@@ -61,6 +61,7 @@ function requireEntry(run: RunState, rosterId: string): RosterEntry {
 
 function replaceEntry(run: RunState, rosterId: string, next: RosterEntry, spend: number): RunState {
   return {
+    ...run,
     levelUpPool: run.levelUpPool - spend,
     roster: run.roster.map((r) => (r.rosterId === rosterId ? next : r)),
   };

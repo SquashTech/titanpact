@@ -415,3 +415,55 @@ body {
   font-weight: 700;
   color: var(--accent);
 }
+
+/* --- Guild Hall panel ---------------------------------------------------- */
+
+.guild-hall {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.guild-hall h2 {
+  font-size: 16px;
+  margin: 4px 0 2px;
+}
+
+.guild-hall .hint {
+  margin: 0 0 10px;
+}
+
+.guild-hall-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.guild-hall-card {
+  cursor: pointer;
+}
+
+.guild-hall-card:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.guild-hall-cost {
+  font-size: 11px;
+  color: var(--accent);
+  margin-top: 4px;
+  font-weight: 700;
+}
+
+/* --- Recruit Contract claims (FightScreen victory overlay) -------------- */
+
+.contract-claims {
+  max-width: 320px;
+  text-align: center;
+}
+
+.contract-claims-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}

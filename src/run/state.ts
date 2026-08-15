@@ -47,10 +47,16 @@ export interface RunState {
   roster: RosterEntry[];
   /** Pooled, freely distributable across the roster (docs/progression.md), not a per-hero locked track. */
   levelUpPool: number;
+  /**
+   * Spent at a Guild Hall to recruit (docs/progression.md "The
+   * raise-vs-recruit axis" — recruitment.ts). Recruit Contracts are claimed,
+   * not bought, so they don't touch this field.
+   */
+  gold: number;
 }
 
-export function createRunState(levelUpPool = 0): RunState {
-  return { roster: [], levelUpPool };
+export function createRunState(levelUpPool = 0, gold = 0): RunState {
+  return { roster: [], levelUpPool, gold };
 }
 
 export function createRosterEntry(rosterId: string, heroId: string, startingMoveIds: readonly string[]): RosterEntry {

@@ -24,10 +24,18 @@ constitution and [`docs/`](./docs) for the deeper design modules.
    the five 50/50 hero typings (Giant Lobster, Sun Priest, Crystal Guardian,
    Hellhound, Artificer — deferred in favor of nailing down rank-up mechanics first),
    and the condition/status sixth contract (in progress in a separate session).
-2. **Build the recruitment economy.** `/src/run` (below) models the roster, squad
-   selection, equipment, and the level-up pool, but heroes are still granted up front —
-   Recruit Contracts vs. Guild Halls, gold, contract/guild pools, and the decaying
-   Guild Hall runway value (`docs/progression.md` "raise-vs-recruit axis") aren't built.
+2. ~~Build the recruitment economy.~~ **Done for both acquisition paths**
+   (`src/run/recruitment.ts`, `docs/progression.md` "raise-vs-recruit axis"): Guild Hall
+   spends gold on a fresh 0-progress hero from a data-driven offer pool
+   (`src/data/recruitment.ts`); Recruit Contracts claim a defeated enemy's exact
+   rank-up state (progress, branches, stat grants, type-graft) for free, ungeared. Both
+   are wired into the playable slice (`GuildHallPanel.tsx` on squad-select,
+   claim buttons on `FightScreen`'s victory overlay) and covered by
+   `test/recruitment.test.ts`. **Still not built:** the decaying Guild Hall runway
+   value curve (offers are flat-cost, not time-decaying) and a real trigger for
+   Recruit Contract offers — claiming currently reuses the single demo fight's fixed
+   AI roster as a stand-in for "the enemy you just beat," since the escalating-fight
+   run loop (#4 below) that would generate that trigger organically doesn't exist yet.
 3. **Build relics** once the hook-and-condition system (the hero-ability effect engine —
    `CLAUDE.md` "Architecture") exists. Relics and equipment share that system by design;
    equipment currently only wires the stat-pipeline half (see "Known gaps" below), and
@@ -68,6 +76,10 @@ turn/round/switching/lock-in loop from `docs/combat.md` and `docs/architecture.m
   moves or advance rank-up progress; rank-up branches grant permanent stats and are
   one-shot per node. Concrete tier/branch content is fixture data for 2 of the 6
   fixture heroes (`src/data/progression.ts`) — see "Known gaps."
+- **The recruitment economy** (`recruitment.ts`): Guild Hall (gold, fresh hero) and
+  Recruit Contract (free, claims a defeated hero's exact rank-up state) acquisition
+  paths, both enforcing the roster cap via the same `addRosterEntry` used everywhere
+  else. `RunState.gold` funds the Guild Hall side; contracts don't touch it.
 
 `/src/view` + `/src/app` is a Vite + React playable slice: pick a 4-hero squad from
 your 6-hero roster, then fight a fixed AI (which also fields a 2-active/2-bench squad).
@@ -98,8 +110,9 @@ locked in) and forced replacement (choosing which bench hero fills a KO'd slot).
   Bulwark") grafts a second type (Stone) to exercise the type-graft mechanic
   (`docs/progression.md` "Type-graft branches") end to end. The other 4 fixture
   heroes have nothing to invest in yet; that's a valid empty state, not a bug.
-- **No recruitment economy** — heroes are granted to the player up front
-  (`src/app/App.tsx`); see "Next steps" #2.
+- **Recruit Contracts have no real fight-outcome trigger.** They're claimed off the
+  fixed demo AI's roster on any win, not off a specific escalating-fight encounter —
+  see "Next steps" #2.
 - **No sequencing/animation.** The view renders each round's *end state* plus a text log
   of what happened — it does not yet subscribe to the event stream turn-by-turn with
   timing/juice. That's the "feel pass" the prototypes model; not built here.

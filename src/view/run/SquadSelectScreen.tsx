@@ -3,18 +3,22 @@ import { heroes } from '../../data/heroes';
 import type { RunState } from '../../run/state';
 import type { Squad } from '../../run/squad';
 import { pickSquad } from '../../run/squad';
+import { GuildHallPanel } from './GuildHallPanel';
 
 interface Props {
   run: RunState;
   onConfirm: (squad: Squad) => void;
+  onRunChange: (next: RunState) => void;
 }
 
 /**
- * Bring-6-pick-4 squad selection (docs/combat.md "Bring-6-pick-4 sideboard").
- * Recruitment isn't built yet (README "Known gaps") so the roster passed in
- * is fixed for the session — this screen only implements the pick-4 step.
+ * Home-base hub: Guild Hall recruitment (src/run/recruitment.ts) followed by
+ * bring-6-pick-4 squad selection (docs/combat.md "Bring-6-pick-4
+ * sideboard"). Recruit Contracts are the other acquisition path but aren't
+ * offered here — they're claimed off a beaten enemy at fight's end
+ * (FightScreen), not bought up front.
  */
-export function SquadSelectScreen({ run, onConfirm }: Props) {
+export function SquadSelectScreen({ run, onConfirm, onRunChange }: Props) {
   const [pickedIds, setPickedIds] = useState<string[]>([]);
 
   function toggle(rosterId: string) {
@@ -31,6 +35,7 @@ export function SquadSelectScreen({ run, onConfirm }: Props) {
 
   return (
     <div className="squad-select">
+      <GuildHallPanel run={run} onRecruit={onRunChange} />
       <h2>Pick your squad ({pickedIds.length}/4)</h2>
       <p className="hint">First two picks start active; the rest start on the bench.</p>
       <div className="roster-grid">

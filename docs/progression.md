@@ -155,6 +155,20 @@ contracts." Set the value curves and let the correct behavior fall out. If it do
 emerge, that's a tuning signal on the curves (bench XP rate, grant sizes, run length),
 not a reason to script the AI or nudge the player.
 
+**IMPLEMENTED (the generic mechanism):** `src/run/recruitment.ts`. Guild Hall spends
+`RunState.gold` on a fresh, 0-progress, ungeared `RosterEntry` from a data-driven offer
+pool (`src/data/recruitment.ts`, provisional flat costs). Recruit Contracts derive a
+claimable offer from a defeated enemy's `RosterEntry` — carrying its rank-up progress,
+chosen branches, stat grants, and type-graft, but not its equipment (an assumption,
+not a cited rule — equipment is roster-slot-attached, not hero-bound, and neither this
+doc nor `CLAUDE.md` says whether captured gear transfers) — and claim it for free.
+**NOT YET IMPLEMENTED:** the decaying Guild Hall runway value curve (offers are flat
+gold costs, not a value that decays as the run progresses) and a real trigger for
+contract offers (there's no escalating-fight encounter to beat yet — README "Next
+steps" #4 — so the playable slice offers a contract claim off the fixed demo AI's
+roster on any win, as a placeholder trigger, not the intended "beat this specific
+encounter" hook).
+
 ---
 
 ## Per-run reset vs. meta-progression (LOCKED — 2026-08-15 designer sign-off)

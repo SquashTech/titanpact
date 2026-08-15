@@ -10,7 +10,7 @@ import { applyForcedReplacement } from '../../engine/combat/switching';
 import type { Action } from '../../engine/combat/actions';
 import type { MoveDefinition } from '../../engine/content';
 import type { RunState, RosterEntry } from '../../run/state';
-import { createRunState, createRosterEntry, addRosterEntry } from '../../run/state';
+import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP } from '../../run/state';
 import type { Squad } from '../../run/squad';
 import { pickSquad } from '../../run/squad';
 import { buildCombatState } from '../../run/buildCombatState';
@@ -67,9 +67,19 @@ interface Props {
   playerRun: RunState;
   playerSquad: Squad;
   onExit: () => void;
+  /**
+   * Recruit Contract claim (docs/progression.md "raise-vs-recruit axis" —
+   * src/run/recruitment.ts): "claim a beaten hero." There's no escalating
+   * fight run loop yet to trigger this organically (README "Next steps"
+   * #4), so it's offered here on the single demo fight's victory screen —
+   * the AI's roster stands in for "the enemy you just beat." Returns
+   * whether the claim succeeded (false only on a full roster) so this
+   * screen can reflect it.
+   */
+  onClaimContract: (defeated: RosterEntry) => boolean;
 }
 
-export function FightScreen({ playerRun, playerSquad, onExit }: Props) {
+export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }: Props) {
   function buildInitialState(seed: number): CombatState {
     return buildCombatState(seed, heroes, equipment, [
       { side: PLAYER_SIDE, squad: playerSquad, roster: playerRun.roster },
@@ -81,6 +91,7 @@ export function FightScreen({ playerRun, playerSquad, onExit }: Props) {
   const [log, setLog] = useState<LogLine[]>([]);
   const [pending, setPending] = useState<Record<string, PendingAction>>({});
   const [selecting, setSelecting] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
+  const [claimedRosterIds, setClaimedRosterIds] = useState<string[]>([]);
 
   const playerActiveAlive = aliveActiveIdsOn(combat, PLAYER_SIDE);
   const enemyActiveAlive = aliveActiveIdsOn(combat, AI_SIDE);
@@ -200,6 +211,11 @@ export function FightScreen({ playerRun, playerSquad, onExit }: Props) {
     setLog([]);
     setPending({});
     setSelecting(null);
+    setClaimedRosterIds([]);
+  }
+
+  function handleClaimContract(entry: RosterEntry) {
+    if (onClaimContract(entry)) setClaimedRosterIds((prev) => [...prev, entry.rosterId]);
   }
 
   function renderActiveSlot(side: Side, slot: 0 | 1) {
@@ -334,6 +350,27 @@ export function FightScreen({ playerRun, playerSquad, onExit }: Props) {
       {winner && (
         <div className="result-overlay">
           <h2>{winner === PLAYER_SIDE ? 'Victory!' : 'Defeat'}</h2>
+          {winner === PLAYER_SIDE && (
+            <div className="contract-claims">
+              <div className="hint">Claim a Recruit Contract (docs/progression.md "raise-vs-recruit axis"):</div>
+              <div className="contract-claims-grid">
+                {AI_RUN.roster.map((entry) => {
+                  const claimed = claimedRosterIds.includes(entry.rosterId);
+                  const rosterFull = playerRun.roster.length >= ROSTER_CAP;
+                  return (
+                    <button
+                      key={entry.rosterId}
+                      className="move-button"
+                      disabled={claimed || rosterFull}
+                      onClick={() => handleClaimContract(entry)}
+                    >
+                      {claimed ? `${heroes[entry.heroId].name} (claimed)` : `Claim ${heroes[entry.heroId].name}`}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div className="result-buttons">
             <button onClick={handleRematch}>Rematch</button>
             <button onClick={onExit}>Change Squad</button>
