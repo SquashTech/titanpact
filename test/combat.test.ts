@@ -6,7 +6,7 @@ import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
-import { isLockedIn } from '../src/engine/state';
+import { isLockedIn, createCombatant, effectiveTypes } from '../src/engine/state';
 import { applyVoluntarySwitch, SwitchBlockedError } from '../src/engine/combat/switching';
 import { isValidFlatStatGrant } from '../src/engine/content';
 
@@ -54,6 +54,19 @@ test('invariant: engine never mutates content data (heroes/moves untouched by re
   resolveRound(state, actions, config);
   assert.strictEqual(heroes, heroesBefore); // same object reference: never reassigned or mutated
   assert.strictEqual(heroes.cinderKnight.types.length, 1); // innate type shape untouched
+});
+
+test('effectiveTypes: a type-graft grant adds to the innate types without mutating HeroDefinition', () => {
+  const hero = heroes.cinderKnight; // mono Fire
+  const grafted = { ...createCombatant('x', 'cinderKnight', 'A', 0, 0), grantedTypes: ['Stone'] };
+  assert.deepStrictEqual(effectiveTypes(hero, grafted), ['Fire', 'Stone']);
+  assert.deepStrictEqual(hero.types, ['Fire']); // innate type untouched by the grant
+});
+
+test('effectiveTypes: no graft returns exactly the innate types', () => {
+  const hero = heroes.cinderKnight;
+  const plain = createCombatant('x', 'cinderKnight', 'A', 0, 0);
+  assert.deepStrictEqual(effectiveTypes(hero, plain), ['Fire']);
 });
 
 test('invariant: stat grants must be multiples of 5 or 10', () => {

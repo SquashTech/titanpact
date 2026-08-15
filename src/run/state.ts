@@ -3,11 +3,11 @@
 // that persist across a run's fights. Combat state (one fight) is built FROM
 // a RunState via buildCombatState.ts and does not write back to it — the two
 // tiers have different lifetimes (CLAUDE.md, docs/architecture.md). Meta
-// state (what survives a run) is out of scope here; docs/architecture.md
-// "Per-run reset vs meta-progression" is still 🔒 OPEN — this module doesn't
-// assume either answer.
+// state (what survives a run — unlocks only, per the LOCKED "light
+// meta-progression" decision, docs/progression.md) is out of scope here;
+// this module models the run tier, which fully resets between runs.
 
-import type { StatKey } from '../engine/content';
+import type { StatKey, TypeId } from '../engine/content';
 import type { EquipmentLoadout } from './equipment';
 import { createEmptyLoadout } from './equipment';
 
@@ -31,6 +31,16 @@ export interface RosterEntry {
    * (CLAUDE.md) while equipment strips on termination.
    */
   rankStatGrants: Partial<Record<StatKey, number>>;
+  /**
+   * The hero's current secondary-type-slot grant, if any, from the most
+   * recently chosen type-graft rank-up branch (docs/progression.md
+   * "Type-graft branches"). null until first grafted; a later graft branch
+   * SHIFTS this (overwrites it) rather than stacking a third type — there is
+   * only ever one secondary slot. The hero's authored innate primary type
+   * never changes — this is the run-tier record of the current grant, carried
+   * into combat state as Combatant.grantedTypes by buildCombatState.ts.
+   */
+  rankTypeGraft: TypeId | null;
 }
 
 export interface RunState {
@@ -52,6 +62,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     rankProgress: 0,
     chosenBranchIds: [],
     rankStatGrants: {},
+    rankTypeGraft: null,
   };
 }
 

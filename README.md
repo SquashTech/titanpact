@@ -10,13 +10,20 @@ constitution and [`docs/`](./docs) for the deeper design modules.
 
 ## Next steps (priority order)
 
-1. **Get a designer call on the 🔒 OPEN items**, or explicitly decide to keep punting on
-   them. Real content (a real type chart, a real roster, real mana tuning) can't be
-   authored responsibly until at least these are decided: mana's resource model
-   (per-hero vs. shared pool) and regen cadence/starting value (`docs/mana.md`), crit
-   source (`docs/combat.md`), damage-modifier stacking order, and the type-chart floor
-   vs. hard-immunity question (`docs/types-and-heroes.md`). None of these are Claude's
-   to decide unilaterally — see "How to work in this repo" in `CLAUDE.md`.
+1. **Most 🔒 OPEN items got a 2026-08-15 designer sign-off** — mana's resource model
+   (per-hero), regen cadence (every round, active + bench) and starting value (full,
+   `docs/mana.md`), crit source (loadout/equipment layer, `docs/combat.md`),
+   damage-modifier stacking (multiplicative), stat-mods-on-switch (persist), the
+   turn/round model (locked as proposed), the type-chart floor (soft 0.25×, no
+   immunities, `docs/types-and-heroes.md`), and per-run reset vs. meta-progression
+   (light meta-progression — unlocks only, `docs/progression.md`) are now locked.
+   Several of these are locked as *decisions* but not yet *implemented* — see the
+   "NOT YET IMPLEMENTED" notes in `docs/mana.md`, `docs/combat.md` (crit), and
+   `docs/progression.md` (meta-progression) before assuming the engine already
+   behaves per the decision. Still genuinely open: weather's interaction with mana,
+   the five 50/50 hero typings (Giant Lobster, Sun Priest, Crystal Guardian,
+   Hellhound, Artificer — deferred in favor of nailing down rank-up mechanics first),
+   and the condition/status sixth contract (in progress in a separate session).
 2. **Build the recruitment economy.** `/src/run` (below) models the roster, squad
    selection, equipment, and the level-up pool, but heroes are still granted up front —
    Recruit Contracts vs. Guild Halls, gold, contract/guild pools, and the decaying
@@ -86,9 +93,11 @@ locked in) and forced replacement (choosing which bench hero fills a KO'd slot).
   pipeline-2 multiplier term) need the same hook-and-condition system as abilities,
   which isn't built — see "Next steps" #3.
 - **Rank-up branches are fixture content for 2 of 6 heroes** (cinderKnight,
-  tidecaller — `src/data/progression.ts`), stat-only (no move unlock on choice) to keep
-  the two level-up-pool spend paths distinct. The other 4 fixture heroes have nothing
-  to invest in yet; that's a valid empty state, not a bug.
+  tidecaller — `src/data/progression.ts`); no branch unlocks a move on choice, to keep
+  the two level-up-pool spend paths distinct. One branch (cinderKnight's "Ember
+  Bulwark") grafts a second type (Stone) to exercise the type-graft mechanic
+  (`docs/progression.md` "Type-graft branches") end to end. The other 4 fixture
+  heroes have nothing to invest in yet; that's a valid empty state, not a bug.
 - **No recruitment economy** — heroes are granted to the player up front
   (`src/app/App.tsx`); see "Next steps" #2.
 - **No sequencing/animation.** The view renders each round's *end state* plus a text log

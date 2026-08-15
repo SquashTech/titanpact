@@ -8,19 +8,17 @@ import type { TypeId } from '../content';
 export type TypeChart = Record<TypeId, Record<TypeId, number>>;
 
 /**
- * 🔒 OPEN (docs/types-and-heroes.md): soft 0.25x floor vs. hard immunities (0x).
- * Provisional policy, matching the prototype: multiplicative stacking, clamped
- * at a 0.25x floor, no immunities. Do not introduce a 0x anywhere until this
- * is signed off — changing to hard immunities means removing this clamp and
- * allowing 0-valued chart cells.
+ * LOCKED (docs/types-and-heroes.md "Effectiveness resolution", 2026-08-15):
+ * soft 0.25x floor only, no hard immunities. Multiplicative dual-type
+ * stacking always clamps here — no chart cell should ever be authored as 0.
  */
-export const PROVISIONAL_TYPE_MULT_FLOOR = 0.25;
+export const TYPE_MULT_FLOOR = 0.25;
 
 export function resolveTypeMult(
   chart: TypeChart,
   moveType: TypeId,
   defenderTypes: readonly TypeId[],
-  floor: number = PROVISIONAL_TYPE_MULT_FLOOR
+  floor: number = TYPE_MULT_FLOOR
 ): number {
   let mult = 1;
   for (const defType of defenderTypes) {

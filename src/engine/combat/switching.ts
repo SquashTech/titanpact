@@ -78,9 +78,11 @@ function performSwitch(
  * Bench HP regen at the round boundary (docs/combat.md: "Benched heroes
  * regenerate (HP, ...), which makes switching a productive action"). The
  * concrete rate is undocumented/untuned — callers pass it as data, not an
- * engine default. Mana bench regen is deliberately NOT implemented here: how
- * (and whether) mana regenerates on the bench is 🔒 OPEN (docs/mana.md
- * "Regen mechanics") and must not be defaulted.
+ * engine default. Mana bench regen is deliberately NOT implemented here yet:
+ * docs/mana.md now LOCKS "every round, active + bench" as the regen cadence,
+ * but no mana-regen tick exists in the engine at all — this function only
+ * ever covered HP. A `ManaChanged`-emitting mana-regen step, likely mirroring
+ * this one, is follow-up engine work.
  */
 export function applyBenchHpRegen(
   state: CombatState,

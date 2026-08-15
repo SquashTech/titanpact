@@ -28,12 +28,10 @@ function combatantIdFor(side: Side, rosterId: string): string {
 
 /**
  * Starting HP/mana are an explicit, full-resources choice made HERE, not an
- * engine default — mirrors the same provisional choice the fight screen and
- * test fixtures already make. "Full" is computed AFTER equipment/rank-up
- * stat modifiers are applied, so a +HP or +Mana item actually starts the
- * fight topped up, not just raising an unreached cap. Starting mana as a
- * concept is still 🔒 OPEN (docs/mana.md "Starting state") — this only
- * decides what "full" means once that provisional choice is made.
+ * engine default — matches the LOCKED starting-mana decision (docs/mana.md
+ * "Resolved": full pool). "Full" is computed AFTER equipment/rank-up stat
+ * modifiers are applied, so a +HP or +Mana item actually starts the fight
+ * topped up, not just raising an unreached cap.
  */
 function placeEntry(
   rosterId: string,
@@ -46,7 +44,8 @@ function placeEntry(
   if (!entry) throw new Error(`${rosterId} is not on the roster`);
   const hero = heroes[entry.heroId];
   const statModifiers = mergeStatMods(equipmentStatModifiers(entry.equipment, equipmentLookup), entry.rankStatGrants);
-  const withMods = { ...createCombatant(combatantIdFor(side, rosterId), entry.heroId, side, 0, 0), statModifiers };
+  const grantedTypes = entry.rankTypeGraft ? [entry.rankTypeGraft] : [];
+  const withMods = { ...createCombatant(combatantIdFor(side, rosterId), entry.heroId, side, 0, 0), statModifiers, grantedTypes };
   return { ...withMods, currentHp: getMaxHp(hero, withMods), currentMana: getMaxMana(hero, withMods) };
 }
 

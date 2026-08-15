@@ -37,33 +37,28 @@ Treat this as a hard constraint when tuning mana-node values in `/data`.
 
 ---
 
-## What is OPEN (do not resolve unilaterally)
+## Resolved (2026-08-15 designer sign-off)
 
-Mana is deliberately underspecified below the level of "it's the balance lever." Each
-of these needs a designer decision before it's coded. Flag, propose, wait — don't
-default any of them to make the prototype run.
+- **Resource model: per-hero pool.** Each hero has their own mana pool, fed by their
+  own `MP Regen` stat. Not a shared team pool.
+- **Regen mechanics: every round, active and benched alike.** `MP Regen` ticks at
+  every round boundary (same cadence as bench HP regen, `combat.md`) for both active
+  and benched combatants — mana regen is one more reason switching is productive,
+  same as HP.
+- **Starting state: full.** Every hero starts a fight with a full mana pool.
+- **NOT YET IMPLEMENTED:** the engine currently has no mana-regen tick at all — only
+  `manaCost` spending on move use (`resolveRound.ts`) and the bench **HP** regen path
+  (`switching.ts applyBenchHpRegen`). Wiring the regen decision above into the engine
+  (a `ManaChanged`-emitting regen step, mirroring `applyBenchHpRegen`) is real
+  engine work, not done as part of locking this decision — flagged as follow-up.
 
-> 🔒 **OPEN — do not resolve without designer sign-off.** *Resource model.*
-> Is mana a **per-hero pool** or a **shared team pool**? This is the foundational
-> question the rest of the system hangs on and it interacts with bring-6-pick-4 and
-> switching. Do not assume per-hero just because `MP Regen` is a per-hero stat — a
-> per-hero regen stat could still feed a shared pool.
-
-> 🔒 **OPEN — do not resolve without designer sign-off.** *Regen mechanics.*
-> How does `MP Regen` actually apply — per round, per turn, on switch-in, only while
-> benched? Does mana regenerate on the **bench** the way HP does (`combat.md`)? If it
-> does, mana becomes another reason switching is productive, which is desirable but
-> must be a deliberate choice, not an accident.
-
-> 🔒 **OPEN — do not resolve without designer sign-off.** *Starting state.*
-> How much mana does a hero/team start a fight with? Full, empty, partial? This sets
-> whether opening turns are high-cost or a ramp.
+## What is still OPEN (do not resolve unilaterally)
 
 > 🔒 **OPEN — do not resolve without designer sign-off.** *Weather subsystem
-> dependency.* Whether a weather subsystem exists at all, and whether it interacts
-> with mana (regen, costs), is unresolved. Do not build weather hooks into the mana
-> system speculatively. If weather is cut, mana must stand on its own; if it's in, the
-> interaction is a deliberate design pass, not a default.
+> interaction with mana.* Weather is kept as a future subsystem (not cut), but its
+> interaction with mana (regen, costs) is explicitly deferred — do not build weather
+> hooks into the mana system speculatively. Mana ships standalone now; weather
+> integration is a separate future design pass.
 
 ---
 
@@ -79,11 +74,16 @@ default any of them to make the prototype run.
 
 ---
 
+## Numerical Examples for future reference:
+
+A "standard" starting mana stat would be something like 80. A decent attack might cost
+roughly 30 mana, and the hero's mana regen stats may be 30. This allows easy usage
+of that attack. However, a more powerful attack may cost 60 mana. With only 30 
+regen, continuous usage of this attack will not be possible without careful
+management.
+
 ## Note for Claude Code
 
-This is the least-specified of the five systems. It's load-bearing (it's the balance
-lever), so the temptation to "just pick something reasonable" is strong — resist it.
-Building the **shape** (mana is combat state, spends on use, regenerates via a stat,
-emits events) is safe and expected. Deciding **per-hero vs. shared, regen cadence,
-starting mana, and weather coupling** is not — those are flagged OPEN above for a
-reason.
+Resource model, regen cadence, and starting mana are now locked (above) — build
+against them directly, including the still-missing regen tick. **Weather coupling
+remains open** — do not build speculative weather hooks into the mana system.

@@ -150,7 +150,7 @@ test('progression: rank-up branch unlocks only after enough progress, grants sta
   assert.ok(node, 'expected a rank-up node to be available at threshold');
   assert.strictEqual(node!.branches.length, 2);
 
-  const next = chooseRankUpBranch(run, progressionTable, 'cinderKnight', 'cinderKnight-offensive');
+  const next = chooseRankUpBranch(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-offensive');
   const baseAttack = heroes.cinderKnight.baseStats.attack;
   assert.strictEqual(next.roster[0].rankStatGrants.attack, 10);
   assert.strictEqual(next.roster[0].chosenBranchIds, next.roster[0].chosenBranchIds); // sanity: array present
@@ -179,5 +179,98 @@ test('progression: a rank-up branch with a non-multiple-of-5 stat grant is rejec
       ],
     },
   };
-  assert.throws(() => chooseRankUpBranch(run, badTable, 'cinderKnight', 'bad'), ProgressionError);
+  assert.throws(() => chooseRankUpBranch(run, badTable, heroes, 'cinderKnight', 'bad'), ProgressionError);
+});
+
+// --- Type-graft rank-up branches (docs/progression.md "Type-graft branches") ---
+
+test('progression: a type-graft branch grants a second type without touching the innate HeroDefinition', () => {
+  let run = seedRoster(['cinderKnight']);
+  run = { ...run, levelUpPool: 3 };
+  run = investRankProgress(run, 'cinderKnight', 3);
+
+  const next = chooseRankUpBranch(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-defensive');
+  assert.strictEqual(next.roster[0].rankTypeGraft, 'Stone');
+  assert.deepStrictEqual(heroes.cinderKnight.types, ['Fire']); // innate type untouched
+
+  const squad = pickSquad(next.roster, ['cinderKnight']);
+  const aiRun = seedRoster(['tidecaller']);
+  const aiSquad = pickSquad(aiRun.roster, ['tidecaller']);
+  const state = buildCombatState(1, heroes, equipment, [
+    { side: 'A', squad, roster: next.roster },
+    { side: 'B', squad: aiSquad, roster: aiRun.roster },
+  ]);
+  assert.deepStrictEqual(state.combatants['A:cinderKnight'].grantedTypes, ['Stone']);
+});
+
+test('progression: a type-graft branch is rejected for an already-dual-typed hero', () => {
+  let run = seedRoster(['ironWarden']); // Iron + Stone, already dual
+  run = { ...run, levelUpPool: 3 };
+  run = investRankProgress(run, 'ironWarden', 3);
+
+  const dualGraftTable = {
+    moveTiers: {},
+    rankUps: {
+      ironWarden: [
+        {
+          threshold: 3,
+          branches: [
+            {
+              id: 'iw-graft',
+              heroId: 'ironWarden',
+              kind: 'utility' as const,
+              name: 'Bad Graft',
+              statGrants: {},
+              unlocksMoveIds: [],
+              typeGraft: 'Nature',
+            },
+          ],
+        },
+      ],
+    },
+  };
+  assert.throws(() => chooseRankUpBranch(run, dualGraftTable, heroes, 'ironWarden', 'iw-graft'), ProgressionError);
+});
+
+test('progression: a later type-graft branch shifts (replaces) the secondary type rather than stacking a third', () => {
+  let run = seedRoster(['cinderKnight']);
+  run = { ...run, levelUpPool: 3 };
+  run = investRankProgress(run, 'cinderKnight', 3);
+  run = chooseRankUpBranch(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-defensive');
+  assert.strictEqual(run.roster[0].rankTypeGraft, 'Stone');
+
+  // A synthetic second node offering a shift to a different secondary type.
+  const shiftTable = {
+    moveTiers: {},
+    rankUps: {
+      cinderKnight: [
+        { threshold: 3, branches: [] },
+        {
+          threshold: 3,
+          branches: [
+            {
+              id: 'cinderKnight-shift',
+              heroId: 'cinderKnight',
+              kind: 'utility' as const,
+              name: 'Shifted Graft',
+              statGrants: {},
+              unlocksMoveIds: [],
+              typeGraft: 'Water',
+            },
+          ],
+        },
+      ],
+    },
+  };
+  const shifted = chooseRankUpBranch(run, shiftTable, heroes, 'cinderKnight', 'cinderKnight-shift');
+  assert.strictEqual(shifted.roster[0].rankTypeGraft, 'Water'); // replaced, not stacked
+
+  const squad = pickSquad(shifted.roster, ['cinderKnight']);
+  const aiRun = seedRoster(['tidecaller']);
+  const aiSquad = pickSquad(aiRun.roster, ['tidecaller']);
+  const state = buildCombatState(1, heroes, equipment, [
+    { side: 'A', squad, roster: shifted.roster },
+    { side: 'B', squad: aiSquad, roster: aiRun.roster },
+  ]);
+  assert.deepStrictEqual(state.combatants['A:cinderKnight'].grantedTypes, ['Water']); // not ['Stone', 'Water']
 });

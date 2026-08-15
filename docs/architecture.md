@@ -121,11 +121,10 @@ Keep these separate; they have different lifetimes and different persistence nee
   progression pool, XP, map/encounter position. Lifetime: one ~45-min run.
 - **Meta state** — whatever survives a run. Lifetime: the save file.
 
-> 🔒 **OPEN — do not resolve without designer sign-off.**
-> **Per-run reset vs. meta-progression** is unresolved. This is exactly the seam
-> between *run state* and *meta state* above. Build the boundary so either answer is
-> cheap to implement; do not hard-wire the assumption that runs carry nothing (or
-> everything) forward.
+**Per-run reset vs. meta-progression is LOCKED** (`progression.md` "Per-run reset vs.
+meta-progression", 2026-08-15): light meta-progression — run state fully resets,
+permanent unlocks persist in meta state. Not yet implemented; see that section for
+what building it actually requires.
 
 ---
 

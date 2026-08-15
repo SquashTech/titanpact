@@ -16,21 +16,16 @@
 
 ---
 
-## Turn & round structure
-
-> 🔒 **OPEN — do not resolve without designer sign-off.**
-> The **precise definitions of "turn" vs. "round" are unresolved.** The model below
-> is a working proposal so the engine has something to build against — do not treat
-> the exact boundaries (when regen ticks, when switches happen, when stat mods
-> expire) as locked. Flag any code that depends on the boundary.
-
-**Proposed model (draft):**
+## Turn & round structure (LOCKED — 2026-08-15 designer sign-off)
 
 - A **round** is one full cycle in which every active combatant takes one action.
 - A **turn** is a single combatant's action within a round.
 - At the **start of a round**, both players declare all their active combatants'
   actions (including switches). Actions then resolve in priority/speed order.
 - **Bench regen** and any per-round bookkeeping tick at round boundaries.
+
+This matches the already-implemented model (`resolveRound.ts`) — locking it promotes
+it from draft to rule; no code change was needed.
 
 The declare-then-resolve structure (both sides commit, then the round plays out) is
 what makes prediction the core skill. Preserve it.
@@ -94,21 +89,25 @@ Fixed terms:
 All situational damage modifiers (buffs, weaknesses conferred by abilities/relics,
 etc.) collect into the pipeline-2 multiplier term — **not** into stats.
 
-> 🔒 **OPEN — do not resolve without designer sign-off.**
-> **Stacking order of damage modifiers (additive vs. multiplicative) is
-> unresolved.** This materially changes balance. Do not pick one to make the code
-> tidy. Structure the term so either policy is a one-line swap, and flag it.
+**Stacking policy (LOCKED — 2026-08-15 designer sign-off): multiplicative.** Each
+modifier multiplies onto the running total, matching how STAB/TypeMult/Variance/Crit
+already combine. `damagePipeline.ts resolveMultiplierTerm` implements both policies
+as a one-line swap by design — the default should now be `'multiplicative'`, not
+`'additive'`.
 
 ### Crit
 
 `Crit` is 1× on a normal hit and the crit multiplier on a crit (multiplier value
 lives in `/data`).
 
-> 🔒 **OPEN — do not resolve without designer sign-off.**
-> **Crit source is unresolved: base-stat-driven vs. a loadout/equipment layer.**
-> This determines whether crit is an innate hero property or something you build
-> toward via equipment (`progression.md`). Don't wire crit chance to a source until
-> this is signed off.
+**Crit source (LOCKED — 2026-08-15 designer sign-off): loadout/equipment layer, not
+a base stat.** Base crit is ~0 for everyone; crit chance is something built toward
+via equipment/relics — it does not become a per-hero authoring axis.
+**NOT YET IMPLEMENTED:** `equipment.ts` has no crit-chance field yet (only the
+`StatKey` stat line), and `damagePipeline.ts`'s flat `PROVISIONAL_CRIT_CHANCE`
+(1/16, sourced from nothing) is still a placeholder. Wiring crit into equipment is
+follow-up work: add a crit-chance grant to equipment/relic definitions and thread it
+into `rollDamage` in place of the flat constant.
 
 ---
 
@@ -119,12 +118,12 @@ lives in `/data`).
 - They flow through the **stat pipeline**, so they change the `Atk/Def` ratio (and
   Speed, and so on), never the damage multiplier term.
 
-> 🔒 **OPEN — do not resolve without designer sign-off.**
-> **Do stat modifiers persist or reset on switch?** This is load-bearing because of
-> bench-regen cycling: if mods reset on switch-out, cycling becomes a way to shed
-> debuffs (and lose buffs); if they persist, cycling doesn't launder a bad board
-> state. This interacts directly with the switching/lock-in rules below and with the
-> unresolved sixth (status) engine contract. Do not default it.
+**Persistence on switch (LOCKED — 2026-08-15 designer sign-off): stat mods persist
+through a switch.** Cycling doesn't launder a bad board state — a debuffed hero
+comes back debuffed. This matches the already-implemented state shape
+(`state.ts StatModifiers` attaches to the `Combatant` record, not the active slot),
+so no code change was needed. Still interacts with the unresolved sixth (status)
+engine contract for anything status-shaped, not just flat stat mods.
 
 ---
 

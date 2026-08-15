@@ -42,13 +42,10 @@ lopsided; that's a feature, not a tuning bug to "fix."
 - **Dual-type effectiveness stacks multiplicatively.** A move that is 2× against each
   of a target's two types resolves to **4×**; 0.5× against each resolves to the
   floor.
-- Current prototype range: **up to 4×, down to a 0.25× floor.**
-
-> 🔒 **OPEN — do not resolve without designer sign-off.**
-> **Type chart floor: soft 0.25× vs. hard immunities (0×).** Right now multiplicative
-> stacking bottoms out at 0.25×; the open question is whether any matchup should be a
-> true immunity (0×, damage impossible) instead. This changes both the chart data and
-> the damage pipeline's clamping. Don't introduce a 0× anywhere until it's signed off.
+- **Range (LOCKED — 2026-08-15 designer sign-off): up to 4×, down to a 0.25× floor,
+  no hard immunities.** No type-chart cell should ever be authored as a true 0× —
+  every matchup stays chippable by something. `typeMult.ts TYPE_MULT_FLOOR` enforces
+  the clamp.
 
 ### STAB
 
@@ -95,8 +92,12 @@ see `architecture.md`. Blight is blocked on that decision.
 ## Hero authoring rules (LOCKED)
 
 - **Apply the power-source filter first** (top of this doc) to assign type.
-- **A hero's innate type is immutable.** Progression never changes it. Rank-ups
-  branch a hero's *kit*, never its type (`progression.md`).
+- **The innate PRIMARY type is immutable.** Progression never changes it — it's
+  present across every rank-up option a hero is ever offered. **The SECONDARY type
+  slot is the rank-up branch axis**: rank-ups may add or shift it, but never touch
+  the primary (`docs/leveling-and-ranks.md` "The immutability nuance" — the
+  authoritative spec for how this works; `progression.md` "Type-graft branches" is
+  being reconciled with it, see that section's note).
 - **Mono is a valid terminal state.** A mono-type hero that never gains a second type
   is a legitimate, finished design identity — not an unfinished or "larval" one.
   Don't treat dual-typing as the goal state every hero climbs toward.

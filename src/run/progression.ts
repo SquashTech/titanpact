@@ -7,8 +7,9 @@
 // in src/data/progression.ts, authored for a subset of the roster only — see
 // the SCOPE NOTE there. This module only implements the generic mechanism.
 
-import type { StatKey } from '../engine/content';
+import type { StatKey, TypeId } from '../engine/content';
 import { isValidFlatStatGrant } from '../engine/content';
+import type { HeroLookup } from '../engine/state';
 import type { RosterEntry, RunState } from './state';
 import { mergeStatMods } from './statMods';
 
@@ -28,6 +29,13 @@ export interface RankUpBranch {
   name: string;
   statGrants: Partial<Record<StatKey, number>>;
   unlocksMoveIds: string[];
+  /**
+   * Optional secondary-type grant/shift (docs/progression.md "Type-graft
+   * branches"). Only legal when the hero is mono-type by design — enforced in
+   * chooseRankUpBranch, not just by authoring convention. A later branch's
+   * typeGraft overwrites (shifts) any earlier one; it's not additive.
+   */
+  typeGraft?: TypeId;
 }
 
 export interface RankUpNode {
@@ -90,14 +98,21 @@ export function availableRankUp(table: ProgressionTable, entry: RosterEntry): Ra
 /**
  * Applies a chosen rank-up branch: grants permanent stats (validated as
  * multiples of 5/10, CLAUDE.md "Stat modifiers are flat additive integers,
- * multiples of 5 or 10") and unlocks its moves. Free — spending the points to
- * reach the threshold already cost the pool via investRankProgress; choosing
- * the branch itself is not a second charge. The hero's innate type never
- * changes here (CLAUDE.md: type is immutable across rank-ups); type-graft via
- * rank-up is a real design axis but no fixture branch in this slice exercises
- * it — see SCOPE NOTE in src/data/progression.ts.
+ * multiples of 5 or 10"), unlocks its moves, and grafts/shifts the secondary
+ * type slot if the branch carries a typeGraft (docs/progression.md
+ * "Type-graft branches") — a later graft overwrites an earlier one rather
+ * than stacking. Free — spending the points to reach the threshold already
+ * cost the pool via investRankProgress; choosing the branch itself is not a
+ * second charge. Requires the hero lookup solely to validate a type-graft
+ * against the hero's innate types, which are never themselves modified.
  */
-export function chooseRankUpBranch(run: RunState, table: ProgressionTable, rosterId: string, branchId: string): RunState {
+export function chooseRankUpBranch(
+  run: RunState,
+  table: ProgressionTable,
+  heroes: HeroLookup,
+  rosterId: string,
+  branchId: string
+): RunState {
   const entry = requireEntry(run, rosterId);
   const node = availableRankUp(table, entry);
   if (!node) throw new ProgressionError(`No rank-up branch is currently available for ${rosterId}`);
@@ -109,11 +124,28 @@ export function chooseRankUpBranch(run: RunState, table: ProgressionTable, roste
     }
   }
 
+  let rankTypeGraft = entry.rankTypeGraft;
+  if (branch.typeGraft) {
+    const hero = heroes[entry.heroId];
+    if (!hero) throw new ProgressionError(`Unknown hero ${entry.heroId}`);
+    if (hero.types.length !== 1) {
+      throw new ProgressionError(`${entry.heroId} is already dual-typed — a type-graft branch cannot be offered`);
+    }
+    if (hero.types.includes(branch.typeGraft)) {
+      throw new ProgressionError(`Type-graft ${branch.typeGraft} duplicates ${entry.heroId}'s innate type`);
+    }
+    // A later graft branch SHIFTS the secondary type slot rather than stacking
+    // a third type (docs/progression.md "Type-graft branches", 2026-08-15): it
+    // simply overwrites whatever was grafted before, if anything.
+    rankTypeGraft = branch.typeGraft;
+  }
+
   const nextEntry: RosterEntry = {
     ...entry,
     chosenBranchIds: [...entry.chosenBranchIds, branch.id],
     unlockedMoveIds: [...new Set([...entry.unlockedMoveIds, ...branch.unlocksMoveIds])],
     rankStatGrants: mergeStatMods(entry.rankStatGrants, branch.statGrants),
+    rankTypeGraft,
   };
   return replaceEntry(run, rosterId, nextEntry, 0);
 }

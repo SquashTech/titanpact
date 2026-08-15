@@ -90,24 +90,36 @@ don't silently override it.
 
 ---
 
+## Resolved design questions (2026-08-15 designer sign-off)
+
+Decided; provisional/placeholder values in code are being promoted to locked as the
+touching work happens. See the linked doc section for the decision, rationale, and
+what's still unimplemented:
+
+- Stat mods on switch: **persist** (`docs/combat.md`).
+- Damage-modifier stacking: **multiplicative** (`docs/combat.md`).
+- Turn vs round: the proposed model is now locked as-is (`docs/combat.md`).
+- Crit source: **loadout/equipment layer**, not a base stat (`docs/combat.md`).
+- Type-chart floor: **soft 0.25×, no hard immunities** (`docs/types-and-heroes.md`).
+- Per-run reset vs meta-progression: **light meta-progression** — run state fully
+  resets, permanent unlocks persist (`docs/progression.md`).
+- Mana resource model/regen/starting state: **per-hero pool, regen every round for
+  active + bench, full starting pool** (`docs/mana.md`).
+- Five "50/50" heroes: general shape decided — **mono base, second type via a
+  rank-up type-graft branch** (`docs/progression.md` "Type-graft branches"), not
+  inherent duals. Which specific type each hero starts mono as is still open (below).
+
 ## Open questions — DO NOT silently resolve
 
 Each has a *provisional* value baked into the prototypes for playability. Treat those as
 placeholders, not decisions. Flag before hardening any of these:
 
-- **Stat mods on switch:** persist through a switch, or reset? *(prototype: persist)*
-- **Condition vocabulary:** the 6th contract — still unspecified.
-- **Damage-modifier stacking:** additive vs multiplicative?
-- **Turn vs round:** precise definitions still needed.
-- **Crit source:** a base stat, or sourced from the loadout layer? *(prototype: flat 1/16 in the
-  damage pipeline)*
-- **Type-chart floor:** hard immunities, or floor at 0.25×? *(prototype: 0.25× floor, no
-  immunities)*
-- **Per-run reset vs meta-progression:** undecided.
-- **Five "50/50" heroes** (Giant Lobster, Sun Priest, Crystal Guardian, Hellhound, Artificer):
-  inherent duals, or mono bases with branches?
+- **Condition vocabulary:** the 6th contract — still unspecified (in progress elsewhere).
+- **Five "50/50" heroes'** specific innate mono type (Giant Lobster, Sun Priest, Crystal
+  Guardian, Hellhound, Artificer) — the mono-base-plus-graft *shape* is resolved (above),
+  the individual picks aren't.
 - **"Weak-and-final mono"** as a distinct hero class vs a capstone-strong 0-branch hero.
-- **Weather subsystem:** dependency still open.
+- **Weather subsystem:** whether it interacts with mana is still open (`docs/mana.md`).
 - **Team archetypes are intentionally deferred** — they must *emerge* from movepool, ability,
   equipment, and relic design. Do not pre-specify archetypes.
 

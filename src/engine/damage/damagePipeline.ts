@@ -19,10 +19,11 @@ export const VARIANCE_MIN = 0.85;
 export const VARIANCE_MAX = 1.0;
 
 /**
- * 🔒 OPEN (docs/combat.md "Crit"): crit source is unresolved — base-stat-driven
- * vs. a loadout/equipment layer. Provisional, matching the prototype: a flat
- * chance rolled in the damage pipeline, not sourced from any stat or item.
- * Do not wire this to equipment/stats until that decision is signed off.
+ * Crit source is LOCKED (docs/combat.md "Crit", 2026-08-15): a loadout/equipment
+ * layer, not a base stat. NOT YET IMPLEMENTED — equipment.ts has no crit-chance
+ * field yet, so this stays a flat, unsourced placeholder until that's built.
+ * When it is, thread the equipped crit-chance grant into rollDamage in place of
+ * this constant rather than adding a crit StatKey to the stat pipeline.
  */
 export const PROVISIONAL_CRIT_CHANCE = 1 / 16;
 export const PROVISIONAL_CRIT_MULTIPLIER = 1.5;
@@ -39,16 +40,17 @@ export interface DamageModifier {
 }
 
 /**
- * 🔒 OPEN (docs/combat.md "The damage-modifier multiplier term"): additive vs.
- * multiplicative stacking of damage modifiers is unresolved. Structured as a
- * one-line policy swap on purpose — do not pick one to make callers simpler.
+ * Stacking policy is LOCKED (docs/combat.md "The damage-modifier multiplier
+ * term", 2026-08-15): multiplicative. Kept as a named policy type / one-line
+ * swap rather than inlining the multiplicative math, so a future exception
+ * (a specific relic that stacks additively, say) stays easy to special-case.
  */
 export type ModifierStackingPolicy = 'additive' | 'multiplicative';
-export const PROVISIONAL_MODIFIER_STACKING: ModifierStackingPolicy = 'additive';
+export const LOCKED_MODIFIER_STACKING: ModifierStackingPolicy = 'multiplicative';
 
 export function resolveMultiplierTerm(
   modifiers: readonly DamageModifier[],
-  policy: ModifierStackingPolicy = PROVISIONAL_MODIFIER_STACKING
+  policy: ModifierStackingPolicy = LOCKED_MODIFIER_STACKING
 ): number {
   if (modifiers.length === 0) return 1;
   if (policy === 'additive') {
@@ -91,7 +93,7 @@ export function calcDamage(
   variance: number,
   isCrit: boolean,
   modifiers: readonly DamageModifier[] = [],
-  stackingPolicy: ModifierStackingPolicy = PROVISIONAL_MODIFIER_STACKING,
+  stackingPolicy: ModifierStackingPolicy = LOCKED_MODIFIER_STACKING,
   critMultiplier: number = PROVISIONAL_CRIT_MULTIPLIER
 ): DamageCalcResult {
   const stab = resolveStab(move.type, attackerTypes);

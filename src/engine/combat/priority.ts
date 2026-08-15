@@ -10,10 +10,10 @@ import { getEffectiveStat } from '../state';
 import { nextInt, type RngState } from '../rng/seededRng';
 
 /**
- * Provisional convention (turn/round boundary is itself 🔒 OPEN per
- * docs/combat.md): switches resolve before any move, regardless of speed.
- * Not stated explicitly in the docs — flag if this assumption needs revisiting
- * once the turn/round model is signed off.
+ * Provisional convention, independent of the (now LOCKED, docs/combat.md)
+ * turn/round model: switches resolve before any move, regardless of speed.
+ * Not stated explicitly in the docs — flag if this assumption needs designer
+ * review; it just hasn't come up yet.
  */
 export const SWITCH_PRIORITY_BRACKET = Number.POSITIVE_INFINITY;
 

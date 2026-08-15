@@ -1,12 +1,11 @@
-// Round resolution — the main orchestrator. Implements the PROPOSED (not
-// locked) turn/round model from docs/combat.md: both sides declare all active
-// combatants' actions, then actions resolve in priority/speed order, then
-// bench regen ticks at the round boundary. Flag any code that leans on the
-// exact boundary — the precise turn/round definitions are 🔒 OPEN.
+// Round resolution — the main orchestrator. Implements the LOCKED turn/round
+// model from docs/combat.md: both sides declare all active combatants'
+// actions, then actions resolve in priority/speed order, then bench regen
+// ticks at the round boundary.
 
 import type { HeroDefinition, MoveDefinition } from '../content';
 import type { CombatState, HeroLookup, Side } from '../state';
-import { getMaxHp } from '../state';
+import { getMaxHp, effectiveTypes } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
@@ -92,7 +91,14 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       const attackerNow = working.combatants[action.combatantId];
       const ratio = resolveStatRatio(move.category, attackerHero, attackerNow, defenderHero, target);
 
-      const rolled = rollDamage(move, ratio, attackerHero.types, defenderHero.types, typeChart, working.rngState);
+      const rolled = rollDamage(
+        move,
+        ratio,
+        effectiveTypes(attackerHero, attackerNow),
+        effectiveTypes(defenderHero, target),
+        typeChart,
+        working.rngState
+      );
       working = { ...working, rngState: rolled.nextRngState };
 
       const amount = Math.round(rolled.damage);

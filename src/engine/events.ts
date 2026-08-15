@@ -91,9 +91,10 @@ export interface BenchRegenTickedEvent extends BaseEvent {
   newHp: number;
   maxHp: number;
   /**
-   * Always 0 in this engine slice — whether/how mana regenerates on the bench
-   * is 🔒 OPEN (docs/mana.md "Regen mechanics"). Field kept for forward
-   * compatibility so the event shape doesn't change once that's decided.
+   * Always 0 in this engine slice. Mana bench regen cadence is now LOCKED
+   * (docs/mana.md "Resolved": every round, active + bench) but the regen tick
+   * itself isn't implemented yet (see switching.ts applyBenchHpRegen). Field
+   * kept ready for when that lands.
    */
   manaRegen: number;
 }
