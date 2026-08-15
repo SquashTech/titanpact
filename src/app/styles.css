@@ -185,10 +185,33 @@ body {
 }
 
 .action-panel h3 {
-  margin: 0 0 6px;
+  margin: 0;
   font-size: 13px;
   color: var(--text-dim);
   font-weight: 600;
+}
+
+.action-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.back-button {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-size: 11px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  color: var(--text);
+  border-color: var(--accent);
 }
 
 .move-grid {
@@ -314,26 +337,67 @@ body {
   margin-bottom: 6px;
 }
 
-.resolve-button {
+.log-toggle-button {
   flex-shrink: 0;
-  position: sticky;
-  bottom: 0;
-  width: 100%;
-  background: var(--accent);
-  color: #1a1300;
-  border: none;
+  align-self: flex-start;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 10px;
-  font-size: 14px;
-  font-weight: 700;
+  color: var(--text-dim);
+  font-size: 11px;
+  padding: 5px 10px;
   cursor: pointer;
 }
 
-.resolve-button:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-  background: var(--panel-alt);
+.log-toggle-button:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.log-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 11, 14, 0.75);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 20;
+}
+
+.log-panel {
+  width: 100%;
+  max-width: 430px;
+  max-height: 60vh;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px 12px 0 0;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.log-panel-header {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.log-close-button {
+  background: none;
+  border: none;
   color: var(--text-dim);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.log-close-button:hover {
+  color: var(--text);
 }
 
 .event-log {
@@ -344,7 +408,8 @@ body {
   font-size: 12px;
   font-family: 'SF Mono', Consolas, monospace;
   line-height: 1.5;
-  height: 160px;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column-reverse;

@@ -91,8 +91,10 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
 
   const [combat, setCombat] = useState<CombatState>(() => buildInitialState(Math.floor(Math.random() * 2 ** 31)));
   const [log, setLog] = useState<LogLine[]>([]);
+  const [logOpen, setLogOpen] = useState(false);
   const [pending, setPending] = useState<Record<string, PendingAction>>({});
   const [selecting, setSelecting] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
+  const [actionStep, setActionStep] = useState(0);
   const [claimedRosterIds, setClaimedRosterIds] = useState<string[]>([]);
 
   const playerActiveAlive = aliveActiveIdsOn(combat, PLAYER_SIDE);
@@ -114,30 +116,60 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
         ? playerActiveAlive
         : [];
 
+  function isPendingComplete(p: PendingAction | undefined): boolean {
+    if (!p) return false;
+    if (p.kind === 'switch') return !!p.benchedCombatantId;
+    const move = moves[p.moveId!];
+    if ((move.target === 'singleEnemy' || move.target === 'singleAlly') && !p.declaredTarget) return false;
+    return true;
+  }
+
+  /**
+   * Commits `combatantId`'s action and, Pokemon-style, advances to the next
+   * player active hero once this one's choice is complete — or auto-resolves
+   * the round if this was the last hero to declare. Takes the resolved
+   * pending map directly (rather than reading the `pending` state) so the
+   * just-committed action is visible immediately, without waiting a render
+   * cycle for setState to land.
+   */
+  function commitAction(combatantId: string, action: PendingAction) {
+    const nextPending = { ...pending, [combatantId]: action };
+    setPending(nextPending);
+    setSelecting(null);
+
+    if (!isPendingComplete(action)) return;
+
+    const idx = playerActiveAlive.indexOf(combatantId);
+    if (idx !== -1 && idx < playerActiveAlive.length - 1) {
+      setActionStep(idx + 1);
+      return;
+    }
+
+    if (openReplacementSlots.length === 0 && playerActiveAlive.every((id) => isPendingComplete(nextPending[id]))) {
+      resolveRoundWith(nextPending);
+    }
+  }
+
   function handleMoveClick(combatantId: string, move: MoveDefinition) {
     if (move.target === 'singleEnemy' || move.target === 'singleAlly') {
       const candidates = move.target === 'singleEnemy' ? enemyActiveAlive : playerActiveAlive;
       if (candidates.length === 1) {
-        setPending((prev) => ({ ...prev, [combatantId]: { kind: 'move', moveId: move.id, declaredTarget: candidates[0] } }));
-        setSelecting(null);
+        commitAction(combatantId, { kind: 'move', moveId: move.id, declaredTarget: candidates[0] });
       } else {
         setSelecting({ combatantId, move });
       }
     } else {
-      setPending((prev) => ({ ...prev, [combatantId]: { kind: 'move', moveId: move.id, declaredTarget: null } }));
-      if (selecting?.combatantId === combatantId) setSelecting(null);
+      commitAction(combatantId, { kind: 'move', moveId: move.id, declaredTarget: null });
     }
   }
 
   function handleTargetClick(targetId: string) {
     if (!selecting) return;
-    setPending((prev) => ({ ...prev, [selecting.combatantId]: { kind: 'move', moveId: selecting.move.id, declaredTarget: targetId } }));
-    setSelecting(null);
+    commitAction(selecting.combatantId, { kind: 'move', moveId: selecting.move.id, declaredTarget: targetId });
   }
 
   function handleSwitchClick(combatantId: string, benchedCombatantId: string) {
-    setPending((prev) => ({ ...prev, [combatantId]: { kind: 'switch', benchedCombatantId } }));
-    if (selecting?.combatantId === combatantId) setSelecting(null);
+    commitAction(combatantId, { kind: 'switch', benchedCombatantId });
   }
 
   function handleForcedReplacement(slot: 0 | 1, benchedCombatantId: string) {
@@ -156,17 +188,6 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
   function appendLog(newLines: LogLine[]) {
     setLog((prev) => [...prev, ...newLines.map((l, i) => ({ ...l, key: `${prev.length + i}-${l.key}` }))]);
   }
-
-  function isActionComplete(combatantId: string): boolean {
-    const p = pending[combatantId];
-    if (!p) return false;
-    if (p.kind === 'switch') return !!p.benchedCombatantId;
-    const move = moves[p.moveId!];
-    if ((move.target === 'singleEnemy' || move.target === 'singleAlly') && !p.declaredTarget) return false;
-    return true;
-  }
-
-  const allReady = playerActiveAlive.length > 0 && playerActiveAlive.every(isActionComplete) && openReplacementSlots.length === 0;
 
   /**
    * Picks randomly among the AI's currently-affordable moves rather than
@@ -214,9 +235,9 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
     return null;
   }
 
-  function handleResolve() {
+  function resolveRoundWith(pendingMap: Record<string, PendingAction>) {
     const playerActions: Action[] = playerActiveAlive.map((id) => {
-      const p = pending[id];
+      const p = pendingMap[id];
       return p.kind === 'switch'
         ? { kind: 'switch', combatantId: id, benchedCombatantId: p.benchedCombatantId! }
         : { kind: 'move', combatantId: id, moveId: p.moveId!, declaredTarget: p.declaredTarget };
@@ -241,6 +262,7 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
     appendLog(formatEvents(events, heroes, nextState.combatants));
     setPending({});
     setSelecting(null);
+    setActionStep(0);
   }
 
   function handleRematch() {
@@ -248,6 +270,7 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
     setLog([]);
     setPending({});
     setSelecting(null);
+    setActionStep(0);
     setClaimedRosterIds([]);
   }
 
@@ -322,25 +345,31 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
         </div>
         {renderBenchRow(PLAYER_SIDE)}
 
-        <div className="event-log">
-          {[...log].reverse().map((l) => (
-            <div key={l.key} className={l.className}>
-              {l.text}
-            </div>
-          ))}
-        </div>
+        <button className="log-toggle-button" onClick={() => setLogOpen(true)}>
+          📜 Battle Log
+        </button>
       </div>
 
       <div className="action-area">
         {openReplacementSlots.length === 0 &&
-          playerActiveAlive.map((id) => {
+          playerActiveAlive.length > 0 &&
+          (() => {
+            const stepIndex = Math.min(actionStep, playerActiveAlive.length - 1);
+            const id = playerActiveAlive[stepIndex];
             const entry = entryFor(playerRun.roster, id);
             const hero = heroes[combat.combatants[id].heroId];
             const combatant = combat.combatants[id];
             const activeMove = activeMoveFor(id);
             return (
               <div className="action-panel" key={id}>
-                <h3>{hero.name}'s move</h3>
+                <div className="action-panel-header">
+                  <h3>{hero.name}'s move</h3>
+                  {stepIndex > 0 && (
+                    <button className="back-button" onClick={() => setActionStep(stepIndex - 1)}>
+                      ← Back
+                    </button>
+                  )}
+                </div>
                 {selecting?.combatantId === id && <div className="hint">Choose a target above</div>}
                 <div className="move-grid">
                   {entry.unlockedMoveIds.map((moveId) => {
@@ -405,14 +434,30 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
                 )}
               </div>
             );
-          })}
+          })()}
 
-        {openReplacementSlots.length > 0 && <div className="hint">Choose a bench replacement above before resolving the round.</div>}
-
-        <button className="resolve-button" disabled={!allReady} onClick={handleResolve}>
-          Resolve Round {combat.round}
-        </button>
+        {openReplacementSlots.length > 0 && <div className="hint">Choose a bench replacement above to continue.</div>}
       </div>
+
+      {logOpen && (
+        <div className="log-overlay" onClick={() => setLogOpen(false)}>
+          <div className="log-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="log-panel-header">
+              <span>Battle Log</span>
+              <button className="log-close-button" onClick={() => setLogOpen(false)}>
+                ✕
+              </button>
+            </div>
+            <div className="event-log">
+              {[...log].reverse().map((l) => (
+                <div key={l.key} className={l.className}>
+                  {l.text}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {winner && (
         <div className="result-overlay">
