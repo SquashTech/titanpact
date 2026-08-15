@@ -65,6 +65,17 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+/* Top-of-screen row: exit on the left, the log toggle on the right, both
+   reachable without hunting through the battlefield below. */
+.fight-header {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 16;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 /* Fixed-size battlefield: the fight state stays visible and stable while the
    action area below it scrolls (see .app-shell comment). */
 .battlefield {
@@ -72,6 +83,56 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* Invisible full-viewport click-catcher while a round is playing out, so any
+   tap advances the beat rather than only one aimed at the banner. */
+.advance-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  cursor: pointer;
+}
+
+/* Narrates the current beat of a playing-out round (docs/architecture.md
+   "engine / presentation separation") — who acted, what landed, who went
+   down. Sits in normal flow rather than as an overlay so it never blocks
+   the cards it's describing. Not itself a click target — .advance-overlay
+   covers the whole screen so any tap advances. */
+.combat-banner {
+  flex-shrink: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: var(--panel-alt);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+}
+
+.combat-banner-hint {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  animation: banner-hint-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes banner-hint-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* The only region of the fight screen allowed to scroll — absorbs however
@@ -174,6 +235,48 @@ body {
   font-size: 10px;
   color: var(--hp-low);
   font-weight: 700;
+}
+
+/* Floating combat-log numbers over a combatant card — mounted fresh (new
+   `key`) on every hit so the rise-and-fade animation restarts even when the
+   same amount lands twice in a row. */
+.dmg-popup {
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  font-size: 15px;
+  font-weight: 800;
+  pointer-events: none;
+  animation: dmg-popup-float 900ms ease-out forwards;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.dmg-popup.popup-damage {
+  color: var(--hp-low);
+}
+
+.dmg-popup.popup-crit {
+  color: var(--crit);
+  font-size: 17px;
+}
+
+.dmg-popup.popup-heal {
+  color: var(--hp-high);
+}
+
+@keyframes dmg-popup-float {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.9);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px) scale(1);
+  }
 }
 
 .action-panel {
@@ -339,7 +442,6 @@ body {
 
 .log-toggle-button {
   flex-shrink: 0;
-  align-self: flex-start;
   background: var(--panel-alt);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -491,6 +593,11 @@ body {
 
 .exit-button:hover {
   color: var(--text);
+}
+
+.exit-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .bench-row {

@@ -3,11 +3,18 @@ import type { Combatant } from '../../engine/state';
 import { effectiveTypes, getMaxHp, getMaxMana } from '../../engine/state';
 import { getTypeColor } from './typeColors';
 
+export interface Popup {
+  key: number;
+  text: string;
+  className: string;
+}
+
 interface Props {
   hero: HeroDefinition;
   combatant: Combatant;
   targetable?: boolean;
   onSelectTarget?: () => void;
+  popup?: Popup | null;
 }
 
 function hpTier(fraction: number): 'hp-high' | 'hp-mid' | 'hp-low' {
@@ -16,7 +23,7 @@ function hpTier(fraction: number): 'hp-high' | 'hp-mid' | 'hp-low' {
   return 'hp-low';
 }
 
-export function CombatantCard({ hero, combatant, targetable, onSelectTarget }: Props) {
+export function CombatantCard({ hero, combatant, targetable, onSelectTarget, popup }: Props) {
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = Math.max(0, combatant.currentHp / maxHp);
@@ -33,6 +40,11 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget }: P
       role={targetable ? 'button' : undefined}
     >
       {combatant.fainted && <span className="fainted-tag">KO</span>}
+      {popup && (
+        <div key={popup.key} className={`dmg-popup ${popup.className}`}>
+          {popup.text}
+        </div>
+      )}
       <div className="combatant-name">
         <span>{hero.name}</span>
         <span className="combatant-types">

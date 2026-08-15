@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
 import { typeChart } from '../../data/typechart';
@@ -8,6 +8,7 @@ import { isLockedIn, effectiveTypes } from '../../engine/state';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../engine/combat/switching';
 import type { Action } from '../../engine/combat/actions';
+import type { CombatEvent } from '../../engine/events';
 import type { MoveDefinition } from '../../engine/content';
 import { resolveStab, resolveTypeMult } from '../../engine/damage/typeMult';
 import type { RunState, RosterEntry } from '../../run/state';
@@ -15,8 +16,10 @@ import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP } from '.
 import type { Squad } from '../../run/squad';
 import { pickSquad } from '../../run/squad';
 import { buildCombatState } from '../../run/buildCombatState';
-import { CombatantCard } from './CombatantCard';
+import { CombatantCard, type Popup } from './CombatantCard';
 import { formatEvents, type LogLine } from './formatEvent';
+import { applyEventToState } from './applyEventToState';
+import { buildBeats, type Beat } from './buildBeats';
 import { getTypeColor } from './typeColors';
 
 const PLAYER_SIDE: Side = 'A';
@@ -96,6 +99,22 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
   const [selecting, setSelecting] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
   const [actionStep, setActionStep] = useState(0);
   const [claimedRosterIds, setClaimedRosterIds] = useState<string[]>([]);
+
+  // Sequenced, tap-advanced round playback (docs/architecture.md "engine /
+  // presentation separation"): `resolving` gates player input and the
+  // victory overlay while a round's already-decided event stream is being
+  // revealed one beat at a time; `banner` narrates the current beat;
+  // `popups` are the floating numbers keyed per combatant card. The queue,
+  // the in-progress display state, and the round's authoritative end state
+  // live in refs rather than state — they're only ever read/written from
+  // inside handleAdvance's click handler, never rendered directly.
+  const [resolving, setResolving] = useState(false);
+  const [banner, setBanner] = useState<string | null>(null);
+  const [popups, setPopups] = useState<Record<string, Popup>>({});
+  const popupSeq = useRef(0);
+  const beatQueue = useRef<Beat[]>([]);
+  const displayState = useRef<CombatState | null>(null);
+  const finalState = useRef<CombatState | null>(null);
 
   const playerActiveAlive = aliveActiveIdsOn(combat, PLAYER_SIDE);
   const enemyActiveAlive = aliveActiveIdsOn(combat, AI_SIDE);
@@ -258,20 +277,70 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
       }
     }
 
-    setCombat(nextState);
-    appendLog(formatEvents(events, heroes, nextState.combatants));
-    setPending({});
-    setSelecting(null);
-    setActionStep(0);
+    startBeatPlayback(combat, events, nextState);
+  }
+
+  /**
+   * Loads an already-resolved round's event stream, grouped into beats
+   * (buildBeats.ts), and reveals the first one. The rest wait in `beatQueue`
+   * for handleAdvance taps — this is the seam that turns the engine's
+   * instant, synchronous result into something a player reads at their own
+   * pace instead of a scripted timer (docs/architecture.md "engine /
+   * presentation separation"). `finalState` is applied verbatim once the
+   * queue empties, so playback can never drift from the authoritative result
+   * regardless of how the beats replayed it.
+   */
+  function startBeatPlayback(startState: CombatState, events: CombatEvent[], nextFinalState: CombatState) {
+    const beats = buildBeats(events, heroes, moves, startState.combatants);
+    displayState.current = startState;
+    finalState.current = nextFinalState;
+    beatQueue.current = beats;
+    setResolving(true);
+    handleAdvance();
+  }
+
+  /**
+   * Reveals the next queued beat, or — once the queue is empty — finalizes
+   * the round (snaps to the authoritative end state and hands control back
+   * to the player). Bound to a tap on the banner/battlefield while
+   * `resolving` is true, so the player reads each beat at their own pace
+   * rather than a fixed timer.
+   */
+  function handleAdvance() {
+    const beat = beatQueue.current.shift();
+
+    if (!beat) {
+      setCombat(finalState.current!);
+      setPopups({});
+      setBanner(null);
+      setResolving(false);
+      setPending({});
+      setSelecting(null);
+      setActionStep(0);
+      return;
+    }
+
+    let next = displayState.current!;
+    for (const event of beat.events) next = applyEventToState(next, event);
+    displayState.current = next;
+
+    setCombat(next);
+    appendLog(formatEvents(beat.events, heroes, next.combatants));
+    setBanner(beat.banner);
+    setPopups(Object.fromEntries(beat.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className }])));
   }
 
   function handleRematch() {
+    beatQueue.current = [];
     setCombat(buildInitialState(Math.floor(Math.random() * 2 ** 31)));
     setLog([]);
     setPending({});
     setSelecting(null);
     setActionStep(0);
     setClaimedRosterIds([]);
+    setResolving(false);
+    setBanner(null);
+    setPopups({});
   }
 
   function handleClaimContract(entry: RosterEntry) {
@@ -289,11 +358,12 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
           combatant={combat.combatants[id]}
           targetable={targetableIds.includes(id)}
           onSelectTarget={() => handleTargetClick(id)}
+          popup={popups[id]}
         />
       );
     }
     const bench = combat.bench[side];
-    if (side === PLAYER_SIDE && bench.length > 0) {
+    if (side === PLAYER_SIDE && bench.length > 0 && !resolving) {
       return (
         <div className="combatant-card empty-slot" key={`empty-${side}-${slot}`}>
           <div className="combatant-name">Choose replacement</div>
@@ -319,7 +389,7 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
       <div className="bench-row">
         {bench.map((id) => (
           <div className="bench-card" key={id}>
-            <CombatantCard hero={heroes[combat.combatants[id].heroId]} combatant={combat.combatants[id]} />
+            <CombatantCard hero={heroes[combat.combatants[id].heroId]} combatant={combat.combatants[id]} popup={popups[id]} />
           </div>
         ))}
       </div>
@@ -328,11 +398,30 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
 
   return (
     <>
-      <button className="exit-button" onClick={onExit}>
-        ← Squad
-      </button>
+      <div className="fight-header">
+        <button className="exit-button" onClick={onExit} disabled={resolving}>
+          ← Squad
+        </button>
+        <button className="log-toggle-button" onClick={() => setLogOpen(true)}>
+          📜 Battle Log
+        </button>
+      </div>
+
+      {/* Full-screen click-catcher while a round is playing out — lets the
+          player tap anywhere to advance instead of hunting for the banner
+          specifically. Sits below the battle-log overlay's z-index so an
+          open log panel takes taps for itself (close it) rather than also
+          advancing the beat underneath it. */}
+      {resolving && <div className="advance-overlay" onClick={handleAdvance} />}
 
       <div className="battlefield">
+        {banner && (
+          <div className="combat-banner">
+            <span>{banner}</span>
+            <span className="combat-banner-hint">tap to continue ▸</span>
+          </div>
+        )}
+
         <div className="team-row enemy">
           {renderActiveSlot(AI_SIDE, 0)}
           {renderActiveSlot(AI_SIDE, 1)}
@@ -344,14 +433,11 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
           {renderActiveSlot(PLAYER_SIDE, 1)}
         </div>
         {renderBenchRow(PLAYER_SIDE)}
-
-        <button className="log-toggle-button" onClick={() => setLogOpen(true)}>
-          📜 Battle Log
-        </button>
       </div>
 
       <div className="action-area">
-        {openReplacementSlots.length === 0 &&
+        {!resolving &&
+          openReplacementSlots.length === 0 &&
           playerActiveAlive.length > 0 &&
           (() => {
             const stepIndex = Math.min(actionStep, playerActiveAlive.length - 1);
@@ -436,7 +522,7 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
             );
           })()}
 
-        {openReplacementSlots.length > 0 && <div className="hint">Choose a bench replacement above to continue.</div>}
+        {!resolving && openReplacementSlots.length > 0 && <div className="hint">Choose a bench replacement above to continue.</div>}
       </div>
 
       {logOpen && (
@@ -459,7 +545,7 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
         </div>
       )}
 
-      {winner && (
+      {winner && !resolving && (
         <div className="result-overlay">
           <h2>{winner === PLAYER_SIDE ? 'Victory!' : 'Defeat'}</h2>
           {winner === PLAYER_SIDE && (
