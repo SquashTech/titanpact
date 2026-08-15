@@ -1,0 +1,63 @@
+// ⚠️ TEST FIXTURE CONTENT — a handful of moves sufficient to exercise the
+// engine (single-target physical/magical, a spread move, priority, mana
+// gating). Not the authored movepool.
+
+import type { MoveDefinition } from '../engine/content';
+
+export const moves: Record<string, MoveDefinition> = {
+  emberSlash: {
+    id: 'emberSlash',
+    name: 'Ember Slash',
+    type: 'Fire',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 60,
+    manaCost: 10,
+    priority: 0,
+    target: 'singleEnemy',
+  },
+  tidalBolt: {
+    id: 'tidalBolt',
+    name: 'Tidal Bolt',
+    type: 'Water',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 55,
+    manaCost: 12,
+    priority: 0,
+    target: 'singleEnemy',
+  },
+  quickJab: {
+    id: 'quickJab',
+    name: 'Quick Jab',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 30,
+    manaCost: 4,
+    priority: 1,
+    target: 'singleEnemy',
+  },
+  wildfire: {
+    id: 'wildfire',
+    name: 'Wildfire',
+    type: 'Fire',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 40,
+    manaCost: 20,
+    priority: 0,
+    target: 'bothEnemies',
+  },
+  overload: {
+    id: 'overload',
+    name: 'Overload',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 90,
+    manaCost: 999, // deliberately unaffordable in test fixtures — exercises the mana-legality guard
+    priority: 0,
+    target: 'singleEnemy',
+  },
+};

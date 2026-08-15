@@ -1,0 +1,118 @@
+# types-and-heroes.md
+
+> The 15-type elemental system, how effectiveness resolves, the roster model, and the
+> rules for authoring heroes. The **type chart itself (the 15×15 matrix) is data** and
+> lives in `/data/typechart.ts` — this doc specifies how it behaves and what's known
+> to be mistuned, not the individual cells.
+
+## The foundational principle: type = power source
+
+**A hero's type is the domain their power draws from — not what their body is made
+of.** This is the single most important authoring filter in the project. It's what
+collapsed the roster from an incoherent body-descriptor mess ("it's a rock, so
+Stone") into a coherent 15-type system.
+
+Author every hero by asking *where does this hero's power come from?*, not *what is
+this hero physically?* A knight whose strength is divine conviction is **Light**, not
+**Iron**, even in plate armor. Apply this filter first, always.
+
+---
+
+## The 15 types
+
+`Fire` · `Water` · `Frost` · `Storm` · `Stone` · `Nature` · `Light` · `Shadow` ·
+`Arcane` · `Mind` · `Spirit` · `Iron` · `Forge` · `Beast` · `Ancient`
+
+Each names a **power source**. (Full domain descriptions belong alongside the chart
+in `/data`; the authoring rule above is what governs assignment.)
+
+### Ancient is special (LOCKED)
+
+`Ancient` is an intentional **near-total defensive wall** — it exists primarily on
+**enemy** encounters and is **rarely draftable** by the player. Treat it as a
+boss/threat type, not a standard roster option. Its chart row/column is deliberately
+lopsided; that's a feature, not a tuning bug to "fix."
+
+---
+
+## Effectiveness resolution
+
+- Effectiveness comes from the chart and feeds `TypeMult` in the damage formula
+  (`combat.md`).
+- **Dual-type effectiveness stacks multiplicatively.** A move that is 2× against each
+  of a target's two types resolves to **4×**; 0.5× against each resolves to the
+  floor.
+- Current prototype range: **up to 4×, down to a 0.25× floor.**
+
+> 🔒 **OPEN — do not resolve without designer sign-off.**
+> **Type chart floor: soft 0.25× vs. hard immunities (0×).** Right now multiplicative
+> stacking bottoms out at 0.25×; the open question is whether any matchup should be a
+> true immunity (0×, damage impossible) instead. This changes both the chart data and
+> the damage pipeline's clamping. Don't introduce a 0× anywhere until it's signed off.
+
+### STAB
+
+**STAB = 1.25×** when a move's type matches one of the user's types (`combat.md`).
+For a dual-type hero, a move matching *either* type gets STAB (it does not double for
+matching both — STAB is a single 1.25× term).
+
+---
+
+## Known balance state (NOT yet resolved — these are tracked tuning issues)
+
+The chart is playable but knowingly mistuned in these spots. Carry these forward as
+open tuning work, not as settled values:
+
+- **Light and Shadow are over-tuned defensively** — they resist too much.
+- **Nature and Beast are fragile** — each currently carries **three weaknesses**,
+  which makes them hard to justify drafting.
+
+These are balance-tuning items, not structural changes. Adjust in `/data`, playtest,
+don't silently rewrite the type philosophy to paper over them.
+
+---
+
+## Blight
+
+**Blight is not a type.** It was demoted to a **cross-type status effect defined at
+the move-design layer.** Do not add a Blight row/column to the chart. Its mechanics
+depend on the unresolved **sixth engine contract (the condition/status vocabulary)** —
+see `architecture.md`. Blight is blocked on that decision.
+
+---
+
+## The roster model
+
+- **Hard cap of 6 heroes** on a team.
+- Doubles is played as **bring-6-pick-4**: you build up to 6, and each fight fields 4
+  (2 active + 2 benched). This sideboard structure is the strategic layer above
+  individual fights.
+- Switching/bench/lock-in mechanics are in `combat.md`; how heroes are acquired and
+  developed is in `progression.md`.
+
+---
+
+## Hero authoring rules (LOCKED)
+
+- **Apply the power-source filter first** (top of this doc) to assign type.
+- **A hero's innate type is immutable.** Progression never changes it. Rank-ups
+  branch a hero's *kit*, never its type (`progression.md`).
+- **Mono is a valid terminal state.** A mono-type hero that never gains a second type
+  is a legitimate, finished design identity — not an unfinished or "larval" one.
+  Don't treat dual-typing as the goal state every hero climbs toward.
+- **Type authoring is not archetype authoring.** Team archetypes must **emerge from
+  content** (movepools, abilities, equipment, relics), not be pre-specified. Don't
+  bake archetype assumptions into type or hero definitions.
+
+### The authored roster
+
+Eight authored heroes exist in the prototype with full type coverage. Their concrete
+stat lines, typings, and movepools are **data** (`/data/heroes.ts`) — this doc governs
+the rules they're authored under, not their individual values.
+
+> 🔒 **OPEN — do not resolve without designer sign-off.**
+> **Five heroes have unresolved (50/50) typings:** Giant Lobster, Sun Priest, Crystal
+> Guardian, Hellhound, Artificer. Each is a genuine coin-flip between two power-source
+> readings and must not be assigned a type unilaterally — run each through the
+> power-source filter *with the designer* and lock it deliberately. Leave them
+> explicitly flagged in `/data` until then.

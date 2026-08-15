@@ -1,0 +1,31 @@
+{
+  "name": "titanpact",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Titanpact — piloted doubles tactical roguelike. Pure TypeScript engine + React view.",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node dist/test/index.js",
+    "demo": "npm run build && node dist/scripts/demo-fight.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "vite",
+    "build:view": "tsc -p tsconfig.view.json --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck:view": "tsc -p tsconfig.view.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "typescript": "~5.4.5",
+    "vite": "^8.2.1"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  }
+}

@@ -1,0 +1,272 @@
+:root {
+  --bg: #14161c;
+  --panel: #1e2129;
+  --panel-alt: #262a35;
+  --border: #333844;
+  --text: #e8e9ed;
+  --text-dim: #9498a3;
+  --hp-high: #4caf6a;
+  --hp-mid: #d9a441;
+  --hp-low: #d9534f;
+  --mana: #4a90d9;
+  --accent: #e0a63c;
+  --enemy: #d9534f;
+  --ally: #4a90d9;
+  --crit: #ff7043;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.app-shell {
+  max-width: 430px;
+  min-height: 100vh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 10px;
+}
+
+.app-header {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+  padding: 4px 0 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.team-row {
+  display: flex;
+  gap: 8px;
+}
+
+.team-row.enemy {
+  flex-direction: row;
+}
+
+.combatant-card {
+  flex: 1;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  position: relative;
+  transition: outline 0.15s ease;
+}
+
+.combatant-card.targetable {
+  outline: 2px solid var(--accent);
+  cursor: pointer;
+}
+
+.combatant-card.fainted {
+  opacity: 0.4;
+}
+
+.combatant-name {
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.combatant-types {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.bar-track {
+  height: 8px;
+  border-radius: 4px;
+  background: #0d0e12;
+  overflow: hidden;
+  margin-bottom: 3px;
+}
+
+.bar-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.bar-fill.hp-high {
+  background: var(--hp-high);
+}
+.bar-fill.hp-mid {
+  background: var(--hp-mid);
+}
+.bar-fill.hp-low {
+  background: var(--hp-low);
+}
+.bar-fill.mana {
+  background: var(--mana);
+}
+
+.bar-label {
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+.fainted-tag {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 10px;
+  color: var(--hp-low);
+  font-weight: 700;
+}
+
+.action-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.action-panel h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.move-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.move-button {
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 8px 6px;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.move-button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.move-button.selected {
+  border-color: var(--accent);
+  background: #33291a;
+}
+
+.move-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.move-button .move-cost {
+  color: var(--mana);
+  float: right;
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.resolve-button {
+  width: 100%;
+  background: var(--accent);
+  color: #1a1300;
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.resolve-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: var(--panel-alt);
+  color: var(--text-dim);
+}
+
+.event-log {
+  background: #0d0e12;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-family: 'SF Mono', Consolas, monospace;
+  line-height: 1.5;
+  height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.event-log .log-round {
+  color: var(--accent);
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.event-log .log-damage {
+  color: var(--text);
+}
+
+.event-log .log-crit {
+  color: var(--crit);
+  font-weight: 700;
+}
+
+.event-log .log-faint {
+  color: var(--hp-low);
+  font-weight: 700;
+}
+
+.event-log .log-mana {
+  color: var(--text-dim);
+}
+
+.result-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 11, 14, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 10;
+}
+
+.result-overlay h2 {
+  font-size: 28px;
+  margin: 0;
+}
+
+.result-overlay button {
+  background: var(--accent);
+  color: #1a1300;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}

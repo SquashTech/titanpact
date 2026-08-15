@@ -1,0 +1,157 @@
+# TITANPACT — Project Constitution
+
+Roguelike tactical RPG. Fully-piloted **doubles (2v2)** combat inspired by Pokémon VGC and
+Guildrun. ~45-minute runs: draft → escalating fights → relics. Portrait-mode mobile.
+
+**North star:** every hero must be viable under *some* combination of items, relics, and team
+composition. No hero is a trap pick.
+
+This file is the constitution: load-bearing rules and rationale. Deeper design lives in `/docs`
+(see Repo map). When a rule here and a prompt conflict, this file wins — surface the conflict,
+don't silently override it.
+
+---
+
+## Locked invariants — do not violate without an explicit decision
+
+### Combat math
+- **Damage formula (locked, exact):**
+  `Damage = BasePower × (offStat / defStat) × STAB × TypeMult × Variance × Crit`
+  - Physical pair: `offStat = Attack`, `defStat = Defense`.
+  - Magical pair: `offStat = Intelligence`, `defStat = Wisdom`.
+  - `STAB = 1.25` when the move's type is one of the user's types.
+  - `TypeMult` = product over each defender type (dual types stack **multiplicatively**).
+  - `Variance` = uniform `0.85–1.0`, rolled per hit. **Load-bearing — never remove.**
+  - `Crit` = a multiplier term (source is an open question; see below).
+- **Two-pipeline separation (non-negotiable):** the *stat pipeline* produces only the
+  off/def **ratio**. The *damage pipeline* applies BasePower and every multiplier term.
+  Damage modifiers (relic damage bonuses, offensive buffs, etc.) live in the **damage
+  pipeline** — never folded back into stats. Mixing them destroys balance legibility.
+- **Stat line:** HP, Attack/Defense, Intelligence/Wisdom, Speed, Mana, MP Regen.
+- **Stat modifiers are flat additive integers, multiples of 5 or 10.** No % stat mods.
+  There is **no automatic stat growth** from leveling.
+- **No accuracy stat.** Moves always land. **Mana cost is the primary balance lever** on
+  reliable moves.
+- **Priority uses integer brackets; Speed is the tiebreaker within a bracket.**
+- **No spread damage reduction** — this is a doubles-only game.
+
+### Types
+- **15 types:** Fire, Water, Frost, Storm, Stone, Nature, Light, Shadow, Arcane, Mind,
+  Spirit, Iron, Forge, Beast, Ancient.
+- **Type = the domain a hero's power draws from, not what its body is made of.** This reframe
+  is the identity filter for the whole roster — apply it everywhere.
+- A hero's **innate type is immutable.** Rank-ups may *add* a second type (type-graft); they
+  never change the innate one.
+
+### Heroes & progression
+- Heroes are **named, authored, fixed specialists** (~53 concepts). Not procedurally generated.
+- **Mono typing is a valid terminal state**, not a larval stage. Precedent: Pokémon
+  Normal/Water/Bug. A numerically common mono type is not a design flaw.
+- Evolution depth varies by design: Capstone = 0 rank-ups, Single = 1, Deep line = 2+.
+- **Level-ups are a pooled currency** distributed freely after each battle (benched heroes
+  included). They do **exactly two things**: progress a hero toward a rank-up, and unlock moves
+  from the current tier. **They never directly raise stats.**
+- **Rank-ups are authored branch points.** Options differ *in kind* (defensive / offensive /
+  utility), are **permanent within a run**, and gate the movepool.
+- **Recruitment:** Recruit Contracts (claim a beaten hero; arrives with branches partially
+  locked) or Guild Halls (spend gold; choose from a pool; arrives underleveled and fully
+  customizable). Guild heroes have decaying runway value; contract heroes have flat value.
+- **Roster hard cap = 6**, doubling as the bring-6-pick-4 battle sideboard. Gaining a hero
+  requires **terminating** an existing one. Equipment strips on termination; no gold refund.
+- **3 equipment slots** per hero: weapon, armor, accessory. **Relics are team-wide passives**
+  — a separate axis, not equipment.
+
+### Mana & tempo
+- Regenerating Mana with two stats: **pool size** and **per-turn Regen**.
+- **Bench heroes regen mana** — this is the resource-cycling engine that makes switching
+  productive.
+- **Lock-in rule:** voluntary switching is disabled once a side has **2+ heroes KO'd** (forced
+  replacement of a downed hero still happens). This flips a fight from a cycling game into a
+  grind — an intentional phase transition.
+- **Rest** is a load-bearing rare option: recovers mana, **no defensive benefit**.
+- **Mana tuning invariant:** *mana investment must pay out later than the point at which a weak
+  team dies.* Keep this true when tuning any mana node or regen value.
+
+### Architecture
+- **All acquirable content — heroes, moves, abilities, relics, equipment — is pure data**
+  referencing a shared engine vocabulary. No bespoke per-content logic. This is what makes the
+  game maintainable and moddable; protect it.
+- **Foundational contracts** the engine exposes: (1) effect primitives (atomic verbs),
+  (2) trigger hooks (timing points), (3) status effects as their own content type, (4) the
+  targeting model, (5) content schemas for all five content types. A 6th — **condition
+  vocabulary** — is still being specified (see open questions).
+- **Equipment and relics use the same hook-and-condition system as abilities**, unifying all
+  five content types under one effect engine.
+- **Resolution and presentation are separate layers.** The engine resolves a turn into an
+  **ordered stream of discrete events** (act, damage, heal, faint, buff, …). The view layer
+  *subscribes* to that stream and animates it. **Never bake timing, animation, or sound into the
+  engine.** This separation is what lets "game feel" (juice, art, audio) be added and tuned
+  forever without touching locked mechanics — proven by the two prototypes.
+
+---
+
+## Open questions — DO NOT silently resolve
+
+Each has a *provisional* value baked into the prototypes for playability. Treat those as
+placeholders, not decisions. Flag before hardening any of these:
+
+- **Stat mods on switch:** persist through a switch, or reset? *(prototype: persist)*
+- **Condition vocabulary:** the 6th contract — still unspecified.
+- **Damage-modifier stacking:** additive vs multiplicative?
+- **Turn vs round:** precise definitions still needed.
+- **Crit source:** a base stat, or sourced from the loadout layer? *(prototype: flat 1/16 in the
+  damage pipeline)*
+- **Type-chart floor:** hard immunities, or floor at 0.25×? *(prototype: 0.25× floor, no
+  immunities)*
+- **Per-run reset vs meta-progression:** undecided.
+- **Five "50/50" heroes** (Giant Lobster, Sun Priest, Crystal Guardian, Hellhound, Artificer):
+  inherent duals, or mono bases with branches?
+- **"Weak-and-final mono"** as a distinct hero class vs a capstone-strong 0-branch hero.
+- **Weather subsystem:** dependency still open.
+- **Team archetypes are intentionally deferred** — they must *emerge* from movepool, ability,
+  equipment, and relic design. Do not pre-specify archetypes.
+
+---
+
+## Prototype status
+
+Two React single-file prototypes are the reference implementation of the combat loop. They are
+**vertical slices, not the target architecture** — the engine here is inlined, not yet the pure
+data + contracts model above. Port their *behavior*, not their structure.
+
+- `prototypes/combat-prototype.jsx` — the mechanical slice: exact damage formula, 15-type chart,
+  command-then-resolve, priority brackets, mana + bench regen, switching + lock-in, 8 heroes.
+- `prototypes/combat-prototype-feel.jsx` — the same engine plus the **presentation layer**
+  (sequenced resolution, HP-drain timing, floating numbers, particles, hitstop, screen shake,
+  procedural Web Audio). This is the model for the engine→event-stream→view separation.
+
+The 8 prototype heroes and the type chart are provisional content for testing the loop, not the
+authored roster.
+
+---
+
+## Repo map (target)
+
+- `CLAUDE.md` — this file. Keep it lean (<200 lines); adherence drops past that.
+- `/docs/` — the deeper design modules (generate next): `combat.md`, `types-and-heroes.md`,
+  `progression.md`, `mana.md`, `architecture.md`. Reference from here; don't inline them.
+- `/prototypes/` — the two slices above, as behavioral reference.
+- `/src/engine/` — the pure resolution engine + the six contracts.
+- `/src/content/` — heroes, moves, abilities, relics, equipment as pure data.
+- `/src/view/` — presentation layer; subscribes to the engine's event stream.
+
+Build order: prove the six contracts + event stream in a thin TypeScript engine, port one
+prototype exchange onto it end-to-end, *then* author the full roster as data.
+
+---
+
+## How to work in this repo
+
+- Present tensions and second-order questions, not just answers. When a decision spawns a new
+  question, name it.
+- Don't re-litigate solved problems or over-elaborate on locked systems.
+- Prefer deferring an open question explicitly over forcing premature closure.
+- Anchor proposals in the reference games (Pokémon VGC, Guildrun, Monster Sanctuary, Into the
+  Breach for feel) rather than rebuilding from first principles.
+- Content is data. If a change wants bespoke logic in a content file, that's a smell — extend the
+  engine vocabulary instead.
