@@ -17,20 +17,24 @@ constitution and [`docs/`](./docs) for the deeper design modules.
    source (`docs/combat.md`), damage-modifier stacking order, and the type-chart floor
    vs. hard-immunity question (`docs/types-and-heroes.md`). None of these are Claude's
    to decide unilaterally — see "How to work in this repo" in `CLAUDE.md`.
-2. **Build `/src/run`** — the roster/progression layer: bring-6-pick-4, recruit vs. Guild
-   Hall, equipment/relics, the level-up pool. This is the next architectural milestone
-   per `CLAUDE.md`'s build order and is what the fight screen needs before it can show
-   more than one scripted 2v2.
-3. **Wire bench/switching into the fight screen.** The engine already implements
-   lock-in and voluntary/forced switching (`src/engine/combat/switching.ts`,
-   tested in `test/combat.test.ts`) — the UI just doesn't expose it because the current
-   fixture roster has no bench. Needs `/src/run` (step 2) to have a real bench to expose.
-4. **Replace `/src/data` test fixtures with real content.** Either locate/import the
+2. **Build the recruitment economy.** `/src/run` (below) models the roster, squad
+   selection, equipment, and the level-up pool, but heroes are still granted up front —
+   Recruit Contracts vs. Guild Halls, gold, contract/guild pools, and the decaying
+   Guild Hall runway value (`docs/progression.md` "raise-vs-recruit axis") aren't built.
+3. **Build relics** once the hook-and-condition system (the hero-ability effect engine —
+   `CLAUDE.md` "Architecture") exists. Relics and equipment share that system by design;
+   equipment currently only wires the stat-pipeline half (see "Known gaps" below), and
+   relics need the same engine before they can be more than a stub.
+4. **Escalating fights / a real run loop.** `/src/app` currently orchestrates exactly one
+   fight (squad-select → fight → squad-select). The roguelike run structure (draft →
+   escalating fights → relics, `CLAUDE.md` north star) — persistent roster HP/mana
+   between fights, an encounter sequence, run-vs-meta state — isn't built.
+5. **Replace `/src/data` test fixtures with real content.** Either locate/import the
    prototype files `CLAUDE.md` treats as the reference (`prototypes/combat-prototype.jsx`
    and the feel-pass variant — not present in this repo as of this writing) and port
    their roster/type chart, or author fresh content collaboratively. Don't hand-tune the
    placeholder chart in `src/data/typechart.ts` into "the" chart — replace it wholesale.
-5. **A presentation "feel" pass** — sequenced event playback, hitstop, floating damage
+6. **A presentation "feel" pass** — sequenced event playback, hitstop, floating damage
    numbers, procedural audio — once the above is stable enough to be worth polishing.
    Lowest priority; purely cosmetic and the feel-pass prototype is the model for it per
    `docs/architecture.md`.
@@ -40,30 +44,55 @@ constitution and [`docs/`](./docs) for the deeper design modules.
 The pure TypeScript combat engine (`/src/engine`) proves the event-stream /
 engine-presentation separation, the two damage pipelines, and the
 turn/round/switching/lock-in loop from `docs/combat.md` and `docs/architecture.md`.
-A first playable slice sits on top of it: `/src/view` + `/src/app` is a Vite + React
-page where you pick moves/targets for a 2v2 fight against a fixed AI, rendered as HP/mana
-bars and a scrolling event log — no run/roster/draft layer yet (`/src/run` is still
-empty), just one fight.
+
+`/src/run` is the roster/progression layer that sits on top of the engine
+(docs/architecture.md "State shapes": the RUN tier). It implements:
+- **Roster** (`state.ts`): up to 6 heroes, add/terminate (equipment strips on
+  termination — `progression.md`).
+- **Equipment** (`equipment.ts`): 3 slots/hero, flat stat grants only — the stat-pipeline
+  half of the discipline in `architecture.md`. Damage-shaped equipment/relic bonuses are
+  deferred; see "Known gaps."
+- **Bring-6-pick-4 squad selection** (`squad.ts`): picks 1-4 roster heroes into a
+  {2 active, 2 bench} `Squad`.
+- **The engine seam** (`buildCombatState.ts`): turns a `Squad` + roster into a real
+  `CombatState`, applying equipment/rank-up stat grants as each combatant's starting
+  modifiers.
+- **The pooled level-up currency** (`progression.ts`): spends points to unlock tiered
+  moves or advance rank-up progress; rank-up branches grant permanent stats and are
+  one-shot per node. Concrete tier/branch content is fixture data for 2 of the 6
+  fixture heroes (`src/data/progression.ts`) — see "Known gaps."
+
+`/src/view` + `/src/app` is a Vite + React playable slice: pick a 4-hero squad from
+your 6-hero roster, then fight a fixed AI (which also fields a 2-active/2-bench squad).
+The fight screen exposes real switching (declared as a round action, blocked once
+locked in) and forced replacement (choosing which bench hero fills a KO'd slot).
 
 **Known gaps, not silently resolved:**
 
 - The reference prototypes (`prototypes/combat-prototype.jsx` and the feel-pass
   variant) that `CLAUDE.md` treats as the behavioral acceptance bar are not present in
-  this repo. `/src/data` currently holds hand-authored **test fixtures** (4 heroes, 5
-  moves, a placeholder type chart) sufficient to exercise the engine — not the
-  authored roster or the real 15x15 balance chart. Bring the prototypes in (or hand off
-  the authored content) before treating this as more than a scaffold.
+  this repo. `/src/data` currently holds hand-authored **test fixtures** (6 heroes, 9
+  moves, a placeholder type chart, a handful of equipment items) sufficient to exercise
+  the engine and `/src/run` — not the authored roster or the real 15x15 balance chart.
+  Bring the prototypes in (or hand off the authored content) before treating this as
+  more than a scaffold.
 - Every 🔒 OPEN item from the docs (stat-mods-on-switch, damage-modifier stacking
   order, crit source, type-chart floor vs. immunity, turn/round boundaries, mana's
   resource model/regen/starting state, the condition/status sixth contract) is left
   flagged in code comments at the point it matters, with a provisional value where one
   was needed to make the engine runnable. Search for `🔒 OPEN` before hardening any of
   these.
-- The fight screen has no bench/switch UI — the fixture roster is exactly 2v2 with no
-  bench, so lock-in and switching aren't reachable from the UI yet even though the
-  engine supports them (see `test/combat.test.ts`).
-- No sequencing/animation. The view renders each round's *end state* plus a text log of
-  what happened — it does not yet subscribe to the event stream turn-by-turn with
+- **Equipment only wires the stat-pipeline half.** Damage-shaped equipment bonuses (the
+  pipeline-2 multiplier term) need the same hook-and-condition system as abilities,
+  which isn't built — see "Next steps" #3.
+- **Rank-up branches are fixture content for 2 of 6 heroes** (cinderKnight,
+  tidecaller — `src/data/progression.ts`), stat-only (no move unlock on choice) to keep
+  the two level-up-pool spend paths distinct. The other 4 fixture heroes have nothing
+  to invest in yet; that's a valid empty state, not a bug.
+- **No recruitment economy** — heroes are granted to the player up front
+  (`src/app/App.tsx`); see "Next steps" #2.
+- **No sequencing/animation.** The view renders each round's *end state* plus a text log
+  of what happened — it does not yet subscribe to the event stream turn-by-turn with
   timing/juice. That's the "feel pass" the prototypes model; not built here.
 
 ## Requirements

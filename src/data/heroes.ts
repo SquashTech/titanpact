@@ -1,6 +1,7 @@
-// ⚠️ TEST FIXTURE CONTENT — 4 heroes sufficient to run a 2v2 fight through the
-// engine. Not the authored 53-concept roster (docs/types-and-heroes.md);
-// stat lines and typings here are arbitrary and untuned.
+// ⚠️ TEST FIXTURE CONTENT — 6 heroes sufficient to run a 2v2 fight and exercise
+// bring-6-pick-4 squad selection (src/run) through the engine. Not the
+// authored 53-concept roster (docs/types-and-heroes.md); stat lines and
+// typings here are arbitrary and untuned.
 
 import type { HeroDefinition } from '../engine/content';
 
@@ -32,5 +33,19 @@ export const heroes: Record<string, HeroDefinition> = {
     types: ['Nature', 'Spirit'],
     baseStats: { hp: 85, attack: 35, defense: 45, intelligence: 80, wisdom: 70, speed: 65, manaPool: 90, mpRegen: 10 },
     moveIds: ['wildfire', 'overload'],
+  },
+  stormRanger: {
+    id: 'stormRanger',
+    name: 'Storm Ranger',
+    types: ['Storm'],
+    baseStats: { hp: 80, attack: 65, defense: 40, intelligence: 35, wisdom: 35, speed: 90, manaPool: 50, mpRegen: 6 },
+    moveIds: ['galeShot', 'quickJab'],
+  },
+  shadowMonk: {
+    id: 'shadowMonk',
+    name: 'Shadow Monk',
+    types: ['Shadow'],
+    baseStats: { hp: 75, attack: 75, defense: 45, intelligence: 40, wisdom: 40, speed: 70, manaPool: 45, mpRegen: 5 },
+    moveIds: ['duskStrike', 'quickJab'],
   },
 };

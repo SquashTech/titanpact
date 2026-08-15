@@ -270,3 +270,148 @@ body {
   font-weight: 700;
   cursor: pointer;
 }
+
+.result-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.result-buttons button:last-child {
+  background: var(--panel-alt);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.exit-button {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 12px;
+  padding: 2px 0;
+  cursor: pointer;
+}
+
+.exit-button:hover {
+  color: var(--text);
+}
+
+.bench-row {
+  display: flex;
+  gap: 6px;
+  opacity: 0.6;
+}
+
+.bench-row .combatant-card {
+  padding: 6px;
+}
+
+.bench-card {
+  flex: 1;
+  transform: scale(0.92);
+  transform-origin: top;
+}
+
+.empty-slot {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--text-dim);
+  font-size: 12px;
+  text-align: center;
+}
+
+.bench-pick-button {
+  background: var(--panel-alt);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 6px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.switch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+.switch-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  width: 100%;
+}
+
+.switch-button {
+  background: var(--panel-alt);
+  border-color: var(--mana);
+}
+
+/* --- Squad select screen ------------------------------------------------ */
+
+.squad-select h2 {
+  font-size: 16px;
+  margin: 4px 0 2px;
+}
+
+.squad-select .hint {
+  margin: 0 0 10px;
+}
+
+.roster-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.roster-card {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.roster-card.picked {
+  border-color: var(--accent);
+  background: #33291a;
+}
+
+.roster-card-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.roster-card-types {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.roster-card-equip {
+  font-size: 10px;
+  color: var(--mana);
+  margin-top: 4px;
+}
+
+.roster-card-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--accent);
+}
