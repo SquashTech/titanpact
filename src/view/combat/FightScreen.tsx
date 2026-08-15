@@ -4,11 +4,12 @@ import { moves } from '../../data/moves';
 import { typeChart } from '../../data/typechart';
 import { equipment } from '../../data/equipment';
 import type { CombatState, Side } from '../../engine/state';
-import { isLockedIn } from '../../engine/state';
+import { isLockedIn, effectiveTypes } from '../../engine/state';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../engine/combat/switching';
 import type { Action } from '../../engine/combat/actions';
 import type { MoveDefinition } from '../../engine/content';
+import { resolveStab, resolveTypeMult } from '../../engine/damage/typeMult';
 import type { RunState, RosterEntry } from '../../run/state';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP } from '../../run/state';
 import type { Squad } from '../../run/squad';
@@ -16,6 +17,7 @@ import { pickSquad } from '../../run/squad';
 import { buildCombatState } from '../../run/buildCombatState';
 import { CombatantCard } from './CombatantCard';
 import { formatEvents, type LogLine } from './formatEvent';
+import { getTypeColor } from './typeColors';
 
 const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
@@ -166,15 +168,50 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
 
   const allReady = playerActiveAlive.length > 0 && playerActiveAlive.every(isActionComplete) && openReplacementSlots.length === 0;
 
+  /**
+   * Picks randomly among the AI's currently-affordable moves rather than
+   * always its first listed move — with a wider fixture movepool per hero
+   * (src/data/heroes.ts) a deterministic first-pick would never exercise the
+   * variety, and a fight that always plays out the same way isn't useful for
+   * testing more complex battles.
+   */
   function pickAiAction(state: CombatState, combatantId: string): Action {
     const combatant = state.combatants[combatantId];
     const hero = heroes[combatant.heroId];
     const entry = entryFor(AI_RUN.roster, combatantId);
-    const moveId = entry.unlockedMoveIds[0] ?? hero.moveIds[0];
+    const moveIds = entry.unlockedMoveIds.length > 0 ? entry.unlockedMoveIds : hero.moveIds;
+    const affordable = moveIds.filter((id) => combatant.currentMana >= moves[id].manaCost);
+    const pool = affordable.length > 0 ? affordable : moveIds;
+    const moveId = pool[Math.floor(Math.random() * pool.length)];
     const move = moves[moveId];
     const declaredTarget =
       move.target === 'singleEnemy' ? (aliveActiveIdsOn(state, PLAYER_SIDE)[0] ?? null) : move.target === 'singleAlly' ? combatantId : null;
     return { kind: 'move', combatantId, moveId, declaredTarget };
+  }
+
+  /** Type-effectiveness multiplier of `move` against whichever hero currently occupies `defenderId` — presentation-only read of the engine's own type resolution (docs/architecture.md "Resolution and presentation are separate layers"). */
+  function effectivenessAgainst(move: MoveDefinition, defenderId: string): number {
+    const defender = combat.combatants[defenderId];
+    const defenderHero = heroes[defender.heroId];
+    return resolveTypeMult(typeChart, move.type, effectiveTypes(defenderHero, defender));
+  }
+
+  function formatMult(mult: number): string {
+    return `${Math.round(mult * 100) / 100}×`;
+  }
+
+  function multClass(mult: number): string {
+    if (mult > 1) return 'eff-super';
+    if (mult < 1) return 'eff-resist';
+    return 'eff-neutral';
+  }
+
+  /** The move currently being shown to the player for `combatantId` — mid target-selection, or already committed — so the description/effectiveness readout has something to point at. */
+  function activeMoveFor(combatantId: string): MoveDefinition | null {
+    if (selecting?.combatantId === combatantId) return selecting.move;
+    const p = pending[combatantId];
+    if (p?.kind === 'move' && p.moveId) return moves[p.moveId];
+    return null;
   }
 
   function handleResolve() {
@@ -272,80 +309,110 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
         ← Squad
       </button>
 
-      <div className="team-row enemy">
-        {renderActiveSlot(AI_SIDE, 0)}
-        {renderActiveSlot(AI_SIDE, 1)}
-      </div>
-      {renderBenchRow(AI_SIDE)}
+      <div className="battlefield">
+        <div className="team-row enemy">
+          {renderActiveSlot(AI_SIDE, 0)}
+          {renderActiveSlot(AI_SIDE, 1)}
+        </div>
+        {renderBenchRow(AI_SIDE)}
 
-      <div className="team-row ally">
-        {renderActiveSlot(PLAYER_SIDE, 0)}
-        {renderActiveSlot(PLAYER_SIDE, 1)}
-      </div>
-      {renderBenchRow(PLAYER_SIDE)}
+        <div className="team-row ally">
+          {renderActiveSlot(PLAYER_SIDE, 0)}
+          {renderActiveSlot(PLAYER_SIDE, 1)}
+        </div>
+        {renderBenchRow(PLAYER_SIDE)}
 
-      <div className="event-log">
-        {[...log].reverse().map((l) => (
-          <div key={l.key} className={l.className}>
-            {l.text}
-          </div>
-        ))}
-      </div>
-
-      {openReplacementSlots.length === 0 &&
-        playerActiveAlive.map((id) => {
-          const entry = entryFor(playerRun.roster, id);
-          const hero = heroes[combat.combatants[id].heroId];
-          const combatant = combat.combatants[id];
-          return (
-            <div className="action-panel" key={id}>
-              <h3>{hero.name}'s move</h3>
-              {selecting?.combatantId === id && <div className="hint">Choose a target above</div>}
-              <div className="move-grid">
-                {entry.unlockedMoveIds.map((moveId) => {
-                  const move = moves[moveId];
-                  const affordable = combatant.currentMana >= move.manaCost;
-                  const isSelected = pending[id]?.kind === 'move' && pending[id]?.moveId === moveId;
-                  return (
-                    <button
-                      key={moveId}
-                      className={`move-button${isSelected ? ' selected' : ''}`}
-                      disabled={!affordable}
-                      onClick={() => handleMoveClick(id, move)}
-                    >
-                      {move.name}
-                      <span className="move-cost">{move.manaCost}MP</span>
-                    </button>
-                  );
-                })}
-              </div>
-              {playerBench.length > 0 && (
-                <div className="switch-row">
-                  <div className="switch-label">{playerLockedIn ? 'Switching disabled (2+ KOs)' : 'Switch in:'}</div>
-                  {!playerLockedIn &&
-                    playerBench.map((benchId) => {
-                      const isSelected = pending[id]?.kind === 'switch' && pending[id]?.benchedCombatantId === benchId;
-                      return (
-                        <button
-                          key={benchId}
-                          className={`move-button switch-button${isSelected ? ' selected' : ''}`}
-                          onClick={() => handleSwitchClick(id, benchId)}
-                        >
-                          {heroes[combat.combatants[benchId].heroId].name}
-                        </button>
-                      );
-                    })}
-                </div>
-              )}
+        <div className="event-log">
+          {[...log].reverse().map((l) => (
+            <div key={l.key} className={l.className}>
+              {l.text}
             </div>
-          );
-        })}
+          ))}
+        </div>
+      </div>
 
-      {openReplacementSlots.length > 0 && <div className="hint">Choose a bench replacement above before resolving the round.</div>}
+      <div className="action-area">
+        {openReplacementSlots.length === 0 &&
+          playerActiveAlive.map((id) => {
+            const entry = entryFor(playerRun.roster, id);
+            const hero = heroes[combat.combatants[id].heroId];
+            const combatant = combat.combatants[id];
+            const activeMove = activeMoveFor(id);
+            return (
+              <div className="action-panel" key={id}>
+                <h3>{hero.name}'s move</h3>
+                {selecting?.combatantId === id && <div className="hint">Choose a target above</div>}
+                <div className="move-grid">
+                  {entry.unlockedMoveIds.map((moveId) => {
+                    const move = moves[moveId];
+                    const affordable = combatant.currentMana >= move.manaCost;
+                    const isSelected = pending[id]?.kind === 'move' && pending[id]?.moveId === moveId;
+                    const hasStab = resolveStab(move.type, effectiveTypes(hero, combatant)) > 1;
+                    return (
+                      <button
+                        key={moveId}
+                        className={`move-button${isSelected ? ' selected' : ''}`}
+                        disabled={!affordable}
+                        onClick={() => handleMoveClick(id, move)}
+                      >
+                        <div className="move-row-top">
+                          <span className="move-name">{move.name}</span>
+                          <span className="move-cost">{move.manaCost}MP</span>
+                        </div>
+                        <div className="move-row-mid">
+                          <span className="type-tag" style={{ color: getTypeColor(move.type) }}>
+                            {move.type}
+                          </span>
+                          <span className="move-power">BP {move.basePower}</span>
+                          {hasStab && <span className="move-stab">STAB</span>}
+                        </div>
+                        {enemyActiveAlive.length > 0 && (
+                          <div className="move-row-eff">
+                            {enemyActiveAlive.map((enemyId) => {
+                              const mult = effectivenessAgainst(move, enemyId);
+                              return (
+                                <span key={enemyId} className={`eff-chip ${multClass(mult)}`}>
+                                  {formatMult(mult)}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="move-description">
+                  {activeMove ? (activeMove.description ?? '') : 'Tap a move to see its effect and matchups.'}
+                </div>
+                {playerBench.length > 0 && (
+                  <div className="switch-row">
+                    <div className="switch-label">{playerLockedIn ? 'Switching disabled (2+ KOs)' : 'Switch in:'}</div>
+                    {!playerLockedIn &&
+                      playerBench.map((benchId) => {
+                        const isSelected = pending[id]?.kind === 'switch' && pending[id]?.benchedCombatantId === benchId;
+                        return (
+                          <button
+                            key={benchId}
+                            className={`move-button switch-button${isSelected ? ' selected' : ''}`}
+                            onClick={() => handleSwitchClick(id, benchId)}
+                          >
+                            {heroes[combat.combatants[benchId].heroId].name}
+                          </button>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
-      <button className="resolve-button" disabled={!allReady} onClick={handleResolve}>
-        Resolve Round {combat.round}
-      </button>
+        {openReplacementSlots.length > 0 && <div className="hint">Choose a bench replacement above before resolving the round.</div>}
+
+        <button className="resolve-button" disabled={!allReady} onClick={handleResolve}>
+          Resolve Round {combat.round}
+        </button>
+      </div>
 
       {winner && (
         <div className="result-overlay">

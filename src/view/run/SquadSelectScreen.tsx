@@ -35,24 +35,26 @@ export function SquadSelectScreen({ run, onConfirm, onRunChange }: Props) {
 
   return (
     <div className="squad-select">
-      <GuildHallPanel run={run} onRecruit={onRunChange} />
-      <h2>Pick your squad ({pickedIds.length}/4)</h2>
-      <p className="hint">First two picks start active; the rest start on the bench.</p>
-      <div className="roster-grid">
-        {run.roster.map((entry) => {
-          const hero = heroes[entry.heroId];
-          const pickIndex = pickedIds.indexOf(entry.rosterId);
-          const picked = pickIndex !== -1;
-          const equippedCount = Object.values(entry.equipment).filter(Boolean).length;
-          return (
-            <button key={entry.rosterId} className={`roster-card${picked ? ' picked' : ''}`} onClick={() => toggle(entry.rosterId)}>
-              <div className="roster-card-name">{hero.name}</div>
-              <div className="roster-card-types">{hero.types.join('/')}</div>
-              {equippedCount > 0 && <div className="roster-card-equip">{equippedCount} item{equippedCount > 1 ? 's' : ''} equipped</div>}
-              {picked && <span className="roster-card-badge">{pickIndex < 2 ? 'ACTIVE' : 'BENCH'}</span>}
-            </button>
-          );
-        })}
+      <div className="screen-scroll">
+        <GuildHallPanel run={run} onRecruit={onRunChange} />
+        <h2>Pick your squad ({pickedIds.length}/4)</h2>
+        <p className="hint">First two picks start active; the rest start on the bench.</p>
+        <div className="roster-grid">
+          {run.roster.map((entry) => {
+            const hero = heroes[entry.heroId];
+            const pickIndex = pickedIds.indexOf(entry.rosterId);
+            const picked = pickIndex !== -1;
+            const equippedCount = Object.values(entry.equipment).filter(Boolean).length;
+            return (
+              <button key={entry.rosterId} className={`roster-card${picked ? ' picked' : ''}`} onClick={() => toggle(entry.rosterId)}>
+                <div className="roster-card-name">{hero.name}</div>
+                <div className="roster-card-types">{hero.types.join('/')}</div>
+                {equippedCount > 0 && <div className="roster-card-equip">{equippedCount} item{equippedCount > 1 ? 's' : ''} equipped</div>}
+                {picked && <span className="roster-card-badge">{pickIndex < 2 ? 'ACTIVE' : 'BENCH'}</span>}
+              </button>
+            );
+          })}
+        </div>
       </div>
       <button className="resolve-button" disabled={pickedIds.length === 0} onClick={handleConfirm}>
         Start Fight

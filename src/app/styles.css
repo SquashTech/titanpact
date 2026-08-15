@@ -22,28 +22,69 @@
 html,
 body {
   margin: 0;
+  height: 100%;
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden;
 }
 
+#root {
+  height: 100%;
+}
+
+/*
+ * The shell is pinned to exactly the viewport height and never scrolls
+ * itself — only designated regions inside a screen (.action-area,
+ * .screen-scroll) scroll internally. This is deliberate: on mobile, letting
+ * the whole page grow taller than the viewport causes browser-chrome
+ * show/hide jank and lost scroll position mid-fight. Every screen's root
+ * element must stay a flex child that can shrink (min-height: 0 on its
+ * scrolling region) so this holds regardless of how much content — move
+ * descriptions, effectiveness readouts, a big roster — gets added later.
+ */
 .app-shell {
   max-width: 430px;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   padding: 12px;
   gap: 10px;
+  overflow: hidden;
 }
 
 .app-header {
+  flex: 0 0 auto;
   font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-align: center;
   padding: 4px 0 8px;
   border-bottom: 1px solid var(--border);
+}
+
+/* Fixed-size battlefield: the fight state stays visible and stable while the
+   action area below it scrolls (see .app-shell comment). */
+.battlefield {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* The only region of the fight screen allowed to scroll — absorbs however
+   much room move descriptions/effectiveness readouts/switch options need
+   without ever growing the page (see .app-shell comment). */
+.action-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 2px;
 }
 
 .team-row {
@@ -84,9 +125,15 @@ body {
 }
 
 .combatant-types {
+  display: flex;
+  gap: 4px;
   font-size: 10px;
-  color: var(--text-dim);
   font-weight: 400;
+}
+
+.type-tag {
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .bar-track {
@@ -130,6 +177,7 @@ body {
 }
 
 .action-panel {
+  flex-shrink: 0;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -147,15 +195,18 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .move-button {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   background: var(--panel-alt);
   border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text);
-  padding: 8px 6px;
+  padding: 6px;
   font-size: 12px;
   text-align: left;
   cursor: pointer;
@@ -175,9 +226,86 @@ body {
   cursor: not-allowed;
 }
 
-.move-button .move-cost {
+.move-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.move-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.move-row-mid {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.move-row-mid .type-tag {
+  font-size: 10px;
+}
+
+.move-power {
+  white-space: nowrap;
+}
+
+.move-stab {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.move-row-eff {
+  display: flex;
+  gap: 4px;
+}
+
+.eff-chip {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: #0d0e12;
+}
+
+.eff-chip.eff-super {
+  color: var(--hp-high);
+}
+
+.eff-chip.eff-resist {
+  color: var(--hp-low);
+}
+
+.eff-chip.eff-neutral {
+  color: var(--text-dim);
+}
+
+/*
+ * Fixed to 2 lines regardless of description length — this is what actually
+ * guarantees adding move flavor text can never grow the action panel (and
+ * therefore the page) beyond what it already reserves. See .app-shell.
+ */
+.move-description {
+  min-height: 28px;
+  margin-bottom: 6px;
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--text-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.move-cost {
   color: var(--mana);
-  float: right;
+  white-space: nowrap;
 }
 
 .hint {
@@ -187,6 +315,9 @@ body {
 }
 
 .resolve-button {
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
   width: 100%;
   background: var(--accent);
   color: #1a1300;
@@ -283,6 +414,7 @@ body {
 }
 
 .exit-button {
+  flex-shrink: 0;
   align-self: flex-start;
   background: none;
   border: none;
@@ -357,6 +489,23 @@ body {
 }
 
 /* --- Squad select screen ------------------------------------------------ */
+
+.squad-select {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Same containment pattern as FightScreen's .action-area — the roster/guild
+   hall list scrolls internally so "Start Fight" stays reachable without the
+   page itself ever growing past the viewport (see .app-shell). */
+.screen-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
 
 .squad-select h2 {
   font-size: 16px;

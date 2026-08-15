@@ -1,6 +1,7 @@
 import type { HeroDefinition } from '../../engine/content';
 import type { Combatant } from '../../engine/state';
-import { getMaxHp, getMaxMana } from '../../engine/state';
+import { effectiveTypes, getMaxHp, getMaxMana } from '../../engine/state';
+import { getTypeColor } from './typeColors';
 
 interface Props {
   hero: HeroDefinition;
@@ -34,7 +35,13 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget }: P
       {combatant.fainted && <span className="fainted-tag">KO</span>}
       <div className="combatant-name">
         <span>{hero.name}</span>
-        <span className="combatant-types">{hero.types.join('/')}</span>
+        <span className="combatant-types">
+          {effectiveTypes(hero, combatant).map((t) => (
+            <span key={t} className="type-tag" style={{ color: getTypeColor(t) }}>
+              {t}
+            </span>
+          ))}
+        </span>
       </div>
       <div className="bar-track">
         <div className={`bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />

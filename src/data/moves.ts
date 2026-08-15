@@ -1,10 +1,21 @@
-// ⚠️ TEST FIXTURE CONTENT — a handful of moves sufficient to exercise the
-// engine (single-target physical/magical, a spread move, priority, mana
-// gating). Not the authored movepool.
+// ⚠️ TEST FIXTURE CONTENT — a broader spread of moves to exercise the engine
+// across all 15 types, both categories, every implemented TargetMode, and a
+// spread of priority brackets. Still not the authored movepool (that's ~53
+// heroes' worth of hand-tuned kits) — this is enough variety to run messier,
+// more interesting 2v2s while that content gets authored.
+//
+// Every move here is `kind: 'damage'` — MoveDefinition intentionally doesn't
+// support anything else yet (see engine/content.ts SCOPE NOTE): buffs,
+// debuffs, statuses, and heals are gated on the still-open "condition
+// vocabulary" contract (CLAUDE.md "Open questions"). Variety instead comes
+// from type/category/power/cost/priority/targeting — including doubles-native
+// spread moves that hit your own ally (`allOthers`), a deliberate nod to
+// Pokémon VGC staples like Earthquake/Surf where positioning matters.
 
 import type { MoveDefinition } from '../engine/content';
 
 export const moves: Record<string, MoveDefinition> = {
+  // --- Original fixture moves (descriptions added) -------------------------
   emberSlash: {
     id: 'emberSlash',
     name: 'Ember Slash',
@@ -15,6 +26,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 10,
     priority: 0,
     target: 'singleEnemy',
+    description: 'A blazing sword strike wreathed in flame.',
   },
   tidalBolt: {
     id: 'tidalBolt',
@@ -26,6 +38,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 12,
     priority: 0,
     target: 'singleEnemy',
+    description: 'A concentrated bolt of surging water.',
   },
   quickJab: {
     id: 'quickJab',
@@ -37,6 +50,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 4,
     priority: 1,
     target: 'singleEnemy',
+    description: 'A cheap, fast punch that moves before most other moves.',
   },
   wildfire: {
     id: 'wildfire',
@@ -48,6 +62,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'bothEnemies',
+    description: 'An uncontrolled blaze that scorches both foes.',
   },
   overload: {
     id: 'overload',
@@ -59,6 +74,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 999, // deliberately unaffordable in test fixtures — exercises the mana-legality guard
     priority: 0,
     target: 'singleEnemy',
+    description: 'A reckless overdraw of arcane power — no hero can currently afford it.',
   },
   galeShot: {
     id: 'galeShot',
@@ -70,6 +86,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 10,
     priority: 0,
     target: 'singleEnemy',
+    description: 'A wind-propelled shot fired with sniper precision.',
   },
   duskStrike: {
     id: 'duskStrike',
@@ -81,6 +98,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 11,
     priority: 0,
     target: 'singleEnemy',
+    description: 'A strike thrown from the edge of vision.',
   },
   // Tiered moves purchasable via the level-up pool (src/run/progression.ts,
   // src/data/progression.ts) — not in any hero's starting moveIds.
@@ -94,6 +112,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 16,
     priority: 0,
     target: 'bothEnemies',
+    description: 'An explosive burst of embers that catches both foes.',
   },
   ripCurrent: {
     id: 'ripCurrent',
@@ -105,5 +124,396 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 22,
     priority: 0,
     target: 'singleEnemy',
+    description: 'A crushing undertow that drags the target under.',
+  },
+
+  // --- Fire ------------------------------------------------------------------
+  flareBurst: {
+    id: 'flareBurst',
+    name: 'Flare Burst',
+    type: 'Fire',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 48,
+    manaCost: 10,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A concentrated flash of searing heat.',
+  },
+  infernoWave: {
+    id: 'infernoWave',
+    name: 'Inferno Wave',
+    type: 'Fire',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 42,
+    manaCost: 20,
+    priority: 0,
+    target: 'allOthers',
+    description: 'A rolling wave of flame that engulfs everyone but the caster — allies included.',
+  },
+
+  // --- Water -------------------------------------------------------------
+  aquaJet: {
+    id: 'aquaJet',
+    name: 'Aqua Jet',
+    type: 'Water',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 35,
+    manaCost: 7,
+    priority: 1,
+    target: 'singleEnemy',
+    description: 'A high-pressure jet of water, fast enough to beat slower moves.',
+  },
+  tsunamiCrash: {
+    id: 'tsunamiCrash',
+    name: 'Tsunami Crash',
+    type: 'Water',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 48,
+    manaCost: 22,
+    priority: -1,
+    target: 'allOthers',
+    description: 'A towering wave that crashes over the whole field except the caster. Slow to summon.',
+  },
+
+  // --- Frost -------------------------------------------------------------
+  frostBite: {
+    id: 'frostBite',
+    name: 'Frostbite',
+    type: 'Frost',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 55,
+    manaCost: 10,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A biting chill that numbs muscle and armor alike.',
+  },
+  glacialSpike: {
+    id: 'glacialSpike',
+    name: 'Glacial Spike',
+    type: 'Frost',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 60,
+    manaCost: 13,
+    priority: -1,
+    target: 'singleEnemy',
+    description: 'A slow-forming spike of enchanted ice — devastating but sluggish.',
+  },
+
+  // --- Storm -------------------------------------------------------------
+  thunderclap: {
+    id: 'thunderclap',
+    name: 'Thunderclap',
+    type: 'Storm',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 58,
+    manaCost: 13,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A crack of thunder channeled into a focused shock.',
+  },
+  galeSlash: {
+    id: 'galeSlash',
+    name: 'Gale Slash',
+    type: 'Storm',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 38,
+    manaCost: 15,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'A cutting gust that slices across both foes at once.',
+  },
+
+  // --- Stone -------------------------------------------------------------
+  boulderToss: {
+    id: 'boulderToss',
+    name: 'Boulder Toss',
+    type: 'Stone',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 65,
+    manaCost: 12,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A heaved chunk of rock thrown with bone-jarring force.',
+  },
+  stoneQuake: {
+    id: 'stoneQuake',
+    name: 'Stone Quake',
+    type: 'Stone',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 45,
+    manaCost: 18,
+    priority: -1,
+    target: 'allOthers',
+    description: 'A ground-shaking tremor that spares no one standing on it — allies included.',
+  },
+
+  // --- Nature ------------------------------------------------------------
+  vineLash: {
+    id: 'vineLash',
+    name: 'Vine Lash',
+    type: 'Nature',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 50,
+    manaCost: 9,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A whip-crack of living vine.',
+  },
+  naturesWrath: {
+    id: 'naturesWrath',
+    name: "Nature's Wrath",
+    type: 'Nature',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 42,
+    manaCost: 17,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Overgrowth erupts violently around both foes.',
+  },
+
+  // --- Light -------------------------------------------------------------
+  radiantBeam: {
+    id: 'radiantBeam',
+    name: 'Radiant Beam',
+    type: 'Light',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 58,
+    manaCost: 12,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A focused lance of blinding light.',
+  },
+  sunstrike: {
+    id: 'sunstrike',
+    name: 'Sunstrike',
+    type: 'Light',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 40,
+    manaCost: 18,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'A flare of searing light that washes over both foes.',
+  },
+
+  // --- Shadow ------------------------------------------------------------
+  shadowVeil: {
+    id: 'shadowVeil',
+    name: 'Shadow Veil',
+    type: 'Shadow',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 52,
+    manaCost: 11,
+    priority: 0,
+    target: 'singleEnemy',
+    description: "Creeping darkness that gnaws at the target's resolve.",
+  },
+  nightmareGrasp: {
+    id: 'nightmareGrasp',
+    name: 'Nightmare Grasp',
+    type: 'Shadow',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 68,
+    manaCost: 15,
+    priority: -1,
+    target: 'singleEnemy',
+    description: 'A dragging grip of pure dread, slow to summon but hard to shake.',
+  },
+
+  // --- Arcane ------------------------------------------------------------
+  arcaneBolt: {
+    id: 'arcaneBolt',
+    name: 'Arcane Bolt',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 45,
+    manaCost: 9,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A quick, crackling bolt of raw arcane energy.',
+  },
+  manaBurst: {
+    id: 'manaBurst',
+    name: 'Mana Burst',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 40,
+    manaCost: 18,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'An unstable detonation of stored mana.',
+  },
+
+  // --- Mind --------------------------------------------------------------
+  psychicLance: {
+    id: 'psychicLance',
+    name: 'Psychic Lance',
+    type: 'Mind',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 62,
+    manaCost: 13,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A piercing spear of pure thought.',
+  },
+  mindSpike: {
+    id: 'mindSpike',
+    name: 'Mind Spike',
+    type: 'Mind',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 28,
+    manaCost: 6,
+    priority: 1,
+    target: 'singleEnemy',
+    description: 'A quick jab of psychic pressure — cheap and always fast.',
+  },
+
+  // --- Spirit ------------------------------------------------------------
+  soulRend: {
+    id: 'soulRend',
+    name: 'Soul Rend',
+    type: 'Spirit',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 55,
+    manaCost: 11,
+    priority: 0,
+    target: 'singleEnemy',
+    description: "A tearing pull at the target's spirit.",
+  },
+  specterHowl: {
+    id: 'specterHowl',
+    name: 'Specter Howl',
+    type: 'Spirit',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 38,
+    manaCost: 16,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'A mournful wail that unsettles both foes at once.',
+  },
+
+  // --- Iron --------------------------------------------------------------
+  ironFist: {
+    id: 'ironFist',
+    name: 'Iron Fist',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 40,
+    manaCost: 8,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A hardened, metal-plated punch.',
+  },
+  shrapnelBlast: {
+    id: 'shrapnelBlast',
+    name: 'Shrapnel Blast',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 36,
+    manaCost: 14,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'A spray of jagged metal fragments.',
+  },
+
+  // --- Forge -------------------------------------------------------------
+  moltenHammer: {
+    id: 'moltenHammer',
+    name: 'Molten Hammer',
+    type: 'Forge',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 70,
+    manaCost: 15,
+    priority: -1,
+    target: 'singleEnemy',
+    description: 'A white-hot hammer blow, heavy and deliberate.',
+  },
+  sparkForge: {
+    id: 'sparkForge',
+    name: 'Spark Forge',
+    type: 'Forge',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 32,
+    manaCost: 6,
+    priority: 1,
+    target: 'singleEnemy',
+    description: 'A quick flurry of glowing sparks.',
+  },
+
+  // --- Beast -------------------------------------------------------------
+  fangRush: {
+    id: 'fangRush',
+    name: 'Fang Rush',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 45,
+    manaCost: 8,
+    priority: 1,
+    target: 'singleEnemy',
+    description: 'A snarling flurry of bites, fast enough to beat most moves.',
+  },
+  savageMaul: {
+    id: 'savageMaul',
+    name: 'Savage Maul',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 75,
+    manaCost: 16,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A brutal, all-out mauling.',
+  },
+
+  // --- Ancient -----------------------------------------------------------
+  runicBlast: {
+    id: 'runicBlast',
+    name: 'Runic Blast',
+    type: 'Ancient',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 60,
+    manaCost: 14,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A detonation of half-forgotten runic power.',
+  },
+  forgottenCurse: {
+    id: 'forgottenCurse',
+    name: 'Forgotten Curse',
+    type: 'Ancient',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 40,
+    manaCost: 17,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'An old curse that settles over both foes at once.',
   },
 };

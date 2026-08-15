@@ -56,6 +56,8 @@ export interface MoveDefinition {
   /** Integer priority bracket; higher resolves first. */
   priority: number;
   target: TargetMode;
+  /** Presentational flavor text only — the engine never reads this. View layer use (docs/architecture.md "Resolution and presentation are separate layers"). */
+  description?: string;
 }
 
 /**
