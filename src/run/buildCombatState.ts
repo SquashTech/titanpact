@@ -34,17 +34,14 @@ function combatantIdFor(side: Side, rosterId: string): string {
   return `${side}:${rosterId}`;
 }
 
-/** Inverse of combatantIdFor — the rosterId a combatant was placed from (runProgress.ts's syncRosterVitals). */
-export function rosterIdFromCombatantId(combatantId: string): string {
-  return combatantId.slice(combatantId.indexOf(':') + 1);
-}
-
 /**
  * Starting HP/mana are an explicit, full-resources choice made HERE, not an
  * engine default — matches the LOCKED starting-mana decision (docs/mana.md
- * "Resolved": full pool). "Full" is computed AFTER equipment/rank-up stat
- * modifiers are applied, so a +HP or +Mana item actually starts the fight
- * topped up, not just raising an unreached cap.
+ * "Resolved": full pool) and the every-node full-heal decision
+ * (docs/run-loop.md "HP/mana fully restore between map nodes"). "Full" is
+ * computed AFTER equipment/rank-up stat modifiers are applied, so a +HP or
+ * +Mana item actually raises the fight's starting resources, not just an
+ * unreached cap.
  */
 function placeEntry(
   rosterId: string,
@@ -60,17 +57,7 @@ function placeEntry(
   const statModifiers = mergeStatMods(equipmentStatModifiers(entry.equipment, equipmentLookup), entry.rankStatGrants, teamStatModifiers);
   const grantedTypes = entry.rankTypeGraft ? [entry.rankTypeGraft] : [];
   const withMods = { ...createCombatant(combatantIdFor(side, rosterId), entry.heroId, side, 0, 0), statModifiers, grantedTypes };
-  const maxHp = getMaxHp(hero, withMods);
-  const maxMana = getMaxMana(hero, withMods);
-  // Persisted HP/mana between map nodes (docs/run-loop.md): a non-null snapshot from the
-  // hero's last fight is clamped to the current max (never healed by a cap increase, e.g.
-  // a mid-run rank-up) rather than reset to full. null (fresh recruit/contract claim, or
-  // never-fielded roster member) keeps the LOCKED "full starting pool" behavior (docs/mana.md).
-  return {
-    ...withMods,
-    currentHp: entry.currentHp !== null ? Math.min(entry.currentHp, maxHp) : maxHp,
-    currentMana: entry.currentMana !== null ? Math.min(entry.currentMana, maxMana) : maxMana,
-  };
+  return { ...withMods, currentHp: getMaxHp(hero, withMods), currentMana: getMaxMana(hero, withMods) };
 }
 
 export function buildCombatState(

@@ -35,6 +35,20 @@ import { createEmptyLoadout } from './equipment';
 
 export class RecruitmentError extends Error {}
 
+/**
+ * Whether a defeated combatant is eligible for a Recruit Contract — gated on
+ * membership in the caller's recruitable-heroes pool (typically src/data/
+ * heroes.ts), not whatever combined pool a fight actually drew its AI roster
+ * from. Non-recruitable enemy-only content (docs/run-loop.md "Non-recruitable
+ * enemy content" — Goblins, etc.) never satisfies this, so it can never
+ * produce a contract offer. Kept content-agnostic like the rest of this
+ * module: the caller supplies the recruitable pool rather than this importing
+ * fixture data directly.
+ */
+export function isRecruitable(heroId: string, recruitablePool: Record<string, unknown>): boolean {
+  return heroId in recruitablePool;
+}
+
 export interface GuildHallOffer {
   id: string;
   heroId: string;

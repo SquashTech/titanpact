@@ -1,10 +1,8 @@
 // Map-node progression (docs/run-loop.md): moving across a RunMap, and
 // resolving what each node type grants. Pure RunState transforms — no view,
-// no engine internals beyond reading a finished CombatState.
+// no engine internals.
 
-import type { CombatState, Side } from '../engine/state';
 import type { RunState, RosterEntry } from './state';
-import { rosterIdFromCombatantId } from './buildCombatState';
 import type { EquipmentDefinition } from './equipment';
 import { equipItem } from './equipment';
 
@@ -33,31 +31,6 @@ export function advanceToNode(run: RunState, nodeId: string): RunState {
     ...run,
     currentNodeId: nodeId,
     visitedNodeIds: run.visitedNodeIds.includes(nodeId) ? run.visitedNodeIds : [...run.visitedNodeIds, nodeId],
-  };
-}
-
-/**
- * Writes a finished fight's ending HP/mana back onto the roster
- * (docs/run-loop.md "HP/mana persist between map nodes"), covering every
- * combatant placed on `side` — active and bench both took the fight.
- * buildCombatState.ts's placeEntry reads this back in on the NEXT fight,
- * clamped to that fight's max (never healed by a cap increase).
- */
-export function syncRosterVitals(run: RunState, combat: CombatState, side: Side): RunState {
-  const updates = new Map<string, { currentHp: number; currentMana: number }>();
-  for (const combatant of Object.values(combat.combatants)) {
-    if (combatant.side !== side) continue;
-    updates.set(rosterIdFromCombatantId(combatant.combatantId), {
-      currentHp: Math.max(0, combatant.currentHp),
-      currentMana: Math.max(0, combatant.currentMana),
-    });
-  }
-  return {
-    ...run,
-    roster: run.roster.map((entry) => {
-      const update = updates.get(entry.rosterId);
-      return update ? { ...entry, ...update } : entry;
-    }),
   };
 }
 

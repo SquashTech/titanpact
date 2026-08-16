@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import { test } from './harness';
 import { generateEncounter } from '../src/run/enemyGen';
 import { heroes } from '../src/data/heroes';
+import { enemies } from '../src/data/enemies';
 
 test('enemyGen: fight encounters field 4 heroes (2 active + 2 bench) with no stat bonus', () => {
   const { run, squad } = generateEncounter('fight', 1, heroes);
@@ -50,4 +51,12 @@ test('enemyGen: picked heroIds are distinct and drawn from the given pool', () =
   const heroIds = run.roster.map((r) => r.heroId);
   assert.strictEqual(new Set(heroIds).size, heroIds.length);
   for (const id of heroIds) assert.ok(heroes[id], `${id} is not in the fixture hero pool`);
+});
+
+test('enemyGen: is generic over any HeroDefinition-shaped pool, gracefully capping a fight encounter to the enemy pool\'s size (docs/run-loop.md "Non-recruitable enemy content")', () => {
+  const { run, squad } = generateEncounter('fight', 1, enemies);
+  assert.strictEqual(run.roster.length, Object.keys(enemies).length);
+  assert.strictEqual(squad.activeIds.filter(Boolean).length, 2);
+  assert.strictEqual(squad.benchIds.length, 0);
+  for (const entry of run.roster) assert.ok(enemies[entry.heroId], `${entry.heroId} is not in the enemy pool`);
 });

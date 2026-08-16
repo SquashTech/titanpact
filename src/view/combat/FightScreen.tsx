@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { heroes } from '../../data/heroes';
+import { allCombatants } from '../../data/content';
 import { moves } from '../../data/moves';
 import { typeChart } from '../../data/typechart';
 import { equipment } from '../../data/equipment';
@@ -16,6 +17,7 @@ import type { RunState, RosterEntry } from '../../run/state';
 import { ROSTER_CAP } from '../../run/state';
 import type { Squad } from '../../run/squad';
 import { buildCombatState } from '../../run/buildCombatState';
+import { isRecruitable } from '../../run/recruitment';
 import { CombatantCard, type Popup } from './CombatantCard';
 import { HeroDetailOverlay } from './HeroDetailOverlay';
 import { formatEvents, type LogLine } from './formatEvent';
@@ -25,7 +27,7 @@ import { getTypeColor } from './typeColors';
 
 const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
-const config = { typeChart, heroes, moves, statuses, benchHpRegenFlat: 5 };
+const config = { typeChart, heroes: allCombatants, moves, statuses, benchHpRegenFlat: 5 };
 
 function rosterIdOf(combatantId: string): string {
   return combatantId.slice(combatantId.indexOf(':') + 1);
@@ -76,7 +78,7 @@ interface Props {
 
 export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatModifiers, goldReward, onClaimContract, onResolved }: Props) {
   function buildInitialState(seed: number): CombatState {
-    return buildCombatState(seed, heroes, equipment, [
+    return buildCombatState(seed, allCombatants, equipment, [
       { side: PLAYER_SIDE, squad: playerSquad, roster: playerRun.roster, teamStatModifiers },
       { side: AI_SIDE, squad: aiSquad, roster: aiRun.roster },
     ]);
@@ -200,7 +202,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
   function handleForcedReplacement(slot: 0 | 1, benchedCombatantId: string) {
     const result = applyForcedReplacement(combat, combat.round, PLAYER_SIDE, slot, benchedCombatantId, statuses);
     setCombat(result.state);
-    appendLog(formatEvents(result.events, heroes, result.state.combatants));
+    appendLog(formatEvents(result.events, allCombatants, result.state.combatants));
   }
 
   /**
@@ -223,7 +225,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
    */
   function pickAiAction(state: CombatState, combatantId: string): Action {
     const combatant = state.combatants[combatantId];
-    const hero = heroes[combatant.heroId];
+    const hero = allCombatants[combatant.heroId];
     const entry = entryFor(aiRun.roster, combatantId);
     const moveIds = entry.unlockedMoveIds.length > 0 ? entry.unlockedMoveIds : hero.moveIds;
     const affordable = moveIds.filter((id) => combatant.currentMana >= moves[id].manaCost);
@@ -238,7 +240,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
   /** Type-effectiveness multiplier of `move` against whichever hero currently occupies `defenderId` — presentation-only read of the engine's own type resolution (docs/architecture.md "Resolution and presentation are separate layers"). */
   function effectivenessAgainst(move: MoveDefinition, defenderId: string): number {
     const defender = combat.combatants[defenderId];
-    const defenderHero = heroes[defender.heroId];
+    const defenderHero = allCombatants[defender.heroId];
     return resolveTypeMult(typeChart, move.type, effectiveTypes(defenderHero, defender));
   }
 
@@ -297,7 +299,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
    * regardless of how the beats replayed it.
    */
   function startBeatPlayback(startState: CombatState, events: CombatEvent[], nextFinalState: CombatState) {
-    const beats = buildBeats(events, heroes, moves, startState.combatants, PLAYER_SIDE);
+    const beats = buildBeats(events, allCombatants, moves, startState.combatants, PLAYER_SIDE);
     displayState.current = startState;
     finalState.current = nextFinalState;
     beatQueue.current = beats;
@@ -333,7 +335,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
     displayState.current = next;
 
     setCombat(next);
-    appendLog(formatEvents(beat.events, heroes, next.combatants));
+    appendLog(formatEvents(beat.events, allCombatants, next.combatants));
     setBanner(beat.banner);
     setBannerMeta(beat.bannerMeta ?? null);
     setPopups(Object.fromEntries(beat.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className }])));
@@ -346,7 +348,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
   function renderActiveSlot(side: Side, slot: 0 | 1) {
     const id = combat.active[side][slot];
     if (id) {
-      const hero = heroes[combat.combatants[id].heroId];
+      const hero = allCombatants[combat.combatants[id].heroId];
       return (
         <CombatantCard
           key={id}
@@ -366,7 +368,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
           <div className="combatant-name">Choose replacement</div>
           {bench.map((benchId) => (
             <button key={benchId} className="bench-pick-button" onClick={() => handleForcedReplacement(slot, benchId)}>
-              {heroes[combat.combatants[benchId].heroId].name}
+              {allCombatants[combat.combatants[benchId].heroId].name}
             </button>
           ))}
         </div>
@@ -422,7 +424,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
             const stepIndex = Math.min(actionStep, playerActiveAlive.length - 1);
             const id = playerActiveAlive[stepIndex];
             const entry = entryFor(playerRun.roster, id);
-            const hero = heroes[combat.combatants[id].heroId];
+            const hero = allCombatants[combat.combatants[id].heroId];
             const combatant = combat.combatants[id];
             const activeMove = activeMoveFor(id);
             return (
@@ -493,7 +495,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
                       playerBench.map((benchId) => {
                         const isSelected = pending[id]?.kind === 'switch' && pending[id]?.benchedCombatantId === benchId;
                         const benchCombatant = combat.combatants[benchId];
-                        const benchHero = heroes[benchCombatant.heroId];
+                        const benchHero = allCombatants[benchCombatant.heroId];
                         return (
                           <button
                             key={benchId}
@@ -540,7 +542,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
         combat.combatants[inspecting] &&
         (() => {
           const combatant = combat.combatants[inspecting];
-          const hero = heroes[combatant.heroId];
+          const hero = allCombatants[combatant.heroId];
           const roster = combatant.side === PLAYER_SIDE ? playerRun.roster : aiRun.roster;
           const rosterEntry = roster.find((r) => r.rosterId === rosterIdOf(inspecting)) ?? null;
           return (
@@ -562,7 +564,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
             <div className="contract-claims">
               <div className="hint">Claim a Recruit Contract (docs/progression.md "raise-vs-recruit axis"):</div>
               <div className="contract-claims-grid">
-                {aiRun.roster.map((entry) => {
+                {aiRun.roster.filter((entry) => isRecruitable(entry.heroId, heroes)).map((entry) => {
                   const claimed = claimedRosterIds.includes(entry.rosterId);
                   const rosterFull = playerRun.roster.length >= ROSTER_CAP;
                   return (

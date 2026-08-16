@@ -1134,6 +1134,54 @@ body {
   opacity: 0.3;
 }
 
+/* --- Title screen --------------------------------------------------------- */
+
+.title-screen {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.title-logo {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+.title-tagline {
+  margin-bottom: 28px;
+}
+
+.title-buttons {
+  width: 100%;
+  max-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.title-secondary-button {
+  width: 100%;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.title-secondary-button:hover {
+  border-color: var(--accent);
+}
+
 /* --- Training panel (level-up pool spend UI) ----------------------------- */
 
 .training-panel {

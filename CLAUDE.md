@@ -111,10 +111,11 @@ what's still unimplemented:
   inherent duals. Which specific type each hero starts mono as is still open (below).
 - Run structure (2026-08-16 sign-off): **a Slay the Spire-style branching map** —
   reward/shop/fight/elite nodes converging on an end-of-act **Ancient** boss fight
-  (`docs/run-loop.md`). One act for now, not multi-act. HP/mana **persist between map
-  nodes** (clamped to current max, never healed by a cap increase) — a necessary
-  consequence of "escalating fights" actually escalating, not part of the original ask.
-  Relics are **minimal and stat-only** until the trigger-hook contract exists.
+  (`docs/run-loop.md`). One act for now, not multi-act. HP/mana **fully restore
+  between map nodes** — reversed same-day from an initial persist-across-nodes design
+  after first playtest showed a KO'd hero simply stayed dead-weight into the next
+  fight with no way to recover it (`docs/run-loop.md`). Relics are **minimal and
+  stat-only** until the trigger-hook contract exists.
 
 ## Open questions — DO NOT silently resolve
 

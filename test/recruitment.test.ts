@@ -1,11 +1,12 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { heroes } from '../src/data/heroes';
+import { enemies } from '../src/data/enemies';
 import { guildHallOffers } from '../src/data/recruitment';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP } from '../src/run/state';
 import { equipItem } from '../src/run/equipment';
 import { equipment } from '../src/data/equipment';
-import { recruitFromGuildHall, deriveContractOffer, claimContract, RecruitmentError } from '../src/run/recruitment';
+import { recruitFromGuildHall, deriveContractOffer, claimContract, isRecruitable, RecruitmentError } from '../src/run/recruitment';
 
 function seedRoster(heroIds: string[], gold = 0) {
   let run = createRunState(0, gold);
@@ -89,4 +90,16 @@ test('recruitment: claiming a contract still enforces the roster cap', () => {
   const run = seedRoster(allSix, 0);
   const offer = deriveContractOffer(run.roster[0]);
   assert.throws(() => claimContract(run, offer, 'extra'));
+});
+
+// --- Non-recruitable enemy content ----------------------------------------
+
+test('recruitment: isRecruitable accepts a heroId from the recruitable pool and rejects one that is not in it', () => {
+  assert.strictEqual(isRecruitable('cinderKnight', heroes), true);
+  assert.strictEqual(isRecruitable('goblinGrunt', heroes), false);
+});
+
+test('recruitment: the enemy pool shares no ids with the recruitable hero pool', () => {
+  const overlap = Object.keys(enemies).filter((id) => id in heroes);
+  assert.deepStrictEqual(overlap, []);
 });

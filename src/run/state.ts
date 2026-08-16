@@ -42,17 +42,6 @@ export interface RosterEntry {
    * into combat state as Combatant.grantedTypes by buildCombatState.ts.
    */
   rankTypeGraft: TypeId | null;
-  /**
-   * Snapshot of the hero's HP/mana at the end of its last fight
-   * (docs/run-loop.md "HP/mana persist between map nodes") — null means "at
-   * full," covering fresh recruits and Contract claims without
-   * special-casing them. Written by runProgress.ts's syncRosterVitals after
-   * every map fight/elite/boss node; read by buildCombatState.ts's
-   * placeEntry, clamped to the (possibly higher, post-rank-up) current max
-   * rather than healed by a cap increase.
-   */
-  currentHp: number | null;
-  currentMana: number | null;
 }
 
 export interface RunState {
@@ -93,8 +82,6 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     chosenBranchIds: [],
     rankStatGrants: {},
     rankTypeGraft: null,
-    currentHp: null,
-    currentMana: null,
   };
 }
 

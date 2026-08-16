@@ -7,15 +7,12 @@ import { generateMap } from '../src/run/map';
 import {
   reachableNodeIds,
   advanceToNode,
-  syncRosterVitals,
   grantCurrencyReward,
   grantUpgradeReward,
   grantRelicReward,
   applyEquipmentReward,
   RunProgressError,
 } from '../src/run/runProgress';
-import { createCombatant } from '../src/engine/state';
-import type { CombatState } from '../src/engine/state';
 
 function seedRoster(heroIds: string[]) {
   let run = createRunState(0, 0);
@@ -59,43 +56,6 @@ test('runProgress: advanceToNode rejects an unreachable node, an unknown node, a
   if (!map.startNodeIds.includes(farNode)) {
     assert.throws(() => advanceToNode(run, farNode), RunProgressError);
   }
-});
-
-// --- Vitals sync ----------------------------------------------------------
-
-test('runProgress: syncRosterVitals writes ending HP/mana back onto the roster, for fielded heroes only', () => {
-  const run = seedRoster(['cinderKnight', 'tidecaller']); // tidecaller never fielded
-  const combat: CombatState = {
-    seed: 1,
-    rngState: 1,
-    round: 3,
-    active: { A: ['A:cinderKnight', null], B: [null, null] },
-    bench: { A: [], B: [] },
-    combatants: { 'A:cinderKnight': { ...createCombatant('A:cinderKnight', 'cinderKnight', 'A', 40, 5), currentHp: 40, currentMana: 5 } },
-    koCount: { A: 0, B: 0 },
-  };
-
-  const next = syncRosterVitals(run, combat, 'A');
-  const cinder = next.roster.find((r) => r.rosterId === 'cinderKnight')!;
-  const tide = next.roster.find((r) => r.rosterId === 'tidecaller')!;
-  assert.strictEqual(cinder.currentHp, 40);
-  assert.strictEqual(cinder.currentMana, 5);
-  assert.strictEqual(tide.currentHp, null); // untouched — never fielded this fight
-});
-
-test('runProgress: syncRosterVitals clamps negative HP up to 0', () => {
-  const run = seedRoster(['cinderKnight']);
-  const combat: CombatState = {
-    seed: 1,
-    rngState: 1,
-    round: 1,
-    active: { A: ['A:cinderKnight', null], B: [null, null] },
-    bench: { A: [], B: [] },
-    combatants: { 'A:cinderKnight': { ...createCombatant('A:cinderKnight', 'cinderKnight', 'A', -5, 0), currentHp: -5, currentMana: 0 } },
-    koCount: { A: 0, B: 0 },
-  };
-  const next = syncRosterVitals(run, combat, 'A');
-  assert.strictEqual(next.roster[0].currentHp, 0);
 });
 
 // --- Reward grants ----------------------------------------------------------

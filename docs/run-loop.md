@@ -41,7 +41,7 @@ which is the thing actually being validated in this pass.
 
 | Type | Resolution |
 |---|---|
-| `fight` | `FightScreen` vs. a generated 4-hero AI squad (`src/run/enemyGen.ts`), no bonus. |
+| `fight` | `FightScreen` vs. a generated 4-hero AI squad (`src/run/enemyGen.ts`), no bonus. Row 0 (the opening 3 nodes) draws from the non-recruitable enemy pool instead — see below. |
 | `elite` | Same, but the AI's 4 heroes each carry a flat +10 bonus to 2 random growth stats. |
 | `boss` | `FightScreen` vs. 2 AI heroes (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. |
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. |
@@ -61,20 +61,46 @@ which is the thing actually being validated in this pass.
   hand-authored Ancient hero yet — `enemyGen.ts`'s boss encounter is 2 fixture heroes
   with a bigger stat bonus. Authoring a real Ancient is future work, once this loop is
   validated and real content authoring begins (README "Next steps" #5).
-- **HP/mana persist between map nodes.** Discovered as necessary during this
-  exploration, not part of the original ask: without persistence, "escalating fights"
-  are just repeated fresh fights, and there's no resource tension across the run —
-  which is the entire point of the Slay the Spire reference. `RosterEntry` gains
-  `currentHp`/`currentMana: number | null` (`state.ts`); `null` means "at full,"
-  covering fresh recruits and Contract claims without special-casing them.
-  `runProgress.ts`'s `syncRosterVitals` writes a fight's ending values back after every
-  node; `buildCombatState.ts`'s `placeEntry` reads them back in, **clamped to the
-  current max, never healed by a cap increase** (e.g. a mid-run rank-up raising max
-  HP just adds headroom, it doesn't top the hero back up).
-- **No passive recovery between nodes in this pass** — no rest-site node type. Heal
-  moves, relics, and equipment are the only recovery levers. This may prove too
-  punishing on first playtest; that's a legitimate signal to gather, not a reason to
-  pre-build a rest mechanic now. A rest-site node type is the natural follow-up if so.
+- **Non-recruitable enemy content (2026-08-16, second playtest).** The opening row's
+  fight nodes were drawing AI squads from the same recruitable hero pool the player's
+  own early roster is still built from — a structural 2v4 (2 starting heroes vs. 4
+  fielded AI heroes), independent of how the fight is tuned, and it burns a real hero
+  concept as disposable fodder besides (CLAUDE.md's north star: every hero must be
+  viable, not "the thing you curb-stomp in fight 1"). Per user direction: `src/data/
+  enemies.ts` is a separate, deliberately-weaker content pool (`goblinGrunt`,
+  `goblinSkulker` — same `HeroDefinition` shape as a hero, just weaker numbers; a
+  Goblin doesn't need a different schema, it needs different numbers), and row 0's
+  fight nodes draw from it instead of `src/data/heroes.ts` (`App.tsx`'s
+  `handleSquadConfirmed`, gated on `node.row === 0`). `src/run/recruitment.ts`'s new
+  `isRecruitable(heroId, recruitablePool)` gates Recruit Contract offers on membership
+  in the caller's recruitable pool specifically — never the combined pool a fight
+  actually drew from — so a defeated Goblin can never produce a contract offer;
+  `FightScreen.tsx`'s claim list is filtered through it, and `App.tsx`'s
+  `handleClaimContract` re-checks it as the actual RunState-mutation boundary, not just
+  the UI. `src/data/content.ts`'s `allCombatants` (`{ ...heroes, ...enemies }`) is what
+  combat resolution and fight-screen rendering actually key off of — they don't care
+  which pool a combatant came from, only recruitment does. This is a mechanism + a
+  first-pass curve (row 0 only), not a full difficulty tuning pass — which rows/node
+  types pull from which pool past the opening row is still open, and is balance work,
+  not architecture work.
+- **HP/mana fully restore between map nodes (reversed 2026-08-16, first playtest).**
+  The original pass persisted HP/mana across nodes (`RosterEntry.currentHp`/
+  `currentMana`, clamped to max on the next fight) on the theory that escalating
+  fights need resource tension carried across the run. First playtest hit the failure
+  mode head-on: a hero KO'd in an early fight simply stayed at 0 HP into the next one —
+  permanently bricked for the rest of the run, with no rest-site node type (see below)
+  and no in-run way back. That's not tension, it's a dead roster slot. Per user
+  direction, persistence was removed: `buildCombatState.ts`'s `placeEntry` now always
+  starts every fielded combatant at full HP/mana (computed after equipment/rank-up
+  stat modifiers, same as the LOCKED full-starting-pool decision in `mana.md`).
+  `RosterEntry` no longer carries `currentHp`/`currentMana` fields, and
+  `runProgress.ts`'s `syncRosterVitals` was deleted. If run-length resource tension is
+  wanted later, it needs a different lever than raw persistence — e.g. a cost gated on
+  the *choice* to fight (mana/HP entry cost) rather than an ambient penalty a KO'd hero
+  can't do anything about.
+- **No passive recovery between nodes in this pass** — no rest-site node type; moot for
+  HP/mana now that fights fully heal on their own, but still relevant for anything a
+  future resource-tension mechanic reintroduces.
 - **Squad selection happens before every fight/elite/boss node, not once per run.**
   Discovered during implementation: CLAUDE.md frames the bring-6-pick-4 sideboard as
   VGC-style team preview, which is inherently per-battle, not a once-per-run
