@@ -560,18 +560,21 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
         <div className="result-overlay">
           <h2>{winner === PLAYER_SIDE ? 'Victory!' : 'Defeat'}</h2>
           {winner === PLAYER_SIDE && goldReward > 0 && <p className="hint">+{goldReward}g</p>}
-          {winner === PLAYER_SIDE && (
+          {winner === PLAYER_SIDE && aiRun.roster.some((entry) => isRecruitable(entry.heroId, heroes)) && (
             <div className="contract-claims">
-              <div className="hint">Claim a Recruit Contract (docs/progression.md "raise-vs-recruit axis"):</div>
+              <div className="hint">
+                Claim a Recruit Contract ({playerRun.recruitContracts} available):
+              </div>
               <div className="contract-claims-grid">
                 {aiRun.roster.filter((entry) => isRecruitable(entry.heroId, heroes)).map((entry) => {
                   const claimed = claimedRosterIds.includes(entry.rosterId);
                   const rosterFull = playerRun.roster.length >= ROSTER_CAP;
+                  const noContracts = playerRun.recruitContracts <= 0;
                   return (
                     <button
                       key={entry.rosterId}
                       className="move-button"
-                      disabled={claimed || rosterFull}
+                      disabled={claimed || rosterFull || noContracts}
                       onClick={() => handleClaimContract(entry)}
                     >
                       {claimed ? `${heroes[entry.heroId].name} (claimed)` : `Claim ${heroes[entry.heroId].name}`}

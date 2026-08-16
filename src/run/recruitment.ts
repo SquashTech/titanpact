@@ -80,8 +80,25 @@ export function deriveContractOffer(defeated: RosterEntry): ContractOffer {
   return carried;
 }
 
-/** Claims a derived contract offer onto the roster for free, ungeared (see module header). */
+/**
+ * Claims a derived contract offer onto the roster, ungeared (see module
+ * header) — spends one Recruit Contract from the run's scarce
+ * `recruitContracts` pool (docs/progression.md "raise-vs-recruit axis"). Not
+ * free: contracts are earned (1 at run start, more via contractReward map
+ * nodes or a cheaper Guild Hall purchase), not unlimited.
+ */
 export function claimContract(run: RunState, offer: ContractOffer, rosterId: string): RunState {
+  if (run.recruitContracts <= 0) {
+    throw new RecruitmentError('No Recruit Contracts available');
+  }
   const entry: RosterEntry = { ...offer, rosterId, equipment: createEmptyLoadout() };
-  return addRosterEntry(run, entry);
+  return addRosterEntry({ ...run, recruitContracts: run.recruitContracts - 1 }, entry);
+}
+
+/** Guild Hall (raise-side venue) also sells Recruit Contracts directly — cheaper than recruiting a specific hero outright, per its "raise vs recruit" role as a discount on the recruit path. */
+export function buyContract(run: RunState, cost: number): RunState {
+  if (run.gold < cost) {
+    throw new RecruitmentError(`A Recruit Contract costs ${cost} gold, only ${run.gold} available`);
+  }
+  return { ...run, gold: run.gold - cost, recruitContracts: run.recruitContracts + 1 };
 }

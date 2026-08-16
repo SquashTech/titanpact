@@ -902,6 +902,11 @@ body {
   margin: 0 0 10px;
 }
 
+/* Scouted enemy cards are read-only (only the info button is interactive) — no pick affordance. */
+.enemy-scout-card {
+  cursor: default;
+}
+
 .roster-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

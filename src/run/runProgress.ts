@@ -3,8 +3,8 @@
 // no engine internals.
 
 import type { RunState, RosterEntry } from './state';
-import type { EquipmentDefinition } from './equipment';
-import { equipItem } from './equipment';
+import type { EquipmentDefinition, EquipmentSlot } from './equipment';
+import { equipItem, unequipSlot } from './equipment';
 
 export class RunProgressError extends Error {}
 
@@ -44,6 +44,11 @@ export function grantUpgradeReward(run: RunState, points: number): RunState {
   return { ...run, levelUpPool: run.levelUpPool + points };
 }
 
+/** contractReward node resolution: a flat grant to the scarce Recruit Contract currency (docs/progression.md "raise-vs-recruit axis"). */
+export function grantContractReward(run: RunState, amount: number): RunState {
+  return { ...run, recruitContracts: run.recruitContracts + amount };
+}
+
 /** relicReward node resolution: adds an owned relic id. Duplicates are allowed (their flat grants simply stack) — the reward screen is expected to only offer relics not yet owned. */
 export function grantRelicReward(run: RunState, relicId: string): RunState {
   return { ...run, relics: [...run.relics, relicId] };
@@ -55,4 +60,35 @@ export function applyEquipmentReward(run: RunState, rosterId: string, item: Equi
   if (!entry) throw new RunProgressError(`${rosterId} is not on the roster`);
   const nextEntry: RosterEntry = { ...entry, equipment: equipItem(entry.equipment, item) };
   return { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)) };
+}
+
+/**
+ * Moves an equipped item from one roster hero's slot to another's — the
+ * Manage Roster equipment-reassignment feature. Unequips the source slot and
+ * equips the item onto the target's matching slot, which (per equipItem's
+ * no-inventory model) drops whatever the target already had equipped there.
+ */
+export function moveEquipment(
+  run: RunState,
+  fromRosterId: string,
+  slot: EquipmentSlot,
+  toRosterId: string,
+  equipmentLookup: Record<string, EquipmentDefinition>
+): RunState {
+  const fromEntry = run.roster.find((r) => r.rosterId === fromRosterId);
+  const toEntry = run.roster.find((r) => r.rosterId === toRosterId);
+  if (!fromEntry || !toEntry) throw new RunProgressError('Unknown roster entry');
+  const itemId = fromEntry.equipment[slot];
+  if (!itemId) throw new RunProgressError(`${fromRosterId} has nothing equipped in ${slot}`);
+  const item = equipmentLookup[itemId];
+  if (!item) throw new RunProgressError(`Unknown equipment ${itemId}`);
+
+  return {
+    ...run,
+    roster: run.roster.map((r) => {
+      if (r.rosterId === fromRosterId) return { ...r, equipment: unequipSlot(r.equipment, slot) };
+      if (r.rosterId === toRosterId) return { ...r, equipment: equipItem(r.equipment, item) };
+      return r;
+    }),
+  };
 }

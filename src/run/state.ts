@@ -19,9 +19,20 @@ export interface RosterEntry {
   rosterId: string;
   heroId: string;
   equipment: EquipmentLoadout;
-  /** Starts as a copy of HeroDefinition.moveIds; grows via progression.ts unlockTierMove. */
+  /** Starts as a copy of HeroDefinition.moveIds; grows via progression.ts levelUpHero/grantLevelUpMove. */
   unlockedMoveIds: string[];
-  /** Points invested toward this hero's next rank-up threshold (progression.ts). */
+  /**
+   * Hero level (docs/leveling-and-ranks.md): incremented by one for every
+   * Training Point spent on this hero (progression.ts levelUpHero). Starts at
+   * 1 — not an XP bar, a plain count of how many times this hero has been
+   * leveled this run.
+   */
+  level: number;
+  /**
+   * Rank-up threshold progress — tracks 1:1 with `level` (progression.ts
+   * levelUpHero increments both together; there is no separate invest step
+   * anymore, docs/leveling-and-ranks.md).
+   */
   rankProgress: number;
   /** Rank-up branch ids chosen so far, in order. Empty = still base rank. */
   chosenBranchIds: string[];
@@ -57,6 +68,14 @@ export interface RunState {
   /** Owned relic ids (docs/run-loop.md, src/run/relics.ts) — team-wide, stat-only for this pass. */
   relics: string[];
   /**
+   * Recruit Contracts available to spend claiming a beaten enemy
+   * (docs/progression.md "raise-vs-recruit axis" — recruitment.ts
+   * claimContract). A scarce earn-and-spend currency, not unlimited: a run
+   * starts with 1, more can be found via contractReward map nodes, and more
+   * can be bought (cheaper than a direct Guild Hall recruit) at a shop node.
+   */
+  recruitContracts: number;
+  /**
    * The player's run map (docs/run-loop.md). Null for a RunState that never
    * gets a map of its own — e.g. the throwaway AI rosters enemyGen.ts builds
    * per fight, which only ever need `roster`.
@@ -68,8 +87,8 @@ export interface RunState {
   visitedNodeIds: string[];
 }
 
-export function createRunState(levelUpPool = 0, gold = 0): RunState {
-  return { roster: [], levelUpPool, gold, relics: [], map: null, currentNodeId: null, visitedNodeIds: [] };
+export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1): RunState {
+  return { roster: [], levelUpPool, gold, relics: [], recruitContracts, map: null, currentNodeId: null, visitedNodeIds: [] };
 }
 
 export function createRosterEntry(rosterId: string, heroId: string, startingMoveIds: readonly string[]): RosterEntry {
@@ -78,6 +97,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     heroId,
     equipment: createEmptyLoadout(),
     unlockedMoveIds: [...startingMoveIds],
+    level: 1,
     rankProgress: 0,
     chosenBranchIds: [],
     rankStatGrants: {},

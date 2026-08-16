@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { RunState } from '../../run/state';
 import { reachableNodeIds } from '../../run/runProgress';
 import type { MapNodeType } from '../../run/map';
-import { TrainingPanel } from './TrainingPanel';
+import { RosterManagementScreen } from './RosterManagementScreen';
 
 interface Props {
   run: RunState;
@@ -19,16 +19,19 @@ const NODE_LABELS: Record<MapNodeType, string> = {
   relicReward: '💠 Relic',
   currencyReward: '💰 Gold',
   upgradeReward: '📈 Training',
+  contractReward: '📜 Contract',
 };
 
 /**
  * The run's hub screen (docs/run-loop.md): a branching map the player
- * ascends node by node, plus always-on access to the Training panel — the
- * level-up pool has nowhere else to be spent (README exploration: no view
- * ever called src/run/progression.ts before this).
+ * ascends node by node, plus always-on access to Manage Roster — full stat
+ * spreads and equipment reassignment (RosterManagementScreen). Training
+ * Points are no longer spent here: they're forced-allocated immediately
+ * after a win via LevelUpScreen (App.tsx), so by the time the player is back
+ * on the map `run.levelUpPool` is always 0.
  */
 export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
-  const [showTraining, setShowTraining] = useState(false);
+  const [showRoster, setShowRoster] = useState(false);
   const map = run.map;
   if (!map) return null;
 
@@ -42,7 +45,8 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
         <span>{run.gold}g</span>
         <span>{run.levelUpPool} training pts</span>
         <span>{run.relics.length} relics</span>
-        <button className="log-toggle-button" onClick={() => setShowTraining(true)}>
+        <span>📜 {run.recruitContracts}</span>
+        <button className="log-toggle-button" onClick={() => setShowRoster(true)}>
           Manage Roster
         </button>
       </div>
@@ -74,7 +78,7 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
         ))}
       </div>
 
-      {showTraining && <TrainingPanel run={run} onRunChange={onRunChange} onClose={() => setShowTraining(false)} />}
+      {showRoster && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setShowRoster(false)} />}
     </div>
   );
 }

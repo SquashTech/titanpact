@@ -48,7 +48,8 @@ which is the thing actually being validated in this pass.
 | `equipmentReward` | `NodeRewardScreen` — pick 1 of 3 equipment items, then which roster hero to equip it on. |
 | `relicReward` | `NodeRewardScreen` — pick 1 of 3 relics not already owned. |
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30, more for nothing having been spent yet). |
-| `upgradeReward` | `NodeRewardScreen` — an instant flat grant to the pooled level-up currency (2-3 points). |
+| `upgradeReward` | `NodeRewardScreen` — an instant flat grant to the pooled level-up currency (2-3 points), on top of the per-fight-win grant (see below). |
+| `contractReward` | `NodeRewardScreen` — an instant flat grant of 1 Recruit Contract (`progression.md` "raise-vs-recruit axis" — a scarce currency, not unlimited claiming). |
 
 ## 3. Decisions locked for this pass (2026-08-16 sign-off)
 
@@ -71,7 +72,9 @@ which is the thing actually being validated in this pass.
   `goblinSkulker` — same `HeroDefinition` shape as a hero, just weaker numbers; a
   Goblin doesn't need a different schema, it needs different numbers), and row 0's
   fight nodes draw from it instead of `src/data/heroes.ts` (`App.tsx`'s
-  `handleSquadConfirmed`, gated on `node.row === 0`). `src/run/recruitment.ts`'s new
+  `handleSelectNode`, gated on `node.row === 0` — moved here from
+  `handleSquadConfirmed` in the 2026-08-16 battle-preview pass below, since the
+  encounter now has to exist before squad-select renders it). `src/run/recruitment.ts`'s new
   `isRecruitable(heroId, recruitablePool)` gates Recruit Contract offers on membership
   in the caller's recruitable pool specifically — never the combined pool a fight
   actually drew from — so a defeated Goblin can never produce a contract offer;
@@ -114,15 +117,42 @@ which is the thing actually being validated in this pass.
   layer yet (`progression.md` "Per-run reset vs. meta-progression" is decided but NOT
   YET IMPLEMENTED) — a new run currently starts from the same fixed 2-hero roster
   every time, not from an unlock pool.
+- **Battle preview before squad-select (2026-08-16, second playtest).** Encounter
+  generation (`generateEncounter`) moved from `handleSquadConfirmed` to
+  `handleSelectNode`, so the AI squad exists before `SquadSelectScreen` renders — that
+  screen now shows a "Scouted enemies" section (the node's generated squad, both active
+  and bench) alongside the player's own roster, both with an info button opening a new
+  `src/view/run/HeroPreviewOverlay.tsx` (full stat table + moves + equipment, computed
+  directly from `RosterEntry`/`HeroDefinition` rather than a live `Combatant` since no
+  fight exists yet).
+- **Training Points now paid out per fight win, not only via `upgradeReward` nodes
+  (2026-08-16, second playtest).** `App.tsx`'s `trainingPointsFor` grants 2 for a
+  normal `fight`, 3-4 for `elite`/`boss` — `upgradeReward` nodes remain a second,
+  separate source (per user direction: valuable as a strategic pull toward rank-ups
+  over gearing/relics, not redundant with the per-fight grant). Spending is also no
+  longer deferred: `src/view/run/LevelUpScreen.tsx` forces every earned point to be
+  allocated before the run can continue, replacing the old "spend whenever via Manage
+  Roster" `TrainingPanel` flow (`progression.md`, "Reconciled" note).
+- **Equipment can now move between heroes, and reward choices preview before
+  committing (2026-08-16, second playtest).** `src/run/runProgress.ts`'s new
+  `moveEquipment` unequips a source hero's slot and equips the item onto a target
+  hero's matching slot; `RosterManagementScreen` (below) is the UI for it. Separately,
+  `NodeRewardScreen`'s `equipmentReward` flow now shows an item's stat grants on
+  tap-to-preview and requires an explicit Confirm button for both the item choice and
+  the hero assignment (previously: tap an item, tap a hero, done — no preview, no
+  undo).
 
 ## 4. What's still not built
 
-- **A missing UI gap this surfaced, now filled:** there was no view-layer way to spend
-  the pooled level-up currency at all before this pass (`progression.ts`'s
-  `unlockTierMove`/`investRankProgress`/`chooseRankUpBranch` were exercised only in
-  tests). `src/view/run/TrainingPanel.tsx` is the minimal spend UI, reachable from
-  `MapScreen` at any time — otherwise `upgradeReward` nodes would grant currency the
-  player could never actually use.
+- **Level-up spend UI, superseded (2026-08-16 playtest pass):** the original gap (no
+  view-layer way to spend the pooled level-up currency) was first filled by
+  `src/view/run/TrainingPanel.tsx`, a deferred-spend panel reachable from `MapScreen`
+  "at any time." That's since been replaced: Training Points are now forced-allocated
+  immediately via `src/view/run/LevelUpScreen.tsx` right after they're granted (every
+  fight win, and any `upgradeReward` node claim) — the run cannot continue with an
+  unspent pool. `MapScreen`'s "Manage Roster" button now opens
+  `src/view/run/RosterManagementScreen.tsx` instead: read-only stat/loadout inspection
+  plus moving equipped items between heroes, no longer a spend surface.
 - **Multi-act sequencing.** This pass is one act, start to boss. Chaining acts (with
   escalating difficulty between them) is deferred until this loop's shape is validated.
 - **Visual path rendering.** `MapScreen` renders nodes grouped by row with

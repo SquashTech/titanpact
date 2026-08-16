@@ -1,8 +1,8 @@
 import { heroes } from '../../data/heroes';
-import { guildHallOffers } from '../../data/recruitment';
+import { guildHallOffers, CONTRACT_PURCHASE_COST } from '../../data/recruitment';
 import type { RunState } from '../../run/state';
 import { ROSTER_CAP } from '../../run/state';
-import { recruitFromGuildHall, RecruitmentError } from '../../run/recruitment';
+import { recruitFromGuildHall, buyContract, RecruitmentError } from '../../run/recruitment';
 
 interface Props {
   run: RunState;
@@ -25,6 +25,14 @@ export function GuildHallPanel({ run, onRecruit }: Props) {
   function handleRecruit(offer: (typeof guildHallOffers)[number]) {
     try {
       onRecruit(recruitFromGuildHall(run, offer, offer.heroId));
+    } catch (err) {
+      if (!(err instanceof RecruitmentError)) throw err;
+    }
+  }
+
+  function handleBuyContract() {
+    try {
+      onRecruit(buyContract(run, CONTRACT_PURCHASE_COST));
     } catch (err) {
       if (!(err instanceof RecruitmentError)) throw err;
     }
@@ -53,6 +61,12 @@ export function GuildHallPanel({ run, onRecruit }: Props) {
         })}
       </div>
       {rosterFull && <p className="hint">Roster is full ({ROSTER_CAP}/{ROSTER_CAP}) — terminate a hero to recruit another.</p>}
+
+      <p className="hint">Or buy a blank Recruit Contract to claim off a future beaten enemy — cheaper than recruiting a specific hero outright.</p>
+      <button className="roster-card guild-hall-card" disabled={run.gold < CONTRACT_PURCHASE_COST} onClick={handleBuyContract}>
+        <div className="roster-card-name">📜 Recruit Contract</div>
+        <div className="guild-hall-cost">{CONTRACT_PURCHASE_COST}g</div>
+      </button>
     </div>
   );
 }

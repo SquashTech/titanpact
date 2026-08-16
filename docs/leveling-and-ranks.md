@@ -54,6 +54,17 @@ is an *offer*, not a forced overwrite.
 A hero holds a **maximum of four moves.** This is a hard cap. Once at four, growth in
 the movepool is strictly *substitution*, never expansion.
 
+> **Implemented (2026-08-16 playtest pass):** `src/run/progression.ts`'s
+> `levelUpHero`/`grantLevelUpMove`/`MOVE_CAP` enforce exactly this — under the cap a
+> level-up's move is gained outright; at the cap it's an accept/decline replacement
+> offer (`src/view/run/LevelUpScreen.tsx`). **Known gap, deliberately deferred:** the
+> `/src/data` fixture heroes (`heroes.ts`) still start with 5-7 moves each — already
+> above the cap before any leveling happens — so in practice almost every level-up
+> currently surfaces the replacement offer rather than a clean gain. This is stale
+> fixture content, not a mechanism bug; per user direction (2026-08-16) it's useful for
+> playtesting the offer/decline UI as-is and will be fixed when the fixture roster is
+> replaced with real content (README "Next steps" #5), not before.
+
 ### Level-ups never change stats (LOCKED)
 
 **Leveling up does not increase any stat.** No HP, no Attack, no Speed — nothing. A

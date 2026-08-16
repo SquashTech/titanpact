@@ -19,7 +19,8 @@ export type MapNodeType =
   | 'equipmentReward'
   | 'relicReward'
   | 'currencyReward'
-  | 'upgradeReward';
+  | 'upgradeReward'
+  | 'contractReward';
 
 export interface MapNode {
   id: string;
@@ -51,6 +52,7 @@ const EARLY_WEIGHTS: readonly [MapNodeType, number][] = [
   ['relicReward', 10],
   ['currencyReward', 13],
   ['upgradeReward', 10],
+  ['contractReward', 6],
 ];
 
 /** Row 3-4 weights: elites enter, fight share drops accordingly. */
@@ -62,6 +64,7 @@ const LATE_WEIGHTS: readonly [MapNodeType, number][] = [
   ['relicReward', 10],
   ['currencyReward', 10],
   ['upgradeReward', 7],
+  ['contractReward', 6],
 ];
 
 function pickWeighted(rng: RngState, weights: readonly [MapNodeType, number][]): { value: MapNodeType; nextState: RngState } {

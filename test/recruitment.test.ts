@@ -6,7 +6,7 @@ import { guildHallOffers } from '../src/data/recruitment';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP } from '../src/run/state';
 import { equipItem } from '../src/run/equipment';
 import { equipment } from '../src/data/equipment';
-import { recruitFromGuildHall, deriveContractOffer, claimContract, isRecruitable, RecruitmentError } from '../src/run/recruitment';
+import { recruitFromGuildHall, deriveContractOffer, claimContract, buyContract, isRecruitable, RecruitmentError } from '../src/run/recruitment';
 
 function seedRoster(heroIds: string[], gold = 0) {
   let run = createRunState(0, gold);
@@ -66,8 +66,8 @@ test('recruitment: a contract offer carries over rank-up state but not equipment
   assert.deepStrictEqual(offer.rankStatGrants, { defense: 10 });
 });
 
-test('recruitment: claiming a contract is free and adds the offer ungeared under a fresh rosterId', () => {
-  const run = seedRoster(['cinderKnight'], 0);
+test('recruitment: claiming a contract is free in gold and adds the offer ungeared under a fresh rosterId', () => {
+  const run = seedRoster(['cinderKnight'], 0); // createRunState defaults recruitContracts to 1
   const defeated = {
     ...run.roster[0],
     heroId: 'ironWarden',
@@ -77,7 +77,8 @@ test('recruitment: claiming a contract is free and adds the offer ungeared under
   const offer = deriveContractOffer(defeated);
 
   const next = claimContract(run, offer, 'claimed-ironWarden');
-  assert.strictEqual(next.gold, 0); // free
+  assert.strictEqual(next.gold, 0); // free in gold...
+  assert.strictEqual(next.recruitContracts, 0); // ...but spends one Recruit Contract
   const entry = next.roster.find((r) => r.rosterId === 'claimed-ironWarden');
   assert.ok(entry);
   assert.strictEqual(entry!.heroId, 'ironWarden');
@@ -90,6 +91,21 @@ test('recruitment: claiming a contract still enforces the roster cap', () => {
   const run = seedRoster(allSix, 0);
   const offer = deriveContractOffer(run.roster[0]);
   assert.throws(() => claimContract(run, offer, 'extra'));
+});
+
+test('recruitment: claiming a contract with none available is rejected', () => {
+  const run = { ...seedRoster(['cinderKnight'], 0), recruitContracts: 0 };
+  const offer = deriveContractOffer(run.roster[0]);
+  assert.throws(() => claimContract(run, offer, 'claimed'), RecruitmentError);
+});
+
+test('recruitment: buyContract spends gold and grants a Recruit Contract; insufficient gold is rejected', () => {
+  const run = seedRoster(['cinderKnight'], 12);
+  assert.throws(() => buyContract(run, 20), RecruitmentError);
+
+  const next = buyContract(run, 12);
+  assert.strictEqual(next.gold, 0);
+  assert.strictEqual(next.recruitContracts, run.recruitContracts + 1);
 });
 
 // --- Non-recruitable enemy content ----------------------------------------

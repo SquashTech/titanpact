@@ -5,6 +5,7 @@ import { SquadSelectScreen } from '../view/run/SquadSelectScreen';
 import { MapScreen } from '../view/run/MapScreen';
 import { ShopNodeScreen } from '../view/run/ShopNodeScreen';
 import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScreen';
+import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { heroes } from '../data/heroes';
 import { enemies } from '../data/enemies';
 import { equipment } from '../data/equipment';
@@ -15,18 +16,20 @@ import { deriveContractOffer, claimContract, isRecruitable } from '../run/recrui
 import { generateMap } from '../run/map';
 import { generateEncounter, type EncounterNodeType, type Encounter } from '../run/enemyGen';
 import { relicTeamStatModifiers } from '../run/relics';
-import { advanceToNode, grantCurrencyReward } from '../run/runProgress';
+import { advanceToNode, grantCurrencyReward, grantUpgradeReward } from '../run/runProgress';
 import type { RunState, RosterEntry } from '../run/state';
 import type { Squad } from '../run/squad';
 
 type Screen =
   | { kind: 'title' }
   | { kind: 'map' }
-  | { kind: 'squadSelect'; nodeId: string; nodeType: EncounterNodeType }
+  | { kind: 'squadSelect'; nodeId: string; nodeType: EncounterNodeType; encounter: Encounter }
   | { kind: 'fight'; nodeId: string; nodeType: EncounterNodeType; squad: Squad; encounter: Encounter; goldReward: number }
   | { kind: 'quickBattle'; player: Encounter; ai: Encounter }
   | { kind: 'shop'; nodeId: string }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
+  /** Forced spend gate (CLAUDE.md "training points ... must be instantly allocated before the run continues") — `next` is whatever screen would otherwise have followed. */
+  | { kind: 'levelUp'; next: Screen }
   | { kind: 'runComplete' }
   | { kind: 'runFailed' };
 
@@ -65,6 +68,17 @@ function goldRewardFor(nodeType: EncounterNodeType): number {
   return 15 + Math.floor(Math.random() * 11); // 15-25
 }
 
+/**
+ * Training Points paid out per battle win (docs/leveling-and-ranks.md
+ * "tougher fights grant more"; CLAUDE.md "After winning a fight, you are
+ * given training points"). 2 for a normal fight, 3-4 for elite — boss folds
+ * into the elite figure since no separate boss value was specified.
+ */
+function trainingPointsFor(nodeType: EncounterNodeType): number {
+  if (nodeType === 'fight') return 2;
+  return 3 + Math.floor(Math.random() * 2); // 3-4
+}
+
 export function App() {
   const [playerRun, setPlayerRun] = useState<RunState>(createStartingRun);
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
@@ -72,6 +86,7 @@ export function App() {
   function handleClaimContract(defeated: RosterEntry): boolean {
     if (!isRecruitable(defeated.heroId, heroes)) return false;
     if (playerRun.roster.length >= ROSTER_CAP) return false;
+    if (playerRun.recruitContracts <= 0) return false;
     const offer = deriveContractOffer(defeated);
     const rosterId = freshRosterId(playerRun, defeated.heroId);
     setPlayerRun((run) => claimContract(run, offer, rosterId));
@@ -81,7 +96,19 @@ export function App() {
   function handleSelectNode(nodeId: string) {
     const node = playerRun.map!.nodes[nodeId];
     if (node.type === 'fight' || node.type === 'elite' || node.type === 'boss') {
-      setScreen({ kind: 'squadSelect', nodeId, nodeType: node.type });
+      // Generated here, at node-select time, rather than after squad
+      // confirmation — the battle-preview screen (SquadSelectScreen) needs
+      // the enemy squad to already exist so it can scout it before the
+      // player commits a squad (playtest ask).
+      //
+      // Row 0 (docs/run-loop.md "Map shape" — the opening 3 plain-fight
+      // nodes) draws from the non-recruitable enemy pool instead of the
+      // draftable hero roster: an intentionally weak opener, not a real hero
+      // spent as disposable fodder.
+      const isOpeningFight = node.row === 0;
+      const encounterPool = isOpeningFight ? enemies : heroes;
+      const encounter = generateEncounter(node.type, Math.floor(Math.random() * 2 ** 31), encounterPool);
+      setScreen({ kind: 'squadSelect', nodeId, nodeType: node.type, encounter });
     } else if (node.type === 'shop') {
       setScreen({ kind: 'shop', nodeId });
     } else {
@@ -89,30 +116,26 @@ export function App() {
     }
   }
 
-  function handleSquadConfirmed(squad: Squad, nodeId: string, nodeType: EncounterNodeType) {
-    // Row 0 (docs/run-loop.md "Map shape" — the opening 3 plain-fight nodes) draws
-    // from the non-recruitable enemy pool instead of the draftable hero roster: an
-    // intentionally weak opener, not a real hero spent as disposable fodder.
-    const isOpeningFight = playerRun.map!.nodes[nodeId].row === 0;
-    const encounterPool = isOpeningFight ? enemies : heroes;
-    const encounter = generateEncounter(nodeType, Math.floor(Math.random() * 2 ** 31), encounterPool);
+  function handleSquadConfirmed(squad: Squad, nodeId: string, nodeType: EncounterNodeType, encounter: Encounter) {
     setScreen({ kind: 'fight', nodeId, nodeType, squad, encounter, goldReward: goldRewardFor(nodeType) });
   }
 
-  function handleFightResolved(nodeId: string, goldReward: number, outcome: 'win' | 'loss') {
+  function handleFightResolved(nodeId: string, nodeType: EncounterNodeType, goldReward: number, outcome: 'win' | 'loss') {
     if (outcome === 'loss') {
       setScreen({ kind: 'runFailed' });
       return;
     }
     let next = grantCurrencyReward(playerRun, goldReward);
+    next = grantUpgradeReward(next, trainingPointsFor(nodeType));
     next = advanceToNode(next, nodeId);
     setPlayerRun(next);
-    setScreen(nodeId === playerRun.map!.bossNodeId ? { kind: 'runComplete' } : { kind: 'map' });
+    const afterScreen: Screen = nodeId === playerRun.map!.bossNodeId ? { kind: 'runComplete' } : { kind: 'map' };
+    setScreen(next.levelUpPool > 0 ? { kind: 'levelUp', next: afterScreen } : afterScreen);
   }
 
   function handleNodeContinue(nodeId: string) {
     setPlayerRun((run) => advanceToNode(run, nodeId));
-    setScreen({ kind: 'map' });
+    setScreen(playerRun.levelUpPool > 0 ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' });
   }
 
   function handleStartNewRun() {
@@ -141,7 +164,11 @@ export function App() {
       {screen.kind === 'map' && <MapScreen run={playerRun} onRunChange={setPlayerRun} onSelectNode={handleSelectNode} />}
 
       {screen.kind === 'squadSelect' && (
-        <SquadSelectScreen run={playerRun} onConfirm={(squad) => handleSquadConfirmed(squad, screen.nodeId, screen.nodeType)} />
+        <SquadSelectScreen
+          run={playerRun}
+          encounter={screen.encounter}
+          onConfirm={(squad) => handleSquadConfirmed(squad, screen.nodeId, screen.nodeType, screen.encounter)}
+        />
       )}
 
       {screen.kind === 'fight' && (
@@ -153,7 +180,7 @@ export function App() {
           teamStatModifiers={relicTeamStatModifiers(playerRun.relics, relics)}
           goldReward={screen.goldReward}
           onClaimContract={handleClaimContract}
-          onResolved={(outcome) => handleFightResolved(screen.nodeId, screen.goldReward, outcome)}
+          onResolved={(outcome) => handleFightResolved(screen.nodeId, screen.nodeType, screen.goldReward, outcome)}
         />
       )}
 
@@ -180,6 +207,10 @@ export function App() {
           onRunChange={setPlayerRun}
           onContinue={() => handleNodeContinue(screen.nodeId)}
         />
+      )}
+
+      {screen.kind === 'levelUp' && (
+        <LevelUpScreen run={playerRun} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />
       )}
 
       {screen.kind === 'runComplete' && (

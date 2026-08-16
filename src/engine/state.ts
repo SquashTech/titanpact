@@ -15,6 +15,9 @@ export type DamageCategory = 'physical' | 'magical';
 export const BLIGHT_STATUS_ID = 'Blight';
 const BLIGHT_AFFECTED_STATS: readonly StatKey[] = ['attack', 'defense', 'intelligence', 'wisdom'];
 
+/** Freeze halves Speed (docs/conditions.md) — see getEffectiveStat below. */
+const FREEZE_STATUS_ID = 'Freeze';
+
 /**
  * A single active status on a combatant (docs/conditions.md §1 "The Three
  * Shapes"). `magnitude` is used by magnitude-shape statuses, `duration` by
@@ -98,6 +101,12 @@ export function getEffectiveStat(
     if (blightMagnitude > 0) {
       return Math.floor(raw * (1 - blightMagnitude / 100));
     }
+  }
+
+  // Freeze (docs/conditions.md): halves Speed. Boolean-shape — presence is
+  // the whole signal, no magnitude to read.
+  if (stat === 'speed' && hasStatus(combatant, FREEZE_STATUS_ID)) {
+    return Math.floor(raw / 2);
   }
 
   return raw;

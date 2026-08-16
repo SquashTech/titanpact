@@ -8,6 +8,9 @@
 import type { GuildHallOffer } from '../run/recruitment';
 import { heroes } from './heroes';
 
+/** Flat, untuned gold cost to buy a blank Recruit Contract at a Guild Hall — deliberately cheaper than the flat 20g hero-recruit offers below, since a contract still requires beating something to cash in. */
+export const CONTRACT_PURCHASE_COST = 12;
+
 export const guildHallOffers: GuildHallOffer[] = [
   { id: 'guild-ironWarden', heroId: 'ironWarden', cost: 20, startingMoveIds: heroes.ironWarden.moveIds },
   { id: 'guild-wildOracle', heroId: 'wildOracle', cost: 20, startingMoveIds: heroes.wildOracle.moveIds },

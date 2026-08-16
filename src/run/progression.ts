@@ -1,8 +1,14 @@
 // The pooled level-up currency (docs/progression.md "The level-up currency
-// (pooled, freely distributed)"). Spending a point does exactly one of two
-// things — CLAUDE.md: "They do exactly two things: progress a hero toward a
-// rank-up, and unlock moves from the current tier. They never directly raise
-// stats" — modeled here as two distinct spend functions. Concrete tier/branch
+// (pooled, freely distributed)"; docs/leveling-and-ranks.md is the
+// authoritative spec for the mechanic below — this module implements it).
+// Each Training Point spent on a hero does exactly one thing — level them up
+// — and a level-up always does two things as a consequence: it moves the
+// hero one step closer to (and eventually triggers) a rank-up, and it offers
+// a random move from the hero's remaining pool. There is no separate
+// "invest toward rank-up" spend and no per-move gold-style cost anymore —
+// that older two-independent-spends model is what this file replaces
+// (docs/leveling-and-ranks.md flagged the rewrite; CLAUDE.md "Each Training
+// Point levels up a hero..." is the signed-off design). Concrete pool/branch
 // CONTENT (which moves, which thresholds, which stat grants) is fixture data
 // in src/data/progression.ts, authored for a subset of the roster only — see
 // the SCOPE NOTE there. This module only implements the generic mechanism.
@@ -13,10 +19,8 @@ import type { HeroLookup } from '../engine/state';
 import type { RosterEntry, RunState } from './state';
 import { mergeStatMods } from './statMods';
 
-export interface MoveTier {
-  moveId: string;
-  cost: number;
-}
+/** A hero holds at most 4 moves (docs/leveling-and-ranks.md "The four-move cap"). Past the cap, growth is substitution, never expansion. */
+export const MOVE_CAP = 4;
 
 export interface RankUpBranch {
   id: string;
@@ -45,8 +49,8 @@ export interface RankUpNode {
 }
 
 export interface ProgressionTable {
-  /** heroId -> tiered moves purchasable beyond the hero's starting kit. */
-  moveTiers: Record<string, MoveTier[]>;
+  /** heroId -> pool of moves that can be randomly offered on level-up, beyond the hero's starting kit. */
+  moveTiers: Record<string, string[]>;
   /** heroId -> ordered rank-up nodes (docs/progression.md "Rank-ups (LOCKED rules)"). */
   rankUps: Record<string, RankUpNode[]>;
 }
@@ -67,25 +71,45 @@ function replaceEntry(run: RunState, rosterId: string, next: RosterEntry, spend:
   };
 }
 
-/** Spends pooled points to unlock a specific tiered move for a roster entry. */
-export function unlockTierMove(run: RunState, table: ProgressionTable, rosterId: string, moveId: string): RunState {
-  const entry = requireEntry(run, rosterId);
-  const tier = table.moveTiers[entry.heroId] ?? [];
-  const node = tier.find((t) => t.moveId === moveId);
-  if (!node) throw new ProgressionError(`${moveId} is not a tiered move for ${entry.heroId}`);
-  if (entry.unlockedMoveIds.includes(moveId)) throw new ProgressionError(`${moveId} is already unlocked`);
-  if (run.levelUpPool < node.cost) throw new ProgressionError('Not enough level-up points');
-
-  return replaceEntry(run, rosterId, { ...entry, unlockedMoveIds: [...entry.unlockedMoveIds, moveId] }, node.cost);
+/** The moves still available to offer this hero on level-up: the table's pool minus whatever's already unlocked. */
+export function levelUpMovePool(table: ProgressionTable, entry: RosterEntry): string[] {
+  const pool = table.moveTiers[entry.heroId] ?? [];
+  return pool.filter((id) => !entry.unlockedMoveIds.includes(id));
 }
 
-/** Spends pooled points advancing a roster entry's progress toward its next rank-up. */
-export function investRankProgress(run: RunState, rosterId: string, points: number): RunState {
-  if (!Number.isInteger(points) || points <= 0) throw new ProgressionError('points must be a positive integer');
+/**
+ * Spends one pooled Training Point leveling up a hero (docs/leveling-and-ranks.md,
+ * CLAUDE.md "Each Training Point levels up a hero"): increments level and
+ * rank-up progress by one. Does not touch the movepool itself — the caller
+ * resolves the random move offer (rolling from levelUpMovePool, and asking
+ * the player to accept a replacement or decline if the hero is already at
+ * MOVE_CAP) and applies it separately via grantLevelUpMove, since that's a
+ * player decision rather than a mechanical consequence of spending the point.
+ */
+export function levelUpHero(run: RunState, rosterId: string): RunState {
   const entry = requireEntry(run, rosterId);
-  if (run.levelUpPool < points) throw new ProgressionError('Not enough level-up points');
+  if (run.levelUpPool < 1) throw new ProgressionError('Not enough training points');
 
-  return replaceEntry(run, rosterId, { ...entry, rankProgress: entry.rankProgress + points }, points);
+  return replaceEntry(run, rosterId, { ...entry, level: entry.level + 1, rankProgress: entry.rankProgress + 1 }, 1);
+}
+
+/**
+ * Applies a level-up's move offer to a roster entry: adds `moveId` outright
+ * if there's room under MOVE_CAP, or swaps it in for `replaceMoveId` if the
+ * hero is already at the cap and the player accepted the replacement. Free —
+ * the point was already spent via levelUpHero; this only resolves what that
+ * level-up's move offer turned into (accept, swap, or the caller simply never
+ * calls this at all if the player declined).
+ */
+export function grantLevelUpMove(run: RunState, rosterId: string, moveId: string, replaceMoveId?: string): RunState {
+  const entry = requireEntry(run, rosterId);
+  if (replaceMoveId && !entry.unlockedMoveIds.includes(replaceMoveId)) {
+    throw new ProgressionError(`${replaceMoveId} is not currently unlocked on ${rosterId}`);
+  }
+  const unlockedMoveIds = replaceMoveId
+    ? entry.unlockedMoveIds.map((id) => (id === replaceMoveId ? moveId : id))
+    : [...entry.unlockedMoveIds, moveId];
+  return replaceEntry(run, rosterId, { ...entry, unlockedMoveIds }, 0);
 }
 
 /** The rank-up branch choice currently on offer for a roster entry, or null if none is available yet (or all nodes are already chosen). */

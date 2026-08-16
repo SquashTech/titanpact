@@ -93,6 +93,32 @@ test('status: Blight does NOT touch Speed, HP, or Mana — those stay Freeze/res
   assert.strictEqual(getEffectiveStat(hero, blighted.combatants.b1, 'manaPool'), hero.baseStats.manaPool);
 });
 
+// --- Freeze: halves Speed, including in turn-order resolution ---------------
+
+test('status: Freeze halves Speed (floored) and does not touch other stats', () => {
+  const state = twoVTwoFixture(150);
+  const frozen = withStatus(state, 'b1', 'Freeze', {});
+  const hero = heroes.ironWarden;
+
+  assert.strictEqual(getEffectiveStat(hero, state.combatants.b1, 'speed'), hero.baseStats.speed);
+  assert.strictEqual(getEffectiveStat(hero, frozen.combatants.b1, 'speed'), Math.floor(hero.baseStats.speed / 2));
+  assert.strictEqual(getEffectiveStat(hero, frozen.combatants.b1, 'attack'), hero.baseStats.attack);
+  assert.ok(hasStatus(frozen.combatants.b1, 'Freeze'));
+});
+
+test('status: a frozen combatant with higher base Speed is outsped by a faster-after-halving opponent', () => {
+  // tidecaller (55 speed) vs ironWarden (30 speed) frozen -> 30/2 = 15: tidecaller should now act first in the same priority bracket.
+  const state = twoVTwoFixture(151);
+  const frozen = withStatus(state, 'b1', 'Freeze', {});
+  const actions: Action[] = [
+    { kind: 'move', combatantId: 'a2', moveId: 'aquaJet', declaredTarget: 'b1' }, // tidecaller, 55 speed
+    { kind: 'move', combatantId: 'b1', moveId: 'quickJab', declaredTarget: 'a2' }, // ironWarden, 30 base -> 15 frozen
+  ];
+  const { events } = resolveRound(frozen, actions, config);
+  const moveUsedOrder = events.filter((e) => e.type === 'MoveUsed').map((e: any) => e.combatantId);
+  assert.deepStrictEqual(moveUsedOrder, ['a2', 'b1']);
+});
+
 test('status: Blight amplifies damage taken end-to-end through resolveRound', () => {
   const plain = twoVTwoFixture(104);
   const blighted = withStatus(plain, 'b1', 'Blight', { magnitude: 40 });

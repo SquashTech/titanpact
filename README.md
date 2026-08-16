@@ -31,13 +31,17 @@ constitution and [`docs/`](./docs) for the deeper design modules.
    (`src/run/recruitment.ts`, `docs/progression.md` "raise-vs-recruit axis"): Guild Hall
    spends gold on a fresh 0-progress hero from a data-driven offer pool
    (`src/data/recruitment.ts`); Recruit Contracts claim a defeated enemy's exact
-   rank-up state (progress, branches, stat grants, type-graft) for free, ungeared. Both
+   rank-up state (progress, branches, stat grants, type-graft), ungeared. Both
    are wired into the playable slice (`ShopNodeScreen.tsx` on `shop` map nodes,
    claim buttons on `FightScreen`'s victory overlay) and covered by
-   `test/recruitment.test.ts`. Contract offers now have a real trigger — claiming reuses
+   `test/recruitment.test.ts`. Contract offers have a real trigger — claiming reuses
    the specific map node's generated AI roster (`src/run/enemyGen.ts`), not a fixed
-   stand-in — now that #4 below exists. **Still not built:** the decaying Guild Hall
-   runway value curve (offers are flat-cost, not time-decaying).
+   stand-in. **Recruit Contracts are now a scarce currency, not unlimited claiming**
+   (2026-08-16 playtest pass): `RunState.recruitContracts` starts at 1/run, is spent on
+   every claim, and can be topped up via a `contractReward` map node or bought at the
+   Guild Hall for a flat 12g (cheaper than a direct 20g hero recruit). **Still not
+   built:** the decaying Guild Hall runway value curve (offers are flat-cost, not
+   time-decaying).
 3. **Relics: minimal version done, hook-triggered version still blocked.**
    `src/run/relics.ts` + `src/data/relics.ts` (`docs/run-loop.md`) implement team-wide
    flat stat grants, the same stat-pipeline-only precedent equipment already uses —
@@ -92,14 +96,20 @@ Covered by `test/statuses.test.ts`.
 - **The engine seam** (`buildCombatState.ts`): turns a `Squad` + roster into a real
   `CombatState`, applying equipment/rank-up stat grants as each combatant's starting
   modifiers.
-- **The pooled level-up currency** (`progression.ts`): spends points to unlock tiered
-  moves or advance rank-up progress; rank-up branches grant permanent stats and are
-  one-shot per node. Concrete tier/branch content is fixture data for 2 of the 6
-  fixture heroes (`src/data/progression.ts`) — see "Known gaps."
+- **The pooled level-up currency** (`progression.ts`): `levelUpHero` spends one point to
+  level a roster entry up (increments `RosterEntry.level` and `rankProgress` together);
+  `grantLevelUpMove` resolves that level-up's move offer — a random pick from the
+  hero's `moveTiers` pool, gained outright under the 4-move cap or an accept/decline
+  replacement at the cap (`MOVE_CAP`). Rank-up branches (unchanged) grant permanent
+  stats and are one-shot per node once `rankProgress` crosses a threshold. Concrete
+  pool/branch content is fixture data for 2 of the 6 fixture heroes
+  (`src/data/progression.ts`) — see "Known gaps."
 - **The recruitment economy** (`recruitment.ts`): Guild Hall (gold, fresh hero) and
-  Recruit Contract (free, claims a defeated hero's exact rank-up state) acquisition
+  Recruit Contract (claims a defeated hero's exact rank-up state, ungeared) acquisition
   paths, both enforcing the roster cap via the same `addRosterEntry` used everywhere
-  else. `RunState.gold` funds the Guild Hall side; contracts don't touch it.
+  else. `RunState.gold` funds the Guild Hall side; Recruit Contracts spend a separate,
+  scarce `RunState.recruitContracts` pool instead (starts at 1/run, toppable via a
+  `contractReward` map node or a cheaper Guild Hall purchase, `buyContract`).
 - **The run loop / branching map** (`map.ts`, `enemyGen.ts`, `runProgress.ts`,
   `relics.ts` — `docs/run-loop.md`): a seeded, Slay the Spire-style branching map for
   one act, 8 node types (fight/elite/boss + shop/equipment/relic/currency/upgrade
@@ -112,14 +122,23 @@ Covered by `test/statuses.test.ts`.
 `/src/view` + `/src/app` is a Vite + React playable slice: `MapScreen` is the run's
 hub — pick a reachable node, and fight/elite/boss nodes lead into a fresh
 bring-6-pick-4 squad pick (`SquadSelectScreen`, now per-fight/team-preview-style, not
-once per run) before `FightScreen` against that node's generated AI squad. The fight
+once per run) before `FightScreen` against that node's generated AI squad. The node's
+AI encounter is generated before `SquadSelectScreen` renders (not after squad
+confirmation), so that screen doubles as a battle-preview: a "Scouted enemies" section
+shows the generated AI squad alongside the player's own roster, both with an info
+button opening `HeroPreviewOverlay` (full stat table, moves, equipment — computed
+straight from `RosterEntry`/`HeroDefinition`, no live fight required). The fight
 screen exposes real switching (declared as a round action, blocked once locked in) and
 forced replacement (choosing which bench hero fills a KO'd slot). A loss ends the run
 ("Run Failed"); beating the boss node ends it ("Run Complete") — both offer "Start New
 Run" (fresh roster, fresh map seed; there's no meta-progression/unlock-pool layer yet).
-`TrainingPanel`, reachable from `MapScreen` at any time, is the level-up-pool spend UI
-that didn't exist before this pass — `src/run/progression.ts` was previously only
-exercised by tests.
+
+Training Points are forced-allocated immediately: `LevelUpScreen` blocks the run from
+continuing until every point earned (from a fight win or an `upgradeReward` node) is
+spent on a hero — replacing the earlier `TrainingPanel`, a deferred "spend whenever"
+panel. `MapScreen`'s "Manage Roster" button now opens `RosterManagementScreen` instead:
+read-only full stat spreads and equipment status per hero, plus moving an equipped item
+from one hero to another.
 
 **Known gaps, not silently resolved:**
 
@@ -142,10 +161,19 @@ exercised by tests.
   which isn't built — see "Next steps" #3.
 - **Rank-up branches are fixture content for 2 of 6 heroes** (cinderKnight,
   tidecaller — `src/data/progression.ts`); no branch unlocks a move on choice, to keep
-  the two level-up-pool spend paths distinct. One branch (cinderKnight's "Ember
-  Bulwark") grafts a second type (Stone) to exercise the type-graft mechanic
-  (`docs/progression.md` "Type-graft branches") end to end. The other 4 fixture
-  heroes have nothing to invest in yet; that's a valid empty state, not a bug.
+  the level-up move pool and rank-up stat grants distinct axes. One branch
+  (cinderKnight's "Ember Bulwark") grafts a second type (Stone) to exercise the
+  type-graft mechanic (`docs/progression.md` "Type-graft branches") end to end. The
+  other 4 fixture heroes have nothing to invest in yet; that's a valid empty state, not
+  a bug.
+- **Fixture heroes already exceed the 4-move cap at roster creation** (`heroes.ts` —
+  5-7 starting moves each, vs. `MOVE_CAP`'s 4, `docs/leveling-and-ranks.md`). The
+  level-up move-offer mechanism (gain under cap / accept-or-decline replacement at cap,
+  `LevelUpScreen`) is fully implemented and correct against `MOVE_CAP` — it's the
+  fixture *content* that's already over it, so almost every level-up currently
+  surfaces the replacement offer instead of a clean gain. Deliberately left as-is per
+  user direction (2026-08-16): useful for playtesting the offer UI now, to be fixed
+  alongside replacing the fixture roster with real content (#5 above), not before.
 - **The run loop is one act, and its map has no visual path lines.** See
   `docs/run-loop.md` §4 for the full list of what's still not built there (multi-act
   sequencing, a real Ancient boss hero, drawn map connectors).

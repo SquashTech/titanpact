@@ -34,14 +34,17 @@ an opaque level curve.
 > **`docs/leveling-and-ranks.md` is now the authoritative spec for level-ups and
 > rank-ups** and supersedes this section where they disagree. The type-graft/shift
 > question is reconciled (below — secondary type can shift, 2026-08-15 sign-off) and
-> implemented. **Still not reconciled:** the leveling *currency* mechanic itself —
-> `leveling-and-ranks.md` describes discrete per-battle level-up grants that always
-> trigger a movepool event, with rank-up triggered automatically at a level
-> threshold; the current implementation (`src/run/progression.ts`) still uses the
-> *older* pooled-points-via-two-independent-spends model (`unlockTierMove` /
-> `investRankProgress`) documented below. Deliberately left as-is for now — the
-> newer spec still has its own open item (bench-XP reconciliation) and rewiring the
-> engine is real scope; flag before doing that rewrite rather than drifting into it.
+> implemented. **Reconciled (2026-08-16 playtest sign-off):** the leveling
+> *currency* mechanic now matches `leveling-and-ranks.md` — `src/run/progression.ts`
+> implements `levelUpHero` (spends one pooled Training Point, incrementing a new
+> `RosterEntry.level` and `rankProgress` together) plus `grantLevelUpMove` (resolves
+> that level-up's random move offer: gained outright under the 4-move cap, or an
+> accept/decline replacement choice at cap). The older two-independent-spends model
+> (`unlockTierMove` / `investRankProgress`) is removed. Spending is also now forced
+> immediately after every points grant (`LevelUpScreen`), not deferred via Manage
+> Roster. **Still open:** the bench-XP reconciliation question below is unaffected
+> by this change (points are still freely distributable to any roster hero,
+> benched or active).
 
 - Level-ups **drive rank-ups**; rank-ups are where a hero's identity branches.
 - **Rank-up branches differ in kind, not degree.** A branch is not "the same hero but
@@ -161,13 +164,20 @@ pool (`src/data/recruitment.ts`, provisional flat costs). Recruit Contracts deri
 claimable offer from a defeated enemy's `RosterEntry` — carrying its rank-up progress,
 chosen branches, stat grants, and type-graft, but not its equipment (an assumption,
 not a cited rule — equipment is roster-slot-attached, not hero-bound, and neither this
-doc nor `CLAUDE.md` says whether captured gear transfers) — and claim it for free.
-**NOT YET IMPLEMENTED:** the decaying Guild Hall runway value curve (offers are flat
-gold costs, not a value that decays as the run progresses) and a real trigger for
-contract offers (there's no escalating-fight encounter to beat yet — README "Next
-steps" #4 — so the playable slice offers a contract claim off the fixed demo AI's
-roster on any win, as a placeholder trigger, not the intended "beat this specific
-encounter" hook).
+doc nor `CLAUDE.md` says whether captured gear transfers). The trigger is real, not a
+placeholder: claiming reuses the specific map node's own generated AI roster
+(`src/run/enemyGen.ts`), now that the run loop exists (`run-loop.md`).
+
+**Recruit Contracts are a scarce currency, not a free-and-unlimited claim (2026-08-16
+playtest pass).** `RunState.recruitContracts` starts at 1 per run and is spent (not
+gold — free in that sense) on every `claimContract`; claiming with none available is
+rejected (`RecruitmentError`). More can be found via a `contractReward` map node
+(`run-loop.md` node types) or bought at a Guild Hall for a flat 12g
+(`buyContract`, `src/data/recruitment.ts` `CONTRACT_PURCHASE_COST`) — deliberately
+cheaper than a direct 20g hero recruit, since a contract still requires beating
+something specific to cash in. **NOT YET IMPLEMENTED:** the decaying Guild Hall
+runway value curve (offers are flat gold costs, not a value that decays as the run
+progresses).
 
 ---
 
