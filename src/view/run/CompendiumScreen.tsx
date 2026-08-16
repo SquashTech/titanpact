@@ -7,6 +7,7 @@ import { getTypeColor } from '../combat/typeColors';
 import { StatBars } from '../shared/StatBars';
 import { MoveTile, MoveInfoPanel } from '../shared/MoveTile';
 import { TypeBadge } from '../shared/TypeBadge';
+import { HeroPortrait } from '../shared/HeroPortrait';
 
 interface Props {
   onClose: () => void;
@@ -40,6 +41,7 @@ function CompendiumHeroCard({
   return (
     <div className="roster-mgmt-card" style={{ borderLeftColor: getTypeColor(hero.types[0]) }}>
       <div className="roster-mgmt-head">
+        <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
         <div className="roster-mgmt-name">{hero.name}</div>
         <div className="roster-card-types">
           {hero.types.map((t) => (

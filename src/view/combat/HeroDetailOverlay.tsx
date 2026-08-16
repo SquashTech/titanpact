@@ -5,6 +5,7 @@ import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
 import { STAT_LABELS, STAT_ORDER, StatBars } from '../shared/StatBars';
 import { TypeBadge } from '../shared/TypeBadge';
+import { HeroPortrait } from '../shared/HeroPortrait';
 
 const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
@@ -49,6 +50,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
   return (
     <div className="detail-overlay" onClick={onClose}>
       <div className="detail-panel" onClick={(e) => e.stopPropagation()}>
+        <HeroPortrait heroId={hero.id} className="detail-portrait" />
         <div className="detail-header">
           <div className="detail-name">{hero.name}</div>
           <div className="combatant-types">

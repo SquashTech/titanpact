@@ -8,6 +8,7 @@ import { equipFromInventory, unequipToInventory, RunProgressError } from '../../
 import { getTypeColor } from '../combat/typeColors';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { TypeBadge } from '../shared/TypeBadge';
+import { HeroPortrait } from '../shared/HeroPortrait';
 
 const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
@@ -109,6 +110,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
               return (
                 <div key={entry.rosterId} className="roster-mgmt-card" style={{ borderLeftColor: getTypeColor(hero.types[0]) }}>
                   <div className="roster-mgmt-head">
+                    <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
                     <div className="roster-mgmt-name">
                       {hero.name} <span className="hint">Lv {entry.level}</span>
                     </div>

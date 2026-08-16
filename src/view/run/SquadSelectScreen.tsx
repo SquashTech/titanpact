@@ -10,6 +10,7 @@ import type { Encounter } from '../../run/enemyGen';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
+import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeChartOverlay } from '../shared/TypeChartOverlay';
 
 interface Props {
@@ -81,6 +82,7 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
                   >
                     i
                   </button>
+                  <HeroPortrait heroId={hero.id} className="roster-card-portrait" />
                   <div className="roster-card-name">
                     {hero.name} <span className="hint">Lv {entry.level}</span>
                   </div>
@@ -126,6 +128,7 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
                   >
                     i
                   </button>
+                  <HeroPortrait heroId={hero.id} className="roster-card-portrait" />
                   <div className="roster-card-name">
                     {hero.name} <span className="hint">Lv {entry.level}</span>
                   </div>

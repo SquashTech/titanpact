@@ -2,7 +2,7 @@ import type { HeroDefinition } from '../../engine/content';
 import type { Combatant } from '../../engine/state';
 import { effectiveTypes, getMaxHp, getMaxMana } from '../../engine/state';
 import { TypeBadge } from '../shared/TypeBadge';
-import { heroArt } from '../shared/heroArt';
+import { HeroPortrait } from '../shared/HeroPortrait';
 
 export interface Popup {
   key: number;
@@ -74,7 +74,7 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onI
           {popup.text}
         </div>
       )}
-      {heroArt[hero.id] && <img className="combatant-portrait" src={heroArt[hero.id]} alt="" />}
+      <HeroPortrait heroId={hero.id} className="combatant-portrait" />
       <div className="combatant-name">
         <span>{hero.name}</span>
         <span className="combatant-types">
@@ -94,17 +94,27 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onI
           </span>
         ))}
       </div>
-      <div className="bar-track">
-        <div className={`bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
-      </div>
-      <div className="bar-label">
-        HP {Math.max(0, combatant.currentHp)}/{maxHp}
-      </div>
-      <div className="bar-track">
-        <div className="bar-fill mana" style={{ width: `${manaFraction * 100}%` }} />
-      </div>
-      <div className="bar-label">
-        MP {combatant.currentMana}/{maxMana}
+      {/* Wrapped in a `.resource` pair so compact contexts (bench-row) can lay
+          HP and MP side by side instead of stacked — `.resource-row`/`.resource`
+          are `display: contents` by default, so this changes nothing about the
+          full-size card's layout (see .bench-row .resource-row in styles.css). */}
+      <div className="resource-row">
+        <div className="resource">
+          <div className="bar-track">
+            <div className={`bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
+          </div>
+          <div className="bar-label">
+            HP {Math.max(0, combatant.currentHp)}/{maxHp}
+          </div>
+        </div>
+        <div className="resource">
+          <div className="bar-track">
+            <div className="bar-fill mana" style={{ width: `${manaFraction * 100}%` }} />
+          </div>
+          <div className="bar-label">
+            MP {combatant.currentMana}/{maxMana}
+          </div>
+        </div>
       </div>
     </div>
   );

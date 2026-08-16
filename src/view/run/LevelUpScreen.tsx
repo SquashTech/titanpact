@@ -15,6 +15,7 @@ import {
 import { getTypeColor } from '../combat/typeColors';
 import { MoveTile, MoveInfoPanel } from '../shared/MoveTile';
 import { TypeBadge } from '../shared/TypeBadge';
+import { HeroPortrait } from '../shared/HeroPortrait';
 
 interface Props {
   run: RunState;
@@ -159,9 +160,12 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
                   }}
                 >
                   <div className="training-hero-head">
-                    <h3>
-                      {hero.name} — Lv {entry.level}
-                    </h3>
+                    <div className="training-hero-title">
+                      <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
+                      <h3>
+                        {hero.name} — Lv {entry.level}
+                      </h3>
+                    </div>
                     <span className="training-hero-cta">{canLevelUp ? 'Tap to level up' : 'No points'}</span>
                   </div>
                   <div className="roster-card-types">

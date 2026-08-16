@@ -403,16 +403,6 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
       {resolving && <div className="advance-overlay" onClick={handleAdvance} />}
 
       <div className="battlefield">
-        {/* Always mounted, at a fixed height, whether or not a round is
-            currently playing out — reserving the space up front means
-            starting/ending playback never itself shifts the team rows below
-            (see .combat-banner). */}
-        <div className={`combat-banner${banner ? '' : ' combat-banner-empty'}`}>
-          {banner && <span>{banner}</span>}
-          {bannerMeta && <span className="combat-banner-meta">{bannerMeta}</span>}
-          <span className="combat-banner-hint">tap to continue ▸</span>
-        </div>
-
         <div className="team-row enemy">
           {renderActiveSlot(AI_SIDE, 0)}
           {renderActiveSlot(AI_SIDE, 1)}
@@ -429,6 +419,19 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
       </div>
 
       <div className="action-area">
+        {/* Narrates the current beat of a playing-out round
+            (docs/architecture.md "engine / presentation separation") — who
+            acted, what landed, who went down. Lives here, in the space the
+            move-selection panel vacates while resolving, rather than as a
+            fixed-height reservation above the battlefield that would sit
+            empty (and push everything else down) the rest of the time. */}
+        {resolving && (
+          <div className="combat-banner">
+            {banner && <span>{banner}</span>}
+            {bannerMeta && <span className="combat-banner-meta">{bannerMeta}</span>}
+            <span className="combat-banner-hint">tap to continue ▸</span>
+          </div>
+        )}
         {!resolving &&
           openReplacementSlots.length === 0 &&
           playerActiveAlive.length > 0 &&

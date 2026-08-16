@@ -8,6 +8,7 @@ import { mergeStatMods } from '../../run/statMods';
 import { StatBars } from '../shared/StatBars';
 import { MoveTile, MoveInfoPanel } from '../shared/MoveTile';
 import { TypeBadge } from '../shared/TypeBadge';
+import { HeroPortrait } from '../shared/HeroPortrait';
 
 const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
@@ -40,6 +41,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Pr
   return (
     <div className="detail-overlay" onClick={onClose}>
       <div className="detail-panel" onClick={(e) => e.stopPropagation()}>
+        <HeroPortrait heroId={hero.id} className="detail-portrait" />
         <div className="detail-header">
           <div className="detail-name">
             {hero.name} — Lv {entry.level}

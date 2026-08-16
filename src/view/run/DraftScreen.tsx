@@ -6,6 +6,7 @@ import { STARTER_PICK_COUNT } from '../../run/draft';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
+import { HeroPortrait } from '../shared/HeroPortrait';
 
 interface Props {
   optionIds: string[];
@@ -73,6 +74,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
                   >
                     i
                   </button>
+                  <HeroPortrait heroId={hero.id} className="roster-card-portrait" />
                   <div className="roster-card-name">{hero.name}</div>
                   <div className="roster-card-types">
                     {hero.types.map((t) => (

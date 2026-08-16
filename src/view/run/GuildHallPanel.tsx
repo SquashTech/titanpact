@@ -3,6 +3,7 @@ import { guildHallOffers, CONTRACT_PURCHASE_COST } from '../../data/recruitment'
 import type { RunState } from '../../run/state';
 import { ROSTER_CAP } from '../../run/state';
 import { recruitFromGuildHall, buyContract, RecruitmentError } from '../../run/recruitment';
+import { HeroPortrait } from '../shared/HeroPortrait';
 
 interface Props {
   run: RunState;
@@ -52,6 +53,7 @@ export function GuildHallPanel({ run, onRecruit }: Props) {
               disabled={!affordable}
               onClick={() => handleRecruit(offer)}
             >
+              <HeroPortrait heroId={hero.id} className="roster-card-portrait" />
               <div className="roster-card-name">{hero.name}</div>
               <div className="roster-card-types">{hero.types.join('/')}</div>
               <div className="guild-hall-cost">{offer.cost}g</div>

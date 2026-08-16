@@ -130,14 +130,15 @@ body {
 
 /* Narrates the current beat of a playing-out round (docs/architecture.md
    "engine / presentation separation") — who acted, what landed, who went
-   down. Sits in normal flow rather than as an overlay so it never blocks
-   the cards it's describing. Not itself a click target — .advance-overlay
-   covers the whole screen so any tap advances. */
-/* Fixed (not min) height at all times, sized for the worst case — a
-   2-line-clamped message plus the meta line plus the hint line — and
-   clipped with overflow:hidden so nothing can push it taller. A min-height
-   alone still let the box grow whenever a beat's text actually wrapped to
-   2 lines or carried a meta line, which was still visibly jumping. */
+   down. Only mounted while a round is resolving (FightScreen.tsx), inside
+   .action-area where the move-selection panel would otherwise be — so it
+   costs no reserved space the rest of the time. Not itself a click target —
+   .advance-overlay covers the whole screen so any tap advances. */
+/* Fixed (not min) height, sized for the worst case — a 2-line-clamped
+   message plus the meta line plus the hint line — and clipped with
+   overflow:hidden so nothing can push it taller. A min-height alone still
+   let the box grow whenever a beat's text actually wrapped to 2 lines or
+   carried a meta line, which was still visibly jumping. */
 .combat-banner {
   flex-shrink: 0;
   width: 100%;
@@ -166,13 +167,6 @@ body {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-.combat-banner.combat-banner-empty {
-  visibility: hidden;
-  border-color: transparent;
-  box-shadow: none;
-  animation: none;
 }
 
 @keyframes banner-pop {
@@ -286,9 +280,43 @@ body {
 }
 
 .bench-row .combatant-portrait {
+  width: 20px;
+  height: 20px;
+  margin-bottom: 1px;
+}
+
+/* Portrait placement for the other hero-referencing screens (HeroPortrait,
+   src/view/shared/HeroPortrait.tsx) — same pixel-art source as
+   .combatant-portrait, sized per context. Renders nothing for heroes with no
+   art yet, so these rules only ever affect heroes that have a sprite. */
+.roster-card-portrait {
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 4px;
+  image-rendering: pixelated;
+}
+
+.roster-mgmt-portrait {
+  display: block;
   width: 28px;
   height: 28px;
-  margin-bottom: 2px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+
+.detail-portrait {
+  display: block;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 6px;
+  image-rendering: pixelated;
+}
+
+.training-hero-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* Switch-in picker, inside the switch-row of the move-selection action panel
@@ -305,7 +333,7 @@ body {
 }
 
 .bench-row .combatant-card {
-  padding: 5px 8px;
+  padding: 4px 8px;
 }
 
 .bench-row .combatant-name {
@@ -313,17 +341,42 @@ body {
   margin-bottom: 2px;
 }
 
+/* No statuses to show mid-selection carries no risk of a later layout jump
+   (nothing resolves while the player is still picking actions), so — unlike
+   the full-size battlefield card — this row can just collapse away instead
+   of reserving a fixed row of empty space. */
+.bench-row .status-badge-row:empty {
+  display: none;
+}
+
 .bench-row .status-badge-row {
   margin-bottom: 2px;
 }
 
+/* HP and MP side by side instead of stacked (.resource-row/.resource are
+   `display: contents` everywhere else — see styles.css near .bar-track) —
+   the single biggest source of the switch-row picker's extra height. */
+.bench-row .resource-row {
+  display: flex;
+  gap: 6px;
+}
+
+.bench-row .resource {
+  display: block;
+  flex: 1;
+  min-width: 0;
+}
+
 .bench-row .bar-track {
   height: 5px;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .bench-row .bar-label {
   font-size: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .combatant-card.targetable {
@@ -460,6 +513,14 @@ body {
 
 .category-badge.category-magical {
   color: var(--magical);
+}
+
+/* Default: invisible in the box tree, so HP/MP render exactly as if
+   .resource-row/.resource weren't there at all — only compact contexts
+   (.bench-row below) give these real layout. */
+.resource-row,
+.resource {
+  display: contents;
 }
 
 .bar-track {
@@ -1280,7 +1341,7 @@ body {
 
 .roster-mgmt-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   margin-bottom: 6px;
   padding-right: 22px;
