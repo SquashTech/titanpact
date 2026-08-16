@@ -1479,6 +1479,20 @@ body {
   margin: 2px 0 10px;
 }
 
+/* Start-of-run draft's flavor intro (DraftScreen), sitting above the pick-2-of-4 grid. */
+.draft-flavor {
+  border-radius: 10px;
+  padding: 10px 10px 4px;
+  margin-bottom: 4px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(232, 168, 74, 0.12), transparent 60%);
+}
+
+.draft-flavor-text {
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+
 /* Scouted enemy cards are read-only (only the info button is interactive) — no pick affordance. */
 .enemy-scout-card {
   cursor: default;
@@ -1786,18 +1800,68 @@ body {
   max-height: 75vh;
 }
 
+/* Roster shown one hero per row (not the shared 2-col .roster-grid) so each
+   card gets full screen width — move tiles need that room for their names to
+   stay readable instead of being squeezed into a quarter-width column. */
+.training-hero-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
 .training-hero {
   padding: 10px 10px 10px 8px;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   background: var(--panel);
   border: 1px solid var(--border);
   border-left: 3px solid var(--border);
   border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.training-hero:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.training-hero-disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.training-hero-disabled:hover {
+  border-color: var(--border);
+  transform: none;
+  box-shadow: none;
 }
 
 .training-hero h3 {
   font-size: 13px;
-  margin: 0 0 4px;
+  margin: 0;
+}
+
+.training-hero-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.training-hero-cta {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.training-hero-disabled .training-hero-cta {
+  color: var(--text-dim);
 }
 
 .training-row {
@@ -1813,12 +1877,25 @@ body {
   width: 100%;
 }
 
-/* --- Level-up screen: move banner + hoverable move chips --------------- */
+/* --- Level-up screen: fixed move info panel + uniform move tiles -------
+   The info panel sits in one fixed spot near the top of the screen (never
+   anchored to the cursor), so its content can never hang off a screen edge
+   regardless of where the tapped hero card or move tile sits.
 
-.levelup-banner {
+   Its height is locked (not min-height) to whatever the fullest state needs
+   — label + name/type row + meta row + a 2-line-clamped description — so
+   swapping between a short message, a long one, and the empty placeholder
+   never reflows the hero list beneath it. Same fixed-box-regardless-of-
+   content convention as .move-description in the combat screen; see that
+   rule's comment for the rationale, and apply it to any future info box
+   whose content changes while the rest of the page stays put. */
+
+.levelup-info-panel {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 3px;
+  height: 104px;
   background: var(--panel-alt);
   border: 1px solid var(--accent);
   border-radius: 8px;
@@ -1826,12 +1903,17 @@ body {
   margin-bottom: 10px;
 }
 
-.levelup-banner-label {
+.levelup-info-label {
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--accent);
+}
+
+.levelup-info-placeholder {
+  font-size: 11px;
+  color: var(--text-dim);
 }
 
 .move-tooltip-head {
@@ -1851,65 +1933,46 @@ body {
 }
 
 .move-tooltip-desc {
+  min-height: 28px;
   font-size: 11px;
-  line-height: 1.4;
+  line-height: 14px;
   color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.move-chip-row {
+.move-tile-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
-  margin-bottom: 8px;
+  gap: 3px;
+  margin-bottom: 2px;
 }
 
-.move-chip {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10px;
+.move-tile {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9px;
   font-weight: 600;
-  padding: 3px 7px;
-  border-radius: 10px;
+  padding: 3px 5px;
+  border-radius: 5px;
   background: #0d0e12;
   border: 1px solid var(--border);
+  border-left-width: 3px;
   cursor: pointer;
 }
 
-.move-chip:hover,
-.move-chip.move-chip-pinned {
+.move-tile:hover,
+.move-tile.move-tile-selected {
   border-color: var(--accent);
 }
 
-.move-chip-type-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.move-chip-tooltip {
-  display: none;
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 0;
-  z-index: 30;
-  width: 200px;
-  flex-direction: column;
-  gap: 3px;
-  background: var(--panel);
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  padding: 8px 10px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-  cursor: default;
-  white-space: normal;
-}
-
-.move-chip:hover .move-chip-tooltip,
-.move-chip.move-chip-pinned .move-chip-tooltip {
-  display: flex;
+.move-tile.move-tile-selected {
+  background: #1a140a;
 }
 
 .rankup-branch-button {

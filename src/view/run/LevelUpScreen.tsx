@@ -28,7 +28,7 @@ interface MoveOffer {
 
 const KIND_LABELS: Record<string, string> = { damage: 'Damage', heal: 'Heal', buff: 'Buff/Debuff' };
 
-/** "60 pow · 10 mp" / "40 heal · 14 mp" / "10 mp" — the compact stat line shown in a move tooltip/banner. */
+/** "60 pow · 10 mp" / "40 heal · 14 mp" / "10 mp" — the compact stat line shown for a move. */
 function moveStatLine(move: MoveDefinition): string {
   const parts: string[] = [];
   if (move.kind === 'damage' && move.basePower) parts.push(`${move.basePower} pow`);
@@ -37,31 +37,35 @@ function moveStatLine(move: MoveDefinition): string {
   return parts.join(' · ');
 }
 
-/** Hoverable move chip — name + type-colored tag, with a tooltip panel (full type/stats/description) shown on hover, tap-to-toggle on touch devices. */
-function MoveChip({ move }: { move: MoveDefinition }) {
-  const [pinned, setPinned] = useState(false);
+/**
+ * Uniform move tile — just the name, type shown as a colored left edge
+ * (matching the border-left type coding used elsewhere in this app, e.g. the
+ * hero card itself) rather than a separate dot glyph, so more tiles fit per
+ * row before wrapping. Kept to a single compact line so six full-width hero
+ * rows still fit on screen without scrolling. Stats and description aren't
+ * shown on the tile at all; hovering (mouse) or tapping (touch/click) loads
+ * them into the screen's fixed info panel instead of popping a tooltip next
+ * to the cursor, so the text can never hang off a screen edge. When
+ * `onSelect` is omitted the tile is purely decorative (used inside the
+ * move-replace offer buttons, where the whole button is already the tap
+ * target).
+ */
+function MoveTile({ move, selected, onSelect }: { move: MoveDefinition; selected?: boolean; onSelect?: () => void }) {
   return (
     <span
-      className={`move-chip${pinned ? ' move-chip-pinned' : ''}`}
-      onClick={(e) => {
-        e.stopPropagation();
-        setPinned((p) => !p);
-      }}
+      className={`move-tile${selected ? ' move-tile-selected' : ''}`}
+      style={{ borderLeftColor: getTypeColor(move.type) }}
+      onMouseEnter={onSelect}
+      onClick={
+        onSelect
+          ? (e) => {
+              e.stopPropagation();
+              onSelect();
+            }
+          : undefined
+      }
     >
-      <span className="move-chip-type-dot" style={{ background: getTypeColor(move.type) }} />
       {move.name}
-      <span className="move-chip-tooltip">
-        <span className="move-tooltip-head">
-          <span className="move-tooltip-name">{move.name}</span>
-          <span className="type-tag" style={{ color: getTypeColor(move.type) }}>
-            {move.type}
-          </span>
-        </span>
-        <span className="move-tooltip-meta">
-          {KIND_LABELS[move.kind] ?? move.kind} · {moveStatLine(move)}
-        </span>
-        {move.description && <span className="move-tooltip-desc">{move.description}</span>}
-      </span>
     </span>
   );
 }
@@ -73,14 +77,27 @@ function MoveChip({ move }: { move: MoveDefinition }) {
  * hero here before Continue unlocks — replaces the old "spend whenever, via
  * Manage Roster" flow. Manage Roster (RosterManagementScreen) is now
  * inspection/equipment-only and never spends the pool.
+ *
+ * Each hero card is itself the level-up button (tap the card to spend a
+ * point on that hero) — there's no separate "Level Up" button to hunt for.
+ * Move details live in a single fixed info panel near the top of the screen
+ * rather than a cursor-anchored tooltip, so they read the same regardless of
+ * where on the (portrait, narrow) screen the hero card sits.
  */
 export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
   const [offer, setOffer] = useState<MoveOffer | null>(null);
   const [lastMessage, setLastMessage] = useState<string | null>(null);
-  /** The most recently learned/offered move — drives the top-of-screen move banner (this screen's equivalent of SquadSelectScreen's info-preview treatment). */
-  const [bannerMoveId, setBannerMoveId] = useState<string | null>(null);
+  /** The move currently shown in the fixed info panel, and why it's there. */
+  const [viewedMoveId, setViewedMoveId] = useState<string | null>(null);
+  const [viewedLabel, setViewedLabel] = useState<string>('');
+
+  function showMoveInfo(moveId: string, label: string) {
+    setViewedMoveId(moveId);
+    setViewedLabel(label);
+  }
 
   function handleLevelUp(rosterId: string) {
+    if (run.levelUpPool < 1) return;
     const entry = run.roster.find((r) => r.rosterId === rosterId);
     if (!entry) return;
     const hero = heroes[entry.heroId];
@@ -99,7 +116,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     if (pool.length === 0) {
       onRunChange(next);
       setLastMessage(`${hero.name} reached level ${newLevel}.`);
-      setBannerMoveId(null);
+      setViewedMoveId(null);
       return;
     }
 
@@ -107,11 +124,11 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     if (!wasAtCap) {
       onRunChange(grantLevelUpMove(next, rosterId, moveId));
       setLastMessage(`${hero.name} reached level ${newLevel} and learned ${moves[moveId].name}!`);
-      setBannerMoveId(moveId);
+      showMoveInfo(moveId, `${hero.name} — move learned`);
     } else {
       onRunChange(next);
       setOffer({ rosterId, moveId });
-      setBannerMoveId(moveId);
+      showMoveInfo(moveId, `${hero.name} — move offered`);
     }
   }
 
@@ -124,13 +141,13 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
       if (hero) setLastMessage(`${hero.name} swapped in ${moves[offer.moveId].name}.`);
     } else if (hero) {
       setLastMessage(`${hero.name} kept its current moves.`);
-      setBannerMoveId(null);
     }
+    setViewedMoveId(null);
     setOffer(null);
   }
 
   const offerEntry = offer ? (run.roster.find((r) => r.rosterId === offer.rosterId) ?? null) : null;
-  const bannerMove = bannerMoveId ? moves[bannerMoveId] : null;
+  const viewedMove = viewedMoveId ? moves[viewedMoveId] : null;
 
   return (
     <div className="node-screen">
@@ -138,22 +155,25 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
         <h2 className="squad-section-title">📈 Level Up — {run.levelUpPool} pts remaining</h2>
         <p className="hint">Spend every Training Point before continuing.</p>
 
-        {bannerMove && (
-          <div className="levelup-banner">
-            <div className="levelup-banner-label">{offer ? 'Move offered' : 'Move learned'}</div>
-            <div className="move-tooltip-head">
-              <span className="move-tooltip-name">{bannerMove.name}</span>
-              <span className="type-tag" style={{ color: getTypeColor(bannerMove.type) }}>
-                {bannerMove.type}
-              </span>
-            </div>
-            <div className="move-tooltip-meta">
-              {KIND_LABELS[bannerMove.kind] ?? bannerMove.kind} · {moveStatLine(bannerMove)}
-            </div>
-            {bannerMove.description && <div className="move-tooltip-desc">{bannerMove.description}</div>}
-          </div>
-        )}
-        {!bannerMove && lastMessage && <p className="hint">{lastMessage}</p>}
+        <div className="levelup-info-panel">
+          {viewedMove ? (
+            <>
+              <div className="levelup-info-label">{viewedLabel}</div>
+              <div className="move-tooltip-head">
+                <span className="move-tooltip-name">{viewedMove.name}</span>
+                <span className="type-tag" style={{ color: getTypeColor(viewedMove.type) }}>
+                  {viewedMove.type}
+                </span>
+              </div>
+              <div className="move-tooltip-meta">
+                {KIND_LABELS[viewedMove.kind] ?? viewedMove.kind} · {moveStatLine(viewedMove)}
+              </div>
+              {viewedMove.description && <div className="move-tooltip-desc">{viewedMove.description}</div>}
+            </>
+          ) : (
+            <div className="levelup-info-placeholder">{lastMessage ?? 'Hover or tap a move to see its details here.'}</div>
+          )}
+        </div>
 
         {offer && offerEntry ? (
           <div className="reward-panel">
@@ -165,7 +185,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
                 <button key={moveId} className="roster-card" onClick={() => resolveOffer(moveId)}>
                   <div className="roster-card-name">Replace {moves[moveId].name}</div>
                   <div className="roster-card-types">
-                    <MoveChip move={moves[moveId]} />
+                    <MoveTile move={moves[moveId]} />
                   </div>
                 </button>
               ))}
@@ -175,19 +195,33 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
             </div>
           </div>
         ) : (
-          <div className="roster-grid">
+          <div className="training-hero-list">
             {run.roster.map((entry) => {
               const hero = heroes[entry.heroId];
               const node = availableRankUp(progressionTable, entry);
+              const canLevelUp = run.levelUpPool >= 1;
               return (
                 <div
                   key={entry.rosterId}
-                  className="training-hero"
+                  className={`training-hero${canLevelUp ? '' : ' training-hero-disabled'}`}
                   style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
+                  role="button"
+                  tabIndex={canLevelUp ? 0 : -1}
+                  aria-disabled={!canLevelUp}
+                  onClick={() => handleLevelUp(entry.rosterId)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleLevelUp(entry.rosterId);
+                    }
+                  }}
                 >
-                  <h3>
-                    {hero.name} — Lv {entry.level}
-                  </h3>
+                  <div className="training-hero-head">
+                    <h3>
+                      {hero.name} — Lv {entry.level}
+                    </h3>
+                    <span className="training-hero-cta">{canLevelUp ? 'Tap to level up' : 'No points'}</span>
+                  </div>
                   <div className="roster-card-types">
                     {hero.types.map((t) => (
                       <span key={t} className="type-tag" style={{ color: getTypeColor(t) }}>
@@ -195,16 +229,20 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
                       </span>
                     ))}
                   </div>
-                  <div className="move-chip-row">
+                  <div className="move-tile-row">
                     {entry.unlockedMoveIds.map((moveId) =>
-                      moves[moveId] ? <MoveChip key={moveId} move={moves[moveId]} /> : null
+                      moves[moveId] ? (
+                        <MoveTile
+                          key={moveId}
+                          move={moves[moveId]}
+                          selected={viewedMoveId === moveId}
+                          onSelect={() => showMoveInfo(moveId, `${hero.name}`)}
+                        />
+                      ) : null
                     )}
                   </div>
-                  <button className="move-button" disabled={run.levelUpPool < 1} onClick={() => handleLevelUp(entry.rosterId)}>
-                    Level Up (1 pt)
-                  </button>
                   {node && (
-                    <div className="training-row">
+                    <div className="training-row" onClick={(e) => e.stopPropagation()}>
                       <span className="hint">Rank-up ready — choose a branch:</span>
                       {node.branches.map((branch) => (
                         <button

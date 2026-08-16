@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FightScreen } from '../view/combat/FightScreen';
 import { TitleScreen } from '../view/run/TitleScreen';
+import { DraftScreen } from '../view/run/DraftScreen';
 import { SquadSelectScreen } from '../view/run/SquadSelectScreen';
 import { MapScreen } from '../view/run/MapScreen';
 import { ShopNodeScreen } from '../view/run/ShopNodeScreen';
@@ -8,12 +9,11 @@ import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScr
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { heroes } from '../data/heroes';
 import { enemies } from '../data/enemies';
-import { equipment } from '../data/equipment';
 import { relics } from '../data/relics';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP } from '../run/state';
-import { equipItem } from '../run/equipment';
 import { deriveContractOffer, claimContract, isRecruitable } from '../run/recruitment';
 import { generateMap } from '../run/map';
+import { generateStarterOptions } from '../run/draft';
 import { generateEncounter, type EncounterNodeType, type Encounter } from '../run/enemyGen';
 import { relicTeamStatModifiers } from '../run/relics';
 import { advanceToNode, grantCurrencyReward, grantUpgradeReward } from '../run/runProgress';
@@ -22,6 +22,7 @@ import type { Squad } from '../run/squad';
 
 type Screen =
   | { kind: 'title' }
+  | { kind: 'draft'; optionIds: string[] }
   | { kind: 'map' }
   | { kind: 'squadSelect'; nodeId: string; nodeType: EncounterNodeType; encounter: Encounter }
   | { kind: 'fight'; nodeId: string; nodeType: EncounterNodeType; squad: Squad; encounter: Encounter; goldReward: number }
@@ -34,22 +35,20 @@ type Screen =
   | { kind: 'runFailed' };
 
 /**
- * Starting roster for a fresh run: a small starting pair plus gold, leaving
- * the rest of the fixture roster to be recruited in-run via Guild Hall
- * (shop map nodes) or claimed as Recruit Contracts after a win. cinderKnight
- * starts pre-equipped just to prove equipment reaches the fight — not a
- * balance statement. A fresh RunMap is generated per run (docs/run-loop.md).
+ * Starting roster for a fresh run: the player's two drafted heroes
+ * (DraftScreen — pick 2 of 4 random candidates, CLAUDE.md "every hero must
+ * be viable" so runs shouldn't always open with the same pair) plus gold,
+ * leaving the rest of the fixture roster to be recruited in-run via Guild
+ * Hall (shop map nodes) or claimed as Recruit Contracts after a win. A fresh
+ * RunMap is generated per run (docs/run-loop.md).
  */
-function createStartingRun(): RunState {
+function createStartingRun(heroIds: readonly string[]): RunState {
   let run = createRunState(0, 40);
-  for (const heroId of ['cinderKnight', 'tidecaller']) {
+  for (const heroId of heroIds) {
     run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   }
   return {
     ...run,
-    roster: run.roster.map((entry) =>
-      entry.rosterId === 'cinderKnight' ? { ...entry, equipment: equipItem(entry.equipment, equipment.ironBlade) } : entry
-    ),
     map: generateMap(Math.floor(Math.random() * 2 ** 31)),
   };
 }
@@ -80,7 +79,7 @@ function trainingPointsFor(nodeType: EncounterNodeType): number {
 }
 
 export function App() {
-  const [playerRun, setPlayerRun] = useState<RunState>(createStartingRun);
+  const [playerRun, setPlayerRun] = useState<RunState>(() => createRunState(0, 40));
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
 
   function handleClaimContract(defeated: RosterEntry): boolean {
@@ -145,8 +144,14 @@ export function App() {
     setScreen(playerRun.levelUpPool > 0 ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' });
   }
 
+  /** "Start a Run" from the title screen opens the draft (DraftScreen) rather than building the run directly — the starting pair isn't chosen yet. */
   function handleStartNewRun() {
-    setPlayerRun(createStartingRun());
+    const optionIds = generateStarterOptions(Math.floor(Math.random() * 2 ** 31), Object.keys(heroes));
+    setScreen({ kind: 'draft', optionIds });
+  }
+
+  function handleDraftConfirm(chosenIds: string[]) {
+    setPlayerRun(createStartingRun(chosenIds));
     setScreen({ kind: 'map' });
   }
 
@@ -167,6 +172,8 @@ export function App() {
       <header className="app-header">Titanpact</header>
 
       {screen.kind === 'title' && <TitleScreen onStartRun={handleStartNewRun} onQuickBattle={handleQuickBattle} />}
+
+      {screen.kind === 'draft' && <DraftScreen optionIds={screen.optionIds} onConfirm={handleDraftConfirm} />}
 
       {screen.kind === 'map' && <MapScreen run={playerRun} onRunChange={setPlayerRun} onSelectNode={handleSelectNode} />}
 
