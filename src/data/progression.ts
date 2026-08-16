@@ -1,10 +1,12 @@
-// ⚠️ TEST FIXTURE CONTENT — a level-up move pool and rank-up branches for 2 of
-// the 6 fixture heroes (cinderKnight, tidecaller), enough to exercise both
-// consequences of leveling end to end (docs/leveling-and-ranks.md: a
-// level-up "progresses toward a rank-up" and "offers a random move"). The
-// other 4 fixture heroes intentionally have no entries here — an empty pool
-// is a valid state (nothing left to offer), not a bug. Not the authored
-// 53-hero progression content.
+// ⚠️ TEST FIXTURE CONTENT — a level-up move pool and rank-up branches for the
+// 6 fixture heroes, enough to exercise both consequences of leveling end to
+// end (docs/leveling-and-ranks.md: a level-up "progresses toward a rank-up"
+// and "offers a random move"). Each hero's starting kit (src/data/heroes.ts)
+// is deliberately small — a low-power main-type move plus 1-2 support moves
+// — so the moveTiers pool below is where the rest of a hero's thematic
+// movepool lives, offered randomly (not in authored order) as the hero
+// levels up toward the 4-move cap (src/run/progression.ts MOVE_CAP). Not the
+// authored 53-hero progression content.
 //
 // SCOPE NOTE: branches are stat-only (statGrants, no unlocksMoveIds) — kept
 // deliberately separate from the level-up move pool so the two growth axes
@@ -18,8 +20,12 @@ import type { ProgressionTable } from '../run/progression';
 
 export const progressionTable: ProgressionTable = {
   moveTiers: {
-    cinderKnight: ['cinderNova'],
-    tidecaller: ['ripCurrent'],
+    cinderKnight: ['emberSlash', 'flareBurst', 'quickJab', 'fangRush', 'cinderNova', 'infernoWave'],
+    tidecaller: ['aquaJet', 'tsunamiCrash', 'frostLock', 'ripCurrent', 'mendWounds', 'curseMind'],
+    ironWarden: ['boulderToss', 'shrapnelBlast', 'stoneQuake', 'ironFist', 'fortify'],
+    wildOracle: ['wildfire', 'vineLash', 'soulRend', 'rendingClaw', 'naturesWrath'],
+    stormRanger: ['quickJab', 'thunderclap', 'galeSlash', 'fangRush'],
+    shadowMonk: ['duskStrike', 'shadowVeil', 'fangRush', 'quickJab', 'nightmareGrasp'],
   },
   rankUps: {
     cinderKnight: [

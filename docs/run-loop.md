@@ -45,7 +45,7 @@ which is the thing actually being validated in this pass.
 | `elite` | Same, but the AI's 4 heroes each carry a flat +10 bonus to 2 random growth stats. |
 | `boss` | `FightScreen` vs. 2 AI heroes (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. |
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. |
-| `equipmentReward` | `NodeRewardScreen` — pick 1 of 3 equipment items, then which roster hero to equip it on. |
+| `equipmentReward` | `NodeRewardScreen` — pick 1 of 3 equipment items; claims straight into the run's unequipped inventory (`RunState.inventory`), no hero-assignment step. |
 | `relicReward` | `NodeRewardScreen` — pick 1 of 3 relics not already owned. |
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30, more for nothing having been spent yet). |
 | `upgradeReward` | `NodeRewardScreen` — an instant flat grant to the pooled level-up currency (2-3 points), on top of the per-fight-win grant (see below). |
@@ -133,14 +133,26 @@ which is the thing actually being validated in this pass.
   longer deferred: `src/view/run/LevelUpScreen.tsx` forces every earned point to be
   allocated before the run can continue, replacing the old "spend whenever via Manage
   Roster" `TrainingPanel` flow (`progression.md`, "Reconciled" note).
-- **Equipment can now move between heroes, and reward choices preview before
-  committing (2026-08-16, second playtest).** `src/run/runProgress.ts`'s new
-  `moveEquipment` unequips a source hero's slot and equips the item onto a target
-  hero's matching slot; `RosterManagementScreen` (below) is the UI for it. Separately,
-  `NodeRewardScreen`'s `equipmentReward` flow now shows an item's stat grants on
-  tap-to-preview and requires an explicit Confirm button for both the item choice and
-  the hero assignment (previously: tap an item, tap a hero, done — no preview, no
-  undo).
+- **Reward choices preview before committing (2026-08-16, second playtest).**
+  `NodeRewardScreen`'s `equipmentReward` flow shows an item's stat grants on
+  tap-to-preview and requires an explicit Claim button (previously: tap an item, done —
+  no preview).
+- **A real unequipped-item inventory replaced immediate-equip and hero-to-hero
+  moving (2026-08-16, third playtest).** The original equipment model had no
+  inventory: `equipmentReward` forced an immediate "which hero gets this" choice, and
+  reassigning gear meant `moveEquipment` unequipping a source hero's slot straight onto
+  a target's — a swap, never a stash. Per user direction, `RunState.inventory: string[]`
+  (`src/run/state.ts`) now holds owned-but-unequipped item ids; `runProgress.ts`'s
+  `grantInventoryReward` is what `equipmentReward` nodes call instead of the old
+  `applyEquipmentReward`, and `equipFromInventory`/`unequipToInventory` replace
+  `moveEquipment` — equipping pulls from the inventory (returning whatever was
+  previously in that slot back to it), unequipping pushes to the inventory, and moving
+  a item between two heroes is just those two ops composed through the inventory rather
+  than a dedicated third function. `RosterManagementScreen` (below) is the UI: condensed
+  hero rows (name/level/types + an Info button opening the full stat-bar readout) each
+  show their 3 equipment slots underneath, empty by default; an Inventory section below
+  the roster lists unequipped items as boxes, equipped via tap-then-tap-a-slot or native
+  HTML5 drag-and-drop onto a slot.
 
 ## 4. What's still not built
 
@@ -151,8 +163,9 @@ which is the thing actually being validated in this pass.
   immediately via `src/view/run/LevelUpScreen.tsx` right after they're granted (every
   fight win, and any `upgradeReward` node claim) — the run cannot continue with an
   unspent pool. `MapScreen`'s "Manage Roster" button now opens
-  `src/view/run/RosterManagementScreen.tsx` instead: read-only stat/loadout inspection
-  plus moving equipped items between heroes, no longer a spend surface.
+  `src/view/run/RosterManagementScreen.tsx` instead: condensed hero rows (Info button
+  for the full stat-bar readout) plus equipping/unequipping against the run's
+  inventory (`RunState.inventory`), no longer a spend surface.
 - **Multi-act sequencing.** This pass is one act, start to boss. Chaining acts (with
   escalating difficulty between them) is deferred until this loop's shape is validated.
 - **Visual path rendering.** `MapScreen` renders nodes grouped by row with

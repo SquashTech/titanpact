@@ -10,7 +10,9 @@ import {
   grantCurrencyReward,
   grantUpgradeReward,
   grantRelicReward,
-  applyEquipmentReward,
+  grantInventoryReward,
+  equipFromInventory,
+  unequipToInventory,
   RunProgressError,
 } from '../src/run/runProgress';
 
@@ -72,13 +74,47 @@ test('runProgress: grantRelicReward appends a relic id, duplicates allowed', () 
   assert.deepStrictEqual(next.relics, ['ironStandard', 'ironStandard']);
 });
 
-test('runProgress: applyEquipmentReward equips the item onto the named roster hero', () => {
+test('runProgress: grantInventoryReward adds an item id to the inventory', () => {
   const run = seedRoster(['cinderKnight']);
-  const next = applyEquipmentReward(run, 'cinderKnight', equipment.ironBlade);
-  assert.strictEqual(next.roster[0].equipment.weapon, 'ironBlade');
+  const next = grantInventoryReward(run, 'ironBlade');
+  assert.deepStrictEqual(next.inventory, ['ironBlade']);
 });
 
-test('runProgress: applyEquipmentReward rejects an unknown rosterId', () => {
+test('runProgress: equipFromInventory moves the item from inventory onto the named roster hero', () => {
+  const run = { ...seedRoster(['cinderKnight']), inventory: ['ironBlade'] };
+  const next = equipFromInventory(run, 'cinderKnight', 'ironBlade', equipment);
+  assert.strictEqual(next.roster[0].equipment.weapon, 'ironBlade');
+  assert.deepStrictEqual(next.inventory, []);
+});
+
+test('runProgress: equipFromInventory returns the previously equipped item to the inventory', () => {
+  const run = {
+    ...seedRoster(['cinderKnight']),
+    roster: [{ ...seedRoster(['cinderKnight']).roster[0], equipment: { weapon: 'ironBlade', armor: null, accessory: null } }],
+    inventory: ['arcaneFocus'],
+  };
+  const next = equipFromInventory(run, 'cinderKnight', 'arcaneFocus', equipment);
+  assert.strictEqual(next.roster[0].equipment.weapon, 'arcaneFocus');
+  assert.deepStrictEqual(next.inventory, ['ironBlade']);
+});
+
+test('runProgress: equipFromInventory rejects an unknown rosterId and an item not in inventory', () => {
+  const run = { ...seedRoster(['cinderKnight']), inventory: ['ironBlade'] };
+  assert.throws(() => equipFromInventory(run, 'nonexistent', 'ironBlade', equipment), RunProgressError);
+  assert.throws(() => equipFromInventory(run, 'cinderKnight', 'oakenArmor', equipment), RunProgressError);
+});
+
+test('runProgress: unequipToInventory clears the slot and returns the item to inventory', () => {
+  const run = {
+    ...seedRoster(['cinderKnight']),
+    roster: [{ ...seedRoster(['cinderKnight']).roster[0], equipment: { weapon: 'ironBlade', armor: null, accessory: null } }],
+  };
+  const next = unequipToInventory(run, 'cinderKnight', 'weapon');
+  assert.strictEqual(next.roster[0].equipment.weapon, null);
+  assert.deepStrictEqual(next.inventory, ['ironBlade']);
+});
+
+test('runProgress: unequipToInventory rejects an empty slot', () => {
   const run = seedRoster(['cinderKnight']);
-  assert.throws(() => applyEquipmentReward(run, 'nonexistent', equipment.ironBlade), RunProgressError);
+  assert.throws(() => unequipToInventory(run, 'cinderKnight', 'weapon'), RunProgressError);
 });

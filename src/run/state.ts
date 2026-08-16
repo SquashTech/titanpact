@@ -85,10 +85,37 @@ export interface RunState {
   currentNodeId: string | null;
   /** Resolved node ids, in visit order — drives MapScreen's greyed-out/reachable rendering. */
   visitedNodeIds: string[];
+  /**
+   * Count of `fight`-type nodes entered so far this run (App.tsx, incremented
+   * at node-select time alongside encounter generation). Drives the run's 2nd
+   * fight being a smaller 2v2 breather (enemyGen.ts heroCountOverride) —
+   * `elite`/`boss` nodes have their own fixed sizing and don't touch this.
+   */
+  fightsStarted: number;
+  /**
+   * Unequipped equipment ids owned by the run but not attached to any roster
+   * hero's loadout (equipment.ts EquipmentLoadout) — duplicates allowed, one
+   * entry per copy owned. `equipmentReward` nodes grant straight here now
+   * (runProgress.ts grantInventoryReward) instead of forcing an immediate
+   * equip-onto-a-hero choice; RosterManagementScreen is where the player
+   * actually equips from it.
+   */
+  inventory: string[];
 }
 
 export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1): RunState {
-  return { roster: [], levelUpPool, gold, relics: [], recruitContracts, map: null, currentNodeId: null, visitedNodeIds: [] };
+  return {
+    roster: [],
+    levelUpPool,
+    gold,
+    relics: [],
+    recruitContracts,
+    map: null,
+    currentNodeId: null,
+    visitedNodeIds: [],
+    fightsStarted: 0,
+    inventory: [],
+  };
 }
 
 export function createRosterEntry(rosterId: string, heroId: string, startingMoveIds: readonly string[]): RosterEntry {

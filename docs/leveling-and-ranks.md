@@ -57,13 +57,14 @@ the movepool is strictly *substitution*, never expansion.
 > **Implemented (2026-08-16 playtest pass):** `src/run/progression.ts`'s
 > `levelUpHero`/`grantLevelUpMove`/`MOVE_CAP` enforce exactly this — under the cap a
 > level-up's move is gained outright; at the cap it's an accept/decline replacement
-> offer (`src/view/run/LevelUpScreen.tsx`). **Known gap, deliberately deferred:** the
-> `/src/data` fixture heroes (`heroes.ts`) still start with 5-7 moves each — already
-> above the cap before any leveling happens — so in practice almost every level-up
-> currently surfaces the replacement offer rather than a clean gain. This is stale
-> fixture content, not a mechanism bug; per user direction (2026-08-16) it's useful for
-> playtesting the offer/decline UI as-is and will be fixed when the fixture roster is
-> replaced with real content (README "Next steps" #5), not before.
+> offer (`src/view/run/LevelUpScreen.tsx`). **Fixture content now respects the cap
+> too:** `/src/data/heroes.ts` starting kits were trimmed to 3 moves each (a
+> low-power move of the hero's main type plus 1-2 support moves — heal/buff/status),
+> leaving room to grow into the cap via level-ups instead of starting over it. Every
+> fixture hero's `moveTiers` pool (`src/data/progression.ts`) was expanded to match, so
+> a level-up's random draw has real variety across all 6 heroes, not just 2. Rank-up
+> branches (Part 2, below) remain fixture content for only 2 of 6 heroes — a separate
+> axis from the move pool, see README "Known gaps."
 
 ### Level-ups never change stats (LOCKED)
 

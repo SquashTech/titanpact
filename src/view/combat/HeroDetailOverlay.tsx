@@ -1,23 +1,10 @@
-import { Fragment } from 'react';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { Combatant } from '../../engine/state';
-import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana } from '../../engine/state';
+import { effectiveTypes, getMaxHp, getMaxMana } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
 import { getTypeColor } from './typeColors';
-
-const STAT_ORDER: StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool', 'mpRegen'];
-
-const STAT_LABELS: Record<StatKey, string> = {
-  hp: 'HP',
-  attack: 'Attack',
-  defense: 'Defense',
-  intelligence: 'Intelligence',
-  wisdom: 'Wisdom',
-  speed: 'Speed',
-  manaPool: 'Mana Pool',
-  mpRegen: 'MP Regen',
-};
+import { STAT_LABELS, STAT_ORDER, StatBars } from '../shared/StatBars';
 
 const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
@@ -83,23 +70,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
         </div>
 
         <div className="detail-section-title">Stats</div>
-        <div className="detail-stat-grid">
-          <span className="detail-stat-head">Stat</span>
-          <span className="detail-stat-head">Base</span>
-          <span className="detail-stat-head">Mod</span>
-          <span className="detail-stat-head">Total</span>
-          {STAT_ORDER.map((stat) => {
-            const mod = combatant.statModifiers[stat] ?? 0;
-            return (
-              <Fragment key={stat}>
-                <span>{STAT_LABELS[stat]}</span>
-                <span>{hero.baseStats[stat]}</span>
-                <span className={mod > 0 ? 'stat-buff' : mod < 0 ? 'stat-debuff' : ''}>{fmtMod(mod)}</span>
-                <span>{getEffectiveStat(hero, combatant, stat)}</span>
-              </Fragment>
-            );
-          })}
-        </div>
+        <StatBars baseStats={hero.baseStats} deltas={combatant.statModifiers} />
 
         <div className="detail-section-title">Buffs / Debuffs</div>
         {hasModifiers ? (

@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
 import { relics } from '../../data/relics';
 import type { StatKey } from '../../engine/content';
 import type { RunState } from '../../run/state';
 import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
-import { grantCurrencyReward, grantUpgradeReward, grantRelicReward, grantContractReward, applyEquipmentReward } from '../../run/runProgress';
+import { grantCurrencyReward, grantUpgradeReward, grantRelicReward, grantContractReward, grantInventoryReward } from '../../run/runProgress';
 
 export type RewardNodeType = 'currencyReward' | 'upgradeReward' | 'equipmentReward' | 'relicReward' | 'contractReward';
 
@@ -51,11 +50,12 @@ function fmtStatGrants(grants: Partial<Record<StatKey, number>>): string {
 }
 
 /**
- * Resolves the four "instant" reward node types (docs/run-loop.md): currency
- * and upgrade grant on a single tap; equipment and relic offer 3 choices.
- * Equipment additionally asks which roster hero to equip it onto (via the
- * existing equipItem, through runProgress.ts's applyEquipmentReward) — there
- * is no unequipped-item inventory in this pass, so the choice is immediate.
+ * Resolves the five "instant" reward node types (docs/run-loop.md): currency,
+ * upgrade and equipment grant on a single tap; relic offers 3 choices.
+ * Equipment goes straight to the run's unequipped inventory
+ * (runProgress.ts's grantInventoryReward) rather than asking "which hero
+ * gets this" up front — that choice happens later, at leisure, in
+ * RosterManagementScreen.
  */
 export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue }: Props) {
   const [currencyAmount] = useState(() => 15 + Math.floor(Math.random() * 16)); // 15-30
@@ -67,7 +67,6 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue }: Pro
 
   const [previewItemId, setPreviewItemId] = useState<string | null>(null);
   const [chosenItem, setChosenItem] = useState<EquipmentDefinition | null>(null);
-  const [previewRosterId, setPreviewRosterId] = useState<string | null>(null);
   const [claimed, setClaimed] = useState(false);
 
   function handleClaimInstant(next: RunState) {
@@ -75,9 +74,9 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue }: Pro
     setClaimed(true);
   }
 
-  function handleAssignEquipment(rosterId: string) {
-    if (!chosenItem) return;
-    onRunChange(applyEquipmentReward(run, rosterId, chosenItem));
+  function handleClaimEquipment(item: EquipmentDefinition) {
+    onRunChange(grantInventoryReward(run, item.id));
+    setChosenItem(item);
     setClaimed(true);
   }
 
@@ -133,9 +132,9 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue }: Pro
         {nodeType === 'equipmentReward' && (
           <div className="reward-panel">
             <h2>🛡️ Equipment Cache</h2>
-            {!chosenItem ? (
+            {!claimed ? (
               <>
-                <p className="hint">Tap an item to preview what it grants.</p>
+                <p className="hint">Tap an item to preview what it grants, then claim it into your inventory.</p>
                 <div className="roster-grid">
                   {equipmentChoices.map((item) => {
                     const isPreviewing = previewItemId === item.id;
@@ -155,55 +154,14 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue }: Pro
                 {previewItemId && (
                   <button
                     className="resolve-button"
-                    onClick={() => setChosenItem(equipmentChoices.find((i) => i.id === previewItemId) ?? null)}
+                    onClick={() => handleClaimEquipment(equipmentChoices.find((i) => i.id === previewItemId)!)}
                   >
-                    Confirm {equipmentChoices.find((i) => i.id === previewItemId)?.name}
+                    Claim {equipmentChoices.find((i) => i.id === previewItemId)?.name}
                   </button>
                 )}
               </>
-            ) : !claimed ? (
-              <>
-                <p className="hint">
-                  Equip {chosenItem.name} ({fmtStatGrants(chosenItem.statGrants)}) on — tap a hero to preview, then confirm:
-                </p>
-                <div className="roster-grid">
-                  {run.roster.map((entry) => {
-                    const currentId = entry.equipment[chosenItem.slot];
-                    const currentItem = currentId ? equipment[currentId] : null;
-                    const isPreviewing = previewRosterId === entry.rosterId;
-                    return (
-                      <button
-                        key={entry.rosterId}
-                        className={`roster-card${isPreviewing ? ' picked' : ''}`}
-                        onClick={() => setPreviewRosterId(isPreviewing ? null : entry.rosterId)}
-                      >
-                        <div className="roster-card-name">{heroes[entry.heroId].name}</div>
-                        <div className="roster-card-types">{currentItem ? `replaces ${currentItem.name}` : 'empty slot'}</div>
-                        {isPreviewing && currentItem && <div className="hint">Losing: {fmtStatGrants(currentItem.statGrants)}</div>}
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="training-row">
-                  {previewRosterId && (
-                    <button className="resolve-button" onClick={() => handleAssignEquipment(previewRosterId)}>
-                      Confirm Equip
-                    </button>
-                  )}
-                  <button
-                    className="log-toggle-button"
-                    onClick={() => {
-                      setChosenItem(null);
-                      setPreviewItemId(null);
-                      setPreviewRosterId(null);
-                    }}
-                  >
-                    ← Back
-                  </button>
-                </div>
-              </>
             ) : (
-              <p className="hint">{chosenItem.name} equipped.</p>
+              <p className="hint">{chosenItem?.name} added to your inventory — equip it any time from Manage Roster.</p>
             )}
           </div>
         )}

@@ -1,24 +1,11 @@
-import { Fragment } from 'react';
 import { moves } from '../../data/moves';
-import type { HeroDefinition, StatKey } from '../../engine/content';
+import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
 import { equipmentStatModifiers } from '../../run/equipment';
 import { mergeStatMods } from '../../run/statMods';
 import { getTypeColor } from '../combat/typeColors';
-
-const STAT_ORDER: StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool', 'mpRegen'];
-
-const STAT_LABELS: Record<StatKey, string> = {
-  hp: 'HP',
-  attack: 'Attack',
-  defense: 'Defense',
-  intelligence: 'Intelligence',
-  wisdom: 'Wisdom',
-  speed: 'Speed',
-  manaPool: 'Mana Pool',
-  mpRegen: 'MP Regen',
-};
+import { StatBars } from '../shared/StatBars';
 
 const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
@@ -33,11 +20,6 @@ interface Props {
   entry: RosterEntry;
   equipmentLookup: Record<string, EquipmentDefinition>;
   onClose: () => void;
-}
-
-function fmtGrant(n: number): string {
-  if (n === 0) return '—';
-  return n > 0 ? `+${n}` : `${n}`;
 }
 
 /**
@@ -68,23 +50,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Pr
         </div>
 
         <div className="detail-section-title">Stats</div>
-        <div className="detail-stat-grid">
-          <span className="detail-stat-head">Stat</span>
-          <span className="detail-stat-head">Base</span>
-          <span className="detail-stat-head">Grants</span>
-          <span className="detail-stat-head">Total</span>
-          {STAT_ORDER.map((stat) => {
-            const grant = grants[stat] ?? 0;
-            return (
-              <Fragment key={stat}>
-                <span>{STAT_LABELS[stat]}</span>
-                <span>{hero.baseStats[stat]}</span>
-                <span className={grant > 0 ? 'stat-buff' : grant < 0 ? 'stat-debuff' : ''}>{fmtGrant(grant)}</span>
-                <span>{hero.baseStats[stat] + grant}</span>
-              </Fragment>
-            );
-          })}
-        </div>
+        <StatBars baseStats={hero.baseStats} deltas={grants} />
 
         <div className="detail-section-title">Moves</div>
         {entry.unlockedMoveIds.length > 0 ? (

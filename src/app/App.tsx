@@ -107,7 +107,14 @@ export function App() {
       // spent as disposable fodder.
       const isOpeningFight = node.row === 0;
       const encounterPool = isOpeningFight ? enemies : heroes;
-      const encounter = generateEncounter(node.type, Math.floor(Math.random() * 2 ** 31), encounterPool);
+      // The run's 2nd `fight` node specifically (not elite/boss, which have
+      // their own fixed sizing) is a deliberately lighter 2v2 breather
+      // between the row-0 opener and elites kicking in.
+      const isSecondFight = node.type === 'fight' && playerRun.fightsStarted === 1;
+      const encounter = generateEncounter(node.type, Math.floor(Math.random() * 2 ** 31), encounterPool, isSecondFight ? 2 : undefined);
+      if (node.type === 'fight') {
+        setPlayerRun((run) => ({ ...run, fightsStarted: run.fightsStarted + 1 }));
+      }
       setScreen({ kind: 'squadSelect', nodeId, nodeType: node.type, encounter });
     } else if (node.type === 'shop') {
       setScreen({ kind: 'shop', nodeId });

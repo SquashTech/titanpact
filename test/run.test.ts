@@ -144,14 +144,19 @@ test('progression: levelUpHero spends one point, bumps level + rankProgress; ins
 test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move offer', () => {
   let run = seedRoster(['cinderKnight']);
   const entry = run.roster[0];
-  assert.deepStrictEqual(levelUpMovePool(progressionTable, entry), ['cinderNova']);
+  assert.deepStrictEqual(
+    levelUpMovePool(progressionTable, entry),
+    ['emberSlash', 'flareBurst', 'quickJab', 'fangRush', 'cinderNova', 'infernoWave']
+  );
 
   const withMove = grantLevelUpMove(run, 'cinderKnight', 'cinderNova');
   assert.ok(withMove.roster[0].unlockedMoveIds.includes('cinderNova'));
-  assert.deepStrictEqual(levelUpMovePool(progressionTable, withMove.roster[0]), []); // already unlocked, pool drained
+  assert.ok(!levelUpMovePool(progressionTable, withMove.roster[0]).includes('cinderNova')); // granted move drops out of the pool
+  assert.strictEqual(withMove.roster[0].unlockedMoveIds.length, 4); // starting 3 + this grant hits MOVE_CAP
 
-  const swapped = grantLevelUpMove(withMove, 'cinderKnight', 'quickJab', 'emberSlash');
-  assert.ok(!swapped.roster[0].unlockedMoveIds.includes('emberSlash'));
+  // Already at MOVE_CAP: further offers require replacing an unlocked move.
+  const swapped = grantLevelUpMove(withMove, 'cinderKnight', 'quickJab', 'fortify');
+  assert.ok(!swapped.roster[0].unlockedMoveIds.includes('fortify'));
   assert.ok(swapped.roster[0].unlockedMoveIds.includes('quickJab'));
   assert.throws(() => grantLevelUpMove(withMove, 'cinderKnight', 'quickJab', 'notUnlocked'), ProgressionError);
 });

@@ -53,6 +53,13 @@ test('enemyGen: picked heroIds are distinct and drawn from the given pool', () =
   for (const id of heroIds) assert.ok(heroes[id], `${id} is not in the fixture hero pool`);
 });
 
+test('enemyGen: heroCountOverride shrinks a fight encounter below the default 4 (the run\'s 2nd-fight 2v2 breather)', () => {
+  const { run, squad } = generateEncounter('fight', 1, heroes, 2);
+  assert.strictEqual(run.roster.length, 2);
+  assert.strictEqual(squad.activeIds.filter(Boolean).length, 2);
+  assert.strictEqual(squad.benchIds.length, 0);
+});
+
 test('enemyGen: is generic over any HeroDefinition-shaped pool, gracefully capping a fight encounter to the enemy pool\'s size (docs/run-loop.md "Non-recruitable enemy content")', () => {
   const { run, squad } = generateEncounter('fight', 1, enemies);
   assert.strictEqual(run.roster.length, Object.keys(enemies).length);

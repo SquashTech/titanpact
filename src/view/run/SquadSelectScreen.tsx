@@ -8,6 +8,7 @@ import type { Squad } from '../../run/squad';
 import { pickSquad } from '../../run/squad';
 import type { Encounter } from '../../run/enemyGen';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
+import { getTypeColor } from '../combat/typeColors';
 
 interface Props {
   run: RunState;
@@ -47,73 +48,98 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
   return (
     <div className="squad-select">
       <div className="screen-scroll">
-        <h2>Pick your squad ({pickedIds.length}/4)</h2>
-        <p className="hint">First two picks start active; the rest start on the bench.</p>
-        <div className="roster-grid">
-          {run.roster.map((entry) => {
-            const hero = heroes[entry.heroId];
-            const pickIndex = pickedIds.indexOf(entry.rosterId);
-            const picked = pickIndex !== -1;
-            const equippedCount = Object.values(entry.equipment).filter(Boolean).length;
-            return (
-              <div
-                key={entry.rosterId}
-                className={`roster-card${picked ? ' picked' : ''}`}
-                role="button"
-                tabIndex={0}
-                onClick={() => toggle(entry.rosterId)}
-              >
-                <button
-                  className="info-button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setInspecting({ hero, entry });
-                  }}
-                  aria-label={`View ${hero.name} details`}
+        {/* Enemies first, mirroring the combat screen's enemy-row-on-top layout —
+            scout the threat before committing a squad against it. */}
+        <div className="squad-section squad-section-enemy">
+          <h2 className="squad-section-title">⚔️ Scouted Enemies</h2>
+          <p className="hint">Who you may face this fight.</p>
+          <div className="roster-grid">
+            {encounter.run.roster.map((entry) => {
+              const hero = allCombatants[entry.heroId];
+              const isBench = !encounter.squad.activeIds.includes(entry.rosterId);
+              return (
+                <div
+                  key={entry.rosterId}
+                  className="roster-card enemy-scout-card"
+                  style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
                 >
-                  i
-                </button>
-                <div className="roster-card-name">
-                  {hero.name} <span className="hint">Lv {entry.level}</span>
-                </div>
-                <div className="roster-card-types">{hero.types.join('/')}</div>
-                {equippedCount > 0 && (
-                  <div className="roster-card-equip">
-                    {equippedCount} item{equippedCount > 1 ? 's' : ''} equipped
+                  <button
+                    className="info-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setInspecting({ hero, entry });
+                    }}
+                    aria-label={`View ${hero.name} details`}
+                  >
+                    i
+                  </button>
+                  <div className="roster-card-name">
+                    {hero.name} <span className="hint">Lv {entry.level}</span>
                   </div>
-                )}
-                {picked && <span className="roster-card-badge">{pickIndex < 2 ? 'ACTIVE' : 'BENCH'}</span>}
-              </div>
-            );
-          })}
+                  <div className="roster-card-types">
+                    {hero.types.map((t) => (
+                      <span key={t} className="type-tag" style={{ color: getTypeColor(t) }}>
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                  <span className="roster-card-badge badge-enemy">{isBench ? 'BENCH' : 'ACTIVE'}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        <h2>Scouted enemies</h2>
-        <p className="hint">Who you may face this fight.</p>
-        <div className="roster-grid">
-          {encounter.run.roster.map((entry) => {
-            const hero = allCombatants[entry.heroId];
-            const isBench = !encounter.squad.activeIds.includes(entry.rosterId);
-            return (
-              <div key={entry.rosterId} className="roster-card enemy-scout-card">
-                <button
-                  className="info-button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setInspecting({ hero, entry });
-                  }}
-                  aria-label={`View ${hero.name} details`}
+        <div className="squad-vs-divider">VS</div>
+
+        <div className="squad-section squad-section-player">
+          <h2 className="squad-section-title">🛡️ Pick Your Squad ({pickedIds.length}/4)</h2>
+          <p className="hint">First two picks start active; the rest start on the bench.</p>
+          <div className="roster-grid">
+            {run.roster.map((entry) => {
+              const hero = heroes[entry.heroId];
+              const pickIndex = pickedIds.indexOf(entry.rosterId);
+              const picked = pickIndex !== -1;
+              const equippedCount = Object.values(entry.equipment).filter(Boolean).length;
+              return (
+                <div
+                  key={entry.rosterId}
+                  className={`roster-card${picked ? ' picked' : ''}`}
+                  style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => toggle(entry.rosterId)}
                 >
-                  i
-                </button>
-                <div className="roster-card-name">
-                  {hero.name} <span className="hint">Lv {entry.level}</span>
+                  <button
+                    className="info-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setInspecting({ hero, entry });
+                    }}
+                    aria-label={`View ${hero.name} details`}
+                  >
+                    i
+                  </button>
+                  <div className="roster-card-name">
+                    {hero.name} <span className="hint">Lv {entry.level}</span>
+                  </div>
+                  <div className="roster-card-types">
+                    {hero.types.map((t) => (
+                      <span key={t} className="type-tag" style={{ color: getTypeColor(t) }}>
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                  {equippedCount > 0 && (
+                    <div className="roster-card-equip">
+                      {equippedCount} item{equippedCount > 1 ? 's' : ''} equipped
+                    </div>
+                  )}
+                  {picked && <span className="roster-card-badge badge-ally">{pickIndex < 2 ? 'ACTIVE' : 'BENCH'}</span>}
                 </div>
-                <div className="roster-card-types">{hero.types.join('/')}</div>
-                <span className="roster-card-badge">{isBench ? 'BENCH' : 'ACTIVE'}</span>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
       <button className="resolve-button" disabled={pickedIds.length === 0} onClick={handleConfirm}>

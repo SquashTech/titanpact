@@ -51,10 +51,14 @@ export interface Encounter {
  * fight: 4 heroes, no bonus — same shape as the old fixed AI.
  * elite: 4 heroes, +10 to 2 random growth stats each.
  * boss: 2 heroes, no bench (a real no-cycling fight), +20 to 3 random growth stats each.
+ *
+ * `heroCountOverride` lets a caller shrink a `fight` node's roster below the
+ * default 4 — used for the run's 2nd fight (App.tsx), which is deliberately
+ * a lighter 2v2 breather between the row-0 opener and elites kicking in.
  */
-export function generateEncounter(nodeType: EncounterNodeType, seed: number, heroPool: HeroLookup): Encounter {
+export function generateEncounter(nodeType: EncounterNodeType, seed: number, heroPool: HeroLookup, heroCountOverride?: number): Encounter {
   let rng = createRng(seed);
-  const heroCount = nodeType === 'boss' ? 2 : 4;
+  const heroCount = heroCountOverride ?? (nodeType === 'boss' ? 2 : 4);
   const [statCount, amountEach] = nodeType === 'boss' ? [3, 20] : nodeType === 'elite' ? [2, 10] : [0, 0];
 
   const { picked: heroIds, nextState: afterPick } = shuffledPick(rng, Object.keys(heroPool), heroCount);

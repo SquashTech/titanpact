@@ -96,11 +96,13 @@ export function buildBeats(
         const applied: CombatEvent[] = [e];
         i++;
         if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
-        let knockedOut = false;
-        if (events[i]?.type === 'Fainted') {
-          applied.push(events[i++]);
-          knockedOut = true;
-        }
+        // Fainted is deliberately held back into its OWN beat below, rather
+        // than bundled into this one: applying it here would clear the
+        // combatant's active slot (applyEventToState) in the same tap that
+        // drains the HP bar, so the card would vanish before the player ever
+        // saw it hit 0. Splitting the beat gives that a tap of its own.
+        let faintEvent: CombatEvent | null = null;
+        if (events[i]?.type === 'Fainted') faintEvent = events[i++];
         const tag = e.isCrit
           ? ' — Critical hit!'
           : e.typeMult >= 2
@@ -109,10 +111,10 @@ export function buildBeats(
               ? ' — Not very effective...'
               : '';
         const targetName = name(e.targetCombatantId);
-        const knockoutText = knockedOut ? ' — Knocked out!' : '';
-        push(applied, `${targetName} takes ${e.amount} damage${tag}${knockoutText}`, [
+        push(applied, `${targetName} takes ${e.amount} damage${tag}`, [
           { combatantId: e.targetCombatantId, text: `-${e.amount}`, className: e.isCrit ? 'popup-crit' : 'popup-damage' },
         ]);
+        if (faintEvent) push([faintEvent], `${targetName} is knocked out!`);
         break;
       }
 
@@ -156,21 +158,20 @@ export function buildBeats(
         const applied: CombatEvent[] = [e];
         i++;
         if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
-        let knockedOut = false;
-        if (events[i]?.type === 'Fainted') {
-          applied.push(events[i++]);
-          knockedOut = true;
-        }
+        // Same split as DamageDealt above — Fainted gets its own beat so a
+        // DoT-tick KO also shows the drained bar before the card disappears.
+        let faintEvent: CombatEvent | null = null;
+        if (events[i]?.type === 'Fainted') faintEvent = events[i++];
         const targetName = name(e.combatantId);
         if (e.kind === 'duration') {
           push(applied, `${targetName}'s ${e.statusId} counts down (${e.newDuration} left)`);
           break;
         }
         const verb = e.kind === 'damage' ? 'takes' : 'recovers';
-        const knockoutText = knockedOut ? ' — Knocked out!' : '';
-        push(applied, `${targetName} ${verb} ${e.amount} from ${e.statusId}${knockoutText}`, [
+        push(applied, `${targetName} ${verb} ${e.amount} from ${e.statusId}`, [
           { combatantId: e.combatantId, text: e.kind === 'damage' ? `-${e.amount}` : `+${e.amount}`, className: e.kind === 'damage' ? 'popup-damage' : 'popup-heal' },
         ]);
+        if (faintEvent) push([faintEvent], `${targetName} is knocked out!`);
         break;
       }
 

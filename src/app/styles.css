@@ -83,6 +83,38 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  position: relative;
+  padding: 10px 8px;
+  border-radius: 14px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(217, 83, 79, 0.08), transparent 55%),
+    radial-gradient(ellipse at 50% 100%, rgba(74, 144, 217, 0.08), transparent 55%);
+  border: 1px solid var(--border);
+}
+
+/* "VS" chip between the enemy and ally rows — purely decorative, gives the
+   battlefield a center of gravity instead of two rows floating in a stack. */
+.battlefield-divider {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.battlefield-divider::before,
+.battlefield-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+
+.battlefield-divider span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
 }
 
 /* Invisible full-viewport click-catcher while a round is playing out, so any
@@ -106,15 +138,28 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  background: var(--panel-alt);
+  background: linear-gradient(180deg, var(--panel-alt), var(--panel));
   border: 1px solid var(--accent);
-  border-radius: 6px;
-  padding: 7px 10px;
+  border-radius: 8px;
+  padding: 8px 10px;
   font-size: 12px;
   line-height: 1.3;
   font-weight: 700;
   color: var(--text);
   text-align: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(224, 166, 60, 0.12) inset;
+  animation: banner-pop 0.18s ease-out;
+}
+
+@keyframes banner-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .combat-banner-meta {
@@ -157,6 +202,8 @@ body {
 .team-row {
   display: flex;
   gap: 8px;
+  position: relative;
+  z-index: 1;
 }
 
 .team-row.enemy {
@@ -165,21 +212,70 @@ body {
 
 .combatant-card {
   flex: 1;
-  background: var(--panel);
+  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 65%);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 8px;
   position: relative;
-  transition: outline 0.15s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition: outline 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.35s ease, filter 0.35s ease;
+}
+
+.team-row.enemy .combatant-card {
+  border-top: 2px solid rgba(217, 83, 79, 0.5);
+}
+
+.team-row.ally .combatant-card {
+  border-top: 2px solid rgba(74, 144, 217, 0.5);
 }
 
 .combatant-card.targetable {
   outline: 2px solid var(--accent);
   cursor: pointer;
+  box-shadow: 0 0 0 3px rgba(224, 166, 60, 0.18), 0 2px 10px rgba(0, 0, 0, 0.3);
+  animation: targetable-pulse 1.4s ease-in-out infinite;
+}
+
+.combatant-card.targetable:hover {
+  transform: translateY(-2px);
+}
+
+@keyframes targetable-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(224, 166, 60, 0.18), 0 2px 10px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(224, 166, 60, 0.32), 0 2px 10px rgba(0, 0, 0, 0.3);
+  }
 }
 
 .combatant-card.fainted {
-  opacity: 0.4;
+  opacity: 0.45;
+  filter: grayscale(0.6);
+  animation: ko-hit 0.4s ease-out;
+}
+
+@keyframes ko-hit {
+  0% {
+    transform: translateX(0);
+    filter: grayscale(0);
+    opacity: 1;
+  }
+  20% {
+    transform: translateX(-4px) rotate(-1deg);
+  }
+  40% {
+    transform: translateX(4px) rotate(1deg);
+  }
+  60% {
+    transform: translateX(-2px);
+  }
+  100% {
+    transform: translateY(3px);
+    filter: grayscale(0.6);
+    opacity: 0.45;
+  }
 }
 
 .combatant-name {
@@ -209,24 +305,37 @@ body {
   background: #0d0e12;
   overflow: hidden;
   margin-bottom: 3px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .bar-fill {
   height: 100%;
-  transition: width 0.3s ease;
+  transition: width 0.45s cubic-bezier(0.22, 0.61, 0.36, 1), background 0.3s ease;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 55%);
 }
 
 .bar-fill.hp-high {
-  background: var(--hp-high);
+  background-color: var(--hp-high);
 }
 .bar-fill.hp-mid {
-  background: var(--hp-mid);
+  background-color: var(--hp-mid);
 }
 .bar-fill.hp-low {
-  background: var(--hp-low);
+  background-color: var(--hp-low);
+  animation: hp-low-pulse 1s ease-in-out infinite;
 }
 .bar-fill.mana {
-  background: var(--mana);
+  background-color: var(--mana);
+}
+
+@keyframes hp-low-pulse {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.35);
+  }
 }
 
 .bar-label {
@@ -238,9 +347,14 @@ body {
   position: absolute;
   top: 6px;
   right: 8px;
-  font-size: 10px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   color: var(--hp-low);
-  font-weight: 700;
+  background: rgba(217, 83, 79, 0.15);
+  border: 1px solid rgba(217, 83, 79, 0.5);
+  border-radius: 8px;
+  padding: 1px 6px;
 }
 
 /* Active statuses (docs/conditions.md) on a battlefield card — magnitude/duration
@@ -317,7 +431,8 @@ body {
 
 .dmg-popup.popup-crit {
   color: var(--crit);
-  font-size: 17px;
+  font-size: 19px;
+  text-shadow: 0 0 10px rgba(255, 112, 67, 0.7), 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 .dmg-popup.popup-heal {
@@ -356,10 +471,11 @@ body {
 
 .action-panel {
   flex-shrink: 0;
-  background: var(--panel);
+  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 70%);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 10px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
 }
 
 .action-panel h3 {
@@ -403,23 +519,27 @@ body {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  background: var(--panel-alt);
+  background: linear-gradient(165deg, var(--panel-alt), #1a1d24);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 7px;
   color: var(--text);
   padding: 6px;
   font-size: 12px;
   text-align: left;
   cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
 }
 
 .move-button:hover:not(:disabled) {
   border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
 }
 
 .move-button.selected {
   border-color: var(--accent);
-  background: #33291a;
+  background: linear-gradient(165deg, #3a2f1c, #241d10);
+  box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.3) inset;
 }
 
 .move-button:disabled {
@@ -517,13 +637,14 @@ body {
 
 .log-toggle-button {
   flex-shrink: 0;
-  background: var(--panel-alt);
+  background: linear-gradient(165deg, var(--panel-alt), var(--panel));
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text-dim);
   font-size: 11px;
   padding: 5px 10px;
   cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
 }
 
 .log-toggle-button:hover {
@@ -632,24 +753,98 @@ body {
   color: var(--hp-mid);
 }
 
+/* Full-screen dimming backdrop only — the actual readable content lives in
+   the solid .result-panel card below. Kept deliberately dark and near-opaque
+   (rather than the old radial-gradient-over-battlefield look) so the
+   battlefield behind it reads as dimmed-out background, not a competing
+   layer of text/color right behind the result text. */
 .result-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(10, 11, 14, 0.85);
+  background: rgba(8, 9, 12, 0.9);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
   z-index: 10;
+  padding: 16px;
+  animation: result-fade-in 0.3s ease-out;
 }
 
-.result-overlay h2 {
-  font-size: 28px;
+@keyframes result-fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.result-overlay.result-win {
+  background: radial-gradient(ellipse at 50% 40%, rgba(76, 175, 106, 0.1), rgba(8, 9, 12, 0.94) 60%);
+}
+
+.result-overlay.result-loss {
+  background: radial-gradient(ellipse at 50% 40%, rgba(217, 83, 79, 0.1), rgba(8, 9, 12, 0.94) 60%);
+}
+
+/* The actual window: an opaque card so the outcome text and buttons never
+   have to fight the battlefield/cards behind the dimmed backdrop for
+   contrast. */
+.result-panel {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 75%);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px 22px 22px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  animation: result-pop 0.35s cubic-bezier(0.2, 0.9, 0.35, 1.3);
+}
+
+.result-win .result-panel {
+  border-color: rgba(76, 175, 106, 0.45);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(76, 175, 106, 0.15) inset;
+}
+
+.result-loss .result-panel {
+  border-color: rgba(217, 83, 79, 0.45);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(217, 83, 79, 0.15) inset;
+}
+
+.result-panel h2 {
+  font-size: 30px;
   margin: 0;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
-.result-overlay button {
+.result-win h2 {
+  color: var(--hp-high);
+  text-shadow: 0 0 20px rgba(76, 175, 106, 0.4);
+}
+
+.result-loss h2 {
+  color: var(--hp-low);
+  text-shadow: 0 0 20px rgba(217, 83, 79, 0.4);
+}
+
+@keyframes result-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.result-panel button {
   background: var(--accent);
   color: #1a1300;
   border: none;
@@ -663,10 +858,12 @@ body {
 .result-buttons {
   display: flex;
   gap: 12px;
+  width: 100%;
+  justify-content: center;
 }
 
 .result-buttons button:last-child {
-  background: var(--panel-alt);
+  background: var(--panel);
   color: var(--text);
   border: 1px solid var(--border);
 }
@@ -738,6 +935,164 @@ body {
 .switch-hp {
   font-size: 10px;
   color: var(--text-dim);
+}
+
+/* --- Manage Roster screen ------------------------------------------------ */
+
+/* Anchored near the top of the viewport rather than log-overlay's default
+   flex-end — "Manage Roster" used to open flush to the bottom half of the
+   screen; pinning it near the top instead makes it read as its own page
+   rather than a bottom-sheet nudged out of the way. */
+.roster-mgmt-overlay {
+  align-items: flex-start;
+  padding-top: 6vh;
+}
+
+.roster-panel {
+  max-height: 86vh;
+  border-radius: 12px;
+  gap: 6px;
+}
+
+.roster-mgmt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.roster-mgmt-card {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.roster-mgmt-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding-right: 22px;
+}
+
+.roster-mgmt-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.roster-mgmt-info-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.equip-slot-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.equip-slot-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  background: #0d0e12;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  padding: 6px 3px;
+  color: var(--text-dim);
+  cursor: pointer;
+  min-width: 0;
+}
+
+.equip-slot-box.filled {
+  border-style: solid;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.equip-slot-box.drop-target {
+  border-color: var(--accent);
+}
+
+.equip-slot-box.drag-over {
+  border-color: var(--accent);
+  background: #33291a;
+}
+
+.equip-slot-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.equip-slot-label {
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-dim);
+}
+
+.equip-slot-item {
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.inventory-section {
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.inventory-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 4px;
+  color: var(--text);
+  cursor: grab;
+}
+
+.inventory-box.selected {
+  border-color: var(--accent);
+  background: #33291a;
+}
+
+.inventory-box-name {
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.inventory-box-count {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--accent);
 }
 
 /* --- Hero detail overlay (CombatantCard info button) -------------------- */
@@ -821,6 +1176,66 @@ body {
   font-weight: 700;
 }
 
+/* Color-coded stat bar graph (src/view/shared/StatBars.tsx) — replaces the
+   old plain numeric stat-grid table so a hero's best/worst stat reads at a
+   glance from bar length instead of requiring the player to parse 8 numbers. */
+.stat-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.stat-bar-row {
+  display: grid;
+  grid-template-columns: 72px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-bar-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stat-bar-best .stat-bar-label {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.stat-bar-best-tag {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: #1a1300;
+  background: var(--accent);
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+.stat-bar-track {
+  height: 10px;
+  border-radius: 5px;
+  background: #0d0e12;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.stat-bar-value {
+  font-size: 11px;
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
 .detail-modifier-list {
   display: flex;
   flex-wrap: wrap;
@@ -902,9 +1317,45 @@ body {
   margin: 0 0 10px;
 }
 
+/* Enemy/player halves of the team-preview screen, colored to match the
+   combat screen's --enemy/--ally palette so the layout reads consistently
+   between "who am I about to fight" here and the battlefield itself. */
+.squad-section {
+  border-radius: 10px;
+  padding: 10px 10px 4px;
+  margin-bottom: 4px;
+  border: 1px solid var(--border);
+}
+
+.squad-section-enemy {
+  background: linear-gradient(180deg, rgba(217, 83, 79, 0.1), transparent 60%);
+  border-color: rgba(217, 83, 79, 0.35);
+}
+
+.squad-section-player {
+  background: linear-gradient(180deg, rgba(74, 144, 217, 0.1), transparent 60%);
+  border-color: rgba(74, 144, 217, 0.35);
+}
+
+.squad-section-title {
+  font-size: 15px;
+  margin: 2px 0 2px;
+  letter-spacing: 0.01em;
+}
+
+.squad-vs-divider {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: var(--text-dim);
+  margin: 2px 0 10px;
+}
+
 /* Scouted enemy cards are read-only (only the info button is interactive) — no pick affordance. */
 .enemy-scout-card {
   cursor: default;
+  border-left-color: var(--enemy);
 }
 
 .roster-grid {
@@ -918,6 +1369,7 @@ body {
   position: relative;
   background: var(--panel);
   border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
   border-radius: 8px;
   padding: 10px;
   text-align: left;
@@ -927,6 +1379,7 @@ body {
 
 .roster-card.picked {
   border-color: var(--accent);
+  border-left-color: var(--accent);
   background: #33291a;
 }
 
@@ -936,9 +1389,11 @@ body {
 }
 
 .roster-card-types {
+  display: flex;
+  gap: 5px;
   font-size: 10px;
-  color: var(--text-dim);
-  margin-top: 2px;
+  margin-top: 3px;
+  font-weight: 700;
 }
 
 .roster-card-equip {
@@ -954,6 +1409,17 @@ body {
   font-size: 9px;
   font-weight: 700;
   color: var(--accent);
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: #0d0e12;
+}
+
+.roster-card-badge.badge-enemy {
+  color: var(--enemy);
+}
+
+.roster-card-badge.badge-ally {
+  color: var(--ally);
 }
 
 /* --- Guild Hall panel ---------------------------------------------------- */
@@ -1194,17 +1660,17 @@ body {
 }
 
 .training-hero {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.training-hero:last-child {
-  border-bottom: none;
+  padding: 10px 10px 10px 8px;
+  margin-bottom: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 8px;
 }
 
 .training-hero h3 {
   font-size: 13px;
-  margin: 0 0 6px;
+  margin: 0 0 4px;
 }
 
 .training-row {
@@ -1218,4 +1684,145 @@ body {
 .training-row .hint {
   margin: 0;
   width: 100%;
+}
+
+/* --- Level-up screen: move banner + hoverable move chips --------------- */
+
+.levelup-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: var(--panel-alt);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+
+.levelup-banner-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.move-tooltip-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.move-tooltip-name {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.move-tooltip-meta {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.move-tooltip-desc {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.move-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.move-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 10px;
+  background: #0d0e12;
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.move-chip:hover,
+.move-chip.move-chip-pinned {
+  border-color: var(--accent);
+}
+
+.move-chip-type-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.move-chip-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  width: 200px;
+  flex-direction: column;
+  gap: 3px;
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  cursor: default;
+  white-space: normal;
+}
+
+.move-chip:hover .move-chip-tooltip,
+.move-chip.move-chip-pinned .move-chip-tooltip {
+  display: flex;
+}
+
+.rankup-branch-button {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 6px 10px;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rankup-branch-button:hover {
+  border-color: var(--accent);
+}
+
+.rankup-branch-name {
+  font-weight: 700;
+}
+
+.rankup-branch-kind {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.rankup-branch-button.rankup-offensive {
+  border-left-color: var(--enemy);
+}
+
+.rankup-branch-button.rankup-defensive {
+  border-left-color: var(--ally);
+}
+
+.rankup-branch-button.rankup-utility {
+  border-left-color: var(--hp-high);
 }

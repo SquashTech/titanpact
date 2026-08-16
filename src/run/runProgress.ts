@@ -54,41 +54,61 @@ export function grantRelicReward(run: RunState, relicId: string): RunState {
   return { ...run, relics: [...run.relics, relicId] };
 }
 
-/** equipmentReward node resolution: equips the chosen item onto the chosen roster hero, via the existing per-loadout equipItem. */
-export function applyEquipmentReward(run: RunState, rosterId: string, item: EquipmentDefinition): RunState {
-  const entry = run.roster.find((r) => r.rosterId === rosterId);
-  if (!entry) throw new RunProgressError(`${rosterId} is not on the roster`);
-  const nextEntry: RosterEntry = { ...entry, equipment: equipItem(entry.equipment, item) };
-  return { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)) };
+/**
+ * equipmentReward node resolution: adds the chosen item straight to the
+ * unequipped inventory (RunState.inventory) rather than forcing an
+ * immediate "which hero gets this" choice — that choice now happens later,
+ * at leisure, in RosterManagementScreen.
+ */
+export function grantInventoryReward(run: RunState, itemId: string): RunState {
+  return { ...run, inventory: [...run.inventory, itemId] };
 }
 
 /**
- * Moves an equipped item from one roster hero's slot to another's — the
- * Manage Roster equipment-reassignment feature. Unequips the source slot and
- * equips the item onto the target's matching slot, which (per equipItem's
- * no-inventory model) drops whatever the target already had equipped there.
+ * Equips one copy of `itemId` out of the inventory onto `rosterId`'s
+ * matching slot (RosterManagementScreen's tap/drag-to-equip). Whatever was
+ * already in that slot is returned to the inventory rather than discarded —
+ * the no-inventory equipItem model this used to rely on (equipment.ts)
+ * dropped the replaced item entirely, which was fine when equipping was the
+ * only path but would silently destroy items now that they're tracked.
  */
-export function moveEquipment(
+export function equipFromInventory(
   run: RunState,
-  fromRosterId: string,
-  slot: EquipmentSlot,
-  toRosterId: string,
+  rosterId: string,
+  itemId: string,
   equipmentLookup: Record<string, EquipmentDefinition>
 ): RunState {
-  const fromEntry = run.roster.find((r) => r.rosterId === fromRosterId);
-  const toEntry = run.roster.find((r) => r.rosterId === toRosterId);
-  if (!fromEntry || !toEntry) throw new RunProgressError('Unknown roster entry');
-  const itemId = fromEntry.equipment[slot];
-  if (!itemId) throw new RunProgressError(`${fromRosterId} has nothing equipped in ${slot}`);
+  const entry = run.roster.find((r) => r.rosterId === rosterId);
+  if (!entry) throw new RunProgressError(`${rosterId} is not on the roster`);
   const item = equipmentLookup[itemId];
   if (!item) throw new RunProgressError(`Unknown equipment ${itemId}`);
+  const invIndex = run.inventory.indexOf(itemId);
+  if (invIndex === -1) throw new RunProgressError(`${itemId} is not in the inventory`);
 
+  const previousItemId = entry.equipment[item.slot];
+  const nextInventory = [...run.inventory];
+  nextInventory.splice(invIndex, 1);
+  if (previousItemId) nextInventory.push(previousItemId);
+
+  const nextEntry: RosterEntry = { ...entry, equipment: equipItem(entry.equipment, item) };
   return {
     ...run,
-    roster: run.roster.map((r) => {
-      if (r.rosterId === fromRosterId) return { ...r, equipment: unequipSlot(r.equipment, slot) };
-      if (r.rosterId === toRosterId) return { ...r, equipment: equipItem(r.equipment, item) };
-      return r;
-    }),
+    inventory: nextInventory,
+    roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)),
+  };
+}
+
+/** Unequips `slot` on `rosterId` and returns the item to the inventory (RosterManagementScreen's tap-to-unequip). */
+export function unequipToInventory(run: RunState, rosterId: string, slot: EquipmentSlot): RunState {
+  const entry = run.roster.find((r) => r.rosterId === rosterId);
+  if (!entry) throw new RunProgressError(`${rosterId} is not on the roster`);
+  const itemId = entry.equipment[slot];
+  if (!itemId) throw new RunProgressError(`${rosterId} has nothing equipped in ${slot}`);
+
+  const nextEntry: RosterEntry = { ...entry, equipment: unequipSlot(entry.equipment, slot) };
+  return {
+    ...run,
+    inventory: [...run.inventory, itemId],
+    roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)),
   };
 }

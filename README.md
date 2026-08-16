@@ -101,9 +101,12 @@ Covered by `test/statuses.test.ts`.
   `grantLevelUpMove` resolves that level-up's move offer — a random pick from the
   hero's `moveTiers` pool, gained outright under the 4-move cap or an accept/decline
   replacement at the cap (`MOVE_CAP`). Rank-up branches (unchanged) grant permanent
-  stats and are one-shot per node once `rankProgress` crosses a threshold. Concrete
-  pool/branch content is fixture data for 2 of the 6 fixture heroes
-  (`src/data/progression.ts`) — see "Known gaps."
+  stats and are one-shot per node once `rankProgress` crosses a threshold.
+  **`moveTiers` pool content now covers all 6 fixture heroes** (`src/data/
+  progression.ts`), each drawing from a handful of thematically-appropriate moves
+  beyond their starting kit. **Rank-up branches remain fixture data for only 2 of the
+  6** (cinderKnight, tidecaller) — a separate axis from the move pool — see "Known
+  gaps."
 - **The recruitment economy** (`recruitment.ts`): Guild Hall (gold, fresh hero) and
   Recruit Contract (claims a defeated hero's exact rank-up state, ungeared) acquisition
   paths, both enforcing the roster cap via the same `addRosterEntry` used everywhere
@@ -133,6 +136,19 @@ forced replacement (choosing which bench hero fills a KO'd slot). A loss ends th
 ("Run Failed"); beating the boss node ends it ("Run Complete") — both offer "Start New
 Run" (fresh roster, fresh map seed; there's no meta-progression/unlock-pool layer yet).
 
+A round resolves instantly in the engine, then `FightScreen` replays its event stream
+one tap-advanced **beat** at a time (`buildBeats.ts`) rather than dumping the end
+state — a beat groups the events that belong to one readable moment (a move landing,
+a status ticking, a KO) behind a single banner + tap. **A KO is its own beat**
+(2026-08-16): a fainting hit's damage/HP-drain beat and the resulting faint (which
+clears the active slot and pulls up the replacement picker) used to be bundled
+together, so the card could disappear before the player saw the bar actually reach
+zero; they're now sequenced as two separate taps. The battlefield also got a visual
+pass (2026-08-16) — gradient card/panel backgrounds, a targetable-glow pulse, a
+KO shake, HP/mana bar shine and a low-HP pulse, and an opaque `result-panel` window
+for the victory/defeat screen instead of the outcome text sitting directly against the
+dimmed battlefield.
+
 Training Points are forced-allocated immediately: `LevelUpScreen` blocks the run from
 continuing until every point earned (from a fight win or an `upgradeReward` node) is
 spent on a hero — replacing the earlier `TrainingPanel`, a deferred "spend whenever"
@@ -144,8 +160,8 @@ from one hero to another.
 
 - The reference prototypes (`prototypes/combat-prototype.jsx` and the feel-pass
   variant) that `CLAUDE.md` treats as the behavioral acceptance bar are not present in
-  this repo. `/src/data` currently holds hand-authored **test fixtures** (6 heroes, 9
-  moves, a placeholder type chart, a handful of equipment items) sufficient to exercise
+  this repo. `/src/data` currently holds hand-authored **test fixtures** (6 heroes, ~55
+  moves across all 15 types, a placeholder type chart, a handful of equipment items) sufficient to exercise
   the engine and `/src/run` — not the authored roster or the real 15x15 balance chart.
   Bring the prototypes in (or hand off the authored content) before treating this as
   more than a scaffold.
@@ -166,20 +182,21 @@ from one hero to another.
   type-graft mechanic (`docs/progression.md` "Type-graft branches") end to end. The
   other 4 fixture heroes have nothing to invest in yet; that's a valid empty state, not
   a bug.
-- **Fixture heroes already exceed the 4-move cap at roster creation** (`heroes.ts` —
-  5-7 starting moves each, vs. `MOVE_CAP`'s 4, `docs/leveling-and-ranks.md`). The
-  level-up move-offer mechanism (gain under cap / accept-or-decline replacement at cap,
-  `LevelUpScreen`) is fully implemented and correct against `MOVE_CAP` — it's the
-  fixture *content* that's already over it, so almost every level-up currently
-  surfaces the replacement offer instead of a clean gain. Deliberately left as-is per
-  user direction (2026-08-16): useful for playtesting the offer UI now, to be fixed
-  alongside replacing the fixture roster with real content (#5 above), not before.
+- ~~Fixture heroes already exceed the 4-move cap at roster creation.~~ **Fixed
+  (2026-08-16):** `heroes.ts` starting kits are now trimmed to 3 moves each (a
+  low-power move of the hero's main type plus 1-2 support moves), leaving room to grow
+  into `MOVE_CAP` via level-ups instead of starting over it — a level-up now surfaces a
+  clean gain until the cap, then the accept/decline replacement offer
+  (`docs/leveling-and-ranks.md`). Each hero's `moveTiers` pool was expanded to match
+  (see the level-up currency bullet above).
 - **The run loop is one act, and its map has no visual path lines.** See
   `docs/run-loop.md` §4 for the full list of what's still not built there (multi-act
   sequencing, a real Ancient boss hero, drawn map connectors).
-- **No sequencing/animation.** The view renders each round's *end state* plus a text log
-  of what happened — it does not yet subscribe to the event stream turn-by-turn with
-  timing/juice. That's the "feel pass" the prototypes model; not built here.
+- **No hitstop/screen-shake/procedural audio.** `FightScreen` already replays a round
+  beat-by-beat, tap-advanced (see above), and has a light CSS-only "juice" pass
+  (card shake on KO, targetable/low-HP pulses, bar shine, popup/banner motion) — but
+  the full feel-pass the prototypes model (hitstop, screen shake, procedural Web Audio)
+  is not built here.
 
 ## Requirements
 
