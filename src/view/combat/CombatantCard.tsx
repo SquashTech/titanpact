@@ -1,8 +1,9 @@
-import type { HeroDefinition } from '../../engine/content';
+import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { Combatant } from '../../engine/state';
 import { effectiveTypes, getMaxHp, getMaxMana } from '../../engine/state';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { STAT_ICONS, STAT_ORDER } from '../shared/StatBars';
 
 export interface Popup {
   key: number;
@@ -37,11 +38,34 @@ function statusBadgeText(statusId: string, magnitude: number | undefined, durati
   return n !== undefined ? `${statusId} ${n}` : statusId;
 }
 
+/**
+ * Stat-mod corner badges (glanceable "this hero's stats are off base" cue,
+ * separate from the momentary dmg-popup and from opening HeroDetailOverlay).
+ * Split the active (non-zero) mods across the two top corners, two per side
+ * in the common case, so neither corner outgrows the space the portrait and
+ * name leave free — see .stat-mod-corner in styles.css.
+ */
+function activeStatMods(combatant: Combatant): StatKey[] {
+  return STAT_ORDER.filter((stat) => (combatant.statModifiers[stat] ?? 0) !== 0);
+}
+
+function StatModBadge({ stat, mod }: { stat: StatKey; mod: number }) {
+  return (
+    <span className={`stat-mod-badge ${mod > 0 ? 'stat-buff' : 'stat-debuff'}`} title={`${stat} ${mod > 0 ? '+' : ''}${mod}`}>
+      {STAT_ICONS[stat]}
+      {mod > 0 ? '▲' : '▼'}
+    </span>
+  );
+}
+
 export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onInspect, popup, selected, switchingIn, locked }: Props) {
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = Math.max(0, combatant.currentHp / maxHp);
   const manaFraction = maxMana > 0 ? Math.max(0, combatant.currentMana / maxMana) : 0;
+  const activeMods = combatant.fainted ? [] : activeStatMods(combatant);
+  const leftMods = activeMods.slice(0, Math.ceil(activeMods.length / 2));
+  const rightMods = activeMods.slice(Math.ceil(activeMods.length / 2));
 
   const classes = ['combatant-card'];
   if (combatant.fainted) classes.push('fainted');
@@ -55,6 +79,20 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onI
       onClick={targetable && !combatant.fainted && !locked ? onSelectTarget : undefined}
       role={targetable && !locked ? 'button' : undefined}
     >
+      {leftMods.length > 0 && (
+        <div className="stat-mod-corner stat-mod-corner-left">
+          {leftMods.map((stat) => (
+            <StatModBadge key={stat} stat={stat} mod={combatant.statModifiers[stat] ?? 0} />
+          ))}
+        </div>
+      )}
+      {rightMods.length > 0 && (
+        <div className="stat-mod-corner stat-mod-corner-right">
+          {rightMods.map((stat) => (
+            <StatModBadge key={stat} stat={stat} mod={combatant.statModifiers[stat] ?? 0} />
+          ))}
+        </div>
+      )}
       {combatant.fainted && <span className="fainted-tag">KO</span>}
       {switchingIn && <span className="switching-tag">⇄ Switching In</span>}
       {onInspect && (

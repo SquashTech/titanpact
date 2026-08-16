@@ -601,6 +601,46 @@ body {
   white-space: nowrap;
 }
 
+/* Stat-mod corner badges (CombatantCard) — a persistent "this stat is off
+   base" cue distinct from the momentary .dmg-popup float and the full
+   HeroDetailOverlay breakdown. Kept out of .status-badge-row (that row is
+   reserved for statuses, and doubling it up would overload it) and out of
+   the .fainted-tag/.switching-tag corner (top-right, further in) by sitting
+   right at the card's own corners. Two per side is the common case — a third
+   wraps to a new line rather than overflowing the card. */
+.stat-mod-corner {
+  position: absolute;
+  top: 3px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  max-width: 46px;
+  z-index: 1;
+}
+
+.stat-mod-corner-left {
+  left: 4px;
+}
+
+.stat-mod-corner-right {
+  right: 4px;
+  justify-content: flex-end;
+}
+
+.stat-mod-badge {
+  font-size: 10px;
+  line-height: 1;
+  padding: 1px 2px;
+  border-radius: 5px;
+  background: rgba(13, 14, 18, 0.75);
+}
+
+/* Switch-row/bench-panel picker cards are too small for these to read —
+   matches .bench-row .status-badge-row:empty hiding statuses there too. */
+.bench-row .stat-mod-corner {
+  display: none;
+}
+
 /* Active statuses (docs/conditions.md) on a battlefield card — magnitude/duration
    included in the label when the status carries one (CombatantCard statusBadgeText). */
 .status-badge-row {

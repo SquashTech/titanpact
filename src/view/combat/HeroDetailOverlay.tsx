@@ -3,7 +3,7 @@ import type { Combatant } from '../../engine/state';
 import { effectiveTypes, getMaxHp, getMaxMana } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
-import { STAT_LABELS, STAT_ORDER, StatBars } from '../shared/StatBars';
+import { STAT_ICONS, STAT_LABELS, STAT_ORDER, StatBars } from '../shared/StatBars';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 
@@ -79,7 +79,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
               const mod = combatant.statModifiers[stat] ?? 0;
               return (
                 <span key={stat} className={`detail-modifier-chip ${mod > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-                  {STAT_LABELS[stat]} {fmtMod(mod)}
+                  {STAT_ICONS[stat]} {STAT_LABELS[stat]} {fmtMod(mod)}
                 </span>
               );
             })}

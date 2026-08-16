@@ -13,6 +13,18 @@ export const STAT_LABELS: Record<StatKey, string> = {
   mpRegen: 'MP Regen',
 };
 
+/** One glyph per stat, shared everywhere a stat reads compactly — battlefield stat-mod corner badges (CombatantCard) and stat-block labels (StatBars, HeroDetailOverlay) alike, so a player learns one icon vocabulary for both contexts. */
+export const STAT_ICONS: Record<StatKey, string> = {
+  hp: '❤️',
+  attack: '⚔️',
+  defense: '🛡️',
+  intelligence: '🧠',
+  wisdom: '🔮',
+  speed: '👟',
+  manaPool: '💧',
+  mpRegen: '🔄',
+};
+
 /** One color per stat, shared everywhere a stat block is drawn — lets a player learn "purple = Intelligence" once and read every hero's block by color from then on. */
 export const STAT_COLORS: Record<StatKey, string> = {
   hp: '#4caf6a',
@@ -74,7 +86,9 @@ export function StatBars({ baseStats, deltas = {} }: Props) {
         const isBest = percents[i] === bestPercent && bestPercent > 0;
         return (
           <div className={`stat-bar-row${isBest ? ' stat-bar-best' : ''}`} key={stat}>
-            <span className="stat-bar-label">{STAT_LABELS[stat]}</span>
+            <span className="stat-bar-label">
+              <span aria-hidden="true">{STAT_ICONS[stat]}</span> {STAT_LABELS[stat]}
+            </span>
             <div className="stat-bar-track">
               <div className="stat-bar-fill" style={{ width: `${percents[i]}%`, background: isBest ? 'var(--accent)' : STAT_COLORS[stat] }} />
             </div>
