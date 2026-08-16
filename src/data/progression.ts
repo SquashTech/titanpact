@@ -26,6 +26,12 @@ export const progressionTable: ProgressionTable = {
     wildOracle: ['wildfire', 'vineLash', 'soulRend', 'rendingClaw', 'naturesWrath'],
     stormRanger: ['quickJab', 'thunderclap', 'galeSlash', 'fangRush'],
     shadowMonk: ['duskStrike', 'shadowVeil', 'fangRush', 'quickJab', 'nightmareGrasp'],
+    glacialWarden: ['frostBite', 'purify', 'mendWounds', 'weaken'],
+    dawnwarden: ['sunstrike', 'healingRain', 'fortify', 'exposeWeakness'],
+    runescribe: ['mindSpike', 'psychicLance', 'weaken', 'curseMind'],
+    mindweaver: ['exposeWeakness', 'quickJab', 'corruptingTouch', 'stunningBlow'],
+    forgewright: ['ironFist', 'shrapnelBlast', 'quickJab', 'stunningBlow'],
+    packAlpha: ['rendingClaw', 'quickJab', 'fortify', 'weaken'],
   },
   rankUps: {
     cinderKnight: [

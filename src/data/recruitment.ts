@@ -16,4 +16,10 @@ export const guildHallOffers: GuildHallOffer[] = [
   { id: 'guild-wildOracle', heroId: 'wildOracle', cost: 20, startingMoveIds: heroes.wildOracle.moveIds },
   { id: 'guild-stormRanger', heroId: 'stormRanger', cost: 20, startingMoveIds: heroes.stormRanger.moveIds },
   { id: 'guild-shadowMonk', heroId: 'shadowMonk', cost: 20, startingMoveIds: heroes.shadowMonk.moveIds },
+  { id: 'guild-glacialWarden', heroId: 'glacialWarden', cost: 20, startingMoveIds: heroes.glacialWarden.moveIds },
+  { id: 'guild-dawnwarden', heroId: 'dawnwarden', cost: 20, startingMoveIds: heroes.dawnwarden.moveIds },
+  { id: 'guild-runescribe', heroId: 'runescribe', cost: 20, startingMoveIds: heroes.runescribe.moveIds },
+  { id: 'guild-mindweaver', heroId: 'mindweaver', cost: 20, startingMoveIds: heroes.mindweaver.moveIds },
+  { id: 'guild-forgewright', heroId: 'forgewright', cost: 20, startingMoveIds: heroes.forgewright.moveIds },
+  { id: 'guild-packAlpha', heroId: 'packAlpha', cost: 20, startingMoveIds: heroes.packAlpha.moveIds },
 ];

@@ -18,6 +18,10 @@ interface Props {
   popup?: Popup | null;
   /** Marks this card as the currently-committed choice — e.g. the bench hero picked to switch in (FightScreen's switch-row). Purely a visual highlight, independent of `targetable`. */
   selected?: boolean;
+  /** This bench hero is the declared replacement for a pending switch action — shown directly on the switch-row picker buttons (FightScreen) so the choice reads at a glance, including when it was made for a *different* active hero than the one currently on screen. */
+  switchingIn?: boolean;
+  /** This bench hero is already queued as another active hero's replacement, so it can't also be picked here — dims the card and blocks the click independently of `targetable`. */
+  locked?: boolean;
 }
 
 function hpTier(fraction: number): 'hp-high' | 'hp-mid' | 'hp-low' {
@@ -32,7 +36,7 @@ function statusBadgeText(statusId: string, magnitude: number | undefined, durati
   return n !== undefined ? `${statusId} ${n}` : statusId;
 }
 
-export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onInspect, popup, selected }: Props) {
+export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onInspect, popup, selected, switchingIn, locked }: Props) {
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = Math.max(0, combatant.currentHp / maxHp);
@@ -40,16 +44,18 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onI
 
   const classes = ['combatant-card'];
   if (combatant.fainted) classes.push('fainted');
-  if (targetable && !combatant.fainted) classes.push('targetable');
+  if (targetable && !combatant.fainted && !locked) classes.push('targetable');
   if (selected) classes.push('selected');
+  if (locked) classes.push('locked');
 
   return (
     <div
       className={classes.join(' ')}
-      onClick={targetable && !combatant.fainted ? onSelectTarget : undefined}
-      role={targetable ? 'button' : undefined}
+      onClick={targetable && !combatant.fainted && !locked ? onSelectTarget : undefined}
+      role={targetable && !locked ? 'button' : undefined}
     >
       {combatant.fainted && <span className="fainted-tag">KO</span>}
+      {switchingIn && <span className="switching-tag">⇄ Switching In</span>}
       {onInspect && (
         <button
           className="info-button"
@@ -77,15 +83,17 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onI
           ))}
         </span>
       </div>
-      {Object.values(combatant.statuses).length > 0 && (
-        <div className="status-badge-row">
-          {Object.values(combatant.statuses).map((s) => (
-            <span key={s.statusId} className={`status-badge${s.statusId === 'Regen' ? ' status-badge-positive' : ''}`}>
-              {statusBadgeText(s.statusId, s.magnitude, s.duration)}
-            </span>
-          ))}
-        </div>
-      )}
+      {/* Always rendered, even with no active statuses — reserves a fixed row of
+          vertical space so a status landing mid-fight doesn't grow the card and
+          shove the rest of the battlefield around (docs/architecture.md
+          "Resolution and presentation are separate layers"). */}
+      <div className="status-badge-row">
+        {Object.values(combatant.statuses).map((s) => (
+          <span key={s.statusId} className={`status-badge${s.statusId === 'Regen' ? ' status-badge-positive' : ''}`}>
+            {statusBadgeText(s.statusId, s.magnitude, s.duration)}
+          </span>
+        ))}
+      </div>
       <div className="bar-track">
         <div className={`bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
       </div>

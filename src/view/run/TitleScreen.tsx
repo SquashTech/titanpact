@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { CompendiumScreen } from './CompendiumScreen';
+
 interface Props {
   onStartRun: () => void;
   onQuickBattle: () => void;
@@ -7,8 +10,12 @@ interface Props {
  * Landing screen. "Quick Battle" skips the run/map/squad-select loop
  * entirely and drops straight into a randomized 4v4 — a fast loop for
  * iterating on combat/UI without playing through a run each time.
+ * "Compendium" opens a read-only hero browser (CompendiumScreen) — no run
+ * state involved, so it's toggled locally rather than routed through App.tsx.
  */
 export function TitleScreen({ onStartRun, onQuickBattle }: Props) {
+  const [showCompendium, setShowCompendium] = useState(false);
+
   return (
     <div className="title-screen">
       <div className="title-logo">TITANPACT</div>
@@ -20,7 +27,12 @@ export function TitleScreen({ onStartRun, onQuickBattle }: Props) {
         <button className="title-secondary-button" onClick={onQuickBattle}>
           Quick Battle
         </button>
+        <button className="title-secondary-button" onClick={() => setShowCompendium(true)}>
+          Compendium
+        </button>
       </div>
+
+      {showCompendium && <CompendiumScreen onClose={() => setShowCompendium(false)} />}
     </div>
   );
 }

@@ -397,13 +397,15 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
       {resolving && <div className="advance-overlay" onClick={handleAdvance} />}
 
       <div className="battlefield">
-        {banner && (
-          <div className="combat-banner">
-            <span>{banner}</span>
-            {bannerMeta && <span className="combat-banner-meta">{bannerMeta}</span>}
-            <span className="combat-banner-hint">tap to continue ▸</span>
-          </div>
-        )}
+        {/* Always mounted, at a fixed height, whether or not a round is
+            currently playing out — reserving the space up front means
+            starting/ending playback never itself shifts the team rows below
+            (see .combat-banner). */}
+        <div className={`combat-banner${banner ? '' : ' combat-banner-empty'}`}>
+          {banner && <span>{banner}</span>}
+          {bannerMeta && <span className="combat-banner-meta">{bannerMeta}</span>}
+          <span className="combat-banner-hint">tap to continue ▸</span>
+        </div>
 
         <div className="team-row enemy">
           {renderActiveSlot(AI_SIDE, 0)}
@@ -487,7 +489,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
                   {hoveredMove?.combatantId === id
                     ? (hoveredMove.move.description ?? '')
                     : selecting?.combatantId === id
-                      ? 'Choose a target above.'
+                      ? `${selecting.move.name} — Choose a target`
                       : activeMove
                         ? (activeMove.description ?? '')
                         : 'Tap a move to see its effect and matchups.'}
@@ -499,6 +501,11 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
                       <div className="bench-row">
                         {playerBench.map((benchId) => {
                           const isSelected = pending[id]?.kind === 'switch' && pending[id]?.benchedCombatantId === benchId;
+                          // A different already-committed active hero has already claimed this bench
+                          // hero as their replacement — can't also send it in here.
+                          const claimedByOther = Object.entries(pending).some(
+                            ([pid, p]) => pid !== id && p.kind === 'switch' && p.benchedCombatantId === benchId
+                          );
                           const benchCombatant = combat.combatants[benchId];
                           const benchHero = allCombatants[benchCombatant.heroId];
                           return (
@@ -506,8 +513,10 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
                               key={benchId}
                               hero={benchHero}
                               combatant={benchCombatant}
-                              targetable
+                              targetable={!claimedByOther}
                               selected={isSelected}
+                              switchingIn={isSelected || claimedByOther}
+                              locked={claimedByOther}
                               onSelectTarget={() => handleSwitchClick(id, benchId)}
                               onInspect={() => setInspecting(benchId)}
                               popup={popups[benchId]}
@@ -524,6 +533,31 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
 
         {!resolving && openReplacementSlots.length > 0 && <div className="hint">Choose a bench replacement above to continue.</div>}
       </div>
+
+      {/* Only while a round is actually playing out — during move selection the
+          switch-row inside the action panel already shows these same bench
+          cards as clickable switch targets, so showing both at once just
+          doubles them up on screen. */}
+      {resolving && playerBench.length > 0 && (
+        <div className="player-bench-panel">
+          <div className="player-bench-label">Bench</div>
+          <div className="bench-row">
+            {playerBench.map((benchId) => {
+              const benchCombatant = combat.combatants[benchId];
+              const benchHero = allCombatants[benchCombatant.heroId];
+              return (
+                <CombatantCard
+                  key={benchId}
+                  hero={benchHero}
+                  combatant={benchCombatant}
+                  onInspect={() => setInspecting(benchId)}
+                  popup={popups[benchId]}
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {logOpen && (
         <div className="log-overlay" onClick={() => setLogOpen(false)}>
