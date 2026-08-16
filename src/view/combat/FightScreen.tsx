@@ -23,7 +23,7 @@ import { HeroDetailOverlay } from './HeroDetailOverlay';
 import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
-import { getTypeColor } from './typeColors';
+import { TypeBadge } from '../shared/TypeBadge';
 
 const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
@@ -463,9 +463,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
                           <span className="move-cost">{move.manaCost}MP</span>
                         </div>
                         <div className="move-row-mid">
-                          <span className="type-tag" style={{ color: getTypeColor(move.type) }}>
-                            {move.type}
-                          </span>
+                          <TypeBadge type={move.type} />
                           <span className="move-power">BP {move.basePower}</span>
                           {hasStab && <span className="move-stab">STAB</span>}
                         </div>

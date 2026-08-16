@@ -7,6 +7,7 @@ import type { EquipmentSlot } from '../../run/equipment';
 import { equipFromInventory, unequipToInventory, RunProgressError } from '../../run/runProgress';
 import { getTypeColor } from '../combat/typeColors';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
+import { TypeBadge } from '../shared/TypeBadge';
 
 const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
@@ -117,9 +118,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
                     </div>
                     <div className="roster-card-types">
                       {hero.types.map((t) => (
-                        <span key={t} className="type-tag" style={{ color: getTypeColor(t) }}>
-                          {t}
-                        </span>
+                        <TypeBadge key={t} type={t} />
                       ))}
                     </div>
                     <button

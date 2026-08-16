@@ -74,12 +74,9 @@ export function StatBars({ baseStats, deltas = {} }: Props) {
         const isBest = percents[i] === bestPercent && bestPercent > 0;
         return (
           <div className={`stat-bar-row${isBest ? ' stat-bar-best' : ''}`} key={stat}>
-            <span className="stat-bar-label">
-              {STAT_LABELS[stat]}
-              {isBest && <span className="stat-bar-best-tag">BEST</span>}
-            </span>
+            <span className="stat-bar-label">{STAT_LABELS[stat]}</span>
             <div className="stat-bar-track">
-              <div className="stat-bar-fill" style={{ width: `${percents[i]}%`, background: STAT_COLORS[stat] }} />
+              <div className="stat-bar-fill" style={{ width: `${percents[i]}%`, background: isBest ? 'var(--accent)' : STAT_COLORS[stat] }} />
             </div>
             <span className="stat-bar-value">
               {totals[i]}

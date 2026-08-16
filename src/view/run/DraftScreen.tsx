@@ -5,6 +5,7 @@ import { createRosterEntry } from '../../run/state';
 import { STARTER_PICK_COUNT } from '../../run/draft';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { getTypeColor } from '../combat/typeColors';
+import { TypeBadge } from '../shared/TypeBadge';
 
 interface Props {
   optionIds: string[];
@@ -75,9 +76,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
                   <div className="roster-card-name">{hero.name}</div>
                   <div className="roster-card-types">
                     {hero.types.map((t) => (
-                      <span key={t} className="type-tag" style={{ color: getTypeColor(t) }}>
-                        {t}
-                      </span>
+                      <TypeBadge key={t} type={t} />
                     ))}
                   </div>
                   {picked && <span className="roster-card-badge badge-ally">CHOSEN</span>}

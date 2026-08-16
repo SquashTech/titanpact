@@ -402,9 +402,19 @@ body {
   font-weight: 400;
 }
 
-.type-tag {
-  font-weight: 700;
-  letter-spacing: 0.02em;
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  flex: none;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 2px 0;
+  border-radius: 4px;
+  line-height: 1.3;
+  white-space: nowrap;
 }
 
 .bar-track {
@@ -706,8 +716,10 @@ body {
   color: var(--text-dim);
 }
 
-.move-row-mid .type-tag {
-  font-size: 10px;
+.move-row-mid .type-badge {
+  width: 26px;
+  font-size: 8px;
+  padding: 1px 0;
 }
 
 .move-power {
@@ -1328,18 +1340,12 @@ body {
 }
 
 .stat-bar-best .stat-bar-label {
-  color: var(--text);
+  color: var(--accent);
   font-weight: 700;
 }
 
-.stat-bar-best-tag {
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  color: #1a1300;
-  background: var(--accent);
-  border-radius: 4px;
-  padding: 1px 4px;
+.stat-bar-best .stat-bar-value {
+  color: var(--accent);
 }
 
 .stat-bar-track {
@@ -1890,12 +1896,12 @@ body {
    rule's comment for the rationale, and apply it to any future info box
    whose content changes while the rest of the page stays put. */
 
-.levelup-info-panel {
+.move-info-panel {
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 3px;
-  height: 104px;
+  min-height: 96px;
   background: var(--panel-alt);
   border: 1px solid var(--accent);
   border-radius: 8px;
@@ -1903,7 +1909,7 @@ body {
   margin-bottom: 10px;
 }
 
-.levelup-info-label {
+.move-info-label {
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.05em;
@@ -1911,28 +1917,28 @@ body {
   color: var(--accent);
 }
 
-.levelup-info-placeholder {
+.move-info-placeholder {
   font-size: 11px;
   color: var(--text-dim);
 }
 
-.move-tooltip-head {
+.move-info-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
 }
 
-.move-tooltip-name {
+.move-info-name {
   font-size: 14px;
   font-weight: 700;
 }
 
-.move-tooltip-meta {
+.move-info-meta {
   font-size: 11px;
   color: var(--text-dim);
 }
 
-.move-tooltip-desc {
+.move-info-desc {
   min-height: 28px;
   font-size: 11px;
   line-height: 14px;

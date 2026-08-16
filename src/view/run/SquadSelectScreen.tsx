@@ -9,6 +9,7 @@ import { pickSquad } from '../../run/squad';
 import type { Encounter } from '../../run/enemyGen';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { getTypeColor } from '../combat/typeColors';
+import { TypeBadge } from '../shared/TypeBadge';
 
 interface Props {
   run: RunState;
@@ -78,9 +79,7 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
                   </div>
                   <div className="roster-card-types">
                     {hero.types.map((t) => (
-                      <span key={t} className="type-tag" style={{ color: getTypeColor(t) }}>
-                        {t}
-                      </span>
+                      <TypeBadge key={t} type={t} />
                     ))}
                   </div>
                   <span className="roster-card-badge badge-enemy">{isBench ? 'BENCH' : 'ACTIVE'}</span>
@@ -125,9 +124,7 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
                   </div>
                   <div className="roster-card-types">
                     {hero.types.map((t) => (
-                      <span key={t} className="type-tag" style={{ color: getTypeColor(t) }}>
-                        {t}
-                      </span>
+                      <TypeBadge key={t} type={t} />
                     ))}
                   </div>
                   {equippedCount > 0 && (

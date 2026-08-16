@@ -3,8 +3,8 @@ import type { Combatant } from '../../engine/state';
 import { effectiveTypes, getMaxHp, getMaxMana } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
-import { getTypeColor } from './typeColors';
 import { STAT_LABELS, STAT_ORDER, StatBars } from '../shared/StatBars';
+import { TypeBadge } from '../shared/TypeBadge';
 
 const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
@@ -53,9 +53,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           <div className="detail-name">{hero.name}</div>
           <div className="combatant-types">
             {effectiveTypes(hero, combatant).map((t) => (
-              <span key={t} className="type-tag" style={{ color: getTypeColor(t) }}>
-                {t}
-              </span>
+              <TypeBadge key={t} type={t} />
             ))}
           </div>
         </div>

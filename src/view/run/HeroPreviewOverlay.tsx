@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { moves } from '../../data/moves';
 import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
 import { equipmentStatModifiers } from '../../run/equipment';
 import { mergeStatMods } from '../../run/statMods';
-import { getTypeColor } from '../combat/typeColors';
 import { StatBars } from '../shared/StatBars';
+import { MoveTile, MoveInfoPanel } from '../shared/MoveTile';
+import { TypeBadge } from '../shared/TypeBadge';
 
 const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
@@ -32,6 +34,8 @@ interface Props {
  */
 export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Props) {
   const grants = mergeStatMods(entry.rankStatGrants, equipmentStatModifiers(entry.equipment, equipmentLookup));
+  const [viewedMoveId, setViewedMoveId] = useState<string | null>(null);
+  const viewedMove = viewedMoveId ? (moves[viewedMoveId] ?? null) : null;
 
   return (
     <div className="detail-overlay" onClick={onClose}>
@@ -42,9 +46,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Pr
           </div>
           <div className="combatant-types">
             {hero.types.map((t) => (
-              <span key={t} className="type-tag" style={{ color: getTypeColor(t) }}>
-                {t}
-              </span>
+              <TypeBadge key={t} type={t} />
             ))}
           </div>
         </div>
@@ -54,13 +56,20 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Pr
 
         <div className="detail-section-title">Moves</div>
         {entry.unlockedMoveIds.length > 0 ? (
-          <div className="detail-modifier-list">
-            {entry.unlockedMoveIds.map((id) => (
-              <span key={id} className="detail-status-chip">
-                {moves[id]?.name ?? id}
-              </span>
-            ))}
-          </div>
+          <>
+            <div className="move-tile-row">
+              {entry.unlockedMoveIds.map((id) =>
+                moves[id] ? (
+                  <MoveTile key={id} move={moves[id]} selected={viewedMoveId === id} onSelect={() => setViewedMoveId(id)} />
+                ) : (
+                  <span key={id} className="detail-status-chip">
+                    {id}
+                  </span>
+                )
+              )}
+            </div>
+            <MoveInfoPanel move={viewedMove} />
+          </>
         ) : (
           <div className="detail-empty">No moves.</div>
         )}

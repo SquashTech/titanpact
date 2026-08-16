@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
-import type { MoveDefinition } from '../../engine/content';
 import type { RunState } from '../../run/state';
 import {
   levelUpHero,
@@ -14,6 +13,8 @@ import {
   ProgressionError,
 } from '../../run/progression';
 import { getTypeColor } from '../combat/typeColors';
+import { MoveTile, MoveInfoPanel } from '../shared/MoveTile';
+import { TypeBadge } from '../shared/TypeBadge';
 
 interface Props {
   run: RunState;
@@ -24,50 +25,6 @@ interface Props {
 interface MoveOffer {
   rosterId: string;
   moveId: string;
-}
-
-const KIND_LABELS: Record<string, string> = { damage: 'Damage', heal: 'Heal', buff: 'Buff/Debuff' };
-
-/** "60 pow · 10 mp" / "40 heal · 14 mp" / "10 mp" — the compact stat line shown for a move. */
-function moveStatLine(move: MoveDefinition): string {
-  const parts: string[] = [];
-  if (move.kind === 'damage' && move.basePower) parts.push(`${move.basePower} pow`);
-  if (move.kind === 'heal' && move.healAmount) parts.push(`${move.healAmount} heal`);
-  parts.push(`${move.manaCost} mp`);
-  return parts.join(' · ');
-}
-
-/**
- * Uniform move tile — just the name, type shown as a colored left edge
- * (matching the border-left type coding used elsewhere in this app, e.g. the
- * hero card itself) rather than a separate dot glyph, so more tiles fit per
- * row before wrapping. Kept to a single compact line so six full-width hero
- * rows still fit on screen without scrolling. Stats and description aren't
- * shown on the tile at all; hovering (mouse) or tapping (touch/click) loads
- * them into the screen's fixed info panel instead of popping a tooltip next
- * to the cursor, so the text can never hang off a screen edge. When
- * `onSelect` is omitted the tile is purely decorative (used inside the
- * move-replace offer buttons, where the whole button is already the tap
- * target).
- */
-function MoveTile({ move, selected, onSelect }: { move: MoveDefinition; selected?: boolean; onSelect?: () => void }) {
-  return (
-    <span
-      className={`move-tile${selected ? ' move-tile-selected' : ''}`}
-      style={{ borderLeftColor: getTypeColor(move.type) }}
-      onMouseEnter={onSelect}
-      onClick={
-        onSelect
-          ? (e) => {
-              e.stopPropagation();
-              onSelect();
-            }
-          : undefined
-      }
-    >
-      {move.name}
-    </span>
-  );
 }
 
 /**
@@ -155,25 +112,11 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
         <h2 className="squad-section-title">📈 Level Up — {run.levelUpPool} pts remaining</h2>
         <p className="hint">Spend every Training Point before continuing.</p>
 
-        <div className="levelup-info-panel">
-          {viewedMove ? (
-            <>
-              <div className="levelup-info-label">{viewedLabel}</div>
-              <div className="move-tooltip-head">
-                <span className="move-tooltip-name">{viewedMove.name}</span>
-                <span className="type-tag" style={{ color: getTypeColor(viewedMove.type) }}>
-                  {viewedMove.type}
-                </span>
-              </div>
-              <div className="move-tooltip-meta">
-                {KIND_LABELS[viewedMove.kind] ?? viewedMove.kind} · {moveStatLine(viewedMove)}
-              </div>
-              {viewedMove.description && <div className="move-tooltip-desc">{viewedMove.description}</div>}
-            </>
-          ) : (
-            <div className="levelup-info-placeholder">{lastMessage ?? 'Hover or tap a move to see its details here.'}</div>
-          )}
-        </div>
+        <MoveInfoPanel
+          move={viewedMove}
+          label={viewedLabel}
+          placeholder={lastMessage ?? 'Hover or tap a move to see its details here.'}
+        />
 
         {offer && offerEntry ? (
           <div className="reward-panel">
@@ -224,9 +167,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
                   </div>
                   <div className="roster-card-types">
                     {hero.types.map((t) => (
-                      <span key={t} className="type-tag" style={{ color: getTypeColor(t) }}>
-                        {t}
-                      </span>
+                      <TypeBadge key={t} type={t} />
                     ))}
                   </div>
                   <div className="move-tile-row">

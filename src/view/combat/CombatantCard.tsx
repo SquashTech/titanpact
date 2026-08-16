@@ -1,7 +1,7 @@
 import type { HeroDefinition } from '../../engine/content';
 import type { Combatant } from '../../engine/state';
 import { effectiveTypes, getMaxHp, getMaxMana } from '../../engine/state';
-import { getTypeColor } from './typeColors';
+import { TypeBadge } from '../shared/TypeBadge';
 
 export interface Popup {
   key: number;
@@ -77,9 +77,7 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onI
         <span>{hero.name}</span>
         <span className="combatant-types">
           {effectiveTypes(hero, combatant).map((t) => (
-            <span key={t} className="type-tag" style={{ color: getTypeColor(t) }}>
-              {t}
-            </span>
+            <TypeBadge key={t} type={t} />
           ))}
         </span>
       </div>
