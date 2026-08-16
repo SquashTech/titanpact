@@ -21,7 +21,6 @@ export function TitleScreen({ onStartRun, onQuickBattle }: Props) {
   return (
     <div className="title-screen">
       <div className="title-logo">TITANPACT</div>
-      <p className="hint title-tagline">Doubles tactical roguelike</p>
       <div className="title-buttons">
         <button className="resolve-button" onClick={onStartRun}>
           Start a Run

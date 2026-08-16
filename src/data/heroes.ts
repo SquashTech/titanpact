@@ -65,14 +65,14 @@ export const heroes: Record<string, HeroDefinition> = {
   // rest of each thematic kit left for src/data/progression.ts moveTiers.
   glacialWarden: {
     id: 'glacialWarden',
-    name: 'Glacial Warden',
+    name: 'The Abominable',
     types: ['Frost'],
     baseStats: { hp: 95, attack: 30, defense: 55, intelligence: 70, wisdom: 60, speed: 45, manaPool: 70, mpRegen: 7 },
     moveIds: ['glacialSpike', 'frostLock', 'secondWind'],
   },
   dawnwarden: {
     id: 'dawnwarden',
-    name: 'Dawnwarden',
+    name: 'Sun Priest',
     types: ['Light'],
     baseStats: { hp: 100, attack: 40, defense: 65, intelligence: 55, wisdom: 85, speed: 40, manaPool: 85, mpRegen: 9 },
     moveIds: ['radiantBeam', 'restoreVigor', 'purify'],
@@ -93,7 +93,7 @@ export const heroes: Record<string, HeroDefinition> = {
   },
   forgewright: {
     id: 'forgewright',
-    name: 'Forgewright',
+    name: 'Steam Colossus',
     types: ['Forge'],
     baseStats: { hp: 110, attack: 75, defense: 70, intelligence: 25, wisdom: 40, speed: 35, manaPool: 45, mpRegen: 5 },
     moveIds: ['moltenHammer', 'sparkForge', 'fortify'],

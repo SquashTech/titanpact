@@ -33,7 +33,6 @@ export function TypeChartOverlay({ onClose }: Props) {
             ✕
           </button>
         </div>
-        <p className="hint">Rows attack, columns defend. Values are damage multipliers (soft 0.25× floor, no immunities).</p>
         <div className="type-chart-scroll">
           <div className="type-chart-grid">
             <div className="tc-cell tc-corner" />

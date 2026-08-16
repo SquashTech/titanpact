@@ -274,6 +274,23 @@ body {
   border-top: 2px solid rgba(74, 144, 217, 0.5);
 }
 
+/* Hero portrait (src/view/shared/heroArt.ts) — most heroes have no art yet,
+   so this only renders for the ones that do (CombatantCard). Pixel-art
+   source, scaled up blocky rather than blurred. */
+.combatant-portrait {
+  display: block;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 4px;
+  image-rendering: pixelated;
+}
+
+.bench-row .combatant-portrait {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 2px;
+}
+
 /* Switch-in picker, inside the switch-row of the move-selection action panel
    (FightScreen.tsx) — the bench heroes' own CombatantCards double as the
    switch buttons (targetable + onSelectTarget), shrunk via these descendant

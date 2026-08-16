@@ -2,6 +2,7 @@ import type { HeroDefinition } from '../../engine/content';
 import type { Combatant } from '../../engine/state';
 import { effectiveTypes, getMaxHp, getMaxMana } from '../../engine/state';
 import { TypeBadge } from '../shared/TypeBadge';
+import { heroArt } from '../shared/heroArt';
 
 export interface Popup {
   key: number;
@@ -73,6 +74,7 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onI
           {popup.text}
         </div>
       )}
+      {heroArt[hero.id] && <img className="combatant-portrait" src={heroArt[hero.id]} alt="" />}
       <div className="combatant-name">
         <span>{hero.name}</span>
         <span className="combatant-types">

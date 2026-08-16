@@ -83,7 +83,6 @@ export function CompendiumScreen({ onClose }: Props) {
             ✕
           </button>
         </div>
-        <p className="hint">{heroList.length} heroes authored. Base stats shown — no rank-up or equipment bonuses.</p>
         <MoveInfoPanel move={viewedMove} label={viewedHero?.name} />
         <div className="screen-scroll">
           <div className="roster-mgmt-list">

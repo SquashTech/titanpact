@@ -110,7 +110,6 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     <div className="node-screen">
       <div className="screen-scroll">
         <h2 className="squad-section-title">📈 Level Up — {run.levelUpPool} pts remaining</h2>
-        <p className="hint">Spend every Training Point before continuing.</p>
 
         <MoveInfoPanel
           move={viewedMove}

@@ -101,11 +101,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
             ✕
           </button>
         </div>
-        <p className="hint">
-          {selectedItemId
-            ? `${equipment[selectedItemId].name} selected — tap a matching slot to equip it.`
-            : 'Tap Info for full stats. Tap an inventory item then a slot to equip — or drag it in.'}
-        </p>
+        {selectedItemId && <p className="hint">{`${equipment[selectedItemId].name} selected — tap a matching slot to equip it.`}</p>}
         <div className="screen-scroll">
           <div className="roster-mgmt-list">
             {run.roster.map((entry) => {

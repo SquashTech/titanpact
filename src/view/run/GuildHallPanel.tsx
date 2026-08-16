@@ -41,7 +41,6 @@ export function GuildHallPanel({ run, onRecruit }: Props) {
   return (
     <div className="guild-hall">
       <h2>Guild Hall — {run.gold}g</h2>
-      <p className="hint">Recruit a fresh hero (0 rank-up progress, no gear).</p>
       <div className="guild-hall-grid">
         {available.map((offer) => {
           const hero = heroes[offer.heroId];
@@ -62,7 +61,6 @@ export function GuildHallPanel({ run, onRecruit }: Props) {
       </div>
       {rosterFull && <p className="hint">Roster is full ({ROSTER_CAP}/{ROSTER_CAP}) — terminate a hero to recruit another.</p>}
 
-      <p className="hint">Or buy a blank Recruit Contract to claim off a future beaten enemy — cheaper than recruiting a specific hero outright.</p>
       <button className="roster-card guild-hall-card" disabled={run.gold < CONTRACT_PURCHASE_COST} onClick={handleBuyContract}>
         <div className="roster-card-name">📜 Recruit Contract</div>
         <div className="guild-hall-cost">{CONTRACT_PURCHASE_COST}g</div>
