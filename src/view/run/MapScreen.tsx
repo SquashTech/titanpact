@@ -3,6 +3,7 @@ import type { RunState } from '../../run/state';
 import { reachableNodeIds } from '../../run/runProgress';
 import type { MapNodeType } from '../../run/map';
 import { RosterManagementScreen } from './RosterManagementScreen';
+import { TypeChartOverlay } from '../shared/TypeChartOverlay';
 
 interface Props {
   run: RunState;
@@ -32,6 +33,7 @@ const NODE_LABELS: Record<MapNodeType, string> = {
  */
 export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
   const [showRoster, setShowRoster] = useState(false);
+  const [showTypeChart, setShowTypeChart] = useState(false);
   const map = run.map;
   if (!map) return null;
 
@@ -48,6 +50,9 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
         <span>📜 {run.recruitContracts}</span>
         <button className="log-toggle-button" onClick={() => setShowRoster(true)}>
           Manage Roster
+        </button>
+        <button className="log-toggle-button" onClick={() => setShowTypeChart(true)}>
+          Type Chart
         </button>
       </div>
 
@@ -79,6 +84,7 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
       </div>
 
       {showRoster && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setShowRoster(false)} />}
+      {showTypeChart && <TypeChartOverlay onClose={() => setShowTypeChart(false)} />}
     </div>
   );
 }

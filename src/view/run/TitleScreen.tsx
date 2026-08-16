@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CompendiumScreen } from './CompendiumScreen';
+import { TypeChartOverlay } from '../shared/TypeChartOverlay';
 
 interface Props {
   onStartRun: () => void;
@@ -15,6 +16,7 @@ interface Props {
  */
 export function TitleScreen({ onStartRun, onQuickBattle }: Props) {
   const [showCompendium, setShowCompendium] = useState(false);
+  const [showTypeChart, setShowTypeChart] = useState(false);
 
   return (
     <div className="title-screen">
@@ -30,9 +32,13 @@ export function TitleScreen({ onStartRun, onQuickBattle }: Props) {
         <button className="title-secondary-button" onClick={() => setShowCompendium(true)}>
           Compendium
         </button>
+        <button className="title-secondary-button" onClick={() => setShowTypeChart(true)}>
+          Type Chart
+        </button>
       </div>
 
       {showCompendium && <CompendiumScreen onClose={() => setShowCompendium(false)} />}
+      {showTypeChart && <TypeChartOverlay onClose={() => setShowTypeChart(false)} />}
     </div>
   );
 }

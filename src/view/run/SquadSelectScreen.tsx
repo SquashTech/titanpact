@@ -10,6 +10,7 @@ import type { Encounter } from '../../run/enemyGen';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
+import { TypeChartOverlay } from '../shared/TypeChartOverlay';
 
 interface Props {
   run: RunState;
@@ -33,6 +34,7 @@ interface Props {
 export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
   const [pickedIds, setPickedIds] = useState<string[]>([]);
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
+  const [showTypeChart, setShowTypeChart] = useState(false);
 
   function toggle(rosterId: string) {
     setPickedIds((prev) => {
@@ -48,6 +50,11 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
 
   return (
     <div className="squad-select">
+      <div className="map-header">
+        <button className="log-toggle-button" onClick={() => setShowTypeChart(true)}>
+          Type Chart
+        </button>
+      </div>
       <div className="screen-scroll">
         {/* Enemies first, mirroring the combat screen's enemy-row-on-top layout —
             scout the threat before committing a squad against it. */}
@@ -151,6 +158,7 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
           onClose={() => setInspecting(null)}
         />
       )}
+      {showTypeChart && <TypeChartOverlay onClose={() => setShowTypeChart(false)} />}
     </div>
   );
 }

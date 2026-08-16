@@ -25,6 +25,7 @@ import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
 import { TypeBadge } from '../shared/TypeBadge';
 import { CategoryBadge } from '../shared/MoveTile';
+import { TypeChartOverlay } from '../shared/TypeChartOverlay';
 
 const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
@@ -88,6 +89,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
   const [combat, setCombat] = useState<CombatState>(() => buildInitialState(Math.floor(Math.random() * 2 ** 31)));
   const [log, setLog] = useState<LogLine[]>([]);
   const [logOpen, setLogOpen] = useState(false);
+  const [typeChartOpen, setTypeChartOpen] = useState(false);
   const [pending, setPending] = useState<Record<string, PendingAction>>({});
   const [selecting, setSelecting] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
   const [actionStep, setActionStep] = useState(0);
@@ -388,6 +390,9 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
         <button className="log-toggle-button" onClick={() => setLogOpen(true)}>
           📜 Battle Log
         </button>
+        <button className="log-toggle-button" onClick={() => setTypeChartOpen(true)}>
+          📊 Type Chart
+        </button>
       </div>
 
       {/* Full-screen click-catcher while a round is playing out — lets the
@@ -584,6 +589,8 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
           </div>
         </div>
       )}
+
+      {typeChartOpen && <TypeChartOverlay onClose={() => setTypeChartOpen(false)} />}
 
       {inspecting &&
         combat.combatants[inspecting] &&

@@ -980,6 +980,80 @@ body {
   color: var(--hp-mid);
 }
 
+/* --- Type Chart overlay --------------------------------------------------- */
+
+.type-chart-panel {
+  max-width: 520px;
+}
+
+.type-chart-scroll {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  max-height: 65vh;
+}
+
+.type-chart-grid {
+  display: grid;
+  grid-template-columns: 34px repeat(15, 30px);
+  width: max-content;
+}
+
+.tc-row {
+  display: contents;
+}
+
+.tc-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  font-size: 10px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.tc-corner {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 3;
+}
+
+.tc-col-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 3px 0;
+}
+
+.tc-row-header {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding: 0 2px;
+}
+
+.tc-value {
+  font-weight: 700;
+}
+
+/* Background tints (on top of eff-chip's existing text-color classes) so a
+   super/resisted matchup reads at a glance while scanning the grid, not just
+   on close reading of the number. */
+.tc-value.eff-super {
+  background: rgba(76, 175, 106, 0.22);
+}
+
+.tc-value.eff-resist {
+  background: rgba(217, 83, 79, 0.2);
+}
+
+.tc-value.eff-neutral {
+  opacity: 0.5;
+}
+
 /* Full-screen dimming backdrop only — the actual readable content lives in
    the solid .result-panel card below. Kept deliberately dark and near-opaque
    (rather than the old radial-gradient-over-battlefield look) so the
