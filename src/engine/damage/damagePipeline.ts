@@ -9,7 +9,7 @@
 // modifier back into a stat, and never let a stat-shaped effect leak into the
 // multiplier term here.
 
-import type { HeroDefinition, MoveDefinition } from '../content';
+import type { HeroDefinition, MoveDefinition, StatKey } from '../content';
 import type { Combatant, DamageCategory } from '../state';
 import { getEffectiveStat } from '../state';
 import { nextRange, nextFloat, type RngState } from '../rng/seededRng';
@@ -59,6 +59,11 @@ export function resolveMultiplierTerm(
   return modifiers.reduce((product, m) => product * (1 + m.amount), 1);
 }
 
+/** Which raw stats feed the off/def ratio for a damage category — shared by resolveStatRatio and by callers that want the raw values (e.g. the Battle Log's math readout) without duplicating the mapping. */
+export function statKeysForCategory(category: DamageCategory): readonly [StatKey, StatKey] {
+  return category === 'physical' ? (['attack', 'defense'] as const) : (['intelligence', 'wisdom'] as const);
+}
+
 /** Pipeline 1: the off/def ratio only. Nothing damage-shaped may enter here. */
 export function resolveStatRatio(
   category: DamageCategory,
@@ -67,7 +72,7 @@ export function resolveStatRatio(
   defenderHero: HeroDefinition,
   defender: Combatant
 ): number {
-  const [offKey, defKey] = category === 'physical' ? (['attack', 'defense'] as const) : (['intelligence', 'wisdom'] as const);
+  const [offKey, defKey] = statKeysForCategory(category);
   const offStat = getEffectiveStat(attackerHero, attacker, offKey);
   const defStat = getEffectiveStat(defenderHero, defender, defKey);
   return offStat / defStat;
@@ -80,6 +85,8 @@ export interface DamageCalcResult {
   typeMult: number;
   variance: number;
   isCrit: boolean;
+  /** The crit term as actually applied: critMultiplier when isCrit, else 1 — carried on the result so callers (the Battle Log's math readout) don't have to re-derive it from isCrit + the provisional constant. */
+  critMultiplier: number;
   multiplierTerm: number;
 }
 
@@ -103,7 +110,7 @@ export function calcDamage(
 
   const damage = (move.basePower ?? 0) * ratio * stab * typeMult * variance * crit * multiplierTerm;
 
-  return { damage, ratio, stab, typeMult, variance, isCrit, multiplierTerm };
+  return { damage, ratio, stab, typeMult, variance, isCrit, critMultiplier: crit, multiplierTerm };
 }
 
 export interface RolledDamage extends DamageCalcResult {

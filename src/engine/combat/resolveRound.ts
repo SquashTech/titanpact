@@ -9,14 +9,14 @@
 
 import type { HeroDefinition, MoveDefinition, StatusDefinition } from '../content';
 import type { CombatState, HeroLookup, Side } from '../state';
-import { getMaxHp, effectiveTypes, hasStatus } from '../state';
+import { getMaxHp, getEffectiveStat, effectiveTypes, hasStatus } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
 import { resolveTargets, TargetNoLongerValidError } from './targeting';
 import { applyVoluntarySwitch, applyBenchHpRegen, SwitchBlockedError } from './switching';
 import { applyManaRegen } from './manaRegen';
-import { resolveStatRatio, rollDamage, type DamageModifier } from '../damage/damagePipeline';
+import { resolveStatRatio, rollDamage, statKeysForCategory, type DamageModifier } from '../damage/damagePipeline';
 import type { TypeChart } from '../damage/typeMult';
 import { applyHpDelta } from './faintHandling';
 import { applyStatus, cleanseStatuses, consumeExpose, tickEndOfRound } from './statusEngine';
@@ -142,6 +142,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           const amount = Math.round(rolled.damage);
           const maxHp = getMaxHp(defenderHero, target);
 
+          const [offKey, defKey] = statKeysForCategory(move.category);
           events.push({
             type: 'DamageDealt',
             round,
@@ -154,6 +155,14 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             typeMult: rolled.typeMult,
             isCrit: rolled.isCrit,
             variance: rolled.variance,
+            basePower: move.basePower ?? 0,
+            offStat: getEffectiveStat(attackerHero, attackerNow, offKey),
+            defStat: getEffectiveStat(defenderHero, target, defKey),
+            ratio: rolled.ratio,
+            stab: rolled.stab,
+            critMultiplier: rolled.critMultiplier,
+            multiplierTerm: rolled.multiplierTerm,
+            modifiers,
           });
 
           const hpResult = applyHpDelta(working, round, targetId, -amount, maxHp);

@@ -50,6 +50,20 @@ export interface DamageDealtEvent extends BaseEvent {
   typeMult: number;
   isCrit: boolean;
   variance: number;
+  /**
+   * Every term of the locked damage formula (docs/combat.md "The damage
+   * formula"), carried on the event purely for view-layer transparency — the
+   * Battle Log's math readout (formatEvent.ts). The engine never reads these
+   * back; `amount` above is the only value that actually applies to HP.
+   */
+  basePower: number;
+  offStat: number;
+  defStat: number;
+  ratio: number;
+  stab: number;
+  critMultiplier: number;
+  multiplierTerm: number;
+  modifiers: readonly { source: string; amount: number }[];
 }
 
 export interface HpChangedEvent extends BaseEvent {

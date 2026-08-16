@@ -202,7 +202,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
   function handleForcedReplacement(slot: 0 | 1, benchedCombatantId: string) {
     const result = applyForcedReplacement(combat, combat.round, PLAYER_SIDE, slot, benchedCombatantId, statuses);
     setCombat(result.state);
-    appendLog(formatEvents(result.events, allCombatants, result.state.combatants));
+    appendLog(formatEvents(result.events, allCombatants, result.state.combatants, moves));
   }
 
   /**
@@ -335,7 +335,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
     displayState.current = next;
 
     setCombat(next);
-    appendLog(formatEvents(beat.events, allCombatants, next.combatants));
+    appendLog(formatEvents(beat.events, allCombatants, next.combatants, moves));
     setBanner(beat.banner);
     setBannerMeta(beat.bannerMeta ?? null);
     setPopups(Object.fromEntries(beat.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className }])));

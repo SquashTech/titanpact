@@ -806,22 +806,24 @@ body {
   inset: 0;
   background: rgba(10, 11, 14, 0.75);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   z-index: 20;
+  padding: 16px;
 }
 
 .log-panel {
   width: 100%;
-  max-width: 430px;
-  max-height: 60vh;
+  max-width: 460px;
+  max-height: 80vh;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 12px 12px 0 0;
+  border-radius: 12px;
   padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }
 
 .log-panel-header {
@@ -870,11 +872,21 @@ body {
 
 .event-log .log-damage {
   color: var(--text);
+  padding-left: 10px;
 }
 
 .event-log .log-crit {
   color: var(--crit);
   font-weight: 700;
+  padding-left: 10px;
+}
+
+.event-log .log-math {
+  color: var(--text-dim);
+  font-size: 10.5px;
+  font-style: italic;
+  padding-left: 20px;
+  word-break: break-word;
 }
 
 .event-log .log-faint {
