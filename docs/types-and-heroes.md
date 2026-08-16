@@ -72,9 +72,11 @@ don't silently rewrite the type philosophy to paper over them.
 ## Blight
 
 **Blight is not a type.** It was demoted to a **cross-type status effect defined at
-the move-design layer.** Do not add a Blight row/column to the chart. Its mechanics
-depend on the unresolved **sixth engine contract (the condition/status vocabulary)** —
-see `architecture.md`. Blight is blocked on that decision.
+the move-design layer.** Do not add a Blight row/column to the chart. It's implemented
+per `conditions.md`'s status catalog: a magnitude status (cap 50%) that lowers
+Attack/Defense/Intelligence/Wisdom multiplicatively in the stat pipeline — see
+`architecture.md` and `conditions.md` §2. The sixth engine contract (condition/status
+vocabulary) that Blight depended on is now implemented (`src/engine/combat/statusEngine.ts`).
 
 ---
 

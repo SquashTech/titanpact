@@ -50,6 +50,31 @@ export function formatEvents(
         lines.push({ key, text: `${name(e.inCombatantId)} switches in${outText}`, className: 'log-mana' });
         break;
       }
+      case 'Healed':
+        lines.push({ key, text: `${name(e.targetCombatantId)} heals ${e.amount} HP`, className: 'log-heal' });
+        break;
+      case 'StatChanged': {
+        const sign = e.delta > 0 ? '+' : '';
+        lines.push({ key, text: `${name(e.combatantId)}'s ${e.stat} ${sign}${e.delta}`, className: e.delta > 0 ? 'log-buff' : 'log-debuff' });
+        break;
+      }
+      case 'StatusApplied': {
+        const detail = e.magnitude !== undefined ? ` (${e.magnitude})` : e.duration !== undefined ? ` (${e.duration})` : '';
+        lines.push({ key, text: `${name(e.combatantId)} afflicted with ${e.statusId}${detail}`, className: 'log-status' });
+        break;
+      }
+      case 'StatusTicked': {
+        if (e.kind === 'duration') break; // no HP/log-worthy change; the eventual StatusRemoved covers expiry
+        const verb = e.kind === 'damage' ? 'takes' : 'heals';
+        lines.push({ key, text: `${name(e.combatantId)} ${verb} ${e.amount} from ${e.statusId}`, className: e.kind === 'damage' ? 'log-damage' : 'log-heal' });
+        break;
+      }
+      case 'StatusRemoved':
+        lines.push({ key, text: `${name(e.combatantId)}'s ${e.statusId} clears (${e.reason})`, className: 'log-status' });
+        break;
+      case 'ActionBlocked':
+        lines.push({ key, text: `${name(e.combatantId)} is ${e.reason} and can't act`, className: 'log-faint' });
+        break;
       default:
         break; // TurnStarted / MoveDeclared / HpChanged / ManaChanged / RoundEnded: omitted for readability
     }

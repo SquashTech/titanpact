@@ -14,6 +14,7 @@ interface Props {
   combatant: Combatant;
   targetable?: boolean;
   onSelectTarget?: () => void;
+  onInspect?: () => void;
   popup?: Popup | null;
 }
 
@@ -23,7 +24,13 @@ function hpTier(fraction: number): 'hp-high' | 'hp-mid' | 'hp-low' {
   return 'hp-low';
 }
 
-export function CombatantCard({ hero, combatant, targetable, onSelectTarget, popup }: Props) {
+/** "Burn 20" / "Daze 2" / "Bleed" — magnitude or duration shown when the status carries one, omitted for boolean-shape statuses (docs/conditions.md §1). Regen is the only positive status; everything else reads as a debuff. */
+function statusBadgeText(statusId: string, magnitude: number | undefined, duration: number | undefined): string {
+  const n = magnitude ?? duration;
+  return n !== undefined ? `${statusId} ${n}` : statusId;
+}
+
+export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onInspect, popup }: Props) {
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = Math.max(0, combatant.currentHp / maxHp);
@@ -40,6 +47,18 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, pop
       role={targetable ? 'button' : undefined}
     >
       {combatant.fainted && <span className="fainted-tag">KO</span>}
+      {onInspect && (
+        <button
+          className="info-button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onInspect();
+          }}
+          aria-label={`View ${hero.name} details`}
+        >
+          i
+        </button>
+      )}
       {popup && (
         <div key={popup.key} className={`dmg-popup ${popup.className}`}>
           {popup.text}
@@ -55,6 +74,15 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, pop
           ))}
         </span>
       </div>
+      {Object.values(combatant.statuses).length > 0 && (
+        <div className="status-badge-row">
+          {Object.values(combatant.statuses).map((s) => (
+            <span key={s.statusId} className={`status-badge${s.statusId === 'Regen' ? ' status-badge-positive' : ''}`}>
+              {statusBadgeText(s.statusId, s.magnitude, s.duration)}
+            </span>
+          ))}
+        </div>
+      )}
       <div className="bar-track">
         <div className={`bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
       </div>

@@ -3,8 +3,9 @@ import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
 import { typeChart } from '../../data/typechart';
 import { equipment } from '../../data/equipment';
+import { statuses } from '../../data/statuses';
 import type { CombatState, Side } from '../../engine/state';
-import { isLockedIn, effectiveTypes } from '../../engine/state';
+import { isLockedIn, effectiveTypes, getMaxHp } from '../../engine/state';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../engine/combat/switching';
 import type { Action } from '../../engine/combat/actions';
@@ -17,6 +18,7 @@ import type { Squad } from '../../run/squad';
 import { pickSquad } from '../../run/squad';
 import { buildCombatState } from '../../run/buildCombatState';
 import { CombatantCard, type Popup } from './CombatantCard';
+import { HeroDetailOverlay } from './HeroDetailOverlay';
 import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
@@ -24,7 +26,7 @@ import { getTypeColor } from './typeColors';
 
 const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
-const config = { typeChart, heroes, moves, benchHpRegenFlat: 5 };
+const config = { typeChart, heroes, moves, statuses, benchHpRegenFlat: 5 };
 
 /**
  * Fixed AI opponent — its own roster, independent of the player's (RunState
@@ -99,6 +101,7 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
   const [selecting, setSelecting] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
   const [actionStep, setActionStep] = useState(0);
   const [claimedRosterIds, setClaimedRosterIds] = useState<string[]>([]);
+  const [inspecting, setInspecting] = useState<string | null>(null);
 
   // Sequenced, tap-advanced round playback (docs/architecture.md "engine /
   // presentation separation"): `resolving` gates player input and the
@@ -110,7 +113,9 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
   // inside handleAdvance's click handler, never rendered directly.
   const [resolving, setResolving] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
+  const [bannerMeta, setBannerMeta] = useState<string | null>(null);
   const [popups, setPopups] = useState<Record<string, Popup>>({});
+  const [hoveredMove, setHoveredMove] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
   const popupSeq = useRef(0);
   const beatQueue = useRef<Beat[]>([]);
   const displayState = useRef<CombatState | null>(null);
@@ -133,7 +138,13 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
       ? enemyActiveAlive
       : selecting.move.target === 'singleAlly'
         ? playerActiveAlive
-        : [];
+        : selecting.move.target === 'bothEnemies'
+          ? enemyActiveAlive
+          : selecting.move.target === 'bothAllies'
+            ? playerActiveAlive
+            : selecting.move.target === 'allOthers'
+              ? [...enemyActiveAlive, ...playerActiveAlive].filter((cid) => cid !== selecting.combatantId)
+              : [];
 
   function isPendingComplete(p: PendingAction | undefined): boolean {
     if (!p) return false;
@@ -155,6 +166,7 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
     const nextPending = { ...pending, [combatantId]: action };
     setPending(nextPending);
     setSelecting(null);
+    setHoveredMove(null);
 
     if (!isPendingComplete(action)) return;
 
@@ -177,6 +189,12 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
       } else {
         setSelecting({ combatantId, move });
       }
+    } else if (move.target === 'bothEnemies' || move.target === 'bothAllies' || move.target === 'allOthers') {
+      // Mechanically these moves hit every valid target regardless of which one is tapped
+      // (declaredTarget is ignored by the engine's targeting resolution — engine/combat/targeting.ts)
+      // — the tap is a confirmation step, not a real choice, so an accidental brush of the move
+      // button can't commit a spread attack without the player deliberately confirming it.
+      setSelecting({ combatantId, move });
     } else {
       commitAction(combatantId, { kind: 'move', moveId: move.id, declaredTarget: null });
     }
@@ -192,9 +210,9 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
   }
 
   function handleForcedReplacement(slot: 0 | 1, benchedCombatantId: string) {
-    const result = applyForcedReplacement(combat, combat.round, PLAYER_SIDE, slot, benchedCombatantId);
+    const result = applyForcedReplacement(combat, combat.round, PLAYER_SIDE, slot, benchedCombatantId, statuses);
     setCombat(result.state);
-    appendLog(formatEvents([result.event], heroes, result.state.combatants));
+    appendLog(formatEvents(result.events, heroes, result.state.combatants));
   }
 
   /**
@@ -271,9 +289,9 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
     for (const slot of [0, 1] as const) {
       if (nextState.active[AI_SIDE][slot] === null && nextState.bench[AI_SIDE].length > 0) {
         const inId = nextState.bench[AI_SIDE][0];
-        const r = applyForcedReplacement(nextState, nextState.round, AI_SIDE, slot, inId);
+        const r = applyForcedReplacement(nextState, nextState.round, AI_SIDE, slot, inId, statuses);
         nextState = r.state;
-        events.push(r.event);
+        events.push(...r.events);
       }
     }
 
@@ -291,7 +309,7 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
    * regardless of how the beats replayed it.
    */
   function startBeatPlayback(startState: CombatState, events: CombatEvent[], nextFinalState: CombatState) {
-    const beats = buildBeats(events, heroes, moves, startState.combatants);
+    const beats = buildBeats(events, heroes, moves, startState.combatants, PLAYER_SIDE);
     displayState.current = startState;
     finalState.current = nextFinalState;
     beatQueue.current = beats;
@@ -313,9 +331,11 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
       setCombat(finalState.current!);
       setPopups({});
       setBanner(null);
+      setBannerMeta(null);
       setResolving(false);
       setPending({});
       setSelecting(null);
+      setHoveredMove(null);
       setActionStep(0);
       return;
     }
@@ -327,6 +347,7 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
     setCombat(next);
     appendLog(formatEvents(beat.events, heroes, next.combatants));
     setBanner(beat.banner);
+    setBannerMeta(beat.bannerMeta ?? null);
     setPopups(Object.fromEntries(beat.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className }])));
   }
 
@@ -336,10 +357,12 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
     setLog([]);
     setPending({});
     setSelecting(null);
+    setHoveredMove(null);
     setActionStep(0);
     setClaimedRosterIds([]);
     setResolving(false);
     setBanner(null);
+    setBannerMeta(null);
     setPopups({});
   }
 
@@ -358,6 +381,7 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
           combatant={combat.combatants[id]}
           targetable={targetableIds.includes(id)}
           onSelectTarget={() => handleTargetClick(id)}
+          onInspect={() => setInspecting(id)}
           popup={popups[id]}
         />
       );
@@ -378,20 +402,6 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
     return (
       <div className="combatant-card empty-slot" key={`empty-${side}-${slot}`}>
         —
-      </div>
-    );
-  }
-
-  function renderBenchRow(side: Side) {
-    const bench = combat.bench[side];
-    if (bench.length === 0) return null;
-    return (
-      <div className="bench-row">
-        {bench.map((id) => (
-          <div className="bench-card" key={id}>
-            <CombatantCard hero={heroes[combat.combatants[id].heroId]} combatant={combat.combatants[id]} popup={popups[id]} />
-          </div>
-        ))}
       </div>
     );
   }
@@ -418,6 +428,7 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
         {banner && (
           <div className="combat-banner">
             <span>{banner}</span>
+            {bannerMeta && <span className="combat-banner-meta">{bannerMeta}</span>}
             <span className="combat-banner-hint">tap to continue ▸</span>
           </div>
         )}
@@ -426,13 +437,11 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
           {renderActiveSlot(AI_SIDE, 0)}
           {renderActiveSlot(AI_SIDE, 1)}
         </div>
-        {renderBenchRow(AI_SIDE)}
 
         <div className="team-row ally">
           {renderActiveSlot(PLAYER_SIDE, 0)}
           {renderActiveSlot(PLAYER_SIDE, 1)}
         </div>
-        {renderBenchRow(PLAYER_SIDE)}
       </div>
 
       <div className="action-area">
@@ -456,7 +465,6 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
                     </button>
                   )}
                 </div>
-                {selecting?.combatantId === id && <div className="hint">Choose a target above</div>}
                 <div className="move-grid">
                   {entry.unlockedMoveIds.map((moveId) => {
                     const move = moves[moveId];
@@ -469,6 +477,8 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
                         className={`move-button${isSelected ? ' selected' : ''}`}
                         disabled={!affordable}
                         onClick={() => handleMoveClick(id, move)}
+                        onMouseEnter={() => setHoveredMove({ combatantId: id, move })}
+                        onMouseLeave={() => setHoveredMove((prev) => (prev?.move.id === move.id && prev.combatantId === id ? null : prev))}
                       >
                         <div className="move-row-top">
                           <span className="move-name">{move.name}</span>
@@ -498,7 +508,13 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
                   })}
                 </div>
                 <div className="move-description">
-                  {activeMove ? (activeMove.description ?? '') : 'Tap a move to see its effect and matchups.'}
+                  {hoveredMove?.combatantId === id
+                    ? (hoveredMove.move.description ?? '')
+                    : selecting?.combatantId === id
+                      ? 'Choose a target above.'
+                      : activeMove
+                        ? (activeMove.description ?? '')
+                        : 'Tap a move to see its effect and matchups.'}
                 </div>
                 {playerBench.length > 0 && (
                   <div className="switch-row">
@@ -506,13 +522,18 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
                     {!playerLockedIn &&
                       playerBench.map((benchId) => {
                         const isSelected = pending[id]?.kind === 'switch' && pending[id]?.benchedCombatantId === benchId;
+                        const benchCombatant = combat.combatants[benchId];
+                        const benchHero = heroes[benchCombatant.heroId];
                         return (
                           <button
                             key={benchId}
                             className={`move-button switch-button${isSelected ? ' selected' : ''}`}
                             onClick={() => handleSwitchClick(id, benchId)}
                           >
-                            {heroes[combat.combatants[benchId].heroId].name}
+                            <span>{benchHero.name}</span>
+                            <span className="switch-hp">
+                              HP {Math.max(0, benchCombatant.currentHp)}/{getMaxHp(benchHero, benchCombatant)}
+                            </span>
                           </button>
                         );
                       })}
@@ -544,6 +565,24 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
           </div>
         </div>
       )}
+
+      {inspecting &&
+        combat.combatants[inspecting] &&
+        (() => {
+          const combatant = combat.combatants[inspecting];
+          const hero = heroes[combatant.heroId];
+          const roster = combatant.side === PLAYER_SIDE ? playerRun.roster : AI_RUN.roster;
+          const rosterEntry = roster.find((r) => r.rosterId === rosterIdOf(inspecting)) ?? null;
+          return (
+            <HeroDetailOverlay
+              hero={hero}
+              combatant={combatant}
+              rosterEntry={rosterEntry}
+              equipmentLookup={equipment}
+              onClose={() => setInspecting(null)}
+            />
+          );
+        })()}
 
       {winner && !resolving && (
         <div className="result-overlay">

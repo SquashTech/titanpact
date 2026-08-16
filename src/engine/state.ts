@@ -4,12 +4,28 @@
 // survives a run) are separate, longer-lived tiers that build on this one —
 // out of scope for this engine slice. Do not fold them in here.
 
-import type { HeroDefinition, StatKey, StatLine, TypeId } from './content';
+import type { HeroDefinition, StatKey, StatLine, StatusId, TypeId } from './content';
 import type { RngState } from './rng/seededRng';
 
 export type Side = 'A' | 'B';
 export type ActiveSlotIndex = 0 | 1;
 export type DamageCategory = 'physical' | 'magical';
+
+/** Blight is the only status wired into the stat pipeline (docs/conditions.md §2) — see getEffectiveStat below. */
+export const BLIGHT_STATUS_ID = 'Blight';
+const BLIGHT_AFFECTED_STATS: readonly StatKey[] = ['attack', 'defense', 'intelligence', 'wisdom'];
+
+/**
+ * A single active status on a combatant (docs/conditions.md §1 "The Three
+ * Shapes"). `magnitude` is used by magnitude-shape statuses, `duration` by
+ * duration-shape; boolean-shape statuses use neither (presence is the whole
+ * signal).
+ */
+export interface StatusInstance {
+  statusId: StatusId;
+  magnitude?: number;
+  duration?: number;
+}
 
 /**
  * Flat additive stat modifiers only (docs/combat.md "Stat modifiers") —
@@ -37,6 +53,8 @@ export interface Combatant {
    * statModifiers already uses for equipment/rank-up stat grants.
    */
   grantedTypes: readonly TypeId[];
+  /** Active statuses, keyed by StatusId — a status either isn't present or is one instance of it (docs/conditions.md: no status stacks as multiple independent instances). */
+  statuses: Record<StatusId, StatusInstance>;
   fainted: boolean;
 }
 
@@ -67,7 +85,31 @@ export function getEffectiveStat(
 ): number {
   const base = hero.baseStats[stat];
   const modifier = combatant.statModifiers[stat] ?? 0;
-  return base + modifier;
+  const raw = base + modifier;
+
+  // Blight (docs/conditions.md §2): the only status in the stat pipeline.
+  // Applies only to Attack/Defense/Intelligence/Wisdom — never Speed (Freeze
+  // owns that) or HP/Mana. Being the same effective-stat value feeding both
+  // sides of the off/def ratio is what makes Blight naturally "two-sided"
+  // (a blighted attacker deals less; a blighted defender takes more) without
+  // any separate offense/defense-specific logic.
+  if (BLIGHT_AFFECTED_STATS.includes(stat)) {
+    const blightMagnitude = combatant.statuses[BLIGHT_STATUS_ID]?.magnitude ?? 0;
+    if (blightMagnitude > 0) {
+      return Math.floor(raw * (1 - blightMagnitude / 100));
+    }
+  }
+
+  return raw;
+}
+
+export function hasStatus(combatant: Combatant, statusId: StatusId): boolean {
+  return combatant.statuses[statusId] !== undefined;
+}
+
+/** 0 if the status is absent or has no magnitude (boolean/duration shapes) — docs/conditions.md §5 Status-Query Layer. */
+export function statusMagnitude(combatant: Combatant, statusId: StatusId): number {
+  return combatant.statuses[statusId]?.magnitude ?? 0;
 }
 
 export function getMaxHp(hero: HeroDefinition, combatant: Combatant): number {
@@ -100,6 +142,7 @@ export function createCombatant(
     currentMana: startingMana,
     statModifiers: {},
     grantedTypes: [],
+    statuses: {},
     fainted: false,
   };
 }

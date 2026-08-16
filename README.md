@@ -21,9 +21,12 @@ constitution and [`docs/`](./docs) for the deeper design modules.
    "NOT YET IMPLEMENTED" notes in `docs/mana.md`, `docs/combat.md` (crit), and
    `docs/progression.md` (meta-progression) before assuming the engine already
    behaves per the decision. Still genuinely open: weather's interaction with mana,
-   the five 50/50 hero typings (Giant Lobster, Sun Priest, Crystal Guardian,
-   Hellhound, Artificer — deferred in favor of nailing down rank-up mechanics first),
-   and the condition/status sixth contract (in progress in a separate session).
+   and the five 50/50 hero typings (Giant Lobster, Sun Priest, Crystal Guardian,
+   Hellhound, Artificer — deferred in favor of nailing down rank-up mechanics first).
+   The condition/status sixth contract is now **implemented** (`docs/conditions.md`,
+   `src/engine/combat/statusEngine.ts`) — 8 statuses, plus heal and buff/debuff move
+   kinds — with its own remaining open sub-questions resolved provisionally per the
+   doc's recommendations, not yet designer-confirmed; see `docs/conditions.md` §7.
 2. ~~Build the recruitment economy.~~ **Done for both acquisition paths**
    (`src/run/recruitment.ts`, `docs/progression.md` "raise-vs-recruit axis"): Guild Hall
    spends gold on a fresh 0-progress hero from a data-driven offer pool
@@ -59,6 +62,12 @@ constitution and [`docs/`](./docs) for the deeper design modules.
 The pure TypeScript combat engine (`/src/engine`) proves the event-stream /
 engine-presentation separation, the two damage pipelines, and the
 turn/round/switching/lock-in loop from `docs/combat.md` and `docs/architecture.md`.
+It also implements the condition/status system (`docs/conditions.md`, the 6th
+engine contract): 8 statuses across 3 shapes as data (`src/data/statuses.ts`) driving
+a generic runtime (`src/engine/combat/statusEngine.ts` — no per-status special
+cases), plus `heal` and `buff` move kinds (`src/engine/content.ts`) so moves can
+heal, buff/debuff flat stats, and apply/cleanse statuses in any combination.
+Covered by `test/statuses.test.ts`.
 
 `/src/run` is the roster/progression layer that sits on top of the engine
 (docs/architecture.md "State shapes": the RUN tier). It implements:
@@ -97,10 +106,11 @@ locked in) and forced replacement (choosing which bench hero fills a KO'd slot).
   more than a scaffold.
 - Every 🔒 OPEN item from the docs (stat-mods-on-switch, damage-modifier stacking
   order, crit source, type-chart floor vs. immunity, turn/round boundaries, mana's
-  resource model/regen/starting state, the condition/status sixth contract) is left
-  flagged in code comments at the point it matters, with a provisional value where one
-  was needed to make the engine runnable. Search for `🔒 OPEN` before hardening any of
-  these.
+  resource model/regen/starting state) is left flagged in code comments at the point
+  it matters, with a provisional value where one was needed to make the engine
+  runnable. Search for `🔒 OPEN` before hardening any of these. The condition/status
+  sixth contract graduated from this list — it's implemented, not just flagged — but
+  its own sub-questions (`docs/conditions.md` §7) are still provisional the same way.
 - **Equipment only wires the stat-pipeline half.** Damage-shaped equipment bonuses (the
   pipeline-2 multiplier term) need the same hook-and-condition system as abilities,
   which isn't built — see "Next steps" #3.

@@ -79,7 +79,8 @@ don't silently override it.
 - **Foundational contracts** the engine exposes: (1) effect primitives (atomic verbs),
   (2) trigger hooks (timing points), (3) status effects as their own content type, (4) the
   targeting model, (5) content schemas for all five content types. A 6th — **condition
-  vocabulary** — is still being specified (see open questions).
+  vocabulary** — is now implemented (`docs/conditions.md`, `src/engine/combat/statusEngine.ts`);
+  see open questions for what's still pending designer confirmation.
 - **Equipment and relics use the same hook-and-condition system as abilities**, unifying all
   five content types under one effect engine.
 - **Resolution and presentation are separate layers.** The engine resolves a turn into an
@@ -114,7 +115,10 @@ what's still unimplemented:
 Each has a *provisional* value baked into the prototypes for playability. Treat those as
 placeholders, not decisions. Flag before hardening any of these:
 
-- **Condition vocabulary:** the 6th contract — still unspecified (in progress elsewhere).
+- **Condition vocabulary:** the 6th contract is implemented (`docs/conditions.md`), adopting
+  that doc's own recommendations for its remaining open sub-questions (Cleanse's debuffs-vs-all
+  split, Daze clearing on switch, Regen's decay shape, end-of-round tick timing) — provisional
+  implementation choices, not designer sign-off. See `docs/conditions.md` §7.
 - **Five "50/50" heroes'** specific innate mono type (Giant Lobster, Sun Priest, Crystal
   Guardian, Hellhound, Artificer) — the mono-base-plus-graft *shape* is resolved (above),
   the individual picks aren't.

@@ -4,13 +4,14 @@ import { createFightState } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
+import { statuses } from '../src/data/statuses';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import { isLockedIn, createCombatant, effectiveTypes } from '../src/engine/state';
 import { applyVoluntarySwitch, SwitchBlockedError } from '../src/engine/combat/switching';
 import { isValidFlatStatGrant } from '../src/engine/content';
 
-const config = { typeChart, heroes, moves, benchHpRegenFlat: 5 };
+const config = { typeChart, heroes, moves, statuses, benchHpRegenFlat: 5 };
 
 function twoVTwoFixture(seed: number) {
   return createFightState(
@@ -39,7 +40,7 @@ test('invariant: lock-in engages at exactly 2 KOs, not before', () => {
 test('invariant: locked-in side cannot voluntarily switch', () => {
   const state = twoVTwoFixture(2);
   const locked = { ...state, koCount: { ...state.koCount, A: 2 }, bench: { ...state.bench, A: ['bench1'] } };
-  assert.throws(() => applyVoluntarySwitch(locked, 1, 'a1', 'bench1'), SwitchBlockedError);
+  assert.throws(() => applyVoluntarySwitch(locked, 1, 'a1', 'bench1', statuses), SwitchBlockedError);
 });
 
 test('invariant: engine never mutates content data (heroes/moves untouched by reference)', () => {

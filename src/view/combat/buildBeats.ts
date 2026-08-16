@@ -8,8 +8,9 @@
 import type {
   BenchRegenTickedEvent,
   CombatEvent,
+  MoveUsedEvent,
 } from '../../engine/events';
-import type { CombatState } from '../../engine/state';
+import type { CombatState, Side } from '../../engine/state';
 import type { HeroDefinition, MoveDefinition } from '../../engine/content';
 
 export interface BeatPopup {
@@ -22,14 +23,31 @@ export interface Beat {
   /** Events to apply, in order, when this beat is revealed. */
   events: CombatEvent[];
   banner: string;
+  /** Secondary readout shown alongside the banner — currently just the mana cost of a declared move. */
+  bannerMeta?: string;
   popups: BeatPopup[];
+}
+
+/**
+ * "TargetA" / "TargetA and TargetB" / "TargetA, TargetB and TargetC" — the
+ * banner's "on {target}" clause. A move that targets only its own user (no
+ * spread moves do yet, but 'self' is a defined TargetMode) omits the clause
+ * entirely rather than reading "X uses Move on X".
+ */
+function targetClause(targetIds: readonly string[], actorId: string, name: (id: string) => string): string {
+  const ids = targetIds.filter((id) => id !== actorId);
+  if (ids.length === 0) return '';
+  const names = ids.map(name);
+  const joined = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+  return ` on ${joined}`;
 }
 
 export function buildBeats(
   events: readonly CombatEvent[],
   heroes: Record<string, HeroDefinition>,
   moves: Record<string, MoveDefinition>,
-  combatants: CombatState['combatants']
+  combatants: CombatState['combatants'],
+  playerSide: Side
 ): Beat[] {
   const name = (id: string) => heroes[combatants[id]?.heroId]?.name ?? id;
   const beats: Beat[] = [];
@@ -39,8 +57,8 @@ export function buildBeats(
   let carry: CombatEvent[] = [];
   let i = 0;
 
-  function push(applied: CombatEvent[], banner: string, popups: BeatPopup[] = []) {
-    beats.push({ events: [...carry, ...applied], banner, popups });
+  function push(applied: CombatEvent[], banner: string, popups: BeatPopup[] = [], bannerMeta?: string) {
+    beats.push({ events: [...carry, ...applied], banner, bannerMeta, popups });
     carry = [];
   }
 
@@ -58,9 +76,19 @@ export function buildBeats(
       case 'MoveDeclared': {
         const applied: CombatEvent[] = [e];
         i++;
-        if (events[i]?.type === 'MoveUsed') applied.push(events[i++]);
+        let manaSpent: number | undefined;
+        if (events[i]?.type === 'MoveUsed') {
+          manaSpent = (events[i] as MoveUsedEvent).manaSpent;
+          applied.push(events[i++]);
+        }
         if (events[i]?.type === 'ManaChanged') applied.push(events[i++]);
-        push(applied, `${name(e.combatantId)} uses ${moves[e.moveId].name}!`);
+
+        const move = moves[e.moveId];
+        const actorSide = combatants[e.combatantId]?.side;
+        const actorName = `${actorSide && actorSide !== playerSide ? 'Enemy ' : ''}${name(e.combatantId)}`;
+        const clause = targetClause(e.targetCombatantIds, e.combatantId, name);
+        const cost = manaSpent ?? move.manaCost;
+        push(applied, `${actorName} uses ${move.name}${clause}`, [], `${cost} MP`);
         break;
       }
 
@@ -92,6 +120,75 @@ export function buildBeats(
         push([e], `${name(e.inCombatantId)} switches in!`);
         i++;
         break;
+
+      case 'Healed': {
+        const applied: CombatEvent[] = [e];
+        i++;
+        if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
+        const targetName = name(e.targetCombatantId);
+        push(applied, `${targetName} recovers ${e.amount} HP`, [
+          { combatantId: e.targetCombatantId, text: `+${e.amount}`, className: 'popup-heal' },
+        ]);
+        break;
+      }
+
+      case 'StatChanged': {
+        const targetName = name(e.combatantId);
+        const sign = e.delta > 0 ? '+' : '';
+        push([e], `${targetName}'s ${e.stat} ${e.delta > 0 ? 'rises' : 'falls'} (${sign}${e.delta})`, [
+          { combatantId: e.combatantId, text: `${sign}${e.delta} ${e.stat}`, className: e.delta > 0 ? 'popup-buff' : 'popup-debuff' },
+        ]);
+        i++;
+        break;
+      }
+
+      case 'StatusApplied': {
+        const targetName = name(e.combatantId);
+        const detail = e.magnitude !== undefined ? ` (${e.magnitude})` : e.duration !== undefined ? ` (${e.duration})` : '';
+        push([e], `${targetName} is afflicted with ${e.statusId}${detail}`, [
+          { combatantId: e.combatantId, text: e.statusId, className: 'popup-status' },
+        ]);
+        i++;
+        break;
+      }
+
+      case 'StatusTicked': {
+        const applied: CombatEvent[] = [e];
+        i++;
+        if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
+        let knockedOut = false;
+        if (events[i]?.type === 'Fainted') {
+          applied.push(events[i++]);
+          knockedOut = true;
+        }
+        const targetName = name(e.combatantId);
+        if (e.kind === 'duration') {
+          push(applied, `${targetName}'s ${e.statusId} counts down (${e.newDuration} left)`);
+          break;
+        }
+        const verb = e.kind === 'damage' ? 'takes' : 'recovers';
+        const knockoutText = knockedOut ? ' — Knocked out!' : '';
+        push(applied, `${targetName} ${verb} ${e.amount} from ${e.statusId}${knockoutText}`, [
+          { combatantId: e.combatantId, text: e.kind === 'damage' ? `-${e.amount}` : `+${e.amount}`, className: e.kind === 'damage' ? 'popup-damage' : 'popup-heal' },
+        ]);
+        break;
+      }
+
+      case 'StatusRemoved': {
+        const targetName = name(e.combatantId);
+        const verb =
+          e.reason === 'switch' ? 'clears' : e.reason === 'cleanse' ? 'is cleansed' : e.reason === 'consumed' ? 'is consumed' : 'fades';
+        push([e], `${targetName}'s ${e.statusId} ${verb}`);
+        i++;
+        break;
+      }
+
+      case 'ActionBlocked': {
+        const targetName = name(e.combatantId);
+        push([e], `${targetName} is ${e.reason === 'dazed' ? "Dazed and can't move" : "Bound and can't switch"}!`);
+        i++;
+        break;
+      }
 
       case 'BenchRegenTicked': {
         const applied: CombatEvent[] = [];

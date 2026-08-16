@@ -55,19 +55,25 @@ Design constraints on every event type:
 - **Discrete** — one event = one thing that happened. `DamageDealt` and
   `Fainted` are two events, not one, even when a hit is lethal.
 
-> 🔒 **OPEN — do not resolve without designer sign-off.**
-> `CLAUDE.md` enumerates the defined engine contracts. The **condition / status
-> vocabulary is the sixth contract and is still unspecified.** Do not invent status
-> events or a status resolution model unilaterally — this decision ripples into
-> `combat.md` (stat mods on switch), `types-and-heroes.md` (Blight as a cross-type
-> status), and `mana.md`. Flag it and wait.
+> **The sixth contract (condition/status vocabulary) is now IMPLEMENTED —
+> pending designer confirmation.** `docs/conditions.md` specifies 8 statuses
+> across 3 shapes; `src/data/statuses.ts` encodes them as data and
+> `src/engine/combat/statusEngine.ts` is the generic runtime (no per-status
+> special cases). Several of `conditions.md` §7's open questions were resolved
+> by adopting that doc's own stated recommendation (Cleanse = debuffs-vs-all
+> split, Daze clears on switch, status ticks run at end-of-round) — these are
+> implemented, not designer-locked; treat them like any other provisional
+> value (e.g. `PROVISIONAL_CRIT_CHANCE`) until confirmed. This unblocks the
+> ripples noted below: `combat.md` stat-mods-on-switch already covers flat
+> mods, and Blight (`types-and-heroes.md`) is implemented as the stat-pipeline
+> hook `conditions.md` §2 specifies.
 
-**Proposed canonical event set — RECONCILE with `CLAUDE.md` before coding, treat as
-draft, not locked:**
+**Canonical event set** (implemented — `src/engine/events.ts`):
 
 `RoundStarted` · `TurnStarted` · `MoveDeclared` · `MoveUsed` · `DamageDealt` ·
-`HpChanged` · `StatChanged` · `Fainted` · `SwitchedIn` · `BenchRegenTicked` ·
-`ManaChanged` · `RoundEnded` · (status events — **blocked on the sixth contract**)
+`Healed` · `HpChanged` · `StatChanged` · `StatusApplied` · `StatusTicked` ·
+`StatusRemoved` · `ActionBlocked` · `Fainted` · `SwitchedIn` · `BenchRegenTicked` ·
+`ManaChanged` · `RoundEnded`
 
 If the prototype or `CLAUDE.md` already names these differently, their names win.
 

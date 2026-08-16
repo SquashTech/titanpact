@@ -8,6 +8,7 @@
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
+import { statuses } from '../src/data/statuses';
 import { createCombatant, type CombatState, type Side } from '../src/engine/state';
 import { createRng } from '../src/engine/rng/seededRng';
 import { resolveRound } from '../src/engine/combat/resolveRound';
@@ -49,7 +50,7 @@ let state: CombatState = {
   koCount: { A: 0, B: 0 },
 };
 
-const config = { typeChart, heroes, moves, benchHpRegenFlat: 5 };
+const config = { typeChart, heroes, moves, statuses, benchHpRegenFlat: 5 };
 
 function firstActiveOn(s: CombatState, side: Side): string | null {
   return s.active[side].find((id) => id && !s.combatants[id].fainted) ?? null;
@@ -116,7 +117,7 @@ while (round < MAX_ROUNDS && !sideDefeated(state, 'A') && !sideDefeated(state, '
     state.active[side].forEach((id, slot) => {
       if (id === null && state.bench[side].length > 0) {
         const inId = state.bench[side][0];
-        const res = applyForcedReplacement(state, state.round, side, slot as 0 | 1, inId);
+        const res = applyForcedReplacement(state, state.round, side, slot as 0 | 1, inId, statuses);
         state = res.state;
       }
     });

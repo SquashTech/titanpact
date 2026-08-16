@@ -1,23 +1,30 @@
 // Round resolution — the main orchestrator. Implements the LOCKED turn/round
 // model from docs/combat.md: both sides declare all active combatants'
 // actions, then actions resolve in priority/speed order, then bench regen
-// ticks at the round boundary.
+// ticks at the round boundary. Also implements the status system
+// (docs/conditions.md, the 6th engine contract): Daze gates move actions,
+// Bind gates switch actions (switching.ts), Expose feeds the damage pipeline's
+// modifier term, and every status ticks at the round boundary alongside bench
+// regen.
 
-import type { HeroDefinition, MoveDefinition } from '../content';
+import type { HeroDefinition, MoveDefinition, StatusDefinition } from '../content';
 import type { CombatState, HeroLookup, Side } from '../state';
-import { getMaxHp, effectiveTypes } from '../state';
+import { getMaxHp, effectiveTypes, hasStatus } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
-import { resolveTargets, findCombatantSide } from './targeting';
+import { resolveTargets } from './targeting';
 import { applyVoluntarySwitch, applyBenchHpRegen, SwitchBlockedError } from './switching';
-import { resolveStatRatio, rollDamage } from '../damage/damagePipeline';
+import { resolveStatRatio, rollDamage, type DamageModifier } from '../damage/damagePipeline';
 import type { TypeChart } from '../damage/typeMult';
+import { applyHpDelta } from './faintHandling';
+import { applyStatus, cleanseStatuses, consumeExpose, tickEndOfRound } from './statusEngine';
 
 export interface RoundConfig {
   typeChart: TypeChart;
   heroes: HeroLookup;
   moves: Record<string, MoveDefinition>;
+  statuses: Record<string, StatusDefinition>;
   /** Data-tunable, untuned placeholder — see switching.ts applyBenchHpRegen. */
   benchHpRegenFlat: number;
 }
@@ -28,11 +35,13 @@ export interface RoundResult {
 }
 
 export function resolveRound(state: CombatState, actions: readonly Action[], config: RoundConfig): RoundResult {
-  const { heroes, moves, typeChart } = config;
+  const { heroes, moves, typeChart, statuses } = config;
   const round = state.round;
   const events: CombatEvent[] = [{ type: 'RoundStarted', round }];
 
   let working: CombatState = state;
+
+  const maxHpOf = (id: string) => getMaxHp(heroes[working.combatants[id].heroId], working.combatants[id]);
 
   const { ordered, nextRngState } = orderActions(working, heroes, actions, (moveId) => moves[moveId].priority, working.rngState);
   working = { ...working, rngState: nextRngState };
@@ -43,11 +52,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     if (action.kind === 'switch') {
       try {
-        const result = applyVoluntarySwitch(working, round, action.combatantId, action.benchedCombatantId);
+        const result = applyVoluntarySwitch(working, round, action.combatantId, action.benchedCombatantId, statuses);
         working = result.state;
-        events.push(result.event);
+        events.push(...result.events);
       } catch (err) {
-        if (err instanceof SwitchBlockedError) continue; // illegal declared action: no-op
+        if (err instanceof SwitchBlockedError) continue; // illegal declared action (lock-in or Bind): no-op
         throw err;
       }
       continue;
@@ -55,6 +64,12 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     // action.kind === 'move'
     const move = moves[action.moveId];
+
+    if (hasStatus(actor, 'Daze')) {
+      events.push({ type: 'ActionBlocked', round, combatantId: action.combatantId, reason: 'dazed' });
+      continue;
+    }
+
     events.push({ type: 'TurnStarted', round, combatantId: action.combatantId });
 
     if (actor.currentMana < move.manaCost) continue; // engine-level legality guard; view must already prevent this
@@ -83,69 +98,124 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     const attackerHero = heroes[working.combatants[action.combatantId].heroId];
 
-    for (const targetId of targetIds) {
-      const target = working.combatants[targetId];
-      if (!target || target.fainted) continue;
-      const defenderHero = heroes[target.heroId];
+    switch (move.kind) {
+      case 'damage': {
+        for (const targetId of targetIds) {
+          const target = working.combatants[targetId];
+          if (!target || target.fainted) continue;
+          const defenderHero = heroes[target.heroId];
 
-      const attackerNow = working.combatants[action.combatantId];
-      const ratio = resolveStatRatio(move.category, attackerHero, attackerNow, defenderHero, target);
+          const attackerNow = working.combatants[action.combatantId];
+          const ratio = resolveStatRatio(move.category, attackerHero, attackerNow, defenderHero, target);
 
-      const rolled = rollDamage(
-        move,
-        ratio,
-        effectiveTypes(attackerHero, attackerNow),
-        effectiveTypes(defenderHero, target),
-        typeChart,
-        working.rngState
-      );
-      working = { ...working, rngState: rolled.nextRngState };
+          // Expose (docs/conditions.md): consumed by the first hit and folded into the damage pipeline's own modifier accumulator.
+          const exposeResult = consumeExpose(working, round, targetId);
+          working = exposeResult.state;
+          events.push(...exposeResult.events);
+          const modifiers: DamageModifier[] = exposeResult.magnitude > 0 ? [{ source: 'Expose', amount: exposeResult.magnitude / 100 }] : [];
 
-      const amount = Math.round(rolled.damage);
-      const previousHp = target.currentHp;
-      const maxHp = getMaxHp(defenderHero, target);
-      const newHp = Math.max(0, previousHp - amount);
+          const rolled = rollDamage(
+            move,
+            ratio,
+            effectiveTypes(attackerHero, attackerNow),
+            effectiveTypes(defenderHero, target),
+            typeChart,
+            working.rngState,
+            modifiers
+          );
+          working = { ...working, rngState: rolled.nextRngState };
 
-      events.push({
-        type: 'DamageDealt',
-        round,
-        sourceCombatantId: action.combatantId,
-        targetCombatantId: targetId,
-        moveId: move.id,
-        amount,
-        category: move.category,
-        moveType: move.type,
-        typeMult: rolled.typeMult,
-        isCrit: rolled.isCrit,
-        variance: rolled.variance,
-      });
+          const amount = Math.round(rolled.damage);
+          const maxHp = getMaxHp(defenderHero, target);
 
-      const fainted = newHp <= 0;
-      working = {
-        ...working,
-        combatants: { ...working.combatants, [targetId]: { ...target, currentHp: newHp, fainted } },
-      };
-      events.push({ type: 'HpChanged', round, combatantId: targetId, previousHp, newHp, maxHp });
+          events.push({
+            type: 'DamageDealt',
+            round,
+            sourceCombatantId: action.combatantId,
+            targetCombatantId: targetId,
+            moveId: move.id,
+            amount,
+            category: move.category,
+            moveType: move.type,
+            typeMult: rolled.typeMult,
+            isCrit: rolled.isCrit,
+            variance: rolled.variance,
+          });
 
-      if (fainted) {
-        const side = findCombatantSide(working, targetId);
-        const koCount = working.koCount[side] + 1;
-        working = {
-          ...working,
-          koCount: { ...working.koCount, [side]: koCount },
-          active: {
-            ...working.active,
-            [side]: working.active[side].map((id) => (id === targetId ? null : id)) as [string | null, string | null],
-          },
-        };
-        events.push({ type: 'Fainted', round, combatantId: targetId, side, koCount });
+          const hpResult = applyHpDelta(working, round, targetId, -amount, maxHp);
+          working = hpResult.state;
+          events.push(...hpResult.events);
+        }
+        break;
+      }
+
+      case 'heal': {
+        for (const targetId of targetIds) {
+          const target = working.combatants[targetId];
+          if (!target || target.fainted) continue;
+          const targetHero = heroes[target.heroId];
+          const maxHp = getMaxHp(targetHero, target);
+          const amount = move.healAmount ?? 0;
+
+          events.push({ type: 'Healed', round, sourceCombatantId: action.combatantId, targetCombatantId: targetId, moveId: move.id, amount });
+
+          const hpResult = applyHpDelta(working, round, targetId, amount, maxHp);
+          working = hpResult.state;
+          events.push(...hpResult.events);
+        }
+        break;
+      }
+
+      case 'buff': {
+        for (const targetId of targetIds) {
+          if (!working.combatants[targetId] || working.combatants[targetId].fainted) continue;
+          for (const delta of move.statDeltas ?? []) {
+            const current = working.combatants[targetId];
+            const newValue = (current.statModifiers[delta.stat] ?? 0) + delta.amount;
+            working = {
+              ...working,
+              combatants: { ...working.combatants, [targetId]: { ...current, statModifiers: { ...current.statModifiers, [delta.stat]: newValue } } },
+            };
+            events.push({ type: 'StatChanged', round, combatantId: targetId, stat: delta.stat, delta: delta.amount, newValue });
+          }
+        }
+        break;
+      }
+    }
+
+    // Status application / cleanse (docs/conditions.md §5) layer on top of any move kind —
+    // a damage move can inflict Burn, a buff move can also grant Regen, etc.
+    if (move.statusApplication) {
+      const app = move.statusApplication;
+      const def = statuses[app.statusId];
+      if (def) {
+        const applyTargets = app.target === 'self' ? [action.combatantId] : targetIds;
+        for (const applyTargetId of applyTargets) {
+          if (!working.combatants[applyTargetId] || working.combatants[applyTargetId].fainted) continue;
+          const result = applyStatus(working, round, applyTargetId, def, { magnitude: app.magnitude, duration: app.duration });
+          working = result.state;
+          events.push(...result.events);
+        }
+      }
+    }
+
+    if (move.cleanses) {
+      for (const targetId of targetIds) {
+        if (!working.combatants[targetId]) continue;
+        const result = cleanseStatuses(working, round, targetId, move.cleanses);
+        working = result.state;
+        events.push(...result.events);
       }
     }
   }
 
-  const regen = applyBenchHpRegen(working, round, config.benchHpRegenFlat, (id) => getMaxHp(heroes[working.combatants[id].heroId], working.combatants[id]));
+  const regen = applyBenchHpRegen(working, round, config.benchHpRegenFlat, maxHpOf);
   working = regen.state;
   events.push(...regen.events);
+
+  const statusTicks = tickEndOfRound(working, round, statuses, maxHpOf);
+  working = statusTicks.state;
+  events.push(...statusTicks.events);
 
   events.push({ type: 'RoundEnded', round });
 

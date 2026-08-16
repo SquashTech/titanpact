@@ -101,7 +101,7 @@ export function calcDamage(
   const crit = isCrit ? critMultiplier : 1;
   const multiplierTerm = resolveMultiplierTerm(modifiers, stackingPolicy);
 
-  const damage = move.basePower * ratio * stab * typeMult * variance * crit * multiplierTerm;
+  const damage = (move.basePower ?? 0) * ratio * stab * typeMult * variance * crit * multiplierTerm;
 
   return { damage, ratio, stab, typeMult, variance, isCrit, multiplierTerm };
 }

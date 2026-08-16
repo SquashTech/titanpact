@@ -117,6 +117,12 @@ body {
   text-align: center;
 }
 
+.combat-banner-meta {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--mana);
+}
+
 .combat-banner-hint {
   font-size: 9px;
   font-weight: 600;
@@ -237,6 +243,60 @@ body {
   font-weight: 700;
 }
 
+/* Active statuses (docs/conditions.md) on a battlefield card — magnitude/duration
+   included in the label when the status carries one (CombatantCard statusBadgeText). */
+.status-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+
+.status-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: #0d0e12;
+  border: 1px solid var(--hp-mid);
+  color: var(--hp-mid);
+}
+
+.status-badge-positive {
+  border-color: var(--hp-high);
+  color: var(--hp-high);
+}
+
+/* Opens HeroDetailOverlay for this card's combatant. Bottom-right so it never
+   collides with the fainted tag (top-right) or a floating damage popup
+   (top-left). */
+.info-button {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 10px;
+  font-style: italic;
+  font-weight: 700;
+  font-family: Georgia, 'Times New Roman', serif;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+}
+
+.info-button:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
 /* Floating combat-log numbers over a combatant card — mounted fresh (new
    `key`) on every hit so the rise-and-fade animation restarts even when the
    same amount lands twice in a row. */
@@ -262,6 +322,21 @@ body {
 
 .dmg-popup.popup-heal {
   color: var(--hp-high);
+}
+
+.dmg-popup.popup-buff {
+  color: var(--hp-high);
+  font-size: 13px;
+}
+
+.dmg-popup.popup-debuff {
+  color: var(--hp-low);
+  font-size: 13px;
+}
+
+.dmg-popup.popup-status {
+  color: var(--hp-mid);
+  font-size: 13px;
 }
 
 @keyframes dmg-popup-float {
@@ -541,6 +616,22 @@ body {
   color: var(--text-dim);
 }
 
+.event-log .log-heal {
+  color: var(--hp-high);
+}
+
+.event-log .log-buff {
+  color: var(--hp-high);
+}
+
+.event-log .log-debuff {
+  color: var(--hp-low);
+}
+
+.event-log .log-status {
+  color: var(--hp-mid);
+}
+
 .result-overlay {
   position: fixed;
   inset: 0;
@@ -600,22 +691,6 @@ body {
   cursor: not-allowed;
 }
 
-.bench-row {
-  display: flex;
-  gap: 6px;
-  opacity: 0.6;
-}
-
-.bench-row .combatant-card {
-  padding: 6px;
-}
-
-.bench-card {
-  flex: 1;
-  transform: scale(0.92);
-  transform-origin: top;
-}
-
 .empty-slot {
   flex: 1;
   display: flex;
@@ -658,6 +733,145 @@ body {
 .switch-button {
   background: var(--panel-alt);
   border-color: var(--mana);
+}
+
+.switch-hp {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+/* --- Hero detail overlay (CombatantCard info button) -------------------- */
+
+.detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 11, 14, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 25;
+  padding: 16px;
+}
+
+.detail-panel {
+  width: 100%;
+  max-width: 380px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.detail-name {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.detail-resource-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.detail-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 10px 0 4px;
+}
+
+.detail-stat-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 0.8fr 0.8fr;
+  gap: 4px 6px;
+  font-size: 12px;
+  align-items: center;
+}
+
+.detail-stat-head {
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.stat-buff {
+  color: var(--hp-high);
+  font-weight: 700;
+}
+
+.stat-debuff {
+  color: var(--hp-low);
+  font-weight: 700;
+}
+
+.detail-modifier-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.detail-modifier-chip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 10px;
+  background: #0d0e12;
+  border: 1px solid var(--border);
+}
+
+.detail-status-chip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 10px;
+  background: #0d0e12;
+  border: 1px solid var(--hp-mid);
+  color: var(--hp-mid);
+}
+
+.detail-equip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-equip-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.detail-equip-slot {
+  color: var(--text-dim);
+}
+
+.detail-empty {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.detail-close-hint {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-dim);
 }
 
 /* --- Squad select screen ------------------------------------------------ */

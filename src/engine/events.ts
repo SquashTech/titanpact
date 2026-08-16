@@ -6,12 +6,11 @@
 //
 // This is the PROPOSED canonical set from docs/architecture.md, reconciled
 // against the two locked pipelines and the combat/switching/KO rules in
-// docs/combat.md. Status events are BLOCKED on the sixth engine contract
-// (condition vocabulary — still unspecified) and are intentionally absent.
-// Do not add them speculatively.
+// docs/combat.md. Status events (Status* below) implement the sixth engine
+// contract per docs/conditions.md — see engine/combat/statusEngine.ts.
 
 import type { Side, DamageCategory } from './state';
-import type { TypeId } from './content';
+import type { StatusId, StatusRemovalReason, TypeId } from './content';
 
 interface BaseEvent {
   round: number;
@@ -69,6 +68,49 @@ export interface StatChangedEvent extends BaseEvent {
   newValue: number;
 }
 
+export interface HealedEvent extends BaseEvent {
+  type: 'Healed';
+  sourceCombatantId: string;
+  targetCombatantId: string;
+  moveId: string;
+  amount: number;
+}
+
+export interface StatusAppliedEvent extends BaseEvent {
+  type: 'StatusApplied';
+  combatantId: string;
+  statusId: StatusId;
+  magnitude?: number;
+  duration?: number;
+}
+
+export interface StatusTickedEvent extends BaseEvent {
+  type: 'StatusTicked';
+  combatantId: string;
+  statusId: StatusId;
+  /** 'duration' = a Daze/Bind round ticked off, no HP change. */
+  kind: 'damage' | 'heal' | 'duration';
+  /** The HP amount this tick applied (pre-decay magnitude, or Bleed's flat %maxHp). 0 for kind 'duration'. */
+  amount: number;
+  /** Magnitude-shape statuses only: the value AFTER this tick's decay — what the view should replay onto combatant.statuses (a trailing StatusRemoved means it decayed to 0). */
+  newMagnitude?: number;
+  /** Duration-shape statuses only: the value AFTER this tick's countdown, mirroring newMagnitude. */
+  newDuration?: number;
+}
+
+export interface StatusRemovedEvent extends BaseEvent {
+  type: 'StatusRemoved';
+  combatantId: string;
+  statusId: StatusId;
+  reason: StatusRemovalReason;
+}
+
+export interface ActionBlockedEvent extends BaseEvent {
+  type: 'ActionBlocked';
+  combatantId: string;
+  reason: 'dazed' | 'bound';
+}
+
 export interface FaintedEvent extends BaseEvent {
   type: 'Fainted';
   combatantId: string;
@@ -117,8 +159,13 @@ export type CombatEvent =
   | MoveDeclaredEvent
   | MoveUsedEvent
   | DamageDealtEvent
+  | HealedEvent
   | HpChangedEvent
   | StatChangedEvent
+  | StatusAppliedEvent
+  | StatusTickedEvent
+  | StatusRemovedEvent
+  | ActionBlockedEvent
   | FaintedEvent
   | SwitchedInEvent
   | BenchRegenTickedEvent

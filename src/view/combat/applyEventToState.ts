@@ -54,10 +54,69 @@ export function applyEventToState(state: CombatState, event: CombatEvent): Comba
       };
     }
 
+    case 'StatChanged':
+      return {
+        ...state,
+        combatants: {
+          ...state.combatants,
+          [event.combatantId]: {
+            ...state.combatants[event.combatantId],
+            statModifiers: { ...state.combatants[event.combatantId].statModifiers, [event.stat]: event.newValue },
+          },
+        },
+      };
+
+    case 'StatusApplied':
+      return {
+        ...state,
+        combatants: {
+          ...state.combatants,
+          [event.combatantId]: {
+            ...state.combatants[event.combatantId],
+            statuses: {
+              ...state.combatants[event.combatantId].statuses,
+              [event.statusId]: { statusId: event.statusId, magnitude: event.magnitude, duration: event.duration },
+            },
+          },
+        },
+      };
+
+    // Carries the post-tick magnitude/duration (engine/combat/statusEngine.ts) — a
+    // trailing StatusRemoved handles the decay-to-zero/expiry case instead.
+    case 'StatusTicked': {
+      const combatant = state.combatants[event.combatantId];
+      const existing = combatant.statuses[event.statusId];
+      if (!existing) return state;
+      return {
+        ...state,
+        combatants: {
+          ...state.combatants,
+          [event.combatantId]: {
+            ...combatant,
+            statuses: {
+              ...combatant.statuses,
+              [event.statusId]: {
+                ...existing,
+                magnitude: event.newMagnitude ?? existing.magnitude,
+                duration: event.newDuration ?? existing.duration,
+              },
+            },
+          },
+        },
+      };
+    }
+
+    case 'StatusRemoved': {
+      const combatant = state.combatants[event.combatantId];
+      const nextStatuses = { ...combatant.statuses };
+      delete nextStatuses[event.statusId];
+      return { ...state, combatants: { ...state.combatants, [event.combatantId]: { ...combatant, statuses: nextStatuses } } };
+    }
+
     // RoundStarted / TurnStarted / MoveDeclared / MoveUsed / DamageDealt /
-    // StatChanged / RoundEnded: no CombatState field this view reads changes
-    // from these directly (DamageDealt is always paired with a HpChanged that
-    // carries the actual new value).
+    // Healed / ActionBlocked / RoundEnded: no CombatState field this view reads
+    // changes from these directly (DamageDealt/Healed are always paired with a
+    // HpChanged that carries the actual new value).
     default:
       return state;
   }

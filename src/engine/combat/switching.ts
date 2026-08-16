@@ -4,8 +4,10 @@
 // (CLAUDE.md "Mana & tempo").
 
 import type { CombatState, Side } from '../state';
-import { isLockedIn } from '../state';
-import type { SwitchedInEvent, BenchRegenTickedEvent } from '../events';
+import { hasStatus, isLockedIn } from '../state';
+import type { CombatEvent, BenchRegenTickedEvent } from '../events';
+import type { StatusDefinition } from '../content';
+import { clearOnSwitch } from './statusEngine';
 
 export class SwitchBlockedError extends Error {}
 
@@ -16,30 +18,43 @@ function slotOf(state: CombatState, side: Side, combatantId: string): 0 | 1 {
   throw new Error(`${combatantId} is not active on side ${side}`);
 }
 
-/** Voluntary switch, declared as a round action. Blocked once the side is locked in. */
+/**
+ * Voluntary switch, declared as a round action. Blocked once the side is
+ * locked in, or if the outgoing combatant is Bound (docs/conditions.md Bind:
+ * "cannot switch" — the whole point is it can't be escaped by switching).
+ */
 export function applyVoluntarySwitch(
   state: CombatState,
   round: number,
   outCombatantId: string,
-  inCombatantId: string
-): { state: CombatState; event: SwitchedInEvent } {
+  inCombatantId: string,
+  statusDefs: Record<string, StatusDefinition>
+): { state: CombatState; events: CombatEvent[] } {
   const side = state.combatants[outCombatantId].side;
   if (isLockedIn(state, side)) {
     throw new SwitchBlockedError(`Side ${side} is locked in (2+ KOs) — voluntary switching is disabled`);
   }
-  return performSwitch(state, round, side, outCombatantId, inCombatantId);
+  if (hasStatus(state.combatants[outCombatantId], 'Bind')) {
+    throw new SwitchBlockedError(`${outCombatantId} is Bound — cannot switch`);
+  }
+  return performSwitch(state, round, side, outCombatantId, inCombatantId, statusDefs);
 }
 
-/** Forced replacement of a fainted active slot. Ignores lock-in by design. */
+/**
+ * Forced replacement of a fainted active slot. Ignores lock-in AND Bind by
+ * design — a fainted combatant isn't voluntarily leaving (same precedent as
+ * lock-in exemption below).
+ */
 export function applyForcedReplacement(
   state: CombatState,
   round: number,
   side: Side,
   slot: 0 | 1,
-  inCombatantId: string
-): { state: CombatState; event: SwitchedInEvent } {
+  inCombatantId: string,
+  statusDefs: Record<string, StatusDefinition>
+): { state: CombatState; events: CombatEvent[] } {
   const outCombatantId = state.active[side][slot];
-  return performSwitch(state, round, side, outCombatantId, inCombatantId, slot);
+  return performSwitch(state, round, side, outCombatantId, inCombatantId, statusDefs, slot);
 }
 
 function performSwitch(
@@ -48,8 +63,9 @@ function performSwitch(
   side: Side,
   outCombatantId: string | null,
   inCombatantId: string,
+  statusDefs: Record<string, StatusDefinition>,
   knownSlot?: 0 | 1
-): { state: CombatState; event: SwitchedInEvent } {
+): { state: CombatState; events: CombatEvent[] } {
   const slot = knownSlot ?? slotOf(state, side, outCombatantId as string);
   const bench = state.bench[side];
   if (!bench.includes(inCombatantId)) {
@@ -62,16 +78,22 @@ function performSwitch(
   const nextBench = bench.filter((id) => id !== inCombatantId);
   if (outCombatantId) nextBench.push(outCombatantId);
 
-  const nextState: CombatState = {
+  let nextState: CombatState = {
     ...state,
     active: { ...state.active, [side]: nextActive },
     bench: { ...state.bench, [side]: nextBench },
   };
 
-  return {
-    state: nextState,
-    event: { type: 'SwitchedIn', round, side, slot, outCombatantId, inCombatantId },
-  };
+  const events: CombatEvent[] = [{ type: 'SwitchedIn', round, side, slot, outCombatantId, inCombatantId }];
+
+  // docs/conditions.md §4: switching to bench clears Burn/Freeze/Daze on the outgoing combatant.
+  if (outCombatantId) {
+    const cleared = clearOnSwitch(nextState, round, outCombatantId, statusDefs);
+    nextState = cleared.state;
+    events.push(...cleared.events);
+  }
+
+  return { state: nextState, events };
 }
 
 /**
