@@ -13,6 +13,8 @@
   --enemy: #d9534f;
   --ally: #4a90d9;
   --crit: #ff7043;
+  --physical: #d9724a;
+  --magical: #8b7fe0;
 }
 
 * {
@@ -417,6 +419,32 @@ body {
   white-space: nowrap;
 }
 
+/* Physical vs Magical — an outlined chip (rather than TypeBadge's filled
+   block) so the two badges read as different kinds of information: type is
+   a filled color swatch, category is a bordered label. */
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  line-height: 1.3;
+  white-space: nowrap;
+  border: 1px solid currentColor;
+}
+
+.category-badge.category-physical {
+  color: var(--physical);
+}
+
+.category-badge.category-magical {
+  color: var(--magical);
+}
+
 .bar-track {
   height: 8px;
   border-radius: 4px;
@@ -722,13 +750,41 @@ body {
   padding: 1px 0;
 }
 
+/* Base Power is one of the two numbers a player is actually choosing
+   between (with mana cost) — sized and colored to stand out from the
+   surrounding dim 10px meta row instead of reading as just more meta text. */
 .move-power {
   white-space: nowrap;
+  color: var(--accent);
+}
+
+.move-power strong {
+  font-size: 13px;
+  font-weight: 800;
+  margin-right: 1px;
 }
 
 .move-stab {
   color: var(--accent);
   font-weight: 700;
+}
+
+/* Bottom-right zone of the move button, kept apart from the type badge up
+   in .move-row-mid so Physical/Magical doesn't compete with — or read as
+   part of — the move's type for attention. Effectiveness chips (when
+   shown) sit opposite it on the left; the empty .move-row-eff still holds
+   its flex slot when there are no chips, so the badge lands bottom-right
+   either way instead of drifting to bottom-left. */
+.move-row-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.move-row-bottom .category-badge {
+  font-size: 8px;
+  padding: 1px 4px;
 }
 
 .move-row-eff {
@@ -773,9 +829,19 @@ body {
   overflow: hidden;
 }
 
+/* Mana cost is the primary balance lever (CLAUDE.md) and the number players
+   check first when choosing a move — sized well above the 12px move-button
+   baseline so it doesn't fade into the name row it sits next to. */
 .move-cost {
   color: var(--mana);
   white-space: nowrap;
+  font-size: 11px;
+}
+
+.move-cost strong {
+  font-size: 16px;
+  font-weight: 800;
+  margin-right: 1px;
 }
 
 .hint {
@@ -1913,7 +1979,7 @@ body {
   flex-direction: column;
   justify-content: center;
   gap: 3px;
-  min-height: 96px;
+  min-height: 108px;
   background: var(--panel-alt);
   border: 1px solid var(--accent);
   border-radius: 8px;
@@ -1945,8 +2011,48 @@ body {
   font-weight: 700;
 }
 
-.move-info-meta {
-  font-size: 11px;
+/* Power/heal and mana cost are the numbers a player actually decides on —
+   pulled out of the meta text line and blown up so they read at a glance
+   instead of fading into dim 11px text (see CLAUDE.md "Mana cost is the
+   primary balance lever"). */
+.move-info-stats {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 2px 0;
+}
+
+.move-stat strong {
+  font-size: 22px;
+  font-weight: 800;
+  margin-right: 3px;
+}
+
+.move-stat-power strong {
+  color: var(--accent);
+}
+
+.move-stat-heal strong {
+  color: var(--hp-high);
+}
+
+.move-stat-cost strong {
+  color: var(--mana);
+}
+
+.move-stat-unit {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.move-info-kind {
+  margin-left: auto;
+  align-self: center;
+  font-size: 10px;
   color: var(--text-dim);
 }
 

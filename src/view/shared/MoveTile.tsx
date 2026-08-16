@@ -4,13 +4,15 @@ import { TypeBadge } from './TypeBadge';
 
 export const KIND_LABELS: Record<string, string> = { damage: 'Damage', heal: 'Heal', buff: 'Buff/Debuff' };
 
-/** "60 pow · 10 mp" / "40 heal · 14 mp" / "10 mp" — the compact stat line shown for a move. */
-export function moveStatLine(move: MoveDefinition): string {
-  const parts: string[] = [];
-  if (move.kind === 'damage' && move.basePower) parts.push(`${move.basePower} pow`);
-  if (move.kind === 'heal' && move.healAmount) parts.push(`${move.healAmount} heal`);
-  parts.push(`${move.manaCost} mp`);
-  return parts.join(' · ');
+const CATEGORY_LABELS: Record<MoveDefinition['category'], string> = { physical: 'PHY', magical: 'MAG' };
+
+/**
+ * Physical (Attack/Defense pipeline) vs Magical (Intelligence/Wisdom pipeline) —
+ * see CLAUDE.md "Two-pipeline separation". Shown everywhere a move's type badge
+ * is shown, so the pipeline a move draws from is always legible alongside its type.
+ */
+export function CategoryBadge({ category }: { category: MoveDefinition['category'] }) {
+  return <span className={`category-badge category-${category}`}>{CATEGORY_LABELS[category]}</span>;
 }
 
 /**
@@ -61,9 +63,26 @@ export function MoveInfoPanel({ move, label, placeholder = 'Hover or tap a move 
           <div className="move-info-head">
             <span className="move-info-name">{move.name}</span>
             <TypeBadge type={move.type} />
+            <CategoryBadge category={move.category} />
           </div>
-          <div className="move-info-meta">
-            {KIND_LABELS[move.kind] ?? move.kind} · {moveStatLine(move)}
+          <div className="move-info-stats">
+            {move.kind === 'damage' && move.basePower != null && (
+              <span className="move-stat move-stat-power">
+                <strong>{move.basePower}</strong>
+                <span className="move-stat-unit">POW</span>
+              </span>
+            )}
+            {move.kind === 'heal' && move.healAmount != null && (
+              <span className="move-stat move-stat-heal">
+                <strong>{move.healAmount}</strong>
+                <span className="move-stat-unit">HEAL</span>
+              </span>
+            )}
+            <span className="move-stat move-stat-cost">
+              <strong>{move.manaCost}</strong>
+              <span className="move-stat-unit">MP</span>
+            </span>
+            <span className="move-info-kind">{KIND_LABELS[move.kind] ?? move.kind}</span>
           </div>
           {move.description && <div className="move-info-desc">{move.description}</div>}
         </>

@@ -24,6 +24,7 @@ import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
 import { TypeBadge } from '../shared/TypeBadge';
+import { CategoryBadge } from '../shared/MoveTile';
 
 const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
@@ -460,14 +461,20 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
                       >
                         <div className="move-row-top">
                           <span className="move-name">{move.name}</span>
-                          <span className="move-cost">{move.manaCost}MP</span>
+                          <span className="move-cost">
+                            <strong>{move.manaCost}</strong>MP
+                          </span>
                         </div>
                         <div className="move-row-mid">
                           <TypeBadge type={move.type} />
-                          <span className="move-power">BP {move.basePower}</span>
+                          {move.kind === 'damage' && move.basePower != null && (
+                            <span className="move-power">
+                              <strong>{move.basePower}</strong>BP
+                            </span>
+                          )}
                           {hasStab && <span className="move-stab">STAB</span>}
                         </div>
-                        {enemyActiveAlive.length > 0 && (
+                        <div className="move-row-bottom">
                           <div className="move-row-eff">
                             {enemyActiveAlive.map((enemyId) => {
                               const mult = effectivenessAgainst(move, enemyId);
@@ -478,7 +485,8 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
                               );
                             })}
                           </div>
-                        )}
+                          <CategoryBadge category={move.category} />
+                        </div>
                       </button>
                     );
                   })}

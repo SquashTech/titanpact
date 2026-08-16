@@ -179,7 +179,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 22,
     priority: -1,
     target: 'allOthers',
-    description: 'A towering wave that crashes over the whole field except the caster. Slow to summon.',
+    description: 'A towering wave that crashes over the whole field except the caster. Priority -1.',
   },
 
   // --- Frost -------------------------------------------------------------
@@ -620,7 +620,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 13,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A searing bite that leaves the wound smoldering (inflicts Burn).',
+    description: 'A searing bite that leaves the wound smoldering (inflicts Burn 20).',
   },
   rendingClaw: {
     id: 'rendingClaw',
@@ -642,11 +642,11 @@ export const moves: Record<string, MoveDefinition> = {
     category: 'magical',
     kind: 'damage',
     basePower: 30,
-    statusApplication: { statusId: 'Blight', magnitude: 15, target: 'moveTarget' },
+    statusApplication: { statusId: 'Blight', magnitude: 10, target: 'moveTarget' },
     manaCost: 14,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A withering touch that softens the target for everything that follows (inflicts Blight).',
+    description: 'A withering touch that softens the target for everything that follows (inflicts Blight 10).',
   },
   frostLock: {
     id: 'frostLock',
@@ -672,7 +672,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A rattling haymaker, priced high for what it denies (inflicts Daze — target can’t attack, can still switch).',
+    description: 'A rattling haymaker, priced high for what it denies (inflicts Daze 2).',
   },
   entanglingRoots: {
     id: 'entanglingRoots',
@@ -698,7 +698,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 8,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Marks a weak point on the target — the next hit lands harder (inflicts Expose; consumed by the first damage taken).',
+    description: 'Marks a weak point on the target — the next hit lands harder (inflicts Expose 40).',
   },
   secondWind: {
     id: 'secondWind',
@@ -711,7 +711,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 15,
     priority: 0,
     target: 'self',
-    description: 'Steadies the caster’s breath, mending a little more each round (grants Regen).',
+    description: 'Steadies the caster’s breath, mending a little more each round (grants Regen 20).',
   },
   purify: {
     id: 'purify',
@@ -724,6 +724,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 16,
     priority: 0,
     target: 'singleAlly',
-    description: 'Washes away an ally’s afflictions and steadies them with a little light (Cleanse: strips debuff statuses).',
+    description: 'Washes away an ally’s afflictions and steadies them with a little light (Grant Cleanse).',
   },
 };
