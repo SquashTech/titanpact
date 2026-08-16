@@ -60,12 +60,22 @@ matching both — STAB is a single 1.25× term).
 The chart is playable but knowingly mistuned in these spots. Carry these forward as
 open tuning work, not as settled values:
 
-- **Light and Shadow are over-tuned defensively** — they resist too much.
 - **Nature and Beast are fragile** — each currently carries **three weaknesses**,
   which makes them hard to justify drafting.
 
 These are balance-tuning items, not structural changes. Adjust in `/data`, playtest,
 don't silently rewrite the type philosophy to paper over them.
+
+### Resolved: Light/Shadow over-resist
+
+Light and Shadow used to resist each other (a mutual 0.5×), which was flagged above
+as over-tuned defensively. A chart pass retuned them to **mutual 2× weakness**
+instead — Light and Shadow now hit each other hard rather than shrugging each other
+off — and gave each a shared weakness to **Spirit** (2×). Net profile for both is now
+2 weaknesses vs. 1 resistance (Light resists Fire; Shadow resists Mind), so this is no
+longer an over-resist problem. Not yet playtested at this new setting — watch whether
+it swings the other way into fragility, the same failure mode Nature/Beast already
+have.
 
 ---
 
