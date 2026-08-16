@@ -109,6 +109,12 @@ what's still unimplemented:
 - Five "50/50" heroes: general shape decided — **mono base, second type via a
   rank-up type-graft branch** (`docs/progression.md` "Type-graft branches"), not
   inherent duals. Which specific type each hero starts mono as is still open (below).
+- Run structure (2026-08-16 sign-off): **a Slay the Spire-style branching map** —
+  reward/shop/fight/elite nodes converging on an end-of-act **Ancient** boss fight
+  (`docs/run-loop.md`). One act for now, not multi-act. HP/mana **persist between map
+  nodes** (clamped to current max, never healed by a cap increase) — a necessary
+  consequence of "escalating fights" actually escalating, not part of the original ask.
+  Relics are **minimal and stat-only** until the trigger-hook contract exists.
 
 ## Open questions — DO NOT silently resolve
 

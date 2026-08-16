@@ -108,7 +108,14 @@ export interface StatusRemovedEvent extends BaseEvent {
 export interface ActionBlockedEvent extends BaseEvent {
   type: 'ActionBlocked';
   combatantId: string;
-  reason: 'dazed' | 'bound';
+  /**
+   * 'noValidTarget': the action's declared target is no longer a legal
+   * target when this action comes up in priority/speed order — e.g. two
+   * attackers both declared against the same lone enemy and the first one's
+   * hit already knocked it out. Declare-then-resolve means this is a normal
+   * mid-round race, not a UI-preventable player error (resolveRound.ts).
+   */
+  reason: 'dazed' | 'bound' | 'noValidTarget';
 }
 
 export interface FaintedEvent extends BaseEvent {

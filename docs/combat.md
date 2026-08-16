@@ -41,6 +41,13 @@ what makes prediction the core skill. Preserve it.
 - **No spread damage reduction.** Because the game is doubles-only, a move that hits
   both targets deals full damage to each. There is no multi-target penalty; do not
   implement one.
+- **A declared single-target that's gone by the time its action resolves is a
+  no-op, not an error.** Declare-then-resolve means an earlier-resolving action this
+  same round can knock out the one target a later action already committed to (e.g.
+  two attackers both declaring against the same lone enemy). `resolveRound.ts`
+  catches this specifically (`targeting.ts`'s `TargetNoLongerValidError`) and emits
+  `ActionBlocked` (`reason: 'noValidTarget'`) instead of throwing — the action fizzles,
+  no mana spent. This is a normal mid-round race, not a UI bug to prevent upstream.
 
 ---
 

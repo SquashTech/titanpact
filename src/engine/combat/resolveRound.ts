@@ -13,7 +13,7 @@ import { getMaxHp, effectiveTypes, hasStatus } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
-import { resolveTargets } from './targeting';
+import { resolveTargets, TargetNoLongerValidError } from './targeting';
 import { applyVoluntarySwitch, applyBenchHpRegen, SwitchBlockedError } from './switching';
 import { resolveStatRatio, rollDamage, type DamageModifier } from '../damage/damagePipeline';
 import type { TypeChart } from '../damage/typeMult';
@@ -74,9 +74,22 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     if (actor.currentMana < move.manaCost) continue; // engine-level legality guard; view must already prevent this
 
-    const targetIds = resolveTargets(working, action.combatantId, move.target, action.declaredTarget ?? null).filter(
-      (id) => !working.combatants[id]?.fainted
-    );
+    let targetIds: string[];
+    try {
+      targetIds = resolveTargets(working, action.combatantId, move.target, action.declaredTarget ?? null).filter(
+        (id) => !working.combatants[id]?.fainted
+      );
+    } catch (err) {
+      if (err instanceof TargetNoLongerValidError) {
+        // The declared target fainted earlier this same round, resolved before this action came up
+        // (declare-then-resolve, priority/speed order) — a normal mid-round race, not a UI-preventable
+        // player error. The action fizzles: no mana spent, no MoveUsed (matches the unaffordable-move
+        // no-op pattern below), just a legible ActionBlocked event.
+        events.push({ type: 'ActionBlocked', round, combatantId: action.combatantId, reason: 'noValidTarget' });
+        continue;
+      }
+      throw err;
+    }
 
     events.push({ type: 'MoveDeclared', round, combatantId: action.combatantId, moveId: move.id, targetCombatantIds: targetIds });
 

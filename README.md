@@ -32,26 +32,37 @@ constitution and [`docs/`](./docs) for the deeper design modules.
    spends gold on a fresh 0-progress hero from a data-driven offer pool
    (`src/data/recruitment.ts`); Recruit Contracts claim a defeated enemy's exact
    rank-up state (progress, branches, stat grants, type-graft) for free, ungeared. Both
-   are wired into the playable slice (`GuildHallPanel.tsx` on squad-select,
+   are wired into the playable slice (`ShopNodeScreen.tsx` on `shop` map nodes,
    claim buttons on `FightScreen`'s victory overlay) and covered by
-   `test/recruitment.test.ts`. **Still not built:** the decaying Guild Hall runway
-   value curve (offers are flat-cost, not time-decaying) and a real trigger for
-   Recruit Contract offers — claiming currently reuses the single demo fight's fixed
-   AI roster as a stand-in for "the enemy you just beat," since the escalating-fight
-   run loop (#4 below) that would generate that trigger organically doesn't exist yet.
-3. **Build relics** once the hook-and-condition system (the hero-ability effect engine —
-   `CLAUDE.md` "Architecture") exists. Relics and equipment share that system by design;
-   equipment currently only wires the stat-pipeline half (see "Known gaps" below), and
-   relics need the same engine before they can be more than a stub.
-4. **Escalating fights / a real run loop.** `/src/app` currently orchestrates exactly one
-   fight (squad-select → fight → squad-select). The roguelike run structure (draft →
-   escalating fights → relics, `CLAUDE.md` north star) — persistent roster HP/mana
-   between fights, an encounter sequence, run-vs-meta state — isn't built.
+   `test/recruitment.test.ts`. Contract offers now have a real trigger — claiming reuses
+   the specific map node's generated AI roster (`src/run/enemyGen.ts`), not a fixed
+   stand-in — now that #4 below exists. **Still not built:** the decaying Guild Hall
+   runway value curve (offers are flat-cost, not time-decaying).
+3. **Relics: minimal version done, hook-triggered version still blocked.**
+   `src/run/relics.ts` + `src/data/relics.ts` (`docs/run-loop.md`) implement team-wide
+   flat stat grants, the same stat-pipeline-only precedent equipment already uses —
+   enough to back `relicReward` map nodes end to end. Hook-triggered relics (e.g. "on
+   faint, heal the team") still need the hook-and-condition system (the hero-ability
+   effect engine — `CLAUDE.md` "Architecture") that isn't built. Equipment has the same
+   split: stat-pipeline half only (see "Known gaps" below).
+4. ~~Escalating fights / a real run loop.~~ **Done, one act.** `/src/app` now
+   orchestrates a Slay the Spire-style branching map (`src/run/map.ts`,
+   `docs/run-loop.md`) — `MapScreen.tsx` hub, 8 node types (fight/elite/boss + 5 reward
+   types), squad selection before every fight node (team-preview style, not once per
+   run), HP/mana persisting between nodes (`RosterEntry.currentHp/currentMana`,
+   `src/run/runProgress.ts`), and a win/loss run outcome (no more retry-in-place
+   "Rematch"). Covered by `test/map.test.ts`, `test/enemyGen.test.ts`,
+   `test/runProgress.test.ts`, `test/relics.test.ts`. **Still not built:** multi-act
+   sequencing (this is one act, start to boss), visual path-line rendering on the map
+   (nodes render grouped by row, not connected by drawn lines), and a real Ancient boss
+   hero (the boss fight is 2 scaled-up fixture heroes, not authored Ancient content).
+   See `docs/run-loop.md` §4 for the full list.
 5. **Replace `/src/data` test fixtures with real content.** Either locate/import the
    prototype files `CLAUDE.md` treats as the reference (`prototypes/combat-prototype.jsx`
    and the feel-pass variant — not present in this repo as of this writing) and port
    their roster/type chart, or author fresh content collaboratively. Don't hand-tune the
    placeholder chart in `src/data/typechart.ts` into "the" chart — replace it wholesale.
+   Higher-value now that a real run loop exists to play it through.
 6. **A presentation "feel" pass** — sequenced event playback, hitstop, floating damage
    numbers, procedural audio — once the above is stable enough to be worth polishing.
    Lowest priority; purely cosmetic and the feel-pass prototype is the model for it per
@@ -89,11 +100,26 @@ Covered by `test/statuses.test.ts`.
   Recruit Contract (free, claims a defeated hero's exact rank-up state) acquisition
   paths, both enforcing the roster cap via the same `addRosterEntry` used everywhere
   else. `RunState.gold` funds the Guild Hall side; contracts don't touch it.
+- **The run loop / branching map** (`map.ts`, `enemyGen.ts`, `runProgress.ts`,
+  `relics.ts` — `docs/run-loop.md`): a seeded, Slay the Spire-style branching map for
+  one act, 8 node types (fight/elite/boss + shop/equipment/relic/currency/upgrade
+  reward), a seeded per-node AI encounter generator (reusing `RosterEntry.
+  rankStatGrants` for elite/boss difficulty scaling — no new mechanism), minimal
+  team-wide stat-only relics, and HP/mana that persist between nodes
+  (`RosterEntry.currentHp/currentMana`, clamped to current max on read, never healed by
+  a cap increase).
 
-`/src/view` + `/src/app` is a Vite + React playable slice: pick a 4-hero squad from
-your 6-hero roster, then fight a fixed AI (which also fields a 2-active/2-bench squad).
-The fight screen exposes real switching (declared as a round action, blocked once
-locked in) and forced replacement (choosing which bench hero fills a KO'd slot).
+`/src/view` + `/src/app` is a Vite + React playable slice: `MapScreen` is the run's
+hub — pick a reachable node, and fight/elite/boss nodes lead into a fresh
+bring-6-pick-4 squad pick (`SquadSelectScreen`, now per-fight/team-preview-style, not
+once per run) before `FightScreen` against that node's generated AI squad. The fight
+screen exposes real switching (declared as a round action, blocked once locked in) and
+forced replacement (choosing which bench hero fills a KO'd slot). A loss ends the run
+("Run Failed"); beating the boss node ends it ("Run Complete") — both offer "Start New
+Run" (fresh roster, fresh map seed; there's no meta-progression/unlock-pool layer yet).
+`TrainingPanel`, reachable from `MapScreen` at any time, is the level-up-pool spend UI
+that didn't exist before this pass — `src/run/progression.ts` was previously only
+exercised by tests.
 
 **Known gaps, not silently resolved:**
 
@@ -120,9 +146,9 @@ locked in) and forced replacement (choosing which bench hero fills a KO'd slot).
   Bulwark") grafts a second type (Stone) to exercise the type-graft mechanic
   (`docs/progression.md` "Type-graft branches") end to end. The other 4 fixture
   heroes have nothing to invest in yet; that's a valid empty state, not a bug.
-- **Recruit Contracts have no real fight-outcome trigger.** They're claimed off the
-  fixed demo AI's roster on any win, not off a specific escalating-fight encounter —
-  see "Next steps" #2.
+- **The run loop is one act, and its map has no visual path lines.** See
+  `docs/run-loop.md` §4 for the full list of what's still not built there (multi-act
+  sequencing, a real Ancient boss hero, drawn map connectors).
 - **No sequencing/animation.** The view renders each round's *end state* plus a text log
   of what happened — it does not yet subscribe to the event stream turn-by-turn with
   timing/juice. That's the "feel pass" the prototypes model; not built here.

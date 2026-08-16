@@ -4,7 +4,7 @@ import { moves } from '../../data/moves';
 import { typeChart } from '../../data/typechart';
 import { equipment } from '../../data/equipment';
 import { statuses } from '../../data/statuses';
-import type { CombatState, Side } from '../../engine/state';
+import type { CombatState, Side, StatModifiers } from '../../engine/state';
 import { isLockedIn, effectiveTypes, getMaxHp } from '../../engine/state';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../engine/combat/switching';
@@ -13,9 +13,8 @@ import type { CombatEvent } from '../../engine/events';
 import type { MoveDefinition } from '../../engine/content';
 import { resolveStab, resolveTypeMult } from '../../engine/damage/typeMult';
 import type { RunState, RosterEntry } from '../../run/state';
-import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP } from '../../run/state';
+import { ROSTER_CAP } from '../../run/state';
 import type { Squad } from '../../run/squad';
-import { pickSquad } from '../../run/squad';
 import { buildCombatState } from '../../run/buildCombatState';
 import { CombatantCard, type Popup } from './CombatantCard';
 import { HeroDetailOverlay } from './HeroDetailOverlay';
@@ -27,22 +26,6 @@ import { getTypeColor } from './typeColors';
 const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
 const config = { typeChart, heroes, moves, statuses, benchHpRegenFlat: 5 };
-
-/**
- * Fixed AI opponent — its own roster, independent of the player's (RunState
- * is per-side; there's no shared-roster concept). Bench included so forced
- * replacement and switching are exercised on the AI side too, not just the
- * player's.
- */
-function createAiRun(): RunState {
-  let run = createRunState(0);
-  for (const heroId of ['ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk']) {
-    run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
-  }
-  return run;
-}
-const AI_RUN = createAiRun();
-const AI_SQUAD = pickSquad(AI_RUN.roster, ['ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk']);
 
 function rosterIdOf(combatantId: string): string {
   return combatantId.slice(combatantId.indexOf(':') + 1);
@@ -73,24 +56,29 @@ interface PendingAction {
 interface Props {
   playerRun: RunState;
   playerSquad: Squad;
-  onExit: () => void;
+  /** This node's generated encounter (src/run/enemyGen.ts) — a fresh AI roster/squad per fight/elite/boss node, not a fixed opponent. */
+  aiRun: RunState;
+  aiSquad: Squad;
+  /** Team-wide relic stat grants (docs/run-loop.md, src/run/relics.ts), precomputed by the caller — applied to every player combatant placed this fight. */
+  teamStatModifiers?: StatModifiers;
+  /** This node's gold reward on a win (docs/run-loop.md), precomputed by the caller — displayed only, the caller grants it in onResolved. */
+  goldReward: number;
   /**
    * Recruit Contract claim (docs/progression.md "raise-vs-recruit axis" —
-   * src/run/recruitment.ts): "claim a beaten hero." There's no escalating
-   * fight run loop yet to trigger this organically (README "Next steps"
-   * #4), so it's offered here on the single demo fight's victory screen —
-   * the AI's roster stands in for "the enemy you just beat." Returns
-   * whether the claim succeeded (false only on a full roster) so this
-   * screen can reflect it.
+   * src/run/recruitment.ts): "claim a beaten hero," offered off this node's
+   * AI roster on a win. Returns whether the claim succeeded (false only on a
+   * full roster) so this screen can reflect it.
    */
   onClaimContract: (defeated: RosterEntry) => boolean;
+  /** Fired when the player dismisses the result overlay — the caller owns what a win/loss means for run progress (vitals sync, currency grant, advancing the map, or ending the run). */
+  onResolved: (outcome: 'win' | 'loss', finalState: CombatState) => void;
 }
 
-export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }: Props) {
+export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatModifiers, goldReward, onClaimContract, onResolved }: Props) {
   function buildInitialState(seed: number): CombatState {
     return buildCombatState(seed, heroes, equipment, [
-      { side: PLAYER_SIDE, squad: playerSquad, roster: playerRun.roster },
-      { side: AI_SIDE, squad: AI_SQUAD, roster: AI_RUN.roster },
+      { side: PLAYER_SIDE, squad: playerSquad, roster: playerRun.roster, teamStatModifiers },
+      { side: AI_SIDE, squad: aiSquad, roster: aiRun.roster },
     ]);
   }
 
@@ -236,7 +224,7 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
   function pickAiAction(state: CombatState, combatantId: string): Action {
     const combatant = state.combatants[combatantId];
     const hero = heroes[combatant.heroId];
-    const entry = entryFor(AI_RUN.roster, combatantId);
+    const entry = entryFor(aiRun.roster, combatantId);
     const moveIds = entry.unlockedMoveIds.length > 0 ? entry.unlockedMoveIds : hero.moveIds;
     const affordable = moveIds.filter((id) => combatant.currentMana >= moves[id].manaCost);
     const pool = affordable.length > 0 ? affordable : moveIds;
@@ -351,21 +339,6 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
     setPopups(Object.fromEntries(beat.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className }])));
   }
 
-  function handleRematch() {
-    beatQueue.current = [];
-    setCombat(buildInitialState(Math.floor(Math.random() * 2 ** 31)));
-    setLog([]);
-    setPending({});
-    setSelecting(null);
-    setHoveredMove(null);
-    setActionStep(0);
-    setClaimedRosterIds([]);
-    setResolving(false);
-    setBanner(null);
-    setBannerMeta(null);
-    setPopups({});
-  }
-
   function handleClaimContract(entry: RosterEntry) {
     if (onClaimContract(entry)) setClaimedRosterIds((prev) => [...prev, entry.rosterId]);
   }
@@ -409,9 +382,6 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
   return (
     <>
       <div className="fight-header">
-        <button className="exit-button" onClick={onExit} disabled={resolving}>
-          ← Squad
-        </button>
         <button className="log-toggle-button" onClick={() => setLogOpen(true)}>
           📜 Battle Log
         </button>
@@ -571,7 +541,7 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
         (() => {
           const combatant = combat.combatants[inspecting];
           const hero = heroes[combatant.heroId];
-          const roster = combatant.side === PLAYER_SIDE ? playerRun.roster : AI_RUN.roster;
+          const roster = combatant.side === PLAYER_SIDE ? playerRun.roster : aiRun.roster;
           const rosterEntry = roster.find((r) => r.rosterId === rosterIdOf(inspecting)) ?? null;
           return (
             <HeroDetailOverlay
@@ -587,11 +557,12 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
       {winner && !resolving && (
         <div className="result-overlay">
           <h2>{winner === PLAYER_SIDE ? 'Victory!' : 'Defeat'}</h2>
+          {winner === PLAYER_SIDE && goldReward > 0 && <p className="hint">+{goldReward}g</p>}
           {winner === PLAYER_SIDE && (
             <div className="contract-claims">
               <div className="hint">Claim a Recruit Contract (docs/progression.md "raise-vs-recruit axis"):</div>
               <div className="contract-claims-grid">
-                {AI_RUN.roster.map((entry) => {
+                {aiRun.roster.map((entry) => {
                   const claimed = claimedRosterIds.includes(entry.rosterId);
                   const rosterFull = playerRun.roster.length >= ROSTER_CAP;
                   return (
@@ -609,8 +580,7 @@ export function FightScreen({ playerRun, playerSquad, onExit, onClaimContract }:
             </div>
           )}
           <div className="result-buttons">
-            <button onClick={handleRematch}>Rematch</button>
-            <button onClick={onExit}>Change Squad</button>
+            <button onClick={() => onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat)}>Continue</button>
           </div>
         </div>
       )}

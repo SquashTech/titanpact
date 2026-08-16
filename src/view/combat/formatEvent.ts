@@ -72,9 +72,11 @@ export function formatEvents(
       case 'StatusRemoved':
         lines.push({ key, text: `${name(e.combatantId)}'s ${e.statusId} clears (${e.reason})`, className: 'log-status' });
         break;
-      case 'ActionBlocked':
-        lines.push({ key, text: `${name(e.combatantId)} is ${e.reason} and can't act`, className: 'log-faint' });
+      case 'ActionBlocked': {
+        const reasonText = e.reason === 'dazed' ? 'dazed' : e.reason === 'bound' ? 'bound' : "out of valid targets";
+        lines.push({ key, text: `${name(e.combatantId)} is ${reasonText} and can't act`, className: 'log-faint' });
         break;
+      }
       default:
         break; // TurnStarted / MoveDeclared / HpChanged / ManaChanged / RoundEnded: omitted for readability
     }

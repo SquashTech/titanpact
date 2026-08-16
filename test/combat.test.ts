@@ -158,6 +158,24 @@ test('round: KO increments KO count and emits Fainted, clearing the active slot'
   assert.ok(events.some((e) => e.type === 'Fainted'));
 });
 
+test('round: a second attacker declared against a target the first attacker already knocked out is blocked, not thrown', () => {
+  const state = twoVTwoFixture(16);
+  // b1 (ironWarden) at 1 HP: whichever of a1/a2 resolves first this round KOs it outright.
+  const oneHp = { ...state, combatants: { ...state.combatants, b1: { ...state.combatants.b1, currentHp: 1 } } };
+  // tidecaller (a2, speed 55) outpaces cinderKnight (a1, speed 50) at equal priority, so a2 resolves
+  // first and KOs b1 — a1's declared target is then stale by the time its own action comes up.
+  const actions: Action[] = [
+    { kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' },
+    { kind: 'move', combatantId: 'a2', moveId: 'tidalBolt', declaredTarget: 'b1' },
+  ];
+  const { state: next, events } = resolveRound(oneHp, actions, config);
+
+  const moveUsedIds = events.filter((e) => e.type === 'MoveUsed').map((e: any) => e.combatantId);
+  assert.deepStrictEqual(moveUsedIds, ['a2']); // a1's move never resolves — no MoveUsed, no mana spent
+  assert.strictEqual(next.combatants.a1.currentMana, heroes.cinderKnight.baseStats.manaPool);
+  assert.ok(events.some((e) => e.type === 'ActionBlocked' && (e as any).combatantId === 'a1' && (e as any).reason === 'noValidTarget'));
+});
+
 test('round: bench regen ticks for a damaged benched combatant, clamped at max HP', () => {
   const state = twoVTwoFixture(15);
   const maxHp = heroes.wildOracle.baseStats.hp; // b2 is wildOracle

@@ -1002,3 +1002,167 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 6px;
 }
+
+/* Primary bottom-docked CTA, shared by SquadSelectScreen ("Start Fight"),
+   ShopNodeScreen and NodeRewardScreen ("Continue") — the map-loop screens'
+   equivalent of .result-overlay button, but inline rather than an overlay. */
+.resolve-button {
+  flex-shrink: 0;
+  width: 100%;
+  background: var(--accent);
+  color: #1a1300;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.resolve-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* --- Node-resolution screens (Shop, the 4 instant-reward types) --------- */
+
+.node-screen {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reward-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 24px 12px;
+}
+
+.reward-panel h2 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.reward-panel .roster-grid {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 0;
+}
+
+/* --- Map screen ----------------------------------------------------------- */
+
+.map-screen {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.map-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-dim);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.map-header button {
+  margin-left: auto;
+}
+
+.map-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 8px 0;
+}
+
+.map-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.map-node {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  padding: 10px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  opacity: 0.4;
+  cursor: default;
+  min-width: 84px;
+}
+
+.map-node.visited {
+  opacity: 0.55;
+  border-color: var(--mana);
+  color: var(--text-dim);
+}
+
+.map-node.current {
+  opacity: 1;
+  border-color: var(--mana);
+  color: var(--text);
+}
+
+.map-node.reachable {
+  opacity: 1;
+  border-color: var(--accent);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.map-node.reachable:hover {
+  background: #33291a;
+}
+
+.map-node.locked {
+  opacity: 0.3;
+}
+
+/* --- Training panel (level-up pool spend UI) ----------------------------- */
+
+.training-panel {
+  max-height: 75vh;
+}
+
+.training-hero {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.training-hero:last-child {
+  border-bottom: none;
+}
+
+.training-hero h3 {
+  font-size: 13px;
+  margin: 0 0 6px;
+}
+
+.training-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.training-row .hint {
+  margin: 0;
+  width: 100%;
+}

@@ -10,6 +10,7 @@
 import type { StatKey, TypeId } from '../engine/content';
 import type { EquipmentLoadout } from './equipment';
 import { createEmptyLoadout } from './equipment';
+import type { RunMap } from './map';
 
 /** CLAUDE.md "Roster hard cap = 6, doubling as the bring-6-pick-4 battle sideboard." */
 export const ROSTER_CAP = 6;
@@ -41,6 +42,17 @@ export interface RosterEntry {
    * into combat state as Combatant.grantedTypes by buildCombatState.ts.
    */
   rankTypeGraft: TypeId | null;
+  /**
+   * Snapshot of the hero's HP/mana at the end of its last fight
+   * (docs/run-loop.md "HP/mana persist between map nodes") — null means "at
+   * full," covering fresh recruits and Contract claims without
+   * special-casing them. Written by runProgress.ts's syncRosterVitals after
+   * every map fight/elite/boss node; read by buildCombatState.ts's
+   * placeEntry, clamped to the (possibly higher, post-rank-up) current max
+   * rather than healed by a cap increase.
+   */
+  currentHp: number | null;
+  currentMana: number | null;
 }
 
 export interface RunState {
@@ -53,10 +65,22 @@ export interface RunState {
    * not bought, so they don't touch this field.
    */
   gold: number;
+  /** Owned relic ids (docs/run-loop.md, src/run/relics.ts) — team-wide, stat-only for this pass. */
+  relics: string[];
+  /**
+   * The player's run map (docs/run-loop.md). Null for a RunState that never
+   * gets a map of its own — e.g. the throwaway AI rosters enemyGen.ts builds
+   * per fight, which only ever need `roster`.
+   */
+  map: RunMap | null;
+  /** The node currently occupied; null = map generated but not yet entered (still choosing among map.startNodeIds). */
+  currentNodeId: string | null;
+  /** Resolved node ids, in visit order — drives MapScreen's greyed-out/reachable rendering. */
+  visitedNodeIds: string[];
 }
 
 export function createRunState(levelUpPool = 0, gold = 0): RunState {
-  return { roster: [], levelUpPool, gold };
+  return { roster: [], levelUpPool, gold, relics: [], map: null, currentNodeId: null, visitedNodeIds: [] };
 }
 
 export function createRosterEntry(rosterId: string, heroId: string, startingMoveIds: readonly string[]): RosterEntry {
@@ -69,6 +93,8 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     chosenBranchIds: [],
     rankStatGrants: {},
     rankTypeGraft: null,
+    currentHp: null,
+    currentMana: null,
   };
 }
 

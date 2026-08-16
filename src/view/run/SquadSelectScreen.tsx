@@ -3,22 +3,23 @@ import { heroes } from '../../data/heroes';
 import type { RunState } from '../../run/state';
 import type { Squad } from '../../run/squad';
 import { pickSquad } from '../../run/squad';
-import { GuildHallPanel } from './GuildHallPanel';
 
 interface Props {
   run: RunState;
   onConfirm: (squad: Squad) => void;
-  onRunChange: (next: RunState) => void;
 }
 
 /**
- * Home-base hub: Guild Hall recruitment (src/run/recruitment.ts) followed by
- * bring-6-pick-4 squad selection (docs/combat.md "Bring-6-pick-4
- * sideboard"). Recruit Contracts are the other acquisition path but aren't
- * offered here — they're claimed off a beaten enemy at fight's end
+ * Bring-6-pick-4 squad selection (docs/combat.md "Bring-6-pick-4
+ * sideboard"), shown before every fight/elite/boss map node (docs/run-loop.md)
+ * — team-preview-style, matching CLAUDE.md's VGC framing rather than a
+ * once-per-run pick. Guild Hall recruitment lives exclusively behind `shop`
+ * map nodes now (ShopNodeScreen) — deliberately NOT embedded here, so it
+ * stays a map choice rather than being freely available before every fight.
+ * Recruit Contracts are claimed off a beaten enemy at fight's end
  * (FightScreen), not bought up front.
  */
-export function SquadSelectScreen({ run, onConfirm, onRunChange }: Props) {
+export function SquadSelectScreen({ run, onConfirm }: Props) {
   const [pickedIds, setPickedIds] = useState<string[]>([]);
 
   function toggle(rosterId: string) {
@@ -36,7 +37,6 @@ export function SquadSelectScreen({ run, onConfirm, onRunChange }: Props) {
   return (
     <div className="squad-select">
       <div className="screen-scroll">
-        <GuildHallPanel run={run} onRecruit={onRunChange} />
         <h2>Pick your squad ({pickedIds.length}/4)</h2>
         <p className="hint">First two picks start active; the rest start on the bench.</p>
         <div className="roster-grid">

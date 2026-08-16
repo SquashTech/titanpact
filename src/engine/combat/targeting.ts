@@ -21,6 +21,18 @@ function activeOf(state: CombatState, side: Side): string[] {
 }
 
 /**
+ * A declared target (singleEnemy/singleAlly) is no longer legal by the time
+ * this action comes up in priority/speed order — e.g. two attackers both
+ * declared against the same lone enemy and an earlier-resolving one already
+ * knocked it out. Actions are declared against a pre-round snapshot and
+ * resolved in order, so this is a normal mid-round race, not a bug — callers
+ * (resolveRound.ts) catch this specifically and treat the action as blocked,
+ * distinct from the plain Error thrown when a target was never declared at
+ * all (an actual caller bug the view is supposed to prevent).
+ */
+export class TargetNoLongerValidError extends Error {}
+
+/**
  * Resolves a TargetMode into concrete combatant ids.
  * `declaredTarget` is required for singleEnemy/singleAlly (the player's choice
  * of slot) and ignored for fixed-group modes.
@@ -50,7 +62,7 @@ export function resolveTargets(
     case 'singleEnemy': {
       if (!declaredTarget) throw new Error('singleEnemy move requires a declared target');
       if (!activeOf(state, enemySide).includes(declaredTarget)) {
-        throw new Error(`Declared target ${declaredTarget} is not an active enemy`);
+        throw new TargetNoLongerValidError(`Declared target ${declaredTarget} is not an active enemy`);
       }
       return [declaredTarget];
     }
@@ -58,7 +70,7 @@ export function resolveTargets(
     case 'singleAlly': {
       if (!declaredTarget) throw new Error('singleAlly move requires a declared target');
       if (!activeOf(state, side).includes(declaredTarget)) {
-        throw new Error(`Declared target ${declaredTarget} is not an active ally`);
+        throw new TargetNoLongerValidError(`Declared target ${declaredTarget} is not an active ally`);
       }
       return [declaredTarget];
     }
