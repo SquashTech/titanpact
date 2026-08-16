@@ -229,6 +229,41 @@ body {
   border-top: 2px solid rgba(74, 144, 217, 0.5);
 }
 
+/* Switch-in picker, inside the switch-row of the move-selection action panel
+   (FightScreen.tsx) — the bench heroes' own CombatantCards double as the
+   switch buttons (targetable + onSelectTarget), shrunk via these descendant
+   overrides rather than a CombatantCard prop so the same card markup/logic
+   serves both the full-size active slot and this compact picker. */
+.bench-row {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 6px;
+  position: relative;
+  z-index: 1;
+}
+
+.bench-row .combatant-card {
+  padding: 5px 8px;
+}
+
+.bench-row .combatant-name {
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+
+.bench-row .status-badge-row {
+  margin-bottom: 2px;
+}
+
+.bench-row .bar-track {
+  height: 5px;
+  margin-bottom: 2px;
+}
+
+.bench-row .bar-label {
+  font-size: 8px;
+}
+
 .combatant-card.targetable {
   outline: 2px solid var(--accent);
   cursor: pointer;
@@ -248,6 +283,11 @@ body {
   50% {
     box-shadow: 0 0 0 5px rgba(224, 166, 60, 0.32), 0 2px 10px rgba(0, 0, 0, 0.3);
   }
+}
+
+.combatant-card.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(224, 166, 60, 0.3) inset, 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .combatant-card.fainted {
@@ -451,6 +491,11 @@ body {
 
 .dmg-popup.popup-status {
   color: var(--hp-mid);
+  font-size: 13px;
+}
+
+.dmg-popup.popup-mana {
+  color: var(--mana);
   font-size: 13px;
 }
 
@@ -925,16 +970,6 @@ body {
   font-size: 11px;
   color: var(--text-dim);
   width: 100%;
-}
-
-.switch-button {
-  background: var(--panel-alt);
-  border-color: var(--mana);
-}
-
-.switch-hp {
-  font-size: 10px;
-  color: var(--text-dim);
 }
 
 /* --- Manage Roster screen ------------------------------------------------ */

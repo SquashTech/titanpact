@@ -119,10 +119,14 @@ test('round: a resolved move spends mana and deals damage', () => {
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }];
   const { state: next, events } = resolveRound(state, actions, config);
 
-  assert.strictEqual(next.combatants.a1.currentMana, heroes.cinderKnight.baseStats.manaPool - moves.emberSlash.manaCost);
+  // Spend, then the round-boundary mana regen tick (docs/mana.md) adds mpRegen back on top.
+  const spent = heroes.cinderKnight.baseStats.manaPool - moves.emberSlash.manaCost;
+  const afterRegen = Math.min(heroes.cinderKnight.baseStats.manaPool, spent + heroes.cinderKnight.baseStats.mpRegen);
+  assert.strictEqual(next.combatants.a1.currentMana, afterRegen);
   assert.ok(next.combatants.b1.currentHp < heroes.ironWarden.baseStats.hp);
   assert.ok(events.some((e) => e.type === 'DamageDealt'));
   assert.ok(events.some((e) => e.type === 'HpChanged'));
+  assert.ok(events.some((e) => e.type === 'ManaRegenTicked'));
 });
 
 test('round: higher priority move resolves before a higher-speed move in a lower bracket', () => {
@@ -192,4 +196,29 @@ test('round: bench regen ticks for a damaged benched combatant, clamped at max H
   assert.ok(tick, 'expected a BenchRegenTicked event for b2');
   assert.strictEqual(tick.hpRegen, 2); // clamped: only 2 HP of headroom even though benchHpRegenFlat is 5
   assert.strictEqual(next.combatants.b2.currentHp, maxHp);
+});
+
+test('round: mana regen ticks every round for active AND benched combatants alike, clamped at max mana', () => {
+  const state = twoVTwoFixture(16);
+  const maxMana = heroes.wildOracle.baseStats.manaPool; // b2 is wildOracle, benched below
+  const withBench = {
+    ...state,
+    active: { ...state.active, B: ['b1', null] as [string | null, string | null] },
+    bench: { ...state.bench, B: ['b2'] },
+    combatants: {
+      ...state.combatants,
+      b1: { ...state.combatants.b1, currentMana: state.combatants.b1.currentMana - 20 }, // active, damaged mana pool
+      b2: { ...state.combatants.b2, currentMana: maxMana - 2 }, // benched, near-full
+    },
+  };
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }];
+  const { state: next, events } = resolveRound(withBench, actions, config);
+
+  const activeTick = events.find((e) => e.type === 'ManaRegenTicked' && (e as any).combatantId === 'b1') as any;
+  const benchTick = events.find((e) => e.type === 'ManaRegenTicked' && (e as any).combatantId === 'b2') as any;
+  assert.ok(activeTick, 'expected a ManaRegenTicked event for the active b1, not just the benched b2');
+  assert.strictEqual(activeTick.manaRegen, heroes.ironWarden.baseStats.mpRegen);
+  assert.ok(benchTick, 'expected a ManaRegenTicked event for the benched b2');
+  assert.strictEqual(benchTick.manaRegen, 2); // clamped: only 2 mana of headroom even though wildOracle's mpRegen is higher
+  assert.strictEqual(next.combatants.b2.currentMana, maxMana);
 });

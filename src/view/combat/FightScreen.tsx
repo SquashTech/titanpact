@@ -6,7 +6,7 @@ import { typeChart } from '../../data/typechart';
 import { equipment } from '../../data/equipment';
 import { statuses } from '../../data/statuses';
 import type { CombatState, Side, StatModifiers } from '../../engine/state';
-import { isLockedIn, effectiveTypes, getMaxHp } from '../../engine/state';
+import { isLockedIn, effectiveTypes } from '../../engine/state';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../engine/combat/switching';
 import type { Action } from '../../engine/combat/actions';
@@ -495,24 +495,27 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
                 {playerBench.length > 0 && (
                   <div className="switch-row">
                     <div className="switch-label">{playerLockedIn ? 'Switching disabled (2+ KOs)' : 'Switch in:'}</div>
-                    {!playerLockedIn &&
-                      playerBench.map((benchId) => {
-                        const isSelected = pending[id]?.kind === 'switch' && pending[id]?.benchedCombatantId === benchId;
-                        const benchCombatant = combat.combatants[benchId];
-                        const benchHero = allCombatants[benchCombatant.heroId];
-                        return (
-                          <button
-                            key={benchId}
-                            className={`move-button switch-button${isSelected ? ' selected' : ''}`}
-                            onClick={() => handleSwitchClick(id, benchId)}
-                          >
-                            <span>{benchHero.name}</span>
-                            <span className="switch-hp">
-                              HP {Math.max(0, benchCombatant.currentHp)}/{getMaxHp(benchHero, benchCombatant)}
-                            </span>
-                          </button>
-                        );
-                      })}
+                    {!playerLockedIn && (
+                      <div className="bench-row">
+                        {playerBench.map((benchId) => {
+                          const isSelected = pending[id]?.kind === 'switch' && pending[id]?.benchedCombatantId === benchId;
+                          const benchCombatant = combat.combatants[benchId];
+                          const benchHero = allCombatants[benchCombatant.heroId];
+                          return (
+                            <CombatantCard
+                              key={benchId}
+                              hero={benchHero}
+                              combatant={benchCombatant}
+                              targetable
+                              selected={isSelected}
+                              onSelectTarget={() => handleSwitchClick(id, benchId)}
+                              onInspect={() => setInspecting(benchId)}
+                              popup={popups[benchId]}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

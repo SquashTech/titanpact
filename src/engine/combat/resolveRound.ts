@@ -1,11 +1,11 @@
 // Round resolution — the main orchestrator. Implements the LOCKED turn/round
 // model from docs/combat.md: both sides declare all active combatants'
-// actions, then actions resolve in priority/speed order, then bench regen
-// ticks at the round boundary. Also implements the status system
-// (docs/conditions.md, the 6th engine contract): Daze gates move actions,
-// Bind gates switch actions (switching.ts), Expose feeds the damage pipeline's
-// modifier term, and every status ticks at the round boundary alongside bench
-// regen.
+// actions, then actions resolve in priority/speed order, then bench HP regen
+// and mana regen (active + bench, docs/mana.md) tick at the round boundary.
+// Also implements the status system (docs/conditions.md, the 6th engine
+// contract): Daze gates move actions, Bind gates switch actions
+// (switching.ts), Expose feeds the damage pipeline's modifier term, and every
+// status ticks at the round boundary alongside those regen ticks.
 
 import type { HeroDefinition, MoveDefinition, StatusDefinition } from '../content';
 import type { CombatState, HeroLookup, Side } from '../state';
@@ -15,6 +15,7 @@ import type { Action } from './actions';
 import { orderActions } from './priority';
 import { resolveTargets, TargetNoLongerValidError } from './targeting';
 import { applyVoluntarySwitch, applyBenchHpRegen, SwitchBlockedError } from './switching';
+import { applyManaRegen } from './manaRegen';
 import { resolveStatRatio, rollDamage, type DamageModifier } from '../damage/damagePipeline';
 import type { TypeChart } from '../damage/typeMult';
 import { applyHpDelta } from './faintHandling';
@@ -225,6 +226,10 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   const regen = applyBenchHpRegen(working, round, config.benchHpRegenFlat, maxHpOf);
   working = regen.state;
   events.push(...regen.events);
+
+  const manaRegen = applyManaRegen(working, round, heroes);
+  working = manaRegen.state;
+  events.push(...manaRegen.events);
 
   const statusTicks = tickEndOfRound(working, round, statuses, maxHpOf);
   working = statusTicks.state;

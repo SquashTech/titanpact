@@ -16,6 +16,8 @@ interface Props {
   onSelectTarget?: () => void;
   onInspect?: () => void;
   popup?: Popup | null;
+  /** Marks this card as the currently-committed choice — e.g. the bench hero picked to switch in (FightScreen's switch-row). Purely a visual highlight, independent of `targetable`. */
+  selected?: boolean;
 }
 
 function hpTier(fraction: number): 'hp-high' | 'hp-mid' | 'hp-low' {
@@ -30,7 +32,7 @@ function statusBadgeText(statusId: string, magnitude: number | undefined, durati
   return n !== undefined ? `${statusId} ${n}` : statusId;
 }
 
-export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onInspect, popup }: Props) {
+export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onInspect, popup, selected }: Props) {
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = Math.max(0, combatant.currentHp / maxHp);
@@ -39,6 +41,7 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onI
   const classes = ['combatant-card'];
   if (combatant.fainted) classes.push('fainted');
   if (targetable && !combatant.fainted) classes.push('targetable');
+  if (selected) classes.push('selected');
 
   return (
     <div

@@ -29,6 +29,12 @@ export function applyEventToState(state: CombatState, event: CombatEvent): Comba
         combatants: { ...state.combatants, [event.combatantId]: { ...state.combatants[event.combatantId], currentHp: event.newHp } },
       };
 
+    case 'ManaRegenTicked':
+      return {
+        ...state,
+        combatants: { ...state.combatants, [event.combatantId]: { ...state.combatants[event.combatantId], currentMana: event.newMana } },
+      };
+
     case 'Fainted':
       return {
         ...state,

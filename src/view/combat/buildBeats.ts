@@ -8,6 +8,7 @@
 import type {
   BenchRegenTickedEvent,
   CombatEvent,
+  ManaRegenTickedEvent,
   MoveUsedEvent,
 } from '../../engine/events';
 import type { CombatState, Side } from '../../engine/state';
@@ -209,6 +210,19 @@ export function buildBeats(
           i++;
         }
         push(applied, `${names.join(' and ')} recover HP on the bench`, popups);
+        break;
+      }
+
+      case 'ManaRegenTicked': {
+        const applied: CombatEvent[] = [];
+        const popups: BeatPopup[] = [];
+        while (events[i]?.type === 'ManaRegenTicked') {
+          const me = events[i] as ManaRegenTickedEvent;
+          applied.push(me);
+          popups.push({ combatantId: me.combatantId, text: `+${me.manaRegen}`, className: 'popup-mana' });
+          i++;
+        }
+        push(applied, 'Mana recovers', popups);
         break;
       }
 

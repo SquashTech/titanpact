@@ -87,6 +87,8 @@ function formatEvent(e: CombatEvent): string | null {
       return `    ${name(e.combatantId)} fainted! (side ${e.side} KOs: ${e.koCount})`;
     case 'BenchRegenTicked':
       return `  ${name(e.combatantId)} regens ${e.hpRegen} HP on the bench (${e.newHp}/${e.maxHp})`;
+    case 'ManaRegenTicked':
+      return `  ${name(e.combatantId)} regens ${e.manaRegen} MP (${e.newMana}/${e.maxMana})`;
     default:
       return null; // TurnStarted / MoveDeclared / HpChanged / ManaChanged / SwitchedIn / RoundEnded omitted for readability
   }

@@ -140,10 +140,11 @@ export interface BenchRegenTickedEvent extends BaseEvent {
   newHp: number;
   maxHp: number;
   /**
-   * Always 0 in this engine slice. Mana bench regen cadence is now LOCKED
-   * (docs/mana.md "Resolved": every round, active + bench) but the regen tick
-   * itself isn't implemented yet (see switching.ts applyBenchHpRegen). Field
-   * kept ready for when that lands.
+   * Always 0 — vestigial. Mana regen (docs/mana.md "Resolved": every round,
+   * active + bench) turned out NOT to be bench-only like HP regen is, so it
+   * couldn't reuse this bench-scoped event; it's its own tick emitting
+   * ManaRegenTicked instead (engine/combat/manaRegen.ts). Field kept only for
+   * event-shape stability.
    */
   manaRegen: number;
 }
@@ -152,6 +153,20 @@ export interface ManaChangedEvent extends BaseEvent {
   type: 'ManaChanged';
   combatantId: string;
   previousMana: number;
+  newMana: number;
+  maxMana: number;
+}
+
+/**
+ * Mana regen at the round boundary (engine/combat/manaRegen.ts), self-
+ * contained like BenchRegenTicked rather than paired with a generic
+ * ManaChanged — applies to active AND benched combatants alike (docs/mana.md
+ * "Resolved": every round, active + bench), unlike bench-only HP regen.
+ */
+export interface ManaRegenTickedEvent extends BaseEvent {
+  type: 'ManaRegenTicked';
+  combatantId: string;
+  manaRegen: number;
   newMana: number;
   maxMana: number;
 }
@@ -177,4 +192,5 @@ export type CombatEvent =
   | SwitchedInEvent
   | BenchRegenTickedEvent
   | ManaChangedEvent
+  | ManaRegenTickedEvent
   | RoundEndedEvent;

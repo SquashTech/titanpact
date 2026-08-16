@@ -46,11 +46,12 @@ Treat this as a hard constraint when tuning mana-node values in `/data`.
   and benched combatants — mana regen is one more reason switching is productive,
   same as HP.
 - **Starting state: full.** Every hero starts a fight with a full mana pool.
-- **NOT YET IMPLEMENTED:** the engine currently has no mana-regen tick at all — only
-  `manaCost` spending on move use (`resolveRound.ts`) and the bench **HP** regen path
-  (`switching.ts applyBenchHpRegen`). Wiring the regen decision above into the engine
-  (a `ManaChanged`-emitting regen step, mirroring `applyBenchHpRegen`) is real
-  engine work, not done as part of locking this decision — flagged as follow-up.
+- **Implemented.** The regen tick above is wired into the engine
+  (`engine/combat/manaRegen.ts`, called from `resolveRound.ts` at the round
+  boundary alongside bench HP regen), emitting a `ManaRegenTicked` event per
+  combatant whose mana changed. It walks every non-fainted combatant (active
+  and benched) rather than reusing the bench-only `applyBenchHpRegen` path,
+  since mana regen — unlike HP regen — isn't bench-exclusive.
 
 ## What is still OPEN (do not resolve unilaterally)
 
