@@ -147,4 +147,13 @@ export interface HeroDefinition {
   baseStats: StatLine;
   /** Move ids currently unlocked for this hero instance. */
   moveIds: readonly string[];
+  /**
+   * Whether this hero is offered in the start-of-run draft (src/run/draft.ts,
+   * DraftScreen). `true` = starter, drawable at run start; `false` =
+   * recruit-only — obtainable exclusively in-run via Guild Hall
+   * (src/data/recruitment.ts) or Recruit Contract (docs/progression.md "The
+   * raise-vs-recruit axis"). This is the single source of truth for the
+   * split — see docs/types-and-heroes.md "Starters vs. recruit-only heroes".
+   */
+  starter: boolean;
 }

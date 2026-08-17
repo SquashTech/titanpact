@@ -10,6 +10,12 @@
 
 import type { HeroDefinition } from '../engine/content';
 
+// `starter: false` on both entries below is never actually read — enemies live
+// in their own pool, outside src/data/heroes.ts, so nothing iterates them
+// looking for draft/Guild-Hall candidates in the first place (isRecruitable
+// already excludes this whole file by pool membership, per the header above).
+// It's set for type-shape compatibility with HeroDefinition, and because it's
+// the semantically correct value anyway: a Goblin is never a draftable starter.
 export const enemies: Record<string, HeroDefinition> = {
   goblinGrunt: {
     id: 'goblinGrunt',
@@ -17,6 +23,7 @@ export const enemies: Record<string, HeroDefinition> = {
     types: ['Beast'],
     baseStats: { hp: 50, attack: 35, defense: 25, intelligence: 15, wisdom: 20, speed: 40, manaPool: 25, mpRegen: 3 },
     moveIds: ['fangRush', 'savageMaul'],
+    starter: false,
   },
   goblinSkulker: {
     id: 'goblinSkulker',
@@ -24,5 +31,6 @@ export const enemies: Record<string, HeroDefinition> = {
     types: ['Beast'],
     baseStats: { hp: 45, attack: 30, defense: 20, intelligence: 15, wisdom: 20, speed: 45, manaPool: 25, mpRegen: 3 },
     moveIds: ['fangRush', 'rendingClaw'],
+    starter: false,
   },
 };

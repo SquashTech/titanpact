@@ -151,6 +151,13 @@ an opaque level curve.
 
 ## The raise-vs-recruit axis (LOCKED design intent)
 
+**Starters vs. recruit-only (`types-and-heroes.md` "Starters vs. recruit-only
+heroes"):** `HeroDefinition.starter` gates whether a hero is ever offered in the
+start-of-run draft. `starter: false` heroes are recruit-only — the raise-vs-recruit
+axis below is *how* you get them, this flag is *whether* you have to. Both dimensions
+apply per hero independently (a recruit-only hero can still be raised via Guild Hall
+or recruited via Contract, same as a starter you didn't happen to draft).
+
 Two sources of heroes, with intentionally different value curves:
 
 - **Guild Hall heroes (raise).** Carry **runway value** — upside you unlock by

@@ -1874,6 +1874,10 @@ body {
   color: var(--ally);
 }
 
+.roster-card-badge.badge-recruit {
+  color: var(--text-dim);
+}
+
 /* --- Guild Hall panel ---------------------------------------------------- */
 
 .guild-hall {

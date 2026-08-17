@@ -99,6 +99,34 @@ vocabulary) that Blight depended on is now implemented (`src/engine/combat/statu
 - Switching/bench/lock-in mechanics are in `combat.md`; how heroes are acquired and
   developed is in `progression.md`.
 
+### Starters vs. recruit-only heroes
+
+Every hero carries a `starter: boolean` (`HeroDefinition.starter`, `src/data/heroes.ts`)
+— the single source of truth for which of the two acquisition paths a hero belongs to:
+
+- **`starter: true`** — offered as a candidate in the start-of-run draft
+  (`src/run/draft.ts`, `DraftScreen`: pick 2 of 4 random starter candidates).
+- **`starter: false`** — **recruit-only**. Never appears in the draft; exists in the
+  game solely as a Guild Hall offer or a Recruit Contract catch (`progression.md`
+  "The raise-vs-recruit axis"). `src/data/recruitment.ts`'s Guild Hall offer pool is
+  *derived* from `starter: false` heroes, not hand-maintained, so the two pools can
+  never drift apart.
+
+A hero is in exactly one pool, never both, and never neither. This split is
+independent of type coverage — a type can have both a starter and a recruit-only
+hero (Iron currently does: Valor starts, Iron Warden is recruit-only), and recruit-only
+status says nothing about a hero's power level, just where you first meet them.
+
+**Current fixture state (2026-08-17):** 14 starters give **one starter per type**
+(every type except Ancient, which is intentionally near-undraftable per "Ancient is
+special" above) — Cinder Knight (Fire), Tidecaller (Water), The Abominable (Frost),
+Storm Ranger (Storm), Crag (Stone), Wild Oracle (Nature), Sun Priest (Light), Shadow
+Monk (Shadow), Runescribe (Arcane), Mindweaver (Mind), Revenant (Spirit), Valor
+(Iron), Steam Colossus (Forge), Pack Alpha (Beast). Iron Warden is the roster's first
+recruit-only hero — kept in the game, pulled out of the draft so Iron's starter slot
+is Valor instead. Expect the recruit-only list to grow as more of the authored
+53-hero roster is added; this is the seed of that split, not the finished shape of it.
+
 ---
 
 ## Hero authoring rules (LOCKED)

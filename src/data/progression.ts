@@ -1,7 +1,8 @@
 // ⚠️ TEST FIXTURE CONTENT — a level-up move pool and Evolution paths for the
-// 12 fixture heroes, enough to exercise both consequences of leveling end to
-// end (docs/leveling-and-ranks.md: a level-up either "offers a random move"
-// or, at EVOLUTION_LEVEL, surfaces the Evolution choice instead). Each
+// fixture roster's starter heroes, enough to exercise both consequences of
+// leveling end to end (docs/leveling-and-ranks.md: a level-up either "offers
+// a random move" or, at EVOLUTION_LEVEL, surfaces the Evolution choice
+// instead). Each
 // hero's starting kit (src/data/heroes.ts) is deliberately small — a
 // low-power main-type move plus 1-2 support moves — so the moveTiers pool
 // below is where the rest of a hero's thematic movepool lives, offered
@@ -53,6 +54,10 @@ export const progressionTable: ProgressionTable = {
     mindweaver: ['exposeWeakness', 'quickJab', 'corruptingTouch', 'stunningBlow'],
     forgewright: ['ironFist', 'shrapnelBlast', 'quickJab', 'stunningBlow'],
     packAlpha: ['rendingClaw', 'quickJab', 'fortify', 'weaken'],
+    // --- Stone/Spirit starters + the new Iron starter (2026-08-17) ---
+    valor: ['quickJab', 'shrapnelBlast', 'stunningBlow', 'rally'],
+    revenant: ['specterHowl', 'purify', 'weaken', 'curseMind'],
+    crag: ['stoneQuake', 'shrapnelBlast', 'weaken', 'rally'],
   },
   evolutions: {
     cinderKnight: [
@@ -483,6 +488,116 @@ export const progressionTable: ProgressionTable = {
             statGrants: { speed: 10, mpRegen: 5 },
             unlocksMoveIds: [],
             typeGraft: 'Spirit',
+          },
+        ],
+      },
+    ],
+
+    // --- Stone/Spirit starters + the new Iron starter (2026-08-17) ---
+    valor: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'valor-offensive',
+            heroId: 'valor',
+            kind: 'offensive',
+            name: 'Crusader',
+            description: 'All-out armored assault; raw Attack.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'valor-defensive',
+            heroId: 'valor',
+            kind: 'defensive',
+            name: 'Bastion',
+            description: 'Shield-wall anchor; protect partner, max Defense.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Stone',
+          },
+          {
+            id: 'valor-utility',
+            heroId: 'valor',
+            kind: 'utility',
+            name: 'Dawnblade',
+            description: 'Righteous support; cleanse and speed control.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Light',
+          },
+        ],
+      },
+    ],
+    revenant: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'revenant-offensive',
+            heroId: 'revenant',
+            kind: 'offensive',
+            name: 'Wraithblade',
+            description: 'Draining spectral assault; raw Intelligence.',
+            statGrants: { intelligence: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'revenant-defensive',
+            heroId: 'revenant',
+            kind: 'defensive',
+            name: 'Hollow Warden',
+            description: 'Undying bulwark; bleeds momentum from the living.',
+            statGrants: { defense: 10, wisdom: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Shadow',
+          },
+          {
+            id: 'revenant-utility',
+            heroId: 'revenant',
+            kind: 'utility',
+            name: 'Soulbinder',
+            description: 'Control and setup; status steering from beyond.',
+            statGrants: { manaPool: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Mind',
+          },
+        ],
+      },
+    ],
+    crag: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'crag-offensive',
+            heroId: 'crag',
+            kind: 'offensive',
+            name: 'Stonebreaker',
+            description: 'Rock-fisted heavy hitter; raw Attack.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'crag-defensive',
+            heroId: 'crag',
+            kind: 'defensive',
+            name: 'Mountainheart',
+            description: 'Immovable armored mass; max bulk.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Iron',
+          },
+          {
+            id: 'crag-utility',
+            heroId: 'crag',
+            kind: 'utility',
+            name: 'Warden of Roots',
+            description: 'Overgrown guardian; sustain and support.',
+            statGrants: { wisdom: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Nature',
           },
         ],
       },

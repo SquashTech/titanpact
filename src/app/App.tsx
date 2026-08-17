@@ -167,7 +167,10 @@ export function App() {
 
   /** "Start a Run" from the title screen opens the draft (DraftScreen) rather than building the run directly — the starting pair isn't chosen yet. */
   function handleStartNewRun() {
-    const optionIds = generateStarterOptions(Math.floor(Math.random() * 2 ** 31), Object.keys(heroes));
+    const starterHeroIds = Object.values(heroes)
+      .filter((hero) => hero.starter)
+      .map((hero) => hero.id);
+    const optionIds = generateStarterOptions(Math.floor(Math.random() * 2 ** 31), starterHeroIds);
     setScreen({ kind: 'draft', optionIds });
   }
 

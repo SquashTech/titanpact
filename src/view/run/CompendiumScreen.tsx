@@ -40,6 +40,9 @@ function CompendiumHeroCard({
 }) {
   return (
     <div className="roster-mgmt-card" style={{ borderLeftColor: getTypeColor(hero.types[0]) }}>
+      <span className={`roster-card-badge ${hero.starter ? 'badge-ally' : 'badge-recruit'}`}>
+        {hero.starter ? 'STARTER' : 'RECRUIT ONLY'}
+      </span>
       <div className="roster-mgmt-head">
         <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
         <div className="roster-mgmt-name">{hero.name}</div>

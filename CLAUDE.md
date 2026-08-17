@@ -60,6 +60,11 @@ don't silently override it.
   identifiable name** (e.g. Cinder Knight's Explosive / Ironclad / Thunderblaze).
   Options differ *in kind* (defensive / offensive / utility), are **permanent within a
   run**, and gate the movepool.
+- **Starters vs. recruit-only:** every hero is flagged `starter: true/false`
+  (`HeroDefinition.starter`, `src/data/heroes.ts`). Starters are offered in the
+  start-of-run draft; `starter: false` heroes exist only in the game, obtained
+  in-run via Recruit Contract or Guild Hall. A hero is in exactly one pool, never
+  both (`docs/types-and-heroes.md` "Starters vs. recruit-only heroes").
 - **Recruitment:** Recruit Contracts (claim a beaten hero; arrives with branches partially
   locked) or Guild Halls (spend gold; choose from a pool; arrives underleveled and fully
   customizable). Guild heroes have decaying runway value; contract heroes have flat value.
