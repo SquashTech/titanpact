@@ -11,7 +11,7 @@
 // authored for a subset of the roster only — see the SCOPE NOTE there. This
 // module only implements the generic mechanism.
 
-import type { StatKey, TypeId } from '../engine/content';
+import type { HeroDefinition, StatKey, TypeId } from '../engine/content';
 import { isValidFlatStatGrant } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
 import type { RosterEntry, RunState } from './state';
@@ -136,6 +136,20 @@ export function availableEvolution(table: ProgressionTable, entry: RosterEntry):
   const node = nodes[entry.chosenPathIds.length];
   if (!node) return null;
   return entry.level >= node.level ? node : null;
+}
+
+/**
+ * A roster entry's current types for display purposes outside combat:
+ * innate hero types plus the current type-graft grant, if any (mirrors
+ * engine/state.ts effectiveTypes, but works from a RosterEntry directly
+ * since there's no Combatant to read from until a fight is actually built).
+ * UI screens that show a roster entry's types (previews, roster management,
+ * squad select, training) should call this instead of reading
+ * `hero.types` directly, or a grafted secondary type silently fails to
+ * appear anywhere outside combat.
+ */
+export function rosterEntryTypes(hero: HeroDefinition, entry: RosterEntry): readonly TypeId[] {
+  return entry.evolutionTypeGraft ? [...hero.types, entry.evolutionTypeGraft] : hero.types;
 }
 
 /** The Evolution path(s) a roster entry has already chosen, resolved back to their full data (name/description/grants) — for read-only display (stat blocks) after the choice was made, as opposed to availableEvolution's still-being-offered node. */

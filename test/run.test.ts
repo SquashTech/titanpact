@@ -21,6 +21,7 @@ import {
   grantLevelUpMove,
   availableEvolution,
   chooseEvolutionPath,
+  rosterEntryTypes,
   EVOLUTION_LEVEL,
   ProgressionError,
 } from '../src/run/progression';
@@ -233,6 +234,9 @@ test('progression: a type-graft path grants a second type without touching the i
     { side: 'B', squad: aiSquad, roster: aiRun.roster },
   ]);
   assert.deepStrictEqual(state.combatants['A:cinderKnight'].grantedTypes, ['Iron']);
+  // Out-of-combat screens (roster mgmt, squad select, training) read the
+  // graft off the RosterEntry directly, with no Combatant built yet.
+  assert.deepStrictEqual(rosterEntryTypes(heroes.cinderKnight, next.roster[0]), ['Fire', 'Iron']);
 });
 
 test('progression: a type-graft path is rejected for an already-dual-typed hero', () => {

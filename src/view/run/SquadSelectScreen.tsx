@@ -6,6 +6,7 @@ import type { HeroDefinition } from '../../engine/content';
 import type { RunState, RosterEntry } from '../../run/state';
 import type { Squad } from '../../run/squad';
 import { pickSquad } from '../../run/squad';
+import { rosterEntryTypes } from '../../run/progression';
 import type { Encounter } from '../../run/enemyGen';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { getTypeColor } from '../combat/typeColors';
@@ -87,7 +88,7 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
                     {hero.name} <span className="hint">Lv {entry.level}</span>
                   </div>
                   <div className="roster-card-types">
-                    {hero.types.map((t) => (
+                    {rosterEntryTypes(hero, entry).map((t) => (
                       <TypeBadge key={t} type={t} />
                     ))}
                   </div>
@@ -133,7 +134,7 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
                     {hero.name} <span className="hint">Lv {entry.level}</span>
                   </div>
                   <div className="roster-card-types">
-                    {hero.types.map((t) => (
+                    {rosterEntryTypes(hero, entry).map((t) => (
                       <TypeBadge key={t} type={t} />
                     ))}
                   </div>

@@ -5,6 +5,7 @@ import type { HeroDefinition } from '../../engine/content';
 import type { RunState, RosterEntry } from '../../run/state';
 import type { EquipmentSlot } from '../../run/equipment';
 import { equipFromInventory, unequipToInventory, RunProgressError } from '../../run/runProgress';
+import { rosterEntryTypes } from '../../run/progression';
 import { getTypeColor } from '../combat/typeColors';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -115,7 +116,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
                       {hero.name} <span className="hint">Lv {entry.level}</span>
                     </div>
                     <div className="roster-card-types">
-                      {hero.types.map((t) => (
+                      {rosterEntryTypes(hero, entry).map((t) => (
                         <TypeBadge key={t} type={t} />
                       ))}
                     </div>

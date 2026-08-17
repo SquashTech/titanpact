@@ -9,15 +9,15 @@ import {
   grantLevelUpMove,
   availableEvolution,
   chooseEvolutionPath,
+  rosterEntryTypes,
   MOVE_CAP,
   ProgressionError,
 } from '../../run/progression';
 import { getTypeColor } from '../combat/typeColors';
-import { MoveTile, MoveInfoPanel } from '../shared/MoveTile';
+import { MoveTile, MoveInfoPanel, CategoryBadge } from '../shared/MoveTile';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
-import type { StatKey } from '../../engine/content';
+import { EvolutionScreen } from './EvolutionScreen';
 
 interface Props {
   run: RunState;
@@ -46,10 +46,14 @@ interface MoveOffer {
  */
 export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
   const [offer, setOffer] = useState<MoveOffer | null>(null);
+  /** The move offer's currently-highlighted replacement target — a click selects it, but nothing is applied until Confirm. */
+  const [selectedReplaceId, setSelectedReplaceId] = useState<string | null>(null);
   const [lastMessage, setLastMessage] = useState<string | null>(null);
   /** The move currently shown in the fixed info panel, and why it's there. */
   const [viewedMoveId, setViewedMoveId] = useState<string | null>(null);
   const [viewedLabel, setViewedLabel] = useState<string>('');
+  /** Which roster entry, if any, has taken over the screen with its full-screen Evolution choice (see EvolutionScreen). */
+  const [evolvingRosterId, setEvolvingRosterId] = useState<string | null>(null);
 
   function showMoveInfo(moveId: string, label: string) {
     setViewedMoveId(moveId);
@@ -75,14 +79,13 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
 
     // Evolution replaces the move offer, not adds to it
     // (docs/leveling-and-ranks.md "the hero is not offered a new move" at
-    // Evolution) — if this level-up left an Evolution pending (whether it
-    // just became available, or one was already sitting unresolved), skip
-    // the move roll entirely; the inline path-choice UI below handles it.
+    // Evolution) — if this level-up left an Evolution pending, skip the move
+    // roll entirely and hand off to the full-screen EvolutionScreen instead.
     const nextEntry = next.roster.find((r) => r.rosterId === rosterId)!;
     if (availableEvolution(progressionTable, nextEntry)) {
       onRunChange(next);
-      setLastMessage(`${hero.name} reached level ${newLevel} and is ready to evolve!`);
       setViewedMoveId(null);
+      setEvolvingRosterId(rosterId);
       return;
     }
 
@@ -101,7 +104,8 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     } else {
       onRunChange(next);
       setOffer({ rosterId, moveId });
-      showMoveInfo(moveId, `${hero.name} — move offered`);
+      setSelectedReplaceId(null);
+      showMoveInfo(moveId, `${hero.name} — new move offered`);
     }
   }
 
@@ -117,10 +121,34 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     }
     setViewedMoveId(null);
     setOffer(null);
+    setSelectedReplaceId(null);
+  }
+
+  function handleChooseEvolution(rosterId: string, pathId: string) {
+    const entry = run.roster.find((r) => r.rosterId === rosterId);
+    const hero = entry ? heroes[entry.heroId] : null;
+    const node = entry ? availableEvolution(progressionTable, entry) : null;
+    const path = node?.paths.find((p) => p.id === pathId);
+    onRunChange(chooseEvolutionPath(run, progressionTable, heroes, rosterId, pathId));
+    if (hero && path) setLastMessage(`${hero.name} evolved into ${path.name}!`);
+    setEvolvingRosterId(null);
   }
 
   const offerEntry = offer ? (run.roster.find((r) => r.rosterId === offer.rosterId) ?? null) : null;
   const viewedMove = viewedMoveId ? moves[viewedMoveId] : null;
+
+  const evolvingEntry = evolvingRosterId ? (run.roster.find((r) => r.rosterId === evolvingRosterId) ?? null) : null;
+  const evolvingNode = evolvingEntry ? availableEvolution(progressionTable, evolvingEntry) : null;
+  if (evolvingEntry && evolvingNode) {
+    return (
+      <EvolutionScreen
+        hero={heroes[evolvingEntry.heroId]}
+        entry={evolvingEntry}
+        node={evolvingNode}
+        onChoose={(pathId) => handleChooseEvolution(evolvingEntry.rosterId, pathId)}
+      />
+    );
+  }
 
   return (
     <div className="node-screen">
@@ -139,17 +167,39 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
               {heroes[offerEntry.heroId].name} is already at {MOVE_CAP} moves — pick one to replace, or decline.
             </h3>
             <div className="roster-grid">
-              {offerEntry.unlockedMoveIds.map((moveId) => (
-                <button key={moveId} className="roster-card" onClick={() => resolveOffer(moveId)}>
-                  <div className="roster-card-name">Replace {moves[moveId].name}</div>
-                  <div className="roster-card-types">
-                    <MoveTile move={moves[moveId]} />
-                  </div>
-                </button>
-              ))}
-              <button className="roster-card" onClick={() => resolveOffer(null)}>
-                <div className="roster-card-name">Decline — keep current moves</div>
+              {offerEntry.unlockedMoveIds.map((moveId) => {
+                const move = moves[moveId];
+                const isSelected = selectedReplaceId === moveId;
+                return (
+                  <button
+                    key={moveId}
+                    className={`roster-card${isSelected ? ' picked' : ''}`}
+                    style={{ borderLeftColor: getTypeColor(move.type) }}
+                    onMouseEnter={() => showMoveInfo(moveId, `${heroes[offerEntry.heroId].name} — tap to replace`)}
+                    onClick={() => {
+                      setSelectedReplaceId(moveId);
+                      showMoveInfo(moveId, `${heroes[offerEntry.heroId].name} — tap to replace`);
+                    }}
+                  >
+                    <div className="roster-card-name">{move.name}</div>
+                    <div className="roster-card-types">
+                      <TypeBadge type={move.type} />
+                      <CategoryBadge category={move.category} />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="reward-panel-actions">
+              <button className="secondary-button" onClick={() => resolveOffer(null)}>
+                Decline — keep current moves
               </button>
+              <button className="resolve-button" disabled={!selectedReplaceId} onClick={() => resolveOffer(selectedReplaceId)}>
+                {selectedReplaceId ? `Confirm — Learn ${moves[offer.moveId].name}` : 'Pick a move to replace'}
+              </button>
+            </div>
+            <div className="reward-panel-offer-move">
+              <MoveInfoPanel move={moves[offer.moveId]} label="New move offered" />
             </div>
           </div>
         ) : (
@@ -157,20 +207,26 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
             {run.roster.map((entry) => {
               const hero = heroes[entry.heroId];
               const node = availableEvolution(progressionTable, entry);
-              const canLevelUp = run.levelUpPool >= 1;
+              // A pending Evolution takes priority over spending another
+              // point — tapping the card opens EvolutionScreen instead of
+              // leveling up again, so the choice can't be buried under a
+              // stack of unresolved levels.
+              const canLevelUp = run.levelUpPool >= 1 && !node;
+              const canAct = canLevelUp || !!node;
               return (
                 <div
                   key={entry.rosterId}
-                  className={`training-hero${canLevelUp ? '' : ' training-hero-disabled'}`}
+                  className={`training-hero${canAct ? '' : ' training-hero-disabled'}${node ? ' training-hero-evolving' : ''}`}
                   style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
                   role="button"
-                  tabIndex={canLevelUp ? 0 : -1}
-                  aria-disabled={!canLevelUp}
-                  onClick={() => handleLevelUp(entry.rosterId)}
+                  tabIndex={canAct ? 0 : -1}
+                  aria-disabled={!canAct}
+                  onClick={() => (node ? setEvolvingRosterId(entry.rosterId) : handleLevelUp(entry.rosterId))}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      handleLevelUp(entry.rosterId);
+                      if (node) setEvolvingRosterId(entry.rosterId);
+                      else handleLevelUp(entry.rosterId);
                     }
                   }}
                 >
@@ -181,10 +237,12 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
                         {hero.name} — Lv {entry.level}
                       </h3>
                     </div>
-                    <span className="training-hero-cta">{canLevelUp ? 'Tap to level up' : 'No points'}</span>
+                    <span className="training-hero-cta">
+                      {node ? '⚡ Ready to evolve!' : canLevelUp ? 'Tap to level up' : 'No points'}
+                    </span>
                   </div>
                   <div className="roster-card-types">
-                    {hero.types.map((t) => (
+                    {rosterEntryTypes(hero, entry).map((t) => (
                       <TypeBadge key={t} type={t} />
                     ))}
                   </div>
@@ -195,54 +253,23 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
                           key={moveId}
                           move={moves[moveId]}
                           selected={viewedMoveId === moveId}
-                          onSelect={() => showMoveInfo(moveId, `${hero.name}`)}
+                          onHover={() => showMoveInfo(moveId, `${hero.name}`)}
+                          onClick={() => showMoveInfo(moveId, `${hero.name}`)}
                         />
                       ) : null
                     )}
                   </div>
-                  {node && (
-                    <div className="evolution-choice" onClick={(e) => e.stopPropagation()}>
-                      <span className="hint">Ready to evolve — choose a path:</span>
-                      <div className="evolution-path-list">
-                        {node.paths.map((path) => {
-                          const statEntries = Object.entries(path.statGrants).filter(([, amount]) => !!amount) as [StatKey, number][];
-                          return (
-                            <button
-                              key={path.id}
-                              className={`evolution-path-button evolution-${path.kind}`}
-                              onClick={() => onRunChange(chooseEvolutionPath(run, progressionTable, heroes, entry.rosterId, path.id))}
-                            >
-                              <div className="evolution-path-head">
-                                <span className="evolution-path-name">{path.name}</span>
-                                <span className="evolution-path-kind">{path.kind}</span>
-                              </div>
-                              {path.description && <p className="evolution-path-description">{path.description}</p>}
-                              <div className="evolution-path-grants">
-                                {statEntries.map(([stat, amount]) => (
-                                  <span key={stat} className="evolution-path-grant-chip">
-                                    {STAT_ICONS[stat]} {STAT_LABELS[stat]} +{amount}
-                                  </span>
-                                ))}
-                                {path.typeGraft && (
-                                  <span className="evolution-path-grant-chip evolution-path-typegraft">
-                                    <TypeBadge type={path.typeGraft} /> secondary type
-                                  </span>
-                                )}
-                                {!path.typeGraft && <span className="evolution-path-grant-chip evolution-path-mono">stays mono {hero.types[0]}</span>}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
                 </div>
               );
             })}
           </div>
         )}
       </div>
-      <button className="resolve-button" disabled={run.levelUpPool > 0 || !!offer} onClick={onDone}>
+      <button
+        className="resolve-button"
+        disabled={run.levelUpPool > 0 || !!offer || run.roster.some((entry) => !!availableEvolution(progressionTable, entry))}
+        onClick={onDone}
+      >
         Continue
       </button>
     </div>

@@ -1977,6 +1977,48 @@ body {
   margin-bottom: 0;
 }
 
+/* Move-replace offer (LevelUpScreen): each existing move is its own tappable
+   roster-card (name + type/category), matching the select-then-highlight
+   pattern NodeRewardScreen already uses for equipment ("picked" modifier) —
+   picking one only highlights it, the Confirm button below is what actually
+   locks the replacement in. */
+.reward-panel-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.secondary-button {
+  width: 100%;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  padding: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondary-button:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+/* Permanent readout of the move being offered — unlike the fixed panel up
+   top (which follows whatever the player is currently hovering/selecting
+   among the *existing* moves), this one never changes while the offer is
+   open, so the player can always see what they'd be learning. */
+.reward-panel-offer-move {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.reward-panel-offer-move .move-info-panel {
+  margin-bottom: 0;
+}
+
 /* --- Map screen ----------------------------------------------------------- */
 
 .map-screen {
@@ -2150,12 +2192,12 @@ body {
 .training-hero-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 6px;
+  margin-bottom: 12px;
 }
 
 .training-hero {
-  padding: 10px 10px 10px 8px;
+  padding: 7px 10px 7px 8px;
   margin-bottom: 0;
   background: var(--panel);
   border: 1px solid var(--border);
@@ -2180,6 +2222,18 @@ body {
   border-color: var(--border);
   transform: none;
   box-shadow: none;
+}
+
+/* A pending Evolution outranks "no points left" — the card stays fully
+   interactive (opens EvolutionScreen) and gets its own glow so it doesn't
+   read as just another disabled row. */
+.training-hero-evolving {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 3px 10px rgba(224, 166, 60, 0.25);
+}
+
+.training-hero-evolving:hover {
+  box-shadow: 0 0 0 1px var(--accent), 0 4px 14px rgba(224, 166, 60, 0.4);
 }
 
 .training-hero h3 {
@@ -2239,7 +2293,7 @@ body {
   flex-direction: column;
   justify-content: center;
   gap: 3px;
-  min-height: 108px;
+  min-height: 82px;
   background: var(--panel-alt);
   border: 1px solid var(--accent);
   border-radius: 8px;
@@ -2260,10 +2314,18 @@ body {
   color: var(--text-dim);
 }
 
+/* Name/type/category and the Power/heal/mana-cost numbers share one row
+   (rather than stacking as two) so the panel stays short enough that a full
+   6-hero roster never pushes LevelUpScreen into scrolling. Power/heal and
+   mana cost are still the numbers a player actually decides on, so they stay
+   visually blown up relative to the name (see CLAUDE.md "Mana cost is the
+   primary balance lever") — just inline instead of on their own line. */
 .move-info-head {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
+  row-gap: 2px;
 }
 
 .move-info-name {
@@ -2271,20 +2333,13 @@ body {
   font-weight: 700;
 }
 
-/* Power/heal and mana cost are the numbers a player actually decides on —
-   pulled out of the meta text line and blown up so they read at a glance
-   instead of fading into dim 11px text (see CLAUDE.md "Mana cost is the
-   primary balance lever"). */
-.move-info-stats {
-  display: flex;
+.move-stat {
+  display: inline-flex;
   align-items: baseline;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 2px 0;
 }
 
 .move-stat strong {
-  font-size: 22px;
+  font-size: 17px;
   font-weight: 800;
   margin-right: 3px;
 }
@@ -2456,4 +2511,111 @@ body {
 
 .evolution-path-button.evolution-utility {
   border-left-color: var(--hp-high);
+}
+
+/* Selecting a path (here, or on the full-screen EvolutionScreen below) only
+   highlights it — same select-then-confirm convention as the move-replace
+   roster-card ("picked") — a separate Confirm button is what actually
+   spends the choice. */
+.evolution-path-button.picked {
+  border-color: var(--accent);
+  background: #33291a;
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* --- Evolution screen (full-screen takeover) -----------------------------
+   Pulled out of LevelUpScreen's hero list into its own screen (EvolutionScreen)
+   so a permanent, exciting choice reads as a moment rather than one more row
+   in a list — and so the list itself never grows tall enough to scroll on a
+   full 6-hero roster. */
+
+.evolution-banner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 28px 16px 20px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(224, 166, 60, 0.14), transparent 70%);
+}
+
+.evolution-banner-glow {
+  position: absolute;
+  top: -40%;
+  left: 50%;
+  width: 260px;
+  height: 260px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(224, 166, 60, 0.35), transparent 65%);
+  animation: evolution-glow-pulse 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes evolution-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: translateX(-50%) scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.05);
+  }
+}
+
+.evolution-banner-portrait {
+  position: relative;
+  display: block;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 10px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 14px rgba(224, 166, 60, 0.55));
+}
+
+.evolution-banner-eyebrow {
+  position: relative;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.evolution-banner-title {
+  position: relative;
+  font-size: 19px;
+  margin: 0 0 6px;
+}
+
+.evolution-banner-sub {
+  position: relative;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin: 0;
+  max-width: 300px;
+}
+
+.evolution-path-list-big {
+  gap: 10px;
+}
+
+.evolution-path-list-big .evolution-path-button {
+  padding: 12px 14px;
+  font-size: 13px;
+  gap: 6px;
+}
+
+.evolution-path-list-big .evolution-path-name {
+  font-size: 15px;
+}
+
+.evolution-path-list-big .evolution-path-description {
+  font-size: 12px;
 }

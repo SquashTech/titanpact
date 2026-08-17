@@ -24,18 +24,34 @@ export function CategoryBadge({ category }: { category: MoveDefinition['category
  * caller's fixed MoveInfoPanel instead of popping a tooltip next to the
  * cursor, so the text can never hang off a screen edge on this portrait
  * mobile layout.
+ *
+ * `onHover` and `onClick` are separate so a caller can distinguish "just
+ * looking" from "picking" (e.g. LevelUpScreen's move-replace screen, where
+ * hovering previews a move but only a click sets the persisted selection) —
+ * most callers just pass the same handler to both, matching the old
+ * combined `onSelect` behavior.
  */
-export function MoveTile({ move, selected, onSelect }: { move: MoveDefinition; selected?: boolean; onSelect?: () => void }) {
+export function MoveTile({
+  move,
+  selected,
+  onHover,
+  onClick,
+}: {
+  move: MoveDefinition;
+  selected?: boolean;
+  onHover?: () => void;
+  onClick?: () => void;
+}) {
   return (
     <span
       className={`move-tile${selected ? ' move-tile-selected' : ''}`}
       style={{ borderLeftColor: getTypeColor(move.type) }}
-      onMouseEnter={onSelect}
+      onMouseEnter={onHover}
       onClick={
-        onSelect
+        onClick
           ? (e) => {
               e.stopPropagation();
-              onSelect();
+              onClick();
             }
           : undefined
       }
@@ -53,7 +69,13 @@ interface MoveInfoPanelProps {
   placeholder?: string;
 }
 
-/** Fixed-position move detail readout paired with MoveTile — see MoveTile's doc comment for why this isn't a cursor-anchored tooltip. */
+/**
+ * Fixed-position move detail readout paired with MoveTile — see MoveTile's
+ * doc comment for why this isn't a cursor-anchored tooltip. Power/heal and
+ * mana cost share the name/type/category row rather than getting a row of
+ * their own — one fewer line keeps the panel short enough that a full
+ * 6-hero roster doesn't push LevelUpScreen into scrolling.
+ */
 export function MoveInfoPanel({ move, label, placeholder = 'Hover or tap a move to see its details.' }: MoveInfoPanelProps) {
   return (
     <div className="move-info-panel">
@@ -64,8 +86,6 @@ export function MoveInfoPanel({ move, label, placeholder = 'Hover or tap a move 
             <span className="move-info-name">{move.name}</span>
             <TypeBadge type={move.type} />
             <CategoryBadge category={move.category} />
-          </div>
-          <div className="move-info-stats">
             {move.kind === 'damage' && move.basePower != null && (
               <span className="move-stat move-stat-power">
                 <strong>{move.basePower}</strong>

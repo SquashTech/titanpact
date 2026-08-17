@@ -57,7 +57,7 @@ function CompendiumHeroCard({
       <div className="move-tile-row">
         {movepool.map((id) =>
           moves[id] ? (
-            <MoveTile key={id} move={moves[id]} selected={viewedMoveId === id} onSelect={() => onSelectMove(id)} />
+            <MoveTile key={id} move={moves[id]} selected={viewedMoveId === id} onHover={() => onSelectMove(id)} onClick={() => onSelectMove(id)} />
           ) : (
             <span key={id} className="detail-status-chip">
               {id}

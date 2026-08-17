@@ -6,7 +6,7 @@ import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
 import { equipmentStatModifiers } from '../../run/equipment';
 import { mergeStatMods } from '../../run/statMods';
-import { chosenEvolutionPaths } from '../../run/progression';
+import { chosenEvolutionPaths, rosterEntryTypes } from '../../run/progression';
 import { StatBars } from '../shared/StatBars';
 import { MoveTile, MoveInfoPanel } from '../shared/MoveTile';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -50,7 +50,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Pr
             {hero.name} — Lv {entry.level}
           </div>
           <div className="combatant-types">
-            {hero.types.map((t) => (
+            {rosterEntryTypes(hero, entry).map((t) => (
               <TypeBadge key={t} type={t} />
             ))}
           </div>
@@ -74,7 +74,13 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Pr
             <div className="move-tile-row">
               {entry.unlockedMoveIds.map((id) =>
                 moves[id] ? (
-                  <MoveTile key={id} move={moves[id]} selected={viewedMoveId === id} onSelect={() => setViewedMoveId(id)} />
+                  <MoveTile
+                    key={id}
+                    move={moves[id]}
+                    selected={viewedMoveId === id}
+                    onHover={() => setViewedMoveId(id)}
+                    onClick={() => setViewedMoveId(id)}
+                  />
                 ) : (
                   <span key={id} className="detail-status-chip">
                     {id}
