@@ -63,7 +63,6 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
             scout the threat before committing a squad against it. */}
         <div className="squad-section squad-section-enemy">
           <h2 className="squad-section-title">⚔️ Scouted Enemies</h2>
-          <p className="hint">Who you may face this fight.</p>
           <div className="roster-grid">
             {encounter.run.roster.map((entry) => {
               const hero = allCombatants[entry.heroId];
@@ -104,11 +103,6 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
 
         <div className="squad-section squad-section-player">
           <h2 className="squad-section-title">🛡️ Pick Your Squad ({pickedIds.length}/{required})</h2>
-          <p className="hint">
-            {required < 4
-              ? 'Every recruited hero must fight — first two picks start active, the rest start on the bench.'
-              : 'First two picks start active; the rest start on the bench.'}
-          </p>
           <div className="roster-grid">
             {run.roster.map((entry) => {
               const hero = heroes[entry.heroId];
