@@ -205,8 +205,6 @@ export function App() {
 
   return (
     <div className="app-shell" ref={shellRef}>
-      <header className="app-header">Titanpact</header>
-
       {screen.kind === 'title' && (
         <TitleScreen onStartRun={handleStartNewRun} onQuickBattle={handleQuickBattle} onStartLevel4TestRun={handleStartLevel4TestRun} />
       )}

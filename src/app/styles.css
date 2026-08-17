@@ -67,16 +67,6 @@ body {
   overflow: hidden;
 }
 
-.app-header {
-  flex: 0 0 auto;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-align: center;
-  padding: 4px 0 8px;
-  border-bottom: 1px solid var(--border);
-}
-
 /* Top-of-screen row: exit on the left, the log toggle on the right, both
    reachable without hunting through the battlefield below. */
 .fight-header {
