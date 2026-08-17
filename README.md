@@ -104,11 +104,11 @@ Covered by `test/statuses.test.ts`.
   (currently level 5, flat and uniform across every hero) skips the move offer
   entirely and instead surfaces the hero's Evolution: a one-shot choice of three
   named paths (`chooseEvolutionPath`) granting permanent stats and/or a type-graft.
-  **`moveTiers` pool content now covers all 6 fixture heroes** (`src/data/
+  **`moveTiers` pool content covers all 12 fixture heroes** (`src/data/
   progression.ts`), each drawing from a handful of thematically-appropriate moves
-  beyond their starting kit. **Evolution paths remain fixture data for only 2 of the
-  6** (cinderKnight, tidecaller) — a separate axis from the move pool — see "Known
-  gaps."
+  beyond their starting kit. **Evolution paths now cover all 12** as well, each with
+  the full three named paths — a separate axis from the move pool, still fixture
+  content rather than authored balance — see "Known gaps."
 - **The recruitment economy** (`recruitment.ts`): Guild Hall (gold, fresh hero) and
   Recruit Contract (claims a defeated hero's exact Evolution state, ungeared) acquisition
   paths, both enforcing the roster cap via the same `addRosterEntry` used everywhere
@@ -177,16 +177,18 @@ from one hero to another.
 - **Equipment only wires the stat-pipeline half.** Damage-shaped equipment bonuses (the
   pipeline-2 multiplier term) need the same hook-and-condition system as abilities,
   which isn't built — see "Next steps" #3.
-- **Evolution paths are fixture content for 2 of 6 heroes** (cinderKnight,
-  tidecaller — `src/data/progression.ts`), each with the full three named paths
-  (one offensive, one defensive, one utility) the framework requires; no path unlocks
-  a move on choice, to keep the level-up move pool and Evolution stat grants distinct
-  axes. Both heroes' defensive paths (cinderKnight's "Ember Bulwark", tidecaller's
-  "Glacial Bastion") graft a second type to exercise the type-graft mechanic
-  (`docs/progression.md` "Type-graft paths") end to end. The other 4 fixture heroes
-  have nothing to invest in yet; that's a valid empty state, not a bug. None of this
-  is authored-canon content — see `docs/leveling-and-ranks.md` Part 2 for the rules
-  the real 53-hero roster's Evolutions need to follow.
+- **Evolution paths are fixture content for all 12 fixture heroes**
+  (`src/data/progression.ts`), each with the full three named paths (one offensive,
+  one defensive, one utility) the framework requires; no path unlocks a move on
+  choice, to keep the level-up move pool and Evolution stat grants distinct axes.
+  Most heroes' non-mono paths graft a second type to exercise the type-graft
+  mechanic (`docs/progression.md` "Type-graft paths") end to end; each hero keeps
+  exactly one mono path as a valid terminal identity. ironWarden and wildOracle were
+  promoted from dual- to mono-typed (`src/data/heroes.ts`) so their Evolutions could
+  follow this mono-base-plus-graft framework — the type chart is keyed per single
+  type, so this didn't require a chart change. None of this is authored-canon
+  content — see `docs/leveling-and-ranks.md` Part 2 for the rules the real 53-hero
+  roster's Evolutions need to follow.
 - ~~Fixture heroes already exceed the 4-move cap at roster creation.~~ **Fixed
   (2026-08-16):** `heroes.ts` starting kits are now trimmed to 3 moves each (a
   low-power move of the hero's main type plus 1-2 support moves), leaving room to grow

@@ -53,6 +53,27 @@ function createStartingRun(heroIds: readonly string[]): RunState {
   };
 }
 
+/**
+ * ⚠️ TEMPORARY DEV/TEST HELPER — not a real game entry point. Fills the
+ * roster (up to ROSTER_CAP) with heroes already at level EVOLUTION_LEVEL - 1
+ * and grants one Training Point per hero, so the very first spend on each
+ * hero triggers its Evolution choice immediately — skips the normal grind of
+ * playing fights and leveling up 4 times per hero just to exercise the
+ * Evolution UI. Remove this (and its TitleScreen button) once Evolution
+ * content/UI work is done.
+ */
+function createLevel4TestRun(): RunState {
+  const testHeroIds = Object.keys(heroes).slice(0, ROSTER_CAP);
+  let run = createRunState(testHeroIds.length, 999);
+  for (const heroId of testHeroIds) {
+    run = addRosterEntry(run, { ...createRosterEntry(heroId, heroId, heroes[heroId].moveIds), level: 4 });
+  }
+  return {
+    ...run,
+    map: generateMap(Math.floor(Math.random() * 2 ** 31)),
+  };
+}
+
 /** Guarantees a rosterId that doesn't collide with an existing entry, even if the same heroId is claimed more than once across a run. */
 function freshRosterId(run: RunState, heroId: string): string {
   if (!run.roster.some((r) => r.rosterId === heroId)) return heroId;
@@ -155,6 +176,12 @@ export function App() {
     setScreen({ kind: 'map' });
   }
 
+  /** ⚠️ TEMPORARY DEV/TEST — see createLevel4TestRun. Drops straight into the level-up/Evolution screen instead of the draft, since that's the whole point of this shortcut. */
+  function handleStartLevel4TestRun() {
+    setPlayerRun(createLevel4TestRun());
+    setScreen({ kind: 'levelUp', next: { kind: 'map' } });
+  }
+
   /**
    * Randomizes a full 4v4 (both sides drawn fresh from the fixture hero
    * pool, no Evolution bonuses) and drops straight into FightScreen — bypasses
@@ -171,7 +198,9 @@ export function App() {
     <div className="app-shell">
       <header className="app-header">Titanpact</header>
 
-      {screen.kind === 'title' && <TitleScreen onStartRun={handleStartNewRun} onQuickBattle={handleQuickBattle} />}
+      {screen.kind === 'title' && (
+        <TitleScreen onStartRun={handleStartNewRun} onQuickBattle={handleQuickBattle} onStartLevel4TestRun={handleStartLevel4TestRun} />
+      )}
 
       {screen.kind === 'draft' && <DraftScreen optionIds={screen.optionIds} onConfirm={handleDraftConfirm} />}
 

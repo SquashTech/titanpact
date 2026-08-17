@@ -16,6 +16,8 @@ import { getTypeColor } from '../combat/typeColors';
 import { MoveTile, MoveInfoPanel } from '../shared/MoveTile';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
+import type { StatKey } from '../../engine/content';
 
 interface Props {
   run: RunState;
@@ -199,18 +201,39 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
                     )}
                   </div>
                   {node && (
-                    <div className="training-row" onClick={(e) => e.stopPropagation()}>
+                    <div className="evolution-choice" onClick={(e) => e.stopPropagation()}>
                       <span className="hint">Ready to evolve — choose a path:</span>
-                      {node.paths.map((path) => (
-                        <button
-                          key={path.id}
-                          className={`evolution-path-button evolution-${path.kind}`}
-                          onClick={() => onRunChange(chooseEvolutionPath(run, progressionTable, heroes, entry.rosterId, path.id))}
-                        >
-                          <span className="evolution-path-name">{path.name}</span>
-                          <span className="evolution-path-kind">{path.kind}</span>
-                        </button>
-                      ))}
+                      <div className="evolution-path-list">
+                        {node.paths.map((path) => {
+                          const statEntries = Object.entries(path.statGrants).filter(([, amount]) => !!amount) as [StatKey, number][];
+                          return (
+                            <button
+                              key={path.id}
+                              className={`evolution-path-button evolution-${path.kind}`}
+                              onClick={() => onRunChange(chooseEvolutionPath(run, progressionTable, heroes, entry.rosterId, path.id))}
+                            >
+                              <div className="evolution-path-head">
+                                <span className="evolution-path-name">{path.name}</span>
+                                <span className="evolution-path-kind">{path.kind}</span>
+                              </div>
+                              {path.description && <p className="evolution-path-description">{path.description}</p>}
+                              <div className="evolution-path-grants">
+                                {statEntries.map(([stat, amount]) => (
+                                  <span key={stat} className="evolution-path-grant-chip">
+                                    {STAT_ICONS[stat]} {STAT_LABELS[stat]} +{amount}
+                                  </span>
+                                ))}
+                                {path.typeGraft && (
+                                  <span className="evolution-path-grant-chip evolution-path-typegraft">
+                                    <TypeBadge type={path.typeGraft} /> secondary type
+                                  </span>
+                                )}
+                                {!path.typeGraft && <span className="evolution-path-grant-chip evolution-path-mono">stays mono {hero.types[0]}</span>}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>

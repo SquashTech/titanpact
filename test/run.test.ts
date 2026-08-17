@@ -222,7 +222,7 @@ test('progression: a type-graft path grants a second type without touching the i
   run = levelUpTimes(run, 'cinderKnight', EVOLUTION_LEVEL - 1);
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-defensive');
-  assert.strictEqual(next.roster[0].evolutionTypeGraft, 'Stone');
+  assert.strictEqual(next.roster[0].evolutionTypeGraft, 'Iron');
   assert.deepStrictEqual(heroes.cinderKnight.types, ['Fire']); // innate type untouched
 
   const squad = pickSquad(next.roster, ['cinderKnight']);
@@ -232,13 +232,18 @@ test('progression: a type-graft path grants a second type without touching the i
     { side: 'A', squad, roster: next.roster },
     { side: 'B', squad: aiSquad, roster: aiRun.roster },
   ]);
-  assert.deepStrictEqual(state.combatants['A:cinderKnight'].grantedTypes, ['Stone']);
+  assert.deepStrictEqual(state.combatants['A:cinderKnight'].grantedTypes, ['Iron']);
 });
 
 test('progression: a type-graft path is rejected for an already-dual-typed hero', () => {
-  let run = seedRoster(['ironWarden']); // Iron + Stone, already dual
+  let run = seedRoster(['ironWarden']);
   run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
   run = levelUpTimes(run, 'ironWarden', EVOLUTION_LEVEL - 1);
+
+  // Synthetic dual-typed override for this hero lookup only — the fixture
+  // roster is all mono/pre-graft now, so this exercises the enforcement
+  // itself rather than depending on any particular hero's canonical typing.
+  const dualHeroes = { ...heroes, ironWarden: { ...heroes.ironWarden, types: ['Iron', 'Stone'] as const } };
 
   const dualGraftTable = {
     moveTiers: {},
@@ -261,7 +266,7 @@ test('progression: a type-graft path is rejected for an already-dual-typed hero'
       ],
     },
   };
-  assert.throws(() => chooseEvolutionPath(run, dualGraftTable, heroes, 'ironWarden', 'iw-graft'), ProgressionError);
+  assert.throws(() => chooseEvolutionPath(run, dualGraftTable, dualHeroes, 'ironWarden', 'iw-graft'), ProgressionError);
 });
 
 test('progression: a later type-graft path shifts (replaces) the secondary type rather than stacking a third', () => {
@@ -269,7 +274,7 @@ test('progression: a later type-graft path shifts (replaces) the secondary type 
   run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
   run = levelUpTimes(run, 'cinderKnight', EVOLUTION_LEVEL - 1);
   run = chooseEvolutionPath(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-defensive');
-  assert.strictEqual(run.roster[0].evolutionTypeGraft, 'Stone');
+  assert.strictEqual(run.roster[0].evolutionTypeGraft, 'Iron');
 
   // A synthetic second node offering a shift to a different secondary type
   // (exercises the future multi-node "Deep line" shape, docs/leveling-and-ranks.md).
@@ -305,5 +310,5 @@ test('progression: a later type-graft path shifts (replaces) the secondary type 
     { side: 'A', squad, roster: shifted.roster },
     { side: 'B', squad: aiSquad, roster: aiRun.roster },
   ]);
-  assert.deepStrictEqual(state.combatants['A:cinderKnight'].grantedTypes, ['Water']); // not ['Stone', 'Water']
+  assert.deepStrictEqual(state.combatants['A:cinderKnight'].grantedTypes, ['Water']); // not ['Iron', 'Water']
 });

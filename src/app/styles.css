@@ -1533,6 +1533,7 @@ body {
 
 .detail-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: baseline;
   margin-bottom: 4px;
@@ -1541,6 +1542,40 @@ body {
 .detail-name {
   font-size: 16px;
   font-weight: 700;
+}
+
+.detail-evolution-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex-basis: 100%;
+  margin-top: 4px;
+}
+
+.evolution-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 2px 8px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+}
+
+.evolution-badge.evolution-offensive {
+  border-color: var(--enemy);
+  color: var(--enemy);
+}
+
+.evolution-badge.evolution-defensive {
+  border-color: var(--ally);
+  color: var(--ally);
+}
+
+.evolution-badge.evolution-utility {
+  border-color: var(--hp-high);
+  color: var(--hp-high);
 }
 
 .detail-resource-row {
@@ -2070,6 +2105,39 @@ body {
   border-color: var(--accent);
 }
 
+/* ⚠️ TEMPORARY DEV/TEST button (App.tsx createLevel4TestRun) — deliberately
+   styled as "not a real menu item" (dashed border, warning color, explicit
+   "temp" tag) so it reads as scaffolding rather than a shipped feature.
+   Remove alongside its handler when no longer needed. */
+.title-debug-button {
+  width: 100%;
+  background: var(--panel-alt);
+  border: 1px dashed var(--enemy);
+  border-radius: 8px;
+  color: var(--enemy);
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.title-debug-button:hover {
+  background: var(--panel);
+}
+
+.title-debug-tag {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--enemy);
+  border-radius: 8px;
+  padding: 1px 5px;
+}
+
 /* --- Training panel (level-up pool spend UI) ----------------------------- */
 
 .training-panel {
@@ -2291,16 +2359,28 @@ body {
   background: #1a140a;
 }
 
+.evolution-choice {
+  margin-bottom: 4px;
+}
+
+.evolution-path-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
 .evolution-path-button {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  width: 100%;
   background: var(--panel-alt);
   border: 1px solid var(--border);
   border-left: 3px solid var(--border);
   border-radius: 6px;
   color: var(--text);
-  padding: 6px 10px;
+  padding: 8px 10px;
   font-size: 12px;
   text-align: left;
   cursor: pointer;
@@ -2310,8 +2390,16 @@ body {
   border-color: var(--accent);
 }
 
+.evolution-path-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+
 .evolution-path-name {
   font-weight: 700;
+  font-size: 13px;
 }
 
 .evolution-path-kind {
@@ -2319,6 +2407,43 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.evolution-path-description {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+.evolution-path-grants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.evolution-path-grant-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.evolution-path-typegraft {
+  gap: 4px;
+}
+
+.evolution-path-mono {
+  color: var(--text-dim);
+  font-weight: 500;
+  font-style: italic;
 }
 
 .evolution-path-button.evolution-offensive {

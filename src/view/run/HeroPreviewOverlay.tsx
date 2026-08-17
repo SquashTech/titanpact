@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { moves } from '../../data/moves';
+import { progressionTable } from '../../data/progression';
 import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
 import { equipmentStatModifiers } from '../../run/equipment';
 import { mergeStatMods } from '../../run/statMods';
+import { chosenEvolutionPaths } from '../../run/progression';
 import { StatBars } from '../shared/StatBars';
 import { MoveTile, MoveInfoPanel } from '../shared/MoveTile';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -35,6 +37,7 @@ interface Props {
  */
 export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Props) {
   const grants = mergeStatMods(entry.evolutionStatGrants, equipmentStatModifiers(entry.equipment, equipmentLookup));
+  const evolved = chosenEvolutionPaths(progressionTable, entry);
   const [viewedMoveId, setViewedMoveId] = useState<string | null>(null);
   const viewedMove = viewedMoveId ? (moves[viewedMoveId] ?? null) : null;
 
@@ -51,6 +54,15 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Pr
               <TypeBadge key={t} type={t} />
             ))}
           </div>
+          {evolved.length > 0 && (
+            <div className="detail-evolution-row">
+              {evolved.map((path) => (
+                <span key={path.id} className={`evolution-badge evolution-${path.kind}`}>
+                  {path.name}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="detail-section-title">Stats</div>

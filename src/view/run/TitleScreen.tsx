@@ -5,6 +5,8 @@ import { TypeChartOverlay } from '../shared/TypeChartOverlay';
 interface Props {
   onStartRun: () => void;
   onQuickBattle: () => void;
+  /** ⚠️ TEMPORARY DEV/TEST — see App.tsx createLevel4TestRun. Remove this prop and its button together when Evolution work no longer needs a fast-forward. */
+  onStartLevel4TestRun: () => void;
 }
 
 /**
@@ -14,7 +16,7 @@ interface Props {
  * "Compendium" opens a read-only hero browser (CompendiumScreen) — no run
  * state involved, so it's toggled locally rather than routed through App.tsx.
  */
-export function TitleScreen({ onStartRun, onQuickBattle }: Props) {
+export function TitleScreen({ onStartRun, onQuickBattle, onStartLevel4TestRun }: Props) {
   const [showCompendium, setShowCompendium] = useState(false);
   const [showTypeChart, setShowTypeChart] = useState(false);
 
@@ -33,6 +35,9 @@ export function TitleScreen({ onStartRun, onQuickBattle }: Props) {
         </button>
         <button className="title-secondary-button" onClick={() => setShowTypeChart(true)}>
           Type Chart
+        </button>
+        <button className="title-debug-button" onClick={onStartLevel4TestRun}>
+          🧪 Test: Lv4 Squad <span className="title-debug-tag">temp</span>
         </button>
       </div>
 

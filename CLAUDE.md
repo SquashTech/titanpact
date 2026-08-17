@@ -133,10 +133,6 @@ placeholders, not decisions. Flag before hardening any of these:
   that doc's own recommendations for its remaining open sub-questions (Cleanse's debuffs-vs-all
   split, Daze clearing on switch, Regen's decay shape, end-of-round tick timing) — provisional
   implementation choices, not designer sign-off. See `docs/conditions.md` §7.
-- **Five "50/50" heroes'** specific innate mono type (Giant Lobster, Sun Priest, Crystal
-  Guardian, Hellhound, Artificer) — the mono-base-plus-graft *shape* is resolved (above),
-  the individual picks aren't.
-- **"Weak-and-final mono"** as a distinct hero class vs a capstone-strong 0-branch hero.
 - **Weather subsystem:** whether it interacts with mana is still open (`docs/mana.md`).
 - **Team archetypes are intentionally deferred** — they must *emerge* from movepool, ability,
   equipment, and relic design. Do not pre-specify archetypes.

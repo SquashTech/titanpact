@@ -63,9 +63,9 @@ the movepool is strictly *substitution*, never expansion.
 > low-power move of the hero's main type plus 1-2 support moves — heal/buff/status),
 > leaving room to grow into the cap via level-ups instead of starting over it. Every
 > fixture hero's `moveTiers` pool (`src/data/progression.ts`) was expanded to match, so
-> a level-up's random draw has real variety across all 6 heroes, not just 2. Evolution
-> paths (Part 2, below) remain fixture content for only 2 of 6 heroes — a separate
-> axis from the move pool, see README "Known gaps."
+> a level-up's random draw has real variety across all 12 heroes. Evolution paths
+> (Part 2, below) now cover all 12 fixture heroes too — a separate axis from the
+> move pool, see README "Known gaps."
 
 ### Level-ups never change stats (LOCKED)
 

@@ -3,6 +3,8 @@ import type { Combatant } from '../../engine/state';
 import { effectiveTypes, getMaxHp, getMaxMana } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
+import { chosenEvolutionPaths } from '../../run/progression';
+import { progressionTable } from '../../data/progression';
 import { STAT_ICONS, STAT_LABELS, STAT_ORDER, StatBars } from '../shared/StatBars';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -46,6 +48,7 @@ function fmtStatus(statusId: string, magnitude: number | undefined, duration: nu
  */
 export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLookup, onClose }: Props) {
   const hasModifiers = STAT_ORDER.some((stat) => (combatant.statModifiers[stat] ?? 0) !== 0);
+  const evolved = rosterEntry ? chosenEvolutionPaths(progressionTable, rosterEntry) : [];
 
   return (
     <div className="detail-overlay" onClick={onClose}>
@@ -58,6 +61,15 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
               <TypeBadge key={t} type={t} />
             ))}
           </div>
+          {evolved.length > 0 && (
+            <div className="detail-evolution-row">
+              {evolved.map((path) => (
+                <span key={path.id} className={`evolution-badge evolution-${path.kind}`}>
+                  {path.name}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="detail-resource-row">

@@ -31,14 +31,14 @@ export const heroes: Record<string, HeroDefinition> = {
   ironWarden: {
     id: 'ironWarden',
     name: 'Iron Warden',
-    types: ['Iron', 'Stone'],
+    types: ['Iron'],
     baseStats: { hp: 120, attack: 55, defense: 90, intelligence: 20, wisdom: 50, speed: 30, manaPool: 40, mpRegen: 4 },
     moveIds: ['quickJab', 'stunningBlow', 'curseMind'],
   },
   wildOracle: {
     id: 'wildOracle',
     name: 'Wild Oracle',
-    types: ['Nature', 'Spirit'],
+    types: ['Nature'],
     baseStats: { hp: 85, attack: 35, defense: 45, intelligence: 80, wisdom: 70, speed: 65, manaPool: 90, mpRegen: 10 },
     moveIds: ['entanglingRoots', 'mendWounds', 'secondWind'],
   },

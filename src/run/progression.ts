@@ -42,6 +42,8 @@ export interface EvolutionPath {
   kind: 'defensive' | 'offensive' | 'utility';
   /** Single identifiable name (docs/leveling-and-ranks.md), e.g. "Explosive", "Ironclad", "Thunderblaze". */
   name: string;
+  /** One-line flavor/mechanical summary shown on the Evolution choice screen so the player can judge the three paths on more than just their name. */
+  description?: string;
   statGrants: Partial<Record<StatKey, number>>;
   unlocksMoveIds: string[];
   /**
@@ -134,6 +136,14 @@ export function availableEvolution(table: ProgressionTable, entry: RosterEntry):
   const node = nodes[entry.chosenPathIds.length];
   if (!node) return null;
   return entry.level >= node.level ? node : null;
+}
+
+/** The Evolution path(s) a roster entry has already chosen, resolved back to their full data (name/description/grants) — for read-only display (stat blocks) after the choice was made, as opposed to availableEvolution's still-being-offered node. */
+export function chosenEvolutionPaths(table: ProgressionTable, entry: RosterEntry): EvolutionPath[] {
+  const allPaths = (table.evolutions[entry.heroId] ?? []).flatMap((node) => node.paths);
+  return entry.chosenPathIds
+    .map((id) => allPaths.find((p) => p.id === id))
+    .filter((p): p is EvolutionPath => p !== undefined);
 }
 
 /**

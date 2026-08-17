@@ -1,5 +1,5 @@
 // ⚠️ TEST FIXTURE CONTENT — a level-up move pool and Evolution paths for the
-// 6 fixture heroes, enough to exercise both consequences of leveling end to
+// 12 fixture heroes, enough to exercise both consequences of leveling end to
 // end (docs/leveling-and-ranks.md: a level-up either "offers a random move"
 // or, at EVOLUTION_LEVEL, surfaces the Evolution choice instead). Each
 // hero's starting kit (src/data/heroes.ts) is deliberately small — a
@@ -9,19 +9,32 @@
 // cap (src/run/progression.ts MOVE_CAP). Not the authored 53-hero
 // progression content.
 //
-// SCOPE NOTE: paths are stat-only (statGrants, no unlocksMoveIds) — kept
-// deliberately separate from the level-up move pool so the two growth axes
-// don't gate the same content twice. Every fixture hero's evolution node
-// sits at EVOLUTION_LEVEL and offers exactly three paths differing in kind
-// (CLAUDE.md "the player is presented with a choice of three options"),
-// demonstrating the shape the real 53-hero roster's authored Evolutions
-// (docs/leveling-and-ranks.md) will need to follow: one offensive, one
-// defensive, one utility — not every path grafts a type ("mono remains a
-// legitimate terminal state", docs/progression.md). cinderKnight's
-// defensive path and tidecaller's defensive path each carry a typeGraft,
-// purely to exercise the type-graft mechanic (docs/progression.md
-// "Type-graft paths") end to end — the specific names and secondary types
-// below are fixture flavor picks, not authored canon.
+// SCOPE NOTE: paths are stat-only (statGrants + description, no
+// unlocksMoveIds) — kept deliberately separate from the level-up move pool
+// so the two growth axes don't gate the same content twice. Every fixture
+// hero's evolution node sits at EVOLUTION_LEVEL and offers exactly three
+// paths differing in kind (CLAUDE.md "the player is presented with a choice
+// of three options"): one offensive, one defensive, one utility — not every
+// path grafts a type ("mono remains a legitimate terminal state",
+// docs/progression.md); each hero keeps exactly one mono path as a valid
+// terminal identity. `description` is the one-line flavor/mechanical pitch
+// shown on the Evolution choice screen (src/view/run/LevelUpScreen.tsx) —
+// this is the 2026-08-16 designer draft verbatim, not final balance copy.
+//
+// ironWarden and wildOracle were promoted from dual- to mono-typed in
+// src/data/heroes.ts to fit this framework's mono-base-plus-graft shape
+// (matching the "50/50 heroes" pattern in CLAUDE.md, even though neither is
+// on that specific list) — Iron/Stone and Nature/Spirit are now reachable
+// only via their defensive Evolution paths (Bulwark/Heartwood keep them
+// mono; the type comes from a sibling path instead, same as any other
+// hero here). Type-chart tuning is unaffected: the chart is keyed per
+// single type, not per pair.
+//
+// cinderKnight and tidecaller's paths were renamed/retyped from an earlier
+// placeholder pass (Blazing Vanguard/Ember Bulwark/Kindled Spirit, Deluge
+// Adept/Glacial Bastion/Mana Current) to match the same designer draft —
+// stat grants are unchanged, only names and typeGraft targets moved to line
+// up with the other 10 heroes' authored framework.
 
 import type { ProgressionTable } from '../run/progression';
 import { EVOLUTION_LEVEL } from '../run/progression';
@@ -50,7 +63,8 @@ export const progressionTable: ProgressionTable = {
             id: 'cinderKnight-offensive',
             heroId: 'cinderKnight',
             kind: 'offensive',
-            name: 'Blazing Vanguard',
+            name: 'Explosive',
+            description: 'Burn-stacking burst; leans into Consume-Burn detonations.',
             statGrants: { attack: 10 },
             unlocksMoveIds: [],
           },
@@ -58,18 +72,21 @@ export const progressionTable: ProgressionTable = {
             id: 'cinderKnight-defensive',
             heroId: 'cinderKnight',
             kind: 'defensive',
-            name: 'Ember Bulwark',
+            name: 'Ironclad',
+            description: 'Armored frontliner; protect self/partner, high bulk.',
             statGrants: { defense: 10, hp: 10 },
             unlocksMoveIds: [],
-            typeGraft: 'Stone',
+            typeGraft: 'Iron',
           },
           {
             id: 'cinderKnight-utility',
             heroId: 'cinderKnight',
             kind: 'utility',
-            name: 'Kindled Spirit',
+            name: 'Thunderblaze',
+            description: 'Speed + priority hybrid; Storm coverage and tempo control.',
             statGrants: { speed: 10, mpRegen: 5 },
             unlocksMoveIds: [],
+            typeGraft: 'Storm',
           },
         ],
       },
@@ -82,7 +99,8 @@ export const progressionTable: ProgressionTable = {
             id: 'tidecaller-offensive',
             heroId: 'tidecaller',
             kind: 'offensive',
-            name: 'Deluge Adept',
+            name: 'Maelstrom',
+            description: 'Escalating wave pressure / multi-hit.',
             statGrants: { intelligence: 10 },
             unlocksMoveIds: [],
           },
@@ -90,18 +108,381 @@ export const progressionTable: ProgressionTable = {
             id: 'tidecaller-defensive',
             heroId: 'tidecaller',
             kind: 'defensive',
-            name: 'Glacial Bastion',
+            name: 'Tidewarden',
+            description: 'Sustain tank; Regen + protect.',
             statGrants: { defense: 10, wisdom: 10 },
             unlocksMoveIds: [],
-            typeGraft: 'Frost',
+            typeGraft: 'Spirit',
           },
           {
             id: 'tidecaller-utility',
             heroId: 'tidecaller',
             kind: 'utility',
-            name: 'Mana Current',
+            name: 'Frostbound',
+            description: 'Freeze control; locks tempo, feeds Freeze→Consume lines.',
             statGrants: { manaPool: 10, mpRegen: 5 },
             unlocksMoveIds: [],
+            typeGraft: 'Frost',
+          },
+        ],
+      },
+    ],
+    ironWarden: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'ironWarden-offensive',
+            heroId: 'ironWarden',
+            kind: 'offensive',
+            name: 'Sunderer',
+            description: 'Armor-piercing heavy hits; cuts enemy Def.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Forge',
+          },
+          {
+            id: 'ironWarden-defensive',
+            heroId: 'ironWarden',
+            kind: 'defensive',
+            name: 'Bulwark',
+            description: 'Redirect/protect partner — the doubles anchor.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'ironWarden-utility',
+            heroId: 'ironWarden',
+            kind: 'utility',
+            name: 'Lodestar',
+            description: 'Cleanse + ally support; the paladin path.',
+            statGrants: { wisdom: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Light',
+          },
+        ],
+      },
+    ],
+    wildOracle: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'wildOracle-offensive',
+            heroId: 'wildOracle',
+            kind: 'offensive',
+            name: 'Thornwrath',
+            description: 'Feral on-hit aggression; Bleed/Blight pressure.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Beast',
+          },
+          {
+            id: 'wildOracle-defensive',
+            heroId: 'wildOracle',
+            kind: 'defensive',
+            name: 'Heartwood',
+            description: 'Regen bulwark; sustains the pair.',
+            statGrants: { wisdom: 10, hp: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'wildOracle-utility',
+            heroId: 'wildOracle',
+            kind: 'utility',
+            name: 'Augur',
+            description: 'Foresight/control; status manipulation and priority steering.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Mind',
+          },
+        ],
+      },
+    ],
+    stormRanger: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'stormRanger-offensive',
+            heroId: 'stormRanger',
+            kind: 'offensive',
+            name: 'Tempest',
+            description: 'High-crit, high-priority skirmisher.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'stormRanger-defensive',
+            heroId: 'stormRanger',
+            kind: 'defensive',
+            name: 'Bedrock',
+            description: 'Grounded tank; hazard/redirect.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Stone',
+          },
+          {
+            id: 'stormRanger-utility',
+            heroId: 'stormRanger',
+            kind: 'utility',
+            name: 'Whiteout',
+            description: 'Spread slow/Freeze; tempo denial across both targets.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Frost',
+          },
+        ],
+      },
+    ],
+    shadowMonk: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'shadowMonk-offensive',
+            heroId: 'shadowMonk',
+            kind: 'offensive',
+            name: 'Nightreaver',
+            description: 'Expose-punishing assassin burst.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'shadowMonk-defensive',
+            heroId: 'shadowMonk',
+            kind: 'defensive',
+            name: 'Stillmind',
+            description: 'Evasive sustain; self-cleanse.',
+            statGrants: { wisdom: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Spirit',
+          },
+          {
+            id: 'shadowMonk-utility',
+            heroId: 'shadowMonk',
+            kind: 'utility',
+            name: 'Nightveil',
+            description: 'Daze control + debuffs; shuts a threat off.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Mind',
+          },
+        ],
+      },
+    ],
+    glacialWarden: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'glacialWarden-offensive',
+            heroId: 'glacialWarden',
+            kind: 'offensive',
+            name: 'Avalanche',
+            description: 'Freeze-then-shatter burst (Consume-Freeze).',
+            statGrants: { intelligence: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'glacialWarden-defensive',
+            heroId: 'glacialWarden',
+            kind: 'defensive',
+            name: 'Glacier',
+            description: 'Immovable tank; max Def, endure.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Stone',
+          },
+          {
+            id: 'glacialWarden-utility',
+            heroId: 'glacialWarden',
+            kind: 'utility',
+            name: 'Permafrost',
+            description: 'Spread Freeze/slow; area control.',
+            statGrants: { manaPool: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Water',
+          },
+        ],
+      },
+    ],
+    dawnwarden: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'dawnwarden-offensive',
+            heroId: 'dawnwarden',
+            kind: 'offensive',
+            name: 'Sunflare',
+            description: 'Radiant burst; Expose/Burn.',
+            statGrants: { intelligence: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Fire',
+          },
+          {
+            id: 'dawnwarden-defensive',
+            heroId: 'dawnwarden',
+            kind: 'defensive',
+            name: 'Sanctuary',
+            description: 'Healer-tank; Regen + protect.',
+            statGrants: { wisdom: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Spirit',
+          },
+          {
+            id: 'dawnwarden-utility',
+            heroId: 'dawnwarden',
+            kind: 'utility',
+            name: 'Dawnherald',
+            description: 'Cleanse/buff support; the classic support priest.',
+            statGrants: { manaPool: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+          },
+        ],
+      },
+    ],
+    runescribe: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'runescribe-offensive',
+            heroId: 'runescribe',
+            kind: 'offensive',
+            name: 'Spellstorm',
+            description: 'Raw Int nuke; scaling burst.',
+            statGrants: { intelligence: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'runescribe-defensive',
+            heroId: 'runescribe',
+            kind: 'defensive',
+            name: 'Sigilward',
+            description: 'Barrier/ward tank.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Stone',
+          },
+          {
+            id: 'runescribe-utility',
+            heroId: 'runescribe',
+            kind: 'utility',
+            name: 'Loreweaver',
+            description: 'Setup/control; status steering.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Mind',
+          },
+        ],
+      },
+    ],
+    mindweaver: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'mindweaver-offensive',
+            heroId: 'mindweaver',
+            kind: 'offensive',
+            name: 'Mindrend',
+            description: 'Daze-punishing burst.',
+            statGrants: { intelligence: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'mindweaver-defensive',
+            heroId: 'mindweaver',
+            kind: 'defensive',
+            name: 'Adamant',
+            description: 'Mental + physical bulk; status resistance.',
+            statGrants: { defense: 10, wisdom: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Iron',
+          },
+          {
+            id: 'mindweaver-utility',
+            heroId: 'mindweaver',
+            kind: 'utility',
+            name: 'Dominion',
+            description: 'Control lock — Daze/Bind, domination debuffs.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Shadow',
+          },
+        ],
+      },
+    ],
+    forgewright: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'forgewright-offensive',
+            heroId: 'forgewright',
+            kind: 'offensive',
+            name: 'Overdrive',
+            description: 'Ramping heavy hitter; Atk builds over turns.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'forgewright-defensive',
+            heroId: 'forgewright',
+            kind: 'defensive',
+            name: 'Juggernaut',
+            description: 'Armored machine; max bulk, endure.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Iron',
+          },
+          {
+            id: 'forgewright-utility',
+            heroId: 'forgewright',
+            kind: 'utility',
+            name: 'Boilover',
+            description: 'Steam control — Burn spread + hazard/tempo.',
+            statGrants: { manaPool: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Water',
+          },
+        ],
+      },
+    ],
+    packAlpha: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'packAlpha-offensive',
+            heroId: 'packAlpha',
+            kind: 'offensive',
+            name: 'Bloodhunt',
+            description: 'Bleed-momentum aggressor.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'packAlpha-defensive',
+            heroId: 'packAlpha',
+            kind: 'defensive',
+            name: 'Stonehide',
+            description: 'Thick-hide bruiser; endure.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Stone',
+          },
+          {
+            id: 'packAlpha-utility',
+            heroId: 'packAlpha',
+            kind: 'utility',
+            name: 'Warhowl',
+            description: 'Pack-support — partner buffs, the doubles-facing path.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Spirit',
           },
         ],
       },
