@@ -90,6 +90,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
   const [log, setLog] = useState<LogLine[]>([]);
   const [logOpen, setLogOpen] = useState(false);
   const [typeChartOpen, setTypeChartOpen] = useState(false);
+  const [switchOpen, setSwitchOpen] = useState(false);
   const [pending, setPending] = useState<Record<string, PendingAction>>({});
   const [selecting, setSelecting] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
   const [actionStep, setActionStep] = useState(0);
@@ -134,11 +135,10 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
   // A player active slot fainted and needs a bench replacement chosen before the next round can be declared (docs/combat.md "KO handling": forced replacement is not optional, but WHICH bench hero fills it is the player's choice).
   const openReplacementSlots = ([0, 1] as const).filter((slot) => combat.active[PLAYER_SIDE][slot] === null && playerBench.length > 0);
 
+  const canAct = !resolving && openReplacementSlots.length === 0 && playerActiveAlive.length > 0;
+  const stepIndex = canAct ? Math.min(actionStep, playerActiveAlive.length - 1) : 0;
   // The player combatant whose move panel is currently on screen — glowed on the battlefield (CombatantCard's `acting` prop) instead of a "X's move" text label, so that vertical space goes back to the action panel.
-  const actingId: string | null =
-    !resolving && openReplacementSlots.length === 0 && playerActiveAlive.length > 0
-      ? playerActiveAlive[Math.min(actionStep, playerActiveAlive.length - 1)]
-      : null;
+  const actingId: string | null = canAct ? playerActiveAlive[stepIndex] : null;
 
   const targetableIds: string[] = !selecting
     ? []
@@ -335,6 +335,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
       setPending({});
       setSelecting(null);
       setMovePopup(null);
+      setSwitchOpen(false);
       setActionStep(0);
       return;
     }
@@ -393,15 +394,6 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
 
   return (
     <>
-      <div className="fight-header">
-        <button className="log-toggle-button" onClick={() => setLogOpen(true)}>
-          📜 Battle Log
-        </button>
-        <button className="log-toggle-button" onClick={() => setTypeChartOpen(true)}>
-          📊 Type Chart
-        </button>
-      </div>
-
       {/* Full-screen click-catcher while a round is playing out — lets the
           player tap anywhere to advance instead of hunting for the banner
           specifically. Sits below the battle-log overlay's z-index so an
@@ -443,20 +435,12 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
           openReplacementSlots.length === 0 &&
           playerActiveAlive.length > 0 &&
           (() => {
-            const stepIndex = Math.min(actionStep, playerActiveAlive.length - 1);
-            const id = playerActiveAlive[stepIndex];
+            const id = actingId!;
             const entry = entryFor(playerRun.roster, id);
             const hero = allCombatants[combat.combatants[id].heroId];
             const combatant = combat.combatants[id];
             return (
               <div className="action-panel" key={id}>
-                {stepIndex > 0 && (
-                  <div className="action-panel-header">
-                    <button className="back-button" onClick={() => setActionStep(stepIndex - 1)}>
-                      ← Back
-                    </button>
-                  </div>
-                )}
                 <div className="move-grid">
                   {entry.unlockedMoveIds.map((moveId) => {
                     const move = moves[moveId];
@@ -530,39 +514,6 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
                     );
                   })}
                 </div>
-                {playerBench.length > 0 && (
-                  <div className="switch-row">
-                    <div className="switch-label">{playerLockedIn ? 'Switching disabled (2+ KOs)' : 'Switch in:'}</div>
-                    {!playerLockedIn && (
-                      <div className="bench-row">
-                        {playerBench.map((benchId) => {
-                          const isSelected = pending[id]?.kind === 'switch' && pending[id]?.benchedCombatantId === benchId;
-                          // A different already-committed active hero has already claimed this bench
-                          // hero as their replacement — can't also send it in here.
-                          const claimedByOther = Object.entries(pending).some(
-                            ([pid, p]) => pid !== id && p.kind === 'switch' && p.benchedCombatantId === benchId
-                          );
-                          const benchCombatant = combat.combatants[benchId];
-                          const benchHero = allCombatants[benchCombatant.heroId];
-                          return (
-                            <CombatantCard
-                              key={benchId}
-                              hero={benchHero}
-                              combatant={benchCombatant}
-                              targetable={!claimedByOther}
-                              selected={isSelected}
-                              switchingIn={isSelected || claimedByOther}
-                              locked={claimedByOther}
-                              onSelectTarget={() => handleSwitchClick(id, benchId)}
-                              onInspect={() => setInspecting(benchId)}
-                              popup={popups[benchId]}
-                            />
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             );
           })()}
@@ -570,30 +521,78 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
         {!resolving && openReplacementSlots.length > 0 && <div className="hint">Choose a bench replacement above to continue.</div>}
       </div>
 
-      {/* Only while a round is actually playing out — during move selection the
-          switch-row inside the action panel already shows these same bench
-          cards as clickable switch targets, so showing both at once just
-          doubles them up on screen. */}
-      {resolving && playerBench.length > 0 && (
-        <div className="player-bench-panel">
-          <div className="player-bench-label">Bench</div>
-          <div className="bench-row">
-            {playerBench.map((benchId) => {
-              const benchCombatant = combat.combatants[benchId];
-              const benchHero = allCombatants[benchCombatant.heroId];
-              return (
-                <CombatantCard
-                  key={benchId}
-                  hero={benchHero}
-                  combatant={benchCombatant}
-                  onInspect={() => setInspecting(benchId)}
-                  popup={popups[benchId]}
-                />
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {/* Every secondary action lives in one fixed bottom row instead of
+          reserving its own space (a top header for log/type-chart, an
+          always-visible bench readout, a back button that shifted the move
+          grid down) — that reserved space was the source of the mobile
+          scroll this consolidation exists to eliminate. Buttons stay
+          mounted and are disabled rather than hidden when inapplicable, so
+          the row's height never changes turn to turn. */}
+      <div className="bottom-bar">
+        <button className="back-button" disabled={!(actingId !== null && stepIndex > 0)} onClick={() => setActionStep(stepIndex - 1)}>
+          ← Back
+        </button>
+        <button
+          className="log-toggle-button"
+          disabled={!(actingId !== null && playerBench.length > 0 && !playerLockedIn)}
+          onClick={() => setSwitchOpen(true)}
+        >
+          🔄 Switch
+        </button>
+        <button className="log-toggle-button" onClick={() => setLogOpen(true)}>
+          📜 Log
+        </button>
+        <button className="log-toggle-button" onClick={() => setTypeChartOpen(true)}>
+          📊 Types
+        </button>
+      </div>
+
+      {switchOpen &&
+        actingId &&
+        (() => {
+          const id = actingId;
+          return (
+            <div className="log-overlay" onClick={() => setSwitchOpen(false)}>
+              <div className="log-panel" onClick={(e) => e.stopPropagation()}>
+                <div className="log-panel-header">
+                  <span>Switch In</span>
+                  <button className="log-close-button" onClick={() => setSwitchOpen(false)}>
+                    ✕
+                  </button>
+                </div>
+                <div className="bench-row">
+                  {playerBench.map((benchId) => {
+                    const isSelected = pending[id]?.kind === 'switch' && pending[id]?.benchedCombatantId === benchId;
+                    // A different already-committed active hero has already claimed this bench
+                    // hero as their replacement — can't also send it in here.
+                    const claimedByOther = Object.entries(pending).some(
+                      ([pid, p]) => pid !== id && p.kind === 'switch' && p.benchedCombatantId === benchId
+                    );
+                    const benchCombatant = combat.combatants[benchId];
+                    const benchHero = allCombatants[benchCombatant.heroId];
+                    return (
+                      <CombatantCard
+                        key={benchId}
+                        hero={benchHero}
+                        combatant={benchCombatant}
+                        targetable={!claimedByOther}
+                        selected={isSelected}
+                        switchingIn={isSelected || claimedByOther}
+                        locked={claimedByOther}
+                        onSelectTarget={() => {
+                          handleSwitchClick(id, benchId);
+                          setSwitchOpen(false);
+                        }}
+                        onInspect={() => setInspecting(benchId)}
+                        popup={popups[benchId]}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
       {movePopup &&
         (() => {

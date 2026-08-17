@@ -67,17 +67,6 @@ body {
   overflow: hidden;
 }
 
-/* Top-of-screen row: exit on the left, the log toggle on the right, both
-   reachable without hunting through the battlefield below. */
-.fight-header {
-  flex: 0 0 auto;
-  position: relative;
-  z-index: 16;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 /* Fixed-size battlefield: the fight state stays visible and stable while the
    action area below it scrolls (see .app-shell comment). */
 .battlefield {
@@ -217,25 +206,35 @@ body {
   padding-bottom: 2px;
 }
 
-/* Always-visible readout of the player's bench, sitting below the scrolling
-   action area — separate from the switch-row picker inside .action-panel
-   (which only exists for the currently-stepped hero and disappears entirely
-   while a round is playing out). Bench heroes regen mana every round
-   (CLAUDE.md "Mana & tempo"), including mid-playback, so this is the only
-   place that regen is ever visible without opening the move panel. */
-.player-bench-panel {
-  flex-shrink: 0;
+/* Bottom-of-screen row: every secondary action (undo the current hero's
+   move choice, open the switch-in picker, review the log, check the type
+   chart) lives in one fixed row instead of each reserving its own space —
+   a top header, an always-visible bench readout, a back button that
+   shifted the move grid down — which is what was pushing the screen past
+   the viewport on mobile. Buttons stay mounted at all times and are
+   disabled rather than hidden when not applicable, so the row's height
+   and position never change turn to turn. */
+.bottom-bar {
+  flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
-.player-bench-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--text-dim);
-  text-transform: uppercase;
+.bottom-bar .back-button,
+.bottom-bar .log-toggle-button {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bottom-bar .back-button:disabled,
+.bottom-bar .log-toggle-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .team-row {
@@ -319,8 +318,8 @@ body {
   gap: 6px;
 }
 
-/* Switch-in picker, inside the switch-row of the move-selection action panel
-   (FightScreen.tsx) — the bench heroes' own CombatantCards double as the
+/* Switch-in picker, inside the "Switch In" overlay opened from the bottom
+   bar (FightScreen.tsx) — the bench heroes' own CombatantCards double as the
    switch buttons (targetable + onSelectTarget), shrunk via these descendant
    overrides rather than a CombatantCard prop so the same card markup/logic
    serves both the full-size active slot and this compact picker. */
@@ -355,7 +354,7 @@ body {
 
 /* HP and MP side by side instead of stacked (.resource-row/.resource are
    `display: contents` everywhere else — see styles.css near .bar-track) —
-   the single biggest source of the switch-row picker's extra height. */
+   the single biggest source of the switch-in picker's extra height. */
 .bench-row .resource-row {
   display: flex;
   gap: 6px;
@@ -442,7 +441,7 @@ body {
   }
 }
 
-/* A switch-row bench card already queued as a different active hero's
+/* A switch-in picker bench card already queued as a different active hero's
    replacement — visibly unavailable without borrowing the fainted look
    (no KO tag, no shake, still legible as "alive, just spoken for"). */
 .combatant-card.locked {
@@ -603,10 +602,11 @@ body {
 }
 
 /* Marks the bench hero that's the declared replacement for a pending switch
-   action, on the always-visible player-bench-panel — the switch-row picker
-   itself only shows while its owning hero's action step is on screen, so
-   without this the choice becomes invisible the moment focus moves to the
-   next hero. */
+   action, inside the switch-in picker overlay — shown both for the choice
+   just made for the currently-viewed hero and for a bench hero another
+   active hero already claimed (via `locked`), so a pick made while
+   stepping through one hero stays legible when a later hero's overlay
+   shows the same bench. */
 .switching-tag {
   position: absolute;
   top: 6px;
@@ -790,13 +790,6 @@ body {
   border-radius: 10px;
   padding: 10px;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
-}
-
-.action-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
 }
 
 .back-button {
@@ -1376,22 +1369,6 @@ body {
   padding: 6px 8px;
   font-size: 11px;
   cursor: pointer;
-  width: 100%;
-}
-
-.switch-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-  margin-top: 4px;
-}
-
-.switch-label {
-  font-size: 11px;
-  color: var(--text-dim);
   width: 100%;
 }
 

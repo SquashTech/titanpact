@@ -18,9 +18,9 @@ interface Props {
   onSelectTarget?: () => void;
   onInspect?: () => void;
   popup?: Popup | null;
-  /** Marks this card as the currently-committed choice — e.g. the bench hero picked to switch in (FightScreen's switch-row). Purely a visual highlight, independent of `targetable`. */
+  /** Marks this card as the currently-committed choice — e.g. the bench hero picked to switch in (FightScreen's switch-in picker overlay). Purely a visual highlight, independent of `targetable`. */
   selected?: boolean;
-  /** This bench hero is the declared replacement for a pending switch action — shown directly on the switch-row picker buttons (FightScreen) so the choice reads at a glance, including when it was made for a *different* active hero than the one currently on screen. */
+  /** This bench hero is the declared replacement for a pending switch action — shown directly on the switch-in picker overlay's cards (FightScreen) so the choice reads at a glance, including when it was made for a *different* active hero than the one currently on screen. */
   switchingIn?: boolean;
   /** This bench hero is already queued as another active hero's replacement, so it can't also be picked here — dims the card and blocks the click independently of `targetable`. */
   locked?: boolean;
