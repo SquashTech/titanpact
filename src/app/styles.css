@@ -421,6 +421,27 @@ body {
   box-shadow: 0 0 0 2px rgba(224, 166, 60, 0.3) inset, 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
+/* Replaces the old "X's move" text label above the action panel (removed to
+   free vertical space) — a blue pulse (distinct from the amber .targetable
+   glow used for tap-to-target cards, since both can apply to the same card
+   on a self-targeting move) on the battlefield card of whichever player
+   combatant's move panel is currently on screen. */
+.combatant-card.acting {
+  outline: 2px solid var(--ally);
+  box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.25), 0 2px 10px rgba(0, 0, 0, 0.3);
+  animation: acting-glow-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes acting-glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.25), 0 2px 10px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(74, 144, 217, 0.45), 0 2px 10px rgba(0, 0, 0, 0.3);
+  }
+}
+
 /* A switch-row bench card already queued as a different active hero's
    replacement — visibly unavailable without borrowing the fainted look
    (no KO tag, no shake, still legible as "alive, just spoken for"). */
@@ -771,13 +792,6 @@ body {
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
 }
 
-.action-panel h3 {
-  margin: 0;
-  font-size: 13px;
-  color: var(--text-dim);
-  font-weight: 600;
-}
-
 .action-panel-header {
   display: flex;
   justify-content: space-between;
@@ -821,6 +835,13 @@ body {
   text-align: left;
   cursor: pointer;
   transition: border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  /* Long-press opens the move-detail popup (FightScreen) — without these,
+     mobile browsers show their own text-selection handles or a native
+     callout menu partway through the hold, which reads as the gesture
+     failing. */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .move-button:hover:not(:disabled) {
@@ -930,23 +951,6 @@ body {
   color: var(--text-dim);
 }
 
-/*
- * Fixed to 2 lines regardless of description length — this is what actually
- * guarantees adding move flavor text can never grow the action panel (and
- * therefore the page) beyond what it already reserves. See .app-shell.
- */
-.move-description {
-  min-height: 28px;
-  margin-bottom: 6px;
-  font-size: 11px;
-  line-height: 14px;
-  color: var(--text-dim);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
 /* Mana cost is the primary balance lever (CLAUDE.md) and the number players
    check first when choosing a move — sized well above the 12px move-button
    baseline so it doesn't fade into the name row it sits next to. */
@@ -1031,6 +1035,51 @@ body {
 
 .log-close-button:hover {
   color: var(--text);
+}
+
+/* Move-detail popup (FightScreen, long-press on a move-button) — reuses
+   .log-overlay/.log-panel for the same dim-backdrop, centered-card look as
+   the Battle Log, but deliberately doesn't stopPropagation on the panel
+   click the way .log-panel does elsewhere: "tap anywhere to close" means
+   anywhere, including the card itself. */
+.move-popup-panel {
+  gap: 6px;
+}
+
+.move-popup-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.move-popup-description {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.move-popup-matchups {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.move-popup-matchup-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.move-popup-hint {
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-dim);
+  padding-top: 2px;
 }
 
 .event-log {
@@ -2287,10 +2336,9 @@ body {
    Its height is locked (not min-height) to whatever the fullest state needs
    — label + name/type row + meta row + a 2-line-clamped description — so
    swapping between a short message, a long one, and the empty placeholder
-   never reflows the hero list beneath it. Same fixed-box-regardless-of-
-   content convention as .move-description in the combat screen; see that
-   rule's comment for the rationale, and apply it to any future info box
-   whose content changes while the rest of the page stays put. */
+   never reflows the hero list beneath it. Apply the same fixed-box-
+   regardless-of-content convention to any future info box whose content
+   changes while the rest of the page stays put. */
 
 .move-info-panel {
   display: flex;

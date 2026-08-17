@@ -24,6 +24,8 @@ interface Props {
   switchingIn?: boolean;
   /** This bench hero is already queued as another active hero's replacement, so it can't also be picked here — dims the card and blocks the click independently of `targetable`. */
   locked?: boolean;
+  /** This is the player combatant whose move panel is currently on screen (FightScreen) — a pulsing glow replaces the old "X's move" text label, so the cue costs no vertical space. */
+  acting?: boolean;
 }
 
 function hpTier(fraction: number): 'hp-high' | 'hp-mid' | 'hp-low' {
@@ -66,7 +68,7 @@ function StatModBadge({ stat, mod }: { stat: StatKey; mod: number }) {
   );
 }
 
-export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onInspect, popup, selected, switchingIn, locked }: Props) {
+export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onInspect, popup, selected, switchingIn, locked, acting }: Props) {
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = Math.max(0, combatant.currentHp / maxHp);
@@ -80,6 +82,7 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onI
   if (targetable && !combatant.fainted && !locked) classes.push('targetable');
   if (selected) classes.push('selected');
   if (locked) classes.push('locked');
+  if (acting) classes.push('acting');
 
   return (
     <div

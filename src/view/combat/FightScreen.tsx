@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { heroes } from '../../data/heroes';
 import { allCombatants } from '../../data/content';
 import { moves } from '../../data/moves';
@@ -108,11 +108,20 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
   const [banner, setBanner] = useState<string | null>(null);
   const [bannerMeta, setBannerMeta] = useState<string | null>(null);
   const [popups, setPopups] = useState<Record<string, Popup>>({});
-  const [hoveredMove, setHoveredMove] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
+  /** Full move detail (description + matchups), shown on long-press — see the move-button pointer handlers below. Distinct from `selecting`, which is mid-target-selection state, not an info request. */
+  const [movePopup, setMovePopup] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
+  const longPressTimer = useRef<number | null>(null);
+  const longPressFired = useRef(false);
   const popupSeq = useRef(0);
   const beatQueue = useRef<Beat[]>([]);
   const displayState = useRef<CombatState | null>(null);
   const finalState = useRef<CombatState | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (longPressTimer.current !== null) clearTimeout(longPressTimer.current);
+    };
+  }, []);
 
   const playerActiveAlive = aliveActiveIdsOn(combat, PLAYER_SIDE);
   const enemyActiveAlive = aliveActiveIdsOn(combat, AI_SIDE);
@@ -124,6 +133,12 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
 
   // A player active slot fainted and needs a bench replacement chosen before the next round can be declared (docs/combat.md "KO handling": forced replacement is not optional, but WHICH bench hero fills it is the player's choice).
   const openReplacementSlots = ([0, 1] as const).filter((slot) => combat.active[PLAYER_SIDE][slot] === null && playerBench.length > 0);
+
+  // The player combatant whose move panel is currently on screen — glowed on the battlefield (CombatantCard's `acting` prop) instead of a "X's move" text label, so that vertical space goes back to the action panel.
+  const actingId: string | null =
+    !resolving && openReplacementSlots.length === 0 && playerActiveAlive.length > 0
+      ? playerActiveAlive[Math.min(actionStep, playerActiveAlive.length - 1)]
+      : null;
 
   const targetableIds: string[] = !selecting
     ? []
@@ -159,7 +174,6 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
     const nextPending = { ...pending, [combatantId]: action };
     setPending(nextPending);
     setSelecting(null);
-    setHoveredMove(null);
 
     if (!isPendingComplete(action)) return;
 
@@ -257,14 +271,6 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
     return 'eff-neutral';
   }
 
-  /** The move currently being shown to the player for `combatantId` — mid target-selection, or already committed — so the description/effectiveness readout has something to point at. */
-  function activeMoveFor(combatantId: string): MoveDefinition | null {
-    if (selecting?.combatantId === combatantId) return selecting.move;
-    const p = pending[combatantId];
-    if (p?.kind === 'move' && p.moveId) return moves[p.moveId];
-    return null;
-  }
-
   function resolveRoundWith(pendingMap: Record<string, PendingAction>) {
     const playerActions: Action[] = playerActiveAlive.map((id) => {
       const p = pendingMap[id];
@@ -328,7 +334,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
       setResolving(false);
       setPending({});
       setSelecting(null);
-      setHoveredMove(null);
+      setMovePopup(null);
       setActionStep(0);
       return;
     }
@@ -358,6 +364,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
           hero={hero}
           combatant={combat.combatants[id]}
           targetable={targetableIds.includes(id)}
+          acting={id === actingId}
           onSelectTarget={() => handleTargetClick(id)}
           onInspect={() => setInspecting(id)}
           popup={popups[id]}
@@ -441,31 +448,55 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
             const entry = entryFor(playerRun.roster, id);
             const hero = allCombatants[combat.combatants[id].heroId];
             const combatant = combat.combatants[id];
-            const activeMove = activeMoveFor(id);
             return (
               <div className="action-panel" key={id}>
-                <div className="action-panel-header">
-                  <h3>{hero.name}'s move</h3>
-                  {stepIndex > 0 && (
+                {stepIndex > 0 && (
+                  <div className="action-panel-header">
                     <button className="back-button" onClick={() => setActionStep(stepIndex - 1)}>
                       ← Back
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
                 <div className="move-grid">
                   {entry.unlockedMoveIds.map((moveId) => {
                     const move = moves[moveId];
                     const affordable = combatant.currentMana >= move.manaCost;
-                    const isSelected = pending[id]?.kind === 'move' && pending[id]?.moveId === moveId;
+                    const isSelected =
+                      (pending[id]?.kind === 'move' && pending[id]?.moveId === moveId) ||
+                      (selecting?.combatantId === id && selecting.move.id === moveId);
                     const hasStab = resolveStab(move.type, effectiveTypes(hero, combatant)) > 1;
                     return (
                       <button
                         key={moveId}
                         className={`move-button${isSelected ? ' selected' : ''}`}
                         disabled={!affordable}
-                        onClick={() => handleMoveClick(id, move)}
-                        onMouseEnter={() => setHoveredMove({ combatantId: id, move })}
-                        onMouseLeave={() => setHoveredMove((prev) => (prev?.move.id === move.id && prev.combatantId === id ? null : prev))}
+                        onClick={() => {
+                          if (longPressFired.current) {
+                            longPressFired.current = false;
+                            return;
+                          }
+                          handleMoveClick(id, move);
+                        }}
+                        onContextMenu={(e) => e.preventDefault()}
+                        onPointerDown={() => {
+                          longPressFired.current = false;
+                          longPressTimer.current = window.setTimeout(() => {
+                            longPressFired.current = true;
+                            setMovePopup({ combatantId: id, move });
+                          }, 500);
+                        }}
+                        onPointerUp={() => {
+                          if (longPressTimer.current !== null) {
+                            clearTimeout(longPressTimer.current);
+                            longPressTimer.current = null;
+                          }
+                        }}
+                        onPointerLeave={() => {
+                          if (longPressTimer.current !== null) {
+                            clearTimeout(longPressTimer.current);
+                            longPressTimer.current = null;
+                          }
+                        }}
                       >
                         <div className="move-row-top">
                           <span className="move-name">{move.name}</span>
@@ -498,15 +529,6 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
                       </button>
                     );
                   })}
-                </div>
-                <div className="move-description">
-                  {hoveredMove?.combatantId === id
-                    ? (hoveredMove.move.description ?? '')
-                    : selecting?.combatantId === id
-                      ? `${selecting.move.name} — Choose a target`
-                      : activeMove
-                        ? (activeMove.description ?? '')
-                        : 'Tap a move to see its effect and matchups.'}
                 </div>
                 {playerBench.length > 0 && (
                   <div className="switch-row">
@@ -572,6 +594,52 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
           </div>
         </div>
       )}
+
+      {movePopup &&
+        (() => {
+          const { move } = movePopup;
+          const combatant = combat.combatants[movePopup.combatantId];
+          const hero = allCombatants[combatant.heroId];
+          const hasStab = resolveStab(move.type, effectiveTypes(hero, combatant)) > 1;
+          return (
+            <div className="log-overlay" onClick={() => setMovePopup(null)}>
+              <div className="log-panel move-popup-panel">
+                <div className="log-panel-header">
+                  <span>{move.name}</span>
+                  <span className="move-cost">
+                    <strong>{move.manaCost}</strong>MP
+                  </span>
+                </div>
+                <div className="move-popup-meta">
+                  <TypeBadge type={move.type} />
+                  <CategoryBadge category={move.category} />
+                  {move.kind === 'damage' && move.basePower != null && (
+                    <span className="move-power">
+                      <strong>{move.basePower}</strong>BP
+                    </span>
+                  )}
+                  {hasStab && <span className="move-stab">STAB</span>}
+                </div>
+                <div className="move-popup-description">{move.description ?? 'No description.'}</div>
+                {enemyActiveAlive.length > 0 && (
+                  <div className="move-popup-matchups">
+                    {enemyActiveAlive.map((enemyId) => {
+                      const enemyHero = allCombatants[combat.combatants[enemyId].heroId];
+                      const mult = effectivenessAgainst(move, enemyId);
+                      return (
+                        <div className="move-popup-matchup-row" key={enemyId}>
+                          <span>{enemyHero.name}</span>
+                          <span className={`eff-chip ${multClass(mult)}`}>{formatMult(mult)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <div className="move-popup-hint">Tap anywhere to close</div>
+              </div>
+            </div>
+          );
+        })()}
 
       {logOpen && (
         <div className="log-overlay" onClick={() => setLogOpen(false)}>
