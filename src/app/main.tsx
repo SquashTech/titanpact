@@ -1,7 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App';
+import { initUiScale } from './uiScale';
 import './styles.css';
+
+initUiScale();
 
 const root = document.getElementById('root');
 if (!root) throw new Error('#root element missing from index.html');

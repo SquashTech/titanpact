@@ -15,6 +15,7 @@
   --crit: #ff7043;
   --physical: #d9724a;
   --magical: #8b7fe0;
+  --ui-scale: 1;
 }
 
 * {
@@ -46,9 +47,19 @@ body {
  * descriptions, effectiveness readouts, a big roster — gets added later.
  */
 .app-shell {
-  max-width: 430px;
-  height: 100vh;
-  height: 100dvh;
+  /*
+   * Fixed-px content (fonts, padding, gaps) below was authored against a
+   * ~430px-wide canvas, which reads as small on real phones once the
+   * viewport meta tag normalizes CSS px. --ui-scale (src/app/uiScale.ts)
+   * is a JS-computed zoom factor >= 1; dividing width/height by it before
+   * zooming back up reproduces the exact same on-screen footprint
+   * (min(100vw, 430px) x 100dvh) while every descendant px value renders
+   * that much bigger. Keep width/height in this "pre-zoom / zoom-back-up"
+   * form together, or the footprint math above breaks.
+   */
+  width: calc(min(100vw, 430px) / var(--ui-scale, 1));
+  height: calc(100dvh / var(--ui-scale, 1));
+  zoom: var(--ui-scale, 1);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
