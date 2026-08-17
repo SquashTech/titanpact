@@ -20,17 +20,32 @@
 import type { HeroDefinition } from '../engine/content';
 
 export const heroes: Record<string, HeroDefinition> = {
+  // Recruit-only (starter: false) since 2026-08-17 — Fire's starter slot is
+  // now Crimson, below. Retyped Fire/Iron and kept in the game as a distinct
+  // armored veteran obtainable via Guild Hall or Recruit Contract, not the
+  // start-of-run draft (same pattern as ironWarden's earlier swap for Valor).
   cinderKnight: {
     id: 'cinderKnight',
     name: 'Cinder',
-    types: ['Fire'],
+    types: ['Fire', 'Iron'],
     baseStats: { hp: 100, attack: 70, defense: 60, intelligence: 30, wisdom: 40, speed: 50, manaPool: 60, mpRegen: 5 },
     moveIds: ['cinderBite', 'fortify', 'restoreVigor'],
+    starter: false,
+  },
+  // Crimson (2026-08-17): the new Fire starter, replacing Cinder in the draft
+  // pool. A magical Int-focused fire mage rather than Cinder's Attack-focused
+  // knight build — same type, different kind of Fire hero.
+  crimson: {
+    id: 'crimson',
+    name: 'Crimson',
+    types: ['Fire'],
+    baseStats: { hp: 75, attack: 25, defense: 35, intelligence: 80, wisdom: 45, speed: 60, manaPool: 85, mpRegen: 9 },
+    moveIds: ['flareBurst', 'weaken', 'restoreVigor'],
     starter: true,
   },
   tidecaller: {
     id: 'tidecaller',
-    name: 'Tidecaller',
+    name: 'Riptide',
     types: ['Water'],
     baseStats: { hp: 90, attack: 40, defense: 50, intelligence: 75, wisdom: 65, speed: 55, manaPool: 80, mpRegen: 8 },
     moveIds: ['tidalBolt', 'healingRain', 'weaken'],
@@ -78,12 +93,28 @@ export const heroes: Record<string, HeroDefinition> = {
   // as the six above: mono-typed, small 3-move starting kits drawn from the
   // already-authored src/data/moves.ts pool, with the rest of each thematic
   // kit left for src/data/progression.ts moveTiers.
+  // Recruit-only (starter: false) since 2026-08-17 — Frost's starter slot is
+  // now Rime, below. The Abominable stays in the game as a special
+  // recruit-only hero, obtainable via Guild Hall or Recruit Contract, not the
+  // start-of-run draft.
   glacialWarden: {
     id: 'glacialWarden',
     name: 'The Abominable',
     types: ['Frost'],
     baseStats: { hp: 95, attack: 30, defense: 55, intelligence: 70, wisdom: 60, speed: 45, manaPool: 70, mpRegen: 7 },
     moveIds: ['glacialSpike', 'frostLock', 'secondWind'],
+    starter: false,
+  },
+  // Rime (2026-08-17): the new Frost starter, replacing The Abominable in the
+  // draft pool. A fast talon-and-claw hunter rather than The Abominable's
+  // slow magical bulk — same type, different kind of Frost hero. Its
+  // defensive Evolution path grafts Beast (a Frost/Beast apex predator).
+  rime: {
+    id: 'rime',
+    name: 'Rime',
+    types: ['Frost'],
+    baseStats: { hp: 80, attack: 60, defense: 40, intelligence: 45, wisdom: 60, speed: 85, manaPool: 55, mpRegen: 6 },
+    moveIds: ['frostBite', 'exposeWeakness', 'secondWind'],
     starter: true,
   },
   dawnwarden: {
@@ -157,5 +188,36 @@ export const heroes: Record<string, HeroDefinition> = {
     baseStats: { hp: 95, attack: 75, defense: 65, intelligence: 25, wisdom: 45, speed: 55, manaPool: 50, mpRegen: 6 },
     moveIds: ['ironFist', 'fortify', 'restoreVigor'],
     starter: true,
+  },
+
+  // --- Cube, Mordrax, Lucius (2026-08-17): new recruit-only heroes, not
+  // added to the start-of-run draft pool.
+  cube: {
+    id: 'cube',
+    name: 'Cube',
+    types: ['Frost'],
+    baseStats: { hp: 110, attack: 50, defense: 80, intelligence: 40, wisdom: 50, speed: 25, manaPool: 45, mpRegen: 5 },
+    moveIds: ['frostBite', 'fortify', 'stunningBlow'],
+    starter: false,
+  },
+  mordax: {
+    id: 'mordax',
+    name: 'Mordrax',
+    types: ['Nature'],
+    baseStats: { hp: 95, attack: 70, defense: 55, intelligence: 35, wisdom: 45, speed: 50, manaPool: 50, mpRegen: 5 },
+    moveIds: ['vineLash', 'rendingClaw', 'rally'],
+    starter: false,
+  },
+  // Lucius: baseline only for now. His Evolutions are deliberately
+  // unauthored (see src/data/progression.ts) — a future pass will let his
+  // paths fully retype him and grant new passives, more involved than the
+  // stat-grant-only Evolution shape every other hero here uses.
+  lucius: {
+    id: 'lucius',
+    name: 'Lucius',
+    types: ['Shadow', 'Mind'],
+    baseStats: { hp: 75, attack: 35, defense: 40, intelligence: 75, wisdom: 55, speed: 65, manaPool: 70, mpRegen: 7 },
+    moveIds: ['shadowVeil', 'curseMind', 'exposeWeakness'],
+    starter: false,
   },
 };
