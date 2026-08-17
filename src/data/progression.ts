@@ -43,6 +43,7 @@ import { EVOLUTION_LEVEL } from '../run/progression';
 export const progressionTable: ProgressionTable = {
   moveTiers: {
     cinderKnight: ['emberSlash', 'flareBurst', 'quickJab', 'fangRush', 'cinderNova', 'infernoWave'],
+    crimson: ['emberSlash', 'infernoWave', 'cinderNova', 'arcaneBolt', 'manaBurst', 'purify'],
     tidecaller: ['aquaJet', 'tsunamiCrash', 'frostLock', 'ripCurrent', 'mendWounds', 'curseMind'],
     ironWarden: ['boulderToss', 'shrapnelBlast', 'stoneQuake', 'ironFist', 'fortify'],
     wildOracle: ['wildfire', 'vineLash', 'soulRend', 'rendingClaw', 'naturesWrath'],
@@ -58,8 +59,23 @@ export const progressionTable: ProgressionTable = {
     valor: ['quickJab', 'shrapnelBlast', 'stunningBlow', 'rally'],
     revenant: ['specterHowl', 'purify', 'weaken', 'curseMind'],
     crag: ['stoneQuake', 'shrapnelBlast', 'weaken', 'rally'],
+
+    // --- Rime, Cube, Mordrax (2026-08-17) ---
+    rime: ['glacialSpike', 'frostLock', 'fangRush', 'rendingClaw', 'stunningBlow', 'mendWounds'],
+    cube: ['glacialSpike', 'frostLock', 'boulderToss', 'shrapnelBlast', 'ironFist'],
+    mordax: ['naturesWrath', 'entanglingRoots', 'savageMaul', 'fangRush', 'weaken'],
+
+    // Lucius: only his Evolutions are deferred (src/data/heroes.ts) — he
+    // still grows a movepool like any other hero below EVOLUTION_LEVEL.
+    lucius: ['corruptingTouch', 'nightmareGrasp', 'psychicLance', 'mindSpike'],
   },
   evolutions: {
+    // cinderKnight is now baseline Fire/Iron (src/data/heroes.ts, 2026-08-17)
+    // rather than mono Fire grafting Iron via Evolution — none of its three
+    // paths may carry a typeGraft any more (chooseEvolutionPath rejects a
+    // type-graft path on an already-dual-typed hero, src/run/progression.ts),
+    // so Ironclad and Thunderblaze were re-themed to amplify the existing
+    // Fire/Iron kit instead of reaching for a third type.
     cinderKnight: [
       {
         level: EVOLUTION_LEVEL,
@@ -81,17 +97,15 @@ export const progressionTable: ProgressionTable = {
             description: 'Armored frontliner; protect self/partner, high bulk.',
             statGrants: { defense: 10, hp: 10 },
             unlocksMoveIds: [],
-            typeGraft: 'Iron',
           },
           {
             id: 'cinderKnight-utility',
             heroId: 'cinderKnight',
             kind: 'utility',
             name: 'Thunderblaze',
-            description: 'Speed + priority hybrid; Storm coverage and tempo control.',
+            description: 'Molten-forged speed; sheds bulk for tempo and priority pressure.',
             statGrants: { speed: 10, mpRegen: 5 },
             unlocksMoveIds: [],
-            typeGraft: 'Storm',
           },
         ],
       },
@@ -602,5 +616,157 @@ export const progressionTable: ProgressionTable = {
         ],
       },
     ],
+
+    // --- Crimson, Rime, Cube, Mordrax (2026-08-17) ---
+    crimson: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'crimson-offensive',
+            heroId: 'crimson',
+            kind: 'offensive',
+            name: 'Pyroclasm',
+            description: 'Unrestrained magical firepower; raw Int nuke.',
+            statGrants: { intelligence: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'crimson-defensive',
+            heroId: 'crimson',
+            kind: 'defensive',
+            name: 'Cinderveil',
+            description: 'Wreathes itself in protective embers; a bulkier caster.',
+            statGrants: { wisdom: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Spirit',
+          },
+          {
+            id: 'crimson-utility',
+            heroId: 'crimson',
+            kind: 'utility',
+            name: 'Emberweave',
+            description: 'Fuses flame with raw arcane current; efficient, sustained casting.',
+            statGrants: { manaPool: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Arcane',
+          },
+        ],
+      },
+    ],
+    rime: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'rime-offensive',
+            heroId: 'rime',
+            kind: 'offensive',
+            name: 'Iceclaw',
+            description: 'Raw talon aggression; hits like a diving strike.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'rime-defensive',
+            heroId: 'rime',
+            kind: 'defensive',
+            name: 'Direwing',
+            description: 'Apex-predator instincts harden it into a Frost/Beast bulwark.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Beast',
+          },
+          {
+            id: 'rime-utility',
+            heroId: 'rime',
+            kind: 'utility',
+            name: 'Farsight',
+            description: 'Preternatural foresight; reads the whole field before it moves.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Mind',
+          },
+        ],
+      },
+    ],
+    cube: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'cube-offensive',
+            heroId: 'cube',
+            kind: 'offensive',
+            name: 'Shatterframe',
+            description: 'Sharpens its frozen edges into a genuine offensive threat.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'cube-defensive',
+            heroId: 'cube',
+            kind: 'defensive',
+            name: 'Permafrost Core',
+            description: 'Its frozen shell hardens into an armored, near-immovable block.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Iron',
+          },
+          {
+            id: 'cube-utility',
+            heroId: 'cube',
+            kind: 'utility',
+            name: 'Cryolattice',
+            description: 'Crystalline lattice growth; a slow, grinding area-control build.',
+            statGrants: { wisdom: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Stone',
+          },
+        ],
+      },
+    ],
+    mordax: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'mordax-offensive',
+            heroId: 'mordax',
+            kind: 'offensive',
+            name: 'Bloomfang',
+            description: 'Thorn and claw working together; raw aggression.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'mordax-defensive',
+            heroId: 'mordax',
+            kind: 'defensive',
+            name: 'Ironbark',
+            description: 'Bark hardens to something closer to stone than wood.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Stone',
+          },
+          {
+            id: 'mordax-utility',
+            heroId: 'mordax',
+            kind: 'utility',
+            name: 'Wildheart',
+            description: 'Leans fully into its feral side; faster, hungrier.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Beast',
+          },
+        ],
+      },
+    ],
+
+    // Lucius: intentionally no evolutions entry yet (src/data/heroes.ts) —
+    // his paths will eventually retype him entirely and grant new passives,
+    // a more involved shape than the stat-grant-only Evolution every other
+    // hero above uses. availableEvolution() simply returns null for him
+    // until that content is authored.
   },
 };

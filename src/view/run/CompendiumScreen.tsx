@@ -72,12 +72,21 @@ function CompendiumHeroCard({
   );
 }
 
+type CompendiumTab = 'starters' | 'recruitable';
+
 export function CompendiumScreen({ onClose }: Props) {
-  const heroList = Object.values(heroes);
+  /** Starters is the default tab; Recruitable is a second tab the player has to select — the two pools mirror the draft vs. Guild Hall split (HeroDefinition.starter, src/data/heroes.ts). */
+  const [tab, setTab] = useState<CompendiumTab>('starters');
+  const heroList = Object.values(heroes).filter((hero) => (tab === 'starters' ? hero.starter : !hero.starter));
   /** Which move is loaded into the single shared info panel below, and whose card it came from — lifted up here (rather than per-card) so scrolling to a different hero doesn't leave a stack of stale panels behind. */
   const [viewed, setViewed] = useState<{ heroId: string; moveId: string } | null>(null);
   const viewedHero = viewed ? (heroes[viewed.heroId] ?? null) : null;
   const viewedMove = viewed ? (moves[viewed.moveId] ?? null) : null;
+
+  function selectTab(next: CompendiumTab) {
+    setTab(next);
+    setViewed(null);
+  }
 
   return (
     <div className="log-overlay roster-mgmt-overlay" onClick={onClose}>
@@ -86,6 +95,20 @@ export function CompendiumScreen({ onClose }: Props) {
           <span>Compendium</span>
           <button className="log-close-button" onClick={onClose}>
             ✕
+          </button>
+        </div>
+        <div className="compendium-tabs">
+          <button
+            className={`compendium-tab${tab === 'starters' ? ' active' : ''}`}
+            onClick={() => selectTab('starters')}
+          >
+            Starters
+          </button>
+          <button
+            className={`compendium-tab${tab === 'recruitable' ? ' active' : ''}`}
+            onClick={() => selectTab('recruitable')}
+          >
+            Recruitable
           </button>
         </div>
         <MoveInfoPanel move={viewedMove} label={viewedHero?.name} />
