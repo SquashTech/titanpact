@@ -14,15 +14,22 @@ export interface Squad {
 
 export class SquadSelectionError extends Error {}
 
+/** How many heroes a fight fields, given the current roster size — exactly 4 (2 active + 2 bench) once the roster reaches 4, or the whole roster below that (docs/combat.md "bring-6-pick-4"). A player must never be able to under-pick and leave a recruited hero benched by omission. */
+export function requiredSquadSize(rosterSize: number): number {
+  return Math.min(4, rosterSize);
+}
+
 /**
  * Picks a squad from the roster. A fight fields 4 (2 active + 2 bench) per
- * docs/combat.md, but this accepts 1-4 picks so a roster smaller than 4
- * (early run, before 4 heroes are recruited) still produces a legal squad.
- * The first two picks become the active pair; the rest start benched.
+ * docs/combat.md; below 4 recruited heroes (early run), the whole roster must
+ * be picked — no partial pick is legal, so a player can never accidentally
+ * bench a hero by leaving them unselected. The first two picks become the
+ * active pair; the rest start benched.
  */
 export function pickSquad(roster: readonly RosterEntry[], pickedRosterIds: readonly string[]): Squad {
-  if (pickedRosterIds.length < 1 || pickedRosterIds.length > 4) {
-    throw new SquadSelectionError(`Pick 1-4 heroes for a fight, got ${pickedRosterIds.length}`);
+  const required = requiredSquadSize(roster.length);
+  if (pickedRosterIds.length !== required) {
+    throw new SquadSelectionError(`Pick exactly ${required} heroes for this fight, got ${pickedRosterIds.length}`);
   }
   if (new Set(pickedRosterIds).size !== pickedRosterIds.length) {
     throw new SquadSelectionError('Squad selection contains a duplicate rosterId');

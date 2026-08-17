@@ -1,6 +1,6 @@
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { Combatant } from '../../engine/state';
-import { effectiveTypes, getMaxHp, getMaxMana } from '../../engine/state';
+import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
 import { chosenEvolutionPaths } from '../../run/progression';
@@ -48,6 +48,7 @@ function fmtStatus(statusId: string, magnitude: number | undefined, duration: nu
  */
 export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLookup, onClose }: Props) {
   const hasModifiers = STAT_ORDER.some((stat) => (combatant.statModifiers[stat] ?? 0) !== 0);
+  const effectiveTotals = Object.fromEntries(STAT_ORDER.map((stat) => [stat, getEffectiveStat(hero, combatant, stat)])) as Record<StatKey, number>;
   const evolved = rosterEntry ? chosenEvolutionPaths(progressionTable, rosterEntry) : [];
 
   return (
@@ -82,7 +83,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
         </div>
 
         <div className="detail-section-title">Stats</div>
-        <StatBars baseStats={hero.baseStats} deltas={combatant.statModifiers} />
+        <StatBars baseStats={hero.baseStats} deltas={combatant.statModifiers} totals={effectiveTotals} />
 
         <div className="detail-section-title">Buffs / Debuffs</div>
         {hasModifiers ? (

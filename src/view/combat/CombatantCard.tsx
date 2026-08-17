@@ -1,6 +1,6 @@
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { Combatant } from '../../engine/state';
-import { effectiveTypes, getMaxHp, getMaxMana } from '../../engine/state';
+import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana } from '../../engine/state';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_ICONS, STAT_ORDER } from '../shared/StatBars';
@@ -44,9 +44,17 @@ function statusBadgeText(statusId: string, magnitude: number | undefined, durati
  * Split the active (non-zero) mods across the two top corners, two per side
  * in the common case, so neither corner outgrows the space the portrait and
  * name leave free — see .stat-mod-corner in styles.css.
+ *
+ * Derived from getEffectiveStat (effective - base), not combatant.statModifiers
+ * alone, so a status-pipeline effect like Blight (docs/conditions.md, applies a
+ * multiplicative reduction outside statModifiers) still surfaces a badge here
+ * instead of only showing up as a status-name chip.
  */
-function activeStatMods(combatant: Combatant): StatKey[] {
-  return STAT_ORDER.filter((stat) => (combatant.statModifiers[stat] ?? 0) !== 0);
+function activeStatMods(hero: HeroDefinition, combatant: Combatant): Array<{ stat: StatKey; mod: number }> {
+  return STAT_ORDER.flatMap((stat) => {
+    const mod = getEffectiveStat(hero, combatant, stat) - hero.baseStats[stat];
+    return mod !== 0 ? [{ stat, mod }] : [];
+  });
 }
 
 function StatModBadge({ stat, mod }: { stat: StatKey; mod: number }) {
@@ -63,7 +71,7 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onI
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = Math.max(0, combatant.currentHp / maxHp);
   const manaFraction = maxMana > 0 ? Math.max(0, combatant.currentMana / maxMana) : 0;
-  const activeMods = combatant.fainted ? [] : activeStatMods(combatant);
+  const activeMods = combatant.fainted ? [] : activeStatMods(hero, combatant);
   const leftMods = activeMods.slice(0, Math.ceil(activeMods.length / 2));
   const rightMods = activeMods.slice(Math.ceil(activeMods.length / 2));
 
@@ -81,15 +89,15 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onI
     >
       {leftMods.length > 0 && (
         <div className="stat-mod-corner stat-mod-corner-left">
-          {leftMods.map((stat) => (
-            <StatModBadge key={stat} stat={stat} mod={combatant.statModifiers[stat] ?? 0} />
+          {leftMods.map(({ stat, mod }) => (
+            <StatModBadge key={stat} stat={stat} mod={mod} />
           ))}
         </div>
       )}
       {rightMods.length > 0 && (
         <div className="stat-mod-corner stat-mod-corner-right">
-          {rightMods.map((stat) => (
-            <StatModBadge key={stat} stat={stat} mod={combatant.statModifiers[stat] ?? 0} />
+          {rightMods.map(({ stat, mod }) => (
+            <StatModBadge key={stat} stat={stat} mod={mod} />
           ))}
         </div>
       )}

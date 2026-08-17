@@ -5,7 +5,7 @@ import { equipment } from '../../data/equipment';
 import type { HeroDefinition } from '../../engine/content';
 import type { RunState, RosterEntry } from '../../run/state';
 import type { Squad } from '../../run/squad';
-import { pickSquad } from '../../run/squad';
+import { pickSquad, requiredSquadSize } from '../../run/squad';
 import { rosterEntryTypes } from '../../run/progression';
 import type { Encounter } from '../../run/enemyGen';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
@@ -37,11 +37,12 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
   const [pickedIds, setPickedIds] = useState<string[]>([]);
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   const [showTypeChart, setShowTypeChart] = useState(false);
+  const required = requiredSquadSize(run.roster.length);
 
   function toggle(rosterId: string) {
     setPickedIds((prev) => {
       if (prev.includes(rosterId)) return prev.filter((id) => id !== rosterId);
-      if (prev.length >= 4) return prev;
+      if (prev.length >= required) return prev;
       return [...prev, rosterId];
     });
   }
@@ -102,8 +103,12 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
         <div className="squad-vs-divider">VS</div>
 
         <div className="squad-section squad-section-player">
-          <h2 className="squad-section-title">🛡️ Pick Your Squad ({pickedIds.length}/4)</h2>
-          <p className="hint">First two picks start active; the rest start on the bench.</p>
+          <h2 className="squad-section-title">🛡️ Pick Your Squad ({pickedIds.length}/{required})</h2>
+          <p className="hint">
+            {required < 4
+              ? 'Every recruited hero must fight — first two picks start active, the rest start on the bench.'
+              : 'First two picks start active; the rest start on the bench.'}
+          </p>
           <div className="roster-grid">
             {run.roster.map((entry) => {
               const hero = heroes[entry.heroId];
@@ -150,7 +155,7 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
           </div>
         </div>
       </div>
-      <button className="resolve-button" disabled={pickedIds.length === 0} onClick={handleConfirm}>
+      <button className="resolve-button" disabled={pickedIds.length !== required} onClick={handleConfirm}>
         Start Fight
       </button>
 

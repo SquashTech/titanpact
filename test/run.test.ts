@@ -80,14 +80,27 @@ test('squad: picking 4 of 6 splits into 2 active + 2 bench, in pick order', () =
   assert.deepStrictEqual(squad.benchIds, ['cinderKnight', 'tidecaller']);
 });
 
-test('squad: fewer than 4 picks is legal (early-run roster) and leaves an empty active slot below 2 picks', () => {
+test('squad: below 4 recruited heroes, the whole roster must be picked (early-run roster) and leaves an empty active slot below 2 picks', () => {
   const run = seedRoster(['cinderKnight']);
   const squad = pickSquad(run.roster, ['cinderKnight']);
   assert.deepStrictEqual(squad.activeIds, ['cinderKnight', null]);
   assert.deepStrictEqual(squad.benchIds, []);
 });
 
-test('squad: 0 picks, 5 picks, duplicates, and unknown ids are all rejected', () => {
+test('squad: a partial pick is rejected at every roster size below the cap — a player can never accidentally leave a recruited hero out', () => {
+  const twoHero = seedRoster(['cinderKnight', 'tidecaller']);
+  assert.throws(() => pickSquad(twoHero.roster, ['cinderKnight']), SquadSelectionError);
+
+  const threeHero = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden']);
+  assert.throws(() => pickSquad(threeHero.roster, ['cinderKnight', 'tidecaller']), SquadSelectionError);
+
+  const fourHero = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle']);
+  assert.throws(() => pickSquad(fourHero.roster, ['cinderKnight', 'tidecaller', 'ironWarden']), SquadSelectionError);
+  const fullSquad = pickSquad(fourHero.roster, ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle']);
+  assert.strictEqual(fullSquad.benchIds.length, 2);
+});
+
+test('squad: 0 picks, 5 picks (roster of 5, above the 4-cap), duplicates, and unknown ids are all rejected', () => {
   const run = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger']);
   assert.throws(() => pickSquad(run.roster, []), SquadSelectionError);
   assert.throws(() => pickSquad(run.roster, run.roster.map((r) => r.rosterId)), SquadSelectionError); // 5 picks

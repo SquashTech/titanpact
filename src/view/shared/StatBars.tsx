@@ -63,8 +63,16 @@ function fmtDelta(n: number): string {
 
 interface Props {
   baseStats: StatLine;
-  /** Additive deltas layered on top of base — rank/equipment grants (run tier) or live combat buffs/debuffs. Omit for a plain base readout. */
+  /** Additive deltas layered on top of base — rank/equipment grants (run tier) or live combat buffs/debuffs. Omit for a plain base readout. Used for the "+N" annotation text even when `totals` is also given. */
   deltas?: Partial<Record<StatKey, number>>;
+  /**
+   * Final effective value per stat, when it isn't simply baseStats+deltas —
+   * e.g. Blight's multiplicative Attack/Defense/Int/Wisdom reduction or
+   * Freeze's Speed halving (engine/state.ts getEffectiveStat). Falls back to
+   * baseStats+deltas per-stat when a stat is omitted, so callers with no live
+   * combat statuses (CompendiumScreen, HeroPreviewOverlay) don't need this.
+   */
+  totals?: Partial<Record<StatKey, number>>;
 }
 
 /**
@@ -74,8 +82,8 @@ interface Props {
  * is on a fixed shared scale (STAT_SCALE_MAX) so it's meaningful both within
  * one hero's block and across different heroes' blocks.
  */
-export function StatBars({ baseStats, deltas = {} }: Props) {
-  const totals = STAT_ORDER.map((stat) => Math.max(0, baseStats[stat] + (deltas[stat] ?? 0)));
+export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {} }: Props) {
+  const totals = STAT_ORDER.map((stat) => Math.max(0, totalOverrides[stat] ?? baseStats[stat] + (deltas[stat] ?? 0)));
   const percents = STAT_ORDER.map((stat, i) => Math.min(100, (totals[i] / STAT_SCALE_MAX[stat]) * 100));
   const bestPercent = Math.max(...percents);
 
