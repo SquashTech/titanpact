@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { initUiScale } from './uiScale';
 import { FightScreen } from '../view/combat/FightScreen';
 import { TitleScreen } from '../view/run/TitleScreen';
 import { DraftScreen } from '../view/run/DraftScreen';
@@ -102,6 +103,11 @@ function trainingPointsFor(nodeType: EncounterNodeType): number {
 export function App() {
   const [playerRun, setPlayerRun] = useState<RunState>(() => createRunState(0, 40));
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
+  const shellRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (shellRef.current) return initUiScale(shellRef.current);
+  }, []);
 
   function handleClaimContract(defeated: RosterEntry): boolean {
     if (!isRecruitable(defeated.heroId, heroes)) return false;
@@ -198,7 +204,7 @@ export function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" ref={shellRef}>
       <header className="app-header">Titanpact</header>
 
       {screen.kind === 'title' && (
