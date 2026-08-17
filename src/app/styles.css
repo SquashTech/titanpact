@@ -2305,15 +2305,47 @@ body {
   width: 100%;
 }
 
-/* --- Level-up screen: fixed move info panel + uniform move tiles -------
-   The info panel sits in one fixed spot near the top of the screen (never
-   anchored to the cursor), so its content can never hang off a screen edge
-   regardless of where the tapped hero card or move tile sits.
+/* Confirm-level-up dialog (LevelUpScreen) — tapping a hero card opens this
+   instead of spending the Training Point immediately, so a stray tap can't
+   burn a point on the wrong hero. Reuses .log-overlay/.log-panel. */
+.level-up-confirm-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.level-up-confirm-portrait {
+  display: block;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+
+.level-up-confirm-name {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.level-up-confirm-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* --- Move info panel + uniform move tiles -------------------------------
+   The info panel sits in one fixed spot (never anchored to the cursor), so
+   its content can never hang off a screen edge regardless of where the
+   tapped hero card or move tile sits. Used where a persistent panel still
+   earns its keep — the level-up screen's move-replace offer (it drives
+   which move gets replaced, not just describes one), CompendiumScreen, and
+   HeroPreviewOverlay. LevelUpScreen's main hero list dropped it in favor of
+   a long-press popup (MoveTile's onLongPress) — a fixed box sized for the
+   fullest state was the main source of that screen's mobile scroll.
 
    Its height is locked (not min-height) to whatever the fullest state needs
    — label + name/type row + meta row + a 2-line-clamped description — so
    swapping between a short message, a long one, and the empty placeholder
-   never reflows the hero list beneath it. Apply the same fixed-box-
+   never reflows the content beneath it. Apply the same fixed-box-
    regardless-of-content convention to any future info box whose content
    changes while the rest of the page stays put. */
 
@@ -2432,6 +2464,12 @@ body {
   border: 1px solid var(--border);
   border-left-width: 3px;
   cursor: pointer;
+  /* Long-press opens the move-detail popup (MoveTile's onLongPress) —
+     without these, mobile browsers show their own text-selection handles
+     or a native callout menu partway through the hold. */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .move-tile:hover,

@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import type { MoveDefinition } from '../../engine/content';
 import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from './TypeBadge';
@@ -30,31 +31,63 @@ export function CategoryBadge({ category }: { category: MoveDefinition['category
  * hovering previews a move but only a click sets the persisted selection) —
  * most callers just pass the same handler to both, matching the old
  * combined `onSelect` behavior.
+ *
+ * `onLongPress` is a third, independent trigger — a ~500ms hold (mirrors
+ * FightScreen's move-button long-press) rather than hover/click, for
+ * callers where the tile sits inside a larger clickable card (e.g.
+ * LevelUpScreen's hero cards) and a plain tap must never fire it. The click
+ * that follows a completed long-press is swallowed so it can't also invoke
+ * `onClick`. Click always stops propagation regardless of which handlers
+ * are passed, since a bare tap on a tile must never bubble to a
+ * surrounding card's own click handler.
  */
 export function MoveTile({
   move,
   selected,
   onHover,
   onClick,
+  onLongPress,
 }: {
   move: MoveDefinition;
   selected?: boolean;
   onHover?: () => void;
   onClick?: () => void;
+  onLongPress?: () => void;
 }) {
+  const longPressTimer = useRef<number | null>(null);
+  const longPressFired = useRef(false);
+
+  function clearLongPressTimer() {
+    if (longPressTimer.current !== null) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }
+
   return (
     <span
       className={`move-tile${selected ? ' move-tile-selected' : ''}`}
       style={{ borderLeftColor: getTypeColor(move.type) }}
       onMouseEnter={onHover}
-      onClick={
-        onClick
-          ? (e) => {
-              e.stopPropagation();
-              onClick();
-            }
-          : undefined
-      }
+      onContextMenu={(e) => e.preventDefault()}
+      onPointerDown={() => {
+        if (!onLongPress) return;
+        longPressFired.current = false;
+        longPressTimer.current = window.setTimeout(() => {
+          longPressFired.current = true;
+          onLongPress();
+        }, 500);
+      }}
+      onPointerUp={clearLongPressTimer}
+      onPointerLeave={clearLongPressTimer}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (longPressFired.current) {
+          longPressFired.current = false;
+          return;
+        }
+        onClick?.();
+      }}
     >
       {move.name}
     </span>
