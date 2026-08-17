@@ -1,4 +1,4 @@
-import cinderKnightArt from '../../../art/cinderknight.png';
+import cinderKnightArt from '../../../art/cinder.png';
 import cragArt from '../../../art/Crag.png';
 import ironWardenArt from '../../../art/ironwarden.png';
 import mindweaverArt from '../../../art/mindweaver.png';
