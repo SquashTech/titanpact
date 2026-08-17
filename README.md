@@ -21,7 +21,7 @@ constitution and [`docs/`](./docs) for the deeper design modules.
    "NOT YET IMPLEMENTED" notes in `docs/mana.md`, `docs/combat.md` (crit), and
    `docs/progression.md` (meta-progression) before assuming the engine already
    behaves per the decision. Still genuinely open: weather's interaction with mana,
-   and the five 50/50 hero typings (Giant Lobster, Sun Priest, Crystal Guardian,
+   and the five 50/50 hero typings (Giant Lobster, Solace, Crystal Guardian,
    Hellhound, Artificer — deferred in favor of nailing down Evolution mechanics first).
    The condition/status sixth contract is now **implemented** (`docs/conditions.md`,
    `src/engine/combat/statusEngine.ts`) — 8 statuses, plus heal and buff/debuff move

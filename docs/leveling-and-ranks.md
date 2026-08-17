@@ -124,7 +124,7 @@ An Evolution is **not** "pick how much to grow." The three paths take the hero i
 different tool. Never author paths as tiered stat bumps of the same shape.
 
 **Every path must carry a single identifiable name** — a proper noun the player
-recognizes and remembers, the way Cinder Knight's three paths might be named
+recognizes and remembers, the way Cinder's three paths might be named
 **Explosive**, **Ironclad**, and **Thunderblaze**. The name, not the `kind` label
 (`offensive` / `defensive` / `utility`), is what the player sees first and what the
 build gets called in conversation about the run.

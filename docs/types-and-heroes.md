@@ -114,15 +114,15 @@ Every hero carries a `starter: boolean` (`HeroDefinition.starter`, `src/data/her
 
 A hero is in exactly one pool, never both, and never neither. This split is
 independent of type coverage — a type can have both a starter and a recruit-only
-hero (Iron currently does: Valor starts, Iron Warden is recruit-only), and recruit-only
+hero (Iron currently does: Valor starts, Warden is recruit-only), and recruit-only
 status says nothing about a hero's power level, just where you first meet them.
 
 **Current fixture state (2026-08-17):** 14 starters give **one starter per type**
 (every type except Ancient, which is intentionally near-undraftable per "Ancient is
-special" above) — Cinder Knight (Fire), Tidecaller (Water), The Abominable (Frost),
-Storm Ranger (Storm), Crag (Stone), Wild Oracle (Nature), Sun Priest (Light), Shadow
-Monk (Shadow), Runescribe (Arcane), Mindweaver (Mind), Revenant (Spirit), Valor
-(Iron), Steam Colossus (Forge), Pack Alpha (Beast). Iron Warden is the roster's first
+special" above) — Cinder (Fire), Tidecaller (Water), The Abominable (Frost),
+Squall (Storm), Crag (Stone), Sylva (Nature), Solace (Light), Vesper
+(Shadow), Glyph (Arcane), Cortex (Mind), Revenant (Spirit), Valor
+(Iron), Vulcan (Forge), Pack Alpha (Beast). Warden is the roster's first
 recruit-only hero — kept in the game, pulled out of the draft so Iron's starter slot
 is Valor instead. Expect the recruit-only list to grow as more of the authored
 53-hero roster is added; this is the seed of that split, not the finished shape of it.
@@ -152,7 +152,7 @@ stat lines, typings, and movepools are **data** (`/data/heroes.ts`) — this doc
 the rules they're authored under, not their individual values.
 
 > 🔒 **OPEN — do not resolve without designer sign-off.**
-> **Five heroes have unresolved (50/50) typings:** Giant Lobster, Sun Priest, Crystal
+> **Five heroes have unresolved (50/50) typings:** Giant Lobster, Solace, Crystal
 > Guardian, Hellhound, Artificer. Each is a genuine coin-flip between two power-source
 > readings and must not be assigned a type unilaterally — run each through the
 > power-source filter *with the designer* and lock it deliberately. Leave them

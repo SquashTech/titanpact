@@ -180,6 +180,37 @@ test('round: a second attacker declared against a target the first attacker alre
   assert.ok(events.some((e) => e.type === 'ActionBlocked' && (e as any).combatantId === 'a1' && (e as any).reason === 'noValidTarget'));
 });
 
+test('round: a move targeting a slot the enemy switched out of hits the replacement, not a fizzle', () => {
+  const state = createFightState(
+    17,
+    [{ combatantId: 'a1', heroId: 'cinderKnight', side: 'A' }],
+    [
+      { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+      { combatantId: 'b2', heroId: 'wildOracle', side: 'B' },
+      { combatantId: 'b3', heroId: 'wildOracle', side: 'B' },
+    ]
+  );
+  // Overwritten well above its real max HP so the incoming attack can't coincidentally KO it —
+  // this test is about retargeting, not survival, and getMaxHp reads from baseStats/statModifiers,
+  // never currentHp, so this doesn't disturb the HP-clamping logic it goes through.
+  const withBufferedHp = { ...state, combatants: { ...state.combatants, b3: { ...state.combatants.b3, currentHp: 1000 } } };
+  // a1 declares against b1's slot; B switches b1 out for the bench b3 (switches always resolve
+  // first, priority.ts SWITCH_PRIORITY_BRACKET) — the attack should retarget onto b3, the new
+  // occupant of that slot, exactly like 2v2 Pokemon, instead of fizzling and wasting a's turn/mana.
+  const actions: Action[] = [
+    { kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' },
+    { kind: 'switch', combatantId: 'b1', benchedCombatantId: 'b3' },
+  ];
+  const { state: next, events } = resolveRound(withBufferedHp, actions, config);
+
+  assert.ok(events.some((e) => e.type === 'MoveUsed' && (e as any).combatantId === 'a1'));
+  assert.ok(events.some((e) => e.type === 'DamageDealt' && (e as any).targetCombatantId === 'b3'));
+  assert.strictEqual(events.some((e) => e.type === 'ActionBlocked'), false);
+  assert.strictEqual(next.combatants.b1.currentHp, heroes.ironWarden.baseStats.hp); // switched-out b1 untouched
+  assert.ok(next.combatants.b3.currentHp < 1000); // b3, the replacement, took the hit
+  assert.strictEqual(next.active.B[0], 'b3');
+});
+
 test('round: bench regen ticks for a damaged benched combatant, clamped at max HP', () => {
   const state = twoVTwoFixture(15);
   const maxHp = heroes.wildOracle.baseStats.hp; // b2 is wildOracle

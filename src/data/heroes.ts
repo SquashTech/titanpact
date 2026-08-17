@@ -22,7 +22,7 @@ import type { HeroDefinition } from '../engine/content';
 export const heroes: Record<string, HeroDefinition> = {
   cinderKnight: {
     id: 'cinderKnight',
-    name: 'Cinder Knight',
+    name: 'Cinder',
     types: ['Fire'],
     baseStats: { hp: 100, attack: 70, defense: 60, intelligence: 30, wisdom: 40, speed: 50, manaPool: 60, mpRegen: 5 },
     moveIds: ['cinderBite', 'fortify', 'restoreVigor'],
@@ -41,7 +41,7 @@ export const heroes: Record<string, HeroDefinition> = {
   // Recruit Contract, not the start-of-run draft (2026-08-17).
   ironWarden: {
     id: 'ironWarden',
-    name: 'Iron Warden',
+    name: 'Warden',
     types: ['Iron'],
     baseStats: { hp: 120, attack: 55, defense: 90, intelligence: 20, wisdom: 50, speed: 30, manaPool: 40, mpRegen: 4 },
     moveIds: ['quickJab', 'stunningBlow', 'curseMind'],
@@ -49,7 +49,7 @@ export const heroes: Record<string, HeroDefinition> = {
   },
   wildOracle: {
     id: 'wildOracle',
-    name: 'Wild Oracle',
+    name: 'Sylva',
     types: ['Nature'],
     baseStats: { hp: 85, attack: 35, defense: 45, intelligence: 80, wisdom: 70, speed: 65, manaPool: 90, mpRegen: 10 },
     moveIds: ['entanglingRoots', 'mendWounds', 'secondWind'],
@@ -57,7 +57,7 @@ export const heroes: Record<string, HeroDefinition> = {
   },
   stormRanger: {
     id: 'stormRanger',
-    name: 'Storm Ranger',
+    name: 'Squall',
     types: ['Storm'],
     baseStats: { hp: 80, attack: 65, defense: 40, intelligence: 35, wisdom: 35, speed: 90, manaPool: 50, mpRegen: 6 },
     moveIds: ['galeShot', 'rally', 'exposeWeakness'],
@@ -65,7 +65,7 @@ export const heroes: Record<string, HeroDefinition> = {
   },
   shadowMonk: {
     id: 'shadowMonk',
-    name: 'Shadow Monk',
+    name: 'Vesper',
     types: ['Shadow'],
     baseStats: { hp: 75, attack: 75, defense: 45, intelligence: 40, wisdom: 40, speed: 70, manaPool: 45, mpRegen: 5 },
     moveIds: ['corruptingTouch', 'secondWind', 'purify'],
@@ -88,7 +88,7 @@ export const heroes: Record<string, HeroDefinition> = {
   },
   dawnwarden: {
     id: 'dawnwarden',
-    name: 'Sun Priest',
+    name: 'Solace',
     types: ['Light'],
     baseStats: { hp: 100, attack: 40, defense: 65, intelligence: 55, wisdom: 85, speed: 40, manaPool: 85, mpRegen: 9 },
     moveIds: ['radiantBeam', 'restoreVigor', 'purify'],
@@ -96,7 +96,7 @@ export const heroes: Record<string, HeroDefinition> = {
   },
   runescribe: {
     id: 'runescribe',
-    name: 'Runescribe',
+    name: 'Glyph',
     types: ['Arcane'],
     baseStats: { hp: 70, attack: 25, defense: 35, intelligence: 85, wisdom: 45, speed: 60, manaPool: 95, mpRegen: 10 },
     moveIds: ['arcaneBolt', 'manaBurst', 'exposeWeakness'],
@@ -104,7 +104,7 @@ export const heroes: Record<string, HeroDefinition> = {
   },
   mindweaver: {
     id: 'mindweaver',
-    name: 'Mindweaver',
+    name: 'Cortex',
     types: ['Mind'],
     baseStats: { hp: 80, attack: 30, defense: 40, intelligence: 75, wisdom: 65, speed: 55, manaPool: 65, mpRegen: 7 },
     moveIds: ['psychicLance', 'mindSpike', 'curseMind'],
@@ -112,7 +112,7 @@ export const heroes: Record<string, HeroDefinition> = {
   },
   forgewright: {
     id: 'forgewright',
-    name: 'Steam Colossus',
+    name: 'Vulcan',
     types: ['Forge'],
     baseStats: { hp: 110, attack: 75, defense: 70, intelligence: 25, wisdom: 40, speed: 35, manaPool: 45, mpRegen: 5 },
     moveIds: ['moltenHammer', 'sparkForge', 'fortify'],
@@ -147,8 +147,8 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: true,
   },
 
-  // --- Valor (2026-08-17): the new Iron starter, replacing Iron Warden in
-  // the draft pool. A leaner, faster frontliner than Iron Warden's
+  // --- Valor (2026-08-17): the new Iron starter, replacing Warden in
+  // the draft pool. A leaner, faster frontliner than Warden's
   // max-bulk tank build — same type, different kind of Iron hero.
   valor: {
     id: 'valor',

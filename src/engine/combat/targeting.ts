@@ -21,6 +21,20 @@ function activeOf(state: CombatState, side: Side): string[] {
 }
 
 /**
+ * Which (side, slot) `combatantId` occupied in `state.active` — used to find
+ * a declared target's slot as of the pre-round snapshot, before any switches
+ * resolved. Returns null if the combatant wasn't an active slot occupant in
+ * that state at all (e.g. it was already benched).
+ */
+export function slotOfActiveCombatant(state: CombatState, combatantId: string): { side: Side; slot: 0 | 1 } | null {
+  for (const side of ['A', 'B'] as const) {
+    const idx = state.active[side].indexOf(combatantId);
+    if (idx === 0 || idx === 1) return { side, slot: idx };
+  }
+  return null;
+}
+
+/**
  * A declared target (singleEnemy/singleAlly) is no longer legal by the time
  * this action comes up in priority/speed order — e.g. two attackers both
  * declared against the same lone enemy and an earlier-resolving one already
@@ -36,15 +50,40 @@ export class TargetNoLongerValidError extends Error {}
  * Resolves a TargetMode into concrete combatant ids.
  * `declaredTarget` is required for singleEnemy/singleAlly (the player's choice
  * of slot) and ignored for fixed-group modes.
+ *
+ * `declaredTargetSlot` is the (side, slot) `declaredTarget` occupied in the
+ * pre-round snapshot (before any actions resolved). Since voluntary switches
+ * always resolve before moves (priority.ts SWITCH_PRIORITY_BRACKET), the
+ * original target may have already been swapped out for a bench replacement
+ * by the time this move comes up — 2v2 Pokemon retargets the attack onto
+ * whoever now occupies that slot rather than letting the attacker waste their
+ * turn, and this hint is what lets us do the same instead of always
+ * fizzling. Only a genuinely empty slot (the target fainted and hasn't been
+ * replaced yet — replacement happens between rounds) still fizzles.
  */
 export function resolveTargets(
   state: CombatState,
   actorCombatantId: string,
   targetMode: TargetMode,
-  declaredTarget?: string | null
+  declaredTarget?: string | null,
+  declaredTargetSlot?: { side: Side; slot: 0 | 1 } | null
 ): string[] {
   const side = findCombatantSide(state, actorCombatantId);
   const enemySide = oppositeSide(side);
+
+  function resolveSingle(expectedSide: Side, label: string): string[] {
+    if (!declaredTarget) throw new Error(`${label} move requires a declared target`);
+    if (activeOf(state, expectedSide).includes(declaredTarget)) {
+      return [declaredTarget];
+    }
+    if (declaredTargetSlot && declaredTargetSlot.side === expectedSide) {
+      const replacement = state.active[expectedSide][declaredTargetSlot.slot];
+      if (replacement && !state.combatants[replacement]?.fainted) {
+        return [replacement];
+      }
+    }
+    throw new TargetNoLongerValidError(`Declared target ${declaredTarget} is not an active ${label === 'singleEnemy' ? 'enemy' : 'ally'}`);
+  }
 
   switch (targetMode) {
     case 'self':
@@ -59,20 +98,10 @@ export function resolveTargets(
     case 'allOthers':
       return [...activeOf(state, enemySide), ...activeOf(state, side).filter((id) => id !== actorCombatantId)];
 
-    case 'singleEnemy': {
-      if (!declaredTarget) throw new Error('singleEnemy move requires a declared target');
-      if (!activeOf(state, enemySide).includes(declaredTarget)) {
-        throw new TargetNoLongerValidError(`Declared target ${declaredTarget} is not an active enemy`);
-      }
-      return [declaredTarget];
-    }
+    case 'singleEnemy':
+      return resolveSingle(enemySide, 'singleEnemy');
 
-    case 'singleAlly': {
-      if (!declaredTarget) throw new Error('singleAlly move requires a declared target');
-      if (!activeOf(state, side).includes(declaredTarget)) {
-        throw new TargetNoLongerValidError(`Declared target ${declaredTarget} is not an active ally`);
-      }
-      return [declaredTarget];
-    }
+    case 'singleAlly':
+      return resolveSingle(side, 'singleAlly');
   }
 }

@@ -1464,13 +1464,6 @@ body {
   line-height: 1;
 }
 
-.equip-slot-label {
-  font-size: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--text-dim);
-}
-
 .equip-slot-item {
   font-size: 10px;
   font-weight: 600;
@@ -1981,6 +1974,57 @@ body {
   color: var(--text-dim);
 }
 
+/* --- Relics overlay ------------------------------------------------------- */
+
+.relics-panel {
+  max-width: 420px;
+}
+
+.relics-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.relic-card {
+  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 70%);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--magical);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.relic-card-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.relic-card-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.relic-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.relic-card-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 700;
+}
+
+.relic-card-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 3px;
+}
+
 /* --- Guild Hall panel ---------------------------------------------------- */
 
 .guild-hall {
@@ -2140,70 +2184,123 @@ body {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-size: 12px;
   color: var(--text-dim);
   padding-bottom: 8px;
   border-bottom: 1px solid var(--border);
 }
 
-.map-header button {
+.map-header-right {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .map-scroll {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 8px 0;
+  gap: 0;
+  padding: 12px 0;
+  background: radial-gradient(ellipse 120% 60% at 50% 100%, #241b0e 0%, transparent 70%), var(--bg);
+  border-radius: 10px;
+}
+
+.map-row-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.map-row-connector {
+  width: 2px;
+  height: 18px;
+  background: linear-gradient(180deg, transparent, var(--border) 40%, var(--border) 60%, transparent);
 }
 
 .map-row {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
+  padding: 4px 0;
 }
 
 .map-node {
-  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 70%);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--text-dim);
-  padding: 10px 8px;
-  font-size: 11px;
+  padding: 10px 10px 8px;
+  font-size: 10px;
   font-weight: 600;
   text-align: center;
-  opacity: 0.4;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  opacity: 0.35;
   cursor: default;
-  min-width: 84px;
+  min-width: 76px;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+}
+
+.map-node-icon {
+  font-size: 20px;
+  line-height: 1;
+  filter: grayscale(0.6);
+}
+
+.map-node-name {
+  color: inherit;
 }
 
 .map-node.visited {
   opacity: 0.55;
-  border-color: var(--mana);
-  color: var(--text-dim);
+  border-color: var(--node-color);
+}
+
+.map-node.visited .map-node-icon {
+  filter: none;
+  opacity: 0.6;
 }
 
 .map-node.current {
   opacity: 1;
-  border-color: var(--mana);
+  border-color: var(--node-color);
   color: var(--text);
+  box-shadow: 0 0 0 1px var(--node-color), 0 0 14px -2px var(--node-color);
+}
+
+.map-node.current .map-node-icon {
+  filter: none;
 }
 
 .map-node.reachable {
   opacity: 1;
-  border-color: var(--accent);
+  border-color: var(--node-color);
   color: var(--text);
   cursor: pointer;
+  box-shadow: 0 0 10px -4px var(--node-color);
+}
+
+.map-node.reachable .map-node-icon {
+  filter: none;
 }
 
 .map-node.reachable:hover {
-  background: #33291a;
+  transform: translateY(-2px);
+  box-shadow: 0 0 16px -2px var(--node-color);
 }
 
 .map-node.locked {
-  opacity: 0.3;
+  opacity: 0.25;
 }
 
 /* --- Title screen --------------------------------------------------------- */

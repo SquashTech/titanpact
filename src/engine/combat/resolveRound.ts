@@ -13,7 +13,7 @@ import { getMaxHp, getEffectiveStat, effectiveTypes, hasStatus } from '../state'
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
-import { resolveTargets, TargetNoLongerValidError } from './targeting';
+import { resolveTargets, slotOfActiveCombatant, TargetNoLongerValidError } from './targeting';
 import { applyVoluntarySwitch, applyBenchHpRegen, SwitchBlockedError } from './switching';
 import { applyManaRegen } from './manaRegen';
 import { resolveStatRatio, rollDamage, statKeysForCategory, type DamageModifier } from '../damage/damagePipeline';
@@ -77,7 +77,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     let targetIds: string[];
     try {
-      targetIds = resolveTargets(working, action.combatantId, move.target, action.declaredTarget ?? null).filter(
+      // Slot looked up against `state` — the pre-round snapshot — not `working`,
+      // so it reflects where the declared target stood before any switch this
+      // round already moved it to the bench (see resolveTargets' doc comment).
+      const declaredTargetSlot = action.declaredTarget ? slotOfActiveCombatant(state, action.declaredTarget) : null;
+      targetIds = resolveTargets(working, action.combatantId, move.target, action.declaredTarget ?? null, declaredTargetSlot).filter(
         (id) => !working.combatants[id]?.fainted
       );
     } catch (err) {

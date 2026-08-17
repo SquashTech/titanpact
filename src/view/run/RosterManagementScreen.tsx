@@ -13,12 +13,6 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 
 const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
-const EQUIP_SLOT_LABELS: Record<EquipmentSlot, string> = {
-  weapon: 'Weapon',
-  armor: 'Armor',
-  accessory: 'Accessory',
-};
-
 const EQUIP_SLOT_ICONS: Record<EquipmentSlot, string> = {
   weapon: '⚔️',
   armor: '🛡️',
@@ -157,7 +151,6 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
                           }}
                         >
                           <span className="equip-slot-icon">{EQUIP_SLOT_ICONS[slot]}</span>
-                          <span className="equip-slot-label">{EQUIP_SLOT_LABELS[slot]}</span>
                           <span className="equip-slot-item">{item ? item.name : 'Empty'}</span>
                         </button>
                       );

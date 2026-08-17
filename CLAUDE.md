@@ -57,7 +57,7 @@ don't silently override it.
   tier; the level-up that reaches the Evolution level instead **surfaces the Evolution
   choice** — no move that level-up. **They never directly raise stats.**
 - **Evolutions are authored branch points**, each option carrying a **single
-  identifiable name** (e.g. Cinder Knight's Explosive / Ironclad / Thunderblaze).
+  identifiable name** (e.g. Cinder's Explosive / Ironclad / Thunderblaze).
   Options differ *in kind* (defensive / offensive / utility), are **permanent within a
   run**, and gate the movepool.
 - **Starters vs. recruit-only:** every hero is flagged `starter: true/false`

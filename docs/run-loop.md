@@ -21,8 +21,10 @@ committing to act-count/pacing decisions, which are really content and balance c
 
 `src/run/map.ts` generates a deterministic (seeded) branching map:
 
-- **Row 0 (entry): 3 plain `fight` nodes.** Slay the Spire convention — the run always
-  opens on an easy, unambiguous fight, no early reward-node luck.
+- **Row 0 (entry): a single plain `fight` node.** Slay the Spire convention — the run
+  always opens on an easy, unambiguous fight, no early reward-node luck and no
+  meaningless first choice among three identical-weight openers (2026-08-17 revision;
+  was 3 nodes).
 - **Rows 1-4: 3 nodes each, weighted-random type.** Rows 1-2 draw from fight/shop/
   equipment/relic/currency/upgrade only — no `elite` yet. Rows 3-4 add `elite` to the
   pool and drop the plain-fight share accordingly.
@@ -41,7 +43,7 @@ which is the thing actually being validated in this pass.
 
 | Type | Resolution |
 |---|---|
-| `fight` | `FightScreen` vs. a generated 4-hero AI squad (`src/run/enemyGen.ts`), no bonus. Row 0 (the opening 3 nodes) draws from the non-recruitable enemy pool instead — see below. |
+| `fight` | `FightScreen` vs. a generated 4-hero AI squad (`src/run/enemyGen.ts`), no bonus. Row 0 (the single opening node) draws from the non-recruitable enemy pool instead — see below. |
 | `elite` | Same, but the AI's 4 heroes each carry a flat +10 bonus to 2 random growth stats. |
 | `boss` | `FightScreen` vs. 2 AI heroes (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. |
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. |

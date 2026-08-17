@@ -34,13 +34,13 @@ export interface MapNode {
 export interface RunMap {
   seed: number;
   nodes: Record<string, MapNode>;
-  /** Node ids grouped by row; row 0 = entry row, last row = the single boss node. */
+  /** Node ids grouped by row; row 0 = the single entry node, last row = the single boss node. */
   rows: string[][];
   startNodeIds: string[];
   bossNodeId: string;
 }
 
-const ROW_WIDTHS = [3, 3, 3, 3, 3, 1, 1] as const; // row 5 = pre-boss shop funnel, row 6 = boss
+const ROW_WIDTHS = [1, 3, 3, 3, 3, 1, 1] as const; // row 0 = single opening fight, row 5 = pre-boss shop funnel, row 6 = boss
 const BOSS_ROW = ROW_WIDTHS.length - 1;
 const FUNNEL_ROW = BOSS_ROW - 1;
 

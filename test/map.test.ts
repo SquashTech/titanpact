@@ -14,13 +14,13 @@ test('map: different seeds produce different maps', () => {
   assert.notStrictEqual(JSON.stringify(a), JSON.stringify(b));
 });
 
-test('map: row 0 is 3 plain fights, the funnel row is a single shop, the boss row is a single boss', () => {
+test('map: row 0 is a single plain fight, the funnel row is a single shop, the boss row is a single boss', () => {
   const map = generateMap(7);
   const rows = map.rows;
   const rowTypes = (r: number) => rows[r].map((id) => map.nodes[id].type);
 
-  assert.strictEqual(rows[0].length, 3);
-  assert.deepStrictEqual(rowTypes(0), ['fight', 'fight', 'fight']);
+  assert.strictEqual(rows[0].length, 1);
+  assert.deepStrictEqual(rowTypes(0), ['fight']);
 
   const funnelRow = rows.length - 2;
   const bossRow = rows.length - 1;
