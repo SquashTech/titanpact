@@ -157,7 +157,7 @@ export function App() {
 
   /**
    * Randomizes a full 4v4 (both sides drawn fresh from the fixture hero
-   * pool, no rank-up bonuses) and drops straight into FightScreen — bypasses
+   * pool, no Evolution bonuses) and drops straight into FightScreen — bypasses
    * the run/map/squad-select loop entirely so combat/UI changes can be
    * iterated on without playing through a run each time.
    */

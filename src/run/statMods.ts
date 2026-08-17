@@ -1,6 +1,6 @@
 // Shared helper for combining flat additive stat modifiers (docs/combat.md
 // "Stat modifiers are flat numeric additives"). Used wherever run-tier
-// content (equipment grants, rank-up grants) needs to fold into the same
+// content (equipment grants, Evolution grants) needs to fold into the same
 // shape the engine's stat pipeline consumes (StatModifiers, engine/state.ts).
 // Never used for damage-shaped values — those stay in the engine's separate
 // multiplier-term accumulator (engine/damage/damagePipeline.ts).

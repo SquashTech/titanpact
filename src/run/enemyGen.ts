@@ -3,8 +3,8 @@
 // playable slice used (FightScreen.tsx's old AI_RUN/AI_SQUAD constants) with
 // a per-node roster drawn from the same fixture hero pool.
 //
-// Difficulty scaling reuses RosterEntry.rankStatGrants (src/run/state.ts) —
-// the exact field rank-up branches already write to — rather than inventing
+// Difficulty scaling reuses RosterEntry.evolutionStatGrants (src/run/state.ts) —
+// the exact field Evolution paths already write to — rather than inventing
 // a second stat-bonus mechanism. "Boss = existing fixture heroes, scaled up"
 // per docs/run-loop.md's boss-content decision: no new Ancient content here,
 // just 2 heroes (no bench — a real no-cycling fight) with a bigger bonus.
@@ -70,7 +70,7 @@ export function generateEncounter(nodeType: EncounterNodeType, seed: number, her
     if (statCount > 0) {
       const { bonus, nextState } = randomStatBonus(rng, statCount, amountEach);
       rng = nextState;
-      entry = { ...entry, rankStatGrants: bonus };
+      entry = { ...entry, evolutionStatGrants: bonus };
     }
     run = addRosterEntry(run, entry);
   }

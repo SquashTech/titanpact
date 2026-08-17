@@ -30,11 +30,11 @@ interface Props {
  * fight starts (SquadSelectScreen — both the player's own roster and the
  * scouted enemy squad). Unlike combat's HeroDetailOverlay, there's no live
  * Combatant to read yet (no fight exists): effective stats are computed
- * directly from base + rank-up grants + equipped-item grants, the same
+ * directly from base + Evolution grants + equipped-item grants, the same
  * inputs buildCombatState.ts feeds the engine at fight start.
  */
 export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Props) {
-  const grants = mergeStatMods(entry.rankStatGrants, equipmentStatModifiers(entry.equipment, equipmentLookup));
+  const grants = mergeStatMods(entry.evolutionStatGrants, equipmentStatModifiers(entry.equipment, equipmentLookup));
   const [viewedMoveId, setViewedMoveId] = useState<string | null>(null);
   const viewedMove = viewedMoveId ? (moves[viewedMoveId] ?? null) : null;
 

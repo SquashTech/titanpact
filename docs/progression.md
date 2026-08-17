@@ -1,6 +1,6 @@
 # progression.md
 
-> How heroes and teams grow across a run: the level-up currency, rank-ups, equipment,
+> How heroes and teams grow across a run: the level-up currency, Evolution, equipment,
 > relics, XP, and the raise-vs-recruit axis. Rules only — grant values, XP rates, and
 > equipment/relic content are **data** (`/data`). Combat effects of these systems
 > resolve through the stat and damage pipelines in `architecture.md`.
@@ -10,12 +10,12 @@
 The core rule that keeps balance legible:
 
 - **Level-ups never directly raise a stat.** Leveling **unlocks moves** and **drives
-  rank-ups**. It does not silently pump numbers.
-- Stat growth, where it happens, comes through **rank-up branches** as explicit
+  Evolution**. It does not silently pump numbers.
+- Stat growth, where it happens, comes through **Evolution paths** as explicit
   grants — never as an invisible per-level drip.
 
 This separation is deliberate: it means a hero's power at any moment is explained by
-*visible choices* (which moves, which rank branch, which gear, which relics), not by
+*visible choices* (which moves, which Evolution path, which gear, which relics), not by
 an opaque level curve.
 
 ---
@@ -29,71 +29,78 @@ an opaque level curve.
 
 ---
 
-## Rank-ups (LOCKED rules)
+## Evolution (LOCKED rules)
 
 > **`docs/leveling-and-ranks.md` is now the authoritative spec for level-ups and
-> rank-ups** and supersedes this section where they disagree. The type-graft/shift
+> Evolution** and supersedes this section where they disagree. The type-graft/shift
 > question is reconciled (below — secondary type can shift, 2026-08-15 sign-off) and
 > implemented. **Reconciled (2026-08-16 playtest sign-off):** the leveling
 > *currency* mechanic now matches `leveling-and-ranks.md` — `src/run/progression.ts`
-> implements `levelUpHero` (spends one pooled Training Point, incrementing a new
-> `RosterEntry.level` and `rankProgress` together) plus `grantLevelUpMove` (resolves
-> that level-up's random move offer: gained outright under the 4-move cap, or an
-> accept/decline replacement choice at cap). The older two-independent-spends model
-> (`unlockTierMove` / `investRankProgress`) is removed. Spending is also now forced
-> immediately after every points grant (`LevelUpScreen`), not deferred via Manage
-> Roster. **Still open:** the bench-XP reconciliation question below is unaffected
-> by this change (points are still freely distributable to any roster hero,
-> benched or active).
+> implements `levelUpHero` (spends one pooled Training Point, incrementing
+> `RosterEntry.level`) plus `grantLevelUpMove` (resolves that level-up's random move
+> offer: gained outright under the 4-move cap, or an accept/decline replacement
+> choice at cap). The older two-independent-spends model (`unlockTierMove` /
+> `investRankProgress`) is removed. Spending is also now forced immediately after
+> every points grant (`LevelUpScreen`), not deferred via Manage Roster. **Still
+> open:** the bench-XP reconciliation question below is unaffected by this change
+> (points are still freely distributable to any roster hero, benched or active).
+>
+> **Renamed and re-scoped (2026-08-16):** what this section used to call
+> "rank-up" is now **Evolution** (docs/leveling-and-ranks.md's terminology, matched
+> here and in code — `RankUpBranch`/`chooseRankUpBranch` etc. are now
+> `EvolutionPath`/`chooseEvolutionPath`). The trigger is also simplified for the
+> current implementation pass: instead of a per-hero-authored `rankProgress`
+> threshold, every hero now Evolves at the same flat, uniform level
+> (`EVOLUTION_LEVEL`, currently 5) — and the level-up that reaches it **replaces**
+> that level-up's move offer rather than granting one alongside the Evolution
+> choice. See `leveling-and-ranks.md` Part 2 for the full rule and its scope note
+> reconciling this against `CLAUDE.md`'s variable evolution-depth design intent.
 
-- Level-ups **drive rank-ups**; rank-ups are where a hero's identity branches.
-- **Rank-up branches differ in kind, not degree.** A branch is not "the same hero but
-  bigger numbers" — branches take the hero in genuinely different directions
-  (different kits, roles, tools). Do not implement branches as tiered stat bumps.
-- **The hero's innate type is immutable across all rank-ups** (`types-and-heroes.md`).
-- **Mono is a valid terminal rank state** — a hero can be fully realized without ever
+- Level-ups **drive Evolution**; Evolution is where a hero's identity branches.
+- **Evolution paths differ in kind, not degree.** A path is not "the same hero but
+  bigger numbers" — paths take the hero in genuinely different directions
+  (different kits, roles, tools). Do not implement paths as tiered stat bumps.
+- **Every path carries a single identifiable name** (`leveling-and-ranks.md`) — e.g.
+  Cinder Knight's Explosive / Ironclad / Thunderblaze — not just a `kind` label.
+- **The hero's innate type is immutable across all Evolution** (`types-and-heroes.md`).
+- **Mono is a valid terminal state** — a hero can be fully realized without ever
   branching into a second type. Don't gate "finished" on dual-typing.
 
 ### Stat grants
 
-- Where a rank-up (or other source) grants stats, **grants are always multiples of 5
-  or 10.** Never grant 7, never grant 12. This keeps the number space clean and
-  readable.
+- Where an Evolution path (or other source) grants stats, **grants are always
+  multiples of 5 or 10.** Never grant 7, never grant 12. This keeps the number space
+  clean and readable.
 - Grants feed the **stat pipeline** (`architecture.md`) as part of effective stats.
 
-### Rank-up sequencing (LOCKED — matches the implemented model)
+### Evolution sequencing (current scope — see `leveling-and-ranks.md` for the deferred multi-node design)
 
-- A hero's rank-up line is an **ordered list of nodes**, authored per-hero in
-  `/data`. Node count is the hero's evolution depth (`CLAUDE.md`: Capstone = 0
-  nodes, Single = 1, Deep line = 2+).
-- Each node has a **threshold** and a set of branches. `rankProgress` accumulates
-  **cumulatively across the whole line** — a node's threshold is the total
-  invested progress required, not a delta since the last rank-up. (E.g. a
-  two-node hero with thresholds 3 and 8 needs 8 total invested points to reach
-  the second node, not 3 then 8 more.)
-- Node *N* becomes available once `rankProgress >= node[N].threshold` **and**
-  every prior node already has a branch chosen. Nodes are not conditioned on
-  *which* branch was picked at a prior node — every hero has one fixed
-  sequence of nodes; branch choice changes what that node grants, not which
-  node comes next. Revisit this if a hero design genuinely needs diverging
-  future nodes per earlier branch — it's a bigger data-model change, not a
-  default to reach for.
-- Choosing a branch is **free** — the cost was already paid via the points
-  spent reaching the node's threshold. Choosing is a separate action from
-  paying, and is one-shot per node.
+- A hero's Evolution line is an **ordered list of nodes** (`ProgressionTable.evolutions`,
+  `src/run/progression.ts`), authored per-hero in `/data`. **Currently every hero has
+  exactly one node**, gated on hero level rather than an accumulated-progress
+  threshold — `EVOLUTION_LEVEL` is a single flat engine constant, not per-hero data.
+  Multiple ordered nodes (Capstone = 0 / Single = 1 / Deep-line = 2+ per `CLAUDE.md`)
+  are a deferred extension of this same shape, not a different one.
+- Node *N* becomes available once `entry.level >= node[N].level` **and** every prior
+  node already has a path chosen. Nodes are not conditioned on *which* path was
+  picked at a prior node — path choice changes what that node grants, not which node
+  comes next. Revisit this if a hero design genuinely needs diverging future nodes
+  per earlier path — it's a bigger data-model change, not a default to reach for.
+- Choosing a path is **free** and one-shot per node — the point cost was already paid
+  reaching the node's trigger level via level-ups.
 
-### Type-graft branches (reconciled with `docs/leveling-and-ranks.md` — 2026-08-15)
+### Type-graft paths (reconciled with `docs/leveling-and-ranks.md` — 2026-08-15)
 
-- A rank-up branch may optionally **graft or shift the secondary type slot** on a
+- An Evolution path may optionally **graft or shift the secondary type slot** on a
   hero, per `docs/leveling-and-ranks.md` "The immutability nuance": the innate
-  **primary** type never changes; the **secondary** type slot is the rank-up
-  branch axis and can be set by one rank-up and **replaced by a later one.**
+  **primary** type never changes; the **secondary** type slot is the Evolution
+  branch axis and can be set by one Evolution and **replaced by a later one.**
 - **Only mono-type heroes have a free secondary slot to start.** A hero authored
-  with two innate types already has both type slots filled by design — a branch
+  with two innate types already has both type slots filled by design — a path
   must never offer a graft/shift to an already-dual-by-design hero. This is
   enforced at data-application time, not just by authoring convention.
-- **A graft can be overwritten by a later graft branch**, any number of times
-  across a hero's rank-up line — each application simply replaces the current
+- **A graft can be overwritten by a later graft path**, any number of times
+  across a hero's Evolution line — each application simply replaces the current
   secondary type with the new one. There is still only ever **one** secondary
   slot (Titanpact heroes cap at two types total, `types-and-heroes.md`); shifting
   isn't stacking a third type, it's swapping what occupies the second one.
@@ -103,13 +110,13 @@ an opaque level curve.
   target of an opponent's `TypeMult`) are the innate primary **plus** the current
   secondary-slot grant (if any), resolved at the combat layer — never written
   back onto the authored hero data.
-- A branch that grafts a type may **also** carry `statGrants` /
+- A path that grafts a type may **also** carry `statGrants` /
   `unlocksMoveIds` — grafting isn't mutually exclusive with the rest of a
-  branch's payload, it's one more thing a branch's "kind" can express
-  (typically fits an `offensive` or `utility` branch reframing the hero's
+  path's payload, it's one more thing a path's "kind" can express
+  (typically fits an `offensive` or `utility` path reframing the hero's
   toolkit around a new domain, but nothing mechanically requires that pairing).
 - **Mono remains a legitimate terminal state.** Not grafting is always a valid
-  choice among a node's branches — a graft branch should normally be offered
+  choice among a node's paths — a graft path should normally be offered
   alongside a non-graft alternative at that node, not forced.
 
 ---
@@ -161,8 +168,8 @@ not a reason to script the AI or nudge the player.
 **IMPLEMENTED (the generic mechanism):** `src/run/recruitment.ts`. Guild Hall spends
 `RunState.gold` on a fresh, 0-progress, ungeared `RosterEntry` from a data-driven offer
 pool (`src/data/recruitment.ts`, provisional flat costs). Recruit Contracts derive a
-claimable offer from a defeated enemy's `RosterEntry` — carrying its rank-up progress,
-chosen branches, stat grants, and type-graft, but not its equipment (an assumption,
+claimable offer from a defeated enemy's `RosterEntry` — carrying its level, chosen
+Evolution paths, stat grants, and type-graft, but not its equipment (an assumption,
 not a cited rule — equipment is roster-slot-attached, not hero-bound, and neither this
 doc nor `CLAUDE.md` says whether captured gear transfers). The trigger is real, not a
 placeholder: claiming reuses the specific map node's own generated AI roster

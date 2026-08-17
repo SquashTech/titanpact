@@ -49,11 +49,11 @@ export interface Combatant {
   statModifiers: StatModifiers;
   /**
    * Types granted on top of HeroDefinition.types by a chosen type-graft
-   * rank-up branch (docs/progression.md "Type-graft branches"). Empty for a
+   * Evolution path (docs/progression.md "Type-graft paths"). Empty for a
    * hero that hasn't grafted (including every mono hero that stays mono).
    * The authored HeroDefinition.types never changes — this is combat-tier
    * data carrying a run-tier grant across the seam, the same pattern
-   * statModifiers already uses for equipment/rank-up stat grants.
+   * statModifiers already uses for equipment/Evolution stat grants.
    */
   grantedTypes: readonly TypeId[];
   /** Active statuses, keyed by StatusId — a status either isn't present or is one instance of it (docs/conditions.md: no status stacks as multiple independent instances). */
@@ -133,7 +133,7 @@ export function getMaxMana(hero: HeroDefinition, combatant: Combatant): number {
  * Starting mana is LOCKED (docs/mana.md "Resolved", 2026-08-15): full pool.
  * This factory still takes startingHp/startingMana explicitly from the caller
  * rather than defaulting internally — callers (buildCombatState.ts, test
- * fixtures) are the ones that apply "full," computed after equipment/rank-up
+ * fixtures) are the ones that apply "full," computed after equipment/Evolution
  * grants, so a +HP/+Mana item actually starts the fight topped up.
  */
 export function createCombatant(

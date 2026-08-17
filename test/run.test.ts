@@ -15,9 +15,17 @@ import { equipItem } from '../src/run/equipment';
 import { pickSquad, SquadSelectionError } from '../src/run/squad';
 import { buildCombatState } from '../src/run/buildCombatState';
 import { getEffectiveStat } from '../src/engine/state';
-import { levelUpHero, levelUpMovePool, grantLevelUpMove, availableRankUp, chooseRankUpBranch, ProgressionError } from '../src/run/progression';
+import {
+  levelUpHero,
+  levelUpMovePool,
+  grantLevelUpMove,
+  availableEvolution,
+  chooseEvolutionPath,
+  EVOLUTION_LEVEL,
+  ProgressionError,
+} from '../src/run/progression';
 
-/** Test helper: spends `n` Training Points on a hero, ignoring each level's move offer — mirrors the old investRankProgress(n) shape for tests that only care about rankProgress crossing a threshold. */
+/** Test helper: spends `n` Training Points on a hero, ignoring each level's move offer — for tests that only care about `level` crossing EVOLUTION_LEVEL. */
 function levelUpTimes(run: import('../src/run/state').RunState, rosterId: string, n: number) {
   let next = run;
   for (let i = 0; i < n; i++) next = levelUpHero(next, rosterId);
@@ -86,7 +94,7 @@ test('squad: 0 picks, 5 picks, duplicates, and unknown ids are all rejected', ()
   assert.throws(() => pickSquad(run.roster, ['nonexistent']), SquadSelectionError);
 });
 
-// --- buildCombatState: equipment + rank-up grants feed the stat pipeline ---
+// --- buildCombatState: equipment + Evolution grants feed the stat pipeline ---
 
 test('buildCombatState: equipped item stat grants raise the combatant\'s effective stat', () => {
   let run = seedRoster(['cinderKnight', 'tidecaller']);
@@ -127,9 +135,9 @@ test('buildCombatState: same rosterId on both sides does not collide (side-prefi
   assert.strictEqual(state.active.B[0], 'B:cinderKnight');
 });
 
-// --- Level-up pool: leveling (moves + rank-up progress) -----------------
+// --- Level-up pool: leveling (moves + Evolution) -----------------
 
-test('progression: levelUpHero spends one point, bumps level + rankProgress; insufficient points is rejected', () => {
+test('progression: levelUpHero spends one point and bumps level; insufficient points is rejected', () => {
   let run = seedRoster(['cinderKnight']);
   run = { ...run, levelUpPool: 0 };
   assert.throws(() => levelUpHero(run, 'cinderKnight'), ProgressionError);
@@ -138,7 +146,6 @@ test('progression: levelUpHero spends one point, bumps level + rankProgress; ins
   const next = levelUpHero(run, 'cinderKnight');
   assert.strictEqual(next.levelUpPool, 0);
   assert.strictEqual(next.roster[0].level, 2);
-  assert.strictEqual(next.roster[0].rankProgress, 1);
 });
 
 test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move offer', () => {
@@ -161,62 +168,61 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
   assert.throws(() => grantLevelUpMove(withMove, 'cinderKnight', 'quickJab', 'notUnlocked'), ProgressionError);
 });
 
-test('progression: rank-up branch unlocks only after enough progress, grants stats, and is one-shot', () => {
+test('progression: Evolution unlocks only at EVOLUTION_LEVEL, offers exactly three paths, grants stats, and is one-shot', () => {
   let run = seedRoster(['cinderKnight']);
-  run = { ...run, levelUpPool: 3 };
+  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
 
-  assert.strictEqual(availableRankUp(progressionTable, run.roster[0]), null);
+  assert.strictEqual(availableEvolution(progressionTable, run.roster[0]), null);
 
-  run = levelUpTimes(run, 'cinderKnight', 2);
-  assert.strictEqual(availableRankUp(progressionTable, run.roster[0]), null); // 2 < threshold 3
+  run = levelUpTimes(run, 'cinderKnight', EVOLUTION_LEVEL - 2);
+  assert.strictEqual(run.roster[0].level, EVOLUTION_LEVEL - 1);
+  assert.strictEqual(availableEvolution(progressionTable, run.roster[0]), null); // level EVOLUTION_LEVEL - 1 hasn't crossed yet
 
   run = { ...run, levelUpPool: 1 };
   run = levelUpTimes(run, 'cinderKnight', 1);
-  const node = availableRankUp(progressionTable, run.roster[0]);
-  assert.ok(node, 'expected a rank-up node to be available at threshold');
-  assert.strictEqual(node!.branches.length, 2);
+  assert.strictEqual(run.roster[0].level, EVOLUTION_LEVEL);
+  const node = availableEvolution(progressionTable, run.roster[0]);
+  assert.ok(node, 'expected an Evolution node to be available at EVOLUTION_LEVEL');
+  assert.strictEqual(node!.paths.length, 3, 'CLAUDE.md: a choice of three options');
 
-  const next = chooseRankUpBranch(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-offensive');
-  const baseAttack = heroes.cinderKnight.baseStats.attack;
-  assert.strictEqual(next.roster[0].rankStatGrants.attack, 10);
-  assert.strictEqual(next.roster[0].chosenBranchIds, next.roster[0].chosenBranchIds); // sanity: array present
-  assert.ok(next.roster[0].chosenBranchIds.includes('cinderKnight-offensive'));
+  const next = chooseEvolutionPath(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-offensive');
+  assert.strictEqual(next.roster[0].evolutionStatGrants.attack, 10);
+  assert.ok(next.roster[0].chosenPathIds.includes('cinderKnight-offensive'));
 
   // one-shot: no second node authored for cinderKnight, so nothing further is offered
-  assert.strictEqual(availableRankUp(progressionTable, next.roster[0]), null);
-  void baseAttack;
+  assert.strictEqual(availableEvolution(progressionTable, next.roster[0]), null);
 });
 
-test('progression: a rank-up branch with a non-multiple-of-5 stat grant is rejected', () => {
+test('progression: an Evolution path with a non-multiple-of-5 stat grant is rejected', () => {
   let run = seedRoster(['cinderKnight']);
-  run = { ...run, levelUpPool: 3 };
-  run = levelUpTimes(run, 'cinderKnight', 3);
+  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
+  run = levelUpTimes(run, 'cinderKnight', EVOLUTION_LEVEL - 1);
 
   const badTable = {
     moveTiers: {},
-    rankUps: {
+    evolutions: {
       cinderKnight: [
         {
-          threshold: 3,
-          branches: [
-            { id: 'bad', heroId: 'cinderKnight', kind: 'offensive' as const, name: 'Bad Branch', statGrants: { attack: 7 }, unlocksMoveIds: [] },
+          level: EVOLUTION_LEVEL,
+          paths: [
+            { id: 'bad', heroId: 'cinderKnight', kind: 'offensive' as const, name: 'Bad Path', statGrants: { attack: 7 }, unlocksMoveIds: [] },
           ],
         },
       ],
     },
   };
-  assert.throws(() => chooseRankUpBranch(run, badTable, heroes, 'cinderKnight', 'bad'), ProgressionError);
+  assert.throws(() => chooseEvolutionPath(run, badTable, heroes, 'cinderKnight', 'bad'), ProgressionError);
 });
 
-// --- Type-graft rank-up branches (docs/progression.md "Type-graft branches") ---
+// --- Type-graft Evolution paths (docs/progression.md "Type-graft paths") ---
 
-test('progression: a type-graft branch grants a second type without touching the innate HeroDefinition', () => {
+test('progression: a type-graft path grants a second type without touching the innate HeroDefinition', () => {
   let run = seedRoster(['cinderKnight']);
-  run = { ...run, levelUpPool: 3 };
-  run = levelUpTimes(run, 'cinderKnight', 3);
+  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
+  run = levelUpTimes(run, 'cinderKnight', EVOLUTION_LEVEL - 1);
 
-  const next = chooseRankUpBranch(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-defensive');
-  assert.strictEqual(next.roster[0].rankTypeGraft, 'Stone');
+  const next = chooseEvolutionPath(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-defensive');
+  assert.strictEqual(next.roster[0].evolutionTypeGraft, 'Stone');
   assert.deepStrictEqual(heroes.cinderKnight.types, ['Fire']); // innate type untouched
 
   const squad = pickSquad(next.roster, ['cinderKnight']);
@@ -229,18 +235,18 @@ test('progression: a type-graft branch grants a second type without touching the
   assert.deepStrictEqual(state.combatants['A:cinderKnight'].grantedTypes, ['Stone']);
 });
 
-test('progression: a type-graft branch is rejected for an already-dual-typed hero', () => {
+test('progression: a type-graft path is rejected for an already-dual-typed hero', () => {
   let run = seedRoster(['ironWarden']); // Iron + Stone, already dual
-  run = { ...run, levelUpPool: 3 };
-  run = levelUpTimes(run, 'ironWarden', 3);
+  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
+  run = levelUpTimes(run, 'ironWarden', EVOLUTION_LEVEL - 1);
 
   const dualGraftTable = {
     moveTiers: {},
-    rankUps: {
+    evolutions: {
       ironWarden: [
         {
-          threshold: 3,
-          branches: [
+          level: EVOLUTION_LEVEL,
+          paths: [
             {
               id: 'iw-graft',
               heroId: 'ironWarden',
@@ -255,25 +261,26 @@ test('progression: a type-graft branch is rejected for an already-dual-typed her
       ],
     },
   };
-  assert.throws(() => chooseRankUpBranch(run, dualGraftTable, heroes, 'ironWarden', 'iw-graft'), ProgressionError);
+  assert.throws(() => chooseEvolutionPath(run, dualGraftTable, heroes, 'ironWarden', 'iw-graft'), ProgressionError);
 });
 
-test('progression: a later type-graft branch shifts (replaces) the secondary type rather than stacking a third', () => {
+test('progression: a later type-graft path shifts (replaces) the secondary type rather than stacking a third', () => {
   let run = seedRoster(['cinderKnight']);
-  run = { ...run, levelUpPool: 3 };
-  run = levelUpTimes(run, 'cinderKnight', 3);
-  run = chooseRankUpBranch(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-defensive');
-  assert.strictEqual(run.roster[0].rankTypeGraft, 'Stone');
+  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
+  run = levelUpTimes(run, 'cinderKnight', EVOLUTION_LEVEL - 1);
+  run = chooseEvolutionPath(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-defensive');
+  assert.strictEqual(run.roster[0].evolutionTypeGraft, 'Stone');
 
-  // A synthetic second node offering a shift to a different secondary type.
+  // A synthetic second node offering a shift to a different secondary type
+  // (exercises the future multi-node "Deep line" shape, docs/leveling-and-ranks.md).
   const shiftTable = {
     moveTiers: {},
-    rankUps: {
+    evolutions: {
       cinderKnight: [
-        { threshold: 3, branches: [] },
+        { level: EVOLUTION_LEVEL, paths: [] },
         {
-          threshold: 3,
-          branches: [
+          level: EVOLUTION_LEVEL,
+          paths: [
             {
               id: 'cinderKnight-shift',
               heroId: 'cinderKnight',
@@ -288,8 +295,8 @@ test('progression: a later type-graft branch shifts (replaces) the secondary typ
       ],
     },
   };
-  const shifted = chooseRankUpBranch(run, shiftTable, heroes, 'cinderKnight', 'cinderKnight-shift');
-  assert.strictEqual(shifted.roster[0].rankTypeGraft, 'Water'); // replaced, not stacked
+  const shifted = chooseEvolutionPath(run, shiftTable, heroes, 'cinderKnight', 'cinderKnight-shift');
+  assert.strictEqual(shifted.roster[0].evolutionTypeGraft, 'Water'); // replaced, not stacked
 
   const squad = pickSquad(shifted.roster, ['cinderKnight']);
   const aiRun = seedRoster(['tidecaller']);

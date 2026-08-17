@@ -9,14 +9,14 @@ test('enemyGen: fight encounters field 4 heroes (2 active + 2 bench) with no sta
   assert.strictEqual(run.roster.length, 4);
   assert.strictEqual(squad.activeIds.filter(Boolean).length, 2);
   assert.strictEqual(squad.benchIds.length, 2);
-  for (const entry of run.roster) assert.deepStrictEqual(entry.rankStatGrants, {});
+  for (const entry of run.roster) assert.deepStrictEqual(entry.evolutionStatGrants, {});
 });
 
 test('enemyGen: elite encounters grant +10 to exactly 2 stats per hero', () => {
   const { run } = generateEncounter('elite', 1, heroes);
   assert.strictEqual(run.roster.length, 4);
   for (const entry of run.roster) {
-    const grants = Object.values(entry.rankStatGrants);
+    const grants = Object.values(entry.evolutionStatGrants);
     assert.strictEqual(grants.length, 2);
     assert.ok(grants.every((v) => v === 10));
   }
@@ -28,7 +28,7 @@ test('enemyGen: boss encounters field 2 heroes with no bench and +20 to exactly 
   assert.strictEqual(squad.activeIds.filter(Boolean).length, 2);
   assert.strictEqual(squad.benchIds.length, 0);
   for (const entry of run.roster) {
-    const grants = Object.values(entry.rankStatGrants);
+    const grants = Object.values(entry.evolutionStatGrants);
     assert.strictEqual(grants.length, 3);
     assert.ok(grants.every((v) => v === 20));
   }

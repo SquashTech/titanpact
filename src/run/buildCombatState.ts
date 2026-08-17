@@ -1,6 +1,6 @@
 // The seam between run state and combat state (docs/architecture.md "State
 // shapes (three tiers)"). Converts a picked Squad, per side, into a
-// CombatState — applying equipped items' and rank-up grants' flat stat
+// CombatState — applying equipped items' and Evolution grants' flat stat
 // modifiers as each Combatant's starting statModifiers. This is the only
 // place run-tier content crosses into the engine's combat tier, and it only
 // ever produces plain CombatState/Combatant data — never reaches back into
@@ -25,7 +25,7 @@ export interface SquadPlacement {
    * identically to every combatant placed on this side. Relics are a
    * separate axis from equipment (docs/progression.md "Relics (team-wide)"),
    * so this is merged in alongside, not instead of, each entry's own
-   * equipment/rank-up modifiers. Omitted (or empty) for sides with no relics.
+   * equipment/Evolution modifiers. Omitted (or empty) for sides with no relics.
    */
   teamStatModifiers?: StatModifiers;
 }
@@ -39,7 +39,7 @@ function combatantIdFor(side: Side, rosterId: string): string {
  * engine default — matches the LOCKED starting-mana decision (docs/mana.md
  * "Resolved": full pool) and the every-node full-heal decision
  * (docs/run-loop.md "HP/mana fully restore between map nodes"). "Full" is
- * computed AFTER equipment/rank-up stat modifiers are applied, so a +HP or
+ * computed AFTER equipment/Evolution stat modifiers are applied, so a +HP or
  * +Mana item actually raises the fight's starting resources, not just an
  * unreached cap.
  */
@@ -54,8 +54,8 @@ function placeEntry(
   const entry = roster.find((r) => r.rosterId === rosterId);
   if (!entry) throw new Error(`${rosterId} is not on the roster`);
   const hero = heroes[entry.heroId];
-  const statModifiers = mergeStatMods(equipmentStatModifiers(entry.equipment, equipmentLookup), entry.rankStatGrants, teamStatModifiers);
-  const grantedTypes = entry.rankTypeGraft ? [entry.rankTypeGraft] : [];
+  const statModifiers = mergeStatMods(equipmentStatModifiers(entry.equipment, equipmentLookup), entry.evolutionStatGrants, teamStatModifiers);
+  const grantedTypes = entry.evolutionTypeGraft ? [entry.evolutionTypeGraft] : [];
   const withMods = { ...createCombatant(combatantIdFor(side, rosterId), entry.heroId, side, 0, 0), statModifiers, grantedTypes };
   return { ...withMods, currentHp: getMaxHp(hero, withMods), currentMana: getMaxMana(hero, withMods) };
 }
@@ -92,7 +92,7 @@ export function buildCombatState(
   };
 }
 
-/** The move ids a given combatant may currently use — pulled from the roster entry, not the static HeroDefinition, so tier unlocks and rank-up grants are reflected. */
+/** The move ids a given combatant may currently use — pulled from the roster entry, not the static HeroDefinition, so tier unlocks and Evolution grants are reflected. */
 export function unlockedMoveIdsFor(roster: readonly RosterEntry[], rosterId: string): readonly string[] {
   const entry = roster.find((r) => r.rosterId === rosterId);
   if (!entry) throw new Error(`${rosterId} is not on the roster`);

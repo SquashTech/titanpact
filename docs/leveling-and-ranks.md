@@ -1,10 +1,10 @@
 # leveling-and-ranks.md
 
 > The authoritative spec for **how heroes grow**: the post-battle level-up grant, what
-> a level-up does to a hero's movepool, and the rank-up branching system. This module
-> supersedes the level-up / rank-up sections of `progression.md` — where they
+> a level-up does to a hero's movepool, and the Evolution branching system. This module
+> supersedes the level-up / Evolution sections of `progression.md` — where they
 > disagree, this file wins, and `progression.md` should be updated to defer here.
-> Rules only; thresholds, move data, and per-hero rank branches are **data** (`/data`).
+> Rules only; thresholds, move data, and per-hero Evolution paths are **data** (`/data`).
 
 ---
 
@@ -39,8 +39,9 @@ spread them, or bank them into a hero you plan to field later.
 
 ## What a level-up does (LOCKED)
 
-A level-up affects **only the hero's movepool**. Specifically, on level-up the hero
-either:
+A level-up affects **only the hero's movepool** — with one exception carved out below:
+the level-up that takes a hero to **`EVOLUTION_LEVEL`** does not touch the movepool at
+all; it triggers Evolution instead (Part 2). Below that level, a level-up either:
 
 - **Gains a new move**, if they have fewer than four; or
 - Is offered the **option to replace one of their four existing moves** with a newly
@@ -62,69 +63,106 @@ the movepool is strictly *substitution*, never expansion.
 > low-power move of the hero's main type plus 1-2 support moves — heal/buff/status),
 > leaving room to grow into the cap via level-ups instead of starting over it. Every
 > fixture hero's `moveTiers` pool (`src/data/progression.ts`) was expanded to match, so
-> a level-up's random draw has real variety across all 6 heroes, not just 2. Rank-up
-> branches (Part 2, below) remain fixture content for only 2 of 6 heroes — a separate
+> a level-up's random draw has real variety across all 6 heroes, not just 2. Evolution
+> paths (Part 2, below) remain fixture content for only 2 of 6 heroes — a separate
 > axis from the move pool, see README "Known gaps."
 
 ### Level-ups never change stats (LOCKED)
 
 **Leveling up does not increase any stat.** No HP, no Attack, no Speed — nothing. A
 level-up is a movepool event and only a movepool event. All stat growth happens at
-**rank-up** (Part 2). This separation is what keeps a hero's raw power explained by
+**Evolution** (Part 2). This separation is what keeps a hero's raw power explained by
 visible choices rather than an opaque level curve.
 
 ### Which moves are offered
 
 The moves offered on level-up are drawn from a pool **shaped by the hero's current
-typing and rank-up history** (see Part 2 — rank-ups steer future offerings). The exact
-selection rule (weighted draw vs. authored per-level lists) is a design detail to
-specify in `/data`; the invariant is that offerings are **type-appropriate to what the
-hero currently is.**
+typing and Evolution history** (see Part 2 — an Evolution path steers future
+offerings). The exact selection rule (weighted draw vs. authored per-level lists) is a
+design detail to specify in `/data`; the invariant is that offerings are
+**type-appropriate to what the hero currently is.**
 
 ---
 
-# Part 2 — The rank-up system
+# Part 2 — The Evolution system
 
-## Trigger
+## Trigger (current scope: a single flat level, uniform across the roster)
 
-When a hero reaches a **certain level threshold**, they **rank up**. At that moment the
-player is presented with a **choice of three options**, each with different pros and
-cons. (Threshold levels, and how many rank-ups a hero can undergo across a run, are
-data — likely more than one rank tier; specify in `/data`.)
+**Every hero Evolves at the same fixed level — `EVOLUTION_LEVEL` (currently 5,
+`src/run/progression.ts`) — for the entire roster.** At that moment the player is
+presented with a **choice of three paths**, each with different pros and cons.
 
-## The three options differ in kind, not degree (LOCKED)
+> **Scope note, not a contradiction of `CLAUDE.md`.** `CLAUDE.md` describes evolution
+> depth as varying by design — *Capstone = 0 Evolutions, Single = 1, Deep line = 2+*
+> — with per-hero-authored trigger levels implied. This file's current
+> implementation is a deliberately scoped-down first pass: **every hero gets exactly
+> one Evolution, at the same uniform level, for now.** That's the "Single" shape
+> applied uniformly rather than authored per hero. Per-hero trigger levels and
+> multi-node Evolution lines (Capstone / Deep-line heroes) are **deferred, not
+> abandoned** — the data model (`ProgressionTable.evolutions: EvolutionNode[]` per
+> hero, ordered) already supports more than one node whenever that authoring work
+> happens; only the "every hero's first node sits at the same flat level" constraint
+> is the temporary part.
 
-A rank-up is **not** "pick how much to grow." The three options take the hero in
+## The level-up that reaches EVOLUTION_LEVEL does not offer a move (LOCKED)
+
+This is new behavior, not just a rename: **the level-up that brings a hero to
+`EVOLUTION_LEVEL` replaces that level-up's move offer with the Evolution choice.** No
+move is rolled or gained that level-up — the player picks a path instead. Below
+`EVOLUTION_LEVEL`, level-ups behave exactly as Part 1 describes. Once evolved, level-ups
+resume granting moves normally (or, if a later Evolution node exists for a Deep-line
+hero, the same suppression applies again at that node's level).
+
+> **Implemented (2026-08-16):** `src/run/progression.ts` `availableEvolution()` — the
+> caller (`LevelUpScreen.tsx`) checks it immediately after every `levelUpHero()` call
+> and skips the move roll entirely whenever it returns non-null.
+
+## The three paths differ in kind, not degree (LOCKED)
+
+An Evolution is **not** "pick how much to grow." The three paths take the hero in
 **genuinely different directions** — a different role, a different type identity, a
-different tool. Never author rank branches as tiered stat bumps of the same shape.
+different tool. Never author paths as tiered stat bumps of the same shape.
 
-An option may grant any of:
+**Every path must carry a single identifiable name** — a proper noun the player
+recognizes and remembers, the way Cinder Knight's three paths might be named
+**Explosive**, **Ironclad**, and **Thunderblaze**. The name, not the `kind` label
+(`offensive` / `defensive` / `utility`), is what the player sees first and what the
+build gets called in conversation about the run.
+
+A path may grant any of:
 
 - **A secondary type** (mono → dual, or a shift of the secondary slot), and/or
 - **A stat grant** — always in **multiples of 5 or 10** (`progression.md`), and/or
 - **An ability** (a passive or triggered effect).
 
-Not every option changes typing — **staying mono is a valid option** and a valid
-terminal identity. The branches are authored per hero (each hero has its own set of
-rank options), consistent with the authored-roster philosophy in `types-and-heroes.md`.
+Not every path changes typing — **staying mono is a valid path** and a valid terminal
+identity. Typing usually shifts by *adding* a secondary (mono → dual), but a path may
+also *replace* an already-granted secondary outright — e.g. a hero flavored around
+"Iron Stone" might Evolve down an **Iron / Light** path instead of the expected
+Iron / Stone, if that's the path chosen. This is the same secondary-slot-shift
+mechanic `progression.md`'s "Type-graft paths" already specifies; it just means the
+resulting pairing isn't always the "obvious" one implied by the hero's name or flavor.
+
+The paths are authored per hero (each hero has its own set of three), consistent with
+the authored-roster philosophy in `types-and-heroes.md`.
 
 ## The immutability nuance (reconciles with `types-and-heroes.md`)
 
-`types-and-heroes.md` states a hero's innate type is immutable. Rank-ups do change
-typing — so read the invariant precisely:
+`types-and-heroes.md` states a hero's innate type is immutable. Evolution paths do
+change typing — so read the invariant precisely:
 
-- **The innate PRIMARY type is immutable.** It is present in *every* rank option and
+- **The innate PRIMARY type is immutable.** It is present in *every* path offered and
   never changes. (The Snowman below is Frost in all three options.)
-- **The SECONDARY type slot is the rank-up branch axis.** Rank-ups add or shift the
-  secondary type; they never touch the primary.
+- **The SECONDARY type slot is the Evolution branch axis.** A path may add or shift the
+  secondary type; it never touches the primary.
 
 So "type is immutable" means the **innate primary** is immutable — not that typing is
-frozen. Update `types-and-heroes.md`'s flat "rank-ups never change type" wording to
-this primary/secondary distinction.
+frozen. `types-and-heroes.md`'s "Hero authoring rules" now carries this
+primary/secondary distinction rather than a flat "type never changes" claim.
 
 ## Worked example — Snowman (canonical; keep verbatim)
 
-A **Mono Frost** "Snowman" hero reaches its rank-up threshold. The three options:
+A **Mono Frost** "Snowman" hero reaches `EVOLUTION_LEVEL`. The three options:
 
 - **Become Frost / Stone**, and gain **+30 Defense.**
   → the defensive/tank branch (secondary type + stat grant).
@@ -138,20 +176,26 @@ Note how the three differ **in kind**: a wall, a weather/utility enabler, and a
 caster pivot — not three sizes of the same upgrade. Frost is retained in all three
 (the immutable primary). All stat grants are multiples of 5/10.
 
+> This example predates the "single identifiable name" rule above and hasn't had
+> names authored for its three options yet (that's real content-design work, deferred
+> to a future pass — see `types-and-heroes.md`'s open five-50/50-heroes note for the
+> same kind of deferred content work). Keep the mechanical shape verbatim; add names
+> when the Snowman's paths get finalized.
+>
 > The Snow-summon ability presupposes the **weather subsystem**, which is flagged
 > 🔒 OPEN in `mana.md` (weather dependency). The example is canonical, but that
 > option's ability can only be implemented once weather is signed off.
 
-## Rank-ups steer future level-up offerings (LOCKED behavior)
+## Evolution steers future level-up offerings (LOCKED behavior)
 
-A rank-up **influences which moves are later offered on level-up.** Branching into a
-new secondary type **opens that type's moves** for future level-up offers — e.g. the
-**Frost / Arcane** Snowman will subsequently be offered **Arcane attacks** it could not
-have received as Mono Frost.
+Choosing an Evolution path **influences which moves are later offered on level-up.**
+Branching into a new secondary type **opens that type's moves** for future level-up
+offers — e.g. the **Frost / Arcane** Snowman will subsequently be offered **Arcane
+attacks** it could not have received as Mono Frost.
 
-This makes the rank-up choice compounding: it is not just an immediate package of
+This makes the Evolution choice compounding: it is not just an immediate package of
 type/stats/ability, it **redirects the hero's whole future movepool** toward the
-chosen identity. The branch you *don't* pick does not open its offerings. (Whether the
+chosen identity. The path you *don't* pick does not open its offerings. (Whether the
 retained primary's moves continue to be offered alongside the new type's — expected
 yes — and the exact weighting are `/data` details to specify.)
 
@@ -162,17 +206,21 @@ yes — and the exact weighting are `/data` details to specify.)
 This module specifies **rules**. The following are **data** (`/data`), not doc content:
 
 - Level-up counts awarded per encounter tier (normal vs. elite).
-- Rank-up level thresholds and the number of rank tiers per hero.
-- Each hero's authored three-option rank branches (types, grants, abilities).
-- Move offer pools / weighting per type and per rank path.
+- Each hero's authored three-path Evolution (names, types, grants, abilities).
+- Move offer pools / weighting per type and per Evolution path.
+- **Deferred:** per-hero Evolution trigger levels and multi-node Evolution lines
+  (Capstone / Deep-line depth) — not yet authorable; `EVOLUTION_LEVEL` is presently a
+  single engine-level constant, not per-hero data. Promoting it to per-hero data (and
+  allowing more than one ordered node) is the next scope expansion of this system, not
+  a rule change — the `EvolutionNode[]`-per-hero shape is already there to support it.
 
 ## Cross-references
 
 - `progression.md` — pooled currency framing, equipment, relics, raise-vs-recruit.
-  **Its level-up/rank-up sections defer to this file.**
+  **Its level-up/Evolution sections defer to this file.**
 - `types-and-heroes.md` — the 15-type system and the primary/secondary immutability
   nuance above; mono as a valid terminal state.
 - `combat.md` — how the resulting stats/moves resolve in a fight (stat pipeline, move
   resolution).
 - `mana.md` — the weather subsystem the Snowman's Snow ability depends on (🔒 OPEN).
-- `architecture.md` — rank-ups/level-ups mutate **run state**, not combat state.
+- `architecture.md` — Evolution/level-ups mutate **run state**, not combat state.

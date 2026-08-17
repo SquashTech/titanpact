@@ -8,7 +8,7 @@
 // - Recruit Contract (recruit): claim a hero straight off a beaten enemy's
 //   RosterEntry, for free. "Arrives with branches partially locked"
 //   (CLAUDE.md) falls out for free from the existing one-shot
-//   chosenBranchIds model (progression.ts) — nothing extra to enforce here.
+//   chosenPathIds model (progression.ts) — nothing extra to enforce here.
 //   Equipment is deliberately NOT carried over: gear is modeled as attached
 //   to the roster slot, not the hero (equipment.ts), and neither CLAUDE.md
 //   nor progression.md specifies what happens to a captured hero's gear —
@@ -70,8 +70,8 @@ export function recruitFromGuildHall(run: RunState, offer: GuildHallOffer, roste
 
 /**
  * Derives a claimable contract offer from a defeated enemy's RosterEntry:
- * carries over its heroId, unlocked moves, and rank-up state (progress,
- * chosen branches, stat grants, type-graft) — the "partially locked" veteran
+ * carries over its heroId, unlocked moves, and Evolution state (level,
+ * chosen paths, stat grants, type-graft) — the "partially locked" veteran
  * build — but not its equipment or its rosterId (the caller assigns a fresh
  * one for the player's roster).
  */

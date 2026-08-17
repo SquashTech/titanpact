@@ -40,19 +40,26 @@ don't silently override it.
   Spirit, Iron, Forge, Beast, Ancient.
 - **Type = the domain a hero's power draws from, not what its body is made of.** This reframe
   is the identity filter for the whole roster — apply it everywhere.
-- A hero's **innate type is immutable.** Rank-ups may *add* a second type (type-graft); they
-  never change the innate one.
+- A hero's **innate primary type is immutable.** Evolution may add or shift a *secondary*
+  type (type-graft); it never changes the innate primary.
 
 ### Heroes & progression
 - Heroes are **named, authored, fixed specialists** (~53 concepts). Not procedurally generated.
 - **Mono typing is a valid terminal state**, not a larval stage. Precedent: Pokémon
   Normal/Water/Bug. A numerically common mono type is not a design flaw.
-- Evolution depth varies by design: Capstone = 0 rank-ups, Single = 1, Deep line = 2+.
+- Evolution depth varies by design: Capstone = 0 Evolutions, Single = 1, Deep line = 2+.
+  **Current implementation scope:** every hero gets exactly one Evolution, triggered at
+  a flat level (`EVOLUTION_LEVEL`, currently 5) uniform across the whole roster — this
+  is the "Single" shape applied everywhere as a first pass. Per-hero trigger levels and
+  Capstone/Deep-line depth are deferred, not abandoned (`docs/leveling-and-ranks.md`).
 - **Level-ups are a pooled currency** distributed freely after each battle (benched heroes
-  included). They do **exactly two things**: progress a hero toward a rank-up, and unlock moves
-  from the current tier. **They never directly raise stats.**
-- **Rank-ups are authored branch points.** Options differ *in kind* (defensive / offensive /
-  utility), are **permanent within a run**, and gate the movepool.
+  included). Below the Evolution level, a level-up **unlocks a move** from the current
+  tier; the level-up that reaches the Evolution level instead **surfaces the Evolution
+  choice** — no move that level-up. **They never directly raise stats.**
+- **Evolutions are authored branch points**, each option carrying a **single
+  identifiable name** (e.g. Cinder Knight's Explosive / Ironclad / Thunderblaze).
+  Options differ *in kind* (defensive / offensive / utility), are **permanent within a
+  run**, and gate the movepool.
 - **Recruitment:** Recruit Contracts (claim a beaten hero; arrives with branches partially
   locked) or Guild Halls (spend gold; choose from a pool; arrives underleveled and fully
   customizable). Guild heroes have decaying runway value; contract heroes have flat value.
@@ -106,8 +113,8 @@ what's still unimplemented:
   resets, permanent unlocks persist (`docs/progression.md`).
 - Mana resource model/regen/starting state: **per-hero pool, regen every round for
   active + bench, full starting pool** (`docs/mana.md`).
-- Five "50/50" heroes: general shape decided — **mono base, second type via a
-  rank-up type-graft branch** (`docs/progression.md` "Type-graft branches"), not
+- Five "50/50" heroes: general shape decided — **mono base, second type via an
+  Evolution type-graft path** (`docs/progression.md` "Type-graft paths"), not
   inherent duals. Which specific type each hero starts mono as is still open (below).
 - Run structure (2026-08-16 sign-off): **a Slay the Spire-style branching map** —
   reward/shop/fight/elite nodes converging on an end-of-act **Ancient** boss fight

@@ -27,8 +27,8 @@ test('recruitment: Guild Hall recruit spends gold and adds a fresh 0-progress en
   const entry = next.roster.find((r) => r.rosterId === 'ironWarden');
   assert.ok(entry);
   assert.strictEqual(entry!.heroId, 'ironWarden');
-  assert.strictEqual(entry!.rankProgress, 0);
-  assert.deepStrictEqual(entry!.chosenBranchIds, []);
+  assert.strictEqual(entry!.level, 1);
+  assert.deepStrictEqual(entry!.chosenPathIds, []);
 });
 
 test('recruitment: Guild Hall recruit rejects insufficient gold', () => {
@@ -47,23 +47,23 @@ test('recruitment: Guild Hall recruit still enforces the roster cap', () => {
 
 // --- Recruit Contracts (recruit) -----------------------------------------
 
-test('recruitment: a contract offer carries over rank-up state but not equipment or rosterId', () => {
+test('recruitment: a contract offer carries over Evolution state but not equipment or rosterId', () => {
   const run = seedRoster(['ironWarden']);
   const defeated = {
     ...run.roster[0],
     equipment: equipItem(run.roster[0].equipment, equipment.ironBlade),
-    rankProgress: 5,
-    chosenBranchIds: ['ironWarden-veteran'],
-    rankStatGrants: { defense: 10 },
-    rankTypeGraft: null,
+    level: 5,
+    chosenPathIds: ['ironWarden-veteran'],
+    evolutionStatGrants: { defense: 10 },
+    evolutionTypeGraft: null,
   };
 
   const offer = deriveContractOffer(defeated);
   assert.strictEqual((offer as any).rosterId, undefined);
   assert.strictEqual((offer as any).equipment, undefined);
-  assert.strictEqual(offer.rankProgress, 5);
-  assert.deepStrictEqual(offer.chosenBranchIds, ['ironWarden-veteran']);
-  assert.deepStrictEqual(offer.rankStatGrants, { defense: 10 });
+  assert.strictEqual(offer.level, 5);
+  assert.deepStrictEqual(offer.chosenPathIds, ['ironWarden-veteran']);
+  assert.deepStrictEqual(offer.evolutionStatGrants, { defense: 10 });
 });
 
 test('recruitment: claiming a contract is free in gold and adds the offer ungeared under a fresh rosterId', () => {
@@ -72,7 +72,7 @@ test('recruitment: claiming a contract is free in gold and adds the offer ungear
     ...run.roster[0],
     heroId: 'ironWarden',
     equipment: equipItem(run.roster[0].equipment, equipment.ironBlade),
-    rankProgress: 5,
+    level: 5,
   };
   const offer = deriveContractOffer(defeated);
 
@@ -82,7 +82,7 @@ test('recruitment: claiming a contract is free in gold and adds the offer ungear
   const entry = next.roster.find((r) => r.rosterId === 'claimed-ironWarden');
   assert.ok(entry);
   assert.strictEqual(entry!.heroId, 'ironWarden');
-  assert.strictEqual(entry!.rankProgress, 5);
+  assert.strictEqual(entry!.level, 5);
   assert.deepStrictEqual(entry!.equipment, { weapon: null, armor: null, accessory: null });
 });
 

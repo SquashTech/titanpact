@@ -132,7 +132,7 @@ export interface MoveDefinition {
 
 /**
  * Invariant (CLAUDE.md "Stat modifiers are flat additive integers, multiples
- * of 5 or 10"): any stat grant (rank-up, equipment, etc.) must satisfy this.
+ * of 5 or 10"): any stat grant (Evolution, equipment, etc.) must satisfy this.
  * Applies to GRANTS, not necessarily to authored base stat lines.
  */
 export function isValidFlatStatGrant(amount: number): boolean {
@@ -142,7 +142,7 @@ export function isValidFlatStatGrant(amount: number): boolean {
 export interface HeroDefinition {
   id: string;
   name: string;
-  /** Innate type(s). Immutable across all rank-ups (CLAUDE.md "Heroes & progression"). */
+  /** Innate type(s). Immutable across all Evolutions (CLAUDE.md "Heroes & progression"). */
   types: readonly [TypeId] | readonly [TypeId, TypeId];
   baseStats: StatLine;
   /** Move ids currently unlocked for this hero instance. */

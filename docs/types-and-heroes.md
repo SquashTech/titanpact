@@ -105,10 +105,10 @@ vocabulary) that Blight depended on is now implemented (`src/engine/combat/statu
 
 - **Apply the power-source filter first** (top of this doc) to assign type.
 - **The innate PRIMARY type is immutable.** Progression never changes it — it's
-  present across every rank-up option a hero is ever offered. **The SECONDARY type
-  slot is the rank-up branch axis**: rank-ups may add or shift it, but never touch
-  the primary (`docs/leveling-and-ranks.md` "The immutability nuance" — the
-  authoritative spec for how this works; `progression.md` "Type-graft branches" is
+  present across every Evolution path a hero is ever offered. **The SECONDARY type
+  slot is the Evolution branch axis**: an Evolution path may add or shift it, but
+  never touch the primary (`docs/leveling-and-ranks.md` "The immutability nuance" —
+  the authoritative spec for how this works; `progression.md` "Type-graft paths" is
   being reconciled with it, see that section's note).
 - **Mono is a valid terminal state.** A mono-type hero that never gains a second type
   is a legitimate, finished design identity — not an unfinished or "larval" one.

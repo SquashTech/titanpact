@@ -94,7 +94,7 @@ which is the thing actually being validated in this pass.
   permanently bricked for the rest of the run, with no rest-site node type (see below)
   and no in-run way back. That's not tension, it's a dead roster slot. Per user
   direction, persistence was removed: `buildCombatState.ts`'s `placeEntry` now always
-  starts every fielded combatant at full HP/mana (computed after equipment/rank-up
+  starts every fielded combatant at full HP/mana (computed after equipment/Evolution
   stat modifiers, same as the LOCKED full-starting-pool decision in `mana.md`).
   `RosterEntry` no longer carries `currentHp`/`currentMana` fields, and
   `runProgress.ts`'s `syncRosterVitals` was deleted. If run-length resource tension is
@@ -128,7 +128,7 @@ which is the thing actually being validated in this pass.
 - **Training Points now paid out per fight win, not only via `upgradeReward` nodes
   (2026-08-16, second playtest).** `App.tsx`'s `trainingPointsFor` grants 2 for a
   normal `fight`, 3-4 for `elite`/`boss` — `upgradeReward` nodes remain a second,
-  separate source (per user direction: valuable as a strategic pull toward rank-ups
+  separate source (per user direction: valuable as a strategic pull toward Evolution
   over gearing/relics, not redundant with the per-fight grant). Spending is also no
   longer deferred: `src/view/run/LevelUpScreen.tsx` forces every earned point to be
   allocated before the run can continue, replacing the old "spend whenever via Manage

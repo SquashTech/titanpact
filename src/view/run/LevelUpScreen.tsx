@@ -7,8 +7,8 @@ import {
   levelUpHero,
   levelUpMovePool,
   grantLevelUpMove,
-  availableRankUp,
-  chooseRankUpBranch,
+  availableEvolution,
+  chooseEvolutionPath,
   MOVE_CAP,
   ProgressionError,
 } from '../../run/progression';
@@ -69,6 +69,19 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     } catch (err) {
       if (err instanceof ProgressionError) return;
       throw err;
+    }
+
+    // Evolution replaces the move offer, not adds to it
+    // (docs/leveling-and-ranks.md "the hero is not offered a new move" at
+    // Evolution) — if this level-up left an Evolution pending (whether it
+    // just became available, or one was already sitting unresolved), skip
+    // the move roll entirely; the inline path-choice UI below handles it.
+    const nextEntry = next.roster.find((r) => r.rosterId === rosterId)!;
+    if (availableEvolution(progressionTable, nextEntry)) {
+      onRunChange(next);
+      setLastMessage(`${hero.name} reached level ${newLevel} and is ready to evolve!`);
+      setViewedMoveId(null);
+      return;
     }
 
     if (pool.length === 0) {
@@ -141,7 +154,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
           <div className="training-hero-list">
             {run.roster.map((entry) => {
               const hero = heroes[entry.heroId];
-              const node = availableRankUp(progressionTable, entry);
+              const node = availableEvolution(progressionTable, entry);
               const canLevelUp = run.levelUpPool >= 1;
               return (
                 <div
@@ -187,15 +200,15 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
                   </div>
                   {node && (
                     <div className="training-row" onClick={(e) => e.stopPropagation()}>
-                      <span className="hint">Rank-up ready — choose a branch:</span>
-                      {node.branches.map((branch) => (
+                      <span className="hint">Ready to evolve — choose a path:</span>
+                      {node.paths.map((path) => (
                         <button
-                          key={branch.id}
-                          className={`rankup-branch-button rankup-${branch.kind}`}
-                          onClick={() => onRunChange(chooseRankUpBranch(run, progressionTable, heroes, entry.rosterId, branch.id))}
+                          key={path.id}
+                          className={`evolution-path-button evolution-${path.kind}`}
+                          onClick={() => onRunChange(chooseEvolutionPath(run, progressionTable, heroes, entry.rosterId, path.id))}
                         >
-                          <span className="rankup-branch-name">{branch.name}</span>
-                          <span className="rankup-branch-kind">{branch.kind}</span>
+                          <span className="evolution-path-name">{path.name}</span>
+                          <span className="evolution-path-kind">{path.kind}</span>
                         </button>
                       ))}
                     </div>

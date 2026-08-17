@@ -22,7 +22,7 @@ constitution and [`docs/`](./docs) for the deeper design modules.
    `docs/progression.md` (meta-progression) before assuming the engine already
    behaves per the decision. Still genuinely open: weather's interaction with mana,
    and the five 50/50 hero typings (Giant Lobster, Sun Priest, Crystal Guardian,
-   Hellhound, Artificer — deferred in favor of nailing down rank-up mechanics first).
+   Hellhound, Artificer — deferred in favor of nailing down Evolution mechanics first).
    The condition/status sixth contract is now **implemented** (`docs/conditions.md`,
    `src/engine/combat/statusEngine.ts`) — 8 statuses, plus heal and buff/debuff move
    kinds — with its own remaining open sub-questions resolved provisionally per the
@@ -31,7 +31,7 @@ constitution and [`docs/`](./docs) for the deeper design modules.
    (`src/run/recruitment.ts`, `docs/progression.md` "raise-vs-recruit axis"): Guild Hall
    spends gold on a fresh 0-progress hero from a data-driven offer pool
    (`src/data/recruitment.ts`); Recruit Contracts claim a defeated enemy's exact
-   rank-up state (progress, branches, stat grants, type-graft), ungeared. Both
+   Evolution state (level, chosen paths, stat grants, type-graft), ungeared. Both
    are wired into the playable slice (`ShopNodeScreen.tsx` on `shop` map nodes,
    claim buttons on `FightScreen`'s victory overlay) and covered by
    `test/recruitment.test.ts`. Contract offers have a real trigger — claiming reuses
@@ -94,21 +94,23 @@ Covered by `test/statuses.test.ts`.
 - **Bring-6-pick-4 squad selection** (`squad.ts`): picks 1-4 roster heroes into a
   {2 active, 2 bench} `Squad`.
 - **The engine seam** (`buildCombatState.ts`): turns a `Squad` + roster into a real
-  `CombatState`, applying equipment/rank-up stat grants as each combatant's starting
+  `CombatState`, applying equipment/Evolution stat grants as each combatant's starting
   modifiers.
 - **The pooled level-up currency** (`progression.ts`): `levelUpHero` spends one point to
-  level a roster entry up (increments `RosterEntry.level` and `rankProgress` together);
-  `grantLevelUpMove` resolves that level-up's move offer — a random pick from the
-  hero's `moveTiers` pool, gained outright under the 4-move cap or an accept/decline
-  replacement at the cap (`MOVE_CAP`). Rank-up branches (unchanged) grant permanent
-  stats and are one-shot per node once `rankProgress` crosses a threshold.
+  level a roster entry up (increments `RosterEntry.level`); `grantLevelUpMove` resolves
+  that level-up's move offer — a random pick from the hero's `moveTiers` pool, gained
+  outright under the 4-move cap or an accept/decline replacement at the cap
+  (`MOVE_CAP`). **Below `EVOLUTION_LEVEL` only** — the level-up that reaches it
+  (currently level 5, flat and uniform across every hero) skips the move offer
+  entirely and instead surfaces the hero's Evolution: a one-shot choice of three
+  named paths (`chooseEvolutionPath`) granting permanent stats and/or a type-graft.
   **`moveTiers` pool content now covers all 6 fixture heroes** (`src/data/
   progression.ts`), each drawing from a handful of thematically-appropriate moves
-  beyond their starting kit. **Rank-up branches remain fixture data for only 2 of the
+  beyond their starting kit. **Evolution paths remain fixture data for only 2 of the
   6** (cinderKnight, tidecaller) — a separate axis from the move pool — see "Known
   gaps."
 - **The recruitment economy** (`recruitment.ts`): Guild Hall (gold, fresh hero) and
-  Recruit Contract (claims a defeated hero's exact rank-up state, ungeared) acquisition
+  Recruit Contract (claims a defeated hero's exact Evolution state, ungeared) acquisition
   paths, both enforcing the roster cap via the same `addRosterEntry` used everywhere
   else. `RunState.gold` funds the Guild Hall side; Recruit Contracts spend a separate,
   scarce `RunState.recruitContracts` pool instead (starts at 1/run, toppable via a
@@ -117,7 +119,7 @@ Covered by `test/statuses.test.ts`.
   `relics.ts` — `docs/run-loop.md`): a seeded, Slay the Spire-style branching map for
   one act, 8 node types (fight/elite/boss + shop/equipment/relic/currency/upgrade
   reward), a seeded per-node AI encounter generator (reusing `RosterEntry.
-  rankStatGrants` for elite/boss difficulty scaling — no new mechanism), minimal
+  evolutionStatGrants` for elite/boss difficulty scaling — no new mechanism), minimal
   team-wide stat-only relics, and HP/mana that persist between nodes
   (`RosterEntry.currentHp/currentMana`, clamped to current max on read, never healed by
   a cap increase).
@@ -175,13 +177,16 @@ from one hero to another.
 - **Equipment only wires the stat-pipeline half.** Damage-shaped equipment bonuses (the
   pipeline-2 multiplier term) need the same hook-and-condition system as abilities,
   which isn't built — see "Next steps" #3.
-- **Rank-up branches are fixture content for 2 of 6 heroes** (cinderKnight,
-  tidecaller — `src/data/progression.ts`); no branch unlocks a move on choice, to keep
-  the level-up move pool and rank-up stat grants distinct axes. One branch
-  (cinderKnight's "Ember Bulwark") grafts a second type (Stone) to exercise the
-  type-graft mechanic (`docs/progression.md` "Type-graft branches") end to end. The
-  other 4 fixture heroes have nothing to invest in yet; that's a valid empty state, not
-  a bug.
+- **Evolution paths are fixture content for 2 of 6 heroes** (cinderKnight,
+  tidecaller — `src/data/progression.ts`), each with the full three named paths
+  (one offensive, one defensive, one utility) the framework requires; no path unlocks
+  a move on choice, to keep the level-up move pool and Evolution stat grants distinct
+  axes. Both heroes' defensive paths (cinderKnight's "Ember Bulwark", tidecaller's
+  "Glacial Bastion") graft a second type to exercise the type-graft mechanic
+  (`docs/progression.md` "Type-graft paths") end to end. The other 4 fixture heroes
+  have nothing to invest in yet; that's a valid empty state, not a bug. None of this
+  is authored-canon content — see `docs/leveling-and-ranks.md` Part 2 for the rules
+  the real 53-hero roster's Evolutions need to follow.
 - ~~Fixture heroes already exceed the 4-move cap at roster creation.~~ **Fixed
   (2026-08-16):** `heroes.ts` starting kits are now trimmed to 3 moves each (a
   low-power move of the hero's main type plus 1-2 support moves), leaving room to grow

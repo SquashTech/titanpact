@@ -25,34 +25,29 @@ export interface RosterEntry {
    * Hero level (docs/leveling-and-ranks.md): incremented by one for every
    * Training Point spent on this hero (progression.ts levelUpHero). Starts at
    * 1 — not an XP bar, a plain count of how many times this hero has been
-   * leveled this run.
+   * leveled this run. Also the sole gate on Evolution availability
+   * (progression.ts EVOLUTION_LEVEL) — there is no separate progress counter.
    */
   level: number;
+  /** Evolution path ids chosen so far, in order. Empty = not yet evolved. */
+  chosenPathIds: string[];
   /**
-   * Rank-up threshold progress — tracks 1:1 with `level` (progression.ts
-   * levelUpHero increments both together; there is no separate invest step
-   * anymore, docs/leveling-and-ranks.md).
-   */
-  rankProgress: number;
-  /** Rank-up branch ids chosen so far, in order. Empty = still base rank. */
-  chosenBranchIds: string[];
-  /**
-   * Permanent stat grants accumulated from chosen rank-up branches
+   * Permanent stat grants accumulated from chosen Evolution paths
    * (docs/progression.md "Stat grants" — always multiples of 5/10). Kept
-   * separate from equipment because rank-ups are "permanent within a run"
+   * separate from equipment because Evolutions are "permanent within a run"
    * (CLAUDE.md) while equipment strips on termination.
    */
-  rankStatGrants: Partial<Record<StatKey, number>>;
+  evolutionStatGrants: Partial<Record<StatKey, number>>;
   /**
    * The hero's current secondary-type-slot grant, if any, from the most
-   * recently chosen type-graft rank-up branch (docs/progression.md
-   * "Type-graft branches"). null until first grafted; a later graft branch
-   * SHIFTS this (overwrites it) rather than stacking a third type — there is
-   * only ever one secondary slot. The hero's authored innate primary type
-   * never changes — this is the run-tier record of the current grant, carried
-   * into combat state as Combatant.grantedTypes by buildCombatState.ts.
+   * recently chosen type-graft Evolution path (docs/progression.md
+   * "Type-graft paths"). null until first grafted; a later graft path SHIFTS
+   * this (overwrites it) rather than stacking a third type — there is only
+   * ever one secondary slot. The hero's authored innate primary type never
+   * changes — this is the run-tier record of the current grant, carried into
+   * combat state as Combatant.grantedTypes by buildCombatState.ts.
    */
-  rankTypeGraft: TypeId | null;
+  evolutionTypeGraft: TypeId | null;
 }
 
 export interface RunState {
@@ -125,10 +120,9 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     equipment: createEmptyLoadout(),
     unlockedMoveIds: [...startingMoveIds],
     level: 1,
-    rankProgress: 0,
-    chosenBranchIds: [],
-    rankStatGrants: {},
-    rankTypeGraft: null,
+    chosenPathIds: [],
+    evolutionStatGrants: {},
+    evolutionTypeGraft: null,
   };
 }
 

@@ -2291,7 +2291,7 @@ body {
   background: #1a140a;
 }
 
-.rankup-branch-button {
+.evolution-path-button {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -2306,29 +2306,29 @@ body {
   cursor: pointer;
 }
 
-.rankup-branch-button:hover {
+.evolution-path-button:hover {
   border-color: var(--accent);
 }
 
-.rankup-branch-name {
+.evolution-path-name {
   font-weight: 700;
 }
 
-.rankup-branch-kind {
+.evolution-path-kind {
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-dim);
 }
 
-.rankup-branch-button.rankup-offensive {
+.evolution-path-button.evolution-offensive {
   border-left-color: var(--enemy);
 }
 
-.rankup-branch-button.rankup-defensive {
+.evolution-path-button.evolution-defensive {
   border-left-color: var(--ally);
 }
 
-.rankup-branch-button.rankup-utility {
+.evolution-path-button.evolution-utility {
   border-left-color: var(--hp-high);
 }

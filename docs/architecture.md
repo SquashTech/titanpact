@@ -85,7 +85,7 @@ Also locked. Damage is computed by **two separate pipelines** and keeping them
 separate is what keeps balance readable. Do not collapse them.
 
 1. **Stat pipeline** — resolves *effective stats*. Base stat line, plus flat stat
-   modifiers, plus equipment contributions, plus rank-up stat grants, produce the
+   modifiers, plus equipment contributions, plus Evolution stat grants, produce the
    final Attack and Defense that feed the offense/defense **ratio**. Everything that
    changes "how strong is this hero right now" lives here.
 2. **Damage pipeline** — takes `BasePower`, the ratio from pipeline 1, and applies

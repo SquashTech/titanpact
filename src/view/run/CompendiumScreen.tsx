@@ -23,7 +23,7 @@ function fullMovepool(heroId: string, startingMoveIds: readonly string[]): strin
  * Read-only hero browser, reachable from the title screen before a run even
  * starts. Shows every authored HeroDefinition's base stats and full learnable
  * movepool (starting kit + level-up tier pool) — unlike HeroPreviewOverlay,
- * there's no RosterEntry here (no level, no rank-up grants, no equipment):
+ * there's no RosterEntry here (no level, no Evolution grants, no equipment):
  * this is the hero as designed, not a specific run's build of it.
  */
 /** One authored hero's stat/movepool card. Move selection state lives in the parent screen, not here, so every card shares the same fixed info panel instead of each carrying its own. */
