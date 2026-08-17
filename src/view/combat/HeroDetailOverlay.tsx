@@ -1,21 +1,15 @@
+import { useState } from 'react';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { Combatant } from '../../engine/state';
 import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
-import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
+import type { EquipmentDefinition } from '../../run/equipment';
 import { chosenEvolutionPaths } from '../../run/progression';
 import { progressionTable } from '../../data/progression';
 import { STAT_ICONS, STAT_LABELS, STAT_ORDER, StatBars } from '../shared/StatBars';
+import { EquipmentInfoPanel, EquipmentSlotGrid } from '../shared/EquipmentBox';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-
-const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
-
-const EQUIP_SLOT_LABELS: Record<EquipmentSlot, string> = {
-  weapon: 'Weapon',
-  armor: 'Armor',
-  accessory: 'Accessory',
-};
 
 interface Props {
   hero: HeroDefinition;
@@ -50,13 +44,29 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
   const hasModifiers = STAT_ORDER.some((stat) => (combatant.statModifiers[stat] ?? 0) !== 0);
   const effectiveTotals = Object.fromEntries(STAT_ORDER.map((stat) => [stat, getEffectiveStat(hero, combatant, stat)])) as Record<StatKey, number>;
   const evolved = rosterEntry ? chosenEvolutionPaths(progressionTable, rosterEntry) : [];
+  const [viewedEquipmentId, setViewedEquipmentId] = useState<string | null>(null);
+  const viewedEquipment = viewedEquipmentId ? (equipmentLookup[viewedEquipmentId] ?? null) : null;
+
+  /**
+   * Stops propagation here (not just on the panel) so a click anywhere in
+   * this overlay — backdrop or panel background alike — closes only THIS
+   * overlay and never bubbles into whatever screen rendered it.
+   */
+  function closeAndStop(e: { stopPropagation: () => void }) {
+    e.stopPropagation();
+    onClose();
+  }
 
   return (
-    <div className="detail-overlay" onClick={onClose}>
+    <div className="detail-overlay" onClick={closeAndStop}>
       <button className="detail-close-button" onClick={onClose} aria-label="Close">
         ✕
       </button>
-      <div className="detail-panel" onClick={(e) => e.stopPropagation()}>
+      {/* Tapping the panel background itself closes it too (matches the
+          "Tap elsewhere to close" hint below) — only a move tile or an
+          equipped item's box stops propagation, so inspecting one doesn't
+          also dismiss the overlay. */}
+      <div className="detail-panel" onClick={closeAndStop}>
         <HeroPortrait heroId={hero.id} className="detail-portrait" />
         <div className="detail-header">
           <div className="detail-name">{hero.name}</div>
@@ -119,23 +129,20 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
 
         <div className="detail-section-title">Equipment</div>
         {rosterEntry ? (
-          <div className="detail-equip-list">
-            {EQUIP_SLOT_ORDER.map((slot) => {
-              const itemId = rosterEntry.equipment[slot];
-              const item = itemId ? equipmentLookup[itemId] : null;
-              return (
-                <div className="detail-equip-row" key={slot}>
-                  <span className="detail-equip-slot">{EQUIP_SLOT_LABELS[slot]}</span>
-                  <span className="detail-equip-item">{item ? item.name : '— empty —'}</span>
-                </div>
-              );
-            })}
-          </div>
+          <>
+            <EquipmentSlotGrid
+              loadout={rosterEntry.equipment}
+              equipmentLookup={equipmentLookup}
+              viewedItemId={viewedEquipmentId}
+              onSelect={setViewedEquipmentId}
+            />
+            <EquipmentInfoPanel item={viewedEquipment} />
+          </>
         ) : (
           <div className="detail-empty">No loadout data.</div>
         )}
 
-        <div className="detail-close-hint">Tap anywhere to close</div>
+        <div className="detail-close-hint">Tap a move or item to inspect it — tap elsewhere to close</div>
       </div>
     </div>
   );

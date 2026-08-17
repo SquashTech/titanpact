@@ -10,14 +10,7 @@ import { getTypeColor } from '../combat/typeColors';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-
-const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
-
-const EQUIP_SLOT_ICONS: Record<EquipmentSlot, string> = {
-  weapon: '⚔️',
-  armor: '🛡️',
-  accessory: '💍',
-};
+import { EQUIP_SLOT_ICONS, EQUIP_SLOT_ORDER } from '../shared/EquipmentBox';
 
 interface Props {
   run: RunState;

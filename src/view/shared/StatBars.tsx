@@ -2,15 +2,16 @@ import type { StatKey, StatLine } from '../../engine/content';
 
 export const STAT_ORDER: StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool', 'mpRegen'];
 
+/** Abbreviated everywhere a stat block reads (StatBars, buff/debuff chips, equipment/Evolution grant chips) — Pokémon-VGC-style short codes instead of full words, so the fixed-width bar-label column never wraps or truncates. */
 export const STAT_LABELS: Record<StatKey, string> = {
   hp: 'HP',
-  attack: 'Attack',
-  defense: 'Defense',
-  intelligence: 'Intelligence',
-  wisdom: 'Wisdom',
-  speed: 'Speed',
-  manaPool: 'Mana Pool',
-  mpRegen: 'MP Regen',
+  attack: 'ATK',
+  defense: 'DEF',
+  intelligence: 'INT',
+  wisdom: 'WIS',
+  speed: 'SPD',
+  manaPool: 'MP',
+  mpRegen: 'MPR',
 };
 
 /** One glyph per stat, shared everywhere a stat reads compactly — battlefield stat-mod corner badges (CombatantCard) and stat-block labels (StatBars, HeroDetailOverlay) alike, so a player learns one icon vocabulary for both contexts. */
@@ -61,6 +62,21 @@ function fmtDelta(n: number): string {
   return n > 0 ? `+${n}` : `${n}`;
 }
 
+/**
+ * Core combat stats summed for BST (balance-tracking readout, CLAUDE.md
+ * north-star "every hero must be viable"). Mirrors Pokémon's Base Stat Total
+ * but excludes Mana Pool/MP Regen — those are the separate tempo/resource
+ * axis CLAUDE.md's "Mana & tempo" section calls out, not raw combat power,
+ * so folding them in would understate a lean-mana hero's BST relative to a
+ * mana-heavy one of equal combat strength.
+ */
+const BST_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed'];
+
+/** Always computed from base stats — the authored design number, not affected by live buffs/equipment/statuses — so it reads the same in every context that shows a stat block. */
+export function computeBst(baseStats: StatLine): number {
+  return BST_STATS.reduce((sum, stat) => sum + baseStats[stat], 0);
+}
+
 interface Props {
   baseStats: StatLine;
   /** Additive deltas layered on top of base — rank/equipment grants (run tier) or live combat buffs/debuffs. Omit for a plain base readout. Used for the "+N" annotation text even when `totals` is also given. */
@@ -107,6 +123,13 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {} }
           </div>
         );
       })}
+      <div
+        className="stat-bst-row"
+        title="Base Stat Total — HP + Attack + Defense + Intelligence + Wisdom + Speed (Mana Pool / MP Regen excluded, a separate tempo axis)"
+      >
+        <span className="stat-bst-label">BST</span>
+        <span className="stat-bst-value">{computeBst(baseStats)}</span>
+      </div>
     </div>
   );
 }

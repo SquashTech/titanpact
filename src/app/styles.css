@@ -1487,6 +1487,14 @@ body {
   background: #33291a;
 }
 
+/* Read-only inspect variant (EquipmentSlotGrid, src/view/shared/EquipmentBox.tsx) —
+   a filled box's currently-loaded-into-the-info-panel state, same treatment
+   as .inventory-box.selected. */
+.equip-slot-box.selected {
+  border-color: var(--accent);
+  background: #33291a;
+}
+
 .equip-slot-icon {
   font-size: 13px;
   line-height: 1;
@@ -1582,9 +1590,10 @@ body {
    sibling of .detail-panel, positioned against the fixed, non-scrolling
    .detail-overlay backdrop rather than inside the panel itself, so it
    stays put in the same spot regardless of how far the (often tall,
-   stats+moves+equipment) panel is scrolled. "Tap anywhere to close" via
-   the backdrop's own onClick still works too; this just gives mobile a
-   guaranteed, always-visible spot to tap instead of hunting for backdrop
+   stats+moves+equipment) panel is scrolled. Tapping the panel itself
+   (outside a move tile or equip box, which stop propagation to stay
+   inspectable) closes it too via the same onClose handler; this button just
+   gives mobile a guaranteed, always-visible spot to tap instead of hunting
    around the panel's edges. */
 .detail-close-button {
   position: absolute;
@@ -1753,6 +1762,29 @@ body {
   white-space: nowrap;
 }
 
+.stat-bst-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 4px;
+  padding-top: 5px;
+  border-top: 1px solid var(--border);
+}
+
+.stat-bst-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.stat-bst-value {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
 .detail-modifier-list {
   display: flex;
   flex-wrap: wrap;
@@ -1776,22 +1808,6 @@ body {
   background: #0d0e12;
   border: 1px solid var(--hp-mid);
   color: var(--hp-mid);
-}
-
-.detail-equip-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.detail-equip-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-}
-
-.detail-equip-slot {
-  color: var(--text-dim);
 }
 
 .detail-empty {
@@ -2185,17 +2201,27 @@ body {
   color: var(--text);
 }
 
-/* Permanent readout of the move being offered — unlike the fixed panel up
-   top (which follows whatever the player is currently hovering/selecting
-   among the *existing* moves), this one never changes while the offer is
-   open, so the player can always see what they'd be learning. */
-.reward-panel-offer-move {
+/* Permanent readout of the move being offered, sitting up top where the old
+   hover-driven info panel used to live — unlike that panel (which followed
+   whatever the player was currently hovering/long-pressing among the
+   *existing* moves below), this one never changes while the offer is open,
+   so the player always sees what they'd be learning. The glow marks it as
+   the screen's headline info, distinct from the plain replace-candidate
+   cards it sits above. */
+.offer-move-highlight {
   width: 100%;
-  margin-top: 4px;
+  border-radius: 8px;
+  animation: offer-move-glow 2.4s ease-in-out infinite;
 }
 
-.reward-panel-offer-move .move-info-panel {
-  margin-bottom: 0;
+@keyframes offer-move-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px var(--accent), 0 0 10px 1px rgba(224, 166, 60, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 1px var(--accent), 0 0 20px 5px rgba(224, 166, 60, 0.65);
+  }
 }
 
 /* --- Map screen ----------------------------------------------------------- */

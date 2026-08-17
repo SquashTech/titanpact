@@ -42,4 +42,13 @@ export const equipment: Record<string, EquipmentDefinition> = {
     slot: 'accessory',
     statGrants: { manaPool: 10, mpRegen: 5 },
   },
+  // Test fixture — see App.tsx's equipTestDagger, which arms the Goblin
+  // Skulker in the run's opening battle so the equip-slot inspect UI has a
+  // real item to show without waiting on the equipment-reward economy.
+  dagger: {
+    id: 'dagger',
+    name: 'Dagger',
+    slot: 'weapon',
+    statGrants: { attack: 5 },
+  },
 };

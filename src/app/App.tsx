@@ -11,6 +11,8 @@ import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { heroes } from '../data/heroes';
 import { enemies } from '../data/enemies';
 import { relics } from '../data/relics';
+import { equipment } from '../data/equipment';
+import { equipItem } from '../run/equipment';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP } from '../run/state';
 import { deriveContractOffer, claimContract, isRecruitable } from '../run/recruitment';
 import { generateMap } from '../run/map';
@@ -83,6 +85,20 @@ function freshRosterId(run: RunState, heroId: string): string {
   return `${heroId}-${n}`;
 }
 
+/**
+ * ⚠️ TEST FIXTURE — equips a Dagger (+5 Attack) onto the Goblin Skulker in
+ * the run's very first battle only, so the equip-slot inspect UI (tap a
+ * filled box to read what it does) has a real item to show from turn one,
+ * without waiting on the equipment-reward economy. Remove once early map
+ * rows can arm encounters for real.
+ */
+function equipTestDagger(encounter: Encounter): Encounter {
+  const roster = encounter.run.roster.map((entry) =>
+    entry.heroId === 'goblinSkulker' ? { ...entry, equipment: equipItem(entry.equipment, equipment.dagger) } : entry
+  );
+  return { ...encounter, run: { ...encounter.run, roster } };
+}
+
 function goldRewardFor(nodeType: EncounterNodeType): number {
   if (nodeType === 'boss') return 0;
   if (nodeType === 'elite') return 30 + Math.floor(Math.random() * 16); // 30-45
@@ -137,7 +153,11 @@ export function App() {
       // their own fixed sizing) is a deliberately lighter 2v2 breather
       // between the row-0 opener and elites kicking in.
       const isSecondFight = node.type === 'fight' && playerRun.fightsStarted === 1;
-      const encounter = generateEncounter(node.type, Math.floor(Math.random() * 2 ** 31), encounterPool, isSecondFight ? 2 : undefined);
+      let encounter = generateEncounter(node.type, Math.floor(Math.random() * 2 ** 31), encounterPool, isSecondFight ? 2 : undefined);
+      const isFirstFight = node.type === 'fight' && playerRun.fightsStarted === 0;
+      if (isOpeningFight && isFirstFight) {
+        encounter = equipTestDagger(encounter);
+      }
       if (node.type === 'fight') {
         setPlayerRun((run) => ({ ...run, fightsStarted: run.fightsStarted + 1 }));
       }

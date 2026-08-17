@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
+import type { MoveDefinition } from '../../engine/content';
 import type { RunState } from '../../run/state';
 import {
   levelUpHero,
@@ -14,10 +15,43 @@ import {
   ProgressionError,
 } from '../../run/progression';
 import { getTypeColor } from '../combat/typeColors';
-import { MoveTile, MoveInfoPanel, CategoryBadge } from '../shared/MoveTile';
+import { MoveTile, MoveInfoPanel, CategoryBadge, useLongPress } from '../shared/MoveTile';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { EvolutionScreen } from './EvolutionScreen';
+
+/**
+ * One existing move in the move-replace offer's picker — same roster-card
+ * layout as before (name + type/category badges, "picked" highlight), but
+ * now a standalone component rather than an inline .map() callback: it needs
+ * its own useLongPress call, and hooks can't be called inside a loop body.
+ * Long-press opens the shared move-detail popup (see `movePopup` below,
+ * the same one LevelUpScreen's main hero list already uses) instead of the
+ * old hover-driven fixed panel — tap still just selects/deselects the
+ * replacement target.
+ */
+function ReplaceMoveCard({
+  move,
+  selected,
+  onSelect,
+  onLongPress,
+}: {
+  move: MoveDefinition;
+  selected: boolean;
+  onSelect: () => void;
+  onLongPress: () => void;
+}) {
+  const longPress = useLongPress(onLongPress, onSelect);
+  return (
+    <button className={`roster-card${selected ? ' picked' : ''}`} style={{ borderLeftColor: getTypeColor(move.type) }} {...longPress}>
+      <div className="roster-card-name">{move.name}</div>
+      <div className="roster-card-types">
+        <TypeBadge type={move.type} />
+        <CategoryBadge category={move.category} />
+      </div>
+    </button>
+  );
+}
 
 interface Props {
   run: RunState;
@@ -40,31 +74,24 @@ interface MoveOffer {
  *
  * Each hero card is itself the level-up button — tapping it doesn't spend
  * the point immediately, it opens a Confirm dialog (below) so a stray tap
- * can't burn a Training Point on the wrong hero. Move details are read via
- * a long-press on the move's tile (mirrors FightScreen's move-button
- * long-press) rather than a persistent info panel, which used to reserve a
- * large fixed box at the top of the screen and was the main source of
- * scroll on a full 6-hero roster.
+ * can't burn a Training Point on the wrong hero. Move details, both here and
+ * in the move-replace offer's picker (ReplaceMoveCard below), are read via a
+ * long-press on the move (mirrors FightScreen's move-button long-press)
+ * rather than a persistent info panel that tracked whatever was last
+ * hovered/tapped — that used to reserve a large fixed box at the top of the
+ * screen and was the main source of scroll on a full 6-hero roster.
  */
 export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
   const [offer, setOffer] = useState<MoveOffer | null>(null);
   /** The move offer's currently-highlighted replacement target — a click selects it, but nothing is applied until Confirm. */
   const [selectedReplaceId, setSelectedReplaceId] = useState<string | null>(null);
   const [lastMessage, setLastMessage] = useState<string | null>(null);
-  /** The move currently shown in the offer screen's fixed info panel, and why it's there — that panel drives which move gets replaced, so it stays a persistent box; it's unrelated to the main hero list's long-press popup below. */
-  const [viewedMoveId, setViewedMoveId] = useState<string | null>(null);
-  const [viewedLabel, setViewedLabel] = useState<string>('');
   /** Which roster entry, if any, has taken over the screen with its full-screen Evolution choice (see EvolutionScreen). */
   const [evolvingRosterId, setEvolvingRosterId] = useState<string | null>(null);
-  /** Long-press-triggered move detail popup for the main hero list (see MoveTile's onLongPress). */
+  /** Long-press-triggered move detail popup — shared by both the main hero list and the move-replace offer's picker (see MoveTile/ReplaceMoveCard's onLongPress). */
   const [movePopup, setMovePopup] = useState<{ moveId: string; label: string } | null>(null);
   /** A hero card was tapped to spend a Training Point — held here until the player confirms, rather than spending immediately on tap. */
   const [confirmRosterId, setConfirmRosterId] = useState<string | null>(null);
-
-  function showMoveInfo(moveId: string, label: string) {
-    setViewedMoveId(moveId);
-    setViewedLabel(label);
-  }
 
   function handleLevelUp(rosterId: string) {
     if (run.levelUpPool < 1) return;
@@ -90,7 +117,6 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     const nextEntry = next.roster.find((r) => r.rosterId === rosterId)!;
     if (availableEvolution(progressionTable, nextEntry)) {
       onRunChange(next);
-      setViewedMoveId(null);
       setEvolvingRosterId(rosterId);
       return;
     }
@@ -98,7 +124,6 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     if (pool.length === 0) {
       onRunChange(next);
       setLastMessage(`${hero.name} reached level ${newLevel}.`);
-      setViewedMoveId(null);
       return;
     }
 
@@ -106,12 +131,10 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     if (!wasAtCap) {
       onRunChange(grantLevelUpMove(next, rosterId, moveId));
       setLastMessage(`${hero.name} reached level ${newLevel} and learned ${moves[moveId].name}!`);
-      setViewedMoveId(null);
     } else {
       onRunChange(next);
       setOffer({ rosterId, moveId });
       setSelectedReplaceId(null);
-      showMoveInfo(moveId, `${hero.name} — new move offered`);
     }
   }
 
@@ -125,7 +148,6 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     } else if (hero) {
       setLastMessage(`${hero.name} kept its current moves.`);
     }
-    setViewedMoveId(null);
     setOffer(null);
     setSelectedReplaceId(null);
   }
@@ -141,7 +163,6 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
   }
 
   const offerEntry = offer ? (run.roster.find((r) => r.rosterId === offer.rosterId) ?? null) : null;
-  const viewedMove = viewedMoveId ? moves[viewedMoveId] : null;
   const confirmEntry = confirmRosterId ? (run.roster.find((r) => r.rosterId === confirmRosterId) ?? null) : null;
 
   const evolvingEntry = evolvingRosterId ? (run.roster.find((r) => r.rosterId === evolvingRosterId) ?? null) : null;
@@ -169,34 +190,24 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
             <h3>
               {heroes[offerEntry.heroId].name} is already at {MOVE_CAP} moves — pick one to replace, or decline.
             </h3>
-            <MoveInfoPanel
-              move={viewedMove}
-              label={viewedLabel}
-              placeholder={lastMessage ?? 'Hover or tap a move to see its details here.'}
-            />
+            {/* The offered move itself — permanent for as long as the offer is
+                open (unlike the old hover-driven panel this replaced), so the
+                player always sees what they'd be learning. The glow marks it
+                as the screen's headline info, distinct from the plain
+                replace-candidate cards below. */}
+            <div className="offer-move-highlight">
+              <MoveInfoPanel move={moves[offer.moveId]} label="New move offered" />
+            </div>
             <div className="roster-grid">
-              {offerEntry.unlockedMoveIds.map((moveId) => {
-                const move = moves[moveId];
-                const isSelected = selectedReplaceId === moveId;
-                return (
-                  <button
-                    key={moveId}
-                    className={`roster-card${isSelected ? ' picked' : ''}`}
-                    style={{ borderLeftColor: getTypeColor(move.type) }}
-                    onMouseEnter={() => showMoveInfo(moveId, `${heroes[offerEntry.heroId].name} — tap to replace`)}
-                    onClick={() => {
-                      setSelectedReplaceId(moveId);
-                      showMoveInfo(moveId, `${heroes[offerEntry.heroId].name} — tap to replace`);
-                    }}
-                  >
-                    <div className="roster-card-name">{move.name}</div>
-                    <div className="roster-card-types">
-                      <TypeBadge type={move.type} />
-                      <CategoryBadge category={move.category} />
-                    </div>
-                  </button>
-                );
-              })}
+              {offerEntry.unlockedMoveIds.map((moveId) => (
+                <ReplaceMoveCard
+                  key={moveId}
+                  move={moves[moveId]}
+                  selected={selectedReplaceId === moveId}
+                  onSelect={() => setSelectedReplaceId(moveId)}
+                  onLongPress={() => setMovePopup({ moveId, label: `${heroes[offerEntry.heroId].name} — current move` })}
+                />
+              ))}
             </div>
             <div className="reward-panel-actions">
               <button className="secondary-button" onClick={() => resolveOffer(null)}>
@@ -205,9 +216,6 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
               <button className="resolve-button" disabled={!selectedReplaceId} onClick={() => resolveOffer(selectedReplaceId)}>
                 {selectedReplaceId ? `Confirm — Learn ${moves[offer.moveId].name}` : 'Pick a move to replace'}
               </button>
-            </div>
-            <div className="reward-panel-offer-move">
-              <MoveInfoPanel move={moves[offer.moveId]} label="New move offered" />
             </div>
           </div>
         ) : (

@@ -3,22 +3,15 @@ import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry } from '../../run/state';
-import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
+import type { EquipmentDefinition } from '../../run/equipment';
 import { equipmentStatModifiers } from '../../run/equipment';
 import { mergeStatMods } from '../../run/statMods';
 import { chosenEvolutionPaths, rosterEntryTypes } from '../../run/progression';
 import { StatBars } from '../shared/StatBars';
 import { MoveTile, MoveInfoPanel } from '../shared/MoveTile';
+import { EquipmentInfoPanel, EquipmentSlotGrid } from '../shared/EquipmentBox';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-
-const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
-
-const EQUIP_SLOT_LABELS: Record<EquipmentSlot, string> = {
-  weapon: 'Weapon',
-  armor: 'Armor',
-  accessory: 'Accessory',
-};
 
 interface Props {
   hero: HeroDefinition;
@@ -40,13 +33,31 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Pr
   const evolved = chosenEvolutionPaths(progressionTable, entry);
   const [viewedMoveId, setViewedMoveId] = useState<string | null>(null);
   const viewedMove = viewedMoveId ? (moves[viewedMoveId] ?? null) : null;
+  const [viewedEquipmentId, setViewedEquipmentId] = useState<string | null>(null);
+  const viewedEquipment = viewedEquipmentId ? (equipmentLookup[viewedEquipmentId] ?? null) : null;
+
+  /**
+   * Stops propagation here (not just on the panel) so a click anywhere in
+   * this overlay — backdrop or panel background alike — closes only THIS
+   * overlay and never bubbles into whatever screen rendered it (e.g.
+   * RosterManagementScreen's own backdrop, which would otherwise also close
+   * on the same click).
+   */
+  function closeAndStop(e: { stopPropagation: () => void }) {
+    e.stopPropagation();
+    onClose();
+  }
 
   return (
-    <div className="detail-overlay" onClick={onClose}>
+    <div className="detail-overlay" onClick={closeAndStop}>
       <button className="detail-close-button" onClick={onClose} aria-label="Close">
         ✕
       </button>
-      <div className="detail-panel" onClick={(e) => e.stopPropagation()}>
+      {/* Tapping the panel background itself closes it too (matches the
+          "Tap elsewhere to close" hint below) — only a move tile or an
+          equipped item's box stops propagation, so inspecting one doesn't
+          also dismiss the overlay. */}
+      <div className="detail-panel" onClick={closeAndStop}>
         <HeroPortrait heroId={hero.id} className="detail-portrait" />
         <div className="detail-header">
           <div className="detail-name">
@@ -98,20 +109,15 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Pr
         )}
 
         <div className="detail-section-title">Equipment</div>
-        <div className="detail-equip-list">
-          {EQUIP_SLOT_ORDER.map((slot) => {
-            const itemId = entry.equipment[slot];
-            const item = itemId ? equipmentLookup[itemId] : null;
-            return (
-              <div className="detail-equip-row" key={slot}>
-                <span className="detail-equip-slot">{EQUIP_SLOT_LABELS[slot]}</span>
-                <span className="detail-equip-item">{item ? item.name : '— empty —'}</span>
-              </div>
-            );
-          })}
-        </div>
+        <EquipmentSlotGrid
+          loadout={entry.equipment}
+          equipmentLookup={equipmentLookup}
+          viewedItemId={viewedEquipmentId}
+          onSelect={setViewedEquipmentId}
+        />
+        <EquipmentInfoPanel item={viewedEquipment} />
 
-        <div className="detail-close-hint">Tap anywhere to close</div>
+        <div className="detail-close-hint">Tap a move or item to inspect it — tap elsewhere to close</div>
       </div>
     </div>
   );
