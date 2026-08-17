@@ -1557,6 +1557,38 @@ body {
   gap: 2px;
 }
 
+/* Explicit dismiss target (HeroPreviewOverlay, HeroDetailOverlay) — a
+   sibling of .detail-panel, positioned against the fixed, non-scrolling
+   .detail-overlay backdrop rather than inside the panel itself, so it
+   stays put in the same spot regardless of how far the (often tall,
+   stats+moves+equipment) panel is scrolled. "Tap anywhere to close" via
+   the backdrop's own onClick still works too; this just gives mobile a
+   guaranteed, always-visible spot to tap instead of hunting for backdrop
+   around the panel's edges. */
+.detail-close-button {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text-dim);
+  font-size: 13px;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.detail-close-button:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
 .detail-header {
   display: flex;
   flex-wrap: wrap;
@@ -1830,10 +1862,55 @@ body {
   line-height: 1.5;
 }
 
-/* Scouted enemy cards are read-only (only the info button is interactive) — no pick affordance. */
-.enemy-scout-card {
-  cursor: default;
-  border-left-color: var(--enemy);
+/* Scouted enemy squad (SquadSelectScreen) — deliberately minimal: sprite +
+   type only, no name/level/active-bench label, so a full 4-hero enemy
+   squad (2 active + 2 bench) costs one compact row instead of stacking
+   full-size .roster-cards into two rows — that was the main source of
+   this screen's mobile scroll when paired with a full 6-hero player
+   roster below it. Tap the chip for the full stat block (HeroPreviewOverlay)
+   instead of a separate info button, since there's no room left for one. */
+.enemy-scout-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.enemy-scout-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 2px;
+  cursor: pointer;
+}
+
+.enemy-scout-chip:hover {
+  border-color: var(--accent);
+}
+
+/* Bench members dimmed rather than labeled — still legible as "won't start
+   the fight" at a glance without spending any of the freed-up space on
+   text. */
+.enemy-scout-chip-bench {
+  opacity: 0.55;
+}
+
+.enemy-scout-portrait {
+  display: block;
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+
+.enemy-scout-types {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
 .roster-grid {

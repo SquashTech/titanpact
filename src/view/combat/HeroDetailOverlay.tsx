@@ -53,6 +53,9 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
 
   return (
     <div className="detail-overlay" onClick={onClose}>
+      <button className="detail-close-button" onClick={onClose} aria-label="Close">
+        ✕
+      </button>
       <div className="detail-panel" onClick={(e) => e.stopPropagation()}>
         <HeroPortrait heroId={hero.id} className="detail-portrait" />
         <div className="detail-header">

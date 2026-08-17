@@ -63,37 +63,25 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
             scout the threat before committing a squad against it. */}
         <div className="squad-section squad-section-enemy">
           <h2 className="squad-section-title">⚔️ Scouted Enemies</h2>
-          <div className="roster-grid">
+          <div className="enemy-scout-grid">
             {encounter.run.roster.map((entry) => {
               const hero = allCombatants[entry.heroId];
               const isBench = !encounter.squad.activeIds.includes(entry.rosterId);
               return (
-                <div
+                <button
                   key={entry.rosterId}
-                  className="roster-card enemy-scout-card"
-                  style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
+                  className={`enemy-scout-chip${isBench ? ' enemy-scout-chip-bench' : ''}`}
+                  style={{ borderColor: getTypeColor(hero.types[0]) }}
+                  onClick={() => setInspecting({ hero, entry })}
+                  aria-label={`View ${hero.name} details`}
                 >
-                  <button
-                    className="info-button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setInspecting({ hero, entry });
-                    }}
-                    aria-label={`View ${hero.name} details`}
-                  >
-                    i
-                  </button>
-                  <HeroPortrait heroId={hero.id} className="roster-card-portrait" />
-                  <div className="roster-card-name">
-                    {hero.name} <span className="hint">Lv {entry.level}</span>
-                  </div>
-                  <div className="roster-card-types">
+                  <HeroPortrait heroId={hero.id} className="enemy-scout-portrait" />
+                  <div className="enemy-scout-types">
                     {rosterEntryTypes(hero, entry).map((t) => (
                       <TypeBadge key={t} type={t} />
                     ))}
                   </div>
-                  <span className="roster-card-badge badge-enemy">{isBench ? 'BENCH' : 'ACTIVE'}</span>
-                </div>
+                </button>
               );
             })}
           </div>
