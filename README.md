@@ -39,9 +39,11 @@ constitution and [`docs/`](./docs) for the deeper design modules.
    stand-in. **Recruit Contracts are now a scarce currency, not unlimited claiming**
    (2026-08-16 playtest pass): `RunState.recruitContracts` starts at 1/run, is spent on
    every claim, and can be topped up via a `contractReward` map node or bought at the
-   Guild Hall for a flat 12g (cheaper than a direct 20g hero recruit). **Still not
-   built:** the decaying Guild Hall runway value curve (offers are flat-cost, not
-   time-decaying).
+   Guild Hall for a flat 20g (cheaper than a direct 50g hero recruit). **Guild Hall
+   overhaul (2026-08-18):** offers only 2-3 curated heroes per visit instead of the full
+   catalog, plus rarity-priced equipment and flat-cost relics for direct purchase
+   (`src/run/shop.ts`). **Still not built:** the decaying Guild Hall runway value curve
+   (offers are flat-cost, not time-decaying).
 3. **Relics: minimal version done, hook-triggered version still blocked.**
    `src/run/relics.ts` + `src/data/relics.ts` (`docs/run-loop.md`) implement team-wide
    flat stat grants, the same stat-pipeline-only precedent equipment already uses —

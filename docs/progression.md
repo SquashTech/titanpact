@@ -197,16 +197,30 @@ doc nor `CLAUDE.md` says whether captured gear transfers). The trigger is real, 
 placeholder: claiming reuses the specific map node's own generated AI roster
 (`src/run/enemyGen.ts`), now that the run loop exists (`run-loop.md`).
 
+**Guild Hall overhaul (2026-08-18, per user direction):** each `shop` node visit now
+rolls a curated, one-time offer set (`src/run/shop.ts` `rollGuildHallOffers`, called
+once at node-select time — see that module's header for why it isn't rolled inside the
+panel component) rather than presenting the entire non-starter hero catalog at once —
+**2-3 heroes**, at a flat **50g** each (`GUILD_HALL_RECRUIT_COST`, up from 20g). The
+same visit also offers a small rotating selection of **equipment** (priced by rarity
+tier, `EQUIPMENT_PRICE_BY_RARITY`, `src/run/shop.ts` — common 15g through mythic 150g)
+and **relics** (flat 60g, `RELIC_PURCHASE_COST`) for direct gold purchase — a new axis
+alongside hero recruitment. A bought equipment item still resolves through the same
+forced equip-or-trash gate (`ForceEquipScreen`) every other equipment grant uses; a
+bought relic is added directly (no placement step, same as any other relic grant).
+Players can tap-and-hold a hero offer (`GuildHallPanel.tsx`'s `useLongPress`, same hook
+`RosterManagementScreen` uses) to preview its full stat/move block before buying.
+
 **Recruit Contracts are a scarce currency, not a free-and-unlimited claim (2026-08-16
 playtest pass).** `RunState.recruitContracts` starts at 1 per run and is spent (not
 gold — free in that sense) on every `claimContract`; claiming with none available is
 rejected (`RecruitmentError`). More can be found via a `contractReward` map node
-(`run-loop.md` node types) or bought at a Guild Hall for a flat 12g
-(`buyContract`, `src/data/recruitment.ts` `CONTRACT_PURCHASE_COST`) — deliberately
-cheaper than a direct 20g hero recruit, since a contract still requires beating
-something specific to cash in. **NOT YET IMPLEMENTED:** the decaying Guild Hall
-runway value curve (offers are flat gold costs, not a value that decays as the run
-progresses).
+(`run-loop.md` node types) or bought at a Guild Hall for a flat 20g
+(`buyContract`, `src/data/recruitment.ts` `CONTRACT_PURCHASE_COST`, up from 12g
+alongside the 2026-08-18 overhaul) — deliberately cheaper than a direct 50g hero
+recruit, since a contract still requires beating something specific to cash in.
+**NOT YET IMPLEMENTED:** the decaying Guild Hall runway value curve (offers are flat
+gold costs, not a value that decays as the run progresses).
 
 ---
 

@@ -18,6 +18,8 @@ import { equipment } from '../data/equipment';
 import { equipItem, pickWeightedEquipmentBySlot, type EquipmentSlot } from '../run/equipment';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP, TOTAL_ACTS } from '../run/state';
 import { deriveContractOffer, claimContract, isRecruitable } from '../run/recruitment';
+import { guildHallOffers } from '../data/recruitment';
+import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } from '../run/shop';
 import { generateMap } from '../run/map';
 import { generateStarterOptions } from '../run/draft';
 import { generateEncounter, type EncounterNodeType, type Encounter } from '../run/enemyGen';
@@ -33,7 +35,8 @@ type Screen =
   | { kind: 'squadSelect'; nodeId: string; nodeType: EncounterNodeType; encounter: Encounter }
   | { kind: 'fight'; nodeId: string; nodeType: EncounterNodeType; squad: Squad; encounter: Encounter; goldReward: number }
   | { kind: 'quickBattle'; player: Encounter; ai: Encounter }
-  | { kind: 'shop'; nodeId: string }
+  /** `offers` is rolled once at node-select time (run/shop.ts rollGuildHallOffers) rather than inside GuildHallPanel's own state — see shop.ts's header for why a component-local roll would reroll on every equipment purchase. */
+  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
   | { kind: 'statBoost'; nodeId: string; nodeType: StatBoostNodeType }
   | { kind: 'event'; nodeId: string }
@@ -182,7 +185,7 @@ export function App() {
       }
       setScreen({ kind: 'squadSelect', nodeId, nodeType: encounterKind, encounter });
     } else if (node.type === 'shop') {
-      setScreen({ kind: 'shop', nodeId });
+      setScreen({ kind: 'shop', nodeId, offers: rollGuildHallOffers(playerRun, guildHallOffers, Object.values(equipment), Object.values(relics)) });
     } else if (node.type === 'weaponReward' || node.type === 'armorReward' || node.type === 'accessoryReward') {
       // Single guaranteed item of a fixed slot, no 3-choice picker — rolls
       // straight into the forced equip-or-trash gate, same as the Goblin
@@ -269,6 +272,30 @@ export function App() {
     setScreen({ kind: 'forceEquip', queue: [itemId], next: afterScreen });
   }
 
+  /**
+   * Guild Hall equipment purchase (ShopNodeScreen): spends gold, then hands
+   * off to the same forced equip-or-trash gate every other equipment grant
+   * uses. `next` is the current shop screen itself, not the map — buying
+   * gear doesn't advance the map node, so the player lands back in the same
+   * Guild Hall to keep shopping once the item is placed. Computes against
+   * `playerRun` directly and only commits on success, same
+   * validate-before-commit shape as GuildHallPanel's own recruit/contract
+   * handlers, rather than throwing inside a setState updater.
+   */
+  function handleBuyGuildEquipment(itemId: string) {
+    const item = equipment[itemId];
+    if (!item) return;
+    let next: RunState;
+    try {
+      next = buyEquipment(playerRun, item);
+    } catch (err) {
+      if (!(err instanceof ShopError)) throw err;
+      return;
+    }
+    setPlayerRun(next);
+    setScreen({ kind: 'forceEquip', queue: [itemId], next: screen });
+  }
+
   /** "Start a Run" from the title screen opens the draft (DraftScreen) rather than building the run directly — the starting pair isn't chosen yet. */
   function handleStartNewRun() {
     const starterHeroIds = Object.values(heroes)
@@ -346,7 +373,13 @@ export function App() {
       )}
 
       {screen.kind === 'shop' && (
-        <ShopNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+        <ShopNodeScreen
+          run={playerRun}
+          offers={screen.offers}
+          onRunChange={setPlayerRun}
+          onBuyEquipment={handleBuyGuildEquipment}
+          onContinue={() => handleNodeContinue(screen.nodeId)}
+        />
       )}
 
       {screen.kind === 'reward' && (

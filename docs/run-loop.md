@@ -72,7 +72,7 @@ within a row.
 | `battle` | Also mechanically identical to `fight`/`skirmish` (collapses to `EncounterNodeType: 'fight'`, recruitable pool). Row 4's non-Elite alternative — kept as its own named type rather than reusing `skirmish` so its specific encounter pool/flavor can be authored separately later ("the actual possible battles" — user direction, deferred) without touching the early-act `skirmish` pool. |
 | `elite` | The AI's 4 heroes each carry a flat +10 bonus to 2 random growth stats. Draws from the recruitable pool, same as `skirmish`/`battle`. Row 4's difficulty-spike alternative to `battle` — the player picks one or the other, never both. |
 | `boss` | `FightScreen` vs. 2 AI heroes (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Winning grants 1 Recruit Contract and ends the act (§3). |
-| `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. |
+| `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. Overhauled 2026-08-18: offers 2-3 curated hero recruits (50g each, `GUILD_HALL_RECRUIT_COST`) rather than the full catalog, plus rarity-priced equipment and flat-cost relics for sale, rolled once per visit (`src/run/shop.ts` `rollGuildHallOffers`). |
 | `equipmentReward` | `NodeRewardScreen` — pick 1 of 3 equipment items, rarity-weighted (`equipment.ts` `pickWeightedEquipment`); claiming hands off to the forced equip-or-trash gate (`ForceEquipScreen`) rather than a stash — see "The unequipped-item inventory was removed" below. |
 | `relicReward` | `NodeRewardScreen` — pick 1 of 3 relics not already owned. |
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30, more for nothing having been spent yet). |

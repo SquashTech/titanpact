@@ -19,11 +19,11 @@ function seedRoster(heroIds: string[], gold = 0) {
 // --- Guild Hall (raise) --------------------------------------------------
 
 test('recruitment: Guild Hall recruit spends gold and adds a fresh 0-progress entry', () => {
-  const run = seedRoster(['cinderKnight'], 20);
+  const run = seedRoster(['cinderKnight'], 100);
   const offer = guildHallOffers.find((o) => o.heroId === 'ironWarden')!;
 
   const next = recruitFromGuildHall(run, offer, 'ironWarden');
-  assert.strictEqual(next.gold, 20 - offer.cost);
+  assert.strictEqual(next.gold, 100 - offer.cost);
   const entry = next.roster.find((r) => r.rosterId === 'ironWarden');
   assert.ok(entry);
   assert.strictEqual(entry!.heroId, 'ironWarden');

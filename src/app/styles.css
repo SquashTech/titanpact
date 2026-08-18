@@ -2034,43 +2034,235 @@ body {
   margin-top: 3px;
 }
 
-/* --- Guild Hall panel ---------------------------------------------------- */
+/* --- Guild Hall panel -----------------------------------------------------
+   Overhauled (2026-08-18, per user direction): a real multi-good shop —
+   2-3 curated hero recruits, a small equipment selection, and relics —
+   rather than a flat grid of every recruitable hero. Each section reuses an
+   established card family (guild-hall-hero-card is new; equipment reuses
+   .equip-cache-card, relics reuse .relic-card) so the shop reads as one
+   consistent surface with the rest of the run loop rather than a bolted-on
+   screen. */
 
 .guild-hall {
-  margin-bottom: 18px;
-  padding-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.guild-hall-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--border);
 }
 
-.guild-hall h2 {
-  font-size: 16px;
-  margin: 4px 0 2px;
+.guild-hall-header h2 {
+  font-size: 18px;
+  margin: 0;
+  letter-spacing: 0.01em;
 }
 
-.guild-hall .hint {
-  margin: 0 0 10px;
+.guild-hall-gold {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--accent);
+  white-space: nowrap;
 }
 
-.guild-hall-grid {
+.guild-hall-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.guild-hall-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.guild-hall-section-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.guild-hall-section-hint {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.guild-hall-hero-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.guild-hall-hero-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 75%);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 8px 8px;
+  text-align: center;
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.guild-hall-hero-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.guild-hall-hero-card.unaffordable {
+  opacity: 0.5;
+}
+
+.guild-hall-hero-portrait {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.guild-hall-hero-name {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.guild-hall-hero-cost {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+.guild-hall-hero-card.unaffordable .guild-hall-hero-cost {
+  color: var(--enemy);
+}
+
+.guild-hall-equip-list {
+  gap: 8px;
+}
+
+.guild-hall-equip-card {
+  padding: 10px 12px;
+}
+
+.guild-hall-equip-card.unaffordable {
+  opacity: 0.5;
+}
+
+.guild-hall-equip-price {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.guild-hall-equip-card.unaffordable .guild-hall-equip-price {
+  color: var(--enemy);
+}
+
+.guild-hall-relic-list {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
 
-.guild-hall-card {
+.guild-hall-relic-card {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+.guild-hall-relic-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.guild-hall-relic-card.unaffordable {
+  opacity: 0.5;
+}
+
+.guild-hall-relic-price {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.guild-hall-relic-card.unaffordable .guild-hall-relic-price {
+  color: var(--enemy);
+}
+
+.guild-hall-contract-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 70%);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text);
+  text-align: left;
   cursor: pointer;
 }
 
-.guild-hall-card:disabled {
-  opacity: 0.35;
+.guild-hall-contract-row:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.guild-hall-contract-row:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
-.guild-hall-cost {
-  font-size: 11px;
-  color: var(--accent);
-  margin-top: 4px;
+.guild-hall-contract-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.guild-hall-contract-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.guild-hall-contract-name {
+  font-size: 13px;
   font-weight: 700;
+}
+
+.guild-hall-contract-desc {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.guild-hall-contract-price {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent);
 }
 
 /* --- Recruit Contract claims (FightScreen victory overlay) -------------- */
