@@ -2209,9 +2209,9 @@ body {
   pointer-events: none;
 }
 
-.equip-cache-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+.equip-cache-list {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   width: 100%;
 }
@@ -2219,15 +2219,15 @@ body {
 .equip-cache-card {
   position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 4px;
-  text-align: center;
+  gap: 12px;
+  text-align: left;
   background: linear-gradient(165deg, var(--panel-alt), var(--panel));
   border: 1px solid var(--border);
-  border-top: 3px solid var(--rarity-color, var(--border));
+  border-left: 3px solid var(--rarity-color, var(--border));
   border-radius: 10px;
-  padding: 16px 8px;
+  padding: 12px 14px;
   color: var(--text);
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
@@ -2244,13 +2244,26 @@ body {
 }
 
 .equip-cache-card-icon {
-  font-size: 26px;
+  font-size: 28px;
   line-height: 1;
+  flex-shrink: 0;
+}
+
+.equip-cache-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
 }
 
 .equip-cache-card-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
+}
+
+.equip-cache-card-meta {
+  display: flex;
+  gap: 8px;
 }
 
 .equip-cache-card-rarity {
@@ -2263,6 +2276,11 @@ body {
 
 .equip-cache-card-slot {
   font-size: 10px;
+  color: var(--text-dim);
+}
+
+.equip-cache-card-stats {
+  font-size: 12px;
   color: var(--text-dim);
 }
 

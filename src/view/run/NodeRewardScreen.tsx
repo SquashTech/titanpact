@@ -114,9 +114,9 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
             <div className="equip-cache-banner">
               <div className="equip-cache-glow" aria-hidden="true" />
               <h2>🛡️ Equipment Cache</h2>
-              <p className="hint">Tap a piece of gear to preview it, then claim it — you'll choose who wears it next.</p>
+              <p className="hint">Tap a piece of gear to select it, then claim it — you'll choose who wears it next.</p>
             </div>
-            <div className="equip-cache-grid">
+            <div className="equip-cache-list">
               {equipmentChoices.map((item) => {
                 const isPreviewing = previewItemId === item.id;
                 return (
@@ -127,10 +127,14 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
                     onClick={() => setPreviewItemId(isPreviewing ? null : item.id)}
                   >
                     <span className="equip-cache-card-icon">{EQUIP_SLOT_ICONS[item.slot]}</span>
-                    <div className="equip-cache-card-name">{item.name}</div>
-                    <div className="equip-cache-card-rarity">{RARITY_LABELS[item.rarity]}</div>
-                    <div className="equip-cache-card-slot">{EQUIP_SLOT_LABELS[item.slot]}</div>
-                    {isPreviewing && <div className="hint">{fmtStatGrants(item.statGrants)}</div>}
+                    <div className="equip-cache-card-body">
+                      <div className="equip-cache-card-name">{item.name}</div>
+                      <div className="equip-cache-card-meta">
+                        <span className="equip-cache-card-rarity">{RARITY_LABELS[item.rarity]}</span>
+                        <span className="equip-cache-card-slot">{EQUIP_SLOT_LABELS[item.slot]}</span>
+                      </div>
+                      <div className="equip-cache-card-stats">{fmtStatGrants(item.statGrants)}</div>
+                    </div>
                   </button>
                 );
               })}
