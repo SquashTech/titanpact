@@ -48,9 +48,9 @@ function statusBadgeText(statusId: string, magnitude: number | undefined, durati
  * name leave free — see .stat-mod-corner in styles.css.
  *
  * Derived from getEffectiveStat (effective - base), not combatant.statModifiers
- * alone, so a status-pipeline effect like Blight (docs/conditions.md, applies a
- * multiplicative reduction outside statModifiers) still surfaces a badge here
- * instead of only showing up as a status-name chip.
+ * alone, so a status-pipeline effect like Freeze (docs/conditions.md, halves
+ * Speed outside statModifiers) still surfaces a badge here instead of only
+ * showing up as a status-name chip.
  */
 function activeStatMods(hero: HeroDefinition, combatant: Combatant): Array<{ stat: StatKey; mod: number }> {
   return STAT_ORDER.flatMap((stat) => {

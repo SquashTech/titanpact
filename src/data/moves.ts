@@ -10,10 +10,14 @@
 // Pokémon VGC staples like Earthquake/Surf where positioning matters.
 //
 // The block at the bottom covers `kind: 'heal'` and `kind: 'buff'`, plus one
-// move per docs/conditions.md status (attached via `statusApplication` to a
-// small dedicated damage/buff move rather than retrofitted onto the moves
-// above, so the original fixture moves — and the tests/demo script that
-// reference them by id — stay untouched) and a Cleanse move.
+// move per docs/conditions.md status that's authored per-move (attached via
+// `statusApplication` to a small dedicated damage/buff move rather than
+// retrofitted onto the moves above, so the original fixture moves — and the
+// tests/demo script that reference them by id — stay untouched) and a
+// Cleanse move. Conduct has no dedicated move: it auto-triggers off
+// StatusDefinition.triggerTypes on ANY existing Storm/Iron damage move
+// (thunderclap, quickJab, ironFist, ...) rather than being authored per-move
+// — see statusEngine.ts applyOrDetonateTriggeredStatuses.
 
 import type { MoveDefinition } from '../engine/content';
 
@@ -635,18 +639,18 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'A raking slash that opens a wound too deep to close by pivoting away (inflicts Bleed).',
   },
-  corruptingTouch: {
-    id: 'corruptingTouch',
-    name: 'Corrupting Touch',
-    type: 'Shadow',
-    category: 'magical',
+  venomousBite: {
+    id: 'venomousBite',
+    name: 'Venomous Bite',
+    type: 'Nature',
+    category: 'physical',
     kind: 'damage',
     basePower: 30,
-    statusApplication: { statusId: 'Blight', magnitude: 10, target: 'moveTarget' },
+    statusApplication: { statusId: 'Poison', magnitude: 10, duration: 3, target: 'moveTarget' },
     manaCost: 14,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A withering touch that softens the target for everything that follows (inflicts Blight 10).',
+    description: 'A venom-laced bite that starts a 3-round countdown (inflicts Poison 10).',
   },
   frostLock: {
     id: 'frostLock',
@@ -674,31 +678,31 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'A rattling haymaker, priced high for what it denies (inflicts Daze 2).',
   },
-  entanglingRoots: {
-    id: 'entanglingRoots',
-    name: 'Entangling Roots',
-    type: 'Nature',
-    category: 'physical',
+  spectralBind: {
+    id: 'spectralBind',
+    name: 'Spectral Bind',
+    type: 'Spirit',
+    category: 'magical',
     kind: 'damage',
-    basePower: 20,
-    statusApplication: { statusId: 'Bind', duration: 5, target: 'moveTarget' },
-    manaCost: 10,
+    basePower: 30,
+    statusApplication: { statusId: 'Haunt', target: 'moveTarget' },
+    manaCost: 12,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Living vines that lash the target in place (inflicts Bind — target can’t switch). Cheap: the value is downstream.',
+    description: "Tethers the target's spirit to its partner — Spirit or Mind attacks aimed at the partner strike this target too (inflicts Haunt).",
   },
-  exposeWeakness: {
-    id: 'exposeWeakness',
-    name: 'Expose Weakness',
-    type: 'Mind',
-    category: 'magical',
+  vanish: {
+    id: 'vanish',
+    name: 'Vanish',
+    type: 'Shadow',
+    category: 'physical',
     kind: 'buff',
     statDeltas: [],
-    statusApplication: { statusId: 'Expose', magnitude: 40, target: 'moveTarget' },
-    manaCost: 8,
+    statusApplication: { statusId: 'Stealth', duration: 1, target: 'self' },
+    manaCost: 10,
     priority: 0,
-    target: 'singleEnemy',
-    description: 'Marks a weak point on the target — the next hit lands harder (inflicts Expose 40).',
+    target: 'self',
+    description: 'Slips out of sight for the rest of the round — a faster Vanish redirects an incoming single-target attack onto the caster’s partner (inflicts Stealth).',
   },
   secondWind: {
     id: 'secondWind',
@@ -720,7 +724,7 @@ export const moves: Record<string, MoveDefinition> = {
     category: 'magical',
     kind: 'heal',
     healAmount: 10,
-    cleanses: 'debuffs',
+    cleanses: true,
     manaCost: 16,
     priority: 0,
     target: 'singleAlly',

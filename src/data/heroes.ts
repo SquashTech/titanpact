@@ -67,7 +67,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Sylva',
     types: ['Nature'],
     baseStats: { hp: 100, attack: 35, defense: 45, intelligence: 80, wisdom: 70, speed: 65, manaPool: 90, mpRegen: 10 },
-    moveIds: ['entanglingRoots', 'mendWounds', 'secondWind'],
+    moveIds: ['venomousBite', 'mendWounds', 'secondWind'],
     starter: true,
   },
   stormRanger: {
@@ -75,7 +75,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Squall',
     types: ['Storm'],
     baseStats: { hp: 90, attack: 65, defense: 40, intelligence: 35, wisdom: 35, speed: 90, manaPool: 50, mpRegen: 6 },
-    moveIds: ['galeShot', 'rally', 'exposeWeakness'],
+    moveIds: ['galeShot', 'rally', 'thunderclap'],
     starter: true,
   },
   shadowMonk: {
@@ -83,7 +83,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Vesper',
     types: ['Shadow'],
     baseStats: { hp: 85, attack: 75, defense: 45, intelligence: 40, wisdom: 40, speed: 70, manaPool: 45, mpRegen: 5 },
-    moveIds: ['corruptingTouch', 'secondWind', 'purify'],
+    moveIds: ['vanish', 'secondWind', 'purify'],
     starter: true,
   },
 
@@ -108,7 +108,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Rime',
     types: ['Frost'],
     baseStats: { hp: 95, attack: 60, defense: 40, intelligence: 45, wisdom: 60, speed: 85, manaPool: 55, mpRegen: 6 },
-    moveIds: ['frostBite', 'exposeWeakness', 'secondWind'],
+    moveIds: ['frostBite', 'rendingClaw', 'secondWind'],
     starter: true,
   },
   dawnwarden: {
@@ -124,7 +124,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Glyph',
     types: ['Arcane'],
     baseStats: { hp: 80, attack: 25, defense: 35, intelligence: 85, wisdom: 45, speed: 60, manaPool: 95, mpRegen: 10 },
-    moveIds: ['arcaneBolt', 'manaBurst', 'exposeWeakness'],
+    moveIds: ['arcaneBolt', 'manaBurst', 'curseMind'],
     starter: true,
   },
   mindweaver: {
@@ -211,7 +211,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Lucius',
     types: ['Shadow', 'Mind'],
     baseStats: { hp: 100, attack: 35, defense: 40, intelligence: 75, wisdom: 55, speed: 65, manaPool: 70, mpRegen: 7 },
-    moveIds: ['shadowVeil', 'curseMind', 'exposeWeakness'],
+    moveIds: ['shadowVeil', 'curseMind', 'spectralBind'],
     starter: false,
   },
 };

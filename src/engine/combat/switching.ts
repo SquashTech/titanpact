@@ -4,7 +4,7 @@
 // (CLAUDE.md "Mana & tempo").
 
 import type { CombatState, Side } from '../state';
-import { hasStatus, isLockedIn } from '../state';
+import { isLockedIn } from '../state';
 import type { CombatEvent, BenchRegenTickedEvent } from '../events';
 import type { StatusDefinition } from '../content';
 import { clearOnSwitch } from './statusEngine';
@@ -20,8 +20,8 @@ function slotOf(state: CombatState, side: Side, combatantId: string): 0 | 1 {
 
 /**
  * Voluntary switch, declared as a round action. Blocked once the side is
- * locked in, or if the outgoing combatant is Bound (docs/conditions.md Bind:
- * "cannot switch" — the whole point is it can't be escaped by switching).
+ * locked in (docs/combat.md lock-in rule) — the only remaining voluntary-
+ * switch block now that Bind is cut.
  */
 export function applyVoluntarySwitch(
   state: CombatState,
@@ -34,16 +34,13 @@ export function applyVoluntarySwitch(
   if (isLockedIn(state, side)) {
     throw new SwitchBlockedError(`Side ${side} is locked in (2+ KOs) — voluntary switching is disabled`);
   }
-  if (hasStatus(state.combatants[outCombatantId], 'Bind')) {
-    throw new SwitchBlockedError(`${outCombatantId} is Bound — cannot switch`);
-  }
   return performSwitch(state, round, side, outCombatantId, inCombatantId, statusDefs);
 }
 
 /**
- * Forced replacement of a fainted active slot. Ignores lock-in AND Bind by
- * design — a fainted combatant isn't voluntarily leaving (same precedent as
- * lock-in exemption below).
+ * Forced replacement of a fainted active slot. Ignores lock-in by design —
+ * a fainted combatant isn't voluntarily leaving, so the lock-in block on
+ * voluntary switching doesn't apply here.
  */
 export function applyForcedReplacement(
   state: CombatState,

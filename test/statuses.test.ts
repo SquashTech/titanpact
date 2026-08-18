@@ -1,8 +1,9 @@
 // docs/conditions.md — the 6th engine contract. Covers the paths the browser
-// playtest can't cheaply exercise exhaustively: Daze blocking a move, Bind
-// blocking a voluntary switch, Blight's stat-pipeline hook (and its exclusion
-// of Speed/HP/Mana), Expose's consume-on-hit into the damage modifier term,
-// Regen's decay mirroring Burn, and Cleanse's debuffs-vs-all split.
+// playtest can't cheaply exercise exhaustively: Daze blocking a move,
+// Freeze halving Speed, Conduct's apply-vs-detonate split off Storm/Iron
+// hits, Poison's active-only timer, Haunt's singleEnemy-to-spread expansion,
+// Stealth's speed-dependent redirect, Regen's decay mirroring Burn, and
+// Cleanse always sparing positive statuses.
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -14,8 +15,7 @@ import { statuses } from '../src/data/statuses';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import { getEffectiveStat, hasStatus } from '../src/engine/state';
-import { applyVoluntarySwitch, SwitchBlockedError } from '../src/engine/combat/switching';
-import { cleanseStatuses } from '../src/engine/combat/statusEngine';
+import { applyStatus, cleanseStatuses } from '../src/engine/combat/statusEngine';
 
 const config = { typeChart, heroes, moves, statuses, benchHpRegenFlat: 5 };
 
@@ -62,37 +62,6 @@ test('status: Daze blocks a move action — no MoveUsed, mana untouched, ActionB
   assert.strictEqual(next.combatants.b1.currentHp, heroes.ironWarden.baseStats.hp); // no damage landed
 });
 
-// --- Bind: switch-lock --------------------------------------------------------
-
-test('status: Bind blocks a voluntary switch even without lock-in', () => {
-  const state = { ...twoVTwoFixture(101), bench: { ...twoVTwoFixture(101).bench, A: ['bench1'] } };
-  const bound = withStatus(state, 'a1', 'Bind', { duration: 5 });
-  assert.throws(() => applyVoluntarySwitch(bound, 1, 'a1', 'bench1', statuses), SwitchBlockedError);
-});
-
-// --- Blight: the stat-pipeline hook ------------------------------------------
-
-test('status: Blight reduces Attack/Defense/Intelligence/Wisdom multiplicatively, floored', () => {
-  const state = twoVTwoFixture(102);
-  const blighted = withStatus(state, 'b1', 'Blight', { magnitude: 20 });
-  const hero = heroes.ironWarden;
-  const baseDefense = hero.baseStats.defense;
-
-  assert.strictEqual(getEffectiveStat(hero, state.combatants.b1, 'defense'), baseDefense);
-  assert.strictEqual(getEffectiveStat(hero, blighted.combatants.b1, 'defense'), Math.floor(baseDefense * 0.8));
-  assert.strictEqual(getEffectiveStat(hero, blighted.combatants.b1, 'attack'), Math.floor(hero.baseStats.attack * 0.8));
-});
-
-test('status: Blight does NOT touch Speed, HP, or Mana — those stay Freeze/resource territory', () => {
-  const state = twoVTwoFixture(103);
-  const blighted = withStatus(state, 'b1', 'Blight', { magnitude: 50 }); // even at the cap
-  const hero = heroes.ironWarden;
-
-  assert.strictEqual(getEffectiveStat(hero, blighted.combatants.b1, 'speed'), hero.baseStats.speed);
-  assert.strictEqual(getEffectiveStat(hero, blighted.combatants.b1, 'hp'), hero.baseStats.hp);
-  assert.strictEqual(getEffectiveStat(hero, blighted.combatants.b1, 'manaPool'), hero.baseStats.manaPool);
-});
-
 // --- Freeze: halves Speed, including in turn-order resolution ---------------
 
 test('status: Freeze halves Speed (floored) and does not touch other stats', () => {
@@ -117,37 +86,6 @@ test('status: a frozen combatant with higher base Speed is outsped by a faster-a
   const { events } = resolveRound(frozen, actions, config);
   const moveUsedOrder = events.filter((e) => e.type === 'MoveUsed').map((e: any) => e.combatantId);
   assert.deepStrictEqual(moveUsedOrder, ['a2', 'b1']);
-});
-
-test('status: Blight amplifies damage taken end-to-end through resolveRound', () => {
-  const plain = twoVTwoFixture(104);
-  const blighted = withStatus(plain, 'b1', 'Blight', { magnitude: 40 });
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }];
-
-  const plainResult = resolveRound(plain, actions, config);
-  const blightedResult = resolveRound(blighted, actions, config);
-
-  const plainDamage = heroes.ironWarden.baseStats.hp - plainResult.state.combatants.b1.currentHp;
-  const blightedDamage = heroes.ironWarden.baseStats.hp - blightedResult.state.combatants.b1.currentHp;
-  assert.ok(blightedDamage > plainDamage, `expected Blight to increase damage taken (${plainDamage} -> ${blightedDamage})`);
-});
-
-// --- Expose: one-shot damage-pipeline mark -----------------------------------
-
-test('status: Expose amplifies the next hit and is consumed by it', () => {
-  const plain = twoVTwoFixture(105);
-  const exposed = withStatus(plain, 'b1', 'Expose', { magnitude: 50 });
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }];
-
-  const plainResult = resolveRound(plain, actions, config);
-  const exposedResult = resolveRound(exposed, actions, config);
-
-  const plainDamage = heroes.ironWarden.baseStats.hp - plainResult.state.combatants.b1.currentHp;
-  const exposedDamage = heroes.ironWarden.baseStats.hp - exposedResult.state.combatants.b1.currentHp;
-  assert.ok(exposedDamage > plainDamage, `expected Expose to amplify the hit (${plainDamage} -> ${exposedDamage})`);
-
-  assert.strictEqual(hasStatus(exposedResult.state.combatants.b1, 'Expose'), false);
-  assert.ok(exposedResult.events.some((e) => e.type === 'StatusRemoved' && e.statusId === 'Expose' && e.reason === 'consumed'));
 });
 
 // --- Regen: the positive mirror of Burn --------------------------------------
@@ -176,23 +114,142 @@ test('status: Burn/Regen decay to 0 removes the status entirely', () => {
   assert.ok(events.some((e) => e.type === 'StatusRemoved' && e.statusId === 'Burn' && e.reason === 'decay'));
 });
 
-// --- Cleanse: debuffs-vs-all split (docs/conditions.md §7 resolution) --------
+// --- Cleanse: always spares positive statuses --------------------------------
 
-test('status: cleanseStatuses("debuffs") strips everything except Regen', () => {
+test('status: cleanseStatuses strips every non-positive status, leaving Regen (positive) alone', () => {
   const state = twoVTwoFixture(108);
   let afflicted = withStatus(state, 'a1', 'Bleed', {});
-  afflicted = withStatus(afflicted, 'a1', 'Blight', { magnitude: 20 });
+  afflicted = withStatus(afflicted, 'a1', 'Poison', { magnitude: 20, duration: 3 });
   afflicted = withStatus(afflicted, 'a1', 'Regen', { magnitude: 15 });
 
-  const { state: cleansed } = cleanseStatuses(afflicted, 1, 'a1', 'debuffs');
+  const { state: cleansed } = cleanseStatuses(afflicted, 1, 'a1', statuses);
   assert.strictEqual(hasStatus(cleansed.combatants.a1, 'Bleed'), false);
-  assert.strictEqual(hasStatus(cleansed.combatants.a1, 'Blight'), false);
+  assert.strictEqual(hasStatus(cleansed.combatants.a1, 'Poison'), false);
   assert.strictEqual(hasStatus(cleansed.combatants.a1, 'Regen'), true);
 });
 
-test('status: cleanseStatuses("all") strips Regen too', () => {
-  const state = twoVTwoFixture(109);
-  const afflicted = withStatus(state, 'a1', 'Regen', { magnitude: 15 });
-  const { state: cleansed } = cleanseStatuses(afflicted, 1, 'a1', 'all');
-  assert.strictEqual(hasStatus(cleansed.combatants.a1, 'Regen'), false);
+// --- Conduct: apply-vs-detonate split off Storm/Iron hits --------------------
+
+test('status: Conduct applies on a clean Storm/Iron hit — no bonus damage yet', () => {
+  const state = twoVTwoFixture(200);
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'quickJab', declaredTarget: 'b1' }]; // quickJab is Iron-typed
+  const { state: next, events } = resolveRound(state, actions, config);
+
+  assert.ok(hasStatus(next.combatants.b1, 'Conduct'));
+  assert.ok(events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Conduct' && e.combatantId === 'b1'));
+});
+
+test('status: Conduct detonates on the next Storm/Iron hit — bonus damage, then consumed', () => {
+  const state = twoVTwoFixture(201);
+  const marked = withStatus(state, 'b1', 'Conduct', {});
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'quickJab', declaredTarget: 'b1' }];
+
+  const plainResult = resolveRound(state, actions, config);
+  const markedResult = resolveRound(marked, actions, config);
+
+  const maxHp = heroes.ironWarden.baseStats.hp;
+  const plainDamage = maxHp - plainResult.state.combatants.b1.currentHp;
+  const markedDamage = maxHp - markedResult.state.combatants.b1.currentHp;
+  const expectedBonus = Math.ceil(maxHp * 0.1);
+
+  assert.strictEqual(markedDamage - plainDamage, expectedBonus);
+  assert.strictEqual(hasStatus(markedResult.state.combatants.b1, 'Conduct'), false);
+  assert.ok(markedResult.events.some((e) => e.type === 'StatusRemoved' && e.statusId === 'Conduct' && e.reason === 'consumed'));
+});
+
+// --- Poison: active-only timer, then delayed detonation ---------------------
+
+test('status: Poison counts down while active without dealing damage until the timer hits zero', () => {
+  const state = twoVTwoFixture(210);
+  const poisoned = withStatus(state, 'b1', 'Poison', { magnitude: 20, duration: 2 });
+  const maxHp = heroes.ironWarden.baseStats.hp;
+
+  const { state: afterRound1 } = resolveRound(poisoned, [], config);
+  assert.strictEqual(afterRound1.combatants.b1.statuses.Poison.duration, 1);
+  assert.strictEqual(afterRound1.combatants.b1.currentHp, maxHp);
+
+  const { state: afterRound2, events } = resolveRound(afterRound1, [], config);
+  const expectedDmg = Math.ceil((maxHp * 20) / 100);
+  assert.strictEqual(afterRound2.combatants.b1.currentHp, maxHp - expectedDmg);
+  assert.strictEqual(hasStatus(afterRound2.combatants.b1, 'Poison'), false);
+  assert.ok(events.some((e) => e.type === 'StatusRemoved' && e.statusId === 'Poison' && e.reason === 'expired'));
+});
+
+test('status: Poison does not tick while benched — switching stalls the timer instead of clearing it', () => {
+  const state = createFightState(
+    211,
+    [{ combatantId: 'a1', heroId: 'cinderKnight', side: 'A' }],
+    [
+      { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+      { combatantId: 'b2', heroId: 'wildOracle', side: 'B' },
+      { combatantId: 'b3', heroId: 'wildOracle', side: 'B' }, // benched
+    ]
+  );
+  const poisoned = withStatus(state, 'b3', 'Poison', { magnitude: 20, duration: 2 });
+  const { state: next } = resolveRound(poisoned, [], config);
+
+  assert.strictEqual(next.combatants.b3.statuses.Poison.duration, 2); // unchanged — still benched
+});
+
+test('status: reapplying Poison mid-timer adds to magnitude without resetting the duration', () => {
+  const state = twoVTwoFixture(212);
+  const poisoned = withStatus(state, 'b1', 'Poison', { magnitude: 10, duration: 2 });
+  const { state: reapplied } = applyStatus(poisoned, 1, 'b1', statuses.Poison, { magnitude: 15, duration: 3 });
+
+  assert.strictEqual(reapplied.combatants.b1.statuses.Poison.magnitude, 25);
+  assert.strictEqual(reapplied.combatants.b1.statuses.Poison.duration, 2); // held, not reset to 3
+});
+
+// --- Haunt: singleEnemy Spirit/Mind attacks become spread --------------------
+
+test('status: Haunt turns a singleEnemy Spirit/Mind attack into a spread hit on the Haunted partner', () => {
+  const state = twoVTwoFixture(220);
+  const haunted = withStatus(state, 'b2', 'Haunt', {});
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'soulRend', declaredTarget: 'b1' }]; // Spirit-typed
+
+  const { state: next, events } = resolveRound(haunted, actions, config);
+
+  assert.ok(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1'));
+  assert.ok(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b2'));
+  assert.ok(next.combatants.b2.currentHp < heroes.wildOracle.baseStats.hp);
+});
+
+test('status: a non-Spirit/Mind attack does not trigger Haunt spread', () => {
+  const state = twoVTwoFixture(221);
+  const haunted = withStatus(state, 'b2', 'Haunt', {});
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }]; // Fire-typed
+
+  const { state: next } = resolveRound(haunted, actions, config);
+  assert.strictEqual(next.combatants.b2.currentHp, heroes.wildOracle.baseStats.hp); // untouched
+});
+
+// --- Stealth: speed-dependent redirect ---------------------------------------
+
+test('status: a faster Stealth redirects an already-declared attack onto the other active hero', () => {
+  const state = twoVTwoFixture(230);
+  // wildOracle (b2, 65 speed) out-paces cinderKnight (a1, 50 speed) at equal priority,
+  // so b2's Vanish (grants Stealth) resolves before a1's attack comes up.
+  const actions: Action[] = [
+    { kind: 'move', combatantId: 'b2', moveId: 'vanish' },
+    { kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b2' },
+  ];
+  const { state: next, events } = resolveRound(state, actions, config);
+
+  assert.ok(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1')); // redirected onto the partner
+  assert.strictEqual(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b2'), false);
+  assert.strictEqual(next.combatants.b2.currentHp, heroes.wildOracle.baseStats.hp); // untouched
+});
+
+test('status: a slower Stealth does not save its caster from an attack that resolves first', () => {
+  const state = twoVTwoFixture(231);
+  // tidecaller (a2, 55 speed) out-paces ironWarden (b1, 30 speed) at equal priority,
+  // so a2's attack resolves before b1's Vanish ever lands.
+  const actions: Action[] = [
+    { kind: 'move', combatantId: 'b1', moveId: 'vanish' },
+    { kind: 'move', combatantId: 'a2', moveId: 'tidalBolt', declaredTarget: 'b1' },
+  ];
+  const { state: next, events } = resolveRound(state, actions, config);
+
+  assert.ok(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1'));
+  assert.ok(next.combatants.b1.currentHp < heroes.ironWarden.baseStats.hp);
 });

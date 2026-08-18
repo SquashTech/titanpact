@@ -199,12 +199,7 @@ export function buildBeats(
 
       case 'ActionBlocked': {
         const targetName = name(e.combatantId);
-        const text =
-          e.reason === 'dazed'
-            ? `${targetName} is Dazed and can't move!`
-            : e.reason === 'bound'
-              ? `${targetName} is Bound and can't switch!`
-              : `${targetName}'s target is already down!`;
+        const text = e.reason === 'dazed' ? `${targetName} is Dazed and can't move!` : `${targetName}'s target is already down!`;
         push([e], text);
         i++;
         break;

@@ -1,12 +1,15 @@
 // The status engine (docs/conditions.md, the 6th contract's runtime half —
 // StatusDefinition in content.ts is the data half). Reads StatusDefinition
-// flags generically; contains no per-status special cases beyond the two
-// documented exceptions the catalog itself calls out (Bleed's flat %maxHp,
-// Blight's stat-pipeline hook which lives in state.ts instead since it must
-// run on every getEffectiveStat call, not just at apply/tick time).
+// flags generically; contains no per-status special cases beyond the
+// documented exceptions the catalog itself calls out: Bleed's flat %maxHp,
+// Freeze's stat-pipeline hook (lives in state.ts instead, since it must run
+// on every getEffectiveStat call rather than only at apply/tick time), and
+// Stealth's untargetable-while-active redirect (applyStealthRedirect below —
+// narrow enough to stay a literal status-id check, same precedent as Freeze).
 
-import type { StatusDefinition, StatusId, StatusRemovalReason } from '../content';
+import type { StatusDefinition, StatusId, StatusRemovalReason, TargetMode, TypeId } from '../content';
 import type { CombatState, StatusInstance } from '../state';
+import { hasStatus } from '../state';
 import type { CombatEvent } from '../events';
 import { applyHpDelta } from './faintHandling';
 
@@ -60,17 +63,19 @@ export function applyStatus(
   let duration = params.duration;
 
   if (existing) {
-    if (def.stacking === 'none') return { state, events: [] }; // reapply while present is a no-op (Bleed, Freeze)
+    if (def.stacking === 'none') return { state, events: [] }; // reapply while present is a no-op (Bleed, Freeze, Conduct, Haunt)
     if (def.stacking === 'additive') {
       magnitude = (existing.magnitude ?? 0) + (params.magnitude ?? 0);
     } else if (def.stacking === 'takeHigher') {
       magnitude = params.magnitude !== undefined ? Math.max(existing.magnitude ?? 0, params.magnitude) : existing.magnitude;
       duration = params.duration !== undefined ? Math.max(existing.duration ?? 0, params.duration) : existing.duration;
+    } else if (def.stacking === 'additiveMagnitudeFixedDuration') {
+      // Poison (docs/conditions.md §7 Q3/Q4): magnitude builds up, but the
+      // timer never resets or extends — reapplying mid-countdown ignores
+      // params.duration entirely and just holds the existing value.
+      magnitude = (existing.magnitude ?? 0) + (params.magnitude ?? 0);
+      duration = existing.duration;
     }
-  }
-
-  if (magnitude !== undefined && def.capMagnitude !== undefined) {
-    magnitude = Math.min(def.capMagnitude, magnitude);
   }
 
   const nextState = setStatus(state, combatantId, def.id, { statusId: def.id, magnitude, duration });
@@ -80,10 +85,13 @@ export function applyStatus(
 /**
  * End-of-round tick (docs/conditions.md §7 "Status tick timing" — resolved as
  * end-of-round, the only tick boundary this engine has). Runs over EVERY
- * combatant, active or benched: Bleed/Blight/Bind/Regen persist through switch
+ * combatant, active or benched: Bleed/Poison/Regen persist through switch
  * specifically so they aren't escapable by bench-parking, so their ticks must
- * follow. Handles DoT/HoT damage-or-heal + magnitude decay, and duration
- * countdown for Daze/Bind — driven entirely by StatusDefinition flags.
+ * follow — except Poison's `activeOnly` flag, which stalls its timer entirely
+ * while benched instead (docs/conditions.md: "switching stalls the clock
+ * rather than clearing it"). Handles DoT/HoT damage-or-heal + magnitude decay,
+ * Poison's timer-then-detonate, and duration countdown for Daze/Stealth —
+ * driven entirely by StatusDefinition flags.
  */
 export function tickEndOfRound(
   state: CombatState,
@@ -102,8 +110,25 @@ export function tickEndOfRound(
       const instance = combatant.statuses[statusId];
       const def = statusDefs[statusId];
       if (!def || !instance || !def.ticksAtEndOfRound) continue;
+      if (def.activeOnly && !working.active[combatant.side].includes(combatantId)) continue;
 
-      if (def.pipeline === 'dot' || def.pipeline === 'hot') {
+      if (def.pipeline === 'timer') {
+        const newDuration = (instance.duration ?? 0) - 1;
+        if (newDuration <= 0) {
+          const maxHp = maxHpOf(combatantId);
+          const amount = Math.ceil((maxHp * (instance.magnitude ?? 0)) / 100);
+          events.push({ type: 'StatusTicked', round, combatantId, statusId, kind: 'damage', amount, newDuration: 0 });
+          const hpResult = applyHpDelta(working, round, combatantId, -amount, maxHp);
+          working = hpResult.state;
+          events.push(...hpResult.events);
+          const rm = removeStatus(working, round, combatantId, statusId, 'expired');
+          working = rm.state;
+          events.push(...rm.events);
+        } else {
+          events.push({ type: 'StatusTicked', round, combatantId, statusId, kind: 'duration', amount: 0, newDuration });
+          working = setStatus(working, combatantId, statusId, { ...instance, duration: newDuration });
+        }
+      } else if (def.pipeline === 'dot' || def.pipeline === 'hot') {
         const maxHp = maxHpOf(combatantId);
         const magnitude = instance.magnitude ?? (def.flatPercentOfMaxHp ? Math.ceil(maxHp * def.flatPercentOfMaxHp) : 0);
         const delta = def.pipeline === 'dot' ? -magnitude : magnitude;
@@ -152,7 +177,7 @@ export function tickEndOfRound(
   return { state: working, events };
 }
 
-/** docs/conditions.md §4: switching to bench clears every status with clearsOnSwitch (Burn, Freeze, Daze). */
+/** docs/conditions.md §4: switching to bench clears every status with clearsOnSwitch (Burn, Freeze, Daze, Haunt). */
 export function clearOnSwitch(
   state: CombatState,
   round: number,
@@ -174,28 +199,17 @@ export function clearOnSwitch(
   return { state: working, events };
 }
 
-/** Pops Expose for the damage pipeline's modifier list (docs/conditions.md: "wiped on the first instance of receiving damage"). Magnitude is 0 if absent. */
-export function consumeExpose(
-  state: CombatState,
-  round: number,
-  targetId: string
-): { state: CombatState; magnitude: number; events: CombatEvent[] } {
-  const instance = state.combatants[targetId]?.statuses['Expose'];
-  if (!instance) return { state, magnitude: 0, events: [] };
-  const rm = removeStatus(state, round, targetId, 'Expose', 'consumed');
-  return { state: rm.state, magnitude: instance.magnitude ?? 0, events: rm.events };
-}
-
 /**
- * docs/conditions.md §7 "Cleanse & positive statuses" — resolved per the doc's
- * own recommendation: 'debuffs' strips everything except Regen (the only
- * positive status); 'all' strips everything including Regen.
+ * docs/conditions.md §7 "Cleanse & positive statuses" — resolved as a flat
+ * rule, not a per-move choice: Cleanse strips every status EXCEPT ones
+ * flagged `positive` (Regen, Stealth). Data-driven off StatusDefinition.positive
+ * rather than a hardcoded status-id check.
  */
 export function cleanseStatuses(
   state: CombatState,
   round: number,
   combatantId: string,
-  scope: 'debuffs' | 'all'
+  statusDefs: Record<string, StatusDefinition>
 ): { state: CombatState; events: CombatEvent[] } {
   let working = state;
   const events: CombatEvent[] = [];
@@ -203,11 +217,114 @@ export function cleanseStatuses(
   if (!combatant) return { state, events };
 
   for (const statusId of Object.keys(combatant.statuses)) {
-    if (scope === 'debuffs' && statusId === 'Regen') continue;
+    if (statusDefs[statusId]?.positive) continue;
     const rm = removeStatus(working, round, combatantId, statusId, 'cleanse');
     working = rm.state;
     events.push(...rm.events);
   }
 
   return { state: working, events };
+}
+
+/**
+ * Conduct's engine hook, written generically off `triggerTypes` /
+ * `detonateBonusPercentMaxHp` so any future type-triggered status reuses it.
+ * For a `kind: 'damage'` hit whose move type matches a status's
+ * `triggerTypes`: if the target already carries that status, detonate it
+ * (bonus damage, then `removeStatus` reason 'consumed') — otherwise apply it
+ * fresh (boolean shape, no magnitude/duration needed) via the existing
+ * `applyStatus` helper. docs/conditions.md: "apply and detonate are separate"
+ * — a single hit only ever does one or the other, never both.
+ */
+export function applyOrDetonateTriggeredStatuses(
+  state: CombatState,
+  round: number,
+  targetId: string,
+  moveType: TypeId,
+  maxHp: number,
+  statusDefs: Record<string, StatusDefinition>
+): { state: CombatState; bonusDamage: number; events: CombatEvent[] } {
+  let working = state;
+  const events: CombatEvent[] = [];
+  let bonusDamage = 0;
+
+  for (const def of Object.values(statusDefs)) {
+    if (!def.triggerTypes?.includes(moveType)) continue;
+    const target = working.combatants[targetId];
+    if (!target || target.fainted) continue;
+
+    if (hasStatus(target, def.id)) {
+      bonusDamage += Math.ceil(maxHp * (def.detonateBonusPercentMaxHp ?? 0));
+      const rm = removeStatus(working, round, targetId, def.id, 'consumed');
+      working = rm.state;
+      events.push(...rm.events);
+    } else {
+      const applied = applyStatus(working, round, targetId, def, {});
+      working = applied.state;
+      events.push(...applied.events);
+    }
+  }
+
+  return { state: working, bonusDamage, events };
+}
+
+/**
+ * Haunt's engine hook, written generically off `spreadTriggerTypes` so any
+ * future retarget-style status reuses it. For a `singleEnemy` `kind: 'damage'`
+ * move resolved to exactly one target: if an active ally-of-the-target (not
+ * the target itself) carries a status whose `spreadTriggerTypes` matches the
+ * move's type, that ally is added to the target list too — single-target
+ * becomes spread. Only expands `singleEnemy` targeting — native spread moves
+ * (bothEnemies/allOthers) are untouched. LOCKED, 2026-08-18 designer sign-off
+ * (docs/conditions.md §7): this caps Haunt's burst ceiling at one extra
+ * full-damage hit rather than roughly doubling an already-spread move.
+ */
+export function expandSpreadTargets(
+  state: CombatState,
+  moveType: TypeId,
+  targetMode: TargetMode,
+  targetIds: readonly string[],
+  statusDefs: Record<string, StatusDefinition>
+): string[] {
+  if (targetMode !== 'singleEnemy' || targetIds.length !== 1) return [...targetIds];
+  const target = state.combatants[targetIds[0]];
+  if (!target) return [...targetIds];
+
+  const extra = state.active[target.side].filter((id): id is string => {
+    if (!id || id === targetIds[0] || state.combatants[id]?.fainted) return false;
+    return Object.values(statusDefs).some(
+      (def) => def.spreadTriggerTypes?.includes(moveType) && hasStatus(state.combatants[id], def.id)
+    );
+  });
+
+  return extra.length > 0 ? [...targetIds, ...extra] : [...targetIds];
+}
+
+/**
+ * Stealth's redirect (docs/conditions.md, §7 Q7 resolution: "a fast stealth
+ * can redirect an attack directed at that hero"). Narrow one-off mechanic —
+ * stays a literal 'Stealth' id check, same precedent as Freeze's Speed hook
+ * in state.ts. Only redirects a `kind: 'damage'` move resolved to exactly one
+ * target (singleEnemy/singleAlly) — spread moves still land, per the doc.
+ * Because actions resolve in priority/speed order and this runs at the exact
+ * point the attack resolves, a Stealth applied by a faster action earlier
+ * this same round is already on the target when this check runs; a slower
+ * Stealth simply hasn't landed yet and the attack goes through untouched.
+ */
+export function applyStealthRedirect(
+  state: CombatState,
+  targetMode: TargetMode,
+  moveKind: 'damage' | 'heal' | 'buff',
+  targetIds: readonly string[]
+): string[] {
+  if (moveKind !== 'damage') return [...targetIds];
+  if (targetMode !== 'singleEnemy' && targetMode !== 'singleAlly') return [...targetIds];
+  if (targetIds.length !== 1) return [...targetIds];
+
+  const [id] = targetIds;
+  const target = state.combatants[id];
+  if (!target || !hasStatus(target, 'Stealth')) return [...targetIds];
+
+  const alternate = state.active[target.side].find((cid): cid is string => cid !== null && cid !== id && !state.combatants[cid]?.fainted);
+  return alternate ? [alternate] : [...targetIds];
 }

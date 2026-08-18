@@ -113,7 +113,7 @@ export function formatEvents(
         lines.push({ key, text: `${name(e.combatantId)} rests, restoring Mana to full`, className: 'log-mana' });
         break;
       case 'ActionBlocked': {
-        const reasonText = e.reason === 'dazed' ? 'dazed' : e.reason === 'bound' ? 'bound' : "out of valid targets";
+        const reasonText = e.reason === 'dazed' ? 'dazed' : "out of valid targets";
         lines.push({ key, text: `${name(e.combatantId)} is ${reasonText} and can't act`, className: 'log-faint' });
         break;
       }

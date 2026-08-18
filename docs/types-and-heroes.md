@@ -81,12 +81,15 @@ have.
 
 ## Blight
 
-**Blight is not a type.** It was demoted to a **cross-type status effect defined at
-the move-design layer.** Do not add a Blight row/column to the chart. It's implemented
-per `conditions.md`'s status catalog: a magnitude status (cap 50%) that lowers
-Attack/Defense/Intelligence/Wisdom multiplicatively in the stat pipeline — see
-`architecture.md` and `conditions.md` §2. The sixth engine contract (condition/status
-vocabulary) that Blight depended on is now implemented (`src/engine/combat/statusEngine.ts`).
+**Blight is not a type, and it no longer exists at all.** It was demoted to a
+**cross-type status effect defined at the move-design layer** (a magnitude status,
+cap 50%, lowering Attack/Defense/Intelligence/Wisdom multiplicatively in the stat
+pipeline) — and then cut entirely in the 2026 status-system design review, for being
+invisible/non-tactile: a player couldn't see or play around a stat percentage the way
+they could a clock. **Poison** (`conditions.md`'s status catalog) replaces it: a visible
+3-round timer with a visible payoff. Do not add a Blight row/column to the chart, and no
+status currently sits in the stat pipeline at all — see `architecture.md` and
+`conditions.md` §2.
 
 ---
 

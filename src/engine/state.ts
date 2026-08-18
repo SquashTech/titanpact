@@ -11,10 +11,6 @@ export type Side = 'A' | 'B';
 export type ActiveSlotIndex = 0 | 1;
 export type DamageCategory = 'physical' | 'magical';
 
-/** Blight is the only status wired into the stat pipeline (docs/conditions.md §2) — see getEffectiveStat below. */
-export const BLIGHT_STATUS_ID = 'Blight';
-const BLIGHT_AFFECTED_STATS: readonly StatKey[] = ['attack', 'defense', 'intelligence', 'wisdom'];
-
 /** Freeze halves Speed (docs/conditions.md) — see getEffectiveStat below. */
 const FREEZE_STATUS_ID = 'Freeze';
 
@@ -103,19 +99,6 @@ export function getEffectiveStat(
   const base = hero.baseStats[stat];
   const modifier = combatant.statModifiers[stat] ?? 0;
   const raw = base + modifier;
-
-  // Blight (docs/conditions.md §2): the only status in the stat pipeline.
-  // Applies only to Attack/Defense/Intelligence/Wisdom — never Speed (Freeze
-  // owns that) or HP/Mana. Being the same effective-stat value feeding both
-  // sides of the off/def ratio is what makes Blight naturally "two-sided"
-  // (a blighted attacker deals less; a blighted defender takes more) without
-  // any separate offense/defense-specific logic.
-  if (BLIGHT_AFFECTED_STATS.includes(stat)) {
-    const blightMagnitude = combatant.statuses[BLIGHT_STATUS_ID]?.magnitude ?? 0;
-    if (blightMagnitude > 0) {
-      return Math.floor(raw * (1 - blightMagnitude / 100));
-    }
-  }
 
   // Freeze (docs/conditions.md): halves Speed. Boolean-shape — presence is
   // the whole signal, no magnitude to read.

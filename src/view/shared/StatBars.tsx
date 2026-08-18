@@ -83,8 +83,7 @@ interface Props {
   deltas?: Partial<Record<StatKey, number>>;
   /**
    * Final effective value per stat, when it isn't simply baseStats+deltas —
-   * e.g. Blight's multiplicative Attack/Defense/Int/Wisdom reduction or
-   * Freeze's Speed halving (engine/state.ts getEffectiveStat). Falls back to
+   * e.g. Freeze's Speed halving (engine/state.ts getEffectiveStat). Falls back to
    * baseStats+deltas per-stat when a stat is omitted, so callers with no live
    * combat statuses (CompendiumScreen, HeroPreviewOverlay) don't need this.
    */

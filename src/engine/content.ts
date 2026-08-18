@@ -4,8 +4,9 @@
 // logic. See CLAUDE.md "Architecture" and docs/architecture.md repo map.
 //
 // The condition vocabulary (the sixth engine contract) is now implemented per
-// docs/conditions.md: 8 statuses across 3 shapes (magnitude/boolean/duration),
-// encoded below as StatusDefinition data. MoveDefinition.kind now covers
+// docs/conditions.md: 9 statuses, mostly across the 3 core shapes
+// (magnitude/boolean/duration) plus Poison's own 'timer' shape, encoded below
+// as StatusDefinition data. MoveDefinition.kind now covers
 // 'damage' | 'heal' | 'buff', and any kind may additionally carry a
 // statusApplication and/or a cleanses effect — see docs/conditions.md §5 (the
 // Status-Query Layer) for the Gate/Consume/Transmute verb vocabulary this sets
@@ -47,13 +48,22 @@ export type MoveCategory = 'physical' | 'magical';
 export type StatusId = string;
 
 /**
- * The three status shapes (docs/conditions.md §1). Every status instance is an
- * instance of exactly one shape — no bespoke per-status engine logic.
+ * The status shapes (docs/conditions.md §1). Every status instance is an
+ * instance of exactly one shape — no bespoke per-status engine logic beyond
+ * the documented exceptions the catalog itself calls out. 'timer' is Poison's
+ * own shape: a magnitude that builds up plus a duration that only counts down
+ * while the combatant is active, detonating into damage at zero instead of
+ * just expiring.
  */
-export type StatusShape = 'magnitude' | 'boolean' | 'duration';
+export type StatusShape = 'magnitude' | 'boolean' | 'duration' | 'timer';
 
 /** How a re-application of an already-present status combines with the existing instance. */
-export type StatusStacking = 'additive' | 'none' | 'takeHigher';
+export type StatusStacking =
+  | 'additive'
+  | 'none'
+  | 'takeHigher'
+  /** Poison (docs/conditions.md §7 Q3/Q4): magnitude accumulates additively; duration holds at whatever it already is — reapplying mid-timer never resets or extends the clock. */
+  | 'additiveMagnitudeFixedDuration';
 
 /** Why a status left a combatant — carried on StatusRemovedEvent for legibility. */
 export type StatusRemovalReason = 'decay' | 'expired' | 'switch' | 'cleanse' | 'consumed';
@@ -67,19 +77,39 @@ export interface StatusDefinition {
   id: StatusId;
   name: string;
   shape: StatusShape;
-  /** DoT/HoT/duration-countdown tick point. LOCKED to end-of-round in this engine — see docs/conditions.md §7 "Status tick timing" open question. */
+  /** DoT/HoT/duration-countdown/timer tick point. LOCKED to end-of-round in this engine — see docs/conditions.md §7 "Status tick timing" open question. */
   ticksAtEndOfRound: boolean;
-  /** Post-tick decay for magnitude statuses (Burn, Regen): halve toward 0. 'none' for persistent magnitude statuses (Blight). */
+  /** Post-tick decay for magnitude statuses (Burn, Regen): halve toward 0. 'none' for statuses whose magnitude doesn't decay on its own (Poison builds up until it detonates). */
   decay: 'halve' | 'none';
   stacking: StatusStacking;
-  /** Additive-stacking ceiling (Blight → 50). Absent = unbounded. */
-  capMagnitude?: number;
   /** docs/conditions.md §4 removal table: cleared by switching to bench. */
   clearsOnSwitch: boolean;
+  /** Poison only: the end-of-round tick is skipped entirely for a benched combatant (switching stalls the timer instead of clearing it) rather than ticking down regardless like Daze/Stealth do. */
+  activeOnly?: boolean;
+  /** The only positive status(es) — Regen, Stealth. docs/conditions.md §7 "Cleanse & positive statuses": Cleanse never strips these. */
+  positive?: boolean;
   /** Boolean-shape DoT/HoT only (Bleed): fixed effect as a % of max HP instead of a magnitude. */
   flatPercentOfMaxHp?: number;
-  /** Which pipeline (if any) this status enters — documentation of where its effect is wired in, not engine-read. */
-  pipeline: 'dot' | 'hot' | 'stat' | 'damage' | 'control' | 'none';
+  /**
+   * Conduct's hook: any `kind: 'damage'` move whose `type` is in this list
+   * auto-applies this status to the target if absent, or detonates it
+   * (`detonateBonusPercentMaxHp` of the target's max HP as bonus damage,
+   * then consumed) if already present. Generic so a future type-triggered
+   * status reuses this same engine hook (statusEngine.ts
+   * applyOrDetonateTriggeredStatuses) instead of a Conduct-only special case.
+   */
+  triggerTypes?: readonly TypeId[];
+  /** Paired with triggerTypes — the detonate bonus, as a fraction of the target's max HP. */
+  detonateBonusPercentMaxHp?: number;
+  /**
+   * Haunt's hook: a `singleEnemy` `kind: 'damage'` move whose `type` is in
+   * this list also strikes an active ally-of-the-target carrying this status
+   * — single-target becomes spread. Generic so a future retarget-style status
+   * reuses this same hook (statusEngine.ts expandSpreadTargets).
+   */
+  spreadTriggerTypes?: readonly TypeId[];
+  /** Which pipeline (if any) this status enters — documentation of where its effect is wired in, not engine-read except where noted above. */
+  pipeline: 'dot' | 'hot' | 'control' | 'timer' | 'trigger' | 'target' | 'none';
   description?: string;
 }
 
@@ -92,7 +122,7 @@ export interface StatDelta {
 /**
  * A move's optional status effect (docs/conditions.md §5). Any move kind may
  * carry one — a damage move inflicting Burn, a buff move also granting Regen,
- * a dedicated status move applying Bind, etc.
+ * a dedicated status move applying Haunt, etc.
  */
 export interface StatusApplication {
   statusId: StatusId;
@@ -120,8 +150,8 @@ export interface MoveDefinition {
   statDeltas?: readonly StatDelta[];
   /** Any kind — see StatusApplication above. */
   statusApplication?: StatusApplication;
-  /** Any kind — strips statuses from the move's resolved target(s) (docs/conditions.md §4 Cleanse; §7 "Cleanse & positive statuses" resolves the split as debuffs-only vs. all, including Regen). */
-  cleanses?: 'debuffs' | 'all';
+  /** Any kind — strips non-positive statuses from the move's resolved target(s) (docs/conditions.md §4 Cleanse). Positive statuses (Regen, Stealth) are never stripped — §7 "Cleanse & positive statuses" resolved this as a flat rule, not a per-move choice. */
+  cleanses?: boolean;
   manaCost: number;
   /** Integer priority bracket; higher resolves first. */
   priority: number;

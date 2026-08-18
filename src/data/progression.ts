@@ -50,9 +50,9 @@ export const progressionTable: ProgressionTable = {
     stormRanger: ['quickJab', 'thunderclap', 'galeSlash', 'fangRush'],
     shadowMonk: ['duskStrike', 'shadowVeil', 'fangRush', 'quickJab', 'nightmareGrasp'],
     glacialWarden: ['frostBite', 'purify', 'mendWounds', 'weaken'],
-    dawnwarden: ['sunstrike', 'healingRain', 'fortify', 'exposeWeakness'],
+    dawnwarden: ['sunstrike', 'healingRain', 'fortify', 'purify'],
     runescribe: ['mindSpike', 'psychicLance', 'weaken', 'curseMind'],
-    mindweaver: ['exposeWeakness', 'quickJab', 'corruptingTouch', 'stunningBlow'],
+    mindweaver: ['spectralBind', 'quickJab', 'vanish', 'stunningBlow'],
     forgewright: ['ironFist', 'shrapnelBlast', 'quickJab', 'stunningBlow'],
     packAlpha: ['rendingClaw', 'quickJab', 'fortify', 'weaken'],
     // --- Stone/Spirit starters + the new Iron starter (2026-08-17) ---
@@ -63,11 +63,11 @@ export const progressionTable: ProgressionTable = {
     // --- Rime, Cube, Mordrax (2026-08-17) ---
     rime: ['glacialSpike', 'frostLock', 'fangRush', 'rendingClaw', 'stunningBlow', 'mendWounds'],
     cube: ['glacialSpike', 'frostLock', 'boulderToss', 'shrapnelBlast', 'ironFist'],
-    mordax: ['naturesWrath', 'entanglingRoots', 'savageMaul', 'fangRush', 'weaken'],
+    mordax: ['naturesWrath', 'venomousBite', 'savageMaul', 'fangRush', 'weaken'],
 
     // Lucius: only his Evolutions are deferred (src/data/heroes.ts) — he
     // still grows a movepool like any other hero below EVOLUTION_LEVEL.
-    lucius: ['corruptingTouch', 'nightmareGrasp', 'psychicLance', 'mindSpike'],
+    lucius: ['vanish', 'nightmareGrasp', 'psychicLance', 'mindSpike'],
   },
   evolutions: {
     // cinderKnight is now baseline Fire/Iron (src/data/heroes.ts, 2026-08-17)
@@ -191,7 +191,7 @@ export const progressionTable: ProgressionTable = {
             heroId: 'wildOracle',
             kind: 'offensive',
             name: 'Thornwrath',
-            description: 'Feral on-hit aggression; Bleed/Blight pressure.',
+            description: 'Feral on-hit aggression; Bleed/Poison pressure.',
             statGrants: { attack: 10 },
             unlocksMoveIds: [],
             typeGraft: 'Beast',
@@ -263,7 +263,7 @@ export const progressionTable: ProgressionTable = {
             heroId: 'shadowMonk',
             kind: 'offensive',
             name: 'Nightreaver',
-            description: 'Expose-punishing assassin burst.',
+            description: 'High-burst assassin strikes, safest under Stealth.',
             statGrants: { attack: 10 },
             unlocksMoveIds: [],
           },
@@ -335,7 +335,7 @@ export const progressionTable: ProgressionTable = {
             heroId: 'dawnwarden',
             kind: 'offensive',
             name: 'Sunflare',
-            description: 'Radiant burst; Expose/Burn.',
+            description: 'Radiant burst; Burn pressure.',
             statGrants: { intelligence: 10 },
             unlocksMoveIds: [],
             typeGraft: 'Fire',
@@ -426,7 +426,7 @@ export const progressionTable: ProgressionTable = {
             heroId: 'mindweaver',
             kind: 'utility',
             name: 'Dominion',
-            description: 'Control lock — Daze/Bind, domination debuffs.',
+            description: 'Control lock — Daze, Haunt, domination debuffs.',
             statGrants: { speed: 10, mpRegen: 5 },
             unlocksMoveIds: [],
             typeGraft: 'Shadow',

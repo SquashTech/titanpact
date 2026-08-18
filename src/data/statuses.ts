@@ -1,7 +1,9 @@
-// The 8-status condition vocabulary (docs/conditions.md, the engine's 6th
-// contract) as DATA — every status is an instance of one of 3 shapes; the
+// The 9-status condition vocabulary (docs/conditions.md, the engine's 6th
+// contract) as DATA — every status is an instance of one of 4 shapes; the
 // engine (engine/combat/statusEngine.ts) reads these flags generically rather
-// than special-casing each status by name.
+// than special-casing each status by name. Replaces the earlier 8-status
+// catalog: Bind, Blight, and Expose were cut in design review; Conduct,
+// Poison, Haunt, and Stealth replace them.
 
 import type { StatusDefinition } from '../engine/content';
 
@@ -29,18 +31,6 @@ export const statuses: Record<string, StatusDefinition> = {
     flatPercentOfMaxHp: 0.05,
     description: "End of round: deal 5% of the target's max HP. Fixed, inescapable by switching — Cleanse only.",
   },
-  Blight: {
-    id: 'Blight',
-    name: 'Blight',
-    shape: 'magnitude',
-    ticksAtEndOfRound: false,
-    decay: 'none',
-    stacking: 'additive',
-    capMagnitude: 50,
-    clearsOnSwitch: false,
-    pipeline: 'stat',
-    description: 'Reduces Attack/Defense/Intelligence/Wisdom by magnitude%, capped at 50%. Persists through switch.',
-  },
   Freeze: {
     id: 'Freeze',
     name: 'Freeze',
@@ -63,28 +53,6 @@ export const statuses: Record<string, StatusDefinition> = {
     pipeline: 'control',
     description: "Can't attack; can still switch. Duration counts down at end of round; cleared by switching.",
   },
-  Bind: {
-    id: 'Bind',
-    name: 'Bind',
-    shape: 'duration',
-    ticksAtEndOfRound: true,
-    decay: 'none',
-    stacking: 'takeHigher',
-    clearsOnSwitch: false,
-    pipeline: 'control',
-    description: "Can't switch. Duration counts down at end of round; cannot be escaped by switching.",
-  },
-  Expose: {
-    id: 'Expose',
-    name: 'Expose',
-    shape: 'magnitude',
-    ticksAtEndOfRound: false,
-    decay: 'none',
-    stacking: 'takeHigher',
-    clearsOnSwitch: false,
-    pipeline: 'damage',
-    description: 'The next instance of damage taken is amplified by magnitude%. Consumed on that hit.',
-  },
   Regen: {
     id: 'Regen',
     name: 'Regen',
@@ -93,7 +61,63 @@ export const statuses: Record<string, StatusDefinition> = {
     decay: 'halve',
     stacking: 'additive',
     clearsOnSwitch: false,
+    positive: true,
     pipeline: 'hot',
-    description: 'End of round: heal magnitude, then halve it. The only positive status — persists through switch.',
+    description: 'End of round: heal magnitude, then halve it. A positive status — persists through switch, never stripped by Cleanse.',
+  },
+  Conduct: {
+    id: 'Conduct',
+    name: 'Conduct',
+    shape: 'boolean',
+    ticksAtEndOfRound: false,
+    decay: 'none',
+    stacking: 'none',
+    // Persists through switch — provisional call, not stated explicitly by the
+    // design doc. Treated as a mark meant to be cashed in later (same reasoning
+    // the old, now-cut Expose used), not an acute effect you dodge by pivoting.
+    clearsOnSwitch: false,
+    triggerTypes: ['Storm', 'Iron'],
+    detonateBonusPercentMaxHp: 0.1,
+    pipeline: 'trigger',
+    description:
+      "Marked by a Storm or Iron hit. The next Storm or Iron hit on this target deals an extra 10% of the target's max HP and consumes the mark — apply and detonate are always separate hits.",
+  },
+  Poison: {
+    id: 'Poison',
+    name: 'Poison',
+    shape: 'timer',
+    ticksAtEndOfRound: true,
+    decay: 'none',
+    stacking: 'additiveMagnitudeFixedDuration',
+    clearsOnSwitch: false,
+    activeOnly: true,
+    pipeline: 'timer',
+    description:
+      "Starts a 3-round timer. Only counts down while this hero is active — switching stalls the clock rather than clearing it. Reapplying raises the magnitude without resetting the timer. At zero: deals magnitude% of max HP and is consumed.",
+  },
+  Haunt: {
+    id: 'Haunt',
+    name: 'Haunt',
+    shape: 'boolean',
+    ticksAtEndOfRound: false,
+    decay: 'none',
+    stacking: 'none',
+    clearsOnSwitch: true,
+    spreadTriggerTypes: ['Spirit', 'Mind'],
+    pipeline: 'target',
+    description: "While active, a Spirit or Mind attack aimed at this hero's non-Haunted partner also strikes this hero. Cleared by switching.",
+  },
+  Stealth: {
+    id: 'Stealth',
+    name: 'Stealth',
+    shape: 'duration',
+    ticksAtEndOfRound: true,
+    decay: 'none',
+    stacking: 'none',
+    clearsOnSwitch: false,
+    positive: true,
+    pipeline: 'target',
+    description:
+      'For 1 round this hero cannot be targeted by a single-target attack (spread moves still land) — a single-target attack resolving after this status lands redirects onto the other active hero.',
   },
 };

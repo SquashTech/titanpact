@@ -56,17 +56,19 @@ Design constraints on every event type:
   `Fainted` are two events, not one, even when a hit is lethal.
 
 > **The sixth contract (condition/status vocabulary) is now IMPLEMENTED —
-> pending designer confirmation.** `docs/conditions.md` specifies 8 statuses
-> across 3 shapes; `src/data/statuses.ts` encodes them as data and
-> `src/engine/combat/statusEngine.ts` is the generic runtime (no per-status
-> special cases). Several of `conditions.md` §7's open questions were resolved
-> by adopting that doc's own stated recommendation (Cleanse = debuffs-vs-all
-> split, Daze clears on switch, status ticks run at end-of-round) — these are
+> pending designer confirmation.** `docs/conditions.md` specifies 9 statuses;
+> `src/data/statuses.ts` encodes them as data and
+> `src/engine/combat/statusEngine.ts` is the generic runtime, with a small
+> number of documented, narrowly-scoped exceptions for statuses that hook
+> target resolution (Haunt, Stealth) or a move's type (Conduct) rather than
+> the plain tick loop. Several of `conditions.md` §7's open questions were
+> resolved by adopting the 2026 status-system design review's stated answers
+> (Cleanse always spares positive statuses — no more debuffs-vs-all split,
+> Daze clears on switch, status ticks run at end-of-round) — these are
 > implemented, not designer-locked; treat them like any other provisional
-> value (e.g. `PROVISIONAL_CRIT_CHANCE`) until confirmed. This unblocks the
-> ripples noted below: `combat.md` stat-mods-on-switch already covers flat
-> mods, and Blight (`types-and-heroes.md`) is implemented as the stat-pipeline
-> hook `conditions.md` §2 specifies.
+> value (e.g. `PROVISIONAL_CRIT_CHANCE`) until confirmed. `combat.md`
+> stat-mods-on-switch already covers flat mods; no status sits in the stat
+> pipeline any more (Blight, the one that did, was cut).
 
 **Canonical event set** (implemented — `src/engine/events.ts`):
 

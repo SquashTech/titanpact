@@ -3,9 +3,9 @@
 // actions, then actions resolve in priority/speed order, then bench HP regen
 // and mana regen (active + bench, docs/mana.md) tick at the round boundary.
 // Also implements the status system (docs/conditions.md, the 6th engine
-// contract): Daze gates move actions, Bind gates switch actions
-// (switching.ts), Expose feeds the damage pipeline's modifier term, and every
-// status ticks at the round boundary alongside those regen ticks.
+// contract): Daze gates move actions, Stealth/Haunt retarget/expand a
+// damage move's targets, Conduct applies/detonates off the move's type, and
+// every status ticks at the round boundary alongside those regen ticks.
 
 import type { HeroDefinition, MoveDefinition, StatusDefinition } from '../content';
 import type { CombatState, HeroLookup, Side } from '../state';
@@ -19,7 +19,7 @@ import { applyManaRegen } from './manaRegen';
 import { resolveStatRatio, rollDamage, statKeysForCategory, type DamageModifier } from '../damage/damagePipeline';
 import type { TypeChart } from '../damage/typeMult';
 import { applyHpDelta } from './faintHandling';
-import { applyStatus, cleanseStatuses, consumeExpose, tickEndOfRound } from './statusEngine';
+import { applyOrDetonateTriggeredStatuses, applyStatus, applyStealthRedirect, cleanseStatuses, expandSpreadTargets, tickEndOfRound } from './statusEngine';
 
 export interface RoundConfig {
   typeChart: TypeChart;
@@ -57,7 +57,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         working = result.state;
         events.push(...result.events);
       } catch (err) {
-        if (err instanceof SwitchBlockedError) continue; // illegal declared action (lock-in or Bind): no-op
+        if (err instanceof SwitchBlockedError) continue; // illegal declared action (lock-in): no-op
         throw err;
       }
       continue;
@@ -113,6 +113,13 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       throw err;
     }
 
+    if (move.kind === 'damage') {
+      // Stealth (redirect) then Haunt (spread) — both status-driven retargeting layered on
+      // top of TargetMode resolution, so MoveDeclared below already reflects the final targets.
+      targetIds = applyStealthRedirect(working, move.target, move.kind, targetIds);
+      targetIds = expandSpreadTargets(working, move.type, move.target, targetIds, statuses);
+    }
+
     events.push({ type: 'MoveDeclared', round, combatantId: action.combatantId, moveId: move.id, targetCombatantIds: targetIds });
 
     const previousMana = actor.currentMana;
@@ -139,15 +146,14 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           const target = working.combatants[targetId];
           if (!target || target.fainted) continue;
           const defenderHero = heroes[target.heroId];
+          const maxHp = getMaxHp(defenderHero, target);
 
           const attackerNow = working.combatants[action.combatantId];
           const ratio = resolveStatRatio(move.category, attackerHero, attackerNow, defenderHero, target);
 
-          // Expose (docs/conditions.md): consumed by the first hit and folded into the damage pipeline's own modifier accumulator.
-          const exposeResult = consumeExpose(working, round, targetId);
-          working = exposeResult.state;
-          events.push(...exposeResult.events);
-          const modifiers: DamageModifier[] = exposeResult.magnitude > 0 ? [{ source: 'Expose', amount: exposeResult.magnitude / 100 }] : [];
+          // No move-driven damage-pipeline modifiers currently exist (Expose, the one that
+          // did, is cut) — kept as an empty accumulator so a future relic/ability slots in here.
+          const modifiers: DamageModifier[] = [];
 
           const rolled = rollDamage(
             move,
@@ -160,8 +166,14 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           );
           working = { ...working, rngState: rolled.nextRngState };
 
-          const amount = Math.round(rolled.damage);
-          const maxHp = getMaxHp(defenderHero, target);
+          // Conduct (docs/conditions.md): auto-applies/detonates off the move's type via
+          // triggerTypes — bypasses the damage pipeline the same way DoT ticks do, folding
+          // straight into `amount` rather than the multiplicative modifier term above.
+          const triggered = applyOrDetonateTriggeredStatuses(working, round, targetId, move.type, maxHp, statuses);
+          working = triggered.state;
+          events.push(...triggered.events);
+
+          const amount = Math.round(rolled.damage) + triggered.bonusDamage;
 
           const [offKey, defKey] = statKeysForCategory(move.category);
           events.push({
@@ -246,7 +258,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     if (move.cleanses) {
       for (const targetId of targetIds) {
         if (!working.combatants[targetId]) continue;
-        const result = cleanseStatuses(working, round, targetId, move.cleanses);
+        const result = cleanseStatuses(working, round, targetId, statuses);
         working = result.state;
         events.push(...result.events);
       }
