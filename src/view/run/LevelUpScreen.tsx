@@ -72,10 +72,10 @@ interface MoveOffer {
  * Manage Roster" flow. Manage Roster (RosterManagementScreen) is now
  * inspection/equipment-only and never spends the pool.
  *
- * Each hero card is itself the level-up button — tapping it doesn't spend
- * the point immediately, it opens a Confirm dialog (below) so a stray tap
- * can't burn a Training Point on the wrong hero. Move details, both here and
- * in the move-replace offer's picker (ReplaceMoveCard below), are read via a
+ * Each hero card is itself the level-up button — tapping it spends the point
+ * immediately (an earlier confirm-dialog step was removed for slowing down the
+ * flow). Move details, both here and in the move-replace offer's picker
+ * (ReplaceMoveCard below), are read via a
  * long-press on the move (mirrors FightScreen's move-button long-press)
  * rather than a persistent info panel that tracked whatever was last
  * hovered/tapped — that used to reserve a large fixed box at the top of the
@@ -90,8 +90,6 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
   const [evolvingRosterId, setEvolvingRosterId] = useState<string | null>(null);
   /** Long-press-triggered move detail popup — shared by both the main hero list and the move-replace offer's picker (see MoveTile/ReplaceMoveCard's onLongPress). */
   const [movePopup, setMovePopup] = useState<{ moveId: string; label: string } | null>(null);
-  /** A hero card was tapped to spend a Training Point — held here until the player confirms, rather than spending immediately on tap. */
-  const [confirmRosterId, setConfirmRosterId] = useState<string | null>(null);
 
   function handleLevelUp(rosterId: string) {
     if (run.levelUpPool < 1) return;
@@ -163,7 +161,6 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
   }
 
   const offerEntry = offer ? (run.roster.find((r) => r.rosterId === offer.rosterId) ?? null) : null;
-  const confirmEntry = confirmRosterId ? (run.roster.find((r) => r.rosterId === confirmRosterId) ?? null) : null;
 
   const evolvingEntry = evolvingRosterId ? (run.roster.find((r) => r.rosterId === evolvingRosterId) ?? null) : null;
   const evolvingNode = evolvingEntry ? availableEvolution(progressionTable, evolvingEntry) : null;
@@ -239,13 +236,13 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
                   aria-disabled={!canAct}
                   onClick={() => {
                     if (node) setEvolvingRosterId(entry.rosterId);
-                    else if (canLevelUp) setConfirmRosterId(entry.rosterId);
+                    else if (canLevelUp) handleLevelUp(entry.rosterId);
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
                       if (node) setEvolvingRosterId(entry.rosterId);
-                      else if (canLevelUp) setConfirmRosterId(entry.rosterId);
+                      else if (canLevelUp) handleLevelUp(entry.rosterId);
                     }
                   }}
                 >
@@ -292,40 +289,6 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
           <div className="log-panel move-popup-panel">
             <MoveInfoPanel move={moves[movePopup.moveId]} label={movePopup.label} />
             <div className="move-popup-hint">Tap anywhere to close</div>
-          </div>
-        </div>
-      )}
-
-      {/* Confirms which hero a Training Point is being spent on before it's actually spent — tapping a hero card alone no longer levels it up. */}
-      {confirmRosterId && confirmEntry && (
-        <div className="log-overlay" onClick={() => setConfirmRosterId(null)}>
-          <div className="log-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="log-panel-header">
-              <span>Confirm Level Up</span>
-            </div>
-            <div className="level-up-confirm-body">
-              <HeroPortrait heroId={heroes[confirmEntry.heroId].id} className="level-up-confirm-portrait" />
-              <div>
-                <div className="level-up-confirm-name">{heroes[confirmEntry.heroId].name}</div>
-                <div className="level-up-confirm-sub">
-                  Level {confirmEntry.level} → {confirmEntry.level + 1}
-                </div>
-              </div>
-            </div>
-            <div className="reward-panel-actions">
-              <button className="secondary-button" onClick={() => setConfirmRosterId(null)}>
-                Cancel
-              </button>
-              <button
-                className="resolve-button"
-                onClick={() => {
-                  handleLevelUp(confirmRosterId);
-                  setConfirmRosterId(null);
-                }}
-              >
-                Confirm
-              </button>
-            </div>
           </div>
         </div>
       )}

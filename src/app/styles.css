@@ -1501,6 +1501,14 @@ body {
   background: #33291a;
 }
 
+/* ForceEquipScreen's per-hero grid (EquipmentSlotGrid highlightSlot prop) —
+   marks the slot an incoming item would land in, since equipping there is now
+   a single un-confirmed tap. */
+.equip-slot-box.target {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
 .equip-slot-icon {
   font-size: 13px;
   line-height: 1;
@@ -2400,10 +2408,10 @@ body {
 @keyframes offer-move-glow {
   0%,
   100% {
-    box-shadow: 0 0 0 1px var(--accent), 0 0 10px 1px rgba(224, 166, 60, 0.35);
+    box-shadow: 0 0 10px 1px rgba(224, 166, 60, 0.35);
   }
   50% {
-    box-shadow: 0 0 0 1px var(--accent), 0 0 20px 5px rgba(224, 166, 60, 0.65);
+    box-shadow: 0 0 20px 5px rgba(224, 166, 60, 0.65);
   }
 }
 

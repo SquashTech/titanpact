@@ -132,7 +132,24 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
   }
 
   return (
-    <div className="log-overlay roster-mgmt-overlay" onClick={onClose}>
+    <div
+      className="log-overlay roster-mgmt-overlay"
+      onClick={() => {
+        // A long-press-opened item popup (below) is inserted mid-gesture,
+        // while the pointer is still down over the equip-slot button —
+        // release then fires a "click" whose mousedown target (the button)
+        // and mouseup target (the popup, now covering that spot) differ. In
+        // that case the browser dispatches the click on their nearest common
+        // ancestor, which is THIS overlay, skipping right past the popup's
+        // own stopPropagation and closing Manage Roster instead of just the
+        // popup. Treat that click as dismissing the popup, not the screen.
+        if (viewedItemId) {
+          setViewedItemId(null);
+          return;
+        }
+        onClose();
+      }}
+    >
       <div className="log-panel roster-panel" onClick={(e) => e.stopPropagation()}>
         <div className="log-panel-header">
           <span>Manage Roster</span>

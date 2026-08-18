@@ -9,7 +9,7 @@ import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
-import { EQUIP_SLOT_ICONS, EQUIP_SLOT_LABELS, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { EQUIP_SLOT_ICONS, EQUIP_SLOT_LABELS, EquipmentSlotGrid, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 
 interface Props {
   run: RunState;
@@ -42,7 +42,6 @@ function fmtGrant(amount: number): string {
  */
 export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone }: Props) {
   const [queue, setQueue] = useState<QueueEntry[]>(() => initialQueue.map((itemId) => ({ itemId, bumped: false })));
-  const [confirmRosterId, setConfirmRosterId] = useState<string | null>(null);
   const [confirmTrash, setConfirmTrash] = useState(false);
 
   const current = queue[0];
@@ -60,7 +59,6 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
 
   function advance(nextQueue: QueueEntry[]) {
     setQueue(nextQueue);
-    setConfirmRosterId(null);
     setConfirmTrash(false);
     if (nextQueue.length === 0) onDone();
   }
@@ -79,11 +77,6 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
   function handleTrash() {
     advance(queue.slice(1));
   }
-
-  const confirmEntry = confirmRosterId ? run.roster.find((r) => r.rosterId === confirmRosterId) : null;
-  const confirmHero = confirmEntry ? heroes[confirmEntry.heroId] : null;
-  const confirmCurrentId = confirmEntry ? confirmEntry.equipment[item.slot] : null;
-  const confirmCurrentItem = confirmCurrentId ? equipment[confirmCurrentId] : null;
 
   const grants = Object.entries(item.statGrants) as [StatKey, number][];
 
@@ -129,7 +122,7 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
                 key={entry.rosterId}
                 className="equip-target-card"
                 style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
-                onClick={() => setConfirmRosterId(entry.rosterId)}
+                onClick={() => handleEquip(entry.rosterId)}
               >
                 <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
                 <div className="equip-target-info">
@@ -141,15 +134,7 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
                       <TypeBadge key={t} type={t} />
                     ))}
                   </div>
-                  <div className="equip-target-current">
-                    {currentItem ? (
-                      <>
-                        Currently: <strong>{currentItem.name}</strong>
-                      </>
-                    ) : (
-                      'Slot empty'
-                    )}
-                  </div>
+                  <EquipmentSlotGrid loadout={entry.equipment} equipmentLookup={equipment} highlightSlot={item.slot} interactive={false} />
                 </div>
                 <span className="equip-target-cta">{currentItem ? 'Replace' : 'Equip'}</span>
               </button>
@@ -161,33 +146,6 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
       <button className="secondary-button trash-button" onClick={() => setConfirmTrash(true)}>
         🗑️ Trash {item.name}
       </button>
-
-      {confirmRosterId && confirmEntry && confirmHero && (
-        <div className="log-overlay" onClick={() => setConfirmRosterId(null)}>
-          <div className="log-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="log-panel-header">
-              <span>Confirm Equip</span>
-            </div>
-            <div className="level-up-confirm-body">
-              <HeroPortrait heroId={confirmHero.id} className="level-up-confirm-portrait" />
-              <div>
-                <div className="level-up-confirm-name">{confirmHero.name}</div>
-                <div className="level-up-confirm-sub">
-                  {confirmCurrentItem ? `Replaces ${confirmCurrentItem.name}` : `Equips into an empty ${EQUIP_SLOT_LABELS[item.slot]} slot`}
-                </div>
-              </div>
-            </div>
-            <div className="reward-panel-actions">
-              <button className="secondary-button" onClick={() => setConfirmRosterId(null)}>
-                Cancel
-              </button>
-              <button className="resolve-button" onClick={() => handleEquip(confirmRosterId)}>
-                Confirm — Equip {item.name}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {confirmTrash && (
         <div className="log-overlay" onClick={() => setConfirmTrash(false)}>

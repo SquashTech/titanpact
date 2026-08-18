@@ -43,6 +43,10 @@ interface EquipmentSlotGridProps {
   /** Which item id (if any) is currently loaded into the paired EquipmentInfoPanel, for the .selected highlight. */
   viewedItemId?: string | null;
   onSelect?: (itemId: string) => void;
+  /** Slot to mark with the .target outline — the slot an incoming item would land in (ForceEquipScreen). */
+  highlightSlot?: EquipmentSlot | null;
+  /** False renders plain <div> boxes instead of <button>s — for placing the grid inside a caller that's already a button/clickable row, where nested buttons would be invalid HTML and eat the click (ForceEquipScreen). Defaults to true. */
+  interactive?: boolean;
 }
 
 /**
@@ -53,32 +57,39 @@ interface EquipmentSlotGridProps {
  * tappable to load its effect into the paired EquipmentInfoPanel below,
  * instead of equipping/unequipping. Empty slots are inert.
  */
-export function EquipmentSlotGrid({ loadout, equipmentLookup, viewedItemId, onSelect }: EquipmentSlotGridProps) {
+export function EquipmentSlotGrid({ loadout, equipmentLookup, viewedItemId, onSelect, highlightSlot, interactive = true }: EquipmentSlotGridProps) {
+  const Box = interactive ? 'button' : 'div';
   return (
     <div className="equip-slot-row">
       {EQUIP_SLOT_ORDER.map((slot) => {
         const itemId = loadout[slot];
         const item = itemId ? equipmentLookup[itemId] : null;
         return (
-          <button
+          <Box
             key={slot}
-            type="button"
-            className={`equip-slot-box${item ? ' filled' : ' empty'}${item && viewedItemId === item.id ? ' selected' : ''}`}
-            onClick={(e) => {
-              // Only a filled box's own item lookup counts as "interacting with
-              // equipment" — stop the click from bubbling to the enclosing
-              // detail-panel's close-on-click-elsewhere handler. An empty slot
-              // has nothing to inspect, so its tap falls through and closes
-              // the panel like any other non-item area.
-              if (!item) return;
-              e.stopPropagation();
-              onSelect?.(item.id);
-            }}
-            aria-label={item ? `View ${item.name} details` : `${EQUIP_SLOT_LABELS[slot]} slot, empty`}
+            type={interactive ? 'button' : undefined}
+            className={`equip-slot-box${item ? ' filled' : ' empty'}${item && viewedItemId === item.id ? ' selected' : ''}${
+              slot === highlightSlot ? ' target' : ''
+            }`}
+            onClick={
+              interactive
+                ? (e) => {
+                    // Only a filled box's own item lookup counts as "interacting
+                    // with equipment" — stop the click from bubbling to the
+                    // enclosing detail-panel's close-on-click-elsewhere handler.
+                    // An empty slot has nothing to inspect, so its tap falls
+                    // through and closes the panel like any other non-item area.
+                    if (!item) return;
+                    e.stopPropagation();
+                    onSelect?.(item.id);
+                  }
+                : undefined
+            }
+            aria-label={item ? `${EQUIP_SLOT_LABELS[slot]}: ${item.name}` : `${EQUIP_SLOT_LABELS[slot]} slot, empty`}
           >
             <span className="equip-slot-icon">{EQUIP_SLOT_ICONS[slot]}</span>
             <span className="equip-slot-item">{item ? item.name : 'Empty'}</span>
-          </button>
+          </Box>
         );
       })}
     </div>
