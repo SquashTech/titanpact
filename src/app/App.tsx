@@ -23,6 +23,7 @@ import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } fr
 import { generateMap } from '../run/map';
 import { generateStarterOptions } from '../run/draft';
 import { generateEncounter, type EncounterNodeType, type Encounter } from '../run/enemyGen';
+import { pickSquad } from '../run/squad';
 import { relicTeamStatModifiers } from '../run/relics';
 import { advanceToNode, advanceToNextAct, grantCurrencyReward, grantUpgradeReward, grantContractReward } from '../run/runProgress';
 import type { RunState, RosterEntry } from '../run/state';
@@ -85,6 +86,52 @@ function createLevel4TestRun(): RunState {
     ...run,
     map: generateMap(Math.floor(Math.random() * 2 ** 31)),
   };
+}
+
+/**
+ * ⚠️ TEMPORARY DEV/TEST HELPER — not a real game entry point. Hand-assembles
+ * a 2v2 that puts every condition from the docs/conditions.md overhaul
+ * (Conduct, Poison, Haunt, Stealth — Burn/Bleed/Freeze/Daze/Regen/Cleanse
+ * already had earlier browser-testable moves) in front of the player at
+ * once, plus the Haunt+Mind interaction the type chart alone can't surface:
+ * Mind is one of Haunt's `spreadTriggerTypes` (statusEngine.ts
+ * expandSpreadTargets), so a `psychicLance` aimed at the enemy's
+ * NON-Haunted half also strikes the Haunted one.
+ *
+ * Squad (2 active + 2 bench, freely switchable mid-fight — no lock-in until
+ * 2+ KOs per CLAUDE.md):
+ *  - Squall (Storm) carries `thunderclap` (applies Conduct) AND `ironFist`
+ *    (Iron — detonates it) so the apply/detonate split is demoable solo,
+ *    across two turns on the same target, without needing a second hero.
+ *  - Cortex (Mind) carries `spectralBind` (Spirit — marks a target Haunted)
+ *    AND `psychicLance`/`mindSpike` (Mind) — mark one enemy, then hit the
+ *    OTHER enemy to watch the Haunted one get struck too.
+ *  - Sylva keeps her default kit (`venomousBite` starts Poison's 3-round
+ *    timer).
+ *  - Vesper keeps her default kit (`vanish` grants 1-round Stealth; a fast
+ *    Vanish redirects an incoming single-target hit onto her partner).
+ *
+ * AI side is two flat defensive tanks (Crag, Warden) chosen for high HP so
+ * they survive enough rounds to actually watch Burn-style ticks and Poison's
+ * timer play out instead of fainting turn 2.
+ */
+function createConditionsTestEncounter(): { player: Encounter; ai: Encounter } {
+  let playerRun = createRunState(0, 0);
+  playerRun = addRosterEntry(playerRun, createRosterEntry('conductTester', 'stormRanger', ['thunderclap', 'ironFist', 'restoreVigor']));
+  playerRun = addRosterEntry(
+    playerRun,
+    createRosterEntry('hauntMindTester', 'mindweaver', ['spectralBind', 'psychicLance', 'mindSpike'])
+  );
+  playerRun = addRosterEntry(playerRun, createRosterEntry('poisonTester', 'wildOracle', heroes.wildOracle.moveIds));
+  playerRun = addRosterEntry(playerRun, createRosterEntry('stealthTester', 'shadowMonk', heroes.shadowMonk.moveIds));
+  const playerSquad = pickSquad(playerRun.roster, ['conductTester', 'hauntMindTester', 'poisonTester', 'stealthTester']);
+
+  let aiRun = createRunState(0, 0);
+  aiRun = addRosterEntry(aiRun, createRosterEntry('conditionsDummyA', 'crag', heroes.crag.moveIds));
+  aiRun = addRosterEntry(aiRun, createRosterEntry('conditionsDummyB', 'ironWarden', heroes.ironWarden.moveIds));
+  const aiSquad = pickSquad(aiRun.roster, ['conditionsDummyA', 'conditionsDummyB']);
+
+  return { player: { run: playerRun, squad: playerSquad }, ai: { run: aiRun, squad: aiSquad } };
 }
 
 /** Guarantees a rosterId that doesn't collide with an existing entry, even if the same heroId is claimed more than once across a run. */
@@ -329,10 +376,21 @@ export function App() {
     setScreen({ kind: 'quickBattle', player, ai });
   }
 
+  /** ⚠️ TEMPORARY DEV/TEST — see createConditionsTestEncounter. Reuses the 'quickBattle' screen kind since the needs (no run/map bookkeeping, drop straight into FightScreen, return to title on resolve) are identical to Quick Battle's. */
+  function handleStartConditionsTest() {
+    const { player, ai } = createConditionsTestEncounter();
+    setScreen({ kind: 'quickBattle', player, ai });
+  }
+
   return (
     <div className="app-shell" ref={shellRef}>
       {screen.kind === 'title' && (
-        <TitleScreen onStartRun={handleStartNewRun} onQuickBattle={handleQuickBattle} onStartLevel4TestRun={handleStartLevel4TestRun} />
+        <TitleScreen
+          onStartRun={handleStartNewRun}
+          onQuickBattle={handleQuickBattle}
+          onStartLevel4TestRun={handleStartLevel4TestRun}
+          onStartConditionsTest={handleStartConditionsTest}
+        />
       )}
 
       {screen.kind === 'draft' && <DraftScreen optionIds={screen.optionIds} onConfirm={handleDraftConfirm} />}

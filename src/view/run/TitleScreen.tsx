@@ -7,6 +7,8 @@ interface Props {
   onQuickBattle: () => void;
   /** ⚠️ TEMPORARY DEV/TEST — see App.tsx createLevel4TestRun. Remove this prop and its button together when Evolution work no longer needs a fast-forward. */
   onStartLevel4TestRun: () => void;
+  /** ⚠️ TEMPORARY DEV/TEST — see App.tsx createConditionsTestEncounter. Remove this prop and its button together once Conduct/Poison/Haunt/Stealth no longer need a dedicated browser playtest. */
+  onStartConditionsTest: () => void;
 }
 
 /**
@@ -16,7 +18,7 @@ interface Props {
  * "Compendium" opens a read-only hero browser (CompendiumScreen) — no run
  * state involved, so it's toggled locally rather than routed through App.tsx.
  */
-export function TitleScreen({ onStartRun, onQuickBattle, onStartLevel4TestRun }: Props) {
+export function TitleScreen({ onStartRun, onQuickBattle, onStartLevel4TestRun, onStartConditionsTest }: Props) {
   const [showCompendium, setShowCompendium] = useState(false);
   const [showTypeChart, setShowTypeChart] = useState(false);
 
@@ -38,6 +40,9 @@ export function TitleScreen({ onStartRun, onQuickBattle, onStartLevel4TestRun }:
         </button>
         <button className="title-debug-button" onClick={onStartLevel4TestRun}>
           🧪 Test: Lv4 Squad <span className="title-debug-tag">temp</span>
+        </button>
+        <button className="title-debug-button" onClick={onStartConditionsTest}>
+          🧪 Test: Conditions <span className="title-debug-tag">temp</span>
         </button>
       </div>
 
