@@ -21,12 +21,47 @@ import { mergeStatMods } from './statMods';
 
 export type EquipmentSlot = 'weapon' | 'armor' | 'accessory';
 
+/** Gray/blue/purple/gold/red — common through mythic, low to high. Drives both reward-roll odds (RARITY_DROP_WEIGHTS below) and the tier color shown in the UI (view/shared/EquipmentBox.tsx RARITY_COLOR_VARS). */
+export type EquipmentRarity = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
+
+export const RARITY_ORDER: readonly EquipmentRarity[] = ['common', 'rare', 'epic', 'legendary', 'mythic'];
+
 export interface EquipmentDefinition {
   id: string;
   name: string;
   slot: EquipmentSlot;
+  rarity: EquipmentRarity;
   /** Flat additive grants (CLAUDE.md "Stat modifiers are flat additive integers, multiples of 5 or 10"). */
   statGrants: Partial<Record<StatKey, number>>;
+}
+
+/** Reward-roll weights per rarity — higher tiers are proportionally rarer finds (pickWeightedEquipment below). */
+export const RARITY_DROP_WEIGHTS: Record<EquipmentRarity, number> = {
+  common: 50,
+  rare: 30,
+  epic: 14,
+  legendary: 5,
+  mythic: 1,
+};
+
+/** Weighted sample of `count` distinct items from `pool`, biased toward common gear per RARITY_DROP_WEIGHTS — used by equipmentReward nodes (NodeRewardScreen) to roll the 3 choices offered. */
+export function pickWeightedEquipment(pool: readonly EquipmentDefinition[], count: number): EquipmentDefinition[] {
+  const remaining = [...pool];
+  const picked: EquipmentDefinition[] = [];
+  while (picked.length < Math.min(count, remaining.length)) {
+    const total = remaining.reduce((sum, item) => sum + RARITY_DROP_WEIGHTS[item.rarity], 0);
+    let roll = Math.random() * total;
+    let index = remaining.length - 1;
+    for (let i = 0; i < remaining.length; i++) {
+      roll -= RARITY_DROP_WEIGHTS[remaining[i].rarity];
+      if (roll <= 0) {
+        index = i;
+        break;
+      }
+    }
+    picked.push(remaining.splice(index, 1)[0]);
+  }
+  return picked;
 }
 
 export type EquipmentLoadout = Record<EquipmentSlot, string | null>;
@@ -55,7 +90,7 @@ export function equipmentStatModifiers(
   return mergeStatMods(...grants);
 }
 
-/** Equips an item into its own slot, replacing whatever was there (the replaced item is just dropped from the loadout — no inventory is modeled in this slice). */
+/** Equips an item into its own slot, replacing whatever was there. Callers that care what got replaced (there is no stash to fall back on — see runProgress.ts equipToRoster) should read the slot before calling this. */
 export function equipItem(loadout: EquipmentLoadout, item: EquipmentDefinition): EquipmentLoadout {
   return { ...loadout, [item.slot]: item.id };
 }

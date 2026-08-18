@@ -132,6 +132,21 @@ an opaque level curve.
   (contract terminated), their gear is removed. Model equipment as attached to the
   hero's roster slot, not permanently bound to the hero object, so termination cleanly
   reclaims it.
+- **Rarity tiers (2026-08-17, per user direction): Common/Rare/Epic/Legendary/Mythic**,
+  gray/blue/purple/gold/red — `EquipmentDefinition.rarity` (`src/run/equipment.ts`
+  `EquipmentRarity`), with per-tier colors as CSS custom properties (`styles.css`
+  `--tier-*`) so every rarity-colored element (Equipment Cache cards, the
+  forced-equip spotlight) stays in sync from one source. `RARITY_DROP_WEIGHTS`
+  biases `equipmentReward` node rolls toward common gear; the roster hard cap and
+  authored-content scope (`equipment.ts`'s fixture items) are unaffected — tiering is
+  purely a rarity/color/drop-weight classification on top of the existing
+  `statGrants` model, not a new stat-scaling system.
+- **No unequipped-item stash (2026-08-17, reversing the 2026-08-16 third-playtest
+  design — per user direction, "adds unnecessary player busywork").** Every item
+  obtained, from a battle win or an `equipmentReward` node alike, must be equipped to
+  a hero or trashed for good before the run continues (`ForceEquipScreen`,
+  `docs/run-loop.md` "The unequipped-item inventory was removed"). `RunState` no
+  longer has an `inventory` field.
 
 > The **crit source** question (`combat.md`) lands partly here: it's now LOCKED as a
 > loadout/equipment layer, not a base stat — so it's an equipment concern. Not yet

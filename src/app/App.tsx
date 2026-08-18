@@ -8,6 +8,7 @@ import { MapScreen } from '../view/run/MapScreen';
 import { ShopNodeScreen } from '../view/run/ShopNodeScreen';
 import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
+import { ForceEquipScreen } from '../view/run/ForceEquipScreen';
 import { heroes } from '../data/heroes';
 import { enemies } from '../data/enemies';
 import { relics } from '../data/relics';
@@ -34,6 +35,8 @@ type Screen =
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
   /** Forced spend gate (CLAUDE.md "training points ... must be instantly allocated before the run continues") — `next` is whatever screen would otherwise have followed. */
   | { kind: 'levelUp'; next: Screen }
+  /** Forced equip-or-trash gate (user direction: no unequipped stash — every piece of gear obtained must be resolved before the run continues) — `queue` is the item(s) awaiting a decision, `next` is whatever screen would otherwise have followed. */
+  | { kind: 'forceEquip'; queue: string[]; next: Screen }
   | { kind: 'runComplete' }
   | { kind: 'runFailed' };
 
@@ -178,17 +181,44 @@ export function App() {
       setScreen({ kind: 'runFailed' });
       return;
     }
+    // Row 0 (the opening Goblin fight, docs/run-loop.md "Map shape") always
+    // grants one random piece of Common gear, on top of the normal gold/
+    // training-point rewards — an early, guaranteed taste of the equip loop
+    // rather than leaving it to the reward-node economy's luck.
+    const isGoblinFight = playerRun.map!.nodes[nodeId].row === 0;
+
     let next = grantCurrencyReward(playerRun, goldReward);
     next = grantUpgradeReward(next, trainingPointsFor(nodeType));
     next = advanceToNode(next, nodeId);
     setPlayerRun(next);
     const afterScreen: Screen = nodeId === playerRun.map!.bossNodeId ? { kind: 'runComplete' } : { kind: 'map' };
-    setScreen(next.levelUpPool > 0 ? { kind: 'levelUp', next: afterScreen } : afterScreen);
+    const afterLevelUp: Screen = next.levelUpPool > 0 ? { kind: 'levelUp', next: afterScreen } : afterScreen;
+
+    if (isGoblinFight) {
+      const commonPool = Object.values(equipment).filter((item) => item.rarity === 'common');
+      const itemId = commonPool[Math.floor(Math.random() * commonPool.length)]?.id;
+      setScreen(itemId ? { kind: 'forceEquip', queue: [itemId], next: afterLevelUp } : afterLevelUp);
+    } else {
+      setScreen(afterLevelUp);
+    }
   }
 
   function handleNodeContinue(nodeId: string) {
     setPlayerRun((run) => advanceToNode(run, nodeId));
     setScreen(playerRun.levelUpPool > 0 ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' });
+  }
+
+  /**
+   * equipmentReward node resolution: claiming an item immediately hands off
+   * to the forced equip-or-trash gate (ForceEquipScreen) instead of stashing
+   * it — mirrors handleFightResolved's Goblin-fight drop, but also advances
+   * the map node first since NodeRewardScreen no longer has its own Continue
+   * button for this node type.
+   */
+  function handleClaimEquipment(nodeId: string, itemId: string) {
+    setPlayerRun((run) => advanceToNode(run, nodeId));
+    const afterScreen: Screen = playerRun.levelUpPool > 0 ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' };
+    setScreen({ kind: 'forceEquip', queue: [itemId], next: afterScreen });
   }
 
   /** "Start a Run" from the title screen opens the draft (DraftScreen) rather than building the run directly — the starting pair isn't chosen yet. */
@@ -276,11 +306,16 @@ export function App() {
           run={playerRun}
           onRunChange={setPlayerRun}
           onContinue={() => handleNodeContinue(screen.nodeId)}
+          onClaimEquipment={(itemId) => handleClaimEquipment(screen.nodeId, itemId)}
         />
       )}
 
       {screen.kind === 'levelUp' && (
         <LevelUpScreen run={playerRun} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />
+      )}
+
+      {screen.kind === 'forceEquip' && (
+        <ForceEquipScreen run={playerRun} queue={screen.queue} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />
       )}
 
       {screen.kind === 'runComplete' && (

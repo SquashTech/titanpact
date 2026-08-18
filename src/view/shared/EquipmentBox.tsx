@@ -1,5 +1,5 @@
 import type { StatKey } from '../../engine/content';
-import type { EquipmentDefinition, EquipmentLoadout, EquipmentSlot } from '../../run/equipment';
+import type { EquipmentDefinition, EquipmentLoadout, EquipmentRarity, EquipmentSlot } from '../../run/equipment';
 import { STAT_ICONS, STAT_LABELS } from './StatBars';
 
 export const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
@@ -14,6 +14,23 @@ export const EQUIP_SLOT_LABELS: Record<EquipmentSlot, string> = {
   weapon: 'Weapon',
   armor: 'Armor',
   accessory: 'Accessory',
+};
+
+/** Gray/blue/purple/gold/red — the tier palette (styles.css :root --tier-*), referenced by CSS var so every rarity-colored element (cards, borders, glows) stays in sync from one source. */
+export const RARITY_COLOR_VARS: Record<EquipmentRarity, string> = {
+  common: 'var(--tier-common)',
+  rare: 'var(--tier-rare)',
+  epic: 'var(--tier-epic)',
+  legendary: 'var(--tier-legendary)',
+  mythic: 'var(--tier-mythic)',
+};
+
+export const RARITY_LABELS: Record<EquipmentRarity, string> = {
+  common: 'Common',
+  rare: 'Rare',
+  epic: 'Epic',
+  legendary: 'Legendary',
+  mythic: 'Mythic',
 };
 
 function fmtGrant(amount: number): string {

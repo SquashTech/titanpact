@@ -87,15 +87,6 @@ export interface RunState {
    * `elite`/`boss` nodes have their own fixed sizing and don't touch this.
    */
   fightsStarted: number;
-  /**
-   * Unequipped equipment ids owned by the run but not attached to any roster
-   * hero's loadout (equipment.ts EquipmentLoadout) — duplicates allowed, one
-   * entry per copy owned. `equipmentReward` nodes grant straight here now
-   * (runProgress.ts grantInventoryReward) instead of forcing an immediate
-   * equip-onto-a-hero choice; RosterManagementScreen is where the player
-   * actually equips from it.
-   */
-  inventory: string[];
 }
 
 export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1): RunState {
@@ -109,7 +100,6 @@ export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1):
     currentNodeId: null,
     visitedNodeIds: [],
     fightsStarted: 0,
-    inventory: [],
   };
 }
 

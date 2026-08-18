@@ -15,6 +15,12 @@
   --crit: #ff7043;
   --physical: #d9724a;
   --magical: #8b7fe0;
+  /* Equipment rarity tiers — gray/blue/purple/gold/red, common through mythic (run/equipment.ts EquipmentRarity, view/shared/EquipmentBox.tsx RARITY_COLOR_VARS). */
+  --tier-common: #9aa0ab;
+  --tier-rare: #4a90d9;
+  --tier-epic: #a463d9;
+  --tier-legendary: #e0a63c;
+  --tier-mythic: #e0393f;
 }
 
 * {
@@ -1510,55 +1516,6 @@ body {
   width: 100%;
 }
 
-.inventory-section {
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-}
-
-.inventory-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-}
-
-.inventory-box {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  background: var(--panel-alt);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 8px 4px;
-  color: var(--text);
-  cursor: grab;
-}
-
-.inventory-box.selected {
-  border-color: var(--accent);
-  background: #33291a;
-}
-
-.inventory-box-name {
-  font-size: 10px;
-  font-weight: 600;
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  width: 100%;
-}
-
-.inventory-box-count {
-  position: absolute;
-  top: 2px;
-  right: 4px;
-  font-size: 9px;
-  font-weight: 800;
-  color: var(--accent);
-}
-
 /* --- Hero detail overlay (CombatantCard info button) -------------------- */
 
 .detail-overlay {
@@ -2199,6 +2156,232 @@ body {
 .secondary-button:hover {
   border-color: var(--accent);
   color: var(--text);
+}
+
+/* --- Equipment Cache (NodeRewardScreen's equipmentReward) ----------------
+   A bigger, tier-colored spin on the plain reward-panel other node types
+   use — every card's top border and rarity label read straight off the
+   item's --rarity-color custom property (RARITY_COLOR_VARS), so no per-tier
+   class list is needed here. */
+
+.equip-cache-panel {
+  padding-top: 8px;
+}
+
+.equip-cache-banner {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  text-align: center;
+  padding: 18px 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(224, 166, 60, 0.14), transparent 70%);
+}
+
+.equip-cache-banner h2 {
+  position: relative;
+}
+
+.equip-cache-banner .hint {
+  position: relative;
+  margin: 4px 0 0;
+}
+
+.equip-cache-glow {
+  position: absolute;
+  top: -45%;
+  left: 50%;
+  width: 240px;
+  height: 240px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(224, 166, 60, 0.32), transparent 65%);
+  animation: evolution-glow-pulse 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.equip-cache-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+}
+
+.equip-cache-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  background: linear-gradient(165deg, var(--panel-alt), var(--panel));
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--rarity-color, var(--border));
+  border-radius: 10px;
+  padding: 16px 8px;
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.equip-cache-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.equip-cache-card.picked {
+  border-color: var(--rarity-color);
+  box-shadow: 0 0 0 1px var(--rarity-color), 0 4px 18px rgba(0, 0, 0, 0.4);
+}
+
+.equip-cache-card-icon {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.equip-cache-card-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.equip-cache-card-rarity {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--rarity-color);
+}
+
+.equip-cache-card-slot {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+/* --- Forced equip-or-trash gate (ForceEquipScreen) ------------------------
+   Same rarity-color-via-custom-property convention as the Equipment Cache
+   above, reused for the "you obtained X" spotlight and applied per-hero-row
+   selection below it. */
+
+.equip-spotlight {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  padding: 20px 14px 16px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--rarity-color, var(--border));
+  background: linear-gradient(180deg, rgba(224, 166, 60, 0.1), transparent 70%);
+}
+
+.equip-spotlight-glow {
+  position: absolute;
+  top: -45%;
+  left: 50%;
+  width: 220px;
+  height: 220px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--rarity-color), transparent 70%);
+  opacity: 0.22;
+  animation: evolution-glow-pulse 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.equip-spotlight-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.equip-spotlight-icon {
+  font-size: 30px;
+  line-height: 1;
+}
+
+.equip-spotlight-name {
+  font-size: 17px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.equip-spotlight-rarity {
+  font-size: 11px;
+  font-weight: 700;
+  text-align: left;
+  color: var(--rarity-color);
+}
+
+.equip-spotlight .detail-modifier-list {
+  position: relative;
+  justify-content: center;
+}
+
+.equip-spotlight .hint {
+  position: relative;
+}
+
+.equip-target-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.equip-target-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.equip-target-card:hover {
+  border-color: var(--accent);
+}
+
+.equip-target-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.equip-target-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.equip-target-current {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.equip-target-cta {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.force-equip-screen .trash-button {
+  color: var(--enemy);
+}
+
+.force-equip-screen .trash-button:hover {
+  border-color: var(--enemy);
+  color: var(--enemy);
 }
 
 /* Permanent readout of the move being offered, sitting up top where the old

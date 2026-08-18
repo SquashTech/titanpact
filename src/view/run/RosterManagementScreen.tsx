@@ -1,16 +1,17 @@
-import { useState } from 'react';
+import { useState, type DragEvent } from 'react';
 import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition } from '../../engine/content';
 import type { RunState, RosterEntry } from '../../run/state';
-import type { EquipmentSlot } from '../../run/equipment';
-import { equipFromInventory, unequipToInventory, RunProgressError } from '../../run/runProgress';
+import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
+import { swapEquipment, RunProgressError } from '../../run/runProgress';
 import { rosterEntryTypes } from '../../run/progression';
 import { getTypeColor } from '../combat/typeColors';
+import { useLongPress } from '../shared/MoveTile';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { EQUIP_SLOT_ICONS, EQUIP_SLOT_ORDER } from '../shared/EquipmentBox';
+import { EQUIP_SLOT_ICONS, EQUIP_SLOT_ORDER, EQUIP_SLOT_LABELS, EquipmentInfoPanel } from '../shared/EquipmentBox';
 
 interface Props {
   run: RunState;
@@ -18,68 +19,117 @@ interface Props {
   onClose: () => void;
 }
 
-/** Counts each distinct item id in the inventory, so duplicates render as one box with a count badge instead of a wall of identical boxes. */
-function groupInventory(inventory: readonly string[]): { itemId: string; count: number }[] {
-  const counts = new Map<string, number>();
-  for (const id of inventory) counts.set(id, (counts.get(id) ?? 0) + 1);
-  return [...counts.entries()].map(([itemId, count]) => ({ itemId, count }));
+interface EquipSlotButtonProps {
+  item: EquipmentDefinition | null;
+  slot: EquipmentSlot;
+  isSelectedSource: boolean;
+  isDropTarget: boolean;
+  isDragOver: boolean;
+  onClick: () => void;
+  onLongPress: () => void;
+  onDragStart: (e: DragEvent) => void;
+  onDragOver: (e: DragEvent) => void;
+  onDragLeave: () => void;
+  onDrop: (e: DragEvent) => void;
+}
+
+/**
+ * One hero's equip slot. Pulled out of the roster .map() below because
+ * useLongPress is a hook — it can't be called from inside a loop body, only
+ * from a component's own top level (same reason LevelUpScreen's
+ * ReplaceMoveCard is its own component rather than an inline callback). Tap
+ * still does the select/move dance (handled by the caller); holding shows
+ * the item's description instead of a persistent selected-item banner.
+ */
+function EquipSlotButton({
+  item,
+  slot,
+  isSelectedSource,
+  isDropTarget,
+  isDragOver,
+  onClick,
+  onLongPress,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+}: EquipSlotButtonProps) {
+  const longPress = useLongPress(item ? onLongPress : undefined, onClick);
+  return (
+    <button
+      className={`equip-slot-box${item ? ' filled' : ' empty'}${isSelectedSource ? ' selected' : ''}${
+        isDropTarget ? ' drop-target' : ''
+      }${isDragOver ? ' drag-over' : ''}`}
+      draggable={!!item}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      aria-label={item ? `${EQUIP_SLOT_LABELS[slot]}: ${item.name}` : `${EQUIP_SLOT_LABELS[slot]} slot, empty`}
+      {...longPress}
+    >
+      <span className="equip-slot-icon">{EQUIP_SLOT_ICONS[slot]}</span>
+      <span className="equip-slot-item">{item ? item.name : 'Empty'}</span>
+    </button>
+  );
 }
 
 /**
  * The Manage Roster screen (map-node-reachable, not a fight-blocking flow —
  * that's LevelUpScreen now). Condensed hero rows (name/level/types + an Info
  * button opening the full StatBars readout via HeroPreviewOverlay) each show
- * their 3 equipment slots underneath, empty by default. Equipping now goes
- * through a real inventory (RunState.inventory, runProgress.ts) rather than
- * hero-to-hero swapping: tap an inventory box to select it (or drag it) then
- * tap/drop it onto a compatible slot; tap a filled slot with nothing selected
- * to send that item back to the inventory.
+ * their 3 equipment slots underneath, empty by default. There is no
+ * unequipped-item stash anymore (per user direction — every newly obtained
+ * item is resolved on the spot by ForceEquipScreen): this screen only
+ * reassigns gear that's already equipped somewhere. Tap a filled slot to
+ * select it, then tap the matching slot on another hero to move it there
+ * (swapping with whatever's already in that slot, if anything) — or drag it
+ * directly. No banner or trash action clutters the screen for this — a
+ * held press instead shows the item's description (EquipSlotButton above).
  */
 export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<{ rosterId: string; slot: EquipmentSlot } | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
+  const [viewedItemId, setViewedItemId] = useState<string | null>(null);
 
-  function selectInventoryItem(itemId: string) {
-    setSelectedItemId((prev) => (prev === itemId ? null : itemId));
+  function selectSlot(rosterId: string, slot: EquipmentSlot) {
+    setSelected((prev) => (prev && prev.rosterId === rosterId && prev.slot === slot ? null : { rosterId, slot }));
   }
 
-  function equipSelectedOnto(rosterId: string, slot: EquipmentSlot) {
-    if (!selectedItemId) return;
-    if (equipment[selectedItemId].slot !== slot) return;
+  function moveSelectedTo(toRosterId: string, slot: EquipmentSlot) {
+    if (!selected || selected.slot !== slot) return;
+    if (selected.rosterId === toRosterId) {
+      setSelected(null);
+      return;
+    }
     try {
-      onRunChange(equipFromInventory(run, rosterId, selectedItemId, equipment));
+      onRunChange(swapEquipment(run, selected.rosterId, toRosterId, slot));
     } catch (err) {
       if (!(err instanceof RunProgressError)) throw err;
     }
-    setSelectedItemId(null);
+    setSelected(null);
   }
 
   function handleSlotClick(rosterId: string, slot: EquipmentSlot, filled: boolean) {
-    if (selectedItemId) {
-      equipSelectedOnto(rosterId, slot);
+    if (selected) {
+      moveSelectedTo(rosterId, slot);
       return;
     }
     if (!filled) return;
-    try {
-      onRunChange(unequipToInventory(run, rosterId, slot));
-    } catch (err) {
-      if (!(err instanceof RunProgressError)) throw err;
-    }
+    selectSlot(rosterId, slot);
   }
 
-  function handleDrop(rosterId: string, slot: EquipmentSlot, itemId: string) {
+  function handleDrop(toRosterId: string, slot: EquipmentSlot, fromRosterId: string, fromSlot: EquipmentSlot) {
     setDragOverKey(null);
-    if (equipment[itemId].slot !== slot) return;
+    if (fromSlot !== slot || fromRosterId === toRosterId) return;
     try {
-      onRunChange(equipFromInventory(run, rosterId, itemId, equipment));
+      onRunChange(swapEquipment(run, fromRosterId, toRosterId, slot));
     } catch (err) {
       if (!(err instanceof RunProgressError)) throw err;
     }
-    setSelectedItemId(null);
+    setSelected(null);
   }
-
-  const inventoryGroups = groupInventory(run.inventory);
 
   return (
     <div className="log-overlay roster-mgmt-overlay" onClick={onClose}>
@@ -90,7 +140,6 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
             ✕
           </button>
         </div>
-        {selectedItemId && <p className="hint">{`${equipment[selectedItemId].name} selected — tap a matching slot to equip it.`}</p>}
         <div className="screen-scroll">
           <div className="roster-mgmt-list">
             {run.roster.map((entry) => {
@@ -121,17 +170,26 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
                       const itemId = entry.equipment[slot];
                       const item = itemId ? equipment[itemId] : null;
                       const dragKey = `${entry.rosterId}:${slot}`;
-                      const isDropTarget = selectedItemId ? equipment[selectedItemId].slot === slot : false;
+                      const isSelectedSource = selected?.rosterId === entry.rosterId && selected.slot === slot;
+                      const isDropTarget = selected ? selected.slot === slot && selected.rosterId !== entry.rosterId : false;
                       const isDragOver = dragOverKey === dragKey;
                       return (
-                        <button
+                        <EquipSlotButton
                           key={slot}
-                          className={`equip-slot-box${item ? ' filled' : ' empty'}${isDropTarget ? ' drop-target' : ''}${
-                            isDragOver ? ' drag-over' : ''
-                          }`}
+                          item={item}
+                          slot={slot}
+                          isSelectedSource={isSelectedSource}
+                          isDropTarget={isDropTarget}
+                          isDragOver={isDragOver}
                           onClick={() => handleSlotClick(entry.rosterId, slot, !!item)}
+                          onLongPress={() => item && setViewedItemId(item.id)}
+                          onDragStart={(e) => {
+                            if (!item) return;
+                            e.dataTransfer.setData('text/titanpact-equip-move', `${entry.rosterId}:${slot}`);
+                            e.dataTransfer.effectAllowed = 'move';
+                          }}
                           onDragOver={(e) => {
-                            if (e.dataTransfer.types.includes('text/titanpact-item')) {
+                            if (e.dataTransfer.types.includes('text/titanpact-equip-move')) {
                               e.preventDefault();
                               setDragOverKey(dragKey);
                             }
@@ -139,49 +197,18 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
                           onDragLeave={() => setDragOverKey((k) => (k === dragKey ? null : k))}
                           onDrop={(e) => {
                             e.preventDefault();
-                            const itemId = e.dataTransfer.getData('text/titanpact-item');
-                            if (itemId) handleDrop(entry.rosterId, slot, itemId);
+                            const raw = e.dataTransfer.getData('text/titanpact-equip-move');
+                            if (!raw) return;
+                            const [fromRosterId, fromSlot] = raw.split(':');
+                            handleDrop(entry.rosterId, slot, fromRosterId, fromSlot as EquipmentSlot);
                           }}
-                        >
-                          <span className="equip-slot-icon">{EQUIP_SLOT_ICONS[slot]}</span>
-                          <span className="equip-slot-item">{item ? item.name : 'Empty'}</span>
-                        </button>
+                        />
                       );
                     })}
                   </div>
                 </div>
               );
             })}
-          </div>
-
-          <div className="inventory-section">
-            <div className="detail-section-title">Inventory</div>
-            {inventoryGroups.length > 0 ? (
-              <div className="inventory-grid">
-                {inventoryGroups.map(({ itemId, count }) => {
-                  const item = equipment[itemId];
-                  const isSelected = selectedItemId === itemId;
-                  return (
-                    <button
-                      key={itemId}
-                      className={`inventory-box${isSelected ? ' selected' : ''}`}
-                      draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData('text/titanpact-item', itemId);
-                        e.dataTransfer.effectAllowed = 'move';
-                      }}
-                      onClick={() => selectInventoryItem(itemId)}
-                    >
-                      <span className="equip-slot-icon">{EQUIP_SLOT_ICONS[item.slot]}</span>
-                      <span className="inventory-box-name">{item.name}</span>
-                      {count > 1 && <span className="inventory-box-count">×{count}</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="detail-empty">No unequipped items — find gear at equipment nodes.</div>
-            )}
           </div>
         </div>
       </div>
@@ -193,6 +220,21 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
           equipmentLookup={equipment}
           onClose={() => setInspecting(null)}
         />
+      )}
+
+      {viewedItemId && (
+        <div
+          className="log-overlay"
+          onClick={(e) => {
+            e.stopPropagation();
+            setViewedItemId(null);
+          }}
+        >
+          <div className="log-panel move-popup-panel">
+            <EquipmentInfoPanel item={equipment[viewedItemId]} />
+            <div className="move-popup-hint">Tap anywhere to close</div>
+          </div>
+        </div>
       )}
     </div>
   );
