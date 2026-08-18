@@ -2476,6 +2476,89 @@ body {
   color: var(--text-dim);
 }
 
+/* --- Relic Shrine (NodeRewardScreen's relicReward) ------------------------
+   Same banner/glow shape as the Equipment Cache above, retinted toward
+   --magical to read as arcane rather than gold. Offer cards reuse .relic-card
+   (also used by RelicsOverlay/GuildHallPanel) so a relic looks the same
+   wherever it's shown; tap picks (border highlight, same "picked" convention
+   as .equip-cache-card), hold opens the full description via the shared
+   move-popup-panel/move-info-panel pattern instead of printing the
+   description on the card itself. */
+
+.relic-shrine-panel {
+  padding-top: 8px;
+}
+
+.relic-shrine-banner {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  text-align: center;
+  padding: 18px 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(139, 127, 224, 0.16), transparent 70%);
+}
+
+.relic-shrine-banner h2 {
+  position: relative;
+}
+
+.relic-shrine-banner .hint {
+  position: relative;
+  margin: 4px 0 0;
+}
+
+.relic-shrine-glow {
+  position: absolute;
+  top: -45%;
+  left: 50%;
+  width: 240px;
+  height: 240px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 127, 224, 0.34), transparent 65%);
+  animation: evolution-glow-pulse 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.relic-shrine-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.relic-shrine-card {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.relic-shrine-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.relic-shrine-card .relic-card-icon {
+  font-size: 20px;
+}
+
+.relic-shrine-card .relic-card-name {
+  font-size: 14px;
+}
+
+.relic-shrine-card.picked {
+  border-color: var(--magical);
+  box-shadow: 0 0 0 1px var(--magical), 0 4px 18px rgba(0, 0, 0, 0.4);
+}
+
 /* --- Forced equip-or-trash gate (ForceEquipScreen) ------------------------
    Same rarity-color-via-custom-property convention as the Equipment Cache
    above, reused for the "you obtained X" spotlight and applied per-hero-row

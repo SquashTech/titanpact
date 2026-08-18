@@ -4,9 +4,11 @@ import { relics } from '../../data/relics';
 import type { StatKey } from '../../engine/content';
 import type { RunState } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
+import type { RelicDefinition } from '../../run/relics';
 import { pickWeightedEquipment } from '../../run/equipment';
 import { grantCurrencyReward, grantUpgradeReward, grantRelicReward } from '../../run/runProgress';
 import { EQUIP_SLOT_ICONS, EQUIP_SLOT_LABELS, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { useLongPress } from '../shared/MoveTile';
 
 export type RewardNodeType = 'currencyReward' | 'upgradeReward' | 'equipmentReward' | 'relicReward';
 
@@ -47,6 +49,33 @@ function fmtStatGrants(grants: Partial<Record<StatKey, number>>): string {
   return parts.length > 0 ? parts.join(', ') : 'No stat grants';
 }
 
+interface RelicChoiceCardProps {
+  relic: RelicDefinition;
+  picked: boolean;
+  onPick: () => void;
+  onInspect: () => void;
+}
+
+/**
+ * One relic offer on the Shrine screen. Tap selects it (highlighted, same
+ * select-then-claim two-step as the Equipment Cache cards above); a ~500ms
+ * hold instead opens the full description popup, matching the tap-picks/
+ * hold-inspects split established by GuildHallPanel's relic cards
+ * (`GuildHallRelicCard`) so relics read the same everywhere they're offered.
+ * Pulled out of the .map() below because useLongPress is a hook.
+ */
+function RelicChoiceCard({ relic, picked, onPick, onInspect }: RelicChoiceCardProps) {
+  const longPress = useLongPress(onInspect, onPick);
+  return (
+    <button className={`relic-card relic-shrine-card${picked ? ' picked' : ''}`} {...longPress}>
+      <div className="relic-card-head">
+        <span className="relic-card-icon">💠</span>
+        <span className="relic-card-name">{relic.name}</span>
+      </div>
+    </button>
+  );
+}
+
 /**
  * Resolves the four "instant" reward node types (docs/run-loop.md): currency,
  * upgrade and equipment grant on a single tap; relic offers 3 choices.
@@ -66,6 +95,8 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
   );
 
   const [previewItemId, setPreviewItemId] = useState<string | null>(null);
+  const [pickedRelicId, setPickedRelicId] = useState<string | null>(null);
+  const [previewRelicId, setPreviewRelicId] = useState<string | null>(null);
   const [claimed, setClaimed] = useState(false);
 
   function handleClaimInstant(next: RunState) {
@@ -148,16 +179,25 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
         )}
 
         {nodeType === 'relicReward' && (
-          <div className="reward-panel">
-            <h2>💠 Relic Shrine</h2>
+          <div className="reward-panel relic-shrine-panel">
+            <div className="relic-shrine-banner">
+              <div className="relic-shrine-glow" aria-hidden="true" />
+              <h2>💠 Relic Shrine</h2>
+              {!claimed && relicChoices.length > 0 && (
+                <p className="hint">Tap a relic to select it, hold to examine what it does.</p>
+              )}
+            </div>
             {!claimed ? (
               relicChoices.length > 0 ? (
-                <div className="roster-grid">
+                <div className="relic-shrine-list">
                   {relicChoices.map((relic) => (
-                    <button key={relic.id} className="roster-card" onClick={() => handleClaimRelic(relic.id)}>
-                      <div className="roster-card-name">{relic.name}</div>
-                      <div className="roster-card-types">{relic.description}</div>
-                    </button>
+                    <RelicChoiceCard
+                      key={relic.id}
+                      relic={relic}
+                      picked={pickedRelicId === relic.id}
+                      onPick={() => setPickedRelicId(pickedRelicId === relic.id ? null : relic.id)}
+                      onInspect={() => setPreviewRelicId(relic.id)}
+                    />
                   ))}
                 </div>
               ) : (
@@ -166,6 +206,11 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
             ) : (
               <p className="hint">Relic claimed.</p>
             )}
+            {pickedRelicId && !claimed && (
+              <button className="resolve-button" onClick={() => handleClaimRelic(pickedRelicId)}>
+                Claim {relicChoices.find((r) => r.id === pickedRelicId)?.name}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -173,6 +218,20 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
         <button className="resolve-button" disabled={!canContinue} onClick={onContinue}>
           Continue
         </button>
+      )}
+
+      {previewRelicId && (
+        <div className="log-overlay" onClick={() => setPreviewRelicId(null)}>
+          <div className="log-panel move-popup-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="move-info-panel">
+              <div className="move-info-head">
+                <span className="move-info-name">{relics[previewRelicId].name}</span>
+              </div>
+              <div className="move-info-desc">{relics[previewRelicId].description ?? 'No effect described.'}</div>
+            </div>
+            <div className="move-popup-hint">Tap anywhere to close</div>
+          </div>
+        </div>
       )}
     </div>
   );
