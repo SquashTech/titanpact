@@ -62,15 +62,15 @@ function createStartingRun(heroIds: readonly string[]): RunState {
 /**
  * ⚠️ TEMPORARY DEV/TEST HELPER — not a real game entry point. Fills the
  * roster (up to ROSTER_CAP) with heroes already at level EVOLUTION_LEVEL - 1
- * and grants one Training Point per hero, so the very first spend on each
- * hero triggers its Evolution choice immediately — skips the normal grind of
+ * and grants a single Training Point, so spending it on whichever hero
+ * triggers its Evolution choice immediately — skips the normal grind of
  * playing fights and leveling up 4 times per hero just to exercise the
  * Evolution UI. Remove this (and its TitleScreen button) once Evolution
  * content/UI work is done.
  */
 function createLevel4TestRun(): RunState {
   const testHeroIds = Object.keys(heroes).slice(0, ROSTER_CAP);
-  let run = createRunState(testHeroIds.length, 999);
+  let run = createRunState(1, 999);
   for (const heroId of testHeroIds) {
     run = addRosterEntry(run, { ...createRosterEntry(heroId, heroId, heroes[heroId].moveIds), level: 4 });
   }
@@ -271,6 +271,7 @@ export function App() {
     setPlayerRun(createLevel4TestRun());
     setScreen({ kind: 'levelUp', next: { kind: 'map' } });
   }
+
 
   /**
    * Randomizes a full 4v4 (both sides drawn fresh from the fixture hero

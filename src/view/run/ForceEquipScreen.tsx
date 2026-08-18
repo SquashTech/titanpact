@@ -105,11 +105,7 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
                 ))}
             </div>
           )}
-          <p className="hint">
-            {current.bumped
-              ? `${item.name} was unequipped — give it to another hero, or trash it for good.`
-              : `You found ${item.name}! Choose a hero to equip it, or trash it for good.`}
-          </p>
+          {current.bumped && <p className="hint">{`${item.name} was unequipped — give it to another hero, or trash it for good.`}</p>}
         </div>
 
         <div className="equip-target-list">
@@ -124,9 +120,9 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
                 style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
                 onClick={() => handleEquip(entry.rosterId)}
               >
-                <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
-                <div className="equip-target-info">
-                  <div className="equip-target-name">
+                <div className="roster-mgmt-head">
+                  <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
+                  <div className="roster-mgmt-name">
                     {hero.name} <span className="hint">Lv {entry.level}</span>
                   </div>
                   <div className="roster-card-types">
@@ -134,9 +130,9 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
                       <TypeBadge key={t} type={t} />
                     ))}
                   </div>
-                  <EquipmentSlotGrid loadout={entry.equipment} equipmentLookup={equipment} highlightSlot={item.slot} interactive={false} />
+                  <span className="equip-target-cta">{currentItem ? 'Replace' : 'Equip'}</span>
                 </div>
-                <span className="equip-target-cta">{currentItem ? 'Replace' : 'Equip'}</span>
+                <EquipmentSlotGrid loadout={entry.equipment} equipmentLookup={equipment} highlightSlot={item.slot} interactive={false} />
               </button>
             );
           })}
