@@ -1,14 +1,41 @@
 import type { StatKey } from '../../engine/content';
 import type { EquipmentDefinition, EquipmentLoadout, EquipmentRarity, EquipmentSlot } from '../../run/equipment';
 import { STAT_ICONS, STAT_LABELS } from './StatBars';
+import { equipmentArt, relicArt } from './itemArt';
 
 export const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
+/** Generic per-slot glyph — only shown for an empty slot, or for an item without its own art in itemArt.ts (EquipmentIcon below prefers the item-specific icon whenever one exists). */
 export const EQUIP_SLOT_ICONS: Record<EquipmentSlot, string> = {
   weapon: '⚔️',
   armor: '🛡️',
   accessory: '💍',
 };
+
+interface EquipmentIconProps {
+  item: EquipmentDefinition | null;
+  slot: EquipmentSlot;
+  className?: string;
+}
+
+/** Renders the item's own icon (itemArt.ts) when one exists, so e.g. Swift Boots shows boots rather than the generic accessory glyph; falls back to EQUIP_SLOT_ICONS for an empty slot or an item without dedicated art. */
+export function EquipmentIcon({ item, slot, className }: EquipmentIconProps) {
+  const src = item ? equipmentArt[item.id] : undefined;
+  if (src) return <img className={`equip-icon-img ${className ?? ''}`} src={src} alt="" />;
+  return <span className={className}>{EQUIP_SLOT_ICONS[slot]}</span>;
+}
+
+interface RelicIconProps {
+  relicId: string;
+  className?: string;
+}
+
+/** Same per-item-art-with-fallback pattern as EquipmentIcon, for the relic side (relics aren't slotted, so there's no per-slot fallback — just the generic relic glyph). */
+export function RelicIcon({ relicId, className }: RelicIconProps) {
+  const src = relicArt[relicId];
+  if (src) return <img className={`equip-icon-img ${className ?? ''}`} src={src} alt="" />;
+  return <span className={className}>💠</span>;
+}
 
 export const EQUIP_SLOT_LABELS: Record<EquipmentSlot, string> = {
   weapon: 'Weapon',
@@ -87,7 +114,7 @@ export function EquipmentSlotGrid({ loadout, equipmentLookup, viewedItemId, onSe
             }
             aria-label={item ? `${EQUIP_SLOT_LABELS[slot]}: ${item.name}` : `${EQUIP_SLOT_LABELS[slot]} slot, empty`}
           >
-            <span className="equip-slot-icon">{EQUIP_SLOT_ICONS[slot]}</span>
+            <EquipmentIcon item={item} slot={slot} className="equip-slot-icon" />
             <span className="equip-slot-item">{item ? item.name : 'Empty'}</span>
           </Box>
         );

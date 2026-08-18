@@ -11,7 +11,7 @@ import { useLongPress } from '../shared/MoveTile';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { EQUIP_SLOT_ICONS, EQUIP_SLOT_ORDER, EQUIP_SLOT_LABELS, EquipmentInfoPanel } from '../shared/EquipmentBox';
+import { EQUIP_SLOT_ORDER, EQUIP_SLOT_LABELS, EquipmentIcon, EquipmentInfoPanel } from '../shared/EquipmentBox';
 
 interface Props {
   run: RunState;
@@ -68,7 +68,7 @@ function EquipSlotButton({
       aria-label={item ? `${EQUIP_SLOT_LABELS[slot]}: ${item.name}` : `${EQUIP_SLOT_LABELS[slot]} slot, empty`}
       {...longPress}
     >
-      <span className="equip-slot-icon">{EQUIP_SLOT_ICONS[slot]}</span>
+      <EquipmentIcon item={item} slot={slot} className="equip-slot-icon" />
       <span className="equip-slot-item">{item ? item.name : 'Empty'}</span>
     </button>
   );

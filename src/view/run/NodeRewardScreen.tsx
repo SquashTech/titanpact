@@ -7,7 +7,7 @@ import type { EquipmentDefinition } from '../../run/equipment';
 import type { RelicDefinition } from '../../run/relics';
 import { pickWeightedEquipment } from '../../run/equipment';
 import { grantCurrencyReward, grantUpgradeReward, grantRelicReward } from '../../run/runProgress';
-import { EQUIP_SLOT_ICONS, EQUIP_SLOT_LABELS, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { EQUIP_SLOT_LABELS, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS, RelicIcon } from '../shared/EquipmentBox';
 import { useLongPress } from '../shared/MoveTile';
 
 export type RewardNodeType = 'currencyReward' | 'upgradeReward' | 'equipmentReward' | 'relicReward';
@@ -69,7 +69,7 @@ function RelicChoiceCard({ relic, picked, onPick, onInspect }: RelicChoiceCardPr
   return (
     <button className={`relic-card relic-shrine-card${picked ? ' picked' : ''}`} {...longPress}>
       <div className="relic-card-head">
-        <span className="relic-card-icon">💠</span>
+        <RelicIcon relicId={relic.id} className="relic-card-icon" />
         <span className="relic-card-name">{relic.name}</span>
       </div>
     </button>
@@ -157,7 +157,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
                     style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}
                     onClick={() => setPreviewItemId(isPreviewing ? null : item.id)}
                   >
-                    <span className="equip-cache-card-icon">{EQUIP_SLOT_ICONS[item.slot]}</span>
+                    <EquipmentIcon item={item} slot={item.slot} className="equip-cache-card-icon" />
                     <div className="equip-cache-card-body">
                       <div className="equip-cache-card-name">{item.name}</div>
                       <div className="equip-cache-card-meta">

@@ -1514,6 +1514,18 @@ body {
   line-height: 1;
 }
 
+/* Per-item icon art (EquipmentIcon/RelicIcon, itemArt.ts): sized in em so it
+   matches whatever font-size the paired glyph class (.equip-slot-icon,
+   .equip-cache-card-icon, .equip-spotlight-icon, .relic-card-icon) already
+   sets for the emoji fallback — one rule covers every call site's size. */
+.equip-icon-img {
+  width: 1em;
+  height: 1em;
+  object-fit: contain;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+}
+
 .equip-slot-item {
   font-size: 10px;
   font-weight: 600;

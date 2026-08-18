@@ -12,7 +12,7 @@ import { recruitFromGuildHall, buyContract, RecruitmentError, type GuildHallOffe
 import { buyRelic, ShopError, EQUIPMENT_PRICE_BY_RARITY, RELIC_PURCHASE_COST, type GuildHallOffers } from '../../run/shop';
 import { getTypeColor } from '../combat/typeColors';
 import { useLongPress } from '../shared/MoveTile';
-import { EQUIP_SLOT_ICONS, EQUIP_SLOT_LABELS, RARITY_COLOR_VARS, RARITY_LABELS, EquipmentInfoPanel } from '../shared/EquipmentBox';
+import { EQUIP_SLOT_LABELS, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS, EquipmentInfoPanel, RelicIcon } from '../shared/EquipmentBox';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
@@ -81,7 +81,7 @@ function GuildHallEquipCard({ item, cost, affordable, onBuy, onInspect }: EquipC
       style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}
       {...longPress}
     >
-      <span className="equip-cache-card-icon">{EQUIP_SLOT_ICONS[item.slot]}</span>
+      <EquipmentIcon item={item} slot={item.slot} className="equip-cache-card-icon" />
       <div className="equip-cache-card-body">
         <div className="equip-cache-card-name">{item.name}</div>
         <div className="equip-cache-card-meta">
@@ -107,7 +107,7 @@ function GuildHallRelicCard({ relic, affordable, onBuy, onInspect }: RelicCardPr
   return (
     <button className={`relic-card guild-hall-relic-card${affordable ? '' : ' unaffordable'}`} {...longPress}>
       <div className="relic-card-head">
-        <span className="relic-card-icon">💠</span>
+        <RelicIcon relicId={relic.id} className="relic-card-icon" />
         <span className="relic-card-name">{relic.name}</span>
         <span className="guild-hall-relic-price">{RELIC_PURCHASE_COST}g</span>
       </div>

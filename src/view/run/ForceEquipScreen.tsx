@@ -9,7 +9,7 @@ import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
-import { EQUIP_SLOT_ICONS, EQUIP_SLOT_LABELS, EquipmentSlotGrid, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { EQUIP_SLOT_LABELS, EquipmentIcon, EquipmentSlotGrid, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 
 interface Props {
   run: RunState;
@@ -86,7 +86,7 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
         <div className="equip-spotlight" style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}>
           <div className="equip-spotlight-glow" aria-hidden="true" />
           <div className="equip-spotlight-header">
-            <span className="equip-spotlight-icon">{EQUIP_SLOT_ICONS[item.slot]}</span>
+            <EquipmentIcon item={item} slot={item.slot} className="equip-spotlight-icon" />
             <div>
               <div className="equip-spotlight-name">{item.name}</div>
               <div className="equip-spotlight-rarity">

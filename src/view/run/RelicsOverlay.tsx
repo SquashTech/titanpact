@@ -1,4 +1,5 @@
 import { relics } from '../../data/relics';
+import { RelicIcon } from '../shared/EquipmentBox';
 
 interface Props {
   ownedRelicIds: readonly string[];
@@ -39,7 +40,7 @@ export function RelicsOverlay({ ownedRelicIds, onClose }: Props) {
               return (
                 <div key={relicId} className="relic-card">
                   <div className="relic-card-head">
-                    <span className="relic-card-icon">💠</span>
+                    <RelicIcon relicId={relic.id} className="relic-card-icon" />
                     <span className="relic-card-name">{relic.name}</span>
                     {count > 1 && <span className="relic-card-count">×{count}</span>}
                   </div>
