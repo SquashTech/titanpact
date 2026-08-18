@@ -40,7 +40,13 @@ export type MapNodeType =
   | 'equipmentReward'
   | 'relicReward'
   | 'currencyReward'
-  | 'upgradeReward';
+  | 'upgradeReward'
+  | 'weaponReward'
+  | 'armorReward'
+  | 'accessoryReward'
+  | 'hpBoostReward'
+  | 'manaBoostReward'
+  | 'event';
 
 export interface MapNode {
   id: string;
@@ -71,32 +77,75 @@ const FUNNEL_ROW = BOSS_ROW - 1;
 const ELITE_ROW = FUNNEL_ROW - 1;
 const SKIRMISH_ROW = 2;
 
-/** The two pick-1-of-3 rows draw from reward types only — fight/shop/elite are forced elsewhere in the row layout, never mixed into a choice row. */
+/**
+ * The two pick-1-of-3 rows draw from reward types only — fight/shop/elite are
+ * forced elsewhere in the row layout, never mixed into a choice row.
+ * `weaponReward`/`armorReward`/`accessoryReward` are single-item guaranteed
+ * grants (no 3-choice picker, unlike `equipmentReward`'s mixed-slot pick),
+ * `hpBoostReward`/`manaBoostReward` grant a flat permanent stat bonus to one
+ * chosen hero, and `event` is a placeholder node with no content yet (user
+ * direction — "don't create any yet, we will design these when it's time").
+ * Weights are a first-pass balance, easily retuned since this is plain data.
+ */
 const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
-  ['equipmentReward', 32],
-  ['relicReward', 24],
-  ['currencyReward', 24],
-  ['upgradeReward', 20],
+  ['equipmentReward', 20],
+  ['relicReward', 18],
+  ['currencyReward', 16],
+  ['upgradeReward', 14],
+  ['weaponReward', 12],
+  ['armorReward', 12],
+  ['accessoryReward', 12],
+  ['hpBoostReward', 10],
+  ['manaBoostReward', 10],
+  ['event', 8],
 ];
 
-function pickWeighted(rng: RngState, weights: readonly [MapNodeType, number][]): { value: MapNodeType; nextState: RngState } {
-  const total = weights.reduce((sum, [, w]) => sum + w, 0);
-  const { value: roll, nextState } = nextFloat(rng);
-  let threshold = roll * total;
-  for (const [type, weight] of weights) {
-    threshold -= weight;
-    if (threshold <= 0) return { value: type, nextState };
+/**
+ * Weighted sample of `count` DISTINCT types from `weights`, without
+ * replacement — used to fill a whole reward row at once so the same node
+ * type never appears twice in one pick-1-of-3 row (a duplicate would make
+ * one of the 3 "choices" meaningless). `REWARD_WEIGHTS` has more entries
+ * than any row is wide, so `count` is always satisfiable.
+ */
+function pickWeightedDistinct(
+  rng: RngState,
+  weights: readonly [MapNodeType, number][],
+  count: number
+): { values: MapNodeType[]; nextState: RngState } {
+  const remaining = [...weights];
+  const values: MapNodeType[] = [];
+  let state = rng;
+  while (values.length < Math.min(count, remaining.length)) {
+    const total = remaining.reduce((sum, [, w]) => sum + w, 0);
+    const { value: roll, nextState } = nextFloat(state);
+    state = nextState;
+    let threshold = roll * total;
+    let index = remaining.length - 1;
+    for (let i = 0; i < remaining.length; i++) {
+      threshold -= remaining[i][1];
+      if (threshold <= 0) {
+        index = i;
+        break;
+      }
+    }
+    values.push(remaining[index][0]);
+    remaining.splice(index, 1);
   }
-  return { value: weights[weights.length - 1][0], nextState };
+  return { values, nextState: state };
 }
 
-function nodeType(row: number, col: number, rng: RngState): { value: MapNodeType; nextState: RngState } {
-  if (row === 0) return { value: 'fight', nextState: rng };
-  if (row === SKIRMISH_ROW) return { value: 'skirmish', nextState: rng };
-  if (row === ELITE_ROW) return { value: col === 0 ? 'elite' : 'battle', nextState: rng };
-  if (row === FUNNEL_ROW) return { value: 'shop', nextState: rng };
-  if (row === BOSS_ROW) return { value: 'boss', nextState: rng };
-  return pickWeighted(rng, REWARD_WEIGHTS);
+/** True for the two pick-1-of-3 reward rows — every other row's type is a fixed function of (row, col), not randomly rolled. */
+function isRewardRow(row: number): boolean {
+  return row !== 0 && row !== SKIRMISH_ROW && row !== ELITE_ROW && row !== FUNNEL_ROW && row !== BOSS_ROW;
+}
+
+/** The fixed node type for a non-reward-row cell — never called for reward rows, which are resolved a whole row at a time (see generateMap) so duplicates within the row can be excluded. */
+function fixedNodeType(row: number, col: number): MapNodeType {
+  if (row === 0) return 'fight';
+  if (row === SKIRMISH_ROW) return 'skirmish';
+  if (row === ELITE_ROW) return col === 0 ? 'elite' : 'battle';
+  if (row === FUNNEL_ROW) return 'shop';
+  return 'boss';
 }
 
 function nodeId(row: number, col: number): string {
@@ -117,9 +166,17 @@ export function generateMap(seed: number): RunMap {
 
   for (let row = 0; row < ROW_WIDTHS.length; row++) {
     const rowIds: string[] = [];
+    // Reward rows are resolved a whole row at a time (distinct sample) so
+    // the pick-1-of-3 choice never repeats a type; every other row's type
+    // is a fixed function of (row, col) and doesn't touch the RNG at all.
+    let rewardTypes: MapNodeType[] = [];
+    if (isRewardRow(row)) {
+      const picked = pickWeightedDistinct(rng, REWARD_WEIGHTS, ROW_WIDTHS[row]);
+      rewardTypes = picked.values;
+      rng = picked.nextState;
+    }
     for (let col = 0; col < ROW_WIDTHS[row]; col++) {
-      const { value: type, nextState } = nodeType(row, col, rng);
-      rng = nextState;
+      const type = isRewardRow(row) ? rewardTypes[col] : fixedNodeType(row, col);
       const id = nodeId(row, col);
       nodes[id] = { id, type, row, col, nextIds: [] };
       rowIds.push(id);

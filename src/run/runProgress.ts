@@ -2,10 +2,12 @@
 // resolving what each node type grants. Pure RunState transforms — no view,
 // no engine internals.
 
+import type { StatKey } from '../engine/content';
 import type { RunState, RosterEntry } from './state';
 import type { EquipmentDefinition, EquipmentSlot } from './equipment';
 import { equipItem, unequipSlot } from './equipment';
 import { generateMap } from './map';
+import { mergeStatMods } from './statMods';
 
 export class RunProgressError extends Error {}
 
@@ -72,6 +74,18 @@ export function advanceToNextAct(run: RunState, seed: number): RunState {
 /** relicReward node resolution: adds an owned relic id. Duplicates are allowed (their flat grants simply stack) — the reward screen is expected to only offer relics not yet owned. */
 export function grantRelicReward(run: RunState, relicId: string): RunState {
   return { ...run, relics: [...run.relics, relicId] };
+}
+
+/**
+ * hpBoostReward/manaBoostReward node resolution: a flat, permanent-for-the-run
+ * stat grant to one chosen roster hero (CLAUDE.md "flat additive integers,
+ * multiples of 5 or 10"), folded into that entry's `bonusStatGrants`.
+ */
+export function grantStatBonus(run: RunState, rosterId: string, stat: StatKey, amount: number): RunState {
+  const entry = run.roster.find((r) => r.rosterId === rosterId);
+  if (!entry) throw new RunProgressError(`${rosterId} is not on the roster`);
+  const nextEntry: RosterEntry = { ...entry, bonusStatGrants: mergeStatMods(entry.bonusStatGrants, { [stat]: amount }) };
+  return { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)) };
 }
 
 export interface EquipOutcome {

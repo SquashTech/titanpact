@@ -9,11 +9,13 @@ import { ShopNodeScreen } from '../view/run/ShopNodeScreen';
 import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { ForceEquipScreen } from '../view/run/ForceEquipScreen';
+import { StatBoostScreen, type StatBoostNodeType } from '../view/run/StatBoostScreen';
+import { EventNodeScreen } from '../view/run/EventNodeScreen';
 import { heroes } from '../data/heroes';
 import { enemies } from '../data/enemies';
 import { relics } from '../data/relics';
 import { equipment } from '../data/equipment';
-import { equipItem } from '../run/equipment';
+import { equipItem, pickWeightedEquipmentBySlot, type EquipmentSlot } from '../run/equipment';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP, TOTAL_ACTS } from '../run/state';
 import { deriveContractOffer, claimContract, isRecruitable } from '../run/recruitment';
 import { generateMap } from '../run/map';
@@ -33,6 +35,8 @@ type Screen =
   | { kind: 'quickBattle'; player: Encounter; ai: Encounter }
   | { kind: 'shop'; nodeId: string }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
+  | { kind: 'statBoost'; nodeId: string; nodeType: StatBoostNodeType }
+  | { kind: 'event'; nodeId: string }
   /** Forced spend gate (CLAUDE.md "training points ... must be instantly allocated before the run continues") — `next` is whatever screen would otherwise have followed. */
   | { kind: 'levelUp'; next: Screen }
   /** Forced equip-or-trash gate (user direction: no unequipped stash — every piece of gear obtained must be resolved before the run continues) — `queue` is the item(s) awaiting a decision, `next` is whatever screen would otherwise have followed. */
@@ -179,6 +183,19 @@ export function App() {
       setScreen({ kind: 'squadSelect', nodeId, nodeType: encounterKind, encounter });
     } else if (node.type === 'shop') {
       setScreen({ kind: 'shop', nodeId });
+    } else if (node.type === 'weaponReward' || node.type === 'armorReward' || node.type === 'accessoryReward') {
+      // Single guaranteed item of a fixed slot, no 3-choice picker — rolls
+      // straight into the forced equip-or-trash gate, same as the Goblin
+      // fight's guaranteed common-item drop below.
+      const slot: EquipmentSlot = node.type === 'weaponReward' ? 'weapon' : node.type === 'armorReward' ? 'armor' : 'accessory';
+      const item = pickWeightedEquipmentBySlot(Object.values(equipment), slot);
+      setPlayerRun((run) => advanceToNode(run, nodeId));
+      const afterScreen: Screen = playerRun.levelUpPool > 0 ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' };
+      setScreen(item ? { kind: 'forceEquip', queue: [item.id], next: afterScreen } : afterScreen);
+    } else if (node.type === 'hpBoostReward' || node.type === 'manaBoostReward') {
+      setScreen({ kind: 'statBoost', nodeId, nodeType: node.type });
+    } else if (node.type === 'event') {
+      setScreen({ kind: 'event', nodeId });
     } else {
       setScreen({ kind: 'reward', nodeId, nodeType: node.type });
     }
@@ -341,6 +358,17 @@ export function App() {
           onClaimEquipment={(itemId) => handleClaimEquipment(screen.nodeId, itemId)}
         />
       )}
+
+      {screen.kind === 'statBoost' && (
+        <StatBoostScreen
+          nodeType={screen.nodeType}
+          run={playerRun}
+          onRunChange={setPlayerRun}
+          onContinue={() => handleNodeContinue(screen.nodeId)}
+        />
+      )}
+
+      {screen.kind === 'event' && <EventNodeScreen onContinue={() => handleNodeContinue(screen.nodeId)} />}
 
       {screen.kind === 'levelUp' && (
         <LevelUpScreen run={playerRun} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />

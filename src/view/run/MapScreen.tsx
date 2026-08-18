@@ -24,6 +24,12 @@ const NODE_ICONS: Record<MapNodeType, string> = {
   relicReward: '💠',
   currencyReward: '💰',
   upgradeReward: '📈',
+  weaponReward: '🏹',
+  armorReward: '🪖',
+  accessoryReward: '💍',
+  hpBoostReward: '❤️',
+  manaBoostReward: '💧',
+  event: '❓',
 };
 
 const NODE_NAMES: Record<MapNodeType, string> = {
@@ -37,9 +43,23 @@ const NODE_NAMES: Record<MapNodeType, string> = {
   relicReward: 'Relic',
   currencyReward: 'Gold',
   upgradeReward: 'Training',
+  weaponReward: 'Weapon',
+  armorReward: 'Armor',
+  accessoryReward: 'Accessory',
+  hpBoostReward: 'Vitality',
+  manaBoostReward: 'Mana',
+  event: 'Event',
 };
 
-/** Per-type accent color, keyed to the existing palette (styles.css :root) so nodes read at a glance. */
+/**
+ * Per-type accent color, keyed to the existing palette (styles.css :root) so
+ * nodes read at a glance. `weaponReward`/`armorReward`/`accessoryReward`/
+ * `hpBoostReward`/`manaBoostReward` reuse the same color language StatBars.tsx
+ * (STAT_COLORS) already established per-stat (attack red, defense gray, hp
+ * green, manaPool blue) so a player who's learned that vocabulary reading
+ * hero stat blocks recognizes it on the map too. `event` gets a neutral gray
+ * — it's an unknown/mystery placeholder, not tied to any stat.
+ */
 const NODE_COLORS: Record<MapNodeType, string> = {
   fight: 'var(--enemy)',
   skirmish: 'var(--ally)',
@@ -51,6 +71,12 @@ const NODE_COLORS: Record<MapNodeType, string> = {
   relicReward: 'var(--magical)',
   currencyReward: 'var(--accent)',
   upgradeReward: 'var(--hp-high)',
+  weaponReward: 'var(--enemy)',
+  armorReward: '#8a94a8',
+  accessoryReward: '#7fd6e0',
+  hpBoostReward: 'var(--hp-high)',
+  manaBoostReward: 'var(--mana)',
+  event: 'var(--tier-common)',
 };
 
 /**

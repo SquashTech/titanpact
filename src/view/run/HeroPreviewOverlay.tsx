@@ -29,7 +29,7 @@ interface Props {
  * inputs buildCombatState.ts feeds the engine at fight start.
  */
 export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Props) {
-  const grants = mergeStatMods(entry.evolutionStatGrants, equipmentStatModifiers(entry.equipment, equipmentLookup));
+  const grants = mergeStatMods(entry.evolutionStatGrants, entry.bonusStatGrants, equipmentStatModifiers(entry.equipment, equipmentLookup));
   const evolved = chosenEvolutionPaths(progressionTable, entry);
   const [viewedMoveId, setViewedMoveId] = useState<string | null>(null);
   const viewedMove = viewedMoveId ? (moves[viewedMoveId] ?? null) : null;

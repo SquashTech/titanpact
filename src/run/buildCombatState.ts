@@ -54,7 +54,12 @@ function placeEntry(
   const entry = roster.find((r) => r.rosterId === rosterId);
   if (!entry) throw new Error(`${rosterId} is not on the roster`);
   const hero = heroes[entry.heroId];
-  const statModifiers = mergeStatMods(equipmentStatModifiers(entry.equipment, equipmentLookup), entry.evolutionStatGrants, teamStatModifiers);
+  const statModifiers = mergeStatMods(
+    equipmentStatModifiers(entry.equipment, equipmentLookup),
+    entry.evolutionStatGrants,
+    entry.bonusStatGrants,
+    teamStatModifiers
+  );
   const grantedTypes = entry.evolutionTypeGraft ? [entry.evolutionTypeGraft] : [];
   const withMods = { ...createCombatant(combatantIdFor(side, rosterId), entry.heroId, side, 0, 0), statModifiers, grantedTypes };
   return { ...withMods, currentHp: getMaxHp(hero, withMods), currentMana: getMaxMana(hero, withMods) };

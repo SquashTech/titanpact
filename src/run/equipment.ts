@@ -64,6 +64,14 @@ export function pickWeightedEquipment(pool: readonly EquipmentDefinition[], coun
   return picked;
 }
 
+/** Rolls a single item restricted to one slot, same rarity weighting as `pickWeightedEquipment` — used by the `weaponReward`/`armorReward`/`accessoryReward` map nodes (App.tsx), which grant one guaranteed item of a fixed slot rather than a 3-choice pick across mixed slots. */
+export function pickWeightedEquipmentBySlot(pool: readonly EquipmentDefinition[], slot: EquipmentSlot): EquipmentDefinition | undefined {
+  return pickWeightedEquipment(
+    pool.filter((item) => item.slot === slot),
+    1
+  )[0];
+}
+
 export type EquipmentLoadout = Record<EquipmentSlot, string | null>;
 
 export function createEmptyLoadout(): EquipmentLoadout {

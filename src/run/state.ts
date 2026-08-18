@@ -42,6 +42,15 @@ export interface RosterEntry {
    */
   evolutionStatGrants: Partial<Record<StatKey, number>>;
   /**
+   * Permanent stat grants from map-node rewards (`hpBoostReward`/
+   * `manaBoostReward` — runProgress.ts `grantStatBonus`), always multiples of
+   * 5/10. Kept on its own field rather than folded into `evolutionStatGrants`
+   * since it comes from neither an equipped item nor a chosen Evolution path
+   * — a third, independent source of flat stat grants (buildCombatState.ts
+   * merges all three at combat-build time).
+   */
+  bonusStatGrants: Partial<Record<StatKey, number>>;
+  /**
    * The hero's current secondary-type-slot grant, if any, from the most
    * recently chosen type-graft Evolution path (docs/progression.md
    * "Type-graft paths"). null until first grafted; a later graft path SHIFTS
@@ -125,6 +134,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     level: 1,
     chosenPathIds: [],
     evolutionStatGrants: {},
+    bonusStatGrants: {},
     evolutionTypeGraft: null,
   };
 }
