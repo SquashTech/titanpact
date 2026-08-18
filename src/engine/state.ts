@@ -4,7 +4,7 @@
 // survives a run) are separate, longer-lived tiers that build on this one —
 // out of scope for this engine slice. Do not fold them in here.
 
-import type { HeroDefinition, StatKey, StatLine, StatusId, TypeId } from './content';
+import type { HeroDefinition, MoveDefinition, StatKey, StatLine, StatusId, TypeId } from './content';
 import type { RngState } from './rng/seededRng';
 
 export type Side = 'A' | 'B';
@@ -79,6 +79,20 @@ export interface CombatState {
  */
 export function isLockedIn(state: CombatState, side: Side): boolean {
   return state.koCount[side] >= 2;
+}
+
+/**
+ * Legality query (docs/mana.md "Engine placement": "Never gate a move's
+ * legality in the view ... legality is an engine decision surfaced as
+ * state"): can `currentMana` afford at least one of `moveIds`? Callers pass
+ * in whichever move-id list is authoritative for the caller (a hero's
+ * currently-unlocked kit, run-tier) — this stays a pure mana/cost check with
+ * no opinion on where that list comes from. Used to decide when a hero must
+ * fall back to Rest (see RestAction, combat/actions.ts) because nothing else
+ * is affordable.
+ */
+export function hasAffordableMove(currentMana: number, moveIds: readonly string[], moves: Record<string, MoveDefinition>): boolean {
+  return moveIds.some((id) => currentMana >= moves[id].manaCost);
 }
 
 export function getEffectiveStat(

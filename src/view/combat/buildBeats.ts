@@ -124,6 +124,18 @@ export function buildBeats(
         i++;
         break;
 
+      case 'Rested': {
+        const applied: CombatEvent[] = [e];
+        i++;
+        if (events[i]?.type === 'ManaChanged') applied.push(events[i++]);
+        const actorSide = combatants[e.combatantId]?.side;
+        const actorName = `${actorSide && actorSide !== playerSide ? 'Enemy ' : ''}${name(e.combatantId)}`;
+        push(applied, `${actorName} rests, restoring Mana to full`, [
+          { combatantId: e.combatantId, text: 'Full MP', className: 'popup-mana' },
+        ]);
+        break;
+      }
+
       case 'Healed': {
         const applied: CombatEvent[] = [e];
         i++;

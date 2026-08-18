@@ -7,7 +7,7 @@ import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
-import { isLockedIn, createCombatant, effectiveTypes } from '../src/engine/state';
+import { isLockedIn, createCombatant, effectiveTypes, hasAffordableMove } from '../src/engine/state';
 import { applyVoluntarySwitch, SwitchBlockedError } from '../src/engine/combat/switching';
 import { isValidFlatStatGrant } from '../src/engine/content';
 
@@ -147,6 +147,46 @@ test('round: an unaffordable move is a legality no-op (engine-level guard)', () 
   const { state: next, events } = resolveRound(state, actions, config);
   assert.strictEqual(events.some((e) => e.type === 'MoveUsed'), false);
   assert.strictEqual(next.combatants.a1.currentHp, heroes.cinderKnight.baseStats.hp);
+});
+
+test('hasAffordableMove: true iff at least one candidate move is within current mana', () => {
+  assert.strictEqual(hasAffordableMove(0, ['overload'], moves), false); // 999 cost, 0 mana
+  assert.strictEqual(hasAffordableMove(0, ['overload', 'emberSlash'], moves), false); // emberSlash costs 10, still unaffordable at 0
+  assert.strictEqual(hasAffordableMove(moves.emberSlash.manaCost, ['overload', 'emberSlash'], moves), true);
+  assert.strictEqual(hasAffordableMove(moves.emberSlash.manaCost - 1, ['overload', 'emberSlash'], moves), false);
+});
+
+test('round: a declared Rest action fully restores mana and skips the turn (softlock fallback, CLAUDE.md "Mana & tempo")', () => {
+  const state = twoVTwoFixture(20);
+  const drained = { ...state, combatants: { ...state.combatants, a1: { ...state.combatants.a1, currentMana: 0 } } };
+  const actions: Action[] = [{ kind: 'rest', combatantId: 'a1' }];
+  const { state: next, events } = resolveRound(drained, actions, config);
+
+  assert.strictEqual(next.combatants.a1.currentMana, heroes.cinderKnight.baseStats.manaPool);
+  assert.strictEqual(events.some((e) => e.type === 'Rested' && e.combatantId === 'a1'), true);
+  assert.strictEqual(events.some((e) => e.type === 'MoveUsed'), false);
+  assert.strictEqual(events.some((e) => e.type === 'DamageDealt'), false);
+  const manaChanged = events.find((e) => e.type === 'ManaChanged' && e.combatantId === 'a1') as any;
+  assert.ok(manaChanged);
+  assert.strictEqual(manaChanged.previousMana, 0);
+  assert.strictEqual(manaChanged.newMana, heroes.cinderKnight.baseStats.manaPool);
+});
+
+test('round: Rest resolves dead last regardless of speed — a faster Resting hero does not preempt a slower attacker', () => {
+  const state = twoVTwoFixture(21);
+  // a2 (tidecaller, speed 55) rests; b1 (ironWarden, speed 30) uses curseMind (priority 0, same
+  // bracket every other authored move lives in). Despite a2 being both faster AND in the same
+  // priority bracket by default, the attack must still resolve first — Rest sorts below every
+  // real move priority via REST_PRIORITY_BRACKET (priority.ts), not by winning a speed race.
+  const actions: Action[] = [
+    { kind: 'rest', combatantId: 'a2' },
+    { kind: 'move', combatantId: 'b1', moveId: 'curseMind', declaredTarget: 'a2' },
+  ];
+  const { events } = resolveRound(state, actions, config);
+  const restedIdx = events.findIndex((e) => e.type === 'Rested');
+  const moveUsedIdx = events.findIndex((e) => e.type === 'MoveUsed');
+  assert.ok(restedIdx !== -1 && moveUsedIdx !== -1);
+  assert.ok(moveUsedIdx < restedIdx);
 });
 
 test('round: KO increments KO count and emits Fainted, clearing the active slot', () => {

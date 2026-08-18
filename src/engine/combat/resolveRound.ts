@@ -63,6 +63,23 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       continue;
     }
 
+    if (action.kind === 'rest') {
+      // Rest bypasses Daze deliberately: Daze gates MOVE actions
+      // (docs/conditions.md), and Rest is the one action a hero can always
+      // fall back to — the softlock fix this exists for would reappear if a
+      // Dazed, mana-starved, bench-less hero had no legal action at all.
+      events.push({ type: 'TurnStarted', round, combatantId: action.combatantId });
+      const previousMana = actor.currentMana;
+      const maxMana = getMaxHeroMaxMana(heroes, working, action.combatantId);
+      working = {
+        ...working,
+        combatants: { ...working.combatants, [action.combatantId]: { ...actor, currentMana: maxMana } },
+      };
+      events.push({ type: 'Rested', round, combatantId: action.combatantId });
+      events.push({ type: 'ManaChanged', round, combatantId: action.combatantId, previousMana, newMana: maxMana, maxMana });
+      continue;
+    }
+
     // action.kind === 'move'
     const move = moves[action.moveId];
 

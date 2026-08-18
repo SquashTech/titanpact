@@ -18,4 +18,16 @@ export interface SwitchAction {
   benchedCombatantId: string;
 }
 
-export type Action = MoveAction | SwitchAction;
+/**
+ * Rest: skip the turn and fully restore Mana (CLAUDE.md "Mana & tempo" — "no
+ * defensive benefit"). Forced fallback when none of a hero's moves are
+ * affordable and no bench hero is available to switch to instead (the
+ * softlock this closes); also freely choosable any other time as a
+ * tempo play (dump mana into a big hit, Rest it back next round).
+ */
+export interface RestAction {
+  kind: 'rest';
+  combatantId: string;
+}
+
+export type Action = MoveAction | SwitchAction | RestAction;

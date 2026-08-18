@@ -163,6 +163,18 @@ export interface BenchRegenTickedEvent extends BaseEvent {
   manaRegen: number;
 }
 
+/**
+ * A declared Rest action resolved (combat/actions.ts RestAction): the hero
+ * forwent any move this round instead. Always immediately followed by a
+ * ManaChanged carrying the actual before/full-pool value — this event exists
+ * purely so the log/beats can say "X rests" rather than reporting a bare mana
+ * jump with no cause.
+ */
+export interface RestedEvent extends BaseEvent {
+  type: 'Rested';
+  combatantId: string;
+}
+
 export interface ManaChangedEvent extends BaseEvent {
   type: 'ManaChanged';
   combatantId: string;
@@ -205,6 +217,7 @@ export type CombatEvent =
   | FaintedEvent
   | SwitchedInEvent
   | BenchRegenTickedEvent
+  | RestedEvent
   | ManaChangedEvent
   | ManaRegenTickedEvent
   | RoundEndedEvent;

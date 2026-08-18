@@ -71,7 +71,14 @@ Treat this as a hard constraint when tuning mana-node values in `/data`.
   so the presentation layer can show the resource draining and refilling — same
   engine/presentation discipline as HP. The engine spends and regenerates mana; the
   view shows it. Never gate a move's *legality* in the view — legality (can this move
-  be afforded?) is an engine decision surfaced as state.
+  be afforded?) is an engine decision surfaced as state (`engine/state.ts`
+  `hasAffordableMove`, a pure query over mana + move costs that both the player UI
+  and the AI consult).
+- **Rest** (`combat.md` "Rest") is the resolution to the case where a hero can afford
+  *none* of their moves: it fully restores Mana instead of spending it, implemented
+  as its own `Action` kind (`engine/combat/actions.ts`) rather than a move, so it
+  can't be folded into a hero's authored movepool or accidentally costed/tuned like
+  one.
 
 ---
 

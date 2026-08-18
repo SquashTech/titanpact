@@ -860,6 +860,24 @@ body {
   cursor: not-allowed;
 }
 
+/* Rest fallback (FightScreen): replaces the move grid entirely when nothing
+   is affordable, so it spans both columns instead of sitting half-width like
+   a single leftover move would. */
+.move-button.rest-button {
+  grid-column: 1 / -1;
+  border-color: var(--mana);
+  align-items: center;
+  text-align: center;
+}
+
+.move-button.rest-button .move-name {
+  font-size: 14px;
+}
+
+.move-button.rest-button .move-power {
+  color: var(--text-dim);
+}
+
 .move-row-top {
   display: flex;
   justify-content: space-between;

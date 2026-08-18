@@ -6,7 +6,7 @@ import { typeChart } from '../../data/typechart';
 import { equipment } from '../../data/equipment';
 import { statuses } from '../../data/statuses';
 import type { CombatState, Side, StatModifiers } from '../../engine/state';
-import { isLockedIn, effectiveTypes } from '../../engine/state';
+import { isLockedIn, effectiveTypes, hasAffordableMove } from '../../engine/state';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../engine/combat/switching';
 import type { Action } from '../../engine/combat/actions';
@@ -51,7 +51,7 @@ function sideDefeated(state: CombatState, side: Side): boolean {
 }
 
 interface PendingAction {
-  kind: 'move' | 'switch';
+  kind: 'move' | 'switch' | 'rest';
   moveId?: string;
   declaredTarget?: string | null;
   benchedCombatantId?: string;
@@ -157,6 +157,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
   function isPendingComplete(p: PendingAction | undefined): boolean {
     if (!p) return false;
     if (p.kind === 'switch') return !!p.benchedCombatantId;
+    if (p.kind === 'rest') return true;
     const move = moves[p.moveId!];
     if ((move.target === 'singleEnemy' || move.target === 'singleAlly') && !p.declaredTarget) return false;
     return true;
@@ -216,6 +217,10 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
     commitAction(combatantId, { kind: 'switch', benchedCombatantId });
   }
 
+  function handleRestClick(combatantId: string) {
+    commitAction(combatantId, { kind: 'rest' });
+  }
+
   function handleForcedReplacement(slot: 0 | 1, benchedCombatantId: string) {
     const result = applyForcedReplacement(combat, combat.round, PLAYER_SIDE, slot, benchedCombatantId, statuses);
     setCombat(result.state);
@@ -245,9 +250,14 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
     const hero = allCombatants[combatant.heroId];
     const entry = entryFor(aiRun.roster, combatantId);
     const moveIds = entry.unlockedMoveIds.length > 0 ? entry.unlockedMoveIds : hero.moveIds;
+    if (!hasAffordableMove(combatant.currentMana, moveIds, moves)) {
+      // Same fallback as the player's move grid below: nothing is affordable,
+      // so Rest rather than declaring a move that would just no-op in the
+      // engine (resolveRound.ts's mana guard) and silently waste the turn.
+      return { kind: 'rest', combatantId };
+    }
     const affordable = moveIds.filter((id) => combatant.currentMana >= moves[id].manaCost);
-    const pool = affordable.length > 0 ? affordable : moveIds;
-    const moveId = pool[Math.floor(Math.random() * pool.length)];
+    const moveId = affordable[Math.floor(Math.random() * affordable.length)];
     const move = moves[moveId];
     const declaredTarget =
       move.target === 'singleEnemy' ? (aliveActiveIdsOn(state, PLAYER_SIDE)[0] ?? null) : move.target === 'singleAlly' ? combatantId : null;
@@ -274,9 +284,9 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
   function resolveRoundWith(pendingMap: Record<string, PendingAction>) {
     const playerActions: Action[] = playerActiveAlive.map((id) => {
       const p = pendingMap[id];
-      return p.kind === 'switch'
-        ? { kind: 'switch', combatantId: id, benchedCombatantId: p.benchedCombatantId! }
-        : { kind: 'move', combatantId: id, moveId: p.moveId!, declaredTarget: p.declaredTarget };
+      if (p.kind === 'switch') return { kind: 'switch', combatantId: id, benchedCombatantId: p.benchedCombatantId! };
+      if (p.kind === 'rest') return { kind: 'rest', combatantId: id };
+      return { kind: 'move', combatantId: id, moveId: p.moveId!, declaredTarget: p.declaredTarget };
     });
     const aiActions: Action[] = enemyActiveAlive.map((id) => pickAiAction(combat, id));
 
@@ -439,8 +449,31 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
             const entry = entryFor(playerRun.roster, id);
             const hero = allCombatants[combat.combatants[id].heroId];
             const combatant = combat.combatants[id];
+            // Softlock fallback (CLAUDE.md "Mana & tempo"): none of this
+            // hero's unlocked moves are currently affordable. Rest replaces
+            // the (all-disabled) move grid entirely — Switch stays available
+            // below as normal whenever a bench hero exists, so a player who
+            // dumped mana into a big hit can still choose to swap in someone
+            // fresh instead of resting this active hero.
+            const canAffordAnyMove = hasAffordableMove(combatant.currentMana, entry.unlockedMoveIds, moves);
             return (
               <div className="action-panel" key={id}>
+                {!canAffordAnyMove && (
+                  <div className="move-grid">
+                    <button
+                      className={`move-button rest-button${pending[id]?.kind === 'rest' ? ' selected' : ''}`}
+                      onClick={() => handleRestClick(id)}
+                    >
+                      <div className="move-row-top">
+                        <span className="move-name">Rest</span>
+                      </div>
+                      <div className="move-row-mid">
+                        <span className="move-power">Out of Mana — recovers to full</span>
+                      </div>
+                    </button>
+                  </div>
+                )}
+                {canAffordAnyMove && (
                 <div className="move-grid">
                   {entry.unlockedMoveIds.map((moveId) => {
                     const move = moves[moveId];
@@ -514,6 +547,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
                     );
                   })}
                 </div>
+                )}
               </div>
             );
           })()}

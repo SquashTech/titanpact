@@ -17,8 +17,20 @@ import { nextInt, type RngState } from '../rng/seededRng';
  */
 export const SWITCH_PRIORITY_BRACKET = Number.POSITIVE_INFINITY;
 
+/**
+ * Rest (combat/actions.ts RestAction) resolves dead last, symmetric with
+ * switches resolving first — it never targets anyone, so where exactly it
+ * lands relative to other moves has no correctness consequence, but sorting
+ * it after every authored move priority (-1..1, src/data/moves.ts) keeps the
+ * turn order legible: "everyone who actually did something, then whoever
+ * passed."
+ */
+export const REST_PRIORITY_BRACKET = Number.NEGATIVE_INFINITY;
+
 function actionPriority(action: Action, movePriority: (moveId: string) => number): number {
-  return action.kind === 'switch' ? SWITCH_PRIORITY_BRACKET : movePriority(action.moveId);
+  if (action.kind === 'switch') return SWITCH_PRIORITY_BRACKET;
+  if (action.kind === 'rest') return REST_PRIORITY_BRACKET;
+  return movePriority(action.moveId);
 }
 
 export interface OrderedAction {

@@ -34,8 +34,9 @@ what makes prediction the core skill. Preserve it.
 
 ## Action declaration & targeting
 
-- Each active combatant declares one action per round: a **move** (with target) or a
-  **switch**.
+- Each active combatant declares one action per round: a **move** (with target), a
+  **switch**, or **Rest** (CLAUDE.md "Mana & tempo": recovers mana, no defensive
+  benefit — see below).
 - Targeting is on the **2v2 grid** — a move targets a specific slot (single-target),
   both enemies, both allies, self, etc., per the move's definition in `/data`.
 - **No spread damage reduction.** Because the game is doubles-only, a move that hits
@@ -48,6 +49,26 @@ what makes prediction the core skill. Preserve it.
   catches this specifically (`targeting.ts`'s `TargetNoLongerValidError`) and emits
   `ActionBlocked` (`reason: 'noValidTarget'`) instead of throwing — the action fizzles,
   no mana spent. This is a normal mid-round race, not a UI bug to prevent upstream.
+
+### Rest
+
+- **`RestAction` (`engine/combat/actions.ts`).** Skips the acting hero's turn and
+  fully restores their Mana to max — untargeted, no HP/status interaction. Resolves
+  dead last in priority order (`priority.ts` `REST_PRIORITY_BRACKET`, below even the
+  lowest authored move priority), symmetric with switches resolving first.
+- **Forced fallback (the reason it exists):** if none of a hero's currently-unlocked
+  moves are affordable and there's no live bench hero to switch to instead, the hero
+  would otherwise have **no legal action** — a softlock. The move grid is replaced
+  with a single Rest button in this state (`FightScreen.tsx`); the engine itself
+  doesn't gate on this (it executes whatever `Action` it's given) — legality here is
+  a query the view/AI consult (`state.ts` `hasAffordableMove`), per `mana.md`
+  "Engine placement".
+- **Also freely choosable any other time**, as a deliberate tempo play — dump mana
+  into one big hit, then Rest it back to full the following round. Not restricted to
+  the forced case.
+- Switching still takes priority as an *option* when a bench hero is available and
+  the side isn't locked in: Rest only replaces the move grid, never the Switch
+  button.
 
 ---
 
