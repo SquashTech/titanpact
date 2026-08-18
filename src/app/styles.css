@@ -1476,6 +1476,12 @@ body {
   color: var(--text-dim);
   cursor: pointer;
   min-width: 0;
+  /* Long-press opens the equipped-item detail popup (RosterManagementScreen's
+     useLongPress) — without these, mobile browsers show their own
+     text-selection handles or a native callout menu partway through the hold. */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .equip-slot-box.filled {
@@ -1944,6 +1950,13 @@ body {
   text-align: left;
   color: var(--text);
   cursor: pointer;
+  /* Long-press opens the move-detail popup on the move-replace picker
+     (LevelUpScreen's ReplaceMoveCard/useLongPress) — without these, mobile
+     browsers show their own text-selection handles or a native callout menu
+     partway through the hold. */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .roster-card.picked {
@@ -2014,6 +2027,12 @@ body {
   border-left: 3px solid var(--magical);
   border-radius: 8px;
   padding: 8px 10px;
+  /* Long-press opens the inspect popup (NodeRewardScreen/GuildHallPanel's
+     useLongPress) — without these, mobile browsers show their own
+     text-selection handles or a native callout menu partway through the hold. */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .relic-card-head {
@@ -2130,6 +2149,7 @@ body {
   color: var(--text);
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
 }
@@ -2435,6 +2455,12 @@ body {
   color: var(--text);
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  /* Long-press opens the inspect popup (GuildHallPanel's useLongPress) —
+     without these, mobile browsers show their own text-selection handles
+     or a native callout menu partway through the hold. */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .equip-cache-card:hover {
@@ -2549,8 +2575,6 @@ body {
   padding: 12px 14px;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 .relic-shrine-card:hover {
