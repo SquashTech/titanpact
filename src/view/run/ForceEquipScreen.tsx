@@ -9,7 +9,7 @@ import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
-import { EQUIP_SLOT_LABELS, EquipmentIcon, EquipmentSlotGrid, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { EQUIP_SLOT_LABELS, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 
 interface Props {
   run: RunState;
@@ -120,8 +120,8 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
                 style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
                 onClick={() => handleEquip(entry.rosterId)}
               >
-                <div className="roster-mgmt-head">
-                  <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
+                <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
+                <div className="equip-target-info">
                   <div className="roster-mgmt-name">
                     {hero.name} <span className="hint">Lv {entry.level}</span>
                   </div>
@@ -130,9 +130,14 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
                       <TypeBadge key={t} type={t} />
                     ))}
                   </div>
+                </div>
+                <div className="equip-target-slot">
+                  <div className={`equip-slot-box target${currentItem ? ' filled' : ' empty'}`}>
+                    <EquipmentIcon item={currentItem} slot={item.slot} className="equip-slot-icon" />
+                    <span className="equip-slot-item">{currentItem ? currentItem.name : 'Empty'}</span>
+                  </div>
                   <span className="equip-target-cta">{currentItem ? 'Replace' : 'Equip'}</span>
                 </div>
-                <EquipmentSlotGrid loadout={entry.equipment} equipmentLookup={equipment} highlightSlot={item.slot} interactive={false} />
               </button>
             );
           })}

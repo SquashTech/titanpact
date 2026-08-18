@@ -1386,7 +1386,7 @@ body {
    rather than a bottom-sheet nudged out of the way. */
 .roster-mgmt-overlay {
   align-items: flex-start;
-  padding-top: 6vh;
+  padding-top: 2vh;
 }
 
 .roster-panel {
@@ -2671,7 +2671,9 @@ body {
 }
 
 .equip-target-card {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   background: var(--panel);
   border: 1px solid var(--border);
@@ -2688,8 +2690,25 @@ body {
   border-color: var(--accent);
 }
 
-.equip-target-card .roster-mgmt-head {
-  padding-right: 0;
+/* Only the slot being rewarded needs showing (per-slot dynamic layout) — the
+   other two equip slots this hero has are irrelevant to the decision at hand,
+   so they're dropped entirely rather than sitting below the portrait row. */
+.equip-target-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.equip-target-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  width: 60px;
+}
+
+.equip-target-slot .equip-slot-box {
+  width: 100%;
 }
 
 .equip-target-current {
@@ -2700,7 +2719,6 @@ body {
 
 .equip-target-cta {
   flex: 0 0 auto;
-  margin-left: auto;
   font-size: 11px;
   font-weight: 700;
   color: var(--accent);
@@ -2772,7 +2790,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 12px 0;
+  padding: 8px 0;
   background: radial-gradient(ellipse 120% 60% at 50% 100%, #241b0e 0%, transparent 70%), var(--bg);
   border-radius: 10px;
 }
@@ -2785,7 +2803,7 @@ body {
 
 .map-row-connector {
   width: 2px;
-  height: 18px;
+  height: 10px;
   background: linear-gradient(180deg, transparent, var(--border) 40%, var(--border) 60%, transparent);
 }
 
@@ -2794,7 +2812,7 @@ body {
   justify-content: center;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 4px 0;
+  padding: 2px 0;
 }
 
 .map-node {
@@ -2806,7 +2824,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--text-dim);
-  padding: 10px 10px 8px;
+  padding: 8px 10px 6px;
   font-size: 10px;
   font-weight: 600;
   text-align: center;
