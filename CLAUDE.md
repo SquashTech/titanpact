@@ -121,9 +121,17 @@ what's still unimplemented:
 - Five "50/50" heroes: general shape decided — **mono base, second type via an
   Evolution type-graft path** (`docs/progression.md` "Type-graft paths"), not
   inherent duals. Which specific type each hero starts mono as is still open (below).
-- Run structure (2026-08-16 sign-off): **a Slay the Spire-style branching map** —
-  reward/shop/fight/elite nodes converging on an end-of-act **Ancient** boss fight
-  (`docs/run-loop.md`). One act for now, not multi-act. HP/mana **fully restore
+- Run structure (2026-08-16 sign-off, multi-act extension 2026-08-17): **a Slay the
+  Spire-style branching map** — a uniform per-act shape of forced Fight → pick 1 of 3
+  reward → Skirmish → pick 1 of 3 reward → pick 1 of 2 (Elite or Battle) → Guild Hall →
+  an end-of-act **Ancient** boss fight, no path ever skipping a fight or gating the
+  Elite/Battle choice on earlier luck (`docs/run-loop.md`). **5 acts** are now
+  chained per run (`RunState.actNumber`, `TOTAL_ACTS`), each with a fresh map generated
+  once the previous act's Ancient falls; 1 Recruit Contract is granted at the end of
+  every act (replacing the removed `contractReward` map-node type — Recruit Contracts
+  now come only from that per-act grant, a beaten enemy's contract claim, or a Guild
+  Hall purchase). Encounter difficulty does not yet scale by act number — open question,
+  `docs/run-loop.md` §3. HP/mana **fully restore
   between map nodes** — reversed same-day from an initial persist-across-nodes design
   after first playtest showed a KO'd hero simply stayed dead-weight into the next
   fight with no way to recover it (`docs/run-loop.md`). Relics are **minimal and

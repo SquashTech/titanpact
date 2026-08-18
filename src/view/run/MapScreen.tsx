@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
+import { TOTAL_ACTS } from '../../run/state';
 import { reachableNodeIds } from '../../run/runProgress';
 import type { MapNodeType } from '../../run/map';
 import { RosterManagementScreen } from './RosterManagementScreen';
@@ -14,6 +15,8 @@ interface Props {
 
 const NODE_ICONS: Record<MapNodeType, string> = {
   fight: '⚔️',
+  skirmish: '🤺',
+  battle: '🗡️',
   elite: '💀',
   boss: '👑',
   shop: '🏪',
@@ -21,11 +24,12 @@ const NODE_ICONS: Record<MapNodeType, string> = {
   relicReward: '💠',
   currencyReward: '💰',
   upgradeReward: '📈',
-  contractReward: '📜',
 };
 
 const NODE_NAMES: Record<MapNodeType, string> = {
   fight: 'Fight',
+  skirmish: 'Skirmish',
+  battle: 'Battle',
   elite: 'Elite',
   boss: 'Ancient',
   shop: 'Guild Hall',
@@ -33,12 +37,13 @@ const NODE_NAMES: Record<MapNodeType, string> = {
   relicReward: 'Relic',
   currencyReward: 'Gold',
   upgradeReward: 'Training',
-  contractReward: 'Contract',
 };
 
 /** Per-type accent color, keyed to the existing palette (styles.css :root) so nodes read at a glance. */
 const NODE_COLORS: Record<MapNodeType, string> = {
   fight: 'var(--enemy)',
+  skirmish: 'var(--ally)',
+  battle: 'var(--ally)',
   elite: 'var(--crit)',
   boss: 'var(--accent)',
   shop: 'var(--mana)',
@@ -46,8 +51,24 @@ const NODE_COLORS: Record<MapNodeType, string> = {
   relicReward: 'var(--magical)',
   currencyReward: 'var(--accent)',
   upgradeReward: 'var(--hp-high)',
-  contractReward: 'var(--ally)',
 };
+
+/**
+ * Bottom-of-screen hub nav (2026-08-17 revision, per user direction): the
+ * three always-on overlays (Relics/Roster/Type Chart) moved out of the
+ * header into a flavorful footer row, using the same "fixed row of secondary
+ * actions" containment pattern FightScreen's .bottom-bar already established
+ * (CLAUDE.md architecture note in styles.css .bottom-bar) — .map-scroll keeps
+ * the flex-fill/internal-scroll role, this row just sits below it instead of
+ * inside the header. Each button gets its own accent color (mirroring
+ * NODE_COLORS below) so the row reads as a small "hub signpost" rather than
+ * generic pills.
+ */
+const FOOTER_BUTTONS: readonly { key: 'relics' | 'roster' | 'typeChart'; icon: string; label: string; color: string }[] = [
+  { key: 'relics', icon: '💠', label: 'Relics', color: 'var(--magical)' },
+  { key: 'roster', icon: '👥', label: 'Roster', color: 'var(--ally)' },
+  { key: 'typeChart', icon: '📖', label: 'Type Chart', color: 'var(--accent)' },
+];
 
 /**
  * The run's hub screen (docs/run-loop.md): a branching map the player
@@ -68,22 +89,24 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
   const visited = new Set(run.visitedNodeIds);
   const rowsTopDown = [...map.rows].reverse();
 
+  const openFooterOverlay: Record<(typeof FOOTER_BUTTONS)[number]['key'], () => void> = {
+    relics: () => setShowRelics(true),
+    roster: () => setShowRoster(true),
+    typeChart: () => setShowTypeChart(true),
+  };
+
   return (
     <div className="map-screen">
       <div className="map-header">
-        <button className="log-toggle-button" onClick={() => setShowRelics(true)}>
-          💠 Relics{run.relics.length > 0 ? ` (${run.relics.length})` : ''}
-        </button>
-        <button className="log-toggle-button" onClick={() => setShowRoster(true)}>
-          Manage Roster
-        </button>
-        <button className="log-toggle-button" onClick={() => setShowTypeChart(true)}>
-          Type Chart
-        </button>
-        <div className="map-header-right">
-          <span title="Gold">💰 {run.gold}</span>
-          <span title="Recruit Contracts">📜 {run.recruitContracts}</span>
-        </div>
+        <span className="map-stat" title="Act">
+          🗺️ Act {run.actNumber}/{TOTAL_ACTS}
+        </span>
+        <span className="map-stat" title="Gold">
+          💰 {run.gold}
+        </span>
+        <span className="map-stat" title="Recruit Contracts">
+          📜 {run.recruitContracts}
+        </span>
       </div>
 
       <div className="map-scroll screen-scroll">
@@ -120,6 +143,21 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
               })}
             </div>
           </div>
+        ))}
+      </div>
+
+      <div className="map-footer">
+        {FOOTER_BUTTONS.map(({ key, icon, label, color }) => (
+          <button
+            key={key}
+            className="map-footer-button"
+            style={{ '--btn-color': color } as CSSProperties}
+            onClick={openFooterOverlay[key]}
+          >
+            <span className="map-footer-icon">{icon}</span>
+            <span className="map-footer-label">{label}</span>
+            {key === 'relics' && run.relics.length > 0 && <span className="map-footer-badge">{run.relics.length}</span>}
+          </button>
         ))}
       </div>
 

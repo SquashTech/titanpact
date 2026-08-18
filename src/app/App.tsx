@@ -14,13 +14,13 @@ import { enemies } from '../data/enemies';
 import { relics } from '../data/relics';
 import { equipment } from '../data/equipment';
 import { equipItem } from '../run/equipment';
-import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP } from '../run/state';
+import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP, TOTAL_ACTS } from '../run/state';
 import { deriveContractOffer, claimContract, isRecruitable } from '../run/recruitment';
 import { generateMap } from '../run/map';
 import { generateStarterOptions } from '../run/draft';
 import { generateEncounter, type EncounterNodeType, type Encounter } from '../run/enemyGen';
 import { relicTeamStatModifiers } from '../run/relics';
-import { advanceToNode, grantCurrencyReward, grantUpgradeReward } from '../run/runProgress';
+import { advanceToNode, advanceToNextAct, grantCurrencyReward, grantUpgradeReward, grantContractReward } from '../run/runProgress';
 import type { RunState, RosterEntry } from '../run/state';
 import type { Squad } from '../run/squad';
 
@@ -140,31 +140,43 @@ export function App() {
 
   function handleSelectNode(nodeId: string) {
     const node = playerRun.map!.nodes[nodeId];
-    if (node.type === 'fight' || node.type === 'elite' || node.type === 'boss') {
+    if (
+      node.type === 'fight' ||
+      node.type === 'skirmish' ||
+      node.type === 'battle' ||
+      node.type === 'elite' ||
+      node.type === 'boss'
+    ) {
       // Generated here, at node-select time, rather than after squad
       // confirmation — the battle-preview screen (SquadSelectScreen) needs
       // the enemy squad to already exist so it can scout it before the
       // player commits a squad (playtest ask).
       //
-      // Row 0 (docs/run-loop.md "Map shape" — the opening 3 plain-fight
-      // nodes) draws from the non-recruitable enemy pool instead of the
-      // draftable hero roster: an intentionally weak opener, not a real hero
-      // spent as disposable fodder.
-      const isOpeningFight = node.row === 0;
-      const encounterPool = isOpeningFight ? enemies : heroes;
-      // The run's 2nd `fight` node specifically (not elite/boss, which have
-      // their own fixed sizing) is a deliberately lighter 2v2 breather
-      // between the row-0 opener and elites kicking in.
-      const isSecondFight = node.type === 'fight' && playerRun.fightsStarted === 1;
-      let encounter = generateEncounter(node.type, Math.floor(Math.random() * 2 ** 31), encounterPool, isSecondFight ? 2 : undefined);
-      const isFirstFight = node.type === 'fight' && playerRun.fightsStarted === 0;
-      if (isOpeningFight && isFirstFight) {
+      // `fight` (docs/run-loop.md "fight vs skirmish vs battle") draws from
+      // the non-recruitable enemy pool instead of the draftable hero roster:
+      // an intentionally weak opener, not a real hero spent as disposable
+      // fodder. `skirmish`/`battle`/`elite`/`boss` all draw from the
+      // recruitable pool.
+      const isMobFight = node.type === 'fight';
+      const encounterPool = isMobFight ? enemies : heroes;
+      // `skirmish` and `battle` map nodes ARE plain `fight` encounters
+      // mechanically (same heroCount, no stat bonus) — only the pool and the
+      // map-facing name differ, so both collapse to 'fight' for
+      // generateEncounter/FightScreen, which only need the mechanical shape.
+      const encounterKind: EncounterNodeType = node.type === 'skirmish' || node.type === 'battle' ? 'fight' : node.type;
+      // The run's 2nd plain-encounter node specifically (not elite/boss,
+      // which have their own fixed sizing) is a deliberately lighter 2v2
+      // breather between the opener and elites kicking in.
+      const isSecondFight = encounterKind === 'fight' && playerRun.fightsStarted === 1;
+      let encounter = generateEncounter(encounterKind, Math.floor(Math.random() * 2 ** 31), encounterPool, isSecondFight ? 2 : undefined);
+      const isFirstFight = encounterKind === 'fight' && playerRun.fightsStarted === 0;
+      if (isMobFight && isFirstFight) {
         encounter = equipTestDagger(encounter);
       }
-      if (node.type === 'fight') {
+      if (encounterKind === 'fight') {
         setPlayerRun((run) => ({ ...run, fightsStarted: run.fightsStarted + 1 }));
       }
-      setScreen({ kind: 'squadSelect', nodeId, nodeType: node.type, encounter });
+      setScreen({ kind: 'squadSelect', nodeId, nodeType: encounterKind, encounter });
     } else if (node.type === 'shop') {
       setScreen({ kind: 'shop', nodeId });
     } else {
@@ -181,17 +193,36 @@ export function App() {
       setScreen({ kind: 'runFailed' });
       return;
     }
-    // Row 0 (the opening Goblin fight, docs/run-loop.md "Map shape") always
-    // grants one random piece of Common gear, on top of the normal gold/
-    // training-point rewards — an early, guaranteed taste of the equip loop
-    // rather than leaving it to the reward-node economy's luck.
-    const isGoblinFight = playerRun.map!.nodes[nodeId].row === 0;
+    // The `fight` node (docs/run-loop.md "fight vs skirmish" — always row 0,
+    // the act's opening Goblin fight) always grants one random piece of
+    // Common gear, on top of the normal gold/training-point rewards — an
+    // early, guaranteed taste of the equip loop rather than leaving it to the
+    // reward-node economy's luck.
+    const isGoblinFight = playerRun.map!.nodes[nodeId].type === 'fight';
+    const isBossNode = nodeId === playerRun.map!.bossNodeId;
 
     let next = grantCurrencyReward(playerRun, goldReward);
     next = grantUpgradeReward(next, trainingPointsFor(nodeType));
     next = advanceToNode(next, nodeId);
+
+    // End of act (docs/run-loop.md "Multi-act sequencing"): a Recruit
+    // Contract per act, replacing the old contractReward map node, then
+    // either chain into the next act's fresh map or, past the last act, end
+    // the run.
+    let afterScreen: Screen;
+    if (isBossNode) {
+      next = grantContractReward(next, 1);
+      if (next.actNumber < TOTAL_ACTS) {
+        next = advanceToNextAct(next, Math.floor(Math.random() * 2 ** 31));
+        afterScreen = { kind: 'map' };
+      } else {
+        afterScreen = { kind: 'runComplete' };
+      }
+    } else {
+      afterScreen = { kind: 'map' };
+    }
+
     setPlayerRun(next);
-    const afterScreen: Screen = nodeId === playerRun.map!.bossNodeId ? { kind: 'runComplete' } : { kind: 'map' };
     const afterLevelUp: Screen = next.levelUpPool > 0 ? { kind: 'levelUp', next: afterScreen } : afterScreen;
 
     if (isGoblinFight) {
@@ -321,7 +352,7 @@ export function App() {
       {screen.kind === 'runComplete' && (
         <div className="result-overlay">
           <h2>Run Complete!</h2>
-          <p className="hint">You defeated the Ancient. The map is cleared.</p>
+          <p className="hint">You defeated the Ancient {TOTAL_ACTS} times. All acts are cleared.</p>
           <div className="result-buttons">
             <button onClick={handleStartNewRun}>Start New Run</button>
           </div>

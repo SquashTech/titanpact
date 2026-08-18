@@ -5,6 +5,7 @@
 import type { RunState, RosterEntry } from './state';
 import type { EquipmentDefinition, EquipmentSlot } from './equipment';
 import { equipItem, unequipSlot } from './equipment';
+import { generateMap } from './map';
 
 export class RunProgressError extends Error {}
 
@@ -44,9 +45,28 @@ export function grantUpgradeReward(run: RunState, points: number): RunState {
   return { ...run, levelUpPool: run.levelUpPool + points };
 }
 
-/** contractReward node resolution: a flat grant to the scarce Recruit Contract currency (docs/progression.md "raise-vs-recruit axis"). */
+/** A flat grant to the scarce Recruit Contract currency (docs/progression.md "raise-vs-recruit axis") — used at the end of every act (App.tsx, on the boss-node win) since the old contractReward map node was removed (2026-08-17). */
 export function grantContractReward(run: RunState, amount: number): RunState {
   return { ...run, recruitContracts: run.recruitContracts + amount };
+}
+
+/**
+ * End-of-act transition (docs/run-loop.md "Multi-act sequencing"): replaces
+ * the current map with a freshly generated one for the next act and resets
+ * the per-act position fields (`currentNodeId`, `visitedNodeIds`) — the
+ * player starts the new act's map from its own start row, same as entering
+ * the run's very first map. Does not touch roster/gold/relics/contracts or
+ * bump `actNumber` itself — callers (App.tsx) own the TOTAL_ACTS check and
+ * increment `actNumber` alongside this.
+ */
+export function advanceToNextAct(run: RunState, seed: number): RunState {
+  return {
+    ...run,
+    map: generateMap(seed),
+    currentNodeId: null,
+    visitedNodeIds: [],
+    actNumber: run.actNumber + 1,
+  };
 }
 
 /** relicReward node resolution: adds an owned relic id. Duplicates are allowed (their flat grants simply stack) — the reward screen is expected to only offer relics not yet owned. */

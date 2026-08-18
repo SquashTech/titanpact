@@ -5,10 +5,10 @@ import type { StatKey } from '../../engine/content';
 import type { RunState } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { pickWeightedEquipment } from '../../run/equipment';
-import { grantCurrencyReward, grantUpgradeReward, grantRelicReward, grantContractReward } from '../../run/runProgress';
+import { grantCurrencyReward, grantUpgradeReward, grantRelicReward } from '../../run/runProgress';
 import { EQUIP_SLOT_ICONS, EQUIP_SLOT_LABELS, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 
-export type RewardNodeType = 'currencyReward' | 'upgradeReward' | 'equipmentReward' | 'relicReward' | 'contractReward';
+export type RewardNodeType = 'currencyReward' | 'upgradeReward' | 'equipmentReward' | 'relicReward';
 
 interface Props {
   nodeType: RewardNodeType;
@@ -48,7 +48,7 @@ function fmtStatGrants(grants: Partial<Record<StatKey, number>>): string {
 }
 
 /**
- * Resolves the five "instant" reward node types (docs/run-loop.md): currency,
+ * Resolves the four "instant" reward node types (docs/run-loop.md): currency,
  * upgrade and equipment grant on a single tap; relic offers 3 choices.
  * Equipment claims hand off to `onClaimEquipment` (App.tsx routes that
  * through ForceEquipScreen) instead of resolving here — there's no
@@ -105,19 +105,6 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
               </button>
             ) : (
               <p className="hint">+{upgradeAmount} training points claimed.</p>
-            )}
-          </div>
-        )}
-
-        {nodeType === 'contractReward' && (
-          <div className="reward-panel">
-            <h2>📜 Contract Cache</h2>
-            {!claimed ? (
-              <button className="resolve-button" onClick={() => handleClaimInstant(grantContractReward(run, 1))}>
-                Claim 1 Recruit Contract
-              </button>
-            ) : (
-              <p className="hint">+1 Recruit Contract claimed.</p>
             )}
           </div>
         )}

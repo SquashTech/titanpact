@@ -1,8 +1,27 @@
-// The run's branching map (docs/run-loop.md). Slay the Spire-lite: rows of
-// nodes, each connecting forward to 1-2 nodes in the next row, funneling into
-// a single boss node. This is ONE ACT's shape for this pass (README "Next
-// steps" #4) — multi-act sequencing is out of scope until this loop is
-// validated. Pure data + a seeded generator; no view or engine concerns here.
+// One act's branching map (docs/run-loop.md). A run chains TOTAL_ACTS of
+// these (App.tsx advanceToNextAct) — each act generates its own map from a
+// fresh seed once its boss falls. Uniform per-act shape (2026-08-17 revision,
+// per user direction): every act is exactly
+// Fight -> pick 1 of 3 -> Skirmish -> pick 1 of 3 -> (Elite or Battle) ->
+// Guild Hall -> Ancient — no path ever skips straight from the opening fight
+// to the boss without passing through the forced mid-act fights, and
+// reward-pick rows are pure reward choices (no fight/shop mixed into them).
+// Pure data + a seeded generator; no view or engine concerns here.
+//
+// `fight` vs `skirmish` vs `battle` (2026-08-17, per user direction): all
+// three are plain (no-bonus) 4-hero encounters mechanically — the split is
+// which pool they draw from and where/how they're presented, not difficulty.
+// `fight` is always the act's row-0 opener against the weaker non-recruitable
+// mob pool (App.tsx's Goblins); `skirmish` is the row-2 encounter against the
+// recruitable hero pool, named differently so the map itself telegraphs
+// "beating this one is a shot at a Recruit Contract" before the player
+// commits a squad. `battle` is `skirmish`'s late-act sibling — row 4's
+// non-Elite alternative (see ELITE_ROW below) — kept as its own named type
+// rather than reusing `skirmish` so its specific encounter pool can be
+// authored separately later ("the actual possible battles" — user direction,
+// deferred) without disturbing the early-act `skirmish` pool. `elite`/`boss`
+// also draw from the recruitable pool but keep their own names since they're
+// already distinguished by their stat bonus.
 //
 // Determinism: reuses the engine's seeded PRNG (engine/rng/seededRng.ts) so a
 // map is reproducible from its seed, same spirit as combat's seeded RNG
@@ -13,14 +32,15 @@ import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
 
 export type MapNodeType =
   | 'fight'
+  | 'skirmish'
+  | 'battle'
   | 'elite'
   | 'boss'
   | 'shop'
   | 'equipmentReward'
   | 'relicReward'
   | 'currencyReward'
-  | 'upgradeReward'
-  | 'contractReward';
+  | 'upgradeReward';
 
 export interface MapNode {
   id: string;
@@ -40,31 +60,23 @@ export interface RunMap {
   bossNodeId: string;
 }
 
-const ROW_WIDTHS = [1, 3, 3, 3, 3, 1, 1] as const; // row 0 = single opening fight, row 5 = pre-boss shop funnel, row 6 = boss
+// row 0 = the act's opening mob `fight`, row 1/3 = pick-1-of-3 reward rows,
+// row 2 = the forced `skirmish` against a recruitable hero squad, row 4 =
+// pick 1 of 2 — `elite` (the act's difficulty spike) or `battle` (its
+// plain-difficulty alternative) — before the shop funnel, row 5 = the
+// pre-boss Guild Hall funnel, row 6 = the Ancient.
+const ROW_WIDTHS = [1, 3, 1, 3, 2, 1, 1] as const;
 const BOSS_ROW = ROW_WIDTHS.length - 1;
 const FUNNEL_ROW = BOSS_ROW - 1;
+const ELITE_ROW = FUNNEL_ROW - 1;
+const SKIRMISH_ROW = 2;
 
-/** Row 1-2 weights: mostly fights, a light spread of reward types, no elites yet. */
-const EARLY_WEIGHTS: readonly [MapNodeType, number][] = [
-  ['fight', 40],
-  ['shop', 12],
-  ['equipmentReward', 15],
-  ['relicReward', 10],
-  ['currencyReward', 13],
-  ['upgradeReward', 10],
-  ['contractReward', 6],
-];
-
-/** Row 3-4 weights: elites enter, fight share drops accordingly. */
-const LATE_WEIGHTS: readonly [MapNodeType, number][] = [
-  ['fight', 30],
-  ['elite', 20],
-  ['shop', 10],
-  ['equipmentReward', 13],
-  ['relicReward', 10],
-  ['currencyReward', 10],
-  ['upgradeReward', 7],
-  ['contractReward', 6],
+/** The two pick-1-of-3 rows draw from reward types only — fight/shop/elite are forced elsewhere in the row layout, never mixed into a choice row. */
+const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
+  ['equipmentReward', 32],
+  ['relicReward', 24],
+  ['currencyReward', 24],
+  ['upgradeReward', 20],
 ];
 
 function pickWeighted(rng: RngState, weights: readonly [MapNodeType, number][]): { value: MapNodeType; nextState: RngState } {
@@ -78,11 +90,13 @@ function pickWeighted(rng: RngState, weights: readonly [MapNodeType, number][]):
   return { value: weights[weights.length - 1][0], nextState };
 }
 
-function nodeType(row: number, rng: RngState): { value: MapNodeType; nextState: RngState } {
+function nodeType(row: number, col: number, rng: RngState): { value: MapNodeType; nextState: RngState } {
   if (row === 0) return { value: 'fight', nextState: rng };
+  if (row === SKIRMISH_ROW) return { value: 'skirmish', nextState: rng };
+  if (row === ELITE_ROW) return { value: col === 0 ? 'elite' : 'battle', nextState: rng };
   if (row === FUNNEL_ROW) return { value: 'shop', nextState: rng };
   if (row === BOSS_ROW) return { value: 'boss', nextState: rng };
-  return pickWeighted(rng, row <= 2 ? EARLY_WEIGHTS : LATE_WEIGHTS);
+  return pickWeighted(rng, REWARD_WEIGHTS);
 }
 
 function nodeId(row: number, col: number): string {
@@ -104,7 +118,7 @@ export function generateMap(seed: number): RunMap {
   for (let row = 0; row < ROW_WIDTHS.length; row++) {
     const rowIds: string[] = [];
     for (let col = 0; col < ROW_WIDTHS[row]; col++) {
-      const { value: type, nextState } = nodeType(row, rng);
+      const { value: type, nextState } = nodeType(row, col, rng);
       rng = nextState;
       const id = nodeId(row, col);
       nodes[id] = { id, type, row, col, nextIds: [] };
@@ -116,6 +130,18 @@ export function generateMap(seed: number): RunMap {
   for (let row = 0; row < ROW_WIDTHS.length - 1; row++) {
     const from = rows[row];
     const to = rows[row + 1];
+
+    // The row feeding into ELITE_ROW (Elite-or-Battle) always fully connects
+    // — every path must present the same real choice between the two,
+    // rather than one that's only sometimes available depending on which
+    // reward-row node the player happened to pick (user direction: "give the
+    // player the option to fight the Elite OR a regular Battle").
+    if (row + 1 === ELITE_ROW) {
+      for (const fromId of from) {
+        nodes[fromId].nextIds = [...to];
+      }
+      continue;
+    }
 
     for (const fromId of from) {
       // Clamp the source column into the TARGET row's width first (it may be

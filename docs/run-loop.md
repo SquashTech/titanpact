@@ -12,49 +12,102 @@ an end-of-act boss fight against an **Ancient** — a nice fit, since `Ancient` 
 already `types-and-heroes.md`-locked as a rare, boss-only "near-total defensive wall"
 type.
 
-**This pass builds one act, not a full multi-act run** — proving the loop shape before
-committing to act-count/pacing decisions, which are really content and balance calls.
+**This pass now chains 5 acts** (2026-08-17 revision, per user direction — see "Multi-act
+sequencing" below), each built from the uniform per-act shape in §1.
 
 ---
 
 ## 1. Map shape
 
-`src/run/map.ts` generates a deterministic (seeded) branching map:
+`src/run/map.ts` generates a deterministic (seeded) branching map for **one act**; a run
+chains `TOTAL_ACTS` of them (§3 "Multi-act sequencing"). Per-act row layout
+(2026-08-17 revision — was a looser weighted-random spread across rows 1-4, which let a
+path skip from the opening fight straight to the funnel with only reward-node luck in
+between; per user direction, the shape is now forced and uniform):
 
-- **Row 0 (entry): a single plain `fight` node.** Slay the Spire convention — the run
-  always opens on an easy, unambiguous fight, no early reward-node luck and no
-  meaningless first choice among three identical-weight openers (2026-08-17 revision;
-  was 3 nodes).
-- **Rows 1-4: 3 nodes each, weighted-random type.** Rows 1-2 draw from fight/shop/
-  equipment/relic/currency/upgrade only — no `elite` yet. Rows 3-4 add `elite` to the
-  pool and drop the plain-fight share accordingly.
+- **Row 0: a single forced `fight` node.** Slay the Spire convention — the act always
+  opens on an easy, unambiguous fight, no early reward-node luck and no meaningless
+  first choice among identical-weight openers.
+- **Row 1: 3 nodes, pick 1 of 3 — reward types only** (`equipmentReward`/`relicReward`/
+  `currencyReward`/`upgradeReward`, weighted). No `fight`/`shop`/`elite` mixed in — every
+  reward row is a genuine reward choice, not a chance to draw another fight or dodge one.
+- **Row 2: a single forced `skirmish` node.**
+- **Row 3: 3 nodes, pick 1 of 3 — reward types only**, same pool as row 1.
+- **Row 4: 2 nodes, pick 1 of 2 — `elite` or `battle`** (2026-08-17, per user direction:
+  "give the player the option to fight the Elite OR a regular Battle"). `elite` is the
+  act's difficulty spike (+10 to 2 stats on all 4 AI heroes); `battle` is a plain,
+  no-bonus alternative — same risk profile as `skirmish`, just later in the act. Always
+  presented as a real choice (see edges, below), not one that depends on luck.
 - **Row 5 (funnel): a single `shop` node** every path converges on — a guaranteed last
   chance to spend gold before the boss, also the standard Slay the Spire "everything
   narrows before the boss" beat.
-- **Row 6: the single `boss` node.**
+- **Row 6: the single `boss` node** — the act's Ancient.
+
+The upshot: every act is exactly **Fight → pick 1 of 3 → Skirmish → pick 1 of 3 →
+(Elite or Battle) → Guild Hall → Ancient** — no path through an act ever skips a fight.
 
 Edges connect each node to 1-2 nodes in the next row within a small column window, with
 a repair pass guaranteeing every node (row 1+) has at least one incoming edge — no
-orphaned nodes. This is simpler than Slay the Spire's real path-weaving generator (no
-attempt to avoid visually crossing paths) but is enough to prove branching *choice*,
-which is the thing actually being validated in this pass.
+orphaned nodes. Given the forced single-node rows above, this repair pass in practice
+means the single fight/skirmish node before a 3-wide reward row always ends up connected
+to all 3 of them (nothing else exists to claim the "leftover" reward nodes), so the "pick
+1 of 3" framing holds for real — no reward option is ever silently unreachable. The row
+feeding into the Elite-or-Battle row is a special case on top of that: since its source
+row is 3-wide and its target row is 2-wide, the generic windowed-edge algorithm would
+only sometimes present both options depending on which reward node was picked — so
+`generateMap` overrides that one row transition to fully connect every row-3 node to
+*both* row-4 nodes, guaranteeing the Elite/Battle choice is real from every path, not
+gated by earlier luck. This is simpler than Slay the Spire's real path-weaving generator
+(no attempt to avoid visually crossing paths) but is enough to prove branching *choice*
+within a row.
 
 ## 2. Node types
 
 | Type | Resolution |
 |---|---|
-| `fight` | `FightScreen` vs. a generated 4-hero AI squad (`src/run/enemyGen.ts`), no bonus. Row 0 (the single opening node) draws from the non-recruitable enemy pool instead — see below. |
-| `elite` | Same, but the AI's 4 heroes each carry a flat +10 bonus to 2 random growth stats. |
-| `boss` | `FightScreen` vs. 2 AI heroes (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. |
+| `fight` | `FightScreen` vs. a generated 4-hero AI squad (`src/run/enemyGen.ts`), no bonus. Always row 0, each act's opening node — draws from the non-recruitable enemy pool (Goblins), not the draftable hero roster. |
+| `skirmish` | Mechanically identical to `fight` (same 4-hero, no-bonus `generateEncounter` call — App.tsx collapses it to `EncounterNodeType: 'fight'`), but draws from the **recruitable hero pool** and is named differently on the map (2026-08-17, per user direction) so the player can see, before committing a squad, that beating this one is a shot at a Recruit Contract claim. Always row 2. |
+| `battle` | Also mechanically identical to `fight`/`skirmish` (collapses to `EncounterNodeType: 'fight'`, recruitable pool). Row 4's non-Elite alternative — kept as its own named type rather than reusing `skirmish` so its specific encounter pool/flavor can be authored separately later ("the actual possible battles" — user direction, deferred) without touching the early-act `skirmish` pool. |
+| `elite` | The AI's 4 heroes each carry a flat +10 bonus to 2 random growth stats. Draws from the recruitable pool, same as `skirmish`/`battle`. Row 4's difficulty-spike alternative to `battle` — the player picks one or the other, never both. |
+| `boss` | `FightScreen` vs. 2 AI heroes (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Winning grants 1 Recruit Contract and ends the act (§3). |
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. |
 | `equipmentReward` | `NodeRewardScreen` — pick 1 of 3 equipment items, rarity-weighted (`equipment.ts` `pickWeightedEquipment`); claiming hands off to the forced equip-or-trash gate (`ForceEquipScreen`) rather than a stash — see "The unequipped-item inventory was removed" below. |
 | `relicReward` | `NodeRewardScreen` — pick 1 of 3 relics not already owned. |
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30, more for nothing having been spent yet). |
 | `upgradeReward` | `NodeRewardScreen` — an instant flat grant to the pooled level-up currency (2-3 points), on top of the per-fight-win grant (see below). |
-| `contractReward` | `NodeRewardScreen` — an instant flat grant of 1 Recruit Contract (`progression.md` "raise-vs-recruit axis" — a scarce currency, not unlimited claiming). |
 
-## 3. Decisions locked for this pass (2026-08-16 sign-off)
+`contractReward` (an instant flat grant of 1 Recruit Contract) was **removed as a map
+node type** (2026-08-17, per user direction: contracts should come from Guild Halls and
+act-end grants, not map-node luck) — see §3 "Multi-act sequencing" for where that grant
+moved to.
 
+`fight` vs. `skirmish` (2026-08-17, per user direction) is purely a **naming + pool**
+split, not a difficulty one — App.tsx's `handleSelectNode` picks the encounter pool off
+`node.type === 'fight'` (mob) vs. anything else (recruitable), then collapses `skirmish`
+down to the `EncounterNodeType` `'fight'` before calling `generateEncounter`/
+`FightScreen`, which only need the mechanical shape (heroCount/stat bonus), not which map
+node it came from.
+
+## 3. Decisions locked for this pass (2026-08-16 sign-off, multi-act entry 2026-08-17)
+
+- **Multi-act sequencing (2026-08-17, per user direction).** A run now chains
+  `TOTAL_ACTS = 5` acts (`src/run/state.ts`) instead of ending at the first boss.
+  `RunState.actNumber` (1-indexed) tracks which act is current. On a boss-node win
+  (`App.tsx handleFightResolved`): grant 1 Recruit Contract
+  (`runProgress.ts grantContractReward` — this is where the removed `contractReward`
+  map node's grant moved to), then if `actNumber < TOTAL_ACTS`, call
+  `runProgress.ts advanceToNextAct` (fresh `generateMap` seed, `currentNodeId`/
+  `visitedNodeIds` reset to the new act's start row, `actNumber` incremented) and return
+  to the map screen; otherwise show "Run Complete." Roster, gold, relics, and Recruit
+  Contracts all carry over between acts — only the map itself and per-act position reset,
+  same "fully restore HP/mana between nodes" spirit already locked below, just at the
+  act boundary instead of the node boundary. Difficulty does **not** yet scale by act
+  number — every act's `fight`/`elite`/`boss` nodes use the same stat-bonus figures
+  (§2) regardless of which act they're in, so acts 2-5 are only harder in practice via
+  the player's own accumulated gear/relics/levels, not via any deliberate curve. Whether
+  that's enough escalation over 5 acts, or whether encounters need an explicit
+  per-act difficulty multiplier, is now an open balance question — flag before assuming
+  either answer.
 - **Relics: minimal, stat-only.** `src/run/relics.ts` mirrors `equipment.ts`'s own
   scope note exactly — team-wide flat stat grants only. Hook-triggered relics (e.g.
   "on faint, heal the team") wait for the trigger-hook engine contract (CLAUDE.md
@@ -161,7 +214,7 @@ which is the thing actually being validated in this pass.
   gear that's already equipped, via `swapEquipment` (a true hero-to-hero swap — tap a
   filled slot then tap the matching slot on another hero, or drag it — never orphaning
   an item since both slots always end up occupied by *something*, possibly the other
-  hero's old item) or trashes it outright. The opening Goblin fight (row 0) also now
+  hero's old item) or trashes it outright. Each act's opening Goblin fight (row 0) also
   always grants one random Common item on top of its gold/training-point rewards
   (`App.tsx` `handleFightResolved`), so the player exercises this loop from turn one
   rather than waiting on `equipmentReward` node luck.
@@ -179,8 +232,8 @@ which is the thing actually being validated in this pass.
   for the full stat-bar readout) plus reassigning already-equipped gear between heroes
   (`swapEquipment`/`trashEquipment` — see "The unequipped-item inventory was removed"
   above), no longer a spend surface and no longer backed by a stash.
-- **Multi-act sequencing.** This pass is one act, start to boss. Chaining acts (with
-  escalating difficulty between them) is deferred until this loop's shape is validated.
+- **Per-act difficulty scaling.** Multi-act sequencing itself is now built (§3), but
+  encounter difficulty doesn't yet scale with `actNumber` — see §3's note on this.
 - **Visual path rendering.** `MapScreen` renders nodes grouped by row with
   reachable/visited/current/locked states, but does not draw connecting lines between
   them — a cosmetic gap, same "lowest priority, purely cosmetic" bucket as the

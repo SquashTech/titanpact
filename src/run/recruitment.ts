@@ -84,8 +84,8 @@ export function deriveContractOffer(defeated: RosterEntry): ContractOffer {
  * Claims a derived contract offer onto the roster, ungeared (see module
  * header) — spends one Recruit Contract from the run's scarce
  * `recruitContracts` pool (docs/progression.md "raise-vs-recruit axis"). Not
- * free: contracts are earned (1 at run start, more via contractReward map
- * nodes or a cheaper Guild Hall purchase), not unlimited.
+ * free: contracts are earned (1 at run start, 1 more at the end of every act,
+ * or a cheaper Guild Hall purchase), not unlimited.
  */
 export function claimContract(run: RunState, offer: ContractOffer, rosterId: string): RunState {
   if (run.recruitContracts <= 0) {

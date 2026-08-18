@@ -15,6 +15,9 @@ import type { RunMap } from './map';
 /** CLAUDE.md "Roster hard cap = 6, doubling as the bring-6-pick-4 battle sideboard." */
 export const ROSTER_CAP = 6;
 
+/** How many acts (docs/run-loop.md "Multi-act sequencing") a run chains before "Run Complete" — per user direction (2026-08-17), 5. */
+export const TOTAL_ACTS = 5;
+
 export interface RosterEntry {
   rosterId: string;
   heroId: string;
@@ -66,27 +69,36 @@ export interface RunState {
    * Recruit Contracts available to spend claiming a beaten enemy
    * (docs/progression.md "raise-vs-recruit axis" — recruitment.ts
    * claimContract). A scarce earn-and-spend currency, not unlimited: a run
-   * starts with 1, more can be found via contractReward map nodes, and more
-   * can be bought (cheaper than a direct Guild Hall recruit) at a shop node.
+   * starts with 1, one more is granted automatically at the end of every act
+   * (App.tsx handleFightResolved, on the boss node — 2026-08-17 revision,
+   * replacing the old contractReward map node), and more can be bought
+   * (cheaper than a direct Guild Hall recruit) at a shop node.
    */
   recruitContracts: number;
   /**
    * The player's run map (docs/run-loop.md). Null for a RunState that never
    * gets a map of its own — e.g. the throwaway AI rosters enemyGen.ts builds
-   * per fight, which only ever need `roster`.
+   * per fight, which only ever need `roster`. A run chains TOTAL_ACTS of
+   * these, one at a time — runProgress.ts's advanceToNextAct replaces this
+   * with a freshly generated map (and resets currentNodeId/visitedNodeIds)
+   * once the current one's boss falls.
    */
   map: RunMap | null;
   /** The node currently occupied; null = map generated but not yet entered (still choosing among map.startNodeIds). */
   currentNodeId: string | null;
-  /** Resolved node ids, in visit order — drives MapScreen's greyed-out/reachable rendering. */
+  /** Resolved node ids, in visit order — drives MapScreen's greyed-out/reachable rendering. Scoped to the CURRENT act's map only; advanceToNextAct clears it. */
   visitedNodeIds: string[];
   /**
    * Count of `fight`-type nodes entered so far this run (App.tsx, incremented
    * at node-select time alongside encounter generation). Drives the run's 2nd
    * fight being a smaller 2v2 breather (enemyGen.ts heroCountOverride) —
    * `elite`/`boss` nodes have their own fixed sizing and don't touch this.
+   * Counts across the whole run, not reset per act — the breather is a
+   * one-time onboarding beat, not a per-act one.
    */
   fightsStarted: number;
+  /** 1-indexed current act (docs/run-loop.md "Multi-act sequencing"); increments on every boss-node win until TOTAL_ACTS, at which point beating the boss ends the run instead. */
+  actNumber: number;
 }
 
 export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1): RunState {
@@ -100,6 +112,7 @@ export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1):
     currentNodeId: null,
     visitedNodeIds: [],
     fightsStarted: 0,
+    actNumber: 1,
   };
 }
 

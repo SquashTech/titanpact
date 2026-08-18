@@ -2421,21 +2421,20 @@ body {
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  font-size: 12px;
-  color: var(--text-dim);
-  padding-bottom: 8px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--border);
 }
 
-.map-header-right {
-  margin-left: auto;
+.map-stat {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
+  white-space: nowrap;
 }
 
 .map-scroll {
@@ -2538,6 +2537,76 @@ body {
 
 .map-node.locked {
   opacity: 0.25;
+}
+
+/* Hub signpost: Relics/Roster/Type Chart, relocated out of the header
+   (2026-08-17) to leave the header to pure run stats. Each button carries
+   its own accent (--btn-color, set inline per FOOTER_BUTTONS) so the row
+   reads as a small signpost rather than three identical pills — same spirit
+   as .map-node's --node-color. */
+.map-footer {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+  padding-top: 10px;
+  margin-top: 2px;
+  border-top: 1px solid var(--border);
+}
+
+.map-footer-button {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 75%);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--btn-color);
+  border-radius: 0 0 10px 10px;
+  padding: 9px 4px 8px;
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+
+.map-footer-button:hover {
+  color: var(--text);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px -4px var(--btn-color);
+  background: linear-gradient(165deg, var(--panel-alt), var(--btn-color) 220%);
+}
+
+.map-footer-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.map-footer-label {
+  color: inherit;
+}
+
+.map-footer-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--btn-color);
+  color: var(--bg);
+  border-radius: 999px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  font-size: 9px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px var(--panel);
 }
 
 /* --- Title screen --------------------------------------------------------- */
