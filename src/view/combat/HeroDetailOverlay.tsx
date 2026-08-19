@@ -10,6 +10,7 @@ import { STAT_ICONS, STAT_LABELS, STAT_ORDER, StatBars } from '../shared/StatBar
 import { EquipmentInfoPanel, EquipmentSlotGrid } from '../shared/EquipmentBox';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { statusEmoji, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
 
 interface Props {
   hero: HeroDefinition;
@@ -117,11 +118,24 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
         <div className="detail-section-title">Statuses</div>
         {Object.values(combatant.statuses).length > 0 ? (
           <div className="detail-modifier-list">
-            {Object.values(combatant.statuses).map((s) => (
-              <span key={s.statusId} className={`detail-status-chip${s.statusId === 'Regen' ? ' status-badge-positive' : ''}`}>
-                {fmtStatus(s.statusId, s.magnitude, s.duration)}
-              </span>
-            ))}
+            {Object.values(combatant.statuses).map((s) => {
+              const emoji = statusEmoji[s.statusId];
+              return (
+                <span
+                  key={s.statusId}
+                  className="detail-status-chip"
+                  style={{
+                    color: statusColor(s.statusId),
+                    background: statusTint(s.statusId, 0.12),
+                    borderColor: statusTint(s.statusId, 0.5),
+                  }}
+                >
+                  {emoji && <span className="status-emoji">{emoji}</span>}
+                  {fmtStatus(s.statusId, s.magnitude, s.duration)}
+                  {s.statusId === 'Poison' && <PoisonPips duration={s.duration} />}
+                </span>
+              );
+            })}
           </div>
         ) : (
           <div className="detail-empty">No active statuses.</div>

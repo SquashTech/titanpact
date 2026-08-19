@@ -103,32 +103,45 @@ function createLevel4TestRun(): RunState {
  *  - Squall (Storm) carries `thunderclap` (applies Conduct) AND `ironFist`
  *    (Iron — detonates it) so the apply/detonate split is demoable solo,
  *    across two turns on the same target, without needing a second hero.
+ *    Also carries `cinderBite` (Burn) as a bonus 4th move.
  *  - Cortex (Mind) carries `spectralBind` (Spirit — marks a target Haunted)
  *    AND `psychicLance`/`mindSpike` (Mind) — mark one enemy, then hit the
- *    OTHER enemy to watch the Haunted one get struck too.
+ *    OTHER enemy to watch the Haunted one get struck too. Also carries
+ *    `frostLock` (Freeze) as a bonus 4th move.
  *  - Sylva keeps her default kit (`venomousBite` starts Poison's 3-round
- *    timer).
+ *    timer) plus `rendingClaw` (Bleed) as a bonus 4th move.
  *  - Vesper keeps her default kit (`vanish` grants 1-round Stealth; a fast
  *    Vanish redirects an incoming single-target hit onto her partner).
  *
- * AI side is two flat defensive tanks (Crag, Warden) chosen for high HP so
- * they survive enough rounds to actually watch Burn-style ticks and Poison's
- * timer play out instead of fainting turn 2.
+ * AI side is two Fortify-only dummies (Crag, Warden) with HP bumped to 9999
+ * via `bonusStatGrants` — a scratch punching bag, not real content, so
+ * skipping the usual multiple-of-5/10 balance convention is fine here. They
+ * never hit back and never faint, so a full Burn/Bleed/Poison/Freeze/
+ * Conduct/Haunt rotation can be watched to completion.
  */
 function createConditionsTestEncounter(): { player: Encounter; ai: Encounter } {
   let playerRun = createRunState(0, 0);
-  playerRun = addRosterEntry(playerRun, createRosterEntry('conductTester', 'stormRanger', ['thunderclap', 'ironFist', 'restoreVigor']));
   playerRun = addRosterEntry(
     playerRun,
-    createRosterEntry('hauntMindTester', 'mindweaver', ['spectralBind', 'psychicLance', 'mindSpike'])
+    createRosterEntry('conductTester', 'stormRanger', ['thunderclap', 'ironFist', 'restoreVigor', 'cinderBite'])
   );
-  playerRun = addRosterEntry(playerRun, createRosterEntry('poisonTester', 'wildOracle', heroes.wildOracle.moveIds));
+  playerRun = addRosterEntry(
+    playerRun,
+    createRosterEntry('hauntMindTester', 'mindweaver', ['spectralBind', 'psychicLance', 'mindSpike', 'frostLock'])
+  );
+  playerRun = addRosterEntry(playerRun, createRosterEntry('poisonTester', 'wildOracle', [...heroes.wildOracle.moveIds, 'rendingClaw']));
   playerRun = addRosterEntry(playerRun, createRosterEntry('stealthTester', 'shadowMonk', heroes.shadowMonk.moveIds));
   const playerSquad = pickSquad(playerRun.roster, ['conductTester', 'hauntMindTester', 'poisonTester', 'stealthTester']);
 
   let aiRun = createRunState(0, 0);
-  aiRun = addRosterEntry(aiRun, createRosterEntry('conditionsDummyA', 'crag', heroes.crag.moveIds));
-  aiRun = addRosterEntry(aiRun, createRosterEntry('conditionsDummyB', 'ironWarden', heroes.ironWarden.moveIds));
+  aiRun = addRosterEntry(aiRun, {
+    ...createRosterEntry('conditionsDummyA', 'crag', ['fortify']),
+    bonusStatGrants: { hp: 9999 - heroes.crag.baseStats.hp },
+  });
+  aiRun = addRosterEntry(aiRun, {
+    ...createRosterEntry('conditionsDummyB', 'ironWarden', ['fortify']),
+    bonusStatGrants: { hp: 9999 - heroes.ironWarden.baseStats.hp },
+  });
   const aiSquad = pickSquad(aiRun.roster, ['conditionsDummyA', 'conditionsDummyB']);
 
   return { player: { run: playerRun, squad: playerSquad }, ai: { run: aiRun, squad: aiSquad } };

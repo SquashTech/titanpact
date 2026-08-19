@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import type { HeroDefinition, StatKey } from '../../engine/content';
-import type { Combatant } from '../../engine/state';
+import type { Combatant, StatusInstance } from '../../engine/state';
 import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana } from '../../engine/state';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_ICONS, STAT_ORDER } from '../shared/StatBars';
+import { statusEmoji, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
+import { useLongPress } from '../shared/MoveTile';
+import { StatusDetailOverlay } from './StatusDetailOverlay';
 
 export interface Popup {
   key: number;
@@ -34,10 +38,34 @@ function hpTier(fraction: number): 'hp-high' | 'hp-mid' | 'hp-low' {
   return 'hp-low';
 }
 
-/** "Burn 20" / "Daze 2" / "Bleed" — magnitude or duration shown when the status carries one, omitted for boolean-shape statuses (docs/conditions.md §1). Regen is the only positive status; everything else reads as a debuff. */
-function statusBadgeText(statusId: string, magnitude: number | undefined, duration: number | undefined): string {
-  const n = magnitude ?? duration;
-  return n !== undefined ? `${statusId} ${n}` : statusId;
+/**
+ * Icon + bare number (magnitude, falling back to duration) for a single
+ * active status — replaces the old word+number text badge so the row reads
+ * at a glance and stays legible at bench-card scale. Tinted with the
+ * status's own identity color (statusIcons.tsx statusColor) rather than a
+ * uniform debuff-red, so the badge reads as "which status" by color alone.
+ * The icon alone can't carry everything a player might need (how it clears,
+ * what it actually does), so a ~500ms hold opens StatusDetailOverlay with
+ * the full readout; a plain tap only stops propagation so it can't fall
+ * through to the card's own onSelectTarget (see useLongPress in MoveTile.tsx).
+ */
+function StatusChip({ instance, onInspect }: { instance: StatusInstance; onInspect: () => void }) {
+  const longPress = useLongPress(onInspect);
+  const emoji = statusEmoji[instance.statusId];
+  const n = instance.magnitude ?? instance.duration;
+  const color = statusColor(instance.statusId);
+  return (
+    <span
+      className={`status-badge${instance.statusId === 'Conduct' ? ' status-badge-conduct' : ''}`}
+      style={{ color, background: statusTint(instance.statusId, 0.16), borderColor: statusTint(instance.statusId, 0.55) }}
+      title={`${instance.statusId}${n !== undefined ? ` ${n}` : ''} — hold for details`}
+      {...longPress}
+    >
+      <span className="status-emoji">{emoji ?? instance.statusId.slice(0, 1)}</span>
+      {n !== undefined && <span className="status-badge-count">{n}</span>}
+      {instance.statusId === 'Poison' && <PoisonPips duration={instance.duration} />}
+    </span>
+  );
 }
 
 /**
@@ -69,6 +97,7 @@ function StatModBadge({ stat, mod }: { stat: StatKey; mod: number }) {
 }
 
 export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onInspect, popup, selected, switchingIn, locked, acting }: Props) {
+  const [inspectingStatus, setInspectingStatus] = useState<string | null>(null);
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = Math.max(0, combatant.currentHp / maxHp);
@@ -141,15 +170,12 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onI
           "Resolution and presentation are separate layers"). */}
       <div className="status-badge-row">
         {Object.values(combatant.statuses).map((s) => (
-          <span
-            key={s.statusId}
-            className={`status-badge${s.statusId === 'Regen' ? ' status-badge-positive' : ''}${s.statusId === 'Conduct' ? ' status-badge-conduct' : ''}`}
-          >
-            {s.statusId === 'Conduct' ? '⚡ ' : ''}
-            {statusBadgeText(s.statusId, s.magnitude, s.duration)}
-          </span>
+          <StatusChip key={s.statusId} instance={s} onInspect={() => setInspectingStatus(s.statusId)} />
         ))}
       </div>
+      {inspectingStatus && combatant.statuses[inspectingStatus] && (
+        <StatusDetailOverlay instance={combatant.statuses[inspectingStatus]} onClose={() => setInspectingStatus(null)} />
+      )}
       {/* Wrapped in a `.resource` pair so compact contexts (bench-row) can lay
           HP and MP side by side instead of stacked — `.resource-row`/`.resource`
           are `display: contents` by default, so this changes nothing about the

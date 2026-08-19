@@ -669,8 +669,9 @@ body {
   display: none;
 }
 
-/* Active statuses (docs/conditions.md) on a battlefield card — magnitude/duration
-   included in the label when the status carries one (CombatantCard statusBadgeText). */
+/* Active statuses (docs/conditions.md) on a battlefield card — icon + bare
+   number when the status carries a magnitude/duration (CombatantCard
+   StatusChip). Long-pressing a chip opens StatusDetailOverlay. */
 .status-badge-row {
   display: flex;
   flex-wrap: wrap;
@@ -678,31 +679,73 @@ body {
   margin-bottom: 4px;
   /* Reserved even when empty (CombatantCard always renders this row) so a
      status landing mid-fight doesn't grow the card and shift the layout
-     below it. Matches one row of .status-badge at its own font/padding. */
+     below it. Matches one row of .status-badge at its own height. */
   min-height: 15px;
 }
 
+/* Color (background/border/text) is set inline per instance from
+   statusIcons.tsx statusColor/statusTint — each status gets its own identity
+   color (Fire-orange Burn, Frost-cyan Freeze, etc.) rather than a uniform
+   debuff-red, so this rule only owns the shared shape/type. */
 .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   font-size: 9px;
   font-weight: 700;
-  padding: 1px 5px;
+  padding: 1px 5px 1px 3px;
   border-radius: 8px;
-  background: #0d0e12;
-  border: 1px solid var(--hp-mid);
-  color: var(--hp-mid);
+  border: 1px solid transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.status-badge-positive {
-  border-color: var(--hp-high);
-  color: var(--hp-high);
+/* Emoji status glyph (src/view/shared/statusIcons.tsx) — text, not an image,
+   so it renders crisp at this badge scale (pixel-art PNGs downscaled to this
+   size turned to noise). Shrinks further on the bench-row switch picker,
+   matching .bench-row .combatant-portrait. */
+.status-emoji {
+  display: block;
+  font-size: 11px;
+  line-height: 1;
 }
 
-/* Conduct is "primed" while this badge shows — a lightning-yellow accent plus
-   a slow pulse cues that the next Storm/Iron hit detonates it, distinct from
-   the plain debuff-red every other status badge uses. */
+.bench-row .status-emoji {
+  font-size: 8px;
+}
+
+.status-badge-count {
+  line-height: 1;
+}
+
+/* Poison's 3-round countdown-to-detonation meter (statusIcons.tsx PoisonPips)
+   — a single emoji can't show that progress, so a pip fills in as the timer
+   nears zero. Sits inline after the magnitude number in the compact badge;
+   StatusDetailOverlay repeats it at the same size next to the emoji. */
+.status-pips {
+  display: inline-flex;
+  gap: 1px;
+  margin-left: 1px;
+}
+
+/* Pip color comes from the wrapping .status-pips' inline `color` (Poison's
+   own statusColor) via currentColor, so it stays in sync with the badge/emoji
+   automatically instead of needing its own color prop. */
+.status-pip {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid currentColor;
+}
+
+.status-pip-filled {
+  background: currentColor;
+}
+
+/* Conduct is "primed" while this badge shows — a slow pulse (on top of its
+   own yellow statusColor) cues that the next Storm/Iron hit detonates it. */
 .status-badge-conduct {
-  border-color: var(--conduct);
-  color: var(--conduct);
   animation: conduct-badge-pulse 1.4s ease-in-out infinite;
 }
 
@@ -1888,7 +1931,15 @@ body {
   border: 1px solid var(--border);
 }
 
+/* Default look for a plain (non-status) use of this chip class — e.g. the
+   stray move-id fallback in HeroPreviewOverlay/CompendiumScreen. Where this
+   chip shows an actual status (HeroDetailOverlay), background/border/color
+   are set inline per statusIcons.tsx statusColor/statusTint and override
+   these defaults. */
 .detail-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   font-weight: 700;
   padding: 3px 7px;
@@ -1908,6 +1959,87 @@ body {
   text-align: center;
   font-size: 10px;
   color: var(--text-dim);
+}
+
+/* --- Status detail overlay (CombatantCard status-icon long-press) ------- */
+/* Reuses .detail-overlay/.detail-panel for the backdrop + centered-card
+   shell (see "Hero detail overlay" above); .status-detail-panel just caps
+   it narrower since this content is a lot shorter than a full hero sheet. */
+/* border-top-color set inline per instance (the status's own color) — a
+   thin identity stripe across the top of the panel, matching the badge that
+   opened it. */
+.status-detail-panel {
+  max-width: 300px;
+  gap: 6px;
+  border-top-width: 3px;
+}
+
+.status-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Circular tinted backdrop (background set inline, statusTint) behind the
+   emoji — echoes the badge's own tinted-chip look at detail-view scale. */
+.status-detail-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Poison's pip meter (statusIcons.tsx PoisonPips), scaled up from the
+   badge's 4px dots to read clearly next to the 30px emoji, and pushed to
+   the far right of the head row rather than crowding the name/pipeline. */
+.status-detail-head .status-pips {
+  margin-left: auto;
+  gap: 3px;
+}
+
+.status-detail-head .status-pip {
+  width: 8px;
+  height: 8px;
+}
+
+/* color set inline per instance (statusColor) — no default here since every
+   caller always supplies one. */
+.status-detail-name {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.status-detail-pipeline {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.status-detail-readout {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.status-detail-desc {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.status-detail-meta {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-style: italic;
 }
 
 /* --- Squad select screen ------------------------------------------------ */
