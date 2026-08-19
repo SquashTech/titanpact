@@ -20,6 +20,29 @@ export interface BeatPopup {
   className: string;
 }
 
+/**
+ * Per-status tick flavor (Burn/Bleed/Poison/Regen — the DoT/HoT statuses that
+ * fire a StatusTicked kind 'damage'/'heal' every end-of-round) so each reads
+ * as its own beat rather than a copy of a plain attack-damage/heal beat, the
+ * same way Conduct's detonation got its own banner/popup below. Poison only
+ * ever ticks once, on detonation (statusEngine.ts tickEndOfRound's timer
+ * branch), but shares the same treatment since it's still a kind 'damage'
+ * StatusTicked.
+ */
+const STATUS_TICK_BANNER: Record<string, (targetName: string, amount: number) => string> = {
+  Burn: (n, a) => `${n} is scorched by Burn for ${a} damage!`,
+  Bleed: (n, a) => `${n} bleeds for ${a} damage!`,
+  Poison: (n, a) => `${n}'s Poison bursts for ${a} damage!`,
+  Regen: (n, a) => `${n}'s Regen mends ${a} HP!`,
+};
+
+const STATUS_TICK_EMOJI: Record<string, string> = {
+  Burn: '🔥',
+  Bleed: '🩸',
+  Poison: '🧪',
+  Regen: '💚',
+};
+
 export interface Beat {
   /** Events to apply, in order, when this beat is revealed. */
   events: CombatEvent[];
@@ -112,8 +135,17 @@ export function buildBeats(
               ? ' — Not very effective...'
               : '';
         const targetName = name(e.targetCombatantId);
-        push(applied, `${targetName} takes ${e.amount} damage${tag}`, [
-          { combatantId: e.targetCombatantId, text: `-${e.amount}`, className: e.isCrit ? 'popup-crit' : 'popup-damage' },
+        // Haunt (statusEngine.ts expandSpreadTargets) dragged this target into a hit
+        // that was declared against its partner — call that out explicitly rather than
+        // letting it read like an ordinary spread move landed on both enemies.
+        const haunted = e.viaStatusId === 'Haunt';
+        const banner = haunted ? `${targetName}'s Haunt drags them into the attack — takes ${e.amount} damage${tag}` : `${targetName} takes ${e.amount} damage${tag}`;
+        push(applied, banner, [
+          {
+            combatantId: e.targetCombatantId,
+            text: `${haunted ? '👻 ' : ''}-${e.amount}`,
+            className: haunted ? 'popup-haunt' : e.isCrit ? 'popup-crit' : 'popup-damage',
+          },
         ]);
         if (faintEvent) push([faintEvent], `${targetName} is knocked out!`);
         break;
@@ -200,8 +232,15 @@ export function buildBeats(
           break;
         }
         const verb = e.kind === 'damage' ? 'takes' : 'recovers';
-        push(applied, `${targetName} ${verb} ${e.amount} from ${e.statusId}`, [
-          { combatantId: e.combatantId, text: e.kind === 'damage' ? `-${e.amount}` : `+${e.amount}`, className: e.kind === 'damage' ? 'popup-damage' : 'popup-heal' },
+        const flavorBanner = STATUS_TICK_BANNER[e.statusId]?.(targetName, e.amount);
+        const emoji = STATUS_TICK_EMOJI[e.statusId];
+        const popupClass = flavorBanner ? `popup-${e.statusId.toLowerCase()}` : e.kind === 'damage' ? 'popup-damage' : 'popup-heal';
+        push(applied, flavorBanner ?? `${targetName} ${verb} ${e.amount} from ${e.statusId}`, [
+          {
+            combatantId: e.combatantId,
+            text: `${emoji ? `${emoji} ` : ''}${e.kind === 'damage' ? '-' : '+'}${e.amount}`,
+            className: popupClass,
+          },
         ]);
         if (faintEvent) push([faintEvent], `${targetName} is knocked out!`);
         break;

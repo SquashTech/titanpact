@@ -15,6 +15,21 @@ export interface Popup {
   className: string;
 }
 
+/**
+ * Card-level flash on the beat each of these pops (buildBeats.ts) — keyed off
+ * the popup's className the same way Conduct's zap-hit originally was, just
+ * generalized to a lookup so each status gets its own animated identity
+ * (styles.css) without a growing chain of className checks here.
+ */
+const POPUP_FLASH_CLASS: Record<string, string> = {
+  'popup-conduct': 'zap-hit',
+  'popup-burn': 'burn-hit',
+  'popup-bleed': 'bleed-hit',
+  'popup-poison': 'poison-hit',
+  'popup-regen': 'regen-hit',
+  'popup-haunt': 'haunt-hit',
+};
+
 interface Props {
   hero: HeroDefinition;
   combatant: Combatant;
@@ -112,9 +127,9 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onI
   if (selected) classes.push('selected');
   if (locked) classes.push('locked');
   if (acting) classes.push('acting');
-  // Conduct's detonation beat (buildBeats.ts) — keyed fresh with the popup so
-  // the flash restarts even if Conduct detonates twice in a row.
-  if (popup?.className === 'popup-conduct') classes.push('zap-hit');
+  // Keyed fresh with the popup so the flash restarts even if the same status
+  // ticks/detonates twice in a row.
+  if (popup && POPUP_FLASH_CLASS[popup.className]) classes.push(POPUP_FLASH_CLASS[popup.className]);
 
   return (
     <div

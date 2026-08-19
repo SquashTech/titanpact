@@ -209,8 +209,8 @@ test('status: Haunt turns a singleEnemy Spirit/Mind attack into a spread hit on 
 
   const { state: next, events } = resolveRound(haunted, actions, config);
 
-  assert.ok(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1'));
-  assert.ok(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b2'));
+  assert.ok(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1' && !e.viaStatusId));
+  assert.ok(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b2' && e.viaStatusId === 'Haunt'));
   assert.ok(next.combatants.b2.currentHp < heroes.wildOracle.baseStats.hp);
 });
 

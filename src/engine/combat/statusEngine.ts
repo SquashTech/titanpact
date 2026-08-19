@@ -331,19 +331,26 @@ export function expandSpreadTargets(
   targetMode: TargetMode,
   targetIds: readonly string[],
   statusDefs: Record<string, StatusDefinition>
-): string[] {
-  if (targetMode !== 'singleEnemy' || targetIds.length !== 1) return [...targetIds];
+): { targetIds: string[]; spreadVia: Record<string, StatusId> } {
+  if (targetMode !== 'singleEnemy' || targetIds.length !== 1) return { targetIds: [...targetIds], spreadVia: {} };
   const target = state.combatants[targetIds[0]];
-  if (!target) return [...targetIds];
+  if (!target) return { targetIds: [...targetIds], spreadVia: {} };
 
+  // Recorded per extra target id (not just filtered) so the caller can stamp the
+  // resulting DamageDealt event with which status dragged this target in —
+  // events.ts DamageDealtEvent.viaStatusId, read by buildBeats.ts to give the hit
+  // its own "dragged into the attack" banner/popup instead of a plain spread hit.
+  const spreadVia: Record<string, StatusId> = {};
   const extra = state.active[target.side].filter((id): id is string => {
     if (!id || id === targetIds[0] || state.combatants[id]?.fainted) return false;
-    return Object.values(statusDefs).some(
+    const match = Object.values(statusDefs).find(
       (def) => def.spreadTriggerTypes?.includes(moveType) && hasStatus(state.combatants[id], def.id)
     );
+    if (match) spreadVia[id] = match.id;
+    return !!match;
   });
 
-  return extra.length > 0 ? [...targetIds, ...extra] : [...targetIds];
+  return { targetIds: extra.length > 0 ? [...targetIds, ...extra] : [...targetIds], spreadVia };
 }
 
 /**

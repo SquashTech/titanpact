@@ -29,6 +29,14 @@ function fmt(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(4);
 }
 
+/** Per-status log color (styles.css) for the DoT/HoT statuses' end-of-round tick — mirrors STATUS_COLOR in statusIcons.tsx so the log reads consistently with the badge. */
+const STATUS_TICK_LOG_CLASS: Record<string, string> = {
+  Burn: 'log-burn',
+  Bleed: 'log-bleed',
+  Poison: 'log-poison',
+  Regen: 'log-regen',
+};
+
 export function formatEvents(
   events: readonly CombatEvent[],
   heroes: Record<string, HeroDefinition>,
@@ -53,10 +61,11 @@ export function formatEvents(
         const move = moves[e.moveId];
         const tag = e.isCrit ? ' CRIT!' : '';
         const eff = e.typeMult >= 2 ? ' Super effective!' : e.typeMult <= 0.5 ? ' Not very effective...' : '';
+        const via = e.viaStatusId ? ` (via ${e.viaStatusId})` : '';
         lines.push({
           key,
-          text: `${move?.name ?? e.moveId} -> ${e.amount} dmg to ${name(e.targetCombatantId)}${tag}${eff}`,
-          className: e.isCrit ? 'log-crit' : 'log-damage',
+          text: `${move?.name ?? e.moveId} -> ${e.amount} dmg to ${name(e.targetCombatantId)}${via}${tag}${eff}`,
+          className: e.viaStatusId ? 'log-haunt' : e.isCrit ? 'log-crit' : 'log-damage',
         });
 
         const [offLabel, defLabel] = e.category === 'physical' ? ['Atk', 'Def'] : ['Int', 'Wis'];
@@ -103,7 +112,8 @@ export function formatEvents(
       case 'StatusTicked': {
         if (e.kind === 'duration') break; // no HP/log-worthy change; the eventual StatusRemoved covers expiry
         const verb = e.kind === 'damage' ? 'takes' : 'heals';
-        lines.push({ key, text: `${name(e.combatantId)} ${verb} ${e.amount} from ${e.statusId}`, className: e.kind === 'damage' ? 'log-damage' : 'log-heal' });
+        const className = STATUS_TICK_LOG_CLASS[e.statusId] ?? (e.kind === 'damage' ? 'log-damage' : 'log-heal');
+        lines.push({ key, text: `${name(e.combatantId)} ${verb} ${e.amount} from ${e.statusId}`, className });
         break;
       }
       case 'StatusRemoved':

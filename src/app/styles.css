@@ -14,6 +14,12 @@
   --ally: #4a90d9;
   --crit: #ff7043;
   --conduct: #f5d90a;
+  /* Per-status tick identity colors (statusIcons.tsx STATUS_COLOR) — Regen reuses
+     --hp-high and Conduct reuses --conduct above rather than duplicating those. */
+  --burn: #e2683c;
+  --bleed: #c0392b;
+  --poison: #8bc34a;
+  --haunt: #7a5fc4;
   --physical: #d9724a;
   --magical: #8b7fe0;
   /* Equipment rarity tiers — gray/blue/purple/gold/red, common through mythic (run/equipment.ts EquipmentRarity, view/shared/EquipmentBox.tsx RARITY_COLOR_VARS). */
@@ -935,6 +941,273 @@ body {
   }
 }
 
+/* Burn's end-of-round tick (buildBeats.ts StatusTicked beat) — a flame flicker
+   (opacity flutter rather than the zap's shake) paired with .burn-hit below. */
+.dmg-popup.popup-burn {
+  color: var(--burn);
+  text-shadow: 0 0 8px rgba(226, 104, 60, 0.75), 0 1px 3px rgba(0, 0, 0, 0.6);
+  animation: dmg-popup-flicker 700ms ease-out forwards;
+}
+
+@keyframes dmg-popup-flicker {
+  0% {
+    opacity: 0;
+    transform: translateY(4px) scale(0.9);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0) scale(1.05);
+  }
+  25% {
+    opacity: 0.55;
+  }
+  35% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.75;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-18px) scale(1);
+  }
+}
+
+.combatant-card.burn-hit {
+  animation: burn-flash 500ms ease-out;
+}
+
+@keyframes burn-flash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(226, 104, 60, 0);
+    filter: brightness(1);
+  }
+  20% {
+    box-shadow: 0 0 14px 3px rgba(226, 104, 60, 0.7);
+    filter: brightness(1.3);
+  }
+  35% {
+    box-shadow: 0 0 4px 1px rgba(226, 104, 60, 0.3);
+    filter: brightness(1.05);
+  }
+  55% {
+    box-shadow: 0 0 12px 3px rgba(226, 104, 60, 0.6);
+    filter: brightness(1.25);
+  }
+}
+
+/* Bleed's tick — the only popup that DRIPS down instead of floating up, and
+   the only card flash that reads as an inward wound (inset shadow) rather
+   than an outer glow, so it can't be mistaken for any other status. */
+.dmg-popup.popup-bleed {
+  color: var(--bleed);
+  text-shadow: 0 1px 4px rgba(192, 57, 43, 0.8), 0 1px 3px rgba(0, 0, 0, 0.6);
+  animation: dmg-popup-drip 800ms ease-in forwards;
+}
+
+@keyframes dmg-popup-drip {
+  0% {
+    opacity: 0;
+    transform: translateY(-4px) scaleY(0.8);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(10px) scaleY(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(22px) scaleY(1.3);
+  }
+}
+
+.combatant-card.bleed-hit {
+  animation: bleed-flash 350ms ease-out;
+}
+
+@keyframes bleed-flash {
+  0% {
+    box-shadow: inset 0 0 0 rgba(192, 57, 43, 0);
+    filter: brightness(1);
+  }
+  25% {
+    box-shadow: inset 0 0 24px 6px rgba(192, 57, 43, 0.55);
+    filter: brightness(0.9) saturate(1.3);
+  }
+  100% {
+    box-shadow: inset 0 0 0 rgba(192, 57, 43, 0);
+    filter: brightness(1);
+  }
+}
+
+/* Poison's detonation tick — a slower, wobblier bubble-up motion (toxic,
+   unhurried) instead of the snappier motion the other DoTs use. */
+.dmg-popup.popup-poison {
+  color: var(--poison);
+  text-shadow: 0 0 8px rgba(139, 195, 74, 0.7), 0 1px 3px rgba(0, 0, 0, 0.6);
+  animation: dmg-popup-bubble 900ms ease-in-out forwards;
+}
+
+@keyframes dmg-popup-bubble {
+  0% {
+    opacity: 0;
+    transform: translateY(4px) scale(0.85);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-1px, 0) scale(1.05);
+  }
+  35% {
+    transform: translate(1px, -4px) scale(1);
+  }
+  55% {
+    transform: translate(-1px, -9px) scale(1.05);
+  }
+  75% {
+    transform: translate(1px, -14px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px) scale(1);
+  }
+}
+
+.combatant-card.poison-hit {
+  animation: poison-flash 700ms ease-in-out;
+}
+
+@keyframes poison-flash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(139, 195, 74, 0);
+    filter: brightness(1) saturate(1);
+  }
+  30% {
+    box-shadow: 0 0 12px 3px rgba(139, 195, 74, 0.55);
+    filter: brightness(1.05) saturate(1.4);
+  }
+  60% {
+    box-shadow: 0 0 6px 1px rgba(139, 195, 74, 0.3);
+    filter: brightness(0.97) saturate(1.2);
+  }
+}
+
+/* Regen's tick — reuses --hp-high (same identity color as the plain heal
+   popup/.popup-heal) but with its own gentler sparkle-and-drift motion and a
+   softer, longer card glow, so a Regen tick doesn't read as an indistinct
+   copy of a move's heal landing. */
+.dmg-popup.popup-regen {
+  color: var(--hp-high);
+  font-size: 16px;
+  text-shadow: 0 0 10px rgba(76, 175, 106, 0.65), 0 1px 3px rgba(0, 0, 0, 0.6);
+  animation: dmg-popup-sparkle 900ms ease-out forwards;
+}
+
+@keyframes dmg-popup-sparkle {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.85);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1.1);
+  }
+  40% {
+    transform: translateY(-4px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-22px) scale(1.05);
+  }
+}
+
+.combatant-card.regen-hit {
+  animation: regen-flash 600ms ease-in-out;
+}
+
+@keyframes regen-flash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(76, 175, 106, 0);
+    filter: brightness(1);
+  }
+  50% {
+    box-shadow: 0 0 16px 4px rgba(76, 175, 106, 0.5);
+    filter: brightness(1.15);
+  }
+}
+
+/* Haunt's spread hit (buildBeats.ts DamageDealt beat, viaStatusId === 'Haunt')
+   — a spectral drift-and-fade popup plus a card flash that visibly jolts the
+   card sideways, so it's unmistakable that this hero was dragged into a hit
+   aimed at its partner rather than caught by an ordinary spread move. */
+.dmg-popup.popup-haunt {
+  color: var(--haunt);
+  font-size: 16px;
+  text-shadow: 0 0 10px rgba(122, 95, 196, 0.75), 0 1px 3px rgba(0, 0, 0, 0.6);
+  animation: dmg-popup-spectral 800ms ease-out forwards;
+}
+
+@keyframes dmg-popup-spectral {
+  0% {
+    opacity: 0;
+    transform: translate(-6px, 4px) scale(0.9);
+  }
+  20% {
+    opacity: 0.9;
+    transform: translate(3px, 0) scale(1.08);
+  }
+  40% {
+    opacity: 0.5;
+    transform: translate(-3px, -4px) scale(1);
+  }
+  60% {
+    opacity: 0.9;
+    transform: translate(2px, -9px) scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, -20px) scale(1);
+  }
+}
+
+.combatant-card.haunt-hit {
+  animation: haunt-flash 450ms ease-out;
+}
+
+@keyframes haunt-flash {
+  0% {
+    box-shadow: 0 0 0 rgba(122, 95, 196, 0);
+    filter: brightness(1);
+    transform: translateX(0);
+  }
+  20% {
+    box-shadow: 0 0 16px 4px rgba(122, 95, 196, 0.7);
+    filter: brightness(1.2);
+    transform: translateX(-3px);
+  }
+  40% {
+    transform: translateX(3px);
+  }
+  60% {
+    box-shadow: 0 0 8px 2px rgba(122, 95, 196, 0.4);
+    filter: brightness(1.1);
+    transform: translateX(-1px);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(122, 95, 196, 0);
+    filter: brightness(1);
+    transform: translateX(0);
+  }
+}
+
 @keyframes dmg-popup-float {
   0% {
     opacity: 0;
@@ -1327,6 +1600,35 @@ body {
 
 .event-log .log-conduct {
   color: var(--conduct);
+  font-weight: 700;
+  padding-left: 10px;
+}
+
+.event-log .log-burn {
+  color: var(--burn);
+  padding-left: 10px;
+}
+
+.event-log .log-bleed {
+  color: var(--bleed);
+  padding-left: 10px;
+}
+
+.event-log .log-poison {
+  color: var(--poison);
+  padding-left: 10px;
+}
+
+.event-log .log-regen {
+  color: var(--hp-high);
+  padding-left: 10px;
+}
+
+/* Haunt's spread hit in the DamageDealt log line (formatEvent.ts, keyed off
+   viaStatusId) — same weight as .log-crit so a dragged-in hit stands out from
+   a plain .log-damage line the way a crit does. */
+.event-log .log-haunt {
+  color: var(--haunt);
   font-weight: 700;
   padding-left: 10px;
 }

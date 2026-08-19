@@ -64,6 +64,13 @@ export interface DamageDealtEvent extends BaseEvent {
   critMultiplier: number;
   multiplierTerm: number;
   modifiers: readonly { source: string; amount: number }[];
+  /**
+   * Set when this target was added by a spread-trigger status (currently only
+   * Haunt — statusEngine.ts expandSpreadTargets) rather than the move's own
+   * TargetMode. Lets the view flag this hit as "dragged in by Haunt" instead
+   * of reading like an ordinary spread move landing on both enemies.
+   */
+  viaStatusId?: StatusId;
 }
 
 export interface HpChangedEvent extends BaseEvent {

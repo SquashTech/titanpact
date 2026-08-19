@@ -127,11 +127,17 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       throw err;
     }
 
+    // Populated by Haunt's spread below; read further down so the DamageDealt
+    // event for a dragged-in target can carry viaStatusId (events.ts).
+    let spreadVia: Record<string, string> = {};
+
     if (move.kind === 'damage') {
       // Stealth (redirect) then Haunt (spread) — both status-driven retargeting layered on
       // top of TargetMode resolution, so MoveDeclared below already reflects the final targets.
       targetIds = applyStealthRedirect(working, move.target, move.kind, targetIds);
-      targetIds = expandSpreadTargets(working, move.type, move.target, targetIds, statuses);
+      const spread = expandSpreadTargets(working, move.type, move.target, targetIds, statuses);
+      targetIds = spread.targetIds;
+      spreadVia = spread.spreadVia;
     }
 
     events.push({ type: 'MoveDeclared', round, combatantId: action.combatantId, moveId: move.id, targetCombatantIds: targetIds });
@@ -203,6 +209,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             critMultiplier: rolled.critMultiplier,
             multiplierTerm: rolled.multiplierTerm,
             modifiers,
+            ...(spreadVia[targetId] ? { viaStatusId: spreadVia[targetId] } : {}),
           });
 
           const hpResult = applyHpDelta(working, round, targetId, -amount, maxHp);
