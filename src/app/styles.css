@@ -268,6 +268,10 @@ body {
   border-radius: 10px;
   padding: 8px;
   position: relative;
+  /* Own stacking context so .targetable's inner glow (::after, z-index -1
+     below) is pinned between this card's background and its content instead
+     of drifting into .team-row's stacking order. */
+  z-index: 0;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
   transition: outline 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.35s ease, filter 0.35s ease;
 }
@@ -391,11 +395,25 @@ body {
   text-overflow: ellipsis;
 }
 
+/* Targetable cue lives *inside* the card (a soft radial glow, ::after below)
+   rather than as an outline/box-shadow around the edge. Reason: the edge was
+   already claimed by .acting's blue outline, and a self-targeting move needs
+   both cues on the same card at once (docs: the "two taps always" QoL pass
+   made the caster tap itself) — outline vs outline just meant one clobbered
+   the other. An inner glow and an edge outline can coexist without a fight. */
 .combatant-card.targetable {
-  outline: 2px solid var(--accent);
   cursor: pointer;
-  box-shadow: 0 0 0 3px rgba(224, 166, 60, 0.18), 0 2px 10px rgba(0, 0, 0, 0.3);
-  animation: targetable-pulse 1.4s ease-in-out infinite;
+}
+
+.combatant-card.targetable::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(ellipse 90% 70% at 50% 38%, rgba(224, 166, 60, 0.4) 0%, rgba(224, 166, 60, 0.16) 48%, rgba(224, 166, 60, 0) 78%);
+  animation: targetable-glow-pulse 1.4s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .combatant-card.targetable:hover {
@@ -406,10 +424,8 @@ body {
    persistent glow the actual move-target cards get above — with every bench
    card glowing all the time it stopped meaning anything. Glow only appears
    on hover, as a genuine "you're about to pick this" cue. */
-.bench-row .combatant-card.targetable {
-  outline: none;
-  box-shadow: none;
-  animation: none;
+.bench-row .combatant-card.targetable::after {
+  content: none;
 }
 
 .bench-row .combatant-card.targetable:hover {
@@ -418,13 +434,13 @@ body {
   transform: translateY(-2px);
 }
 
-@keyframes targetable-pulse {
+@keyframes targetable-glow-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 3px rgba(224, 166, 60, 0.18), 0 2px 10px rgba(0, 0, 0, 0.3);
+    opacity: 0.65;
   }
   50% {
-    box-shadow: 0 0 0 5px rgba(224, 166, 60, 0.32), 0 2px 10px rgba(0, 0, 0, 0.3);
+    opacity: 1;
   }
 }
 
