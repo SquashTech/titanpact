@@ -116,12 +116,18 @@ body {
 }
 
 /* Invisible full-viewport click-catcher while a round is playing out, so any
-   tap advances the beat rather than only one aimed at the banner. */
+   tap advances the beat rather than only one aimed at the banner. Also the
+   hold-to-auto-play target (FightScreen's handleAdvancePointerDown) — without
+   the touch-callout/user-select suppression, mobile browsers show their own
+   text-selection handles or a native callout menu partway through the hold. */
 .advance-overlay {
   position: fixed;
   inset: 0;
   z-index: 15;
   cursor: pointer;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* Narrates the current beat of a playing-out round (docs/architecture.md
@@ -690,14 +696,29 @@ body {
 .status-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 2px;
   font-size: 9px;
   font-weight: 700;
-  padding: 1px 5px 1px 3px;
+  padding: 1px 4px;
   border-radius: 8px;
   border: 1px solid transparent;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  /* Long-pressable (useLongPress, opens StatusDetailOverlay) — without these,
+     mobile/desktop browsers start a text-selection drag partway through the
+     hold instead of registering it as a press. */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Only badges with a magnitude/duration number get the extra right padding
+   that gives the digit breathing room — boolean statuses (Conduct, Haunt)
+   render just the emoji and want symmetric padding so the glyph sits
+   centered in the oval instead of crowding the left edge. */
+.status-badge-has-count {
+  padding-right: 5px;
 }
 
 /* Emoji status glyph (src/view/shared/statusIcons.tsx) — text, not an image,

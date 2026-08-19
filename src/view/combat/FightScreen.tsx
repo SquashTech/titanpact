@@ -31,6 +31,13 @@ const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
 const config = { typeChart, heroes: allCombatants, moves, statuses, benchHpRegenFlat: 5 };
 
+// Hold-to-auto-play tuning (FightScreen's advance-overlay) — how long a
+// press must be held before it commits to auto-play instead of a normal
+// single-beat tap, and the pause between each auto-advanced beat once
+// engaged. Both are easy to retune from playtesting.
+const AUTO_ADVANCE_HOLD_MS = 350;
+const AUTO_ADVANCE_STEP_MS = 450;
+
 function rosterIdOf(combatantId: string): string {
   return combatantId.slice(combatantId.indexOf(':') + 1);
 }
@@ -117,10 +124,21 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
   const beatQueue = useRef<Beat[]>([]);
   const displayState = useRef<CombatState | null>(null);
   const finalState = useRef<CombatState | null>(null);
+  /** Hold-to-auto-play on the advance-overlay (below): `holdTimer` is the
+   *  pending "has this press been held long enough to engage auto-play"
+   *  check, `autoPlayInterval` is the running auto-advance loop once
+   *  engaged, and `autoEngaged` records that engagement happened so the
+   *  trailing click (pointerup always fires one) gets swallowed instead of
+   *  advancing an extra beat on top of what auto-play already revealed. */
+  const holdTimer = useRef<number | null>(null);
+  const autoPlayInterval = useRef<number | null>(null);
+  const autoEngaged = useRef(false);
 
   useEffect(() => {
     return () => {
       if (longPressTimer.current !== null) clearTimeout(longPressTimer.current);
+      if (holdTimer.current !== null) clearTimeout(holdTimer.current);
+      if (autoPlayInterval.current !== null) clearInterval(autoPlayInterval.current);
     };
   }, []);
 
@@ -146,13 +164,15 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
       ? enemyActiveAlive
       : selecting.move.target === 'singleAlly'
         ? playerActiveAlive
-        : selecting.move.target === 'bothEnemies'
-          ? enemyActiveAlive
-          : selecting.move.target === 'bothAllies'
-            ? playerActiveAlive
-            : selecting.move.target === 'allOthers'
-              ? [...enemyActiveAlive, ...playerActiveAlive].filter((cid) => cid !== selecting.combatantId)
-              : [];
+        : selecting.move.target === 'self'
+          ? [selecting.combatantId]
+          : selecting.move.target === 'bothEnemies'
+            ? enemyActiveAlive
+            : selecting.move.target === 'bothAllies'
+              ? playerActiveAlive
+              : selecting.move.target === 'allOthers'
+                ? [...enemyActiveAlive, ...playerActiveAlive].filter((cid) => cid !== selecting.combatantId)
+                : [];
 
   function isPendingComplete(p: PendingAction | undefined): boolean {
     if (!p) return false;
@@ -189,23 +209,19 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
     }
   }
 
+  /**
+   * Always a two-tap commit, regardless of target shape: this tap only ever
+   * loads the move into `selecting` and lights up its target(s) on the
+   * battlefield (targetableIds above) — even a 'self' move highlights just
+   * the caster's own card, and a singleEnemy/singleAlly move with only one
+   * legal candidate still highlights that lone card rather than
+   * auto-resolving. A second, deliberate tap on the highlighted card(s)
+   * (handleTargetClick) is what actually commits the action. This makes
+   * move selection uniformly deliberate — no move can be locked in by a
+   * single accidental tap, no matter how "obvious" the target is.
+   */
   function handleMoveClick(combatantId: string, move: MoveDefinition) {
-    if (move.target === 'singleEnemy' || move.target === 'singleAlly') {
-      const candidates = move.target === 'singleEnemy' ? enemyActiveAlive : playerActiveAlive;
-      if (candidates.length === 1) {
-        commitAction(combatantId, { kind: 'move', moveId: move.id, declaredTarget: candidates[0] });
-      } else {
-        setSelecting({ combatantId, move });
-      }
-    } else if (move.target === 'bothEnemies' || move.target === 'bothAllies' || move.target === 'allOthers') {
-      // Mechanically these moves hit every valid target regardless of which one is tapped
-      // (declaredTarget is ignored by the engine's targeting resolution — engine/combat/targeting.ts)
-      // — the tap is a confirmation step, not a real choice, so an accidental brush of the move
-      // button can't commit a spread attack without the player deliberately confirming it.
-      setSelecting({ combatantId, move });
-    } else {
-      commitAction(combatantId, { kind: 'move', moveId: move.id, declaredTarget: null });
-    }
+    setSelecting({ combatantId, move });
   }
 
   function handleTargetClick(targetId: string) {
@@ -331,9 +347,12 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
    * the round (snaps to the authoritative end state and hands control back
    * to the player). Bound to a tap on the banner/battlefield while
    * `resolving` is true, so the player reads each beat at their own pace
-   * rather than a fixed timer.
+   * rather than a fixed timer. Returns whether a beat was actually shown
+   * (false once it finalized), so the auto-play loop below knows when to
+   * stop ticking instead of continuing to fire against an already-finished
+   * round.
    */
-  function handleAdvance() {
+  function handleAdvance(): boolean {
     const beat = beatQueue.current.shift();
 
     if (!beat) {
@@ -347,7 +366,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
       setMovePopup(null);
       setSwitchOpen(false);
       setActionStep(0);
-      return;
+      return false;
     }
 
     let next = displayState.current!;
@@ -359,6 +378,47 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
     setBanner(beat.banner);
     setBannerMeta(beat.bannerMeta ?? null);
     setPopups(Object.fromEntries(beat.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className }])));
+    return true;
+  }
+
+  /** Stops any pending hold-to-engage check and any running auto-play loop — bound to pointerup/pointerleave/pointercancel on the advance-overlay so releasing the press (or the pointer sliding off-screen) always halts it. */
+  function stopAutoAdvance() {
+    if (holdTimer.current !== null) {
+      clearTimeout(holdTimer.current);
+      holdTimer.current = null;
+    }
+    if (autoPlayInterval.current !== null) {
+      clearInterval(autoPlayInterval.current);
+      autoPlayInterval.current = null;
+    }
+  }
+
+  /** Fires once the press has been held past AUTO_ADVANCE_HOLD_MS: reveals the beat that was waiting under the player's thumb immediately, then keeps revealing one every AUTO_ADVANCE_STEP_MS until released or the round runs out of beats. */
+  function engageAutoPlay() {
+    holdTimer.current = null;
+    autoEngaged.current = true;
+    if (!handleAdvance()) return;
+    autoPlayInterval.current = window.setInterval(() => {
+      if (!handleAdvance()) stopAutoAdvance();
+    }, AUTO_ADVANCE_STEP_MS);
+  }
+
+  function handleAdvancePointerDown() {
+    // Reset rather than only clearing on the trailing click: a press that
+    // ends via pointercancel (gesture interrupted by the OS, e.g. a
+    // notification swipe) skips the click event entirely, which would
+    // otherwise leave a stale `true` here and swallow the next press's tap.
+    autoEngaged.current = false;
+    holdTimer.current = window.setTimeout(engageAutoPlay, AUTO_ADVANCE_HOLD_MS);
+  }
+
+  /** A press that never made it to the hold threshold is a normal tap — advance one beat as before. A press that did engage auto-play already revealed its beats via the interval, so swallow the trailing click instead of double-advancing. */
+  function handleAdvanceClick() {
+    if (autoEngaged.current) {
+      autoEngaged.current = false;
+      return;
+    }
+    handleAdvance();
   }
 
   function handleClaimContract(entry: RosterEntry) {
@@ -409,7 +469,16 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
           specifically. Sits below the battle-log overlay's z-index so an
           open log panel takes taps for itself (close it) rather than also
           advancing the beat underneath it. */}
-      {resolving && <div className="advance-overlay" onClick={handleAdvance} />}
+      {resolving && (
+        <div
+          className="advance-overlay"
+          onClick={handleAdvanceClick}
+          onPointerDown={handleAdvancePointerDown}
+          onPointerUp={stopAutoAdvance}
+          onPointerLeave={stopAutoAdvance}
+          onPointerCancel={stopAutoAdvance}
+        />
+      )}
 
       <div className="battlefield">
         <div className="team-row enemy">
@@ -438,7 +507,7 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
           <div className="combat-banner">
             {banner && <span>{banner}</span>}
             {bannerMeta && <span className="combat-banner-meta">{bannerMeta}</span>}
-            <span className="combat-banner-hint">tap to continue ▸</span>
+            <span className="combat-banner-hint">tap ▸ or hold to auto-play ⏵⏵</span>
           </div>
         )}
         {!resolving &&

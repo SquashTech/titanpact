@@ -56,7 +56,7 @@ function StatusChip({ instance, onInspect }: { instance: StatusInstance; onInspe
   const color = statusColor(instance.statusId);
   return (
     <span
-      className={`status-badge${instance.statusId === 'Conduct' ? ' status-badge-conduct' : ''}`}
+      className={`status-badge${n !== undefined ? ' status-badge-has-count' : ''}${instance.statusId === 'Conduct' ? ' status-badge-conduct' : ''}`}
       style={{ color, background: statusTint(instance.statusId, 0.16), borderColor: statusTint(instance.statusId, 0.55) }}
       title={`${instance.statusId}${n !== undefined ? ` ${n}` : ''} — hold for details`}
       {...longPress}
