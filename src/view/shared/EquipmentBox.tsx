@@ -1,7 +1,9 @@
+import type { CSSProperties } from 'react';
 import type { StatKey } from '../../engine/content';
 import type { EquipmentDefinition, EquipmentLoadout, EquipmentRarity, EquipmentSlot } from '../../run/equipment';
 import { STAT_ICONS, STAT_LABELS } from './StatBars';
 import { equipmentArt, relicArt } from './itemArt';
+import { useLongPress } from './MoveTile';
 
 export const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
@@ -67,57 +69,60 @@ function fmtGrant(amount: number): string {
 interface EquipmentSlotGridProps {
   loadout: EquipmentLoadout;
   equipmentLookup: Record<string, EquipmentDefinition>;
-  /** Which item id (if any) is currently loaded into the paired EquipmentInfoPanel, for the .selected highlight. */
-  viewedItemId?: string | null;
-  onSelect?: (itemId: string) => void;
+  /** Long-press on a filled slot — opens the shared item-detail popup (matches the "hold a move or item to inspect it" standard, e.g. RosterManagementScreen's EquipSlotButton). Omit for an inert, non-inspectable grid. */
+  onInspect?: (itemId: string) => void;
   /** Slot to mark with the .target outline — the slot an incoming item would land in (ForceEquipScreen). */
   highlightSlot?: EquipmentSlot | null;
-  /** False renders plain <div> boxes instead of <button>s — for placing the grid inside a caller that's already a button/clickable row, where nested buttons would be invalid HTML and eat the click (ForceEquipScreen). Defaults to true. */
-  interactive?: boolean;
+}
+
+interface EquipSlotBoxProps {
+  slot: EquipmentSlot;
+  item: EquipmentDefinition | null;
+  onInspect?: (itemId: string) => void;
+  highlighted?: boolean;
+}
+
+/**
+ * One slot box — pulled out of EquipmentSlotGrid's .map() because
+ * useLongPress is a hook and can't be called from inside a loop body (same
+ * reason RosterManagementScreen's EquipSlotButton is its own component).
+ * Tap does nothing here (this grid is inspection-only); a ~500ms hold opens
+ * the shared item-detail popup, mirroring MoveTile's "hold for details" rule
+ * so moves and equipment share one interaction language everywhere a hero's
+ * loadout is shown. The rarity tint on a filled box's left edge (borrowed
+ * from the Equipment Cache/Relic Shrine's --rarity-color convention) lets a
+ * player clock an item's tier before ever opening the popup.
+ */
+function EquipSlotBox({ slot, item, onInspect, highlighted }: EquipSlotBoxProps) {
+  const longPress = useLongPress(item && onInspect ? () => onInspect(item.id) : undefined);
+  return (
+    <button
+      type="button"
+      className={`equip-slot-box${item ? ' filled' : ' empty'}${highlighted ? ' target' : ''}`}
+      style={item ? ({ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties) : undefined}
+      aria-label={item ? `${EQUIP_SLOT_LABELS[slot]}: ${item.name}` : `${EQUIP_SLOT_LABELS[slot]} slot, empty`}
+      {...longPress}
+    >
+      <EquipmentIcon item={item} slot={slot} className="equip-slot-icon" />
+      <span className="equip-slot-item">{item ? item.name : 'Empty'}</span>
+    </button>
+  );
 }
 
 /**
  * Read-only rectangular equip-slot boxes — the same equip-slot-box visual
  * convention RosterManagementScreen established for its equip/unequip grid
  * (.equip-slot-row/.equip-slot-box, styles.css), reused here for stat-block
- * contexts (HeroDetailOverlay, HeroPreviewOverlay) where a filled box is
- * tappable to load its effect into the paired EquipmentInfoPanel below,
- * instead of equipping/unequipping. Empty slots are inert.
+ * contexts (HeroDetailOverlay, HeroPreviewOverlay) where a filled box's only
+ * interaction is a long-press to inspect it. Empty slots are inert.
  */
-export function EquipmentSlotGrid({ loadout, equipmentLookup, viewedItemId, onSelect, highlightSlot, interactive = true }: EquipmentSlotGridProps) {
-  const Box = interactive ? 'button' : 'div';
+export function EquipmentSlotGrid({ loadout, equipmentLookup, onInspect, highlightSlot }: EquipmentSlotGridProps) {
   return (
     <div className="equip-slot-row">
       {EQUIP_SLOT_ORDER.map((slot) => {
         const itemId = loadout[slot];
         const item = itemId ? equipmentLookup[itemId] : null;
-        return (
-          <Box
-            key={slot}
-            type={interactive ? 'button' : undefined}
-            className={`equip-slot-box${item ? ' filled' : ' empty'}${item && viewedItemId === item.id ? ' selected' : ''}${
-              slot === highlightSlot ? ' target' : ''
-            }`}
-            onClick={
-              interactive
-                ? (e) => {
-                    // Only a filled box's own item lookup counts as "interacting
-                    // with equipment" — stop the click from bubbling to the
-                    // enclosing detail-panel's close-on-click-elsewhere handler.
-                    // An empty slot has nothing to inspect, so its tap falls
-                    // through and closes the panel like any other non-item area.
-                    if (!item) return;
-                    e.stopPropagation();
-                    onSelect?.(item.id);
-                  }
-                : undefined
-            }
-            aria-label={item ? `${EQUIP_SLOT_LABELS[slot]}: ${item.name}` : `${EQUIP_SLOT_LABELS[slot]} slot, empty`}
-          >
-            <EquipmentIcon item={item} slot={slot} className="equip-slot-icon" />
-            <span className="equip-slot-item">{item ? item.name : 'Empty'}</span>
-          </Box>
-        );
+        return <EquipSlotBox key={slot} slot={slot} item={item} onInspect={onInspect} highlighted={slot === highlightSlot} />;
       })}
     </div>
   );

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { moves } from '../../data/moves';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { Combatant } from '../../engine/state';
 import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana } from '../../engine/state';
@@ -6,8 +7,9 @@ import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { chosenEvolutionPaths } from '../../run/progression';
 import { progressionTable } from '../../data/progression';
-import { STAT_ICONS, STAT_LABELS, STAT_ORDER, StatBars } from '../shared/StatBars';
+import { STAT_ICONS, STAT_LABELS, STAT_ORDER, StatBars, hpTier } from '../shared/StatBars';
 import { EquipmentInfoPanel, EquipmentSlotGrid } from '../shared/EquipmentBox';
+import { MoveTile, MoveInfoPanel, swallowGhostClick } from '../shared/MoveTile';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { statusEmoji, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
@@ -45,16 +47,39 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
   const hasModifiers = STAT_ORDER.some((stat) => (combatant.statModifiers[stat] ?? 0) !== 0);
   const effectiveTotals = Object.fromEntries(STAT_ORDER.map((stat) => [stat, getEffectiveStat(hero, combatant, stat)])) as Record<StatKey, number>;
   const evolved = rosterEntry ? chosenEvolutionPaths(progressionTable, rosterEntry) : [];
-  const [viewedEquipmentId, setViewedEquipmentId] = useState<string | null>(null);
-  const viewedEquipment = viewedEquipmentId ? (equipmentLookup[viewedEquipmentId] ?? null) : null;
+  const maxHp = getMaxHp(hero, combatant);
+  const maxMana = getMaxMana(hero, combatant);
+  const hpFraction = maxHp > 0 ? Math.max(0, combatant.currentHp) / maxHp : 0;
+  const manaFraction = maxMana > 0 ? combatant.currentMana / maxMana : 0;
+  /** Long-press-triggered move/item detail popup — shared by the moves row and the equipment grid below (mirrors LevelUpScreen's movePopup, "hold to inspect" standard). */
+  const [popup, setPopup] = useState<{ kind: 'move' | 'equipment'; id: string } | null>(null);
+
+  /**
+   * Opens the popup and arms swallowGhostClick (MoveTile.tsx) — releasing
+   * the hold that got us here fires a browser-synthesized "ghost" click
+   * (the popup now covers the tile, so pointerup lands on it instead of the
+   * original element) that would otherwise reach whichever ancestor's
+   * onClick and get misread as a deliberate dismiss. See that function's
+   * doc comment for the full mechanism.
+   */
+  function openPopup(next: { kind: 'move' | 'equipment'; id: string }) {
+    swallowGhostClick();
+    setPopup(next);
+  }
 
   /**
    * Stops propagation here (not just on the panel) so a click anywhere in
    * this overlay — backdrop or panel background alike — closes only THIS
-   * overlay and never bubbles into whatever screen rendered it.
+   * overlay and never bubbles into whatever screen rendered it. A deliberate
+   * click elsewhere in the panel while the popup is open dismisses just the
+   * popup, not the whole hero sheet.
    */
   function closeAndStop(e: { stopPropagation: () => void }) {
     e.stopPropagation();
+    if (popup) {
+      setPopup(null);
+      return;
+    }
     onClose();
   }
 
@@ -88,18 +113,28 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
         </div>
 
         <div className="detail-resource-row">
-          <span>
-            HP {Math.max(0, combatant.currentHp)}/{getMaxHp(hero, combatant)}
-          </span>
-          <span>
-            MP {combatant.currentMana}/{getMaxMana(hero, combatant)}
-          </span>
+          <div>
+            <div className="bar-track">
+              <div className={`bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
+            </div>
+            <div className="bar-label">
+              HP {Math.max(0, combatant.currentHp)}/{maxHp}
+            </div>
+          </div>
+          <div>
+            <div className="bar-track">
+              <div className="bar-fill mana" style={{ width: `${manaFraction * 100}%` }} />
+            </div>
+            <div className="bar-label">
+              MP {combatant.currentMana}/{maxMana}
+            </div>
+          </div>
         </div>
 
-        <div className="detail-section-title">Stats</div>
+        <div className="detail-section-title">📊 Stats</div>
         <StatBars baseStats={hero.baseStats} deltas={combatant.statModifiers} totals={effectiveTotals} />
 
-        <div className="detail-section-title">Buffs / Debuffs</div>
+        <div className="detail-section-title">✨ Buffs / Debuffs</div>
         {hasModifiers ? (
           <div className="detail-modifier-list">
             {STAT_ORDER.filter((stat) => (combatant.statModifiers[stat] ?? 0) !== 0).map((stat) => {
@@ -115,7 +150,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           <div className="detail-empty">No active modifiers.</div>
         )}
 
-        <div className="detail-section-title">Statuses</div>
+        <div className="detail-section-title">🩹 Statuses</div>
         {/* Hide a duration-shape status (Stealth) once its counter hits 0 — see
             CombatantCard.tsx's matching filter for why it can still be present
             in state for the rest of that round. */}
@@ -147,23 +182,46 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           );
         })()}
 
-        <div className="detail-section-title">Equipment</div>
+        <div className="detail-section-title">⚔️ Moves</div>
+        {rosterEntry && rosterEntry.unlockedMoveIds.length > 0 ? (
+          <div className="move-tile-row">
+            {rosterEntry.unlockedMoveIds.map((moveId) =>
+              moves[moveId] ? (
+                <MoveTile key={moveId} move={moves[moveId]} onLongPress={() => openPopup({ kind: 'move', id: moveId })} />
+              ) : null
+            )}
+          </div>
+        ) : (
+          <div className="detail-empty">No moves.</div>
+        )}
+
+        <div className="detail-section-title">🎒 Equipment</div>
         {rosterEntry ? (
-          <>
-            <EquipmentSlotGrid
-              loadout={rosterEntry.equipment}
-              equipmentLookup={equipmentLookup}
-              viewedItemId={viewedEquipmentId}
-              onSelect={setViewedEquipmentId}
-            />
-            <EquipmentInfoPanel item={viewedEquipment} />
-          </>
+          <EquipmentSlotGrid
+            loadout={rosterEntry.equipment}
+            equipmentLookup={equipmentLookup}
+            onInspect={(id) => openPopup({ kind: 'equipment', id })}
+          />
         ) : (
           <div className="detail-empty">No loadout data.</div>
         )}
 
-        <div className="detail-close-hint">Tap a move or item to inspect it — tap elsewhere to close</div>
+        <div className="detail-close-hint">Hold a move or item to inspect it — tap elsewhere to close</div>
       </div>
+
+      {/* Long-press-triggered move/item detail popup (see `popup` state above) — reuses .log-overlay/.log-panel like LevelUpScreen's move popup, including "tap anywhere to close" (no stopPropagation on the panel). */}
+      {popup && (
+        <div className="log-overlay" onClick={() => setPopup(null)}>
+          <div className="log-panel move-popup-panel">
+            {popup.kind === 'move' ? (
+              <MoveInfoPanel move={moves[popup.id] ?? null} />
+            ) : (
+              <EquipmentInfoPanel item={equipmentLookup[popup.id] ?? null} />
+            )}
+            <div className="move-popup-hint">Tap anywhere to close</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -85,7 +85,6 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
   const [offer, setOffer] = useState<MoveOffer | null>(null);
   /** The move offer's currently-highlighted replacement target — a click selects it, but nothing is applied until Confirm. */
   const [selectedReplaceId, setSelectedReplaceId] = useState<string | null>(null);
-  const [lastMessage, setLastMessage] = useState<string | null>(null);
   /** Which roster entry, if any, has taken over the screen with its full-screen Evolution choice (see EvolutionScreen). */
   const [evolvingRosterId, setEvolvingRosterId] = useState<string | null>(null);
   /** Long-press-triggered move detail popup — shared by both the main hero list and the move-replace offer's picker (see MoveTile/ReplaceMoveCard's onLongPress). */
@@ -95,10 +94,8 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     if (run.levelUpPool < 1) return;
     const entry = run.roster.find((r) => r.rosterId === rosterId);
     if (!entry) return;
-    const hero = heroes[entry.heroId];
     const pool = levelUpMovePool(progressionTable, entry);
     const wasAtCap = entry.unlockedMoveIds.length >= MOVE_CAP;
-    const newLevel = entry.level + 1;
 
     let next: RunState;
     try {
@@ -121,14 +118,12 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
 
     if (pool.length === 0) {
       onRunChange(next);
-      setLastMessage(`${hero.name} reached level ${newLevel}.`);
       return;
     }
 
     const moveId = pool[Math.floor(Math.random() * pool.length)];
     if (!wasAtCap) {
       onRunChange(grantLevelUpMove(next, rosterId, moveId));
-      setLastMessage(`${hero.name} reached level ${newLevel} and learned ${moves[moveId].name}!`);
     } else {
       onRunChange(next);
       setOffer({ rosterId, moveId });
@@ -138,25 +133,15 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
 
   function resolveOffer(replaceMoveId: string | null) {
     if (!offer) return;
-    const entry = run.roster.find((r) => r.rosterId === offer.rosterId);
-    const hero = entry ? heroes[entry.heroId] : null;
     if (replaceMoveId) {
       onRunChange(grantLevelUpMove(run, offer.rosterId, offer.moveId, replaceMoveId));
-      if (hero) setLastMessage(`${hero.name} swapped in ${moves[offer.moveId].name}.`);
-    } else if (hero) {
-      setLastMessage(`${hero.name} kept its current moves.`);
     }
     setOffer(null);
     setSelectedReplaceId(null);
   }
 
   function handleChooseEvolution(rosterId: string, pathId: string) {
-    const entry = run.roster.find((r) => r.rosterId === rosterId);
-    const hero = entry ? heroes[entry.heroId] : null;
-    const node = entry ? availableEvolution(progressionTable, entry) : null;
-    const path = node?.paths.find((p) => p.id === pathId);
     onRunChange(chooseEvolutionPath(run, progressionTable, heroes, rosterId, pathId));
-    if (hero && path) setLastMessage(`${hero.name} evolved into ${path.name}!`);
     setEvolvingRosterId(null);
   }
 
@@ -178,15 +163,23 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
   return (
     <div className="node-screen">
       <div className="screen-scroll">
-        <h2 className="squad-section-title">📈 Level Up — {run.levelUpPool} pts remaining</h2>
-
-        {!offer && lastMessage && <div className="hint">{lastMessage}</div>}
+        <div className="levelup-header">
+          <h2 className="levelup-header-title">Level Up</h2>
+          <div className="levelup-pool-badge" title="Training points still to spend">
+            <span className="levelup-pool-count">{run.levelUpPool}</span>
+            <span className="levelup-pool-label">{run.levelUpPool === 1 ? 'pt left' : 'pts left'}</span>
+          </div>
+        </div>
 
         {offer && offerEntry ? (
           <div className="reward-panel">
-            <h3>
-              {heroes[offerEntry.heroId].name} is already at {MOVE_CAP} moves — pick one to replace, or decline.
-            </h3>
+            <div className="offer-hero-head">
+              <HeroPortrait heroId={heroes[offerEntry.heroId].id} className="training-hero-portrait" />
+              <h3>{heroes[offerEntry.heroId].name}</h3>
+            </div>
+            <p className="offer-hero-sub">
+              Already knows {MOVE_CAP} moves — pick one to replace, or decline.
+            </p>
             {/* The offered move itself — permanent for as long as the offer is
                 open (unlike the old hover-driven panel this replaced), so the
                 player always sees what they'd be learning. The glow marks it
@@ -194,6 +187,9 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
                 replace-candidate cards below. */}
             <div className="offer-move-highlight">
               <MoveInfoPanel move={moves[offer.moveId]} label="New move offered" />
+            </div>
+            <div className="offer-swap-arrow" aria-hidden="true">
+              ↓ replaces one of
             </div>
             <div className="roster-grid">
               {offerEntry.unlockedMoveIds.map((moveId) => (
@@ -248,19 +244,22 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
                 >
                   <div className="training-hero-head">
                     <div className="training-hero-title">
-                      <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
-                      <h3>
-                        {hero.name} — Lv {entry.level}
-                      </h3>
+                      <HeroPortrait heroId={hero.id} className="training-hero-portrait" />
+                      <div className="training-hero-name-block">
+                        <div className="training-hero-name-row">
+                          <h3>{hero.name}</h3>
+                          <span className="training-hero-level">Lv {entry.level}</span>
+                        </div>
+                        <div className="training-hero-types">
+                          {rosterEntryTypes(hero, entry).map((t) => (
+                            <TypeBadge key={t} type={t} />
+                          ))}
+                        </div>
+                      </div>
                     </div>
                     <span className="training-hero-cta">
                       {node ? '⚡ Ready to evolve!' : canLevelUp ? 'Tap to level up' : 'No points'}
                     </span>
-                  </div>
-                  <div className="roster-card-types">
-                    {rosterEntryTypes(hero, entry).map((t) => (
-                      <TypeBadge key={t} type={t} />
-                    ))}
                   </div>
                   <div className="move-tile-row">
                     {entry.unlockedMoveIds.map((moveId) =>

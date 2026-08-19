@@ -4,7 +4,7 @@ import type { Combatant, StatusInstance } from '../../engine/state';
 import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana } from '../../engine/state';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { STAT_ICONS, STAT_ORDER } from '../shared/StatBars';
+import { STAT_ICONS, STAT_ORDER, hpTier } from '../shared/StatBars';
 import { statusEmoji, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
 import { useLongPress } from '../shared/MoveTile';
 import { StatusDetailOverlay } from './StatusDetailOverlay';
@@ -45,12 +45,6 @@ interface Props {
   locked?: boolean;
   /** This is the player combatant whose move panel is currently on screen (FightScreen) — a pulsing glow replaces the old "X's move" text label, so the cue costs no vertical space. */
   acting?: boolean;
-}
-
-function hpTier(fraction: number): 'hp-high' | 'hp-mid' | 'hp-low' {
-  if (fraction > 0.5) return 'hp-high';
-  if (fraction > 0.2) return 'hp-mid';
-  return 'hp-low';
 }
 
 /**

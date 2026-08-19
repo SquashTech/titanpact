@@ -62,6 +62,13 @@ function fmtDelta(n: number): string {
   return n > 0 ? `+${n}` : `${n}`;
 }
 
+/** Shared HP-bar color tiering (CombatantCard's battlefield bars and the hero-detail resource row alike), so "HP is getting low" reads as the same color threshold everywhere a bar is drawn. */
+export function hpTier(fraction: number): 'hp-high' | 'hp-mid' | 'hp-low' {
+  if (fraction > 0.5) return 'hp-high';
+  if (fraction > 0.2) return 'hp-mid';
+  return 'hp-low';
+}
+
 /**
  * Core combat stats summed for BST (balance-tracking readout, CLAUDE.md
  * north-star "every hero must be viable"). Mirrors Pokémon's Base Stat Total

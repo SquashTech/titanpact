@@ -1974,6 +1974,7 @@ body {
 .equip-slot-box.filled {
   border-style: solid;
   border-color: var(--border);
+  border-left: 3px solid var(--rarity-color, var(--border));
   color: var(--text);
 }
 
@@ -1986,9 +1987,10 @@ body {
   background: #33291a;
 }
 
-/* Read-only inspect variant (EquipmentSlotGrid, src/view/shared/EquipmentBox.tsx) —
-   a filled box's currently-loaded-into-the-info-panel state, same treatment
-   as .inventory-box.selected. */
+/* RosterManagementScreen's own equip/unequip grid — a filled box picked as
+   the swap source, same treatment as .inventory-box.selected. (Not used by
+   EquipmentSlotGrid, src/view/shared/EquipmentBox.tsx — that grid is
+   inspection-only, via .equip-slot-box's long-press.) */
 .equip-slot-box.selected {
   border-color: var(--accent);
   background: #33291a;
@@ -2094,12 +2096,15 @@ body {
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
 }
 
 .detail-name {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .detail-evolution-row {
@@ -2136,11 +2141,17 @@ body {
   color: var(--hp-high);
 }
 
+/* HP/MP mini bars (reuses CombatantCard's .bar-track/.bar-fill/.bar-label so
+   "how healthy is this hero" reads with the same color language on the
+   battlefield and in this sheet) — a plain 2-column grid rather than the
+   shared .resource-row/.resource pair (those default to `display: contents`
+   for CombatantCard's own layout, which would scatter these track/label
+   pairs as loose flex children of .detail-panel instead of keeping each
+   bar's track above its label). */
 .detail-resource-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: var(--text-dim);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
   margin-bottom: 6px;
 }
 
@@ -2291,6 +2302,9 @@ body {
 .detail-empty {
   font-size: 11px;
   color: var(--text-dim);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
 }
 
 .detail-close-hint {
@@ -3332,6 +3346,36 @@ body {
   }
 }
 
+.offer-hero-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.offer-hero-head h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.offer-hero-sub {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* Points from the permanent offer readout down at the replace-candidate
+   grid below it, so the "one of these gets swapped out" relationship reads
+   visually instead of only through the heading text. */
+.offer-swap-arrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: -4px 0 0;
+}
+
 /* --- Map screen ----------------------------------------------------------- */
 
 .map-screen {
@@ -3621,6 +3665,46 @@ body {
   max-height: 75vh;
 }
 
+/* Replaces the old plain "Level Up — N pts remaining" text heading — the
+   count now reads as its own badge so "how many points do I still have to
+   spend" is legible at a glance instead of buried mid-sentence. */
+.levelup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.levelup-header-title {
+  font-size: 16px;
+  margin: 0;
+}
+
+.levelup-pool-badge {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-shrink: 0;
+  background: linear-gradient(165deg, var(--panel-alt), var(--panel));
+  border: 1px solid var(--accent);
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+
+.levelup-pool-count {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.levelup-pool-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
 /* Roster shown one hero per row (not the shared 2-col .roster-grid) so each
    card gets full screen width — move tiles need that room for their names to
    stay readable instead of being squeezed into a quarter-width column. */
@@ -3676,9 +3760,52 @@ body {
   margin: 0;
 }
 
+.training-hero-portrait {
+  display: block;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+
+/* Split out of the old "Name — Lv N" heading text so level reads as its own
+   scannable chip rather than getting lost inline with the hero's name. */
+.training-hero-level {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: #0d0e12;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+/* Name/level on top, types underneath — both stacked beside the portrait
+   rather than the old full-width type row below the whole head, so a hero's
+   identity (name + level + typing) reads as one cluster and the freed row
+   goes back to the card. */
+.training-hero-name-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.training-hero-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.training-hero-types {
+  display: flex;
+  gap: 5px;
+}
+
 .training-hero-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 6px;
   margin-bottom: 4px;
@@ -3848,27 +3975,36 @@ body {
   overflow: hidden;
 }
 
+/* nowrap + each tile sharing the row (flex-basis auto, shrinking together
+   below its content width once four of them can't all fit their natural
+   size) — guarantees a hero's moves always read as one row, never spilling
+   a 4th tile onto its own line. Long names truncate with ellipsis instead. */
 .move-tile-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
+  flex-wrap: nowrap;
+  gap: 4px;
   margin-bottom: 2px;
 }
 
 .move-tile {
-  display: inline-block;
-  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 9px;
-  font-weight: 600;
-  padding: 3px 5px;
-  border-radius: 5px;
-  background: #0d0e12;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 6px 7px;
+  border-radius: 7px;
+  background: linear-gradient(165deg, var(--panel-alt), #0d0e12 75%);
   border: 1px solid var(--border);
   border-left-width: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
   cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
   /* Long-press opens the move-detail popup (MoveTile's onLongPress) —
      without these, mobile browsers show their own text-selection handles
      or a native callout menu partway through the hold. */
@@ -3880,10 +4016,12 @@ body {
 .move-tile:hover,
 .move-tile.move-tile-selected {
   border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 2px 6px rgba(0, 0, 0, 0.35);
+  transform: translateY(-1px);
 }
 
 .move-tile.move-tile-selected {
-  background: #1a140a;
+  background: linear-gradient(165deg, #33291a, #1a140a 75%);
 }
 
 .evolution-choice {

@@ -46,6 +46,31 @@ export function useLongPress(onLongPress?: () => void, onClick?: () => void) {
   };
 }
 
+/**
+ * Swallows the very next click anywhere in the document, for a short grace
+ * window — call this the instant a long-press opens a popup that visually
+ * covers the tile the hold started on (e.g. HeroDetailOverlay/
+ * HeroPreviewOverlay's move/equipment popup). Releasing the hold fires a
+ * "ghost" click: the popup is now the topmost element at the pointer's
+ * position, so the pointerup that ends the gesture lands on it instead of
+ * the original tile, and the mousedown-target/pointerup-target mismatch
+ * makes the browser synthesize a click on whichever ancestor happens to be
+ * common to both — RosterManagementScreen's own equip popup ran into this
+ * first. Which ancestor that lands on (and whether it even has a click
+ * handler that would misinterpret it as a deliberate dismiss) depends on
+ * how deeply the popup is nested — a plain screen vs. one opened from
+ * inside another modal like Manage Roster — so rather than guessing the
+ * right ancestor to guard, this intercepts the click at the document's
+ * capture phase, before it reaches any component's onClick at all. A
+ * genuine subsequent tap (after the grace window, since only one click is
+ * ever swallowed) reaches handlers normally.
+ */
+export function swallowGhostClick() {
+  const swallow = (e: Event) => e.stopPropagation();
+  document.addEventListener('click', swallow, { capture: true, once: true });
+  window.setTimeout(() => document.removeEventListener('click', swallow, { capture: true }), 400);
+}
+
 export const KIND_LABELS: Record<string, string> = { damage: 'Damage', heal: 'Heal', buff: 'Buff/Debuff' };
 
 const CATEGORY_LABELS: Record<MoveDefinition['category'], string> = { physical: 'PHY', magical: 'MAG' };
