@@ -58,6 +58,19 @@ export function applyStatus(
   const combatant = state.combatants[combatantId];
   if (!combatant || combatant.fainted) return { state, events: [] };
 
+  // Blanket rule: a side's two active heroes can never both be Stealthed at once
+  // (docs/conditions.md) — without this, simultaneous self-Stealth on both actives
+  // makes a whole enemy turn whiff with no counterplay. Narrow literal 'Stealth' id
+  // check, same precedent as applyStealthRedirect below. Fizzles silently, same as
+  // any other already-blocked reapply (stacking 'none' below) — no event, since
+  // nothing about combatant state actually changed.
+  if (def.id === 'Stealth' && state.active[combatant.side].includes(combatantId)) {
+    const partnerId = state.active[combatant.side].find((id): id is string => id !== null && id !== combatantId);
+    if (partnerId && hasStatus(state.combatants[partnerId], 'Stealth')) {
+      return { state, events: [] };
+    }
+  }
+
   const existing = combatant.statuses[def.id];
   let magnitude = params.magnitude;
   let duration = params.duration;

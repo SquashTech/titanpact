@@ -69,6 +69,17 @@ discipline** and are collected at the bottom.
 - Positive / self-buff → subject to the Cleanse-strips-positives question, alongside
   Regen.
 - ⚠️ Command-then-resolve timing needs an explicit rule. See open questions.
+- **Exclusivity rule (2026-08-19, resolved): a side's two active heroes can never both
+  be Stealthed at the same time.** Without this, simultaneously Stealthing both
+  actives makes an entire enemy turn whiff for free — a stall tactic with no
+  counterplay, not an interesting use of the Speed-matters redirect. If an
+  application would create double-active-Stealth, it fizzles (no status, no event —
+  same as any other blocked reapply); the move itself still resolves and still costs
+  its mana. Enforced at the point of application (statusEngine.ts `applyStatus`), not
+  as a switch-time guard — Stealth's own duration (protects the casting round plus
+  the one after) makes a benched Stealth surviving long enough to re-enter as active
+  alongside an independently-Stealthed partner structurally unreachable today, given
+  one action per hero per round.
 
 ---
 

@@ -281,3 +281,21 @@ test('status: Stealth ticks at the start of a round, so it still protects the ro
   );
   assert.ok(round3.events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b2'));
 });
+
+test('status: both active heroes can never be Stealthed at once — the slower Vanish fizzles', () => {
+  const state = twoVTwoFixture(230);
+  // tidecaller (a2, 55 speed) out-paces cinderKnight (a1, 50 speed) at equal priority,
+  // so a2's Vanish resolves first and locks out a1's Vanish this same round.
+  const actions: Action[] = [
+    { kind: 'move', combatantId: 'a1', moveId: 'vanish' },
+    { kind: 'move', combatantId: 'a2', moveId: 'vanish' },
+  ];
+  const { state: next, events } = resolveRound(state, actions, config);
+
+  assert.ok(hasStatus(next.combatants.a2, 'Stealth'));
+  assert.strictEqual(hasStatus(next.combatants.a1, 'Stealth'), false);
+  assert.ok(events.some((e) => e.type === 'StatusApplied' && e.combatantId === 'a2' && e.statusId === 'Stealth'));
+  assert.strictEqual(events.some((e) => e.type === 'StatusApplied' && e.combatantId === 'a1' && e.statusId === 'Stealth'), false);
+  // a1's mana was still spent — the move itself went off, only the status application fizzled.
+  assert.ok(events.some((e) => e.type === 'MoveUsed' && e.combatantId === 'a1' && e.manaSpent === moves.vanish.manaCost));
+});

@@ -17,7 +17,7 @@ export const statuses: Record<string, StatusDefinition> = {
     stacking: 'additive',
     clearsOnSwitch: true,
     pipeline: 'dot',
-    description: 'End of round: deal magnitude damage, then halve it. Fades to 0; escapable by switching.',
+    description: 'End of round: deal X damage, then halve it. Cleansed by switching.',
   },
   Bleed: {
     id: 'Bleed',
@@ -29,7 +29,7 @@ export const statuses: Record<string, StatusDefinition> = {
     clearsOnSwitch: false,
     pipeline: 'dot',
     flatPercentOfMaxHp: 0.05,
-    description: "End of round: deal 5% of the target's max HP. Fixed, inescapable by switching — Cleanse only.",
+    description: "End of round: deal 5% of the target's max HP.",
   },
   Freeze: {
     id: 'Freeze',
@@ -51,7 +51,7 @@ export const statuses: Record<string, StatusDefinition> = {
     stacking: 'takeHigher',
     clearsOnSwitch: true,
     pipeline: 'control',
-    description: "Can't attack; can still switch. Duration counts down at end of round; cleared by switching.",
+    description: "Can't attack, but can switch. Duration counts down at end of round; cleared by switching.",
   },
   Regen: {
     id: 'Regen',
@@ -63,7 +63,7 @@ export const statuses: Record<string, StatusDefinition> = {
     clearsOnSwitch: false,
     positive: true,
     pipeline: 'hot',
-    description: 'End of round: heal magnitude, then halve it. A positive status — persists through switch, never stripped by Cleanse.',
+    description: 'End of round: heal X, then halve it. Persists through switch and cleanse.',
   },
   Conduct: {
     id: 'Conduct',
@@ -80,7 +80,7 @@ export const statuses: Record<string, StatusDefinition> = {
     detonateBonusPercentMaxHp: 0.1,
     pipeline: 'trigger',
     description:
-      "Marked by a Storm or Iron hit. The next Storm or Iron hit on this target deals an extra 10% of the target's max HP and consumes the mark — apply and detonate are always separate hits.",
+      "Lasts one turn. The next Storm or Iron hit on this target deals an extra 10% of the target's max HP and consumes the mark.",
   },
   Poison: {
     id: 'Poison',
@@ -93,7 +93,7 @@ export const statuses: Record<string, StatusDefinition> = {
     activeOnly: true,
     pipeline: 'timer',
     description:
-      "Starts a 3-round timer. Only counts down while this hero is active — switching stalls the clock rather than clearing it. Reapplying raises the magnitude without resetting the timer. At zero: deals magnitude% of max HP and is consumed.",
+      "Starts a 3-round timer, then deals X% max HP damage. Only counts down while the hero is active. Reapplying raises the X% without resetting the timer.",
   },
   Haunt: {
     id: 'Haunt',
@@ -105,7 +105,7 @@ export const statuses: Record<string, StatusDefinition> = {
     clearsOnSwitch: true,
     spreadTriggerTypes: ['Spirit', 'Mind'],
     pipeline: 'target',
-    description: "While active, a Spirit or Mind attack aimed at this hero's non-Haunted partner also strikes this hero. Cleared by switching.",
+    description: "While active, a Spirit or Mind attack aimed at this hero's partner also strikes this hero. Cleared by switching.",
   },
   Stealth: {
     id: 'Stealth',
@@ -119,6 +119,6 @@ export const statuses: Record<string, StatusDefinition> = {
     positive: true,
     pipeline: 'target',
     description:
-      'Protects for the rest of the round it lands plus the entire following round — a single-target attack resolving while this status is up redirects onto the other active hero (spread moves still land).',
+      "Hero cannot be the target of an attack. If Stealth is applied mid-round, attacks targeting this are redirected to this hero's partner. Spread moves still land. Both active heroes can never be Stealthed at the same time — a second Stealth fizzles while the other is still active and Stealthed.",
   },
 };
