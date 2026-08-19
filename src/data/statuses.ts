@@ -111,13 +111,14 @@ export const statuses: Record<string, StatusDefinition> = {
     id: 'Stealth',
     name: 'Stealth',
     shape: 'duration',
-    ticksAtEndOfRound: true,
+    ticksAtEndOfRound: false,
+    ticksAtStartOfRound: true,
     decay: 'none',
     stacking: 'none',
     clearsOnSwitch: false,
     positive: true,
     pipeline: 'target',
     description:
-      'For 1 round this hero cannot be targeted by a single-target attack (spread moves still land) — a single-target attack resolving after this status lands redirects onto the other active hero.',
+      'Protects for the rest of the round it lands plus the entire following round — a single-target attack resolving while this status is up redirects onto the other active hero (spread moves still land).',
   },
 };

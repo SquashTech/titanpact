@@ -177,6 +177,48 @@ export function tickEndOfRound(
   return { state: working, events };
 }
 
+/**
+ * Start-of-round tick (Stealth only, currently) — the counterpart to
+ * tickEndOfRound above, run BEFORE a round's actions so the countdown lands
+ * on a round boundary the caster wasn't already mid-action for. A duration
+ * already at 0 has used up the one full round it was owed (see
+ * ticksAtStartOfRound's doc comment in content.ts) and is removed before this
+ * round's actions run; otherwise it decrements and stays present, so it also
+ * protects the round now starting.
+ */
+export function tickStartOfRound(
+  state: CombatState,
+  round: number,
+  statusDefs: Record<string, StatusDefinition>
+): { state: CombatState; events: CombatEvent[] } {
+  let working = state;
+  const events: CombatEvent[] = [];
+
+  for (const combatantId of Object.keys(working.combatants)) {
+    const combatant = working.combatants[combatantId];
+    if (!combatant || combatant.fainted) continue;
+
+    for (const statusId of Object.keys(combatant.statuses)) {
+      const instance = combatant.statuses[statusId];
+      const def = statusDefs[statusId];
+      if (!def || !instance || !def.ticksAtStartOfRound) continue;
+
+      if ((instance.duration ?? 0) <= 0) {
+        const rm = removeStatus(working, round, combatantId, statusId, 'expired');
+        working = rm.state;
+        events.push(...rm.events);
+        continue;
+      }
+
+      const newDuration = (instance.duration ?? 0) - 1;
+      events.push({ type: 'StatusTicked', round, combatantId, statusId, kind: 'duration', amount: 0, newDuration });
+      working = setStatus(working, combatantId, statusId, { ...instance, duration: newDuration });
+    }
+  }
+
+  return { state: working, events };
+}
+
 /** docs/conditions.md §4: switching to bench clears every status with clearsOnSwitch (Burn, Freeze, Daze, Haunt). */
 export function clearOnSwitch(
   state: CombatState,

@@ -79,6 +79,16 @@ export interface StatusDefinition {
   shape: StatusShape;
   /** DoT/HoT/duration-countdown/timer tick point. LOCKED to end-of-round in this engine — see docs/conditions.md §7 "Status tick timing" open question. */
   ticksAtEndOfRound: boolean;
+  /**
+   * Duration-shape only (Stealth): countdown ticks at the START of a round instead
+   * of the end, and a tick that finds duration already at 0 removes the status
+   * BEFORE that round's actions rather than decrementing it further — so a status
+   * applied mid-round with duration 1 protects the rest of its casting round (via
+   * the live hasStatus check, same as always) AND the entire following round,
+   * expiring only when the round after that begins. Mutually exclusive with
+   * ticksAtEndOfRound.
+   */
+  ticksAtStartOfRound?: boolean;
   /** Post-tick decay for magnitude statuses (Burn, Regen): halve toward 0. 'none' for statuses whose magnitude doesn't decay on its own (Poison builds up until it detonates). */
   decay: 'halve' | 'none';
   stacking: StatusStacking;

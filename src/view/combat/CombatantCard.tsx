@@ -169,9 +169,15 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onI
           shove the rest of the battlefield around (docs/architecture.md
           "Resolution and presentation are separate layers"). */}
       <div className="status-badge-row">
-        {Object.values(combatant.statuses).map((s) => (
-          <StatusChip key={s.statusId} instance={s} onInspect={() => setInspectingStatus(s.statusId)} />
-        ))}
+        {Object.values(combatant.statuses)
+          // A duration-shape status (Stealth) can sit at duration 0 for the rest of
+          // its last protected round before the next start-of-round tick actually
+          // removes it (statusEngine.ts tickStartOfRound) — hide the chip the moment
+          // it hits 0 rather than showing a stale "0" badge for that whole round.
+          .filter((s) => s.duration === undefined || s.duration > 0)
+          .map((s) => (
+            <StatusChip key={s.statusId} instance={s} onInspect={() => setInspectingStatus(s.statusId)} />
+          ))}
       </div>
       {inspectingStatus && combatant.statuses[inspectingStatus] && (
         <StatusDetailOverlay instance={combatant.statuses[inspectingStatus]} onClose={() => setInspectingStatus(null)} />

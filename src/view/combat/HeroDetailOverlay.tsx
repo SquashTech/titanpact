@@ -116,30 +116,36 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
         )}
 
         <div className="detail-section-title">Statuses</div>
-        {Object.values(combatant.statuses).length > 0 ? (
-          <div className="detail-modifier-list">
-            {Object.values(combatant.statuses).map((s) => {
-              const emoji = statusEmoji[s.statusId];
-              return (
-                <span
-                  key={s.statusId}
-                  className="detail-status-chip"
-                  style={{
-                    color: statusColor(s.statusId),
-                    background: statusTint(s.statusId, 0.12),
-                    borderColor: statusTint(s.statusId, 0.5),
-                  }}
-                >
-                  {emoji && <span className="status-emoji">{emoji}</span>}
-                  {fmtStatus(s.statusId, s.magnitude, s.duration)}
-                  {s.statusId === 'Poison' && <PoisonPips duration={s.duration} />}
-                </span>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="detail-empty">No active statuses.</div>
-        )}
+        {/* Hide a duration-shape status (Stealth) once its counter hits 0 — see
+            CombatantCard.tsx's matching filter for why it can still be present
+            in state for the rest of that round. */}
+        {(() => {
+          const visibleStatuses = Object.values(combatant.statuses).filter((s) => s.duration === undefined || s.duration > 0);
+          return visibleStatuses.length > 0 ? (
+            <div className="detail-modifier-list">
+              {visibleStatuses.map((s) => {
+                const emoji = statusEmoji[s.statusId];
+                return (
+                  <span
+                    key={s.statusId}
+                    className="detail-status-chip"
+                    style={{
+                      color: statusColor(s.statusId),
+                      background: statusTint(s.statusId, 0.12),
+                      borderColor: statusTint(s.statusId, 0.5),
+                    }}
+                  >
+                    {emoji && <span className="status-emoji">{emoji}</span>}
+                    {fmtStatus(s.statusId, s.magnitude, s.duration)}
+                    {s.statusId === 'Poison' && <PoisonPips duration={s.duration} />}
+                  </span>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="detail-empty">No active statuses.</div>
+          );
+        })()}
 
         <div className="detail-section-title">Equipment</div>
         {rosterEntry ? (

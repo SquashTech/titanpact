@@ -702,7 +702,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 10,
     priority: 0,
     target: 'self',
-    description: 'Slips out of sight for the rest of the round — a faster Vanish redirects an incoming single-target attack onto the caster’s partner (inflicts Stealth).',
+    description: 'Slips out of sight for the rest of this round and all of the next — a faster Vanish redirects an incoming single-target attack onto the caster’s partner (inflicts Stealth).',
   },
   secondWind: {
     id: 'secondWind',

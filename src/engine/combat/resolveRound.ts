@@ -5,7 +5,9 @@
 // Also implements the status system (docs/conditions.md, the 6th engine
 // contract): Daze gates move actions, Stealth/Haunt retarget/expand a
 // damage move's targets, Conduct applies/detonates off the move's type, and
-// every status ticks at the round boundary alongside those regen ticks.
+// most statuses tick at the end-of-round boundary alongside the regen ticks —
+// except Stealth, which ticks at the START of the round (before actions
+// resolve) so it also protects the round after the one it was cast in.
 
 import type { HeroDefinition, MoveDefinition, StatusDefinition } from '../content';
 import type { CombatState, HeroLookup, Side } from '../state';
@@ -19,7 +21,15 @@ import { applyManaRegen } from './manaRegen';
 import { resolveStatRatio, rollDamage, statKeysForCategory, type DamageModifier } from '../damage/damagePipeline';
 import type { TypeChart } from '../damage/typeMult';
 import { applyHpDelta } from './faintHandling';
-import { applyOrDetonateTriggeredStatuses, applyStatus, applyStealthRedirect, cleanseStatuses, expandSpreadTargets, tickEndOfRound } from './statusEngine';
+import {
+  applyOrDetonateTriggeredStatuses,
+  applyStatus,
+  applyStealthRedirect,
+  cleanseStatuses,
+  expandSpreadTargets,
+  tickEndOfRound,
+  tickStartOfRound,
+} from './statusEngine';
 
 export interface RoundConfig {
   typeChart: TypeChart;
@@ -41,6 +51,10 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   const events: CombatEvent[] = [{ type: 'RoundStarted', round }];
 
   let working: CombatState = state;
+
+  const startTicks = tickStartOfRound(working, round, statuses);
+  working = startTicks.state;
+  events.push(...startTicks.events);
 
   const maxHpOf = (id: string) => getMaxHp(heroes[working.combatants[id].heroId], working.combatants[id]);
 

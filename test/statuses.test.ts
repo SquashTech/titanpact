@@ -253,3 +253,31 @@ test('status: a slower Stealth does not save its caster from an attack that reso
   assert.ok(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1'));
   assert.ok(next.combatants.b1.currentHp < heroes.ironWarden.baseStats.hp);
 });
+
+test('status: Stealth ticks at the start of a round, so it still protects the round after it lands', () => {
+  const state = twoVTwoFixture(230);
+
+  // Round 1: b2 goes Stealth and nothing targets b2, so the redirect never
+  // triggers this round — only the start-of-round tick timing is under test.
+  const round1 = resolveRound(state, [{ kind: 'move', combatantId: 'b2', moveId: 'vanish' }], config);
+  assert.ok(hasStatus(round1.state.combatants.b2, 'Stealth'));
+
+  // Round 2: Stealth is still up (start-of-round tick decremented 1 -> 0 but kept
+  // it present), so a single-target attack on b2 still redirects onto b1.
+  const round2 = resolveRound(
+    round1.state,
+    [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b2' }],
+    config
+  );
+  assert.ok(round2.events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1'));
+  assert.strictEqual(round2.events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b2'), false);
+  assert.ok(hasStatus(round2.state.combatants.b2, 'Stealth')); // still present (duration 0) — expires at the start of round 3
+
+  // Round 3: the start-of-round tick removes Stealth before actions run, so the same attack lands on b2 directly.
+  const round3 = resolveRound(
+    round2.state,
+    [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b2' }],
+    config
+  );
+  assert.ok(round3.events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b2'));
+});
