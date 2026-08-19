@@ -1633,10 +1633,34 @@ body {
   padding-left: 10px;
 }
 
-/* --- Type Chart overlay --------------------------------------------------- */
+/* --- Reference overlay (type chart + status catalog) --------------------- */
 
-.type-chart-panel {
+.reference-panel {
   max-width: 520px;
+}
+
+.reference-tabs {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.reference-tab {
+  flex: 1 1 0;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.reference-tab-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
 }
 
 .type-chart-scroll {
@@ -1705,6 +1729,89 @@ body {
 
 .tc-value.eff-neutral {
   opacity: 0.5;
+}
+
+/* Statuses tab of the reference overlay — one row per status.ts definition
+   (static catalog, not a live StatusInstance), styled as a lighter-weight
+   cousin of .status-detail-panel's readout so the two feel like the same
+   family of "explain this status" UI at different scales. */
+.status-reference-scroll {
+  overflow-y: auto;
+  max-height: 65vh;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.status-ref-row {
+  display: flex;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--panel-alt);
+  border-left: 3px solid;
+  border-radius: 6px;
+}
+
+.status-ref-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.status-ref-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.status-ref-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.status-ref-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.status-ref-tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--hp-high);
+  border: 1px solid var(--hp-high);
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+.status-ref-pipeline {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.status-ref-desc {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.status-ref-meta {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-style: italic;
 }
 
 /* Full-screen dimming backdrop only — the actual readable content lives in
@@ -3655,7 +3762,7 @@ body {
   opacity: 0.25;
 }
 
-/* Hub signpost: Relics/Roster/Type Chart, relocated out of the header
+/* Hub signpost: Relics/Roster/Reference, relocated out of the header
    (2026-08-17) to leave the header to pure run stats. Each button carries
    its own accent (--btn-color, set inline per FOOTER_BUTTONS) so the row
    reads as a small signpost rather than three identical pills — same spirit

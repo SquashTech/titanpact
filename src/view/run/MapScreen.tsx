@@ -4,7 +4,7 @@ import { TOTAL_ACTS } from '../../run/state';
 import { reachableNodeIds } from '../../run/runProgress';
 import type { MapNodeType } from '../../run/map';
 import { RosterManagementScreen } from './RosterManagementScreen';
-import { TypeChartOverlay } from '../shared/TypeChartOverlay';
+import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { RelicsOverlay } from './RelicsOverlay';
 
 interface Props {
@@ -81,7 +81,7 @@ const NODE_COLORS: Record<MapNodeType, string> = {
 
 /**
  * Bottom-of-screen hub nav (2026-08-17 revision, per user direction): the
- * three always-on overlays (Relics/Roster/Type Chart) moved out of the
+ * three always-on overlays (Relics/Roster/Reference) moved out of the
  * header into a flavorful footer row, using the same "fixed row of secondary
  * actions" containment pattern FightScreen's .bottom-bar already established
  * (CLAUDE.md architecture note in styles.css .bottom-bar) — .map-scroll keeps
@@ -90,10 +90,10 @@ const NODE_COLORS: Record<MapNodeType, string> = {
  * NODE_COLORS below) so the row reads as a small "hub signpost" rather than
  * generic pills.
  */
-const FOOTER_BUTTONS: readonly { key: 'relics' | 'roster' | 'typeChart'; icon: string; label: string; color: string }[] = [
+const FOOTER_BUTTONS: readonly { key: 'relics' | 'roster' | 'reference'; icon: string; label: string; color: string }[] = [
   { key: 'relics', icon: '💠', label: 'Relics', color: 'var(--magical)' },
   { key: 'roster', icon: '👥', label: 'Roster', color: 'var(--ally)' },
-  { key: 'typeChart', icon: '📖', label: 'Type Chart', color: 'var(--accent)' },
+  { key: 'reference', icon: '📖', label: 'Reference', color: 'var(--accent)' },
 ];
 
 /**
@@ -106,7 +106,7 @@ const FOOTER_BUTTONS: readonly { key: 'relics' | 'roster' | 'typeChart'; icon: s
  */
 export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
   const [showRoster, setShowRoster] = useState(false);
-  const [showTypeChart, setShowTypeChart] = useState(false);
+  const [showReference, setShowReference] = useState(false);
   const [showRelics, setShowRelics] = useState(false);
   const map = run.map;
   if (!map) return null;
@@ -118,7 +118,7 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
   const openFooterOverlay: Record<(typeof FOOTER_BUTTONS)[number]['key'], () => void> = {
     relics: () => setShowRelics(true),
     roster: () => setShowRoster(true),
-    typeChart: () => setShowTypeChart(true),
+    reference: () => setShowReference(true),
   };
 
   return (
@@ -188,7 +188,7 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
       </div>
 
       {showRoster && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setShowRoster(false)} />}
-      {showTypeChart && <TypeChartOverlay onClose={() => setShowTypeChart(false)} />}
+      {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
       {showRelics && <RelicsOverlay ownedRelicIds={run.relics} onClose={() => setShowRelics(false)} />}
     </div>
   );

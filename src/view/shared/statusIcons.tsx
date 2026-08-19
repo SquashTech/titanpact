@@ -1,3 +1,5 @@
+import type { StatusDefinition } from '../../engine/content';
+
 /**
  * Emoji glyph per status id — crisp at any size (unlike the pixel-art PNGs
  * this replaced, which turned to noise once downscaled to badge size).
@@ -64,6 +66,27 @@ export function poisonTier(duration: number | undefined): 1 | 2 | 3 {
   if (duration === undefined || duration >= 3) return 1;
   if (duration === 2) return 2;
   return 3;
+}
+
+/** Human-readable label per pipeline value — shared by StatusDetailOverlay's live readout and ReferenceOverlay's static catalog, so the two never drift. */
+const PIPELINE_LABELS: Record<StatusDefinition['pipeline'], string> = {
+  dot: 'Damage over time',
+  hot: 'Heal over time',
+  control: 'Control effect',
+  timer: 'Delayed detonation',
+  trigger: 'Trigger / mark',
+  target: 'Targeting effect',
+  none: 'Effect',
+};
+
+export function pipelineLabel(pipeline: StatusDefinition['pipeline']): string {
+  return PIPELINE_LABELS[pipeline];
+}
+
+/** How a status is removed, in prose — same clearsOnSwitch/positive branching StatusDetailOverlay used inline, lifted here so ReferenceOverlay's catalog entries read identically. */
+export function statusClearText(def: StatusDefinition): string {
+  if (def.clearsOnSwitch) return 'Cleared by switching to the bench.';
+  return def.positive ? "Persists through switching — Cleanse can't remove it." : 'Persists through switching — removed by Cleanse.';
 }
 
 /** The 3-pip "how close to detonation" meter — sits next to Poison's emoji+magnitude in both CombatantCard and StatusDetailOverlay. Pip color is set here (Poison's own color, via currentColor) so callers don't each have to know it. */

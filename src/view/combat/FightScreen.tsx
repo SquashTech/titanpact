@@ -27,7 +27,7 @@ import { buildBeats, type Beat } from './buildBeats';
 import { getTypeColor } from './typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { CategoryBadge, useLongPress } from '../shared/MoveTile';
-import { TypeChartOverlay } from '../shared/TypeChartOverlay';
+import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
 import { EquipmentIcon, EQUIP_SLOT_LABELS, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
@@ -166,7 +166,7 @@ export function FightScreen({
   const [combat, setCombat] = useState<CombatState>(() => buildInitialState(Math.floor(Math.random() * 2 ** 31)));
   const [log, setLog] = useState<LogLine[]>([]);
   const [logOpen, setLogOpen] = useState(false);
-  const [typeChartOpen, setTypeChartOpen] = useState(false);
+  const [referenceOpen, setReferenceOpen] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
   const [pending, setPending] = useState<Record<string, PendingAction>>({});
   const [selecting, setSelecting] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
@@ -706,7 +706,7 @@ export function FightScreen({
       </div>
 
       {/* Every secondary action lives in one fixed bottom row instead of
-          reserving its own space (a top header for log/type-chart, an
+          reserving its own space (a top header for log/reference, an
           always-visible bench readout, a back button that shifted the move
           grid down) — that reserved space was the source of the mobile
           scroll this consolidation exists to eliminate. Buttons stay
@@ -726,8 +726,8 @@ export function FightScreen({
         <button className="log-toggle-button" onClick={() => setLogOpen(true)}>
           📜 Log
         </button>
-        <button className="log-toggle-button" onClick={() => setTypeChartOpen(true)}>
-          📊 Types
+        <button className="log-toggle-button" onClick={() => setReferenceOpen(true)}>
+          📊 Ref
         </button>
       </div>
 
@@ -844,7 +844,7 @@ export function FightScreen({
         </div>
       )}
 
-      {typeChartOpen && <TypeChartOverlay onClose={() => setTypeChartOpen(false)} />}
+      {referenceOpen && <ReferenceOverlay onClose={() => setReferenceOpen(false)} />}
 
       {inspecting &&
         combat.combatants[inspecting] &&

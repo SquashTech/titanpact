@@ -1,17 +1,7 @@
 import { createPortal } from 'react-dom';
 import type { StatusInstance } from '../../engine/state';
 import { statuses } from '../../data/statuses';
-import { statusEmoji, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
-
-const PIPELINE_LABELS: Record<string, string> = {
-  dot: 'Damage over time',
-  hot: 'Heal over time',
-  control: 'Control effect',
-  timer: 'Delayed detonation',
-  trigger: 'Trigger / mark',
-  target: 'Targeting effect',
-  none: 'Effect',
-};
+import { statusEmoji, statusColor, statusTint, statusClearText, pipelineLabel, PoisonPips } from '../shared/statusIcons';
 
 interface Props {
   instance: StatusInstance;
@@ -36,11 +26,7 @@ export function StatusDetailOverlay({ instance, onClose }: Props) {
     onClose();
   }
 
-  const clearText = def.clearsOnSwitch
-    ? 'Cleared by switching to the bench.'
-    : def.positive
-      ? "Persists through switching — Cleanse can't remove it."
-      : 'Persists through switching — removed by Cleanse.';
+  const clearText = statusClearText(def);
 
   // Portalled to document.body rather than rendered in place: this overlay is
   // reached from a status icon nested inside a CombatantCard, and that card
@@ -60,7 +46,7 @@ export function StatusDetailOverlay({ instance, onClose }: Props) {
             <div className="status-detail-name" style={{ color }}>
               {def.name}
             </div>
-            <div className="status-detail-pipeline">{PIPELINE_LABELS[def.pipeline]}</div>
+            <div className="status-detail-pipeline">{pipelineLabel(def.pipeline)}</div>
           </div>
           {instance.statusId === 'Poison' && <PoisonPips duration={instance.duration} />}
         </div>

@@ -1,0 +1,118 @@
+import { useState } from 'react';
+import { TYPES, typeChart } from '../../data/typechart';
+import { statuses } from '../../data/statuses';
+import type { StatusDefinition } from '../../engine/content';
+import { TypeBadge } from './TypeBadge';
+import { statusEmoji, statusColor, statusTint, statusClearText, pipelineLabel } from './statusIcons';
+
+interface Props {
+  onClose: () => void;
+  /** Which tab opens first — callers reached via a "Types"-flavored button (FightScreen's 📊) land on the matchup grid; a future "Statuses" entry point can open straight to the catalog instead. Defaults to the grid, matching this overlay's original type-chart-only behavior. */
+  initialTab?: Tab;
+}
+
+type Tab = 'types' | 'statuses';
+
+function multClass(mult: number): string {
+  if (mult > 1) return 'eff-super';
+  if (mult < 1) return 'eff-resist';
+  return 'eff-neutral';
+}
+
+function formatCell(mult: number): string {
+  return mult === 1 ? '–' : `${mult}`;
+}
+
+/**
+ * Full player-facing reference, reachable from every screen that benefits
+ * from a rules lookup (title, map, squad-select/battle-preview, combat).
+ * Two tabs: the 15x15 type effectiveness matrix (src/data/typechart.ts) and
+ * the 9-status condition catalog (src/data/statuses.ts) — the same
+ * definitions StatusDetailOverlay reads for its live in-combat readout, just
+ * presented as a static list instead of one instance's magnitude/duration.
+ * Read-only: this is the current fixture chart, not the authored balance
+ * content (see typechart.ts's placeholder warning).
+ */
+export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
+  const [tab, setTab] = useState<Tab>(initialTab);
+
+  return (
+    <div className="log-overlay" onClick={onClose}>
+      <div className="log-panel reference-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="log-panel-header">
+          <span>Reference</span>
+          <button className="log-close-button" onClick={onClose}>
+            ✕
+          </button>
+        </div>
+        <div className="reference-tabs">
+          <button className={`reference-tab${tab === 'types' ? ' reference-tab-active' : ''}`} onClick={() => setTab('types')}>
+            Types
+          </button>
+          <button className={`reference-tab${tab === 'statuses' ? ' reference-tab-active' : ''}`} onClick={() => setTab('statuses')}>
+            Statuses
+          </button>
+        </div>
+        {tab === 'types' ? (
+          <div className="type-chart-scroll">
+            <div className="type-chart-grid">
+              <div className="tc-cell tc-corner" />
+              {TYPES.map((col) => (
+                <div className="tc-cell tc-col-header" key={col}>
+                  <TypeBadge type={col} />
+                </div>
+              ))}
+              {TYPES.map((row) => (
+                <div className="tc-row" key={row}>
+                  <div className="tc-cell tc-row-header">
+                    <TypeBadge type={row} />
+                  </div>
+                  {TYPES.map((col) => {
+                    const mult = typeChart[row][col];
+                    return (
+                      <div className={`tc-cell tc-value ${multClass(mult)}`} key={col}>
+                        {formatCell(mult)}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="status-reference-scroll">
+            {Object.values(statuses).map((def) => (
+              <StatusReferenceRow key={def.id} def={def} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StatusReferenceRow({ def }: { def: StatusDefinition }) {
+  const emoji = statusEmoji[def.id];
+  const color = statusColor(def.id);
+
+  return (
+    <div className="status-ref-row" style={{ borderLeftColor: color }}>
+      {emoji && (
+        <span className="status-ref-icon" style={{ background: statusTint(def.id, 0.16) }}>
+          {emoji}
+        </span>
+      )}
+      <div className="status-ref-body">
+        <div className="status-ref-head">
+          <span className="status-ref-name" style={{ color }}>
+            {def.name}
+          </span>
+          {def.positive && <span className="status-ref-tag">Buff</span>}
+          <span className="status-ref-pipeline">{pipelineLabel(def.pipeline)}</span>
+        </div>
+        {def.description && <div className="status-ref-desc">{def.description}</div>}
+        <div className="status-ref-meta">{statusClearText(def)}</div>
+      </div>
+    </div>
+  );
+}

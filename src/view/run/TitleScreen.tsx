@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CompendiumScreen } from './CompendiumScreen';
-import { TypeChartOverlay } from '../shared/TypeChartOverlay';
+import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 
 interface Props {
   onStartRun: () => void;
@@ -20,7 +20,7 @@ interface Props {
  */
 export function TitleScreen({ onStartRun, onQuickBattle, onStartLevel4TestRun, onStartConditionsTest }: Props) {
   const [showCompendium, setShowCompendium] = useState(false);
-  const [showTypeChart, setShowTypeChart] = useState(false);
+  const [showReference, setShowReference] = useState(false);
 
   return (
     <div className="title-screen">
@@ -35,8 +35,8 @@ export function TitleScreen({ onStartRun, onQuickBattle, onStartLevel4TestRun, o
         <button className="title-secondary-button" onClick={() => setShowCompendium(true)}>
           Compendium
         </button>
-        <button className="title-secondary-button" onClick={() => setShowTypeChart(true)}>
-          Type Chart
+        <button className="title-secondary-button" onClick={() => setShowReference(true)}>
+          Reference
         </button>
         <button className="title-debug-button" onClick={onStartLevel4TestRun}>
           🧪 Test: Lv4 Squad <span className="title-debug-tag">temp</span>
@@ -47,7 +47,7 @@ export function TitleScreen({ onStartRun, onQuickBattle, onStartLevel4TestRun, o
       </div>
 
       {showCompendium && <CompendiumScreen onClose={() => setShowCompendium(false)} />}
-      {showTypeChart && <TypeChartOverlay onClose={() => setShowTypeChart(false)} />}
+      {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
     </div>
   );
 }

@@ -12,7 +12,7 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { TypeChartOverlay } from '../shared/TypeChartOverlay';
+import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 
 interface Props {
   run: RunState;
@@ -36,7 +36,7 @@ interface Props {
 export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
   const [pickedIds, setPickedIds] = useState<string[]>([]);
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
-  const [showTypeChart, setShowTypeChart] = useState(false);
+  const [showReference, setShowReference] = useState(false);
   const required = requiredSquadSize(run.roster.length);
 
   function toggle(rosterId: string) {
@@ -54,8 +54,8 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
   return (
     <div className="squad-select">
       <div className="map-header">
-        <button className="log-toggle-button" onClick={() => setShowTypeChart(true)}>
-          Type Chart
+        <button className="log-toggle-button" onClick={() => setShowReference(true)}>
+          Reference
         </button>
       </div>
       <div className="screen-scroll">
@@ -149,7 +149,7 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
           onClose={() => setInspecting(null)}
         />
       )}
-      {showTypeChart && <TypeChartOverlay onClose={() => setShowTypeChart(false)} />}
+      {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
     </div>
   );
 }
