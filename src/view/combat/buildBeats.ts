@@ -119,6 +119,25 @@ export function buildBeats(
         break;
       }
 
+      case 'StatusDetonated': {
+        // Always immediately followed by the removeStatus reason 'consumed'
+        // (statusEngine.ts applyOrDetonateTriggeredStatuses) and its own
+        // HpChanged/Fainted pair — bundled into one beat so the zap and the
+        // bar drain land on the same tap.
+        const applied: CombatEvent[] = [e];
+        i++;
+        if (events[i]?.type === 'StatusRemoved') applied.push(events[i++]);
+        if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
+        let faintEvent: CombatEvent | null = null;
+        if (events[i]?.type === 'Fainted') faintEvent = events[i++];
+        const targetName = name(e.combatantId);
+        push(applied, `${targetName}'s ${e.statusId} detonates for ${e.amount} damage!`, [
+          { combatantId: e.combatantId, text: `⚡ -${e.amount}`, className: 'popup-conduct' },
+        ]);
+        if (faintEvent) push([faintEvent], `${targetName} is knocked out!`);
+        break;
+      }
+
       case 'SwitchedIn':
         push([e], `${name(e.inCombatantId)} switches in!`);
         i++;

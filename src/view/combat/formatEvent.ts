@@ -109,6 +109,9 @@ export function formatEvents(
       case 'StatusRemoved':
         lines.push({ key, text: `${name(e.combatantId)}'s ${e.statusId} clears (${e.reason})`, className: 'log-status' });
         break;
+      case 'StatusDetonated':
+        lines.push({ key, text: `${name(e.combatantId)}'s ${e.statusId} detonates for ${e.amount} dmg!`, className: 'log-conduct' });
+        break;
       case 'Rested':
         lines.push({ key, text: `${name(e.combatantId)} rests, restoring Mana to full`, className: 'log-mana' });
         break;

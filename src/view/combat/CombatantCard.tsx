@@ -83,6 +83,9 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onI
   if (selected) classes.push('selected');
   if (locked) classes.push('locked');
   if (acting) classes.push('acting');
+  // Conduct's detonation beat (buildBeats.ts) — keyed fresh with the popup so
+  // the flash restarts even if Conduct detonates twice in a row.
+  if (popup?.className === 'popup-conduct') classes.push('zap-hit');
 
   return (
     <div
@@ -138,7 +141,11 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onI
           "Resolution and presentation are separate layers"). */}
       <div className="status-badge-row">
         {Object.values(combatant.statuses).map((s) => (
-          <span key={s.statusId} className={`status-badge${s.statusId === 'Regen' ? ' status-badge-positive' : ''}`}>
+          <span
+            key={s.statusId}
+            className={`status-badge${s.statusId === 'Regen' ? ' status-badge-positive' : ''}${s.statusId === 'Conduct' ? ' status-badge-conduct' : ''}`}
+          >
+            {s.statusId === 'Conduct' ? '⚡ ' : ''}
             {statusBadgeText(s.statusId, s.magnitude, s.duration)}
           </span>
         ))}

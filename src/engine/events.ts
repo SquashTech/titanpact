@@ -119,6 +119,22 @@ export interface StatusRemovedEvent extends BaseEvent {
   reason: StatusRemovalReason;
 }
 
+/**
+ * A triggered status (currently only Conduct — docs/conditions.md) detonating:
+ * bonus damage dealt on its own, separate from the hit that landed it. Kept
+ * as its own event rather than folded into the triggering DamageDealt's
+ * `amount` so the view can present it as a distinct beat with its own
+ * indicator (resolveRound.ts applies this AFTER the base hit's HpChanged,
+ * always immediately followed by StatusRemoved reason 'consumed' and its own
+ * HpChanged/Fainted pair).
+ */
+export interface StatusDetonatedEvent extends BaseEvent {
+  type: 'StatusDetonated';
+  combatantId: string;
+  statusId: StatusId;
+  amount: number;
+}
+
 export interface ActionBlockedEvent extends BaseEvent {
   type: 'ActionBlocked';
   combatantId: string;
@@ -213,6 +229,7 @@ export type CombatEvent =
   | StatusAppliedEvent
   | StatusTickedEvent
   | StatusRemovedEvent
+  | StatusDetonatedEvent
   | ActionBlockedEvent
   | FaintedEvent
   | SwitchedInEvent

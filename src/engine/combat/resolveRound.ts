@@ -166,14 +166,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           );
           working = { ...working, rngState: rolled.nextRngState };
 
-          // Conduct (docs/conditions.md): auto-applies/detonates off the move's type via
-          // triggerTypes — bypasses the damage pipeline the same way DoT ticks do, folding
-          // straight into `amount` rather than the multiplicative modifier term above.
-          const triggered = applyOrDetonateTriggeredStatuses(working, round, targetId, move.type, maxHp, statuses);
-          working = triggered.state;
-          events.push(...triggered.events);
-
-          const amount = Math.round(rolled.damage) + triggered.bonusDamage;
+          const amount = Math.round(rolled.damage);
 
           const [offKey, defKey] = statKeysForCategory(move.category);
           events.push({
@@ -201,6 +194,21 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           const hpResult = applyHpDelta(working, round, targetId, -amount, maxHp);
           working = hpResult.state;
           events.push(...hpResult.events);
+
+          // Conduct (docs/conditions.md): auto-applies/detonates off the move's type via
+          // triggerTypes, resolved AFTER the base hit above lands so its bonus damage reads
+          // as its own beat/indicator (events.ts StatusDetonatedEvent) rather than inflating
+          // the move's own DamageDealt amount. Skipped once the base hit alone knocked the
+          // target out — applyOrDetonateTriggeredStatuses no-ops on a fainted target.
+          const triggered = applyOrDetonateTriggeredStatuses(working, round, targetId, move.type, maxHp, statuses);
+          working = triggered.state;
+          events.push(...triggered.events);
+
+          if (triggered.bonusDamage > 0) {
+            const bonusHpResult = applyHpDelta(working, round, targetId, -triggered.bonusDamage, maxHp);
+            working = bonusHpResult.state;
+            events.push(...bonusHpResult.events);
+          }
         }
         break;
       }

@@ -13,6 +13,7 @@
   --enemy: #d9534f;
   --ally: #4a90d9;
   --crit: #ff7043;
+  --conduct: #f5d90a;
   --physical: #d9724a;
   --magical: #8b7fe0;
   /* Equipment rarity tiers — gray/blue/purple/gold/red, common through mythic (run/equipment.ts EquipmentRarity, view/shared/EquipmentBox.tsx RARITY_COLOR_VARS). */
@@ -696,6 +697,25 @@ body {
   color: var(--hp-high);
 }
 
+/* Conduct is "primed" while this badge shows — a lightning-yellow accent plus
+   a slow pulse cues that the next Storm/Iron hit detonates it, distinct from
+   the plain debuff-red every other status badge uses. */
+.status-badge-conduct {
+  border-color: var(--conduct);
+  color: var(--conduct);
+  animation: conduct-badge-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes conduct-badge-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(245, 217, 10, 0);
+  }
+  50% {
+    box-shadow: 0 0 4px 1px rgba(245, 217, 10, 0.55);
+  }
+}
+
 /* Opens HeroDetailOverlay for this card's combatant. Bottom-right so it never
    collides with the fainted tag (top-right) or a floating damage popup
    (top-left). */
@@ -772,6 +792,67 @@ body {
 .dmg-popup.popup-mana {
   color: var(--mana);
   font-size: 13px;
+}
+
+/* Conduct's detonation (buildBeats.ts StatusDetonated beat) — its own zap
+   color/motion so the bonus damage reads as a distinct jolt rather than a
+   second copy of the plain -N damage popup. Paired with .zap-hit below. */
+.dmg-popup.popup-conduct {
+  color: var(--conduct);
+  font-size: 17px;
+  text-shadow: 0 0 8px rgba(245, 217, 10, 0.75), 0 1px 3px rgba(0, 0, 0, 0.6);
+  animation: dmg-popup-zap 550ms ease-out forwards;
+}
+
+@keyframes dmg-popup-zap {
+  0% {
+    opacity: 0;
+    transform: translateY(4px) scale(0.85) rotate(0deg);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(-2px, 0) scale(1.15) rotate(-6deg);
+  }
+  25% {
+    transform: translate(2px, 0) scale(1.1) rotate(5deg);
+  }
+  40% {
+    transform: translate(-1px, -2px) scale(1.05) rotate(-3deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-18px) scale(1) rotate(0deg);
+  }
+}
+
+/* Card-level flash on the beat Conduct detonates (CombatantCard's zap-hit
+   class, keyed off the popup-conduct className) — a quick electric flicker
+   over the whole card so the hit reads as tactile, not just a number. */
+.combatant-card.zap-hit {
+  animation: zap-flash 400ms ease-out;
+}
+
+@keyframes zap-flash {
+  0% {
+    box-shadow: 0 0 0 rgba(245, 217, 10, 0);
+    filter: brightness(1);
+  }
+  15% {
+    box-shadow: 0 0 18px 4px rgba(245, 217, 10, 0.85);
+    filter: brightness(1.5);
+  }
+  30% {
+    box-shadow: 0 0 4px 1px rgba(245, 217, 10, 0.4);
+    filter: brightness(1.1);
+  }
+  45% {
+    box-shadow: 0 0 14px 3px rgba(245, 217, 10, 0.7);
+    filter: brightness(1.4);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(245, 217, 10, 0);
+    filter: brightness(1);
+  }
 }
 
 @keyframes dmg-popup-float {
@@ -1162,6 +1243,12 @@ body {
 
 .event-log .log-status {
   color: var(--hp-mid);
+}
+
+.event-log .log-conduct {
+  color: var(--conduct);
+  font-weight: 700;
+  padding-left: 10px;
 }
 
 /* --- Type Chart overlay --------------------------------------------------- */

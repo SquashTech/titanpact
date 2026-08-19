@@ -254,7 +254,11 @@ export function applyOrDetonateTriggeredStatuses(
     if (!target || target.fainted) continue;
 
     if (hasStatus(target, def.id)) {
-      bonusDamage += Math.ceil(maxHp * (def.detonateBonusPercentMaxHp ?? 0));
+      const bonus = Math.ceil(maxHp * (def.detonateBonusPercentMaxHp ?? 0));
+      bonusDamage += bonus;
+      // Own event (not folded into the triggering hit's DamageDealt) so the view
+      // can present the detonation as a separate beat/indicator — see events.ts.
+      events.push({ type: 'StatusDetonated', round, combatantId: targetId, statusId: def.id, amount: bonus });
       const rm = removeStatus(working, round, targetId, def.id, 'consumed');
       working = rm.state;
       events.push(...rm.events);
