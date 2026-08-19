@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { heroes } from '../../data/heroes';
 import { allCombatants } from '../../data/content';
 import { moves } from '../../data/moves';
@@ -11,11 +11,12 @@ import { resolveRound } from '../../engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../engine/combat/switching';
 import type { Action } from '../../engine/combat/actions';
 import type { CombatEvent } from '../../engine/events';
-import type { MoveDefinition } from '../../engine/content';
+import type { HeroDefinition, MoveDefinition, StatKey } from '../../engine/content';
 import { resolveStab, resolveTypeMult } from '../../engine/damage/typeMult';
 import type { RunState, RosterEntry } from '../../run/state';
 import { ROSTER_CAP } from '../../run/state';
 import type { Squad } from '../../run/squad';
+import type { EquipmentDefinition } from '../../run/equipment';
 import { buildCombatState } from '../../run/buildCombatState';
 import { isRecruitable } from '../../run/recruitment';
 import { CombatantCard, type Popup } from './CombatantCard';
@@ -23,9 +24,57 @@ import { HeroDetailOverlay } from './HeroDetailOverlay';
 import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
+import { getTypeColor } from './typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
-import { CategoryBadge } from '../shared/MoveTile';
+import { CategoryBadge, useLongPress } from '../shared/MoveTile';
 import { TypeChartOverlay } from '../shared/TypeChartOverlay';
+import { HeroPortrait } from '../shared/HeroPortrait';
+import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
+import { EquipmentIcon, EQUIP_SLOT_LABELS, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { HeroPreviewOverlay } from '../run/HeroPreviewOverlay';
+
+function fmtGrant(amount: number): string {
+  return amount > 0 ? `+${amount}` : `${amount}`;
+}
+
+interface RecruitClaimCardProps {
+  hero: HeroDefinition;
+  selected: boolean;
+  claimed: boolean;
+  onSelect: () => void;
+  onInspect: () => void;
+}
+
+/**
+ * One claimable Recruit Contract offer on the victory screen (user direction,
+ * 2026-08-19: replace the plain text "Claim X" buttons with hero portraits).
+ * Pulled out of the recruit-claims .map() below because useLongPress is a
+ * hook (GuildHallHeroCard is the precedent for this split). A short tap
+ * selects the card (highlighted, matching NodeRewardScreen's equipment/relic
+ * pick-then-claim two-step) rather than claiming immediately — the actual
+ * spend happens from the confirm button below the grid, once. A ~500ms hold
+ * opens the full HeroPreviewOverlay stat/move sheet instead, same
+ * tap-selects/hold-inspects split as every other offer card in the app.
+ */
+function RecruitClaimCard({ hero, selected, claimed, onSelect, onInspect }: RecruitClaimCardProps) {
+  const longPress = useLongPress(onInspect, claimed ? undefined : onSelect);
+  return (
+    <button
+      className={`recruit-claim-card${selected ? ' selected' : ''}${claimed ? ' claimed' : ''}`}
+      style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
+      {...longPress}
+    >
+      <HeroPortrait heroId={hero.id} className="recruit-claim-portrait" />
+      <div className="recruit-claim-name">{hero.name}</div>
+      <div className="roster-card-types">
+        {hero.types.map((t) => (
+          <TypeBadge key={t} type={t} />
+        ))}
+      </div>
+      {claimed && <span className="recruit-claim-tag">Claimed</span>}
+    </button>
+  );
+}
 
 const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
@@ -74,6 +123,16 @@ interface Props {
   teamStatModifiers?: StatModifiers;
   /** This node's gold reward on a win (docs/run-loop.md), precomputed by the caller — displayed only, the caller grants it in onResolved. */
   goldReward: number;
+  /** This node's Training Point reward on a win, precomputed by the caller (App.tsx handleSquadConfirmed) — displayed only, the caller grants it in onResolved. */
+  trainingPointsReward: number;
+  /**
+   * The guaranteed common-item drop from the run's opener Goblin fight, if
+   * this node is one (App.tsx handleSquadConfirmed) — rolled up front so the
+   * victory screen can spotlight the exact item that's coming. Null for
+   * every other node. Displayed only; the caller hands this same item off to
+   * ForceEquipScreen in onResolved.
+   */
+  equipmentReward: EquipmentDefinition | null;
   /**
    * Recruit Contract claim (docs/progression.md "raise-vs-recruit axis" —
    * src/run/recruitment.ts): "claim a beaten hero," offered off this node's
@@ -85,7 +144,18 @@ interface Props {
   onResolved: (outcome: 'win' | 'loss', finalState: CombatState) => void;
 }
 
-export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatModifiers, goldReward, onClaimContract, onResolved }: Props) {
+export function FightScreen({
+  playerRun,
+  playerSquad,
+  aiRun,
+  aiSquad,
+  teamStatModifiers,
+  goldReward,
+  trainingPointsReward,
+  equipmentReward,
+  onClaimContract,
+  onResolved,
+}: Props) {
   function buildInitialState(seed: number): CombatState {
     return buildCombatState(seed, allCombatants, equipment, [
       { side: PLAYER_SIDE, squad: playerSquad, roster: playerRun.roster, teamStatModifiers },
@@ -103,6 +173,10 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
   const [actionStep, setActionStep] = useState(0);
   const [claimedRosterIds, setClaimedRosterIds] = useState<string[]>([]);
   const [inspecting, setInspecting] = useState<string | null>(null);
+  /** Recruit Contract claim selection on the victory screen — a tap selects a card, the confirm button below the grid is what actually spends the contract. */
+  const [claimSelection, setClaimSelection] = useState<string | null>(null);
+  /** rosterId of the AI-side hero whose full stat/move sheet is open, via a recruit-claim card's long-press. */
+  const [claimPreviewRosterId, setClaimPreviewRosterId] = useState<string | null>(null);
 
   // Sequenced, tap-advanced round playback (docs/architecture.md "engine /
   // presentation separation"): `resolving` gates player input and the
@@ -422,7 +496,14 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
   }
 
   function handleClaimContract(entry: RosterEntry) {
-    if (onClaimContract(entry)) setClaimedRosterIds((prev) => [...prev, entry.rosterId]);
+    if (onClaimContract(entry)) {
+      setClaimedRosterIds((prev) => [...prev, entry.rosterId]);
+      setClaimSelection(null);
+    }
+  }
+
+  function handleSelectClaim(rosterId: string) {
+    setClaimSelection((prev) => (prev === rosterId ? null : rosterId));
   }
 
   function renderActiveSlot(side: Side, slot: 0 | 1) {
@@ -783,41 +864,121 @@ export function FightScreen({ playerRun, playerSquad, aiRun, aiSquad, teamStatMo
           );
         })()}
 
-      {winner && !resolving && (
-        <div className={`result-overlay ${winner === PLAYER_SIDE ? 'result-win' : 'result-loss'}`}>
-          <div className="result-panel">
-            <h2>{winner === PLAYER_SIDE ? 'Victory!' : 'Defeat'}</h2>
-            {winner === PLAYER_SIDE && goldReward > 0 && <p className="hint">+{goldReward}g</p>}
-            {winner === PLAYER_SIDE && aiRun.roster.some((entry) => isRecruitable(entry.heroId, heroes)) && (
-              <div className="contract-claims">
-                <div className="hint">
-                  Claim a Recruit Contract ({playerRun.recruitContracts} available):
-                </div>
-                <div className="contract-claims-grid">
-                  {aiRun.roster.filter((entry) => isRecruitable(entry.heroId, heroes)).map((entry) => {
-                    const claimed = claimedRosterIds.includes(entry.rosterId);
-                    const rosterFull = playerRun.roster.length >= ROSTER_CAP;
-                    const noContracts = playerRun.recruitContracts <= 0;
-                    return (
+      {winner &&
+        !resolving &&
+        (() => {
+          const recruitableEntries = aiRun.roster.filter((entry) => isRecruitable(entry.heroId, heroes));
+          const selectedClaimEntry = claimSelection ? (recruitableEntries.find((e) => e.rosterId === claimSelection) ?? null) : null;
+          const rosterFull = playerRun.roster.length >= ROSTER_CAP;
+          const noContracts = playerRun.recruitContracts <= 0;
+          const equipGrants = equipmentReward ? (Object.entries(equipmentReward.statGrants) as [StatKey, number][]) : [];
+
+          return (
+            <div className={`result-overlay ${winner === PLAYER_SIDE ? 'result-win' : 'result-loss'}`}>
+              <div className="result-panel">
+                <div className="result-glow" aria-hidden="true" />
+                <h2>{winner === PLAYER_SIDE ? 'Victory!' : 'Defeat'}</h2>
+
+                {winner === PLAYER_SIDE && (goldReward > 0 || trainingPointsReward > 0) && (
+                  <div className="result-rewards">
+                    {goldReward > 0 && (
+                      <div className="result-reward-chip">
+                        💰 <strong>+{goldReward}</strong>g
+                      </div>
+                    )}
+                    {trainingPointsReward > 0 && (
+                      <div className="result-reward-chip">
+                        📈 <strong>+{trainingPointsReward}</strong> Training
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {winner === PLAYER_SIDE && equipmentReward && (
+                  <div
+                    className="equip-spotlight result-equip-spotlight"
+                    style={{ '--rarity-color': RARITY_COLOR_VARS[equipmentReward.rarity] } as CSSProperties}
+                  >
+                    <div className="equip-spotlight-glow" aria-hidden="true" />
+                    <div className="equip-spotlight-header">
+                      <EquipmentIcon item={equipmentReward} slot={equipmentReward.slot} className="equip-spotlight-icon" />
+                      <div>
+                        <div className="equip-spotlight-name">{equipmentReward.name}</div>
+                        <div className="equip-spotlight-rarity">
+                          {RARITY_LABELS[equipmentReward.rarity]} · {EQUIP_SLOT_LABELS[equipmentReward.slot]}
+                        </div>
+                      </div>
+                    </div>
+                    {equipGrants.length > 0 && (
+                      <div className="detail-modifier-list">
+                        {equipGrants
+                          .filter(([, amount]) => amount)
+                          .map(([stat, amount]) => (
+                            <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
+                              {STAT_ICONS[stat]} {STAT_LABELS[stat]} {fmtGrant(amount)}
+                            </span>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {winner === PLAYER_SIDE && recruitableEntries.length > 0 && (
+                  <div className="recruit-claims">
+                    <div className="hint">📜 Recruit Contracts available: {playerRun.recruitContracts}</div>
+                    <div className="recruit-claims-grid">
+                      {recruitableEntries.map((entry) => {
+                        const claimed = claimedRosterIds.includes(entry.rosterId);
+                        return (
+                          <RecruitClaimCard
+                            key={entry.rosterId}
+                            hero={heroes[entry.heroId]}
+                            selected={claimSelection === entry.rosterId}
+                            claimed={claimed}
+                            onSelect={() => handleSelectClaim(entry.rosterId)}
+                            onInspect={() => setClaimPreviewRosterId(entry.rosterId)}
+                          />
+                        );
+                      })}
+                    </div>
+                    <div className="recruit-claims-hint">Tap a hero to select, hold to inspect their stats</div>
+                    {selectedClaimEntry && (
                       <button
-                        key={entry.rosterId}
-                        className="move-button"
-                        disabled={claimed || rosterFull || noContracts}
-                        onClick={() => handleClaimContract(entry)}
+                        className="resolve-button recruit-claim-confirm"
+                        disabled={rosterFull || noContracts}
+                        onClick={() => handleClaimContract(selectedClaimEntry)}
                       >
-                        {claimed ? `${heroes[entry.heroId].name} (claimed)` : `Claim ${heroes[entry.heroId].name}`}
+                        {rosterFull
+                          ? 'Roster Full'
+                          : noContracts
+                            ? 'No Contracts Left'
+                            : `Claim ${heroes[selectedClaimEntry.heroId].name} — 1 Contract`}
                       </button>
-                    );
-                  })}
+                    )}
+                  </div>
+                )}
+
+                <div className="result-buttons">
+                  <button onClick={() => onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat)}>Continue</button>
                 </div>
               </div>
-            )}
-            <div className="result-buttons">
-              <button onClick={() => onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat)}>Continue</button>
+
+              {claimPreviewRosterId &&
+                (() => {
+                  const entry = aiRun.roster.find((r) => r.rosterId === claimPreviewRosterId);
+                  if (!entry) return null;
+                  return (
+                    <HeroPreviewOverlay
+                      hero={heroes[entry.heroId]}
+                      entry={entry}
+                      equipmentLookup={equipment}
+                      onClose={() => setClaimPreviewRosterId(null)}
+                    />
+                  );
+                })()}
             </div>
-          </div>
-        </div>
-      )}
+          );
+        })()}
     </>
   );
 }

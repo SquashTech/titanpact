@@ -15,7 +15,7 @@ import { heroes } from '../data/heroes';
 import { enemies } from '../data/enemies';
 import { relics } from '../data/relics';
 import { equipment } from '../data/equipment';
-import { equipItem, pickWeightedEquipmentBySlot, type EquipmentSlot } from '../run/equipment';
+import { equipItem, pickWeightedEquipmentBySlot, type EquipmentDefinition, type EquipmentSlot } from '../run/equipment';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP, TOTAL_ACTS } from '../run/state';
 import { deriveContractOffer, claimContract, isRecruitable } from '../run/recruitment';
 import { guildHallOffers } from '../data/recruitment';
@@ -34,7 +34,17 @@ type Screen =
   | { kind: 'draft'; optionIds: string[] }
   | { kind: 'map' }
   | { kind: 'squadSelect'; nodeId: string; nodeType: EncounterNodeType; encounter: Encounter }
-  | { kind: 'fight'; nodeId: string; nodeType: EncounterNodeType; squad: Squad; encounter: Encounter; goldReward: number }
+  | {
+      kind: 'fight';
+      nodeId: string;
+      nodeType: EncounterNodeType;
+      squad: Squad;
+      encounter: Encounter;
+      goldReward: number;
+      trainingPointsReward: number;
+      /** The opener Goblin fight's guaranteed common-item drop (see handleFightResolved), rolled up front at squad-confirm time so the victory screen can spotlight it — same value handleFightResolved then hands to ForceEquipScreen, rather than re-rolling after the fact. */
+      equipmentReward: EquipmentDefinition | null;
+    }
   | { kind: 'quickBattle'; player: Encounter; ai: Encounter }
   /** `offers` is rolled once at node-select time (run/shop.ts rollGuildHallOffers) rather than inside GuildHallPanel's own state — see shop.ts's header for why a component-local roll would reroll on every equipment purchase. */
   | { kind: 'shop'; nodeId: string; offers: GuildHallOffers }
@@ -265,24 +275,44 @@ export function App() {
   }
 
   function handleSquadConfirmed(squad: Squad, nodeId: string, nodeType: EncounterNodeType, encounter: Encounter) {
-    setScreen({ kind: 'fight', nodeId, nodeType, squad, encounter, goldReward: goldRewardFor(nodeType) });
-  }
-
-  function handleFightResolved(nodeId: string, nodeType: EncounterNodeType, goldReward: number, outcome: 'win' | 'loss') {
-    if (outcome === 'loss') {
-      setScreen({ kind: 'runFailed' });
-      return;
-    }
     // The `fight` node (docs/run-loop.md "fight vs skirmish" — always row 0,
     // the act's opening Goblin fight) always grants one random piece of
     // Common gear, on top of the normal gold/training-point rewards — an
     // early, guaranteed taste of the equip loop rather than leaving it to the
-    // reward-node economy's luck.
+    // reward-node economy's luck. Rolled here, before the fight even starts,
+    // so the victory screen can spotlight the exact item that's coming —
+    // handleFightResolved below reuses this same value instead of re-rolling.
     const isGoblinFight = playerRun.map!.nodes[nodeId].type === 'fight';
+    const commonPool = Object.values(equipment).filter((item) => item.rarity === 'common');
+    const equipmentReward = isGoblinFight ? (commonPool[Math.floor(Math.random() * commonPool.length)] ?? null) : null;
+    setScreen({
+      kind: 'fight',
+      nodeId,
+      nodeType,
+      squad,
+      encounter,
+      goldReward: goldRewardFor(nodeType),
+      trainingPointsReward: trainingPointsFor(nodeType),
+      equipmentReward,
+    });
+  }
+
+  function handleFightResolved(
+    nodeId: string,
+    nodeType: EncounterNodeType,
+    goldReward: number,
+    trainingPointsReward: number,
+    equipmentReward: EquipmentDefinition | null,
+    outcome: 'win' | 'loss'
+  ) {
+    if (outcome === 'loss') {
+      setScreen({ kind: 'runFailed' });
+      return;
+    }
     const isBossNode = nodeId === playerRun.map!.bossNodeId;
 
     let next = grantCurrencyReward(playerRun, goldReward);
-    next = grantUpgradeReward(next, trainingPointsFor(nodeType));
+    next = grantUpgradeReward(next, trainingPointsReward);
     next = advanceToNode(next, nodeId);
 
     // End of act (docs/run-loop.md "Multi-act sequencing"): a Recruit
@@ -305,13 +335,7 @@ export function App() {
     setPlayerRun(next);
     const afterLevelUp: Screen = next.levelUpPool > 0 ? { kind: 'levelUp', next: afterScreen } : afterScreen;
 
-    if (isGoblinFight) {
-      const commonPool = Object.values(equipment).filter((item) => item.rarity === 'common');
-      const itemId = commonPool[Math.floor(Math.random() * commonPool.length)]?.id;
-      setScreen(itemId ? { kind: 'forceEquip', queue: [itemId], next: afterLevelUp } : afterLevelUp);
-    } else {
-      setScreen(afterLevelUp);
-    }
+    setScreen(equipmentReward ? { kind: 'forceEquip', queue: [equipmentReward.id], next: afterLevelUp } : afterLevelUp);
   }
 
   function handleNodeContinue(nodeId: string) {
@@ -426,8 +450,12 @@ export function App() {
           aiSquad={screen.encounter.squad}
           teamStatModifiers={relicTeamStatModifiers(playerRun.relics, relics)}
           goldReward={screen.goldReward}
+          trainingPointsReward={screen.trainingPointsReward}
+          equipmentReward={screen.equipmentReward}
           onClaimContract={handleClaimContract}
-          onResolved={(outcome) => handleFightResolved(screen.nodeId, screen.nodeType, screen.goldReward, outcome)}
+          onResolved={(outcome) =>
+            handleFightResolved(screen.nodeId, screen.nodeType, screen.goldReward, screen.trainingPointsReward, screen.equipmentReward, outcome)
+          }
         />
       )}
 
@@ -438,6 +466,8 @@ export function App() {
           aiRun={screen.ai.run}
           aiSquad={screen.ai.squad}
           goldReward={0}
+          trainingPointsReward={0}
+          equipmentReward={null}
           onClaimContract={() => false}
           onResolved={() => setScreen({ kind: 'title' })}
         />
