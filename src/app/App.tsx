@@ -11,6 +11,7 @@ import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { ForceEquipScreen } from '../view/run/ForceEquipScreen';
 import { StatBoostScreen, type StatBoostNodeType } from '../view/run/StatBoostScreen';
 import { EventNodeScreen } from '../view/run/EventNodeScreen';
+import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
 import { heroes } from '../data/heroes';
 import { enemies } from '../data/enemies';
 import { relics } from '../data/relics';
@@ -27,6 +28,8 @@ import { pickSquad } from '../run/squad';
 import { relicTeamStatModifiers } from '../run/relics';
 import { relicTeamPassiveGrants } from '../run/passives';
 import { advanceToNode, advanceToNextAct, grantCurrencyReward, grantUpgradeReward, grantContractReward } from '../run/runProgress';
+import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
+import { progressionTable } from '../data/progression';
 import type { RunState, RosterEntry } from '../run/state';
 import type { Squad } from '../run/squad';
 
@@ -47,6 +50,9 @@ type Screen =
       equipmentReward: EquipmentDefinition | null;
     }
   | { kind: 'quickBattle'; player: Encounter; ai: Encounter }
+  | { kind: 'sandboxBattle' }
+  /** Built from a SandboxBattleScreen config (src/run/sandbox.ts) — `playerRelics` drives Side A's team relic modifiers, same props the real 'fight' kind already uses; Sandbox Battle has no enemy-side relic support. */
+  | { kind: 'sandboxFight'; player: Encounter; ai: Encounter; playerRelics: string[] }
   /** `offers` is rolled once at node-select time (run/shop.ts rollGuildHallOffers) rather than inside GuildHallPanel's own state — see shop.ts's header for why a component-local roll would reroll on every equipment purchase. */
   | { kind: 'shop'; nodeId: string; offers: GuildHallOffers }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
@@ -201,6 +207,17 @@ export function App() {
   const [playerRun, setPlayerRun] = useState<RunState>(() => createRunState(0, 40));
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
   const shellRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Sandbox Battle's team configs, owned here rather than inside
+   * SandboxBattleScreen — App.tsx unmounts that screen while a sandbox fight
+   * is in progress (swapping to the 'sandboxFight' screen kind), so
+   * component-local state would be lost the instant "Start Fight" is
+   * pressed. Living here lets a config survive the round trip through
+   * FightScreen and back, which is the whole point of the tool.
+   */
+  const [sandboxSideA, setSandboxSideA] = useState<SandboxSideConfig>(() => createEmptySandboxSide());
+  const [sandboxSideB, setSandboxSideB] = useState<SandboxSideConfig>(() => createEmptySandboxSide());
 
   useEffect(() => {
     if (shellRef.current) return initUiScale(shellRef.current);
@@ -420,14 +437,58 @@ export function App() {
     setScreen({ kind: 'quickBattle', player, ai });
   }
 
+  function handleOpenSandbox() {
+    setScreen({ kind: 'sandboxBattle' });
+  }
+
+  /**
+   * Builds both sides via buildSandboxSide (src/run/sandbox.ts) and drops
+   * straight into FightScreen. Unlike Quick Battle, onResolved below returns
+   * to the Sandbox Battle screen (not title) — the whole point of this tool
+   * is tweak-and-rerun without losing the configuration just tested.
+   */
+  function handleSandboxFight(a: SandboxSideConfig, b: SandboxSideConfig) {
+    const player = buildSandboxSide(a, heroes, progressionTable);
+    const ai = buildSandboxSide(b, heroes, progressionTable);
+    setScreen({ kind: 'sandboxFight', player, ai, playerRelics: a.relicIds });
+  }
+
   return (
     <div className="app-shell" ref={shellRef}>
       {screen.kind === 'title' && (
         <TitleScreen
           onStartRun={handleStartNewRun}
           onQuickBattle={handleQuickBattle}
+          onOpenSandbox={handleOpenSandbox}
           onStartLevel4TestRun={handleStartLevel4TestRun}
           onStartConditionsTest={handleStartConditionsTest}
+        />
+      )}
+
+      {screen.kind === 'sandboxBattle' && (
+        <SandboxBattleScreen
+          sideA={sandboxSideA}
+          sideB={sandboxSideB}
+          onChangeSideA={setSandboxSideA}
+          onChangeSideB={setSandboxSideB}
+          onStartFight={handleSandboxFight}
+          onClose={() => setScreen({ kind: 'title' })}
+        />
+      )}
+
+      {screen.kind === 'sandboxFight' && (
+        <FightScreen
+          playerRun={screen.player.run}
+          playerSquad={screen.player.squad}
+          aiRun={screen.ai.run}
+          aiSquad={screen.ai.squad}
+          teamStatModifiers={relicTeamStatModifiers(screen.playerRelics, relics)}
+          teamPassiveGrants={relicTeamPassiveGrants(screen.playerRelics, relics)}
+          goldReward={0}
+          trainingPointsReward={0}
+          equipmentReward={null}
+          onClaimContract={() => false}
+          onResolved={() => setScreen({ kind: 'sandboxBattle' })}
         />
       )}
 

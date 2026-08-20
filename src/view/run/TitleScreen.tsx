@@ -5,6 +5,8 @@ import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 interface Props {
   onStartRun: () => void;
   onQuickBattle: () => void;
+  /** Opens SandboxBattleScreen — a permanent team-builder tool, not a temp dev shortcut like the two below. */
+  onOpenSandbox: () => void;
   /** ⚠️ TEMPORARY DEV/TEST — see App.tsx createLevel4TestRun. Remove this prop and its button together when Evolution work no longer needs a fast-forward. */
   onStartLevel4TestRun: () => void;
   /** ⚠️ TEMPORARY DEV/TEST — see App.tsx createConditionsTestEncounter. Remove this prop and its button together once Conduct/Poison/Haunt/Stealth no longer need a dedicated browser playtest. */
@@ -18,7 +20,7 @@ interface Props {
  * "Compendium" opens a read-only hero browser (CompendiumScreen) — no run
  * state involved, so it's toggled locally rather than routed through App.tsx.
  */
-export function TitleScreen({ onStartRun, onQuickBattle, onStartLevel4TestRun, onStartConditionsTest }: Props) {
+export function TitleScreen({ onStartRun, onQuickBattle, onOpenSandbox, onStartLevel4TestRun, onStartConditionsTest }: Props) {
   const [showCompendium, setShowCompendium] = useState(false);
   const [showReference, setShowReference] = useState(false);
 
@@ -31,6 +33,9 @@ export function TitleScreen({ onStartRun, onQuickBattle, onStartLevel4TestRun, o
         </button>
         <button className="title-secondary-button" onClick={onQuickBattle}>
           Quick Battle
+        </button>
+        <button className="title-secondary-button" onClick={onOpenSandbox}>
+          Sandbox Battle
         </button>
         <button className="title-secondary-button" onClick={() => setShowCompendium(true)}>
           Compendium
