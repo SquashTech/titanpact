@@ -27,7 +27,7 @@ import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
 import { getTypeColor } from './typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
-import { CategoryBadge, useLongPress } from '../shared/MoveTile';
+import { CategoryBadge, MoveKindBadge, KIND_LABELS, useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
@@ -393,6 +393,19 @@ export function FightScreen({
   }
 
   /**
+   * Word readout for the targeting panel (CombatantCard's `effBadge`) —
+   * spells out the matchup instead of making the player do 2×/0.5× math
+   * mid-tap. Neutral (1×) intentionally has no label; callers should omit
+   * the badge entirely rather than render this for mult === 1.
+   */
+  function effLabel(mult: number): string {
+    if (mult >= 4) return 'Extremely Effective!';
+    if (mult > 1) return 'Super Effective!';
+    if (mult <= TYPE_MULT_FLOOR) return 'Extremely Ineffective';
+    return 'Ineffective';
+  }
+
+  /**
    * Dual-type stacking (CLAUDE.md "TypeMult stacks multiplicatively") means a
    * defender weak to a move on both its types takes 4× rather than the 2× a
    * single-type matchup caps out at, and the reverse for a double-resist —
@@ -675,7 +688,7 @@ export function FightScreen({
                           targetable={!spread}
                           onSelectTarget={spread ? undefined : () => handleTargetClick(tid)}
                           popup={popups[tid]}
-                          effBadge={{ text: formatMult(mult), className: multClass(mult) }}
+                          effBadge={mult === 1 ? null : { text: effLabel(mult), className: multClass(mult) }}
                         />
                       );
                     })}
@@ -768,6 +781,11 @@ export function FightScreen({
                               <strong>{move.basePower}</strong>BP
                             </span>
                           )}
+                          {move.kind === 'heal' && move.healAmount != null && (
+                            <span className="move-power move-heal">
+                              <strong>{move.healAmount}</strong>HEAL
+                            </span>
+                          )}
                           {hasStab && <span className="move-stab">STAB</span>}
                         </div>
                         <div className="move-row-bottom">
@@ -781,7 +799,7 @@ export function FightScreen({
                               );
                             })}
                           </div>
-                          <CategoryBadge category={move.category} />
+                          <MoveKindBadge move={move} />
                         </div>
                       </button>
                     );
@@ -886,9 +904,15 @@ export function FightScreen({
                 <div className="move-popup-meta">
                   <TypeBadge type={move.type} />
                   <CategoryBadge category={move.category} />
+                  <span className="move-popup-kind">{KIND_LABELS[move.kind] ?? move.kind}</span>
                   {move.kind === 'damage' && move.basePower != null && (
                     <span className="move-power">
                       <strong>{move.basePower}</strong>BP
+                    </span>
+                  )}
+                  {move.kind === 'heal' && move.healAmount != null && (
+                    <span className="move-power move-heal">
+                      <strong>{move.healAmount}</strong>HEAL
                     </span>
                   )}
                   {hasStab && <span className="move-stab">STAB</span>}

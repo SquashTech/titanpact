@@ -84,6 +84,33 @@ export function CategoryBadge({ category }: { category: MoveDefinition['category
   return <span className={`category-badge category-${category}`}>{CATEGORY_LABELS[category]}</span>;
 }
 
+const CATEGORY_EMOJI: Record<MoveDefinition['category'], string> = { physical: '⚔️', magical: '🔮' };
+const KIND_EMOJI: Record<MoveDefinition['kind'], string> = { damage: '', heal: '💚', buff: '🛡️' };
+
+/**
+ * Compact glyph for the always-visible move button (FightScreen's move grid)
+ * — replaces CategoryBadge's PHY/MAG text there. Category (physical/magical)
+ * only matters for `kind: 'damage'` moves (resolveRound.ts reads it for the
+ * stat ratio; heal/buff moves ignore it entirely), so showing PHY/MAG on a
+ * heal or buff was decorative noise that also failed to say "this doesn't
+ * attack." Damage moves keep the category glyph; heal/buff moves show their
+ * kind instead, so attacks and non-attacks read apart at a glance. The
+ * long-press move popup still spells the full PHY/MAG + Damage/Heal/Buff
+ * text out via CategoryBadge + KIND_LABELS for anyone unsure what a glyph
+ * means.
+ */
+export function MoveKindBadge({ move }: { move: MoveDefinition }) {
+  const isDamage = move.kind === 'damage';
+  const emoji = isDamage ? CATEGORY_EMOJI[move.category] : KIND_EMOJI[move.kind];
+  const tierClass = isDamage ? `category-${move.category}` : `kind-${move.kind}`;
+  const title = isDamage ? CATEGORY_LABELS[move.category] : KIND_LABELS[move.kind];
+  return (
+    <span className={`category-badge move-kind-badge ${tierClass}`} title={title}>
+      {emoji}
+    </span>
+  );
+}
+
 /**
  * Uniform move tile — just the name, type shown as a colored left edge
  * (matching the border-left type coding used elsewhere in this app, e.g. the

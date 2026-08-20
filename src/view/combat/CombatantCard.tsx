@@ -139,6 +139,10 @@ export function CombatantCard({
   if (selected) classes.push('selected');
   if (locked) classes.push('locked');
   if (acting) classes.push('acting');
+  // Retints the .targetable glow (styles.css) to match the effectiveness
+  // tier so the enemy box itself reads as "great target" / "bad target" at
+  // a glance, not just the text badge inside it.
+  if (effBadge) classes.push(effBadge.className);
   // Keyed fresh with the popup so the flash restarts even if the same status
   // ticks/detonates twice in a row.
   if (popup && POPUP_FLASH_CLASS[popup.className]) classes.push(POPUP_FLASH_CLASS[popup.className]);

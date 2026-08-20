@@ -22,6 +22,7 @@
   --haunt: #7a5fc4;
   --physical: #d9724a;
   --magical: #8b7fe0;
+  --buff: #3fb8af;
   /* Equipment rarity tiers — gray/blue/purple/gold/red, common through mythic (run/equipment.ts EquipmentRarity, view/shared/EquipmentBox.tsx RARITY_COLOR_VARS). */
   --tier-common: #9aa0ab;
   --tier-rare: #4a90d9;
@@ -450,6 +451,27 @@ body {
   }
 }
 
+/* Retint the targeting glow by effectiveness tier (CombatantCard adds the
+   eff-* class alongside .targetable whenever the bottom targeting panel has
+   a matchup badge to show) — green toward "great target", red toward "bad
+   target", quad tiers pushed more saturated so they read as the bigger deal
+   they are, same intensity relationship as the .eff-chip badge colors. */
+.combatant-card.targetable.eff-super::after {
+  background: radial-gradient(ellipse 90% 70% at 50% 38%, rgba(76, 175, 106, 0.4) 0%, rgba(76, 175, 106, 0.16) 48%, rgba(76, 175, 106, 0) 78%);
+}
+
+.combatant-card.targetable.eff-quad-super::after {
+  background: radial-gradient(ellipse 90% 70% at 50% 38%, rgba(76, 175, 106, 0.6) 0%, rgba(76, 175, 106, 0.24) 48%, rgba(76, 175, 106, 0) 78%);
+}
+
+.combatant-card.targetable.eff-resist::after {
+  background: radial-gradient(ellipse 90% 70% at 50% 38%, rgba(217, 83, 79, 0.36) 0%, rgba(217, 83, 79, 0.14) 48%, rgba(217, 83, 79, 0) 78%);
+}
+
+.combatant-card.targetable.eff-quad-resist::after {
+  background: radial-gradient(ellipse 90% 70% at 50% 38%, rgba(217, 83, 79, 0.55) 0%, rgba(217, 83, 79, 0.22) 48%, rgba(217, 83, 79, 0) 78%);
+}
+
 .combatant-card.selected {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px rgba(224, 166, 60, 0.3) inset, 0 2px 6px rgba(0, 0, 0, 0.25);
@@ -568,6 +590,25 @@ body {
 
 .category-badge.category-magical {
   color: var(--magical);
+}
+
+.category-badge.kind-heal {
+  color: var(--hp-high);
+}
+
+.category-badge.kind-buff {
+  color: var(--buff);
+}
+
+/* MoveKindBadge's glyph (FightScreen's move grid) is an emoji, not
+   letter-spaced text, so it needs its own sizing rather than inheriting
+   .category-badge's PHY/MAG-tuned metrics. */
+.move-kind-badge {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: normal;
+  padding: 0 4px;
+  line-height: 1.5;
 }
 
 /* Default: invisible in the box tree, so HP/MP render exactly as if
@@ -1613,6 +1654,10 @@ body {
   margin-right: 1px;
 }
 
+.move-power.move-heal {
+  color: var(--hp-high);
+}
+
 .move-stab {
   color: var(--accent);
   font-weight: 700;
@@ -1685,8 +1730,12 @@ body {
 }
 
 .eff-badge-row .eff-chip {
-  font-size: 11px;
+  display: inline-block;
+  font-size: 10px;
+  line-height: 1.25;
   padding: 2px 6px;
+  text-align: center;
+  white-space: normal;
 }
 
 /* Mana cost is the primary balance lever (CLAUDE.md) and the number players
@@ -1789,6 +1838,16 @@ body {
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+}
+
+/* Spells out damage/heal/buff in words (KIND_LABELS) next to the PHY/MAG
+   CategoryBadge — the long-press popup's full-text counterpart to the move
+   grid's compact MoveKindBadge glyph. */
+.move-popup-kind {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .move-popup-description {
