@@ -271,7 +271,16 @@ export function App() {
       if (encounterKind === 'fight') {
         setPlayerRun((run) => ({ ...run, fightsStarted: run.fightsStarted + 1 }));
       }
-      setScreen({ kind: 'squadSelect', nodeId, nodeType: encounterKind, encounter });
+      // With 2 or fewer heroes on the roster, the whole roster is mandatory
+      // and starts active — there's no bench/active split to decide, so the
+      // battle-preview screen (SquadSelectScreen) would just be a forced,
+      // decision-free tap. Skip straight into the fight with the full roster.
+      if (playerRun.roster.length <= 2) {
+        const squad = pickSquad(playerRun.roster, playerRun.roster.map((r) => r.rosterId));
+        handleSquadConfirmed(squad, nodeId, encounterKind, encounter);
+      } else {
+        setScreen({ kind: 'squadSelect', nodeId, nodeType: encounterKind, encounter });
+      }
     } else if (node.type === 'shop') {
       setScreen({ kind: 'shop', nodeId, offers: rollGuildHallOffers(playerRun, guildHallOffers, Object.values(equipment), Object.values(relics)) });
     } else if (node.type === 'weaponReward' || node.type === 'armorReward' || node.type === 'accessoryReward') {

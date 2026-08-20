@@ -2891,12 +2891,6 @@ body {
   font-weight: 700;
 }
 
-.roster-card-equip {
-  font-size: 10px;
-  color: var(--mana);
-  margin-top: 4px;
-}
-
 .roster-card-badge {
   position: absolute;
   top: 8px;

@@ -96,7 +96,6 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
               const hero = heroes[entry.heroId];
               const pickIndex = pickedIds.indexOf(entry.rosterId);
               const picked = pickIndex !== -1;
-              const equippedCount = Object.values(entry.equipment).filter(Boolean).length;
               return (
                 <div
                   key={entry.rosterId}
@@ -125,11 +124,6 @@ export function SquadSelectScreen({ run, encounter, onConfirm }: Props) {
                       <TypeBadge key={t} type={t} />
                     ))}
                   </div>
-                  {equippedCount > 0 && (
-                    <div className="roster-card-equip">
-                      {equippedCount} item{equippedCount > 1 ? 's' : ''} equipped
-                    </div>
-                  )}
                   {picked && <span className="roster-card-badge badge-ally">{pickIndex < 2 ? 'ACTIVE' : 'BENCH'}</span>}
                 </div>
               );
