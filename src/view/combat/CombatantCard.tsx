@@ -49,6 +49,8 @@ interface Props {
   locked?: boolean;
   /** This is the player combatant whose move panel is currently on screen (FightScreen) — a pulsing glow replaces the old "X's move" text label, so the cue costs no vertical space. */
   acting?: boolean;
+  /** Type-effectiveness readout for the move currently being targeted (FightScreen's bottom targeting panel) — the multiplier of that move against THIS card's hero, so the matchup is visible right where the player commits to a target instead of only back in the move grid. `className` is one of the eff-chip tier classes (FightScreen's multClass): eff-quad-super/eff-super/eff-neutral/eff-resist/eff-quad-resist. */
+  effBadge?: { text: string; className: string } | null;
 }
 
 /**
@@ -109,7 +111,19 @@ function StatModBadge({ stat, mod }: { stat: StatKey; mod: number }) {
   );
 }
 
-export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onInspect, popup, selected, switchingIn, locked, acting }: Props) {
+export function CombatantCard({
+  hero,
+  combatant,
+  targetable,
+  onSelectTarget,
+  onInspect,
+  popup,
+  selected,
+  switchingIn,
+  locked,
+  acting,
+  effBadge,
+}: Props) {
   const [inspectingStatus, setInspectingStatus] = useState<string | null>(null);
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
@@ -177,6 +191,16 @@ export function CombatantCard({ hero, combatant, targetable, onSelectTarget, onI
           ))}
         </span>
       </div>
+      {/* The move-being-targeted's effectiveness against THIS card's hero
+          (FightScreen's bottom targeting panel) — a full row of its own,
+          not a corner overlay, so it can't collide with the stat-mod
+          corners or get clipped behind the HP/MP bars on the panel's
+          compact cards. */}
+      {effBadge && (
+        <div className="eff-badge-row">
+          <span className={`eff-chip ${effBadge.className}`}>{effBadge.text}</span>
+        </div>
+      )}
       {/* Always rendered, even with no active statuses — reserves a fixed row of
           vertical space so a status landing mid-fight doesn't grow the card and
           shove the rest of the battlefield around (docs/architecture.md

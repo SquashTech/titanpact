@@ -12,8 +12,8 @@ import { resolveRound } from '../../engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../engine/combat/switching';
 import type { Action } from '../../engine/combat/actions';
 import type { CombatEvent } from '../../engine/events';
-import type { HeroDefinition, MoveDefinition, PassiveId, StatKey } from '../../engine/content';
-import { resolveStab, resolveTypeMult } from '../../engine/damage/typeMult';
+import type { HeroDefinition, MoveDefinition, PassiveId, StatKey, TargetMode } from '../../engine/content';
+import { resolveStab, resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
 import type { RunState, RosterEntry } from '../../run/state';
 import { ROSTER_CAP } from '../../run/state';
 import type { Squad } from '../../run/squad';
@@ -307,6 +307,29 @@ export function FightScreen({
     commitAction(selecting.combatantId, { kind: 'move', moveId: selecting.move.id, declaredTarget: targetId });
   }
 
+  /** Fixed-group moves (bothEnemies/bothAllies/allOthers) have no target to choose — resolveTargets ignores declaredTarget for these — so the bottom targeting panel's Confirm button just commits the move as-is. */
+  function handleConfirmSpread() {
+    if (!selecting) return;
+    commitAction(selecting.combatantId, { kind: 'move', moveId: selecting.move.id, declaredTarget: null });
+  }
+
+  function isSpreadTarget(mode: TargetMode): boolean {
+    return mode === 'bothEnemies' || mode === 'bothAllies' || mode === 'allOthers';
+  }
+
+  function spreadTargetLabel(mode: TargetMode): string {
+    switch (mode) {
+      case 'bothEnemies':
+        return 'both enemies';
+      case 'bothAllies':
+        return 'both allies';
+      case 'allOthers':
+        return 'everyone else';
+      default:
+        return 'target';
+    }
+  }
+
   function handleSwitchClick(combatantId: string, benchedCombatantId: string) {
     commitAction(combatantId, { kind: 'switch', benchedCombatantId });
   }
@@ -369,10 +392,20 @@ export function FightScreen({
     return `${Math.round(mult * 100) / 100}×`;
   }
 
+  /**
+   * Dual-type stacking (CLAUDE.md "TypeMult stacks multiplicatively") means a
+   * defender weak to a move on both its types takes 4× rather than the 2× a
+   * single-type matchup caps out at, and the reverse for a double-resist —
+   * floored at TYPE_MULT_FLOOR (0.25) rather than going lower still. Two extra
+   * tiers on top of the plain super/resist split so those matchups read as
+   * distinctly bigger deals, not just "a bit more of the same color."
+   */
   function multClass(mult: number): string {
+    if (mult >= 4) return 'eff-quad-super';
     if (mult > 1) return 'eff-super';
-    if (mult < 1) return 'eff-resist';
-    return 'eff-neutral';
+    if (mult === 1) return 'eff-neutral';
+    if (mult <= TYPE_MULT_FLOOR) return 'eff-quad-resist';
+    return 'eff-resist';
   }
 
   function resolveRoundWith(pendingMap: Record<string, PendingAction>) {
@@ -603,6 +636,59 @@ export function FightScreen({
             const entry = entryFor(playerRun.roster, id);
             const hero = allCombatants[combat.combatants[id].heroId];
             const combatant = combat.combatants[id];
+
+            // Move chosen, target not yet declared: swap the move grid for a
+            // bottom-anchored targeting panel instead of relying on the
+            // battlefield cards up top — on mobile that's a long thumb
+            // reach from the move buttons down here. The gold `.targetable`
+            // glow on the battlefield cards (targetableIds, above) still
+            // applies in parallel, so either tap path works. Fixed-group
+            // moves (bothEnemies/bothAllies/allOthers) have nothing to pick
+            // between, so their cards are shown for information only and a
+            // single Confirm button commits; single-target moves render
+            // each legal target as its own tappable card, which collapses
+            // to one card — a de facto confirm button — whenever only one
+            // target is legal (self-target moves, or a singleAlly/singleEnemy
+            // move with only one candidate left standing).
+            if (selecting && selecting.combatantId === id) {
+              const { move } = selecting;
+              const spread = isSpreadTarget(move.target);
+              return (
+                <div className="action-panel target-panel" key={`${id}-targeting`}>
+                  <div className="target-panel-header">
+                    <button className="target-back-button" onClick={() => setSelecting(null)}>
+                      ← Back
+                    </button>
+                    <span className="target-panel-move-name">{move.name}</span>
+                    <TypeBadge type={move.type} />
+                  </div>
+                  <div className="target-row">
+                    {targetableIds.map((tid) => {
+                      const tHero = allCombatants[combat.combatants[tid].heroId];
+                      const tCombatant = combat.combatants[tid];
+                      const mult = effectivenessAgainst(move, tid);
+                      return (
+                        <CombatantCard
+                          key={tid}
+                          hero={tHero}
+                          combatant={tCombatant}
+                          targetable={!spread}
+                          onSelectTarget={spread ? undefined : () => handleTargetClick(tid)}
+                          popup={popups[tid]}
+                          effBadge={{ text: formatMult(mult), className: multClass(mult) }}
+                        />
+                      );
+                    })}
+                  </div>
+                  {spread && (
+                    <button className="target-confirm-button" onClick={handleConfirmSpread}>
+                      Confirm — hits {spreadTargetLabel(move.target)}
+                    </button>
+                  )}
+                </div>
+              );
+            }
+
             // Softlock fallback (CLAUDE.md "Mana & tempo"): none of this
             // hero's unlocked moves are currently affordable. Rest replaces
             // the (all-disabled) move grid entirely — Switch stays available
