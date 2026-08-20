@@ -6,7 +6,7 @@
 // PassiveDefinition, engine/combat/passiveEngine.ts) — `grantsPassiveIds`
 // below is relics' side of that wiring, applied team-wide like statGrants.
 
-import type { PassiveId, StatKey } from '../engine/content';
+import type { PassiveId, StatKey, StatusGrant } from '../engine/content';
 import { isValidFlatStatGrant } from '../engine/content';
 import type { StatModifiers } from '../engine/state';
 import { mergeStatMods } from './statMods';
@@ -19,6 +19,8 @@ export interface RelicDefinition {
   statGrants: Partial<Record<StatKey, number>>;
   /** Passives (engine/content.ts PassiveDefinition, src/data/passives.ts) this relic grants to every combatant on the owning side while owned. Optional/omitted for plain stat-only relics. */
   grantsPassiveIds?: readonly PassiveId[];
+  /** Persistent magnitude-shape statuses (currently Elemental Force — src/data/statuses.ts) this relic grants to every combatant on the owning side for the whole fight, applied team-wide like statGrants (src/run/statusGrants.ts, buildCombatState.ts). Optional/omitted for relics that don't grant one. */
+  grantsStatusIds?: readonly StatusGrant[];
 }
 
 export function isValidRelicDefinition(relic: RelicDefinition): boolean {

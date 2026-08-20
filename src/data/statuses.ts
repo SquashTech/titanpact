@@ -4,8 +4,35 @@
 // than special-casing each status by name. Replaces the earlier 8-status
 // catalog: Bind, Blight, and Expose were cut in design review; Conduct,
 // Poison, Haunt, and Stealth replace them.
+//
+// Elemental Force: one magnitude-shape status per type (`${Type}Force`,
+// generated below from typechart.ts's TYPES rather than hand-authored 15
+// times), adding its magnitude as flat BasePower to that type's moves
+// (damagePipeline.ts resolveElementalForceBonus). Granted via a move's
+// statusApplication (self-target, additive stacking — no new engine plumbing
+// needed there), or via equipment/relics at fight-build time
+// (src/run/statusGrants.ts). Persistent (no decay, doesn't clear on switch)
+// and positive (Cleanse can't strip it) since it's meant to represent a
+// standing investment, not an acute buff.
 
 import type { StatusDefinition } from '../engine/content';
+import { TYPES, type TitanpactType } from './typechart';
+
+function elementalForceStatus(type: TitanpactType): StatusDefinition {
+  return {
+    id: `${type}Force`,
+    name: `${type} Force`,
+    shape: 'magnitude',
+    ticksAtEndOfRound: false,
+    decay: 'none',
+    stacking: 'additive',
+    clearsOnSwitch: false,
+    positive: true,
+    forceType: type,
+    pipeline: 'basePower',
+    description: `Adds its magnitude as flat Base Power to every ${type}-type move this hero uses.`,
+  };
+}
 
 export const statuses: Record<string, StatusDefinition> = {
   Burn: {
@@ -121,4 +148,5 @@ export const statuses: Record<string, StatusDefinition> = {
     description:
       "Hero cannot be the target of an attack. If Stealth is applied mid-round, attacks targeting this are redirected to this hero's partner. Spread moves still land. Both active heroes can never be Stealthed at the same time — a second Stealth fizzles while the other is still active and Stealthed.",
   },
+  ...Object.fromEntries(TYPES.map((type) => [`${type}Force`, elementalForceStatus(type)])),
 };

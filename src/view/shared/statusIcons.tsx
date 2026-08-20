@@ -1,4 +1,47 @@
 import type { StatusDefinition } from '../../engine/content';
+import { getTypeColor } from '../combat/typeColors';
+
+/**
+ * Elemental Force ids follow the `${Type}Force` naming convention
+ * (src/data/statuses.ts) — stripping the suffix back to a bare TypeId lets
+ * these chips reuse typeColors.ts's per-type color instead of hand-authoring
+ * 15 near-duplicate entries into STATUS_COLOR below, and keeps a Force chip's
+ * color in sync with its type's color everywhere else in the app.
+ */
+const FORCE_ID_SUFFIX = 'Force';
+
+/**
+ * One glyph per element for Elemental Force chips. Deliberately NOT the
+ * obvious pick for Fire/Frost/Storm/Shadow (🔥/❄️/⚡/🌑) — those already belong
+ * to Burn/Freeze/Conduct/Stealth above, and Fire's and Frost's colors happen
+ * to exactly match Burn's/Freeze's too (both picked to evoke the same type),
+ * so a hero holding both a Force and its same-named status at once would
+ * otherwise render two visually identical badges.
+ */
+const FORCE_EMOJI: Record<string, string> = {
+  Fire: '🌋',
+  Water: '💧',
+  Frost: '🧊',
+  Storm: '🌪️',
+  Stone: '🪨',
+  Nature: '🌿',
+  Light: '☀️',
+  Shadow: '🖤',
+  Arcane: '✨',
+  Mind: '🧠',
+  Spirit: '🌀',
+  Iron: '⚙️',
+  Mech: '🤖',
+  Beast: '🐾',
+  Ancient: '🏺',
+};
+
+/** The bare TypeId a Force status id boosts, or undefined if `statusId` isn't a recognized Force status. */
+function forceStatusType(statusId: string): string | undefined {
+  if (!statusId.endsWith(FORCE_ID_SUFFIX)) return undefined;
+  const base = statusId.slice(0, -FORCE_ID_SUFFIX.length);
+  return FORCE_EMOJI[base] ? base : undefined;
+}
 
 /**
  * Emoji glyph per status id — crisp at any size (unlike the pixel-art PNGs
@@ -16,6 +59,7 @@ export const statusEmoji: Record<string, string> = {
   Poison: '🧪',
   Haunt: '👻',
   Stealth: '🌑',
+  ...Object.fromEntries(Object.entries(FORCE_EMOJI).map(([type, glyph]) => [`${type}Force`, glyph])),
 };
 
 /**
@@ -40,6 +84,8 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export function statusColor(statusId: string): string {
+  const forceType = forceStatusType(statusId);
+  if (forceType) return getTypeColor(forceType);
   return STATUS_COLOR[statusId] ?? '#d9a441';
 }
 
@@ -76,6 +122,7 @@ const PIPELINE_LABELS: Record<StatusDefinition['pipeline'], string> = {
   timer: 'Delayed detonation',
   trigger: 'Trigger / mark',
   target: 'Targeting effect',
+  basePower: 'Elemental Force',
   none: 'Effect',
 };
 

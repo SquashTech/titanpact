@@ -18,7 +18,7 @@ import { orderActions } from './priority';
 import { resolveTargets, slotOfActiveCombatant, TargetNoLongerValidError } from './targeting';
 import { applyVoluntarySwitch, applyBenchHpRegen, SwitchBlockedError } from './switching';
 import { applyManaRegen } from './manaRegen';
-import { resolveStatRatio, rollDamage, statKeysForCategory, type DamageModifier } from '../damage/damagePipeline';
+import { resolveStatRatio, rollDamage, resolveElementalForceBonus, statKeysForCategory, type DamageModifier } from '../damage/damagePipeline';
 import type { TypeChart } from '../damage/typeMult';
 import { applyHpDelta } from './faintHandling';
 import {
@@ -178,6 +178,10 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           // roll (passiveEngine.ts collectPassiveDamageModifiers).
           const modifiers: DamageModifier[] = collectPassiveDamageModifiers(attackerNow, move, passives);
 
+          // Elemental Force — held statuses whose forceType matches this move's
+          // type add flat BasePower before the roll (damagePipeline.ts).
+          const elementalForceBonus = resolveElementalForceBonus(attackerNow, move.type, statuses);
+
           const rolled = rollDamage(
             move,
             ratio,
@@ -185,7 +189,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             effectiveTypes(defenderHero, target),
             typeChart,
             working.rngState,
-            modifiers
+            modifiers,
+            undefined,
+            elementalForceBonus
           );
           working = { ...working, rngState: rolled.nextRngState };
 
@@ -205,6 +211,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             isCrit: rolled.isCrit,
             variance: rolled.variance,
             basePower: move.basePower ?? 0,
+            elementalForceBonus: rolled.basePowerBonus,
             offStat: getEffectiveStat(attackerHero, attackerNow, offKey),
             defStat: getEffectiveStat(defenderHero, target, defKey),
             ratio: rolled.ratio,

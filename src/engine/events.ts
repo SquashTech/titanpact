@@ -57,6 +57,8 @@ export interface DamageDealtEvent extends BaseEvent {
    * back; `amount` above is the only value that actually applies to HP.
    */
   basePower: number;
+  /** Elemental Force's contribution to this hit's BasePower (0 if none) — added to `basePower` BEFORE the ratio/STAB/TypeMult/Variance/Crit/multiplierTerm chain, unlike `modifiers`/multiplierTerm which scale the already-computed result (damagePipeline.ts resolveElementalForceBonus). */
+  elementalForceBonus: number;
   offStat: number;
   defStat: number;
   ratio: number;

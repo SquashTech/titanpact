@@ -74,10 +74,12 @@ export function formatEvents(
           e.modifiers.length > 0
             ? `, Mods ${fmt(e.multiplierTerm)}× (${e.modifiers.map((m) => `${m.source} ${m.amount >= 0 ? '+' : ''}${Math.round(m.amount * 100)}%`).join(', ')})`
             : '';
+        const bpText =
+          e.elementalForceBonus > 0 ? `${e.basePower + e.elementalForceBonus} BP (${e.basePower} + ${e.elementalForceBonus} Force)` : `${e.basePower} BP`;
         lines.push({
           key: `${key}-math`,
           text:
-            `${e.basePower} BP × (${e.offStat} ${offLabel} ÷ ${e.defStat} ${defLabel} = ${fmt(e.ratio)}) ` +
+            `${bpText} × (${e.offStat} ${offLabel} ÷ ${e.defStat} ${defLabel} = ${fmt(e.ratio)}) ` +
             `× STAB ${fmt(e.stab)}× × Type ${fmt(e.typeMult)}× × Var ${fmt(e.variance)}× × Crit ${fmt(e.critMultiplier)}×${modsText} = ${e.amount} dmg`,
           className: 'log-math',
         });

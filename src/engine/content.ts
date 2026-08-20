@@ -129,9 +129,26 @@ export interface StatusDefinition {
    * reuses this same hook (statusEngine.ts expandSpreadTargets).
    */
   spreadTriggerTypes?: readonly TypeId[];
+  /**
+   * Elemental Force: which move type's BasePower this magnitude-shape status
+   * adds to. Read generically by damagePipeline.ts's resolveElementalForceBonus
+   * — a hero can hold several Force statuses (Fire Force, Water Force, ...)
+   * independently, each keyed by its own StatusId, and only the one(s)
+   * matching the move actually in flight contribute. Added to move.basePower
+   * BEFORE the ratio/STAB/TypeMult/Variance/Crit/multiplierTerm chain — it
+   * changes the formula's own BasePower input, unlike a DamageModifier, which
+   * scales the already-computed result.
+   */
+  forceType?: TypeId;
   /** Which pipeline (if any) this status enters — documentation of where its effect is wired in, not engine-read except where noted above. */
-  pipeline: 'dot' | 'hot' | 'control' | 'timer' | 'trigger' | 'target' | 'none';
+  pipeline: 'dot' | 'hot' | 'control' | 'timer' | 'trigger' | 'target' | 'basePower' | 'none';
   description?: string;
+}
+
+/** A status grant with a fixed magnitude, no duration/target — equipment/relics granting a persistent magnitude-shape status (e.g. Elemental Force) for the whole fight, applied once at fight-build time rather than via applyStatus's runtime apply/stack path. */
+export interface StatusGrant {
+  statusId: StatusId;
+  magnitude?: number;
 }
 
 export interface StatDelta {

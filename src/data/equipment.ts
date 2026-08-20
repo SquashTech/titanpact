@@ -48,6 +48,14 @@ export const equipment: Record<string, EquipmentDefinition> = {
     rarity: 'legendary',
     statGrants: { manaPool: 10, mpRegen: 5 },
   },
+  emberBand: {
+    id: 'emberBand',
+    name: 'Ember Band',
+    slot: 'accessory',
+    rarity: 'rare',
+    statGrants: {},
+    grantsStatusIds: [{ statusId: 'FireForce', magnitude: 10 }],
+  },
   // Test fixture — see App.tsx's equipTestDagger, which arms the Goblin
   // Skulker in the run's opening battle so the equip-slot inspect UI has a
   // real item to show without waiting on the equipment-reward economy.

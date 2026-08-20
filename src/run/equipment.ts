@@ -12,7 +12,7 @@
 // (engine/content.ts PassiveDefinition, engine/combat/passiveEngine.ts) —
 // `grantsPassiveIds` below is equipment's side of that wiring.
 
-import type { PassiveId, StatKey } from '../engine/content';
+import type { PassiveId, StatKey, StatusGrant } from '../engine/content';
 import { isValidFlatStatGrant } from '../engine/content';
 import type { StatModifiers } from '../engine/state';
 import { mergeStatMods } from './statMods';
@@ -33,6 +33,8 @@ export interface EquipmentDefinition {
   statGrants: Partial<Record<StatKey, number>>;
   /** Passives (engine/content.ts PassiveDefinition, src/data/passives.ts) this item grants while equipped. Optional/omitted for plain stat-only gear. */
   grantsPassiveIds?: readonly PassiveId[];
+  /** Persistent magnitude-shape statuses (currently Elemental Force — src/data/statuses.ts) this item grants for the whole fight while equipped, applied at fight-build time (src/run/statusGrants.ts, buildCombatState.ts). Optional/omitted for gear that doesn't grant one. */
+  grantsStatusIds?: readonly StatusGrant[];
 }
 
 /** Reward-roll weights per rarity — higher tiers are proportionally rarer finds (pickWeightedEquipment below). */

@@ -1,8 +1,10 @@
 // ⚠️ TEST FIXTURE CONTENT — a handful of team-wide stat relics sufficient to
 // exercise relicReward map nodes and src/run/relics.ts end to end, plus one
 // Passive-granting relic (Emberheart) proving relics' side of the Passives
-// wiring (RelicDefinition.grantsPassiveIds, src/run/passives.ts). Not
-// authored relic content.
+// wiring (RelicDefinition.grantsPassiveIds, src/run/passives.ts) and one
+// status-granting relic (Cinder Standard) proving relics' side of the
+// Elemental Force wiring (RelicDefinition.grantsStatusIds, src/run/
+// statusGrants.ts). Not authored relic content.
 
 import type { RelicDefinition } from '../run/relics';
 
@@ -49,5 +51,12 @@ export const relics: Record<string, RelicDefinition> = {
     description: 'Team-wide: grants the Emberheart passive (+20% bonus damage with Fire-type moves).',
     statGrants: {},
     grantsPassiveIds: ['emberheart'],
+  },
+  cinderStandard: {
+    id: 'cinderStandard',
+    name: 'Cinder Standard',
+    description: 'Team-wide: grants Fire Force 10 (+10 Base Power to Fire moves) to every combatant.',
+    statGrants: {},
+    grantsStatusIds: [{ statusId: 'FireForce', magnitude: 10 }],
   },
 };

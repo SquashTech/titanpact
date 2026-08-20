@@ -27,6 +27,7 @@ import { generateEncounter, type EncounterNodeType, type Encounter } from '../ru
 import { pickSquad } from '../run/squad';
 import { relicTeamStatModifiers } from '../run/relics';
 import { relicTeamPassiveGrants } from '../run/passives';
+import { relicTeamStatusGrants } from '../run/statusGrants';
 import { advanceToNode, advanceToNextAct, grantCurrencyReward, grantUpgradeReward, grantContractReward } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { progressionTable } from '../data/progression';
@@ -493,6 +494,7 @@ export function App() {
           aiSquad={screen.ai.squad}
           teamStatModifiers={relicTeamStatModifiers(screen.playerRelics, relics)}
           teamPassiveGrants={relicTeamPassiveGrants(screen.playerRelics, relics)}
+          teamStatusGrants={relicTeamStatusGrants(screen.playerRelics, relics)}
           goldReward={0}
           trainingPointsReward={0}
           equipmentReward={null}
@@ -522,6 +524,7 @@ export function App() {
           aiSquad={screen.encounter.squad}
           teamStatModifiers={relicTeamStatModifiers(playerRun.relics, relics)}
           teamPassiveGrants={relicTeamPassiveGrants(playerRun.relics, relics)}
+          teamStatusGrants={relicTeamStatusGrants(playerRun.relics, relics)}
           goldReward={screen.goldReward}
           trainingPointsReward={screen.trainingPointsReward}
           equipmentReward={screen.equipmentReward}

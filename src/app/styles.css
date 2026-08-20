@@ -1663,6 +1663,17 @@ body {
   font-weight: 700;
 }
 
+/* Elemental Force's live "this move is currently boosted" cue — same slot and
+   weight as .move-stab, sitting beside it rather than replacing it since a
+   move can be both STAB'd and Force-boosted at once. The BP number itself
+   already reflects the boost (move.basePower + forceBonus); this chip is
+   just the "why" label. */
+.move-force {
+  color: var(--hp-high);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 /* Bottom-right zone of the move button, kept apart from the type badge up
    in .move-row-mid so Physical/Magical doesn't compete with — or read as
    part of — the move's type for attention. Effectiveness chips (when

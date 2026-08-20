@@ -9,7 +9,7 @@
 // modifier back into a stat, and never let a stat-shaped effect leak into the
 // multiplier term here.
 
-import type { HeroDefinition, MoveDefinition, StatKey } from '../content';
+import type { HeroDefinition, MoveDefinition, StatKey, StatusDefinition } from '../content';
 import type { Combatant, DamageCategory } from '../state';
 import { getEffectiveStat } from '../state';
 import { nextRange, nextFloat, type RngState } from '../rng/seededRng';
@@ -59,6 +59,26 @@ export function resolveMultiplierTerm(
   return modifiers.reduce((product, m) => product * (1 + m.amount), 1);
 }
 
+/**
+ * Elemental Force: sums the magnitude of every status the attacker holds
+ * whose StatusDefinition.forceType matches the move's type (src/data/
+ * statuses.ts's `${Type}Force` catalog) — a hero holding both Fire Force and
+ * Water Force only gets the matching one(s) added. This is pipeline 2's own
+ * concern (it changes the formula's BasePower input, not a stat), so it lives
+ * here rather than in statusEngine.ts.
+ */
+export function resolveElementalForceBonus(
+  attacker: Combatant,
+  moveType: string,
+  statusDefs: Record<string, StatusDefinition>
+): number {
+  let bonus = 0;
+  for (const [statusId, instance] of Object.entries(attacker.statuses)) {
+    if (statusDefs[statusId]?.forceType === moveType) bonus += instance.magnitude ?? 0;
+  }
+  return bonus;
+}
+
 /** Which raw stats feed the off/def ratio for a damage category — shared by resolveStatRatio and by callers that want the raw values (e.g. the Battle Log's math readout) without duplicating the mapping. */
 export function statKeysForCategory(category: DamageCategory): readonly [StatKey, StatKey] {
   return category === 'physical' ? (['attack', 'defense'] as const) : (['intelligence', 'wisdom'] as const);
@@ -88,6 +108,8 @@ export interface DamageCalcResult {
   /** The crit term as actually applied: critMultiplier when isCrit, else 1 — carried on the result so callers (the Battle Log's math readout) don't have to re-derive it from isCrit + the provisional constant. */
   critMultiplier: number;
   multiplierTerm: number;
+  /** Elemental Force's contribution to this hit's BasePower (0 if none) — see resolveElementalForceBonus above. Added to move.basePower BEFORE every multiplier term, unlike `modifiers`/multiplierTerm which scale the already-computed result. */
+  basePowerBonus: number;
 }
 
 /** Pure: pipeline 2. Takes pre-rolled variance/crit so this stays testable without RNG. */
@@ -101,16 +123,21 @@ export function calcDamage(
   isCrit: boolean,
   modifiers: readonly DamageModifier[] = [],
   stackingPolicy: ModifierStackingPolicy = LOCKED_MODIFIER_STACKING,
-  critMultiplier: number = PROVISIONAL_CRIT_MULTIPLIER
+  critMultiplier: number = PROVISIONAL_CRIT_MULTIPLIER,
+  basePowerBonus: number = 0
 ): DamageCalcResult {
   const stab = resolveStab(move.type, attackerTypes);
   const typeMult = resolveTypeMult(typeChart, move.type, defenderTypes);
   const crit = isCrit ? critMultiplier : 1;
   const multiplierTerm = resolveMultiplierTerm(modifiers, stackingPolicy);
 
-  const damage = (move.basePower ?? 0) * ratio * stab * typeMult * variance * crit * multiplierTerm;
+  // Elemental Force adds directly to the formula's own BasePower input — a 40
+  // BP move with Fire Force 20 becomes a 60 BP move, not a 40 BP move dealt at
+  // +20% damage (that's what `modifiers`/multiplierTerm are for instead).
+  const effectiveBasePower = (move.basePower ?? 0) + basePowerBonus;
+  const damage = effectiveBasePower * ratio * stab * typeMult * variance * crit * multiplierTerm;
 
-  return { damage, ratio, stab, typeMult, variance, isCrit, critMultiplier: crit, multiplierTerm };
+  return { damage, ratio, stab, typeMult, variance, isCrit, critMultiplier: crit, multiplierTerm, basePowerBonus };
 }
 
 export interface RolledDamage extends DamageCalcResult {
@@ -130,13 +157,26 @@ export function rollDamage(
   typeChart: TypeChart,
   rngState: RngState,
   modifiers: readonly DamageModifier[] = [],
-  critChance: number = PROVISIONAL_CRIT_CHANCE
+  critChance: number = PROVISIONAL_CRIT_CHANCE,
+  basePowerBonus: number = 0
 ): RolledDamage {
   const varianceRoll = nextRange(rngState, VARIANCE_MIN, VARIANCE_MAX);
   const critRoll = nextFloat(varianceRoll.nextState);
   const isCrit = critRoll.value < critChance;
 
-  const result = calcDamage(move, ratio, attackerTypes, defenderTypes, typeChart, varianceRoll.value, isCrit, modifiers);
+  const result = calcDamage(
+    move,
+    ratio,
+    attackerTypes,
+    defenderTypes,
+    typeChart,
+    varianceRoll.value,
+    isCrit,
+    modifiers,
+    LOCKED_MODIFIER_STACKING,
+    PROVISIONAL_CRIT_MULTIPLIER,
+    basePowerBonus
+  );
 
   return { ...result, nextRngState: critRoll.nextState };
 }

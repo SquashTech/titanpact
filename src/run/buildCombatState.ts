@@ -9,13 +9,14 @@
 import type { HeroLookup, CombatState, Side, Combatant, StatModifiers } from '../engine/state';
 import { createCombatant, getMaxHp, getMaxMana } from '../engine/state';
 import { createRng } from '../engine/rng/seededRng';
-import type { PassiveId } from '../engine/content';
+import type { PassiveId, StatusId } from '../engine/content';
 import type { RosterEntry } from './state';
 import type { Squad } from './squad';
 import type { EquipmentDefinition } from './equipment';
 import { equipmentStatModifiers } from './equipment';
 import { mergeStatMods } from './statMods';
 import { equipmentPassiveGrants, mergePassiveGrants, toPassiveInstances } from './passives';
+import { equipmentStatusGrants, mergeStatusGrants, toStatusInstances } from './statusGrants';
 
 export interface SquadPlacement {
   side: Side;
@@ -32,6 +33,8 @@ export interface SquadPlacement {
   teamStatModifiers?: StatModifiers;
   /** Team-wide Passive grants (src/run/relics.ts relicTeamPassiveGrants) — same broadcast as teamStatModifiers, just counted stacks instead of summed stats. Omitted (or empty) for sides with no passive-granting relics. */
   teamPassiveGrants?: Record<PassiveId, number>;
+  /** Team-wide status-magnitude grants (src/run/relics.ts relicTeamStatusGrants — currently Elemental Force only) — same broadcast as teamStatModifiers/teamPassiveGrants, just summed magnitudes instead of stats or stack counts. Omitted (or empty) for sides with no status-granting relics. */
+  teamStatusGrants?: Record<StatusId, number>;
 }
 
 function combatantIdFor(side: Side, rosterId: string): string {
@@ -54,7 +57,8 @@ function placeEntry(
   heroes: HeroLookup,
   equipmentLookup: Record<string, EquipmentDefinition>,
   teamStatModifiers: StatModifiers,
-  teamPassiveGrants: Record<PassiveId, number>
+  teamPassiveGrants: Record<PassiveId, number>,
+  teamStatusGrants: Record<StatusId, number>
 ): Combatant {
   const entry = roster.find((r) => r.rosterId === rosterId);
   if (!entry) throw new Error(`${rosterId} is not on the roster`);
@@ -70,8 +74,9 @@ function placeEntry(
   const passives = toPassiveInstances(
     mergePassiveGrants(equipmentPassiveGrants(entry.equipment, equipmentLookup), evolutionGrants, teamPassiveGrants)
   );
+  const statuses = toStatusInstances(mergeStatusGrants(equipmentStatusGrants(entry.equipment, equipmentLookup), teamStatusGrants));
   const grantedTypes = entry.evolutionTypeGraft ? [entry.evolutionTypeGraft] : [];
-  const withMods = { ...createCombatant(combatantIdFor(side, rosterId), entry.heroId, side, 0, 0), statModifiers, grantedTypes, passives };
+  const withMods = { ...createCombatant(combatantIdFor(side, rosterId), entry.heroId, side, 0, 0), statModifiers, grantedTypes, passives, statuses };
   return { ...withMods, currentHp: getMaxHp(hero, withMods), currentMana: getMaxMana(hero, withMods) };
 }
 
@@ -85,13 +90,22 @@ export function buildCombatState(
   const active: CombatState['active'] = { A: [null, null], B: [null, null] };
   const bench: CombatState['bench'] = { A: [], B: [] };
 
-  for (const { side, squad, roster, teamStatModifiers, teamPassiveGrants } of placements) {
+  for (const { side, squad, roster, teamStatModifiers, teamPassiveGrants, teamStatusGrants } of placements) {
     active[side] = squad.activeIds.map((id) => (id ? combatantIdFor(side, id) : null)) as [string | null, string | null];
     bench[side] = squad.benchIds.map((id) => combatantIdFor(side, id));
 
     for (const rosterId of [...squad.activeIds, ...squad.benchIds]) {
       if (!rosterId) continue;
-      const combatant = placeEntry(rosterId, roster, side, heroes, equipmentLookup, teamStatModifiers ?? {}, teamPassiveGrants ?? {});
+      const combatant = placeEntry(
+        rosterId,
+        roster,
+        side,
+        heroes,
+        equipmentLookup,
+        teamStatModifiers ?? {},
+        teamPassiveGrants ?? {},
+        teamStatusGrants ?? {}
+      );
       combatants[combatant.combatantId] = combatant;
     }
   }

@@ -14,6 +14,7 @@ import type { Action } from '../../engine/combat/actions';
 import type { CombatEvent } from '../../engine/events';
 import type { HeroDefinition, MoveDefinition, PassiveId, StatKey, TargetMode } from '../../engine/content';
 import { resolveStab, resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
+import { resolveElementalForceBonus } from '../../engine/damage/damagePipeline';
 import type { RunState, RosterEntry } from '../../run/state';
 import { ROSTER_CAP } from '../../run/state';
 import type { Squad } from '../../run/squad';
@@ -124,6 +125,8 @@ interface Props {
   teamStatModifiers?: StatModifiers;
   /** Team-wide relic Passive grants (src/run/relics.ts relicTeamPassiveGrants), precomputed by the caller — same broadcast as teamStatModifiers. */
   teamPassiveGrants?: Record<PassiveId, number>;
+  /** Team-wide relic status-magnitude grants (src/run/relics.ts relicTeamStatusGrants — currently Elemental Force only), precomputed by the caller — same broadcast as teamStatModifiers/teamPassiveGrants. */
+  teamStatusGrants?: Record<string, number>;
   /** This node's gold reward on a win (docs/run-loop.md), precomputed by the caller — displayed only, the caller grants it in onResolved. */
   goldReward: number;
   /** This node's Training Point reward on a win, precomputed by the caller (App.tsx handleSquadConfirmed) — displayed only, the caller grants it in onResolved. */
@@ -154,6 +157,7 @@ export function FightScreen({
   aiSquad,
   teamStatModifiers,
   teamPassiveGrants,
+  teamStatusGrants,
   goldReward,
   trainingPointsReward,
   equipmentReward,
@@ -162,7 +166,7 @@ export function FightScreen({
 }: Props) {
   function buildInitialState(seed: number): CombatState {
     return buildCombatState(seed, allCombatants, equipment, [
-      { side: PLAYER_SIDE, squad: playerSquad, roster: playerRun.roster, teamStatModifiers, teamPassiveGrants },
+      { side: PLAYER_SIDE, squad: playerSquad, roster: playerRun.roster, teamStatModifiers, teamPassiveGrants, teamStatusGrants },
       { side: AI_SIDE, squad: aiSquad, roster: aiRun.roster },
     ]);
   }
@@ -735,6 +739,7 @@ export function FightScreen({
                       (pending[id]?.kind === 'move' && pending[id]?.moveId === moveId) ||
                       (selecting?.combatantId === id && selecting.move.id === moveId);
                     const hasStab = resolveStab(move.type, effectiveTypes(hero, combatant)) > 1;
+                    const forceBonus = resolveElementalForceBonus(combatant, move.type, statuses);
                     return (
                       <button
                         key={moveId}
@@ -778,7 +783,7 @@ export function FightScreen({
                           <TypeBadge type={move.type} />
                           {move.kind === 'damage' && move.basePower != null && (
                             <span className="move-power">
-                              <strong>{move.basePower}</strong>BP
+                              <strong>{move.basePower + forceBonus}</strong>BP
                             </span>
                           )}
                           {move.kind === 'heal' && move.healAmount != null && (
@@ -787,6 +792,11 @@ export function FightScreen({
                             </span>
                           )}
                           {hasStab && <span className="move-stab">STAB</span>}
+                          {forceBonus > 0 && (
+                            <span className="move-force" title={`Elemental Force: +${forceBonus} Base Power`}>
+                              +{forceBonus} Force
+                            </span>
+                          )}
                         </div>
                         <div className="move-row-bottom">
                           <div className="move-row-eff">
@@ -892,6 +902,7 @@ export function FightScreen({
           const combatant = combat.combatants[movePopup.combatantId];
           const hero = allCombatants[combatant.heroId];
           const hasStab = resolveStab(move.type, effectiveTypes(hero, combatant)) > 1;
+          const forceBonus = resolveElementalForceBonus(combatant, move.type, statuses);
           return (
             <div className="log-overlay" onClick={() => setMovePopup(null)}>
               <div className="log-panel move-popup-panel">
@@ -907,7 +918,7 @@ export function FightScreen({
                   <span className="move-popup-kind">{KIND_LABELS[move.kind] ?? move.kind}</span>
                   {move.kind === 'damage' && move.basePower != null && (
                     <span className="move-power">
-                      <strong>{move.basePower}</strong>BP
+                      <strong>{move.basePower + forceBonus}</strong>BP
                     </span>
                   )}
                   {move.kind === 'heal' && move.healAmount != null && (
@@ -916,6 +927,11 @@ export function FightScreen({
                     </span>
                   )}
                   {hasStab && <span className="move-stab">STAB</span>}
+                  {forceBonus > 0 && (
+                    <span className="move-force" title={`Elemental Force: +${forceBonus} Base Power`}>
+                      +{forceBonus} Force
+                    </span>
+                  )}
                 </div>
                 <div className="move-popup-description">{move.description ?? 'No description.'}</div>
                 {enemyActiveAlive.length > 0 && (
