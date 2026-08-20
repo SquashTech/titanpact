@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { TYPES, typeChart } from '../../data/typechart';
 import { statuses } from '../../data/statuses';
-import type { StatusDefinition } from '../../engine/content';
+import { passives } from '../../data/passives';
+import type { PassiveDefinition, StatusDefinition } from '../../engine/content';
 import { TypeBadge } from './TypeBadge';
 import { statusEmoji, statusColor, statusTint, statusClearText, pipelineLabel } from './statusIcons';
+import { passiveEmoji, passiveColor, passiveTint, passiveEffectSummary } from './passiveIcons';
 
 interface Props {
   onClose: () => void;
@@ -11,7 +13,7 @@ interface Props {
   initialTab?: Tab;
 }
 
-type Tab = 'types' | 'statuses';
+type Tab = 'types' | 'statuses' | 'passives';
 
 function multClass(mult: number): string {
   if (mult > 1) return 'eff-super';
@@ -52,6 +54,9 @@ export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
           <button className={`reference-tab${tab === 'statuses' ? ' reference-tab-active' : ''}`} onClick={() => setTab('statuses')}>
             Statuses
           </button>
+          <button className={`reference-tab${tab === 'passives' ? ' reference-tab-active' : ''}`} onClick={() => setTab('passives')}>
+            Passives
+          </button>
         </div>
         {tab === 'types' ? (
           <div className="type-chart-scroll">
@@ -79,13 +84,45 @@ export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
               ))}
             </div>
           </div>
-        ) : (
+        ) : tab === 'statuses' ? (
           <div className="status-reference-scroll">
             {Object.values(statuses).map((def) => (
               <StatusReferenceRow key={def.id} def={def} />
             ))}
           </div>
+        ) : (
+          <div className="status-reference-scroll">
+            {Object.values(passives).map((def) => (
+              <PassiveReferenceRow key={def.id} def={def} />
+            ))}
+          </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+/** Mirrors StatusReferenceRow's layout exactly (same .status-ref-* classes — a catalog row is a catalog row regardless of content type) since passives don't yet have their own reference-catalog styling. */
+function PassiveReferenceRow({ def }: { def: PassiveDefinition }) {
+  const emoji = passiveEmoji[def.id];
+  const color = passiveColor(def.id);
+  const summary = passiveEffectSummary(def);
+
+  return (
+    <div className="status-ref-row" style={{ borderLeftColor: color }}>
+      {emoji && (
+        <span className="status-ref-icon" style={{ background: passiveTint(def.id, 0.16) }}>
+          {emoji}
+        </span>
+      )}
+      <div className="status-ref-body">
+        <div className="status-ref-head">
+          <span className="status-ref-name" style={{ color }}>
+            {def.name}
+          </span>
+        </div>
+        <div className="status-ref-desc">{def.description}</div>
+        {summary && <div className="status-ref-meta">{summary}</div>}
       </div>
     </div>
   );

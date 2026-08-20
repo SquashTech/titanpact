@@ -9,6 +9,7 @@ import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
+import { passives } from '../src/data/passives';
 import { createCombatant, type CombatState, type Side } from '../src/engine/state';
 import { createRng } from '../src/engine/rng/seededRng';
 import { resolveRound } from '../src/engine/combat/resolveRound';
@@ -50,7 +51,7 @@ let state: CombatState = {
   koCount: { A: 0, B: 0 },
 };
 
-const config = { typeChart, heroes, moves, statuses, benchHpRegenFlat: 5 };
+const config = { typeChart, heroes, moves, statuses, passives, benchHpRegenFlat: 5 };
 
 function firstActiveOn(s: CombatState, side: Side): string | null {
   return s.active[side].find((id) => id && !s.combatants[id].fainted) ?? null;

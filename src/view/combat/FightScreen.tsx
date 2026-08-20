@@ -5,13 +5,14 @@ import { moves } from '../../data/moves';
 import { typeChart } from '../../data/typechart';
 import { equipment } from '../../data/equipment';
 import { statuses } from '../../data/statuses';
+import { passives } from '../../data/passives';
 import type { CombatState, Side, StatModifiers } from '../../engine/state';
 import { isLockedIn, effectiveTypes, hasAffordableMove } from '../../engine/state';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../engine/combat/switching';
 import type { Action } from '../../engine/combat/actions';
 import type { CombatEvent } from '../../engine/events';
-import type { HeroDefinition, MoveDefinition, StatKey } from '../../engine/content';
+import type { HeroDefinition, MoveDefinition, PassiveId, StatKey } from '../../engine/content';
 import { resolveStab, resolveTypeMult } from '../../engine/damage/typeMult';
 import type { RunState, RosterEntry } from '../../run/state';
 import { ROSTER_CAP } from '../../run/state';
@@ -78,7 +79,7 @@ function RecruitClaimCard({ hero, selected, claimed, onSelect, onInspect }: Recr
 
 const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
-const config = { typeChart, heroes: allCombatants, moves, statuses, benchHpRegenFlat: 5 };
+const config = { typeChart, heroes: allCombatants, moves, statuses, passives, benchHpRegenFlat: 5 };
 
 // Hold-to-auto-play tuning (FightScreen's advance-overlay) — how long a
 // press must be held before it commits to auto-play instead of a normal
@@ -121,6 +122,8 @@ interface Props {
   aiSquad: Squad;
   /** Team-wide relic stat grants (docs/run-loop.md, src/run/relics.ts), precomputed by the caller — applied to every player combatant placed this fight. */
   teamStatModifiers?: StatModifiers;
+  /** Team-wide relic Passive grants (src/run/relics.ts relicTeamPassiveGrants), precomputed by the caller — same broadcast as teamStatModifiers. */
+  teamPassiveGrants?: Record<PassiveId, number>;
   /** This node's gold reward on a win (docs/run-loop.md), precomputed by the caller — displayed only, the caller grants it in onResolved. */
   goldReward: number;
   /** This node's Training Point reward on a win, precomputed by the caller (App.tsx handleSquadConfirmed) — displayed only, the caller grants it in onResolved. */
@@ -150,6 +153,7 @@ export function FightScreen({
   aiRun,
   aiSquad,
   teamStatModifiers,
+  teamPassiveGrants,
   goldReward,
   trainingPointsReward,
   equipmentReward,
@@ -158,7 +162,7 @@ export function FightScreen({
 }: Props) {
   function buildInitialState(seed: number): CombatState {
     return buildCombatState(seed, allCombatants, equipment, [
-      { side: PLAYER_SIDE, squad: playerSquad, roster: playerRun.roster, teamStatModifiers },
+      { side: PLAYER_SIDE, squad: playerSquad, roster: playerRun.roster, teamStatModifiers, teamPassiveGrants },
       { side: AI_SIDE, squad: aiSquad, roster: aiRun.roster },
     ]);
   }

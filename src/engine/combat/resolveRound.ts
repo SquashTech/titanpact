@@ -9,7 +9,7 @@
 // except Stealth, which ticks at the START of the round (before actions
 // resolve) so it also protects the round after the one it was cast in.
 
-import type { HeroDefinition, MoveDefinition, StatusDefinition } from '../content';
+import type { HeroDefinition, MoveDefinition, PassiveDefinition, StatusDefinition } from '../content';
 import type { CombatState, HeroLookup, Side } from '../state';
 import { getMaxHp, getEffectiveStat, effectiveTypes, hasStatus } from '../state';
 import type { CombatEvent } from '../events';
@@ -30,12 +30,14 @@ import {
   tickEndOfRound,
   tickStartOfRound,
 } from './statusEngine';
+import { collectPassiveDamageModifiers, resolvePassiveReactions } from './passiveEngine';
 
 export interface RoundConfig {
   typeChart: TypeChart;
   heroes: HeroLookup;
   moves: Record<string, MoveDefinition>;
   statuses: Record<string, StatusDefinition>;
+  passives: Record<string, PassiveDefinition>;
   /** Data-tunable, untuned placeholder — see switching.ts applyBenchHpRegen. */
   benchHpRegenFlat: number;
 }
@@ -46,7 +48,7 @@ export interface RoundResult {
 }
 
 export function resolveRound(state: CombatState, actions: readonly Action[], config: RoundConfig): RoundResult {
-  const { heroes, moves, typeChart, statuses } = config;
+  const { heroes, moves, typeChart, statuses, passives } = config;
   const round = state.round;
   const events: CombatEvent[] = [{ type: 'RoundStarted', round }];
 
@@ -171,9 +173,10 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           const attackerNow = working.combatants[action.combatantId];
           const ratio = resolveStatRatio(move.category, attackerHero, attackerNow, defenderHero, target);
 
-          // No move-driven damage-pipeline modifiers currently exist (Expose, the one that
-          // did, is cut) — kept as an empty accumulator so a future relic/ability slots in here.
-          const modifiers: DamageModifier[] = [];
+          // Passive-driven damage-pipeline modifiers (e.g. Emberheart's "+20% Fire
+          // damage") — collected fresh per hit, evaluated synchronously before the
+          // roll (passiveEngine.ts collectPassiveDamageModifiers).
+          const modifiers: DamageModifier[] = collectPassiveDamageModifiers(attackerNow, move, passives);
 
           const rolled = rollDamage(
             move,
@@ -189,7 +192,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           const amount = Math.round(rolled.damage);
 
           const [offKey, defKey] = statKeysForCategory(move.category);
-          events.push({
+          const damageDealtEvent: CombatEvent = {
             type: 'DamageDealt',
             round,
             sourceCombatantId: action.combatantId,
@@ -210,11 +213,19 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             multiplierTerm: rolled.multiplierTerm,
             modifiers,
             ...(spreadVia[targetId] ? { viaStatusId: spreadVia[targetId] } : {}),
-          });
+          };
+          events.push(damageDealtEvent);
 
           const hpResult = applyHpDelta(working, round, targetId, -amount, maxHp);
           working = hpResult.state;
           events.push(...hpResult.events);
+
+          // Passive reactions keyed off this hit landing (e.g. a defender-side
+          // "when an enemy/ally is hit, do X" passive) — resolved off the
+          // DamageDealt event alone, before Conduct's own trigger below.
+          const damageReactions = resolvePassiveReactions(working, round, [damageDealtEvent], heroes, statuses, passives);
+          working = damageReactions.state;
+          events.push(...damageReactions.events);
 
           // Conduct (docs/conditions.md): auto-applies/detonates off the move's type via
           // triggerTypes, resolved AFTER the base hit above lands so its bonus damage reads
@@ -275,12 +286,17 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       const def = statuses[app.statusId];
       if (def) {
         const applyTargets = app.target === 'self' ? [action.combatantId] : targetIds;
+        const statusAppliedEvents: CombatEvent[] = [];
         for (const applyTargetId of applyTargets) {
           if (!working.combatants[applyTargetId] || working.combatants[applyTargetId].fainted) continue;
           const result = applyStatus(working, round, applyTargetId, def, { magnitude: app.magnitude, duration: app.duration });
           working = result.state;
           events.push(...result.events);
+          statusAppliedEvents.push(...result.events);
         }
+        const statusReactions = resolvePassiveReactions(working, round, statusAppliedEvents, heroes, statuses, passives);
+        working = statusReactions.state;
+        events.push(...statusReactions.events);
       }
     }
 
@@ -305,6 +321,14 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   const statusTicks = tickEndOfRound(working, round, statuses, maxHpOf);
   working = statusTicks.state;
   events.push(...statusTicks.events);
+
+  // Sanguine's checkpoint: reacts to this round's status ticks (e.g. "heal
+  // when an enemy takes Bleed damage") — statusTicks.events only, not the
+  // whole round's log, so a passive can't accidentally re-match an event from
+  // earlier this same round.
+  const tickReactions = resolvePassiveReactions(working, round, statusTicks.events, heroes, statuses, passives);
+  working = tickReactions.state;
+  events.push(...tickReactions.events);
 
   events.push({ type: 'RoundEnded', round });
 

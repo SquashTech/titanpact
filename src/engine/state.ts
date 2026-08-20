@@ -4,7 +4,7 @@
 // survives a run) are separate, longer-lived tiers that build on this one —
 // out of scope for this engine slice. Do not fold them in here.
 
-import type { HeroDefinition, MoveDefinition, StatKey, StatLine, StatusId, TypeId } from './content';
+import type { HeroDefinition, MoveDefinition, PassiveId, StatKey, StatLine, StatusId, TypeId } from './content';
 import type { RngState } from './rng/seededRng';
 
 export type Side = 'A' | 'B';
@@ -24,6 +24,20 @@ export interface StatusInstance {
   statusId: StatusId;
   magnitude?: number;
   duration?: number;
+}
+
+/**
+ * A held Passive (engine/content.ts PassiveDefinition) — `stacks` counts how
+ * many independent grants (equipment + relics + Evolution combined,
+ * src/run/passives.ts collectPassiveGrants) this combatant currently holds of
+ * it. No per-passive stacking config (unlike StatusStacking): N stacks always
+ * means the effect resolves N independent times (passiveEngine.ts) — this
+ * composes correctly for free for damage modifiers via the damage pipeline's
+ * already-locked multiplicative stacking.
+ */
+export interface PassiveInstance {
+  passiveId: PassiveId;
+  stacks: number;
 }
 
 /**
@@ -54,6 +68,8 @@ export interface Combatant {
   grantedTypes: readonly TypeId[];
   /** Active statuses, keyed by StatusId — a status either isn't present or is one instance of it (docs/conditions.md: no status stacks as multiple independent instances). */
   statuses: Record<StatusId, StatusInstance>;
+  /** Held Passives, keyed by PassiveId — populated once at fight-build time from equipment/relic/Evolution grants (src/run/passives.ts, buildCombatState.ts placeEntry). Unlike statuses, never changes mid-fight in this engine slice — nothing currently grants or removes a Passive during combat. */
+  passives: Record<PassiveId, PassiveInstance>;
   fainted: boolean;
 }
 
@@ -149,6 +165,7 @@ export function createCombatant(
     statModifiers: {},
     grantedTypes: [],
     statuses: {},
+    passives: {},
     fainted: false,
   };
 }

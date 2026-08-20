@@ -10,8 +10,19 @@
 // 'damage' | 'heal' | 'buff', and any kind may additionally carry a
 // statusApplication and/or a cleanses effect — see docs/conditions.md §5 (the
 // Status-Query Layer) for the Gate/Consume/Transmute verb vocabulary this sets
-// up. Abilities, equipment and relic hooks (effect primitives / trigger hooks)
-// remain future work.
+// up.
+//
+// Passives (the fifth engine contract — CLAUDE.md "abilities" slot) are
+// implemented below as PassiveDefinition: named, single-title effects
+// grantable from Equipment, Relics, or Evolution paths (src/run/equipment.ts,
+// src/run/relics.ts, src/run/progression.ts EvolutionPath.grantsPassiveIds),
+// held on Combatant.passives (engine/state.ts) and resolved by
+// engine/combat/passiveEngine.ts — reactive hooks (event-stream-driven, e.g.
+// "heal when an enemy takes Bleed damage") and damage-pipeline modifiers
+// (synchronous, contributing to damagePipeline.ts's DamageModifier
+// accumulator, e.g. "+20% Fire damage") are the two effect shapes so far;
+// extend PassiveEffect/PassiveHook as new shapes are actually needed rather
+// than speculatively.
 
 /** Opaque type-chart key. The concrete 15 types are DATA — see src/data/typechart.ts. */
 export type TypeId = string;
@@ -142,6 +153,70 @@ export interface StatusApplication {
   duration?: number;
   /** 'self' = the move's user; 'moveTarget' = the move's own resolved target(s). */
   target: 'self' | 'moveTarget';
+}
+
+/** Opaque passive-catalog key. Concrete passives are DATA — see src/data/passives.ts. */
+export type PassiveId = string;
+
+/**
+ * Event types a reactive Passive can key off — a deliberately small subset of
+ * CombatEvent['type'] (engine/events.ts) that make sense as hook points.
+ * Extend this union only when a passive actually needs the new hook, not
+ * speculatively — same discipline as StatusDefinition.triggerTypes.
+ */
+export type PassiveHook = 'DamageDealt' | 'StatusApplied' | 'StatusTicked';
+
+/**
+ * Relationship the triggering event's subject (passiveEngine.ts subjectOf)
+ * must have to the passive's owner. 'self' = the owner itself; 'ally' = the
+ * owner's partner, not the owner; 'enemy' = the opposing side.
+ */
+export type PassiveRelation = 'self' | 'ally' | 'enemy';
+
+/**
+ * Declarative field-equality match against the triggering event — same
+ * discipline as StatusDefinition.triggerTypes: data, not a function, so
+ * content stays pure data the engine interprets generically.
+ */
+export interface PassiveTriggerCondition {
+  relativeTo: PassiveRelation;
+  /** Every key must equal the triggering event's same-named field (compared as a string). e.g. { statusId: 'Bleed', kind: 'damage' } for a Bleed-tick hook. */
+  eventFieldEquals?: Partial<Record<string, string>>;
+}
+
+/** Where a reactive effect's magnitude comes from. matchTriggerAmount powers Sanguine's "heals for the same amount [the enemy just took]". */
+export type PassiveAmount = { kind: 'flat'; value: number } | { kind: 'matchTriggerAmount'; multiplier?: number };
+
+/** The reactive effect primitives — the atomic verbs a Passive's reaction resolves into. */
+export type PassiveEffect =
+  | { kind: 'heal'; target: 'self' | 'triggerSubject'; amount: PassiveAmount }
+  | { kind: 'applyStatus'; target: 'self' | 'triggerSubject'; statusId: StatusId; magnitude?: number; duration?: number }
+  | { kind: 'statDelta'; target: 'self' | 'triggerSubject'; stat: StatKey; amount: number };
+
+/**
+ * The damage-pipeline-modifier shape (docs/combat.md "The damage-modifier
+ * multiplier term") — evaluated synchronously per hit, BEFORE it's rolled,
+ * not a reaction to a past event. Matched only against the pending hit's own
+ * context (currently just { moveType }) — there is no "relativeTo" here since
+ * this is always evaluated against the attacker's own held passives.
+ */
+export interface PassiveDamageModifier {
+  eventFieldEquals?: Partial<Record<string, string>>;
+  /** Same units as damagePipeline.ts DamageModifier.amount — e.g. 0.2 == +20%. */
+  amount: number;
+}
+
+/**
+ * A Passive may carry a reactive effect, a damage modifier, or (later) both —
+ * a PassiveDefinition with neither is invalid content (nothing for it to do).
+ */
+export interface PassiveDefinition {
+  id: PassiveId;
+  name: string;
+  /** Player-facing, required — readability is the whole point (CLAUDE.md "visible, readable... to the player"). */
+  description: string;
+  reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect };
+  damageModifier?: PassiveDamageModifier;
 }
 
 export interface MoveDefinition {

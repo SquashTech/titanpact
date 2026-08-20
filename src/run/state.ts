@@ -7,7 +7,7 @@
 // meta-progression" decision, docs/progression.md) is out of scope here;
 // this module models the run tier, which fully resets between runs.
 
-import type { StatKey, TypeId } from '../engine/content';
+import type { PassiveId, StatKey, TypeId } from '../engine/content';
 import type { EquipmentLoadout } from './equipment';
 import { createEmptyLoadout } from './equipment';
 import type { RunMap } from './map';
@@ -41,6 +41,13 @@ export interface RosterEntry {
    * (CLAUDE.md) while equipment strips on termination.
    */
   evolutionStatGrants: Partial<Record<StatKey, number>>;
+  /**
+   * Passives (engine/content.ts PassiveDefinition) granted by chosen Evolution
+   * paths (progression.ts EvolutionPath.grantsPassiveIds), accumulated the
+   * same way evolutionStatGrants is. Permanent within a run, same as any
+   * other Evolution grant.
+   */
+  evolutionPassiveGrants: readonly PassiveId[];
   /**
    * Permanent stat grants from map-node rewards (`hpBoostReward`/
    * `manaBoostReward` — runProgress.ts `grantStatBonus`), always multiples of
@@ -134,6 +141,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     level: 1,
     chosenPathIds: [],
     evolutionStatGrants: {},
+    evolutionPassiveGrants: [],
     bonusStatGrants: {},
     evolutionTypeGraft: null,
   };

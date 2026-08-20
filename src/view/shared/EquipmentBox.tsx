@@ -4,6 +4,8 @@ import type { EquipmentDefinition, EquipmentLoadout, EquipmentRarity, EquipmentS
 import { STAT_ICONS, STAT_LABELS } from './StatBars';
 import { equipmentArt, relicArt } from './itemArt';
 import { useLongPress } from './MoveTile';
+import { passives } from '../../data/passives';
+import { passiveEmoji } from './passiveIcons';
 
 export const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
@@ -141,6 +143,7 @@ interface EquipmentInfoPanelProps {
  */
 export function EquipmentInfoPanel({ item, placeholder = 'Tap an equipped item to see what it does.' }: EquipmentInfoPanelProps) {
   const grants = item ? (Object.entries(item.statGrants) as [StatKey, number][]) : [];
+  const grantedPassives = item?.grantsPassiveIds ?? [];
   return (
     <div className="move-info-panel">
       {item ? (
@@ -159,6 +162,20 @@ export function EquipmentInfoPanel({ item, placeholder = 'Tap an equipped item t
             </div>
           ) : (
             <div className="move-info-placeholder">No stat effects.</div>
+          )}
+          {grantedPassives.length > 0 && (
+            <div className="detail-modifier-list">
+              {grantedPassives.map((passiveId) => {
+                const def = passives[passiveId];
+                if (!def) return null;
+                return (
+                  <span key={passiveId} className="detail-modifier-chip">
+                    {passiveEmoji[passiveId] ? `${passiveEmoji[passiveId]} ` : ''}
+                    Grants: {def.name}
+                  </span>
+                );
+              })}
+            </div>
           )}
         </>
       ) : (

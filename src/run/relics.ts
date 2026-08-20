@@ -1,14 +1,12 @@
 // Relics (docs/progression.md "Relics (team-wide)"): a separate progression
 // axis from per-hero equipment, applying to the whole side rather than a
-// slot. SCOPE NOTE, mirroring equipment.ts's own scope note exactly: this
-// slice only wires the STAT-shaped half of the pipeline discipline
-// (docs/architecture.md "two damage pipelines") — relics here grant flat
-// team-wide stat modifiers only. Hook-triggered relics (e.g. "on faint, heal
-// the team") need the trigger-hook engine contract (CLAUDE.md "Architecture"
-// — README "Next steps" #3), which isn't built yet. Do not speculatively add
-// a trigger/hook field here until that contract lands.
+// slot. Stat grants below are the flat-additive half of the pipeline
+// discipline (docs/architecture.md "two damage pipelines"). The trigger-hook
+// engine contract that note was waiting on now exists (engine/content.ts
+// PassiveDefinition, engine/combat/passiveEngine.ts) — `grantsPassiveIds`
+// below is relics' side of that wiring, applied team-wide like statGrants.
 
-import type { StatKey } from '../engine/content';
+import type { PassiveId, StatKey } from '../engine/content';
 import { isValidFlatStatGrant } from '../engine/content';
 import type { StatModifiers } from '../engine/state';
 import { mergeStatMods } from './statMods';
@@ -19,6 +17,8 @@ export interface RelicDefinition {
   description?: string;
   /** Flat additive grants (CLAUDE.md "Stat modifiers are flat additive integers, multiples of 5 or 10"), applied to every combatant on the owning side. */
   statGrants: Partial<Record<StatKey, number>>;
+  /** Passives (engine/content.ts PassiveDefinition, src/data/passives.ts) this relic grants to every combatant on the owning side while owned. Optional/omitted for plain stat-only relics. */
+  grantsPassiveIds?: readonly PassiveId[];
 }
 
 export function isValidRelicDefinition(relic: RelicDefinition): boolean {

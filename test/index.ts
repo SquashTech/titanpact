@@ -2,6 +2,7 @@ import './rng.test';
 import './damage.test';
 import './combat.test';
 import './statuses.test';
+import './passives.test';
 import './run.test';
 import './recruitment.test';
 import './shop.test';

@@ -1,7 +1,8 @@
 // ⚠️ TEST FIXTURE CONTENT — a handful of team-wide stat relics sufficient to
-// exercise relicReward map nodes and src/run/relics.ts end to end. Stat-only
-// per that module's scope note; not authored relic content, and no
-// hook-triggered relics (blocked on the trigger-hook engine contract).
+// exercise relicReward map nodes and src/run/relics.ts end to end, plus one
+// Passive-granting relic (Emberheart) proving relics' side of the Passives
+// wiring (RelicDefinition.grantsPassiveIds, src/run/passives.ts). Not
+// authored relic content.
 
 import type { RelicDefinition } from '../run/relics';
 
@@ -41,5 +42,12 @@ export const relics: Record<string, RelicDefinition> = {
     name: 'Bulwark Core',
     description: 'Team-wide +20 HP.',
     statGrants: { hp: 20 },
+  },
+  emberheart: {
+    id: 'emberheart',
+    name: 'Emberheart',
+    description: 'Team-wide: grants the Emberheart passive (+20% bonus damage with Fire-type moves).',
+    statGrants: {},
+    grantsPassiveIds: ['emberheart'],
   },
 };

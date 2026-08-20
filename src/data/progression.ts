@@ -36,6 +36,13 @@
 // Adept/Glacial Bastion/Mana Current) to match the same designer draft —
 // stat grants are unchanged, only names and typeGraft targets moved to line
 // up with the other 10 heroes' authored framework.
+//
+// Lucius (dual Shadow/Mind — no typeGraft path, per the mono-only rule
+// chooseEvolutionPath enforces) is the one exception to the stat-only scope
+// note above: his defensive path also grants a Passive (grantsPassiveIds,
+// src/run/progression.ts EvolutionPath, engine/content.ts PassiveDefinition)
+// — Sanguine (src/data/passives.ts), the first Evolution-granted Passive now
+// that the contract exists (engine/combat/passiveEngine.ts).
 
 import type { ProgressionTable } from '../run/progression';
 import { EVOLUTION_LEVEL } from '../run/progression';
@@ -763,10 +770,40 @@ export const progressionTable: ProgressionTable = {
       },
     ],
 
-    // Lucius: intentionally no evolutions entry yet (src/data/heroes.ts) —
-    // his paths will eventually retype him entirely and grant new passives,
-    // a more involved shape than the stat-grant-only Evolution every other
-    // hero above uses. availableEvolution() simply returns null for him
-    // until that content is authored.
+    lucius: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'lucius-offensive',
+            heroId: 'lucius',
+            kind: 'offensive',
+            name: 'Voidcaller',
+            description: 'Leans fully into raw spellpower, restraint be damned.',
+            statGrants: { intelligence: 10, speed: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'lucius-defensive',
+            heroId: 'lucius',
+            kind: 'defensive',
+            name: 'Sanguine',
+            description: "Feeds on the enemy's open wounds — heals for every point of Bleed damage they take, from any source.",
+            statGrants: { hp: 10, wisdom: 10 },
+            unlocksMoveIds: [],
+            grantsPassiveIds: ['sanguine'],
+          },
+          {
+            id: 'lucius-utility',
+            heroId: 'lucius',
+            kind: 'utility',
+            name: 'Cipher',
+            description: 'Trades offense for a deep, self-sustaining mana reserve.',
+            statGrants: { manaPool: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+          },
+        ],
+      },
+    ],
   },
 };

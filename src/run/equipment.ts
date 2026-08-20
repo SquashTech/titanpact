@@ -5,16 +5,14 @@
 // as attached to the hero's roster slot, not permanently bound to the hero
 // object" (progression.md).
 //
-// SCOPE NOTE: this slice only wires the STAT-shaped half of the pipeline
+// SCOPE NOTE: stat grants below are the flat-additive half of the pipeline
 // discipline (docs/architecture.md "two damage pipelines" / "Equipment and
-// relics use the same hook-and-condition system as abilities", CLAUDE.md) —
-// equipment here grants flat stat modifiers only. Damage-shaped equipment
-// bonuses (the pipeline-2 multiplier term, engine/damage/damagePipeline.ts
-// DamageModifier) require that same hook-and-condition system, which isn't
-// built yet. Do not speculatively add a damage-modifier field to equipment
-// until it lands — extend the engine's multiplier-term wiring first.
+// relics use the same hook-and-condition system as abilities", CLAUDE.md).
+// The hook-and-condition system that note was waiting on now exists
+// (engine/content.ts PassiveDefinition, engine/combat/passiveEngine.ts) —
+// `grantsPassiveIds` below is equipment's side of that wiring.
 
-import type { StatKey } from '../engine/content';
+import type { PassiveId, StatKey } from '../engine/content';
 import { isValidFlatStatGrant } from '../engine/content';
 import type { StatModifiers } from '../engine/state';
 import { mergeStatMods } from './statMods';
@@ -33,6 +31,8 @@ export interface EquipmentDefinition {
   rarity: EquipmentRarity;
   /** Flat additive grants (CLAUDE.md "Stat modifiers are flat additive integers, multiples of 5 or 10"). */
   statGrants: Partial<Record<StatKey, number>>;
+  /** Passives (engine/content.ts PassiveDefinition, src/data/passives.ts) this item grants while equipped. Optional/omitted for plain stat-only gear. */
+  grantsPassiveIds?: readonly PassiveId[];
 }
 
 /** Reward-roll weights per rarity — higher tiers are proportionally rarer finds (pickWeightedEquipment below). */

@@ -25,6 +25,7 @@ import { generateStarterOptions } from '../run/draft';
 import { generateEncounter, type EncounterNodeType, type Encounter } from '../run/enemyGen';
 import { pickSquad } from '../run/squad';
 import { relicTeamStatModifiers } from '../run/relics';
+import { relicTeamPassiveGrants } from '../run/passives';
 import { advanceToNode, advanceToNextAct, grantCurrencyReward, grantUpgradeReward, grantContractReward } from '../run/runProgress';
 import type { RunState, RosterEntry } from '../run/state';
 import type { Squad } from '../run/squad';
@@ -449,6 +450,7 @@ export function App() {
           aiRun={screen.encounter.run}
           aiSquad={screen.encounter.squad}
           teamStatModifiers={relicTeamStatModifiers(playerRun.relics, relics)}
+          teamPassiveGrants={relicTeamPassiveGrants(playerRun.relics, relics)}
           goldReward={screen.goldReward}
           trainingPointsReward={screen.trainingPointsReward}
           equipmentReward={screen.equipmentReward}

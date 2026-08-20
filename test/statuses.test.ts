@@ -12,12 +12,13 @@ import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
+import { passives } from '../src/data/passives';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import { getEffectiveStat, hasStatus } from '../src/engine/state';
 import { applyStatus, cleanseStatuses } from '../src/engine/combat/statusEngine';
 
-const config = { typeChart, heroes, moves, statuses, benchHpRegenFlat: 5 };
+const config = { typeChart, heroes, moves, statuses, passives, benchHpRegenFlat: 5 };
 
 function twoVTwoFixture(seed: number) {
   return createFightState(

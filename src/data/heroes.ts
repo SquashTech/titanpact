@@ -202,10 +202,11 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['vineLash', 'rendingClaw', 'rally'],
     starter: false,
   },
-  // Lucius: baseline only for now. His Evolutions are deliberately
-  // unauthored (see src/data/progression.ts) — a future pass will let his
-  // paths fully retype him and grant new passives, more involved than the
-  // stat-grant-only Evolution shape every other hero here uses.
+  // Lucius: his Evolution (src/data/progression.ts evolutions.lucius) grants
+  // a Passive on the defensive path (Sanguine) rather than just stats — the
+  // first hero to use that shape now that the Passives contract exists
+  // (engine/content.ts PassiveDefinition). Already dual-typed (Shadow/Mind),
+  // so none of his paths carry a typeGraft (mono-only rule).
   lucius: {
     id: 'lucius',
     name: 'Lucius',

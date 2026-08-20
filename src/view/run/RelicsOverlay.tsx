@@ -1,5 +1,7 @@
 import { relics } from '../../data/relics';
+import { passives } from '../../data/passives';
 import { RelicIcon } from '../shared/EquipmentBox';
+import { passiveEmoji } from '../shared/passiveIcons';
 
 interface Props {
   ownedRelicIds: readonly string[];
@@ -45,6 +47,14 @@ export function RelicsOverlay({ ownedRelicIds, onClose }: Props) {
                     {count > 1 && <span className="relic-card-count">×{count}</span>}
                   </div>
                   {relic.description && <div className="relic-card-desc">{relic.description}</div>}
+                  {relic.grantsPassiveIds && relic.grantsPassiveIds.length > 0 && (
+                    <div className="relic-card-desc">
+                      Grants:{' '}
+                      {relic.grantsPassiveIds
+                        .map((id) => `${passiveEmoji[id] ? `${passiveEmoji[id]} ` : ''}${passives[id]?.name ?? id}`)
+                        .join(', ')}
+                    </div>
+                  )}
                 </div>
               );
             })}

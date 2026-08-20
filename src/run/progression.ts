@@ -11,7 +11,7 @@
 // authored for a subset of the roster only — see the SCOPE NOTE there. This
 // module only implements the generic mechanism.
 
-import type { HeroDefinition, StatKey, TypeId } from '../engine/content';
+import type { HeroDefinition, PassiveId, StatKey, TypeId } from '../engine/content';
 import { isValidFlatStatGrant } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
 import type { RosterEntry, RunState } from './state';
@@ -53,6 +53,8 @@ export interface EvolutionPath {
    * typeGraft overwrites (shifts) any earlier one; it's not additive.
    */
   typeGraft?: TypeId;
+  /** Passives (engine/content.ts PassiveDefinition, src/data/passives.ts) this path grants permanently once chosen — e.g. Lucius's Sanguine path. Optional/omitted for a plain stat-grant path. */
+  grantsPassiveIds?: readonly PassiveId[];
 }
 
 export interface EvolutionNode {
@@ -210,6 +212,7 @@ export function chooseEvolutionPath(
     chosenPathIds: [...entry.chosenPathIds, path.id],
     unlockedMoveIds: [...new Set([...entry.unlockedMoveIds, ...path.unlocksMoveIds])],
     evolutionStatGrants: mergeStatMods(entry.evolutionStatGrants, path.statGrants),
+    evolutionPassiveGrants: [...new Set([...entry.evolutionPassiveGrants, ...(path.grantsPassiveIds ?? [])])],
     evolutionTypeGraft,
   };
   return replaceEntry(run, rosterId, nextEntry, 0);

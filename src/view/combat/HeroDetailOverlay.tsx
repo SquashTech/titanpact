@@ -13,6 +13,8 @@ import { MoveTile, MoveInfoPanel, swallowGhostClick } from '../shared/MoveTile';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { statusEmoji, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
+import { passives } from '../../data/passives';
+import { passiveEmoji, passiveColor, passiveTint, PassiveInfoPanel } from '../shared/passiveIcons';
 
 interface Props {
   hero: HeroDefinition;
@@ -51,8 +53,8 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = maxHp > 0 ? Math.max(0, combatant.currentHp) / maxHp : 0;
   const manaFraction = maxMana > 0 ? combatant.currentMana / maxMana : 0;
-  /** Long-press-triggered move/item detail popup — shared by the moves row and the equipment grid below (mirrors LevelUpScreen's movePopup, "hold to inspect" standard). */
-  const [popup, setPopup] = useState<{ kind: 'move' | 'equipment'; id: string } | null>(null);
+  /** Long-press-triggered move/item/passive detail popup — shared by the moves row, the equipment grid, and the passives row below (mirrors LevelUpScreen's movePopup, "hold to inspect" standard). */
+  const [popup, setPopup] = useState<{ kind: 'move' | 'equipment' | 'passive'; id: string } | null>(null);
 
   /**
    * Opens the popup and arms swallowGhostClick (MoveTile.tsx) — releasing
@@ -62,7 +64,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
    * onClick and get misread as a deliberate dismiss. See that function's
    * doc comment for the full mechanism.
    */
-  function openPopup(next: { kind: 'move' | 'equipment'; id: string }) {
+  function openPopup(next: { kind: 'move' | 'equipment' | 'passive'; id: string }) {
     swallowGhostClick();
     setPopup(next);
   }
@@ -182,6 +184,37 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           );
         })()}
 
+        <div className="detail-section-title">🌟 Passives</div>
+        {Object.keys(combatant.passives).length > 0 ? (
+          <div className="detail-modifier-list">
+            {Object.values(combatant.passives).map((instance) => {
+              const def = passives[instance.passiveId];
+              if (!def) return null;
+              return (
+                <span
+                  key={instance.passiveId}
+                  className="detail-status-chip"
+                  style={{
+                    color: passiveColor(instance.passiveId),
+                    background: passiveTint(instance.passiveId, 0.12),
+                    borderColor: passiveTint(instance.passiveId, 0.5),
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openPopup({ kind: 'passive', id: instance.passiveId });
+                  }}
+                >
+                  {passiveEmoji[instance.passiveId] && <span className="status-emoji">{passiveEmoji[instance.passiveId]}</span>}
+                  {def.name}
+                  {instance.stacks > 1 && ` ×${instance.stacks}`}
+                </span>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="detail-empty">No active passives.</div>
+        )}
+
         <div className="detail-section-title">⚔️ Moves</div>
         {rosterEntry && rosterEntry.unlockedMoveIds.length > 0 ? (
           <div className="move-tile-row">
@@ -206,7 +239,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           <div className="detail-empty">No loadout data.</div>
         )}
 
-        <div className="detail-close-hint">Hold a move or item to inspect it — tap elsewhere to close</div>
+        <div className="detail-close-hint">Hold a move or item, or tap a passive, to inspect it — tap elsewhere to close</div>
       </div>
 
       {/* Long-press-triggered move/item detail popup (see `popup` state above) — reuses .log-overlay/.log-panel like LevelUpScreen's move popup, including "tap anywhere to close" (no stopPropagation on the panel). */}
@@ -215,8 +248,10 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           <div className="log-panel move-popup-panel">
             {popup.kind === 'move' ? (
               <MoveInfoPanel move={moves[popup.id] ?? null} />
-            ) : (
+            ) : popup.kind === 'equipment' ? (
               <EquipmentInfoPanel item={equipmentLookup[popup.id] ?? null} />
+            ) : (
+              <PassiveInfoPanel passive={passives[popup.id] ?? null} />
             )}
             <div className="move-popup-hint">Tap anywhere to close</div>
           </div>
