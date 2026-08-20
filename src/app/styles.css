@@ -3106,6 +3106,91 @@ body {
   color: var(--text-dim);
 }
 
+/* Player squad grid (SquadSelectScreen) — a fixed 2-wide/3-tall grid (the
+   roster hard cap) instead of a pick-order list: row 1 fields the fight,
+   row 2 is bench, row 3 sits out. Drag one cell onto another to swap
+   contents, or tap-then-tap on touch (mirrors RosterManagementScreen's
+   equip-slot select/target pattern below). */
+.squad-grid-hint {
+  color: var(--text-dim);
+}
+
+.squad-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.squad-grid-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.squad-grid-row-label {
+  flex: 0 0 52px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.squad-grid-row-active .squad-grid-row-label {
+  color: var(--ally);
+}
+
+.squad-grid-row-cells {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.squad-slot {
+  position: relative;
+  min-height: 64px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.squad-slot.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-style: dashed;
+  opacity: 0.5;
+}
+
+.squad-slot-empty-label {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.squad-slot.selected {
+  border-color: var(--accent);
+  background: #33291a;
+}
+
+.squad-slot.drop-target {
+  border-color: var(--accent);
+}
+
+.squad-slot.drag-over {
+  border-color: var(--accent);
+  background: #33291a;
+}
+
 /* --- Relics overlay ------------------------------------------------------- */
 
 .relics-panel {

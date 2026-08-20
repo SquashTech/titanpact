@@ -509,6 +509,7 @@ export function App() {
         <SquadSelectScreen
           run={playerRun}
           encounter={screen.encounter}
+          onRunChange={setPlayerRun}
           onConfirm={(squad) => handleSquadConfirmed(squad, screen.nodeId, screen.nodeType, screen.encounter)}
         />
       )}
