@@ -47,11 +47,6 @@ don't silently override it.
 - Heroes are **named, authored, fixed specialists** (~53 concepts). Not procedurally generated.
 - **Mono typing is a valid terminal state**, not a larval stage. Precedent: Pokémon
   Normal/Water/Bug. A numerically common mono type is not a design flaw.
-- Evolution depth varies by design: Capstone = 0 Evolutions, Single = 1, Deep line = 2+.
-  **Current implementation scope:** every hero gets exactly one Evolution, triggered at
-  a flat level (`EVOLUTION_LEVEL`, currently 5) uniform across the whole roster — this
-  is the "Single" shape applied everywhere as a first pass. Per-hero trigger levels and
-  Capstone/Deep-line depth are deferred, not abandoned (`docs/leveling-and-ranks.md`).
 - **Level-ups are a pooled currency** distributed freely after each battle (benched heroes
   included). Below the Evolution level, a level-up **unlocks a move** from the current
   tier; the level-up that reaches the Evolution level instead **surfaces the Evolution
@@ -80,7 +75,8 @@ don't silently override it.
 - **Lock-in rule:** voluntary switching is disabled once a side has **2+ heroes KO'd** (forced
   replacement of a downed hero still happens). This flips a fight from a cycling game into a
   grind — an intentional phase transition.
-- **Rest** is a load-bearing rare option: recovers mana, **no defensive benefit**.
+- **Rest** is a required choice when a hero does not have enough mana for any of their abilities.
+  Recovers all mana, but skips the turn.
 - **Mana tuning invariant:** *mana investment must pay out later than the point at which a weak
   team dies.* Keep this true when tuning any mana node or regen value.
 
@@ -142,10 +138,6 @@ what's still unimplemented:
 Each has a *provisional* value baked into the prototypes for playability. Treat those as
 placeholders, not decisions. Flag before hardening any of these:
 
-- **Condition vocabulary:** the 6th contract is implemented (`docs/conditions.md`), adopting
-  that doc's own recommendations for its remaining open sub-questions (Cleanse's debuffs-vs-all
-  split, Daze clearing on switch, Regen's decay shape, end-of-round tick timing) — provisional
-  implementation choices, not designer sign-off. See `docs/conditions.md` §7.
 - **Weather subsystem:** whether it interacts with mana is still open (`docs/mana.md`).
 - **Team archetypes are intentionally deferred** — they must *emerge* from movepool, ability,
   equipment, and relic design. Do not pre-specify archetypes.
