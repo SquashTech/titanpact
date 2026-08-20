@@ -137,8 +137,8 @@ export const heroes: Record<string, HeroDefinition> = {
   },
   forgewright: {
     id: 'forgewright',
-    name: 'Vulcan',
-    types: ['Forge'],
+    name: 'Clockwork',
+    types: ['Mech'],
     baseStats: { hp: 120, attack: 75, defense: 70, intelligence: 25, wisdom: 40, speed: 35, manaPool: 45, mpRegen: 5 },
     moveIds: ['moltenHammer', 'sparkForge', 'fortify'],
     starter: true,

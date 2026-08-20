@@ -165,7 +165,7 @@ export const progressionTable: ProgressionTable = {
             description: 'Armor-piercing heavy hits; cuts enemy Def.',
             statGrants: { attack: 10 },
             unlocksMoveIds: [],
-            typeGraft: 'Forge',
+            typeGraft: 'Mech',
           },
           {
             id: 'ironWarden-defensive',

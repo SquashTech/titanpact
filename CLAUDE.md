@@ -37,7 +37,7 @@ don't silently override it.
 
 ### Types
 - **15 types:** Fire, Water, Frost, Storm, Stone, Nature, Light, Shadow, Arcane, Mind,
-  Spirit, Iron, Forge, Beast, Ancient.
+  Spirit, Iron, Mech, Beast, Ancient.
 - **Type = the domain a hero's power draws from, not what its body is made of.** This reframe
   is the identity filter for the whole roster — apply it everywhere.
 - A hero's **innate primary type is immutable.** Evolution may add or shift a *secondary*

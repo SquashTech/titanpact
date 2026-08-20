@@ -13,7 +13,7 @@ import revenantArt from '../../../art/revenant.png';
 import rimeArt from '../../../art/rime.png';
 import runescribeArt from '../../../art/runescribe.png';
 import shadowMonkArt from '../../../art/shadowmonk.png';
-import steamColossusArt from '../../../art/steamcolossus.png';
+import clockworkArt from '../../../art/clockwork.png';
 import stormRangerArt from '../../../art/stormranger.png';
 import sunPriestArt from '../../../art/sunpriest.png';
 import theAbominableArt from '../../../art/theabominable.png';
@@ -38,7 +38,7 @@ export const heroArt: Partial<Record<string, string>> = {
   rime: rimeArt,
   runescribe: runescribeArt,
   shadowMonk: shadowMonkArt,
-  forgewright: steamColossusArt,
+  forgewright: clockworkArt,
   stormRanger: stormRangerArt,
   dawnwarden: sunPriestArt,
   glacialWarden: theAbominableArt,

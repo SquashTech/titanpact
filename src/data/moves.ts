@@ -446,11 +446,11 @@ export const moves: Record<string, MoveDefinition> = {
     description: 'A spray of jagged metal fragments.',
   },
 
-  // --- Forge -------------------------------------------------------------
+  // --- Mech --------------------------------------------------------------
   moltenHammer: {
     id: 'moltenHammer',
     name: 'Molten Hammer',
-    type: 'Forge',
+    type: 'Mech',
     category: 'physical',
     kind: 'damage',
     basePower: 70,
@@ -462,7 +462,7 @@ export const moves: Record<string, MoveDefinition> = {
   sparkForge: {
     id: 'sparkForge',
     name: 'Spark Forge',
-    type: 'Forge',
+    type: 'Mech',
     category: 'physical',
     kind: 'damage',
     basePower: 32,

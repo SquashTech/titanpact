@@ -21,7 +21,7 @@ this hero physically?* A knight whose strength is divine conviction is **Light**
 ## The 15 types
 
 `Fire` · `Water` · `Frost` · `Storm` · `Stone` · `Nature` · `Light` · `Shadow` ·
-`Arcane` · `Mind` · `Spirit` · `Iron` · `Forge` · `Beast` · `Ancient`
+`Arcane` · `Mind` · `Spirit` · `Iron` · `Mech` · `Beast` · `Ancient`
 
 Each names a **power source**. (Full domain descriptions belong alongside the chart
 in `/data`; the authoring rule above is what governs assignment.)
@@ -125,7 +125,7 @@ status says nothing about a hero's power level, just where you first meet them.
 special" above) — Cinder (Fire), Tidecaller (Water), The Abominable (Frost),
 Squall (Storm), Crag (Stone), Sylva (Nature), Solace (Light), Vesper
 (Shadow), Glyph (Arcane), Cortex (Mind), Revenant (Spirit), Valor
-(Iron), Vulcan (Forge), Pack Alpha (Beast). Warden is the roster's first
+(Iron), Clockwork (Mech), Pack Alpha (Beast). Warden is the roster's first
 recruit-only hero — kept in the game, pulled out of the draft so Iron's starter slot
 is Valor instead. Expect the recruit-only list to grow as more of the authored
 53-hero roster is added; this is the seed of that split, not the finished shape of it.

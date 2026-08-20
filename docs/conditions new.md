@@ -123,7 +123,7 @@ count is not the constraint — legibility and non-overlap are.)
 - **Agnostic-served:** Bleed, Regen, Stealth (place Stealth deliberately — reads
   Shadow, but Beast/predator-ambush or fully agnostic avoids double-signaturing one
   element)
-- **Status-poor (holes):** Water, Stone, Forge, Beast, Nature, Light, Arcane
+- **Status-poor (holes):** Water, Stone, Mech, Beast, Nature, Light, Arcane
 - **Cleanest next fill:** Arcane mana-**regen** denial (hits the regen stat, not the
   pool — surgical, distinct from the cut Sap). Unbuilt; bench interaction is the
   load-bearing decision if pursued.

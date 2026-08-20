@@ -16,7 +16,7 @@ const TYPE_COLORS: Record<string, string> = {
   Mind: '#e05fa0',
   Spirit: '#5fcfc0',
   Iron: '#9aa3ad',
-  Forge: '#d97a3c',
+  Mech: '#d97a3c',
   Beast: '#b5772f',
   Ancient: '#8a9c5e',
 };
@@ -43,7 +43,7 @@ const TYPE_ABBR: Record<string, string> = {
   Mind: 'MND',
   Spirit: 'SPI',
   Iron: 'IRN',
-  Forge: 'FOR',
+  Mech: 'MEC',
   Beast: 'BST',
   Ancient: 'ANC',
 };
