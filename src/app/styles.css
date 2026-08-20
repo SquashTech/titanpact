@@ -850,14 +850,115 @@ body {
   color: var(--hp-low);
 }
 
+/* Card-level flash on an ordinary attack landing (buildBeats.ts DamageDealt
+   beat, keyed off popup-damage) — a quick red recoil so every basic hit has
+   some impact, not just the statuses that got their own treatment. Short and
+   understated on purpose: this fires on nearly every attack, so anything
+   louder than burn-flash/bleed-flash would get old fast. */
+.combatant-card.impact-hit {
+  animation: impact-flash 280ms ease-out;
+}
+
+@keyframes impact-flash {
+  0% {
+    box-shadow: 0 0 0 rgba(217, 83, 79, 0);
+    filter: brightness(1);
+    transform: translateX(0);
+  }
+  20% {
+    box-shadow: 0 0 12px 3px rgba(217, 83, 79, 0.55);
+    filter: brightness(1.12);
+    transform: translateX(-2px);
+  }
+  40% {
+    transform: translateX(2px);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(217, 83, 79, 0);
+    filter: brightness(1);
+    transform: translateX(0);
+  }
+}
+
+/* Crit gets its own punchier overshoot-scale instead of the plain float, plus
+   a bigger card flash below (crit-hit) — reads as "harder hit" without
+   needing new copy beyond the existing "Critical hit!" banner tag. */
 .dmg-popup.popup-crit {
   color: var(--crit);
   font-size: 19px;
   text-shadow: 0 0 10px rgba(255, 112, 67, 0.7), 0 1px 3px rgba(0, 0, 0, 0.6);
+  animation: dmg-popup-impact 700ms ease-out forwards;
+}
+
+@keyframes dmg-popup-impact {
+  0% {
+    opacity: 0;
+    transform: translateY(2px) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.35);
+  }
+  30% {
+    transform: translateY(0) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px) scale(1.1);
+  }
+}
+
+.combatant-card.crit-hit {
+  animation: crit-flash 400ms ease-out;
+}
+
+@keyframes crit-flash {
+  0% {
+    box-shadow: 0 0 0 rgba(255, 112, 67, 0);
+    filter: brightness(1);
+    transform: translateX(0) scale(1);
+  }
+  15% {
+    box-shadow: 0 0 22px 6px rgba(255, 112, 67, 0.85);
+    filter: brightness(1.35);
+    transform: translateX(-4px) scale(1.02);
+  }
+  30% {
+    transform: translateX(4px) scale(1.02);
+  }
+  45% {
+    transform: translateX(-2px) scale(1);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(255, 112, 67, 0);
+    filter: brightness(1);
+    transform: translateX(0) scale(1);
+  }
 }
 
 .dmg-popup.popup-heal {
   color: var(--hp-high);
+  text-shadow: 0 0 6px rgba(76, 175, 106, 0.5), 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+/* Card flash for an ordinary heal landing (Healed/BenchRegenTicked beats,
+   popup-heal) — a single quick pulse, deliberately snappier than Regen's
+   slow sparkle-and-glow (regen-flash below) so a move's heal doesn't read as
+   an indistinct copy of the DoT-style tick. */
+.combatant-card.heal-hit {
+  animation: heal-flash 420ms ease-out;
+}
+
+@keyframes heal-flash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(76, 175, 106, 0);
+    filter: brightness(1);
+  }
+  30% {
+    box-shadow: 0 0 16px 4px rgba(76, 175, 106, 0.6);
+    filter: brightness(1.18) saturate(1.1);
+  }
 }
 
 .dmg-popup.popup-buff {
@@ -1141,6 +1242,60 @@ body {
   50% {
     box-shadow: 0 0 16px 4px rgba(76, 175, 106, 0.5);
     filter: brightness(1.15);
+  }
+}
+
+/* A held Passive's reactive heal landing (buildBeats.ts PassiveTriggered
+   beat — currently Lucius's Sanguine, off an enemy's Bleed tick). Reuses
+   --bleed's crimson rather than the usual green heal palette so it reads as
+   life drawn FROM the wound rather than an ordinary green heal/Regen tick,
+   with a double-pulse "heartbeat" motion (drain, then settle) instead of the
+   single float other heals use. The card flash is an outward glow, the
+   positive mirror of Bleed's inward wound flash below. */
+.dmg-popup.popup-passive-heal {
+  color: var(--bleed);
+  font-size: 16px;
+  text-shadow: 0 0 10px rgba(192, 57, 43, 0.7), 0 1px 3px rgba(0, 0, 0, 0.6);
+  animation: dmg-popup-heartbeat 900ms ease-out forwards;
+}
+
+@keyframes dmg-popup-heartbeat {
+  0% {
+    opacity: 0;
+    transform: translateY(4px) scale(0.8);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1.2);
+  }
+  35% {
+    transform: translateY(-2px) scale(1);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.15);
+  }
+  65% {
+    transform: translateY(-8px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-24px) scale(1);
+  }
+}
+
+.combatant-card.passive-heal-hit {
+  animation: passive-heal-flash 650ms ease-in-out;
+}
+
+@keyframes passive-heal-flash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(192, 57, 43, 0);
+    filter: brightness(1);
+  }
+  40% {
+    box-shadow: 0 0 18px 5px rgba(192, 57, 43, 0.5);
+    filter: brightness(1.12) saturate(1.2);
   }
 }
 

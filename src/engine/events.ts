@@ -10,7 +10,7 @@
 // contract per docs/conditions.md — see engine/combat/statusEngine.ts.
 
 import type { Side, DamageCategory } from './state';
-import type { StatusId, StatusRemovalReason, TypeId } from './content';
+import type { PassiveId, StatusId, StatusRemovalReason, TypeId } from './content';
 
 interface BaseEvent {
   round: number;
@@ -142,6 +142,21 @@ export interface StatusDetonatedEvent extends BaseEvent {
   amount: number;
 }
 
+/**
+ * A held Passive's reactive effect firing (engine/combat/passiveEngine.ts
+ * resolvePassiveReactions) — kept as its own event, ahead of whatever
+ * HpChanged/StatusApplied/StatChanged the effect itself produces, purely so
+ * the view can attribute that state change to the passive rather than
+ * showing an unexplained stat swing (same reasoning as StatusDetonatedEvent
+ * above, generalized to any PassiveEffect kind instead of just damage). One
+ * stack firing = one event, so N held stacks emit N of these in a row.
+ */
+export interface PassiveTriggeredEvent extends BaseEvent {
+  type: 'PassiveTriggered';
+  combatantId: string;
+  passiveId: PassiveId;
+}
+
 export interface ActionBlockedEvent extends BaseEvent {
   type: 'ActionBlocked';
   combatantId: string;
@@ -237,6 +252,7 @@ export type CombatEvent =
   | StatusTickedEvent
   | StatusRemovedEvent
   | StatusDetonatedEvent
+  | PassiveTriggeredEvent
   | ActionBlockedEvent
   | FaintedEvent
   | SwitchedInEvent

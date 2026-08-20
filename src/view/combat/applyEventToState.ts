@@ -120,10 +120,11 @@ export function applyEventToState(state: CombatState, event: CombatEvent): Comba
     }
 
     // RoundStarted / TurnStarted / MoveDeclared / MoveUsed / DamageDealt /
-    // Healed / StatusDetonated / ActionBlocked / RoundEnded: no CombatState
-    // field this view reads changes from these directly (DamageDealt/Healed/
-    // StatusDetonated are always paired with a HpChanged that carries the
-    // actual new value).
+    // Healed / StatusDetonated / PassiveTriggered / ActionBlocked /
+    // RoundEnded: no CombatState field this view reads changes from these
+    // directly (DamageDealt/Healed/StatusDetonated/PassiveTriggered are
+    // always paired with a HpChanged/StatusApplied/StatChanged that carries
+    // the actual new value).
     default:
       return state;
   }

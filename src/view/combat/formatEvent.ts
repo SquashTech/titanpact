@@ -10,6 +10,7 @@
 import type { CombatEvent } from '../../engine/events';
 import type { HeroDefinition, MoveDefinition } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
+import { passives } from '../../data/passives';
 
 export interface LogLine {
   key: string;
@@ -121,6 +122,9 @@ export function formatEvents(
         break;
       case 'StatusDetonated':
         lines.push({ key, text: `${name(e.combatantId)}'s ${e.statusId} detonates for ${e.amount} dmg!`, className: 'log-conduct' });
+        break;
+      case 'PassiveTriggered':
+        lines.push({ key, text: `${name(e.combatantId)}'s ${passives[e.passiveId]?.name ?? e.passiveId} triggers`, className: 'log-heal' });
         break;
       case 'Rested':
         lines.push({ key, text: `${name(e.combatantId)} rests, restoring Mana to full`, className: 'log-mana' });

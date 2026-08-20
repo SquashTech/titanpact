@@ -22,12 +22,16 @@ export interface Popup {
  * (styles.css) without a growing chain of className checks here.
  */
 const POPUP_FLASH_CLASS: Record<string, string> = {
+  'popup-damage': 'impact-hit',
+  'popup-crit': 'crit-hit',
+  'popup-heal': 'heal-hit',
   'popup-conduct': 'zap-hit',
   'popup-burn': 'burn-hit',
   'popup-bleed': 'bleed-hit',
   'popup-poison': 'poison-hit',
   'popup-regen': 'regen-hit',
   'popup-haunt': 'haunt-hit',
+  'popup-passive-heal': 'passive-heal-hit',
 };
 
 interface Props {

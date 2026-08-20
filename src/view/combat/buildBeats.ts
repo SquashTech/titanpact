@@ -8,11 +8,16 @@
 import type {
   BenchRegenTickedEvent,
   CombatEvent,
+  HpChangedEvent,
   ManaRegenTickedEvent,
   MoveUsedEvent,
+  StatChangedEvent,
+  StatusAppliedEvent,
 } from '../../engine/events';
 import type { CombatState, Side } from '../../engine/state';
 import type { HeroDefinition, MoveDefinition } from '../../engine/content';
+import { passives } from '../../data/passives';
+import { passiveEmoji } from '../shared/passiveIcons';
 
 export interface BeatPopup {
   combatantId: string;
@@ -167,6 +172,49 @@ export function buildBeats(
           { combatantId: e.combatantId, text: `⚡ -${e.amount}`, className: 'popup-conduct' },
         ]);
         if (faintEvent) push([faintEvent], `${targetName} is knocked out!`);
+        break;
+      }
+
+      // A held Passive reacting (passiveEngine.ts resolvePassiveReactions) —
+      // e.g. Sanguine mending its owner off an enemy's Bleed tick, right after
+      // that tick's own beat. Dispatches on the granting PassiveDefinition's
+      // effect kind to know which trailing state-change event to fold in,
+      // mirroring the dedicated Healed/StatusApplied/StatChanged beats below
+      // rather than introducing a passive-specific one.
+      case 'PassiveTriggered': {
+        const applied: CombatEvent[] = [e];
+        i++;
+        const def = passives[e.passiveId];
+        const ownerName = name(e.combatantId);
+        const label = `${passiveEmoji[e.passiveId] ? `${passiveEmoji[e.passiveId]} ` : ''}${def?.name ?? e.passiveId}`;
+        const effectKind = def?.reactive?.effect.kind;
+
+        if (effectKind === 'heal' && events[i]?.type === 'HpChanged') {
+          const hp = events[i++] as HpChangedEvent;
+          applied.push(hp);
+          const amount = hp.newHp - hp.previousHp;
+          push(applied, `${label} heals ${ownerName} for ${amount} HP!`, [
+            { combatantId: e.combatantId, text: `${passiveEmoji[e.passiveId] ?? ''} +${amount}`, className: 'popup-passive-heal' },
+          ]);
+        } else if (effectKind === 'applyStatus' && events[i]?.type === 'StatusApplied') {
+          const applied2 = events[i++] as StatusAppliedEvent;
+          applied.push(applied2);
+          push(applied, `${label} afflicts ${name(applied2.combatantId)} with ${applied2.statusId}!`, [
+            { combatantId: applied2.combatantId, text: applied2.statusId, className: 'popup-status' },
+          ]);
+        } else if (effectKind === 'statDelta' && events[i]?.type === 'StatChanged') {
+          const changed = events[i++] as StatChangedEvent;
+          applied.push(changed);
+          const sign = changed.delta > 0 ? '+' : '';
+          push(applied, `${label} shifts ${name(changed.combatantId)}'s ${changed.stat} (${sign}${changed.delta})`, [
+            { combatantId: changed.combatantId, text: `${sign}${changed.delta} ${changed.stat}`, className: changed.delta > 0 ? 'popup-buff' : 'popup-debuff' },
+          ]);
+        } else {
+          // No state-change event followed (e.g. resolveEffect no-op'd
+          // because the target already fainted) — carry the bare trigger
+          // event along rather than surfacing an empty beat.
+          carry.push(...applied);
+        }
         break;
       }
 

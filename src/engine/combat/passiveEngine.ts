@@ -154,7 +154,11 @@ export function resolvePassiveReactions(
         for (let i = 0; i < instance.stacks; i++) {
           const resolved = resolveEffect(working, round, heroes, statusDefs, ownerId, subjectId, reactive.effect, context);
           working = resolved.state;
-          produced.push(...resolved.events);
+          // Emitted even if resolveEffect no-op'd (e.g. target already
+          // fainted) so the view still knows the passive attempted to fire —
+          // buildBeats.ts only awards it a visible beat when a state-change
+          // event actually follows.
+          produced.push({ type: 'PassiveTriggered', round, combatantId: ownerId, passiveId: instance.passiveId }, ...resolved.events);
         }
       }
     }
