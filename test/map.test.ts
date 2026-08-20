@@ -34,7 +34,18 @@ test('map: row 0 is a single plain fight, the funnel row is a single shop, the b
 });
 
 test('map: uniform per-act shape — Fight, pick-3 reward, Skirmish, pick-3 reward, (Elite or Battle), Guild Hall, Ancient', () => {
-  const REWARD_TYPES = new Set(['equipmentReward', 'relicReward', 'currencyReward', 'upgradeReward']);
+  const REWARD_TYPES = new Set([
+    'equipmentReward',
+    'relicReward',
+    'currencyReward',
+    'upgradeReward',
+    'weaponReward',
+    'armorReward',
+    'accessoryReward',
+    'hpBoostReward',
+    'manaBoostReward',
+    'event',
+  ]);
   for (const seed of [1, 2, 3, 4, 5]) {
     const map = generateMap(seed);
     const rows = map.rows;

@@ -231,25 +231,25 @@ test('progression: an Evolution path with a non-multiple-of-5 stat grant is reje
 // --- Type-graft Evolution paths (docs/progression.md "Type-graft paths") ---
 
 test('progression: a type-graft path grants a second type without touching the innate HeroDefinition', () => {
-  let run = seedRoster(['cinderKnight']);
+  let run = seedRoster(['tidecaller']);
   run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
-  run = levelUpTimes(run, 'cinderKnight', EVOLUTION_LEVEL - 1);
+  run = levelUpTimes(run, 'tidecaller', EVOLUTION_LEVEL - 1);
 
-  const next = chooseEvolutionPath(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-defensive');
-  assert.strictEqual(next.roster[0].evolutionTypeGraft, 'Iron');
-  assert.deepStrictEqual(heroes.cinderKnight.types, ['Fire']); // innate type untouched
+  const next = chooseEvolutionPath(run, progressionTable, heroes, 'tidecaller', 'tidecaller-defensive');
+  assert.strictEqual(next.roster[0].evolutionTypeGraft, 'Spirit');
+  assert.deepStrictEqual(heroes.tidecaller.types, ['Water']); // innate type untouched
 
-  const squad = pickSquad(next.roster, ['cinderKnight']);
-  const aiRun = seedRoster(['tidecaller']);
-  const aiSquad = pickSquad(aiRun.roster, ['tidecaller']);
+  const squad = pickSquad(next.roster, ['tidecaller']);
+  const aiRun = seedRoster(['ironWarden']);
+  const aiSquad = pickSquad(aiRun.roster, ['ironWarden']);
   const state = buildCombatState(1, heroes, equipment, [
     { side: 'A', squad, roster: next.roster },
     { side: 'B', squad: aiSquad, roster: aiRun.roster },
   ]);
-  assert.deepStrictEqual(state.combatants['A:cinderKnight'].grantedTypes, ['Iron']);
+  assert.deepStrictEqual(state.combatants['A:tidecaller'].grantedTypes, ['Spirit']);
   // Out-of-combat screens (roster mgmt, squad select, training) read the
   // graft off the RosterEntry directly, with no Combatant built yet.
-  assert.deepStrictEqual(rosterEntryTypes(heroes.cinderKnight, next.roster[0]), ['Fire', 'Iron']);
+  assert.deepStrictEqual(rosterEntryTypes(heroes.tidecaller, next.roster[0]), ['Water', 'Spirit']);
 });
 
 test('progression: a type-graft path is rejected for an already-dual-typed hero', () => {
@@ -287,45 +287,45 @@ test('progression: a type-graft path is rejected for an already-dual-typed hero'
 });
 
 test('progression: a later type-graft path shifts (replaces) the secondary type rather than stacking a third', () => {
-  let run = seedRoster(['cinderKnight']);
+  let run = seedRoster(['tidecaller']);
   run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
-  run = levelUpTimes(run, 'cinderKnight', EVOLUTION_LEVEL - 1);
-  run = chooseEvolutionPath(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-defensive');
-  assert.strictEqual(run.roster[0].evolutionTypeGraft, 'Iron');
+  run = levelUpTimes(run, 'tidecaller', EVOLUTION_LEVEL - 1);
+  run = chooseEvolutionPath(run, progressionTable, heroes, 'tidecaller', 'tidecaller-defensive');
+  assert.strictEqual(run.roster[0].evolutionTypeGraft, 'Spirit');
 
   // A synthetic second node offering a shift to a different secondary type
   // (exercises the future multi-node "Deep line" shape, docs/leveling-and-ranks.md).
   const shiftTable = {
     moveTiers: {},
     evolutions: {
-      cinderKnight: [
+      tidecaller: [
         { level: EVOLUTION_LEVEL, paths: [] },
         {
           level: EVOLUTION_LEVEL,
           paths: [
             {
-              id: 'cinderKnight-shift',
-              heroId: 'cinderKnight',
+              id: 'tidecaller-shift',
+              heroId: 'tidecaller',
               kind: 'utility' as const,
               name: 'Shifted Graft',
               statGrants: {},
               unlocksMoveIds: [],
-              typeGraft: 'Water',
+              typeGraft: 'Frost',
             },
           ],
         },
       ],
     },
   };
-  const shifted = chooseEvolutionPath(run, shiftTable, heroes, 'cinderKnight', 'cinderKnight-shift');
-  assert.strictEqual(shifted.roster[0].evolutionTypeGraft, 'Water'); // replaced, not stacked
+  const shifted = chooseEvolutionPath(run, shiftTable, heroes, 'tidecaller', 'tidecaller-shift');
+  assert.strictEqual(shifted.roster[0].evolutionTypeGraft, 'Frost'); // replaced, not stacked
 
-  const squad = pickSquad(shifted.roster, ['cinderKnight']);
-  const aiRun = seedRoster(['tidecaller']);
-  const aiSquad = pickSquad(aiRun.roster, ['tidecaller']);
+  const squad = pickSquad(shifted.roster, ['tidecaller']);
+  const aiRun = seedRoster(['ironWarden']);
+  const aiSquad = pickSquad(aiRun.roster, ['ironWarden']);
   const state = buildCombatState(1, heroes, equipment, [
     { side: 'A', squad, roster: shifted.roster },
     { side: 'B', squad: aiSquad, roster: aiRun.roster },
   ]);
-  assert.deepStrictEqual(state.combatants['A:cinderKnight'].grantedTypes, ['Water']); // not ['Iron', 'Water']
+  assert.deepStrictEqual(state.combatants['A:tidecaller'].grantedTypes, ['Frost']); // not ['Spirit', 'Frost']
 });

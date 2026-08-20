@@ -55,20 +55,20 @@ test('invariant: engine never mutates content data (heroes/moves untouched by re
   const heroesBefore = heroes;
   resolveRound(state, actions, config);
   assert.strictEqual(heroes, heroesBefore); // same object reference: never reassigned or mutated
-  assert.strictEqual(heroes.cinderKnight.types.length, 1); // innate type shape untouched
+  assert.strictEqual(heroes.tidecaller.types.length, 1); // innate type shape untouched
 });
 
 test('effectiveTypes: a type-graft grant adds to the innate types without mutating HeroDefinition', () => {
-  const hero = heroes.cinderKnight; // mono Fire
-  const grafted = { ...createCombatant('x', 'cinderKnight', 'A', 0, 0), grantedTypes: ['Stone'] };
-  assert.deepStrictEqual(effectiveTypes(hero, grafted), ['Fire', 'Stone']);
-  assert.deepStrictEqual(hero.types, ['Fire']); // innate type untouched by the grant
+  const hero = heroes.tidecaller; // mono Water
+  const grafted = { ...createCombatant('x', 'tidecaller', 'A', 0, 0), grantedTypes: ['Stone'] };
+  assert.deepStrictEqual(effectiveTypes(hero, grafted), ['Water', 'Stone']);
+  assert.deepStrictEqual(hero.types, ['Water']); // innate type untouched by the grant
 });
 
 test('effectiveTypes: no graft returns exactly the innate types', () => {
-  const hero = heroes.cinderKnight;
-  const plain = createCombatant('x', 'cinderKnight', 'A', 0, 0);
-  assert.deepStrictEqual(effectiveTypes(hero, plain), ['Fire']);
+  const hero = heroes.tidecaller;
+  const plain = createCombatant('x', 'tidecaller', 'A', 0, 0);
+  assert.deepStrictEqual(effectiveTypes(hero, plain), ['Water']);
 });
 
 test('invariant: stat grants must be multiples of 5 or 10', () => {
