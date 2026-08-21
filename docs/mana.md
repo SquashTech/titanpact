@@ -53,13 +53,20 @@ Treat this as a hard constraint when tuning mana-node values in `/data`.
   and benched) rather than reusing the bench-only `applyBenchHpRegen` path,
   since mana regen — unlike HP regen — isn't bench-exclusive.
 
+## Resolved (2026-08-21 designer sign-off)
+
+- **Weather subsystem interaction with mana: RESOLVED.** Field Effects
+  (`docs/field-effects.md`) **is** the weather subsystem, generalized beyond just
+  weather-flavored effects — a single global battlefield state, one active at a time,
+  lasting a flat 5 rounds. The first content, Surging Magic, doubles every hero's MP
+  Regen while active (`engine/combat/manaRegen.ts`, `engine/combat/
+  fieldEffectEngine.ts`). This was the mana system's only remaining open question.
+
 ## What is still OPEN (do not resolve unilaterally)
 
-> 🔒 **OPEN — do not resolve without designer sign-off.** *Weather subsystem
-> interaction with mana.* Weather is kept as a future subsystem (not cut), but its
-> interaction with mana (regen, costs) is explicitly deferred — do not build weather
-> hooks into the mana system speculatively. Mana ships standalone now; weather
-> integration is a separate future design pass.
+Nothing currently — see `docs/field-effects.md`'s own open questions for what's still
+undecided about Field Effects specifically (a type-restricted damage-modifier surface,
+whether relics should be able to grant one passively).
 
 ---
 
@@ -93,5 +100,6 @@ management.
 ## Note for Claude Code
 
 Resource model, regen cadence, and starting mana are now locked (above) — build
-against them directly, including the still-missing regen tick. **Weather coupling
-remains open** — do not build speculative weather hooks into the mana system.
+against them directly, including the regen tick, which is implemented. Weather
+coupling is also resolved now, via Field Effects (`docs/field-effects.md`) — this
+doc has no open questions of its own left.

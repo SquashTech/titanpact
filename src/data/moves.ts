@@ -743,4 +743,19 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleAlly',
     description: 'Washes away an ally’s afflictions and steadies them with a little light (Grant Cleanse).',
   },
+
+  // --- Field Effect moves (docs/field-effects.md) — one per effect ---------
+  arcaneSurge: {
+    id: 'arcaneSurge',
+    name: 'Arcane Surge',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [],
+    fieldEffectApplication: 'surgingMagic',
+    manaCost: 20,
+    priority: 0,
+    target: 'self',
+    description: 'Floods the battlefield with raw arcane current, doubling every hero’s MP Regen for 5 rounds (sets the Surging Magic field effect).',
+  },
 };

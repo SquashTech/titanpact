@@ -9,7 +9,7 @@
 // except Stealth, which ticks at the START of the round (before actions
 // resolve) so it also protects the round after the one it was cast in.
 
-import type { HeroDefinition, MoveDefinition, PassiveDefinition, StatusDefinition } from '../content';
+import type { FieldEffectDefinition, HeroDefinition, MoveDefinition, PassiveDefinition, StatusDefinition } from '../content';
 import type { CombatState, HeroLookup, Side } from '../state';
 import { getMaxHp, getMaxMana, getEffectiveStat, effectiveTypes, hasStatus } from '../state';
 import type { CombatEvent } from '../events';
@@ -18,6 +18,7 @@ import { orderActions } from './priority';
 import { resolveTargets, slotOfActiveCombatant, TargetNoLongerValidError } from './targeting';
 import { applyVoluntarySwitch, applyBenchHpRegen, SwitchBlockedError } from './switching';
 import { applyManaRegen } from './manaRegen';
+import { setFieldEffect, tickFieldEffect } from './fieldEffectEngine';
 import { resolveStatRatio, rollDamage, resolveElementalForceBonus, statKeysForCategory, type DamageModifier } from '../damage/damagePipeline';
 import type { TypeChart } from '../damage/typeMult';
 import { applyHpDelta } from './faintHandling';
@@ -38,6 +39,7 @@ export interface RoundConfig {
   moves: Record<string, MoveDefinition>;
   statuses: Record<string, StatusDefinition>;
   passives: Record<string, PassiveDefinition>;
+  fieldEffects: Record<string, FieldEffectDefinition>;
   /** Data-tunable, untuned placeholder — see switching.ts applyBenchHpRegen. */
   benchHpRegenFlat: number;
 }
@@ -48,7 +50,7 @@ export interface RoundResult {
 }
 
 export function resolveRound(state: CombatState, actions: readonly Action[], config: RoundConfig): RoundResult {
-  const { heroes, moves, typeChart, statuses, passives } = config;
+  const { heroes, moves, typeChart, statuses, passives, fieldEffects } = config;
   const round = state.round;
   const events: CombatEvent[] = [{ type: 'RoundStarted', round }];
 
@@ -230,7 +232,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           // Passive reactions keyed off this hit landing (e.g. a defender-side
           // "when an enemy/ally is hit, do X" passive) — resolved off the
           // DamageDealt event alone, before Conduct's own trigger below.
-          const damageReactions = resolvePassiveReactions(working, round, [damageDealtEvent], heroes, statuses, passives);
+          const damageReactions = resolvePassiveReactions(working, round, [damageDealtEvent], heroes, statuses, passives, fieldEffects);
           working = damageReactions.state;
           events.push(...damageReactions.events);
 
@@ -286,6 +288,16 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       }
     }
 
+    // Field Effect application (docs/field-effects.md) layers on top of any move
+    // kind, same flexibility as statusApplication just below — global, so there's
+    // no per-target loop. Unknown ids are silently skipped, same guard discipline
+    // as statusApplication's `def` lookup.
+    if (move.fieldEffectApplication && fieldEffects[move.fieldEffectApplication]) {
+      const result = setFieldEffect(working, round, move.fieldEffectApplication);
+      working = result.state;
+      events.push(...result.events);
+    }
+
     // Status application / cleanse (docs/conditions.md §5) layer on top of any move kind —
     // a damage move can inflict Burn, a buff move can also grant Regen, etc.
     if (move.statusApplication) {
@@ -301,7 +313,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           events.push(...result.events);
           statusAppliedEvents.push(...result.events);
         }
-        const statusReactions = resolvePassiveReactions(working, round, statusAppliedEvents, heroes, statuses, passives);
+        const statusReactions = resolvePassiveReactions(working, round, statusAppliedEvents, heroes, statuses, passives, fieldEffects);
         working = statusReactions.state;
         events.push(...statusReactions.events);
       }
@@ -321,7 +333,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   working = regen.state;
   events.push(...regen.events);
 
-  const manaRegen = applyManaRegen(working, round, heroes);
+  const manaRegen = applyManaRegen(working, round, heroes, fieldEffects);
   working = manaRegen.state;
   events.push(...manaRegen.events);
 
@@ -333,9 +345,15 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   // when an enemy takes Bleed damage") — statusTicks.events only, not the
   // whole round's log, so a passive can't accidentally re-match an event from
   // earlier this same round.
-  const tickReactions = resolvePassiveReactions(working, round, statusTicks.events, heroes, statuses, passives);
+  const tickReactions = resolvePassiveReactions(working, round, statusTicks.events, heroes, statuses, passives, fieldEffects);
   working = tickReactions.state;
   events.push(...tickReactions.events);
+
+  // Field Effect countdown (docs/field-effects.md) — its own end-of-round
+  // boundary step, alongside status ticks and mana regen above.
+  const fieldEffectTick = tickFieldEffect(working, round);
+  working = fieldEffectTick.state;
+  events.push(...fieldEffectTick.events);
 
   events.push({ type: 'RoundEnded', round });
 

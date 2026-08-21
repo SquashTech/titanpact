@@ -6,6 +6,7 @@ import { typeChart } from '../../data/typechart';
 import { equipment } from '../../data/equipment';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
+import { fieldEffects } from '../../data/fieldEffects';
 import type { CombatState, Side, StatModifiers } from '../../engine/state';
 import { isLockedIn, effectiveTypes, hasAffordableMove } from '../../engine/state';
 import { resolveRound } from '../../engine/combat/resolveRound';
@@ -88,7 +89,7 @@ function RecruitClaimCard({ hero, selected, claimed, onSelect, onInspect }: Recr
 
 const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
-const config = { typeChart, heroes: allCombatants, moves, statuses, passives, benchHpRegenFlat: 5 };
+const config = { typeChart, heroes: allCombatants, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
 /** Recruit Contract offers are capped to this many cards on the victory screen (user direction, 2026-08-21) — a 4v4 elite/boss fight would otherwise dump every recruitable enemy on the player at once. */
 const MAX_RECRUIT_OFFERS = 2;
@@ -663,6 +664,11 @@ export function FightScreen({
 
         <div className="battlefield-divider">
           <span>VS</span>
+          {combat.activeFieldEffect && (
+            <span className="field-effect-badge" title={fieldEffects[combat.activeFieldEffect.fieldEffectId]?.description}>
+              {fieldEffects[combat.activeFieldEffect.fieldEffectId]?.name ?? combat.activeFieldEffect.fieldEffectId} · {combat.activeFieldEffect.roundsRemaining}
+            </span>
+          )}
         </div>
 
         <div className="team-row ally">

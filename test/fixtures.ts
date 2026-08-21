@@ -36,5 +36,6 @@ export function createFightState(seed: number, sideA: FixtureCombatant[], sideB:
     },
     combatants,
     koCount: { A: 0, B: 0 },
+    activeFieldEffect: null,
   };
 }

@@ -17,6 +17,7 @@ import type {
 import type { CombatState, Side } from '../../engine/state';
 import type { HeroDefinition, MoveDefinition } from '../../engine/content';
 import { passives } from '../../data/passives';
+import { fieldEffects } from '../../data/fieldEffects';
 import { passiveEmoji } from '../shared/passiveIcons';
 
 export interface BeatPopup {
@@ -307,6 +308,28 @@ export function buildBeats(
         const targetName = name(e.combatantId);
         const text = e.reason === 'dazed' ? `${targetName} is Dazed and can't move!` : `${targetName}'s target is already down!`;
         push([e], text);
+        i++;
+        break;
+      }
+
+      case 'FieldEffectSet': {
+        const fx = fieldEffects[e.fieldEffectId];
+        const label = fx?.name ?? e.fieldEffectId;
+        push([e], e.previousFieldEffectId ? `${label} surges across the battlefield, overriding the old field!` : `${label} surges across the battlefield!`);
+        i++;
+        break;
+      }
+
+      case 'FieldEffectTicked': {
+        const fx = fieldEffects[e.fieldEffectId];
+        push([e], `${fx?.name ?? e.fieldEffectId} holds (${e.roundsRemaining} rounds left)`);
+        i++;
+        break;
+      }
+
+      case 'FieldEffectExpired': {
+        const fx = fieldEffects[e.fieldEffectId];
+        push([e], `${fx?.name ?? e.fieldEffectId} fades from the battlefield.`);
         i++;
         break;
       }

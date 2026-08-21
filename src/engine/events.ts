@@ -10,7 +10,7 @@
 // contract per docs/conditions.md — see engine/combat/statusEngine.ts.
 
 import type { Side, DamageCategory } from './state';
-import type { PassiveId, StatusId, StatusRemovalReason, TypeId } from './content';
+import type { FieldEffectId, PassiveId, StatusId, StatusRemovalReason, TypeId } from './content';
 
 interface BaseEvent {
   round: number;
@@ -237,6 +237,32 @@ export interface ManaRegenTickedEvent extends BaseEvent {
   maxMana: number;
 }
 
+/**
+ * A Field Effect (docs/field-effects.md) is set on the battlefield — either
+ * newly (previousFieldEffectId null) or overriding a different one that was
+ * already active (previousFieldEffectId set, and its clock is discarded, not
+ * merged). Never emitted for a no-op re-application of the already-active
+ * effect (engine/combat/fieldEffectEngine.ts setFieldEffect).
+ */
+export interface FieldEffectSetEvent extends BaseEvent {
+  type: 'FieldEffectSet';
+  fieldEffectId: FieldEffectId;
+  previousFieldEffectId: FieldEffectId | null;
+}
+
+/** The active Field Effect's end-of-round countdown ticked down but didn't reach 0 — mirrors StatusTicked's duration-kind shape. */
+export interface FieldEffectTickedEvent extends BaseEvent {
+  type: 'FieldEffectTicked';
+  fieldEffectId: FieldEffectId;
+  roundsRemaining: number;
+}
+
+/** The active Field Effect's countdown reached 0 and it cleared — mirrors StatusRemoved. */
+export interface FieldEffectExpiredEvent extends BaseEvent {
+  type: 'FieldEffectExpired';
+  fieldEffectId: FieldEffectId;
+}
+
 export interface RoundEndedEvent extends BaseEvent {
   type: 'RoundEnded';
 }
@@ -262,4 +288,7 @@ export type CombatEvent =
   | RestedEvent
   | ManaChangedEvent
   | ManaRegenTickedEvent
+  | FieldEffectSetEvent
+  | FieldEffectTickedEvent
+  | FieldEffectExpiredEvent
   | RoundEndedEvent;

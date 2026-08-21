@@ -122,6 +122,18 @@ body {
   color: var(--text-dim);
 }
 
+/* The active Field Effect (docs/field-effects.md) — a persistent badge next
+   to the "VS" chip, not just a transient beat banner, since it's standing
+   battlefield state that stays true between rounds. */
+.field-effect-badge {
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--magical);
+  color: var(--magical);
+  background: rgba(139, 127, 224, 0.12);
+  white-space: nowrap;
+}
+
 /* Invisible full-viewport click-catcher while a round is playing out, so any
    tap advances the beat rather than only one aimed at the banner. Also the
    hold-to-auto-play target (FightScreen's handleAdvancePointerDown) — without
@@ -2060,6 +2072,11 @@ body {
 .event-log .log-regen {
   color: var(--hp-high);
   padding-left: 10px;
+}
+
+.event-log .log-field-effect {
+  color: var(--magical);
+  font-weight: 700;
 }
 
 /* Haunt's spread hit in the DamageDealt log line (formatEvent.ts, keyed off

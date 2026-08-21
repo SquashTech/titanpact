@@ -132,15 +132,24 @@ what's still unimplemented:
   after first playtest showed a KO'd hero simply stayed dead-weight into the next
   fight with no way to recover it (`docs/run-loop.md`). Relics are **minimal and
   stat-only** until the trigger-hook contract exists.
+- Field Effects (2026-08-21 sign-off): resolves the former "weather subsystem" open
+  question — Field Effects **is** that subsystem, generalized. A single global
+  battlefield state (only one active at a time), settable by a move or a passive
+  (relic/ability), lasting a flat **5 rounds** regardless of which effect; re-applying
+  the active effect is a no-op, a different one overrides it and restarts the clock.
+  Data-driven (`FieldEffectDefinition`, `docs/field-effects.md`); first content is
+  **Surging Magic** (Arcane), doubling every hero's MP Regen while active.
 
 ## Open questions — DO NOT silently resolve
 
 Each has a *provisional* value baked into the prototypes for playability. Treat those as
 placeholders, not decisions. Flag before hardening any of these:
 
-- **Weather subsystem:** whether it interacts with mana is still open (`docs/mana.md`).
 - **Team archetypes are intentionally deferred** — they must *emerge* from movepool, ability,
   equipment, and relic design. Do not pre-specify archetypes.
+- **Field Effects beyond mpRegenMultiplier:** a type-restricted damage-pipeline
+  modifier ("certain type of moves") is named in the original ask but deliberately not
+  yet wired into any engine module — see `docs/field-effects.md`.
 
 ---
 
@@ -165,7 +174,8 @@ authored roster.
 
 - `CLAUDE.md` — this file. Keep it lean (<200 lines); adherence drops past that.
 - `/docs/` — the deeper design modules (generate next): `combat.md`, `types-and-heroes.md`,
-  `progression.md`, `mana.md`, `architecture.md`. Reference from here; don't inline them.
+  `progression.md`, `mana.md`, `architecture.md`, `field-effects.md`. Reference from
+  here; don't inline them.
 - `/prototypes/` — the two slices above, as behavioral reference.
 - `/src/engine/` — the pure resolution engine + the six contracts.
 - `/src/content/` — heroes, moves, abilities, relics, equipment as pure data.

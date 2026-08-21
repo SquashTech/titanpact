@@ -212,7 +212,9 @@ export type PassiveAmount = { kind: 'flat'; value: number } | { kind: 'matchTrig
 export type PassiveEffect =
   | { kind: 'heal'; target: 'self' | 'triggerSubject'; amount: PassiveAmount }
   | { kind: 'applyStatus'; target: 'self' | 'triggerSubject'; statusId: StatusId; magnitude?: number; duration?: number }
-  | { kind: 'statDelta'; target: 'self' | 'triggerSubject'; stat: StatKey; amount: number };
+  | { kind: 'statDelta'; target: 'self' | 'triggerSubject'; stat: StatKey; amount: number }
+  /** Sets the battlefield's Field Effect (docs/field-effects.md) — global, so unlike the other three shapes above it has no `target`. */
+  | { kind: 'setFieldEffect'; fieldEffectId: FieldEffectId };
 
 /**
  * The damage-pipeline-modifier shape (docs/combat.md "The damage-modifier
@@ -256,6 +258,42 @@ export function isValidPassiveDefinition(passive: PassiveDefinition): boolean {
   return Object.values(passive.statGrants ?? {}).every((amount) => amount === undefined || isValidFlatStatGrant(amount));
 }
 
+/** Opaque field-effect-catalog key. Concrete field effects are DATA — see src/data/fieldEffects.ts. */
+export type FieldEffectId = string;
+
+/**
+ * A Field Effect (docs/field-effects.md, resolving docs/mana.md's former
+ * "weather subsystem" open question): a single global battlefield state, only
+ * one active at a time. Every Field Effect lasts a flat 5 rounds regardless of
+ * which one it is (engine/combat/fieldEffectEngine.ts
+ * FIELD_EFFECT_DURATION_ROUNDS) — duration is NOT authored per-definition.
+ * Re-setting the currently active effect is a no-op (does not refresh the
+ * clock); setting a different one overrides it and restarts the clock.
+ * Settable by a move (`MoveDefinition.fieldEffectApplication`) or a Passive
+ * (`PassiveEffect` `setFieldEffect`, i.e. a relic or ability).
+ *
+ * Only one effect shape is implemented so far — `mpRegenMultiplier` — since
+ * that's all Surging Magic (the first content) needs. Extend this shape only
+ * when a Field Effect actually needs it (same discipline as
+ * StatusDefinition/PassiveHook): docs/field-effects.md flags the
+ * "certain type of moves" surface (a damage-pipeline modifier restricted to
+ * specific move types) as a deliberately deferred extension point, not yet
+ * wired into any engine module.
+ */
+export interface FieldEffectDefinition {
+  id: FieldEffectId;
+  name: string;
+  /** Player-facing, required — same discipline as PassiveDefinition.description. */
+  description: string;
+  /** Flat multiplier applied to every combatant's MP Regen while this effect is active (e.g. 2 = doubled). Applied in the regen pipeline itself (engine/combat/manaRegen.ts) — never folded into the mpRegen stat, same discipline that keeps damage modifiers out of the stat pipeline. */
+  mpRegenMultiplier?: number;
+}
+
+/** A FieldEffectDefinition with no implemented effect shape is invalid content (nothing for it to do) — same discipline as isValidPassiveDefinition. */
+export function isValidFieldEffectDefinition(fieldEffect: FieldEffectDefinition): boolean {
+  return fieldEffect.mpRegenMultiplier !== undefined;
+}
+
 export interface MoveDefinition {
   id: string;
   name: string;
@@ -274,6 +312,8 @@ export interface MoveDefinition {
   statusApplication?: StatusApplication;
   /** Any kind — strips non-positive statuses from the move's resolved target(s) (docs/conditions.md §4 Cleanse). Positive statuses (Regen, Stealth) are never stripped — §7 "Cleanse & positive statuses" resolved this as a flat rule, not a per-move choice. */
   cleanses?: boolean;
+  /** Any kind — sets the battlefield's Field Effect (docs/field-effects.md). Global, so unlike statusApplication there's no target to choose. */
+  fieldEffectApplication?: FieldEffectId;
   manaCost: number;
   /** Integer priority bracket; higher resolves first. */
   priority: number;

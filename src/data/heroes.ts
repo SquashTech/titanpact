@@ -154,7 +154,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Glyph',
     types: ['Arcane'],
     baseStats: { hp: 80, attack: 25, defense: 35, intelligence: 85, wisdom: 45, speed: 60, manaPool: 95, mpRegen: 10 },
-    moveIds: ['arcaneBolt', 'manaBurst', 'curseMind'],
+    moveIds: ['arcaneBolt', 'manaBurst', 'curseMind', 'arcaneSurge'],
     starter: true,
   },
   mindweaver: {

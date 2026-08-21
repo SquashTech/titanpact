@@ -11,6 +11,7 @@ import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
+import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import { matchesTrigger, collectPassiveDamageModifiers } from '../src/engine/combat/passiveEngine';
@@ -21,7 +22,7 @@ import { createEmptyLoadout, equipItem, type EquipmentDefinition } from '../src/
 import { relics } from '../src/data/relics';
 import { isValidPassiveDefinition } from '../src/engine/content';
 
-const config = { typeChart, heroes, moves, statuses, passives, benchHpRegenFlat: 5 };
+const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
 function twoVTwoFixture(seed: number) {
   return createFightState(

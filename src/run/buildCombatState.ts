@@ -137,6 +137,7 @@ export function buildCombatState(
     bench,
     combatants,
     koCount: { A: 0, B: 0 },
+    activeFieldEffect: null,
   };
 }
 

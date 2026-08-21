@@ -12,6 +12,7 @@ import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
+import { fieldEffects } from '../src/data/fieldEffects';
 import { equipment } from '../src/data/equipment';
 import { relics } from '../src/data/relics';
 import { resolveRound } from '../src/engine/combat/resolveRound';
@@ -22,7 +23,7 @@ import type { CombatState } from '../src/engine/state';
 import { equipmentStatusGrants, relicTeamStatusGrants, mergeStatusGrants, toStatusInstances } from '../src/run/statusGrants';
 import { createEmptyLoadout, equipItem, type EquipmentDefinition } from '../src/run/equipment';
 
-const config = { typeChart, heroes, moves, statuses, passives, benchHpRegenFlat: 5 };
+const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
 function twoVTwoFixture(seed: number) {
   return createFightState(

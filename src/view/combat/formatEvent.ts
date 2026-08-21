@@ -11,6 +11,7 @@ import type { CombatEvent } from '../../engine/events';
 import type { HeroDefinition, MoveDefinition } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
 import { passives } from '../../data/passives';
+import { fieldEffects } from '../../data/fieldEffects';
 
 export interface LogLine {
   key: string;
@@ -134,6 +135,22 @@ export function formatEvents(
       case 'ActionBlocked': {
         const reasonText = e.reason === 'dazed' ? 'dazed' : "out of valid targets";
         lines.push({ key, text: `${name(e.combatantId)} is ${reasonText} and can't act`, className: 'log-faint' });
+        break;
+      }
+      case 'FieldEffectSet': {
+        const fx = fieldEffects[e.fieldEffectId];
+        const verb = e.previousFieldEffectId ? 'overrides the field with' : 'sets the field to';
+        lines.push({ key, text: `The battlefield ${verb} ${fx?.name ?? e.fieldEffectId}`, className: 'log-field-effect' });
+        break;
+      }
+      case 'FieldEffectTicked': {
+        const fx = fieldEffects[e.fieldEffectId];
+        lines.push({ key, text: `${fx?.name ?? e.fieldEffectId} continues (${e.roundsRemaining} rounds left)`, className: 'log-field-effect' });
+        break;
+      }
+      case 'FieldEffectExpired': {
+        const fx = fieldEffects[e.fieldEffectId];
+        lines.push({ key, text: `${fx?.name ?? e.fieldEffectId} fades from the battlefield`, className: 'log-field-effect' });
         break;
       }
       default:

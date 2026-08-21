@@ -8,6 +8,7 @@
 
 import type { CombatEvent } from '../../engine/events';
 import type { CombatState } from '../../engine/state';
+import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
 
 export function applyEventToState(state: CombatState, event: CombatEvent): CombatState {
   switch (event.type) {
@@ -118,6 +119,15 @@ export function applyEventToState(state: CombatState, event: CombatEvent): Comba
       delete nextStatuses[event.statusId];
       return { ...state, combatants: { ...state.combatants, [event.combatantId]: { ...combatant, statuses: nextStatuses } } };
     }
+
+    case 'FieldEffectSet':
+      return { ...state, activeFieldEffect: { fieldEffectId: event.fieldEffectId, roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
+
+    case 'FieldEffectTicked':
+      return { ...state, activeFieldEffect: { fieldEffectId: event.fieldEffectId, roundsRemaining: event.roundsRemaining } };
+
+    case 'FieldEffectExpired':
+      return { ...state, activeFieldEffect: null };
 
     // RoundStarted / TurnStarted / MoveDeclared / MoveUsed / DamageDealt /
     // Healed / StatusDetonated / PassiveTriggered / ActionBlocked /

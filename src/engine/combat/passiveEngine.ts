@@ -16,11 +16,12 @@
 
 import type { HeroLookup, CombatState, Combatant, Side } from '../state';
 import { getMaxHp } from '../state';
-import type { PassiveDefinition, PassiveId, PassiveEffect, PassiveTriggerCondition, PassiveAmount, StatusDefinition, MoveDefinition } from '../content';
+import type { FieldEffectDefinition, PassiveDefinition, PassiveId, PassiveEffect, PassiveTriggerCondition, PassiveAmount, StatusDefinition, MoveDefinition } from '../content';
 import type { CombatEvent } from '../events';
 import type { DamageModifier } from '../damage/damagePipeline';
 import { applyHpDelta } from './faintHandling';
 import { applyStatus } from './statusEngine';
+import { setFieldEffect } from './fieldEffectEngine';
 
 /** Generic field-read off a CombatEvent (or, for damage modifiers, a synthetic pre-roll context) by name — same discipline as StatusDefinition's flag-driven matching, just against event shape instead of move.type. */
 type TriggerContext = Record<string, unknown>;
@@ -86,11 +87,20 @@ function resolveEffect(
   round: number,
   heroes: HeroLookup,
   statusDefs: Record<string, StatusDefinition>,
+  fieldEffectDefs: Record<string, FieldEffectDefinition>,
   ownerId: string,
   subjectId: string | undefined,
   effect: PassiveEffect,
   context: TriggerContext
 ): { state: CombatState; events: CombatEvent[] } {
+  // Global, so unlike the other three effect kinds it has no target combatant
+  // to resolve — handled before the targetId lookup below, which the other
+  // three all rely on.
+  if (effect.kind === 'setFieldEffect') {
+    if (!fieldEffectDefs[effect.fieldEffectId]) return { state, events: [] };
+    return setFieldEffect(state, round, effect.fieldEffectId);
+  }
+
   const targetId = effect.target === 'self' ? ownerId : subjectId;
   const target = targetId ? state.combatants[targetId] : undefined;
   if (!targetId || !target || target.fainted) return { state, events: [] };
@@ -132,7 +142,8 @@ export function resolvePassiveReactions(
   events: readonly CombatEvent[],
   heroes: HeroLookup,
   statusDefs: Record<string, StatusDefinition>,
-  passiveDefs: Record<PassiveId, PassiveDefinition>
+  passiveDefs: Record<PassiveId, PassiveDefinition>,
+  fieldEffectDefs: Record<string, FieldEffectDefinition>
 ): { state: CombatState; events: CombatEvent[] } {
   let working = state;
   const produced: CombatEvent[] = [];
@@ -152,7 +163,7 @@ export function resolvePassiveReactions(
         if (!matchesTrigger(reactive.condition, context, ownerId, owner.side, subjectId, subjectSide)) continue;
 
         for (let i = 0; i < instance.stacks; i++) {
-          const resolved = resolveEffect(working, round, heroes, statusDefs, ownerId, subjectId, reactive.effect, context);
+          const resolved = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, ownerId, subjectId, reactive.effect, context);
           working = resolved.state;
           // Emitted even if resolveEffect no-op'd (e.g. target already
           // fainted) so the view still knows the passive attempted to fire —

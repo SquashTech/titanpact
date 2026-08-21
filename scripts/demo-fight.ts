@@ -10,6 +10,7 @@ import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
+import { fieldEffects } from '../src/data/fieldEffects';
 import { createCombatant, type CombatState, type Side } from '../src/engine/state';
 import { createRng } from '../src/engine/rng/seededRng';
 import { resolveRound } from '../src/engine/combat/resolveRound';
@@ -49,9 +50,10 @@ let state: CombatState = {
   bench: { A: [], B: [] }, // this fixture roster is exactly 2v2, no bench — see note below
   combatants,
   koCount: { A: 0, B: 0 },
+  activeFieldEffect: null,
 };
 
-const config = { typeChart, heroes, moves, statuses, passives, benchHpRegenFlat: 5 };
+const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
 function firstActiveOn(s: CombatState, side: Side): string | null {
   return s.active[side].find((id) => id && !s.combatants[id].fainted) ?? null;

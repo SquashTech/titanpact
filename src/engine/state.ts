@@ -4,7 +4,7 @@
 // survives a run) are separate, longer-lived tiers that build on this one —
 // out of scope for this engine slice. Do not fold them in here.
 
-import type { HeroDefinition, MoveDefinition, PassiveId, StatKey, StatLine, StatusId, TypeId } from './content';
+import type { FieldEffectId, HeroDefinition, MoveDefinition, PassiveId, StatKey, StatLine, StatusId, TypeId } from './content';
 import type { RngState } from './rng/seededRng';
 
 export type Side = 'A' | 'B';
@@ -92,6 +92,13 @@ export interface Combatant {
   fainted: boolean;
 }
 
+/** A Field Effect currently on the battlefield (docs/field-effects.md) — global, not per-side; only one may be active at once. */
+export interface ActiveFieldEffect {
+  fieldEffectId: FieldEffectId;
+  /** Counts down at the end of every round (engine/combat/fieldEffectEngine.ts); the effect clears when this reaches 0. */
+  roundsRemaining: number;
+}
+
 export interface CombatState {
   seed: number;
   rngState: RngState;
@@ -101,6 +108,8 @@ export interface CombatState {
   bench: Record<Side, string[]>;
   combatants: Record<string, Combatant>;
   koCount: Record<Side, number>;
+  /** null when no Field Effect is active. */
+  activeFieldEffect: ActiveFieldEffect | null;
 }
 
 /**

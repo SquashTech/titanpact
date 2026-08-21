@@ -6,13 +6,14 @@ import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
+import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import { isLockedIn, createCombatant, effectiveTypes, hasAffordableMove } from '../src/engine/state';
 import { applyVoluntarySwitch, SwitchBlockedError } from '../src/engine/combat/switching';
 import { isValidFlatStatGrant } from '../src/engine/content';
 
-const config = { typeChart, heroes, moves, statuses, passives, benchHpRegenFlat: 5 };
+const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
 function twoVTwoFixture(seed: number) {
   return createFightState(
