@@ -744,12 +744,12 @@ export function FightScreen({
                     const isSelected =
                       (pending[id]?.kind === 'move' && pending[id]?.moveId === moveId) ||
                       (selecting?.combatantId === id && selecting.move.id === moveId);
-                    const hasStab = resolveStab(move.type, effectiveTypes(hero, combatant)) > 1;
                     const forceBonus = resolveElementalForceBonus(combatant, move.type, statuses);
                     return (
                       <button
                         key={moveId}
                         className={`move-button${isSelected ? ' selected' : ''}`}
+                        style={{ borderLeftColor: getTypeColor(move.type) }}
                         disabled={!affordable}
                         onClick={() => {
                           if (longPressFired.current) {
@@ -780,10 +780,10 @@ export function FightScreen({
                         }}
                       >
                         <div className="move-row-top">
-                          <span className="move-name">{move.name}</span>
-                          <span className="move-cost">
-                            <strong>{move.manaCost}</strong>MP
+                          <span className="move-crystal" title={`${move.manaCost} Mana`}>
+                            <strong>{move.manaCost}</strong>
                           </span>
+                          <span className="move-name">{move.name}</span>
                         </div>
                         <div className="move-row-mid">
                           <TypeBadge type={move.type} />
@@ -797,24 +797,11 @@ export function FightScreen({
                               <strong>{move.healAmount}</strong>HEAL
                             </span>
                           )}
-                          {hasStab && <span className="move-stab">STAB</span>}
                           {forceBonus > 0 && (
                             <span className="move-force" title={`Elemental Force: +${forceBonus} Base Power`}>
                               +{forceBonus} Force
                             </span>
                           )}
-                        </div>
-                        <div className="move-row-bottom">
-                          <div className="move-row-eff">
-                            {enemyActiveAlive.map((enemyId) => {
-                              const mult = effectivenessAgainst(move, enemyId);
-                              return (
-                                <span key={enemyId} className={`eff-chip ${multClass(mult)}`}>
-                                  {formatMult(mult)}
-                                </span>
-                              );
-                            })}
-                          </div>
                           <MoveKindBadge move={move} />
                         </div>
                       </button>
