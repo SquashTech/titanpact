@@ -136,7 +136,6 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
 
         <div className="squad-section squad-section-player">
           <h2 className="squad-section-title">🛡️ Arrange Your Squad ({pickedIds.length}/{required})</h2>
-          <p className="hint squad-grid-hint">Drag a hero onto another slot to swap places (tap, then tap the target on touch).</p>
           <div className="squad-grid">
             {SLOT_ROWS.map((row) => (
               <div key={row.key} className={`squad-grid-row squad-grid-row-${row.key}`}>

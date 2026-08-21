@@ -3122,10 +3122,6 @@ body {
    row 2 is bench, row 3 sits out. Drag one cell onto another to swap
    contents, or tap-then-tap on touch (mirrors RosterManagementScreen's
    equip-slot select/target pattern below). */
-.squad-grid-hint {
-  color: var(--text-dim);
-}
-
 .squad-grid {
   display: flex;
   flex-direction: column;
