@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
-import type { MoveDefinition } from '../../engine/content';
-import type { RunState } from '../../run/state';
+import type { HeroDefinition } from '../../engine/content';
+import type { RosterEntry, RunState } from '../../run/state';
 import {
   levelUpHero,
   levelUpMovePool,
@@ -15,43 +15,12 @@ import {
   ProgressionError,
 } from '../../run/progression';
 import { getTypeColor } from '../combat/typeColors';
-import { MoveTile, MoveInfoPanel, CategoryBadge, useLongPress } from '../shared/MoveTile';
+import { MoveInfoPanel, MoveButtonReplica } from '../shared/MoveTile';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { equipment } from '../../data/equipment';
+import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { EvolutionScreen } from './EvolutionScreen';
-
-/**
- * One existing move in the move-replace offer's picker — same roster-card
- * layout as before (name + type/category badges, "picked" highlight), but
- * now a standalone component rather than an inline .map() callback: it needs
- * its own useLongPress call, and hooks can't be called inside a loop body.
- * Long-press opens the shared move-detail popup (see `movePopup` below,
- * the same one LevelUpScreen's main hero list already uses) instead of the
- * old hover-driven fixed panel — tap still just selects/deselects the
- * replacement target.
- */
-function ReplaceMoveCard({
-  move,
-  selected,
-  onSelect,
-  onLongPress,
-}: {
-  move: MoveDefinition;
-  selected: boolean;
-  onSelect: () => void;
-  onLongPress: () => void;
-}) {
-  const longPress = useLongPress(onLongPress, onSelect);
-  return (
-    <button className={`roster-card${selected ? ' picked' : ''}`} style={{ borderLeftColor: getTypeColor(move.type) }} {...longPress}>
-      <div className="roster-card-name">{move.name}</div>
-      <div className="roster-card-types">
-        <TypeBadge type={move.type} />
-        <CategoryBadge category={move.category} />
-      </div>
-    </button>
-  );
-}
 
 interface Props {
   run: RunState;
@@ -63,6 +32,9 @@ interface MoveOffer {
   rosterId: string;
   moveId: string;
 }
+
+/** Duration of the level-up fill-bar's tactile animation (styles.css @keyframes hero-grid-levelup-fill) — the actual level-up (and any resulting screen transition, e.g. to the move-replace offer or Evolution) is deferred until it completes. */
+const LEVEL_UP_ANIM_MS = 550;
 
 /**
  * Forced immediately-after-battle spend screen (CLAUDE.md "After winning a
@@ -87,13 +59,20 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
   const [selectedReplaceId, setSelectedReplaceId] = useState<string | null>(null);
   /** Which roster entry, if any, has taken over the screen with its full-screen Evolution choice (see EvolutionScreen). */
   const [evolvingRosterId, setEvolvingRosterId] = useState<string | null>(null);
-  /** Long-press-triggered move detail popup — shared by both the main hero list and the move-replace offer's picker (see MoveTile/ReplaceMoveCard's onLongPress). */
+  /** Long-press-triggered move detail popup — shared by both the main hero list and the move-replace offer's picker. */
   const [movePopup, setMovePopup] = useState<{ moveId: string; label: string } | null>(null);
+  /** Info-button-triggered full hero sheet (HeroPreviewOverlay) — the main hero grid no longer shows moves inline, so this is the only way to see a hero's current moves/stats/gear from this screen. */
+  const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
+  /** Roster id whose card is mid level-up fill-bar animation, if any — blocks starting another level-up until it finishes (see LEVEL_UP_ANIM_MS/applyLevelUp below). */
+  const [animatingRosterId, setAnimatingRosterId] = useState<string | null>(null);
+  /** "X leveled up and learned Y!" readout, set once the animated level-up actually resolves — re-added per user direction so a level-up's outcome is visible on-screen again instead of only inferable from the card's new Lv/moves. */
+  const [feedback, setFeedback] = useState<string | null>(null);
 
-  function handleLevelUp(rosterId: string) {
-    if (run.levelUpPool < 1) return;
+  /** The actual level-up effect — spends the pooled point and applies whatever it rolled. Called after the tactile fill-bar animation finishes (see handleCardClick), never directly from a click, so a screen transition it triggers (the move-replace offer, or handing off to EvolutionScreen) always happens after the animation rather than cutting it off. */
+  function applyLevelUp(rosterId: string) {
     const entry = run.roster.find((r) => r.rosterId === rosterId);
     if (!entry) return;
+    const heroName = heroes[entry.heroId].name;
     const pool = levelUpMovePool(progressionTable, entry);
     const wasAtCap = entry.unlockedMoveIds.length >= MOVE_CAP;
 
@@ -118,17 +97,38 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
 
     if (pool.length === 0) {
       onRunChange(next);
+      setFeedback(`${heroName} leveled up to Lv ${nextEntry.level}!`);
       return;
     }
 
     const moveId = pool[Math.floor(Math.random() * pool.length)];
     if (!wasAtCap) {
       onRunChange(grantLevelUpMove(next, rosterId, moveId));
+      setFeedback(`${heroName} leveled up to Lv ${nextEntry.level} and learned ${moves[moveId].name}!`);
     } else {
       onRunChange(next);
+      setFeedback(null);
       setOffer({ rosterId, moveId });
       setSelectedReplaceId(null);
     }
+  }
+
+  /** Tapping a hero card: an Evolution-ready card jumps straight to EvolutionScreen (that choice was already earned by an earlier level-up, so there's nothing to animate here); otherwise play the fill-bar animation and only apply the level-up once it completes. Ignored while another card's animation is still running, so points can't be double-spent mid-animation. */
+  function handleCardClick(rosterId: string) {
+    if (animatingRosterId) return;
+    const entry = run.roster.find((r) => r.rosterId === rosterId);
+    if (!entry) return;
+    if (availableEvolution(progressionTable, entry)) {
+      setEvolvingRosterId(rosterId);
+      return;
+    }
+    if (run.levelUpPool < 1) return;
+    setFeedback(null);
+    setAnimatingRosterId(rosterId);
+    window.setTimeout(() => {
+      applyLevelUp(rosterId);
+      setAnimatingRosterId(null);
+    }, LEVEL_UP_ANIM_MS);
   }
 
   function resolveOffer(replaceMoveId: string | null) {
@@ -163,13 +163,16 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
   return (
     <div className="node-screen">
       <div className="screen-scroll">
+        <div className="bottom-pinned">
         <div className="levelup-header">
           <h2 className="levelup-header-title">Level Up</h2>
-          <div className="levelup-pool-badge" title="Training points still to spend">
+          <div className="levelup-pool-badge" title="XP still to spend">
             <span className="levelup-pool-count">{run.levelUpPool}</span>
             <span className="levelup-pool-label">{run.levelUpPool === 1 ? 'pt left' : 'pts left'}</span>
           </div>
         </div>
+
+        {!offer && feedback && <div className="levelup-feedback">{feedback}</div>}
 
         {offer && offerEntry ? (
           <div className="reward-panel">
@@ -191,13 +194,13 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
             <div className="offer-swap-arrow" aria-hidden="true">
               ↓ replaces one of
             </div>
-            <div className="roster-grid">
+            <div className="move-grid offer-replace-grid">
               {offerEntry.unlockedMoveIds.map((moveId) => (
-                <ReplaceMoveCard
+                <MoveButtonReplica
                   key={moveId}
                   move={moves[moveId]}
                   selected={selectedReplaceId === moveId}
-                  onSelect={() => setSelectedReplaceId(moveId)}
+                  onClick={() => setSelectedReplaceId(moveId)}
                   onLongPress={() => setMovePopup({ moveId, label: `${heroes[offerEntry.heroId].name} — current move` })}
                 />
               ))}
@@ -212,67 +215,81 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
             </div>
           </div>
         ) : (
-          <div className="training-hero-list">
+          <div className="hero-grid">
             {run.roster.map((entry) => {
               const hero = heroes[entry.heroId];
               const node = availableEvolution(progressionTable, entry);
+              const isAnimating = animatingRosterId === entry.rosterId;
               // A pending Evolution takes priority over spending another
               // point — tapping the card opens EvolutionScreen instead of
               // leveling up again, so the choice can't be buried under a
-              // stack of unresolved levels.
-              const canLevelUp = run.levelUpPool >= 1 && !node;
-              const canAct = canLevelUp || !!node;
+              // stack of unresolved levels. Any card is briefly inert while
+              // another one's fill-bar is animating, so a point can't be
+              // spent mid-animation.
+              const blockedByOtherAnim = !!animatingRosterId && !isAnimating;
+              const canLevelUp = run.levelUpPool >= 1 && !node && !blockedByOtherAnim;
+              const canAct = (canLevelUp || !!node) && !blockedByOtherAnim;
               return (
                 <div
                   key={entry.rosterId}
-                  className={`training-hero${canAct ? '' : ' training-hero-disabled'}${node ? ' training-hero-evolving' : ''}`}
+                  className={`hero-grid-card${canAct ? '' : ' hero-grid-card-disabled'}${node ? ' hero-grid-card-evolving' : ''}${isAnimating ? ' hero-grid-card-leveling' : ''}`}
                   style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
                   role="button"
                   tabIndex={canAct ? 0 : -1}
                   aria-disabled={!canAct}
                   onClick={() => {
                     if (node) setEvolvingRosterId(entry.rosterId);
-                    else if (canLevelUp) handleLevelUp(entry.rosterId);
+                    else if (canLevelUp) handleCardClick(entry.rosterId);
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
                       if (node) setEvolvingRosterId(entry.rosterId);
-                      else if (canLevelUp) handleLevelUp(entry.rosterId);
+                      else if (canLevelUp) handleCardClick(entry.rosterId);
                     }
                   }}
                 >
-                  <div className="training-hero-head">
-                    <div className="training-hero-title">
-                      <HeroPortrait heroId={hero.id} className="training-hero-portrait" />
-                      <div className="training-hero-name-block">
-                        <div className="training-hero-name-row">
-                          <h3>{hero.name}</h3>
-                          <span className="training-hero-level">Lv {entry.level}</span>
-                        </div>
-                        <div className="training-hero-types">
-                          {rosterEntryTypes(hero, entry).map((t) => (
-                            <TypeBadge key={t} type={t} />
-                          ))}
-                        </div>
-                      </div>
+                  <button
+                    type="button"
+                    className="info-button hero-grid-info-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewEntry({ hero, entry });
+                    }}
+                    aria-label={`View ${hero.name} details`}
+                  >
+                    i
+                  </button>
+                  <HeroPortrait heroId={hero.id} className="hero-grid-portrait" />
+                  <div className="hero-grid-name-row">
+                    <span className="hero-grid-name">{hero.name}</span>
+                    <span className="training-hero-level">Lv {entry.level}</span>
+                  </div>
+                  <div className="hero-grid-types">
+                    {rosterEntryTypes(hero, entry).map((t) => (
+                      <TypeBadge key={t} type={t} />
+                    ))}
+                  </div>
+                  <span className="hero-grid-cta">
+                    {isAnimating
+                      ? 'Leveling up…'
+                      : node
+                        ? '⚡ Ready to evolve!'
+                        : run.levelUpPool >= 1
+                          ? 'Tap to level up'
+                          : 'No points'}
+                  </span>
+                  {isAnimating && (
+                    <div className="hero-grid-levelup-bar">
+                      <div className="hero-grid-levelup-bar-fill" />
                     </div>
-                    <span className="training-hero-cta">
-                      {node ? '⚡ Ready to evolve!' : canLevelUp ? 'Tap to level up' : 'No points'}
-                    </span>
-                  </div>
-                  <div className="move-tile-row">
-                    {entry.unlockedMoveIds.map((moveId) =>
-                      moves[moveId] ? (
-                        <MoveTile key={moveId} move={moves[moveId]} onLongPress={() => setMovePopup({ moveId, label: hero.name })} />
-                      ) : null
-                    )}
-                  </div>
+                  )}
                 </div>
               );
             })}
           </div>
         )}
+        </div>
       </div>
       <button
         className="resolve-button"
@@ -282,7 +299,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
         Continue
       </button>
 
-      {/* Long-press-triggered move detail popup (MoveTile's onLongPress) — reuses .log-overlay/.log-panel like FightScreen's move-button popup, including "tap anywhere to close" (no stopPropagation on the panel). */}
+      {/* Long-press-triggered move detail popup (MoveButtonReplica's onLongPress) — reuses .log-overlay/.log-panel like FightScreen's move-button popup, including "tap anywhere to close" (no stopPropagation on the panel). */}
       {movePopup && (
         <div className="log-overlay" onClick={() => setMovePopup(null)}>
           <div className="log-panel move-popup-panel">
@@ -290,6 +307,16 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
             <div className="move-popup-hint">Tap anywhere to close</div>
           </div>
         </div>
+      )}
+
+      {/* Info-button-triggered full hero sheet — replaces the old inline move-tile row on each hero-grid card, which didn't fit a chunky 3x2 card. */}
+      {previewEntry && (
+        <HeroPreviewOverlay
+          hero={previewEntry.hero}
+          entry={previewEntry.entry}
+          equipmentLookup={equipment}
+          onClose={() => setPreviewEntry(null)}
+        />
       )}
     </div>
   );

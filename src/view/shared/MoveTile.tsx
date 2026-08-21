@@ -164,6 +164,51 @@ export function MoveTile({
   );
 }
 
+/**
+ * Visual replica of FightScreen's in-combat move button (same .move-button/
+ * .move-crystal/.move-row-* markup, styles.css:1589) for screens that offer
+ * a hero's moves outside of combat — currently LevelUpScreen's move-replace
+ * picker — so the same button language is recognizable wherever a move is
+ * shown. Presentational only: no mana-affordability check and no elemental-
+ * force bonus, since both are live-combat-only state that doesn't apply here.
+ */
+export function MoveButtonReplica({
+  move,
+  selected,
+  onClick,
+  onLongPress,
+}: {
+  move: MoveDefinition;
+  selected?: boolean;
+  onClick?: () => void;
+  onLongPress?: () => void;
+}) {
+  const longPress = useLongPress(onLongPress, onClick);
+  return (
+    <button type="button" className={`move-button${selected ? ' selected' : ''}`} style={{ borderLeftColor: getTypeColor(move.type) }} {...longPress}>
+      <div className="move-row-top">
+        <span className="move-crystal" title={`${move.manaCost} Mana`}>
+          <strong>{move.manaCost}</strong>
+        </span>
+        <span className="move-name">{move.name}</span>
+      </div>
+      <div className="move-row-mid">
+        <TypeBadge type={move.type} />
+        {move.kind === 'damage' && move.basePower != null && (
+          <span className="move-power">
+            <strong>{move.basePower}</strong>BP
+          </span>
+        )}
+        {move.kind === 'heal' && move.healAmount != null && (
+          <span className="move-power move-heal">
+            <strong>{move.healAmount}</strong>HEAL
+          </span>
+        )}
+      </div>
+    </button>
+  );
+}
+
 interface MoveInfoPanelProps {
   move: MoveDefinition | null;
   /** Shown above the move name while a move is loaded, e.g. "Hover or tap a move". Omit for no label row. */

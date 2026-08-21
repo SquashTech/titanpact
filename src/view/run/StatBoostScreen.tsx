@@ -54,41 +54,42 @@ export function StatBoostScreen({ nodeType, run, onRunChange, onContinue }: Prop
   return (
     <div className="node-screen">
       <div className="screen-scroll">
-        <div className="reward-panel">
-          <h2>
-            {config.icon} {config.title}
-          </h2>
-          <p className="hint">
-            {grantedHero ? `${grantedHero.name} gained ${config.ctaLabel}.` : `Choose a hero to permanently grant ${config.ctaLabel}.`}
-          </p>
-        </div>
-        <div className="equip-target-list">
-          {run.roster.map((entry) => {
-            const hero = heroes[entry.heroId];
-            const isGranted = grantedTo === entry.rosterId;
-            return (
-              <button
-                key={entry.rosterId}
-                className="equip-target-card"
-                style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
-                disabled={!!grantedTo}
-                onClick={() => handleGrant(entry.rosterId)}
-              >
-                <div className="roster-mgmt-head">
-                  <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
-                  <div className="roster-mgmt-name">
-                    {hero.name} <span className="hint">Lv {entry.level}</span>
+        <div className="bottom-pinned">
+          <div className="reward-panel">
+            <h2>
+              {config.icon} {config.title}
+            </h2>
+            <p className="hint">
+              {grantedHero ? `${grantedHero.name} gained ${config.ctaLabel}.` : `Choose a hero to permanently grant ${config.ctaLabel}.`}
+            </p>
+          </div>
+          <div className="hero-grid">
+            {run.roster.map((entry) => {
+              const hero = heroes[entry.heroId];
+              const isGranted = grantedTo === entry.rosterId;
+              return (
+                <button
+                  key={entry.rosterId}
+                  className="hero-grid-card"
+                  style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
+                  disabled={!!grantedTo}
+                  onClick={() => handleGrant(entry.rosterId)}
+                >
+                  <HeroPortrait heroId={hero.id} className="hero-grid-portrait" />
+                  <div className="hero-grid-name-row">
+                    <span className="hero-grid-name">{hero.name}</span>
+                    <span className="training-hero-level">Lv {entry.level}</span>
                   </div>
-                  <div className="roster-card-types">
+                  <div className="hero-grid-types">
                     {rosterEntryTypes(hero, entry).map((t) => (
                       <TypeBadge key={t} type={t} />
                     ))}
                   </div>
-                  <span className="equip-target-cta">{isGranted ? 'Granted' : config.ctaLabel}</span>
-                </div>
-              </button>
-            );
-          })}
+                  <span className="hero-grid-cta">{isGranted ? 'Granted' : config.ctaLabel}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
       <button className="resolve-button" disabled={!grantedTo} onClick={onContinue}>

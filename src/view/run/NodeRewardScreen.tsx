@@ -115,8 +115,12 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
     <div className="node-screen">
       <div className="screen-scroll">
         {nodeType === 'currencyReward' && (
-          <div className="reward-panel">
-            <h2>💰 Gold Cache</h2>
+          <div className="reward-panel bottom-pinned">
+            <div className="equip-cache-banner">
+              <div className="equip-cache-glow" aria-hidden="true" />
+              <h2>💰 Gold Cache</h2>
+              {!claimed && <p className="hint">A pile of gold, ready to claim.</p>}
+            </div>
             {!claimed ? (
               <button className="resolve-button" onClick={() => handleClaimInstant(grantCurrencyReward(run, currencyAmount))}>
                 Claim {currencyAmount}g
@@ -128,20 +132,24 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
         )}
 
         {nodeType === 'upgradeReward' && (
-          <div className="reward-panel">
-            <h2>📈 Training Grounds</h2>
+          <div className="reward-panel bottom-pinned">
+            <div className="equip-cache-banner">
+              <div className="equip-cache-glow" aria-hidden="true" />
+              <h2>📈 XP Cache</h2>
+              {!claimed && <p className="hint">Experience, ready to claim.</p>}
+            </div>
             {!claimed ? (
               <button className="resolve-button" onClick={() => handleClaimInstant(grantUpgradeReward(run, upgradeAmount))}>
-                Claim {upgradeAmount} Training Points
+                Claim {upgradeAmount} XP
               </button>
             ) : (
-              <p className="hint">+{upgradeAmount} training points claimed.</p>
+              <p className="hint">+{upgradeAmount} XP claimed.</p>
             )}
           </div>
         )}
 
         {nodeType === 'equipmentReward' && (
-          <div className="reward-panel equip-cache-panel">
+          <div className="reward-panel equip-cache-panel bottom-pinned">
             <div className="equip-cache-banner">
               <div className="equip-cache-glow" aria-hidden="true" />
               <h2>🛡️ Equipment Cache</h2>
@@ -179,7 +187,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
         )}
 
         {nodeType === 'relicReward' && (
-          <div className="reward-panel relic-shrine-panel">
+          <div className="reward-panel relic-shrine-panel bottom-pinned">
             <div className="relic-shrine-banner">
               <div className="relic-shrine-glow" aria-hidden="true" />
               <h2>💠 Relic Shrine</h2>

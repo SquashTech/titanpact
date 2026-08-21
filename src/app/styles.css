@@ -3711,9 +3711,33 @@ body {
   margin: 0;
 }
 
+/* Shared "sink to the bottom of the scroll area" wrapper — every redesigned
+   pick-a-hero/pick-a-reward screen (ForceEquipScreen, StatBoostScreen,
+   LevelUpScreen, NodeRewardScreen) uses this so its pressable grid/buttons
+   land near the player's thumb instead of floating near the top under the
+   header. Add as an extra class alongside the screen's own wrapper (e.g.
+   `.reward-panel.bottom-pinned`) or as a new wrapper around otherwise-sibling
+   content — .screen-scroll's own children keep their normal margins as
+   spacing since flex items don't collapse margins against each other. */
+.bottom-pinned {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 100%;
+}
+
 .reward-panel .roster-grid {
   width: 100%;
   text-align: left;
+  margin-bottom: 0;
+}
+
+/* Move-replace offer's candidate grid (LevelUpScreen) — replicas of
+   FightScreen's combat move-button, laid out in the same 2-col .move-grid so
+   the actual pressable buttons sit low, right above the Confirm/Decline
+   actions, instead of a plain vertical list. */
+.reward-panel .move-grid {
+  width: 100%;
   margin-bottom: 0;
 }
 
@@ -3794,6 +3818,33 @@ body {
   flex-direction: column;
   gap: 10px;
   width: 100%;
+}
+
+/* Equipment Cache (NodeRewardScreen's equipmentReward only — Guild Hall's
+   shop reuses the base row layout above via .guild-hall-equip-list) — chunky
+   square tiles instead of full-width horizontal rows. */
+.equip-cache-panel .equip-cache-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.equip-cache-panel .equip-cache-card {
+  flex-direction: column;
+  text-align: center;
+  padding: 16px 10px;
+}
+
+.equip-cache-panel .equip-cache-card-icon {
+  font-size: 34px;
+}
+
+.equip-cache-panel .equip-cache-card-body {
+  align-items: center;
+}
+
+.equip-cache-panel .equip-cache-card-meta {
+  justify-content: center;
 }
 
 .equip-cache-card {
@@ -3916,19 +3967,25 @@ body {
   pointer-events: none;
 }
 
+/* Chunky square grid (not a vertical list of full-width rows) so the offer
+   reads as tappable tiles low on screen rather than a scrolling stack. */
 .relic-shrine-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   width: 100%;
 }
 
 .relic-shrine-card {
   width: 100%;
-  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
   font: inherit;
   color: inherit;
-  padding: 12px 14px;
+  padding: 18px 10px;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
@@ -3938,12 +3995,17 @@ body {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
+.relic-shrine-card .relic-card-head {
+  flex-direction: column;
+  gap: 6px;
+}
+
 .relic-shrine-card .relic-card-icon {
-  font-size: 20px;
+  font-size: 32px;
 }
 
 .relic-shrine-card .relic-card-name {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .relic-shrine-card.picked {
@@ -4099,6 +4161,40 @@ body {
   position: relative;
 }
 
+/* Full passive description(s) granted by the item being equipped — spelled
+   out (not just a "Grants: Name" chip) now that the chunkier hero-grid below
+   frees up the vertical room for it. */
+.equip-spotlight-passives {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+}
+
+.equip-spotlight-passive {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  border-left: 2px solid var(--rarity-color, var(--border));
+}
+
+.equip-spotlight-passive-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.equip-spotlight-passive-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+
 .equip-target-list {
   display: flex;
   flex-direction: column;
@@ -4123,33 +4219,6 @@ body {
 
 .equip-target-card:hover {
   border-color: var(--accent);
-}
-
-/* Only the slot being rewarded needs showing (per-slot dynamic layout) — the
-   other two equip slots this hero has are irrelevant to the decision at hand,
-   so they're dropped entirely rather than sitting below the portrait row. */
-.equip-target-info {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.equip-target-slot {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  flex-shrink: 0;
-  width: 60px;
-}
-
-.equip-target-slot .equip-slot-box {
-  width: 100%;
-}
-
-.equip-target-current {
-  font-size: 11px;
-  color: var(--text-dim);
-  margin-top: 2px;
 }
 
 .equip-target-cta {
@@ -4560,59 +4629,20 @@ body {
   white-space: nowrap;
 }
 
-/* Roster shown one hero per row (not the shared 2-col .roster-grid) so each
-   card gets full screen width — move tiles need that room for their names to
-   stay readable instead of being squeezed into a quarter-width column. */
-.training-hero-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-.training-hero {
-  padding: 7px 10px 7px 8px;
-  margin-bottom: 0;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--border);
+/* "X leveled up and learned Y!" readout — set once a level-up's fill-bar
+   animation finishes (LevelUpScreen's applyLevelUp/feedback state), so the
+   outcome of a level-up is spelled out rather than only inferable from the
+   card's new Lv/moves. */
+.levelup-feedback {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  background: linear-gradient(165deg, var(--panel-alt), var(--panel));
+  border: 1px solid var(--accent);
   border-radius: 8px;
-  cursor: pointer;
-  transition: border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
-}
-
-.training-hero:hover {
-  border-color: var(--accent);
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
-}
-
-.training-hero-disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.training-hero-disabled:hover {
-  border-color: var(--border);
-  transform: none;
-  box-shadow: none;
-}
-
-/* A pending Evolution outranks "no points left" — the card stays fully
-   interactive (opens EvolutionScreen) and gets its own glow so it doesn't
-   read as just another disabled row. */
-.training-hero-evolving {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent), 0 3px 10px rgba(224, 166, 60, 0.25);
-}
-
-.training-hero-evolving:hover {
-  box-shadow: 0 0 0 1px var(--accent), 0 4px 14px rgba(224, 166, 60, 0.4);
-}
-
-.training-hero h3 {
-  font-size: 13px;
-  margin: 0;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  text-align: center;
 }
 
 .training-hero-portrait {
@@ -4658,15 +4688,139 @@ body {
   gap: 5px;
 }
 
-.training-hero-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  margin-bottom: 4px;
+/* --- Hero grid (3x2 chunky squares) ---------------------------------------
+   Shared "pick a hero" card used wherever a screen used to lay heroes out as
+   full-width rows (.equip-target-list, .training-hero-list): ForceEquipScreen,
+   StatBoostScreen, and LevelUpScreen's main roster list. Squarer cards with
+   bigger tap targets read better one-handed than long thin rows, and a 3x2
+   grid puts the whole roster on screen at once without scrolling past it.
+   Each screen supplies its own content for the bottom of the card (an
+   equip-slot-box, a stat-grant CTA, or a level-up CTA) below the shared
+   portrait/name/level/types head. */
+.hero-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.training-hero-cta {
+.hero-grid-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 6px 6px;
+  color: var(--text);
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  font: inherit;
+  transition: border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.hero-grid-card:hover:not(:disabled) {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.hero-grid-card:disabled,
+.hero-grid-card-disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* A pending Evolution outranks "no points left" (LevelUpScreen) — the card
+   stays fully interactive and gets its own glow so it doesn't read as just
+   another disabled tile. */
+.hero-grid-card-evolving {
+  opacity: 1;
+  cursor: pointer;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 3px 10px rgba(224, 166, 60, 0.25);
+}
+
+.hero-grid-card-evolving:hover {
+  box-shadow: 0 0 0 1px var(--accent), 0 4px 14px rgba(224, 166, 60, 0.4);
+}
+
+/* Tactile level-up feedback (LevelUpScreen) — the card glows for the
+   duration of its fill-bar animation (LEVEL_UP_ANIM_MS) so the tap reads as
+   registered immediately, even though the actual level-up is deferred until
+   the bar finishes filling. */
+.hero-grid-card-leveling {
+  cursor: default;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 3px 12px rgba(224, 166, 60, 0.35);
+}
+
+.hero-grid-levelup-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* Duration must match LevelUpScreen's LEVEL_UP_ANIM_MS — the level-up is
+   applied by a JS timeout, not a CSS animationend listener, so the two just
+   need to agree on how long the tap-to-payoff feels. */
+.hero-grid-levelup-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), #fff2c2);
+  animation: hero-grid-levelup-fill 550ms ease forwards;
+}
+
+@keyframes hero-grid-levelup-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.hero-grid-portrait {
+  display: block;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+
+.hero-grid-name-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.hero-grid-name {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.hero-grid-types {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.hero-grid-cta {
+  margin-top: auto;
+  padding-top: 4px;
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -4675,8 +4829,22 @@ body {
   white-space: nowrap;
 }
 
-.training-hero-disabled .training-hero-cta {
+.hero-grid-card:disabled .hero-grid-cta,
+.hero-grid-card-disabled .hero-grid-cta {
   color: var(--text-dim);
+}
+
+/* The equip-slot-box reused inside a hero-grid-card (ForceEquipScreen) fills
+   the card's remaining width instead of the fixed 60px column it used in the
+   old row layout. */
+.hero-grid-card .equip-slot-box {
+  width: 100%;
+  margin-top: 2px;
+}
+
+.hero-grid-info-button {
+  top: 6px;
+  bottom: auto;
 }
 
 .training-row {

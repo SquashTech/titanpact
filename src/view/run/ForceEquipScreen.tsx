@@ -10,6 +10,9 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
 import { EQUIP_SLOT_LABELS, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { passives } from '../../data/passives';
+import { passiveEmoji } from '../shared/passiveIcons';
+import { statuses } from '../../data/statuses';
 
 interface Props {
   run: RunState;
@@ -79,68 +82,101 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
   }
 
   const grants = Object.entries(item.statGrants) as [StatKey, number][];
+  const grantedPassives = item.grantsPassiveIds ?? [];
+  const grantedStatuses = item.grantsStatusIds ?? [];
 
   return (
     <div className="node-screen force-equip-screen">
       <div className="screen-scroll">
-        <div className="equip-spotlight" style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}>
-          <div className="equip-spotlight-glow" aria-hidden="true" />
-          <div className="equip-spotlight-header">
-            <EquipmentIcon item={item} slot={item.slot} className="equip-spotlight-icon" />
-            <div>
-              <div className="equip-spotlight-name">{item.name}</div>
-              <div className="equip-spotlight-rarity">
-                {RARITY_LABELS[item.rarity]} · {EQUIP_SLOT_LABELS[item.slot]}
+        <div className="bottom-pinned">
+          <div className="equip-spotlight" style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}>
+            <div className="equip-spotlight-glow" aria-hidden="true" />
+            <div className="equip-spotlight-header">
+              <EquipmentIcon item={item} slot={item.slot} className="equip-spotlight-icon" />
+              <div>
+                <div className="equip-spotlight-name">{item.name}</div>
+                <div className="equip-spotlight-rarity">
+                  {RARITY_LABELS[item.rarity]} · {EQUIP_SLOT_LABELS[item.slot]}
+                </div>
               </div>
             </div>
+            {grants.length > 0 && (
+              <div className="detail-modifier-list">
+                {grants
+                  .filter(([, amount]) => amount)
+                  .map(([stat, amount]) => (
+                    <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
+                      {STAT_ICONS[stat]} {STAT_LABELS[stat]} {fmtGrant(amount)}
+                    </span>
+                  ))}
+              </div>
+            )}
+            {/* Full passive/status description (not just the "Grants: Name"
+                chip used elsewhere) — the more economical hero-grid below
+                frees up room to spell out exactly what the item does. */}
+            {(grantedPassives.length > 0 || grantedStatuses.length > 0) && (
+              <div className="equip-spotlight-passives">
+                {grantedPassives.map((passiveId) => {
+                  const def = passives[passiveId];
+                  if (!def) return null;
+                  return (
+                    <div key={passiveId} className="equip-spotlight-passive">
+                      <span className="equip-spotlight-passive-name">
+                        {passiveEmoji[passiveId] ? `${passiveEmoji[passiveId]} ` : ''}
+                        {def.name}
+                      </span>
+                      <span className="equip-spotlight-passive-desc">{def.description}</span>
+                    </div>
+                  );
+                })}
+                {grantedStatuses.map(({ statusId, magnitude }) => {
+                  const def = statuses[statusId];
+                  if (!def) return null;
+                  return (
+                    <div key={statusId} className="equip-spotlight-passive">
+                      <span className="equip-spotlight-passive-name">
+                        {def.name} +{magnitude}
+                      </span>
+                      <span className="equip-spotlight-passive-desc">{def.description}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {current.bumped && <p className="hint">{`${item.name} was unequipped — give it to another hero, or trash it for good.`}</p>}
           </div>
-          {grants.length > 0 && (
-            <div className="detail-modifier-list">
-              {grants
-                .filter(([, amount]) => amount)
-                .map(([stat, amount]) => (
-                  <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-                    {STAT_ICONS[stat]} {STAT_LABELS[stat]} {fmtGrant(amount)}
-                  </span>
-                ))}
-            </div>
-          )}
-          {current.bumped && <p className="hint">{`${item.name} was unequipped — give it to another hero, or trash it for good.`}</p>}
-        </div>
 
-        <div className="equip-target-list">
-          {run.roster.map((entry) => {
-            const hero = heroes[entry.heroId];
-            const currentId = entry.equipment[item.slot];
-            const currentItem = currentId ? equipment[currentId] : null;
-            return (
-              <button
-                key={entry.rosterId}
-                className="equip-target-card"
-                style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
-                onClick={() => handleEquip(entry.rosterId)}
-              >
-                <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
-                <div className="equip-target-info">
-                  <div className="roster-mgmt-name">
-                    {hero.name} <span className="hint">Lv {entry.level}</span>
+          <div className="hero-grid">
+            {run.roster.map((entry) => {
+              const hero = heroes[entry.heroId];
+              const currentId = entry.equipment[item.slot];
+              const currentItem = currentId ? equipment[currentId] : null;
+              return (
+                <button
+                  key={entry.rosterId}
+                  className="hero-grid-card"
+                  style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
+                  onClick={() => handleEquip(entry.rosterId)}
+                >
+                  <HeroPortrait heroId={hero.id} className="hero-grid-portrait" />
+                  <div className="hero-grid-name-row">
+                    <span className="hero-grid-name">{hero.name}</span>
+                    <span className="training-hero-level">Lv {entry.level}</span>
                   </div>
-                  <div className="roster-card-types">
+                  <div className="hero-grid-types">
                     {rosterEntryTypes(hero, entry).map((t) => (
                       <TypeBadge key={t} type={t} />
                     ))}
                   </div>
-                </div>
-                <div className="equip-target-slot">
                   <div className={`equip-slot-box target${currentItem ? ' filled' : ' empty'}`}>
                     <EquipmentIcon item={currentItem} slot={item.slot} className="equip-slot-icon" />
                     <span className="equip-slot-item">{currentItem ? currentItem.name : 'Empty'}</span>
                   </div>
-                  <span className="equip-target-cta">{currentItem ? 'Replace' : 'Equip'}</span>
-                </div>
-              </button>
-            );
-          })}
+                  <span className="hero-grid-cta">{currentItem ? 'Replace' : 'Equip'}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 

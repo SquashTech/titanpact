@@ -43,7 +43,7 @@ const NODE_NAMES: Record<MapNodeType, string> = {
   equipmentReward: 'Equipment',
   relicReward: 'Relic',
   currencyReward: 'Gold',
-  upgradeReward: 'Training',
+  upgradeReward: 'XP',
   weaponReward: 'Weapon',
   armorReward: 'Armor',
   accessoryReward: 'Accessory',
