@@ -422,7 +422,18 @@ body {
   cursor: pointer;
 }
 
-.combatant-card.targetable::after {
+/* Shared pseudo-element base for both the plain amber "you can tap this"
+   glow (.targetable, single-target cards) and the effectiveness-tinted glow
+   below — a spread-move card (bothEnemies/allOthers) never gets .targetable
+   itself (the whole row is the tap target, not the individual card — see
+   target-row-spread), but it still needs this base so its eff-* tier class
+   can render a colored glow instead of the .eff-chip text badge being the
+   only cue for "this one's a great/bad hit". */
+.combatant-card.targetable::after,
+.combatant-card.eff-super::after,
+.combatant-card.eff-quad-super::after,
+.combatant-card.eff-resist::after,
+.combatant-card.eff-quad-resist::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -461,24 +472,27 @@ body {
   }
 }
 
-/* Retint the targeting glow by effectiveness tier (CombatantCard adds the
-   eff-* class alongside .targetable whenever the bottom targeting panel has
-   a matchup badge to show) — green toward "great target", red toward "bad
-   target", quad tiers pushed more saturated so they read as the bigger deal
-   they are, same intensity relationship as the .eff-chip badge colors. */
-.combatant-card.targetable.eff-super::after {
+/* Retint the glow by effectiveness tier (CombatantCard adds the eff-* class
+   whenever the bottom targeting panel has a matchup badge to show) — green
+   toward "great target", red toward "bad target", quad tiers pushed more
+   saturated so they read as the bigger deal they are, same intensity
+   relationship as the .eff-chip badge colors. Not gated on .targetable: a
+   spread-move card carries the eff-* class without .targetable (the row,
+   not the card, is the tap target — see target-row-spread) and still needs
+   its box tinted, not just its text chip. */
+.combatant-card.eff-super::after {
   background: radial-gradient(ellipse 90% 70% at 50% 38%, rgba(76, 175, 106, 0.4) 0%, rgba(76, 175, 106, 0.16) 48%, rgba(76, 175, 106, 0) 78%);
 }
 
-.combatant-card.targetable.eff-quad-super::after {
+.combatant-card.eff-quad-super::after {
   background: radial-gradient(ellipse 90% 70% at 50% 38%, rgba(76, 175, 106, 0.6) 0%, rgba(76, 175, 106, 0.24) 48%, rgba(76, 175, 106, 0) 78%);
 }
 
-.combatant-card.targetable.eff-resist::after {
+.combatant-card.eff-resist::after {
   background: radial-gradient(ellipse 90% 70% at 50% 38%, rgba(217, 83, 79, 0.36) 0%, rgba(217, 83, 79, 0.14) 48%, rgba(217, 83, 79, 0) 78%);
 }
 
-.combatant-card.targetable.eff-quad-resist::after {
+.combatant-card.eff-quad-resist::after {
   background: radial-gradient(ellipse 90% 70% at 50% 38%, rgba(217, 83, 79, 0.55) 0%, rgba(217, 83, 79, 0.22) 48%, rgba(217, 83, 79, 0) 78%);
 }
 
@@ -1508,38 +1522,7 @@ body {
 
 .target-row .combatant-name {
   font-size: 11px;
-  margin-bottom: 2px;
-}
-
-.target-row .status-badge-row:empty {
-  display: none;
-}
-
-.target-row .status-badge-row {
-  margin-bottom: 2px;
-}
-
-.target-row .resource-row {
-  display: flex;
-  gap: 6px;
-}
-
-.target-row .resource {
-  display: block;
-  flex: 1;
-  min-width: 0;
-}
-
-.target-row .bar-track {
-  height: 5px;
-  margin-bottom: 1px;
-}
-
-.target-row .bar-label {
-  font-size: 8px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-bottom: 0;
 }
 
 /* A spread move's target-row IS the confirm control (FightScreen) — one
@@ -1757,15 +1740,23 @@ body {
   font-weight: 700;
 }
 
-/* Elemental Force's live "this move is currently boosted" cue — same slot and
-   weight as .move-stab, sitting beside it rather than replacing it since a
-   move can be both STAB'd and Force-boosted at once. The BP number itself
-   already reflects the boost (move.basePower + forceBonus); this chip is
-   just the "why" label. */
-.move-force {
-  color: var(--hp-high);
-  font-weight: 700;
-  white-space: nowrap;
+/* Elemental Force's live "this move is currently boosted" cue — recolors the
+   BP number itself (already move.basePower + forceBonus) instead of adding
+   a separate "+10 Force" text chip next to it, so the boost reads at a
+   glance without extra words crowding the move-row-mid line. The "why" is
+   still available via the span's title attribute (long-press/hover). --buff
+   (teal, already the kind-buff category-badge color) rather than --hp-high —
+   that green is HEAL's identity color, and a boosted damage number sitting
+   right next to an actual heal number in the same row read as the same
+   thing at a glance. */
+.move-power.move-boosted {
+  color: var(--buff);
+}
+
+.move-boosted-arrow {
+  font-size: 8px;
+  margin-left: 1px;
+  vertical-align: super;
 }
 
 .eff-chip {

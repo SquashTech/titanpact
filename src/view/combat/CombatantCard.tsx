@@ -51,6 +51,11 @@ interface Props {
   acting?: boolean;
   /** Type-effectiveness readout for the move currently being targeted (FightScreen's bottom targeting panel) — the multiplier of that move against THIS card's hero, so the matchup is visible right where the player commits to a target instead of only back in the move grid. `className` is one of the eff-chip tier classes (FightScreen's multClass): eff-quad-super/eff-super/eff-neutral/eff-resist/eff-quad-resist. */
   effBadge?: { text: string; className: string } | null;
+  /** Strips HP/MP bars, status chips, and stat-mod corner badges down to
+   * portrait + name + type + effBadge — the targeting panel (FightScreen)
+   * already shows full HP/MP/statuses on the battlefield cards behind it, so
+   * repeating them here was pure redundancy bloating the target-picker boxes. */
+  compact?: boolean;
 }
 
 /**
@@ -125,17 +130,19 @@ export function CombatantCard({
   locked,
   acting,
   effBadge,
+  compact,
 }: Props) {
   const [inspectingStatus, setInspectingStatus] = useState<string | null>(null);
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = Math.max(0, combatant.currentHp / maxHp);
   const manaFraction = maxMana > 0 ? Math.max(0, combatant.currentMana / maxMana) : 0;
-  const activeMods = combatant.fainted ? [] : activeStatMods(hero, combatant);
+  const activeMods = compact || combatant.fainted ? [] : activeStatMods(hero, combatant);
   const leftMods = activeMods.slice(0, Math.ceil(activeMods.length / 2));
   const rightMods = activeMods.slice(Math.ceil(activeMods.length / 2));
 
   const classes = ['combatant-card'];
+  if (compact) classes.push('compact');
   if (combatant.fainted) classes.push('fainted');
   if (targetable && !combatant.fainted && !locked) classes.push('targetable');
   if (selected) classes.push('selected');
@@ -210,50 +217,58 @@ export function CombatantCard({
       {/* Always rendered, even with no active statuses — reserves a fixed row of
           vertical space so a status landing mid-fight doesn't grow the card and
           shove the rest of the battlefield around (docs/architecture.md
-          "Resolution and presentation are separate layers"). */}
-      <div className="status-badge-row">
-        {Object.values(combatant.statuses)
-          // A duration-shape status (Stealth) can sit at duration 0 for the rest of
-          // its last protected round before the next start-of-round tick actually
-          // removes it (statusEngine.ts tickStartOfRound) — hide the chip the moment
-          // it hits 0 rather than showing a stale "0" badge for that whole round.
-          .filter((s) => s.duration === undefined || s.duration > 0)
-          // A magnitude-shape grant like Elemental Force can come entirely from
-          // equipment/relics (buildCombatState.ts baselineStatusMagnitudes) — that
-          // portion is loadout, not a combat indicator, so net it out and drop the
-          // chip if nothing was added by a move/passive during THIS fight.
-          .filter((s) => s.magnitude === undefined || s.magnitude - (combatant.baselineStatusMagnitudes[s.statusId] ?? 0) > 0)
-          .map((s) => {
-            const displayInstance =
-              s.magnitude !== undefined ? { ...s, magnitude: s.magnitude - (combatant.baselineStatusMagnitudes[s.statusId] ?? 0) } : s;
-            return <StatusChip key={s.statusId} instance={displayInstance} onInspect={() => setInspectingStatus(s.statusId)} />;
-          })}
-      </div>
+          "Resolution and presentation are separate layers"). Skipped entirely
+          in `compact` mode — the targeting panel doesn't show statuses, and
+          the battlefield card behind it already reserves this space. */}
+      {!compact && (
+        <div className="status-badge-row">
+          {Object.values(combatant.statuses)
+            // A duration-shape status (Stealth) can sit at duration 0 for the rest of
+            // its last protected round before the next start-of-round tick actually
+            // removes it (statusEngine.ts tickStartOfRound) — hide the chip the moment
+            // it hits 0 rather than showing a stale "0" badge for that whole round.
+            .filter((s) => s.duration === undefined || s.duration > 0)
+            // A magnitude-shape grant like Elemental Force can come entirely from
+            // equipment/relics (buildCombatState.ts baselineStatusMagnitudes) — that
+            // portion is loadout, not a combat indicator, so net it out and drop the
+            // chip if nothing was added by a move/passive during THIS fight.
+            .filter((s) => s.magnitude === undefined || s.magnitude - (combatant.baselineStatusMagnitudes[s.statusId] ?? 0) > 0)
+            .map((s) => {
+              const displayInstance =
+                s.magnitude !== undefined ? { ...s, magnitude: s.magnitude - (combatant.baselineStatusMagnitudes[s.statusId] ?? 0) } : s;
+              return <StatusChip key={s.statusId} instance={displayInstance} onInspect={() => setInspectingStatus(s.statusId)} />;
+            })}
+        </div>
+      )}
       {inspectingStatus && combatant.statuses[inspectingStatus] && (
         <StatusDetailOverlay instance={combatant.statuses[inspectingStatus]} onClose={() => setInspectingStatus(null)} />
       )}
       {/* Wrapped in a `.resource` pair so compact contexts (bench-row) can lay
           HP and MP side by side instead of stacked — `.resource-row`/`.resource`
           are `display: contents` by default, so this changes nothing about the
-          full-size card's layout (see .bench-row .resource-row in styles.css). */}
-      <div className="resource-row">
-        <div className="resource">
-          <div className="bar-track">
-            <div className={`bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
+          full-size card's layout (see .bench-row .resource-row in styles.css).
+          Dropped entirely in `compact` mode (targeting panel) — HP/MP are
+          already visible on the battlefield card this panel sits above. */}
+      {!compact && (
+        <div className="resource-row">
+          <div className="resource">
+            <div className="bar-track">
+              <div className={`bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
+            </div>
+            <div className="bar-label">
+              HP {Math.max(0, combatant.currentHp)}/{maxHp}
+            </div>
           </div>
-          <div className="bar-label">
-            HP {Math.max(0, combatant.currentHp)}/{maxHp}
+          <div className="resource">
+            <div className="bar-track">
+              <div className="bar-fill mana" style={{ width: `${manaFraction * 100}%` }} />
+            </div>
+            <div className="bar-label">
+              MP {combatant.currentMana}/{maxMana}
+            </div>
           </div>
         </div>
-        <div className="resource">
-          <div className="bar-track">
-            <div className="bar-fill mana" style={{ width: `${manaFraction * 100}%` }} />
-          </div>
-          <div className="bar-label">
-            MP {combatant.currentMana}/{maxMana}
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

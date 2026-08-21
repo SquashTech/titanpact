@@ -746,6 +746,7 @@ export function FightScreen({
                           onSelectTarget={spread ? undefined : () => handleTargetClick(tid)}
                           popup={popups[tid]}
                           effBadge={mult === 1 ? null : { text: effLabel(mult), className: multClass(mult) }}
+                          compact
                         />
                       );
                     })}
@@ -830,18 +831,17 @@ export function FightScreen({
                         <div className="move-row-mid">
                           <TypeBadge type={move.type} />
                           {move.kind === 'damage' && move.basePower != null && (
-                            <span className="move-power">
+                            <span
+                              className={`move-power${forceBonus > 0 ? ' move-boosted' : ''}`}
+                              title={forceBonus > 0 ? `Elemental Force: +${forceBonus} Base Power` : undefined}
+                            >
                               <strong>{move.basePower + forceBonus}</strong>BP
+                              {forceBonus > 0 && <span className="move-boosted-arrow">▲</span>}
                             </span>
                           )}
                           {move.kind === 'heal' && move.healAmount != null && (
                             <span className="move-power move-heal">
                               <strong>{move.healAmount}</strong>HEAL
-                            </span>
-                          )}
-                          {forceBonus > 0 && (
-                            <span className="move-force" title={`Elemental Force: +${forceBonus} Base Power`}>
-                              +{forceBonus} Force
                             </span>
                           )}
                           <MoveKindBadge move={move} />
@@ -952,8 +952,12 @@ export function FightScreen({
                   <CategoryBadge category={move.category} />
                   <span className="move-popup-kind">{KIND_LABELS[move.kind] ?? move.kind}</span>
                   {move.kind === 'damage' && move.basePower != null && (
-                    <span className="move-power">
+                    <span
+                      className={`move-power${forceBonus > 0 ? ' move-boosted' : ''}`}
+                      title={forceBonus > 0 ? `Elemental Force: +${forceBonus} Base Power` : undefined}
+                    >
                       <strong>{move.basePower + forceBonus}</strong>BP
+                      {forceBonus > 0 && <span className="move-boosted-arrow">▲</span>}
                     </span>
                   )}
                   {move.kind === 'heal' && move.healAmount != null && (
@@ -962,11 +966,6 @@ export function FightScreen({
                     </span>
                   )}
                   {hasStab && <span className="move-stab">STAB</span>}
-                  {forceBonus > 0 && (
-                    <span className="move-force" title={`Elemental Force: +${forceBonus} Base Power`}>
-                      +{forceBonus} Force
-                    </span>
-                  )}
                 </div>
                 <div className="move-popup-description">{move.description ?? 'No description.'}</div>
                 {enemyActiveAlive.length > 0 && (
