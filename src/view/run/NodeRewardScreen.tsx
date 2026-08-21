@@ -135,7 +135,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
           <div className="reward-panel bottom-pinned">
             <div className="equip-cache-banner">
               <div className="equip-cache-glow" aria-hidden="true" />
-              <h2>📈 XP Cache</h2>
+              <h2>⭐ XP Cache</h2>
               {!claimed && <p className="hint">Experience, ready to claim.</p>}
             </div>
             {!claimed ? (

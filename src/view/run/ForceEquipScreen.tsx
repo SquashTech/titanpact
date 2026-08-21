@@ -1,8 +1,9 @@
 import { useState, type CSSProperties } from 'react';
 import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
-import type { StatKey } from '../../engine/content';
-import type { RunState } from '../../run/state';
+import type { HeroDefinition, StatKey } from '../../engine/content';
+import type { RosterEntry, RunState } from '../../run/state';
+import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
 import { equipToRoster, RunProgressError } from '../../run/runProgress';
 import { rosterEntryTypes } from '../../run/progression';
 import { getTypeColor } from '../combat/typeColors';
@@ -10,6 +11,8 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
 import { EQUIP_SLOT_LABELS, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { useLongPress } from '../shared/MoveTile';
+import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { passives } from '../../data/passives';
 import { passiveEmoji } from '../shared/passiveIcons';
 import { statuses } from '../../data/statuses';
@@ -32,6 +35,45 @@ function fmtGrant(amount: number): string {
   return amount > 0 ? `+${amount}` : `${amount}`;
 }
 
+interface ForceEquipHeroCardProps {
+  hero: HeroDefinition;
+  entry: RosterEntry;
+  slot: EquipmentSlot;
+  currentItem: EquipmentDefinition | null;
+  onEquip: () => void;
+  onPreview: () => void;
+}
+
+/**
+ * One hero-grid card — pulled out of the roster .map() below because
+ * useLongPress is a hook (same reason LevelUpScreen's own hero card is its
+ * own component). A tap still equips/replaces immediately; holding the card
+ * now opens the full HeroPreviewOverlay sheet first, so a player can check a
+ * hero's current loadout/stats before committing to bump something off them.
+ */
+function ForceEquipHeroCard({ hero, entry, slot, currentItem, onEquip, onPreview }: ForceEquipHeroCardProps) {
+  const longPress = useLongPress(onPreview, onEquip);
+  return (
+    <button type="button" className="hero-grid-card" style={{ borderLeftColor: getTypeColor(hero.types[0]) }} {...longPress}>
+      <HeroPortrait heroId={hero.id} className="hero-grid-portrait" />
+      <div className="hero-grid-name-row">
+        <span className="hero-grid-name">{hero.name}</span>
+        <span className="training-hero-level">Lv {entry.level}</span>
+      </div>
+      <div className="hero-grid-types">
+        {rosterEntryTypes(hero, entry).map((t) => (
+          <TypeBadge key={t} type={t} />
+        ))}
+      </div>
+      <div className={`equip-slot-box target${currentItem ? ' filled' : ' empty'}`}>
+        <EquipmentIcon item={currentItem} slot={slot} className="equip-slot-icon" />
+        <span className="equip-slot-item">{currentItem ? currentItem.name : 'Empty'}</span>
+      </div>
+      <span className="hero-grid-cta">{currentItem ? 'Replace' : 'Equip'}</span>
+    </button>
+  );
+}
+
 /**
  * Forced resolution gate (CLAUDE.md-style "instantly allocated before the run
  * continues", same pattern as LevelUpScreen): every piece of equipment
@@ -46,6 +88,8 @@ function fmtGrant(amount: number): string {
 export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone }: Props) {
   const [queue, setQueue] = useState<QueueEntry[]>(() => initialQueue.map((itemId) => ({ itemId, bumped: false })));
   const [confirmTrash, setConfirmTrash] = useState(false);
+  /** Long-press-triggered full hero sheet (HeroPreviewOverlay) — lets the player check a hero's current loadout before bumping something off them. */
+  const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
 
   const current = queue[0];
   const itemLookup = current ? equipment[current.itemId] : undefined;
@@ -91,14 +135,11 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
         <div className="bottom-pinned">
           <div className="equip-spotlight" style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}>
             <div className="equip-spotlight-glow" aria-hidden="true" />
-            <div className="equip-spotlight-header">
-              <EquipmentIcon item={item} slot={item.slot} className="equip-spotlight-icon" />
-              <div>
-                <div className="equip-spotlight-name">{item.name}</div>
-                <div className="equip-spotlight-rarity">
-                  {RARITY_LABELS[item.rarity]} · {EQUIP_SLOT_LABELS[item.slot]}
-                </div>
-              </div>
+            <div className="equip-spotlight-eyebrow">{current.bumped ? 'Needs a New Home' : 'New Equipment'}</div>
+            <EquipmentIcon item={item} slot={item.slot} className="equip-spotlight-icon" />
+            <div className="equip-spotlight-name">{item.name}</div>
+            <div className="equip-spotlight-rarity">
+              {RARITY_LABELS[item.rarity]} · {EQUIP_SLOT_LABELS[item.slot]}
             </div>
             {grants.length > 0 && (
               <div className="detail-modifier-list">
@@ -152,28 +193,15 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
               const currentId = entry.equipment[item.slot];
               const currentItem = currentId ? equipment[currentId] : null;
               return (
-                <button
+                <ForceEquipHeroCard
                   key={entry.rosterId}
-                  className="hero-grid-card"
-                  style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
-                  onClick={() => handleEquip(entry.rosterId)}
-                >
-                  <HeroPortrait heroId={hero.id} className="hero-grid-portrait" />
-                  <div className="hero-grid-name-row">
-                    <span className="hero-grid-name">{hero.name}</span>
-                    <span className="training-hero-level">Lv {entry.level}</span>
-                  </div>
-                  <div className="hero-grid-types">
-                    {rosterEntryTypes(hero, entry).map((t) => (
-                      <TypeBadge key={t} type={t} />
-                    ))}
-                  </div>
-                  <div className={`equip-slot-box target${currentItem ? ' filled' : ' empty'}`}>
-                    <EquipmentIcon item={currentItem} slot={item.slot} className="equip-slot-icon" />
-                    <span className="equip-slot-item">{currentItem ? currentItem.name : 'Empty'}</span>
-                  </div>
-                  <span className="hero-grid-cta">{currentItem ? 'Replace' : 'Equip'}</span>
-                </button>
+                  hero={hero}
+                  entry={entry}
+                  slot={item.slot}
+                  currentItem={currentItem}
+                  onEquip={() => handleEquip(entry.rosterId)}
+                  onPreview={() => setPreviewEntry({ hero, entry })}
+                />
               );
             })}
           </div>
@@ -201,6 +229,15 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
             </div>
           </div>
         </div>
+      )}
+
+      {previewEntry && (
+        <HeroPreviewOverlay
+          hero={previewEntry.hero}
+          entry={previewEntry.entry}
+          equipmentLookup={equipment}
+          onClose={() => setPreviewEntry(null)}
+        />
       )}
     </div>
   );

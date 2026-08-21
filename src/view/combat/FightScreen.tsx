@@ -1019,7 +1019,7 @@ export function FightScreen({
                     )}
                     {trainingPointsReward > 0 && (
                       <div className="result-reward-chip">
-                        📈 <strong>+{trainingPointsReward}</strong> XP
+                        ⭐ <strong>+{trainingPointsReward}</strong> XP
                       </div>
                     )}
                   </div>

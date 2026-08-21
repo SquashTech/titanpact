@@ -33,6 +33,40 @@ interface EquipSlotButtonProps {
   onDrop: (e: DragEvent) => void;
 }
 
+interface RosterMgmtHeadProps {
+  hero: HeroDefinition;
+  entry: RosterEntry;
+  onInspect: () => void;
+}
+
+/**
+ * One hero's name/level/types row — pulled out of the roster .map() below
+ * because useLongPress is a hook (same reason EquipSlotButton is its own
+ * component). A tap does nothing here (the "i" button is the discoverable
+ * way in); a hold opens the same HeroPreviewOverlay sheet, matching the
+ * "hold a hero to review it" language this app now uses everywhere a hero
+ * card sits inside a bigger tappable/draggable surface.
+ */
+function RosterMgmtHead({ hero, entry, onInspect }: RosterMgmtHeadProps) {
+  const longPress = useLongPress(onInspect);
+  return (
+    <div className="roster-mgmt-head" {...longPress}>
+      <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
+      <div className="roster-mgmt-name">
+        {hero.name} <span className="hint">Lv {entry.level}</span>
+      </div>
+      <div className="roster-card-types">
+        {rosterEntryTypes(hero, entry).map((t) => (
+          <TypeBadge key={t} type={t} />
+        ))}
+      </div>
+      <button className="info-button roster-mgmt-info-button" onClick={onInspect} aria-label={`View ${hero.name} details`}>
+        i
+      </button>
+    </div>
+  );
+}
+
 /**
  * One hero's equip slot. Pulled out of the roster .map() below because
  * useLongPress is a hook — it can't be called from inside a loop body, only
@@ -163,24 +197,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
               const hero = heroes[entry.heroId];
               return (
                 <div key={entry.rosterId} className="roster-mgmt-card" style={{ borderLeftColor: getTypeColor(hero.types[0]) }}>
-                  <div className="roster-mgmt-head">
-                    <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
-                    <div className="roster-mgmt-name">
-                      {hero.name} <span className="hint">Lv {entry.level}</span>
-                    </div>
-                    <div className="roster-card-types">
-                      {rosterEntryTypes(hero, entry).map((t) => (
-                        <TypeBadge key={t} type={t} />
-                      ))}
-                    </div>
-                    <button
-                      className="info-button roster-mgmt-info-button"
-                      onClick={() => setInspecting({ hero, entry })}
-                      aria-label={`View ${hero.name} details`}
-                    >
-                      i
-                    </button>
-                  </div>
+                  <RosterMgmtHead hero={hero} entry={entry} onInspect={() => setInspecting({ hero, entry })} />
 
                   <div className="equip-slot-row">
                     {EQUIP_SLOT_ORDER.map((slot) => {
