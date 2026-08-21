@@ -44,6 +44,7 @@ test('map: uniform per-act shape — Fight, pick-3 reward, Skirmish, pick-3 rewa
     'accessoryReward',
     'hpBoostReward',
     'manaBoostReward',
+    'classReward',
     'event',
   ]);
   for (const seed of [1, 2, 3, 4, 5]) {

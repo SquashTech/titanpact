@@ -10,6 +10,7 @@ import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScr
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { ForceEquipScreen } from '../view/run/ForceEquipScreen';
 import { StatBoostScreen, type StatBoostNodeType } from '../view/run/StatBoostScreen';
+import { ClassNodeScreen } from '../view/run/ClassNodeScreen';
 import { EventNodeScreen } from '../view/run/EventNodeScreen';
 import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
 import { heroes } from '../data/heroes';
@@ -58,6 +59,8 @@ type Screen =
   | { kind: 'shop'; nodeId: string; offers: GuildHallOffers }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
   | { kind: 'statBoost'; nodeId: string; nodeType: StatBoostNodeType }
+  /** classReward node (docs/run-loop.md, ClassNodeScreen) — one screen handles both the 1-of-3 Class pick and the target-hero assignment internally, so this kind only needs the node id. */
+  | { kind: 'classNode'; nodeId: string }
   | { kind: 'event'; nodeId: string }
   /** Forced spend gate (CLAUDE.md "training points ... must be instantly allocated before the run continues") — `next` is whatever screen would otherwise have followed. */
   | { kind: 'levelUp'; next: Screen }
@@ -295,6 +298,8 @@ export function App() {
       setScreen(item ? { kind: 'forceEquip', queue: [item.id], next: afterScreen } : afterScreen);
     } else if (node.type === 'hpBoostReward' || node.type === 'manaBoostReward') {
       setScreen({ kind: 'statBoost', nodeId, nodeType: node.type });
+    } else if (node.type === 'classReward') {
+      setScreen({ kind: 'classNode', nodeId });
     } else if (node.type === 'event') {
       setScreen({ kind: 'event', nodeId });
     } else {
@@ -576,6 +581,10 @@ export function App() {
           onRunChange={setPlayerRun}
           onContinue={() => handleNodeContinue(screen.nodeId)}
         />
+      )}
+
+      {screen.kind === 'classNode' && (
+        <ClassNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'event' && <EventNodeScreen onContinue={() => handleNodeContinue(screen.nodeId)} />}

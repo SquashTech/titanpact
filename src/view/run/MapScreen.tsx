@@ -29,6 +29,7 @@ const NODE_ICONS: Record<MapNodeType, string> = {
   accessoryReward: '💍',
   hpBoostReward: '❤️',
   manaBoostReward: '💧',
+  classReward: '🏛️',
   event: '❓',
 };
 
@@ -48,6 +49,7 @@ const NODE_NAMES: Record<MapNodeType, string> = {
   accessoryReward: 'Accessory',
   hpBoostReward: 'Vitality',
   manaBoostReward: 'Mana',
+  classReward: 'Mentor',
   event: 'Event',
 };
 
@@ -76,6 +78,7 @@ const NODE_COLORS: Record<MapNodeType, string> = {
   accessoryReward: '#7fd6e0',
   hpBoostReward: 'var(--hp-high)',
   manaBoostReward: 'var(--mana)',
+  classReward: 'var(--buff)',
   event: 'var(--tier-common)',
 };
 

@@ -30,9 +30,9 @@ between; per user direction, the shape is now forced and uniform):
   first choice among identical-weight openers.
 - **Row 1: 3 nodes, pick 1 of 3 — reward types only** (`equipmentReward`/`relicReward`/
   `currencyReward`/`upgradeReward`/`weaponReward`/`armorReward`/`accessoryReward`/
-  `hpBoostReward`/`manaBoostReward`/`event`, weighted). No `fight`/`shop`/`elite` mixed
-  in — every reward row is a genuine reward choice, not a chance to draw another fight or
-  dodge one.
+  `hpBoostReward`/`manaBoostReward`/`classReward`/`event`, weighted). No `fight`/`shop`/
+  `elite` mixed in — every reward row is a genuine reward choice, not a chance to draw
+  another fight or dodge one.
 - **Row 2: a single forced `skirmish` node.**
 - **Row 3: 3 nodes, pick 1 of 3 — reward types only**, same pool as row 1.
 - **Row 4: 2 nodes, pick 1 of 2 — `elite` or `battle`** (2026-08-17, per user direction:
@@ -79,6 +79,7 @@ within a row.
 | `upgradeReward` | `NodeRewardScreen` — an instant flat grant to the pooled level-up currency (2-3 points), on top of the per-fight-win grant (see below). |
 | `weaponReward` / `armorReward` / `accessoryReward` | Rolls a single rarity-weighted item of that fixed slot (`equipment.ts` `pickWeightedEquipmentBySlot`) and hands off straight to `ForceEquipScreen` — no 3-choice picker, unlike `equipmentReward`'s mixed-slot pick. |
 | `hpBoostReward` / `manaBoostReward` | `StatBoostScreen` — pick one roster hero to receive a flat, permanent-for-the-run stat grant (+20 HP / +10 Mana, `runProgress.ts` `grantStatBonus`), stored on `RosterEntry.bonusStatGrants`. |
+| `classReward` ("Mentor's Hall") | `ClassNodeScreen` — pick 1 of 3 Classes (`src/data/classes.ts`), then pick which roster hero learns it, filtered to heroes with no Class yet (`src/run/classes.ts` `grantClass`, stored on `RosterEntry.classId` — a hero can hold at most one Class per run, so `grantClass` REPLACES rather than stacks). If every roster hero already has a Class, the offer is simply wasted. |
 | `event` | `EventNodeScreen` — placeholder, no content yet (deferred: "we will design these when it's time"). |
 
 `contractReward` (an instant flat grant of 1 Recruit Contract) was **removed as a map

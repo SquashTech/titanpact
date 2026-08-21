@@ -46,6 +46,7 @@ export type MapNodeType =
   | 'accessoryReward'
   | 'hpBoostReward'
   | 'manaBoostReward'
+  | 'classReward'
   | 'event';
 
 export interface MapNode {
@@ -83,9 +84,13 @@ const SKIRMISH_ROW = 2;
  * `weaponReward`/`armorReward`/`accessoryReward` are single-item guaranteed
  * grants (no 3-choice picker, unlike `equipmentReward`'s mixed-slot pick),
  * `hpBoostReward`/`manaBoostReward` grant a flat permanent stat bonus to one
- * chosen hero, and `event` is a placeholder node with no content yet (user
- * direction — "don't create any yet, we will design these when it's time").
- * Weights are a first-pass balance, easily retuned since this is plain data.
+ * chosen hero, `classReward` offers 1 of 3 Classes then a hero to teach it to
+ * (src/data/classes.ts, src/view/run/ClassNodeScreen.tsx — a hero can only
+ * ever hold one, so this is weighted like the stat-boost shrines rather than
+ * the more plentiful equipment/relic/currency rows), and `event` is a
+ * placeholder node with no content yet (user direction — "don't create any
+ * yet, we will design these when it's time"). Weights are a first-pass
+ * balance, easily retuned since this is plain data.
  */
 const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   ['equipmentReward', 20],
@@ -97,6 +102,7 @@ const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   ['accessoryReward', 12],
   ['hpBoostReward', 10],
   ['manaBoostReward', 10],
+  ['classReward', 10],
   ['event', 8],
 ];
 

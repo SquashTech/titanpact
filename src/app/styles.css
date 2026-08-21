@@ -3865,6 +3865,85 @@ body {
   box-shadow: 0 0 0 1px var(--magical), 0 4px 18px rgba(0, 0, 0, 0.4);
 }
 
+/* --- Mentor's Hall (ClassNodeScreen's classReward) ------------------------
+   Same banner/glow/card/list shapes as the Relic Shrine above, retinted from
+   --magical toward --buff — a Class is a stat buff, not an arcane relic, and
+   the map tile already uses --buff (MapScreen.tsx NODE_COLORS) so the two
+   surfaces read as the same node type at a glance. */
+
+.class-shrine-panel {
+  padding-top: 8px;
+}
+
+.class-shrine-banner {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  text-align: center;
+  padding: 18px 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(63, 184, 175, 0.16), transparent 70%);
+}
+
+.class-shrine-banner h2 {
+  position: relative;
+}
+
+.class-shrine-banner .hint {
+  position: relative;
+  margin: 4px 0 0;
+}
+
+.class-shrine-glow {
+  position: absolute;
+  top: -45%;
+  left: 50%;
+  width: 240px;
+  height: 240px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(63, 184, 175, 0.34), transparent 65%);
+  animation: evolution-glow-pulse 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.class-shrine-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.class-shrine-card {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  padding: 12px 14px;
+  cursor: pointer;
+  border-left-color: var(--buff);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.class-shrine-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.class-shrine-card .relic-card-icon {
+  font-size: 20px;
+}
+
+.class-shrine-card .relic-card-name {
+  font-size: 14px;
+}
+
+.class-shrine-card.picked {
+  border-color: var(--buff);
+  box-shadow: 0 0 0 1px var(--buff), 0 4px 18px rgba(0, 0, 0, 0.4);
+}
+
 /* --- Forced equip-or-trash gate (ForceEquipScreen) ------------------------
    Same rarity-color-via-custom-property convention as the Equipment Cache
    above, reused for the "you obtained X" spotlight and applied per-hero-row
