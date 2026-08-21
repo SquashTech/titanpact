@@ -46,7 +46,14 @@ function fmtStatus(statusId: string, magnitude: number | undefined, duration: nu
  * the battle log overlay).
  */
 export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLookup, onClose }: Props) {
-  const hasModifiers = STAT_ORDER.some((stat) => (combatant.statModifiers[stat] ?? 0) !== 0);
+  // Loadout (equipment/relic/Evolution/Class) grants combined with whatever a
+  // move/passive has changed THIS fight — this full sheet shows both, unlike
+  // the battlefield card's badges (CombatantCard.tsx activeStatMods), which
+  // only flag the latter.
+  const totalModifiers = Object.fromEntries(
+    STAT_ORDER.map((stat) => [stat, (combatant.baselineStatModifiers[stat] ?? 0) + (combatant.statModifiers[stat] ?? 0)])
+  ) as Record<StatKey, number>;
+  const hasModifiers = STAT_ORDER.some((stat) => totalModifiers[stat] !== 0);
   const effectiveTotals = Object.fromEntries(STAT_ORDER.map((stat) => [stat, getEffectiveStat(hero, combatant, stat)])) as Record<StatKey, number>;
   const evolved = rosterEntry ? chosenEvolutionPaths(progressionTable, rosterEntry) : [];
   const maxHp = getMaxHp(hero, combatant);
@@ -134,13 +141,13 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
         </div>
 
         <div className="detail-section-title">📊 Stats</div>
-        <StatBars baseStats={hero.baseStats} deltas={combatant.statModifiers} totals={effectiveTotals} />
+        <StatBars baseStats={hero.baseStats} deltas={totalModifiers} totals={effectiveTotals} />
 
         <div className="detail-section-title">✨ Buffs / Debuffs</div>
         {hasModifiers ? (
           <div className="detail-modifier-list">
-            {STAT_ORDER.filter((stat) => (combatant.statModifiers[stat] ?? 0) !== 0).map((stat) => {
-              const mod = combatant.statModifiers[stat] ?? 0;
+            {STAT_ORDER.filter((stat) => totalModifiers[stat] !== 0).map((stat) => {
+              const mod = totalModifiers[stat];
               return (
                 <span key={stat} className={`detail-modifier-chip ${mod > 0 ? 'stat-buff' : 'stat-debuff'}`}>
                   {STAT_ICONS[stat]} {STAT_LABELS[stat]} {fmtMod(mod)}

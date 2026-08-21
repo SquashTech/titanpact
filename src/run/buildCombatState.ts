@@ -1,7 +1,8 @@
 // The seam between run state and combat state (docs/architecture.md "State
 // shapes (three tiers)"). Converts a picked Squad, per side, into a
 // CombatState — applying equipped items' and Evolution grants' flat stat
-// modifiers as each Combatant's starting statModifiers. This is the only
+// modifiers as each Combatant's starting baselineStatModifiers (kept apart
+// from statModifiers, which is reserved for in-combat deltas). This is the only
 // place run-tier content crosses into the engine's combat tier, and it only
 // ever produces plain CombatState/Combatant data — never reaches back into
 // /src/engine internals.
@@ -74,16 +75,24 @@ function placeEntry(
     teamPassiveGrants
   );
   const passives = toPassiveInstances(passiveCounts);
-  const statModifiers = mergeStatMods(
+  const baselineStatModifiers = mergeStatMods(
     equipmentStatModifiers(entry.equipment, equipmentLookup),
     entry.evolutionStatGrants,
     entry.bonusStatGrants,
     teamStatModifiers,
     passiveStatModifiers(passiveCounts, passiveDefs)
   );
-  const statuses = toStatusInstances(mergeStatusGrants(equipmentStatusGrants(entry.equipment, equipmentLookup), teamStatusGrants));
+  const baselineStatusMagnitudes = mergeStatusGrants(equipmentStatusGrants(entry.equipment, equipmentLookup), teamStatusGrants);
+  const statuses = toStatusInstances(baselineStatusMagnitudes);
   const grantedTypes = entry.evolutionTypeGraft ? [entry.evolutionTypeGraft] : [];
-  const withMods = { ...createCombatant(combatantIdFor(side, rosterId), entry.heroId, side, 0, 0), statModifiers, grantedTypes, passives, statuses };
+  const withMods = {
+    ...createCombatant(combatantIdFor(side, rosterId), entry.heroId, side, 0, 0),
+    baselineStatModifiers,
+    grantedTypes,
+    baselineStatusMagnitudes,
+    passives,
+    statuses,
+  };
   return { ...withMods, currentHp: getMaxHp(hero, withMods), currentMana: getMaxMana(hero, withMods) };
 }
 

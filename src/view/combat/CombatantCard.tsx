@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { Combatant, StatusInstance } from '../../engine/state';
-import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana } from '../../engine/state';
+import { effectiveTypes, getCombatStatDelta, getMaxHp, getMaxMana } from '../../engine/state';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_ICONS, STAT_ORDER, hpTier } from '../shared/StatBars';
@@ -90,14 +90,16 @@ function StatusChip({ instance, onInspect }: { instance: StatusInstance; onInspe
  * in the common case, so neither corner outgrows the space the portrait and
  * name leave free — see .stat-mod-corner in styles.css.
  *
- * Derived from getEffectiveStat (effective - base), not combatant.statModifiers
- * alone, so a status-pipeline effect like Freeze (docs/conditions.md, halves
- * Speed outside statModifiers) still surfaces a badge here instead of only
- * showing up as a status-name chip.
+ * Derived from getCombatStatDelta (effective - loadout baseline), NOT
+ * combatant.baselineStatModifiers — equipment/relic/Evolution/Class grants
+ * enhance the hero's effective BST and read as part of their stat block
+ * (HeroDetailOverlay), not as a battlefield indicator. Only what a move or
+ * passive changes DURING this fight (including a status-pipeline effect like
+ * Freeze, docs/conditions.md, halving Speed) shows up here.
  */
 function activeStatMods(hero: HeroDefinition, combatant: Combatant): Array<{ stat: StatKey; mod: number }> {
   return STAT_ORDER.flatMap((stat) => {
-    const mod = getEffectiveStat(hero, combatant, stat) - hero.baseStats[stat];
+    const mod = getCombatStatDelta(hero, combatant, stat);
     return mod !== 0 ? [{ stat, mod }] : [];
   });
 }
@@ -216,9 +218,16 @@ export function CombatantCard({
           // removes it (statusEngine.ts tickStartOfRound) — hide the chip the moment
           // it hits 0 rather than showing a stale "0" badge for that whole round.
           .filter((s) => s.duration === undefined || s.duration > 0)
-          .map((s) => (
-            <StatusChip key={s.statusId} instance={s} onInspect={() => setInspectingStatus(s.statusId)} />
-          ))}
+          // A magnitude-shape grant like Elemental Force can come entirely from
+          // equipment/relics (buildCombatState.ts baselineStatusMagnitudes) — that
+          // portion is loadout, not a combat indicator, so net it out and drop the
+          // chip if nothing was added by a move/passive during THIS fight.
+          .filter((s) => s.magnitude === undefined || s.magnitude - (combatant.baselineStatusMagnitudes[s.statusId] ?? 0) > 0)
+          .map((s) => {
+            const displayInstance =
+              s.magnitude !== undefined ? { ...s, magnitude: s.magnitude - (combatant.baselineStatusMagnitudes[s.statusId] ?? 0) } : s;
+            return <StatusChip key={s.statusId} instance={displayInstance} onInspect={() => setInspectingStatus(s.statusId)} />;
+          })}
       </div>
       {inspectingStatus && combatant.statuses[inspectingStatus] && (
         <StatusDetailOverlay instance={combatant.statuses[inspectingStatus]} onClose={() => setInspectingStatus(null)} />

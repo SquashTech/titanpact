@@ -11,7 +11,7 @@
 
 import type { HeroDefinition, MoveDefinition, PassiveDefinition, StatusDefinition } from '../content';
 import type { CombatState, HeroLookup, Side } from '../state';
-import { getMaxHp, getEffectiveStat, effectiveTypes, hasStatus } from '../state';
+import { getMaxHp, getMaxMana, getEffectiveStat, effectiveTypes, hasStatus } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
@@ -345,5 +345,5 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 function getMaxHeroMaxMana(heroes: HeroLookup, state: CombatState, combatantId: string): number {
   const combatant = state.combatants[combatantId];
   const hero = heroes[combatant.heroId];
-  return hero.baseStats.manaPool + (combatant.statModifiers.manaPool ?? 0);
+  return getMaxMana(hero, combatant);
 }
