@@ -165,10 +165,16 @@ export function FightScreen({
   onResolved,
 }: Props) {
   function buildInitialState(seed: number): CombatState {
-    return buildCombatState(seed, allCombatants, equipment, [
-      { side: PLAYER_SIDE, squad: playerSquad, roster: playerRun.roster, teamStatModifiers, teamPassiveGrants, teamStatusGrants },
-      { side: AI_SIDE, squad: aiSquad, roster: aiRun.roster },
-    ]);
+    return buildCombatState(
+      seed,
+      allCombatants,
+      equipment,
+      [
+        { side: PLAYER_SIDE, squad: playerSquad, roster: playerRun.roster, teamStatModifiers, teamPassiveGrants, teamStatusGrants },
+        { side: AI_SIDE, squad: aiSquad, roster: aiRun.roster },
+      ],
+      passives
+    );
   }
 
   const [combat, setCombat] = useState<CombatState>(() => buildInitialState(Math.floor(Math.random() * 2 ** 31)));

@@ -9,13 +9,13 @@
 import type { HeroLookup, CombatState, Side, Combatant, StatModifiers } from '../engine/state';
 import { createCombatant, getMaxHp, getMaxMana } from '../engine/state';
 import { createRng } from '../engine/rng/seededRng';
-import type { PassiveId, StatusId } from '../engine/content';
+import type { PassiveDefinition, PassiveId, StatusId } from '../engine/content';
 import type { RosterEntry } from './state';
 import type { Squad } from './squad';
 import type { EquipmentDefinition } from './equipment';
 import { equipmentStatModifiers } from './equipment';
 import { mergeStatMods } from './statMods';
-import { equipmentPassiveGrants, mergePassiveGrants, toPassiveInstances } from './passives';
+import { equipmentPassiveGrants, mergePassiveGrants, passiveStatModifiers, toPassiveInstances } from './passives';
 import { equipmentStatusGrants, mergeStatusGrants, toStatusInstances } from './statusGrants';
 
 export interface SquadPlacement {
@@ -56,6 +56,7 @@ function placeEntry(
   side: Side,
   heroes: HeroLookup,
   equipmentLookup: Record<string, EquipmentDefinition>,
+  passiveDefs: Record<PassiveId, PassiveDefinition>,
   teamStatModifiers: StatModifiers,
   teamPassiveGrants: Record<PassiveId, number>,
   teamStatusGrants: Record<StatusId, number>
@@ -63,16 +64,22 @@ function placeEntry(
   const entry = roster.find((r) => r.rosterId === rosterId);
   if (!entry) throw new Error(`${rosterId} is not on the roster`);
   const hero = heroes[entry.heroId];
+  const evolutionGrants: Record<PassiveId, number> = {};
+  for (const id of entry.evolutionPassiveGrants) evolutionGrants[id] = (evolutionGrants[id] ?? 0) + 1;
+  const classGrants: Record<PassiveId, number> = entry.classId ? { [entry.classId]: 1 } : {};
+  const passiveCounts = mergePassiveGrants(
+    equipmentPassiveGrants(entry.equipment, equipmentLookup),
+    evolutionGrants,
+    classGrants,
+    teamPassiveGrants
+  );
+  const passives = toPassiveInstances(passiveCounts);
   const statModifiers = mergeStatMods(
     equipmentStatModifiers(entry.equipment, equipmentLookup),
     entry.evolutionStatGrants,
     entry.bonusStatGrants,
-    teamStatModifiers
-  );
-  const evolutionGrants: Record<PassiveId, number> = {};
-  for (const id of entry.evolutionPassiveGrants) evolutionGrants[id] = (evolutionGrants[id] ?? 0) + 1;
-  const passives = toPassiveInstances(
-    mergePassiveGrants(equipmentPassiveGrants(entry.equipment, equipmentLookup), evolutionGrants, teamPassiveGrants)
+    teamStatModifiers,
+    passiveStatModifiers(passiveCounts, passiveDefs)
   );
   const statuses = toStatusInstances(mergeStatusGrants(equipmentStatusGrants(entry.equipment, equipmentLookup), teamStatusGrants));
   const grantedTypes = entry.evolutionTypeGraft ? [entry.evolutionTypeGraft] : [];
@@ -84,7 +91,9 @@ export function buildCombatState(
   seed: number,
   heroes: HeroLookup,
   equipmentLookup: Record<string, EquipmentDefinition>,
-  placements: readonly SquadPlacement[]
+  placements: readonly SquadPlacement[],
+  /** Optional — omitted callers (most existing tests) simply get no passive-held stat contribution, since passiveStatModifiers has nothing to look up. Real fights (FightScreen.tsx) pass the full data/passives.ts catalog so Class grants (and any future statGrants-bearing passive) actually reach the stat pipeline. */
+  passiveDefs: Record<PassiveId, PassiveDefinition> = {}
 ): CombatState {
   const combatants: CombatState['combatants'] = {};
   const active: CombatState['active'] = { A: [null, null], B: [null, null] };
@@ -102,6 +111,7 @@ export function buildCombatState(
         side,
         heroes,
         equipmentLookup,
+        passiveDefs,
         teamStatModifiers ?? {},
         teamPassiveGrants ?? {},
         teamStatusGrants ?? {}

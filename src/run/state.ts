@@ -67,6 +67,18 @@ export interface RosterEntry {
    * combat state as Combatant.grantedTypes by buildCombatState.ts.
    */
   evolutionTypeGraft: TypeId | null;
+  /**
+   * The hero's chosen Class this run, if any (CLAUDE.md-adjacent "Class
+   * system": a Class is a Passive — engine/content.ts PassiveDefinition,
+   * src/data/classes.ts — granting a flat, thematic two-stat buff). A single
+   * nullable id rather than a list: "a hero can only get one Class per run"
+   * holds structurally because there is only one slot to write into —
+   * src/run/classes.ts grantClass REPLACES this rather than appending.
+   * Permanent within a run once granted, same as an Evolution choice; carried
+   * into combat state as a Passive grant + statGrants contribution by
+   * buildCombatState.ts, same seam evolutionPassiveGrants already crosses.
+   */
+  classId: PassiveId | null;
 }
 
 export interface RunState {
@@ -144,6 +156,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     evolutionPassiveGrants: [],
     bonusStatGrants: {},
     evolutionTypeGraft: null,
+    classId: null,
   };
 }
 

@@ -19,6 +19,7 @@ import type { CombatState, PassiveInstance } from '../src/engine/state';
 import { equipmentPassiveGrants, relicTeamPassiveGrants, mergePassiveGrants, toPassiveInstances } from '../src/run/passives';
 import { createEmptyLoadout, equipItem, type EquipmentDefinition } from '../src/run/equipment';
 import { relics } from '../src/data/relics';
+import { isValidPassiveDefinition } from '../src/engine/content';
 
 const config = { typeChart, heroes, moves, statuses, passives, benchHpRegenFlat: 5 };
 
@@ -58,6 +59,32 @@ function withPassive(state: CombatState, combatantId: string, passiveId: string,
     },
   };
 }
+
+// --- isValidPassiveDefinition -------------------------------------------
+
+test('passives: fixture catalog (sanguine, emberheart, and the merged-in Class catalog) is all valid content', () => {
+  for (const passive of Object.values(passives)) {
+    assert.ok(isValidPassiveDefinition(passive), `${passive.id} is not a valid PassiveDefinition`);
+  }
+});
+
+test('passives: isValidPassiveDefinition rejects a passive with no reactive/damageModifier/statGrants — nothing for it to do', () => {
+  assert.strictEqual(isValidPassiveDefinition({ id: 'inert', name: 'Inert', description: '' }), false);
+});
+
+test('passives: isValidPassiveDefinition rejects a non-multiple-of-5 statGrants entry', () => {
+  assert.strictEqual(
+    isValidPassiveDefinition({ id: 'bad', name: 'Bad', description: '', statGrants: { attack: 7 } }),
+    false
+  );
+});
+
+test('passives: isValidPassiveDefinition accepts a statGrants-only passive (a Class)', () => {
+  assert.strictEqual(
+    isValidPassiveDefinition({ id: 'ok', name: 'Ok', description: '', statGrants: { attack: 10, defense: 10 } }),
+    true
+  );
+});
 
 // --- matchesTrigger: relation matching ---------------------------------------
 

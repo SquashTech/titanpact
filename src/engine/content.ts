@@ -14,15 +14,19 @@
 //
 // Passives (the fifth engine contract — CLAUDE.md "abilities" slot) are
 // implemented below as PassiveDefinition: named, single-title effects
-// grantable from Equipment, Relics, or Evolution paths (src/run/equipment.ts,
-// src/run/relics.ts, src/run/progression.ts EvolutionPath.grantsPassiveIds),
-// held on Combatant.passives (engine/state.ts) and resolved by
+// grantable from Equipment, Relics, Evolution paths, or a Class
+// (src/run/equipment.ts, src/run/relics.ts, src/run/progression.ts
+// EvolutionPath.grantsPassiveIds, src/run/classes.ts), held on
+// Combatant.passives (engine/state.ts) and resolved by
 // engine/combat/passiveEngine.ts — reactive hooks (event-stream-driven, e.g.
 // "heal when an enemy takes Bleed damage") and damage-pipeline modifiers
 // (synchronous, contributing to damagePipeline.ts's DamageModifier
-// accumulator, e.g. "+20% Fire damage") are the two effect shapes so far;
-// extend PassiveEffect/PassiveHook as new shapes are actually needed rather
-// than speculatively.
+// accumulator, e.g. "+20% Fire damage") are the two triggered effect shapes;
+// PassiveDefinition.statGrants is a third, non-triggered shape (an always-on
+// flat stat buff, applied at fight-build time like Equipment/Relic
+// statGrants) — src/data/classes.ts's Classes are the first content to use it
+// on its own. Extend PassiveEffect/PassiveHook as new shapes are actually
+// needed rather than speculatively.
 
 /** Opaque type-chart key. The concrete 15 types are DATA — see src/data/typechart.ts. */
 export type TypeId = string;
@@ -224,8 +228,15 @@ export interface PassiveDamageModifier {
 }
 
 /**
- * A Passive may carry a reactive effect, a damage modifier, or (later) both —
- * a PassiveDefinition with neither is invalid content (nothing for it to do).
+ * A Passive may carry a reactive effect, a damage modifier, flat stat grants,
+ * or any combination — a PassiveDefinition with none of the three is invalid
+ * content (nothing for it to do). `statGrants` is the always-on shape (no
+ * hook, no pre-roll evaluation): applied once at fight-build time exactly
+ * like Equipment.statGrants/RelicDefinition.statGrants (src/run/equipment.ts,
+ * src/run/relics.ts — src/run/passives.ts passiveStatModifiers is the
+ * passive-held equivalent of those two), not read by passiveEngine.ts at all.
+ * Its first real user is the Class system (src/data/classes.ts): a Class is
+ * simply a Passive whose only content is a flat two-stat grant.
  */
 export interface PassiveDefinition {
   id: PassiveId;
@@ -234,6 +245,15 @@ export interface PassiveDefinition {
   description: string;
   reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect };
   damageModifier?: PassiveDamageModifier;
+  /** Flat additive grants (CLAUDE.md "Stat modifiers are flat additive integers, multiples of 5 or 10") — see isValidPassiveDefinition. */
+  statGrants?: Partial<Record<StatKey, number>>;
+}
+
+/** Same discipline as isValidEquipmentDefinition/isValidRelicDefinition: every statGrants entry must be a valid flat grant, and the passive must actually do something. */
+export function isValidPassiveDefinition(passive: PassiveDefinition): boolean {
+  const hasEffect = passive.reactive !== undefined || passive.damageModifier !== undefined || passive.statGrants !== undefined;
+  if (!hasEffect) return false;
+  return Object.values(passive.statGrants ?? {}).every((amount) => amount === undefined || isValidFlatStatGrant(amount));
 }
 
 export interface MoveDefinition {
