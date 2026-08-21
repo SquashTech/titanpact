@@ -189,6 +189,16 @@ export function CombatantCard({
         </div>
       )}
       <HeroPortrait heroId={hero.id} className="combatant-portrait" />
+      {/* The move-being-targeted's effectiveness against THIS card's hero
+          (FightScreen's bottom targeting panel) — sits below the portrait,
+          above the name/type line. Always rendered (like .status-badge-row
+          below) so its row reserves the same height whether or not this
+          particular card has a badge — otherwise cards with a non-neutral
+          matchup grow taller than their neutral-matchup neighbors and the
+          whole target row's HP/MP bars end up misaligned. */}
+      <div className="eff-badge-row">
+        {effBadge && <span className={`eff-chip ${effBadge.className}`}>{effBadge.text}</span>}
+      </div>
       <div className="combatant-name">
         <span>{hero.name}</span>
         <span className="combatant-types">
@@ -197,16 +207,6 @@ export function CombatantCard({
           ))}
         </span>
       </div>
-      {/* The move-being-targeted's effectiveness against THIS card's hero
-          (FightScreen's bottom targeting panel) — a full row of its own,
-          not a corner overlay, so it can't collide with the stat-mod
-          corners or get clipped behind the HP/MP bars on the panel's
-          compact cards. */}
-      {effBadge && (
-        <div className="eff-badge-row">
-          <span className={`eff-chip ${effBadge.className}`}>{effBadge.text}</span>
-        </div>
-      )}
       {/* Always rendered, even with no active statuses — reserves a fixed row of
           vertical space so a status landing mid-fight doesn't grow the card and
           shove the rest of the battlefield around (docs/architecture.md

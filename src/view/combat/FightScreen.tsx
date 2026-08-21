@@ -411,8 +411,8 @@ export function FightScreen({
   function effLabel(mult: number): string {
     if (mult >= 4) return 'Super Bonus!';
     if (mult > 1) return 'Bonus!';
-    if (mult <= TYPE_MULT_FLOOR) return 'Super Weak!';
-    return 'Weak!';
+    if (mult <= TYPE_MULT_FLOOR) return 'Super Resist!';
+    return 'Resist!';
   }
 
   /**
