@@ -79,7 +79,7 @@ test('classes: chosenClass resolves a granted classId back to its full data, or 
   const run = seedRoster(['cinderKnight']);
   assert.strictEqual(chosenClass(classes, run.roster[0]), null);
   const withWarrior = grantClass(run, classes, 'cinderKnight', 'warrior');
-  assert.strictEqual(chosenClass(classes, withWarrior.roster[0])?.name, 'Warrior');
+  assert.strictEqual(chosenClass(classes, withWarrior.roster[0])?.name, 'Class - Warrior');
 });
 
 // --- passiveStatModifiers (src/run/passives.ts) -------------------------

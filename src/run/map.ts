@@ -15,8 +15,8 @@
 // mob pool (App.tsx's Goblins); `skirmish` is the row-2 encounter against the
 // recruitable hero pool, named differently so the map itself telegraphs
 // "beating this one is a shot at a Recruit Contract" before the player
-// commits a squad. `battle` is `skirmish`'s late-act sibling — row 4's
-// non-Elite alternative (see ELITE_ROW below) — kept as its own named type
+// commits a squad. `battle` is `skirmish`'s late-act sibling — the
+// non-Elite alternative in generateMap's Elite-or-Battle row — kept as its own named type
 // rather than reusing `skirmish` so its specific encounter pool can be
 // authored separately later ("the actual possible battles" — user direction,
 // deferred) without disturbing the early-act `skirmish` pool. `elite`/`boss`
@@ -71,12 +71,29 @@ export interface RunMap {
 // row 2 = the forced `skirmish` against a recruitable hero squad, row 4 =
 // pick 1 of 2 — `elite` (the act's difficulty spike) or `battle` (its
 // plain-difficulty alternative) — before the shop funnel, row 5 = the
-// pre-boss Guild Hall funnel, row 6 = the Ancient.
-const ROW_WIDTHS = [1, 3, 1, 3, 2, 1, 1] as const;
-const BOSS_ROW = ROW_WIDTHS.length - 1;
-const FUNNEL_ROW = BOSS_ROW - 1;
-const ELITE_ROW = FUNNEL_ROW - 1;
+// pre-boss Guild Hall funnel, row 6 = the Ancient. This is the shape for
+// every act except Act 1, which inserts one extra standalone row — see
+// rowWidthsFor/MENTOR_ROW below.
+const BASE_ROW_WIDTHS = [1, 3, 1, 3, 2, 1, 1] as const;
 const SKIRMISH_ROW = 2;
+
+/**
+ * Act-1-only standalone row, forced to a single classReward (Mentor's Hall,
+ * ClassNodeScreen) node, immediately after the Skirmish row (2026-08-21
+ * revision, per user direction: a dedicated row the player must pass
+ * through — not one of three choices folded into the pick-1-of-3 reward row
+ * that already sat there, which now shifts down a row unchanged and stays a
+ * normal, fully random pick of 3). Every run's Act 1 sees this guaranteed
+ * Class offer right after its first Skirmish; later acts keep the base
+ * 7-row shape and only roll classReward at its normal pick-1-of-3 weight.
+ */
+const MENTOR_ROW = SKIRMISH_ROW + 1;
+
+/** The per-act row-width list — Act 1 gets an extra width-1 row spliced in at MENTOR_ROW; every other act is the unmodified base shape. */
+function rowWidthsFor(actNumber: number): number[] {
+  if (actNumber !== 1) return [...BASE_ROW_WIDTHS];
+  return [...BASE_ROW_WIDTHS.slice(0, MENTOR_ROW), 1, ...BASE_ROW_WIDTHS.slice(MENTOR_ROW)];
+}
 
 /**
  * The two pick-1-of-3 rows draw from reward types only — fight/shop/elite are
@@ -140,20 +157,6 @@ function pickWeightedDistinct(
   return { values, nextState: state };
 }
 
-/** True for the two pick-1-of-3 reward rows — every other row's type is a fixed function of (row, col), not randomly rolled. */
-function isRewardRow(row: number): boolean {
-  return row !== 0 && row !== SKIRMISH_ROW && row !== ELITE_ROW && row !== FUNNEL_ROW && row !== BOSS_ROW;
-}
-
-/** The fixed node type for a non-reward-row cell — never called for reward rows, which are resolved a whole row at a time (see generateMap) so duplicates within the row can be excluded. */
-function fixedNodeType(row: number, col: number): MapNodeType {
-  if (row === 0) return 'fight';
-  if (row === SKIRMISH_ROW) return 'skirmish';
-  if (row === ELITE_ROW) return col === 0 ? 'elite' : 'battle';
-  if (row === FUNNEL_ROW) return 'shop';
-  return 'boss';
-}
-
 function nodeId(row: number, col: number): string {
   return `r${row}-c${col}`;
 }
@@ -164,24 +167,53 @@ function nodeId(row: number, col: number): string {
  * column window, then a repair pass guarantees every node (row 1+) has at
  * least one incoming edge — simpler than a true path-weaving algorithm, but
  * enough to prove branching choice without ever stranding a node.
+ *
+ * `actNumber` (default 1, matching RunState's initial act) selects the row
+ * shape via rowWidthsFor — Act 1 gets the extra standalone Mentor row, every
+ * other act the base 7-row shape. eliteRow/funnelRow/bossRow are derived
+ * from the shape's length (not hardcoded row numbers) so they land correctly
+ * either way.
  */
-export function generateMap(seed: number): RunMap {
+export function generateMap(seed: number, actNumber: number = 1): RunMap {
+  const rowWidths = rowWidthsFor(actNumber);
+  const bossRow = rowWidths.length - 1;
+  const funnelRow = bossRow - 1;
+  const eliteRow = funnelRow - 1;
+  // Only a real row index for Act 1 (rowWidthsFor's inserted row) — never
+  // matched otherwise, since no other act's row count reaches it meaningfully.
+  const mentorRow = actNumber === 1 ? MENTOR_ROW : -1;
+
+  /** True for the pick-1-of-3 reward rows — every other row's type (including the forced Act-1 Mentor row) is fixed by (row, col), not randomly rolled. */
+  function isRewardRow(row: number): boolean {
+    return row !== 0 && row !== SKIRMISH_ROW && row !== mentorRow && row !== eliteRow && row !== funnelRow && row !== bossRow;
+  }
+
+  /** The fixed node type for a non-reward-row cell — never called for reward rows, which are resolved a whole row at a time (see below) so duplicates within the row can be excluded. */
+  function fixedNodeType(row: number, col: number): MapNodeType {
+    if (row === 0) return 'fight';
+    if (row === SKIRMISH_ROW) return 'skirmish';
+    if (row === mentorRow) return 'classReward';
+    if (row === eliteRow) return col === 0 ? 'elite' : 'battle';
+    if (row === funnelRow) return 'shop';
+    return 'boss';
+  }
+
   let rng = createRng(seed);
   const nodes: Record<string, MapNode> = {};
   const rows: string[][] = [];
 
-  for (let row = 0; row < ROW_WIDTHS.length; row++) {
+  for (let row = 0; row < rowWidths.length; row++) {
     const rowIds: string[] = [];
     // Reward rows are resolved a whole row at a time (distinct sample) so
     // the pick-1-of-3 choice never repeats a type; every other row's type
     // is a fixed function of (row, col) and doesn't touch the RNG at all.
     let rewardTypes: MapNodeType[] = [];
     if (isRewardRow(row)) {
-      const picked = pickWeightedDistinct(rng, REWARD_WEIGHTS, ROW_WIDTHS[row]);
+      const picked = pickWeightedDistinct(rng, REWARD_WEIGHTS, rowWidths[row]);
       rewardTypes = picked.values;
       rng = picked.nextState;
     }
-    for (let col = 0; col < ROW_WIDTHS[row]; col++) {
+    for (let col = 0; col < rowWidths[row]; col++) {
       const type = isRewardRow(row) ? rewardTypes[col] : fixedNodeType(row, col);
       const id = nodeId(row, col);
       nodes[id] = { id, type, row, col, nextIds: [] };
@@ -190,16 +222,16 @@ export function generateMap(seed: number): RunMap {
     rows.push(rowIds);
   }
 
-  for (let row = 0; row < ROW_WIDTHS.length - 1; row++) {
+  for (let row = 0; row < rowWidths.length - 1; row++) {
     const from = rows[row];
     const to = rows[row + 1];
 
-    // The row feeding into ELITE_ROW (Elite-or-Battle) always fully connects
+    // The row feeding into eliteRow (Elite-or-Battle) always fully connects
     // — every path must present the same real choice between the two,
     // rather than one that's only sometimes available depending on which
     // reward-row node the player happened to pick (user direction: "give the
     // player the option to fight the Elite OR a regular Battle").
-    if (row + 1 === ELITE_ROW) {
+    if (row + 1 === eliteRow) {
       for (const fromId of from) {
         nodes[fromId].nextIds = [...to];
       }
@@ -253,6 +285,6 @@ export function generateMap(seed: number): RunMap {
     nodes,
     rows,
     startNodeIds: rows[0],
-    bossNodeId: rows[BOSS_ROW][0],
+    bossNodeId: rows[bossRow][0],
   };
 }

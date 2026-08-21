@@ -64,7 +64,7 @@ export function grantContractReward(run: RunState, amount: number): RunState {
 export function advanceToNextAct(run: RunState, seed: number): RunState {
   return {
     ...run,
-    map: generateMap(seed),
+    map: generateMap(seed, run.actNumber + 1),
     currentNodeId: null,
     visitedNodeIds: [],
     actNumber: run.actNumber + 1,

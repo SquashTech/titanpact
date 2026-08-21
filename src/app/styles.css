@@ -2756,6 +2756,13 @@ body {
   color: var(--hp-high);
 }
 
+.evolution-badge.class-badge {
+  border-color: #d9a441;
+  color: #d9a441;
+  cursor: pointer;
+  user-select: none;
+}
+
 /* HP/MP mini bars (reuses CombatantCard's .bar-track/.bar-fill/.bar-label so
    "how healthy is this hero" reads with the same color language on the
    battlefield and in this sheet) — a plain 2-column grid rather than the

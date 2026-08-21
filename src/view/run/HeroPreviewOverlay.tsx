@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
+import { classes } from '../../data/classes';
 import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { equipmentStatModifiers } from '../../run/equipment';
 import { mergeStatMods } from '../../run/statMods';
 import { chosenEvolutionPaths, rosterEntryTypes } from '../../run/progression';
+import { chosenClass } from '../../run/classes';
 import { StatBars } from '../shared/StatBars';
-import { MoveTile, MoveInfoPanel, swallowGhostClick } from '../shared/MoveTile';
+import { MoveTile, MoveInfoPanel, swallowGhostClick, useLongPress } from '../shared/MoveTile';
 import { EquipmentInfoPanel, EquipmentSlotGrid } from '../shared/EquipmentBox';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { PassiveInfoPanel } from '../shared/passiveIcons';
 
 interface Props {
   hero: HeroDefinition;
@@ -29,10 +32,16 @@ interface Props {
  * inputs buildCombatState.ts feeds the engine at fight start.
  */
 export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Props) {
-  const grants = mergeStatMods(entry.evolutionStatGrants, entry.bonusStatGrants, equipmentStatModifiers(entry.equipment, equipmentLookup));
+  const heroClass = chosenClass(classes, entry);
+  const grants = mergeStatMods(
+    entry.evolutionStatGrants,
+    entry.bonusStatGrants,
+    equipmentStatModifiers(entry.equipment, equipmentLookup),
+    heroClass?.statGrants ?? {}
+  );
   const evolved = chosenEvolutionPaths(progressionTable, entry);
-  /** Long-press-triggered move/item detail popup — shared by the moves row and the equipment grid below (mirrors LevelUpScreen's movePopup, "hold to inspect" standard). */
-  const [popup, setPopup] = useState<{ kind: 'move' | 'equipment'; id: string } | null>(null);
+  /** Long-press-triggered move/item/class detail popup — shared by the moves row, the equipment grid, and the Class badge below (mirrors LevelUpScreen's movePopup, "hold to inspect" standard). */
+  const [popup, setPopup] = useState<{ kind: 'move' | 'equipment' | 'class'; id: string } | null>(null);
 
   /**
    * Opens the popup and arms swallowGhostClick (MoveTile.tsx) — releasing
@@ -44,10 +53,12 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Pr
    * ancestor further out than this component even knows about. See that
    * function's doc comment for the full mechanism.
    */
-  function openPopup(next: { kind: 'move' | 'equipment'; id: string }) {
+  function openPopup(next: { kind: 'move' | 'equipment' | 'class'; id: string }) {
     swallowGhostClick();
     setPopup(next);
   }
+
+  const classLongPress = useLongPress(heroClass ? () => openPopup({ kind: 'class', id: heroClass.id }) : undefined);
 
   /**
    * Stops propagation here (not just on the panel) so a click anywhere in
@@ -95,6 +106,13 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Pr
               ))}
             </div>
           )}
+          {heroClass && (
+            <div className="detail-evolution-row">
+              <span className="evolution-badge class-badge" {...classLongPress} title="Hold to view details">
+                🏛️ {heroClass.name}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="detail-section-title">📊 Stats</div>
@@ -120,17 +138,19 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Pr
         <div className="detail-section-title">🎒 Equipment</div>
         <EquipmentSlotGrid loadout={entry.equipment} equipmentLookup={equipmentLookup} onInspect={(id) => openPopup({ kind: 'equipment', id })} />
 
-        <div className="detail-close-hint">Hold a move or item to inspect it — tap elsewhere to close</div>
+        <div className="detail-close-hint">Hold a move, item, or Class to inspect it — tap elsewhere to close</div>
       </div>
 
-      {/* Long-press-triggered move/item detail popup (see `popup` state above) — reuses .log-overlay/.log-panel like LevelUpScreen's move popup, including "tap anywhere to close" (no stopPropagation on the panel). */}
+      {/* Long-press-triggered move/item/class detail popup (see `popup` state above) — reuses .log-overlay/.log-panel like LevelUpScreen's move popup, including "tap anywhere to close" (no stopPropagation on the panel). */}
       {popup && (
         <div className="log-overlay" onClick={() => setPopup(null)}>
           <div className="log-panel move-popup-panel">
             {popup.kind === 'move' ? (
               <MoveInfoPanel move={moves[popup.id] ?? null} />
-            ) : (
+            ) : popup.kind === 'equipment' ? (
               <EquipmentInfoPanel item={equipmentLookup[popup.id] ?? null} />
+            ) : (
+              <PassiveInfoPanel passive={classes[popup.id] ?? null} />
             )}
             <div className="move-popup-hint">Tap anywhere to close</div>
           </div>
