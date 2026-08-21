@@ -3584,7 +3584,19 @@ body {
    button below the grid that's the only thing that actually spends a
    Contract. `.result-panel button` (above) would otherwise paint these cards
    solid accent-gold like the old buttons — the `.result-panel` prefix here
-   gives these rules enough specificity to win instead. */
+   gives these rules enough specificity to win instead.
+
+   Given its own visual identity (user direction, 2026-08-21) rather than
+   reusing the guild-hall-hero-card / roster-card look: recruiting a
+   teammate is meant to read as a bigger moment than a shop purchase or a
+   stat sheet. Violet is deliberately not gold (--accent) or teal (--buff) —
+   both already mean something else on this same victory screen (equipment
+   rarity, buffs) — so a "you can recruit someone" offer never gets confused
+   with a loot drop at a glance. Offers are capped to 2 cards
+   (MAX_RECRUIT_OFFERS in FightScreen.tsx); the confirm button is always
+   rendered, dormant until a card is selected, then it visibly "arms" via
+   the .armed modifier — this replaces the old show/hide-on-select button so
+   the claim action has a constant, learnable home on screen. */
 
 .recruit-claims {
   position: relative;
@@ -3594,25 +3606,55 @@ body {
   flex-direction: column;
   gap: 8px;
   text-align: center;
+  padding: 14px 12px 12px;
+  margin: 4px 0;
+  border-radius: 14px;
+  border: 1px solid rgba(164, 99, 217, 0.35);
+  background: linear-gradient(180deg, rgba(164, 99, 217, 0.14), transparent 75%);
+  overflow: hidden;
+}
+
+.recruit-claims-glow {
+  position: absolute;
+  top: -55%;
+  left: 50%;
+  width: 220px;
+  height: 220px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(164, 99, 217, 0.4), transparent 70%);
+  opacity: 0.55;
+  animation: evolution-glow-pulse 2.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.recruit-claims-eyebrow {
+  position: relative;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #caa0ef;
 }
 
 .recruit-claims-grid {
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 10px;
 }
 
 .result-panel .recruit-claim-card {
   position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 75%);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 6px 6px;
+  background: linear-gradient(165deg, rgba(164, 99, 217, 0.2), var(--panel) 72%);
+  border: 1px solid rgba(164, 99, 217, 0.45);
+  border-top: 3px solid var(--recruit-type-color, var(--accent));
+  border-radius: 12px;
+  padding: 14px 8px 8px;
   text-align: center;
   color: var(--text);
   cursor: pointer;
@@ -3623,13 +3665,13 @@ body {
 }
 
 .result-panel .recruit-claim-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4), 0 0 16px rgba(164, 99, 217, 0.35);
 }
 
 .result-panel .recruit-claim-card.selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent), 0 4px 18px rgba(0, 0, 0, 0.4);
+  border-color: #caa0ef;
+  box-shadow: 0 0 0 2px #caa0ef, 0 0 24px rgba(164, 99, 217, 0.6);
 }
 
 .result-panel .recruit-claim-card.claimed {
@@ -3637,18 +3679,60 @@ body {
   cursor: default;
 }
 
+.recruit-claim-shimmer {
+  position: absolute;
+  top: -20%;
+  left: -60%;
+  width: 40%;
+  height: 140%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  transform: rotate(12deg);
+  animation: recruit-card-shimmer-sweep 3.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.result-panel .recruit-claim-card.claimed .recruit-claim-shimmer {
+  animation-play-state: paused;
+  opacity: 0;
+}
+
+@keyframes recruit-card-shimmer-sweep {
+  0%,
+  20% {
+    left: -60%;
+  }
+  70%,
+  100% {
+    left: 140%;
+  }
+}
+
+.recruit-claim-seal {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  font-size: 11px;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 3px rgba(164, 99, 217, 0.7));
+}
+
 .recruit-claim-portrait {
-  width: 40px;
-  height: 40px;
+  position: relative;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
+  border: 2px solid rgba(164, 99, 217, 0.55);
+  box-shadow: 0 0 10px rgba(164, 99, 217, 0.35);
 }
 
 .recruit-claim-name {
+  position: relative;
   font-size: 11px;
   font-weight: 700;
 }
 
 .recruit-claim-tag {
+  position: relative;
   font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
@@ -3662,8 +3746,39 @@ body {
   font-style: italic;
 }
 
-.recruit-claim-confirm {
+.result-panel .recruit-claim-confirm {
+  position: relative;
+  overflow: hidden;
   margin-top: 2px;
+  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 80%);
+  color: var(--text-dim);
+  border: 1px solid rgba(164, 99, 217, 0.35);
+  transition: background 0.25s ease, color 0.25s ease, box-shadow 0.3s ease, border-color 0.25s ease, transform 0.15s ease;
+}
+
+.result-panel .recruit-claim-confirm.armed:not(:disabled) {
+  background: linear-gradient(135deg, #caa0ef, #a463d9 55%, #caa0ef);
+  background-size: 220% 220%;
+  color: #1c0f2b;
+  border-color: #caa0ef;
+  box-shadow: 0 0 0 1px #caa0ef, 0 0 22px rgba(164, 99, 217, 0.65);
+  animation: recruit-confirm-glow 1.6s ease-in-out infinite;
+}
+
+.result-panel .recruit-claim-confirm.armed:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+@keyframes recruit-confirm-glow {
+  0%,
+  100% {
+    background-position: 0% 50%;
+    box-shadow: 0 0 0 1px #caa0ef, 0 0 14px rgba(164, 99, 217, 0.45);
+  }
+  50% {
+    background-position: 100% 50%;
+    box-shadow: 0 0 0 1px #caa0ef, 0 0 30px rgba(164, 99, 217, 0.8);
+  }
 }
 
 /* Primary bottom-docked CTA, shared by SquadSelectScreen ("Start Fight"),

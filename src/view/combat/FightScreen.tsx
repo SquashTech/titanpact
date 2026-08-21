@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { heroes } from '../../data/heroes';
 import { allCombatants } from '../../data/content';
 import { moves } from '../../data/moves';
@@ -49,10 +49,14 @@ interface RecruitClaimCardProps {
 
 /**
  * One claimable Recruit Contract offer on the victory screen (user direction,
- * 2026-08-19: replace the plain text "Claim X" buttons with hero portraits).
- * Pulled out of the recruit-claims .map() below because useLongPress is a
- * hook (GuildHallHeroCard is the precedent for this split). A short tap
- * selects the card (highlighted, matching NodeRewardScreen's equipment/relic
+ * 2026-08-19: replace the plain text "Claim X" buttons with hero portraits;
+ * 2026-08-21: deliberately NOT built on the guild-hall-hero-card /
+ * roster-card visual family — recruiting a teammate is a bigger moment than
+ * a shop purchase, so this card gets its own violet contract-seal treatment
+ * and idle shimmer instead of reusing the generic hero-card look). Pulled
+ * out of the recruit-claims .map() below because useLongPress is a hook
+ * (GuildHallHeroCard is the precedent for this split). A short tap selects
+ * the card (highlighted, matching NodeRewardScreen's equipment/relic
  * pick-then-claim two-step) rather than claiming immediately — the actual
  * spend happens from the confirm button below the grid, once. A ~500ms hold
  * opens the full HeroPreviewOverlay stat/move sheet instead, same
@@ -63,9 +67,13 @@ function RecruitClaimCard({ hero, selected, claimed, onSelect, onInspect }: Recr
   return (
     <button
       className={`recruit-claim-card${selected ? ' selected' : ''}${claimed ? ' claimed' : ''}`}
-      style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
+      style={{ '--recruit-type-color': getTypeColor(hero.types[0]) } as CSSProperties}
       {...longPress}
     >
+      <span className="recruit-claim-shimmer" aria-hidden="true" />
+      <span className="recruit-claim-seal" aria-hidden="true">
+        📜
+      </span>
       <HeroPortrait heroId={hero.id} className="recruit-claim-portrait" />
       <div className="recruit-claim-name">{hero.name}</div>
       <div className="roster-card-types">
@@ -81,6 +89,21 @@ function RecruitClaimCard({ hero, selected, claimed, onSelect, onInspect }: Recr
 const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
 const config = { typeChart, heroes: allCombatants, moves, statuses, passives, benchHpRegenFlat: 5 };
+
+/** Recruit Contract offers are capped to this many cards on the victory screen (user direction, 2026-08-21) — a 4v4 elite/boss fight would otherwise dump every recruitable enemy on the player at once. */
+const MAX_RECRUIT_OFFERS = 2;
+
+/** Random, order-independent sample of up to MAX_RECRUIT_OFFERS entries — called once per fight via useMemo below, not on every render, so the offer doesn't reshuffle out from under a selection. */
+function pickRecruitOffers(entries: readonly RosterEntry[]): RosterEntry[] {
+  if (entries.length <= MAX_RECRUIT_OFFERS) return [...entries];
+  const pool = [...entries];
+  const picks: RosterEntry[] = [];
+  while (picks.length < MAX_RECRUIT_OFFERS && pool.length > 0) {
+    const i = Math.floor(Math.random() * pool.length);
+    picks.push(pool.splice(i, 1)[0]);
+  }
+  return picks;
+}
 
 // Hold-to-auto-play tuning (FightScreen's advance-overlay) — how long a
 // press must be held before it commits to auto-play instead of a normal
@@ -191,6 +214,17 @@ export function FightScreen({
   const [claimSelection, setClaimSelection] = useState<string | null>(null);
   /** rosterId of the AI-side hero whose full stat/move sheet is open, via a recruit-claim card's long-press. */
   const [claimPreviewRosterId, setClaimPreviewRosterId] = useState<string | null>(null);
+
+  /**
+   * Recruit Contract offers for this fight, capped at MAX_RECRUIT_OFFERS and
+   * randomly sampled when a 4v4 encounter leaves more recruitable enemies
+   * than that (e.g. an elite/boss fight). Memoized on `aiRun` — stable for
+   * the life of this FightScreen instance (aiRun doesn't change mid-fight) —
+   * rather than recomputed inline in the result overlay below, so selecting
+   * a card or any other re-render doesn't reroll which heroes are offered.
+   */
+  const recruitableEntries = useMemo(() => aiRun.roster.filter((entry) => isRecruitable(entry.heroId, heroes)), [aiRun]);
+  const recruitOffers = useMemo(() => pickRecruitOffers(recruitableEntries), [recruitableEntries]);
 
   // Sequenced, tap-advanced round playback (docs/architecture.md "engine /
   // presentation separation"): `resolving` gates player input and the
@@ -998,8 +1032,7 @@ export function FightScreen({
       {winner &&
         !resolving &&
         (() => {
-          const recruitableEntries = aiRun.roster.filter((entry) => isRecruitable(entry.heroId, heroes));
-          const selectedClaimEntry = claimSelection ? (recruitableEntries.find((e) => e.rosterId === claimSelection) ?? null) : null;
+          const selectedClaimEntry = claimSelection ? (recruitOffers.find((e) => e.rosterId === claimSelection) ?? null) : null;
           const rosterFull = playerRun.roster.length >= ROSTER_CAP;
           const noContracts = playerRun.recruitContracts <= 0;
           const equipGrants = equipmentReward ? (Object.entries(equipmentReward.statGrants) as [StatKey, number][]) : [];
@@ -1054,11 +1087,12 @@ export function FightScreen({
                   </div>
                 )}
 
-                {winner === PLAYER_SIDE && recruitableEntries.length > 0 && (
+                {winner === PLAYER_SIDE && recruitOffers.length > 0 && (
                   <div className="recruit-claims">
-                    <div className="hint">📜 Recruit Contracts available: {playerRun.recruitContracts}</div>
+                    <span className="recruit-claims-glow" aria-hidden="true" />
+                    <div className="recruit-claims-eyebrow">📜 Recruit Contracts available: {playerRun.recruitContracts}</div>
                     <div className="recruit-claims-grid">
-                      {recruitableEntries.map((entry) => {
+                      {recruitOffers.map((entry) => {
                         const claimed = claimedRosterIds.includes(entry.rosterId);
                         return (
                           <RecruitClaimCard
@@ -1073,19 +1107,19 @@ export function FightScreen({
                       })}
                     </div>
                     <div className="recruit-claims-hint">Tap a hero to select, hold to inspect their stats</div>
-                    {selectedClaimEntry && (
-                      <button
-                        className="resolve-button recruit-claim-confirm"
-                        disabled={rosterFull || noContracts}
-                        onClick={() => handleClaimContract(selectedClaimEntry)}
-                      >
-                        {rosterFull
-                          ? 'Roster Full'
-                          : noContracts
-                            ? 'No Contracts Left'
-                            : `Claim ${heroes[selectedClaimEntry.heroId].name} — 1 Contract`}
-                      </button>
-                    )}
+                    <button
+                      className={`resolve-button recruit-claim-confirm${selectedClaimEntry ? ' armed' : ''}`}
+                      disabled={!selectedClaimEntry || rosterFull || noContracts}
+                      onClick={() => selectedClaimEntry && handleClaimContract(selectedClaimEntry)}
+                    >
+                      {rosterFull
+                        ? 'Roster Full'
+                        : noContracts
+                          ? 'No Contracts Left'
+                          : selectedClaimEntry
+                            ? `Claim ${heroes[selectedClaimEntry.heroId].name} — 1 Contract`
+                            : 'Select a Hero to Recruit'}
+                    </button>
                   </div>
                 )}
 
