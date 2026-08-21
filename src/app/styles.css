@@ -98,8 +98,14 @@ body {
 }
 
 /* "VS" chip between the enemy and ally rows — purely decorative, gives the
-   battlefield a center of gravity instead of two rows floating in a stack. */
+   battlefield a center of gravity instead of two rows floating in a stack.
+   `position: relative` anchors .field-effect-badge below (positioned
+   absolutely) — the badge overlays this row rather than sitting inline next
+   to "VS", so it can appear/disappear without ever nudging "VS" off-center
+   or growing this row's height and shoving the battlefield (and everything
+   below it) down. */
 .battlefield-divider {
+  position: relative;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -122,16 +128,114 @@ body {
   color: var(--text-dim);
 }
 
-/* The active Field Effect (docs/field-effects.md) — a persistent badge next
-   to the "VS" chip, not just a transient beat banner, since it's standing
-   battlefield state that stays true between rounds. */
-.field-effect-badge {
+/* The active Field Effect (docs/field-effects.md) — a persistent badge that
+   overlays the "VS" divider, not just a transient beat banner, since it's
+   standing battlefield state that stays true between rounds. Absolutely
+   positioned (see .battlefield-divider above) and pinned to the right edge
+   of the divider's own gradient line rather than laid out inline: taking it
+   out of flow means "VS" never has to make room for it and mounting/
+   unmounting it never changes the divider row's height. Long-pressable
+   (useLongPress, opens FieldEffectDetailOverlay) — the touch-callout/
+   user-select suppression below matches the same pattern as .status-badge. */
+.battlefield-divider .field-effect-badge {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: 45%;
   padding: 3px 8px;
   border-radius: 999px;
   border: 1px solid var(--magical);
   color: var(--magical);
-  background: rgba(139, 127, 224, 0.12);
+  background: var(--panel);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: normal;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.field-effect-detail-panel {
+  border-top-color: var(--magical);
+}
+
+/* Ambient battlefield treatment while a Field Effect is active — a pulsing
+   magical border/glow plus a diagonal shimmer sweep, so the charged-up state
+   reads across the whole battlefield rather than living only in the small
+   divider badge. Tinted --magical to match the badge; the only Field Effect
+   so far (Surging Magic) is Arcane-flavored, so this is intentionally not
+   yet generalized to a per-effect color — revisit if/when a non-Arcane
+   Field Effect ships (docs/field-effects.md open questions). `overflow:
+   hidden` is scoped to this class (rather than living on the base
+   .battlefield) so it only clips while the shimmer sweep actually needs
+   containing. Both pseudo-elements sit at z-index: -1 inside .battlefield's
+   own stacking context (position: relative), which paints them behind the
+   in-flow team-row cards — same trick as .battlefield-divider's badge, just
+   for depth instead of position — so HP/MP legibility never suffers. */
+.battlefield.field-effect-active {
+  overflow: hidden;
+  border-color: var(--magical);
+  animation: field-effect-border-pulse 2.6s ease-in-out infinite;
+}
+
+.battlefield.field-effect-active::before,
+.battlefield.field-effect-active::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.battlefield.field-effect-active::before {
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse 130% 90% at 50% 50%, rgba(139, 127, 224, 0.22), transparent 68%);
+  animation: field-effect-glow-pulse 2.6s ease-in-out infinite;
+}
+
+.battlefield.field-effect-active::after {
+  top: -20%;
+  left: -60%;
+  width: 40%;
+  height: 140%;
+  background: linear-gradient(100deg, transparent, rgba(139, 127, 224, 0.3), transparent);
+  transform: rotate(12deg);
+  animation: field-effect-shimmer-sweep 4s ease-in-out infinite;
+}
+
+@keyframes field-effect-border-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(139, 127, 224, 0.35), 0 0 12px rgba(139, 127, 224, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgba(139, 127, 224, 0.85), 0 0 24px rgba(139, 127, 224, 0.4);
+  }
+}
+
+@keyframes field-effect-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes field-effect-shimmer-sweep {
+  0%,
+  15% {
+    left: -60%;
+  }
+  65%,
+  100% {
+    left: 140%;
+  }
 }
 
 /* Invisible full-viewport click-catcher while a round is playing out, so any

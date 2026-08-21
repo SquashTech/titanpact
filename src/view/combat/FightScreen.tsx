@@ -24,6 +24,7 @@ import { buildCombatState } from '../../run/buildCombatState';
 import { isRecruitable } from '../../run/recruitment';
 import { CombatantCard, type Popup } from './CombatantCard';
 import { HeroDetailOverlay } from './HeroDetailOverlay';
+import { FieldEffectDetailOverlay } from './FieldEffectDetailOverlay';
 import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
@@ -211,6 +212,8 @@ export function FightScreen({
   const [actionStep, setActionStep] = useState(0);
   const [claimedRosterIds, setClaimedRosterIds] = useState<string[]>([]);
   const [inspecting, setInspecting] = useState<string | null>(null);
+  /** Whether the active Field Effect's full detail card (FieldEffectDetailOverlay) is open — opened via a long-press on the battlefield-divider badge. */
+  const [inspectingFieldEffect, setInspectingFieldEffect] = useState(false);
   /** Recruit Contract claim selection on the victory screen — a tap selects a card, the confirm button below the grid is what actually spends the contract. */
   const [claimSelection, setClaimSelection] = useState<string | null>(null);
   /** rosterId of the AI-side hero whose full stat/move sheet is open, via a recruit-claim card's long-press. */
@@ -272,6 +275,9 @@ export function FightScreen({
   const playerLockedIn = isLockedIn(combat, PLAYER_SIDE);
 
   const winner: Side | null = sideDefeated(combat, PLAYER_SIDE) ? AI_SIDE : sideDefeated(combat, AI_SIDE) ? PLAYER_SIDE : null;
+
+  /** Long-press on the battlefield-divider Field Effect badge opens its full detail card (FieldEffectDetailOverlay) — the badge itself only has room for name + rounds remaining. */
+  const fieldEffectLongPress = useLongPress(combat.activeFieldEffect ? () => setInspectingFieldEffect(true) : undefined);
 
   // A player active slot fainted and needs a bench replacement chosen before the next round can be declared (docs/combat.md "KO handling": forced replacement is not optional, but WHICH bench hero fills it is the player's choice).
   const openReplacementSlots = ([0, 1] as const).filter((slot) => combat.active[PLAYER_SIDE][slot] === null && playerBench.length > 0);
@@ -656,7 +662,7 @@ export function FightScreen({
         />
       )}
 
-      <div className="battlefield">
+      <div className={`battlefield${combat.activeFieldEffect ? ' field-effect-active' : ''}`}>
         <div className="team-row enemy">
           {renderActiveSlot(AI_SIDE, 0)}
           {renderActiveSlot(AI_SIDE, 1)}
@@ -665,11 +671,18 @@ export function FightScreen({
         <div className="battlefield-divider">
           <span>VS</span>
           {combat.activeFieldEffect && (
-            <span className="field-effect-badge" title={fieldEffects[combat.activeFieldEffect.fieldEffectId]?.description}>
+            <span
+              className="field-effect-badge"
+              title={`${fieldEffects[combat.activeFieldEffect.fieldEffectId]?.description ?? ''} — hold for details`}
+              {...fieldEffectLongPress}
+            >
               {fieldEffects[combat.activeFieldEffect.fieldEffectId]?.name ?? combat.activeFieldEffect.fieldEffectId} · {combat.activeFieldEffect.roundsRemaining}
             </span>
           )}
         </div>
+        {inspectingFieldEffect && combat.activeFieldEffect && (
+          <FieldEffectDetailOverlay active={combat.activeFieldEffect} onClose={() => setInspectingFieldEffect(false)} />
+        )}
 
         <div className="team-row ally">
           {renderActiveSlot(PLAYER_SIDE, 0)}
