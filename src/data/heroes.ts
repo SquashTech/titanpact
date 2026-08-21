@@ -93,9 +93,24 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['galeShot', 'rally', 'thunderclap'],
     starter: true,
   },
+  // Recruit-only (starter: false) since 2026-08-21 — Shadow's starter slot is
+  // now Marrow, below. Kept in the game as a distinct Shadow hero obtainable
+  // via Guild Hall or Recruit Contract, not the start-of-run draft (same
+  // pattern as ironWarden's/cinderKnight's/stormRanger's earlier swaps).
   shadowMonk: {
     id: 'shadowMonk',
     name: 'Vesper',
+    types: ['Shadow'],
+    baseStats: { hp: 85, attack: 75, defense: 45, intelligence: 40, wisdom: 40, speed: 70, manaPool: 45, mpRegen: 5 },
+    moveIds: ['vanish', 'secondWind', 'purify'],
+    starter: false,
+  },
+  // Marrow (2026-08-21): the new Shadow starter, replacing Vesper in the
+  // draft pool. Same stat line and starting kit as Vesper for now — build
+  // differentiation is deferred, not yet designed.
+  marrow: {
+    id: 'marrow',
+    name: 'Marrow',
     types: ['Shadow'],
     baseStats: { hp: 85, attack: 75, defense: 45, intelligence: 40, wisdom: 40, speed: 70, manaPool: 45, mpRegen: 5 },
     moveIds: ['vanish', 'secondWind', 'purify'],

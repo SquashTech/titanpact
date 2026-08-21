@@ -7,12 +7,13 @@ import goblinGruntArt from '../../../art/enemies/goblingrunt.png';
 import goblinSkulkerArt from '../../../art/enemies/goblinskulker.png';
 import ironWardenArt from '../../../art/heroes/ironwarden.png';
 import luciusArt from '../../../art/heroes/lucius.png';
+import marrowArt from '../../../art/heroes/starters/marrow.png';
 import mindweaverArt from '../../../art/heroes/starters/cortex.png';
 import mordaxArt from '../../../art/heroes/mordax.png';
 import revenantArt from '../../../art/heroes/starters/revenant.png';
 import rimeArt from '../../../art/heroes/starters/rime.png';
 import runescribeArt from '../../../art/heroes/starters/glyph.png';
-import shadowMonkArt from '../../../art/heroes/starters/vesper.png';
+import shadowMonkArt from '../../../art/heroes/vesper.png';
 import clockworkArt from '../../../art/heroes/starters/clockwork.png';
 import stormRangerArt from '../../../art/heroes/stormranger.png';
 import tempestArt from '../../../art/heroes/starters/Tempest.png';
@@ -33,6 +34,7 @@ export const heroArt: Partial<Record<string, string>> = {
   goblinSkulker: goblinSkulkerArt,
   ironWarden: ironWardenArt,
   lucius: luciusArt,
+  marrow: marrowArt,
   mindweaver: mindweaverArt,
   mordax: mordaxArt,
   revenant: revenantArt,
