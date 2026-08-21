@@ -203,21 +203,41 @@ test('round: KO increments KO count and emits Fainted, clearing the active slot'
   assert.ok(events.some((e) => e.type === 'Fainted'));
 });
 
-test('round: a second attacker declared against a target the first attacker already knocked out is blocked, not thrown', () => {
+test('round: a second attacker declared against a target the first attacker already knocked out redirects onto the other enemy', () => {
   const state = twoVTwoFixture(16);
   // b1 (ironWarden) at 1 HP: whichever of a1/a2 resolves first this round KOs it outright.
   const oneHp = { ...state, combatants: { ...state.combatants, b1: { ...state.combatants.b1, currentHp: 1 } } };
   // tidecaller (a2, speed 55) outpaces cinderKnight (a1, speed 50) at equal priority, so a2 resolves
-  // first and KOs b1 — a1's declared target is then stale by the time its own action comes up.
+  // first and KOs b1 — a1's declared target is then stale by the time its own action comes up. b2 is
+  // still standing, so a1's attack should redirect onto it rather than fizzle.
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' },
     { kind: 'move', combatantId: 'a2', moveId: 'tidalBolt', declaredTarget: 'b1' },
   ];
-  const { state: next, events } = resolveRound(oneHp, actions, config);
+  const { events } = resolveRound(oneHp, actions, config);
 
   const moveUsedIds = events.filter((e) => e.type === 'MoveUsed').map((e: any) => e.combatantId);
-  assert.deepStrictEqual(moveUsedIds, ['a2']); // a1's move never resolves — no MoveUsed, no mana spent
-  assert.strictEqual(next.combatants.a1.currentMana, heroes.cinderKnight.baseStats.manaPool);
+  assert.deepStrictEqual(moveUsedIds, ['a2', 'a1']); // both moves resolve — a1's redirects onto b2
+  assert.strictEqual(events.some((e) => e.type === 'ActionBlocked' && (e as any).combatantId === 'a1'), false);
+  const a1Damage = events.find((e) => e.type === 'DamageDealt' && (e as any).sourceCombatantId === 'a1') as any;
+  assert.ok(a1Damage);
+  assert.strictEqual(a1Damage.targetCombatantId, 'b2');
+});
+
+test('round: an attacker still fizzles when its declared target is gone and the whole enemy side is empty', () => {
+  const state = createFightState(18, [{ combatantId: 'a1', heroId: 'cinderKnight', side: 'A' }], [{ combatantId: 'b1', heroId: 'ironWarden', side: 'B' }]);
+  // b1 is the only enemy and it's already fainted before the round starts — there's nothing to
+  // redirect onto, so this must still fizzle rather than throw.
+  const b1Fainted = {
+    ...state,
+    combatants: { ...state.combatants, b1: { ...state.combatants.b1, currentHp: 0, fainted: true } },
+    active: { ...state.active, B: [null, null] as [string | null, string | null] },
+    koCount: { ...state.koCount, B: 1 },
+  };
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }];
+  const { events } = resolveRound(b1Fainted, actions, config);
+
+  assert.strictEqual(events.some((e) => e.type === 'MoveUsed'), false);
   assert.ok(events.some((e) => e.type === 'ActionBlocked' && (e as any).combatantId === 'a1' && (e as any).reason === 'noValidTarget'));
 });
 

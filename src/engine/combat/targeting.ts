@@ -36,13 +36,15 @@ export function slotOfActiveCombatant(state: CombatState, combatantId: string): 
 
 /**
  * A declared target (singleEnemy/singleAlly) is no longer legal by the time
- * this action comes up in priority/speed order — e.g. two attackers both
- * declared against the same lone enemy and an earlier-resolving one already
- * knocked it out. Actions are declared against a pre-round snapshot and
- * resolved in order, so this is a normal mid-round race, not a bug — callers
- * (resolveRound.ts) catch this specifically and treat the action as blocked,
- * distinct from the plain Error thrown when a target was never declared at
- * all (an actual caller bug the view is supposed to prevent).
+ * this action comes up in priority/speed order, AND there's no other active
+ * combatant on that side to redirect onto — e.g. two attackers both declared
+ * against the same lone enemy, an earlier-resolving one already knocked it
+ * out, and it was the only enemy left standing. Actions are declared against
+ * a pre-round snapshot and resolved in order, so this is a normal mid-round
+ * race, not a bug — callers (resolveRound.ts) catch this specifically and
+ * treat the action as blocked, distinct from the plain Error thrown when a
+ * target was never declared at all (an actual caller bug the view is
+ * supposed to prevent).
  */
 export class TargetNoLongerValidError extends Error {}
 
@@ -81,6 +83,16 @@ export function resolveTargets(
       if (replacement && !state.combatants[replacement]?.fainted) {
         return [replacement];
       }
+    }
+    // The declared target fainted earlier this same round (an earlier-resolving
+    // action KO'd it) and hasn't been replaced — replacement only happens
+    // between rounds, so that slot is genuinely empty. Rather than waste the
+    // action, retarget onto whoever else is still active on that side, the
+    // same auto-redirect 2v2 Pokemon does for a single-target move whose
+    // target dropped out mid-turn. Only a wholly empty side still fizzles.
+    const remaining = activeOf(state, expectedSide);
+    if (remaining.length > 0) {
+      return [remaining[0]];
     }
     throw new TargetNoLongerValidError(`Declared target ${declaredTarget} is not an active ${label === 'singleEnemy' ? 'enemy' : 'ally'}`);
   }

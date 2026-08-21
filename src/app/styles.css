@@ -264,6 +264,16 @@ body {
   z-index: 1;
 }
 
+/* Matches a full card's natural height (portrait + name + status row + HP/MP
+   bars) so an .empty-slot placeholder — both active slots on a side once
+   it's wiped out, with no bench left to auto-replace it — doesn't collapse
+   that team-row short and shift the whole battlefield/action panel up
+   underneath it. Scoped to the battlefield row only: bench-row/target-row
+   cards are deliberately compact and shouldn't inherit this. */
+.team-row .combatant-card {
+  min-height: 167px;
+}
+
 .team-row.enemy {
   flex-direction: row;
 }
