@@ -200,7 +200,7 @@ export function CombatantCard({
         {effBadge && <span className={`eff-chip ${effBadge.className}`}>{effBadge.text}</span>}
       </div>
       <div className="combatant-name">
-        <span>{hero.name}</span>
+        <span className="hero-name-text">{hero.name}</span>
         <span className="combatant-types">
           {effectiveTypes(hero, combatant).map((t) => (
             <TypeBadge key={t} type={t} />

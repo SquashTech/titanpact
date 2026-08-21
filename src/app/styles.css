@@ -1542,23 +1542,48 @@ body {
   text-overflow: ellipsis;
 }
 
-.target-confirm-button {
-  width: 100%;
-  margin-top: 8px;
-  background: linear-gradient(165deg, #3a2f1c, #241d10);
-  border: 1px solid var(--accent);
-  border-radius: 7px;
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 10px;
+/* A spread move's target-row IS the confirm control (FightScreen) — one
+   shared outline + glow around the whole group instead of the per-card
+   .targetable treatment (individual cards stay non-targetable, see
+   `targetable={!spread}`), so there's a single obvious "tap to commit"
+   surface without a separate button box eating vertical space below it. */
+.target-row-spread {
   cursor: pointer;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 5px;
+  position: relative;
+  z-index: 0;
   transition: transform 0.1s ease, box-shadow 0.15s ease;
 }
 
-.target-confirm-button:hover {
+.target-row-spread::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(ellipse 90% 70% at 50% 38%, rgba(224, 166, 60, 0.32) 0%, rgba(224, 166, 60, 0.12) 48%, rgba(224, 166, 60, 0) 78%);
+  animation: targetable-glow-pulse 1.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.target-row-spread:hover {
   transform: translateY(-1px);
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 3-target spread (allOthers) only — bothEnemies/bothAllies stay at 2 cards,
+   which already fit. Dropping the name text (kept: type badges, eff badge,
+   HP/MP bars) is what actually buys back the width; three full cards' worth
+   of dual-type badges plus name text is what forces the horizontal scroll
+   this exists to avoid. */
+.target-row-compact .combatant-name {
+  justify-content: center;
+}
+
+.target-row-compact .hero-name-text {
+  display: none;
 }
 
 .move-button {

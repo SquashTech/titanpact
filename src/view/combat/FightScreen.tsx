@@ -685,7 +685,20 @@ export function FightScreen({
                     <span className="target-panel-move-name">{move.name}</span>
                     <TypeBadge type={move.type} />
                   </div>
-                  <div className="target-row">
+                  {/* A spread move has nothing to pick between, so the whole
+                      row of targets doubles as the confirm control — one
+                      outlined group instead of a separate confirm button
+                      eating its own vertical slice below the cards. A 3-target
+                      spread (allOthers) additionally drops each card's name
+                      text (kept: type badges, eff badge, HP/MP) since three
+                      full-width cards' dual-type badges alone can outgrow the
+                      panel and force horizontal scroll. */}
+                  <div
+                    className={`target-row${spread ? ' target-row-spread' : ''}${spread && targetableIds.length >= 3 ? ' target-row-compact' : ''}`}
+                    onClick={spread ? handleConfirmSpread : undefined}
+                    role={spread ? 'button' : undefined}
+                    aria-label={spread ? `Confirm — hits ${spreadTargetLabel(move.target)}` : undefined}
+                  >
                     {targetableIds.map((tid) => {
                       const tHero = allCombatants[combat.combatants[tid].heroId];
                       const tCombatant = combat.combatants[tid];
@@ -703,11 +716,6 @@ export function FightScreen({
                       );
                     })}
                   </div>
-                  {spread && (
-                    <button className="target-confirm-button" onClick={handleConfirmSpread}>
-                      Confirm — hits {spreadTargetLabel(move.target)}
-                    </button>
-                  )}
                 </div>
               );
             }
