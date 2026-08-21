@@ -70,9 +70,24 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['venomousBite', 'mendWounds', 'secondWind'],
     starter: true,
   },
+  // Recruit-only (starter: false) since 2026-08-20 — Storm's starter slot is
+  // now Tempest, below. Kept in the game as a distinct Storm veteran
+  // obtainable via Guild Hall or Recruit Contract, not the start-of-run draft
+  // (same pattern as ironWarden's/cinderKnight's earlier swaps).
   stormRanger: {
     id: 'stormRanger',
     name: 'Squall',
+    types: ['Storm'],
+    baseStats: { hp: 90, attack: 65, defense: 40, intelligence: 35, wisdom: 35, speed: 90, manaPool: 50, mpRegen: 6 },
+    moveIds: ['galeShot', 'rally', 'thunderclap'],
+    starter: false,
+  },
+  // Tempest (2026-08-20): the new Storm starter, replacing Squall in the
+  // draft pool. Same stat line and starting kit as Squall for now — build
+  // differentiation is deferred, not yet designed.
+  tempest: {
+    id: 'tempest',
+    name: 'Tempest',
     types: ['Storm'],
     baseStats: { hp: 90, attack: 65, defense: 40, intelligence: 35, wisdom: 35, speed: 90, manaPool: 50, mpRegen: 6 },
     moveIds: ['galeShot', 'rally', 'thunderclap'],
@@ -143,9 +158,12 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['moltenHammer', 'sparkForge', 'fortify'],
     starter: true,
   },
+  // Renamed from "Pack Alpha" to "Fang" (2026-08-20) — id kept stable
+  // (packAlpha) since it's referenced throughout run/progression data;
+  // only the display name changed.
   packAlpha: {
     id: 'packAlpha',
-    name: 'Pack Alpha',
+    name: 'Fang',
     types: ['Beast'],
     baseStats: { hp: 110, attack: 80, defense: 45, intelligence: 20, wisdom: 30, speed: 75, manaPool: 40, mpRegen: 4 },
     moveIds: ['fangRush', 'savageMaul', 'rally'],

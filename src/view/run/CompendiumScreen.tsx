@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
+import { TYPES } from '../../data/typechart';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition } from '../../engine/content';
 import { getTypeColor } from '../combat/typeColors';
@@ -77,7 +78,13 @@ type CompendiumTab = 'starters' | 'recruitable';
 export function CompendiumScreen({ onClose }: Props) {
   /** Starters is the default tab; Recruitable is a second tab the player has to select — the two pools mirror the draft vs. Guild Hall split (HeroDefinition.starter, src/data/heroes.ts). */
   const [tab, setTab] = useState<CompendiumTab>('starters');
-  const heroList = Object.values(heroes).filter((hero) => (tab === 'starters' ? hero.starter : !hero.starter));
+  // Ordered by the hero's primary type's position in the 15-type chart
+  // (src/data/typechart.ts TYPES), not authoring order — a stable sort keeps
+  // same-primary-type heroes (e.g. Warden/Valor, both Iron) in their existing
+  // relative order instead of reshuffling them further.
+  const heroList = Object.values(heroes)
+    .filter((hero) => (tab === 'starters' ? hero.starter : !hero.starter))
+    .sort((a, b) => TYPES.indexOf(a.types[0] as (typeof TYPES)[number]) - TYPES.indexOf(b.types[0] as (typeof TYPES)[number]));
   /** Which move is loaded into the single shared info panel below, and whose card it came from — lifted up here (rather than per-card) so scrolling to a different hero doesn't leave a stack of stale panels behind. */
   const [viewed, setViewed] = useState<{ heroId: string; moveId: string } | null>(null);
   const viewedHero = viewed ? (heroes[viewed.heroId] ?? null) : null;
