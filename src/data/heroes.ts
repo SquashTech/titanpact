@@ -94,7 +94,7 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: true,
   },
   // Recruit-only (starter: false) since 2026-08-21 — Shadow's starter slot is
-  // now Marrow, below. Kept in the game as a distinct Shadow hero obtainable
+  // now Nightshade. Kept in the game as a distinct Shadow hero obtainable
   // via Guild Hall or Recruit Contract, not the start-of-run draft (same
   // pattern as ironWarden's/cinderKnight's/stormRanger's earlier swaps).
   shadowMonk: {
@@ -105,16 +105,17 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['vanish', 'secondWind', 'purify'],
     starter: false,
   },
-  // Marrow (2026-08-21): the new Shadow starter, replacing Vesper in the
-  // draft pool. Same stat line and starting kit as Vesper for now — build
-  // differentiation is deferred, not yet designed.
+  // Marrow (2026-08-21): briefly the Shadow starter; moved to recruit-only
+  // (2026-08-22) when Nightshade took the Shadow starter slot instead. Same
+  // stat line and starting kit as Vesper — build differentiation is
+  // deferred, not yet designed.
   marrow: {
     id: 'marrow',
     name: 'Marrow',
     types: ['Shadow'],
     baseStats: { hp: 85, attack: 75, defense: 45, intelligence: 40, wisdom: 40, speed: 70, manaPool: 45, mpRegen: 5 },
     moveIds: ['vanish', 'secondWind', 'purify'],
-    starter: true,
+    starter: false,
   },
 
   // Renamed from "The Abominable" to "Flurry" (2026-08-22) — id kept stable
@@ -251,12 +252,13 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: false,
   },
 
-  // --- Hollowbark, Aegis, Brimstone, Gallant, Nightshade, Pincer,
-  // Scallywag, Sentinel, Steam Colossus, Zenith (2026-08-22): new
-  // recruit-only heroes brought in alongside their art, typed via the
-  // power-source-not-body filter (docs/types-and-heroes.md) in
-  // conversation with the designer. Not added to the start-of-run draft
-  // pool — same pattern as Cube/Mordrax/Lucius above.
+  // --- Hollowbark, Aegis, Brimstone, Gallant, Pincer, Scallywag, Sentinel,
+  // Steam Colossus, Zenith (2026-08-22): new recruit-only heroes brought in
+  // alongside their art, typed via the power-source-not-body filter
+  // (docs/types-and-heroes.md) in conversation with the designer. Not added
+  // to the start-of-run draft pool — same pattern as Cube/Mordrax/Lucius
+  // above. (Nightshade, introduced in the same batch, took the Shadow
+  // starter slot instead — see its entry below.)
   hollowbark: {
     id: 'hollowbark',
     name: 'Hollowbark',
@@ -292,13 +294,16 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['ironFist', 'quickJab', 'rally'],
     starter: false,
   },
+  // Nightshade (2026-08-22): took the Shadow starter slot from Marrow,
+  // which moved to recruit-only. Same batch/typing rationale as the
+  // recruit-only heroes above, but promoted to the draft pool.
   nightshade: {
     id: 'nightshade',
     name: 'Nightshade',
     types: ['Shadow'],
     baseStats: { hp: 85, attack: 80, defense: 35, intelligence: 30, wisdom: 35, speed: 85, manaPool: 45, mpRegen: 5 },
     moveIds: ['duskStrike', 'vanish', 'nightmareGrasp'],
-    starter: false,
+    starter: true,
   },
   pincer: {
     id: 'pincer',
