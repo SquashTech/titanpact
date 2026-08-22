@@ -21,7 +21,8 @@ import { ROSTER_CAP } from '../../run/state';
 import type { Squad } from '../../run/squad';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { buildCombatState } from '../../run/buildCombatState';
-import { isRecruitable } from '../../run/recruitment';
+import { isRecruitable, deriveContractOffer } from '../../run/recruitment';
+import { RosterReplaceScreen } from '../run/RosterReplaceScreen';
 import { CombatantCard, type Popup } from './CombatantCard';
 import { HeroDetailOverlay } from './HeroDetailOverlay';
 import { FieldEffectDetailOverlay } from './FieldEffectDetailOverlay';
@@ -167,10 +168,18 @@ interface Props {
   /**
    * Recruit Contract claim (docs/progression.md "raise-vs-recruit axis" —
    * src/run/recruitment.ts): "claim a beaten hero," offered off this node's
-   * AI roster on a win. Returns whether the claim succeeded (false only on a
-   * full roster) so this screen can reflect it.
+   * AI roster on a win. Returns whether the claim succeeded (false only if
+   * the player has no contracts left) — a full roster no longer blocks this,
+   * see onClaimContractReplace below.
    */
   onClaimContract: (defeated: RosterEntry) => boolean;
+  /**
+   * Roster-full variant of onClaimContract, wired to RosterReplaceScreen's
+   * confirm button (rendered in-place over this victory overlay rather than
+   * via App.tsx's Screen state — see that component's header comment for
+   * why). Returns whether the claim+replace succeeded.
+   */
+  onClaimContractReplace: (defeated: RosterEntry, terminatedRosterId: string) => boolean;
   /** Fired when the player dismisses the result overlay — the caller owns what a win/loss means for run progress (vitals sync, currency grant, advancing the map, or ending the run). */
   onResolved: (outcome: 'win' | 'loss', finalState: CombatState) => void;
 }
@@ -187,6 +196,7 @@ export function FightScreen({
   trainingPointsReward,
   equipmentReward,
   onClaimContract,
+  onClaimContractReplace,
   onResolved,
 }: Props) {
   function buildInitialState(seed: number): CombatState {
@@ -218,6 +228,8 @@ export function FightScreen({
   const [claimSelection, setClaimSelection] = useState<string | null>(null);
   /** rosterId of the AI-side hero whose full stat/move sheet is open, via a recruit-claim card's long-press. */
   const [claimPreviewRosterId, setClaimPreviewRosterId] = useState<string | null>(null);
+  /** The defeated entry a roster-full claim attempt is trying to recruit — set instead of claiming directly when playerRun.roster is already at ROSTER_CAP, opening RosterReplaceScreen in place over this victory overlay. */
+  const [rosterReplaceEntry, setRosterReplaceEntry] = useState<RosterEntry | null>(null);
 
   /**
    * Recruit Contract offers for this fight, capped at MAX_RECRUIT_OFFERS and
@@ -597,6 +609,10 @@ export function FightScreen({
   }
 
   function handleClaimContract(entry: RosterEntry) {
+    if (playerRun.roster.length >= ROSTER_CAP) {
+      setRosterReplaceEntry(entry);
+      return;
+    }
     if (onClaimContract(entry)) {
       setClaimedRosterIds((prev) => [...prev, entry.rosterId]);
       setClaimSelection(null);
@@ -1137,16 +1153,16 @@ export function FightScreen({
                     <div className="recruit-claims-hint">Tap a hero to select, hold to inspect their stats</div>
                     <button
                       className={`resolve-button recruit-claim-confirm${selectedClaimEntry ? ' armed' : ''}`}
-                      disabled={!selectedClaimEntry || rosterFull || noContracts}
+                      disabled={!selectedClaimEntry || noContracts}
                       onClick={() => selectedClaimEntry && handleClaimContract(selectedClaimEntry)}
                     >
-                      {rosterFull
-                        ? 'Roster Full'
-                        : noContracts
-                          ? 'No Contracts Left'
-                          : selectedClaimEntry
-                            ? `Claim ${heroes[selectedClaimEntry.heroId].name} — 1 Contract`
-                            : 'Select a Hero to Recruit'}
+                      {noContracts
+                        ? 'No Contracts Left'
+                        : selectedClaimEntry
+                          ? rosterFull
+                            ? `Replace a Hero for ${heroes[selectedClaimEntry.heroId].name}`
+                            : `Claim ${heroes[selectedClaimEntry.heroId].name} — 1 Contract`
+                          : 'Select a Hero to Recruit'}
                     </button>
                   </div>
                 )}
@@ -1169,6 +1185,23 @@ export function FightScreen({
                     />
                   );
                 })()}
+
+              {rosterReplaceEntry && (
+                <RosterReplaceScreen
+                  roster={playerRun.roster}
+                  candidate={{ source: 'contract', offer: deriveContractOffer(rosterReplaceEntry) }}
+                  onConfirm={(terminatedRosterId) => {
+                    const ok = onClaimContractReplace(rosterReplaceEntry, terminatedRosterId);
+                    if (ok) {
+                      setClaimedRosterIds((prev) => [...prev, rosterReplaceEntry.rosterId]);
+                      setClaimSelection(null);
+                      setRosterReplaceEntry(null);
+                    }
+                    return ok;
+                  }}
+                  onCancel={() => setRosterReplaceEntry(null)}
+                />
+              )}
             </div>
           );
         })()}

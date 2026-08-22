@@ -6,7 +6,17 @@ import { guildHallOffers } from '../src/data/recruitment';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP } from '../src/run/state';
 import { equipItem } from '../src/run/equipment';
 import { equipment } from '../src/data/equipment';
-import { recruitFromGuildHall, deriveContractOffer, claimContract, buyContract, isRecruitable, RecruitmentError } from '../src/run/recruitment';
+import {
+  recruitFromGuildHall,
+  recruitFromGuildHallReplacing,
+  deriveContractOffer,
+  claimContract,
+  claimContractReplacing,
+  buyContract,
+  isRecruitable,
+  freshRosterId,
+  RecruitmentError,
+} from '../src/run/recruitment';
 
 function seedRoster(heroIds: string[], gold = 0) {
   let run = createRunState(0, gold);
@@ -106,6 +116,76 @@ test('recruitment: buyContract spends gold and grants a Recruit Contract; insuff
   const next = buyContract(run, 12);
   assert.strictEqual(next.gold, 0);
   assert.strictEqual(next.recruitContracts, run.recruitContracts + 1);
+});
+
+// --- Roster-full replacement (RosterReplaceScreen) ------------------------
+
+test('recruitment: recruitFromGuildHallReplacing swaps the terminated hero for a fresh recruit, inheriting its equipment', () => {
+  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk'];
+  let run = seedRoster(allSix, 1000);
+  run = {
+    ...run,
+    roster: run.roster.map((r) => (r.rosterId === 'tidecaller' ? { ...r, equipment: equipItem(r.equipment, equipment.ironBlade), level: 4 } : r)),
+  };
+  const incomingOffer = guildHallOffers.find((o) => !allSix.includes(o.heroId))!;
+  assert.ok(incomingOffer, 'expected a Guild Hall offer for a hero not already on the fixture roster');
+
+  const next = recruitFromGuildHallReplacing(run, incomingOffer, incomingOffer.heroId, 'tidecaller');
+  assert.strictEqual(next.gold, 1000 - incomingOffer.cost);
+  assert.strictEqual(next.roster.length, ROSTER_CAP); // still 6, not 7
+  assert.ok(!next.roster.some((r) => r.rosterId === 'tidecaller'), 'tidecaller is gone');
+  const entry = next.roster.find((r) => r.rosterId === incomingOffer.heroId);
+  assert.ok(entry);
+  assert.strictEqual(entry!.heroId, incomingOffer.heroId);
+  assert.strictEqual(entry!.level, 1); // fresh, no progress carried over
+  assert.strictEqual(entry!.equipment.weapon, 'ironBlade'); // inherited from the terminated hero
+});
+
+test('recruitment: recruitFromGuildHallReplacing rejects insufficient gold and an unknown terminated rosterId', () => {
+  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk'];
+  const run = seedRoster(allSix, 0);
+  const incomingOffer = guildHallOffers.find((o) => !allSix.includes(o.heroId))!;
+  assert.throws(() => recruitFromGuildHallReplacing(run, incomingOffer, incomingOffer.heroId, 'tidecaller'), RecruitmentError);
+
+  const richRun = { ...run, gold: 1000 };
+  assert.throws(() => recruitFromGuildHallReplacing(richRun, incomingOffer, incomingOffer.heroId, 'nonexistent'), RecruitmentError);
+});
+
+test('recruitment: claimContractReplacing swaps the terminated hero for the claimed veteran, inheriting its equipment but not the veteran\'s own', () => {
+  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk'];
+  let run = seedRoster(allSix, 0);
+  run = {
+    ...run,
+    roster: run.roster.map((r) => (r.rosterId === 'ironWarden' ? { ...r, equipment: equipItem(r.equipment, equipment.ironBlade) } : r)),
+  };
+  const defeated = { ...run.roster.find((r) => r.rosterId === 'cinderKnight')!, heroId: 'shadowMonk', level: 5 };
+  const offer = deriveContractOffer(defeated); // shadowMonk is already on this roster, but rosterId is derived fresh below
+  const rosterId = freshRosterId(run, 'shadowMonk');
+  assert.strictEqual(rosterId, 'shadowMonk-2'); // shadowMonk already occupies its own rosterId
+
+  const next = claimContractReplacing(run, offer, rosterId, 'ironWarden');
+  assert.strictEqual(next.recruitContracts, run.recruitContracts - 1);
+  assert.strictEqual(next.roster.length, ROSTER_CAP);
+  assert.ok(!next.roster.some((r) => r.rosterId === 'ironWarden'), 'ironWarden is gone');
+  const entry = next.roster.find((r) => r.rosterId === rosterId);
+  assert.ok(entry);
+  assert.strictEqual(entry!.heroId, 'shadowMonk');
+  assert.strictEqual(entry!.level, 5); // veteran progress carried over
+  assert.strictEqual(entry!.equipment.weapon, 'ironBlade'); // inherited from the terminated hero, not the veteran's own (offer is ungeared)
+});
+
+test('recruitment: claimContractReplacing rejects no contracts available and an unknown terminated rosterId', () => {
+  const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk'];
+  const run = seedRoster(allSix, 0);
+  const offer = deriveContractOffer(run.roster[0]);
+  assert.throws(() => claimContractReplacing({ ...run, recruitContracts: 0 }, offer, 'new', 'ironWarden'), RecruitmentError);
+  assert.throws(() => claimContractReplacing(run, offer, 'new', 'nonexistent'), RecruitmentError);
+});
+
+test('recruitment: freshRosterId returns the heroId itself when unclaimed, else disambiguates', () => {
+  const run = seedRoster(['cinderKnight']);
+  assert.strictEqual(freshRosterId(run, 'ironWarden'), 'ironWarden');
+  assert.strictEqual(freshRosterId(run, 'cinderKnight'), 'cinderKnight-2');
 });
 
 // --- Non-recruitable enemy content ----------------------------------------

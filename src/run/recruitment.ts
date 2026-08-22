@@ -30,10 +30,18 @@
 // src/app/App.tsx).
 
 import type { RosterEntry, RunState } from './state';
-import { createRosterEntry, addRosterEntry } from './state';
+import { createRosterEntry, addRosterEntry, replaceRosterEntry } from './state';
 import { createEmptyLoadout } from './equipment';
 
 export class RecruitmentError extends Error {}
+
+/** Guarantees a rosterId that doesn't collide with an existing entry, even if the same heroId is claimed or recruited more than once across a run. */
+export function freshRosterId(run: RunState, heroId: string): string {
+  if (!run.roster.some((r) => r.rosterId === heroId)) return heroId;
+  let n = 2;
+  while (run.roster.some((r) => r.rosterId === `${heroId}-${n}`)) n++;
+  return `${heroId}-${n}`;
+}
 
 /**
  * Whether a defeated combatant is eligible for a Recruit Contract — gated on
@@ -101,4 +109,53 @@ export function buyContract(run: RunState, cost: number): RunState {
     throw new RecruitmentError(`A Recruit Contract costs ${cost} gold, only ${run.gold} available`);
   }
   return { ...run, gold: run.gold - cost, recruitContracts: run.recruitContracts + 1 };
+}
+
+/**
+ * What's arriving when the roster is already at ROSTER_CAP and needs a
+ * termination to make room (view/run/RosterReplaceScreen.tsx): a fresh Guild
+ * Hall recruit, or a Recruit Contract claim off a beaten enemy's build.
+ */
+export type RosterReplaceCandidate =
+  | { source: 'guildHall'; offer: GuildHallOffer }
+  | { source: 'contract'; offer: ContractOffer };
+
+/**
+ * Roster-full variant of recruitFromGuildHall: spends gold exactly the same
+ * way, but replaces `terminatedRosterId`'s slot instead of appending a new
+ * one. Per user direction, the incoming hero instantly inherits the outgoing
+ * hero's equipment — unlike a plain termination (state.ts
+ * terminateRosterEntry), which just strips it — so the gear isn't lost, only
+ * handed to whoever takes the slot. Nothing else about the outgoing hero
+ * carries over: the new hero is exactly the fresh, 0-progress RosterEntry
+ * recruitFromGuildHall would have built, with only `equipment` overridden.
+ */
+export function recruitFromGuildHallReplacing(
+  run: RunState,
+  offer: GuildHallOffer,
+  rosterId: string,
+  terminatedRosterId: string
+): RunState {
+  if (run.gold < offer.cost) {
+    throw new RecruitmentError(`Guild Hall recruit costs ${offer.cost} gold, only ${run.gold} available`);
+  }
+  const terminated = run.roster.find((r) => r.rosterId === terminatedRosterId);
+  if (!terminated) {
+    throw new RecruitmentError(`No roster entry ${terminatedRosterId} to terminate`);
+  }
+  const entry: RosterEntry = { ...createRosterEntry(rosterId, offer.heroId, offer.startingMoveIds), equipment: terminated.equipment };
+  return replaceRosterEntry({ ...run, gold: run.gold - offer.cost }, terminatedRosterId, entry);
+}
+
+/** Roster-full variant of claimContract — same equipment-inheritance behavior as recruitFromGuildHallReplacing above, see its doc comment. */
+export function claimContractReplacing(run: RunState, offer: ContractOffer, rosterId: string, terminatedRosterId: string): RunState {
+  if (run.recruitContracts <= 0) {
+    throw new RecruitmentError('No Recruit Contracts available');
+  }
+  const terminated = run.roster.find((r) => r.rosterId === terminatedRosterId);
+  if (!terminated) {
+    throw new RecruitmentError(`No roster entry ${terminatedRosterId} to terminate`);
+  }
+  const entry: RosterEntry = { ...offer, rosterId, equipment: terminated.equipment };
+  return replaceRosterEntry({ ...run, recruitContracts: run.recruitContracts - 1 }, terminatedRosterId, entry);
 }

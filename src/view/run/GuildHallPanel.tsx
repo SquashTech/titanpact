@@ -24,6 +24,8 @@ interface Props {
   onRunChange: (next: RunState) => void;
   /** Equipment purchases hand off to App.tsx's forced equip-or-trash gate (ForceEquipScreen) — this panel can't transition screens itself. */
   onBuyEquipment: (itemId: string) => void;
+  /** Recruiting while the roster is already full hands off to App.tsx's RosterReplaceScreen gate instead of the normal recruitFromGuildHall call — same reason as onBuyEquipment, this panel can't transition screens itself. */
+  onRequestRosterReplace: (offer: GuildHallOffer) => void;
 }
 
 interface HeroCardProps {
@@ -129,7 +131,7 @@ function GuildHallRelicCard({ relic, affordable, onBuy, onInspect }: RelicCardPr
  * HeroPreviewOverlay for heroes; a small dismiss-on-tap popup for
  * equipment/relics) — no separate select-then-confirm step for any of them.
  */
-export function GuildHallPanel({ run, offers, onRunChange, onBuyEquipment }: Props) {
+export function GuildHallPanel({ run, offers, onRunChange, onBuyEquipment, onRequestRosterReplace }: Props) {
   const [previewOfferId, setPreviewOfferId] = useState<string | null>(null);
   const [previewEquipId, setPreviewEquipId] = useState<string | null>(null);
   const [previewRelicId, setPreviewRelicId] = useState<string | null>(null);
@@ -148,6 +150,10 @@ export function GuildHallPanel({ run, offers, onRunChange, onBuyEquipment }: Pro
   const previewRelic = previewRelicId ? relicOffers.find((r) => r.id === previewRelicId) : undefined;
 
   function handleRecruit(offer: GuildHallOffer) {
+    if (rosterFull) {
+      if (run.gold >= offer.cost) onRequestRosterReplace(offer);
+      return;
+    }
     try {
       onRunChange(recruitFromGuildHall(run, offer, offer.heroId));
     } catch (err) {
@@ -192,7 +198,7 @@ export function GuildHallPanel({ run, offers, onRunChange, onBuyEquipment }: Pro
                   key={offer.id}
                   hero={hero}
                   offer={offer}
-                  affordable={run.gold >= offer.cost && !rosterFull}
+                  affordable={run.gold >= offer.cost}
                   onBuy={() => handleRecruit(offer)}
                   onInspect={() => setPreviewOfferId(offer.id)}
                 />
@@ -204,7 +210,7 @@ export function GuildHallPanel({ run, offers, onRunChange, onBuyEquipment }: Pro
         )}
         {rosterFull && (
           <p className="hint">
-            Roster is full ({ROSTER_CAP}/{ROSTER_CAP}) — terminate a hero to recruit another.
+            Roster is full ({ROSTER_CAP}/{ROSTER_CAP}) — recruiting will ask you to terminate a hero to make room.
           </p>
         )}
       </div>

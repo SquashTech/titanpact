@@ -9,6 +9,7 @@ import { ShopNodeScreen } from '../view/run/ShopNodeScreen';
 import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { ForceEquipScreen } from '../view/run/ForceEquipScreen';
+import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
 import { StatBoostScreen, type StatBoostNodeType } from '../view/run/StatBoostScreen';
 import { ClassNodeScreen } from '../view/run/ClassNodeScreen';
 import { EventNodeScreen } from '../view/run/EventNodeScreen';
@@ -19,7 +20,17 @@ import { relics } from '../data/relics';
 import { equipment } from '../data/equipment';
 import { equipItem, pickWeightedEquipmentBySlot, type EquipmentDefinition, type EquipmentSlot } from '../run/equipment';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP, TOTAL_ACTS } from '../run/state';
-import { deriveContractOffer, claimContract, isRecruitable } from '../run/recruitment';
+import {
+  deriveContractOffer,
+  claimContract,
+  claimContractReplacing,
+  recruitFromGuildHallReplacing,
+  freshRosterId,
+  isRecruitable,
+  RecruitmentError,
+  type GuildHallOffer,
+  type RosterReplaceCandidate,
+} from '../run/recruitment';
 import { guildHallOffers } from '../data/recruitment';
 import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } from '../run/shop';
 import { generateMap } from '../run/map';
@@ -66,6 +77,15 @@ type Screen =
   | { kind: 'levelUp'; next: Screen }
   /** Forced equip-or-trash gate (user direction: no unequipped stash — every piece of gear obtained must be resolved before the run continues) — `queue` is the item(s) awaiting a decision, `next` is whatever screen would otherwise have followed. */
   | { kind: 'forceEquip'; queue: string[]; next: Screen }
+  /**
+   * Roster-full replacement gate (CLAUDE.md "Gaining a hero requires
+   * terminating an existing one" once at ROSTER_CAP) — Guild Hall path only.
+   * The Recruit Contract claim path (FightScreen's victory overlay) resolves
+   * this in-place instead, since FightScreen can't safely remount mid-fight
+   * (see RosterReplaceScreen's header comment). `next` is the shop screen
+   * the player returns to either way, replace confirmed or cancelled.
+   */
+  | { kind: 'rosterReplace'; candidate: RosterReplaceCandidate; next: Screen }
   | { kind: 'runComplete' }
   | { kind: 'runFailed' };
 
@@ -168,14 +188,6 @@ function createConditionsTestEncounter(): { player: Encounter; ai: Encounter } {
   return { player: { run: playerRun, squad: playerSquad }, ai: { run: aiRun, squad: aiSquad } };
 }
 
-/** Guarantees a rosterId that doesn't collide with an existing entry, even if the same heroId is claimed more than once across a run. */
-function freshRosterId(run: RunState, heroId: string): string {
-  if (!run.roster.some((r) => r.rosterId === heroId)) return heroId;
-  let n = 2;
-  while (run.roster.some((r) => r.rosterId === `${heroId}-${n}`)) n++;
-  return `${heroId}-${n}`;
-}
-
 /**
  * ⚠️ TEST FIXTURE — equips a Dagger (+5 Attack) onto the Goblin Skulker in
  * the run's very first battle only, so the equip-slot inspect UI (tap a
@@ -235,6 +247,21 @@ export function App() {
     const rosterId = freshRosterId(playerRun, defeated.heroId);
     setPlayerRun((run) => claimContract(run, offer, rosterId));
     return true;
+  }
+
+  /** Roster-full variant of handleClaimContract above — FightScreen opens RosterReplaceScreen in place and calls this once the player picks who to terminate. */
+  function handleClaimContractReplace(defeated: RosterEntry, terminatedRosterId: string): boolean {
+    if (!isRecruitable(defeated.heroId, heroes)) return false;
+    if (playerRun.recruitContracts <= 0) return false;
+    const offer = deriveContractOffer(defeated);
+    const rosterId = freshRosterId(playerRun, defeated.heroId);
+    setPlayerRun((run) => claimContractReplacing(run, offer, rosterId, terminatedRosterId));
+    return true;
+  }
+
+  /** Guild Hall recruiting at a full roster (GuildHallPanel) opens this Screen instead of recruiting directly — see the `rosterReplace` Screen kind's doc comment. */
+  function handleRequestRosterReplace(offer: GuildHallOffer) {
+    setScreen({ kind: 'rosterReplace', candidate: { source: 'guildHall', offer }, next: screen });
   }
 
   function handleSelectNode(nodeId: string) {
@@ -504,6 +531,7 @@ export function App() {
           trainingPointsReward={0}
           equipmentReward={null}
           onClaimContract={() => false}
+          onClaimContractReplace={() => false}
           onResolved={() => setScreen({ kind: 'sandboxBattle' })}
         />
       )}
@@ -534,6 +562,7 @@ export function App() {
           trainingPointsReward={screen.trainingPointsReward}
           equipmentReward={screen.equipmentReward}
           onClaimContract={handleClaimContract}
+          onClaimContractReplace={handleClaimContractReplace}
           onResolved={(outcome) =>
             handleFightResolved(screen.nodeId, screen.nodeType, screen.goldReward, screen.trainingPointsReward, screen.equipmentReward, outcome)
           }
@@ -550,6 +579,7 @@ export function App() {
           trainingPointsReward={0}
           equipmentReward={null}
           onClaimContract={() => false}
+          onClaimContractReplace={() => false}
           onResolved={() => setScreen({ kind: 'title' })}
         />
       )}
@@ -560,7 +590,32 @@ export function App() {
           offers={screen.offers}
           onRunChange={setPlayerRun}
           onBuyEquipment={handleBuyGuildEquipment}
+          onRequestRosterReplace={handleRequestRosterReplace}
           onContinue={() => handleNodeContinue(screen.nodeId)}
+        />
+      )}
+
+      {screen.kind === 'rosterReplace' && (
+        <RosterReplaceScreen
+          roster={playerRun.roster}
+          candidate={screen.candidate}
+          onConfirm={(terminatedRosterId) => {
+            const { candidate } = screen;
+            try {
+              const rosterId = freshRosterId(playerRun, candidate.offer.heroId);
+              const nextRun =
+                candidate.source === 'guildHall'
+                  ? recruitFromGuildHallReplacing(playerRun, candidate.offer, rosterId, terminatedRosterId)
+                  : claimContractReplacing(playerRun, candidate.offer, rosterId, terminatedRosterId);
+              setPlayerRun(nextRun);
+              setScreen(screen.next);
+              return true;
+            } catch (err) {
+              if (!(err instanceof RecruitmentError)) throw err;
+              return false;
+            }
+          }}
+          onCancel={() => setScreen(screen.next)}
         />
       )}
 

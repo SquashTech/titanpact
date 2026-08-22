@@ -8,6 +8,7 @@ import {
   createRosterEntry,
   addRosterEntry,
   terminateRosterEntry,
+  replaceRosterEntry,
   RosterFullError,
   ROSTER_CAP,
 } from '../src/run/state';
@@ -69,6 +70,27 @@ test('run: terminating a roster entry strips its equipment (the entry, and its l
 
   const afterTermination = terminateRosterEntry(run, 'cinderKnight');
   assert.strictEqual(afterTermination.roster.length, 0);
+});
+
+test('run: replaceRosterEntry swaps one roster slot for a new entry, preserving roster order and size', () => {
+  const run = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden']);
+  const newEntry = createRosterEntry('wildOracle', 'wildOracle', heroes.wildOracle.moveIds);
+
+  const next = replaceRosterEntry(run, 'tidecaller', newEntry);
+  assert.strictEqual(next.roster.length, 3);
+  assert.deepStrictEqual(
+    next.roster.map((r) => r.rosterId),
+    ['cinderKnight', 'wildOracle', 'ironWarden'] // tidecaller's slot, in place — not appended
+  );
+});
+
+test('run: replaceRosterEntry rejects an unknown terminated rosterId and a rosterId collision with a different remaining entry', () => {
+  const run = seedRoster(['cinderKnight', 'tidecaller']);
+  const newEntry = createRosterEntry('wildOracle', 'wildOracle', heroes.wildOracle.moveIds);
+  assert.throws(() => replaceRosterEntry(run, 'nonexistent', newEntry));
+
+  const collidingEntry = createRosterEntry('cinderKnight', 'wildOracle', heroes.wildOracle.moveIds);
+  assert.throws(() => replaceRosterEntry(run, 'tidecaller', collidingEntry));
 });
 
 // --- Squad selection (bring-6-pick-4) -----------------------------------

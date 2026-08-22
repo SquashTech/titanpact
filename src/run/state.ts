@@ -193,3 +193,25 @@ export function addRosterEntry(run: RunState, entry: RosterEntry): RunState {
 export function terminateRosterEntry(run: RunState, rosterId: string): RunState {
   return { ...run, roster: run.roster.filter((r) => r.rosterId !== rosterId) };
 }
+
+/**
+ * Roster-full acquisition (CLAUDE.md "Gaining a hero requires terminating an
+ * existing one" once at ROSTER_CAP, view/run/RosterReplaceScreen.tsx):
+ * swaps `terminatedRosterId`'s slot for `newEntry` in one step, preserving
+ * roster order and never transiently exceeding ROSTER_CAP the way
+ * terminate-then-addRosterEntry would. Unlike plain termination, this does
+ * NOT strip equipment on its own — the caller (src/run/recruitment.ts
+ * recruitFromGuildHallReplacing/claimContractReplacing) is expected to have
+ * already copied the outgoing hero's `equipment` onto `newEntry` per the
+ * "new hero instantly inherits the terminated hero's gear" rule, since this
+ * function only knows about roster membership, not that policy.
+ */
+export function replaceRosterEntry(run: RunState, terminatedRosterId: string, newEntry: RosterEntry): RunState {
+  if (!run.roster.some((r) => r.rosterId === terminatedRosterId)) {
+    throw new Error(`rosterId ${terminatedRosterId} not found on roster`);
+  }
+  if (newEntry.rosterId !== terminatedRosterId && run.roster.some((r) => r.rosterId === newEntry.rosterId)) {
+    throw new Error(`rosterId ${newEntry.rosterId} already exists on the roster`);
+  }
+  return { ...run, roster: run.roster.map((r) => (r.rosterId === terminatedRosterId ? newEntry : r)) };
+}
