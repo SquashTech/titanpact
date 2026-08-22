@@ -246,11 +246,13 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
                 ))}
               </div>
             </div>
-            {pickedClassId && (
-              <button className="resolve-button" onClick={() => setConfirmedClassId(pickedClassId)}>
-                Confirm {classChoices.find((c) => c.id === pickedClassId)?.name}
-              </button>
-            )}
+            <button
+              className="resolve-button class-shrine-confirm-button"
+              disabled={!pickedClassId}
+              onClick={() => pickedClassId && setConfirmedClassId(pickedClassId)}
+            >
+              {pickedClassId ? `Confirm ${classChoices.find((c) => c.id === pickedClassId)?.name}` : 'Select a discipline'}
+            </button>
           </div>
         ) : !assignedTo ? (
           <div className="bottom-pinned">
@@ -326,10 +328,7 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
       {rosterPeekOpen && (
         <RosterPeekOverlay
           run={run}
-          onInspect={(hero, entry) => {
-            setRosterPeekOpen(false);
-            setPreviewEntry({ hero, entry });
-          }}
+          onInspect={(hero, entry) => setPreviewEntry({ hero, entry })}
           onClose={() => setRosterPeekOpen(false)}
         />
       )}

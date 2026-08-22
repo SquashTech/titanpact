@@ -4579,6 +4579,33 @@ body {
   height: 72px;
 }
 
+/* Always rendered (even before a discipline is picked, just disabled) so
+   its height is reserved from the start — it used to only mount once
+   pickedClassId was set, which yanked the whole bottom-pinned panel
+   upward the instant a card was tapped. Teal gradient/glow matches the
+   rest of Mentor's Hall's --buff theming instead of the generic gold
+   .resolve-button. */
+.class-shrine-confirm-button {
+  background: linear-gradient(165deg, #5fd6ce, #278f86);
+  border: 1px solid #3fb8af;
+  color: #06211e;
+  box-shadow: 0 0 0 1px rgba(63, 184, 175, 0.35), 0 4px 16px rgba(63, 184, 175, 0.35);
+  transition: opacity 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.class-shrine-confirm-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px rgba(63, 184, 175, 0.5), 0 6px 20px rgba(63, 184, 175, 0.45);
+}
+
+.class-shrine-confirm-button:disabled {
+  background: var(--panel-alt);
+  border-color: var(--border);
+  color: var(--text-dim);
+  box-shadow: none;
+  opacity: 0.45;
+}
+
 .class-shrine-roster-btn {
   position: relative;
   width: auto;
