@@ -18,7 +18,14 @@ import { heroes } from '../data/heroes';
 import { enemies } from '../data/enemies';
 import { relics } from '../data/relics';
 import { equipment } from '../data/equipment';
-import { equipItem, pickWeightedEquipmentBySlot, type EquipmentDefinition, type EquipmentSlot } from '../run/equipment';
+import {
+  equipItem,
+  pickWeightedEquipment,
+  pickWeightedEquipmentBySlot,
+  ELITE_RARITY_DROP_WEIGHTS,
+  type EquipmentDefinition,
+  type EquipmentSlot,
+} from '../run/equipment';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP, TOTAL_ACTS } from '../run/state';
 import {
   deriveContractOffer,
@@ -59,7 +66,7 @@ type Screen =
       encounter: Encounter;
       goldReward: number;
       trainingPointsReward: number;
-      /** The opener Goblin fight's guaranteed common-item drop (see handleFightResolved), rolled up front at squad-confirm time so the victory screen can spotlight it — same value handleFightResolved then hands to ForceEquipScreen, rather than re-rolling after the fact. */
+      /** The opener Goblin fight's guaranteed common-item drop, or (for every other fight) an equipmentDropFor roll (see handleFightResolved / handleSquadConfirmed), rolled up front at squad-confirm time so the victory screen can spotlight it — same value handleFightResolved then hands to ForceEquipScreen, rather than re-rolling after the fact. */
       equipmentReward: EquipmentDefinition | null;
     }
   | { kind: 'quickBattle'; player: Encounter; ai: Encounter }
@@ -219,6 +226,26 @@ function trainingPointsFor(nodeType: EncounterNodeType): number {
   return 3 + Math.floor(Math.random() * 2); // 3-4
 }
 
+/**
+ * Per-fight equipment-drop odds beyond the Goblin fight's guaranteed common
+ * item (handleSquadConfirmed's isGoblinFight branch, unaffected by this
+ * table). Elite/boss fights roll both more often AND against
+ * ELITE_RARITY_DROP_WEIGHTS (src/run/equipment.ts), which skews well above
+ * the default RARITY_DROP_WEIGHTS toward rare-and-up gear — "higher % to
+ * drop higher tier loot," not just a higher drop chance.
+ */
+const EQUIPMENT_DROP_CHANCE: Record<EncounterNodeType, number> = {
+  fight: 0.25,
+  elite: 0.55,
+  boss: 0.7,
+};
+
+function equipmentDropFor(nodeType: EncounterNodeType): EquipmentDefinition | null {
+  if (Math.random() >= EQUIPMENT_DROP_CHANCE[nodeType]) return null;
+  const weights = nodeType === 'fight' ? undefined : ELITE_RARITY_DROP_WEIGHTS;
+  return pickWeightedEquipment(Object.values(equipment), 1, weights)[0] ?? null;
+}
+
 export function App() {
   const [playerRun, setPlayerRun] = useState<RunState>(() => createRunState(0, 40));
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
@@ -350,7 +377,9 @@ export function App() {
     // handleFightResolved below reuses this same value instead of re-rolling.
     const isGoblinFight = playerRun.map!.nodes[nodeId].type === 'fight';
     const commonPool = Object.values(equipment).filter((item) => item.rarity === 'common');
-    const equipmentReward = isGoblinFight ? (commonPool[Math.floor(Math.random() * commonPool.length)] ?? null) : null;
+    const equipmentReward = isGoblinFight
+      ? (commonPool[Math.floor(Math.random() * commonPool.length)] ?? null)
+      : equipmentDropFor(nodeType);
     setScreen({
       kind: 'fight',
       nodeId,

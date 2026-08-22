@@ -46,16 +46,29 @@ export const RARITY_DROP_WEIGHTS: Record<EquipmentRarity, number> = {
   mythic: 1,
 };
 
-/** Weighted sample of `count` distinct items from `pool`, biased toward common gear per RARITY_DROP_WEIGHTS — used by equipmentReward nodes (NodeRewardScreen) to roll the 3 choices offered. */
-export function pickWeightedEquipment(pool: readonly EquipmentDefinition[], count: number): EquipmentDefinition[] {
+/** Elite/boss battle-drop weighting (App.tsx handleSquadConfirmed) — shifted well above RARITY_DROP_WEIGHTS so tougher fights noticeably favor better gear, without making common items impossible. */
+export const ELITE_RARITY_DROP_WEIGHTS: Record<EquipmentRarity, number> = {
+  common: 20,
+  rare: 35,
+  epic: 25,
+  legendary: 15,
+  mythic: 5,
+};
+
+/** Weighted sample of `count` distinct items from `pool`, biased per `weights` (defaults to RARITY_DROP_WEIGHTS) — used by equipmentReward nodes (NodeRewardScreen) to roll the 3 choices offered, and by App.tsx's battle-drop roll with an alternate (elite-favoring) weight table. */
+export function pickWeightedEquipment(
+  pool: readonly EquipmentDefinition[],
+  count: number,
+  weights: Record<EquipmentRarity, number> = RARITY_DROP_WEIGHTS
+): EquipmentDefinition[] {
   const remaining = [...pool];
   const picked: EquipmentDefinition[] = [];
   while (picked.length < Math.min(count, remaining.length)) {
-    const total = remaining.reduce((sum, item) => sum + RARITY_DROP_WEIGHTS[item.rarity], 0);
+    const total = remaining.reduce((sum, item) => sum + weights[item.rarity], 0);
     let roll = Math.random() * total;
     let index = remaining.length - 1;
     for (let i = 0; i < remaining.length; i++) {
-      roll -= RARITY_DROP_WEIGHTS[remaining[i].rarity];
+      roll -= weights[remaining[i].rarity];
       if (roll <= 0) {
         index = i;
         break;
