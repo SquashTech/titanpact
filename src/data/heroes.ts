@@ -117,20 +117,22 @@ export const heroes: Record<string, HeroDefinition> = {
     starter: true,
   },
 
-  // Recruit-only (starter: false) since 2026-08-17 — Frost's starter slot is
-  // now Rime, below. The Abominable stays in the game as a special
-  // recruit-only hero, obtainable via Guild Hall or Recruit Contract, not the
-  // start-of-run draft.
+  // Renamed from "The Abominable" to "Flurry" (2026-08-22) — id kept stable
+  // (glacialWarden) since it's referenced throughout progression data; only
+  // the display name and art changed. Recruit-only (starter: false) since
+  // 2026-08-17 — Frost's starter slot is Rime, below. Flurry stays in the
+  // game as a special recruit-only hero, obtainable via Guild Hall or
+  // Recruit Contract, not the start-of-run draft.
   glacialWarden: {
     id: 'glacialWarden',
-    name: 'The Abominable',
+    name: 'Flurry',
     types: ['Frost'],
     baseStats: { hp: 140, attack: 30, defense: 55, intelligence: 70, wisdom: 60, speed: 45, manaPool: 70, mpRegen: 7 },
     moveIds: ['glacialSpike', 'frostLock', 'secondWind'],
     starter: false,
   },
-  // Rime (2026-08-17): the new Frost starter, replacing The Abominable in the
-  // draft pool. A fast talon-and-claw hunter rather than The Abominable's
+  // Rime (2026-08-17): the new Frost starter, replacing Flurry in the
+  // draft pool. A fast talon-and-claw hunter rather than Flurry's
   // slow magical bulk — same type, different kind of Frost hero. Its
   // defensive Evolution path grafts Beast (a Frost/Beast apex predator).
   rime: {
@@ -246,6 +248,98 @@ export const heroes: Record<string, HeroDefinition> = {
     types: ['Shadow', 'Mind'],
     baseStats: { hp: 100, attack: 35, defense: 40, intelligence: 75, wisdom: 55, speed: 65, manaPool: 70, mpRegen: 7 },
     moveIds: ['shadowVeil', 'curseMind', 'spectralBind'],
+    starter: false,
+  },
+
+  // --- Hollowbark, Aegis, Brimstone, Gallant, Nightshade, Pincer,
+  // Scallywag, Sentinel, Steam Colossus, Zenith (2026-08-22): new
+  // recruit-only heroes brought in alongside their art, typed via the
+  // power-source-not-body filter (docs/types-and-heroes.md) in
+  // conversation with the designer. Not added to the start-of-run draft
+  // pool — same pattern as Cube/Mordrax/Lucius above.
+  hollowbark: {
+    id: 'hollowbark',
+    name: 'Hollowbark',
+    types: ['Nature'],
+    baseStats: { hp: 135, attack: 70, defense: 80, intelligence: 20, wisdom: 45, speed: 30, manaPool: 40, mpRegen: 4 },
+    moveIds: ['vineLash', 'fortify', 'secondWind'],
+    starter: false,
+  },
+  aegis: {
+    id: 'aegis',
+    name: 'Aegis',
+    types: ['Light'],
+    baseStats: { hp: 120, attack: 45, defense: 80, intelligence: 40, wisdom: 75, speed: 35, manaPool: 70, mpRegen: 7 },
+    moveIds: ['radiantBeam', 'fortify', 'secondWind'],
+    starter: false,
+  },
+  // Brimstone is already dual-typed (Fire/Shadow), so per the mono-only
+  // graft rule none of its Evolution paths may carry a typeGraft
+  // (src/data/progression.ts, same treatment as cinderKnight/lucius).
+  brimstone: {
+    id: 'brimstone',
+    name: 'Brimstone',
+    types: ['Fire', 'Shadow'],
+    baseStats: { hp: 80, attack: 55, defense: 35, intelligence: 60, wisdom: 35, speed: 60, manaPool: 55, mpRegen: 6 },
+    moveIds: ['cinderBite', 'shadowVeil', 'weaken'],
+    starter: false,
+  },
+  gallant: {
+    id: 'gallant',
+    name: 'Gallant',
+    types: ['Iron'],
+    baseStats: { hp: 110, attack: 80, defense: 55, intelligence: 20, wisdom: 35, speed: 70, manaPool: 45, mpRegen: 5 },
+    moveIds: ['ironFist', 'quickJab', 'rally'],
+    starter: false,
+  },
+  nightshade: {
+    id: 'nightshade',
+    name: 'Nightshade',
+    types: ['Shadow'],
+    baseStats: { hp: 85, attack: 80, defense: 35, intelligence: 30, wisdom: 35, speed: 85, manaPool: 45, mpRegen: 5 },
+    moveIds: ['duskStrike', 'vanish', 'nightmareGrasp'],
+    starter: false,
+  },
+  pincer: {
+    id: 'pincer',
+    name: 'Pincer',
+    types: ['Water'],
+    baseStats: { hp: 125, attack: 70, defense: 85, intelligence: 20, wisdom: 45, speed: 30, manaPool: 40, mpRegen: 4 },
+    moveIds: ['aquaJet', 'stunningBlow', 'fortify'],
+    starter: false,
+  },
+  scallywag: {
+    id: 'scallywag',
+    name: 'Scallywag',
+    types: ['Storm'],
+    baseStats: { hp: 95, attack: 75, defense: 40, intelligence: 30, wisdom: 35, speed: 80, manaPool: 50, mpRegen: 6 },
+    moveIds: ['galeShot', 'quickJab', 'rally'],
+    starter: false,
+  },
+  sentinel: {
+    id: 'sentinel',
+    name: 'Sentinel',
+    types: ['Stone'],
+    baseStats: { hp: 150, attack: 45, defense: 100, intelligence: 15, wisdom: 50, speed: 15, manaPool: 30, mpRegen: 4 },
+    moveIds: ['boulderToss', 'fortify', 'stunningBlow'],
+    starter: false,
+  },
+  // Steam Colossus is already dual-typed (Mech/Iron), so per the mono-only
+  // graft rule none of its Evolution paths may carry a typeGraft.
+  steamColossus: {
+    id: 'steamColossus',
+    name: 'Steam Colossus',
+    types: ['Mech', 'Iron'],
+    baseStats: { hp: 145, attack: 90, defense: 80, intelligence: 15, wisdom: 35, speed: 15, manaPool: 40, mpRegen: 4 },
+    moveIds: ['moltenHammer', 'shrapnelBlast', 'fortify'],
+    starter: false,
+  },
+  zenith: {
+    id: 'zenith',
+    name: 'Zenith',
+    types: ['Arcane'],
+    baseStats: { hp: 95, attack: 20, defense: 45, intelligence: 85, wisdom: 65, speed: 50, manaPool: 90, mpRegen: 9 },
+    moveIds: ['arcaneBolt', 'manaBurst', 'arcaneSurge'],
     starter: false,
   },
 };

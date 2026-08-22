@@ -122,7 +122,7 @@ status says nothing about a hero's power level, just where you first meet them.
 
 **Current fixture state (2026-08-17):** 14 starters give **one starter per type**
 (every type except Ancient, which is intentionally near-undraftable per "Ancient is
-special" above) — Cinder (Fire), Tidecaller (Water), The Abominable (Frost),
+special" above) — Cinder (Fire), Tidecaller (Water), Flurry (Frost),
 Squall (Storm), Crag (Stone), Sylva (Nature), Solace (Light), Vesper
 (Shadow), Glyph (Arcane), Cortex (Mind), Revenant (Spirit), Valor
 (Iron), Clockwork (Mech), Pack Alpha (Beast). Warden is the roster's first
