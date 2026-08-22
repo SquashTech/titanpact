@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { ActiveFieldEffect, Combatant, StatusInstance } from '../../engine/state';
 import { effectiveTypes, getCombatStatDelta, getMaxHp, getMaxMana } from '../../engine/state';
@@ -9,6 +9,7 @@ import { STAT_ICONS, STAT_ORDER, hpTier } from '../shared/StatBars';
 import { statusEmoji, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
 import { useLongPress } from '../shared/MoveTile';
 import { StatusDetailOverlay } from './StatusDetailOverlay';
+import { getTypeColor, getTypeColorRgb } from './typeColors';
 
 export interface Popup {
   key: number;
@@ -163,9 +164,17 @@ export function CombatantCard({
   // ticks/detonates twice in a row.
   if (popup && POPUP_FLASH_CLASS[popup.className]) classes.push(POPUP_FLASH_CLASS[popup.className]);
 
+  // Primary type (effectiveTypes, not hero.types — a type-graft Evolution
+  // should retint the card too) drives the card's accent color, so each box
+  // reads as "which hero's power" at a glance instead of a uniform gray tin
+  // that only differed by ally/enemy row position.
+  const primaryType = effectiveTypes(hero, combatant)[0];
+  const typeStyle = { '--type-color': getTypeColor(primaryType), '--type-rgb': getTypeColorRgb(primaryType) } as CSSProperties;
+
   return (
     <div
       className={classes.join(' ')}
+      style={typeStyle}
       onClick={targetable && !combatant.fainted && !locked ? onSelectTarget : undefined}
       role={targetable && !locked ? 'button' : undefined}
     >

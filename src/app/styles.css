@@ -91,10 +91,20 @@ body {
   position: relative;
   padding: 10px 8px;
   border-radius: 14px;
+  overflow: hidden;
+  /* Two-zone arena floor (enemy red top, ally blue bottom) plus a faint
+     tactical grid for texture — replaces the old flat panel-gray box so the
+     playing field itself reads as a place, not just a container for cards.
+     The grid sits under everything via background-position layering; kept
+     low-opacity so it never competes with card content or the HP/MP bars. */
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(217, 83, 79, 0.08), transparent 55%),
-    radial-gradient(ellipse at 50% 100%, rgba(74, 144, 217, 0.08), transparent 55%);
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0px, rgba(255, 255, 255, 0.025) 1px, transparent 1px, transparent 24px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0px, rgba(255, 255, 255, 0.025) 1px, transparent 1px, transparent 24px),
+    radial-gradient(ellipse 120% 60% at 50% 0%, rgba(217, 83, 79, 0.16), transparent 60%),
+    radial-gradient(ellipse 120% 60% at 50% 100%, rgba(74, 144, 217, 0.16), transparent 60%),
+    linear-gradient(180deg, #191b22, #14161c 50%, #191b22);
   border: 1px solid var(--border);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset, 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
 /* "VS" chip between the enemy and ally rows — purely decorative, gives the
@@ -396,10 +406,19 @@ body {
   flex-direction: row;
 }
 
+/* Per-hero type identity (CombatantCard sets --type-color/--type-rgb inline
+   from typeColors.ts) — a soft type-tinted wash behind the portrait plus a
+   type-colored top edge, so each box reads as "whose power this is" at a
+   glance instead of every card being the same flat gray tin regardless of
+   hero. Side (ally/enemy) is already legible from row position, so the top
+   border is free to carry type identity instead. */
 .combatant-card {
   flex: 1;
-  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 65%);
+  background:
+    radial-gradient(ellipse 100% 65% at 50% 0%, rgba(var(--type-rgb, 150, 150, 150), 0.22), transparent 70%),
+    linear-gradient(165deg, var(--panel-alt), var(--panel) 65%);
   border: 1px solid var(--border);
+  border-top: 2px solid var(--type-color, var(--border));
   border-radius: 10px;
   padding: 8px;
   position: relative;
@@ -407,16 +426,8 @@ body {
      below) is pinned between this card's background and its content instead
      of drifting into .team-row's stacking order. */
   z-index: 0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), 0 0 14px rgba(var(--type-rgb, 150, 150, 150), 0.1);
   transition: outline 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.35s ease, filter 0.35s ease;
-}
-
-.team-row.enemy .combatant-card {
-  border-top: 2px solid rgba(217, 83, 79, 0.5);
-}
-
-.team-row.ally .combatant-card {
-  border-top: 2px solid rgba(74, 144, 217, 0.5);
 }
 
 /* Hero portrait (src/view/shared/heroArt.ts) — most heroes have no art yet,
