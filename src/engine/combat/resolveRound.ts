@@ -23,7 +23,7 @@ import { resolveStatRatio, rollDamage, resolveElementalForceBonus, statKeysForCa
 import type { TypeChart } from '../damage/typeMult';
 import { applyHpDelta } from './faintHandling';
 import {
-  applyOrDetonateTriggeredStatuses,
+  detonateTriggeredStatuses,
   applyStatus,
   applyStealthRedirect,
   cleanseStatuses,
@@ -236,12 +236,13 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           working = damageReactions.state;
           events.push(...damageReactions.events);
 
-          // Conduct (docs/conditions.md): auto-applies/detonates off the move's type via
-          // triggerTypes, resolved AFTER the base hit above lands so its bonus damage reads
-          // as its own beat/indicator (events.ts StatusDetonatedEvent) rather than inflating
-          // the move's own DamageDealt amount. Skipped once the base hit alone knocked the
-          // target out — applyOrDetonateTriggeredStatuses no-ops on a fainted target.
-          const triggered = applyOrDetonateTriggeredStatuses(working, round, targetId, move.type, maxHp, statuses);
+          // Conduct (docs/conditions.md): detonates off the move's type via triggerTypes —
+          // any Storm/Iron hit can cash in an existing mark, but only a move with its own
+          // statusApplication plants one. Resolved AFTER the base hit above lands so its
+          // bonus damage reads as its own beat/indicator (events.ts StatusDetonatedEvent)
+          // rather than inflating the move's own DamageDealt amount. Skipped once the base
+          // hit alone knocked the target out — detonateTriggeredStatuses no-ops on a fainted target.
+          const triggered = detonateTriggeredStatuses(working, round, targetId, move.type, maxHp, statuses);
           working = triggered.state;
           events.push(...triggered.events);
 

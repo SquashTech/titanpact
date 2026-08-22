@@ -132,9 +132,18 @@ test('status: cleanseStatuses strips every non-positive status, leaving Regen (p
 
 // --- Conduct: apply-vs-detonate split off Storm/Iron hits --------------------
 
-test('status: Conduct applies on a clean Storm/Iron hit — no bonus damage yet', () => {
+test('status: Conduct is only applied by its dedicated move, not any Storm/Iron hit', () => {
   const state = twoVTwoFixture(200);
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'quickJab', declaredTarget: 'b1' }]; // quickJab is Iron-typed
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'quickJab', declaredTarget: 'b1' }]; // quickJab is Iron-typed, no statusApplication
+  const { state: next, events } = resolveRound(state, actions, config);
+
+  assert.strictEqual(hasStatus(next.combatants.b1, 'Conduct'), false);
+  assert.strictEqual(events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Conduct'), false);
+});
+
+test('status: Conduct applies via its dedicated move (voltaicJolt) — no bonus damage yet', () => {
+  const state = twoVTwoFixture(200);
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'voltaicJolt', declaredTarget: 'b1' }];
   const { state: next, events } = resolveRound(state, actions, config);
 
   assert.ok(hasStatus(next.combatants.b1, 'Conduct'));

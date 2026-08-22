@@ -286,12 +286,15 @@ export function cleanseStatuses(
  * `detonateBonusPercentMaxHp` so any future type-triggered status reuses it.
  * For a `kind: 'damage'` hit whose move type matches a status's
  * `triggerTypes`: if the target already carries that status, detonate it
- * (bonus damage, then `removeStatus` reason 'consumed') — otherwise apply it
- * fresh (boolean shape, no magnitude/duration needed) via the existing
- * `applyStatus` helper. docs/conditions.md: "apply and detonate are separate"
- * — a single hit only ever does one or the other, never both.
+ * (bonus damage, then `removeStatus` reason 'consumed'). Detonate-only —
+ * `triggerTypes` no longer auto-applies the status on a clean hit (that was
+ * the bug: it made every Storm/Iron move inflict Conduct). Applying the
+ * status is now a move-authored choice like any other status, via the same
+ * `statusApplication` field Burn/Bleed/Poison/etc. use — see moves.ts's
+ * dedicated Conduct move. `triggerTypes` only ever governs who can cash the
+ * mark in, not who can plant it.
  */
-export function applyOrDetonateTriggeredStatuses(
+export function detonateTriggeredStatuses(
   state: CombatState,
   round: number,
   targetId: string,
@@ -307,21 +310,16 @@ export function applyOrDetonateTriggeredStatuses(
     if (!def.triggerTypes?.includes(moveType)) continue;
     const target = working.combatants[targetId];
     if (!target || target.fainted) continue;
+    if (!hasStatus(target, def.id)) continue;
 
-    if (hasStatus(target, def.id)) {
-      const bonus = Math.ceil(maxHp * (def.detonateBonusPercentMaxHp ?? 0));
-      bonusDamage += bonus;
-      // Own event (not folded into the triggering hit's DamageDealt) so the view
-      // can present the detonation as a separate beat/indicator — see events.ts.
-      events.push({ type: 'StatusDetonated', round, combatantId: targetId, statusId: def.id, amount: bonus });
-      const rm = removeStatus(working, round, targetId, def.id, 'consumed');
-      working = rm.state;
-      events.push(...rm.events);
-    } else {
-      const applied = applyStatus(working, round, targetId, def, {});
-      working = applied.state;
-      events.push(...applied.events);
-    }
+    const bonus = Math.ceil(maxHp * (def.detonateBonusPercentMaxHp ?? 0));
+    bonusDamage += bonus;
+    // Own event (not folded into the triggering hit's DamageDealt) so the view
+    // can present the detonation as a separate beat/indicator — see events.ts.
+    events.push({ type: 'StatusDetonated', round, combatantId: targetId, statusId: def.id, amount: bonus });
+    const rm = removeStatus(working, round, targetId, def.id, 'consumed');
+    working = rm.state;
+    events.push(...rm.events);
   }
 
   return { state: working, bonusDamage, events };

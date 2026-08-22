@@ -7,7 +7,7 @@
 //   - resolvePassiveReactions: event-reactive. Scans a batch of just-produced
 //     CombatEvents (resolveRound.ts passes each checkpoint's own new slice,
 //     not the whole round) for hook matches, generalizing the exact pattern
-//     applyOrDetonateTriggeredStatuses already uses for Conduct (match a
+//     detonateTriggeredStatuses already uses for Conduct (match a
 //     generic flag, run a generic effect) — keyed off real event types
 //     instead of move type.
 //   - collectPassiveDamageModifiers: synchronous. Evaluated BEFORE a hit is

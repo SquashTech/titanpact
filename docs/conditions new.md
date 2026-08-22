@@ -36,14 +36,25 @@ discipline** and are collected at the bottom.
 - Positive status → subject to the Cleanse-strips-positives question (see open).
 
 ### Conduct — boolean
-- Applied by hitting the target with a **Storm OR Iron** based attack.
-- While active, deals an additional **10% of target's max HP** as damage.
-- Sharing one mechanic across Storm and Iron gives Iron a signature status without
-  inventing a second effect.
+- Applied only by a specific move that names Conduct in its own `statusApplication`
+  (moves.ts `voltaicJolt`) — same authoring convention as every other status, not
+  automatic.
+- Once applied, **any** Storm OR Iron based attack can detonate the mark for an
+  additional **10% of target's max HP** as damage, consuming it.
+- Sharing the detonate mechanic across Storm and Iron gives Iron a signature status
+  without inventing a second effect.
 - ⚠️ **Apply-vs-detonate timing undefined.** Intended as loop-split (one hit applies,
   a separate hit detonates). If the applying hit also detonates, the status is
   invisible and collapses into "Storm/Iron hits harder." See open questions.
 - ANSWER: Apply and detonate are separate
+- **2026-08-21 correction:** this section originally read "applied by hitting the
+  target with a Storm OR Iron based attack," and the engine matched that literally —
+  `triggerTypes` drove both apply-if-absent AND detonate-if-present, so every single
+  Storm/Iron damage move inflicted Conduct on a clean hit. Reported as a bug: apply
+  should be a per-move authored choice (like Burn/Bleed/Poison/etc. via
+  `statusApplication`), while detonate stays automatic for any Storm/Iron hit. Fixed
+  in statusEngine.ts (`applyOrDetonateTriggeredStatuses` → `detonateTriggeredStatuses`,
+  detonate-only) plus a new dedicated move, `voltaicJolt`.
 
 ### Poison X — timer / delayed detonation
 - First instance starts a **3-turn timer**.

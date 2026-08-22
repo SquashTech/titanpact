@@ -159,7 +159,7 @@ export function buildBeats(
 
       case 'StatusDetonated': {
         // Always immediately followed by the removeStatus reason 'consumed'
-        // (statusEngine.ts applyOrDetonateTriggeredStatuses) and its own
+        // (statusEngine.ts detonateTriggeredStatuses) and its own
         // HpChanged/Fainted pair — bundled into one beat so the zap and the
         // bar drain land on the same tap.
         const applied: CombatEvent[] = [e];

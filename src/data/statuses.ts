@@ -103,11 +103,16 @@ export const statuses: Record<string, StatusDefinition> = {
     // design doc. Treated as a mark meant to be cashed in later (same reasoning
     // the old, now-cut Expose used), not an acute effect you dodge by pivoting.
     clearsOnSwitch: false,
+    // Detonate-only. Only a move with its own `statusApplication: { statusId: 'Conduct' }`
+    // (moves.ts voltaicJolt) plants the mark; ANY Storm/Iron damage move can then cash it
+    // in via this list. 2026-08-21 designer correction: triggerTypes previously also drove
+    // auto-apply, which meant every Storm/Iron hit inflicted Conduct — see statusEngine.ts
+    // detonateTriggeredStatuses.
     triggerTypes: ['Storm', 'Iron'],
     detonateBonusPercentMaxHp: 0.1,
     pipeline: 'trigger',
     description:
-      "Lasts one turn. The next Storm or Iron hit on this target deals an extra 10% of the target's max HP and consumes the mark.",
+      "The next Storm or Iron hit on this target deals an extra 10% of the target's max HP and consumes the mark.",
   },
   Poison: {
     id: 'Poison',

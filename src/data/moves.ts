@@ -14,10 +14,10 @@
 // `statusApplication` to a small dedicated damage/buff move rather than
 // retrofitted onto the moves above, so the original fixture moves — and the
 // tests/demo script that reference them by id — stay untouched) and a
-// Cleanse move. Conduct has no dedicated move: it auto-triggers off
-// StatusDefinition.triggerTypes on ANY existing Storm/Iron damage move
-// (thunderclap, quickJab, ironFist, ...) rather than being authored per-move
-// — see statusEngine.ts applyOrDetonateTriggeredStatuses.
+// Cleanse move. Conduct included: only its own dedicated move (voltaicJolt)
+// plants the mark. ANY Storm/Iron damage move — this one included — can still
+// detonate an existing mark via StatusDefinition.triggerTypes; that half stays
+// automatic — see statusEngine.ts detonateTriggeredStatuses.
 
 import type { MoveDefinition } from '../engine/content';
 
@@ -677,6 +677,19 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
     description: 'A rattling haymaker, priced high for what it denies (inflicts Daze 2).',
+  },
+  voltaicJolt: {
+    id: 'voltaicJolt',
+    name: 'Voltaic Jolt',
+    type: 'Storm',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 35,
+    statusApplication: { statusId: 'Conduct', target: 'moveTarget' },
+    manaCost: 14,
+    priority: 0,
+    target: 'singleEnemy',
+    description: "Charges the target's frame with current — any Storm or Iron hit that follows detonates it for bonus damage (inflicts Conduct).",
   },
   spectralBind: {
     id: 'spectralBind',

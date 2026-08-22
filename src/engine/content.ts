@@ -117,11 +117,14 @@ export interface StatusDefinition {
   flatPercentOfMaxHp?: number;
   /**
    * Conduct's hook: any `kind: 'damage'` move whose `type` is in this list
-   * auto-applies this status to the target if absent, or detonates it
-   * (`detonateBonusPercentMaxHp` of the target's max HP as bonus damage,
-   * then consumed) if already present. Generic so a future type-triggered
-   * status reuses this same engine hook (statusEngine.ts
-   * applyOrDetonateTriggeredStatuses) instead of a Conduct-only special case.
+   * detonates this status on the target (`detonateBonusPercentMaxHp` of the
+   * target's max HP as bonus damage, then consumed) if already present —
+   * detonate-only, a no-op otherwise. Planting the status in the first place
+   * is a separate, move-authored choice via `statusApplication` (same as any
+   * other status) — see moves.ts's dedicated Conduct move. Generic so a
+   * future type-triggered status reuses this same engine hook
+   * (statusEngine.ts detonateTriggeredStatuses) instead of a Conduct-only
+   * special case.
    */
   triggerTypes?: readonly TypeId[];
   /** Paired with triggerTypes — the detonate bonus, as a fraction of the target's max HP. */
