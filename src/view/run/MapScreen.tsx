@@ -20,7 +20,7 @@ const NODE_ICONS: Record<MapNodeType, string> = {
   elite: '💀',
   boss: '👑',
   shop: '🏪',
-  equipmentReward: '🛡️',
+  equipmentReward: '🎁',
   relicReward: '💠',
   currencyReward: '💰',
   upgradeReward: '⭐',

@@ -6,6 +6,7 @@ import { equipmentArt, relicArt } from './itemArt';
 import { useLongPress } from './MoveTile';
 import { passives } from '../../data/passives';
 import { passiveEmoji } from './passiveIcons';
+import { statuses } from '../../data/statuses';
 
 export const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
@@ -64,7 +65,7 @@ export const RARITY_LABELS: Record<EquipmentRarity, string> = {
   mythic: 'Mythic',
 };
 
-function fmtGrant(amount: number): string {
+export function fmtGrant(amount: number): string {
   return amount > 0 ? `+${amount}` : `${amount}`;
 }
 
@@ -144,6 +145,7 @@ interface EquipmentInfoPanelProps {
 export function EquipmentInfoPanel({ item, placeholder = 'Tap an equipped item to see what it does.' }: EquipmentInfoPanelProps) {
   const grants = item ? (Object.entries(item.statGrants) as [StatKey, number][]) : [];
   const grantedPassives = item?.grantsPassiveIds ?? [];
+  const grantedStatuses = item?.grantsStatusIds ?? [];
   return (
     <div className="move-info-panel">
       {item ? (
@@ -152,7 +154,7 @@ export function EquipmentInfoPanel({ item, placeholder = 'Tap an equipped item t
             <span className="move-info-name">{item.name}</span>
             <span className="move-info-kind">{EQUIP_SLOT_LABELS[item.slot]}</span>
           </div>
-          {grants.length > 0 ? (
+          {grants.length > 0 && (
             <div className="detail-modifier-list">
               {grants.map(([stat, amount]) => (
                 <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
@@ -160,10 +162,8 @@ export function EquipmentInfoPanel({ item, placeholder = 'Tap an equipped item t
                 </span>
               ))}
             </div>
-          ) : (
-            <div className="move-info-placeholder">No stat effects.</div>
           )}
-          {grantedPassives.length > 0 && (
+          {(grantedPassives.length > 0 || grantedStatuses.length > 0) && (
             <div className="detail-modifier-list">
               {grantedPassives.map((passiveId) => {
                 const def = passives[passiveId];
@@ -175,7 +175,19 @@ export function EquipmentInfoPanel({ item, placeholder = 'Tap an equipped item t
                   </span>
                 );
               })}
+              {grantedStatuses.map(({ statusId, magnitude }) => {
+                const def = statuses[statusId];
+                if (!def) return null;
+                return (
+                  <span key={statusId} className="detail-modifier-chip">
+                    Grants: {def.name} +{magnitude}
+                  </span>
+                );
+              })}
             </div>
+          )}
+          {grants.length === 0 && grantedPassives.length === 0 && grantedStatuses.length === 0 && (
+            <div className="move-info-placeholder">No stat effects.</div>
           )}
         </>
       ) : (
