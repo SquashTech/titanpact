@@ -40,7 +40,7 @@ interface RosterMgmtHeadProps {
 }
 
 /**
- * One hero's name/level/types row — pulled out of the roster .map() below
+ * One hero's name/types row — pulled out of the roster .map() below
  * because useLongPress is a hook (same reason EquipSlotButton is its own
  * component). A tap does nothing here (the "i" button is the discoverable
  * way in); a hold opens the same HeroPreviewOverlay sheet, matching the
@@ -52,9 +52,7 @@ function RosterMgmtHead({ hero, entry, onInspect }: RosterMgmtHeadProps) {
   return (
     <div className="roster-mgmt-head" {...longPress}>
       <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
-      <div className="roster-mgmt-name">
-        {hero.name} <span className="hint">Lv {entry.level}</span>
-      </div>
+      <div className="roster-mgmt-name">{hero.name}</div>
       <div className="roster-card-types">
         {rosterEntryTypes(hero, entry).map((t) => (
           <TypeBadge key={t} type={t} />
@@ -110,7 +108,7 @@ function EquipSlotButton({
 
 /**
  * The Manage Roster screen (map-node-reachable, not a fight-blocking flow —
- * that's LevelUpScreen now). Condensed hero rows (name/level/types + an Info
+ * that's LevelUpScreen now). Condensed hero rows (name/types + an Info
  * button opening the full StatBars readout via HeroPreviewOverlay) each show
  * their 3 equipment slots underneath, empty by default. There is no
  * unequipped-item stash anymore (per user direction — every newly obtained
