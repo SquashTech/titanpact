@@ -85,8 +85,8 @@ function LevelUpHeroCard({ hero, entry, node, canAct, isAnimating, poolAvailable
       <HeroPortrait heroId={hero.id} className="hero-grid-portrait" />
       <div className="hero-grid-name-row">
         <span className="hero-grid-name">{hero.name}</span>
-        <span className="training-hero-level">Lv {entry.level}</span>
       </div>
+      <span className="training-hero-level">Lv {entry.level}</span>
       <div className="hero-grid-types">
         {rosterEntryTypes(hero, entry).map((t) => (
           <TypeBadge key={t} type={t} />
