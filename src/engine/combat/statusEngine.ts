@@ -7,7 +7,7 @@
 // Stealth's untargetable-while-active redirect (applyStealthRedirect below —
 // narrow enough to stay a literal status-id check, same precedent as Freeze).
 
-import type { StatusDefinition, StatusId, StatusRemovalReason, TargetMode, TypeId } from '../content';
+import type { FieldEffectDefinition, StatusDefinition, StatusId, StatusRemovalReason, TargetMode, TypeId } from '../content';
 import type { CombatState, StatusInstance } from '../state';
 import { hasStatus } from '../state';
 import type { CombatEvent } from '../events';
@@ -110,10 +110,17 @@ export function tickEndOfRound(
   state: CombatState,
   round: number,
   statusDefs: Record<string, StatusDefinition>,
+  fieldEffects: Record<string, FieldEffectDefinition>,
   maxHpOf: (combatantId: string) => number
 ): { state: CombatState; events: CombatEvent[] } {
   let working = state;
   const events: CombatEvent[] = [];
+
+  // Scorched Land (docs/field-effects.md): suppresses decay for whichever
+  // status ids its definition lists (Burn) — the DoT tick itself is
+  // untouched, only the post-tick halving below is skipped.
+  const activeFieldEffectId = working.activeFieldEffect?.fieldEffectId;
+  const activeFieldEffectDef = activeFieldEffectId ? fieldEffects[activeFieldEffectId] : undefined;
 
   for (const combatantId of Object.keys(working.combatants)) {
     const combatant = working.combatants[combatantId];
@@ -124,6 +131,7 @@ export function tickEndOfRound(
       const def = statusDefs[statusId];
       if (!def || !instance || !def.ticksAtEndOfRound) continue;
       if (def.activeOnly && !working.active[combatant.side].includes(combatantId)) continue;
+      const decaySuppressed = activeFieldEffectDef?.suppressesStatusDecay?.includes(statusId) ?? false;
 
       if (def.pipeline === 'timer') {
         const newDuration = (instance.duration ?? 0) - 1;
@@ -148,8 +156,9 @@ export function tickEndOfRound(
         // Computed up front so the StatusTicked event's newMagnitude is already the
         // post-decay value the view should replay onto combatant.statuses. Left
         // undefined for non-decaying statuses (Bleed) — it has no magnitude to begin
-        // with, and a stray 0 would render as "Bleed 0" instead of "Bleed".
-        const decayedMagnitude = def.decay === 'halve' ? Math.floor((instance.magnitude ?? 0) / 2) : undefined;
+        // with, and a stray 0 would render as "Bleed 0" instead of "Bleed". Also left
+        // undefined while Scorched Land suppresses this status's decay.
+        const decayedMagnitude = def.decay === 'halve' && !decaySuppressed ? Math.floor((instance.magnitude ?? 0) / 2) : undefined;
 
         events.push({
           type: 'StatusTicked',
@@ -164,7 +173,7 @@ export function tickEndOfRound(
         working = hpResult.state;
         events.push(...hpResult.events);
 
-        if (def.decay === 'halve') {
+        if (def.decay === 'halve' && !decaySuppressed) {
           if ((decayedMagnitude ?? 0) <= 0) {
             const rm = removeStatus(working, round, combatantId, statusId, 'decay');
             working = rm.state;

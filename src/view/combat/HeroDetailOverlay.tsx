@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { moves } from '../../data/moves';
+import { fieldEffects } from '../../data/fieldEffects';
 import type { HeroDefinition, StatKey } from '../../engine/content';
-import type { Combatant } from '../../engine/state';
+import type { ActiveFieldEffect, Combatant } from '../../engine/state';
 import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
@@ -22,6 +23,8 @@ interface Props {
   /** null when the roster this combatant belongs to has no matching entry (shouldn't happen in practice, guarded for safety). */
   rosterEntry: RosterEntry | null;
   equipmentLookup: Record<string, EquipmentDefinition>;
+  /** The battlefield's current Field Effect, if any (docs/field-effects.md) — threaded into getEffectiveStat so a Verdant Earth-boosted Attack/Intelligence reads correctly here instead of showing the unboosted loadout value. */
+  activeFieldEffect: ActiveFieldEffect | null;
   onClose: () => void;
 }
 
@@ -45,7 +48,7 @@ function fmtStatus(statusId: string, magnitude: number | undefined, duration: nu
  * anywhere (docs/architecture.md presentation-layer convention shared with
  * the battle log overlay).
  */
-export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLookup, onClose }: Props) {
+export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLookup, activeFieldEffect, onClose }: Props) {
   // Loadout (equipment/relic/Evolution/Class) grants combined with whatever a
   // move/passive has changed THIS fight — this full sheet shows both, unlike
   // the battlefield card's badges (CombatantCard.tsx activeStatMods), which
@@ -53,8 +56,11 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
   const totalModifiers = Object.fromEntries(
     STAT_ORDER.map((stat) => [stat, (combatant.baselineStatModifiers[stat] ?? 0) + (combatant.statModifiers[stat] ?? 0)])
   ) as Record<StatKey, number>;
+  const fieldEffectCtx = { active: activeFieldEffect, defs: fieldEffects };
   const hasModifiers = STAT_ORDER.some((stat) => totalModifiers[stat] !== 0);
-  const effectiveTotals = Object.fromEntries(STAT_ORDER.map((stat) => [stat, getEffectiveStat(hero, combatant, stat)])) as Record<StatKey, number>;
+  const effectiveTotals = Object.fromEntries(
+    STAT_ORDER.map((stat) => [stat, getEffectiveStat(hero, combatant, stat, fieldEffectCtx)])
+  ) as Record<StatKey, number>;
   const evolved = rosterEntry ? chosenEvolutionPaths(progressionTable, rosterEntry) : [];
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);

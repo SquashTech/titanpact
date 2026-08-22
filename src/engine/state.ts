@@ -4,7 +4,7 @@
 // survives a run) are separate, longer-lived tiers that build on this one —
 // out of scope for this engine slice. Do not fold them in here.
 
-import type { FieldEffectId, HeroDefinition, MoveDefinition, PassiveId, StatKey, StatLine, StatusId, TypeId } from './content';
+import type { FieldEffectDefinition, FieldEffectId, HeroDefinition, MoveDefinition, PassiveId, StatKey, StatLine, StatusId, TypeId } from './content';
 import type { RngState } from './rng/seededRng';
 
 export type Side = 'A' | 'B';
@@ -135,19 +135,35 @@ export function hasAffordableMove(currentMana: number, moveIds: readonly string[
   return moveIds.some((id) => currentMana >= moves[id].manaCost);
 }
 
+/** Field Effect context threaded into getEffectiveStat/getCombatStatDelta only by callers that need a Field-Effect-driven stat hook (currently just Verdant Earth's statBonusEqualToRegen) — omit entirely and both functions behave exactly as before. */
+export interface FieldEffectContext {
+  active: ActiveFieldEffect | null;
+  defs: Record<string, FieldEffectDefinition>;
+}
+
 export function getEffectiveStat(
   hero: HeroDefinition,
   combatant: Combatant,
-  stat: StatKey
+  stat: StatKey,
+  fieldEffectCtx?: FieldEffectContext
 ): number {
   const base = hero.baseStats[stat];
   const modifier = (combatant.baselineStatModifiers[stat] ?? 0) + (combatant.statModifiers[stat] ?? 0);
-  const raw = base + modifier;
+  let raw = base + modifier;
 
   // Freeze (docs/conditions.md): halves Speed. Boolean-shape — presence is
   // the whole signal, no magnitude to read.
   if (stat === 'speed' && hasStatus(combatant, FREEZE_STATUS_ID)) {
-    return Math.floor(raw / 2);
+    raw = Math.floor(raw / 2);
+  }
+
+  // Verdant Earth (docs/field-effects.md): while active, adds a bonus equal
+  // to the combatant's own effective Regen to every stat its definition lists
+  // in statBonusEqualToRegen. The recursive call omits fieldEffectCtx (mpRegen
+  // itself is never a target of this bonus), so it can't recurse further.
+  const activeDef = fieldEffectCtx?.active ? fieldEffectCtx.defs[fieldEffectCtx.active.fieldEffectId] : undefined;
+  if (activeDef?.statBonusEqualToRegen?.includes(stat)) {
+    raw += getEffectiveStat(hero, combatant, 'mpRegen');
   }
 
   return raw;
@@ -169,9 +185,9 @@ export function statusMagnitude(combatant: Combatant, statusId: StatusId): numbe
  * like Freeze's Speed halving). Used by the view layer to badge only
  * temporary combat buffs/debuffs, not the hero's equipped stat block.
  */
-export function getCombatStatDelta(hero: HeroDefinition, combatant: Combatant, stat: StatKey): number {
+export function getCombatStatDelta(hero: HeroDefinition, combatant: Combatant, stat: StatKey, fieldEffectCtx?: FieldEffectContext): number {
   const baseline = hero.baseStats[stat] + (combatant.baselineStatModifiers[stat] ?? 0);
-  return getEffectiveStat(hero, combatant, stat) - baseline;
+  return getEffectiveStat(hero, combatant, stat, fieldEffectCtx) - baseline;
 }
 
 export function getMaxHp(hero: HeroDefinition, combatant: Combatant): number {

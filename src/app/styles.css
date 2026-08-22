@@ -145,8 +145,8 @@ body {
   max-width: 45%;
   padding: 3px 8px;
   border-radius: 999px;
-  border: 1px solid var(--magical);
-  color: var(--magical);
+  border: 1px solid rgb(var(--field-effect-rgb, 195, 86, 208));
+  color: rgb(var(--field-effect-rgb, 195, 86, 208));
   background: var(--panel);
   white-space: nowrap;
   overflow: hidden;
@@ -160,25 +160,27 @@ body {
 }
 
 .field-effect-detail-panel {
+  /* Overridden inline per effect (FieldEffectDetailOverlay.tsx) — this is just the pre-mount fallback so the panel never flashes unstyled. */
   border-top-color: var(--magical);
 }
 
 /* Ambient battlefield treatment while a Field Effect is active — a pulsing
-   magical border/glow plus a diagonal shimmer sweep, so the charged-up state
-   reads across the whole battlefield rather than living only in the small
-   divider badge. Tinted --magical to match the badge; the only Field Effect
-   so far (Surging Magic) is Arcane-flavored, so this is intentionally not
-   yet generalized to a per-effect color — revisit if/when a non-Arcane
-   Field Effect ships (docs/field-effects.md open questions). `overflow:
-   hidden` is scoped to this class (rather than living on the base
-   .battlefield) so it only clips while the shimmer sweep actually needs
-   containing. Both pseudo-elements sit at z-index: -1 inside .battlefield's
-   own stacking context (position: relative), which paints them behind the
-   in-flow team-row cards — same trick as .battlefield-divider's badge, just
-   for depth instead of position — so HP/MP legibility never suffers. */
+   border/glow plus a diagonal shimmer sweep, so the charged-up state reads
+   across the whole battlefield rather than living only in the small divider
+   badge. Tinted via --field-effect-rgb, an "r, g, b" triplet FightScreen.tsx
+   sets inline per the active effect's flavorType (typeColors.ts
+   getTypeColorRgb) — falls back to Surging Magic's original Arcane purple
+   (195, 86, 208) if the var is ever unset, so a missing/unknown flavorType
+   degrades gracefully instead of rendering colorless. `overflow: hidden` is
+   scoped to this class (rather than living on the base .battlefield) so it
+   only clips while the shimmer sweep actually needs containing. Both
+   pseudo-elements sit at z-index: -1 inside .battlefield's own stacking
+   context (position: relative), which paints them behind the in-flow
+   team-row cards — same trick as .battlefield-divider's badge, just for
+   depth instead of position — so HP/MP legibility never suffers. */
 .battlefield.field-effect-active {
   overflow: hidden;
-  border-color: var(--magical);
+  border-color: rgb(var(--field-effect-rgb, 195, 86, 208));
   animation: field-effect-border-pulse 2.6s ease-in-out infinite;
 }
 
@@ -193,7 +195,7 @@ body {
 .battlefield.field-effect-active::before {
   inset: 0;
   border-radius: inherit;
-  background: radial-gradient(ellipse 130% 90% at 50% 50%, rgba(139, 127, 224, 0.22), transparent 68%);
+  background: radial-gradient(ellipse 130% 90% at 50% 50%, rgba(var(--field-effect-rgb, 195, 86, 208), 0.22), transparent 68%);
   animation: field-effect-glow-pulse 2.6s ease-in-out infinite;
 }
 
@@ -202,7 +204,7 @@ body {
   left: -60%;
   width: 40%;
   height: 140%;
-  background: linear-gradient(100deg, transparent, rgba(139, 127, 224, 0.3), transparent);
+  background: linear-gradient(100deg, transparent, rgba(var(--field-effect-rgb, 195, 86, 208), 0.3), transparent);
   transform: rotate(12deg);
   animation: field-effect-shimmer-sweep 4s ease-in-out infinite;
 }
@@ -210,10 +212,10 @@ body {
 @keyframes field-effect-border-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 1px rgba(139, 127, 224, 0.35), 0 0 12px rgba(139, 127, 224, 0.15);
+    box-shadow: 0 0 0 1px rgba(var(--field-effect-rgb, 195, 86, 208), 0.35), 0 0 12px rgba(var(--field-effect-rgb, 195, 86, 208), 0.15);
   }
   50% {
-    box-shadow: 0 0 0 1px rgba(139, 127, 224, 0.85), 0 0 24px rgba(139, 127, 224, 0.4);
+    box-shadow: 0 0 0 1px rgba(var(--field-effect-rgb, 195, 86, 208), 0.85), 0 0 24px rgba(var(--field-effect-rgb, 195, 86, 208), 0.4);
   }
 }
 

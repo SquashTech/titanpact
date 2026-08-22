@@ -28,7 +28,7 @@ import { FieldEffectDetailOverlay } from './FieldEffectDetailOverlay';
 import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
-import { getTypeColor } from './typeColors';
+import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { CategoryBadge, MoveKindBadge, KIND_LABELS, useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
@@ -621,6 +621,7 @@ export function FightScreen({
           onSelectTarget={() => handleTargetClick(id)}
           onInspect={() => setInspecting(id)}
           popup={popups[id]}
+          activeFieldEffect={combat.activeFieldEffect}
         />
       );
     }
@@ -662,7 +663,14 @@ export function FightScreen({
         />
       )}
 
-      <div className={`battlefield${combat.activeFieldEffect ? ' field-effect-active' : ''}`}>
+      <div
+        className={`battlefield${combat.activeFieldEffect ? ' field-effect-active' : ''}`}
+        style={
+          combat.activeFieldEffect
+            ? ({ '--field-effect-rgb': getTypeColorRgb(fieldEffects[combat.activeFieldEffect.fieldEffectId]?.flavorType ?? 'Arcane') } as CSSProperties)
+            : undefined
+        }
+      >
         <div className="team-row enemy">
           {renderActiveSlot(AI_SIDE, 0)}
           {renderActiveSlot(AI_SIDE, 1)}
@@ -941,6 +949,7 @@ export function FightScreen({
                         }}
                         onInspect={() => setInspecting(benchId)}
                         popup={popups[benchId]}
+                        activeFieldEffect={combat.activeFieldEffect}
                       />
                     );
                   })}
@@ -1042,6 +1051,7 @@ export function FightScreen({
               combatant={combatant}
               rosterEntry={rosterEntry}
               equipmentLookup={equipment}
+              activeFieldEffect={combat.activeFieldEffect}
               onClose={() => setInspecting(null)}
             />
           );

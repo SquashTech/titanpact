@@ -38,53 +38,92 @@ interface FieldEffectDefinition {
   id: FieldEffectId;
   name: string;
   description: string;
+  flavorType?: TypeId; // presentational only — the view's badge/glow color
   mpRegenMultiplier?: number; // e.g. 2 = doubled
+  suppressesStatusDecay?: readonly StatusId[]; // e.g. ['Burn']
+  reversesSpeedOrder?: boolean;
+  healPriorityBonus?: number; // added to a heal-kind move's priority bracket
+  statBonusEqualToRegen?: readonly StatKey[]; // e.g. ['attack', 'intelligence']
 }
 ```
 
 Same registry pattern as every other content type: a plain object literal keyed by id,
-`src/data/fieldEffects.ts`. The engine (`fieldEffectEngine.ts`, `manaRegen.ts`) reads
-`FieldEffectDefinition` flags generically — no per-effect special cases, same
-discipline as `StatusDefinition`/`PassiveHook`.
+`src/data/fieldEffects.ts`. The engine reads `FieldEffectDefinition` flags
+generically — no per-effect special cases, same discipline as
+`StatusDefinition`/`PassiveHook` — each flag owned by the one engine module that
+actually applies it:
 
-### Effect surfaces: implemented vs. deferred
-
-The original ask named two kinds of thing a Field Effect should be able to do:
-"affect all heroes on the field, or certain type of moves." Only the first is wired up
-so far:
-
-- **`mpRegenMultiplier`** (implemented): a flat multiplier on every combatant's MP
-  Regen, applied in the regen pipeline itself (`manaRegen.ts`) — never folded into the
+- **`mpRegenMultiplier`** — `engine/combat/manaRegen.ts`. A flat multiplier on every
+  combatant's MP Regen, applied in the regen pipeline itself — never folded into the
   `mpRegen` stat, the same discipline that keeps damage modifiers out of the stat
   pipeline (CLAUDE.md "Two-pipeline separation"), generalized to the regen pipeline.
-  Surging Magic (below) is the only content using it.
-- **A type-restricted damage-pipeline modifier** ("certain type of moves" — e.g. a
-  future "Scorched Land" boosting Fire-type moves for both sides) is a **deliberately
-  deferred extension point**, not yet wired into any engine module. `PassiveHook`
-  and `StatusDefinition.triggerTypes` were both grown incrementally, one shape at a
-  time, only when real content needed the next one — Field Effects follows the same
-  discipline rather than speculatively building a damage-modifier hook with zero
-  consumers today. Add it (a `moveTypes`/`amount` shape on `FieldEffectDefinition`,
-  collected into `resolveRound.ts`'s `modifiers` array the same way
-  `collectPassiveDamageModifiers` already is) when the first type-restricted Field
-  Effect is actually authored.
+- **`suppressesStatusDecay`** — `engine/combat/statusEngine.ts` `tickEndOfRound`. Lists
+  status ids whose end-of-round decay (`StatusDefinition.decay`) is skipped while the
+  effect is active; the DoT/HoT tick itself still fires, only the post-tick halving is
+  suppressed.
+- **`reversesSpeedOrder`** — `engine/combat/priority.ts` `orderActions`. Flips the
+  Speed tiebreaker to ascending (slowest-first) *within* a shared priority bracket.
+  Priority BRACKETS themselves are untouched — still sorted descending — so a move
+  with nonzero authored `priority` still resolves in its own bracket regardless of the
+  flip.
+- **`healPriorityBonus`** — `engine/combat/priority.ts` `orderActions`
+  (`actionPriority`). Added to a `kind: 'heal'` move's priority bracket, read
+  generically off the move's own `kind` rather than a per-move/per-status check.
+- **`statBonusEqualToRegen`** — `engine/state.ts` `getEffectiveStat`. A genuine
+  stat-pipeline bonus (pipeline 1, not a damage modifier): every stat listed gains a
+  bonus equal to the combatant's own effective `mpRegen`. Threaded as an optional
+  `FieldEffectContext` argument (`{ active, defs }`) so every existing 3-arg call site
+  (tests, non-combat stat sheets) is unaffected; `damagePipeline.ts`'s
+  `resolveStatRatio` and `resolveRound.ts`'s per-hit `DamageDealt` readout both pass it
+  through, and it's recomputed fresh per hit (not hoisted before the action loop) so a
+  Field Effect set by a faster action earlier the same round already applies to a
+  slower action's damage later that round.
 
-## First content: Surging Magic
+A **type-restricted damage-pipeline modifier** ("certain type of moves" from the
+original ask — e.g. a future effect boosting Fire-type moves specifically) remains a
+**deliberately deferred extension point**, not yet wired into any engine module.
+`PassiveHook` and `StatusDefinition.triggerTypes` were both grown incrementally, one
+shape at a time, only when real content needed the next one — Field Effects follows
+the same discipline. Add it (a `moveTypes`/`amount` shape on `FieldEffectDefinition`,
+collected into `resolveRound.ts`'s `modifiers` array the same way
+`collectPassiveDamageModifiers` already is) when the first type-restricted Field
+Effect is actually authored.
 
-Arcane-flavored (mainly for Arcane users, per the original ask), but its effect is
-global — it doubles MP Regen for every hero on the field, both sides alike, same as
-weather would in Pokémon.
+## Content (2026-08-21 batch)
 
-- `src/data/fieldEffects.ts` — `surgingMagic`, `mpRegenMultiplier: 2`.
-- `src/data/moves.ts` — `arcaneSurge` (Arcane, `kind: 'buff'`, `target: 'self'`,
-  20 mana, sets `surgingMagic`). Attached to Glyph's (`runescribe`, the Arcane
-  starter) `moveIds` as a fourth move — the same "small dedicated buff move" pattern
-  `moves.ts`'s file header already documents for status-granting moves like `vanish`
-  (Stealth) and `secondWind` (Regen).
+Each is flavored around one type (`flavorType`, presentational only) but — like
+Surging Magic — mechanically **global**, affecting both sides. Every setting move
+mirrors `arcaneSurge`'s shape (`kind: 'buff'`, `target: 'self'`, 20 mana, sets its
+field effect) and is attached as a fourth move to that type's starter, the same "small
+dedicated buff move" pattern `moves.ts`'s file header documents for status-granting
+moves like `vanish` (Stealth) and `secondWind` (Regen):
 
-This is placeholder-tier balance content (mana cost, and whether Glyph specifically
-should be the one to carry it, are both open to reassignment) — the mechanic and the
-first definition are real, but nothing here has been through a tuning pass.
+| Field Effect | flavorType | Effect | Move (starter) |
+| --- | --- | --- | --- |
+| Surging Magic | Arcane | Doubles MP Regen | `arcaneSurge` (Glyph) |
+| Scorched Land | Fire | Burn no longer decays | `scorchTheEarth` (Crimson) |
+| Stasis Bubble | Mind | Reverses same-bracket Speed order | `stasisField` (Cortex) |
+| Sanctuary | Light | Heal-kind moves get +1 priority | `consecrate` (Solace) |
+| Verdant Earth | Nature | +Attack/+Intelligence equal to Regen | `overgrowth` (Sylva) |
+
+This is placeholder-tier balance content (mana costs, and which starter carries each
+move, are both open to reassignment) — the mechanics and the definitions are real, but
+nothing here has been through a tuning pass.
+
+### View layer: per-effect color
+
+The battlefield glow/border and the divider badge (`FightScreen.tsx`) were originally
+hardcoded to Surging Magic's Arcane purple — the CSS itself flagged this as
+provisional ("revisit if/when a non-Arcane Field Effect ships"). Now generalized:
+`FightScreen.tsx` sets a `--field-effect-rgb` custom property (an "r, g, b" triplet
+from `typeColors.ts` `getTypeColorRgb(def.flavorType)`) on `.battlefield`, and
+`styles.css`'s glow/badge/keyframes all read `rgba(var(--field-effect-rgb, 195, 86,
+208), …)` — the fallback triplet is Arcane's own color, so an effect with no
+`flavorType` still renders instead of going colorless.
+`FieldEffectDetailOverlay.tsx` sets its own border-top-color inline the same way
+(`getTypeColor`, not the custom property) since it's portalled to `document.body` and
+so sits outside `.battlefield`'s subtree — custom properties don't cross a portal
+boundary.
 
 ## Open questions — do not silently resolve
 
@@ -99,6 +138,9 @@ first definition are real, but nothing here has been through a tuning pass.
   `setFieldEffect` `PassiveEffect` shape technically supports it. Revisit once a
   Field Effect is actually meant to be always-on from a relic rather than
   move-triggered.
-- **Variety beyond Surging Magic** — the framework is generic (any future effect is
-  pure data in `src/data/fieldEffects.ts`), but no second Field Effect has been
-  designed yet. Nothing here should be read as implying what comes next.
+- **Verdant Earth's bonus applying to benched heroes too** — `getEffectiveStat` has no
+  active/bench distinction, so (like Surging Magic's `mpRegenMultiplier`) the
+  Attack/Intelligence bonus applies to every combatant regardless of bench status.
+  Consistent with existing precedent, but not something a designer has explicitly
+  signed off on for this specific effect — flag if that's ever meant to be
+  active-only.

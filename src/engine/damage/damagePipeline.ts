@@ -10,7 +10,7 @@
 // multiplier term here.
 
 import type { HeroDefinition, MoveDefinition, StatKey, StatusDefinition } from '../content';
-import type { Combatant, DamageCategory } from '../state';
+import type { Combatant, DamageCategory, FieldEffectContext } from '../state';
 import { getEffectiveStat } from '../state';
 import { nextRange, nextFloat, type RngState } from '../rng/seededRng';
 import { resolveStab, resolveTypeMult, type TypeChart } from './typeMult';
@@ -84,17 +84,18 @@ export function statKeysForCategory(category: DamageCategory): readonly [StatKey
   return category === 'physical' ? (['attack', 'defense'] as const) : (['intelligence', 'wisdom'] as const);
 }
 
-/** Pipeline 1: the off/def ratio only. Nothing damage-shaped may enter here. */
+/** Pipeline 1: the off/def ratio only. Nothing damage-shaped may enter here. `fieldEffectCtx` is a stat-pipeline input (Verdant Earth's statBonusEqualToRegen), not a damage modifier — see getEffectiveStat. */
 export function resolveStatRatio(
   category: DamageCategory,
   attackerHero: HeroDefinition,
   attacker: Combatant,
   defenderHero: HeroDefinition,
-  defender: Combatant
+  defender: Combatant,
+  fieldEffectCtx?: FieldEffectContext
 ): number {
   const [offKey, defKey] = statKeysForCategory(category);
-  const offStat = getEffectiveStat(attackerHero, attacker, offKey);
-  const defStat = getEffectiveStat(defenderHero, defender, defKey);
+  const offStat = getEffectiveStat(attackerHero, attacker, offKey, fieldEffectCtx);
+  const defStat = getEffectiveStat(defenderHero, defender, defKey, fieldEffectCtx);
   return offStat / defStat;
 }
 

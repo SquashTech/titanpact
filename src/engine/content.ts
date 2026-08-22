@@ -275,26 +275,48 @@ export type FieldEffectId = string;
  * Settable by a move (`MoveDefinition.fieldEffectApplication`) or a Passive
  * (`PassiveEffect` `setFieldEffect`, i.e. a relic or ability).
  *
- * Only one effect shape is implemented so far — `mpRegenMultiplier` — since
- * that's all Surging Magic (the first content) needs. Extend this shape only
- * when a Field Effect actually needs it (same discipline as
- * StatusDefinition/PassiveHook): docs/field-effects.md flags the
- * "certain type of moves" surface (a damage-pipeline modifier restricted to
- * specific move types) as a deliberately deferred extension point, not yet
- * wired into any engine module.
+ * Five effect shapes are implemented so far, each read generically by its own
+ * engine module rather than special-cased by id — same discipline as
+ * StatusDefinition/PassiveHook. Extend this shape only when a new Field
+ * Effect actually needs it: docs/field-effects.md flags the "certain type of
+ * moves" surface (a damage-pipeline modifier restricted to specific move
+ * types) as a deliberately deferred extension point, still not wired into any
+ * engine module.
  */
 export interface FieldEffectDefinition {
   id: FieldEffectId;
   name: string;
   /** Player-facing, required — same discipline as PassiveDefinition.description. */
   description: string;
+  /**
+   * Presentational only — the engine never reads this (same discipline as
+   * MoveDefinition.description). Which type's palette (view/combat/
+   * typeColors.ts) the view layer tints this effect's badge/glow with, since
+   * every Field Effect so far is flavored around one type even though its
+   * mechanical effect is global to both sides.
+   */
+  flavorType?: TypeId;
   /** Flat multiplier applied to every combatant's MP Regen while this effect is active (e.g. 2 = doubled). Applied in the regen pipeline itself (engine/combat/manaRegen.ts) — never folded into the mpRegen stat, same discipline that keeps damage modifiers out of the stat pipeline. */
   mpRegenMultiplier?: number;
+  /** Status ids whose end-of-round decay (StatusDefinition.decay) is suppressed while this effect is active — e.g. Scorched Land holding Burn at full magnitude instead of halving it. Read by statusEngine.ts tickEndOfRound; the magnitude/DoT tick itself is untouched, only the post-tick decay step is skipped. */
+  suppressesStatusDecay?: readonly StatusId[];
+  /** If true, actions within the same priority bracket resolve in ASCENDING (slowest-first) Speed order instead of the normal descending order — e.g. Stasis Bubble. Priority bracket separation itself is untouched: a move with nonzero authored priority still resolves in its own bracket before/after priority-0 moves, same as always. Read by combat/priority.ts orderActions. */
+  reversesSpeedOrder?: boolean;
+  /** Added to a heal-kind move's priority bracket while this effect is active — e.g. Sanctuary's +1. Read by combat/priority.ts orderActions. */
+  healPriorityBonus?: number;
+  /** Stats that gain a bonus equal to the combatant's own effective Regen while this effect is active — e.g. Verdant Earth granting Attack/Intelligence equal to Regen. A genuine stat-pipeline bonus (CLAUDE.md "Two-pipeline separation" pipeline 1), not a damage-pipeline modifier — read by state.ts getEffectiveStat. */
+  statBonusEqualToRegen?: readonly StatKey[];
 }
 
 /** A FieldEffectDefinition with no implemented effect shape is invalid content (nothing for it to do) — same discipline as isValidPassiveDefinition. */
 export function isValidFieldEffectDefinition(fieldEffect: FieldEffectDefinition): boolean {
-  return fieldEffect.mpRegenMultiplier !== undefined;
+  return (
+    fieldEffect.mpRegenMultiplier !== undefined ||
+    (fieldEffect.suppressesStatusDecay?.length ?? 0) > 0 ||
+    fieldEffect.reversesSpeedOrder === true ||
+    fieldEffect.healPriorityBonus !== undefined ||
+    (fieldEffect.statBonusEqualToRegen?.length ?? 0) > 0
+  );
 }
 
 export interface MoveDefinition {

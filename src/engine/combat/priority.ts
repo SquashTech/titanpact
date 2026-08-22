@@ -7,6 +7,7 @@ import type { Action } from './actions';
 import type { CombatState } from '../state';
 import type { HeroLookup } from '../state';
 import { getEffectiveStat } from '../state';
+import type { FieldEffectDefinition, MoveDefinition } from '../content';
 import { nextInt, type RngState } from '../rng/seededRng';
 
 /**
@@ -27,10 +28,22 @@ export const SWITCH_PRIORITY_BRACKET = Number.POSITIVE_INFINITY;
  */
 export const REST_PRIORITY_BRACKET = Number.NEGATIVE_INFINITY;
 
-function actionPriority(action: Action, movePriority: (moveId: string) => number): number {
+/**
+ * Sanctuary's hook (docs/field-effects.md): a heal-kind move's priority
+ * bracket gets `healPriorityBonus` added while the effect is active. Read
+ * generically off the move's own `kind`, same discipline as every other
+ * Field Effect flag — no hardcoded move/status id check.
+ */
+function actionPriority(
+  action: Action,
+  moves: Record<string, MoveDefinition>,
+  activeFieldEffectDef: FieldEffectDefinition | undefined
+): number {
   if (action.kind === 'switch') return SWITCH_PRIORITY_BRACKET;
   if (action.kind === 'rest') return REST_PRIORITY_BRACKET;
-  return movePriority(action.moveId);
+  const move = moves[action.moveId];
+  const healBonus = move.kind === 'heal' ? (activeFieldEffectDef?.healPriorityBonus ?? 0) : 0;
+  return move.priority + healBonus;
 }
 
 export interface OrderedAction {
@@ -43,25 +56,37 @@ export interface OrderedAction {
  * Orders declared actions for resolution. Returns the order plus the advanced
  * RNG state (ties consume RNG in a fixed, documented sequence: one tiebreak
  * roll per colliding pair, processed left-to-right over the pre-sorted list).
+ *
+ * Stasis Bubble (docs/field-effects.md) flips the Speed tiebreaker to
+ * ascending (slowest-first) via `reversesSpeedOrder` — priority BRACKETS are
+ * untouched (still sorted descending, higher-priority first), so a move with
+ * nonzero authored priority "still functions as intended" and resolves in its
+ * own bracket regardless of the flip; only which end of a shared bracket goes
+ * first changes.
  */
 export function orderActions(
   state: CombatState,
   heroes: HeroLookup,
   actions: readonly Action[],
-  movePriority: (moveId: string) => number,
-  rngState: RngState
+  moves: Record<string, MoveDefinition>,
+  rngState: RngState,
+  fieldEffects: Record<string, FieldEffectDefinition> = {}
 ): { ordered: Action[]; nextRngState: RngState } {
+  const activeFieldEffectId = state.activeFieldEffect?.fieldEffectId;
+  const activeFieldEffectDef = activeFieldEffectId ? fieldEffects[activeFieldEffectId] : undefined;
+  const speedDirection = activeFieldEffectDef?.reversesSpeedOrder ? 1 : -1;
+
   const withKeys: OrderedAction[] = actions.map((action) => {
     const combatant = state.combatants[action.combatantId];
     const hero = heroes[combatant.heroId];
     return {
       action,
-      priority: actionPriority(action, movePriority),
+      priority: actionPriority(action, moves, activeFieldEffectDef),
       speed: getEffectiveStat(hero, combatant, 'speed'),
     };
   });
 
-  withKeys.sort((a, b) => b.priority - a.priority || b.speed - a.speed);
+  withKeys.sort((a, b) => b.priority - a.priority || (a.speed - b.speed) * speedDirection);
 
   // Resolve exact priority+speed ties deterministically via the seeded RNG.
   let cursor = rngState;

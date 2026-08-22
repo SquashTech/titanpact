@@ -40,7 +40,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Crimson',
     types: ['Fire'],
     baseStats: { hp: 90, attack: 25, defense: 35, intelligence: 80, wisdom: 45, speed: 60, manaPool: 85, mpRegen: 9 },
-    moveIds: ['flareBurst', 'weaken', 'restoreVigor'],
+    moveIds: ['flareBurst', 'weaken', 'restoreVigor', 'scorchTheEarth'],
     starter: true,
   },
   tidecaller: {
@@ -67,7 +67,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Sylva',
     types: ['Nature'],
     baseStats: { hp: 100, attack: 35, defense: 45, intelligence: 80, wisdom: 70, speed: 65, manaPool: 90, mpRegen: 10 },
-    moveIds: ['venomousBite', 'mendWounds', 'secondWind'],
+    moveIds: ['venomousBite', 'mendWounds', 'secondWind', 'overgrowth'],
     starter: true,
   },
   // Recruit-only (starter: false) since 2026-08-20 — Storm's starter slot is
@@ -146,7 +146,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Solace',
     types: ['Light'],
     baseStats: { hp: 100, attack: 40, defense: 65, intelligence: 55, wisdom: 85, speed: 40, manaPool: 85, mpRegen: 9 },
-    moveIds: ['radiantBeam', 'restoreVigor', 'purify'],
+    moveIds: ['radiantBeam', 'restoreVigor', 'purify', 'consecrate'],
     starter: true,
   },
   runescribe: {
@@ -162,7 +162,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Cortex',
     types: ['Mind'],
     baseStats: { hp: 90, attack: 30, defense: 40, intelligence: 75, wisdom: 65, speed: 55, manaPool: 65, mpRegen: 7 },
-    moveIds: ['psychicLance', 'mindSpike', 'curseMind'],
+    moveIds: ['psychicLance', 'mindSpike', 'curseMind', 'stasisField'],
     starter: true,
   },
   forgewright: {

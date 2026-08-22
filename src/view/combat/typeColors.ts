@@ -59,6 +59,19 @@ function hexToRgb(hex: string): [number, number, number] | null {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
+/**
+ * "r, g, b" triplet for a type's color, for CSS that needs to build its own
+ * rgba()/translucent variants (Field Effect badge/glow — FightScreen.tsx sets
+ * this as a --field-effect-rgb custom property so styles.css can vary opacity
+ * per state without a fixed color baked into the stylesheet). Falls back to a
+ * neutral gray for the non-hex hsl() fallback getTypeColor produces for an
+ * unlisted type, same graceful-degrade spirit as getTypeColor itself.
+ */
+export function getTypeColorRgb(type: string): string {
+  const rgb = hexToRgb(getTypeColor(type));
+  return rgb ? rgb.join(', ') : '150, 150, 150';
+}
+
 /** Picks readable badge text (near-black or near-white) against a type color background. Non-hex colors (the hsl() fallback above) default to dark text, which reads fine against that fallback's fixed 60% lightness. */
 export function getContrastText(bg: string): string {
   const rgb = hexToRgb(bg);

@@ -62,7 +62,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
   const maxHpOf = (id: string) => getMaxHp(heroes[working.combatants[id].heroId], working.combatants[id]);
 
-  const { ordered, nextRngState } = orderActions(working, heroes, actions, (moveId) => moves[moveId].priority, working.rngState);
+  const { ordered, nextRngState } = orderActions(working, heroes, actions, moves, working.rngState, fieldEffects);
   working = { ...working, rngState: nextRngState };
 
   for (const action of ordered) {
@@ -173,7 +173,12 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           const maxHp = getMaxHp(defenderHero, target);
 
           const attackerNow = working.combatants[action.combatantId];
-          const ratio = resolveStatRatio(move.category, attackerHero, attackerNow, defenderHero, target);
+          // Verdant Earth's Attack/Intelligence bonus (docs/field-effects.md) is a
+          // stat-pipeline input, read fresh here rather than hoisted before the
+          // action loop — a field effect a faster action set earlier THIS round
+          // must already apply to a slower action's damage later in the same round.
+          const fieldEffectCtx = { active: working.activeFieldEffect, defs: fieldEffects };
+          const ratio = resolveStatRatio(move.category, attackerHero, attackerNow, defenderHero, target, fieldEffectCtx);
 
           // Passive-driven damage-pipeline modifiers (e.g. Emberheart's "+20% Fire
           // damage") — collected fresh per hit, evaluated synchronously before the
@@ -214,8 +219,8 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             variance: rolled.variance,
             basePower: move.basePower ?? 0,
             elementalForceBonus: rolled.basePowerBonus,
-            offStat: getEffectiveStat(attackerHero, attackerNow, offKey),
-            defStat: getEffectiveStat(defenderHero, target, defKey),
+            offStat: getEffectiveStat(attackerHero, attackerNow, offKey, fieldEffectCtx),
+            defStat: getEffectiveStat(defenderHero, target, defKey, fieldEffectCtx),
             ratio: rolled.ratio,
             stab: rolled.stab,
             critMultiplier: rolled.critMultiplier,
@@ -338,7 +343,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   working = manaRegen.state;
   events.push(...manaRegen.events);
 
-  const statusTicks = tickEndOfRound(working, round, statuses, maxHpOf);
+  const statusTicks = tickEndOfRound(working, round, statuses, fieldEffects, maxHpOf);
   working = statusTicks.state;
   events.push(...statusTicks.events);
 

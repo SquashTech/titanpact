@@ -18,6 +18,10 @@ import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import { setFieldEffect, tickFieldEffect, FIELD_EFFECT_DURATION_ROUNDS } from '../src/engine/combat/fieldEffectEngine';
 import { applyManaRegen } from '../src/engine/combat/manaRegen';
+import { tickEndOfRound, applyStatus } from '../src/engine/combat/statusEngine';
+import { orderActions } from '../src/engine/combat/priority';
+import { resolveStatRatio } from '../src/engine/damage/damagePipeline';
+import { getEffectiveStat, getMaxHp } from '../src/engine/state';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
@@ -185,4 +189,152 @@ test('fieldEffects: casting arcaneSurge again while it is already active does no
   const { state: next, events } = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'arcaneSurge' }], config);
   assert.strictEqual(events.some((e) => e.type === 'FieldEffectSet'), false);
   assert.strictEqual(next.activeFieldEffect?.roundsRemaining, 2); // ticked down again this round (3 -> 2), not reset to 5
+});
+
+// --- Scorched Land: Burn no longer decays ------------------------------------
+
+test('fieldEffects: Scorched Land suppresses Burn\'s end-of-round decay; normally it halves', () => {
+  const built = twoVTwoFixture(410);
+  const burned = applyStatus(built, 1, 'a1', statuses.Burn, { magnitude: 20 }).state;
+  const maxHpOf = (id: string) => getMaxHp(heroes[burned.combatants[id].heroId], burned.combatants[id]);
+
+  const normalTick = tickEndOfRound(burned, 1, statuses, fieldEffects, maxHpOf);
+  assert.strictEqual(normalTick.state.combatants.a1.statuses.Burn?.magnitude, 10); // halved as usual
+  assert.ok(normalTick.events.some((e) => e.type === 'StatusTicked' && e.statusId === 'Burn' && e.newMagnitude === 10));
+
+  const scorched = { ...burned, activeFieldEffect: { fieldEffectId: 'scorchedLand', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
+  const scorchedTick = tickEndOfRound(scorched, 1, statuses, fieldEffects, maxHpOf);
+  assert.strictEqual(scorchedTick.state.combatants.a1.statuses.Burn?.magnitude, 20); // decay suppressed
+  const tickEvent = scorchedTick.events.find((e) => e.type === 'StatusTicked' && e.statusId === 'Burn');
+  assert.ok(tickEvent && tickEvent.type === 'StatusTicked' && tickEvent.kind === 'damage' && tickEvent.amount === 20 && tickEvent.newMagnitude === undefined);
+});
+
+test('fieldEffects: Scorched Land keeps Burn at full magnitude across several rounds, then decay resumes once it expires', () => {
+  const built = twoVTwoFixture(411);
+  // ironWarden (135 HP) rather than a1 — needs to survive 5 rounds of an
+  // un-decayed 20-damage Burn (100 HP worth) plus one round past expiry.
+  let state = applyStatus(built, 1, 'b1', statuses.Burn, { magnitude: 20 }).state;
+  state = { ...state, activeFieldEffect: { fieldEffectId: 'scorchedLand', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
+
+  // 5 rounds of Scorched Land: Burn deals its full 20 every round without ever halving.
+  for (let i = 0; i < FIELD_EFFECT_DURATION_ROUNDS; i++) {
+    state = resolveRound(state, [], config).state;
+    assert.strictEqual(state.combatants.b1.statuses.Burn?.magnitude, 20, `still full magnitude after round ${i + 1}`);
+  }
+  assert.strictEqual(state.activeFieldEffect, null); // expired exactly on schedule
+
+  // Now that Scorched Land is gone, the next end-of-round tick halves it as normal.
+  state = resolveRound(state, [], config).state;
+  assert.strictEqual(state.combatants.b1.statuses.Burn?.magnitude, 10);
+});
+
+// --- Stasis Bubble: reverse Speed order within a shared priority bracket ----
+
+test('fieldEffects: Stasis Bubble reverses the Speed tiebreak within a shared priority bracket', () => {
+  const state = twoVTwoFixture(420);
+  const actions: Action[] = [
+    { kind: 'move', combatantId: 'a1', moveId: 'cinderBite', declaredTarget: 'b1' }, // cinderKnight, speed 50
+    { kind: 'move', combatantId: 'b2', moveId: 'venomousBite', declaredTarget: 'a1' }, // wildOracle, speed 65
+  ];
+
+  const normal = orderActions(state, heroes, actions, moves, state.rngState, fieldEffects);
+  assert.deepStrictEqual(normal.ordered.map((a) => a.combatantId), ['b2', 'a1']); // faster (65) first, as always
+
+  const stasis = { ...state, activeFieldEffect: { fieldEffectId: 'stasisBubble', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
+  const reversed = orderActions(stasis, heroes, actions, moves, stasis.rngState, fieldEffects);
+  assert.deepStrictEqual(reversed.ordered.map((a) => a.combatantId), ['a1', 'b2']); // slower (50) first
+});
+
+test('fieldEffects: Stasis Bubble does not touch priority BRACKETS — a priority move still resolves in its own bracket', () => {
+  const state = twoVTwoFixture(421);
+  const actions: Action[] = [
+    { kind: 'move', combatantId: 'a2', moveId: 'tidalBolt', declaredTarget: 'b1' }, // tidecaller, priority 0, speed 55
+    { kind: 'move', combatantId: 'b1', moveId: 'quickJab', declaredTarget: 'a2' }, // ironWarden, priority 1, speed 30 (slower, but higher priority)
+  ];
+
+  const stasis = { ...state, activeFieldEffect: { fieldEffectId: 'stasisBubble', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
+  const { ordered } = orderActions(stasis, heroes, actions, moves, stasis.rngState, fieldEffects);
+  // b1's priority-1 quickJab still goes first even though it's the slower actor and
+  // Stasis Bubble is active — the reversal only ever changes a same-bracket tiebreak.
+  assert.deepStrictEqual(ordered.map((a) => a.combatantId), ['b1', 'a2']);
+});
+
+// --- Sanctuary: healing moves gain +1 priority -------------------------------
+
+test('fieldEffects: Sanctuary bumps a heal-kind move\'s priority bracket by 1, regardless of Speed', () => {
+  const state = twoVTwoFixture(430);
+  const actions: Action[] = [
+    { kind: 'move', combatantId: 'a1', moveId: 'restoreVigor' }, // cinderKnight, heal, speed 50, target self
+    { kind: 'move', combatantId: 'b2', moveId: 'venomousBite', declaredTarget: 'a1' }, // wildOracle, damage, speed 65
+  ];
+
+  const normal = orderActions(state, heroes, actions, moves, state.rngState, fieldEffects);
+  assert.deepStrictEqual(normal.ordered.map((a) => a.combatantId), ['b2', 'a1']); // both priority 0 -> faster (65) first
+
+  const sanctuary = { ...state, activeFieldEffect: { fieldEffectId: 'sanctuary', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
+  const withSanctuary = orderActions(sanctuary, heroes, actions, moves, sanctuary.rngState, fieldEffects);
+  assert.deepStrictEqual(withSanctuary.ordered.map((a) => a.combatantId), ['a1', 'b2']); // heal now bracket 1, resolves first
+});
+
+test('fieldEffects: Sanctuary — a heal actually lands before a same-bracket damage move once resolveRound runs', () => {
+  const built = twoVTwoFixture(431);
+  const state = { ...built, activeFieldEffect: { fieldEffectId: 'sanctuary', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
+  const actions: Action[] = [
+    { kind: 'move', combatantId: 'a1', moveId: 'restoreVigor' },
+    { kind: 'move', combatantId: 'b2', moveId: 'venomousBite', declaredTarget: 'a1' },
+  ];
+
+  const { events } = resolveRound(state, actions, config);
+  const turnOrder = events.filter((e) => e.type === 'TurnStarted').map((e) => (e.type === 'TurnStarted' ? e.combatantId : ''));
+  assert.deepStrictEqual(turnOrder, ['a1', 'b2']);
+});
+
+// --- Verdant Earth: bonus Attack/Intelligence equal to Regen -----------------
+
+test('fieldEffects: Verdant Earth adds the combatant\'s own Regen to Attack and Intelligence, not other stats', () => {
+  const state = twoVTwoFixture(440);
+  const hero = heroes.cinderKnight;
+  const combatant = state.combatants.a1;
+
+  const noCtx = getEffectiveStat(hero, combatant, 'attack');
+  assert.strictEqual(noCtx, hero.baseStats.attack); // no field effect context passed -> unaffected
+
+  const inactiveCtx = { active: null, defs: fieldEffects };
+  assert.strictEqual(getEffectiveStat(hero, combatant, 'attack', inactiveCtx), hero.baseStats.attack);
+
+  const activeCtx = { active: { fieldEffectId: 'verdantEarth', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS }, defs: fieldEffects };
+  assert.strictEqual(getEffectiveStat(hero, combatant, 'attack', activeCtx), hero.baseStats.attack + hero.baseStats.mpRegen);
+  assert.strictEqual(getEffectiveStat(hero, combatant, 'intelligence', activeCtx), hero.baseStats.intelligence + hero.baseStats.mpRegen);
+  // Not in statBonusEqualToRegen -> untouched
+  assert.strictEqual(getEffectiveStat(hero, combatant, 'defense', activeCtx), hero.baseStats.defense);
+  assert.strictEqual(getEffectiveStat(hero, combatant, 'speed', activeCtx), hero.baseStats.speed);
+});
+
+test('fieldEffects: Verdant Earth raises the damage-pipeline stat ratio via the boosted offStat', () => {
+  const state = twoVTwoFixture(441);
+  const attackerHero = heroes.cinderKnight; // physical: Attack/Defense
+  const attacker = state.combatants.a1;
+  const defenderHero = heroes.ironWarden;
+  const defender = state.combatants.b1;
+
+  const plainRatio = resolveStatRatio('physical', attackerHero, attacker, defenderHero, defender);
+  const activeCtx = { active: { fieldEffectId: 'verdantEarth', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS }, defs: fieldEffects };
+  const boostedRatio = resolveStatRatio('physical', attackerHero, attacker, defenderHero, defender, activeCtx);
+
+  const expectedRatio = (attackerHero.baseStats.attack + attackerHero.baseStats.mpRegen) / defenderHero.baseStats.defense;
+  assert.ok(boostedRatio > plainRatio);
+  assert.strictEqual(boostedRatio, expectedRatio);
+});
+
+test('fieldEffects: Verdant Earth — a DamageDealt event\'s offStat reflects the Regen bonus end to end', () => {
+  const built = twoVTwoFixture(442);
+  const state = { ...built, activeFieldEffect: { fieldEffectId: 'verdantEarth', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'cinderBite', declaredTarget: 'b1' }]; // physical, cinderKnight
+
+  const { events } = resolveRound(state, actions, config);
+  const dmg = events.find((e) => e.type === 'DamageDealt');
+  assert.ok(dmg && dmg.type === 'DamageDealt');
+  if (dmg && dmg.type === 'DamageDealt') {
+    assert.strictEqual(dmg.offStat, heroes.cinderKnight.baseStats.attack + heroes.cinderKnight.baseStats.mpRegen);
+  }
 });
