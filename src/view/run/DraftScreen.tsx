@@ -37,14 +37,16 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
   return (
     <div className="squad-select draft-screen">
       <div className="screen-scroll">
-        <div className="draft-flavor">
-          <h2 className="squad-section-title">Forge Your Pact</h2>
-          <p className="hint draft-flavor-text">
+        <div className="draft-banner">
+          <div className="draft-banner-glow" aria-hidden="true" />
+          <div className="draft-banner-eyebrow">A Titan Stirs</div>
+          <h2 className="draft-banner-title">Forge Your Pact</h2>
+          <p className="draft-banner-text">
             Beneath the world, a Titan has stirred, and it offers you a pact: prove your worth
             across its trials, and a fraction of its power becomes yours. Every hero you
             command, every relic you claim, is a term of that bargain.
           </p>
-          <p className="hint draft-flavor-text">Choose two allies to begin the climb.</p>
+          <p className="draft-banner-text draft-banner-callout">Choose two allies to begin the climb.</p>
         </div>
 
         <div className="squad-section squad-section-player">
@@ -89,7 +91,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
         </div>
       </div>
       <button
-        className="resolve-button"
+        className="resolve-button draft-cta"
         disabled={pickedIds.length !== STARTER_PICK_COUNT}
         onClick={() => onConfirm(pickedIds)}
       >

@@ -3221,18 +3221,65 @@ body {
   margin: 2px 0 10px;
 }
 
-/* Start-of-run draft's flavor intro (DraftScreen), sitting above the pick-2-of-4 grid. */
-.draft-flavor {
-  border-radius: 10px;
-  padding: 10px 10px 4px;
+/* Start-of-run draft's flavor intro (DraftScreen), sitting above the pick-2-of-4
+   grid. Same glowing-banner language as .evolution-banner/.levelup-banner
+   (reusing @keyframes evolution-glow-pulse) so the very first screen of a run
+   reads as an occasion, not a plain instructions blurb. */
+.draft-banner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 22px 16px 18px;
   margin-bottom: 4px;
-  border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(232, 168, 74, 0.12), transparent 60%);
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid rgba(224, 166, 60, 0.35);
+  background: linear-gradient(180deg, rgba(224, 166, 60, 0.14), transparent 70%);
 }
 
-.draft-flavor-text {
-  margin: 0 0 10px;
+.draft-banner-glow {
+  position: absolute;
+  top: -45%;
+  left: 50%;
+  width: 240px;
+  height: 240px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(224, 166, 60, 0.35), transparent 65%);
+  animation: evolution-glow-pulse 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.draft-banner-eyebrow {
+  position: relative;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 2px;
+}
+
+.draft-banner-title {
+  position: relative;
+  font-size: 19px;
+  margin: 2px 0 8px;
+}
+
+.draft-banner-text {
+  position: relative;
+  font-size: 12px;
   line-height: 1.5;
+  color: var(--text-dim);
+  margin: 0 0 8px;
+}
+
+.draft-banner-callout {
+  margin-bottom: 0;
+  color: var(--text);
+  font-weight: 700;
 }
 
 /* Scouted enemy squad (SquadSelectScreen) — deliberately minimal: sprite +
@@ -3310,12 +3357,19 @@ body {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.roster-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
 }
 
 .roster-card.picked {
   border-color: var(--accent);
   border-left-color: var(--accent);
   background: #33291a;
+  box-shadow: 0 0 0 1px var(--accent), 0 0 14px rgba(224, 166, 60, 0.35);
 }
 
 .roster-card-name {
@@ -3948,6 +4002,15 @@ body {
 .resolve-button:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+/* DraftScreen's "Begin the Pact" — same gold-gradient/pulse treatment as
+   .title-cta once the pick requirement is met, so completing the draft
+   feels like the payoff moment it is rather than just un-graying a button. */
+.draft-cta:not(:disabled) {
+  background: linear-gradient(135deg, #f3c877, var(--accent) 55%, #b9822a);
+  box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.5), 0 6px 18px rgba(224, 166, 60, 0.22), 0 0 18px rgba(224, 166, 60, 0.16);
+  animation: title-cta-pulse 2.4s ease-in-out infinite;
 }
 
 /* --- Node-resolution screens (Shop, the 4 instant-reward types) --------- */
@@ -5296,9 +5359,11 @@ body {
 /* Epic treatment: a moody arcane-gold vignette (same layered-gradient +
    faint tactical-grid language as .battlefield, so the title reads as the
    same world rather than a generic menu screen), a slow-spinning godray
-   burst and pulsing core glow behind the logo (::before/::after, same
-   "decorative pseudo-elements at z-index:-1 or 0" pattern used by
-   .battlefield.field-effect-active), and a rising ember field
+   burst and pulsing core glow behind the logo (.title-logo::before/::after —
+   deliberately anchored to .title-logo itself rather than positioned by
+   percentage-of-screen against .title-screen, so the glow tracks the
+   wordmark's actual position instead of drifting into empty space whenever
+   the button stack below it grows or shrinks), and a rising ember field
    (.title-embers/.title-ember, positions/timings authored in TitleScreen.tsx
    useEmbers via a golden-angle sequence rather than PNG art or Math.random —
    see memory: combat juice here is CSS, not sprites). */
@@ -5322,10 +5387,9 @@ body {
     linear-gradient(180deg, #17131d, #14161c 55%, #100e14);
 }
 
-.title-screen::before {
-  content: '';
+.title-ray-burst {
   position: absolute;
-  top: 22%;
+  top: 50%;
   left: 50%;
   width: 440px;
   height: 440px;
@@ -5344,13 +5408,12 @@ body {
   );
   animation: title-rays-spin 44s linear infinite;
   pointer-events: none;
-  z-index: 0;
+  z-index: -2;
 }
 
-.title-screen::after {
-  content: '';
+.title-core-glow {
   position: absolute;
-  top: 24%;
+  top: 50%;
   left: 50%;
   width: 240px;
   height: 240px;
@@ -5359,7 +5422,7 @@ body {
   filter: blur(2px);
   animation: title-core-pulse 3.6s ease-in-out infinite;
   pointer-events: none;
-  z-index: 0;
+  z-index: -2;
 }
 
 @keyframes title-rays-spin {

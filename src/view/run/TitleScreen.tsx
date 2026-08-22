@@ -71,6 +71,8 @@ export function TitleScreen({ onStartRun, onQuickBattle, onOpenSandbox, onStartL
 
       <div className="title-heading">
         <div className="title-logo">
+          <span className="title-ray-burst" aria-hidden="true" />
+          <span className="title-core-glow" aria-hidden="true" />
           <span className="title-logo-glow" aria-hidden="true">
             TITANPACT
           </span>

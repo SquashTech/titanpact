@@ -11,9 +11,11 @@
 //      ironBlade must stay common/cheap, dagger must stay the Goblin
 //      Skulker's starter weapon).
 //   2. Generated per-type gear (weapon + armor + accessory for each of the
-//      15 types, docs/types-and-heroes.md) — same discipline
-//      src/data/statuses.ts uses for Elemental Force: derive 45 items from
-//      TYPES rather than hand-duplicating the same 3-slot shape 15 times.
+//      14 non-Ancient types, docs/types-and-heroes.md) — same discipline
+//      src/data/statuses.ts uses for Elemental Force: derive 42 items from
+//      TYPES rather than hand-duplicating the same 3-slot shape 14 times.
+//      Ancient is skipped — no hero is Ancient-typed (it's reserved for the
+//      Ancient boss fights), so that gear would be unusable by any player.
 //      Each type's accessory grants that type's Elemental Force status
 //      (src/data/statuses.ts) so every type has its own build-around piece,
 //      not just Fire (emberBand, layer 1).
@@ -138,9 +140,9 @@ function lowerFirst(value: string): string {
   return value.charAt(0).toLowerCase() + value.slice(1);
 }
 
-/** Generated per-type gear: 15 types x 3 slots = 45 items. Rarity is staggered per slot (offsets of 0/2/4 through RARITY_ORDER) so a single type's weapon/armor/accessory don't all land on the same tier, and so all 5 rarities end up represented across each slot. */
+/** Generated per-type gear: 14 types x 3 slots = 42 items. Ancient is excluded — no hero is Ancient-typed (it's reserved for the Ancient boss fights, heroes.ts), so Ancient-flavored gear (STAB-less weapon/armor, unusable Ancient Force accessory) would be dead weight in every reward pool. Rarity is staggered per slot (offsets of 0/2/4 through RARITY_ORDER) so a single type's weapon/armor/accessory don't all land on the same tier, and so all 5 rarities end up represented across each slot. */
 const generatedTypeEquipment: Record<string, EquipmentDefinition> = {};
-TYPES.forEach((type, i) => {
+TYPES.filter((type) => type !== 'Ancient').forEach((type, i) => {
   const gear = TYPE_GEAR[type];
   const weaponRarity = RARITY_ORDER[i % RARITY_ORDER.length];
   const armorRarity = RARITY_ORDER[(i + 2) % RARITY_ORDER.length];
