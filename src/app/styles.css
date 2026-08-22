@@ -2060,6 +2060,22 @@ body {
   letter-spacing: 0.03em;
 }
 
+/* Who the move hits (TARGET_MODE_LABELS, view/shared/MoveTile.tsx) — same text
+   treatment as .move-popup-kind, shown right after it so the popup always
+   answers "what does this do" and "who does it hit" together. */
+.move-popup-target {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.move-popup-target::before {
+  content: '•';
+  margin-right: 6px;
+  opacity: 0.6;
+}
+
 .move-popup-description {
   font-size: 12px;
   line-height: 1.4;

@@ -76,6 +76,26 @@ export const KIND_LABELS: Record<string, string> = { damage: 'Damage', heal: 'He
 const CATEGORY_LABELS: Record<MoveDefinition['category'], string> = { physical: 'PHY', magical: 'MAG' };
 
 /**
+ * Canonical player-facing name for each `TargetMode` (engine/content.ts) —
+ * the single source of truth so this wording doesn't drift between the
+ * long-press MoveInfoPanel below and FightScreen's targeting-panel copy.
+ * 'allOthers' reads as "All" (everyone but the caster) rather than a literal
+ * "everyone including me" mode — Titanpact has no such mode today.
+ * "Random" is reserved vocabulary for a future move that rolls its target
+ * randomly rather than a distinct `TargetMode` — no move uses it yet, so it
+ * isn't a key here; author it as a move-level description note (matching
+ * "this will usually specify on the move itself") until an engine hook exists.
+ */
+export const TARGET_MODE_LABELS: Record<MoveDefinition['target'], string> = {
+  singleEnemy: 'Single Enemy',
+  bothEnemies: 'Both Enemies',
+  singleAlly: 'Single Ally',
+  bothAllies: 'Both Allies',
+  self: 'Self',
+  allOthers: 'All',
+};
+
+/**
  * Physical (Attack/Defense pipeline) vs Magical (Intelligence/Wisdom pipeline) —
  * see CLAUDE.md "Two-pipeline separation". Shown everywhere a move's type badge
  * is shown, so the pipeline a move draws from is always legible alongside its type.
@@ -250,7 +270,9 @@ export function MoveInfoPanel({ move, label, placeholder = 'Hover or tap a move 
               <strong>{move.manaCost}</strong>
               <span className="move-stat-unit">MP</span>
             </span>
-            <span className="move-info-kind">{KIND_LABELS[move.kind] ?? move.kind}</span>
+            <span className="move-info-kind">
+              {TARGET_MODE_LABELS[move.target]} &middot; {KIND_LABELS[move.kind] ?? move.kind}
+            </span>
           </div>
           {move.description && <div className="move-info-desc">{move.description}</div>}
         </>

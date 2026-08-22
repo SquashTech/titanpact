@@ -31,7 +31,7 @@ import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
-import { CategoryBadge, MoveKindBadge, KIND_LABELS, useLongPress } from '../shared/MoveTile';
+import { CategoryBadge, MoveKindBadge, KIND_LABELS, TARGET_MODE_LABELS, useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
@@ -380,17 +380,9 @@ export function FightScreen({
     return mode === 'bothEnemies' || mode === 'bothAllies' || mode === 'allOthers';
   }
 
+  /** Lowercased for mid-sentence aria-label use ("Confirm — hits both enemies") — same canonical wording as TARGET_MODE_LABELS, just not title-cased. */
   function spreadTargetLabel(mode: TargetMode): string {
-    switch (mode) {
-      case 'bothEnemies':
-        return 'both enemies';
-      case 'bothAllies':
-        return 'both allies';
-      case 'allOthers':
-        return 'everyone else';
-      default:
-        return 'target';
-    }
+    return TARGET_MODE_LABELS[mode]?.toLowerCase() ?? 'target';
   }
 
   function handleSwitchClick(combatantId: string, benchedCombatantId: string) {
@@ -995,6 +987,7 @@ export function FightScreen({
                   <TypeBadge type={move.type} />
                   <CategoryBadge category={move.category} />
                   <span className="move-popup-kind">{KIND_LABELS[move.kind] ?? move.kind}</span>
+                  <span className="move-popup-target">{TARGET_MODE_LABELS[move.target]}</span>
                   {move.kind === 'damage' && move.basePower != null && (
                     <span
                       className={`move-power${forceBonus > 0 ? ' move-boosted' : ''}`}
