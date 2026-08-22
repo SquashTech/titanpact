@@ -5293,7 +5293,17 @@ body {
 
 /* --- Title screen --------------------------------------------------------- */
 
+/* Epic treatment: a moody arcane-gold vignette (same layered-gradient +
+   faint tactical-grid language as .battlefield, so the title reads as the
+   same world rather than a generic menu screen), a slow-spinning godray
+   burst and pulsing core glow behind the logo (::before/::after, same
+   "decorative pseudo-elements at z-index:-1 or 0" pattern used by
+   .battlefield.field-effect-active), and a rising ember field
+   (.title-embers/.title-ember, positions/timings authored in TitleScreen.tsx
+   useEmbers via a golden-angle sequence rather than PNG art or Math.random —
+   see memory: combat juice here is CSS, not sprites). */
 .title-screen {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -5302,25 +5312,227 @@ body {
   justify-content: center;
   gap: 6px;
   text-align: center;
+  overflow: hidden;
+  border-radius: 14px;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 24px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 24px),
+    radial-gradient(ellipse 90% 55% at 50% 28%, rgba(224, 166, 60, 0.18), transparent 65%),
+    radial-gradient(ellipse 100% 70% at 50% 105%, rgba(139, 127, 224, 0.16), transparent 70%),
+    linear-gradient(180deg, #17131d, #14161c 55%, #100e14);
+}
+
+.title-screen::before {
+  content: '';
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  width: 440px;
+  height: 440px;
+  transform: translate(-50%, -50%);
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(224, 166, 60, 0.14) 8deg,
+    transparent 22deg,
+    transparent 160deg,
+    rgba(224, 166, 60, 0.1) 172deg,
+    transparent 186deg,
+    transparent 338deg,
+    rgba(224, 166, 60, 0.14) 352deg,
+    transparent 360deg
+  );
+  animation: title-rays-spin 44s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.title-screen::after {
+  content: '';
+  position: absolute;
+  top: 24%;
+  left: 50%;
+  width: 240px;
+  height: 240px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(224, 166, 60, 0.3), transparent 70%);
+  filter: blur(2px);
+  animation: title-core-pulse 3.6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes title-rays-spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes title-core-pulse {
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.title-embers {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.title-ember {
+  position: absolute;
+  bottom: -4%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffe4ab 0%, var(--accent) 55%, transparent 75%);
+  box-shadow: 0 0 6px 1px rgba(224, 166, 60, 0.65);
+  opacity: 0;
+  animation-name: title-ember-rise;
+  animation-timing-function: ease-in;
+  animation-iteration-count: infinite;
+}
+
+@keyframes title-ember-rise {
+  0% {
+    bottom: -4%;
+    opacity: 0;
+    transform: translateX(0);
+  }
+  12% {
+    opacity: 0.9;
+  }
+  80% {
+    opacity: 0.55;
+  }
+  100% {
+    bottom: 104%;
+    opacity: 0;
+    transform: translateX(var(--drift));
+  }
+}
+
+.title-heading {
+  position: relative;
+  z-index: 2;
+  animation: title-heading-drop 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes title-heading-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .title-logo {
-  font-size: 34px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  position: relative;
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
   color: var(--accent);
+  text-shadow: 0 0 10px rgba(224, 166, 60, 0.55), 0 0 26px rgba(224, 166, 60, 0.32), 0 2px 0 rgba(0, 0, 0, 0.5);
+  animation: title-logo-breathe 4.5s ease-in-out infinite;
+}
+
+/* Duplicate text sitting behind the crisp copy, heavily blurred, giving the
+   logo a soft bloom halo without relying on a raster glow asset. */
+.title-logo-glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  color: var(--accent);
+  filter: blur(14px);
+  opacity: 0.55;
+}
+
+@keyframes title-logo-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.015);
+  }
 }
 
 .title-tagline {
-  margin-bottom: 28px;
+  margin-bottom: 30px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  animation: title-tagline-fade 0.9s ease 0.25s both;
+}
+
+@keyframes title-tagline-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .title-buttons {
+  position: relative;
+  z-index: 2;
   width: 100%;
   max-width: 260px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  animation: title-buttons-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+@keyframes title-buttons-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hero CTA — layered on top of the shared .resolve-button so every other
+   resolve-button in the app is untouched; this modifier just adds the gold
+   gradient fill and a slow glow-pulse so "Start a Run" reads as the one
+   action the whole screen is built around. */
+.title-cta {
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, #f3c877, var(--accent) 55%, #b9822a);
+  box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.5), 0 6px 18px rgba(224, 166, 60, 0.22), 0 0 18px rgba(224, 166, 60, 0.16);
+  transition: transform 0.15s ease;
+  animation: title-cta-pulse 2.4s ease-in-out infinite;
+}
+
+.title-cta:hover {
+  transform: translateY(-1px);
+}
+
+@keyframes title-cta-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.5), 0 6px 18px rgba(224, 166, 60, 0.22), 0 0 18px rgba(224, 166, 60, 0.16);
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.8), 0 8px 22px rgba(224, 166, 60, 0.35), 0 0 30px rgba(224, 166, 60, 0.3);
+  }
 }
 
 .title-secondary-button {
@@ -5333,10 +5545,13 @@ body {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .title-secondary-button:hover {
   border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
 }
 
 /* ⚠️ TEMPORARY DEV/TEST button (App.tsx createLevel4TestRun) — deliberately
@@ -5370,6 +5585,54 @@ body {
   border: 1px solid var(--enemy);
   border-radius: 8px;
   padding: 1px 5px;
+}
+
+/* Compendium/Reference — secondary lookup tools, not run-starting actions,
+   so they're pulled out of .title-buttons entirely and pinned as small
+   emoji-icon buttons along the bottom edge rather than competing with the
+   real menu for vertical weight. */
+.title-icon-row {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  gap: 14px;
+  animation: title-icon-row-fade 0.7s ease 0.4s both;
+}
+
+.title-icon-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.title-icon-button:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+@keyframes title-icon-row-fade {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 /* --- Training panel (level-up pool spend UI) ----------------------------- */

@@ -137,65 +137,6 @@ function createLevel4TestRun(): RunState {
 }
 
 /**
- * ⚠️ TEMPORARY DEV/TEST HELPER — not a real game entry point. Hand-assembles
- * a 2v2 that puts every condition from the docs/conditions.md overhaul
- * (Conduct, Poison, Haunt, Stealth — Burn/Bleed/Freeze/Daze/Regen/Cleanse
- * already had earlier browser-testable moves) in front of the player at
- * once, plus the Haunt+Mind interaction the type chart alone can't surface:
- * Mind is one of Haunt's `spreadTriggerTypes` (statusEngine.ts
- * expandSpreadTargets), so a `psychicLance` aimed at the enemy's
- * NON-Haunted half also strikes the Haunted one.
- *
- * Squad (2 active + 2 bench, freely switchable mid-fight — no lock-in until
- * 2+ KOs per CLAUDE.md):
- *  - Squall (Storm) carries `thunderclap` (applies Conduct) AND `ironFist`
- *    (Iron — detonates it) so the apply/detonate split is demoable solo,
- *    across two turns on the same target, without needing a second hero.
- *    Also carries `cinderBite` (Burn) as a bonus 4th move.
- *  - Cortex (Mind) carries `spectralBind` (Spirit — marks a target Haunted)
- *    AND `psychicLance`/`mindSpike` (Mind) — mark one enemy, then hit the
- *    OTHER enemy to watch the Haunted one get struck too. Also carries
- *    `frostLock` (Freeze) as a bonus 4th move.
- *  - Sylva keeps her default kit (`venomousBite` starts Poison's 3-round
- *    timer) plus `rendingClaw` (Bleed) as a bonus 4th move.
- *  - Vesper keeps her default kit (`vanish` grants 1-round Stealth; a fast
- *    Vanish redirects an incoming single-target hit onto her partner).
- *
- * AI side is two Fortify-only dummies (Crag, Warden) with HP bumped to 9999
- * via `bonusStatGrants` — a scratch punching bag, not real content, so
- * skipping the usual multiple-of-5/10 balance convention is fine here. They
- * never hit back and never faint, so a full Burn/Bleed/Poison/Freeze/
- * Conduct/Haunt rotation can be watched to completion.
- */
-function createConditionsTestEncounter(): { player: Encounter; ai: Encounter } {
-  let playerRun = createRunState(0, 0);
-  playerRun = addRosterEntry(
-    playerRun,
-    createRosterEntry('conductTester', 'stormRanger', ['thunderclap', 'ironFist', 'restoreVigor', 'cinderBite'])
-  );
-  playerRun = addRosterEntry(
-    playerRun,
-    createRosterEntry('hauntMindTester', 'mindweaver', ['spectralBind', 'psychicLance', 'mindSpike', 'frostLock'])
-  );
-  playerRun = addRosterEntry(playerRun, createRosterEntry('poisonTester', 'wildOracle', [...heroes.wildOracle.moveIds, 'rendingClaw']));
-  playerRun = addRosterEntry(playerRun, createRosterEntry('stealthTester', 'shadowMonk', heroes.shadowMonk.moveIds));
-  const playerSquad = pickSquad(playerRun.roster, ['conductTester', 'hauntMindTester', 'poisonTester', 'stealthTester']);
-
-  let aiRun = createRunState(0, 0);
-  aiRun = addRosterEntry(aiRun, {
-    ...createRosterEntry('conditionsDummyA', 'crag', ['fortify']),
-    bonusStatGrants: { hp: 9999 - heroes.crag.baseStats.hp },
-  });
-  aiRun = addRosterEntry(aiRun, {
-    ...createRosterEntry('conditionsDummyB', 'ironWarden', ['fortify']),
-    bonusStatGrants: { hp: 9999 - heroes.ironWarden.baseStats.hp },
-  });
-  const aiSquad = pickSquad(aiRun.roster, ['conditionsDummyA', 'conditionsDummyB']);
-
-  return { player: { run: playerRun, squad: playerSquad }, ai: { run: aiRun, squad: aiSquad } };
-}
-
-/**
  * ⚠️ TEST FIXTURE — equips a Dagger (+5 Attack) onto the Goblin Skulker in
  * the run's very first battle only, so the equip-slot inspect UI (tap a
  * filled box to read what it does) has a real item to show from turn one,
@@ -508,12 +449,6 @@ export function App() {
     setScreen({ kind: 'quickBattle', player, ai });
   }
 
-  /** ⚠️ TEMPORARY DEV/TEST — see createConditionsTestEncounter. Reuses the 'quickBattle' screen kind since the needs (no run/map bookkeeping, drop straight into FightScreen, return to title on resolve) are identical to Quick Battle's. */
-  function handleStartConditionsTest() {
-    const { player, ai } = createConditionsTestEncounter();
-    setScreen({ kind: 'quickBattle', player, ai });
-  }
-
   function handleOpenSandbox() {
     setScreen({ kind: 'sandboxBattle' });
   }
@@ -538,7 +473,6 @@ export function App() {
           onQuickBattle={handleQuickBattle}
           onOpenSandbox={handleOpenSandbox}
           onStartLevel4TestRun={handleStartLevel4TestRun}
-          onStartConditionsTest={handleStartConditionsTest}
         />
       )}
 
