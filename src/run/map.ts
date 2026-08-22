@@ -8,20 +8,25 @@
 // reward-pick rows are pure reward choices (no fight/shop mixed into them).
 // Pure data + a seeded generator; no view or engine concerns here.
 //
-// `fight` vs `skirmish` vs `battle` (2026-08-17, per user direction): all
-// three are plain (no-bonus) 4-hero encounters mechanically — the split is
-// which pool they draw from and where/how they're presented, not difficulty.
-// `fight` is always the act's row-0 opener against the weaker non-recruitable
-// mob pool (App.tsx's Goblins); `skirmish` is the row-2 encounter against the
+// `fight` vs `skirmish` vs `battle` (2026-08-17, per user direction; pool
+// split revised 2026-08-22): all three are plain (no-bonus) 4-hero
+// encounters mechanically — the split is which pool they draw from and
+// where/how they're presented, not difficulty. `fight` (map-facing name
+// "Fight") is always the act's row-0 opener against the weaker
+// non-recruitable mob pool (App.tsx's `enemies`, "Monsters" flavor);
+// `battle` (map-facing name "Monsters") is `fight`'s later, still
+// non-recruitable sibling — the non-Elite alternative in generateMap's
+// Elite-or-Battle row, kept as its own named type (rather than reusing
+// `fight`) so its map position/flavor can be authored separately as the
+// monster pool grows (per user direction: monster variety/difficulty is
+// meant to scale by act, e.g. tougher or differently-themed monsters past
+// Act 1 — not yet built, docs/run-loop.md "Per-act difficulty scaling").
+// `skirmish` (map-facing name "Skirmish") is the row-2 encounter against the
 // recruitable hero pool, named differently so the map itself telegraphs
 // "beating this one is a shot at a Recruit Contract" before the player
-// commits a squad. `battle` is `skirmish`'s late-act sibling — the
-// non-Elite alternative in generateMap's Elite-or-Battle row — kept as its own named type
-// rather than reusing `skirmish` so its specific encounter pool can be
-// authored separately later ("the actual possible battles" — user direction,
-// deferred) without disturbing the early-act `skirmish` pool. `elite`/`boss`
-// also draw from the recruitable pool but keep their own names since they're
-// already distinguished by their stat bonus.
+// commits a squad. `elite`/`boss` also draw from the recruitable pool but
+// keep their own names since they're already distinguished by their stat
+// bonus.
 //
 // Determinism: reuses the engine's seeded PRNG (engine/rng/seededRng.ts) so a
 // map is reproducible from its seed, same spirit as combat's seeded RNG
@@ -46,6 +51,7 @@ export type MapNodeType =
   | 'accessoryReward'
   | 'hpBoostReward'
   | 'manaBoostReward'
+  | 'manaRegenBoostReward'
   | 'classReward'
   | 'event';
 
@@ -84,8 +90,11 @@ const SKIRMISH_ROW = 2;
  * through — not one of three choices folded into the pick-1-of-3 reward row
  * that already sat there, which now shifts down a row unchanged and stays a
  * normal, fully random pick of 3). Every run's Act 1 sees this guaranteed
- * Class offer right after its first Skirmish; later acts keep the base
- * 7-row shape and only roll classReward at its normal pick-1-of-3 weight.
+ * Class offer right after its first Skirmish. `classReward` was removed from
+ * `REWARD_WEIGHTS` entirely (2026-08-22, per user direction) — this forced
+ * row is now the ONLY place a Class offer can appear, in every act; later
+ * acts keep the base 7-row shape with no Mentor row and no other way to roll
+ * one.
  */
 const MENTOR_ROW = SKIRMISH_ROW + 1;
 
@@ -100,14 +109,14 @@ function rowWidthsFor(actNumber: number): number[] {
  * forced elsewhere in the row layout, never mixed into a choice row.
  * `weaponReward`/`armorReward`/`accessoryReward` are single-item guaranteed
  * grants (no 3-choice picker, unlike `equipmentReward`'s mixed-slot pick),
- * `hpBoostReward`/`manaBoostReward` grant a flat permanent stat bonus to one
- * chosen hero, `classReward` offers 1 of 3 Classes then a hero to teach it to
- * (src/data/classes.ts, src/view/run/ClassNodeScreen.tsx — a hero can only
- * ever hold one, so this is weighted like the stat-boost shrines rather than
- * the more plentiful equipment/relic/currency rows), and `event` is a
- * placeholder node with no content yet (user direction — "don't create any
- * yet, we will design these when it's time"). Weights are a first-pass
- * balance, easily retuned since this is plain data.
+ * `hpBoostReward`/`manaBoostReward`/`manaRegenBoostReward` each grant a flat
+ * permanent stat bonus to one chosen hero (+20 HP / +10 Mana / +5 MP Regen),
+ * and `event` is a placeholder node with no content yet (user direction —
+ * "don't create any yet, we will design these when it's time"). `classReward`
+ * is deliberately NOT in this pool (2026-08-22 revision, per user direction):
+ * it's the Act-1-only forced Mentor row (MENTOR_ROW below) exclusively now,
+ * never a random pick-1-of-3 option in any act — see that row's doc comment.
+ * Weights are a first-pass balance, easily retuned since this is plain data.
  */
 const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   ['equipmentReward', 20],
@@ -119,7 +128,7 @@ const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   ['accessoryReward', 12],
   ['hpBoostReward', 10],
   ['manaBoostReward', 10],
-  ['classReward', 10],
+  ['manaRegenBoostReward', 10],
   ['event', 8],
 ];
 

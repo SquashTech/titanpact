@@ -5088,6 +5088,9 @@ body {
   padding: 2px 0;
 }
 
+/* Long-pressable (useLongPress, opens MapNodePreviewPopup) — the
+   touch-callout/user-select suppression below matches the same pattern as
+   .field-effect-badge/.status-badge. */
 .map-node {
   display: flex;
   flex-direction: column;
@@ -5107,6 +5110,9 @@ body {
   cursor: default;
   min-width: 76px;
   transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .map-node-icon {

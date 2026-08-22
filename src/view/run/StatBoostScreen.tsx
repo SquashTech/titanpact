@@ -8,7 +8,7 @@ import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 
-export type StatBoostNodeType = 'hpBoostReward' | 'manaBoostReward';
+export type StatBoostNodeType = 'hpBoostReward' | 'manaBoostReward' | 'manaRegenBoostReward';
 
 interface Props {
   nodeType: StatBoostNodeType;
@@ -28,17 +28,18 @@ interface StatBoostConfig {
 const STAT_BOOST_CONFIG: Record<StatBoostNodeType, StatBoostConfig> = {
   hpBoostReward: { stat: 'hp', amount: 20, icon: '❤️', title: 'Vitality Shrine', ctaLabel: '+20 Max HP' },
   manaBoostReward: { stat: 'manaPool', amount: 10, icon: '💧', title: 'Mana Well', ctaLabel: '+10 Mana' },
+  manaRegenBoostReward: { stat: 'mpRegen', amount: 5, icon: '🔄', title: 'Regen Spring', ctaLabel: '+5 Mana Regen' },
 };
 
 /**
- * hpBoostReward/manaBoostReward node resolution: pick one roster hero to
- * receive a flat, permanent-for-the-run stat grant (runProgress.ts
- * grantStatBonus) — CLAUDE.md "flat additive integers, multiples of 5 or
- * 10". No 3-choice picker here, just which hero receives it — mirrors
- * NodeRewardScreen's relicReward tap-to-claim, but choosing a target instead
- * of a reward. Reuses ForceEquipScreen's hero-card layout (.equip-target-*)
- * so the "tap a hero card" gesture reads the same across every forced-target
- * node type.
+ * hpBoostReward/manaBoostReward/manaRegenBoostReward node resolution: pick
+ * one roster hero to receive a flat, permanent-for-the-run stat grant
+ * (runProgress.ts grantStatBonus) — CLAUDE.md "flat additive integers,
+ * multiples of 5 or 10". No 3-choice picker here, just which hero receives
+ * it — mirrors NodeRewardScreen's relicReward tap-to-claim, but choosing a
+ * target instead of a reward. Reuses ForceEquipScreen's hero-card layout
+ * (.equip-target-*) so the "tap a hero card" gesture reads the same across
+ * every forced-target node type.
  */
 export function StatBoostScreen({ nodeType, run, onRunChange, onContinue }: Props) {
   const config = STAT_BOOST_CONFIG[nodeType];

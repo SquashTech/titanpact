@@ -30,9 +30,11 @@ between; per user direction, the shape is now forced and uniform):
   first choice among identical-weight openers.
 - **Row 1: 3 nodes, pick 1 of 3 — reward types only** (`equipmentReward`/`relicReward`/
   `currencyReward`/`upgradeReward`/`weaponReward`/`armorReward`/`accessoryReward`/
-  `hpBoostReward`/`manaBoostReward`/`classReward`/`event`, weighted). No `fight`/`shop`/
-  `elite` mixed in — every reward row is a genuine reward choice, not a chance to draw
-  another fight or dodge one.
+  `hpBoostReward`/`manaBoostReward`/`manaRegenBoostReward`/`event`, weighted). No
+  `fight`/`shop`/`elite`/`classReward` mixed in — every reward row is a genuine reward
+  choice, not a chance to draw another fight or dodge one, and `classReward` is reserved
+  for its own forced Act-1 Mentor row (2026-08-22 revision, per user direction — see
+  the Mentor row note below), never a random pick-1-of-3 option.
 - **Row 2: a single forced `skirmish` node.**
 - **Row 3: 3 nodes, pick 1 of 3 — reward types only**, same pool as row 1.
 - **Row 4: 2 nodes, pick 1 of 2 — `elite` or `battle`** (2026-08-17, per user direction:
@@ -69,7 +71,7 @@ within a row.
 |---|---|
 | `fight` | `FightScreen` vs. a generated 4-hero AI squad (`src/run/enemyGen.ts`), no bonus. Always row 0, each act's opening node — draws from the non-recruitable enemy pool (Goblins), not the draftable hero roster. |
 | `skirmish` | Mechanically identical to `fight` (same 4-hero, no-bonus `generateEncounter` call — App.tsx collapses it to `EncounterNodeType: 'fight'`), but draws from the **recruitable hero pool** and is named differently on the map (2026-08-17, per user direction) so the player can see, before committing a squad, that beating this one is a shot at a Recruit Contract claim. Always row 2. |
-| `battle` | Also mechanically identical to `fight`/`skirmish` (collapses to `EncounterNodeType: 'fight'`, recruitable pool). Row 4's non-Elite alternative — kept as its own named type rather than reusing `skirmish` so its specific encounter pool/flavor can be authored separately later ("the actual possible battles" — user direction, deferred) without touching the early-act `skirmish` pool. |
+| `battle` (map-facing name "Monsters", 2026-08-22 revision) | Also mechanically identical to `fight`/`skirmish` (collapses to `EncounterNodeType: 'fight'`), but draws from the **non-recruitable enemy pool**, same as `fight` — not `skirmish`'s recruitable pool. Row 4's non-Elite alternative — kept as its own named type rather than reusing `fight` so its map position/flavor can be authored separately as the monster pool grows (per user direction: monster variety/difficulty is meant to scale by act — e.g. a Goblin Chieftain/Torch Goblin tier, then different-themed monsters in later acts — not yet built, see "Per-act difficulty scaling" below). `enemies.ts` currently only has the 2 opener-tier Goblins, so until that pool grows, a `battle` node is no harder than the opener. |
 | `elite` | The AI's 4 heroes each carry a flat +10 bonus to 2 random growth stats. Draws from the recruitable pool, same as `skirmish`/`battle`. Row 4's difficulty-spike alternative to `battle` — the player picks one or the other, never both. |
 | `boss` | `FightScreen` vs. 2 AI heroes (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Winning grants 1 Recruit Contract and ends the act (§3). |
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. Overhauled 2026-08-18: offers 2-3 curated hero recruits (50g each, `GUILD_HALL_RECRUIT_COST`) rather than the full catalog, plus rarity-priced equipment and flat-cost relics for sale, rolled once per visit (`src/run/shop.ts` `rollGuildHallOffers`). |
@@ -78,8 +80,8 @@ within a row.
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30, more for nothing having been spent yet). |
 | `upgradeReward` | `NodeRewardScreen` — an instant flat grant to the pooled level-up currency (2-3 points), on top of the per-fight-win grant (see below). |
 | `weaponReward` / `armorReward` / `accessoryReward` | Rolls a single rarity-weighted item of that fixed slot (`equipment.ts` `pickWeightedEquipmentBySlot`) and hands off straight to `ForceEquipScreen` — no 3-choice picker, unlike `equipmentReward`'s mixed-slot pick. |
-| `hpBoostReward` / `manaBoostReward` | `StatBoostScreen` — pick one roster hero to receive a flat, permanent-for-the-run stat grant (+20 HP / +10 Mana, `runProgress.ts` `grantStatBonus`), stored on `RosterEntry.bonusStatGrants`. |
-| `classReward` ("Mentor's Hall") | `ClassNodeScreen` — pick 1 of 3 Classes (`src/data/classes.ts`), then pick which roster hero learns it, filtered to heroes with no Class yet (`src/run/classes.ts` `grantClass`, stored on `RosterEntry.classId` — a hero can hold at most one Class per run, so `grantClass` REPLACES rather than stacks). If every roster hero already has a Class, the offer is simply wasted. |
+| `hpBoostReward` / `manaBoostReward` / `manaRegenBoostReward` | `StatBoostScreen` — pick one roster hero to receive a flat, permanent-for-the-run stat grant (+20 HP / +10 Mana / +5 MP Regen, `runProgress.ts` `grantStatBonus`), stored on `RosterEntry.bonusStatGrants`. `manaRegenBoostReward` added 2026-08-22, per user direction. |
+| `classReward` ("Mentor's Hall") | `ClassNodeScreen` — pick 1 of 3 Classes (`src/data/classes.ts`), then pick which roster hero learns it, filtered to heroes with no Class yet (`src/run/classes.ts` `grantClass`, stored on `RosterEntry.classId` — a hero can hold at most one Class per run, so `grantClass` REPLACES rather than stacks). If every roster hero already has a Class, the offer is simply wasted. **Not in `REWARD_WEIGHTS`** (2026-08-22 revision, per user direction) — the only way to encounter this node type is the forced Act-1 Mentor row (§1), never a random pick-1-of-3 option in any act. |
 | `event` | `EventNodeScreen` — placeholder, no content yet (deferred: "we will design these when it's time"). |
 
 `contractReward` (an instant flat grant of 1 Recruit Contract) was **removed as a map
@@ -87,12 +89,12 @@ node type** (2026-08-17, per user direction: contracts should come from Guild Ha
 act-end grants, not map-node luck) — see §3 "Multi-act sequencing" for where that grant
 moved to.
 
-`fight` vs. `skirmish` (2026-08-17, per user direction) is purely a **naming + pool**
-split, not a difficulty one — App.tsx's `handleSelectNode` picks the encounter pool off
-`node.type === 'fight'` (mob) vs. anything else (recruitable), then collapses `skirmish`
-down to the `EncounterNodeType` `'fight'` before calling `generateEncounter`/
-`FightScreen`, which only need the mechanical shape (heroCount/stat bonus), not which map
-node it came from.
+`fight`/`battle` vs. `skirmish` (2026-08-17, per user direction; pool split revised
+2026-08-22) is purely a **naming + pool** split, not a difficulty one — App.tsx's
+`handleSelectNode` picks the encounter pool off `node.type === 'fight' || 'battle'` (mob)
+vs. anything else (recruitable), then collapses `skirmish`/`battle` down to the
+`EncounterNodeType` `'fight'` before calling `generateEncounter`/`FightScreen`, which only
+need the mechanical shape (heroCount/stat bonus), not which map node it came from.
 
 ## 3. Decisions locked for this pass (2026-08-16 sign-off, multi-act entry 2026-08-17)
 
@@ -131,11 +133,11 @@ node it came from.
   viable, not "the thing you curb-stomp in fight 1"). Per user direction: `src/data/
   enemies.ts` is a separate, deliberately-weaker content pool (`goblinGrunt`,
   `goblinSkulker` — same `HeroDefinition` shape as a hero, just weaker numbers; a
-  Goblin doesn't need a different schema, it needs different numbers), and row 0's
-  fight nodes draw from it instead of `src/data/heroes.ts` (`App.tsx`'s
-  `handleSelectNode`, gated on `node.row === 0` — moved here from
-  `handleSquadConfirmed` in the 2026-08-16 battle-preview pass below, since the
-  encounter now has to exist before squad-select renders it). `src/run/recruitment.ts`'s new
+  Goblin doesn't need a different schema, it needs different numbers), and `fight`
+  nodes draw from it instead of `src/data/heroes.ts` (`App.tsx`'s `handleSelectNode`,
+  gated on `node.type === 'fight'` — moved here from `handleSquadConfirmed` in the
+  2026-08-16 battle-preview pass below, since the encounter now has to exist before
+  squad-select renders it). `src/run/recruitment.ts`'s new
   `isRecruitable(heroId, recruitablePool)` gates Recruit Contract offers on membership
   in the caller's recruitable pool specifically — never the combined pool a fight
   actually drew from — so a defeated Goblin can never produce a contract offer;
@@ -143,10 +145,16 @@ node it came from.
   `handleClaimContract` re-checks it as the actual RunState-mutation boundary, not just
   the UI. `src/data/content.ts`'s `allCombatants` (`{ ...heroes, ...enemies }`) is what
   combat resolution and fight-screen rendering actually key off of — they don't care
-  which pool a combatant came from, only recruitment does. This is a mechanism + a
-  first-pass curve (row 0 only), not a full difficulty tuning pass — which rows/node
-  types pull from which pool past the opening row is still open, and is balance work,
-  not architecture work.
+  which pool a combatant came from, only recruitment does. This was a mechanism + a
+  first-pass curve (originally row 0 only) — **2026-08-22 revision, per user
+  direction:** `battle` nodes (row 4, map-facing "Monsters") now also draw from
+  `enemies.ts`, to read as "non-recruitable" the way the name implies, distinct from
+  `skirmish`'s recruitable squads. `enemies.ts` itself hasn't grown yet — the plan is
+  to expand it with tougher/act-themed monster tiers (e.g. a Goblin Chieftain, Torch
+  Goblin, then non-Goblin monster themes in later acts) so difficulty actually scales;
+  until then a `battle` node is no harder than the row-0 opener. Which rows/node types
+  pull from which pool, and how the pool itself scales by act, is still open balance
+  work, not architecture work.
 - **HP/mana fully restore between map nodes (reversed 2026-08-16, first playtest).**
   The original pass persisted HP/mana across nodes (`RosterEntry.currentHp`/
   `currentMana`, clamped to max on the next fight) on the theory that escalating

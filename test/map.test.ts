@@ -43,7 +43,7 @@ const REWARD_TYPES = new Set([
   'accessoryReward',
   'hpBoostReward',
   'manaBoostReward',
-  'classReward',
+  'manaRegenBoostReward',
   'event',
 ]);
 
@@ -106,8 +106,11 @@ test('map: Act 1 inserts a standalone single-node Mentor (classReward) row right
     assert.strictEqual(rows[3].length, 1, `Mentor row (seed ${seed}) should be a single node`);
     assert.deepStrictEqual(rowTypes(3), ['classReward']);
     // The reward row that used to sit right after Skirmish shifts down a row,
-    // unchanged and unfiltered — a normal pick of 3, not excluding classReward.
+    // unchanged — a normal pick of 3, which (2026-08-22) can never itself
+    // reroll classReward: it's excluded from REWARD_WEIGHTS entirely, so the
+    // Mentor row above is the only place it can appear.
     assert.ok(rowTypes(4).every((t) => REWARD_TYPES.has(t)), `row 4 (seed ${seed}) has a non-reward type: ${rowTypes(4)}`);
+    assert.ok(!rowTypes(4).includes('classReward'), `row 4 (seed ${seed}) rerolled classReward — it should only ever appear in the forced Mentor row`);
     assert.strictEqual(rows[4].length, 3);
     assert.strictEqual(rows[5].length, 2);
     assert.deepStrictEqual(rowTypes(5).slice().sort(), ['battle', 'elite']);
@@ -127,6 +130,20 @@ test('map: the guarantee is Act-1-only — every other act keeps the base 7-row 
     for (const actNumber of [2, 3, 4, 5]) {
       const map = generateMap(seed, actNumber);
       assert.strictEqual(map.rows.length, 7, `Act ${actNumber} (seed ${seed}) should not have the extra Mentor row`);
+    }
+  }
+});
+
+test('map: classReward never rerolls into a pick-1-of-3 reward row — the forced Act-1 Mentor row is its only source', () => {
+  for (const seed of Array.from({ length: 30 }, (_, i) => i + 1)) {
+    for (const actNumber of [1, 2, 3, 4, 5]) {
+      const map = generateMap(seed, actNumber);
+      const rewardRowIndices = actNumber === 1 ? [1, 4] : [1, 3];
+      for (const r of rewardRowIndices) {
+        for (const nodeId of map.rows[r]) {
+          assert.notStrictEqual(map.nodes[nodeId].type, 'classReward', `Act ${actNumber} row ${r} (seed ${seed}) rolled classReward outside the Mentor row`);
+        }
+      }
     }
   }
 });

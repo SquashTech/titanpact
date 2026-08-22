@@ -278,12 +278,18 @@ export function App() {
       // the enemy squad to already exist so it can scout it before the
       // player commits a squad (playtest ask).
       //
-      // `fight` (docs/run-loop.md "fight vs skirmish vs battle") draws from
-      // the non-recruitable enemy pool instead of the draftable hero roster:
-      // an intentionally weak opener, not a real hero spent as disposable
-      // fodder. `skirmish`/`battle`/`elite`/`boss` all draw from the
-      // recruitable pool.
-      const isMobFight = node.type === 'fight';
+      // `fight` and `battle` (docs/run-loop.md "fight vs skirmish vs battle")
+      // both draw from the non-recruitable enemy pool instead of the
+      // draftable hero roster — `fight` as an intentionally weak opener,
+      // `battle` as its later, still-non-recruitable sibling (2026-08-22, per
+      // user direction: differentiate "Monsters" you fight from "Skirmish"
+      // hero squads you can recruit off of). `enemies.ts` only has the 2
+      // opener-tier Goblins today, so a `battle` node is currently no harder
+      // than the opener — expanding the pool with tougher/act-themed monster
+      // content is flagged future work (docs/run-loop.md "Per-act difficulty
+      // scaling"), not a gap introduced here. `skirmish`/`elite`/`boss` draw
+      // from the recruitable pool.
+      const isMobFight = node.type === 'fight' || node.type === 'battle';
       const encounterPool = isMobFight ? enemies : heroes;
       // `skirmish` and `battle` map nodes ARE plain `fight` encounters
       // mechanically (same heroCount, no stat bonus) — only the pool and the
@@ -323,7 +329,7 @@ export function App() {
       setPlayerRun((run) => advanceToNode(run, nodeId));
       const afterScreen: Screen = playerRun.levelUpPool > 0 ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' };
       setScreen(item ? { kind: 'forceEquip', queue: [item.id], next: afterScreen } : afterScreen);
-    } else if (node.type === 'hpBoostReward' || node.type === 'manaBoostReward') {
+    } else if (node.type === 'hpBoostReward' || node.type === 'manaBoostReward' || node.type === 'manaRegenBoostReward') {
       setScreen({ kind: 'statBoost', nodeId, nodeType: node.type });
     } else if (node.type === 'classReward') {
       setScreen({ kind: 'classNode', nodeId });
