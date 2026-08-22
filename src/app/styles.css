@@ -3974,6 +3974,14 @@ body {
   flex: 1 1 42%;
 }
 
+/* Mentor's Hall (ClassNodeScreen) gets the same reachable-thumb treatment —
+   both its pick-a-Class and pick-a-hero phases sink to the bottom of the
+   scroll area instead of floating under the header. */
+.class-node-screen .bottom-pinned::before {
+  content: '';
+  flex: 1 1 30%;
+}
+
 .reward-panel .roster-grid {
   width: 100%;
   text-align: left;
@@ -4439,13 +4447,25 @@ body {
 }
 
 /* --- Mentor's Hall (ClassNodeScreen's classReward) ------------------------
-   Same banner/glow/card/list shapes as the Relic Shrine above, retinted from
-   --magical toward --buff — a Class is a stat buff, not an arcane relic, and
-   the map tile already uses --buff (MapScreen.tsx NODE_COLORS) so the two
-   surfaces read as the same node type at a glance. */
+   Overhauled (2026-08-22, per user direction) into its own epic "moment"
+   rather than a reskinned Relic Shrine: the Mentor NPC portrait (art/npc/
+   mentor.png) anchors every phase of the flow, a wider multi-layer glow +
+   slow idle bob keeps them feeling present rather than decorative, and a
+   dedicated reveal phase (.class-learn-reveal below) replaces the hero grid
+   once a pick lands so committing a hero to a Class reads as significant as
+   Evolution does. Still retinted from --magical toward --buff — a Class is a
+   stat buff, not an arcane relic, and the map tile already uses --buff
+   (MapScreen.tsx NODE_COLORS) so the two surfaces read as the same node type
+   at a glance. */
 
+/* Tighter than the base .reward-panel padding/gap (24px/10px) — the
+   pick-a-Class phase already stacks a full banner + 3 flavor-text cards, the
+   tallest content this screen shows, so every bit of shaved chrome here goes
+   toward keeping it inside one screen on a real mobile viewport instead of
+   scrolling. */
 .class-shrine-panel {
-  padding-top: 8px;
+  padding: 4px 12px 14px;
+  gap: 8px;
 }
 
 .class-shrine-banner {
@@ -4453,14 +4473,18 @@ body {
   width: 100%;
   overflow: hidden;
   text-align: center;
-  padding: 18px 12px 14px;
-  border-radius: 12px;
+  padding: 12px 14px 10px;
+  border-radius: 14px;
   border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(63, 184, 175, 0.16), transparent 70%);
+  background: radial-gradient(circle at 50% 0%, rgba(63, 184, 175, 0.22), transparent 70%), linear-gradient(180deg, rgba(63, 184, 175, 0.12), transparent 75%);
+  box-shadow: inset 0 0 0 1px rgba(63, 184, 175, 0.12);
 }
 
 .class-shrine-banner h2 {
   position: relative;
+  font-size: 20px;
+  margin: 2px 0 2px;
+  text-shadow: 0 0 18px rgba(63, 184, 175, 0.5);
 }
 
 .class-shrine-banner .hint {
@@ -4468,32 +4492,100 @@ body {
   margin: 4px 0 0;
 }
 
+.class-shrine-eyebrow {
+  position: relative;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--buff);
+  margin-bottom: 2px;
+}
+
 .class-shrine-glow {
   position: absolute;
-  top: -45%;
+  top: -50%;
   left: 50%;
-  width: 240px;
-  height: 240px;
+  width: 280px;
+  height: 280px;
   transform: translateX(-50%);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(63, 184, 175, 0.34), transparent 65%);
+  background: radial-gradient(circle, rgba(63, 184, 175, 0.38), transparent 65%);
   animation: evolution-glow-pulse 2.4s ease-in-out infinite;
   pointer-events: none;
+}
+
+/* Faint rotating ring behind the Mentor's portrait — reads as ambient magic
+   rather than a literal spinner since it sits mostly hidden under the glow. */
+.class-shrine-banner::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  width: 128px;
+  height: 128px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 1px dashed rgba(63, 184, 175, 0.28);
+  animation: mentor-ring-spin 18s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes mentor-ring-spin {
+  to {
+    transform: translateX(-50%) rotate(360deg);
+  }
+}
+
+.class-shrine-mentor {
+  position: relative;
+  display: block;
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 4px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 16px rgba(63, 184, 175, 0.65));
+  animation: mentor-float 3.2s ease-in-out infinite;
+}
+
+@keyframes mentor-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.class-shrine-mentor-small {
+  width: 72px;
+  height: 72px;
+}
+
+.class-shrine-roster-btn {
+  position: relative;
+  width: auto;
+  margin: 6px auto 0;
+  padding: 6px 16px;
 }
 
 .class-shrine-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
   width: 100%;
 }
 
 .class-shrine-card {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   text-align: left;
   font: inherit;
   color: inherit;
-  padding: 12px 14px;
+  padding: 10px 14px;
   cursor: pointer;
   border-left-color: var(--buff);
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
@@ -4512,9 +4604,176 @@ body {
   font-size: 14px;
 }
 
+.class-shrine-card-flavor {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.class-shrine-card-grants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
 .class-shrine-card.picked {
   border-color: var(--buff);
-  box-shadow: 0 0 0 1px var(--buff), 0 4px 18px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 1px var(--buff), 0 4px 18px rgba(63, 184, 175, 0.35);
+  background: linear-gradient(165deg, rgba(63, 184, 175, 0.14), var(--panel) 70%);
+}
+
+/* --- Class-learn reveal (ClassNodeScreen, once a hero is assigned) --------
+   Replaces the hero grid entirely once a pick lands — same "this is a big
+   deal" logic as .evolution-banner, but staged as a two-portrait moment (the
+   Mentor conferring the Class onto the chosen hero) with the stat grants
+   cascading in afterward rather than all appearing at once. */
+
+.class-learn-reveal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+  padding: 26px 16px 20px;
+  border-radius: 14px;
+  border: 1px solid var(--buff);
+  background: radial-gradient(circle at 50% 0%, rgba(63, 184, 175, 0.26), transparent 70%), linear-gradient(180deg, rgba(63, 184, 175, 0.14), transparent 75%);
+  box-shadow: 0 0 0 1px rgba(63, 184, 175, 0.25), 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.class-learn-flash {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  width: 260px;
+  height: 260px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(63, 184, 175, 0.55), transparent 68%);
+  animation: class-learn-flash-burst 0.6s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes class-learn-flash-burst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.6);
+  }
+}
+
+.class-learn-portraits {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.class-learn-mentor {
+  display: block;
+  width: 72px;
+  height: 72px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 10px rgba(63, 184, 175, 0.5));
+  opacity: 0.85;
+}
+
+.class-learn-arrow {
+  font-size: 20px;
+  color: var(--buff);
+}
+
+.class-learn-hero {
+  display: block;
+  width: 88px;
+  height: 88px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 18px rgba(63, 184, 175, 0.75));
+  animation: class-learn-pop 0.5s ease-out;
+}
+
+@keyframes class-learn-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.class-learn-eyebrow {
+  position: relative;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--buff);
+  margin-bottom: 4px;
+  animation: class-learn-pop 0.4s ease-out;
+}
+
+.class-learn-title {
+  position: relative;
+  font-size: 20px;
+  margin: 0 0 4px;
+  text-shadow: 0 0 20px rgba(63, 184, 175, 0.6);
+  animation: class-learn-pop 0.45s ease-out;
+}
+
+.class-learn-classname {
+  position: relative;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--buff);
+  margin: 0 0 6px;
+}
+
+.class-learn-desc {
+  position: relative;
+  font-size: 12px;
+  color: var(--text-dim);
+  max-width: 320px;
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.class-learn-grants {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.class-learn-grant-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(63, 184, 175, 0.14);
+  border: 1px solid rgba(63, 184, 175, 0.4);
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  animation: equip-cache-fade-up 0.3s ease-out backwards;
 }
 
 /* --- Forced equip-or-trash gate (ForceEquipScreen) ------------------------
