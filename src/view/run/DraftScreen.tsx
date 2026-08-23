@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { heroes } from '../../data/heroes';
 import type { HeroDefinition } from '../../engine/content';
 import { createRosterEntry } from '../../run/state';
@@ -13,6 +13,33 @@ interface Props {
   onConfirm: (chosenIds: string[]) => void;
 }
 
+const SPARK_COUNT = 12;
+
+/**
+ * Rising motes inside .draft-banner — same golden-angle-sequence trick as
+ * TitleScreen's useEmbers (pure function of index, no seed to store) so the
+ * scatter is stable across re-renders, just fewer of them and contained to
+ * the banner's own height instead of the whole screen. Every third mote is
+ * tagged violet to echo FightScreen's recruit-claims contract color, since
+ * this banner is itself the opening term of a pact.
+ */
+function useBannerSparks() {
+  return useMemo(
+    () =>
+      Array.from({ length: SPARK_COUNT }, (_, i) => {
+        const seed = i * 137.51;
+        return {
+          left: seed % 100,
+          delay: (seed * 1.3) % 6,
+          duration: 4.5 + ((seed * 0.29) % 3),
+          size: 2 + ((seed * 0.17) % 2),
+          violet: i % 3 === 0,
+        };
+      }),
+    []
+  );
+}
+
 /**
  * Start-of-run draft: the player's opening pact with a Titan, framed with
  * flavor text, then a pick-2-of-4 hero choice (App.tsx's draft screen,
@@ -25,6 +52,7 @@ interface Props {
 export function DraftScreen({ optionIds, onConfirm }: Props) {
   const [pickedIds, setPickedIds] = useState<string[]>([]);
   const [inspecting, setInspecting] = useState<HeroDefinition | null>(null);
+  const sparks = useBannerSparks();
 
   function toggle(heroId: string) {
     setPickedIds((prev) => {
@@ -39,8 +67,32 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
       <div className="screen-scroll">
         <div className="draft-banner">
           <div className="draft-banner-glow" aria-hidden="true" />
+          <div className="draft-banner-glow draft-banner-glow-violet" aria-hidden="true" />
+          <span className="draft-banner-sigil" aria-hidden="true" />
+          <div className="draft-banner-sparks" aria-hidden="true">
+            {sparks.map((s, i) => (
+              <span
+                key={i}
+                className={`draft-banner-spark${s.violet ? ' spark-violet' : ''}`}
+                style={
+                  {
+                    left: `${s.left}%`,
+                    width: `${s.size}px`,
+                    height: `${s.size}px`,
+                    animationDelay: `${s.delay}s`,
+                    animationDuration: `${s.duration}s`,
+                  } as CSSProperties
+                }
+              />
+            ))}
+          </div>
           <div className="draft-banner-eyebrow">A Titan Stirs</div>
-          <h2 className="draft-banner-title">Forge Your Pact</h2>
+          <h2 className="draft-banner-title">
+            <span className="draft-banner-title-glow" aria-hidden="true">
+              Forge Your Pact
+            </span>
+            Forge Your Pact
+          </h2>
           <p className="draft-banner-text">
             Beneath the world, a Titan has stirred, and it offers you a pact: prove your worth
             across its trials, and a fraction of its power becomes yours. Every hero you
