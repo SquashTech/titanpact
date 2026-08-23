@@ -42,6 +42,11 @@ function fmtGrant(amount: number): string {
   return amount > 0 ? `+${amount}` : `${amount}`;
 }
 
+/** "Sylva's" / "Marrow's" / "Astris'" for the move-panel header's "Select {hero}'s Move:" — apostrophe-only for a name already ending in s, matching standard English possessive form. */
+function possessive(name: string): string {
+  return name.endsWith('s') ? `${name}'` : `${name}'s`;
+}
+
 interface RecruitClaimCardProps {
   hero: HeroDefinition;
   selected: boolean;
@@ -217,6 +222,8 @@ export function FightScreen({
   const [logOpen, setLogOpen] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
+  /** Bench hero tapped (but not yet confirmed) in the forced-replacement panel below — a fainted active slot requires a deliberate select-then-confirm instead of a single tap, since this choice can't be undone once committed. Reset after each confirm so the panel starts fresh for the next open slot (a double KO opens two in sequence). */
+  const [replacementPick, setReplacementPick] = useState<string | null>(null);
   const [pending, setPending] = useState<Record<string, PendingAction>>({});
   const [selecting, setSelecting] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
   const [actionStep, setActionStep] = useState(0);
@@ -400,6 +407,7 @@ export function FightScreen({
     const result = applyForcedReplacement(combat, combat.round, PLAYER_SIDE, slot, benchedCombatantId, statuses);
     setCombat(result.state);
     appendLog(formatEvents(result.events, allCombatants, result.state.combatants, moves));
+    setReplacementPick(null);
   }
 
   /**
@@ -640,12 +648,8 @@ export function FightScreen({
     if (side === PLAYER_SIDE && bench.length > 0 && !resolving) {
       return (
         <div className="combatant-card empty-slot" key={`empty-${side}-${slot}`}>
-          <div className="combatant-name">Choose replacement</div>
-          {bench.map((benchId) => (
-            <button key={benchId} className="bench-pick-button" onClick={() => handleForcedReplacement(slot, benchId)}>
-              {allCombatants[combat.combatants[benchId].heroId].name}
-            </button>
-          ))}
+          <span className="fainted-tag">KO</span>
+          <div className="combatant-name">Choose replacement below</div>
         </div>
       );
     }
@@ -723,6 +727,54 @@ export function FightScreen({
             <span className="combat-banner-hint">tap ▸ or hold to auto-play ⏵⏵</span>
           </div>
         )}
+        {/* A player active slot fainted — voluntary switching/move selection
+            is on hold (canAct is false, see openReplacementSlots above)
+            until a bench replacement is chosen for it. Deliberately a
+            select-then-Confirm flow rather than a single tap: this
+            replacement can't be undone once committed, unlike the
+            already-two-tap move-then-target flow above. A double KO opens
+            this panel again for the second slot once the first is filled —
+            openReplacementSlots recomputes off `combat`, which just changed. */}
+        {!resolving &&
+          openReplacementSlots.length > 0 &&
+          (() => {
+            const slot = openReplacementSlots[0];
+            return (
+              <div className="action-panel target-panel">
+                <div className="target-panel-header">
+                  <span className="target-panel-title">
+                    Choose a Replacement{openReplacementSlots.length > 1 ? ' (1 of 2)' : ''}:
+                  </span>
+                </div>
+                <div className="bench-row">
+                  {playerBench.map((benchId) => {
+                    const benchCombatant = combat.combatants[benchId];
+                    const benchHero = allCombatants[benchCombatant.heroId];
+                    return (
+                      <CombatantCard
+                        key={benchId}
+                        hero={benchHero}
+                        combatant={benchCombatant}
+                        targetable
+                        selected={replacementPick === benchId}
+                        onSelectTarget={() => setReplacementPick(benchId)}
+                        onInspect={() => setInspecting(benchId)}
+                        popup={popups[benchId]}
+                        activeFieldEffect={combat.activeFieldEffect}
+                      />
+                    );
+                  })}
+                </div>
+                <button
+                  className="resolve-button replacement-confirm-button"
+                  disabled={!replacementPick}
+                  onClick={() => replacementPick && handleForcedReplacement(slot, replacementPick)}
+                >
+                  Confirm
+                </button>
+              </div>
+            );
+          })()}
         {!resolving &&
           openReplacementSlots.length === 0 &&
           playerActiveAlive.length > 0 &&
@@ -803,7 +855,7 @@ export function FightScreen({
             return (
               <div className="action-panel" key={id}>
                 <div className="move-panel-header">
-                  <span className="move-panel-title">Select a Move:</span>
+                  <span className="move-panel-title">Select {possessive(hero.name)} Move:</span>
                   <span className="move-panel-hint">Long-press for info</span>
                 </div>
                 {!canAffordAnyMove && (
@@ -896,8 +948,6 @@ export function FightScreen({
               </div>
             );
           })()}
-
-        {!resolving && openReplacementSlots.length > 0 && <div className="hint">Choose a bench replacement above to continue.</div>}
       </div>
 
       {/* Every secondary action lives in one fixed bottom row instead of

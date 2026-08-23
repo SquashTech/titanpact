@@ -2649,15 +2649,12 @@ body {
   text-align: center;
 }
 
-.bench-pick-button {
-  background: var(--panel-alt);
-  border: 1px solid var(--accent);
-  border-radius: 6px;
-  color: var(--text);
-  padding: 6px 8px;
-  font-size: 11px;
-  cursor: pointer;
-  width: 100%;
+/* Forced-replacement picker (FightScreen action-area, a fainted active slot)
+   — the bench-row above already renders full CombatantCard boxes; this just
+   spaces the Confirm button below them, matching the move-grid's gap to the
+   resolve-button in other action-panel variants. */
+.replacement-confirm-button {
+  margin-top: 8px;
 }
 
 /* --- Manage Roster screen ------------------------------------------------ */
