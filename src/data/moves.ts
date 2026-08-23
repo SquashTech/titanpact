@@ -611,6 +611,25 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: "A disorienting pressure that dulls the target's mind.",
   },
+  // Goblin Chief's signature move (src/data/enemies.ts) — deliberately the
+  // strongest buff in the fixture pool: 3 stats at once, both allies, where
+  // every other buff move here caps at 2 stats and/or a single target.
+  warHorn: {
+    id: 'warHorn',
+    name: 'War Horn',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'buff',
+    statDeltas: [
+      { stat: 'attack', amount: 10 },
+      { stat: 'defense', amount: 10 },
+      { stat: 'speed', amount: 10 },
+    ],
+    manaCost: 24,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'A bone-rattling war horn that whips both allies into a frenzy, sharpening attack, defense, and speed all at once.',
+  },
 
   // --- Status moves (docs/conditions.md) — one per status, plus Cleanse ---
   cinderBite: {

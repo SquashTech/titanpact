@@ -15,7 +15,7 @@ import { ClassNodeScreen } from '../view/run/ClassNodeScreen';
 import { EventNodeScreen } from '../view/run/EventNodeScreen';
 import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
 import { heroes } from '../data/heroes';
-import { enemies } from '../data/enemies';
+import { enemies, basicGoblins, BASIC_GOBLIN_IDS, GOBLIN_CHIEF_ID } from '../data/enemies';
 import { relics } from '../data/relics';
 import { equipment } from '../data/equipment';
 import {
@@ -42,7 +42,7 @@ import { guildHallOffers } from '../data/recruitment';
 import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } from '../run/shop';
 import { generateMap } from '../run/map';
 import { generateStarterOptions } from '../run/draft';
-import { generateEncounter, type EncounterNodeType, type Encounter } from '../run/enemyGen';
+import { generateEncounter, generateGoblinChiefEncounter, type EncounterNodeType, type Encounter } from '../run/enemyGen';
 import { pickSquad } from '../run/squad';
 import { relicTeamStatModifiers } from '../run/relics';
 import { relicTeamPassiveGrants } from '../run/passives';
@@ -248,17 +248,13 @@ export function App() {
       //
       // `fight` and `battle` (docs/run-loop.md "fight vs skirmish vs battle")
       // both draw from the non-recruitable enemy pool instead of the
-      // draftable hero roster — `fight` as an intentionally weak opener,
-      // `battle` as its later, still-non-recruitable sibling (2026-08-22, per
-      // user direction: differentiate "Monsters" you fight from "Skirmish"
-      // hero squads you can recruit off of). `enemies.ts` only has the 2
-      // opener-tier Goblins today, so a `battle` node is currently no harder
-      // than the opener — expanding the pool with tougher/act-themed monster
-      // content is flagged future work (docs/run-loop.md "Per-act difficulty
-      // scaling"), not a gap introduced here. `skirmish`/`elite`/`boss` draw
-      // from the recruitable pool.
+      // draftable hero roster — `fight` (always row 0) is 2 random basic
+      // Goblins (`BASIC_GOBLIN_IDS`), an intentionally weak opener; `battle`
+      // (row 4, map-facing "Monsters") is Goblin Chief plus 3 random basic
+      // Goblins, a considerably tougher, still-non-recruitable alternative to
+      // that row's Elite option (2026-08-23, per user direction).
+      // `skirmish`/`elite`/`boss` draw from the recruitable pool.
       const isMobFight = node.type === 'fight' || node.type === 'battle';
-      const encounterPool = isMobFight ? enemies : heroes;
       // `skirmish` and `battle` map nodes ARE plain `fight` encounters
       // mechanically (same heroCount, no stat bonus) — only the pool and the
       // map-facing name differ, so both collapse to 'fight' for
@@ -268,7 +264,14 @@ export function App() {
       // which have their own fixed sizing) is a deliberately lighter 2v2
       // breather between the opener and elites kicking in.
       const isSecondFight = encounterKind === 'fight' && playerRun.fightsStarted === 1;
-      let encounter = generateEncounter(encounterKind, Math.floor(Math.random() * 2 ** 31), encounterPool, isSecondFight ? 2 : undefined);
+      let encounter: Encounter;
+      if (node.type === 'battle') {
+        encounter = generateGoblinChiefEncounter(Math.floor(Math.random() * 2 ** 31), BASIC_GOBLIN_IDS, GOBLIN_CHIEF_ID, enemies);
+      } else {
+        const encounterPool = node.type === 'fight' ? basicGoblins : heroes;
+        const heroCountOverride = node.type === 'fight' ? 2 : isSecondFight ? 2 : undefined;
+        encounter = generateEncounter(encounterKind, Math.floor(Math.random() * 2 ** 31), encounterPool, heroCountOverride);
+      }
       const isFirstFight = encounterKind === 'fight' && playerRun.fightsStarted === 0;
       if (isMobFight && isFirstFight) {
         encounter = equipTestDagger(encounter);

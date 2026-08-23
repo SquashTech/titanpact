@@ -25,12 +25,61 @@ export const enemies: Record<string, HeroDefinition> = {
     moveIds: ['fangRush', 'savageMaul'],
     starter: false,
   },
+  // Retyped Beast -> Shadow (per user direction) so the opening Goblin fight
+  // draws from 5 distinct basic types instead of 2 mono-Beast Goblins.
+  // Moveset swapped to Shadow-type moves accordingly (STAB).
   goblinSkulker: {
     id: 'goblinSkulker',
     name: 'Goblin Skulker',
-    types: ['Beast'],
+    types: ['Shadow'],
     baseStats: { hp: 45, attack: 30, defense: 20, intelligence: 15, wisdom: 20, speed: 45, manaPool: 25, mpRegen: 3 },
-    moveIds: ['fangRush', 'rendingClaw'],
+    moveIds: ['duskStrike', 'weaken'],
+    starter: false,
+  },
+  spookyGoblin: {
+    id: 'spookyGoblin',
+    name: 'Spooky Goblin',
+    types: ['Spirit'],
+    baseStats: { hp: 42, attack: 20, defense: 20, intelligence: 35, wisdom: 30, speed: 42, manaPool: 30, mpRegen: 4 },
+    moveIds: ['soulRend', 'spectralBind'],
+    starter: false,
+  },
+  goblinWarrior: {
+    id: 'goblinWarrior',
+    name: 'Goblin Warrior',
+    types: ['Iron'],
+    baseStats: { hp: 55, attack: 35, defense: 35, intelligence: 10, wisdom: 15, speed: 30, manaPool: 20, mpRegen: 2 },
+    moveIds: ['quickJab', 'ironFist'],
+    starter: false,
+  },
+  torchGoblin: {
+    id: 'torchGoblin',
+    name: 'Torch Goblin',
+    types: ['Fire'],
+    baseStats: { hp: 42, attack: 32, defense: 18, intelligence: 25, wisdom: 18, speed: 48, manaPool: 28, mpRegen: 4 },
+    moveIds: ['cinderBite', 'emberSlash'],
+    starter: false,
+  },
+  // Considerably stronger than the basic 5 (docs/run-loop.md "Per-act
+  // difficulty scaling" — the first tougher-tier monster content). Fields
+  // the "Monsters" battle node (map row 4, next to Elite) alongside 3 random
+  // basic Goblins, per user direction.
+  goblinChief: {
+    id: 'goblinChief',
+    name: 'Goblin Chief',
+    types: ['Beast'],
+    baseStats: { hp: 110, attack: 60, defense: 45, intelligence: 25, wisdom: 35, speed: 50, manaPool: 50, mpRegen: 6 },
+    moveIds: ['savageMaul', 'warHorn'],
     starter: false,
   },
 };
+
+/** The 5 basic, opener-tier Goblin types (docs/run-loop.md) — row 0's opening fight draws 2 of these; the "Monsters" battle node (row 4) draws 3 alongside `GOBLIN_CHIEF_ID`. Excludes `goblinChief`, which is never randomly drawn — it's always present in its own encounter. */
+export const BASIC_GOBLIN_IDS = ['goblinGrunt', 'goblinSkulker', 'spookyGoblin', 'goblinWarrior', 'torchGoblin'] as const;
+
+export const GOBLIN_CHIEF_ID = 'goblinChief';
+
+/** `enemies` filtered to just `BASIC_GOBLIN_IDS`, for encounter generation that must never draw the Chief. */
+export const basicGoblins: Record<string, HeroDefinition> = Object.fromEntries(
+  BASIC_GOBLIN_IDS.map((id) => [id, enemies[id]])
+);

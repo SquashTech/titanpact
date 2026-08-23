@@ -78,3 +78,33 @@ export function generateEncounter(nodeType: EncounterNodeType, seed: number, her
   const squad = pickSquad(run.roster, heroIds);
   return { run, squad };
 }
+
+/**
+ * The "Monsters" battle node (map row 4, next to Elite — docs/run-loop.md
+ * §2 "battle") — Goblin Chief plus 3 random basic Goblins, per user
+ * direction: the Chief is always present (not randomly drawn like
+ * `generateEncounter` picks its whole roster), backed by 3 of the 5 basic
+ * types (`enemies.ts` `BASIC_GOBLIN_IDS`). No stat bonus — the Chief's own
+ * base stats and War Horn are what make this node a real threat, distinct
+ * from `elite`'s flat stat-bonus mechanism.
+ */
+export function generateGoblinChiefEncounter(
+  seed: number,
+  basicGoblinIds: readonly string[],
+  chiefId: string,
+  enemyPool: HeroLookup
+): Encounter {
+  let rng = createRng(seed);
+  const { picked: goblinIds, nextState } = shuffledPick(rng, basicGoblinIds, 3);
+  rng = nextState;
+  const heroIds = [chiefId, ...goblinIds];
+
+  let run = createRunState(0);
+  for (const heroId of heroIds) {
+    const entry = createRosterEntry(heroId, heroId, enemyPool[heroId].moveIds);
+    run = addRosterEntry(run, entry);
+  }
+
+  const squad = pickSquad(run.roster, heroIds);
+  return { run, squad };
+}

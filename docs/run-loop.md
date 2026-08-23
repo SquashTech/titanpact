@@ -71,7 +71,7 @@ within a row.
 |---|---|
 | `fight` | `FightScreen` vs. a generated 4-hero AI squad (`src/run/enemyGen.ts`), no bonus. Always row 0, each act's opening node — draws from the non-recruitable enemy pool (Goblins), not the draftable hero roster. |
 | `skirmish` | Mechanically identical to `fight` (same 4-hero, no-bonus `generateEncounter` call — App.tsx collapses it to `EncounterNodeType: 'fight'`), but draws from the **recruitable hero pool** and is named differently on the map (2026-08-17, per user direction) so the player can see, before committing a squad, that beating this one is a shot at a Recruit Contract claim. Always row 2. |
-| `battle` (map-facing name "Monsters", 2026-08-22 revision) | Also mechanically identical to `fight`/`skirmish` (collapses to `EncounterNodeType: 'fight'`), but draws from the **non-recruitable enemy pool**, same as `fight` — not `skirmish`'s recruitable pool. Row 4's non-Elite alternative — kept as its own named type rather than reusing `fight` so its map position/flavor can be authored separately as the monster pool grows (per user direction: monster variety/difficulty is meant to scale by act — e.g. a Goblin Chieftain/Torch Goblin tier, then different-themed monsters in later acts — not yet built, see "Per-act difficulty scaling" below). `enemies.ts` currently only has the 2 opener-tier Goblins, so until that pool grows, a `battle` node is no harder than the opener. |
+| `battle` (map-facing name "Monsters", 2026-08-22 revision) | Also mechanically identical to `fight`/`skirmish` (collapses to `EncounterNodeType: 'fight'`), but draws from the **non-recruitable enemy pool**, same as `fight` — not `skirmish`'s recruitable pool. Row 4's non-Elite alternative to `elite`. **2026-08-23 revision, per user direction:** no longer a plain `generateEncounter` call over the whole enemy pool — `App.tsx`'s `handleSelectNode` calls the dedicated `generateGoblinChiefEncounter` (`enemyGen.ts`) instead, which always fields `goblinChief` plus 3 random draws from `BASIC_GOBLIN_IDS`. This is what makes `battle` a real, considerably-tougher alternative to `elite` rather than a same-difficulty reskin of the opener — see "Goblin roster" below for the content this draws on. Different-themed (non-Goblin) monster tiers for later acts remain future work, see "Per-act difficulty scaling" below. |
 | `elite` | The AI's 4 heroes each carry a flat +10 bonus to 2 random growth stats. Draws from the recruitable pool, same as `skirmish`/`battle`. Row 4's difficulty-spike alternative to `battle` — the player picks one or the other, never both. |
 | `boss` | `FightScreen` vs. 2 AI heroes (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Winning grants 1 Recruit Contract and ends the act (§3). |
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. Overhauled 2026-08-18: offers 2-3 curated hero recruits (50g each, `GUILD_HALL_RECRUIT_COST`) rather than the full catalog, plus rarity-priced equipment and flat-cost relics for sale, rolled once per visit (`src/run/shop.ts` `rollGuildHallOffers`). |
@@ -149,12 +149,26 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   first-pass curve (originally row 0 only) — **2026-08-22 revision, per user
   direction:** `battle` nodes (row 4, map-facing "Monsters") now also draw from
   `enemies.ts`, to read as "non-recruitable" the way the name implies, distinct from
-  `skirmish`'s recruitable squads. `enemies.ts` itself hasn't grown yet — the plan is
-  to expand it with tougher/act-themed monster tiers (e.g. a Goblin Chieftain, Torch
-  Goblin, then non-Goblin monster themes in later acts) so difficulty actually scales;
-  until then a `battle` node is no harder than the row-0 opener. Which rows/node types
-  pull from which pool, and how the pool itself scales by act, is still open balance
-  work, not architecture work.
+  `skirmish`'s recruitable squads.
+- **Goblin roster (2026-08-23, per user direction).** `enemies.ts` grew from the
+  original 2 mono-Beast Goblins to 5 basic, mono-typed Goblin variants —
+  `goblinGrunt` (Beast), `goblinSkulker` (retyped Beast → Shadow), `spookyGoblin`
+  (Spirit), `goblinWarrior` (Iron), `torchGoblin` (Fire) — plus a considerably
+  stronger `goblinChief` (mono Beast, ~2x the basic Goblins' stats, wielding a
+  powerful team-wide buff move, War Horn). The 5 basic ids live in
+  `BASIC_GOBLIN_IDS`/`basicGoblins`; `goblinChief` is never drawn randomly.
+  `handleSelectNode` specializes both mob-fight node types on this split: the row-0
+  `fight` opener draws exactly 2 random heroes from `basicGoblins`
+  (`generateEncounter(..., heroCountOverride: 2)`), and the row-4 `battle` node
+  ("Monsters") calls the dedicated `generateGoblinChiefEncounter` (`enemyGen.ts`),
+  which always fields `goblinChief` alongside 3 random draws from
+  `BASIC_GOBLIN_IDS` — a fixed threat backed by variable support, rather than a
+  fully random 4-pick. This is what makes `battle` a real, harder alternative to
+  `elite` instead of a same-difficulty reskin of the opener. Different-themed
+  (non-Goblin) monster tiers for later acts remain future work — see "Per-act
+  difficulty scaling" below. Which rows/node types pull from which pool, and how
+  the pool itself scales by act number, is still open balance work, not
+  architecture work.
 - **HP/mana fully restore between map nodes (reversed 2026-08-16, first playtest).**
   The original pass persisted HP/mana across nodes (`RosterEntry.currentHp`/
   `currentMana`, clamped to max on the next fight) on the theory that escalating
