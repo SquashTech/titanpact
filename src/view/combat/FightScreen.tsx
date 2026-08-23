@@ -299,6 +299,9 @@ export function FightScreen({
   // The player combatant whose move panel is currently on screen — glowed on the battlefield (CombatantCard's `acting` prop) instead of a "X's move" text label, so that vertical space goes back to the action panel.
   const actingId: string | null = canAct ? playerActiveAlive[stepIndex] : null;
 
+  /** Whether the target-selection panel (below) is what's currently on screen for the acting hero — drives both that panel's render and the bottom-bar Back button's behavior (exit targeting back to the move grid, rather than stepping to the previous hero). */
+  const showingTargetPanel = selecting !== null && selecting.combatantId === actingId;
+
   const targetableIds: string[] = !selecting
     ? []
     : selecting.move.target === 'singleEnemy'
@@ -748,11 +751,11 @@ export function FightScreen({
               return (
                 <div className="action-panel target-panel" key={`${id}-targeting`}>
                   <div className="target-panel-header">
-                    <button className="target-back-button" onClick={() => setSelecting(null)}>
-                      ← Back
-                    </button>
-                    <span className="target-panel-move-name">{move.name}</span>
-                    <TypeBadge type={move.type} />
+                    <span className="target-panel-title">Select a Target:</span>
+                    <span className="target-panel-move-meta">
+                      <span className="target-panel-move-name">{move.name}</span>
+                      <TypeBadge type={move.type} />
+                    </span>
                   </div>
                   {/* A spread move has nothing to pick between, so the whole
                       row of targets doubles as the confirm control — one
@@ -799,6 +802,10 @@ export function FightScreen({
             const canAffordAnyMove = hasAffordableMove(combatant.currentMana, entry.unlockedMoveIds, moves);
             return (
               <div className="action-panel" key={id}>
+                <div className="move-panel-header">
+                  <span className="move-panel-title">Select a Move:</span>
+                  <span className="move-panel-hint">Long-press for info</span>
+                </div>
                 {!canAffordAnyMove && (
                   <div className="move-grid">
                     <button
@@ -901,7 +908,11 @@ export function FightScreen({
           mounted and are disabled rather than hidden when inapplicable, so
           the row's height never changes turn to turn. */}
       <div className="bottom-bar">
-        <button className="back-button" disabled={!(actingId !== null && stepIndex > 0)} onClick={() => setActionStep(stepIndex - 1)}>
+        <button
+          className="back-button"
+          disabled={!(actingId !== null && (showingTargetPanel || stepIndex > 0))}
+          onClick={() => (showingTargetPanel ? setSelecting(null) : setActionStep(stepIndex - 1))}
+        >
           ← Back
         </button>
         <button

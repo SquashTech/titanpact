@@ -1610,31 +1610,70 @@ body {
 .target-panel-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   margin-bottom: 8px;
 }
 
+.target-panel-title {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent);
+  text-shadow: 0 0 8px rgba(224, 166, 60, 0.5);
+}
+
+.target-panel-move-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 .target-panel-move-name {
-  flex: 1;
   font-size: 13px;
   font-weight: 700;
   color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.target-back-button {
+/* Move-selection panel's header (FightScreen, above .move-grid) — a glowing
+   "Select a Move:" label paired with the long-press hint on the same line,
+   kept to small type sizes (matches .target-panel-title/.combat-banner-hint)
+   so it doesn't add enough height to force mobile scroll. */
+.move-panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.move-panel-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent);
+  text-shadow: 0 0 8px rgba(224, 166, 60, 0.5);
+  animation: move-panel-title-glow-pulse 1.8s ease-in-out infinite;
+}
+
+.move-panel-hint {
   flex-shrink: 0;
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 600;
   color: var(--text-dim);
-  font-size: 11px;
-  padding: 3px 8px;
-  cursor: pointer;
 }
 
-.target-back-button:hover {
-  color: var(--text);
-  border-color: var(--accent);
+@keyframes move-panel-title-glow-pulse {
+  0%,
+  100% {
+    text-shadow: 0 0 8px rgba(224, 166, 60, 0.5);
+  }
+  50% {
+    text-shadow: 0 0 13px rgba(224, 166, 60, 0.85);
+  }
 }
 
 .target-row {
