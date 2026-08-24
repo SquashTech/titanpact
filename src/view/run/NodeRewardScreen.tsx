@@ -78,24 +78,31 @@ interface RelicChoiceCardProps {
   relic: RelicDefinition;
   picked: boolean;
   onPick: () => void;
-  onInspect: () => void;
+  /** Staggers this card's fade-up-in behind the banner (see revealDelayMs usage below), same convention as EquipCacheCard. */
+  revealDelayMs: number;
 }
 
 /**
- * One relic offer on the Shrine screen. Tap selects it (highlighted, same
- * select-then-claim two-step as the Equipment Cache cards above); a ~500ms
- * hold instead opens the full description popup, matching the tap-picks/
- * hold-inspects split established by GuildHallPanel's relic cards
- * (`GuildHallRelicCard`) so relics read the same everywhere they're offered.
- * Pulled out of the .map() below because useLongPress is a hook.
+ * One relic offer on the Shrine screen — a full-width row (icon + name +
+ * the relic's actual description) rather than a square tile, so the player
+ * can read exactly what each relic does before picking without holding
+ * anything. Tap selects it (highlighted, same select-then-claim two-step as
+ * the Equipment Cache cards above); no long-press/inspect step here since the
+ * description is already on the card.
  */
-function RelicChoiceCard({ relic, picked, onPick, onInspect }: RelicChoiceCardProps) {
-  const longPress = useLongPress(onInspect, onPick);
+function RelicChoiceCard({ relic, picked, onPick, revealDelayMs }: RelicChoiceCardProps) {
   return (
-    <button className={`relic-card relic-shrine-card${picked ? ' picked' : ''}`} {...longPress}>
-      <div className="relic-card-head">
+    <button
+      className={`relic-card relic-shrine-card${picked ? ' picked' : ''}`}
+      style={{ animationDelay: `${revealDelayMs}ms` } as CSSProperties}
+      onClick={onPick}
+    >
+      <div className="relic-shrine-card-icon-badge">
         <RelicIcon relicId={relic.id} className="relic-card-icon" />
+      </div>
+      <div className="relic-shrine-card-body">
         <span className="relic-card-name">{relic.name}</span>
+        <p className="relic-shrine-card-desc">{relic.description ?? 'No effect described.'}</p>
       </div>
     </button>
   );
@@ -163,8 +170,10 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
   const [pickedItemId, setPickedItemId] = useState<string | null>(null);
   const [inspectItemId, setInspectItemId] = useState<string | null>(null);
   const [pickedRelicId, setPickedRelicId] = useState<string | null>(null);
-  const [previewRelicId, setPreviewRelicId] = useState<string | null>(null);
   const [claimed, setClaimed] = useState(false);
+
+  /** The relic to show in the post-claim reveal moment below — pickedRelicId stays set through the claim, so this only needs to look it up once `claimed` flips true. */
+  const claimedRelic = claimed && pickedRelicId ? relics[pickedRelicId] : null;
 
   /**
    * Equipment Cache only: a brief chest-opens-into-the-loot beat before the
@@ -277,39 +286,54 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
           </div>
         )}
 
-        {nodeType === 'relicReward' && (
+        {nodeType === 'relicReward' && !claimed && (
           <div className="reward-panel relic-shrine-panel bottom-pinned">
             <div className="relic-shrine-banner">
               <div className="relic-shrine-glow" aria-hidden="true" />
+              <div className="relic-shrine-eyebrow">A Pact Awaits</div>
               <h2>💠 Relic Shrine</h2>
-              {!claimed && relicChoices.length > 0 && (
-                <p className="hint">Tap a relic to select it, hold to examine what it does.</p>
-              )}
+              {relicChoices.length > 0 && <p className="hint">Tap a relic to select it, then claim it.</p>}
             </div>
-            {!claimed ? (
-              relicChoices.length > 0 ? (
-                <div className="relic-shrine-list">
-                  {relicChoices.map((relic) => (
-                    <RelicChoiceCard
-                      key={relic.id}
-                      relic={relic}
-                      picked={pickedRelicId === relic.id}
-                      onPick={() => setPickedRelicId(pickedRelicId === relic.id ? null : relic.id)}
-                      onInspect={() => setPreviewRelicId(relic.id)}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="hint">Every relic here is already yours.</p>
-              )
+            {relicChoices.length > 0 ? (
+              <div className="relic-shrine-list">
+                {relicChoices.map((relic, i) => (
+                  <RelicChoiceCard
+                    key={relic.id}
+                    relic={relic}
+                    picked={pickedRelicId === relic.id}
+                    onPick={() => setPickedRelicId(pickedRelicId === relic.id ? null : relic.id)}
+                    revealDelayMs={80 + i * 90}
+                  />
+                ))}
+              </div>
             ) : (
-              <p className="hint">Relic claimed.</p>
+              <p className="hint">Every relic here is already yours.</p>
             )}
-            {pickedRelicId && !claimed && (
-              <button className="resolve-button" onClick={() => handleClaimRelic(pickedRelicId)}>
-                Claim {relicChoices.find((r) => r.id === pickedRelicId)?.name}
+            {relicChoices.length > 0 && (
+              <button
+                className="resolve-button relic-shrine-claim-button"
+                disabled={!pickedRelicId}
+                onClick={() => pickedRelicId && handleClaimRelic(pickedRelicId)}
+              >
+                {pickedRelicId ? `Claim ${relicChoices.find((r) => r.id === pickedRelicId)?.name}` : 'Select a relic'}
               </button>
             )}
+          </div>
+        )}
+
+        {/* Deliberately its own top-level sibling rather than nested in the panel above
+            (same reasoning as the Equipment Cache's chest-reveal split) — this replaces
+            the pick-a-relic panel entirely once a claim lands, so obtaining a relic reads
+            as its own epic moment instead of a line of text where the picker used to be. */}
+        {nodeType === 'relicReward' && claimedRelic && (
+          <div className="relic-reveal">
+            <div className="relic-reveal-flash" aria-hidden="true" />
+            <div className="relic-reveal-icon-badge">
+              <RelicIcon relicId={claimedRelic.id} className="relic-reveal-icon" />
+            </div>
+            <div className="relic-reveal-eyebrow">Relic Claimed</div>
+            <h2 className="relic-reveal-name">{claimedRelic.name}</h2>
+            {claimedRelic.description && <p className="relic-reveal-desc">{claimedRelic.description}</p>}
           </div>
         )}
       </div>
@@ -317,20 +341,6 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
         <button className="resolve-button" disabled={!canContinue} onClick={onContinue}>
           Continue
         </button>
-      )}
-
-      {previewRelicId && (
-        <div className="log-overlay" onClick={() => setPreviewRelicId(null)}>
-          <div className="log-panel move-popup-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="move-info-panel">
-              <div className="move-info-head">
-                <span className="move-info-name">{relics[previewRelicId].name}</span>
-              </div>
-              <div className="move-info-desc">{relics[previewRelicId].description ?? 'No effect described.'}</div>
-            </div>
-            <div className="move-popup-hint">Tap anywhere to close</div>
-          </div>
-        </div>
       )}
 
       {inspectItemId &&

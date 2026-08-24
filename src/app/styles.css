@@ -4603,13 +4603,15 @@ body {
 }
 
 /* --- Relic Shrine (NodeRewardScreen's relicReward) ------------------------
-   Same banner/glow shape as the Equipment Cache above, retinted toward
-   --magical to read as arcane rather than gold. Offer cards reuse .relic-card
-   (also used by RelicsOverlay/GuildHallPanel) so a relic looks the same
-   wherever it's shown; tap picks (border highlight, same "picked" convention
-   as .equip-cache-card), hold opens the full description via the shared
-   move-popup-panel/move-info-panel pattern instead of printing the
-   description on the card itself. */
+   Overhauled (2026-08-23, per user direction) from a 2x2 grid of icon-only
+   tiles — which read oddly with only 3 offers, always leaving one tile
+   orphaned in the second row — into a vertical stack of full-width rows,
+   each printing the relic's actual description (data/relics.ts) right on the
+   card so a player can read exactly what an offer does without holding
+   anything. Claiming one now hands off to .relic-reveal below (its own
+   top-level sibling, same split as the Equipment Cache's chest-reveal
+   phases) instead of just swapping in a line of "Relic claimed." text, so
+   picking up a relic reads as the moment it should be. */
 
 .relic-shrine-panel {
   padding-top: 8px;
@@ -4620,14 +4622,19 @@ body {
   width: 100%;
   overflow: hidden;
   text-align: center;
-  padding: 18px 12px 14px;
+  padding: 20px 12px 16px;
   border-radius: 12px;
-  border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(139, 127, 224, 0.16), transparent 70%);
+  border: 1px solid var(--magical);
+  background: radial-gradient(circle at 50% 0%, rgba(139, 127, 224, 0.24), transparent 70%),
+    linear-gradient(180deg, rgba(139, 127, 224, 0.14), transparent 75%);
+  box-shadow: inset 0 0 0 1px rgba(139, 127, 224, 0.14);
 }
 
 .relic-shrine-banner h2 {
   position: relative;
+  font-size: 19px;
+  margin: 2px 0 2px;
+  text-shadow: 0 0 18px rgba(139, 127, 224, 0.55);
 }
 
 .relic-shrine-banner .hint {
@@ -4635,40 +4642,68 @@ body {
   margin: 4px 0 0;
 }
 
+.relic-shrine-eyebrow {
+  position: relative;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--magical);
+  margin-bottom: 2px;
+}
+
 .relic-shrine-glow {
   position: absolute;
-  top: -45%;
+  top: -50%;
   left: 50%;
-  width: 240px;
-  height: 240px;
+  width: 260px;
+  height: 260px;
   transform: translateX(-50%);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(139, 127, 224, 0.34), transparent 65%);
+  background: radial-gradient(circle, rgba(139, 127, 224, 0.4), transparent 65%);
   animation: evolution-glow-pulse 2.4s ease-in-out infinite;
   pointer-events: none;
 }
 
-/* Chunky square grid (not a vertical list of full-width rows) so the offer
-   reads as tappable tiles low on screen rather than a scrolling stack. */
+/* Faint rotating ring behind the banner heading — same ambient-magic trick
+   as Mentor's Hall's ::after (mentor-ring-spin), just smaller/centered up top
+   since this banner has no portrait to frame. */
+.relic-shrine-banner::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 110px;
+  height: 110px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 1px dashed rgba(139, 127, 224, 0.3);
+  animation: mentor-ring-spin 16s linear infinite;
+  pointer-events: none;
+}
+
+/* Full-width rows, not a square grid — reads correctly whether the pool has
+   1, 2, or 3 relics left instead of leaving an orphaned tile in a 2x2 grid. */
 .relic-shrine-list {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   width: 100%;
 }
 
 .relic-shrine-card {
   width: 100%;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  text-align: center;
-  gap: 6px;
+  text-align: left;
+  gap: 12px;
   font: inherit;
   color: inherit;
-  padding: 18px 10px;
+  padding: 10px 14px;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  /* Staggered fade-up-in via revealDelayMs (NodeRewardScreen), same entrance as EquipCacheCard. */
+  animation: equip-cache-fade-up 0.3s ease-out backwards;
 }
 
 .relic-shrine-card:hover {
@@ -4676,22 +4711,170 @@ body {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
-.relic-shrine-card .relic-card-head {
-  flex-direction: column;
-  gap: 6px;
+/* Circular glow badge behind the relic glyph/art — same wrap-don't-style-
+   directly trick as .equip-cache-card-icon-badge so the fixed circle doesn't
+   fight .equip-icon-img's 1em sizing for relics with dedicated art. */
+.relic-shrine-card-icon-badge {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 127, 224, 0.28), transparent 75%);
+  box-shadow: inset 0 0 0 1px rgba(139, 127, 224, 0.35);
 }
 
 .relic-shrine-card .relic-card-icon {
-  font-size: 32px;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.relic-shrine-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .relic-shrine-card .relic-card-name {
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.relic-shrine-card-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.4;
+  margin: 0;
 }
 
 .relic-shrine-card.picked {
   border-color: var(--magical);
-  box-shadow: 0 0 0 1px var(--magical), 0 4px 18px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 1px var(--magical), 0 4px 18px rgba(139, 127, 224, 0.35);
+  background: linear-gradient(165deg, rgba(139, 127, 224, 0.14), var(--panel) 70%);
+}
+
+/* Purple-gradient confirm button — .class-shrine-confirm-button's treatment
+   retinted --magical instead of --buff, so claiming a relic reads as
+   distinctly "arcane" from teaching a Class. */
+.relic-shrine-claim-button {
+  background: linear-gradient(165deg, #a89ae8, #6a5cc4);
+  border: 1px solid var(--magical);
+  color: #17122c;
+  box-shadow: 0 0 0 1px rgba(139, 127, 224, 0.35), 0 4px 16px rgba(139, 127, 224, 0.35);
+  transition: opacity 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.relic-shrine-claim-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px rgba(139, 127, 224, 0.5), 0 6px 20px rgba(139, 127, 224, 0.45);
+}
+
+.relic-shrine-claim-button:disabled {
+  background: var(--panel-alt);
+  border-color: var(--border);
+  color: var(--text-dim);
+  box-shadow: none;
+  opacity: 0.45;
+}
+
+/* --- Relic reveal (NodeRewardScreen, once a relic is claimed) -------------
+   Same "this is a big deal" beat as ClassNodeScreen's class-learn-reveal
+   below, retinted --magical: a flash-burst behind a single glowing icon
+   badge, with the name and full description cascading in after. Reuses that
+   screen's keyframes (class-learn-flash-burst, class-learn-pop) and Mentor's
+   Hall's mentor-ring-spin — none of them bake in a color, so there's no need
+   for relic-specific duplicates. */
+
+.relic-reveal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+  padding: 30px 16px 22px;
+  border-radius: 14px;
+  border: 1px solid var(--magical);
+  background: radial-gradient(circle at 50% 0%, rgba(139, 127, 224, 0.28), transparent 70%),
+    linear-gradient(180deg, rgba(139, 127, 224, 0.14), transparent 75%);
+  box-shadow: 0 0 0 1px rgba(139, 127, 224, 0.25), 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.relic-reveal-flash {
+  position: absolute;
+  top: 34%;
+  left: 50%;
+  width: 260px;
+  height: 260px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 127, 224, 0.6), transparent 68%);
+  animation: class-learn-flash-burst 0.6s ease-out forwards;
+  pointer-events: none;
+}
+
+.relic-reveal-icon-badge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 127, 224, 0.3), transparent 72%);
+  box-shadow: inset 0 0 0 1px rgba(139, 127, 224, 0.4);
+  animation: class-learn-pop 0.5s ease-out;
+}
+
+/* Rotating ring behind the reveal's icon badge — bigger, centered version of
+   the shrine banner's ambient-magic ring. */
+.relic-reveal-icon-badge::after {
+  content: '';
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 1px dashed rgba(139, 127, 224, 0.35);
+  animation: mentor-ring-spin 12s linear infinite;
+  pointer-events: none;
+}
+
+.relic-reveal-icon {
+  position: relative;
+  font-size: 48px;
+  line-height: 1;
+  filter: drop-shadow(0 0 16px rgba(139, 127, 224, 0.75));
+}
+
+.relic-reveal-eyebrow {
+  position: relative;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--magical);
+  margin-bottom: 4px;
+  animation: class-learn-pop 0.4s ease-out;
+}
+
+.relic-reveal-name {
+  position: relative;
+  font-size: 21px;
+  margin: 0 0 6px;
+  text-shadow: 0 0 20px rgba(139, 127, 224, 0.65);
+  animation: class-learn-pop 0.45s ease-out;
+}
+
+.relic-reveal-desc {
+  position: relative;
+  font-size: 12px;
+  color: var(--text-dim);
+  max-width: 320px;
+  margin: 0;
+  line-height: 1.5;
 }
 
 /* --- Mentor's Hall (ClassNodeScreen's classReward) ------------------------
