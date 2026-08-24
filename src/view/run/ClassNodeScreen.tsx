@@ -321,6 +321,7 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
           hero={previewEntry.hero}
           entry={previewEntry.entry}
           equipmentLookup={equipment}
+          relicIds={run.relics}
           onClose={() => setPreviewEntry(null)}
         />
       )}

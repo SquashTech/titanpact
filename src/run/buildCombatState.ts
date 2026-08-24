@@ -14,9 +14,8 @@ import type { PassiveDefinition, PassiveId, StatusId } from '../engine/content';
 import type { RosterEntry } from './state';
 import type { Squad } from './squad';
 import type { EquipmentDefinition } from './equipment';
-import { equipmentStatModifiers } from './equipment';
-import { mergeStatMods } from './statMods';
-import { equipmentPassiveGrants, mergePassiveGrants, passiveStatModifiers, toPassiveInstances } from './passives';
+import { entryPassiveCounts, entryStatModifiers } from './entryStats';
+import { toPassiveInstances } from './passives';
 import { equipmentStatusGrants, mergeStatusGrants, toStatusInstances } from './statusGrants';
 
 export interface SquadPlacement {
@@ -65,23 +64,12 @@ function placeEntry(
   const entry = roster.find((r) => r.rosterId === rosterId);
   if (!entry) throw new Error(`${rosterId} is not on the roster`);
   const hero = heroes[entry.heroId];
-  const evolutionGrants: Record<PassiveId, number> = {};
-  for (const id of entry.evolutionPassiveGrants) evolutionGrants[id] = (evolutionGrants[id] ?? 0) + 1;
-  const classGrants: Record<PassiveId, number> = entry.classId ? { [entry.classId]: 1 } : {};
-  const passiveCounts = mergePassiveGrants(
-    equipmentPassiveGrants(entry.equipment, equipmentLookup),
-    evolutionGrants,
-    classGrants,
-    teamPassiveGrants
-  );
+  // Both halves come from entryStats.ts, the shared definition the
+  // out-of-combat hero sheet reads too — see that module's header for why
+  // this must not be computed inline here again.
+  const passiveCounts = entryPassiveCounts(entry, equipmentLookup, teamPassiveGrants);
   const passives = toPassiveInstances(passiveCounts);
-  const baselineStatModifiers = mergeStatMods(
-    equipmentStatModifiers(entry.equipment, equipmentLookup),
-    entry.evolutionStatGrants,
-    entry.bonusStatGrants,
-    teamStatModifiers,
-    passiveStatModifiers(passiveCounts, passiveDefs)
-  );
+  const baselineStatModifiers = entryStatModifiers(entry, equipmentLookup, passiveDefs, passiveCounts, teamStatModifiers);
   const baselineStatusMagnitudes = mergeStatusGrants(equipmentStatusGrants(entry.equipment, equipmentLookup), teamStatusGrants);
   const statuses = toStatusInstances(baselineStatusMagnitudes);
   const grantedTypes = entry.evolutionTypeGraft ? [entry.evolutionTypeGraft] : [];

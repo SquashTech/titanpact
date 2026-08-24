@@ -60,7 +60,8 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
   });
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
-  const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
+  /** `enemy` distinguishes a scouted-opponent sheet from one of the player's own heroes — only the latter gets the team's relic grants folded into its stats (HeroPreviewOverlay's relicIds). */
+  const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry; enemy: boolean } | null>(null);
   const [showReference, setShowReference] = useState(false);
   const [showRoster, setShowRoster] = useState(false);
   const required = requiredSquadSize(run.roster.length);
@@ -117,7 +118,7 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
                   key={entry.rosterId}
                   className={`enemy-scout-chip${isBench ? ' enemy-scout-chip-bench' : ''}`}
                   style={{ borderColor: getTypeColor(hero.types[0]) }}
-                  onClick={() => setInspecting({ hero, entry })}
+                  onClick={() => setInspecting({ hero, entry, enemy: true })}
                   aria-label={`View ${hero.name} details`}
                 >
                   <HeroPortrait heroId={hero.id} className="enemy-scout-portrait" />
@@ -186,7 +187,7 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
                               className="info-button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setInspecting({ hero, entry });
+                                setInspecting({ hero, entry, enemy: false });
                               }}
                               aria-label={`View ${hero.name} details`}
                             >
@@ -223,6 +224,7 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
           hero={inspecting.hero}
           entry={inspecting.entry}
           equipmentLookup={equipment}
+          relicIds={inspecting.enemy ? [] : run.relics}
           onClose={() => setInspecting(null)}
         />
       )}

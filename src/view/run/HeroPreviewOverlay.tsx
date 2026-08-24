@@ -2,14 +2,17 @@ import { useState } from 'react';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import { classes } from '../../data/classes';
-import type { HeroDefinition } from '../../engine/content';
+import { passives } from '../../data/passives';
+import { relics } from '../../data/relics';
+import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
-import { equipmentStatModifiers } from '../../run/equipment';
-import { mergeStatMods } from '../../run/statMods';
+import { relicTeamStatModifiers } from '../../run/relics';
+import { relicTeamPassiveGrants } from '../../run/passives';
+import { entryPassiveCounts, entryStatModifiers, relicStatContribution } from '../../run/entryStats';
 import { chosenEvolutionPaths, rosterEntryTypes } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
-import { StatBars } from '../shared/StatBars';
+import { StatBars, STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
 import { MoveTile, MoveInfoPanel, swallowGhostClick, useLongPress } from '../shared/MoveTile';
 import { EquipmentInfoPanel, EquipmentSlotGrid } from '../shared/EquipmentBox';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -20,6 +23,14 @@ interface Props {
   hero: HeroDefinition;
   entry: RosterEntry;
   equipmentLookup: Record<string, EquipmentDefinition>;
+  /**
+   * The owning team's relics (RunState.relics), so this sheet shows the same
+   * numbers the fight will (relics are team-wide — src/run/relics.ts — and
+   * every combatant on the side gets them at build time). Omit for a hero
+   * that is NOT on this team: the scouted enemy squad (SquadSelectScreen)
+   * and the pre-run draft, where the player owns no relics yet.
+   */
+  relicIds?: readonly string[];
   onClose: () => void;
 }
 
@@ -27,18 +38,19 @@ interface Props {
  * Out-of-combat stat/loadout preview, opened by an info button before a
  * fight starts (SquadSelectScreen — both the player's own roster and the
  * scouted enemy squad). Unlike combat's HeroDetailOverlay, there's no live
- * Combatant to read yet (no fight exists): effective stats are computed
- * directly from base + Evolution grants + equipped-item grants, the same
- * inputs buildCombatState.ts feeds the engine at fight start.
+ * Combatant to read yet (no fight exists), so stats come from entryStats.ts
+ * — literally the same function buildCombatState.ts calls to produce a
+ * Combatant's baselineStatModifiers, so this sheet can't drift out of sync
+ * with what the fight actually uses (it did: relic grants were missing here).
  */
-export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Props) {
+export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = [], onClose }: Props) {
   const heroClass = chosenClass(classes, entry);
-  const grants = mergeStatMods(
-    entry.evolutionStatGrants,
-    entry.bonusStatGrants,
-    equipmentStatModifiers(entry.equipment, equipmentLookup),
-    heroClass?.statGrants ?? {}
-  );
+  const teamStatModifiers = relicTeamStatModifiers(relicIds, relics);
+  const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);
+  const passiveCounts = entryPassiveCounts(entry, equipmentLookup, teamPassiveGrants);
+  const grants = entryStatModifiers(entry, equipmentLookup, passives, passiveCounts, teamStatModifiers);
+  /** The relic-sourced slice of `grants`, called out under the bars so a team-wide buff is legible as a relic's doing rather than looking like the hero's own numbers. */
+  const relicGrants = Object.entries(relicStatContribution(teamStatModifiers, teamPassiveGrants, passives)) as [StatKey, number][];
   const evolved = chosenEvolutionPaths(progressionTable, entry);
   /** Long-press-triggered move/item/class detail popup — shared by the moves row, the equipment grid, and the Class badge below (mirrors LevelUpScreen's movePopup, "hold to inspect" standard). */
   const [popup, setPopup] = useState<{ kind: 'move' | 'equipment' | 'class'; id: string } | null>(null);
@@ -117,6 +129,16 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, onClose }: Pr
 
         <div className="detail-section-title">📊 Stats</div>
         <StatBars baseStats={hero.baseStats} deltas={grants} />
+        {relicGrants.length > 0 && (
+          <div className="relic-contrib-row">
+            <span className="relic-contrib-label">🏺 From relics</span>
+            {relicGrants.map(([stat, amount]) => (
+              <span key={stat} className="relic-contrib-chip">
+                <span aria-hidden="true">{STAT_ICONS[stat]}</span> {STAT_LABELS[stat]} {amount > 0 ? `+${amount}` : amount}
+              </span>
+            ))}
+          </div>
+        )}
 
         <div className="detail-section-title">⚔️ Moves</div>
         {entry.unlockedMoveIds.length > 0 ? (

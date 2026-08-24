@@ -236,6 +236,7 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
           hero={previewEntry.hero}
           entry={previewEntry.entry}
           equipmentLookup={equipment}
+          relicIds={run.relics}
           onClose={() => setPreviewEntry(null)}
         />
       )}

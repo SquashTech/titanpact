@@ -7,13 +7,14 @@ import { equipment } from '../../data/equipment';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
-import type { CombatState, Side, StatModifiers } from '../../engine/state';
+import { relics } from '../../data/relics';
+import type { CombatState, Side } from '../../engine/state';
 import { isLockedIn, effectiveTypes, hasAffordableMove } from '../../engine/state';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../engine/combat/switching';
 import type { Action } from '../../engine/combat/actions';
 import type { CombatEvent } from '../../engine/events';
-import type { HeroDefinition, MoveDefinition, PassiveId, StatKey, TargetMode } from '../../engine/content';
+import type { HeroDefinition, MoveDefinition, StatKey, TargetMode } from '../../engine/content';
 import { resolveStab, resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
 import { resolveElementalForceBonus } from '../../engine/damage/damagePipeline';
 import type { RunState, RosterEntry } from '../../run/state';
@@ -21,6 +22,9 @@ import { ROSTER_CAP } from '../../run/state';
 import type { Squad } from '../../run/squad';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { buildCombatState } from '../../run/buildCombatState';
+import { relicTeamStatModifiers } from '../../run/relics';
+import { relicTeamPassiveGrants } from '../../run/passives';
+import { relicTeamStatusGrants } from '../../run/statusGrants';
 import { isRecruitable, deriveContractOffer } from '../../run/recruitment';
 import { RosterReplaceScreen } from '../run/RosterReplaceScreen';
 import { CombatantCard, type Popup } from './CombatantCard';
@@ -152,12 +156,15 @@ interface Props {
   /** This node's generated encounter (src/run/enemyGen.ts) — a fresh AI roster/squad per fight/elite/boss node, not a fixed opponent. */
   aiRun: RunState;
   aiSquad: Squad;
-  /** Team-wide relic stat grants (docs/run-loop.md, src/run/relics.ts), precomputed by the caller — applied to every player combatant placed this fight. */
-  teamStatModifiers?: StatModifiers;
-  /** Team-wide relic Passive grants (src/run/relics.ts relicTeamPassiveGrants), precomputed by the caller — same broadcast as teamStatModifiers. */
-  teamPassiveGrants?: Record<PassiveId, number>;
-  /** Team-wide relic status-magnitude grants (src/run/relics.ts relicTeamStatusGrants — currently Elemental Force only), precomputed by the caller — same broadcast as teamStatModifiers/teamPassiveGrants. */
-  teamStatusGrants?: Record<string, number>;
+  /**
+   * The player's owned relics (RunState.relics) — the raw id list rather
+   * than precomputed grants, so this screen derives the stat/passive/status
+   * broadcasts once (below) AND can hand the same ids to the hero sheets it
+   * opens (HeroPreviewOverlay), which must show the same relic-inclusive
+   * numbers the fight itself uses. Omitted by relic-less callers (Quick
+   * Battle).
+   */
+  playerRelicIds?: readonly string[];
   /** This node's gold reward on a win (docs/run-loop.md), precomputed by the caller — displayed only, the caller grants it in onResolved. */
   goldReward: number;
   /** This node's Training Point reward on a win, precomputed by the caller (App.tsx handleSquadConfirmed) — displayed only, the caller grants it in onResolved. */
@@ -194,9 +201,7 @@ export function FightScreen({
   playerSquad,
   aiRun,
   aiSquad,
-  teamStatModifiers,
-  teamPassiveGrants,
-  teamStatusGrants,
+  playerRelicIds = [],
   goldReward,
   trainingPointsReward,
   equipmentReward,
@@ -204,6 +209,11 @@ export function FightScreen({
   onClaimContractReplace,
   onResolved,
 }: Props) {
+  /** The three team-wide broadcasts every owned relic contributes (src/run/relics.ts, passives.ts, statusGrants.ts) — derived here rather than by each caller so "what a relic does" has one wiring site. */
+  const teamStatModifiers = relicTeamStatModifiers(playerRelicIds, relics);
+  const teamPassiveGrants = relicTeamPassiveGrants(playerRelicIds, relics);
+  const teamStatusGrants = relicTeamStatusGrants(playerRelicIds, relics);
+
   function buildInitialState(seed: number): CombatState {
     return buildCombatState(
       seed,
@@ -1235,6 +1245,7 @@ export function FightScreen({
                       hero={heroes[entry.heroId]}
                       entry={entry}
                       equipmentLookup={equipment}
+                      relicIds={playerRelicIds}
                       onClose={() => setClaimPreviewRosterId(null)}
                     />
                   );
@@ -1244,6 +1255,7 @@ export function FightScreen({
                 <RosterReplaceScreen
                   roster={playerRun.roster}
                   candidate={{ source: 'contract', offer: deriveContractOffer(rosterReplaceEntry) }}
+                  relicIds={playerRelicIds}
                   onConfirm={(terminatedRosterId) => {
                     const ok = onClaimContractReplace(rosterReplaceEntry, terminatedRosterId);
                     if (ok) {

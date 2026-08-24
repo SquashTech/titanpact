@@ -18,6 +18,8 @@ export type { RosterReplaceCandidate };
 interface Props {
   roster: RosterEntry[];
   candidate: RosterReplaceCandidate;
+  /** The team's owned relics (RunState.relics) — passed straight through to the hero sheets opened from here so their stats include team-wide relic grants, same as everywhere else the player inspects their own heroes. */
+  relicIds?: readonly string[];
   /** Attempts the swap; returns whether it succeeded. Only expected to fail if the offer was invalidated between this screen opening and confirming (e.g. gold/contracts spent elsewhere in a way the caller's own guards didn't already rule out) — rare enough not to need bespoke failure UI here. */
   onConfirm: (terminatedRosterId: string) => boolean;
   onCancel: () => void;
@@ -78,7 +80,7 @@ function ReplaceHeroCard({ hero, entry, selected, onSelect, onPreview }: Replace
  * roster + the incoming candidate; it doesn't know or care which context
  * it's in.
  */
-export function RosterReplaceScreen({ roster, candidate, onConfirm, onCancel }: Props) {
+export function RosterReplaceScreen({ roster, candidate, relicIds = [], onConfirm, onCancel }: Props) {
   const [selectedRosterId, setSelectedRosterId] = useState<string | null>(null);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
 
@@ -151,6 +153,7 @@ export function RosterReplaceScreen({ roster, candidate, onConfirm, onCancel }: 
           hero={previewEntry.hero}
           entry={previewEntry.entry}
           equipmentLookup={equipment}
+          relicIds={relicIds}
           onClose={() => setPreviewEntry(null)}
         />
       )}

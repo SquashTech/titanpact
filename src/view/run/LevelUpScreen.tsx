@@ -401,6 +401,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
           hero={previewEntry.hero}
           entry={previewEntry.entry}
           equipmentLookup={equipment}
+          relicIds={run.relics}
           onClose={() => setPreviewEntry(null)}
         />
       )}

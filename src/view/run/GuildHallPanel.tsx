@@ -277,6 +277,7 @@ export function GuildHallPanel({ run, offers, onRunChange, onBuyEquipment, onReq
           hero={heroes[previewOffer.heroId]}
           entry={createRosterEntry('preview', previewOffer.heroId, previewOffer.startingMoveIds)}
           equipmentLookup={equipment}
+          relicIds={run.relics}
           onClose={() => setPreviewOfferId(null)}
         />
       )}

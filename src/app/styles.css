@@ -7831,3 +7831,76 @@ button,
   padding: 8px;
   font-size: 12px;
 }
+
+/* ── Relic contribution readouts ─────────────────────────────────────────
+   Relics are team-wide (CLAUDE.md "Relics are team-wide passives"), so their
+   grants land on every hero's stat block with nothing on-screen tying the
+   number back to the relic that caused it — a player who claims "+20 Speed,
+   team-wide" sees the same bars and reasonably concludes it did nothing.
+   These two surfaces close that loop: a per-hero "From relics" line under
+   the stat bars (HeroPreviewOverlay) and an at-a-glance active-bonuses
+   banner on the roster screen (RosterManagementScreen). Both are pure
+   readouts of relicStatContribution (src/run/entryStats.ts) — the stats are
+   already applied, this only makes them legible. */
+.relic-contrib-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 7px 9px;
+  border-radius: var(--radius-md);
+  background: var(--well);
+  border: 1px solid var(--border);
+}
+
+.relic-contrib-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.relic-contrib-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--panel-alt);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
+/* Roster-screen banner: the same contribution list, once for the whole team
+   rather than per hero, so "my relics are working" is answerable without
+   opening a single hero sheet. */
+.relic-active-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+}
+
+.relic-active-banner-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.relic-active-banner-note {
+  flex-basis: 100%;
+  font-size: 11px;
+  color: var(--text-dim);
+}

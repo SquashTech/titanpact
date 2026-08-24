@@ -1,7 +1,13 @@
 import { useState, type DragEvent } from 'react';
 import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
-import type { HeroDefinition } from '../../engine/content';
+import { relics } from '../../data/relics';
+import { passives } from '../../data/passives';
+import type { HeroDefinition, StatKey } from '../../engine/content';
+import { relicTeamStatModifiers } from '../../run/relics';
+import { relicTeamPassiveGrants } from '../../run/passives';
+import { relicStatContribution } from '../../run/entryStats';
+import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
 import type { RunState, RosterEntry } from '../../run/state';
 import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
 import { swapEquipment, RunProgressError } from '../../run/runProgress';
@@ -124,6 +130,10 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   const [viewedItemId, setViewedItemId] = useState<string | null>(null);
+  /** What the run's relics are currently adding to EVERY hero below (src/run/entryStats.ts) — banner-only, since the stats themselves are already applied wherever they're read. */
+  const relicGrants = Object.entries(
+    relicStatContribution(relicTeamStatModifiers(run.relics, relics), relicTeamPassiveGrants(run.relics, relics), passives)
+  ) as [StatKey, number][];
 
   function selectSlot(rosterId: string, slot: EquipmentSlot) {
     setSelected((prev) => (prev && prev.rosterId === rosterId && prev.slot === slot ? null : { rosterId, slot }));
@@ -190,6 +200,17 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
           </button>
         </div>
         <div className="screen-scroll">
+          {relicGrants.length > 0 && (
+            <div className="relic-active-banner">
+              <span className="relic-active-banner-label">🏺 Relics active</span>
+              {relicGrants.map(([stat, amount]) => (
+                <span key={stat} className="relic-contrib-chip">
+                  <span aria-hidden="true">{STAT_ICONS[stat]}</span> {STAT_LABELS[stat]} {amount > 0 ? `+${amount}` : amount}
+                </span>
+              ))}
+              <span className="relic-active-banner-note">Already included in every hero's stats below.</span>
+            </div>
+          )}
           <div className="roster-mgmt-list">
             {run.roster.map((entry) => {
               const hero = heroes[entry.heroId];
@@ -250,6 +271,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
           hero={inspecting.hero}
           entry={inspecting.entry}
           equipmentLookup={equipment}
+          relicIds={run.relics}
           onClose={() => setInspecting(null)}
         />
       )}

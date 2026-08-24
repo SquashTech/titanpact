@@ -44,9 +44,6 @@ import { generateMap } from '../run/map';
 import { generateStarterOptions } from '../run/draft';
 import { generateEncounter, generateGoblinChiefEncounter, type EncounterNodeType, type Encounter } from '../run/enemyGen';
 import { pickSquad } from '../run/squad';
-import { relicTeamStatModifiers } from '../run/relics';
-import { relicTeamPassiveGrants } from '../run/passives';
-import { relicTeamStatusGrants } from '../run/statusGrants';
 import { advanceToNode, advanceToNextAct, grantCurrencyReward, grantUpgradeReward, grantContractReward } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { progressionTable } from '../data/progression';
@@ -496,9 +493,7 @@ export function App() {
           playerSquad={screen.player.squad}
           aiRun={screen.ai.run}
           aiSquad={screen.ai.squad}
-          teamStatModifiers={relicTeamStatModifiers(screen.playerRelics, relics)}
-          teamPassiveGrants={relicTeamPassiveGrants(screen.playerRelics, relics)}
-          teamStatusGrants={relicTeamStatusGrants(screen.playerRelics, relics)}
+          playerRelicIds={screen.playerRelics}
           goldReward={0}
           trainingPointsReward={0}
           equipmentReward={null}
@@ -527,9 +522,7 @@ export function App() {
           playerSquad={screen.squad}
           aiRun={screen.encounter.run}
           aiSquad={screen.encounter.squad}
-          teamStatModifiers={relicTeamStatModifiers(playerRun.relics, relics)}
-          teamPassiveGrants={relicTeamPassiveGrants(playerRun.relics, relics)}
-          teamStatusGrants={relicTeamStatusGrants(playerRun.relics, relics)}
+          playerRelicIds={playerRun.relics}
           goldReward={screen.goldReward}
           trainingPointsReward={screen.trainingPointsReward}
           equipmentReward={screen.equipmentReward}
@@ -571,6 +564,7 @@ export function App() {
         <RosterReplaceScreen
           roster={playerRun.roster}
           candidate={screen.candidate}
+          relicIds={playerRun.relics}
           onConfirm={(terminatedRosterId) => {
             const { candidate } = screen;
             try {
