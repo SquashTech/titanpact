@@ -171,12 +171,22 @@ export function CombatantCard({
   const primaryType = effectiveTypes(hero, combatant)[0];
   const typeStyle = { '--type-color': getTypeColor(primaryType), '--type-rgb': getTypeColorRgb(primaryType) } as CSSProperties;
 
+  // Targeting always wins; otherwise the whole figure opens its detail sheet.
+  // The corner "i" button stays mounted (it's the discoverable and accessible
+  // affordance, and the only one on cards that aren't tappable for anything
+  // else) but is now a chromeless glyph on the battlefield rather than a
+  // bordered circle — one fewer box, and the large tap target it used to
+  // compete with is now the figure itself. Target-row cards pass no
+  // onInspect, so their behavior is unchanged.
+  const canTarget = Boolean(targetable && !combatant.fainted && !locked);
+  const handleCardClick = canTarget ? onSelectTarget : onInspect;
+
   return (
     <div
       className={classes.join(' ')}
       style={typeStyle}
-      onClick={targetable && !combatant.fainted && !locked ? onSelectTarget : undefined}
-      role={targetable && !locked ? 'button' : undefined}
+      onClick={handleCardClick}
+      role={canTarget || onInspect ? 'button' : undefined}
     >
       {leftMods.length > 0 && (
         <div className="stat-mod-corner stat-mod-corner-left">
@@ -211,7 +221,23 @@ export function CombatantCard({
           {popup.text}
         </div>
       )}
-      <HeroPortrait heroId={hero.id} className="combatant-portrait" />
+      {/* The figure and the ground it stands on. On the battlefield
+          (.team-row scope in styles.css) the card's own box is gone, so this
+          pair carries the hero's physical presence instead: the portrait
+          renders at a clean 2x of its 48px pixel-art source — it was
+          previously 56px, a 1.167x scale that made some source pixels 1px
+          wide and others 2px — standing on a type-colored ellipse that
+          reads as both a shadow and a team-color platform. The ellipse also
+          absorbs two cues the card box used to carry: which side (ally
+          platforms are wider and brighter, enemy ones smaller and dimmer,
+          selling distance across the horizon) and whose turn it is
+          (.acting lights the platform rather than outlining a rectangle).
+          In the compact/bench pickers the box stays and this is just a
+          plain wrapper — see .bench-row/.target-row overrides. */}
+      <div className="combatant-stage">
+        <span className="combatant-platform" aria-hidden="true" />
+        <HeroPortrait heroId={hero.id} className="combatant-portrait" />
+      </div>
       {/* The move-being-targeted's effectiveness against THIS card's hero
           (FightScreen's bottom targeting panel) — sits below the portrait,
           above the name/type line. Always rendered (like .status-badge-row

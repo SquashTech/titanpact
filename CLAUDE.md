@@ -174,8 +174,8 @@ authored roster.
 
 - `CLAUDE.md` — this file. Keep it lean (<200 lines); adherence drops past that.
 - `/docs/` — the deeper design modules (generate next): `combat.md`, `types-and-heroes.md`,
-  `progression.md`, `mana.md`, `architecture.md`, `field-effects.md`. Reference from
-  here; don't inline them.
+  `progression.md`, `mana.md`, `architecture.md`, `field-effects.md`, `run-loop.md`,
+  `visual-language.md` (presentation only). Reference from here; don't inline them.
 - `/prototypes/` — the two slices above, as behavioral reference.
 - `/src/engine/` — the pure resolution engine + the six contracts.
 - `/src/content/` — heroes, moves, abilities, relics, equipment as pure data.

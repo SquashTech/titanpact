@@ -702,7 +702,7 @@ export function FightScreen({
         </div>
 
         <div className="battlefield-divider">
-          <span>VS</span>
+          <span className="battlefield-vs">VS</span>
           {combat.activeFieldEffect && (
             <span
               className="field-effect-badge"

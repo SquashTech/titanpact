@@ -15,6 +15,11 @@
   /* One step brighter, for hover/active borders and any divider that has to
      hold its own against a busy surface. */
   --border-strong: #4a5164;
+  /* The counterpart to --border-strong, going the other way: a rim *darker*
+     than the surface it sits on, so the edge reads as a cut into the page
+     rather than a frame raised off it. Pair it with inset shadows and no
+     drop shadow — a recessed plane must never also appear to float. */
+  --border-sunken: #262b36;
   --text: #edeff4;
   --text-dim: #99a0af;
   /* Recessed plane — bar tracks, empty slots, code-ish wells. Sits *below*
@@ -88,6 +93,31 @@
      them and a consistency win for everything else. */
   --surface-raised: linear-gradient(165deg, var(--panel-alt), var(--panel) 72%);
   --surface-sunken: linear-gradient(180deg, var(--well), #0d1015);
+
+  /*
+   * Fight-screen chassis. The combat screen is two regions doing two
+   * different jobs — a battlefield you read and a console you act on — and
+   * they were previously built from the same material (same border token,
+   * same radius, one value-step apart), separated only by a gap of --bg.
+   * The fix is a physical model: the arena is a window cut *into* the page,
+   * the console is the device housing sitting *in front of* it. These are
+   * the housing's colors; the arena side is handled on .battlefield.
+   *
+   * Deliberately mid-value — clearly lighter than the sunken arena, clearly
+   * darker than the --surface-raised panels it holds — so it reads as a
+   * bezel around lit controls rather than competing with either. The lit
+   * variant's gradient resolves to the flat --console-face within 90px, so
+   * .action-area and .bottom-bar can carry the same chassis with no seam
+   * where they meet regardless of how tall the scrolling region ends up.
+   */
+  --console-face: #16191f;
+  --console-face-lit: linear-gradient(180deg, #1c2029, var(--console-face) 90px);
+
+  /* .app-shell's own padding/gap, as tokens: the fight-screen console
+     cancels them with negative margins to bleed to the screen edge and to
+     overlap the arena, and those two values must stay in lockstep. */
+  --shell-pad: 12px;
+  --shell-gap: 10px;
 
   /* Motion. --ease-out for state changes (hover, color, width), --ease-spring
      for anything that enters or pops — the slight overshoot is what makes an
@@ -297,35 +327,66 @@ button,
   transform-origin: top left;
   display: flex;
   flex-direction: column;
-  padding: 12px;
-  gap: 10px;
+  padding: var(--shell-pad);
+  gap: var(--shell-gap);
   overflow: hidden;
 }
 
-/* Fixed-size battlefield: the fight state stays visible and stable while the
-   action area below it scrolls (see .app-shell comment). */
+/*
+ * Fixed-height battlefield: the fight state stays visible and stable while
+ * the action area below it scrolls (see .app-shell comment).
+ *
+ * NOT a box. This used to be a bordered, rounded, drop-shadowed panel, which
+ * made it the outermost of five concentric rounded rectangles between the
+ * screen edge and any actual number (shell → battlefield → team-row → card →
+ * badge). Every one of those levels was drawn with the same grammar — 1px
+ * --border, gradient fill, shadow — and the middle three carry no
+ * information at all, so half the ink on screen was spent on containers that
+ * mean nothing. The whole fight screen now follows one rule instead:
+ *
+ *     A rectangle means "you can act on this." Nothing else gets a box.
+ *
+ * So the arena stops being a container and becomes the page: full-bleed to
+ * all three edges, no border, no radius, no shadow. What's left is a scene —
+ * a vignetted floor, the two zone tints, and a horizon (.battlefield-divider)
+ * — that the combatant figures stand in rather than sit on top of. The
+ * console below is then the only boxed region on screen, which separates the
+ * two regions by *kind* rather than by degree; that is the thing a nicer
+ * seam between two similar panels could never do.
+ */
 .battlefield {
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   gap: 8px;
   position: relative;
-  padding: 10px 8px;
-  border-radius: 14px;
+  /* Full-bleed: cancel .app-shell's padding on the three edges this touches,
+     then put the spacing back as padding so nothing inside moves. */
+  margin: calc(var(--shell-pad) * -1) calc(var(--shell-pad) * -1) 0;
+  padding: calc(var(--shell-pad) + 2px) var(--shell-pad) 20px;
+  /* Retained solely to contain the Field Effect shimmer sweep below. */
   overflow: hidden;
   /* Two-zone arena floor (enemy red top, ally blue bottom) plus a faint
      tactical grid for texture — replaces the old flat panel-gray box so the
      playing field itself reads as a place, not just a container for cards.
      The grid sits under everything via background-position layering; kept
      low-opacity so it never competes with card content or the HP/MP bars. */
+  /* Scene, read back-to-front: the tactical grid (kept, but dimmer now that
+     it's floor rather than panel texture), the two zone tints pulled to the
+     top and bottom edges where the figures actually stand, a horizontal
+     light band at the horizon, and a vignetted floor underneath it all. The
+     vignette is what makes a full-bleed dark field read as a lit place
+     instead of an absence of UI. */
   background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0px, rgba(255, 255, 255, 0.025) 1px, transparent 1px, transparent 24px),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0px, rgba(255, 255, 255, 0.025) 1px, transparent 1px, transparent 24px),
-    radial-gradient(ellipse 120% 60% at 50% 0%, rgba(217, 83, 79, 0.16), transparent 60%),
-    radial-gradient(ellipse 120% 60% at 50% 100%, rgba(74, 144, 217, 0.16), transparent 60%),
-    linear-gradient(180deg, #191b22, #14161c 50%, #191b22);
-  border: 1px solid var(--border);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset, 0 10px 30px rgba(0, 0, 0, 0.35);
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0px, rgba(255, 255, 255, 0.018) 1px, transparent 1px, transparent 26px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0px, rgba(255, 255, 255, 0.018) 1px, transparent 1px, transparent 26px),
+    radial-gradient(ellipse 110% 46% at 50% -4%, rgba(217, 83, 79, 0.2), transparent 62%),
+    radial-gradient(ellipse 110% 46% at 50% 104%, rgba(74, 144, 217, 0.2), transparent 62%),
+    linear-gradient(180deg, transparent 42%, rgba(140, 160, 200, 0.07) 50%, transparent 58%),
+    radial-gradient(ellipse 82% 58% at 50% 50%, #171b25, #0c0e14 78%);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 /* "VS" chip between the enemy and ally rows — purely decorative, gives the
@@ -344,19 +405,52 @@ button,
   gap: 8px;
 }
 
-.battlefield-divider::before,
-.battlefield-divider::after {
+/* The horizon. Was two gradient rules flanking a "VS" chip — a divider
+   *between two panels*. Now that the arena is a scene rather than a stack of
+   boxes, the same element does the job a horizon does in a landscape: it
+   says where the ground meets the far distance, which is what makes the
+   enemy row read as "over there" and the ally row as "here". Bleeds past the
+   battlefield's own side padding so the light band runs edge to edge like
+   the floor it belongs to. */
+.battlefield-divider::before {
   content: '';
-  flex: 1;
+  position: absolute;
+  left: calc(var(--shell-pad) * -1);
+  right: calc(var(--shell-pad) * -1);
+  top: 50%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  transform: translateY(-50%);
+  background: linear-gradient(90deg, transparent, rgba(160, 178, 214, 0.28) 22%, rgba(160, 178, 214, 0.28) 78%, transparent);
 }
 
-.battlefield-divider span {
-  font-size: 10px;
+/* A soft glow above the horizon line — the atmospheric haze that sells it as
+   distance rather than as a 1px rule someone drew across the screen. */
+.battlefield-divider::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--shell-pad) * -1);
+  right: calc(var(--shell-pad) * -1);
+  top: 50%;
+  height: 34px;
+  transform: translateY(-50%);
+  background: radial-gradient(ellipse 60% 100% at 50% 50%, rgba(150, 172, 214, 0.1), transparent 70%);
+  pointer-events: none;
+}
+
+/* Deliberately kept, deliberately quiet. "VS" is decorative — it carries no
+   state — so under the no-meaningless-chrome rule it loses its chip and
+   becomes a faint mark sitting on the horizon, still orienting the two rows
+   without competing with them. Class-scoped rather than the old bare `span`
+   selector, which also matched .field-effect-badge (a sibling span) and made
+   every change here leak onto it. */
+.battlefield-vs {
+  position: relative;
+  padding: 0 8px;
+  font-size: 9px;
   font-weight: 800;
-  letter-spacing: 0.12em;
-  color: var(--text-dim);
+  letter-spacing: 0.18em;
+  color: rgba(153, 160, 175, 0.55);
+  background: transparent;
 }
 
 /* The active Field Effect (docs/field-effects.md) — a persistent badge that
@@ -409,10 +503,39 @@ button,
    context (position: relative), which paints them behind the in-flow
    team-row cards — same trick as .battlefield-divider's badge, just for
    depth instead of position — so HP/MP legibility never suffers. */
+/* The arena has no border to pulse any more, so the charged-up state moves
+   to the two scene elements that survived the box removal: the ambient glow
+   (::before) and the horizon, which takes on the effect's color and breathes
+   with it. Reads as the *sky* changing rather than a frame lighting up,
+   which is the right register now that this is a place and not a panel. */
 .battlefield.field-effect-active {
   overflow: hidden;
-  border-color: rgb(var(--field-effect-rgb, 195, 86, 208));
-  animation: field-effect-border-pulse 2.6s ease-in-out infinite;
+}
+
+.battlefield.field-effect-active .battlefield-divider::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(var(--field-effect-rgb, 195, 86, 208), 0.75) 22%,
+    rgba(var(--field-effect-rgb, 195, 86, 208), 0.75) 78%,
+    transparent
+  );
+  animation: field-effect-horizon-pulse 2.6s ease-in-out infinite;
+}
+
+.battlefield.field-effect-active .battlefield-divider::after {
+  background: radial-gradient(ellipse 60% 100% at 50% 50%, rgba(var(--field-effect-rgb, 195, 86, 208), 0.28), transparent 70%);
+  animation: field-effect-horizon-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes field-effect-horizon-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .battlefield.field-effect-active::before,
@@ -438,16 +561,6 @@ button,
   background: linear-gradient(100deg, transparent, rgba(var(--field-effect-rgb, 195, 86, 208), 0.3), transparent);
   transform: rotate(12deg);
   animation: field-effect-shimmer-sweep 4s ease-in-out infinite;
-}
-
-@keyframes field-effect-border-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 1px rgba(var(--field-effect-rgb, 195, 86, 208), 0.35), 0 0 12px rgba(var(--field-effect-rgb, 195, 86, 208), 0.15);
-  }
-  50% {
-    box-shadow: 0 0 0 1px rgba(var(--field-effect-rgb, 195, 86, 208), 0.85), 0 0 24px rgba(var(--field-effect-rgb, 195, 86, 208), 0.4);
-  }
 }
 
 @keyframes field-effect-glow-pulse {
@@ -567,7 +680,27 @@ button,
 
 /* The only region of the fight screen allowed to scroll — absorbs however
    much room move descriptions/effectiveness readouts/switch options need
-   without ever growing the page (see .app-shell comment). */
+   without ever growing the page (see .app-shell comment).
+ *
+ * Also the top half of the fight-screen console chassis (see --console-face)
+ * — the surface that separates "where the fight happens" from "where you
+ * act on it". Three cues stack here, deliberately, because no one of them
+ * carries it alone on a dark UI:
+ *
+ *   1. Value    — a mid-tone housing against the now-sunken arena above.
+ *   2. Occlusion — it bleeds up over the arena's bottom edge and casts a
+ *      shadow *upward* onto it. Occlusion is the strongest depth cue there
+ *      is, and the old 10px gap of --bg specifically forbade it.
+ *   3. Silhouette — full-bleed to the screen edges with only its top
+ *      corners rounded, so it reads as a drawer docked to the bottom of
+ *      the phone rather than a second floating card matching the first.
+ *
+ * The negative margins cancel .app-shell's padding/gap and the paddings put
+ * the same space back inside, so nothing in the panels actually moves; only
+ * the chassis behind them grows. Colors stay in the value/depth register on
+ * purpose — the arena already carries per-hero type-tinted card borders,
+ * ally/enemy zone gradients, and a full-battlefield tint while a Field
+ * Effect is up, so an accent-colored seam here would just add noise. */
 .action-area {
   flex: 1 1 auto;
   min-height: 0;
@@ -575,7 +708,26 @@ button,
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-bottom: 2px;
+  /* Above .team-row's z-index: 1 (which competes at the root level, since
+     .battlefield sets no z-index and so opens no stacking context) and
+     below .advance-overlay's 15, which must still take taps over all this. */
+  position: relative;
+  z-index: 5;
+  margin-left: calc(var(--shell-pad) * -1);
+  margin-right: calc(var(--shell-pad) * -1);
+  padding-left: var(--shell-pad);
+  padding-right: var(--shell-pad);
+  /* Eat the shell gap, then 6px more — the bite lands in the battlefield's
+     own 10px bottom padding, so it never occludes card content. */
+  margin-top: calc((var(--shell-gap) + 6px) * -1);
+  padding-top: 12px;
+  /* Eat the gap to .bottom-bar so the two chassis halves meet seamlessly. */
+  margin-bottom: calc(var(--shell-gap) * -1);
+  padding-bottom: 8px;
+  background: var(--console-face-lit);
+  border-top: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--hairline-strong), 0 -5px 12px rgba(0, 0, 0, 0.55), 0 -16px 34px rgba(0, 0, 0, 0.38);
 }
 
 /* Bottom-of-screen row: every secondary action (undo the current hero's
@@ -586,10 +738,27 @@ button,
    the viewport on mobile. Buttons stay mounted at all times and are
    disabled rather than hidden when not applicable, so the row's height
    and position never change turn to turn. */
+/* The bottom half of the console chassis (see .action-area). Carries the
+   same face color and the same full-bleed cancel of .app-shell's padding so
+   the housing runs unbroken from the seam under the arena all the way to
+   the bottom of the screen — a chassis that stopped short and let --bg show
+   underneath would read as yet another floating card, which is the exact
+   thing this pass is undoing. Flat rather than gradient-lit: --console-face
+   is where .action-area's gradient has already resolved by the time the two
+   meet, so the join is invisible at any action-area height. */
 .bottom-bar {
   flex: 0 0 auto;
   display: flex;
   gap: 6px;
+  position: relative;
+  z-index: 5;
+  margin-left: calc(var(--shell-pad) * -1);
+  margin-right: calc(var(--shell-pad) * -1);
+  padding-left: var(--shell-pad);
+  padding-right: var(--shell-pad);
+  margin-bottom: calc(var(--shell-pad) * -1);
+  padding-bottom: var(--shell-pad);
+  background: var(--console-face);
 }
 
 .bottom-bar .back-button,
@@ -616,14 +785,300 @@ button,
   z-index: 1;
 }
 
-/* Matches a full card's natural height (portrait + name + status row + HP/MP
-   bars) so an .empty-slot placeholder — both active slots on a side once
-   it's wiped out, with no bench left to auto-replace it — doesn't collapse
-   that team-row short and shift the whole battlefield/action panel up
-   underneath it. Scoped to the battlefield row only: bench-row/target-row
-   cards are deliberately compact and shouldn't inherit this. */
+/* ===========================================================================
+ * BATTLEFIELD FIGURES
+ * ---------------------------------------------------------------------------
+ * The combatant on the battlefield is not a card any more. Everything in
+ * this block is scoped under .team-row on purpose: the bench and target
+ * pickers keep their boxes, because those cards ARE buttons and the box is
+ * the affordance (see the rule in .battlefield's comment). On the
+ * battlefield a hero is not a button most of the time — it becomes one only
+ * while it's a legal target — so it gets no box until then.
+ *
+ * Nothing was dropped in the conversion. Every signal the card carried has a
+ * new home on the figure:
+ *
+ *   portrait      -> 96px (clean 2x), standing on the platform
+ *   name + types  -> one pill under the platform (was 3 nested boxes)
+ *   HP / MP       -> two bars with their numerals set INSIDE the track
+ *   statuses      -> free-floating cluster at the figure's shoulder
+ *   stat mods     -> ticks on the platform rim
+ *   side          -> platform size/brightness + horizon position
+ *   whose turn    -> the platform lights up (.acting)
+ *   targetable    -> a frame appears; that IS the affordance
+ *   KO / popups   -> unchanged; they already floated free of the box
+ * ======================================================================== */
+
+/* Holds the row open at a full figure's height so an .empty-slot placeholder
+   — both active slots on a side once it's wiped out, with no bench left to
+   auto-replace it — doesn't collapse the row and shift the scene underneath
+   it. 155px = stage 104 + name pill 24 + two bars 27. */
 .team-row .combatant-card {
-  min-height: 167px;
+  min-height: 155px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 2px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+}
+
+/* Ground plane for one figure. Fixed height so the platform sits at a known
+   offset (the stat-mod rim ticks below position against it) regardless of
+   whether this hero's portrait loaded. */
+.team-row .combatant-stage {
+  position: relative;
+  width: 100%;
+  height: 104px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  flex: none;
+}
+
+/* Shadow and team platform in one mark. Type-tinted from --type-rgb (set
+   inline by CombatantCard) so the hero's domain still colors its space now
+   that there's no card top-border to carry it. */
+.team-row .combatant-platform {
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 96px;
+  height: 26px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(var(--type-rgb, 150, 150, 150), 0.55),
+    rgba(var(--type-rgb, 150, 150, 150), 0.16) 52%,
+    transparent 72%
+  );
+  transition: background var(--dur-mid) var(--ease-out), width var(--dur-mid) var(--ease-out);
+}
+
+/* Depth without touching the portrait. The obvious way to place the enemy
+   row "further away" is to scale it down, but the art is 48px pixel art:
+   any non-integer scale makes some source pixels 1px wide and others 2px,
+   which is the exact artifact this pass exists to fix. So both rows render
+   at a clean 2x and the *platform* carries the distance instead — enemy
+   ground reads smaller, dimmer, and tighter; ally ground wider and brighter,
+   nearer the viewer. */
+.team-row.enemy .combatant-platform {
+  width: 74px;
+  height: 19px;
+  opacity: 0.7;
+}
+
+.team-row.ally .combatant-platform {
+  width: 104px;
+  height: 28px;
+}
+
+/* 96px is exactly 2x the 48px source (art/heroes/*.png). The old 56px was
+   1.167x — uneven pixel doubling, visible as inconsistent pixel widths
+   across every portrait in the game. The drop-shadow (not box-shadow)
+   follows the sprite's alpha silhouette rather than its bounding box, which
+   is what makes it read as a figure standing on the platform instead of an
+   image pasted over an ellipse. */
+.team-row .combatant-portrait {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  /* 96 + 8 == the stage's 104px exactly. Any taller and the sprite overflows
+     the stage upward (it's flex-end aligned), which pushes it off the
+     platform and out of alignment with its opposite number across the row. */
+  margin: 0 0 8px;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.65));
+}
+
+/* Name + types, one pill instead of a bare row inside a bordered card. The
+   scrim is what replaces the card background's job of guaranteeing contrast
+   — sized to the text rather than to a container, so it costs a fraction of
+   the ink the box did. */
+.team-row .combatant-name {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: none;
+  max-width: 100%;
+  margin: 0 0 5px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(8, 10, 14, 0.62);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.team-row .hero-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* HP/MP: numerals moved INSIDE the track. Two boxes become one per resource,
+   the bars get tall enough to read at a glance, and the card reclaims ~24px
+   of vertical space — which is most of what paid for the 96px portrait. */
+.team-row .resource-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  flex: none;
+}
+
+.team-row .resource {
+  display: block;
+  position: relative;
+}
+
+.team-row .bar-track {
+  height: 13px;
+  margin-bottom: 0;
+}
+
+.team-row .bar-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  /* The bar fill slides out from under this text as HP drops, so the numerals
+     sit on the track color at one end of the fight and on the fill color at
+     the other. A hard shadow rather than a scrim keeps them legible on both
+     without reintroducing a box. */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95), 0 0 3px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+/* Statuses orbit the figure's shoulder instead of occupying a reserved row.
+   Absolute, so the row no longer has to reserve min-height against layout
+   shift — the thing that reservation was protecting against can't happen
+   once the element is out of flow. */
+.team-row .status-badge-row {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  max-width: 58px;
+  min-height: 0;
+  margin: 0;
+  justify-content: flex-end;
+}
+
+/* Rim ticks flanking the figure's feet, where they read as markings on the
+   ground rather than badges pinned to a card corner. Anchored from the
+   BOTTOM (54px clears the name pill) rather than the top: a hero can carry
+   enough simultaneous mods to wrap onto two or three rows, and a
+   top-anchored cluster grows downward into the name pill. Bottom-anchored,
+   the overflow goes up across the platform and the portrait's feet, which
+   is both harmless and the correct read. */
+.team-row .stat-mod-corner {
+  top: auto;
+  bottom: 54px;
+  max-width: 46px;
+  align-content: flex-end;
+}
+
+.team-row .stat-mod-corner-left {
+  left: 0;
+}
+
+.team-row .stat-mod-corner-right {
+  right: 0;
+}
+
+/* Chromeless. The circle, border, fill and shadow all went; the glyph stays
+   for discoverability and for keyboard/screen-reader users, while the whole
+   figure is now the practical tap target (CombatantCard handleCardClick). */
+.team-row .info-button {
+  top: 0;
+  left: 0;
+  right: auto;
+  bottom: auto;
+  background: none;
+  border: none;
+  box-shadow: none;
+  opacity: 0.4;
+}
+
+.team-row .info-button:hover {
+  background: none;
+  opacity: 1;
+}
+
+/* Floating numbers rise off the figure's chest rather than the old card's
+   top-left corner — which is now where the info glyph lives, and which was
+   only ever "the corner of the box" rather than anywhere meaningful. Bigger
+   too: with the box gone there's nothing competing for attention, so the hit
+   can read at the size it deserves. */
+.team-row .dmg-popup {
+  top: 26px;
+  left: 0;
+  right: 0;
+  font-size: 17px;
+  text-align: center;
+}
+
+/* THE frame. A battlefield figure has no box at rest; it grows one at the
+   exact moment it becomes a legal target, so the rectangle itself is the
+   "you can tap this" affordance rather than a permanent container that a
+   glow has to be layered onto. Outline rather than border so its appearance
+   costs no reflow. The inherited ::after glow (and its eff-* tier retints)
+   still applies on top, unchanged. */
+.team-row .combatant-card.targetable {
+  /* 2px, not 1.5 — Chrome floors fractional outline widths to 1px, which is
+     too faint to be the sole "you can tap this" cue at arm's length. */
+  outline: 2px solid rgba(224, 166, 60, 0.7);
+  outline-offset: -1px;
+  background: linear-gradient(180deg, rgba(224, 166, 60, 0.13), rgba(224, 166, 60, 0.02) 62%, transparent);
+}
+
+/* Whose move is being chosen. Was a blue outline + box-shadow pulse on the
+   card edge — an edge that no longer exists, and which would also have
+   collided with the .targetable frame above on a self-targeting move (the
+   original reason .targetable was built as an inner glow). Lighting the
+   ground under the figure has neither problem: the two cues stack legibly
+   because they're on different parts of the figure. */
+.team-row .combatant-card.acting {
+  outline: none;
+  box-shadow: none;
+  animation: none;
+}
+
+.team-row .combatant-card.acting .combatant-platform {
+  background: radial-gradient(ellipse at 50% 50%, rgba(74, 144, 217, 0.85), rgba(74, 144, 217, 0.28) 52%, transparent 74%);
+  animation: acting-platform-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes acting-platform-pulse {
+  0%,
+  100% {
+    filter: brightness(1);
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    filter: brightness(1.5);
+    transform: translateX(-50%) scale(1.06);
+  }
+}
+
+/* No box to grey out, so the KO reads on the figure: the sprite desaturates
+   and drops, and its platform fades out from under it. */
+.team-row .combatant-card.fainted .combatant-platform {
+  opacity: 0.25;
+}
+
+.team-row .empty-slot {
+  justify-content: center;
 }
 
 .team-row.enemy {
@@ -654,24 +1109,48 @@ button,
      border rather than replacing it — the border says "which type", the
      highlight says "this is a raised object", and both are wanted. */
   box-shadow: var(--hairline), var(--elev-1), 0 0 16px rgba(var(--type-rgb, 150, 150, 150), 0.12);
-  transition: outline var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out),
-    opacity 0.35s ease, filter 0.35s ease;
+  /* `outline` is deliberately NOT transitioned. outline-style is not an
+     interpolable property, so animating the shorthand from `none` leaves
+     Chrome interpolating width and color from their *initial* values —
+     medium (3px) and currentColor — and the ring renders as a stuck white
+     3px band instead of the color it was assigned. It's also the wrong
+     motion: an outline here means "this is now tappable", which should snap
+     rather than fade in. Everything else in this list is interpolable. */
+  transition: box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out), opacity 0.35s ease,
+    filter 0.35s ease;
 }
 
-/* Hero portrait (src/view/shared/heroArt.ts) — most heroes have no art yet,
-   so this only renders for the ones that do (CombatantCard). Pixel-art
-   source, scaled up blocky rather than blurred. */
+/* The ground platform exists only on the battlefield (.team-row scope, far
+   below). The bench and target pickers keep their card boxes — those cards
+   really are buttons — so there the .combatant-stage wrapper degrades to a
+   plain block and its platform is hidden outright, rather than rendering a
+   stray ellipse behind a 20px portrait. */
+.combatant-platform {
+  display: none;
+}
+
+/* Hero portrait (src/view/shared/heroArt.ts) — every hero and enemy has art
+   (heroArt covers all 38 ids); HeroPortrait still renders nothing for an
+   unmapped id so a future addition degrades rather than breaks. Pixel-art
+   source (48x48), scaled up blocky rather than blurred — keep display sizes
+   at integer multiples of 48 or the doubling goes uneven, which is exactly
+   what the old 56px was doing. */
 .combatant-portrait {
   display: block;
-  width: 56px;
-  height: 56px;
+  /* 1x of the source. Was 56px — a 1.167x scale, which with `pixelated`
+     rendered some source pixels 1px wide and their neighbours 2px, blurring
+     the art's own grid. Integer multiples only. */
+  width: 48px;
+  height: 48px;
   margin: 0 auto 4px;
   image-rendering: pixelated;
 }
 
 .bench-row .combatant-portrait {
-  width: 20px;
-  height: 20px;
+  /* 0.5x — the one clean downscale available from a 48px source. 20px was a
+     0.4167x scale, which drops source pixels unevenly. */
+  width: 24px;
+  height: 24px;
   margin-bottom: 1px;
 }
 
