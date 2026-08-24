@@ -1,10 +1,27 @@
 :root {
-  --bg: #14161c;
-  --panel: #1e2129;
-  --panel-alt: #262a35;
-  --border: #333844;
-  --text: #e8e9ed;
-  --text-dim: #9498a3;
+  /*
+   * Neutral ramp. Deliberately cool-shifted (a touch of blue in every step)
+   * rather than pure gray: on an OLED-ish dark UI a neutral gray reads as
+   * "unfinished wireframe", while a consistent hue cast reads as an
+   * authored surface. The steps are spaced far enough apart that a card on
+   * a panel on the background is legible as three distinct planes without
+   * needing a heavy border on each — that separation is what lets the
+   * hairline/elevation tokens below do the rest of the work.
+   */
+  --bg: #0f1117;
+  --panel: #1b1e27;
+  --panel-alt: #242833;
+  --border: #353b4a;
+  /* One step brighter, for hover/active borders and any divider that has to
+     hold its own against a busy surface. */
+  --border-strong: #4a5164;
+  --text: #edeff4;
+  --text-dim: #99a0af;
+  /* Recessed plane — bar tracks, empty slots, code-ish wells. Sits *below*
+     --bg so an inset control reads as carved into its parent rather than
+     floating on it. Replaces the hardcoded #0d0e12 that was repeated at a
+     dozen call sites. */
+  --well: #0a0c10;
   --hp-high: #4caf6a;
   --hp-mid: #d9a441;
   --hp-low: #d9534f;
@@ -29,6 +46,69 @@
   --tier-epic: #a463d9;
   --tier-legendary: #e0a63c;
   --tier-mythic: #e0393f;
+
+  /*
+   * --- Presentation scale -------------------------------------------------
+   * Cross-cutting tokens introduced with the 2026-08-24 visual pass. They
+   * exist so "what a raised surface looks like" is answered in ONE place
+   * instead of being re-invented per screen — before this, roughly a dozen
+   * near-identical box-shadow triplets and five different border-radius
+   * values were scattered through this file, which is exactly what makes a
+   * UI read as assembled rather than designed. New screens should reach for
+   * these rather than authoring fresh values.
+   */
+
+  /* Radius scale. Bigger surfaces get bigger radii so curvature stays
+     visually proportional — a 6px radius on a full-screen panel looks sharp,
+     the same 6px on a 20px chip looks round. */
+  --radius-xs: 5px;
+  --radius-sm: 8px;
+  --radius-md: 11px;
+  --radius-lg: 15px;
+  --radius-pill: 999px;
+
+  /* Top-edge inner highlight — the single most load-bearing trick in this
+     pass. One hairline of near-white along the top inside edge of a panel
+     simulates a light source above the UI, which is what separates a
+     "material" surface from a flat colored rectangle. Always paired with a
+     drop shadow (light above ⇒ shadow below); using it alone looks wrong. */
+  --hairline: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --hairline-strong: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+  /* Elevation ramp. Two-shadow recipe per level: a tight, near-opaque
+     contact shadow (grounds the element) plus a wide, soft ambient one
+     (gives it height). A single blurred shadow reads as a smudge; the pair
+     reads as an object sitting on something. */
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.22);
+  --elev-2: 0 2px 4px rgba(0, 0, 0, 0.4), 0 8px 20px rgba(0, 0, 0, 0.3);
+  --elev-3: 0 4px 8px rgba(0, 0, 0, 0.45), 0 18px 44px rgba(0, 0, 0, 0.45);
+
+  /* Standard raised-surface fill. The 165deg angle matches what most panels
+     in this file already used by hand, so adopting the token is a no-op for
+     them and a consistency win for everything else. */
+  --surface-raised: linear-gradient(165deg, var(--panel-alt), var(--panel) 72%);
+  --surface-sunken: linear-gradient(180deg, var(--well), #0d1015);
+
+  /* Motion. --ease-out for state changes (hover, color, width), --ease-spring
+     for anything that enters or pops — the slight overshoot is what makes an
+     appearing element feel placed rather than teleported. Durations are
+     short on purpose: this is a game UI the player taps through hundreds of
+     times per run, so polish must never cost perceived responsiveness. */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 0.12s;
+  --dur-mid: 0.2s;
+
+  /* Keyboard focus. Kept distinct from the gold hover/selected treatments so
+     "focused" and "chosen" never look like the same state. */
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(224, 166, 60, 0.75);
+
+  /* The "you picked this one" fill, shared by every select-then-confirm
+     surface in the app (draft cards, squad slots, equip slots, sandbox
+     chips). Was a flat #33291a repeated at seven call sites; as a gradient it
+     picks up the same top-lit falloff as every other raised surface, so a
+     chosen card stays a lit object rather than turning into a brown block. */
+  --selected-fill: linear-gradient(165deg, #3b2f1c, #241c0f 78%);
 }
 
 * {
@@ -43,10 +123,151 @@ body {
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow: hidden;
+  /*
+   * Light text on a dark ground is the one case where subpixel antialiasing
+   * actively hurts: it fattens every stroke, so 9–11px labels (which this UI
+   * is built almost entirely out of) bloom and lose their counters. Grayscale
+   * smoothing keeps them crisp at the sizes that matter here.
+   */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /*
+   * Tabular figures globally. Nearly every number in this game is a value
+   * that ticks (HP 142/180, 340g, ×1.25, Lv 4) and proportional digits make
+   * those readouts visibly jitter as they count — "1" is much narrower than
+   * "0" in the system UI faces. Locking digit width costs nothing and is the
+   * difference between an HP bar that counts down and one that wobbles.
+   */
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
 }
 
 #root {
   height: 100%;
+}
+
+/* ==========================================================================
+   Cross-cutting presentation defaults (2026-08-24 visual pass)
+
+   Rules here deliberately apply app-wide rather than per screen. Each one
+   fixes something that was previously either inconsistent between screens or
+   left at the browser default — and browser defaults are desktop-document
+   defaults, which is the main reason a hand-built game UI reads as a web
+   page. None of these change layout metrics: no rule below adds height, so
+   the "screens never grow past the viewport" contract in .app-shell holds.
+   ========================================================================== */
+
+/*
+ * Scrollbars. Every internally-scrolling region in this app (.action-area,
+ * .screen-scroll, .event-log, the overlays) was rendering the platform's
+ * default bar — a ~15px opaque desktop chrome strip stealing real estate
+ * from a UI authored against a ~340px canvas, and visually screaming
+ * "browser". These make the bar a thin translucent overlay that reads as
+ * part of the panel it's scrolling.
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+/* The default is a fully transparent rectangle in the corner where two
+   scrollbars meet; on a dark panel it renders as a light square. */
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/*
+ * Typography inheritance. Buttons and form controls don't inherit font-family
+ * from body — they fall back to the platform's form-control face, which is
+ * why several screens' buttons were subtly a different typeface from the
+ * labels beside them. This is the single highest-consistency-per-line rule
+ * in the pass.
+ */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-variant-numeric: inherit;
+  color: inherit;
+}
+
+/*
+ * Universal press feedback. This is a touch-first game: on mobile there is no
+ * hover, so without an :active state a tap gives literally zero acknowledgment
+ * until the screen changes. A 1px sink plus a brightness drop is the cheapest
+ * possible "the device felt that". Excluded on :disabled so an inert control
+ * stays visibly inert.
+ *
+ * `transform` is scoped to :active only (not declared in the base rule) so it
+ * can't fight the many screen-specific transforms already in this file —
+ * hover lifts, pop-in animations, the .app-shell scale.
+ */
+button:not(:disabled):active {
+  filter: brightness(0.92);
+}
+
+/* Removes the blue flash mobile Safari/Chrome paint over any tapped element.
+   With the :active state above providing real feedback, the platform flash is
+   pure noise — and it ignores border-radius, so it flashes a rectangle behind
+   every rounded button. */
+button,
+[role='button'] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * Keyboard focus. The browser default outline is a 1-2px system-colored ring
+ * drawn tight to the border box, which on rounded dark panels reads as a
+ * rendering artifact. :focus-visible (not :focus) means mouse and touch
+ * activation never show it — only actual keyboard traversal — so this is
+ * purely additive accessibility with no visual cost to the common path.
+ *
+ * Uses box-shadow rather than `outline` so the ring follows each element's
+ * own border-radius (outline-offset rings render square on some engines) —
+ * and note it deliberately does NOT set border-radius itself, which would
+ * flatten the corners of whatever it lands on.
+ */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/*
+ * Respect the OS "reduce motion" setting. This UI leans hard on ambient
+ * animation — ember fields, glow pulses, shimmer sweeps, banner pops — which
+ * is great for feel and genuinely nauseating for a player with vestibular
+ * sensitivity. Rather than deleting the effects, collapse every animation and
+ * transition to effectively instant: final states still apply, so nothing
+ * disappears or breaks, it just stops moving.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /*
@@ -288,14 +509,17 @@ body {
   gap: 2px;
   background: linear-gradient(180deg, var(--panel-alt), var(--panel));
   border: 1px solid var(--accent);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 8px 10px;
   font-size: 12px;
   line-height: 1.3;
   font-weight: 700;
   color: var(--text);
   text-align: center;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(224, 166, 60, 0.12) inset;
+  /* Warm outer bloom in addition to the existing inner ring: this banner is
+     the only thing on screen while a round plays out, so it should feel lit
+     from within rather than merely outlined in gold. */
+  box-shadow: inset 0 0 0 1px rgba(224, 166, 60, 0.14), var(--hairline), var(--elev-2), 0 0 20px -6px rgba(224, 166, 60, 0.4);
   animation: banner-pop 0.18s ease-out;
 }
 
@@ -419,15 +643,19 @@ body {
     linear-gradient(165deg, var(--panel-alt), var(--panel) 65%);
   border: 1px solid var(--border);
   border-top: 2px solid var(--type-color, var(--border));
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 8px;
   position: relative;
   /* Own stacking context so .targetable's inner glow (::after, z-index -1
      below) is pinned between this card's background and its content instead
      of drifting into .team-row's stacking order. */
   z-index: 0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), 0 0 14px rgba(var(--type-rgb, 150, 150, 150), 0.1);
-  transition: outline 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.35s ease, filter 0.35s ease;
+  /* Hairline first so the lit top edge reads *under* the type-colored top
+     border rather than replacing it — the border says "which type", the
+     highlight says "this is a raised object", and both are wanted. */
+  box-shadow: var(--hairline), var(--elev-1), 0 0 16px rgba(var(--type-rgb, 150, 150, 150), 0.12);
+  transition: outline var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out),
+    opacity 0.35s ease, filter 0.35s ease;
 }
 
 /* Hero portrait (src/view/shared/heroArt.ts) — most heroes have no art yet,
@@ -704,6 +932,15 @@ body {
   font-weight: 400;
 }
 
+/*
+ * Type chip. The fill color is applied inline per type (TypeBadge.tsx reads
+ * typeColors.ts), which rules out styling it with a `background` gradient
+ * here — an inline style always wins. Inset shadows get the same result
+ * without touching the fill: a bright hairline along the top inside edge and
+ * a dark one along the bottom give any color the same top-lit, slightly
+ * domed read, so all 15 types look like one manufactured set of chips rather
+ * than 15 flat swatches. The outer shadow lifts them off busy card art.
+ */
 .type-badge {
   display: inline-flex;
   align-items: center;
@@ -714,9 +951,10 @@ body {
   font-weight: 800;
   letter-spacing: 0.03em;
   padding: 2px 0;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   line-height: 1.3;
   white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 0 rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* Physical vs Magical — an outlined chip (rather than TypeBadge's filled
@@ -774,17 +1012,31 @@ body {
 
 .bar-track {
   height: 8px;
-  border-radius: 4px;
-  background: #0d0e12;
+  border-radius: var(--radius-pill);
+  background: var(--well);
   overflow: hidden;
   margin-bottom: 3px;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+  /* Inset shadow for the carved-in look, plus a 1px outer ring so the track
+     still has a defined silhouette when it sits on a panel close to its own
+     value (bench cards, the detail overlay) rather than on the dark field. */
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
+/*
+ * The fill is fully pill-rounded rather than square-cut. With the track
+ * clipping it, that means a full bar reads as a solid capsule and a partial
+ * one has a rounded leading edge — which is the detail that makes a bar look
+ * like a designed gauge instead of a `<div>` with a width. The top-half
+ * white gradient is the same overhead-light model used everywhere else in
+ * this pass, and the bottom stop darkens the underside so the capsule reads
+ * as cylindrical.
+ */
 .bar-fill {
   height: 100%;
-  transition: width 0.45s cubic-bezier(0.22, 0.61, 0.36, 1), background 0.3s ease;
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 55%);
+  min-width: 0;
+  border-radius: var(--radius-pill);
+  transition: width 0.45s var(--ease-out), background 0.3s var(--ease-out);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.05) 52%, rgba(0, 0, 0, 0.18));
 }
 
 .bar-fill.hp-high {
@@ -811,8 +1063,13 @@ body {
   }
 }
 
+/* Slightly heavier than the surrounding dim text: these are live values the
+   player re-reads every single turn, so they earn a bit more weight than a
+   caption without needing to be full --text brightness. */
 .bar-label {
   font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--text-dim);
 }
 
@@ -917,9 +1174,13 @@ body {
   font-size: 9px;
   font-weight: 700;
   padding: 1px 4px;
-  border-radius: 8px;
+  border-radius: var(--radius-pill);
   border: 1px solid transparent;
   cursor: pointer;
+  /* These sit directly on top of the type-tinted card art, where a flat chip
+     of any color can get lost. A dark rim keeps every status legible against
+     whatever is behind it without needing a heavier fill. */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
   -webkit-tap-highlight-color: transparent;
   /* Long-pressable (useLongPress, opens StatusDetailOverlay) — without these,
      mobile/desktop browsers start a text-selection drag partway through the
@@ -1006,7 +1267,7 @@ body {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--panel-alt);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   color: var(--text-dim);
   font-size: 10px;
@@ -1019,11 +1280,14 @@ body {
   justify-content: center;
   padding: 0;
   cursor: pointer;
+  box-shadow: var(--hairline), 0 1px 2px rgba(0, 0, 0, 0.4);
+  transition: color var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out);
 }
 
 .info-button:hover {
-  color: var(--text);
+  color: var(--accent);
   border-color: var(--accent);
+  background: rgba(224, 166, 60, 0.12);
 }
 
 /* Floating combat-log numbers over a combatant card — mounted fresh (new
@@ -1574,27 +1838,30 @@ body {
 
 .action-panel {
   flex-shrink: 0;
-  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 70%);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 10px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--hairline), var(--elev-1);
 }
 
 .back-button {
   flex-shrink: 0;
-  background: none;
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   color: var(--text-dim);
   font-size: 11px;
+  font-weight: 600;
   padding: 3px 8px;
   cursor: pointer;
+  transition: color var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out);
 }
 
 .back-button:hover {
   color: var(--text);
   border-color: var(--accent);
+  background: rgba(224, 166, 60, 0.08);
 }
 
 .move-grid {
@@ -1746,14 +2013,15 @@ body {
      share and blow the whole .move-grid past the screen width. This is what
      lets .move-name's ellipsis and .move-row-mid's wrap actually engage. */
   min-width: 0;
-  background: linear-gradient(165deg, var(--panel-alt), #1a1d24);
+  background: linear-gradient(165deg, var(--panel-alt), #171a22);
   border: 1px solid var(--border);
   /* Type-coded left edge (same idiom as .move-tile elsewhere in the app) —
      borderLeftColor is set inline per-move from getTypeColor, so type reads
      at a glance without waiting on the small TypeBadge glyph below. */
   border-left-width: 3px;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   color: var(--text);
+  box-shadow: var(--hairline), var(--elev-1);
   /* Vertical padding taller than the horizontal (10.5px vs. 7px originally)
      so the move-selection .action-panel's total height lands on the
      targeting .action-panel's (which carries its own header row) by growing
@@ -1763,7 +2031,7 @@ body {
   font-size: 12px;
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
   /* Long-press opens the move-detail popup (FightScreen) — without these,
      mobile browsers show their own text-selection handles or a native
      callout menu partway through the hold, which reads as the gesture
@@ -1776,17 +2044,24 @@ body {
 .move-button:hover:not(:disabled) {
   border-color: var(--accent);
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--hairline-strong), var(--elev-2);
 }
 
+/* Committed choice. Reads warmer *and* raised — a selected move stays visibly
+   pressable (you can still back out of it) rather than sinking into a
+   locked-in state the player might read as already spent. */
 .move-button.selected {
   border-color: var(--accent);
   background: linear-gradient(165deg, #3a2f1c, #241d10);
-  box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.3) inset;
+  box-shadow: inset 0 0 0 1px rgba(224, 166, 60, 0.35), var(--hairline-strong), 0 0 14px -2px rgba(224, 166, 60, 0.4);
 }
 
+/* Unaffordable moves lose their elevation entirely, not just opacity: a
+   dimmed-but-still-raised tile still reads as pressable, and in a mana-gated
+   game the player needs "can't afford this" to be obvious at a glance mid-turn. */
 .move-button:disabled {
   opacity: 0.35;
+  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -1930,9 +2205,16 @@ body {
 .eff-chip {
   font-size: 10px;
   font-weight: 700;
-  padding: 1px 4px;
-  border-radius: 4px;
-  background: #0d0e12;
+  padding: 1px 5px;
+  border-radius: var(--radius-xs);
+  background: var(--well);
+  /* A neutral hairline edge, deliberately NOT currentColor. Effectiveness is
+     the highest-stakes readout on the move grid, so the chip earns a defined
+     shape rather than being colored text on a dark patch — but the colored
+     ring is reserved for the 4x/0.25x variants below, which need to shout
+     louder than an ordinary super/resist. Tinting this one too would flatten
+     that two-step hierarchy back into one. */
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .eff-chip.eff-super {
@@ -2013,33 +2295,48 @@ body {
   margin-right: 1px;
 }
 
+/* Instructional line under a screen's heading. Kept gold (it's the
+   "what do I do here" line and every screen has one) but given a real line
+   box — at 11px with default leading, a hint that wraps to two lines was
+   setting tighter than the body text around it, which read as cramped. */
 .hint {
   font-size: 11px;
+  line-height: 1.35;
   color: var(--accent);
   margin-bottom: 6px;
 }
 
 .log-toggle-button {
   flex-shrink: 0;
-  background: linear-gradient(165deg, var(--panel-alt), var(--panel));
+  background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: var(--text-dim);
   font-size: 11px;
+  font-weight: 600;
   padding: 5px 10px;
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  box-shadow: var(--hairline);
+  transition: border-color var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
 .log-toggle-button:hover {
   color: var(--text);
   border-color: var(--accent);
+  box-shadow: var(--hairline), var(--elev-1);
 }
 
 .log-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(10, 11, 14, 0.75);
+  /* Blurring the scrim rather than only dimming it is what turns a modal from
+     "a card on top of a darkened screenshot" into a real focus layer: the busy
+     battlefield or roster behind it stops competing for the eye while still
+     reading as present underneath. The -webkit- prefix is still required by
+     iOS Safari, which is a first-class target for a portrait mobile game. */
+  background: rgba(8, 9, 13, 0.68);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2051,14 +2348,14 @@ body {
   width: 100%;
   max-width: 460px;
   max-height: 80vh;
-  background: var(--panel);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--hairline), var(--elev-3);
 }
 
 .log-panel-header {
@@ -2155,13 +2452,18 @@ body {
   padding-top: 2px;
 }
 
+/* Deliberately monospaced and recessed — this is the game's receipt tape,
+   where the player audits the damage math. The sunken well plus a terminal
+   face says "raw output" rather than "narration", which is exactly the
+   contract: everything here is verifiable numbers. */
 .event-log {
-  background: #0d0e12;
+  background: var(--surface-sunken);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
   padding: 8px 10px;
   font-size: 12px;
-  font-family: 'SF Mono', Consolas, monospace;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
   line-height: 1.5;
   flex: 1 1 auto;
   min-height: 0;
@@ -2266,35 +2568,94 @@ body {
   max-width: 520px;
 }
 
-.reference-tabs {
+/* ==========================================================================
+   Segmented control — the shared tab-strip look (2026-08-24 visual pass)
+
+   Three screens grew their own tab styling independently (Reference's
+   overlay, the Compendium, Sandbox Battle's A/B side picker) and drifted
+   into three different answers to the same question: outlined pills with a
+   solid-gold active state, outlined pills with a gold *border* active state,
+   and outlined pills with gold *text*. Unified here into one iOS/Material-
+   style segmented control — a single sunken track with one raised thumb
+   sliding between the options.
+
+   Why a track-and-thumb rather than N independent buttons: it encodes
+   mutual exclusivity visually. A row of separate buttons says "here are
+   three things you can press"; one recessed track containing one raised
+   chip says "this is one setting, currently on the middle value" — which is
+   what all three of these actually are.
+
+   Height cost, stated honestly: the track's own 3px padding and border make
+   this strip ~2-4px taller than the loose-pill rows it replaces on the
+   Reference and Compendium tabs, and ~1px shorter on Sandbox's. All three
+   live inside overlays that already scroll internally, so none of them can
+   push a screen past the viewport (.app-shell's contract holds), and the
+   trade buys a slightly larger tap target on each button — worth it on a
+   touch-first target. Do not grow the padding further without re-checking
+   the shortest of those three panels.
+   ========================================================================== */
+
+.reference-tabs,
+.compendium-tabs,
+.sandbox-tabs {
   display: flex;
-  gap: 6px;
+  gap: 2px;
   flex-shrink: 0;
+  padding: 3px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
-.reference-tab {
+.reference-tab,
+.compendium-tab,
+.sandbox-tab {
   flex: 1 1 0;
-  background: var(--panel-alt);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 0;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 6px 4px;
   font-size: 12px;
   font-weight: 700;
   color: var(--text-dim);
   cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out);
 }
 
-.reference-tab-active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--bg);
+.reference-tab:hover,
+.compendium-tab:hover,
+.sandbox-tab:hover {
+  color: var(--text);
+}
+
+/* The thumb. Note it's a raised *neutral* surface with gold text rather than
+   a solid gold fill: at three-tabs-wide a saturated gold block is heavy
+   enough to out-shout the panel content it's labelling, and it forces the
+   label to dark-on-gold, breaking the light-text-on-dark rhythm every other
+   surface in the app follows. */
+.reference-tab-active,
+.compendium-tab.active,
+.sandbox-tab.active {
+  background: var(--surface-raised);
+  color: var(--accent);
+  box-shadow: var(--hairline-strong), var(--elev-1);
 }
 
 .type-chart-scroll {
   overflow: auto;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   max-height: 65vh;
+  /* Recessed frame around the 15x15 matrix, so the chart reads as a
+     reference table set into the panel rather than a grid floating on it —
+     the same sunken language as .event-log and .map-scroll. */
+  background: var(--well);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.4);
 }
 
 .type-chart-grid {
@@ -2374,9 +2735,10 @@ body {
   display: flex;
   gap: 10px;
   padding: 8px 10px;
-  background: var(--panel-alt);
+  background: var(--surface-raised);
   border-left: 3px solid;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--hairline), var(--elev-1);
 }
 
 .status-ref-icon {
@@ -2490,11 +2852,11 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 75%);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   padding: 28px 22px 22px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--hairline-strong), var(--elev-3);
   animation: result-pop 0.35s cubic-bezier(0.2, 0.9, 0.35, 1.3);
 }
 
@@ -2612,9 +2974,10 @@ body {
 }
 
 .result-buttons button:last-child {
-  background: var(--panel);
+  background: var(--surface-raised);
   color: var(--text);
   border: 1px solid var(--border);
+  box-shadow: var(--hairline), var(--elev-1);
 }
 
 .exit-button {
@@ -2624,8 +2987,10 @@ body {
   border: none;
   color: var(--text-dim);
   font-size: 12px;
+  font-weight: 600;
   padding: 2px 0;
   cursor: pointer;
+  transition: color var(--dur-mid) var(--ease-out);
 }
 
 .exit-button:hover {
@@ -2681,41 +3046,20 @@ body {
   margin-bottom: 14px;
 }
 
+/* Look lives in the shared segmented-control block above; this is only the
+   Compendium's own spacing against the list below it. */
 .compendium-tabs {
-  display: flex;
-  gap: 6px;
   margin-bottom: 8px;
-}
-
-.compendium-tab {
-  flex: 1;
-  background: linear-gradient(165deg, var(--panel-alt), var(--panel));
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text-dim);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 7px 10px;
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-.compendium-tab:hover {
-  color: var(--text);
-}
-
-.compendium-tab.active {
-  color: var(--text);
-  border-color: var(--accent);
 }
 
 .roster-mgmt-card {
   position: relative;
-  background: var(--panel);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   border-left: 3px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 8px 10px;
+  box-shadow: var(--hairline), var(--elev-1);
 }
 
 .roster-mgmt-head {
@@ -2743,18 +3087,28 @@ body {
   gap: 6px;
 }
 
+/*
+ * Empty state: a sunken dashed cavity. Filled state (below) swaps to a
+ * raised, solid, rarity-edged tile. Keeping those two as genuinely opposite
+ * treatments — hole vs. object — rather than "same box, different border
+ * color" is what makes a hero's three slots scannable at a glance for what's
+ * still missing, which is the question the player is actually asking on the
+ * roster and force-equip screens.
+ */
 .equip-slot-box {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1px;
-  background: #0d0e12;
+  background: var(--surface-sunken);
   border: 1px dashed var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   padding: 6px 3px;
   color: var(--text-dim);
   cursor: pointer;
   min-width: 0;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
+  transition: border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
   /* Long-press opens the equipped-item detail popup (RosterManagementScreen's
      useLongPress) — without these, mobile browsers show their own
      text-selection handles or a native callout menu partway through the hold. */
@@ -2768,6 +3122,11 @@ body {
   border-color: var(--border);
   border-left: 3px solid var(--rarity-color, var(--border));
   color: var(--text);
+  background: var(--surface-raised);
+  /* Faint rarity bloom, so a legendary/mythic piece is spottable across a
+     six-hero roster without having to read three tiny slot labels per card.
+     Deliberately weak — rarity is a nice-to-know, not the primary signal. */
+  box-shadow: var(--hairline), var(--elev-1), 0 0 10px -4px var(--rarity-color, transparent);
 }
 
 .equip-slot-box.drop-target {
@@ -2776,7 +3135,7 @@ body {
 
 .equip-slot-box.drag-over {
   border-color: var(--accent);
-  background: #33291a;
+  background: var(--selected-fill);
 }
 
 /* RosterManagementScreen's own equip/unequip grid — a filled box picked as
@@ -2785,7 +3144,7 @@ body {
    inspection-only, via .equip-slot-box's long-press.) */
 .equip-slot-box.selected {
   border-color: var(--accent);
-  background: #33291a;
+  background: var(--selected-fill);
 }
 
 /* ForceEquipScreen's per-hero grid (EquipmentSlotGrid highlightSlot prop) —
@@ -2828,7 +3187,9 @@ body {
 .detail-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(10, 11, 14, 0.8);
+  background: rgba(8, 9, 13, 0.72);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2841,13 +3202,17 @@ body {
   max-width: 380px;
   max-height: 85vh;
   overflow-y: auto;
-  background: var(--panel);
+  /* Gradient rather than a flat --panel fill: a modal is the topmost surface
+     in the app, so it gets the full raised treatment (lit top edge + level-3
+     elevation) to sit convincingly above the blurred scrim behind it. */
+  background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  box-shadow: var(--hairline), var(--elev-3);
 }
 
 /* Explicit dismiss target (HeroPreviewOverlay, HeroDetailOverlay) — a
@@ -2869,18 +3234,21 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--panel-alt);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   border-radius: 50%;
   color: var(--text-dim);
   font-size: 13px;
   cursor: pointer;
   z-index: 1;
+  box-shadow: var(--hairline), var(--elev-1);
+  transition: color var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out);
 }
 
 .detail-close-button:hover {
-  color: var(--text);
+  color: var(--accent);
   border-color: var(--accent);
+  background: rgba(224, 166, 60, 0.12);
 }
 
 .detail-header {
@@ -2896,7 +3264,7 @@ body {
 .detail-name {
   font-size: 17px;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.01em;
 }
 
 .detail-evolution-row {
@@ -2912,10 +3280,11 @@ body {
   align-items: center;
   font-size: 10px;
   font-weight: 700;
-  border-radius: 10px;
+  border-radius: var(--radius-pill);
   padding: 2px 8px;
   background: var(--panel-alt);
   border: 1px solid var(--border);
+  box-shadow: var(--hairline);
 }
 
 .evolution-badge.evolution-offensive {
@@ -2954,13 +3323,30 @@ body {
   margin-bottom: 6px;
 }
 
+/* Section eyebrow inside the hero-detail modal. The panel is one long scroll
+   of heterogeneous blocks (stats, moves, equipment, statuses, modifiers), so
+   these labels are the only thing giving it structure — the trailing rule
+   turns each from a floating caption into an actual section break the eye can
+   land on while scrolling. */
 .detail-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--accent);
   margin: 10px 0 4px;
+}
+
+.detail-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  /* Fades out to the right so the rule reads as a soft underline trailing off
+     the label rather than a hard divider cutting the panel in half. */
+  background: linear-gradient(90deg, rgba(224, 166, 60, 0.35), transparent);
 }
 
 .detail-stat-grid {
@@ -3023,16 +3409,21 @@ body {
 
 .stat-bar-track {
   height: 10px;
-  border-radius: 5px;
-  background: #0d0e12;
+  border-radius: var(--radius-pill);
+  background: var(--well);
   border: 1px solid var(--border);
   overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
+/* Same capsule treatment as the combat HP/MP bars (.bar-fill) — a hero's
+   stat spread and their live resources should read as the same family of
+   gauge, since the player compares them side by side on the detail overlay. */
 .stat-bar-fill {
   height: 100%;
-  border-radius: 5px;
-  transition: width 0.3s ease;
+  border-radius: var(--radius-pill);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.05) 52%, rgba(0, 0, 0, 0.18));
+  transition: width 0.3s var(--ease-out);
 }
 
 .stat-bar-value {
@@ -3074,9 +3465,9 @@ body {
 .detail-modifier-chip {
   font-size: 11px;
   font-weight: 700;
-  padding: 3px 7px;
-  border-radius: 10px;
-  background: #0d0e12;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--well);
   border: 1px solid var(--border);
 }
 
@@ -3093,7 +3484,7 @@ body {
   font-weight: 700;
   padding: 3px 7px;
   border-radius: 10px;
-  background: #0d0e12;
+  background: var(--well);
   border: 1px solid var(--hp-mid);
   color: var(--hp-mid);
 }
@@ -3213,6 +3604,19 @@ body {
   overflow-y: auto;
 }
 
+/* Screen titles across the run loop (here, Guild Hall, Sandbox, the reward
+   nodes) share one set of metrics: slightly negative tracking and a tighter
+   line box. Display-size type set at default tracking looks loose and
+   web-default; pulling it in is most of what separates a designed heading
+   from an <h2>. */
+.squad-select h2,
+.guild-hall-header h2,
+.sandbox-header h2,
+.reward-panel h2 {
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
 .squad-select h2 {
   font-size: 16px;
   margin: 4px 0 2px;
@@ -3226,10 +3630,11 @@ body {
    combat screen's --enemy/--ally palette so the layout reads consistently
    between "who am I about to fight" here and the battlefield itself. */
 .squad-section {
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 10px 10px 4px;
   margin-bottom: 4px;
   border: 1px solid var(--border);
+  box-shadow: var(--hairline), var(--elev-1);
 }
 
 .squad-section-enemy {
@@ -3243,9 +3648,34 @@ body {
 }
 
 .squad-section-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-size: 15px;
-  margin: 2px 0 2px;
-  letter-spacing: 0.01em;
+  margin: 2px 0 4px;
+  letter-spacing: -0.01em;
+}
+
+/* Accent tick keyed to the section's own side color — red for the scouted
+   enemies, blue for your squad — so the two halves of the screen are
+   distinguishable from the header alone while scrolling, matching the
+   --enemy/--ally split their panel tints already use. */
+.squad-section-title::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.squad-section-enemy .squad-section-title::before {
+  background: var(--enemy);
+}
+
+.squad-section-player .squad-section-title::before {
+  background: var(--ally);
 }
 
 .squad-vs-divider {
@@ -3385,7 +3815,7 @@ body {
   font-size: 21px;
   margin: 4px 0 8px;
   text-shadow: 0 0 12px rgba(224, 166, 60, 0.45), 0 0 26px rgba(164, 99, 217, 0.22);
-  animation: title-heading-drop 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: title-heading-drop 0.7s var(--ease-spring) both;
 }
 
 /* Blurred duplicate of the title text sitting behind the crisp copy — same
@@ -3444,15 +3874,19 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  background: var(--panel);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 6px 2px;
   cursor: pointer;
+  box-shadow: var(--hairline), var(--elev-1);
+  transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
 .enemy-scout-chip:hover {
   border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: var(--hairline-strong), var(--elev-2);
 }
 
 /* Bench members dimmed rather than labeled — still legible as "won't start
@@ -3485,11 +3919,12 @@ body {
 
 .roster-card {
   position: relative;
-  background: var(--panel);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   border-left: 3px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 10px;
+  box-shadow: var(--hairline), var(--elev-1);
   text-align: left;
   color: var(--text);
   cursor: pointer;
@@ -3500,18 +3935,22 @@ body {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: transform var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
 .roster-card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--hairline-strong), var(--elev-2);
+}
+
+.roster-card:active {
+  transform: translateY(0);
 }
 
 .roster-card.picked {
   border-color: var(--accent);
   border-left-color: var(--accent);
-  background: #33291a;
+  background: var(--selected-fill);
   box-shadow: 0 0 0 1px var(--accent), 0 0 14px rgba(224, 166, 60, 0.35);
   /* Only DraftScreen ever sets .picked, so this pop is safe to scope here —
      it re-triggers on every tap since the class is added fresh each time. */
@@ -3552,7 +3991,7 @@ body {
   color: var(--accent);
   padding: 1px 5px;
   border-radius: 8px;
-  background: #0d0e12;
+  background: var(--well);
 }
 
 .roster-card-badge.badge-enemy {
@@ -3608,11 +4047,13 @@ body {
 .squad-slot {
   position: relative;
   min-height: 64px;
-  background: var(--panel);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   border-left: 3px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 10px;
+  box-shadow: var(--hairline), var(--elev-1);
+  transition: border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
   text-align: left;
   color: var(--text);
   cursor: pointer;
@@ -3621,12 +4062,17 @@ body {
   user-select: none;
 }
 
+/* An empty slot is a hole in the layout, not an object in it — so it drops
+   the raised treatment entirely and becomes a sunken dashed outline. Same
+   figure/ground logic as .equip-slot-box's empty state. */
 .squad-slot.empty {
   display: flex;
   align-items: center;
   justify-content: center;
   border-style: dashed;
-  opacity: 0.5;
+  background: var(--surface-sunken);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+  opacity: 0.6;
 }
 
 .squad-slot-empty-label {
@@ -3636,7 +4082,7 @@ body {
 
 .squad-slot.selected {
   border-color: var(--accent);
-  background: #33291a;
+  background: var(--selected-fill);
 }
 
 .squad-slot.drop-target {
@@ -3645,7 +4091,7 @@ body {
 
 .squad-slot.drag-over {
   border-color: var(--accent);
-  background: #33291a;
+  background: var(--selected-fill);
 }
 
 /* --- Relics overlay ------------------------------------------------------- */
@@ -3662,11 +4108,12 @@ body {
 }
 
 .relic-card {
-  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 70%);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   border-left: 3px solid var(--magical);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 8px 10px;
+  box-shadow: var(--hairline), var(--elev-1);
   /* Long-press opens the inspect popup (NodeRewardScreen/GuildHallPanel's
      useLongPress) — without these, mobile browsers show their own
      text-selection handles or a native callout menu partway through the hold. */
@@ -3734,8 +4181,19 @@ body {
   letter-spacing: 0.01em;
 }
 
+/* The player's purse, rendered as a currency pill rather than loose gold
+   text. This is the number every decision on the screen is measured against,
+   so it needs a container that says "persistent readout" — the same chip
+   language .map-stat uses for the run HUD, so gold looks like the same object
+   in both places. */
 .guild-hall-gold {
-  font-size: 14px;
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(224, 166, 60, 0.1);
+  border: 1px solid rgba(224, 166, 60, 0.35);
+  box-shadow: var(--hairline);
+  font-size: 13px;
   font-weight: 800;
   color: var(--accent);
   white-space: nowrap;
@@ -3754,12 +4212,28 @@ body {
   gap: 8px;
 }
 
+/* Eyebrow-style section header with a short accent rule before it. In a
+   long single-scroll shop the eye needs a repeating anchor to find section
+   boundaries while flicking past; an uppercase label alone at 12px doesn't
+   provide one, a colored tick does. */
 .guild-hall-section-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text);
+}
+
+.guild-hall-section-title::before {
+  content: '';
+  width: 3px;
+  height: 12px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  flex-shrink: 0;
 }
 
 .guild-hall-section-hint {
@@ -3780,15 +4254,16 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 75%);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   border-left: 3px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 10px 8px 8px;
   text-align: center;
   color: var(--text);
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  box-shadow: var(--hairline), var(--elev-1);
+  transition: transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out);
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
@@ -3796,7 +4271,12 @@ body {
 
 .guild-hall-hero-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  border-color: var(--accent);
+  box-shadow: var(--hairline-strong), var(--elev-2);
+}
+
+.guild-hall-hero-card:active {
+  transform: translateY(0);
 }
 
 .guild-hall-hero-card.unaffordable {
@@ -3807,6 +4287,9 @@ body {
   width: 44px;
   height: 44px;
   border-radius: 50%;
+  /* A ring + inner shadow frames the portrait instead of letting a circular
+     crop float free on the card. Costs no layout space (both are shadows). */
+  box-shadow: 0 0 0 1px var(--border), inset 0 0 0 1px rgba(0, 0, 0, 0.4);
 }
 
 .guild-hall-hero-name {
@@ -4144,21 +4627,45 @@ body {
 /* Primary bottom-docked CTA, shared by SquadSelectScreen ("Start Fight"),
    ShopNodeScreen and NodeRewardScreen ("Continue") — the map-loop screens'
    equivalent of .result-overlay button, but inline rather than an overlay. */
+/*
+ * The app's primary CTA, shared by every "commit this choice and move on"
+ * button. Upgraded from a flat gold slab: a top-lit gradient plus a warm
+ * ambient glow makes it read as the one lit, raised, pressable thing on the
+ * screen, which is exactly the job of a single-primary-action layout. The
+ * darker bottom stop is doing real work — a fill that's uniformly bright
+ * reads as a highlighted *label*, while one that falls off downward reads as
+ * a physical key.
+ */
 .resolve-button {
   flex-shrink: 0;
   width: 100%;
-  background: var(--accent);
+  background: linear-gradient(180deg, #eab654, var(--accent) 45%, #c98f2c);
   color: #1a1300;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 12px;
   font-size: 14px;
   font-weight: 700;
+  letter-spacing: 0.01em;
   cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 2px 6px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(224, 166, 60, 0.16);
+  transition: box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out);
 }
 
+.resolve-button:hover:not(:disabled) {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 3px 8px rgba(0, 0, 0, 0.32), 0 8px 26px rgba(224, 166, 60, 0.26);
+}
+
+.resolve-button:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+/* Disabled loses the glow entirely, not just opacity: a dimmed-but-still-
+   glowing button still reads as "the thing to press", which is the wrong
+   signal when the screen is waiting on the player to pick something first. */
 .resolve-button:disabled {
-  opacity: 0.35;
+  opacity: 0.32;
+  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -4259,19 +4766,22 @@ body {
 
 .secondary-button {
   width: 100%;
-  background: var(--panel-alt);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: var(--text-dim);
   padding: 12px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: var(--hairline), var(--elev-1);
+  transition: border-color var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
 .secondary-button:hover {
   border-color: var(--accent);
   color: var(--text);
+  box-shadow: var(--hairline), var(--elev-2);
 }
 
 /* Move-replace offer's Decline/Confirm (LevelUpScreen) — chunky side-by-side
@@ -4293,11 +4803,23 @@ body {
   justify-content: center;
   gap: 3px;
   aspect-ratio: 1 / 1;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   padding: 10px 8px;
   text-align: center;
   cursor: pointer;
   border: 1px solid var(--border);
+  box-shadow: var(--hairline), var(--elev-1);
+  transition: border-color var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-mid) var(--ease-out);
+}
+
+.moveoffer-button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: var(--hairline-strong), var(--elev-2);
+}
+
+.moveoffer-button:not(:disabled):active {
+  transform: translateY(0);
 }
 
 .moveoffer-icon {
@@ -4320,7 +4842,7 @@ body {
 }
 
 .moveoffer-decline {
-  background: var(--panel-alt);
+  background: var(--surface-raised);
   color: var(--text-dim);
 }
 
@@ -4340,6 +4862,7 @@ body {
   border-color: var(--border);
   color: var(--text-dim);
   opacity: 0.5;
+  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -4409,14 +4932,18 @@ body {
   align-items: center;
   gap: 14px;
   text-align: left;
-  background: linear-gradient(165deg, var(--panel-alt), var(--panel));
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   border-left: 3px solid var(--rarity-color, var(--border));
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 14px 16px;
   color: var(--text);
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  /* Rarity bloom on the reward card itself — this is the one screen where
+     "how good is this drop" is the entire question, so rarity gets to be
+     louder here than it is on the roster's small equip slots. */
+  box-shadow: var(--hairline), var(--elev-2), 0 0 16px -6px var(--rarity-color, transparent);
+  transition: transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out);
   /* Long-press opens the inspect popup (GuildHallPanel's useLongPress) —
      without these, mobile browsers show their own text-selection handles
      or a native callout menu partway through the hold. */
@@ -4427,12 +4954,16 @@ body {
 
 .equip-cache-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--hairline-strong), var(--elev-3), 0 0 22px -6px var(--rarity-color, transparent);
+}
+
+.equip-cache-card:active {
+  transform: translateY(0);
 }
 
 .equip-cache-card.picked {
   border-color: var(--rarity-color);
-  box-shadow: 0 0 0 1px var(--rarity-color), 0 4px 18px rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 0 0 1px var(--rarity-color), var(--hairline-strong), var(--elev-3), 0 0 26px -6px var(--rarity-color, transparent);
 }
 
 /* Circular rarity-tinted badge behind the item glyph/art — wraps
@@ -4708,7 +5239,11 @@ body {
 
 .relic-shrine-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--hairline-strong), var(--elev-3);
+}
+
+.relic-shrine-card:active {
+  transform: translateY(0);
 }
 
 /* Circular glow badge behind the relic glyph/art — same wrap-don't-style-
@@ -4763,8 +5298,8 @@ body {
   background: linear-gradient(165deg, #a89ae8, #6a5cc4);
   border: 1px solid var(--magical);
   color: #17122c;
-  box-shadow: 0 0 0 1px rgba(139, 127, 224, 0.35), 0 4px 16px rgba(139, 127, 224, 0.35);
-  transition: opacity 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 0 1px rgba(139, 127, 224, 0.35), 0 4px 16px rgba(139, 127, 224, 0.35);
+  transition: opacity var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
 .relic-shrine-claim-button:hover:not(:disabled) {
@@ -5004,8 +5539,8 @@ body {
   background: linear-gradient(165deg, #5fd6ce, #278f86);
   border: 1px solid #3fb8af;
   color: #06211e;
-  box-shadow: 0 0 0 1px rgba(63, 184, 175, 0.35), 0 4px 16px rgba(63, 184, 175, 0.35);
-  transition: opacity 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 0 1px rgba(63, 184, 175, 0.35), 0 4px 16px rgba(63, 184, 175, 0.35);
+  transition: opacity var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
 .class-shrine-confirm-button:hover:not(:disabled) {
@@ -5051,7 +5586,11 @@ body {
 
 .class-shrine-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--hairline-strong), var(--elev-3);
+}
+
+.class-shrine-card:active {
+  transform: translateY(0);
 }
 
 .class-shrine-card .relic-card-icon {
@@ -5253,10 +5792,14 @@ body {
   text-align: center;
   padding: 22px 16px 16px;
   margin-bottom: 10px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   border-top: 3px solid var(--rarity-color, var(--border));
-  background: linear-gradient(180deg, rgba(224, 166, 60, 0.1), transparent 70%);
+  /* Warm wash over the raised fill, plus a rarity bloom keyed to the drop —
+     this is the "look what you found" moment, so the panel gets the loudest
+     rarity treatment in the app. */
+  background: linear-gradient(180deg, rgba(224, 166, 60, 0.1), transparent 70%), var(--surface-raised);
+  box-shadow: var(--hairline), var(--elev-2), 0 0 24px -8px var(--rarity-color, transparent);
 }
 
 .equip-spotlight-glow {
@@ -5331,9 +5874,10 @@ body {
   flex-direction: column;
   gap: 1px;
   padding: 6px 8px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-xs);
+  background: rgba(0, 0, 0, 0.25);
   border-left: 2px solid var(--rarity-color, var(--border));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .equip-spotlight-passive-name {
@@ -5350,17 +5894,24 @@ body {
 .roster-replace-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(10, 11, 14, 0.85);
+  background: rgba(8, 9, 13, 0.78);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   z-index: 30;
   display: flex;
   padding: 12px;
 }
 
+/* Sits on the blurred .roster-replace-overlay scrim, so it needs to be a
+   surface rather than page-ground: filling it with --bg made the panel and
+   the dimmed screen behind it read as the same plane. */
 .roster-replace-screen {
   width: 100%;
-  background: var(--bg);
-  border-radius: 12px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   padding: 10px;
+  box-shadow: var(--hairline), var(--elev-3);
 }
 
 .roster-replace-portrait {
@@ -5393,19 +5944,26 @@ body {
   align-items: center;
   gap: 8px;
   width: 100%;
-  background: var(--panel);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   border-left: 3px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 8px 10px;
   color: var(--text);
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.15s ease;
+  box-shadow: var(--hairline), var(--elev-1);
+  transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
 .equip-target-card:hover {
   border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: var(--hairline-strong), var(--elev-2);
+}
+
+.equip-target-card:active {
+  transform: translateY(0);
 }
 
 .equip-target-cta {
@@ -5497,33 +6055,62 @@ body {
   gap: 10px;
 }
 
+/*
+ * Run-status bar. Was three bare text runs sitting on a hairline rule, which
+ * read as a caption row rather than a HUD. Each stat is now a discrete chip
+ * on a sunken track — the same "these are readouts, not actions" language
+ * the segmented control uses, and the visual opposite of .map-footer-button's
+ * raised pressable tiles, so the top of the screen is unambiguously
+ * information and the bottom is unambiguously controls.
+ *
+ * The rule below is dropped in favour of the track's own border: two
+ * horizontal lines 10px apart was the busiest part of this screen.
+ */
 .map-header {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border);
+  gap: 6px;
+  padding: 4px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
 .map-stat {
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
-  font-size: 13px;
+  padding: 4px 6px;
+  background: var(--surface-raised);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--hairline);
+  font-size: 12px;
   font-weight: 700;
   color: var(--text);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* The map field itself: a recessed well the route sits inside, so the
+   ascent reads as terrain viewed through a frame rather than nodes floating
+   on the page. The warm pool at the bottom is the run's origin point —
+   the player climbs up and away from it. */
 .map-scroll {
   display: flex;
   flex-direction: column;
   gap: 0;
   padding: 8px 0;
-  background: radial-gradient(ellipse 120% 60% at 50% 100%, #241b0e 0%, transparent 70%), var(--bg);
-  border-radius: 10px;
+  background: radial-gradient(ellipse 120% 60% at 50% 100%, #241b0e 0%, transparent 70%), var(--well);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .map-row-wrap {
@@ -5550,33 +6137,68 @@ body {
    touch-callout/user-select suppression below matches the same pattern as
    .field-effect-badge/.status-badge. */
 .map-node {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 70%);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   color: var(--text-dim);
   padding: 8px 10px 6px;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   opacity: 0.35;
   cursor: default;
   min-width: 76px;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+  box-shadow: var(--hairline);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
 }
 
+/*
+ * The --node-color wash: a soft pool of the node's own accent gathering at
+ * the top of the tile, behind the icon. This is what lets a node's type read
+ * from across the screen at map scale — the 10px uppercase label underneath
+ * is confirmation, not the primary signal.
+ *
+ * Done as a low-opacity pseudo-element rather than a `rgb(from …)` /
+ * `color-mix()` tint in the background stack because --node-color arrives as
+ * an arbitrary author string (MapScreen's NODE_COLORS mixes `var(--enemy)`
+ * with raw hex like `#8a94a8`), and the relative-color functions that could
+ * alpha-adjust it in place are still too new to rely on for a phone-first
+ * target. `opacity` on a solid fill does the same job everywhere.
+ *
+ * z-index/isolation are not needed: an ::before with no `position` context
+ * of its own that is painted first still sits under the in-flow spans.
+ */
+.map-node::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse 90% 62% at 50% 0%, var(--node-color), transparent 72%);
+  opacity: 0.22;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
 .map-node-icon {
+  position: relative;
   font-size: 20px;
   line-height: 1;
   filter: grayscale(0.6);
+}
+
+.map-node-name {
+  position: relative;
 }
 
 .map-node-name {
@@ -5593,11 +6215,18 @@ body {
   opacity: 0.6;
 }
 
+/* "You are here." The one node on the map that should be unmistakable, so it
+   gets the strongest treatment available: full accent border, a hard 1px ring
+   outside it, an ambient bloom, and a lit top edge. */
 .map-node.current {
   opacity: 1;
   border-color: var(--node-color);
   color: var(--text);
-  box-shadow: 0 0 0 1px var(--node-color), 0 0 14px -2px var(--node-color);
+  box-shadow: var(--hairline-strong), 0 0 0 1px var(--node-color), 0 0 16px -2px var(--node-color), var(--elev-1);
+}
+
+.map-node.current::before {
+  opacity: 0.34;
 }
 
 .map-node.current .map-node-icon {
@@ -5609,7 +6238,7 @@ body {
   border-color: var(--node-color);
   color: var(--text);
   cursor: pointer;
-  box-shadow: 0 0 10px -4px var(--node-color);
+  box-shadow: var(--hairline), 0 0 10px -4px var(--node-color), var(--elev-1);
 }
 
 .map-node.reachable .map-node-icon {
@@ -5618,11 +6247,32 @@ body {
 
 .map-node.reachable:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 16px -2px var(--node-color);
+  box-shadow: var(--hairline-strong), 0 0 18px -2px var(--node-color), var(--elev-2);
+}
+
+.map-node.reachable:hover::before {
+  opacity: 0.32;
+}
+
+.map-node.reachable:active {
+  transform: translateY(0);
+}
+
+/* Spent nodes keep their color identity (so the path already walked stays
+   legible as a route) but drop the wash to near-nothing — a visited node
+   should read as history, never compete with the live choices ahead. */
+.map-node.visited::before {
+  opacity: 0.1;
 }
 
 .map-node.locked {
   opacity: 0.25;
+}
+
+/* A locked node carries no information beyond "not yet" — showing its type
+   color would imply it's a choice on offer. */
+.map-node.locked::before {
+  opacity: 0;
 }
 
 /* Hub signpost: Relics/Roster/Reference, relocated out of the header
@@ -5633,7 +6283,7 @@ body {
 .map-footer {
   flex: 0 0 auto;
   display: flex;
-  gap: 8px;
+  gap: 6px;
   padding-top: 6px;
   margin-top: 2px;
   border-top: 1px solid var(--border);
@@ -5647,10 +6297,10 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 75%);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   border-top: 2px solid var(--btn-color);
-  border-radius: 0 0 10px 10px;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
   padding: 6px 4px 5px;
   color: var(--text-dim);
   font-size: 10px;
@@ -5658,14 +6308,20 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.03em;
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, color 0.12s ease, background 0.12s ease;
+  box-shadow: var(--elev-1);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
 }
 
 .map-footer-button:hover {
   color: var(--text);
   transform: translateY(-2px);
-  box-shadow: 0 4px 14px -4px var(--btn-color);
+  box-shadow: 0 4px 16px -4px var(--btn-color), var(--elev-2);
   background: linear-gradient(165deg, var(--panel-alt), var(--btn-color) 220%);
+}
+
+.map-footer-button:active {
+  transform: translateY(0);
 }
 
 .map-footer-icon {
@@ -5824,7 +6480,7 @@ body {
 .title-heading {
   position: relative;
   z-index: 2;
-  animation: title-heading-drop 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: title-heading-drop 0.7s var(--ease-spring) both;
 }
 
 @keyframes title-heading-drop {
@@ -5838,13 +6494,31 @@ body {
   }
 }
 
+/*
+ * Wordmark. Upgraded from flat gold + text-shadow to a gradient-filled
+ * letterform: pale highlight at the top, saturated gold through the middle,
+ * deep bronze at the baseline. That vertical falloff is what separates a
+ * *logo* from *large colored text* — it implies the letters have a surface
+ * catching light, the same lighting model every panel in this pass follows.
+ *
+ * Two mechanical notes. `background-clip: text` requires a transparent fill,
+ * which rules out `text-shadow` (it paints behind the glyph and would show
+ * straight through the transparent letters) — so the drop glow moves to a
+ * `filter: drop-shadow`, which follows the painted result instead. And the
+ * blurred `.title-logo-glow` duplicate behind it keeps its own solid `color`,
+ * so the bloom is unaffected by any of this.
+ */
 .title-logo {
   position: relative;
   font-size: 38px;
   font-weight: 900;
   letter-spacing: 0.12em;
   color: var(--accent);
-  text-shadow: 0 0 10px rgba(224, 166, 60, 0.55), 0 0 26px rgba(224, 166, 60, 0.32), 0 2px 0 rgba(0, 0, 0, 0.5);
+  background: linear-gradient(180deg, #ffe7b0 0%, #f0bc5f 38%, var(--accent) 62%, #a4701f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 12px rgba(224, 166, 60, 0.45)) drop-shadow(0 2px 1px rgba(0, 0, 0, 0.6));
   animation: title-logo-breathe 4.5s ease-in-out infinite;
 }
 
@@ -5855,6 +6529,11 @@ body {
   inset: 0;
   z-index: -1;
   color: var(--accent);
+  /* Mandatory reset, not decoration: -webkit-text-fill-color INHERITS, so
+     the parent's `transparent` (needed for its gradient-clipped fill) would
+     otherwise propagate down here and blank out the very glyphs whose blur
+     is the bloom. */
+  -webkit-text-fill-color: var(--accent);
   filter: blur(14px);
   opacity: 0.55;
 }
@@ -5898,7 +6577,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  animation: title-buttons-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+  animation: title-buttons-rise 0.6s var(--ease-spring) 0.15s both;
 }
 
 @keyframes title-buttons-rise {
@@ -5941,21 +6620,26 @@ body {
 
 .title-secondary-button {
   width: 100%;
-  background: var(--panel-alt);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: var(--text);
   padding: 12px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: var(--hairline), var(--elev-1);
+  transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
 .title-secondary-button:hover {
   border-color: var(--accent);
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--hairline-strong), var(--elev-2);
+}
+
+.title-secondary-button:active {
+  transform: translateY(0);
 }
 
 /* ⚠️ TEMPORARY DEV/TEST button (App.tsx createLevel4TestRun) — deliberately
@@ -6010,7 +6694,7 @@ body {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--panel-alt);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   color: var(--text);
   font-size: 18px;
@@ -6019,13 +6703,18 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: var(--hairline), var(--elev-1);
+  transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
 .title-icon-button:hover {
   border-color: var(--accent);
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--hairline-strong), var(--elev-2);
+}
+
+.title-icon-button:active {
+  transform: translateY(0);
 }
 
 @keyframes title-icon-row-fade {
@@ -6216,7 +6905,7 @@ body {
   font-size: 10px;
   font-weight: 700;
   color: var(--text-dim);
-  background: #0d0e12;
+  background: var(--well);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1px 6px;
@@ -6267,10 +6956,10 @@ body {
   align-items: center;
   gap: 3px;
   width: 100%;
-  background: var(--panel);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   border-left: 3px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 8px 6px 6px;
   color: var(--text);
   text-align: center;
@@ -6278,19 +6967,28 @@ body {
   position: relative;
   overflow: hidden;
   font: inherit;
-  transition: border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  box-shadow: var(--hairline), var(--elev-1);
+  transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
 .hero-grid-card:hover:not(:disabled) {
   border-color: var(--accent);
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--hairline-strong), var(--elev-2);
 }
 
+.hero-grid-card:not(:disabled):active {
+  transform: translateY(0);
+}
+
+/* Same rule as .move-button/.resolve-button: an unavailable card drops its
+   elevation as well as dimming, so "can't pick this" is legible from the
+   silhouette and not only from the opacity. */
 .hero-grid-card:disabled,
 .hero-grid-card-disabled {
   cursor: not-allowed;
   opacity: 0.55;
+  box-shadow: none;
 }
 
 /* A pending Evolution outranks "no points left" (LevelUpScreen) — the card
@@ -6586,13 +7284,13 @@ body {
   font-size: 10px;
   font-weight: 700;
   padding: 6px 7px;
-  border-radius: 7px;
-  background: linear-gradient(165deg, var(--panel-alt), #0d0e12 75%);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(165deg, var(--panel-alt), var(--well) 75%);
   border: 1px solid var(--border);
   border-left-width: 3px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--hairline), var(--elev-1);
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  transition: border-color var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
   /* Long-press opens the move-detail popup (MoveTile's onLongPress) —
      without these, mobile browsers show their own text-selection handles
      or a native callout menu partway through the hold. */
@@ -6604,12 +7302,16 @@ body {
 .move-tile:hover,
 .move-tile.move-tile-selected {
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent), 0 2px 6px rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(224, 166, 60, 0.45), var(--hairline-strong), var(--elev-2);
   transform: translateY(-1px);
 }
 
+.move-tile:active {
+  transform: translateY(0);
+}
+
 .move-tile.move-tile-selected {
-  background: linear-gradient(165deg, #33291a, #1a140a 75%);
+  background: var(--selected-fill);
 }
 
 .evolution-choice {
@@ -6628,19 +7330,31 @@ body {
   flex-direction: column;
   gap: 4px;
   width: 100%;
-  background: var(--panel-alt);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   border-left: 3px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: var(--text);
   padding: 8px 10px;
   font-size: 12px;
   text-align: left;
   cursor: pointer;
+  box-shadow: var(--hairline), var(--elev-1);
+  transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
+/* An Evolution is permanent for the run and gates the whole movepool — the
+   single most consequential click in the game. The hover lift is a touch
+   stronger than the app's usual 1px so the branch cards feel weighty to
+   handle. */
 .evolution-path-button:hover {
   border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: var(--hairline-strong), var(--elev-2);
+}
+
+.evolution-path-button:active {
+  transform: translateY(0);
 }
 
 .evolution-path-head {
@@ -6717,7 +7431,7 @@ body {
    spends the choice. */
 .evolution-path-button.picked {
   border-color: var(--accent);
-  background: #33291a;
+  background: var(--selected-fill);
   box-shadow: 0 0 0 1px var(--accent);
 }
 
@@ -6821,14 +7535,69 @@ body {
 /* --- Sandbox Battle (team-builder tool — App.tsx 'sandboxBattle'/'sandboxFight',
    src/view/run/SandboxBattleScreen.tsx) --------------------------------------- */
 
+/*
+ * Sandbox is the only screen in the app built out of native form controls,
+ * and a stock <select> is the single loudest "this is a web page" artifact in
+ * the whole UI — the platform draws its own chrome, its own dropdown arrow,
+ * and (on Windows) its own light-mode background regardless of the dark theme
+ * around it. `appearance: none` strips that, and the arrow is redrawn as an
+ * inline SVG data URI so the control matches every other surface here.
+ *
+ * The SVG is inlined rather than referenced as a file deliberately: it's two
+ * strokes, and a separate asset for it would be a network request and a build
+ * dependency for something smaller than the URL that fetches it.
+ */
 .sandbox-screen select,
 .sandbox-screen input[type='number'] {
-  background: var(--panel-alt);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   color: var(--text);
   padding: 6px 8px;
   font-size: 12px;
+  box-shadow: var(--hairline);
+  transition: border-color var(--dur-mid) var(--ease-out);
+}
+
+.sandbox-screen select:hover,
+.sandbox-screen input[type='number']:hover {
+  border-color: var(--border-strong);
+}
+
+.sandbox-screen select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* Room on the right for the custom chevron below. */
+  padding-right: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2399a0af' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  /* The gradient must be re-declared alongside the arrow: `background-image`
+     above replaces the shorthand's layer, so without this the control would
+     lose its fill and fall back to transparent. */
+  background-color: var(--panel-alt);
+}
+
+/* The dropdown list itself is drawn by the OS, not the page, and inherits
+   nothing — without an explicit dark pair here it opens as white-on-white
+   text on Windows. */
+.sandbox-screen select option {
+  background: var(--panel);
+  color: var(--text);
+}
+
+/* Chrome/Safari draw increment/decrement spinners that don't respect the
+   dark theme and are redundant next to the explicit +/- steppers this screen
+   already provides. */
+.sandbox-screen input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.sandbox-screen input[type='number']::-webkit-outer-spin-button,
+.sandbox-screen input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .sandbox-header {
@@ -6843,27 +7612,11 @@ body {
   margin: 0;
 }
 
-.sandbox-tabs {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
+/* Look lives in the shared segmented-control block; Sandbox's A/B picker is
+   only two wide, so it can afford a slightly larger label than the 3-tab
+   strips the shared rule is sized for. */
 .sandbox-tab {
-  flex: 1 1 0;
-  background: var(--panel-alt);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text-dim);
-  padding: 8px;
   font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.sandbox-tab.active {
-  border-color: var(--accent);
-  color: var(--accent);
 }
 
 .sandbox-add-row {
@@ -6899,10 +7652,11 @@ body {
 
 .sandbox-hero-card {
   padding: 8px 10px;
-  background: var(--panel);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   border-left: 3px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--hairline), var(--elev-1);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -6931,29 +7685,42 @@ body {
   width: 20px;
   height: 20px;
   line-height: 1;
-  background: var(--panel-alt);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 5px;
+  border-radius: var(--radius-xs);
   color: var(--text);
   cursor: pointer;
   padding: 0;
+  box-shadow: var(--hairline);
+  transition: border-color var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out);
+}
+
+.sandbox-level-stepper button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .sandbox-active-toggle {
   flex-shrink: 0;
-  background: var(--panel-alt);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-pill);
   color: var(--text-dim);
   font-size: 11px;
   font-weight: 700;
-  padding: 4px 8px;
+  padding: 4px 10px;
   cursor: pointer;
+  box-shadow: var(--hairline);
+  transition: border-color var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out);
 }
 
+/* Pill + tinted fill when on, so this reads as a two-state switch rather
+   than a button that happens to be gold right now — it's toggled far more
+   often than it's pressed once. */
 .sandbox-active-toggle.active {
   border-color: var(--accent);
   color: var(--accent);
+  background: rgba(224, 166, 60, 0.12);
 }
 
 .sandbox-remove-button {
@@ -7019,19 +7786,22 @@ body {
 }
 
 .sandbox-relic-chip {
-  background: var(--panel-alt);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-pill);
   color: var(--text-dim);
   font-size: 11px;
   font-weight: 600;
   padding: 5px 10px;
   cursor: pointer;
+  box-shadow: var(--hairline);
+  transition: border-color var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out);
 }
 
 .sandbox-relic-chip.selected {
   border-color: var(--accent);
   color: var(--accent);
+  background: rgba(224, 166, 60, 0.12);
 }
 
 .sandbox-preset-row {
