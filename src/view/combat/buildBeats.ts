@@ -53,8 +53,10 @@ export interface Beat {
   /** Events to apply, in order, when this beat is revealed. */
   events: CombatEvent[];
   banner: string;
-  /** Secondary readout shown alongside the banner — currently just the mana cost of a declared move. */
+  /** Secondary readout shown alongside the banner — a declared move's mana cost, or the rules text of a Field Effect that just landed. */
   bannerMeta?: string;
+  /** Extra class for the bannerMeta span, so a meta line that isn't a mana cost doesn't inherit .combat-banner-meta's mana blue. */
+  bannerMetaClass?: string;
   popups: BeatPopup[];
 }
 
@@ -87,8 +89,8 @@ export function buildBeats(
   let carry: CombatEvent[] = [];
   let i = 0;
 
-  function push(applied: CombatEvent[], banner: string, popups: BeatPopup[] = [], bannerMeta?: string) {
-    beats.push({ events: [...carry, ...applied], banner, bannerMeta, popups });
+  function push(applied: CombatEvent[], banner: string, popups: BeatPopup[] = [], bannerMeta?: string, bannerMetaClass?: string) {
+    beats.push({ events: [...carry, ...applied], banner, bannerMeta, bannerMetaClass, popups });
     carry = [];
   }
 
@@ -315,17 +317,33 @@ export function buildBeats(
       case 'FieldEffectSet': {
         const fx = fieldEffects[e.fieldEffectId];
         const label = fx?.name ?? e.fieldEffectId;
-        push([e], e.previousFieldEffectId ? `${label} surges across the battlefield, overriding the old field!` : `${label} surges across the battlefield!`);
+        /* The one moment the player has to understand *what* just changed.
+           A Field Effect rewrites how every move in every following round
+           resolves, so the banner's meta line carries the effect's actual
+           rules text rather than making the player go find it — this beat is
+           the only place the description is guaranteed to be read. */
+        push(
+          [e],
+          e.previousFieldEffectId ? `${label} surges across the battlefield, overriding the old field!` : `${label} surges across the battlefield!`,
+          [],
+          fx?.description,
+          'banner-meta-rules'
+        );
         i++;
         break;
       }
 
-      case 'FieldEffectTicked': {
-        const fx = fieldEffects[e.fieldEffectId];
-        push([e], `${fx?.name ?? e.fieldEffectId} holds (${e.roundsRemaining} rounds left)`);
+      /* Deliberately NOT its own beat. The tick carries no new information —
+         the divider plaque's pip track already shows rounds remaining, and it
+         updates from this event either way — so giving it a beat charged the
+         player one mandatory tap per round, every round, for five rounds, to
+         be told nothing. Carried instead: the event still applies (and still
+         reaches the event log via formatEvents on beat.events), it just rides
+         along on the next beat that actually has something to say. */
+      case 'FieldEffectTicked':
+        carry.push(e);
         i++;
         break;
-      }
 
       case 'FieldEffectExpired': {
         const fx = fieldEffects[e.fieldEffectId];

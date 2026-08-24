@@ -1,6 +1,6 @@
-import { useRef, type MouseEvent } from 'react';
+import { useRef, type CSSProperties, type MouseEvent } from 'react';
 import type { MoveDefinition } from '../../engine/content';
-import { getTypeColor } from '../combat/typeColors';
+import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { TypeBadge } from './TypeBadge';
 
 /**
@@ -205,7 +205,15 @@ export function MoveButtonReplica({
 }) {
   const longPress = useLongPress(onLongPress, onClick);
   return (
-    <button type="button" className={`move-button${selected ? ' selected' : ''}`} style={{ borderLeftColor: getTypeColor(move.type) }} {...longPress}>
+    <button
+      type="button"
+      className={`move-button${selected ? ' selected' : ''}`}
+      /* Kept in lockstep with FightScreen's own move button — this is the
+         replica, and the two diverging is exactly what makes a reward screen
+         stop feeling like the same game as the fight screen. */
+      style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
+      {...longPress}
+    >
       <div className="move-row-top">
         <span className="move-crystal" title={`${move.manaCost} Mana`}>
           <strong>{move.manaCost}</strong>
@@ -213,7 +221,9 @@ export function MoveButtonReplica({
         <span className="move-name">{move.name}</span>
       </div>
       <div className="move-row-mid">
-        <TypeBadge type={move.type} />
+        <span className="move-type-code" title={move.type}>
+          {getTypeAbbr(move.type)}
+        </span>
         {move.kind === 'damage' && move.basePower != null && (
           <span className="move-power">
             <strong>{move.basePower}</strong>BP

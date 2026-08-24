@@ -12,6 +12,7 @@ import type { CombatState, Side } from '../../engine/state';
 import { isLockedIn, effectiveTypes, hasAffordableMove } from '../../engine/state';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../engine/combat/switching';
+import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
 import type { Action } from '../../engine/combat/actions';
 import type { CombatEvent } from '../../engine/events';
 import type { HeroDefinition, MoveDefinition, StatKey, TargetMode } from '../../engine/content';
@@ -33,7 +34,7 @@ import { FieldEffectDetailOverlay } from './FieldEffectDetailOverlay';
 import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
-import { getTypeColor, getTypeColorRgb } from './typeColors';
+import { getTypeAbbr, getTypeColor, getTypeColorRgb } from './typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { CategoryBadge, MoveKindBadge, KIND_LABELS, TARGET_MODE_LABELS, useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
@@ -270,6 +271,7 @@ export function FightScreen({
   const [resolving, setResolving] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const [bannerMeta, setBannerMeta] = useState<string | null>(null);
+  const [bannerMetaClass, setBannerMetaClass] = useState<string | null>(null);
   const [popups, setPopups] = useState<Record<string, Popup>>({});
   /** Full move detail (description + matchups), shown on long-press — see the move-button pointer handlers below. Distinct from `selecting`, which is mid-target-selection state, not an info request. */
   const [movePopup, setMovePopup] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
@@ -305,8 +307,18 @@ export function FightScreen({
 
   const winner: Side | null = sideDefeated(combat, PLAYER_SIDE) ? AI_SIDE : sideDefeated(combat, AI_SIDE) ? PLAYER_SIDE : null;
 
-  /** Long-press on the battlefield-divider Field Effect badge opens its full detail card (FieldEffectDetailOverlay) — the badge itself only has room for name + rounds remaining. */
-  const fieldEffectLongPress = useLongPress(combat.activeFieldEffect ? () => setInspectingFieldEffect(true) : undefined);
+  /**
+   * The battlefield-divider Field Effect plaque opens its full detail card
+   * (FieldEffectDetailOverlay) — the plaque itself only has room for the name
+   * and a rounds-remaining pip track, not for what the effect actually does.
+   * Bound to BOTH gestures: hold (the convention shared with status badges and
+   * move buttons) *and* a plain tap. A Field Effect is standing rules that
+   * change how every move in the round resolves, so "what does this do" has to
+   * be one obvious tap away rather than gated behind a gesture the player has
+   * to already know is available.
+   */
+  const inspectFieldEffect = combat.activeFieldEffect ? () => setInspectingFieldEffect(true) : undefined;
+  const fieldEffectPress = useLongPress(inspectFieldEffect, inspectFieldEffect);
 
   // A player active slot fainted and needs a bench replacement chosen before the next round can be declared (docs/combat.md "KO handling": forced replacement is not optional, but WHICH bench hero fills it is the player's choice).
   const openReplacementSlots = ([0, 1] as const).filter((slot) => combat.active[PLAYER_SIDE][slot] === null && playerBench.length > 0);
@@ -577,6 +589,7 @@ export function FightScreen({
     appendLog(formatEvents(beat.events, allCombatants, next.combatants, moves));
     setBanner(beat.banner);
     setBannerMeta(beat.bannerMeta ?? null);
+    setBannerMetaClass(beat.bannerMetaClass ?? null);
     setPopups(Object.fromEntries(beat.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className }])));
     return true;
   }
@@ -704,12 +717,37 @@ export function FightScreen({
         <div className="battlefield-divider">
           <span className="battlefield-vs">VS</span>
           {combat.activeFieldEffect && (
+            /* The plaque sits centred ON the horizon, and "VS" fades out
+               behind it (styles.css .field-effect-active .battlefield-vs).
+               "VS" is decorative and means "nothing special is happening
+               here"; a Field Effect is the single most important standing
+               fact about the battlefield, so it takes the centre rather than
+               being pinned into a corner beside a mark it was overlapping.
+               Keyed by effect id so switching effects remounts the element
+               and replays the arrival animation — an override has to read as
+               a *new* field, not as a name quietly swapping in place. */
             <span
+              key={combat.activeFieldEffect.fieldEffectId}
               className="field-effect-badge"
-              title={`${fieldEffects[combat.activeFieldEffect.fieldEffectId]?.description ?? ''} — hold for details`}
-              {...fieldEffectLongPress}
+              title={`${fieldEffects[combat.activeFieldEffect.fieldEffectId]?.description ?? ''} — tap for details`}
+              {...fieldEffectPress}
             >
-              {fieldEffects[combat.activeFieldEffect.fieldEffectId]?.name ?? combat.activeFieldEffect.fieldEffectId} · {combat.activeFieldEffect.roundsRemaining}
+              <span className="field-effect-name">
+                {fieldEffects[combat.activeFieldEffect.fieldEffectId]?.name ?? combat.activeFieldEffect.fieldEffectId}
+              </span>
+              {/* Duration is a flat 5 rounds for every effect
+                  (FIELD_EFFECT_DURATION_ROUNDS, a locked invariant), so a
+                  fixed 5-pip track reads as a clock the player can learn.
+                  The old "· 4" was a bare number with no unit — indistinguishable
+                  from a stack count, a tier, or a power value. */}
+              <span className="field-effect-pips" aria-label={`${combat.activeFieldEffect.roundsRemaining} rounds remaining`}>
+                {Array.from({ length: FIELD_EFFECT_DURATION_ROUNDS }, (_, i) => (
+                  <span
+                    key={i}
+                    className={`field-effect-pip${i < combat.activeFieldEffect!.roundsRemaining ? '' : ' spent'}`}
+                  />
+                ))}
+              </span>
             </span>
           )}
         </div>
@@ -733,7 +771,7 @@ export function FightScreen({
         {resolving && (
           <div className="combat-banner">
             {banner && <span>{banner}</span>}
-            {bannerMeta && <span className="combat-banner-meta">{bannerMeta}</span>}
+            {bannerMeta && <span className={`combat-banner-meta${bannerMetaClass ? ` ${bannerMetaClass}` : ''}`}>{bannerMeta}</span>}
             <span className="combat-banner-hint">tap ▸ or hold to auto-play ⏵⏵</span>
           </div>
         )}
@@ -896,7 +934,11 @@ export function FightScreen({
                       <button
                         key={moveId}
                         className={`move-button${isSelected ? ' selected' : ''}`}
-                        style={{ borderLeftColor: getTypeColor(move.type) }}
+                        /* Type is carried by the button's own material now (a
+                           tinted wash + tinted rim, styles.css) instead of a
+                           3px stripe glued to the left edge, so the whole
+                           control is type-coded rather than wearing a tag. */
+                        style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
                         disabled={!affordable}
                         onClick={() => {
                           if (longPressFired.current) {
@@ -933,7 +975,17 @@ export function FightScreen({
                           <span className="move-name">{move.name}</span>
                         </div>
                         <div className="move-row-mid">
-                          <TypeBadge type={move.type} />
+                          {/* Was a filled TypeBadge chip. One move button used to
+                              hold three sub-boxes (mana crystal, type chip, kind
+                              chip) inside an already-boxed control — the nesting
+                              problem docs/visual-language.md names one level
+                              down. The abbreviation still carries the exact type
+                              (color alone can't separate 15 of them), it just
+                              does it as colored text rather than as a third
+                              competing rectangle. */}
+                          <span className="move-type-code" title={move.type}>
+                            {getTypeAbbr(move.type)}
+                          </span>
                           {move.kind === 'damage' && move.basePower != null && (
                             <span
                               className={`move-power${forceBonus > 0 ? ' move-boosted' : ''}`}

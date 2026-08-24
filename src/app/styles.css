@@ -445,6 +445,9 @@ button,
    every change here leak onto it. */
 .battlefield-vs {
   position: relative;
+  /* Fades out when a Field Effect plaque takes the centre of the horizon
+     (.field-effect-active rule below). */
+  transition: opacity var(--dur-mid) var(--ease-out);
   padding: 0 8px;
   font-size: 9px;
   font-weight: 800;
@@ -453,35 +456,131 @@ button,
   background: transparent;
 }
 
-/* The active Field Effect (docs/field-effects.md) — a persistent badge that
-   overlays the "VS" divider, not just a transient beat banner, since it's
-   standing battlefield state that stays true between rounds. Absolutely
-   positioned (see .battlefield-divider above) and pinned to the right edge
-   of the divider's own gradient line rather than laid out inline: taking it
-   out of flow means "VS" never has to make room for it and mounting/
-   unmounting it never changes the divider row's height. Long-pressable
-   (useLongPress, opens FieldEffectDetailOverlay) — the touch-callout/
-   user-select suppression below matches the same pattern as .status-badge. */
+/* The active Field Effect (docs/field-effects.md) — a persistent plaque set
+   ON the horizon, not a transient beat banner, since it's standing
+   battlefield state that stays true between rounds.
+ *
+ * This was previously a right-pinned pill, and it was the messiest object on
+ * the fight screen. Three separate faults, all measured in the running app:
+ *   - It set no font-size, so it inherited the 16px/400 root — body copy,
+ *     rendering a 156 x 32px slab (42% of a 375px screen) on a horizon whose
+ *     own "VS" mark is 9px/800. Nothing else on the battlefield is set in
+ *     body copy; it read as unstyled.
+ *   - At 32px tall against a 13px divider row it overhung ~9px into BOTH
+ *     team rows, and its left edge overlapped the "VS" glyph by 3px. Two
+ *     pieces of chrome literally colliding.
+ *   - "Surging Magic · 4" — a bare number with no unit, indistinguishable
+ *     from a stack count, a tier, or a power value.
+ *
+ * The fix is to stop treating it as a badge stuck onto the scene and treat it
+ * as part of the scene: a plaque centred on the horizon, in the horizon's own
+ * type register (9px/800, letterspaced, uppercase), with "VS" fading out
+ * behind it. Centred rather than corner-pinned because a Field Effect is
+ * global — it belongs to the whole field, and symmetry is how that reads.
+ *
+ * Still absolutely positioned (see .battlefield-divider above): out of flow
+ * means mounting/unmounting can never change the divider row's height and so
+ * can never shove the battlefield around. Tap OR hold opens the detail card
+ * (FightScreen's fieldEffectPress); the touch-callout/user-select suppression
+ * matches the same pattern as .status-badge. */
 .battlefield-divider .field-effect-badge {
   position: absolute;
-  right: 4px;
+  left: 50%;
   top: 50%;
-  transform: translateY(-50%);
-  max-width: 45%;
-  padding: 3px 8px;
-  border-radius: 999px;
-  border: 1px solid rgb(var(--field-effect-rgb, 195, 86, 208));
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: calc(100% - 16px);
+  padding: 3px 9px 3px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(var(--field-effect-rgb, 195, 86, 208), 0.55);
   color: rgb(var(--field-effect-rgb, 195, 86, 208));
-  background: var(--panel);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  letter-spacing: normal;
+  /* Tinted glass over the arena floor rather than a flat --panel fill: the
+     plaque should look lit by the effect it names, not stamped on top of it.
+     The outer glow bleeds the effect color onto the horizon around it, which
+     is what ties the plaque to the ambient treatment below. */
+  background:
+    linear-gradient(180deg, rgba(var(--field-effect-rgb, 195, 86, 208), 0.22), rgba(var(--field-effect-rgb, 195, 86, 208), 0.1)),
+    var(--panel);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 14px -2px rgba(var(--field-effect-rgb, 195, 86, 208), 0.55);
   cursor: pointer;
+  /* Remounted on every effect change (FightScreen keys it by fieldEffectId),
+     so this replays whenever the field changes — an override must read as a
+     new field arriving, not as a name quietly swapping in place. */
+  animation: field-effect-plaque-arrive 0.45s var(--ease-spring) both;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
+}
+
+.field-effect-name {
+  min-width: 0;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* Rounds remaining. Every Field Effect lasts a flat 5 rounds
+   (FIELD_EFFECT_DURATION_ROUNDS — a locked invariant, docs/field-effects.md),
+   which is exactly what makes a fixed-length pip track the right readout: the
+   denominator never changes, so the player learns the shape of a full clock
+   once and can then read "how much is left" without counting. A bare numeral
+   can't do that — it has no scale to be read against. */
+.field-effect-pips {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 2.5px;
+}
+
+.field-effect-pip {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 4px -1px currentColor;
+}
+
+.field-effect-pip.spent {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: none;
+}
+
+/* "VS" means "nothing in particular is happening on this field". Once a Field
+   Effect is up, that is no longer true and the plaque takes the centre, so
+   the decorative mark steps out of the way instead of being overlapped by it. */
+.battlefield.field-effect-active .battlefield-vs {
+  opacity: 0;
+}
+
+@keyframes field-effect-plaque-arrive {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.82);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      0 0 0 0 rgba(var(--field-effect-rgb, 195, 86, 208), 0.6);
+  }
+  55% {
+    opacity: 1;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      0 0 26px 6px rgba(var(--field-effect-rgb, 195, 86, 208), 0.6);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 
 .field-effect-detail-panel {
@@ -658,6 +757,17 @@ button,
   font-size: 10px;
   font-weight: 600;
   color: var(--mana);
+}
+
+/* Meta line carrying rules text rather than a mana cost (the Field Effect
+   arrival beat, buildBeats.ts) — mana blue would misread it as a cost, and a
+   full sentence needs to wrap and centre rather than sit as a short chip. */
+.combat-banner-meta.banner-meta-rules {
+  max-width: 300px;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.35;
 }
 
 .combat-banner-hint {
@@ -2492,13 +2602,25 @@ button,
      share and blow the whole .move-grid past the screen width. This is what
      lets .move-name's ellipsis and .move-row-mid's wrap actually engage. */
   min-width: 0;
-  background: linear-gradient(165deg, var(--panel-alt), #171a22);
-  border: 1px solid var(--border);
-  /* Type-coded left edge (same idiom as .move-tile elsewhere in the app) —
-     borderLeftColor is set inline per-move from getTypeColor, so type reads
-     at a glance without waiting on the small TypeBadge glyph below. */
-  border-left-width: 3px;
-  border-radius: var(--radius-sm);
+  /* Type is the button's *material*, not a tag stuck to its edge.
+   *
+   * This used to be a flat gray gradient with a 3px type-colored left border
+   * — a hard stripe that stops abruptly, reads as a list-row marker rather
+   * than as part of the control, and left the button itself colorless. Now
+   * `--move-type-rgb` (set inline per move, FightScreen / MoveButtonReplica)
+   * drives a wash that enters from the top-left corner and dissolves across
+   * the face, plus a rim tinted the same way. The type reads instantly from
+   * the whole object, and the surface stops looking like a table row.
+   *
+   * The fallback triplet is the neutral --border gray, so a caller that
+   * forgets to set the property degrades to the old colorless look rather
+   * than rendering black.
+   */
+  background:
+    linear-gradient(135deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.3), rgba(var(--move-type-rgb, 53, 59, 74), 0.07) 46%, transparent 76%),
+    linear-gradient(165deg, var(--panel-alt), #171a22);
+  border: 1px solid rgba(var(--move-type-rgb, 53, 59, 74), 0.4);
+  border-radius: var(--radius-md);
   color: var(--text);
   box-shadow: var(--hairline), var(--elev-1);
   /* Vertical padding taller than the horizontal (10.5px vs. 7px originally)
@@ -2506,7 +2628,9 @@ button,
      targeting .action-panel's (which carries its own header row) by growing
      each button, not by tacking dead space onto the grid's own
      margin-bottom. */
-  padding: 9.7px 8px;
+  /* Horizontal was 8px against a 3px type border; with that border gone the
+     left inset would optically shrink, so it picks up the 2px it lost. */
+  padding: 9.7px 9px 9.7px 10px;
   font-size: 12px;
   text-align: left;
   cursor: pointer;
@@ -2528,10 +2652,15 @@ button,
 
 /* Committed choice. Reads warmer *and* raised — a selected move stays visibly
    pressable (you can still back out of it) rather than sinking into a
-   locked-in state the player might read as already spent. */
+   locked-in state the player might read as already spent. The type wash is
+   kept underneath at reduced strength rather than replaced outright: the
+   player is scanning four buttons of which one is now amber, and the one
+   they picked shouldn't be the only one whose type they can no longer read. */
 .move-button.selected {
   border-color: var(--accent);
-  background: linear-gradient(165deg, #3a2f1c, #241d10);
+  background:
+    linear-gradient(135deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.22), transparent 62%),
+    linear-gradient(165deg, #3a2f1c, #241d10);
   box-shadow: inset 0 0 0 1px rgba(224, 166, 60, 0.35), var(--hairline-strong), 0 0 14px -2px rgba(224, 166, 60, 0.4);
 }
 
@@ -2573,6 +2702,15 @@ button,
    instead of a text "3MP" pair, so the button reads at a glance without
    spelling the unit out (CLAUDE.md: mana cost is the primary balance lever,
    so it still gets top billing — just as a shape+color instead of a label). */
+/* Kept as the ONE object inside the button, deliberately. The rest of the
+   interior was flattened to chromeless text/glyphs (see .move-type-code and
+   .move-row-mid .move-kind-badge below), which is what makes keeping this
+   one work: a single crystal on a clean face reads as a game object, where
+   a crystal competing with two other chips read as clutter. Mana cost is
+   also the primary balance lever (CLAUDE.md), so it earns the billing.
+   Modernised rather than rebuilt: a tighter specular highlight, a rim light
+   picking up the top-left light source the whole UI uses (--hairline), and
+   a contact shadow instead of the old flat 1px black ring. */
 .move-crystal {
   flex-shrink: 0;
   display: flex;
@@ -2581,8 +2719,11 @@ button,
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: radial-gradient(circle at 32% 28%, #8ecdf7, var(--mana) 55%, #1f4266 100%);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.4);
+  background: radial-gradient(circle at 34% 26%, #a8dbfb, #5ea3e4 32%, var(--mana) 62%, #1b3a5c 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.45),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.35),
+    0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
 .move-crystal strong {
@@ -2621,20 +2762,48 @@ button,
   font-size: 10px;
   color: var(--text-dim);
   min-width: 0;
+  /* Matches the line box of .move-power's 15px BP numeral, the tallest thing
+     that can sit in this row. Explicit because the two chips that used to
+     enforce it are gone: with them flattened to text, a buff/heal move (no BP
+     readout) came out 6.6px shorter than a damage move, which stepped the
+     grid's two rows against each other. Nothing else is allowed to set this
+     row's height, so it says so here rather than depending on its contents. */
+  min-height: 20px;
 }
 
 /* Physical/Magical/Heal/Buff glyph — pushed to the row's far end rather than
    sitting up in .move-row-top next to the name, which was crowding the two
-   most important reads (mana cost, move name) on mobile widths. */
+   most important reads (mana cost, move name) on mobile widths.
+   Chromeless here: .category-badge gives it a 1px border and a rounded well
+   everywhere else in the app, but an emoji is already a self-contained shape
+   and does not need a frame drawn around it — that frame was the third
+   competing rectangle inside a control that is itself a rectangle. Freed of
+   the box it can also run a size larger, so it reads better than it did
+   framed. */
 .move-row-mid .move-kind-badge {
   flex-shrink: 0;
   margin-left: auto;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  font-size: 13px;
+  line-height: 1;
 }
 
-.move-row-mid .type-badge {
-  width: 30px;
-  font-size: 9px;
-  padding: 2px 0;
+/* Replaces the filled TypeBadge chip in the move button's meta row. The
+   button's own wash already says which type this is at a glance; the
+   abbreviation is here to disambiguate between 15 of them, which is a job
+   for text, not for a second colored rectangle sitting under a colored
+   button. Colored by the same --move-type-rgb the chassis uses, at full
+   strength so it holds against the dim 10px row it sits in. */
+.move-type-code {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgb(var(--move-type-rgb, 153, 160, 175));
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 /* Base Power is one of the two numbers a player is actually choosing
