@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom';
 import type { StatusInstance } from '../../engine/state';
 import { statuses } from '../../data/statuses';
-import { statusEmoji, statusColor, statusTint, statusClearText, pipelineLabel, PoisonPips } from '../shared/statusIcons';
+import { StatusGlyph, statusColor, statusTint, statusClearText, pipelineLabel, PoisonPips } from '../shared/statusIcons';
 
 interface Props {
   instance: StatusInstance;
@@ -18,7 +18,6 @@ interface Props {
 export function StatusDetailOverlay({ instance, onClose }: Props) {
   const def = statuses[instance.statusId];
   if (!def) return null;
-  const emoji = statusEmoji[instance.statusId];
   const color = statusColor(instance.statusId);
 
   function closeAndStop(e: { stopPropagation: () => void }) {
@@ -37,11 +36,9 @@ export function StatusDetailOverlay({ instance, onClose }: Props) {
     <div className="detail-overlay status-detail-overlay" onClick={closeAndStop}>
       <div className="detail-panel status-detail-panel" style={{ borderTopColor: color }} onClick={closeAndStop}>
         <div className="status-detail-head">
-          {emoji && (
-            <span className="status-detail-icon" style={{ background: statusTint(instance.statusId, 0.16) }}>
-              {emoji}
-            </span>
-          )}
+          <span className="status-detail-icon" style={{ background: statusTint(instance.statusId, 0.16) }}>
+            <StatusGlyph statusId={instance.statusId} />
+          </span>
           <div>
             <div className="status-detail-name" style={{ color }}>
               {def.name}

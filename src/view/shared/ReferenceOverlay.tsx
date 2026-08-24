@@ -4,7 +4,7 @@ import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
 import type { PassiveDefinition, StatusDefinition } from '../../engine/content';
 import { TypeBadge } from './TypeBadge';
-import { statusEmoji, statusColor, statusTint, statusClearText, pipelineLabel } from './statusIcons';
+import { StatusGlyph, statusColor, statusTint, statusClearText, pipelineLabel } from './statusIcons';
 import { passiveEmoji, passiveColor, passiveTint, passiveEffectSummary } from './passiveIcons';
 
 interface Props {
@@ -129,16 +129,13 @@ function PassiveReferenceRow({ def }: { def: PassiveDefinition }) {
 }
 
 function StatusReferenceRow({ def }: { def: StatusDefinition }) {
-  const emoji = statusEmoji[def.id];
   const color = statusColor(def.id);
 
   return (
     <div className="status-ref-row" style={{ borderLeftColor: color }}>
-      {emoji && (
-        <span className="status-ref-icon" style={{ background: statusTint(def.id, 0.16) }}>
-          {emoji}
-        </span>
-      )}
+      <span className="status-ref-icon" style={{ background: statusTint(def.id, 0.16) }}>
+        <StatusGlyph statusId={def.id} />
+      </span>
       <div className="status-ref-body">
         <div className="status-ref-head">
           <span className="status-ref-name" style={{ color }}>

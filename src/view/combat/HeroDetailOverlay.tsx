@@ -13,7 +13,7 @@ import { EquipmentInfoPanel, EquipmentSlotGrid } from '../shared/EquipmentBox';
 import { MoveTile, MoveInfoPanel, swallowGhostClick } from '../shared/MoveTile';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { statusEmoji, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
+import { StatusGlyph, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
 import { passives } from '../../data/passives';
 import { passiveEmoji, passiveColor, passiveTint, PassiveInfoPanel } from '../shared/passiveIcons';
 
@@ -174,7 +174,6 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           return visibleStatuses.length > 0 ? (
             <div className="detail-modifier-list">
               {visibleStatuses.map((s) => {
-                const emoji = statusEmoji[s.statusId];
                 return (
                   <span
                     key={s.statusId}
@@ -185,7 +184,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
                       borderColor: statusTint(s.statusId, 0.5),
                     }}
                   >
-                    {emoji && <span className="status-emoji">{emoji}</span>}
+                    <StatusGlyph statusId={s.statusId} />
                     {fmtStatus(s.statusId, s.magnitude, s.duration)}
                     {s.statusId === 'Poison' && <PoisonPips duration={s.duration} />}
                   </span>

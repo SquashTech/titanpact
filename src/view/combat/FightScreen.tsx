@@ -732,6 +732,15 @@ export function FightScreen({
               title={`${fieldEffects[combat.activeFieldEffect.fieldEffectId]?.description ?? ''} — tap for details`}
               {...fieldEffectPress}
             >
+              {/* No glyph here, deliberately — it lives on
+                  FieldEffectDetailOverlay instead. This plaque is the one
+                  surface in the status family that already spells its subject
+                  out in words, and it is also the most size-constrained thing
+                  on the screen: it has to sit inside a 13px horizon band
+                  without touching either team row. Measured, a 16px icon cost
+                  23px of width (190px total, 51% of the screen) and dropped
+                  the clearance to each row from 6.4px to 2.2px — paying half
+                  the horizon for identity the adjacent word already carries. */}
               <span className="field-effect-name">
                 {fieldEffects[combat.activeFieldEffect.fieldEffectId]?.name ?? combat.activeFieldEffect.fieldEffectId}
               </span>

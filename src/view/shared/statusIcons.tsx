@@ -1,5 +1,6 @@
 import type { StatusDefinition } from '../../engine/content';
 import { getTypeColor } from '../combat/typeColors';
+import { forceIconArt, statusIconArt } from './iconArt';
 
 /**
  * Elemental Force ids follow the `${Type}Force` naming convention
@@ -43,11 +44,45 @@ function forceStatusType(statusId: string): string | undefined {
   return FORCE_EMOJI[base] ? base : undefined;
 }
 
+/** Pixel-art glyph for a status id (docs/icon-pack.md), or undefined if it has none and must fall back to its emoji. */
+function statusIconSrc(statusId: string): string | undefined {
+  const forceType = forceStatusType(statusId);
+  if (forceType) return forceIconArt[forceType];
+  return statusIconArt[statusId];
+}
+
 /**
- * Emoji glyph per status id — crisp at any size (unlike the pixel-art PNGs
- * this replaced, which turned to noise once downscaled to badge size).
- * Shared by CombatantCard's compact badge and StatusDetailOverlay's larger
- * readout, plus HeroDetailOverlay's status chip, so all three stay in sync.
+ * The one place a status's glyph is drawn. Every surface that shows a status —
+ * the battlefield shoulder badge, StatusDetailOverlay, HeroDetailOverlay's
+ * chip, ReferenceOverlay's catalog — renders this rather than interpolating a
+ * string, so the icon/emoji decision is made once.
+ *
+ * Falls back to the emoji whenever the iconset has no glyph for the id. That
+ * path is live, not defensive: four of the fifteen Elemental Force chips
+ * (Iron, Mech, Beast, Ancient) have no element row in the pack, so a mixed
+ * icon/emoji cluster is a state the UI genuinely reaches.
+ *
+ * `alt=""` because the badge/chip that wraps this already carries the status
+ * name in its `title`, and a duplicate accessible name on the icon would make
+ * a screen reader say it twice.
+ */
+export function StatusGlyph({ statusId, className }: { statusId: string; className?: string }) {
+  const src = statusIconSrc(statusId);
+  const cls = className ? ` ${className}` : '';
+  if (src) return <img className={`status-glyph${cls}`} src={src} alt="" draggable={false} />;
+  return <span className={`status-emoji${cls}`}>{statusEmoji[statusId] ?? statusId.slice(0, 1)}</span>;
+}
+
+/**
+ * Emoji glyph per status id — now the FALLBACK behind StatusGlyph below,
+ * which prefers the pixel-art icons in iconArt.ts.
+ *
+ * An earlier attempt at pixel-art status glyphs was reverted because they
+ * "turned to noise once downscaled to badge size"; that is still true and is
+ * the reason every glyph slot is pinned to 16px (a clean half of the 32px
+ * sources) rather than the 11px this emoji used — see docs/icon-pack.md.
+ * Kept, not deleted, because Iron/Mech/Beast/Ancient Force chips have no
+ * icon in the pack and still render from here.
  */
 export const statusEmoji: Record<string, string> = {
   Burn: '🔥',

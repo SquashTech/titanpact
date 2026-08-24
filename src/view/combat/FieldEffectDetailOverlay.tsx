@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import type { ActiveFieldEffect } from '../../engine/state';
 import { fieldEffects } from '../../data/fieldEffects';
 import { getTypeColor } from './typeColors';
+import { fieldEffectIconArt } from '../shared/iconArt';
 
 interface Props {
   active: ActiveFieldEffect;
@@ -40,6 +41,15 @@ export function FieldEffectDetailOverlay({ active, onClose }: Props) {
         style={{ borderTopColor: getTypeColor(def.flavorType ?? 'Arcane') } as CSSProperties}
         onClick={closeAndStop}
       >
+        {/* The plaque on the horizon has no room for a glyph without eating
+            half the divider, so the icon lives here — the same split
+            StatusDetailOverlay uses, where a 44px disc is the only slot that
+            can show a 32px source at its native size. */}
+        {fieldEffectIconArt[active.fieldEffectId] && (
+          <div className="field-effect-detail-icon">
+            <img src={fieldEffectIconArt[active.fieldEffectId]} alt="" draggable={false} />
+          </div>
+        )}
         <div className="status-detail-name">{def.name}</div>
         <div className="status-detail-readout">
           <span>Rounds left {active.roundsRemaining}</span>

@@ -2,6 +2,7 @@ import { useRef, type CSSProperties, type MouseEvent } from 'react';
 import type { MoveDefinition } from '../../engine/content';
 import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { TypeBadge } from './TypeBadge';
+import { moveKindIconArt } from './iconArt';
 
 /**
  * Shared ~500ms long-press-vs-click detection. Originally inlined in
@@ -121,12 +122,24 @@ const KIND_EMOJI: Record<MoveDefinition['kind'], string> = { damage: '', heal: '
  */
 export function MoveKindBadge({ move }: { move: MoveDefinition }) {
   const isDamage = move.kind === 'damage';
-  const emoji = isDamage ? CATEGORY_EMOJI[move.category] : KIND_EMOJI[move.kind];
+  const key = isDamage ? move.category : move.kind;
+  const icon = moveKindIconArt[key];
   const tierClass = isDamage ? `category-${move.category}` : `kind-${move.kind}`;
   const title = isDamage ? CATEGORY_LABELS[move.category] : KIND_LABELS[move.kind];
   return (
     <span className={`category-badge move-kind-badge ${tierClass}`} title={title}>
-      {emoji}
+      {/* Pixel-art glyph (docs/icon-pack.md), falling back to the emoji for any
+          kind/category without one. These four were picked specifically for
+          silhouette strength, because this badge renders at 16px — a true
+          halving of the 32px source, which drops every other pixel rather than
+          blending, so a detailed icon would come apart here. */}
+      {icon ? (
+        <img className="move-kind-glyph" src={icon} alt="" draggable={false} />
+      ) : isDamage ? (
+        CATEGORY_EMOJI[move.category]
+      ) : (
+        KIND_EMOJI[move.kind]
+      )}
     </span>
   );
 }

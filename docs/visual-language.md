@@ -161,7 +161,7 @@ A **plaque on the horizon** rather than a badge stuck near it:
 |---|---|
 | Right-pinned, colliding with "VS" | Centred; "VS" fades out behind it |
 | 16px/400 body copy | 9px/800/0.14em uppercase — the horizon's own register |
-| 156 × 32px (42% of screen) | 135 × 18px (36%), clearing both rows by 6.4px |
+| 156 × 32px, overhanging ~9px into both rows | 159 × 22px, clearing both rows by 4.4px |
 | `· 4`, a unitless number | A **5-pip track** — duration is a flat 5 rounds for every effect (`FIELD_EFFECT_DURATION_ROUNDS`, locked), so the denominator never changes and the player learns the shape of a full clock once |
 | Flat `--panel` fill | Type-tinted glass + outer glow, tying it to the ambient treatment |
 | Popped into existence | Arrival animation, remounted on effect change (keyed by `fieldEffectId`) so an override reads as a *new* field |
@@ -248,6 +248,19 @@ know about:
   even a value just set inline. The "VS" fade reads as `opacity: 1` there; the rule was
   confirmed instead against a synthetic element carrying the same classes, which resolves
   to `0`. Don't trust an animated computed value from a non-compositing pane.
+
+  **This bit the plaque measurements themselves, which is worth spelling out.** The
+  arrival keyframe starts at `scale(0.82)`, and a frozen timeline pins it there — so
+  `getBoundingClientRect()` returned every plaque dimension multiplied by 0.82, and the
+  figures first recorded here (135 × 18px, "36% of screen", 6.4px of row clearance) were
+  all understated by that factor. The corrected numbers above come from setting
+  `element.style.animation = 'none'` before measuring, and they change the story: the
+  plaque is **not narrower** than the badge it replaced (159px vs 156px — a wash). What it
+  actually won was height (32px → 22px), a centred position instead of a right-pinned one,
+  no collision with "VS", and real clearance from both team rows where the old badge
+  overhung them by ~9px. That is still the fix; it just isn't the width fix the first
+  measurement claimed. **Kill the animation before measuring an animated element, or use
+  `offsetWidth`/`offsetHeight`, which ignore transforms.**
 - `MoveButtonReplica` (LevelUpScreen's move-replace offer) got the identical treatment and
   compiles and typechecks, but that screen only appears when a hero with four moves is
   offered a fifth, which the test squad doesn't reach. It has not been seen rendering.

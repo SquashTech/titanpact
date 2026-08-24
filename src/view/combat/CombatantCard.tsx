@@ -6,7 +6,7 @@ import { fieldEffects } from '../../data/fieldEffects';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_ICONS, STAT_ORDER, hpTier } from '../shared/StatBars';
-import { statusEmoji, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
+import { StatusGlyph, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
 import { useLongPress } from '../shared/MoveTile';
 import { StatusDetailOverlay } from './StatusDetailOverlay';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
@@ -75,7 +75,6 @@ interface Props {
  */
 function StatusChip({ instance, onInspect }: { instance: StatusInstance; onInspect: () => void }) {
   const longPress = useLongPress(onInspect);
-  const emoji = statusEmoji[instance.statusId];
   const n = instance.magnitude ?? instance.duration;
   const color = statusColor(instance.statusId);
   return (
@@ -85,7 +84,7 @@ function StatusChip({ instance, onInspect }: { instance: StatusInstance; onInspe
       title={`${instance.statusId}${n !== undefined ? ` ${n}` : ''} — hold for details`}
       {...longPress}
     >
-      <span className="status-emoji">{emoji ?? instance.statusId.slice(0, 1)}</span>
+      <StatusGlyph statusId={instance.statusId} />
       {n !== undefined && <span className="status-badge-count">{n}</span>}
       {instance.statusId === 'Poison' && <PoisonPips duration={instance.duration} />}
     </span>

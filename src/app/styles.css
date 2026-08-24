@@ -491,9 +491,9 @@ button,
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 5px;
   max-width: calc(100% - 16px);
-  padding: 3px 9px 3px 10px;
+  padding: 3px 8px;
   border-radius: var(--radius-pill);
   border: 1px solid rgba(var(--field-effect-rgb, 195, 86, 208), 0.55);
   color: rgb(var(--field-effect-rgb, 195, 86, 208));
@@ -586,6 +586,24 @@ button,
 .field-effect-detail-panel {
   /* Overridden inline per effect (FieldEffectDetailOverlay.tsx) — this is just the pre-mount fallback so the panel never flashes unstyled. */
   border-top-color: var(--magical);
+}
+
+/* The effect's glyph (docs/icon-pack.md — its flavorType element carrying the
+   iconset's "cycle arrows" modifier). Native 32px, because this panel is the
+   only Field Effect surface with room for it: the horizon plaque would have
+   had to give up half the divider's width to carry a 16px copy. Mirrors
+   .status-detail-icon's job for statuses. */
+.field-effect-detail-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.field-effect-detail-icon img {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
 }
 
 /* Ambient battlefield treatment while a Field Effect is active — a pulsing
@@ -1072,15 +1090,24 @@ button,
 /* Statuses orbit the figure's shoulder instead of occupying a reserved row.
    Absolute, so the row no longer has to reserve min-height against layout
    shift — the thing that reservation was protecting against can't happen
-   once the element is out of flow. */
+   once the element is out of flow.
+
+   Widened from 58px when the glyph went from an 11px emoji to a 16px icon
+   (docs/icon-pack.md — 16 is the only legal size below the 32px source). At
+   58px each badge had become too wide to share a line, so four statuses
+   stacked into a 98px column running down past the portrait. This fits two
+   per row again. It does overlap the 96px portrait further, which is the
+   intent of a *shoulder* cluster rather than a cost of it — the badges are
+   meant to sit on the figure. */
 .team-row .status-badge-row {
   position: absolute;
   top: 0;
   right: 0;
   z-index: 2;
-  max-width: 58px;
+  max-width: 82px;
   min-height: 0;
   margin: 0;
+  gap: 2px;
   justify-content: flex-end;
 }
 
@@ -1787,10 +1814,12 @@ button,
   padding-right: 5px;
 }
 
-/* Emoji status glyph (src/view/shared/statusIcons.tsx) — text, not an image,
-   so it renders crisp at this badge scale (pixel-art PNGs downscaled to this
-   size turned to noise). Shrinks further on the bench-row switch picker,
-   matching .bench-row .combatant-portrait. */
+/* Emoji status glyph (src/view/shared/statusIcons.tsx) — the FALLBACK path
+   behind .status-glyph below, still used by the four Elemental Force chips
+   (Iron/Mech/Beast/Ancient) the iconset has no element row for. Kept at 11px:
+   text has no source resolution to respect, so it can sit at whatever size
+   the badge wants. Shrinks further on the bench-row switch picker, matching
+   .bench-row .combatant-portrait. */
 .status-emoji {
   display: block;
   font-size: 11px;
@@ -1799,6 +1828,24 @@ button,
 
 .bench-row .status-emoji {
   font-size: 8px;
+}
+
+/* Pixel-art status glyph (docs/icon-pack.md). 16px is not a tuning choice —
+   the sources are 32x32, so 16 is the only size below native that lands on a
+   whole-pixel boundary, and a true halving at that. Anything between (the
+   11px the emoji above uses, say) resamples off-grid and produces exactly the
+   noise that got an earlier pixel-art attempt reverted. If this ever needs to
+   be bigger, the next legal size is 32px, not 20 or 24.
+   Deliberately NOT shrunk on .bench-row the way .status-emoji is, for the
+   same reason: 8px would be a quarter-scale resample. */
+.status-glyph {
+  display: block;
+  width: 16px;
+  height: 16px;
+  image-rendering: pixelated;
+  /* The badge's inline color styles its text and the emoji fallback; an image
+     ignores that, so it gets its own separation from the tinted chip behind it. */
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.65));
 }
 
 .status-badge-count {
@@ -2789,6 +2836,19 @@ button,
   background: none;
   font-size: 13px;
   line-height: 1;
+}
+
+/* Physical/Magical/Heal/Buff pixel-art glyph (docs/icon-pack.md). 16px for
+   the same reason .status-glyph is — a clean half of the 32px source — and
+   this is the slot that dictated which four icons could be picked at all,
+   since a true halving drops every other pixel and only bold silhouettes
+   come through it intact. */
+.move-kind-glyph {
+  display: block;
+  width: 16px;
+  height: 16px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
 }
 
 /* Replaces the filled TypeBadge chip in the move button's meta row. The
@@ -4183,6 +4243,15 @@ button,
   font-size: 24px;
   line-height: 1;
   flex-shrink: 0;
+}
+
+/* The one place a status glyph gets its full 32px native resolution: this
+   44px disc is the only slot big enough to hold it. Everything else in the
+   app shows the same icon halved to 16px, so this readout is where a player
+   actually sees what the art is. */
+.status-detail-icon .status-glyph {
+  width: 32px;
+  height: 32px;
 }
 
 /* Poison's pip meter (statusIcons.tsx PoisonPips), scaled up from the
