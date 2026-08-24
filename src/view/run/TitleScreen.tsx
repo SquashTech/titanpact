@@ -9,6 +9,8 @@ interface Props {
   onOpenSandbox: () => void;
   /** ⚠️ TEMPORARY DEV/TEST — see App.tsx createLevel4TestRun. Remove this prop and its button together when Evolution work no longer needs a fast-forward. */
   onStartLevel4TestRun: () => void;
+  /** ⚠️ TEMPORARY DEV/TEST — see src/run/statusTestFight.ts. Unkillable heroes whose entire movepool is status moves, for looking at the status-effect UI without playing to it. */
+  onStartStatusTestFight: () => void;
 }
 
 const EMBER_COUNT = 18;
@@ -43,7 +45,7 @@ function useEmbers() {
  * "Compendium" opens a read-only hero browser (CompendiumScreen) — no run
  * state involved, so it's toggled locally rather than routed through App.tsx.
  */
-export function TitleScreen({ onStartRun, onQuickBattle, onOpenSandbox, onStartLevel4TestRun }: Props) {
+export function TitleScreen({ onStartRun, onQuickBattle, onOpenSandbox, onStartLevel4TestRun, onStartStatusTestFight }: Props) {
   const [showCompendium, setShowCompendium] = useState(false);
   const [showReference, setShowReference] = useState(false);
   const embers = useEmbers();
@@ -93,6 +95,9 @@ export function TitleScreen({ onStartRun, onQuickBattle, onOpenSandbox, onStartL
         </button>
         <button className="title-debug-button" onClick={onStartLevel4TestRun}>
           🧪 Test: Lv4 Squad <span className="title-debug-tag">temp</span>
+        </button>
+        <button className="title-debug-button" onClick={onStartStatusTestFight}>
+          🧪 Test: Status FX <span className="title-debug-tag">temp</span>
         </button>
       </div>
 

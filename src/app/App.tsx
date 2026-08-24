@@ -46,6 +46,7 @@ import { generateEncounter, generateGoblinChiefEncounter, type EncounterNodeType
 import { pickSquad } from '../run/squad';
 import { advanceToNode, advanceToNextAct, grantCurrencyReward, grantUpgradeReward, grantContractReward } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
+import { createStatusTestSides } from '../run/statusTestFight';
 import { progressionTable } from '../data/progression';
 import type { RunState, RosterEntry } from '../run/state';
 import type { Squad } from '../run/squad';
@@ -70,6 +71,8 @@ type Screen =
   | { kind: 'sandboxBattle' }
   /** Built from a SandboxBattleScreen config (src/run/sandbox.ts) — `playerRelics` drives Side A's team relic modifiers, same props the real 'fight' kind already uses; Sandbox Battle has no enemy-side relic support. */
   | { kind: 'sandboxFight'; player: Encounter; ai: Encounter; playerRelics: string[] }
+  /** ⚠️ TEMPORARY DEV/TEST — see src/run/statusTestFight.ts. Its own kind rather than a reuse of 'sandboxFight' so leaving it returns to the title screen instead of an unrelated (and empty) Sandbox Battle config. */
+  | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
   /** `offers` is rolled once at node-select time (run/shop.ts rollGuildHallOffers) rather than inside GuildHallPanel's own state — see shop.ts's header for why a component-local roll would reroll on every equipment purchase. */
   | { kind: 'shop'; nodeId: string; offers: GuildHallOffers }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
@@ -465,6 +468,21 @@ export function App() {
     setScreen({ kind: 'sandboxFight', player, ai, playerRelics: a.relicIds });
   }
 
+  /**
+   * ⚠️ TEMPORARY DEV/TEST — see src/run/statusTestFight.ts for what this
+   * fight is and why. Goes through the same buildSandboxSide path as Sandbox
+   * Battle (so it exercises the real run -> combat seam rather than a special
+   * case), just from a fixed config instead of a user-built one.
+   */
+  function handleStatusTestFight() {
+    const { a, b } = createStatusTestSides();
+    setScreen({
+      kind: 'statusTestFight',
+      player: buildSandboxSide(a, heroes, progressionTable),
+      ai: buildSandboxSide(b, heroes, progressionTable),
+    });
+  }
+
   return (
     <div className="app-shell" ref={shellRef}>
       {screen.kind === 'title' && (
@@ -473,6 +491,7 @@ export function App() {
           onQuickBattle={handleQuickBattle}
           onOpenSandbox={handleOpenSandbox}
           onStartLevel4TestRun={handleStartLevel4TestRun}
+          onStartStatusTestFight={handleStatusTestFight}
         />
       )}
 
@@ -500,6 +519,21 @@ export function App() {
           onClaimContract={() => false}
           onClaimContractReplace={() => false}
           onResolved={() => setScreen({ kind: 'sandboxBattle' })}
+        />
+      )}
+
+      {screen.kind === 'statusTestFight' && (
+        <FightScreen
+          playerRun={screen.player.run}
+          playerSquad={screen.player.squad}
+          aiRun={screen.ai.run}
+          aiSquad={screen.ai.squad}
+          goldReward={0}
+          trainingPointsReward={0}
+          equipmentReward={null}
+          onClaimContract={() => false}
+          onClaimContractReplace={() => false}
+          onResolved={() => setScreen({ kind: 'title' })}
         />
       )}
 
