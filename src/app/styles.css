@@ -1316,16 +1316,27 @@ button,
 
 .roster-mgmt-portrait {
   display: block;
-  width: 28px;
-  height: 28px;
+  /* 0.5x. Was 28px, a 0.583x scale. This portrait sets the height of its
+     own flex row (.roster-mgmt-head), so the row and every card in the
+     Compendium/roster lists gets 4px shorter — both are long scrolling
+     lists with no fit constraint to trade against. */
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
   image-rendering: pixelated;
 }
 
 .detail-portrait {
   display: block;
-  width: 72px;
-  height: 72px;
+  /* 2x — the battlefield figure's size, which is the point: tapping a hero
+     to inspect it should hand back a bigger image than the 48px card you
+     tapped. Was 72px, a 1.5x scale that doubled every other source pixel.
+     48px is the other legal size and was rejected for being no larger than
+     the card. The 24px this costs comes out of .detail-panel's scroll,
+     which is already its normal state (max-height: 85vh on a stats +
+     moves + equipment sheet). */
+  width: 96px;
+  height: 96px;
   margin: 0 auto 6px;
   image-rendering: pixelated;
 }

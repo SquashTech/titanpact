@@ -231,12 +231,51 @@ run-loop screens.
 |---|---|---|---|
 | `.roster-card-portrait` | 40px | 0.833× | **48px** (clean 1×) |
 | `.enemy-scout-portrait` | 32px | 0.667× | **24px** (clean 0.5×) |
-| `.roster-mgmt-portrait` | 28px | 0.583× | still broken — open item 10 |
-| `.detail-portrait` | 72px | 1.5× | still broken — open item 10 |
+| `.roster-mgmt-portrait` | 28px | 0.583× | **24px** (clean 0.5×) |
+| `.detail-portrait` | 72px | 1.5× | **96px** (clean 2×) |
 
 `.roster-card-portrait` has **two** callers, not one: `DraftScreen` (the 2×2 pick grid)
 and `SquadSelectScreen` (the 2×3 squad grid). The draft screen has never been converted
 — it shares the class, so it got the fix for free.
+
+**These four are not the whole set.** An audit of every `image-rendering: pixelated`
+rule in `styles.css` — run at the end of this pass, and the thing that should have been
+run at the start of the *first* one — found **six more live classes** at illegal scales,
+plus one dead rule. They are listed in open item 10 and are not fixed here. What this
+pass can claim is narrower than it first appeared: the four portraits on the draft,
+squad-select, roster and detail surfaces are correct, and there is now a repeatable way
+to find the rest.
+
+### Why `.detail-portrait` went up and the other three went down or stayed
+
+72px sits exactly between the two legal sizes, so this one was a judgment call rather
+than arithmetic. It went to **96px** because the panel it heads is what you get for
+*tapping a hero to inspect it* — handing back an image no larger than the 48px card
+that was tapped makes the detail view strictly worse than the 72px it replaced. 96px is
+also the size pass 1 chose for the battlefield figure, so the two "look closely at a
+hero" surfaces now agree.
+
+The cost is 24px in a panel that is capped at `85vh` and scrolls, and it is worth
+stating exactly, because it is the one place in this pass where something got worse:
+
+| Surface | Before (72px) | After (96px) |
+|---|---|---|
+| `HeroPreviewOverlay`, level-1 hero, 375×667 | 533.7px, no scroll | 557.7px, no scroll |
+| `HeroPreviewOverlay`, evolved Lv5 hero, 375×667 | ~543px, no scroll | capped, **scrolls 15px** |
+| `HeroPreviewOverlay`, any hero, 375×812 | no scroll | 571.7px, no scroll |
+| `HeroDetailOverlay` (in combat), 375×667 | scrolled ~216px | scrolls 240px |
+
+So: on a 667px screen the run-loop sheet now starts scrolling one content-step earlier
+than it did, and the in-combat sheet — which has a resource row, modifiers and two
+status sections on top of the same content — was scrolling long before this and simply
+scrolls 11% further. The close button is pinned to the fixed overlay rather than the
+panel (see the comment on `.detail-close-button`), so it stays reachable either way.
+**If that trade reads wrong on a device, 48px is the other legal size** and reverses it.
+
+`.roster-mgmt-portrait` needed no such argument: it sets the height of its own flex row
+(`.roster-mgmt-head`), so dropping to 24px takes 4px off every card in the Compendium
+and the roster manager, both of which are long scrolling lists with nothing to trade
+against. The roster manager's scroller went from 95px of overflow to 71px.
 
 ### The interesting half: paying for 8px × 3 rows
 
@@ -281,7 +320,7 @@ before the portraits grew.
   applied globally to every portrait at once. **The "integer multiples of 48" rule is
   therefore a rule about layout px, and there is a second, global scale underneath it
   that no per-class size can satisfy.** Worth knowing before anyone measures a
-  `getBoundingClientRect` and concludes a size is wrong. See open item 11.
+  `getBoundingClientRect` and concludes a size is wrong. See open item 12.
 
 ---
 
@@ -338,7 +377,9 @@ scroller's, no horizontal overflow, and "Start Fight" still on screen. Two adver
 cases were forced by injecting into the live DOM rather than played to: a **4-hero**
 scouted enemy squad (the grid is `repeat(4, 1fr)` — one row, height unchanged) and a
 name sweep through all six slots, which is what turned up the 12-character wrap
-threshold above. `npm test` (200
+threshold above. The two overlay portraits were measured on all four of their
+surfaces — the run-loop preview at level 1 and at evolved Lv5, and the in-combat sheet
+— at both viewport heights, against `.detail-panel`'s `85vh` cap. `npm test` (200
 engine tests), `npm run typecheck:view` and `npm run build:view` all pass. One gap:
 **the Browser pane was hidden for this pass, so nothing was screenshotted** — the pane
 does not composite frames while hidden and `computer`'s screenshot times out. Everything
@@ -404,13 +445,31 @@ Roughly in order of expected payoff.
    styling one — `KIND_EMOJI` is keyed on `move.kind`, and there is no `fieldEffect`
    kind today.
 
-10. **Two portraits are still at illegal scales.** `.roster-mgmt-portrait` (28px, a
-    0.583× scale) and `.detail-portrait` (72px, a 1.5× scale — every other source pixel
-    doubled) were found during the third pass and deliberately left alone, since neither
-    screen was in that pass's scope and both changes move layout on screens that would
-    need their own measuring. The legal targets are 24px and either 48px or 96px
-    respectively. This is the last of the defect-1 family.
-11. **The global UI scale resamples all pixel art.** `initUiScale` transform-scales the
+10. **Six more portraits are still at illegal scales**, found by auditing every
+    `image-rendering: pixelated` rule at the end of the third pass. All render 48×48
+    sources — `art/heroes/`, `art/enemies/` and `art/npc/mentor.png` are all 48×48:
+
+    | Class | Now | Scale | Screens |
+    |---|---|---|---|
+    | `.hero-grid-portrait` | 30px | 0.625× | six — Class, ForceEquip, LevelUp, RosterReplace, StatBoost |
+    | `.training-hero-portrait` | 32px | 0.667× | LevelUp, SandboxBattle |
+    | `.roster-replace-portrait` | 64px | 1.333× | RosterReplace |
+    | `.class-learn-mentor` | 72px | 1.5× | ClassNode |
+    | `.class-shrine-mentor` | 84px | 1.75× | ClassNode |
+    | `.class-learn-hero` | 88px | 1.833× | ClassNode |
+
+    Legal targets are 24, 48 or 96. `.hero-grid-portrait` is the one worth doing first
+    (six screens, and 30 → 24 shrinks rather than grows). `.level-up-confirm-portrait`
+    (40px) has **no callers left** and should just be deleted.
+
+    Also unresolved from the third pass: whether `.detail-portrait` should have gone
+    *down* to 48px rather than up to 96px. The trade is tabulated there.
+11. **An audit, not a sweep, is what catches this.** The first pass fixed two portraits
+    and declared defect 1 handled; the third pass fixed four more and, in its first
+    draft, declared the family closed. Both were wrong for the same reason — the check
+    was "which portraits am I looking at" rather than "which rules in the file say
+    `pixelated`". The latter takes one command and is the only version that terminates.
+12. **The global UI scale resamples all pixel art.** `initUiScale` transform-scales the
     shell by up to 1.2×, so above a 700px viewport height every portrait renders at a
     fractional device size regardless of its layout size (48px → 52.94px at 375×812).
     The options are to snap the scale to a value that keeps art on whole pixels, to
