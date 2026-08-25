@@ -253,7 +253,7 @@ export const heroes: Record<string, HeroDefinition> = {
   },
 
   // --- Hollowbark, Aegis, Brimstone, Gallant, Pincer, Scallywag, Sentinel,
-  // Steam Colossus, Zenith (2026-08-22): new recruit-only heroes brought in
+  // Bellows, Zenith (2026-08-22): new recruit-only heroes brought in
   // alongside their art, typed via the power-source-not-body filter
   // (docs/types-and-heroes.md) in conversation with the designer. Not added
   // to the start-of-run draft pool — same pattern as Cube/Mordrax/Lucius
@@ -329,11 +329,13 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['boulderToss', 'fortify', 'stunningBlow'],
     starter: false,
   },
-  // Steam Colossus is already dual-typed (Mech/Iron), so per the mono-only
-  // graft rule none of its Evolution paths may carry a typeGraft.
+  // Bellows is already dual-typed (Mech/Iron), so per the mono-only graft
+  // rule none of its Evolution paths may carry a typeGraft. The `steamColossus`
+  // id predates the rename (2026-08-25) and is deliberately unchanged — it keys
+  // the progression tables and the art import in heroArt.ts.
   steamColossus: {
     id: 'steamColossus',
-    name: 'Steam Colossus',
+    name: 'Bellows',
     types: ['Mech', 'Iron'],
     baseStats: { hp: 145, attack: 90, defense: 80, intelligence: 15, wisdom: 35, speed: 15, manaPool: 40, mpRegen: 4 },
     moveIds: ['moltenHammer', 'shrapnelBlast', 'fortify'],

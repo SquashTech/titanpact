@@ -219,6 +219,72 @@ move-panel/targeting-panel height match `padding: 9.7px` exists to maintain.
 
 ---
 
+## Third pass — portrait scale outside combat (2026-08-25)
+
+Defect 1 from the first pass — pixel art displayed at a fractional scale — was fixed
+only where it was found, on the battlefield. **Every other portrait in the game kept
+the size it was born with, and all four of them were illegal.** `HeroPortrait` renders
+the same 48×48 sources as `.combatant-portrait`; nothing was enforcing the rule on the
+run-loop screens.
+
+| Class | Was | Scale | Now |
+|---|---|---|---|
+| `.roster-card-portrait` | 40px | 0.833× | **48px** (clean 1×) |
+| `.enemy-scout-portrait` | 32px | 0.667× | **24px** (clean 0.5×) |
+| `.roster-mgmt-portrait` | 28px | 0.583× | still broken — open item 10 |
+| `.detail-portrait` | 72px | 1.5× | still broken — open item 10 |
+
+`.roster-card-portrait` has **two** callers, not one: `DraftScreen` (the 2×2 pick grid)
+and `SquadSelectScreen` (the 2×3 squad grid). The draft screen has never been converted
+— it shares the class, so it got the fix for free.
+
+### The interesting half: paying for 8px × 3 rows
+
+The draft screen had 129px of vertical slack at 375×667 and could absorb the growth
+without noticing. **Squad select had 11.3px** and needed 24. Measured before touching
+anything, so the constraint was real rather than assumed. Two reclaims paid for it,
+and both are corrections rather than scrounging:
+
+- **`.enemy-scout-portrait` went *down*, to 24px.** It was illegal anyway, and the
+  only two legal sizes near it are 24 and 48. Down is also what that chip wants: it
+  is the deliberately-minimal "glance" tier (tap for the full stat block), and it
+  should read as smaller than your own squad, not larger. Frees 8px.
+- **`.enemy-scout-grid` and `.squad-grid` gave back 10px each of bottom margin.**
+  `.squad-section` pads `10px 10px 4px`, so these grids' `margin-bottom: 16px` *was*
+  the section's bottom inset — 20px against a 10px top padding. Set to 6px, the
+  section now insets 10px on both ends. Frees 20px.
+
+Net: squad select ends at **15.3px of slack at 375×667**, more than the 11.3px it had
+before the portraits grew.
+
+### A name that no longer overflows, and one thing this can't fix
+
+- **The slot has a hard 12-character name budget.** The measurement that found this
+  was `Steam Colossus` — then the longest name in `heroes.ts` — which wrapped
+  `.roster-card-name` from 17.8px to 35.7px in the 106.5px slot; six of those
+  overflowed the 375×667 scroller by 42px. That was pre-existing rather than caused
+  by the bigger portraits (the same test against the old 40px layout overflowed by
+  42.7px), and it is now moot: **the hero was renamed `Bellows` the same day**, and
+  the longest name left is 10 characters (`Nightshade`, `Hollowbark`), both of which
+  measure 17.8px — one line, no overflow, slack unchanged at 15.3px.
+
+  The budget is worth stating because nothing enforces it. Sweeping a single-word
+  name through the slot, it stays one line to **11 characters and wraps at 12**
+  (glyph widths, so it is a width budget rather than a character count). A future
+  hero named past that reintroduces the 42px overflow. `.screen-scroll` scrolls
+  gracefully if it happens — "Start Fight" is pinned outside it — but the fix would
+  be a naming rule or a type-scale decision, not a portrait one.
+- **No portrait lands on integer *device* pixels above a 700px viewport.**
+  `initUiScale` (`src/app/uiScale.ts`) transform-scales the whole shell by
+  `min(vw/340, vh/700)` clamped to 1–1.2. At 375×812 that is **1.10294**, so the new
+  48px portrait occupies 52.94 device px — a fractional resample of the pixel grid,
+  applied globally to every portrait at once. **The "integer multiples of 48" rule is
+  therefore a rule about layout px, and there is a second, global scale underneath it
+  that no per-class size can satisfy.** Worth knowing before anyone measures a
+  `getBoundingClientRect` and concludes a size is wrong. See open item 11.
+
+---
+
 ## Verification standard
 
 This pass was verified by measuring computed geometry and styles in the running app
@@ -264,6 +330,19 @@ know about:
 - `MoveButtonReplica` (LevelUpScreen's move-replace offer) got the identical treatment and
   compiles and typechecks, but that screen only appears when a hero with four moves is
   offered a fifth, which the test squad doesn't reach. It has not been seen rendering.
+
+The third pass was verified the same way, at both 375×812 and 375×667: computed and
+`offsetWidth`/`offsetHeight` portrait sizes against the 48×48 naturals, the scroller's
+`scrollHeight - clientHeight`, the layout-px gap between the last child's bottom and the
+scroller's, no horizontal overflow, and "Start Fight" still on screen. Two adversarial
+cases were forced by injecting into the live DOM rather than played to: a **4-hero**
+scouted enemy squad (the grid is `repeat(4, 1fr)` — one row, height unchanged) and a
+name sweep through all six slots, which is what turned up the 12-character wrap
+threshold above. `npm test` (200
+engine tests), `npm run typecheck:view` and `npm run build:view` all pass. One gap:
+**the Browser pane was hidden for this pass, so nothing was screenshotted** — the pane
+does not composite frames while hidden and `computer`'s screenshot times out. Everything
+above is measurement; the result has not been looked at.
 
 ### Getting to the states worth measuring
 
@@ -324,6 +403,20 @@ Roughly in order of expected payoff.
    distinct kind glyph, which is a `MoveKindBadge`/content-schema question, not a
    styling one — `KIND_EMOJI` is keyed on `move.kind`, and there is no `fieldEffect`
    kind today.
+
+10. **Two portraits are still at illegal scales.** `.roster-mgmt-portrait` (28px, a
+    0.583× scale) and `.detail-portrait` (72px, a 1.5× scale — every other source pixel
+    doubled) were found during the third pass and deliberately left alone, since neither
+    screen was in that pass's scope and both changes move layout on screens that would
+    need their own measuring. The legal targets are 24px and either 48px or 96px
+    respectively. This is the last of the defect-1 family.
+11. **The global UI scale resamples all pixel art.** `initUiScale` transform-scales the
+    shell by up to 1.2×, so above a 700px viewport height every portrait renders at a
+    fractional device size regardless of its layout size (48px → 52.94px at 375×812).
+    The options are to snap the scale to a value that keeps art on whole pixels, to
+    exempt portraits from the shell transform and size them in scale-aware steps, or to
+    decide the resample is acceptable and say so — right now the codebase asserts a
+    rule it structurally cannot keep.
 
 ## Non-goals
 

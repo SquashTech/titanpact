@@ -1302,8 +1302,14 @@ button,
    art yet, so these rules only ever affect heroes that have a sprite. */
 .roster-card-portrait {
   display: block;
-  width: 40px;
-  height: 40px;
+  /* 1x of the source. Was 40px — a 0.833x scale, the same defect the
+     battlefield's old 56px had in the other direction: with `pixelated`
+     some source pixels render 1px wide and their neighbours 2px. The 8px
+     this costs per row on SquadSelectScreen (3 rows) was paid for by
+     .enemy-scout-portrait dropping to a clean 24px and the two grids
+     giving back their oversized bottom margins. */
+  width: 48px;
+  height: 48px;
   margin: 0 auto 4px;
   image-rendering: pixelated;
 }
@@ -4588,7 +4594,12 @@ button,
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
-  margin-bottom: 16px;
+  /* This margin is the section's real bottom inset — .squad-section only
+     pads 4px there — so it is set to match the 10px top padding instead of
+     the 16px it carried from when something else sat below it. The 10px
+     reclaimed here and in .squad-grid is most of what paid for the 48px
+     portraits. */
+  margin-bottom: 6px;
 }
 
 .enemy-scout-chip {
@@ -4620,8 +4631,13 @@ button,
 
 .enemy-scout-portrait {
   display: block;
-  width: 32px;
-  height: 32px;
+  /* 0.5x — the one clean downscale from a 48px source, same as the combat
+     bench. Was 32px, a 0.667x scale that drops source pixels unevenly.
+     Down rather than up is also what this chip wants: it is the "glance"
+     tier (tap for the full stat block), and it should stay smaller than
+     the 48px squad slots below it. */
+  width: 24px;
+  height: 24px;
   image-rendering: pixelated;
 }
 
@@ -4737,7 +4753,9 @@ button,
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 16px;
+  /* Matched to .enemy-scout-grid above for the same reason: 6px + the
+     section's 4px padding-bottom = its 10px top padding. */
+  margin-bottom: 6px;
 }
 
 .squad-grid-row {
