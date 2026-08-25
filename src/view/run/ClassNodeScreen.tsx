@@ -13,6 +13,7 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { useLongPress } from '../shared/MoveTile';
 import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
+import { RunGlyph } from '../shared/RunGlyph';
 
 interface Props {
   run: RunState;
@@ -46,7 +47,7 @@ function ClassChoiceCard({ cls, picked, onPick }: ClassChoiceCardProps) {
     <button className={`relic-card class-shrine-card${picked ? ' picked' : ''}`} onClick={onPick}>
       <div className="relic-card-head">
         <span className="relic-card-icon" aria-hidden="true">
-          🏛️
+          <RunGlyph kind="class" />
         </span>
         <span className="relic-card-name">{cls.name}</span>
       </div>
@@ -229,7 +230,7 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
                 <div className="class-shrine-glow" aria-hidden="true" />
                 <img src={mentorArt} className="class-shrine-mentor" alt="" />
                 <div className="class-shrine-eyebrow">The Mentor Awaits</div>
-                <h2>🏛️ Mentor's Hall</h2>
+                <h2><RunGlyph kind="class" /> Mentor's Hall</h2>
                 <p className="hint">Tap a discipline to select it, then confirm — you'll choose who studies it next.</p>
                 <button type="button" className="secondary-button class-shrine-roster-btn" onClick={() => setRosterPeekOpen(true)}>
                   👥 Check Your Roster

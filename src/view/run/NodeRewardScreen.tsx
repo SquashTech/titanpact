@@ -20,6 +20,7 @@ import {
 import { STAT_ICONS } from '../shared/StatBars';
 import { passiveEmoji } from '../shared/passiveIcons';
 import { useLongPress } from '../shared/MoveTile';
+import { ResourceMark, RunGlyph } from '../shared/RunGlyph';
 
 export type RewardNodeType = 'currencyReward' | 'upgradeReward' | 'equipmentReward' | 'relicReward';
 
@@ -216,7 +217,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
           <div className="reward-panel bottom-pinned">
             <div className="equip-cache-banner">
               <div className="equip-cache-glow" aria-hidden="true" />
-              <h2>💰 Gold Cache</h2>
+              <h2><ResourceMark label="G" /> Gold Cache</h2>
               {!claimed && <p className="hint">A pile of gold, ready to claim.</p>}
             </div>
             {!claimed ? (
@@ -233,7 +234,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
           <div className="reward-panel bottom-pinned">
             <div className="equip-cache-banner">
               <div className="equip-cache-glow" aria-hidden="true" />
-              <h2>⭐ XP Cache</h2>
+              <h2><ResourceMark label="XP" tone="green" /> XP Cache</h2>
               {!claimed && <p className="hint">Experience, ready to claim.</p>}
             </div>
             {!claimed ? (
@@ -250,7 +251,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
           <div className="equip-cache-chest-screen">
             <div className="equip-cache-chest-reveal">
               <div className="equip-cache-chest-glow" aria-hidden="true" />
-              <div className={`equip-cache-chest-icon${chestPhase === 'opening' ? ' opening' : ''}`}>🎁</div>
+              <div className={`equip-cache-chest-icon${chestPhase === 'opening' ? ' opening' : ''}`}><RunGlyph kind="equipment" /></div>
               <p className="hint">Opening the cache…</p>
             </div>
           </div>
@@ -260,7 +261,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
           <div className="reward-panel equip-cache-panel bottom-pinned">
             <div className="equip-cache-banner equip-cache-reveal-in">
               <div className="equip-cache-glow" aria-hidden="true" />
-              <h2>🎁 Equipment Cache</h2>
+              <h2><RunGlyph kind="equipment" /> Equipment Cache</h2>
               <p className="hint">Tap a piece of gear to select it, hold to see full details, then claim it.</p>
             </div>
             <div className="equip-cache-list">
@@ -291,7 +292,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
             <div className="relic-shrine-banner">
               <div className="relic-shrine-glow" aria-hidden="true" />
               <div className="relic-shrine-eyebrow">A Pact Awaits</div>
-              <h2>💠 Relic Shrine</h2>
+              <h2><RunGlyph kind="relic" /> Relic Shrine</h2>
               {relicChoices.length > 0 && <p className="hint">Tap a relic to select it, then claim it.</p>}
             </div>
             {relicChoices.length > 0 ? (

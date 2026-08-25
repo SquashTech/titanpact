@@ -7,33 +7,14 @@ import { useLongPress } from '../shared/MoveTile';
 import { RosterManagementScreen } from './RosterManagementScreen';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { RelicsOverlay } from './RelicsOverlay';
+import { ResourceMark, RunGlyph, type RunGlyphKind } from '../shared/RunGlyph';
+import { MapNodeIcon } from './MapNodeIcon';
 
 interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
   onSelectNode: (nodeId: string) => void;
 }
-
-const NODE_ICONS: Record<MapNodeType, string> = {
-  fight: '⚔️',
-  skirmish: '🤺',
-  battle: '🗡️',
-  elite: '💀',
-  boss: '👑',
-  shop: '🏪',
-  equipmentReward: '🎁',
-  relicReward: '💠',
-  currencyReward: '💰',
-  upgradeReward: '⭐',
-  weaponReward: '🏹',
-  armorReward: '🪖',
-  accessoryReward: '💍',
-  hpBoostReward: '❤️',
-  manaBoostReward: '💧',
-  manaRegenBoostReward: '🔄',
-  classReward: '🏛️',
-  event: '❓',
-};
 
 const NODE_NAMES: Record<MapNodeType, string> = {
   fight: 'Fight',
@@ -164,7 +145,7 @@ function MapNodeButton({
       aria-disabled={!isReachable}
       {...longPress}
     >
-      <span className="map-node-icon">{NODE_ICONS[node.type]}</span>
+      <span className="map-node-icon"><MapNodeIcon type={node.type} /></span>
       <span className="map-node-name">{NODE_NAMES[node.type]}</span>
     </button>
   );
@@ -182,7 +163,7 @@ function MapNodePreviewPopup({ node, onClose }: { node: MapNode; onClose: () => 
       <div className="log-panel move-popup-panel" style={{ '--node-color': NODE_COLORS[node.type] } as CSSProperties}>
         <div className="log-panel-header">
           <span>
-            {NODE_ICONS[node.type]} {NODE_NAMES[node.type]}
+            <MapNodeIcon type={node.type} /> {NODE_NAMES[node.type]}
           </span>
         </div>
         <div className="move-popup-description">{NODE_DESCRIPTIONS[node.type]}</div>
@@ -203,10 +184,10 @@ function MapNodePreviewPopup({ node, onClose }: { node: MapNode; onClose: () => 
  * NODE_COLORS below) so the row reads as a small "hub signpost" rather than
  * generic pills.
  */
-const FOOTER_BUTTONS: readonly { key: 'relics' | 'roster' | 'reference'; icon: string; label: string; color: string }[] = [
-  { key: 'relics', icon: '💠', label: 'Relics', color: 'var(--magical)' },
-  { key: 'roster', icon: '👥', label: 'Roster', color: 'var(--ally)' },
-  { key: 'reference', icon: '📖', label: 'Reference', color: 'var(--accent)' },
+const FOOTER_BUTTONS: readonly { key: 'relics' | 'roster' | 'reference'; icon: RunGlyphKind | null; mark: string; label: string; color: string }[] = [
+  { key: 'relics', icon: 'relic', mark: 'R', label: 'Relics', color: 'var(--magical)' },
+  { key: 'roster', icon: null, mark: 'II', label: 'Roster', color: 'var(--ally)' },
+  { key: 'reference', icon: 'guild', mark: 'i', label: 'Reference', color: 'var(--accent)' },
 ];
 
 /**
@@ -239,13 +220,13 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
     <div className="map-screen">
       <div className="map-header">
         <span className="map-stat" title="Act">
-          🗺️ Act {run.actNumber}/{TOTAL_ACTS}
+          <ResourceMark label="ACT" tone="blue" /> {run.actNumber}/{TOTAL_ACTS}
         </span>
         <span className="map-stat" title="Gold">
-          💰 {run.gold}
+          <ResourceMark label="G" /> {run.gold}
         </span>
         <span className="map-stat" title="Recruit Contracts">
-          📜 {run.recruitContracts}
+          <ResourceMark label="C" tone="green" /> {run.recruitContracts}
         </span>
       </div>
 
@@ -274,14 +255,14 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
       </div>
 
       <div className="map-footer">
-        {FOOTER_BUTTONS.map(({ key, icon, label, color }) => (
+        {FOOTER_BUTTONS.map(({ key, icon, mark, label, color }) => (
           <button
             key={key}
             className="map-footer-button"
             style={{ '--btn-color': color } as CSSProperties}
             onClick={openFooterOverlay[key]}
           >
-            <span className="map-footer-icon">{icon}</span>
+            <span className="map-footer-icon">{icon ? <RunGlyph kind={icon} /> : <ResourceMark label={mark} tone="blue" />}</span>
             <span className="map-footer-label">{label}</span>
             {key === 'relics' && run.relics.length > 0 && <span className="map-footer-badge">{run.relics.length}</span>}
           </button>

@@ -1,0 +1,25 @@
+-------------------------------------------------------------
+
+These icons were sold by Pixel Odyssey and are available for
+purchase on itch.io:
+
+https://pixelodyssey.itch.io/
+
+These icons are not to be used in commercial projects without
+being purchased from the above itch.io profile.
+
+Once the pack has been officially purchased, the buyer is now
+a license holder of this pack and has permission to use and
+edit these icons  for use in apps, games, or whatever purpose
+they like EXCEPT that these icons cannot be redistributed to
+other parties who have not purchased it.
+
+-------------------------------------------------------------
+
+The icons come in the same format as they would appear in
+RPG Maker MV and can be pasted into the system graphic.
+To add these into your RMMV project, open your Icons file in
+img/system and replace the Iconset.png with the desired icon
+sheet you wish to use from us.
+
+-------------------------------------------------------------

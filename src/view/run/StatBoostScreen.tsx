@@ -7,6 +7,7 @@ import { rosterEntryTypes } from '../../run/progression';
 import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { RunGlyph } from '../shared/RunGlyph';
 
 export type StatBoostNodeType = 'hpBoostReward' | 'manaBoostReward' | 'manaRegenBoostReward';
 
@@ -20,15 +21,15 @@ interface Props {
 interface StatBoostConfig {
   stat: StatKey;
   amount: number;
-  icon: string;
+  icon: 'mana' | null;
   title: string;
   ctaLabel: string;
 }
 
 const STAT_BOOST_CONFIG: Record<StatBoostNodeType, StatBoostConfig> = {
-  hpBoostReward: { stat: 'hp', amount: 20, icon: '❤️', title: 'Vitality Shrine', ctaLabel: '+20 Max HP' },
-  manaBoostReward: { stat: 'manaPool', amount: 10, icon: '💧', title: 'Mana Well', ctaLabel: '+10 Mana' },
-  manaRegenBoostReward: { stat: 'mpRegen', amount: 5, icon: '🔄', title: 'Regen Spring', ctaLabel: '+5 Mana Regen' },
+  hpBoostReward: { stat: 'hp', amount: 20, icon: null, title: 'Vitality Shrine', ctaLabel: '+20 Max HP' },
+  manaBoostReward: { stat: 'manaPool', amount: 10, icon: 'mana', title: 'Mana Well', ctaLabel: '+10 Mana' },
+  manaRegenBoostReward: { stat: 'mpRegen', amount: 5, icon: 'mana', title: 'Regen Spring', ctaLabel: '+5 Mana Regen' },
 };
 
 /**
@@ -58,7 +59,7 @@ export function StatBoostScreen({ nodeType, run, onRunChange, onContinue }: Prop
         <div className="bottom-pinned">
           <div className="reward-panel">
             <h2>
-              {config.icon} {config.title}
+              {config.icon && <RunGlyph kind={config.icon} />} {config.title}
             </h2>
             <p className="hint">
               {grantedHero ? `${grantedHero.name} gained ${config.ctaLabel}.` : `Choose a hero to permanently grant ${config.ctaLabel}.`}

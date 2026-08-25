@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import type { StatKey } from '../../engine/content';
 import type { EquipmentDefinition, EquipmentLoadout, EquipmentRarity, EquipmentSlot } from '../../run/equipment';
 import { STAT_ICONS, STAT_LABELS } from './StatBars';
-import { equipmentArt, relicArt } from './itemArt';
+import { IconsetGlyph } from './RunGlyph';
 import { useLongPress } from './MoveTile';
 import { passives } from '../../data/passives';
 import { passiveEmoji } from './passiveIcons';
@@ -11,10 +11,31 @@ import { statuses } from '../../data/statuses';
 export const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 
 /** Generic per-slot glyph — only shown for an empty slot, or for an item without its own art in itemArt.ts (EquipmentIcon below prefers the item-specific icon whenever one exists). */
-export const EQUIP_SLOT_ICONS: Record<EquipmentSlot, string> = {
-  weapon: '⚔️',
-  armor: '🛡️',
-  accessory: '💍',
+export const EQUIP_SLOT_ICONS: Record<EquipmentSlot, number> = {
+  weapon: 97,
+  armor: 81,
+  accessory: 84,
+};
+
+/** 2500+ icon-sheet indices for the authored equipment catalogue. */
+const EQUIPMENT_ICON_INDICES: Partial<Record<string, number>> = {
+  ironBlade: 97,
+  dagger: 96,
+  arcaneFocus: 70,
+  oakenArmor: 81,
+  guardianPlate: 83,
+  swiftBoots: 86,
+  vitalCharm: 84,
+};
+
+/** 2500+ icon-sheet indices for the authored relic catalogue. */
+const RELIC_ICON_INDICES: Partial<Record<string, number>> = {
+  ironStandard: 81,
+  warHorn: 77,
+  sagesLantern: 70,
+  windcallersBanner: 66,
+  deepWellstone: 68,
+  bulwarkCore: 83,
 };
 
 interface EquipmentIconProps {
@@ -23,11 +44,9 @@ interface EquipmentIconProps {
   className?: string;
 }
 
-/** Renders the item's own icon (itemArt.ts) when one exists, so e.g. Swift Boots shows boots rather than the generic accessory glyph; falls back to EQUIP_SLOT_ICONS for an empty slot or an item without dedicated art. */
+/** Renders the item's 2500+ sprite glyph, preserving a distinctive silhouette for each item. */
 export function EquipmentIcon({ item, slot, className }: EquipmentIconProps) {
-  const src = item ? equipmentArt[item.id] : undefined;
-  if (src) return <img className={`equip-icon-img ${className ?? ''}`} src={src} alt="" />;
-  return <span className={className}>{EQUIP_SLOT_ICONS[slot]}</span>;
+  return <IconsetGlyph index={item ? (EQUIPMENT_ICON_INDICES[item.id] ?? EQUIP_SLOT_ICONS[slot]) : EQUIP_SLOT_ICONS[slot]} className={`equip-icon-img ${className ?? ''}`} />;
 }
 
 interface RelicIconProps {
@@ -35,11 +54,9 @@ interface RelicIconProps {
   className?: string;
 }
 
-/** Same per-item-art-with-fallback pattern as EquipmentIcon, for the relic side (relics aren't slotted, so there's no per-slot fallback — just the generic relic glyph). */
+/** Same 2500+ sprite treatment for relics; the gem is the neutral fallback. */
 export function RelicIcon({ relicId, className }: RelicIconProps) {
-  const src = relicArt[relicId];
-  if (src) return <img className={`equip-icon-img ${className ?? ''}`} src={src} alt="" />;
-  return <span className={className}>💠</span>;
+  return <IconsetGlyph index={RELIC_ICON_INDICES[relicId] ?? 3} className={`equip-icon-img ${className ?? ''}`} />;
 }
 
 export const EQUIP_SLOT_LABELS: Record<EquipmentSlot, string> = {
