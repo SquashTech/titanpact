@@ -521,6 +521,355 @@ layout measurement taken afterwards is garbage. Dispatch a `resize` event before
 
 ---
 
+## Fifth pass — the action console (2026-08-26)
+
+Open item 3 ("a persistent console shell"), closed. Triggered by the plainest
+possible report: *about an eighth of the screen is gray space at the bottom,
+between the moves and the Back/Switch/Log/Ref/Menu row.*
+
+### What was wrong, measured
+
+`.action-area` is a chassis of fixed height — **316.6px** at 375×812 — holding
+**four** panel variants, each `flex-shrink: 0` and sized to its own contents:
+
+| Console state | Panel height | Bare console face below it | % of screen |
+|---|---|---|---|
+| Move select (3 moves) | 194.8px | **108.9px** | 13.4% |
+| Targeting | 145.7px | **157.9px** | 19.4% |
+| Round resolving | 80.4px | **226.4px** | 27.9% |
+
+So the report understated it twice over. The gray is three different sizes,
+and — worse than the gray itself — **the panel's bottom edge moves by up to
+114px at every step of a single turn**. A console that breathes in and out
+between picking a move, picking a target, and watching the round is what reads
+as unpolished; the empty band is only the most visible symptom.
+
+Two defects underneath, and they are the same two every pass has found:
+
+1. **A hole in the grid, at the common case.** `.move-grid` was 2-column. At 3
+   moves the fourth cell was empty — a measured **161.5 × 69.4px** gap. With
+   `MOVE_CAP = 4` and starting kits now uniformly 3, that hole was not the edge
+   case, it was the default.
+2. **The buttons were empty of the decision.** A move button carried name,
+   type, mana cost and BP. Not what the move *does* — a buff read as a name and
+   a glyph — and not how it fares against the enemies actually standing there.
+   Both were behind a **500ms long-press, per move, per turn, for the whole
+   run**, in a doubles game where type matchup is the single most consequential
+   fact on screen. This is the fourth pass in a row where applying the no-boxes
+   rule well required the second question the rule doesn't ask. It is now 4 for
+   4; the doc already says to treat it as part of the procedure.
+
+### What replaced it
+
+| Was | Is |
+|---|---|
+| Four variants sizing themselves inside a fixed chassis | One shell: `.action-panel` is `flex: 1 1 auto`, so the outer boundary is **constant for the whole fight** and only the contents change |
+| 2-col `.move-grid`, one empty cell at 3 moves | 1-col `.move-list`, `grid-auto-rows: 1fr` — fills exactly at **any** move count |
+| Name / type / cost / BP, effect behind a hold | A second line per row: **live per-enemy effectiveness** for attacks, `moveEffectSummary()` for everything else |
+| Meta on its own `.move-row-mid` line | Meta rides the name's line — full row width made room, which is what freed the second line |
+| 82px banner, 226px of bare face under it | Banner fills, carrying a **beat trail** of the round so far |
+| Target cards 98.7px, 157.9px of gray below | Target cards **248.6px**, portrait at a clean **2×** |
+| Target cards `compact` — portrait, name, type | HP/MP back on them, in the battlefield's own numerals-inside-the-track register |
+
+Details worth keeping:
+
+- **`grid-auto-rows: 1fr` is what actually closes the ask.** Rows come out at
+  79.9px for 3 moves and 58.4px for 4, and in both cases the list's
+  `scrollHeight` equals its `clientHeight` — the fill is exact, not approximate,
+  and it stays exact if a hero ever holds a different number.
+- **A single column is not a cosmetic choice.** 3 moves in 2 columns leaves a
+  hole no styling can fill; one column has no parity to get wrong. The width it
+  buys is the other half — the effect line only fits because the row is 329px.
+- **The effectiveness readout is chromeless, deliberately.** The second pass
+  took three sub-boxes out of this button. An `.eff-chip` — which has a fill and
+  a ring — would have put the first one straight back, so the tier reads as
+  colored text, and the 4×/0.25× escalation as a glow on the numeral rather
+  than the filled tint `.eff-chip` uses. Same two-step hierarchy, no rectangle.
+- **The beat trail only ever lists *revealed* beats.** The queue holds the rest
+  of the round, already resolved by the engine; rendering that would hand the
+  player the enemy's turn before it happens. Newest-first, so the freshest
+  history sits under the beat it followed and old lines fall off the bottom
+  instead of pushing the current beat down.
+- **The current beat and its trail centre as one group.** Top-aligning them
+  would put a single sentence at the ceiling of a 295px box on every round's
+  first beat — trading bare console face for the same emptiness with a gold
+  border drawn around it. `.combat-banner-hint` is absolute so its height never
+  enters that centring, and `.beat-trail` is `flex: 0 1 auto` so it takes only
+  what its lines need.
+- **`banner-pop` now fires per beat, not per round.** The banner was one
+  persistent element whose text swapped; `.combat-banner-current` is keyed on
+  the trail's length, so each beat remounts it and replays the arrival.
+- **2× on the target picker is not a precedent for the arena.** Open item 5 is
+  about the battlefield, which holds four figures in a fixed-height scene and is
+  unchanged. This is the picker: two figures, and a panel that now has 248.6px
+  of card where it had 98.7px. Committing a move to a target is the last
+  irreversible tap of a turn and the hero being committed against was a 48px
+  thumbnail.
+- **Dropping `compact` on the target picker is the same finding as the move
+  button's.** It was the right call at 98.7px — HP/MP/statuses are on the
+  battlefield cards above, and repeating them bloated a box with no room. At
+  248.6px the trade inverts: the question being asked is *which of these two do
+  I hit*, and how much HP one has left and what it is already suffering are the
+  two facts that answer it. Redundancy costs nothing against empty space.
+- **Those bars share `.team-row`'s treatment, not the base one.** Numerals
+  inside the track, not stacked labels beneath it. They sit a few centimetres
+  below the battlefield's bars showing the same two numbers for the same
+  heroes; two registers that close together read as two different readouts.
+  Same lesson as the Field Effect badge, applied across a panel boundary
+  instead of within one.
+- **The power readout is a column, not a chip.** `.move-list .move-power` has a
+  `min-width` and a placeholder (`.move-power-empty`) on buff moves, because
+  without one the type code lands at one x on rows with a BP/HEAL value and
+  another on rows without, and a 3–4 row list rags visibly between them.
+- **Scoping discipline.** `.move-grid` is untouched and still 2-column —
+  `LevelUpScreen`'s move-replace offer (`.reward-panel .move-grid`,
+  `MoveButtonReplica`) uses it, sits in a scrolling column, and has no chassis
+  to fill. Likewise the fill rules for `.bench-row` are scoped under
+  `.target-panel`, so the switch-in picker's overlay copy is unaffected
+  (verified: its cards still compute `display: block`).
+
+### Verification
+
+Driven and measured in the running app at 375×812, per the standard below.
+
+- **Fill.** Panel bottom 744 against a bottom-bar top of 752 in *every* state —
+  move select, targeting, forced replacement, resolving. The 8px is
+  `.action-area`'s own `padding-bottom`. The 108.9 / 157.9 / 226.4px bands are
+  gone and the panel's edges no longer move between steps.
+- **Move counts.** 3 → 79.9px rows; 4 (synthetic 4th row injected into the live
+  grid) → 58.4px rows, `scrollHeight === clientHeight` at both.
+- **Row interior.** Effect line starts at x=66, exactly under `.move-name`, and
+  reserves 15.0px whether it holds effectiveness chips or a summary sentence —
+  the two must match or the grid's rows step against each other, the defect
+  `.move-row-mid`'s `min-height` was originally added for.
+- **Beat trail.** 11 lines fit 180px without scrolling; banner held at 295.6px
+  throughout; group stays centred as it grows.
+- **Forced replacement.** Panel 295.6px, bench row 198.6px, Confirm 43px and
+  unstretched.
+- **Rest fallback.** Synthetic probe (it needs a hero with no affordable move;
+  25 driven rounds of Quick Battle never drained one). Fills the list at
+  251.6px, centred to within 0.5px, indent correctly neutralised, text not
+  clipped.
+- **Target picker.** Card 248.6px, portrait exactly **96.0px** (2× of the 48px
+  source — the scale this doc requires), `.bar-label` computing `position:
+  absolute`, i.e. inside the track as intended.
+- **Power column.** Type codes land within 3.1px of each other across a 4-move
+  list (249.2–252.3), the residue being the glyph widths of FRS/LIT/SPI rather
+  than the layout.
+- No horizontal overflow at any point (`documentElement.scrollWidth === 375`).
+  No console errors. `npm test` (203 engine tests), `npm run typecheck:view` and
+  `npm run build:view` all pass.
+
+Three things to know:
+
+- **`1fr` is `minmax(auto, 1fr)`, so rows have a floor** — measured at 56px for
+  a two-line row. At `MOVE_CAP` the tracks land at 58.4px, clearing it by only
+  2.4px, and the 🧪 Status FX fixture's 7-move movepool blows straight through
+  it (428px of rows in a 252px list) and drew over the panel's own border.
+  `.move-list` now scrolls internally as a backstop. It does not engage at 3 or
+  4 moves.
+- **At 375×667 the move list scrolls**, because the console is only 171.6px
+  there — the battlefield is a content-sized 441.4px regardless of viewport, i.e.
+  66% of a 667px screen. This is not a regression (the old panel was 194.8px in
+  the same 171.6px area, so `.action-area` scrolled instead); the scroll just
+  moved one level in, which keeps the header pinned and the chassis intact.
+  Making the arena height-responsive is the actual fix and belongs with open
+  item 2.
+- **This one was actually looked at** — the first pass in four where the Browser
+  pane composited, so move-select, targeting and mid-round playback were all
+  seen rendering rather than only measured. Three things the geometry did not
+  catch and the screenshots did: the ragged type-code column (fixed, above), a
+  target card that read as sparse until HP/MP went back on it (fixed, above),
+  and the stacked bar labels that gave the picker a different register from the
+  battlefield directly above it (fixed, above). **Still not seen on a real
+  device** — every figure is a 375×812 emulated viewport.
+
+---
+
+## Sixth pass — the console as a place (2026-08-26)
+
+Same day as the fifth, and its direct sequel. The fifth pass made the console
+*fill*; the note back was that it still read as **zones** — "less boxyness of the
+UI where it feels like everything is split into different zones, more of a
+cohesive interface" — with the draft screen (third pass) named as the bar.
+
+### What was wrong, measured
+
+The first pass's own diagnosis, still live on the half of the screen it never
+reached. Computed styles at 375×812, walking down from the shell:
+
+| | border | radius | fill | shadow |
+|---|---|---|---|---|
+| `.app-shell` | — | — | — | — |
+| `.action-area` | 1px `--border-strong` | 15px | gradient | yes |
+| `.action-panel` | 1px `--border` | 11px | gradient | yes |
+| `.move-button` | 1px tinted | 11px | gradient | yes |
+
+**Three concentric rounded rectangles drawn in the identical grammar**, which is
+verbatim the defect at the top of this document. The first pass removed
+`battlefield`, `team-row` and `combatant-card` and installed `.action-area` as a
+deliberate chassis — "the only boxed region on the fight screen" — and that was
+right at the time and one step too far in the end. It made the console an
+*object sitting under* the arena, and left the two containers inside it standing.
+Of the five containers the first pass named as "pure grouping, carrying no
+information at all", **two were still boxed.**
+
+And the thing the boxes contained was, a fourth time, the actual problem:
+
+1. **The header was a form label.** `Select Aegis' Move:` in glowing 12px body
+   copy plus `Long-press for info`. It named a hero the arena was already
+   lighting, in a register nothing else on the screen uses, and said nothing
+   about the only thing the player genuinely could not see — that a doubles turn
+   is **two** decisions, which one they were on, and what was already locked in
+   for the other.
+2. **Nothing below the horizon was alive.** The title screen, the draft and the
+   level-up screen all carry a drifting ember field; the arena has the Field
+   Effect sweep and the acting platform's pulse. The console had no ambient layer
+   at all, which is half of why it read as a control panel bolted under a picture.
+
+### The rule this pass adds
+
+> **Separate regions by depth, not by edge.**
+
+The first pass's finding was that two regions built from identical material
+cannot be separated by degree — they have to be separated by *kind*. True, and
+a drawn edge is not the only way to do it. A photograph separates foreground
+from background with **light and focus**, and gets a single continuous space
+instead of two stacked slabs:
+
+```
+far   = the arena.   Cool, hazy, vignetted, small figures, a horizon.
+near  = the console. Warmer, sharper, larger elements, lit from the
+        player's own side — and lit specifically by whoever is commanding it.
+```
+
+So the console's gradient now runs the **opposite way to a card's**: darkest at
+the seam where the arena's floor tips away, warming toward the bottom edge where
+the ground is closest to the viewer. A card is lighter at its top edge because
+light falls on it from above. Ground is lighter near you because you are standing
+on it. Same value range, opposite reading — and the console stops being an object.
+
+### What replaced it
+
+| Was | Is |
+|---|---|
+| `.action-area` a raised chassis: border, 15px radius, drop shadow | Near ground. No border, no radius, no shadow — an inverted gradient and an inset darkening at the seam |
+| `.action-panel` a bordered, rounded, shadowed card inside it | **Unboxed.** Pure grouping, nothing in it pressable; it never had a claim to a rectangle |
+| A panel edge between arena and console | A **seam of light** — a 1px hairline in the commander's own color, brightest directly beneath them, fading to nothing at both ends |
+| Three or four raised move tiles with 6px gutters | **Facets of one surface**: full-bleed, zero gap, divided by a single scored hairline |
+| Type as a rim drawn around each tile | Type as **light in the facet's leading wall** — a white-hot core blooming in the domain color, running off the screen edge |
+| Five raised chips in the bottom bar | The same keys, **set into** the same ground |
+| `Select Aegis' Move:` + `Long-press for info` | The **command crest**: one socket per active hero, the commander lit in their domain, a committed hero wearing the mana crystal of the move it holds |
+| A second, differently-styled header for targeting | The **same crest**, one step later, its trailing label becoming the move being aimed |
+| The beat banner: a gold-bordered, glowing panel around unpressable text | Unboxed. The round's gold pools on the ground and the beat stands in it |
+| Nothing moving below the horizon | Nine embers rising, tinted to the commander |
+
+Details worth keeping:
+
+- **The console is lit by whoever is commanding it, in their color and from
+  their position.** `--console-rgb` takes the acting hero's primary effective
+  type; `--console-origin` slides the light source to 27% or 73% to sit under
+  whichever half of the ally row holds it. This is the whole join — a light has
+  a position, and putting the console's at the foot of the figure that owns it
+  makes arena floor and console one continuous lit surface. It is also
+  read-at-a-glance information (which side you are commanding from, whose turn
+  it is) delivered without a word of UI.
+- **This inverts a written non-goal, deliberately.** "Accent color at region
+  boundaries" is listed below as something to avoid — but that entry is about
+  *separating* two regions with hue, and this fuses them. It also changes exactly
+  as often as it should: **twice a turn**, at the moment command passes. The
+  draft's rejected version would have re-tinted on every rail tap, which is the
+  strobe that non-goal is really about.
+- **The domain light needed a white-hot core.** Seven of the fifteen types are
+  low-chroma (Iron `#9aa3ad`, Stone `#a89468`, Ancient `#8a9c5e`), and a flat 3px
+  bar of raw type color at the screen's edge is not a light source, it is a
+  scratch. A white core with the domain color as its bloom is how a real emitter
+  reads, and it brings Iron through as *cool white light* rather than as nothing.
+  Verified against Stone and Iron specifically, which is where the first attempt
+  failed.
+- **The pressable things kept their rectangles; the rectangles turned inward.**
+  Move rows and console keys are still boxed — they are controls, and the rule
+  stands. What changed is which way the box faces. Raised (lit top edge, drop
+  shadow, lighter fill) makes separate objects scattered on a tray. Inset (dark
+  rim above, lit lip below, filled darker than the ground) makes one surface with
+  grooves cut into it. Same count of rectangles, one object instead of four.
+- **Committed reads as loaded, not as spent.** The selected facet fills with gold
+  and its leading light goes full, but stays inset — a choice that popped up out
+  of the surface would read as already resolved, and the player can still back
+  out of it.
+- **The beat banner had to go too, and by the rule it always did.** It is not
+  pressable — `.advance-overlay` covers the whole screen and takes the taps, and
+  the banner has never had a handler — so it never had a claim to a rectangle.
+  Once the move rows became facets it was the last card left in the tray, and
+  while a round played out the screen went straight back to looking like the
+  thing this pass is undoing.
+- **The crest is the same fixed-denominator idiom** as the draft's pact sockets,
+  the Field Effect plaque's 5-pip duration clock and the level-up screen's rank
+  track: a shape whose full form is learned once and then read at a glance.
+  Fourth use, and the first one that carries a *sequence* rather than a count.
+- **The entrance animation is capped hard.** Command passes twice a turn, every
+  turn, for a run — so the rows stagger in over 290ms total and start at opacity
+  **0.4**, not 0. An entrance that starts transparent makes the move list
+  unreadable for its whole duration, on the one control the player is waiting to
+  press. The `--dur-fast`/`--dur-mid` header note already says polish must never
+  cost perceived responsiveness; `--dur-slow` (420ms) was added for ambient
+  transitions only — a light changing color, never a control answering a press.
+- **Filling a chassis is not the same as filling a card.** The fifth pass let the
+  forced-replacement panel's bench cards grow like the target picker's, and with a
+  single candidate that produced a 351 x 200px rectangle holding a 24px sprite —
+  the panel filled and looked *emptier* than when it had a gap beneath it. Capped
+  at 168px and centred, so one candidate is the size either of two would be, with
+  the portrait at 2x and the bars in the shared in-track register. Its heading is
+  the one console header that is not the crest (the hero whose slot it fills has
+  just been knocked out, so there is no commander to socket) but it moves into the
+  crest's register anyway — the console must not change type systems depending on
+  how the turn is going.
+- **Ambient at half the draft's strength.** Nine embers, not sixteen, at 0.45
+  opacity: this field is a third of the height and passes behind move names and
+  damage numbers being read against a clock, not behind a figure being admired.
+
+### Verification
+
+Driven through every console state in the running app and measured.
+
+- **The rule, asserted rather than eyeballed.** Walking every element inside
+  `.action-area` and collecting those with a real top border: **move select →
+  zero**. Targeting → `combatant-card` only, which is exactly right (the frame
+  *is* the affordance). Resolving → `beat-trail` only, which is its scored
+  separator, not a box.
+- **Fill survived the fifth pass intact.** Panel 447.4 → 744 against a
+  bottom-bar top of 752 in every state; `.action-area` `scrollHeight ===
+  clientHeight`; no horizontal overflow (`documentElement.scrollWidth === 375`).
+- **The light tracks command.** Water `74, 144, 217` at origin `27%` (ally slot
+  0) → Frost `127, 214, 224` at `73%` (slot 1) → gold `224, 166, 60` at `50%`
+  while resolving. Crest sockets follow: the hero that just committed keeps full
+  color and gains its move's mana crystal.
+- **Forced replacement.** Panel 296.6px, card 168 x 223.6px, portrait exactly
+  96.0px, bar labels computing position: absolute (in-track).
+- **Facets tile exactly.** Three rows at 85.5px, each spanning 0 → 375 (full
+  bleed past the shell's 12px padding), `scrollHeight === clientHeight`.
+- `npm test` (203 engine tests), `npm run typecheck:view` and `npm run
+  build:view` all pass. No console errors. Dead CSS removed with the markup it
+  belonged to (`.move-panel-header/-title/-hint`, its glow keyframe,
+  `.target-panel-move-meta/-name`); `.target-panel-header/-title` stay, since the
+  forced-replacement panel still uses them.
+
+Two caveats:
+
+- **Seen rendering, at one size.** Move select for four different domains (Stone,
+  Iron, Fire, Frost, Water — the low-chroma cases picked on purpose), targeting,
+  command passing between the two heroes, and mid-round playback. All at an
+  emulated 375×812. **Not seen on a real device**, and the seam light in
+  particular is a 1px feature at 20-90% alpha — the thing most likely to read
+  differently on real glass.
+- **375×667 still scrolls the move list**, unchanged from the fifth pass and for
+  the same reason: the arena is content-sized at 441.4px whatever the viewport,
+  so the console gets 172px there. Full-bleed facets make the cut-off row read as
+  a list continuing rather than as a clipped card, which softens it, but the
+  actual fix is a height-responsive arena — see open item 2.
+
+---
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.
@@ -530,11 +879,18 @@ Roughly in order of expected payoff.
    times. Planning: console hot and full, arena dimmed. Resolving: console collapses
    to a thin ticker, arena goes full-bleed and full-brightness. The beat stream
    already drives this — it is the natural payoff of the engine/presentation split,
-   and it would make the split feel *authored* rather than merely clean.
-3. **A persistent console shell.** `.action-area` currently holds four different
-   panel variants (move grid, target panel, replacement picker, resolving banner),
-   each with its own border. The chassis now stabilises the outer boundary, but the
-   variants could be de-duplicated into one framed container with a fixed header.
+   and it would make the split feel *authored* rather than merely clean. The fifth
+   pass took the interim step (the resolving console fills and carries a beat trail
+   instead of collapsing) precisely because the full version makes the arena's
+   height variable, and **the arena's height is currently content-sized and fixed
+   at 441.4px whatever the viewport** — 66% of a 375×667 screen, which is why the
+   move list has to scroll there. Making the arena height-responsive is the same
+   piece of work as this item; do them together.
+3. ~~**A persistent console shell.**~~ Done across the fifth and sixth passes.
+   The variants share a boundary, a fill behaviour, and — since the sixth — one
+   header object (`ConsoleCrest`) across move selection and targeting. They are
+   still separate JSX branches, but there is no longer a "framed container" to
+   unify them into: the frame is gone.
 4. **Numerals on busy backgrounds.** Without card boxes, HP/MP legibility rests on
    text shadows. This needs checking against the noisiest case — Field Effect active,
    multiple statuses, damage popup mid-flight, low-HP pulse — on a real device.
@@ -579,3 +935,9 @@ Roughly in order of expected payoff.
 - **Accent color at region boundaries.** Separate with value and depth, not hue. The
   arena already carries per-hero type tints, ally/enemy zone gradients, and a
   full-battlefield tint while a Field Effect is up; a colored seam only adds noise.
+  - **Exception, sixth pass: hue that FUSES two regions rather than separating
+    them.** The console is lit in the commanding hero's domain color, seam
+    included. The test this has to pass is the one the draft's rejected
+    full-screen tint failed — how often does it change? Twice a turn, at the
+    moment command passes, is a signal. Once per rail tap would have been a
+    strobe. Reach for this only where the recolour is itself the information.

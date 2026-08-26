@@ -36,7 +36,7 @@ import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
 import { getTypeAbbr, getTypeColor, getTypeColorRgb } from './typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
-import { CategoryBadge, MoveKindBadge, KIND_LABELS, TARGET_MODE_LABELS, useLongPress } from '../shared/MoveTile';
+import { CategoryBadge, MoveKindBadge, KIND_LABELS, TARGET_MODE_LABELS, moveEffectSummary, useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
@@ -47,10 +47,6 @@ function fmtGrant(amount: number): string {
   return amount > 0 ? `+${amount}` : `${amount}`;
 }
 
-/** "Sylva's" / "Marrow's" / "Astris'" for the move-panel header's "Select {hero}'s Move:" — apostrophe-only for a name already ending in s, matching standard English possessive form. */
-function possessive(name: string): string {
-  return name.endsWith('s') ? `${name}'` : `${name}'s`;
-}
 
 interface RecruitClaimCardProps {
   hero: HeroDefinition;
@@ -101,6 +97,27 @@ function RecruitClaimCard({ hero, selected, claimed, onSelect, onInspect }: Recr
 
 const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
+
+/**
+ * Ambient embers drifting up through the console — the same golden-angle
+ * sequence the title screen's useEmbers and the draft's useMotes use (a pure
+ * function of index, so the scatter is stable across re-renders with no seed to
+ * store) and the same `title-ember-rise` keyframe.
+ *
+ * Nine rather than the draft's sixteen: this field is a third of the height and
+ * sits behind text the player reads under time pressure, not behind a figure
+ * they are admiring. They take `--console-rgb`, so the air below the horizon
+ * carries the domain of whoever is currently commanding.
+ */
+const CONSOLE_EMBERS = Array.from({ length: 9 }, (_, i) => {
+  const seed = i * 137.51;
+  return {
+    left: seed % 100,
+    delay: (seed * 1.3) % 8,
+    duration: 6.5 + ((seed * 0.29) % 4),
+    size: 2 + ((seed * 0.17) % 2),
+  };
+});
 const config = { typeChart, heroes: allCombatants, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
 /** Recruit Contract offers are capped to this many cards on the victory screen (user direction, 2026-08-21) — a 4v4 elite/boss fight would otherwise dump every recruitable enemy on the player at once. */
@@ -149,6 +166,96 @@ interface PendingAction {
   moveId?: string;
   declaredTarget?: string | null;
   benchedCombatantId?: string;
+}
+
+/**
+ * The command crest — what replaced "Select Aegis' Move:" / "Select a Target:".
+ *
+ * A doubles turn is two decisions taken in sequence, and the console said
+ * nothing about that: not which of the two you were on, and not what you had
+ * already locked in for the other. It said the acting hero's name, in words,
+ * beside a hero the arena was already lighting — a form label for a fact
+ * something else was carrying better.
+ *
+ * So it becomes the two heroes themselves, in the same socket idiom the draft
+ * uses for the pact (docs/visual-language.md third pass) and the Field Effect
+ * plaque uses for its duration: a fixed-denominator track whose full shape is
+ * learned once and then read at a glance. One socket per active hero at 24px —
+ * the one clean downscale of a 48px source. The one in command is lit in its
+ * own domain color, the same light the whole console is filled with; a
+ * committed one wears the mana crystal of the move it is holding.
+ *
+ * The SAME object renders for move selection and for targeting, with only the
+ * trailing label changing (the commander's name, then the move being aimed).
+ * That is the persistent console shell open item 3 asked for, at the one level
+ * that actually matters to the player: the header does not restyle itself
+ * halfway through a decision.
+ */
+function ConsoleCrest({
+  activeIds,
+  actingId,
+  combatants,
+  pending,
+  isComplete,
+  label,
+  labelRgb,
+}: {
+  activeIds: readonly string[];
+  actingId: string | null;
+  combatants: CombatState['combatants'];
+  pending: Record<string, PendingAction>;
+  isComplete: (p: PendingAction | undefined) => boolean;
+  label: string;
+  /** Overrides the console's own hue — targeting colors the label by the MOVE being aimed, not by its caster. */
+  labelRgb?: string;
+}) {
+  return (
+    <div className="console-crest">
+      <div className="console-sockets">
+        {activeIds.map((cid) => {
+          const c = combatants[cid];
+          const cHero = allCombatants[c.heroId];
+          const committed = isComplete(pending[cid]) ? pending[cid] : undefined;
+          const committedMove = committed?.kind === 'move' ? moves[committed.moveId!] : undefined;
+          return (
+            <span
+              key={cid}
+              className={`console-socket${cid === actingId ? ' acting' : ''}${committed ? ' committed' : ''}`}
+              style={{ '--socket-rgb': getTypeColorRgb(effectiveTypes(cHero, c)[0]) } as CSSProperties}
+              title={
+                committedMove
+                  ? `${cHero.name} — ${committedMove.name}`
+                  : committed
+                    ? `${cHero.name} — ${committed.kind === 'rest' ? 'Rest' : 'Switching out'}`
+                    : cHero.name
+              }
+            >
+              <HeroPortrait heroId={cHero.id} className="console-socket-portrait" />
+              {committedMove && (
+                <span
+                  className="console-socket-crystal"
+                  style={{ '--move-type-rgb': getTypeColorRgb(committedMove.type) } as CSSProperties}
+                >
+                  {committedMove.manaCost}
+                </span>
+              )}
+              {committed && !committedMove && (
+                <span className="console-socket-mark" aria-hidden="true">
+                  {committed.kind === 'rest' ? '\u25CC' : '\u21C4'}
+                </span>
+              )}
+            </span>
+          );
+        })}
+      </div>
+      {/* Identity, not instruction — and set in the horizon's own register
+          (9px/800/0.14em uppercase) rather than body copy, which is the
+          register audit the second pass asked for. */}
+      <span className="console-commander" style={labelRgb ? ({ '--console-rgb': labelRgb } as CSSProperties) : undefined}>
+        {label}
+      </span>
+    </div>
+  );
 }
 
 interface Props {
@@ -285,6 +392,19 @@ export function FightScreen({
   const [banner, setBanner] = useState<string | null>(null);
   const [bannerMeta, setBannerMeta] = useState<string | null>(null);
   const [bannerMetaClass, setBannerMetaClass] = useState<string | null>(null);
+  /**
+   * Every beat revealed so far in the round currently playing out, oldest
+   * first — the last entry is the beat on screen now, the ones before it are
+   * history. The console is a fixed-height chassis and a single beat is one
+   * sentence, so playback used to leave 226px of bare console face under an
+   * 80px banner (28% of the screen). This is what fills it, and it fills it
+   * with the one thing the player actually loses during playback: a round
+   * read too fast, or auto-played under a held thumb, is gone until they open
+   * the log. Only *revealed* beats are ever listed — the queue holds the rest
+   * of the round already resolved, and rendering that would hand the player
+   * the enemy's turn before it happens.
+   */
+  const [beatTrail, setBeatTrail] = useState<{ banner: string; meta?: string; metaClass?: string }[]>([]);
   const [popups, setPopups] = useState<Record<string, Popup>>({});
   /** Full move detail (description + matchups), shown on long-press — see the move-button pointer handlers below. Distinct from `selecting`, which is mid-target-selection state, not an info request. */
   const [movePopup, setMovePopup] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
@@ -343,6 +463,53 @@ export function FightScreen({
 
   /** Whether the target-selection panel (below) is what's currently on screen for the acting hero — drives both that panel's render and the bottom-bar Back button's behavior (exit targeting back to the move grid, rather than stepping to the previous hero). */
   const showingTargetPanel = selecting !== null && selecting.combatantId === actingId;
+
+  /**
+   * The hue the whole lower half of the screen is lit in.
+   *
+   * This is the console's link to the arena. The player's two heroes take
+   * turns commanding it, and while one is, the console is lit in *that hero's
+   * domain color* — the same type color their platform, their card rim and
+   * their move rows already carry. So the console reads as belonging to the
+   * figure standing above it rather than as a control panel the fight happens
+   * to be displayed on, and "whose turn is it" stops being carried solely by a
+   * pulse on a 96px sprite.
+   *
+   * docs/visual-language.md lists "accent color at region boundaries" as a
+   * non-goal — but that entry is about *separating* two regions with hue, and
+   * this does the opposite. It is also the one thing on screen that changes
+   * exactly as often as it should: twice a turn, at the moment command passes,
+   * where the draft's rejected version would have re-tinted on every rail tap.
+   *
+   * Gold while a round resolves: nobody is commanding, the round is, and gold
+   * is what the beat banner and every other "the game is speaking" surface
+   * already uses.
+   */
+  const consoleRgb = (() => {
+    if (resolving || actingId === null) return '224, 166, 60';
+    const c = combat.combatants[actingId];
+    return getTypeColorRgb(effectiveTypes(allCombatants[c.heroId], c)[0]);
+  })();
+  /**
+   * ...and from WHERE they stand. The two player heroes occupy the left and
+   * right halves of the ally row, so the console's light source slides to sit
+   * under whichever one currently holds it.
+   *
+   * This is the cheapest honest answer to "these are two separate zones": a
+   * light has a position, and putting the console's at the foot of the figure
+   * that owns it makes the arena floor and the console one continuous lit
+   * surface rather than a picture with a control panel under it. It is also
+   * read-at-a-glance information — which side of the field you are commanding
+   * from — delivered without a word of UI.
+   *
+   * Centre while a round resolves: the round belongs to nobody.
+   */
+  const consoleOrigin = (() => {
+    if (resolving || actingId === null) return '50%';
+    const slot = playerActiveAlive.indexOf(actingId);
+    return slot <= 0 ? '27%' : '73%';
+  })();
+  const consoleStyle = { '--console-rgb': consoleRgb, '--console-origin': consoleOrigin } as CSSProperties;
 
   const targetableIds: string[] = !selecting
     ? []
@@ -563,6 +730,7 @@ export function FightScreen({
     displayState.current = startState;
     finalState.current = nextFinalState;
     beatQueue.current = beats;
+    setBeatTrail([]);
     setResolving(true);
     handleAdvance();
   }
@@ -601,6 +769,7 @@ export function FightScreen({
     setCombat(next);
     appendLog(formatEvents(beat.events, allCombatants, next.combatants, moves));
     setBanner(beat.banner);
+    setBeatTrail((prev) => [...prev, { banner: beat.banner, meta: beat.bannerMeta, metaClass: beat.bannerMetaClass }]);
     setBannerMeta(beat.bannerMeta ?? null);
     setBannerMetaClass(beat.bannerMetaClass ?? null);
     setPopups(Object.fromEntries(beat.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className }])));
@@ -783,7 +952,22 @@ export function FightScreen({
         </div>
       </div>
 
-      <div className="action-area">
+      <div className="action-area" style={consoleStyle}>
+        <div className="console-embers" aria-hidden="true">
+          {CONSOLE_EMBERS.map((e, i) => (
+            <span
+              key={i}
+              className="console-ember"
+              style={{
+                left: `${e.left}%`,
+                width: `${e.size}px`,
+                height: `${e.size}px`,
+                animationDelay: `${e.delay}s`,
+                animationDuration: `${e.duration}s`,
+              }}
+            />
+          ))}
+        </div>
         {/* Narrates the current beat of a playing-out round
             (docs/architecture.md "engine / presentation separation") — who
             acted, what landed, who went down. Lives here, in the space the
@@ -792,8 +976,31 @@ export function FightScreen({
             empty (and push everything else down) the rest of the time. */}
         {resolving && (
           <div className="combat-banner">
-            {banner && <span>{banner}</span>}
-            {bannerMeta && <span className={`combat-banner-meta${bannerMetaClass ? ` ${bannerMetaClass}` : ''}`}>{bannerMeta}</span>}
+            <div className="combat-banner-current">
+              {banner && <span className="combat-banner-line">{banner}</span>}
+              {bannerMeta && <span className={`combat-banner-meta${bannerMetaClass ? ` ${bannerMetaClass}` : ''}`}>{bannerMeta}</span>}
+            </div>
+            {/* What already happened this round, most recent first, so the
+                newest history sits directly under the beat it followed and
+                older lines fall off the bottom instead of pushing the current
+                beat down. `beatTrail` is oldest-first, hence the slice+reverse:
+                drop the last entry (that's the current beat, rendered above)
+                and read backwards. The list scrolls rather than growing — the
+                console's outer boundary is fixed in every state, which is the
+                whole point of this pass. */}
+            {beatTrail.length > 1 && (
+              <div className="beat-trail">
+                {beatTrail
+                  .slice(0, -1)
+                  .reverse()
+                  .map((entry, i) => (
+                    <div className="beat-trail-line" key={beatTrail.length - 2 - i}>
+                      <span className="beat-trail-text">{entry.banner}</span>
+                      {entry.meta && <span className={`beat-trail-meta${entry.metaClass ? ` ${entry.metaClass}` : ''}`}>{entry.meta}</span>}
+                    </div>
+                  ))}
+              </div>
+            )}
             <span className="combat-banner-hint">tap ▸ or hold to auto-play ⏵⏵</span>
           </div>
         )}
@@ -872,13 +1079,24 @@ export function FightScreen({
               const spread = isSpreadTarget(move.target);
               return (
                 <div className="action-panel target-panel" key={`${id}-targeting`}>
-                  <div className="target-panel-header">
-                    <span className="target-panel-title">Select a Target:</span>
-                    <span className="target-panel-move-meta">
-                      <span className="target-panel-move-name">{move.name}</span>
-                      <TypeBadge type={move.type} />
-                    </span>
-                  </div>
+                  {/* Same crest, one step later. "Select a Target:" in glowing
+                      12px body copy beside a filled type chip was a second
+                      header design for the same console, two taps apart — and
+                      the instruction it carried is already the loudest thing on
+                      screen, since every legal target has grown a pulsing gold
+                      frame (docs/visual-language.md: "targetability becomes the
+                      frame"). What the player cannot see from the frames is
+                      WHICH move they are aiming, so that is what the crest's
+                      trailing label becomes, in the move's own type color. */}
+                  <ConsoleCrest
+                    activeIds={playerActiveAlive}
+                    actingId={actingId}
+                    combatants={combat.combatants}
+                    pending={pending}
+                    isComplete={isPendingComplete}
+                    label={move.name}
+                    labelRgb={getTypeColorRgb(move.type)}
+                  />
                   {/* A spread move has nothing to pick between, so the whole
                       row of targets doubles as the confirm control — one
                       outlined group instead of a separate confirm button
@@ -906,7 +1124,16 @@ export function FightScreen({
                           onSelectTarget={spread ? undefined : () => handleTargetClick(tid)}
                           popup={popups[tid]}
                           effBadge={mult === 1 ? null : { text: effLabel(mult), className: multClass(mult) }}
-                          compact
+                          /* `compact` (portrait + name + type only) was right
+                             when this panel was 98.7px tall with 157.9px of bare
+                             console under it: HP/MP/statuses are on the
+                             battlefield cards above, and repeating them bloated
+                             a box that had no room. The console-fill pass
+                             inverted that — the cards are 248.6px now, and the
+                             choice being made is *which of these two to hit*,
+                             for which how much HP one has left and what it is
+                             already suffering are the two facts that decide it.
+                             Redundancy costs nothing against empty space. */
                         />
                       );
                     })}
@@ -924,12 +1151,16 @@ export function FightScreen({
             const canAffordAnyMove = hasAffordableMove(combatant.currentMana, entry.unlockedMoveIds, moves);
             return (
               <div className="action-panel" key={id}>
-                <div className="move-panel-header">
-                  <span className="move-panel-title">Select {possessive(hero.name)} Move:</span>
-                  <span className="move-panel-hint">Long-press for info</span>
-                </div>
+                <ConsoleCrest
+                  activeIds={playerActiveAlive}
+                  actingId={actingId}
+                  combatants={combat.combatants}
+                  pending={pending}
+                  isComplete={isPendingComplete}
+                  label={hero.name}
+                />
                 {!canAffordAnyMove && (
-                  <div className="move-grid">
+                  <div className="move-list" key={`${id}-moves`}>
                     <button
                       className={`move-button rest-button${pending[id]?.kind === 'rest' ? ' selected' : ''}`}
                       onClick={() => handleRestClick(id)}
@@ -937,14 +1168,14 @@ export function FightScreen({
                       <div className="move-row-top">
                         <span className="move-name">Rest</span>
                       </div>
-                      <div className="move-row-mid">
-                        <span className="move-power">Out of Mana — recovers to full</span>
+                      <div className="move-row-effect">
+                        <span className="move-effect-text">Out of Mana — recovers to full, but skips the turn</span>
                       </div>
                     </button>
                   </div>
                 )}
                 {canAffordAnyMove && (
-                <div className="move-grid">
+                <div className="move-list">
                   {entry.unlockedMoveIds.map((moveId) => {
                     const move = moves[moveId];
                     const affordable = combatant.currentMana >= move.manaCost;
@@ -990,13 +1221,15 @@ export function FightScreen({
                           }
                         }}
                       >
+                        {/* One line, not two: at full row width the meta that
+                            used to need its own .move-row-mid fits beside the
+                            name, which frees the second line for what the button
+                            was missing entirely — the effect. */}
                         <div className="move-row-top">
                           <span className="move-crystal" title={`${move.manaCost} Mana`}>
                             <strong>{move.manaCost}</strong>
                           </span>
                           <span className="move-name">{move.name}</span>
-                        </div>
-                        <div className="move-row-mid">
                           {/* Was a filled TypeBadge chip. One move button used to
                               hold three sub-boxes (mana crystal, type chip, kind
                               chip) inside an already-boxed control — the nesting
@@ -1022,7 +1255,40 @@ export function FightScreen({
                               <strong>{move.healAmount}</strong>HEAL
                             </span>
                           )}
+                          {/* Holds the power slot open on a move that has no
+                              number to put in it (a buff). Without it the type
+                              code lands at one x on rows carrying a BP/HEAL
+                              readout and a different one on rows that don't, and
+                              a 3-4 row list rags visibly between the two. */}
+                          {move.kind === 'buff' && <span className="move-power move-power-empty" aria-hidden="true" />}
                           <MoveKindBadge move={move} />
+                        </div>
+                        {/* The decision, on the face of the control instead of
+                            behind a 500ms hold on it. For an attack that is the
+                            live matchup against each enemy still standing — the
+                            most consequential fact in a doubles game, and one the
+                            player was re-deriving by holding every move, every
+                            turn. For everything else it is what the move actually
+                            grants or inflicts (moveEffectSummary). Always
+                            rendered, so a row's height never depends on its
+                            contents. */}
+                        <div className="move-row-effect">
+                          {move.kind === 'damage' ? (
+                            <span className="move-eff-row">
+                              {enemyActiveAlive.map((eid) => {
+                                const mult = effectivenessAgainst(move, eid);
+                                return (
+                                  <span key={eid} className={`move-eff-chip ${multClass(mult)}`}>
+                                    <span className="move-eff-name">{allCombatants[combat.combatants[eid].heroId].name}</span>
+                                    <span className="move-eff-mult">{formatMult(mult)}</span>
+                                  </span>
+                                );
+                              })}
+                              {move.statusApplication && <span className="move-eff-status">+{move.statusApplication.statusId}</span>}
+                            </span>
+                          ) : (
+                            <span className="move-effect-text">{moveEffectSummary(move)}</span>
+                          )}
                         </div>
                       </button>
                     );
@@ -1049,7 +1315,7 @@ export function FightScreen({
           now that the app runs installed rather than in a browser tab. Log /
           Ref / Menu are consulted, not played, so they stay narrow and stack
           their glyph over a caption instead. */}
-      <div className="bottom-bar">
+      <div className="bottom-bar" style={consoleStyle}>
         <button
           className="bottom-action bottom-action-primary"
           disabled={!(actingId !== null && (showingTargetPanel || stepIndex > 0))}

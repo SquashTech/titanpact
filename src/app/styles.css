@@ -128,6 +128,11 @@
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --dur-fast: 0.12s;
   --dur-mid: 0.2s;
+  /* Ambient transitions only — a light source changing color, never a control
+     responding to a press. Long enough that the console re-lighting as command
+     passes between the two heroes reads as light moving through a space; short
+     enough to be finished before the player has read the new move list. */
+  --dur-slow: 0.42s;
 
   /* Keyboard focus. Kept distinct from the gold hover/selected treatments so
      "focused" and "chosen" never look like the same state. */
@@ -738,42 +743,173 @@ button,
    .action-area where the move-selection panel would otherwise be — so it
    costs no reserved space the rest of the time. Not itself a click target —
    .advance-overlay covers the whole screen so any tap advances. */
-/* Fixed (not min) height, sized for the worst case — a 2-line-clamped
-   message plus the meta line plus the hint line — and clipped with
-   overflow:hidden so nothing can push it taller. A min-height alone still
-   let the box grow whenever a beat's text actually wrapped to 2 lines or
-   carried a meta line, which was still visibly jumping. */
+/* The fixed 82px height this used to carry is gone, but the reason it existed
+   is not: a beat whose text wraps to 2 lines, or that carries a meta line,
+   must not resize the box. That job moved outward — the chassis is what's
+   fixed now, and every child that can vary in height either clamps
+   (.combat-banner-line) or scrolls (.beat-trail). overflow:hidden stays as
+   the backstop. */
+/* The console's fourth variant, and the one that wasted the most: an 82px
+   strip inside a 316.6px chassis left 226.4px — 28% of the screen — as bare
+   console face for the entire time a round played out. It now fills the
+   chassis like the other three, and .beat-trail below is what fills it with
+   something worth reading rather than with more gold border. */
 .combat-banner {
-  flex-shrink: 0;
+  flex: 1 1 auto;
   width: 100%;
-  height: 82px;
+  min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
+  /* The current beat and its trail centre as ONE group, growing symmetrically
+     as the round unspools, rather than the beat pinning to the top with the
+     trail's future space held empty beneath it. Every round's first beat has
+     no trail yet, so top-alignment would put a single sentence at the ceiling
+     of a 295px box once per round — trading the old bare console face for the
+     same emptiness with a gold border drawn around it. */
   justify-content: center;
+  /* Anchors .combat-banner-hint, which is absolute (below) so the hint's own
+     height and its distance from the bottom edge never enter the centring. */
+  position: relative;
+  padding-bottom: 26px;
   gap: 2px;
-  background: linear-gradient(180deg, var(--panel-alt), var(--panel));
-  border: 1px solid var(--accent);
-  border-radius: var(--radius-md);
+  /* Unboxed, like everything else in the console now.
+   *
+   * This was a gold-bordered, rounded, drop-shadowed panel wrapped around text
+   * that is not pressable — .advance-overlay takes the taps, covering the whole
+   * screen, and the banner itself has never had a handler. So by the rule it
+   * never had a claim to a rectangle, and once the move rows became facets and
+   * .action-panel lost its box it was the last card left in the tray: while a
+   * round played out, the screen went back to looking exactly like the thing
+   * this pass is undoing.
+   *
+   * What replaces the border is light. The round's own gold pools on the near
+   * ground where the panel used to sit, and the text stands in it. Nothing is
+   * drawn around anything. */
+  background: radial-gradient(ellipse 78% 52% at 50% 42%, rgba(224, 166, 60, 0.1), transparent 72%);
+  border: none;
+  border-radius: 0;
   padding: 8px 10px;
   font-size: 12px;
   line-height: 1.3;
   font-weight: 700;
   color: var(--text);
   text-align: center;
-  /* Warm outer bloom in addition to the existing inner ring: this banner is
-     the only thing on screen while a round plays out, so it should feel lit
-     from within rather than merely outlined in gold. */
-  box-shadow: inset 0 0 0 1px rgba(224, 166, 60, 0.14), var(--hairline), var(--elev-2), 0 0 20px -6px rgba(224, 166, 60, 0.4);
+  box-shadow: none;
+}
+
+/* The beat on screen right now. Keyed on the trail's length in FightScreen,
+   so it remounts — and replays banner-pop — on every beat; before the trail
+   existed the banner was a single persistent element whose text simply
+   swapped, and the arrival animation fired once per round. */
+.combat-banner-current {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
   animation: banner-pop 0.18s ease-out;
 }
 
-.combat-banner span:first-child {
+/* With the panel gone, the beat itself has to carry the weight the gold rim
+   was carrying. A size up, and a warm bloom behind it — the same trick
+   .draft-title-glow uses to stop dark-on-dark text reading as flat type pasted
+   onto a gradient. */
+.combat-banner-line {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  font-size: 14px;
+  letter-spacing: 0.005em;
+  text-shadow: 0 0 18px rgba(224, 166, 60, 0.45), 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/*
+ * What already happened this round, newest first, under a hairline.
+ *
+ * Playback is one sentence per tap, and a round is many taps — so the one
+ * thing a player can actually lose here is a beat they read too fast, or one
+ * that went by under a held thumb during auto-play. Until now recovering it
+ * meant opening the log, which covers the battlefield. The dead space the
+ * banner was leaving is exactly the right size to hold it instead.
+ *
+ * Newest-first, not chronological: the freshest history then sits directly
+ * under the beat it preceded, and older lines fall off the bottom rather than
+ * pushing the current beat down. Scrolls rather than grows — the chassis'
+ * outer boundary is fixed in every state, which is the point of the pass.
+ */
+.beat-trail {
+  /* Takes only the height its lines need — `1 1 auto` would claim the whole
+     box and defeat the group centring above — but shrinks and scrolls the
+     moment a long round's history outgrows the space. */
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(224, 166, 60, 0.16);
+  /* Scrollbar-free: this is a readout, not a control, and a 4px gutter on a
+     344px console is width the lines need more. */
+  scrollbar-width: none;
+}
+
+.beat-trail::-webkit-scrollbar {
+  display: none;
+}
+
+/* Set below the current beat's weight and above nothing — history is context,
+   so it recedes, but a line the player is reading *because* they missed it
+   can't be so faint it needs a second look. */
+.beat-trail-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-dim);
+}
+
+/* Wraps rather than truncating. This started as a single-line ellipsis and
+   that was wrong for the one surface a player reads *because* they missed
+   something — the trail scrolls, so a wrapped line costs height, not layout.
+   (The "..." on "Not very effective..." is authored banner text from
+   buildBeats, not a clip; nothing here is actually being cut off.)
+
+   min-width:0 because flex items default to min-width:auto — never narrower
+   than their own min-content — which would pin this span at its full
+   unwrapped width and stop it wrapping at all. */
+.beat-trail-text {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.beat-trail-meta {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--mana);
+  opacity: 0.8;
+}
+
+/* A Field Effect's rules text is a sentence, not a cost — same split
+   .combat-banner-meta.banner-meta-rules makes one level up. Truncated here
+   rather than wrapped: in the trail it's a reminder of a beat already read in
+   full, so the first clause is enough to identify it. */
+.beat-trail-meta.banner-meta-rules {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  color: var(--text-dim);
 }
 
 @keyframes banner-pop {
@@ -805,6 +941,14 @@ button,
 }
 
 .combat-banner-hint {
+  /* Pinned to the bottom of the chassis rather than trailing the last trail
+     line, so it stays where the thumb already is as the trail grows — and out
+     of flow, so it takes no part in centring the beat group above it. */
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  text-align: center;
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -848,6 +992,7 @@ button,
 .action-area {
   flex: 1 1 auto;
   min-height: 0;
+  transition: background var(--dur-slow, 420ms) var(--ease-out);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -868,10 +1013,83 @@ button,
   /* Eat the gap to .bottom-bar so the two chassis halves meet seamlessly. */
   margin-bottom: calc(var(--shell-gap) * -1);
   padding-bottom: 8px;
-  background: var(--console-face-lit);
-  border-top: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  box-shadow: var(--hairline-strong), 0 -5px 12px rgba(0, 0, 0, 0.55), 0 -16px 34px rgba(0, 0, 0, 0.38);
+  /*
+   * NOT a panel. This used to be a raised chassis — a lighter face, a 1px
+   * --border-strong top edge, a 15px radius and a two-layer drop shadow — and
+   * the first pass installed it deliberately, to separate the console from the
+   * arena "by kind rather than by degree" after a nicer seam had failed.
+   *
+   * That worked, and then it went one step too far. It made the console an
+   * *object sitting under* the arena, and since .action-panel was itself still
+   * a bordered, rounded, shadowed, gradient-filled box, the screen ran
+   * shell -> action-area -> action-panel -> move-button: three concentric
+   * rounded rectangles drawn in the identical grammar, which is verbatim the
+   * defect this document was written to diagnose. The first pass fixed it on
+   * the arena side and left the console side standing.
+   *
+   * The fix is not to go back to a shared flat gray — that is what "the two
+   * regions run together" meant the first time. It is to separate them the way
+   * a photograph does, by DEPTH rather than by edge:
+   *
+   *   far  = the arena. Cool, hazy, vignetted, small figures, a horizon.
+   *   near = this. Warmer, sharper, larger elements, lit from the player's own
+   *          side, and lit specifically by whoever is commanding it.
+   *
+   * So the gradient runs the opposite way to a card's: darkest at the seam,
+   * where the arena's floor tips away, and warming toward the bottom edge,
+   * where the ground is closest to the viewer. A card is lighter at its top
+   * edge because light falls on it from above; ground is lighter near you
+   * because you are standing on it. Same value range, opposite reading.
+   */
+  background:
+    /* The acting hero's light, pouring down from where they stand. This is
+       the whole join: the console is not next to the arena, it is the lit
+       ground under the figure who currently owns it. --console-rgb is set
+       per-render in FightScreen. */
+    /* Two layers, not one. A single soft wash at 0.17 was invisible for the
+       low-chroma domains — Iron is #9aa3ad and Stone #a89468, and a gray light
+       at 17% over a near-black ground is nothing at all. A tight hot core
+       inside a wide falloff reads as an actual source for every one of the 15,
+       including the grays, which come through as cool white rather than as
+       no light. */
+    radial-gradient(ellipse 62% 26% at 50% -2%, rgba(var(--console-rgb, 224, 166, 60), 0.3), transparent 70%),
+    radial-gradient(ellipse 135% 66% at 50% -8%, rgba(var(--console-rgb, 224, 166, 60), 0.19), transparent 66%),
+    /* Near ground: darkest at the seam, warming toward the thumb. */
+    linear-gradient(180deg, #0d0f15 0%, #14171f 42%, #191d26 100%);
+  border-top: none;
+  border-radius: 0;
+  /* No drop shadow — a shadow is what an object casts onto the thing behind
+     it, and there is no longer an object here. What is left is the arena's
+     own floor darkening into the horizon it just passed over. */
+  box-shadow: inset 0 14px 22px -14px rgba(0, 0, 0, 0.9);
+}
+
+/* The seam. One hairline of the commander's own light where the arena's floor
+   meets the near ground — the same job .battlefield-divider does at the far
+   horizon, at the near one. It is a light source, not a border: it has no
+   corners, it fades out at both ends, and it changes color with whoever is
+   standing in it. */
+.action-area::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(var(--console-rgb, 224, 166, 60), 0.5) 22%,
+    rgba(var(--console-rgb, 224, 166, 60), 0.75) 50%,
+    rgba(var(--console-rgb, 224, 166, 60), 0.5) 78%,
+    transparent
+  );
+  box-shadow: 0 0 12px 1px rgba(var(--console-rgb, 224, 166, 60), 0.22);
+  /* Recolours over the same 420ms the console face does, so command passing
+     from one hero to the other reads as the light moving rather than as a
+     stylesheet swapping. */
+  transition: background var(--dur-slow, 420ms) var(--ease-out), box-shadow var(--dur-slow, 420ms) var(--ease-out);
 }
 
 /* Bottom-of-screen row: every secondary action (undo the current hero's
@@ -904,7 +1122,14 @@ button,
   margin-bottom: calc(var(--shell-pad) * -1);
   padding-bottom: var(--shell-pad);
   padding-top: 2px;
-  background: var(--console-face);
+  /* Picks the near-ground gradient up exactly where .action-area's ends
+     (#191d26) and carries it the last few pixels to the screen edge, so there
+     is no join to see. Same commander's light, at the low strength it has by
+     the time it reaches the bottom of the screen. */
+  background:
+    radial-gradient(ellipse 120% 180% at 50% -60%, rgba(var(--console-rgb, 224, 166, 60), 0.07), transparent 70%),
+    linear-gradient(180deg, #191d26, #1b1f29);
+  transition: background var(--dur-slow, 420ms) var(--ease-out);
 }
 
 /*
@@ -917,6 +1142,13 @@ button,
  * than padding so the double-width pair (glyph beside label) and the
  * caption-stacked trio (glyph over label) still land on the same baseline.
  */
+/* Set INTO the console, like the move rows above them. These were raised chips
+   — a lighter --surface-raised face, a --border rectangle, a hairline and a
+   drop shadow — which made five more free-floating objects on a sixth object,
+   directly under three or four move cards doing the same thing. Same rule as
+   the grooves: they keep their rectangles (they are pressable, and the tap
+   targets are unchanged at 46px), but the rectangle now faces inward. One
+   surface with keys cut into it. */
 .bottom-action {
   flex: 1 1 0;
   min-width: 0;
@@ -924,15 +1156,16 @@ button,
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(6, 8, 12, 0.5), rgba(10, 13, 18, 0.28));
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
   color: var(--text-dim);
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   cursor: pointer;
-  box-shadow: var(--hairline);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
   -webkit-tap-highlight-color: transparent;
   transition: color var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out),
     background var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out),
@@ -941,8 +1174,8 @@ button,
 
 .bottom-action:hover:not(:disabled) {
   color: var(--text);
-  border-color: var(--accent);
-  box-shadow: var(--hairline), var(--elev-1);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(224, 166, 60, 0.35),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.07);
 }
 
 .bottom-action:not(:disabled):active {
@@ -963,14 +1196,18 @@ button,
    Roughly double width, a label at body size next to the glyph rather than
    under it, and a lit face — they are the row's foreground, and the other
    three are reference material that happens to live in the same strip. */
+/* Back and Switch keep their double width and their brighter label — they are
+   the two keys pressed mid-decision — but they earn it with a lit key face
+   rather than by being the only raised objects in the row. */
 .bottom-action-primary {
   flex: 2.1 1 0;
   gap: 7px;
   font-size: 14px;
   letter-spacing: 0.01em;
   color: var(--text);
-  border-color: var(--border-strong);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.012));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.09);
 }
 
 .bottom-action-primary .bottom-action-glyph {
@@ -982,12 +1219,14 @@ button,
    own bottom-zone tint already use. Only while it's live — a disabled key
    carrying team color would advertise an action that isn't available. */
 .bottom-action-switch:not(:disabled) {
-  border-color: rgba(74, 144, 217, 0.5);
-  background: linear-gradient(180deg, rgba(74, 144, 217, 0.18), rgba(74, 144, 217, 0.05));
+  background: linear-gradient(180deg, rgba(74, 144, 217, 0.16), rgba(74, 144, 217, 0.03));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(74, 144, 217, 0.42),
+    inset 0 -1px 0 rgba(120, 175, 235, 0.16);
 }
 
 .bottom-action-switch:hover:not(:disabled) {
-  border-color: rgba(74, 144, 217, 0.9);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(74, 144, 217, 0.85),
+    inset 0 -1px 0 rgba(120, 175, 235, 0.24), inset 0 0 22px -6px rgba(74, 144, 217, 0.6);
 }
 
 /* Log / Ref / Menu: consulted, not played. Third the width, and the glyph
@@ -1152,8 +1391,16 @@ button,
 
 /* HP/MP: numerals moved INSIDE the track. Two boxes become one per resource,
    the bars get tall enough to read at a glance, and the card reclaims ~24px
-   of vertical space — which is most of what paid for the 96px portrait. */
-.team-row .resource-row {
+   of vertical space — which is most of what paid for the 96px portrait.
+
+   Shared with .target-row since the console-fill pass, which dropped `compact`
+   there and so gave that panel resource bars for the first time. They sit a
+   few centimetres below the battlefield's, showing the same two numbers for
+   the same heroes: two registers that close together would read as two
+   different readouts. "Match the register of what it sits on" — the second
+   pass's lesson, applied across a panel boundary rather than within one. */
+.team-row .resource-row,
+.target-row .resource-row {
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -1161,17 +1408,20 @@ button,
   flex: none;
 }
 
-.team-row .resource {
+.team-row .resource,
+.target-row .resource {
   display: block;
   position: relative;
 }
 
-.team-row .bar-track {
+.team-row .bar-track,
+.target-row .bar-track {
   height: 13px;
   margin-bottom: 0;
 }
 
-.team-row .bar-label {
+.team-row .bar-label,
+.target-row .bar-label {
   position: absolute;
   inset: 0;
   display: flex;
@@ -1453,6 +1703,80 @@ button,
    switch buttons (targetable + onSelectTarget), shrunk via these descendant
    overrides rather than a CombatantCard prop so the same card markup/logic
    serves both the full-size active slot and this compact picker. */
+/* Inside the forced-replacement panel only — the switch-in picker's own
+   .bench-row lives in an overlay with no chassis to fill, so this is scoped
+   rather than added to .bench-row itself.
+
+   The fifth pass let these cards grow to fill the chassis the way the target
+   picker's do, and with a single candidate on the bench that produced a
+   351 x 200px rectangle holding a 24px sprite — the panel filled, and looked
+   emptier than when it had a gap under it. Filling a chassis is not the same
+   as filling a card. So the row centres and each card is capped at the width
+   two of them would take, which makes one candidate the same size as either of
+   two rather than twice as large as both. */
+.target-panel .bench-row {
+  flex: 1 1 auto;
+  min-height: 0;
+  justify-content: center;
+}
+
+.target-panel .bench-row .combatant-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 0 1 168px;
+  max-width: 168px;
+}
+
+/* 2x, matching the target picker for the same reason: this is a hero-choosing
+   moment with room for the hero, and .bench-row's own 24px (0.5x) is sized for
+   the switch-in overlay's compact list, not for a card this size. */
+.target-panel .bench-row .combatant-portrait {
+  width: 96px;
+  height: 96px;
+  margin-bottom: 6px;
+}
+
+/* Same numerals-inside-the-track register as the battlefield and the target
+   picker — .bench-row's base style stacks a label under a 5px bar, which at
+   this card size reads as a different readout for the same two numbers. */
+.target-panel .bench-row .resource-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  flex: none;
+}
+
+.target-panel .bench-row .resource {
+  display: block;
+  position: relative;
+}
+
+.target-panel .bench-row .bar-track {
+  height: 13px;
+  margin-bottom: 0;
+}
+
+.target-panel .bench-row .bar-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95), 0 0 3px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+.target-panel .bench-row .combatant-name {
+  justify-content: center;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
 .bench-row {
   display: flex;
   flex: 1 1 auto;
@@ -2595,15 +2919,46 @@ button,
   }
 }
 
+/*
+ * Fills the console chassis, in all four of its variants (move list, target
+ * picker, replacement picker; .combat-banner below is the fourth). This was
+ * `flex-shrink: 0` with a content-driven height, which is what open item 3 in
+ * docs/visual-language.md — "a persistent console shell" — describes: the
+ * chassis is a fixed 316.6px at 375x812, and each variant sized itself to its
+ * own contents inside it. Measured, that left bare console face below the
+ * panel of 108.9px while choosing a move, 157.9px while choosing a target, and
+ * 226.4px (28% of the screen) while a round played out — and, worse than the
+ * gray itself, meant the panel's bottom edge jumped by up to 114px at every
+ * step of a single turn. The outer boundary is now constant for the whole
+ * fight and the *contents* are what change.
+ */
 .action-panel {
-  flex-shrink: 0;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 10px;
-  box-shadow: var(--hairline), var(--elev-1);
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* Unboxed. This is the middle rectangle of the three concentric ones
+   * described above, and by the document's own rule it never had a claim to a
+   * box: it is pure grouping, it carries no information, and nothing in it is
+   * pressable — the things inside it are. The first pass named `.action-panel`
+   * in its list of meaningless containers and then did not remove it.
+   *
+   * Padding stays. The box is what goes; the breathing room it was holding is
+   * a real part of the composition.
+   */
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 2px 0 0;
 }
 
+/* Still 2-col, and still used by LevelUpScreen's move-replace offer
+   (.reward-panel .move-grid). FightScreen's own move selector is .move-list
+   below — the two were the same class until the console-fill pass, and
+   keeping them separate is the scoping discipline docs/visual-language.md
+   asks for: the reward panel's grid sits in a scrolling column with room
+   above and below it, and has no chassis to fill. */
 .move-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2611,10 +2966,64 @@ button,
   margin-bottom: 6px;
 }
 
+/*
+ * FightScreen's move selector: one column, rows split the console evenly.
+ *
+ * Two holes closed at once. Vertically, `grid-auto-rows: 1fr` against a
+ * definite height means the rows consume exactly what the chassis has, at any
+ * move count — no dead band, ever. Horizontally, a 2-column grid at 3 moves
+ * left the fourth cell empty (a measured 161.5 x 69.4px gap), and since
+ * MOVE_CAP is 4 and starting kits are uniformly 3, that hole was the common
+ * case rather than the edge case. A single column has no parity to get wrong.
+ *
+ * The width this buys is the other half of the point: a full-width row fits
+ * the whole meta line beside the name, which frees a second line for the
+ * effect readout (.move-row-effect) that used to be reachable only by a
+ * 500ms hold.
+ */
+.move-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-auto-rows: 1fr;
+  /*
+   * No gap, and full-bleed past .app-shell's padding — the same negative-inset
+   * trick .battlefield uses to stop being a container.
+   *
+   * Six pixels of gap plus a radius on each row is what made three rows read
+   * as three stacked objects. Tiled edge to edge and divided by a hairline,
+   * the same three rows read as ONE surface with three facets cut into it,
+   * which is the difference between a tray of cards and a console. It also
+   * lines every row's domain light up in a single column at the screen's left
+   * edge, so the hero's palette reads as one vertical strip of light rather
+   * than as four separate tinted tiles.
+   */
+  gap: 0;
+  margin-left: calc(var(--shell-pad) * -1);
+  margin-right: calc(var(--shell-pad) * -1);
+  /* Backstop, not a normal state. `1fr` is `minmax(auto, 1fr)`, so a row will
+     not shrink below its own min-content height — measured at 56px for a
+     two-line row. At MOVE_CAP (4) the tracks come out at 58.4px, which clears
+     that floor but only by 2.4px, and the 🧪 Status FX fixture's 7-move
+     movepool blows straight through it (428px of rows in a 252px list). With
+     no overflow rule the rows simply drew over the panel's own border and out
+     the bottom of the console. Scroll instead — and hide the gutter, which on
+     a 329px list is width the rows need more than the player needs a
+     scrollbar for a case that shouldn't arise in a real fight. */
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.move-list::-webkit-scrollbar {
+  display: none;
+}
+
 /* Bottom-anchored targeting panel (FightScreen): replaces the move grid once
    a move is picked, so the target choice is within thumb reach of the move
    buttons instead of requiring a reach to the battlefield up top. */
 .target-panel-header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2622,70 +3031,254 @@ button,
   margin-bottom: 8px;
 }
 
+/* The forced-replacement panel's heading — the one console header that is NOT
+   the crest, because there is no commander to socket: the hero whose slot this
+   fills has just been knocked out. It still moves into the crest's register
+   (9px/800/0.14em uppercase) so the console does not change type systems
+   depending on how the turn is going. */
 .target-panel-title {
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: 9px;
   font-weight: 800;
-  color: var(--accent);
-  text-shadow: 0 0 8px rgba(224, 166, 60, 0.5);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(var(--console-rgb, 224, 166, 60));
+  text-shadow: 0 0 10px rgba(var(--console-rgb, 224, 166, 60), 0.55);
 }
 
-.target-panel-move-meta {
+/* Same fading rule the crest carries, so the two headers sit on the same
+   baseline treatment. */
+.target-panel-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(var(--console-rgb, 224, 166, 60), 0.3), transparent);
+}
+
+
+/* Ambient embers rising through the console — the same field the title screen,
+   the draft and the level-up screen carry (@keyframes title-ember-rise), tinted
+   to whoever is commanding. Those three screens feel like places partly because
+   something is moving in the air; the fight screen had ambience in the arena
+   (the Field Effect sweep, the acting platform's pulse) and none at all below
+   the horizon, which is half of what made the console read as a control panel
+   bolted under a picture.
+
+   Nine, not the draft's sixteen: this field is a third of the height and sits
+   behind text the player is reading under time pressure, not behind a figure
+   they are admiring. */
+.console-embers {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  /* Halved against the draft's field. There the motes drift behind a figure
+     and empty ground; here they pass behind move names and damage numbers the
+     player is reading against a clock, and at full strength they read as specks
+     on the text rather than as air in the room. */
+  opacity: 0.45;
+}
+
+.console-ember {
+  position: absolute;
+  bottom: -4%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0%, rgba(var(--console-rgb, 224, 166, 60), 0.9) 55%, transparent 75%);
+  box-shadow: 0 0 6px 1px rgba(var(--console-rgb, 224, 166, 60), 0.4);
+  opacity: 0;
+  animation-name: title-ember-rise;
+  animation-timing-function: ease-in;
+  animation-iteration-count: infinite;
+  --drift: 0px;
+}
+
+/* Everything the player actually reads or presses sits above the ember field. */
+.action-panel,
+.combat-banner {
+  position: relative;
+  z-index: 1;
+}
+
+/* =====================================================================
+ * The command crest — the console's header, rebuilt as objects.
+ *
+ * Was: "Select Aegis' Move:" in glowing 12px body copy, plus "Long-press for
+ * info" — a form label and a tooltip hint, above a fight. It named a hero the
+ * arena was already lighting, and said nothing about the thing the player
+ * actually could not see: that a doubles turn is two decisions, which one they
+ * are on, and what is already locked in for the other.
+ * ===================================================================== */
+.console-crest {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 8px;
+  padding: 0 2px;
+}
+
+.console-sockets {
   display: flex;
   align-items: center;
   gap: 6px;
-  min-width: 0;
 }
 
-.target-panel-move-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
-  white-space: nowrap;
+/* One per active hero. Unlit at rest — it is a readout, and the frame is
+   reserved for things you can press. What lights it is being in command. */
+.console-socket {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(6, 8, 12, 0.5), rgba(10, 13, 18, 0.3));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  /* Legible enough to be counted — this pair IS the "1 of 2" readout, so a
+     waiting hero that fades to nothing takes the denominator with it. */
+  opacity: 0.62;
+  filter: grayscale(0.6);
+  transition: opacity var(--dur-slow) var(--ease-out), filter var(--dur-slow) var(--ease-out),
+    box-shadow var(--dur-slow) var(--ease-out);
+}
+
+/* In command. Full color, and ringed in its own domain — the same light the
+   whole console is currently filled with, so the socket and the ground read as
+   one system rather than as a badge that happens to match. */
+.console-socket.acting {
+  opacity: 1;
+  filter: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(var(--socket-rgb), 0.75),
+    inset 0 -6px 12px -6px rgba(var(--socket-rgb), 0.5),
+    0 0 12px -2px rgba(var(--socket-rgb), 0.45);
+}
+
+/* Already decided. Reads back up to full color — a committed hero is not
+   inactive, it is waiting — but keeps the flat unlit slot, so "in command" and
+   "done" are never the same state. */
+.console-socket.committed {
+  opacity: 0.92;
+  filter: none;
+}
+
+.console-socket-portrait {
+  /* 24px: the one clean downscale of a 48px source (docs/visual-language.md
+     defect 1). Same size the draft's pact sockets use, deliberately — it is
+     the same idiom doing the same job. */
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+}
+
+/* The move that hero is holding, as the same mana crystal the row it came from
+   uses — at 14px, so the crest says WHAT was chosen and not merely THAT
+   something was. Overlaps the socket's corner rather than sitting beside it:
+   the crystal belongs to the hero, it is not a second item in a list. */
+.console-socket-crystal {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 2px;
+  border-radius: var(--radius-pill);
+  background: radial-gradient(circle at 34% 26%, #a8dbfb, #5ea3e4 40%, var(--mana) 78%);
+  box-shadow: 0 0 0 1.5px #12151c, inset 0 1px 1px rgba(255, 255, 255, 0.45);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+}
+
+/* Rest (dotted circle) or a queued switch (swap arrows) — the two commits that
+   have no mana crystal to show. */
+.console-socket-mark {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: var(--radius-pill);
+  background: #20252f;
+  box-shadow: 0 0 0 1.5px #12151c;
+  color: var(--text-dim);
+  font-size: 9px;
+  line-height: 1;
+}
+
+/* Whose console this is. Set in the horizon's register — 9px/800/0.14em
+   uppercase, the same as the Field Effect plaque and the "VS" mark — because
+   that is the register this game uses for "a standing fact about the
+   battlefield", and it stops the name reading as an instruction. Lit in the
+   commander's own color, which is also the console's. */
+.console-commander {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* Move-selection panel's header (FightScreen, above .move-grid) — a glowing
-   "Select a Move:" label paired with the long-press hint on the same line,
-   kept to small type sizes (matches .target-panel-title/.combat-banner-hint)
-   so it doesn't add enough height to force mobile scroll. */
-.move-panel-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
-.move-panel-title {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--accent);
-  text-shadow: 0 0 8px rgba(224, 166, 60, 0.5);
-  animation: move-panel-title-glow-pulse 1.8s ease-in-out infinite;
-}
-
-.move-panel-hint {
-  flex-shrink: 0;
+  white-space: nowrap;
   font-size: 9px;
-  font-weight: 600;
-  color: var(--text-dim);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(var(--console-rgb, 224, 166, 60));
+  text-shadow: 0 0 10px rgba(var(--console-rgb, 224, 166, 60), 0.55);
+  transition: color var(--dur-slow) var(--ease-out), text-shadow var(--dur-slow) var(--ease-out);
 }
 
-@keyframes move-panel-title-glow-pulse {
-  0%,
-  100% {
-    text-shadow: 0 0 8px rgba(224, 166, 60, 0.5);
-  }
-  50% {
-    text-shadow: 0 0 13px rgba(224, 166, 60, 0.85);
-  }
+/* Rule to the right edge, fading out — gives the crest a baseline to sit on
+   without drawing a box around it, and ties into the seam light above. */
+.console-crest::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(var(--console-rgb, 224, 166, 60), 0.3), transparent);
+  transition: background var(--dur-slow) var(--ease-out);
 }
-
+/* Grows into the console with its panel (.action-panel is now flex-fill), so
+   the ~158px this variant used to leave as bare face below itself becomes
+   bigger target cards instead. That is the right place for it: this is the
+   moment the player commits a move to a hero, and the cards are the tap
+   targets — a taller card is a better one, where a taller empty panel is just
+   a framed gap. */
 .target-row {
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   gap: 6px;
+}
+
+/* Cards stretch with the row (align-items defaults to stretch), so their
+   contents have to centre or a 240px card renders its portrait at the top
+   with everything else stranded above the fold. The absolutely-positioned
+   overlays — stat-mod corners, the KO tag, damage popups — are unaffected. */
+.target-row .combatant-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* 2x, the same clean multiple of the 48px source the battlefield figures use
+   — affordable here only because this panel now fills the chassis, which put
+   a measured 248.6px of card height where there used to be 98.7px of card
+   and 157.9px of bare console below it. Open item 5 in
+   docs/visual-language.md is about the *arena's* scale, which is unchanged;
+   this is the picker, and it holds two figures rather than four. Committing a
+   move to a target is the last irreversible tap of a turn, and until now the
+   hero being committed against was a 48px thumbnail. */
+.target-row .combatant-portrait {
+  width: 96px;
+  height: 96px;
+  margin-bottom: 6px;
 }
 
 /* Compact card sizing, same treatment as the switch-in picker's .bench-row
@@ -2795,6 +3388,208 @@ button,
   user-select: none;
 }
 
+/* The power readout is a right-aligned column in the list, not a chip that
+   floats wherever the text ends — see .move-power-empty below for the row that
+   has no number. Width is set by the widest real value ("45HEAL"), so nothing
+   in the column can push the type code out of line. */
+.move-list .move-power {
+  min-width: 42px;
+  text-align: right;
+}
+
+.move-power-empty {
+  /* Reserves the column, draws nothing. */
+  visibility: hidden;
+}
+
+/* A list row rather than a tile. Padding drops on the vertical axis because
+   the row's height now comes from the grid track, not from the button's own
+   box — the 9.7px above existed to make the move panel's total height match
+   the targeting panel's, a match both variants now get from the chassis
+   instead. Content centres so a 78px row (3 moves) and a 57px one (4 moves)
+   both read as deliberate rather than top-aligned with a gap under them. */
+/*
+ * Facets cut into the console, not cards laid on top of it.
+ *
+ * A move row is still legitimately boxed — it is pressable, and the rule says
+ * a rectangle means you can act on this. What changed is which *way* the box
+ * faces. Raised (a lit top edge, a drop shadow, its own lighter fill) made
+ * three or four separate objects scattered on a tray, which is the "everything
+ * is split into zones" reading. Inset — a dark rim above, a lit rim below,
+ * filled a step DARKER than the ground it sits in — makes one surface with
+ * grooves cut into it. Same count of rectangles, one object instead of four.
+ *
+ * The type color arrives as light entering the groove from its leading edge
+ * rather than as a rim drawn around the whole tile. The wash that used to
+ * enter diagonally across the face is now a bar of the hero's domain at the
+ * left wall, bleeding inward — so a row reads as lit by its type, the way the
+ * console reads as lit by its commander.
+ */
+.move-list .move-button {
+  position: relative;
+  justify-content: center;
+  gap: 3px;
+  /* Left inset = shell padding (12) + the light bar's own column, so the
+     crystal starts where the crest's sockets do rather than at the screen
+     edge. */
+  padding: 6px 14px 6px 21px;
+  border-radius: 0;
+  border: none;
+  background:
+    linear-gradient(90deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.26), rgba(var(--move-type-rgb, 53, 59, 74), 0.06) 32%, transparent 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0));
+  /* One hairline between facets, and nothing else. No ring, no radius, no
+     shadow — the surface is continuous, and what separates two facets is a
+     line scored into it. */
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.055);
+  transition: background var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
+}
+
+/* The last facet has nothing below it to be divided from. */
+.move-list .move-button:last-child {
+  box-shadow: none;
+}
+
+/* The domain light at the groove's leading wall. A bar, not a border: it stops
+   short of both ends and blooms outward, so it reads as something glowing in
+   the slot rather than a 3px stripe glued to a list row — the exact idiom the
+   second pass removed from this button and which a flat left border would
+   quietly reinstate. */
+/* The domain light in the facet's leading wall, running off the screen edge.
+
+   A flat bar of the raw type color was not enough: seven of the fifteen
+   domains are low-chroma (Iron #9aa3ad, Stone #a89468, Ancient #8a9c5e), and a
+   3px gray line at the extreme edge of a dark screen is not a light source,
+   it is a scratch. So the bar has a white-hot core with the domain color as
+   its bloom — which is how an actual emitter reads, and which makes Iron come
+   through as cool white light rather than as nothing. Brightest at the
+   facet's middle and falling off toward its ends, so it reads as a source
+   rather than as a rule. */
+.move-list .move-button::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12%;
+  bottom: 12%;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(
+    180deg,
+    rgba(var(--move-type-rgb, 53, 59, 74), 0.35),
+    rgb(var(--move-type-rgb, 53, 59, 74)) 30%,
+    rgb(var(--move-type-rgb, 53, 59, 74)) 70%,
+    rgba(var(--move-type-rgb, 53, 59, 74), 0.35)
+  );
+  box-shadow:
+    0 0 10px 1px rgba(var(--move-type-rgb, 53, 59, 74), 0.85),
+    0 0 26px 5px rgba(var(--move-type-rgb, 53, 59, 74), 0.35);
+  opacity: 1;
+  transition: box-shadow var(--dur-mid) var(--ease-out), top var(--dur-mid) var(--ease-out),
+    bottom var(--dur-mid) var(--ease-out), width var(--dur-mid) var(--ease-out);
+}
+
+/* Hover/press: the groove lights from within rather than lifting off the
+   surface. A row that rose would be a card again. */
+/* Hover lights the facet from its own edge and grows the light bar to the
+   facet's full height — the surface never lifts, because a facet that lifted
+   would be a card again. */
+.move-list .move-button:hover:not(:disabled) {
+  background:
+    linear-gradient(90deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.3), rgba(var(--move-type-rgb, 53, 59, 74), 0.08) 36%, transparent 64%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012));
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.055);
+}
+
+.move-list .move-button:hover:not(:disabled)::before {
+  top: 0;
+  bottom: 0;
+  box-shadow:
+    0 0 14px 2px rgba(var(--move-type-rgb, 53, 59, 74), 1),
+    0 0 34px 7px rgba(var(--move-type-rgb, 53, 59, 74), 0.45);
+}
+
+.move-list .move-button:not(:disabled):active {
+  background:
+    linear-gradient(90deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.36), rgba(var(--move-type-rgb, 53, 59, 74), 0.1) 38%, transparent 66%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.14));
+}
+
+/* Committed. The groove fills with the commander's gold and its own domain
+   light goes to full — the row is now holding something. Still inset: the
+   player can back out of this, and a choice that popped up out of the surface
+   would read as spent rather than as pending. */
+/* Committed: the facet fills with the commander's gold and holds it, lit from
+   its own leading edge. No ring — a rectangle drawn around one facet would pop
+   it back out of the surface, and this state has to read as "this slot is
+   loaded", not "this card is on top". */
+.move-list .move-button.selected {
+  background:
+    linear-gradient(90deg, rgba(224, 166, 60, 0.3), rgba(224, 166, 60, 0.12) 42%, rgba(224, 166, 60, 0.05) 78%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.055), inset 0 0 34px -8px rgba(224, 166, 60, 0.55);
+}
+
+.move-list .move-button.selected::before {
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  opacity: 1;
+  background: var(--accent);
+  box-shadow: 0 0 16px 2px rgba(224, 166, 60, 0.85);
+}
+
+/* Unaffordable: the groove is empty and unlit. Losing the domain light
+   entirely is the cue — a dimmed-but-still-glowing slot reads as available. */
+/* Unaffordable: the facet goes dark and its light goes out. Losing the domain
+   light entirely is the cue — a dimmed-but-still-glowing slot reads as
+   available. */
+.move-list .move-button:disabled {
+  opacity: 0.4;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.16));
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.move-list .move-button:disabled::before {
+  opacity: 0.18;
+  box-shadow: none;
+}
+
+/* Command passing to the other hero restacks the whole list, so it arrives
+   rather than swaps — .move-list is keyed on the acting combatant in
+   FightScreen. Staggered by row, capped at four because MOVE_CAP is four.
+
+   Deliberately short and deliberately never fully transparent. This fires
+   TWICE PER TURN, every turn, for a whole run, on the one control the player
+   is waiting to press — the header note on --dur-fast/--dur-mid says polish
+   must never cost perceived responsiveness, and an entrance that starts at
+   opacity 0 makes the move list unreadable for its whole duration. Starting
+   at 0.4 means the rows are legible from the first frame and the animation is
+   only telling you they are new. Total for four rows: 290ms. */
+.move-list .move-button {
+  animation: console-row-in 0.2s var(--ease-out) both;
+}
+
+.move-list .move-button:nth-child(2) {
+  animation-delay: 0.03s;
+}
+.move-list .move-button:nth-child(3) {
+  animation-delay: 0.06s;
+}
+.move-list .move-button:nth-child(4) {
+  animation-delay: 0.09s;
+}
+
+@keyframes console-row-in {
+  from {
+    opacity: 0.4;
+    transform: translateX(-7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 .move-button:hover:not(:disabled) {
   border-color: var(--accent);
   transform: translateY(-1px);
@@ -2828,6 +3623,9 @@ button,
    is affordable, so it spans both columns instead of sitting half-width like
    a single leftover move would. */
 .move-button.rest-button {
+  /* Vestigial in .move-list (one column spans itself) but kept: the same
+     markup renders in the 2-col .move-grid on other screens, where it still
+     does the work. */
   grid-column: 1 / -1;
   border-color: var(--mana);
   align-items: center;
@@ -2838,8 +3636,137 @@ button,
   font-size: 14px;
 }
 
-.move-button.rest-button .move-power {
+/* The effect line's 30px indent aligns it under the move name, past the mana
+   crystal — but Rest has no crystal and centres its contents, so the indent
+   would just push its one line off-centre by half of 30px. */
+.move-button.rest-button .move-row-effect {
+  padding-left: 0;
+  justify-content: center;
+}
+
+/* Rest fills the whole console as one facet, so its own left inset would push
+   its centred contents off-centre by half of it. */
+.move-list .move-button.rest-button {
+  padding-left: 14px;
+}
+
+/*
+ * The move button's second line — what the move actually does.
+ *
+ * This is the question docs/visual-language.md has now hit four times: the
+ * no-boxes rule decides whether a control is drawn as a box, never whether
+ * the box holds the decision. The button carried name / type / cost / BP and
+ * nothing else, so "is this a good hit right now" and "what does this buff
+ * even grant" both cost a 500ms hold, per move, per turn, for the whole run.
+ *
+ * Indented past the crystal so it reads as the name's own sub-line rather
+ * than a second row of equal weight. Chromeless throughout, deliberately:
+ * the second pass took three sub-boxes out of this button and colored text
+ * on a clean face is the register that replaced them — an effectiveness
+ * *chip* in here would put the first one straight back.
+ */
+.move-row-effect {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  /* 24px crystal + .move-row-top's 6px gap, so the line starts under the
+     move name rather than under the mana orb. */
+  padding-left: 30px;
+  /* Stated rather than inherited from contents, the same reason
+     .move-row-mid's min-height is: an effectiveness row and a one-line effect
+     summary must occupy identical height or the grid's rows step against each
+     other. */
+  min-height: 15px;
+  font-size: 10px;
+  line-height: 1.25;
   color: var(--text-dim);
+}
+
+/* Non-damage moves: one sentence of what it grants or inflicts
+ * (moveEffectSummary, MoveTile.tsx). Clamped to the row rather than wrapped —
+ * a two-line summary would blow the grid track it sits in. */
+.move-effect-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Damage moves: the live matchup against every enemy still standing. Two
+ * entries in a doubles fight, which is what makes this affordable inline at
+ * all — the same readout on a 4v4 roster screen would need a table. */
+.move-eff-row {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.move-eff-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  min-width: 0;
+}
+
+.move-eff-name {
+  min-width: 0;
+  max-width: 82px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.72;
+}
+
+/* The multiplier is the number being read; the name is only there to say
+   which enemy it belongs to. Weight and color both go on the numeral. */
+.move-eff-mult {
+  flex-shrink: 0;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.move-eff-chip.eff-neutral .move-eff-mult {
+  color: var(--text-dim);
+}
+
+.move-eff-chip.eff-super .move-eff-mult,
+.move-eff-chip.eff-quad-super .move-eff-mult {
+  color: var(--hp-high);
+}
+
+.move-eff-chip.eff-resist .move-eff-mult,
+.move-eff-chip.eff-quad-resist .move-eff-mult {
+  color: var(--hp-low);
+}
+
+/* 4x / 0.25x are the two tiers .eff-chip escalates with a filled tint. Here
+   the escalation is a glow on the numeral instead — same two-step hierarchy
+   (ordinary super/resist is colored, a stacked one shouts), without the fill
+   that would make it a box. */
+.move-eff-chip.eff-quad-super .move-eff-mult {
+  text-shadow: 0 0 7px rgba(76, 175, 106, 0.75);
+}
+
+.move-eff-chip.eff-quad-resist .move-eff-mult {
+  text-shadow: 0 0 7px rgba(217, 83, 79, 0.7);
+}
+
+/* A damage move that also lands a status — the one thing the matchup row
+   can't say on its own. Reads as a rider on the attack, not a fourth column. */
+.move-eff-status {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--accent);
+  opacity: 0.85;
+}
+
+/* Selected and unaffordable rows: the effect line is the row's quietest
+   element, so it needs to survive both treatments rather than disappearing
+   into the amber wash or the 0.35 dim. */
+.move-button.selected .move-row-effect {
+  color: var(--text);
 }
 
 .move-row-top {
@@ -2931,7 +3858,8 @@ button,
    competing rectangle inside a control that is itself a rectangle. Freed of
    the box it can also run a size larger, so it reads better than it did
    framed. */
-.move-row-mid .move-kind-badge {
+.move-row-mid .move-kind-badge,
+.move-row-top .move-kind-badge {
   flex-shrink: 0;
   margin-left: auto;
   padding: 0;
@@ -3893,6 +4821,7 @@ button,
    spaces the Confirm button below them, matching the move-grid's gap to the
    resolve-button in other action-panel variants. */
 .replacement-confirm-button {
+  flex-shrink: 0;
   margin-top: 8px;
 }
 

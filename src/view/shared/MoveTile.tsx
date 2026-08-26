@@ -1,6 +1,8 @@
 import { useRef, type CSSProperties, type MouseEvent } from 'react';
 import type { MoveDefinition } from '../../engine/content';
 import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
+import { fieldEffects } from '../../data/fieldEffects';
+import { STAT_LABELS } from './StatBars';
 import { TypeBadge } from './TypeBadge';
 import { moveKindIconArt } from './iconArt';
 
@@ -95,6 +97,54 @@ export const TARGET_MODE_LABELS: Record<MoveDefinition['target'], string> = {
   self: 'Self',
   allOthers: 'All',
 };
+
+/**
+ * One-line "what this actually does" summary for a move, in the vocabulary the
+ * hero sheet and the long-press popup already use (STAT_LABELS abbreviations,
+ * TARGET_MODE_LABELS wording).
+ *
+ * This exists because of the question docs/visual-language.md keeps arriving at:
+ * the no-boxes rule governs whether a control is drawn as a box, not whether the
+ * box holds the decision. A combat move button carried name / type / cost / BP and
+ * nothing about the *effect*, so the only way to learn that Second Wind grants
+ * +10 ATK was a 500ms hold on it — every turn, for every move.
+ *
+ * Damage moves deliberately don't route through here. Their decision-relevant
+ * line is the per-target effectiveness readout, which needs live combat state and
+ * so is built by the caller (FightScreen).
+ */
+export function moveEffectSummary(move: MoveDefinition): string {
+  const parts: string[] = [];
+
+  if (move.kind === 'heal' && move.healAmount != null) parts.push(`Restores ${move.healAmount} HP`);
+
+  if (move.statDeltas?.length) {
+    parts.push(move.statDeltas.map(({ stat, amount }) => `${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]}`).join(', '));
+  }
+
+  if (move.statusApplication) {
+    const { statusId, magnitude, duration, target } = move.statusApplication;
+    // A status landing on the user is granted; one landing on the move's resolved
+    // target is inflicted. Same field, opposite reading — and since the target
+    // clause appended below reads "Self" for a self-buff either way, the verb is
+    // what actually disambiguates the two.
+    const amount = magnitude ?? duration;
+    parts.push(`${target === 'self' ? 'Grants' : 'Applies'} ${statusId}${amount != null ? ` ${amount}` : ''}`);
+  }
+
+  if (move.cleanses) parts.push('Cleanses');
+
+  if (move.fieldEffectApplication) {
+    parts.push(`Field: ${fieldEffects[move.fieldEffectApplication]?.name ?? move.fieldEffectApplication}`);
+  }
+
+  // Falls back to the authored flavor line rather than rendering an empty row —
+  // the row's height is reserved either way, so a move with no mechanical payload
+  // should still say something rather than leave a gap.
+  if (parts.length === 0) return move.description ?? '';
+
+  return `${parts.join(' · ')} — ${TARGET_MODE_LABELS[move.target]}`;
+}
 
 /**
  * Physical (Attack/Defense pipeline) vs Magical (Intelligence/Wisdom pipeline) —
