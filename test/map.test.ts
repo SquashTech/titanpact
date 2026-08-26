@@ -73,12 +73,28 @@ test('map: the single-node rows before a pick-3 reward row connect to all 3 of t
   }
 });
 
-test('map: every row-3 reward node connects to BOTH row-4 options — the Elite/Battle choice is never gated by which reward was picked (Act 2+)', () => {
+/*
+ * NARROWED 2026-08-26. This used to assert that every row-3 reward node
+ * connects to BOTH row-4 options. The reward row now steers (left commits to
+ * the Elite, right to the Battle, middle keeps both), so that assertion is
+ * gone — but the guarantee it was protecting is not, and this is what's left
+ * of it: on every seed, from anywhere in row 3, the player can still REACH
+ * both options. What they can't do is take a specific side reward and keep
+ * the choice. See the steering test at the bottom of this file.
+ */
+test('map: the Elite/Battle choice stays reachable from the reward row on every seed (Act 2+)', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
     const map = generateMap(seed, 2);
-    for (const nodeId of map.rows[3]) {
-      assert.deepStrictEqual([...map.nodes[nodeId].nextIds].sort(), [...map.rows[4]].sort());
+    const reachableFromRow3 = new Set(map.rows[3].flatMap((id) => map.nodes[id].nextIds));
+    for (const optionId of map.rows[4]) {
+      assert.ok(reachableFromRow3.has(optionId), `seed ${seed}: ${optionId} unreachable from row 3`);
     }
+    // ...and at least one row-3 node keeps BOTH open, so the choice is never
+    // a coin flip made one row early.
+    assert.ok(
+      map.rows[3].some((id) => map.rows[4].every((o) => map.nodes[id].nextIds.includes(o))),
+      `seed ${seed}: no row-3 node preserves the full Elite/Battle choice`,
+    );
   }
 });
 
@@ -161,5 +177,44 @@ test('map: every node past row 0 has at least one incoming edge (no orphans)', (
     for (const nodeId of map.rows[r]) {
       assert.ok(incoming.has(nodeId), `${nodeId} (row ${r}) has no incoming edge from row ${r - 1}`);
     }
+  }
+});
+
+/*
+ * The reward row before Elite-or-Battle steers instead of fully connecting
+ * (2026-08-26): left commits to the Elite, right commits to the Battle,
+ * middle keeps both. The load-bearing half of that is the middle node — it's
+ * what keeps the Elite/Battle choice reachable on every seed and every act,
+ * which is the guarantee the old full-connect rule existed to provide.
+ */
+test('map: the reward row before Elite-or-Battle steers left->Elite, right->Battle, middle->both', () => {
+  for (const act of [1, 2, 3]) {
+    for (const seed of [1, 7, 42, 99, 2024]) {
+      const map = generateMap(seed, act);
+      const eliteRow = map.rows.length - 3;
+      const feeding = map.rows[eliteRow - 1];
+      const [eliteId, battleId] = map.rows[eliteRow];
+      assert.strictEqual(map.nodes[eliteId].type, 'elite');
+      assert.strictEqual(map.nodes[battleId].type, 'battle');
+      assert.strictEqual(feeding.length, 3, `act ${act} seed ${seed}: expected a 3-wide feeding row`);
+
+      assert.deepStrictEqual(map.nodes[feeding[0]].nextIds, [eliteId], `act ${act} seed ${seed}: left should commit to the Elite`);
+      assert.deepStrictEqual(map.nodes[feeding[1]].nextIds, [eliteId, battleId], `act ${act} seed ${seed}: middle should keep both open`);
+      assert.deepStrictEqual(map.nodes[feeding[2]].nextIds, [battleId], `act ${act} seed ${seed}: right should commit to the Battle`);
+    }
+  }
+});
+
+test('map: no edge into the Elite-or-Battle row ever crosses another (the fix that motivated steering)', () => {
+  for (const seed of [3, 11, 500]) {
+    const map = generateMap(seed, 2);
+    const eliteRow = map.rows.length - 3;
+    // A crossing exists iff some node reaches a target further from its own
+    // column than a node on the other side of it does — with steering, each
+    // outer node reaches only its own side, so no pair can invert.
+    const feeding = map.rows[eliteRow - 1];
+    const [eliteId, battleId] = map.rows[eliteRow];
+    assert.ok(!map.nodes[feeding[0]].nextIds.includes(battleId), `seed ${seed}: left still reaches across to the Battle`);
+    assert.ok(!map.nodes[feeding[2]].nextIds.includes(eliteId), `seed ${seed}: right still reaches across to the Elite`);
   }
 });

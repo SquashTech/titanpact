@@ -235,15 +235,32 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
     const from = rows[row];
     const to = rows[row + 1];
 
-    // The row feeding into eliteRow (Elite-or-Battle) always fully connects
-    // — every path must present the same real choice between the two,
-    // rather than one that's only sometimes available depending on which
-    // reward-row node the player happened to pick (user direction: "give the
-    // player the option to fight the Elite OR a regular Battle").
+    // The row feeding into eliteRow STEERS rather than fully connecting
+    // (2026-08-26 revision, per user direction). Left node commits to the
+    // Elite, right node commits to the Battle, middle keeps both open.
+    //
+    // This narrows the earlier "always fully connects" rule (which existed so
+    // the Elite/Battle choice could never be taken away by an earlier pick)
+    // without breaking what that rule protected: the MIDDLE node always
+    // reaches both, so no path ever loses the choice. What's now on the table
+    // is whether the player can have a particular reward AND keep the choice
+    // — a tradeoff they can see and price, not luck, since the whole map is
+    // visible from the moment the act starts.
+    //
+    // It also removes the only place the map drew crossing edges: previously
+    // the left reward ran a line all the way across to the Battle and the
+    // right one back to the Elite, which read as noise rather than structure.
     if (row + 1 === eliteRow) {
-      for (const fromId of from) {
-        nodes[fromId].nextIds = [...to];
-      }
+      const eliteId = to[0];
+      const battleId = to[to.length - 1];
+      from.forEach((fromId, col) => {
+        // A width-1 feeding row has nothing to steer WITH, so it keeps the
+        // old full connection — the choice must survive every shape.
+        if (from.length === 1) nodes[fromId].nextIds = [...to];
+        else if (col === 0) nodes[fromId].nextIds = [eliteId];
+        else if (col === from.length - 1) nodes[fromId].nextIds = [battleId];
+        else nodes[fromId].nextIds = [...to];
+      });
       continue;
     }
 

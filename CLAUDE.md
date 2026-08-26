@@ -69,9 +69,7 @@ don't silently override it.
   — a separate axis, not equipment.
 
 ### Mana & tempo
-- Regenerating Mana with two stats: **pool size** and **per-turn MP Regen**. Always write
-  the stat as **MP Regen**: the bare word "Regen" used to collide with the heal-over-time
-  status, which is why that status is now **Renew** (2026-08-26).
+- Regenerating Mana with two stats: **pool size** and **per-turn MP Regen** (always written "MP Regen" — the bare word collided with the HoT status, now **Renew**).
 - **Bench heroes regen mana** — this is the resource-cycling engine that makes switching
   productive.
 - **Lock-in rule:** voluntary switching is disabled once a side has **2+ heroes KO'd** (forced
@@ -122,8 +120,10 @@ what's still unimplemented:
 - Run structure (2026-08-16 sign-off, multi-act extension 2026-08-17): **a Slay the
   Spire-style branching map** — a uniform per-act shape of forced Fight → pick 1 of 3
   reward → Skirmish → pick 1 of 3 reward → pick 1 of 2 (Elite or Battle) → Guild Hall →
-  an end-of-act **Ancient** boss fight, no path ever skipping a fight or gating the
-  Elite/Battle choice on earlier luck (`docs/run-loop.md`). **5 acts** are now
+  an end-of-act **Ancient** boss fight, no path ever skipping a fight, and no path ever
+  losing the Elite/Battle choice (`docs/run-loop.md`). **2026-08-26:** the reward row
+  feeding that choice **steers** — left→Elite, right→Battle, middle→both — so the choice
+  is never removed, only priced against taking a side reward. **5 acts** are
   chained per run (`RunState.actNumber`, `TOTAL_ACTS`), each with a fresh map generated
   once the previous act's Ancient falls; 1 Recruit Contract is granted at the end of
   every act (replacing the removed `contractReward` map-node type — Recruit Contracts

@@ -56,14 +56,32 @@ orphaned nodes. Given the forced single-node rows above, this repair pass in pra
 means the single fight/skirmish node before a 3-wide reward row always ends up connected
 to all 3 of them (nothing else exists to claim the "leftover" reward nodes), so the "pick
 1 of 3" framing holds for real — no reward option is ever silently unreachable. The row
-feeding into the Elite-or-Battle row is a special case on top of that: since its source
-row is 3-wide and its target row is 2-wide, the generic windowed-edge algorithm would
-only sometimes present both options depending on which reward node was picked — so
-`generateMap` overrides that one row transition to fully connect every row-3 node to
-*both* row-4 nodes, guaranteeing the Elite/Battle choice is real from every path, not
-gated by earlier luck. This is simpler than Slay the Spire's real path-weaving generator
-(no attempt to avoid visually crossing paths) but is enough to prove branching *choice*
-within a row.
+feeding into the Elite-or-Battle row is a special case on top of that. Its source row is
+3-wide and its target row 2-wide, so the generic windowed-edge algorithm would present
+both options only sometimes, depending on which reward node was picked. That row
+transition is therefore overridden — originally to **fully connect** every row-3 node to
+both row-4 nodes, and since **2026-08-26** (per user direction) to **steer**:
+
+| Row-3 node | Leads to |
+| --- | --- |
+| left | Elite only |
+| middle | Elite *or* Battle |
+| right | Battle only |
+
+The guarantee the full-connect rule existed to provide is intact, just narrowed: the
+middle node always keeps both open, so **no path ever loses the Elite/Battle choice**.
+What the player can no longer do is take a specific *side* reward and keep the choice —
+a tradeoff they can see and price from the start of the act, since the whole map is
+visible, rather than luck imposed on them. Two tests pin both halves down (`test/map.test.ts`:
+"the Elite/Battle choice stays reachable…" and "…steers left->Elite, right->Battle,
+middle->both").
+
+The motivation was visual as much as mechanical: full-connect was the only place the map
+drew crossing edges, running the left reward all the way across to the Battle and the
+right one back to the Elite. Once `MapScreen` started drawing real parent→child lines
+(2026-08-26), that row read as noise rather than structure. This is still simpler than
+Slay the Spire's real path-weaving generator, but it's now enough to prove branching
+*choice* within a row without the visual tangle.
 
 ## 2. Node types
 
