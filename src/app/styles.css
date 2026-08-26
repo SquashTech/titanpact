@@ -8053,161 +8053,619 @@ button,
   max-height: 75vh;
 }
 
-/* Replaces the old plain "Level Up — N pts remaining" heading strip — a
-   glowing banner (same rarity-glow-card language as .evolution-banner/
-   .equip-spotlight, reusing @keyframes evolution-glow-pulse) makes this the
-   screen's visual centerpiece instead of a thin top row, which also eats
-   into the dead space .bottom-pinned otherwise leaves above the hero grid
-   (LevelUpScreen "top half empty" — the grid itself stays bottom-pinned; this
-   block just grows to fill more of the space above it). */
-.levelup-banner {
+/* --- Level Up screen ------------------------------------------------------
+   Fourth pass of docs/visual-language.md's "a rectangle means you can act on
+   this" rule, after the fight screen, the move buttons and the draft.
+
+   What was here: `.levelup-banner` (a bordered, glowing container carrying no
+   action) wrapping `.levelup-xp-card` (another one) above `.levelup-feedback`
+   (a third, rendered permanently so its height stayed reserved even with
+   nothing to say) — three boxes of chrome introducing one grid of buttons.
+   Below them the shared `.hero-grid` drew 48px sprites at 30px, the 0.625x
+   fractional downscale this doc exists to forbid, on cards that carried
+   nothing about what a Training Point actually buys.
+
+   Now: an unboxed header on a full-bleed sky, the pool as a depleting orb
+   track, and `.growth-card` — the only boxed thing on screen besides
+   Continue, and the only thing that is pressable. `.hero-grid` is untouched:
+   ForceEquipScreen, StatBoostScreen, ClassNodeScreen and RosterReplaceScreen
+   still use it, and its 30px portrait is a known remaining instance of the
+   same defect (see this doc's fourth-pass scoping note). */
+
+.levelup-screen {
   position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 22px 16px 18px;
-  margin-bottom: 10px;
-  overflow: hidden;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(224, 166, 60, 0.14), transparent 70%);
+  gap: 8px;
 }
 
-.levelup-banner-glow {
+/* Full-bleed past .app-shell's padding, same negative-inset trick as
+   .battlefield and .draft-sky: a place, not a container. Gold alone rather
+   than the draft's gold/violet — the pact screen is a bargain being struck,
+   this one is purely the reward for winning. */
+.levelup-sky {
   position: absolute;
-  top: -45%;
-  left: 50%;
-  width: 240px;
-  height: 240px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(224, 166, 60, 0.35), transparent 65%);
-  animation: evolution-glow-pulse 2.4s ease-in-out infinite;
+  inset: calc(var(--shell-pad) * -1);
+  z-index: 0;
+  overflow: hidden;
   pointer-events: none;
 }
 
-.levelup-banner-eyebrow {
+.levelup-sky-wash {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 120% 52% at 50% -8%, rgba(224, 166, 60, 0.17), transparent 62%),
+    radial-gradient(ellipse 130% 55% at 50% 108%, rgba(224, 166, 60, 0.07), transparent 68%),
+    radial-gradient(ellipse 85% 62% at 50% 44%, #171410, #0b0c12 78%);
+}
+
+.levelup-motes {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Same @keyframes title-ember-rise as the title screen's embers and the
+   draft's motes. Fixed gold rather than a per-hero tint: no single hero owns
+   this screen, and six competing colours in the air would fight the six
+   type-washed cards in front of it. */
+.levelup-mote {
+  position: absolute;
+  bottom: -4%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0%, rgba(224, 166, 60, 0.9) 55%, transparent 75%);
+  box-shadow: 0 0 6px 1px rgba(224, 166, 60, 0.4);
+  opacity: 0;
+  animation-name: title-ember-rise;
+  animation-timing-function: ease-in;
+  animation-iteration-count: infinite;
+  --drift: 0px;
+}
+
+.levelup-header {
   position: relative;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 2px;
-}
-
-/* The headline ask — big, centered, snazzied up (was a plain 16px left-aligned h2). */
-.levelup-banner-title {
-  position: relative;
-  margin: 0 0 12px;
-  font-size: 30px;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  color: var(--accent);
-  text-shadow: 0 0 18px rgba(224, 166, 60, 0.45);
-  animation: levelup-title-pop 0.4s ease-out;
-}
-
-@keyframes levelup-title-pop {
-  0% {
-    opacity: 0;
-    transform: scale(0.9) translateY(4px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.levelup-banner-sub {
-  position: relative;
-  margin: 10px 0 0;
-  font-size: 11px;
-  color: var(--text-dim);
-  max-width: 280px;
-}
-
-/* Reframed around XP (was the small corner ".levelup-pool-badge" pill) — a
-   full card with heft of its own, since XP is the resource this whole screen
-   exists to spend. Dims (not hides) once the pool hits 0 so the card still
-   reads as "this is where XP lives," just currently empty. */
-.levelup-xp-card {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: linear-gradient(165deg, var(--panel-alt), var(--panel));
-  border: 1px solid var(--accent);
-  border-radius: 14px;
-  padding: 8px 18px;
-  box-shadow: 0 0 16px rgba(224, 166, 60, 0.2);
-  transition: opacity 0.2s ease, box-shadow 0.2s ease;
-}
-
-.levelup-xp-card-empty {
-  border-color: var(--border);
-  box-shadow: none;
-  opacity: 0.6;
-}
-
-.levelup-xp-icon {
-  font-size: 26px;
-  line-height: 1;
-}
-
-.levelup-xp-body {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  line-height: 1.1;
-}
-
-.levelup-xp-count {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--accent);
-}
-
-.levelup-xp-card-empty .levelup-xp-count {
-  color: var(--text-dim);
-}
-
-.levelup-xp-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  white-space: nowrap;
-}
-
-/* "X leveled up and learned Y!" readout — set once a level-up's fill-bar
-   animation finishes (LevelUpScreen's applyLevelUp/feedback state), so the
-   outcome of a level-up is spelled out rather than only inferable from the
-   card's new Lv/moves. */
-.levelup-feedback {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text);
-  background: linear-gradient(165deg, var(--panel-alt), var(--panel));
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  padding: 8px 10px;
-  margin-bottom: 8px;
+  z-index: 1;
+  flex: none;
   text-align: center;
 }
 
-/* Idle state — shown before any level-up has happened this visit (or while
-   one's fill-bar animation is running). Box stays the same size either way
-   (see the always-rendered comment at the call site) so nothing shifts when
-   real feedback text replaces this; just dimmed down so it doesn't compete
-   with an actual "leveled up!" readout for attention. */
-.levelup-feedback-placeholder {
+.levelup-eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--accent);
+  animation: title-tagline-fade 0.6s ease both;
+}
+
+.levelup-title {
+  position: relative;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  margin: 3px 0 0;
+  color: var(--text);
+  text-shadow: 0 0 14px rgba(224, 166, 60, 0.45);
+  animation: title-heading-drop 0.6s var(--ease-spring) both;
+}
+
+/* Blurred duplicate behind the crisp copy — the same bloom trick as
+   .title-logo-glow and .draft-title-glow, which is what stops a dark-on-dark
+   heading reading as flat text pasted onto a gradient. */
+.levelup-title-glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  color: var(--accent);
+  filter: blur(11px);
+  opacity: 0.55;
+}
+
+/* The pool, as orbs that go out one at a time. Same fixed-denominator idiom
+   as the draft's pact sockets and the Field Effect plaque's duration clock:
+   the track's width is what the fight paid out, and it empties left to right
+   as points are spent, so the resource is something the player *watches
+   drain* rather than a numeral they re-read. Width is held stable by
+   LevelUpScreen's `startingPool` ref — a track that shrank as it drained
+   would be the old numeral with extra steps. */
+.levelup-orbs {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-height: 18px;
+  margin-top: 10px;
+  animation: title-tagline-fade 0.6s ease 0.12s both;
+}
+
+.levelup-orb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  transition:
+    transform 0.35s var(--ease-spring),
+    background 0.35s var(--ease-out),
+    box-shadow 0.35s var(--ease-out);
+}
+
+.levelup-orb.filled {
+  background: radial-gradient(circle at 34% 28%, #fff6dc, var(--accent) 58%, #8a5f14 100%);
+  box-shadow: 0 0 11px rgba(224, 166, 60, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+}
+
+/* A spent orb collapses rather than disappearing, so the track still reads as
+   "you were given four of these" after the fourth is gone. */
+.levelup-orb.spent {
+  transform: scale(0.62);
+  background: rgba(224, 166, 60, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(224, 166, 60, 0.24);
+}
+
+/* Fallback past a dozen points (unreachable from one fight, but the pool can
+   in principle carry over) — the orb row would wrap into the roster. */
+.levelup-orb-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 18px;
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+/* The outcome readout. Unboxed — this replaces a bordered strip that was
+   always rendered purely to reserve its own height — but the height is still
+   reserved, by min-height, so nothing below shifts when a level-up resolves.
+   Keyed on the feedback text at the call site so each new line replays its
+   fade rather than swapping in place. */
+.levelup-readout {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  margin: 8px 0 0;
+  padding: 0 6px;
+  font-size: 11px;
+  line-height: 1.35;
   color: var(--text-dim);
-  font-weight: 500;
-  border-color: var(--border);
-  background: var(--panel);
+  animation: title-tagline-fade 0.35s ease both;
+}
+
+.levelup-readout.has-feedback {
+  color: var(--text);
+  font-weight: 700;
+  text-shadow: 0 0 12px rgba(224, 166, 60, 0.4);
+}
+
+/* --- The growth roster ---------------------------------------------------
+   Two columns up to four heroes, three at five or six. Not a cosmetic
+   breakpoint: it is what keeps the portrait on a clean multiple of its 48px
+   source (docs/visual-language.md defect 1) at either width — 2x in a
+   two-column card, 1x in a three-column one. align-content centres a short
+   roster instead of stranding two cards under the header. */
+.growth-roster {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+}
+
+/* Only the portrait size is stated per column count; the figure box and the
+   ground ellipse are derived from it below, so the two layouts stay the same
+   composition at two scales rather than two hand-tuned ones. */
+.growth-cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+  --growth-portrait: 96px;
+  --growth-name-size: 14px;
+}
+
+.growth-cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+  --growth-portrait: 48px;
+  --growth-name-size: 12px;
+}
+
+/* The card is boxed because it genuinely is a button. Everything inside it is
+   not: figure, ground, name, type codes, rank track and payoff line are all
+   drawn without a container of their own. Type is the card's *material* — a
+   wash entering top-left plus a rim tinted to match, the same move
+   `.move-type-code` made for the move buttons — rather than the 3px
+   left-border marker and two filled chips this wore before. */
+.growth-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 6px 7px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--type-rgb), 0.32);
+  background:
+    radial-gradient(ellipse 130% 95% at 10% -10%, rgba(var(--type-rgb), 0.22), transparent 64%),
+    var(--surface-raised);
+  box-shadow: var(--hairline), var(--elev-1);
+  color: var(--text);
+  text-align: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-mid) var(--ease-out),
+    border-color var(--dur-mid) var(--ease-out),
+    opacity var(--dur-mid) var(--ease-out);
+}
+
+.growth-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.growth-card:hover:not(.is-locked):not(.is-leveling) {
+  transform: translateY(-2px);
+  border-color: rgba(var(--type-rgb), 0.7);
+  box-shadow: var(--hairline-strong), var(--elev-2);
+}
+
+.growth-card:not(.is-locked):active {
+  transform: translateY(0);
+}
+
+.growth-card:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring), var(--elev-2);
+}
+
+/* Same rule as .move-button/.resolve-button: an unavailable card drops its
+   elevation as well as dimming, so "can't act on this" is legible from the
+   silhouette and not only from the opacity. */
+.growth-card.is-locked {
+  cursor: default;
+  opacity: 0.48;
+  box-shadow: none;
+}
+
+/* One level-up away from the branch. A hairline of gold on the rim only —
+   the loud treatment belongs to .is-evolving, and if both shouted the
+   already-earned Evolution would stop being the brightest thing on screen. */
+.growth-card.is-brink {
+  border-color: rgba(224, 166, 60, 0.5);
+}
+
+/* A pending Evolution outranks everything, including "no points left" — the
+   card stays fully interactive and lit even with an empty pool, because
+   tapping it opens the choice rather than spending anything. */
+.growth-card.is-evolving {
+  opacity: 1;
+  cursor: pointer;
+  border-color: var(--accent);
+  background:
+    radial-gradient(ellipse 130% 95% at 50% -12%, rgba(224, 166, 60, 0.3), transparent 66%),
+    var(--surface-raised);
+  animation: growth-evolve-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes growth-evolve-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px var(--accent), 0 0 16px rgba(224, 166, 60, 0.28), var(--elev-2);
+  }
+  50% {
+    box-shadow: 0 0 0 1px var(--accent), 0 0 26px rgba(224, 166, 60, 0.55), var(--elev-2);
+  }
+}
+
+.growth-card.is-leveling {
+  cursor: default;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 20px rgba(224, 166, 60, 0.4), var(--elev-2);
+}
+
+/* The level-up itself: gold rising through the card over exactly
+   LEVEL_UP_ANIM_MS. Replaces a 5px progress bar pinned to the card's bottom
+   edge — which read as a download, not as a hero being trained. Duration must
+   stay in step with LevelUpScreen's LEVEL_UP_ANIM_MS: the level-up is applied
+   by a JS timeout, not an animationend listener, so the two only have to
+   agree on how long tap-to-payoff feels. */
+.growth-charge {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  transform-origin: bottom;
+  background: linear-gradient(0deg, rgba(224, 166, 60, 0.5), rgba(224, 166, 60, 0.12) 62%, transparent);
+  animation: growth-charge-fill 550ms var(--ease-out) forwards;
+  pointer-events: none;
+}
+
+@keyframes growth-charge-fill {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* Headroom above the sprite for the level mark, and floor room below it so
+   the ground ellipse has somewhere to sit — the same arrangement
+   .draft-figure uses, where the portrait is lifted off the box bottom rather
+   than flush against it. Both are fractions of the portrait, so the figure is
+   one composition at two scales. */
+.growth-figure {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  height: calc(var(--growth-portrait) * 1.25);
+  padding-bottom: calc(var(--growth-portrait) * 0.125);
+}
+
+/* The same ground mark the battlefield's .combatant-platform makes — shadow
+   and colour in one ellipse — so a hero stands on the same kind of ground
+   here that it stands on in a fight. */
+.growth-ground {
+  position: absolute;
+  left: 50%;
+  /* Proportions lifted from .draft-figure::after, which is the reference for
+     a figure standing on ground: the ellipse is 0.9x the sprite wide and
+     centred a hair (0.03x) above its base, so it reads as ground under the
+     feet rather than a shadow across the shins. */
+  bottom: calc(var(--growth-portrait) * 0.06);
+  width: calc(var(--growth-portrait) * 0.9);
+  height: calc(var(--growth-portrait) * 0.19);
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(var(--type-rgb), 0.5),
+    rgba(var(--type-rgb), 0.14) 54%,
+    transparent 72%
+  );
+}
+
+/* 48px (1x) at three columns, 96px (2x) at two — both exact multiples of the
+   48px source (art/heroes/*.png), replacing the shared .hero-grid-portrait's
+   30px 0.625x downscale. The drop-shadow follows the sprite's alpha
+   silhouette rather than its bounding box, which is what makes it stand on
+   the ground rather than float over it. */
+.growth-portrait {
+  position: relative;
+  z-index: 1;
+  width: var(--growth-portrait);
+  height: var(--growth-portrait);
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.65));
+  transition: transform var(--dur-mid) var(--ease-spring);
+}
+
+.growth-card:hover:not(.is-locked) .growth-portrait {
+  transform: translateY(-2px);
+}
+
+/* Level as a corner mark on the figure, not a bordered chip beside the name
+   (.training-hero-level, still used by the .hero-grid screens). The unit is
+   set smaller than the numeral so "Lv" reads as a label and the number reads
+   as the value — the fault the Field Effect plaque's bare "· 4" had. */
+.growth-level {
+  position: absolute;
+  z-index: 2;
+  left: 3px;
+  top: 1px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-dim);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.growth-level::before {
+  content: 'Lv';
+  margin-right: 2px;
+  font-size: 7px;
+  opacity: 0.7;
+}
+
+/* Chromeless glyph, the same treatment as .draft-info and the battlefield's
+   .team-row .info-button: circle, border, fill and shadow all go, the glyph
+   stays for discoverability and for keyboard/screen-reader users. */
+.growth-info {
+  position: absolute;
+  z-index: 3;
+  top: 1px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 700;
+  font-style: italic;
+  cursor: pointer;
+  opacity: 0.42;
+  transition: opacity var(--dur-mid) var(--ease-out);
+}
+
+.growth-info:hover {
+  opacity: 1;
+}
+
+.growth-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--growth-name-size);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+/* Type as chromeless coloured text, not a filled chip — .move-type-code's
+   idiom. Colour alone cannot separate 15 types, so the abbreviation stays; it
+   just is not a second coloured rectangle inside a type-washed card. */
+.growth-types {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.growth-type-code {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+/* The rank track — the screen's actual decision surface. Fixed denominator
+   (the pending Evolution's trigger level), filled to the hero's current
+   level, so "who is closest to their branch" is readable across the whole
+   roster without opening anything. min-height holds the row's space for a
+   post-Evolution hero, which has a path name here instead of pips. */
+.growth-track {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 13px;
+  margin-top: 3px;
+}
+
+.growth-pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09);
+}
+
+.growth-pip.filled {
+  background: linear-gradient(180deg, #fff0c4, var(--accent));
+  box-shadow: 0 0 6px rgba(224, 166, 60, 0.5);
+  animation: growth-pip-seal 0.4s var(--ease-spring);
+}
+
+/* The last pip is the Evolution itself — a diamond, matching the empty draft
+   socket's mark, so the end of the track never reads as just one more
+   level. */
+.growth-pip.evo {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
+
+.growth-pip.evo.filled {
+  background: linear-gradient(180deg, #ffffff, var(--accent));
+  box-shadow: 0 0 10px rgba(224, 166, 60, 0.75);
+  animation: growth-pip-seal-evo 0.4s var(--ease-spring);
+}
+
+@keyframes growth-pip-seal {
+  0% {
+    transform: scale(0.3);
+  }
+  60% {
+    transform: scale(1.35);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* The diamond carries a static rotate(45deg), and transform is one property —
+   its seal has to re-state that rotation on every keyframe or the pip snaps
+   back to a square for the length of the animation. */
+@keyframes growth-pip-seal-evo {
+  0% {
+    transform: rotate(45deg) scale(0.3);
+  }
+  60% {
+    transform: rotate(45deg) scale(1.35);
+  }
+  100% {
+    transform: rotate(45deg) scale(1);
+  }
+}
+
+/* Shown in the track's place once a hero has taken its branch: the path is
+   that hero's identity now, and a more interesting fact than a level. */
+.growth-path {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* What the point buys. The line the old card never had, and the reason the
+   choice can be made from the grid instead of from six overlays. Coloured by
+   payoff so the roster sorts itself by eye: the earned Evolution burns, the
+   next-level-triggers-one is warm, an ordinary move roll is gold, and the two
+   duds sit back in --text-dim. */
+.growth-payoff {
+  margin-top: auto;
+  padding-top: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--text-dim);
+}
+
+.growth-payoff.payoff-move {
+  color: var(--accent);
+}
+
+.growth-payoff.payoff-brink {
+  color: #ffd98a;
+  text-shadow: 0 0 8px rgba(224, 166, 60, 0.5);
+}
+
+.growth-payoff.payoff-evolve {
+  color: #fff4cf;
+  text-shadow: 0 0 10px rgba(224, 166, 60, 0.85);
+}
+
+.growth-card.is-locked .growth-payoff {
+  color: var(--text-dim);
+  text-shadow: none;
+}
+
+/* The sky is absolutely positioned with a z-index, so anything left static
+   paints under it — the same trap .draft-cta documents. Both of these are
+   pointer-events-live content, and without this they would be invisible
+   (though still clickable, since the sky is pointer-events: none). */
+.levelup-screen > .resolve-button,
+.levelup-screen > .screen-scroll {
+  position: relative;
+  z-index: 1;
+}
+
+/* Move-replace offer headline (LevelUpScreen's OfferHeroHead) — 48px, a clean
+   1x, rather than the shared .training-hero-portrait's 32px 0.667x downscale
+   (that class is still SandboxBattleScreen's and is left alone). */
+.offer-hero-portrait {
+  display: block;
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.6));
 }
 
 .training-hero-portrait {
@@ -8303,71 +8761,20 @@ button,
 /* Same rule as .move-button/.resolve-button: an unavailable card drops its
    elevation as well as dimming, so "can't pick this" is legible from the
    silhouette and not only from the opacity. */
-.hero-grid-card:disabled,
-.hero-grid-card-disabled {
+.hero-grid-card:disabled {
   cursor: not-allowed;
   opacity: 0.55;
   box-shadow: none;
 }
 
-/* A pending Evolution outranks "no points left" (LevelUpScreen) — the card
-   stays fully interactive and gets its own glow so it doesn't read as just
-   another disabled tile. */
-.hero-grid-card-evolving {
-  opacity: 1;
-  cursor: pointer;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent), 0 3px 10px rgba(224, 166, 60, 0.25);
-}
-
-/* RosterReplaceScreen's tap-to-select grid (as opposed to LevelUpScreen's/
-   ForceEquipScreen's tap-to-act ones) — same glow language as the evolving
-   state above so "picked" reads as clearly armed. */
+/* RosterReplaceScreen's tap-to-select grid, as opposed to ForceEquipScreen's
+   and StatBoostScreen's tap-to-act ones — the gold rim reads as clearly
+   armed. (LevelUpScreen no longer shares this card; it has its own
+   .growth-card, and the level-up/Evolution states that used to live here
+   went with it.) */
 .hero-grid-card.selected {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent), 0 3px 10px rgba(224, 166, 60, 0.25);
-}
-
-.hero-grid-card-evolving:hover {
-  box-shadow: 0 0 0 1px var(--accent), 0 4px 14px rgba(224, 166, 60, 0.4);
-}
-
-/* Tactile level-up feedback (LevelUpScreen) — the card glows for the
-   duration of its fill-bar animation (LEVEL_UP_ANIM_MS) so the tap reads as
-   registered immediately, even though the actual level-up is deferred until
-   the bar finishes filling. */
-.hero-grid-card-leveling {
-  cursor: default;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent), 0 3px 12px rgba(224, 166, 60, 0.35);
-}
-
-.hero-grid-levelup-bar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 5px;
-  background: rgba(0, 0, 0, 0.35);
-}
-
-/* Duration must match LevelUpScreen's LEVEL_UP_ANIM_MS — the level-up is
-   applied by a JS timeout, not a CSS animationend listener, so the two just
-   need to agree on how long the tap-to-payoff feels. */
-.hero-grid-levelup-bar-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, var(--accent), #fff2c2);
-  animation: hero-grid-levelup-fill 550ms ease forwards;
-}
-
-@keyframes hero-grid-levelup-fill {
-  from {
-    width: 0%;
-  }
-  to {
-    width: 100%;
-  }
 }
 
 .hero-grid-portrait {
@@ -8411,8 +8818,7 @@ button,
   white-space: nowrap;
 }
 
-.hero-grid-card:disabled .hero-grid-cta,
-.hero-grid-card-disabled .hero-grid-cta {
+.hero-grid-card:disabled .hero-grid-cta {
   color: var(--text-dim);
 }
 

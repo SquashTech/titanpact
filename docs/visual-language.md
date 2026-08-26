@@ -299,6 +299,134 @@ It belongs in its own pass, with its own measurements.
 
 ---
 
+## Fourth pass — the level-up screen (2026-08-26)
+
+The second screen outside combat (open item 6), and the one the player sees most often:
+it runs after **every** fight win.
+
+### What was wrong, measured
+
+`LevelUpScreen` was three stacked boxes above one grid of buttons:
+
+1. `.levelup-banner` — bordered, glowing, 150px tall. Carries no action.
+2. `.levelup-xp-card` — bordered, gold-glowing, **inside** the banner. Also no action; it
+   held a numeral.
+3. `.levelup-feedback` — bordered, and rendered **unconditionally**, reserving its own
+   height for the placeholder sentence "Spend XP to learn new moves and evolve!" while
+   nothing had happened yet.
+
+Three concentric/stacked containers introducing one region that was actually pressable.
+Same shape as the fight screen and the draft, one screen further along. And underneath
+them, the same two defects both earlier passes found:
+
+1. **The sprite was at a broken scale.** `.hero-grid-portrait` drew the 48px sources at
+   **30px** — a 0.625× downscale, not one of the two legal sizes (48, 24). Blurrier than
+   the draft's 40px was.
+2. **The cards were empty of the decision.** A card carried a name, `Lv N`, two type chips
+   and the string "Tap to level up". Nothing about *what the point buys* — which is the
+   entire question the screen asks. Whether a hero was one level from its Evolution,
+   whether its movepool was exhausted, whether it was at the four-move cap so the level-up
+   would open a swap: all of it was invisible, so the player either opened six overlays or
+   picked at random. This is the third time in a row that applying the rule well required
+   the second question the rule doesn't ask.
+
+### What replaced it
+
+| Was | Is |
+|---|---|
+| Banner box + XP card box + feedback box | Unboxed header on a full-bleed `.levelup-sky` |
+| The pool as a numeral in a bordered card | A **depleting orb track** — one orb goes out per point spent |
+| Feedback strip, permanently drawn, prose placeholder | One unboxed readout line, height still reserved by `min-height` |
+| Portrait 30px (0.625×, blurry) | **48px (1×) at three columns, 96px (2×) at two** |
+| 3px type-coloured left border + two filled type chips | Type is the card's **material** (wash + tinted rim) with chromeless type codes |
+| `Lv N` as a bordered chip beside the name | A corner mark on the figure, unit set smaller than the numeral |
+| Nothing about the payoff | A **rank track** toward the Evolution + a one-line **payoff** label |
+| A 5px progress bar pinned to the card's bottom edge | Gold **rising through the card** over the same 550ms |
+
+Two things on this screen are boxed, and both are pressable: the hero card and Continue.
+Figure, ground, name, type codes, rank track, payoff line, orbs, header and readout are
+all drawn without a container.
+
+Details worth keeping:
+
+- **The rank track is the pass's real content win.** Pips to the pending Evolution's
+  trigger level, filled to the hero's current level, last pip drawn as a diamond. Same
+  fixed-denominator idiom as the Field Effect plaque's duration clock and the draft's pact
+  sockets — learned once, then read at a glance across six heroes. It needed one engine-side
+  addition: `pendingEvolution()` in `src/run/progression.ts`, split out of
+  `availableEvolution()`. The existing function is a *gate* ("may this hero evolve now"),
+  and a progress track needs the other question ("where is this hero headed"). A
+  post-Evolution hero has no pending node, so its track becomes its chosen path's name.
+- **The payoff line makes the choice legible.** `Evolve!` / `Evolve next` / `New move` /
+  `Move swap` / `Level only`, coloured so the roster sorts itself by eye. It stays visible
+  with an empty pool: the locked card already says "you can't act on this", and six
+  repetitions of "No XP" would replace the card's only information with a fact the header
+  states once.
+- **Two columns up to four heroes, three at five or six.** Not a cosmetic breakpoint — it
+  is what keeps the portrait on a clean multiple of 48 at either width. An early-run pair
+  gets 2× figures; a full roster gets a grid that fits without scrolling.
+- **Only the portrait size is authored per column count.** The figure box (1.25× the
+  portrait, with 0.125× of floor room below it) and the ground ellipse (0.9× wide, 0.19×
+  tall, centred 0.03× above the sprite's base — proportions taken from
+  `.draft-figure::after`) are derived from it, so the two layouts are one composition at
+  two scales rather than two hand-tuned ones.
+- **The sky is gold alone**, where the draft's is the pact's gold/violet: the draft is a
+  bargain being struck, this screen is purely the reward for winning. The motes are gold
+  too rather than type-tinted — six figures are on screen, and six colours in the air would
+  fight the six type-washed cards in front of them.
+- **The stacking trap `.draft-cta` documents bit again**, exactly as written down: a
+  `z-index`-carrying full-bleed sky paints over anything left static, so `.resolve-button`
+  and the offer's `.screen-scroll` needed `position: relative; z-index: 1`. Third screen,
+  third time. It is worth reaching for that pair whenever a `-sky` goes in.
+
+### Scoping discipline
+
+Every rule is scoped under `.levelup-*` or `.growth-*`. **`.hero-grid` is untouched** —
+`ForceEquipScreen`, `StatBoostScreen`, `ClassNodeScreen` and `RosterReplaceScreen` still
+use it, and `.hero-grid-portrait` **still carries the 30px 0.625× defect there**, the same
+way `.roster-card-portrait` was left carrying 0.833× after the draft pass. Both are real,
+known bugs on screens the player sees, and both belong in their own pass with their own
+measurements. What *was* removed from that block is only what LevelUpScreen alone used:
+`.hero-grid-card-evolving`, `-leveling`, `.hero-grid-levelup-bar{,-fill}`, the
+`hero-grid-levelup-fill` keyframes, and the orphaned `.hero-grid-card-disabled` selectors.
+`.training-hero-portrait` (32px, 0.667×) is likewise left alone — it is
+`SandboxBattleScreen`'s now; the move-replace offer took a new `.offer-hero-portrait` at a
+clean 48px instead.
+
+### Verification
+
+Driven through every state in the running app and measured, not eyeballed. Both fixtures:
+🧪 Test: Lv4 Squad for the six-hero/three-column case, and a real run from the draft for
+the two-hero/two-column one.
+
+- Geometry: portrait exactly **48.0px** at three columns and **96.0px** at two — the
+  scales this doc requires. Ground ellipse 0.9×/0.19× the portrait, centred **3.0%** above
+  the sprite's base at both sizes (the draft's is 2.8%).
+- Layout: nothing scrolls at 375×812, 375×667 or 360×600; Continue on screen at all three;
+  no horizontal overflow anywhere; no payoff label or hero name clipped in a 100px card.
+- Flow: level-up → charge animation → move grant → readout; level-up → Evolution →
+  `EvolutionScreen` → path chosen → back with the track replaced by the path name; and the
+  four-move-cap path all the way through the **move-replace offer**, which this doc
+  previously recorded as never having been seen rendering. It fits its scroll area with
+  0px of overflow.
+- No console errors. `npm test` (200 engine tests), `npm run typecheck:view` and
+  `npm run build:view` all pass.
+
+Two caveats, both the documented hazards rather than new ones:
+
+- **The frozen-timeline trap, a third time.** `.growth-charge` starts at `scaleY(0)`, and
+  in a non-compositing pane `getBoundingClientRect()` duly reported its height as **0**.
+  The rule was confirmed instead from its computed `animation-name`/`duration`/
+  `transform-origin`. Likewise the diamond pip's resting `rotate(45deg)` and the
+  `.is-evolving` card's fill were read off synthetic probe elements with
+  `style.animation = 'none'`.
+- **Nothing here has been seen rendering.** The Browser pane was not displayed for this
+  session, so screenshots were unavailable and every figure above is geometry. The
+  composition has not been looked at — including whether 2× figures at two columns are the
+  right weight next to a 25px heading.
+
+---
+
 ## Verification standard
 
 This pass was verified by measuring computed geometry and styles in the running app
@@ -344,6 +472,10 @@ know about:
 - `MoveButtonReplica` (LevelUpScreen's move-replace offer) got the identical treatment and
   compiles and typechecks, but that screen only appears when a hero with four moves is
   offered a fifth, which the test squad doesn't reach. It has not been seen rendering.
+  **Resolved in the fourth pass** — reaching it needs a real run rather than a fixture
+  (win the opening fight, spend the point, win the Skirmish, spend a point on the hero
+  that just hit four moves), and driven that way the panel measures 577px inside a 661px
+  scroll area with 0px of overflow.
 
 The third pass was verified the same way, driving the screen through every state:
 figure/portrait geometry (`.draft-portrait` computed 144px — exactly 3×), stage
@@ -411,10 +543,18 @@ Roughly in order of expected payoff.
    draft screen (third pass), where exactly one figure is on stage — so the scale has
    been *built* but still hasn't been **eyeballed on a real device**, which was the
    actual condition. Look at it there before considering it for the arena.
-6. **Apply the rule outside combat.** ~~Draft~~ done in the third pass above. Still
-   outstanding: the **map, roster, and shrine** screens, which keep the same nesting.
-   The draft pass is the worked example — note that the win came as much from asking
-   what the boxes *contained* as from removing them.
+6. **Apply the rule outside combat.** ~~Draft~~ (third pass) and ~~level-up~~ (fourth)
+   are done. Still outstanding: the **map, roster, and shrine** screens, which keep the
+   same nesting. Both finished passes are worked examples — and note that in both, as
+   on the Field Effect badge, the win came as much from asking what the boxes
+   *contained* as from removing them. That question is now 3 for 3; treat it as part of
+   the procedure rather than an extra.
+   - **Two portraits are still at broken scales, knowingly.**
+     `.roster-card-portrait` is 40px (0.833×) on `SquadSelectScreen` and the reward
+     nodes; `.hero-grid-portrait` is 30px (0.625×) on `ForceEquipScreen`,
+     `StatBoostScreen`, `ClassNodeScreen` and `RosterReplaceScreen`. Each was left
+     alone because fixing it changes that card's height and those screens' layout
+     budgets are tight. They are the first thing to fix when those screens come up.
 7. **Ground-plane depth.** The platform currently carries distance via size and
    opacity. A true perspective floor grid (fading toward the horizon) would sell it
    further, at some risk of noise behind the figures.

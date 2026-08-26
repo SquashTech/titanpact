@@ -132,10 +132,25 @@ export function grantLevelUpMove(run: RunState, rosterId: string, moveId: string
   return replaceEntry(run, rosterId, { ...entry, unlockedMoveIds }, 0);
 }
 
+/**
+ * The next Evolution node a roster entry is working toward — the first one
+ * it has not yet chosen a path from — regardless of whether its trigger
+ * level has been reached. Null once every authored node has been resolved
+ * (or for a hero with no authored Evolution at all).
+ *
+ * Distinct from availableEvolution below, which is the *gate*: it answers
+ * "may this hero evolve right now". This one answers "where is this hero
+ * headed", which is what a UI showing progress toward Evolution needs —
+ * LevelUpScreen's rank track draws its denominator from `node.level`.
+ */
+export function pendingEvolution(table: ProgressionTable, entry: RosterEntry): EvolutionNode | null {
+  const nodes = table.evolutions[entry.heroId] ?? [];
+  return nodes[entry.chosenPathIds.length] ?? null;
+}
+
 /** The Evolution node currently on offer for a roster entry, or null if none is available yet (or it's already been chosen). */
 export function availableEvolution(table: ProgressionTable, entry: RosterEntry): EvolutionNode | null {
-  const nodes = table.evolutions[entry.heroId] ?? [];
-  const node = nodes[entry.chosenPathIds.length];
+  const node = pendingEvolution(table, entry);
   if (!node) return null;
   return entry.level >= node.level ? node : null;
 }
