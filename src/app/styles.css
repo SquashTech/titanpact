@@ -179,13 +179,12 @@ body {
 #root {
   height: 100%;
   /*
-   * Installed-PWA safe area. index.html ships `viewport-fit=cover` so an
-   * installed build paints the whole screen edge to edge; these insets are
-   * what keep the UI itself out from under a notch, a punch-hole camera, or
-   * an iOS home indicator. env() resolves to 0 in a browser tab and on
-   * hardware with no cutouts, so the rule is inert everywhere else.
+   * No safe-area padding here on purpose: `.app-shell` is `position: fixed`,
+   * so its containing block is the viewport and it escapes this element's box
+   * entirely — padding here would silently do nothing for the game UI. The
+   * insets are handled by not going edge-to-edge in the first place (see the
+   * viewport meta in index.html).
    */
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 /* ==========================================================================

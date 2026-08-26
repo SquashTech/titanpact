@@ -19,11 +19,32 @@
  * below typical phone heights (~650-930px) so only genuinely short
  * viewports pull scale back toward 1 (no enlargement, but no new
  * overflow either) — it should rarely be the binding constraint.
+ *
+ * The width ratio measures the *footprint* (viewport width capped at
+ * MAX_WIDTH), not the raw viewport. Past 430px of screen the extra width
+ * is unused, so feeding it in would keep inflating scale — and because
+ * canvas width is footprint/scale, inflating scale makes the authored
+ * canvas *narrower*. Capping first is what makes canvas width a stable
+ * `min(footprint, REFERENCE_WIDTH)` instead of a function of the screen.
+ *
+ * REFERENCE_WIDTH was 340 until 2026-08-26, which no viewport could ever
+ * reach: at 340, a 412px phone wants scale 1.21 and pins to MAX_SCALE,
+ * yielding a 343px canvas. That never showed up in a browser tab, because
+ * the address bar keeps the viewport short enough that the *height* ratio
+ * always bound first and held scale near 1.0 — so the effective canvas was
+ * ~394px and the enlargement this module exists to do was switched off in
+ * practice. Installing the app as a PWA removed the address bar, the width
+ * ratio started binding, and the layout silently reshaped to a narrower,
+ * taller canvas. 394 is the width the UI has actually been designed and
+ * played against; setting it here makes that explicit and keeps a tab and
+ * an installed launch identical, differing only in vertical room.
  */
-const REFERENCE_WIDTH = 340;
+const REFERENCE_WIDTH = 394;
 const REFERENCE_HEIGHT = 700;
 const MAX_WIDTH = 430;
 const MIN_SCALE = 1;
+/* Now a backstop rather than a live constraint: footprint is capped at
+   MAX_WIDTH, so the width ratio cannot exceed 430/394 ≈ 1.09. */
 const MAX_SCALE = 1.2;
 
 function viewportSize(): { width: number; height: number } {
@@ -33,9 +54,9 @@ function viewportSize(): { width: number; height: number } {
 
 function layout(shell: HTMLElement): void {
   const { width: vw, height: vh } = viewportSize();
-  const rawScale = Math.min(vw / REFERENCE_WIDTH, vh / REFERENCE_HEIGHT);
-  const scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, rawScale));
   const footprintWidth = Math.min(vw, MAX_WIDTH);
+  const rawScale = Math.min(footprintWidth / REFERENCE_WIDTH, vh / REFERENCE_HEIGHT);
+  const scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, rawScale));
 
   shell.style.width = `${footprintWidth / scale}px`;
   shell.style.height = `${vh / scale}px`;

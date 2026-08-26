@@ -2,7 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <!--
+      Deliberately NOT viewport-fit=cover. Going edge-to-edge hands the notch /
+      status-bar strip to the viewport, and `.app-shell` is `position: fixed;
+      top: 0` sized from JS-measured viewport height (src/app/uiScale.ts) — so
+      cover both hid the top of the UI under the system clock and inflated the
+      measured height the scaler derives the whole layout from. Letting the
+      platform reserve its own bars keeps the installed app's viewport equal to
+      the usable screen, which is what the scaler assumes.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Titanpact</title>
     <meta name="description" content="Piloted doubles tactical roguelike. Draft. Battle. Ascend." />
 
@@ -15,7 +24,9 @@
     <!-- iOS ignores the manifest for home-screen launches and reads these. -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- "black", not "black-translucent": translucent is the iOS half of
+         viewport-fit=cover and puts the status bar *over* the shell. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="Titanpact" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon-180.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />

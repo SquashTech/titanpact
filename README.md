@@ -272,9 +272,24 @@ The pieces, should any of this need changing:
 - `public/icons/*` — generated, not hand-drawn: `node scripts/generate-icons.mjs`
   re-rasterizes them from the title screen's palette. Re-run it if `--accent` or the
   `.title-logo` gradient changes.
-- `#root`'s `env(safe-area-inset-*)` padding in `styles.css` — keeps the UI clear of
-  notches and the iOS home indicator now that the app paints edge to edge. Inert (0px)
-  in a browser tab.
+- **Not `viewport-fit=cover`, deliberately** (see the comment on the viewport meta in
+  `index.html`). Going edge-to-edge hands the status-bar strip to the viewport, and
+  `.app-shell` is `position: fixed; top: 0` sized from JS-measured viewport height — so
+  cover both hid the top of the UI under the system clock and inflated the number
+  `uiScale.ts` derives the whole layout from. Note that safe-area padding on `#root`
+  cannot fix that: a `position: fixed` shell's containing block is the viewport, so it
+  escapes `#root`'s box entirely.
+- **`uiScale.ts`'s `REFERENCE_WIDTH` is load-bearing for installed-vs-tab parity.**
+  Installing the app removes the address bar, which is what turned up a latent bug: the
+  scaler takes `min(widthRatio, heightRatio)`, and in a browser tab the shortened
+  viewport means the *height* ratio always binds, holding scale near 1.0. With the
+  address bar gone the *width* ratio binds instead and pins to `MAX_SCALE` — and since
+  canvas width is `footprint / scale`, a higher scale yields a **narrower** canvas. On a
+  412px phone the design canvas went 394×700 in a tab to 343×763 installed: narrower and
+  taller, i.e. visibly "elongated". `REFERENCE_WIDTH` is now 394 (the width the UI has
+  actually been designed against) rather than the 340 no viewport could reach, so a tab
+  and an installed launch produce an identical canvas width and scale, differing only in
+  vertical room. If you ever change it, check both surfaces.
 
 Everything is served from `dist-view/` by the existing Pages workflow — Vite copies
 `public/` to the build root, so no CI change was needed. Note that **installability
