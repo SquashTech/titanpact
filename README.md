@@ -245,3 +245,39 @@ npm run typecheck:view   # tsc --noEmit (view/app side, DOM + JSX)
 `npm run demo [seed]` is the non-visual sibling of `npm run dev`: a fixed AI drives both
 sides and the event log prints as text. Useful for eyeballing the engine without a
 browser, or for a specific seed.
+
+## Playtesting on a phone (PWA)
+
+The view ships as an installable Progressive Web App, so the deployed build can be added
+to a phone's home screen and launched fullscreen — portrait, no browser chrome, no app
+store. This is the intended mobile playtest path; the game is designed portrait-first and
+reads very differently without the browser's address bar eating the top of the screen.
+
+Install: open the GitHub Pages URL on the phone, then **Chrome/Android** → ⋮ → "Add to
+Home screen" (or the install prompt Chrome offers on its own); **Safari/iOS** → Share →
+"Add to Home Screen" (iOS has no automatic prompt — the manual step is the only way).
+
+The pieces, should any of this need changing:
+
+- `public/manifest.webmanifest` — name, icons, `display: standalone`, `orientation:
+  portrait`. Switch `display` to `"fullscreen"` to also hide the phone's status bar.
+- `public/sw.js` — the service worker. **Network-first for the HTML entry, cache-first
+  for `assets/`.** That split is deliberate: hashed asset URLs are immutable so they're
+  safe to pin forever, while a cached HTML shell would silently pin an installed phone to
+  a stale build and make mobile playtesting lie to you. Offline play works off the cache
+  once the app has been opened at least once. Bump `VERSION` to force every install to
+  drop its caches.
+- `src/app/registerServiceWorker.ts` — registration, **production builds only** (a worker
+  intercepting module requests under `vite dev` fights HMR).
+- `public/icons/*` — generated, not hand-drawn: `node scripts/generate-icons.mjs`
+  re-rasterizes them from the title screen's palette. Re-run it if `--accent` or the
+  `.title-logo` gradient changes.
+- `#root`'s `env(safe-area-inset-*)` padding in `styles.css` — keeps the UI clear of
+  notches and the iOS home indicator now that the app paints edge to edge. Inert (0px)
+  in a browser tab.
+
+Everything is served from `dist-view/` by the existing Pages workflow — Vite copies
+`public/` to the build root, so no CI change was needed. Note that **installability
+requires HTTPS**: it works on the deployed Pages URL and on `localhost`, but *not* over a
+LAN IP like `http://192.168.x.x:5173`. To exercise the installed behavior locally, use
+`npm run build:view && npm run preview` rather than `npm run dev`.

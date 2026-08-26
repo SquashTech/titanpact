@@ -153,6 +153,10 @@ body {
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow: hidden;
+  /* Kill pull-to-refresh and rubber-band scroll chaining. A tactical UI is
+     made of drag-adjacent taps near the screen edges, and on mobile Chrome a
+     downward one at the top of a battle otherwise reloads the run. */
+  overscroll-behavior: none;
   /*
    * Light text on a dark ground is the one case where subpixel antialiasing
    * actively hurts: it fattens every stroke, so 9–11px labels (which this UI
@@ -174,6 +178,14 @@ body {
 
 #root {
   height: 100%;
+  /*
+   * Installed-PWA safe area. index.html ships `viewport-fit=cover` so an
+   * installed build paints the whole screen edge to edge; these insets are
+   * what keep the UI itself out from under a notch, a punch-hole camera, or
+   * an iOS home indicator. env() resolves to 0 in a browser tab and on
+   * hardware with no cutouts, so the rule is inert everywhere else.
+   */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 /* ==========================================================================

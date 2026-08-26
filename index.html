@@ -2,8 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Titanpact</title>
+    <meta name="description" content="Piloted doubles tactical roguelike. Draft. Battle. Ascend." />
+
+    <!-- Installed-app metadata. theme-color paints the Android system bars to
+         match --bg so the shell doesn't frame the game in white. -->
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <meta name="theme-color" content="#0f1117" />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- iOS ignores the manifest for home-screen launches and reads these. -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Titanpact" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon-180.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
   </head>
   <body>
     <div id="root"></div>
