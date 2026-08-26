@@ -7385,31 +7385,81 @@ button,
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 8px 0;
+  padding: 14px 12px;
   background: radial-gradient(ellipse 120% 60% at 50% 100%, #241b0e 0%, transparent 70%), var(--well);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
-.map-row-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.map-row-connector {
-  width: 2px;
-  height: 10px;
-  background: linear-gradient(180deg, transparent, var(--border) 40%, var(--border) 60%, transparent);
+/* The route's coordinate space. Rows are a fixed height and nodes are pinned
+   to one of three columns (MapScreen's ROW_COLUMNS) precisely so the edge
+   overlay can be drawn from arithmetic — see the SVG comment there. The row
+   height is what gives the lines enough run to read as travel rather than as
+   a seam between two tiles. */
+.map-grid {
+  position: relative;
+  display: grid;
+  grid-template-rows: repeat(var(--map-rows), var(--map-row-h));
+  --map-row-h: 74px;
 }
 
 .map-row {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 2px 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+  justify-items: center;
+}
+
+/* Stretched to the grid box exactly (inset: 0 with no padding of its own), so
+   the SVG's user units map 1:1 onto the cells the nodes are placed in. */
+.map-edges {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/*
+ * Three states, in ascending order of "does this matter to me right now":
+ * an unlit edge is structure (this is where the map goes), a traveled edge is
+ * history, an open edge is the live choice leaving the node you're standing
+ * on. The open one animates — it's the only moving thing on the screen, which
+ * is what makes "these are your options" register without a label.
+ */
+.map-edge {
+  stroke: var(--border);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+
+.map-edge.traveled {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  opacity: 0.5;
+}
+
+.map-edge.open {
+  stroke: var(--accent);
+  stroke-width: 3;
+  opacity: 1;
+  stroke-dasharray: 7 6;
+  animation: map-edge-crawl 900ms linear infinite;
+}
+
+@keyframes map-edge-crawl {
+  to {
+    stroke-dashoffset: -13;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-edge.open {
+    animation: none;
+  }
 }
 
 /* Long-pressable (useLongPress, opens MapNodePreviewPopup) — the
@@ -7429,9 +7479,10 @@ button,
   font-size: 11px;
   font-weight: 700;
   text-align: center;
+  white-space: nowrap;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  opacity: 0.35;
+  opacity: 1;
   cursor: default;
   min-width: 76px;
   box-shadow: var(--hairline);
@@ -7475,7 +7526,7 @@ button,
 }
 
 .map-node.visited {
-  opacity: 0.55;
+  opacity: 0.5;
   border-color: var(--node-color);
 }
 
@@ -7521,14 +7572,77 @@ button,
   opacity: 0.1;
 }
 
-.map-node.locked {
-  opacity: 0.25;
+/*
+ * Silhouette tiers (MapScreen's NODE_TIERS). The map has no icons, so the
+ * only thing distinguishing an Ancient from a gold pickup at a glance is how
+ * the tile is SHAPED — and shape survives being small in a way a drawing
+ * doesn't. Pill = optional candy you pick up in passing. Plate = something
+ * that stands in the route and has to be fought through. The two read apart
+ * instantly in peripheral vision, which is the whole job.
+ *
+ * Sizing here fully replaces .map-node's own padding/font-size/min-width —
+ * the base rule only carries what every tier shares.
+ */
+.map-node.tier-reward {
+  border-radius: 999px;
+  padding: 9px 15px 8px;
+  font-size: 10px;
+  min-width: 74px;
 }
 
-/* A locked node carries no information beyond "not yet" — showing its type
-   color would imply it's a choice on offer. */
+.map-node.tier-encounter {
+  border-radius: 5px;
+  padding: 14px 15px 13px;
+  font-size: 11.5px;
+  min-width: 92px;
+}
+
+.map-node.tier-landmark {
+  border-radius: 5px;
+  padding: 15px 17px 14px;
+  font-size: 12px;
+  min-width: 106px;
+  letter-spacing: 0.09em;
+}
+
+/* The act's terminus. Widest tile on the map, and the only one carrying a
+   second ring — it should read as a wall across the top of the route rather
+   than one more stop on it. */
+.map-node.tier-ancient {
+  border-radius: 5px;
+  padding: 16px 20px 15px;
+  font-size: 12.5px;
+  min-width: 124px;
+  letter-spacing: 0.12em;
+  outline: 1px solid var(--border);
+  outline-offset: 3px;
+}
+
+.map-node.tier-ancient.reachable,
+.map-node.tier-ancient.current {
+  outline-color: var(--node-color);
+}
+
+/*
+ * Locked = the route ahead, and the route ahead is the whole point of having
+ * a map. This deliberately REVERSES the earlier treatment (opacity 0.25, wash
+ * killed entirely, on the reasoning that a locked node "carries no
+ * information beyond 'not yet'"): at that strength most of the screen was an
+ * unreadable smear and a player could not plan more than one step. A locked
+ * node keeps its type color and stays readable; what it loses is the lit
+ * border and the glow. Reachability is a LIGHTING difference here, never a
+ * visibility one — which is also why a visited node sits dimmer (0.5) than a
+ * locked one: the past is finished, the future is still being planned.
+ */
+.map-node.locked {
+  opacity: 0.62;
+}
+
+/* Kept, not zeroed — see .map-node.locked above. The wash IS the type signal
+   now that the node has no icon, so erasing it would leave every unreachable
+   node an identical gray pill. */
 .map-node.locked::before {
-  opacity: 0;
+  opacity: 0.2;
 }
 
 /* Hub signpost: Relics/Roster/Reference, relocated out of the header

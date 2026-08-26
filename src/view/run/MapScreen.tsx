@@ -97,6 +97,129 @@ const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
 };
 
 /**
+ * Silhouette tier. With the node icons gone, shape and size are the only
+ * channels left to say "how much does this node matter" — and they say it
+ * better at phone scale than a 22px drawing ever did, because a silhouette
+ * survives being small while a drawing does not.
+ *
+ * Deliberately NOT expressed as clip-path polygons: every reachability signal
+ * on this screen is a box-shadow glow (.map-node.reachable/.current), and
+ * clip-path would crop it. Pill-vs-plate does the same silhouette work with
+ * border-radius alone, which shadows pass through untouched.
+ *
+ * Keyed by node type as pure data, same as NODE_COLORS/NODE_NAMES — a new
+ * node type picks its tier here and inherits the whole treatment.
+ */
+type NodeTier = 'reward' | 'encounter' | 'landmark' | 'ancient';
+
+const NODE_TIERS: Record<MapNodeType, NodeTier> = {
+  fight: 'encounter',
+  skirmish: 'encounter',
+  battle: 'encounter',
+  elite: 'encounter',
+  boss: 'ancient',
+  shop: 'landmark',
+  equipmentReward: 'reward',
+  relicReward: 'reward',
+  currencyReward: 'reward',
+  upgradeReward: 'reward',
+  weaponReward: 'reward',
+  armorReward: 'reward',
+  accessoryReward: 'reward',
+  hpBoostReward: 'reward',
+  manaBoostReward: 'reward',
+  manaRegenBoostReward: 'reward',
+  classReward: 'reward',
+  event: 'reward',
+};
+
+/**
+ * Fixed 3-column geometry, shared by the CSS grid (.map-row) and the edge
+ * overlay below. Pinning nodes to columns is what lets the connecting lines
+ * be drawn from pure arithmetic instead of measured DOM rects — no layout
+ * effect, no ResizeObserver, no first-paint flicker, and the lines stay
+ * exact at every viewport width because the SVG stretches with the grid.
+ *
+ * A 2-node row spreads to the OUTER columns rather than sitting adjacent, so
+ * a fork reads as a fork. That also means a 3-node row's middle node lines up
+ * with the gap in the row above it, which is what gives the map its woven,
+ * non-gridlike look once the edges are drawn.
+ */
+const MAP_COLUMNS = 3;
+const ROW_COLUMNS: Record<number, readonly number[]> = {
+  1: [2],
+  2: [1, 3],
+  3: [1, 2, 3],
+};
+/** SVG user units per grid cell. Arbitrary — the viewBox is stretched to fit. */
+const CELL = 100;
+/**
+ * Fraction of each edge trimmed off both ends, so a line runs BETWEEN two
+ * tiles instead of into their centers. Node tiles are semi-transparent, so an
+ * untrimmed line stays visible straight through the label underneath it.
+ * Trimming proportionally (rather than by a pixel radius) also pulls a
+ * diagonal edge's x inward by the right amount for free, and stays correct
+ * under the viewBox's non-uniform stretch.
+ */
+const EDGE_TRIM = 0.3;
+
+function columnOf(indexInRow: number, rowLength: number): number {
+  return (ROW_COLUMNS[rowLength] ?? ROW_COLUMNS[MAP_COLUMNS])[indexInRow] ?? 2;
+}
+
+interface EdgeLine {
+  key: string;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  /** Both ends already walked — the route behind you. */
+  traveled: boolean;
+  /** Leaves the node you're standing on and lands somewhere you may go next. */
+  open: boolean;
+}
+
+/**
+ * Every parent→child link in the map as a drawable line, in the SVG's user
+ * units. `map.rows` is stored bottom-up (row 0 is the act's opening fight)
+ * but the map renders top-down, so a node's `nextIds` always live one row
+ * ABOVE it on screen.
+ */
+function buildEdges(
+  rowsTopDown: readonly (readonly string[])[],
+  nodes: Record<string, MapNode>,
+  currentNodeId: string | null,
+  reachable: ReadonlySet<string>,
+  visited: ReadonlySet<string>,
+): EdgeLine[] {
+  const centers = new Map<string, { x: number; y: number }>();
+  rowsTopDown.forEach((rowIds, row) => {
+    rowIds.forEach((id, i) => {
+      centers.set(id, { x: (columnOf(i, rowIds.length) - 0.5) * CELL, y: (row + 0.5) * CELL });
+    });
+  });
+
+  return rowsTopDown.flatMap((rowIds) =>
+    rowIds.flatMap((id) => {
+      const from = centers.get(id);
+      return (nodes[id]?.nextIds ?? []).flatMap((childId) => {
+        const to = centers.get(childId);
+        if (!from || !to) return [];
+        return [{
+          key: `${id}->${childId}`,
+          x1: from.x + (to.x - from.x) * EDGE_TRIM,
+          y1: from.y + (to.y - from.y) * EDGE_TRIM,
+          x2: to.x - (to.x - from.x) * EDGE_TRIM,
+          y2: to.y - (to.y - from.y) * EDGE_TRIM,
+          traveled: visited.has(id) && visited.has(childId),
+          open: currentNodeId === id && reachable.has(childId),
+        }];
+      });
+    }),
+  );
+}
+
+/**
  * One map node button. Split out from MapScreen's row-render loop because
  * `useLongPress` is a hook and can't be called from inside a `.map()`
  * callback. A long press (any node, including locked/visited ones — a
@@ -110,6 +233,7 @@ const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
  */
 function MapNodeButton({
   node,
+  column,
   isCurrent,
   isReachable,
   isVisited,
@@ -117,6 +241,8 @@ function MapNodeButton({
   onPreview,
 }: {
   node: MapNode;
+  /** 1-based grid column this node sits in (columnOf) — kept in sync with the edge overlay, which assumes the same geometry. */
+  column: number;
   isCurrent: boolean;
   isReachable: boolean;
   isVisited: boolean;
@@ -125,6 +251,7 @@ function MapNodeButton({
 }) {
   const classes = [
     'map-node',
+    `tier-${NODE_TIERS[node.type]}`,
     isCurrent ? 'current' : '',
     isReachable ? 'reachable' : '',
     isVisited ? 'visited' : '',
@@ -140,7 +267,7 @@ function MapNodeButton({
     <button
       type="button"
       className={classes}
-      style={{ '--node-color': NODE_COLORS[node.type] } as CSSProperties}
+      style={{ '--node-color': NODE_COLORS[node.type], gridColumn: column } as CSSProperties}
       aria-disabled={!isReachable}
       {...longPress}
     >
@@ -207,6 +334,7 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
   const reachable = new Set(reachableNodeIds(run));
   const visited = new Set(run.visitedNodeIds);
   const rowsTopDown = [...map.rows].reverse();
+  const edges = buildEdges(rowsTopDown, map.nodes, run.currentNodeId, reachable, visited);
 
   const openFooterOverlay: Record<(typeof FOOTER_BUTTONS)[number]['key'], () => void> = {
     relics: () => setShowRelics(true),
@@ -229,16 +357,44 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
       </div>
 
       <div className="map-scroll screen-scroll">
-        {rowsTopDown.map((rowIds, rowIndex) => (
-          <div className="map-row-wrap" key={rowIndex}>
-            {rowIndex > 0 && <div className="map-row-connector" aria-hidden="true" />}
-            <div className="map-row">
-              {rowIds.map((nodeId) => {
+        <div className="map-grid" style={{ '--map-rows': rowsTopDown.length } as CSSProperties}>
+          {/*
+            The route itself. Drawn under the nodes as one stretched SVG rather
+            than per-row connector stubs: a stub between rows can only say
+            "these rows are adjacent", while a real parent->child line says
+            WHICH node leads where — the only thing that makes a branching map
+            plannable. preserveAspectRatio="none" lets the overlay stretch to
+            whatever the grid resolves to, and non-scaling-stroke keeps the
+            lines an even weight through that stretch.
+          */}
+          <svg
+            className="map-edges"
+            viewBox={`0 0 ${MAP_COLUMNS * CELL} ${rowsTopDown.length * CELL}`}
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            {edges.map((edge) => (
+              <line
+                key={edge.key}
+                className={['map-edge', edge.traveled ? 'traveled' : '', edge.open ? 'open' : ''].filter(Boolean).join(' ')}
+                x1={edge.x1}
+                y1={edge.y1}
+                x2={edge.x2}
+                y2={edge.y2}
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
+          </svg>
+
+          {rowsTopDown.map((rowIds, rowIndex) => (
+            <div className="map-row" key={rowIndex}>
+              {rowIds.map((nodeId, indexInRow) => {
                 const node = map.nodes[nodeId];
                 return (
                   <MapNodeButton
                     key={nodeId}
                     node={node}
+                    column={columnOf(indexInRow, rowIds.length)}
                     isCurrent={run.currentNodeId === nodeId}
                     isReachable={reachable.has(nodeId)}
                     isVisited={visited.has(nodeId)}
@@ -248,8 +404,8 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
                 );
               })}
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <div className="map-footer">
