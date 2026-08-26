@@ -7425,12 +7425,12 @@ button,
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   color: var(--text-dim);
-  padding: 8px 10px 6px;
-  font-size: 10px;
+  padding: 13px 14px 12px;
+  font-size: 11px;
   font-weight: 700;
   text-align: center;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.06em;
   opacity: 0.35;
   cursor: default;
   min-width: 76px;
@@ -7469,56 +7469,14 @@ button,
   transition: opacity var(--dur-fast) var(--ease-out);
 }
 
-.map-node-icon {
-  position: relative;
-  font-size: 20px;
-  line-height: 1;
-  filter: grayscale(0.6);
-}
-
-.map-node-icon .run-glyph {
-  --iconset-glyph-size: 20px;
-  vertical-align: 0;
-}
-
-/* The map's own landmarks are a hand-authored 16×16 grid. SVG is used only
-   as the pixel canvas: each visible unit is a 1×1 rect and crispEdges keeps
-   the intended hard sprite silhouette at every supported UI scale. */
-.map-pixel-icon {
-  display: block;
-  width: 24px;
-  height: 24px;
-  image-rendering: pixelated;
-}
-
-.map-node-icon .map-pixel-icon {
-  width: 22px;
-  height: 22px;
-}
-
-.log-panel-header .map-pixel-icon {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  margin: 0 4px -4px 0;
-}
-
 .map-node-name {
   position: relative;
-}
-
-.map-node-name {
   color: inherit;
 }
 
 .map-node.visited {
   opacity: 0.55;
   border-color: var(--node-color);
-}
-
-.map-node.visited .map-node-icon {
-  filter: none;
-  opacity: 0.6;
 }
 
 /* "You are here." The one node on the map that should be unmistakable, so it
@@ -7535,20 +7493,12 @@ button,
   opacity: 0.34;
 }
 
-.map-node.current .map-node-icon {
-  filter: none;
-}
-
 .map-node.reachable {
   opacity: 1;
   border-color: var(--node-color);
   color: var(--text);
   cursor: pointer;
   box-shadow: var(--hairline), 0 0 10px -4px var(--node-color), var(--elev-1);
-}
-
-.map-node.reachable .map-node-icon {
-  filter: none;
 }
 
 .map-node.reachable:hover {

@@ -8,7 +8,6 @@ import { RosterManagementScreen } from './RosterManagementScreen';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { RelicsOverlay } from './RelicsOverlay';
 import { ResourceMark, RunGlyph, type RunGlyphKind } from '../shared/RunGlyph';
-import { MapNodeIcon } from './MapNodeIcon';
 
 interface Props {
   run: RunState;
@@ -145,7 +144,6 @@ function MapNodeButton({
       aria-disabled={!isReachable}
       {...longPress}
     >
-      <span className="map-node-icon"><MapNodeIcon type={node.type} /></span>
       <span className="map-node-name">{NODE_NAMES[node.type]}</span>
     </button>
   );
@@ -163,7 +161,7 @@ function MapNodePreviewPopup({ node, onClose }: { node: MapNode; onClose: () => 
       <div className="log-panel move-popup-panel" style={{ '--node-color': NODE_COLORS[node.type] } as CSSProperties}>
         <div className="log-panel-header">
           <span>
-            <MapNodeIcon type={node.type} /> {NODE_NAMES[node.type]}
+            {NODE_NAMES[node.type]}
           </span>
         </div>
         <div className="move-popup-description">{NODE_DESCRIPTIONS[node.type]}</div>
