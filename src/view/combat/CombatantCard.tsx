@@ -31,7 +31,7 @@ const POPUP_FLASH_CLASS: Record<string, string> = {
   'popup-burn': 'burn-hit',
   'popup-bleed': 'bleed-hit',
   'popup-poison': 'poison-hit',
-  'popup-regen': 'regen-hit',
+  'popup-renew': 'renew-hit',
   'popup-haunt': 'haunt-hit',
   'popup-passive-heal': 'passive-heal-hit',
 };

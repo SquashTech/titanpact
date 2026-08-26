@@ -98,7 +98,7 @@ export function applyStatus(
 /**
  * End-of-round tick (docs/conditions.md §7 "Status tick timing" — resolved as
  * end-of-round, the only tick boundary this engine has). Runs over EVERY
- * combatant, active or benched: Bleed/Poison/Regen persist through switch
+ * combatant, active or benched: Bleed/Poison/Renew persist through switch
  * specifically so they aren't escapable by bench-parking, so their ticks must
  * follow — except Poison's `activeOnly` flag, which stalls its timer entirely
  * while benched instead (docs/conditions.md: "switching stalls the clock
@@ -266,7 +266,7 @@ export function clearOnSwitch(
 /**
  * docs/conditions.md §7 "Cleanse & positive statuses" — resolved as a flat
  * rule, not a per-move choice: Cleanse strips every status EXCEPT ones
- * flagged `positive` (Regen, Stealth). Data-driven off StatusDefinition.positive
+ * flagged `positive` (Renew, Stealth). Data-driven off StatusDefinition.positive
  * rather than a hardcoded status-id check.
  */
 export function cleanseStatuses(

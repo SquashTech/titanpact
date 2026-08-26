@@ -31,9 +31,13 @@ discipline** and are collected at the bottom.
 - **Does NOT cleanse on switch.**
 - Design intent: straightforward, flavorful; combo / lifesteal potential.
 
-### Regen — magnitude (positive / self-buff)
+### Renew — magnitude (positive / self-buff)
 - Standard heal-over-time.
 - Positive status → subject to the Cleanse-strips-positives question (see open).
+- **Named Renew, not Regen (2026-08-26).** "Regen" collided with the `MP Regen` stat in
+  prose and code identifiers, and that collision had already produced one real bug —
+  Verdant Earth's stat bonus was wired to `mpRegen` instead of this status. The stat
+  keeps its name; the status took the distinct one.
 
 ### Conduct — boolean
 - Applied only by a specific move that names Conduct in its own `statusApplication`
@@ -78,7 +82,7 @@ discipline** and are collected at the bottom.
 - **Outspeeding + applying Stealth redirects the incoming attack to the other active
   hero** (the Speed-matters hook).
 - Positive / self-buff → subject to the Cleanse-strips-positives question, alongside
-  Regen.
+  Renew.
 - ⚠️ Command-then-resolve timing needs an explicit rule. See open questions.
 - **Exclusivity rule (2026-08-19, resolved): a side's two active heroes can never both
   be Stealthed at the same time.** Without this, simultaneously Stealthing both
@@ -111,7 +115,7 @@ discipline** and are collected at the bottom.
 The original three-shape framing (Magnitude / Boolean / Duration) no longer maps
 cleanly:
 
-- Magnitude: Burn, Regen
+- Magnitude: Burn, Renew
 - Boolean: Bleed, Freeze, Conduct
 - Duration: Daze
 - Poison: timer / delayed-detonation — its own shape
@@ -131,7 +135,7 @@ status to call its own? (Roguelike structure keeps per-run status load low, so r
 count is not the constraint — legibility and non-overlap are.)
 
 - **Covered:** Fire (Burn), Frost (Freeze), Storm + Iron (Conduct), Spirit/Mind (Haunt)
-- **Agnostic-served:** Bleed, Regen, Stealth (place Stealth deliberately — reads
+- **Agnostic-served:** Bleed, Renew, Stealth (place Stealth deliberately — reads
   Shadow, but Beast/predator-ambush or fully agnostic avoids double-signaturing one
   element)
 - **Status-poor (holes):** Water, Stone, Mech, Beast, Nature, Light, Arcane
@@ -155,8 +159,8 @@ percentage goes up
 5. **Haunt + native spread.** Does Haunt double-hit on already-spread moves, or is it
    strictly single→spread with no effect on native spread? Plus a burst-ceiling check
    (no spread-damage reduction in combat math means Haunt ~doubles output).
-6. **Cleanse strips positives?** Resolve for Regen AND Stealth together — an enemy
-   peeling Stealth/Regen is either healthy counterplay or feels awful. Answer: do not strip positives
+6. **Cleanse strips positives?** Resolve for Renew AND Stealth together — an enemy
+   peeling Stealth/Renew is either healthy counterplay or feels awful. Answer: do not strip positives
 7. **Stealth command-then-resolve timing.** If an enemy commanded an attack at a hero
    who then goes Stealth this same turn, who resolves first decides whether it
    protects. Write the rule (faster-Stealth dodges; slower-Stealth eats it, safe next

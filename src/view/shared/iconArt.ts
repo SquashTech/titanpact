@@ -19,7 +19,7 @@ import burnIcon from '../../../art/icons/status/burn.png';
 import bleedIcon from '../../../art/icons/status/bleed.png';
 import freezeIcon from '../../../art/icons/status/freeze.png';
 import dazeIcon from '../../../art/icons/status/daze.png';
-import regenIcon from '../../../art/icons/status/regen.png';
+import renewIcon from '../../../art/icons/status/renew.png';
 import conductIcon from '../../../art/icons/status/conduct.png';
 import poisonIcon from '../../../art/icons/status/poison.png';
 import hauntIcon from '../../../art/icons/status/haunt.png';
@@ -54,7 +54,7 @@ export const statusIconArt: Partial<Record<string, string>> = {
   Bleed: bleedIcon,
   Freeze: freezeIcon,
   Daze: dazeIcon,
-  Regen: regenIcon,
+  Renew: renewIcon,
   Conduct: conductIcon,
   Poison: poisonIcon,
   Haunt: hauntIcon,

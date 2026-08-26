@@ -80,9 +80,9 @@ export const statuses: Record<string, StatusDefinition> = {
     pipeline: 'control',
     description: "Can't attack, but can switch. Duration counts down at end of round; cleared by switching.",
   },
-  Regen: {
-    id: 'Regen',
-    name: 'Regen',
+  Renew: {
+    id: 'Renew',
+    name: 'Renew',
     shape: 'magnitude',
     ticksAtEndOfRound: true,
     decay: 'halve',

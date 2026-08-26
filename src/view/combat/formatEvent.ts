@@ -36,7 +36,7 @@ const STATUS_TICK_LOG_CLASS: Record<string, string> = {
   Burn: 'log-burn',
   Bleed: 'log-bleed',
   Poison: 'log-poison',
-  Regen: 'log-regen',
+  Renew: 'log-renew',
 };
 
 export function formatEvents(

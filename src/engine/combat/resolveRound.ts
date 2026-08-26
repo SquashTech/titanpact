@@ -305,7 +305,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     }
 
     // Status application / cleanse (docs/conditions.md §5) layer on top of any move kind —
-    // a damage move can inflict Burn, a buff move can also grant Regen, etc.
+    // a damage move can inflict Burn, a buff move can also grant Renew, etc.
     if (move.statusApplication) {
       const app = move.statusApplication;
       const def = statuses[app.statusId];

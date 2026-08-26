@@ -89,7 +89,7 @@ export const statusEmoji: Record<string, string> = {
   Bleed: '🩸',
   Freeze: '❄️',
   Daze: '💫',
-  Regen: '💚',
+  Renew: '💚',
   Conduct: '⚡',
   Poison: '🧪',
   Haunt: '👻',
@@ -99,7 +99,7 @@ export const statusEmoji: Record<string, string> = {
 
 /**
  * Identity color per status — Fire-orange Burn, Frost-cyan Freeze, and so on
- * (Regen/Conduct reuse the app's existing --hp-high/--conduct tokens) — so a
+ * (Renew/Conduct reuse the app's existing --hp-high/--conduct tokens) — so a
  * badge reads as "which status" by color alone, not just by its emoji.
  * Applied via inline style (mirrors TypeBadge/getTypeColor, since 9 statuses
  * is a JS lookup, not something worth 9 enumerated CSS classes) everywhere a
@@ -111,7 +111,7 @@ const STATUS_COLOR: Record<string, string> = {
   Bleed: '#c0392b',
   Freeze: '#7fd6e0',
   Daze: '#c9a0f5',
-  Regen: '#4caf6a',
+  Renew: '#4caf6a',
   Conduct: '#f5d90a',
   Poison: '#8bc34a',
   Haunt: '#7a5fc4',

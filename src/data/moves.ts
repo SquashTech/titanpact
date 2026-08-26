@@ -743,11 +743,11 @@ export const moves: Record<string, MoveDefinition> = {
     category: 'magical',
     kind: 'buff',
     statDeltas: [],
-    statusApplication: { statusId: 'Regen', magnitude: 20, target: 'self' },
+    statusApplication: { statusId: 'Renew', magnitude: 20, target: 'self' },
     manaCost: 15,
     priority: 0,
     target: 'self',
-    description: 'Steadies the caster’s breath, mending a little more each round (grants Regen 20).',
+    description: 'Steadies the caster’s breath, mending a little more each round (grants Renew 20).',
   },
   stokeTheFlames: {
     id: 'stokeTheFlames',
@@ -840,6 +840,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'self',
-    description: "Roots and vines surge across the field for 5 rounds — every hero's Attack and Intelligence rise by their own MP Regen (sets the Verdant Earth field effect).",
+    description: 'Roots and vines surge across the field for 5 rounds — any hero carrying Renew has their Attack and Intelligence raised by its magnitude (sets the Verdant Earth field effect).',
   },
 };

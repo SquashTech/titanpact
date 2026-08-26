@@ -46,7 +46,7 @@ function byName(a: MoveDefinition, b: MoveDefinition): number {
  * Every status-applying move in the game, split by who it lands on.
  *
  * `afflict` is the debuff bench (Burn, Bleed, Poison, Freeze, Daze, Conduct,
- * Haunt, …); `support` is the self/ally side (Regen, Stealth, Elemental
+ * Haunt, …); `support` is the self/ally side (Renew, Stealth, Elemental
  * Force) plus every cleansing move, so removal has something to remove.
  * Cleansers have no `statusApplication` of their own — they're the other half
  * of the status lifecycle and belong in the same fixture.

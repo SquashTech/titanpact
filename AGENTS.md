@@ -87,7 +87,7 @@ preserving the shared engine contracts.
   Field Effects.
 - Field Effects are global: only one can be active, duration is five rounds, reapplying
   the same effect is a no-op, and a different effect replaces it. Current data covers
-  mana regeneration, Burn decay, Speed ordering, heal priority, and Regen-linked stat
+  mana regeneration, Burn decay, Speed ordering, heal priority, and Renew-linked stat
   effects; type-restricted damage-pipeline Field Effects remain an open design area.
 - Avoid silently deciding open questions. The intentionally open items include emergent
   team archetypes and further Field Effect damage-pipeline support. Flag a proposed

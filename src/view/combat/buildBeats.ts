@@ -27,7 +27,7 @@ export interface BeatPopup {
 }
 
 /**
- * Per-status tick flavor (Burn/Bleed/Poison/Regen — the DoT/HoT statuses that
+ * Per-status tick flavor (Burn/Bleed/Poison/Renew — the DoT/HoT statuses that
  * fire a StatusTicked kind 'damage'/'heal' every end-of-round) so each reads
  * as its own beat rather than a copy of a plain attack-damage/heal beat, the
  * same way Conduct's detonation got its own banner/popup below. Poison only
@@ -39,14 +39,14 @@ const STATUS_TICK_BANNER: Record<string, (targetName: string, amount: number) =>
   Burn: (n, a) => `${n} is scorched by Burn for ${a} damage!`,
   Bleed: (n, a) => `${n} bleeds for ${a} damage!`,
   Poison: (n, a) => `${n}'s Poison bursts for ${a} damage!`,
-  Regen: (n, a) => `${n}'s Regen mends ${a} HP!`,
+  Renew: (n, a) => `${n}'s Renew mends ${a} HP!`,
 };
 
 const STATUS_TICK_EMOJI: Record<string, string> = {
   Burn: '🔥',
   Bleed: '🩸',
   Poison: '🧪',
-  Regen: '💚',
+  Renew: '💚',
 };
 
 export interface Beat {

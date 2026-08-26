@@ -2,7 +2,7 @@
 // playtest can't cheaply exercise exhaustively: Daze blocking a move,
 // Freeze halving Speed, Conduct's apply-vs-detonate split off Storm/Iron
 // hits, Poison's active-only timer, Haunt's singleEnemy-to-spread expansion,
-// Stealth's speed-dependent redirect, Regen's decay mirroring Burn, and
+// Stealth's speed-dependent redirect, Renew's decay mirroring Burn, and
 // Cleanse always sparing positive statuses.
 
 import * as assert from 'assert';
@@ -90,24 +90,24 @@ test('status: a frozen combatant with higher base Speed is outsped by a faster-a
   assert.deepStrictEqual(moveUsedOrder, ['a2', 'b1']);
 });
 
-// --- Regen: the positive mirror of Burn --------------------------------------
+// --- Renew: the positive mirror of Burn --------------------------------------
 
-test('status: Regen heals at end of round and decays by halving, like Burn', () => {
+test('status: Renew heals at end of round and decays by halving, like Burn', () => {
   const state = twoVTwoFixture(106);
   const hurt = { ...state, combatants: { ...state.combatants, a1: { ...state.combatants.a1, currentHp: 10 } } };
-  const regenerating = withStatus(hurt, 'a1', 'Regen', { magnitude: 20 });
+  const regenerating = withStatus(hurt, 'a1', 'Renew', { magnitude: 20 });
 
   const { state: afterRound1, events } = resolveRound(regenerating, [], config);
   assert.strictEqual(afterRound1.combatants.a1.currentHp, 30); // 10 + 20
-  assert.strictEqual(afterRound1.combatants.a1.statuses.Regen.magnitude, 10); // floor(20/2)
-  assert.ok(events.some((e) => e.type === 'StatusTicked' && e.statusId === 'Regen' && e.kind === 'heal' && e.amount === 20));
+  assert.strictEqual(afterRound1.combatants.a1.statuses.Renew.magnitude, 10); // floor(20/2)
+  assert.ok(events.some((e) => e.type === 'StatusTicked' && e.statusId === 'Renew' && e.kind === 'heal' && e.amount === 20));
 
   const { state: afterRound2 } = resolveRound(afterRound1, [], config);
   assert.strictEqual(afterRound2.combatants.a1.currentHp, 40); // 30 + 10
-  assert.strictEqual(afterRound2.combatants.a1.statuses.Regen.magnitude, 5); // floor(10/2)
+  assert.strictEqual(afterRound2.combatants.a1.statuses.Renew.magnitude, 5); // floor(10/2)
 });
 
-test('status: Burn/Regen decay to 0 removes the status entirely', () => {
+test('status: Burn/Renew decay to 0 removes the status entirely', () => {
   const state = twoVTwoFixture(107);
   const burning = withStatus(state, 'b1', 'Burn', { magnitude: 1 }); // floor(1/2) = 0
   const { state: next, events } = resolveRound(burning, [], config);
@@ -118,16 +118,16 @@ test('status: Burn/Regen decay to 0 removes the status entirely', () => {
 
 // --- Cleanse: always spares positive statuses --------------------------------
 
-test('status: cleanseStatuses strips every non-positive status, leaving Regen (positive) alone', () => {
+test('status: cleanseStatuses strips every non-positive status, leaving Renew (positive) alone', () => {
   const state = twoVTwoFixture(108);
   let afflicted = withStatus(state, 'a1', 'Bleed', {});
   afflicted = withStatus(afflicted, 'a1', 'Poison', { magnitude: 20, duration: 3 });
-  afflicted = withStatus(afflicted, 'a1', 'Regen', { magnitude: 15 });
+  afflicted = withStatus(afflicted, 'a1', 'Renew', { magnitude: 15 });
 
   const { state: cleansed } = cleanseStatuses(afflicted, 1, 'a1', statuses);
   assert.strictEqual(hasStatus(cleansed.combatants.a1, 'Bleed'), false);
   assert.strictEqual(hasStatus(cleansed.combatants.a1, 'Poison'), false);
-  assert.strictEqual(hasStatus(cleansed.combatants.a1, 'Regen'), true);
+  assert.strictEqual(hasStatus(cleansed.combatants.a1, 'Renew'), true);
 });
 
 // --- Conduct: apply-vs-detonate split off Storm/Iron hits --------------------

@@ -104,14 +104,14 @@ export interface StatusDefinition {
    * ticksAtEndOfRound.
    */
   ticksAtStartOfRound?: boolean;
-  /** Post-tick decay for magnitude statuses (Burn, Regen): halve toward 0. 'none' for statuses whose magnitude doesn't decay on its own (Poison builds up until it detonates). */
+  /** Post-tick decay for magnitude statuses (Burn, Renew): halve toward 0. 'none' for statuses whose magnitude doesn't decay on its own (Poison builds up until it detonates). */
   decay: 'halve' | 'none';
   stacking: StatusStacking;
   /** docs/conditions.md §4 removal table: cleared by switching to bench. */
   clearsOnSwitch: boolean;
   /** Poison only: the end-of-round tick is skipped entirely for a benched combatant (switching stalls the timer instead of clearing it) rather than ticking down regardless like Daze/Stealth do. */
   activeOnly?: boolean;
-  /** The only positive status(es) — Regen, Stealth. docs/conditions.md §7 "Cleanse & positive statuses": Cleanse never strips these. */
+  /** The only positive status(es) — Renew, Stealth. docs/conditions.md §7 "Cleanse & positive statuses": Cleanse never strips these. */
   positive?: boolean;
   /** Boolean-shape DoT/HoT only (Bleed): fixed effect as a % of max HP instead of a magnitude. */
   flatPercentOfMaxHp?: number;
@@ -166,7 +166,7 @@ export interface StatDelta {
 
 /**
  * A move's optional status effect (docs/conditions.md §5). Any move kind may
- * carry one — a damage move inflicting Burn, a buff move also granting Regen,
+ * carry one — a damage move inflicting Burn, a buff move also granting Renew,
  * a dedicated status move applying Haunt, etc.
  */
 export interface StatusApplication {
@@ -304,8 +304,8 @@ export interface FieldEffectDefinition {
   reversesSpeedOrder?: boolean;
   /** Added to a heal-kind move's priority bracket while this effect is active — e.g. Sanctuary's +1. Read by combat/priority.ts orderActions. */
   healPriorityBonus?: number;
-  /** Stats that gain a bonus equal to the combatant's own effective Regen while this effect is active — e.g. Verdant Earth granting Attack/Intelligence equal to Regen. A genuine stat-pipeline bonus (CLAUDE.md "Two-pipeline separation" pipeline 1), not a damage-pipeline modifier — read by state.ts getEffectiveStat. */
-  statBonusEqualToRegen?: readonly StatKey[];
+  /** While active, every stat in `stats` gains a bonus equal to the combatant's OWN current magnitude of `statusId` — e.g. Verdant Earth granting Attack/Intelligence equal to that hero's Renew. Keyed by status id rather than hardcoding one status, so a later effect can scale off any magnitude-shape status. A hero not carrying the status gets nothing (magnitude 0), which is what makes this a build-around payoff rather than a flat global buff. A genuine stat-pipeline bonus (CLAUDE.md "Two-pipeline separation" pipeline 1), not a damage-pipeline modifier — read by state.ts getEffectiveStat. */
+  statBonusEqualToStatusMagnitude?: { statusId: StatusId; stats: readonly StatKey[] };
 }
 
 /** A FieldEffectDefinition with no implemented effect shape is invalid content (nothing for it to do) — same discipline as isValidPassiveDefinition. */
@@ -315,7 +315,7 @@ export function isValidFieldEffectDefinition(fieldEffect: FieldEffectDefinition)
     (fieldEffect.suppressesStatusDecay?.length ?? 0) > 0 ||
     fieldEffect.reversesSpeedOrder === true ||
     fieldEffect.healPriorityBonus !== undefined ||
-    (fieldEffect.statBonusEqualToRegen?.length ?? 0) > 0
+    (fieldEffect.statBonusEqualToStatusMagnitude?.stats.length ?? 0) > 0
   );
 }
 
@@ -335,7 +335,7 @@ export interface MoveDefinition {
   statDeltas?: readonly StatDelta[];
   /** Any kind — see StatusApplication above. */
   statusApplication?: StatusApplication;
-  /** Any kind — strips non-positive statuses from the move's resolved target(s) (docs/conditions.md §4 Cleanse). Positive statuses (Regen, Stealth) are never stripped — §7 "Cleanse & positive statuses" resolved this as a flat rule, not a per-move choice. */
+  /** Any kind — strips non-positive statuses from the move's resolved target(s) (docs/conditions.md §4 Cleanse). Positive statuses (Renew, Stealth) are never stripped — §7 "Cleanse & positive statuses" resolved this as a flat rule, not a per-move choice. */
   cleanses?: boolean;
   /** Any kind — sets the battlefield's Field Effect (docs/field-effects.md). Global, so unlike statusApplication there's no target to choose. */
   fieldEffectApplication?: FieldEffectId;

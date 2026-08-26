@@ -135,7 +135,7 @@ export function hasAffordableMove(currentMana: number, moveIds: readonly string[
   return moveIds.some((id) => currentMana >= moves[id].manaCost);
 }
 
-/** Field Effect context threaded into getEffectiveStat/getCombatStatDelta only by callers that need a Field-Effect-driven stat hook (currently just Verdant Earth's statBonusEqualToRegen) — omit entirely and both functions behave exactly as before. */
+/** Field Effect context threaded into getEffectiveStat/getCombatStatDelta only by callers that need a Field-Effect-driven stat hook (currently just Verdant Earth's statBonusEqualToStatusMagnitude) — omit entirely and both functions behave exactly as before. */
 export interface FieldEffectContext {
   active: ActiveFieldEffect | null;
   defs: Record<string, FieldEffectDefinition>;
@@ -157,13 +157,16 @@ export function getEffectiveStat(
     raw = Math.floor(raw / 2);
   }
 
-  // Verdant Earth (docs/field-effects.md): while active, adds a bonus equal
-  // to the combatant's own effective Regen to every stat its definition lists
-  // in statBonusEqualToRegen. The recursive call omits fieldEffectCtx (mpRegen
-  // itself is never a target of this bonus), so it can't recurse further.
-  const activeDef = fieldEffectCtx?.active ? fieldEffectCtx.defs[fieldEffectCtx.active.fieldEffectId] : undefined;
-  if (activeDef?.statBonusEqualToRegen?.includes(stat)) {
-    raw += getEffectiveStat(hero, combatant, 'mpRegen');
+  // Verdant Earth (docs/field-effects.md): while active, adds a bonus equal to
+  // the combatant's OWN current magnitude of the named status (Renew) to every
+  // stat its definition lists. Reads the live magnitude each call, so the bonus
+  // shrinks as Renew decays and is simply 0 for a hero not carrying it — the
+  // effect rewards a Renew build rather than buffing the whole field flatly.
+  const statusBonus = fieldEffectCtx?.active
+    ? fieldEffectCtx.defs[fieldEffectCtx.active.fieldEffectId]?.statBonusEqualToStatusMagnitude
+    : undefined;
+  if (statusBonus?.stats.includes(stat)) {
+    raw += statusMagnitude(combatant, statusBonus.statusId);
   }
 
   return raw;

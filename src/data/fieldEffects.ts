@@ -53,8 +53,8 @@ export const fieldEffects: Record<string, FieldEffectDefinition> = {
   verdantEarth: {
     id: 'verdantEarth',
     name: 'Verdant Earth',
-    description: "Every hero's Attack and Intelligence are boosted by an amount equal to their own MP Regen.",
+    description: 'Every hero carrying Renew has their Attack and Intelligence raised by their own Renew magnitude.',
     flavorType: 'Nature',
-    statBonusEqualToRegen: ['attack', 'intelligence'],
+    statBonusEqualToStatusMagnitude: { statusId: 'Renew', stats: ['attack', 'intelligence'] },
   },
 };

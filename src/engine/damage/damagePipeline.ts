@@ -84,7 +84,7 @@ export function statKeysForCategory(category: DamageCategory): readonly [StatKey
   return category === 'physical' ? (['attack', 'defense'] as const) : (['intelligence', 'wisdom'] as const);
 }
 
-/** Pipeline 1: the off/def ratio only. Nothing damage-shaped may enter here. `fieldEffectCtx` is a stat-pipeline input (Verdant Earth's statBonusEqualToRegen), not a damage modifier — see getEffectiveStat. */
+/** Pipeline 1: the off/def ratio only. Nothing damage-shaped may enter here. `fieldEffectCtx` is a stat-pipeline input (Verdant Earth's statBonusEqualToStatusMagnitude), not a damage modifier — see getEffectiveStat. */
 export function resolveStatRatio(
   category: DamageCategory,
   attackerHero: HeroDefinition,

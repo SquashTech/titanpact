@@ -22,6 +22,7 @@ import { tickEndOfRound, applyStatus } from '../src/engine/combat/statusEngine';
 import { orderActions } from '../src/engine/combat/priority';
 import { resolveStatRatio } from '../src/engine/damage/damagePipeline';
 import { getEffectiveStat, getMaxHp } from '../src/engine/state';
+import type { CombatState } from '../src/engine/state';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
@@ -289,10 +290,19 @@ test('fieldEffects: Sanctuary — a heal actually lands before a same-bracket da
   assert.deepStrictEqual(turnOrder, ['a1', 'b2']);
 });
 
-// --- Verdant Earth: bonus Attack/Intelligence equal to Regen -----------------
+// --- Verdant Earth: bonus Attack/Intelligence equal to the Renew status ------
+// Reworked 2026-08-26: originally read the mpRegen STAT (a naming mix-up between
+// "MP Regen" and the HoT status, which is why that status is now "Renew"). The
+// bonus is a build-around payoff keyed to the status, so a hero not carrying
+// Renew gains nothing and the bonus decays as Renew's magnitude halves.
 
-test('fieldEffects: Verdant Earth adds the combatant\'s own Regen to Attack and Intelligence, not other stats', () => {
-  const state = twoVTwoFixture(440);
+/** Puts `magnitude` Renew on one combatant, through the real status engine. */
+function withRenew(state: CombatState, combatantId: string, magnitude: number): CombatState {
+  return applyStatus(state, 1, combatantId, statuses.Renew, { magnitude }).state;
+}
+
+test('fieldEffects: Verdant Earth adds the combatant\'s own Renew magnitude to Attack and Intelligence, not other stats', () => {
+  const state = withRenew(twoVTwoFixture(440), 'a1', 20);
   const hero = heroes.cinderKnight;
   const combatant = state.combatants.a1;
 
@@ -303,15 +313,33 @@ test('fieldEffects: Verdant Earth adds the combatant\'s own Regen to Attack and 
   assert.strictEqual(getEffectiveStat(hero, combatant, 'attack', inactiveCtx), hero.baseStats.attack);
 
   const activeCtx = { active: { fieldEffectId: 'verdantEarth', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS }, defs: fieldEffects };
-  assert.strictEqual(getEffectiveStat(hero, combatant, 'attack', activeCtx), hero.baseStats.attack + hero.baseStats.mpRegen);
-  assert.strictEqual(getEffectiveStat(hero, combatant, 'intelligence', activeCtx), hero.baseStats.intelligence + hero.baseStats.mpRegen);
-  // Not in statBonusEqualToRegen -> untouched
+  assert.strictEqual(getEffectiveStat(hero, combatant, 'attack', activeCtx), hero.baseStats.attack + 20);
+  assert.strictEqual(getEffectiveStat(hero, combatant, 'intelligence', activeCtx), hero.baseStats.intelligence + 20);
+  // Not in statBonusEqualToStatusMagnitude -> untouched
   assert.strictEqual(getEffectiveStat(hero, combatant, 'defense', activeCtx), hero.baseStats.defense);
   assert.strictEqual(getEffectiveStat(hero, combatant, 'speed', activeCtx), hero.baseStats.speed);
 });
 
+test('fieldEffects: Verdant Earth does nothing for a hero not carrying Renew, and shrinks as Renew decays', () => {
+  const activeCtx = { active: { fieldEffectId: 'verdantEarth', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS }, defs: fieldEffects };
+  const hero = heroes.cinderKnight;
+
+  // No Renew -> magnitude 0 -> no bonus at all, even with the effect up.
+  const bare = twoVTwoFixture(443);
+  assert.strictEqual(getEffectiveStat(hero, bare.combatants.a1, 'attack', activeCtx), hero.baseStats.attack);
+
+  // Renew halves at end of round (StatusDefinition.decay: 'halve'), so the
+  // Attack bonus tracks it down rather than holding at its opening value.
+  const renewed = withRenew(bare, 'a1', 20);
+  assert.strictEqual(getEffectiveStat(hero, renewed.combatants.a1, 'attack', activeCtx), hero.baseStats.attack + 20);
+  const maxHpOf = (id: string) => getMaxHp(heroes[renewed.combatants[id].heroId], renewed.combatants[id]);
+  const afterRound = tickEndOfRound(renewed, 1, statuses, fieldEffects, maxHpOf).state;
+  assert.strictEqual(afterRound.combatants.a1.statuses.Renew.magnitude, 10);
+  assert.strictEqual(getEffectiveStat(hero, afterRound.combatants.a1, 'attack', activeCtx), hero.baseStats.attack + 10);
+});
+
 test('fieldEffects: Verdant Earth raises the damage-pipeline stat ratio via the boosted offStat', () => {
-  const state = twoVTwoFixture(441);
+  const state = withRenew(twoVTwoFixture(441), 'a1', 20);
   const attackerHero = heroes.cinderKnight; // physical: Attack/Defense
   const attacker = state.combatants.a1;
   const defenderHero = heroes.ironWarden;
@@ -321,13 +349,13 @@ test('fieldEffects: Verdant Earth raises the damage-pipeline stat ratio via the 
   const activeCtx = { active: { fieldEffectId: 'verdantEarth', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS }, defs: fieldEffects };
   const boostedRatio = resolveStatRatio('physical', attackerHero, attacker, defenderHero, defender, activeCtx);
 
-  const expectedRatio = (attackerHero.baseStats.attack + attackerHero.baseStats.mpRegen) / defenderHero.baseStats.defense;
+  const expectedRatio = (attackerHero.baseStats.attack + 20) / defenderHero.baseStats.defense;
   assert.ok(boostedRatio > plainRatio);
   assert.strictEqual(boostedRatio, expectedRatio);
 });
 
-test('fieldEffects: Verdant Earth — a DamageDealt event\'s offStat reflects the Regen bonus end to end', () => {
-  const built = twoVTwoFixture(442);
+test('fieldEffects: Verdant Earth — a DamageDealt event\'s offStat reflects the Renew bonus end to end', () => {
+  const built = withRenew(twoVTwoFixture(442), 'a1', 20);
   const state = { ...built, activeFieldEffect: { fieldEffectId: 'verdantEarth', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'cinderBite', declaredTarget: 'b1' }]; // physical, cinderKnight
 
@@ -335,6 +363,6 @@ test('fieldEffects: Verdant Earth — a DamageDealt event\'s offStat reflects th
   const dmg = events.find((e) => e.type === 'DamageDealt');
   assert.ok(dmg && dmg.type === 'DamageDealt');
   if (dmg && dmg.type === 'DamageDealt') {
-    assert.strictEqual(dmg.offStat, heroes.cinderKnight.baseStats.attack + heroes.cinderKnight.baseStats.mpRegen);
+    assert.strictEqual(dmg.offStat, heroes.cinderKnight.baseStats.attack + 20);
   }
 });

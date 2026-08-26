@@ -69,7 +69,9 @@ don't silently override it.
   — a separate axis, not equipment.
 
 ### Mana & tempo
-- Regenerating Mana with two stats: **pool size** and **per-turn Regen**.
+- Regenerating Mana with two stats: **pool size** and **per-turn MP Regen**. Always write
+  the stat as **MP Regen**: the bare word "Regen" used to collide with the heal-over-time
+  status, which is why that status is now **Renew** (2026-08-26).
 - **Bench heroes regen mana** — this is the resource-cycling engine that makes switching
   productive.
 - **Lock-in rule:** voluntary switching is disabled once a side has **2+ heroes KO'd** (forced

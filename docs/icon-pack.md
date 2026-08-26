@@ -74,7 +74,7 @@ Plain, un-modified glyphs, so statuses read as the *base* family.
 | Bleed | 77 | impact/wound burst — the weakest pick here; the pack has no actual blood glyph |
 | Freeze | 65 | snowflake — **needs ≥ 32px**, the arms disconnect when halved |
 | Daze | 8 | cyan Z stack |
-| Regen | 75 | green cycle arrows |
+| Renew | 75 | green cycle arrows |
 | Conduct | 11 | water drops between two bolts. Uncannily exact — Conduct *is* water + electricity |
 | Poison | 2 | purple bubbles |
 | Haunt | 10 | skull in a purple swirl — **needs ≥ 32px**, becomes a blob when halved |

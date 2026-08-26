@@ -43,7 +43,7 @@ interface FieldEffectDefinition {
   suppressesStatusDecay?: readonly StatusId[]; // e.g. ['Burn']
   reversesSpeedOrder?: boolean;
   healPriorityBonus?: number; // added to a heal-kind move's priority bracket
-  statBonusEqualToRegen?: readonly StatKey[]; // e.g. ['attack', 'intelligence']
+  statBonusEqualToStatusMagnitude?: { statusId: StatusId; stats: readonly StatKey[] };
 }
 ```
 
@@ -69,10 +69,14 @@ actually applies it:
 - **`healPriorityBonus`** — `engine/combat/priority.ts` `orderActions`
   (`actionPriority`). Added to a `kind: 'heal'` move's priority bracket, read
   generically off the move's own `kind` rather than a per-move/per-status check.
-- **`statBonusEqualToRegen`** — `engine/state.ts` `getEffectiveStat`. A genuine
-  stat-pipeline bonus (pipeline 1, not a damage modifier): every stat listed gains a
-  bonus equal to the combatant's own effective `mpRegen`. Threaded as an optional
-  `FieldEffectContext` argument (`{ active, defs }`) so every existing 3-arg call site
+- **`statBonusEqualToStatusMagnitude`** — `engine/state.ts` `getEffectiveStat`. A genuine
+  stat-pipeline bonus (pipeline 1, not a damage modifier): every stat in `stats` gains a
+  bonus equal to the combatant's **own current magnitude of `statusId`** — for Verdant
+  Earth, its Renew. Read live off the status each call, so the bonus decays as Renew
+  halves and is 0 for a hero not carrying it: the effect is a payoff for building around
+  the status, not a flat buff to the whole field. Keyed by status id rather than
+  hardcoding Renew, so a later effect can scale a stat off any magnitude-shape status.
+  Threaded as an optional `FieldEffectContext` argument (`{ active, defs }`) so every existing 3-arg call site
   (tests, non-combat stat sheets) is unaffected; `damagePipeline.ts`'s
   `resolveStatRatio` and `resolveRound.ts`'s per-hit `DamageDealt` readout both pass it
   through, and it's recomputed fresh per hit (not hoisted before the action loop) so a
@@ -96,7 +100,7 @@ Surging Magic — mechanically **global**, affecting both sides. Every setting m
 mirrors `arcaneSurge`'s shape (`kind: 'buff'`, `target: 'self'`, 20 mana, sets its
 field effect) and is attached as a fourth move to that type's starter, the same "small
 dedicated buff move" pattern `moves.ts`'s file header documents for status-granting
-moves like `vanish` (Stealth) and `secondWind` (Regen):
+moves like `vanish` (Stealth) and `secondWind` (Renew):
 
 | Field Effect | flavorType | Effect | Move (starter) |
 | --- | --- | --- | --- |
@@ -104,7 +108,7 @@ moves like `vanish` (Stealth) and `secondWind` (Regen):
 | Scorched Land | Fire | Burn no longer decays | `scorchTheEarth` (Crimson) |
 | Stasis Bubble | Mind | Reverses same-bracket Speed order | `stasisField` (Cortex) |
 | Sanctuary | Light | Heal-kind moves get +1 priority | `consecrate` (Solace) |
-| Verdant Earth | Nature | +Attack/+Intelligence equal to Regen | `overgrowth` (Sylva) |
+| Verdant Earth | Nature | +Attack/+Intelligence equal to your own Renew | `overgrowth` (Sylva) |
 
 This is placeholder-tier balance content (mana costs, and which starter carries each
 move, are both open to reassignment) — the mechanics and the definitions are real, but
@@ -140,7 +144,9 @@ boundary.
   move-triggered.
 - **Verdant Earth's bonus applying to benched heroes too** — `getEffectiveStat` has no
   active/bench distinction, so (like Surging Magic's `mpRegenMultiplier`) the
-  Attack/Intelligence bonus applies to every combatant regardless of bench status.
+  Attack/Intelligence bonus applies to any combatant carrying Renew regardless of bench
+  status. Mostly moot while the bonus only feeds the damage pipeline (a benched hero
+  isn't attacking), but it means a hero can be switched in mid-effect already boosted.
   Consistent with existing precedent, but not something a designer has explicitly
   signed off on for this specific effect — flag if that's ever meant to be
   active-only.

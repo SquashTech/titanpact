@@ -159,7 +159,7 @@ engine contract for anything status-shaped, not just flat stat mods.
 
 - A combatant can **switch** with a benched ally as its action for the round.
 - **Benched heroes regenerate** (HP, and per `mana.md`, possibly mana), which makes
-  switching a *productive* action, not a purely defensive one. Regen ticks at round
+  switching a *productive* action, not a purely defensive one. Renew ticks at round
   boundaries (per the proposed turn/round model above).
 - **Lock-in rule (LOCKED):** once a side has **2 or more KOs**, switching is
   **disabled** for that side. This is self-regulating design: early fights are a
