@@ -257,11 +257,22 @@ Install: open the GitHub Pages URL on the phone, then **Chrome/Android** → ⋮
 Home screen" (or the install prompt Chrome offers on its own); **Safari/iOS** → Share →
 "Add to Home Screen" (iOS has no automatic prompt — the manual step is the only way).
 
-**Getting a new build onto the phone.** There is no live reload — a push does not reach
-an app that is already open. A *relaunch* picks up the newest build, but on iOS
-"reopening" from the App Switcher only resumes the suspended page and does not
-re-navigate: **swipe the app away in the App Switcher first**, then tap the icon. Deploy
-takes ~40s after a push, so confirm the Pages workflow is green before testing.
+**Getting a new build onto the phone.** The app self-updates *while sitting on the title
+screen* (`src/app/useReloadOnNewBuild.ts`): it compares the hashed bundle it booted from
+against the one the deployed HTML now points at, and reloads when they differ — on
+mount, on returning to the foreground, and every 30s. So the loop is: push, wait ~40s for
+the Pages workflow to go green, and let the phone sit on the title screen.
+
+**It is gated to the title screen on purpose.** A run lives in React state alone and
+nothing persists it, so a reload at any other moment destroys one silently. If you ever
+widen that gate, persist run state first. It deliberately does *not* use the service
+worker's update cycle either — `sw.js` only changes when the worker itself is edited, so
+that would miss every ordinary app change.
+
+Outside the title screen the old rule still applies: a push does not reach an app that is
+already open, and on iOS "reopening" from the App Switcher only resumes the suspended
+page rather than re-navigating — **swipe the app away in the App Switcher first**, then
+tap the icon.
 
 The pieces, should any of this need changing:
 

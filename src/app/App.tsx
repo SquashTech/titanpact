@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { initUiScale } from './uiScale';
+import { useReloadOnNewBuild } from './useReloadOnNewBuild';
 import { FightScreen } from '../view/combat/FightScreen';
 import { TitleScreen } from '../view/run/TitleScreen';
 import { DraftScreen } from '../view/run/DraftScreen';
@@ -219,6 +220,10 @@ export function App() {
   useEffect(() => {
     if (shellRef.current) return initUiScale(shellRef.current);
   }, []);
+
+  // Title screen only — a run lives in React state alone, so a reload anywhere
+  // else would destroy one. See useReloadOnNewBuild's header.
+  useReloadOnNewBuild(screen.kind === 'title');
 
   function handleClaimContract(defeated: RosterEntry): boolean {
     if (!isRecruitable(defeated.heroId, heroes)) return false;
