@@ -47,6 +47,14 @@ const MIN_SCALE = 1;
    MAX_WIDTH, so the width ratio cannot exceed 430/394 ≈ 1.09. */
 const MAX_SCALE = 1.2;
 
+/**
+ * Both branches report *layout viewport* px, which equal device px only at
+ * zoom 1. If the page is ever zoomed, every number here inflates by 1/zoom and
+ * the whole layout silently renders at the wrong size without erroring — see
+ * the minimum-scale note on index.html's viewport meta, which is what keeps
+ * that from happening. `visualViewport.scale` is the value to check first if
+ * this module ever appears to be measuring a viewport the device doesn't have.
+ */
 function viewportSize(): { width: number; height: number } {
   const vv = window.visualViewport;
   return vv ? { width: vv.width, height: vv.height } : { width: window.innerWidth, height: window.innerHeight };

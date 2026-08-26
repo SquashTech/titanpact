@@ -279,6 +279,13 @@ The pieces, should any of this need changing:
   `uiScale.ts` derives the whole layout from. Note that safe-area padding on `#root`
   cannot fix that: a `position: fixed` shell's containing block is the viewport, so it
   escapes `#root`'s box entirely.
+- **`minimum-scale=1.0` in the viewport meta is load-bearing.** Without a floor, an
+  installed iOS web app can settle at a zoom below 1 and remember it *per site*, so
+  deleting and re-adding the home-screen icon does not clear it. At zoom 0.5 an iPhone
+  reporting `screen 390x844` hands the page a `780x1594` layout viewport; nothing errors,
+  `.app-shell` just correctly caps at `MAX_WIDTH` and centres, and the game renders
+  half-size in a narrow column. If the app ever looks shrunken again, check
+  `visualViewport.scale` before anything else.
 - **`uiScale.ts`'s `REFERENCE_WIDTH` is load-bearing for installed-vs-tab parity.**
   Installing the app removes the address bar, which is what turned up a latent bug: the
   scaler takes `min(widthRatio, heightRatio)`, and in a browser tab the shortened
