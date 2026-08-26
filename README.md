@@ -257,6 +257,12 @@ Install: open the GitHub Pages URL on the phone, then **Chrome/Android** → ⋮
 Home screen" (or the install prompt Chrome offers on its own); **Safari/iOS** → Share →
 "Add to Home Screen" (iOS has no automatic prompt — the manual step is the only way).
 
+**Getting a new build onto the phone.** There is no live reload — a push does not reach
+an app that is already open. A *relaunch* picks up the newest build, but on iOS
+"reopening" from the App Switcher only resumes the suspended page and does not
+re-navigate: **swipe the app away in the App Switcher first**, then tap the icon. Deploy
+takes ~40s after a push, so confirm the Pages workflow is green before testing.
+
 The pieces, should any of this need changing:
 
 - `public/manifest.webmanifest` — name, icons, `display: standalone`, `orientation:

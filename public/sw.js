@@ -13,7 +13,7 @@
  * filenames — a given URL's bytes can never change.
  */
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL_CACHE = `titanpact-shell-${VERSION}`;
 const ASSET_CACHE = `titanpact-assets-${VERSION}`;
 const OWNED = [SHELL_CACHE, ASSET_CACHE];
@@ -62,14 +62,19 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-async function networkFirst(request, cacheName, fallbackUrl) {
+/**
+ * `fetchRequest` is what actually goes to the network and is not always
+ * `request` — a navigation is answered by the shell URL — while `cacheKey` is
+ * what the result is stored and looked up under.
+ */
+async function networkFirst(request, cacheName, { fetchRequest = request, cacheKey = request } = {}) {
   const cache = await caches.open(cacheName);
   try {
-    const fresh = await fetch(request);
-    if (fresh && fresh.ok) cache.put(fallbackUrl ?? request, fresh.clone());
+    const fresh = await fetch(fetchRequest);
+    if (fresh && fresh.ok) cache.put(cacheKey, fresh.clone());
     return fresh;
   } catch (err) {
-    const cached = await cache.match(fallbackUrl ?? request);
+    const cached = await cache.match(cacheKey);
     if (cached) return cached;
     throw err;
   }
@@ -91,9 +96,20 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Navigations always resolve to the single-page shell.
+  // Navigations always resolve to the single-page shell, and the shell is
+  // fetched with `cache: 'reload'` so the browser's OWN http cache cannot
+  // answer it. GitHub Pages sends `Cache-Control: max-age=600` on the HTML, so
+  // a plain fetch() here could hand a relaunched app a ten-minute-old shell —
+  // which is the exact staleness this worker is network-first to prevent.
+  // Built from the URL rather than `new Request(request, …)` because a
+  // navigation request's `navigate` mode cannot be reconstructed.
   if (request.mode === 'navigate') {
-    event.respondWith(networkFirst(request, SHELL_CACHE, SHELL_URL));
+    event.respondWith(
+      networkFirst(request, SHELL_CACHE, {
+        fetchRequest: new Request(SHELL_URL, { cache: 'reload', credentials: 'same-origin' }),
+        cacheKey: SHELL_URL,
+      })
+    );
     return;
   }
 
