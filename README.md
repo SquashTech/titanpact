@@ -279,13 +279,18 @@ The pieces, should any of this need changing:
   `uiScale.ts` derives the whole layout from. Note that safe-area padding on `#root`
   cannot fix that: a `position: fixed` shell's containing block is the viewport, so it
   escapes `#root`'s box entirely.
-- **`minimum-scale=1.0` in the viewport meta is load-bearing.** Without a floor, an
-  installed iOS web app can settle at a zoom below 1 and remember it *per site*, so
-  deleting and re-adding the home-screen icon does not clear it. At zoom 0.5 an iPhone
-  reporting `screen 390x844` hands the page a `780x1594` layout viewport; nothing errors,
-  `.app-shell` just correctly caps at `MAX_WIDTH` and centres, and the game renders
-  half-size in a narrow column. If the app ever looks shrunken again, check
-  `visualViewport.scale` before anything else.
+- **`uiScale.ts` compensates for page zoom, and that is what keeps the installed app
+  the right size.** A per-site page zoom hands the page a layout viewport `1/zoom` times
+  the device's own size: an iPhone reporting `screen 390x844` reports `innerWidth 780` at
+  zoom 0.5. Nothing errors — `.app-shell` just correctly caps at `MAX_WIDTH` and centres,
+  and the game renders half-size in a narrow column with `--bg` either side. The viewport
+  meta's `minimum-scale`/`maximum-scale`/`user-scalable` do **not** prevent this (verified
+  on device 2026-08-26; iOS has ignored `user-scalable=no` since iOS 10, and a per-site
+  zoom overrides the rest). It also survives reinstalling the home-screen icon and does
+  not show under Safari's Website Data. So `layout()` reads `visualViewport.scale` and
+  works in device px throughout; verified to produce an identical canvas at zoom 1, 0.75
+  and 0.5 on the same device. **If the app ever looks shrunken again, check
+  `visualViewport.scale` first.**
 - **`uiScale.ts`'s `REFERENCE_WIDTH` is load-bearing for installed-vs-tab parity.**
   Installing the app removes the address bar, which is what turned up a latent bug: the
   scaler takes `min(widthRatio, heightRatio)`, and in a browser tab the shortened

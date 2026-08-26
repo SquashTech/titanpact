@@ -12,17 +12,19 @@
       the usable screen, which is what the scaler assumes.
     -->
     <!--
-      minimum-scale=1.0 is load-bearing, not boilerplate. initial-scale pins the
-      *starting* zoom and maximum-scale the *upper* bound, but neither sets a
-      floor — so the floor is WebKit's default 0.25, and an installed iOS web
-      app is free to settle at a zoom below 1 and remember it per site (which is
-      why deleting and re-adding the home-screen icon does not reset it).
+      minimum-scale/maximum-scale/user-scalable are a best-effort hint here, NOT
+      the thing keeping the layout honest. Tested on a real installed build
+      (2026-08-26): an iPhone reporting `screen 390x844` still handed the page a
+      780x1594 layout viewport at zoom 0.5 with all three set. iOS has ignored
+      `user-scalable=no` since iOS 10 for accessibility, and a per-site page zoom
+      overrides the scale hints regardless — it also survives deleting and
+      re-adding the home-screen icon, and does not appear under Safari's Website
+      Data, so there is nothing the page can do to forbid it.
 
-      At zoom 0.5 an iPhone reporting screen 390x844 hands the page a 780x1594
-      layout viewport. Nothing errors: `.app-shell` correctly caps itself at
-      MAX_WIDTH and centres, so the game renders half-size in a narrow column
-      with --bg either side. Pinning the floor to 1 makes the layout viewport
-      equal the device width on every device, which is what uiScale.ts measures.
+      What actually holds the layout together is that src/app/uiScale.ts reads
+      `visualViewport.scale` and works in device px, so any zoom is measured and
+      compensated for rather than assumed away. Do not "simplify" that by
+      trusting these attributes.
     -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Titanpact</title>

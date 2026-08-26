@@ -48,28 +48,49 @@ const MIN_SCALE = 1;
 const MAX_SCALE = 1.2;
 
 /**
- * Both branches report *layout viewport* px, which equal device px only at
- * zoom 1. If the page is ever zoomed, every number here inflates by 1/zoom and
- * the whole layout silently renders at the wrong size without erroring — see
- * the minimum-scale note on index.html's viewport meta, which is what keeps
- * that from happening. `visualViewport.scale` is the value to check first if
- * this module ever appears to be measuring a viewport the device doesn't have.
+ * Reports *layout viewport* px plus the page zoom relating them to device px.
+ *
+ * These are only the same number at zoom 1. A browser rendering the page at
+ * zoom z hands out a layout viewport 1/z times the device's own size, so an
+ * iPhone reporting `screen 390x844` reports `innerWidth 780` at zoom 0.5 — and
+ * every measurement here inflates to match. Nothing errors; the layout just
+ * silently comes out half size. Reported once from a real installed build
+ * (2026-08-26) and the reason `layout()` below works in device px throughout.
+ *
+ * Page zoom is a per-site browser setting, not something the page controls: it
+ * survives reinstalling a home-screen web app, does not appear under Safari's
+ * Website Data, and is set independently in every browser. It cannot be
+ * prevented from here (iOS has ignored `user-scalable=no` since iOS 10, for
+ * accessibility reasons), so it has to be measured and compensated for.
  */
-function viewportSize(): { width: number; height: number } {
+function viewportMetrics(): { vw: number; vh: number; zoom: number } {
   const vv = window.visualViewport;
-  return vv ? { width: vv.width, height: vv.height } : { width: window.innerWidth, height: window.innerHeight };
+  if (!vv) return { vw: window.innerWidth, vh: window.innerHeight, zoom: 1 };
+  return { vw: vv.width, vh: vv.height, zoom: vv.scale > 0 ? vv.scale : 1 };
 }
 
 function layout(shell: HTMLElement): void {
-  const { width: vw, height: vh } = viewportSize();
-  const footprintWidth = Math.min(vw, MAX_WIDTH);
-  const rawScale = Math.min(footprintWidth / REFERENCE_WIDTH, vh / REFERENCE_HEIGHT);
+  const { vw, vh, zoom } = viewportMetrics();
+
+  // Everything below is in device px — what the viewport would measure at zoom
+  // 1 — so the design canvas is chosen from the screen the player is actually
+  // holding rather than from a zoom-inflated one. At zoom 1 this is identity
+  // and the arithmetic is exactly what it was before.
+  const deviceWidth = vw * zoom;
+  const deviceHeight = vh * zoom;
+
+  const footprintWidth = Math.min(deviceWidth, MAX_WIDTH);
+  const rawScale = Math.min(footprintWidth / REFERENCE_WIDTH, deviceHeight / REFERENCE_HEIGHT);
   const scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, rawScale));
 
+  // Back to layout px, which is the unit the styles are interpreted in. The
+  // transform carries the extra 1/zoom so the shell still covers the whole
+  // screen: at zoom 0.5 a 390px-wide canvas is drawn at 780 layout px, which
+  // the browser then renders back down to the 390pt the device really has.
   shell.style.width = `${footprintWidth / scale}px`;
-  shell.style.height = `${vh / scale}px`;
-  shell.style.left = `${(vw - footprintWidth) / 2}px`;
-  shell.style.transform = `scale(${scale})`;
+  shell.style.height = `${deviceHeight / scale}px`;
+  shell.style.left = `${(vw - footprintWidth / zoom) / 2}px`;
+  shell.style.transform = `scale(${scale / zoom})`;
 }
 
 /** Call from a mount effect once the app-shell element exists. Returns a cleanup function. */
