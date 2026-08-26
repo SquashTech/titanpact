@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { initUiScale } from './uiScale';
+import { ViewportProbe } from '../view/dev/ViewportProbe';
 import { FightScreen } from '../view/combat/FightScreen';
 import { TitleScreen } from '../view/run/TitleScreen';
 import { DraftScreen } from '../view/run/DraftScreen';
@@ -502,6 +503,8 @@ export function App() {
 
   return (
     <div className="app-shell" ref={shellRef}>
+      {/* TEMP: installed-PWA layout diagnosis. Remove with ViewportProbe.tsx. */}
+      {screen.kind === 'title' && <ViewportProbe />}
       {screen.kind === 'title' && (
         <TitleScreen
           onStartRun={handleStartNewRun}
