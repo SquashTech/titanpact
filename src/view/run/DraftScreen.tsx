@@ -1,13 +1,14 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
-import type { HeroDefinition, StatKey } from '../../engine/content';
+import type { HeroDefinition, MoveDefinition, StatKey } from '../../engine/content';
 import { createRosterEntry } from '../../run/state';
 import { STARTER_PICK_COUNT } from '../../run/draft';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { MoveInfoPanel } from '../shared/MoveTile';
 import { STAT_COLORS, STAT_LABELS, computeBst, statFraction } from '../shared/StatBars';
 
 interface Props {
@@ -79,6 +80,8 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
   const [featuredId, setFeaturedId] = useState<string>(optionIds[0]);
   const [pickedIds, setPickedIds] = useState<string[]>([]);
   const [inspecting, setInspecting] = useState<HeroDefinition | null>(null);
+  /** The starting move whose detail popup is open over the stage, or null. Tapping a kit chip opens it; a tap anywhere dismisses it. */
+  const [popupMove, setPopupMove] = useState<MoveDefinition | null>(null);
   const motes = useMotes();
 
   const featured = heroes[featuredId];
@@ -204,24 +207,32 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
             </div>
           </div>
 
-          {/* Starting kit, drawn as the move buttons with their boxes taken
-              off: the same mana crystal the move grid uses, and the type
-              carried as the name's own color rather than a separate chip. */}
+          {/* Starting kit. These were chromeless spans — the same mana
+              crystal the move grid uses, with the type carried as the name's
+              own color — because at the time they were a readout, and
+              docs/visual-language.md's rule reserves a rectangle for things
+              you can act on. They ARE actionable now: tapping one pops its
+              full detail over the stage, which is the only way the player
+              can find out what a starting kit actually does before
+              committing to a hero for the rest of the run. So under the same
+              rule they get their boxes back, and the box advertises the tap. */}
           <div className="draft-kit">
             {featured.moveIds.map((moveId) => {
               const move = moves[moveId];
               if (!move) return null;
               return (
-                <span
+                <button
                   className="draft-kit-move"
                   key={moveId}
-                  style={{ '--move-type': getTypeColor(move.type) } as CSSProperties}
+                  style={{ '--move-type': getTypeColor(move.type), '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
+                  onClick={() => setPopupMove(move)}
+                  aria-haspopup="dialog"
                 >
                   <span className="draft-kit-crystal" title={`${move.manaCost} Mana`}>
                     {move.manaCost}
                   </span>
                   {move.name}
-                </span>
+                </button>
               );
             })}
           </div>
@@ -266,6 +277,31 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
       <button className="resolve-button draft-cta" disabled={!complete} onClick={() => onConfirm(pickedIds)}>
         {complete ? 'Seal the Pact' : `Choose ${STARTER_PICK_COUNT - pickedIds.length} more`}
       </button>
+
+      {/* Move detail as an overlay rather than a slab pinned under the kit.
+          The readout that used to live there was always on screen — an empty
+          88px box for most of the draft, holding stage space that the figure
+          and stat silhouette make better use of — and it sat below the fold
+          of the kit it belonged to. As a popup it appears over the stage,
+          right where the eye already is, and a tap anywhere dismisses it
+          (same contract as the in-combat long-press move popup, .log-overlay
+          + "tap anywhere to close"), so a player comparing three moves pays
+          one extra tap per move and gets the whole screen back the rest of
+          the time. It carries the move's own type color, so the card still
+          reads as the same object as the chip that opened it. */}
+      {popupMove && (
+        <div className="log-overlay" onClick={() => setPopupMove(null)}>
+          <div
+            className="draft-move-popup"
+            role="dialog"
+            aria-label={`${popupMove.name} details`}
+            style={{ '--move-type-rgb': getTypeColorRgb(popupMove.type) } as CSSProperties}
+          >
+            <MoveInfoPanel move={popupMove} />
+            <div className="move-popup-hint">Tap anywhere to close</div>
+          </div>
+        </div>
+      )}
 
       {inspecting && (
         <HeroPreviewOverlay

@@ -587,6 +587,11 @@ export function App() {
           onResolved={(outcome) =>
             handleFightResolved(screen.nodeId, screen.nodeType, screen.goldReward, screen.trainingPointsReward, screen.equipmentReward, outcome)
           }
+          /* Abandon this run from the fight's Options menu. Nothing to tear
+             down: RunState lives in this component's state and a new run
+             replaces it wholesale, so returning to the title is the whole
+             operation. */
+          onQuitToTitle={() => setScreen({ kind: 'title' })}
         />
       )}
 

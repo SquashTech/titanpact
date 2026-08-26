@@ -59,9 +59,13 @@ the movepool is strictly *substitution*, never expansion.
 > `levelUpHero`/`grantLevelUpMove`/`MOVE_CAP` enforce exactly this — under the cap a
 > level-up's move is gained outright; at the cap it's an accept/decline replacement
 > offer (`src/view/run/LevelUpScreen.tsx`). **Fixture content now respects the cap
-> too:** `/src/data/heroes.ts` starting kits were trimmed to 3 moves each (a
-> low-power move of the hero's main type plus 1-2 support moves — heal/buff/status),
-> leaving room to grow into the cap via level-ups instead of starting over it. Every
+> too:** `/src/data/heroes.ts` starting kits are **exactly 3 moves for every hero** (a
+> low-power move of the hero's main type plus two supports — heal/buff/status),
+> leaving room to grow into the cap via level-ups instead of starting over it. The
+> five Field Effect setters briefly broke that uniformity as fourth starting moves;
+> they moved into `moveTiers` on 2026-08-26 (`docs/field-effects.md`), so the rule now
+> holds with no exceptions — which is what lets the draft screen compare four
+> candidates' kits against each other without one of them being a slot longer. Every
 > fixture hero's `moveTiers` pool (`src/data/progression.ts`) was expanded to match, so
 > a level-up's random draw has real variety across all 12 heroes. Evolution paths
 > (Part 2, below) now cover all 12 fixture heroes too — a separate axis from the

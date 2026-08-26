@@ -893,6 +893,7 @@ button,
 .bottom-bar {
   flex: 0 0 auto;
   display: flex;
+  align-items: stretch;
   gap: 6px;
   position: relative;
   z-index: 5;
@@ -902,24 +903,108 @@ button,
   padding-right: var(--shell-pad);
   margin-bottom: calc(var(--shell-pad) * -1);
   padding-bottom: var(--shell-pad);
+  padding-top: 2px;
   background: var(--console-face);
 }
 
-.bottom-bar .back-button,
-.bottom-bar .log-toggle-button {
+/*
+ * The five console keys. Previously four ~92x24 chips: quarter-width, and
+ * shorter than any other tap target in the app. That was survivable in a
+ * browser tab and stopped being so once the game ran installed, where the
+ * row sits right at the bottom edge under the thumb — so the height is now
+ * set once, here, at 46px for all five, and the *width* is what separates
+ * them (see the two modifiers below). Height comes from min-height rather
+ * than padding so the double-width pair (glyph beside label) and the
+ * caption-stacked trio (glyph over label) still land on the same baseline.
+ */
+.bottom-action {
   flex: 1 1 0;
   min-width: 0;
-  text-align: center;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  cursor: pointer;
+  box-shadow: var(--hairline);
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out),
+    background var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
 }
 
-.bottom-bar .back-button:disabled,
-.bottom-bar .log-toggle-button:disabled {
+.bottom-action:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--accent);
+  box-shadow: var(--hairline), var(--elev-1);
+}
+
+.bottom-action:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+.bottom-action:disabled {
   opacity: 0.35;
   cursor: not-allowed;
   pointer-events: none;
+}
+
+.bottom-action-glyph {
+  line-height: 1;
+}
+
+/* Back and Switch: the two keys pressed mid-decision, several times a turn.
+   Roughly double width, a label at body size next to the glyph rather than
+   under it, and a lit face — they are the row's foreground, and the other
+   three are reference material that happens to live in the same strip. */
+.bottom-action-primary {
+  flex: 2.1 1 0;
+  gap: 7px;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  color: var(--text);
+  border-color: var(--border-strong);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+}
+
+.bottom-action-primary .bottom-action-glyph {
+  font-size: 15px;
+}
+
+/* Switching is the one thing in this row that's a *play* rather than
+   navigation, so it takes the ally blue the acting platform and the arena's
+   own bottom-zone tint already use. Only while it's live — a disabled key
+   carrying team color would advertise an action that isn't available. */
+.bottom-action-switch:not(:disabled) {
+  border-color: rgba(74, 144, 217, 0.5);
+  background: linear-gradient(180deg, rgba(74, 144, 217, 0.18), rgba(74, 144, 217, 0.05));
+}
+
+.bottom-action-switch:hover:not(:disabled) {
+  border-color: rgba(74, 144, 217, 0.9);
+}
+
+/* Log / Ref / Menu: consulted, not played. Third the width, and the glyph
+   stacks over a caption so they keep their labels at that width instead of
+   degrading to bare icons. */
+.bottom-action-utility {
+  flex-direction: column;
+  gap: 3px;
+  font-size: 15px;
+}
+
+.bottom-action-label {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  line-height: 1;
 }
 
 .team-row {
@@ -945,7 +1030,7 @@ button,
  *   portrait      -> 96px (clean 2x), standing on the platform
  *   name + types  -> one pill under the platform (was 3 nested boxes)
  *   HP / MP       -> two bars with their numerals set INSIDE the track
- *   statuses      -> free-floating cluster at the figure's shoulder
+ *   statuses      -> a full-width band of their own under the name
  *   stat mods     -> ticks on the platform rim
  *   side          -> platform size/brightness + horizon position
  *   whose turn    -> the platform lights up (.acting)
@@ -956,9 +1041,9 @@ button,
 /* Holds the row open at a full figure's height so an .empty-slot placeholder
    — both active slots on a side once it's wiped out, with no bench left to
    auto-replace it — doesn't collapse the row and shift the scene underneath
-   it. 155px = stage 104 + name pill 24 + two bars 27. */
+   it. 181px = stage 104 + name pill 24 + status band 26 + two bars 27. */
 .team-row .combatant-card {
-  min-height: 155px;
+  min-height: 181px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1103,40 +1188,62 @@ button,
   pointer-events: none;
 }
 
-/* Statuses orbit the figure's shoulder instead of occupying a reserved row.
-   Absolute, so the row no longer has to reserve min-height against layout
-   shift — the thing that reservation was protecting against can't happen
-   once the element is out of flow.
-
-   Widened from 58px when the glyph went from an 11px emoji to a 16px icon
-   (docs/icon-pack.md — 16 is the only legal size below the 32px source). At
-   58px each badge had become too wide to share a line, so four statuses
-   stacked into a 98px column running down past the portrait. This fits two
-   per row again. It does overlap the 96px portrait further, which is the
-   intent of a *shoulder* cluster rather than a cost of it — the badges are
-   meant to sit on the figure. */
+/*
+ * Statuses get a band of their own under the name, full card width.
+ *
+ * They spent one revision as an absolutely-positioned cluster at the
+ * figure's shoulder, which bought layout stability (out of flow, so nothing
+ * it did could shift the row) at the price of an 82px box that a third
+ * status already overflowed — badges wrapped down across the portrait and
+ * the chips had to stay at 9px text and 1px padding to fit two per line. A
+ * status is the single most decision-relevant thing on a combatant after
+ * its HP, and it was being rendered at the smallest size on the screen.
+ *
+ * The band is ~177px wide instead of 82 and fits four chips per row at a
+ * size that can actually be read and long-pressed (2026-08-26, user
+ * direction: the fight screen has vertical room to spare on a phone-sized
+ * canvas, and this is what to spend it on). Layout stability comes back the
+ * original way — a reserved min-height, empty or not — which is why
+ * .team-row .combatant-card's own min-height accounts for it below.
+ */
 .team-row .status-badge-row {
-  position: absolute;
-  top: 0;
-  right: 0;
+  position: relative;
   z-index: 2;
-  max-width: 82px;
-  min-height: 0;
-  margin: 0;
-  gap: 2px;
-  justify-content: flex-end;
+  width: 100%;
+  min-height: 24px;
+  margin: 0 0 4px;
+  gap: 4px;
+  align-items: center;
+  align-content: flex-start;
+  justify-content: center;
+}
+
+/* Sized against the 16px glyph the badge already carried rather than
+   squeezed around it: the chip is now taller than the icon instead of
+   clipping to it, which is also what makes the ~500ms hold that opens
+   StatusDetailOverlay a realistic gesture on a phone. */
+.team-row .status-badge {
+  min-height: 24px;
+  gap: 3px;
+  padding: 2px 7px;
+  font-size: 11px;
+}
+
+.team-row .status-badge-has-count {
+  padding-right: 8px;
 }
 
 /* Rim ticks flanking the figure's feet, where they read as markings on the
    ground rather than badges pinned to a card corner. Anchored from the
-   BOTTOM (54px clears the name pill) rather than the top: a hero can carry
-   enough simultaneous mods to wrap onto two or three rows, and a
-   top-anchored cluster grows downward into the name pill. Bottom-anchored,
-   the overflow goes up across the platform and the portrait's feet, which
-   is both harmless and the correct read. */
+   BOTTOM (80px = bars 27 + status band 26 + name pill 24, i.e. exactly the
+   platform's own line) rather than the top: a hero can carry enough
+   simultaneous mods to wrap onto two or three rows, and a top-anchored
+   cluster grows downward into the name pill. Bottom-anchored, the overflow
+   goes up across the platform and the portrait's feet, which is both
+   harmless and the correct read. */
 .team-row .stat-mod-corner {
   top: auto;
-  bottom: 54px;
+  bottom: 80px;
   max-width: 46px;
   align-content: flex-end;
 }
@@ -2497,25 +2604,6 @@ button,
   box-shadow: var(--hairline), var(--elev-1);
 }
 
-.back-button {
-  flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
-  color: var(--text-dim);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 8px;
-  cursor: pointer;
-  transition: color var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out);
-}
-
-.back-button:hover {
-  color: var(--text);
-  border-color: var(--accent);
-  background: rgba(224, 166, 60, 0.08);
-}
-
 .move-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -3103,6 +3191,68 @@ button,
 
 .log-close-button:hover {
   color: var(--text);
+}
+
+/* In-fight Options menu (FightScreen, the bottom bar's ⚙ key). Reuses
+   .log-overlay/.log-panel so pausing a fight looks like every other modal
+   here rather than inventing a settings chrome for two entries. */
+.options-panel {
+  gap: 10px;
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Full-width rows at the same 46px the bottom bar's own keys use — this
+   panel is reached from there, so a menu of noticeably smaller targets
+   would read as a step backwards from the control that opened it. */
+.options-item {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--hairline);
+  transition: border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out),
+    color var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.options-item:active {
+  transform: translateY(1px);
+}
+
+/* Destructive, and unrecoverable — there is no save file. Muted red at rest
+   so it doesn't advertise itself next to Resume; it only takes the full
+   danger treatment once the first tap has armed it, which is also the cue
+   that the second tap is the one that fires. */
+.options-item-danger {
+  border-color: rgba(217, 83, 79, 0.4);
+  background: linear-gradient(180deg, rgba(217, 83, 79, 0.1), rgba(217, 83, 79, 0.03));
+  color: #e2938f;
+}
+
+.options-item-danger.armed {
+  border-color: rgba(217, 83, 79, 0.95);
+  background: linear-gradient(180deg, rgba(217, 83, 79, 0.34), rgba(217, 83, 79, 0.14));
+  color: #ffd9d6;
+  box-shadow: 0 0 0 1px rgba(217, 83, 79, 0.35), 0 0 18px rgba(217, 83, 79, 0.28);
+}
+
+.options-note {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--text-dim);
 }
 
 /* Move-detail popup (FightScreen, long-press on a move-button) — reuses
@@ -4549,7 +4699,7 @@ button,
   font-size: 11px;
   line-height: 1.4;
   color: var(--text-dim);
-  margin: 4px 0 0;
+  margin: 2px 0 0;
   animation: title-tagline-fade 0.6s ease 0.12s both;
 }
 
@@ -4562,7 +4712,7 @@ button,
   display: flex;
   justify-content: center;
   gap: 14px;
-  margin-top: 9px;
+  margin-top: 6px;
   animation: title-tagline-fade 0.6s ease 0.24s both;
 }
 
@@ -4625,8 +4775,22 @@ button,
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: 6px;
+}
+
+/* Centred via auto margins on the end children rather than
+   `justify-content: center`. Identical whenever the stage has room to spare,
+   but it degrades correctly when it doesn't: a centred flex column that
+   overflows its scroll box clips at BOTH ends and can't be scrolled back up
+   to reach the top, which on a short canvas would hide the hero the player
+   is being asked to read. With auto margins the overflow becomes a normal
+   scroll from the top instead. */
+.draft-stage > :first-child {
+  margin-top: auto;
+}
+
+.draft-stage > :last-child {
+  margin-bottom: auto;
 }
 
 /* Fixed box so the sigil, bloom and platform all resolve against a known
@@ -4803,11 +4967,17 @@ button,
   opacity: 1;
 }
 
+/* Stretched to the stage's full width rather than shrink-to-fit. Its
+   children still centre themselves; what changes is that the kit row and the
+   move readout get the whole stage to lay out in instead of inheriting a
+   width set by whichever child happened to be widest (the stat silhouette).
+   That extra ~38px is what lets three move chips share one line. */
 .draft-ident {
+  align-self: stretch;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 7px;
+  gap: 5px;
   animation: title-tagline-fade 0.45s ease 0.1s both;
 }
 
@@ -4901,21 +5071,60 @@ button,
    the exact fault the Field Effect badge was rebuilt for); the type becomes
    the name's own color, the same "type is the material, not a tag on it"
    move the move buttons made when .type-badge became .move-type-code. */
+/* Three chips, one row, for every hero in the roster — the widest starting
+   kit ("Venomous Bite / Mend Wounds / Second Wind") is what the chip metrics
+   below are sized against. Worth the tighter type: a kit that wraps to two
+   rows on some candidates and not others moves the figure between rail taps,
+   and the whole point of this screen is comparing four heroes to each other. */
 .draft-kit {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 5px 12px;
-  max-width: 300px;
+  gap: 5px;
+  max-width: 100%;
 }
 
+/* Boxed, because it's pressable now (see the markup's comment). The box is
+   the move's own type color at low alpha rather than the generic --border,
+   so the kit still reads as a set belonging to this hero rather than as
+   three neutral chips that happen to sit under it. */
 .draft-kit-move {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
+  /* Height, not width, is what makes this comfortable to hit — 30px is kept
+     even as the type shrinks to fit three names on one line. */
+  min-height: 30px;
+  padding: 4px 8px 4px 4px;
+  border: 1px solid rgba(var(--move-type-rgb), 0.4);
+  border-radius: var(--radius-pill);
+  background: linear-gradient(180deg, rgba(var(--move-type-rgb), 0.14), rgba(var(--move-type-rgb), 0.04));
   font-size: 10px;
   font-weight: 700;
+  white-space: nowrap;
   color: var(--move-type);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out),
+    box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.draft-kit-move:hover {
+  border-color: rgba(var(--move-type-rgb), 0.75);
+}
+
+.draft-kit-move:active {
+  transform: translateY(1px);
+}
+
+/* The one whose text is in the panel below. Matched to .move-info-panel's
+   own gold edge rather than tinted further by type — the pairing between
+   "this chip" and "that readout" is the thing the highlight has to carry,
+   and it has to survive being read against fifteen different type colors. */
+.draft-kit-move.selected {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, rgba(224, 166, 60, 0.2), rgba(224, 166, 60, 0.06));
+  box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.3), 0 0 12px rgba(224, 166, 60, 0.2);
 }
 
 /* Half-scale .move-crystal, same recipe so a player learns "blue orb = mana
@@ -4925,8 +5134,8 @@ button,
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 17px;
-  height: 17px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: radial-gradient(circle at 34% 26%, #a8dbfb, #5ea3e4 32%, var(--mana) 62%, #1b3a5c 100%);
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.45), inset 0 -2px 3px rgba(0, 0, 0, 0.35),
@@ -4937,13 +5146,73 @@ button,
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
 }
 
+/*
+ * The move detail popup (a tap on a kit chip opens it; a tap anywhere
+ * closes it). Sits inside the shared .log-overlay scrim, like every other
+ * modal here, but keeps the stage's own grammar rather than .log-panel's
+ * flat gray rect: it takes the tapped move's type color as a lit top edge,
+ * a tinted wash and a soft outer glow, so the card reads as the same object
+ * as the chip that opened it.
+ *
+ * Sized to content — this replaced a fixed-height slab pinned under the kit,
+ * where the height had to be frozen so a 1-line and a 2-line move couldn't
+ * shove the figure around mid-comparison. Floating over the stage, nothing
+ * is underneath it to push.
+ */
+.draft-move-popup {
+  width: 100%;
+  max-width: 380px;
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  padding-bottom: 8px;
+  border: 1px solid rgba(var(--move-type-rgb), 0.42);
+  background: radial-gradient(ellipse 120% 100% at 50% 0%, rgba(var(--move-type-rgb), 0.16), transparent 72%),
+    linear-gradient(180deg, var(--surface-raised), rgba(0, 0, 0, 0.3));
+  box-shadow: var(--hairline), 0 10px 32px rgba(0, 0, 0, 0.55), 0 0 22px rgba(var(--move-type-rgb), 0.18);
+  animation: draft-move-popup-in var(--dur-mid) var(--ease-out);
+}
+
+/* The lit top edge — same mark .combatant-card uses to say "whose power this
+   is", reused here for "which move this is". */
+.draft-move-popup::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--move-type-rgb), 0.85), transparent);
+}
+
+@keyframes draft-move-popup-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* The shared panel is now purely the text layout — the wrapper above owns
+   every surface treatment, so this strips the box off it entirely rather
+   than nesting two frames. */
+.draft-move-popup .move-info-panel {
+  margin-bottom: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  padding: 11px 13px 6px;
+}
+
 /* The commit. A box, legitimately — it's the control that binds a hero, and
    under the rule that is exactly what earns a rectangle. Type-tinted at rest
    so it belongs to the figure above it, gold once bound so it joins the
    pact's own palette. */
 .draft-choose {
   flex: none;
-  margin-top: 2px;
   padding: 9px 24px;
   border-radius: var(--radius-pill);
   border: 1px solid rgba(var(--pact-rgb), 0.55);
@@ -4989,6 +5258,13 @@ button,
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
+  /* Lifted clear of the CTA (2026-08-26, user direction). The rail was
+     sitting one 10px shell gap above a button that has since roughly
+     doubled in height, which put four small tap targets directly against
+     the biggest one on the screen — right where a thumb reaching for "Seal
+     the Pact" lands. The extra room is also why .draft-stage, which is the
+     flexible child, now centres its figure a little higher. */
+  margin-bottom: 6px;
 }
 
 .draft-candidate {
@@ -4997,7 +5273,7 @@ button,
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 6px 2px 5px;
+  padding: 4px 2px 3px;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   background: none;
@@ -5903,6 +6179,19 @@ button,
 .draft-cta {
   position: relative;
   z-index: 1;
+  /*
+   * Deliberately the largest control in the app. This is the last press of
+   * the draft and the first commitment of the run, and at the shared
+   * .resolve-button size (12px padding, 14px text) it was both undersized
+   * for that and, sitting at the very bottom of the shell above the phone's
+   * own home indicator, awkward to actually hit. Scale is doing two jobs:
+   * a bigger target, and the psychological weight the moment deserves.
+   */
+  padding: 21px 12px;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  border-radius: var(--radius-md);
 }
 
 /* DraftScreen's "Begin the Pact" — same gold-gradient/pulse treatment as

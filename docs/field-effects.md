@@ -98,9 +98,8 @@ Effect is actually authored.
 Each is flavored around one type (`flavorType`, presentational only) but — like
 Surging Magic — mechanically **global**, affecting both sides. Every setting move
 mirrors `arcaneSurge`'s shape (`kind: 'buff'`, `target: 'self'`, 20 mana, sets its
-field effect) and is attached as a fourth move to that type's starter, the same "small
-dedicated buff move" pattern `moves.ts`'s file header documents for status-granting
-moves like `vanish` (Stealth) and `secondWind` (Renew):
+field effect), the same "small dedicated buff move" pattern `moves.ts`'s file header
+documents for status-granting moves like `vanish` (Stealth) and `secondWind` (Renew):
 
 | Field Effect | flavorType | Effect | Move (starter) |
 | --- | --- | --- | --- |
@@ -109,6 +108,14 @@ moves like `vanish` (Stealth) and `secondWind` (Renew):
 | Stasis Bubble | Mind | Reverses same-bracket Speed order | `stasisField` (Cortex) |
 | Sanctuary | Light | Heal-kind moves get +1 priority | `consecrate` (Solace) |
 | Verdant Earth | Nature | +Attack/+Intelligence equal to your own Renew | `overgrowth` (Sylva) |
+
+Each move is tied to that starter through `progressionTable.moveTiers`
+(`src/data/progression.ts`) — a **level-up unlock**, not part of the starting kit.
+It was originally granted as a fourth starting move, which made those five heroes the
+only ones opening with four (2026-08-26): starting kits are now uniformly three across
+the whole roster, both because the draft screen compares four candidates side by side
+and because a 20-mana field setter is a strange thing to hand a level-1 hero whose
+other moves cost 10-15. A hero that wants its field effect grows into it.
 
 This is placeholder-tier balance content (mana costs, and which starter carries each
 move, are both open to reassignment) — the mechanics and the definitions are real, but

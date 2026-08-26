@@ -2,13 +2,17 @@
 // fixture roster's starter heroes, enough to exercise both consequences of
 // leveling end to end (docs/leveling-and-ranks.md: a level-up either "offers
 // a random move" or, at EVOLUTION_LEVEL, surfaces the Evolution choice
-// instead). Each
-// hero's starting kit (src/data/heroes.ts) is deliberately small — a
-// low-power main-type move plus 1-2 support moves — so the moveTiers pool
-// below is where the rest of a hero's thematic movepool lives, offered
+// instead). Every hero's starting kit (src/data/heroes.ts) is exactly three
+// moves — a low-power main-type move plus two supports — so the moveTiers
+// pool below is where the rest of a hero's thematic movepool lives, offered
 // randomly (not in authored order) as the hero levels up toward the 4-move
 // cap (src/run/progression.ts MOVE_CAP). Not the authored 53-hero
 // progression content.
+//
+// A pool entry that's also in the hero's starting kit is dead weight —
+// levelUpMovePool filters out anything already unlocked, so it can never be
+// offered — which is why runescribe's pool carries arcaneSurge rather than
+// the curseMind it now starts with.
 //
 // SCOPE NOTE: paths are stat-only (statGrants + description, no
 // unlocksMoveIds) — kept deliberately separate from the level-up move pool
@@ -50,17 +54,17 @@ import { EVOLUTION_LEVEL } from '../run/progression';
 export const progressionTable: ProgressionTable = {
   moveTiers: {
     cinderKnight: ['emberSlash', 'flareBurst', 'quickJab', 'fangRush', 'cinderNova', 'infernoWave'],
-    crimson: ['emberSlash', 'infernoWave', 'cinderNova', 'arcaneBolt', 'manaBurst', 'purify'],
+    crimson: ['emberSlash', 'infernoWave', 'cinderNova', 'arcaneBolt', 'manaBurst', 'purify', 'scorchTheEarth'],
     tidecaller: ['aquaJet', 'tsunamiCrash', 'frostLock', 'ripCurrent', 'mendWounds', 'curseMind'],
     ironWarden: ['boulderToss', 'shrapnelBlast', 'stoneQuake', 'ironFist', 'fortify'],
-    wildOracle: ['wildfire', 'vineLash', 'soulRend', 'rendingClaw', 'naturesWrath'],
+    wildOracle: ['wildfire', 'vineLash', 'soulRend', 'rendingClaw', 'naturesWrath', 'overgrowth'],
     stormRanger: ['quickJab', 'thunderclap', 'galeSlash', 'fangRush'],
     shadowMonk: ['duskStrike', 'shadowVeil', 'fangRush', 'quickJab', 'nightmareGrasp'],
     marrow: ['duskStrike', 'shadowVeil', 'fangRush', 'quickJab', 'nightmareGrasp'],
     glacialWarden: ['frostBite', 'purify', 'mendWounds', 'weaken'],
-    dawnwarden: ['sunstrike', 'healingRain', 'fortify', 'purify'],
-    runescribe: ['mindSpike', 'psychicLance', 'weaken', 'curseMind'],
-    mindweaver: ['spectralBind', 'quickJab', 'vanish', 'stunningBlow'],
+    dawnwarden: ['sunstrike', 'healingRain', 'fortify', 'purify', 'consecrate'],
+    runescribe: ['mindSpike', 'psychicLance', 'weaken', 'arcaneSurge'],
+    mindweaver: ['spectralBind', 'quickJab', 'vanish', 'stunningBlow', 'stasisField'],
     forgewright: ['ironFist', 'shrapnelBlast', 'quickJab', 'stunningBlow'],
     packAlpha: ['rendingClaw', 'quickJab', 'fortify', 'weaken'],
     // --- Stone/Spirit starters + the new Iron starter (2026-08-17) ---

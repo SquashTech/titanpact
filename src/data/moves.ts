@@ -628,7 +628,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 24,
     priority: 0,
     target: 'bothAllies',
-    description: 'A bone-rattling war horn that whips both allies into a frenzy, sharpening attack, defense, and speed all at once.',
+    description: "Whips both allies into a frenzy — Attack, Defense and Speed all up.",
   },
 
   // --- Status moves (docs/conditions.md) — one per status, plus Cleanse ---
@@ -656,7 +656,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 12,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A raking slash that opens a wound too deep to close by pivoting away (inflicts Bleed).',
+    description: "A raking slash that opens a wound too deep to close (inflicts Bleed).",
   },
   venomousBite: {
     id: 'venomousBite',
@@ -708,7 +708,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 14,
     priority: 0,
     target: 'singleEnemy',
-    description: "Charges the target's frame with current — any Storm or Iron hit that follows detonates it for bonus damage (inflicts Conduct).",
+    description: "Charges the target's frame with current (inflicts Conduct).",
   },
   spectralBind: {
     id: 'spectralBind',
@@ -721,7 +721,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 12,
     priority: 0,
     target: 'singleEnemy',
-    description: "Tethers the target's spirit to its partner — Spirit or Mind attacks aimed at the partner strike this target too (inflicts Haunt).",
+    description: "Tethers the target's spirit to its partner (inflicts Haunt).",
   },
   vanish: {
     id: 'vanish',
@@ -734,7 +734,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 10,
     priority: 0,
     target: 'self',
-    description: 'Slips out of sight for the rest of this round and all of the next — a faster Vanish redirects an incoming single-target attack onto the caster’s partner (inflicts Stealth).',
+    description: "Enters Stealth for this round and the next.",
   },
   secondWind: {
     id: 'secondWind',
@@ -760,7 +760,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 12,
     priority: 0,
     target: 'self',
-    description: 'Feeds the caster’s inner flame — adds +10 Base Power to Fire moves for the rest of the fight (grants Fire Force 10, stacks).',
+    description: "Feeds the caster's inner flame (grants Fire Force 10, stacks).",
   },
   purify: {
     id: 'purify',
@@ -773,7 +773,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 16,
     priority: 0,
     target: 'singleAlly',
-    description: 'Washes away an ally’s afflictions and steadies them with a little light (Grant Cleanse).',
+    description: "Washes away an ally's afflictions (Grant Cleanse).",
   },
 
   // --- Field Effect moves (docs/field-effects.md) — one per effect ---------
@@ -788,7 +788,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'self',
-    description: 'Floods the battlefield with raw arcane current, doubling every hero’s MP Regen for 5 rounds (sets the Surging Magic field effect).',
+    description: "Surging Magic for 5 rounds: every hero's MP Regen doubles.",
   },
   scorchTheEarth: {
     id: 'scorchTheEarth',
@@ -801,7 +801,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'self',
-    description: 'Sets the whole battlefield ablaze for 5 rounds — Burn no longer decays while it burns (sets the Scorched Land field effect).',
+    description: "Scorched Land for 5 rounds: Burn stops decaying.",
   },
   stasisField: {
     id: 'stasisField',
@@ -814,7 +814,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'self',
-    description: 'Warps the flow of time for 5 rounds — within a shared priority bracket, the slowest hero now acts first (sets the Stasis Bubble field effect).',
+    description: "Stasis Bubble for 5 rounds: the slowest in a bracket acts first.",
   },
   consecrate: {
     id: 'consecrate',
@@ -827,7 +827,7 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'self',
-    description: 'Hallows the battlefield for 5 rounds — healing moves gain +1 priority (sets the Sanctuary field effect).',
+    description: "Sanctuary for 5 rounds: healing moves gain +1 priority.",
   },
   overgrowth: {
     id: 'overgrowth',
@@ -840,6 +840,6 @@ export const moves: Record<string, MoveDefinition> = {
     manaCost: 20,
     priority: 0,
     target: 'self',
-    description: 'Roots and vines surge across the field for 5 rounds — any hero carrying Renew has their Attack and Intelligence raised by its magnitude (sets the Verdant Earth field effect).',
+    description: "Verdant Earth for 5 rounds: Renew also raises Attack and Intelligence.",
   },
 };

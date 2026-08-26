@@ -16,8 +16,17 @@
 //
 // Scorched Land / Stasis Bubble / Sanctuary / Verdant Earth (2026-08-21) are
 // the second batch, one per new FieldEffectDefinition shape — each sets from
-// its own dedicated move (moves.ts "Field Effect moves"), attached to that
-// type's starter the same way arcaneSurge was attached to Glyph.
+// its own dedicated move (moves.ts "Field Effect moves").
+//
+// Each setter is tied to its type's starter, but as a LEVEL-UP unlock, not a
+// starting move (2026-08-26): every one of them costs 20 mana, which made it
+// the outlier in a kit otherwise built from a cheap main-type move and one
+// or two supports, and it was the 4th slot in a hero that had one — the
+// thing that stopped starting kits being uniform three across the draft
+// screen. So the attachment lives in src/data/progression.ts moveTiers now
+// (crimson→scorchTheEarth, wildOracle→overgrowth, dawnwarden→consecrate,
+// runescribe→arcaneSurge, mindweaver→stasisField), and each effect is
+// something a run grows into rather than opens with.
 
 import type { FieldEffectDefinition } from '../engine/content';
 

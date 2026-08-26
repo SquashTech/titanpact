@@ -195,6 +195,14 @@ interface Props {
   onClaimContractReplace: (defeated: RosterEntry, terminatedRosterId: string) => boolean;
   /** Fired when the player dismisses the result overlay — the caller owns what a win/loss means for run progress (vitals sync, currency grant, advancing the map, or ending the run). */
   onResolved: (outcome: 'win' | 'loss', finalState: CombatState) => void;
+  /**
+   * Abandon the run from the bottom bar's Options menu and go back to the
+   * title. Omit it for fights that aren't part of a run (Quick Battle, the
+   * sandbox) — the menu then simply has nothing to quit and shows only
+   * Resume. There is no save file, so this discards the run outright; the
+   * menu arms the choice with a second tap before calling this.
+   */
+  onQuitToTitle?: () => void;
 }
 
 export function FightScreen({
@@ -209,6 +217,7 @@ export function FightScreen({
   onClaimContract,
   onClaimContractReplace,
   onResolved,
+  onQuitToTitle,
 }: Props) {
   /** The three team-wide broadcasts every owned relic contributes (src/run/relics.ts, passives.ts, statusGrants.ts) — derived here rather than by each caller so "what a relic does" has one wiring site. */
   const teamStatModifiers = relicTeamStatModifiers(playerRelicIds, relics);
@@ -233,6 +242,10 @@ export function FightScreen({
   const [logOpen, setLogOpen] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
+  /** The bottom bar's Options menu (quit run / resume). */
+  const [menuOpen, setMenuOpen] = useState(false);
+  /** Quitting is armed by a first tap and only fires on the second — see the menu's markup below. Reset every time the menu opens so it never comes back pre-armed. */
+  const [confirmingQuit, setConfirmingQuit] = useState(false);
   /** Bench hero tapped (but not yet confirmed) in the forced-replacement panel below — a fainted active slot requires a deliberate select-then-confirm instead of a single tap, since this choice can't be undone once committed. Reset after each confirm so the panel starts fresh for the next open slot (a double KO opens two in sequence). */
   const [replacementPick, setReplacementPick] = useState<string | null>(null);
   const [pending, setPending] = useState<Record<string, PendingAction>>({});
@@ -1027,29 +1040,101 @@ export function FightScreen({
           grid down) — that reserved space was the source of the mobile
           scroll this consolidation exists to eliminate. Buttons stay
           mounted and are disabled rather than hidden when inapplicable, so
-          the row's height never changes turn to turn. */}
+          the row's height never changes turn to turn.
+
+          Split into two weights (2026-08-26, user direction): Back and
+          Switch are pressed *during* a decision, many times a fight, so they
+          take double width and the row's full height — the previous
+          24px-tall quarter-width row was genuinely hard to hit on a phone
+          now that the app runs installed rather than in a browser tab. Log /
+          Ref / Menu are consulted, not played, so they stay narrow and stack
+          their glyph over a caption instead. */}
       <div className="bottom-bar">
         <button
-          className="back-button"
+          className="bottom-action bottom-action-primary"
           disabled={!(actingId !== null && (showingTargetPanel || stepIndex > 0))}
           onClick={() => (showingTargetPanel ? setSelecting(null) : setActionStep(stepIndex - 1))}
         >
-          ← Back
+          <span className="bottom-action-glyph" aria-hidden="true">
+            ←
+          </span>
+          Back
         </button>
         <button
-          className="log-toggle-button"
+          className="bottom-action bottom-action-primary bottom-action-switch"
           disabled={!(actingId !== null && playerBench.length > 0 && !playerLockedIn)}
           onClick={() => setSwitchOpen(true)}
         >
-          🔄 Switch
+          <span className="bottom-action-glyph" aria-hidden="true">
+            🔄
+          </span>
+          Switch
         </button>
-        <button className="log-toggle-button" onClick={() => setLogOpen(true)}>
-          📜 Log
+        <button className="bottom-action bottom-action-utility" onClick={() => setLogOpen(true)}>
+          <span className="bottom-action-glyph" aria-hidden="true">
+            📜
+          </span>
+          <span className="bottom-action-label">Log</span>
         </button>
-        <button className="log-toggle-button" onClick={() => setReferenceOpen(true)}>
-          📊 Ref
+        <button className="bottom-action bottom-action-utility" onClick={() => setReferenceOpen(true)}>
+          <span className="bottom-action-glyph" aria-hidden="true">
+            📊
+          </span>
+          <span className="bottom-action-label">Ref</span>
+        </button>
+        <button
+          className="bottom-action bottom-action-utility"
+          onClick={() => {
+            setConfirmingQuit(false);
+            setMenuOpen(true);
+          }}
+        >
+          <span className="bottom-action-glyph" aria-hidden="true">
+            ⚙
+          </span>
+          <span className="bottom-action-label">Menu</span>
         </button>
       </div>
+
+      {/* Options. Deliberately the only way out of a fight that isn't
+          winning or losing it: there is no save file (App.tsx holds RunState
+          in component state), so abandoning is destructive and gets a
+          two-tap arm/confirm rather than one button that can drop a
+          45-minute run on a mis-tap. The quit entry is hidden entirely when
+          the caller passes no onQuitToTitle — Quick Battle and the sandbox
+          fights have no run to abandon. */}
+      {menuOpen && (
+        <div className="log-overlay" onClick={() => setMenuOpen(false)}>
+          <div className="log-panel options-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="log-panel-header">
+              <span>Options</span>
+              <button className="log-close-button" onClick={() => setMenuOpen(false)}>
+                ✕
+              </button>
+            </div>
+            <div className="options-list">
+              <button className="options-item" onClick={() => setMenuOpen(false)}>
+                Resume Fight
+              </button>
+              {onQuitToTitle && (
+                <button
+                  className={`options-item options-item-danger${confirmingQuit ? ' armed' : ''}`}
+                  onClick={() => (confirmingQuit ? onQuitToTitle() : setConfirmingQuit(true))}
+                >
+                  {confirmingQuit ? 'Tap again to abandon' : 'Quit Run — Return to Title'}
+                </button>
+              )}
+            </div>
+            {onQuitToTitle && (
+              <p className="options-note">
+                {confirmingQuit
+                  ? 'This run ends now. Roster, relics and map progress are lost.'
+                  : 'Runs are not saved. Quitting discards this one.'}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {switchOpen &&
         actingId &&
