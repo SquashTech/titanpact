@@ -40,7 +40,7 @@ import {
 } from '../run/recruitment';
 import { guildHallOffers } from '../data/recruitment';
 import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } from '../run/shop';
-import { generateMap } from '../run/map';
+import { generateMap, type MapNodeType } from '../run/map';
 import { generateStarterOptions } from '../run/draft';
 import { generateEncounter, generateGoblinChiefEncounter, type EncounterNodeType, type Encounter } from '../run/enemyGen';
 import { pickSquad } from '../run/squad';
@@ -159,11 +159,24 @@ function goldRewardFor(nodeType: EncounterNodeType): number {
 /**
  * Training Points paid out per battle win (docs/leveling-and-ranks.md
  * "tougher fights grant more"; CLAUDE.md "After winning a fight, you are
- * given training points"). 2 for a normal fight, 3-4 for elite — boss folds
- * into the elite figure since no separate boss value was specified.
+ * given training points").
+ *
+ * Keyed on the **map** node type rather than the collapsed
+ * EncounterNodeType, which is the whole reason this takes a MapNodeType:
+ * `skirmish` and `battle` both flatten to a mechanical `fight` encounter
+ * (handleNodeSelected's `encounterKind`), so a function taking the encounter
+ * kind physically cannot tell the act's opening Goblin fight apart from the
+ * normal fights that follow it.
+ *
+ * 1 for that opener (2026-08-26, per user direction — it is a deliberately
+ * light 2v2 against the weak non-recruitable mob pool and was paying out the
+ * same as a real fight), 2 for every normal fight after it, 3-4 for elite —
+ * boss folds into the elite figure since no separate boss value was
+ * specified.
  */
-function trainingPointsFor(nodeType: EncounterNodeType): number {
-  if (nodeType === 'fight') return 2;
+function trainingPointsFor(nodeType: MapNodeType): number {
+  if (nodeType === 'fight') return 1;
+  if (nodeType === 'skirmish' || nodeType === 'battle') return 2;
   return 3 + Math.floor(Math.random() * 2); // 3-4
 }
 
@@ -319,7 +332,8 @@ export function App() {
     // reward-node economy's luck. Rolled here, before the fight even starts,
     // so the victory screen can spotlight the exact item that's coming —
     // handleFightResolved below reuses this same value instead of re-rolling.
-    const isGoblinFight = playerRun.map!.nodes[nodeId].type === 'fight';
+    const mapNodeType = playerRun.map!.nodes[nodeId].type;
+    const isGoblinFight = mapNodeType === 'fight';
     const commonPool = Object.values(equipment).filter((item) => item.rarity === 'common');
     const equipmentReward = isGoblinFight
       ? (commonPool[Math.floor(Math.random() * commonPool.length)] ?? null)
@@ -331,7 +345,10 @@ export function App() {
       squad,
       encounter,
       goldReward: goldRewardFor(nodeType),
-      trainingPointsReward: trainingPointsFor(nodeType),
+      // The map node type, not `nodeType` — see trainingPointsFor: the
+      // opener and the later normal fights are indistinguishable once
+      // they collapse to the mechanical `fight` encounter kind.
+      trainingPointsReward: trainingPointsFor(mapNodeType),
       equipmentReward,
     });
   }

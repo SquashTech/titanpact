@@ -209,8 +209,13 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   directly from `RosterEntry`/`HeroDefinition` rather than a live `Combatant` since no
   fight exists yet).
 - **Training Points now paid out per fight win, not only via `upgradeReward` nodes
-  (2026-08-16, second playtest).** `App.tsx`'s `trainingPointsFor` grants 2 for a
-  normal `fight`, 3-4 for `elite`/`boss` — `upgradeReward` nodes remain a second,
+  (2026-08-16, second playtest; retuned 2026-08-26).** `App.tsx`'s `trainingPointsFor`
+  keys on the **map** node type — 1 for the act's opening `fight` (the light 2v2
+  against the non-recruitable mob pool), 2 for a normal `skirmish`/`battle`, 3-4 for
+  `elite`/`boss`. It takes a `MapNodeType` rather than an `EncounterNodeType`
+  precisely because `skirmish` and `battle` collapse to a mechanical `fight`
+  encounter, so the opener is otherwise indistinguishable from its successors —
+  `upgradeReward` nodes remain a second,
   separate source (per user direction: valuable as a strategic pull toward Evolution
   over gearing/relics, not redundant with the per-fight grant). Spending is also no
   longer deferred: `src/view/run/LevelUpScreen.tsx` forces every earned point to be
