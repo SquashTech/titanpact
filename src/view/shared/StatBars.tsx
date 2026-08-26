@@ -57,6 +57,18 @@ const STAT_SCALE_MAX: Record<StatKey, number> = {
   mpRegen: 16,
 };
 
+/**
+ * One stat's value as a 0-1 fraction of its shared reference ceiling — the
+ * bar-length calculation below, exposed so any other stat readout is drawn
+ * on the *same* scale rather than re-deriving its own ceilings. The draft
+ * screen's compact stat silhouette is the first such caller; duplicating
+ * STAT_SCALE_MAX there would have meant two blocks that silently disagree
+ * about how long a 90 HP bar is.
+ */
+export function statFraction(stat: StatKey, value: number): number {
+  return Math.min(1, Math.max(0, value) / STAT_SCALE_MAX[stat]);
+}
+
 function fmtDelta(n: number): string {
   if (n === 0) return '';
   return n > 0 ? `+${n}` : `${n}`;

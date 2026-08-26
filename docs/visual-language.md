@@ -219,6 +219,86 @@ move-panel/targeting-panel height match `padding: 9.7px` exists to maintain.
 
 ---
 
+## Third pass — the start-of-run draft (2026-08-25)
+
+The first application of the rule **outside combat** (open item 6), on the screen
+where it matters most: the draft is a player's first real contact with the game's
+content, and it read as a form.
+
+### What was wrong, measured
+
+`DraftScreen` was a 227px flavor banner (a box) above a bordered `.squad-section` (a
+box) holding a 2×2 `.roster-grid` of four 158 × 112px `.roster-card`s (boxes) — the
+same concentric-rectangle hierarchy the fight screen was converted away from, on a
+screen with only four objects on it. Two defects underneath the styling:
+
+1. **The sprite was at a broken scale — the exact defect this doc exists to forbid.**
+   `.roster-card-portrait` drew 48px sources at **40px**, a 0.833× downscale. The
+   game's opening image was its blurriest. (Defect 1 of the first pass named 24px as
+   the *one* usable fraction of 48; 40px is not one of them.)
+2. **The boxes weren't just ugly, they were empty.** A card carried a name and two
+   type chips. Stats and movepool sat behind an info button, so the player either
+   picked blind or opened four overlays to make one choice. This is what "clicking on
+   boxes" actually describes, and no amount of restyling the card would have fixed it
+   — the complaint was about what the card *contained*.
+
+Note the shape of that second finding: it's the same category as the second pass's
+Field Effect badge. The rule governs whether a thing is drawn, not whether the thing
+is worth drawing. Both times, applying it well required a second question the rule
+doesn't ask on its own.
+
+### What replaced it
+
+A **stage**, not a grid. One candidate stands at a time; the others wait in the dark.
+
+| Was | Is |
+|---|---|
+| Four 158 × 112 cards | One figure on stage, three in a rail |
+| Portrait 40px (0.833×, blurry) | **144px — a clean 3×** |
+| 227px banner of prose | 110px header: eyebrow, wordmark, one line |
+| "Choose Your Allies (1/2)" in a section heading | Two **sockets** that fill with the bound hero's own 24px sprite |
+| Name + two type chips | Name, types, a 6-bar **stat silhouette**, and the starting kit |
+| Card border = the object | Chromeless figures; the frame appears on the one on stage |
+| Selection = tinting a card | A commit button that binds, and a rail seal |
+
+Three things on the screen are boxed, and all three are pressable: the commit button,
+the candidate currently on stage, and the CTA. Everything else — figure, sigil,
+platform, stat bars, move list, sockets — is drawn without a container.
+
+Details worth keeping:
+
+- **3× is affordable here and only here.** Open item 5 wanted to try 144px and
+  couldn't, because the battlefield holds four figures inside a fixed-height arena.
+  The draft holds exactly one, so it gets the scale the art deserves. This is not a
+  precedent for the arena.
+- **The stat silhouette shares StatBars' ceilings, deliberately.** `statFraction()`
+  was extracted from `StatBars.tsx` rather than re-deriving maxima locally, so a bar
+  means the same length here as on the hero sheet. Six stats, not eight: Mana Pool
+  and MP Regen are the separate tempo axis (CLAUDE.md), and the point of the strip is
+  *cross-candidate comparison* — six bars is a silhouette, eight is a spec sheet.
+- **The kit is the move buttons with their boxes taken off.** Same mana crystal at
+  half scale (a bare unitless number is the fault the Field Effect plaque was rebuilt
+  for), and the type carried as the name's own color — the same "type is the
+  material, not a tag on it" move `.move-type-code` made.
+- **The screen's hue does not follow the featured hero.** The type color lives in the
+  figure's own bloom, platform, sigil and commit button. Tinting the full-screen wash
+  as well would strobe on every rail tap; the wash stays the pact's constant
+  gold/violet. The motes *do* take the type color — at 2–4px the swap is invisible.
+- **Two taps per pick** (feature on the rail, commit on the stage) is deliberate. This
+  is the most consequential decision in a run; the ceremony is the point.
+
+### Scoping discipline
+
+Every rule is scoped under a `.draft-*` class, and the old `.draft-banner*` block was
+deleted outright. `.roster-card` and `.roster-grid` are untouched — `SquadSelectScreen`
+and the reward nodes still use them, and **`.roster-card-portrait` still carries the
+0.833× scale defect there**. That is a real, known bug on a screen the player sees
+before every fight; it was left alone because fixing it changes that screen's card
+height and its layout budget is already tight (see the `.enemy-scout-grid` comment).
+It belongs in its own pass, with its own measurements.
+
+---
+
 ## Verification standard
 
 This pass was verified by measuring computed geometry and styles in the running app
@@ -265,6 +345,30 @@ know about:
   compiles and typechecks, but that screen only appears when a hero with four moves is
   offered a fifth, which the test squad doesn't reach. It has not been seen rendering.
 
+The third pass was verified the same way, driving the screen through every state:
+figure/portrait geometry (`.draft-portrait` computed 144px — exactly 3×), stage
+content height against available height at three viewports, feature-switch,
+commit/release, pact-full with an unchosen hero on stage, socket fill, CTA
+enable, the info overlay, and `onConfirm` actually reaching the map screen. No
+horizontal overflow at any size. At 375×812 and 375×667 nothing scrolls; at a
+deliberately undersized 360×560 the stage scrolls internally and the rail and CTA
+stay on screen, which is what its `overflow-y` is there for. `npm test` (200 engine
+tests), `npm run typecheck:view` and `npm run build:view` all pass.
+
+Two caveats on this pass specifically:
+
+- **The frozen-timeline trap from the second pass bit again, and confirmed itself.**
+  `.draft-figure`'s arrival keyframe starts at `scale(0.94)`, so every rect it and
+  `.draft-portrait` reported was multiplied by 0.94 — the portrait measured 149.3
+  device px where 158.8 was expected, and 149.3 / 158.8 is exactly 0.94. `transform`
+  doesn't affect layout, so the *stack* was unaffected; only the reported rects were.
+  Separately, `.draft-choose:disabled` read back with its gold glow still on because
+  `box-shadow` is transitioned; a synthetic probe element carrying the same classes
+  resolved it to `none`, correctly. Both are the documented hazard, not new bugs.
+- **Nothing here has been seen rendering.** The Browser pane was not displayed for
+  this session, so screenshots were unavailable and every figure above is geometry.
+  The composition — 3× sprite scale in particular — has not been looked at.
+
 ### Getting to the states worth measuring
 
 Two title-screen shortcuts exist so UI work doesn't have to be played to:
@@ -302,13 +406,15 @@ Roughly in order of expected payoff.
 4. **Numerals on busy backgrounds.** Without card boxes, HP/MP legibility rests on
    text shadows. This needs checking against the noisiest case — Field Effect active,
    multiple statuses, damage popup mid-flight, low-HP pulse — on a real device.
-5. **Portrait scale.** 96px (2×) was chosen over 144px (3×) to fit the vertical
-   budget. If the phase-shift work (2) frees arena height during planning, 3× becomes
-   possible — but 48px sources at 3× will read as very chunky and should be eyeballed
-   on one hero before committing the roster.
-6. **Apply the rule outside combat.** The same nesting exists on the map, draft,
-   roster, and shrine screens. The rule is general; only the combat screen has been
-   converted.
+5. **Portrait scale.** 96px (2×) was chosen over 144px (3×) to fit the arena's
+   vertical budget, and that still stands for the battlefield. 3× now ships on the
+   draft screen (third pass), where exactly one figure is on stage — so the scale has
+   been *built* but still hasn't been **eyeballed on a real device**, which was the
+   actual condition. Look at it there before considering it for the arena.
+6. **Apply the rule outside combat.** ~~Draft~~ done in the third pass above. Still
+   outstanding: the **map, roster, and shrine** screens, which keep the same nesting.
+   The draft pass is the worked example — note that the win came as much from asking
+   what the boxes *contained* as from removing them.
 7. **Ground-plane depth.** The platform currently carries distance via size and
    opacity. A true perspective floor grid (fading toward the horizon) would sell it
    further, at some risk of noise behind the figures.

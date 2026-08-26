@@ -4409,104 +4409,85 @@ button,
   margin: 2px 0 10px;
 }
 
-/* Start-of-run draft's flavor intro (DraftScreen), sitting above the pick-2-of-4
-   grid — the very first screen of a run, so it borrows liberally from the two
-   biggest "occasion" treatments elsewhere: TitleScreen's gold+violet vignette,
-   rotating ray-burst and rising ember field (reused here as a smaller rune
-   sigil + spark field, since this banner is a fraction of the screen rather
-   than the whole thing), and FightScreen's recruit-claims violet contract
-   glow (this pact is, narratively, the same kind of bargain). Text lines
-   stagger in with @keyframes title-tagline-fade so the banner reads as a
-   moment unfolding rather than a static instructions blurb. */
-.draft-banner {
+/* --- Start-of-run draft (DraftScreen) ----------------------------------
+ *
+ * The first screen of a run, rebuilt 2026-08-25 as docs/visual-language.md's
+ * open item 6: "apply the rule outside combat". The rule is the same one the
+ * fight screen was converted to —
+ *
+ *     A rectangle means "you can act on this." Nothing else gets a box.
+ *
+ * — and this screen violated it the same way the old battlefield did. It was
+ * a 227px flavor banner (a box) over a bordered section (a box) holding a
+ * 2x2 grid of four 158x112 .roster-cards (boxes), each carrying a 40px
+ * sprite. Two consequences, both measured in the running app:
+ *
+ *   1. The sprite was at a BROKEN scale. Sources are 48px pixel art and
+ *      .roster-card-portrait drew them at 40px — a 0.833x scale, exactly the
+ *      uneven pixel doubling docs/visual-language.md defect 1 exists to
+ *      forbid. The game's opening image was its blurriest.
+ *   2. Nothing on a card informed the pick. Name plus two type chips, with
+ *      stats and movepool hidden behind an info button, so the player either
+ *      chose blind or opened four overlays. That is what "clicking on boxes"
+ *      actually means: the boxes weren't just ugly, they were empty.
+ *
+ * So the screen becomes a stage. One candidate stands at a time, at 144px —
+ * a clean 3x, the scale item 5 wanted to try and could never afford on a
+ * battlefield holding four figures — inside a summoning sigil, with the stat
+ * silhouette and starting kit that make the choice a real one. Only three
+ * things on this screen are boxed, and all three are pressable: the commit
+ * button, the candidate on stage, and the CTA.
+ */
+
+.draft-screen {
   position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 26px 16px 20px;
-  margin-bottom: 4px;
+  gap: 10px;
+}
+
+/* Full-bleed past .app-shell's padding, same negative-inset trick as
+   .battlefield: a place, not a container, so it has no edge of its own. */
+.draft-sky {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  z-index: 0;
   overflow: hidden;
-  border-radius: 14px;
-  border: 1px solid rgba(224, 166, 60, 0.35);
-  background:
-    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(224, 166, 60, 0.16), transparent 65%),
-    radial-gradient(ellipse 90% 65% at 50% 100%, rgba(164, 99, 217, 0.16), transparent 70%),
-    linear-gradient(180deg, #1c1712, #17131d 60%, #14111a);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-}
-
-.draft-banner-glow {
-  position: absolute;
-  top: -45%;
-  left: 50%;
-  width: 240px;
-  height: 240px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(224, 166, 60, 0.35), transparent 65%);
-  animation: evolution-glow-pulse 2.4s ease-in-out infinite;
   pointer-events: none;
-  z-index: 0;
 }
 
-/* Second glow, anchored low/violet against the first's high/gold — the same
-   two-tone vignette as .title-screen's own background, just condensed into
-   one banner instead of a full-screen wash. */
-.draft-banner-glow-violet {
-  top: auto;
-  bottom: -55%;
-  width: 260px;
-  height: 260px;
-  background: radial-gradient(circle, rgba(164, 99, 217, 0.32), transparent 65%);
-  animation: evolution-glow-pulse 3s ease-in-out infinite 0.6s;
-}
-
-/* Slow-spinning rune ring behind the wordmark, same conic-gradient trick and
-   @keyframes title-rays-spin as .title-ray-burst, dimmed and gold-violet
-   dual-toned to fit a banner rather than a full logo backdrop. */
-.draft-banner-sigil {
-  position: absolute;
-  top: 46%;
-  left: 50%;
-  width: 220px;
-  height: 220px;
-  transform: translate(-50%, -50%);
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    rgba(224, 166, 60, 0.12) 10deg,
-    transparent 26deg,
-    transparent 160deg,
-    rgba(164, 99, 217, 0.14) 176deg,
-    transparent 194deg,
-    transparent 340deg,
-    rgba(224, 166, 60, 0.12) 352deg,
-    transparent 360deg
-  );
-  animation: title-rays-spin 30s linear infinite;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.draft-banner-sparks {
+/* Deliberately NOT tinted to the featured hero's type. The figure's own
+   bloom carries the type color; flipping the entire screen's hue on every
+   rail tap would strobe. What's constant instead is the pact's own two-tone
+   gold/violet — the same palette TitleScreen and FightScreen's recruit-claim
+   glow use, since this bargain is narratively the same kind of contract. */
+.draft-sky-wash {
   position: absolute;
   inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
+  background:
+    radial-gradient(ellipse 120% 55% at 50% -6%, rgba(224, 166, 60, 0.13), transparent 62%),
+    radial-gradient(ellipse 120% 60% at 50% 106%, rgba(164, 99, 217, 0.15), transparent 66%),
+    radial-gradient(ellipse 85% 60% at 50% 46%, #171522, #0b0c12 76%);
 }
 
-/* Contained version of .title-ember — same @keyframes title-ember-rise (its
-   0%/104% bottom range just maps onto this banner's own height instead of
-   the full screen), gold by default with a violet variant so the field reads
-   as the same two-tone pact rather than a recolored copy-paste. */
-.draft-banner-spark {
+.draft-motes {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Same @keyframes title-ember-rise as the title screen's ember field, tinted
+   to --pact-rgb so the air around the summoning carries the featured hero's
+   domain. At 2-4px the recolor on a rail tap is imperceptible, which is why
+   these can take the type color when the full-screen wash can't. */
+.draft-mote {
   position: absolute;
   bottom: -4%;
   border-radius: 50%;
-  background: radial-gradient(circle, #ffe4ab 0%, var(--accent) 55%, transparent 75%);
-  box-shadow: 0 0 5px 1px rgba(224, 166, 60, 0.6);
+  background: radial-gradient(circle, #ffffff 0%, rgba(var(--pact-rgb), 0.9) 55%, transparent 75%);
+  box-shadow: 0 0 6px 1px rgba(var(--pact-rgb), 0.45);
   opacity: 0;
   animation-name: title-ember-rise;
   animation-timing-function: ease-in;
@@ -4514,67 +4495,579 @@ button,
   --drift: 0px;
 }
 
-.draft-banner-spark.spark-violet {
-  background: radial-gradient(circle, #ecd8fb 0%, #a463d9 55%, transparent 75%);
-  box-shadow: 0 0 5px 1px rgba(164, 99, 217, 0.6);
-}
-
-.draft-banner-eyebrow {
+.draft-header {
   position: relative;
   z-index: 1;
-  font-size: 11px;
+  flex: none;
+  text-align: center;
+}
+
+.draft-eyebrow {
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--accent);
-  margin-bottom: 2px;
   animation: title-tagline-fade 0.6s ease both;
 }
 
-.draft-banner-title {
+.draft-title {
   position: relative;
-  z-index: 1;
-  font-size: 21px;
-  margin: 4px 0 8px;
-  text-shadow: 0 0 12px rgba(224, 166, 60, 0.45), 0 0 26px rgba(164, 99, 217, 0.22);
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  margin: 3px 0 0;
+  text-shadow: 0 0 14px rgba(224, 166, 60, 0.4), 0 0 30px rgba(164, 99, 217, 0.2);
   animation: title-heading-drop 0.7s var(--ease-spring) both;
 }
 
-/* Blurred duplicate of the title text sitting behind the crisp copy — same
-   bloom trick as .title-logo-glow, scaled down for a banner heading. */
-.draft-banner-title-glow {
+/* Blurred duplicate behind the crisp copy — same bloom trick as
+   .title-logo-glow, which is what keeps a dark-on-dark heading from looking
+   like flat text pasted onto a gradient. */
+.draft-title-glow {
   position: absolute;
   inset: 0;
   z-index: -1;
   color: var(--accent);
-  filter: blur(10px);
+  filter: blur(11px);
   opacity: 0.5;
 }
 
-.draft-banner-text {
-  position: relative;
-  z-index: 1;
-  font-size: 12px;
-  line-height: 1.5;
+.draft-flavor {
+  font-size: 11px;
+  line-height: 1.4;
   color: var(--text-dim);
-  margin: 0 0 8px;
+  margin: 4px 0 0;
   animation: title-tagline-fade 0.6s ease 0.12s both;
 }
 
-.draft-banner-callout {
-  margin-bottom: 0;
-  color: var(--text);
-  font-weight: 700;
+/* The pick counter, as two sockets rather than an "(n/2)" in a heading. Same
+   fixed-denominator pip-track idiom as the Field Effect plaque's duration
+   clock: the shape of a full pact is learned once and then read at a glance.
+   A filled socket shows the bound hero's own sprite at 24px — the one clean
+   downscale a 48px source has. */
+.draft-sockets {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 9px;
   animation: title-tagline-fade 0.6s ease 0.24s both;
 }
 
-.draft-banner-callout::before,
-.draft-banner-callout::after {
-  content: '◆';
+.draft-socket {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px dashed rgba(224, 166, 60, 0.32);
+  background: rgba(224, 166, 60, 0.04);
+}
+
+.draft-socket-mark {
+  font-size: 9px;
+  color: rgba(224, 166, 60, 0.4);
+}
+
+.draft-socket.filled {
+  border-style: solid;
+  border-color: rgba(var(--type-rgb), 0.75);
+  background: radial-gradient(circle, rgba(var(--type-rgb), 0.3), rgba(var(--type-rgb), 0.06) 72%);
+  box-shadow: 0 0 13px rgba(var(--type-rgb), 0.4);
+  animation: draft-socket-seal 0.45s var(--ease-spring);
+}
+
+@keyframes draft-socket-seal {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(1.14);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.draft-socket-portrait {
+  display: block;
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+}
+
+/* Centred rather than top-aligned: the figure is the subject of the screen,
+   so it takes the middle of whatever height is left over after the fixed
+   header, rail and CTA. overflow-y is insurance for a genuinely short
+   viewport (uiScale.ts stops enlarging below its 700px reference but never
+   shrinks), not the normal case — every child is sized to fit inside. */
+.draft-stage {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Fixed box so the sigil, bloom and platform all resolve against a known
+   frame regardless of whether this hero's sprite loaded, and so nothing the
+   figure draws can escape into .draft-stage's scroll box. */
+.draft-figure {
+  position: relative;
+  flex: none;
+  width: 208px;
+  height: 172px;
+  animation: draft-figure-rise 0.5s var(--ease-spring) both;
+}
+
+@keyframes draft-figure-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* The type bloom. This is where the featured hero's domain color lives —
+   contained to the figure, so switching candidates re-lights the summoning
+   without repainting the whole screen. */
+.draft-figure::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(ellipse 62% 58% at 50% 56%, rgba(var(--pact-rgb), 0.34), transparent 68%);
+  animation: draft-bloom-in 0.7s ease both;
+}
+
+@keyframes draft-bloom-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Ground plane, same mark as the battlefield's .combatant-platform (shadow
+   and team colour in one ellipse) scaled to a 3x figure — a candidate stands
+   on the same kind of ground here that it will stand on in a fight. */
+.draft-figure::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: 132px;
+  height: 28px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(var(--pact-rgb), 0.55),
+    rgba(var(--pact-rgb), 0.16) 52%,
+    transparent 72%
+  );
+}
+
+/* Summoning sigil: two counter-rotating conic rings, the same trick as
+   .title-ray-burst and the flavor banner this screen replaces. Two rings
+   rather than one because a single rotating gradient reads as a loading
+   spinner; a pair turning against each other reads as machinery. */
+.draft-sigil {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 184px;
+  height: 184px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(var(--pact-rgb), 0.3) 12deg,
+    transparent 30deg,
+    transparent 170deg,
+    rgba(224, 166, 60, 0.24) 184deg,
+    transparent 202deg,
+    transparent 350deg,
+    rgba(var(--pact-rgb), 0.3) 360deg
+  );
+  animation: title-rays-spin 26s linear infinite;
+  pointer-events: none;
+}
+
+.draft-sigil::before,
+.draft-sigil::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Inner ring, turning the other way and faster. */
+.draft-sigil::before {
+  inset: 26px;
+  background: conic-gradient(
+    from 180deg,
+    transparent 0deg,
+    rgba(164, 99, 217, 0.26) 16deg,
+    transparent 38deg,
+    transparent 180deg,
+    rgba(var(--pact-rgb), 0.24) 198deg,
+    transparent 220deg
+  );
+  animation: draft-sigil-counter 17s linear infinite;
+}
+
+@keyframes draft-sigil-counter {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+/* Hairline circle holding the two gradient rings together, so they read as
+   one inscribed sigil rather than two unrelated sweeps. */
+.draft-sigil::after {
+  inset: 12px;
+  box-shadow: inset 0 0 0 1px rgba(var(--pact-rgb), 0.22), 0 0 22px rgba(var(--pact-rgb), 0.1);
+}
+
+/* 144px is exactly 3x the 48px source (art/heroes/*.png), replacing a 40px
+   0.833x downscale. Only affordable because exactly one figure is on stage;
+   the battlefield holds four and stays at 2x (docs/visual-language.md item
+   5). The drop-shadow follows the sprite's alpha silhouette rather than its
+   bounding box, which is what makes it stand on the platform instead of
+   float over it. z-index lifts it above the absolutely-positioned bloom and
+   platform pseudo-elements. */
+.draft-portrait {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  bottom: 16px;
+  width: 144px;
+  height: 144px;
+  transform: translateX(-50%);
+  image-rendering: pixelated;
+  filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.7));
+}
+
+/* Chromeless glyph, same treatment as the battlefield's .team-row
+   .info-button: the circle, border, fill and shadow all go, the glyph stays
+   for discoverability and for keyboard/screen-reader users. */
+.draft-info {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 700;
+  font-style: italic;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity var(--dur-mid) var(--ease-out);
+}
+
+.draft-info:hover {
+  opacity: 1;
+}
+
+.draft-ident {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  animation: title-tagline-fade 0.45s ease 0.1s both;
+}
+
+.draft-name {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  margin: 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+.draft-types {
+  display: flex;
+  gap: 5px;
+}
+
+/* The stat silhouette. Six vertical bars on StatBars' own shared ceilings
+   (statFraction) rather than local maxima, so the shape is comparable across
+   all four candidates — which is the actual decision being made here. Six,
+   not eight: Mana Pool / MP Regen are the separate tempo axis (CLAUDE.md),
+   and the full block is one tap away on the hero sheet. Chromeless — a stat
+   readout isn't actionable, so it gets no box. */
+.draft-silhouette {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.draft-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 30px;
+}
+
+.draft-stat-value {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.draft-stat-track {
+  display: flex;
+  align-items: flex-end;
+  width: 8px;
+  height: 34px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.draft-stat-fill {
+  width: 100%;
+  border-radius: var(--radius-pill);
+}
+
+.draft-stat-label {
   font-size: 8px;
-  color: rgba(224, 166, 60, 0.6);
-  margin: 0 8px;
-  vertical-align: middle;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  line-height: 1;
+}
+
+/* BST is a total, not a seventh stat, so it gets a rule instead of a bar and
+   sits in the accent rather than a stat color. flex-end on the row keeps its
+   label on the same baseline as the six it summarizes. */
+.draft-stat-bst {
+  justify-content: center;
+  border-left: 1px solid rgba(255, 255, 255, 0.09);
+  margin-left: 2px;
+  padding-left: 8px;
+}
+
+.draft-stat-bst .draft-stat-value {
+  font-size: 15px;
+  color: var(--accent);
+}
+
+.draft-stat-track-empty {
+  display: none;
+}
+
+/* Starting kit — the move buttons with their boxes taken off, which is the
+   whole rule in one element. The crystal stays (mana cost is the primary
+   balance lever, CLAUDE.md "No accuracy stat", and a bare unitless number is
+   the exact fault the Field Effect badge was rebuilt for); the type becomes
+   the name's own color, the same "type is the material, not a tag on it"
+   move the move buttons made when .type-badge became .move-type-code. */
+.draft-kit {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px 12px;
+  max-width: 300px;
+}
+
+.draft-kit-move {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--move-type);
+}
+
+/* Half-scale .move-crystal, same recipe so a player learns "blue orb = mana
+   cost" once and reads it in both places. */
+.draft-kit-crystal {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 26%, #a8dbfb, #5ea3e4 32%, var(--mana) 62%, #1b3a5c 100%);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.45), inset 0 -2px 3px rgba(0, 0, 0, 0.35),
+    0 1px 3px rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+/* The commit. A box, legitimately — it's the control that binds a hero, and
+   under the rule that is exactly what earns a rectangle. Type-tinted at rest
+   so it belongs to the figure above it, gold once bound so it joins the
+   pact's own palette. */
+.draft-choose {
+  flex: none;
+  margin-top: 2px;
+  padding: 9px 24px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(var(--pact-rgb), 0.55);
+  background: linear-gradient(180deg, rgba(var(--pact-rgb), 0.24), rgba(var(--pact-rgb), 0.07));
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: var(--hairline), 0 4px 14px rgba(var(--pact-rgb), 0.2);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
+}
+
+.draft-choose:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+.draft-choose.chosen {
+  border-color: rgba(224, 166, 60, 0.75);
+  background: linear-gradient(180deg, rgba(224, 166, 60, 0.3), rgba(224, 166, 60, 0.1));
+  color: #ffe4ab;
+  box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.35), 0 0 20px rgba(224, 166, 60, 0.25);
+}
+
+/* Same reasoning as .resolve-button:disabled — the glow goes entirely, not
+   just some opacity. A dimmed-but-still-glowing control still reads as "the
+   thing to press", which is wrong when the pact is already full. */
+.draft-choose:disabled {
+  opacity: 0.35;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* The candidates waiting in the dark. Chromeless and dimmed at rest; the
+   frame appears on the one that's on stage and on the ones already bound —
+   the frame IS the affordance, the same conversion the battlefield's
+   targetable figures got. */
+.draft-rail {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.draft-candidate {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 2px 5px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  opacity: 0.5;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: opacity var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out),
+    background var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out);
+}
+
+/* Miniature of the stage's ground plane, so a rail portrait reads as a
+   figure standing back from the light rather than an icon in a cell. */
+.draft-candidate::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  width: 46px;
+  height: 12px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(var(--type-rgb), 0.5), transparent 70%);
+}
+
+.draft-candidate:hover {
+  opacity: 0.8;
+}
+
+.draft-candidate.featured {
+  opacity: 1;
+  color: var(--text);
+  border-color: rgba(var(--type-rgb), 0.5);
+  background: linear-gradient(180deg, rgba(var(--type-rgb), 0.16), transparent 78%);
+  transform: translateY(-2px);
+}
+
+.draft-candidate.chosen {
+  opacity: 1;
+  color: var(--accent);
+  border-color: rgba(224, 166, 60, 0.5);
+  background: linear-gradient(180deg, rgba(224, 166, 60, 0.12), transparent 78%);
+}
+
+.draft-candidate.chosen.featured {
+  border-color: rgba(224, 166, 60, 0.8);
+  box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.3), 0 0 16px rgba(224, 166, 60, 0.2);
+}
+
+/* 48px is the source's own size — 1x, no resampling at all. */
+.draft-candidate-portrait {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+}
+
+.draft-candidate-name {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.draft-candidate-seal {
+  position: absolute;
+  z-index: 2;
+  top: 2px;
+  right: 4px;
+  font-size: 9px;
+  color: var(--accent);
+  text-shadow: 0 0 6px rgba(224, 166, 60, 0.7);
 }
 
 /* Scouted enemy squad (SquadSelectScreen) — deliberately minimal: sprite +
@@ -5389,6 +5882,16 @@ button,
   opacity: 0.32;
   box-shadow: none;
   cursor: not-allowed;
+}
+
+/* Lifted out of the sky's paint order for the same reason .draft-header /
+   .draft-stage / .draft-rail are: .draft-sky is positioned at z-index 0 and
+   its wash bottoms out in an opaque gradient, so a static in-flow sibling
+   paints *under* it. Without this the CTA was invisible — though still
+   clickable, since the sky is pointer-events: none. */
+.draft-cta {
+  position: relative;
+  z-index: 1;
 }
 
 /* DraftScreen's "Begin the Pact" — same gold-gradient/pulse treatment as
