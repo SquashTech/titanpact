@@ -36,7 +36,10 @@ export function StatusDetailOverlay({ instance, onClose }: Props) {
     <div className="detail-overlay status-detail-overlay" onClick={closeAndStop}>
       <div className="detail-panel status-detail-panel" style={{ borderTopColor: color }} onClick={closeAndStop}>
         <div className="status-detail-head">
-          <span className="status-detail-icon" style={{ background: statusTint(instance.statusId, 0.16) }}>
+          {/* `color` as well as `background`: the glyph inside is a currentColor
+              path now (statusIcons.tsx), not the full-colour PNG this disc used
+              to hold, so the status's identity colour has to reach it here. */}
+          <span className="status-detail-icon" style={{ color, background: statusTint(instance.statusId, 0.16) }}>
             <StatusGlyph statusId={instance.statusId} />
           </span>
           <div>

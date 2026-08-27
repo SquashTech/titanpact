@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { MapNodeType } from '../../run/map';
 import { STAT_PATHS } from './statIcons';
 import { SECTION_PATHS } from './sectionIcons';
+import { EQUIP_FORM_PATHS } from './equipmentIcons';
 
 /**
  * One glyph per map node type — the fourth family in the vector vocabulary
@@ -168,13 +169,8 @@ const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   weaponReward: STAT_PATHS.attack,
   /** The Defense shield, for the same reason. */
   armorReward: STAT_PATHS.defense,
-  /** A banded ring under a set stone. The third slot has no stat of its own to borrow, so it gets the object itself; the band is a 3.4-unit annulus, which is what a ring needs to still be a ring at pill size. */
-  accessoryReward: (
-    <>
-      <path d="M12 1.4 15.6 5.6 12 9.8 8.4 5.6Z" />
-      <path fillRule="evenodd" d="M12 8.6a6.7 6.7 0 1 1 0 13.4 6.7 6.7 0 0 1 0-13.4Zm0 3.4a3.3 3.3 0 1 0 0 6.6 3.3 3.3 0 0 0 0-6.6Z" />
-    </>
-  ),
+  /** A banded ring under a set stone. The third slot has no stat of its own to borrow, so it gets the object itself — and now that gear draws its own silhouette (equipmentIcons.tsx), the object is that file's `ring`, so an Accessory Cache wears the shape of the ring it is about to hand over. */
+  accessoryReward: EQUIP_FORM_PATHS.ring,
   /** The HP heart — the Vitality shrine grants max HP. */
   hpBoostReward: STAT_PATHS.hp,
   /** The Mana droplet. */

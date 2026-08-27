@@ -3,30 +3,13 @@ import type { StatKey } from '../../engine/content';
 import type { EquipmentDefinition, EquipmentLoadout, EquipmentRarity, EquipmentSlot } from '../../run/equipment';
 import { StatGlyph, STAT_LABELS } from './StatBars';
 import { IconsetGlyph } from './RunGlyph';
+import { EquipmentFormGlyph } from './equipmentIcons';
 import { useLongPress } from './MoveTile';
 import { passives } from '../../data/passives';
 import { passiveEmoji } from './passiveIcons';
 import { statuses } from '../../data/statuses';
 
 export const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
-
-/** Generic per-slot glyph — only shown for an empty slot, or for an item without its own art in itemArt.ts (EquipmentIcon below prefers the item-specific icon whenever one exists). */
-export const EQUIP_SLOT_ICONS: Record<EquipmentSlot, number> = {
-  weapon: 97,
-  armor: 81,
-  accessory: 84,
-};
-
-/** 2500+ icon-sheet indices for the authored equipment catalogue. */
-const EQUIPMENT_ICON_INDICES: Partial<Record<string, number>> = {
-  ironBlade: 97,
-  dagger: 96,
-  arcaneFocus: 70,
-  oakenArmor: 81,
-  guardianPlate: 83,
-  swiftBoots: 86,
-  vitalCharm: 84,
-};
 
 /** 2500+ icon-sheet indices for the authored relic catalogue. */
 const RELIC_ICON_INDICES: Partial<Record<string, number>> = {
@@ -44,9 +27,20 @@ interface EquipmentIconProps {
   className?: string;
 }
 
-/** Renders the item's 2500+ sprite glyph, preserving a distinctive silhouette for each item. */
+/**
+ * The item's silhouette (equipmentIcons.tsx) — a bow draws as a bow, boots as
+ * boots, a necklace as a necklace, derived from the item's own name rather
+ * than from a hand-kept id table.
+ *
+ * That derivation is the point of the change. This used to be three iconset
+ * cells and a seven-entry override map, which meant the other 48 items in
+ * src/data/equipment.ts shared one generic sword, one shield and one sparkle
+ * between them — a roster screen showed the same sword for a greatsword, a
+ * maul and a scythe. `equipmentForm` reads the noun the item is already named
+ * after, so new gear is drawn correctly the moment it is written.
+ */
 export function EquipmentIcon({ item, slot, className }: EquipmentIconProps) {
-  return <IconsetGlyph index={item ? (EQUIPMENT_ICON_INDICES[item.id] ?? EQUIP_SLOT_ICONS[slot]) : EQUIP_SLOT_ICONS[slot]} className={`equip-icon-img ${className ?? ''}`} />;
+  return <EquipmentFormGlyph item={item} slot={slot} className={className} />;
 }
 
 interface RelicIconProps {

@@ -1,67 +1,43 @@
-// Pixel-art glyphs for statuses, move kinds, Field Effects and Elemental
-// Force, cut from the Pixel Odyssey iconset — see docs/icon-pack.md for the
-// sheet's structure, the per-concept picks and why each was chosen.
-//
-// Same shape as itemArt.ts: bare `Record<id, url>` maps of Vite-imported PNGs,
-// with every consumer falling back to its existing emoji when an id has no
-// entry. That fallback is load-bearing, not defensive — the pack has no
-// element row for Iron, Mech, Beast or Ancient, so four of the fifteen
-// Elemental Force chips genuinely have no icon and must keep rendering.
+// Pixel-art glyphs for Field Effects, cut from the Pixel Odyssey iconset —
+// see docs/icon-pack.md for the sheet's structure, the per-concept picks and
+// why each was chosen.
 //
 // SIZING (docs/icon-pack.md "The size constraint"): sources are 32x32, so the
 // only honest display sizes are 32px and 16px. 16px is a true halving — every
-// other source pixel is dropped, not blended — and anything below that is what
-// the old `.status-emoji` comment meant by "turned to noise". Every glyph slot
-// in styles.css is therefore pinned to exactly 16px. Do not set a size here
-// that isn't 16 or 32.
-
-import burnIcon from '../../../art/icons/status/burn.png';
-import bleedIcon from '../../../art/icons/status/bleed.png';
-import freezeIcon from '../../../art/icons/status/freeze.png';
-import dazeIcon from '../../../art/icons/status/daze.png';
-import renewIcon from '../../../art/icons/status/renew.png';
-import conductIcon from '../../../art/icons/status/conduct.png';
-import poisonIcon from '../../../art/icons/status/poison.png';
-import hauntIcon from '../../../art/icons/status/haunt.png';
-import stealthIcon from '../../../art/icons/status/stealth.png';
+// other source pixel is dropped, not blended — and anything below that is
+// what an earlier pixel-art attempt meant by "turned to noise". Every glyph
+// slot in styles.css that draws from this file is therefore pinned to exactly
+// 16px. Do not set a size here that isn't 16 or 32.
+//
+// WHAT LEFT, AND WHY THIS IS THE LAST MAP STANDING. Three families used to
+// live here and are vector now (docs/icon-pack.md "Where this pack does NOT
+// apply"):
+//
+// - MoveKindBadge's four glyphs became the stat glyphs themselves
+//   (statIcons.tsx MoveKindGlyph), so a physical move wears the Attack sword
+//   and a magical one the Intelligence spark — the literal stat each pipeline
+//   reads.
+// - The nine status glyphs became statusIcons.tsx's STATUS_PATHS: a status
+//   chip sets its own color and a PNG could not take it, which is why the old
+//   icon needed a drop-shadow to separate from the chip it belonged to.
+// - The eleven Elemental Force glyphs became element x arrow, composed in
+//   statusIcons.tsx from elementIcons.tsx. Eleven, not fifteen, is the whole
+//   story: this pack has no element row for Iron, Mech, Beast or Ancient, so
+//   four of the fifteen chips had always fallen back to an emoji.
+//
+// The extracted PNGs are left in art/icons/ rather than deleted; nothing
+// imports them.
+//
+// Field Effects stay here because the plaque they render on is a fixed 32px
+// slot on the horizon — the one surface in the app big enough to show this
+// pack at native resolution, and the one whose glyph never needs to be
+// recolored.
 
 import surgingMagicIcon from '../../../art/icons/field-effect/surging-magic.png';
 import scorchedLandIcon from '../../../art/icons/field-effect/scorched-land.png';
 import stasisBubbleIcon from '../../../art/icons/field-effect/stasis-bubble.png';
 import sanctuaryIcon from '../../../art/icons/field-effect/sanctuary.png';
 import verdantEarthIcon from '../../../art/icons/field-effect/verdant-earth.png';
-
-import fireForceIcon from '../../../art/icons/force/fire.png';
-import frostForceIcon from '../../../art/icons/force/frost.png';
-import stormForceIcon from '../../../art/icons/force/storm.png';
-import waterForceIcon from '../../../art/icons/force/water.png';
-import stoneForceIcon from '../../../art/icons/force/stone.png';
-import natureForceIcon from '../../../art/icons/force/nature.png';
-import lightForceIcon from '../../../art/icons/force/light.png';
-import shadowForceIcon from '../../../art/icons/force/shadow.png';
-import arcaneForceIcon from '../../../art/icons/force/arcane.png';
-import mindForceIcon from '../../../art/icons/force/mind.png';
-import spiritForceIcon from '../../../art/icons/force/spirit.png';
-
-/** Per-status glyphs, keyed by status id (src/data/statuses.ts). Elemental Force ids are resolved separately — see forceIconArt. */
-export const statusIconArt: Partial<Record<string, string>> = {
-  Burn: burnIcon,
-  Bleed: bleedIcon,
-  Freeze: freezeIcon,
-  Daze: dazeIcon,
-  Renew: renewIcon,
-  Conduct: conductIcon,
-  Poison: poisonIcon,
-  Haunt: hauntIcon,
-  Stealth: stealthIcon,
-};
-
-// MoveKindBadge's four glyphs used to live here (physical/magical/heal/buff,
-// cut from the same sheet). They are vector now — MoveKindGlyph in
-// statIcons.tsx, which draws them from the same set as the stat blocks so a
-// physical move wears the Attack sword and a magical one the Intelligence
-// spark, the literal stat each pipeline reads. The extracted PNGs are left in
-// art/icons/move-kind/ rather than deleted; nothing imports them.
 
 /**
  * Per-Field-Effect glyphs, keyed by fieldEffectId (src/data/fieldEffects.ts).
@@ -81,32 +57,4 @@ export const fieldEffectIconArt: Partial<Record<string, string>> = {
   stasisBubble: stasisBubbleIcon,
   sanctuary: sanctuaryIcon,
   verdantEarth: verdantEarthIcon,
-};
-
-/**
- * Elemental Force chips, keyed by the bare TypeId the Force boosts.
- *
- * Each is that element carrying the matrix's "major up arrow" modifier, which
- * is a literal picture of what the status does (+Base Power to moves of that
- * type). That modifier is also what lets Fire Force and Burn both be flames —
- * statusIcons.tsx's FORCE_EMOJI had to dodge the obvious glyph for
- * Fire/Frost/Storm/Shadow precisely because Burn/Freeze/Conduct/Stealth had
- * already claimed it, and that dodge is no longer necessary here.
- *
- * Iron, Mech, Beast and Ancient are absent on purpose: the iconset has no
- * element row for them (docs/icon-pack.md), so those four keep falling back to
- * FORCE_EMOJI rather than being forced onto a wrong-looking icon.
- */
-export const forceIconArt: Partial<Record<string, string>> = {
-  Fire: fireForceIcon,
-  Frost: frostForceIcon,
-  Storm: stormForceIcon,
-  Water: waterForceIcon,
-  Stone: stoneForceIcon,
-  Nature: natureForceIcon,
-  Light: lightForceIcon,
-  Shadow: shadowForceIcon,
-  Arcane: arcaneForceIcon,
-  Mind: mindForceIcon,
-  Spirit: spiritForceIcon,
 };

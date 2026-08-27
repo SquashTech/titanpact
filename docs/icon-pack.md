@@ -51,8 +51,11 @@ currently all reach for the same emoji and collide. See the picks.
 
 ## Picks
 
-All extracted to `art/icons/<set>/<name>.png` at the native 32 × 32 with alpha intact,
-matching the naming convention `itemArt.ts` already uses for equipment and relics.
+All extracted to `art/icons/<set>/<name>.png` at the native 32 × 32 with alpha intact.
+
+> Most of what follows is now **historical** — three of the four sets have been replaced by
+> vector and are marked as such per section. The picks are kept on record because the
+> reasoning behind them is what eventually made the case against the pack.
 
 ### `art/icons/move-kind/` — the `MoveKindBadge` glyphs — **superseded, see below**
 
@@ -70,7 +73,12 @@ matching the naming convention `itemArt.ts` already uses for equipment and relic
 | Heal (alt) | `heal-heart.png` | 84 | Bolder fallback — 72's gold frame goes noisy below ~24px, this doesn't. |
 | Buff | `buff.png` | 81 | Glowing ward shield. |
 
-### `art/icons/status/` — the 9 authored statuses
+### `art/icons/status/` — the 9 authored statuses — **superseded, see below**
+
+> Extracted and wired, then replaced by vector (`STATUS_PATHS`,
+> `src/view/shared/statusIcons.tsx`). The files are still in `art/icons/status/`; nothing
+> imports them. Two of the nine picks below carry a "**needs ≥ 32px**" warning, on a family
+> whose only real slot is a 16px badge — which is most of the argument for the move.
 
 Plain, un-modified glyphs, so statuses read as the *base* family.
 
@@ -105,7 +113,13 @@ Effect is a standing state that keeps ticking, not a one-shot.
 Column 12/13's up arrow was the other candidate and is worse: it reads "buff", which is a
 lie for Stasis Bubble (it slows everyone) and for Scorched Land (it stops Burn decaying).
 
-### `art/icons/force/` — matrix column 13 (major up arrow) × element
+### `art/icons/force/` — matrix column 13 (major up arrow) × element — **superseded, see below**
+
+> Extracted and wired, then replaced by vector — `ELEMENT_PATHS`
+> (`src/view/shared/elementIcons.tsx`) composed under a drawn arrow by `StatusGlyph`. The
+> files are still in `art/icons/force/`; nothing imports them. The design below survived the
+> move intact; only the source of the art changed, and the four missing types stopped being
+> missing.
 
 Elemental Force grants +Base Power to one type, so "element + big up arrow" is a literal
 picture of the status. This replaces `FORCE_EMOJI` in `statusIcons.tsx`, whose header
@@ -118,6 +132,10 @@ Arcane, Mind (sleep row), Spirit (phoenix row). **Iron, Mech, Beast and Ancient 
 element row in the pack** and are not extracted; they need either a hand-drawn addition or
 a fallback to the existing type-coloured text chip.
 
+> This paragraph is the whole reason the family is vector now: "hand-drawn addition" was
+> the right answer, and there was no version of it that left the other eleven on the pack
+> without the set rendering in two styles.
+
 ### The resulting system
 
 Worth stating plainly, because it fell out of the matrix rather than being designed:
@@ -127,6 +145,9 @@ Worth stating plainly, because it fell out of the matrix rather than being desig
 
 Three systems that currently compete for the same emoji become one grammar with three
 inflections.
+
+> This is the one part of the pack's design that was kept when the art was not — see "Where
+> this pack does NOT apply" for where it runs now.
 
 ---
 
@@ -164,15 +185,24 @@ chasing exact multiples.
 
 ## What was wired in
 
-`src/view/shared/iconArt.ts` holds the four maps (same shape as `itemArt.ts`), and
-`StatusGlyph` in `statusIcons.tsx` is the single place a status glyph is drawn — the
-battlefield shoulder badge, `StatusDetailOverlay`, `HeroDetailOverlay`'s chip and
-`ReferenceOverlay`'s catalog all render it rather than interpolating an emoji string, so
-the icon/emoji decision is made once. `MoveKindBadge` does the same for its four.
+> Historical. `src/view/shared/iconArt.ts` held four maps and now holds one (Field
+> Effects); the status, Force and move-kind maps are gone, and `itemArt.ts` was deleted
+> outright — nothing had imported it since `EquipmentIcon` moved to iconset cells, and gear
+> is vector now. The emoji fallbacks it describes are gone too: every status, every type and
+> every item has a drawn glyph, so the **mixed icon/emoji cluster this section warns about
+> is no longer a state the UI can reach.**
 
-Every consumer falls back to its existing emoji when an id has no icon. That path is live,
-not defensive: Iron, Mech, Beast and Ancient Force chips have no icon, so a **mixed
-icon/emoji cluster is a state the UI genuinely reaches** and must not look broken.
+`StatusGlyph` in `statusIcons.tsx` is still the single place a status glyph is drawn — the
+battlefield shoulder badge, `StatusDetailOverlay`, `HeroDetailOverlay`'s chip and
+`ReferenceOverlay`'s catalog all render it rather than interpolating a string, so the
+decision is made once. `EquipmentIcon` (`EquipmentBox.tsx` → `EquipmentFormGlyph`) is the
+same single point for gear, and `MoveKindBadge` for its four.
+
+One thing that outlived the PNGs and applies to any surface drawing these: a wrapper that
+tints a glyph has to set `color`, not just `background`. `StatusDetailOverlay`'s 44px disc
+and `ReferenceOverlay`'s catalog disc both set only a tinted background — correct for a
+full-colour PNG, and silently wrong for a `currentColor` path, which came out in the app's
+default text grey inside a correctly orange Burn chip. Both now set the colour too.
 
 ### Two things measured after wiring, both regressions, both fixed
 
@@ -221,7 +251,7 @@ badge's tier class, never from `STAT_COLORS` — on a move button the glyph answ
 kind of move", and a red sword meaning "Attack stat" in one place and "physical damage" in
 another would be two claims in one shape.
 
-**Two more families followed, on the same two reasons.** The six hero-sheet section headers
+**Five more families followed, on the same two reasons.** The six hero-sheet section headers
 (`src/view/shared/sectionIcons.tsx`) render at 16px and always take their panel's gold. The
 eighteen map node glyphs (`src/view/shared/nodeIcons.tsx`) render at 15–24px depending on
 the node's tier and always take that node's `--node-color`. The map is the sharper case,
@@ -233,18 +263,43 @@ sprites had needed a `grayscale(0.6)` on locked nodes, which is a *colour* chang
 in for a *lighting* one and made the route ahead least readable where it most needed to be
 read. A `currentColor` path just takes the tile's opacity.
 
-Both new families reuse rather than reinvent where the pairing is literal. A Vitality shrine
-on the map wears the **HP heart**; a Weapon Cache the **Attack sword**; an Armor Cache the
-**Defense shield**; an Equipment Cache the section header's own **chest**. Same trade as
+Both of those families reuse rather than reinvent where the pairing is literal. A Vitality
+shrine on the map wears the **HP heart**; a Weapon Cache the **Attack sword**; an Armor Cache
+the **Defense shield**; an Equipment Cache the section header's own **chest**. Same trade as
 `MoveKindBadge`: a player who has read one hero stat block has already learned half of the
 map.
 
-So the division is: **this pack owns "a thing happening, flavoured by a type"** — statuses,
-Field Effects, Elemental Force, where the matrix's modifier × element grammar is the whole
-value. **Vector owns the fixed abstract vocabulary** — the eight stats, the four move kinds,
-the six section headers and the eighteen map nodes — which has to be recolourable, has to be
-legible from 11px up, and turned out to be one vocabulary rather than four. Neither is a
-fallback for the other.
+**Then the last three went, and the division above went with them.** The nine statuses
+(`STATUS_PATHS`, `statusIcons.tsx`), the fifteen types (`ELEMENT_PATHS`,
+`elementIcons.tsx`) and the gear silhouettes (`EQUIP_FORM_PATHS`, `equipmentIcons.tsx`) are
+vector now. Each fell for its own reason, and none of the three is the size argument:
+
+- **Statuses fell to colour.** A status badge sets its own identity colour (`statusColor`)
+  and the PNG could not take it, so the icon carried a drop-shadow to separate itself from
+  the very chip it belonged to. A `currentColor` path just *is* the status's colour.
+- **Elemental Force fell to coverage.** The pack has no element row for Iron, Mech, Beast or
+  Ancient, so four of the fifteen chips had always rendered as emoji — a family that could
+  never be one family. The elements had to be authored for those four regardless, and once
+  four exist, fifteen should.
+- **Equipment fell to arithmetic.** There are 55 items and there will be more; the pack path
+  hand-mapped seven ids to cells and gave everything else a generic sword, shield or
+  sparkle. A form derived from the item's own name (`equipmentForm`) draws new gear
+  correctly the moment it is written, and no id table goes stale.
+
+So the division is now: **vector owns everything a player looks at directly** — stats, move
+kinds, section headers, map nodes, statuses, types and gear, seven families in one
+vocabulary, all recolourable and all legible from 11px up. **This pack owns the Field
+Effect plaque**, one fixed 32px slot on the horizon that never recolours and shows the art
+at native resolution. That is not a grudging remainder: it is the only surface in the app
+the pack was ever sized for.
+
+The matrix's grammar outlived the matrix, which is the part worth keeping:
+
+> **The modifier names the family. The base shape names the member.**
+
+It now runs on drawn shapes rather than extracted cells — Mana Pool and MP Regen (droplet,
+droplet + chevron), HP and Renew (heart, heart + chevron), Skirmish and Elite (helm, helm +
+crown), and every Elemental Force chip (element + up arrow).
 
 ---
 

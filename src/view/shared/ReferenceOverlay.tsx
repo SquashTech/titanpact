@@ -133,7 +133,10 @@ function StatusReferenceRow({ def }: { def: StatusDefinition }) {
 
   return (
     <div className="status-ref-row" style={{ borderLeftColor: color }}>
-      <span className="status-ref-icon" style={{ background: statusTint(def.id, 0.16) }}>
+      {/* `color` as well as `background`: the glyph inside is a currentColor
+          path now (statusIcons.tsx), not the full-colour PNG this disc used to
+          hold, so the status's identity colour has to reach it from here. */}
+      <span className="status-ref-icon" style={{ color, background: statusTint(def.id, 0.16) }}>
         <StatusGlyph statusId={def.id} />
       </span>
       <div className="status-ref-body">
