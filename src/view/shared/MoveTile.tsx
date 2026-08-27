@@ -4,7 +4,8 @@ import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors
 import { fieldEffects } from '../../data/fieldEffects';
 import { STAT_LABELS } from './StatBars';
 import { TypeBadge } from './TypeBadge';
-import { moveKindIconArt } from './iconArt';
+import { MoveKindGlyph, type MoveKindGlyphKind } from './statIcons';
+import { ManaCost } from './ManaCost';
 
 /**
  * Shared ~500ms long-press-vs-click detection. Originally inlined in
@@ -155,9 +156,6 @@ export function CategoryBadge({ category }: { category: MoveDefinition['category
   return <span className={`category-badge category-${category}`}>{CATEGORY_LABELS[category]}</span>;
 }
 
-const CATEGORY_EMOJI: Record<MoveDefinition['category'], string> = { physical: '⚔️', magical: '🔮' };
-const KIND_EMOJI: Record<MoveDefinition['kind'], string> = { damage: '', heal: '💚', buff: '🛡️' };
-
 /**
  * Compact glyph for the always-visible move button (FightScreen's move grid)
  * — replaces CategoryBadge's PHY/MAG text there. Category (physical/magical)
@@ -169,27 +167,24 @@ const KIND_EMOJI: Record<MoveDefinition['kind'], string> = { damage: '', heal: '
  * long-press move popup still spells the full PHY/MAG + Damage/Heal/Buff
  * text out via CategoryBadge + KIND_LABELS for anyone unsure what a glyph
  * means.
+ *
+ * The glyph itself is now MoveKindGlyph — the same vector set the stat blocks
+ * use, and for physical/magical/heal the *same glyph as the stat the move
+ * actually reads* (see its note in statIcons.tsx). It replaced the pixel-art
+ * badge, which was picked from a 32px iconset and drawn here at 16px: a true
+ * halving that survives, but a size this slot was locked to rather than one
+ * it chose. Vector lets the badge sit at the row's own scale.
  */
 export function MoveKindBadge({ move }: { move: MoveDefinition }) {
-  const isDamage = move.kind === 'damage';
-  const key = isDamage ? move.category : move.kind;
-  const icon = moveKindIconArt[key];
-  const tierClass = isDamage ? `category-${move.category}` : `kind-${move.kind}`;
-  const title = isDamage ? CATEGORY_LABELS[move.category] : KIND_LABELS[move.kind];
+  // Compared inline rather than through an `isDamage` boolean so the false
+  // branch narrows move.kind to 'heal' | 'buff' — MoveKindGlyph's four kinds
+  // exactly, with no cast.
+  const kind: MoveKindGlyphKind = move.kind === 'damage' ? move.category : move.kind;
+  const tierClass = move.kind === 'damage' ? `category-${move.category}` : `kind-${move.kind}`;
+  const title = move.kind === 'damage' ? CATEGORY_LABELS[move.category] : KIND_LABELS[move.kind];
   return (
     <span className={`category-badge move-kind-badge ${tierClass}`} title={title}>
-      {/* Pixel-art glyph (docs/icon-pack.md), falling back to the emoji for any
-          kind/category without one. These four were picked specifically for
-          silhouette strength, because this badge renders at 16px — a true
-          halving of the 32px source, which drops every other pixel rather than
-          blending, so a detailed icon would come apart here. */}
-      {icon ? (
-        <img className="move-kind-glyph" src={icon} alt="" draggable={false} />
-      ) : isDamage ? (
-        CATEGORY_EMOJI[move.category]
-      ) : (
-        KIND_EMOJI[move.kind]
-      )}
+      <MoveKindGlyph kind={kind} className="move-kind-glyph" />
     </span>
   );
 }
@@ -249,7 +244,7 @@ export function MoveTile({
 
 /**
  * Visual replica of FightScreen's in-combat move button (same .move-button/
- * .move-crystal/.move-row-* markup, styles.css:1589) for screens that offer
+ * ManaCost/.move-row-* markup, styles.css:1589) for screens that offer
  * a hero's moves outside of combat — currently LevelUpScreen's move-replace
  * picker — so the same button language is recognizable wherever a move is
  * shown. Presentational only: no mana-affordability check and no elemental-
@@ -278,9 +273,7 @@ export function MoveButtonReplica({
       {...longPress}
     >
       <div className="move-row-top">
-        <span className="move-crystal" title={`${move.manaCost} Mana`}>
-          <strong>{move.manaCost}</strong>
-        </span>
+        <ManaCost cost={move.manaCost} />
         <span className="move-name">{move.name}</span>
       </div>
       <div className="move-row-mid">
@@ -292,9 +285,11 @@ export function MoveButtonReplica({
             <strong>{move.basePower}</strong>BP
           </span>
         )}
+        {/* Bare number, no "HEAL" — kept in lockstep with FightScreen's own
+            move button, which has the reasoning. */}
         {move.kind === 'heal' && move.healAmount != null && (
           <span className="move-power move-heal">
-            <strong>{move.healAmount}</strong>HEAL
+            <strong>{move.healAmount}</strong>
           </span>
         )}
       </div>

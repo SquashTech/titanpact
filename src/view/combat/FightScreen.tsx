@@ -38,8 +38,9 @@ import { getTypeAbbr, getTypeColor, getTypeColorRgb } from './typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { CategoryBadge, MoveKindBadge, KIND_LABELS, TARGET_MODE_LABELS, moveEffectSummary, useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
+import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
+import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { EquipmentIcon, EQUIP_SLOT_LABELS, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { HeroPreviewOverlay } from '../run/HeroPreviewOverlay';
 
@@ -264,14 +265,7 @@ function ConsoleCrest({
           }
         >
           <HeroPortrait heroId={cHero.id} className="console-socket-portrait" />
-          {committedMove && (
-            <span
-              className="console-socket-crystal"
-              style={{ '--move-type-rgb': getTypeColorRgb(committedMove.type) } as CSSProperties}
-            >
-              {committedMove.manaCost}
-            </span>
-          )}
+          {committedMove && <ManaCost cost={committedMove.manaCost} size="sm" className="console-socket-crystal" />}
           {committed && !committedMove && (
             <span className="console-socket-mark" aria-hidden="true">
               {committed.kind === 'rest' ? '\u25CC' : '\u21C4'}
@@ -1271,9 +1265,7 @@ export function FightScreen({
                             name, which frees the second line for what the button
                             was missing entirely — the effect. */}
                         <div className="move-row-top">
-                          <span className="move-crystal" title={`${move.manaCost} Mana`}>
-                            <strong>{move.manaCost}</strong>
-                          </span>
+                          <ManaCost cost={move.manaCost} />
                           <span className="move-name">{move.name}</span>
                           {/* Was a filled TypeBadge chip. One move button used to
                               hold three sub-boxes (mana crystal, type chip, kind
@@ -1295,9 +1287,16 @@ export function FightScreen({
                               {forceBonus > 0 && <span className="move-boosted-arrow">▲</span>}
                             </span>
                           )}
+                          {/* No "HEAL" suffix beside the number, unlike the
+                              damage row's "BP". Base Power needs its unit
+                              spelled out because 60 alone could be anything;
+                              a heal amount is HP, the number is already in
+                              --hp-high green, and the badge at the row's far
+                              end is now the HP heart itself — three things
+                              saying "health" made the word the fourth. */}
                           {move.kind === 'heal' && move.healAmount != null && (
                             <span className="move-power move-heal">
-                              <strong>{move.healAmount}</strong>HEAL
+                              <strong>{move.healAmount}</strong>
                             </span>
                           )}
                           {/* Holds the power slot open on a move that has no
@@ -1357,10 +1356,24 @@ export function FightScreen({
           Switch are pressed *during* a decision, many times a fight, so they
           take double width and the row's full height — the previous
           24px-tall quarter-width row was genuinely hard to hit on a phone
-          now that the app runs installed rather than in a browser tab. Log /
-          Ref / Menu are consulted, not played, so they stay narrow and stack
-          their glyph over a caption instead. */}
-      <div className="bottom-bar" style={consoleStyle}>
+          now that the app runs installed rather than in a browser tab. Menu is
+          consulted, not played, so it stays narrow and stacks its glyph over a
+          caption instead.
+
+          Log and Reference moved OFF this row and into the Menu (2026-08-26,
+          user direction). Five keys was one more than the row could give real
+          width to, and the two that lost their place are the two a player
+          opens least — a fight is played with Back and Switch, and reads of
+          the log or the type chart are deliberate detours. Three keys means
+          Menu can share the utility width the trio used to split.
+
+          And while a target is being chosen the row collapses to a SINGLE
+          full-width Back. That state has exactly one legal exit — unpick the
+          move — because Switch is itself an action the hero can't take once a
+          move is loaded, and the whole battlefield is live with tappable
+          targets. A row of four other keys under a screen that wants one tap
+          on a highlighted card was offering choices that don't exist. */}
+      <div className={`bottom-bar${showingTargetPanel ? ' bottom-bar-solo' : ''}`} style={consoleStyle}>
         <button
           className="bottom-action bottom-action-primary"
           disabled={!(actingId !== null && (showingTargetPanel || stepIndex > 0))}
@@ -1371,40 +1384,32 @@ export function FightScreen({
           </span>
           Back
         </button>
-        <button
-          className="bottom-action bottom-action-primary bottom-action-switch"
-          disabled={!(actingId !== null && playerBench.length > 0 && !playerLockedIn)}
-          onClick={() => setSwitchOpen(true)}
-        >
-          <span className="bottom-action-glyph" aria-hidden="true">
-            🔄
-          </span>
-          Switch
-        </button>
-        <button className="bottom-action bottom-action-utility" onClick={() => setLogOpen(true)}>
-          <span className="bottom-action-glyph" aria-hidden="true">
-            📜
-          </span>
-          <span className="bottom-action-label">Log</span>
-        </button>
-        <button className="bottom-action bottom-action-utility" onClick={() => setReferenceOpen(true)}>
-          <span className="bottom-action-glyph" aria-hidden="true">
-            📊
-          </span>
-          <span className="bottom-action-label">Ref</span>
-        </button>
-        <button
-          className="bottom-action bottom-action-utility"
-          onClick={() => {
-            setConfirmingQuit(false);
-            setMenuOpen(true);
-          }}
-        >
-          <span className="bottom-action-glyph" aria-hidden="true">
-            ⚙
-          </span>
-          <span className="bottom-action-label">Menu</span>
-        </button>
+        {!showingTargetPanel && (
+          <>
+            <button
+              className="bottom-action bottom-action-primary bottom-action-switch"
+              disabled={!(actingId !== null && playerBench.length > 0 && !playerLockedIn)}
+              onClick={() => setSwitchOpen(true)}
+            >
+              <span className="bottom-action-glyph" aria-hidden="true">
+                🔄
+              </span>
+              Switch
+            </button>
+            <button
+              className="bottom-action bottom-action-utility"
+              onClick={() => {
+                setConfirmingQuit(false);
+                setMenuOpen(true);
+              }}
+            >
+              <span className="bottom-action-glyph" aria-hidden="true">
+                ⚙
+              </span>
+              <span className="bottom-action-label">Menu</span>
+            </button>
+          </>
+        )}
       </div>
 
       {/* Options. Deliberately the only way out of a fight that isn't
@@ -1424,7 +1429,39 @@ export function FightScreen({
               </button>
             </div>
             <div className="options-list">
+              {/* The two readers that used to hold their own keys in the
+                  bottom row. They close the menu on the way out rather than
+                  layering a second overlay on the first — both open into the
+                  same .log-overlay scrim, and stacking them would leave the
+                  Options panel visible behind whichever one won. */}
+              <button
+                className="options-item"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setLogOpen(true);
+                }}
+              >
+                <span className="options-item-glyph" aria-hidden="true">
+                  📜
+                </span>
+                Battle Log
+              </button>
+              <button
+                className="options-item"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setReferenceOpen(true);
+                }}
+              >
+                <span className="options-item-glyph" aria-hidden="true">
+                  📊
+                </span>
+                Reference — Types &amp; Statuses
+              </button>
               <button className="options-item" onClick={() => setMenuOpen(false)}>
+                <span className="options-item-glyph" aria-hidden="true">
+                  ▶
+                </span>
                 Resume Fight
               </button>
               {onQuitToTitle && (
@@ -1432,6 +1469,9 @@ export function FightScreen({
                   className={`options-item options-item-danger${confirmingQuit ? ' armed' : ''}`}
                   onClick={() => (confirmingQuit ? onQuitToTitle() : setConfirmingQuit(true))}
                 >
+                  <span className="options-item-glyph" aria-hidden="true">
+                    {confirmingQuit ? '⚠' : '⏻'}
+                  </span>
                   {confirmingQuit ? 'Tap again to abandon' : 'Quit Run — Return to Title'}
                 </button>
               )}
@@ -1644,7 +1684,7 @@ export function FightScreen({
                           .filter(([, amount]) => amount)
                           .map(([stat, amount]) => (
                             <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-                              {STAT_ICONS[stat]} {STAT_LABELS[stat]} {fmtGrant(amount)}
+                              <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtGrant(amount)}
                             </span>
                           ))}
                       </div>

@@ -8,7 +8,7 @@ import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { RARITY_ORDER } from '../../run/equipment';
 import { getTypeColor } from '../combat/typeColors';
-import { StatBars, STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
+import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { EQUIP_SLOT_LABELS, EQUIP_SLOT_ORDER, EquipmentIcon, fmtGrant, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
@@ -166,7 +166,7 @@ export function CompendiumScreen({ onClose }: Props) {
                     <div className="detail-modifier-list">
                       {grants.map(([stat, amount]) => (
                         <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-                          {STAT_ICONS[stat]} {STAT_LABELS[stat]} {fmtGrant(amount)}
+                          <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtGrant(amount)}
                         </span>
                       ))}
                     </div>

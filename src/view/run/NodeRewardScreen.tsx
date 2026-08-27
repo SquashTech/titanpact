@@ -17,7 +17,7 @@ import {
   RARITY_LABELS,
   RelicIcon,
 } from '../shared/EquipmentBox';
-import { STAT_ICONS } from '../shared/StatBars';
+import { StatGlyph } from '../shared/StatBars';
 import { passiveEmoji } from '../shared/passiveIcons';
 import { useLongPress } from '../shared/MoveTile';
 import { ResourceMark, RunGlyph } from '../shared/RunGlyph';
@@ -366,7 +366,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
                     <div className="detail-modifier-list">
                       {grants.map(([stat, amount]) => (
                         <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-                          {STAT_ICONS[stat]} {STAT_LABELS[stat]} {fmtGrant(amount)}
+                          <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtGrant(amount)}
                         </span>
                       ))}
                     </div>

@@ -1093,13 +1093,16 @@ button,
 }
 
 /* Bottom-of-screen row: every secondary action (undo the current hero's
-   move choice, open the switch-in picker, review the log, check the type
-   chart) lives in one fixed row instead of each reserving its own space —
-   a top header, an always-visible bench readout, a back button that
-   shifted the move grid down — which is what was pushing the screen past
-   the viewport on mobile. Buttons stay mounted at all times and are
-   disabled rather than hidden when not applicable, so the row's height
-   and position never change turn to turn. */
+   move choice, open the switch-in picker, open the Menu — and behind it the
+   log and the type chart) lives in one fixed row instead of each reserving
+   its own space — a top header, an always-visible bench readout, a back
+   button that shifted the move grid down — which is what was pushing the
+   screen past the viewport on mobile. Keys are disabled rather than hidden
+   when merely inapplicable, so the row never changes shape turn to turn.
+   The one deliberate exception is target selection, which drops to a single
+   full-width Back (.bottom-bar-solo below) — there the change of shape IS
+   the message: this screen has one way out. The row's height and position
+   are untouched by it either way. */
 /* The bottom half of the console chassis (see .action-area). Carries the
    same face color and the same full-bleed cancel of .app-shell's padding so
    the housing runs unbroken from the seam under the arena all the way to
@@ -1133,14 +1136,19 @@ button,
 }
 
 /*
- * The five console keys. Previously four ~92x24 chips: quarter-width, and
- * shorter than any other tap target in the app. That was survivable in a
- * browser tab and stopped being so once the game ran installed, where the
- * row sits right at the bottom edge under the thumb — so the height is now
- * set once, here, at 46px for all five, and the *width* is what separates
- * them (see the two modifiers below). Height comes from min-height rather
- * than padding so the double-width pair (glyph beside label) and the
- * caption-stacked trio (glyph over label) still land on the same baseline.
+ * The console keys. Previously four ~92x24 chips: quarter-width, and shorter
+ * than any other tap target in the app. That was survivable in a browser tab
+ * and stopped being so once the game ran installed, where the row sits right
+ * at the bottom edge under the thumb — so the height is now set once, here,
+ * at 46px for every key, and the *width* is what separates them (see the two
+ * modifiers below). Height comes from min-height rather than padding so the
+ * double-width pair (glyph beside label) and the caption-stacked utility key
+ * (glyph over label) still land on the same baseline.
+ *
+ * Down to three: Log and Ref moved into the Menu. Five keys meant the row's
+ * width was being split between two things a player presses constantly and
+ * three they consult occasionally, and the occasional three were winning
+ * 60% of it.
  */
 /* Set INTO the console, like the move rows above them. These were raised chips
    — a lighter --surface-raised face, a --border rectangle, a hairline and a
@@ -1229,13 +1237,31 @@ button,
     inset 0 -1px 0 rgba(120, 175, 235, 0.24), inset 0 0 22px -6px rgba(74, 144, 217, 0.6);
 }
 
-/* Log / Ref / Menu: consulted, not played. Third the width, and the glyph
-   stacks over a caption so they keep their labels at that width instead of
-   degrading to bare icons. */
+/* Menu: consulted, not played. Narrow, and the glyph stacks over a caption so
+   it keeps its label at that width instead of degrading to a bare icon. It
+   inherits the whole utility width Log and Ref used to split with it, which is
+   what makes a single narrow key still comfortably hittable. */
 .bottom-action-utility {
   flex-direction: column;
   gap: 3px;
   font-size: 15px;
+}
+
+/* Target selection. The row is one full-width Back and nothing else — see
+   FightScreen's note: at that moment the only thing this row can offer is
+   "undo the move", and the actual choice is out on the battlefield. Back is
+   the sole flex child, so it already fills the row; what this rule adds is
+   the *reading* of a full-width key rather than a stretched one — the label
+   centres on its own glyph instead of drifting to the middle of a very wide
+   button, and the key face lifts slightly, because it is now the only lit
+   control on the console. */
+.bottom-bar-solo .bottom-action-primary {
+  gap: 9px;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.02));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.11),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.11);
 }
 
 .bottom-action-label {
@@ -2198,11 +2224,24 @@ button,
 }
 
 .stat-mod-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
   font-size: 10px;
   line-height: 1;
-  padding: 1px 2px;
+  padding: 1px 3px;
   border-radius: 5px;
   background: rgba(13, 14, 18, 0.75);
+}
+
+/* The glyph here takes the badge's own green/red rather than its stat color
+   (StatGlyph tone="inherit"): on the battlefield the question is "is this
+   hero up or down", and a purple Intelligence glyph inside a green badge
+   would answer a different one. Slightly larger than the arrow beside it —
+   the icon says WHICH stat, the arrow only says which way. */
+.stat-mod-badge .stat-glyph {
+  width: 11px;
+  height: 11px;
 }
 
 /* Switch-row/bench-panel picker cards are too small for these to read —
@@ -3185,28 +3224,18 @@ button,
   image-rendering: pixelated;
 }
 
-/* The move that hero is holding, as the same mana crystal the row it came from
-   uses — at 14px, so the crest says WHAT was chosen and not merely THAT
+/* The move that hero is holding, as the same mana gem the row it came from
+   uses — at half scale, so the crest says WHAT was chosen and not merely THAT
    something was. Overlaps the socket's corner rather than sitting beside it:
-   the crystal belongs to the hero, it is not a second item in a list. */
+   the gem belongs to the hero, it is not a second item in a list. */
+/* Positioning only — the gem itself is <ManaCost size="sm">, identical to the
+   one on the move button that produced it. The pill's old dark ring is now the
+   gem's own .mana-gem-halo stroke, which follows the hexagon rather than a
+   rounded box. */
 .console-socket-crystal {
   position: absolute;
-  right: -4px;
-  bottom: -4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 15px;
-  height: 15px;
-  padding: 0 2px;
-  border-radius: var(--radius-pill);
-  background: radial-gradient(circle at 34% 26%, #a8dbfb, #5ea3e4 40%, var(--mana) 78%);
-  box-shadow: 0 0 0 1.5px #12151c, inset 0 1px 1px rgba(255, 255, 255, 0.45);
-  color: #fff;
-  font-size: 9px;
-  font-weight: 800;
-  line-height: 1;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+  right: -5px;
+  bottom: -5px;
 }
 
 /* Rest (dotted circle) or a queued switch (swap arrows) — the two commits that
@@ -3463,10 +3492,13 @@ button,
   position: relative;
   justify-content: center;
   gap: 3px;
-  /* Left inset = shell padding (12) + the light bar's own column, so the
-     crystal starts where the crest's sockets do rather than at the screen
-     edge. */
-  padding: 6px 14px 6px 21px;
+  /* Left inset clears the light bar's own column and then some, so the gem
+     doesn't sit on the emitter. Was 21px, aligning the gem with the crest's
+     sockets above — but the crest is a different object at a different scale,
+     and paying 5px of a 375px row for an alignment nobody was reading cost
+     the move name more than it was worth. 16px still clears the 4px bar with
+     room to spare. */
+  padding: 6px 14px 6px 16px;
   border-radius: 0;
   border: none;
   background:
@@ -3810,43 +3842,117 @@ button,
   min-width: 0;
 }
 
-/* Hearthstone-style cost gem: the mana number lives inside a colored crystal
-   instead of a text "3MP" pair, so the button reads at a glance without
-   spelling the unit out (CLAUDE.md: mana cost is the primary balance lever,
-   so it still gets top billing — just as a shape+color instead of a label). */
-/* Kept as the ONE object inside the button, deliberately. The rest of the
+/* The cost gem: the mana number lives inside a crystal instead of a text
+   "3MP" pair, so the button reads at a glance without spelling the unit out
+   (CLAUDE.md: mana cost is the primary balance lever, so it gets top billing
+   — as a shape+color rather than a label).
+
+   Kept as the ONE object inside the button, deliberately. The rest of the
    interior was flattened to chromeless text/glyphs (see .move-type-code and
    .move-row-mid .move-kind-badge below), which is what makes keeping this
    one work: a single crystal on a clean face reads as a game object, where
-   a crystal competing with two other chips read as clutter. Mana cost is
-   also the primary balance lever (CLAUDE.md), so it earns the billing.
-   Modernised rather than rebuilt: a tighter specular highlight, a rim light
-   picking up the top-left light source the whole UI uses (--hairline), and
-   a contact shadow instead of the old flat 1px black ring. */
-.move-crystal {
+   a crystal competing with two other chips read as clutter.
+
+   Rebuilt as a CUT gem (src/view/shared/ManaCost.tsx has the full note): the
+   sphere it replaces was a saturated pale-blue ball, the brightest object on
+   every row of a dark carved console, and it read as a sticker rather than as
+   part of the set. Now it is dark glass with three flat facets, a lit rim and
+   one specular sliver — the fill went dark so the numeral could go light like
+   every other number on screen, and the glow does the "this is mana" work the
+   fill used to, over a fraction of the area. */
+.mana-gem {
+  position: relative;
   flex-shrink: 0;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 24px;
   height: 24px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 34% 26%, #a8dbfb, #5ea3e4 32%, var(--mana) 62%, #1b3a5c 100%);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.45),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.35),
-    0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
-.move-crystal strong {
-  color: #fff;
+.mana-gem-sm {
+  width: 16px;
+  height: 16px;
+}
+
+/*
+ * The facets. Absolutely positioned under the numeral rather than being its
+ * background, because the shape is geometry (three <path>s) and the number has
+ * to sit at the gem's optical centre regardless of how many digits it has.
+ *
+ * Two stacked drop-shadows: a tight dark one that seats the gem on the button
+ * face, and a wide mana-blue one that is the only saturated colour left in the
+ * object. Both are drop-shadow rather than box-shadow so they follow the
+ * hexagon instead of a bounding box.
+ */
+.mana-gem-cut {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 7px rgba(74, 144, 217, 0.45));
+}
+
+/* Near-black outer stroke, drawn behind the facets — separates the gem from
+   whatever it sits on. Load-bearing on .console-socket-crystal, where the gem
+   overlaps a hero portrait. */
+.mana-gem-halo {
+  fill: none;
+  stroke: #0a0d13;
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+}
+
+/* Light from the top left, the same direction every other surface in the app
+   takes it: crown brightest, left pavilion mid, right pavilion in shadow. */
+.mana-gem-crown {
+  fill: #3581be;
+}
+
+.mana-gem-left {
+  fill: #1b466f;
+}
+
+.mana-gem-right {
+  fill: #0f2b48;
+}
+
+.mana-gem-rim {
+  fill: none;
+  stroke: #7ccdf7;
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+  opacity: 0.95;
+}
+
+.mana-gem-spark {
+  fill: none;
+  stroke: #d5efff;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  opacity: 0.75;
+}
+
+.mana-gem-value {
+  position: relative;
   font-size: 12px;
   font-weight: 800;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+  line-height: 1;
+  color: #e2f2ff;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
-.move-button:disabled .move-crystal {
-  filter: grayscale(0.7);
+.mana-gem-sm .mana-gem-value {
+  font-size: 9px;
+}
+
+/* Unaffordable. The whole button already dims to 0.35, so the gem only has to
+   stop advertising: the blue glow goes out and the facets desaturate, which
+   reads as a dead crystal rather than a lit one behind a scrim. */
+.move-button:disabled .mana-gem-cut {
+  filter: grayscale(0.85) brightness(0.85) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
 }
 
 .move-name {
@@ -3904,16 +4010,27 @@ button,
   line-height: 1;
 }
 
-/* Physical/Magical/Heal/Buff pixel-art glyph (docs/icon-pack.md). 16px for
-   the same reason .status-glyph is — a clean half of the 32px source — and
-   this is the slot that dictated which four icons could be picked at all,
-   since a true halving drops every other pixel and only bold silhouettes
-   come through it intact. */
-.move-kind-glyph {
+/* Physical/Magical/Heal/Buff, now drawn from the same vector set as the stat
+   blocks (MoveKindGlyph, src/view/shared/statIcons.tsx) — a physical move
+   wears the Attack sword and a magical one the Intelligence spark, which are
+   literally the stats those two pipelines read.
+
+   It replaced a 32px pixel-art icon pinned to 16px. That was a legal size, but
+   the *only* other legal size was 32, so the slot could never be tuned — this
+   badge sits at the end of a 10px meta row and 16px was already a shade large
+   in it. 15px is what the row actually wants, and vector can be asked for it.
+   Colour comes from .category-badge's tier class via currentColor, so one
+   glyph serves all four kinds.
+
+   Selected through .move-kind-badge purely for specificity: the element also
+   carries .stat-glyph (MoveKindGlyph renders a StatGlyph), whose 1.15em sizing
+   is declared later in this file and would otherwise win. This badge is not
+   set beside a text label the way a stat block's glyph is, so it wants a fixed
+   size rather than one tied to the local font-size. */
+.move-kind-badge .move-kind-glyph {
   display: block;
-  width: 16px;
-  height: 16px;
-  image-rendering: pixelated;
+  width: 15px;
+  height: 15px;
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
 }
 
@@ -4157,7 +4274,9 @@ button,
 
 /* In-fight Options menu (FightScreen, the bottom bar's ⚙ key). Reuses
    .log-overlay/.log-panel so pausing a fight looks like every other modal
-   here rather than inventing a settings chrome for two entries. */
+   here rather than inventing a settings chrome for a handful of entries.
+   Now also the home of the Battle Log and the Reference, which gave up their
+   own keys in the bottom bar so the three that remain could have real width. */
 .options-panel {
   gap: 10px;
 }
@@ -4170,22 +4289,40 @@ button,
 
 /* Full-width rows at the same 46px the bottom bar's own keys use — this
    panel is reached from there, so a menu of noticeably smaller targets
-   would read as a step backwards from the control that opened it. */
+   would read as a step backwards from the control that opened it.
+
+   Left-aligned behind a fixed glyph column rather than centered: with two
+   entries, centered labels read as two buttons; with four, a ragged column of
+   centered text reads as a mess, and a glyph gutter is what makes a list of
+   destinations scan as a menu. */
 .options-item {
   min-height: 46px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 12px;
+  padding: 0 16px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   color: var(--text);
   font-size: 14px;
   font-weight: 700;
+  text-align: left;
   cursor: pointer;
   box-shadow: var(--hairline);
   transition: border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out),
     color var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+/* Fixed width so every label starts at the same x, whatever the glyph's own
+   advance width is — the point of the gutter is the alignment, not the icon. */
+.options-item-glyph {
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1;
+  opacity: 0.85;
 }
 
 .options-item:active {
@@ -5201,6 +5338,31 @@ button,
   text-transform: uppercase;
 }
 
+/*
+ * The eight stat glyphs (src/view/shared/statIcons.tsx), replacing the emoji
+ * that used to sit in these slots. Vector, so this one rule sizes every
+ * instance and no surface has to worry about landing on an integer multiple
+ * of a bitmap source (docs/icon-pack.md "The size constraint" — the reason
+ * the pixel-art iconset was never a candidate here).
+ *
+ * 1em rather than a pixel size: a stat glyph is always set beside its own
+ * STAT_LABELS text ("ATK"), and the two have to stay locked together across
+ * the 10px corner badge, the 11px bar label and the 12px grant chip. Tying it
+ * to the local font-size means they scale as one thing instead of drifting
+ * apart every time a surface picks a different type size.
+ *
+ * `vertical-align` and the flex `align-items` on the callers' rows both do
+ * work here: an inline SVG sits on the text baseline by default, which hangs
+ * it a couple of pixels low next to uppercase abbreviations that have no
+ * descenders.
+ */
+.stat-glyph {
+  flex-shrink: 0;
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: -0.22em;
+}
+
 .stat-buff {
   color: var(--hp-high);
   font-weight: 700;
@@ -6090,24 +6252,11 @@ button,
   box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.3), 0 0 12px rgba(224, 166, 60, 0.2);
 }
 
-/* Half-scale .move-crystal, same recipe so a player learns "blue orb = mana
-   cost" once and reads it in both places. */
-.draft-kit-crystal {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 34% 26%, #a8dbfb, #5ea3e4 32%, var(--mana) 62%, #1b3a5c 100%);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.45), inset 0 -2px 3px rgba(0, 0, 0, 0.35),
-    0 1px 3px rgba(0, 0, 0, 0.45);
-  color: #fff;
-  font-size: 9px;
-  font-weight: 800;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
-}
+/* The draft kit chip's cost is the same <ManaCost size="sm"> gem the move
+   button uses — it used to be a hand-copied half-scale duplicate of the old
+   sphere's gradient recipe, which is exactly the drift the shared component
+   exists to stop. Nothing left to style here beyond the half-scale size the
+   component's own `sm` modifier already carries. */
 
 /*
  * The move detail popup (a tap on a kit chip opens it; a tap anywhere

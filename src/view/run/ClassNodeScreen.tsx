@@ -11,7 +11,7 @@ import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { useLongPress } from '../shared/MoveTile';
-import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
+import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RunGlyph } from '../shared/RunGlyph';
 
@@ -55,7 +55,7 @@ function ClassChoiceCard({ cls, picked, onPick }: ClassChoiceCardProps) {
       <div className="class-shrine-card-grants">
         {fmtStatGrants(cls.statGrants).map(([stat, amount]) => (
           <span key={stat} className="evolution-path-grant-chip">
-            {STAT_ICONS[stat]} {STAT_LABELS[stat]} +{amount}
+            <StatGlyph stat={stat} /> {STAT_LABELS[stat]} +{amount}
           </span>
         ))}
       </div>
@@ -305,7 +305,7 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
               <div className="class-learn-grants">
                 {fmtStatGrants(confirmedClass.statGrants).map(([stat, amount], i) => (
                   <span key={stat} className="class-learn-grant-chip" style={{ animationDelay: `${0.15 + i * 0.1}s` }}>
-                    {STAT_ICONS[stat]} {STAT_LABELS[stat]} +{amount}
+                    <StatGlyph stat={stat} /> {STAT_LABELS[stat]} +{amount}
                   </span>
                 ))}
               </div>

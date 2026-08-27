@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { StatKey } from '../../engine/content';
 import type { EquipmentDefinition, EquipmentLoadout, EquipmentRarity, EquipmentSlot } from '../../run/equipment';
-import { STAT_ICONS, STAT_LABELS } from './StatBars';
+import { StatGlyph, STAT_LABELS } from './StatBars';
 import { IconsetGlyph } from './RunGlyph';
 import { useLongPress } from './MoveTile';
 import { passives } from '../../data/passives';
@@ -175,7 +175,7 @@ export function EquipmentInfoPanel({ item, placeholder = 'Tap an equipped item t
             <div className="detail-modifier-list">
               {grants.map(([stat, amount]) => (
                 <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-                  {STAT_ICONS[stat]} {STAT_LABELS[stat]} {fmtGrant(amount)}
+                  <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtGrant(amount)}
                 </span>
               ))}
             </div>

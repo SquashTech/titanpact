@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { RosterEntry } from '../../run/state';
 import type { EvolutionNode } from '../../run/progression';
-import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
+import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 
@@ -61,7 +61,7 @@ export function EvolutionScreen({ hero, entry, node, onChoose }: Props) {
                 <div className="evolution-path-grants">
                   {statEntries.map(([stat, amount]) => (
                     <span key={stat} className="evolution-path-grant-chip">
-                      {STAT_ICONS[stat]} {STAT_LABELS[stat]} +{amount}
+                      <StatGlyph stat={stat} /> {STAT_LABELS[stat]} +{amount}
                     </span>
                   ))}
                   {path.typeGraft && (

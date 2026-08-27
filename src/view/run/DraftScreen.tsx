@@ -9,6 +9,7 @@ import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { MoveInfoPanel } from '../shared/MoveTile';
+import { ManaCost } from '../shared/ManaCost';
 import { STAT_COLORS, STAT_LABELS, computeBst, statFraction } from '../shared/StatBars';
 
 interface Props {
@@ -228,9 +229,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
                   onClick={() => setPopupMove(move)}
                   aria-haspopup="dialog"
                 >
-                  <span className="draft-kit-crystal" title={`${move.manaCost} Mana`}>
-                    {move.manaCost}
-                  </span>
+                  <ManaCost cost={move.manaCost} size="sm" className="draft-kit-crystal" />
                   {move.name}
                 </button>
               );

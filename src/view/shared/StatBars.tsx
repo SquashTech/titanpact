@@ -1,4 +1,5 @@
 import type { StatKey, StatLine } from '../../engine/content';
+import { STAT_COLORS, StatGlyph } from './statIcons';
 
 export const STAT_ORDER: StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool', 'mpRegen'];
 
@@ -14,29 +15,8 @@ export const STAT_LABELS: Record<StatKey, string> = {
   mpRegen: 'MPR',
 };
 
-/** One glyph per stat, shared everywhere a stat reads compactly — battlefield stat-mod corner badges (CombatantCard) and stat-block labels (StatBars, HeroDetailOverlay) alike, so a player learns one icon vocabulary for both contexts. */
-export const STAT_ICONS: Record<StatKey, string> = {
-  hp: '❤️',
-  attack: '⚔️',
-  defense: '🛡️',
-  intelligence: '🧠',
-  wisdom: '🔮',
-  speed: '👟',
-  manaPool: '💧',
-  mpRegen: '🔄',
-};
-
-/** One color per stat, shared everywhere a stat block is drawn — lets a player learn "purple = Intelligence" once and read every hero's block by color from then on. */
-export const STAT_COLORS: Record<StatKey, string> = {
-  hp: '#4caf6a',
-  attack: '#d9534f',
-  defense: '#8a94a8',
-  intelligence: '#c356d0',
-  wisdom: '#7fd6e0',
-  speed: '#e8d16a',
-  manaPool: '#4a90d9',
-  mpRegen: '#4cd9a0',
-};
+/** Re-exported so the dozen screens that draw a stat block keep importing their color and their glyph from the same place; both now live in statIcons.tsx, where the glyph geometry needs the color anyway. */
+export { STAT_COLORS, StatGlyph } from './statIcons';
 
 /**
  * Fixed reference ceilings, not per-hero maxes — this is what makes bar
@@ -129,7 +109,7 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {} }
         return (
           <div className={`stat-bar-row${isBest ? ' stat-bar-best' : ''}`} key={stat}>
             <span className="stat-bar-label">
-              <span aria-hidden="true">{STAT_ICONS[stat]}</span> {STAT_LABELS[stat]}
+              <StatGlyph stat={stat} /> {STAT_LABELS[stat]}
             </span>
             <div className="stat-bar-track">
               <div className="stat-bar-fill" style={{ width: `${percents[i]}%`, background: isBest ? 'var(--accent)' : STAT_COLORS[stat] }} />

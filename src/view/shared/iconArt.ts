@@ -25,11 +25,6 @@ import poisonIcon from '../../../art/icons/status/poison.png';
 import hauntIcon from '../../../art/icons/status/haunt.png';
 import stealthIcon from '../../../art/icons/status/stealth.png';
 
-import physicalIcon from '../../../art/icons/move-kind/physical.png';
-import magicalIcon from '../../../art/icons/move-kind/magical.png';
-import healIcon from '../../../art/icons/move-kind/heal.png';
-import buffIcon from '../../../art/icons/move-kind/buff.png';
-
 import surgingMagicIcon from '../../../art/icons/field-effect/surging-magic.png';
 import scorchedLandIcon from '../../../art/icons/field-effect/scorched-land.png';
 import stasisBubbleIcon from '../../../art/icons/field-effect/stasis-bubble.png';
@@ -61,18 +56,12 @@ export const statusIconArt: Partial<Record<string, string>> = {
   Stealth: stealthIcon,
 };
 
-/**
- * MoveKindBadge's four glyphs. Keyed by the same two values that badge already
- * switches on: a damage move keys off `move.category` (the stat pipeline it
- * draws from, CLAUDE.md "two-pipeline separation"), a non-damage one off
- * `move.kind`.
- */
-export const moveKindIconArt: Partial<Record<string, string>> = {
-  physical: physicalIcon,
-  magical: magicalIcon,
-  heal: healIcon,
-  buff: buffIcon,
-};
+// MoveKindBadge's four glyphs used to live here (physical/magical/heal/buff,
+// cut from the same sheet). They are vector now — MoveKindGlyph in
+// statIcons.tsx, which draws them from the same set as the stat blocks so a
+// physical move wears the Attack sword and a magical one the Intelligence
+// spark, the literal stat each pipeline reads. The extracted PNGs are left in
+// art/icons/move-kind/ rather than deleted; nothing imports them.
 
 /**
  * Per-Field-Effect glyphs, keyed by fieldEffectId (src/data/fieldEffects.ts).

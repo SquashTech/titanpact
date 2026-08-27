@@ -9,7 +9,7 @@ import { rosterEntryTypes } from '../../run/progression';
 import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
+import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { EQUIP_SLOT_LABELS, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { useLongPress } from '../shared/MoveTile';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
@@ -147,7 +147,7 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
                   .filter(([, amount]) => amount)
                   .map(([stat, amount]) => (
                     <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-                      {STAT_ICONS[stat]} {STAT_LABELS[stat]} {fmtGrant(amount)}
+                      <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtGrant(amount)}
                     </span>
                   ))}
               </div>

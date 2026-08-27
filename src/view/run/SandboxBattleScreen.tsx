@@ -24,7 +24,7 @@ import { MoveTile } from '../shared/MoveTile';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { EQUIP_SLOT_ORDER, EQUIP_SLOT_LABELS } from '../shared/EquipmentBox';
-import { STAT_ORDER, STAT_ICONS } from '../shared/StatBars';
+import { STAT_ORDER, StatGlyph } from '../shared/StatBars';
 
 type SideKey = 'A' | 'B';
 
@@ -152,7 +152,7 @@ function HeroConfigCard({
       <div className="sandbox-bonus-stat-row">
         {STAT_ORDER.map((stat) => (
           <label key={stat} className="sandbox-bonus-stat" title={stat}>
-            <span>{STAT_ICONS[stat]}</span>
+            <StatGlyph stat={stat} />
             <input
               type="number"
               step={5}

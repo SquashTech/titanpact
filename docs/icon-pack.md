@@ -54,7 +54,13 @@ currently all reach for the same emoji and collide. See the picks.
 All extracted to `art/icons/<set>/<name>.png` at the native 32 × 32 with alpha intact,
 matching the naming convention `itemArt.ts` already uses for equipment and relics.
 
-### `art/icons/move-kind/` — the `MoveKindBadge` glyphs
+### `art/icons/move-kind/` — the `MoveKindBadge` glyphs — **superseded, see below**
+
+> These four were extracted and wired, then replaced by vector (`MoveKindGlyph`,
+> `src/view/shared/statIcons.tsx`) for the reasons in "Where this pack does NOT apply". The
+> files are still in `art/icons/move-kind/`; nothing imports them. The picks are kept on
+> record because the reasoning — silhouette strength at a forced 16px — is what made the
+> case for moving off the pack here.
 
 | Slot | File | Index | Why |
 |---|---|---|---|
@@ -186,6 +192,40 @@ icon/emoji cluster is a state the UI genuinely reaches** and must not look broke
 
 The rule that generalises: **an icon earns its place where there is no room for the word.**
 Status badges qualify, the move-kind badge qualifies, the plaque does not.
+
+---
+
+## Where this pack does NOT apply: the stat glyphs and the move-kind badge
+
+The stat icons (HP / ATK / DEF / INT / WIS / SPD / MP / MPR) were emoji, and the obvious
+next move was to pull eight more picks out of the sheet. They are **inline vector art**
+instead — `src/view/shared/statIcons.tsx`, drawn on a 24 × 24 grid — for two reasons that
+follow directly from the size constraint above:
+
+- **They render too small for this pack.** Every surface that draws a stat glyph sets it at
+  `1.15em` against 10–12px text, i.e. **11–14px**. The only honest sizes for a 32px source
+  are 32 and 16; 11–14 is neither, and the measured "destroyed at 16px" list is what a stat
+  block would be made of.
+- **They have to take a color they aren't drawn in.** A stat glyph is tinted by
+  `STAT_COLORS` in a stat block and by buff-green / debuff-red in a battlefield corner
+  badge. A PNG can't do that; a `currentColor` path is free.
+
+**`MoveKindBadge` followed them off the pack**, and gained something the pack could not have
+given it. Its four glyphs are now the stat glyphs, and three of the four pairings are exact
+rather than symbolic: physical damage wears the **Attack sword**, magical damage the
+**Intelligence spark**, a heal the **HP heart** — the literal stat each one reads
+(CLAUDE.md "Two-pipeline separation"). A player who has learned the stat block has already
+learned the move badge. Only buff keeps a symbol (the Defense shield), because no single
+stat owns "changes stats or applies a status, in either direction". Colour comes from the
+badge's tier class, never from `STAT_COLORS` — on a move button the glyph answers "which
+kind of move", and a red sword meaning "Attack stat" in one place and "physical damage" in
+another would be two claims in one shape.
+
+So the division is: **this pack owns "a thing happening, flavoured by a type"** — statuses,
+Field Effects, Elemental Force, where the matrix's modifier × element grammar is the whole
+value. **Vector owns the fixed abstract vocabulary** — the eight stats and the four move
+kinds — which has to be recolourable, has to be legible at 11–15px, and turned out to be
+one vocabulary rather than two. Neither is a fallback for the other.
 
 ---
 

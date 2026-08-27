@@ -8,7 +8,7 @@ import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { chosenEvolutionPaths } from '../../run/progression';
 import { progressionTable } from '../../data/progression';
-import { STAT_ICONS, STAT_LABELS, STAT_ORDER, StatBars, hpTier } from '../shared/StatBars';
+import { StatGlyph, STAT_LABELS, STAT_ORDER, StatBars, hpTier } from '../shared/StatBars';
 import { EquipmentInfoPanel, EquipmentSlotGrid } from '../shared/EquipmentBox';
 import { MoveTile, MoveInfoPanel, swallowGhostClick } from '../shared/MoveTile';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -156,7 +156,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
               const mod = totalModifiers[stat];
               return (
                 <span key={stat} className={`detail-modifier-chip ${mod > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-                  {STAT_ICONS[stat]} {STAT_LABELS[stat]} {fmtMod(mod)}
+                  <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtMod(mod)}
                 </span>
               );
             })}

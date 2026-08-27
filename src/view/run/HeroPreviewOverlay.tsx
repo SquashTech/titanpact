@@ -12,7 +12,7 @@ import { relicTeamPassiveGrants } from '../../run/passives';
 import { entryPassiveCounts, entryStatModifiers, relicStatContribution } from '../../run/entryStats';
 import { chosenEvolutionPaths, rosterEntryTypes } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
-import { StatBars, STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
+import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { MoveTile, MoveInfoPanel, swallowGhostClick, useLongPress } from '../shared/MoveTile';
 import { EquipmentInfoPanel, EquipmentSlotGrid } from '../shared/EquipmentBox';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -134,7 +134,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
             <span className="relic-contrib-label">🏺 From relics</span>
             {relicGrants.map(([stat, amount]) => (
               <span key={stat} className="relic-contrib-chip">
-                <span aria-hidden="true">{STAT_ICONS[stat]}</span> {STAT_LABELS[stat]} {amount > 0 ? `+${amount}` : amount}
+                <StatGlyph stat={stat} /> {STAT_LABELS[stat]} {amount > 0 ? `+${amount}` : amount}
               </span>
             ))}
           </div>

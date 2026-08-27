@@ -7,7 +7,7 @@ import type { HeroDefinition, StatKey } from '../../engine/content';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
 import { relicStatContribution } from '../../run/entryStats';
-import { STAT_ICONS, STAT_LABELS } from '../shared/StatBars';
+import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import type { RunState, RosterEntry } from '../../run/state';
 import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
 import { swapEquipment, RunProgressError } from '../../run/runProgress';
@@ -205,7 +205,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
               <span className="relic-active-banner-label">🏺 Relics active</span>
               {relicGrants.map(([stat, amount]) => (
                 <span key={stat} className="relic-contrib-chip">
-                  <span aria-hidden="true">{STAT_ICONS[stat]}</span> {STAT_LABELS[stat]} {amount > 0 ? `+${amount}` : amount}
+                  <StatGlyph stat={stat} /> {STAT_LABELS[stat]} {amount > 0 ? `+${amount}` : amount}
                 </span>
               ))}
               <span className="relic-active-banner-note">Already included in every hero's stats below.</span>

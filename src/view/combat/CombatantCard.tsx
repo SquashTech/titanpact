@@ -5,7 +5,7 @@ import { effectiveTypes, getCombatStatDelta, getMaxHp, getMaxMana } from '../../
 import { fieldEffects } from '../../data/fieldEffects';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { STAT_ICONS, STAT_ORDER, hpTier } from '../shared/StatBars';
+import { StatGlyph, STAT_ORDER, hpTier } from '../shared/StatBars';
 import { StatusGlyph, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
 import { useLongPress } from '../shared/MoveTile';
 import { StatusDetailOverlay } from './StatusDetailOverlay';
@@ -118,7 +118,7 @@ function activeStatMods(hero: HeroDefinition, combatant: Combatant, activeFieldE
 function StatModBadge({ stat, mod }: { stat: StatKey; mod: number }) {
   return (
     <span className={`stat-mod-badge ${mod > 0 ? 'stat-buff' : 'stat-debuff'}`} title={`${stat} ${mod > 0 ? '+' : ''}${mod}`}>
-      {STAT_ICONS[stat]}
+      <StatGlyph stat={stat} tone="inherit" />
       {mod > 0 ? '▲' : '▼'}
     </span>
   );
