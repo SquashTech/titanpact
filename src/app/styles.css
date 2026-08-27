@@ -6333,12 +6333,22 @@ button,
    pact's own palette. */
 .draft-choose {
   flex: none;
-  padding: 9px 24px;
+  /* A third auto margin in the stage's column (2026-08-27, user direction).
+     The stage was centred by auto margins on its first and last child, which
+     split the leftover height in two and left this button pressed against the
+     bottom of the starting-kit chips with all the empty space below it. With
+     an auto margin here as well the column has three of them, so the free
+     space divides in thirds: the figure rides a little higher, and the commit
+     sits centred in the gap between the kit it follows and the candidate rail
+     it sits above — clear of both, at whatever height the viewport gives. */
+  margin-top: auto;
+  padding: 13px 30px;
+  max-width: 100%;
   border-radius: var(--radius-pill);
   border: 1px solid rgba(var(--pact-rgb), 0.55);
   background: linear-gradient(180deg, rgba(var(--pact-rgb), 0.24), rgba(var(--pact-rgb), 0.07));
   color: var(--text);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: 0.07em;
   text-transform: uppercase;
