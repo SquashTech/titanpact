@@ -3,15 +3,23 @@
 // this). Keyed by string rather than importing TitanpactType so it degrades
 // gracefully if a type shows up here before the chart is updated.
 
+/* Storm and Shadow used to sit one value-step apart in the same violet
+   (#a78be0 / #7a6fa8) and read as a single type at badge size. They are now
+   split on two axes at once: Storm is the brightest, highest-chroma violet in
+   the set (lightning), Shadow the darkest and nearly achromatic (smoke).
+   Shadow stops short of true black because this same value is also used as
+   *ink* — ElementGlyph fill, the 8px type codes on LevelUpScreen — over --bg
+   #0f1117 and --panel #1b1e27, where #000 would vanish. #6a637a is as close
+   to black as that foreground duty allows while staying legible. */
 const TYPE_COLORS: Record<string, string> = {
   Fire: '#e2683c',
   Water: '#4a90d9',
   Frost: '#7fd6e0',
-  Storm: '#a78be0',
+  Storm: '#b48cf5',
   Stone: '#a89468',
   Nature: '#6bbf59',
   Light: '#e8d16a',
-  Shadow: '#7a6fa8',
+  Shadow: '#6a637a',
   Arcane: '#c356d0',
   Mind: '#e05fa0',
   Spirit: '#5fcfc0',
