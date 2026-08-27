@@ -5322,6 +5322,26 @@ button,
   margin: 10px 0 4px;
 }
 
+/* The header's own glyph (src/view/shared/sectionIcons.tsx). No color of its
+   own — it inherits the header's --accent gold, which is the point: a section
+   marker belongs to its heading, not to the content under it.
+
+   16px, not the 14 this started at, and the crossed-swords Moves glyph is what
+   set the number: it is the one shape in the set built from two thin objects
+   with a gap between them rather than from one mass, and 14px is where that gap
+   closes. The other five are legible either way, and a heading's mark reading a
+   little larger than its 11px caps is right anyway.
+
+   The -2px margin trims .detail-section-title's 8px flex gap to ~6 between
+   glyph and word. That gap is set for the trailing rule, which wants the room;
+   a glyph and the word it marks want to sit closer than a label and a divider. */
+.section-glyph {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-right: -2px;
+}
+
 .detail-section-title::after {
   content: '';
   flex: 1;

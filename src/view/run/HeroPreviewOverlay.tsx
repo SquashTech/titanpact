@@ -13,6 +13,7 @@ import { entryPassiveCounts, entryStatModifiers, relicStatContribution } from '.
 import { chosenEvolutionPaths, rosterEntryTypes } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
 import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
+import { SectionGlyph } from '../shared/sectionIcons';
 import { MoveTile, MoveInfoPanel, swallowGhostClick, useLongPress } from '../shared/MoveTile';
 import { EquipmentInfoPanel, EquipmentSlotGrid } from '../shared/EquipmentBox';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -127,7 +128,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
           )}
         </div>
 
-        <div className="detail-section-title">📊 Stats</div>
+        <div className="detail-section-title"><SectionGlyph name="stats" /> Stats</div>
         <StatBars baseStats={hero.baseStats} deltas={grants} />
         {relicGrants.length > 0 && (
           <div className="relic-contrib-row">
@@ -140,7 +141,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
           </div>
         )}
 
-        <div className="detail-section-title">⚔️ Moves</div>
+        <div className="detail-section-title"><SectionGlyph name="moves" /> Moves</div>
         {entry.unlockedMoveIds.length > 0 ? (
           <div className="move-tile-row">
             {entry.unlockedMoveIds.map((id) =>
@@ -157,7 +158,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
           <div className="detail-empty">No moves.</div>
         )}
 
-        <div className="detail-section-title">🎒 Equipment</div>
+        <div className="detail-section-title"><SectionGlyph name="equipment" /> Equipment</div>
         <EquipmentSlotGrid loadout={entry.equipment} equipmentLookup={equipmentLookup} onInspect={(id) => openPopup({ kind: 'equipment', id })} />
 
         <div className="detail-close-hint">Hold a move, item, or Class to inspect it — tap elsewhere to close</div>

@@ -9,6 +9,7 @@ import type { EquipmentDefinition } from '../../run/equipment';
 import { RARITY_ORDER } from '../../run/equipment';
 import { getTypeColor } from '../combat/typeColors';
 import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
+import { SectionGlyph } from '../shared/sectionIcons';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { EQUIP_SLOT_LABELS, EQUIP_SLOT_ORDER, EquipmentIcon, fmtGrant, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
@@ -41,7 +42,7 @@ function CompendiumHeroCard({ hero }: { hero: HeroDefinition }) {
         </div>
       </div>
 
-      <div className="detail-section-title">Stats</div>
+      <div className="detail-section-title"><SectionGlyph name="stats" /> Stats</div>
       <StatBars baseStats={hero.baseStats} />
     </div>
   );

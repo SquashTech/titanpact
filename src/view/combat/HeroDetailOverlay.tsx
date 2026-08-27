@@ -9,6 +9,7 @@ import type { EquipmentDefinition } from '../../run/equipment';
 import { chosenEvolutionPaths } from '../../run/progression';
 import { progressionTable } from '../../data/progression';
 import { StatGlyph, STAT_LABELS, STAT_ORDER, StatBars, hpTier } from '../shared/StatBars';
+import { SectionGlyph } from '../shared/sectionIcons';
 import { EquipmentInfoPanel, EquipmentSlotGrid } from '../shared/EquipmentBox';
 import { MoveTile, MoveInfoPanel, swallowGhostClick } from '../shared/MoveTile';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -146,10 +147,10 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           </div>
         </div>
 
-        <div className="detail-section-title">📊 Stats</div>
+        <div className="detail-section-title"><SectionGlyph name="stats" /> Stats</div>
         <StatBars baseStats={hero.baseStats} deltas={totalModifiers} totals={effectiveTotals} />
 
-        <div className="detail-section-title">✨ Buffs / Debuffs</div>
+        <div className="detail-section-title"><SectionGlyph name="buffs" /> Buffs / Debuffs</div>
         {hasModifiers ? (
           <div className="detail-modifier-list">
             {STAT_ORDER.filter((stat) => totalModifiers[stat] !== 0).map((stat) => {
@@ -165,7 +166,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           <div className="detail-empty">No active modifiers.</div>
         )}
 
-        <div className="detail-section-title">🩹 Statuses</div>
+        <div className="detail-section-title"><SectionGlyph name="statuses" /> Statuses</div>
         {/* Hide a duration-shape status (Stealth) once its counter hits 0 — see
             CombatantCard.tsx's matching filter for why it can still be present
             in state for the rest of that round. */}
@@ -196,7 +197,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           );
         })()}
 
-        <div className="detail-section-title">🌟 Passives</div>
+        <div className="detail-section-title"><SectionGlyph name="passives" /> Passives</div>
         {Object.keys(combatant.passives).length > 0 ? (
           <div className="detail-modifier-list">
             {Object.values(combatant.passives).map((instance) => {
@@ -227,7 +228,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           <div className="detail-empty">No active passives.</div>
         )}
 
-        <div className="detail-section-title">⚔️ Moves</div>
+        <div className="detail-section-title"><SectionGlyph name="moves" /> Moves</div>
         {rosterEntry && rosterEntry.unlockedMoveIds.length > 0 ? (
           <div className="move-tile-row">
             {rosterEntry.unlockedMoveIds.map((moveId) =>
@@ -240,7 +241,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           <div className="detail-empty">No moves.</div>
         )}
 
-        <div className="detail-section-title">🎒 Equipment</div>
+        <div className="detail-section-title"><SectionGlyph name="equipment" /> Equipment</div>
         {rosterEntry ? (
           <EquipmentSlotGrid
             loadout={rosterEntry.equipment}
