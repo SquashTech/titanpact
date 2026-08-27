@@ -40,7 +40,7 @@ const SWORD_SLIM = (
   </>
 );
 
-const SECTION_PATHS = {
+export const SECTION_PATHS = {
   /** Ascending bar chart — the same vertical-bar idiom the draft screen's stat silhouette uses, and a direct picture of the StatBars block below. */
   stats: (
     <>

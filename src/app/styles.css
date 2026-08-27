@@ -4267,6 +4267,17 @@ button,
   color: var(--text);
 }
 
+/* The long-pressed node's own glyph, at the head of its preview popup — the
+   same shape the player is still holding down, in the same color, so the
+   popup reads as that tile opening rather than as a new panel about it. */
+.map-popup-glyph {
+  width: 17px;
+  height: 17px;
+  color: var(--node-color);
+  vertical-align: -3px;
+  margin-right: 2px;
+}
+
 .log-close-button {
   background: none;
   border: none;
@@ -8851,6 +8862,10 @@ button,
   position: relative;
   display: grid;
   grid-template-rows: repeat(var(--map-rows), var(--map-row-h));
+  /* Unchanged by the node glyphs: an act's map has to fit the canvas without
+     scrolling (8 rows in Act 1 x 74 + 28 padding = 620, against ~627 of room),
+     so the glyphs were paid for out of the tiles' own padding and leading
+     rather than out of the row — see .map-node-name and the tier paddings. */
   --map-row-h: 74px;
 }
 
@@ -8945,7 +8960,7 @@ button,
 
 /*
  * The --node-color wash: a soft pool of the node's own accent gathering at
- * the top of the tile, behind the icon. This is what lets a node's type read
+ * the top of the tile, behind the glyph. This is what lets a node's type read
  * from across the screen at map scale — the 10px uppercase label underneath
  * is confirmation, not the primary signal.
  *
@@ -8970,9 +8985,48 @@ button,
   transition: opacity var(--dur-fast) var(--ease-out);
 }
 
+/*
+ * The node's own glyph (src/view/shared/nodeIcons.tsx). `position: relative`
+ * for the same reason .map-node-name has it: .map-node::before is absolutely
+ * positioned, and an absolutely positioned box paints above static in-flow
+ * content no matter what order it is written in.
+ *
+ * Drawn in --node-color, not the tile's text color. The wash behind it is the
+ * same hue at 0.22, so glyph and wash read as one lit object and the label
+ * stays the single neutral thing on the tile — the reverse (a neutral glyph on
+ * a colored wash) puts the least informative element in the brightest ink.
+ *
+ * Nothing here filters. The sprites this replaces (commit 9688834) carried a
+ * grayscale(0.6) on locked nodes and were unreadable exactly where the map
+ * most needs to be read — the route ahead. Every state on this tile is a
+ * change in LIGHT (the parent's opacity, the glow below), never in color.
+ */
+.map-node-glyph {
+  position: relative;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--node-color);
+  transition: filter var(--dur-fast) var(--ease-out);
+}
+
+/* The glyph picks up the same bloom the tile's border does, so a lit node is
+   lit all the way through rather than being a glowing frame around a flat
+   drawing. Locked and visited nodes get none — that difference IS the state. */
+.map-node.reachable .map-node-glyph,
+.map-node.current .map-node-glyph {
+  filter: drop-shadow(0 0 5px var(--node-color));
+}
+
+/* `line-height: 1.1` is load-bearing, not typographic taste: a single-line
+   label at the default leading reserves ~21px of box for ~12px of type, and
+   eight rows of that is more than the glyph above it costs. Tightened, the
+   label sits directly under its glyph as one object and the map still fits the
+   canvas — see .map-grid. */
 .map-node-name {
   position: relative;
   color: inherit;
+  line-height: 1.1;
 }
 
 .map-node.visited {
@@ -9035,24 +9089,37 @@ button,
  */
 .map-node.tier-reward {
   border-radius: 999px;
-  padding: 9px 15px 8px;
+  padding: 6px 14px 6px;
   font-size: 10px;
   min-width: 74px;
+  gap: 1px;
+}
+
+.map-node.tier-reward .map-node-glyph {
+  width: 15px;
+  height: 15px;
 }
 
 .map-node.tier-encounter {
   border-radius: 5px;
-  padding: 14px 15px 13px;
+  padding: 6px 15px 6px;
   font-size: 11.5px;
   min-width: 92px;
+  gap: 3px;
 }
 
 .map-node.tier-landmark {
   border-radius: 5px;
-  padding: 15px 17px 14px;
+  padding: 6px 17px 5px;
   font-size: 12px;
   min-width: 106px;
   letter-spacing: 0.09em;
+  gap: 3px;
+}
+
+.map-node.tier-landmark .map-node-glyph {
+  width: 21px;
+  height: 21px;
 }
 
 /* The act's terminus. Widest tile on the map, and the only one carrying a
@@ -9060,12 +9127,21 @@ button,
    than one more stop on it. */
 .map-node.tier-ancient {
   border-radius: 5px;
-  padding: 16px 20px 15px;
+  padding: 6px 20px 5px;
   font-size: 12.5px;
   min-width: 124px;
   letter-spacing: 0.12em;
+  gap: 3px;
   outline: 1px solid var(--border);
   outline-offset: 3px;
+}
+
+/* The largest glyph on the map, on the largest tile — and the only one whose
+   drawing has knocked-out holes (the skull's sockets and nose), which is
+   affordable precisely because it never renders anywhere smaller. */
+.map-node.tier-ancient .map-node-glyph {
+  width: 24px;
+  height: 24px;
 }
 
 .map-node.tier-ancient.reachable,
@@ -9088,8 +9164,8 @@ button,
   opacity: 0.62;
 }
 
-/* Kept, not zeroed — see .map-node.locked above. The wash IS the type signal
-   now that the node has no icon, so erasing it would leave every unreachable
+/* Kept, not zeroed — see .map-node.locked above. The wash and the glyph
+   together are the type signal, so erasing it would leave every unreachable
    node an identical gray pill. */
 .map-node.locked::before {
   opacity: 0.2;
@@ -9145,21 +9221,24 @@ button,
 }
 
 .map-footer-icon {
-  font-size: 17px;
   line-height: 1;
-  height: 18px;
+  height: 19px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.map-footer-icon .run-glyph {
-  --iconset-glyph-size: 18px;
-  vertical-align: 0;
+/* The signpost's glyphs (nodeIcons.tsx HUB_PATHS), in the button's own accent
+   rather than its text color — same trade as .map-node-glyph, and it is what
+   makes the row read as three destinations instead of three gray pills. */
+.map-footer-icon .node-glyph {
+  width: 19px;
+  height: 19px;
+  color: var(--btn-color);
 }
 
-.map-footer-icon .resource-mark {
-  transform: scale(1.08);
+.map-footer-button:hover .node-glyph {
+  filter: drop-shadow(0 0 5px var(--btn-color));
 }
 
 .map-footer-label {

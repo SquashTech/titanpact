@@ -7,7 +7,8 @@ import { useLongPress } from '../shared/MoveTile';
 import { RosterManagementScreen } from './RosterManagementScreen';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { RelicsOverlay } from './RelicsOverlay';
-import { ResourceMark, RunGlyph, type RunGlyphKind } from '../shared/RunGlyph';
+import { ResourceMark } from '../shared/RunGlyph';
+import { HubGlyph, NodeGlyph, type HubGlyphName } from '../shared/nodeIcons';
 
 interface Props {
   run: RunState;
@@ -97,10 +98,11 @@ const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
 };
 
 /**
- * Silhouette tier. With the node icons gone, shape and size are the only
- * channels left to say "how much does this node matter" — and they say it
- * better at phone scale than a 22px drawing ever did, because a silhouette
- * survives being small while a drawing does not.
+ * Silhouette tier — how much this node matters, said in shape and size rather
+ * than in the glyph. The two channels answer different questions and both are
+ * needed: the glyph (src/view/shared/nodeIcons.tsx) says WHAT is here, the
+ * silhouette says how much it weighs, and the silhouette is the one that
+ * survives peripheral vision at phone scale.
  *
  * Deliberately NOT expressed as clip-path polygons: every reachability signal
  * on this screen is a box-shadow glow (.map-node.reachable/.current), and
@@ -271,6 +273,7 @@ function MapNodeButton({
       aria-disabled={!isReachable}
       {...longPress}
     >
+      <NodeGlyph type={node.type} className="map-node-glyph" />
       <span className="map-node-name">{NODE_NAMES[node.type]}</span>
     </button>
   );
@@ -288,7 +291,7 @@ function MapNodePreviewPopup({ node, onClose }: { node: MapNode; onClose: () => 
       <div className="log-panel move-popup-panel" style={{ '--node-color': NODE_COLORS[node.type] } as CSSProperties}>
         <div className="log-panel-header">
           <span>
-            {NODE_NAMES[node.type]}
+            <NodeGlyph type={node.type} className="map-popup-glyph" /> {NODE_NAMES[node.type]}
           </span>
         </div>
         <div className="move-popup-description">{NODE_DESCRIPTIONS[node.type]}</div>
@@ -309,10 +312,10 @@ function MapNodePreviewPopup({ node, onClose }: { node: MapNode; onClose: () => 
  * NODE_COLORS below) so the row reads as a small "hub signpost" rather than
  * generic pills.
  */
-const FOOTER_BUTTONS: readonly { key: 'relics' | 'roster' | 'reference'; icon: RunGlyphKind | null; mark: string; label: string; color: string }[] = [
-  { key: 'relics', icon: 'relic', mark: 'R', label: 'Relics', color: 'var(--magical)' },
-  { key: 'roster', icon: null, mark: 'II', label: 'Roster', color: 'var(--ally)' },
-  { key: 'reference', icon: 'guild', mark: 'i', label: 'Reference', color: 'var(--accent)' },
+const FOOTER_BUTTONS: readonly { key: HubGlyphName; label: string; color: string }[] = [
+  { key: 'relics', label: 'Relics', color: 'var(--magical)' },
+  { key: 'roster', label: 'Roster', color: 'var(--ally)' },
+  { key: 'reference', label: 'Reference', color: 'var(--accent)' },
 ];
 
 /**
@@ -409,14 +412,14 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
       </div>
 
       <div className="map-footer">
-        {FOOTER_BUTTONS.map(({ key, icon, mark, label, color }) => (
+        {FOOTER_BUTTONS.map(({ key, label, color }) => (
           <button
             key={key}
             className="map-footer-button"
             style={{ '--btn-color': color } as CSSProperties}
             onClick={openFooterOverlay[key]}
           >
-            <span className="map-footer-icon">{icon ? <RunGlyph kind={icon} /> : <ResourceMark label={mark} tone="blue" />}</span>
+            <span className="map-footer-icon"><HubGlyph name={key} /></span>
             <span className="map-footer-label">{label}</span>
             {key === 'relics' && run.relics.length > 0 && <span className="map-footer-badge">{run.relics.length}</span>}
           </button>

@@ -195,7 +195,7 @@ Status badges qualify, the move-kind badge qualifies, the plaque does not.
 
 ---
 
-## Where this pack does NOT apply: the stat glyphs and the move-kind badge
+## Where this pack does NOT apply: the vector families
 
 The stat icons (HP / ATK / DEF / INT / WIS / SPD / MP / MPR) were emoji, and the obvious
 next move was to pull eight more picks out of the sheet. They are **inline vector art**
@@ -221,11 +221,30 @@ badge's tier class, never from `STAT_COLORS` — on a move button the glyph answ
 kind of move", and a red sword meaning "Attack stat" in one place and "physical damage" in
 another would be two claims in one shape.
 
+**Two more families followed, on the same two reasons.** The six hero-sheet section headers
+(`src/view/shared/sectionIcons.tsx`) render at 16px and always take their panel's gold. The
+eighteen map node glyphs (`src/view/shared/nodeIcons.tsx`) render at 15–24px depending on
+the node's tier and always take that node's `--node-color`. The map is the sharper case,
+because it had already tried the pack and lost: commit 9688834 cut a set of hand-drawn
+16 × 16 sprites that were being rendered at 22px — a 1.375× resample, exactly the
+dishonest size this document warns about — and dropped the icon slot entirely rather than
+keep bad art. Vector got the slot back, and got the reachability states back with it: the
+sprites had needed a `grayscale(0.6)` on locked nodes, which is a *colour* change standing
+in for a *lighting* one and made the route ahead least readable where it most needed to be
+read. A `currentColor` path just takes the tile's opacity.
+
+Both new families reuse rather than reinvent where the pairing is literal. A Vitality shrine
+on the map wears the **HP heart**; a Weapon Cache the **Attack sword**; an Armor Cache the
+**Defense shield**; an Equipment Cache the section header's own **chest**. Same trade as
+`MoveKindBadge`: a player who has read one hero stat block has already learned half of the
+map.
+
 So the division is: **this pack owns "a thing happening, flavoured by a type"** — statuses,
 Field Effects, Elemental Force, where the matrix's modifier × element grammar is the whole
-value. **Vector owns the fixed abstract vocabulary** — the eight stats and the four move
-kinds — which has to be recolourable, has to be legible at 11–15px, and turned out to be
-one vocabulary rather than two. Neither is a fallback for the other.
+value. **Vector owns the fixed abstract vocabulary** — the eight stats, the four move kinds,
+the six section headers and the eighteen map nodes — which has to be recolourable, has to be
+legible from 11px up, and turned out to be one vocabulary rather than four. Neither is a
+fallback for the other.
 
 ---
 

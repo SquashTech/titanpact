@@ -64,7 +64,7 @@ export const STAT_COLORS: Record<StatKey, string> = {
  * it sits on wants: the stat's own color in a stat block, the buff green /
  * debuff red in a battlefield corner badge.
  */
-const STAT_PATHS: Record<StatKey, ReactNode> = {
+export const STAT_PATHS: Record<StatKey, ReactNode> = {
   // Heart. The only shape in the set with no straight edge, which is what
   // separates "life" from the six combat stats at a glance.
   hp: <path d="M12 21.6 3.7 13.1a5.3 5.3 0 0 1 7.5-7.5l.8.8.8-.8a5.3 5.3 0 0 1 7.5 7.5Z" />,
