@@ -616,6 +616,11 @@ export function App() {
           onClaimContract={() => false}
           onClaimContractReplace={() => false}
           onResolved={() => setScreen({ kind: 'title' })}
+          /* No run behind a Quick Battle, so leaving mid-fight costs
+             nothing — a plain one-tap exit, not the armed quit the run
+             fights get. Rerolling a throwaway matchup is the whole point of
+             the mode, and bouncing off the title is how you do it. */
+          onExitToTitle={() => setScreen({ kind: 'title' })}
         />
       )}
 

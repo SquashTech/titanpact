@@ -357,6 +357,13 @@ interface Props {
    * menu arms the choice with a second tap before calling this.
    */
   onQuitToTitle?: () => void;
+  /**
+   * Non-destructive way out for fights that aren't part of a run (Quick
+   * Battle): there is no run to abandon, so this is a plain one-tap exit
+   * with no arm/confirm, and it takes the quit entry's place in the menu.
+   * A caller passes one or the other, never both.
+   */
+  onExitToTitle?: () => void;
 }
 
 export function FightScreen({
@@ -372,6 +379,7 @@ export function FightScreen({
   onClaimContractReplace,
   onResolved,
   onQuitToTitle,
+  onExitToTitle,
 }: Props) {
   /** The three team-wide broadcasts every owned relic contributes (src/run/relics.ts, passives.ts, statusGrants.ts) — derived here rather than by each caller so "what a relic does" has one wiring site. */
   const teamStatModifiers = relicTeamStatModifiers(playerRelicIds, relics);
@@ -1472,6 +1480,14 @@ export function FightScreen({
                 </span>
                 Resume Fight
               </button>
+              {onExitToTitle && (
+                <button className="options-item" onClick={onExitToTitle}>
+                  <span className="options-item-glyph" aria-hidden="true">
+                    ⏏
+                  </span>
+                  Back to Title Screen
+                </button>
+              )}
               {onQuitToTitle && (
                 <button
                   className={`options-item options-item-danger${confirmingQuit ? ' armed' : ''}`}
