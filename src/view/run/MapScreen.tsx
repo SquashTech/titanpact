@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import React, { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
 import { TOTAL_ACTS } from '../../run/state';
 import { reachableNodeIds } from '../../run/runProgress';
@@ -137,12 +137,8 @@ const NODE_TIERS: Record<MapNodeType, NodeTier> = {
 
 /**
  * Fixed 3-column geometry, shared by the CSS grid (.map-row) and the edge
- * overlay below. Pinning nodes to columns is what lets the connecting lines
- * be drawn from pure arithmetic instead of measured DOM rects — no layout
- * effect, no ResizeObserver, no first-paint flicker, and the lines stay
- * exact at every viewport width because the SVG stretches with the grid.
- *
- * A 2-node row spreads to the OUTER columns rather than sitting adjacent, so
+ * overlay below. Pinning nodes to columns is what keeps the route legible:
+ * a 2-node row spreads to the OUTER columns rather than sitting adjacent, so
  * a fork reads as a fork. That also means a 3-node row's middle node lines up
  * with the gap in the row above it, which is what gives the map its woven,
  * non-gridlike look once the edges are drawn.
@@ -153,72 +149,204 @@ const ROW_COLUMNS: Record<number, readonly number[]> = {
   2: [1, 3],
   3: [1, 2, 3],
 };
-/** SVG user units per grid cell. Arbitrary — the viewBox is stretched to fit. */
-const CELL = 100;
-/**
- * Fraction of each edge trimmed off both ends, so a line runs BETWEEN two
- * tiles instead of into their centers. Node tiles are semi-transparent, so an
- * untrimmed line stays visible straight through the label underneath it.
- * Trimming proportionally (rather than by a pixel radius) also pulls a
- * diagonal edge's x inward by the right amount for free, and stays correct
- * under the viewBox's non-uniform stretch.
- */
-const EDGE_TRIM = 0.3;
 
 function columnOf(indexInRow: number, rowLength: number): number {
   return (ROW_COLUMNS[rowLength] ?? ROW_COLUMNS[MAP_COLUMNS])[indexInRow] ?? 2;
 }
 
-interface EdgeLine {
+/** A measured node tile, in .map-grid-relative layout px (offsetLeft/Top — unaffected by .app-shell's transform scale). */
+interface NodeBox {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+interface MapGeometry {
+  width: number;
+  height: number;
+  boxes: Record<string, NodeBox>;
+}
+
+/** Gap left between a tile's edge and the line docking into it. Small on purpose — the route should touch each stop, not hover near it. */
+const DOCK_GAP = 3;
+/**
+ * How far apart sibling edges spread across the edge they share, as a
+ * fraction of the tile's width. A node with two children fans its two lines
+ * out of its top edge instead of stacking them on one point, so a fork is
+ * visible at the fork rather than only further along.
+ */
+const FAN_SPREAD = 0.24;
+const FAN_SPREAD_MAX = 13;
+
+interface MapEdge {
   key: string;
+  /** Cubic path, parent tile's top edge -> child tile's bottom edge. */
+  d: string;
+  /** Docking point on the parent (lower on screen). */
   x1: number;
   y1: number;
+  /** Docking point on the child (higher on screen — the route runs upward). */
   x2: number;
   y2: number;
+  /** The destination's accent, so a live choice previews what it leads to. */
+  color: string;
   /** Both ends already walked — the route behind you. */
   traveled: boolean;
   /** Leaves the node you're standing on and lands somewhere you may go next. */
   open: boolean;
 }
 
+function fanOffset(index: number, count: number, width: number): number {
+  if (count < 2) return 0;
+  const spread = Math.min(width * FAN_SPREAD, FAN_SPREAD_MAX);
+  return (index - (count - 1) / 2) * spread;
+}
+
 /**
- * Every parent→child link in the map as a drawable line, in the SVG's user
- * units. `map.rows` is stored bottom-up (row 0 is the act's opening fight)
- * but the map renders top-down, so a node's `nextIds` always live one row
- * ABOVE it on screen.
+ * Every parent->child link as a drawable path, in measured layout px.
+ *
+ * The geometry is measured rather than derived from the grid's arithmetic
+ * (which is what this used to do). Column centers are only the centers of
+ * CELLS; the tiles inside them are four different widths and heights by tier,
+ * so a line trimmed by a fixed fraction of its own length stopped short of a
+ * wide tile and ran under a narrow one — a different gap on every edge, which
+ * is exactly what made the route read as loose sticks rather than a path.
+ * Docking to the real box costs one layout read and makes every connection
+ * exact at every viewport width.
+ *
+ * Every edge leaves its parent's TOP edge heading straight up and arrives at
+ * its child's BOTTOM edge still heading straight up — a cubic with purely
+ * vertical control handles. Two consequences, both wanted: a diagonal becomes
+ * an S-curve that reads as travel rather than as a strut, and the tangent at
+ * both ends is always vertical, so the caps and the chevron below never need
+ * rotating to match.
+ *
+ * `map.rows` is stored bottom-up (row 0 is the act's opening fight) but the
+ * map renders top-down, so a node's `nextIds` always live one row ABOVE it on
+ * screen.
  */
 function buildEdges(
   rowsTopDown: readonly (readonly string[])[],
   nodes: Record<string, MapNode>,
+  geometry: MapGeometry,
   currentNodeId: string | null,
   reachable: ReadonlySet<string>,
   visited: ReadonlySet<string>,
-): EdgeLine[] {
-  const centers = new Map<string, { x: number; y: number }>();
-  rowsTopDown.forEach((rowIds, row) => {
-    rowIds.forEach((id, i) => {
-      centers.set(id, { x: (columnOf(i, rowIds.length) - 0.5) * CELL, y: (row + 0.5) * CELL });
-    });
-  });
+): MapEdge[] {
+  const { boxes } = geometry;
 
-  return rowsTopDown.flatMap((rowIds) =>
+  // How many parents each child has, and this edge's index among them, so the
+  // arriving lines spread across the child's bottom edge the same way the
+  // leaving ones spread across the parent's top edge.
+  const parentsOf = new Map<string, string[]>();
+  for (const rowIds of rowsTopDown) {
+    for (const id of rowIds) {
+      for (const childId of nodes[id]?.nextIds ?? []) {
+        const list = parentsOf.get(childId);
+        if (list) list.push(id);
+        else parentsOf.set(childId, [id]);
+      }
+    }
+  }
+
+  const edges = rowsTopDown.flatMap((rowIds) =>
     rowIds.flatMap((id) => {
-      const from = centers.get(id);
-      return (nodes[id]?.nextIds ?? []).flatMap((childId) => {
-        const to = centers.get(childId);
+      const from = boxes[id];
+      const childIds = nodes[id]?.nextIds ?? [];
+      return childIds.flatMap((childId, childIndex) => {
+        const to = boxes[childId];
         if (!from || !to) return [];
+
+        const parents = parentsOf.get(childId) ?? [];
+        const x1 = from.x + from.w / 2 + fanOffset(childIndex, childIds.length, from.w);
+        const y1 = from.y - DOCK_GAP;
+        const x2 = to.x + to.w / 2 + fanOffset(parents.indexOf(id), parents.length, to.w);
+        const y2 = to.y + to.h + DOCK_GAP;
+        // Handle length: enough to bend a diagonal into a readable S, floored
+        // so two rows that nearly touch still get a curve rather than a stub,
+        // and capped at half the run so the two handles can never cross. On
+        // this map most vertical gaps are only ~16px (a 74px row holding a
+        // ~56px tile), and an uncapped 12px floor put c1 ABOVE c2 there —
+        // a curve that doubles back on itself, which reads as a wobble and
+        // makes the open edge's dash crawl stutter as it passes through.
+        const run = y1 - y2;
+        const handle = Math.min(Math.max(12, run * 0.48), run / 2);
+
         return [{
-          key: `${id}->${childId}`,
-          x1: from.x + (to.x - from.x) * EDGE_TRIM,
-          y1: from.y + (to.y - from.y) * EDGE_TRIM,
-          x2: to.x - (to.x - from.x) * EDGE_TRIM,
-          y2: to.y - (to.y - from.y) * EDGE_TRIM,
+          key: id + '->' + childId,
+          d: `M ${x1} ${y1} C ${x1} ${y1 - handle}, ${x2} ${y2 + handle}, ${x2} ${y2}`,
+          x1,
+          y1,
+          x2,
+          y2,
+          color: NODE_COLORS[nodes[childId]?.type ?? 'event'],
           traveled: visited.has(id) && visited.has(childId),
           open: currentNodeId === id && reachable.has(childId),
         }];
       });
     }),
   );
+
+  // Paint order = importance order: structure, then history, then the live
+  // choice on top, so an open edge is never crossed by a dim one.
+  const rank = (e: MapEdge) => (e.open ? 2 : e.traveled ? 1 : 0);
+  return edges.sort((a, b) => rank(a) - rank(b));
+}
+
+function sameGeometry(a: MapGeometry, b: MapGeometry): boolean {
+  if (a.width !== b.width || a.height !== b.height) return false;
+  const aIds = Object.keys(a.boxes);
+  if (aIds.length !== Object.keys(b.boxes).length) return false;
+  return aIds.every((id) => {
+    const prev = a.boxes[id];
+    const next = b.boxes[id];
+    return !!next && prev.x === next.x && prev.y === next.y && prev.w === next.w && prev.h === next.h;
+  });
+}
+
+/**
+ * Measures every node tile against .map-grid. offsetLeft/offsetTop rather
+ * than getBoundingClientRect on purpose: .app-shell is transform-scaled to
+ * the device (src/app/uiScale.ts), and offsets are pre-transform layout px —
+ * the same space the SVG's viewBox is authored in. Rect math would have to
+ * divide that scale back out and would drift on fractional scales.
+ *
+ * Re-measures on any resize of the grid (rotation, a wider device, the
+ * scrollbar appearing) via ResizeObserver, and on a new act's map via
+ * `mapKey`. One frame renders before the first measurement lands; the edges
+ * sit *behind* the tiles, so what that frame is missing is the connective
+ * tissue, never a control.
+ */
+function useMapGeometry(
+  nodeRefs: React.RefObject<Map<string, HTMLElement>>,
+  mapKey: string,
+): [React.RefObject<HTMLDivElement | null>, MapGeometry | null] {
+  const gridRef = useRef<HTMLDivElement | null>(null);
+  const [geometry, setGeometry] = useState<MapGeometry | null>(null);
+
+  useLayoutEffect(() => {
+    const grid = gridRef.current;
+    if (!grid) return;
+
+    const measure = () => {
+      const boxes: Record<string, NodeBox> = {};
+      for (const [id, el] of nodeRefs.current) {
+        boxes[id] = { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight };
+      }
+      const next = { width: grid.offsetWidth, height: grid.offsetHeight, boxes };
+      // Bail out when nothing moved — a ResizeObserver that setStates
+      // unconditionally can loop against its own re-render.
+      setGeometry((prev) => (prev && sameGeometry(prev, next) ? prev : next));
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(grid);
+    return () => observer.disconnect();
+  }, [nodeRefs, mapKey]);
+
+  return [gridRef, geometry];
 }
 
 /**
@@ -241,15 +369,18 @@ function MapNodeButton({
   isVisited,
   onSelect,
   onPreview,
+  registerRef,
 }: {
   node: MapNode;
-  /** 1-based grid column this node sits in (columnOf) — kept in sync with the edge overlay, which assumes the same geometry. */
+  /** 1-based grid column this node sits in (columnOf) — the CSS grid's placement; the edge overlay reads the resulting box, it doesn't assume it. */
   column: number;
   isCurrent: boolean;
   isReachable: boolean;
   isVisited: boolean;
   onSelect: () => void;
   onPreview: () => void;
+  /** Hands this tile's DOM node to MapScreen's geometry cache so the route can dock to its real box (useMapGeometry). */
+  registerRef: (el: HTMLElement | null) => void;
 }) {
   const classes = [
     'map-node',
@@ -267,6 +398,7 @@ function MapNodeButton({
 
   return (
     <button
+      ref={registerRef}
       type="button"
       className={classes}
       style={{ '--node-color': NODE_COLORS[node.type], gridColumn: column } as CSSProperties}
@@ -331,13 +463,19 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
   const [showReference, setShowReference] = useState(false);
   const [showRelics, setShowRelics] = useState(false);
   const [previewNode, setPreviewNode] = useState<MapNode | null>(null);
+  // Hooks can't sit behind the `if (!map)` bail below, so both of these are
+  // called unconditionally; a mapless run simply never registers a tile and
+  // the geometry stays an empty measurement.
+  const nodeRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const [gridRef, geometry] = useMapGeometry(nodeRefs, run.map ? `${run.actNumber}:${run.map.seed}` : 'none');
+
   const map = run.map;
   if (!map) return null;
 
   const reachable = new Set(reachableNodeIds(run));
   const visited = new Set(run.visitedNodeIds);
   const rowsTopDown = [...map.rows].reverse();
-  const edges = buildEdges(rowsTopDown, map.nodes, run.currentNodeId, reachable, visited);
+  const edges = geometry ? buildEdges(rowsTopDown, map.nodes, geometry, run.currentNodeId, reachable, visited) : [];
 
   const openFooterOverlay: Record<(typeof FOOTER_BUTTONS)[number]['key'], () => void> = {
     relics: () => setShowRelics(true),
@@ -360,34 +498,56 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
       </div>
 
       <div className="map-scroll screen-scroll">
-        <div className="map-grid" style={{ '--map-rows': rowsTopDown.length } as CSSProperties}>
+        <div className="map-grid" ref={gridRef} style={{ '--map-rows': rowsTopDown.length } as CSSProperties}>
           {/*
-            The route itself. Drawn under the nodes as one stretched SVG rather
-            than per-row connector stubs: a stub between rows can only say
-            "these rows are adjacent", while a real parent->child line says
-            WHICH node leads where — the only thing that makes a branching map
-            plannable. preserveAspectRatio="none" lets the overlay stretch to
-            whatever the grid resolves to, and non-scaling-stroke keeps the
-            lines an even weight through that stretch.
+            The route itself. Drawn under the tiles as one SVG in the grid's own
+            layout px (viewBox = measured size, so 1 user unit = 1 CSS px and
+            strokes need no non-scaling-stroke correction) rather than as
+            per-row connector stubs: a stub between rows can only say "these
+            rows are adjacent", while a real parent->child path says WHICH node
+            leads where — the only thing that makes a branching map plannable.
+
+            Two passes, not one: every casing is laid down before any core, so
+            a dark casing can never cut a hole through a line that crosses it.
+            The casing is what keeps a route readable where it runs over the
+            well's warm pool at the bottom of the map.
           */}
-          <svg
-            className="map-edges"
-            viewBox={`0 0 ${MAP_COLUMNS * CELL} ${rowsTopDown.length * CELL}`}
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            {edges.map((edge) => (
-              <line
-                key={edge.key}
-                className={['map-edge', edge.traveled ? 'traveled' : '', edge.open ? 'open' : ''].filter(Boolean).join(' ')}
-                x1={edge.x1}
-                y1={edge.y1}
-                x2={edge.x2}
-                y2={edge.y2}
-                vectorEffect="non-scaling-stroke"
-              />
-            ))}
-          </svg>
+          {geometry && (
+            <svg
+              className="map-edges"
+              viewBox={`0 0 ${geometry.width} ${geometry.height}`}
+              width={geometry.width}
+              height={geometry.height}
+              aria-hidden="true"
+            >
+              {edges.map((edge) => (
+                <path key={`casing:${edge.key}`} className="map-edge-casing" d={edge.d} />
+              ))}
+              {edges.map((edge) => (
+                <g
+                  key={edge.key}
+                  className={['map-edge-group', edge.traveled ? 'traveled' : '', edge.open ? 'open' : ''].filter(Boolean).join(' ')}
+                  style={{ '--edge-color': edge.color } as CSSProperties}
+                >
+                  <path className="map-edge" d={edge.d} />
+                  {/* Docking caps. They sit exactly on the tile edge, so they
+                      read as the line socketing into the stop rather than
+                      merely ending near it — and they hide the half-pixel a
+                      fractional layout can leave between stroke and border. */}
+                  <circle className="map-edge-cap" cx={edge.x1} cy={edge.y1} r={2.2} />
+                  {edge.open ? (
+                    // The route's only direction cue: an open edge arrives at
+                    // its destination pointing at it. Always drawn straight
+                    // up because the path's end tangent is always vertical
+                    // (buildEdges' control handles) — no rotation needed.
+                    <path className="map-edge-arrow" d={`M ${edge.x2 - 4.2} ${edge.y2 + 5} L ${edge.x2} ${edge.y2} L ${edge.x2 + 4.2} ${edge.y2 + 5}`} />
+                  ) : (
+                    <circle className="map-edge-cap" cx={edge.x2} cy={edge.y2} r={2.2} />
+                  )}
+                </g>
+              ))}
+            </svg>
+          )}
 
           {rowsTopDown.map((rowIds, rowIndex) => (
             <div className="map-row" key={rowIndex}>
@@ -403,6 +563,10 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
                     isVisited={visited.has(nodeId)}
                     onSelect={() => onSelectNode(nodeId)}
                     onPreview={() => setPreviewNode(node)}
+                    registerRef={(el) => {
+                      if (el) nodeRefs.current.set(nodeId, el);
+                      else nodeRefs.current.delete(nodeId);
+                    }}
                   />
                 );
               })}

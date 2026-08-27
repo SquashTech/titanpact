@@ -1724,14 +1724,16 @@ button,
   gap: 6px;
 }
 
-/* Switch-in picker, inside the "Switch In" overlay opened from the bottom
-   bar (FightScreen.tsx) — the bench heroes' own CombatantCards double as the
-   switch buttons (targetable + onSelectTarget), shrunk via these descendant
-   overrides rather than a CombatantCard prop so the same card markup/logic
-   serves both the full-size active slot and this compact picker. */
-/* Inside the forced-replacement panel only — the switch-in picker's own
-   .bench-row lives in an overlay with no chassis to fill, so this is scoped
-   rather than added to .bench-row itself.
+/* The bench picker: the forced-replacement panel that opens when one of your
+   active heroes is KO'd (FightScreen.tsx) — the bench heroes' own
+   CombatantCards double as the buttons (targetable + onSelectTarget), shrunk
+   via these descendant overrides rather than a CombatantCard prop so the same
+   card markup/logic serves both the full-size active slot and this compact
+   picker.
+
+   The voluntary Switch overlay used to share this row and no longer does — it
+   has purpose-built rows of its own now (SwitchInPanel.tsx, .switch-option
+   below), so everything scoped to .target-panel here is the KO flow alone.
 
    The fifth pass let these cards grow to fill the chassis the way the target
    picker's do, and with a single candidate on the bench that produced a
@@ -1756,7 +1758,7 @@ button,
 
 /* 2x, matching the target picker for the same reason: this is a hero-choosing
    moment with room for the hero, and .bench-row's own 24px (0.5x) is sized for
-   the switch-in overlay's compact list, not for a card this size. */
+   a compact list, not for a card this size. */
 .target-panel .bench-row .combatant-portrait {
   width: 96px;
   height: 96px;
@@ -1894,10 +1896,10 @@ button,
   transform: translateY(-2px);
 }
 
-/* Switch-in picker cards (bench-row, always `targetable`) don't get the
-   persistent glow the actual move-target cards get above — with every bench
-   card glowing all the time it stopped meaning anything. Glow only appears
-   on hover, as a genuine "you're about to pick this" cue. */
+/* Bench picker cards (always `targetable`) don't get the persistent glow the
+   actual move-target cards get above — with every bench card glowing all the
+   time it stopped meaning anything. Glow only appears on hover, as a genuine
+   "you're about to pick this" cue. */
 .bench-row .combatant-card.targetable::after {
   content: none;
 }
@@ -1966,15 +1968,6 @@ button,
   50% {
     box-shadow: 0 0 0 6px rgba(74, 144, 217, 0.45), 0 2px 10px rgba(0, 0, 0, 0.3);
   }
-}
-
-/* A switch-in picker bench card already queued as a different active hero's
-   replacement — visibly unavailable without borrowing the fainted look
-   (no KO tag, no shake, still legible as "alive, just spoken for"). */
-.combatant-card.locked {
-  opacity: 0.5;
-  filter: grayscale(0.5);
-  cursor: not-allowed;
 }
 
 .combatant-card.fainted {
@@ -2176,32 +2169,11 @@ button,
   padding: 1px 6px;
 }
 
-/* Marks the bench hero that's the declared replacement for a pending switch
-   action, inside the switch-in picker overlay — shown both for the choice
-   just made for the currently-viewed hero and for a bench hero another
-   active hero already claimed (via `locked`), so a pick made while
-   stepping through one hero stays legible when a later hero's overlay
-   shows the same bench. */
-.switching-tag {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  color: var(--accent);
-  background: rgba(224, 166, 60, 0.15);
-  border: 1px solid rgba(224, 166, 60, 0.5);
-  border-radius: 8px;
-  padding: 1px 6px;
-  white-space: nowrap;
-}
-
 /* Stat-mod corner badges (CombatantCard) — a persistent "this stat is off
    base" cue distinct from the momentary .dmg-popup float and the full
    HeroDetailOverlay breakdown. Kept out of .status-badge-row (that row is
    reserved for statuses, and doubling it up would overload it) and out of
-   the .fainted-tag/.switching-tag corner (top-right, further in) by sitting
+   the .fainted-tag corner (top-right, further in) by sitting
    right at the card's own corners. Two per side is the common case — a third
    wraps to a new line rather than overflowing the card. */
 .stat-mod-corner {
@@ -4379,6 +4351,378 @@ button,
 }
 
 .options-note {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+/* --- Switch-in picker (SwitchInPanel.tsx) ---------------------------------
+ *
+ * This used to be a bare .log-panel wrapping a row of shrunken battlefield
+ * cards. It is now authored for the decision it serves: a switch is a TRADE,
+ * and the three things that decide one are who leaves, how much HP and mana
+ * arrives, and how the type matchup lands in both directions. Each of those
+ * gets its own band below.
+ *
+ * The panel keeps .log-panel's chassis (same scrim, same radius, same header)
+ * — it should still read as one of this game's modals, not as a screen of its
+ * own.
+ */
+.switch-panel {
+  gap: 8px;
+}
+
+/* The outgoing half of the trade, on a sunken track: the same "this is a
+   readout, not a control" language .map-header uses, so it can sit directly
+   above a stack of large pressable rows without competing with them. */
+.switch-outgoing {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* Same socket idiom as the fight console's commander portraits
+   (.console-socket): a carved slot ringed in the hero's own primary-type
+   color. Reused rather than reinvented so a hero looks like the same object
+   wherever the game frames one. */
+.switch-outgoing-socket,
+.switch-option-socket {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(6, 8, 12, 0.55), rgba(10, 13, 18, 0.32));
+  box-shadow:
+    inset 0 0 0 1px rgba(var(--socket-rgb), 0.55),
+    inset 0 -7px 14px -7px rgba(var(--socket-rgb), 0.45),
+    inset 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.switch-outgoing-socket {
+  width: 28px;
+  height: 28px;
+  /* Dimmed: this hero is leaving. The ring stays lit so the type is still
+     readable — what fades is the sprite, not the identity. */
+  opacity: 0.62;
+  filter: grayscale(0.45);
+}
+
+.switch-outgoing-portrait {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+}
+
+.switch-outgoing-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.switch-outgoing-text strong {
+  color: var(--text);
+}
+
+.switch-outgoing-chips {
+  flex-shrink: 0;
+  display: flex;
+  gap: 4px;
+}
+
+/* Scrolls rather than squeezing: a bring-4 squad tops out at two bench heroes
+   today, but nothing in the rules caps it there, and a row whose gauges
+   collapse is worse than a row you have to scroll to. */
+.switch-options {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* Padding, not margin: `overflow-y: auto` also makes overflow-x `auto`, so
+     this box clips at its own padding edge — and .switch-stamp hangs 7px above
+     the first row while the hover glow spills sideways. Both need room inside
+     the scroller or the top row loses its stamp entirely. */
+  padding: 8px 5px 2px;
+  margin: -8px -5px -2px;
+}
+
+/*
+ * One candidate. Full width and ~76px tall — deliberately the same weight as
+ * the .options-item rows in the pause menu, because this is a comparably
+ * consequential press and the old thumbnail-strip version read as a preview
+ * rather than as a choice.
+ */
+.switch-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--hairline);
+  transition: border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+
+/* Lit in the candidate's own primary type, not in the app accent: with two or
+   three heroes stacked, the hover cue doubles as a reminder of what you're
+   about to bring in. */
+.switch-option:hover {
+  border-color: rgba(var(--socket-rgb), 0.8);
+  box-shadow: var(--hairline), 0 0 14px -4px rgba(var(--socket-rgb), 0.6), var(--elev-2);
+  transform: translateY(-2px);
+}
+
+.switch-option:active {
+  transform: translateY(0);
+}
+
+/* Already the declared replacement for THIS hero. Uses the app-wide
+   "you picked this one" fill (--selected-fill) so a committed switch looks
+   like every other committed choice in the game. */
+.switch-option.selected {
+  background: var(--selected-fill);
+  border-color: var(--accent);
+}
+
+/* Queued as the OTHER active hero's replacement — inert, and said with light
+   rather than by hiding anything: the player still needs to read who it is to
+   understand why this row can't be pressed. */
+.switch-option.claimed {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.switch-option.claimed:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--hairline);
+  transform: none;
+}
+
+.switch-option-socket {
+  width: 52px;
+  height: 52px;
+}
+
+/* 48px — the sprite's native size, so the one hero portrait the player is
+   actually studying before a trade is the one place in the fight UI that
+   never downscales it. */
+.switch-option-portrait {
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+}
+
+.switch-option-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.switch-option-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.switch-option-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.switch-option-types {
+  flex-shrink: 0;
+  display: flex;
+  gap: 3px;
+}
+
+/* Label / track / numerals on one line. The battlefield stacks a caption
+   under its bars because it has no horizontal room to spare; this panel does,
+   and a gauge that reads left-to-right in one pass is faster to compare
+   across two stacked candidates than two stacked two-line blocks. */
+.switch-gauge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.switch-gauge-label {
+  flex-shrink: 0;
+  width: 16px;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+/* `display: block` is load-bearing, not tidiness: this panel's track and fill
+   are spans (they sit inside a <button>, which may not contain a <div>), and
+   an inline box ignores height/width entirely — the gauges rendered as empty
+   grooves until both were blockified. */
+.switch-gauge-track {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 7px;
+  /* .bar-track carries a bottom margin for the stacked battlefield layout;
+     on one line it would push the bar off-center. */
+  margin-bottom: 0;
+}
+
+.switch-gauge-track .bar-fill {
+  display: block;
+}
+
+.switch-gauge-value {
+  flex-shrink: 0;
+  min-width: 52px;
+  text-align: right;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.switch-gauge-max {
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.switch-option-readout {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 1px;
+}
+
+/*
+ * The matchup pair. Colored by CONSEQUENCE, not by multiplier: green means
+ * "this is in your favour" on both chips, which is why the sword chip and the
+ * shield chip invert against each other (SwitchInPanel's toneFor). A player
+ * scanning two candidates should be able to pick on color alone and be right.
+ */
+.switch-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px 1px 4px;
+  border-radius: var(--radius-xs);
+  background: var(--well);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.switch-chip-glyph {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.switch-chip.good {
+  color: var(--hp-high);
+  box-shadow: inset 0 0 0 1px rgba(76, 175, 106, 0.4);
+}
+
+.switch-chip.bad {
+  color: var(--hp-low);
+  box-shadow: inset 0 0 0 1px rgba(217, 83, 79, 0.4);
+}
+
+.switch-chip.flat {
+  color: var(--text-dim);
+}
+
+/* Statuses that travel in with this hero. Icon only — the panel is a
+   comparison, and a hero arriving Burned is a fact the player needs to see,
+   not one they need the magnitude of mid-tap (that's a hold on the
+   battlefield card). */
+.switch-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border: 1px solid;
+  border-radius: var(--radius-xs);
+}
+
+.switch-status svg {
+  width: 11px;
+  height: 11px;
+}
+
+/* Printed only when it's bad news: a hero arriving with no affordable move
+   spends its first round Resting. "Ready" has no chip — the common case earns
+   no ink. */
+.switch-flag {
+  padding: 1px 5px;
+  border-radius: var(--radius-xs);
+  background: rgba(217, 83, 79, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(217, 83, 79, 0.45);
+  color: var(--hp-low);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Corner stamp for the row's own state. Sits over the border rather than in
+   the flow so it can't reflow the gauges underneath it. */
+.switch-stamp {
+  position: absolute;
+  top: -7px;
+  right: 8px;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 0 0 0 2px var(--panel);
+}
+
+.switch-stamp.claimed-stamp {
+  background: var(--border-strong);
+  color: var(--text);
+}
+
+/* The one rule of switching that isn't visible anywhere on this panel: the
+   arrival loses its turn. Stated once, at the bottom, in the same register
+   .options-note uses. */
+.switch-note {
+  flex-shrink: 0;
   margin: 0;
   font-size: 10px;
   line-height: 1.4;
@@ -8883,14 +9227,25 @@ button,
 
 /* The map field itself: a recessed well the route sits inside, so the
    ascent reads as terrain viewed through a frame rather than nodes floating
-   on the page. The warm pool at the bottom is the run's origin point —
-   the player climbs up and away from it. */
+   on the page.
+
+   Four layers, painted top to bottom, and all four exist to give the climb a
+   direction. The warm pool at the BOTTOM is the run's origin — where the
+   player started. The cold accent bloom at the TOP is the summit the Ancient
+   sits on. Between them a vignette pulls the corners down so the eye stays on
+   the route rather than on the frame's inside edges. An act therefore reads
+   as travel from one lit end of the well to the other even with every tile
+   covered up. */
 .map-scroll {
   display: flex;
   flex-direction: column;
   gap: 0;
   padding: 14px 12px;
-  background: radial-gradient(ellipse 120% 60% at 50% 100%, #241b0e 0%, transparent 70%), var(--well);
+  background:
+    radial-gradient(ellipse 88% 22% at 50% 0%, rgba(224, 166, 60, 0.14) 0%, transparent 72%),
+    radial-gradient(ellipse 118% 58% at 50% 100%, #241b0e 0%, transparent 70%),
+    radial-gradient(ellipse 92% 74% at 50% 50%, transparent 46%, rgba(0, 0, 0, 0.55) 100%),
+    var(--well);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
@@ -8919,15 +9274,28 @@ button,
   justify-items: center;
 }
 
-/* Stretched to the grid box exactly (inset: 0 with no padding of its own), so
-   the SVG's user units map 1:1 onto the cells the nodes are placed in. */
+/* Pinned to the grid's origin and sized in JS to the measured grid box
+   (MapScreen's useMapGeometry), so one SVG user unit is one CSS px — the
+   overlay is never stretched, which is what lets curves, caps and dash
+   patterns keep their authored proportions at every viewport width. */
 .map-edges {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  top: 0;
+  left: 0;
   pointer-events: none;
   overflow: visible;
+}
+
+/* Dark casing under every core stroke, laid down in its own pass before any
+   core is drawn (see MapScreen's two `edges.map` calls). Without it the route
+   dissolves wherever it crosses the well's warm pool or a tile's glow; with
+   it, every line is a lit cord on a dark ground no matter what it runs over. */
+.map-edge-casing {
+  fill: none;
+  stroke: #05070b;
+  stroke-width: 5.5;
+  stroke-linecap: round;
+  opacity: 0.8;
 }
 
 /*
@@ -8938,34 +9306,72 @@ button,
  * is what makes "these are your options" register without a label.
  */
 .map-edge {
-  stroke: var(--border);
+  fill: none;
+  stroke: var(--border-strong);
   stroke-width: 2;
   stroke-linecap: round;
-  opacity: 0.85;
+  opacity: 0.75;
 }
 
-.map-edge.traveled {
+/* The socket where a line meets a tile. Same color as its own stroke, so the
+   two read as one object rather than as a line plus a bead. */
+.map-edge-cap {
+  fill: var(--border-strong);
+  opacity: 0.75;
+}
+
+.map-edge-group.traveled .map-edge {
   stroke: var(--accent);
+  stroke-width: 2;
+  opacity: 0.42;
+}
+
+.map-edge-group.traveled .map-edge-cap {
+  fill: var(--accent);
+  opacity: 0.42;
+}
+
+/* The live choice, drawn in the DESTINATION's own accent (--edge-color, set
+   per edge in MapScreen from NODE_COLORS) rather than a uniform gold: with
+   two or three options leaving the same tile, the line itself previews what
+   each one leads to before the player has read a single label. */
+.map-edge-group.open .map-edge {
+  stroke: var(--edge-color);
   stroke-width: 2.5;
-  opacity: 0.5;
-}
-
-.map-edge.open {
-  stroke: var(--accent);
-  stroke-width: 3;
   opacity: 1;
-  stroke-dasharray: 7 6;
+  stroke-dasharray: 8 7;
+  filter: drop-shadow(0 0 4px var(--edge-color));
   animation: map-edge-crawl 900ms linear infinite;
 }
 
+.map-edge-group.open .map-edge-cap {
+  fill: var(--edge-color);
+  opacity: 1;
+}
+
+/* Arrowhead at the destination end of a live edge. Stroked rather than
+   filled so it keeps the same weight as the line it terminates. */
+.map-edge-arrow {
+  fill: none;
+  stroke: var(--edge-color);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px var(--edge-color));
+}
+
+/* Negative offset only: the dashes crawl in the direction the path was
+   authored in (parent -> child), which on this map is always upward, toward
+   the destination. Flipping the sign would make the route appear to flow
+   back down into the node the player is standing on. */
 @keyframes map-edge-crawl {
   to {
-    stroke-dashoffset: -13;
+    stroke-dashoffset: -15;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .map-edge.open {
+  .map-edge-group.open .map-edge {
     animation: none;
   }
 }

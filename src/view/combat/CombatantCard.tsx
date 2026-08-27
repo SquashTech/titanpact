@@ -43,12 +43,8 @@ interface Props {
   onSelectTarget?: () => void;
   onInspect?: () => void;
   popup?: Popup | null;
-  /** Marks this card as the currently-committed choice — e.g. the bench hero picked to switch in (FightScreen's switch-in picker overlay). Purely a visual highlight, independent of `targetable`. */
+  /** Marks this card as the currently-committed choice — the bench hero picked in the forced-replacement panel (FightScreen). Purely a visual highlight, independent of `targetable`. */
   selected?: boolean;
-  /** This bench hero is the declared replacement for a pending switch action — shown directly on the switch-in picker overlay's cards (FightScreen) so the choice reads at a glance, including when it was made for a *different* active hero than the one currently on screen. */
-  switchingIn?: boolean;
-  /** This bench hero is already queued as another active hero's replacement, so it can't also be picked here — dims the card and blocks the click independently of `targetable`. */
-  locked?: boolean;
   /** This is the player combatant whose move panel is currently on screen (FightScreen) — a pulsing glow replaces the old "X's move" text label, so the cue costs no vertical space. */
   acting?: boolean;
   /** Type-effectiveness readout for the move currently being targeted (FightScreen's bottom targeting panel) — the multiplier of that move against THIS card's hero, so the matchup is visible right where the player commits to a target instead of only back in the move grid. `className` is one of the eff-chip tier classes (FightScreen's multClass): eff-quad-super/eff-super/eff-neutral/eff-resist/eff-quad-resist. */
@@ -132,8 +128,6 @@ export function CombatantCard({
   onInspect,
   popup,
   selected,
-  switchingIn,
-  locked,
   acting,
   effBadge,
   compact,
@@ -151,9 +145,8 @@ export function CombatantCard({
   const classes = ['combatant-card'];
   if (compact) classes.push('compact');
   if (combatant.fainted) classes.push('fainted');
-  if (targetable && !combatant.fainted && !locked) classes.push('targetable');
+  if (targetable && !combatant.fainted) classes.push('targetable');
   if (selected) classes.push('selected');
-  if (locked) classes.push('locked');
   if (acting) classes.push('acting');
   // Retints the .targetable glow (styles.css) to match the effectiveness
   // tier so the enemy box itself reads as "great target" / "bad target" at
@@ -177,7 +170,7 @@ export function CombatantCard({
   // bordered circle — one fewer box, and the large tap target it used to
   // compete with is now the figure itself. Target-row cards pass no
   // onInspect, so their behavior is unchanged.
-  const canTarget = Boolean(targetable && !combatant.fainted && !locked);
+  const canTarget = Boolean(targetable && !combatant.fainted);
   const handleCardClick = canTarget ? onSelectTarget : onInspect;
 
   return (
@@ -202,7 +195,6 @@ export function CombatantCard({
         </div>
       )}
       {combatant.fainted && <span className="fainted-tag">KO</span>}
-      {switchingIn && <span className="switching-tag">⇄ Switching In</span>}
       {onInspect && (
         <button
           className="info-button"

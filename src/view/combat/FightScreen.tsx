@@ -30,6 +30,7 @@ import { isRecruitable, deriveContractOffer } from '../../run/recruitment';
 import { RosterReplaceScreen } from '../run/RosterReplaceScreen';
 import { CombatantCard, type Popup } from './CombatantCard';
 import { HeroDetailOverlay } from './HeroDetailOverlay';
+import { SwitchInPanel } from './SwitchInPanel';
 import { FieldEffectDetailOverlay } from './FieldEffectDetailOverlay';
 import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
@@ -1515,47 +1516,40 @@ export function FightScreen({
         actingId &&
         (() => {
           const id = actingId;
+          const outgoing = combat.combatants[id];
           return (
-            <div className="log-overlay" onClick={() => setSwitchOpen(false)}>
-              <div className="log-panel" onClick={(e) => e.stopPropagation()}>
-                <div className="log-panel-header">
-                  <span>Switch In</span>
-                  <button className="log-close-button" onClick={() => setSwitchOpen(false)}>
-                    ✕
-                  </button>
-                </div>
-                <div className="bench-row">
-                  {playerBench.map((benchId) => {
-                    const isSelected = pending[id]?.kind === 'switch' && pending[id]?.benchedCombatantId === benchId;
-                    // A different already-committed active hero has already claimed this bench
-                    // hero as their replacement — can't also send it in here.
-                    const claimedByOther = Object.entries(pending).some(
-                      ([pid, p]) => pid !== id && p.kind === 'switch' && p.benchedCombatantId === benchId
-                    );
-                    const benchCombatant = combat.combatants[benchId];
-                    const benchHero = allCombatants[benchCombatant.heroId];
-                    return (
-                      <CombatantCard
-                        key={benchId}
-                        hero={benchHero}
-                        combatant={benchCombatant}
-                        targetable={!claimedByOther}
-                        selected={isSelected}
-                        switchingIn={isSelected || claimedByOther}
-                        locked={claimedByOther}
-                        onSelectTarget={() => {
-                          handleSwitchClick(id, benchId);
-                          setSwitchOpen(false);
-                        }}
-                        onInspect={() => setInspecting(benchId)}
-                        popup={popups[benchId]}
-                        activeFieldEffect={combat.activeFieldEffect}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+            <SwitchInPanel
+              outgoingHero={allCombatants[outgoing.heroId]}
+              outgoing={outgoing}
+              typeChart={typeChart}
+              moves={moves}
+              enemies={enemyActiveAlive.map((eid) => {
+                const c = combat.combatants[eid];
+                return { hero: allCombatants[c.heroId], combatant: c };
+              })}
+              options={playerBench.map((benchId) => {
+                const benchCombatant = combat.combatants[benchId];
+                const entry = entryFor(playerRun.roster, benchId);
+                return {
+                  combatantId: benchId,
+                  hero: allCombatants[benchCombatant.heroId],
+                  combatant: benchCombatant,
+                  moveIds: entry.unlockedMoveIds,
+                  selected: pending[id]?.kind === 'switch' && pending[id]?.benchedCombatantId === benchId,
+                  // A different already-committed active hero has already claimed this bench
+                  // hero as their replacement — can't also send it in here.
+                  claimedByOther: Object.entries(pending).some(
+                    ([pid, p]) => pid !== id && p.kind === 'switch' && p.benchedCombatantId === benchId
+                  ),
+                };
+              })}
+              onPick={(benchId) => {
+                handleSwitchClick(id, benchId);
+                setSwitchOpen(false);
+              }}
+              onInspect={(benchId) => setInspecting(benchId)}
+              onClose={() => setSwitchOpen(false)}
+            />
           );
         })()}
 
