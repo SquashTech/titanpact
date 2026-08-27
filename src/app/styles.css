@@ -3118,10 +3118,22 @@ button,
   padding: 0 2px;
 }
 
-.console-sockets {
+/* The two ends of the crest. The crest is a map of the battlefield above it,
+   not a list: slot 0 anchors to the left edge with its label reading rightward
+   out of the socket, slot 1 anchors to the right edge and mirrors
+   (row-reverse), so each hero's readout sits at the end of the bar its card
+   stands on. An empty slot (downed, with no bench left to replace it) still
+   holds its end, so the survivor never slides across the bar. */
+.console-slot {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 9px;
+  min-width: 0;
+}
+
+.console-slot.right {
+  flex-direction: row-reverse;
+  text-align: right;
 }
 
 /* One per active hero. Unlit at rest — it is a readout, and the frame is
@@ -3235,13 +3247,35 @@ button,
   transition: color var(--dur-slow) var(--ease-out), text-shadow var(--dur-slow) var(--ease-out);
 }
 
-/* Rule to the right edge, fading out — gives the crest a baseline to sit on
-   without drawing a box around it, and ties into the seam light above. */
-.console-crest::after {
-  content: '';
-  flex: 1;
+/* The end that is NOT in command is reporting, not asking — it holds the move
+   it already locked in, in that move's type color, but at a lower burn so the
+   lit commander stays the one thing the eye lands on. */
+.console-commander:not(.acting) {
+  opacity: 0.62;
+  text-shadow: none;
+}
+
+/* Not in command and holding nothing yet: a name, waiting its turn. Reads in
+   plain dim text rather than any domain color — there is no decision to
+   report, and coloring one would claim there is. */
+.console-commander.waiting {
+  color: var(--text-dim);
+}
+
+/* The span between the crest's two ends, fading toward the middle — gives the
+   crest a baseline to sit on without drawing a box around it, and ties into
+   the seam light above. It fills whatever the two readouts leave, which is
+   also what pins them to their own edges. */
+.console-rule {
+  flex: 1 1 auto;
+  min-width: 10px;
   height: 1px;
-  background: linear-gradient(90deg, rgba(var(--console-rgb, 224, 166, 60), 0.3), transparent);
+  background: linear-gradient(
+    90deg,
+    rgba(var(--console-rgb, 224, 166, 60), 0.3),
+    rgba(var(--console-rgb, 224, 166, 60), 0.05) 50%,
+    rgba(var(--console-rgb, 224, 166, 60), 0.3)
+  );
   transition: background var(--dur-slow) var(--ease-out);
 }
 /* Grows into the console with its panel (.action-panel is now flex-fill), so

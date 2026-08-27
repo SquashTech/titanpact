@@ -48,6 +48,7 @@ import { pickSquad } from '../run/squad';
 import { advanceToNode, advanceToNextAct, grantCurrencyReward, grantUpgradeReward, grantContractReward } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { createStatusTestSides } from '../run/statusTestFight';
+import { fullMovepool } from '../run/progression';
 import { progressionTable } from '../data/progression';
 import type { RunState, RosterEntry } from '../run/state';
 import type { Squad } from '../run/squad';
@@ -467,10 +468,18 @@ export function App() {
    * pool, no Evolution bonuses) and drops straight into FightScreen — bypasses
    * the run/map/squad-select loop entirely so combat/UI changes can be
    * iterated on without playing through a run each time.
+   *
+   * Every hero here rolls MOVE_CAP moves at random from its FULL movepool
+   * (starting kit + level-up pool, src/run/progression.ts fullMovepool)
+   * rather than its authored 3-move starting kit — a throwaway fight is the
+   * one place worth spending on coverage, so the moves a hero would only see
+   * several levels into a run show up here immediately. Real map nodes keep
+   * the authored kits.
    */
   function handleQuickBattle() {
-    const player = generateEncounter('fight', Math.floor(Math.random() * 2 ** 31), heroes);
-    const ai = generateEncounter('fight', Math.floor(Math.random() * 2 ** 31), heroes);
+    const movepools = Object.fromEntries(Object.values(heroes).map((hero) => [hero.id, fullMovepool(progressionTable, hero)]));
+    const player = generateEncounter('fight', Math.floor(Math.random() * 2 ** 31), heroes, undefined, movepools);
+    const ai = generateEncounter('fight', Math.floor(Math.random() * 2 ** 31), heroes, undefined, movepools);
     setScreen({ kind: 'quickBattle', player, ai });
   }
 

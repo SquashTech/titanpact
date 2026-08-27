@@ -87,6 +87,19 @@ function replaceEntry(run: RunState, rosterId: string, next: RosterEntry, spend:
   };
 }
 
+/**
+ * A hero's ENTIRE movepool: the authored starting kit
+ * (HeroDefinition.moveIds) followed by everything the level-up table can
+ * ever offer them, deduped. Leveling itself never needs this — it walks the
+ * two halves separately (levelUpMovePool above filters the table pool against
+ * what is already unlocked). This is for callers that need the whole surface
+ * at once, e.g. Quick Battle rolling a random MOVE_CAP loadout so a test
+ * fight can exercise moves a hero would only reach several levels in.
+ */
+export function fullMovepool(table: ProgressionTable, hero: HeroDefinition): string[] {
+  return [...new Set([...hero.moveIds, ...(table.moveTiers[hero.id] ?? [])])];
+}
+
 /** The moves still available to offer this hero on level-up: the table's pool minus whatever's already unlocked. */
 export function levelUpMovePool(table: ProgressionTable, entry: RosterEntry): string[] {
   const pool = table.moveTiers[entry.heroId] ?? [];

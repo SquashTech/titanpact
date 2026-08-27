@@ -14,6 +14,7 @@ import type { HeroLookup } from '../engine/state';
 import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
 import type { RunState, RosterEntry } from './state';
 import { createRunState, createRosterEntry, addRosterEntry } from './state';
+import { MOVE_CAP } from './progression';
 import type { Squad } from './squad';
 import { pickSquad } from './squad';
 
@@ -55,8 +56,21 @@ export interface Encounter {
  * `heroCountOverride` lets a caller shrink a `fight` node's roster below the
  * default 4 — used for the run's 2nd fight (App.tsx), which is deliberately
  * a lighter 2v2 breather between the row-0 opener and elites kicking in.
+ *
+ * `movepools` (heroId -> that hero's full movepool, src/run/progression.ts
+ * fullMovepool) swaps the authored 3-move starting kit for MOVE_CAP moves
+ * drawn at random from the whole pool. Quick Battle passes it so a throwaway
+ * fight can exercise moves a hero would otherwise only reach several
+ * levels in; real map nodes omit it and keep the authored kit. Any hero
+ * missing from the lookup falls back to its starting kit.
  */
-export function generateEncounter(nodeType: EncounterNodeType, seed: number, heroPool: HeroLookup, heroCountOverride?: number): Encounter {
+export function generateEncounter(
+  nodeType: EncounterNodeType,
+  seed: number,
+  heroPool: HeroLookup,
+  heroCountOverride?: number,
+  movepools?: Record<string, readonly string[]>
+): Encounter {
   let rng = createRng(seed);
   const heroCount = heroCountOverride ?? (nodeType === 'boss' ? 2 : 4);
   const [statCount, amountEach] = nodeType === 'boss' ? [3, 20] : nodeType === 'elite' ? [2, 10] : [0, 0];
@@ -66,7 +80,14 @@ export function generateEncounter(nodeType: EncounterNodeType, seed: number, her
 
   let run = createRunState(0);
   for (const heroId of heroIds) {
-    let entry: RosterEntry = createRosterEntry(heroId, heroId, heroPool[heroId].moveIds);
+    let startingMoveIds: readonly string[] = heroPool[heroId].moveIds;
+    const movepool = movepools?.[heroId];
+    if (movepool) {
+      const { picked, nextState } = shuffledPick(rng, movepool, MOVE_CAP);
+      rng = nextState;
+      startingMoveIds = picked;
+    }
+    let entry: RosterEntry = createRosterEntry(heroId, heroId, startingMoveIds);
     if (statCount > 0) {
       const { bonus, nextState } = randomStatBonus(rng, statCount, amountEach);
       rng = nextState;

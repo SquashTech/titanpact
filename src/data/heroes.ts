@@ -305,7 +305,7 @@ export const heroes: Record<string, HeroDefinition> = {
   },
   steamColossus: {
     id: 'steamColossus',
-    name: 'Steam Colossus',
+    name: 'Bellows',
     types: ['Mech', 'Iron'],
     baseStats: { hp: 145, attack: 90, defense: 80, intelligence: 15, wisdom: 35, speed: 15, manaPool: 40, mpRegen: 10 },
     moveIds: ['moltenHammer', 'shrapnelBlast', 'fortify'],

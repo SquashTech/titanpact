@@ -82,7 +82,7 @@ export const progressionTable: ProgressionTable = {
     lucius: ['vanish', 'nightmareGrasp', 'psychicLance', 'mindSpike'],
 
     // --- Hollowbark, Aegis, Brimstone, Gallant, Nightshade, Pincer,
-    // Scallywag, Sentinel, Steam Colossus, Zenith (2026-08-22) ---
+    // Scallywag, Sentinel, Bellows, Zenith (2026-08-22) ---
     hollowbark: ['naturesWrath', 'venomousBite', 'healingRain', 'rendingClaw', 'weaken'],
     aegis: ['sunstrike', 'restoreVigor', 'purify', 'consecrate', 'stunningBlow'],
     brimstone: ['wildfire', 'nightmareGrasp', 'stokeTheFlames', 'duskStrike', 'scorchTheEarth'],
@@ -861,8 +861,8 @@ export const progressionTable: ProgressionTable = {
     ],
 
     // --- Hollowbark, Aegis, Brimstone, Gallant, Nightshade, Pincer,
-    // Scallywag, Sentinel, Steam Colossus, Zenith (2026-08-22) — Brimstone
-    // and Steam Colossus are already dual-typed, so per the mono-only graft
+    // Scallywag, Sentinel, Bellows, Zenith (2026-08-22) — Brimstone
+    // and Bellows are already dual-typed, so per the mono-only graft
     // rule none of their paths carry a typeGraft (same treatment as
     // cinderKnight/lucius above).
     hollowbark: [

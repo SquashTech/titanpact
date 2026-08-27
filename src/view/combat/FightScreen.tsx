@@ -186,13 +186,21 @@ interface PendingAction {
  * committed one wears the mana crystal of the move it is holding.
  *
  * The SAME object renders for move selection and for targeting, with only the
- * trailing label changing (the commander's name, then the move being aimed).
- * That is the persistent console shell open item 3 asked for, at the one level
- * that actually matters to the player: the header does not restyle itself
- * halfway through a decision.
+ * acting slot's label changing (the commander's name, then the move being
+ * aimed). That is the persistent console shell open item 3 asked for, at the
+ * one level that actually matters to the player: the header does not restyle
+ * itself halfway through a decision.
+ *
+ * The two sockets are pushed to the crest's two ends and mirrored (user
+ * direction, 2026-08-26): the hero standing on the LEFT of the battlefield
+ * reports from the left edge with its label to its right, the hero on the
+ * RIGHT reports from the right edge with its label to its left. So the crest
+ * is a map of the arena rather than a list — you read a hero's state at the
+ * end of the bar its card is on, and the two decisions of a doubles turn stop
+ * competing for the same strip of text.
  */
 function ConsoleCrest({
-  activeIds,
+  activeSlots,
   actingId,
   combatants,
   pending,
@@ -200,7 +208,14 @@ function ConsoleCrest({
   label,
   labelRgb,
 }: {
-  activeIds: readonly string[];
+  /**
+   * The player's two active SLOTS in battlefield order (index 0 = the left
+   * card, 1 = the right), nulls included — the crest mirrors the arena's
+   * geometry, so it reads positions rather than a compacted alive-list. A
+   * hero standing on the right of the field reports from the right of the
+   * crest.
+   */
+  activeSlots: readonly (string | null)[];
   actingId: string | null;
   combatants: CombatState['combatants'];
   pending: Record<string, PendingAction>;
@@ -209,51 +224,81 @@ function ConsoleCrest({
   /** Overrides the console's own hue — targeting colors the label by the MOVE being aimed, not by its caster. */
   labelRgb?: string;
 }) {
+  function renderSlot(slot: 0 | 1) {
+    const cid = activeSlots[slot] ?? null;
+    const sideClass = slot === 0 ? 'left' : 'right';
+    // A slot can be empty late in a locked-in fight (downed, no bench left to
+    // replace it). It still holds its end of the crest, so the surviving
+    // hero stays on the side of the bar it stands on.
+    if (!cid || combatants[cid].fainted) return <span key={slot} className={`console-slot ${sideClass}`} />;
+    const c = combatants[cid];
+    const cHero = allCombatants[c.heroId];
+    const committed = isComplete(pending[cid]) ? pending[cid] : undefined;
+    const committedMove = committed?.kind === 'move' ? moves[committed.moveId!] : undefined;
+    const acting = cid === actingId;
+    /* The hero in command carries the console's own label (its name, or the
+       move it is aiming). The other one reports what it is already holding,
+       in that move's type color — so the bar reads "deciding X / holding Y"
+       across its two ends instead of one name beside a silent portrait. */
+    const slotLabel = acting
+      ? label
+      : committedMove
+        ? committedMove.name
+        : committed
+          ? committed.kind === 'rest'
+            ? 'Rest'
+            : 'Switching out'
+          : cHero.name;
+    const slotRgb = acting ? labelRgb : committedMove ? getTypeColorRgb(committedMove.type) : undefined;
+    return (
+      <span key={slot} className={`console-slot ${sideClass}`}>
+        <span
+          className={`console-socket${acting ? ' acting' : ''}${committed ? ' committed' : ''}`}
+          style={{ '--socket-rgb': getTypeColorRgb(effectiveTypes(cHero, c)[0]) } as CSSProperties}
+          title={
+            committedMove
+              ? `${cHero.name} — ${committedMove.name}`
+              : committed
+                ? `${cHero.name} — ${committed.kind === 'rest' ? 'Rest' : 'Switching out'}`
+                : cHero.name
+          }
+        >
+          <HeroPortrait heroId={cHero.id} className="console-socket-portrait" />
+          {committedMove && (
+            <span
+              className="console-socket-crystal"
+              style={{ '--move-type-rgb': getTypeColorRgb(committedMove.type) } as CSSProperties}
+            >
+              {committedMove.manaCost}
+            </span>
+          )}
+          {committed && !committedMove && (
+            <span className="console-socket-mark" aria-hidden="true">
+              {committed.kind === 'rest' ? '\u25CC' : '\u21C4'}
+            </span>
+          )}
+        </span>
+        {/* Identity, not instruction — and set in the horizon's own register
+            (9px/800/0.14em uppercase) rather than body copy, which is the
+            register audit the second pass asked for. */}
+        <span
+          className={`console-commander${acting ? ' acting' : ''}${!acting && !committed ? ' waiting' : ''}`}
+          style={slotRgb ? ({ '--console-rgb': slotRgb } as CSSProperties) : undefined}
+        >
+          {slotLabel}
+        </span>
+      </span>
+    );
+  }
+
   return (
     <div className="console-crest">
-      <div className="console-sockets">
-        {activeIds.map((cid) => {
-          const c = combatants[cid];
-          const cHero = allCombatants[c.heroId];
-          const committed = isComplete(pending[cid]) ? pending[cid] : undefined;
-          const committedMove = committed?.kind === 'move' ? moves[committed.moveId!] : undefined;
-          return (
-            <span
-              key={cid}
-              className={`console-socket${cid === actingId ? ' acting' : ''}${committed ? ' committed' : ''}`}
-              style={{ '--socket-rgb': getTypeColorRgb(effectiveTypes(cHero, c)[0]) } as CSSProperties}
-              title={
-                committedMove
-                  ? `${cHero.name} — ${committedMove.name}`
-                  : committed
-                    ? `${cHero.name} — ${committed.kind === 'rest' ? 'Rest' : 'Switching out'}`
-                    : cHero.name
-              }
-            >
-              <HeroPortrait heroId={cHero.id} className="console-socket-portrait" />
-              {committedMove && (
-                <span
-                  className="console-socket-crystal"
-                  style={{ '--move-type-rgb': getTypeColorRgb(committedMove.type) } as CSSProperties}
-                >
-                  {committedMove.manaCost}
-                </span>
-              )}
-              {committed && !committedMove && (
-                <span className="console-socket-mark" aria-hidden="true">
-                  {committed.kind === 'rest' ? '\u25CC' : '\u21C4'}
-                </span>
-              )}
-            </span>
-          );
-        })}
-      </div>
-      {/* Identity, not instruction — and set in the horizon's own register
-          (9px/800/0.14em uppercase) rather than body copy, which is the
-          register audit the second pass asked for. */}
-      <span className="console-commander" style={labelRgb ? ({ '--console-rgb': labelRgb } as CSSProperties) : undefined}>
-        {label}
-      </span>
+      {renderSlot(0)}
+      {/* Spans the gap between the two ends, so the crest still has a
+          baseline to sit on now that the label no longer runs into a
+          trailing rule of its own. */}
+      <span className="console-rule" aria-hidden="true" />
+      {renderSlot(1)}
     </div>
   );
 }
@@ -1089,7 +1134,7 @@ export function FightScreen({
                       WHICH move they are aiming, so that is what the crest's
                       trailing label becomes, in the move's own type color. */}
                   <ConsoleCrest
-                    activeIds={playerActiveAlive}
+                    activeSlots={combat.active[PLAYER_SIDE]}
                     actingId={actingId}
                     combatants={combat.combatants}
                     pending={pending}
@@ -1152,7 +1197,7 @@ export function FightScreen({
             return (
               <div className="action-panel" key={id}>
                 <ConsoleCrest
-                  activeIds={playerActiveAlive}
+                  activeSlots={combat.active[PLAYER_SIDE]}
                   actingId={actingId}
                   combatants={combat.combatants}
                   pending={pending}
