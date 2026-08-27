@@ -4023,6 +4023,30 @@ button,
   white-space: nowrap;
 }
 
+/* Optical centring, which is not the same as box centring. Every box in
+   these rows already shares a centre — flex `align-items: center` sees to
+   that, and measured, the mana gem, the type glyph, the category badge, the
+   name and the power readout agree on it to the hundredth of a pixel. What
+   does not agree is the ink: a line box reserves descender space, and neither
+   a move name nor a "55BP" readout has descenders, so their visible letters
+   sit ~1px below the centre their box was handed while the gem and the glyph
+   — real boxes, full to their edges — sit on it. Measured at 1.00px for the
+   13px name and 1.04px for the 15px numeral.
+
+   This did not matter while the type was three letters, because then the
+   whole row was text and everything was low together. Giving the row a glyph
+   is what exposed it.
+
+   `position` rather than `transform`: a translate would resample the text.
+   :has() rather than a blanket rule so Rest — whose row is a lone centred
+   word with no object in it to align to — keeps its own centring. */
+.move-row-top:has(.mana-gem, .move-type-code) .move-name,
+.move-row-top:has(.mana-gem, .move-type-code) .move-power,
+.move-row-mid .move-power {
+  position: relative;
+  top: -1px;
+}
+
 .move-row-mid {
   display: flex;
   align-items: center;
