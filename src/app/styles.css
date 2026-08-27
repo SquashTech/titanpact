@@ -1682,6 +1682,69 @@ button,
   image-rendering: pixelated;
 }
 
+/* ── Idle breath ─────────────────────────────────────────────────────────
+   A figure standing perfectly still reads as an image pasted onto a
+   background; the same figure breathing reads as someone waiting for you to
+   decide. Adapted from the `idle` snippet at https://chr15m.github.io/juice-it/
+   — a bottom-anchored squash-and-stretch on a slow loop — with two changes.
+
+   Its scaleY(0.85) is emoji-bounce territory and would visibly wobble the
+   art's own pixel grid; ~0.95 sits below the amplitude you consciously
+   notice on a still screen and above the one where the row goes dead. And
+   its keyframes are a symmetric squash, which reads mechanical at this
+   duration, so the loop settles (squash, wide) and then rebounds slightly
+   past rest (rise, narrow) before returning — the shape of a breath.
+
+   Every portrait carries its own --idle-phase (where in the loop it starts)
+   and --idle-rate (how fast), hashed from the hero/combatant id by
+   HeroPortrait. Four figures breathing in lockstep is the single thing that
+   turns this back into "an animation is playing", and it's the default
+   unless every figure is desynced by construction.
+
+   A context opts in by naming its own --idle-period and --idle-squash, and
+   restates whatever centering transform it already needed as --idle-shift
+   (keyframes replace the whole transform, so it has to travel with them).
+   Transform-only, so nothing reflows and this composites on the GPU; the
+   global prefers-reduced-motion collapse at the top of this file switches it
+   off, which is why each context keeps its static transform declaration. */
+.team-row .combatant-portrait,
+.draft-portrait,
+.draft-candidate-portrait {
+  transform-origin: center bottom;
+  animation: hero-idle-breath calc(var(--idle-period) * var(--idle-rate, 1)) ease-in-out infinite;
+  /* Negative delay = start mid-loop. Scaled by the same period × rate the
+     duration uses, so --idle-phase stays a plain 0–1 fraction of one breath
+     no matter how long that context's breath is. */
+  animation-delay: calc(var(--idle-period) * var(--idle-rate, 1) * var(--idle-phase, 0) * -1);
+}
+
+@keyframes hero-idle-breath {
+  0%,
+  100% {
+    transform: var(--idle-shift, translateX(0)) scale(1, 1);
+  }
+  45% {
+    transform: var(--idle-shift, translateX(0))
+      scale(calc(1 + var(--idle-squash) * 0.7), calc(1 - var(--idle-squash)));
+  }
+  75% {
+    transform: var(--idle-shift, translateX(0))
+      scale(calc(1 - var(--idle-squash) * 0.35), calc(1 + var(--idle-squash) * 0.45));
+  }
+}
+
+.team-row .combatant-portrait {
+  --idle-period: 2.4s;
+  --idle-squash: 0.05;
+}
+
+/* A downed hero stops breathing. The KO already desaturates and drops the
+   card (.ko-hit); leaving the sprite gently inflating on the ground after
+   that undoes it. */
+.team-row .combatant-card.fainted .combatant-portrait {
+  animation: none;
+}
+
 .bench-row .combatant-portrait {
   /* 0.5x — the one clean downscale available from a 48px source. 20px was a
      0.4167x scale, which drops source pixels unevenly. */
@@ -6594,6 +6657,12 @@ button,
   width: 144px;
   height: 144px;
   transform: translateX(-50%);
+  /* Idle breath (see "Idle breath" above). Slower and shallower than the
+     battlefield's: this figure is 3x the size, so the same fraction covers
+     three times the pixels, and it's the only thing moving on the screen. */
+  --idle-period: 3.1s;
+  --idle-squash: 0.04;
+  --idle-shift: translateX(-50%);
   image-rendering: pixelated;
   filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.7));
 }
@@ -6989,6 +7058,12 @@ button,
   height: 48px;
   image-rendering: pixelated;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+  /* The rail breathes too, shallower — the candidates waiting in the dark
+     are alive, they're just not the one on stage. Their hashed phases put
+     four different rhythms side by side, which is most of what sells the
+     rail as a lineup rather than a row of thumbnails. */
+  --idle-period: 2.7s;
+  --idle-squash: 0.035;
 }
 
 .draft-candidate-name {

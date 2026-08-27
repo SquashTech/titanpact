@@ -227,7 +227,7 @@ export function CombatantCard({
           plain wrapper — see .bench-row/.target-row overrides. */}
       <div className="combatant-stage">
         <span className="combatant-platform" aria-hidden="true" />
-        <HeroPortrait heroId={hero.id} className="combatant-portrait" />
+        <HeroPortrait heroId={hero.id} seed={combatant.combatantId} className="combatant-portrait" />
       </div>
       {/* The move-being-targeted's effectiveness against THIS card's hero
           (FightScreen's bottom targeting panel) — sits below the portrait,
