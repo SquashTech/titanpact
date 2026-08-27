@@ -1,4 +1,4 @@
-import { useRef, type CSSProperties, type MouseEvent } from 'react';
+import { useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent } from 'react';
 import type { MoveDefinition } from '../../engine/content';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { fieldEffects } from '../../data/fieldEffects';
@@ -9,36 +9,82 @@ import { MoveKindGlyph, type MoveKindGlyphKind } from './statIcons';
 import { ManaCost } from './ManaCost';
 
 /**
- * Shared ~500ms long-press-vs-click detection. Originally inlined in
- * MoveTile below; pulled out so other custom-styled tappable elements that
- * want the same "hold for details, tap to act" split (e.g. LevelUpScreen's
+ * Shared hold-to-inspect gesture: a ~500ms press opens details, a tap acts.
+ * Originally inlined in MoveTile below; pulled out so other custom-styled
+ * tappable elements that want the same split (e.g. LevelUpScreen's
  * move-replace picker, which needs its own bordered card layout rather than
  * MoveTile's compact span) can reuse it instead of re-implementing the timer
  * dance. The click that follows a completed long-press is swallowed so it
  * can't also fire `onClick`.
+ *
+ * Three things beyond the timer, none of which the hand-rolled copies had:
+ *
+ * 1. **The hold is visible while it happens.** The returned props carry
+ *    `data-holding` for as long as the timer is running, so the pressed
+ *    control can draw its own charge (styles.css, `[data-holding]`). A 500ms
+ *    gesture that shows nothing until the instant it completes is
+ *    indistinguishable from a dead control, which is most of why "hold for
+ *    info" goes undiscovered. It is spelled as a data attribute rather than
+ *    as a returned flag precisely so every existing `{...longPress}` call
+ *    site picks it up without touching its JSX — and unlike a bare boolean,
+ *    a `data-*` prop is legal to spread onto a DOM element.
+ * 2. **Movement cancels it.** `.move-list` scrolls at short viewports and the
+ *    roster/compendium lists scroll everywhere, and on touch the pointer
+ *    stays captured by the element it went down on — `pointerleave` never
+ *    fires mid-drag, so a flick to scroll sat perfectly still as far as the
+ *    DOM was concerned and popped a detail card 500ms later. A pointer that
+ *    travels past HOLD_CANCEL_PX is a scroll, not a hold.
+ * 3. **It ticks.** One short vibration at the moment the hold completes,
+ *    where the platform offers one: the gesture ends under the player's own
+ *    finger, which is covering the thing that just changed.
  */
+export const LONG_PRESS_MS = 500;
+
+/** Past this much travel the gesture is a scroll or a drag, not a hold. Deliberately generous — a thumb resting on glass wanders several pixels over half a second without its owner meaning anything by it. */
+const HOLD_CANCEL_PX = 12;
+
 export function useLongPress(onLongPress?: () => void, onClick?: () => void) {
   const timer = useRef<number | null>(null);
   const fired = useRef(false);
+  const origin = useRef<{ x: number; y: number } | null>(null);
+  const [holding, setHolding] = useState(false);
 
   function clearTimer() {
     if (timer.current !== null) {
       clearTimeout(timer.current);
       timer.current = null;
     }
+    origin.current = null;
+    setHolding(false);
   }
 
   return {
+    /* Absent rather than `false` when idle: a CSS `[data-holding]` selector
+       matches any value, empty string included, so the attribute's presence
+       is the whole signal. */
+    'data-holding': holding ? '' : undefined,
     onContextMenu: (e: MouseEvent) => e.preventDefault(),
-    onPointerDown: () => {
+    onPointerDown: (e: PointerEvent) => {
       if (!onLongPress) return;
       fired.current = false;
+      origin.current = { x: e.clientX, y: e.clientY };
+      setHolding(true);
       timer.current = window.setTimeout(() => {
         fired.current = true;
+        clearTimer();
+        // Feature-detected, not assumed: iOS Safari has no Vibration API at
+        // all, and a desktop mouse holding a move button must not throw.
+        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate(12);
         onLongPress();
-      }, 500);
+      }, LONG_PRESS_MS);
+    },
+    onPointerMove: (e: PointerEvent) => {
+      const from = origin.current;
+      if (!from) return;
+      if (Math.abs(e.clientX - from.x) > HOLD_CANCEL_PX || Math.abs(e.clientY - from.y) > HOLD_CANCEL_PX) clearTimer();
     },
     onPointerUp: clearTimer,
+    onPointerCancel: clearTimer,
     onPointerLeave: clearTimer,
     onClick: (e: MouseEvent) => {
       e.stopPropagation();

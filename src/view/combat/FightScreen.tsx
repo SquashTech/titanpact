@@ -16,7 +16,7 @@ import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEng
 import type { Action } from '../../engine/combat/actions';
 import type { CombatEvent } from '../../engine/events';
 import type { HeroDefinition, MoveDefinition, StatKey, TargetMode } from '../../engine/content';
-import { resolveStab, resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
+import { resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
 import { resolveElementalForceBonus } from '../../engine/damage/damagePipeline';
 import type { RunState, RosterEntry } from '../../run/state';
 import { ROSTER_CAP } from '../../run/state';
@@ -32,13 +32,14 @@ import { CombatantCard, type Popup } from './CombatantCard';
 import { HeroDetailOverlay } from './HeroDetailOverlay';
 import { SwitchInPanel } from './SwitchInPanel';
 import { FieldEffectDetailOverlay } from './FieldEffectDetailOverlay';
+import { MoveDetailOverlay } from './MoveDetailOverlay';
 import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { ElementGlyph } from '../shared/elementIcons';
-import { CategoryBadge, MoveKindBadge, KIND_LABELS, TARGET_MODE_LABELS, moveEffectSummary, useLongPress } from '../shared/MoveTile';
+import { MoveKindBadge, TARGET_MODE_LABELS, moveEffectSummary, useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -50,6 +51,142 @@ function fmtGrant(amount: number): string {
   return amount > 0 ? `+${amount}` : `${amount}`;
 }
 
+
+/** One enemy's live matchup for a move row, precomputed by FightScreen so MoveRow needs no combat state of its own. */
+interface MoveMatchup {
+  id: string;
+  name: string;
+  mult: number;
+}
+
+interface MoveRowProps {
+  move: MoveDefinition;
+  /** Enough mana to actually press it. Unaffordable rows stay pressable at the DOM level (see below) and simply refuse to act. */
+  affordable: boolean;
+  selected: boolean;
+  /** Elemental Force's contribution to this move's BasePower right now (damagePipeline.ts), already resolved by the caller. */
+  forceBonus: number;
+  matchups: readonly MoveMatchup[];
+  multClass: (mult: number) => string;
+  formatMult: (mult: number) => string;
+  onSelect: () => void;
+  onInspect: () => void;
+}
+
+/**
+ * One facet of the console's move surface.
+ *
+ * Lifted out of FightScreen's `.map()` for the reason RecruitClaimCard above
+ * was: `useLongPress` is a hook and cannot be called inside a loop. That hook
+ * replaces the hand-rolled timer this button used to carry — which is what
+ * gives the row its hold charge (`data-holding`), cancels the gesture when the
+ * pointer is really scrolling the list, and ticks the haptic.
+ *
+ * **Unaffordable rows are no longer `disabled`.** A `disabled` button receives
+ * no pointer events at all, so the one move a player most wants explained —
+ * the expensive one they cannot press yet — was the only move in the game that
+ * could not be inspected. It now carries `.is-unaffordable` + `aria-disabled`
+ * instead: identical dead-and-dimmed treatment (styles.css moved the same
+ * rules off `:disabled`), still refuses to act on a tap, and still opens its
+ * dossier on a hold.
+ */
+function MoveRow({ move, affordable, selected, forceBonus, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
+  const longPress = useLongPress(onInspect, () => {
+    if (affordable) onSelect();
+  });
+
+  return (
+    <button
+      className={`move-button${selected ? ' selected' : ''}${affordable ? '' : ' is-unaffordable'}`}
+      /* Type is carried by the button's own material now (a tinted wash +
+         tinted rim, styles.css) instead of a 3px stripe glued to the left
+         edge, so the whole control is type-coded rather than wearing a tag. */
+      style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
+      aria-disabled={!affordable}
+      {...longPress}
+    >
+      {/* One line, not two: at full row width the meta that used to need its
+          own .move-row-mid fits beside the name, which frees the second line
+          for what the button was missing entirely — the effect. */}
+      <div className="move-row-top">
+        <ManaCost cost={move.manaCost} />
+        {/* Was a filled TypeBadge chip. One move button used to hold three
+            sub-boxes (mana crystal, type chip, kind chip) inside an
+            already-boxed control — the nesting problem
+            docs/visual-language.md names one level down. The abbreviation
+            still carries the exact type (color alone can't separate 15 of
+            them), it just does it as colored text rather than as a third
+            competing rectangle.
+
+            It sits *before* the name rather than after it because the name is
+            the row's flex:1 — anything downstream of it gets shoved to the
+            right edge, and the right edge had grown to three unrelated
+            readouts (type, power, category). Splitting it gives each side one
+            question: the left is what this move IS (what it costs, what it
+            draws on, what it's called), the right is what it DOES (how hard
+            it hits, and how). */}
+        {/* Glyph only, no abbreviation. The three letters existed because
+            colour alone cannot separate 15 types — a real problem, and not
+            one the letters were the only answer to. The glyph separates
+            fifteen on its own, and dropping the text is what lets the type
+            sit inside the left cluster without pushing the name's ellipsis
+            in. The exact name is still one hold away (the move dossier), and
+            on the tooltip for anyone on a pointer. */}
+        <span className="move-type-code" title={move.type}>
+          <ElementGlyph type={move.type} />
+        </span>
+        <span className="move-name">{move.name}</span>
+        {move.kind === 'damage' && move.basePower != null && (
+          <span
+            className={`move-power${forceBonus > 0 ? ' move-boosted' : ''}`}
+            title={forceBonus > 0 ? `Elemental Force: +${forceBonus} Base Power` : undefined}
+          >
+            <strong>{move.basePower + forceBonus}</strong>BP
+            {forceBonus > 0 && <span className="move-boosted-arrow">▲</span>}
+          </span>
+        )}
+        {/* No "HEAL" suffix beside the number, unlike the damage row's "BP".
+            Base Power needs its unit spelled out because 60 alone could be
+            anything; a heal amount is HP, the number is already in --hp-high
+            green, and the badge at the row's far end is now the HP heart
+            itself — three things saying "health" made the word the fourth. */}
+        {move.kind === 'heal' && move.healAmount != null && (
+          <span className="move-power move-heal">
+            <strong>{move.healAmount}</strong>
+          </span>
+        )}
+        {/* Holds the power slot open on a move that has no number to put in
+            it (a buff). Without it the type code lands at one x on rows
+            carrying a BP/HEAL readout and a different one on rows that don't,
+            and a 3-4 row list rags visibly between the two. */}
+        {move.kind === 'buff' && <span className="move-power move-power-empty" aria-hidden="true" />}
+        <MoveKindBadge move={move} />
+      </div>
+      {/* The decision, on the face of the control instead of behind a 500ms
+          hold on it. For an attack that is the live matchup against each enemy
+          still standing — the most consequential fact in a doubles game, and
+          one the player was re-deriving by holding every move, every turn. For
+          everything else it is what the move actually grants or inflicts
+          (moveEffectSummary). Always rendered, so a row's height never depends
+          on its contents. */}
+      <div className="move-row-effect">
+        {move.kind === 'damage' ? (
+          <span className="move-eff-row">
+            {matchups.map(({ id, name, mult }) => (
+              <span key={id} className={`move-eff-chip ${multClass(mult)}`}>
+                <span className="move-eff-name">{name}</span>
+                <span className="move-eff-mult">{formatMult(mult)}</span>
+              </span>
+            ))}
+            {move.statusApplication && <span className="move-eff-status">+{move.statusApplication.statusId}</span>}
+          </span>
+        ) : (
+          <span className="move-effect-text">{moveEffectSummary(move)}</span>
+        )}
+      </div>
+    </button>
+  );
+}
 
 interface RecruitClaimCardProps {
   hero: HeroDefinition;
@@ -463,10 +600,8 @@ export function FightScreen({
    */
   const [beatTrail, setBeatTrail] = useState<{ banner: string; meta?: string; metaClass?: string }[]>([]);
   const [popups, setPopups] = useState<Record<string, Popup>>({});
-  /** Full move detail (description + matchups), shown on long-press — see the move-button pointer handlers below. Distinct from `selecting`, which is mid-target-selection state, not an info request. */
+  /** The move dossier (MoveDetailOverlay), opened by holding a move row. Carries the holder as well as the move, since every number on that card — the damage band, the mana left, STAB — is relative to whichever hero is commanding. Distinct from `selecting`, which is mid-target-selection state, not an info request. */
   const [movePopup, setMovePopup] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
-  const longPressTimer = useRef<number | null>(null);
-  const longPressFired = useRef(false);
   const popupSeq = useRef(0);
   const beatQueue = useRef<Beat[]>([]);
   const displayState = useRef<CombatState | null>(null);
@@ -483,7 +618,6 @@ export function FightScreen({
 
   useEffect(() => {
     return () => {
-      if (longPressTimer.current !== null) clearTimeout(longPressTimer.current);
       if (holdTimer.current !== null) clearTimeout(holdTimer.current);
       if (autoPlayInterval.current !== null) clearInterval(autoPlayInterval.current);
     };
@@ -1235,142 +1369,30 @@ export function FightScreen({
                 <div className="move-list">
                   {entry.unlockedMoveIds.map((moveId) => {
                     const move = moves[moveId];
-                    const affordable = combatant.currentMana >= move.manaCost;
                     const isSelected =
                       (pending[id]?.kind === 'move' && pending[id]?.moveId === moveId) ||
                       (selecting?.combatantId === id && selecting.move.id === moveId);
-                    const forceBonus = resolveElementalForceBonus(combatant, move.type, statuses);
                     return (
-                      <button
+                      <MoveRow
                         key={moveId}
-                        className={`move-button${isSelected ? ' selected' : ''}`}
-                        /* Type is carried by the button's own material now (a
-                           tinted wash + tinted rim, styles.css) instead of a
-                           3px stripe glued to the left edge, so the whole
-                           control is type-coded rather than wearing a tag. */
-                        style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
-                        disabled={!affordable}
-                        onClick={() => {
-                          if (longPressFired.current) {
-                            longPressFired.current = false;
-                            return;
-                          }
-                          handleMoveClick(id, move);
-                        }}
-                        onContextMenu={(e) => e.preventDefault()}
-                        onPointerDown={() => {
-                          longPressFired.current = false;
-                          longPressTimer.current = window.setTimeout(() => {
-                            longPressFired.current = true;
-                            setMovePopup({ combatantId: id, move });
-                          }, 500);
-                        }}
-                        onPointerUp={() => {
-                          if (longPressTimer.current !== null) {
-                            clearTimeout(longPressTimer.current);
-                            longPressTimer.current = null;
-                          }
-                        }}
-                        onPointerLeave={() => {
-                          if (longPressTimer.current !== null) {
-                            clearTimeout(longPressTimer.current);
-                            longPressTimer.current = null;
-                          }
-                        }}
-                      >
-                        {/* One line, not two: at full row width the meta that
-                            used to need its own .move-row-mid fits beside the
-                            name, which frees the second line for what the button
-                            was missing entirely — the effect. */}
-                        <div className="move-row-top">
-                          <ManaCost cost={move.manaCost} />
-                          {/* Was a filled TypeBadge chip. One move button used to
-                              hold three sub-boxes (mana crystal, type chip, kind
-                              chip) inside an already-boxed control — the nesting
-                              problem docs/visual-language.md names one level
-                              down. The abbreviation still carries the exact type
-                              (color alone can't separate 15 of them), it just
-                              does it as colored text rather than as a third
-                              competing rectangle.
-
-                              It sits *before* the name rather than after it
-                              because the name is the row's flex:1 — anything
-                              downstream of it gets shoved to the right edge,
-                              and the right edge had grown to three unrelated
-                              readouts (type, power, category). Splitting it
-                              gives each side one question: the left is what
-                              this move IS (what it costs, what it draws on,
-                              what it's called), the right is what it DOES
-                              (how hard it hits, and how). */}
-                          {/* Glyph only, no abbreviation. The three letters existed because
-                              colour alone cannot separate 15 types — a real problem,
-                              and not one the letters were the only answer to. The
-                              glyph separates fifteen on its own, and dropping the
-                              text is what lets the type sit inside the left cluster
-                              without pushing the name's ellipsis in. The exact name
-                              is still one long-press away (the move popup), and on
-                              the tooltip for anyone on a pointer. */}
-                          <span className="move-type-code" title={move.type}>
-                            <ElementGlyph type={move.type} />
-                          </span>
-                          <span className="move-name">{move.name}</span>
-                          {move.kind === 'damage' && move.basePower != null && (
-                            <span
-                              className={`move-power${forceBonus > 0 ? ' move-boosted' : ''}`}
-                              title={forceBonus > 0 ? `Elemental Force: +${forceBonus} Base Power` : undefined}
-                            >
-                              <strong>{move.basePower + forceBonus}</strong>BP
-                              {forceBonus > 0 && <span className="move-boosted-arrow">▲</span>}
-                            </span>
-                          )}
-                          {/* No "HEAL" suffix beside the number, unlike the
-                              damage row's "BP". Base Power needs its unit
-                              spelled out because 60 alone could be anything;
-                              a heal amount is HP, the number is already in
-                              --hp-high green, and the badge at the row's far
-                              end is now the HP heart itself — three things
-                              saying "health" made the word the fourth. */}
-                          {move.kind === 'heal' && move.healAmount != null && (
-                            <span className="move-power move-heal">
-                              <strong>{move.healAmount}</strong>
-                            </span>
-                          )}
-                          {/* Holds the power slot open on a move that has no
-                              number to put in it (a buff). Without it the type
-                              code lands at one x on rows carrying a BP/HEAL
-                              readout and a different one on rows that don't, and
-                              a 3-4 row list rags visibly between the two. */}
-                          {move.kind === 'buff' && <span className="move-power move-power-empty" aria-hidden="true" />}
-                          <MoveKindBadge move={move} />
-                        </div>
-                        {/* The decision, on the face of the control instead of
-                            behind a 500ms hold on it. For an attack that is the
-                            live matchup against each enemy still standing — the
-                            most consequential fact in a doubles game, and one the
-                            player was re-deriving by holding every move, every
-                            turn. For everything else it is what the move actually
-                            grants or inflicts (moveEffectSummary). Always
-                            rendered, so a row's height never depends on its
-                            contents. */}
-                        <div className="move-row-effect">
-                          {move.kind === 'damage' ? (
-                            <span className="move-eff-row">
-                              {enemyActiveAlive.map((eid) => {
-                                const mult = effectivenessAgainst(move, eid);
-                                return (
-                                  <span key={eid} className={`move-eff-chip ${multClass(mult)}`}>
-                                    <span className="move-eff-name">{allCombatants[combat.combatants[eid].heroId].name}</span>
-                                    <span className="move-eff-mult">{formatMult(mult)}</span>
-                                  </span>
-                                );
-                              })}
-                              {move.statusApplication && <span className="move-eff-status">+{move.statusApplication.statusId}</span>}
-                            </span>
-                          ) : (
-                            <span className="move-effect-text">{moveEffectSummary(move)}</span>
-                          )}
-                        </div>
-                      </button>
+                        move={move}
+                        affordable={combatant.currentMana >= move.manaCost}
+                        selected={isSelected}
+                        forceBonus={resolveElementalForceBonus(combatant, move.type, statuses)}
+                        matchups={
+                          move.kind === 'damage'
+                            ? enemyActiveAlive.map((eid) => ({
+                                id: eid,
+                                name: allCombatants[combat.combatants[eid].heroId].name,
+                                mult: effectivenessAgainst(move, eid),
+                              }))
+                            : []
+                        }
+                        multClass={multClass}
+                        formatMult={formatMult}
+                        onSelect={() => handleMoveClick(id, move)}
+                        onInspect={() => setMovePopup({ combatantId: id, move })}
+                      />
                     );
                   })}
                 </div>
@@ -1572,63 +1594,17 @@ export function FightScreen({
           );
         })()}
 
-      {movePopup &&
-        (() => {
-          const { move } = movePopup;
-          const combatant = combat.combatants[movePopup.combatantId];
-          const hero = allCombatants[combatant.heroId];
-          const hasStab = resolveStab(move.type, effectiveTypes(hero, combatant)) > 1;
-          const forceBonus = resolveElementalForceBonus(combatant, move.type, statuses);
-          return (
-            <div className="log-overlay" onClick={() => setMovePopup(null)}>
-              <div className="log-panel move-popup-panel">
-                <div className="log-panel-header">
-                  <span>{move.name}</span>
-                  <span className="move-cost">
-                    <strong>{move.manaCost}</strong>MP
-                  </span>
-                </div>
-                <div className="move-popup-meta">
-                  <TypeBadge type={move.type} />
-                  <CategoryBadge category={move.category} />
-                  <span className="move-popup-kind">{KIND_LABELS[move.kind] ?? move.kind}</span>
-                  <span className="move-popup-target">{TARGET_MODE_LABELS[move.target]}</span>
-                  {move.kind === 'damage' && move.basePower != null && (
-                    <span
-                      className={`move-power${forceBonus > 0 ? ' move-boosted' : ''}`}
-                      title={forceBonus > 0 ? `Elemental Force: +${forceBonus} Base Power` : undefined}
-                    >
-                      <strong>{move.basePower + forceBonus}</strong>BP
-                      {forceBonus > 0 && <span className="move-boosted-arrow">▲</span>}
-                    </span>
-                  )}
-                  {move.kind === 'heal' && move.healAmount != null && (
-                    <span className="move-power move-heal">
-                      <strong>{move.healAmount}</strong>HEAL
-                    </span>
-                  )}
-                  {hasStab && <span className="move-stab">STAB</span>}
-                </div>
-                <div className="move-popup-description">{move.description ?? 'No description.'}</div>
-                {enemyActiveAlive.length > 0 && (
-                  <div className="move-popup-matchups">
-                    {enemyActiveAlive.map((enemyId) => {
-                      const enemyHero = allCombatants[combat.combatants[enemyId].heroId];
-                      const mult = effectivenessAgainst(move, enemyId);
-                      return (
-                        <div className="move-popup-matchup-row" key={enemyId}>
-                          <span>{enemyHero.name}</span>
-                          <span className={`eff-chip ${multClass(mult)}`}>{formatMult(mult)}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                <div className="move-popup-hint">Tap anywhere to close</div>
-              </div>
-            </div>
-          );
-        })()}
+      {/* The move dossier (MoveDetailOverlay.tsx). Handed the live fight, so
+          the card can run the locked damage formula forward against whoever is
+          actually standing there rather than describing the move in the
+          abstract — the thing a hold on a move is genuinely worth. */}
+      {movePopup && (
+        <MoveDetailOverlay
+          move={movePopup.move}
+          context={{ combat, attackerId: movePopup.combatantId, defenderIds: enemyActiveAlive }}
+          onClose={() => setMovePopup(null)}
+        />
+      )}
 
       {logOpen && (
         <div className="log-overlay" onClick={() => setLogOpen(false)}>

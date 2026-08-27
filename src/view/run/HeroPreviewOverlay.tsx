@@ -14,7 +14,8 @@ import { chosenEvolutionPaths, rosterEntryTypes } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
 import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { SectionGlyph } from '../shared/sectionIcons';
-import { MoveTile, MoveInfoPanel, swallowGhostClick, useLongPress } from '../shared/MoveTile';
+import { MoveTile, swallowGhostClick, useLongPress } from '../shared/MoveTile';
+import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { EquipmentInfoPanel, EquipmentSlotGrid } from '../shared/EquipmentBox';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -169,7 +170,8 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
         <div className="log-overlay" onClick={() => setPopup(null)}>
           <div className="log-panel move-popup-panel">
             {popup.kind === 'move' ? (
-              <MoveInfoPanel move={moves[popup.id] ?? null} />
+              /* Same move dossier as everywhere else (MoveDetailOverlay.tsx), minus the forecast — a preview screen has no fight to forecast against. */
+              moves[popup.id] ? <MoveDetailCard move={moves[popup.id]} /> : null
             ) : popup.kind === 'equipment' ? (
               <EquipmentInfoPanel item={equipmentLookup[popup.id] ?? null} />
             ) : (

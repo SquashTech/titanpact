@@ -11,7 +11,8 @@ import { progressionTable } from '../../data/progression';
 import { StatGlyph, STAT_LABELS, STAT_ORDER, StatBars, hpTier } from '../shared/StatBars';
 import { SectionGlyph } from '../shared/sectionIcons';
 import { EquipmentInfoPanel, EquipmentSlotGrid } from '../shared/EquipmentBox';
-import { MoveTile, MoveInfoPanel, swallowGhostClick } from '../shared/MoveTile';
+import { MoveTile, swallowGhostClick } from '../shared/MoveTile';
+import { MoveDetailCard } from './MoveDetailOverlay';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { StatusGlyph, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
@@ -260,7 +261,8 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
         <div className="log-overlay" onClick={() => setPopup(null)}>
           <div className="log-panel move-popup-panel">
             {popup.kind === 'move' ? (
-              <MoveInfoPanel move={moves[popup.id] ?? null} />
+              /* The same dossier the fight screen's move rows open — one card for a move, wherever the player holds one. No combat context here: this sheet is read out of a fight as often as in one, so the forecast half simply doesn't render. */
+              moves[popup.id] ? <MoveDetailCard move={moves[popup.id]} /> : null
             ) : popup.kind === 'equipment' ? (
               <EquipmentInfoPanel item={equipmentLookup[popup.id] ?? null} />
             ) : (

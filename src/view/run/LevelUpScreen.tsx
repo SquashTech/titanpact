@@ -19,6 +19,7 @@ import {
 } from '../../run/progression';
 import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { MoveInfoPanel, MoveButtonReplica, useLongPress } from '../shared/MoveTile';
+import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { ElementGlyph } from '../shared/elementIcons';
 import { equipment } from '../../data/equipment';
@@ -579,7 +580,8 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
       {movePopup && (
         <div className="log-overlay" onClick={() => setMovePopup(null)}>
           <div className="log-panel move-popup-panel">
-            <MoveInfoPanel move={moves[movePopup.moveId]} label={movePopup.label} />
+            {/* Same move dossier the fight screen opens (MoveDetailOverlay.tsx) — the whole point of this screen is choosing between moves, so it should read exactly like inspecting one mid-fight. */}
+            <MoveDetailCard move={moves[movePopup.moveId]} label={movePopup.label} />
             <div className="move-popup-hint">Tap anywhere to close</div>
           </div>
         </div>

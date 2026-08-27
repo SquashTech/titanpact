@@ -3674,14 +3674,14 @@ button,
 /* Hover lights the facet from its own edge and grows the light bar to the
    facet's full height — the surface never lifts, because a facet that lifted
    would be a card again. */
-.move-list .move-button:hover:not(:disabled) {
+.move-list .move-button:hover:not(.is-unaffordable) {
   background:
     linear-gradient(90deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.3), rgba(var(--move-type-rgb, 53, 59, 74), 0.08) 36%, transparent 64%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012));
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.055);
 }
 
-.move-list .move-button:hover:not(:disabled)::before {
+.move-list .move-button:hover:not(.is-unaffordable)::before {
   top: 0;
   bottom: 0;
   box-shadow:
@@ -3689,7 +3689,7 @@ button,
     0 0 34px 7px rgba(var(--move-type-rgb, 53, 59, 74), 0.45);
 }
 
-.move-list .move-button:not(:disabled):active {
+.move-list .move-button:not(.is-unaffordable):active {
   background:
     linear-gradient(90deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.36), rgba(var(--move-type-rgb, 53, 59, 74), 0.1) 38%, transparent 66%),
     linear-gradient(180deg, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.14));
@@ -3724,13 +3724,13 @@ button,
 /* Unaffordable: the facet goes dark and its light goes out. Losing the domain
    light entirely is the cue — a dimmed-but-still-glowing slot reads as
    available. */
-.move-list .move-button:disabled {
+.move-list .move-button.is-unaffordable {
   opacity: 0.4;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.16));
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.03);
 }
 
-.move-list .move-button:disabled::before {
+.move-list .move-button.is-unaffordable::before {
   opacity: 0.18;
   box-shadow: none;
 }
@@ -3746,8 +3746,14 @@ button,
    opacity 0 makes the move list unreadable for its whole duration. Starting
    at 0.4 means the rows are legible from the first frame and the animation is
    only telling you they are new. Total for four rows: 290ms. */
+/* `backwards`, not `both`. A forwards fill retains the keyframe's final
+   opacity: 1 for as long as the row exists, and an animation's value outranks
+   every ordinary declaration in the cascade — so the unaffordable row's own
+   opacity: 0.4 below never applied, and a move the hero could not pay for
+   dimmed only by losing its light. `backwards` still applies the from-state
+   through the stagger delay, which is the whole point of the fill here. */
 .move-list .move-button {
-  animation: console-row-in 0.2s var(--ease-out) both;
+  animation: console-row-in 0.2s var(--ease-out) backwards;
 }
 
 .move-list .move-button:nth-child(2) {
@@ -3771,7 +3777,7 @@ button,
   }
 }
 
-.move-button:hover:not(:disabled) {
+.move-button:hover:not(.is-unaffordable) {
   border-color: var(--accent);
   transform: translateY(-1px);
   box-shadow: var(--hairline-strong), var(--elev-2);
@@ -3794,7 +3800,17 @@ button,
 /* Unaffordable moves lose their elevation entirely, not just opacity: a
    dimmed-but-still-raised tile still reads as pressable, and in a mana-gated
    game the player needs "can't afford this" to be obvious at a glance mid-turn. */
-.move-button:disabled {
+/* Unaffordable moves lose their elevation entirely, not just opacity: a
+   dimmed-but-still-raised tile still reads as pressable, and in a mana-gated
+   game the player needs "can't afford this" to be obvious at a glance
+   mid-turn.
+
+   Keyed on a class rather than :disabled because these rows are no longer
+   disabled elements — a disabled button receives no pointer events at all,
+   which made the one move a player most wants explained (the expensive one
+   they can't press yet) the only move in the game that couldn't be held for
+   its dossier. They now refuse the tap in JS and keep the gesture. */
+.move-button.is-unaffordable {
   opacity: 0.35;
   box-shadow: none;
   cursor: not-allowed;
@@ -4066,7 +4082,7 @@ button,
 /* Unaffordable. The whole button already dims to 0.35, so the gem only has to
    stop advertising: the blue glow goes out and the facets desaturate, which
    reads as a dead crystal rather than a lit one behind a scrim. */
-.move-button:disabled .mana-gem-cut {
+.move-button.is-unaffordable .mana-gem-cut {
   filter: grayscale(0.85) brightness(0.85) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
 }
 
@@ -4222,11 +4238,6 @@ button,
 
 .move-power.move-heal {
   color: var(--hp-high);
-}
-
-.move-stab {
-  color: var(--accent);
-  font-weight: 700;
 }
 
 /* Elemental Force's live "this move is currently boosted" cue — recolors the
@@ -4903,68 +4914,20 @@ button,
   color: var(--text-dim);
 }
 
-/* Move-detail popup (FightScreen, long-press on a move-button) — reuses
-   .log-overlay/.log-panel for the same dim-backdrop, centered-card look as
-   the Battle Log, but deliberately doesn't stopPropagation on the panel
-   click the way .log-panel does elsewhere: "tap anywhere to close" means
-   anywhere, including the card itself. */
+/* The shared "tap anywhere to close" popup chassis, still used by the map
+   node preview, the equipment/passive popups and the level-up move offer.
+   FightScreen's move popup moved off it onto .detail-panel — see "The move
+   dossier" below. Unlike .log-panel elsewhere it deliberately doesn't
+   stopPropagation on the panel click: "tap anywhere" means anywhere,
+   including the card itself. */
 .move-popup-panel {
   gap: 6px;
-}
-
-.move-popup-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-/* Spells out damage/heal/buff in words (KIND_LABELS) next to the PHY/MAG
-   CategoryBadge — the long-press popup's full-text counterpart to the move
-   grid's compact MoveKindBadge glyph. */
-.move-popup-kind {
-  font-size: 10px;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-/* Who the move hits (TARGET_MODE_LABELS, view/shared/MoveTile.tsx) — same text
-   treatment as .move-popup-kind, shown right after it so the popup always
-   answers "what does this do" and "who does it hit" together. */
-.move-popup-target {
-  font-size: 10px;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.move-popup-target::before {
-  content: '•';
-  margin-right: 6px;
-  opacity: 0.6;
 }
 
 .move-popup-description {
   font-size: 12px;
   line-height: 1.4;
   color: var(--text);
-}
-
-.move-popup-matchups {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-top: 4px;
-  border-top: 1px solid var(--border);
-}
-
-.move-popup-matchup-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-  color: var(--text-dim);
 }
 
 .move-popup-hint {
@@ -11868,4 +11831,569 @@ button,
   flex-basis: 100%;
   font-size: 11px;
   color: var(--text-dim);
+}
+
+/* --- The move dossier (MoveDetailOverlay.tsx) --------------------------- */
+/* What a hold on a move opens, everywhere a move can be held: the fight
+   screen's rows, the hero sheet, the level-up replace offer, a recruit
+   preview.
+
+   It sits on .detail-overlay/.detail-panel — the shell StatusDetailOverlay and
+   FieldEffectDetailOverlay already use — rather than on .log-overlay/.log-panel,
+   which is the *Battle Log's* chassis and which this card had been borrowing
+   since before either of those existed. Same identity stripe across the top in
+   the subject's own colour, same "tap anywhere to close". The long-press a
+   player performs most often was the only one opening something shaped
+   differently from every other one.
+
+   Nothing inside it is boxed. Sections separate with a scored hairline and a
+   change of register, the way the console's facets do — the no-boxes rule
+   (docs/visual-language.md) reaches inside a modal too. */
+/* The domain wash the move's own row in the console wears, entering from the
+   same top-left corner every lit surface in this app takes its light from — it
+   is what makes the card read as that row opening rather than as a separate
+   panel about it.
+
+   It lives on the panel rather than on the card because it has to bleed to the
+   panel's edges; a gradient painted on the card would start 14px inside the
+   modal and its lit corner would draw a rectangle where there is no object.
+   Which is why only the fight screen's own modal carries it: the hero sheet
+   and the level-up offer open the same card inside a shared
+   .move-popup-panel wrapper that also holds equipment and passives, and has no
+   move type to be tinted by. There the disc, the coloured type name and the
+   card's own structure carry the identity instead. */
+.move-detail-panel {
+  max-width: 340px;
+  gap: 0;
+  border-top-width: 3px;
+  background:
+    linear-gradient(155deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.16), transparent 46%),
+    var(--surface-raised);
+}
+
+.move-detail-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+/* LevelUpScreen's replace offer names the slot being inspected. */
+.move-detail-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.move-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* The 44px disc StatusDetailOverlay gives a status, given to a type — the one
+   slot in the app large enough to show an authored glyph at full size, which
+   makes this the place a player actually learns what the Storm mark or the
+   Iron anvil is. Tinted from the type's own rgb rather than sitting in a flat
+   well, so the disc is lit by the same light as the panel's wash. */
+.move-detail-disc {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 32% 28%,
+    rgba(var(--move-type-rgb, 53, 59, 74), 0.34),
+    rgba(var(--move-type-rgb, 53, 59, 74), 0.1)
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(var(--move-type-rgb, 53, 59, 74), 0.4),
+    0 0 18px -6px rgba(var(--move-type-rgb, 53, 59, 74), 0.9);
+}
+
+.move-detail-disc svg {
+  width: 26px;
+  height: 26px;
+}
+
+.move-detail-titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.move-detail-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+/* Type, pipeline and target as one sentence in the register
+   .status-detail-pipeline established, replacing the four separate chips this
+   row used to hold (a filled TypeBadge, a bordered PHY/MAG badge and two
+   uppercase word-spans). Only the type name takes colour — it is the one of
+   the three the disc beside it is already saying, so the two reinforce. */
+.move-detail-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.move-detail-sep {
+  opacity: 0.45;
+}
+
+/* The numbers row: glyph, numeral, unit. Chromeless, because the second pass
+   took three sub-boxes out of the button that opens this card, and putting
+   chips back into the card would simply relocate them. */
+.move-detail-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.move-detail-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.move-detail-stat svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.move-detail-stat strong {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.move-detail-unit {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+/* Elemental Force's contribution, already folded into the BP numeral beside
+   it — the same --buff teal the move row uses for a boosted number, and not
+   --hp-high for the same reason it isn't there: that green is HEAL's identity
+   colour. */
+.move-detail-boost {
+  color: var(--buff);
+  font-weight: 800;
+  font-size: 10px;
+}
+
+.move-detail-stat-heal,
+.move-detail-stat-heal strong {
+  color: var(--hp-high);
+}
+
+/* The glyph goes gold with the numeral, unlike BP's, because here the glyph is
+   the *reason*: STAB exists because the move's element and the caster's match,
+   and a dim flame beside a gold ×1.25 read as two unrelated marks. */
+.move-detail-stat-stab strong,
+.move-detail-stat-stab .move-detail-unit,
+.move-detail-stat-stab svg {
+  color: var(--accent);
+}
+
+/* Priority. Ten authored moves carry a non-zero bracket, and until this card
+   the UI displayed it precisely nowhere — in a game whose turn order is a
+   locked mechanic (CLAUDE.md "Priority uses integer brackets"). Green for a
+   mover, red for a laggard: the same two colours the effectiveness readout
+   already uses for good and bad news. */
+.move-detail-stat-priority.is-fast strong,
+.move-detail-stat-priority.is-fast .move-detail-unit,
+.move-detail-stat-priority.is-fast svg {
+  color: var(--hp-high);
+}
+
+.move-detail-stat-priority.is-slow strong,
+.move-detail-stat-priority.is-slow .move-detail-unit,
+.move-detail-stat-priority.is-slow svg {
+  color: var(--hp-low);
+}
+
+.move-detail-stat-mana svg {
+  color: var(--mana);
+}
+
+/* What the move carries beyond its number — one glyph, one line, drawn in the
+   payload's own colour. A status row wears the status's glyph and colour, the
+   identical pair the badge on the battlefield figure will wear when it lands,
+   so the player is shown the thing they are about to see. */
+.move-detail-effects {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.move-detail-effect-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+}
+
+.move-detail-effect-glyph {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+}
+
+.move-detail-effect-glyph svg {
+  width: 16px;
+  height: 16px;
+}
+
+.move-detail-effect-text {
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+/* The rules sentence riding under the payload's name — dim and unweighted, so
+   the row reads as "Applies Burn 3" first and explains itself second. Its own
+   line rather than a trailing clause: a status's description is a full
+   sentence, and run on inline it read as part of the payload's name. It takes
+   no colour from the row, which is tinted to the status. */
+.move-detail-effect-note {
+  display: block;
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* Authored flavor. Deliberately the quietest thing on the card: everything
+   above it is mechanics. */
+.move-detail-desc {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.move-detail-forecast {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+/* Section mark in the horizon's own register (9px/800/0.14em) — the one the
+   Field Effect plaque and the draft's eyebrows already use. */
+.move-detail-eyebrow {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.move-forecast-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.move-forecast-who {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+/* 24px is the one legal downscale of the 48px sources (docs/visual-language.md
+   defect 1) — a clean 0.5x. Any other size resamples the art's own grid. */
+.move-forecast-portrait {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+
+.move-forecast-type {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.move-forecast-type svg {
+  width: 13px;
+  height: 13px;
+}
+
+.move-forecast-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* The multiplier reuses the move row's own eff- tiers verbatim, glow included
+   — a 2x in the console and a 2x in the dossier must not be two different
+   greens. */
+.move-forecast-mult {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.move-forecast-mult.eff-neutral {
+  color: var(--text-dim);
+}
+
+.move-forecast-mult.eff-super,
+.move-forecast-mult.eff-quad-super {
+  color: var(--hp-high);
+}
+
+.move-forecast-mult.eff-resist,
+.move-forecast-mult.eff-quad-resist {
+  color: var(--hp-low);
+}
+
+.move-forecast-mult.eff-quad-super {
+  text-shadow: 0 0 7px rgba(76, 175, 106, 0.75);
+}
+
+.move-forecast-mult.eff-quad-resist {
+  text-shadow: 0 0 7px rgba(217, 83, 79, 0.7);
+}
+
+.move-forecast-meter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The bite, drawn out of the defender's own remaining track.
+
+   A pair of numerals ("38-45") is precise and says nothing about whether that
+   matters to a hero standing on 52 HP, and the player is reading it against a
+   turn clock. Same fixed-denominator idiom as the Field Effect plaque's 5-pip
+   duration clock and the level-up screen's rank track: one shape, learned
+   once, read at a glance from then on. */
+.move-forecast-track {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 9px;
+  border-radius: 5px;
+  background: var(--surface-sunken);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+/* What the defender is standing on now, in the same three HP tiers every other
+   bar in the game uses. */
+.move-forecast-hp {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 5px;
+}
+
+.move-forecast-track.hp-high .move-forecast-hp {
+  background: var(--hp-high);
+}
+
+.move-forecast-track.hp-mid .move-forecast-hp {
+  background: var(--hp-mid);
+}
+
+.move-forecast-track.hp-low .move-forecast-hp {
+  background: var(--hp-low);
+}
+
+/* What this move takes off it at the best roll — hatched in the move's own
+   domain colour, so the bite reads as belonging to the move rather than to the
+   defender's bar. Hatched rather than filled because this segment is a
+   *prediction* sitting on top of a real value, and it must never be mistaken
+   for HP the target has already lost. */
+.move-forecast-bite {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(var(--move-type-rgb, 53, 59, 74), 0.95) 0 3px,
+      rgba(var(--move-type-rgb, 53, 59, 74), 0.5) 3px 6px
+    ),
+    rgba(9, 11, 15, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+/* Where the worst roll would leave them: a notch inside the bite, which is
+   what turns a solid block into a range without drawing a second bar. */
+.move-forecast-floor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.move-forecast-numbers {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The denominator: what the target is actually standing on. Without it the
+   band is a number with nothing to be big or small against. */
+.move-forecast-of {
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+.move-forecast-ko {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+/* A guaranteed kill shouts; a maybe does not. The two have to separate at a
+   glance or the readout is worse than none — committing a turn to a "KO" that
+   was really a "KO?" is the exact mistake this card exists to prevent. */
+.move-forecast-ko.is-sure {
+  color: var(--hp-high);
+  text-shadow: 0 0 8px rgba(76, 175, 106, 0.8);
+}
+
+.move-forecast-ko.is-maybe {
+  color: var(--hp-mid);
+}
+
+/* Stated, not hidden. A player shown "38-45" who then watches 41 land should
+   know exactly which term of the locked formula the game rolled — and that the
+   one term missing from the band is the 1/16 crit. */
+.move-detail-footnote {
+  font-size: 9px;
+  line-height: 1.4;
+  color: var(--text-dim);
+  opacity: 0.75;
+}
+
+/* --- Hold-to-inspect charge (useLongPress, MoveTile.tsx) ---------------- */
+/* The gesture, made visible while it is happening.
+
+   A 500ms hold that shows nothing until the instant it completes is
+   indistinguishable from a dead control, which is most of why "hold for info"
+   goes undiscovered — and on the fight screen it is the only route to the
+   damage forecast. The charge is drawn in the language the sixth pass gave
+   these rows: the domain light in the facet's leading wall swells, and the
+   type wash sweeps across the face from that same light, left to right,
+   arriving exactly as the dossier opens.
+
+   --hold-ms is the CSS twin of LONG_PRESS_MS (MoveTile.tsx). If one moves the
+   other must: a sweep that lands early reads as a bug, one that lands late
+   reads as lag. */
+:root {
+  --hold-ms: 500ms;
+}
+
+.move-list .move-button[data-holding] {
+  /* Beats the row's own background transition, which would otherwise ease the
+     wash in over --dur-mid and blunt the sweep's leading edge. */
+  transition: none;
+}
+
+.move-list .move-button[data-holding]::before {
+  width: 7px;
+  top: 0;
+  bottom: 0;
+  box-shadow:
+    0 0 16px 3px rgba(var(--move-type-rgb, 53, 59, 74), 1),
+    0 0 40px 9px rgba(var(--move-type-rgb, 53, 59, 74), 0.5);
+  transition-duration: var(--hold-ms);
+}
+
+.move-list .move-button[data-holding]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(var(--move-type-rgb, 53, 59, 74), 0.5),
+    rgba(var(--move-type-rgb, 53, 59, 74), 0.06) 78%,
+    transparent
+  );
+  animation: hold-charge var(--hold-ms) linear both;
+}
+
+/* A wipe, not a fade: the player has to be able to see how much of the hold is
+   left, which a uniform ramp in opacity cannot say. clip-path rather than a
+   scaled child, so the gradient inside stays fixed to the row and only the
+   leading edge travels across it. */
+@keyframes hold-charge {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* The compact tiles (hero sheet, sandbox, compendium) get the same clock in
+   the register they are drawn at — a tinted sweep across the tile, since they
+   have no leading light to swell. */
+.move-tile[data-holding] {
+  position: relative;
+  overflow: hidden;
+}
+
+.move-tile[data-holding]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(224, 166, 60, 0.3), rgba(224, 166, 60, 0.08));
+  animation: hold-charge var(--hold-ms) linear both;
+}
+
+/* An animated wipe is decoration on top of a gesture that works without it. */
+@media (prefers-reduced-motion: reduce) {
+  .move-list .move-button[data-holding]::after,
+  .move-tile[data-holding]::after {
+    animation: none;
+  }
 }

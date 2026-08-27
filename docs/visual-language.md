@@ -870,6 +870,148 @@ Two caveats:
 
 ---
 
+## Seventh pass — hold-to-inspect, and the move dossier (2026-08-27)
+
+The sixth pass rebuilt the console around the move rows. This one is about the
+*other* thing those rows do: the ~500ms hold that opens a move's details. The
+report was that it was "barebones and weakly executed," and both halves of that
+turned out to be literally true — the gesture and the card it opens were each
+the oldest surviving version of themselves.
+
+### What was wrong, measured
+
+**The gesture showed nothing until it was over.** `onPointerDown` started a
+500ms timer and no pixel changed until the popup appeared. A control that does
+nothing for half a second is indistinguishable from a dead control, which is
+most of why "hold for info" goes undiscovered at all — and on the fight screen
+it is the only route to a move's full readout.
+
+Two defects underneath it, both bugs rather than styling:
+
+1. **A scroll fired it.** The timer was cancelled on `pointerup` and
+   `pointerleave`, and on touch the pointer stays *captured* by the element it
+   went down on — `pointerleave` never fires mid-drag. So flicking to scroll
+   `.move-list` (which scrolls at 375×667, per the fifth pass) or any roster
+   list sat perfectly still as far as the DOM was concerned and popped a detail
+   card 500ms later.
+2. **The one move worth inspecting could not be inspected.** Unaffordable rows
+   were `disabled`, and a disabled button receives no pointer events at all. The
+   expensive move a player is saving up for — the single most likely thing to
+   want explained — was the only move in the game that could not be held.
+
+And a third found while measuring the fix: `.move-list .move-button` carries
+`animation: console-row-in … both`, and a **forwards fill retains the
+keyframe's `opacity: 1` forever**, outranking every ordinary declaration in the
+cascade. So `.move-list .move-button:disabled { opacity: 0.4 }` had never
+applied — an unaffordable row dimmed only by losing its leading light. Changing
+the fill to `backwards` (which is all the stagger delay actually needs) restored
+it: measured 1 → 0.4.
+
+**The card was the pre-second-pass move button, preserved.** It opened on
+`.log-overlay`/`.log-panel` — the *Battle Log's* chassis — while every other
+hold-to-inspect card in combat (`StatusDetailOverlay`, `FieldEffectDetailOverlay`)
+had long since moved to `.detail-overlay`/`.detail-panel` with an identity
+stripe in the subject's own colour. The single most-performed long-press in the
+game was the only one opening something shaped differently from all the others.
+Inside it, five chips in a row: a filled `TypeBadge`, a bordered PHY/MAG
+`CategoryBadge`, two uppercase word-spans and a bare `STAB` tag — which is
+verbatim the competing-rectangles defect the second pass removed from the button
+this card opens *from*, left standing in the card itself.
+
+And, for the fifth pass in a row, the boxes were the smaller half of the
+problem. What the card *contained* was: the type multiplier (already on the
+button's own second line since the fifth pass), and a line of flavour text. It
+told the player nothing the row underneath it wasn't already saying.
+
+### What replaced it
+
+| Was | Is |
+|---|---|
+| 500ms of nothing | A **charge**: the facet's domain light swells and a type-coloured wipe crosses the row, landing exactly as the card opens |
+| Fires during a scroll | Cancels past 12px of travel — a pointer that moves is a scroll, not a hold |
+| Unaffordable = `disabled` = uninspectable | `.is-unaffordable` + `aria-disabled`: same dead treatment, refuses the tap, keeps the gesture |
+| No confirmation the gesture landed | One 12ms haptic where the platform has one |
+| The Battle Log's panel | `.detail-panel`, the shell every other inspect card uses, with the move's type as its stripe and its wash |
+| `TypeBadge` + `CategoryBadge` + 2 word-spans + `STAB` tag | One 44px type disc + a single line: `FROST · MAGICAL · SINGLE ENEMY` |
+| Type multiplier (already on the button) | A **damage forecast**: a real band per enemy, drawn as a bite out of that enemy's own HP track |
+| Nothing about turn order | **Priority**, which ten authored moves carry and which the UI displayed nowhere at all |
+| Nothing about the payload | Status / stat / cleanse / field rows, each in its own glyph and colour |
+| Cost only | Cost, and what the hero is left standing on |
+
+Details worth keeping:
+
+- **The forecast calls the engine, it does not re-implement it.** `calcDamage`
+  takes pre-rolled variance and crit precisely so it can run without RNG, so the
+  card runs it at both ends of the 0.85–1.0 band with every input read the way
+  `resolveRound.ts` reads it — field-effect context into the stat ratio, passive
+  damage modifiers, Elemental Force into BasePower. Verified end to end: a
+  Sunstrike forecast of **49–57** against Squall was followed by the round
+  actually taking Squall 90 → 40, i.e. **50**. Crit is deliberately outside the
+  band (a 1/16 event would inflate every forecast by half) and the card says so
+  in a footnote rather than hiding it.
+- **The bite, not the numerals, is the readout.** "38–45" is precise and says
+  nothing about whether that matters to a hero standing on 52 HP, read against a
+  turn clock. Drawing the damage *out of the defender's own remaining track*,
+  with a notch where the worst roll lands, is the same fixed-denominator idiom
+  as the Field Effect plaque's 5-pip clock, the draft's pact sockets and the
+  level-up rank track. Fifth use.
+- **The bite needed a dark base under its hatching**, for the reason the console
+  light needed a white-hot core: seven of the fifteen domains are low-chroma, and
+  a pale hatch laid straight over the green HP fill read as lighter green rather
+  than as a different material.
+- **It is one card, in four places.** `MoveDetailCard` is what the fight rows,
+  the hero sheet, the level-up replace offer and the recruit preview all open —
+  holding a move produces the same object wherever you are. The forecast half
+  simply doesn't render without a fight to forecast against, which is what
+  `MoveDossierContext` being optional buys.
+- **The card found a content bug on its first render.** STAB was being shown on
+  buffs and heals — a term that does not exist in a non-damage move's
+  resolution. Gated to `kind === 'damage'`.
+- **The forecast's defender types are bare glyphs, not `TypeBadge`.** Two filled
+  chips per row would have reinstated the exact sub-box this card exists to
+  argue against, and they out-shouted the defender's own name.
+- **`data-holding`, not a returned boolean.** `useLongPress` is spread onto its
+  element at a dozen call sites; a `data-*` attribute is legal to spread and
+  every one of them picked up the charge without an edit, where a flag would
+  have needed twelve.
+- **The move row moved out of `FightScreen`'s `.map()`** into its own `MoveRow`,
+  for the reason `RecruitClaimCard` did: `useLongPress` is a hook. That is what
+  let the hand-rolled timer this button carried be deleted in favour of the
+  shared one.
+
+### Verification
+
+Driven in the running app at 375×812 and screenshotted through headless Edge
+over CDP (the Browser pane does not composite in this session).
+
+- **Card states seen rendering**: a damage move with a status rider (Cinder
+  Bite), a plain attack, a magical attack, a self-buff (Fortify), a heal +
+  cleanse (Purify), and a priority attack (Fang Rush, `+1 STRIKES FIRST`).
+  Heights 221–387px inside an 812px viewport.
+- **Forecast geometry** asserted per row, not eyeballed: HP fill, bite
+  left/width, notch position and HP tier all computed from the same fractions.
+- **Forecast honesty** confirmed against a resolved round (above).
+- **The charge** confirmed mid-gesture: `data-holding` present, `hold-charge`
+  running at `0.5s`, and the sweep caught on screen part-way across the row.
+- **Unaffordable treatment survived the `:disabled` → `.is-unaffordable` swap**,
+  and now actually dims (opacity 0.4, measured) for the first time.
+- `npm test` (203 engine tests), `npm run typecheck:view` and `npm run
+  build:view` all pass. Dead CSS removed with the markup it belonged to
+  (`.move-popup-meta/-kind/-target/-matchups/-matchup-row`, `.move-stab`);
+  `.move-popup-panel/-hint/-description` stay, since the map node preview, the
+  equipment popups and the level-up offer still use them.
+
+Two caveats:
+
+- **Not seen on a real device.** The haptic in particular has only been
+  feature-detected, never felt, and iOS Safari has no Vibration API at all — on
+  iPhone the charge sweep is the entire feedback.
+- **The hold is still 500ms.** With the charge drawn it is legible rather than
+  dead, but whether 500 is the right number is a feel question that wants a
+  thumb, not a measurement.
+
+---
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.
@@ -921,11 +1063,13 @@ Roughly in order of expected payoff.
    and it's worth asserting that in the verification sweep rather than rediscovering
    the next violation by looking at it.
 9. **Field-effect moves aren't identifiable in the move grid.** `Arcane Surge` renders
-   with the generic 🛡️ buff glyph and no BP, so nothing distinguishes "this rewrites
+   with the generic buff glyph and no BP, so nothing distinguishes "this rewrites
    the battlefield for 5 rounds" from an ordinary self-buff until it resolves. Wants a
    distinct kind glyph, which is a `MoveKindBadge`/content-schema question, not a
-   styling one — `KIND_EMOJI` is keyed on `move.kind`, and there is no `fieldEffect`
-   kind today.
+   styling one — the glyph is keyed on `move.kind`, and there is no `fieldEffect`
+   kind today. Partly mitigated by the seventh pass: the move dossier now draws a
+   `Field: <name>` row in the effect's own element glyph and colour. The *grid* is
+   still silent about it.
 
 ## Non-goals
 
