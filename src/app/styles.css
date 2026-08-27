@@ -4248,7 +4248,18 @@ button,
 .log-panel {
   width: 100%;
   max-width: 460px;
-  max-height: 80vh;
+  /* Percent of the overlay, NOT vh. The overlay is fixed inset:0 inside
+     .app-shell, whose height is JS-set from the *visual* viewport
+     (src/app/uiScale.ts) and then divided by the shell's scale — so on any
+     real phone (browser chrome visible, or page zoom set) the shell canvas
+     is meaningfully shorter than 100vh, and a vh-sized panel could stand
+     taller than the screen it lives on. When that happened the panel
+     centered past both edges: the header's ✕ sat above the top of the
+     screen and the panel covered every pixel of scrim, leaving a modal with
+     no way out. Percent tracks the shell, so this cap always means what it
+     says. Any scrolling region inside a panel needs min-height: 0 to
+     actually shrink under it. */
+  max-height: 80%;
   background: var(--surface-raised);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -4644,7 +4655,11 @@ button,
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  max-height: 65vh;
+  /* Shrinks under .log-panel's cap instead of asserting its own vh height —
+     same containment pattern as .screen-scroll / .growth-roster. min-height
+     is what lets a column flex item go below its content size at all. */
+  flex: 1 1 auto;
+  min-height: 0;
   /* Recessed frame around the 15x15 matrix, so the chart reads as a
      reference table set into the panel rather than a grid floating on it —
      the same sunken language as .event-log and .map-scroll. */
@@ -4719,7 +4734,13 @@ button,
    family of "explain this status" UI at different scales. */
 .status-reference-scroll {
   overflow-y: auto;
-  max-height: 65vh;
+  /* See .type-chart-scroll. This is the tab (Statuses, Passives) that
+     actually overflowed: both catalogs are long enough to hit the cap, so
+     on a short shell the panel grew past the screen and took the ✕ with
+     it. The type chart never did — its grid is shorter than the old 65vh —
+     which is why the bug looked tab-specific. */
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -4840,7 +4861,7 @@ button,
   overflow: hidden;
   width: 100%;
   max-width: 340px;
-  max-height: 80vh;
+  max-height: 80%;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -5025,11 +5046,11 @@ button,
    rather than a bottom-sheet nudged out of the way. */
 .roster-mgmt-overlay {
   align-items: flex-start;
-  padding-top: 2vh;
+  padding-top: 14px;
 }
 
 .roster-panel {
-  max-height: 86vh;
+  max-height: 86%;
   border-radius: 12px;
   gap: 6px;
 }
@@ -5212,7 +5233,7 @@ button,
 .detail-panel {
   width: 100%;
   max-width: 380px;
-  max-height: 85vh;
+  max-height: 85%;
   overflow-y: auto;
   /* Gradient rather than a flat --panel fill: a modal is the topmost surface
      in the app, so it gets the full raised treatment (lit top edge + level-3
@@ -6787,6 +6808,10 @@ button,
   flex-direction: column;
   gap: 8px;
   overflow-y: auto;
+  /* Without this the list refuses to shrink under .log-panel's cap and
+     pushes the panel past it — see that rule. */
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .relic-card {
