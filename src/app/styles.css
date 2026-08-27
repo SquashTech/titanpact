@@ -3224,20 +3224,6 @@ button,
   image-rendering: pixelated;
 }
 
-/* The move that hero is holding, as the same mana gem the row it came from
-   uses — at half scale, so the crest says WHAT was chosen and not merely THAT
-   something was. Overlaps the socket's corner rather than sitting beside it:
-   the gem belongs to the hero, it is not a second item in a list. */
-/* Positioning only — the gem itself is <ManaCost size="sm">, identical to the
-   one on the move button that produced it. The pill's old dark ring is now the
-   gem's own .mana-gem-halo stroke, which follows the hexagon rather than a
-   rounded box. */
-.console-socket-crystal {
-  position: absolute;
-  right: -5px;
-  bottom: -5px;
-}
-
 /* Rest (dotted circle) or a queued switch (swap arrows) — the two commits that
    have no mana crystal to show. */
 .console-socket-mark {
@@ -3264,9 +3250,13 @@ button,
    commander's own color, which is also the console's. */
 .console-commander {
   min-width: 0;
+  display: flex;
+  align-items: center;
+  /* Tight — the gem and the name it prices are one readout, and this gap has
+     to stay visibly smaller than the crest's own 9px socket-to-label gap so
+     the gem reads as belonging to the move rather than to the portrait. */
+  gap: 5px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.14em;
@@ -3274,6 +3264,24 @@ button,
   color: rgb(var(--console-rgb, 224, 166, 60));
   text-shadow: 0 0 10px rgba(var(--console-rgb, 224, 166, 60), 0.55);
   transition: color var(--dur-slow) var(--ease-out), text-shadow var(--dur-slow) var(--ease-out);
+}
+
+/* Mirrored with its slot: on the right end the label runs leftward out of the
+   socket, so the gem sits on the name's right and stays the item nearest the
+   portrait it belongs to — the same map-of-the-arena reading the two ends
+   already carry. */
+.console-slot.right .console-commander {
+  flex-direction: row-reverse;
+}
+
+/* The name itself. The ellipsis lives here rather than on the wrapper now
+   that the wrapper is a flex row — a truncating flex CONTAINER would clip the
+   gem instead of the text. */
+.console-commander-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* The end that is NOT in command is reporting, not asking — it holds the move

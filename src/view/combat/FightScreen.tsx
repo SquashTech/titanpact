@@ -265,7 +265,6 @@ function ConsoleCrest({
           }
         >
           <HeroPortrait heroId={cHero.id} className="console-socket-portrait" />
-          {committedMove && <ManaCost cost={committedMove.manaCost} size="sm" className="console-socket-crystal" />}
           {committed && !committedMove && (
             <span className="console-socket-mark" aria-hidden="true">
               {committed.kind === 'rest' ? '\u25CC' : '\u21C4'}
@@ -279,7 +278,16 @@ function ConsoleCrest({
           className={`console-commander${acting ? ' acting' : ''}${!acting && !committed ? ' waiting' : ''}`}
           style={slotRgb ? ({ '--console-rgb': slotRgb } as CSSProperties) : undefined}
         >
-          {slotLabel}
+          {/* The cost rides with the MOVE NAME rather than the portrait. It
+              used to be pinned to the socket's corner, which only worked on
+              paper: .mana-gem's own `position: relative` is declared later in
+              the sheet than that pin, so the gem never left the flow — a 16px
+              gem and a 24px portrait then fought over a 30px socket, which
+              knocked the sprite off-centre and pushed the gem out toward the
+              label. Beside the name it is also the truer statement: the cost
+              is a fact about the move being reported, not about the hero. */}
+          {committedMove && <ManaCost cost={committedMove.manaCost} size="sm" />}
+          <span className="console-commander-text">{slotLabel}</span>
         </span>
       </span>
     );
