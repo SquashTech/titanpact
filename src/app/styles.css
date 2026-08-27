@@ -1998,20 +1998,52 @@ button,
   }
 }
 
+/* space-between with no gap was survivable while a type chip was 30px of
+   pure text; a glyph makes each chip 40px, and a dual-type hero with a
+   ten-character name (Nightshade, Hollowbark) closed the last of the slack on
+   the bench card. The gap is the guarantee the two never touch, and the name
+   is the half that yields — .team-row's pill and the switch picker already
+   truncate theirs for exactly this reason. */
 .combatant-name {
   font-size: 13px;
   font-weight: 600;
   display: flex;
   justify-content: space-between;
   align-items: baseline;
+  gap: 6px;
   margin-bottom: 4px;
+}
+
+.combatant-name .hero-name-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .combatant-types {
   display: flex;
+  flex-shrink: 0;
   gap: 4px;
   font-size: 10px;
   font-weight: 400;
+}
+
+/*
+ * The fifteen element glyphs (elementIcons.tsx), as an inline text-sized
+ * mark. Follows .stat-glyph's contract rather than .status-glyph's: a type
+ * almost always appears *beside* its own name or abbreviation, so it is sized
+ * in em off whatever row it lands in and pulled up off the baseline, where an
+ * inline SVG would otherwise hang a couple of pixels low next to uppercase
+ * codes that have no descenders. Callers that need a fixed size (the type
+ * chip) override width/height; callers that want it to shrink with a dense
+ * row (the move buttons, the level-up roster) just let this rule do it.
+ */
+.element-glyph {
+  flex-shrink: 0;
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: -0.22em;
 }
 
 /*
@@ -2027,7 +2059,8 @@ button,
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
+  gap: 2px;
+  width: 40px;
   flex: none;
   font-size: 9px;
   font-weight: 800;
@@ -2037,6 +2070,43 @@ button,
   line-height: 1.3;
   white-space: nowrap;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 0 rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* The glyph rides the chip's own `color` (the contrast-picked ink, not the
+   type colour) because the fill behind it already *is* the type colour — a
+   coloured glyph on its own colour would be a hole. Sized in px rather than
+   em so it does not shrink along with the 8px codes on the crowded screens;
+   11 is the smallest size at which Beast's four paw pads and Ancient's urn
+   lip still separate, which is the floor the family was drawn to. */
+.type-badge-glyph {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  /* The chip ink is near-black on the bright types (Light, Frost, Iron) and
+     these are solid fills, so the glyph needs the same top-lit treatment the
+     chip's own inset highlight gives the block — otherwise it reads as a
+     stamped hole rather than as part of the manufactured set. */
+  filter: drop-shadow(0 0.5px 0 rgba(255, 255, 255, 0.25));
+}
+
+/* Letters, now that the glyph carries identity: still the exact answer for a
+   player who has not learned the set, but no longer the thing read first. */
+.type-badge-code {
+  opacity: 0.92;
+}
+
+/* Position names the type (matchup-grid headers), so the letters come off,
+   the chip goes square, and the glyph grows into what they vacated. This is
+   what keeps the 15 columns at 30px while making the header *more* legible
+   than three 9px letters were. */
+.type-badge-icon-only {
+  width: 24px;
+  padding: 3px 0;
+}
+
+.type-badge-icon-only .type-badge-glyph {
+  width: 14px;
+  height: 14px;
 }
 
 /* Physical vs Magical — an outlined chip (rather than TypeBadge's filled
@@ -4022,13 +4092,29 @@ button,
    for text, not for a second colored rectangle sitting under a colored
    button. Colored by the same --move-type-rgb the chassis uses, at full
    strength so it holds against the dim 10px row it sits in. */
+/* The type mark, now the glyph alone. It sits in the row's LEFT cluster —
+   cost, type, name — because the right edge had accumulated three unrelated
+   readouts and the name's flex:1 shoves anything after it over there. With
+   the letters gone this is 16px wide instead of 40, which is what makes room
+   for it on the crowded side without costing the name any ellipsis. */
 .move-type-code {
+  display: inline-flex;
+  align-items: center;
   flex-shrink: 0;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
   color: rgb(var(--move-type-rgb, 153, 160, 175));
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+/* Bigger than the 12px it wore beside letters: it is carrying the type by
+   itself now, and 16 is where the busier shapes (Beast's paw, Mech's cog
+   teeth, Ancient's urn lip) stop needing a second look on a moving screen.
+   The drop-shadow does what the code's text-shadow used to — the two do not
+   compose on an SVG — and lifts the mark off the button's type wash, which
+   is the same hue it is drawn in. */
+.move-type-code .element-glyph {
+  width: 16px;
+  height: 16px;
+  vertical-align: 0;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
 }
 
 /* Base Power is one of the two numbers a player is actually choosing
@@ -10564,9 +10650,22 @@ button,
 }
 
 .growth-type-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.1em;
+}
+
+/* Pinned rather than sized off the 8px code. 1.15em of 8px is 9px, which is
+   under the floor these shapes were drawn to — Beast's paw pads merge and
+   Ancient's urn lip disappears. The letters can be that small because they
+   are only three of them in a known alphabet; the glyph cannot. */
+.growth-type-code .element-glyph {
+  width: 11px;
+  height: 11px;
+  vertical-align: 0;
 }
 
 /* The rank track — the screen's actual decision surface. Fixed denominator

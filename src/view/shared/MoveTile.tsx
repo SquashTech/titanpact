@@ -1,9 +1,10 @@
 import { useRef, type CSSProperties, type MouseEvent } from 'react';
 import type { MoveDefinition } from '../../engine/content';
-import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
+import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { fieldEffects } from '../../data/fieldEffects';
 import { STAT_LABELS } from './StatBars';
 import { TypeBadge } from './TypeBadge';
+import { ElementGlyph } from './elementIcons';
 import { MoveKindGlyph, type MoveKindGlyphKind } from './statIcons';
 import { ManaCost } from './ManaCost';
 
@@ -277,8 +278,10 @@ export function MoveButtonReplica({
         <span className="move-name">{move.name}</span>
       </div>
       <div className="move-row-mid">
+        {/* Glyph only — kept in lockstep with FightScreen's own move
+            button, which has the reasoning. */}
         <span className="move-type-code" title={move.type}>
-          {getTypeAbbr(move.type)}
+          <ElementGlyph type={move.type} />
         </span>
         {move.kind === 'damage' && move.basePower != null && (
           <span className="move-power">

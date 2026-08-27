@@ -64,13 +64,18 @@ export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
               <div className="tc-cell tc-corner" />
               {TYPES.map((col) => (
                 <div className="tc-cell tc-col-header" key={col}>
-                  <TypeBadge type={col} />
+                  <TypeBadge type={col} iconOnly />
                 </div>
               ))}
               {TYPES.map((row) => (
                 <div className="tc-row" key={row}>
+                  {/* Glyph-only on both axes: a header repeats down every
+                      one of 15 rows, so the three letters were being read 30
+                      times to answer a question the position already answers,
+                      and they were doing it at the 9px the 30px column
+                      allows. The glyph gets that width to itself instead. */}
                   <div className="tc-cell tc-row-header">
-                    <TypeBadge type={row} />
+                    <TypeBadge type={row} iconOnly />
                   </div>
                   {TYPES.map((col) => {
                     const mult = typeChart[row][col];

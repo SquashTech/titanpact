@@ -20,6 +20,7 @@ import {
 import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { MoveInfoPanel, MoveButtonReplica, useLongPress } from '../shared/MoveTile';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { ElementGlyph } from '../shared/elementIcons';
 import { equipment } from '../../data/equipment';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { EvolutionScreen } from './EvolutionScreen';
@@ -181,6 +182,7 @@ function GrowthCard({ hero, entry, node, canAct, isAnimating, onActivate, onPrev
       <span className="growth-types">
         {rosterEntryTypes(hero, entry).map((t) => (
           <span key={t} className="growth-type-code" style={{ color: getTypeColor(t) }} title={t}>
+            <ElementGlyph type={t} />
             {getTypeAbbr(t)}
           </span>
         ))}

@@ -4,6 +4,7 @@ import type { RosterEntry } from '../../run/state';
 import type { EvolutionNode } from '../../run/progression';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { TypeBadge } from '../shared/TypeBadge';
+import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
 
 interface Props {
@@ -69,7 +70,15 @@ export function EvolutionScreen({ hero, entry, node, onChoose }: Props) {
                       <TypeBadge type={path.typeGraft} /> secondary type
                     </span>
                   )}
-                  {!path.typeGraft && <span className="evolution-path-grant-chip evolution-path-mono">stays mono {hero.types[0]}</span>}
+                  {/* The graft branch above answers "which second type" with a
+                      chip; this one answers "none, and here is the one you
+                      keep" — so it names that type the same way rather than
+                      as bare text sitting beside a chip that isn't there. */}
+                  {!path.typeGraft && (
+                    <span className="evolution-path-grant-chip evolution-path-mono">
+                      stays mono <ElementGlyph type={hero.types[0]} /> {hero.types[0]}
+                    </span>
+                  )}
                 </div>
               </button>
             );

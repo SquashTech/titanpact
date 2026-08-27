@@ -35,8 +35,9 @@ import { FieldEffectDetailOverlay } from './FieldEffectDetailOverlay';
 import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
-import { getTypeAbbr, getTypeColor, getTypeColorRgb } from './typeColors';
+import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
+import { ElementGlyph } from '../shared/elementIcons';
 import { CategoryBadge, MoveKindBadge, KIND_LABELS, TARGET_MODE_LABELS, moveEffectSummary, useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { ManaCost } from '../shared/ManaCost';
@@ -1283,7 +1284,6 @@ export function FightScreen({
                             was missing entirely — the effect. */}
                         <div className="move-row-top">
                           <ManaCost cost={move.manaCost} />
-                          <span className="move-name">{move.name}</span>
                           {/* Was a filled TypeBadge chip. One move button used to
                               hold three sub-boxes (mana crystal, type chip, kind
                               chip) inside an already-boxed control — the nesting
@@ -1291,10 +1291,29 @@ export function FightScreen({
                               down. The abbreviation still carries the exact type
                               (color alone can't separate 15 of them), it just
                               does it as colored text rather than as a third
-                              competing rectangle. */}
+                              competing rectangle.
+
+                              It sits *before* the name rather than after it
+                              because the name is the row's flex:1 — anything
+                              downstream of it gets shoved to the right edge,
+                              and the right edge had grown to three unrelated
+                              readouts (type, power, category). Splitting it
+                              gives each side one question: the left is what
+                              this move IS (what it costs, what it draws on,
+                              what it's called), the right is what it DOES
+                              (how hard it hits, and how). */}
+                          {/* Glyph only, no abbreviation. The three letters existed because
+                              colour alone cannot separate 15 types — a real problem,
+                              and not one the letters were the only answer to. The
+                              glyph separates fifteen on its own, and dropping the
+                              text is what lets the type sit inside the left cluster
+                              without pushing the name's ellipsis in. The exact name
+                              is still one long-press away (the move popup), and on
+                              the tooltip for anyone on a pointer. */}
                           <span className="move-type-code" title={move.type}>
-                            {getTypeAbbr(move.type)}
+                            <ElementGlyph type={move.type} />
                           </span>
+                          <span className="move-name">{move.name}</span>
                           {move.kind === 'damage' && move.basePower != null && (
                             <span
                               className={`move-power${forceBonus > 0 ? ' move-boosted' : ''}`}
