@@ -19,6 +19,7 @@ import type { HeroDefinition, MoveDefinition } from '../../engine/content';
 import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { passiveEmoji } from '../shared/passiveIcons';
+import { getTypeColor } from './typeColors';
 
 export interface BeatPopup {
   combatantId: string;
@@ -49,14 +50,53 @@ const STATUS_TICK_EMOJI: Record<string, string> = {
   Renew: '💚',
 };
 
-export interface Beat {
-  /** Events to apply, in order, when this beat is revealed. */
-  events: CombatEvent[];
-  banner: string;
-  /** Secondary readout shown alongside the banner — a declared move's mana cost, or the rules text of a Field Effect that just landed. */
+/**
+ * The optional, *presentational* half of a beat — everything past the plain
+ * sentence. `banner` stays the whole sentence and is what the event log reads
+ * and what the console falls back to; these fields exist only so the console
+ * can set the interesting words large and the bookkeeping small.
+ *
+ * Nothing here is required: a beat that supplies none of it still renders,
+ * with `banner` itself taking the headline slot. Reach for the split only
+ * when a beat genuinely has a subject and a payload — "Cinder uses" /
+ * "Ember Burst", "Bramble takes" / "47 damage" — never to decorate a sentence
+ * that already reads as one thought.
+ */
+export interface BeatFlavor {
+  /** Small line above the headline: who is acting, or who is being hit. */
+  bannerLead?: string;
+  /** The headline itself, replacing `banner` on screen — the words worth setting large. */
+  bannerFocus?: string;
+  /** Small line below the headline — a move's targets, so far. */
+  bannerSub?: string;
+  /** Colors the headline. Maps to a .banner-focus-* class in styles.css. */
+  bannerFocusKind?:
+    | 'crit'
+    | 'super'
+    | 'resist'
+    | 'ko'
+    | 'heal'
+    | 'buff'
+    | 'debuff'
+    | 'status'
+    | 'damage'
+    | 'detonate'
+    | 'mana'
+    | 'field';
+  /** Type color (typeColors.ts) the headline glows in, overriding the kind's own. Set on move beats, so a Fire move arrives orange and a Frost move cyan. */
+  bannerAccent?: string;
+  /** Stamp under the headline — "Critical hit!", "Super effective!". Rendered as a struck-in chip, not a fragment trailing an em-dash. */
+  bannerTag?: string;
+  /** Secondary readout — a declared move's mana cost, or the rules text of a Field Effect that just landed. */
   bannerMeta?: string;
   /** Extra class for the bannerMeta span, so a meta line that isn't a mana cost doesn't inherit .combat-banner-meta's mana blue. */
   bannerMetaClass?: string;
+}
+
+export interface Beat extends BeatFlavor {
+  /** Events to apply, in order, when this beat is revealed. */
+  events: CombatEvent[];
+  banner: string;
   popups: BeatPopup[];
 }
 
@@ -89,8 +129,8 @@ export function buildBeats(
   let carry: CombatEvent[] = [];
   let i = 0;
 
-  function push(applied: CombatEvent[], banner: string, popups: BeatPopup[] = [], bannerMeta?: string, bannerMetaClass?: string) {
-    beats.push({ events: [...carry, ...applied], banner, bannerMeta, bannerMetaClass, popups });
+  function push(applied: CombatEvent[], banner: string, popups: BeatPopup[] = [], flavor: BeatFlavor = {}) {
+    beats.push({ events: [...carry, ...applied], banner, popups, ...flavor });
     carry = [];
   }
 
@@ -120,7 +160,17 @@ export function buildBeats(
         const actorName = `${actorSide && actorSide !== playerSide ? 'Enemy ' : ''}${name(e.combatantId)}`;
         const clause = targetClause(e.targetCombatantIds, e.combatantId, name);
         const cost = manaSpent ?? move.manaCost;
-        push(applied, `${actorName} uses ${move.name}${clause}`, [], `${cost} MP`);
+        // The beat with the clearest subject/payload split: the actor is context
+        // the player already has (they just picked it), the move NAME is the
+        // thing worth reading, and it arrives lit in its own type's color.
+        push(applied, `${actorName} uses ${move.name}${clause}`, [], {
+          bannerLead: actorName,
+          bannerFocus: move.name,
+          // `clause` is " on X and Y" — slice past " on" and point at them instead.
+          bannerSub: clause ? `▸${clause.slice(3)}` : undefined,
+          bannerAccent: getTypeColor(move.type),
+          bannerMeta: `${cost} MP`,
+        });
         break;
       }
 
@@ -142,20 +192,35 @@ export function buildBeats(
             : e.typeMult <= 0.5
               ? ' — Not very effective...'
               : '';
+        // The same three outcomes as `tag`, split off the sentence so the console
+        // can stamp them rather than trail them behind an em-dash. `tag` above
+        // stays exactly as written — it is also the event-log line.
+        const tagText = e.isCrit ? 'Critical hit!' : e.typeMult >= 2 ? 'Super effective!' : e.typeMult <= 0.5 ? 'Not very effective...' : undefined;
+        const tagKind = e.isCrit ? 'crit' : e.typeMult >= 2 ? 'super' : e.typeMult <= 0.5 ? 'resist' : 'damage';
         const targetName = name(e.targetCombatantId);
         // Haunt (statusEngine.ts expandSpreadTargets) dragged this target into a hit
         // that was declared against its partner — call that out explicitly rather than
         // letting it read like an ordinary spread move landed on both enemies.
         const haunted = e.viaStatusId === 'Haunt';
         const banner = haunted ? `${targetName}'s Haunt drags them into the attack — takes ${e.amount} damage${tag}` : `${targetName} takes ${e.amount} damage${tag}`;
-        push(applied, banner, [
+        push(
+          applied,
+          banner,
+          [
+            {
+              combatantId: e.targetCombatantId,
+              text: `${haunted ? '👻 ' : ''}-${e.amount}`,
+              className: haunted ? 'popup-haunt' : e.isCrit ? 'popup-crit' : 'popup-damage',
+            },
+          ],
           {
-            combatantId: e.targetCombatantId,
-            text: `${haunted ? '👻 ' : ''}-${e.amount}`,
-            className: haunted ? 'popup-haunt' : e.isCrit ? 'popup-crit' : 'popup-damage',
-          },
-        ]);
-        if (faintEvent) push([faintEvent], `${targetName} is knocked out!`);
+            bannerLead: haunted ? `${targetName}'s Haunt drags them in` : `${targetName} takes`,
+            bannerFocus: `${e.amount} damage`,
+            bannerFocusKind: tagKind,
+            bannerTag: tagText,
+          }
+        );
+        if (faintEvent) push([faintEvent], `${targetName} is knocked out!`, [], { bannerFocusKind: 'ko' });
         break;
       }
 
@@ -171,10 +236,17 @@ export function buildBeats(
         let faintEvent: CombatEvent | null = null;
         if (events[i]?.type === 'Fainted') faintEvent = events[i++];
         const targetName = name(e.combatantId);
-        push(applied, `${targetName}'s ${e.statusId} detonates for ${e.amount} damage!`, [
-          { combatantId: e.combatantId, text: `⚡ -${e.amount}`, className: 'popup-conduct' },
-        ]);
-        if (faintEvent) push([faintEvent], `${targetName} is knocked out!`);
+        push(
+          applied,
+          `${targetName}'s ${e.statusId} detonates for ${e.amount} damage!`,
+          [{ combatantId: e.combatantId, text: `⚡ -${e.amount}`, className: 'popup-conduct' }],
+          {
+            bannerLead: `${targetName}'s ${e.statusId} detonates`,
+            bannerFocus: `${e.amount} damage`,
+            bannerFocusKind: 'detonate',
+          }
+        );
+        if (faintEvent) push([faintEvent], `${targetName} is knocked out!`, [], { bannerFocusKind: 'ko' });
         break;
       }
 
@@ -196,22 +268,41 @@ export function buildBeats(
           const hp = events[i++] as HpChangedEvent;
           applied.push(hp);
           const amount = hp.newHp - hp.previousHp;
-          push(applied, `${label} heals ${ownerName} for ${amount} HP!`, [
-            { combatantId: e.combatantId, text: `${passiveEmoji[e.passiveId] ?? ''} +${amount}`, className: 'popup-passive-heal' },
-          ]);
+          push(
+            applied,
+            `${label} heals ${ownerName} for ${amount} HP!`,
+            [{ combatantId: e.combatantId, text: `${passiveEmoji[e.passiveId] ?? ''} +${amount}`, className: 'popup-passive-heal' }],
+            { bannerLead: `${label} · ${ownerName}`, bannerFocus: `+${amount} HP`, bannerFocusKind: 'heal' }
+          );
         } else if (effectKind === 'applyStatus' && events[i]?.type === 'StatusApplied') {
           const applied2 = events[i++] as StatusAppliedEvent;
           applied.push(applied2);
-          push(applied, `${label} afflicts ${name(applied2.combatantId)} with ${applied2.statusId}!`, [
-            { combatantId: applied2.combatantId, text: applied2.statusId, className: 'popup-status' },
-          ]);
+          push(
+            applied,
+            `${label} afflicts ${name(applied2.combatantId)} with ${applied2.statusId}!`,
+            [{ combatantId: applied2.combatantId, text: applied2.statusId, className: 'popup-status' }],
+            { bannerLead: `${label} · ${name(applied2.combatantId)}`, bannerFocus: applied2.statusId, bannerFocusKind: 'status' }
+          );
         } else if (effectKind === 'statDelta' && events[i]?.type === 'StatChanged') {
           const changed = events[i++] as StatChangedEvent;
           applied.push(changed);
           const sign = changed.delta > 0 ? '+' : '';
-          push(applied, `${label} shifts ${name(changed.combatantId)}'s ${changed.stat} (${sign}${changed.delta})`, [
-            { combatantId: changed.combatantId, text: `${sign}${changed.delta} ${changed.stat}`, className: changed.delta > 0 ? 'popup-buff' : 'popup-debuff' },
-          ]);
+          push(
+            applied,
+            `${label} shifts ${name(changed.combatantId)}'s ${changed.stat} (${sign}${changed.delta})`,
+            [
+              {
+                combatantId: changed.combatantId,
+                text: `${sign}${changed.delta} ${changed.stat}`,
+                className: changed.delta > 0 ? 'popup-buff' : 'popup-debuff',
+              },
+            ],
+            {
+              bannerLead: `${label} · ${name(changed.combatantId)}`,
+              bannerFocus: `${changed.stat} ${sign}${changed.delta}`,
+              bannerFocusKind: changed.delta > 0 ? 'buff' : 'debuff',
+            }
+          );
         } else {
           // No state-change event followed (e.g. resolveEffect no-op'd
           // because the target already fainted) — carry the bare trigger
@@ -222,7 +313,11 @@ export function buildBeats(
       }
 
       case 'SwitchedIn':
-        push([e], `${name(e.inCombatantId)} switches in!`);
+        push([e], `${name(e.inCombatantId)} switches in!`, [], {
+          bannerLead: 'Switching in',
+          bannerFocus: name(e.inCombatantId),
+          bannerFocusKind: 'buff',
+        });
         i++;
         break;
 
@@ -232,9 +327,12 @@ export function buildBeats(
         if (events[i]?.type === 'ManaChanged') applied.push(events[i++]);
         const actorSide = combatants[e.combatantId]?.side;
         const actorName = `${actorSide && actorSide !== playerSide ? 'Enemy ' : ''}${name(e.combatantId)}`;
-        push(applied, `${actorName} rests, restoring Mana to full`, [
-          { combatantId: e.combatantId, text: 'Full MP', className: 'popup-mana' },
-        ]);
+        push(
+          applied,
+          `${actorName} rests, restoring Mana to full`,
+          [{ combatantId: e.combatantId, text: 'Full MP', className: 'popup-mana' }],
+          { bannerLead: `${actorName} rests`, bannerFocus: 'Mana restored', bannerFocusKind: 'mana' }
+        );
         break;
       }
 
@@ -243,18 +341,28 @@ export function buildBeats(
         i++;
         if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
         const targetName = name(e.targetCombatantId);
-        push(applied, `${targetName} recovers ${e.amount} HP`, [
-          { combatantId: e.targetCombatantId, text: `+${e.amount}`, className: 'popup-heal' },
-        ]);
+        push(
+          applied,
+          `${targetName} recovers ${e.amount} HP`,
+          [{ combatantId: e.targetCombatantId, text: `+${e.amount}`, className: 'popup-heal' }],
+          { bannerLead: `${targetName} recovers`, bannerFocus: `+${e.amount} HP`, bannerFocusKind: 'heal' }
+        );
         break;
       }
 
       case 'StatChanged': {
         const targetName = name(e.combatantId);
         const sign = e.delta > 0 ? '+' : '';
-        push([e], `${targetName}'s ${e.stat} ${e.delta > 0 ? 'rises' : 'falls'} (${sign}${e.delta})`, [
-          { combatantId: e.combatantId, text: `${sign}${e.delta} ${e.stat}`, className: e.delta > 0 ? 'popup-buff' : 'popup-debuff' },
-        ]);
+        push(
+          [e],
+          `${targetName}'s ${e.stat} ${e.delta > 0 ? 'rises' : 'falls'} (${sign}${e.delta})`,
+          [{ combatantId: e.combatantId, text: `${sign}${e.delta} ${e.stat}`, className: e.delta > 0 ? 'popup-buff' : 'popup-debuff' }],
+          {
+            bannerLead: `${targetName}'s ${e.stat} ${e.delta > 0 ? 'rises' : 'falls'}`,
+            bannerFocus: `${sign}${e.delta} ${e.stat}`,
+            bannerFocusKind: e.delta > 0 ? 'buff' : 'debuff',
+          }
+        );
         i++;
         break;
       }
@@ -262,9 +370,12 @@ export function buildBeats(
       case 'StatusApplied': {
         const targetName = name(e.combatantId);
         const detail = e.magnitude !== undefined ? ` (${e.magnitude})` : e.duration !== undefined ? ` (${e.duration})` : '';
-        push([e], `${targetName} is afflicted with ${e.statusId}${detail}`, [
-          { combatantId: e.combatantId, text: e.statusId, className: 'popup-status' },
-        ]);
+        push(
+          [e],
+          `${targetName} is afflicted with ${e.statusId}${detail}`,
+          [{ combatantId: e.combatantId, text: e.statusId, className: 'popup-status' }],
+          { bannerLead: `${targetName} is afflicted with`, bannerFocus: `${e.statusId}${detail}`, bannerFocusKind: 'status' }
+        );
         i++;
         break;
       }
@@ -286,14 +397,23 @@ export function buildBeats(
         const flavorBanner = STATUS_TICK_BANNER[e.statusId]?.(targetName, e.amount);
         const emoji = STATUS_TICK_EMOJI[e.statusId];
         const popupClass = flavorBanner ? `popup-${e.statusId.toLowerCase()}` : e.kind === 'damage' ? 'popup-damage' : 'popup-heal';
-        push(applied, flavorBanner ?? `${targetName} ${verb} ${e.amount} from ${e.statusId}`, [
+        push(
+          applied,
+          flavorBanner ?? `${targetName} ${verb} ${e.amount} from ${e.statusId}`,
+          [
+            {
+              combatantId: e.combatantId,
+              text: `${emoji ? `${emoji} ` : ''}${e.kind === 'damage' ? '-' : '+'}${e.amount}`,
+              className: popupClass,
+            },
+          ],
           {
-            combatantId: e.combatantId,
-            text: `${emoji ? `${emoji} ` : ''}${e.kind === 'damage' ? '-' : '+'}${e.amount}`,
-            className: popupClass,
-          },
-        ]);
-        if (faintEvent) push([faintEvent], `${targetName} is knocked out!`);
+            bannerLead: `${emoji ? `${emoji} ` : ''}${targetName}'s ${e.statusId}`,
+            bannerFocus: `${e.kind === 'damage' ? '-' : '+'}${e.amount} HP`,
+            bannerFocusKind: e.kind === 'damage' ? 'damage' : 'heal',
+          }
+        );
+        if (faintEvent) push([faintEvent], `${targetName} is knocked out!`, [], { bannerFocusKind: 'ko' });
         break;
       }
 
@@ -309,7 +429,7 @@ export function buildBeats(
       case 'ActionBlocked': {
         const targetName = name(e.combatantId);
         const text = e.reason === 'dazed' ? `${targetName} is Dazed and can't move!` : `${targetName}'s target is already down!`;
-        push([e], text);
+        push([e], text, [], { bannerFocusKind: 'debuff' });
         i++;
         break;
       }
@@ -326,8 +446,14 @@ export function buildBeats(
           [e],
           e.previousFieldEffectId ? `${label} surges across the battlefield, overriding the old field!` : `${label} surges across the battlefield!`,
           [],
-          fx?.description,
-          'banner-meta-rules'
+          {
+            bannerLead: e.previousFieldEffectId ? 'The field is overwritten' : 'The field turns',
+            bannerFocus: label,
+            bannerFocusKind: 'field',
+            bannerAccent: fx?.flavorType ? getTypeColor(fx.flavorType) : undefined,
+            bannerMeta: fx?.description,
+            bannerMetaClass: 'banner-meta-rules',
+          }
         );
         i++;
         break;
@@ -347,7 +473,11 @@ export function buildBeats(
 
       case 'FieldEffectExpired': {
         const fx = fieldEffects[e.fieldEffectId];
-        push([e], `${fx?.name ?? e.fieldEffectId} fades from the battlefield.`);
+        push([e], `${fx?.name ?? e.fieldEffectId} fades from the battlefield.`, [], {
+          bannerLead: 'The field settles',
+          bannerFocus: `${fx?.name ?? e.fieldEffectId} fades`,
+          bannerAccent: fx?.flavorType ? getTypeColor(fx.flavorType) : undefined,
+        });
         i++;
         break;
       }
@@ -363,7 +493,11 @@ export function buildBeats(
           names.push(name(be.combatantId));
           i++;
         }
-        push(applied, `${names.join(' and ')} recover HP on the bench`, popups);
+        push(applied, `${names.join(' and ')} recover HP on the bench`, popups, {
+          bannerLead: 'On the bench',
+          bannerFocus: `${names.join(' and ')} recover`,
+          bannerFocusKind: 'heal',
+        });
         break;
       }
 
@@ -376,7 +510,7 @@ export function buildBeats(
           popups.push({ combatantId: me.combatantId, text: `+${me.manaRegen}`, className: 'popup-mana' });
           i++;
         }
-        push(applied, 'Mana recovers', popups);
+        push(applied, 'Mana recovers', popups, { bannerFocus: 'Mana recovers', bannerFocusKind: 'mana' });
         break;
       }
 

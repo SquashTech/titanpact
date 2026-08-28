@@ -1102,6 +1102,101 @@ Two caveats:
 
 ---
 
+## Eighth pass — the beat, and the console keys (2026-08-27)
+
+Two asks, both about the bottom third of the fight screen.
+
+### The beat trail is removed
+
+The sixth pass filled the resolving console's dead space with `.beat-trail`, a
+running list of the round's earlier beats. That is reversed, on user direction:
+re-reading a beat mid-fight is a want the vast majority of players never have,
+the game is readable enough without it, and the trail was spending the console's
+best real estate on history while the beat actually happening sat at 14px. The
+full log stays one tap away in the Menu, which is where a deliberate look-back
+belongs.
+
+Everything above about the trail — newest-first ordering, revealed-beats-only,
+`flex: 0 1 auto`, the scored separator the verification pass measured — is
+history now. Two of its findings survive it: `.combat-banner-current` still
+centres as a group (keyed on `beatSeq` rather than the trail's length, so
+`banner-strike` still fires per beat, not per round), and the chassis is still
+what's fixed, with `.combat-banner-focus` clamping at three lines instead of the
+trail scrolling.
+
+### What replaces it: a beat with a subject and a payload
+
+`buildBeats` now authors an optional presentational split alongside the plain
+sentence (`BeatFlavor` — lead / headline / sub / tag / accent / kind). `banner`
+is unchanged and still what the event log reads, so nothing downstream of the
+split depends on it existing; a beat that supplies none of it puts its sentence
+in the headline slot at a size down (`.banner-focus-sentence`).
+
+- **The split is only for beats that have one.** "Cinder uses" / "Ember Burst",
+  "Bramble takes" / "47 damage". A sentence that already reads as one thought —
+  `StatusRemoved`, `ActionBlocked` — is not decorated into three lines.
+- **Effectiveness is stamped, not trailed.** Crit / super / resist were an
+  em-dash and a clause on the end of the damage sentence. They are now a struck
+  chip under the number, arriving 80ms later so the two land as a one-two.
+- **The move's own type colors the beat**, via `--banner-accent` set inline from
+  `getTypeColor(move.type)` — the stylesheet never names one of the 15. Category
+  colors (`--banner-kind-color`, set by `.banner-kind-*`) are the fallback, and
+  every value is a token the floating combat numbers already use, so a crit
+  reads orange in the console and orange over the card it landed on.
+- **Both vars live on `.combat-banner`, not on the headline.** The inner element
+  remounts every beat; a background that remounts can't cross-fade, and the
+  headline and its stamp must not be able to disagree about the beat's color.
+
+**Finding worth keeping: the light pool was drafted three times too strong.**
+At 20%/9% the beat's color stopped reading as light on the ground and started
+reading as fog *in front of* the text — the dim lead and sub lines lost most of
+their contrast, and the near-white pool an ordinary hit produces turned the
+console into a gray cloud. 11%/4.5% says what color the beat is without ever
+being the thing you look at. The plain-damage kind is `#ccd3e0` rather than
+`--text` for the same reason: pure white through the pool formula is haze.
+
+### The console keys
+
+- **Off is drawn, not dimmed.** `opacity: 0.35` on a disabled key was the
+  weakest state in the console — a uniform fade reads as a rendering artifact
+  rather than a control the game has switched off, and against a dark face 35%
+  of a dim key and 100% of a dim key are nearly the same pixel. The off state
+  now removes the rim entirely, sinks the face a step darker than the console,
+  and drops the label to an explicit inert value. Nothing translucent.
+- **Back is lit when it is live.** Availability is the thing this key has to
+  communicate and it flickers several times a turn. It takes gold the way Switch
+  takes ally blue, so the row reads as *two colored keys and one neutral* when
+  there is something to undo and *one colored and two neutral* when there isn't
+  — a difference in kind, visible without comparing brightnesses, costing no
+  width. Gold rather than a fourth hue because Back is navigation, not a play.
+- **The emoji is gone.** `🔄` is a full-color image the platform draws: it could
+  not take the key's own color, so it stayed bright on a key the stylesheet had
+  just turned off, and it was the one element in the console that did not belong
+  to the console. `⇄` and `☰` are type, and they inherit.
+- **Menu carries the commander's light.** It has no state to report, so its rim
+  and glyph are free to take `--console-rgb` instead — the key recolours with
+  the acting hero, which is what stops the row reading as a strip of chrome
+  bolted under the console rather than the bottom of it. The glyph is at 0.5
+  alpha, not full: at full strength a Fire commander turned it solid orange,
+  which reads as a warning rather than as a menu.
+
+### Verification
+
+Driven through a real Quick Battle round over CDP, reading computed style off
+the live DOM.
+
+- **The trail is gone at every beat** (`.beat-trail` absent for all 8 beats of
+  the round), and the headline computes to 30px — 19px on the sentence fallback.
+- **Type accent tracks content**: Beast `#b5772f` → Iron `#9aa3ad` → Light
+  `#e8d16a`, each with `.combat-banner-focus` color matching exactly.
+- **Kinds resolve**: `banner-kind-damage` `rgb(204, 211, 224)`,
+  `banner-kind-ko` `rgb(217, 83, 79)`, `banner-kind-resist` `rgb(153, 160, 175)`
+  with the "Not very effective..." chip attached.
+- **Back's two states are structurally different, not just dimmer**: disabled
+  carries no accent ring and a `rgb(78, 86, 101)` glyph; enabled carries
+  `rgba(224, 166, 60, 0.6)` at 1px and a `rgb(224, 166, 60)` glyph. Opacity is
+  `1` in both.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.

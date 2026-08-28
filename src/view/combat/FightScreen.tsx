@@ -583,22 +583,27 @@ export function FightScreen({
   // live in refs rather than state — they're only ever read/written from
   // inside handleAdvance's click handler, never rendered directly.
   const [resolving, setResolving] = useState(false);
-  const [banner, setBanner] = useState<string | null>(null);
-  const [bannerMeta, setBannerMeta] = useState<string | null>(null);
-  const [bannerMetaClass, setBannerMetaClass] = useState<string | null>(null);
   /**
-   * Every beat revealed so far in the round currently playing out, oldest
-   * first — the last entry is the beat on screen now, the ones before it are
-   * history. The console is a fixed-height chassis and a single beat is one
-   * sentence, so playback used to leave 226px of bare console face under an
-   * 80px banner (28% of the screen). This is what fills it, and it fills it
-   * with the one thing the player actually loses during playback: a round
-   * read too fast, or auto-played under a held thumb, is gone until they open
-   * the log. Only *revealed* beats are ever listed — the queue holds the rest
-   * of the round already resolved, and rendering that would hand the player
-   * the enemy's turn before it happens.
+   * The beat on screen right now, whole — the sentence plus the presentational
+   * split buildBeats authored for it (lead / headline / tag / meta).
+   *
+   * There used to be a second piece of state beside this one, a running trail
+   * of every beat already revealed this round, filling the console under the
+   * current beat. It's gone (2026-08-27, user direction): a round is many taps
+   * and re-reading them mid-fight is a want the vast majority of players never
+   * have, so the trail was spending the console's best real estate on history
+   * while the beat that's actually happening sat at 14px. The full log is
+   * still one tap away in the Menu, which is where a deliberate look-back
+   * belongs. What the space buys instead is size — see .combat-banner-focus.
    */
-  const [beatTrail, setBeatTrail] = useState<{ banner: string; meta?: string; metaClass?: string }[]>([]);
+  const [beat, setBeat] = useState<Beat | null>(null);
+  /**
+   * Monotonic counter of beats revealed this round. Only a React key: the
+   * headline replays its arrival animation by remounting, and consecutive
+   * beats can carry identical text (two ticks of the same DoT for the same
+   * amount), so keying on the content itself would silently skip the pop.
+   */
+  const [beatSeq, setBeatSeq] = useState(0);
   const [popups, setPopups] = useState<Record<string, Popup>>({});
   /** The move dossier (MoveDetailOverlay), opened by holding a move row. Carries the holder as well as the move, since every number on that card — the damage band, the mana left, STAB — is relative to whichever hero is commanding. Distinct from `selecting`, which is mid-target-selection state, not an info request. */
   const [movePopup, setMovePopup] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
@@ -921,7 +926,6 @@ export function FightScreen({
     displayState.current = startState;
     finalState.current = nextFinalState;
     beatQueue.current = beats;
-    setBeatTrail([]);
     setResolving(true);
     handleAdvance();
   }
@@ -937,13 +941,12 @@ export function FightScreen({
    * round.
    */
   function handleAdvance(): boolean {
-    const beat = beatQueue.current.shift();
+    const revealed = beatQueue.current.shift();
 
-    if (!beat) {
+    if (!revealed) {
       setCombat(finalState.current!);
       setPopups({});
-      setBanner(null);
-      setBannerMeta(null);
+      setBeat(null);
       setResolving(false);
       setPending({});
       setSelecting(null);
@@ -954,16 +957,14 @@ export function FightScreen({
     }
 
     let next = displayState.current!;
-    for (const event of beat.events) next = applyEventToState(next, event);
+    for (const event of revealed.events) next = applyEventToState(next, event);
     displayState.current = next;
 
     setCombat(next);
-    appendLog(formatEvents(beat.events, allCombatants, next.combatants, moves));
-    setBanner(beat.banner);
-    setBeatTrail((prev) => [...prev, { banner: beat.banner, meta: beat.bannerMeta, metaClass: beat.bannerMetaClass }]);
-    setBannerMeta(beat.bannerMeta ?? null);
-    setBannerMetaClass(beat.bannerMetaClass ?? null);
-    setPopups(Object.fromEntries(beat.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className }])));
+    appendLog(formatEvents(revealed.events, allCombatants, next.combatants, moves));
+    setBeat(revealed);
+    setBeatSeq((n) => n + 1);
+    setPopups(Object.fromEntries(revealed.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className }])));
     return true;
   }
 
@@ -1165,33 +1166,38 @@ export function FightScreen({
             move-selection panel vacates while resolving, rather than as a
             fixed-height reservation above the battlefield that would sit
             empty (and push everything else down) the rest of the time. */}
-        {resolving && (
-          <div className="combat-banner">
-            <div className="combat-banner-current">
-              {banner && <span className="combat-banner-line">{banner}</span>}
-              {bannerMeta && <span className={`combat-banner-meta${bannerMetaClass ? ` ${bannerMetaClass}` : ''}`}>{bannerMeta}</span>}
+        {resolving && beat && (
+          /* The beat's color lives on the OUTER element, not on the line it
+             tints: the console's light pool reads off it too, so a Fire move
+             floods the near ground orange and a Frost move cyan. It also has
+             to sit on something that survives the beat change — the inner
+             element remounts every beat (see the key below), and a background
+             that remounts can't cross-fade. */
+          <div
+            className={`combat-banner${beat.bannerFocusKind ? ` banner-kind-${beat.bannerFocusKind}` : ''}`}
+            style={beat.bannerAccent ? ({ '--banner-accent': beat.bannerAccent } as CSSProperties) : undefined}
+          >
+            {/* One beat, given the whole console. Keyed on beatSeq so every
+                reveal remounts and replays its arrival — the pop is the beat
+                landing, and it has to fire per beat, not once per round.
+
+                buildBeats hands over an optional lead/headline/tag split
+                (BeatFlavor); a beat that supplies none of it puts its plain
+                sentence in the headline slot, so nothing here depends on the
+                split existing. */}
+            <div className="combat-banner-current" key={beatSeq}>
+              {beat.bannerLead && <span className="combat-banner-lead">{beat.bannerLead}</span>}
+              {/* No authored headline means this beat is a whole sentence, not
+                  a subject and a payload — set it a size down, because display
+                  type is for two or three words and a sentence at 26px just
+                  fills the console with wrapping. */}
+              <span className={`combat-banner-focus${beat.bannerFocus ? '' : ' banner-focus-sentence'}`}>{beat.bannerFocus ?? beat.banner}</span>
+              {beat.bannerSub && <span className="combat-banner-sub">{beat.bannerSub}</span>}
+              {beat.bannerTag && <span className="combat-banner-tag">{beat.bannerTag}</span>}
+              {beat.bannerMeta && (
+                <span className={`combat-banner-meta${beat.bannerMetaClass ? ` ${beat.bannerMetaClass}` : ''}`}>{beat.bannerMeta}</span>
+              )}
             </div>
-            {/* What already happened this round, most recent first, so the
-                newest history sits directly under the beat it followed and
-                older lines fall off the bottom instead of pushing the current
-                beat down. `beatTrail` is oldest-first, hence the slice+reverse:
-                drop the last entry (that's the current beat, rendered above)
-                and read backwards. The list scrolls rather than growing — the
-                console's outer boundary is fixed in every state, which is the
-                whole point of this pass. */}
-            {beatTrail.length > 1 && (
-              <div className="beat-trail">
-                {beatTrail
-                  .slice(0, -1)
-                  .reverse()
-                  .map((entry, i) => (
-                    <div className="beat-trail-line" key={beatTrail.length - 2 - i}>
-                      <span className="beat-trail-text">{entry.banner}</span>
-                      {entry.meta && <span className={`beat-trail-meta${entry.metaClass ? ` ${entry.metaClass}` : ''}`}>{entry.meta}</span>}
-                    </div>
-                  ))}
-              </div>
-            )}
             <span className="combat-banner-hint">tap ▸ or hold to auto-play ⏵⏵</span>
           </div>
         )}
@@ -1433,7 +1439,7 @@ export function FightScreen({
           on a highlighted card was offering choices that don't exist. */}
       <div className={`bottom-bar${showingTargetPanel ? ' bottom-bar-solo' : ''}`} style={consoleStyle}>
         <button
-          className="bottom-action bottom-action-primary"
+          className="bottom-action bottom-action-primary bottom-action-back"
           disabled={!(actingId !== null && (showingTargetPanel || stepIndex > 0))}
           onClick={() => (showingTargetPanel ? setSelecting(null) : setActionStep(stepIndex - 1))}
         >
@@ -1449,8 +1455,13 @@ export function FightScreen({
               disabled={!(actingId !== null && playerBench.length > 0 && !playerLockedIn)}
               onClick={() => setSwitchOpen(true)}
             >
+              {/* ⇄, not the 🔄 emoji it replaced. An emoji is a full-color
+                  image the platform draws for us: it can't take the key's own
+                  color, so it stayed bright blue-and-green on a key the
+                  stylesheet had just turned off, and it was the one element in
+                  the console that didn't belong to the console. */}
               <span className="bottom-action-glyph" aria-hidden="true">
-                🔄
+                ⇄
               </span>
               Switch
             </button>
@@ -1462,7 +1473,7 @@ export function FightScreen({
               }}
             >
               <span className="bottom-action-glyph" aria-hidden="true">
-                ⚙
+                ☰
               </span>
               <span className="bottom-action-label">Menu</span>
             </button>

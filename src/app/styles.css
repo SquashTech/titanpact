@@ -794,16 +794,15 @@ textarea,
    costs no reserved space the rest of the time. Not itself a click target —
    .advance-overlay covers the whole screen so any tap advances. */
 /* The fixed 82px height this used to carry is gone, but the reason it existed
-   is not: a beat whose text wraps to 2 lines, or that carries a meta line,
+   is not: a beat whose text wraps, or that carries a tag and a meta line,
    must not resize the box. That job moved outward — the chassis is what's
-   fixed now, and every child that can vary in height either clamps
-   (.combat-banner-line) or scrolls (.beat-trail). overflow:hidden stays as
-   the backstop. */
+   fixed now, and .combat-banner-focus clamps at 3 lines. overflow:hidden
+   stays as the backstop. */
 /* The console's fourth variant, and the one that wasted the most: an 82px
    strip inside a 316.6px chassis left 226.4px — 28% of the screen — as bare
    console face for the entire time a round played out. It now fills the
-   chassis like the other three, and .beat-trail below is what fills it with
-   something worth reading rather than with more gold border. */
+   chassis like the other three, and what fills it is one beat set large
+   enough to be worth the room (see .combat-banner-current). */
 .combat-banner {
   flex: 1 1 auto;
   width: 100%;
@@ -812,18 +811,34 @@ textarea,
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* The current beat and its trail centre as ONE group, growing symmetrically
-     as the round unspools, rather than the beat pinning to the top with the
-     trail's future space held empty beneath it. Every round's first beat has
-     no trail yet, so top-alignment would put a single sentence at the ceiling
-     of a 295px box once per round — trading the old bare console face for the
-     same emptiness with a gold border drawn around it. */
+  /* Centred, so a beat with a lead and a tag and a beat with neither both sit
+     at the same optical middle of the chassis and the headline never jumps
+     between them — the one line the player's eye is locked to stays put for
+     the whole round. */
   justify-content: center;
   /* Anchors .combat-banner-hint, which is absolute (below) so the hint's own
      height and its distance from the bottom edge never enter the centring. */
   position: relative;
   padding-bottom: 26px;
   gap: 2px;
+  /*
+   * Two custom properties, resolved in this order by everything that takes a
+   * color from the beat — the headline, the tag, and the light pool below:
+   *
+   *   --banner-accent      set inline, per beat, from content data — a move's
+   *                        own type color. Wins, so a Fire move arrives orange
+   *                        and a Frost move cyan without the stylesheet ever
+   *                        naming one of the 15 types.
+   *   --banner-kind-color  set by the .banner-kind-* classes further down,
+   *                        from the beat's *category* — crit, super effective,
+   *                        KO, heal.
+   *
+   * Both live on this element rather than on the headline, so the headline,
+   * the stamp under it, and the ground they stand on can never disagree about
+   * what color the beat is.
+   */
+  --banner-kind-color: var(--accent);
+  --banner-color: var(--banner-accent, var(--banner-kind-color));
   /* Unboxed, like everything else in the console now.
    *
    * This was a gold-bordered, rounded, drop-shadowed panel wrapped around text
@@ -836,8 +851,25 @@ textarea,
    *
    * What replaces the border is light. The round's own gold pools on the near
    * ground where the panel used to sit, and the text stands in it. Nothing is
-   * drawn around anything. */
-  background: radial-gradient(ellipse 78% 52% at 50% 42%, rgba(224, 166, 60, 0.1), transparent 72%);
+   * drawn around anything.
+   *
+   * The pool is the beat's color now, not a fixed gold — a tight core under
+   * the headline inside a wide falloff, the same two-layer construction
+   * .action-area uses for the commander's light, and for the same reason: one
+   * soft wash is invisible for the low-chroma types. It cross-fades between
+   * beats rather than cutting, which is why the color vars sit on this element
+   * and not on the child that remounts. */
+  /* Kept low on purpose. Drafted at 20%/9% and that was a mistake worth
+     recording: a wide radial at that strength stops reading as light on the
+     ground and starts reading as fog *in front of* the text — the dim lead and
+     sub lines lost most of their contrast against it, and the near-white pool
+     the plain-damage kind produces turned the console into a gray cloud. The
+     pool's job is to say what color the beat is, which it does at a tenth the
+     strength; the headline is what carries the beat. */
+  background:
+    radial-gradient(ellipse 54% 26% at 50% 44%, color-mix(in srgb, var(--banner-color) 11%, transparent), transparent 70%),
+    radial-gradient(ellipse 92% 60% at 50% 42%, color-mix(in srgb, var(--banner-color) 4.5%, transparent), transparent 74%);
+  transition: background var(--dur-slow, 420ms) var(--ease-out);
   border: none;
   border-radius: 0;
   padding: 8px 10px;
@@ -849,127 +881,225 @@ textarea,
   box-shadow: none;
 }
 
-/* The beat on screen right now. Keyed on the trail's length in FightScreen,
-   so it remounts — and replays banner-pop — on every beat; before the trail
-   existed the banner was a single persistent element whose text simply
-   swapped, and the arrival animation fired once per round. */
+/*
+ * The beat on screen right now — the whole beat, and the whole console.
+ *
+ * A running trail of the round's earlier beats used to sit under this,
+ * filling the rest of the chassis. It's gone (2026-08-27, user direction):
+ * re-reading a beat mid-fight is a want very few players have, and the trail
+ * was spending the console's best space on history while the beat actually
+ * happening sat at 14px. A deliberate look-back belongs in the Menu's log,
+ * which is where it still is.
+ *
+ * What the freed space buys is size. buildBeats now hands over a lead /
+ * headline / tag split (BeatFlavor), so this is a small line of context, one
+ * large line of consequence, and a stamp — a beat that reads at a glance
+ * instead of a sentence that has to be parsed.
+ *
+ * Keyed on beatSeq in FightScreen so it remounts, and every child replays its
+ * arrival, once per beat rather than once per round.
+ */
 .combat-banner-current {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   width: 100%;
-  animation: banner-pop 0.18s ease-out;
 }
 
-/* With the panel gone, the beat itself has to carry the weight the gold rim
-   was carrying. A size up, and a warm bloom behind it — the same trick
-   .draft-title-glow uses to stop dark-on-dark text reading as flat type pasted
-   onto a gradient. */
-.combat-banner-line {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  font-size: 14px;
-  letter-spacing: 0.005em;
-  text-shadow: 0 0 18px rgba(224, 166, 60, 0.45), 0 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-/*
- * What already happened this round, newest first, under a hairline.
- *
- * Playback is one sentence per tap, and a round is many taps — so the one
- * thing a player can actually lose here is a beat they read too fast, or one
- * that went by under a held thumb during auto-play. Until now recovering it
- * meant opening the log, which covers the battlefield. The dead space the
- * banner was leaving is exactly the right size to hold it instead.
- *
- * Newest-first, not chronological: the freshest history then sits directly
- * under the beat it preceded, and older lines fall off the bottom rather than
- * pushing the current beat down. Scrolls rather than grows — the chassis'
- * outer boundary is fixed in every state, which is the point of the pass.
- */
-.beat-trail {
-  /* Takes only the height its lines need — `1 1 auto` would claim the whole
-     box and defeat the group centring above — but shrinks and scrolls the
-     moment a long round's history outgrows the space. */
-  flex: 0 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin-top: 7px;
-  padding-top: 7px;
-  border-top: 1px solid rgba(224, 166, 60, 0.16);
-  /* Scrollbar-free: this is a readout, not a control, and a 4px gutter on a
-     344px console is width the lines need more. */
-  scrollbar-width: none;
-}
-
-.beat-trail::-webkit-scrollbar {
-  display: none;
-}
-
-/* Set below the current beat's weight and above nothing — history is context,
-   so it recedes, but a line the player is reading *because* they missed it
-   can't be so faint it needs a second look. */
-.beat-trail-line {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 5px;
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 1.3;
-  color: var(--text-dim);
-}
-
-/* Wraps rather than truncating. This started as a single-line ellipsis and
-   that was wrong for the one surface a player reads *because* they missed
-   something — the trail scrolls, so a wrapped line costs height, not layout.
-   (The "..." on "Not very effective..." is authored banner text from
-   buildBeats, not a clip; nothing here is actually being cut off.)
-
-   min-width:0 because flex items default to min-width:auto — never narrower
-   than their own min-content — which would pin this span at its full
-   unwrapped width and stop it wrapping at all. */
-.beat-trail-text {
-  min-width: 0;
-  overflow: hidden;
-}
-
-.beat-trail-meta {
-  flex-shrink: 0;
-  font-weight: 700;
-  color: var(--mana);
-  opacity: 0.8;
-}
-
-/* A Field Effect's rules text is a sentence, not a cost — same split
-   .combat-banner-meta.banner-meta-rules makes one level up. Truncated here
-   rather than wrapped: in the trail it's a reminder of a beat already read in
-   full, so the first clause is enough to identify it. */
-.beat-trail-meta.banner-meta-rules {
-  min-width: 0;
+/* Who is acting, or who is being hit — context the player mostly already has,
+   set as a label rather than as prose so it never competes with the line under
+   it. Sentence case would read as the first half of a sentence the headline
+   then interrupts; small caps read as a byline. */
+.combat-banner-lead {
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
   color: var(--text-dim);
+  animation: banner-lead-in 0.2s var(--ease-out) both;
 }
 
-@keyframes banner-pop {
+/*
+ * The line the beat exists to deliver: the move's name, the damage number, the
+ * KO. Display type, in the beat's own color, with a bloom behind it — the same
+ * trick .draft-title-glow uses to stop dark-on-dark text reading as flat type
+ * pasted onto a gradient, at the scale that trick was meant for.
+ *
+ * Three lines, then it clips. Nothing authored reaches two at this size, and
+ * the clamp is a backstop against a long hero name in a fallback sentence
+ * pushing the tag and the meta line off the bottom of the chassis.
+ */
+.combat-banner-focus {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  /* A single token longer than the line (a compound move name) would otherwise
+     hit overflow:hidden and clip mid-word instead of wrapping. */
+  overflow-wrap: break-word;
+  color: var(--banner-color);
+  text-shadow: 0 0 26px rgba(0, 0, 0, 0.55), 0 2px 3px rgba(0, 0, 0, 0.85);
+  animation: banner-strike 0.26s cubic-bezier(0.2, 1.5, 0.5, 1) both;
+}
+
+/* A beat with no authored headline is a whole sentence in the headline slot
+   (StatusRemoved's "Aegis's Burn fades", ActionBlocked's "Cinder is Dazed and
+   can't move!"). Display sizing is for two or three words; a sentence at 26px
+   just fills the console with wrapping, so it drops a tier and reads as
+   narration — which is what it is. */
+.combat-banner-focus.banner-focus-sentence {
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+/* A move's targets, under its name. An arrow rather than the word "on", since
+   the lead above already established who is acting — the two lines read as
+   "CINDER / Ember Burst / ▸ Bramble", an order of operations rather than a
+   sentence chopped into three. */
+.combat-banner-sub {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--text-dim);
+  animation: banner-lead-in 0.2s var(--ease-out) 0.05s both;
+}
+
+/*
+ * Critical hit / Super effective / Not very effective. These were an em-dash
+ * and a clause on the end of the damage sentence, which is the one place in a
+ * fight where the game gets to shout and it was whispering. A stamp instead:
+ * a struck chip in the beat's own color, arriving a beat after the number so
+ * the two land as a one-two rather than together.
+ */
+.combat-banner-tag {
+  margin-top: 5px;
+  padding: 4px 13px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--banner-color);
+  background: color-mix(in srgb, var(--banner-color) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--banner-color) 45%, transparent),
+    0 0 18px -4px color-mix(in srgb, var(--banner-color) 60%, transparent);
+  animation: banner-stamp 0.22s cubic-bezier(0.2, 1.4, 0.45, 1) 0.08s both;
+}
+
+/*
+ * The beat's category color. One declaration per kind, read by both the
+ * headline and the tag through --banner-color above. Every value is an
+ * existing token — these are the same identities the floating combat numbers
+ * (.popup-crit, .popup-heal, …) already use, so a crit reads orange in the
+ * console and orange over the card it landed on.
+ */
+.banner-kind-crit {
+  --banner-kind-color: var(--crit);
+}
+
+.banner-kind-super {
+  --banner-kind-color: var(--accent);
+}
+
+/* Resisted: deliberately the one kind that goes *quieter* rather than louder.
+   A soft hit that shouted in gold would read as good news. */
+.banner-kind-resist {
+  --banner-kind-color: var(--text-dim);
+}
+
+.banner-kind-ko {
+  --banner-kind-color: var(--enemy);
+}
+
+/* An ordinary hit — no crit, no type advantage, a DoT tick. The only kind with
+   nothing to announce, so it stays at the console's own text color and the
+   light pool it casts is a near-neutral sheen rather than a hue. Deliberately
+   a shade off --text: pure white through the pool formula reads as haze. */
+.banner-kind-damage {
+  --banner-kind-color: #ccd3e0;
+}
+
+.banner-kind-detonate {
+  --banner-kind-color: var(--conduct);
+}
+
+.banner-kind-heal {
+  --banner-kind-color: var(--hp-high);
+}
+
+.banner-kind-buff {
+  --banner-kind-color: var(--buff);
+}
+
+.banner-kind-debuff {
+  --banner-kind-color: var(--hp-low);
+}
+
+.banner-kind-status {
+  --banner-kind-color: var(--haunt);
+}
+
+.banner-kind-mana {
+  --banner-kind-color: var(--mana);
+}
+
+.banner-kind-field {
+  --banner-kind-color: var(--accent);
+}
+
+@keyframes banner-lead-in {
   0% {
     opacity: 0;
-    transform: translateY(-4px) scale(0.98);
+    transform: translateY(-3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* The headline lands rather than fades in: it overshoots slightly on the way
+   down (the cubic-bezier above pulls past 1) so the beat has weight. */
+@keyframes banner-strike {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.9);
   }
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* The stamp comes down from above the page and settles — scaled up and
+   transparent to full size, which is what makes it read as struck onto the
+   beat rather than as another line of the layout. */
+@keyframes banner-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -1174,7 +1304,10 @@ textarea,
   padding-right: var(--shell-pad);
   margin-bottom: calc(var(--shell-pad) * -1);
   padding-bottom: var(--shell-pad);
-  padding-top: 2px;
+  /* 2px had the keys touching the panel above them, which is what made the row
+     read as a strip *appended* to the console rather than the bottom of it.
+     A key needs a little face around it to sit in. */
+  padding-top: 6px;
   /* Picks the near-ground gradient up exactly where .action-area's ends
      (#191d26) and carries it the last few pixels to the screen edge, so there
      is no join to see. Same commander's light, at the low strength it has by
@@ -1239,14 +1372,42 @@ textarea,
   transform: translateY(1px);
 }
 
+/*
+ * Off, not faded.
+ *
+ * This was `opacity: 0.35` on the whole key, and it was the weakest state in
+ * the console: a uniform fade reads as a rendering artifact — the same thing
+ * that happens to a screen mid-transition — rather than as a control the game
+ * has deliberately switched off. It also failed at the one job the row needs
+ * it for, which is telling the player at a glance whether Back is available
+ * this tap; against a dark console face, 35% of a dim key and 100% of a dim
+ * key are nearly the same pixel.
+ *
+ * So the off state is drawn rather than dimmed. The rim goes out entirely
+ * (a lit key has one, a dead key doesn't — that's the tell, and it's a
+ * *presence* difference, not a brightness one), the face sinks a full step
+ * darker than the console around it so the key reads as a filled hole, and
+ * the label drops to a value that is legible but plainly inert. Nothing here
+ * is translucent, so it never reads as unfinished.
+ */
 .bottom-action:disabled {
-  opacity: 0.35;
+  opacity: 1;
+  color: #4e5665;
+  background: linear-gradient(180deg, rgba(3, 4, 7, 0.66), rgba(7, 9, 13, 0.46));
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.85), inset 0 0 0 1px rgba(255, 255, 255, 0.02);
   cursor: not-allowed;
   pointer-events: none;
 }
 
+/* The glyph carries the state harder than the word does — it's the part the
+   eye lands on first at this size — so it goes further down than the label. */
+.bottom-action:disabled .bottom-action-glyph {
+  opacity: 0.45;
+}
+
 .bottom-action-glyph {
   line-height: 1;
+  transition: color var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out);
 }
 
 /* Back and Switch: the two keys pressed mid-decision, several times a turn.
@@ -1269,6 +1430,44 @@ textarea,
 
 .bottom-action-primary .bottom-action-glyph {
   font-size: 15px;
+}
+
+/*
+ * Back, while it is actually available.
+ *
+ * Availability is the thing this key has to communicate, and it flickers: Back
+ * is dead on the first hero's first decision, live the moment a move is
+ * picked, dead again after the round resolves. Sharing one neutral face with
+ * Menu meant the only difference between "you can undo" and "you can't" was an
+ * opacity value on an already-dark key — which is to say, nearly nothing.
+ *
+ * So it takes a lit rim in the console's own gold the way Switch takes ally
+ * blue, and only while it's live: the row now reads as two colored keys and
+ * one neutral one when there's something to undo, and one colored key and two
+ * neutral ones when there isn't. That's a difference in *kind*, visible
+ * without comparing brightnesses, and it costs the row no width.
+ *
+ * Gold rather than a fourth hue on purpose — Back is navigation, not a play,
+ * and --accent is already what the console lights itself with.
+ */
+.bottom-action-back:not(:disabled) {
+  color: var(--text);
+  background: linear-gradient(180deg, rgba(224, 166, 60, 0.15), rgba(224, 166, 60, 0.025));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(224, 166, 60, 0.42),
+    inset 0 -1px 0 rgba(255, 214, 140, 0.16);
+}
+
+.bottom-action-back:not(:disabled) .bottom-action-glyph {
+  color: var(--accent);
+}
+
+.bottom-action-back:hover:not(:disabled) {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(224, 166, 60, 0.85),
+    inset 0 -1px 0 rgba(255, 214, 140, 0.24), inset 0 0 22px -6px rgba(224, 166, 60, 0.6);
+}
+
+.bottom-action-switch:not(:disabled) .bottom-action-glyph {
+  color: var(--ally);
 }
 
 /* Switching is the one thing in this row that's a *play* rather than
@@ -1294,6 +1493,29 @@ textarea,
   flex-direction: column;
   gap: 3px;
   font-size: 15px;
+  /* The row's one tie back to the fight above it. Menu has no state to report
+     — it is never disabled and never colored by what it does — so its rim is
+     free to carry the commander's own light instead, the same --console-rgb
+     the console face and the seam under the arena are lit with. The key
+     recolours with the acting hero, which is what stops the row reading as a
+     separate strip of chrome bolted under the console. */
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(var(--console-rgb, 224, 166, 60), 0.2),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+  transition: color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out),
+    box-shadow var(--dur-slow, 420ms) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.bottom-action-utility:hover:not(:disabled) {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(var(--console-rgb, 224, 166, 60), 0.6),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.07), inset 0 0 20px -6px rgba(var(--console-rgb, 224, 166, 60), 0.5);
+}
+
+/* Tinted, not saturated. At full strength the commander's light turned this
+   into a solid orange glyph under a Fire hero, which reads as a warning rather
+   than as a menu — the rim is where the light belongs, and the glyph only
+   needs enough of it to belong to the same key. */
+.bottom-action-utility .bottom-action-glyph {
+  color: rgba(var(--console-rgb, 224, 166, 60), 0.5);
 }
 
 /* Target selection. The row is one full-width Back and nothing else — see
@@ -1304,13 +1526,17 @@ textarea,
    centres on its own glyph instead of drifting to the middle of a very wide
    button, and the key face lifts slightly, because it is now the only lit
    control on the console. */
+/* Same gold as the docked Back above, a step brighter — during target
+   selection this is the only lit control on the console, and it is always
+   available (that is the whole point of the solo state), so there is no
+   off-appearance for it to stay distinguishable from. */
 .bottom-bar-solo .bottom-action-primary {
   gap: 9px;
   font-size: 15px;
   letter-spacing: 0.04em;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.02));
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.11),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.11);
+  background: linear-gradient(180deg, rgba(224, 166, 60, 0.19), rgba(224, 166, 60, 0.04));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(224, 166, 60, 0.6),
+    inset 0 -1px 0 rgba(255, 214, 140, 0.2), inset 0 0 26px -8px rgba(224, 166, 60, 0.55);
 }
 
 .bottom-action-label {
