@@ -1,6 +1,7 @@
 import { useMemo, type CSSProperties, type ReactNode } from 'react';
 import { moves } from '../../data/moves';
 import type { MoveDefinition, StatKey, StatLine, TypeId } from '../../engine/content';
+import type { HealCaster } from '../../engine/heal/healPipeline';
 import type { StatModifiers } from '../../engine/state';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from './HeroPortrait';
@@ -222,7 +223,7 @@ export function StageKit({ moveIds, onPick }: { moveIds: readonly string[]; onPi
  * carries the move's own type color, so the card still reads as the same
  * object as the chip that opened it.
  */
-export function StageMovePopup({ move, onClose }: { move: MoveDefinition; onClose: () => void }) {
+export function StageMovePopup({ move, caster, onClose }: { move: MoveDefinition; caster?: HealCaster; onClose: () => void }) {
   return (
     <div className="log-overlay" onClick={onClose}>
       <div
@@ -231,7 +232,7 @@ export function StageMovePopup({ move, onClose }: { move: MoveDefinition; onClos
         aria-label={`${move.name} details`}
         style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
       >
-        <MoveInfoPanel move={move} />
+        <MoveInfoPanel move={move} caster={caster} />
         <div className="move-popup-hint">Tap anywhere to close</div>
       </div>
     </div>

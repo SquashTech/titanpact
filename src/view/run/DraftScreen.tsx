@@ -158,7 +158,13 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
         {complete ? 'Seal the Pact' : `Choose ${STARTER_PICK_COUNT - pickedIds.length} more`}
       </button>
 
-      {popupMove && <StageMovePopup move={popupMove} onClose={() => setPopupMove(null)} />}
+      {popupMove && (
+        <StageMovePopup
+          move={popupMove}
+          caster={{ wisdom: featured.baseStats.wisdom, types: featured.types }}
+          onClose={() => setPopupMove(null)}
+        />
+      )}
 
       {inspecting && (
         <HeroPreviewOverlay

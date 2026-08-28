@@ -13,6 +13,7 @@ import { chosenEvolutionPaths, rosterEntryTypes } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
 import { deriveContractOffer } from '../../run/recruitment';
 import { getTypeColorRgb } from '../combat/typeColors';
+import { healCasterForEntry } from '../shared/healCaster';
 import {
   StageCandidate,
   StageFigure,
@@ -238,7 +239,9 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone }: 
         {allClaimed || contracts <= 0 ? 'Continue' : claimedRosterIds.length > 0 ? 'Done Recruiting' : 'Leave Them'}
       </button>
 
-      {popupMove && <StageMovePopup move={popupMove} onClose={() => setPopupMove(null)} />}
+      {popupMove && (
+        <StageMovePopup move={popupMove} caster={healCasterForEntry(hero, featured)} onClose={() => setPopupMove(null)} />
+      )}
 
       {inspecting && (
         <HeroPreviewOverlay

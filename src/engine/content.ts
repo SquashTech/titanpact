@@ -329,8 +329,8 @@ export interface MoveDefinition {
   kind: 'damage' | 'heal' | 'buff';
   /** damage-kind only. */
   basePower?: number;
-  /** heal-kind only. Flat, per the flat-additive convention (CLAUDE.md "Stat modifiers"). */
-  healAmount?: number;
+  /** heal-kind only. The authored figure the healing formula scales (docs/combat.md "The healing formula", engine/heal/healPipeline.ts) — HP restored by a Wisdom-50 caster with no STAB, NOT a flat guaranteed amount. */
+  healPower?: number;
   /** buff-kind only. Negative amounts are debuffs — same move kind covers both. */
   statDeltas?: readonly StatDelta[];
   /** Any kind — see StatusApplication above. */

@@ -69,6 +69,8 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
   /** The relic-sourced slice of `grants`, called out under the bars so a team-wide buff is legible as a relic's doing rather than looking like the hero's own numbers. */
   const relicGrants = Object.entries(relicStatContribution(teamStatModifiers, teamPassiveGrants, passives)) as [StatKey, number][];
   const evolved = chosenEvolutionPaths(progressionTable, entry);
+  /** What a heal move on this sheet actually restores in this hero's hands (healPipeline.ts). Built from `grants` rather than from healCasterForEntry, since this component has already done that work — same inputs either way. */
+  const healCaster = { wisdom: hero.baseStats.wisdom + (grants.wisdom ?? 0), types: rosterEntryTypes(hero, entry) };
   /** Long-press-triggered move/item/class detail popup — shared by the moves row, the equipment grid, and the Class badge below (mirrors LevelUpScreen's movePopup, "hold to inspect" standard). */
   const [popup, setPopup] = useState<{ kind: 'move' | 'equipment' | 'class'; id: string } | null>(null);
 
@@ -203,7 +205,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
           <div className="log-panel move-popup-panel">
             {popup.kind === 'move' ? (
               /* Same move dossier as everywhere else (MoveDetailOverlay.tsx), minus the forecast — a preview screen has no fight to forecast against. */
-              moves[popup.id] ? <MoveDetailCard move={moves[popup.id]} /> : null
+              moves[popup.id] ? <MoveDetailCard move={moves[popup.id]} caster={healCaster} /> : null
             ) : popup.kind === 'equipment' ? (
               <EquipmentInfoPanel item={equipmentLookup[popup.id] ?? null} />
             ) : (

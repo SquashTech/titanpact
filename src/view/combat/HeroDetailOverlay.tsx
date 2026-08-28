@@ -64,6 +64,8 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
     STAT_ORDER.map((stat) => [stat, getEffectiveStat(hero, combatant, stat, fieldEffectCtx)])
   ) as Record<StatKey, number>;
   const evolved = rosterEntry ? chosenEvolutionPaths(progressionTable, rosterEntry) : [];
+  /** In-fight, so this reads the same effective Wisdom the round will (mid-fight buffs and the field effect included) rather than the loadout baseline. */
+  const healCaster = { wisdom: effectiveTotals.wisdom, types: effectiveTypes(hero, combatant) };
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = maxHp > 0 ? Math.max(0, combatant.currentHp) / maxHp : 0;
@@ -262,7 +264,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           <div className="log-panel move-popup-panel">
             {popup.kind === 'move' ? (
               /* The same dossier the fight screen's move rows open — one card for a move, wherever the player holds one. No combat context here: this sheet is read out of a fight as often as in one, so the forecast half simply doesn't render. */
-              moves[popup.id] ? <MoveDetailCard move={moves[popup.id]} /> : null
+              moves[popup.id] ? <MoveDetailCard move={moves[popup.id]} caster={healCaster} /> : null
             ) : popup.kind === 'equipment' ? (
               <EquipmentInfoPanel item={equipmentLookup[popup.id] ?? null} />
             ) : (

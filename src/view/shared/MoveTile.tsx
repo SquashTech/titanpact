@@ -1,5 +1,6 @@
 import { useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent } from 'react';
 import type { MoveDefinition } from '../../engine/content';
+import { resolveHealFor, type HealCaster } from '../../engine/heal/healPipeline';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
@@ -189,6 +190,27 @@ export const TARGET_MODE_LABELS: Record<MoveDefinition['target'], string> = {
 };
 
 /**
+ * What a heal move actually restores, for whoever is about to cast it.
+ *
+ * Healing stopped being a flat authored number when the healing formula
+ * landed (docs/combat.md), so every readout that used to print
+ * `move.healPower` as literal HP now has to run the formula or lie —
+ * Solace's Restore Vigor says 60 on Solace's own sheet and 36 on Cinder's,
+ * and those are both correct. Callers pass a `caster` wherever a hero is in
+ * scope, which is everywhere a move is shown except the type compendium.
+ *
+ * Without one this falls back to the authored HealPower, which is the same
+ * number a Wisdom-50 caster with no STAB gets — honest as a baseline, and
+ * flagged `resolved: false` so the caller can drop the "HP" unit rather
+ * than promise hit points it can't compute.
+ */
+export function healReadout(move: MoveDefinition | undefined, caster?: HealCaster): { value: number; resolved: boolean } | null {
+  if (!move || move.kind !== 'heal' || move.healPower == null) return null;
+  if (!caster) return { value: move.healPower, resolved: false };
+  return { value: resolveHealFor(move, caster).heal, resolved: true };
+}
+
+/**
  * One-line "what this actually does" summary for a move, in the vocabulary the
  * hero sheet and the long-press popup already use (STAT_LABELS abbreviations,
  * TARGET_MODE_LABELS wording).
@@ -203,10 +225,11 @@ export const TARGET_MODE_LABELS: Record<MoveDefinition['target'], string> = {
  * line is the per-target effectiveness readout, which needs live combat state and
  * so is built by the caller (FightScreen).
  */
-export function moveEffectSummary(move: MoveDefinition): string {
+export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): string {
   const parts: string[] = [];
 
-  if (move.kind === 'heal' && move.healAmount != null) parts.push(`Restores ${move.healAmount} HP`);
+  const heal = healReadout(move, caster);
+  if (heal) parts.push(`Restores ${heal.value} HP`);
 
   if (move.statDeltas?.length) {
     parts.push(move.statDeltas.map(({ stat, amount }) => `${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]}`).join(', '));
@@ -344,15 +367,19 @@ export function MoveTile({
 export function MoveButtonReplica({
   move,
   selected,
+  caster,
   onClick,
   onLongPress,
 }: {
   move: MoveDefinition;
   selected?: boolean;
+  /** The hero whose button this is, so a heal shows what IT restores — see healReadout. Elemental Force still isn't applied here (live-combat-only), but Wisdom and STAB are loadout facts that read fine out of combat. */
+  caster?: HealCaster;
   onClick?: () => void;
   onLongPress?: () => void;
 }) {
   const longPress = useLongPress(onLongPress, onClick);
+  const heal = healReadout(move, caster);
   return (
     <button
       type="button"
@@ -380,9 +407,9 @@ export function MoveButtonReplica({
         )}
         {/* Bare number, no "HEAL" — kept in lockstep with FightScreen's own
             move button, which has the reasoning. */}
-        {move.kind === 'heal' && move.healAmount != null && (
+        {heal && (
           <span className="move-power move-heal">
-            <strong>{move.healAmount}</strong>
+            <strong>{heal.value}</strong>
           </span>
         )}
       </div>
@@ -392,6 +419,8 @@ export function MoveButtonReplica({
 
 interface MoveInfoPanelProps {
   move: MoveDefinition | null;
+  /** The hero this panel is describing the move FOR, so a heal reads as real hit points rather than as its authored baseline (healReadout). */
+  caster?: HealCaster;
   /** Shown above the move name while a move is loaded, e.g. "Hover or tap a move". Omit for no label row. */
   label?: string;
   /** Shown in place of move details when nothing is loaded yet. */
@@ -405,7 +434,8 @@ interface MoveInfoPanelProps {
  * their own — one fewer line keeps the panel short enough that a full
  * 6-hero roster doesn't push LevelUpScreen into scrolling.
  */
-export function MoveInfoPanel({ move, label, placeholder = 'Hover or tap a move to see its details.' }: MoveInfoPanelProps) {
+export function MoveInfoPanel({ move, caster, label, placeholder = 'Hover or tap a move to see its details.' }: MoveInfoPanelProps) {
+  const heal = healReadout(move ?? undefined, caster);
   return (
     <div className="move-info-panel">
       {move ? (
@@ -421,10 +451,13 @@ export function MoveInfoPanel({ move, label, placeholder = 'Hover or tap a move 
                 <span className="move-stat-unit">POW</span>
               </span>
             )}
-            {move.kind === 'heal' && move.healAmount != null && (
+            {heal && (
               <span className="move-stat move-stat-heal">
-                <strong>{move.healAmount}</strong>
-                <span className="move-stat-unit">HEAL</span>
+                <strong>{heal.value}</strong>
+                {/* "HP" only once the number IS hit points. Unresolved it is
+                    still the authored HealPower, and calling that HP would be
+                    the exact lie healReadout exists to avoid. */}
+                <span className="move-stat-unit">{heal.resolved ? 'HP' : 'HEAL'}</span>
               </span>
             )}
             <span className="move-stat move-stat-cost">

@@ -139,6 +139,109 @@ into `rollDamage` in place of the flat constant.
 
 ---
 
+## The healing formula
+
+```
+Heal = HealPower           ← authored per move (MoveDefinition.healPower)
+     × WisdomMult          ← the caster's Wisdom
+     × STAB (1.25×)        ← the caster's types vs the move's type
+```
+
+```
+WisdomMult = 1 + (effectiveWisdom − 50) / 100,  clamped to [0.5, 2.0]
+```
+
+Implemented in `engine/heal/healPipeline.ts` and applied by
+`combat/resolveRound.ts`'s `heal` case. `effectiveWisdom` is read through
+`getEffectiveStat`, so buffs, equipment, Class grants and Field Effects all
+reach it without being folded back into a stat — the same two-pipeline
+discipline the damage side keeps.
+
+`HealPower` is the authored figure, **not** a guaranteed HP amount: it is what
+a Wisdom-50 caster with no STAB restores. That reference point is deliberate,
+so an authored number reads as "what an average caster gets" and the existing
+values needed no retuning when the formula landed.
+
+### What this buys
+
+The same move is worth different amounts in different hands, which is the
+entire point — a heal is a fact about the caster, not about the move:
+
+| Caster | Move | Wis | STAB | Heal |
+|---|---|---|---|---|
+| Cinder (Fire/Iron) | Restore Vigor 40 | 40 | — | 36 |
+| Sylva (Nature) | Mend Wounds 45 | 60 | — | 50 |
+| Revenant (Spirit) | Mend Wounds 45 | 46 | ✓ | 54 |
+| Solace (Light) | Restore Vigor 40 | 70 | ✓ | 60 |
+
+Wisdom rather than the move's category off-stat (Intelligence/Attack) so that
+support is **its own build axis** instead of collapsing into "mage who
+sometimes heals" — a healer invests in a defensive stat, pays for it in
+offence, and in exchange heals harder *and* survives to keep healing. It also
+forecloses a degenerate case: a category rule would let a future physical
+self-heal scale off a 90-Attack bruiser.
+
+The 1-point-of-Wisdom = 1% shape lines up with the locked "flat additives in
+multiples of 5 or 10" rule, so it reads at the design table as **"+10 Wisdom is
++10% healing"** — a Fortify visibly helps the healer.
+
+### Three deliberate asymmetries with the damage formula
+
+Each is a decision, not an omission. Re-adding any of them "for symmetry" is a
+regression.
+
+1. **No target max-HP term.** A heal buys *turns*, not hit points, and turns
+   bought = heal ÷ incoming damage per hit. A wall's high Defence already makes
+   a flat heal worth roughly 3× more turns on it than on a glass caster;
+   scaling by max HP would multiply that same bias again and make low-HP heroes
+   effectively un-healable — straight into CLAUDE.md's "no hero is a trap pick".
+   Healing is absolute, and that is the point. It also means a `bothAllies` heal
+   resolves **once** and pays every ally the same number.
+2. **No variance.** Variance is load-bearing on *damage* — it blurs the kill
+   range so the attacker cannot compute a guaranteed lethal. On a heal the
+   planner and the randomised party are the same person, so it punishes correct
+   play without creating a decision.
+3. **No defender-side term at all.** Healing is unopposed: nothing scales
+   against it. That is why the Wisdom term is a gentle linear nudge rather than
+   a full off/def ratio, which would run away without an opposing stat, and why
+   it carries a `[0.5, 2.0]` clamp.
+
+### Heal-over-turn (Renew)
+
+A HoT is healing, so it runs the same formula — **snapshotted at application
+time** off the caster, not recomputed per tick off whoever holds it. Renew
+persists through a switch (`conditions.md`), and the caster earned the
+magnitude; re-reading the holder's Wisdom every round would make the same
+Second Wind worth more on a bulkier ally who had nothing to do with casting it.
+Decay-by-halving operates on whatever magnitude the snapshot produced.
+
+The scaling is gated on `StatusDefinition.pipeline === 'hot'`, not on the
+move's kind, so a damage move that grants Renew scales its Renew and a heal
+move that inflicts Burn does not scale the Burn.
+
+**Passive heals are not scaled.** `PassiveEffect { kind: 'heal' }` — Sanguine's
+"heal for the amount that Bleed tick dealt" — is already derived from another
+number; running it through the formula as well would compound two multipliers.
+
+### Settled alongside the formula (2026-08-28 designer sign-off)
+
+- **Wisdom is the heal stat**, and stays one. More ways to raise it are coming,
+  which is also what earns the `[0.5, 2.0]` clamp its keep: nothing on the
+  roster reaches either end today, so the guardrail is there for the stacking
+  Wisdom sources that will exist, not for anything current. Do not remove it as
+  dead code.
+
+### Open questions
+
+- **Balance target.** The invariant to tune against is that a heal turn restores
+  *less* than an attack turn deals to that target. In doubles two enemies act
+  per round against one healer, so even a heal at parity with a single attacker
+  loses ground — which is what stops healing from stalling fights into a grind.
+  The current move numbers are placeholders, so nothing is calibrated to this
+  yet; it is the rule to calibrate *by* once real numbers are authored.
+
+---
+
 ## Stat modifiers
 
 - Stat modifiers are **flat numeric additives** — not the VGC stage/bracket system.
@@ -191,3 +294,6 @@ regression:
   `mana.md`.
 - **No spread damage reduction** (doubles-only, covered above).
 - **No VGC stat-stage brackets** — modifiers are flat additives (covered above).
+- **No percentage-of-max-HP healing, and no variance on heals.** Both are covered
+  in "The healing formula" above, with the reasoning; both look like consistency
+  fixes and are regressions.

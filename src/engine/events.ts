@@ -97,6 +97,10 @@ export interface HealedEvent extends BaseEvent {
   targetCombatantId: string;
   moveId: string;
   amount: number;
+  /** The formula's terms, carried the way DamageDealtEvent carries its own (docs/combat.md "The healing formula"): `amount` is the rounded result, these are how it got there, so the Battle Log can show the math without re-deriving it. */
+  healPower: number;
+  wisdomMult: number;
+  stab: number;
 }
 
 export interface StatusAppliedEvent extends BaseEvent {

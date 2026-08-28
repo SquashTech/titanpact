@@ -27,6 +27,10 @@ don't silently override it.
   off/def **ratio**. The *damage pipeline* applies BasePower and every multiplier term.
   Damage modifiers (relic damage bonuses, offensive buffs, etc.) live in the **damage
   pipeline** — never folded back into stats. Mixing them destroys balance legibility.
+- **Healing formula (2026-08-28):** `Heal = HealPower × WisdomMult × STAB`, with
+  `WisdomMult = 1 + (Wisdom − 50)/100`. Scales with the **caster's Wisdom** (whatever the
+  move's category), **never with the target's max HP**, and carries **no variance**. A HoT
+  snapshots it at application time. Reasoning + open questions: `docs/combat.md`.
 - **Stat line:** HP, Attack/Defense, Intelligence/Wisdom, Speed, Mana, MP Regen.
 - **Stat modifiers are flat additive integers, multiples of 5 or 10.** No % stat mods.
   There is **no automatic stat growth** from leveling.

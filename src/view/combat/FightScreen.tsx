@@ -9,7 +9,8 @@ import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { relics } from '../../data/relics';
 import type { CombatState, Side } from '../../engine/state';
-import { isLockedIn, effectiveTypes, hasAffordableMove } from '../../engine/state';
+import { isLockedIn, effectiveTypes, hasAffordableMove, getEffectiveStat } from '../../engine/state';
+import type { HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../engine/combat/switching';
 import { selectableTargets } from '../../engine/combat/statusEngine';
@@ -36,7 +37,7 @@ import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
-import { MoveKindBadge, TARGET_MODE_LABELS, moveEffectSummary, useLongPress } from '../shared/MoveTile';
+import { MoveKindBadge, TARGET_MODE_LABELS, healReadout, moveEffectSummary, useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -63,6 +64,8 @@ interface MoveRowProps {
   selected: boolean;
   /** Elemental Force's contribution to this move's BasePower right now (damagePipeline.ts), already resolved by the caller. */
   forceBonus: number;
+  /** The commanding hero's live heal inputs (healPipeline.ts), resolved by the caller for the same reason forceBonus is — a heal's number is a fact about the caster, not about the move. */
+  caster: HealCaster;
   matchups: readonly MoveMatchup[];
   multClass: (mult: number) => string;
   formatMult: (mult: number) => string;
@@ -87,10 +90,11 @@ interface MoveRowProps {
  * rules off `:disabled`), still refuses to act on a tap, and still opens its
  * dossier on a hold.
  */
-function MoveRow({ move, affordable, selected, forceBonus, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
+function MoveRow({ move, affordable, selected, forceBonus, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
   const longPress = useLongPress(onInspect, () => {
     if (affordable) onSelect();
   });
+  const heal = healReadout(move, caster);
 
   return (
     <button
@@ -146,10 +150,14 @@ function MoveRow({ move, affordable, selected, forceBonus, matchups, multClass, 
             Base Power needs its unit spelled out because 60 alone could be
             anything; a heal amount is HP, the number is already in --hp-high
             green, and the badge at the row's far end is now the HP heart
-            itself — three things saying "health" made the word the fourth. */}
-        {move.kind === 'heal' && move.healAmount != null && (
+            itself — three things saying "health" made the word the fourth.
+
+            The number is THIS hero's heal, run through the formula
+            (healReadout) rather than the move's authored HealPower — same
+            reason the BP readout beside it folds in Elemental Force. */}
+        {heal && (
           <span className="move-power move-heal">
-            <strong>{move.healAmount}</strong>
+            <strong>{heal.value}</strong>
           </span>
         )}
         {/* Holds the power slot open on a move that has no number to put in
@@ -178,7 +186,7 @@ function MoveRow({ move, affordable, selected, forceBonus, matchups, multClass, 
             {move.statusApplication && <span className="move-eff-status">+{move.statusApplication.statusId}</span>}
           </span>
         ) : (
-          <span className="move-effect-text">{moveEffectSummary(move)}</span>
+          <span className="move-effect-text">{moveEffectSummary(move, caster)}</span>
         )}
       </div>
     </button>
@@ -1274,6 +1282,13 @@ export function FightScreen({
                         affordable={combatant.currentMana >= move.manaCost}
                         selected={isSelected}
                         forceBonus={resolveElementalForceBonus(combatant, move.type, statuses)}
+                        caster={{
+                          wisdom: getEffectiveStat(allCombatants[combatant.heroId], combatant, 'wisdom', {
+                            active: combat.activeFieldEffect,
+                            defs: fieldEffects,
+                          }),
+                          types: effectiveTypes(allCombatants[combatant.heroId], combatant),
+                        }}
                         matchups={
                           move.kind === 'damage'
                             ? enemyActiveAlive.map((eid) => ({

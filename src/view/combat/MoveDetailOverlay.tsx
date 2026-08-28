@@ -2,13 +2,14 @@ import { createPortal } from 'react-dom';
 import type { CSSProperties, ReactNode } from 'react';
 import type { MoveDefinition } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
-import { effectiveTypes, getMaxHp, getMaxMana } from '../../engine/state';
+import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana } from '../../engine/state';
 import { allCombatants } from '../../data/content';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { typeChart } from '../../data/typechart';
 import { resolveStab, resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
+import { resolveHealFor, type HealCaster } from '../../engine/heal/healPipeline';
 import {
   calcDamage,
   resolveElementalForceBonus,
@@ -25,7 +26,7 @@ import { StatusGlyph, statusColor } from '../shared/statusIcons';
 import { STAT_LABELS, hpTier } from '../shared/StatBars';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { TARGET_MODE_LABELS, moveKindGlyph, moveKindLabel } from '../shared/MoveTile';
+import { TARGET_MODE_LABELS, healReadout, moveKindGlyph, moveKindLabel } from '../shared/MoveTile';
 import { overlayHost } from '../shared/overlayHost';
 
 /**
@@ -220,6 +221,8 @@ interface CardProps {
   /** Optional eyebrow above the name — LevelUpScreen's replace offer uses it to say which slot is being inspected. */
   label?: string;
   context?: MoveDossierContext;
+  /** Who is casting, for screens that have a hero but no live fight (level-up, hero sheet, draft). A `context` supersedes it — that carries a real Combatant, so the field effect and any mid-fight Wisdom buff are already in the number. Without either, a heal falls back to its authored HealPower (healReadout). */
+  caster?: HealCaster;
 }
 
 /**
@@ -250,13 +253,25 @@ interface CardProps {
  * - **What is left in the tank?** The cost gem says what it costs; with a live
  *   fight it now also says what the hero is standing on afterwards.
  */
-export function MoveDetailCard({ move, label, context }: CardProps) {
+export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   const typeColor = getTypeColor(move.type);
   const attacker = context ? context.combat.combatants[context.attackerId] : undefined;
   const attackerHero = attacker ? allCombatants[attacker.heroId] : undefined;
 
+  // Heals take STAB too (docs/combat.md "The healing formula"), so this is no
+  // longer damage-only — a Light healer's Light heal is 1.25x for exactly the
+  // same reason a Light nuke is.
+  const healCaster: HealCaster | undefined =
+    attacker && attackerHero
+      ? {
+          wisdom: getEffectiveStat(attackerHero, attacker, 'wisdom', { active: context?.combat.activeFieldEffect ?? null, defs: fieldEffects }),
+          types: effectiveTypes(attackerHero, attacker),
+        }
+      : caster;
+  const heal = move.kind === 'heal' ? healReadout(move, healCaster) : null;
+  const healTerms = healCaster && move.kind === 'heal' ? resolveHealFor(move, healCaster) : null;
   const stab =
-    move.kind === 'damage' && attacker && attackerHero ? resolveStab(move.type, effectiveTypes(attackerHero, attacker)) > 1 : false;
+    (move.kind === 'damage' || move.kind === 'heal') && healCaster ? resolveStab(move.type, healCaster.types) > 1 : false;
   const forceBonus = attacker ? resolveElementalForceBonus(attacker, move.type, statuses) : 0;
   const manaAfter = attacker ? attacker.currentMana - move.manaCost : null;
   const manaPool = attacker && attackerHero ? getMaxMana(attackerHero, attacker) : null;
@@ -305,11 +320,30 @@ export function MoveDetailCard({ move, label, context }: CardProps) {
             {forceBonus > 0 && <span className="move-detail-boost">▲{forceBonus}</span>}
           </span>
         )}
-        {move.kind === 'heal' && move.healAmount != null && (
-          <span className="move-detail-stat move-detail-stat-heal">
+        {heal && (
+          <span
+            className="move-detail-stat move-detail-stat-heal"
+            title={
+              healTerms
+                ? `${healTerms.healPower} HealPower × ${healTerms.wisdomMult.toFixed(2)} Wisdom${healTerms.stab > 1 ? ' × 1.25 STAB' : ''}`
+                : undefined
+            }
+          >
             <StatGlyph stat="hp" tone="inherit" />
-            <strong>{move.healAmount}</strong>
-            <span className="move-detail-unit">HP</span>
+            <strong>{heal.value}</strong>
+            <span className="move-detail-unit">{heal.resolved ? 'HP' : 'HEAL'}</span>
+          </span>
+        )}
+        {/* The Wisdom term, stated the way STAB below is: a heal that reads 60
+            on one hero and 36 on another has to say WHY on the card, or the
+            formula just looks like the numbers are unstable. Hidden at
+            exactly 1.00 — a caster sitting on the reference Wisdom has no
+            story to tell. */}
+        {healTerms && healTerms.wisdomMult !== 1 && (
+          <span className="move-detail-stat move-detail-stat-wis" title="Wisdom scales healing: ±1% per point off 50">
+            <StatGlyph stat="wisdom" tone="inherit" />
+            <strong>×{healTerms.wisdomMult.toFixed(2)}</strong>
+            <span className="move-detail-unit">WIS</span>
           </span>
         )}
         {/* STAB wears the attacker's own type glyph rather than the word

@@ -21,6 +21,7 @@ import { applyManaRegen } from './manaRegen';
 import { setFieldEffect, tickFieldEffect } from './fieldEffectEngine';
 import { resolveStatRatio, rollDamage, resolveElementalForceBonus, statKeysForCategory, type DamageModifier } from '../damage/damagePipeline';
 import type { TypeChart } from '../damage/typeMult';
+import { resolveHeal, scaleHotMagnitude } from '../heal/healPipeline';
 import { applyHpDelta } from './faintHandling';
 import {
   detonateTriggeredStatuses,
@@ -261,16 +262,34 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       }
 
       case 'heal': {
+        // Target-independent by design (healPipeline.ts): the healing formula
+        // has no defender-side term, so one resolve covers every ally a
+        // bothAllies heal reaches. Field-effect context read fresh here for
+        // the same reason the damage case does — a faster action this round
+        // may already have changed the battlefield.
+        const casterNow = working.combatants[action.combatantId];
+        const healFieldCtx = { active: working.activeFieldEffect, defs: fieldEffects };
+        const healed = resolveHeal(move, attackerHero, casterNow, healFieldCtx);
+
         for (const targetId of targetIds) {
           const target = working.combatants[targetId];
           if (!target || target.fainted) continue;
           const targetHero = heroes[target.heroId];
           const maxHp = getMaxHp(targetHero, target);
-          const amount = move.healAmount ?? 0;
 
-          events.push({ type: 'Healed', round, sourceCombatantId: action.combatantId, targetCombatantId: targetId, moveId: move.id, amount });
+          events.push({
+            type: 'Healed',
+            round,
+            sourceCombatantId: action.combatantId,
+            targetCombatantId: targetId,
+            moveId: move.id,
+            amount: healed.heal,
+            healPower: healed.healPower,
+            wisdomMult: healed.wisdomMult,
+            stab: healed.stab,
+          });
 
-          const hpResult = applyHpDelta(working, round, targetId, amount, maxHp);
+          const hpResult = applyHpDelta(working, round, targetId, healed.heal, maxHp);
           working = hpResult.state;
           events.push(...hpResult.events);
         }
@@ -311,10 +330,18 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       const def = statuses[app.statusId];
       if (def) {
         const applyTargets = app.target === 'self' ? [action.combatantId] : targetIds;
+        // A heal-over-turn is healing, so it runs the healing formula too —
+        // snapshotted once here off the CASTER, not re-read per tick off the
+        // holder (healPipeline.ts scaleHotMagnitude has the reasoning).
+        // Non-HoT statuses pass through untouched.
+        const magnitude = scaleHotMagnitude(app.magnitude, def, move, attackerHero, working.combatants[action.combatantId], {
+          active: working.activeFieldEffect,
+          defs: fieldEffects,
+        });
         const statusAppliedEvents: CombatEvent[] = [];
         for (const applyTargetId of applyTargets) {
           if (!working.combatants[applyTargetId] || working.combatants[applyTargetId].fainted) continue;
-          const result = applyStatus(working, round, applyTargetId, def, { magnitude: app.magnitude, duration: app.duration });
+          const result = applyStatus(working, round, applyTargetId, def, { magnitude, duration: app.duration });
           working = result.state;
           events.push(...result.events);
           statusAppliedEvents.push(...result.events);

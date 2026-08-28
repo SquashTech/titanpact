@@ -17,6 +17,7 @@ import {
   type EvolutionNode,
 } from '../../run/progression';
 import { MoveInfoPanel, MoveButtonReplica, useLongPress } from '../shared/MoveTile';
+import { healCasterForEntry } from '../shared/healCaster';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
@@ -387,7 +388,11 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
               {/* The offered move itself — permanent for as long as the offer
                   is open, so the player always sees what they'd be learning. */}
               <div className="offer-move-highlight">
-                <MoveInfoPanel move={moves[offer.moveId]} label="New move offered" />
+                <MoveInfoPanel
+                  move={moves[offer.moveId]}
+                  label="New move offered"
+                  caster={healCasterForEntry(heroes[offerEntry.heroId], offerEntry, run.relics)}
+                />
               </div>
               <div className="offer-swap-arrow" aria-hidden="true">
                 ↓ replaces one of
@@ -398,6 +403,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
                     key={moveId}
                     move={moves[moveId]}
                     selected={selectedReplaceId === moveId}
+                    caster={healCasterForEntry(heroes[offerEntry.heroId], offerEntry, run.relics)}
                     onClick={() => setSelectedReplaceId(moveId)}
                     onLongPress={() => setMovePopup({ moveId, label: `${heroes[offerEntry.heroId].name} — current move` })}
                   />
@@ -475,7 +481,11 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
         <div className="log-overlay" onClick={() => setMovePopup(null)}>
           <div className="log-panel move-popup-panel">
             {/* Same move dossier the fight screen opens (MoveDetailOverlay.tsx) — the whole point of this screen is choosing between moves, so it should read exactly like inspecting one mid-fight. */}
-            <MoveDetailCard move={moves[movePopup.moveId]} label={movePopup.label} />
+            <MoveDetailCard
+              move={moves[movePopup.moveId]}
+              label={movePopup.label}
+              caster={offerEntry ? healCasterForEntry(heroes[offerEntry.heroId], offerEntry, run.relics) : undefined}
+            />
             <div className="move-popup-hint">Tap anywhere to close</div>
           </div>
         </div>

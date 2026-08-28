@@ -12544,6 +12544,16 @@ textarea,
   color: var(--accent);
 }
 
+/* The Wisdom term on a heal — same "the glyph IS the reason" treatment as
+   STAB above, in the healing readout's own green rather than gold, so the
+   multiplier reads as belonging to the HP figure it modifies rather than as a
+   second, unrelated bonus. */
+.move-detail-stat-wis strong,
+.move-detail-stat-wis .move-detail-unit,
+.move-detail-stat-wis svg {
+  color: var(--hp-high);
+}
+
 /* Priority. Ten authored moves carry a non-zero bracket, and until this card
    the UI displayed it precisely nowhere — in a game whose turn order is a
    locked mechanic (CLAUDE.md "Priority uses integer brackets"). Green for a
