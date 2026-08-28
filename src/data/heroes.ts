@@ -2,8 +2,7 @@
 // bring-6-pick-4 squad selection (src/run) through the engine. Not the
 // authored 53-concept roster (docs/types-and-heroes.md); typings here are
 // still arbitrary. The 14 STARTER stat lines are authored and tuned to a
-// 450 BST budget (HP + manaPool + the five battle stats; Valor sits at 440)
-// as of 2026-08-28 — do not nudge one without rebalancing its budget.
+// 450 BST budget (HP + manaPool + the five battle stats) as of 2026-08-28 — do not nudge one without rebalancing its budget.
 // Recruit-only stat lines are still untuned.
 //
 // STARTING KITS ARE EXACTLY THREE MOVES, for every hero, with no exceptions
@@ -284,7 +283,7 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'valor',
     name: 'Valor',
     types: ['Iron'],
-    baseStats: { hp: 120, attack: 60, defense: 60, intelligence: 40, wisdom: 40, speed: 60, manaPool: 60, mpRegen: 10 },
+    baseStats: { hp: 120, attack: 60, defense: 65, intelligence: 40, wisdom: 45, speed: 60, manaPool: 60, mpRegen: 10 },
     moveIds: ['ironFist', 'fortify', 'restoreVigor'],
     starter: true,
   },
