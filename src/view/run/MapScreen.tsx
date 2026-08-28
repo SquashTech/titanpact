@@ -239,6 +239,15 @@ function buildEdges(
   // How many parents each child has, and this edge's index among them, so the
   // arriving lines spread across the child's bottom edge the same way the
   // leaving ones spread across the parent's top edge.
+  //
+  // Both fans are then sorted left-to-right by measured x, which is what keeps
+  // the route from tangling: fan slots are handed out in index order (slot 0
+  // leftmost), but `nextIds` is in GENERATION order — a random pick order plus
+  // the generator repair pass appends (src/run/map.ts) — so without this, slot
+  // 0 could dock the middle child while slot 1 docked the left one, and the two
+  // lines crossed each other right at the parent tile top edge. Sorting by the
+  // child box rather than by `col` means the rule holds for whatever geometry
+  // the grid lands on.
   const parentsOf = new Map<string, string[]>();
   for (const rowIds of rowsTopDown) {
     for (const id of rowIds) {
@@ -249,11 +258,13 @@ function buildEdges(
       }
     }
   }
+  const byX = (a: string, b: string) => (boxes[a]?.x ?? 0) - (boxes[b]?.x ?? 0);
+  for (const list of parentsOf.values()) list.sort(byX);
 
   const edges = rowsTopDown.flatMap((rowIds) =>
     rowIds.flatMap((id) => {
       const from = boxes[id];
-      const childIds = nodes[id]?.nextIds ?? [];
+      const childIds = [...(nodes[id]?.nextIds ?? [])].sort(byX);
       return childIds.flatMap((childId, childIndex) => {
         const to = boxes[childId];
         if (!from || !to) return [];
