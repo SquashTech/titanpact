@@ -11,6 +11,7 @@ import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScr
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { ForceEquipScreen } from '../view/run/ForceEquipScreen';
 import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
+import { RecruitScreen } from '../view/run/RecruitScreen';
 import { StatBoostScreen, type StatBoostNodeType } from '../view/run/StatBoostScreen';
 import { ClassNodeScreen } from '../view/run/ClassNodeScreen';
 import { EventNodeScreen } from '../view/run/EventNodeScreen';
@@ -35,6 +36,7 @@ import {
   recruitFromGuildHallReplacing,
   freshRosterId,
   isRecruitable,
+  pickContractOffers,
   RecruitmentError,
   type GuildHallOffer,
   type RosterReplaceCandidate,
@@ -89,12 +91,21 @@ type Screen =
   /**
    * Roster-full replacement gate (CLAUDE.md "Gaining a hero requires
    * terminating an existing one" once at ROSTER_CAP) — Guild Hall path only.
-   * The Recruit Contract claim path (FightScreen's victory overlay) resolves
-   * this in-place instead, since FightScreen can't safely remount mid-fight
-   * (see RosterReplaceScreen's header comment). `next` is the shop screen
-   * the player returns to either way, replace confirmed or cancelled.
+   * The Recruit Contract claim path (RecruitScreen) resolves this in-place
+   * instead, so that screen keeps track of which of its offers are already
+   * signed (see RosterReplaceScreen's header comment). `next` is the shop
+   * screen the player returns to either way, replace confirmed or cancelled.
    */
   | { kind: 'rosterReplace'; candidate: RosterReplaceCandidate; next: Screen }
+  /**
+   * Recruit Contract claim (RecruitScreen) — the beaten heroes a win puts on
+   * offer, sampled once in handleFightResolved so re-renders can't reshuffle
+   * them. Only ever pushed when the player actually holds a contract to
+   * spend: an offer that cannot be taken is a screen that teaches the player
+   * their taps are decorative, so with none the run goes straight on to
+   * `next` (the equip gate, the level-up gate, or the map).
+   */
+  | { kind: 'recruit'; offers: RosterEntry[]; next: Screen }
   | { kind: 'runComplete' }
   | { kind: 'runFailed' };
 
@@ -365,6 +376,8 @@ export function App() {
     goldReward: number,
     trainingPointsReward: number,
     equipmentReward: EquipmentDefinition | null,
+    /** This fight's AI roster — the beaten builds a Recruit Contract can claim (RecruitScreen below). */
+    defeatedRoster: readonly RosterEntry[],
     outcome: 'win' | 'loss'
   ) {
     if (outcome === 'loss') {
@@ -396,8 +409,21 @@ export function App() {
 
     setPlayerRun(next);
     const afterLevelUp: Screen = next.levelUpPool > 0 ? { kind: 'levelUp', next: afterScreen } : afterScreen;
+    const afterEquip: Screen = equipmentReward ? { kind: 'forceEquip', queue: [equipmentReward.id], next: afterLevelUp } : afterLevelUp;
 
-    setScreen(equipmentReward ? { kind: 'forceEquip', queue: [equipmentReward.id], next: afterLevelUp } : afterLevelUp);
+    // The Recruit Contract claim, first of the post-fight gates: recruiting
+    // before the equip and level-up gates means the gear and the Training
+    // Points this same win paid out can go to the hero who just joined,
+    // rather than arriving one node too late for them.
+    //
+    // `next`, not `playerRun` — a boss node has already granted this act's
+    // contract by here, and that contract is spendable on the very heroes
+    // that boss fight just beat. With none held, no screen: the offer is
+    // dropped rather than shown unclaimable.
+    const contractOffers =
+      next.recruitContracts > 0 ? pickContractOffers(defeatedRoster.filter((entry) => isRecruitable(entry.heroId, heroes))) : [];
+
+    setScreen(contractOffers.length > 0 ? { kind: 'recruit', offers: contractOffers, next: afterEquip } : afterEquip);
   }
 
   function handleNodeContinue(nodeId: string) {
@@ -547,8 +573,6 @@ export function App() {
           goldReward={0}
           trainingPointsReward={0}
           equipmentReward={null}
-          onClaimContract={() => false}
-          onClaimContractReplace={() => false}
           onResolved={() => setScreen({ kind: 'sandboxBattle' })}
         />
       )}
@@ -562,8 +586,6 @@ export function App() {
           goldReward={0}
           trainingPointsReward={0}
           equipmentReward={null}
-          onClaimContract={() => false}
-          onClaimContractReplace={() => false}
           onResolved={() => setScreen({ kind: 'title' })}
         />
       )}
@@ -591,10 +613,16 @@ export function App() {
           goldReward={screen.goldReward}
           trainingPointsReward={screen.trainingPointsReward}
           equipmentReward={screen.equipmentReward}
-          onClaimContract={handleClaimContract}
-          onClaimContractReplace={handleClaimContractReplace}
           onResolved={(outcome) =>
-            handleFightResolved(screen.nodeId, screen.nodeType, screen.goldReward, screen.trainingPointsReward, screen.equipmentReward, outcome)
+            handleFightResolved(
+              screen.nodeId,
+              screen.nodeType,
+              screen.goldReward,
+              screen.trainingPointsReward,
+              screen.equipmentReward,
+              screen.encounter.run.roster,
+              outcome
+            )
           }
           /* Abandon this run from the fight's Options menu. Nothing to tear
              down: RunState lives in this component's state and a new run
@@ -613,8 +641,6 @@ export function App() {
           goldReward={0}
           trainingPointsReward={0}
           equipmentReward={null}
-          onClaimContract={() => false}
-          onClaimContractReplace={() => false}
           onResolved={() => setScreen({ kind: 'title' })}
           /* No run behind a Quick Battle, so leaving mid-fight costs
              nothing — a plain one-tap exit, not the armed quit the run
@@ -632,6 +658,16 @@ export function App() {
           onBuyEquipment={handleBuyGuildEquipment}
           onRequestRosterReplace={handleRequestRosterReplace}
           onContinue={() => handleNodeContinue(screen.nodeId)}
+        />
+      )}
+
+      {screen.kind === 'recruit' && (
+        <RecruitScreen
+          run={playerRun}
+          offers={screen.offers}
+          onClaim={handleClaimContract}
+          onClaimReplace={handleClaimContractReplace}
+          onDone={() => setScreen(screen.next)}
         />
       )}
 

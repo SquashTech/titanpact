@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { heroes } from '../../data/heroes';
 import { allCombatants } from '../../data/content';
 import { moves } from '../../data/moves';
@@ -15,19 +15,16 @@ import { applyForcedReplacement } from '../../engine/combat/switching';
 import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
 import type { Action } from '../../engine/combat/actions';
 import type { CombatEvent } from '../../engine/events';
-import type { HeroDefinition, MoveDefinition, StatKey, TargetMode } from '../../engine/content';
+import type { MoveDefinition, StatKey, TargetMode } from '../../engine/content';
 import { resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
 import { resolveElementalForceBonus } from '../../engine/damage/damagePipeline';
 import type { RunState, RosterEntry } from '../../run/state';
-import { ROSTER_CAP } from '../../run/state';
 import type { Squad } from '../../run/squad';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { buildCombatState } from '../../run/buildCombatState';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
 import { relicTeamStatusGrants } from '../../run/statusGrants';
-import { isRecruitable, deriveContractOffer } from '../../run/recruitment';
-import { RosterReplaceScreen } from '../run/RosterReplaceScreen';
 import { CombatantCard, type Popup } from './CombatantCard';
 import { HeroDetailOverlay } from './HeroDetailOverlay';
 import { SwitchInPanel } from './SwitchInPanel';
@@ -37,7 +34,6 @@ import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
-import { TypeBadge } from '../shared/TypeBadge';
 import { ElementGlyph } from '../shared/elementIcons';
 import { MoveKindBadge, TARGET_MODE_LABELS, moveEffectSummary, useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
@@ -76,9 +72,9 @@ interface MoveRowProps {
 /**
  * One facet of the console's move surface.
  *
- * Lifted out of FightScreen's `.map()` for the reason RecruitClaimCard above
- * was: `useLongPress` is a hook and cannot be called inside a loop. That hook
- * replaces the hand-rolled timer this button used to carry — which is what
+ * Lifted out of FightScreen's `.map()` because `useLongPress` is a hook and
+ * cannot be called inside a loop. That hook replaces the hand-rolled timer
+ * this button used to carry — which is what
  * gives the row its hold charge (`data-holding`), cancels the gesture when the
  * pointer is really scrolling the list, and ticks the haptic.
  *
@@ -188,53 +184,6 @@ function MoveRow({ move, affordable, selected, forceBonus, matchups, multClass, 
   );
 }
 
-interface RecruitClaimCardProps {
-  hero: HeroDefinition;
-  selected: boolean;
-  claimed: boolean;
-  onSelect: () => void;
-  onInspect: () => void;
-}
-
-/**
- * One claimable Recruit Contract offer on the victory screen (user direction,
- * 2026-08-19: replace the plain text "Claim X" buttons with hero portraits;
- * 2026-08-21: deliberately NOT built on the guild-hall-hero-card /
- * roster-card visual family — recruiting a teammate is a bigger moment than
- * a shop purchase, so this card gets its own violet contract-seal treatment
- * and idle shimmer instead of reusing the generic hero-card look). Pulled
- * out of the recruit-claims .map() below because useLongPress is a hook
- * (GuildHallHeroCard is the precedent for this split). A short tap selects
- * the card (highlighted, matching NodeRewardScreen's equipment/relic
- * pick-then-claim two-step) rather than claiming immediately — the actual
- * spend happens from the confirm button below the grid, once. A ~500ms hold
- * opens the full HeroPreviewOverlay stat/move sheet instead, same
- * tap-selects/hold-inspects split as every other offer card in the app.
- */
-function RecruitClaimCard({ hero, selected, claimed, onSelect, onInspect }: RecruitClaimCardProps) {
-  const longPress = useLongPress(onInspect, claimed ? undefined : onSelect);
-  return (
-    <button
-      className={`recruit-claim-card${selected ? ' selected' : ''}${claimed ? ' claimed' : ''}`}
-      style={{ '--recruit-type-color': getTypeColor(hero.types[0]) } as CSSProperties}
-      {...longPress}
-    >
-      <span className="recruit-claim-shimmer" aria-hidden="true" />
-      <span className="recruit-claim-seal" aria-hidden="true">
-        📜
-      </span>
-      <HeroPortrait heroId={hero.id} className="recruit-claim-portrait" />
-      <div className="recruit-claim-name">{hero.name}</div>
-      <div className="roster-card-types">
-        {hero.types.map((t) => (
-          <TypeBadge key={t} type={t} />
-        ))}
-      </div>
-      {claimed && <span className="recruit-claim-tag">Claimed</span>}
-    </button>
-  );
-}
-
 const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
 
@@ -259,21 +208,6 @@ const CONSOLE_EMBERS = Array.from({ length: 9 }, (_, i) => {
   };
 });
 const config = { typeChart, heroes: allCombatants, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
-
-/** Recruit Contract offers are capped to this many cards on the victory screen (user direction, 2026-08-21) — a 4v4 elite/boss fight would otherwise dump every recruitable enemy on the player at once. */
-const MAX_RECRUIT_OFFERS = 2;
-
-/** Random, order-independent sample of up to MAX_RECRUIT_OFFERS entries — called once per fight via useMemo below, not on every render, so the offer doesn't reshuffle out from under a selection. */
-function pickRecruitOffers(entries: readonly RosterEntry[]): RosterEntry[] {
-  if (entries.length <= MAX_RECRUIT_OFFERS) return [...entries];
-  const pool = [...entries];
-  const picks: RosterEntry[] = [];
-  while (picks.length < MAX_RECRUIT_OFFERS && pool.length > 0) {
-    const i = Math.floor(Math.random() * pool.length);
-    picks.push(pool.splice(i, 1)[0]);
-  }
-  return picks;
-}
 
 // Hold-to-auto-play tuning (FightScreen's advance-overlay) — how long a
 // press must be held before it commits to auto-play instead of a normal
@@ -471,21 +405,6 @@ interface Props {
    * ForceEquipScreen in onResolved.
    */
   equipmentReward: EquipmentDefinition | null;
-  /**
-   * Recruit Contract claim (docs/progression.md "raise-vs-recruit axis" —
-   * src/run/recruitment.ts): "claim a beaten hero," offered off this node's
-   * AI roster on a win. Returns whether the claim succeeded (false only if
-   * the player has no contracts left) — a full roster no longer blocks this,
-   * see onClaimContractReplace below.
-   */
-  onClaimContract: (defeated: RosterEntry) => boolean;
-  /**
-   * Roster-full variant of onClaimContract, wired to RosterReplaceScreen's
-   * confirm button (rendered in-place over this victory overlay rather than
-   * via App.tsx's Screen state — see that component's header comment for
-   * why). Returns whether the claim+replace succeeded.
-   */
-  onClaimContractReplace: (defeated: RosterEntry, terminatedRosterId: string) => boolean;
   /** Fired when the player dismisses the result overlay — the caller owns what a win/loss means for run progress (vitals sync, currency grant, advancing the map, or ending the run). */
   onResolved: (outcome: 'win' | 'loss', finalState: CombatState) => void;
   /**
@@ -514,8 +433,6 @@ export function FightScreen({
   goldReward,
   trainingPointsReward,
   equipmentReward,
-  onClaimContract,
-  onClaimContractReplace,
   onResolved,
   onQuitToTitle,
   onExitToTitle,
@@ -552,28 +469,9 @@ export function FightScreen({
   const [pending, setPending] = useState<Record<string, PendingAction>>({});
   const [selecting, setSelecting] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
   const [actionStep, setActionStep] = useState(0);
-  const [claimedRosterIds, setClaimedRosterIds] = useState<string[]>([]);
   const [inspecting, setInspecting] = useState<string | null>(null);
   /** Whether the active Field Effect's full detail card (FieldEffectDetailOverlay) is open — opened via a long-press on the battlefield-divider badge. */
   const [inspectingFieldEffect, setInspectingFieldEffect] = useState(false);
-  /** Recruit Contract claim selection on the victory screen — a tap selects a card, the confirm button below the grid is what actually spends the contract. */
-  const [claimSelection, setClaimSelection] = useState<string | null>(null);
-  /** rosterId of the AI-side hero whose full stat/move sheet is open, via a recruit-claim card's long-press. */
-  const [claimPreviewRosterId, setClaimPreviewRosterId] = useState<string | null>(null);
-  /** The defeated entry a roster-full claim attempt is trying to recruit — set instead of claiming directly when playerRun.roster is already at ROSTER_CAP, opening RosterReplaceScreen in place over this victory overlay. */
-  const [rosterReplaceEntry, setRosterReplaceEntry] = useState<RosterEntry | null>(null);
-
-  /**
-   * Recruit Contract offers for this fight, capped at MAX_RECRUIT_OFFERS and
-   * randomly sampled when a 4v4 encounter leaves more recruitable enemies
-   * than that (e.g. an elite/boss fight). Memoized on `aiRun` — stable for
-   * the life of this FightScreen instance (aiRun doesn't change mid-fight) —
-   * rather than recomputed inline in the result overlay below, so selecting
-   * a card or any other re-render doesn't reroll which heroes are offered.
-   */
-  const recruitableEntries = useMemo(() => aiRun.roster.filter((entry) => isRecruitable(entry.heroId, heroes)), [aiRun]);
-  const recruitOffers = useMemo(() => pickRecruitOffers(recruitableEntries), [recruitableEntries]);
-
   // Sequenced, tap-advanced round playback (docs/architecture.md "engine /
   // presentation separation"): `resolving` gates player input and the
   // victory overlay while a round's already-decided event stream is being
@@ -1006,21 +904,6 @@ export function FightScreen({
       return;
     }
     handleAdvance();
-  }
-
-  function handleClaimContract(entry: RosterEntry) {
-    if (playerRun.roster.length >= ROSTER_CAP) {
-      setRosterReplaceEntry(entry);
-      return;
-    }
-    if (onClaimContract(entry)) {
-      setClaimedRosterIds((prev) => [...prev, entry.rosterId]);
-      setClaimSelection(null);
-    }
-  }
-
-  function handleSelectClaim(rosterId: string) {
-    setClaimSelection((prev) => (prev === rosterId ? null : rosterId));
   }
 
   function renderActiveSlot(side: Side, slot: 0 | 1) {
@@ -1661,9 +1544,6 @@ export function FightScreen({
       {winner &&
         !resolving &&
         (() => {
-          const selectedClaimEntry = claimSelection ? (recruitOffers.find((e) => e.rosterId === claimSelection) ?? null) : null;
-          const rosterFull = playerRun.roster.length >= ROSTER_CAP;
-          const noContracts = playerRun.recruitContracts <= 0;
           const equipGrants = equipmentReward ? (Object.entries(equipmentReward.statGrants) as [StatKey, number][]) : [];
 
           return (
@@ -1716,79 +1596,10 @@ export function FightScreen({
                   </div>
                 )}
 
-                {winner === PLAYER_SIDE && recruitOffers.length > 0 && (
-                  <div className="recruit-claims">
-                    <span className="recruit-claims-glow" aria-hidden="true" />
-                    <div className="recruit-claims-eyebrow">📜 Recruit Contracts available: {playerRun.recruitContracts}</div>
-                    <div className="recruit-claims-grid">
-                      {recruitOffers.map((entry) => {
-                        const claimed = claimedRosterIds.includes(entry.rosterId);
-                        return (
-                          <RecruitClaimCard
-                            key={entry.rosterId}
-                            hero={heroes[entry.heroId]}
-                            selected={claimSelection === entry.rosterId}
-                            claimed={claimed}
-                            onSelect={() => handleSelectClaim(entry.rosterId)}
-                            onInspect={() => setClaimPreviewRosterId(entry.rosterId)}
-                          />
-                        );
-                      })}
-                    </div>
-                    <div className="recruit-claims-hint">Tap a hero to select, hold to inspect their stats</div>
-                    <button
-                      className={`resolve-button recruit-claim-confirm${selectedClaimEntry ? ' armed' : ''}`}
-                      disabled={!selectedClaimEntry || noContracts}
-                      onClick={() => selectedClaimEntry && handleClaimContract(selectedClaimEntry)}
-                    >
-                      {noContracts
-                        ? 'No Contracts Left'
-                        : selectedClaimEntry
-                          ? rosterFull
-                            ? `Replace a Hero for ${heroes[selectedClaimEntry.heroId].name}`
-                            : `Claim ${heroes[selectedClaimEntry.heroId].name} — 1 Contract`
-                          : 'Select a Hero to Recruit'}
-                    </button>
-                  </div>
-                )}
-
                 <div className="result-buttons">
                   <button onClick={() => onResolved(winner === PLAYER_SIDE ? 'win' : 'loss', combat)}>Continue</button>
                 </div>
               </div>
-
-              {claimPreviewRosterId &&
-                (() => {
-                  const entry = aiRun.roster.find((r) => r.rosterId === claimPreviewRosterId);
-                  if (!entry) return null;
-                  return (
-                    <HeroPreviewOverlay
-                      hero={heroes[entry.heroId]}
-                      entry={entry}
-                      equipmentLookup={equipment}
-                      relicIds={playerRelicIds}
-                      onClose={() => setClaimPreviewRosterId(null)}
-                    />
-                  );
-                })()}
-
-              {rosterReplaceEntry && (
-                <RosterReplaceScreen
-                  roster={playerRun.roster}
-                  candidate={{ source: 'contract', offer: deriveContractOffer(rosterReplaceEntry) }}
-                  relicIds={playerRelicIds}
-                  onConfirm={(terminatedRosterId) => {
-                    const ok = onClaimContractReplace(rosterReplaceEntry, terminatedRosterId);
-                    if (ok) {
-                      setClaimedRosterIds((prev) => [...prev, rosterReplaceEntry.rosterId]);
-                      setClaimSelection(null);
-                      setRosterReplaceEntry(null);
-                    }
-                    return ok;
-                  }}
-                  onCancel={() => setRosterReplaceEntry(null)}
-                />
-              )}
             </div>
           );
         })()}

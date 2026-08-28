@@ -1397,6 +1397,79 @@ The real app (not just the harness) was then driven from the title screen into
 Level Up to confirm the peek button mounts and the CTA measures 70px with its
 bottom 12px clear of the shell. `npm run typecheck:view` passes.
 
+## Eleventh pass — the Recruit Contract gets a screen (2026-08-28)
+
+A direct report: *the recruit screen should be its own screen, with presentation
+close to the starter select. It must be very clear how many Contracts the player
+has, and that recruiting spends one. With no Contracts, don't show it at all.*
+
+### What was wrong
+
+**The biggest roster decision in the run was a band inside a results box.** Two
+56px portraits under an eyebrow reading "📜 Recruit Contracts available: 2",
+below the gold/XP chips and below the equipment spotlight, inside a panel whose
+whole job is to say *the fight is over*. Adding a hero to a six-slot roster —
+permanently, for a currency the player may hold exactly one of for a whole act
+— was staged as a smaller moment than the item that dropped above it.
+
+**The price was a number in a sentence.** Nothing on that band made "you are
+spending one of these" a visible event; the count simply read one lower the
+next time a victory box appeared.
+
+**An offer with no way to take it was still drawn.** With zero contracts the
+band rendered in full and the confirm button read "No Contracts Left" — a
+screenful of hero portraits teaching the player that their taps are decorative.
+
+**The draft had already solved the same problem.** Choosing a hero for the run
+is the draft's entire ceremony: a 144px figure in a summoning sigil, a stat
+silhouette on shared ceilings, the kit as pressable chips, a rail of the
+alternatives. The claim asks the identical question — *do you want this hero,
+permanently, for a price* — and answered it with two portrait buttons.
+
+### What replaced it
+
+| Was | Is |
+|---|---|
+| `.recruit-claims` band in `FightScreen`'s victory overlay | `RecruitScreen` — a top-level screen (`App.tsx` `{ kind: 'recruit' }`), the first of the post-fight gates, ahead of the equip and level-up gates so this win's gear and Training Points can go to the hero it just recruited |
+| Two 56px portrait cards, name + type chips | The draft's stage, shared as `view/shared/HeroStage.tsx`: same sky and motes, same 144px figure and sigil, same silhouette, kit and rail |
+| "Recruit Contracts available: N" in an eyebrow | `.recruit-contracts` — one seal pip per contract owned, with the seal this signature will consume **dimmed and pulsing** the moment a signable hero is on stage |
+| A confirm button that armed on selection | The stage button *is* the spend, and says the price: "Sign Cinder — 1 Contract" |
+| Nothing said what a veteran brings | `Lv 5` on the figure, the chosen Evolution branches named under the types, and the silhouette's granted stats tinted `--buff` — "arrives with branches partially locked" (CLAUDE.md), drawn |
+| Band rendered even with 0 contracts | `handleFightResolved` never opens the screen: no contracts (or nothing recruitable beaten) means straight on to the next gate |
+
+Details worth keeping:
+
+- **The price reads as leaving, not arriving.** The spending pip dims and
+  drifts up rather than glowing gold; a bright pip would read as a reward being
+  granted, which is the opposite of what is happening.
+- **Walking away is not the loudest control.** The draft's `.draft-cta` slab
+  (25px padding, 21px type) belongs to "Seal the Pact". Here the commit is the
+  signature on the stage, so the bottom button — "Leave Them" / "Done
+  Recruiting" — is a subdued panel button. It needed `.recruit-screen >` to
+  outrank `.resolve-button`'s gold, which the first render caught.
+- **The class family keeps its `.draft-*` prefix.** Renaming ~200 selectors to
+  something screen-neutral would invalidate every `.draft-figure` /
+  `.draft-portrait` measurement the third and fifth passes record. The prefix
+  now names the idiom; `.recruit-*` is only what this screen adds.
+- **Everything drawn is the hero that actually arrives.** A contract strips the
+  enemy's gear (`recruitment.ts deriveContractOffer`), so silhouette, kit and
+  hero sheet all read off an ungeared copy of the entry rather than the build
+  that just fought — the old claim preview advertised a weapon that never came.
+
+### Verification
+
+Same method as the ninth and tenth passes: a throwaway harness (root
+`recruitshot.html` + an entry mounting the real `RecruitScreen` /
+`DraftScreen` from a synthetic `RunState`, both deleted before committing),
+headless Edge over CDP, PNGs read back. Shot and looked at: two offers at two
+contracts, the state after signing one (stage advances to the unsigned offer,
+rail seals the signed one, CTA becomes "Done Recruiting"), one offer at one
+contract with a full roster ("Replace a hero for Cinder"), the
+`RosterReplaceScreen` overlay opened over it, and the draft itself as a
+regression check on the extraction. The gold "Leave Them" was only visible in
+the first PNG. `npm run typecheck:view`, `npm run typecheck` and `npm test`
+(203 passing) all pass.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.

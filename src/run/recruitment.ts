@@ -21,13 +21,11 @@
 // vs. code"). src/data/recruitment.ts is fixture-status, same as the rest of
 // /src/data (README "Known gaps") — flat costs, no runway decay modeled yet.
 //
-// NOT YET WIRED INTO A RUN LOOP: the natural trigger for a Recruit Contract
-// offer is winning a fight against the hero being claimed. The
-// escalating-fight run loop that would generate that trigger organically
-// isn't built yet (README "Next steps" #4) — deriveContractOffer just takes
-// a defeated enemy's RosterEntry directly, so a caller can wire it to
-// whatever fight-outcome hook exists (currently: the single demo fight in
-// src/app/App.tsx).
+// The run-loop trigger is a won fight: App.tsx's handleFightResolved samples
+// the beaten AI roster (pickContractOffers below, filtered by isRecruitable)
+// and opens RecruitScreen with it — but only when the run actually holds a
+// contract to spend, since an offer that cannot be taken is a screen worth
+// skipping (docs/run-loop.md "Winning a fight: the post-fight gates").
 
 import type { RosterEntry, RunState } from './state';
 import { createRosterEntry, addRosterEntry, replaceRosterEntry } from './state';
@@ -158,4 +156,28 @@ export function claimContractReplacing(run: RunState, offer: ContractOffer, rost
   }
   const entry: RosterEntry = { ...offer, rosterId, equipment: terminated.equipment };
   return replaceRosterEntry({ ...run, recruitContracts: run.recruitContracts - 1 }, terminatedRosterId, entry);
+}
+
+/**
+ * How many beaten heroes a win may offer on a Recruit Contract (user
+ * direction, 2026-08-21) — a 4v4 elite/boss fight would otherwise dump every
+ * recruitable enemy on the player at once.
+ */
+export const MAX_CONTRACT_OFFERS = 2;
+
+/**
+ * Random, order-independent sample of up to `max` claimable entries. Called
+ * once per resolved fight (App.tsx handleFightResolved) and stored on the
+ * screen, not recomputed per render, so the offer can't reshuffle out from
+ * under a selection.
+ */
+export function pickContractOffers(entries: readonly RosterEntry[], max = MAX_CONTRACT_OFFERS): RosterEntry[] {
+  if (entries.length <= max) return [...entries];
+  const pool = [...entries];
+  const picks: RosterEntry[] = [];
+  while (picks.length < max && pool.length > 0) {
+    const i = Math.floor(Math.random() * pool.length);
+    picks.push(pool.splice(i, 1)[0]);
+  }
+  return picks;
 }

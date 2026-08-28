@@ -76,21 +76,18 @@ function ReplaceHeroCard({ hero, entry, selected, onSelect, onPreview }: Replace
  * terminating an existing one" once at the roster cap): the incoming hero is
  * the header's art, and the player picks one of the 6 current heroes (the
  * shared HeroPickGrid, same as LevelUpScreen/ForceEquipScreen) to terminate
- * in their place. Select-then-confirm (mirrors FightScreen's
- * RecruitClaimCard), not tap-to-act like the other two grids — termination
- * is permanent and shouldn't be one accidental tap away.
+ * in their place. Select-then-confirm, not tap-to-act like the other two
+ * grids — termination is permanent and shouldn't be one accidental tap away.
  *
  * Rendered two different ways depending on which acquisition path triggered
  * it: Guild Hall recruiting at cap goes through App.tsx as a genuine
  * top-level Screen (`{ kind: 'rosterReplace' }`) since ShopNodeScreen has no
  * irreplaceable state to lose on a remount. A Recruit Contract claim at cap
- * (FightScreen's victory overlay) instead renders this as an in-place modal
- * over the fight screen — FightScreen's `combat` state is seeded from a
- * fresh random roll on mount (buildInitialState), so navigating away and
- * back via App.tsx's Screen state would silently replay the just-finished
- * fight from scratch. Either way this component only needs the current
- * roster + the incoming candidate; it doesn't know or care which context
- * it's in.
+ * (RecruitScreen) instead renders this as an in-place modal over itself,
+ * since going out to App.tsx's Screen state and back would remount that
+ * screen and lose which of its offers have already been signed. Either way
+ * this component only needs the current roster + the incoming candidate; it
+ * doesn't know or care which context it's in.
  */
 export function RosterReplaceScreen({ roster, candidate, relicIds = [], onConfirm, onCancel }: Props) {
   const [selectedRosterId, setSelectedRosterId] = useState<string | null>(null);

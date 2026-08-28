@@ -1,59 +1,25 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { heroes } from '../../data/heroes';
-import { moves } from '../../data/moves';
-import type { HeroDefinition, MoveDefinition, StatKey } from '../../engine/content';
+import type { HeroDefinition, MoveDefinition } from '../../engine/content';
 import { createRosterEntry } from '../../run/state';
 import { STARTER_PICK_COUNT } from '../../run/draft';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
-import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
-import { TypeBadge } from '../shared/TypeBadge';
+import { getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { MoveInfoPanel } from '../shared/MoveTile';
-import { ManaCost } from '../shared/ManaCost';
-import { STAT_COLORS, STAT_LABELS, computeBst, statFraction } from '../shared/StatBars';
+import {
+  StageCandidate,
+  StageFigure,
+  StageKit,
+  StageMovePopup,
+  StageRail,
+  StageSilhouette,
+  StageSky,
+  StageTypes,
+} from '../shared/HeroStage';
 
 interface Props {
   optionIds: string[];
   onConfirm: (chosenIds: string[]) => void;
-}
-
-const MOTE_COUNT = 16;
-
-/**
- * The stats the BST beside them is summed from, in the same order StatBars
- * uses. Mana Pool joined the strip when it joined BST (2026-08-28): a hero
- * pays for its power out of the same 450 budget its pool comes from, so a
- * strip that hid the pool showed a 62-Speed hero and an 85-Speed hero as if
- * the difference were free. Seven bars that add up to the number next to
- * them beats six that do not.
- *
- * MP Regen stays off — flat 10 on every hero, so it is a column of identical
- * bars, and this strip exists to be compared across four candidates at a
- * glance. The full eight-stat block is one tap away on the hero sheet.
- */
-const SILHOUETTE_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool'];
-
-/**
- * Ambient motes drifting up the whole screen — same golden-angle-sequence
- * trick as TitleScreen's useEmbers (pure function of index, so the scatter is
- * stable across re-renders with no seed to store). They take the featured
- * hero's type color from `--pact-rgb`, so switching candidates re-tints the
- * air as well as the figure.
- */
-function useMotes() {
-  return useMemo(
-    () =>
-      Array.from({ length: MOTE_COUNT }, (_, i) => {
-        const seed = i * 137.51;
-        return {
-          left: seed % 100,
-          delay: (seed * 1.3) % 7,
-          duration: 5.5 + ((seed * 0.29) % 4),
-          size: 2 + ((seed * 0.17) % 2),
-        };
-      }),
-    []
-  );
 }
 
 /**
@@ -78,6 +44,12 @@ function useMotes() {
  * pick, on the most consequential decision of the run — the ceremony is the
  * point.
  *
+ * The stage itself now lives in shared/HeroStage.tsx: the Recruit Contract
+ * claim (RecruitScreen) asks the same question about the same kind of
+ * figure, so it stands on the same ground rather than reimplementing it.
+ * What stays here is what only the draft has — the pact sockets and the
+ * two-pick commit.
+ *
  * Candidates are unrecruited (no roster entry yet), so the info-button
  * preview synthesizes a throwaway level-1 RosterEntry the same way
  * SquadSelectScreen does for real roster members.
@@ -88,7 +60,6 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
   const [inspecting, setInspecting] = useState<HeroDefinition | null>(null);
   /** The starting move whose detail popup is open over the stage, or null. Tapping a kit chip opens it; a tap anywhere dismisses it. */
   const [popupMove, setPopupMove] = useState<MoveDefinition | null>(null);
-  const motes = useMotes();
 
   const featured = heroes[featuredId];
   const featuredRgb = getTypeColorRgb(featured.types[0]);
@@ -106,28 +77,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
 
   return (
     <div className="draft-screen" style={{ '--pact-rgb': featuredRgb } as CSSProperties}>
-      {/* The scene itself: a type-tinted wash and a mote field, both full-bleed
-          past .app-shell's padding. Not a container — nothing sits "in" it. */}
-      <div className="draft-sky" aria-hidden="true">
-        <span className="draft-sky-wash" />
-        <div className="draft-motes">
-          {motes.map((m, i) => (
-            <span
-              key={i}
-              className="draft-mote"
-              style={
-                {
-                  left: `${m.left}%`,
-                  width: `${m.size}px`,
-                  height: `${m.size}px`,
-                  animationDelay: `${m.delay}s`,
-                  animationDuration: `${m.duration}s`,
-                } as CSSProperties
-              }
-            />
-          ))}
-        </div>
-      </div>
+      <StageSky />
 
       <header className="draft-header">
         <div className="draft-eyebrow">A Titan Stirs</div>
@@ -168,78 +118,14 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
 
       <div className="draft-stage">
         {/* Keyed on the featured hero so switching candidates remounts the
-            figure and replays its arrival — a new hero should read as summoned
-            in, not as a swapped <img src>. */}
-        <div className="draft-figure" key={featuredId}>
-          <span className="draft-sigil" aria-hidden="true" />
-          <HeroPortrait heroId={featured.id} className="draft-portrait" />
-          <button
-            className="draft-info"
-            onClick={() => setInspecting(featured)}
-            aria-label={`View ${featured.name} details`}
-          >
-            i
-          </button>
-        </div>
+            figure and replays its arrival. */}
+        <StageFigure key={featuredId} heroId={featured.id} heroName={featured.name} onInspect={() => setInspecting(featured)} />
 
         <div className="draft-ident" key={`${featuredId}-ident`}>
           <h3 className="draft-name">{featured.name}</h3>
-          <div className="draft-types">
-            {featured.types.map((t) => (
-              <TypeBadge key={t} type={t} />
-            ))}
-          </div>
-
-          <div className="draft-silhouette">
-            {SILHOUETTE_STATS.map((stat) => {
-              const value = featured.baseStats[stat];
-              return (
-                <div className="draft-stat" key={stat}>
-                  <span className="draft-stat-value">{value}</span>
-                  <div className="draft-stat-track">
-                    <div
-                      className="draft-stat-fill"
-                      style={{ height: `${statFraction(stat, value) * 100}%`, background: STAT_COLORS[stat] }}
-                    />
-                  </div>
-                  <span className="draft-stat-label">{STAT_LABELS[stat]}</span>
-                </div>
-              );
-            })}
-            <div className="draft-stat draft-stat-bst" title="Base Stat Total — the seven bars beside it, summed">
-              <span className="draft-stat-value">{computeBst(featured.baseStats)}</span>
-              <div className="draft-stat-track draft-stat-track-empty" />
-              <span className="draft-stat-label">BST</span>
-            </div>
-          </div>
-
-          {/* Starting kit. These were chromeless spans — the same mana
-              crystal the move grid uses, with the type carried as the name's
-              own color — because at the time they were a readout, and
-              docs/visual-language.md's rule reserves a rectangle for things
-              you can act on. They ARE actionable now: tapping one pops its
-              full detail over the stage, which is the only way the player
-              can find out what a starting kit actually does before
-              committing to a hero for the rest of the run. So under the same
-              rule they get their boxes back, and the box advertises the tap. */}
-          <div className="draft-kit">
-            {featured.moveIds.map((moveId) => {
-              const move = moves[moveId];
-              if (!move) return null;
-              return (
-                <button
-                  className="draft-kit-move"
-                  key={moveId}
-                  style={{ '--move-type': getTypeColor(move.type), '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
-                  onClick={() => setPopupMove(move)}
-                  aria-haspopup="dialog"
-                >
-                  <ManaCost cost={move.manaCost} size="sm" className="draft-kit-crystal" />
-                  {move.name}
-                </button>
-              );
-            })}
-          </div>
+          <StageTypes types={featured.types} />
+          <StageSilhouette baseStats={featured.baseStats} />
+          <StageKit moveIds={featured.moveIds} onPick={setPopupMove} />
         </div>
 
         <button
@@ -251,61 +137,28 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
         </button>
       </div>
 
-      {/* The other candidates, waiting in the dark. Chromeless at rest — the
-          frame is the affordance, and it appears on the one that's on stage
-          (docs/visual-language.md). */}
-      <div className="draft-rail">
+      <StageRail>
         {optionIds.map((heroId) => {
           const hero = heroes[heroId];
-          const chosen = pickedIds.includes(heroId);
           return (
-            <button
+            <StageCandidate
               key={heroId}
-              className={`draft-candidate${heroId === featuredId ? ' featured' : ''}${chosen ? ' chosen' : ''}`}
-              style={{ '--type-rgb': getTypeColorRgb(hero.types[0]) } as CSSProperties}
-              onClick={() => setFeaturedId(heroId)}
-              aria-pressed={heroId === featuredId}
-            >
-              <HeroPortrait heroId={hero.id} className="draft-candidate-portrait" />
-              <span className="draft-candidate-name">{hero.name}</span>
-              {chosen && (
-                <span className="draft-candidate-seal" aria-hidden="true">
-                  ✦
-                </span>
-              )}
-            </button>
+              heroId={hero.id}
+              heroName={hero.name}
+              primaryType={hero.types[0]}
+              featured={heroId === featuredId}
+              sealed={pickedIds.includes(heroId)}
+              onSelect={() => setFeaturedId(heroId)}
+            />
           );
         })}
-      </div>
+      </StageRail>
 
       <button className="resolve-button draft-cta" disabled={!complete} onClick={() => onConfirm(pickedIds)}>
         {complete ? 'Seal the Pact' : `Choose ${STARTER_PICK_COUNT - pickedIds.length} more`}
       </button>
 
-      {/* Move detail as an overlay rather than a slab pinned under the kit.
-          The readout that used to live there was always on screen — an empty
-          88px box for most of the draft, holding stage space that the figure
-          and stat silhouette make better use of — and it sat below the fold
-          of the kit it belonged to. As a popup it appears over the stage,
-          right where the eye already is, and a tap anywhere dismisses it
-          (same contract as the in-combat long-press move popup, .log-overlay
-          + "tap anywhere to close"), so a player comparing three moves pays
-          one extra tap per move and gets the whole screen back the rest of
-          the time. It carries the move's own type color, so the card still
-          reads as the same object as the chip that opened it. */}
-      {popupMove && (
-        <div className="log-overlay" onClick={() => setPopupMove(null)}>
-          <div
-            className="draft-move-popup"
-            role="dialog"
-            aria-label={`${popupMove.name} details`}
-            style={{ '--move-type-rgb': getTypeColorRgb(popupMove.type) } as CSSProperties}
-          >
-            <MoveInfoPanel move={popupMove} />
-            <div className="move-popup-hint">Tap anywhere to close</div>
-          </div>
-        </div>
-      )}
+      {popupMove && <StageMovePopup move={popupMove} onClose={() => setPopupMove(null)} />}
 
       {inspecting && (
         <HeroPreviewOverlay

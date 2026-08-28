@@ -102,6 +102,27 @@ Slay the Spire's real path-weaving generator, but it's now enough to prove branc
 | `classReward` ("Mentor's Hall") | `ClassNodeScreen` — pick 1 of 3 Classes (`src/data/classes.ts`), then pick which roster hero learns it, filtered to heroes with no Class yet (`src/run/classes.ts` `grantClass`, stored on `RosterEntry.classId` — a hero can hold at most one Class per run, so `grantClass` REPLACES rather than stacks). If every roster hero already has a Class, the offer is simply wasted. **Not in `REWARD_WEIGHTS`** (2026-08-22 revision, per user direction) — the only way to encounter this node type is the forced Act-1 Mentor row (§1), never a random pick-1-of-3 option in any act. |
 | `event` | `EventNodeScreen` — placeholder, no content yet (deferred: "we will design these when it's time"). |
 
+### Winning a fight: the post-fight gates
+
+A won encounter resolves through up to three gates before the map comes back
+(`App.tsx handleFightResolved`), in this order:
+
+1. **Recruit Contract claim** (`RecruitScreen`) — the beaten recruitable heroes, up to
+   `MAX_CONTRACT_OFFERS` = 2 of them (`recruitment.ts pickContractOffers`). **Skipped
+   entirely when the player holds no contracts**, and when nothing beaten was
+   recruitable: the run goes straight on rather than opening a screen whose offer cannot
+   be taken. On a boss node the act-end contract (§3) is granted *before* this check, so
+   it is spendable on the heroes that boss fight just beat.
+2. **Forced equip-or-trash** (`ForceEquipScreen`) for this node's item drop, if any.
+3. **Training Point allocation** (`LevelUpScreen`), if the pool is non-empty.
+
+Recruiting comes first on purpose: the gear and the Training Points this same win paid
+out can then go to the hero who just joined, instead of arriving one node too late for
+them. **2026-08-28, per user direction:** the claim used to be a band inside
+`FightScreen`'s victory overlay — two portrait buttons under the gold/XP chips — which
+priced a permanent roster decision below the item drop above it. It is now its own
+screen, standing on the draft's stage (see `docs/visual-language.md`).
+
 `contractReward` (an instant flat grant of 1 Recruit Contract) was **removed as a map
 node type** (2026-08-17, per user direction: contracts should come from Guild Halls and
 act-end grants, not map-node luck) — see §3 "Multi-act sequencing" for where that grant
@@ -159,9 +180,9 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   `isRecruitable(heroId, recruitablePool)` gates Recruit Contract offers on membership
   in the caller's recruitable pool specifically — never the combined pool a fight
   actually drew from — so a defeated Goblin can never produce a contract offer;
-  `FightScreen.tsx`'s claim list is filtered through it, and `App.tsx`'s
-  `handleClaimContract` re-checks it as the actual RunState-mutation boundary, not just
-  the UI. `src/data/content.ts`'s `allCombatants` (`{ ...heroes, ...enemies }`) is what
+  `App.tsx`'s `handleFightResolved` filters the claim
+  offer through it, and `handleClaimContract` re-checks it as the actual
+  RunState-mutation boundary, not just the UI. `src/data/content.ts`'s `allCombatants` (`{ ...heroes, ...enemies }`) is what
   combat resolution and fight-screen rendering actually key off of — they don't care
   which pool a combatant came from, only recruitment does. This was a mechanism + a
   first-pass curve (originally row 0 only) — **2026-08-22 revision, per user

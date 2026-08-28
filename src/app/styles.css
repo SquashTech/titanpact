@@ -6638,8 +6638,9 @@ textarea,
 /* Deliberately NOT tinted to the featured hero's type. The figure's own
    bloom carries the type color; flipping the entire screen's hue on every
    rail tap would strobe. What's constant instead is the pact's own two-tone
-   gold/violet — the same palette TitleScreen and FightScreen's recruit-claim
-   glow use, since this bargain is narratively the same kind of contract. */
+   gold/violet — the same palette TitleScreen uses, and the same one the
+   Recruit Contract screen inherits by standing on this stage, since that
+   bargain is narratively the same kind of contract. */
 .draft-sky-wash {
   position: absolute;
   inset: 0;
@@ -6717,6 +6718,13 @@ textarea,
   color: var(--text-dim);
   margin: 2px 0 0;
   animation: title-tagline-fade 0.6s ease 0.12s both;
+}
+
+/* Same "the line stops describing and starts reporting" brightening the node
+   header's readout uses (.node-readout.is-live) — on the recruit screen this
+   line is where a signed contract is confirmed. */
+.draft-flavor.is-live {
+  color: var(--text);
 }
 
 /* The pick counter, as two sockets rather than an "(n/2)" in a heading. Same
@@ -7042,6 +7050,16 @@ textarea,
   font-weight: 700;
   color: var(--text);
   line-height: 1;
+}
+
+/* A veteran offered on a Recruit Contract arrives carrying the Evolution and
+   shrine grants they earned before you beat them (entryStats.ts), and the
+   silhouette shows the number that will actually fight. Tinting the ones that
+   are above base keeps the strip honest: this hero is not simply a better
+   authored spread than the one beside it, it is a hero who has already been
+   somewhere. */
+.draft-stat-value.is-boosted {
+  color: var(--buff);
 }
 
 .draft-stat-track {
@@ -7376,6 +7394,143 @@ textarea,
   font-size: 9px;
   color: var(--accent);
   text-shadow: 0 0 6px rgba(224, 166, 60, 0.7);
+}
+
+/* --- The Recruit Contract screen (RecruitScreen.tsx) ---------------------
+   Everything here layers on top of the draft stage above, which the recruit
+   screen reuses wholesale (shared/HeroStage.tsx): same sky, same 144px figure
+   in the same sigil, same silhouette, kit and rail. Claiming a beaten hero
+   and drafting a starter are the same decision — a permanent roster slot, for
+   a price — and until 2026-08-28 one of them was a full ceremonial screen and
+   the other was two 56px portraits inside the victory box.
+
+   What the draft has no equivalent of, and so is all that is defined here:
+   the price. The draft's pact sockets count a fixed denominator (2 heroes);
+   the contract track counts a currency the player might hold exactly one of
+   for a whole act, so it is drawn from what they own rather than from a
+   constant, and the seal that this signature will consume dims and pulses the
+   moment a signable hero is on stage. */
+
+/* The sky paints at z-index 0 and its wash bottoms out opaque, so every other
+   child has to be lifted above it — the trap .draft-cta documents. The draft
+   lifts its children one class at a time; this screen adds enough of its own
+   to be worth the blanket rule, with the same exceptions the node screens
+   name (anything that positions itself on purpose). */
+.recruit-screen > *:not(.draft-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button) {
+  position: relative;
+  z-index: 1;
+}
+
+.recruit-contracts {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.recruit-seal {
+  font-size: 15px;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px rgba(164, 99, 217, 0.65));
+  transition: opacity var(--dur-mid) var(--ease-out), filter var(--dur-mid) var(--ease-out);
+}
+
+/* The one being spent. Reading it as *leaving* rather than as the brightest
+   thing on the track is the point: the player is being shown a cost, and a
+   gold-glowing pip would read as a reward. */
+.recruit-seal.is-spending {
+  opacity: 0.55;
+  filter: drop-shadow(0 0 8px rgba(224, 166, 60, 0.7));
+  animation: recruit-seal-spend 1.9s ease-in-out infinite;
+}
+
+@keyframes recruit-seal-spend {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-2px);
+  }
+}
+
+.recruit-contracts-count {
+  margin-left: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #caa0ef;
+}
+
+/* The veteran's level, on the figure itself. A drafted candidate is always
+   level 1 and never needs this; a claimed one can arrive at 5 with two
+   Evolutions behind it, and that is the single biggest difference between the
+   two acquisition paths. */
+.recruit-level {
+  position: absolute;
+  z-index: 2;
+  top: 6px;
+  left: 16px;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(var(--pact-rgb), 0.5);
+  background: rgba(10, 11, 16, 0.72);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+
+/* "Arrives with branches partially locked" (CLAUDE.md), said out loud.
+   Chromeless: these are a readout, and the rule reserves a rectangle for
+   things you can act on. */
+.recruit-veteran {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 10px;
+}
+
+.recruit-veteran-mark {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  text-shadow: 0 0 8px rgba(224, 166, 60, 0.35);
+}
+
+/* The signature. The draft's stage button toggles a pick that a separate CTA
+   later seals; here the stage button IS the spend, so it carries the gold of
+   a committed action rather than the pact-tinted "selected" look, and says
+   the price in the label. */
+.recruit-sign:not(:disabled) {
+  border-color: rgba(224, 166, 60, 0.7);
+  background: linear-gradient(180deg, rgba(224, 166, 60, 0.28), rgba(224, 166, 60, 0.08));
+  color: #ffe4ab;
+  box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.3), 0 0 22px rgba(224, 166, 60, 0.22);
+}
+
+/* Deliberately NOT .draft-cta's 25px/21px slab. That size belongs to "Seal
+   the Pact", the commit at the end of the draft; the equivalent commit here
+   is the signature on the stage, and the bottom button is the way past it.
+   Sizing it like the draft's would make walking away the loudest thing on the
+   screen. */
+.recruit-screen > .recruit-leave {
+  flex: none;
+  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 80%);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  box-shadow: var(--hairline);
+  font-size: 14px;
+  letter-spacing: 0.05em;
+}
+
+.recruit-screen > .recruit-leave:active {
+  transform: translateY(1px);
 }
 
 /* Scouted enemy squad (SquadSelectScreen) — deliberately minimal: sprite +
@@ -7934,207 +8089,6 @@ textarea,
   font-size: 13px;
   font-weight: 800;
   color: var(--accent);
-}
-
-/* --- Recruit Contract claims (FightScreen victory overlay) --------------
-   Redesigned (user direction, 2026-08-19): hero-portrait cards instead of
-   plain text buttons, tap-selects/hold-inspects like every other offer card
-   in the app (RecruitClaimCard, FightScreen.tsx), with a single confirm
-   button below the grid that's the only thing that actually spends a
-   Contract. `.result-panel button` (above) would otherwise paint these cards
-   solid accent-gold like the old buttons — the `.result-panel` prefix here
-   gives these rules enough specificity to win instead.
-
-   Given its own visual identity (user direction, 2026-08-21) rather than
-   reusing the guild-hall-hero-card / roster-card look: recruiting a
-   teammate is meant to read as a bigger moment than a shop purchase or a
-   stat sheet. Violet is deliberately not gold (--accent) or teal (--buff) —
-   both already mean something else on this same victory screen (equipment
-   rarity, buffs) — so a "you can recruit someone" offer never gets confused
-   with a loot drop at a glance. Offers are capped to 2 cards
-   (MAX_RECRUIT_OFFERS in FightScreen.tsx); the confirm button is always
-   rendered, dormant until a card is selected, then it visibly "arms" via
-   the .armed modifier — this replaces the old show/hide-on-select button so
-   the claim action has a constant, learnable home on screen. */
-
-.recruit-claims {
-  position: relative;
-  width: 100%;
-  max-width: 320px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  text-align: center;
-  padding: 14px 12px 12px;
-  margin: 4px 0;
-  border-radius: 14px;
-  border: 1px solid rgba(164, 99, 217, 0.35);
-  background: linear-gradient(180deg, rgba(164, 99, 217, 0.14), transparent 75%);
-  overflow: hidden;
-}
-
-.recruit-claims-glow {
-  position: absolute;
-  top: -55%;
-  left: 50%;
-  width: 220px;
-  height: 220px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(164, 99, 217, 0.4), transparent 70%);
-  opacity: 0.55;
-  animation: evolution-glow-pulse 2.6s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.recruit-claims-eyebrow {
-  position: relative;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  color: #caa0ef;
-}
-
-.recruit-claims-grid {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
-  gap: 10px;
-}
-
-.result-panel .recruit-claim-card {
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  background: linear-gradient(165deg, rgba(164, 99, 217, 0.2), var(--panel) 72%);
-  border: 1px solid rgba(164, 99, 217, 0.45);
-  border-top: 3px solid var(--recruit-type-color, var(--accent));
-  border-radius: 12px;
-  padding: 14px 8px 8px;
-  text-align: center;
-  color: var(--text);
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-}
-
-.result-panel .recruit-claim-card:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4), 0 0 16px rgba(164, 99, 217, 0.35);
-}
-
-.result-panel .recruit-claim-card.selected {
-  border-color: #caa0ef;
-  box-shadow: 0 0 0 2px #caa0ef, 0 0 24px rgba(164, 99, 217, 0.6);
-}
-
-.result-panel .recruit-claim-card.claimed {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.recruit-claim-shimmer {
-  position: absolute;
-  top: -20%;
-  left: -60%;
-  width: 40%;
-  height: 140%;
-  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.25), transparent);
-  transform: rotate(12deg);
-  animation: recruit-card-shimmer-sweep 3.4s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.result-panel .recruit-claim-card.claimed .recruit-claim-shimmer {
-  animation-play-state: paused;
-  opacity: 0;
-}
-
-@keyframes recruit-card-shimmer-sweep {
-  0%,
-  20% {
-    left: -60%;
-  }
-  70%,
-  100% {
-    left: 140%;
-  }
-}
-
-.recruit-claim-seal {
-  position: absolute;
-  top: 3px;
-  right: 5px;
-  font-size: 11px;
-  opacity: 0.85;
-  filter: drop-shadow(0 0 3px rgba(164, 99, 217, 0.7));
-}
-
-.recruit-claim-portrait {
-  position: relative;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 2px solid rgba(164, 99, 217, 0.55);
-  box-shadow: 0 0 10px rgba(164, 99, 217, 0.35);
-}
-
-.recruit-claim-name {
-  position: relative;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.recruit-claim-tag {
-  position: relative;
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--text-dim);
-}
-
-.recruit-claims-hint {
-  font-size: 10px;
-  color: var(--text-dim);
-  font-style: italic;
-}
-
-.result-panel .recruit-claim-confirm {
-  position: relative;
-  overflow: hidden;
-  margin-top: 2px;
-  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 80%);
-  color: var(--text-dim);
-  border: 1px solid rgba(164, 99, 217, 0.35);
-  transition: background 0.25s ease, color 0.25s ease, box-shadow 0.3s ease, border-color 0.25s ease, transform 0.15s ease;
-}
-
-.result-panel .recruit-claim-confirm.armed:not(:disabled) {
-  background: linear-gradient(135deg, #caa0ef, #a463d9 55%, #caa0ef);
-  background-size: 220% 220%;
-  color: #1c0f2b;
-  border-color: #caa0ef;
-  box-shadow: 0 0 0 1px #caa0ef, 0 0 22px rgba(164, 99, 217, 0.65);
-  animation: recruit-confirm-glow 1.6s ease-in-out infinite;
-}
-
-.result-panel .recruit-claim-confirm.armed:not(:disabled):active {
-  transform: scale(0.98);
-}
-
-@keyframes recruit-confirm-glow {
-  0%,
-  100% {
-    background-position: 0% 50%;
-    box-shadow: 0 0 0 1px #caa0ef, 0 0 14px rgba(164, 99, 217, 0.45);
-  }
-  50% {
-    background-position: 100% 50%;
-    box-shadow: 0 0 0 1px #caa0ef, 0 0 30px rgba(164, 99, 217, 0.8);
-  }
 }
 
 /* Primary bottom-docked CTA, shared by SquadSelectScreen ("Start Fight"),
