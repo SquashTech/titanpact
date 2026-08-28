@@ -12,8 +12,7 @@ import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { SectionGlyph } from '../shared/sectionIcons';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { EQUIP_SLOT_LABELS, EQUIP_SLOT_ORDER, EquipmentIcon, fmtGrant, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
-import { passiveEmoji } from '../shared/passiveIcons';
+import { EQUIP_SLOT_LABELS, EQUIP_SLOT_ORDER, EquipmentEffectList, EquipmentIcon, fmtGrant, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 
 interface Props {
   onClose: () => void;
@@ -172,35 +171,7 @@ export function CompendiumScreen({ onClose }: Props) {
                       ))}
                     </div>
                   )}
-                  {(grantedPassives.length > 0 || grantedStatuses.length > 0) && (
-                    <div className="equip-spotlight-passives">
-                      {grantedPassives.map((passiveId) => {
-                        const def = passives[passiveId];
-                        if (!def) return null;
-                        return (
-                          <div key={passiveId} className="equip-spotlight-passive">
-                            <span className="equip-spotlight-passive-name">
-                              {passiveEmoji[passiveId] ? `${passiveEmoji[passiveId]} ` : ''}
-                              {def.name}
-                            </span>
-                            <span className="equip-spotlight-passive-desc">{def.description}</span>
-                          </div>
-                        );
-                      })}
-                      {grantedStatuses.map(({ statusId, magnitude }) => {
-                        const def = statuses[statusId];
-                        if (!def) return null;
-                        return (
-                          <div key={statusId} className="equip-spotlight-passive">
-                            <span className="equip-spotlight-passive-name">
-                              {def.name} +{magnitude}
-                            </span>
-                            <span className="equip-spotlight-passive-desc">{def.description}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                  <EquipmentEffectList item={inspectItem} />
                   {!hasEffects && <div className="move-info-placeholder">No effects.</div>}
                 </div>
                 <div className="move-popup-hint">Tap anywhere to close</div>

@@ -5718,10 +5718,25 @@ textarea,
   font-size: 14px;
 }
 
+/* The victory summary's copy of the drop panel, deliberately quieter than the
+   one on the reward/force-equip screens (2026-08-28, user direction). Those
+   screens exist to present the item and nothing else, so the full loot-reveal
+   treatment — a pulsing rarity orb, a rarity bloom on the panel, a glowing
+   icon — is the whole point there. Here it sits inside an already-glowing
+   result panel under a 30px "Victory!", and three light sources stacked in one
+   small card read as noise rather than as ceremony. The rarity colour still
+   carries the tier through the top border, the name and the icon; it just
+   stops radiating. */
 .result-equip-spotlight {
   position: relative;
   width: 100%;
   margin-bottom: 0;
+  background: var(--surface-raised);
+  box-shadow: var(--hairline), var(--elev-1);
+}
+
+.result-equip-spotlight .equip-spotlight-icon {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
 }
 
 .result-win .result-panel {
@@ -6376,6 +6391,47 @@ textarea,
   text-align: center;
   font-size: 10px;
   color: var(--text-dim);
+}
+
+/* The commit footer a hero sheet grows when it is asking a question rather
+   than answering one (HeroPreviewOverlay's `action` — the Guild Hall recruit).
+   Borrows .resolve-button's accent gradient and its disabled treatment so the
+   confirm reads as the same "this is the press" control as every screen-level
+   CTA, at the smaller scale a modal footer wants. */
+.detail-action {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.detail-action .resolve-button {
+  min-height: 0;
+  padding: 14px 12px;
+  font-size: 15px;
+  border-radius: var(--radius-md);
+}
+
+/* Why the button is inert, or what confirming will additionally cost — the
+   one place the sheet says "you cannot do this yet", so it sits above the
+   control it is about rather than under it. */
+.detail-action-note {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.detail-action-cancel {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+  cursor: pointer;
 }
 
 /* --- Status detail overlay (CombatantCard status-icon long-press) ------- */
@@ -9166,20 +9222,6 @@ textarea,
      rarity treatment in the app. */
   background: linear-gradient(180deg, rgba(224, 166, 60, 0.1), transparent 70%), var(--surface-raised);
   box-shadow: var(--hairline), var(--elev-2), 0 0 24px -8px var(--rarity-color, transparent);
-}
-
-.equip-spotlight-glow {
-  position: absolute;
-  top: -45%;
-  left: 50%;
-  width: 240px;
-  height: 240px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--rarity-color), transparent 70%);
-  opacity: 0.25;
-  animation: evolution-glow-pulse 2.4s ease-in-out infinite;
-  pointer-events: none;
 }
 
 .equip-spotlight-eyebrow {

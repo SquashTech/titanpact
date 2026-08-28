@@ -41,7 +41,7 @@ import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
-import { EquipmentIcon, EQUIP_SLOT_LABELS, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { EquipmentEffectList, EquipmentIcon, EQUIP_SLOT_LABELS, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { HeroPreviewOverlay } from '../run/HeroPreviewOverlay';
 
 function fmtGrant(amount: number): string {
@@ -1578,7 +1578,6 @@ export function FightScreen({
                     className="equip-spotlight result-equip-spotlight"
                     style={{ '--rarity-color': RARITY_COLOR_VARS[equipmentReward.rarity] } as CSSProperties}
                   >
-                    <div className="equip-spotlight-glow" aria-hidden="true" />
                     <div className="equip-spotlight-header">
                       <EquipmentIcon item={equipmentReward} slot={equipmentReward.slot} className="equip-spotlight-icon" />
                       <div>
@@ -1599,6 +1598,14 @@ export function FightScreen({
                           ))}
                       </div>
                     )}
+                    {/* What the drop actually does. The stat chips above were
+                        the whole story here, so an item whose point is a
+                        passive (an Elemental Force accessory, say) announced
+                        itself as a name and a rarity and nothing else — the
+                        player had to go equip it to find out what they had
+                        won. Same spelled-out block the reward and force-equip
+                        screens use. */}
+                    <EquipmentEffectList item={equipmentReward} />
                   </div>
                 )}
 

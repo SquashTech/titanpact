@@ -151,6 +151,52 @@ export function EquipmentSlotGrid({ loadout, equipmentLookup, onInspect, highlig
   );
 }
 
+/**
+ * What an item actually *does*, spelled out — every granted passive and
+ * status with its full description, not the "Grants: Name" chip a compact
+ * readout uses. Renders nothing for an item that only moves stats.
+ *
+ * One component rather than the four hand-copied blocks it replaces
+ * (ForceEquipScreen, NodeRewardScreen, CompendiumScreen, and the victory
+ * summary, which was the fourth and had been going without): they were
+ * identical down to the emoji prefix, so a fix to one silently left the
+ * others behind.
+ */
+export function EquipmentEffectList({ item }: { item: EquipmentDefinition | null }) {
+  const grantedPassives = item?.grantsPassiveIds ?? [];
+  const grantedStatuses = item?.grantsStatusIds ?? [];
+  if (grantedPassives.length === 0 && grantedStatuses.length === 0) return null;
+  return (
+    <div className="equip-spotlight-passives">
+      {grantedPassives.map((passiveId) => {
+        const def = passives[passiveId];
+        if (!def) return null;
+        return (
+          <div key={passiveId} className="equip-spotlight-passive">
+            <span className="equip-spotlight-passive-name">
+              {passiveEmoji[passiveId] ? `${passiveEmoji[passiveId]} ` : ''}
+              {def.name}
+            </span>
+            <span className="equip-spotlight-passive-desc">{def.description}</span>
+          </div>
+        );
+      })}
+      {grantedStatuses.map(({ statusId, magnitude }) => {
+        const def = statuses[statusId];
+        if (!def) return null;
+        return (
+          <div key={statusId} className="equip-spotlight-passive">
+            <span className="equip-spotlight-passive-name">
+              {def.name} +{magnitude}
+            </span>
+            <span className="equip-spotlight-passive-desc">{def.description}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 interface EquipmentInfoPanelProps {
   item: EquipmentDefinition | null;
   placeholder?: string;

@@ -32,27 +32,27 @@ interface HeroCardProps {
   hero: HeroDefinition;
   offer: GuildHallOffer;
   affordable: boolean;
-  onBuy: () => void;
   onInspect: () => void;
 }
 
 /**
- * One recruit offer. Pulled out of the offers .map() below because
- * useLongPress is a hook (RosterManagementScreen's EquipSlotButton is the
- * precedent for this split). A short tap recruits; a ~500ms hold opens the
- * full stat/move preview instead (user direction — Guild Hall recruits used
- * to be a blind buy). Unaffordable/roster-full offers stay interactive
- * rather than `disabled` so a hold still works to browse a hero you can't
- * afford yet — the underlying purchase call is what actually guards against
- * spending gold you don't have.
+ * One recruit offer. A tap opens the hero's sheet, where the gold is actually
+ * spent (user direction, 2026-08-28).
+ *
+ * It used to buy on the spot, with a ~500ms hold as the only way to see what
+ * you were buying — so the fast, obvious gesture was the irreversible one and
+ * the careful gesture was the hidden one. Every other permanent commitment in
+ * the run (the draft, a Recruit Contract, a Class) shows the hero and then
+ * asks; this is the same decision and now asks the same way. Unaffordable
+ * offers still open — browsing a hero you cannot yet afford is the point of a
+ * shop — and the sheet's confirm button is what goes inert.
  */
-function GuildHallHeroCard({ hero, offer, affordable, onBuy, onInspect }: HeroCardProps) {
-  const longPress = useLongPress(onInspect, onBuy);
+function GuildHallHeroCard({ hero, offer, affordable, onInspect }: HeroCardProps) {
   return (
     <button
       className={`guild-hall-hero-card${affordable ? '' : ' unaffordable'}`}
       style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
-      {...longPress}
+      onClick={onInspect}
     >
       <HeroPortrait heroId={hero.id} className="guild-hall-hero-portrait" />
       <div className="guild-hall-hero-name">{hero.name}</div>
@@ -126,10 +126,11 @@ function GuildHallRelicCard({ relic, affordable, onBuy, onInspect }: RelicCardPr
  * (recruit) still aren't offered as heroes here — they're claimed off a
  * beaten enemy at fight's end (FightScreen) or bought blank below.
  *
- * Every offer card (hero/equipment/relic) shares one interaction: a short
- * tap buys it immediately, a ~500ms hold previews it instead (a fixed
- * HeroPreviewOverlay for heroes; a small dismiss-on-tap popup for
- * equipment/relics) — no separate select-then-confirm step for any of them.
+ * Equipment and relic cards buy on a short tap and preview on a ~500ms hold.
+ * Heroes no longer do (2026-08-28, user direction): a hero is permanent, the
+ * priciest thing in the Hall, and the one purchase whose value is a page of
+ * stats rather than a line of text, so its tap opens the sheet and the sheet
+ * asks. See GuildHallHeroCard.
  */
 export function GuildHallPanel({ run, offers, onRunChange, onBuyEquipment, onRequestRosterReplace }: Props) {
   const [previewOfferId, setPreviewOfferId] = useState<string | null>(null);
@@ -187,7 +188,7 @@ export function GuildHallPanel({ run, offers, onRunChange, onBuyEquipment, onReq
       <div className="guild-hall-section">
         <div className="guild-hall-section-head">
           <span className="guild-hall-section-title">⚔️ Recruits</span>
-          <span className="guild-hall-section-hint">Hold a hero to inspect</span>
+          <span className="guild-hall-section-hint">Tap a hero to view and recruit</span>
         </div>
         {heroOffers.length > 0 ? (
           <div className="guild-hall-hero-grid">
@@ -199,7 +200,6 @@ export function GuildHallPanel({ run, offers, onRunChange, onBuyEquipment, onReq
                   hero={hero}
                   offer={offer}
                   affordable={run.gold >= offer.cost}
-                  onBuy={() => handleRecruit(offer)}
                   onInspect={() => setPreviewOfferId(offer.id)}
                 />
               );
@@ -272,15 +272,32 @@ export function GuildHallPanel({ run, offers, onRunChange, onBuyEquipment, onReq
         <span className="guild-hall-contract-price">{CONTRACT_PURCHASE_COST}g</span>
       </button>
 
-      {previewOffer && (
-        <HeroPreviewOverlay
-          hero={heroes[previewOffer.heroId]}
-          entry={createRosterEntry('preview', previewOffer.heroId, previewOffer.startingMoveIds)}
-          equipmentLookup={equipment}
-          relicIds={run.relics}
-          onClose={() => setPreviewOfferId(null)}
-        />
-      )}
+      {previewOffer &&
+        (() => {
+          const affordable = run.gold >= previewOffer.cost;
+          return (
+            <HeroPreviewOverlay
+              hero={heroes[previewOffer.heroId]}
+              entry={createRosterEntry('preview', previewOffer.heroId, previewOffer.startingMoveIds)}
+              equipmentLookup={equipment}
+              relicIds={run.relics}
+              action={{
+                label: `Recruit ${heroes[previewOffer.heroId].name} — ${previewOffer.cost}g`,
+                disabled: !affordable,
+                note: !affordable
+                  ? `Not enough gold — ${previewOffer.cost}g needed, you have ${run.gold}g.`
+                  : rosterFull
+                    ? `Roster is full (${ROSTER_CAP}/${ROSTER_CAP}) — you'll choose a hero to terminate next.`
+                    : undefined,
+                onConfirm: () => {
+                  handleRecruit(previewOffer);
+                  setPreviewOfferId(null);
+                },
+              }}
+              onClose={() => setPreviewOfferId(null)}
+            />
+          );
+        })()}
 
       {previewEquip && (
         <div className="log-overlay" onClick={() => setPreviewEquipId(null)}>

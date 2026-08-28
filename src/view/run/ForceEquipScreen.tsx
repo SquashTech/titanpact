@@ -8,12 +8,9 @@ import { equipToRoster, RunProgressError } from '../../run/runProgress';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
-import { EQUIP_SLOT_LABELS, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
+import { EQUIP_SLOT_LABELS, EquipmentEffectList, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
-import { passives } from '../../data/passives';
-import { passiveEmoji } from '../shared/passiveIcons';
-import { statuses } from '../../data/statuses';
 
 interface Props {
   run: RunState;
@@ -124,8 +121,6 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
   }
 
   const grants = Object.entries(item.statGrants) as [StatKey, number][];
-  const grantedPassives = item.grantsPassiveIds ?? [];
-  const grantedStatuses = item.grantsStatusIds ?? [];
 
   return (
     <div
@@ -176,35 +171,7 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
         {/* Full passive/status description (not just the "Grants: Name"
             chip used elsewhere) — the more economical hero grid below
             frees up room to spell out exactly what the item does. */}
-        {(grantedPassives.length > 0 || grantedStatuses.length > 0) && (
-          <div className="equip-spotlight-passives">
-            {grantedPassives.map((passiveId) => {
-              const def = passives[passiveId];
-              if (!def) return null;
-              return (
-                <div key={passiveId} className="equip-spotlight-passive">
-                  <span className="equip-spotlight-passive-name">
-                    {passiveEmoji[passiveId] ? `${passiveEmoji[passiveId]} ` : ''}
-                    {def.name}
-                  </span>
-                  <span className="equip-spotlight-passive-desc">{def.description}</span>
-                </div>
-              );
-            })}
-            {grantedStatuses.map(({ statusId, magnitude }) => {
-              const def = statuses[statusId];
-              if (!def) return null;
-              return (
-                <div key={statusId} className="equip-spotlight-passive">
-                  <span className="equip-spotlight-passive-name">
-                    {def.name} +{magnitude}
-                  </span>
-                  <span className="equip-spotlight-passive-desc">{def.description}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <EquipmentEffectList item={item} />
       </div>
 
       <HeroPickGrid count={run.roster.length} fill>

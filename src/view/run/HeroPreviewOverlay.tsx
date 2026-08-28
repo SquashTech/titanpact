@@ -33,6 +33,21 @@ interface Props {
    * and the pre-run draft, where the player owns no relics yet.
    */
   relicIds?: readonly string[];
+  /**
+   * Turns the sheet from a readout into a decision: a confirm button under the
+   * loadout, plus a Cancel. The Guild Hall's recruit is the first caller —
+   * buying a hero used to happen on the tap that opened nothing, so the player
+   * spent 120 gold before seeing a single stat. Omit for the read-only
+   * previews (squad select, the scouted enemy squad, roster management), which
+   * is still what most callers want.
+   */
+  action?: {
+    label: string;
+    /** Rendered above the button — why the button is inert, or what confirming will additionally cost (a full roster's termination). */
+    note?: string;
+    disabled?: boolean;
+    onConfirm: () => void;
+  };
   onClose: () => void;
 }
 
@@ -45,7 +60,7 @@ interface Props {
  * Combatant's baselineStatModifiers, so this sheet can't drift out of sync
  * with what the fight actually uses (it did: relic grants were missing here).
  */
-export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = [], onClose }: Props) {
+export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = [], action, onClose }: Props) {
   const heroClass = chosenClass(classes, entry);
   const teamStatModifiers = relicTeamStatModifiers(relicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);
@@ -162,7 +177,24 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
         <div className="detail-section-title"><SectionGlyph name="equipment" /> Equipment</div>
         <EquipmentSlotGrid loadout={entry.equipment} equipmentLookup={equipmentLookup} onInspect={(id) => openPopup({ kind: 'equipment', id })} />
 
-        <div className="detail-close-hint">Hold a move, item, or Class to inspect it — tap elsewhere to close</div>
+        {/* stopPropagation on the whole block: closeAndStop above treats a tap
+            anywhere in the panel as "dismiss", which would fire before the
+            confirm ever ran. */}
+        {action && (
+          <div className="detail-action" onClick={(e) => e.stopPropagation()}>
+            {action.note && <div className="detail-action-note">{action.note}</div>}
+            <button className="resolve-button" disabled={action.disabled} onClick={action.onConfirm}>
+              {action.label}
+            </button>
+            <button className="detail-action-cancel" onClick={onClose}>
+              Cancel
+            </button>
+          </div>
+        )}
+
+        <div className="detail-close-hint">
+          {action ? 'Hold a move, item, or Class to inspect it' : 'Hold a move, item, or Class to inspect it — tap elsewhere to close'}
+        </div>
       </div>
 
       {/* Long-press-triggered move/item/class detail popup (see `popup` state above) — reuses .log-overlay/.log-panel like LevelUpScreen's move popup, including "tap anywhere to close" (no stopPropagation on the panel). */}
