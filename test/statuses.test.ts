@@ -17,7 +17,7 @@ import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import { getEffectiveStat, hasStatus } from '../src/engine/state';
-import { applyStatus, cleanseStatuses } from '../src/engine/combat/statusEngine';
+import { applyStatus, cleanseStatuses, selectableTargets } from '../src/engine/combat/statusEngine';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
@@ -309,4 +309,23 @@ test('status: both active heroes can never be Stealthed at once — the slower V
   assert.strictEqual(events.some((e) => e.type === 'StatusApplied' && e.combatantId === 'a1' && e.statusId === 'Stealth'), false);
   // a1's mana was still spent — the move itself went off, only the status application fizzled.
   assert.ok(events.some((e) => e.type === 'MoveUsed' && e.combatantId === 'a1' && e.manaSpent === moves.vanish.manaCost));
+});
+
+test('status: a Stealthed hero is not a selectable target for a single-target attack, but is for a spread one', () => {
+  const state = twoVTwoFixture(230);
+  // Round 1: b2 goes Stealth with nothing aimed at it, so the redirect never
+  // fires and the status is simply up when targets are next declared.
+  const { state: stealthed } = resolveRound(state, [{ kind: 'move', combatantId: 'b2', moveId: 'vanish' }], config);
+  assert.ok(hasStatus(stealthed.combatants.b2, 'Stealth'));
+
+  const enemies = ['b1', 'b2'];
+  // Single-target attack: b2 is hidden from the picker entirely.
+  assert.deepStrictEqual(selectableTargets(stealthed, 'singleEnemy', 'damage', enemies), ['b1']);
+  // Spread attack: still lists (and still hits) b2.
+  assert.deepStrictEqual(selectableTargets(stealthed, 'bothEnemies', 'damage', enemies), enemies);
+  // Non-damage single-target move: Stealth only blocks attacks.
+  assert.deepStrictEqual(selectableTargets(stealthed, 'singleEnemy', 'heal', enemies), enemies);
+  // Last hero standing is Stealthed — offer it anyway rather than an empty picker,
+  // matching applyStealthRedirect's own "no alternate, the attack goes through" branch.
+  assert.deepStrictEqual(selectableTargets(stealthed, 'singleEnemy', 'damage', ['b2']), ['b2']);
 });

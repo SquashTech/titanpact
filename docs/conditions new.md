@@ -81,6 +81,15 @@ discipline** and are collected at the bottom.
 - For 1 turn the hero **cannot be targeted by attacks**; **spread moves still land.**
 - **Outspeeding + applying Stealth redirects the incoming attack to the other active
   hero** (the Speed-matters hook).
+- **Declaration time (2026-08-28): an already-Stealthed hero is not offered as a target
+  at all** — the target picker omits it for single-target attacks, so "cannot be
+  targeted" is literal rather than something the player discovers via the redirect.
+  The redirect above still covers the mid-round case, where Stealth lands *after* the
+  attack was declared. Same narrow shape both sides (`selectableTargets` /
+  `applyStealthRedirect`, statusEngine.ts): damage-kind, singleEnemy/singleAlly only,
+  so spread moves keep listing and hitting a Stealthed hero. If the Stealthed hero is
+  the only one left to aim at, it is offered anyway rather than presenting an empty
+  picker — mirroring the redirect's own "no alternate, the attack goes through" branch.
 - Positive / self-buff → subject to the Cleanse-strips-positives question, alongside
   Renew.
 - ⚠️ Command-then-resolve timing needs an explicit rule. See open questions.

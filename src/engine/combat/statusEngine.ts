@@ -401,3 +401,31 @@ export function applyStealthRedirect(
   const alternate = state.active[target.side].find((cid): cid is string => cid !== null && cid !== id && !state.combatants[cid]?.fainted);
   return alternate ? [alternate] : [...targetIds];
 }
+
+/**
+ * The declaration-time counterpart to applyStealthRedirect: which of
+ * `candidateIds` a single-target move may legally be aimed at. A Stealthed
+ * hero is not offered at all, so the player never declares an attack the
+ * redirect above would silently move somewhere else. Same narrow shape as the
+ * redirect — damage-kind, singleEnemy/singleAlly only — so spread moves keep
+ * listing (and hitting) a Stealthed hero.
+ *
+ * Falls back to the unfiltered candidates when hiding would leave nothing to
+ * aim at, mirroring the redirect's own "no alternate, the attack goes through"
+ * branch rather than presenting an empty target list.
+ */
+export function selectableTargets(
+  state: CombatState,
+  targetMode: TargetMode,
+  moveKind: 'damage' | 'heal' | 'buff',
+  candidateIds: readonly string[]
+): string[] {
+  if (moveKind !== 'damage') return [...candidateIds];
+  if (targetMode !== 'singleEnemy' && targetMode !== 'singleAlly') return [...candidateIds];
+
+  const visible = candidateIds.filter((id) => {
+    const combatant = state.combatants[id];
+    return !combatant || !hasStatus(combatant, 'Stealth');
+  });
+  return visible.length > 0 ? visible : [...candidateIds];
+}

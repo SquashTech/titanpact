@@ -12,6 +12,7 @@ import type { CombatState, Side } from '../../engine/state';
 import { isLockedIn, effectiveTypes, hasAffordableMove } from '../../engine/state';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../engine/combat/switching';
+import { selectableTargets } from '../../engine/combat/statusEngine';
 import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
 import type { Action } from '../../engine/combat/actions';
 import type { CombatEvent } from '../../engine/events';
@@ -605,12 +606,17 @@ export function FightScreen({
   })();
   const consoleStyle = { '--console-rgb': consoleRgb, '--console-origin': consoleOrigin } as CSSProperties;
 
+  /** Stealth hides its holder from the target picker entirely — the engine rule lives with its resolve-time counterpart (selectableTargets, statusEngine.ts) so the two can't drift apart. */
+  function visibleTargets(move: MoveDefinition, ids: string[]): string[] {
+    return selectableTargets(combat, move.target, move.kind, ids);
+  }
+
   const targetableIds: string[] = !selecting
     ? []
     : selecting.move.target === 'singleEnemy'
-      ? enemyActiveAlive
+      ? visibleTargets(selecting.move, enemyActiveAlive)
       : selecting.move.target === 'singleAlly'
-        ? playerActiveAlive
+        ? visibleTargets(selecting.move, playerActiveAlive)
         : selecting.move.target === 'self'
           ? [selecting.combatantId]
           : selecting.move.target === 'bothEnemies'
