@@ -4,6 +4,7 @@ import type { ActiveFieldEffect } from '../../engine/state';
 import { fieldEffects } from '../../data/fieldEffects';
 import { getTypeColor } from './typeColors';
 import { fieldEffectIconArt } from '../shared/iconArt';
+import { overlayHost } from '../shared/overlayHost';
 
 interface Props {
   active: ActiveFieldEffect;
@@ -21,9 +22,9 @@ interface Props {
  *
  * Colored by the effect's own flavorType (border-top) — set inline here
  * rather than via the --field-effect-rgb custom property FightScreen sets on
- * .battlefield, since this overlay is portalled straight to document.body and
- * so sits outside that element's subtree (custom properties don't cross a
- * portal boundary).
+ * .battlefield, since this overlay is portalled (to `.app-shell` —
+ * overlayHost.ts) and so sits outside that element's subtree; custom
+ * properties don't cross a portal boundary.
  */
 export function FieldEffectDetailOverlay({ active, onClose }: Props) {
   const def = fieldEffects[active.fieldEffectId];
@@ -58,6 +59,6 @@ export function FieldEffectDetailOverlay({ active, onClose }: Props) {
         <div className="detail-close-hint">Tap anywhere to close</div>
       </div>
     </div>,
-    document.body
+    overlayHost()
   );
 }

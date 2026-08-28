@@ -26,6 +26,7 @@ import { STAT_LABELS, hpTier } from '../shared/StatBars';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TARGET_MODE_LABELS } from '../shared/MoveTile';
+import { overlayHost } from '../shared/overlayHost';
 
 /**
  * The live fight a move is being inspected *inside*. Optional everywhere the
@@ -417,10 +418,12 @@ export function MoveDetailCard({ move, label, context }: CardProps) {
  * long-press a player performs most often was the only one that opened
  * something shaped differently from all the others.
  *
- * Portalled to document.body for the reason StatusDetailOverlay documents: the
- * console and its rows carry transforms and filters, either of which would make
- * a `position: fixed` descendant resolve against the row instead of the
- * viewport.
+ * Portalled for the reason StatusDetailOverlay documents — the console and its
+ * rows carry transforms and filters, either of which would make a
+ * `position: fixed` descendant resolve against the row — but into
+ * `.app-shell`, not `document.body`. See overlayHost.ts: body is outside the
+ * transform-scaled design canvas, which on a zoomed browser rendered this card
+ * at half the size of everything around it.
  */
 export function MoveDetailOverlay({ move, context, onClose }: { move: MoveDefinition; context?: MoveDossierContext; onClose: () => void }) {
   function closeAndStop(e: { stopPropagation: () => void }) {
@@ -444,6 +447,6 @@ export function MoveDetailOverlay({ move, context, onClose }: { move: MoveDefini
         <div className="detail-close-hint">Tap anywhere to close</div>
       </div>
     </div>,
-    document.body
+    overlayHost()
   );
 }

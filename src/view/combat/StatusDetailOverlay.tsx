@@ -2,6 +2,7 @@ import { createPortal } from 'react-dom';
 import type { StatusInstance } from '../../engine/state';
 import { statuses } from '../../data/statuses';
 import { StatusGlyph, statusColor, statusTint, statusClearText, pipelineLabel, PoisonPips } from '../shared/statusIcons';
+import { overlayHost } from '../shared/overlayHost';
 
 interface Props {
   instance: StatusInstance;
@@ -27,11 +28,12 @@ export function StatusDetailOverlay({ instance, onClose }: Props) {
 
   const clearText = statusClearText(def);
 
-  // Portalled to document.body rather than rendered in place: this overlay is
-  // reached from a status icon nested inside a CombatantCard, and that card
-  // can carry `filter` (fainted/locked) or `transform` (targetable:hover) —
-  // either one turns a `position: fixed` descendant into a containing-block
-  // child of the card instead of the viewport. Portalling sidesteps that.
+  // Portalled rather than rendered in place: this overlay is reached from a
+  // status icon nested inside a CombatantCard, and that card can carry
+  // `filter` (fainted/locked) or `transform` (targetable:hover) — either one
+  // turns a `position: fixed` descendant into a containing-block child of the
+  // card instead of the viewport. The host is `.app-shell`, NOT document.body:
+  // see overlayHost.ts for why the body version renders at the wrong scale.
   return createPortal(
     <div className="detail-overlay status-detail-overlay" onClick={closeAndStop}>
       <div className="detail-panel status-detail-panel" style={{ borderTopColor: color }} onClick={closeAndStop}>
@@ -63,6 +65,6 @@ export function StatusDetailOverlay({ instance, onClose }: Props) {
         <div className="detail-close-hint">Tap anywhere to close</div>
       </div>
     </div>,
-    document.body
+    overlayHost()
   );
 }

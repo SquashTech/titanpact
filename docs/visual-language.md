@@ -1021,11 +1021,47 @@ over CDP (the Browser pane does not composite in this session).
   `.move-popup-panel/-hint/-description` stay, since the map node preview, the
   equipment popups and the level-up offer still use them.
 
+### A portal to `document.body` leaves the design canvas
+
+Found the moment this reached a real phone, and it is a *class* of bug rather
+than a detail of this card — worth knowing before the next overlay is written.
+
+The three combat detail overlays (move, status, Field Effect) each portal out of
+the component that opens them, for a real reason StatusDetailOverlay documents:
+they hang off an icon inside a `CombatantCard`, and that card can carry `filter`
+or `transform`, either of which turns a `position: fixed` descendant into a
+containing-block child of the *card*. All three portalled to `document.body`.
+
+But `.app-shell` is a **transform-scaled design canvas** (src/app/uiScale.ts):
+every size in this app is authored against a ~394px canvas and the shell is
+scaled to fill the real screen. Anything mounted outside the shell is not
+scaled — it renders at its authored px against the raw layout viewport. On a
+browser at page zoom 0.5, which uiScale.ts already records as a real measured
+case (an iPhone reporting `screen 390x844` hands the page a **780px** layout
+viewport), a 380px card came out at **48% of the screen**, sitting next to move
+rows drawn at twice its type size. That is what "the box still looks extremely
+small" was, and no amount of raising the max-width would have fixed it — the
+previous attempt raised 340 → 380 and moved the number by four points.
+
+The fix is one line, in a shared `overlayHost()`: portal into `.app-shell`
+instead. The shell always carries a `transform` (`scale(…)`, set inline by
+uiScale — never `none`), and any transform makes an element the containing block
+for its fixed-position descendants. So `inset: 0` now means *the canvas*: the
+overlay is scaled with everything else, and it is still above every card's own
+filter or transform, which is what the portal was for.
+
+Measured at an 780×1690 viewport (the same shell-vs-viewport ratio the zoomed
+phone produces): overlay box **430 × 1690** — exactly the shell, not the 780px
+viewport — move card **92% of the shell** (395 device px from 362 CSS px × 1.09),
+status card 76% (its own 300px cap, correct for a three-line readout).
+
+**The rule: never `createPortal(…, document.body)` in this app.** Use
+`overlayHost()`.
+
 Two caveats:
 
-- **Not seen on a real device.** The haptic in particular has only been
-  feature-detected, never felt, and iOS Safari has no Vibration API at all — on
-  iPhone the charge sweep is the entire feedback.
+- **The haptic has been feature-detected, never felt**, and iOS Safari has no
+  Vibration API at all — on iPhone the charge is the entire feedback.
 - **The hold is still 500ms.** With the charge drawn it is legible rather than
   dead, but whether 500 is the right number is a feel question that wants a
   thumb, not a measurement.
