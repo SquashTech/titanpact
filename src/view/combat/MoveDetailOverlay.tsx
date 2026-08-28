@@ -164,8 +164,14 @@ function ForecastRow({ move, ctx, defenderId }: { move: MoveDefinition; ctx: Mov
 
   return (
     <div className="move-forecast-row">
+      {/* 48px — the source's native size. The 24px this used to draw at is the
+          other legal scale (docs/visual-language.md defect 1) and it made the
+          enemy a footnote in a readout that is entirely about that enemy; at
+          native size the row is worth the space it takes, and the name/matchup
+          line and the meter stack beside it rather than under it. */}
+      <HeroPortrait heroId={defender.heroId} className="move-forecast-portrait" seed={defenderId} />
+      <div className="move-forecast-body">
       <div className="move-forecast-who">
-        <HeroPortrait heroId={defender.heroId} className="move-forecast-portrait" seed={defenderId} />
         <span className="move-forecast-name">{hero.name}</span>
         {/* Chromeless, not TypeBadge: a filled chip here would put back exactly
             the sub-box the console's move rows had removed, twice per row, and
@@ -190,6 +196,7 @@ function ForecastRow({ move, ctx, defenderId }: { move: MoveDefinition; ctx: Mov
           <span className="move-forecast-of"> / {defender.currentHp}</span>
         </span>
         {ko && <span className={`move-forecast-ko ${ko === 'sure' ? 'is-sure' : 'is-maybe'}`}>{ko === 'sure' ? 'KO' : 'KO?'}</span>}
+      </div>
       </div>
     </div>
   );

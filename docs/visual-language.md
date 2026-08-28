@@ -927,7 +927,7 @@ told the player nothing the row underneath it wasn't already saying.
 
 | Was | Is |
 |---|---|
-| 500ms of nothing | A **charge**: the facet's domain light swells and a type-coloured wipe crosses the row, landing exactly as the card opens |
+| 500ms of nothing | A **charge**: after a delay no tap survives, the facet lights from its own leading emitter, arriving as the card opens |
 | Fires during a scroll | Cancels past 12px of travel — a pointer that moves is a scroll, not a hold |
 | Unaffordable = `disabled` = uninspectable | `.is-unaffordable` + `aria-disabled`: same dead treatment, refuses the tap, keeps the gesture |
 | No confirmation the gesture landed | One 12ms haptic where the platform has one |
@@ -964,12 +964,32 @@ Details worth keeping:
   holding a move produces the same object wherever you are. The forecast half
   simply doesn't render without a fight to forecast against, which is what
   `MoveDossierContext` being optional buys.
+- **The width is the shell's, not a status card's.** The panel first shipped
+  capped at 340px, inherited from `.status-detail-panel` — right for three short
+  lines, wrong for a header, a numbers row, a payload list and a two-enemy
+  forecast, which at 340 read as a small slab floating in a full-screen blur on
+  the 394px design canvas. It now takes `.detail-panel`'s own 380 cap, i.e. the
+  full 362px the overlay's padding leaves, with the type scale raised a step to
+  match and the forecast's enemy portraits at their **native 48px** rather than
+  the 24px thumbnail they started at. Measured 362 × 358px at 394 × 852 with no
+  horizontal overflow.
 - **The card found a content bug on its first render.** STAB was being shown on
   buffs and heals — a term that does not exist in a non-damage move's
   resolution. Gated to `kind === 'damage'`.
 - **The forecast's defender types are bare glyphs, not `TypeBadge`.** Two filled
   chips per row would have reinstated the exact sub-box this card exists to
   argue against, and they out-shouted the defender's own name.
+- **The charge is light, and it is late.** The first version drew a hard-edged
+  wipe travelling the row, and it was wrong twice: it read as a progress bar, in
+  a console whose *committed* state is already a gold fill; and because the
+  animation starts on pointerdown, an ordinary tap flashed a partly-filled bar
+  for the 80–150ms a finger is down, which reads as a glitch on the control
+  pressed most often in the game. It now shows nothing for the first 180ms —
+  longer than any tap — and then lights the row from its own leading emitter,
+  a soft falloff spreading rightwards with no edge to read as a percentage.
+  `animation-fill-mode: both` is what makes the delay invisible rather than
+  merely early: the backwards half holds the from-state (opacity 0) throughout
+  it. Verified at 100ms into a press: computed opacity **0**.
 - **`data-holding`, not a returned boolean.** `useLongPress` is spread onto its
   element at a dozen call sites; a `data-*` attribute is legal to spread and
   every one of them picked up the charge without an edit, where a flag would
@@ -991,8 +1011,8 @@ over CDP (the Browser pane does not composite in this session).
 - **Forecast geometry** asserted per row, not eyeballed: HP fill, bite
   left/width, notch position and HP tier all computed from the same fractions.
 - **Forecast honesty** confirmed against a resolved round (above).
-- **The charge** confirmed mid-gesture: `data-holding` present, `hold-charge`
-  running at `0.5s`, and the sweep caught on screen part-way across the row.
+- **The charge** confirmed at both ends: invisible 100ms into a press (opacity
+  0, delay 0.18s), and the row lit from its leading edge on a real hold.
 - **Unaffordable treatment survived the `:disabled` → `.is-unaffordable` swap**,
   and now actually dims (opacity 0.4, measured) for the first time.
 - `npm test` (203 engine tests), `npm run typecheck:view` and `npm run

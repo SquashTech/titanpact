@@ -11862,8 +11862,14 @@ button,
    .move-popup-panel wrapper that also holds equipment and passives, and has no
    move type to be tinted by. There the disc, the coloured type name and the
    card's own structure carry the identity instead. */
+/* No max-width of its own. .detail-panel caps at 380px, which on the 394px
+   design canvas (src/app/uiScale.ts REFERENCE_WIDTH) means the card fills the
+   362px the overlay's padding leaves it. The 340px cap this used to carry was
+   inherited from .status-detail-panel — a status card is three short lines and
+   deserves to be narrow; a move dossier is a header, a numbers row, a payload
+   list and a two-enemy forecast, and at 340 it read as a small slab floating
+   in a full-screen blur. */
 .move-detail-panel {
-  max-width: 340px;
   gap: 0;
   border-top-width: 3px;
   background:
@@ -11879,7 +11885,7 @@ button,
 
 /* LevelUpScreen's replace offer names the slot being inspected. */
 .move-detail-label {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -11898,8 +11904,8 @@ button,
    Iron anvil is. Tinted from the type's own rgb rather than sitting in a flat
    well, so the disc is lit by the same light as the panel's wash. */
 .move-detail-disc {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -11916,8 +11922,8 @@ button,
 }
 
 .move-detail-disc svg {
-  width: 26px;
-  height: 26px;
+  width: 31px;
+  height: 31px;
 }
 
 .move-detail-titles {
@@ -11926,7 +11932,7 @@ button,
 }
 
 .move-detail-name {
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 700;
   color: var(--text);
   line-height: 1.2;
@@ -11942,8 +11948,8 @@ button,
   flex-wrap: wrap;
   align-items: baseline;
   gap: 4px;
-  margin-top: 2px;
-  font-size: 10px;
+  margin-top: 3px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -11961,34 +11967,34 @@ button,
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 14px;
-  padding-top: 8px;
+  gap: 7px 16px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
 }
 
 .move-detail-stat {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11px;
+  gap: 5px;
+  font-size: 12px;
   color: var(--text-dim);
 }
 
 .move-detail-stat svg {
-  width: 13px;
-  height: 13px;
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
 }
 
 .move-detail-stat strong {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 800;
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
 
 .move-detail-unit {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -12002,7 +12008,7 @@ button,
 .move-detail-boost {
   color: var(--buff);
   font-weight: 800;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .move-detail-stat-heal,
@@ -12047,15 +12053,15 @@ button,
 .move-detail-effects {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding-top: 8px;
+  gap: 8px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
 }
 
 .move-detail-effect-row {
   display: flex;
   align-items: flex-start;
-  gap: 7px;
+  gap: 8px;
 }
 
 .move-detail-effect-glyph {
@@ -12063,19 +12069,19 @@ button,
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
+  width: 19px;
+  height: 19px;
   margin-top: 1px;
 }
 
 .move-detail-effect-glyph svg {
-  width: 16px;
-  height: 16px;
+  width: 19px;
+  height: 19px;
 }
 
 .move-detail-effect-text {
   min-width: 0;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.35;
 }
@@ -12088,14 +12094,14 @@ button,
 .move-detail-effect-note {
   display: block;
   font-weight: 400;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-dim);
 }
 
 /* Authored flavor. Deliberately the quietest thing on the card: everything
    above it is mechanics. */
 .move-detail-desc {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.45;
   color: var(--text-dim);
   font-style: italic;
@@ -12104,15 +12110,15 @@ button,
 .move-detail-forecast {
   display: flex;
   flex-direction: column;
-  gap: 9px;
-  padding-top: 8px;
+  gap: 12px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
 }
 
 /* Section mark in the horizon's own register (9px/800/0.14em) — the one the
    Field Effect plaque and the draft's eyebrows already use. */
 .move-detail-eyebrow {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -12121,8 +12127,16 @@ button,
 
 .move-forecast-row {
   display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.move-forecast-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
 }
 
 .move-forecast-who {
@@ -12132,11 +12146,12 @@ button,
   min-width: 0;
 }
 
-/* 24px is the one legal downscale of the 48px sources (docs/visual-language.md
-   defect 1) — a clean 0.5x. Any other size resamples the art's own grid. */
+/* Native 48px. The sources are 48x48 and the only other honest size is 24
+   (docs/visual-language.md defect 1) — which is what this drew at first, and it
+   made the enemy a thumbnail in a readout whose entire subject is that enemy. */
 .move-forecast-portrait {
-  width: 24px;
-  height: 24px;
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
   image-rendering: pixelated;
 }
@@ -12148,8 +12163,8 @@ button,
 }
 
 .move-forecast-type svg {
-  width: 13px;
-  height: 13px;
+  width: 15px;
+  height: 15px;
 }
 
 .move-forecast-name {
@@ -12158,7 +12173,7 @@ button,
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text);
 }
@@ -12168,7 +12183,7 @@ button,
    greens. */
 .move-forecast-mult {
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
@@ -12212,8 +12227,8 @@ button,
   position: relative;
   flex: 1;
   min-width: 0;
-  height: 9px;
-  border-radius: 5px;
+  height: 11px;
+  border-radius: 6px;
   background: var(--surface-sunken);
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.55);
   overflow: hidden;
@@ -12270,7 +12285,7 @@ button,
 
 .move-forecast-numbers {
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--text);
   font-variant-numeric: tabular-nums;
@@ -12285,7 +12300,7 @@ button,
 
 .move-forecast-ko {
   flex-shrink: 0;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
 }
@@ -12306,7 +12321,7 @@ button,
    know exactly which term of the locked formula the game rolled — and that the
    one term missing from the band is the 1/16 crit. */
 .move-detail-footnote {
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1.4;
   color: var(--text-dim);
   opacity: 0.75;
@@ -12318,24 +12333,36 @@ button,
    A 500ms hold that shows nothing until the instant it completes is
    indistinguishable from a dead control, which is most of why "hold for info"
    goes undiscovered — and on the fight screen it is the only route to the
-   damage forecast. The charge is drawn in the language the sixth pass gave
-   these rows: the domain light in the facet's leading wall swells, and the
-   type wash sweeps across the face from that same light, left to right,
-   arriving exactly as the dossier opens.
+   damage forecast.
 
-   --hold-ms is the CSS twin of LONG_PRESS_MS (MoveTile.tsx). If one moves the
-   other must: a sweep that lands early reads as a bug, one that lands late
-   reads as lag. */
+   The first version of this drew a hard-edged wipe travelling the row, and it
+   was wrong twice. It read as a progress bar, which put a second filling
+   rectangle in a console whose committed state is already a gold fill; and
+   because the animation starts on pointerdown, an ordinary *tap* flashed a
+   partly-filled bar for the 80-150ms a finger is down. A bar that fills to 30%
+   and vanishes reads as a glitch, on the control pressed most often in the
+   game.
+
+   So: nothing at all for the first --hold-charge-delay, which no tap survives,
+   and then light rather than fill. The row lights from its own leading
+   emitter, the glow spreading rightwards with a soft falloff and no edge to
+   read as a percentage — the same idiom the sixth pass gave these facets, just
+   answering a press. Releasing early takes the light away; there is no
+   half-finished bar left behind to explain.
+
+   --hold-ms is the CSS twin of LONG_PRESS_MS (MoveTile.tsx), and delay +
+   duration must add up to it: the light has to arrive exactly as the card
+   opens, or it reads as lag one way and as a bug the other. */
 :root {
   --hold-ms: 500ms;
+  /* Longer than a tap (~80-150ms) by a clear margin, so pressing a move never
+     shows a trace of this. */
+  --hold-charge-delay: 180ms;
+  --hold-charge-ms: 320ms;
 }
 
-.move-list .move-button[data-holding] {
-  /* Beats the row's own background transition, which would otherwise ease the
-     wash in over --dur-mid and blunt the sweep's leading edge. */
-  transition: none;
-}
-
+/* The domain light in the leading wall swells to the facet's full height and
+   brightens — delayed with everything else, so a tap leaves it alone. */
 .move-list .move-button[data-holding]::before {
   width: 7px;
   top: 0;
@@ -12343,7 +12370,8 @@ button,
   box-shadow:
     0 0 16px 3px rgba(var(--move-type-rgb, 53, 59, 74), 1),
     0 0 40px 9px rgba(var(--move-type-rgb, 53, 59, 74), 0.5);
-  transition-duration: var(--hold-ms);
+  transition-delay: var(--hold-charge-delay);
+  transition-duration: var(--hold-charge-ms);
 }
 
 .move-list .move-button[data-holding]::after {
@@ -12351,31 +12379,35 @@ button,
   position: absolute;
   inset: 0;
   pointer-events: none;
+  transform-origin: left center;
+  /* Faded out well before its own right edge, so scaling it moves a soft
+     falloff across the row instead of dragging a visible boundary. */
   background: linear-gradient(
     90deg,
     rgba(var(--move-type-rgb, 53, 59, 74), 0.5),
-    rgba(var(--move-type-rgb, 53, 59, 74), 0.06) 78%,
-    transparent
+    rgba(var(--move-type-rgb, 53, 59, 74), 0.16) 40%,
+    transparent 74%
   );
-  animation: hold-charge var(--hold-ms) linear both;
+  animation: hold-charge var(--hold-charge-ms) var(--ease-out) var(--hold-charge-delay) both;
 }
 
-/* A wipe, not a fade: the player has to be able to see how much of the hold is
-   left, which a uniform ramp in opacity cannot say. clip-path rather than a
-   scaled child, so the gradient inside stays fixed to the row and only the
-   leading edge travels across it. */
+/* `both`, for the backwards half: during the delay the element holds the
+   from-state, i.e. fully transparent. That is what makes a tap show nothing
+   rather than show a little. */
 @keyframes hold-charge {
   from {
-    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+    transform: scaleX(0.1);
   }
   to {
-    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    transform: scaleX(1);
   }
 }
 
-/* The compact tiles (hero sheet, sandbox, compendium) get the same clock in
-   the register they are drawn at — a tinted sweep across the tile, since they
-   have no leading light to swell. */
+/* The compact tiles (hero sheet, sandbox, compendium) get the same light in
+   the register they are drawn at — gold rather than a domain colour, since a
+   tile has no leading emitter of its own to spread from. */
 .move-tile[data-holding] {
   position: relative;
   overflow: hidden;
@@ -12386,11 +12418,12 @@ button,
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(90deg, rgba(224, 166, 60, 0.3), rgba(224, 166, 60, 0.08));
-  animation: hold-charge var(--hold-ms) linear both;
+  transform-origin: left center;
+  background: linear-gradient(90deg, rgba(224, 166, 60, 0.34), rgba(224, 166, 60, 0.1) 45%, transparent 78%);
+  animation: hold-charge var(--hold-charge-ms) var(--ease-out) var(--hold-charge-delay) both;
 }
 
-/* An animated wipe is decoration on top of a gesture that works without it. */
+/* The light is decoration on top of a gesture that works without it. */
 @media (prefers-reduced-motion: reduce) {
   .move-list .move-button[data-holding]::after,
   .move-tile[data-holding]::after {
