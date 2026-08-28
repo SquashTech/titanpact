@@ -68,6 +68,15 @@ export const RARITY_COLOR_VARS: Record<EquipmentRarity, string> = {
   mythic: 'var(--tier-mythic)',
 };
 
+/** The same five tiers as bare `r, g, b` triples (styles.css :root --tier-*-rgb) — for the rgba() consumers, chiefly the node stage's sky, which tints a whole screen in the dropped item's tier. */
+export const RARITY_RGB_VARS: Record<EquipmentRarity, string> = {
+  common: 'var(--tier-common-rgb)',
+  rare: 'var(--tier-rare-rgb)',
+  epic: 'var(--tier-epic-rgb)',
+  legendary: 'var(--tier-legendary-rgb)',
+  mythic: 'var(--tier-mythic-rgb)',
+};
+
 export const RARITY_LABELS: Record<EquipmentRarity, string> = {
   common: 'Common',
   rare: 'Rare',

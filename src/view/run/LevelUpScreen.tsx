@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useRef, useState } from 'react';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
@@ -12,16 +12,15 @@ import {
   pendingEvolution,
   chosenEvolutionPaths,
   chooseEvolutionPath,
-  rosterEntryTypes,
   MOVE_CAP,
   ProgressionError,
   type EvolutionNode,
 } from '../../run/progression';
-import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { MoveInfoPanel, MoveButtonReplica, useLongPress } from '../shared/MoveTile';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { ElementGlyph } from '../shared/elementIcons';
+import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
+import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { equipment } from '../../data/equipment';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { EvolutionScreen } from './EvolutionScreen';
@@ -35,31 +34,6 @@ interface Props {
 interface MoveOffer {
   rosterId: string;
   moveId: string;
-}
-
-const MOTE_COUNT = 12;
-
-/**
- * Ambient motes drifting up the screen — the same golden-angle scatter
- * DraftScreen/TitleScreen use (a pure function of the index, so it's stable
- * across re-renders with no seed to store). Kept sparser than the draft's 16:
- * this screen has six figures on it, not one, and the air behind them has to
- * stay quiet enough to read a rank track through.
- */
-function useMotes() {
-  return useMemo(
-    () =>
-      Array.from({ length: MOTE_COUNT }, (_, i) => {
-        const seed = i * 137.51;
-        return {
-          left: seed % 100,
-          delay: (seed * 1.3) % 7,
-          duration: 6 + ((seed * 0.29) % 4),
-          size: 2 + ((seed * 0.17) % 2),
-        };
-      }),
-    []
-  );
 }
 
 /**
@@ -102,20 +76,16 @@ interface GrowthCardProps {
 }
 
 /**
- * One hero on the growth roster. A card rather than a bare figure because
- * this genuinely is a button (docs/visual-language.md "a rectangle means you
- * can act on this") — but everything *inside* it is drawn without a
- * container, and the type is carried as the card's own material (a wash
- * entering top-left plus a tinted rim, `--type-rgb` set inline) rather than
- * as the 3px left-border marker + two chips it used to wear.
+ * One hero on the growth roster: the shared HeroPickCard (which this card is
+ * where the rest of the run loop's pick screens got theirs from — see
+ * src/view/shared/HeroPickCard.tsx) carrying two things only this screen
+ * has, the rank track toward Evolution as its detail row and the rising
+ * charge as its overlay.
  *
- * Own component because useLongPress is a hook — same reason
- * RosterManagementScreen's EquipSlotButton and GuildHallPanel's cards are.
  * Tap levels up (or opens Evolution); hold opens the full hero sheet, the
  * "hold to inspect" language used for moves and equipment everywhere else.
  */
 function GrowthCard({ hero, entry, node, canAct, isAnimating, onActivate, onPreview }: GrowthCardProps) {
-  const longPress = useLongPress(onPreview, canAct ? onActivate : undefined);
   const payoff = payoffFor(entry);
   const pending = pendingEvolution(progressionTable, entry);
   // Post-Evolution heroes have no pending node and so no track; their
@@ -126,100 +96,53 @@ function GrowthCard({ hero, entry, node, canAct, isAnimating, onActivate, onPrev
   const filled = pending ? Math.min(entry.level, pending.level) : 0;
 
   return (
-    <div
-      className={[
-        'growth-card',
-        canAct ? '' : 'is-locked',
-        node ? 'is-evolving' : '',
-        payoff === 'brink' && canAct ? 'is-brink' : '',
-        isAnimating ? 'is-leveling' : '',
-      ]
+    <HeroPickCard
+      hero={hero}
+      entry={entry}
+      className={['growth-card', node ? 'is-evolving' : '', payoff === 'brink' && canAct ? 'is-brink' : '', isAnimating ? 'is-leveling' : '']
         .filter(Boolean)
         .join(' ')}
-      style={{ '--type-rgb': getTypeColorRgb(hero.types[0]) } as CSSProperties}
-      role="button"
-      tabIndex={canAct ? 0 : -1}
-      aria-disabled={!canAct}
-      aria-label={`${hero.name}, level ${entry.level} — ${PAYOFF_LABEL[payoff]}`}
-      onKeyDown={(e) => {
-        if ((e.key === 'Enter' || e.key === ' ') && canAct) {
-          e.preventDefault();
-          onActivate();
-        }
-      }}
-      {...longPress}
-    >
-      <button
-        type="button"
-        className="growth-info"
-        onClick={(e) => {
-          e.stopPropagation();
-          onPreview();
-        }}
-        aria-label={`View ${hero.name} details`}
-      >
-        i
-      </button>
-
-      {/* The rising charge only exists while the level-up timer is running —
-          mounting it is what starts its animation, so there is no stale state
-          to reset between level-ups. */}
-      {isAnimating && <span className="growth-charge" aria-hidden="true" />}
-
-      <div className="growth-figure">
-        <span className="growth-ground" aria-hidden="true" />
-        <HeroPortrait heroId={hero.id} className="growth-portrait" />
-        <span className="growth-level" aria-hidden="true">
-          {entry.level}
+      disabled={!canAct}
+      onActivate={onActivate}
+      onPreview={onPreview}
+      ariaLabel={`${hero.name}, level ${entry.level} — ${PAYOFF_LABEL[payoff]}`}
+      /* The rising charge only exists while the level-up timer is running —
+         mounting it is what starts its animation, so there is no stale state
+         to reset between level-ups. */
+      overlay={isAnimating ? <span className="growth-charge" aria-hidden="true" /> : undefined}
+      /* The rank track: a fixed denominator (the pending Evolution's trigger
+         level) whose shape the player learns once, exactly like the Field
+         Effect plaque's duration clock and the draft's pact sockets. This is
+         the answer to "who should get this point" — how far each hero is from
+         the branch, readable across the whole roster at a glance. The final
+         pip is the Evolution itself, drawn as a diamond. */
+      detail={
+        <span className="growth-track">
+          {pending
+            ? Array.from({ length: pending.level }, (_, i) => {
+                const isLast = i === pending.level - 1;
+                const isFilled = i < filled;
+                // Remount the frontier pip whenever the level changes so it
+                // (and only it) replays the seal animation — the rest of the
+                // track holds still.
+                return (
+                  <span
+                    key={i === filled - 1 ? `${i}-${entry.level}` : `${i}`}
+                    className={`growth-pip${isFilled ? ' filled' : ''}${isLast ? ' evo' : ''}`}
+                  />
+                );
+              })
+            : chosenPath && <span className="growth-path">{chosenPath.name}</span>}
         </span>
-      </div>
-
-      <span className="growth-name">{hero.name}</span>
-
-      {/* Type as chromeless colored text, the .move-type-code idiom — the
-          card's wash already carries the primary type, and two filled chips
-          under a tinted button is the sub-box clutter the move grid was
-          rebuilt to get rid of. */}
-      <span className="growth-types">
-        {rosterEntryTypes(hero, entry).map((t) => (
-          <span key={t} className="growth-type-code" style={{ color: getTypeColor(t) }} title={t}>
-            <ElementGlyph type={t} />
-            {getTypeAbbr(t)}
-          </span>
-        ))}
-      </span>
-
-      {/* The rank track: a fixed denominator (the pending Evolution's trigger
-          level) whose shape the player learns once, exactly like the Field
-          Effect plaque's duration clock and the draft's pact sockets. This is
-          the answer to "who should get this point" — how far each hero is
-          from the branch, readable across the whole roster at a glance. The
-          final pip is the Evolution itself, drawn as a diamond. */}
-      <span className="growth-track">
-        {pending
-          ? Array.from({ length: pending.level }, (_, i) => {
-              const isLast = i === pending.level - 1;
-              const isFilled = i < filled;
-              // Remount the frontier pip whenever the level changes so it
-              // (and only it) replays the seal animation — the rest of the
-              // track holds still.
-              return (
-                <span
-                  key={i === filled - 1 ? `${i}-${entry.level}` : `${i}`}
-                  className={`growth-pip${isFilled ? ' filled' : ''}${isLast ? ' evo' : ''}`}
-                />
-              );
-            })
-          : chosenPath && <span className="growth-path">{chosenPath.name}</span>}
-      </span>
-
-      {/* Shown even with an empty pool — the card is visibly locked already,
-          and six repetitions of "No XP" would replace the one piece of
-          information on the card with a fact the header states once. What a
-          hero is about to unlock stays worth reading while the player decides
-          whether to press Continue. */}
-      <span className={`growth-payoff payoff-${payoff}`}>{isAnimating ? 'Training…' : PAYOFF_LABEL[payoff]}</span>
-    </div>
+      }
+      /* Shown even with an empty pool — the card is visibly locked already,
+         and six repetitions of "No XP" would replace the one piece of
+         information on the card with a fact the header states once. What a
+         hero is about to unlock stays worth reading while the player decides
+         whether to press Continue. */
+      ctaClassName={`payoff-${payoff}`}
+      cta={isAnimating ? 'Training…' : PAYOFF_LABEL[payoff]}
+    />
   );
 }
 
@@ -293,7 +216,6 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
   const [animatingRosterId, setAnimatingRosterId] = useState<string | null>(null);
   /** "X leveled up and learned Y!" readout, set once the animated level-up actually resolves — so a level-up's outcome is visible on-screen instead of only inferable from the card's new level and moves. */
   const [feedback, setFeedback] = useState<string | null>(null);
-  const motes = useMotes();
 
   /**
    * The pool as it stood when this screen opened, so the orb track keeps a
@@ -397,56 +319,32 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
   }
 
   const pendingEvolutions = run.roster.filter((entry) => !!availableEvolution(progressionTable, entry)).length;
-  /**
-   * Two columns up to four heroes, three at five or six. Not a cosmetic
-   * breakpoint: it's what lets the portrait always land on a clean multiple
-   * of its 48px source (docs/visual-language.md defect 1) — a two-column
-   * card is wide enough for 2x, a three-column one takes 1x. An early-run
-   * pair of heroes gets figures worth looking at; a full roster gets a grid
-   * that fits without scrolling.
-   */
-  const columns: 2 | 3 = run.roster.length > 4 ? 3 : 2;
 
   return (
     <div className="levelup-screen">
-      {/* Full-bleed past .app-shell's padding — a place, not a container.
-          Gold only, where the draft's sky is the pact's gold/violet: this is
-          the growth beat, and it is the one screen in the run loop that is
-          purely a reward. */}
-      <div className="levelup-sky" aria-hidden="true">
-        <span className="levelup-sky-wash" />
-        <div className="levelup-motes">
-          {motes.map((m, i) => (
-            <span
-              key={i}
-              className="levelup-mote"
-              style={
-                {
-                  left: `${m.left}%`,
-                  width: `${m.size}px`,
-                  height: `${m.size}px`,
-                  animationDelay: `${m.delay}s`,
-                  animationDuration: `${m.duration}s`,
-                } as CSSProperties
-              }
-            />
-          ))}
-        </div>
-      </div>
+      {/* Gold, where the draft's sky is the pact's gold/violet: this is the
+          growth beat, and it is the one screen in the run loop that is purely
+          a reward. */}
+      <NodeSky />
 
       {/* Hidden while the move-replace offer is up: that panel has its own
           headline, and it is the one layout here tall enough to need the
           whole screen. */}
       {!offer && (
-        <header className="levelup-header">
-          <div className="levelup-eyebrow">Growth Phase</div>
-          <h2 className="levelup-title">
-            <span className="levelup-title-glow" aria-hidden="true">
-              Level Up
-            </span>
-            Level Up
-          </h2>
-
+        <NodeHeader
+          eyebrow="Growth Phase"
+          title="Level Up"
+          readoutKey={feedback ?? 'idle'}
+          readoutLive={!!feedback}
+          readout={
+            feedback ??
+            (pendingEvolutions > 0
+              ? `${pendingEvolutions === 1 ? 'A hero is' : `${pendingEvolutions} heroes are`} ready to evolve — tap to choose a path.`
+              : run.levelUpPool >= 1
+                ? 'Tap a hero to spend a point. Hold to review its sheet.'
+                : 'Every point is spent.')
+          }
+        >
           {/* The pool, as orbs that go out one at a time rather than a
               numeral in a bordered card. Same fixed-denominator idiom as the
               draft's pact sockets — the track's width is what the fight paid
@@ -466,19 +364,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
               ))}
             </div>
           )}
-
-          {/* The readout. Unboxed, but with its height reserved so nothing
-              below it shifts when a level-up resolves — which is what the
-              always-rendered bordered strip this replaces was really for. */}
-          <p className={`levelup-readout${feedback ? ' has-feedback' : ''}`} key={feedback ?? 'idle'}>
-            {feedback ??
-              (pendingEvolutions > 0
-                ? `${pendingEvolutions === 1 ? 'A hero is' : `${pendingEvolutions} heroes are`} ready to evolve — tap to choose a path.`
-                : run.levelUpPool >= 1
-                  ? 'Tap a hero to spend a point. Hold to review its sheet.'
-                  : 'Every point is spent.')}
-          </p>
-        </header>
+        </NodeHeader>
       )}
 
       {offer && offerEntry ? (
@@ -535,7 +421,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
           </div>
         </div>
       ) : (
-        <div className={`growth-roster growth-cols-${columns}`}>
+        <HeroPickGrid count={run.roster.length} fill>
           {run.roster.map((entry) => {
             const hero = heroes[entry.heroId];
             const node = availableEvolution(progressionTable, entry);
@@ -565,7 +451,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
               />
             );
           })}
-        </div>
+        </HeroPickGrid>
       )}
 
       <button

@@ -5,13 +5,10 @@ import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
 import { equipToRoster, RunProgressError } from '../../run/runProgress';
-import { rosterEntryTypes } from '../../run/progression';
-import { getTypeColor } from '../combat/typeColors';
-import { TypeBadge } from '../shared/TypeBadge';
-import { HeroPortrait } from '../shared/HeroPortrait';
+import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
+import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
-import { EQUIP_SLOT_LABELS, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
-import { useLongPress } from '../shared/MoveTile';
+import { EQUIP_SLOT_LABELS, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { passives } from '../../data/passives';
 import { passiveEmoji } from '../shared/passiveIcons';
@@ -45,32 +42,32 @@ interface ForceEquipHeroCardProps {
 }
 
 /**
- * One hero-grid card — pulled out of the roster .map() below because
- * useLongPress is a hook (same reason LevelUpScreen's own hero card is its
- * own component). A tap still equips/replaces immediately; holding the card
- * now opens the full HeroPreviewOverlay sheet first, so a player can check a
- * hero's current loadout/stats before committing to bump something off them.
+ * One hero on the placement grid: the shared HeroPickCard, carrying what is
+ * in that hero's matching slot right now as its detail row — the fact the
+ * whole choice turns on, since equipping over a filled slot bumps the old
+ * item back onto this same queue.
+ *
+ * A tap equips/replaces immediately; holding opens the full HeroPreviewOverlay
+ * sheet first, so a player can check a hero's loadout and stats before
+ * committing to bump something off them.
  */
 function ForceEquipHeroCard({ hero, entry, slot, currentItem, onEquip, onPreview }: ForceEquipHeroCardProps) {
-  const longPress = useLongPress(onPreview, onEquip);
   return (
-    <button type="button" className="hero-grid-card" style={{ borderLeftColor: getTypeColor(hero.types[0]) }} {...longPress}>
-      <HeroPortrait heroId={hero.id} className="hero-grid-portrait" />
-      <div className="hero-grid-name-row">
-        <span className="hero-grid-name">{hero.name}</span>
-        <span className="training-hero-level">Lv {entry.level}</span>
-      </div>
-      <div className="hero-grid-types">
-        {rosterEntryTypes(hero, entry).map((t) => (
-          <TypeBadge key={t} type={t} />
-        ))}
-      </div>
-      <div className={`equip-slot-box target${currentItem ? ' filled' : ' empty'}`}>
-        <EquipmentIcon item={currentItem} slot={slot} className="equip-slot-icon" />
-        <span className="equip-slot-item">{currentItem ? currentItem.name : 'Empty'}</span>
-      </div>
-      <span className="hero-grid-cta">{currentItem ? 'Replace' : 'Equip'}</span>
-    </button>
+    <HeroPickCard
+      hero={hero}
+      entry={entry}
+      onActivate={onEquip}
+      onPreview={onPreview}
+      ariaLabel={`${hero.name}, level ${entry.level} — ${currentItem ? `replace ${currentItem.name}` : 'equip'}`}
+      detail={
+        <span className={`pick-slot${currentItem ? ' filled' : ' empty'}`}>
+          <EquipmentIcon item={currentItem} slot={slot} className="pick-slot-icon" />
+          <span className="pick-slot-item">{currentItem ? currentItem.name : 'Empty'}</span>
+        </span>
+      }
+      ctaClassName="is-accent"
+      cta={currentItem ? 'Replace' : 'Equip'}
+    />
   );
 }
 
@@ -130,18 +127,34 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
   const grantedStatuses = item.grantsStatusIds ?? [];
 
   return (
-    <div className="node-screen force-equip-screen">
+    <div
+      className="node-screen force-equip-screen"
+      style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity], '--node-rgb': RARITY_RGB_VARS[item.rarity] } as CSSProperties}
+    >
+      {/* The whole screen takes the drop's tier colour — a mythic find and a
+          common one no longer arrive in the same room. */}
+      <NodeSky />
+
+      {/* The item, unboxed. What was here: `.equip-spotlight`, a bordered,
+          glowing, rarity-rimmed card carrying the icon, the name, the rarity
+          line and every stat chip — a container around the one thing on the
+          screen you cannot act on, sitting above the six things you can (see
+          docs/visual-language.md's ninth pass). The icon is now the header's
+          art and the name is its title. */}
+      <NodeHeader
+        compact
+        eyebrow={current.bumped ? 'Needs a New Home' : 'New Equipment'}
+        art={<EquipmentIcon item={item} slot={item.slot} className="equip-spotlight-icon" />}
+        title={item.name}
+        readout={`${RARITY_LABELS[item.rarity]} · ${EQUIP_SLOT_LABELS[item.slot]}${
+          current.bumped ? ' — unequipped; give it to another hero, or trash it' : ''
+        }`}
+      />
+
       <div className="screen-scroll">
         <div className="bottom-pinned">
-          <div className="equip-spotlight" style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}>
-            <div className="equip-spotlight-glow" aria-hidden="true" />
-            <div className="equip-spotlight-eyebrow">{current.bumped ? 'Needs a New Home' : 'New Equipment'}</div>
-            <EquipmentIcon item={item} slot={item.slot} className="equip-spotlight-icon" />
-            <div className="equip-spotlight-name">{item.name}</div>
-            <div className="equip-spotlight-rarity">
-              {RARITY_LABELS[item.rarity]} · {EQUIP_SLOT_LABELS[item.slot]}
-            </div>
-            {grants.length > 0 && (
+          <div className="node-item-effects">
+            {grants.some(([, amount]) => amount) && (
               <div className="detail-modifier-list">
                 {grants
                   .filter(([, amount]) => amount)
@@ -153,7 +166,7 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
               </div>
             )}
             {/* Full passive/status description (not just the "Grants: Name"
-                chip used elsewhere) — the more economical hero-grid below
+                chip used elsewhere) — the more economical hero grid below
                 frees up room to spell out exactly what the item does. */}
             {(grantedPassives.length > 0 || grantedStatuses.length > 0) && (
               <div className="equip-spotlight-passives">
@@ -184,10 +197,9 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
                 })}
               </div>
             )}
-            {current.bumped && <p className="hint">{`${item.name} was unequipped — give it to another hero, or trash it for good.`}</p>}
           </div>
 
-          <div className="hero-grid">
+          <HeroPickGrid count={run.roster.length}>
             {run.roster.map((entry) => {
               const hero = heroes[entry.heroId];
               const currentId = entry.equipment[item.slot];
@@ -204,7 +216,7 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
                 />
               );
             })}
-          </div>
+          </HeroPickGrid>
         </div>
       </div>
 

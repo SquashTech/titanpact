@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import mentorArt from '../../../art/npc/mentor.png';
 import { heroes } from '../../data/heroes';
 import { classes } from '../../data/classes';
@@ -10,7 +10,8 @@ import { rosterEntryTypes } from '../../run/progression';
 import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { useLongPress } from '../shared/MoveTile';
+import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
+import { NodeHeader, NodeSky, NODE_TINT_TEAL } from '../shared/NodeStage';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RunGlyph } from '../shared/RunGlyph';
@@ -71,53 +72,24 @@ interface ClassHeroCardProps {
 }
 
 /**
- * One candidate on the "who studies it" grid — pulled out of the .map() below
- * because useLongPress is a hook (same reason LevelUpScreen's own hero card
- * is its own component). A tap teaches the Class immediately; holding opens
- * the full HeroPreviewOverlay sheet first — full stats/moves/gear, not just
- * the name/level/types this grid shows — so committing a permanent, one-per-
- * run Class to a hero isn't a guess. The "i" button is the discoverable,
- * no-hold alternative to the same overlay.
+ * One candidate on the "who studies it" grid — the shared HeroPickCard. A tap
+ * teaches the Class immediately; holding opens the full HeroPreviewOverlay
+ * sheet first — stats, moves and gear, not just the name/level/types the card
+ * shows — so committing a permanent, one-per-run Class to a hero isn't a
+ * guess. The "i" button is the discoverable, no-hold alternative to the same
+ * overlay.
  */
 function ClassHeroCard({ hero, entry, onAssign, onPreview }: ClassHeroCardProps) {
-  const longPress = useLongPress(onPreview, onAssign);
   return (
-    <div
-      className="hero-grid-card"
-      style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onAssign();
-        }
-      }}
-      {...longPress}
-    >
-      <button
-        type="button"
-        className="info-button hero-grid-info-button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onPreview();
-        }}
-        aria-label={`View ${hero.name} details`}
-      >
-        i
-      </button>
-      <HeroPortrait heroId={hero.id} className="hero-grid-portrait" />
-      <div className="hero-grid-name-row">
-        <span className="hero-grid-name">{hero.name}</span>
-        <span className="training-hero-level">Lv {entry.level}</span>
-      </div>
-      <div className="hero-grid-types">
-        {rosterEntryTypes(hero, entry).map((t) => (
-          <TypeBadge key={t} type={t} />
-        ))}
-      </div>
-      <span className="hero-grid-cta">Teach</span>
-    </div>
+    <HeroPickCard
+      hero={hero}
+      entry={entry}
+      onActivate={onAssign}
+      onPreview={onPreview}
+      ariaLabel={`${hero.name}, level ${entry.level} — teach this discipline`}
+      ctaClassName="is-accent"
+      cta="Teach"
+    />
   );
 }
 
@@ -221,56 +193,60 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
   const canContinue = confirmedClassId !== null && (assignedTo !== null || eligibleRoster.length === 0);
 
   return (
-    <div className="node-screen class-node-screen">
+    <div className="node-screen class-node-screen" style={{ '--node-rgb': NODE_TINT_TEAL } as CSSProperties}>
+      <NodeSky />
+
+      {/* The Mentor speaks from the stage rather than from inside a bordered
+          plaque — `.class-shrine-banner` was a box (inside `.reward-panel`,
+          a second box) around the one part of this screen you cannot act on.
+          The portrait, the ring and the teal all survive it; see
+          docs/visual-language.md's ninth pass. */}
+      {!assignedTo && (
+        <NodeHeader
+          compact
+          ring
+          art={
+            <img
+              src={mentorArt}
+              className={`class-shrine-mentor${confirmedClass ? ' class-shrine-mentor-small' : ''}`}
+              alt=""
+              draggable={false}
+            />
+          }
+          eyebrow={confirmedClass ? 'Choose a Student' : 'The Mentor Awaits'}
+          title={confirmedClass ? confirmedClass.name : "Mentor's Hall"}
+          glyph={confirmedClass ? undefined : <RunGlyph kind="class" />}
+          readout={
+            confirmedClass
+              ? eligibleRoster.length === 0
+                ? 'Every hero has already learned a Class — this teaching goes to waste.'
+                : `Choose who will study ${confirmedClass.name}. Hold a hero to review its sheet.`
+              : "Tap a discipline to select it, then confirm — you'll choose who studies it next."
+          }
+        />
+      )}
+
       <div className="screen-scroll">
         {!confirmedClass ? (
           <div className="bottom-pinned">
-            <div className="reward-panel class-shrine-panel">
-              <div className="class-shrine-banner">
-                <div className="class-shrine-glow" aria-hidden="true" />
-                <img src={mentorArt} className="class-shrine-mentor" alt="" draggable={false} />
-                <div className="class-shrine-eyebrow">The Mentor Awaits</div>
-                <h2><RunGlyph kind="class" /> Mentor's Hall</h2>
-                <p className="hint">Tap a discipline to select it, then confirm — you'll choose who studies it next.</p>
-                <button type="button" className="secondary-button class-shrine-roster-btn" onClick={() => setRosterPeekOpen(true)}>
-                  👥 Check Your Roster
-                </button>
-              </div>
-              <div className="class-shrine-list">
-                {classChoices.map((cls) => (
-                  <ClassChoiceCard
-                    key={cls.id}
-                    cls={cls}
-                    picked={pickedClassId === cls.id}
-                    onPick={() => setPickedClassId(pickedClassId === cls.id ? null : cls.id)}
-                  />
-                ))}
-              </div>
+            <div className="class-shrine-list">
+              {classChoices.map((cls) => (
+                <ClassChoiceCard
+                  key={cls.id}
+                  cls={cls}
+                  picked={pickedClassId === cls.id}
+                  onPick={() => setPickedClassId(pickedClassId === cls.id ? null : cls.id)}
+                />
+              ))}
             </div>
-            <button
-              className="resolve-button class-shrine-confirm-button"
-              disabled={!pickedClassId}
-              onClick={() => pickedClassId && setConfirmedClassId(pickedClassId)}
-            >
-              {pickedClassId ? `Confirm ${classChoices.find((c) => c.id === pickedClassId)?.name}` : 'Select a discipline'}
+            <button type="button" className="secondary-button class-shrine-roster-btn" onClick={() => setRosterPeekOpen(true)}>
+              👥 Check Your Roster
             </button>
           </div>
         ) : !assignedTo ? (
           <div className="bottom-pinned">
-            <div className="reward-panel">
-              <div className="class-shrine-banner">
-                <div className="class-shrine-glow" aria-hidden="true" />
-                <img src={mentorArt} className="class-shrine-mentor class-shrine-mentor-small" alt="" draggable={false} />
-                <h2>{confirmedClass.name}</h2>
-                <p className="hint">
-                  {eligibleRoster.length === 0
-                    ? 'Every hero has already learned a Class — this teaching goes to waste.'
-                    : `Choose who will study ${confirmedClass.name}.`}
-                </p>
-              </div>
-            </div>
             {eligibleRoster.length > 0 && (
-              <div className="hero-grid">
+              <HeroPickGrid count={eligibleRoster.length}>
                 {eligibleRoster.map((entry) => {
                   const hero = heroes[entry.heroId];
                   return (
@@ -283,7 +259,7 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
                     />
                   );
                 })}
-              </div>
+              </HeroPickGrid>
             )}
           </div>
         ) : (
@@ -313,9 +289,24 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
           )
         )}
       </div>
-      <button className="resolve-button" disabled={!canContinue} onClick={onContinue}>
-        Continue
-      </button>
+
+      {/* One CTA at the bottom, whichever the screen is waiting for — the
+          Confirm used to sit inside the scroll area with a second, disabled
+          gold Continue directly beneath it, two identical-looking primaries
+          of which one was inert. */}
+      {!confirmedClass ? (
+        <button
+          className="resolve-button class-shrine-confirm-button"
+          disabled={!pickedClassId}
+          onClick={() => pickedClassId && setConfirmedClassId(pickedClassId)}
+        >
+          {pickedClassId ? `Confirm ${classChoices.find((c) => c.id === pickedClassId)?.name}` : 'Select a discipline'}
+        </button>
+      ) : (
+        <button className="resolve-button" disabled={!canContinue} onClick={onContinue}>
+          Continue
+        </button>
+      )}
 
       {previewEntry && (
         <HeroPreviewOverlay

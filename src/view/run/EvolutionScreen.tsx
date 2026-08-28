@@ -6,6 +6,7 @@ import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { TypeBadge } from '../shared/TypeBadge';
 import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { NodeHeader, NodeSky } from '../shared/NodeStage';
 
 interface Props {
   hero: HeroDefinition;
@@ -33,17 +34,25 @@ export function EvolutionScreen({ hero, entry, node, onChoose }: Props) {
 
   return (
     <div className="node-screen evolution-screen">
-      <div className="screen-scroll">
-        <div className="evolution-banner">
-          <div className="evolution-banner-glow" aria-hidden="true" />
-          <HeroPortrait heroId={hero.id} className="evolution-banner-portrait" />
-          <div className="evolution-banner-eyebrow">Evolution</div>
-          <h2 className="evolution-banner-title">{hero.name} is ready to evolve!</h2>
-          <p className="evolution-banner-sub">
-            Level {entry.level} — choose a path. This choice is permanent for the rest of the run.
-          </p>
-        </div>
+      {/* The same stage the node screens stand on (docs/visual-language.md,
+          ninth pass) — this screen is reached from the level-up screen and was
+          the last one still introducing its choice with a bordered banner. The
+          hero is the header's art; the glow behind it stays. */}
+      <NodeSky />
+      <NodeHeader
+        compact
+        art={
+          <span className="evolution-art">
+            <span className="evolution-banner-glow" aria-hidden="true" />
+            <HeroPortrait heroId={hero.id} className="evolution-banner-portrait" />
+          </span>
+        }
+        eyebrow="Evolution"
+        title={`${hero.name} is ready to evolve!`}
+        readout={`Level ${entry.level} — choose a path. This choice is permanent for the rest of the run.`}
+      />
 
+      <div className="screen-scroll">
         <div className="evolution-path-list evolution-path-list-big">
           {node.paths.map((path) => {
             const isSelected = selectedPathId === path.id;

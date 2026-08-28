@@ -51,6 +51,14 @@
   --tier-epic: #a463d9;
   --tier-legendary: #e0a63c;
   --tier-mythic: #e0393f;
+  /* The same five as bare rgb triples, for the rgba() consumers — the node
+     stage tints a whole screen in the dropped item's tier (RARITY_RGB_VARS,
+     view/shared/EquipmentBox.tsx), and rgba() cannot take a hex var. */
+  --tier-common-rgb: 154, 160, 171;
+  --tier-rare-rgb: 74, 144, 217;
+  --tier-epic-rgb: 164, 99, 217;
+  --tier-legendary-rgb: 224, 166, 60;
+  --tier-mythic-rgb: 224, 57, 63;
 
   /*
    * --- Presentation scale -------------------------------------------------
@@ -3504,7 +3512,6 @@ textarea,
   background: linear-gradient(90deg, rgba(var(--console-rgb, 224, 166, 60), 0.3), transparent);
 }
 
-
 /* Ambient embers rising through the console — the same field the title screen,
    the draft and the level-up screen carry (@keyframes title-ember-rise), tinted
    to whoever is commanding. Those three screens feel like places partly because
@@ -5746,14 +5753,18 @@ textarea,
   }
 }
 
+/* Sized with .resolve-button (2026-08-28, same user direction): this is the
+   most-pressed button in the game — it ends every fight — and it was a 15px
+   label in 12px of padding, floating centred rather than filling the row. */
 .result-panel button {
+  min-height: 56px;
   background: var(--accent);
   color: #1a1300;
   border: none;
-  border-radius: 6px;
-  padding: 12px 24px;
-  font-size: 15px;
-  font-weight: 700;
+  border-radius: var(--radius-md);
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 800;
   cursor: pointer;
 }
 
@@ -5762,6 +5773,13 @@ textarea,
   gap: 12px;
   width: 100%;
   justify-content: center;
+}
+
+/* Each button takes an equal half of the row rather than shrinking to its
+   label — a two-word "Continue" and a one-word "Quit" should not be two
+   different-sized targets. */
+.result-buttons button {
+  flex: 1 1 0;
 }
 
 .result-buttons button:last-child {
@@ -8098,17 +8116,30 @@ textarea,
  * reads as a highlighted *label*, while one that falls off downward reads as
  * a physical key.
  */
+/*
+ * Chunky on purpose (2026-08-28, per user direction: "avoid vertically skinny
+ * Continue buttons at the bottom — these should be chunkier and easier for
+ * players to press"). It was 12px of padding around 14px type — a ~42px slab
+ * pinned to the very bottom edge of a portrait phone, i.e. under the thumb's
+ * least accurate travel and inside the home-indicator's own gesture zone. Now
+ * 56px minimum, which clears both platforms' touch-target floors (44/48px)
+ * with room left over, and 16px/800 type so the button reads as the weightiest
+ * thing on the screen rather than a caption with a fill behind it. The radius
+ * steps up with it — --radius-sm on a 56px bar looks sharp (see the radius
+ * scale's own note).
+ */
 .resolve-button {
   flex-shrink: 0;
   width: 100%;
+  min-height: 56px;
   background: linear-gradient(180deg, #eab654, var(--accent) 45%, #c98f2c);
   color: #1a1300;
   border: none;
-  border-radius: var(--radius-sm);
-  padding: 12px;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  border-radius: var(--radius-md);
+  padding: 16px 14px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
   cursor: pointer;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 2px 6px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(224, 166, 60, 0.16);
   transition: box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out);
@@ -8166,6 +8197,9 @@ textarea,
 /* --- Node-resolution screens (Shop, the 4 instant-reward types) --------- */
 
 .node-screen {
+  /* Positioning context for .node-sky, which is absolute and bleeds past
+     .app-shell's padding (see the node stage block below). */
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -8249,15 +8283,21 @@ textarea,
   width: 100%;
 }
 
+/* Follows .resolve-button up in size (2026-08-28): these two are paired at the
+   bottom of several screens — Cancel/Confirm, Trash/Equip — and a 42px
+   secondary next to a 56px primary reads as a disabled control rather than as
+   the other half of a choice. It stays a step smaller in type and weight,
+   which is where the hierarchy actually lives. */
 .secondary-button {
   width: 100%;
+  min-height: 50px;
   background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   color: var(--text-dim);
-  padding: 12px;
-  font-size: 13px;
-  font-weight: 600;
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
   box-shadow: var(--hairline), var(--elev-1);
   transition: border-color var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
@@ -8356,43 +8396,6 @@ textarea,
    use — every card's top border and rarity label read straight off the
    item's --rarity-color custom property (RARITY_COLOR_VARS), so no per-tier
    class list is needed here. */
-
-.equip-cache-panel {
-  padding-top: 8px;
-}
-
-.equip-cache-banner {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  text-align: center;
-  padding: 18px 12px 14px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(224, 166, 60, 0.14), transparent 70%);
-}
-
-.equip-cache-banner h2 {
-  position: relative;
-}
-
-.equip-cache-banner .hint {
-  position: relative;
-  margin: 4px 0 0;
-}
-
-.equip-cache-glow {
-  position: absolute;
-  top: -45%;
-  left: 50%;
-  width: 240px;
-  height: 240px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(224, 166, 60, 0.32), transparent 65%);
-  animation: evolution-glow-pulse 2.4s ease-in-out infinite;
-  pointer-events: none;
-}
 
 .equip-cache-list {
   display: flex;
@@ -8622,75 +8625,6 @@ textarea,
    phases) instead of just swapping in a line of "Relic claimed." text, so
    picking up a relic reads as the moment it should be. */
 
-.relic-shrine-panel {
-  padding-top: 8px;
-}
-
-.relic-shrine-banner {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  text-align: center;
-  padding: 20px 12px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--magical);
-  background: radial-gradient(circle at 50% 0%, rgba(139, 127, 224, 0.24), transparent 70%),
-    linear-gradient(180deg, rgba(139, 127, 224, 0.14), transparent 75%);
-  box-shadow: inset 0 0 0 1px rgba(139, 127, 224, 0.14);
-}
-
-.relic-shrine-banner h2 {
-  position: relative;
-  font-size: 19px;
-  margin: 2px 0 2px;
-  text-shadow: 0 0 18px rgba(139, 127, 224, 0.55);
-}
-
-.relic-shrine-banner .hint {
-  position: relative;
-  margin: 4px 0 0;
-}
-
-.relic-shrine-eyebrow {
-  position: relative;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--magical);
-  margin-bottom: 2px;
-}
-
-.relic-shrine-glow {
-  position: absolute;
-  top: -50%;
-  left: 50%;
-  width: 260px;
-  height: 260px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(139, 127, 224, 0.4), transparent 65%);
-  animation: evolution-glow-pulse 2.4s ease-in-out infinite;
-  pointer-events: none;
-}
-
-/* Faint rotating ring behind the banner heading — same ambient-magic trick
-   as Mentor's Hall's ::after (mentor-ring-spin), just smaller/centered up top
-   since this banner has no portrait to frame. */
-.relic-shrine-banner::after {
-  content: '';
-  position: absolute;
-  top: 6px;
-  left: 50%;
-  width: 110px;
-  height: 110px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  border: 1px dashed rgba(139, 127, 224, 0.3);
-  animation: mentor-ring-spin 16s linear infinite;
-  pointer-events: none;
-}
-
 /* Full-width rows, not a square grid — reads correctly whether the pool has
    1, 2, or 3 relics left instead of leaving an orphaned tile in a 2x2 grid. */
 .relic-shrine-list {
@@ -8902,90 +8836,20 @@ textarea,
    (MapScreen.tsx NODE_COLORS) so the two surfaces read as the same node type
    at a glance. */
 
-/* Tighter than the base .reward-panel padding/gap (24px/10px) — the
-   pick-a-Class phase already stacks a full banner + 3 flavor-text cards, the
-   tallest content this screen shows, so every bit of shaved chrome here goes
-   toward keeping it inside one screen on a real mobile viewport instead of
-   scrolling. */
-.class-shrine-panel {
-  padding: 4px 12px 14px;
-  gap: 8px;
-}
-
-.class-shrine-banner {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  text-align: center;
-  padding: 12px 14px 10px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: radial-gradient(circle at 50% 0%, rgba(63, 184, 175, 0.22), transparent 70%), linear-gradient(180deg, rgba(63, 184, 175, 0.12), transparent 75%);
-  box-shadow: inset 0 0 0 1px rgba(63, 184, 175, 0.12);
-}
-
-.class-shrine-banner h2 {
-  position: relative;
-  font-size: 20px;
-  margin: 2px 0 2px;
-  text-shadow: 0 0 18px rgba(63, 184, 175, 0.5);
-}
-
-.class-shrine-banner .hint {
-  position: relative;
-  margin: 4px 0 0;
-}
-
-.class-shrine-eyebrow {
-  position: relative;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--buff);
-  margin-bottom: 2px;
-}
-
-.class-shrine-glow {
-  position: absolute;
-  top: -50%;
-  left: 50%;
-  width: 280px;
-  height: 280px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(63, 184, 175, 0.38), transparent 65%);
-  animation: evolution-glow-pulse 2.4s ease-in-out infinite;
-  pointer-events: none;
-}
-
-/* Faint rotating ring behind the Mentor's portrait — reads as ambient magic
-   rather than a literal spinner since it sits mostly hidden under the glow. */
-.class-shrine-banner::after {
-  content: '';
-  position: absolute;
-  top: 4px;
-  left: 50%;
-  width: 128px;
-  height: 128px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  border: 1px dashed rgba(63, 184, 175, 0.28);
-  animation: mentor-ring-spin 18s linear infinite;
-  pointer-events: none;
-}
-
 @keyframes mentor-ring-spin {
   to {
     transform: translateX(-50%) rotate(360deg);
   }
 }
 
+/* 96px — a clean 2x of the 48x48 source (art/npc/mentor.png). It was 84px, a
+   1.75x fractional scale: the defect docs/visual-language.md opens with, which
+   renders some source pixels 1px wide and their neighbours 2px. */
 .class-shrine-mentor {
   position: relative;
   display: block;
-  width: 84px;
-  height: 84px;
+  width: 96px;
+  height: 96px;
   margin: 0 auto 4px;
   image-rendering: pixelated;
   filter: drop-shadow(0 0 16px rgba(63, 184, 175, 0.65));
@@ -9002,9 +8866,10 @@ textarea,
   }
 }
 
+/* 1x once the Mentor is a reminder rather than the subject (was 72px, 1.5x). */
 .class-shrine-mentor-small {
-  width: 72px;
-  height: 72px;
+  width: 48px;
+  height: 48px;
 }
 
 /* Always rendered (even before a discipline is picked, just disabled) so
@@ -9034,11 +8899,15 @@ textarea,
   opacity: 0.45;
 }
 
+/* A utility, not a commitment — it stays a compact pill rather than following
+   .secondary-button up to the paired-with-the-primary size. */
 .class-shrine-roster-btn {
   position: relative;
   width: auto;
-  margin: 6px auto 0;
-  padding: 6px 16px;
+  min-height: 0;
+  margin: 10px auto 0;
+  padding: 9px 18px;
+  font-size: 13px;
 }
 
 .class-shrine-list {
@@ -9155,10 +9024,13 @@ textarea,
   margin-bottom: 4px;
 }
 
+/* 1x against the student's 2x — same clean-multiple rule, and the size gap is
+   what makes the hero the subject of the reveal (both were fractional: 72px
+   and 88px off a 48px source). */
 .class-learn-mentor {
   display: block;
-  width: 72px;
-  height: 72px;
+  width: 48px;
+  height: 48px;
   image-rendering: pixelated;
   filter: drop-shadow(0 0 10px rgba(63, 184, 175, 0.5));
   opacity: 0.85;
@@ -9171,8 +9043,8 @@ textarea,
 
 .class-learn-hero {
   display: block;
-  width: 88px;
-  height: 88px;
+  width: 96px;
+  height: 96px;
   image-rendering: pixelated;
   filter: drop-shadow(0 0 18px rgba(63, 184, 175, 0.75));
   animation: class-learn-pop 0.5s ease-out;
@@ -10495,24 +10367,610 @@ textarea,
   max-height: 75vh;
 }
 
+/* --- The node stage: sky + header ------------------------------------------
+   Ninth application of docs/visual-language.md's "a rectangle means you can
+   act on this" rule, and the one that finishes the run loop (open item 6).
+
+   What was here: every map-node screen introduced its grid of buttons with a
+   *bordered banner carrying no action* — `.equip-cache-banner`,
+   `.relic-shrine-banner`, `.class-shrine-banner`, `.equip-spotlight` and the
+   plain `.reward-panel` were five hand-tuned variations on the same box, each
+   wrapped in a second box (`.reward-panel`) and sat on flat `--bg`. The
+   level-up screen had already been through this and come out with a
+   full-bleed sky and an unboxed header; the node screens had not.
+
+   Now they share that stage. `.node-sky` is the place, `.node-header` is its
+   voice, and both take their hue from one custom property, `--node-rgb`, so a
+   node keeps the colour it already had — gold for a cache, violet for the
+   Relic Shrine, teal for the Mentor, the dropped item's own rarity colour on
+   a forced equip — without this stylesheet naming any of them. See
+   src/view/shared/NodeStage.tsx. */
+
+/* Full-bleed past .app-shell's padding, same negative-inset trick as
+   .battlefield and .draft-sky: a place, not a container. */
+.node-sky {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Four layers: a bright tinted pool entering from above (where the node's
+   event is), a faint one bouncing off the bottom edge, a wide low-alpha body
+   tint so the dark itself is the node's colour rather than neutral gray with
+   coloured corners, and the near-black ground under all three. */
+.node-sky-wash {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 120% 52% at 50% -8%, rgba(var(--node-rgb), 0.17), transparent 62%),
+    radial-gradient(ellipse 130% 55% at 50% 108%, rgba(var(--node-rgb), 0.07), transparent 68%),
+    radial-gradient(ellipse 85% 62% at 50% 44%, rgba(var(--node-rgb), 0.06), transparent 72%),
+    radial-gradient(ellipse 85% 62% at 50% 44%, #14141a, #0b0c12 78%);
+}
+
+.node-motes {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Same @keyframes title-ember-rise as the title screen's embers, the draft's
+   motes and the console's. Tinted to the node rather than fixed gold — this
+   is the one piece of ambience that says which kind of room you walked into
+   before a word of it has been read. */
+.node-mote {
+  position: absolute;
+  bottom: -4%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0%, rgba(var(--node-rgb), 0.9) 55%, transparent 75%);
+  box-shadow: 0 0 6px 1px rgba(var(--node-rgb), 0.4);
+  opacity: 0;
+  animation-name: title-ember-rise;
+  animation-timing-function: ease-in;
+  animation-iteration-count: infinite;
+  --drift: 0px;
+}
+
+/* Gold by default; a screen overrides it once on its own root and the sky, the
+   header and everything else it draws inherit from there (see NodeStage.tsx). */
+.node-screen,
+.levelup-screen {
+  --node-rgb: 224, 166, 60;
+}
+
+.node-header {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  text-align: center;
+}
+
+/* Faint rotating ring behind the title — the one piece of the shrine banners
+   worth keeping now that the rectangle they were drawn on is gone. Reads as
+   ambient magic rather than a spinner because it sits mostly under the
+   title's own bloom. */
+/* Frames the header's art (the Mentor) — the one piece of the shrine banners
+   worth keeping now that the rectangle they were drawn on is gone. Reads as
+   ambient magic rather than a spinner because it sits mostly behind the
+   figure. NodeHeader only renders it when there is art to frame: around a bare
+   title the same circle reads as a stray ellipse crossing the readout. */
+.node-ring {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  width: 116px;
+  height: 116px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 1px dashed rgba(var(--node-rgb), 0.28);
+  animation: mentor-ring-spin 18s linear infinite;
+  pointer-events: none;
+}
+
+.node-eyebrow {
+  position: relative;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgb(var(--node-rgb));
+  animation: title-tagline-fade 0.6s ease both;
+}
+
+.node-title {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  margin: 3px 0 0;
+  color: var(--text);
+  text-shadow: 0 0 14px rgba(var(--node-rgb), 0.45);
+  animation: title-heading-drop 0.6s var(--ease-spring) both;
+}
+
+/* Blurred duplicate behind the crisp copy — the same bloom trick as
+   .title-logo-glow and .draft-title-glow, which is what stops a dark-on-dark
+   heading reading as flat text pasted onto a gradient. */
+.node-title-glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(var(--node-rgb));
+  filter: blur(11px);
+  opacity: 0.55;
+}
+
+/* The glyph is deliberately outside the bloom: a blurred word reads as light
+   coming off the word, a blurred icon reads as a smudge behind it. */
+.node-title-glyph {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* A screen whose body is already tall (the Mentor's three discipline cards,
+   the Equipment Cache's three offers) gets the same header one size down
+   rather than a different header. */
+.node-header.is-compact .node-title {
+  font-size: 19px;
+}
+
+.node-header.is-compact .node-readout {
+  min-height: 26px;
+}
+
+/* The readout: what the screen is asking for, or what just happened. Unboxed
+   — it replaces bordered strips that were rendered permanently just to
+   reserve their own height — but the height is still reserved, so nothing
+   below it shifts when the answer arrives. */
+.node-readout {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  margin: 8px 0 0;
+  padding: 0 6px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-dim);
+  animation: title-tagline-fade 0.35s ease both;
+}
+
+.node-readout.is-live {
+  color: var(--text);
+  font-weight: 700;
+  text-shadow: 0 0 12px rgba(var(--node-rgb), 0.4);
+}
+
+/* The sky is absolutely positioned with a z-index of its own, so anything
+   left static paints *under* it — the same trap .draft-cta documents. Both
+   screen roots that stand on the stage lift every other child above it;
+   without this the screen is invisible, though still clickable, since the sky
+   is pointer-events: none. */
+.node-screen > *:not(.node-sky),
+.levelup-screen > *:not(.node-sky) {
+  position: relative;
+  z-index: 1;
+}
+
+/* --- The hero pick card ---------------------------------------------------
+   Shared "pick a hero" card (src/view/shared/HeroPickCard.tsx), generalised
+   out of the level-up screen's growth card so ForceEquipScreen,
+   StatBoostScreen and ClassNodeScreen stop using `.hero-grid` — whose 30px
+   portrait was the last instance of the fractional-downscale defect this doc
+   opens with (48px sources at 0.625x), and whose cards carried a name, a
+   level and two type chips but nothing about what the tap actually did.
+
+   Only the portrait size is stated per column count; the figure box and the
+   ground ellipse are derived from it below, so the two layouts are the same
+   composition at two scales rather than two hand-tuned ones. */
+.pick-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+}
+
+.pick-cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+  --pick-portrait: 96px;
+  --pick-name-size: 14px;
+}
+
+.pick-cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+  --pick-portrait: 48px;
+  --pick-name-size: 12px;
+}
+
+/* The card is boxed because it genuinely is a button. Everything inside it is
+   not: figure, ground, name, type codes, detail row and CTA are all drawn
+   without a container of their own. Type is the card's *material* — a wash
+   entering top-left plus a rim tinted to match, the same move
+   `.move-type-code` made for the move buttons — rather than a 3px left-border
+   marker and two filled chips. */
+.pick-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 6px 7px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--type-rgb), 0.32);
+  background:
+    radial-gradient(ellipse 130% 95% at 10% -10%, rgba(var(--type-rgb), 0.22), transparent 64%),
+    var(--surface-raised);
+  box-shadow: var(--hairline), var(--elev-1);
+  color: var(--text);
+  text-align: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-mid) var(--ease-out),
+    border-color var(--dur-mid) var(--ease-out),
+    opacity var(--dur-mid) var(--ease-out);
+}
+
+.pick-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.pick-card:hover:not(.is-locked):not(.is-leveling) {
+  transform: translateY(-2px);
+  border-color: rgba(var(--type-rgb), 0.7);
+  box-shadow: var(--hairline-strong), var(--elev-2);
+}
+
+.pick-card:not(.is-locked):active {
+  transform: translateY(0);
+}
+
+.pick-card:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring), var(--elev-2);
+}
+
+/* Same rule as .move-button/.resolve-button: an unavailable card drops its
+   elevation as well as dimming, so "can't act on this" is legible from the
+   silhouette and not only from the opacity. */
+.pick-card.is-locked {
+  cursor: default;
+  opacity: 0.48;
+  box-shadow: none;
+}
+
+/* For the screens that select-then-confirm rather than acting on the tap. */
+.pick-card.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 3px 10px rgba(224, 166, 60, 0.25);
+}
+
+/* Headroom above the sprite for the level mark, and floor room below it so
+   the ground ellipse has somewhere to sit — the same arrangement
+   .draft-figure uses, where the portrait is lifted off the box bottom rather
+   than flush against it. Both are fractions of the portrait, so the figure is
+   one composition at two scales. */
+.pick-figure {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  height: calc(var(--pick-portrait) * 1.25);
+  padding-bottom: calc(var(--pick-portrait) * 0.125);
+}
+
+/* The same ground mark the battlefield's .combatant-platform makes — shadow
+   and colour in one ellipse — so a hero stands on the same kind of ground
+   here that it stands on in a fight. Proportions lifted from
+   .draft-figure::after: the ellipse is 0.9x the sprite wide and centred a
+   hair (0.06x) above its base, so it reads as ground under the feet rather
+   than a shadow across the shins. */
+.pick-ground {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--pick-portrait) * 0.06);
+  width: calc(var(--pick-portrait) * 0.9);
+  height: calc(var(--pick-portrait) * 0.19);
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(var(--type-rgb), 0.5),
+    rgba(var(--type-rgb), 0.14) 54%,
+    transparent 72%
+  );
+}
+
+/* 48px (1x) at three columns, 96px (2x) at two — both exact multiples of the
+   48px source (art/heroes/*.png). The drop-shadow follows the sprite's alpha
+   silhouette rather than its bounding box, which is what makes it stand on
+   the ground rather than float over it. */
+.pick-portrait {
+  position: relative;
+  z-index: 1;
+  width: var(--pick-portrait);
+  height: var(--pick-portrait);
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.65));
+  transition: transform var(--dur-mid) var(--ease-spring);
+}
+
+.pick-card:hover:not(.is-locked) .pick-portrait {
+  transform: translateY(-2px);
+}
+
+/* Level as a corner mark on the figure, not a bordered chip beside the name
+   (.training-hero-level, still used by the screens that keep .hero-grid). The
+   unit is set smaller than the numeral so "Lv" reads as a label and the
+   number reads as the value. */
+.pick-level {
+  position: absolute;
+  z-index: 2;
+  left: 3px;
+  top: 1px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-dim);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.pick-level::before {
+  content: 'Lv';
+  margin-right: 2px;
+  font-size: 7px;
+  opacity: 0.7;
+}
+
+/* Chromeless glyph, the same treatment as .draft-info: circle, border, fill
+   and shadow all go, the glyph stays for discoverability and for
+   keyboard/screen-reader users. */
+.pick-info {
+  position: absolute;
+  z-index: 3;
+  top: 1px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 700;
+  font-style: italic;
+  cursor: pointer;
+  opacity: 0.42;
+  transition: opacity var(--dur-mid) var(--ease-out);
+}
+
+.pick-info:hover {
+  opacity: 1;
+}
+
+.pick-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--pick-name-size);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+/* Type as chromeless coloured text, not a filled chip — .move-type-code's
+   idiom. Colour alone cannot separate 15 types, so the abbreviation stays; it
+   just is not a second coloured rectangle inside a type-washed card. */
+.pick-types {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.pick-type-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+/* Pinned rather than sized off the 8px code. 1.15em of 8px is 9px, which is
+   under the floor these shapes were drawn to — Beast's paw pads merge and
+   Ancient's urn lip disappears. */
+.pick-type-code .element-glyph {
+  width: 11px;
+  height: 11px;
+  vertical-align: 0;
+}
+
+/* What the tap buys. The line the old .hero-grid card never had, and the
+   reason a choice can be made from the grid instead of from six overlays.
+   Pushed to the card's bottom edge so a card carrying a detail row and one
+   without still line their CTAs up across the grid. */
+.pick-cta {
+  margin-top: auto;
+  padding-top: 4px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--text-dim);
+}
+
+/* The card's action is live and worth taking — the state most pick screens
+   are in for every card on screen. */
+.pick-cta.is-accent {
+  color: var(--accent);
+}
+
+/* Already done, on the card it was done to. */
+.pick-cta.is-done {
+  color: var(--hp-high);
+  text-shadow: 0 0 10px rgba(76, 175, 106, 0.5);
+}
+
+.pick-card.is-locked .pick-cta {
+  text-shadow: none;
+}
+
+/* --- What the node screens put on the stage ------------------------------- */
+
+/* A node with no body of its own (the Event placeholder) still puts its CTA
+   at the bottom of the screen rather than directly under the header. */
+.node-spacer {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Gold and XP caches have nothing to choose between, so the amount *is* the
+   screen: one numeral at display size lit by the node's hue, where there used
+   to be a line of 11px hint text inside a bordered banner. The unit rides
+   smaller alongside it, the same label/value split .pick-level makes. */
+.node-hoard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Centred in the room rather than pinned above the CTA: there is nothing to
+     pick here, so the amount is the whole screen and belongs at its optical
+     centre — the thumb-reach argument that puts pickers low doesn't apply to
+     something you can't press. */
+  min-height: 100%;
+  animation: title-heading-drop 0.6s var(--ease-spring) both;
+}
+
+.node-hoard-amount {
+  display: inline-flex;
+  align-items: baseline;
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  text-shadow: 0 0 26px rgba(var(--node-rgb, 224, 166, 60), 0.55);
+}
+
+.node-hoard-unit {
+  margin-left: 4px;
+  font-size: 22px;
+  font-weight: 800;
+  color: rgb(var(--node-rgb, 224, 166, 60));
+}
+
+/* Claiming is the payoff, so the numeral takes the hit rather than a label
+   changing underneath it. */
+.node-hoard.is-claimed .node-hoard-amount {
+  animation: growth-pip-seal 0.45s var(--ease-spring);
+}
+
+/* The dropped item's stat chips and full passive text on ForceEquipScreen,
+   under the header and above the heroes — the contents of the `.equip-spotlight`
+   box, now standing on their own. */
+.node-item-effects {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.node-item-effects .detail-modifier-list {
+  justify-content: center;
+}
+
+/* On the stage the granted-passive rows lose their fill, their inner shadow
+   and their rarity rail: the item's rarity is already the colour of the whole
+   room, and a filled rectangle under text you cannot press is exactly what
+   the header above it stopped being. The rule stays scoped here — the same
+   markup inside the Compendium and the cache's detail popup is on a panel,
+   where the fill is doing real separation work. */
+.node-item-effects .equip-spotlight-passive {
+  padding: 0;
+  background: none;
+  border-left: none;
+  box-shadow: none;
+  text-align: center;
+}
+
+.node-item-effects .equip-spotlight-passive-name {
+  color: var(--rarity-color, var(--accent));
+}
+
+/* ForceEquipScreen's detail row: what is already in this hero's matching slot.
+   Chromeless — `.equip-slot-box`, which this replaces on these cards, is a
+   dashed sunken box, and a box inside a card inside a grid is exactly the
+   nesting docs/visual-language.md exists to stop. The icon is set in px
+   because equipment glyphs are em-sized off their call site (.equip-icon-img)
+   and 1em of a 9px row is unreadable. */
+.pick-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  max-width: 100%;
+  margin-top: 2px;
+  overflow: hidden;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-dim);
+}
+
+.pick-slot-icon {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.pick-slot-item {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pick-slot.filled {
+  color: var(--text);
+}
+
+.pick-slot.empty {
+  opacity: 0.55;
+}
+
 /* --- Level Up screen ------------------------------------------------------
-   Fourth pass of docs/visual-language.md's "a rectangle means you can act on
-   this" rule, after the fight screen, the move buttons and the draft.
+   Fourth pass of the no-boxes rule, after the fight screen, the move buttons
+   and the draft — and the screen the node stage and the pick card above were
+   generalised out of in the ninth.
 
    What was here: `.levelup-banner` (a bordered, glowing container carrying no
    action) wrapping `.levelup-xp-card` (another one) above `.levelup-feedback`
    (a third, rendered permanently so its height stayed reserved even with
    nothing to say) — three boxes of chrome introducing one grid of buttons.
-   Below them the shared `.hero-grid` drew 48px sprites at 30px, the 0.625x
-   fractional downscale this doc exists to forbid, on cards that carried
-   nothing about what a Training Point actually buys.
+   Below them the shared `.hero-grid` drew 48px sprites at 30px on cards that
+   carried nothing about what a Training Point actually buys.
 
-   Now: an unboxed header on a full-bleed sky, the pool as a depleting orb
-   track, and `.growth-card` — the only boxed thing on screen besides
-   Continue, and the only thing that is pressable. `.hero-grid` is untouched:
-   ForceEquipScreen, StatBoostScreen, ClassNodeScreen and RosterReplaceScreen
-   still use it, and its 30px portrait is a known remaining instance of the
-   same defect (see this doc's fourth-pass scoping note). */
+   What is left in this block is only what is specific to this screen: the
+   pool as a depleting orb track, and the growth card's own states (the rank
+   track toward Evolution, the level-up charge, the payoff colours). Its sky,
+   its header and its card geometry are the shared ones above. */
 
 .levelup-screen {
   position: relative;
@@ -10521,90 +10979,6 @@ textarea,
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-/* Full-bleed past .app-shell's padding, same negative-inset trick as
-   .battlefield and .draft-sky: a place, not a container. Gold alone rather
-   than the draft's gold/violet — the pact screen is a bargain being struck,
-   this one is purely the reward for winning. */
-.levelup-sky {
-  position: absolute;
-  inset: calc(var(--shell-pad) * -1);
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.levelup-sky-wash {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 120% 52% at 50% -8%, rgba(224, 166, 60, 0.17), transparent 62%),
-    radial-gradient(ellipse 130% 55% at 50% 108%, rgba(224, 166, 60, 0.07), transparent 68%),
-    radial-gradient(ellipse 85% 62% at 50% 44%, #171410, #0b0c12 78%);
-}
-
-.levelup-motes {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-}
-
-/* Same @keyframes title-ember-rise as the title screen's embers and the
-   draft's motes. Fixed gold rather than a per-hero tint: no single hero owns
-   this screen, and six competing colours in the air would fight the six
-   type-washed cards in front of it. */
-.levelup-mote {
-  position: absolute;
-  bottom: -4%;
-  border-radius: 50%;
-  background: radial-gradient(circle, #ffffff 0%, rgba(224, 166, 60, 0.9) 55%, transparent 75%);
-  box-shadow: 0 0 6px 1px rgba(224, 166, 60, 0.4);
-  opacity: 0;
-  animation-name: title-ember-rise;
-  animation-timing-function: ease-in;
-  animation-iteration-count: infinite;
-  --drift: 0px;
-}
-
-.levelup-header {
-  position: relative;
-  z-index: 1;
-  flex: none;
-  text-align: center;
-}
-
-.levelup-eyebrow {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--accent);
-  animation: title-tagline-fade 0.6s ease both;
-}
-
-.levelup-title {
-  position: relative;
-  font-size: 25px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  line-height: 1.15;
-  margin: 3px 0 0;
-  color: var(--text);
-  text-shadow: 0 0 14px rgba(224, 166, 60, 0.45);
-  animation: title-heading-drop 0.6s var(--ease-spring) both;
-}
-
-/* Blurred duplicate behind the crisp copy — the same bloom trick as
-   .title-logo-glow and .draft-title-glow, which is what stops a dark-on-dark
-   heading reading as flat text pasted onto a gradient. */
-.levelup-title-glow {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  color: var(--accent);
-  filter: blur(11px);
-  opacity: 0.55;
 }
 
 /* The pool, as orbs that go out one at a time. Same fixed-denominator idiom
@@ -10661,120 +11035,14 @@ textarea,
   color: var(--accent);
 }
 
-/* The outcome readout. Unboxed — this replaces a bordered strip that was
-   always rendered purely to reserve its own height — but the height is still
-   reserved, by min-height, so nothing below shifts when a level-up resolves.
-   Keyed on the feedback text at the call site so each new line replays its
-   fade rather than swapping in place. */
-.levelup-readout {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 32px;
-  margin: 8px 0 0;
-  padding: 0 6px;
-  font-size: 11px;
-  line-height: 1.35;
-  color: var(--text-dim);
-  animation: title-tagline-fade 0.35s ease both;
-}
-
-.levelup-readout.has-feedback {
-  color: var(--text);
-  font-weight: 700;
-  text-shadow: 0 0 12px rgba(224, 166, 60, 0.4);
-}
-
-/* --- The growth roster ---------------------------------------------------
-   Two columns up to four heroes, three at five or six. Not a cosmetic
-   breakpoint: it is what keeps the portrait on a clean multiple of its 48px
-   source (docs/visual-language.md defect 1) at either width — 2x in a
-   two-column card, 1x in a three-column one. align-content centres a short
-   roster instead of stranding two cards under the header. */
-.growth-roster {
-  position: relative;
-  z-index: 1;
+/* The grid owns the space between the header and the CTA and scrolls inside
+   it, rather than growing the page until Continue is off screen — same
+   containment pattern as .screen-scroll. align-content (on .pick-grid)
+   centres a short roster instead of stranding two cards under the header. */
+.pick-grid.is-filling {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  display: grid;
-  align-content: center;
-  gap: 8px;
-}
-
-/* Only the portrait size is stated per column count; the figure box and the
-   ground ellipse are derived from it below, so the two layouts stay the same
-   composition at two scales rather than two hand-tuned ones. */
-.growth-cols-2 {
-  grid-template-columns: repeat(2, 1fr);
-  --growth-portrait: 96px;
-  --growth-name-size: 14px;
-}
-
-.growth-cols-3 {
-  grid-template-columns: repeat(3, 1fr);
-  --growth-portrait: 48px;
-  --growth-name-size: 12px;
-}
-
-/* The card is boxed because it genuinely is a button. Everything inside it is
-   not: figure, ground, name, type codes, rank track and payoff line are all
-   drawn without a container of their own. Type is the card's *material* — a
-   wash entering top-left plus a rim tinted to match, the same move
-   `.move-type-code` made for the move buttons — rather than the 3px
-   left-border marker and two filled chips this wore before. */
-.growth-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 8px 6px 7px;
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(var(--type-rgb), 0.32);
-  background:
-    radial-gradient(ellipse 130% 95% at 10% -10%, rgba(var(--type-rgb), 0.22), transparent 64%),
-    var(--surface-raised);
-  box-shadow: var(--hairline), var(--elev-1);
-  color: var(--text);
-  text-align: center;
-  cursor: pointer;
-  overflow: hidden;
-  transition:
-    transform var(--dur-fast) var(--ease-out),
-    box-shadow var(--dur-mid) var(--ease-out),
-    border-color var(--dur-mid) var(--ease-out),
-    opacity var(--dur-mid) var(--ease-out);
-}
-
-.growth-card > * {
-  position: relative;
-  z-index: 1;
-}
-
-.growth-card:hover:not(.is-locked):not(.is-leveling) {
-  transform: translateY(-2px);
-  border-color: rgba(var(--type-rgb), 0.7);
-  box-shadow: var(--hairline-strong), var(--elev-2);
-}
-
-.growth-card:not(.is-locked):active {
-  transform: translateY(0);
-}
-
-.growth-card:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring), var(--elev-2);
-}
-
-/* Same rule as .move-button/.resolve-button: an unavailable card drops its
-   elevation as well as dimming, so "can't act on this" is legible from the
-   silhouette and not only from the opacity. */
-.growth-card.is-locked {
-  cursor: default;
-  opacity: 0.48;
-  box-shadow: none;
 }
 
 /* One level-up away from the branch. A hairline of gold on the rim only —
@@ -10836,150 +11104,6 @@ textarea,
   to {
     transform: scaleY(1);
   }
-}
-
-/* Headroom above the sprite for the level mark, and floor room below it so
-   the ground ellipse has somewhere to sit — the same arrangement
-   .draft-figure uses, where the portrait is lifted off the box bottom rather
-   than flush against it. Both are fractions of the portrait, so the figure is
-   one composition at two scales. */
-.growth-figure {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  width: 100%;
-  height: calc(var(--growth-portrait) * 1.25);
-  padding-bottom: calc(var(--growth-portrait) * 0.125);
-}
-
-/* The same ground mark the battlefield's .combatant-platform makes — shadow
-   and colour in one ellipse — so a hero stands on the same kind of ground
-   here that it stands on in a fight. */
-.growth-ground {
-  position: absolute;
-  left: 50%;
-  /* Proportions lifted from .draft-figure::after, which is the reference for
-     a figure standing on ground: the ellipse is 0.9x the sprite wide and
-     centred a hair (0.03x) above its base, so it reads as ground under the
-     feet rather than a shadow across the shins. */
-  bottom: calc(var(--growth-portrait) * 0.06);
-  width: calc(var(--growth-portrait) * 0.9);
-  height: calc(var(--growth-portrait) * 0.19);
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(
-    ellipse at 50% 50%,
-    rgba(var(--type-rgb), 0.5),
-    rgba(var(--type-rgb), 0.14) 54%,
-    transparent 72%
-  );
-}
-
-/* 48px (1x) at three columns, 96px (2x) at two — both exact multiples of the
-   48px source (art/heroes/*.png), replacing the shared .hero-grid-portrait's
-   30px 0.625x downscale. The drop-shadow follows the sprite's alpha
-   silhouette rather than its bounding box, which is what makes it stand on
-   the ground rather than float over it. */
-.growth-portrait {
-  position: relative;
-  z-index: 1;
-  width: var(--growth-portrait);
-  height: var(--growth-portrait);
-  image-rendering: pixelated;
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.65));
-  transition: transform var(--dur-mid) var(--ease-spring);
-}
-
-.growth-card:hover:not(.is-locked) .growth-portrait {
-  transform: translateY(-2px);
-}
-
-/* Level as a corner mark on the figure, not a bordered chip beside the name
-   (.training-hero-level, still used by the .hero-grid screens). The unit is
-   set smaller than the numeral so "Lv" reads as a label and the number reads
-   as the value — the fault the Field Effect plaque's bare "· 4" had. */
-.growth-level {
-  position: absolute;
-  z-index: 2;
-  left: 3px;
-  top: 1px;
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 1;
-  color: var(--text-dim);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-}
-
-.growth-level::before {
-  content: 'Lv';
-  margin-right: 2px;
-  font-size: 7px;
-  opacity: 0.7;
-}
-
-/* Chromeless glyph, the same treatment as .draft-info: circle, border, fill
-   and shadow all go, the glyph stays for discoverability and for
-   keyboard/screen-reader users. */
-.growth-info {
-  position: absolute;
-  z-index: 3;
-  top: 1px;
-  right: 2px;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  background: none;
-  border: none;
-  color: var(--text-dim);
-  font-size: 11px;
-  font-weight: 700;
-  font-style: italic;
-  cursor: pointer;
-  opacity: 0.42;
-  transition: opacity var(--dur-mid) var(--ease-out);
-}
-
-.growth-info:hover {
-  opacity: 1;
-}
-
-.growth-name {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--growth-name-size);
-  font-weight: 700;
-  line-height: 1.15;
-}
-
-/* Type as chromeless coloured text, not a filled chip — .move-type-code's
-   idiom. Colour alone cannot separate 15 types, so the abbreviation stays; it
-   just is not a second coloured rectangle inside a type-washed card. */
-.growth-types {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-}
-
-.growth-type-code {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-}
-
-/* Pinned rather than sized off the 8px code. 1.15em of 8px is 9px, which is
-   under the floor these shapes were drawn to — Beast's paw pads merge and
-   Ancient's urn lip disappears. The letters can be that small because they
-   are only three of them in a known alphabet; the glyph cannot. */
-.growth-type-code .element-glyph {
-  width: 11px;
-  height: 11px;
-  vertical-align: 0;
 }
 
 /* The rank track — the screen's actual decision surface. Fixed denominator
@@ -11067,49 +11191,22 @@ textarea,
   color: var(--accent);
 }
 
-/* What the point buys. The line the old card never had, and the reason the
-   choice can be made from the grid instead of from six overlays. Coloured by
-   payoff so the roster sorts itself by eye: the earned Evolution burns, the
-   next-level-triggers-one is warm, an ordinary move roll is gold, and the two
-   duds sit back in --text-dim. */
-.growth-payoff {
-  margin-top: auto;
-  padding-top: 4px;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--text-dim);
-}
-
-.growth-payoff.payoff-move {
+/* The payoff line's colours, layered on the shared .pick-cta: the roster
+   sorts itself by eye — the earned Evolution burns, the next-level-triggers-
+   one is warm, an ordinary move roll is gold, and the two duds sit back in
+   --text-dim. */
+.pick-cta.payoff-move {
   color: var(--accent);
 }
 
-.growth-payoff.payoff-brink {
+.pick-cta.payoff-brink {
   color: #ffd98a;
   text-shadow: 0 0 8px rgba(224, 166, 60, 0.5);
 }
 
-.growth-payoff.payoff-evolve {
+.pick-cta.payoff-evolve {
   color: #fff4cf;
   text-shadow: 0 0 10px rgba(224, 166, 60, 0.85);
-}
-
-.growth-card.is-locked .growth-payoff {
-  color: var(--text-dim);
-  text-shadow: none;
-}
-
-/* The sky is absolutely positioned with a z-index, so anything left static
-   paints under it — the same trap .draft-cta documents. Both of these are
-   pointer-events-live content, and without this they would be invisible
-   (though still clickable, since the sky is pointer-events: none). */
-.levelup-screen > .resolve-button,
-.levelup-screen > .screen-scroll {
-  position: relative;
-  z-index: 1;
 }
 
 /* Move-replace offer headline (LevelUpScreen's OfferHeroHead) — 48px, a clean
@@ -11615,18 +11712,13 @@ textarea,
    in a list — and so the list itself never grows tall enough to scroll on a
    full 6-hero roster. */
 
-.evolution-banner {
+/* The glow that stood behind the Evolution banner, now behind the header
+   portrait that replaced it — the banner box itself is gone (see the node
+   stage). `.evolution-art` is what it is positioned against, so the circle
+   stays centred on the hero rather than on the whole header. */
+.evolution-art {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 28px 16px 20px;
-  margin-bottom: 14px;
-  overflow: hidden;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(224, 166, 60, 0.14), transparent 70%);
+  display: block;
 }
 
 .evolution-banner-glow {
@@ -11662,30 +11754,6 @@ textarea,
   margin: 0 auto 10px;
   image-rendering: pixelated;
   filter: drop-shadow(0 0 14px rgba(224, 166, 60, 0.55));
-}
-
-.evolution-banner-eyebrow {
-  position: relative;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 4px;
-}
-
-.evolution-banner-title {
-  position: relative;
-  font-size: 19px;
-  margin: 0 0 6px;
-}
-
-.evolution-banner-sub {
-  position: relative;
-  font-size: 12px;
-  color: var(--text-dim);
-  margin: 0;
-  max-width: 300px;
 }
 
 .evolution-path-list-big {

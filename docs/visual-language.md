@@ -1197,6 +1197,114 @@ the live DOM.
   `rgba(224, 166, 60, 0.6)` at 1px and a `rgb(224, 166, 60)` glyph. Opacity is
   `1` in both.
 
+## Ninth pass — the map-node screens, and the size of a Continue (2026-08-28)
+
+Open item 6's remainder ("apply the rule outside combat… still outstanding: the
+map, roster, and **shrine** screens"), plus a direct report: *avoid vertically
+skinny "Continue" buttons at the bottom — these should be chunkier and easier
+for players to press.* The two turned out to be the same screens.
+
+### What was wrong
+
+**Every node screen introduced its buttons with a bordered banner carrying no
+action.** There were five hand-tuned variants of that one box —
+`.equip-cache-banner`, `.relic-shrine-banner`, `.class-shrine-banner`,
+`.equip-spotlight`, `.evolution-banner` — and each sat inside a *second* box,
+`.reward-panel`, on flat `--bg`. Three levels between the screen edge and the
+first pressable thing, which is the same finding as the diagnosis at the top of
+this doc, three months of passes later, on the half of the app combat isn't.
+
+**The hero grid was the known defect, still open.** `.hero-grid-portrait` drew
+the 48×48 sources at **30px** — 0.625×, the fractional downscale this doc opens
+with — on `ForceEquipScreen`, `StatBoostScreen` and `ClassNodeScreen`. It is
+listed under open item 6 as "the first thing to fix when those screens come up."
+They came up.
+
+**And the cards were empty of the decision** — the question this doc's own
+procedure says to ask after "what does the box contain?", now 5 for 5. A
+`.hero-grid-card` carried a name, a level and two type chips. On the Vitality
+Shrine that is a picker for a *permanent* +20 HP grant with nothing on it about
+the hero receiving it; on ForceEquipScreen it did carry the target slot, in a
+dashed sunken sub-box.
+
+**Two primaries, one of them inert.** Mentor's Hall, the Gold and XP caches and
+the Relic Shrine each rendered a gold Claim/Confirm button *and* a gold
+Continue directly beneath it. Same fill, same size, and on arrival exactly one
+of them did anything.
+
+**The CTA itself was 42px.** 12px of padding around 14px type, pinned to the
+bottom edge of a portrait phone — inside the home-indicator's gesture strip and
+under the least accurate part of the thumb's travel. Both platforms' minimum
+touch target (44/48px) sat above it.
+
+### What replaced it
+
+| Was | Is |
+|---|---|
+| Five bordered banners, each inside `.reward-panel` | One shared stage: `NodeSky` (full-bleed, tinted) + `NodeHeader` (eyebrow / bloomed title / readout), nothing drawn around either |
+| Per-screen hue hard-coded into per-screen banner rules | One custom property, `--node-rgb`, set once on the screen root; sky, motes, eyebrow, title bloom and readout all inherit it |
+| `.hero-grid`, 30px portraits (0.625×) | `HeroPickCard` — 48px (1×) at three columns, 96px (2×) at two, the level-up screen's card generalised |
+| Name / level / two chips | A CTA line saying what the tap buys ("+20 Max HP", "Replace", "Teach"), and an optional detail row (the target equip slot, the rank track) |
+| No way to inspect from a stat-grant node | Hold a card for the full hero sheet, the same gesture as everywhere else |
+| Claim *and* Continue, both gold, both full width | One bottom button, whichever the screen is waiting for |
+| 42px CTA | **56px minimum**, 16px/800, `--radius-md`; `.secondary-button` follows to 50px so a pair still reads as a pair |
+| Post-fight Continue: 15px label, centred, hugging its text | Same 56px slab, `flex: 1` across the row |
+
+Details worth keeping:
+
+- **The tint had to live on the screen root, not on the components.** They took
+  a `tint` prop first, and the XP cache came out with a green header above a
+  gold numeral: a sibling of the header inherits nothing from it. One
+  declaration on `.node-screen` is also what lets a *forced equip* tint the
+  whole room with the drop's rarity (`RARITY_RGB_VARS` — the tier palette as
+  bare rgb triples, added for exactly this).
+- **The ring survived, the banner didn't.** The dashed rotating circle behind
+  the shrine headings was the one part of those boxes doing real work. It is now
+  rendered only when the header has art to frame (the Mentor): centred on a bare
+  title it reads as a stray circle crossing the readout, which is what it did
+  for two rounds of screenshots before the rule became "frames the figure or
+  isn't drawn".
+- **Gold and XP get a numeral, not a hint.** There is nothing to choose at those
+  nodes, so the amount is the screen — 64px, lit by the node's hue, centred in
+  the room rather than pinned above the CTA. Thumb reach is an argument about
+  controls; this isn't one.
+- **Three more portraits were at broken scales** and were fixed with them: the
+  Mentor at 84px (1.75×) → 96px, its small variant 72px → 48px, and the Class
+  reveal's 72px mentor / 88px hero → 48px / 96px. The size gap now *carries* the
+  hierarchy in that reveal instead of both figures being wrong.
+- **`.hero-grid` is deliberately still alive.** `RosterReplaceScreen` and the
+  Mentor's roster-peek overlay still use it, both inside overlays where the
+  small card is doing no harm. The class exists for those two now, not as the
+  app's pick-a-hero idiom.
+
+### Verification
+
+Every screen was driven and **looked at**, not measured — rendered through a
+throwaway harness (a root `nodes.html` plus an entry importing the real screen
+modules, both deleted before committing) into headless Edge at 394×800 device
+pixels ×2, then read back as PNGs. That is what caught the green-header/gold-
+numeral inheritance bug and both ring placements; none of the three would have
+shown up in computed style.
+
+Shot and checked: Vitality Shrine, Mana Well, Gold Cache, XP Cache, Equipment
+Cache, Relic Shrine, Mentor's Hall, the Event placeholder, ForceEquipScreen,
+EvolutionScreen, and the Level Up screen itself (unchanged in appearance after
+its card and header were replaced by the shared ones — which is the point of
+the refactor). `npm test` (203 engine tests), `npm run typecheck:view` and the
+production build all pass.
+
+Two notes for whoever picks this up:
+
+- **Headless Edge drops screenshots at random here.** Roughly one run in three
+  writes no file at all, exit code 0, no stderr — unrelated to the page (the
+  same URL succeeds on retry). Loop until the file is non-empty; don't debug the
+  screen.
+- **`initUiScale` fights a headless viewport.** Mounting the real shell in
+  headless Edge produced a canvas wider than the window and clipped the right
+  column. The harness pinned `.app-shell` to `width: 394px; height: 800px;
+  transform: none` instead, which is the canvas the UI is authored against
+  anyway.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.
@@ -1226,18 +1334,22 @@ Roughly in order of expected payoff.
    draft screen (third pass), where exactly one figure is on stage — so the scale has
    been *built* but still hasn't been **eyeballed on a real device**, which was the
    actual condition. Look at it there before considering it for the arena.
-6. **Apply the rule outside combat.** ~~Draft~~ (third pass) and ~~level-up~~ (fourth)
-   are done. Still outstanding: the **map, roster, and shrine** screens, which keep the
-   same nesting. Both finished passes are worked examples — and note that in both, as
+6. **Apply the rule outside combat.** ~~Draft~~ (third pass), ~~level-up~~ (fourth)
+   and ~~the shrine/node screens~~ (ninth) are done. Still outstanding: the **map**
+   and **roster** screens, which keep the same nesting — and the **Guild Hall**
+   (`GuildHallPanel`, which `ShopNodeScreen` wraps), deliberately left alone in the
+   ninth pass because it is a shop with three distinct lists, not a one-decision
+   node. Each finished pass is a worked example — and note that in all of them, as
    on the Field Effect badge, the win came as much from asking what the boxes
-   *contained* as from removing them. That question is now 3 for 3; treat it as part of
-   the procedure rather than an extra.
-   - **Two portraits are still at broken scales, knowingly.**
-     `.roster-card-portrait` is 40px (0.833×) on `SquadSelectScreen` and the reward
-     nodes; `.hero-grid-portrait` is 30px (0.625×) on `ForceEquipScreen`,
-     `StatBoostScreen`, `ClassNodeScreen` and `RosterReplaceScreen`. Each was left
-     alone because fixing it changes that card's height and those screens' layout
-     budgets are tight. They are the first thing to fix when those screens come up.
+   *contained* as from removing them. That question is now 5 for 5; treat it as part
+   of the procedure rather than an extra.
+   - **One portrait is still at a broken scale, knowingly.**
+     `.roster-card-portrait` is 40px (0.833×) on `SquadSelectScreen` and the Guild
+     Hall. It was left alone because fixing it changes that card's height and those
+     screens' layout budgets are tight; it is the first thing to fix when they come
+     up. `.hero-grid-portrait`'s 30px is gone from the node screens (they use
+     `HeroPickCard` now) but survives in `RosterReplaceScreen` and the Mentor's
+     roster-peek overlay, both of which are overlays rather than screens.
 7. **Ground-plane depth.** The platform currently carries distance via size and
    opacity. A true perspective floor grid (fading toward the horizon) would sell it
    further, at some risk of noise behind the figures.

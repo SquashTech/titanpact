@@ -21,8 +21,17 @@ import { StatGlyph } from '../shared/StatBars';
 import { passiveEmoji } from '../shared/passiveIcons';
 import { useLongPress } from '../shared/MoveTile';
 import { ResourceMark, RunGlyph } from '../shared/RunGlyph';
+import { NodeHeader, NodeSky, NODE_TINT_ARCANE, NODE_TINT_GOLD, NODE_TINT_VITAL } from '../shared/NodeStage';
 
 export type RewardNodeType = 'currencyReward' | 'upgradeReward' | 'equipmentReward' | 'relicReward';
+
+/** Each reward node keeps the hue it already wore as a banner — gold for the caches, XP green, the shrine's violet (see NodeStage). */
+const NODE_TINT: Record<RewardNodeType, string> = {
+  currencyReward: NODE_TINT_GOLD,
+  upgradeReward: NODE_TINT_VITAL,
+  equipmentReward: NODE_TINT_GOLD,
+  relicReward: NODE_TINT_ARCANE,
+};
 
 /** Equipment Cache chest-reveal timing (ms) — see `chestPhase` in NodeRewardScreen. */
 const CHEST_SHAKE_MS = 900;
@@ -210,40 +219,74 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
 
   const canContinue = claimed || (nodeType === 'relicReward' && relicChoices.length === 0);
 
-  return (
-    <div className="node-screen node-reward-screen">
-      <div className="screen-scroll">
-        {nodeType === 'currencyReward' && (
-          <div className="reward-panel bottom-pinned">
-            <div className="equip-cache-banner">
-              <div className="equip-cache-glow" aria-hidden="true" />
-              <h2><ResourceMark label="G" /> Gold Cache</h2>
-              {!claimed && <p className="hint">A pile of gold, ready to claim.</p>}
-            </div>
-            {!claimed ? (
-              <button className="resolve-button" onClick={() => handleClaimInstant(grantCurrencyReward(run, currencyAmount))}>
-                Claim {currencyAmount}g
-              </button>
-            ) : (
-              <p className="hint">+{currencyAmount}g claimed.</p>
-            )}
-          </div>
-        )}
+  /** True while the screen's one bottom button is still a Claim rather than a Continue — the two never render together. */
+  const showClaimButton =
+    nodeType === 'currencyReward' || nodeType === 'upgradeReward'
+      ? !claimed
+      : nodeType === 'relicReward'
+        ? !claimed && relicChoices.length > 0
+        : false;
 
-        {nodeType === 'upgradeReward' && (
-          <div className="reward-panel bottom-pinned">
-            <div className="equip-cache-banner">
-              <div className="equip-cache-glow" aria-hidden="true" />
-              <h2><ResourceMark label="XP" tone="green" /> XP Cache</h2>
-              {!claimed && <p className="hint">Experience, ready to claim.</p>}
-            </div>
-            {!claimed ? (
-              <button className="resolve-button" onClick={() => handleClaimInstant(grantUpgradeReward(run, upgradeAmount))}>
-                Claim {upgradeAmount} XP
-              </button>
-            ) : (
-              <p className="hint">+{upgradeAmount} XP claimed.</p>
-            )}
+  return (
+    <div className="node-screen node-reward-screen" style={{ '--node-rgb': NODE_TINT[nodeType] } as CSSProperties}>
+      <NodeSky />
+
+      {/* One header per node type, on one stage. What was here: four
+          bordered banners (`.equip-cache-banner` twice, `.relic-shrine-banner`,
+          each inside a `.reward-panel`) introducing content that was itself in
+          boxes — see docs/visual-language.md's ninth pass. The eyebrow/title/
+          readout is the same object the level-up screen uses; only the hue and
+          the words change. */}
+      {nodeType === 'currencyReward' && (
+        <NodeHeader
+          eyebrow="Spoils"
+          title="Gold Cache"
+          glyph={<ResourceMark label="G" />}
+          readoutLive={claimed}
+          readout={claimed ? `${currencyAmount}g added to the purse.` : 'A pile of gold, left where it fell.'}
+        />
+      )}
+
+      {nodeType === 'upgradeReward' && (
+        <NodeHeader
+          eyebrow="Spoils"
+          title="XP Cache"
+          glyph={<ResourceMark label="XP" tone="green" />}
+          readoutLive={claimed}
+          readout={claimed ? `${upgradeAmount} XP added to the pool.` : 'Hard-won experience, there for the taking.'}
+        />
+      )}
+
+      {nodeType === 'equipmentReward' && chestPhase === 'revealed' && (
+        <NodeHeader
+          compact
+          eyebrow="A Cache Opens"
+          title="Equipment Cache"
+          glyph={<RunGlyph kind="equipment" />}
+          readout="Tap a piece of gear to select it, hold to read it in full."
+        />
+      )}
+
+      {nodeType === 'relicReward' && !claimed && (
+        <NodeHeader
+          compact
+          eyebrow="A Pact Awaits"
+          title="Relic Shrine"
+          glyph={<RunGlyph kind="relic" />}
+          readout={relicChoices.length > 0 ? 'Tap a relic to select it, then claim it.' : 'Every relic here is already yours.'}
+        />
+      )}
+
+      <div className="screen-scroll">
+        {/* Gold and XP have nothing to choose between, so the amount itself is
+            the screen: one numeral at display size, lit by the node's own hue.
+            It was a line of hint text inside a bordered banner. */}
+        {(nodeType === 'currencyReward' || nodeType === 'upgradeReward') && (
+          <div className={`node-hoard${claimed ? ' is-claimed' : ''}`}>
+            <span className="node-hoard-amount">
+              {nodeType === 'currencyReward' ? currencyAmount : upgradeAmount}
+              <span className="node-hoard-unit">{nodeType === 'currencyReward' ? 'g' : 'XP'}</span>
+            </span>
           </div>
         )}
 
@@ -251,19 +294,16 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
           <div className="equip-cache-chest-screen">
             <div className="equip-cache-chest-reveal">
               <div className="equip-cache-chest-glow" aria-hidden="true" />
-              <div className={`equip-cache-chest-icon${chestPhase === 'opening' ? ' opening' : ''}`}><RunGlyph kind="equipment" /></div>
+              <div className={`equip-cache-chest-icon${chestPhase === 'opening' ? ' opening' : ''}`}>
+                <RunGlyph kind="equipment" />
+              </div>
               <p className="hint">Opening the cache…</p>
             </div>
           </div>
         )}
 
         {nodeType === 'equipmentReward' && chestPhase === 'revealed' && (
-          <div className="reward-panel equip-cache-panel bottom-pinned">
-            <div className="equip-cache-banner equip-cache-reveal-in">
-              <div className="equip-cache-glow" aria-hidden="true" />
-              <h2><RunGlyph kind="equipment" /> Equipment Cache</h2>
-              <p className="hint">Tap a piece of gear to select it, hold to see full details, then claim it.</p>
-            </div>
+          <div className="bottom-pinned">
             <div className="equip-cache-list">
               {equipmentChoices.map((item, i) => (
                 <EquipCacheCard
@@ -276,56 +316,30 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
                 />
               ))}
             </div>
-            <button
-              className="resolve-button equip-cache-reveal-in"
-              style={{ animationDelay: `${120 + equipmentChoices.length * 90}ms` } as CSSProperties}
-              disabled={!pickedItemId}
-              onClick={() => pickedItemId && onClaimEquipment(pickedItemId)}
-            >
-              {pickedItemId ? `Claim ${equipmentChoices.find((i) => i.id === pickedItemId)?.name}` : 'Select a piece of gear'}
-            </button>
           </div>
         )}
 
-        {nodeType === 'relicReward' && !claimed && (
-          <div className="reward-panel relic-shrine-panel bottom-pinned">
-            <div className="relic-shrine-banner">
-              <div className="relic-shrine-glow" aria-hidden="true" />
-              <div className="relic-shrine-eyebrow">A Pact Awaits</div>
-              <h2><RunGlyph kind="relic" /> Relic Shrine</h2>
-              {relicChoices.length > 0 && <p className="hint">Tap a relic to select it, then claim it.</p>}
+        {nodeType === 'relicReward' && !claimed && relicChoices.length > 0 && (
+          <div className="bottom-pinned">
+            <div className="relic-shrine-list">
+              {relicChoices.map((relic, i) => (
+                <RelicChoiceCard
+                  key={relic.id}
+                  relic={relic}
+                  picked={pickedRelicId === relic.id}
+                  onPick={() => setPickedRelicId(pickedRelicId === relic.id ? null : relic.id)}
+                  revealDelayMs={80 + i * 90}
+                />
+              ))}
             </div>
-            {relicChoices.length > 0 ? (
-              <div className="relic-shrine-list">
-                {relicChoices.map((relic, i) => (
-                  <RelicChoiceCard
-                    key={relic.id}
-                    relic={relic}
-                    picked={pickedRelicId === relic.id}
-                    onPick={() => setPickedRelicId(pickedRelicId === relic.id ? null : relic.id)}
-                    revealDelayMs={80 + i * 90}
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="hint">Every relic here is already yours.</p>
-            )}
-            {relicChoices.length > 0 && (
-              <button
-                className="resolve-button relic-shrine-claim-button"
-                disabled={!pickedRelicId}
-                onClick={() => pickedRelicId && handleClaimRelic(pickedRelicId)}
-              >
-                {pickedRelicId ? `Claim ${relicChoices.find((r) => r.id === pickedRelicId)?.name}` : 'Select a relic'}
-              </button>
-            )}
           </div>
         )}
 
-        {/* Deliberately its own top-level sibling rather than nested in the panel above
-            (same reasoning as the Equipment Cache's chest-reveal split) — this replaces
-            the pick-a-relic panel entirely once a claim lands, so obtaining a relic reads
-            as its own epic moment instead of a line of text where the picker used to be. */}
+        {/* Deliberately its own top-level sibling rather than nested in the
+            picker above (same reasoning as the Equipment Cache's chest-reveal
+            split) — this replaces the pick-a-relic list entirely once a claim
+            lands, so obtaining a relic reads as its own moment instead of a
+            line of text where the picker used to be. */}
         {nodeType === 'relicReward' && claimedRelic && (
           <div className="relic-reveal">
             <div className="relic-reveal-flash" aria-hidden="true" />
@@ -338,7 +352,47 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
           </div>
         )}
       </div>
-      {nodeType !== 'equipmentReward' && (
+
+      {/* One CTA, not two. Claiming used to be a full-width gold button inside
+          the panel with a second full-width gold button ("Continue") directly
+          under it — two identical-looking primaries, one of which was inert.
+          The bottom button is now whichever of the two the screen is actually
+          waiting for. */}
+      {(nodeType === 'currencyReward' || nodeType === 'upgradeReward') && !claimed && (
+        <button
+          className="resolve-button"
+          onClick={() =>
+            handleClaimInstant(
+              nodeType === 'currencyReward' ? grantCurrencyReward(run, currencyAmount) : grantUpgradeReward(run, upgradeAmount)
+            )
+          }
+        >
+          {nodeType === 'currencyReward' ? `Claim ${currencyAmount}g` : `Claim ${upgradeAmount} XP`}
+        </button>
+      )}
+
+      {nodeType === 'equipmentReward' && chestPhase === 'revealed' && (
+        <button
+          className="resolve-button equip-cache-reveal-in"
+          style={{ animationDelay: `${120 + equipmentChoices.length * 90}ms` } as CSSProperties}
+          disabled={!pickedItemId}
+          onClick={() => pickedItemId && onClaimEquipment(pickedItemId)}
+        >
+          {pickedItemId ? `Claim ${equipmentChoices.find((i) => i.id === pickedItemId)?.name}` : 'Select a piece of gear'}
+        </button>
+      )}
+
+      {nodeType === 'relicReward' && !claimed && relicChoices.length > 0 && (
+        <button
+          className="resolve-button relic-shrine-claim-button"
+          disabled={!pickedRelicId}
+          onClick={() => pickedRelicId && handleClaimRelic(pickedRelicId)}
+        >
+          {pickedRelicId ? `Claim ${relicChoices.find((r) => r.id === pickedRelicId)?.name}` : 'Select a relic'}
+        </button>
+      )}
+
+      {nodeType !== 'equipmentReward' && !showClaimButton && (
         <button className="resolve-button" disabled={!canContinue} onClick={onContinue}>
           Continue
         </button>
