@@ -1,7 +1,10 @@
 // ⚠️ TEST FIXTURE CONTENT — heroes sufficient to run a 2v2 fight and exercise
 // bring-6-pick-4 squad selection (src/run) through the engine. Not the
-// authored 53-concept roster (docs/types-and-heroes.md); stat lines and
-// typings here are arbitrary and untuned.
+// authored 53-concept roster (docs/types-and-heroes.md); typings here are
+// still arbitrary. The 14 STARTER stat lines are authored and tuned to a
+// 450 BST budget (HP + manaPool + the five battle stats; Valor sits at 440)
+// as of 2026-08-28 — do not nudge one without rebalancing its budget.
+// Recruit-only stat lines are still untuned.
 //
 // STARTING KITS ARE EXACTLY THREE MOVES, for every hero, with no exceptions
 // (2026-08-26). A low-power move of the hero's main type plus two supports —
@@ -51,7 +54,7 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'crimson',
     name: 'Crimson',
     types: ['Fire'],
-    baseStats: { hp: 90, attack: 25, defense: 35, intelligence: 80, wisdom: 45, speed: 60, manaPool: 85, mpRegen: 10 },
+    baseStats: { hp: 100, attack: 30, defense: 38, intelligence: 80, wisdom: 75, speed: 62, manaPool: 65, mpRegen: 10 },
     moveIds: ['flareBurst', 'weaken', 'restoreVigor'],
     starter: true,
   },
@@ -69,7 +72,7 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'tidecaller',
     name: 'Riptide',
     types: ['Water'],
-    baseStats: { hp: 105, attack: 40, defense: 50, intelligence: 75, wisdom: 65, speed: 55, manaPool: 80, mpRegen: 10 },
+    baseStats: { hp: 110, attack: 55, defense: 55, intelligence: 59, wisdom: 40, speed: 66, manaPool: 65, mpRegen: 10 },
     moveIds: ['tidalBolt', 'healingRain', 'weaken'],
     starter: true,
   },
@@ -95,7 +98,7 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'rime',
     name: 'Rime',
     types: ['Frost'],
-    baseStats: { hp: 95, attack: 60, defense: 40, intelligence: 45, wisdom: 60, speed: 85, manaPool: 55, mpRegen: 10 },
+    baseStats: { hp: 110, attack: 65, defense: 55, intelligence: 65, wisdom: 53, speed: 42, manaPool: 60, mpRegen: 10 },
     moveIds: ['frostBite', 'rendingClaw', 'secondWind'],
     starter: true,
   },
@@ -121,7 +124,7 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'tempest',
     name: 'Tempest',
     types: ['Storm'],
-    baseStats: { hp: 90, attack: 65, defense: 40, intelligence: 35, wisdom: 35, speed: 90, manaPool: 50, mpRegen: 10 },
+    baseStats: { hp: 90, attack: 70, defense: 45, intelligence: 70, wisdom: 35, speed: 65, manaPool: 75, mpRegen: 10 },
     moveIds: ['galeShot', 'rally', 'thunderclap'],
     starter: true,
   },
@@ -139,7 +142,7 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'crag',
     name: 'Crag',
     types: ['Stone'],
-    baseStats: { hp: 140, attack: 60, defense: 95, intelligence: 15, wisdom: 55, speed: 20, manaPool: 35, mpRegen: 10 },
+    baseStats: { hp: 140, attack: 90, defense: 75, intelligence: 20, wisdom: 35, speed: 40, manaPool: 50, mpRegen: 10 },
     moveIds: ['boulderToss', 'fortify', 'secondWind'],
     starter: true,
   },
@@ -157,7 +160,7 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'wildOracle',
     name: 'Sylva',
     types: ['Nature'],
-    baseStats: { hp: 100, attack: 35, defense: 45, intelligence: 80, wisdom: 70, speed: 65, manaPool: 90, mpRegen: 10 },
+    baseStats: { hp: 80, attack: 45, defense: 60, intelligence: 60, wisdom: 60, speed: 65, manaPool: 80, mpRegen: 10 },
     moveIds: ['venomousBite', 'mendWounds', 'secondWind'],
     starter: true,
   },
@@ -183,7 +186,7 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'dawnwarden',
     name: 'Solace',
     types: ['Light'],
-    baseStats: { hp: 100, attack: 40, defense: 65, intelligence: 55, wisdom: 85, speed: 40, manaPool: 85, mpRegen: 10 },
+    baseStats: { hp: 110, attack: 29, defense: 50, intelligence: 60, wisdom: 70, speed: 61, manaPool: 70, mpRegen: 10 },
     moveIds: ['radiantBeam', 'restoreVigor', 'purify'],
     starter: true,
   },
@@ -225,7 +228,7 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'nightshade',
     name: 'Nightshade',
     types: ['Shadow'],
-    baseStats: { hp: 85, attack: 80, defense: 35, intelligence: 30, wisdom: 35, speed: 85, manaPool: 45, mpRegen: 10 },
+    baseStats: { hp: 90, attack: 80, defense: 30, intelligence: 65, wisdom: 40, speed: 85, manaPool: 60, mpRegen: 10 },
     moveIds: ['duskStrike', 'vanish', 'nightmareGrasp'],
     starter: true,
   },
@@ -235,7 +238,7 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'runescribe',
     name: 'Glyph',
     types: ['Arcane'],
-    baseStats: { hp: 80, attack: 25, defense: 35, intelligence: 85, wisdom: 45, speed: 60, manaPool: 95, mpRegen: 10 },
+    baseStats: { hp: 80, attack: 25, defense: 32, intelligence: 90, wisdom: 80, speed: 58, manaPool: 85, mpRegen: 10 },
     moveIds: ['arcaneBolt', 'manaBurst', 'curseMind'],
     starter: true,
   },
@@ -253,7 +256,7 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'mindweaver',
     name: 'Cortex',
     types: ['Mind'],
-    baseStats: { hp: 90, attack: 30, defense: 40, intelligence: 75, wisdom: 65, speed: 55, manaPool: 65, mpRegen: 10 },
+    baseStats: { hp: 100, attack: 53, defense: 45, intelligence: 55, wisdom: 55, speed: 67, manaPool: 75, mpRegen: 10 },
     moveIds: ['psychicLance', 'mindSpike', 'curseMind'],
     starter: true,
   },
@@ -263,7 +266,7 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'revenant',
     name: 'Revenant',
     types: ['Spirit'],
-    baseStats: { hp: 90, attack: 25, defense: 40, intelligence: 70, wisdom: 75, speed: 60, manaPool: 75, mpRegen: 10 },
+    baseStats: { hp: 80, attack: 56, defense: 47, intelligence: 77, wisdom: 46, speed: 64, manaPool: 80, mpRegen: 10 },
     moveIds: ['soulRend', 'secondWind', 'mendWounds'],
     starter: true,
   },
@@ -281,7 +284,7 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'valor',
     name: 'Valor',
     types: ['Iron'],
-    baseStats: { hp: 120, attack: 75, defense: 65, intelligence: 25, wisdom: 45, speed: 55, manaPool: 50, mpRegen: 10 },
+    baseStats: { hp: 120, attack: 60, defense: 60, intelligence: 40, wisdom: 40, speed: 60, manaPool: 60, mpRegen: 10 },
     moveIds: ['ironFist', 'fortify', 'restoreVigor'],
     starter: true,
   },
@@ -299,7 +302,7 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'forgewright',
     name: 'Clockwork',
     types: ['Mech'],
-    baseStats: { hp: 120, attack: 75, defense: 70, intelligence: 25, wisdom: 40, speed: 35, manaPool: 45, mpRegen: 10 },
+    baseStats: { hp: 130, attack: 60, defense: 70, intelligence: 45, wisdom: 40, speed: 55, manaPool: 50, mpRegen: 10 },
     moveIds: ['moltenHammer', 'sparkForge', 'fortify'],
     starter: true,
   },
@@ -317,7 +320,7 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'packAlpha',
     name: 'Fang',
     types: ['Beast'],
-    baseStats: { hp: 110, attack: 80, defense: 45, intelligence: 20, wisdom: 30, speed: 75, manaPool: 40, mpRegen: 10 },
+    baseStats: { hp: 100, attack: 90, defense: 55, intelligence: 20, wisdom: 50, speed: 80, manaPool: 55, mpRegen: 10 },
     moveIds: ['fangRush', 'savageMaul', 'rally'],
     starter: true,
   },
