@@ -164,12 +164,11 @@ export function CombatantCard({
   const typeStyle = { '--type-color': getTypeColor(primaryType), '--type-rgb': getTypeColorRgb(primaryType) } as CSSProperties;
 
   // Targeting always wins; otherwise the whole figure opens its detail sheet.
-  // The corner "i" button stays mounted (it's the discoverable and accessible
-  // affordance, and the only one on cards that aren't tappable for anything
-  // else) but is now a chromeless glyph on the battlefield rather than a
-  // bordered circle — one fewer box, and the large tap target it used to
-  // compete with is now the figure itself. Target-row cards pass no
-  // onInspect, so their behavior is unchanged.
+  // There is no corner "i" affordance any more: it had already been reduced to
+  // a chromeless 40%-opacity glyph that read as a smudge on the figure, and it
+  // pointed at a gesture the whole card already answers. Tapping the hero *is*
+  // the affordance. Target-row cards pass no onInspect, so their behavior is
+  // unchanged.
   const canTarget = Boolean(targetable && !combatant.fainted);
   const handleCardClick = canTarget ? onSelectTarget : onInspect;
 
@@ -195,18 +194,6 @@ export function CombatantCard({
         </div>
       )}
       {combatant.fainted && <span className="fainted-tag">KO</span>}
-      {onInspect && (
-        <button
-          className="info-button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onInspect();
-          }}
-          aria-label={`View ${hero.name} details`}
-        >
-          i
-        </button>
-      )}
       {popup && (
         <div key={popup.key} className={`dmg-popup ${popup.className}`}>
           {popup.text}
@@ -241,9 +228,15 @@ export function CombatantCard({
       </div>
       <div className="combatant-name">
         <span className="hero-name-text">{hero.name}</span>
+        {/* iconOnly: the hero's own name sits directly beside these, so the
+            three-letter code was spending width to repeat what the glyph and
+            the fill colour already say — and at card scale it was the smaller,
+            harder-to-read half of the pair. The literal answer is still one
+            tap away in HeroDetailOverlay, which is where a player who hasn't
+            learned the set is headed anyway. */}
         <span className="combatant-types">
           {effectiveTypes(hero, combatant).map((t) => (
-            <TypeBadge key={t} type={t} />
+            <TypeBadge key={t} type={t} iconOnly />
           ))}
         </span>
       </div>

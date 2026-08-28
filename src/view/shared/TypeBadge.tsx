@@ -18,9 +18,11 @@ import { ElementGlyph } from './elementIcons';
  * are redundant on purpose, which is what lets the glyph be learned in the
  * first place.
  *
- * `iconOnly` drops the letters for surfaces where the *position* already
- * names the type and the width is spoken for — the 15x15 matchup grid, whose
- * columns are 30px and whose headers repeat down every row.
+ * `iconOnly` drops the letters for surfaces where something adjacent already
+ * names the type and the width is spoken for: the 15x15 matchup grid, whose
+ * columns are 30px and whose headers repeat down every row, and the combat
+ * hero cards, where the chip sits beside the hero's own name and a tap opens
+ * the full stat sheet.
  */
 export function TypeBadge({ type, iconOnly }: { type: string; iconOnly?: boolean }) {
   const bg = getTypeColor(type);

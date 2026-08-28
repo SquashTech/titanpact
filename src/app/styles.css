@@ -1581,30 +1581,10 @@ textarea,
   right: 0;
 }
 
-/* Chromeless. The circle, border, fill and shadow all went; the glyph stays
-   for discoverability and for keyboard/screen-reader users, while the whole
-   figure is now the practical tap target (CombatantCard handleCardClick). */
-.team-row .info-button {
-  top: 0;
-  left: 0;
-  right: auto;
-  bottom: auto;
-  background: none;
-  border: none;
-  box-shadow: none;
-  opacity: 0.4;
-}
-
-.team-row .info-button:hover {
-  background: none;
-  opacity: 1;
-}
-
 /* Floating numbers rise off the figure's chest rather than the old card's
-   top-left corner — which is now where the info glyph lives, and which was
-   only ever "the corner of the box" rather than anywhere meaningful. Bigger
-   too: with the box gone there's nothing competing for attention, so the hit
-   can read at the size it deserves. */
+   top-left corner, which was only ever "the corner of the box" rather than
+   anywhere meaningful. Bigger too: with the box gone there's nothing
+   competing for attention, so the hit can read at the size it deserves. */
 .team-row .dmg-popup {
   top: 26px;
   left: 0;
@@ -2133,12 +2113,48 @@ textarea,
   white-space: nowrap;
 }
 
+/*
+ * Shared by the combat cards and by the two hero detail sheets
+ * (HeroDetailOverlay, HeroPreviewOverlay) — the sheets want it inline under
+ * the hero's name, so this base rule must stay plain flow. Only the card
+ * corner-mounts it, below.
+ */
 .combatant-types {
   display: flex;
   flex-shrink: 0;
   gap: 4px;
   font-size: 10px;
   font-weight: 400;
+}
+
+/*
+ * On a card, the type chips ride the top-left corner rather than sitting
+ * inline after the hero's name. Two reasons the corner is the better home now
+ * that the chips are glyph-only (TypeBadge iconOnly, CombatantCard):
+ *
+ *   1. Inline, a dual-type hero pushed its own name off-centre, so a Fire/Iron
+ *      hero and a mono-type one standing side by side had their nameplates at
+ *      different offsets — the row read as misaligned rather than as a pair.
+ *      Out of flow, the name is centred under the figure for every hero.
+ *   2. The chip is now a mark, not a word, and a mark belongs in a corner. On
+ *      the target picker (.target-row) the card still draws its box, so the
+ *      corner is a real corner and the chips tuck into it like a tag.
+ *
+ * Scoped to .combatant-card deliberately: the detail sheets above reuse the
+ * class, and an unscoped `position: absolute` here pinned their type row to
+ * the top-left of the whole overlay.
+ *
+ * No collision with .stat-mod-corner: it's `top: 3px` only on the boxed
+ * pickers, and `compact` cards pass no stat mods at all (CombatantCard
+ * activeMods) while .bench-row hides the corner outright. On the battlefield
+ * the stat-mod corners are pinned to `bottom: 80px`, beside the figure.
+ */
+.combatant-card .combatant-types {
+  position: absolute;
+  z-index: 4;
+  top: 3px;
+  left: 4px;
+  gap: 3px;
 }
 
 /*
@@ -2207,10 +2223,11 @@ textarea,
   opacity: 0.92;
 }
 
-/* Position names the type (matchup-grid headers), so the letters come off,
-   the chip goes square, and the glyph grows into what they vacated. This is
-   what keeps the 15 columns at 30px while making the header *more* legible
-   than three 9px letters were. */
+/* Something adjacent already names the type (matchup-grid headers; the hero's
+   own name on a combat card), so the letters come off, the chip goes square,
+   and the glyph grows into what they vacated. This is what keeps the 15
+   columns at 30px while making the header *more* legible than three 9px
+   letters were. */
 .type-badge-icon-only {
   width: 24px;
   padding: 3px 0;
@@ -10657,9 +10674,9 @@ textarea,
   opacity: 0.7;
 }
 
-/* Chromeless glyph, the same treatment as .draft-info and the battlefield's
-   .team-row .info-button: circle, border, fill and shadow all go, the glyph
-   stays for discoverability and for keyboard/screen-reader users. */
+/* Chromeless glyph, the same treatment as .draft-info: circle, border, fill
+   and shadow all go, the glyph stays for discoverability and for
+   keyboard/screen-reader users. */
 .growth-info {
   position: absolute;
   z-index: 3;
