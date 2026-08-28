@@ -62,14 +62,18 @@ export function hpTier(fraction: number): 'hp-high' | 'hp-mid' | 'hp-low' {
 }
 
 /**
- * Core combat stats summed for BST (balance-tracking readout, CLAUDE.md
- * north-star "every hero must be viable"). Mirrors Pokémon's Base Stat Total
- * but excludes Mana Pool/MP Regen — those are the separate tempo/resource
- * axis CLAUDE.md's "Mana & tempo" section calls out, not raw combat power,
- * so folding them in would understate a lean-mana hero's BST relative to a
- * mana-heavy one of equal combat strength.
+ * The stats summed for BST (balance-tracking readout, CLAUDE.md north-star
+ * "every hero must be viable"). Mana Pool counts (2026-08-28): the authored
+ * starter spreads are budgeted at 450 across HP + Mana Pool + the five
+ * battle stats, so a BST that left Mana Pool out reported a mana-heavy hero
+ * as 80 points weaker than a lean one that had simply spent the same budget
+ * elsewhere. Buying a deep pool IS how a hero pays for its power.
+ *
+ * MP Regen stays out — it is flat 10 on every hero (src/data/heroes.ts), so
+ * it distinguishes nobody and only inflates the number. Revisit if a hero
+ * ever authors a different regen.
  */
-const BST_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed'];
+const BST_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool'];
 
 /** Always computed from base stats — the authored design number, not affected by live buffs/equipment/statuses — so it reads the same in every context that shows a stat block. */
 export function computeBst(baseStats: StatLine): number {
@@ -123,7 +127,7 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {} }
       })}
       <div
         className="stat-bst-row"
-        title="Base Stat Total — HP + Attack + Defense + Intelligence + Wisdom + Speed (Mana Pool / MP Regen excluded, a separate tempo axis)"
+        title="Base Stat Total — HP + Attack + Defense + Intelligence + Wisdom + Speed + Mana Pool (MP Regen excluded, flat across the roster)"
       >
         <span className="stat-bst-label">BST</span>
         <span className="stat-bst-value">{computeBst(baseStats)}</span>

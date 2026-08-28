@@ -20,13 +20,18 @@ interface Props {
 const MOTE_COUNT = 16;
 
 /**
- * The six combat stats, in the same order StatBars uses. Mana Pool / MP Regen
- * are deliberately absent: they're the separate tempo axis (CLAUDE.md "Mana &
- * tempo"), and this strip exists to be compared across four candidates at a
- * glance — eight bars is a spec sheet, six is a silhouette. The full block is
- * one tap away on the hero sheet.
+ * The stats the BST beside them is summed from, in the same order StatBars
+ * uses. Mana Pool joined the strip when it joined BST (2026-08-28): a hero
+ * pays for its power out of the same 450 budget its pool comes from, so a
+ * strip that hid the pool showed a 62-Speed hero and an 85-Speed hero as if
+ * the difference were free. Seven bars that add up to the number next to
+ * them beats six that do not.
+ *
+ * MP Regen stays off — flat 10 on every hero, so it is a column of identical
+ * bars, and this strip exists to be compared across four candidates at a
+ * glance. The full eight-stat block is one tap away on the hero sheet.
  */
-const SILHOUETTE_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed'];
+const SILHOUETTE_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool'];
 
 /**
  * Ambient motes drifting up the whole screen — same golden-angle-sequence
@@ -201,7 +206,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
                 </div>
               );
             })}
-            <div className="draft-stat draft-stat-bst" title="Base Stat Total">
+            <div className="draft-stat draft-stat-bst" title="Base Stat Total — the seven bars beside it, summed">
               <span className="draft-stat-value">{computeBst(featured.baseStats)}</span>
               <div className="draft-stat-track draft-stat-track-empty" />
               <span className="draft-stat-label">BST</span>
