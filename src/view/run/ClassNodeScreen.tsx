@@ -228,7 +228,7 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
             <div className="reward-panel class-shrine-panel">
               <div className="class-shrine-banner">
                 <div className="class-shrine-glow" aria-hidden="true" />
-                <img src={mentorArt} className="class-shrine-mentor" alt="" />
+                <img src={mentorArt} className="class-shrine-mentor" alt="" draggable={false} />
                 <div className="class-shrine-eyebrow">The Mentor Awaits</div>
                 <h2><RunGlyph kind="class" /> Mentor's Hall</h2>
                 <p className="hint">Tap a discipline to select it, then confirm — you'll choose who studies it next.</p>
@@ -260,7 +260,7 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
             <div className="reward-panel">
               <div className="class-shrine-banner">
                 <div className="class-shrine-glow" aria-hidden="true" />
-                <img src={mentorArt} className="class-shrine-mentor class-shrine-mentor-small" alt="" />
+                <img src={mentorArt} className="class-shrine-mentor class-shrine-mentor-small" alt="" draggable={false} />
                 <h2>{confirmedClass.name}</h2>
                 <p className="hint">
                   {eligibleRoster.length === 0
@@ -292,7 +292,7 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
             <div className="class-learn-reveal">
               <div className="class-learn-flash" aria-hidden="true" />
               <div className="class-learn-portraits">
-                <img src={mentorArt} className="class-learn-mentor" alt="" />
+                <img src={mentorArt} className="class-learn-mentor" alt="" draggable={false} />
                 <span className="class-learn-arrow" aria-hidden="true">
                   →
                 </span>

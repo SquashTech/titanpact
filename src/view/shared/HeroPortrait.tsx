@@ -37,5 +37,8 @@ export function HeroPortrait({ heroId, className, seed }: Props) {
     '--idle-phase': ((h % 97) / 97).toFixed(3),
     '--idle-rate': (0.85 + ((h >>> 7) % 31) / 100).toFixed(2),
   } as CSSProperties;
-  return <img className={className} src={src} alt="" style={idleStyle} />;
+  // draggable={false} as well as styles.css's `-webkit-user-drag: none`: the
+  // CSS property is WebKit/Blink-only, and a sprite that starts a drag ghost
+  // mid-hold eats the long-press it was in the middle of.
+  return <img className={className} src={src} alt="" style={idleStyle} draggable={false} />;
 }

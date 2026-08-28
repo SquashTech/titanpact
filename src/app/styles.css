@@ -271,13 +271,73 @@ button:not(:disabled):active {
   filter: brightness(0.92);
 }
 
-/* Removes the blue flash mobile Safari/Chrome paint over any tapped element.
-   With the :active state above providing real feedback, the platform flash is
-   pure noise — and it ignores border-radius, so it flashes a rectangle behind
-   every rounded button. */
-button,
-[role='button'] {
+/*
+ * ── NOTHING IN THIS APP IS SELECTABLE ──────────────────────────────────────
+ *
+ * READ THIS BEFORE ADDING A NEW SURFACE. This is a rule, not a default, and
+ * it is declared once here so that it can never again be something a new
+ * screen has to remember.
+ *
+ * This is a touch-first game, and every one of its primary gestures is a
+ * press: tap to act, ~500ms hold to inspect (useLongPress, MoveTile.tsx). A
+ * browser's own reaction to a press on text or an image — the iOS callout
+ * menu, selection handles, a blue highlight, a drag ghost — arrives *partway
+ * through* the player's hold and takes the gesture with it. It reads as the
+ * control failing. There is no screen in this app where selecting a label or
+ * dragging a sprite is a thing a player wants to do.
+ *
+ * It used to be handled per-surface: fifteen near-identical copies of these
+ * three declarations, each with its own paragraph explaining them, and every
+ * new screen had to know to bring its own. The move dossier and the combat
+ * targeting panel are what happens when one doesn't — which is the argument
+ * for stating it once, globally, rather than for being more careful.
+ *
+ * All three properties INHERIT, so declaring them on :root covers everything
+ * the app will ever render, including portalled overlays. `-webkit-user-drag`
+ * does not inherit and is set on `img` below; HeroPortrait also passes
+ * `draggable={false}` for the engines that read the attribute instead.
+ *
+ * The escape hatch is `.selectable`, and it is opt-in ON PURPOSE: if some
+ * future readout genuinely wants to be copied (a seed string, an error
+ * dump), give that element the class. Do not re-add these declarations to a
+ * component — and if you find yourself wanting to, the thing you actually
+ * want is for this block to already be doing it, and it is.
+ */
+:root {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  /* The blue flash mobile Safari/Chrome paints over any tapped element. The
+     universal :active state above is real feedback and this is not: it
+     ignores border-radius, so it flashes a rectangle behind every rounded
+     button, and on a full-bleed console facet it flashes the whole row. */
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Sprites are the other half of it: without this a hold on a hero portrait
+   starts a drag ghost, which on iOS is accompanied by the same callout menu a
+   hold on text produces. */
+img {
+  -webkit-user-drag: none;
+}
+
+/* The one opt-in. Nothing uses it yet; it exists so that the day something
+   does, the answer is a class rather than a fifteenth copy of the block
+   above. */
+.selectable {
+  -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Form controls, if this app ever grows one, must stay editable — an
+   uneditable text field is a worse bug than a selectable label. */
+input,
+textarea,
+[contenteditable] {
+  -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /*
@@ -502,8 +562,7 @@ button,
  * Still absolutely positioned (see .battlefield-divider above): out of flow
  * means mounting/unmounting can never change the divider row's height and so
  * can never shove the battlefield around. Tap OR hold opens the detail card
- * (FightScreen's fieldEffectPress); the touch-callout/user-select suppression
- * matches the same pattern as .status-badge. */
+ * (FightScreen's fieldEffectPress). */
 .battlefield-divider .field-effect-badge {
   position: absolute;
   left: 50%;
@@ -533,10 +592,6 @@ button,
      so this replays whenever the field changes — an override must read as a
      new field arriving, not as a name quietly swapping in place. */
   animation: field-effect-plaque-arrive 0.45s var(--ease-spring) both;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 .field-effect-name {
@@ -724,17 +779,12 @@ button,
 
 /* Invisible full-viewport click-catcher while a round is playing out, so any
    tap advances the beat rather than only one aimed at the banner. Also the
-   hold-to-auto-play target (FightScreen's handleAdvancePointerDown) — without
-   the touch-callout/user-select suppression, mobile browsers show their own
-   text-selection handles or a native callout menu partway through the hold. */
+   hold-to-auto-play target (FightScreen's handleAdvancePointerDown). */
 .advance-overlay {
   position: fixed;
   inset: 0;
   z-index: 15;
   cursor: pointer;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 /* Narrates the current beat of a playing-out round (docs/architecture.md
@@ -1174,7 +1224,6 @@ button,
   cursor: pointer;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.03),
     inset 0 -1px 0 rgba(255, 255, 255, 0.05);
-  -webkit-tap-highlight-color: transparent;
   transition: color var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out),
     background var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out),
     transform var(--dur-fast) var(--ease-out);
@@ -2388,13 +2437,6 @@ button,
      of any color can get lost. A dark rim keeps every status legible against
      whatever is behind it without needing a heavier fill. */
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
-  -webkit-tap-highlight-color: transparent;
-  /* Long-pressable (useLongPress, opens StatusDetailOverlay) — without these,
-     mobile/desktop browsers start a text-selection drag partway through the
-     hold instead of registering it as a press. */
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 /* Only badges with a magnitude/duration number get the extra right padding
@@ -3557,13 +3599,6 @@ button,
   text-align: left;
   cursor: pointer;
   transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
-  /* Long-press opens the move-detail popup (FightScreen) — without these,
-     mobile browsers show their own text-selection handles or a native
-     callout menu partway through the hold, which reads as the gesture
-     failing. */
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 /* The power readout is a right-aligned column in the list, not a chip that
@@ -5605,12 +5640,6 @@ button,
   min-width: 0;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
   transition: border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
-  /* Long-press opens the equipped-item detail popup (RosterManagementScreen's
-     useLongPress) — without these, mobile browsers show their own
-     text-selection handles or a native callout menu partway through the hold. */
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 .equip-slot-box.filled {
@@ -5819,7 +5848,6 @@ button,
   border-color: #d9a441;
   color: #d9a441;
   cursor: pointer;
-  user-select: none;
 }
 
 /* HP/MP mini bars (reuses CombatantCard's .bar-track/.bar-fill/.bar-label so
@@ -6794,7 +6822,6 @@ button,
   white-space: nowrap;
   color: var(--move-type);
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
   transition: border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out),
     box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
@@ -6967,9 +6994,6 @@ button,
   color: var(--text-dim);
   cursor: pointer;
   opacity: 0.5;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
   transition: opacity var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out),
     background var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out);
 }
@@ -7123,13 +7147,6 @@ button,
   text-align: left;
   color: var(--text);
   cursor: pointer;
-  /* Long-press opens the move-detail popup on the move-replace picker
-     (LevelUpScreen's ReplaceMoveCard/useLongPress) — without these, mobile
-     browsers show their own text-selection handles or a native callout menu
-     partway through the hold. */
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
   transition: transform var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
@@ -7252,9 +7269,6 @@ button,
   text-align: left;
   color: var(--text);
   cursor: pointer;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 /* An empty slot is a hole in the layout, not an object in it — so it drops
@@ -7313,12 +7327,6 @@ button,
   border-radius: var(--radius-sm);
   padding: 8px 10px;
   box-shadow: var(--hairline), var(--elev-1);
-  /* Long-press opens the inspect popup (NodeRewardScreen/GuildHallPanel's
-     useLongPress) — without these, mobile browsers show their own
-     text-selection handles or a native callout menu partway through the hold. */
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 .relic-card-head {
@@ -7463,9 +7471,6 @@ button,
   cursor: pointer;
   box-shadow: var(--hairline), var(--elev-1);
   transition: transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out);
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 .guild-hall-hero-card:hover {
@@ -7701,9 +7706,6 @@ button,
   color: var(--text);
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 .result-panel .recruit-claim-card:hover {
@@ -8166,12 +8168,6 @@ button,
      louder here than it is on the roster's small equip slots. */
   box-shadow: var(--hairline), var(--elev-2), 0 0 16px -6px var(--rarity-color, transparent);
   transition: transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out);
-  /* Long-press opens the inspect popup (GuildHallPanel's useLongPress) —
-     without these, mobile browsers show their own text-selection handles
-     or a native callout menu partway through the hold. */
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 .equip-cache-card:hover {
@@ -9524,9 +9520,7 @@ button,
   }
 }
 
-/* Long-pressable (useLongPress, opens MapNodePreviewPopup) — the
-   touch-callout/user-select suppression below matches the same pattern as
-   .field-effect-badge/.status-badge. */
+/* Long-pressable (useLongPress, opens MapNodePreviewPopup). */
 .map-node {
   position: relative;
   display: flex;
@@ -9550,9 +9544,6 @@ button,
   box-shadow: var(--hairline);
   transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out),
     border-color var(--dur-fast) var(--ease-out);
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 /*
@@ -11219,12 +11210,6 @@ button,
   box-shadow: var(--hairline), var(--elev-1);
   cursor: pointer;
   transition: border-color var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
-  /* Long-press opens the move-detail popup (MoveTile's onLongPress) —
-     without these, mobile browsers show their own text-selection handles
-     or a native callout menu partway through the hold. */
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 .move-tile:hover,

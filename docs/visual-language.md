@@ -1058,6 +1058,40 @@ status card 76% (its own 300px cap, correct for a three-line readout).
 **The rule: never `createPortal(…, document.body)` in this app.** Use
 `overlayHost()`.
 
+### Nothing in this app is selectable
+
+Reported off the same device and on the same overlays: press and hold on a move
+name, a forecast row, or an enemy in the targeting panel, and the browser
+highlighted the text or grabbed the sprite. That is the platform reacting to a
+press *partway through the player's own hold*, and it takes the gesture with it —
+the hold reads as the control failing.
+
+This was not a missing rule; it was a rule applied **fifteen times**. Every
+long-pressable surface carried its own copy of `-webkit-touch-callout` /
+`-webkit-user-select` / `user-select`, each with its own paragraph explaining
+them, so every new surface had to know to bring one. The move dossier and the
+combat targeting panel are what a surface that didn't looks like. Being more
+careful was never going to be the fix.
+
+All three properties inherit, so they are now declared **once on `:root`** — which
+covers everything the app will ever render, portalled overlays included — plus
+`-webkit-user-drag: none` on `img` (that one doesn't inherit) and
+`draggable={false}` on every sprite, for the engines that read the attribute
+instead. The fifteen copies and their fifteen paragraphs are gone. `.selectable`
+is the opt-in escape hatch, used by nothing today; it exists so that the day some
+readout genuinely wants copying, the answer is a class rather than a sixteenth
+copy of the block.
+
+**The rule: never add `user-select`, `-webkit-touch-callout` or
+`-webkit-tap-highlight-color` to a component.** It is already handled. If a
+surface needs the opposite, that is `.selectable`.
+
+Verified in the running app on the two surfaces named in the report — every text
+node and portrait in the move dossier and in the targeting panel computes
+`user-select: none` with a transparent tap highlight, and `user-drag: none` on the
+sprites — and all three properties survive minification into the production
+bundle.
+
 Two caveats:
 
 - **The haptic has been feature-detected, never felt**, and iOS Safari has no

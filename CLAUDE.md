@@ -198,3 +198,8 @@ prototype exchange onto it end-to-end, *then* author the full roster as data.
   Breach for feel) rather than rebuilding from first principles.
 - Content is data. If a change wants bespoke logic in a content file, that's a smell — extend the
   engine vocabulary instead.
+- **View layer, two standing rules** (both stated in `src/app/styles.css` and `overlayHost.ts`,
+  both easy to break and hard to spot): nothing is selectable — never add
+  `user-select`/`touch-callout`/`tap-highlight` to a component, the global `:root` block covers
+  everything and `.selectable` is the only opt-in; and never `createPortal(…, document.body)` —
+  use `overlayHost()`, since body sits outside the transform-scaled design canvas.
