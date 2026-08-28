@@ -96,7 +96,7 @@ function StatusChip({ instance, onInspect }: { instance: StatusInstance; onInspe
  *
  * Derived from getCombatStatDelta (effective - loadout baseline), NOT
  * combatant.baselineStatModifiers — equipment/relic/Evolution/Class grants
- * enhance the hero's effective BST and read as part of their stat block
+ * enhance the hero's effective Stat Total and read as part of their stat block
  * (HeroDetailOverlay), not as a battlefield indicator. Only what a move or
  * passive changes DURING this fight (including a status-pipeline effect like
  * Freeze, docs/conditions.md, halving Speed, or a Field-Effect-pipeline one

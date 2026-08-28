@@ -7,7 +7,7 @@ import { HeroPortrait } from './HeroPortrait';
 import { ManaCost } from './ManaCost';
 import { MoveInfoPanel } from './MoveTile';
 import { TypeBadge } from './TypeBadge';
-import { STAT_COLORS, STAT_LABELS, computeBst, statFraction } from './StatBars';
+import { STAT_COLORS, STAT_LABELS, computeStatTotal, statFraction } from './StatBars';
 
 /**
  * The hero *stage* — one hero standing at 144px inside a summoning sigil,
@@ -118,12 +118,12 @@ export function StageFigure({
 }
 
 /**
- * The stats the BST beside them is summed from, in the same order StatBars
- * uses. Mana Pool joined the strip when it joined BST (2026-08-28): a hero
- * pays for its power out of the same 450 budget its pool comes from, so a
- * strip that hid the pool showed a 62-Speed hero and an 85-Speed hero as if
- * the difference were free. Seven bars that add up to the number next to
- * them beats six that do not.
+ * The stats the Stat Total beside them is summed from, in the same order
+ * StatBars uses. Mana Pool joined the strip when it joined the total
+ * (2026-08-28): a hero pays for its power out of the same 450 budget its pool
+ * comes from, so a strip that hid the pool showed a 62-Speed hero and an
+ * 85-Speed hero as if the difference were free. Seven bars that add up to the
+ * number next to them beats six that do not.
  *
  * MP Regen stays off — flat 10 on every hero, so it is a column of identical
  * bars, and this strip exists to be compared across candidates at a glance.
@@ -132,15 +132,19 @@ export function StageFigure({
 const SILHOUETTE_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool'];
 
 /**
- * Seven bars on StatBars' shared ceilings (statFraction) plus the BST they
- * sum to. `grants` is the flat delta a hero already carries into the pick
- * (entryStats.ts) — a drafted candidate has none, a beaten veteran offered
- * on a contract usually does — added to the bar and called out in the
- * accent, so the numbers on screen are the ones that will fight. BST stays
- * the authored base total either way, the same number every other stat block
- * in the app reports.
+ * Seven bars on StatBars' shared ceilings (statFraction) plus the Stat Total
+ * they sum to. `grants` is the flat delta a hero already carries into the
+ * pick (entryStats.ts) — a drafted candidate has none, a beaten veteran
+ * offered on a contract usually does — added to the bar and called out in the
+ * accent, so the numbers on screen are the ones that will fight. The total
+ * sums those same granted numbers rather than the authored base (2026-08-28),
+ * so the strip stays internally consistent: the bars and the number beside
+ * them always describe the same hero.
  */
 export function StageSilhouette({ baseStats, grants = {} }: { baseStats: StatLine; grants?: StatModifiers }) {
+  const effective = Object.fromEntries(
+    SILHOUETTE_STATS.map((stat) => [stat, baseStats[stat] + (grants[stat] ?? 0)])
+  ) as Record<StatKey, number>;
   return (
     <div className="draft-silhouette">
       {SILHOUETTE_STATS.map((stat) => {
@@ -159,10 +163,10 @@ export function StageSilhouette({ baseStats, grants = {} }: { baseStats: StatLin
           </div>
         );
       })}
-      <div className="draft-stat draft-stat-bst" title="Base Stat Total — the seven bars beside it, summed">
-        <span className="draft-stat-value">{computeBst(baseStats)}</span>
+      <div className="draft-stat draft-stat-total" title="Stat Total — the seven bars beside it, summed">
+        <span className="draft-stat-value">{computeStatTotal(effective)}</span>
         <div className="draft-stat-track draft-stat-track-empty" />
-        <span className="draft-stat-label">BST</span>
+        <span className="draft-stat-label">Stat Total</span>
       </div>
     </div>
   );

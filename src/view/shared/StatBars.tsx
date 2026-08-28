@@ -62,22 +62,32 @@ export function hpTier(fraction: number): 'hp-high' | 'hp-mid' | 'hp-low' {
 }
 
 /**
- * The stats summed for BST (balance-tracking readout, CLAUDE.md north-star
- * "every hero must be viable"). Mana Pool counts (2026-08-28): the authored
- * starter spreads are budgeted at 450 across HP + Mana Pool + the five
- * battle stats, so a BST that left Mana Pool out reported a mana-heavy hero
- * as 80 points weaker than a lean one that had simply spent the same budget
- * elsewhere. Buying a deep pool IS how a hero pays for its power.
+ * The stats summed for the Stat Total (balance-tracking readout, CLAUDE.md
+ * north-star "every hero must be viable"). Mana Pool counts (2026-08-28):
+ * the authored starter spreads are budgeted at 450 across HP + Mana Pool +
+ * the five battle stats, so a total that left Mana Pool out reported a
+ * mana-heavy hero as 80 points weaker than a lean one that had simply spent
+ * the same budget elsewhere. Buying a deep pool IS how a hero pays for its
+ * power.
  *
  * MP Regen stays out — it is flat 10 on every hero (src/data/heroes.ts), so
  * it distinguishes nobody and only inflates the number. Revisit if a hero
  * ever authors a different regen.
  */
-const BST_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool'];
+const TOTAL_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool'];
 
-/** Always computed from base stats — the authored design number, not affected by live buffs/equipment/statuses — so it reads the same in every context that shows a stat block. */
-export function computeBst(baseStats: StatLine): number {
-  return BST_STATS.reduce((sum, stat) => sum + baseStats[stat], 0);
+/**
+ * Sums whatever stat values it is handed — base stats for an unmodified hero,
+ * *effective* ones wherever the caller has them. Renamed from BST /
+ * computeBst (2026-08-28): the number on screen is deliberately no longer the
+ * authored base total, it is what this hero currently is, so equipment,
+ * relics, a Class, Evolution grants and live combat buffs all move it. A
+ * player comparing two builds reads the answer off one number instead of
+ * summing seven bars in their head. The authored 450 budget still exists as a
+ * balance constraint (src/data/heroes.ts) — it just isn't what the UI reports.
+ */
+export function computeStatTotal(stats: Partial<Record<StatKey, number>>): number {
+  return TOTAL_STATS.reduce((sum, stat) => sum + (stats[stat] ?? 0), 0);
 }
 
 interface Props {
@@ -104,6 +114,17 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {} }
   const totals = STAT_ORDER.map((stat) => Math.max(0, totalOverrides[stat] ?? baseStats[stat] + (deltas[stat] ?? 0)));
   const percents = STAT_ORDER.map((stat, i) => Math.min(100, (totals[i] / STAT_SCALE_MAX[stat]) * 100));
   const bestPercent = Math.max(...percents);
+  /**
+   * Summed from the same effective numbers the bars above are drawn from —
+   * NOT from baseStats — so every source of stats a hero picks up in a run
+   * (equipment, relics, Class, Evolution grants, live buffs/debuffs, and a
+   * status-pipeline effect like Freeze that the `totals` override carries)
+   * moves this number the moment it moves a bar. The delta beside it is
+   * against the authored base, the same "+N" annotation each stat row uses.
+   */
+  const effective = Object.fromEntries(STAT_ORDER.map((stat, i) => [stat, totals[i]])) as Record<StatKey, number>;
+  const statTotal = computeStatTotal(effective);
+  const totalDelta = statTotal - computeStatTotal(baseStats);
 
   return (
     <div className="stat-bars">
@@ -126,11 +147,14 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {} }
         );
       })}
       <div
-        className="stat-bst-row"
-        title="Base Stat Total — HP + Attack + Defense + Intelligence + Wisdom + Speed + Mana Pool (MP Regen excluded, flat across the roster)"
+        className="stat-total-row"
+        title="Stat Total — HP + Attack + Defense + Intelligence + Wisdom + Speed + Mana Pool, as this hero currently stands (MP Regen excluded, flat across the roster)"
       >
-        <span className="stat-bst-label">BST</span>
-        <span className="stat-bst-value">{computeBst(baseStats)}</span>
+        <span className="stat-total-label">Stat Total</span>
+        <span className="stat-total-value">
+          {statTotal}
+          {totalDelta !== 0 && <span className={totalDelta > 0 ? 'stat-buff' : 'stat-debuff'}> {fmtDelta(totalDelta)}</span>}
+        </span>
       </div>
     </div>
   );

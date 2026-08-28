@@ -2,7 +2,7 @@
 // bring-6-pick-4 squad selection (src/run) through the engine. Not the
 // authored 53-concept roster (docs/types-and-heroes.md); typings here are
 // still arbitrary. The 14 STARTER stat lines are authored and tuned to a
-// 450 BST budget (HP + manaPool + the five battle stats) as of 2026-08-28 — do not nudge one without rebalancing its budget.
+// 450 base Stat Total budget (HP + manaPool + the five battle stats) as of 2026-08-28 — do not nudge one without rebalancing its budget.
 // Recruit-only stat lines are still untuned.
 //
 // STARTING KITS ARE EXACTLY THREE MOVES, for every hero, with no exceptions

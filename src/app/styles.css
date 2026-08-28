@@ -6307,7 +6307,7 @@ textarea,
   white-space: nowrap;
 }
 
-.stat-bst-row {
+.stat-total-row {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -6316,7 +6316,7 @@ textarea,
   border-top: 1px solid var(--border);
 }
 
-.stat-bst-label {
+.stat-total-label {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -6324,7 +6324,7 @@ textarea,
   color: var(--text-dim);
 }
 
-.stat-bst-value {
+.stat-total-value {
   font-size: 13px;
   font-weight: 800;
   color: var(--accent);
@@ -7086,17 +7086,25 @@ textarea,
   line-height: 1;
 }
 
-/* BST is a total, not a seventh stat, so it gets a rule instead of a bar and
-   sits in the accent rather than a stat color. flex-end on the row keeps its
-   label on the same baseline as the six it summarizes. */
-.draft-stat-bst {
+/* The Stat Total is a total, not an eighth stat, so it gets a rule instead of
+   a bar and sits in the accent rather than a stat color. flex-end on the row
+   keeps its label on the same baseline as the seven it summarizes. Wider than
+   a stat column and nowrap: "Stat Total" spelled out does not fit the 30px a
+   three-letter stat code needs, and the label is worth the ~24px — "BST" was
+   jargon a new player had to be taught. */
+.draft-stat-total {
   justify-content: center;
   border-left: 1px solid rgba(255, 255, 255, 0.09);
   margin-left: 2px;
   padding-left: 8px;
+  width: auto;
 }
 
-.draft-stat-bst .draft-stat-value {
+.draft-stat-total .draft-stat-label {
+  white-space: nowrap;
+}
+
+.draft-stat-total .draft-stat-value {
   font-size: 15px;
   color: var(--accent);
 }

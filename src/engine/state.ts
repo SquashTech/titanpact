@@ -62,7 +62,7 @@ export interface Combatant {
    * build time and never mutated during the fight. Kept separate from
    * `statModifiers` (below) so the view layer can tell "this hero's loadout"
    * apart from "a move buffed/debuffed this hero this fight" — the former
-   * enhances the hero's effective BST and should read as part of their base
+   * enhances the hero's effective Stat Total and should read as part of their base
    * stat block, not as a temporary combat indicator.
    */
   baselineStatModifiers: StatModifiers;
