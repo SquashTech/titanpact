@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import type { HeroDefinition, StatKey } from '../../engine/content';
-import type { RosterEntry } from '../../run/state';
+import type { RosterEntry, RunState } from '../../run/state';
 import type { EvolutionNode } from '../../run/progression';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { TypeBadge } from '../shared/TypeBadge';
 import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
+import { RosterPeek } from './RosterPeek';
 
 interface Props {
   hero: HeroDefinition;
   entry: RosterEntry;
   node: EvolutionNode;
+  /** The run this Evolution is happening in — only used for the corner roster glyph (RosterPeek), which is what lets the player check the rest of the team's type coverage before locking a permanent type-graft in. */
+  run: RunState;
   onChoose: (pathId: string) => void;
 }
 
@@ -28,7 +31,7 @@ interface Props {
  * pattern used for move replacement (MoveInfoPanel-driven screens) — since
  * this choice is permanent for the run and a stray tap shouldn't lock it in.
  */
-export function EvolutionScreen({ hero, entry, node, onChoose }: Props) {
+export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
   const [selectedPathId, setSelectedPathId] = useState<string | null>(null);
   const selectedPath = node.paths.find((p) => p.id === selectedPathId) ?? null;
 
@@ -39,6 +42,7 @@ export function EvolutionScreen({ hero, entry, node, onChoose }: Props) {
           the last one still introducing its choice with a bordered banner. The
           hero is the header's art; the glow behind it stays. */}
       <NodeSky />
+      <RosterPeek run={run} />
       <NodeHeader
         compact
         art={

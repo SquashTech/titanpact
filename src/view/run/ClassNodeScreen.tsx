@@ -5,15 +5,13 @@ import { classes } from '../../data/classes';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition, PassiveDefinition, StatKey } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
-import { grantClass, chosenClass } from '../../run/classes';
-import { rosterEntryTypes } from '../../run/progression';
-import { getTypeColor } from '../combat/typeColors';
-import { TypeBadge } from '../shared/TypeBadge';
+import { grantClass } from '../../run/classes';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky, NODE_TINT_TEAL } from '../shared/NodeStage';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
+import { RosterPeek } from './RosterPeek';
 import { RunGlyph } from '../shared/RunGlyph';
 
 interface Props {
@@ -93,64 +91,6 @@ function ClassHeroCard({ hero, entry, onAssign, onPreview }: ClassHeroCardProps)
   );
 }
 
-interface RosterPeekOverlayProps {
-  run: RunState;
-  onInspect: (hero: HeroDefinition, entry: RosterEntry) => void;
-  onClose: () => void;
-}
-
-/**
- * "Check your roster before committing" — a read-only overview reachable
- * from the pick-a-Class phase, before the player has even chosen a
- * discipline. Reuses RosterManagementScreen's overlay/panel chrome and the
- * shared .hero-grid card shape; unlike that screen this is pure inspection
- * (no equipment dragging), so every card just opens the full HeroPreviewOverlay
- * sheet on tap.
- */
-function RosterPeekOverlay({ run, onInspect, onClose }: RosterPeekOverlayProps) {
-  return (
-    <div className="log-overlay roster-mgmt-overlay" onClick={onClose}>
-      <div className="log-panel roster-panel" onClick={(e) => e.stopPropagation()}>
-        <div className="log-panel-header">
-          <span>Your Roster</span>
-          <button className="log-close-button" onClick={onClose}>
-            ✕
-          </button>
-        </div>
-        <div className="screen-scroll">
-          <div className="hero-grid">
-            {run.roster.map((entry) => {
-              const hero = heroes[entry.heroId];
-              const heroClass = chosenClass(classes, entry);
-              return (
-                <button
-                  key={entry.rosterId}
-                  type="button"
-                  className="hero-grid-card"
-                  style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
-                  onClick={() => onInspect(hero, entry)}
-                >
-                  <HeroPortrait heroId={hero.id} className="hero-grid-portrait" />
-                  <div className="hero-grid-name-row">
-                    <span className="hero-grid-name">{hero.name}</span>
-                    <span className="training-hero-level">Lv {entry.level}</span>
-                  </div>
-                  <div className="hero-grid-types">
-                    {rosterEntryTypes(hero, entry).map((t) => (
-                      <TypeBadge key={t} type={t} />
-                    ))}
-                  </div>
-                  <span className="hero-grid-cta">{heroClass ? heroClass.name.replace('Class - ', '') : 'Tap to inspect'}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /**
  * `classReward` node resolution: pick 1 of 3 Classes (src/data/classes.ts —
  * PassiveDefinition entries whose only content is a flat two-stat grant),
@@ -174,7 +114,6 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
   const [confirmedClassId, setConfirmedClassId] = useState<string | null>(null);
   const [assignedTo, setAssignedTo] = useState<string | null>(null);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
-  const [rosterPeekOpen, setRosterPeekOpen] = useState(false);
 
   const confirmedClass = confirmedClassId ? classes[confirmedClassId] : null;
   // Includes the just-assigned hero even after their classId stops being
@@ -195,6 +134,13 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
   return (
     <div className="node-screen class-node-screen" style={{ '--node-rgb': NODE_TINT_TEAL } as CSSProperties}>
       <NodeSky />
+
+      {/* Was a full-width "👥 Check Your Roster" secondary button sitting
+          under the discipline list, which only existed on this screen and
+          only during phase 1. Now the same corner glyph every other pick
+          screen carries, present through all three phases — see
+          RosterPeek.tsx. */}
+      <RosterPeek run={run} />
 
       {/* The Mentor speaks from the stage rather than from inside a bordered
           plaque — `.class-shrine-banner` was a box (inside `.reward-panel`,
@@ -226,8 +172,14 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
         />
       )}
 
-      <div className="screen-scroll">
-        {!confirmedClass ? (
+      {/* Phase 2's grid is a direct child of the screen, not a `.bottom-pinned`
+          block inside `.screen-scroll` — that is what puts the figures at the
+          same height here as on Level Up, Equipment and the stat shrines
+          (2026-08-28 pass). Phases 1 and 3 keep the scroll region: a list of
+          three disciplines and the learn-reveal are both content to read, not
+          a roster to compare. */}
+      {!confirmedClass ? (
+        <div className="screen-scroll">
           <div className="bottom-pinned">
             <div className="class-shrine-list">
               {classChoices.map((cls) => (
@@ -239,32 +191,30 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
                 />
               ))}
             </div>
-            <button type="button" className="secondary-button class-shrine-roster-btn" onClick={() => setRosterPeekOpen(true)}>
-              👥 Check Your Roster
-            </button>
           </div>
-        ) : !assignedTo ? (
-          <div className="bottom-pinned">
-            {eligibleRoster.length > 0 && (
-              <HeroPickGrid count={eligibleRoster.length}>
-                {eligibleRoster.map((entry) => {
-                  const hero = heroes[entry.heroId];
-                  return (
-                    <ClassHeroCard
-                      key={entry.rosterId}
-                      hero={hero}
-                      entry={entry}
-                      onAssign={() => handleAssign(entry.rosterId)}
-                      onPreview={() => setPreviewEntry({ hero, entry })}
-                    />
-                  );
-                })}
-              </HeroPickGrid>
-            )}
-          </div>
+        </div>
+      ) : !assignedTo ? (
+        eligibleRoster.length > 0 ? (
+          <HeroPickGrid count={eligibleRoster.length} fill>
+            {eligibleRoster.map((entry) => {
+              const hero = heroes[entry.heroId];
+              return (
+                <ClassHeroCard
+                  key={entry.rosterId}
+                  hero={hero}
+                  entry={entry}
+                  onAssign={() => handleAssign(entry.rosterId)}
+                  onPreview={() => setPreviewEntry({ hero, entry })}
+                />
+              );
+            })}
+          </HeroPickGrid>
         ) : (
-          assignedHero &&
-          confirmedClass && (
+          <div className="node-spacer" />
+        )
+      ) : (
+        <div className="screen-scroll">
+          {assignedHero && confirmedClass && (
             <div className="class-learn-reveal">
               <div className="class-learn-flash" aria-hidden="true" />
               <div className="class-learn-portraits">
@@ -286,9 +236,9 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
                 ))}
               </div>
             </div>
-          )
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* One CTA at the bottom, whichever the screen is waiting for — the
           Confirm used to sit inside the scroll area with a second, disabled
@@ -315,14 +265,6 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
           equipmentLookup={equipment}
           relicIds={run.relics}
           onClose={() => setPreviewEntry(null)}
-        />
-      )}
-
-      {rosterPeekOpen && (
-        <RosterPeekOverlay
-          run={run}
-          onInspect={(hero, entry) => setPreviewEntry({ hero, entry })}
-          onClose={() => setRosterPeekOpen(false)}
         />
       )}
     </div>

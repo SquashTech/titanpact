@@ -4,13 +4,14 @@ import { equipment } from '../../data/equipment';
 import { createEmptyLoadout } from '../../run/equipment';
 import type { HeroDefinition } from '../../engine/content';
 import type { RosterEntry } from '../../run/state';
-import { createRosterEntry, ROSTER_CAP } from '../../run/state';
+import { createRosterEntry } from '../../run/state';
 import type { RosterReplaceCandidate } from '../../run/recruitment';
 import { rosterEntryTypes } from '../../run/progression';
-import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { useLongPress } from '../shared/MoveTile';
+import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
+import { NodeHeader, NodeSky } from '../shared/NodeStage';
+import { EQUIP_SLOT_ORDER } from '../shared/EquipmentBox';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 
 export type { RosterReplaceCandidate };
@@ -39,32 +40,43 @@ interface ReplaceHeroCardProps {
  * destructive and permanent; the confirm button below the grid is what
  * actually commits. A hold still opens the full HeroPreviewOverlay sheet, so
  * the player can check exactly what they'd be giving up before picking them.
+ *
+ * The shared HeroPickCard as of 2026-08-28: this was the last pick-a-hero
+ * grid in the run loop still on the legacy `.hero-grid-card`, whose 30px
+ * portrait is the fractional-downscale defect docs/visual-language.md opens
+ * with. Its detail row carries what the termination actually costs — the
+ * gear that strips off (CLAUDE.md "Equipment strips on termination") — since
+ * that is the part of the price the grid used to leave unsaid.
  */
 function ReplaceHeroCard({ hero, entry, selected, onSelect, onPreview }: ReplaceHeroCardProps) {
-  const longPress = useLongPress(onPreview, onSelect);
+  const equippedCount = EQUIP_SLOT_ORDER.filter((slot) => entry.equipment[slot]).length;
   return (
-    <button type="button" className={`hero-grid-card${selected ? ' selected' : ''}`} style={{ borderLeftColor: getTypeColor(hero.types[0]) }} {...longPress}>
-      <HeroPortrait heroId={hero.id} className="hero-grid-portrait" />
-      <div className="hero-grid-name-row">
-        <span className="hero-grid-name">{hero.name}</span>
-        <span className="training-hero-level">Lv {entry.level}</span>
-      </div>
-      <div className="hero-grid-types">
-        {rosterEntryTypes(hero, entry).map((t) => (
-          <TypeBadge key={t} type={t} />
-        ))}
-      </div>
-      <span className="hero-grid-cta">{selected ? '✓ Selected' : 'Tap to select'}</span>
-    </button>
+    <HeroPickCard
+      hero={hero}
+      entry={entry}
+      selected={selected}
+      onActivate={onSelect}
+      onPreview={onPreview}
+      ariaLabel={`${hero.name}, level ${entry.level} — ${selected ? 'selected for termination' : 'select to terminate'}`}
+      detail={
+        <span className="pick-slot empty">
+          <span className="pick-slot-item">
+            {equippedCount > 0 ? `${equippedCount} item${equippedCount > 1 ? 's' : ''} equipped` : 'No gear'}
+          </span>
+        </span>
+      }
+      ctaClassName={selected ? 'is-accent' : undefined}
+      cta={selected ? '✓ Selected' : 'Terminate'}
+    />
   );
 }
 
 /**
  * Roster-full replacement gate (CLAUDE.md "Gaining a hero requires
- * terminating an existing one" once at ROSTER_CAP): the incoming hero (top
- * spotlight) needs a slot, so the player picks one of the 6 current heroes
- * (bottom grid, same 3x2 .hero-grid layout as LevelUpScreen/ForceEquipScreen)
- * to terminate in their place. Select-then-confirm (mirrors FightScreen's
+ * terminating an existing one" once at the roster cap): the incoming hero is
+ * the header's art, and the player picks one of the 6 current heroes (the
+ * shared HeroPickGrid, same as LevelUpScreen/ForceEquipScreen) to terminate
+ * in their place. Select-then-confirm (mirrors FightScreen's
  * RecruitClaimCard), not tap-to-act like the other two grids — termination
  * is permanent and shouldn't be one accidental tap away.
  *
@@ -100,43 +112,49 @@ export function RosterReplaceScreen({ roster, candidate, relicIds = [], onConfir
 
   return (
     <div className="detail-overlay roster-replace-overlay" onClick={onCancel}>
+      {/* Stands on the same node stage as the rest of the run loop's
+          pick-a-hero screens (2026-08-28 pass): sky, unboxed header, filling
+          grid, chunky CTA. The incoming hero used to be introduced by an
+          `.equip-spotlight` — a bordered, glowing card around the one thing
+          on this screen you cannot act on — sitting on top of a `.hero-grid`
+          of 30px portraits. */}
       <div className="node-screen roster-replace-screen" onClick={(e) => e.stopPropagation()}>
-        <div className="screen-scroll">
-          <div className="bottom-pinned">
-            <div className="equip-spotlight roster-replace-spotlight">
-              <div className="equip-spotlight-glow" aria-hidden="true" />
-              <div className="equip-spotlight-eyebrow">Roster Full — New Hero</div>
-              <HeroPortrait heroId={hero.id} className="roster-replace-portrait" />
-              <div className="equip-spotlight-name">{hero.name}</div>
-              <div className="hero-grid-types roster-replace-types">
+        <NodeSky motes={8} />
+
+        <NodeHeader
+          compact
+          art={<HeroPortrait heroId={hero.id} className="roster-replace-portrait" />}
+          eyebrow="Roster Full — New Hero"
+          title={hero.name}
+          readout={
+            <>
+              <span className="roster-replace-types">
                 {rosterEntryTypes(hero, previewNewEntry).map((t) => (
                   <TypeBadge key={t} type={t} />
                 ))}
-              </div>
-              <p className="hint">
-                Your roster is full ({ROSTER_CAP}/{ROSTER_CAP}). Select a hero below to terminate — {hero.name} will take their
-                slot and instantly inherit their equipped gear. {hero.name} will <strong>not</strong> gain the terminated hero's
-                level, Evolution choices, or Class. This cannot be undone.
-              </p>
-            </div>
+              </span>
+              <span className="roster-replace-note">
+                Pick who {hero.name} replaces — they inherit that hero's gear, not their level, Evolutions or Class. Permanent.
+              </span>
+            </>
+          }
+        />
 
-            <div className="hero-grid">
-              {roster.map((entry) => {
-                const rosterHero = heroes[entry.heroId];
-                return (
-                  <ReplaceHeroCard
-                    key={entry.rosterId}
-                    hero={rosterHero}
-                    entry={entry}
-                    selected={selectedRosterId === entry.rosterId}
-                    onSelect={() => setSelectedRosterId((prev) => (prev === entry.rosterId ? null : entry.rosterId))}
-                    onPreview={() => setPreviewEntry({ hero: rosterHero, entry })}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        <HeroPickGrid count={roster.length} fill>
+          {roster.map((entry) => {
+            const rosterHero = heroes[entry.heroId];
+            return (
+              <ReplaceHeroCard
+                key={entry.rosterId}
+                hero={rosterHero}
+                entry={entry}
+                selected={selectedRosterId === entry.rosterId}
+                onSelect={() => setSelectedRosterId((prev) => (prev === entry.rosterId ? null : entry.rosterId))}
+                onPreview={() => setPreviewEntry({ hero: rosterHero, entry })}
+              />
+            );
+          })}
+        </HeroPickGrid>
 
         <div className="reward-panel-actions roster-replace-actions">
           <button className="secondary-button" onClick={onCancel}>

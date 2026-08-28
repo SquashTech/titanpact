@@ -1,7 +1,10 @@
 import type { CSSProperties } from 'react';
+import type { RunState } from '../../run/state';
 import { NodeHeader, NodeSky, NODE_TINT_ARCANE } from '../shared/NodeStage';
+import { RosterPeek } from './RosterPeek';
 
 interface Props {
+  run: RunState;
   onContinue: () => void;
 }
 
@@ -16,10 +19,11 @@ interface Props {
  * you walked into, and when the real content arrives it inherits the frame
  * every other node already uses.
  */
-export function EventNodeScreen({ onContinue }: Props) {
+export function EventNodeScreen({ run, onContinue }: Props) {
   return (
     <div className="node-screen" style={{ '--node-rgb': NODE_TINT_ARCANE } as CSSProperties}>
       <NodeSky />
+      <RosterPeek run={run} />
       <NodeHeader
         eyebrow="Something Stirs"
         title="???"

@@ -8,6 +8,7 @@ import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky, NODE_TINT_MANA, NODE_TINT_VITAL } from '../shared/NodeStage';
 import { RunGlyph, type RunGlyphKind } from '../shared/RunGlyph';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
+import { RosterPeek } from './RosterPeek';
 
 export type StatBoostNodeType = 'hpBoostReward' | 'manaBoostReward' | 'manaRegenBoostReward';
 
@@ -92,6 +93,8 @@ export function StatBoostScreen({ nodeType, run, onRunChange, onContinue }: Prop
   return (
     <div className="node-screen" style={{ '--node-rgb': config.tint } as CSSProperties}>
       <NodeSky />
+
+      <RosterPeek run={run} />
 
       <NodeHeader
         eyebrow={config.eyebrow}

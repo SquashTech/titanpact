@@ -683,7 +683,7 @@ export function App() {
         <ClassNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
-      {screen.kind === 'event' && <EventNodeScreen onContinue={() => handleNodeContinue(screen.nodeId)} />}
+      {screen.kind === 'event' && <EventNodeScreen run={playerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />}
 
       {screen.kind === 'levelUp' && (
         <LevelUpScreen run={playerRun} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />

@@ -2,6 +2,7 @@ import type { RunState } from '../../run/state';
 import type { GuildHallOffers } from '../../run/shop';
 import type { GuildHallOffer } from '../../run/recruitment';
 import { GuildHallPanel } from './GuildHallPanel';
+import { RosterPeek } from './RosterPeek';
 
 interface Props {
   run: RunState;
@@ -21,7 +22,8 @@ interface Props {
  */
 export function ShopNodeScreen({ run, offers, onRunChange, onBuyEquipment, onRequestRosterReplace, onContinue }: Props) {
   return (
-    <div className="node-screen">
+    <div className="node-screen shop-node-screen">
+      <RosterPeek run={run} />
       <div className="screen-scroll">
         <GuildHallPanel
           run={run}

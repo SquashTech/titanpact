@@ -1305,6 +1305,98 @@ Two notes for whoever picks this up:
   transform: none` instead, which is the canvas the UI is authored against
   anyway.
 
+## Tenth pass — one shape for every pick-a-hero screen (2026-08-28)
+
+A direct report, same day as the ninth: *every screen that asks the player to
+select a hero should be laid out like the Level Up screen — same information in
+the same places, same boxes in the same positions. Every one of them needs a way
+to check the roster, a glyph in a top corner rather than a worded button. And the
+Confirm button should be bigger still, and lifted off the bottom edge.*
+
+The ninth pass gave those screens a shared **stage**. This one makes them the
+same **screen**.
+
+### What was wrong
+
+**Same parts, different heights.** All the pick screens already drew a
+`NodeHeader` over a `HeroPickGrid`, but three of them wrapped the grid in
+`.screen-scroll > .bottom-pinned` while `LevelUpScreen` and `StatBoostScreen`
+gave it `is-filling` and let it own the space. So the row of figures landed at a
+different y on `ForceEquipScreen` (where its height moved with how much the
+dropped item had to say about itself), on `ClassNodeScreen`, and on Level Up —
+three variants of a screen the player is meant to learn once.
+
+**Two grids never got the treatment at all.** `RosterReplaceScreen` still drew
+an `.equip-spotlight` over a `.hero-grid` of 30px portraits — the last live
+instance of the fractional downscale this doc opens with, kept alive in the
+ninth pass on the grounds that it was "inside an overlay". It is a full-screen
+decision about permanently destroying a hero; the overlay is a technicality.
+The Mentor's roster-peek overlay was the other, and it is now gone entirely.
+
+**"Check your roster" existed exactly once, as a paragraph.** A full-width
+`.secondary-button` reading "👥 Check Your Roster", on Mentor's Hall only, and
+only during its first phase. Every other screen that permanently commits
+something to a hero — a Training Point, an Evolution branch, a piece of gear, a
++20 HP grant, a team-wide relic — offered no answer to *what have I actually
+got* without leaving the decision.
+
+**A latent bug the pass surfaced.** The ninth pass's
+`.node-screen > *:not(.node-sky) { position: relative }` is (0,2,0) and sits
+below every overlay's own rule, so it silently overwrote `position: fixed` on
+any modal rendered as a direct child of a node screen — which is how all of them
+are rendered. Hero sheets opened from those screens were laying out as in-flow
+blocks in the flex column. Now the selector names its exceptions
+(`.log-overlay`, `.detail-overlay`, `.corner-glyph-button`) instead of leaving
+them to fight for specificity.
+
+### What replaced it
+
+| Was | Is |
+|---|---|
+| Grid in `.screen-scroll > .bottom-pinned` on three screens, `is-filling` on two | `HeroPickGrid … fill` as a **direct child** everywhere: header → context → grid → CTA, four bands, same order, same heights |
+| ForceEquip's item text pushing the roster down by however tall it was | `.node-item-effects` is its own band, `max-height: 32%`, scrolling internally |
+| `RosterReplaceScreen`'s `.equip-spotlight` + 30px `.hero-grid` | The node stage: sky, `NodeHeader` with the incoming hero as its art, `HeroPickCard` grid whose detail row names the gear the termination strips |
+| "👥 Check Your Roster", one screen, one phase | `RosterPeek` — a 44px corner glyph on **nine** screens, opening a read-only panel: gold / unspent XP / contracts, the owned relics, and the roster as the same `HeroPickCard` figures, each opening the full sheet |
+| `SquadSelectScreen`'s two worded chips in a `.map-header` bar | The same corner glyphs (roster → Manage Roster, since moving gear *is* the point there; 📖 → Reference) |
+| 56px CTA flush to the screen edge | **68px**, 18px/800, `--radius-lg`, and **12px clear of the bottom** |
+
+Details worth keeping:
+
+- **The lift mattered more than the height.** A 56px bar flush to the edge is
+  still the screen's border; the 12px gap is what makes it an object sitting on
+  the screen, and it moves the whole target out of the home-indicator's swipe
+  strip rather than only growing upward. The margin is scoped to CTAs that are
+  *direct children of a screen root* — the same `.resolve-button` inside a
+  `.log-panel` dialog is laid out by that panel's gap and must not collect a
+  stray 12px.
+- **The peek is deliberately read-only.** Equipment is moved on
+  `RosterManagementScreen`, reachable from the map and before a fight. Opening
+  an inspector from inside a *forced allocation gate* must not be able to
+  quietly change the thing being allocated.
+- **A glyph, not a phrase.** It is the same utility on nine screens, so it
+  should be the same shape in the same corner on all of them, learned once —
+  and every one of these screens wants its full width for a centred title.
+- **Absolute positioning has to be paid for.** The glyph floats over the scroll
+  area rather than taking a row, so each host reserves the corner: the Guild
+  Hall's header gets `padding-right`, and Squad Select's scouted-enemy panel
+  drops 16px so its rightmost chip clears the buttons' bottom edge. Both were
+  found by looking, not by reasoning.
+
+### Verification
+
+Same method as the ninth pass and the same caveats apply — a throwaway harness
+(root `shots.html` + an entry importing the real screen modules from a synthetic
+`RunState`, both deleted before committing) driven in headless Edge over CDP,
+read back as PNGs. Shot and looked at: Level Up, the peek overlay over it, the
+peek's hero sheet, Vitality Shrine, ForceEquip, Mentor's Hall (both phases),
+Relic Shrine, Equipment Cache, the Event placeholder, Guild Hall, Roster
+Replace, Squad Select, Evolution. The Squad Select corner collision and the
+peek card's redundant "LEVEL 4" line were both only visible in the PNGs.
+
+The real app (not just the harness) was then driven from the title screen into
+Level Up to confirm the peek button mounts and the CTA measures 70px with its
+bottom 12px clear of the shell. `npm run typecheck:view` passes.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.
@@ -1347,9 +1439,10 @@ Roughly in order of expected payoff.
      `.roster-card-portrait` is 40px (0.833×) on `SquadSelectScreen` and the Guild
      Hall. It was left alone because fixing it changes that card's height and those
      screens' layout budgets are tight; it is the first thing to fix when they come
-     up. `.hero-grid-portrait`'s 30px is gone from the node screens (they use
-     `HeroPickCard` now) but survives in `RosterReplaceScreen` and the Mentor's
-     roster-peek overlay, both of which are overlays rather than screens.
+     up. `.hero-grid-portrait`'s 30px is now out of the run loop entirely — the
+     node screens took `HeroPickCard` in the ninth pass, `RosterReplaceScreen` and
+     the roster peek in the tenth. `.hero-grid` itself survives only as dead
+     styling; delete it when something else touches that block.
 7. **Ground-plane depth.** The platform currently carries distance via size and
    opacity. A true perspective floor grid (fading toward the horizon) would sell it
    further, at some risk of noise behind the figures.

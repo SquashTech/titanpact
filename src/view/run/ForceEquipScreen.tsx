@@ -10,6 +10,7 @@ import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { EQUIP_SLOT_LABELS, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
+import { RosterPeek } from './RosterPeek';
 import { passives } from '../../data/passives';
 import { passiveEmoji } from '../shared/passiveIcons';
 import { statuses } from '../../data/statuses';
@@ -135,6 +136,8 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
           common one no longer arrive in the same room. */}
       <NodeSky />
 
+      <RosterPeek run={run} />
+
       {/* The item, unboxed. What was here: `.equip-spotlight`, a bordered,
           glowing, rarity-rimmed card carrying the icon, the name, the rarity
           line and every stat chip — a container around the one thing on the
@@ -151,74 +154,77 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
         }`}
       />
 
-      <div className="screen-scroll">
-        <div className="bottom-pinned">
-          <div className="node-item-effects">
-            {grants.some(([, amount]) => amount) && (
-              <div className="detail-modifier-list">
-                {grants
-                  .filter(([, amount]) => amount)
-                  .map(([stat, amount]) => (
-                    <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-                      <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtGrant(amount)}
-                    </span>
-                  ))}
-              </div>
-            )}
-            {/* Full passive/status description (not just the "Grants: Name"
-                chip used elsewhere) — the more economical hero grid below
-                frees up room to spell out exactly what the item does. */}
-            {(grantedPassives.length > 0 || grantedStatuses.length > 0) && (
-              <div className="equip-spotlight-passives">
-                {grantedPassives.map((passiveId) => {
-                  const def = passives[passiveId];
-                  if (!def) return null;
-                  return (
-                    <div key={passiveId} className="equip-spotlight-passive">
-                      <span className="equip-spotlight-passive-name">
-                        {passiveEmoji[passiveId] ? `${passiveEmoji[passiveId]} ` : ''}
-                        {def.name}
-                      </span>
-                      <span className="equip-spotlight-passive-desc">{def.description}</span>
-                    </div>
-                  );
-                })}
-                {grantedStatuses.map(({ statusId, magnitude }) => {
-                  const def = statuses[statusId];
-                  if (!def) return null;
-                  return (
-                    <div key={statusId} className="equip-spotlight-passive">
-                      <span className="equip-spotlight-passive-name">
-                        {def.name} +{magnitude}
-                      </span>
-                      <span className="equip-spotlight-passive-desc">{def.description}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+      {/* Header → what the thing does → the roster → the CTA, the same four
+          bands in the same order as the Level Up screen (2026-08-28 pass).
+          This used to be a `.screen-scroll > .bottom-pinned` stack, which put
+          the grid at a different height on this screen than on every other
+          pick-a-hero screen depending on how much the item had to say about
+          itself. The effects block scrolls inside its own band instead, so
+          the figures always start at the same place. */}
+      <div className="node-item-effects">
+        {grants.some(([, amount]) => amount) && (
+          <div className="detail-modifier-list">
+            {grants
+              .filter(([, amount]) => amount)
+              .map(([stat, amount]) => (
+                <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
+                  <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtGrant(amount)}
+                </span>
+              ))}
           </div>
-
-          <HeroPickGrid count={run.roster.length}>
-            {run.roster.map((entry) => {
-              const hero = heroes[entry.heroId];
-              const currentId = entry.equipment[item.slot];
-              const currentItem = currentId ? equipment[currentId] : null;
+        )}
+        {/* Full passive/status description (not just the "Grants: Name"
+            chip used elsewhere) — the more economical hero grid below
+            frees up room to spell out exactly what the item does. */}
+        {(grantedPassives.length > 0 || grantedStatuses.length > 0) && (
+          <div className="equip-spotlight-passives">
+            {grantedPassives.map((passiveId) => {
+              const def = passives[passiveId];
+              if (!def) return null;
               return (
-                <ForceEquipHeroCard
-                  key={entry.rosterId}
-                  hero={hero}
-                  entry={entry}
-                  slot={item.slot}
-                  currentItem={currentItem}
-                  onEquip={() => handleEquip(entry.rosterId)}
-                  onPreview={() => setPreviewEntry({ hero, entry })}
-                />
+                <div key={passiveId} className="equip-spotlight-passive">
+                  <span className="equip-spotlight-passive-name">
+                    {passiveEmoji[passiveId] ? `${passiveEmoji[passiveId]} ` : ''}
+                    {def.name}
+                  </span>
+                  <span className="equip-spotlight-passive-desc">{def.description}</span>
+                </div>
               );
             })}
-          </HeroPickGrid>
-        </div>
+            {grantedStatuses.map(({ statusId, magnitude }) => {
+              const def = statuses[statusId];
+              if (!def) return null;
+              return (
+                <div key={statusId} className="equip-spotlight-passive">
+                  <span className="equip-spotlight-passive-name">
+                    {def.name} +{magnitude}
+                  </span>
+                  <span className="equip-spotlight-passive-desc">{def.description}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
+
+      <HeroPickGrid count={run.roster.length} fill>
+        {run.roster.map((entry) => {
+          const hero = heroes[entry.heroId];
+          const currentId = entry.equipment[item.slot];
+          const currentItem = currentId ? equipment[currentId] : null;
+          return (
+            <ForceEquipHeroCard
+              key={entry.rosterId}
+              hero={hero}
+              entry={entry}
+              slot={item.slot}
+              currentItem={currentItem}
+              onEquip={() => handleEquip(entry.rosterId)}
+              onPreview={() => setPreviewEntry({ hero, entry })}
+            />
+          );
+        })}
+      </HeroPickGrid>
 
       <button className="secondary-button trash-button" onClick={() => setConfirmTrash(true)}>
         🗑️ Trash {item.name}

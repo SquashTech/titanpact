@@ -23,6 +23,7 @@ import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { equipment } from '../../data/equipment';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
+import { RosterPeek } from './RosterPeek';
 import { EvolutionScreen } from './EvolutionScreen';
 
 interface Props {
@@ -313,6 +314,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
         hero={heroes[evolvingEntry.heroId]}
         entry={evolvingEntry}
         node={evolvingNode}
+        run={run}
         onChoose={(pathId) => handleChooseEvolution(evolvingEntry.rosterId, pathId)}
       />
     );
@@ -326,6 +328,12 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
           growth beat, and it is the one screen in the run loop that is purely
           a reward. */}
       <NodeSky />
+
+      {/* The corner roster glyph every allocation screen carries — see
+          RosterPeek.tsx. Kept mounted through the move-replace offer too:
+          deciding which of a hero's four moves to give up is exactly when
+          the rest of the team's coverage matters. */}
+      <RosterPeek run={run} />
 
       {/* Hidden while the move-replace offer is up: that panel has its own
           headline, and it is the one layout here tall enough to need the

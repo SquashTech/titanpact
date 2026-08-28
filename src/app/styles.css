@@ -6471,11 +6471,27 @@ textarea,
 /* --- Squad select screen ------------------------------------------------ */
 
 .squad-select {
+  /* Positioning context for the corner glyph buttons, same as .node-screen's
+     is for the sky and its own. */
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+/* The scouted-enemy panel sat directly under the two worded chips that the
+   corner glyphs replaced. The glyphs float over the scroll area instead of
+   occupying a row of their own, so this section reserves the corner for them:
+   the title keeps clear horizontally, and the whole panel drops far enough
+   that the rightmost enemy chip clears the buttons' 44px bottom edge. */
+.squad-select > .screen-scroll > .squad-section-enemy {
+  margin-top: 16px;
+}
+
+.squad-select > .screen-scroll > .squad-section-enemy .squad-section-title {
+  padding-right: 100px;
 }
 
 /* Same containment pattern as FightScreen's .action-area — the roster/guild
@@ -7662,6 +7678,14 @@ textarea,
   gap: 18px;
 }
 
+/* On a shop node the corner roster glyph sits over the top-right of this row,
+   where the gold readout lives — reserve the corner rather than let the two
+   overlap. Scoped to the node so the same panel keeps its full width wherever
+   else it is embedded. */
+.shop-node-screen .guild-hall-header {
+  padding-right: 50px;
+}
+
 .guild-hall-header {
   display: flex;
   align-items: baseline;
@@ -8130,23 +8154,27 @@ textarea,
  * Continue buttons at the bottom — these should be chunkier and easier for
  * players to press"). It was 12px of padding around 14px type — a ~42px slab
  * pinned to the very bottom edge of a portrait phone, i.e. under the thumb's
- * least accurate travel and inside the home-indicator's own gesture zone. Now
- * 56px minimum, which clears both platforms' touch-target floors (44/48px)
- * with room left over, and 16px/800 type so the button reads as the weightiest
- * thing on the screen rather than a caption with a fill behind it. The radius
- * steps up with it — --radius-sm on a 56px bar looks sharp (see the radius
- * scale's own note).
+ * least accurate travel and inside the home-indicator's own gesture zone.
+ *
+ * Taken further the same day on a second look: 68px minimum around 18px/800
+ * type, and — the part that mattered more than the size — **lifted off the
+ * bottom edge** by .screen-cta-lift below. A 56px bar flush to the edge is
+ * still a bar flush to the edge; the gap is what turns it from the screen's
+ * border into an object sitting on the screen, and it moves the whole target
+ * out of the home-indicator's swipe zone rather than merely making it taller
+ * upward. The radius steps up with the height (--radius-sm on a 68px slab
+ * looks sharp — see the radius scale's own note).
  */
 .resolve-button {
   flex-shrink: 0;
   width: 100%;
-  min-height: 56px;
+  min-height: 68px;
   background: linear-gradient(180deg, #eab654, var(--accent) 45%, #c98f2c);
   color: #1a1300;
   border: none;
-  border-radius: var(--radius-md);
-  padding: 16px 14px;
-  font-size: 16px;
+  border-radius: var(--radius-lg);
+  padding: 20px 14px;
+  font-size: 18px;
   font-weight: 800;
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -8171,6 +8199,20 @@ textarea,
   cursor: not-allowed;
 }
 
+/* The lift. Only ever applied to a CTA that is a *direct child of a screen
+   root* — i.e. the one pinned to the bottom of the viewport. The same
+   .resolve-button / .secondary-button inside a `.log-panel` dialog or a
+   `.reward-panel` is laid out by that container's own gap and must not
+   collect a stray 12px under it. */
+.node-screen > .resolve-button,
+.node-screen > .secondary-button,
+.node-screen > .reward-panel-actions,
+.levelup-screen > .resolve-button,
+.squad-select > .resolve-button,
+.draft-screen > .resolve-button {
+  margin-bottom: 12px;
+}
+
 /* Lifted out of the sky's paint order for the same reason .draft-header /
    .draft-stage / .draft-rail are: .draft-sky is positioned at z-index 0 and
    its wash bottoms out in an opaque gradient, so a static in-flow sibling
@@ -8187,11 +8229,11 @@ textarea,
    * own home indicator, awkward to actually hit. Scale is doing two jobs:
    * a bigger target, and the psychological weight the moment deserves.
    */
-  padding: 21px 12px;
-  font-size: 19px;
+  padding: 25px 12px;
+  font-size: 21px;
   font-weight: 800;
   letter-spacing: 0.03em;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
 }
 
 /* DraftScreen's "Begin the Pact" — same gold-gradient/pulse treatment as
@@ -8325,8 +8367,11 @@ textarea,
    the screen's Continue CTA, and reusing it here made "confirm this swap"
    and "leave this screen" look like the same action. Green instead reads as
    its own "commit" affordance. */
+/* The bottom margin is the same lift .resolve-button gets at the foot of a
+   screen — this pair is the move offer's CTA and lands on the same edge. */
 .moveoffer-actions {
   flex-direction: row;
+  margin-bottom: 12px;
 }
 
 .moveoffer-button {
@@ -8908,17 +8953,6 @@ textarea,
   opacity: 0.45;
 }
 
-/* A utility, not a commitment — it stays a compact pill rather than following
-   .secondary-button up to the paired-with-the-primary size. */
-.class-shrine-roster-btn {
-  position: relative;
-  width: auto;
-  min-height: 0;
-  margin: 10px auto 0;
-  padding: 9px 18px;
-  font-size: 13px;
-}
-
 .class-shrine-list {
   display: flex;
   flex-direction: column;
@@ -9249,7 +9283,7 @@ textarea,
    genuine App.tsx top-level Screen and as an in-place overlay inside
    FightScreen — see that component's header comment) rather than
    .detail-overlay's narrow centered card, since it needs room for a full
-   .hero-grid underneath the spotlight. */
+   pick grid underneath the incoming hero. */
 .roster-replace-overlay {
   position: fixed;
   inset: 0;
@@ -9270,6 +9304,10 @@ textarea,
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 10px;
+  /* The node sky bleeds --shell-pad past its host's padding box; clip it back
+     to the panel's own rounded rectangle, since here the "screen" is a card
+     floating on a scrim rather than the whole viewport. */
+  overflow: hidden;
   box-shadow: var(--hairline), var(--elev-3);
 }
 
@@ -9282,8 +9320,22 @@ textarea,
   image-rendering: pixelated;
 }
 
+/* The readout carries two lines here — the incoming hero's types, then what
+   the swap costs — so it stacks rather than centring one row. */
+.roster-replace-screen .node-readout {
+  flex-direction: column;
+  gap: 4px;
+}
+
 .roster-replace-types {
   position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.roster-replace-note {
+  display: block;
 }
 
 .equip-spotlight-passive-desc {
@@ -10565,11 +10617,132 @@ textarea,
    left static paints *under* it — the same trap .draft-cta documents. Both
    screen roots that stand on the stage lift every other child above it;
    without this the screen is invisible, though still clickable, since the sky
-   is pointer-events: none. */
-.node-screen > *:not(.node-sky),
-.levelup-screen > *:not(.node-sky) {
+   is pointer-events: none.
+
+   The exclusions matter as much as the rule. This selector is (0,2,0) and
+   sits below every overlay's own block, so a bare `*` also overwrote
+   `position: fixed` on any modal rendered as a direct child of a node screen
+   — which is how every one of them is rendered (the hero sheet, the move
+   popup, the roster peek) — dropping a full-viewport overlay into the flex
+   column as an in-flow block. Anything that positions itself on purpose is
+   named here rather than fighting for specificity. */
+.node-screen > *:not(.node-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button),
+.levelup-screen > *:not(.node-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button) {
   position: relative;
   z-index: 1;
+}
+
+/* --- The corner glyph buttons -------------------------------------------
+   The "what have I actually got?" affordance every screen that asks the
+   player to commit something to a hero now carries (2026-08-28, per user
+   direction) — src/view/run/RosterPeek.tsx.
+
+   A glyph, not a phrase: it is the same utility on eight different screens,
+   so it should be the same *shape* in the same place on all of them, learned
+   once. Anchored to the screen root's top-right corner rather than placed in
+   the flow, because the header underneath it is centred and every one of
+   these screens wants its full width for the title.
+
+   Sized past the 44px touch floor and drawn as a raised tile — the language
+   .map-footer-button already uses for "this is a control", as opposed to the
+   sunken chips the map header uses for readouts. */
+.corner-glyph-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 6;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--hairline), var(--elev-1);
+  transition: border-color var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.corner-glyph-button:hover {
+  border-color: var(--accent);
+  box-shadow: var(--hairline), var(--elev-2);
+}
+
+.corner-glyph-button:active {
+  transform: translateY(1px);
+}
+
+/* A second glyph steps left of the first rather than stacking — two 44px
+   tiles side by side still clear the centred title on a 394px canvas, a
+   vertical stack would run into the readout. */
+.corner-glyph-button.corner-slot-2 {
+  right: 50px;
+}
+
+/* --- The roster peek overlay --------------------------------------------- */
+
+.roster-peek-panel {
+  max-height: 86%;
+}
+
+/* Gold / unspent XP / contracts, in the same chip idiom the map header uses
+   for the same three numbers — so a player checking the roster mid-decision
+   gets "can I afford the other thing" in the same glance. */
+.roster-peek-resources {
+  flex-shrink: 0;
+  display: flex;
+  gap: 6px;
+}
+
+.roster-peek-resource {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 6px;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-xs);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.roster-peek-relics {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.roster-peek-relic {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(139, 127, 224, 0.14);
+  border: 1px solid rgba(139, 127, 224, 0.3);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--magical);
+}
+
+.roster-peek-relic-icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* The peek's own grid never fills a screen — it lives in a panel that is
+   already capped — so it scrolls inside .screen-scroll and keeps its natural
+   row height instead of centring in leftover space. */
+.roster-peek-panel .screen-scroll {
+  min-height: 0;
 }
 
 /* --- The hero pick card ---------------------------------------------------
@@ -10895,12 +11068,20 @@ textarea,
 /* The dropped item's stat chips and full passive text on ForceEquipScreen,
    under the header and above the heroes — the contents of the `.equip-spotlight`
    box, now standing on their own. */
+/* Its own band between the header and the grid, scrolling internally rather
+   than pushing the roster down: an item with three granted passives and one
+   with none must put the hero figures at the same height, or this screen
+   stops being the same screen as Level Up (2026-08-28 pass). Capped at
+   roughly a third of the stage so the grid always wins the argument. */
 .node-item-effects {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 32%;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
 }
 
 .node-item-effects .detail-modifier-list {

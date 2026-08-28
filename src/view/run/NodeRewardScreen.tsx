@@ -22,6 +22,7 @@ import { passiveEmoji } from '../shared/passiveIcons';
 import { useLongPress } from '../shared/MoveTile';
 import { ResourceMark, RunGlyph } from '../shared/RunGlyph';
 import { NodeHeader, NodeSky, NODE_TINT_ARCANE, NODE_TINT_GOLD, NODE_TINT_VITAL } from '../shared/NodeStage';
+import { RosterPeek } from './RosterPeek';
 
 export type RewardNodeType = 'currencyReward' | 'upgradeReward' | 'equipmentReward' | 'relicReward';
 
@@ -230,6 +231,12 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
   return (
     <div className="node-screen node-reward-screen" style={{ '--node-rgb': NODE_TINT[nodeType] } as CSSProperties}>
       <NodeSky />
+
+      {/* Every node that hands the team something carries the same corner
+          roster glyph as the allocation screens — a relic is a team-wide
+          passive and a piece of gear has to land on somebody, so "who have I
+          got" is part of the choice here too (RosterPeek.tsx). */}
+      <RosterPeek run={run} />
 
       {/* One header per node type, on one stage. What was here: four
           bordered banners (`.equip-cache-banner` twice, `.relic-shrine-banner`,

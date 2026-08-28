@@ -96,14 +96,29 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
 
   return (
     <div className="squad-select">
-      <div className="map-header">
-        <button className="log-toggle-button" onClick={() => setShowRoster(true)}>
-          👥 Roster
-        </button>
-        <button className="log-toggle-button" onClick={() => setShowReference(true)}>
-          Reference
-        </button>
-      </div>
+      {/* The same top-corner glyphs the node screens carry (RosterPeek.tsx),
+          rather than the two worded chips in a `.map-header` bar that used to
+          sit above the scouted-enemy row. The roster one opens Manage Roster
+          rather than the read-only peek: this is the one moment before a
+          fight where moving gear between heroes is the point. */}
+      <button
+        type="button"
+        className="corner-glyph-button"
+        onClick={() => setShowRoster(true)}
+        aria-label="Manage your roster"
+        title="Manage your roster"
+      >
+        <span aria-hidden="true">👥</span>
+      </button>
+      <button
+        type="button"
+        className="corner-glyph-button corner-slot-2"
+        onClick={() => setShowReference(true)}
+        aria-label="Type chart and reference"
+        title="Type chart and reference"
+      >
+        <span aria-hidden="true">📖</span>
+      </button>
       <div className="screen-scroll">
         {/* Enemies first, mirroring the combat screen's enemy-row-on-top layout —
             scout the threat before committing a squad against it. */}
