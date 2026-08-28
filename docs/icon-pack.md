@@ -299,7 +299,15 @@ The matrix's grammar outlived the matrix, which is the part worth keeping:
 
 It now runs on drawn shapes rather than extracted cells — Mana Pool and MP Regen (droplet,
 droplet + chevron), HP and Renew (heart, heart + chevron), Skirmish and Elite (helm, helm +
-crown), and every Elemental Force chip (element + up arrow).
+crown), Buff and Debuff (shield, shield split in two), and every Elemental Force chip
+(element + up arrow).
+
+Debuff is the one case where the modifier had to be **subtractive rather than additive** — a
+break in the silhouette, not a mark added to it — because the pair is a thing and its
+negation. It is also the case that pins down what "modifier" is allowed to mean at these
+sizes: a hairline crack drawn across an intact shield is the obvious first answer and it
+dies at 15px, where anything under ~2 units of the 24-grid is sub-pixel. What survives a
+downscale is the outline, so a modifier that does not change the outline is not a modifier.
 
 ---
 

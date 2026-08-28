@@ -119,6 +119,29 @@ export const STAT_PATHS: Record<StatKey, ReactNode> = {
   ),
 };
 
+/**
+ * The svg chassis every glyph in this file renders through. Extracted when
+ * MoveKindGlyph gained a kind with no stat behind it (debuff, below): the
+ * `.stat-glyph` class is a layout hook a dozen rules in styles.css size
+ * against — including `.move-kind-badge .move-kind-glyph`, which exists
+ * purely to out-specify it — so a glyph that skips StatGlyph still has to
+ * land in exactly the same slots.
+ */
+function GlyphSvg({ paths, className, style }: { paths: ReactNode; className?: string; style?: CSSProperties }) {
+  return (
+    <svg
+      className={`stat-glyph${className ? ` ${className}` : ''}`}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+      focusable="false"
+      style={style}
+    >
+      {paths}
+    </svg>
+  );
+}
+
 interface StatGlyphProps {
   stat: StatKey;
   /**
@@ -145,21 +168,16 @@ interface StatGlyphProps {
  */
 export function StatGlyph({ stat, tone = 'stat', className }: StatGlyphProps) {
   return (
-    <svg
-      className={`stat-glyph${className ? ` ${className}` : ''}`}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-      focusable="false"
+    <GlyphSvg
+      paths={STAT_PATHS[stat]}
+      className={className}
       style={tone === 'stat' ? ({ color: STAT_COLORS[stat] } as CSSProperties) : undefined}
-    >
-      {STAT_PATHS[stat]}
-    </svg>
+    />
   );
 }
 
-/** The four things a move can be, as MoveKindBadge switches on them: a damage move keys off `move.category` (the stat pipeline it draws from), a non-damage one off `move.kind`. */
-export type MoveKindGlyphKind = 'physical' | 'magical' | 'heal' | 'buff';
+/** The five things a move can be, as MoveKindBadge switches on them. `moveKindGlyph` (MoveTile.tsx) is the one place a MoveDefinition is mapped onto this union — nothing else should re-derive it. */
+export type MoveKindGlyphKind = 'physical' | 'magical' | 'heal' | 'buff' | 'debuff';
 
 /**
  * Move kinds borrow the stat glyphs rather than getting a set of their own,
@@ -175,21 +193,59 @@ export type MoveKindGlyphKind = 'physical' | 'magical' | 'heal' | 'buff';
  *   and the heart is already what HP looks like everywhere else.
  * - **buff → the Defense shield**, the one pairing that is a symbol rather
  *   than a reference — it kept the shield the emoji and the pixel-art badge
- *   before it both used, since 'buff' covers stat changes and statuses in
- *   both directions and no single stat owns it.
+ *   before it both used, since no single stat owns "a number went up."
+ * - **debuff → that same shield, split in two and pulled apart** — the only
+ *   kind with no stat to borrow, so it is drawn here (BROKEN_SHIELD below).
+ *   Buff and debuff were one glyph until now because they are one move kind
+ *   in the data (engine/content.ts: "Negative amounts are debuffs — same
+ *   move kind covers both"), which meant Weaken and Curse Mind wore an
+ *   intact shield and read as protective on the move row. The engine still
+ *   has one kind; the badge no longer does.
  *
  * Colour comes from the badge (`.category-physical` and friends), never from
  * STAT_COLORS: on a move button the question is which *kind* of move this is,
  * and a red sword that meant "Attack stat" in one place and "physical damage"
  * in another would be two claims in one glyph.
  */
-const MOVE_KIND_STAT: Record<MoveKindGlyphKind, StatKey> = {
+const MOVE_KIND_STAT: Record<Exclude<MoveKindGlyphKind, 'debuff'>, StatKey> = {
   physical: 'attack',
   magical: 'intelligence',
   heal: 'hp',
   buff: 'defense',
 };
 
+/**
+ * Debuff: STAT_PATHS.defense's heater shield, cut down the middle on a
+ * jagged line with the two halves pulled 3 units apart.
+ *
+ * Same base shape plus a modifier is the vocabulary's own grammar
+ * (docs/icon-pack.md, "The modifier names the family. The base shape names
+ * the member" — droplet / droplet + chevron, heart / heart + chevron), and
+ * buff↔debuff is the pair that needs it most: the two occupy the same slot
+ * on the same move row, so they have to read as the same object before they
+ * can read as opposites.
+ *
+ * The break is a **gap in the silhouette**, not a hairline crack laid over
+ * an intact shield. The crack was the first attempt and it failed this
+ * file's own floor (nothing finer than ~2 units): at the 15px the move-row
+ * badge is drawn at, a crack narrow enough to look like a crack is under a
+ * pixel, and the result was just the buff shield in red. Breaking the top
+ * edge and the point instead changes the outline, which is the part that
+ * survives a 24→15 downscale. Geometry is copied from the shield rather
+ * than imported for the same reason Renew copies the heart — the halves are
+ * a re-cut of that outline, not a decoration on top of it, so if one is
+ * redrawn the other has to be.
+ */
+const BROKEN_SHIELD = (
+  <>
+    <path d="M10.6 1.8 2.5 5v6.6C2.5 17 5.8 20.8 10.6 22.4L9.2 16.6 11.7 11.6 8.6 7Z" />
+    <path d="M13.4 1.8 11.4 7 14.5 11.6 12 16.6 13.4 22.4C18.2 20.8 21.5 17 21.5 11.6V5Z" />
+  </>
+);
+
 export function MoveKindGlyph({ kind, className }: { kind: MoveKindGlyphKind; className?: string }) {
+  // The one kind that isn't a stat glyph — it goes through the same chassis
+  // StatGlyph does, so it inherits colour and sizing identically.
+  if (kind === 'debuff') return <GlyphSvg paths={BROKEN_SHIELD} className={className} />;
   return <StatGlyph stat={MOVE_KIND_STAT[kind]} tone="inherit" className={className} />;
 }

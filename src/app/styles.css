@@ -2514,6 +2514,15 @@ textarea,
   color: var(--buff);
 }
 
+/* The debuff half of the same move kind (MoveTile.tsx moveKindGlyph splits
+   it). Deliberately --hp-low and not a new variable: every other debuff-
+   coloured thing in the app already reaches for it directly — .stat-debuff,
+   .log-debuff, .popup-debuff, .banner-kind-debuff — so a "-10 DEF" popup, its
+   log line and the move that caused it are one red. */
+.category-badge.kind-debuff {
+  color: var(--hp-low);
+}
+
 /* MoveKindBadge's glyph (FightScreen's move grid) is an emoji, not
    letter-spaced text, so it needs its own sizing rather than inheriting
    .category-badge's PHY/MAG-tuned metrics. */

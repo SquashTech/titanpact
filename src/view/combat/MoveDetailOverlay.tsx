@@ -20,12 +20,12 @@ import {
 import { collectPassiveDamageModifiers } from '../../engine/combat/passiveEngine';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
-import { StatGlyph, MoveKindGlyph, type MoveKindGlyphKind } from '../shared/statIcons';
+import { StatGlyph, MoveKindGlyph } from '../shared/statIcons';
 import { StatusGlyph, statusColor } from '../shared/statusIcons';
 import { STAT_LABELS, hpTier } from '../shared/StatBars';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { TARGET_MODE_LABELS } from '../shared/MoveTile';
+import { TARGET_MODE_LABELS, moveKindGlyph, moveKindLabel } from '../shared/MoveTile';
 import { overlayHost } from '../shared/overlayHost';
 
 /**
@@ -45,18 +45,17 @@ export interface MoveDossierContext {
 }
 
 /**
- * The one-word pipeline name for the title line. A damage move says which of
- * the two stat pipelines it draws from (CLAUDE.md "Two-pipeline separation");
- * a heal or a buff says what it is. Deliberately one word each: the line also
- * carries the type and the target, and at three items it has to fit 214px of
- * a 340px card without wrapping and orphaning a separator.
+ * The one-word pipeline name for the title line — damage moves only, since
+ * they are the only ones that draw from a stat pipeline at all (CLAUDE.md
+ * "Two-pipeline separation"). Everything else says what it is via
+ * moveKindLabel, which is also what splits Buff from Debuff. Deliberately one
+ * word either way: the line also carries the type and the target, and at
+ * three items it has to fit 214px of a 340px card without wrapping and
+ * orphaning a separator.
  */
-const PIPELINE_WORDS: Record<MoveDefinition['kind'] | MoveDefinition['category'], string> = {
+const PIPELINE_WORDS: Record<MoveDefinition['category'], string> = {
   physical: 'Physical',
   magical: 'Magical',
-  damage: 'Damage',
-  heal: 'Heal',
-  buff: 'Buff',
 };
 
 /** Same tiering as FightScreen's inline matchup readout, and deliberately the same class names — a 4x on the move row and a 4x in the dossier must not be two different greens. */
@@ -262,7 +261,7 @@ export function MoveDetailCard({ move, label, context }: CardProps) {
   const manaAfter = attacker ? attacker.currentMana - move.manaCost : null;
   const manaPool = attacker && attackerHero ? getMaxMana(attackerHero, attacker) : null;
 
-  const kindGlyph: MoveKindGlyphKind = move.kind === 'damage' ? move.category : move.kind;
+  const kindGlyph = moveKindGlyph(move);
   const statusDef = move.statusApplication ? statuses[move.statusApplication.statusId] : undefined;
   const fieldDef = move.fieldEffectApplication ? fieldEffects[move.fieldEffectApplication] : undefined;
   const hasPayload = Boolean(move.statDeltas?.length || move.statusApplication || move.cleanses || move.fieldEffectApplication);
@@ -286,7 +285,7 @@ export function MoveDetailCard({ move, label, context }: CardProps) {
           <div className="move-detail-line">
             <span style={{ color: typeColor }}>{move.type}</span>
             <span className="move-detail-sep">·</span>
-            <span>{PIPELINE_WORDS[move.kind === 'damage' ? move.category : move.kind]}</span>
+            <span>{move.kind === 'damage' ? PIPELINE_WORDS[move.category] : moveKindLabel(move)}</span>
             <span className="move-detail-sep">·</span>
             <span>{TARGET_MODE_LABELS[move.target]}</span>
           </div>

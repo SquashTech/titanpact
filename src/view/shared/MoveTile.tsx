@@ -2,6 +2,7 @@ import { useRef, useState, type CSSProperties, type MouseEvent, type PointerEven
 import type { MoveDefinition } from '../../engine/content';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { fieldEffects } from '../../data/fieldEffects';
+import { statuses } from '../../data/statuses';
 import { STAT_LABELS } from './StatBars';
 import { TypeBadge } from './TypeBadge';
 import { ElementGlyph } from './elementIcons';
@@ -122,7 +123,48 @@ export function swallowGhostClick() {
   window.setTimeout(() => document.removeEventListener('click', swallow, { capture: true }), 400);
 }
 
-export const KIND_LABELS: Record<string, string> = { damage: 'Damage', heal: 'Heal', buff: 'Buff/Debuff' };
+/**
+ * `kind: 'buff'` covers both directions in the data — "Negative amounts are
+ * debuffs — same move kind covers both" (engine/content.ts) — which is right
+ * for the engine, where there is genuinely one resolution path, and wrong for
+ * the UI, where Rally and Weaken were the same word and the same picture. The
+ * sign is recovered here, once, so the glyph, the badge colour and the
+ * "Buff"/"Debuff" text can never disagree with each other.
+ *
+ * Two ways a buff-kind move points downward, and a move needs only one:
+ *
+ * - **A negative stat delta** — Weaken (-10 DEF), Curse Mind (-10 INT/WIS).
+ * - **A status pushed onto somebody else that isn't flagged `positive`** —
+ *   the same StatusDefinition flag Cleanse reads (docs/conditions.md §7), so
+ *   a status authored as harmful counts here the moment it is written, with
+ *   no second list to keep in sync. `target: 'self'` is what separates
+ *   granting Renew from inflicting Poison; both are one StatusApplication
+ *   field, and the target is the only thing that says which reading applies
+ *   (the same distinction moveEffectSummary spells as Grants vs Applies).
+ *
+ * A move carrying both a buff and a debuff would read as a debuff. None does
+ * today; if one is ever authored, the honest answer is probably two glyphs
+ * rather than a tiebreak, so revisit this rather than adding a rule.
+ */
+function isDebuff(move: MoveDefinition): boolean {
+  if (move.statDeltas?.some(({ amount }) => amount < 0)) return true;
+  const applied = move.statusApplication;
+  return applied != null && applied.target !== 'self' && !statuses[applied.statusId]?.positive;
+}
+
+/** Which of MoveKindGlyph's five glyphs a move wears: a damage move keys off `move.category` (the stat pipeline it draws from), a non-damage one off `move.kind`, with buff split by sign. The one MoveDefinition -> MoveKindGlyphKind mapping in the app. */
+export function moveKindGlyph(move: MoveDefinition): MoveKindGlyphKind {
+  if (move.kind === 'damage') return move.category;
+  if (move.kind === 'heal') return 'heal';
+  return isDebuff(move) ? 'debuff' : 'buff';
+}
+
+/** The player-facing word for what a move does, matching the glyph exactly. Replaces a KIND_LABELS table whose buff entry read "Buff/Debuff" — a hedge that was only ever there because nothing could tell the two apart. */
+export function moveKindLabel(move: MoveDefinition): string {
+  if (move.kind === 'damage') return 'Damage';
+  if (move.kind === 'heal') return 'Heal';
+  return isDebuff(move) ? 'Debuff' : 'Buff';
+}
 
 const CATEGORY_LABELS: Record<MoveDefinition['category'], string> = { physical: 'PHY', magical: 'MAG' };
 
@@ -209,11 +251,11 @@ export function CategoryBadge({ category }: { category: MoveDefinition['category
  * only matters for `kind: 'damage'` moves (resolveRound.ts reads it for the
  * stat ratio; heal/buff moves ignore it entirely), so showing PHY/MAG on a
  * heal or buff was decorative noise that also failed to say "this doesn't
- * attack." Damage moves keep the category glyph; heal/buff moves show their
- * kind instead, so attacks and non-attacks read apart at a glance. The
- * long-press move popup still spells the full PHY/MAG + Damage/Heal/Buff
- * text out via CategoryBadge + KIND_LABELS for anyone unsure what a glyph
- * means.
+ * attack." Damage moves keep the category glyph; heal/buff/debuff moves show
+ * their kind instead, so attacks and non-attacks read apart at a glance. The
+ * long-press move popup still spells the full PHY/MAG + Damage/Heal/Buff/
+ * Debuff text out via CategoryBadge + moveKindLabel for anyone unsure what a
+ * glyph means.
  *
  * The glyph itself is now MoveKindGlyph — the same vector set the stat blocks
  * use, and for physical/magical/heal the *same glyph as the stat the move
@@ -223,12 +265,14 @@ export function CategoryBadge({ category }: { category: MoveDefinition['category
  * it chose. Vector lets the badge sit at the row's own scale.
  */
 export function MoveKindBadge({ move }: { move: MoveDefinition }) {
-  // Compared inline rather than through an `isDamage` boolean so the false
-  // branch narrows move.kind to 'heal' | 'buff' — MoveKindGlyph's four kinds
-  // exactly, with no cast.
-  const kind: MoveKindGlyphKind = move.kind === 'damage' ? move.category : move.kind;
-  const tierClass = move.kind === 'damage' ? `category-${move.category}` : `kind-${move.kind}`;
-  const title = move.kind === 'damage' ? CATEGORY_LABELS[move.category] : KIND_LABELS[move.kind];
+  const kind = moveKindGlyph(move);
+  // Damage moves are coloured by pipeline, everything else by kind — so the
+  // class follows `kind` rather than `move.kind`, which is what gives debuff
+  // its own .kind-debuff red instead of inheriting the buff teal.
+  const tierClass = move.kind === 'damage' ? `category-${move.category}` : `kind-${kind}`;
+  // Still PHY/MAG for a damage move: the title's job there is to expand the
+  // abbreviation the badge replaced, not to name the kind.
+  const title = move.kind === 'damage' ? CATEGORY_LABELS[move.category] : moveKindLabel(move);
   return (
     <span className={`category-badge move-kind-badge ${tierClass}`} title={title}>
       <MoveKindGlyph kind={kind} className="move-kind-glyph" />
@@ -388,7 +432,7 @@ export function MoveInfoPanel({ move, label, placeholder = 'Hover or tap a move 
               <span className="move-stat-unit">MP</span>
             </span>
             <span className="move-info-kind">
-              {TARGET_MODE_LABELS[move.target]} &middot; {KIND_LABELS[move.kind] ?? move.kind}
+              {TARGET_MODE_LABELS[move.target]} &middot; {moveKindLabel(move)}
             </span>
           </div>
           {move.description && <div className="move-info-desc">{move.description}</div>}
