@@ -2149,11 +2149,19 @@ textarea,
  * activeMods) while .bench-row hides the corner outright. On the battlefield
  * the stat-mod corners are pinned to `bottom: 80px`, beside the figure.
  */
+/*
+ * Stacked, not side by side. A dual-type hero's second chip used to grow the
+ * corner rightward — straight into the figure, which is centred and whose
+ * widest sprites reach the top-left corner. Growing downward instead keeps
+ * both chips inside the narrow left margin the portrait never occupies, so a
+ * hero's type count no longer decides whether its own art gets covered.
+ */
 .combatant-card .combatant-types {
   position: absolute;
   z-index: 4;
   top: 3px;
   left: 4px;
+  flex-direction: column;
   gap: 3px;
 }
 
@@ -2419,6 +2427,16 @@ textarea,
    matches .bench-row .status-badge-row:empty hiding statuses there too. */
 .bench-row .stat-mod-corner {
   display: none;
+}
+
+/* Back to side by side here, alone among the card contexts. The stack exists
+   to keep a second chip off the figure, but a bench card's figure is a
+   thumbnail with nothing to protect — what it has instead is a name sitting
+   only ~35px below the card top, which a stacked pair ran straight into
+   ("Lucius" rendering as "us"). Horizontally the pair is 51px wide against a
+   centred thumbnail, so it clears both. */
+.bench-row .combatant-types {
+  flex-direction: row;
 }
 
 /* Active statuses (docs/conditions.md) on a battlefield card — icon + bare
