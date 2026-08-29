@@ -357,12 +357,26 @@ export function MoveTile({
 }
 
 /**
- * Visual replica of FightScreen's in-combat move button (same .move-button/
- * ManaCost/.move-row-* markup, styles.css:1589) for screens that offer
- * a hero's moves outside of combat — currently LevelUpScreen's move-replace
- * picker — so the same button language is recognizable wherever a move is
- * shown. Presentational only: no mana-affordability check and no elemental-
- * force bonus, since both are live-combat-only state that doesn't apply here.
+ * Visual replica of FightScreen's in-combat move row (its `MoveRow`) for
+ * screens that offer a hero's moves outside of combat — currently
+ * LevelUpScreen's move-replace picker — so the same button language is
+ * recognizable wherever a move is shown. Presentational only: no mana-
+ * affordability check and no Elemental Force bonus, since both are
+ * live-combat-only state that doesn't apply here.
+ *
+ * It had drifted. FightScreen's button was rebuilt into a full-width row —
+ * cost, type glyph, name, power and kind badge on ONE line, with the second
+ * line freed for the effect readout that used to need a 500ms hold — and this
+ * replica stayed on the old two-line `.move-row-top` / `.move-row-mid` shape
+ * in a 2-column grid, with no effect line and no kind badge at all. The result
+ * was that the one screen in the run loop whose entire job is comparing four
+ * moves showed less about each move than the fight screen does, in a layout
+ * that no longer looked like it (2026-08-29 pass).
+ *
+ * The one honest divergence from `MoveRow`: a damage move's effect line is its
+ * description rather than the per-enemy matchup chips. Those need a live
+ * CombatState, and there isn't one here — a move being *learned* has no
+ * defenders to be effective against yet.
  */
 export function MoveButtonReplica({
   move,
@@ -392,14 +406,12 @@ export function MoveButtonReplica({
     >
       <div className="move-row-top">
         <ManaCost cost={move.manaCost} />
-        <span className="move-name">{move.name}</span>
-      </div>
-      <div className="move-row-mid">
-        {/* Glyph only — kept in lockstep with FightScreen's own move
-            button, which has the reasoning. */}
+        {/* Glyph only, no abbreviation — kept in lockstep with FightScreen's
+            own move button, which has the reasoning. */}
         <span className="move-type-code" title={move.type}>
           <ElementGlyph type={move.type} />
         </span>
+        <span className="move-name">{move.name}</span>
         {move.kind === 'damage' && move.basePower != null && (
           <span className="move-power">
             <strong>{move.basePower}</strong>BP
@@ -412,6 +424,13 @@ export function MoveButtonReplica({
             <strong>{heal.value}</strong>
           </span>
         )}
+        {/* Holds the power column open on a move with no number to put in it,
+            so the badges don't rag between rows — same as MoveRow. */}
+        {move.kind === 'buff' && <span className="move-power move-power-empty" aria-hidden="true" />}
+        <MoveKindBadge move={move} />
+      </div>
+      <div className="move-row-effect">
+        <span className="move-effect-text">{moveEffectSummary(move, caster)}</span>
       </div>
     </button>
   );

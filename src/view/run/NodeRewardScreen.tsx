@@ -310,7 +310,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
         )}
 
         {nodeType === 'equipmentReward' && chestPhase === 'revealed' && (
-          <div className="bottom-pinned">
+          <div className="stage-centered">
             <div className="equip-cache-list">
               {equipmentChoices.map((item, i) => (
                 <EquipCacheCard
@@ -327,7 +327,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
         )}
 
         {nodeType === 'relicReward' && !claimed && relicChoices.length > 0 && (
-          <div className="bottom-pinned">
+          <div className="stage-centered">
             <div className="relic-shrine-list">
               {relicChoices.map((relic, i) => (
                 <RelicChoiceCard

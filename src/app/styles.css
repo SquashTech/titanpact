@@ -3419,18 +3419,11 @@ textarea,
   padding: 2px 0 0;
 }
 
-/* Still 2-col, and still used by LevelUpScreen's move-replace offer
-   (.reward-panel .move-grid). FightScreen's own move selector is .move-list
-   below — the two were the same class until the console-fill pass, and
-   keeping them separate is the scoping discipline docs/visual-language.md
-   asks for: the reward panel's grid sits in a scrolling column with room
-   above and below it, and has no chassis to fill. */
-.move-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-bottom: 6px;
-}
+/* `.move-grid`, the 2-column move layout, lived here. FightScreen moved off it
+   in the console-fill pass and LevelUpScreen's move-replace offer — its last
+   holder — moved off it in 2026-08-29's, onto `.move-list.offer-replace-list`
+   below. Nothing renders the class now, so the rule is gone rather than left
+   as a thing the next reader has to prove is dead. */
 
 /*
  * FightScreen's move selector: one column, rows split the console evenly.
@@ -3840,8 +3833,8 @@ textarea,
   gap: 4px;
   /* Grid items default to min-width:auto (never smaller than their content),
      which let a long move name / crowded meta row push a track past its 1fr
-     share and blow the whole .move-grid past the screen width. This is what
-     lets .move-name's ellipsis and .move-row-mid's wrap actually engage. */
+     share and blow the whole list past the screen width. This is what lets
+     .move-name's ellipsis actually engage. */
   min-width: 0;
   /* Type is the button's *material*, not a tag stuck to its edge.
    *
@@ -4132,9 +4125,9 @@ textarea,
    is affordable, so it spans both columns instead of sitting half-width like
    a single leftover move would. */
 .move-button.rest-button {
-  /* Vestigial in .move-list (one column spans itself) but kept: the same
-     markup renders in the 2-col .move-grid on other screens, where it still
-     does the work. */
+  /* Vestigial now that every list holding this markup is one column and a
+     column spans itself. Harmless, and cheaper to keep than to re-derive if a
+     multi-column move layout ever comes back. */
   grid-column: 1 / -1;
   border-color: var(--mana);
   align-items: center;
@@ -4411,8 +4404,8 @@ textarea,
 .move-name {
   flex: 1;
   /* Lets the name actually shrink (and its ellipsis kick in) instead of
-     forcing the row — and with it the grid column and the whole
-     move-grid — to grow to the name's full unwrapped width. Flex items
+     forcing the row — and with it the whole list — to grow to the name's
+     full unwrapped width. Flex items
      default to min-width:auto, i.e. "never smaller than my content," which
      is what was pushing the buttons wide enough to scroll the screen
      horizontally. */
@@ -5993,7 +5986,7 @@ textarea,
 
 /* Forced-replacement picker (FightScreen action-area, a fainted active slot)
    — the bench-row above already renders full CombatantCard boxes; this just
-   spaces the Confirm button below them, matching the move-grid's gap to the
+   spaces the Confirm button below them, matching the move list's gap to the
    resolve-button in other action-panel variants. */
 .replacement-confirm-button {
   flex-shrink: 0;
@@ -8445,39 +8438,33 @@ textarea,
   margin: 0;
 }
 
-/* Shared "sink to the bottom of the scroll area" wrapper — every redesigned
-   pick-a-hero/pick-a-reward screen (ForceEquipScreen, StatBoostScreen,
-   LevelUpScreen, NodeRewardScreen) uses this so its pressable grid/buttons
-   land near the player's thumb instead of floating near the top under the
-   header. Add as an extra class alongside the screen's own wrapper (e.g.
-   `.reward-panel.bottom-pinned`) or as a new wrapper around otherwise-sibling
-   content — .screen-scroll's own children keep their normal margins as
-   spacing since flex items don't collapse margins against each other. */
-.bottom-pinned {
+/* Shared "stand in the middle of the scroll area" wrapper — the offer lists
+   every pick-a-reward screen puts between its header and its CTA (the
+   Equipment Cache's three items, the Relic Shrine's three relics, the
+   Mentor's three disciplines, the move-replace offer).
+   ┄
+   This was `.bottom-pinned`, and it did what it said: `justify-content:
+   flex-end` plus a 30-42% `::before` spacer sank the list onto the CTA, on
+   the reachable-thumb argument. What that actually produced was three cards
+   pressed against the bottom bar under half a screen of empty sky (2026-08-29,
+   per user report) — the list is the subject of these screens, and a subject
+   shoved into the last third with nothing above it reads as an accident
+   rather than as a layout. Centred, it sits in the same band the hero grid
+   occupies on Level Up and the forced equip, which is what makes the reward
+   screens and the allocation screens read as one set.
+   ┄
+   Thumb reach is not lost with it: the CTA these lists sit above is
+   .resolve-button, 68px and lifted off the bottom edge, and it is the only
+   control on the screen that has to be pressed. Add as an extra class
+   alongside the screen's own wrapper (e.g. `.reward-panel.stage-centered`)
+   or as a new wrapper around otherwise-sibling content — .screen-scroll's own
+   children keep their normal margins as spacing since flex items don't
+   collapse margins against each other. */
+.stage-centered {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: center;
   min-height: 100%;
-}
-
-/* NodeRewardScreen only: guarantees the reward panel reads as living in the
-   bottom half of the screen even when its content (a short "Claim Xg" card,
-   say) is nowhere near tall enough to fill the leftover space flex-end
-   would otherwise leave — portrait mobile games read best with the reachable
-   controls low and the top of the screen kept clear. flex-shrink lets this
-   spacer give way instead of pushing content off-screen for the tallest
-   panel (Equipment Cache's 3-card list). */
-.node-reward-screen .bottom-pinned::before {
-  content: '';
-  flex: 1 1 42%;
-}
-
-/* Mentor's Hall (ClassNodeScreen) gets the same reachable-thumb treatment —
-   both its pick-a-Class and pick-a-hero phases sink to the bottom of the
-   scroll area instead of floating under the header. */
-.class-node-screen .bottom-pinned::before {
-  content: '';
-  flex: 1 1 30%;
 }
 
 .reward-panel .roster-grid {
@@ -8486,13 +8473,23 @@ textarea,
   margin-bottom: 0;
 }
 
-/* Move-replace offer's candidate grid (LevelUpScreen) — replicas of
-   FightScreen's combat move-button, laid out in the same 2-col .move-grid so
-   the actual pressable buttons sit low, right above the Confirm/Decline
-   actions, instead of a plain vertical list. */
-.reward-panel .move-grid {
+/* The move-replace offer's candidate list (LevelUpScreen) borrows
+   FightScreen's `.move-list` wholesale — the tiled rows, the hairline
+   dividers, the type-washed material, the hold charge — and trims the three
+   things that are specific to living inside the combat console:
+   its rows no longer split a fixed chassis height between them (there is no
+   chassis; they take their natural height), it no longer grows to fill, and
+   it no longer bleeds past .app-shell's padding, because here it sits inside
+   `.reward-panel` rather than spanning the screen. The radius is on the list
+   instead of the rows, which is what keeps four tiled facets reading as one
+   object. */
+.move-list.offer-replace-list {
+  flex: 0 0 auto;
   width: 100%;
-  margin-bottom: 0;
+  grid-auto-rows: auto;
+  margin: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
 /* Move-replace offer (LevelUpScreen): each existing move is its own tappable
@@ -8547,14 +8544,20 @@ textarea,
   margin-bottom: 12px;
 }
 
+/* Was `aspect-ratio: 1 / 1` — two 168px squares, which was affordable when
+   the offer above them was a one-line info panel and is not now that it is the
+   full move dossier over four full-width candidate rows (2026-08-29). At
+   .resolve-button's own height they still read as the pair of chunky either/or
+   slabs they were meant to be, and the panel fits the screen without
+   scrolling. */
 .moveoffer-button {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  aspect-ratio: 1 / 1;
+  gap: 2px;
+  min-height: 68px;
   border-radius: var(--radius-lg);
   padding: 10px 8px;
   text-align: center;
@@ -8737,12 +8740,12 @@ textarea,
    swaps to `.opening` to play the burst-open keyframe once, at which point
    the component swaps this block out for the real panel.
    Deliberately its own top-level sibling in .screen-scroll rather than
-   nested in .reward-panel.bottom-pinned like the rest of this screen's
-   panels: stacking .bottom-pinned's 42%-reserved spacer (NodeRewardScreen's
-   `.node-reward-screen .bottom-pinned::before`) on top of the panel's own
-   padding pushed this content taller than the viewport and forced
-   .screen-scroll to show a scrollbar. A plain centered flex box has no such
-   compounding, and dead center reads fine for a momentary loading beat. */
+   nested in .reward-panel.stage-centered like the rest of this screen's
+   panels: back when that wrapper sank its content with a 42%-reserved
+   `::before` spacer, stacking that on the panel's own padding pushed this
+   content taller than the viewport and forced .screen-scroll to show a
+   scrollbar. The spacer is gone now, but this stays its own box — dead centre
+   is what a momentary loading beat wants, with or without a wrapper. */
 .equip-cache-chest-screen {
   min-height: 100%;
   display: flex;
@@ -9101,7 +9104,7 @@ textarea,
 
 /* Always rendered (even before a discipline is picked, just disabled) so
    its height is reserved from the start — it used to only mount once
-   pickedClassId was set, which yanked the whole bottom-pinned panel
+   pickedClassId was set, which yanked the whole discipline panel
    upward the instant a card was tapped. Teal gradient/glow matches the
    rest of Mentor's Hall's --buff theming instead of the generic gold
    .resolve-button. */
@@ -9346,8 +9349,9 @@ textarea,
 
 /* Bigger "loot reveal" treatment (was a compact left-aligned icon+name row)
    — matches .evolution-banner's centered/glowing card language so this reads
-   as a moment, and its extra height eats into the dead space
-   .bottom-pinned otherwise leaves above the hero grid on a simple item. */
+   as a moment. No longer used by ForceEquipScreen itself — that screen's
+   item is the node header's title and glyph now — but still the shape the
+   victory summary's `.result-equip-spotlight` builds on. */
 .equip-spotlight {
   position: relative;
   overflow: hidden;
@@ -9543,8 +9547,27 @@ textarea,
   color: var(--accent);
 }
 
+/* The forced-equip gate hands straight off to Level Up, so its bottom control
+   is compared against that screen's Continue a fifth of a second later. At
+   .secondary-button's 50px it was 18px shorter, and since both screens centre
+   their hero grid in whatever is left between the header and the CTA, that
+   difference alone slid the whole roster (2026-08-29, per user report: "the
+   whole screen jumps up and it's awkward"). It takes .resolve-button's box —
+   height, padding, radius — and keeps the secondary's surface, weight and
+   type size, which is where the hierarchy between "trash this" and "go on"
+   actually lives. */
 .force-equip-screen .trash-button {
+  min-height: 68px;
+  padding: 20px 14px;
+  border-radius: var(--radius-lg);
   color: var(--enemy);
+}
+
+/* Matches .levelup-screen's, for the same reason the button above does: the
+   grid's resting height is the sum of every gap over it, and a 2px-per-gap
+   drift across four bands is visible when the two screens trade places. */
+.force-equip-screen {
+  gap: 8px;
 }
 
 .force-equip-screen .trash-button:hover {
@@ -9558,21 +9581,28 @@ textarea,
    *existing* moves below), this one never changes while the offer is open,
    so the player always sees what they'd be learning. The glow marks it as
    the screen's headline info, distinct from the plain replace-candidate
-   cards it sits above. */
+   cards it sits above.
+   ┄
+   It now carries the panel surface itself. `.move-detail-card` draws no
+   background or border of its own — everywhere else it is handed one by the
+   `.log-panel` it is portalled into — so a bare wrapper would have left the
+   dossier's text floating on the sky inside a glowing rectangle around
+   nothing. These are `.log-panel`'s own values, deliberately: the point of
+   showing the dossier here is that it is the same object the player opens
+   with a hold, and half a copy of it would not be. */
 .offer-move-highlight {
   width: 100%;
-  border-radius: 8px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 10px;
+  /* .reward-panel centres everything in it, which is right for the hero's
+     name and the swap arrow and wrong for a dossier — the card's own rows
+     (the stat strip, the payload lines, the flavour) are built as left-aligned
+     columns, and centring them is the one way to make it stop reading as the
+     card the player already knows. */
+  text-align: left;
   animation: offer-move-glow 2.4s ease-in-out infinite;
-}
-
-/* .move-info-panel's own margin-bottom (spacing it from a following sibling
-   in non-flex-gap contexts, e.g. the popup panels) is redundant here — this
-   wrapper's parent (.reward-panel) already spaces siblings via flex gap.
-   Left in, that margin became blank space inside .offer-move-highlight's
-   own box, which its animated box-shadow glow traced around too, reading as
-   a second, taller box below the visible bordered panel. */
-.offer-move-highlight .move-info-panel {
-  margin-bottom: 0;
 }
 
 @keyframes offer-move-glow {
@@ -11527,23 +11557,36 @@ textarea,
   animation: growth-pip-seal 0.45s var(--ease-spring);
 }
 
-/* The dropped item's stat chips and full passive text on ForceEquipScreen,
-   under the header and above the heroes — the contents of the `.equip-spotlight`
-   box, now standing on their own. */
-/* Its own band between the header and the grid, scrolling internally rather
-   than pushing the roster down: an item with three granted passives and one
-   with none must put the hero figures at the same height, or this screen
-   stops being the same screen as Level Up (2026-08-28 pass). Capped at
-   roughly a third of the stage so the grid always wins the argument. */
+/* The dropped item's stat chips and full passive text on ForceEquipScreen —
+   the contents of the `.equip-spotlight` box, now standing on their own.
+   ┄
+   Inside the header now, in the slot Level Up fills with its XP orb track
+   (2026-08-29) — it was a band of its own between the header and the grid,
+   which is one more row than Level Up has and put this screen's figures 33px
+   lower than that screen's. Still scrolls internally rather than pushing the
+   roster down: an item with three granted passives and one with none must put
+   the hero figures at the same height, or this screen stops being the same
+   screen as Level Up (2026-08-28 pass). The cap is in px rather than the old
+   32% because a percentage of the *header* is not the same quantity as a
+   percentage of the stage. */
 .node-item-effects {
-  flex: 0 1 auto;
   min-height: 0;
-  max-height: 32%;
+  max-height: 108px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  margin-top: 8px;
+}
+
+/* The item's icon rides beside its name as the title glyph rather than
+   standing above the eyebrow as 52px of `art`. .equip-spotlight-icon sizes
+   the sprite in em off its call site (.equip-icon-img), so this one
+   declaration is the whole resize. */
+.node-title-glyph .equip-spotlight-icon {
+  font-size: 26px;
+  margin-bottom: 0;
 }
 
 .node-item-effects .detail-modifier-list {

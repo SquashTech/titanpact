@@ -137,42 +137,48 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
           glowing, rarity-rimmed card carrying the icon, the name, the rarity
           line and every stat chip — a container around the one thing on the
           screen you cannot act on, sitting above the six things you can (see
-          docs/visual-language.md's ninth pass). The icon is now the header's
-          art and the name is its title. */}
+          docs/visual-language.md's ninth pass). The name is now the header's
+          title and the icon rides beside it as the title glyph, the same slot
+          the Gold Cache's coin and the Relic Shrine's gem use.
+          ┄
+          The icon used to be the header's `art` — a 52px figure standing above
+          the eyebrow — and what the effects are now inside used to be a fourth
+          band of its own between the header and the grid. Together those two
+          put this screen's hero figures 33px lower than the Level Up screen's,
+          and since a won fight hands equipment straight to Level Up, the whole
+          roster visibly jumped up the moment the player pressed Trash/Equip
+          (2026-08-29 pass). The chips sit in the header's `children` slot —
+          exactly where Level Up puts its XP orb track — so the two headers now
+          have the same four rows and the grid lands at the same height. */}
       <NodeHeader
-        compact
         eyebrow={current.bumped ? 'Needs a New Home' : 'New Equipment'}
-        art={<EquipmentIcon item={item} slot={item.slot} className="equip-spotlight-icon" />}
+        glyph={<EquipmentIcon item={item} slot={item.slot} className="equip-spotlight-icon" />}
         title={item.name}
         readout={`${RARITY_LABELS[item.rarity]} · ${EQUIP_SLOT_LABELS[item.slot]}${
           current.bumped ? ' — unequipped; give it to another hero, or trash it' : ''
         }`}
-      />
-
-      {/* Header → what the thing does → the roster → the CTA, the same four
-          bands in the same order as the Level Up screen (2026-08-28 pass).
-          This used to be a `.screen-scroll > .bottom-pinned` stack, which put
-          the grid at a different height on this screen than on every other
-          pick-a-hero screen depending on how much the item had to say about
-          itself. The effects block scrolls inside its own band instead, so
-          the figures always start at the same place. */}
-      <div className="node-item-effects">
-        {grants.some(([, amount]) => amount) && (
-          <div className="detail-modifier-list">
-            {grants
-              .filter(([, amount]) => amount)
-              .map(([stat, amount]) => (
-                <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-                  <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtGrant(amount)}
-                </span>
-              ))}
-          </div>
-        )}
-        {/* Full passive/status description (not just the "Grants: Name"
-            chip used elsewhere) — the more economical hero grid below
-            frees up room to spell out exactly what the item does. */}
-        <EquipmentEffectList item={item} />
-      </div>
+      >
+        {/* Capped and internally scrolling: an item with three granted
+            passives and one with none must still put the hero figures at the
+            same height. */}
+        <div className="node-item-effects">
+          {grants.some(([, amount]) => amount) && (
+            <div className="detail-modifier-list">
+              {grants
+                .filter(([, amount]) => amount)
+                .map(([stat, amount]) => (
+                  <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
+                    <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtGrant(amount)}
+                  </span>
+                ))}
+            </div>
+          )}
+          {/* Full passive/status description (not just the "Grants: Name"
+              chip used elsewhere) — the more economical hero grid below
+              frees up room to spell out exactly what the item does. */}
+          <EquipmentEffectList item={item} />
+        </div>
+      </NodeHeader>
 
       <HeroPickGrid count={run.roster.length} fill>
         {run.roster.map((entry) => {

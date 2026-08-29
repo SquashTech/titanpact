@@ -150,7 +150,15 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
       {!assignedTo && (
         <NodeHeader
           compact
-          ring
+          /* Only while the Mentor is at full size. The ring is 116px and the
+             figure drops to 48px the moment a discipline is confirmed, so on
+             the student-picking screen the dashed circle had nothing left to
+             frame and its lower arc cut straight through the eyebrow and the
+             title — a stray ellipse drawn over the line of text under it,
+             which is the exact failure NodeHeader's own `ring` note says to
+             avoid around a bare title (2026-08-29, per user report of a
+             visual bug at the top of the second screen). */
+          ring={!confirmedClass}
           art={
             <img
               src={mentorArt}
@@ -161,18 +169,42 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
           }
           eyebrow={confirmedClass ? 'Choose a Student' : 'The Mentor Awaits'}
           title={confirmedClass ? confirmedClass.name : "Mentor's Hall"}
-          glyph={confirmedClass ? undefined : <RunGlyph kind="class" />}
+          /* No glyph on either phase. The Mentor is already standing directly
+             above the title at 96px, so a second small class sprite wedged in
+             front of the words added nothing but a mark the eye tries to read
+             as part of the heading. */
           readout={
             confirmedClass
               ? eligibleRoster.length === 0
                 ? 'Every hero has already learned a Class — this teaching goes to waste.'
-                : `Choose who will study ${confirmedClass.name}. Hold a hero to review its sheet.`
+                : /* Not "Choose who will study X" any more: the eyebrow says
+                     Choose a Student, the title says X, and the chips below it
+                     say what X does — a sentence repeating both was the third
+                     printing of the same name on one header. */
+                  'Hold a hero to review its sheet before committing.'
               : "Tap a discipline to select it, then confirm — you'll choose who studies it next."
           }
-        />
+        >
+          {/* The discipline the player just committed to, carried through the
+              student pick. The title says its name, but the name alone is not
+              what the choice was made on — the grants are — and by this screen
+              the card that showed them is gone. Same slot, and the same chips,
+              the forced-equip gate uses for the item it is placing. */}
+          {confirmedClass && (
+            <div className="node-item-effects">
+              <div className="detail-modifier-list">
+                {fmtStatGrants(confirmedClass.statGrants).map(([stat, amount]) => (
+                  <span key={stat} className="detail-modifier-chip stat-buff">
+                    <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} +{amount}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </NodeHeader>
       )}
 
-      {/* Phase 2's grid is a direct child of the screen, not a `.bottom-pinned`
+      {/* Phase 2's grid is a direct child of the screen, not a `.stage-centered`
           block inside `.screen-scroll` — that is what puts the figures at the
           same height here as on Level Up, Equipment and the stat shrines
           (2026-08-28 pass). Phases 1 and 3 keep the scroll region: a list of
@@ -180,7 +212,7 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
           a roster to compare. */}
       {!confirmedClass ? (
         <div className="screen-scroll">
-          <div className="bottom-pinned">
+          <div className="stage-centered">
             <div className="class-shrine-list">
               {classChoices.map((cls) => (
                 <ClassChoiceCard

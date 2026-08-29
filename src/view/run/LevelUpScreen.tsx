@@ -16,7 +16,7 @@ import {
   ProgressionError,
   type EvolutionNode,
 } from '../../run/progression';
-import { MoveInfoPanel, MoveButtonReplica, useLongPress } from '../shared/MoveTile';
+import { MoveButtonReplica, useLongPress } from '../shared/MoveTile';
 import { healCasterForEntry } from '../shared/healCaster';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -384,7 +384,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
 
       {offer && offerEntry ? (
         <div className="screen-scroll">
-          <div className="bottom-pinned">
+          <div className="stage-centered">
             <div className="reward-panel">
               <OfferHeroHead
                 hero={heroes[offerEntry.heroId]}
@@ -392,9 +392,21 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
               />
               <p className="offer-hero-sub">Already knows {MOVE_CAP} moves — pick one to replace, or decline.</p>
               {/* The offered move itself — permanent for as long as the offer
-                  is open, so the player always sees what they'd be learning. */}
+                  is open, so the player always sees what they'd be learning.
+                  ┄
+                  This is the full move dossier (MoveDetailOverlay's
+                  MoveDetailCard), the same card a 500ms hold opens anywhere
+                  else in the game, rather than the one-line MoveInfoPanel that
+                  was here. The decision this screen exists for is "is this
+                  worth one of my four slots", and the panel answered it with a
+                  name, a power number and a flavor line — every mechanical
+                  fact that would actually settle it (what it applies, to whom,
+                  for how long, what it costs against the pool) was behind a
+                  hold the player had no reason to think was available on a
+                  readout. The dossier is what a player already knows how to
+                  read by this point in a run (2026-08-29 pass). */}
               <div className="offer-move-highlight">
-                <MoveInfoPanel
+                <MoveDetailCard
                   move={moves[offer.moveId]}
                   label="New move offered"
                   caster={healCasterForEntry(heroes[offerEntry.heroId], offerEntry, run.relics)}
@@ -403,7 +415,15 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
               <div className="offer-swap-arrow" aria-hidden="true">
                 ↓ replaces one of
               </div>
-              <div className="move-grid offer-replace-grid">
+              {/* `.move-list`, the fight screen's own move selector — one
+                  column of full-width rows tiled edge to edge and divided by a
+                  hairline, so the four moves read as one surface with four
+                  facets rather than as four loose tiles. It was a 2-column
+                  `.move-grid`, which is the shape FightScreen's selector had
+                  before the console-fill pass and nothing has used since; the
+                  modifier below trims the console-specific parts (filling the
+                  chassis, rows sharing its height) that have no chassis here. */}
+              <div className="move-list offer-replace-list">
                 {offerEntry.unlockedMoveIds.map((moveId) => (
                   <MoveButtonReplica
                     key={moveId}
