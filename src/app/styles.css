@@ -13821,3 +13821,125 @@ textarea,
   filter: drop-shadow(0 0 8px currentColor);
   opacity: 0.92;
 }
+
+/* ── Visit Location picker (view/run/LocationSelectOverlay.tsx) ──────────
+   The title screen's direct route into any one of the six Locations. Rows
+   rather than a grid: a location's identity is carried by its horizon band,
+   which is a wide silhouette (locationArt.tsx) and turns to mush in a square
+   tile. Each row sets its own --node-rgb, so the tint, the rim light on the
+   silhouette and the hover glow all come from the one property the rest of
+   the location system already keys off. */
+.location-select-panel {
+  gap: 10px;
+}
+
+.location-select-hint {
+  flex-shrink: 0;
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.location-select-list {
+  /* min-height: 0 is what lets this scroll under .log-panel's max-height —
+     see the note on .log-panel. */
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.location-select-row {
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 12px 14px;
+  text-align: left;
+  border: 1px solid rgba(var(--node-rgb), 0.35);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: linear-gradient(180deg, rgba(var(--node-rgb), 0.16), rgba(var(--node-rgb), 0.04) 62%),
+    var(--surface-raised);
+  box-shadow: var(--hairline), var(--elev-1);
+  transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out),
+    box-shadow var(--dur-mid) var(--ease-out);
+}
+
+.location-select-row:hover {
+  border-color: rgba(var(--node-rgb), 0.85);
+  transform: translateY(-1px);
+  box-shadow: var(--hairline-strong), var(--elev-2), 0 0 18px rgba(var(--node-rgb), 0.18);
+}
+
+.location-select-row:active {
+  transform: translateY(0);
+}
+
+/* The silhouette sits behind the text as the row's own skyline, not beside it
+   as a thumbnail — the same relationship it has to the arrival screen, an
+   eighth of the size. Held well back: this band is under a name and a faction
+   line that have to stay readable. */
+.location-select-art {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.location-select-art .location-horizon {
+  height: 62%;
+  color: rgba(6, 7, 11, 0.85);
+  opacity: 0.5;
+  filter: drop-shadow(0 -1px 0 rgba(var(--node-rgb), 0.3));
+  animation: none;
+}
+
+.location-select-body {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.location-select-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.location-select-faction {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(var(--node-rgb), 0.95);
+}
+
+.location-select-domains {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.location-select-domain .element-glyph {
+  width: 18px;
+  height: 18px;
+  filter: drop-shadow(0 0 6px currentColor);
+  opacity: 0.92;
+}
+
+/* Wild's Edge — the one null affinity, so it gets the word instead of glyphs
+   rather than an empty gap where three marks are everywhere else. */
+.location-select-domains-all {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}

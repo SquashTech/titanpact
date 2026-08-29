@@ -48,6 +48,7 @@ import { generateMap, type MapNodeType } from '../run/map';
 import { generateStarterOptions } from '../run/draft';
 import { generateEncounter, generateGoblinChiefEncounter, type EncounterNodeType, type Encounter } from '../run/enemyGen';
 import { generateItinerary, locationBias, locationForAct } from '../run/locations';
+import { locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
 import { setTrack } from '../audio/music';
 import { hasTrack } from '../audio/tracks';
@@ -160,6 +161,51 @@ function createStartingRun(heroIds: readonly string[]): RunState {
     // Wild's Edge, acts 2-5 without replacement from the rest.
     locationIds: generateItinerary(Math.floor(Math.random() * 2 ** 31)),
   };
+}
+
+/**
+ * A run standing in a **chosen** Location, with a random full roster — the
+ * title screen's "Visit Location" (LocationSelectOverlay). Everything past
+ * the first act is a normal run: the same map, the same act chain, the same
+ * arrival screen; only the two things that are normally drawn for you (which
+ * place Act 1 is, and who is on the roster) are supplied here.
+ *
+ * The itinerary deliberately breaks the one rule generateItinerary enforces —
+ * that Act 1 is always Wild's Edge (docs/locations.md §1) — because visiting
+ * a location IS the request. The rest of the acts keep the without-
+ * replacement property by drawing from every location except the chosen one,
+ * Wild's Edge included, so a Necropolis visit can still walk into the
+ * tutorial ground later rather than losing it from the run.
+ *
+ * A random SIX, not a drafted two: this entry point exists to see a place and
+ * fight in it, and a full roster is also the only way in from the title with
+ * a real bring-6-pick-4 squad select. They arrive at level 1 with their
+ * authored starting kits, exactly as a drafted hero does — an underlevelled
+ * party is a fair fight here, since encounter difficulty does not yet scale
+ * by act (CLAUDE.md open question, docs/run-loop.md §3).
+ */
+function createLocationVisitRun(locationId: string): RunState {
+  const heroIds = shuffled(Object.keys(heroes)).slice(0, ROSTER_CAP);
+  let run = createRunState(0, 40);
+  for (const heroId of heroIds) {
+    run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
+  }
+  const rest = shuffled(Object.keys(locations).filter((id) => id !== locationId));
+  return {
+    ...run,
+    map: generateMap(Math.floor(Math.random() * 2 ** 31)),
+    locationIds: [locationId, ...rest].slice(0, TOTAL_ACTS),
+  };
+}
+
+/** Fisher-Yates on a copy — the roster and itinerary rolls above, which are throwaway (unseeded) the same way every other entry-point roll in this file is. */
+function shuffled<T>(items: readonly T[]): T[] {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
 }
 
 /**
@@ -571,6 +617,17 @@ export function App() {
   }
 
   /**
+   * "Visit Location" (LocationSelectOverlay) — builds a run already standing
+   * in the chosen place (createLocationVisitRun) and enters through the
+   * normal arrival screen rather than jumping to the map, since the arrival
+   * beat is most of what there is to see about a Location.
+   */
+  function handleVisitLocation(locationId: string) {
+    setPlayerRun(createLocationVisitRun(locationId));
+    setScreen({ kind: 'actIntro' });
+  }
+
+  /**
    * Builds both sides via buildSandboxSide (src/run/sandbox.ts) and drops
    * straight into FightScreen. Unlike Quick Battle, onResolved below returns
    * to the Sandbox Battle screen (not title) — the whole point of this tool
@@ -627,6 +684,7 @@ export function App() {
           onStartRun={handleStartNewRun}
           onQuickBattle={handleQuickBattle}
           onOpenSandbox={handleOpenSandbox}
+          onVisitLocation={handleVisitLocation}
           onStartLevel4TestRun={handleStartLevel4TestRun}
           onStartStatusTestFight={handleStatusTestFight}
         />

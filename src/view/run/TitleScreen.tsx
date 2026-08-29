@@ -1,5 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { CompendiumScreen } from './CompendiumScreen';
+import { LocationSelectOverlay } from './LocationSelectOverlay';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 
 interface Props {
@@ -7,6 +8,8 @@ interface Props {
   onQuickBattle: () => void;
   /** Opens SandboxBattleScreen — a permanent team-builder tool, not a temp dev shortcut like the one below. */
   onOpenSandbox: () => void;
+  /** Opens the chosen Location directly, with a random party of six — see App.tsx createLocationVisitRun. */
+  onVisitLocation: (locationId: string) => void;
   /** ⚠️ TEMPORARY DEV/TEST — see App.tsx createLevel4TestRun. Remove this prop and its button together when Evolution work no longer needs a fast-forward. */
   onStartLevel4TestRun: () => void;
   /** ⚠️ TEMPORARY DEV/TEST — see src/run/statusTestFight.ts. Unkillable heroes whose entire movepool is status moves, for looking at the status-effect UI without playing to it. */
@@ -45,9 +48,17 @@ function useEmbers() {
  * "Compendium" opens a read-only hero browser (CompendiumScreen) — no run
  * state involved, so it's toggled locally rather than routed through App.tsx.
  */
-export function TitleScreen({ onStartRun, onQuickBattle, onOpenSandbox, onStartLevel4TestRun, onStartStatusTestFight }: Props) {
+export function TitleScreen({
+  onStartRun,
+  onQuickBattle,
+  onOpenSandbox,
+  onVisitLocation,
+  onStartLevel4TestRun,
+  onStartStatusTestFight,
+}: Props) {
   const [showCompendium, setShowCompendium] = useState(false);
   const [showReference, setShowReference] = useState(false);
+  const [showLocations, setShowLocations] = useState(false);
   const embers = useEmbers();
 
   return (
@@ -93,6 +104,9 @@ export function TitleScreen({ onStartRun, onQuickBattle, onOpenSandbox, onStartL
         <button className="title-secondary-button" onClick={onOpenSandbox}>
           Sandbox Battle
         </button>
+        <button className="title-secondary-button" onClick={() => setShowLocations(true)}>
+          Visit Location
+        </button>
         <button className="title-debug-button" onClick={onStartLevel4TestRun}>
           🧪 Test: Lv4 Squad <span className="title-debug-tag">temp</span>
         </button>
@@ -110,6 +124,7 @@ export function TitleScreen({ onStartRun, onQuickBattle, onOpenSandbox, onStartL
         </button>
       </div>
 
+      {showLocations && <LocationSelectOverlay onPick={onVisitLocation} onClose={() => setShowLocations(false)} />}
       {showCompendium && <CompendiumScreen onClose={() => setShowCompendium(false)} />}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
     </div>
