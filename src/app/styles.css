@@ -6523,6 +6523,126 @@ textarea,
   padding: 6px 8px;
 }
 
+/* --- Defensive matchups (TypeMatchups.tsx) ------------------------------
+
+   The one thing a pair of type chips cannot tell you: what actually hurts
+   this hero. Lives on all three hero sheets (HeroDetailOverlay,
+   HeroPreviewOverlay, CompendiumScreen), and its whole design constraint is
+   vertical — those sheets already run to a scroll on a phone, so this block
+   has to say fifteen types' worth of information in two lines.
+
+   What buys the two lines: the glyph-only chip (24px, no three-letter code —
+   the multiplier tag immediately left of a run of chips is doing the naming
+   that a row header would otherwise have to), a row that wraps rather than a
+   labelled line per tier, and 2px of vertical gap between the pair. A mono
+   type lands at two lines; the worst dual-typed hero in the roster wraps to
+   four, and four short lines is still less than the Buffs section spends on
+   one chip. */
+.matchup-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* align-items: flex-start (not center) so the "Weak"/"Resists" label stays
+   pinned to the first line of a run that wraps, rather than floating to the
+   vertical middle of two rows of chips and reading as if it labelled neither. */
+.matchup-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 3px;
+  min-height: 20px;
+}
+
+/* Fixed width, not intrinsic: "Weak" and "Resists" are different lengths, and
+   without this the two rows' chips start at different x and the block reads as
+   ragged rather than as a table of two. */
+.matchup-side {
+  flex: none;
+  width: 46px;
+  align-self: center;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 20px;
+}
+
+/* Colored by CONSEQUENCE for the hero on this sheet, matching SwitchInPanel's
+   toneFor rather than the move grid's eff-super/eff-resist: red is bad news
+   here, green is good, whichever side of 1x the multiplier sits on.
+
+   The tone is carried as a custom property as well as as `color` because the
+   extreme tier below inverts — it paints the tone as its FILL and takes a dark
+   ink — and `currentColor` in that rule's own background would resolve to the
+   dark ink it just set, not to the tone. */
+.matchup-bad {
+  --matchup-tone: var(--hp-low);
+  color: var(--hp-low);
+}
+
+.matchup-good {
+  --matchup-tone: var(--hp-high);
+  color: var(--hp-high);
+}
+
+/* One box holding the tag and the chips it governs, so a wrap can never leave
+   a "4x" stranded at the end of one line with its types on the next — the tag
+   is the group's first item, so it always keeps at least one chip company.
+
+   flex-wrap here as well as on the row: a single group can be long enough to
+   overrun the panel on its own (Ancient resists thirteen types), and without
+   this the group refuses to break and the whole sheet grows a horizontal
+   scrollbar. */
+.matchup-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  margin-right: 5px;
+}
+
+.matchup-mult {
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  padding: 1px 4px;
+  border-radius: var(--radius-xs);
+  background: var(--well);
+  box-shadow: inset 0 0 0 1px currentColor;
+  opacity: 0.75;
+}
+
+/* 4x and 1/4x — the two multipliers only a dual type can produce, and the
+   reason this block exists at all. Filled rather than outlined, at full
+   opacity, so the extreme tier separates from the ordinary 2x/half sitting
+   three pixels to its right without needing a labelled line of its own. */
+.matchup-extreme {
+  opacity: 1;
+  background: var(--matchup-tone);
+  color: #10131a;
+  box-shadow: none;
+}
+
+.matchup-none {
+  align-self: center;
+  font-size: 10px;
+  font-style: italic;
+  color: var(--text-dim);
+  line-height: 20px;
+}
+
+/* Only where the block is followed by something that isn't a section header:
+   in combat the HP/MP bars come next, and .detail-panel's 2px gap left them
+   sitting flush against the Resists row, reading as a third matchup line. The
+   other two sheets follow the block with a .detail-section-title, which brings
+   its own 10px and needs nothing here. */
+.matchup-block + .detail-resource-row {
+  margin-top: 8px;
+}
+
 .detail-close-hint {
   margin-top: 10px;
   text-align: center;

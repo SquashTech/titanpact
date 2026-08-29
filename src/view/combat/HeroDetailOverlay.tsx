@@ -14,6 +14,7 @@ import { EquipmentInfoPanel, EquipmentSlotGrid } from '../shared/EquipmentBox';
 import { MoveTile, swallowGhostClick } from '../shared/MoveTile';
 import { MoveDetailCard } from './MoveDetailOverlay';
 import { TypeBadge } from '../shared/TypeBadge';
+import { TypeMatchups } from '../shared/TypeMatchups';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { StatusGlyph, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
 import { passives } from '../../data/passives';
@@ -130,6 +131,12 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
             </div>
           )}
         </div>
+
+        {/* Above the stat bars, not below the moves: mid-fight this is the
+            question the sheet gets opened to answer, and the hero’s own type
+            chips are two lines up. */}
+        <div className="detail-section-title"><SectionGlyph name="matchups" /> Matchups</div>
+        <TypeMatchups types={effectiveTypes(hero, combatant)} />
 
         <div className="detail-resource-row">
           <div>

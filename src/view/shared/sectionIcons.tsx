@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 /**
- * The six section-header glyphs on the hero sheets (HeroDetailOverlay,
+ * The seven section-header glyphs on the hero sheets (HeroDetailOverlay,
  * HeroPreviewOverlay, CompendiumScreen).
  *
  * These were the last emoji left on those screens, and once the stat blocks
@@ -15,7 +15,7 @@ import type { ReactNode } from 'react';
  * file's per-stat color map: a section header is always its panel's gold
  * (`--accent`), and inheriting is the whole behaviour.
  *
- * Three of the six depict what sits underneath them rather than symbolising
+ * Three of the seven depict what sits underneath them rather than symbolising
  * it — the Stats bars ARE the bar block, the Buffs arrows ARE the ▲/▼ the
  * chips carry, the Equipment chest holds the three slots. That is the cheapest
  * way for a header to be legible without having to be taught.
@@ -69,6 +69,19 @@ export const SECTION_PATHS = {
       <rect x="8.9" y="1.6" width="6.2" height="2.1" rx="0.9" />
       <path d="M10.3 3.7h3.4v5.6l5.5 8.5a2.7 2.7 0 0 1-2.3 4.2H7.1a2.7 2.7 0 0 1-2.3-4.2l5.5-8.5Z" />
     </>
+  ),
+  /**
+   * A shield with a lightning bolt punched clean through it — the two halves
+   * of the Matchups block said in one shape: something is getting through, and
+   * something is holding. Drawn as a single evenodd path so the bolt is a hole
+   * in the shield rather than a second mass sitting on top of it; a filled bolt
+   * on a filled shield is one blob at 16px.
+   */
+  matchups: (
+    <path
+      fillRule="evenodd"
+      d="M12 1.8 20.6 4.9v7.2c0 4.9-3.5 8.4-8.6 10.1-5.1-1.7-8.6-5.2-8.6-10.1V4.9ZM12.9 6.4 8.6 12.9h2.6l-0.8 5 4.3-6.6h-2.6Z"
+    />
   ),
   /** Five-point star. Convex and asymmetric where the Intelligence spark is concave and four-pointed, and the two never share a surface. */
   passives: <path d="M12 1.6 14.7 8.9 22.5 9.2 16.4 14 18.5 21.5 12 17.2 5.5 21.5 7.6 14 1.5 9.2 9.3 8.9Z" />,

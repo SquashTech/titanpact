@@ -11,6 +11,7 @@ import { getTypeColor } from '../combat/typeColors';
 import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { SectionGlyph } from '../shared/sectionIcons';
 import { TypeBadge } from '../shared/TypeBadge';
+import { TypeMatchups } from '../shared/TypeMatchups';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { EQUIP_SLOT_LABELS, EQUIP_SLOT_ORDER, EquipmentEffectList, EquipmentIcon, fmtGrant, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 
@@ -40,6 +41,11 @@ function CompendiumHeroCard({ hero }: { hero: HeroDefinition }) {
           ))}
         </div>
       </div>
+
+      {/* hero.types, not an entry’s effective types — the Compendium shows the
+          hero as authored, so no Evolution graft exists to fold in here. */}
+      <div className="detail-section-title"><SectionGlyph name="matchups" /> Matchups</div>
+      <TypeMatchups types={hero.types} />
 
       <div className="detail-section-title"><SectionGlyph name="stats" /> Stats</div>
       <StatBars baseStats={hero.baseStats} />

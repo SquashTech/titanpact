@@ -18,6 +18,7 @@ import { MoveTile, swallowGhostClick, useLongPress } from '../shared/MoveTile';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { EquipmentInfoPanel, EquipmentSlotGrid } from '../shared/EquipmentBox';
 import { TypeBadge } from '../shared/TypeBadge';
+import { TypeMatchups } from '../shared/TypeMatchups';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { PassiveInfoPanel } from '../shared/passiveIcons';
 
@@ -145,6 +146,11 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
             </div>
           )}
         </div>
+
+        {/* Reads rosterEntryTypes, not hero.types, so an Evolution type-graft
+            moves the matchups the moment it lands. */}
+        <div className="detail-section-title"><SectionGlyph name="matchups" /> Matchups</div>
+        <TypeMatchups types={rosterEntryTypes(hero, entry)} />
 
         <div className="detail-section-title"><SectionGlyph name="stats" /> Stats</div>
         <StatBars baseStats={hero.baseStats} deltas={grants} />
