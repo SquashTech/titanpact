@@ -26,6 +26,9 @@ export type SfxId =
   | 'ui.select'
   | 'ui.denied'
   | 'ui.page'
+  | 'ui.commit'
+  // Run
+  | 'levelUp'
   // Combat
   | 'cast'
   | 'hit.physical'
@@ -102,6 +105,67 @@ export const sounds: Record<SfxId, SoundSpec> = {
     gain: 0.6,
     jitter: 0.05,
     voices: [{ wave: 'noise', gain: 0.5, attack: 0.05, decay: 0.2, filter: { type: 'bandpass', freq: 380, freqEnd: 2100, q: 0.9 } }],
+  },
+
+  /**
+   * The big commitment — sealing the starter draft, taking a Mentor's
+   * class, choosing an Evolution. Deliberately breaks the "UI sounds are
+   * quiet and under 120ms" rule above, and that is the whole point: it
+   * fires perhaps a dozen times in a run, so it is allowed to be a moment.
+   * Contour is `ui.confirm` written large — the same rise, but as a spelled
+   * out C-major arpeggio over a fifth in the bass, so it reads as an
+   * *arrival* rather than an acknowledgement.
+   */
+  'ui.commit': {
+    gain: 0.42,
+    jitter: 0.01,
+    voices: [
+      // The floor. Lands with the first note and opens a fifth under the
+      // rise, which is what stops the arpeggio sounding thin and chimey.
+      { wave: 'triangle', freq: 196, freqEnd: 262, detune: 8, gain: 0.34, attack: 0.006, hold: 0.06, decay: 0.5 },
+      { wave: 'sine', freq: 523, gain: 0.3, attack: 0.004, decay: 0.22 },
+      { wave: 'sine', freq: 784, gain: 0.26, attack: 0.004, decay: 0.24, delay: 0.075 },
+      { wave: 'sine', freq: 1046, gain: 0.22, attack: 0.004, decay: 0.5, delay: 0.15 },
+      // A detuned octave above the landing note, held long. This is the
+      // "special" — a shimmer that keeps ringing after the gesture is over.
+      { wave: 'triangle', freq: 1568, detune: 14, gain: 0.1, attack: 0.02, decay: 0.55, delay: 0.16 },
+      // Air opening underneath, slow-attacked so it swells into the landing
+      // instead of announcing itself.
+      { wave: 'noise', gain: 0.16, attack: 0.09, decay: 0.34, filter: { type: 'bandpass', freq: 700, freqEnd: 3600, q: 0.9 } },
+    ],
+  },
+
+  /**
+   * A hero gaining a level: a four-note fanfare in D, landing on the octave
+   * with a bell over it and the root arriving underneath.
+   *
+   * Timed to the card's charge animation (LevelUpScreen's LEVEL_UP_ANIM_MS)
+   * — it is fired when the level actually lands, so the run reads as the
+   * payoff of the charge rather than a second, competing gesture. Kept
+   * under a second: it plays once per Training Point, and there can be four
+   * of those in a row.
+   *
+   * `jitter` is near-zero on purpose. Every voice is scaled by the same
+   * pitch factor so a jitter only transposes the tune, never detunes it —
+   * but a fanfare that lands on a different key each time reads as sloppy,
+   * not alive.
+   */
+  levelUp: {
+    gain: 0.4,
+    jitter: 0.004,
+    voices: [
+      { wave: 'triangle', freq: 587, gain: 0.26, attack: 0.003, hold: 0.02, decay: 0.1 },
+      { wave: 'triangle', freq: 740, gain: 0.26, attack: 0.003, hold: 0.02, decay: 0.1, delay: 0.085 },
+      { wave: 'triangle', freq: 880, gain: 0.26, attack: 0.003, hold: 0.02, decay: 0.1, delay: 0.17 },
+      { wave: 'triangle', freq: 1175, detune: 10, gain: 0.3, attack: 0.004, hold: 0.07, decay: 0.55, delay: 0.255 },
+      // Bell two octaves over the landing note — the sparkle that says
+      // "something was gained" rather than "something happened".
+      { wave: 'sine', freq: 2349, gain: 0.1, attack: 0.004, decay: 0.6, delay: 0.26 },
+      // The root, arriving only on the last note. Held back so the first
+      // three notes stay light and the fourth has somewhere to land.
+      { wave: 'sine', freq: 293, gain: 0.34, attack: 0.006, decay: 0.6, delay: 0.25 },
+      { wave: 'noise', gain: 0.1, attack: 0.12, decay: 0.3, filter: { type: 'bandpass', freq: 1800, freqEnd: 5200, q: 1.4 } },
+    ],
   },
 
   /**

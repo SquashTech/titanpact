@@ -26,6 +26,7 @@ import { equipment } from '../../data/equipment';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
 import { EvolutionScreen } from './EvolutionScreen';
+import { playSfx } from '../../audio/sfx';
 
 interface Props {
   run: RunState;
@@ -243,6 +244,11 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
       if (err instanceof ProgressionError) return;
       throw err;
     }
+
+    // Only once the level is actually banked — a refused level-up above
+    // must stay silent, and the fanfare is timed to land on the end of the
+    // card's charge animation, which is what calls this.
+    playSfx('levelUp');
 
     // Evolution replaces the move offer, not adds to it
     // (docs/leveling-and-ranks.md "the hero is not offered a new move" at

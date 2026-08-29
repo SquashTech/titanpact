@@ -98,7 +98,15 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
           })}
         </div>
       </div>
-      <button className="resolve-button" disabled={!selectedPath} onClick={() => selectedPath && onChoose(selectedPath.id)}>
+      {/* The heaviest button in the run — the choice is permanent and gates
+          the movepool — so it takes the ceremonial commit sound rather than
+          the generic `resolve-button` confirm. */}
+      <button
+        className="resolve-button"
+        data-sfx="ui.commit"
+        disabled={!selectedPath}
+        onClick={() => selectedPath && onChoose(selectedPath.id)}
+      >
         {selectedPath ? `Confirm — Evolve into ${selectedPath.name}` : 'Choose a path to evolve'}
       </button>
     </div>

@@ -34,11 +34,15 @@ const CLASS_SFX: readonly (readonly [string, SfxId])[] = [
   ['detail-close-button', 'ui.back'],
   ['exit-button', 'ui.back'],
   ['bottom-action-back', 'ui.back'],
+  // The run-shaping commitments — sealing the starter draft, taking a
+  // Mentor's class. These carry `resolve-button` too, so they must be
+  // matched BEFORE it or the generic confirm wins.
+  ['draft-cta', 'ui.commit'],
+  ['class-shrine-confirm-button', 'ui.commit'],
   // The commit buttons: locking in a round, claiming a reward, buying.
   ['resolve-button', 'ui.confirm'],
   ['replacement-confirm-button', 'ui.confirm'],
   ['relic-shrine-claim-button', 'ui.confirm'],
-  ['class-shrine-confirm-button', 'ui.confirm'],
   ['moveoffer-button', 'ui.confirm'],
   // Choosing without committing.
   ['move-button', 'ui.select'],
