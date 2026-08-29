@@ -12,11 +12,14 @@ import { HubGlyph, NodeGlyph, type HubGlyphName } from '../shared/nodeIcons';
 import { locationForAct } from '../../run/locations';
 import type { LocationDefinition } from '../../data/locations';
 import { LocationAmbience } from '../shared/LocationSky';
+import { AudioSettings } from '../shared/AudioSettings';
 
 interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
   onSelectNode: (nodeId: string) => void;
+  /** Abandon the run and return to the title. Omit and the pause menu simply drops that entry — same contract FightScreen's own quit uses. */
+  onQuitToTitle?: () => void;
 }
 
 /**
@@ -496,10 +499,17 @@ function MapNodePreviewPopup({ node, onClose }: { node: MapNode; onClose: () => 
  * NODE_COLORS below) so the row reads as a small "hub signpost" rather than
  * generic pills.
  */
-const FOOTER_BUTTONS: readonly { key: HubGlyphName; label: string; color: string }[] = [
+const FOOTER_BUTTONS: readonly { key: HubGlyphName; label: string; color: string; iconOnly?: true }[] = [
   { key: 'relics', label: 'Relics', color: 'var(--magical)' },
   { key: 'roster', label: 'Roster', color: 'var(--ally)' },
-  { key: 'reference', label: 'Reference', color: 'var(--accent)' },
+  /* Icon-only, to make room for Menu without cramming four labels into a
+     ~394px row. Reference is the one that can afford it: it is a lookup
+     table consulted occasionally, while the other three are things the
+     player reaches for by habit — and its scroll is the most distinctive
+     shape of the four, so it survives losing its word better than they
+     would. Still labelled for screen readers (aria-label below). */
+  { key: 'reference', label: 'Reference', color: 'var(--accent)', iconOnly: true },
+  { key: 'menu', label: 'Menu', color: 'var(--text-dim)' },
 ];
 
 /**
@@ -581,10 +591,14 @@ function MapPlacard({ location }: { location: LocationDefinition }) {
  * after a win via LevelUpScreen (App.tsx), so by the time the player is back
  * on the map `run.levelUpPool` is always 0 — nothing to show in the header.
  */
-export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
+export function MapScreen({ run, onRunChange, onSelectNode, onQuitToTitle }: Props) {
   const [showRoster, setShowRoster] = useState(false);
   const [showReference, setShowReference] = useState(false);
   const [showRelics, setShowRelics] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  /* Two taps to abandon a run, the same arming FightScreen's own quit entry
+     uses: there is no save file, so a mis-tap here costs a 45-minute run. */
+  const [confirmingQuit, setConfirmingQuit] = useState(false);
   const [previewNode, setPreviewNode] = useState<MapNode | null>(null);
   // Hooks can't sit behind the `if (!map)` bail below, so both of these are
   // called unconditionally; a mapless run simply never registers a tile and
@@ -610,6 +624,10 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
     relics: () => setShowRelics(true),
     roster: () => setShowRoster(true),
     reference: () => setShowReference(true),
+    menu: () => {
+      setConfirmingQuit(false);
+      setShowMenu(true);
+    },
   };
 
   return (
@@ -728,19 +746,63 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
       </div>
 
       <div className="map-footer">
-        {FOOTER_BUTTONS.map(({ key, label, color }) => (
+        {FOOTER_BUTTONS.map(({ key, label, color, iconOnly }) => (
           <button
             key={key}
-            className="map-footer-button"
+            className={`map-footer-button${iconOnly ? ' is-icon-only' : ''}`}
             style={{ '--btn-color': color } as CSSProperties}
             onClick={openFooterOverlay[key]}
+            /* Only when the word is gone: with the label rendered, naming the
+               button here would make a screen reader say it twice — the same
+               reasoning that keeps the glyphs themselves aria-hidden. */
+            aria-label={iconOnly ? label : undefined}
+            title={iconOnly ? label : undefined}
           >
             <span className="map-footer-icon"><HubGlyph name={key} /></span>
-            <span className="map-footer-label">{label}</span>
+            {!iconOnly && <span className="map-footer-label">{label}</span>}
             {key === 'relics' && run.relics.length > 0 && <span className="map-footer-badge">{run.relics.length}</span>}
           </button>
         ))}
       </div>
+
+      {/* The map's pause menu. Deliberately the same markup as FightScreen's
+          Options panel (.log-overlay / .options-panel / .options-item) rather
+          than a second styling of the same idea — a player who opened it in a
+          fight should meet the identical thing here, and the shared audio
+          block is the whole reason this screen needed a menu at all: volume
+          and mute were previously reachable only mid-fight. */}
+      {showMenu && (
+        <div className="log-overlay" onClick={() => setShowMenu(false)}>
+          <div className="log-panel options-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="log-panel-header">
+              <span>Options</span>
+              <button className="log-close-button" onClick={() => setShowMenu(false)}>
+                ✕
+              </button>
+            </div>
+            <div className="options-list">
+              <AudioSettings />
+              <button className="options-item" onClick={() => setShowMenu(false)}>
+                <span className="options-item-glyph" aria-hidden="true">
+                  ▶
+                </span>
+                Back to Map
+              </button>
+              {onQuitToTitle && (
+                <button
+                  className={`options-item options-item-danger${confirmingQuit ? ' armed' : ''}`}
+                  onClick={() => (confirmingQuit ? onQuitToTitle() : setConfirmingQuit(true))}
+                >
+                  <span className="options-item-glyph" aria-hidden="true">
+                    {confirmingQuit ? '⚠' : '🚪'}
+                  </span>
+                  {confirmingQuit ? 'Tap again to abandon' : 'Quit Run — Return to Title'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {showRoster && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setShowRoster(false)} />}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}

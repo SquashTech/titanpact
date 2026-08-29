@@ -234,6 +234,20 @@ const HUB_PATHS = {
       <rect x="3.4" y="18.2" width="17.2" height="3.4" rx="1.7" />
     </>
   ),
+  /**
+   * Three bars — the same hamburger the fight screen's own Menu key wears as
+   * a text glyph (`☰`, FightScreen.tsx). Deliberately identical in meaning
+   * across the two screens: the pause menu is one idea, and a player who
+   * learns it in a fight should recognise it on the map without reading the
+   * label. Shares the scroll's x/width above so the two sit on one grid.
+   */
+  menu: (
+    <>
+      <rect x="3.4" y="4.6" width="17.2" height="3.2" rx="1.6" />
+      <rect x="3.4" y="10.4" width="17.2" height="3.2" rx="1.6" />
+      <rect x="3.4" y="16.2" width="17.2" height="3.2" rx="1.6" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type HubGlyphName = keyof typeof HUB_PATHS;

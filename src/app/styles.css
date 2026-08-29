@@ -10420,6 +10420,22 @@ textarea,
   color: inherit;
 }
 
+/* Reference, reduced to its scroll so a fourth key (Menu) fits the row
+   without four labels fighting for a ~394px width.
+
+   `flex: 0 0 auto` rather than staying in the 1fr share: an icon-only button
+   that kept an equal quarter would be a wide empty plate with a small mark
+   floating in it, which reads as a broken label rather than a deliberate
+   icon. Taking only what it needs also hands the width back to the three
+   buttons that still carry words.
+
+   The extra bottom padding replaces the label's own line box, so the glyph
+   stays optically centred and the row keeps one flat baseline. */
+.map-footer-button.is-icon-only {
+  flex: 0 0 auto;
+  padding: 6px 12px 5px;
+}
+
 .map-footer-badge {
   position: absolute;
   top: -6px;

@@ -1460,7 +1460,7 @@ export function FightScreen({
                   onClick={() => (confirmingQuit ? onQuitToTitle() : setConfirmingQuit(true))}
                 >
                   <span className="options-item-glyph" aria-hidden="true">
-                    {confirmingQuit ? '⚠' : '⏻'}
+                    {confirmingQuit ? '⚠' : '🚪'}
                   </span>
                   {confirmingQuit ? 'Tap again to abandon' : 'Quit Run — Return to Title'}
                 </button>

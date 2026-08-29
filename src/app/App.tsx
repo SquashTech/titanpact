@@ -49,6 +49,8 @@ import { generateStarterOptions } from '../run/draft';
 import { generateEncounter, generateGoblinChiefEncounter, type EncounterNodeType, type Encounter } from '../run/enemyGen';
 import { generateItinerary, locationBias, locationForAct } from '../run/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
+import { setTrack } from '../audio/music';
+import { hasTrack } from '../audio/tracks';
 import { pickSquad } from '../run/squad';
 import { advanceToNode, advanceToNextAct, grantCurrencyReward, grantUpgradeReward, grantContractReward } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
@@ -603,6 +605,20 @@ export function App() {
       ? null
       : locationForAct(playerRun.locationIds, playerRun.actNumber);
 
+  /* The whole music integration: the act's location IS the track. Because
+     `ambientLocation` is computed here, above the screen switch, it does not
+     change when the player walks from the map into a fight and back — so
+     neither does the music, which keeps playing across the transition rather
+     than restarting per screen. `setTrack` is idempotent on the id, so
+     running this on every render costs nothing (audio/music.ts).
+
+     A location with no authored track yet falls to null and fades out, which
+     is the honest result: silence, not the previous act's music following
+     the player into a place it doesn't belong to. */
+  useEffect(() => {
+    setTrack(hasTrack(ambientLocation?.id) ? ambientLocation.id : null);
+  }, [ambientLocation?.id]);
+
   return (
     <LocationProvider location={ambientLocation}>
     <div className="app-shell" ref={shellRef}>
@@ -664,7 +680,14 @@ export function App() {
         />
       )}
 
-      {screen.kind === 'map' && <MapScreen run={playerRun} onRunChange={setPlayerRun} onSelectNode={handleSelectNode} />}
+      {screen.kind === 'map' && (
+        <MapScreen
+          run={playerRun}
+          onRunChange={setPlayerRun}
+          onSelectNode={handleSelectNode}
+          onQuitToTitle={() => setScreen({ kind: 'title' })}
+        />
+      )}
 
       {screen.kind === 'squadSelect' && (
         <SquadSelectScreen
