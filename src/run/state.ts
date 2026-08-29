@@ -127,6 +127,18 @@ export interface RunState {
   fightsStarted: number;
   /** 1-indexed current act (docs/run-loop.md "Multi-act sequencing"); increments on every boss-node win until TOTAL_ACTS, at which point beating the boss ends the run instead. */
   actNumber: number;
+  /**
+   * Which Location each act happens in (docs/locations.md), ordered — index
+   * 0 is Act 1, which is always Wild's Edge. Drawn once at run start by
+   * src/run/locations.ts `generateItinerary` (without replacement, so a
+   * location is never visited twice in one run) and never mutated after.
+   *
+   * Empty on a RunState that never plays a run of its own — the throwaway AI
+   * rosters enemyGen.ts builds per fight, same as `map` being null there.
+   * `locationForAct` falls back rather than throwing on an empty list, so
+   * nothing downstream has to special-case those.
+   */
+  locationIds: readonly string[];
 }
 
 export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1): RunState {
@@ -141,6 +153,7 @@ export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1):
     visitedNodeIds: [],
     fightsStarted: 0,
     actNumber: 1,
+    locationIds: [],
   };
 }
 

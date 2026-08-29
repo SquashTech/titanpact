@@ -1,7 +1,9 @@
 # run-loop.md — The Escalating-Fight Run Loop
 
 > Module of the Titanpact `/docs` suite. Companion to `combat.md`, `progression.md`,
-> `mana.md`, `architecture.md`. The map/node structure that turns the single fixed
+> `mana.md`, `architecture.md`, and `locations.md` — which owns the layer directly
+> above this one: **which place** an act happens in, and how that biases the encounter
+> pools §2 describes. The map/node structure that turns the single fixed
 > demo fight into the roguelike run CLAUDE.md's north star describes: draft →
 > escalating fights → relics.
 
@@ -306,6 +308,13 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   above), no longer a spend surface and no longer backed by a stash.
 - **Per-act difficulty scaling.** Multi-act sequencing itself is now built (§3), but
   encounter difficulty doesn't yet scale with `actNumber` — see §3's note on this.
+- **Per-location choice.** Acts now happen in named Locations with their own
+  faction, type affinity and arrival screen (`locations.md`, 2026-08-28), but the
+  itinerary is currently drawn *for* the player. The decided design — **each act
+  offers 2 named locations and the player picks one** — is not built yet, and the
+  five non-Act-1 factions (Cultists, Fae, Automatons, Raiders, Undead) have no enemy
+  content, so `fight`/`battle` nodes still field Goblins in every act. Both are
+  tracked in `locations.md` §5, not here.
 - **Visual path rendering.** `MapScreen` renders nodes grouped by row with
   reachable/visited/current/locked states, but does not draw connecting lines between
   them — a cosmetic gap, same "lowest priority, purely cosmetic" bucket as the

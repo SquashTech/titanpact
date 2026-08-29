@@ -18,6 +18,7 @@ import { EventNodeScreen } from '../view/run/EventNodeScreen';
 import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
 import { heroes } from '../data/heroes';
 import { enemies, basicGoblins, BASIC_GOBLIN_IDS, GOBLIN_CHIEF_ID } from '../data/enemies';
+import { ActIntroScreen } from '../view/run/ActIntroScreen';
 import { relics } from '../data/relics';
 import { equipment } from '../data/equipment';
 import {
@@ -46,6 +47,7 @@ import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } fr
 import { generateMap, type MapNodeType } from '../run/map';
 import { generateStarterOptions } from '../run/draft';
 import { generateEncounter, generateGoblinChiefEncounter, type EncounterNodeType, type Encounter } from '../run/enemyGen';
+import { generateItinerary, locationBias, locationForAct } from '../run/locations';
 import { pickSquad } from '../run/squad';
 import { advanceToNode, advanceToNextAct, grantCurrencyReward, grantUpgradeReward, grantContractReward } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
@@ -58,6 +60,8 @@ import type { Squad } from '../run/squad';
 type Screen =
   | { kind: 'title' }
   | { kind: 'draft'; optionIds: string[] }
+  /** The per-act arrival beat (docs/locations.md §4) — reads its location off the run's itinerary and actNumber, so it carries no payload of its own. */
+  | { kind: 'actIntro' }
   | { kind: 'map' }
   | { kind: 'squadSelect'; nodeId: string; nodeType: EncounterNodeType; encounter: Encounter }
   | {
@@ -125,6 +129,9 @@ function createStartingRun(heroIds: readonly string[]): RunState {
   return {
     ...run,
     map: generateMap(Math.floor(Math.random() * 2 ** 31)),
+    // Drawn once, for the whole run (docs/locations.md §1): Act 1 is always
+    // Wild's Edge, acts 2-5 without replacement from the rest.
+    locationIds: generateItinerary(Math.floor(Math.random() * 2 ** 31)),
   };
 }
 
@@ -146,6 +153,7 @@ function createLevel4TestRun(): RunState {
   return {
     ...run,
     map: generateMap(Math.floor(Math.random() * 2 ** 31)),
+    locationIds: generateItinerary(Math.floor(Math.random() * 2 ** 31)),
   };
 }
 
@@ -300,7 +308,25 @@ export function App() {
       } else {
         const encounterPool = node.type === 'fight' ? basicGoblins : heroes;
         const heroCountOverride = node.type === 'fight' ? 2 : isSecondFight ? 2 : undefined;
-        encounter = generateEncounter(encounterKind, Math.floor(Math.random() * 2 ** 31), encounterPool, heroCountOverride);
+        // The act's Location weights which heroes show up (docs/locations.md
+        // §2) — all but one slot drawn from its affinity types, the last from
+        // anywhere. Recruitable-pool nodes only: the Goblin pool is the
+        // faction's, and factions are not type-themed yet ("The faction
+        // bill"). Wild's Edge has a null affinity and so returns no bias at
+        // all, which is exactly the uniform pick Act 1 had before this.
+        const heroCount = heroCountOverride ?? (encounterKind === 'boss' ? 2 : 4);
+        const bias =
+          encounterPool === heroes
+            ? locationBias(locationForAct(playerRun.locationIds, playerRun.actNumber), heroes, heroCount)
+            : undefined;
+        encounter = generateEncounter(
+          encounterKind,
+          Math.floor(Math.random() * 2 ** 31),
+          encounterPool,
+          heroCountOverride,
+          undefined,
+          bias
+        );
       }
       const isFirstFight = encounterKind === 'fight' && playerRun.fightsStarted === 0;
       if (isMobFight && isFirstFight) {
@@ -399,7 +425,9 @@ export function App() {
       next = grantContractReward(next, 1);
       if (next.actNumber < TOTAL_ACTS) {
         next = advanceToNextAct(next, Math.floor(Math.random() * 2 ** 31));
-        afterScreen = { kind: 'map' };
+        // ...and so does every act after the first: the arrival screen is the
+        // per-act beat, not an Act-1 title card (docs/locations.md §4).
+        afterScreen = { kind: 'actIntro' };
       } else {
         afterScreen = { kind: 'runComplete' };
       }
@@ -479,7 +507,9 @@ export function App() {
 
   function handleDraftConfirm(chosenIds: string[]) {
     setPlayerRun(createStartingRun(chosenIds));
-    setScreen({ kind: 'map' });
+    // Act 1's arrival screen sits between the draft and the map — the player
+    // should know where they are standing before they read the map of it.
+    setScreen({ kind: 'actIntro' });
   }
 
   /** ⚠️ TEMPORARY DEV/TEST — see createLevel4TestRun. Drops straight into the level-up/Evolution screen instead of the draft, since that's the whole point of this shortcut. */
@@ -591,6 +621,14 @@ export function App() {
       )}
 
       {screen.kind === 'draft' && <DraftScreen optionIds={screen.optionIds} onConfirm={handleDraftConfirm} />}
+
+      {screen.kind === 'actIntro' && (
+        <ActIntroScreen
+          run={playerRun}
+          location={locationForAct(playerRun.locationIds, playerRun.actNumber)}
+          onEnter={() => setScreen({ kind: 'map' })}
+        />
+      )}
 
       {screen.kind === 'map' && <MapScreen run={playerRun} onRunChange={setPlayerRun} onSelectNode={handleSelectNode} />}
 

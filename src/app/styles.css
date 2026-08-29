@@ -12969,3 +12969,418 @@ textarea,
     animation: none;
   }
 }
+
+/* --- The Location sky and the act arrival screen -------------------------
+   docs/locations.md §4. An act now happens in a *place* (Wild's Edge, the
+   Necropolis, the Molten Foundry), and the screen that announces it has to
+   make those places look nothing like each other.
+
+   It stands on the node stage — .act-intro-screen carries .node-screen, and
+   LocationSky's root carries .node-sky — so the full-bleed inset, the
+   stacking rule and the --node-rgb plumbing above all apply unchanged. What
+   this block adds is the two things a node's sky has no business knowing:
+   a horizon silhouette, and weather that is not always an updraft.
+
+   Everything here still takes its colour from the single --node-rgb the
+   screen sets on its own root, exactly as every other node screen does. */
+
+/* A scene, not a room: the wash is pushed to a low horizon glow with dark
+   above it, where .node-sky-wash pools its tint at the TOP edge (where "the
+   node's event" is). Overrides that rule rather than replacing the element,
+   so a location keeps the node stage's ground colour underneath. */
+.location-sky-wash {
+  background:
+    radial-gradient(ellipse 90% 34% at 50% 88%, rgba(var(--node-rgb), 0.3), transparent 70%),
+    radial-gradient(ellipse 150% 44% at 50% 100%, rgba(var(--node-rgb), 0.14), transparent 72%),
+    radial-gradient(ellipse 120% 60% at 50% -14%, rgba(var(--node-rgb), 0.08), transparent 66%),
+    linear-gradient(180deg, #07080d, #14161f);
+}
+
+/* The silhouette band (src/view/shared/locationArt.tsx). Near-black rather
+   than a tint of the location: it reads as land occluding the glow behind it,
+   which is what makes the glow read as distance. The faint tinted rim light is
+   what keeps it from going flat grey against a strongly coloured sky. */
+.location-horizon {
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  bottom: 0;
+  width: 104%;
+  /* Tall enough that a good half of the silhouette clears the Enter button —
+     the band is stretched to fill it, not scaled (see locationArt.tsx). */
+  height: 34%;
+  color: rgba(6, 7, 11, 0.94);
+  filter: drop-shadow(0 -1px 0 rgba(var(--node-rgb), 0.34));
+  animation: location-horizon-settle 1.1s var(--ease-spring) both;
+}
+
+@keyframes location-horizon-settle {
+  from {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.location-motes {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* One element, six motions. Shape defaults to a soft tinted dot; the
+   data-ambience rules below reshape it where a dot is wrong (rain wants a
+   streak, sigils want an edge). animation-name/-delay/-duration are authored
+   per particle in LocationSky.tsx. */
+.location-mote {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0%, rgba(var(--node-rgb), 0.9) 55%, transparent 76%);
+  box-shadow: 0 0 6px 1px rgba(var(--node-rgb), 0.4);
+  opacity: 0;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  --drift: 0px;
+}
+
+/* Rising kinds start below the frame, falling kinds start above it. Set on
+   the particle rather than inside each keyframe so the keyframes only have to
+   describe motion. */
+.location-sky[data-ambience="fireflies"] .location-mote,
+.location-sky[data-ambience="embers"] .location-mote,
+.location-sky[data-ambience="spores"] .location-mote {
+  bottom: -6%;
+}
+
+.location-sky[data-ambience="snow"] .location-mote,
+.location-sky[data-ambience="rain"] .location-mote,
+.location-sky[data-ambience="sigils"] .location-mote {
+  top: -6%;
+}
+
+/* Embers are the one kind that should look hot rather than tinted. */
+.location-sky[data-ambience="embers"] .location-mote {
+  background: radial-gradient(circle, #fff1cf 0%, rgba(var(--node-rgb), 0.95) 50%, transparent 76%);
+  box-shadow: 0 0 8px 2px rgba(var(--node-rgb), 0.55);
+}
+
+/* A streak, not a dot — the height is set per particle (LocationSky's
+   `stretch`), and the slant comes from the keyframe's translateX. */
+.location-sky[data-ambience="rain"] .location-mote {
+  border-radius: var(--radius-pill);
+  background: linear-gradient(180deg, transparent, rgba(var(--node-rgb), 0.85));
+  box-shadow: none;
+}
+
+/* Cold and matte: snow that glows reads as embers falling. */
+.location-sky[data-ambience="snow"] .location-mote {
+  background: radial-gradient(circle, #ffffff 0%, rgba(var(--node-rgb), 0.75) 60%, transparent 78%);
+  box-shadow: 0 0 5px 1px rgba(var(--node-rgb), 0.22);
+}
+
+/* An edge rather than a dot, turned 45deg — the field has to read as script
+   falling, not as weather. */
+.location-sky[data-ambience="sigils"] .location-mote {
+  border-radius: 1px;
+  background: linear-gradient(135deg, rgba(var(--node-rgb), 0.95), rgba(var(--node-rgb), 0.35));
+  box-shadow: 0 0 8px 1px rgba(var(--node-rgb), 0.45);
+}
+
+/* Big and soft: spores are the one kind you should notice individually. */
+.location-sky[data-ambience="spores"] .location-mote {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.85) 0%, rgba(var(--node-rgb), 0.55) 45%, transparent 74%);
+  box-shadow: 0 0 10px 3px rgba(var(--node-rgb), 0.24);
+}
+
+/* Travel is animated on `bottom`/`top` as a PERCENTAGE OF THE SKY, not as vh
+   in a transform. The app shell is a transform-scaled design canvas
+   (src/app/uiScale.ts), so viewport units do not agree with the container the
+   particles are actually falling through — which is why the existing
+   `title-ember-rise` animates `bottom` too. `transform` is left free for
+   drift, scale and rotation. */
+
+/* Wanders across on a switchback rather than a straight drift, and blinks —
+   the only ambience that should read as alive rather than as weather. */
+@keyframes loc-rise-wander {
+  0% {
+    bottom: -6%;
+    transform: translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.95;
+  }
+  30% {
+    transform: translateX(var(--drift));
+    opacity: 0.25;
+  }
+  55% {
+    opacity: 0.9;
+  }
+  70% {
+    transform: translateX(calc(var(--drift) * -0.6));
+    opacity: 0.4;
+  }
+  100% {
+    bottom: 106%;
+    transform: translateX(calc(var(--drift) * 0.4));
+    opacity: 0;
+  }
+}
+
+@keyframes loc-rise-fast {
+  0% {
+    bottom: -6%;
+    transform: translateX(0) scale(1);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.6;
+  }
+  100% {
+    bottom: 106%;
+    transform: translateX(var(--drift)) scale(0.4);
+    opacity: 0;
+  }
+}
+
+@keyframes loc-fall-sway {
+  0% {
+    top: -6%;
+    transform: translateX(0);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.9;
+  }
+  35% {
+    transform: translateX(var(--drift));
+  }
+  65% {
+    transform: translateX(calc(var(--drift) * -0.7));
+  }
+  90% {
+    opacity: 0.75;
+  }
+  100% {
+    top: 106%;
+    transform: translateX(calc(var(--drift) * 0.5));
+    opacity: 0;
+  }
+}
+
+@keyframes loc-fall-streak {
+  0% {
+    top: -6%;
+    transform: translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  85% {
+    opacity: 0.75;
+  }
+  100% {
+    top: 106%;
+    transform: translateX(var(--drift));
+    opacity: 0;
+  }
+}
+
+@keyframes loc-drift-up {
+  0% {
+    bottom: -6%;
+    transform: translateX(0) scale(0.7);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateX(var(--drift)) scale(1);
+  }
+  85% {
+    opacity: 0.5;
+  }
+  100% {
+    bottom: 106%;
+    transform: translateX(calc(var(--drift) * -0.5)) scale(0.8);
+    opacity: 0;
+  }
+}
+
+@keyframes loc-fall-pulse {
+  0% {
+    top: -6%;
+    transform: translateX(0) rotate(45deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.95;
+  }
+  38% {
+    opacity: 0.25;
+  }
+  62% {
+    opacity: 0.9;
+  }
+  88% {
+    opacity: 0.3;
+  }
+  100% {
+    top: 106%;
+    transform: translateX(var(--drift)) rotate(45deg);
+    opacity: 0;
+  }
+}
+
+/* Ambience is atmosphere, and atmosphere is exactly what a reduced-motion
+   setting is asking to be spared. The horizon and the wash still carry the
+   location's identity without it. */
+@media (prefers-reduced-motion: reduce) {
+  /* Hidden outright, not frozen: a paused falling particle sits at top: -6%,
+     which is off the sky entirely, so "animation: none" left snow and rain
+     invisible rather than still. */
+  .location-mote {
+    display: none;
+  }
+
+  .location-horizon,
+  .act-intro-numeral,
+  .act-intro-dossier {
+    animation: none;
+  }
+}
+
+/* --- The arrival screen's own content ----------------------------------- */
+
+/* The act number is the least important thing here — the player knows roughly
+   how far in they are — so it is drawn as a watermark behind the name they
+   actually need. Absolutely positioned, and the .node-screen stacking rule
+   gives it z-index 1, so the header after it in the DOM paints over it. */
+.act-intro-numeral {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(-42%);
+  text-align: center;
+  /* Serif on purpose. A roman numeral in the UI sans gives Act I a watermark
+     that reads as a stray vertical bar; the serifs are what make I, II and III
+     legible as letterforms, which is the whole reason the numeral is roman. */
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 176px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-indent: 0.08em;
+  color: rgba(var(--node-rgb), 0.11);
+  text-shadow: 0 0 60px rgba(var(--node-rgb), 0.22);
+  pointer-events: none;
+  animation: act-intro-numeral-in 1.4s var(--ease-out) both;
+}
+
+@keyframes act-intro-numeral-in {
+  from {
+    opacity: 0;
+    transform: translateY(-42%) scale(1.18);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-42%) scale(1);
+  }
+}
+
+/* The block the numeral is positioned against, floated between two flexible
+   spacers so the location's name sits in the middle of the sky rather than
+   crowding its top edge. */
+.act-intro-body {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+/* The header and the dossier paint over the watermark behind them. */
+.act-intro-body > *:not(.act-intro-numeral) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Unboxed, per the standing rule: the button is the only thing on this screen
+   you can act on, so it is the only rectangle. */
+.act-intro-dossier {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  animation: act-intro-dossier-in 0.7s var(--ease-out) 0.45s both;
+}
+
+@keyframes act-intro-dossier-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.act-intro-faction {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-dim);
+  letter-spacing: 0.02em;
+}
+
+.act-intro-faction strong {
+  color: rgb(var(--node-rgb));
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.act-intro-domains {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.act-intro-domains-label {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  opacity: 0.75;
+}
+
+.act-intro-domains-label.is-wide {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: rgba(var(--node-rgb), 0.9);
+  opacity: 1;
+}
+
+.act-intro-domain-marks {
+  display: flex;
+  gap: 14px;
+}
+
+/* The glyph in its own type colour, unboxed — a type chip's rectangle would
+   put three more containers on a screen that has one on purpose. */
+.act-intro-domain .element-glyph {
+  width: 26px;
+  height: 26px;
+  filter: drop-shadow(0 0 8px currentColor);
+  opacity: 0.92;
+}

@@ -14,6 +14,7 @@ import './relics.test';
 import './enemyGen.test';
 import './runProgress.test';
 import './classes.test';
+import './locations.test';
 import { run } from './harness';
 
 run();

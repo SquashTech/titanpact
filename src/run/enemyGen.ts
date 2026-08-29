@@ -43,6 +43,45 @@ function randomStatBonus(rng: RngState, statCount: number, amountEach: number): 
   return { bonus, nextState };
 }
 
+/**
+ * A weighting over an encounter's hero pool: fill `slots` of the encounter
+ * from `preferredIds` first, then draw whatever is left from the whole pool.
+ *
+ * Deliberately generic. This module knows "prefer these ids for this many
+ * slots" and nothing else — it is src/run/locations.ts that knows a Location
+ * has a type affinity and turns it into one of these (docs/locations.md
+ * "Weighting, not filtering"). Keeping the vocabulary generic here is what
+ * lets a later biaser (an act-difficulty curve, a relic that seeds the enemy
+ * pool) reuse the same seam without enemyGen growing a second concept.
+ */
+export interface PoolBias {
+  preferredIds: readonly string[];
+  /** How many of the encounter's slots to fill from `preferredIds`. Clamped to the encounter size and to how many preferred ids actually exist in the pool. */
+  slots: number;
+}
+
+/**
+ * `shuffledPick` over the whole pool, or — with a bias — a two-stage pick:
+ * the preferred ids first, then the remainder from everything not already
+ * taken. Threads the RNG through both stages so the result stays a pure
+ * function of the seed.
+ */
+function biasedPick(
+  rng: RngState,
+  heroPool: HeroLookup,
+  heroCount: number,
+  bias: PoolBias | undefined
+): { picked: string[]; nextState: RngState } {
+  const allIds = Object.keys(heroPool);
+  if (!bias || bias.slots <= 0) return shuffledPick(rng, allIds, heroCount);
+
+  const preferred = bias.preferredIds.filter((id) => id in heroPool);
+  const { picked: onTheme, nextState } = shuffledPick(rng, preferred, Math.min(bias.slots, heroCount));
+  const rest = allIds.filter((id) => !onTheme.includes(id));
+  const { picked: wildcards, nextState: afterWild } = shuffledPick(nextState, rest, heroCount - onTheme.length);
+  return { picked: [...onTheme, ...wildcards], nextState: afterWild };
+}
+
 export interface Encounter {
   run: RunState;
   squad: Squad;
@@ -63,19 +102,25 @@ export interface Encounter {
  * fight can exercise moves a hero would otherwise only reach several
  * levels in; real map nodes omit it and keep the authored kit. Any hero
  * missing from the lookup falls back to its starting kit.
+ *
+ * `bias` weights which heroes get drawn (PoolBias, above) — the current act's
+ * Location supplies it for the recruitable-pool node types, so a Necropolis
+ * Skirmish fields Spirit/Frost/Shadow heroes plus one wildcard. Omitted, the
+ * pick is uniform over the whole pool exactly as before.
  */
 export function generateEncounter(
   nodeType: EncounterNodeType,
   seed: number,
   heroPool: HeroLookup,
   heroCountOverride?: number,
-  movepools?: Record<string, readonly string[]>
+  movepools?: Record<string, readonly string[]>,
+  bias?: PoolBias
 ): Encounter {
   let rng = createRng(seed);
   const heroCount = heroCountOverride ?? (nodeType === 'boss' ? 2 : 4);
   const [statCount, amountEach] = nodeType === 'boss' ? [3, 20] : nodeType === 'elite' ? [2, 10] : [0, 0];
 
-  const { picked: heroIds, nextState: afterPick } = shuffledPick(rng, Object.keys(heroPool), heroCount);
+  const { picked: heroIds, nextState: afterPick } = biasedPick(rng, heroPool, heroCount, bias);
   rng = afterPick;
 
   let run = createRunState(0);
