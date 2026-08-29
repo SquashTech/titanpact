@@ -253,13 +253,23 @@ at the bottom, a crown at the top — it is simply the location's colour now.
 #### The name
 
 `MapScreen`'s `MapPlacard` etches the location's name and its faction into the
-well's **top-left corner**. That corner is free by construction, not by luck:
-every act ends in a Guild Hall funnel and a Guardian (`map.ts`
-`BASE_ROW_WIDTHS`), both width-1 rows, and a width-1 row pins to the centre
-column (`ROW_COLUMNS`) — so the top two rows never put a tile in an outer
-column in any act. It is unboxed, per `visual-language.md`'s rule that the only
-rectangles are controls, and `pointer-events: none` so a future map shape that
-does grow a tile there cannot lose a tap to it.
+well's **bottom-left corner**. It is unboxed, per `visual-language.md`'s rule
+that the only rectangles are controls, and `pointer-events: none` so no map
+shape can lose a tap to it.
+
+It sat top-left first, reasoning that the top two rows are width-1 and a
+width-1 row pins to the centre column (`ROW_COLUMNS`). True, and not enough —
+**pinning a tile to a column does not keep it inside one.** The Guardian is
+`tier-ancient`, whose 124px min-width exceeds the ~117px column, so it spills
+into both neighbours and ran under the placard on longer names. The bottom row
+is the act's opener, a `tier-encounter` tile at 92px that fits its column, so
+that corner is genuinely empty; the width cap is now sized to the free column
+rather than to the well, so a long name wraps rather than reaching whatever
+tier ends up beside it. Measured clearance across all six names: 19px at worst.
+
+Landing on the horizon silhouette turned out to be a gain rather than a cost —
+dark land is a better ground for lit text than open sky, and a name at the foot
+of the climb reads as a signpost at the place you walked in from.
 
 #### Every screen inside an act
 

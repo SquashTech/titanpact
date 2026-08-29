@@ -538,17 +538,23 @@ const FOOTER_BUTTONS: readonly { key: HubGlyphName; label: string; color: string
 const MAP_MOTE_DENSITY = 0.5;
 
 /**
- * The place's name, etched into the well's top-left corner (2026-08-29, per
+ * The place's name, etched into the well's bottom-left corner (2026-08-29, per
  * user direction). The map used to carry the location's whole look and never
  * its name — the header says `ACT 1/5` and nothing else, so the one word the
  * player could actually repeat back was only ever on a screen they had
  * already dismissed.
  *
- * The top-left is free by construction, not by luck: every act's map ends in
- * a Guild Hall funnel and a Guardian (src/run/map.ts BASE_ROW_WIDTHS), both
- * width-1 rows, and a width-1 row is pinned to the CENTRE column
- * (ROW_COLUMNS). The top two rows therefore never put a tile in the outer
- * columns in any act.
+ * It sat top-left first, on the reasoning that the top two rows are width-1
+ * and a width-1 row pins to the CENTRE column (ROW_COLUMNS). True, and not
+ * enough: pinning a tile to a column does not keep it inside one. The Guardian
+ * is `tier-ancient`, whose 124px min-width exceeds the ~117px column, so it
+ * spills into both neighbours and ran under the placard on longer names.
+ *
+ * The bottom row is the act's opening fight — also width-1, but a
+ * `tier-encounter` tile at 92px, which fits its column with room to spare. The
+ * corner is genuinely empty there, and the placard's width cap (styles.css) is
+ * now sized to that free column rather than to the well, so a long name wraps
+ * rather than reaching whatever tier ends up beside it.
  *
  * Etched rather than boxed, per visual-language's standing rule that the only
  * rectangles on a screen are the things you can act on — and `pointer-events:

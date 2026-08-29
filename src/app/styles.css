@@ -9769,21 +9769,34 @@ textarea,
    meant for the route.
 
    Sits INSIDE the well rather than in the header row above it, which is
-   already three run-stat chips edge to edge. The corner it takes is free by
-   construction — the top two rows of every act's map are width-1 and pin to
-   the centre column (MapScreen's ROW_COLUMNS) — and capped at 42% width so a
-   long name wraps into the empty column instead of running under the Guardian.
+   already three run-stat chips edge to edge.
+
+   BOTTOM-left, not top-left (2026-08-29, second pass). Every width-1 row pins
+   to the centre column (MapScreen's ROW_COLUMNS), so both corners looked
+   equally free — but a tile is not confined to its column. `tier-ancient` has
+   a 124px min-width against a ~117px column, so the Guardian spills into both
+   neighbours and ran under a top-left placard on longer names. The bottom row
+   is a `tier-encounter` tile at 92px, which stays inside its own column, so
+   the corner it leaves is genuinely empty.
+
+   `max-width` is the other half of the fix and the durable one: capped to
+   roughly the free column rather than 42% of the well, so a long name wraps
+   instead of reaching the tile no matter which tier ends up beside it.
+
+   Landing on the horizon silhouette is a bonus rather than a cost — dark land
+   is a better ground for lit text than open sky, and a name at the foot of the
+   climb reads as a signpost at the place you walked in from.
 
    On the FRAME, not in the scroller, so it stays put when a tall map scrolls
-   — and so it cannot add to the scrolled content's height. The offsets are
+   — and so it cannot add to the scrolled content's height. Offsets are
    measured from the frame's inner edge and therefore include what used to be
-   the scroller's padding (14/12) plus the 10/12 it sat at inside it. */
+   the scroller's own padding. */
 .map-placard {
   position: absolute;
-  top: 22px;
-  left: 22px;
+  bottom: 20px;
+  left: 20px;
   z-index: 1;
-  max-width: 42%;
+  max-width: 26%;
   display: flex;
   flex-direction: column;
   gap: 1px;
