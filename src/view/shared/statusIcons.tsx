@@ -108,7 +108,7 @@ const STATUS_PATHS: Record<string, ReactNode> = {
   ),
   /** A bare bolt. The Storm element deliberately carries a cloud as well (elementIcons.tsx) so that this one can stay bare — the two are on the field together whenever a Storm hero plants the mark. */
   Conduct: <path d="M13.8 1.8 5.6 13.4h4.8L8.8 22.6 18.4 10.2h-5.2Z" />,
-  /** A trefoil. The two stock poison pictures are both taken — the skull is the Ancient boss (nodeIcons.tsx) and the flask is the Statuses section header (sectionIcons.tsx) — and a trefoil says "hazard" without either, in three lobes fat enough to survive the badge. */
+  /** A trefoil. The two stock poison pictures are both taken — the skull is the Guardian boss (nodeIcons.tsx) and the flask is the Statuses section header (sectionIcons.tsx) — and a trefoil says "hazard" without either, in three lobes fat enough to survive the badge. */
   Poison: (
     <>
       <circle cx="12" cy="6.2" r="4.6" />

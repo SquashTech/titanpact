@@ -73,7 +73,7 @@ against `src/data/heroes.ts`'s 32 heroes:
 
 A Skirmish fields 4. Under a hard filter, Necropolis on its originally proposed
 Spirit/Frost pair matched **exactly 4 heroes** — it would have fielded the identical four
-every single time, and its Elite and Ancient would have drawn from that same closed set.
+every single time, and its Elite and Guardian would have drawn from that same closed set.
 Shadow was added as a third Necropolis type to open it up, at the cost of overlapping
 Blighted Shrines. Weighting rather than filtering is what keeps every location varied
 without blocking the feature on authoring twenty more heroes.
@@ -122,10 +122,10 @@ This is a known and accepted intermediate state, not an oversight. The affinity 
 costs zero new content and works today; faction rosters can land one at a time, each one
 flipping `LocationDefinition.factionEnemyIds` off the Goblin default. Scoped in §5.2.
 
-The upside buried in it: `run-loop.md` §4 still lists "a real Ancient boss hero" as
+The upside buried in it: `run-loop.md` §4 still lists "a real Guardian boss hero" as
 unbuilt, and locations supply the reason to author six of them rather than one. Each
-location's Ancient is its faction's apex. That is a far better authoring prompt than
-"make an Ancient."
+location's Guardian is its faction's apex. That is a far better authoring prompt than
+"make a Guardian."
 
 ## 4. The arrival screen
 
@@ -195,12 +195,12 @@ Roughly 5 basic + 1 leader per faction, ~30 `HeroDefinition`s in the shape
 different numbers — `run-loop.md` §3). Each faction that lands flips one field
 here and one branch in `handleSelectNode`; they can arrive one at a time.
 
-### 5.3 Per-location Ancients
+### 5.3 Per-location Guardians
 
-`run-loop.md` §4 still lists "a real Ancient boss hero" as unbuilt — the boss is
+`run-loop.md` §4 still lists "a real Guardian boss hero" as unbuilt — the boss is
 two fixture heroes with a bigger stat bonus. Locations are the reason to author
-six of them instead of one: each location's Ancient is its faction's apex. Blocked
-behind 5.2 in practice, since an Ancient without its faction reads as unrelated.
+six of them instead of one: each location's Guardian is its faction's apex. Blocked
+behind 5.2 in practice, since a Guardian without its faction reads as unrelated.
 
 ### 5.4 `exclusiveHeroIds` has no consumer
 
@@ -245,7 +245,7 @@ their strength (`MapScreen`, styles.css "The map well's Location"):
   animation off — the map is re-entered after every node, and a band that
   settles in each time reads as a transition rather than as land. It sits at the
   BOTTOM of the well, which on this screen is the act's origin: the route climbs
-  away from where you walked in, toward the Ancient.
+  away from where you walked in, toward the Guardian.
 
 The direction cue the old gold well carried survives the recolour — lit ground
 at the bottom, a crown at the top — it is simply the location's colour now.
@@ -254,7 +254,7 @@ at the bottom, a crown at the top — it is simply the location's colour now.
 
 `MapScreen`'s `MapPlacard` etches the location's name and its faction into the
 well's **top-left corner**. That corner is free by construction, not by luck:
-every act ends in a Guild Hall funnel and an Ancient (`map.ts`
+every act ends in a Guild Hall funnel and a Guardian (`map.ts`
 `BASE_ROW_WIDTHS`), both width-1 rows, and a width-1 row pins to the centre
 column (`ROW_COLUMNS`) — so the top two rows never put a tile in an outer
 column in any act. It is unboxed, per `visual-language.md`'s rule that the only

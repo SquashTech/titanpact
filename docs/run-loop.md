@@ -10,9 +10,10 @@
 Slay the Spire is the direct reference (per user direction, 2026-08-16): a branching
 map of nodes, most of which reward something (a Guild Hall shop, equipment, a relic,
 gold, or a hero upgrade), interspersed with fights and Elite fights, all culminating in
-an end-of-act boss fight against an **Ancient** — a nice fit, since `Ancient` is
-already `types-and-heroes.md`-locked as a rare, boss-only "near-total defensive wall"
-type.
+an end-of-act boss fight against a **Guardian**. Renamed from Ancient on 2026-08-29
+(per user direction): "Ancient" is being reserved for something later in a run, and now
+refers only to the `types-and-heroes.md`-locked type — a rare, boss-only "near-total
+defensive wall". The boss encounter itself is unchanged; only what the map calls it is.
 
 **This pass now chains 5 acts** (2026-08-17 revision, per user direction — see "Multi-act
 sequencing" below), each built from the uniform per-act shape in §1.
@@ -47,10 +48,10 @@ between; per user direction, the shape is now forced and uniform):
 - **Row 5 (funnel): a single `shop` node** every path converges on — a guaranteed last
   chance to spend gold before the boss, also the standard Slay the Spire "everything
   narrows before the boss" beat.
-- **Row 6: the single `boss` node** — the act's Ancient.
+- **Row 6: the single `boss` node** — the act's Guardian.
 
 The upshot: every act is exactly **Fight → pick 1 of 3 → Skirmish → pick 1 of 3 →
-(Elite or Battle) → Guild Hall → Ancient** — no path through an act ever skips a fight.
+(Elite or Battle) → Guild Hall → Guardian** — no path through an act ever skips a fight.
 
 Edges connect each node to 1-2 nodes in the next row within a small column window, with
 a repair pass guaranteeing every node (row 1+) has at least one incoming edge — no
@@ -86,6 +87,20 @@ Slay the Spire's real path-weaving generator, but it's now enough to prove branc
 *choice* within a row without the visual tangle.
 
 ## 2. Node types
+
+**What the map calls them (2026-08-29, per user direction).** The four encounter types
+share **two** player-facing names, not four. `fight` and `battle` both read **Monsters**;
+`skirmish` and `elite` both read **Skirmish**. The split is recruitability — the one fact
+a player needs before choosing a route — and difficulty is carried by colour and glyph
+instead (`MapScreen`'s `NODE_COLORS`, `nodeIcons.tsx`: `--enemy` the soft opener,
+`--ally` a standard fight, `--crit` the Elite spike; Monsters wear a claw, Skirmishes a
+helm, the Elite that helm under a crown). `boss` reads **Guardian**. The type *ids* below
+are unchanged; this is labelling only.
+
+The two channels are deliberately **not** redundant — name for recruitability, colour for
+difficulty. Making colour agree with the label instead was tried and reverted the same
+day: moving `battle` to `--enemy` put it next to `elite` on row 4, the act's one real
+difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 
 | Type | Resolution |
 |---|---|
@@ -162,10 +177,12 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   "on faint, heal the team") wait for the trigger-hook engine contract (CLAUDE.md
   "Architecture", README "Next steps" #3), which isn't built. Do not add a
   trigger/hook field to `RelicDefinition` speculatively before that contract lands.
-- **Boss = existing fixture heroes, scaled up, not new Ancient content.** No
-  hand-authored Ancient hero yet — `enemyGen.ts`'s boss encounter is 2 fixture heroes
-  with a bigger stat bonus. Authoring a real Ancient is future work, once this loop is
-  validated and real content authoring begins (README "Next steps" #5).
+- **Boss = existing fixture heroes, scaled up, not new Guardian content.** No
+  hand-authored Guardian hero yet — `enemyGen.ts`'s boss encounter is 2 fixture heroes
+  with a bigger stat bonus. Authoring a real Guardian is future work, once this loop is
+  validated and real content authoring begins (README "Next steps" #5). Note this is
+  also where a real **Ancient** would land, if the reserved name becomes its own
+  late-run encounter rather than a rename of this one.
 - **Non-recruitable enemy content (2026-08-16, second playtest).** The opening row's
   fight nodes were drawing AI squads from the same recruitable hero pool the player's
   own early roster is still built from — a structural 2v4 (2 starting heroes vs. 4
@@ -319,5 +336,5 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   reachable/visited/current/locked states, but does not draw connecting lines between
   them — a cosmetic gap, same "lowest priority, purely cosmetic" bucket as the
   feel-pass prototype's presentation layer (`architecture.md`).
-- **A real Ancient boss hero**, and real content generally — this pass still runs on
+- **A real Guardian boss hero**, and real content generally — this pass still runs on
   `/src/data`'s 6 fixture heroes (README "Next steps" #5, unchanged by this work).

@@ -9610,7 +9610,7 @@ textarea,
    strand the route on a bare well.
 
    The climb's direction survives the recolour: the ground the act began on is
-   lit at the BOTTOM, the Ancient's summit gets a narrow crown at the TOP, and
+   lit at the BOTTOM, the Guardian's summit gets a narrow crown at the TOP, and
    a vignette between them keeps the eye on the route rather than on the
    frame. What changed is that all of it is now the location's colour.
 
@@ -9772,7 +9772,7 @@ textarea,
    already three run-stat chips edge to edge. The corner it takes is free by
    construction — the top two rows of every act's map are width-1 and pin to
    the centre column (MapScreen's ROW_COLUMNS) — and capped at 42% width so a
-   long name wraps into the empty column instead of running under the Ancient.
+   long name wraps into the empty column instead of running under the Guardian.
 
    On the FRAME, not in the scroller, so it stays put when a tall map scrolls
    — and so it cannot add to the scrolled content's height. The offsets are
@@ -10106,7 +10106,7 @@ textarea,
 
 /*
  * Silhouette tiers (MapScreen's NODE_TIERS). The map has no icons, so the
- * only thing distinguishing an Ancient from a gold pickup at a glance is how
+ * only thing distinguishing a Guardian from a gold pickup at a glance is how
  * the tile is SHAPED — and shape survives being small in a way a drawing
  * doesn't. Pill = optional candy you pick up in passing. Plate = something
  * that stands in the route and has to be fought through. The two read apart

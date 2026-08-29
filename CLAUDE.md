@@ -124,12 +124,18 @@ what's still unimplemented:
 - Run structure (2026-08-16 sign-off, multi-act extension 2026-08-17): **a Slay the
   Spire-style branching map** — a uniform per-act shape of forced Fight → pick 1 of 3
   reward → Skirmish → pick 1 of 3 reward → pick 1 of 2 (Elite or Battle) → Guild Hall →
-  an end-of-act **Ancient** boss fight, no path ever skipping a fight, and no path ever
-  losing the Elite/Battle choice (`docs/run-loop.md`). **2026-08-26:** the reward row
+  an end-of-act **Guardian** boss fight, no path ever skipping a fight, and no path ever
+  losing the Elite/Battle choice (`docs/run-loop.md`). **2026-08-29:** the boss was
+  renamed Ancient → **Guardian**; "Ancient" is reserved for something later in a run and
+  is otherwise only the locked TYPE, which is untouched. The map's encounter labels are
+  now a two-word vocabulary — **Monsters** (not recruitable: `fight`, `battle`) and
+  **Skirmish** (recruitable: `skirmish`, `elite`) — with difficulty carried by colour and
+  glyph instead of by a third and fourth word. Node type *ids* are unchanged.
+  **2026-08-26:** the reward row
   feeding that choice **steers** — left→Elite, right→Battle, middle→both — so the choice
   is never removed, only priced against taking a side reward. **5 acts** are
   chained per run (`RunState.actNumber`, `TOTAL_ACTS`), each with a fresh map generated
-  once the previous act's Ancient falls; 1 Recruit Contract is granted at the end of
+  once the previous act's Guardian falls; 1 Recruit Contract is granted at the end of
   every act (replacing the removed `contractReward` map-node type — Recruit Contracts
   now come only from that per-act grant, a beaten enemy's contract claim, or a Guild
   Hall purchase). Encounter difficulty does not yet scale by act number — open question,

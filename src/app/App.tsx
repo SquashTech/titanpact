@@ -804,7 +804,7 @@ export function App() {
       {screen.kind === 'runComplete' && (
         <div className="result-overlay">
           <h2>Run Complete!</h2>
-          <p className="hint">You defeated the Ancient {TOTAL_ACTS} times. All acts are cleared.</p>
+          <p className="hint">You defeated the Guardian {TOTAL_ACTS} times. All acts are cleared.</p>
           <div className="result-buttons">
             <button onClick={handleStartNewRun}>Start New Run</button>
           </div>

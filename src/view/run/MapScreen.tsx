@@ -19,12 +19,35 @@ interface Props {
   onSelectNode: (nodeId: string) => void;
 }
 
+/**
+ * What each node calls itself on the map.
+ *
+ * The encounter names are a two-word vocabulary, not five distinct ones
+ * (2026-08-29, per user direction): **Monsters** is a fight you cannot recruit
+ * from, **Skirmish** is one you can. That is the single fact a player needs
+ * before picking a route, so it is the fact the label carries — which is why
+ * `fight`/`battle` share a name and `skirmish`/`elite` share a name, even
+ * though all four are distinct node types underneath.
+ *
+ * What separates the two members of each pair is difficulty, and difficulty is
+ * said in COLOR and GLYPH instead (NODE_COLORS, nodeIcons.tsx): the Elite-tier
+ * Skirmish is `--crit` and wears a crowned helm, so the harder of the two
+ * recruitable fights still reads as the spike on its row without needing a
+ * word the player has to learn separately. The two channels are deliberately
+ * NOT redundant — name for recruitability, color for difficulty — which is
+ * what keeps row 4's Elite-or-Battle choice legible in both dimensions at
+ * once (see NODE_COLORS for the version of this that did not work).
+ *
+ * `boss` is the act's **Guardian**. "Ancient" is deliberately not used here —
+ * it is reserved for something later in a run — and this is only the node's
+ * name, unrelated to the locked `Ancient` TYPE (CLAUDE.md), which is untouched.
+ */
 const NODE_NAMES: Record<MapNodeType, string> = {
-  fight: 'Fight',
+  fight: 'Monsters',
   skirmish: 'Skirmish',
   battle: 'Monsters',
-  elite: 'Elite',
-  boss: 'Ancient',
+  elite: 'Skirmish',
+  boss: 'Guardian',
   shop: 'Guild Hall',
   equipmentReward: 'Equipment',
   relicReward: 'Relic',
@@ -49,6 +72,18 @@ const NODE_NAMES: Record<MapNodeType, string> = {
  * player who's learned that vocabulary reading hero stat blocks recognizes
  * it on the map too. `event` gets a neutral gray — it's an unknown/mystery
  * placeholder, not tied to any stat.
+ *
+ * The four encounter types split the work with NODE_NAMES rather than
+ * duplicating it, which is why the 2026-08-29 rename left these alone. **The
+ * name carries recruitability** (Monsters vs Skirmish); **color carries
+ * difficulty** — `--enemy` the act's soft opener, `--ally` a standard fight,
+ * `--crit` the Elite spike. Two axes, one each, no redundancy.
+ *
+ * `battle` was briefly moved to `--enemy` during that rename, on the theory
+ * that color should agree with the label about recruiting. Reverted the same
+ * day: it put `battle` beside `elite` on row 4 — the act's one real difficulty
+ * choice — in two reds a shade apart (#d9534f vs #ff7043), costing more
+ * legibility on the row that matters most than the redundancy bought anywhere.
  */
 const NODE_COLORS: Record<MapNodeType, string> = {
   fight: 'var(--enemy)',
@@ -78,13 +113,16 @@ const NODE_COLORS: Record<MapNodeType, string> = {
  * "spell the math out" transparency (Battle Log, item stat-grant previews).
  * `battle`'s "Monsters" framing and non-recruitable pool is the same
  * 2026-08-22 decision as its map-facing rename (see src/run/map.ts).
+ *
+ * This is also where the two same-named pairs (NODE_NAMES) are told apart, so
+ * each line has to name its own difficulty rather than leaning on the label.
  */
 const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
   fight: 'A weak Monster squad (4v4, no bonus) — not recruitable. The act’s opener.',
   skirmish: 'A recruitable hero squad (4v4, no bonus). Win to claim a Recruit Contract.',
-  battle: 'A Monster squad (4v4, no bonus) — not recruitable, same pool as Fight.',
-  elite: 'A recruitable hero squad, each with +10 to 2 stats. Tougher than a Skirmish.',
-  boss: 'The act’s Ancient: 2 heroes, no bench, each with +20 to 3 stats. Ends the act.',
+  battle: 'A Monster squad (4v4, no bonus) — not recruitable, same pool as the act’s opener.',
+  elite: 'A recruitable hero squad, each with +10 to 2 stats — the act’s difficulty spike.',
+  boss: 'The act’s Guardian: 2 heroes, no bench, each with +20 to 3 stats. Ends the act.',
   shop: 'Guild Hall: spend gold on hero recruits, equipment, and relics before the boss.',
   equipmentReward: 'Pick 1 of 3 equipment items.',
   relicReward: 'Pick 1 of 3 team-wide relics.',
@@ -486,7 +524,7 @@ const FOOTER_BUTTONS: readonly { key: HubGlyphName; label: string; color: string
  *    thinned to `MAP_MOTE_DENSITY` and dimmed further in styles.css.
  * 3. **Horizon** — the same silhouette band (locationArt.tsx), sitting at the
  *    BOTTOM of the well, which on this screen is the act's origin: the route
- *    climbs away from the place you walked in from, toward the Ancient.
+ *    climbs away from the place you walked in from, toward the Guardian.
  *
  * Only 2 and 3 need real elements, and those two are the shared
  * `LocationAmbience` (LocationSky.tsx), which the node screens render as well.
@@ -507,7 +545,7 @@ const MAP_MOTE_DENSITY = 0.5;
  * already dismissed.
  *
  * The top-left is free by construction, not by luck: every act's map ends in
- * a Guild Hall funnel and an Ancient (src/run/map.ts BASE_ROW_WIDTHS), both
+ * a Guild Hall funnel and a Guardian (src/run/map.ts BASE_ROW_WIDTHS), both
  * width-1 rows, and a width-1 row is pinned to the CENTRE column
  * (ROW_COLUMNS). The top two rows therefore never put a tile in the outer
  * columns in any act.

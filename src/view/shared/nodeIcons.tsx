@@ -27,13 +27,16 @@ import { EQUIP_FORM_PATHS } from './equipmentIcons';
  *
  * - **Encounters say who you are fighting** — the one thing about a fight that
  *   an 11px label cannot carry. Monsters wear a claw, recruitable hero squads
- *   wear a helm, the Ancient wears a horned skull. `fight` and `battle`
+ *   wear a helm, the Guardian wears a horned skull. `fight` and `battle`
  *   deliberately share the claw: they draw from the same monster pool
  *   (src/run/map.ts, the 2026-08-22 Monsters/Skirmish split), so two glyphs
  *   would invent a distinction the game does not have. `elite` is the Skirmish
  *   helm under a crown — the same "the modifier names the family, the base
  *   shape names the member" grammar as Mana Pool / MP Regen, and true: an
- *   Elite IS a Skirmish squad with stat boosts.
+ *   Elite IS a Skirmish squad with stat boosts. The 2026-08-29 label rename
+ *   caught the words up to this grouping: both claw nodes now SAY "Monsters"
+ *   and both helm nodes say "Skirmish", so glyph and label finally agree on
+ *   which fights you can recruit from.
  * - **Stat and gear rewards reuse the exact glyph of the thing they grant.** A
  *   Vitality shrine wears the HP heart, a Mana shrine the droplet, a Regen
  *   shrine the droplet-with-chevron, a Weapon cache the Attack sword, an Armor
@@ -119,7 +122,7 @@ const NODE_PATHS: Record<MapNodeType, ReactNode> = {
    * and a jaw are what make a shape read as something that is looking back at
    * you, and nothing else on the route should. The sockets and nose are
    * knocked out (evenodd) rather than drawn: this glyph only ever renders on
-   * the Ancient plate, the largest tile on the screen, where holes hold.
+   * the Guardian plate, the largest tile on the screen, where holes hold.
    */
   boss: (
     <>
