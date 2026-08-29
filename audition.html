@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Titanpact — Sound Audition</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0d0f14;
+        --panel: #161a22;
+        --line: #2a303c;
+        --text: #e6e9ef;
+        --dim: #8a93a5;
+        --accent: #ffb454;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 24px 20px 64px;
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+      }
+      h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: 0.02em; }
+      p.sub { margin: 0 0 24px; color: var(--dim); max-width: 62ch; }
+      h2 {
+        font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em;
+        color: var(--dim); margin: 28px 0 10px; font-weight: 600;
+      }
+      .controls {
+        display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+        padding: 12px 14px; background: var(--panel);
+        border: 1px solid var(--line); border-radius: 8px;
+      }
+      .controls label { display: flex; align-items: center; gap: 8px; color: var(--dim); }
+      input[type="range"] { width: 140px; accent-color: var(--accent); }
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+      .card {
+        display: flex; flex-direction: column; gap: 8px; align-items: stretch;
+        padding: 10px; background: var(--panel);
+        border: 1px solid var(--line); border-radius: 8px;
+        cursor: pointer; text-align: left; color: inherit; font: inherit;
+        transition: border-color 120ms, transform 60ms;
+      }
+      .card:hover { border-color: var(--accent); }
+      .card:active { transform: translateY(1px); }
+      .card .id { font-weight: 600; letter-spacing: 0.01em; }
+      .card .meta { color: var(--dim); font-size: 12px; font-variant-numeric: tabular-nums; }
+      canvas { width: 100%; height: 48px; display: block; background: #0a0c10; border-radius: 4px; }
+      .row { display: flex; flex-wrap: wrap; gap: 8px; }
+      .row button {
+        padding: 8px 12px; background: var(--panel); color: var(--text);
+        border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
+        font: inherit; font-variant-numeric: tabular-nums;
+      }
+      .row button:hover { border-color: var(--accent); }
+      .hint { color: var(--dim); font-size: 12px; margin: 6px 0 0; }
+    </style>
+  </head>
+  <body>
+    <h1>Titanpact — Sound Audition</h1>
+    <p class="sub">
+      Every sound in the game, generated live. Tap a card to hear it; the waveform
+      under each name is its nominal shape rendered offline (no pitch jitter), so a
+      sound that feels thin or clipped can be diagnosed by looking as well as listening.
+    </p>
+
+    <div class="controls">
+      <label>Effects <input id="sfx-vol" type="range" min="0" max="1" step="0.01" /></label>
+      <label><input id="mute" type="checkbox" /> Mute</label>
+      <span class="meta" id="status">click anywhere to start audio</span>
+    </div>
+
+    <h2>Interface</h2>
+    <div class="grid" id="grid-ui"></div>
+
+    <h2>Combat</h2>
+    <div class="grid" id="grid-combat"></div>
+
+    <h2>In context</h2>
+    <div class="row" id="demos"></div>
+    <p class="hint">
+      These fire the same code path a real fight does, so they demonstrate how the
+      damage curve and type multipliers bend one base sound.
+    </p>
+
+    <script type="module" src="/src/audio/audition.ts"></script>
+  </body>
+</html>

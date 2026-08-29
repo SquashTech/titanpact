@@ -35,6 +35,7 @@ import { MoveDetailOverlay } from './MoveDetailOverlay';
 import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
+import { playBeatSfx } from '../../audio/beatSfx';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
 import { MoveKindBadge, TARGET_MODE_LABELS, healReadout, moveEffectSummary, useLongPress } from '../shared/MoveTile';
@@ -874,6 +875,9 @@ export function FightScreen({
 
     setCombat(next);
     appendLog(formatEvents(revealed.events, allCombatants, next.combatants, moves));
+    // Audio subscribes to the same beat the visuals do, at the same moment —
+    // one call, no timing knowledge anywhere near the engine (audio/beatSfx.ts).
+    playBeatSfx(revealed);
     setBeat(revealed);
     setBeatSeq((n) => n + 1);
     setPopups(Object.fromEntries(revealed.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className }])));
