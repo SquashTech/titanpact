@@ -328,6 +328,16 @@ screenshot, which is the standard method for this repo (`visual-language.md`);
 the map well was checked across all six locations, the node screens across
 three. The data and selection layers are tested (`test/locations.test.ts`).
 
+A second trap, this one on the map: the atmosphere layer has to reach back over
+the well's padding so its horizon meets the frame's real inside edge, and it
+did that with negative insets while it still lived inside `.map-scroll`. A
+negatively-inset child of a **scroll container** does not overhang — it becomes
+scrollable overflow, and it put 14px of vertical and 12px of horizontal scroll
+on a map deliberately sized to fit its canvas exactly. The fix was to split the
+well into a `.map-well` frame (wash, border, radius, atmosphere, placard) and a
+`.map-scroll` scroller inside it. Anything that must overhang the padding, or
+must stay put while the route scrolls, belongs on the frame.
+
 One trap the node screens hit that is worth repeating from the §5.7 list: the
 horizon band was authored at 22% of screen height first, which put the whole
 silhouette under the squad select's full-width "Start Fight" button with only

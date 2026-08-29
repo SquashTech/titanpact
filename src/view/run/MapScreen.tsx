@@ -452,9 +452,9 @@ function MapNodePreviewPopup({ node, onClose }: { node: MapNode; onClose: () => 
  * three always-on overlays (Relics/Roster/Reference) moved out of the
  * header into a flavorful footer row, using the same "fixed row of secondary
  * actions" containment pattern FightScreen's .bottom-bar already established
- * (CLAUDE.md architecture note in styles.css .bottom-bar) — .map-scroll keeps
- * the flex-fill/internal-scroll role, this row just sits below it instead of
- * inside the header. Each button gets its own accent color (mirroring
+ * (CLAUDE.md architecture note in styles.css .bottom-bar) — .map-well keeps
+ * the flex-fill role and .map-scroll inside it the internal scroll, this row
+ * just sits below both instead of inside the header. Each button gets its own accent color (mirroring
  * NODE_COLORS below) so the row reads as a small "hub signpost" rather than
  * generic pills.
  */
@@ -477,10 +477,11 @@ const FOOTER_BUTTONS: readonly { key: HubGlyphName; label: string; color: string
  *
  * 1. **Tint and lighting** — `--node-rgb` and `data-location`, both set on
  *    `.map-screen`, drive a per-location wash recipe (styles.css). That wash
- *    is `.map-scroll`'s own *background* rather than a layer in here, and
- *    deliberately so: a background is fixed to its element, so it survives a
- *    map tall enough to scroll, where an absolutely-positioned layer would
- *    slide up and strand the route on a bare well.
+ *    is `.map-well`'s own *background* rather than a layer in here — a
+ *    background is fixed to its element, so it survives a map tall enough to
+ *    scroll where a layer inside the scroller would slide up and strand the
+ *    route on a bare well. The layers below get the same immunity from
+ *    sitting on the frame rather than in the scroller (see the well markup).
  * 2. **Weather** — the location's own ambience keyframe (LocationMotes),
  *    thinned to `MAP_MOTE_DENSITY` and dimmed further in styles.css.
  * 3. **Horizon** — the same silhouette band (locationArt.tsx), sitting at the
@@ -584,84 +585,101 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
         </span>
       </div>
 
-      <div className="map-scroll screen-scroll">
+      {/*
+        The well is a FRAME with a scroller inside it, not a scroller that also
+        draws a frame. The two were one element until 2026-08-29, and that cost
+        the map a scrollbar: the atmosphere layer has to reach back over the
+        well's padding to put its horizon on the real inside edge, and a child
+        with negative insets inside a scroll container does not overhang — it
+        becomes scrollable overflow. 14px down and 12px across, on a map
+        already sized to fit its canvas exactly.
+
+        Splitting them fixes that by construction rather than by clamping:
+        atmosphere and placard belong to the frame, so they cannot enlarge the
+        scrolled content, and they now genuinely stay put when a tall map does
+        scroll — which is what the wash (a background, and so always fixed to
+        its own box) was already doing without them.
+      */}
+      <div className="map-well">
         <LocationAmbience location={location} density={MAP_MOTE_DENSITY} className="map-atmosphere" />
         <MapPlacard location={location} />
 
-        <div className="map-grid" ref={gridRef} style={{ '--map-rows': rowsTopDown.length } as CSSProperties}>
-          {/*
-            The route itself. Drawn under the tiles as one SVG in the grid's own
-            layout px (viewBox = measured size, so 1 user unit = 1 CSS px and
-            strokes need no non-scaling-stroke correction) rather than as
-            per-row connector stubs: a stub between rows can only say "these
-            rows are adjacent", while a real parent->child path says WHICH node
-            leads where — the only thing that makes a branching map plannable.
+        <div className="map-scroll screen-scroll">
+          <div className="map-grid" ref={gridRef} style={{ '--map-rows': rowsTopDown.length } as CSSProperties}>
+            {/*
+              The route itself. Drawn under the tiles as one SVG in the grid's own
+              layout px (viewBox = measured size, so 1 user unit = 1 CSS px and
+              strokes need no non-scaling-stroke correction) rather than as
+              per-row connector stubs: a stub between rows can only say "these
+              rows are adjacent", while a real parent->child path says WHICH node
+              leads where — the only thing that makes a branching map plannable.
 
-            Two passes, not one: every casing is laid down before any core, so
-            a dark casing can never cut a hole through a line that crosses it.
-            The casing is what keeps a route readable where it runs over the
-            well's warm pool at the bottom of the map.
-          */}
-          {geometry && (
-            <svg
-              className="map-edges"
-              viewBox={`0 0 ${geometry.width} ${geometry.height}`}
-              width={geometry.width}
-              height={geometry.height}
-              aria-hidden="true"
-            >
-              {edges.map((edge) => (
-                <path key={`casing:${edge.key}`} className="map-edge-casing" d={edge.d} />
-              ))}
-              {edges.map((edge) => (
-                <g
-                  key={edge.key}
-                  className={['map-edge-group', edge.traveled ? 'traveled' : '', edge.open ? 'open' : ''].filter(Boolean).join(' ')}
-                  style={{ '--edge-color': edge.color } as CSSProperties}
-                >
-                  <path className="map-edge" d={edge.d} />
-                  {/* Docking caps. They sit exactly on the tile edge, so they
-                      read as the line socketing into the stop rather than
-                      merely ending near it — and they hide the half-pixel a
-                      fractional layout can leave between stroke and border. */}
-                  <circle className="map-edge-cap" cx={edge.x1} cy={edge.y1} r={2.2} />
-                  {edge.open ? (
-                    // The route's only direction cue: an open edge arrives at
-                    // its destination pointing at it. Always drawn straight
-                    // up because the path's end tangent is always vertical
-                    // (buildEdges' control handles) — no rotation needed.
-                    <path className="map-edge-arrow" d={`M ${edge.x2 - 4.2} ${edge.y2 + 5} L ${edge.x2} ${edge.y2} L ${edge.x2 + 4.2} ${edge.y2 + 5}`} />
-                  ) : (
-                    <circle className="map-edge-cap" cx={edge.x2} cy={edge.y2} r={2.2} />
-                  )}
-                </g>
-              ))}
-            </svg>
-          )}
+              Two passes, not one: every casing is laid down before any core, so
+              a dark casing can never cut a hole through a line that crosses it.
+              The casing is what keeps a route readable where it runs over the
+              well's warm pool at the bottom of the map.
+            */}
+            {geometry && (
+              <svg
+                className="map-edges"
+                viewBox={`0 0 ${geometry.width} ${geometry.height}`}
+                width={geometry.width}
+                height={geometry.height}
+                aria-hidden="true"
+              >
+                {edges.map((edge) => (
+                  <path key={`casing:${edge.key}`} className="map-edge-casing" d={edge.d} />
+                ))}
+                {edges.map((edge) => (
+                  <g
+                    key={edge.key}
+                    className={['map-edge-group', edge.traveled ? 'traveled' : '', edge.open ? 'open' : ''].filter(Boolean).join(' ')}
+                    style={{ '--edge-color': edge.color } as CSSProperties}
+                  >
+                    <path className="map-edge" d={edge.d} />
+                    {/* Docking caps. They sit exactly on the tile edge, so they
+                        read as the line socketing into the stop rather than
+                        merely ending near it — and they hide the half-pixel a
+                        fractional layout can leave between stroke and border. */}
+                    <circle className="map-edge-cap" cx={edge.x1} cy={edge.y1} r={2.2} />
+                    {edge.open ? (
+                      // The route's only direction cue: an open edge arrives at
+                      // its destination pointing at it. Always drawn straight
+                      // up because the path's end tangent is always vertical
+                      // (buildEdges' control handles) — no rotation needed.
+                      <path className="map-edge-arrow" d={`M ${edge.x2 - 4.2} ${edge.y2 + 5} L ${edge.x2} ${edge.y2} L ${edge.x2 + 4.2} ${edge.y2 + 5}`} />
+                    ) : (
+                      <circle className="map-edge-cap" cx={edge.x2} cy={edge.y2} r={2.2} />
+                    )}
+                  </g>
+                ))}
+              </svg>
+            )}
 
-          {rowsTopDown.map((rowIds, rowIndex) => (
-            <div className="map-row" key={rowIndex}>
-              {rowIds.map((nodeId, indexInRow) => {
-                const node = map.nodes[nodeId];
-                return (
-                  <MapNodeButton
-                    key={nodeId}
-                    node={node}
-                    column={columnOf(indexInRow, rowIds.length)}
-                    isCurrent={run.currentNodeId === nodeId}
-                    isReachable={reachable.has(nodeId)}
-                    isVisited={visited.has(nodeId)}
-                    onSelect={() => onSelectNode(nodeId)}
-                    onPreview={() => setPreviewNode(node)}
-                    registerRef={(el) => {
-                      if (el) nodeRefs.current.set(nodeId, el);
-                      else nodeRefs.current.delete(nodeId);
-                    }}
-                  />
-                );
-              })}
-            </div>
-          ))}
+            {rowsTopDown.map((rowIds, rowIndex) => (
+              <div className="map-row" key={rowIndex}>
+                {rowIds.map((nodeId, indexInRow) => {
+                  const node = map.nodes[nodeId];
+                  return (
+                    <MapNodeButton
+                      key={nodeId}
+                      node={node}
+                      column={columnOf(indexInRow, rowIds.length)}
+                      isCurrent={run.currentNodeId === nodeId}
+                      isReachable={reachable.has(nodeId)}
+                      isVisited={visited.has(nodeId)}
+                      onSelect={() => onSelectNode(nodeId)}
+                      onPreview={() => setPreviewNode(node)}
+                      registerRef={(el) => {
+                        if (el) nodeRefs.current.set(nodeId, el);
+                        else nodeRefs.current.delete(nodeId);
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            ))}
+        </div>
         </div>
       </div>
 
