@@ -40,6 +40,7 @@ import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
 import { MoveKindBadge, TARGET_MODE_LABELS, healReadout, moveEffectSummary, useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
+import { AudioSettings } from '../shared/AudioSettings';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
@@ -1435,6 +1436,10 @@ export function FightScreen({
                 </span>
                 Reference — Types &amp; Statuses
               </button>
+              {/* Settings sit between the readers and the exits: they are
+                  neither a place to go nor a way out, and burying them under
+                  Quit would put a routine control below a destructive one. */}
+              <AudioSettings />
               <button className="options-item" onClick={() => setMenuOpen(false)}>
                 <span className="options-item-glyph" aria-hidden="true">
                   ▶

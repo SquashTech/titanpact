@@ -4856,6 +4856,140 @@ textarea,
   box-shadow: 0 0 0 1px rgba(217, 83, 79, 0.35), 0 0 18px rgba(217, 83, 79, 0.28);
 }
 
+/* --- Audio settings (shared/AudioSettings.tsx) ----------------------------
+ *
+ * A settings GROUP inside a menu of destinations. The mute row is a plain
+ * .options-item so it keeps the list's rhythm; the two faders hang under it
+ * in a recessed well, which is what says "these belong to the row above"
+ * without needing a heading to say it.
+ */
+.options-audio {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Right-aligned current value on the mute row — same trick the fader values
+   use below, so state reads down a consistent right edge. */
+.options-item-state {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.options-item-state.is-off {
+  color: var(--text-dim);
+}
+
+.audio-faders {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: opacity var(--dur-mid) var(--ease-out);
+}
+
+/* Muting doesn't move the faders — the levels are still whatever the player
+   set, and will be again the moment sound comes back. Dimming says
+   "inactive, not reset", which a disabled control would get wrong. */
+.audio-faders.is-muted {
+  opacity: 0.45;
+}
+
+.audio-fader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.audio-fader-label {
+  flex-shrink: 0;
+  width: 52px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+/* Fixed width and tabular figures so the track doesn't twitch sideways as
+   the number goes 5% → 50% → 100% mid-drag. */
+.audio-fader-value {
+  flex-shrink: 0;
+  width: 34px;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+/* 28px tall for the finger, not the eye — the visible track is the 4px
+   pseudo-element below, and the extra height is hit area. A slider sized to
+   its own artwork is a 4px target on a phone. */
+.audio-slider {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+/* Track and thumb have to be authored per-engine — there is no shared
+   pseudo-element for them, so these blocks are duplicates by necessity, not
+   by oversight. Keep them in sync. */
+.audio-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.audio-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* 16px thumb: comfortably past the ~44px-diagonal touch guidance once the
+   design canvas is scaled up on a real phone, without looking like a knob. */
+.audio-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.audio-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.audio-slider:active::-webkit-slider-thumb {
+  transform: scale(1.12);
+}
+
+.audio-slider:active::-moz-range-thumb {
+  transform: scale(1.12);
+}
+
 .options-note {
   margin: 0;
   font-size: 10px;
