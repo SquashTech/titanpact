@@ -45,10 +45,8 @@ the only major strategic axis decided by luck the player cannot see coming.
 
 > **Implemented so far:** the itinerary (Act 1 fixed, acts 2-5 drawn without replacement)
 > and the per-act arrival screen. The **1-of-2 choice UI is not built yet** — the
-> itinerary is currently drawn *for* the player rather than chosen *by* them.
-> `src/run/locations.ts` `generateItinerary` already produces the full ordered list, so
-> the choice screen is a matter of offering two candidates and committing one, not of
-> restructuring state.
+> itinerary is currently drawn *for* the player rather than chosen *by* them. Scoped in
+> §5.1.
 
 ## 2. Weighting, not filtering
 
@@ -98,17 +96,20 @@ wilderness.
 **The Guild Hall stays unfiltered on purpose.** Biasing Skirmishes narrows what a player
 can *claim* that act — that is the rare-hero mechanic working as intended. But it can also
 mean "I need a Fire hero and this act structurally cannot give me one." The Guild Hall is
-the pressure valve: it offers from the whole pool, plus the location's exclusives. So a
-location **adds** options rather than removing them, and the pressure a location applies
-stays on the combat side, where it is legible.
+the pressure valve: it offers from the whole pool, so the pressure a location applies stays
+on the combat side, where it is legible.
+
+The *intent* is that it also offers the location's exclusives on top, so a location **adds**
+options rather than removing them. That half is **not built** — `rollGuildHallOffers` has no
+idea where the run is. See §5.4.
 
 ### `exclusiveHeroIds`
 
 Each location carries a list of hero ids obtainable only while that location is current.
-The field exists and is threaded through; **it is empty on every location today.** Which
-heroes are rare and where they live is authoring work for when the real roster lands
-(`run-loop.md` §4, README "Next steps" #5) — the mechanism is here so that work is data
-entry rather than plumbing.
+The field exists and is threaded through; **it is empty on every location today, and nothing
+reads it** (§5.4). Which heroes are rare and where they live is authoring work for when the
+real roster lands (`run-loop.md` §4, README "Next steps" #5) — the schema is here so that
+work is data entry rather than plumbing.
 
 ### The faction bill
 
@@ -119,7 +120,7 @@ Automaton, Raider and Undead rosters are authored — roughly 30 enemy definitio
 
 This is a known and accepted intermediate state, not an oversight. The affinity layer (§2)
 costs zero new content and works today; faction rosters can land one at a time, each one
-flipping `LocationDefinition.factionEnemyIds` off the Goblin default.
+flipping `LocationDefinition.factionEnemyIds` off the Goblin default. Scoped in §5.2.
 
 The upside buried in it: `run-loop.md` §4 still lists "a real Ancient boss hero" as
 unbuilt, and locations supply the reason to author six of them rather than one. Each
@@ -155,10 +156,101 @@ location supplies three things the sky reads:
 No art assets are involved. Everything is vector + CSS, so a location costs a paragraph of
 data and a path, not a commissioned background.
 
-## 5. Open questions — do not silently resolve
+## 5. What is not built yet
 
-- **The 1-of-2 choice screen** (§1) is designed but unbuilt. Until it exists, acts 2-5 are
-  effectively random-without-replacement, which is explicitly *not* the decided design.
+Everything below is a known gap, not an oversight. Roughly in the order that
+would make the system worth the ceremony it already has.
+
+### 5.1 The 1-of-2 location choice — the headline gap
+
+§1 decided that **each act offers 2 named locations and the player picks one**.
+That is the whole reason this system beats a random roll, and it is the one part
+not written. Today `generateItinerary` draws all five up front and the player is
+simply told where they are.
+
+What it needs, and no more than this:
+
+- A `Screen` variant (`{ kind: 'locationChoice' }`) shown *before* `actIntro` on
+  every act after the first.
+- `RunState.locationIds` stops being a pre-drawn itinerary and becomes a
+  **history** of what has been visited, so the candidate draw excludes it. The
+  without-replacement bookkeeping already lives in `src/run/locations.ts`; it
+  moves from "draw all" to "draw 2 from what is left".
+- `locationForAct` keeps working unchanged — it already reads a list by index.
+
+Until it lands, acts 2-5 are effectively random-without-replacement, which is
+explicitly **not** the decided design. Do not read the current behaviour as a
+decision.
+
+### 5.2 Faction enemy content — the largest chunk of actual work
+
+`LocationDefinition.factionEnemyIds` is `null` on all six locations and **nothing
+reads it yet**. `App.tsx`'s `handleSelectNode` still hardcodes `basicGoblins` for
+`fight` and `generateGoblinChiefEncounter` for `battle`, so every act fields
+Goblins while the arrival screen names Cultists, Fae, Automatons, Raiders or
+Undead.
+
+Roughly 5 basic + 1 leader per faction, ~30 `HeroDefinition`s in the shape
+`enemies.ts` already uses (a Goblin does not need a different schema, it needs
+different numbers — `run-loop.md` §3). Each faction that lands flips one field
+here and one branch in `handleSelectNode`; they can arrive one at a time.
+
+### 5.3 Per-location Ancients
+
+`run-loop.md` §4 still lists "a real Ancient boss hero" as unbuilt — the boss is
+two fixture heroes with a bigger stat bonus. Locations are the reason to author
+six of them instead of one: each location's Ancient is its faction's apex. Blocked
+behind 5.2 in practice, since an Ancient without its faction reads as unrelated.
+
+### 5.4 `exclusiveHeroIds` has no consumer
+
+The field exists and is empty on every location, and **neither of the two
+consumers §3 describes is written**:
+
+- The Skirmish pool does not add them (`locationBias` only weights heroes
+  already in the pool; it never inserts one).
+- The Guild Hall does not add them either — `rollGuildHallOffers` takes the flat
+  `guildHallOffers` list built from `HeroDefinition.starter`, with no knowledge of
+  where the run currently is.
+
+So the "some heroes are only findable in certain locations" mechanic is currently
+a schema, not a behaviour. Both consumers are small; what they are waiting on is
+a real roster to declare rare in the first place.
+
+### 5.5 The location vanishes after the arrival screen
+
+It is announced once and then invisible for the rest of the act. `MapScreen`'s
+footer reads `ACT 1/5` and never the place's name; squad-select, the Guild Hall
+and every reward screen have no idea where they are. If a location is supposed to
+be pressuring the player's choices all act, the map is the surface that should be
+carrying its name and tint, not just the screen they already dismissed.
+
+### 5.6 Difficulty is location-blind
+
+A location changes *who* you fight, never how hard. That is deliberate for this
+pass, but it interacts with the still-open per-act scaling question — see §6.
+
+### 5.7 Constraints for anyone authoring a new location
+
+Two that are easy to violate and only visible on device:
+
+- **Nothing below y≈78 of the 400x110 horizon viewBox will be seen.** The band is
+  anchored to the bottom of the screen and the Enter button covers its lowest
+  quarter. Waterlines, ground detail and hull shapes drawn at the authored
+  "ground" line are drawn under a button.
+- **Nothing may span the full width at y=0.** The band's rim light
+  (`drop-shadow(0 -1px 0 …)`) turns any shape touching the top edge into a hard
+  horizontal line across the whole screen. This is what killed the Forbidden
+  Forest's original canopy; its trunks now run past y=0 and are clipped flat by
+  the SVG viewport instead.
+
+The arrival screen has **no automated coverage** — it was verified by screenshot
+across all six locations, which is the standard method for this repo
+(`visual-language.md`). The data and selection layers are tested
+(`test/locations.test.ts`).
+
+## 6. Open questions — do not silently resolve
+
 - **Does a location modify difficulty?** Right now it changes *who* you fight, never how
   hard. Per-act difficulty scaling is already an open question (`run-loop.md` §3); if it
   lands, whether locations carry their own difficulty weight — a "deep" location worth
