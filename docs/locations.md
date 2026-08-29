@@ -217,13 +217,41 @@ So the "some heroes are only findable in certain locations" mechanic is currentl
 a schema, not a behaviour. Both consumers are small; what they are waiting on is
 a real roster to declare rare in the first place.
 
-### 5.5 The location vanishes after the arrival screen
+### 5.5 The location reaches the map, and nothing past it
 
-It is announced once and then invisible for the rest of the act. `MapScreen`'s
-footer reads `ACT 1/5` and never the place's name; squad-select, the Guild Hall
-and every reward screen have no idea where they are. If a location is supposed to
-be pressuring the player's choices all act, the map is the surface that should be
-carrying its name and tint, not just the screen they already dismissed.
+**Closed for the map (2026-08-29).** The map well used to be one hardcoded warm
+gold in every act, which made a location a title card rather than a setting. It
+now carries the same three identity channels the arrival screen does, at a
+fraction of their strength (`MapScreen`'s `MapAtmosphere`, styles.css "The map
+well's Location"):
+
+- **Tint and lighting.** `--node-rgb` and `data-location` are set on
+  `.map-screen`; each location gets its own wash recipe. Tint alone would have
+  produced six versions of one place, so the recipes differ in *where the light
+  comes from* — open dusk over hills, a lit corridor between dark trunks, a hot
+  floor under a black ceiling, flat overcast with a squall band, a fog that lies
+  on the ground, a single altar bloom. That wash is the well's own `background`
+  rather than a layer, deliberately: a background is fixed to its element, so it
+  survives a map tall enough to scroll.
+- **Weather.** The same six ambience keyframes, at `MAP_MOTE_DENSITY` (half the
+  count) and half the opacity. `LocationSky` was split so `LocationMotes` can be
+  used without a sky; `data-ambience` moved onto the motes container, which is
+  the only ancestor both call sites share.
+- **Horizon.** The same silhouette band, shorter, dimmer and with the entrance
+  animation off — the map is re-entered after every node, and a band that
+  settles in each time reads as a transition rather than as land. It sits at the
+  BOTTOM of the well, which on this screen is the act's origin: the route climbs
+  away from where you walked in, toward the Ancient.
+
+The direction cue the old gold well carried survives the recolour — lit ground
+at the bottom, a crown at the top — it is simply the location's colour now.
+
+**Still owed.** The map carries the place's *look* but not its *name*: the
+header still reads `ACT 1/5` and nothing else. Squad-select, the Guild Hall and
+every reward screen remain location-blind. Whether a name belongs on the map at
+all is a real question — it costs the one horizontal band the run stats own —
+and the reward screens are the more interesting gap, since those are the
+choices a location is supposed to be pressuring.
 
 ### 5.6 Difficulty is location-blind
 
@@ -244,10 +272,10 @@ Two that are easy to violate and only visible on device:
   Forest's original canopy; its trunks now run past y=0 and are clipped flat by
   the SVG viewport instead.
 
-The arrival screen has **no automated coverage** — it was verified by screenshot
-across all six locations, which is the standard method for this repo
-(`visual-language.md`). The data and selection layers are tested
-(`test/locations.test.ts`).
+Both presentation surfaces — the arrival screen and the map well (§5.5) — have
+**no automated coverage**. Each was verified by screenshot across all six
+locations, which is the standard method for this repo (`visual-language.md`).
+The data and selection layers are tested (`test/locations.test.ts`).
 
 ## 6. Open questions — do not silently resolve
 

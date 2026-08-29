@@ -9592,26 +9592,177 @@ textarea,
    ascent reads as terrain viewed through a frame rather than nodes floating
    on the page.
 
-   Four layers, painted top to bottom, and all four exist to give the climb a
-   direction. The warm pool at the BOTTOM is the run's origin — where the
-   player started. The cold accent bloom at the TOP is the summit the Ancient
-   sits on. Between them a vignette pulls the corners down so the eye stays on
-   the route rather than on the frame's inside edges. An act therefore reads
-   as travel from one lit end of the well to the other even with every tile
-   covered up. */
+   --- The map well's Location (docs/locations.md §4) ---
+
+   The wash below used to be one hardcoded warm gold, identical in every act.
+   The arrival screen answers "where am I" once, loudly, and then the player
+   spends the rest of the act looking at THIS screen — so a fixed gold well
+   made a Location a title card rather than a setting: the Necropolis and the
+   Molten Foundry were the same screen with different fights behind it.
+
+   It is now driven by the act's Location, one of three identity channels
+   carried over from the arrival screen at a fraction of their strength —
+   tint (--node-rgb, set on .map-screen from LocationDefinition.tintRgb),
+   weather and horizon (both in .map-atmosphere below). The other two need
+   real elements; this one is deliberately still a BACKGROUND, because a
+   background is fixed to its own element and therefore survives a map tall
+   enough to scroll, where an absolutely-positioned layer would slide up and
+   strand the route on a bare well.
+
+   The climb's direction survives the recolour: the ground the act began on is
+   lit at the BOTTOM, the Ancient's summit gets a narrow crown at the TOP, and
+   a vignette between them keeps the eye on the route rather than on the
+   frame. What changed is that all of it is now the location's colour.
+
+   `position: relative` is what makes .map-atmosphere's insets work; it was
+   not needed while nothing was layered in here. */
 .map-scroll {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 14px 12px;
+  --map-well-pad-y: 14px;
+  --map-well-pad-x: 12px;
+  padding: var(--map-well-pad-y) var(--map-well-pad-x);
   background:
-    radial-gradient(ellipse 88% 22% at 50% 0%, rgba(224, 166, 60, 0.14) 0%, transparent 72%),
-    radial-gradient(ellipse 118% 58% at 50% 100%, #241b0e 0%, transparent 70%),
-    radial-gradient(ellipse 92% 74% at 50% 50%, transparent 46%, rgba(0, 0, 0, 0.55) 100%),
+    radial-gradient(ellipse 84% 22% at 50% 0%, rgba(var(--node-rgb), 0.2), transparent 74%),
+    radial-gradient(ellipse 96% 78% at 50% 50%, transparent 52%, rgba(0, 0, 0, 0.42) 100%),
+    radial-gradient(ellipse 128% 44% at 50% 102%, rgba(var(--node-rgb), 0.4), transparent 72%),
+    linear-gradient(180deg, rgba(var(--node-rgb), 0.05), rgba(var(--node-rgb), 0.13)),
     var(--well);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(var(--node-rgb), 0.26);
   border-radius: var(--radius-md);
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/*
+ * Six recipes, one per location. Tint and weather already differ; what these
+ * change is the LIGHT — where it comes from, how far it reaches, and how hard
+ * its edge is — because that is what actually separates a foundry floor from
+ * a snowfield when both are just a coloured glow at the bottom of a box.
+ *
+ * Each is a full override of the stack above rather than a patch on it: a
+ * place is one lighting idea, and three of these want a layer the base recipe
+ * does not have at all.
+ */
+
+/* Open country at dusk: the widest, softest ground light in the set, a warm
+   sky that still has some day left in it, and the lightest vignette — this is
+   the one location that should feel like distance rather than enclosure. */
+.map-screen[data-location="wildsEdge"] .map-scroll {
+  background:
+    radial-gradient(ellipse 120% 30% at 50% 0%, rgba(var(--node-rgb), 0.2), transparent 78%),
+    radial-gradient(ellipse 108% 88% at 50% 50%, transparent 62%, rgba(0, 0, 0, 0.34) 100%),
+    radial-gradient(ellipse 150% 50% at 50% 100%, rgba(var(--node-rgb), 0.32), transparent 76%),
+    radial-gradient(ellipse 96% 28% at 50% 104%, rgba(232, 174, 92, 0.26), transparent 72%),
+    linear-gradient(180deg, rgba(var(--node-rgb), 0.06), rgba(var(--node-rgb), 0.15)),
+    var(--well);
+}
+
+/* Enclosure. The vignette is the heaviest in the set and starts early, and
+   the only light is a narrow shaft down the centre — a canopy gap, not a
+   horizon. The route therefore climbs through the one lit corridor on the
+   screen, which is exactly what the Forbidden Forest should feel like. */
+.map-screen[data-location="forbiddenForest"] .map-scroll {
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.55), transparent 28%, transparent 72%, rgba(0, 0, 0, 0.55)),
+    radial-gradient(ellipse 38% 100% at 50% 6%, rgba(var(--node-rgb), 0.24), transparent 72%),
+    radial-gradient(ellipse 88% 76% at 50% 46%, transparent 34%, rgba(0, 0, 0, 0.5) 100%),
+    radial-gradient(ellipse 120% 40% at 50% 104%, rgba(var(--node-rgb), 0.3), transparent 70%),
+    linear-gradient(180deg, rgba(var(--node-rgb), 0.05), rgba(var(--node-rgb), 0.13)),
+    var(--well);
+}
+
+/* A furnace floor. The ground light is the tightest and hottest here — a hard
+   inner edge rather than a fade — with a second thin heat band above it, and
+   a near-black ceiling: the only light in a foundry comes off the metal. */
+.map-screen[data-location="moltenFoundry"] .map-scroll {
+  background:
+    radial-gradient(ellipse 64% 14% at 50% 0%, rgba(var(--node-rgb), 0.14), transparent 76%),
+    radial-gradient(ellipse 100% 74% at 50% 40%, transparent 40%, rgba(0, 0, 0, 0.52) 100%),
+    linear-gradient(0deg, rgba(var(--node-rgb), 0.18) 0%, transparent 36%),
+    radial-gradient(ellipse 96% 30% at 50% 100%, rgba(var(--node-rgb), 0.6) 0%, rgba(var(--node-rgb), 0.24) 48%, transparent 76%),
+    linear-gradient(180deg, rgba(var(--node-rgb), 0.04), rgba(var(--node-rgb), 0.12)),
+    var(--well);
+}
+
+/* Weather over open water: the brightest, flattest, coldest field in the set.
+   The light is up top (an overcast sky, not a ground glow), and a wide
+   diagonal sheen crosses the whole well — the squall the rain is falling out
+   of, said in one soft band rather than in the particles alone. */
+.map-screen[data-location="stormCoast"] .map-scroll {
+  background:
+    linear-gradient(104deg, transparent 16%, rgba(var(--node-rgb), 0.16) 44%, transparent 72%),
+    radial-gradient(ellipse 140% 44% at 50% -6%, rgba(var(--node-rgb), 0.3), transparent 74%),
+    radial-gradient(ellipse 106% 88% at 50% 50%, transparent 60%, rgba(0, 0, 0, 0.36) 100%),
+    radial-gradient(ellipse 140% 34% at 50% 104%, rgba(var(--node-rgb), 0.22), transparent 70%),
+    linear-gradient(180deg, rgba(var(--node-rgb), 0.11), rgba(var(--node-rgb), 0.06)),
+    var(--well);
+}
+
+/* A city under snow. No source of light anywhere — the glow is a flat,
+   even, cold haze lying ON the ground rather than rising off it, and the
+   crown at the top is nearly gone. The only location whose well has a hard
+   horizontal band in it: fog has a top edge, firelight does not. */
+.map-screen[data-location="necropolis"] .map-scroll {
+  background:
+    radial-gradient(ellipse 80% 18% at 50% 0%, rgba(var(--node-rgb), 0.14), transparent 76%),
+    radial-gradient(ellipse 104% 88% at 50% 50%, transparent 60%, rgba(0, 0, 0, 0.34) 100%),
+    linear-gradient(0deg, rgba(var(--node-rgb), 0.4) 0%, rgba(var(--node-rgb), 0.22) 16%, rgba(var(--node-rgb), 0.06) 34%, transparent 52%),
+    linear-gradient(180deg, rgba(var(--node-rgb), 0.07), rgba(var(--node-rgb), 0.13)),
+    var(--well);
+}
+
+/* Something is still lit down there. A tight altar bloom at the bottom
+   centre — much narrower than any other location's ground light, so it reads
+   as a single burning point rather than as terrain — under a cold violet
+   crown, with the darkest mid-field in the set between the two. */
+.map-screen[data-location="blightedShrines"] .map-scroll {
+  background:
+    radial-gradient(ellipse 90% 28% at 50% -4%, rgba(var(--node-rgb), 0.32), transparent 74%),
+    radial-gradient(ellipse 100% 80% at 50% 46%, transparent 42%, rgba(0, 0, 0, 0.44) 100%),
+    radial-gradient(ellipse 46% 26% at 50% 96%, rgba(var(--node-rgb), 0.6), transparent 72%),
+    radial-gradient(ellipse 132% 40% at 50% 108%, rgba(var(--node-rgb), 0.26), transparent 70%),
+    linear-gradient(180deg, rgba(var(--node-rgb), 0.07), rgba(var(--node-rgb), 0.16)),
+    var(--well);
+}
+
+/* The two identity channels that need real elements rather than a background:
+   the location's weather and its horizon silhouette (MapScreen's
+   `MapAtmosphere`). Reaches back OVER .map-scroll's padding with negative
+   insets and clips itself to the same radius, so the silhouette runs to the
+   well's real inside edge instead of stopping 12px short of it. Painted
+   before .map-grid in the DOM and pointer-events: none, so it can never take
+   a tap meant for a node. */
+.map-atmosphere {
+  position: absolute;
+  top: calc(var(--map-well-pad-y) * -1);
+  right: calc(var(--map-well-pad-x) * -1);
+  bottom: calc(var(--map-well-pad-y) * -1);
+  left: calc(var(--map-well-pad-x) * -1);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* The weather, held back. Same keyframes and the same per-kind shapes as the
+   arrival screen, at half the count (MAP_MOTE_DENSITY) and roughly half the
+   presence — this is a screen the player plans a route on, and a mote that
+   competes with an edge has stopped being atmosphere. */
+.map-atmosphere .location-motes {
+  opacity: 0.5;
+}
+
+/* The horizon on the map is DISTANCE, not the subject it is on the arrival
+   screen: shorter, dimmer, and with no entrance animation, because the map is
+   re-entered after every single node and a silhouette that settles in each
+   time would read as a transition rather than as land. */
+.map-atmosphere .location-horizon {
+  height: 27%;
+  color: rgba(6, 7, 11, 0.9);
+  opacity: 0.82;
+  filter: drop-shadow(0 -1px 0 rgba(var(--node-rgb), 0.26));
+  animation: none;
 }
 
 /* The route's coordinate space. Rows are a fixed height and nodes are pinned
@@ -13049,48 +13200,48 @@ textarea,
 /* Rising kinds start below the frame, falling kinds start above it. Set on
    the particle rather than inside each keyframe so the keyframes only have to
    describe motion. */
-.location-sky[data-ambience="fireflies"] .location-mote,
-.location-sky[data-ambience="embers"] .location-mote,
-.location-sky[data-ambience="spores"] .location-mote {
+.location-motes[data-ambience="fireflies"] .location-mote,
+.location-motes[data-ambience="embers"] .location-mote,
+.location-motes[data-ambience="spores"] .location-mote {
   bottom: -6%;
 }
 
-.location-sky[data-ambience="snow"] .location-mote,
-.location-sky[data-ambience="rain"] .location-mote,
-.location-sky[data-ambience="sigils"] .location-mote {
+.location-motes[data-ambience="snow"] .location-mote,
+.location-motes[data-ambience="rain"] .location-mote,
+.location-motes[data-ambience="sigils"] .location-mote {
   top: -6%;
 }
 
 /* Embers are the one kind that should look hot rather than tinted. */
-.location-sky[data-ambience="embers"] .location-mote {
+.location-motes[data-ambience="embers"] .location-mote {
   background: radial-gradient(circle, #fff1cf 0%, rgba(var(--node-rgb), 0.95) 50%, transparent 76%);
   box-shadow: 0 0 8px 2px rgba(var(--node-rgb), 0.55);
 }
 
 /* A streak, not a dot — the height is set per particle (LocationSky's
    `stretch`), and the slant comes from the keyframe's translateX. */
-.location-sky[data-ambience="rain"] .location-mote {
+.location-motes[data-ambience="rain"] .location-mote {
   border-radius: var(--radius-pill);
   background: linear-gradient(180deg, transparent, rgba(var(--node-rgb), 0.85));
   box-shadow: none;
 }
 
 /* Cold and matte: snow that glows reads as embers falling. */
-.location-sky[data-ambience="snow"] .location-mote {
+.location-motes[data-ambience="snow"] .location-mote {
   background: radial-gradient(circle, #ffffff 0%, rgba(var(--node-rgb), 0.75) 60%, transparent 78%);
   box-shadow: 0 0 5px 1px rgba(var(--node-rgb), 0.22);
 }
 
 /* An edge rather than a dot, turned 45deg — the field has to read as script
    falling, not as weather. */
-.location-sky[data-ambience="sigils"] .location-mote {
+.location-motes[data-ambience="sigils"] .location-mote {
   border-radius: 1px;
   background: linear-gradient(135deg, rgba(var(--node-rgb), 0.95), rgba(var(--node-rgb), 0.35));
   box-shadow: 0 0 8px 1px rgba(var(--node-rgb), 0.45);
 }
 
 /* Big and soft: spores are the one kind you should notice individually. */
-.location-sky[data-ambience="spores"] .location-mote {
+.location-motes[data-ambience="spores"] .location-mote {
   background: radial-gradient(circle, rgba(255, 255, 255, 0.85) 0%, rgba(var(--node-rgb), 0.55) 45%, transparent 74%);
   box-shadow: 0 0 10px 3px rgba(var(--node-rgb), 0.24);
 }

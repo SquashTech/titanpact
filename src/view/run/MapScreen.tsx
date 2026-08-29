@@ -9,6 +9,10 @@ import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { RelicsOverlay } from './RelicsOverlay';
 import { ResourceMark } from '../shared/RunGlyph';
 import { HubGlyph, NodeGlyph, type HubGlyphName } from '../shared/nodeIcons';
+import { locationForAct } from '../../run/locations';
+import type { LocationDefinition } from '../../data/locations';
+import { LocationMotes } from '../shared/LocationSky';
+import { LocationHorizon } from '../shared/locationArt';
 
 interface Props {
   run: RunState;
@@ -462,6 +466,48 @@ const FOOTER_BUTTONS: readonly { key: HubGlyphName; label: string; color: string
 ];
 
 /**
+ * The map well's back layer — the act's Location, standing behind the route
+ * (docs/locations.md §4).
+ *
+ * The arrival screen already answers "where am I" once, loudly, and then the
+ * player spends the rest of the act on a well that used to look the same in
+ * every location: one hardcoded warm-gold pool, gold at the bottom, gold at
+ * the top. That made the place a title card rather than a setting. This layer
+ * moves the same three identity channels the arrival screen uses onto the map,
+ * at a fraction of the strength:
+ *
+ * 1. **Tint and lighting** — `--node-rgb` and `data-location`, both set on
+ *    `.map-screen`, drive a per-location wash recipe (styles.css). That wash
+ *    is `.map-scroll`'s own *background* rather than a layer in here, and
+ *    deliberately so: a background is fixed to its element, so it survives a
+ *    map tall enough to scroll, where an absolutely-positioned layer would
+ *    slide up and strand the route on a bare well.
+ * 2. **Weather** — the location's own ambience keyframe (LocationMotes),
+ *    thinned to `MAP_MOTE_DENSITY` and dimmed further in styles.css.
+ * 3. **Horizon** — the same silhouette band (locationArt.tsx), sitting at the
+ *    BOTTOM of the well, which on this screen is the act's origin: the route
+ *    climbs away from the place you walked in from, toward the Ancient.
+ *
+ * Only 2 and 3 need real elements, so only they live in here. Both are
+ * `pointer-events: none` and paint under `.map-grid`, so no amount of
+ * atmosphere can intercept a tap on a node. The one thing this layer must
+ * never do is make the route harder to read, which is why the density and the
+ * opacity are both well under the arrival screen's — and why the edge casing
+ * pass (see the SVG below) already exists to keep a line legible over whatever
+ * it crosses.
+ */
+const MAP_MOTE_DENSITY = 0.5;
+
+function MapAtmosphere({ location }: { location: LocationDefinition }) {
+  return (
+    <div className="map-atmosphere" aria-hidden="true">
+      <LocationMotes kind={location.ambience} density={MAP_MOTE_DENSITY} />
+      <LocationHorizon locationId={location.id} />
+    </div>
+  );
+}
+
+/**
  * The run's hub screen (docs/run-loop.md): a branching map the player
  * ascends node by node, plus always-on access to Manage Roster — full stat
  * spreads and equipment reassignment (RosterManagementScreen). Training
@@ -483,6 +529,12 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
   const map = run.map;
   if (!map) return null;
 
+  // Read off the run rather than threaded down from App: MapScreen already
+  // has the itinerary and the act number, and `locationForAct` falls back
+  // rather than throwing on a run with no itinerary at all (a pre-Locations
+  // save, or enemyGen's throwaway rosters).
+  const location = locationForAct(run.locationIds, run.actNumber);
+
   const reachable = new Set(reachableNodeIds(run));
   const visited = new Set(run.visitedNodeIds);
   const rowsTopDown = [...map.rows].reverse();
@@ -495,7 +547,10 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
   };
 
   return (
-    <div className="map-screen">
+    // One custom property on the root is the whole plumbing, exactly as on the
+    // node screens: the well's wash, its border, the horizon's rim light and
+    // every mote downstream all resolve their colour from it.
+    <div className="map-screen" data-location={location.id} style={{ '--node-rgb': location.tintRgb } as CSSProperties}>
       <div className="map-header">
         <span className="map-stat" title="Act">
           <ResourceMark label="ACT" tone="blue" /> {run.actNumber}/{TOTAL_ACTS}
@@ -509,6 +564,8 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
       </div>
 
       <div className="map-scroll screen-scroll">
+        <MapAtmosphere location={location} />
+
         <div className="map-grid" ref={gridRef} style={{ '--map-rows': rowsTopDown.length } as CSSProperties}>
           {/*
             The route itself. Drawn under the tiles as one SVG in the grid's own

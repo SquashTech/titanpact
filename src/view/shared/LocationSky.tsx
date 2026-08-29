@@ -54,10 +54,13 @@ const AMBIENCE: Record<AmbienceKind, AmbienceSpec> = {
   sigils: { count: 18, animation: 'loc-fall-pulse', size: [3, 3], duration: [9, 6], drift: [-18, 36] },
 };
 
-function useField(kind: AmbienceKind) {
+function useField(kind: AmbienceKind, density: number) {
   return useMemo(() => {
     const spec = AMBIENCE[kind];
-    return Array.from({ length: spec.count }, (_, i) => {
+    // Floored at one: a location whose weather rounds away to nothing has lost
+    // its identity, it has not become quiet.
+    const count = Math.max(1, Math.round(spec.count * density));
+    return Array.from({ length: count }, (_, i) => {
       const seed = i * 137.51;
       const size = spec.size[0] + ((seed * 0.13) % spec.size[1]);
       return {
@@ -73,35 +76,54 @@ function useField(kind: AmbienceKind) {
         drift: spec.drift[0] + ((seed * 0.53) % spec.drift[1]),
       };
     });
-  }, [kind]);
+  }, [kind, density]);
+}
+
+/**
+ * The particle field on its own, so a screen that wants a location's weather
+ * without inheriting its whole sky can have it — which is exactly what the map
+ * well needs (MapScreen's `MapAtmosphere`).
+ *
+ * `data-ambience` now lives on THIS element rather than on `.location-sky`,
+ * because it is the only ancestor both call sites share and the per-kind mote
+ * shapes in styles.css key off it.
+ *
+ * `density` scales the authored count. The arrival screen runs at a full 1;
+ * the map runs thinner, because the map is a screen you *plan* on and its
+ * weather has to stay behind the route rather than compete with it.
+ */
+export function LocationMotes({ kind, density = 1 }: { kind: AmbienceKind; density?: number }) {
+  const field = useField(kind, density);
+  const spec = AMBIENCE[kind];
+
+  return (
+    <div className="location-motes" data-ambience={kind} aria-hidden="true">
+      {field.map((p, i) => (
+        <span
+          key={i}
+          className="location-mote"
+          style={
+            {
+              left: `${p.left}%`,
+              width: `${p.width}px`,
+              height: `${p.height}px`,
+              animationName: spec.animation,
+              animationDelay: `${p.delay}s`,
+              animationDuration: `${p.duration}s`,
+              '--drift': `${p.drift}px`,
+            } as CSSProperties
+          }
+        />
+      ))}
+    </div>
+  );
 }
 
 export function LocationSky({ location }: { location: LocationDefinition }) {
-  const field = useField(location.ambience);
-  const spec = AMBIENCE[location.ambience];
-
   return (
-    <div className="node-sky location-sky" data-ambience={location.ambience} aria-hidden="true">
+    <div className="node-sky location-sky" aria-hidden="true">
       <span className="node-sky-wash location-sky-wash" />
-      <div className="location-motes">
-        {field.map((p, i) => (
-          <span
-            key={i}
-            className="location-mote"
-            style={
-              {
-                left: `${p.left}%`,
-                width: `${p.width}px`,
-                height: `${p.height}px`,
-                animationName: spec.animation,
-                animationDelay: `${p.delay}s`,
-                animationDuration: `${p.duration}s`,
-                '--drift': `${p.drift}px`,
-              } as CSSProperties
-            }
-          />
-        ))}
-      </div>
+      <LocationMotes kind={location.ambience} />
       <LocationHorizon locationId={location.id} />
     </div>
   );
