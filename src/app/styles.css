@@ -4348,17 +4348,20 @@ textarea,
 }
 
 /* Light from the top left, the same direction every other surface in the app
-   takes it: crown brightest, left pavilion mid, right pavilion in shadow. */
+   takes it: crown brightest, left pavilion mid, right pavilion in shadow.
+   All three sit a step darker than the first cut: the numeral is the thing
+   being read, and the crown — the only facet the digit's upper half crosses
+   — was light enough to hold it under 4.5:1 against #e2f2ff. It clears it now. */
 .mana-gem-crown {
-  fill: #3581be;
+  fill: #2a6ea3;
 }
 
 .mana-gem-left {
-  fill: #1b466f;
+  fill: #163a5c;
 }
 
 .mana-gem-right {
-  fill: #0f2b48;
+  fill: #0c223a;
 }
 
 .mana-gem-rim {
@@ -4382,6 +4385,13 @@ textarea,
   font-size: 12px;
   font-weight: 800;
   line-height: 1;
+  /* The gem gets dropped into tracked-out uppercase contexts — the combat
+     console crest's committed-move label (.console-commander, 0.14em), the
+     draft kit chip — and letter-spacing inherited onto a single digit is
+     trailing space with nothing after it: the glyph sits half the tracking
+     left of the gem's centre. The facets and the numeral are one object, so
+     the numeral opts out of whatever tracking it lands in. */
+  letter-spacing: normal;
   color: #e2f2ff;
   font-variant-numeric: tabular-nums;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
