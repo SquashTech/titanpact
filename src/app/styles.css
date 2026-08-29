@@ -9745,6 +9745,56 @@ textarea,
   pointer-events: none;
 }
 
+/* The place's name, etched into the well's top-left corner (MapScreen's
+   `MapPlacard`). Unboxed, because the only rectangles on a screen are the
+   things you can act on, and `pointer-events: none` so it can never eat a tap
+   meant for the route.
+
+   Sits INSIDE the well rather than in the header row above it, which is
+   already three run-stat chips edge to edge. The corner it takes is free by
+   construction — the top two rows of every act's map are width-1 and pin to
+   the centre column (MapScreen's ROW_COLUMNS) — and capped at 42% width so a
+   long name wraps into the empty column instead of running under the Ancient.
+
+   Absolutely positioned, so it also survives the well scrolling: it stays
+   with the frame, not with the route. */
+.map-placard {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  z-index: 1;
+  max-width: 42%;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  pointer-events: none;
+}
+
+/* Lit in the location's own colour and softly bloomed — the same "this is a
+   place, not a label" treatment the arrival screen's title gets, three sizes
+   down. */
+.map-placard-name {
+  font-size: 11.5px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(var(--node-rgb), 0.92);
+  text-shadow: 0 0 10px rgba(var(--node-rgb), 0.45), 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+/* Who holds the place, in the neutral ink the name is not — the two together
+   read as one caption rather than as two labels. */
+.map-placard-faction {
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
 /* The weather, held back. Same keyframes and the same per-kind shapes as the
    arrival screen, at half the count (MAP_MOTE_DENSITY) and roughly half the
    presence — this is a screen the player plans a route on, and a mote that
@@ -10803,9 +10853,62 @@ textarea,
    column as an in-flow block. Anything that positions itself on purpose is
    named here rather than fighting for specificity. */
 .node-screen > *:not(.node-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button),
-.levelup-screen > *:not(.node-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button) {
+.levelup-screen > *:not(.node-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button),
+/* .squad-select joined the stage in 2026-08-29 so it could carry the act's
+   Location (docs/locations.md §5.5). Its root rule was already this stage's,
+   copied verbatim; this is the one line it was missing. */
+.squad-select > *:not(.node-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button) {
   position: relative;
   z-index: 1;
+}
+
+/* --- The Location on a node screen (docs/locations.md §5.5) ---------------
+
+   Every screen inside an act now stands in the place the act happens in,
+   through one shared layer (LocationSky's `LocationAmbience`, rendered by
+   NodeStage's `NodeSky` whenever LocationContext has a location).
+
+   The division of the screen is the whole design. A node screen's own
+   `--node-rgb` is a SEMANTIC tint — gold for a cache, violet for a relic,
+   teal for the Mentor, an item's rarity colour for a forced equip — and it
+   still owns the wash's upper pool and the header bloom, because it is
+   answering "what kind of moment is this". This layer redefines --node-rgb
+   for its own subtree only (see LocationAmbience) and takes the bottom of the
+   screen: a low ground glow, the weather, and the horizon. One says what is
+   happening, the other says where. Neither has to be dimmed for the other.
+
+   No per-location recipes here, unlike the map well. The map is a screen the
+   player dwells on and can afford six distinct lighting ideas; a node screen
+   is passed through in seconds and already has a tint of its own competing
+   for the same field. Colour, weather and silhouette are enough to tell six
+   places apart at this dwell time — a seventh channel would only muddy the
+   node's own signal. */
+.node-location {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 140% 38% at 50% 106%, rgba(var(--node-rgb), 0.34), transparent 72%);
+}
+
+/* Dimmer than the map's, but NOT shorter — this was 22% first, and on the
+   squad select that put the whole silhouette under the "Start Fight" button
+   with only the Necropolis mausoleum's spire poking out, reading as a stray
+   spike rather than as a skyline. It is the same trap docs/locations.md §5.7
+   documents for the arrival screen, and it wants the same answer: a band tall
+   enough that a good half of it clears whatever full-width button the screen
+   ends in. */
+.node-location .location-horizon {
+  height: 30%;
+  color: rgba(6, 7, 11, 0.92);
+  opacity: 0.75;
+  filter: drop-shadow(0 -1px 0 rgba(var(--node-rgb), 0.24));
+  animation: none;
+}
+
+/* Held back the same way the map's is, and for the same reason: this weather
+   sits behind cards, prices and stat lines that have to stay readable. */
+.node-location .location-motes {
+  opacity: 0.45;
 }
 
 /* --- The corner glyph buttons -------------------------------------------

@@ -217,13 +217,17 @@ So the "some heroes are only findable in certain locations" mechanic is currentl
 a schema, not a behaviour. Both consumers are small; what they are waiting on is
 a real roster to declare rare in the first place.
 
-### 5.5 The location reaches the map, and nothing past it
+### 5.5 The location follows the player through the act
 
-**Closed for the map (2026-08-29).** The map well used to be one hardcoded warm
-gold in every act, which made a location a title card rather than a setting. It
-now carries the same three identity channels the arrival screen does, at a
-fraction of their strength (`MapScreen`'s `MapAtmosphere`, styles.css "The map
-well's Location"):
+**Closed 2026-08-29.** A location used to be announced once and then vanish:
+the map well was one hardcoded warm gold in every act, and every screen past it
+had no idea where it was. It is now carried by the map, its name, and every
+screen inside an act.
+
+#### The map well
+
+The same three identity channels the arrival screen uses, at a fraction of
+their strength (`MapScreen`, styles.css "The map well's Location"):
 
 - **Tint and lighting.** `--node-rgb` and `data-location` are set on
   `.map-screen`; each location gets its own wash recipe. Tint alone would have
@@ -246,12 +250,58 @@ well's Location"):
 The direction cue the old gold well carried survives the recolour — lit ground
 at the bottom, a crown at the top — it is simply the location's colour now.
 
-**Still owed.** The map carries the place's *look* but not its *name*: the
-header still reads `ACT 1/5` and nothing else. Squad-select, the Guild Hall and
-every reward screen remain location-blind. Whether a name belongs on the map at
-all is a real question — it costs the one horizontal band the run stats own —
-and the reward screens are the more interesting gap, since those are the
-choices a location is supposed to be pressuring.
+#### The name
+
+`MapScreen`'s `MapPlacard` etches the location's name and its faction into the
+well's **top-left corner**. That corner is free by construction, not by luck:
+every act ends in a Guild Hall funnel and an Ancient (`map.ts`
+`BASE_ROW_WIDTHS`), both width-1 rows, and a width-1 row pins to the centre
+column (`ROW_COLUMNS`) — so the top two rows never put a tile in an outer
+column in any act. It is unboxed, per `visual-language.md`'s rule that the only
+rectangles are controls, and `pointer-events: none` so a future map shape that
+does grow a tile there cannot lose a tap to it.
+
+#### Every screen inside an act
+
+`NodeSky` (`NodeStage.tsx`) renders the location whenever `LocationContext` has
+one, which reaches all ten node screens — the Guild Hall, every reward and stat
+grant, the Mentor, level-up, forced equip, evolution, roster replace — plus the
+squad select, without any of them knowing the system exists.
+
+The division of the screen is the design. A node screen's own `--node-rgb` is a
+**semantic** tint (gold for a cache, violet for a relic, teal for the Mentor,
+an item's rarity colour for a forced equip) and it still owns the wash's upper
+pool and the header bloom: *what kind of moment is this*. `LocationAmbience`
+redefines `--node-rgb` for its own subtree only and takes the bottom: ground
+glow, weather, horizon — *where is it happening*. Neither has to be dimmed for
+the other, and the generic rising motes are **replaced** rather than joined,
+since two particle fields on one screen is noise rather than twice the
+atmosphere.
+
+Two things this cost, both worth naming:
+
+- **`LocationContext` is the first React context in the repo.** A location is
+  ambient — true of the whole act, read by one shared leaf component, used for
+  nothing else by any of the ten screens that render it. Prop-drilling it meant
+  ten prop lists and ten call sites growing a field they only forward, and
+  `RosterReplaceScreen` taking a `RunState` it does not otherwise want. The
+  value is nullable and `App.tsx` decides: `null` outside an act
+  (`PLACELESS_SCREENS`) is what keeps the title and the sandbox tools on the
+  plain placeless sky with no opt-out at any call site.
+- **`ShopNodeScreen` never actually stood on the node stage.** It carried
+  `.node-screen` from the day it was written but rendered no sky and set no
+  tint, so the Guild Hall was the one node in the run loop drawn on bare page
+  background. It now has both; the tint is `NODE_TINT_MANA`, the same blue its
+  tile wears on the map.
+
+No per-location wash recipes on node screens, unlike the map well. The map is
+dwelt on and can afford six lighting ideas; a node screen is passed through in
+seconds and already has a tint of its own competing for the same field.
+
+**Still owed.** `FightScreen` is untouched — the battlefield is its own
+established place and dropping a horizon into it is a bigger question than this
+pass. Nothing outside the view layer knows about any of this; the location
+still changes only *who* you fight (§5.6).
 
 ### 5.6 Difficulty is location-blind
 
@@ -272,10 +322,18 @@ Two that are easy to violate and only visible on device:
   Forest's original canopy; its trunks now run past y=0 and are clipped flat by
   the SVG viewport instead.
 
-Both presentation surfaces — the arrival screen and the map well (§5.5) — have
-**no automated coverage**. Each was verified by screenshot across all six
-locations, which is the standard method for this repo (`visual-language.md`).
-The data and selection layers are tested (`test/locations.test.ts`).
+Every presentation surface — the arrival screen, the map well, and the node
+screens (§5.5) — has **no automated coverage**. Each was verified by
+screenshot, which is the standard method for this repo (`visual-language.md`);
+the map well was checked across all six locations, the node screens across
+three. The data and selection layers are tested (`test/locations.test.ts`).
+
+One trap the node screens hit that is worth repeating from the §5.7 list: the
+horizon band was authored at 22% of screen height first, which put the whole
+silhouette under the squad select's full-width "Start Fight" button with only
+the Necropolis mausoleum's spire showing — a stray spike, not a skyline. It is
+the same failure as drawing below y≈78 of the viewBox. A band has to be tall
+enough that half of it clears whatever button the screen ends in.
 
 ## 6. Open questions — do not silently resolve
 

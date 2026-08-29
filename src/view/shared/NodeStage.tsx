@@ -1,4 +1,6 @@
 import { useMemo, type CSSProperties, type ReactNode } from 'react';
+import { useAmbientLocation } from './LocationContext';
+import { LocationAmbience } from './LocationSky';
 
 /**
  * The shared stage every map-node screen is set on — the full-bleed sky and
@@ -65,6 +67,9 @@ interface NodeSkyProps {
   motes?: number;
 }
 
+/** How much of a location's authored weather a node screen carries — see NodeSky. */
+const NODE_MOTE_DENSITY = 0.5;
+
 /**
  * Full-bleed past .app-shell's padding, same negative-inset trick as
  * .battlefield and .draft-sky: a place, not a container. Must be the first
@@ -72,29 +77,53 @@ interface NodeSkyProps {
  * `position: relative; z-index: 1` (the `.node-screen > *` rule does this) —
  * the sky paints at z-index 0 and its wash bottoms out opaque, so a static
  * in-flow sibling would paint *under* it and vanish.
+ *
+ * **Inside an act it also carries the Location** (docs/locations.md §5.5,
+ * LocationContext.tsx). The two do not compete, because they answer different
+ * questions and were given different halves of the screen: the node's own
+ * `--node-rgb` still owns the wash's upper pool and the header bloom — what
+ * *kind* of moment this is — and the location owns the ground, the horizon and
+ * the weather — *where* it is happening. A Guild Hall is still violet-lit and
+ * unmistakably a Guild Hall; it is now unmistakably a Guild Hall in the
+ * Necropolis.
+ *
+ * The generic rising motes are REPLACED rather than joined when a location is
+ * present. Two particle fields on one screen is not twice the atmosphere, it
+ * is noise — and the generic updraft is the weaker of the two, since it says
+ * nothing the wash has not already said.
+ *
+ * Outside a run the context is null and this renders exactly what it always
+ * did, with no opt-out needed at the call sites (the title screen, the
+ * sandbox tools).
  */
 export function NodeSky({ motes = MOTE_COUNT }: NodeSkyProps) {
   const field = useMotes(motes);
+  const location = useAmbientLocation();
+
   return (
     <div className="node-sky" aria-hidden="true">
       <span className="node-sky-wash" />
-      <div className="node-motes">
-        {field.map((m, i) => (
-          <span
-            key={i}
-            className="node-mote"
-            style={
-              {
-                left: `${m.left}%`,
-                width: `${m.size}px`,
-                height: `${m.size}px`,
-                animationDelay: `${m.delay}s`,
-                animationDuration: `${m.duration}s`,
-              } as CSSProperties
-            }
-          />
-        ))}
-      </div>
+      {location ? (
+        <LocationAmbience location={location} density={NODE_MOTE_DENSITY} className="node-location" />
+      ) : (
+        <div className="node-motes">
+          {field.map((m, i) => (
+            <span
+              key={i}
+              className="node-mote"
+              style={
+                {
+                  left: `${m.left}%`,
+                  width: `${m.size}px`,
+                  height: `${m.size}px`,
+                  animationDelay: `${m.delay}s`,
+                  animationDuration: `${m.duration}s`,
+                } as CSSProperties
+              }
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

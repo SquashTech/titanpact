@@ -11,8 +11,7 @@ import { ResourceMark } from '../shared/RunGlyph';
 import { HubGlyph, NodeGlyph, type HubGlyphName } from '../shared/nodeIcons';
 import { locationForAct } from '../../run/locations';
 import type { LocationDefinition } from '../../data/locations';
-import { LocationMotes } from '../shared/LocationSky';
-import { LocationHorizon } from '../shared/locationArt';
+import { LocationAmbience } from '../shared/LocationSky';
 
 interface Props {
   run: RunState;
@@ -488,8 +487,9 @@ const FOOTER_BUTTONS: readonly { key: HubGlyphName; label: string; color: string
  *    BOTTOM of the well, which on this screen is the act's origin: the route
  *    climbs away from the place you walked in from, toward the Ancient.
  *
- * Only 2 and 3 need real elements, so only they live in here. Both are
- * `pointer-events: none` and paint under `.map-grid`, so no amount of
+ * Only 2 and 3 need real elements, and those two are the shared
+ * `LocationAmbience` (LocationSky.tsx), which the node screens render as well.
+ * It is `pointer-events: none` and paints under `.map-grid`, so no amount of
  * atmosphere can intercept a tap on a node. The one thing this layer must
  * never do is make the route harder to read, which is why the density and the
  * opacity are both well under the arrival screen's — and why the edge casing
@@ -498,11 +498,32 @@ const FOOTER_BUTTONS: readonly { key: HubGlyphName; label: string; color: string
  */
 const MAP_MOTE_DENSITY = 0.5;
 
-function MapAtmosphere({ location }: { location: LocationDefinition }) {
+/**
+ * The place's name, etched into the well's top-left corner (2026-08-29, per
+ * user direction). The map used to carry the location's whole look and never
+ * its name — the header says `ACT 1/5` and nothing else, so the one word the
+ * player could actually repeat back was only ever on a screen they had
+ * already dismissed.
+ *
+ * The top-left is free by construction, not by luck: every act's map ends in
+ * a Guild Hall funnel and an Ancient (src/run/map.ts BASE_ROW_WIDTHS), both
+ * width-1 rows, and a width-1 row is pinned to the CENTRE column
+ * (ROW_COLUMNS). The top two rows therefore never put a tile in the outer
+ * columns in any act.
+ *
+ * Etched rather than boxed, per visual-language's standing rule that the only
+ * rectangles on a screen are the things you can act on — and `pointer-events:
+ * none`, so it can never eat a tap even if a future map shape does grow a
+ * tile underneath it. The faction rides along under the name because "who
+ * holds this place" is the half of a location that survives into the fights;
+ * the arrival screen says it once and this is the only other place it is
+ * said.
+ */
+function MapPlacard({ location }: { location: LocationDefinition }) {
   return (
-    <div className="map-atmosphere" aria-hidden="true">
-      <LocationMotes kind={location.ambience} density={MAP_MOTE_DENSITY} />
-      <LocationHorizon locationId={location.id} />
+    <div className="map-placard">
+      <span className="map-placard-name">{location.name}</span>
+      <span className="map-placard-faction">{location.faction}</span>
     </div>
   );
 }
@@ -564,7 +585,8 @@ export function MapScreen({ run, onRunChange, onSelectNode }: Props) {
       </div>
 
       <div className="map-scroll screen-scroll">
-        <MapAtmosphere location={location} />
+        <LocationAmbience location={location} density={MAP_MOTE_DENSITY} className="map-atmosphere" />
+        <MapPlacard location={location} />
 
         <div className="map-grid" ref={gridRef} style={{ '--map-rows': rowsTopDown.length } as CSSProperties}>
           {/*

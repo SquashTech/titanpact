@@ -1,4 +1,4 @@
-import { useState, type DragEvent } from 'react';
+import { useState, type CSSProperties, type DragEvent } from 'react';
 import { heroes } from '../../data/heroes';
 import { allCombatants } from '../../data/content';
 import { equipment } from '../../data/equipment';
@@ -14,6 +14,8 @@ import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
+import { NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
+import { useAmbientLocation } from '../shared/LocationContext';
 
 interface Props {
   run: RunState;
@@ -65,6 +67,7 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
   const [showReference, setShowReference] = useState(false);
   const [showRoster, setShowRoster] = useState(false);
   const required = requiredSquadSize(run.roster.length);
+  const location = useAmbientLocation();
 
   const activeIds = [slots[0], slots[1]] as const;
   const benchIds = [slots[2], slots[3]].filter((id): id is string => id !== null);
@@ -95,7 +98,20 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
   }
 
   return (
-    <div className="squad-select">
+    // The Location's ground under the last screen before the fight
+    // (docs/locations.md §5.5). `.squad-select` was already the node stage's
+    // root rule copied verbatim — position: relative, flex column, the same
+    // gap — so it needed nothing but the sky itself and a place in the
+    // stacking rule (styles.css) to stand on it.
+    //
+    // `--node-rgb` is the LOCATION's tint here, not a semantic one. Every
+    // other screen carrying a sky is a node — a cache, a shrine, a Mentor —
+    // and its tint says which. This one is not a node at all: it is the
+    // moment before a fight, and the only thing it has to say about itself is
+    // where the fight is about to happen.
+    <div className="squad-select" style={{ '--node-rgb': location?.tintRgb ?? NODE_TINT_GOLD } as CSSProperties}>
+      <NodeSky />
+
       {/* The same top-corner glyphs the node screens carry (RosterPeek.tsx),
           rather than the two worded chips in a `.map-header` bar that used to
           sit above the scouted-enemy row. The roster one opens Manage Roster

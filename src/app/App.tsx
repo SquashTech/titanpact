@@ -48,6 +48,7 @@ import { generateMap, type MapNodeType } from '../run/map';
 import { generateStarterOptions } from '../run/draft';
 import { generateEncounter, generateGoblinChiefEncounter, type EncounterNodeType, type Encounter } from '../run/enemyGen';
 import { generateItinerary, locationBias, locationForAct } from '../run/locations';
+import { LocationProvider } from '../view/shared/LocationContext';
 import { pickSquad } from '../run/squad';
 import { advanceToNode, advanceToNextAct, grantCurrencyReward, grantUpgradeReward, grantContractReward } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
@@ -112,6 +113,30 @@ type Screen =
   | { kind: 'recruit'; offers: RosterEntry[]; next: Screen }
   | { kind: 'runComplete' }
   | { kind: 'runFailed' };
+
+/**
+ * The screens that are not inside an act. Everything else gets the current
+ * Location as ambient view context (LocationContext.tsx), which is what puts
+ * the place's weather, ground and horizon behind every node screen and the
+ * squad select.
+ *
+ * Listed as the EXCEPTIONS rather than as the run-loop screens, and
+ * deliberately: a new node screen should inherit the place it happens in
+ * without anyone remembering to add it to a list, while the handful of
+ * screens that stand outside a run are a closed, stable set. `playerRun` can
+ * still hold a finished run's itinerary while the player is in the sandbox,
+ * so this is checked on the screen rather than on the run.
+ */
+const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
+  'title',
+  'draft',
+  'quickBattle',
+  'sandboxBattle',
+  'sandboxFight',
+  'statusTestFight',
+  'runComplete',
+  'runFailed',
+]);
 
 /**
  * Starting roster for a fresh run: the player's two drafted heroes
@@ -570,7 +595,16 @@ export function App() {
     });
   }
 
+  // Null outside an act, which is what keeps the title and the sandbox tools
+  // on the plain, placeless node sky they have always had — see
+  // PLACELESS_SCREENS and LocationContext.tsx.
+  const ambientLocation =
+    PLACELESS_SCREENS.has(screen.kind) || playerRun.locationIds.length === 0
+      ? null
+      : locationForAct(playerRun.locationIds, playerRun.actNumber);
+
   return (
+    <LocationProvider location={ambientLocation}>
     <div className="app-shell" ref={shellRef}>
       {screen.kind === 'title' && (
         <TitleScreen
@@ -787,5 +821,6 @@ export function App() {
         </div>
       )}
     </div>
+    </LocationProvider>
   );
 }

@@ -119,6 +119,42 @@ export function LocationMotes({ kind, density = 1 }: { kind: AmbienceKind; densi
   );
 }
 
+/**
+ * A location's weather and horizon as one drop-in layer, for any surface that
+ * wants to stand *in* the place without adopting the arrival screen's whole
+ * sky: the map well (`.map-atmosphere`) and every node screen
+ * (`.node-location`, NodeStage's `NodeSky`).
+ *
+ * It sets `--node-rgb` to the location's tint **on its own root**, which is
+ * the point of the component. On the map that is already the ambient value
+ * and the assignment is a no-op; on a node screen it very much is not — those
+ * screens set `--node-rgb` to their own semantic tint (gold for a cache,
+ * violet for a relic, teal for the Mentor), and that tint is load-bearing:
+ * it is how a screen says what *kind* of moment this is. Scoping the location's
+ * colour to this subtree is what lets the two coexist — the node keeps the
+ * event, the location gets the ground.
+ *
+ * `className` rather than a fixed class because the two call sites need
+ * genuinely different boxes (the map's reaches back over the well's padding
+ * and clips to its radius; a node screen's is a plain full-bleed inset).
+ */
+export function LocationAmbience({
+  location,
+  density,
+  className,
+}: {
+  location: LocationDefinition;
+  density?: number;
+  className: string;
+}) {
+  return (
+    <div className={className} style={{ '--node-rgb': location.tintRgb } as CSSProperties} aria-hidden="true">
+      <LocationMotes kind={location.ambience} density={density} />
+      <LocationHorizon locationId={location.id} />
+    </div>
+  );
+}
+
 export function LocationSky({ location }: { location: LocationDefinition }) {
   return (
     <div className="node-sky location-sky" aria-hidden="true">
