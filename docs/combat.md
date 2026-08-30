@@ -534,7 +534,9 @@ spent, a Rest, or a completed switch. It does **not** reset on an action that
 never happened — a Dazed hero, or one whose target gate went unmet, keeps
 banking. That is the literal reading of the row, and it means a Dazed Stone hero
 wakes up holding a very large Stoneheart, which is the correct payoff for having
-lost a round.
+lost a round. (Since Daze became flinch — 2026-08-30, `docs/conditions new.md` —
+that is at most **one** round of extra banking rather than two, and only if the
+Daze's applier was faster.)
 
 The counter is **live**, which is what separates the two moves beyond their
 percentages:

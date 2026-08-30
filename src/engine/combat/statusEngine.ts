@@ -123,8 +123,8 @@ export function applyStatus(
  * follow — except Poison's `activeOnly` flag, which stalls its timer entirely
  * while benched instead (docs/conditions.md: "switching stalls the clock
  * rather than clearing it"). Handles DoT/HoT damage-or-heal + magnitude decay,
- * Poison's timer-then-detonate, and duration countdown for Daze/Stealth —
- * driven entirely by StatusDefinition flags.
+ * Poison's timer-then-detonate, duration countdown for Stealth, and the
+ * end-of-round flinch clear (Daze) — driven entirely by StatusDefinition flags.
  */
 export function tickEndOfRound(
   state: CombatState,
@@ -213,6 +213,30 @@ export function tickEndOfRound(
           working = setStatus(working, combatantId, statusId, { ...instance, duration: newDuration });
         }
       }
+    }
+  }
+
+  // The flinch pass (content.ts clearsAtEndOfRound — Daze). Its own loop rather
+  // than a branch above, and deliberately AFTER the tick loop, for three
+  // reasons: it is not gated on `ticksAtEndOfRound`, so a status can clear
+  // without pretending to tick; a status authoring both ticks exactly once and
+  // then goes; and running last means nothing else this round can be reading a
+  // status the clear has already removed.
+  //
+  // Runs over benched combatants too. That is unreachable for Daze today — it
+  // clears on switch as well, and cannot outlive the round it was applied in —
+  // but "removed at end of round" should not quietly mean "unless you are on
+  // the bench", which is the kind of exception Poison's activeOnly flag exists
+  // to state explicitly when a status genuinely wants it.
+  for (const combatantId of Object.keys(working.combatants)) {
+    const combatant = working.combatants[combatantId];
+    if (!combatant || combatant.fainted) continue;
+
+    for (const statusId of Object.keys(combatant.statuses)) {
+      if (!statusDefs[statusId]?.clearsAtEndOfRound) continue;
+      const rm = removeStatus(working, round, combatantId, statusId, 'expired');
+      working = rm.state;
+      events.push(...rm.events);
     }
   }
 

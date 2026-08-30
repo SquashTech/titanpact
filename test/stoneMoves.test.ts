@@ -244,7 +244,7 @@ test('stone: taking a turn resets the counter; being blocked does not', () => {
   assert.strictEqual(rested.state.combatants.a1.damageTakenSinceLastTurn, 0);
 
   // Daze blocks the action, so no turn happened and the bank stands.
-  const dazed = applyStatus(banked, 1, 'a1', statuses.Daze, { duration: 2 }).state;
+  const dazed = applyStatus(banked, 1, 'a1', statuses.Daze, {}).state;
   const stalled = resolveRound(dazed, [{ kind: 'move', combatantId: 'a1', moveId: 'rockToss', declaredTarget: 'b1' }], config);
   assert.ok(
     stalled.events.some((e) => e.type === 'ActionBlocked' && (e as any).reason === 'dazed'),

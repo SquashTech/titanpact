@@ -69,16 +69,34 @@ export const statuses: Record<string, StatusDefinition> = {
     pipeline: 'control',
     description: 'Halves Speed. Cleared by switching.',
   },
+  // Redesigned 2026-08-30 from a duration-shape lockout (authored per-move at
+  // 2 rounds) into FLINCH, in the Pokemon sense. It is boolean, carries no
+  // number, and is gone at the end of the round it landed in.
+  //
+  // What that buys: Daze is now a bet on TURN ORDER rather than a purchase of
+  // enemy turns. resolveRound reads it live when each actor's turn comes up, so
+  // a Daze lands only if its applier moved first — a fast hero's chanced rider
+  // is a real tempo swing and a slow hero's is close to nothing. Speed and
+  // priority became the whole cost/benefit of the status, and no move has to
+  // author a magnitude to say so.
   Daze: {
     id: 'Daze',
     name: 'Daze',
-    shape: 'duration',
-    ticksAtEndOfRound: true,
+    shape: 'boolean',
+    ticksAtEndOfRound: false,
     decay: 'none',
-    stacking: 'takeHigher',
+    // Nothing to combine: it is present or it is not, and a second application
+    // in the same round is a no-op on a hero already denied its action.
+    stacking: 'none',
+    // Kept honest rather than kept useful. Voluntary switches resolve in their
+    // own bracket ABOVE every move (priority.ts), so a Daze applied during the
+    // move phase can never be dodged by switching in the round it exists — this
+    // flag is unreachable for Daze today, and stays true because it is still
+    // what would happen.
     clearsOnSwitch: true,
+    clearsAtEndOfRound: true,
     pipeline: 'control',
-    description: "Can't attack, but can switch. Duration counts down at end of round; cleared by switching.",
+    description: "Can't attack for the rest of the round, but can still switch or Rest. Gone when the round ends.",
   },
   Renew: {
     id: 'Renew',

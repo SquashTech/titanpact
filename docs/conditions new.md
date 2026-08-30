@@ -16,11 +16,43 @@ discipline** and are collected at the bottom.
 - **Cleansed by switching out.**
 - Design intent: stackable damage; decays on its own so it self-limits.
 
-### Daze — duration
-- Target cannot attack for X turns.
-- **Cleansed by switching out.**
-- Design intent: interacts with the mana system. A tank can dump mana to Daze a
-  scary target, but pays for it by skipping its own turn.
+### Daze — *boolean · control* (REDESIGNED 2026-08-30 — flinch)
+- **Effect:** the target cannot use a **move** for the rest of the round. It can
+  still Rest, and switches were never blockable (they resolve in their own
+  bracket above every move).
+- **Removal:** removed automatically at the **end of the round it landed in**
+  (`StatusDefinition.clearsAtEndOfRound`). Also cleared by switching and by
+  Cleanse, both of which are now unreachable in practice — it cannot outlive its
+  own round.
+- **It carries no number.** It was a duration-shape status authored per-move at
+  2 rounds; that is gone, and no `statusApplication` should author a magnitude or
+  duration for it (`test/lightMoves.test.ts` pins this).
+
+**What changed and why.** As a two-round lockout, Daze was a *purchase*: spend
+mana, remove up to two enemy turns, and the only question was whether you could
+afford it. As flinch it is a **bet on turn order**, which is the Pokémon
+mechanic it is named after:
+
+- A hero's action is gated on a live read when its turn comes up
+  (`resolveRound.ts`), so a Daze only denies anything if its applier acted
+  **earlier in the same round**. Landed on someone who has already moved, it is
+  worth exactly zero — it still applies, it just never gets read.
+- Nobody can ever *begin* a round Dazed, which is what makes the number
+  meaningless. There is no second round to count down to.
+- **Speed and priority are now the entire price.** The same 30% rider is a real
+  tempo swing on a fast hero and close to dead weight on a slow one, with no
+  content change between the two. That asymmetry is the point.
+
+The old design intent — "a tank dumps mana to shut off a scary target" — is
+explicitly **not** what this is any more. A slow tank is now the worst possible
+holder of a Daze move. If the tank-shutdown role is still wanted, it needs a
+different status (a real multi-round lock) rather than this one.
+
+**Open, and worth watching:** a priority-bracketed Daze move would buy its way
+past the Speed check entirely, which is the one thing that could undo the
+redesign. Nothing authors one today (Light's six are all bracket 0, asserted in
+`test/lightMoves.test.ts`) and the first slate that wants one should say so
+rather than slipping it in.
 
 ### Freeze — *boolean · control*
 - **Effect:** **halve Speed.**
@@ -245,8 +277,10 @@ The original three-shape framing (Magnitude / Boolean / Duration) no longer maps
 cleanly:
 
 - Magnitude: Burn, Renew
-- Boolean: Bleed, Freeze, Conduct
-- Duration: Daze
+- Boolean: Bleed, Freeze, Conduct, **Daze** (2026-08-30: was Duration, now flinch —
+  boolean plus `clearsAtEndOfRound`)
+- Duration: **nothing, now.** Stealth is the only duration-shape status left and
+  it ticks at the START of a round, which is its own special case.
 - Poison: timer / delayed-detonation — its own shape
 - Haunt: target modifier — its own shape
 - Stealth: 1-turn self-buff — boolean-ish

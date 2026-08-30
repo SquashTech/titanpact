@@ -18,6 +18,7 @@ import type { CombatState, Side } from '../../engine/state';
 import type { HeroDefinition, MoveDefinition } from '../../engine/content';
 import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
+import { statuses } from '../../data/statuses';
 import { passiveEmoji } from '../shared/passiveIcons';
 import { getTypeColor } from './typeColors';
 
@@ -436,6 +437,16 @@ export function buildBeats(
       }
 
       case 'StatusRemoved': {
+        // A flinch-shaped status (content.ts clearsAtEndOfRound — Daze) never
+        // survives the round it landed in, so its removal is bookkeeping rather
+        // than news: the player already watched it deny an action, or watched it
+        // do nothing. Carried so the badge still disappears, without costing a
+        // tap to be told a thing that was never going to last expired.
+        if (statuses[e.statusId]?.clearsAtEndOfRound && e.reason === 'expired') {
+          carry.push(e);
+          i++;
+          break;
+        }
         const targetName = name(e.combatantId);
         const verb =
           e.reason === 'switch' ? 'clears' : e.reason === 'cleanse' ? 'is cleansed' : e.reason === 'consumed' ? 'is consumed' : 'fades';

@@ -84,6 +84,8 @@ function performSwitch(
   const events: CombatEvent[] = [{ type: 'SwitchedIn', round, side, slot, outCombatantId, inCombatantId }];
 
   // docs/conditions.md §4: switching to bench clears Burn/Freeze/Daze on the outgoing combatant.
+  // (The Daze half is moot since it became flinch: switches resolve in their own
+  // bracket above every move, so a Daze can never be present when one happens.)
   if (outCombatantId) {
     const cleared = clearOnSwitch(nextState, round, outCombatantId, statusDefs);
     nextState = cleared.state;

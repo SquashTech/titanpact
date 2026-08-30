@@ -160,7 +160,7 @@ export interface StatusTickedEvent extends BaseEvent {
   type: 'StatusTicked';
   combatantId: string;
   statusId: StatusId;
-  /** 'duration' = a Daze/Poison/Stealth round ticked off (Poison's `kind: 'damage'` tick fires separately on expiry). No HP change for a plain countdown tick. */
+  /** 'duration' = a Poison/Stealth round ticked off (Poison's `kind: 'damage'` tick fires separately on expiry). No HP change for a plain countdown tick. Daze no longer counts down: it is boolean and cleared wholesale at end of round (content.ts clearsAtEndOfRound), which emits StatusRemoved rather than a tick. */
   kind: 'damage' | 'heal' | 'duration';
   /** The HP amount this tick applied (pre-decay magnitude, or Bleed's flat %maxHp). 0 for kind 'duration'. */
   amount: number;

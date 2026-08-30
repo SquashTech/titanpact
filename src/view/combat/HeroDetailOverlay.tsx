@@ -36,7 +36,7 @@ function fmtMod(n: number): string {
   return n > 0 ? `+${n}` : `${n}`;
 }
 
-/** "Burn 20" / "Daze 2" / "Bleed" — mirrors CombatantCard's badge text (magnitude/duration shown when the status carries one). */
+/** "Burn 20" / "Poison 15" / "Bleed" — mirrors CombatantCard's badge text (magnitude/duration shown when the status carries one; boolean statuses like Bleed and Daze carry neither and render bare). */
 function fmtStatus(statusId: string, magnitude: number | undefined, duration: number | undefined): string {
   const n = magnitude ?? duration;
   return n !== undefined ? `${statusId} ${n}` : statusId;

@@ -1573,12 +1573,14 @@ export const moves: Record<string, MoveDefinition> = {
   // The type is three overlapping lines rather than one:
   //
   //   1. **Daze pressure.** Six of the seventeen carry Daze — one guaranteed
-  //      (Blind) and five chance-gated at 10/20/30/30/30%. The slate authors no
-  //      DURATION, so every one of them uses 2, the only precedent in the game
-  //      (stunningBlow). That is a real number and not a formality: a landed
-  //      Daze 2 denies the rest of this round plus all of the next, so
-  //      Blinding Flash is a 30% roll at that outcome on BOTH foes. See
-  //      docs/authoring-moves.md §10.
+  //      (Blind) and five chance-gated at 10/20/30/30/30%. Daze carries no
+  //      number (statuses.ts, redesigned to FLINCH 2026-08-30): it denies the
+  //      rest of the round and is gone when the round ends. So every one of
+  //      these six is really a bet on TURN ORDER — it does nothing at all
+  //      against a foe that has already acted, and Solace (Speed 61) gets far
+  //      more out of the same rider than Aegis (35) does. Blinding Flash rolls
+  //      per target, which is the slate's best odds of catching someone before
+  //      they move.
   //   2. **Intelligence buffs.** Bless / Radiance / Exalt are +20 single, +40
   //      both, +100 single. Flat additive multiples of 5 (CLAUDE.md), and
   //      pointedly INTELLIGENCE — a Light hero's own damage line is magical, so
@@ -1607,11 +1609,11 @@ export const moves: Record<string, MoveDefinition> = {
     basePower: 40,
     // A 10% opener, not a Daze plan — Blind is the guaranteed applier. The
     // chance gates the RIDER and never the hit (CLAUDE.md "No accuracy stat").
-    statusApplication: { statusId: 'Daze', duration: 2, chance: 0.1, target: 'moveTarget' },
+    statusApplication: { statusId: 'Daze', chance: 0.1, target: 'moveTarget' },
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A needle of light, occasionally straight across the eyes (10% chance of Daze 2).',
+    description: 'A needle of light, occasionally straight across the eyes (10% chance of Daze).',
   },
   bless: {
     id: 'bless',
@@ -1671,11 +1673,17 @@ export const moves: Record<string, MoveDefinition> = {
     // Debuff label from the rider's target (docs/authoring-moves.md §2).
     kind: 'buff',
     statDeltas: [],
-    statusApplication: { statusId: 'Daze', duration: 2, target: 'moveTarget' },
+    // The slate's only GUARANTEED Daze, and since the 2026-08-30 flinch
+    // redesign it is a pure 1-for-1 turn trade that only pays when the caster
+    // is faster: spend your action to delete theirs. Against a foe that has
+    // already moved it does nothing whatsoever. The whole move is priced on the
+    // caster's Speed now, which is why it sits in Solace's pool (61) and not
+    // Aegis's (35).
+    statusApplication: { statusId: 'Daze', target: 'moveTarget' },
     manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Floods a foe with white until there is nothing to aim at (inflicts Daze 2).',
+    description: 'Floods a foe with white until there is nothing to aim at (inflicts Daze).',
   },
   holyStrike: {
     id: 'holyStrike',
@@ -1703,11 +1711,11 @@ export const moves: Record<string, MoveDefinition> = {
     category: 'magical',
     kind: 'damage',
     basePower: 60,
-    statusApplication: { statusId: 'Daze', duration: 2, chance: 0.2, target: 'moveTarget' },
+    statusApplication: { statusId: 'Daze', chance: 0.2, target: 'moveTarget' },
     manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A focused lance of blinding light (20% chance of Daze 2).',
+    description: 'A focused lance of blinding light (20% chance of Daze).',
   },
   consecrate: {
     id: 'consecrate',
@@ -1785,11 +1793,11 @@ export const moves: Record<string, MoveDefinition> = {
     // Rolled once PER TARGET (content.ts StatusApplication.chance), so this is
     // two independent 30% rolls, not one — the most Daze the slate can put on
     // the board in a single cast, which is what the 50 is priced for.
-    statusApplication: { statusId: 'Daze', duration: 2, chance: 0.3, target: 'moveTarget' },
+    statusApplication: { statusId: 'Daze', chance: 0.3, target: 'moveTarget' },
     manaCost: 50,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A white detonation across the whole enemy line (30% chance of Daze 2 on each).',
+    description: 'A white detonation across the whole enemy line (30% chance of Daze on each).',
   },
 
   // -- Late --
@@ -1838,11 +1846,11 @@ export const moves: Record<string, MoveDefinition> = {
     category: 'physical',
     kind: 'damage',
     basePower: 80,
-    statusApplication: { statusId: 'Daze', duration: 2, chance: 0.3, target: 'moveTarget' },
+    statusApplication: { statusId: 'Daze', chance: 0.3, target: 'moveTarget' },
     manaCost: 75,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A blade of borrowed divinity, and a light nobody looks straight at (30% chance of Daze 2).',
+    description: 'A blade of borrowed divinity, and a light nobody looks straight at (30% chance of Daze).',
   },
   exalt: {
     id: 'exalt',
@@ -2181,11 +2189,11 @@ export const moves: Record<string, MoveDefinition> = {
     category: 'physical',
     kind: 'damage',
     basePower: 25,
-    statusApplication: { statusId: 'Daze', duration: 2, target: 'moveTarget' },
+    statusApplication: { statusId: 'Daze', target: 'moveTarget' },
     manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A rattling haymaker, priced high for what it denies (inflicts Daze 2).',
+    description: 'A rattling haymaker, priced high for what it denies (inflicts Daze).',
   },
   spectralBind: {
     id: 'spectralBind',

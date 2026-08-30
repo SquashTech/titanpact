@@ -127,7 +127,31 @@ export interface StatusDefinition {
   stacking: StatusStacking;
   /** docs/conditions.md §4 removal table: cleared by switching to bench. */
   clearsOnSwitch: boolean;
-  /** Poison only: the end-of-round tick is skipped entirely for a benched combatant (switching stalls the timer instead of clearing it) rather than ticking down regardless like Daze/Stealth do. */
+  /**
+   * Removed unconditionally at the end of the round it was applied in — Daze,
+   * and the reason Daze needs no number (2026-08-30 redesign; before it, Daze
+   * was a duration-shape status authored per-move at 2).
+   *
+   * This is the FLINCH shape, in the Pokémon sense, and the whole mechanic is
+   * an interaction with turn order rather than with a clock:
+   *
+   * - A hero's action is gated on a LIVE read at the moment its turn comes up
+   *   (resolveRound.ts), so a Daze only denies anything if it was applied by a
+   *   combatant that acted EARLIER in the same round. Land it on someone who
+   *   has already moved and it does nothing at all.
+   * - It can therefore never be present when a round begins, which is what
+   *   makes the number meaningless: there is no second round to count down to.
+   *   Speed (and priority) is the entire cost/benefit.
+   *
+   * Independent of `ticksAtEndOfRound`: the clear is its own pass in
+   * statusEngine.ts tickEndOfRound, running AFTER the tick pass, so a status
+   * authoring both would tick exactly once and then go. Emits StatusRemoved
+   * with reason 'expired', which the view deliberately folds into the next beat
+   * rather than spending a tap on (buildBeats.ts) — a status that never
+   * survives its own round has no "wore off" moment worth stopping for.
+   */
+  clearsAtEndOfRound?: boolean;
+  /** Poison only: the end-of-round tick is skipped entirely for a benched combatant (switching stalls the timer instead of clearing it) rather than ticking down regardless like Stealth does. */
   activeOnly?: boolean;
   /** The only positive status(es) — Renew, Stealth. docs/conditions.md §7 "Cleanse & positive statuses": Cleanse never strips these. */
   positive?: boolean;

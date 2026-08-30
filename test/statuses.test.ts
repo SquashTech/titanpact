@@ -51,10 +51,19 @@ function withStatus(
   };
 }
 
-// --- Daze: hard action-denial ------------------------------------------------
+// --- Daze: flinch ------------------------------------------------------------
+// Redesigned 2026-08-30 from a duration-shape lockout into Pokemon-style
+// flinch: boolean, no number, gone at the end of the round it landed in
+// (content.ts clearsAtEndOfRound). The three things that shape pins:
+//   1. it still hard-denies a move action, mana untouched;
+//   2. it only denies anything when its applier moved FIRST — a Daze landed on
+//      a hero that has already acted is worth exactly nothing, which is the
+//      whole mechanic and the reason Speed is now the price;
+//   3. it never survives into the next round, so a hero can never begin a round
+//      already Dazed and there is no number to carry.
 
 test('status: Daze blocks a move action — no MoveUsed, mana untouched, ActionBlocked emitted', () => {
-  const state = withStatus(twoVTwoFixture(100), 'a1', 'Daze', { duration: 2 });
+  const state = withStatus(twoVTwoFixture(100), 'a1', 'Daze', {});
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
   const { state: next, events } = resolveRound(state, actions, config);
 
@@ -62,6 +71,60 @@ test('status: Daze blocks a move action — no MoveUsed, mana untouched, ActionB
   assert.strictEqual(events.some((e) => e.type === 'ActionBlocked' && e.combatantId === 'a1' && e.reason === 'dazed'), true);
   assert.strictEqual(next.combatants.a1.currentMana, heroes.cinderKnight.baseStats.manaPool);
   assert.strictEqual(next.combatants.b1.currentHp, heroes.ironWarden.baseStats.hp); // no damage landed
+});
+
+test('status: Daze is gone by the end of the round it was applied in — nobody ever starts a round Dazed', () => {
+  const state = withStatus(twoVTwoFixture(101), 'a1', 'Daze', {});
+  const { state: next, events } = resolveRound(
+    state,
+    [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }],
+    config
+  );
+
+  assert.strictEqual(hasStatus(next.combatants.a1, 'Daze'), false);
+  assert.strictEqual(
+    events.some((e) => e.type === 'StatusRemoved' && e.combatantId === 'a1' && e.statusId === 'Daze' && e.reason === 'expired'),
+    true,
+    'the clear is an event, so the view can drop the badge'
+  );
+  // And it carries no number to have counted down: the instance the fixture put
+  // on is boolean-shaped, exactly like Bleed's.
+  assert.strictEqual(statuses.Daze.shape, 'boolean');
+  assert.strictEqual(statuses.Daze.clearsAtEndOfRound, true);
+});
+
+test('status: a Daze only denies a turn when its applier moved first — flinch, not a purchased turn', () => {
+  // Stunning Blow is the guaranteed applier. Cinder (speed 50) vs Warden (30):
+  // cast by the faster hero it deletes the slower one's action, and cast by the
+  // slower one it lands on a hero that has already swung and does nothing.
+  const fast = resolveRound(
+    twoVTwoFixture(102),
+    [
+      { kind: 'move', combatantId: 'a1', moveId: 'stunningBlow', declaredTarget: 'b1' }, // cinderKnight, 50
+      { kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a1' }, // ironWarden, 30
+    ],
+    config
+  );
+  assert.strictEqual(
+    fast.events.some((e) => e.type === 'ActionBlocked' && e.combatantId === 'b1' && e.reason === 'dazed'),
+    true,
+    'the slower hero never gets to swing'
+  );
+
+  const slow = resolveRound(
+    twoVTwoFixture(102),
+    [
+      { kind: 'move', combatantId: 'b1', moveId: 'stunningBlow', declaredTarget: 'a1' }, // ironWarden, 30 — acts second
+      { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }, // cinderKnight, 50 — already gone
+    ],
+    config
+  );
+  assert.strictEqual(
+    slow.events.some((e) => e.type === 'ActionBlocked'),
+    false,
+    'a Daze landed on a hero that already acted is worth nothing at all'
+  );
+  assert.strictEqual(hasStatus(slow.state.combatants.a1, 'Daze'), false, 'and is gone before it could ever matter');
 });
 
 // --- Freeze: halves Speed, including in turn-order resolution ---------------

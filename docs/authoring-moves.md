@@ -44,17 +44,24 @@ side of the field, and Nature's is a *condition being read* off the wrong side.
 
 Light needed **one**, the fewest of any slate, and it was visible in four
 words — "if Sanctuary is active". The lesson is not about the extension. It is
-about the column that **is not there**: the table says "apply Daze" six times
-and never says *for how long*. Base Power, Mana Cost and the rider's chance are
-all columns; a duration-shape status's duration is not, and there is no
+about the column that **is not there**: the table said "apply Daze" six times
+and never said *for how long*. Base Power, Mana Cost and the rider's chance are
+all columns; a duration-shape status's duration was not, and there is no
 `isValidMoveDefinition` to catch a zero. **Before authoring, list every status
-your slate applies and check the shape it needs against `src/data/statuses.ts` —
-magnitude, duration, or timer — and whether the table supplies that number.**
-Where it does not, the honest move is to use the existing precedent, say so in
-the hand-off, and let the designer overrule it; the wrong move is to pick a
-different value per row and quietly invent a balance split the table never
-asked for. Light used `duration: 2` (stunningBlow's, the only precedent) on all
-six and reported it.
+your slate applies, check the shape it needs against `src/data/statuses.ts` —
+magnitude, duration, or timer — and check whether the table supplies that
+number.** Where it does not, the honest move is to use the existing precedent,
+say so in the hand-off, and let the designer overrule it; the wrong move is to
+pick a different value per row and quietly invent a balance split the table
+never asked for.
+
+**This is the clearest evidence yet that naming beats guessing.** Light shipped
+with `duration: 2` on all six (stunningBlow's, the only precedent) and reported
+it as the one value the table omitted. The designer's answer was not a different
+number — it was to **redesign the status so the number stops existing**: Daze
+became flinch the same day (boolean, `clearsAtEndOfRound`, gone at the end of
+the round it landed in). A silently-chosen 2 would have hidden the question the
+mechanic was actually posing, and the type would have shipped around it.
 
 Read this **before** opening `src/data/moves.ts`. Read `CLAUDE.md` first if you have not.
 
@@ -203,7 +210,7 @@ The catalog (`src/data/statuses.ts`, `docs/conditions new.md`):
 | `Renew` | magnitude, positive | End of round: heal X, then halve X. Cleanse never strips it | No |
 | `Bleed` | boolean | End of round: 5% of max HP, flat | No |
 | `Freeze` | boolean | Halves Speed | Yes |
-| `Daze` | duration | Cannot attack (can still switch or Rest) | Yes |
+| `Daze` | boolean | Cannot use a move for the REST OF THE ROUND, then gone. Flinch: worth nothing if its applier acted second | Yes (moot) |
 | `Poison` | timer | Magnitude builds, duration only ticks while active, detonates at 0 | No (stalls on the bench) |
 | `Conduct` | boolean | A Storm/Iron damage move detonates it for bonus %maxHP | No |
 | `Haunt` | boolean | A Spirit/Mind single-target hit on the partner also strikes the holder | Yes |
@@ -857,16 +864,33 @@ the first whose findings are all about **what the table did not say**:
   `docs/field-effects.md` rather than settled by accident, along with the two
   shapes deliberately left unbuilt: gating on a field's *absence*, and on
   *any* field rather than a named one.
-- **A balance consequence outside the slate — and it is a value the table
-  omits.** Six of seventeen Light moves apply **Daze**, and Daze is a
-  duration-shape status whose duration the table never gives. Every one uses
-  `2`, the only precedent in the game (`stunningBlow`). That is not a
-  formality: a landed Daze 2 denies the rest of the current round *and* all of
-  the next, so Blind is a guaranteed two-round lockout for 25 mana and
-  Blinding Flash is two independent 30% rolls at that outcome. If the intent
-  was flinch-shaped (deny the rest of this round only) the value is `1`, and
-  it is a one-token change across six rows — but it is the designer's call,
-  not the author's.
+- **A balance consequence outside the slate — raised, and answered by
+  redesigning the status.** Six of seventeen Light moves apply **Daze**, and
+  Daze was a duration-shape status whose duration the table never gave. The
+  slate shipped with `2` on all six, the only precedent in the game
+  (`stunningBlow`), and reported it as an authored guess rather than a
+  decision.
+
+  **Designer call, 2026-08-30: Daze is now FLINCH.** Boolean, no number,
+  removed at the end of the round it landed in
+  (`StatusDefinition.clearsAtEndOfRound`; `docs/conditions new.md`). The
+  question the slate surfaced was not "1 or 2" — it was that a status whose
+  whole job is denying one action should be priced against **turn order**, not
+  bought by the round. It now is: a Daze denies nothing unless its applier
+  acted first, so the same rider is worth a lot on a fast hero and almost
+  nothing on a slow one, with no content change between them.
+
+  Two things this cost the type, both worth knowing and neither tuned away:
+  Blind (25 mana, no damage, guaranteed) went from a two-round lockout to a
+  1-for-1 turn trade that only pays when the caster is faster; and Light
+  authors no priority anywhere, so it has no way to buy past a Speed
+  disadvantage. `test/lightMoves.test.ts` pins both.
+
+  **The generalisation:** a missing column is sometimes a missing *decision*.
+  When the table omits a number the mechanic needs, the useful question in the
+  hand-off is not only "which value?" but "should this mechanic want a value at
+  all?" — and asking it that way is what produced a better status instead of a
+  tuned one.
 
 **The procedural lesson from Stone**, extending Storm's: when you finish the
 slate, run the reachability check as well as the dangling-id one. They are

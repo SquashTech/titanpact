@@ -41,6 +41,7 @@ import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import { FIELD_EFFECT_DURATION_ROUNDS } from '../src/engine/combat/fieldEffectEngine';
 import { calcDamage, resolveConditionalPowerMultiplier } from '../src/engine/damage/damagePipeline';
+import { hasStatus } from '../src/engine/state';
 import type { CombatState, FieldEffectContext } from '../src/engine/state';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
@@ -249,14 +250,70 @@ test('light: no Light move applies or scales off something the catalog does not 
   }
 });
 
-test('light: every Daze applier authors the duration the shape requires', () => {
-  // There is no isValidMoveDefinition (authoring-moves.md §4), so a
-  // duration-shape status authored with no duration would sit at 0 and expire
-  // on the very next tick — six of Light's seventeen carry Daze, so a silent
-  // zero here would quietly delete a third of the slate's payload.
+test('light: no Daze applier authors a number — the status is flinch-shaped', () => {
+  // The inverse of the assertion this file shipped with. Daze was a
+  // duration-shape lockout authored per-move at 2; the 2026-08-30 redesign made
+  // it boolean and end-of-round (statuses.ts, content.ts clearsAtEndOfRound), so
+  // a magnitude or duration here is now stale content rather than a missing
+  // one. Six of Light's seventeen carry Daze, which is why this is pinned.
+  assert.strictEqual(statuses.Daze.shape, 'boolean');
   for (const move of Object.values(moves)) {
     if (move.statusApplication?.statusId !== 'Daze') continue;
-    assert.ok((move.statusApplication.duration ?? 0) > 0, `${move.id} applies Daze with no duration`);
+    assert.strictEqual(move.statusApplication.duration, undefined, `${move.id} still authors a Daze duration`);
+    assert.strictEqual(move.statusApplication.magnitude, undefined, `${move.id} still authors a Daze magnitude`);
+  }
+});
+
+test("light: Daze is a bet on turn order — Solace's own riders only pay when it moves first", () => {
+  // The redesign's whole point, exercised on the slate that leans on it hardest.
+  // Blind is guaranteed, so this isolates SPEED as the variable: Solace (61)
+  // against Warden (30) deletes a turn, and the same cast from the slow side
+  // buys nothing.
+  const state = withDeepPools(lightFixture(107));
+  const fast = resolveRound(
+    state,
+    [
+      { kind: 'move', combatantId: 'a1', moveId: 'blind', declaredTarget: 'b1' }, // Solace, 61
+      { kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a1' }, // Warden, 30
+    ],
+    config
+  );
+  assert.ok(fast.events.some((e) => e.type === 'ActionBlocked' && e.combatantId === 'b1' && e.reason === 'dazed'));
+  assert.strictEqual(hasStatus(fast.state.combatants.b1, 'Daze'), false, 'and it does not carry into the next round');
+
+  // The same guaranteed cast from the slow side of the same matchup. Warden is
+  // given +20 Speed so it outruns Aegis (35): the Daze still LANDS, it is just
+  // worth nothing, because the hero it lands on has already swung.
+  const outsped = {
+    ...state,
+    combatants: {
+      ...state.combatants,
+      b1: { ...state.combatants.b1, statModifiers: { ...state.combatants.b1.statModifiers, speed: 20 } },
+    },
+  } as CombatState;
+  const slow = resolveRound(
+    outsped,
+    [
+      { kind: 'move', combatantId: 'a2', moveId: 'blind', declaredTarget: 'b1' }, // Aegis, 35 — acts second
+      { kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a2' }, // Warden, 30 + 20 = 50
+    ],
+    config
+  );
+  assert.ok(
+    slow.events.some((e) => e.type === 'MoveUsed' && e.combatantId === 'b1'),
+    'the foe got its swing off before the Daze existed'
+  );
+  assert.strictEqual(
+    slow.events.some((e) => e.type === 'ActionBlocked'),
+    false,
+    '25 mana and a whole turn bought nothing'
+  );
+
+  // And the slate authors no priority anywhere, so there is no way for Light to
+  // buy its way past a Speed disadvantage — the redesign's cost is real.
+  for (const move of Object.values(moves)) {
+    if (move.type !== 'Light' || move.statusApplication?.statusId !== 'Daze') continue;
+    assert.strictEqual(move.priority, 0, `${move.id} would let Light buy its way past Speed`);
   }
 });
 
