@@ -626,9 +626,56 @@ What it changes about the game, which is bigger than the field: a damage bonus
 that lives on the caster is one nothing on the enemy side can play around.
 Freeze, Burn and Conduct can all be dodged by cleansing, switching, or simply
 not being the target; Renew cannot be stripped (it is `positive`, so Cleanse
-never touches it) and does not clear on switch. **Open:** whether that is
-intended to be as absolute as it currently is, or whether Nature's setup being
-uninterruptible should be priced somewhere other than in the mana cost.
+never touches it) and does not clear on switch.
+
+**Resolved 2026-08-30 (designer call): that is the point.** See "Renew's
+stacked payoffs" below — a status whose only job is to tick quietly is not
+worth a turn, so the payoffs hanging off it are *supposed* to be large and
+*supposed* to be uninterruptible. Do not price this as a risk.
+
+---
+
+## Renew's stacked payoffs (LOCKED — 2026-08-30 designer sign-off)
+
+Renew is currently read **three separate ways**, and as of the Nature slate all
+three can land on one hero at once:
+
+1. **It heals.** End of round, then halves (`docs/conditions new.md`),
+   snapshotted through the healing formula at cast time so the caster's Wisdom
+   and STAB are already inside the stored magnitude.
+2. **It is a damage condition.** `conditionalPower.requiresUserStatus` — Seed
+   Shot and Branch Slam double while the user carries it.
+3. **It is a stat.** Under Verdant Earth
+   (`FieldEffectDefinition.statBonusEqualToStatusMagnitude`) every hero gains
+   flat Attack and Intelligence equal to their **own** current Renew, and the
+   Nature slate ships two setters for that field effect.
+
+The consequence at the top of the curve: Overgrowth's Renew 100, snapshotted
+through a Nature caster to roughly 125, is simultaneously ~250 HP of healing
+across the fight, a doubling of an 80 BP move, and +125 Attack and +125
+Intelligence on one hero — larger than any base stat in the roster — decaying
+by half a round at a time.
+
+**This is intended, not a stacking accident.** The reasoning is about what
+Renew *is*: a slow, passive effect that does nothing on the turn you spend on
+it, and returns its value in halving instalments over the rounds after. A
+status shaped like that has to have powerful payoffs or it is never worth the
+turn — every point of "safe" you tune out of it is a point of "why would I ever
+press this". The three readings are the payoff, and the halving curve is the
+limit on them: the +125 is +62 next round and +31 the round after, so the swing
+is a window a hero has to actually use, not a standing buff.
+
+What this means for a future slate: **do not report Renew's payoffs stacking as
+a finding**, the same way "the capstone costs more than a starting pool" is no
+longer a finding (`docs/mana.md`). A *fourth* reading of Renew would be a new
+conversation — three is the count that has been signed off. Real findings in
+this area would be a payoff that does **not** decay with the magnitude
+(breaking the window that limits all three), or one that reads a *different*
+hero's Renew than its holder's.
+
+**Open, and separate from the above:** the magnitudes themselves are untested
+in play — 2026-08-30, "we'll see how these work in practice". The shape is
+locked; the numbers are not.
 
 ---
 

@@ -149,6 +149,12 @@ boundary.
   `setFieldEffect` `PassiveEffect` shape technically supports it. Revisit once a
   Field Effect is actually meant to be always-on from a relic rather than
   move-triggered.
+- **Verdant Earth's bonus size**, as of the Nature slate, is no longer bounded by the
+  20–30 Renew the fixture content granted: Overgrowth's Renew 100 makes this a ~+125
+  Attack/Intelligence swing. **Signed off 2026-08-30** — see docs/combat.md "Renew's
+  stacked payoffs". Renew is a slow passive effect and its payoffs are meant to be
+  worth the turn; the halving curve is what bounds the window rather than the
+  magnitude. Not a finding; do not re-report it.
 - **Verdant Earth's bonus applying to benched heroes too** — `getEffectiveStat` has no
   active/bench distinction, so (like Surging Magic's `mpRegenMultiplier`) the
   Attack/Intelligence bonus applies to any combatant carrying Renew regardless of bench

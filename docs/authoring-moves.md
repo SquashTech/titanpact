@@ -732,8 +732,8 @@ nobody to play it against:
   reach fixed damage? — and a second instance turns that from a question about
   one move into a question about a category. Recorded in `docs/combat.md`
   rather than settled by accumulation.
-- **A balance consequence outside the slate — and the real finding.**
-  **Renew is now counted three times.** It heals on the usual halving curve; it
+- **A balance consequence outside the slate — raised, and answered the same
+  day.** **Renew is now counted three times.** It heals on the usual halving curve; it
   is Seed Shot's and Branch Slam's ×2 (`requiresUserStatus`); and under
   Verdant Earth it is *also* flat Attack and Intelligence
   (`statBonusEqualToStatusMagnitude`). The slate ships its own enabler for the
@@ -742,10 +742,19 @@ nobody to play it against:
   to roughly 125, is simultaneously a ~250 HP heal over the fight, a doubling
   of an 80 BP move, and **+125 Attack and +125 Intelligence on one hero** —
   larger than any base stat in the roster — all decaying by half a round at a
-  time. Nothing here is a rules conflict; it is a magnitude one, and it is the
-  single thing worth a designer's eye before this slate is tuned. The three
-  readings were each reasonable in isolation and were authored years apart in
-  design time; they had never been on one hero at once until now.
+  time. Nothing here is a rules conflict; it is a magnitude one, and it was
+  worth a designer's eye before the slate was tuned.
+  **Answer (2026-08-30): intended, and locked** — Renew is a slow passive
+  effect, so its payoffs have to be powerful or the turn spent on it is never
+  worth taking, and the halving curve is what bounds the window rather than the
+  magnitude (`docs/combat.md` "Renew's stacked payoffs"). **Do not report this
+  again**, the same way the starting-pool non-finding is retired. A FOURTH
+  reading of Renew, a payoff that does not decay with the magnitude, or one
+  that reads another hero's Renew would each be new. Left here rather than
+  deleted because the shape of the finding — *"one resource has quietly
+  accumulated N independent readings and this slate is what puts them on one
+  hero"* — is still the right thing to go looking for, and it is worth knowing
+  that raising it took one round trip and cost nothing.
 - **A second one, smaller: Nature has no enemy.** Three Nature heroes, zero
   Nature entries in `enemies.ts` — so none of these fifteen ever appears on the
   side of the field the player is fighting. That matters more for this type
