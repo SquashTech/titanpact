@@ -235,7 +235,7 @@ test('fieldEffects: Stasis Bubble reverses the Speed tiebreak within a shared pr
   const state = twoVTwoFixture(420);
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }, // cinderKnight, speed 50
-    { kind: 'move', combatantId: 'b2', moveId: 'venomousBite', declaredTarget: 'a1' }, // wildOracle, speed 65
+    { kind: 'move', combatantId: 'b2', moveId: 'vineLash', declaredTarget: 'a1' }, // wildOracle, speed 65
   ];
 
   const normal = orderActions(state, heroes, actions, moves, state.rngState, fieldEffects);
@@ -266,7 +266,7 @@ test('fieldEffects: Sanctuary bumps a heal-kind move\'s priority bracket by 1, r
   const state = twoVTwoFixture(430);
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'restoreVigor' }, // cinderKnight, heal, speed 50, target self
-    { kind: 'move', combatantId: 'b2', moveId: 'venomousBite', declaredTarget: 'a1' }, // wildOracle, damage, speed 65
+    { kind: 'move', combatantId: 'b2', moveId: 'vineLash', declaredTarget: 'a1' }, // wildOracle, damage, speed 65
   ];
 
   const normal = orderActions(state, heroes, actions, moves, state.rngState, fieldEffects);
@@ -282,7 +282,7 @@ test('fieldEffects: Sanctuary — a heal actually lands before a same-bracket da
   const state = { ...built, activeFieldEffect: { fieldEffectId: 'sanctuary', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'restoreVigor' },
-    { kind: 'move', combatantId: 'b2', moveId: 'venomousBite', declaredTarget: 'a1' },
+    { kind: 'move', combatantId: 'b2', moveId: 'vineLash', declaredTarget: 'a1' },
   ];
 
   const { events } = resolveRound(state, actions, config);

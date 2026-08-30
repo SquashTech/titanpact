@@ -73,9 +73,20 @@ export const progressionTable: ProgressionTable = {
     // be on the hero that can be drafted alongside a second Water hero.
     tidecaller: ['siphon', 'torrent', 'engulf', 'deluge', 'oasis', 'maelstrom', 'tsunami', 'highTide'],
     ironWarden: ['rockToss', 'shrapnelBlast', 'bodyBlow', 'ironFist', 'fortify'],
-    // 'wildfire' dropped with the Fire rewrite — it was fixture filler on a
-    // mono-Nature hero anyway, and naturesWrath already covers the spread slot.
-    wildOracle: ['vineLash', 'soulRend', 'rendingClaw', 'naturesWrath', 'overgrowth', 'weaken'],
+    // The three Nature heroes draw from the authored Nature pool
+    // (src/data/moves.ts, 2026-08-30), split by the stat each actually attacks
+    // with, same as Fire/Water/Frost/Storm/Stone. Sylva (Int 60, Wis 60) takes
+    // the magical line and with it BOTH halves of the type's engine — the
+    // Poison stack (Blight, Corrode) and the move that detonates it (Miasma) —
+    // because it is the only Nature hero that can hold all three at once.
+    //
+    // Magic Growth sits here for the reason Crimson carries Stoke the Flames
+    // and Riptide carries High Tide: it is the side-wide/field move, and Sylva
+    // is the only Nature STARTER (heroes.ts), so it is the one that can be
+    // drafted alongside a second Nature hero for Verdant Earth to pay off twice.
+    // mendWounds survives the rewrite as Sylva's only heal-KIND move — the
+    // slate authors none (see the hand-off in docs/authoring-moves.md).
+    wildOracle: ['blight', 'corrode', 'magicGrowth', 'miasma', 'forceOfNature', 'wildBloom', 'mendWounds'],
     // The three Storm heroes draw from the authored Storm pool (src/data/moves.ts,
     // 2026-08-30), split by the stat each actually attacks with, same as Fire,
     // Water and Frost. Squall (Atk 65 vs Int 35) and Scallywag (Atk 75 vs Int
@@ -106,7 +117,13 @@ export const progressionTable: ProgressionTable = {
     // its starting kit, so the key and the lock grow on the same hero rather
     // than depending on a second Frost draft.
     glacialWarden: ['snowBlast', 'glaciate', 'permafrost', 'quickFreeze', 'frigidAir', 'absoluteZero', 'avalanche', 'purify'],
-    dawnwarden: ['sunstrike', 'healingRain', 'fortify', 'purify', 'consecrate'],
+    // healingRain dropped with the Nature rewrite — it was Nature filler on a
+    // mono-LIGHT hero, and Light's own five moves are already split across
+    // Solace's kit and the four below, so there is no same-type replacement for
+    // the slot. Left short rather than backfilled with more off-type filler,
+    // same call the Storm slate made for Gallant; the real fix is Light's own
+    // authored slate.
+    dawnwarden: ['sunstrike', 'fortify', 'purify', 'consecrate'],
     runescribe: ['mindSpike', 'psychicLance', 'weaken', 'arcaneSurge'],
     mindweaver: ['spectralBind', 'quickJab', 'vanish', 'stunningBlow', 'stasisField'],
     forgewright: ['ironFist', 'shrapnelBlast', 'quickJab', 'stunningBlow'],
@@ -127,7 +144,10 @@ export const progressionTable: ProgressionTable = {
     // of the physical one plus its own Freeze setup — Deep Chill (25) and
     // Permafrost (45, exactly affordable) feeding Cold Snap (35).
     cube: ['icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'rockToss', 'shrapnelBlast', 'ironFist'],
-    mordax: ['naturesWrath', 'venomousBite', 'savageMaul', 'fangRush', 'weaken'],
+    // Mordrax takes the physical line and, with Overgrowth, the Renew that
+    // doubles Branch Slam — the two are one pick, and putting them in the same
+    // pool is what makes that legible rather than accidental.
+    mordax: ['ivySpike', 'thornWhip', 'leafSlice', 'branchSlam', 'overgrowth', 'toxicSpores', 'weaken'],
 
     // Lucius: only his Evolutions are deferred (src/data/heroes.ts) — he
     // still grows a movepool like any other hero below EVOLUTION_LEVEL.
@@ -135,7 +155,11 @@ export const progressionTable: ProgressionTable = {
 
     // --- Hollowbark, Aegis, Brimstone, Gallant, Nightshade, Pincer,
     // Scallywag, Sentinel, Bellows, Zenith (2026-08-22) ---
-    hollowbark: ['naturesWrath', 'venomousBite', 'healingRain', 'rendingClaw', 'weaken'],
+    // Hollowbark shares the physical line but is the 40-mana wall, so its
+    // half of it is the cheap end (Vine Lash 20, Blight 30) plus the two big
+    // swings a run's mana growth eventually reaches (docs/mana.md).
+    // rendingClaw dropped: Leaf Slice is the slate's own Bleed carrier.
+    hollowbark: ['vineLash', 'blight', 'leafSlice', 'thornWhip', 'branchSlam', 'regrowth', 'weaken'],
     aegis: ['sunstrike', 'restoreVigor', 'purify', 'consecrate', 'stunningBlow'],
     brimstone: ['sparkFlash', 'spreadingBlaze', 'backdraft', 'sparkBurst', 'nightmareGrasp', 'duskStrike'],
     // galeShot dropped with the Storm rewrite — it was Storm filler on a

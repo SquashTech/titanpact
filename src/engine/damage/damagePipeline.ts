@@ -88,20 +88,33 @@ export function resolveElementalForceBonus(
 /**
  * The conditional-BasePower multiplier for one pending hit
  * (MoveDefinition.conditionalPower — Fire's Immolate, "triple base power if
- * the target is Burned"). 1 when the move authors no condition or the target
- * isn't carrying the named status.
+ * the target is Burned"; Nature's Seed Shot, "double damage if the USER has
+ * Renew"). 1 when the move authors no condition, or when whichever combatant
+ * the condition asks about isn't carrying the named status.
  *
- * Read against the target's LIVE statuses at the moment the hit resolves, so
- * a Burn applied by a faster action earlier in the same round already counts —
- * same freshness rule the field-effect context follows in resolveRound.ts.
+ * Two questions, one answer: `requiresTargetStatus` reads the defender and
+ * `requiresUserStatus` reads the attacker. A move authors exactly one; the
+ * target-side form is checked first only because it is the older of the two,
+ * and a move authoring both is malformed content rather than a shape with a
+ * meaning.
+ *
+ * Read against LIVE statuses at the moment the hit resolves, so a Burn — or a
+ * Renew — applied by a faster action earlier in the same round already counts.
+ * That freshness matters more on the user side than it ever did on the target
+ * side: it is what lets a Nature partner cast Regrowth and have the same
+ * round's Branch Slam already be doubled.
+ *
  * Pipeline 2's concern (it changes the formula's BasePower input, not a stat),
  * so it lives here next to resolveElementalForceBonus rather than in
  * statusEngine.ts.
  */
-export function resolveConditionalPowerMultiplier(move: MoveDefinition, target: Combatant): number {
+export function resolveConditionalPowerMultiplier(move: MoveDefinition, target: Combatant, attacker: Combatant): number {
   const conditional = move.conditionalPower;
   if (!conditional) return 1;
-  return hasStatus(target, conditional.requiresTargetStatus) ? conditional.multiplier : 1;
+  const holder = conditional.requiresTargetStatus ? target : conditional.requiresUserStatus ? attacker : null;
+  const statusId = conditional.requiresTargetStatus ?? conditional.requiresUserStatus;
+  if (!holder || !statusId) return 1;
+  return hasStatus(holder, statusId) ? conditional.multiplier : 1;
 }
 
 /** Which raw stats feed the off/def ratio for a damage category — shared by resolveStatRatio and by callers that want the raw values (e.g. the Battle Log's math readout) without duplicating the mapping. */

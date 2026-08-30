@@ -1289,30 +1289,275 @@ export const moves: Record<string, MoveDefinition> = {
     description: 'Brings the hillside down on both foes and leaves your side dug into what it left (+20 Defense to allies).',
   },
 
-  // --- Nature ------------------------------------------------------------
+  // --- Nature (AUTHORED, 2026-08-30) ----------------------------------------
+  // The sixth designed movepool. Nature is the first type whose damage mostly
+  // isn't in its damage moves: four of the fifteen do nothing but stack Poison,
+  // which is the catalog's one 'timer'-shape status (statuses.ts) — a magnitude
+  // that BUILDS and then pays out once, as a percentage of the holder's max HP.
+  // The slate is arranged around the two ways that stack turns into a win:
+  //
+  //   - **Wait for it.** Poison survives a switch and STALLS on the bench
+  //     (activeOnly), so a foe who pivots away carries it with them and only
+  //     restarts the clock by coming back. Toxic Spores, Blight, Corrode and
+  //     Thorn Whip exist to make that number bigger.
+  //   - **Refuse to wait.** Miasma detonates it on contact (content.ts
+  //     detonatesStatus), paying the whole accumulated magnitude out
+  //     immediately — its own Poison 5 included, because the detonation
+  //     resolves after the application.
+  //
+  // Running alongside it is Renew, which is doing THREE jobs here. This is the
+  // single most load-bearing thing about the slate and it is worth reading
+  // before tuning any number in it:
+  //
+  //   1. It heals, on the usual halving curve, snapshotted through the healing
+  //      formula at cast time (healPipeline.ts scaleHotMagnitude) — so the
+  //      caster's Wisdom and Nature's own STAB are already inside every
+  //      authored magnitude below before it ever ticks.
+  //   2. It is Seed Shot's and Branch Slam's damage condition
+  //      (conditionalPower.requiresUserStatus) — the first two moves in the
+  //      game whose bonus is something you put on YOURSELF rather than inflict.
+  //   3. Under Verdant Earth it is ALSO flat Attack and Intelligence
+  //      (fieldEffects.ts statBonusEqualToStatusMagnitude), and this slate sets
+  //      that field effect twice (Magic Growth, Force of Nature).
+  //
+  // So Overgrowth's Renew 100 is not a 100-point heal. It is a heal, a damage
+  // doubler, and — under the type's own field effect — a ~+125 stat swing on
+  // one hero, all decaying by half each round. See docs/combat.md.
+  //
+  // Cost floor 15, ceiling 75, and the slate authors no priority column, so
+  // every Nature move resolves in bracket 0.
   vineLash: {
     id: 'vineLash',
     name: 'Vine Lash',
     type: 'Nature',
     category: 'physical',
     kind: 'damage',
-    basePower: 50,
-    manaCost: 9,
+    basePower: 40,
+    // A 20% opener, not a Poison plan — the guaranteed appliers are Toxic
+    // Spores, Blight, Corrode and Thorn Whip. The chance gates the RIDER and
+    // never the hit (CLAUDE.md "No accuracy stat").
+    statusApplication: { statusId: 'Poison', magnitude: 5, duration: 3, chance: 0.2, target: 'moveTarget' },
+    manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A whip-crack of living vine.',
+    description: 'A whip-crack of living vine, sometimes barbed (20% chance of Poison 5).',
   },
-  naturesWrath: {
-    id: 'naturesWrath',
-    name: "Nature's Wrath",
+  toxicSpores: {
+    id: 'toxicSpores',
+    name: 'Toxic Spores',
+    type: 'Nature',
+    category: 'magical',
+    // No damage body at all, so 'buff' with a negative payload — the engine has
+    // no 'debuff' kind and MoveTile recovers the label from the sign
+    // (docs/authoring-moves.md §2).
+    kind: 'buff',
+    statusApplication: { statusId: 'Poison', magnitude: 10, duration: 3, target: 'moveTarget' },
+    statDeltas: [{ stat: 'speed', amount: -5 }],
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A cloud of spores that clings and drags (inflicts Poison 10, −5 Speed).',
+  },
+  regrowth: {
+    id: 'regrowth',
+    name: 'Regrowth',
+    type: 'Nature',
+    category: 'magical',
+    kind: 'buff',
+    // Twenty is what a Wisdom-50 caster with no STAB gets; a Nature hero
+    // casting it on itself is already at 25 before Wisdom (healPipeline.ts).
+    // It is also what makes Seed Shot a 60 BP move rather than a 30 BP one,
+    // which is why the cheapest Renew in the pool is the one Sylva opens with.
+    statusApplication: { statusId: 'Renew', magnitude: 20, target: 'moveTarget' },
+    manaCost: 20,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Green comes back up under both allies (grants Renew 20).',
+  },
+  seedShot: {
+    id: 'seedShot',
+    name: 'Seed Shot',
     type: 'Nature',
     category: 'magical',
     kind: 'damage',
-    basePower: 42,
-    manaCost: 17,
+    basePower: 30,
+    // The first conditional in the game that reads the USER
+    // (content.ts conditionalPower.requiresUserStatus). Deliberately not
+    // consuming: the Renew it reads is also healing the caster and, under
+    // Verdant Earth, is that hero's Attack and Intelligence — eating it would
+    // make one press undo the other two.
+    conditionalPower: { requiresUserStatus: 'Renew', multiplier: 2 },
+    manaCost: 25,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A seed fired hard enough to sting — harder while you are still growing (×2 while you have Renew).',
+  },
+  ivySpike: {
+    id: 'ivySpike',
+    name: 'Ivy Spike',
+    type: 'Nature',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 25,
+    // Lands AFTER its own hit (resolveRound.ts), so the −10 shapes the next
+    // swing rather than this one.
+    statDeltas: [{ stat: 'attack', amount: -10 }],
+    manaCost: 15,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A low thorn that takes the strength out of the next swing (−10 Attack).',
+  },
+  blight: {
+    id: 'blight',
+    name: 'Blight',
+    type: 'Nature',
+    category: 'magical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Poison', magnitude: 20, duration: 3, target: 'moveTarget' },
+    manaCost: 30,
     priority: 0,
     target: 'bothEnemies',
-    description: 'Overgrowth erupts violently around both foes.',
+    description: 'Rot goes through the whole enemy line (inflicts Poison 20 on both).',
+  },
+  corrode: {
+    id: 'corrode',
+    name: 'Corrode',
+    type: 'Nature',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 50,
+    statusApplication: { statusId: 'Poison', magnitude: 10, duration: 3, target: 'moveTarget' },
+    statDeltas: [{ stat: 'defense', amount: -10 }],
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Sap that eats through the guard and stays in the wound (Poison 10, −10 Defense).',
+  },
+  thornWhip: {
+    id: 'thornWhip',
+    name: 'Thorn Whip',
+    type: 'Nature',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 35,
+    statusApplication: { statusId: 'Poison', magnitude: 10, duration: 3, target: 'moveTarget' },
+    // Both offensive stats at once, which is what the 45 is actually buying —
+    // 35 BP is the smallest damage body in the Mid tier.
+    statDeltas: [
+      { stat: 'attack', amount: -10 },
+      { stat: 'intelligence', amount: -10 },
+    ],
+    manaCost: 45,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Barbs that leave a foe poisoned and unable to answer either way (Poison 10, −10 Attack, −10 Intelligence).',
+  },
+  wildBloom: {
+    id: 'wildBloom',
+    name: 'Wild Bloom',
+    type: 'Nature',
+    category: 'magical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Renew', magnitude: 50, target: 'moveTarget' },
+    manaCost: 45,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'The whole side flowers at once (grants Renew 50).',
+  },
+  magicGrowth: {
+    id: 'magicGrowth',
+    name: 'Magic Growth',
+    type: 'Nature',
+    category: 'magical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Renew', magnitude: 30, target: 'moveTarget' },
+    // The cheaper of the slate's two Verdant Earth setters, and the one that
+    // arrives holding its own payoff: the Renew it grants IS the Attack and
+    // Intelligence the field effect then reads (fieldEffects.ts).
+    fieldEffectApplication: 'verdantEarth',
+    manaCost: 40,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Feeds one ally and turns the ground under everyone (Renew 30; Verdant Earth for 5 rounds).',
+  },
+  leafSlice: {
+    id: 'leafSlice',
+    name: 'Leaf Slice',
+    type: 'Nature',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 60,
+    // Bleed is boolean-shape (statuses.ts) — no magnitude, no decay, a flat 5%
+    // of max HP every round for the rest of the fight, and a switch does not
+    // clear it. The 30% is priced against that permanence.
+    statusApplication: { statusId: 'Bleed', chance: 0.3, target: 'moveTarget' },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A leaf edge drawn across the guard (30% chance of Bleed).',
+  },
+  overgrowth: {
+    id: 'overgrowth',
+    name: 'Overgrowth',
+    type: 'Nature',
+    category: 'magical',
+    kind: 'buff',
+    // The largest single number in the game, and it is three numbers: heal,
+    // Seed Shot / Branch Slam doubler, and (under Verdant Earth) flat Attack
+    // and Intelligence. See the section note above.
+    statusApplication: { statusId: 'Renew', magnitude: 100, target: 'moveTarget' },
+    manaCost: 70,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'One ally disappears under new growth (grants Renew 100).',
+  },
+  forceOfNature: {
+    id: 'forceOfNature',
+    name: 'Force of Nature',
+    type: 'Nature',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 100,
+    fieldEffectApplication: 'verdantEarth',
+    manaCost: 75,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'The forest answers, and stays answered (Verdant Earth for 5 rounds).',
+  },
+  branchSlam: {
+    id: 'branchSlam',
+    name: 'Branch Slam',
+    type: 'Nature',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 80,
+    // Seed Shot's capstone: same condition, and the reason a physical Nature
+    // hero wants a Renew move in its kit at all. 160 effective BP is the
+    // biggest number the type reaches, and every route to it runs through
+    // having spent an earlier turn on yourself.
+    conditionalPower: { requiresUserStatus: 'Renew', multiplier: 2 },
+    manaCost: 70,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A whole bough brought down two-handed (×2 while you have Renew).',
+  },
+  miasma: {
+    id: 'miasma',
+    name: 'Miasma',
+    type: 'Nature',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 50,
+    statusApplication: { statusId: 'Poison', magnitude: 5, duration: 3, target: 'moveTarget' },
+    // Resolved AFTER the application above (resolveRound.ts), so the 5 it just
+    // planted is part of what goes off — a Miasma into a clean target is worth
+    // 5% of max HP, and one into a Blight + Corrode + Thorn Whip stack is worth
+    // 45%. The move is priced at 75 for the second case, not the first.
+    detonatesStatus: 'Poison',
+    manaCost: 75,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Everything this side has planted goes off at once (Poison 5, then detonates the whole stack).',
   },
 
   // --- Light -------------------------------------------------------------
@@ -1562,18 +1807,6 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'self',
     description: 'A burst of restorative light poured into the caster.',
   },
-  healingRain: {
-    id: 'healingRain',
-    name: 'Healing Rain',
-    type: 'Nature',
-    category: 'magical',
-    kind: 'heal',
-    healPower: 28,
-    manaCost: 20,
-    priority: 0,
-    target: 'bothAllies',
-    description: 'A gentle rain that mends both allies at once.',
-  },
   mendWounds: {
     id: 'mendWounds',
     name: 'Mend Wounds',
@@ -1670,19 +1903,6 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: "A raking slash that opens a wound too deep to close (inflicts Bleed).",
   },
-  venomousBite: {
-    id: 'venomousBite',
-    name: 'Venomous Bite',
-    type: 'Nature',
-    category: 'physical',
-    kind: 'damage',
-    basePower: 30,
-    statusApplication: { statusId: 'Poison', magnitude: 10, duration: 3, target: 'moveTarget' },
-    manaCost: 14,
-    priority: 0,
-    target: 'singleEnemy',
-    description: 'A venom-laced bite that starts a 3-round countdown (inflicts Poison 10).',
-  },
   stunningBlow: {
     id: 'stunningBlow',
     name: 'Stunning Blow',
@@ -1749,7 +1969,11 @@ export const moves: Record<string, MoveDefinition> = {
     description: "Washes away an ally's afflictions (Grant Cleanse).",
   },
 
-  // --- Field Effect moves (docs/field-effects.md) — one per effect ---------
+  // --- Field Effect moves (docs/field-effects.md) -------------------------
+  // One per effect, EXCEPT Verdant Earth: the authored Nature slate
+  // (2026-08-30) sets it from two of its own moves — Magic Growth and Force of
+  // Nature, both in the Nature section above — and the standalone setter that
+  // used to live here was deleted, its id reused by the slate's Renew 100 buff.
   arcaneSurge: {
     id: 'arcaneSurge',
     name: 'Arcane Surge',
@@ -1788,18 +2012,5 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'self',
     description: "Sanctuary for 5 rounds: healing moves gain +1 priority.",
-  },
-  overgrowth: {
-    id: 'overgrowth',
-    name: 'Overgrowth',
-    type: 'Nature',
-    category: 'magical',
-    kind: 'buff',
-    statDeltas: [],
-    fieldEffectApplication: 'verdantEarth',
-    manaCost: 20,
-    priority: 0,
-    target: 'self',
-    description: "Verdant Earth for 5 rounds: Renew also raises Attack and Intelligence.",
   },
 };

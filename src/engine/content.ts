@@ -423,11 +423,45 @@ export interface MoveDefinition {
    * StatusDefinition.triggerTypes.
    */
   conditionalPower?: {
-    requiresTargetStatus: StatusId;
+    /**
+     * The multiplier applies when the HIT'S TARGET carries this status —
+     * Fire's Immolate, Frost's Cold Snap. Exactly one of this and
+     * `requiresUserStatus` must be authored; authoring neither leaves the
+     * multiplier permanently unapplied, which is a silent dud rather than an
+     * error (there is still no isValidMoveDefinition —
+     * docs/authoring-moves.md §4).
+     */
+    requiresTargetStatus?: StatusId;
+    /**
+     * The multiplier applies when the move's USER carries this status —
+     * Nature's Seed Shot and Branch Slam, "double damage if the user has
+     * Renew".
+     *
+     * The mirror of `requiresTargetStatus` above, and deliberately a sibling
+     * field rather than a `side` discriminator: the two ask genuinely
+     * different questions of the board and a move asking both at once has no
+     * meaning worth guessing at.
+     *
+     * The consequence Nature is built around: this makes a damage bonus
+     * something you SET UP on yourself rather than something you inflict, so
+     * the same Renew that is quietly healing the caster is also what its
+     * physical line is priced against. Read off the attacker's live statuses
+     * at the moment the hit resolves, exactly like the target-side form — so
+     * a Regrowth cast by a faster partner earlier in the same round already
+     * counts.
+     */
+    requiresUserStatus?: StatusId;
     multiplier: number;
     /**
      * Spend the status this move just cashed in — Frost's Cold Snap,
      * "if the target is Frozen, consume it to deal double damage".
+     *
+     * Strips it from whichever combatant the condition READ: the target for
+     * `requiresTargetStatus`, the user for `requiresUserStatus`. Neither of
+     * Nature's two user-side moves authors it — a Renew that Seed Shot ate
+     * would stop being the standing investment Verdant Earth also reads —
+     * but the field is defined for both sides so the next slate does not
+     * have to re-answer the question.
      *
      * Only fires on a hit that ACTUALLY got the multiplier, so a spread
      * conditional move strips the mark off the foe it doubled against and
@@ -610,6 +644,30 @@ export interface MoveDefinition {
    * quantity, not a query.
    */
   cleanseCount?: number;
+  /**
+   * Any kind. Fires a TIMER-shape status's stored payload on this move's
+   * resolved targets NOW, instead of when its clock runs out — Nature's
+   * Miasma, "apply Poison 5, then instantly detonate Poison".
+   *
+   * Resolved AFTER this move's own `statusApplication`, which is what makes
+   * Miasma's authored order ("apply, THEN detonate") true: the 5 it just
+   * planted is part of what goes off. On a target already sitting on Poison
+   * 20 the detonation is 25% of max HP, which is the whole pitch — Nature
+   * spends four moves building a number the enemy is allowed to walk away
+   * from, and this is the one that refuses to wait.
+   *
+   * Deliberately gated on `StatusDefinition.pipeline === 'timer'` rather
+   * than on a literal 'Poison' id (statusEngine.ts detonateStatusNow), same
+   * discipline as triggerTypes: a timer is the one status shape that HOLDS an
+   * unspent payload, so it is the one shape "detonate" is meaningful for.
+   * Naming a status of any other shape is a silent no-op, not an error.
+   *
+   * The damage it deals is the timer's own — `magnitude`% of the holder's
+   * max HP, exactly what the end-of-round expiry would have dealt. FIXED
+   * damage, like Stone's retribution: no ratio, no STAB, no TypeMult, no
+   * variance, no crit, and no RNG drawn. See docs/combat.md.
+   */
+  detonatesStatus?: StatusId;
   /** Any kind — sets the battlefield's Field Effect (docs/field-effects.md). Global, so unlike statusApplication there's no target to choose. */
   fieldEffectApplication?: FieldEffectId;
   manaCost: number;

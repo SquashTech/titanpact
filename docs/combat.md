@@ -596,6 +596,77 @@ Omitted means `'moveTarget'`, which is every move authored before it.
 
 ---
 
+## A damage bonus you set up on yourself (2026-08-30, Nature)
+
+`MoveDefinition.conditionalPower.requiresUserStatus`: the same BasePower-stage
+multiplier Immolate and Cold Snap use, asked of the **attacker** instead of the
+defender. Nature's Seed Shot (30 BP) and Branch Slam (80 BP) are the first
+content — both "double damage if the user has Renew", neither consuming it.
+
+A sibling field rather than a `side` discriminator on the existing one: the two
+ask genuinely different questions and a move asking both at once has no meaning
+worth guessing at. Everything else about the field is unchanged — it scales the
+formula's BasePower **input**, not the finished hit (the two-pipeline separation
+is LOCKED), it is read off live statuses at resolution, and `consumesStatus`
+now spends it from whichever combatant the condition read.
+
+Two consequences worth stating rather than discovering:
+
+- **It is all-or-nothing across a spread.** The target-side form is re-read per
+  hit and can double against one foe and not the other; the user-side form asks
+  one question about one combatant, so every target of a single cast gets the
+  same answer.
+- **It reads live, so a partner counts.** A Regrowth cast by a faster ally
+  earlier in the same round is already on the attacker when Branch Slam
+  resolves. This is the type's whole tempo shape and it is deliberate — Nature
+  is the first type whose damage line asks the *support* half of the side to
+  act first.
+
+What it changes about the game, which is bigger than the field: a damage bonus
+that lives on the caster is one nothing on the enemy side can play around.
+Freeze, Burn and Conduct can all be dodged by cleansing, switching, or simply
+not being the target; Renew cannot be stripped (it is `positive`, so Cleanse
+never touches it) and does not clear on switch. **Open:** whether that is
+intended to be as absolute as it currently is, or whether Nature's setup being
+uninterruptible should be priced somewhere other than in the mana cost.
+
+---
+
+## Detonating a status on demand (2026-08-30, Nature)
+
+`MoveDefinition.detonatesStatus`: fires a **timer-shape** status's stored
+payload on the move's resolved targets now, instead of when its clock runs out.
+Nature's Miasma ("apply Poison 5, then instantly detonate Poison") is the first
+and only content.
+
+- **Resolved after the move's own `statusApplication`**, which is what makes
+  the design row's "apply, THEN detonate" true rather than merely the order it
+  was written in: the 5 Miasma plants is part of what goes off. Into a clean
+  target it is worth 5% of max HP; into a Blight + Corrode + Thorn Whip stack,
+  45%.
+- **Worth exactly what the expiry would have been** — `magnitude`% of the
+  holder's max HP, the same number `tickEndOfRound` pays at duration 0. That
+  equality is the invariant the move is priced against: Miasma buys *time*, not
+  damage. If the two ever diverge it has quietly become its own damage source.
+- **Gated on the status SHAPE, not on an id.** Only `pipeline: 'timer'`
+  statuses hold an unspent payload, so only they can be detonated; naming Burn
+  or Renew is a silent no-op, the same guard discipline `statusApplication`'s
+  unknown-id lookup uses.
+- **Spent, not expired** (`StatusRemoved`, reason `consumed`), and emitted as
+  `StatusDetonated` → `StatusRemoved` → `HpChanged` — the same three-event
+  run Conduct's detonation produces, so the view bundles it into one beat with
+  no new presentation vocabulary.
+
+Like Stone's retribution, this is **fixed damage the damage formula never
+touches**: no ratio, no STAB, no TypeMult, no variance, no crit, and no RNG
+drawn. The same open question therefore extends to it — whether a future relic
+or equipment `DamageModifier` should reach a detonation. It does not today, and
+"fixed means fixed" remains the simplest defensible answer, but the game now has
+**two** independent damage sources outside the type chart rather than one, which
+is worth deciding on purpose rather than by accumulation.
+
+---
+
 ## Stat modifiers
 
 - Stat modifiers are **flat numeric additives** — not the VGC stage/bracket system.

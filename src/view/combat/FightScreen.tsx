@@ -13,6 +13,7 @@ import {
   isLockedIn,
   effectiveManaCost,
   effectiveTypes,
+  hasStatus,
   hasAffordableMoveInFight,
   resolveManaCost,
   getEffectiveStat,
@@ -92,6 +93,17 @@ interface MoveRowProps {
    * a fact about the caster, not about the move.
    */
   banked: number;
+  /**
+   * Whether this hero is carrying what a user-side conditionalPower demands
+   * (content.ts conditionalPower.requiresUserStatus — Nature's Seed Shot and
+   * Branch Slam). `true` for every move that asks nothing of its caster.
+   *
+   * Resolved by the caller for the same reason `banked` is: it is a fact about
+   * the caster. Deliberately NOT folded into `gateUnmet` — this condition
+   * makes the move weaker, never unpressable, and greying the row out over a
+   * bonus the player is choosing to skip would be a lie about a legal action.
+   */
+  userConditionMet: boolean;
   /** The commanding hero's live heal inputs (healPipeline.ts), resolved by the caller for the same reason forceBonus is — a heal's number is a fact about the caster, not about the move. */
   caster: HealCaster;
   matchups: readonly MoveMatchup[];
@@ -118,7 +130,7 @@ interface MoveRowProps {
  * rules off `:disabled`), still refuses to act on a tap, and still opens its
  * dossier on a hold.
  */
-function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
+function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, userConditionMet, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
   // Two independent ways a row can be dead, one shared treatment. `.is-unusable`
   // carries the dim; `.is-unaffordable` is kept as the narrower flag so the mana
   // gem only goes grey when mana is actually the problem (styles.css).
@@ -248,11 +260,26 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                 per-defender number it produces is in the dossier's forecast,
                 which already runs the multiplier against each enemy. */}
             {move.conditionalPower && (
-              <span className="move-eff-status">
-                ×{move.conditionalPower.multiplier} vs {move.conditionalPower.requiresTargetStatus}
+              <span
+                className={`move-eff-status${move.conditionalPower.requiresUserStatus && !userConditionMet ? ' move-eff-unmet' : ''}`}
+              >
+                {/* The user-side form (content.ts requiresUserStatus) asks
+                    about a hero the player is already looking at, so unlike
+                    the target-side one this chip can answer it — and dims when
+                    the answer is no. "vs" would be the wrong preposition twice
+                    over: wrong side of the field, and wrong verb. */}
+                ×{move.conditionalPower.multiplier}{' '}
+                {move.conditionalPower.requiresUserStatus
+                  ? `with ${move.conditionalPower.requiresUserStatus}`
+                  : `vs ${move.conditionalPower.requiresTargetStatus}`}
                 {move.conditionalPower.consumesStatus ? ' (spent)' : ''}
               </span>
             )}
+            {/* The detonation, on the button, because it is the difference
+                between Miasma being a 50 BP poke and being a quarter of the
+                target's max HP — and the size of that stack is something only
+                the player has been tracking (content.ts detonatesStatus). */}
+            {move.detonatesStatus && <span className="move-eff-status">Detonates {move.detonatesStatus}</span>}
             {/* The gate, and whether it is met, on the face of the button. A row
                 that just said "Freeze only" while the whole enemy side is
                 unmarked would read as a move the player forgot how to press;
@@ -1530,6 +1557,10 @@ export function FightScreen({
                         selected={isSelected}
                         forceBonus={resolveElementalForceBonus(combatant, move.type, statuses)}
                         banked={combatant.damageTakenSinceLastTurn}
+                        userConditionMet={
+                          !move.conditionalPower?.requiresUserStatus ||
+                          hasStatus(combatant, move.conditionalPower.requiresUserStatus)
+                        }
                         caster={{
                           wisdom: getEffectiveStat(allCombatants[combatant.heroId], combatant, 'wisdom', {
                             active: combat.activeFieldEffect,

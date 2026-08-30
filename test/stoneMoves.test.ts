@@ -371,7 +371,7 @@ test('stone: Provoke does not touch spread moves, or moves aimed at the enemy ow
   const state = withDeepPools(stoneFixture(603));
   const taunted = applyStatus(state, 1, 'a2', statuses.Provoke, { duration: 1 }).state;
 
-  const spread = resolveRound(taunted, [{ kind: 'move', combatantId: 'b1', moveId: 'naturesWrath' }], config);
+  const spread = resolveRound(taunted, [{ kind: 'move', combatantId: 'b1', moveId: 'rockfall' }], config);
   const spreadHits = (spread.events.filter((e) => e.type === 'DamageDealt') as any[]).map((h) => h.targetCombatantId);
   assert.deepStrictEqual(spreadHits.sort(), ['a1', 'a2'], 'a spread move still hits both, taunt or no taunt');
 

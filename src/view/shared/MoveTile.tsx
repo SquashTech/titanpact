@@ -298,13 +298,19 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   }
 
   if (move.conditionalPower) {
-    const gate = move.conditionalPower.requiresTargetStatus;
+    // "vs Freeze" and "while you have Renew" are opposite instructions and the
+    // summary has to say which — a Branch Slam reading "×2 power vs Renew"
+    // would send the player looking for an enemy to put Renew on
+    // (content.ts conditionalPower.requiresUserStatus).
+    const userSide = move.conditionalPower.requiresUserStatus;
+    const gate = move.conditionalPower.requiresTargetStatus ?? userSide ?? '';
     const gateName = statuses[gate]?.name ?? gate;
     // "consumed" is not a footnote. Cold Snap's double is paid for with the
     // exact mark a requiresTargetStatus move in the same kit needs to be
     // castable, and a player who cannot see that cannot make the choice.
     const spent = move.conditionalPower.consumesStatus ? ', consumed' : '';
-    parts.push(`×${move.conditionalPower.multiplier} power vs ${gateName}${spent}`);
+    const clause = userSide ? `while you have ${gateName}` : `vs ${gateName}`;
+    parts.push(`×${move.conditionalPower.multiplier} power ${clause}${spent}`);
   }
 
   if (move.critChance != null) parts.push(`${Math.round(move.critChance * 100)}% crit`);
@@ -352,6 +358,13 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     // on a two-sided move that is the wrong answer for this half.
     const where = riderTargetLabel(move.statusApplication);
     parts.push(`${odds}${verb} ${statusName}${amount != null ? ` ${amount}` : ''}${where ? ` (${where})` : ''}`);
+  }
+
+  // Miasma's detonation is most of what the move does — a 50 BP magical hit
+  // that also cashes in a Poison stack the player spent four moves building —
+  // so it cannot be left to the dossier (content.ts detonatesStatus).
+  if (move.detonatesStatus) {
+    parts.push(`Detonates ${statuses[move.detonatesStatus]?.name ?? move.detonatesStatus}`);
   }
 
   // A limited cleanse has to say so, and has to say it is random — "Cleanses"

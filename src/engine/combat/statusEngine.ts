@@ -378,6 +378,62 @@ export function detonateTriggeredStatuses(
 }
 
 /**
+ * Fire a TIMER-shape status's stored payload NOW instead of when its clock
+ * runs out (content.ts MoveDefinition.detonatesStatus — Nature's Miasma,
+ * "apply Poison 5, then instantly detonate Poison").
+ *
+ * The same payload tickEndOfRound's `pipeline === 'timer'` branch pays at
+ * duration 0 — `magnitude`% of the holder's max HP — just claimed early. It
+ * is deliberately NOT re-derived here as a different number: a detonation the
+ * player forced and a detonation they waited for have to be worth the same,
+ * or Miasma stops being "spend the timer" and becomes its own damage source.
+ *
+ * Two things it is not:
+ *
+ * - Not an expiry. The status leaves with reason 'consumed' rather than
+ *   'expired', matching Conduct's detonation, because something spent it.
+ * - Not a tick. It emits StatusDetonated + StatusRemoved + HpChanged, in that
+ *   order, which is exactly the beat detonateTriggeredStatuses already
+ *   produces and buildBeats.ts already knows how to bundle — so a forced
+ *   detonation reads in the log and on screen like the Conduct pop it is a
+ *   cousin of, with no new view vocabulary.
+ *
+ * Gated on the SHAPE, not on a status id: a timer is the one status that
+ * holds an unspent payload, so it is the one shape "detonate" means anything
+ * for. Naming Burn or Renew here is a silent no-op, same guard discipline as
+ * statusApplication's unknown-id lookup.
+ */
+export function detonateStatusNow(
+  state: CombatState,
+  round: number,
+  combatantId: string,
+  statusId: StatusId,
+  statusDefs: Record<string, StatusDefinition>,
+  maxHp: number
+): { state: CombatState; amount: number; events: CombatEvent[] } {
+  const def = statusDefs[statusId];
+  const combatant = state.combatants[combatantId];
+  if (!def || def.pipeline !== 'timer') return { state, amount: 0, events: [] };
+  if (!combatant || combatant.fainted) return { state, amount: 0, events: [] };
+  const instance = combatant.statuses[statusId];
+  if (!instance) return { state, amount: 0, events: [] };
+
+  const amount = Math.ceil((maxHp * (instance.magnitude ?? 0)) / 100);
+  const events: CombatEvent[] = [{ type: 'StatusDetonated', round, combatantId, statusId, amount }];
+
+  let working = state;
+  const rm = removeStatus(working, round, combatantId, statusId, 'consumed');
+  working = rm.state;
+  events.push(...rm.events);
+
+  const hpResult = applyHpDelta(working, round, combatantId, -amount, maxHp);
+  working = hpResult.state;
+  events.push(...hpResult.events);
+
+  return { state: working, amount, events };
+}
+
+/**
  * Haunt's engine hook, written generically off `spreadTriggerTypes` so any
  * future retarget-style status reuses it. For a `singleEnemy` `kind: 'damage'`
  * move resolved to exactly one target: if an active ally-of-the-target (not

@@ -24,9 +24,15 @@
 // or two supports, and it was the 4th slot in a hero that had one — the
 // thing that stopped starting kits being uniform three across the draft
 // screen. So the attachment lives in src/data/progression.ts moveTiers now
-// (crimson→spreadingBlaze, wildOracle→overgrowth, dawnwarden→consecrate,
+// (crimson→spreadingBlaze, wildOracle→magicGrowth, dawnwarden→consecrate,
 // runescribe→arcaneSurge, mindweaver→stasisField), and each effect is
 // something a run grows into rather than opens with.
+//
+// Verdant Earth is the one exception to "one setter per effect" (2026-08-30):
+// the authored Nature slate sets it from TWO of its own moves — Magic Growth
+// (40, a Renew grant that also turns the ground) and Force of Nature (75, the
+// type's biggest hit) — and the standalone 20-mana setter that used to carry it
+// was deleted, its `overgrowth` id reused by the slate's Renew 100 buff.
 
 import type { FieldEffectDefinition } from '../engine/content';
 

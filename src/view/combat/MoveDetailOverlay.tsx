@@ -120,7 +120,7 @@ function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defender
   // Read against THIS defender, so a conditional move forecasts x3 on the
   // Burned foe and x1 on the clean one — the whole point of showing a
   // per-defender band rather than one number.
-  const conditionalMult = resolveConditionalPowerMultiplier(move, defender);
+  const conditionalMult = resolveConditionalPowerMultiplier(move, defender, attacker);
   const attackerTypes = effectiveTypes(attackerHero, attacker);
   const defenderTypes = effectiveTypes(defenderHero, defender);
 
@@ -310,7 +310,13 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   const kindGlyph = moveKindGlyph(move);
   const statusDef = move.statusApplication ? statuses[move.statusApplication.statusId] : undefined;
   const fieldDef = move.fieldEffectApplication ? fieldEffects[move.fieldEffectApplication] : undefined;
-  const conditionalDef = move.conditionalPower ? statuses[move.conditionalPower.requiresTargetStatus] : undefined;
+  // Whichever side of the board this move's conditional actually asks about
+  // (content.ts conditionalPower.requiresUserStatus).
+  const conditionalStatusId = move.conditionalPower
+    ? (move.conditionalPower.requiresTargetStatus ?? move.conditionalPower.requiresUserStatus ?? '')
+    : '';
+  const conditionalDef = conditionalStatusId ? statuses[conditionalStatusId] : undefined;
+  const detonateDef = move.detonatesStatus ? statuses[move.detonatesStatus] : undefined;
   const gateDef = move.requiresTargetStatus ? statuses[move.requiresTargetStatus] : undefined;
   const priorityDef = move.conditionalPriority ? statuses[move.conditionalPriority.requiresTargetStatus] : undefined;
   /**
@@ -336,6 +342,7 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
       move.cleanses ||
       move.fieldEffectApplication ||
       move.conditionalPower ||
+      move.detonatesStatus ||
       move.requiresTargetStatus ||
       move.critChance != null ||
       move.drainPercent ||
@@ -508,14 +515,32 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
           )}
           {move.conditionalPower && (
             <EffectRow
-              glyph={<StatusGlyph statusId={move.conditionalPower.requiresTargetStatus} />}
-              color={statusColor(move.conditionalPower.requiresTargetStatus)}
-              text={`×${move.conditionalPower.multiplier} power vs ${conditionalDef?.name ?? move.conditionalPower.requiresTargetStatus}`}
+              glyph={<StatusGlyph statusId={conditionalStatusId} />}
+              color={statusColor(conditionalStatusId)}
+              text={
+                move.conditionalPower.requiresUserStatus
+                  ? `×${move.conditionalPower.multiplier} power while you have ${conditionalDef?.name ?? conditionalStatusId}`
+                  : `×${move.conditionalPower.multiplier} power vs ${conditionalDef?.name ?? conditionalStatusId}`
+              }
               note={
                 move.conditionalPower.consumesStatus
-                  ? `scales base power, not the finished hit — and spends the ${conditionalDef?.name ?? move.conditionalPower.requiresTargetStatus} it cashed in`
-                  : 'scales base power, not the finished hit'
+                  ? `scales base power, not the finished hit — and spends the ${conditionalDef?.name ?? conditionalStatusId} it cashed in`
+                  : move.conditionalPower.requiresUserStatus
+                    ? 'scales base power, not the finished hit — read off THIS hero, so a partner granting it earlier in the round already counts'
+                    : 'scales base power, not the finished hit'
               }
+            />
+          )}
+          {/* The detonation wears the detonated status's own glyph, not the
+              move's: what the row is really reporting is how big the player's
+              Poison stack has grown, and the move is only the trigger
+              (content.ts detonatesStatus). */}
+          {move.detonatesStatus && (
+            <EffectRow
+              glyph={<StatusGlyph statusId={move.detonatesStatus} />}
+              color={statusColor(move.detonatesStatus)}
+              text={`Detonates ${detonateDef?.name ?? move.detonatesStatus} on contact`}
+              note="pays the timer out now, at whatever magnitude it has reached — and this move's own application counts toward it"
             />
           )}
           {move.critChance != null && (

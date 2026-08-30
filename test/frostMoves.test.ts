@@ -128,7 +128,8 @@ test('frost: no Frost move applies a status the catalog does not define, or gate
       assert.ok(statuses[move.requiresTargetStatus], `${move.id} gates on unknown status ${move.requiresTargetStatus}`);
     }
     if (move.conditionalPower) {
-      assert.ok(statuses[move.conditionalPower.requiresTargetStatus], `${move.id} scales off unknown status`);
+      const scalesOff = move.conditionalPower.requiresTargetStatus ?? move.conditionalPower.requiresUserStatus;
+      assert.ok(scalesOff && statuses[scalesOff], `${move.id} scales off unknown status`);
     }
   }
 });

@@ -137,13 +137,16 @@ test('heal: NO max-HP term — one caster restores the same amount to a 135 HP w
 });
 
 test('heal: a bothAllies heal resolves once and pays every ally the same number', () => {
-  // Healing Rain is Nature; Tidecaller is not, so this is the bare Wisdom term.
+  // Repointed off Healing Rain, which the authored Nature slate deleted — the
+  // slate has no heal-KIND move at all, so Water's Oasis is now the game's only
+  // bothAllies heal. Cast by Sylva (Nature, Wisdom 60) rather than by a Water
+  // hero, which keeps this the bare Wisdom term the test was written for.
   const { events } = resolveRound(
-    hurt(fixture(203, 'tidecaller', 'ironWarden'), ['a1', 'a2'], 10),
-    [{ kind: 'move', combatantId: 'a1', moveId: 'healingRain' }] as Action[],
+    hurt(fixture(203, 'wildOracle', 'ironWarden'), ['a1', 'a2'], 10),
+    [{ kind: 'move', combatantId: 'a1', moveId: 'oasis' }] as Action[],
     config
   );
-  assert.deepStrictEqual(healedAmounts(events), [25, 25]); // 28 x 0.90
+  assert.deepStrictEqual(healedAmounts(events), [55, 55]); // 50 x 1.10, no STAB
 });
 
 test('heal: no variance — the same heal on two different seeds lands on the same number', () => {
@@ -182,10 +185,12 @@ test('heal: a HoT snapshots the caster Wisdom and STAB at application time', () 
 });
 
 test('heal: the snapshot is gated on the HoT pipeline — a DoT rider is not scaled by the caster Wisdom', () => {
-  // Venomous Bite inflicts Poison 10. Sylva's 60 Wisdom must not touch it.
+  // Toxic Spores inflicts Poison 10 (repointed off the deleted Venomous Bite).
+  // Sylva's 60 Wisdom must not touch it — scaleHotMagnitude is gated on the
+  // status's pipeline, not on the move's kind, and Poison's is 'timer'.
   const { state } = resolveRound(
     fixture(205, 'wildOracle', 'ironWarden'),
-    [{ kind: 'move', combatantId: 'a1', moveId: 'venomousBite', declaredTarget: 'b1' }] as Action[],
+    [{ kind: 'move', combatantId: 'a1', moveId: 'toxicSpores', declaredTarget: 'b1' }] as Action[],
     config
   );
   assert.strictEqual(state.combatants.b1.statuses.Poison.magnitude, 10);

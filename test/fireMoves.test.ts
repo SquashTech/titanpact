@@ -200,11 +200,11 @@ test('fire: a 30%-crit move crits far more often than the 1/16 default, and both
 
 test('fire: Immolate triples BasePower against a Burned target and leaves a clean one alone', () => {
   const plain = fireFixture(910);
-  assert.strictEqual(resolveConditionalPowerMultiplier(moves.immolate, plain.combatants.b1), 1);
+  assert.strictEqual(resolveConditionalPowerMultiplier(moves.immolate, plain.combatants.b1, plain.combatants.a1), 1);
   const burned = burn(plain, 'b1', 20);
-  assert.strictEqual(resolveConditionalPowerMultiplier(moves.immolate, burned.combatants.b1), 3);
+  assert.strictEqual(resolveConditionalPowerMultiplier(moves.immolate, burned.combatants.b1, burned.combatants.a1), 3);
   // A move with no condition is unaffected either way.
-  assert.strictEqual(resolveConditionalPowerMultiplier(moves.inferno, burned.combatants.b1), 1);
+  assert.strictEqual(resolveConditionalPowerMultiplier(moves.inferno, burned.combatants.b1, burned.combatants.a1), 1);
 });
 
 test('fire: the conditional multiplier is a BasePower-stage term, not a damage modifier', () => {

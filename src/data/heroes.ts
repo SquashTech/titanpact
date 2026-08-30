@@ -168,12 +168,22 @@ export const heroes: Record<string, HeroDefinition> = {
   },
 
   // --- Nature ------------------------------------------------------------
+  // Re-kitted for the authored Nature slate (src/data/moves.ts, 2026-08-30),
+  // split by the stat each hero actually attacks with: Sylva (Int 60 / Atk 45)
+  // takes the magical line, Mordrax and Hollowbark (Atk 70, Int 35 and 20) the
+  // physical one. Every kit is a Nature attack plus two supports, and every kit
+  // carries a Renew source — that is not decoration, it is the type's damage
+  // condition (moves.ts Seed Shot, Branch Slam).
   wildOracle: {
     id: 'wildOracle',
     name: 'Sylva',
     types: ['Nature'],
     baseStats: { hp: 80, attack: 45, defense: 60, intelligence: 60, wisdom: 60, speed: 65, manaPool: 80, mpRegen: 10 },
-    moveIds: ['venomousBite', 'mendWounds', 'secondWind'],
+    // The whole type in three moves: Regrowth turns Seed Shot from a 30 BP poke
+    // into a 60 BP one, and Toxic Spores starts the timer the pool's Mid/Late
+    // half exists to cash in. 65 of an 80 pool, so the opening round is a real
+    // choice between two of the three rather than a script.
+    moveIds: ['seedShot', 'regrowth', 'toxicSpores'],
     starter: true,
   },
   mordax: {
@@ -181,7 +191,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Mordrax',
     types: ['Nature'],
     baseStats: { hp: 105, attack: 70, defense: 55, intelligence: 35, wisdom: 45, speed: 50, manaPool: 50, mpRegen: 10 },
-    moveIds: ['vineLash', 'rendingClaw', 'rally'],
+    moveIds: ['vineLash', 'regrowth', 'rally'],
     starter: false,
   },
   hollowbark: {
@@ -189,7 +199,10 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Hollowbark',
     types: ['Nature'],
     baseStats: { hp: 135, attack: 70, defense: 80, intelligence: 20, wisdom: 45, speed: 30, manaPool: 40, mpRegen: 10 },
-    moveIds: ['vineLash', 'fortify', 'secondWind'],
+    // Ivy Spike at 15 is the cheapest move in the slate, which is what a 40
+    // pool wants; Second Wind is its Renew (Spirit, so no STAB) and therefore
+    // its route into Branch Slam later.
+    moveIds: ['ivySpike', 'fortify', 'secondWind'],
     starter: false,
   },
 

@@ -32,6 +32,7 @@ import { resolveHeal, scaleHotMagnitude } from '../heal/healPipeline';
 import { applyHpDelta } from './faintHandling';
 import {
   detonateTriggeredStatuses,
+  detonateStatusNow,
   applyStatus,
   applyStealthRedirect,
   applyProvokeRedirect,
@@ -319,7 +320,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           // Conditional BasePower (Immolate's "triple power vs a Burned
           // target") — read per target off its LIVE statuses, so a spread
           // conditional move can be tripled on one foe and not the other.
-          const basePowerMultiplier = resolveConditionalPowerMultiplier(move, target);
+          // Nature's Seed Shot / Branch Slam ask the same question of the
+          // ATTACKER instead (content.ts conditionalPower.requiresUserStatus),
+          // which is why `attackerNow` is passed in: read fresh per hit, so a
+          // Renew granted by a faster partner this same round already counts.
+          const basePowerMultiplier = resolveConditionalPowerMultiplier(move, target, attackerNow);
 
           const rolled = retribution
             ? {
@@ -394,10 +399,21 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           // conditional move only the target that got doubled pays for it. Its own
           // StatusRemoved beat after the damage, for the same reason Conduct's
           // detonation is its own beat rather than a bigger DamageDealt number.
-          if (move.conditionalPower?.consumesStatus && basePowerMultiplier !== 1 && !working.combatants[targetId].fainted) {
-            const spent = consumeStatus(working, round, targetId, move.conditionalPower.requiresTargetStatus);
-            working = spent.state;
-            events.push(...spent.events);
+          if (move.conditionalPower?.consumesStatus && basePowerMultiplier !== 1) {
+            // Spent by whoever the condition READ — the target for the
+            // Immolate/Cold Snap shape, the user for Nature's user-side one
+            // (content.ts conditionalPower.consumesStatus). The user branch
+            // is unused by content today; it is here so the field means the
+            // same thing on both halves of conditionalPower rather than
+            // silently only working on one.
+            const cond = move.conditionalPower;
+            const holderId = cond.requiresTargetStatus ? targetId : action.combatantId;
+            const heldStatus = cond.requiresTargetStatus ?? cond.requiresUserStatus;
+            if (heldStatus && !working.combatants[holderId]?.fainted) {
+              const spent = consumeStatus(working, round, holderId, heldStatus);
+              working = spent.state;
+              events.push(...spent.events);
+            }
           }
 
           // Drain (content.ts drainPercent — Water's Siphon/Engulf). Scaled off
@@ -638,6 +654,29 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         const statusReactions = resolvePassiveReactions(working, round, statusAppliedEvents, heroes, statuses, passives, fieldEffects);
         working = statusReactions.state;
         events.push(...statusReactions.events);
+      }
+    }
+
+    // The forced detonation (content.ts detonatesStatus — Nature's Miasma).
+    // Deliberately AFTER the statusApplication block above, which is what makes
+    // "apply Poison 5, THEN detonate" true rather than merely the order the
+    // design table happened to write it in: the 5 Miasma just planted is part
+    // of the number that goes off. Skips a target the move's own damage already
+    // knocked out, same as Conduct's detonation does.
+    if (move.detonatesStatus) {
+      for (const targetId of targetIds) {
+        const target = working.combatants[targetId];
+        if (!target || target.fainted) continue;
+        const blast = detonateStatusNow(
+          working,
+          round,
+          targetId,
+          move.detonatesStatus,
+          statuses,
+          getMaxHp(heroes[target.heroId], target)
+        );
+        working = blast.state;
+        events.push(...blast.events);
       }
     }
 

@@ -8,7 +8,7 @@ asks you to remove that type's existing moves, replace them, and "distribute the
 appropriately."
 
 Fire was the first (2026-08-29), Water the second, Frost the third, Storm
-the fourth and Stone the fifth (all 2026-08-30). Ten types remain. This file is what those five cost to learn, written
+the fourth, Stone the fifth and Nature the sixth (all 2026-08-30). Nine types remain. This file is what those six cost to learn, written
 down so the next one is an afternoon instead of a day. Water took about a third of
 Fire's time and Frost about the same as Water, and every hour of the saving came from
 §0 step 1 — naming the engine extensions before writing any content. Frost needed two
@@ -29,6 +29,17 @@ That last one reads like an ordinary `statDeltas` clause and is actually a secon
 independent targeting resolution. **The general form of the trap: whenever one row's
 payload lands on a different side of the field from its damage, that is an engine
 field, not a rider.**
+
+Nature needed **two**, the fewest since Frost, and both were visible on the
+first read — but only one of them *looked* like an engine field. "instantly
+detonate Poison" announces itself. **"if the user has Renew" does not**: it is
+the same six words as Immolate's "if the target is Burned", the field it wants
+already exists, and it is one word away from being expressible. That is the
+whole trap. **Read every conditional clause for WHOSE state it asks about, not
+just which status it names** — a slate can reuse an engine field's exact
+grammar and still be asking it a question it has never been asked. The general
+form is a sibling of Stone's: Stone's trap was a payload landing on the wrong
+side of the field, and Nature's is a *condition being read* off the wrong side.
 
 Read this **before** opening `src/data/moves.ts`. Read `CLAUDE.md` first if you have not.
 
@@ -255,6 +266,23 @@ Respects the LOCKED lock-in rule; a block degrades the move (buff lands, mana sp
 only the pivot refused) rather than fizzling it. If you author one, the view needs a
 second declaration stage — FightScreen reuses `SwitchInPanel` for it.
 
+### `detonatesStatus`
+
+`detonatesStatus: 'Poison'` (Nature's Miasma) fires a **timer-shape** status's
+stored payload on the move's resolved targets now, instead of when its clock
+runs out. Three things fix its shape:
+
+- It resolves **after** the move's own `statusApplication`, so Miasma's "apply
+  Poison 5, then detonate" includes the 5 it just planted. If a design row wants
+  the reverse order, that is a conversation, not a re-ordering.
+- It is worth **exactly** what the expiry would have been (`magnitude`% of max
+  HP). Keep that true: the move buys tempo, not damage, and the moment the two
+  numbers diverge it has become its own damage source — one the type chart
+  cannot touch, like Stone's retribution.
+- It is gated on `StatusDefinition.pipeline === 'timer'`, not on the id, so it
+  is a no-op on anything else. Poison is the only timer status today, so Poison
+  is the only detonatable one.
+
 ### `fieldEffectApplication`
 
 Sets the single global battlefield state for a flat **5 rounds** (never authored
@@ -341,6 +369,21 @@ Per-move override of the 1/16 default. See §10 — this has an open question at
 `{ requiresTargetStatus: 'Burn', multiplier: 3 }` — multiplies the move's **BasePower
 input** when the target carries the named status. Read per target, off live statuses, so
 a status applied earlier in the same round already counts.
+
+Swap in `requiresUserStatus` (Nature's Seed Shot, Branch Slam — "double damage
+if the user has Renew") and the same multiplier asks about the **attacker**
+instead. Author exactly one of the two; nothing validates that, and a
+`conditionalPower` authoring neither is a silent dud. Two behavioural
+differences worth knowing before you reach for it:
+
+- The target-side form is re-read per hit, so a spread move can double against
+  one foe and not the other. The user-side form asks one question about one
+  combatant, so a spread cast is doubled against **every** target or none.
+- A bonus that lives on the caster is one the enemy cannot interact with at
+  all. Burn/Freeze/Conduct can be cleansed, switched off, or simply not be on
+  the target you picked; if the status you read is `positive` and survives a
+  switch — as Renew is and does — the condition is effectively unconditional
+  from the second turn onward. That is priced entirely in mana today; see §10.
 
 Add `consumesStatus: true` (Frost's Cold Snap) and the hit that actually got the
 multiplier also **strips** the status, as its own `StatusRemoved` beat with reason
@@ -662,6 +705,53 @@ this one did not need redoing:
   50-mana pools, castable only at its conditional price — reported, not tuned.
   And Tempest, a STARTER, turned out to have no `moveTiers` entry at all, so it
   could never learn a move; the slate is what surfaced it, and it is fixed here.
+
+Nature's, as a sixth — and the first slate whose findings are about a
+NUMBER rather than about a rule. Its two engine fields were the cheapest of
+any slate since Frost. What it actually surfaced is that Nature's central
+resource is now being counted three separate ways, and that the type has
+nobody to play it against:
+
+- **A capability the slate deleted.** Two, and both are stated by omission.
+  (1) `healingRain` was the game's only `bothAllies` **heal-kind** move, and
+  the authored fifteen contain no heal-kind move at all — every drop of Nature
+  healing is now Renew, a HoT. Nature can no longer put HP back on a hero
+  *this* turn, only over the next several, which is a real identity call and
+  not obviously the intended one; Sylva keeps a direct heal only because
+  `mendWounds` (Spirit) survives in its pool, and `test/heal.test.ts`'s
+  bothAllies fixture had to be repointed onto Water's Oasis. (2) The slate has
+  **no spread damage move**. `naturesWrath` (42 BP, bothEnemies) died with the
+  rewrite and nothing replaces it — Blight is spread but is a debuff, so
+  Nature's only way to touch both enemies at once is 30 mana of Poison. The
+  Stone-Provoke test that stood on `naturesWrath` as its "a spread move still
+  hits both" fixture now stands on Stone's own Rockfall.
+- **A locked decision the slate brushed against.** `detonatesStatus` is the
+  **second** damage source in the game that never runs the LOCKED damage
+  formula, after Stone's `retributionPercent`. Neither breaks the lock. But
+  Stone's hand-off left one open question — should a future `DamageModifier`
+  reach fixed damage? — and a second instance turns that from a question about
+  one move into a question about a category. Recorded in `docs/combat.md`
+  rather than settled by accumulation.
+- **A balance consequence outside the slate — and the real finding.**
+  **Renew is now counted three times.** It heals on the usual halving curve; it
+  is Seed Shot's and Branch Slam's ×2 (`requiresUserStatus`); and under
+  Verdant Earth it is *also* flat Attack and Intelligence
+  (`statBonusEqualToStatusMagnitude`). The slate ships its own enabler for the
+  third — Magic Growth and Force of Nature both set Verdant Earth. So
+  Overgrowth's Renew 100, snapshotted through a Nature caster's Wisdom and STAB
+  to roughly 125, is simultaneously a ~250 HP heal over the fight, a doubling
+  of an 80 BP move, and **+125 Attack and +125 Intelligence on one hero** —
+  larger than any base stat in the roster — all decaying by half a round at a
+  time. Nothing here is a rules conflict; it is a magnitude one, and it is the
+  single thing worth a designer's eye before this slate is tuned. The three
+  readings were each reasonable in isolation and were authored years apart in
+  design time; they had never been on one hero at once until now.
+- **A second one, smaller: Nature has no enemy.** Three Nature heroes, zero
+  Nature entries in `enemies.ts` — so none of these fifteen ever appears on the
+  side of the field the player is fighting. That matters more for this type
+  than it would for Fire or Storm, because Nature's whole identity is a clock
+  the *defender* is supposed to play around by switching, and a player who only
+  ever casts Poison never learns to answer it.
 
 Stone's, as a fifth — and the first slate whose findings were all about the
 *roster* rather than about the engine. Five engine fields is the most any

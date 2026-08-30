@@ -78,7 +78,18 @@ discipline** and are collected at the bottom.
   the stall.
 - Reapplying Poison while the timer is ticking down increases the X value   
 - When the timer hits zero: deals **X% max HP** damage.
+- **Forced detonation (2026-08-30, Nature).** A move may author
+  `detonatesStatus: 'Poison'` (`MoveDefinition`, docs/combat.md) and pay the
+  timer out immediately, at whatever magnitude it has reached, instead of
+  waiting for zero. Nature's Miasma is the only content: it applies Poison 5 and
+  then detonates, so its own application counts toward the pop. The amount is
+  identical to what the expiry would have dealt — the move buys time, not
+  damage — and the status leaves as `consumed` rather than `expired`.
+  Poison is currently the only timer-shape status, so it is currently the only
+  detonatable one; the field is written against the shape, not the id.
 - Replaces Blight (cut). Fixes Blight's non-tactility: visible clock, visible payoff.
+  (The name is now reused by a Nature MOVE, `blight` — spread Poison 20 — which
+  is content, not a status.)
 
 
 ### Haunt — target modifier

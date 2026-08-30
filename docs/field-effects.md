@@ -107,7 +107,7 @@ documents for status-granting moves like `vanish` (Stealth) and `secondWind` (Re
 | Scorched Land | Fire | Burn no longer decays | `spreadingBlaze` (Brimstone) |
 | Stasis Bubble | Mind | Reverses same-bracket Speed order | `stasisField` (Cortex) |
 | Sanctuary | Light | Heal-kind moves get +1 priority | `consecrate` (Solace) |
-| Verdant Earth | Nature | +Attack/+Intelligence equal to your own Renew | `overgrowth` (Sylva) |
+| Verdant Earth | Nature | +Attack/+Intelligence equal to your own Renew | `magicGrowth`, `forceOfNature` (Sylva) |
 
 Each move is tied to that starter through `progressionTable.moveTiers`
 (`src/data/progression.ts`) — a **level-up unlock**, not part of the starting kit.
