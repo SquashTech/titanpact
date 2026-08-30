@@ -108,7 +108,7 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `skirmish` | Mechanically identical to `fight` (same 4-hero, no-bonus `generateEncounter` call — App.tsx collapses it to `EncounterNodeType: 'fight'`), but draws from the **recruitable hero pool** and is named differently on the map (2026-08-17, per user direction) so the player can see, before committing a squad, that beating this one is a shot at a Recruit Contract claim. Always row 2. |
 | `battle` (map-facing name "Monsters", 2026-08-22 revision) | Also mechanically identical to `fight`/`skirmish` (collapses to `EncounterNodeType: 'fight'`), but draws from the **non-recruitable enemy pool**, same as `fight` — not `skirmish`'s recruitable pool. Row 4's non-Elite alternative to `elite`. **2026-08-23 revision, per user direction:** no longer a plain `generateEncounter` call over the whole enemy pool — `App.tsx`'s `handleSelectNode` calls the dedicated `generateGoblinChiefEncounter` (`enemyGen.ts`) instead, which always fields `goblinChief` plus 3 random draws from `BASIC_GOBLIN_IDS`. This is what makes `battle` a real, considerably-tougher alternative to `elite` rather than a same-difficulty reskin of the opener — see "Goblin roster" below for the content this draws on. Different-themed (non-Goblin) monster tiers for later acts remain future work, see "Per-act difficulty scaling" below. |
 | `elite` | The AI's 4 heroes each carry a flat +10 bonus to 2 random growth stats. Draws from the recruitable pool, same as `skirmish`/`battle`. Row 4's difficulty-spike alternative to `battle` — the player picks one or the other, never both. |
-| `boss` | `FightScreen` vs. 2 AI heroes (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Winning grants 1 Recruit Contract and ends the act (§3). |
+| `boss` | `FightScreen` vs. 2 AI heroes (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Winning grants 1 Recruit Contract, the Guardian's Banner in acts 1-4, and ends the act (§3). |
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. Overhauled 2026-08-18: offers 2-3 curated hero recruits (50g each, `GUILD_HALL_RECRUIT_COST`) rather than the full catalog, plus rarity-priced equipment and flat-cost relics for sale, rolled once per visit (`src/run/shop.ts` `rollGuildHallOffers`). |
 | `equipmentReward` | `NodeRewardScreen` — pick 1 of 3 equipment items, rarity-weighted (`equipment.ts` `pickWeightedEquipment`); claiming hands off to the forced equip-or-trash gate (`ForceEquipScreen`) rather than a stash — see "The unequipped-item inventory was removed" below. |
 | `relicReward` | `NodeRewardScreen` — pick 1 of 3 relics not already owned. |
@@ -121,9 +121,12 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 
 ### Winning a fight: the post-fight gates
 
-A won encounter resolves through up to three gates before the map comes back
+A won encounter resolves through up to four gates before the map comes back
 (`App.tsx handleFightResolved`), in this order:
 
+0. **The Guardian's Banner** (`GuardianBannerScreen`) — boss nodes in acts 1-4 only; a
+   fixed 1-of-3 team-wide relic, ahead of everything else so a hero recruited at gate 1
+   arrives under it. See §3.
 1. **Recruit Contract claim** (`RecruitScreen`) — the beaten recruitable heroes, up to
    `MAX_CONTRACT_OFFERS` = 2 of them (`recruitment.ts pickContractOffers`). **Skipped
    entirely when the player holds no contracts**, and when nothing beaten was
@@ -172,6 +175,48 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   that's enough escalation over 5 acts, or whether encounters need an explicit
   per-act difficulty multiplier, is now an open balance question — flag before assuming
   either answer.
+- **The Guardian's Banner (2026-08-30, per user direction).** Beating an act's Guardian
+  grants a second reward on top of the Recruit Contract: a **fixed 1-of-3 relic choice**
+  (`GuardianBannerScreen`), shown after the wins that end **acts 1-4** and not after act
+  5's, whose Guardian ends the run — a team-wide permanent handed to a finished run is a
+  choice with nothing to spend it on. Not a map node; it hangs off the boss win itself
+  (`App.tsx` `handleFightResolved`, `Screen` kind `guardianBanner`), and it goes **first**
+  in the post-fight chain, ahead of the recruit/equip/level-up gates, so a hero recruited
+  in that same beat already arrives under the banner.
+
+  The three options never change and never roll:
+
+  | Banner | Grant |
+  |---|---|
+  | Banner of Vitality | Team-wide +30 HP |
+  | Banner of the Wellspring | Team-wide +20 Mana pool |
+  | Banner of the Everflow | Team-wide +10 MP Regen |
+
+  Being **fixed** is the design, not a placeholder. Because the same three come back four
+  times, the real decision is *spread them or commit to one axis*, and that only becomes a
+  decision if the player can see all four offers coming from act 1. `RelicDefinition
+  .guardianBanner` keeps all three out of `drawableRelics` (`src/data/relics.ts`), which is
+  what both random sources — the Relic Shrine's 1-of-3 and the Guild Hall's stock — draw
+  from, so a banner is never a random offer and the fixed choice is never pre-empted.
+
+  **Stacking** needs no new mechanism: duplicate relic ids already sum in
+  `relicTeamStatModifiers`. What is new is how a stack is *written* — one card named
+  `Banner of Vitality +2` carrying the summed `+90 HP`, rather than three identical cards
+  (`src/view/shared/relicStacks.ts`, used by `RelicsOverlay` and `RosterPeek`). The suffix
+  counts copies **beyond the first**, the upgrade-pip convention: 3 copies reads "+2". Like
+  every relic, a banner applies to heroes obtained before *and* after it — the grant is
+  broadcast to the side at fight-build time (`entryStats.ts`), never written onto a hero.
+
+  **Open balance question — the three are not equal, and the MP Regen one is the outlier.**
+  Against the roster's averages (~105 HP, ~58 Mana pool, a flat **10** MP Regen on every
+  hero), +30 HP is about +29%, +20 Mana about +34%, and +10 MP Regen is **+100%** — and
+  regen is throughput, not a one-time buffer, so over a six-round fight it is worth ~60
+  mana against the Wellspring's 20. At four stacks it is 50 MP Regen, 5× base, which is
+  also the side of the ledger CLAUDE.md's mana-tuning invariant ("mana investment must pay
+  out later than the point at which a weak team dies") is most sensitive to. The authored
+  values are the ones asked for and are what ships; the balance-pass alternative on record
+  is **+5 MP Regen**, or holding +10 and raising the Wellspring to +40. Flag before
+  hardening either way.
 - **Relics: minimal, stat-only.** `src/run/relics.ts` mirrors `equipment.ts`'s own
   scope note exactly — team-wide flat stat grants only. Hook-triggered relics (e.g.
   "on faint, heal the team") wait for the trigger-hook engine contract (CLAUDE.md

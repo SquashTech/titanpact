@@ -2,13 +2,14 @@ import { relics } from '../../data/relics';
 import { passives } from '../../data/passives';
 import { RelicIcon } from '../shared/EquipmentBox';
 import { passiveEmoji } from '../shared/passiveIcons';
+import { stackedGrantSummary, stackedRelicName } from '../shared/relicStacks';
 
 interface Props {
   ownedRelicIds: readonly string[];
   onClose: () => void;
 }
 
-/** Counts each distinct relic id, so a duplicate pickup renders as one card with a count badge — same pattern as RosterManagementScreen's groupInventory. */
+/** Counts each distinct relic id, so duplicates render as ONE card carrying the summed total rather than N identical cards — same pattern as RosterManagementScreen's groupInventory. */
 function groupRelics(ownedRelicIds: readonly string[]): { relicId: string; count: number }[] {
   const counts = new Map<string, number>();
   for (const id of ownedRelicIds) counts.set(id, (counts.get(id) ?? 0) + 1);
@@ -39,14 +40,23 @@ export function RelicsOverlay({ ownedRelicIds, onClose }: Props) {
             {groups.map(({ relicId, count }) => {
               const relic = relics[relicId];
               if (!relic) return null;
+              // A stack renames itself ("Banner of Vitality +2") and states
+              // its summed grant, because the authored description is written
+              // for a single copy and would otherwise read as a third of what
+              // the team is actually getting. No separate ×N badge alongside
+              // it: two counters in two different bases for one fact.
+              const stackedTotal = count > 1 ? stackedGrantSummary(relic, count) : '';
               return (
                 <div key={relicId} className="relic-card">
                   <div className="relic-card-head">
                     <RelicIcon relicId={relic.id} className="relic-card-icon" />
-                    <span className="relic-card-name">{relic.name}</span>
-                    {count > 1 && <span className="relic-card-count">×{count}</span>}
+                    <span className="relic-card-name">{stackedRelicName(relic, count)}</span>
                   </div>
-                  {relic.description && <div className="relic-card-desc">{relic.description}</div>}
+                  {stackedTotal ? (
+                    <div className="relic-card-desc">Team-wide {stackedTotal}.</div>
+                  ) : (
+                    relic.description && <div className="relic-card-desc">{relic.description}</div>
+                  )}
                   {relic.grantsPassiveIds && relic.grantsPassiveIds.length > 0 && (
                     <div className="relic-card-desc">
                       Grants:{' '}

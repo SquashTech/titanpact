@@ -311,6 +311,38 @@ const passiveRelics: Record<string, RelicDefinition> = {
   },
 };
 
+
+// The Guardian's Banner (docs/run-loop.md): the fixed 1-of-3 handed out after
+// every Guardian win in acts 1-4. Deliberately the same three every time and
+// deliberately stackable — a player who wants one axis can take it four times
+// (a 4-stack Banner of Vitality is +120 HP on every hero, present and future),
+// and RelicsOverlay folds duplicates into one card ("Banner of Vitality +3").
+// `guardianBanner` keeps all three out of the random pools (drawableRelics
+// below), so they are never a Shrine or Guild Hall offer.
+const guardianBanners: Record<string, RelicDefinition> = {
+  bannerOfVitality: {
+    id: 'bannerOfVitality',
+    name: 'Banner of Vitality',
+    description: 'Team-wide +30 HP.',
+    statGrants: { hp: 30 },
+    guardianBanner: true,
+  },
+  bannerOfTheWellspring: {
+    id: 'bannerOfTheWellspring',
+    name: 'Banner of the Wellspring',
+    description: 'Team-wide +20 Mana pool.',
+    statGrants: { manaPool: 20 },
+    guardianBanner: true,
+  },
+  bannerOfTheEverflow: {
+    id: 'bannerOfTheEverflow',
+    name: 'Banner of the Everflow',
+    description: 'Team-wide +10 MP Regen.',
+    statGrants: { mpRegen: 10 },
+    guardianBanner: true,
+  },
+};
+
 export const relics: Record<string, RelicDefinition> = {
   ...originalRelics,
   ...singleStatRelics,
@@ -318,4 +350,17 @@ export const relics: Record<string, RelicDefinition> = {
   ...utilityStatRelics,
   ...elementalForceRelics,
   ...passiveRelics,
+  ...guardianBanners,
 };
+
+/** The three fixed Banners, in the order the post-Guardian screen offers them (App.tsx GuardianBannerScreen). */
+export const guardianBannerRelics: RelicDefinition[] = Object.values(guardianBanners);
+
+/**
+ * Every relic a random offer may draw — the catalog minus the Guardian
+ * Banners. Both random sources use it (the Relic Shrine's 1-of-3 and the
+ * Guild Hall's rotating stock); the banners reach the player only through the
+ * post-Guardian choice, which is what keeps that choice the same three every
+ * act.
+ */
+export const drawableRelics: RelicDefinition[] = Object.values(relics).filter((relic) => !relic.guardianBanner);

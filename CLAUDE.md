@@ -145,7 +145,11 @@ what's still unimplemented:
   once the previous act's Guardian falls; 1 Recruit Contract is granted at the end of
   every act (replacing the removed `contractReward` map-node type — Recruit Contracts
   now come only from that per-act grant, a beaten enemy's contract claim, or a Guild
-  Hall purchase). Encounter difficulty does not yet scale by act number — open question,
+  Hall purchase). Beating the Guardian of acts 1-4 also grants **the Guardian's
+  Banner** (2026-08-30): a fixed, never-rolled 1-of-3 team-wide relic — Vitality
+  (+30 HP), Wellspring (+20 Mana), Everflow (+10 MP Regen) — stackable across the
+  four acts and displayed folded ("Banner of Vitality +2"). Their relative values
+  are an open balance question (`docs/run-loop.md`). Encounter difficulty does not yet scale by act number — open question,
   `docs/run-loop.md` §3. HP/mana **fully restore
   between map nodes** — reversed same-day from an initial persist-across-nodes design
   after first playtest showed a KO'd hero simply stayed dead-weight into the next

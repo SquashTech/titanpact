@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { isValidRelicDefinition, relicTeamStatModifiers } from '../src/run/relics';
-import { relics } from '../src/data/relics';
+import { relics, drawableRelics, guardianBannerRelics } from '../src/data/relics';
 import { heroes } from '../src/data/heroes';
 import { equipment } from '../src/data/equipment';
 import { passives } from '../src/data/passives';
@@ -35,6 +35,40 @@ test('relics: relicTeamStatModifiers stacks a duplicate relic id', () => {
 
 test('relics: no owned relics yields no modifiers', () => {
   assert.deepStrictEqual(relicTeamStatModifiers([], relics), {});
+});
+
+// --- The Guardian's Banner (docs/run-loop.md) --------------------------
+// The three fixed banners are the one part of the catalog that must NEVER
+// appear in a random offer, and the one part designed to be taken more than
+// once. Both properties are load-bearing for the post-Guardian choice.
+
+test('relics: the three Guardian Banners are catalogued, in offer order', () => {
+  assert.deepStrictEqual(
+    guardianBannerRelics.map((r) => r.id),
+    ['bannerOfVitality', 'bannerOfTheWellspring', 'bannerOfTheEverflow']
+  );
+  for (const banner of guardianBannerRelics) {
+    assert.strictEqual(relics[banner.id], banner, `${banner.id} is missing from the relic catalog`);
+    assert.strictEqual(banner.guardianBanner, true);
+  }
+});
+
+test('relics: no Guardian Banner is drawable by a random offer', () => {
+  const drawableIds = new Set(drawableRelics.map((r) => r.id));
+  for (const banner of guardianBannerRelics) {
+    assert.ok(!drawableIds.has(banner.id), `${banner.id} leaked into the random relic pool`);
+  }
+  assert.strictEqual(drawableRelics.length, Object.values(relics).length - guardianBannerRelics.length);
+});
+
+test('relics: a Banner taken four times stacks to four times its grant', () => {
+  const mods = relicTeamStatModifiers(['bannerOfVitality', 'bannerOfVitality', 'bannerOfVitality', 'bannerOfVitality'], relics);
+  assert.deepStrictEqual(mods, { hp: 120 });
+});
+
+test('relics: the three Banners cover three different resources', () => {
+  const grantedStats = guardianBannerRelics.map((r) => Object.keys(r.statGrants).join(),);
+  assert.deepStrictEqual(grantedStats, ['hp', 'manaPool', 'mpRegen']);
 });
 
 // --- Out-of-combat sheet parity ----------------------------------------

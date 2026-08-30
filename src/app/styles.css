@@ -9136,6 +9136,16 @@ textarea,
   margin: 0;
 }
 
+/* The Banner screen’s stack line ("Already raised ×2 — taking it again
+   makes Banner of Vitality +2, +90 HP in total"), lit so it reads as the
+   consequence of the pick rather than more of the description. */
+.relic-shrine-card-note {
+  font-size: 11px;
+  color: var(--accent);
+  line-height: 1.4;
+  margin: 2px 0 0;
+}
+
 .relic-shrine-card.picked {
   border-color: var(--magical);
   box-shadow: 0 0 0 1px var(--magical), 0 4px 18px rgba(139, 127, 224, 0.35);

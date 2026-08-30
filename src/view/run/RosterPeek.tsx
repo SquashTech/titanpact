@@ -9,6 +9,7 @@ import type { RosterEntry, RunState } from '../../run/state';
 import type { RelicDefinition } from '../../run/relics';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { RelicIcon } from '../shared/EquipmentBox';
+import { stackedGrantSummary, stackedRelicName } from '../shared/relicStacks';
 import { ResourceMark } from '../shared/RunGlyph';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 
@@ -48,7 +49,10 @@ export function RosterPeek({ run, className }: Props) {
   const [open, setOpen] = useState(false);
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
 
-  const ownedRelics = run.relics.map((id) => relics[id]).filter((r): r is RelicDefinition => !!r);
+  /** Folded by id, same as RelicsOverlay — a stacked relic is one chip carrying its summed total, not one chip per copy. */
+  const ownedRelics = [...new Set(run.relics)]
+    .map((id) => ({ relic: relics[id], count: run.relics.filter((other) => other === id).length }))
+    .filter((r): r is { relic: RelicDefinition; count: number } => !!r.relic);
 
   return (
     <>
@@ -89,10 +93,14 @@ export function RosterPeek({ run, className }: Props) {
 
             {ownedRelics.length > 0 && (
               <div className="roster-peek-relics">
-                {ownedRelics.map((relic, i) => (
-                  <span key={`${relic.id}:${i}`} className="roster-peek-relic" title={relic.description ?? relic.name}>
+                {ownedRelics.map(({ relic, count }) => (
+                  <span
+                    key={relic.id}
+                    className="roster-peek-relic"
+                    title={(count > 1 && stackedGrantSummary(relic, count) && `Team-wide ${stackedGrantSummary(relic, count)}.`) || relic.description || relic.name}
+                  >
                     <RelicIcon relicId={relic.id} className="roster-peek-relic-icon" />
-                    {relic.name}
+                    {stackedRelicName(relic, count)}
                   </span>
                 ))}
               </div>

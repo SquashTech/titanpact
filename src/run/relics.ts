@@ -21,6 +21,17 @@ export interface RelicDefinition {
   grantsPassiveIds?: readonly PassiveId[];
   /** Persistent magnitude-shape statuses (currently Elemental Force — src/data/statuses.ts) this relic grants to every combatant on the owning side for the whole fight, applied team-wide like statGrants (src/run/statusGrants.ts, buildCombatState.ts). Optional/omitted for relics that don't grant one. */
   grantsStatusIds?: readonly StatusGrant[];
+  /**
+   * Marks one of the three fixed Banners offered after every Guardian win
+   * (docs/run-loop.md "The Guardian's Banner"). Load-bearing in one
+   * direction only: a banner is EXCLUDED from every random offer pool
+   * (`drawableRelics` in src/data/relics.ts — the Relic Shrine and the Guild
+   * Hall both draw from it), so the post-Guardian choice stays the same
+   * three every act and never dilutes an ordinary relic draw. Nothing in the
+   * engine reads it; banners stack through the same duplicate-id summing as
+   * any other relic.
+   */
+  guardianBanner?: true;
 }
 
 export function isValidRelicDefinition(relic: RelicDefinition): boolean {

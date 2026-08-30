@@ -1,12 +1,11 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { equipment } from '../../data/equipment';
-import { relics } from '../../data/relics';
+import { drawableRelics } from '../../data/relics';
 import { passives } from '../../data/passives';
 import { statuses } from '../../data/statuses';
 import type { StatKey } from '../../engine/content';
 import type { RunState } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
-import type { RelicDefinition } from '../../run/relics';
 import { pickWeightedEquipment } from '../../run/equipment';
 import { grantCurrencyReward, grantUpgradeReward, grantRelicReward } from '../../run/runProgress';
 import {
@@ -19,9 +18,11 @@ import {
   RelicIcon,
 } from '../shared/EquipmentBox';
 import { StatGlyph } from '../shared/StatBars';
+import { STAT_FULL_LABELS } from '../shared/relicStacks';
 import { useLongPress } from '../shared/MoveTile';
 import { ResourceMark, RunGlyph } from '../shared/RunGlyph';
 import { NodeHeader, NodeSky, NODE_TINT_ARCANE, NODE_TINT_GOLD, NODE_TINT_VITAL } from '../shared/NodeStage';
+import { RelicChoiceCard } from './RelicChoiceCard';
 import { RosterPeek } from './RosterPeek';
 
 export type RewardNodeType = 'currencyReward' | 'upgradeReward' | 'equipmentReward' | 'relicReward';
@@ -56,17 +57,6 @@ function pickRandom<T>(pool: readonly T[], count: number): T[] {
   return picked;
 }
 
-const STAT_LABELS: Record<StatKey, string> = {
-  hp: 'HP',
-  attack: 'Attack',
-  defense: 'Defense',
-  intelligence: 'Intelligence',
-  wisdom: 'Wisdom',
-  speed: 'Speed',
-  manaPool: 'Mana Pool',
-  mpRegen: 'MP Regen',
-};
-
 /**
  * "+10 Attack, +20 HP, Fire Force +10" — the one-line benefit preview on the
  * card face. Folds in passive/status grants (not just raw stats) so an item
@@ -77,46 +67,12 @@ const STAT_LABELS: Record<StatKey, string> = {
 function itemHighlights(item: EquipmentDefinition): string[] {
   const statParts = Object.entries(item.statGrants)
     .filter(([, amount]) => amount)
-    .map(([stat, amount]) => `${(amount as number) > 0 ? '+' : ''}${amount} ${STAT_LABELS[stat as StatKey] ?? stat}`);
+    .map(([stat, amount]) => `${(amount as number) > 0 ? '+' : ''}${amount} ${STAT_FULL_LABELS[stat as StatKey] ?? stat}`);
   const passiveParts = (item.grantsPassiveIds ?? []).flatMap((id) => (passives[id] ? [passives[id].name] : []));
   const statusParts = (item.grantsStatusIds ?? []).flatMap(({ statusId, magnitude }) =>
     statuses[statusId] ? [`${statuses[statusId].name} +${magnitude}`] : []
   );
   return [...statParts, ...passiveParts, ...statusParts];
-}
-
-interface RelicChoiceCardProps {
-  relic: RelicDefinition;
-  picked: boolean;
-  onPick: () => void;
-  /** Staggers this card's fade-up-in behind the banner (see revealDelayMs usage below), same convention as EquipCacheCard. */
-  revealDelayMs: number;
-}
-
-/**
- * One relic offer on the Shrine screen — a full-width row (icon + name +
- * the relic's actual description) rather than a square tile, so the player
- * can read exactly what each relic does before picking without holding
- * anything. Tap selects it (highlighted, same select-then-claim two-step as
- * the Equipment Cache cards above); no long-press/inspect step here since the
- * description is already on the card.
- */
-function RelicChoiceCard({ relic, picked, onPick, revealDelayMs }: RelicChoiceCardProps) {
-  return (
-    <button
-      className={`relic-card relic-shrine-card${picked ? ' picked' : ''}`}
-      style={{ animationDelay: `${revealDelayMs}ms` } as CSSProperties}
-      onClick={onPick}
-    >
-      <div className="relic-shrine-card-icon-badge">
-        <RelicIcon relicId={relic.id} className="relic-card-icon" />
-      </div>
-      <div className="relic-shrine-card-body">
-        <span className="relic-card-name">{relic.name}</span>
-        <p className="relic-shrine-card-desc">{relic.description ?? 'No effect described.'}</p>
-      </div>
-    </button>
-  );
 }
 
 interface EquipCacheCardProps {
@@ -175,7 +131,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
     nodeType === 'equipmentReward' ? pickWeightedEquipment(Object.values(equipment), 3) : []
   );
   const [relicChoices] = useState(() =>
-    nodeType === 'relicReward' ? pickRandom(Object.values(relics).filter((r) => !run.relics.includes(r.id)), 3) : []
+    nodeType === 'relicReward' ? pickRandom(drawableRelics.filter((r) => !run.relics.includes(r.id)), 3) : []
   );
 
   const [pickedItemId, setPickedItemId] = useState<string | null>(null);
@@ -184,7 +140,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
   const [claimed, setClaimed] = useState(false);
 
   /** The relic to show in the post-claim reveal moment below — pickedRelicId stays set through the claim, so this only needs to look it up once `claimed` flips true. */
-  const claimedRelic = claimed && pickedRelicId ? relics[pickedRelicId] : null;
+  const claimedRelic = claimed && pickedRelicId ? relicChoices.find((r) => r.id === pickedRelicId) ?? null : null;
 
   /**
    * Equipment Cache only: a brief chest-opens-into-the-loot beat before the
@@ -427,7 +383,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
                     <div className="detail-modifier-list">
                       {grants.map(([stat, amount]) => (
                         <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-                          <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtGrant(amount)}
+                          <StatGlyph stat={stat} tone="inherit" /> {STAT_FULL_LABELS[stat]} {fmtGrant(amount)}
                         </span>
                       ))}
                     </div>

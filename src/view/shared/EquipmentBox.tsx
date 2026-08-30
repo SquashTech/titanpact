@@ -19,6 +19,11 @@ const RELIC_ICON_INDICES: Partial<Record<string, number>> = {
   windcallersBanner: 66,
   deepWellstone: 68,
   bulwarkCore: 83,
+  // The three Guardian's Banners, each drawn as the resource it grants:
+  // heart for HP, blue orb for the mana pool, the cycle arrows for regen.
+  bannerOfVitality: 84,
+  bannerOfTheWellspring: 165,
+  bannerOfTheEverflow: 75,
 };
 
 interface EquipmentIconProps {

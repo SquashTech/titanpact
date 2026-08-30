@@ -8,6 +8,7 @@ import { SquadSelectScreen } from '../view/run/SquadSelectScreen';
 import { MapScreen } from '../view/run/MapScreen';
 import { ShopNodeScreen } from '../view/run/ShopNodeScreen';
 import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScreen';
+import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { ForceEquipScreen } from '../view/run/ForceEquipScreen';
 import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
@@ -19,7 +20,7 @@ import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
 import { heroes } from '../data/heroes';
 import { enemies, basicGoblins, BASIC_GOBLIN_IDS, GOBLIN_CHIEF_ID } from '../data/enemies';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
-import { relics } from '../data/relics';
+import { drawableRelics } from '../data/relics';
 import { equipment } from '../data/equipment';
 import {
   equipItem,
@@ -92,6 +93,13 @@ type Screen =
   /** classReward node (docs/run-loop.md, ClassNodeScreen) — one screen handles both the 1-of-3 Class pick and the target-hero assignment internally, so this kind only needs the node id. */
   | { kind: 'classNode'; nodeId: string }
   | { kind: 'event'; nodeId: string }
+  /**
+   * The Guardian's Banner (docs/run-loop.md, GuardianBannerScreen) — the
+   * fixed 1-of-3 that follows every Guardian win in acts 1-4. Not a map node:
+   * it hangs off the boss win itself, so it carries no nodeId, only the
+   * `next` screen the post-fight chain was already headed for.
+   */
+  | { kind: 'guardianBanner'; next: Screen }
   /** Forced spend gate (CLAUDE.md "training points ... must be instantly allocated before the run continues") — `next` is whatever screen would otherwise have followed. */
   | { kind: 'levelUp'; next: Screen }
   /** Forced equip-or-trash gate (user direction: no unequipped stash — every piece of gear obtained must be resolved before the run continues) — `queue` is the item(s) awaiting a decision, `next` is whatever screen would otherwise have followed. */
@@ -419,7 +427,7 @@ export function App() {
         setScreen({ kind: 'squadSelect', nodeId, nodeType: encounterKind, encounter });
       }
     } else if (node.type === 'shop') {
-      setScreen({ kind: 'shop', nodeId, offers: rollGuildHallOffers(playerRun, guildHallOffers, Object.values(equipment), Object.values(relics)) });
+      setScreen({ kind: 'shop', nodeId, offers: rollGuildHallOffers(playerRun, guildHallOffers, Object.values(equipment), drawableRelics) });
     } else if (node.type === 'weaponReward' || node.type === 'armorReward' || node.type === 'accessoryReward') {
       // Single guaranteed item of a fixed slot, no 3-choice picker — rolls
       // straight into the forced equip-or-trash gate, same as the Goblin
@@ -484,6 +492,11 @@ export function App() {
       return;
     }
     const isBossNode = nodeId === playerRun.map!.bossNodeId;
+    // The Guardian's Banner rides on every Guardian win EXCEPT the last one
+    // — act 5's Guardian ends the run, and a team-wide permanent granted
+    // onto a finished run is a choice with nothing left to spend it on.
+    // Read off `playerRun`, before advanceToNextAct below bumps actNumber.
+    const banner = isBossNode && playerRun.actNumber < TOTAL_ACTS;
 
     let next = grantCurrencyReward(playerRun, goldReward);
     next = grantUpgradeReward(next, trainingPointsReward);
@@ -524,7 +537,12 @@ export function App() {
     const contractOffers =
       next.recruitContracts > 0 ? pickContractOffers(defeatedRoster.filter((entry) => isRecruitable(entry.heroId, heroes))) : [];
 
-    setScreen(contractOffers.length > 0 ? { kind: 'recruit', offers: contractOffers, next: afterEquip } : afterEquip);
+    const afterRecruit: Screen = contractOffers.length > 0 ? { kind: 'recruit', offers: contractOffers, next: afterEquip } : afterEquip;
+
+    // The banner goes FIRST, ahead of the recruit/equip/level-up gates: it is
+    // the Guardian's own prize, and putting it in front means the hero a
+    // contract recruits this same beat already arrives under it.
+    setScreen(banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit);
   }
 
   function handleNodeContinue(nodeId: string) {
@@ -873,6 +891,10 @@ export function App() {
       )}
 
       {screen.kind === 'event' && <EventNodeScreen run={playerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />}
+
+      {screen.kind === 'guardianBanner' && (
+        <GuardianBannerScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />
+      )}
 
       {screen.kind === 'levelUp' && (
         <LevelUpScreen run={playerRun} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />
