@@ -82,7 +82,7 @@ test('invariant: engine never mutates content data (heroes/moves untouched by re
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
     { kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' },
-    { kind: 'move', combatantId: 'b1', moveId: 'quickJab', declaredTarget: 'a1' },
+    { kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a1' },
     { kind: 'move', combatantId: 'b2', moveId: 'firestorm' },
   ];
   const heroesBefore = heroes;
@@ -118,7 +118,7 @@ test('golden replay: same seed + same inputs reproduce an identical event log', 
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
     { kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b2' },
-    { kind: 'move', combatantId: 'b1', moveId: 'quickJab', declaredTarget: 'a1' },
+    { kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a1' },
     { kind: 'move', combatantId: 'b2', moveId: 'firestorm' },
   ];
 
@@ -165,10 +165,14 @@ test('round: a resolved move spends mana and deals damage', () => {
 
 test('round: higher priority move resolves before a higher-speed move in a lower bracket', () => {
   const state = twoVTwoFixture(12);
-  // quickJab (priority 1) from the slower b1 should still resolve before singe (priority 0) from faster a1.
+  // fangRush (priority 1) from the slower b1 should still resolve before singe (priority 0) from faster a1.
+  // This stood on Iron's quickJab until the authored Iron slate deleted it
+  // (2026-08-30); Iron authors no priority bracket anywhere now, so the
+  // fixture moved onto Beast's fangRush, which is still priority 1 and still
+  // cheap enough for Warden's 40 pool.
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
-    { kind: 'move', combatantId: 'b1', moveId: 'quickJab', declaredTarget: 'a1' },
+    { kind: 'move', combatantId: 'b1', moveId: 'fangRush', declaredTarget: 'a1' },
   ];
   const { events } = resolveRound(state, actions, config);
   const moveUsedOrder = events.filter((e) => e.type === 'MoveUsed').map((e: any) => e.combatantId);
@@ -208,13 +212,13 @@ test('round: a declared Rest action fully restores mana and skips the turn (soft
 
 test('round: Rest resolves dead last regardless of speed — a faster Resting hero does not preempt a slower attacker', () => {
   const state = twoVTwoFixture(21);
-  // a2 (tidecaller, speed 55) rests; b1 (ironWarden, speed 30) uses quickJab (priority 0, same
+  // a2 (tidecaller, speed 55) rests; b1 (ironWarden, speed 30) uses ironFist (priority 0, same
   // bracket every other authored move lives in). Despite a2 being both faster AND in the same
   // priority bracket by default, the attack must still resolve first — Rest sorts below every
   // real move priority via REST_PRIORITY_BRACKET (priority.ts), not by winning a speed race.
   const actions: Action[] = [
     { kind: 'rest', combatantId: 'a2' },
-    { kind: 'move', combatantId: 'b1', moveId: 'quickJab', declaredTarget: 'a2' },
+    { kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a2' },
   ];
   const { events } = resolveRound(state, actions, config);
   const restedIdx = events.findIndex((e) => e.type === 'Rested');

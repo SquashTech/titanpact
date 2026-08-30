@@ -65,8 +65,21 @@ export const enemies: Record<string, HeroDefinition> = {
     id: 'goblinWarrior',
     name: 'Goblin Warrior',
     types: ['Iron'],
-    baseStats: { hp: 55, attack: 35, defense: 35, intelligence: 10, wisdom: 15, speed: 30, manaPool: 20, mpRegen: 2 },
-    moveIds: ['quickJab', 'ironFist'],
+    // Mana raised from 20/2 when Iron's authored movepool landed
+    // (src/data/moves.ts, 2026-08-30): the cheapest Iron move is now 15 and
+    // the cheapest Iron ATTACK is 20, where Quick Jab used to cost 4, so at
+    // the old pool this goblin could act about once every five rounds. 40/10
+    // is the same fix and the same number Torch Goblin, Goblin Skulker and
+    // Spooky Goblin all got — enemies have no relics, equipment or Evolution,
+    // so their pools are fixed for the whole game. Stat line otherwise
+    // untouched.
+    //
+    // Opening Strike beside Iron Fist deliberately: it is the type's whole
+    // identity (shrink the Defense, then swing) demonstrated from the side of
+    // the field the player is fighting, which is the thing Nature, Arcane and
+    // Mind each shipped without.
+    baseStats: { hp: 55, attack: 35, defense: 35, intelligence: 10, wisdom: 15, speed: 30, manaPool: 40, mpRegen: 10 },
+    moveIds: ['ironFist', 'openingStrike'],
     starter: false,
   },
   torchGoblin: {

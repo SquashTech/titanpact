@@ -62,7 +62,11 @@ export const progressionTable: ProgressionTable = {
     // kindle left this pool for Cinder's starting kit (heroes.ts) when the
     // Spirit slate deleted Mend Wounds — a starting move in its own pool is
     // dead weight levelUpMovePool can never offer.
-    cinderKnight: ['moltenLash', 'firebrand', 'volcanicSurge', 'quickJab', 'fangRush'],
+    // quickJab died with the Iron slate (moves.ts, 2026-08-30). Cinder is the
+    // only Fire hero for which Iron is an INNATE second type, and at Atk 70 it
+    // is the one that can actually swing it, so the slot became a real Iron
+    // line rather than one more off-type poke.
+    cinderKnight: ['moltenLash', 'firebrand', 'volcanicSurge', 'heavyBlow', 'momentumSwing', 'fangRush'],
     // stokeTheFlames sits here rather than on the other two deliberately:
     // it buffs the whole active side, and Crimson is the only Fire STARTER
     // (heroes.ts), so it is the one that can be drafted alongside a second
@@ -84,7 +88,13 @@ export const progressionTable: ProgressionTable = {
     // offered — dead weight that made the pool read as 5 picks when it was 4.
     // Predates the Spirit slate; found by widening §9's "no starter in its own
     // pool" assertion past the type being authored (test/spiritMoves.test.ts).
-    ironWarden: ['rockToss', 'shrapnelBlast', 'bodyBlow', 'ironFist'],
+    // Iron authored (moves.ts, 2026-08-30). Warden takes the DEBUFF line its
+    // Atk 55 / Def 90 frame can actually play — Rend Armor is the escalation
+    // of the Opening Strike it starts with, and Juggernaut is the one row in
+    // the game that answers Speed 30. The two Stone entries stay: Body Blow
+    // swings DEFENSE (offStatOverride), which is the single best move in the
+    // game for a Defense-90 hero and the reason it was put here.
+    ironWarden: ['ironFist', 'rendArmor', 'juggernaut', 'rockToss', 'bodyBlow'],
     // The three Nature heroes draw from the authored Nature pool
     // (src/data/moves.ts, 2026-08-30), split by the stat each actually attacks
     // with, same as Fire/Water/Frost/Storm/Stone. Sylva (Int 60, Wis 60) takes
@@ -113,7 +123,7 @@ export const progressionTable: ProgressionTable = {
     // move: it is free while both enemies carry Conduct, so on these two heroes
     // it is only ever castable off a fully-marked board — see docs/combat.md
     // for the hand-off on whether that reads as a payoff or as a dead row.
-    stormRanger: ['stormLash', 'shockSlice', 'tailwind', 'overcharge', 'quickJab', 'fangRush'],
+    stormRanger: ['stormLash', 'shockSlice', 'tailwind', 'overcharge', 'heavyBlow', 'fangRush'],
     // Tempest had NO pool at all before the Storm slate — a starter that could
     // never learn a move (levelUpMovePool returns an empty list for a hero with
     // no moveTiers entry). It takes the magical line, and with it Storm Surge,
@@ -175,7 +185,15 @@ export const progressionTable: ProgressionTable = {
     // drafted alongside a second Arcane hero for the field to pay off twice.
     // The off-type filler (mindSpike, psychicLance, weaken) is gone now that
     // the type has its own line.
-    runescribe: ['manaFont', 'study', 'arcaneBlast', 'overload', 'magicCloak', 'arcPulse', 'singularity', 'cataclysm'],
+    // Conjured Sword (Iron, moves.ts 2026-08-30) is the one row of that slate
+    // authored for heroes who do NOT have the type — "a lategame learnable for
+    // certain spellcasters", per the designer. Glyph is the game's highest
+    // Intelligence (90) on the game's second-biggest pool (85, against the
+    // move's 80), and this is already the artillery line, so it is the least
+    // arguable home for it. WHICH other casters should learn it is a roster
+    // decision, not a movepool one — see docs/authoring-moves.md §10 (Iron)
+    // for the candidate list, left unplaced rather than stuffed in.
+    runescribe: ['manaFont', 'study', 'arcaneBlast', 'overload', 'magicCloak', 'arcPulse', 'singularity', 'cataclysm', 'conjuredSword'],
     // Cortex takes the WISDOM/control line — the half of the slate its 55/55
     // Int/Wis frame can actually play. Mind Shatter is the anchor (it swings
     // Wisdom, so Mental Fortress is its ramp), and Break Will -> Brain Flay is
@@ -187,11 +205,21 @@ export const progressionTable: ProgressionTable = {
     // The off-type filler (spectralBind, quickJab, vanish, stunningBlow) is
     // gone now that the type has its own line.
     mindweaver: ['enervate', 'psychicBlow', 'stasis', 'mentalFortress', 'disorient', 'mindShatter', 'breakWill', 'brainFlay'],
-    forgewright: ['ironFist', 'shrapnelBlast', 'quickJab', 'stunningBlow'],
-    packAlpha: ['rendingClaw', 'quickJab', 'fortify', 'weaken'],
+    // Three of Clockwork's four pool entries were Iron fixture moves and all
+    // three died (moves.ts, 2026-08-30). Mech has no authored slate yet, so
+    // the line stays off-type Iron — it is just a line now instead of filler.
+    forgewright: ['ironFist', 'heavyBlow', 'momentumSwing', 'rendArmor'],
+    packAlpha: ['rendingClaw', 'ironFist', 'heavyBlow', 'weaken'],
     // --- Stone/Spirit starters + the new Iron starter (2026-08-17) ---
     // rally moved up into Valor's starting kit (heroes.ts) when Mend Wounds died.
-    valor: ['quickJab', 'shrapnelBlast', 'stunningBlow'],
+    //
+    // Iron authored (moves.ts, 2026-08-30). Valor is Iron's ONLY starter, so
+    // Reinforce sits here for the reason Crimson carries Stoke the Flames and
+    // Riptide carries High Tide: it is the side-wide row, and this is the one
+    // Iron hero that can be drafted alongside a second one for it to pay off
+    // twice. The rest is the type's middle — the Bleed carrier, the spread,
+    // and the two mid attacks its Atk 60 can afford before the capstones.
+    valor: ['openingStrike', 'heavyBlow', 'momentumSwing', 'serratedSlice', 'reinforce', 'swingingChain'],
     // Revenant draws the ENTIRE magical half of the authored Spirit pool
     // (src/data/moves.ts, 2026-08-30), which is a deliberate departure from
     // the "keep the pool a line, not a sample" rule every other type here
@@ -226,11 +254,14 @@ export const progressionTable: ProgressionTable = {
     // active side, and Rime is the only Frost STARTER (heroes.ts), so it is the
     // one that can be drafted alongside a second Frost hero. Ice Shatter sits
     // here at 70 despite Rime's 60 pool; see docs/combat.md for that hand-off.
-    rime: ['icicleThrust', 'coldSnap', 'iceShatter', 'frostWall', 'permafrost', 'rendingClaw', 'fangRush', 'stunningBlow'],
+    // stunningBlow dropped 2026-08-30 with the Iron slate. Not backfilled:
+    // Rime's own Frost line is already eight deep and Iron has nothing at the
+    // 20-mana price point that row occupied.
+    rime: ['icicleThrust', 'coldSnap', 'iceShatter', 'frostWall', 'permafrost', 'rendingClaw', 'fangRush'],
     // Cube's 45 pool is the tightest in the game, so its line is the cheap half
     // of the physical one plus its own Freeze setup — Deep Chill (25) and
     // Permafrost (45, exactly affordable) feeding Cold Snap (35).
-    cube: ['icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'rockToss', 'shrapnelBlast', 'ironFist'],
+    cube: ['icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'rockToss', 'openingStrike', 'ironFist'],
     // Mordrax takes the physical line and, with Overgrowth, the Renew that
     // doubles Branch Slam — the two are one pick, and putting them in the same
     // pool is what makes that legible rather than accidental.
@@ -261,8 +292,14 @@ export const progressionTable: ProgressionTable = {
     // the support line its Wisdom actually pays for. Bless and Exalt are here
     // despite granting a stat Aegis barely uses: both are singleAlly, so this
     // is the hero that spends a turn making a MAGICAL partner enormous.
-    // stunningBlow stays as the off-type physical it always was.
-    aegis: ['holySlice', 'deityBlade', 'mend', 'purify', 'bless', 'exalt', 'consecrate', 'divineGrace', 'stunningBlow'],
+    // stunningBlow died with the Iron slate and Mend moved up into Aegis's own
+    // starting kit (both 2026-08-30), so two entries left this pool. Reinforce
+    // replaces them: Iron's +20 Attack / +20 Defense to BOTH allies is the
+    // closest thing left in the game to the Fortify that Aegis lost, it is
+    // singleAlly-adjacent in exactly the way Bless and Exalt are, and Aegis's
+    // 70 pool is the only one of the nine ex-Fortify heroes that can pay 50
+    // for it.
+    aegis: ['holySlice', 'deityBlade', 'purify', 'bless', 'exalt', 'consecrate', 'divineGrace', 'reinforce'],
     // The spread-and-attrition line reads the same on both halves now: Fire's
     // Burn spreads, Shadow's Poison spreads.
     brimstone: ['sparkFlash', 'spreadingBlaze', 'backdraft', 'sparkBurst', 'umbralBeam', 'umbralWave'],
@@ -271,7 +308,16 @@ export const progressionTable: ProgressionTable = {
     // Gallant's kit and the four below, so there is no same-type replacement to
     // put in the slot. Left short rather than backfilled with more off-type
     // filler; the real fix is Iron's own authored slate.
-    gallant: ['shrapnelBlast', 'stunningBlow', 'fortify', 'savageMaul'],
+    //
+    // Which landed 2026-08-30, so savageMaul goes too and the pool is now
+    // wholly Iron. Gallant is the AGGRO line: Atk 80 behind Def 55, so it takes
+    // the Attack ramp (Iron Fist, Momentum Swing) into Onslaught, the type's
+    // 100-power capstone, plus the Bleed carrier. Metallic Blade is here
+    // rather than on Warden or Valor because a free 50-power swing is worth
+    // most to the hero that wants to press an attack every single round — and
+    // because Gallant's 45 pool is the one that most needs the rows it cannot
+    // otherwise afford.
+    gallant: ['ironFist', 'momentumSwing', 'serratedSlice', 'metallicBlade', 'onslaught'],
     // Speed 85, the fastest Shadow hero, so Shadowstrike's +1 bracket is worth
     // most here. Off-type filler (curseMind, rendingClaw, stunningBlow) drops
     // for the type's own line — docs/authoring-moves.md §7, "a line, not a sample".
@@ -281,10 +327,17 @@ export const progressionTable: ProgressionTable = {
     // perfectly good carrier for it. Wave Shred sits here because Pincer is the
     // only physical Water hero in the roster; see docs/combat.md for the open
     // question about its first cast being unaffordable on a 55 pool.
-    pincer: ['aquaSlice', 'waveShred', 'washAway', 'shrapnelBlast', 'refresh'],
-    scallywag: ['stormLash', 'shockSlice', 'overcharge', 'risingStatic', 'ironFist', 'stunningBlow', 'fangRush'],
+    pincer: ['aquaSlice', 'waveShred', 'washAway', 'rendArmor', 'refresh'],
+    // ironFist moved up into Scallywag's starting kit and stunningBlow died,
+    // both with the Iron slate (2026-08-30); Heavy Blow is the one row left.
+    scallywag: ['stormLash', 'shockSlice', 'overcharge', 'risingStatic', 'heavyBlow', 'fangRush'],
     sentinel: ['bodyBlow', 'bastion', 'retribution', 'bodyCrush', 'stoneheart', 'toughenUp', 'rally'],
-    steamColossus: ['sparkForge', 'ironFist', 'stunningBlow', 'quickJab', 'rockToss'],
+    // Bellows is Mech/IRON at Atk 90 and Speed 15 — the heaviest body in the
+    // roster — so its half of the slate is the big swings, with STAB, and none
+    // of the cheap ramp (Iron Fist and Sharpen are in its starting kit now).
+    // Onslaught's 80 sits above its 40 starting pool on purpose; a run's mana
+    // growth is what opens it (docs/mana.md).
+    steamColossus: ['sparkForge', 'momentumSwing', 'onslaught', 'swingingChain', 'rockToss'],
     // Zenith takes the battery line — every mana grant the slate authors, plus
     // Arcane Overflow, which is the only move that reads the pool back out. The
     // three are one plan: bank with Font of Power, cash it as a three-figure

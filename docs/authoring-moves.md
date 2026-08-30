@@ -9,10 +9,10 @@ appropriately."
 
 Fire was the first (2026-08-29), Water the second, Frost the third, Storm
 the fourth, Stone the fifth, Nature the sixth, Light the seventh, Shadow the
-eighth, Arcane the ninth, Mind the tenth and Spirit the eleventh (all
-2026-08-30). Four types remain — Iron, Mech, Beast, Ancient. This file is
-what those eleven cost to learn, written down so the next one is an afternoon
-instead of a day. Water took about a third of
+eighth, Arcane the ninth, Mind the tenth, Spirit the eleventh and Iron the
+twelfth (all 2026-08-30). Three types remain — Mech, Beast, Ancient. This file
+is what those twelve cost to learn, written down so the next one is an
+afternoon instead of a day. Water took about a third of
 Fire's time and Frost about the same as Water, and every hour of the saving came from
 §0 step 1 — naming the engine extensions before writing any content. Frost needed two
 (a targeting gate and a status consume) and both were visible in the table on the
@@ -171,6 +171,37 @@ but "billed against WHAT, and known WHEN?"** Recoil is an outcome you discover;
 `selfHpCost` is a price you read before pressing. That distinction is the
 entire reason it is a separate field, and it is invisible if you only ask
 whether a field for self-damage exists.
+
+Iron needed **one**, tying Light and Shadow for the cheapest slate, and its
+words to watch for were three: **"if AN enemy has Conduct."** The field it
+wants already existed and already read Conduct — Storm's `conditionalManaCost`,
+authored six rows earlier — and the only difference is the quantifier. That is
+the whole trap, and it is Nature's in a new costume: *the same grammar, asked
+of a different quantity*. Nature's version read a condition off the wrong side
+of the field; this one reads it off the right side and **counts differently**.
+
+**What makes it worth a field rather than a shrug is second-order, and it is
+the generalisable part.** Iron is one of Conduct's `triggerTypes`, so an Iron
+damage move DETONATES the mark it reads. Under "all enemies" the discount is
+self-consuming — a board that satisfies the condition cannot survive the cast
+that reads it — so Overcharge poses no choice at all. Under "any enemy" the
+player picks: swing at the marked foe and cash the mark, or swing at the other
+one and keep the discount. **One word in the design table turned a price into a
+decision, and it was only visible by asking what the move does to the state it
+reads.** When a row's condition and its payload touch the same piece of state,
+that is the question to ask — not "how much?" but *"what does reading it do to
+it?"*
+
+The corollary for §0 step 1: the sort is *already expressible* vs *needs a new
+field*, and a row can be in the second bucket while looking exactly like the
+first. Grep the field's existing readers and diff the SENTENCE, not the shape.
+
+Iron's other lesson has nothing to do with the engine and everything to do with
+§6. It is the slate that finally emptied the fixture pool, and it deleted the
+single most widely-held move in the game — **Fortify was in NINE starting kits
+across seven types**. That is not a §6 grep result you absorb; it is a design
+decision about eight heroes who have nothing to do with Iron, and it has to be
+made deliberately and reported. See §10.
 
 Read this **before** opening `src/data/moves.ts`. Read `CLAUDE.md` first if you have not.
 
@@ -381,13 +412,34 @@ declared target only, so a fixed-group move never gets it.
 
 ### `conditionalManaCost`
 
-`{ requiresAllEnemiesStatus: 'Conduct', manaCost: 0 }` (Storm's Overcharge) is a
-**replacement** price while every active enemy carries the status — not a discount.
+A **replacement** price while the enemy side carries a named status — not a
+discount. Two sides, and a move authors **exactly one**:
+
+- `{ requiresAllEnemiesStatus: 'Conduct', manaCost: 0 }` (Storm's Overcharge) —
+  every active enemy carries it.
+- `{ requiresAnyEnemyStatus: 'Conduct', manaCost: 0 }` (Iron's Metallic Blade) —
+  at least one does, whether or not it is the foe being hit.
+
+Nothing in the type system enforces "exactly one"; both fields are optional and
+a move authoring neither is a silent dud. `test/ironMoves.test.ts` pins it over
+the whole move table, same as `test/shadowMoves.test.ts` does for
+`conditionalPower`'s five siblings — so a third sibling fails the moment it is
+authored without extending that list.
+
 Composes with `manaDiscountOnUse` by taking the lower. Unlike `conditionalPriority`
 this IS read at resolution, so a mark planted earlier in the same round pays for it.
 Every live-fight reader must go through `state.ts resolveManaCost`;
 `effectiveManaCost` stays the board-free answer for the draft/level-up/compendium
-surfaces.
+surfaces. Both sides need at least one ACTIVE enemy (a wiped side vacuously
+satisfies "every enemy is marked") and both read the enemy side only — a mark on
+your own partner discounts nothing.
+
+**The two sides are different mechanics, not different tolerances.** Where the
+gated move also *interacts* with the status it reads, "all" is self-consuming
+and "any" is a choice: an Iron move detonates Conduct, so Metallic Blade cashes
+the mark if it swings at the marked foe and banks the discount if it swings at
+the other one. Reach for the "any" side when the design row wants that decision,
+not merely when it says "an".
 
 ### `switchesUserOut`
 
@@ -699,9 +751,9 @@ extensions; some are design decisions above your pay grade. Either way, name it.
   is a conversation.
 - **Priority or cost that varies with state in a shape not already covered.** Three
   shapes exist now: `manaDiscountOnUse` (a self-inflicted, monotonic, per-fight
-  discount), `conditionalManaCost` (a replacement price gated on every enemy
-  carrying a status), and `conditionalPriority` (a bracket bonus gated on the
-  declared target's status). "Costs double while Burned" and "priority scales
+  discount), `conditionalManaCost` (a replacement price gated on the enemy side
+  carrying a status — in TWO quantifiers now, every enemy or any enemy), and
+  `conditionalPriority` (a bracket bonus gated on the declared target's status). "Costs double while Burned" and "priority scales
   with missing HP" are still conversations. Note that reading a *number* is no
   longer novel in itself — `conditionalPower` does it on both sides of the
   field now (`requiresTargetHpBelow`, `requiresUserHpBelow`) — but no COST or
@@ -1433,6 +1485,86 @@ arrangement with one difference worth pricing: Storm needs a partner of the
 right type to cash its mark in, and Spirit plants AND cashes with the same
 kit. `test/spiritMoves.test.ts` pins the count so it cannot drift silently.
 
+Iron's, as a twelfth — the slate that emptied the fixture pool, and whose
+findings are almost entirely about the **eight heroes that have nothing to do
+with the type**:
+
+- **A capability the slate deleted — and it is the biggest deletion any slate
+  has made.** `fortify` (Iron, +10 Defense / +10 Wisdom, self, **10 mana**) was
+  in **NINE starting kits across seven types** — Cinder, Cube, Sentinel,
+  Hollowbark, Aegis, Warden, Valor, Clockwork, Bellows — plus two level-up
+  pools. Iron's fourteen authored rows contain **no defensive buff under 50
+  mana** (Reinforce at 50, Juggernaut at 70), so what went away is a role and
+  not just a price point: the game's cheapest buff, its only move granting
+  WISDOM, and the only cheap defensive self-buff anywhere.
+
+  Eight of the nine were repointed onto the nearest Iron row that keeps each
+  hero's slot shape (Sharpen for the Attack users, Pin Down for the cheap
+  slots); Aegis, the one with a 70 pool and Wisdom 75, went onto its OWN type's
+  Mend instead. **None of them got a defensive buff back**, because there is no
+  longer one to point at. Reported, not patched around.
+
+  Two smaller deletions on the same pass. `quickJab` (30 BP, **4 mana**,
+  priority **1**) was the cheapest move in the game and Iron authors no
+  priority at all, so the type lost bracket play outright — the Water/Shadow
+  shape again, and Juggernaut's +50 Speed at 70 mana is now the type's only
+  answer to being outsped. And `stunningBlow` was Daze's dedicated carrier;
+  Light replaces it six times over, but the cheapest Daze in the game went 20 →
+  25 and the status is now entirely Light's.
+
+- **A locked decision the slate brushed against.**
+  `conditionalManaCost.requiresAnyEnemyStatus` does not break anything —
+  it is the same replacement-price shape, the same resolution timing, the same
+  single board-aware reader. What is new is that a cost condition and the
+  move's own payload now touch the **same piece of state**: Iron detonates
+  Conduct, so Metallic Blade's discount is spent by the cast that uses it *if
+  and only if* the player aims it at the marked foe. That is the first time a
+  price in this game has been something a player can choose to preserve, and
+  it is recorded in `docs/combat.md` rather than settled by accident, along
+  with the shape deliberately left unbuilt: a cost gated on the CASTER's own
+  statuses, or on a status's absence.
+
+- **A balance consequence outside the slate — three, and the first is a
+  designer call already taken.**
+  1. **Metallic Blade cannot be set up by its own type.** The slate plants
+     Conduct zero times (designer call, 2026-08-30: Iron cashes, a partner
+     sets), so its discount is gated on a **team composition** rather than on a
+     setup any Iron hero can perform. Storm's Overcharge has a test asserting
+     the key ships with the lock; this one cannot have that test, because the
+     key is by construction on another hero. It is the most partner-dependent
+     row in the roster — Mind's Cerebral Shock with the sides swapped, and the
+     two are each other's answer.
+  2. **Goblin Warrior could not afford its own kit.** 20 mana / 2 regen against
+     a floor that went 4 → 15 and a cheapest attack that went 4 → 20; at the old
+     pool it acted about once every five rounds. Raised to **40/10** — the
+     fourth time that exact fix has been applied, after Torch Goblin, Goblin
+     Skulker and Spooky Goblin, which makes 40/10 the standard basic-enemy pool
+     rather than a per-case patch. It now swings Iron Fist and Opening Strike,
+     which between them demonstrate the type's whole plan from the side of the
+     field the player is fighting.
+  3. **Conjured Sword has one home and wants a decision about the rest.** The
+     designer's note ("a lategame learnable for certain spellcasters, not
+     necessarily intended for native Iron heroes") is a placement instruction,
+     not a mechanic — and every Iron hero is Intelligence 40 or below, so it
+     genuinely cannot live with its own type. It went into Glyph's pool (Int 90,
+     an 85 pool against the move's 80, and already the artillery line) as the
+     least arguable single home. **Which other casters learn it is a roster
+     decision, not a movepool one** — Lucius (Int 75), Zenith (85), Marrow (75),
+     Solace (75) and Crimson (80) are the obvious candidates and are
+     deliberately left unplaced, per Stone's rule that the deliverable is the
+     list, not a fix.
+
+- **A fourth, and §7 earns its keep for the fifth slate running.** Iron's three
+  heroes were not duplicates, but two of their three kits opened on the same
+  move and their pools were byte-identical off-type filler (Valor and Gallant
+  both `shrapnelBlast/stunningBlow/…`), so the type read as one hero in three
+  stat lines. They now split on the axis the slate actually has: Warden plays
+  the **denominator** (Opening Strike, Pin Down, Rend Armor — Atk 55 behind
+  Def 90), Gallant plays the **numerator** (Heavy Blow, the Attack ramp,
+  Onslaught — Atk 80 behind Def 55), and Valor, the only starter, takes the
+  middle and the side-wide Reinforce. **Distribution keeps being a roster audit
+  wearing a movepool hat** — that is five for five.
+
 **One more procedural note, from Mind.** §0 step 1 says name the extensions up front
 and §10 says report what you hit. Mind is the case where those were the same act:
 the stat floor exists because a question about Brain Flay's second cast was asked
@@ -1458,7 +1590,9 @@ on Spirit/Mind), the equivalent question is almost certainly: *is the slate pric
 knowing every one of its damage moves carries that hook for free?* Storm answered
 it by counting: **ten of its fifteen moves are damage moves, and every one of
 them detonates Conduct for 10% max HP with no field authored**, while five plant
-the mark. That is the type's whole engine and it is invisible in the design
+the mark. **Iron's count is ten of fourteen and zero** — every damage row cashes,
+nothing plants — which is the same hook arranged as a doubles dependency rather
+than as a self-contained engine, and it is a designer call rather than a gap. That is the type's whole engine and it is invisible in the design
 table — `test/stormMoves.test.ts` pins the count so it cannot drift silently.
 
 **The one procedural lesson from Storm**: §0 step 1 says name the engine

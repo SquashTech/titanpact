@@ -223,10 +223,16 @@ export function effectiveManaCost(move: MoveDefinition, discounts?: Partial<Reco
  * authored price is the honest answer.
  *
  * The two conditions compose by taking the LOWER price, since neither is meant
- * to be a way of making the other more expensive. "All enemies" reads over the
- * ACTIVE, unfainted enemies and requires at least one of them: a wiped enemy
- * side vacuously satisfies "every enemy is marked", and a condition nothing
- * can meet must not read as met.
+ * to be a way of making the other more expensive.
+ *
+ * `conditionalManaCost` has two sides and a move authors exactly one
+ * (content.ts): `requiresAllEnemiesStatus` (Overcharge — every active enemy
+ * marked) or `requiresAnyEnemyStatus` (Iron's Metallic Blade — at least one
+ * is). Both read over the ACTIVE, unfainted enemies and both require at least
+ * one of them: a wiped enemy side vacuously satisfies "every enemy is marked",
+ * and a condition nothing can meet must not read as met. The shared
+ * empty-side guard is what makes that true for the `every` side; the `some`
+ * side would already answer false.
  */
 export function resolveManaCost(state: CombatState, combatantId: string, move: MoveDefinition): number {
   const combatant = state.combatants[combatantId];
@@ -240,7 +246,16 @@ export function resolveManaCost(state: CombatState, combatantId: string, move: M
     .filter((c): c is Combatant => c != null && !c.fainted);
 
   if (activeEnemies.length === 0) return base;
-  if (!activeEnemies.every((enemy) => hasStatus(enemy, conditional.requiresAllEnemiesStatus))) return base;
+
+  const all = conditional.requiresAllEnemiesStatus;
+  const any = conditional.requiresAnyEnemyStatus;
+  const met =
+    all != null
+      ? activeEnemies.every((enemy) => hasStatus(enemy, all))
+      : any != null
+        ? activeEnemies.some((enemy) => hasStatus(enemy, any))
+        : false; // authored neither: a silent dud, never a free cast
+  if (!met) return base;
   return Math.min(base, Math.max(0, conditional.manaCost));
 }
 

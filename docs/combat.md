@@ -407,11 +407,16 @@ This is a deliberate asymmetry with the cost condition below, which *is* read at
 resolution and *can* see this round's work. Both are pinned by
 `test/stormMoves.test.ts` so the difference changes loudly if it ever changes.
 
-## Cost that varies with the BOARD (2026-08-30, Storm)
+## Cost that varies with the BOARD (2026-08-30, Storm; extended 2026-08-30, Iron)
 
 `MoveDefinition.conditionalManaCost`: a **replacement** price that applies while
-every active enemy carries a named status. Storm's Overcharge ("costs 0 mana if
-both enemies have Conduct") is the first content.
+the enemy side carries a named status. It has **two sides**, and a move authors
+exactly one:
+
+| Side | Reads | Content |
+|---|---|---|
+| `requiresAllEnemiesStatus` | every active enemy carries it | Storm's Overcharge, "costs 0 mana if both enemies have Conduct" |
+| `requiresAnyEnemyStatus` | at least one does | Iron's Metallic Blade, "costs 0 mana if an enemy has Conduct" |
 
 The second authored cost that varies with state, and the first that varies with
 something other than the caster's own history (`manaDiscountOnUse`, above).
@@ -419,9 +424,25 @@ something other than the caster's own history (`manaDiscountOnUse`, above).
 - **A replacement, not a discount**, so "costs 0" is authored as 0 rather than as
   a subtraction to be checked against the base price. Composes with
   `manaDiscountOnUse` by taking the **lower**.
-- **"All enemies" requires at least one.** A wiped enemy side vacuously
+- **Both sides require at least one active enemy.** A wiped enemy side vacuously
   satisfies "every enemy is marked"; a condition nothing can meet must not read
-  as met.
+  as met. The `some` side would answer false on its own, and the guard is
+  shared rather than duplicated.
+- **Both sides read the ENEMY side only.** A mark that lands on the caster's own
+  partner — which Storm's Rising Static can do, since its rider resolves its own
+  target — never discounts anything.
+- **Exactly one side, unenforced by the type system.** Both fields are optional
+  and a move authoring neither is a silent dud that never fires. Pinned across
+  the whole move table by `test/ironMoves.test.ts`, the same discipline
+  `conditionalPower`'s five siblings follow.
+
+**Why "any" is a different mechanic and not a looser "all".** Iron is one of
+Conduct's `triggerTypes`, so an Iron damage move *detonates* the mark it reads.
+Swing Metallic Blade at the marked foe and it cashes the mark for 10% max HP and
+ends its own discount; swing it at the *unmarked* foe and the mark survives, so
+the next cast is free too. **Spend it or bank it** is a decision only the "any"
+side can pose — a board satisfying "both marked" cannot survive the cast that
+reads it, so Overcharge's discount is always self-consuming.
 - **One board-aware reader, `state.ts resolveManaCost`**, for the same reason
   `effectiveManaCost` had one: the engine's spend, the view's affordability
   filter, the gem on the button and the crest all go through it.
@@ -437,6 +458,15 @@ rounds of every fight. Reported rather than tuned away, same as Fire's Inferno
 and Water's Wave Shred. `test/stormMoves.test.ts` asserts the pairing holds —
 any hero who can only afford a conditional-cost move at its discount can also
 reach the status it needs — but nothing in the engine enforces it.
+
+**And the Iron half leaves a sharper version of it (2026-08-30).** Metallic
+Blade's 40 is affordable outright on Gallant's 45 pool, so it never trips that
+assertion — but the Iron slate plants Conduct **zero** times (designer call:
+Iron cashes the mark, a Storm partner or Mind's Cerebral Shock sets it). So the
+discount is not gated on a setup Iron can perform; it is gated on a *team
+composition*. It is the most partner-dependent row in the roster, and unlike
+Overcharge nothing in a test can assert the pairing, because the pairing is not
+within one hero's reach by construction.
 
 ## A move that switches its user out (2026-08-30, Storm)
 

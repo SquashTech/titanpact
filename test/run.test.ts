@@ -190,8 +190,10 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
   assert.deepStrictEqual(
     levelUpMovePool(progressionTable, entry),
     // kindle left this pool for Cinder's starting kit when the Spirit slate
-    // deleted Mend Wounds (src/data/heroes.ts, 2026-08-30).
-    ['moltenLash', 'firebrand', 'volcanicSurge', 'quickJab', 'fangRush']
+    // deleted Mend Wounds (src/data/heroes.ts, 2026-08-30), and quickJab was
+    // replaced by a real Iron line when the Iron slate landed — Cinder is
+    // Fire/Iron at Atk 70, so heavyBlow and momentumSwing are on-type.
+    ['moltenLash', 'firebrand', 'volcanicSurge', 'heavyBlow', 'momentumSwing', 'fangRush']
   );
 
   const withMove = grantLevelUpMove(run, 'cinderKnight', 'firebrand');
@@ -200,10 +202,13 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
   assert.strictEqual(withMove.roster[0].unlockedMoveIds.length, 4); // starting 3 + this grant hits MOVE_CAP
 
   // Already at MOVE_CAP: further offers require replacing an unlocked move.
-  const swapped = grantLevelUpMove(withMove, 'cinderKnight', 'quickJab', 'fortify');
-  assert.ok(!swapped.roster[0].unlockedMoveIds.includes('fortify'));
-  assert.ok(swapped.roster[0].unlockedMoveIds.includes('quickJab'));
-  assert.throws(() => grantLevelUpMove(withMove, 'cinderKnight', 'quickJab', 'notUnlocked'), ProgressionError);
+  // quickJab and fortify both died with the authored Iron slate (2026-08-30);
+  // heavyBlow is the pool entry that replaced the first and sharpen is the
+  // starting move that replaced the second (src/data/heroes.ts).
+  const swapped = grantLevelUpMove(withMove, 'cinderKnight', 'heavyBlow', 'sharpen');
+  assert.ok(!swapped.roster[0].unlockedMoveIds.includes('sharpen'));
+  assert.ok(swapped.roster[0].unlockedMoveIds.includes('heavyBlow'));
+  assert.throws(() => grantLevelUpMove(withMove, 'cinderKnight', 'heavyBlow', 'notUnlocked'), ProgressionError);
 });
 
 test('progression: Evolution unlocks only at EVOLUTION_LEVEL, offers exactly three paths, grants stats, and is one-shot', () => {

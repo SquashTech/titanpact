@@ -94,13 +94,15 @@ test('status: Daze is gone by the end of the round it was applied in — nobody 
 });
 
 test('status: a Daze only denies a turn when its applier moved first — flinch, not a purchased turn', () => {
-  // Stunning Blow is the guaranteed applier. Cinder (speed 50) vs Warden (30):
+  // Blind (Light) is the guaranteed applier — Iron's Stunning Blow, which used
+  // to be, died with the authored Iron slate (moves.ts, 2026-08-30) and the
+  // slate authors no Daze at all. Cinder (speed 50) vs Warden (30):
   // cast by the faster hero it deletes the slower one's action, and cast by the
   // slower one it lands on a hero that has already swung and does nothing.
   const fast = resolveRound(
     twoVTwoFixture(102),
     [
-      { kind: 'move', combatantId: 'a1', moveId: 'stunningBlow', declaredTarget: 'b1' }, // cinderKnight, 50
+      { kind: 'move', combatantId: 'a1', moveId: 'blind', declaredTarget: 'b1' }, // cinderKnight, 50
       { kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a1' }, // ironWarden, 30
     ],
     config
@@ -114,7 +116,7 @@ test('status: a Daze only denies a turn when its applier moved first — flinch,
   const slow = resolveRound(
     twoVTwoFixture(102),
     [
-      { kind: 'move', combatantId: 'b1', moveId: 'stunningBlow', declaredTarget: 'a1' }, // ironWarden, 30 — acts second
+      { kind: 'move', combatantId: 'b1', moveId: 'blind', declaredTarget: 'a1' }, // ironWarden, 30 — acts second
       { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }, // cinderKnight, 50 — already gone
     ],
     config
@@ -200,7 +202,7 @@ test('status: cleanseStatuses strips every non-positive status, leaving Renew (p
 
 test('status: Conduct is only applied by its dedicated move, not any Storm/Iron hit', () => {
   const state = twoVTwoFixture(200);
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'quickJab', declaredTarget: 'b1' }]; // quickJab is Iron-typed, no statusApplication
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'ironFist', declaredTarget: 'b1' }]; // ironFist is Iron-typed, no statusApplication
   const { state: next, events } = resolveRound(state, actions, config);
 
   assert.strictEqual(hasStatus(next.combatants.b1, 'Conduct'), false);
@@ -219,7 +221,7 @@ test('status: Conduct applies via a move that names it (stormLash) — no bonus 
 test('status: Conduct detonates on the next Storm/Iron hit — bonus damage, then consumed', () => {
   const state = twoVTwoFixture(201);
   const marked = withStatus(state, 'b1', 'Conduct', {});
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'quickJab', declaredTarget: 'b1' }];
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'ironFist', declaredTarget: 'b1' }];
 
   const plainResult = resolveRound(state, actions, config);
   const markedResult = resolveRound(marked, actions, config);

@@ -469,8 +469,14 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   // the mana gem beside this line shows the LIVE price — so this says what the
   // condition is, not what it costs right now.
   if (move.conditionalManaCost) {
-    const gate = move.conditionalManaCost.requiresAllEnemiesStatus;
-    parts.push(`${move.conditionalManaCost.manaCost} MP if both enemies have ${statuses[gate]?.name ?? gate}`);
+    const all = move.conditionalManaCost.requiresAllEnemiesStatus;
+    const gate = all ?? move.conditionalManaCost.requiresAnyEnemyStatus;
+    if (gate) {
+      const name = statuses[gate]?.name ?? gate;
+      parts.push(
+        `${move.conditionalManaCost.manaCost} MP if ${all ? `both enemies have ${name}` : `an enemy has ${name}`}`
+      );
+    }
   }
 
   // The pivot. Second, after the buff it delivers, because that is the order it

@@ -52,7 +52,11 @@ export const heroes: Record<string, HeroDefinition> = {
     // dead weight levelUpMovePool can never offer). Cinder keeps three moves
     // and loses healing outright; the designer call was to let the borrowers
     // lose the heal rather than repoint them onto Light's Mend a second time.
-    moveIds: ['singe', 'fortify', 'kindle'],
+    // Sharpen in place of Fortify, which the authored Iron slate deleted
+    // (moves.ts, 2026-08-30). Cinder is the one Fortify holder for which Iron
+    // is an INNATE type, and it swings Atk 70 — so the slot goes from a cheap
+    // defensive buff to the type's own +30 Attack rather than off-type filler.
+    moveIds: ['singe', 'sharpen', 'kindle'],
     starter: false,
   },
   crimson: {
@@ -103,7 +107,11 @@ export const heroes: Record<string, HeroDefinition> = {
     // The physical read of the same pool (Atk 70 / Int 20): Undertow rather
     // than Splash, and Tide Guard on the hero with 85 Defense already, whose
     // job is to make the OTHER slot survivable too.
-    moveIds: ['undertow', 'tideGuard', 'stunningBlow'],
+    // Opening Strike in place of Stunning Blow, which the Iron slate deleted
+    // (moves.ts, 2026-08-30) — the same off-type physical slot at the same 20
+    // mana, trading a guaranteed Daze for a Defense debuff that Rend Armor in
+    // its pool then escalates.
+    moveIds: ['undertow', 'tideGuard', 'openingStrike'],
     starter: false,
   },
 
@@ -129,7 +137,10 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Cube',
     types: ['Frost'],
     baseStats: { hp: 90, attack: 50, defense: 80, intelligence: 40, wisdom: 50, speed: 25, manaPool: 45, mpRegen: 10 },
-    moveIds: ['iceShard', 'frostArmor', 'fortify'],
+    // Pin Down in place of Fortify (moves.ts, 2026-08-30). Iron's cheapest
+    // row at 15, which is what a 45 pool wants, and its -10 Speed is worth
+    // more to a Speed-25 hero than to anyone else on the field.
+    moveIds: ['iceShard', 'frostArmor', 'pinDown'],
     starter: false,
   },
 
@@ -155,7 +166,11 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Scallywag',
     types: ['Storm'],
     baseStats: { hp: 95, attack: 75, defense: 40, intelligence: 30, wisdom: 35, speed: 80, manaPool: 50, mpRegen: 10 },
-    moveIds: ['thunderclap', 'quickJab', 'rally'],
+    // Iron Fist in place of Quick Jab, which the Iron slate deleted (moves.ts,
+    // 2026-08-30): the same role at the authored floor (4 mana -> 20, and no
+    // priority bracket any more), and it drops out of Scallywag's own pool
+    // below, where it would otherwise be dead weight.
+    moveIds: ['thunderclap', 'ironFist', 'rally'],
     starter: false,
   },
 
@@ -173,7 +188,10 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Sentinel',
     types: ['Stone'],
     baseStats: { hp: 150, attack: 45, defense: 100, intelligence: 15, wisdom: 50, speed: 15, manaPool: 30, mpRegen: 10 },
-    moveIds: ['mudBall', 'provoke', 'fortify'],
+    // Pin Down in place of Fortify (moves.ts, 2026-08-30) — 15 rather than
+    // 10, which the 30 pool can still open on, and a debuff rather than a
+    // guard buff on a hero that already has Defense 100.
+    moveIds: ['mudBall', 'provoke', 'pinDown'],
     starter: false,
   },
 
@@ -212,7 +230,9 @@ export const heroes: Record<string, HeroDefinition> = {
     // Ivy Spike at 15 is the cheapest move in the slate, which is what a 40
     // pool wants; Second Wind is its Renew (Spirit, so no STAB) and therefore
     // its route into Branch Slam later.
-    moveIds: ['ivySpike', 'fortify', 'secondWind'],
+    // Pin Down in place of Fortify (moves.ts, 2026-08-30); Ivy Spike and it
+    // are both 15, which is what the 40 pool wants beside a 30-mana Renew.
+    moveIds: ['ivySpike', 'pinDown', 'secondWind'],
     starter: false,
   },
 
@@ -230,7 +250,13 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Aegis',
     types: ['Light'],
     baseStats: { hp: 120, attack: 45, defense: 80, intelligence: 40, wisdom: 75, speed: 35, manaPool: 70, mpRegen: 10 },
-    moveIds: ['holyStrike', 'fortify', 'secondWind'],
+    // Mend in place of Fortify (moves.ts, 2026-08-30), promoted out of Aegis's
+    // own level-up pool below. Iron has no cheap defensive buff left to point
+    // at, so this is the one of the nine Fortify holders repointed onto its
+    // OWN type instead: Wisdom 75 is what Mend scales off, and a 70 pool is
+    // the only one of the nine that can carry a 25-mana heal beside a 30-mana
+    // Renew.
+    moveIds: ['holyStrike', 'mend', 'secondWind'],
     starter: false,
   },
 
@@ -367,7 +393,13 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Warden',
     types: ['Iron'],
     baseStats: { hp: 135, attack: 55, defense: 90, intelligence: 20, wisdom: 50, speed: 30, manaPool: 40, mpRegen: 10 },
-    moveIds: ['quickJab', 'stunningBlow', 'fortify'],
+    // Iron authored (moves.ts, 2026-08-30). Warden is Atk 55 against Def 90,
+    // so it plays the DENOMINATOR half of the type: Opening Strike and Pin
+    // Down both shrink what it is hitting rather than growing what it hits
+    // with. Second Wind is the sustain slot a 135 HP wall wants and the one
+    // Fortify actually cost it — nothing in the slate is a defensive buff
+    // under 50 mana.
+    moveIds: ['openingStrike', 'pinDown', 'secondWind'],
     starter: false,
   },
   valor: {
@@ -379,7 +411,12 @@ export const heroes: Record<string, HeroDefinition> = {
     // own pool. Iron authors no support of its own beyond Fortify, and Gallant
     // already carries Rally, so the off-type slot stays off-type — it just
     // stops being a heal.
-    moveIds: ['ironFist', 'fortify', 'rally'],
+    // Iron authored (moves.ts, 2026-08-30). Valor is the type's only STARTER
+    // and the balanced frame (Atk 60 / Spd 60 / 60 pool), so it opens on the
+    // ramp: Iron Fist grows +5 a swing and Sharpen buys +30 outright, both
+    // permanent for the fight (stat mods persist through a switch). Rally
+    // stays the off-type slot it has been since Mend Wounds died.
+    moveIds: ['ironFist', 'sharpen', 'rally'],
     starter: true,
   },
   gallant: {
@@ -387,7 +424,11 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Gallant',
     types: ['Iron'],
     baseStats: { hp: 110, attack: 80, defense: 55, intelligence: 20, wisdom: 35, speed: 70, manaPool: 45, mpRegen: 10 },
-    moveIds: ['ironFist', 'quickJab', 'rally'],
+    // Iron authored (moves.ts, 2026-08-30). Gallant is Atk 80 / Spd 70 / Def
+    // 55 — the glass half of the type — so it keeps its old two-attacks-plus-
+    // Rally shape and takes the burst pair: Heavy Blow's 30% crit and Opening
+    // Strike to set up the Onslaught in its pool.
+    moveIds: ['heavyBlow', 'openingStrike', 'rally'],
     starter: false,
   },
 
@@ -397,7 +438,10 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Clockwork',
     types: ['Mech'],
     baseStats: { hp: 130, attack: 60, defense: 70, intelligence: 45, wisdom: 40, speed: 55, manaPool: 50, mpRegen: 10 },
-    moveIds: ['moltenHammer', 'sparkForge', 'fortify'],
+    // Sharpen in place of Fortify (moves.ts, 2026-08-30) — Clockwork is Atk 60
+    // and Mech is still fixture content, so the off-type slot stays off-type
+    // and just stops being a guard buff.
+    moveIds: ['moltenHammer', 'sparkForge', 'sharpen'],
     starter: true,
   },
   steamColossus: {
@@ -405,7 +449,12 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Bellows',
     types: ['Mech', 'Iron'],
     baseStats: { hp: 145, attack: 90, defense: 80, intelligence: 15, wisdom: 35, speed: 15, manaPool: 40, mpRegen: 10 },
-    moveIds: ['moltenHammer', 'shrapnelBlast', 'fortify'],
+    // Two of the three died with the Iron slate (Shrapnel Blast and Fortify,
+    // moves.ts 2026-08-30). Bellows is Mech/IRON, so unlike the other Fortify
+    // holders it gets STAB on the replacements — and at Atk 90 with Speed 15
+    // it is the exact body the ramp is for: Iron Fist to open, Sharpen to make
+    // the 90 into 120, and the mana pool reaches Onslaught later.
+    moveIds: ['moltenHammer', 'ironFist', 'sharpen'],
     starter: false,
   },
 

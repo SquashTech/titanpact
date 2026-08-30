@@ -4,11 +4,13 @@
 // 2v2s while the real content gets authored.
 //
 // EXCEPT Fire (2026-08-29), Water, Frost, Storm, Stone, Nature, Light,
-// Shadow and Arcane (all 2026-08-30), the nine types replaced wholesale by
-// their designed movepools —
+// Shadow, Arcane, Mind, Spirit and Iron (all 2026-08-30), the twelve types
+// replaced wholesale by their designed movepools —
 // see the "(AUTHORED)" blocks below. Those are balance-tuned content;
 // everything else here is still filler and should be read (and replaced) as
-// such, type by type. Every engine field below exists because an authored slate
+// such, type by type. Three types are left: Mech, Beast, Ancient. As of the
+// Iron slate the "original fixture moves" section at the top of this file is
+// gone entirely — every remaining fixture move belongs to one of those three. Every engine field below exists because an authored slate
 // needed it, and each is generic vocabulary in engine/content.ts rather than a
 // per-type special case:
 //
@@ -29,6 +31,12 @@
 //           (Overload) — the first move whose TARGETING reads the board;
 //           derivedStatDeltas (Arcane Overflow) — the first stat grant with no
 //           authored number
+//   Iron  — conditionalManaCost.requiresAnyEnemyStatus (Metallic Blade) — the
+//           second side of Storm's cost condition, "an enemy" rather than
+//           "both". Worth a field rather than a rounding because Iron
+//           DETONATES the status it reads, which turns a price into a choice:
+//           swing at the marked foe and cash the mark, or swing at the other
+//           one and keep the discount (docs/combat.md)
 //
 // Most moves here are `kind: 'damage'` — variety comes from
 // type/category/power/cost/priority/targeting — including doubles-native
@@ -57,19 +65,19 @@
 import type { MoveDefinition } from '../engine/content';
 
 export const moves: Record<string, MoveDefinition> = {
-  // --- Original fixture moves (descriptions added) -------------------------
-  quickJab: {
-    id: 'quickJab',
-    name: 'Quick Jab',
-    type: 'Iron',
-    category: 'physical',
-    kind: 'damage',
-    basePower: 30,
-    manaCost: 4,
-    priority: 1,
-    target: 'singleEnemy',
-    description: 'A cheap, fast punch that moves before most other moves.',
-  },
+  // The "original fixture moves" section used to open the file here, and its
+  // last survivor was Quick Jab (Iron, 30 BP, 4 mana, priority 1). The
+  // authored Iron slate (2026-08-30) deleted it, which is the moment the
+  // fixture pool finally emptied: every move in this file is now authored
+  // content or a fixture move belonging to one of the three types still
+  // waiting for a slate (Mech, Beast, Ancient).
+  //
+  // Quick Jab was the game's cheapest move at 4 mana and one of only two
+  // fixture priority-1 rows a test ever stood on; Iron authors no priority at
+  // all, so the type lost bracket play outright — see
+  // docs/authoring-moves.md §10. The priority fixtures moved onto Beast's
+  // fangRush (test/combat.test.ts, test/fieldEffects.test.ts), which is still
+  // priority 1 and still cheap.
   // --- Fire (AUTHORED, 2026-08-29) ------------------------------------------
   // The first type whose movepool is designer-authored rather than fixture
   // filler. Early/Mid/Late in the design table is the level-up tier a move
@@ -3013,7 +3021,42 @@ export const moves: Record<string, MoveDefinition> = {
     description: 'Lets go of the body altogether (+75 Intelligence, +25 Speed).',
   },
 
-  // --- Iron --------------------------------------------------------------
+  // --- Iron (AUTHORED, 2026-08-30) -----------------------------------------
+  // The twelfth authored slate, and the most single-minded of the twelve. Iron
+  // has exactly one plan and every row serves it: push the physical ratio's
+  // NUMERATOR up and its DENOMINATOR down, then swing.
+  //
+  //   - FIVE rows hand the caster Attack (Iron Fist +5, Momentum Swing +20,
+  //     Sharpen +30, Onslaught +30, Juggernaut +50), and three of those five
+  //     are attached to a hit rather than to a turn spent buffing — the ramp
+  //     mostly costs nothing but the mana.
+  //   - THREE reduce the target's Defense (Opening Strike -10, Pin Down -10,
+  //     Rend Armor -20). Same ratio, other end.
+  //   - Stat mods PERSIST through a switch (CLAUDE.md, 2026-08-15 sign-off),
+  //     so BOTH halves survive a pivot and neither is priced against a single
+  //     exchange. Sharpen into Momentum Swing into Onslaught is +100 Attack by
+  //     the fourth turn and it keeps it; every stat delta here is a permanent
+  //     investment in the fight, not a buff with a clock.
+  //
+  // Iron is one of Conduct's two trigger types (statuses.ts `triggerTypes:
+  // ['Storm', 'Iron']`), so every one of the TEN damage rows below detonates
+  // an existing mark for 10% of the target's max HP, for free, with nothing
+  // authored — the same hidden rider Storm carries, and the reason the raw
+  // numbers here are not the whole price.
+  //
+  // The slate plants Conduct ZERO times. Designer call (2026-08-30): Iron
+  // CASHES the mark and never sets it, so planting is a Storm partner's job
+  // (or Mind's Cerebral Shock). Metallic Blade is the one row that reads the
+  // mark, and reading it is what makes it free — see its own note for the
+  // spend-it-or-bank-it decision that falls out of Iron detonating what it
+  // reads.
+  //
+  // What the type deliberately does not have, all stated by omission: no
+  // priority anywhere (Quick Jab's bracket 1 died with the fixture pool), no
+  // heal, no cleanse, no field effect, no drain, and exactly ONE status rider
+  // in fourteen rows.
+
+  // Early --------------------------------------------------------------------
   ironFist: {
     id: 'ironFist',
     name: 'Iron Fist',
@@ -3021,23 +3064,234 @@ export const moves: Record<string, MoveDefinition> = {
     category: 'physical',
     kind: 'damage',
     basePower: 40,
-    manaCost: 8,
+    // The fixture id survives at the authored price (8 -> 20). The +5 is the
+    // smallest legal stat grant (CLAUDE.md: multiples of 5) and it is the
+    // point of the row — an opener that is very slightly better every time you
+    // press it, on a stat mod that never expires.
+    statDeltas: [{ stat: 'attack', amount: 5 }],
+    statDeltaTarget: 'self',
+    manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A hardened, metal-plated punch.',
+    description: 'A hardened, metal-plated punch that settles the shoulder for the next one (+5 Attack).',
   },
-  shrapnelBlast: {
-    id: 'shrapnelBlast',
-    name: 'Shrapnel Blast',
+  sharpen: {
+    id: 'sharpen',
+    name: 'Sharpen',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'buff',
+    statDeltas: [{ stat: 'attack', amount: 30 }],
+    statDeltaTarget: 'self',
+    manaCost: 25,
+    priority: 0,
+    target: 'self',
+    description: 'A turn spent on the edge instead of the enemy (+30 Attack).',
+  },
+  openingStrike: {
+    id: 'openingStrike',
+    name: 'Opening Strike',
     type: 'Iron',
     category: 'physical',
     kind: 'damage',
-    basePower: 36,
-    manaCost: 14,
+    basePower: 30,
+    // Deltas land AFTER the hit, so the -10 shapes the NEXT swing and never
+    // its own. That is what makes this an opener rather than a cheap nuke.
+    statDeltas: [{ stat: 'defense', amount: -10 }],
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: "A probing blow that finds the seam in a guard (-10 to the target's Defense).",
+  },
+  heavyBlow: {
+    id: 'heavyBlow',
+    name: 'Heavy Blow',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 45,
+    // Nearly five times the 1/16 default (damagePipeline.ts). The type's only
+    // source of variance beyond the locked 0.85-1.0 roll.
+    critChance: 0.3,
+    manaCost: 25,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A committed, full-weight swing (30% crit chance).',
+  },
+  pinDown: {
+    id: 'pinDown',
+    name: 'Pin Down',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'buff',
+    // A `buff`-kind move with a negative payload aimed at an enemy is how the
+    // engine spells "debuff" (docs/authoring-moves.md §2) — there is no
+    // 'debuff' kind, and MoveTile recovers the label from the sign.
+    statDeltas: [
+      { stat: 'defense', amount: -10 },
+      { stat: 'speed', amount: -10 },
+    ],
+    manaCost: 15,
+    priority: 0,
+    target: 'singleEnemy',
+    description: "Traps a limb and leans on it (-10 to the target's Defense and Speed).",
+  },
+
+  // Mid ----------------------------------------------------------------------
+  serratedSlice: {
+    id: 'serratedSlice',
+    name: 'Serrated Slice',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 60,
+    // The slate's ONLY status rider. Bleed is boolean and flat (5% of max HP
+    // per round, no decay) and does NOT clear on a switch, so a landed roll
+    // follows the target to the bench and back.
+    statusApplication: { statusId: 'Bleed', chance: 0.3, target: 'moveTarget' },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A ragged, toothed edge dragged across the wound (30% chance of Bleed).',
+  },
+  momentumSwing: {
+    id: 'momentumSwing',
+    name: 'Momentum Swing',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 50,
+    statDeltas: [{ stat: 'attack', amount: 20 }],
+    statDeltaTarget: 'self',
+    manaCost: 35,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Lets the weight of the weapon carry into the follow-through (+20 Attack).',
+  },
+  rendArmor: {
+    id: 'rendArmor',
+    name: 'Rend Armor',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 55,
+    statDeltas: [{ stat: 'defense', amount: -20 }],
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: "Peels plate away from what it was protecting (-20 to the target's Defense).",
+  },
+  metallicBlade: {
+    id: 'metallicBlade',
+    name: 'Metallic Blade',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 50,
+    // `requiresAnyEnemyStatus` — the second side of conditionalManaCost, and
+    // the reason it exists (content.ts, designer call 2026-08-30). Storm's
+    // Overcharge needs BOTH enemies marked; this needs one, anywhere on the
+    // enemy side, whether or not it is the foe being hit.
+    //
+    // That distinction is the move. Iron detonates Conduct (statuses.ts
+    // triggerTypes), so swinging this at the MARKED foe cashes the mark for
+    // 10% max HP and ends its own discount, while swinging it at the unmarked
+    // one leaves the mark standing and stays free next round. Spend it or bank
+    // it — a decision Overcharge cannot pose, because a board that satisfies
+    // "both marked" cannot survive the cast that reads it.
+    conditionalManaCost: { requiresAnyEnemyStatus: 'Conduct', manaCost: 0 },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A blade that answers a charged field (free while an enemy carries Conduct).',
+  },
+  reinforce: {
+    id: 'reinforce',
+    name: 'Reinforce',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'buff',
+    statDeltas: [
+      { stat: 'attack', amount: 20 },
+      { stat: 'defense', amount: 20 },
+    ],
+    manaCost: 50,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Braces both allies behind the same plate (+20 Attack and +20 Defense each).',
+  },
+
+  // Late ---------------------------------------------------------------------
+  onslaught: {
+    id: 'onslaught',
+    name: 'Onslaught',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 100,
+    statDeltas: [{ stat: 'attack', amount: 30 }],
+    statDeltaTarget: 'self',
+    manaCost: 80,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'An unbroken sequence of blows that only gets heavier (+30 Attack).',
+  },
+  juggernaut: {
+    id: 'juggernaut',
+    name: 'Juggernaut',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'buff',
+    // The largest buff in the game: three stats at +50 each, on one hero, and
+    // permanent for the fight. Priced as a whole turn plus 70 mana, and it is
+    // the only Iron row that touches Speed upward — the type's answer to
+    // having no priority bracket anywhere.
+    statDeltas: [
+      { stat: 'attack', amount: 50 },
+      { stat: 'defense', amount: 50 },
+      { stat: 'speed', amount: 50 },
+    ],
+    manaCost: 70,
+    priority: 0,
+    target: 'self',
+    description: 'Becomes the thing that does not stop (+50 Attack, +50 Defense and +50 Speed).',
+  },
+  swingingChain: {
+    id: 'swingingChain',
+    name: 'Swinging Chain',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 70,
+    // The slate's only spread, and no reduction applies (CLAUDE.md: this is a
+    // doubles-only game) — so it is 70 into each foe AND a Conduct detonation
+    // on each of them that carries a mark.
+    manaCost: 65,
     priority: 0,
     target: 'bothEnemies',
-    description: 'A spray of jagged metal fragments.',
+    description: 'A weighted chain swung in a flat arc through both foes.',
   },
+  conjuredSword: {
+    id: 'conjuredSword',
+    name: 'Conjured Sword',
+    type: 'Iron',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 120,
+    // The slate's ONE magical row, and the only one authored for heroes who do
+    // not have this type (designer note, 2026-08-30): a late learnable for
+    // spellcasters, whose Intelligence swings an Iron-typed blade against
+    // Wisdom. No Iron hero should hold it — Warden is Int 20, Valor 40,
+    // Gallant 20, Bellows 15 — so it lives in off-type pools and is pinned in
+    // the orphan list (test/stoneMoves.test.ts) rather than stuffed into one
+    // of theirs. Note it still detonates Conduct like every other Iron damage
+    // move, which is a free rider on a hero that cannot plant the mark either.
+    manaCost: 80,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A blade with no smith and no weight, held together by will (magical).',
+  },
+
 
   // --- Mech --------------------------------------------------------------
   moltenHammer: {
@@ -3145,18 +3399,21 @@ export const moves: Record<string, MoveDefinition> = {
   // Mend at 25, up from 16.
 
   // --- Buff / debuff (flat stat deltas — CLAUDE.md "flat additive integers, multiples of 5 or 10") ---
-  fortify: {
-    id: 'fortify',
-    name: 'Fortify',
-    type: 'Iron',
-    category: 'physical',
-    kind: 'buff',
-    statDeltas: [{ stat: 'defense', amount: 10 }, { stat: 'wisdom', amount: 10 }],
-    manaCost: 10,
-    priority: 0,
-    target: 'self',
-    description: "Hardens the caster's guard, physical and magical alike.",
-  },
+  // Fortify (Iron, +10 Defense / +10 Wisdom, self, 10 mana) lived here until
+  // the authored Iron slate replaced the type (2026-08-30), and it is the
+  // largest single deletion any slate has made: NINE starting kits carried it
+  // (Cinder, Cube, Sentinel, Hollowbark, Aegis, Warden, Valor, Clockwork,
+  // Bellows) across seven types, plus two level-up pools.
+  //
+  // What went away with it is a role, not just a price: it was the game's
+  // cheapest buff at 10 mana, its only move granting WISDOM, and the only
+  // cheap defensive self-buff anywhere. Iron's fourteen authored rows contain
+  // no defensive buff under 50 mana — Reinforce (50, both allies, +20 Atk /
+  // +20 Def) and Juggernaut (70, self, +50/+50/+50) are the whole of it — so
+  // the nine kits were repointed onto the nearest Iron row that keeps each
+  // hero's slot shape rather than onto a same-role replacement, because there
+  // is no longer a same-role replacement to point at.
+  // See docs/authoring-moves.md §10 (Iron).
   rally: {
     id: 'rally',
     name: 'Rally',
@@ -3203,19 +3460,17 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: "A raking slash that opens a wound too deep to close (inflicts Bleed).",
   },
-  stunningBlow: {
-    id: 'stunningBlow',
-    name: 'Stunning Blow',
-    type: 'Iron',
-    category: 'physical',
-    kind: 'damage',
-    basePower: 25,
-    statusApplication: { statusId: 'Daze', target: 'moveTarget' },
-    manaCost: 20,
-    priority: 0,
-    target: 'singleEnemy',
-    description: 'A rattling haymaker, priced high for what it denies (inflicts Daze).',
-  },
+  // Daze's dedicated fixture carrier (stunningBlow — Iron, 25 BP + guaranteed
+  // Daze at 20 mana) went the way Burn's, Freeze's, Conduct's, Haunt's and
+  // Renew's did, when the authored Iron slate landed (2026-08-30). Unlike
+  // those, the replacement is not in the slate that deleted it: Iron authors
+  // no Daze at all. Light carries the status six times over (Glimmer, Blind,
+  // Holy Beam, Blinding Flash, Deity Blade, Judgment), so the vector needed no
+  // patching — but the status is now entirely Light's, and the cheapest way
+  // to Daze anything went from 20 mana to Blind at 25.
+  //
+  // It was also the off-type physical slot in two kits (Pincer, Warden) and
+  // five level-up pools; all seven are repointed onto Iron's own rows.
   // Haunt's and Renew's fixture carriers both lived here (spectralBind, 30 BP
   // at 12 mana; secondWind, Renew 20 at 15) until the authored Spirit slate
   // (2026-08-30). Haunt is now planted three ways up in the Spirit block —

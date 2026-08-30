@@ -407,9 +407,17 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                 {move.conditionalPriority.bonus} priority vs {move.conditionalPriority.requiresTargetStatus}
               </span>
             )}
+            {/* The count is the whole difference between the two sides
+                (content.ts): Overcharge needs BOTH enemies marked, Metallic
+                Blade needs one. `2×`/`1×` in front of the status name is the
+                shortest thing that says which — the gem beside it already
+                carries the live price. */}
             {move.conditionalManaCost && (
               <span className="move-eff-status">
-                {move.conditionalManaCost.manaCost} MP vs 2× {move.conditionalManaCost.requiresAllEnemiesStatus}
+                {move.conditionalManaCost.manaCost} MP vs{' '}
+                {move.conditionalManaCost.requiresAllEnemiesStatus
+                  ? `2× ${move.conditionalManaCost.requiresAllEnemiesStatus}`
+                  : `1× ${move.conditionalManaCost.requiresAnyEnemyStatus}`}
               </span>
             )}
             {/* WHO it hits, when that depends on the board (content.ts

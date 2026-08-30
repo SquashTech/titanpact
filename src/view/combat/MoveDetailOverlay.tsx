@@ -388,7 +388,13 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
     })
       ? move.priority + move.conditionalPriority.bonus
       : move.priority;
-  const freeDef = move.conditionalManaCost ? statuses[move.conditionalManaCost.requiresAllEnemiesStatus] : undefined;
+  // Whichever side of conditionalManaCost the move authored (content.ts) —
+  // "every active enemy carries it" (Overcharge) or "at least one does"
+  // (Metallic Blade). Exactly one is ever set.
+  const freeGate = move.conditionalManaCost
+    ? move.conditionalManaCost.requiresAllEnemiesStatus ?? move.conditionalManaCost.requiresAnyEnemyStatus
+    : undefined;
+  const freeDef = freeGate ? statuses[freeGate] : undefined;
   const hasPayload = Boolean(
     move.statDeltas?.length ||
       move.derivedStatDeltas ||
@@ -852,9 +858,9 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
           {move.conditionalManaCost && (
             <EffectRow
               glyph={<StatGlyph stat="manaPool" />}
-              text={`${move.conditionalManaCost.manaCost} mana while both enemies carry ${
-                freeDef?.name ?? move.conditionalManaCost.requiresAllEnemiesStatus
-              }`}
+              text={`${move.conditionalManaCost.manaCost} mana while ${
+                move.conditionalManaCost.requiresAllEnemiesStatus ? 'both enemies carry' : 'an enemy carries'
+              } ${freeDef?.name ?? freeGate}`}
               note={
                 attacker
                   ? `costs ${liveCost} right now`

@@ -1051,15 +1051,23 @@ export interface MoveDefinition {
   fieldEffectApplication?: FieldEffectId;
   manaCost: number;
   /**
-   * A REPLACEMENT price that applies only while every active enemy carries
-   * `requiresAllEnemiesStatus` — Storm's Overcharge, "costs 0 mana if both
-   * enemies have Conduct".
+   * A REPLACEMENT price that applies while the enemy side carries a named
+   * status — Storm's Overcharge, "costs 0 mana if BOTH enemies have Conduct"
+   * (`requiresAllEnemiesStatus`), and Iron's Metallic Blade, "costs 0 mana if
+   * AN enemy has Conduct" (`requiresAnyEnemyStatus`).
    *
    * The second authored cost that varies with state, and the first that
    * varies with the BOARD rather than with the caster's own history
    * (manaDiscountOnUse below). Kept as a replacement rather than a discount
    * so "costs 0" is authored as 0 and not as a subtraction that has to be
    * arithmetic-checked against the base price.
+   *
+   * **Author exactly ONE of the two sides** — the same discipline
+   * `conditionalPower`'s five siblings follow. Nothing in the type system
+   * enforces it; `test/ironMoves.test.ts` pins "exactly one side" across the
+   * whole move table, so a third sibling fails the moment it is authored
+   * without extending that list. A `conditionalManaCost` authoring neither is
+   * a silent dud that simply never fires.
    *
    * Composes with manaDiscountOnUse by taking the LOWER of the two — neither
    * is meant to be a way to make the other more expensive. Resolved by
@@ -1068,11 +1076,22 @@ export interface MoveDefinition {
    * effectiveManaCost stays the board-free answer for surfaces with no live
    * fight (draft, level-up, compendium), where the authored price is correct.
    *
-   * "All enemies" reads over the ACTIVE enemies only, and an empty enemy side
-   * does not satisfy it — a condition nothing can meet must not read as met.
+   * Both sides read over the ACTIVE enemies only, and an empty enemy side
+   * satisfies NEITHER — a condition nothing can meet must not read as met.
+   * (For the "all" side that means rejecting a vacuous `every`; for the "any"
+   * side `some` already returns false, and the guard is shared.)
+   *
+   * The behavioural difference between the two is the whole reason the "any"
+   * side exists, and it is specific to Conduct: an Iron damage move DETONATES
+   * the mark it reads (statuses.ts triggerTypes), so a Metallic Blade swung at
+   * the marked foe cashes the mark and ends its own discount, while one swung
+   * at the unmarked foe stays free next round. "Spend it or bank it" is the
+   * decision; `requiresAllEnemiesStatus` has no equivalent, because a
+   * fully-marked board cannot survive the cast that reads it.
    */
   conditionalManaCost?: {
-    requiresAllEnemiesStatus: StatusId;
+    requiresAllEnemiesStatus?: StatusId;
+    requiresAnyEnemyStatus?: StatusId;
     manaCost: number;
   };
   /**
