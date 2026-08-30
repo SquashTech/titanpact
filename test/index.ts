@@ -23,6 +23,7 @@ import './mechMoves.test';
 import './run.test';
 import './recruitment.test';
 import './shop.test';
+import './equipment.test';
 import './map.test';
 import './relics.test';
 import './enemyGen.test';

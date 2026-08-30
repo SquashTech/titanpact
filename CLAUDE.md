@@ -76,6 +76,12 @@ don't silently override it.
   requires **terminating** an existing one. Equipment strips on termination; no gold refund.
 - **3 equipment slots** per hero: weapon, armor, accessory. **Relics are team-wide passives**
   — a separate axis, not equipment.
+- **Equipment rarity is a point budget, spent exactly** (2026-08-30): Common 10 / Rare 20 /
+  Epic 30 / Legendary 40 / Mythic 50, paid in stats, Elemental Force magnitude, or granted
+  passives (`RARITY_BUDGET`, `src/run/equipment.ts`; enforced by `test/equipment.test.ts`).
+  Not every stat costs 1 — HP and Mana are ½, MP Regen is 3× (`STAT_POINT_VALUE`).
+  **Drop odds scale by act**: Legendary/Mythic cannot appear in Act 1, Common cannot appear
+  in Act 5, elites roll one tier ahead (`rarityWeightsFor`, `docs/progression.md`).
 
 ### Mana & tempo
 - Regenerating Mana with two stats: **pool size** and **per-turn MP Regen** (always written "MP Regen" — the bare word collided with the HoT status, now **Renew**).

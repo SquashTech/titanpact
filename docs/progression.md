@@ -136,17 +136,111 @@ an opaque level curve.
   gray/blue/purple/gold/red — `EquipmentDefinition.rarity` (`src/run/equipment.ts`
   `EquipmentRarity`), with per-tier colors as CSS custom properties (`styles.css`
   `--tier-*`) so every rarity-colored element (Equipment Cache cards, the
-  forced-equip spotlight) stays in sync from one source. `RARITY_DROP_WEIGHTS`
-  biases `equipmentReward` node rolls toward common gear; the roster hard cap and
-  authored-content scope (`equipment.ts`'s fixture items) are unaffected — tiering is
-  purely a rarity/color/drop-weight classification on top of the existing
-  `statGrants` model, not a new stat-scaling system.
+  forced-equip spotlight) stays in sync from one source.
+
+### The rarity budget (2026-08-30, per user direction)
+
+A tier is no longer just a colour and a drop weight — it is a **point budget**, and
+every authored item spends its tier's budget **exactly** (`RARITY_BUDGET`,
+`equipmentBudgetProblems`, `src/run/equipment.ts`; asserted over the whole catalog by
+`test/equipment.test.ts`):
+
+| Tier | Budget | Worked example |
+| --- | --- | --- |
+| Common | 10 | Torch — 5 Attack, 5 Fire Force |
+| Rare | 20 | Ember Band — 10 Attack, 10 Fire Force |
+| Epic | 30 | Bloodletter Fang — 10 Attack + Bloodthirst |
+| Legendary | 40 | Ring of Vitality — 20 HP, 10 MP Regen |
+| Mythic | 50 | Crown of the Ancients — 20 HP + 10 each of Atk/Def/Int/Wis |
+
+Three things convert into those points:
+
+- **Stats**, via `STAT_POINT_VALUE`. Attack/Defense/Intelligence/Wisdom/Speed cost 1
+  per unit, which is the user's "roughly 10 total stats" read literally. Two stats are
+  **deliberately not 1:1** — the one judgment call layered on the spec, and the first
+  knob to turn if tiers feel wrong. **HP and Mana cost ½** (heroes sit at 80-110 HP,
+  and neither stat enters the locked damage ratio at all, so at 1:1 every HP item
+  would be a trap pick — which the north star forbids). **MP Regen costs 3×** (every
+  hero's base is exactly 10, so +10 is a 100% swing in the resource-cycling engine the
+  whole switching game runs on). Setting every entry to 1 and re-budgeting the catalog
+  is a one-file change if the designer would rather have a flat count.
+- **Elemental Force magnitude**, at 1 point per magnitude (`FORCE_POINT_VALUE`).
+  Pinned by the user's own worked example: Torch is 5 Attack + 5 Fire Force at Common.
+- **Granted passives**, priced in `PASSIVE_ITEM_COST` (`src/data/passives.ts`) — the
+  "OR equivalent in terms of powerful passives or other effects" half of the brief.
+  The anchor is **20 points = a 20% type-locked damage multiplier**. The table lives in
+  the data layer, not on `PassiveDefinition`: what a passive is worth *in an item* is an
+  equipment-economy question the engine has no opinion about, and relics grant passives
+  on a different axis (team-wide, no slot competition) that shouldn't be forced through
+  an equipment-shaped price. An item granting an unpriced passive **fails validation**
+  rather than getting it free.
+
+Stats now **cover more possibilities** at every tier (the brief's other ask): a Common
+weapon is no longer "10 Attack" but any 10 points — 5 Attack + 5 Speed, 5 Attack +
+5 Fire Force, 5 Intelligence + 5 Defense. The twelve authored Common weapons in
+`src/data/equipment.ts` are the worked example the rest of the catalog follows, and
+`test/equipment.test.ts` pins them verbatim so a rebalance can't silently rewrite the
+reference.
+
+> **Open question — nothing caps how much of a tier a drawback may buy.** A negative
+> stat grant refunds its full point value, which is what lets Berserker's Cleaver carry
+> a Legendary Attack line (40) at Epic by taking −10 Defense. That is a good item; a
+> hypothetical −40 Defense / 70 Attack Epic is not. A cap (say, 25% of the tier budget)
+> is the obvious answer but has not been decided — flag before authoring a second
+> drawback item.
 - **No unequipped-item stash (2026-08-17, reversing the 2026-08-16 third-playtest
   design — per user direction, "adds unnecessary player busywork").** Every item
   obtained, from a battle win or an `equipmentReward` node alike, must be equipped to
   a hero or trashed for good before the run continues (`ForceEquipScreen`,
   `docs/run-loop.md` "The unequipped-item inventory was removed"). `RunState` no
   longer has an `inventory` field.
+
+### The act-scaled drop curve (2026-08-30, per user direction)
+
+> "We also need spawn rates to adjust as the run goes on. Legendary and Mythic
+> equipment should be impossible to find in Act 1, but common items should be
+> impossible to find in Act 5."
+
+Two composable rules, both in `src/run/equipment.ts`, and **one function
+(`rarityWeightsFor`) that every roll site in the game goes through** — the Equipment
+Cache (`NodeRewardScreen`), the per-slot reward nodes and post-fight drops (`App.tsx`),
+and the Guild Hall shelf (`run/shop.ts`). One curve, not four.
+
+**1. The tier rows (`RARITY_WEIGHTS_BY_TIER`)** — the shape, as percentages:
+
+| Loot tier | Common | Rare | Epic | Legendary | Mythic |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 65 | 30 | 5 | — | — |
+| 2 | 35 | 40 | 20 | 5 | — |
+| 3 | 15 | 35 | 30 | 15 | 5 |
+| 4 | 5 | 20 | 35 | 27 | 13 |
+| 5 | — | 10 | 30 | 35 | 25 |
+| 6 | — | 5 | 20 | 40 | 35 |
+
+A plain fight rolls **tier = act number**. An **Elite or the act's Guardian rolls one
+tier ahead** (`lootTierFor`), which is what tier 6 exists for — it replaces the old
+flat `ELITE_RARITY_DROP_WEIGHTS` table, so "tougher fights drop better gear" is now
+one rule that scales with the run instead of a second fixed table that doesn't.
+
+**2. The act window (`ACT_RARITY_WINDOW`)** — the hard half, kept deliberately
+separate so the elite bump can never punch through it. Act 1 is capped at Epic; Act 5
+floors at Rare. Without this, an Act-1 elite rolling tier 2 would produce the 5%
+Legendary the brief forbids.
+
+The sampler **filters zero-weight items out of the pool** rather than leaving them in
+at weight 0 (`pickWeightedEquipment`): "impossible" has to mean impossible, and a
+plain weighted walk can still land on a zero-weight entry through float drift.
+`test/equipment.test.ts` asserts this by rolling, not just by reading the table.
+
+One knock-on: **the act-opening Goblin fight's guaranteed drop is no longer hard-coded
+to Common** — it rolls the act's own standard curve. In Act 1 that is ~65% Common
+anyway; by Act 5 there are no Commons left to hand out.
+
+> **Open question — the curve is untuned.** The rows above are a plausible ramp, not a
+> playtested one, and they interact with two things not yet decided: encounter
+> difficulty doesn't scale by act at all yet (`run-loop.md` §3), and gold income is
+> flat while `EQUIPMENT_PRICE_BY_RARITY` is not. An Act-5 Guild Hall now stocks mostly
+> Legendary/Mythic at 90-150 gold apiece.
 
 > The **crit source** question (`combat.md`) lands partly here: it's now LOCKED as a
 > loadout/equipment layer, not a base stat — so it's an equipment concern. Not yet

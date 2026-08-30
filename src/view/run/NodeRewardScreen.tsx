@@ -6,7 +6,7 @@ import { statuses } from '../../data/statuses';
 import type { StatKey } from '../../engine/content';
 import type { RunState } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
-import { pickWeightedEquipment } from '../../run/equipment';
+import { pickWeightedEquipment, rarityWeightsFor } from '../../run/equipment';
 import { grantCurrencyReward, grantUpgradeReward, grantRelicReward } from '../../run/runProgress';
 import {
   EQUIP_SLOT_LABELS,
@@ -127,8 +127,13 @@ function EquipCacheCard({ item, picked, onPick, onInspect, revealDelayMs }: Equi
 export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onClaimEquipment }: Props) {
   const [currencyAmount] = useState(() => 15 + Math.floor(Math.random() * 16)); // 15-30
   const [upgradeAmount] = useState(() => 2 + Math.floor(Math.random() * 2)); // 2-3
+  // The cache's 3 offers roll the act's own curve (rarityWeightsFor,
+  // src/run/equipment.ts) — an Act-1 cache cannot show a Legendary and an
+  // Act-5 one cannot show a Common.
   const [equipmentChoices] = useState<EquipmentDefinition[]>(() =>
-    nodeType === 'equipmentReward' ? pickWeightedEquipment(Object.values(equipment), 3) : []
+    nodeType === 'equipmentReward'
+      ? pickWeightedEquipment(Object.values(equipment), 3, rarityWeightsFor(run.actNumber, 'standard'))
+      : []
   );
   const [relicChoices] = useState(() =>
     nodeType === 'relicReward' ? pickRandom(drawableRelics.filter((r) => !run.relics.includes(r.id)), 3) : []

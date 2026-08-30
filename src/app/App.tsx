@@ -26,7 +26,7 @@ import {
   equipItem,
   pickWeightedEquipment,
   pickWeightedEquipmentBySlot,
-  ELITE_RARITY_DROP_WEIGHTS,
+  rarityWeightsFor,
   type EquipmentDefinition,
   type EquipmentSlot,
 } from '../run/equipment';
@@ -283,12 +283,12 @@ function trainingPointsFor(nodeType: MapNodeType): number {
 }
 
 /**
- * Per-fight equipment-drop odds beyond the Goblin fight's guaranteed common
- * item (handleSquadConfirmed's isGoblinFight branch, unaffected by this
- * table). Elite/boss fights roll both more often AND against
- * ELITE_RARITY_DROP_WEIGHTS (src/run/equipment.ts), which skews well above
- * the default RARITY_DROP_WEIGHTS toward rare-and-up gear — "higher % to
- * drop higher tier loot," not just a higher drop chance.
+ * Per-fight equipment-drop odds beyond the Goblin fight's guaranteed drop
+ * (handleSquadConfirmed's isGoblinFight branch, which uses the same act curve
+ * but skips this chance roll). Elite/boss fights roll both more often AND one
+ * loot tier ahead of the act they're in — `rarityWeightsFor(act, 'elite')`,
+ * src/run/equipment.ts — so a tough fight is "higher % to drop higher tier
+ * loot," not just a higher drop chance.
  */
 const EQUIPMENT_DROP_CHANCE: Record<EncounterNodeType, number> = {
   fight: 0.25,
@@ -296,9 +296,9 @@ const EQUIPMENT_DROP_CHANCE: Record<EncounterNodeType, number> = {
   boss: 0.7,
 };
 
-function equipmentDropFor(nodeType: EncounterNodeType): EquipmentDefinition | null {
+function equipmentDropFor(nodeType: EncounterNodeType, actNumber: number): EquipmentDefinition | null {
   if (Math.random() >= EQUIPMENT_DROP_CHANCE[nodeType]) return null;
-  const weights = nodeType === 'fight' ? undefined : ELITE_RARITY_DROP_WEIGHTS;
+  const weights = rarityWeightsFor(actNumber, nodeType === 'fight' ? 'standard' : 'elite');
   return pickWeightedEquipment(Object.values(equipment), 1, weights)[0] ?? null;
 }
 
@@ -433,7 +433,7 @@ export function App() {
       // straight into the forced equip-or-trash gate, same as the Goblin
       // fight's guaranteed common-item drop below.
       const slot: EquipmentSlot = node.type === 'weaponReward' ? 'weapon' : node.type === 'armorReward' ? 'armor' : 'accessory';
-      const item = pickWeightedEquipmentBySlot(Object.values(equipment), slot);
+      const item = pickWeightedEquipmentBySlot(Object.values(equipment), slot, rarityWeightsFor(playerRun.actNumber, 'standard'));
       setPlayerRun((run) => advanceToNode(run, nodeId));
       const afterScreen: Screen = playerRun.levelUpPool > 0 ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' };
       setScreen(item ? { kind: 'forceEquip', queue: [item.id], next: afterScreen } : afterScreen);
@@ -450,18 +450,20 @@ export function App() {
 
   function handleSquadConfirmed(squad: Squad, nodeId: string, nodeType: EncounterNodeType, encounter: Encounter) {
     // The `fight` node (docs/run-loop.md "fight vs skirmish" — always row 0,
-    // the act's opening Goblin fight) always grants one random piece of
-    // Common gear, on top of the normal gold/training-point rewards — an
-    // early, guaranteed taste of the equip loop rather than leaving it to the
-    // reward-node economy's luck. Rolled here, before the fight even starts,
-    // so the victory screen can spotlight the exact item that's coming —
+    // the act's opening Goblin fight) always grants one random piece of gear,
+    // on top of the normal gold/training-point rewards — an early,
+    // guaranteed taste of the equip loop rather than leaving it to the
+    // reward-node economy's luck. It rolls the act's own standard curve
+    // rather than a hard-coded Common: in Act 1 that is ~65% Common anyway,
+    // and by Act 5 Commons no longer exist to hand out (rarityWeightsFor,
+    // src/run/equipment.ts). Rolled here, before the fight even starts, so
+    // the victory screen can spotlight the exact item that's coming —
     // handleFightResolved below reuses this same value instead of re-rolling.
     const mapNodeType = playerRun.map!.nodes[nodeId].type;
     const isGoblinFight = mapNodeType === 'fight';
-    const commonPool = Object.values(equipment).filter((item) => item.rarity === 'common');
     const equipmentReward = isGoblinFight
-      ? (commonPool[Math.floor(Math.random() * commonPool.length)] ?? null)
-      : equipmentDropFor(nodeType);
+      ? pickWeightedEquipment(Object.values(equipment), 1, rarityWeightsFor(playerRun.actNumber, 'standard'))[0] ?? null
+      : equipmentDropFor(nodeType, playerRun.actNumber);
     setScreen({
       kind: 'fight',
       nodeId,

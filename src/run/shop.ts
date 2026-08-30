@@ -16,7 +16,7 @@
 // down as data sidesteps that entirely.
 
 import type { RunState } from './state';
-import type { EquipmentDefinition, EquipmentRarity } from './equipment';
+import { pickWeightedEquipment, rarityWeightsFor, type EquipmentDefinition, type EquipmentRarity } from './equipment';
 import type { RelicDefinition } from './relics';
 import type { GuildHallOffer } from './recruitment';
 
@@ -63,8 +63,16 @@ function sample<T>(pool: readonly T[], count: number): T[] {
 /**
  * Rolls a shop node's one-time offer set: 2-3 heroes not already on the
  * roster (a curated pick rather than the full non-starter catalog — user
- * direction 2026-08-18), a handful of equipment items (any slot/rarity), and
- * a couple of relics not already owned.
+ * direction 2026-08-18), a handful of equipment items, and a couple of relics
+ * not already owned.
+ *
+ * The equipment shelf is the one place a player can BUY a specific tier, so
+ * it rolls the same act curve every drop does (rarityWeightsFor,
+ * src/run/equipment.ts) rather than sampling the catalog uniformly — an Act-1
+ * Guild Hall stocking a Mythic would let gold skip the whole progression, and
+ * an Act-5 one stocking Commons would just waste two thirds of the shelf.
+ * Pricing stays flat per tier (EQUIPMENT_PRICE_BY_RARITY), so the act
+ * controls what is on offer and gold controls whether you can afford it.
  */
 export function rollGuildHallOffers(
   run: RunState,
@@ -78,7 +86,11 @@ export function rollGuildHallOffers(
   const heroCount = Math.random() < 0.5 ? 2 : 3;
   return {
     heroOfferIds: sample(availableHeroes, heroCount).map((o) => o.id),
-    equipmentOfferIds: sample(equipmentPool, GUILD_HALL_EQUIPMENT_OFFER_COUNT).map((i) => i.id),
+    equipmentOfferIds: pickWeightedEquipment(
+      equipmentPool,
+      GUILD_HALL_EQUIPMENT_OFFER_COUNT,
+      rarityWeightsFor(run.actNumber, 'standard')
+    ).map((i) => i.id),
     relicOfferIds: sample(availableRelics, GUILD_HALL_RELIC_OFFER_COUNT).map((r) => r.id),
   };
 }
