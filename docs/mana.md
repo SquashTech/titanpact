@@ -58,7 +58,7 @@ Treat this as a hard constraint when tuning mana-node values in `/data`.
 - **Weather subsystem interaction with mana: RESOLVED.** Field Effects
   (`docs/field-effects.md`) **is** the weather subsystem, generalized beyond just
   weather-flavored effects — a single global battlefield state, one active at a time,
-  lasting a flat 5 rounds. The first content, Surging Magic, doubles every hero's MP
+  lasting a flat 5 rounds. The first content, Magical Surge, doubles every hero's MP
   Regen while active (`engine/combat/manaRegen.ts`, `engine/combat/
   fieldEffectEngine.ts`). This was the mana system's only remaining open question.
 
@@ -115,6 +115,52 @@ intended shape.
 
 **Classes remain the exception**: `src/data/classes.ts` deliberately grants neither
 `manaPool` nor `mpRegen`, which is still an open question and is unaffected by this.
+
+## Overflow: mana above the pool (2026-08-30 designer sign-off, Arcane)
+
+Until the Arcane slate, `Combatant.currentMana` was bounded by `getMaxMana` at every
+point that touched it. It no longer is. Four Arcane moves — Infuse (40), Empower (80),
+Conduit (150) and Font of Power (150 to both allies) — hand mana to a target and the
+design table says, of each one, **"can exceed their max"**.
+
+**The rule, as decided: uncapped, sticky, never clawed back.**
+
+- **No ceiling.** There is no 2× cap and no cap of any other shape. A hero can hold
+  whatever it has been handed.
+- **MP Regen never LOWERS you.** The round-boundary tick still clamps a *gain* to the
+  pool, but a combatant already above the pool simply gains nothing rather than being
+  pulled back down to it (`engine/combat/manaRegen.ts`). The pre-Arcane line was
+  `Math.min(maxMana, current + regen)`, which would have deleted every grant at the
+  end of the round it landed in.
+- **Rest tops up TO the pool and never below what you hold.** Resting on an overflowed
+  pool is a wasted turn, not a refund (`engine/combat/resolveRound.ts`).
+- **It survives a switch to the bench**, like ordinary mana and unlike a status.
+- **It ends only by being spent** — or at the next map node, where HP and mana fully
+  restore for everyone anyway (`docs/run-loop.md`).
+
+**Why this shape rather than a decaying or capped one.** The mechanic exists so a type
+can pay for costs no pool can reach: Arcane authors a 150-mana capstone (Singularity,
+200 BP) against a roster whose largest pool is 90, and Conduit is how you cast it. A
+cap would put an invisible wall in front of exactly that play, and a decay would turn
+a plan into a one-round trick. The cost is paid in tempo instead — every grant is a
+turn the battery spent not attacking, and the payoff has to arrive on somebody else's
+turn.
+
+**What this obliges every reader of `currentMana` to do.** The value can be greater
+than the pool, so anything dividing by the pool has to clamp. The three gauges that
+do (`CombatantCard`, `HeroDetailOverlay`, `SwitchInPanel`) clamp the fill at 100% and
+draw the surplus as a second, brighter band on top, with the raw `210/85` numeral
+beside it in the overflow colour — a bar that silently pinned at full would make the
+whole mechanic invisible, and an unclamped one just overflowed its own hidden track.
+Affordability checks are `>=` comparisons and needed nothing.
+
+A grant emits its own **`ManaGranted`** event rather than a bare `ManaChanged`
+(`engine/events.ts`), carrying the source, the amount and the resulting overflow —
+`ManaChanged` is deliberately omitted from the Battle Log as bookkeeping, so a grant
+without its own event would be both invisible in the log and unattributable in the
+beat stream.
+
+---
 
 ## What is still OPEN (do not resolve unilaterally)
 

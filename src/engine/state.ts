@@ -4,7 +4,7 @@
 // survives a run) are separate, longer-lived tiers that build on this one —
 // out of scope for this engine slice. Do not fold them in here.
 
-import type { FieldEffectDefinition, FieldEffectId, HeroDefinition, MoveDefinition, PassiveId, StatKey, StatLine, StatusId, TypeId } from './content';
+import type { FieldEffectDefinition, FieldEffectId, HeroDefinition, MoveDefinition, PassiveId, StatKey, StatLine, StatusId, TargetMode, TypeId } from './content';
 import type { RngState } from './rng/seededRng';
 
 export type Side = 'A' | 'B';
@@ -55,6 +55,28 @@ export interface Combatant {
   heroId: string;
   side: Side;
   currentHp: number;
+  /**
+   * NOT bounded by the hero's mana pool. Unlike `currentHp`, which
+   * faintHandling.ts clamps to `getMaxHp`, this may sit ABOVE `getMaxMana`
+   * — Arcane's mana grants (content.ts `manaGrant`: Infuse, Empower, Conduit,
+   * Font of Power) explicitly "can exceed their max", and the 2026-08-30
+   * designer call is that the overflow is uncapped and never clawed back
+   * (docs/mana.md "Overflow").
+   *
+   * Which means every reader has to be written for `currentMana > maxMana`:
+   *
+   * - **Regen never LOWERS you** (combat/manaRegen.ts). It clamps a gain to
+   *   the pool, but a combatant already above it simply gains nothing rather
+   *   than being pulled back down.
+   * - **Rest tops up TO the pool, never below what you hold**
+   *   (combat/resolveRound.ts). Resting on an overflowed pool is a wasted
+   *   turn, not a refund.
+   * - **The view's mana bar divides by the pool**, so its fraction can exceed
+   *   1 — every gauge clamps its fill and draws the surplus as its own band
+   *   (view/combat/CombatantCard.tsx, HeroDetailOverlay.tsx, SwitchInPanel.tsx).
+   * - It survives switching to the bench like any other mana, and resets with
+   *   everything else at the next map node (run/buildCombatState.ts).
+   */
   currentMana: number;
   /**
    * Flat stat grants from equipment, relics, Evolution, and Class Passives
@@ -220,6 +242,28 @@ export function resolveManaCost(state: CombatState, combatantId: string, move: M
   if (activeEnemies.length === 0) return base;
   if (!activeEnemies.every((enemy) => hasStatus(enemy, conditional.requiresAllEnemiesStatus))) return base;
   return Math.min(base, Math.max(0, conditional.manaCost));
+}
+
+/**
+ * resolveManaCost's targeting counterpart — the board-aware answer to "who
+ * does this move actually hit right now" (content.ts `conditionalTarget`,
+ * Arcane's Overload: "spread if Magical Surge is active").
+ *
+ * The single reader every live-fight surface must go through, for the same
+ * reason resolveManaCost is: `move.target` stays the AUTHORED mode, which is
+ * still the honest answer on the fight-free surfaces (draft, level-up,
+ * compendium) and is still what the player declares against. This is what
+ * resolveRound resolves targets from and what the move button's chip reports.
+ *
+ * Reads the one global field-effect slot (docs/field-effects.md), so like
+ * `conditionalPower.requiresFieldEffect` it has exactly one answer per round
+ * for everyone on the board — and an enemy's Magical Surge spreads YOUR
+ * Overload just as your own does.
+ */
+export function resolveTargetMode(state: CombatState, move: MoveDefinition): TargetMode {
+  const conditional = move.conditionalTarget;
+  if (!conditional) return move.target;
+  return state.activeFieldEffect?.fieldEffectId === conditional.requiresFieldEffect ? conditional.target : move.target;
 }
 
 /**

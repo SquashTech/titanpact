@@ -12,8 +12,40 @@ import type { Action } from '../src/engine/combat/actions';
 import { isLockedIn, createCombatant, effectiveTypes, hasAffordableMove } from '../src/engine/state';
 import { applyVoluntarySwitch, SwitchBlockedError } from '../src/engine/combat/switching';
 import { isValidFlatStatGrant } from '../src/engine/content';
+import type { MoveDefinition } from '../src/engine/content';
 
-const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
+/**
+ * The mana-legality guard's fixture, and the one piece of coverage the
+ * authored Arcane slate (2026-08-30) took away rather than replaced.
+ *
+ * `overload` used to be a shipped 999-mana move that no hero could ever cast —
+ * content authored purely so this file could prove the engine refuses an
+ * unaffordable action. The slate re-authors that id as a real 50-mana move, so
+ * the fixture moves here instead of staying in the game as an uncastable
+ * button (docs/authoring-moves.md §6: move the coverage into a test-local
+ * definition, do not quietly re-add the old move as content).
+ *
+ * It is spliced into this file's own `moves` lookup only — src/data/moves.ts
+ * never sees it, and nothing else in the app can reach it.
+ */
+const UNAFFORDABLE_MOVE_ID = 'testUnaffordable';
+const testMoves = {
+  ...moves,
+  [UNAFFORDABLE_MOVE_ID]: {
+    id: UNAFFORDABLE_MOVE_ID,
+    name: 'Overdraw',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 90,
+    manaCost: 999,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Deliberately unaffordable — exercises the mana-legality guard.',
+  } as MoveDefinition,
+};
+
+const config = { typeChart, heroes, moves: testMoves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
 function twoVTwoFixture(seed: number) {
   return createFightState(
@@ -145,17 +177,17 @@ test('round: higher priority move resolves before a higher-speed move in a lower
 
 test('round: an unaffordable move is a legality no-op (engine-level guard)', () => {
   const state = twoVTwoFixture(13);
-  const actions: Action[] = [{ kind: 'move', combatantId: 'b2', moveId: 'overload', declaredTarget: 'a1' }];
+  const actions: Action[] = [{ kind: 'move', combatantId: 'b2', moveId: UNAFFORDABLE_MOVE_ID, declaredTarget: 'a1' }];
   const { state: next, events } = resolveRound(state, actions, config);
   assert.strictEqual(events.some((e) => e.type === 'MoveUsed'), false);
   assert.strictEqual(next.combatants.a1.currentHp, heroes.cinderKnight.baseStats.hp);
 });
 
 test('hasAffordableMove: true iff at least one candidate move is within current mana', () => {
-  assert.strictEqual(hasAffordableMove(0, ['overload'], moves), false); // 999 cost, 0 mana
-  assert.strictEqual(hasAffordableMove(0, ['overload', 'singe'], moves), false); // singe costs 20, still unaffordable at 0
-  assert.strictEqual(hasAffordableMove(moves.singe.manaCost, ['overload', 'singe'], moves), true);
-  assert.strictEqual(hasAffordableMove(moves.singe.manaCost - 1, ['overload', 'singe'], moves), false);
+  assert.strictEqual(hasAffordableMove(0, [UNAFFORDABLE_MOVE_ID], testMoves), false); // 999 cost, 0 mana
+  assert.strictEqual(hasAffordableMove(0, [UNAFFORDABLE_MOVE_ID, 'singe'], testMoves), false); // singe costs 20, still unaffordable at 0
+  assert.strictEqual(hasAffordableMove(moves.singe.manaCost, [UNAFFORDABLE_MOVE_ID, 'singe'], testMoves), true);
+  assert.strictEqual(hasAffordableMove(moves.singe.manaCost - 1, [UNAFFORDABLE_MOVE_ID, 'singe'], testMoves), false);
 });
 
 test('round: a declared Rest action fully restores mana and skips the turn (softlock fallback, CLAUDE.md "Mana & tempo")', () => {

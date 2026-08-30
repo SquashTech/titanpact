@@ -36,6 +36,19 @@ export function applyEventToState(state: CombatState, event: CombatEvent): Comba
         combatants: { ...state.combatants, [event.combatantId]: { ...state.combatants[event.combatantId], currentMana: event.newMana } },
       };
 
+    // Copies the engine's own figure, which may exceed the pool — the view
+    // must not re-clamp it (state.ts Combatant.currentMana, docs/mana.md
+    // "Overflow"). Keyed on targetCombatantId, not combatantId: this is the
+    // one mana event with two combatants in it.
+    case 'ManaGranted':
+      return {
+        ...state,
+        combatants: {
+          ...state.combatants,
+          [event.targetCombatantId]: { ...state.combatants[event.targetCombatantId], currentMana: event.newMana },
+        },
+      };
+
     case 'Fainted':
       return {
         ...state,

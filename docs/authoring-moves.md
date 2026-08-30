@@ -8,9 +8,10 @@ asks you to remove that type's existing moves, replace them, and "distribute the
 appropriately."
 
 Fire was the first (2026-08-29), Water the second, Frost the third, Storm
-the fourth, Stone the fifth, Nature the sixth, Light the seventh and Shadow the
-eighth (all 2026-08-30). Seven types remain. This file is what those eight cost
-to learn, written down so the next one is an afternoon instead of a day. Water took about a third of
+the fourth, Stone the fifth, Nature the sixth, Light the seventh, Shadow the
+eighth and Arcane the ninth (all 2026-08-30). Six types remain. This file is
+what those nine cost to learn, written down so the next one is an afternoon
+instead of a day. Water took about a third of
 Fire's time and Frost about the same as Water, and every hour of the saving came from
 §0 step 1 — naming the engine extensions before writing any content. Frost needed two
 (a targeting gate and a status consume) and both were visible in the table on the
@@ -85,6 +86,32 @@ how the mechanic should READ to a player, not about the engine. It turned into
 player commits — and the chip was then confirmed in the app, unlit and lit, one
 round apart. **When the designer answers a mechanical fork with a sentence about
 legibility, the deliverable includes the surface, not just the field.**
+
+Arcane needed **three**, the second-most of any slate, and it is the first one
+whose hardest question was not about the engine at all. Its words to watch for
+were "spread if", "equal to the user's", and — the one that matters —
+**"(can exceed their max)"**. Four rows carried that parenthetical, and it is
+the whole slate: not a rider on a mana grant but a change to what
+`Combatant.currentMana` MEANS, and therefore to every line in the codebase
+that had been written assuming a ceiling. Three of those lines already existed
+and all three would have silently undone the mechanic — the regen tick's
+`Math.min`, Rest's assignment TO the pool, and a view gauge dividing by the
+pool.
+
+**The generalisation, and the reason this one is worth remembering:** most
+slates ADD a field. This one **removed an invariant**. When a design row
+changes what an existing state field is allowed to hold, the work is not
+"write the new field" — it is *grep every reader of that field and ask which
+of them was relying on the old bound*. `grep -rn "currentMana"` was a
+twelve-line list and five of those lines needed a decision. None of them is
+findable by reading the design table, and none of them would have failed a
+test that did not already exist.
+
+The corollary for the hand-off: the designer question to ask about a row like
+this is not "how much?" but **"what takes it away?"** — a ceiling, a decay, a
+Rest, a round boundary, a switch, a map node are six different answers and the
+table gives none of them. Asked as one multiple-choice question up front, it
+cost one round trip; discovered afterwards, each one is a rebuild.
 
 Read this **before** opening `src/data/moves.ts`. Read `CLAUDE.md` first if you have not.
 
@@ -328,6 +355,67 @@ runs out. Three things fix its shape:
   is a no-op on anything else. Poison is the only timer status today, so Poison
   is the only detonatable one.
 
+### `manaGrant`
+
+`manaGrant: 40` (Arcane's Infuse, Empower 80, Conduit 150, Font of Power 150)
+hands the move's resolved targets flat mana. The first content that moves mana
+between combatants, and the reason `Combatant.currentMana` is no longer bounded
+by `getMaxMana`.
+
+**The overflow is uncapped and sticky** (`docs/mana.md` "Overflow"): regen
+never lowers you, Rest tops up TO the pool and never below what you hold, it
+survives a switch, and it ends only by being spent or at the next map node. If
+you author one of these, that is the rule you are authoring against — a grant
+bigger than the target's pool is the normal case, not the edge case.
+
+Two things worth knowing before reaching for it:
+
+- **Ally modes include the caster** (`targeting.ts activeOf`), so a
+  `singleAlly` grant can legally be pointed at yourself, and a `bothAllies`
+  one always pays the caster too. Font of Power is 100 out and 150 back to
+  itself plus 150 to the partner.
+- It emits its own **`ManaGranted`** event, not a bare `ManaChanged` — the
+  latter is deliberately omitted from the Battle Log as bookkeeping, so a grant
+  without its own event is invisible in the log.
+
+### `conditionalTarget`
+
+`{ requiresFieldEffect: 'surgingMagic', target: 'bothEnemies' }` (Arcane's
+Overload, "spread if Magical Surge is active") replaces the move's `target`
+while that field is up. The first move whose TARGETING reads the board.
+
+Read at **resolution**, via `state.ts resolveTargetMode` — the same board-aware
+single-reader discipline `resolveManaCost` follows, and the same timing as
+`conditionalPower.requiresFieldEffect` rather than `conditionalPriority`'s
+(a bracket must be settled before the round resolves; a target list need not
+be). So a partner's setter earlier in the same round already counts.
+
+The player still declares against the AUTHORED mode — Overload opens a normal
+single-target panel and the second target is added on the way in — and every
+downstream retargeting layer (Stealth, Provoke, Haunt) reads the effective
+mode, so a conditionally-spread move behaves exactly as an authored spread one.
+
+### `derivedStatDeltas`
+
+`{ source: 'userManaBeforeCast', stats: ['attack', 'intelligence'] }` (Arcane
+Overflow) is `statDeltas` with the amount read off live state instead of
+authored. It expands into ordinary `StatDelta`s at cast time, so
+`statDeltaTarget`, the `StatChanged` events and `statModifiers` are all the
+unchanged path.
+
+Two things fix its shape, and both are decisions rather than mechanics:
+
+- The mana is read **before the cost is paid** (the design row says so), and
+  reading it spends nothing.
+- It is the **one documented exemption** from CLAUDE.md's multiples-of-5/10
+  rule. A derived amount has no authored number to round, and rounding it would
+  make the buff disagree with the numeral on the caster's own bar. Do not add a
+  second exemption without asking.
+
+`source` is a small union on purpose. A later slate wanting "equal to missing
+HP" adds a member; it does not add a field, and it certainly does not add a
+predicate function.
+
 ### `fieldEffectApplication`
 
 Sets the single global battlefield state for a flat **5 rounds** (never authored
@@ -471,10 +559,17 @@ extensions; some are design decisions above your pay grade. Either way, name it.
 - **A second status on one move** (see §3).
 - **Targeting the bench.** (Random targeting now exists — `randomAlly` /
   `randomEnemy`, on the move and on a status rider independently. Conditional
-  targeting exists too, but only in the one shape `requiresTargetStatus` covers —
-  "only a target carrying status X". "Only the slower foe", "only a full-HP ally"
-  and gating on the *absence* of a status are all still conversations.)
-- **Percentage stat modifiers**, or any stat growth. Flat multiples of 5/10 only.
+  targeting exists in TWO shapes now: `requiresTargetStatus` restricts *which*
+  combatants are legal ("only a target carrying status X"), and
+  `conditionalTarget` swaps the whole `TargetMode` while a named field effect is
+  up (Arcane's Overload). Neither generalises: "only the slower foe", "only a
+  full-HP ally", gating on the *absence* of a status, and a conditional target
+  keyed on anything other than the one global field slot are all still
+  conversations.)
+- **Percentage stat modifiers**, or any stat growth. Flat multiples of 5/10 only —
+  with the single exception of `derivedStatDeltas` (§3), whose amount is read off
+  live state and lands unrounded. A stat delta scaled as a *fraction* of anything
+  is still a conversation.
 - **Accuracy.** Moves always land. A "70% to hit" row is a `chance`-gated *rider* or it
   is a conversation.
 - **Priority or cost that varies with state in a shape not already covered.** Three
@@ -998,6 +1093,77 @@ already held the type** rather than about the moves:
   off the player's own board, not off a clock the defender has to answer —
   but Stealth in particular is a status a player will never learn to play
   around until something casts it at them.
+
+Arcane's, as a ninth — the slate that changed a state invariant rather than
+adding a field, and the first whose engine work was mostly in code nobody
+touched:
+
+- **A capability the slate deleted — two prices and one test fixture.**
+  (1) `arcaneBolt` cost **9**, which made it one of the three cheapest damage
+  moves in the game and the reason Glyph could act every round on an 85 pool
+  from level 1. The slate's cheapest real attack is Magic Bolt at 25. What
+  replaces the *role* is Mana Tap at **0**, which is not the same thing — 0
+  never scales, so where the old 9-mana bolt was a cheap poke that stayed
+  relevant, Mana Tap is a floor you fall back to. Whether the type wanted a
+  cheap-but-real opener as well as a free one is a design call the table states
+  only by omission. (2) `manaBurst` was a 40 BP spread at **18**; the slate's
+  cheapest spread is Arc Pulse at 45, so the type's way to touch both enemies
+  went 18 → 45 — the same shape as Light's 18 → 50 and worth knowing is now a
+  pattern across authored slates rather than a one-off. (3) The fixture
+  `overload` (999 mana, uncastable by design) was the ONLY content exercising
+  the engine's mana-legality guard, and the slate reuses its id. Moved to a
+  test-local definition in `test/combat.test.ts` per §6 rather than left as an
+  unpressable button in a shipped movepool.
+- **A locked decision the slate brushed against — two, and the first is the
+  bigger one.**
+  (1) **`Combatant.currentMana` is no longer bounded.** It is the first
+  resource in the game whose value may exceed its own maximum, and the first
+  time a UI gauge has had to render past 100%. HP has `applyHpDelta` clamping
+  every write; mana now deliberately has no equivalent, which means the
+  invariant lives in prose and in `test/arcaneMoves.test.ts` rather than in a
+  chokepoint function. That is a real fragility: a future feature that writes
+  mana without going through a grant is free to reintroduce a clamp and nothing
+  will fail loudly. Worth considering an `applyManaDelta` chokepoint if a
+  second mana-moving mechanic ever lands.
+  (2) **`derivedStatDeltas` is the first hole in the multiples-of-5/10 lock**
+  (CLAUDE.md). Asked, and answered by the designer as an exemption rather than a
+  rounding rule. Recorded in `docs/combat.md` and pinned from both sides —
+  the derived grant lands unrounded, and every authored delta in the game is
+  still asserted to be a multiple of 5.
+- **A balance consequence outside the slate — three, and none of them is about
+  a mana cost.**
+  1. **Mana Tap is the only 0-cost move in the game**, and `hasAffordableMove`
+     is a `>=` check, so **its holder can never be forced to Rest**. Rest is the
+     engine's softlock fallback (`docs/combat.md`) and a whole game mechanic —
+     "you overspent, now lose a turn" — simply does not apply to Zenith. That is
+     arguably exactly right for the type that gives its pool away, and it is
+     also the first hero in the roster that one of the game's tempo rules cannot
+     reach. Reported rather than priced away, and pinned by a test so a later
+     rebalance that gives Mana Tap a cost has to notice it is removing the
+     battery's floor.
+  2. **Arcane Overflow grants Attack to a type that has none.** Glyph is Attack
+     25 and Zenith 20, so half of the slate's capstone is worth nothing on
+     either hero that can cast it — it only pays on a PHYSICAL partner. This is
+     the most explicitly doubles-shaped move in the roster and reads as
+     deliberate, but it means one move's value swings by team composition more
+     than anything else in the game, and a player who drafts two Arcane heroes
+     gets a capstone that is half dead. Not tuned; named.
+  3. **Arcane has no enemy.** Zero Arcane entries in `enemies.ts`, so none of
+     these sixteen ever appears on the side the player is fighting. Nature's
+     version of this finding, with an extra edge: **Magical Surge doubles MP
+     Regen for BOTH sides**, so it is the one field effect whose downside a
+     player learns only by having it used against them — and nothing can.
+- **A fourth, smaller, and it came out of the distribution pass again.** Glyph
+  and Zenith are NOT the same hero (365 vs 360 across the six non-mana stats,
+  and genuinely different frames — 80/32/80 Wisdom-glass against 95/45/65
+  bulk), but their kits and level-up pools **were byte-identical apart from one
+  slot**: both opened `arcaneBolt, manaBurst, …` and both pools were off-type
+  Mind filler. So the two played identically despite reading differently, which
+  is the inverse of Shadow's Vesper/Marrow problem and just as invisible until
+  someone asks which half of a slate each hero should get. Fixed here —
+  artillery and battery, no shared pool entries — and it is the second slate
+  running where §7 was what surfaced a roster problem. **Distribution keeps
+  being a roster audit wearing a movepool hat.**
 
 **The procedural lesson from Stone**, extending Storm's: when you finish the
 slate, run the reachability check as well as the dangling-id one. They are

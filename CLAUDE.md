@@ -33,7 +33,10 @@ don't silently override it.
   snapshots it at application time. Reasoning + open questions: `docs/combat.md`.
 - **Stat line:** HP, Attack/Defense, Intelligence/Wisdom, Speed, Mana, MP Regen.
 - **Stat modifiers are flat additive integers, multiples of 5 or 10.** No % stat mods.
-  There is **no automatic stat growth** from leveling.
+  There is **no automatic stat growth** from leveling. One documented exemption
+  (2026-08-30): a **derived** grant, whose amount is read off live state rather than
+  authored, lands unrounded — Arcane Overflow grants Attack/Intelligence equal to the
+  caster's current Mana (`MoveDefinition.derivedStatDeltas`, `docs/combat.md`).
 - **No accuracy stat.** Moves always land. **Mana cost is the primary balance lever** on
   reliable moves.
 - **Priority uses integer brackets; Speed is the tiebreaker within a bracket.**
@@ -74,6 +77,10 @@ don't silently override it.
 
 ### Mana & tempo
 - Regenerating Mana with two stats: **pool size** and **per-turn MP Regen** (always written "MP Regen" — the bare word collided with the HoT status, now **Renew**).
+- **Mana can exceed the pool** (2026-08-30, Arcane): a mana GRANT (`MoveDefinition
+  .manaGrant`) overflows, and the overflow is uncapped, never clawed back by regen or
+  Rest, and survives switching. It ends only by being spent or at the next map node
+  (`docs/mana.md` "Overflow"). Every reader of `currentMana` must handle `> maxMana`.
 - **Bench heroes regen mana** — this is the resource-cycling engine that makes switching
   productive.
 - **Lock-in rule:** voluntary switching is disabled once a side has **2+ heroes KO'd** (forced
@@ -150,7 +157,8 @@ what's still unimplemented:
   (relic/ability), lasting a flat **5 rounds** regardless of which effect; re-applying
   the active effect is a no-op, a different one overrides it and restarts the clock.
   Data-driven (`FieldEffectDefinition`, `docs/field-effects.md`); first content is
-  **Surging Magic** (Arcane), doubling every hero's MP Regen while active.
+  **Magical Surge** (Arcane, displayed as "Surging Magic" until 2026-08-30 — id
+  unchanged), doubling every hero's MP Regen while active.
 
 ## Open questions — DO NOT silently resolve
 

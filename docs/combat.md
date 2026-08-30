@@ -808,12 +808,81 @@ is worth deciding on purpose rather than by accumulation.
 
 ---
 
+## Targeting that varies with the board (2026-08-30, Arcane)
+
+Arcane's Overload is "spread if Magical Surge is active" — the first move whose
+**targeting** depends on the state of the fight. `MoveDefinition.conditionalTarget`
+names a field effect and a replacement `TargetMode`; `state.ts resolveTargetMode` is
+the one board-aware reader, exactly as `resolveManaCost` is for price.
+
+**Read at RESOLUTION, not when the round is ordered** (2026-08-30 designer call). The
+precedent was split and the split is principled:
+
+- `conditionalPriority` reads the board as the round is ORDERED, because a bracket
+  has to be settled before anything resolves. It genuinely cannot see a same-round
+  setter.
+- `conditionalManaCost` and `conditionalPower.requiresFieldEffect` read at
+  resolution, because nothing forces them earlier.
+
+A target list is in the second group: it is already resolved per action, in order. So a
+partner casting Mana Font earlier in the same round *does* spread Overload, and the two
+are a combo rather than a two-round setup.
+
+Three consequences worth knowing:
+
+- **The player still declares against the authored mode.** Overload is authored
+  `singleEnemy`, so the target panel opens as normal and the second target is simply
+  added on the way in. The move button carries a chip saying whether the swap is
+  currently on, so it is never a surprise.
+- **Everything downstream reads the EFFECTIVE mode.** Stealth's redirect, Provoke's
+  redirect and Haunt's expansion all treat a conditionally-spread move exactly as they
+  treat an authored `bothEnemies` one.
+- **The enabler is global and has no owner**, like every field-effect condition
+  (`docs/field-effects.md`): an enemy's Magical Surge spreads your Overload, and any
+  other field effect displaces it and switches the spread back off.
+
+Deliberately left unbuilt, rather than guessed at: a status-gated version of the same
+thing, a condition that NARROWS targeting instead of widening it, and any conditional
+target read off something other than the one global field slot.
+
+---
+
 ## Stat modifiers
 
 - Stat modifiers are **flat numeric additives** — not the VGC stage/bracket system.
   A +10 Attack modifier adds 10 to effective Attack.
 - They flow through the **stat pipeline**, so they change the `Atk/Def` ratio (and
   Speed, and so on), never the damage multiplier term.
+
+### A stat grant with no authored number (2026-08-30, Arcane)
+
+Arcane Overflow grants both allies "Attack and Intelligence equal to the user's current
+Mana (before casting this)". `MoveDefinition.derivedStatDeltas` is the field: a small
+`source` union (`'userManaBeforeCast'` is its only member today) plus the stats it
+feeds. The engine expands it into ordinary `StatDelta`s at cast time, so everything
+downstream — the target resolution, the `StatChanged` events, `statModifiers` itself
+— is byte-for-byte the path an authored delta takes.
+
+Two decisions in it:
+
+- **Read BEFORE the mana is spent.** The design row says so, and it is the shape of
+  the move: it cashes in a pool the player spent turns filling, so charging the 80
+  first would quietly make it worth 80 less than it reads. Nothing is spent by the
+  read — the mana is still there afterwards, which is the point.
+- **It is the one documented EXEMPTION from the multiples-of-5/10 rule**
+  (2026-08-30 designer call). A mana pool is whatever it is; rounding the grant would
+  make the buff disagree with the numeral on the caster's own bar. The lock still binds
+  every *authored* delta, and `isValidFlatStatGrant` deliberately does not reach here.
+  `test/arcaneMoves.test.ts` pins both halves: this grant lands unrounded, and every
+  authored `statDeltas` entry in the game is still a multiple of 5.
+
+Overflow mana counts (`docs/mana.md`), which is the combo the slate is built around:
+Font of Power banks 150 past the pool, Arcane Overflow reads the whole figure, and the
+mana is still available to spend. That is the same *shape* as Renew's stacked payoffs
+(below) and is intended for the same reason — a turn spent not attacking has to buy
+something worth the turn.
+
+---
 
 **Persistence on switch (LOCKED — 2026-08-15 designer sign-off): stat mods persist
 through a switch.** Cycling doesn't launder a bad board state — a debuffed hero

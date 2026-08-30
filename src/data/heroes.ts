@@ -275,12 +275,22 @@ export const heroes: Record<string, HeroDefinition> = {
   },
 
   // --- Arcane ------------------------------------------------------------
+  // Both Arcane heroes are Intelligence casters on near-identical frames
+  // (365 vs 360 across the six non-mana stats), so the authored slate
+  // (2026-08-30) splits them by ROLE rather than by pipeline: Glyph is the
+  // glass artillery (Int 90 / Wis 80 / Def 32 / HP 80) and Zenith is the
+  // battery (HP 95 / Def 45 / the biggest mana pool in the roster, and the
+  // slowest of the two). Neither has an Attack stat worth speaking of, which
+  // is why Arcane Overflow's Attack half is aimed at a PARTNER — see
+  // src/data/moves.ts.
   runescribe: {
     id: 'runescribe',
     name: 'Glyph',
     types: ['Arcane'],
     baseStats: { hp: 80, attack: 25, defense: 32, intelligence: 90, wisdom: 80, speed: 58, manaPool: 85, mpRegen: 10 },
-    moveIds: ['arcaneBolt', 'manaBurst', 'curseMind'],
+    // The artillery opener: a real attack, the Intelligence stack that scales
+    // it, and Infuse so a mono-Arcane draft still has one hand on the battery.
+    moveIds: ['magicBolt', 'focus', 'infuse'],
     starter: true,
   },
   zenith: {
@@ -288,7 +298,10 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Zenith',
     types: ['Arcane'],
     baseStats: { hp: 95, attack: 20, defense: 45, intelligence: 85, wisdom: 65, speed: 50, manaPool: 90, mpRegen: 10 },
-    moveIds: ['arcaneBolt', 'manaBurst', 'arcaneSurge'],
+    // The battery's kit is deliberately the cheap end of the slate: Mana Tap
+    // costs 0, which is what lets a hero whose whole plan is giving its pool
+    // away still act on the turn after it has given everything.
+    moveIds: ['manaTap', 'infuse', 'empower'],
     starter: false,
   },
 

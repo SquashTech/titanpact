@@ -701,6 +701,117 @@ export interface MoveDefinition {
    */
   statDeltaTarget?: 'moveTarget' | 'self' | 'bothAllies';
   /**
+   * Any kind. Stat deltas whose AMOUNT is read off live state at cast time
+   * rather than authored as a number — Arcane's Arcane Overflow, "allies gain
+   * Attack and Intelligence equal to the user's current Mana (before casting
+   * this)".
+   *
+   * Lands through exactly the same path as `statDeltas` above — same
+   * `statDeltaTarget` resolution, same StatChanged events, same flat additive
+   * integers on `Combatant.statModifiers` — so a move may author both and they
+   * simply concatenate. What is new is only where the number comes from.
+   *
+   * Three things fix its shape:
+   *
+   * - **`source` is a small union, not a predicate.** Data, not a function
+   *   (same discipline as `StatusDefinition.triggerTypes` and every
+   *   conditional above). 'userManaBeforeCast' is the only member today; a
+   *   later slate wanting "equal to missing HP" adds a member here rather
+   *   than a second field.
+   * - **Read BEFORE the mana is spent.** The design row says so explicitly,
+   *   and it is the whole shape of the move: Arcane Overflow cashes in a pool
+   *   you spent the previous rounds filling, so charging it first would make
+   *   the move quietly worth 80 less than it reads. resolveRound captures the
+   *   figure at the top of the action alongside `damageTakenSinceLastTurn`,
+   *   for the same reason — one read, before anything this action does.
+   * - **It is EXEMPT from the multiples-of-5/10 rule** (CLAUDE.md "Stat
+   *   modifiers are flat additive integers, multiples of 5 or 10"), by
+   *   2026-08-30 designer call. A derived grant has no authored number to
+   *   round, and rounding it would make the readout disagree with the mana
+   *   numeral the player is looking at. The lock still binds every AUTHORED
+   *   delta; this is the one documented hole in it, and `isValidFlatStatGrant`
+   *   deliberately does not reach here.
+   *
+   * Overflow mana counts (docs/mana.md "Overflow"). That is the combo the
+   * Arcane slate is built around — Font of Power into Arcane Overflow — and
+   * it is intended: the number is a fact about a resource the player spent
+   * whole turns banking, and it is spent the moment it is read, because the
+   * mana is still there to be burned on something else.
+   */
+  derivedStatDeltas?: {
+    source: 'userManaBeforeCast';
+    stats: readonly StatKey[];
+  };
+  /**
+   * Any kind. Hands the move's resolved targets flat mana — Arcane's Infuse
+   * (40), Empower (80), Conduit (150) and Font of Power (150), "give an ally
+   * N mana (can exceed their max)".
+   *
+   * The first content that moves mana between combatants at all, and the
+   * reason `Combatant.currentMana` is no longer bounded by the pool
+   * (state.ts, docs/mana.md "Overflow"). Overflow is UNCAPPED and STICKY
+   * (2026-08-30 designer call): nothing claws it back — MP Regen stops
+   * helping above the pool but never lowers you, Rest tops up TO the pool and
+   * never below what you already hold, and it survives a switch to the bench
+   * exactly as ordinary mana does. It resets with everything else at the next
+   * map node (run/buildCombatState.ts), which is the only place it ends other
+   * than being spent.
+   *
+   * Two consequences worth authoring knowing:
+   *
+   * - **It is a tempo trade, not free value, unless it overflows.** Infuse
+   *   spends 20 to give 40; on a partner sitting at full pool the surplus
+   *   would once have evaporated, and the whole point of the uncapped rule is
+   *   that it no longer does. This is what lets a 150-mana capstone
+   *   (Singularity) exist for a roster whose biggest pool is 90.
+   * - **Ally modes include the caster** (targeting.ts activeOf), so Infuse on
+   *   yourself is a legal 20-for-40 self-ramp and Font of Power's `bothAllies`
+   *   pays the caster too. Intended: the battery is allowed to charge itself,
+   *   just less efficiently than it charges a partner it does not also have
+   *   to pay the cost from.
+   *
+   * Emitted as its own `ManaGranted` event rather than a bare `ManaChanged`,
+   * for the same reason drain is emitted as a `Healed` pointing at itself: a
+   * mana jump with no named cause is unreadable in the Battle Log, and this
+   * one is an entire move's payload.
+   */
+  manaGrant?: number;
+  /**
+   * Any kind. Replaces this move's `target` while `requiresFieldEffect` is the
+   * active battlefield state — Arcane's Overload, "spread if Magical Surge is
+   * active".
+   *
+   * The first move whose TARGETING varies with the board, and the fourth
+   * conditional shape overall after `conditionalPower`, `conditionalPriority`
+   * and `conditionalManaCost`. Read at RESOLUTION (2026-08-30 designer call),
+   * which puts it with `conditionalPower.requiresFieldEffect` and
+   * `conditionalManaCost` rather than with `conditionalPriority`:
+   *
+   * - A bracket has to be settled before anything resolves, so
+   *   `conditionalPriority` genuinely cannot see a same-round setter. A target
+   *   list does not — it is already resolved per action, in order — so the
+   *   restriction would be arbitrary here.
+   * - Which means a partner casting Mana Font earlier in the same round
+   *   already makes Overload spread, and the two moves are a combo rather than
+   *   a two-round setup.
+   *
+   * The player still DECLARES against the authored `target`
+   * (Overload is `singleEnemy`, so the target panel opens as normal); the
+   * conditional mode simply supersedes it when the move lands, and a
+   * fixed-group mode ignores the declared target the way it always has. The
+   * chip on the move button reports whether the field is up, so the swap is
+   * never a surprise (FightScreen MoveRow).
+   *
+   * Applied before Stealth's redirect, Provoke's redirect and Haunt's spread,
+   * all of which read the EFFECTIVE mode — a conditionally-spread Overload is
+   * a spread move for every one of those rules, exactly as an authored
+   * `bothEnemies` move is.
+   */
+  conditionalTarget?: {
+    requiresFieldEffect: FieldEffectId;
+    target: TargetMode;
+  };
+  /**
    * Any kind. A HARD targeting gate: this move may only ever resolve
    * against a combatant already carrying this status — Frost's Glaciate and
    * Absolute Zero, "can only target Frozen enemies".

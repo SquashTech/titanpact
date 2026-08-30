@@ -4,7 +4,7 @@
 // this is explicitly NOT bench-only — it walks every non-fainted combatant,
 // mirroring statusEngine.ts's tickEndOfRound iteration.
 //
-// A Field Effect's mpRegenMultiplier (docs/field-effects.md — Surging Magic's
+// A Field Effect's mpRegenMultiplier (docs/field-effects.md — Magical Surge's
 // whole reason to exist) is applied HERE, not folded into the mpRegen stat
 // itself: same discipline that keeps damage modifiers out of the stat
 // pipeline (engine/content.ts StatKey doc, CLAUDE.md "Two-pipeline
@@ -34,7 +34,13 @@ export function applyManaRegen(
     const maxMana = getMaxMana(hero, combatant);
     const previousMana = combatant.currentMana;
     const regen = Math.round(getEffectiveStat(hero, combatant, 'mpRegen') * mpRegenMultiplier);
-    const newMana = Math.min(maxMana, previousMana + regen);
+    // Clamps a GAIN to the pool, but never pulls an already-overflowed
+    // combatant back down to it (state.ts Combatant.currentMana, docs/mana.md
+    // "Overflow"). A plain Math.min would have made every Arcane mana grant
+    // (content.ts manaGrant) evaporate at the end of the round it landed in,
+    // which is the exact opposite of "can exceed their max". At or above the
+    // pool this is a no-op and emits nothing, same as it always did at full.
+    const newMana = previousMana >= maxMana ? previousMana : Math.min(maxMana, previousMana + regen);
 
     if (newMana !== previousMana) {
       combatants[id] = { ...combatant, currentMana: newMana };

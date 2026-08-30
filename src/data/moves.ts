@@ -3,9 +3,9 @@
 // and a spread of priority brackets. Enough variety to run messy, interesting
 // 2v2s while the real content gets authored.
 //
-// EXCEPT Fire (2026-08-29), Water, Frost, Storm, Stone, Nature, Light and
-// Shadow (all 2026-08-30), the eight types replaced wholesale by their
-// designed movepools —
+// EXCEPT Fire (2026-08-29), Water, Frost, Storm, Stone, Nature, Light,
+// Shadow and Arcane (all 2026-08-30), the nine types replaced wholesale by
+// their designed movepools —
 // see the "(AUTHORED)" blocks below. Those are balance-tuned content;
 // everything else here is still filler and should be read (and replaced) as
 // such, type by type. Every engine field below exists because an authored slate
@@ -23,6 +23,12 @@
 //   Shadow — conditionalPower.requiresTargetHpBelow (Rend, Eclipse) — the
 //           first damage condition that reads a NUMBER rather than the
 //           presence of a status or a field
+//   Arcane — manaGrant (Infuse, Empower, Conduit, Font of Power) — the first
+//           content that moves mana between combatants, and the reason
+//           currentMana is no longer bounded by the pool; conditionalTarget
+//           (Overload) — the first move whose TARGETING reads the board;
+//           derivedStatDeltas (Arcane Overflow) — the first stat grant with no
+//           authored number
 //
 // Most moves here are `kind: 'damage'` — variety comes from
 // type/category/power/cost/priority/targeting — including doubles-native
@@ -64,19 +70,6 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'A cheap, fast punch that moves before most other moves.',
   },
-  overload: {
-    id: 'overload',
-    name: 'Overload',
-    type: 'Arcane',
-    category: 'magical',
-    kind: 'damage',
-    basePower: 90,
-    manaCost: 999, // deliberately unaffordable in test fixtures — exercises the mana-legality guard
-    priority: 0,
-    target: 'singleEnemy',
-    description: 'A reckless overdraw of arcane power — no hero can currently afford it.',
-  },
-
   // --- Fire (AUTHORED, 2026-08-29) ------------------------------------------
   // The first type whose movepool is designer-authored rather than fixture
   // filler. Early/Mid/Late in the design table is the level-up tier a move
@@ -1763,7 +1756,7 @@ export const moves: Record<string, MoveDefinition> = {
     // combatant (content.ts conditionalPower.requiresFieldEffect). Three things
     // follow, all of them intended:
     //   - Consecrate is the only setter, so the type carries its own key — but
-    //     a Surging Magic or a Verdant Earth cast by ANYONE overrides Sanctuary
+    //     a Magical Surge or a Verdant Earth cast by ANYONE overrides Sanctuary
     //     and switches this back off mid-fight.
     //   - The field is global, so an enemy Light hero's Consecrate arms this
     //     too, and this side's Consecrate arms theirs.
@@ -2144,30 +2137,283 @@ export const moves: Record<string, MoveDefinition> = {
     description: 'Becomes the dark itself (grants Stealth and +75 Attack).',
   },
 
-  // --- Arcane ------------------------------------------------------------
-  arcaneBolt: {
-    id: 'arcaneBolt',
-    name: 'Arcane Bolt',
+  // --- Arcane (AUTHORED 2026-08-30) --------------------------------------
+  // The designed sixteen, replacing the four fixture Arcane moves (arcaneBolt,
+  // manaBurst, arcaneSurge, and the deliberately-unaffordable 999-mana
+  // overload). One id is REUSED: `overload`, which the slate re-authors as a
+  // real 50-mana move — the fixture's mana-legality coverage moved to a
+  // test-local definition in test/combat.test.ts rather than staying shipped
+  // as an uncastable move.
+  //
+  // The first type whose subject is the resource itself. Every other slate
+  // spends mana; this one MOVES it, and four of its rows hand mana to an ally
+  // in amounts that deliberately exceed what the ally can hold
+  // (content.ts manaGrant, docs/mana.md "Overflow"). It runs as three lines:
+  //
+  //   1. **The battery.** Infuse (20 -> 40), Empower (40 -> 80), Conduit
+  //      (60 -> 150) and Font of Power (100 -> 150 to BOTH allies). Every one
+  //      is a net gain for the side and a net loss for the caster's own tempo,
+  //      which is the trade the type is built on: a turn spent giving is a turn
+  //      not spent attacking, and the payoff has to arrive on somebody else's
+  //      turn. The overflow is what makes them more than a wash — a partner at
+  //      full pool used to waste the whole grant, and now banks it.
+  //   2. **The sink.** Singularity at 200 base power for 150 mana is larger
+  //      than any pool in the roster and is not meant to be castable off one:
+  //      it is what Conduit and Font of Power are FOR. Arcane Blast (60) and
+  //      Cataclysm (90) are the same idea one tier down, and Mana Tap at
+  //      **0 mana** is the floor under all of it — the only free move in the
+  //      game, so an Arcane hero that has given its pool away still acts.
+  //   3. **Magical Surge, set twice and read twice.** Mana Font (which also
+  //      hands the side +10 MP Regen) and Magic Cloak (which also hides the
+  //      caster) both set it; Overload reads it back as a SPREAD
+  //      (content.ts conditionalTarget) — the first move in the game whose
+  //      targeting depends on the board. Doubled MP Regen under a field the
+  //      type sets itself is the second engine behind the battery: the mana
+  //      Infuse hands over is partly mana the field gave back.
+  //
+  // Arcane Overflow is the slate's capstone and its own category: it hands
+  // BOTH allies flat Attack and Intelligence equal to the caster's mana before
+  // the cast (content.ts derivedStatDeltas). It is the only stat grant in the
+  // game with no authored number, and the only one exempt from the
+  // multiples-of-5/10 rule — a mana pool is whatever it is. Note that it grants
+  // Attack to a type whose own two heroes are both Intelligence casters: the
+  // half that matters is the one landing on a PHYSICAL partner, which is the
+  // most explicitly doubles-shaped move in the roster.
+  //
+  // Cost floor 0 (Mana Tap), ceiling 150 (Conduit's grant, Singularity's hit).
+  // The slate authors no priority anywhere and no status but Stealth.
+  infuse: {
+    id: 'infuse',
+    name: 'Infuse',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [],
+    // 20 for 40 — the cheapest tempo trade in the type and its opening
+    // statement: a turn given away is worth more than a turn spent, as long as
+    // the partner has something to spend it on. Ally modes include the caster
+    // (targeting.ts), so pointing it at yourself is a legal 20-for-40 self-ramp.
+    manaGrant: 40,
+    manaCost: 20,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Pours 40 mana into an ally — past their pool if it will not fit.',
+  },
+  magicBolt: {
+    id: 'magicBolt',
+    name: 'Magic Bolt',
     type: 'Arcane',
     category: 'magical',
     kind: 'damage',
     basePower: 45,
-    manaCost: 9,
+    manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A quick, crackling bolt of raw arcane energy.',
+    description: 'A clean, unadorned bolt of shaped mana.',
   },
-  manaBurst: {
-    id: 'manaBurst',
-    name: 'Mana Burst',
+  focus: {
+    id: 'focus',
+    name: 'Focus',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [{ stat: 'intelligence', amount: 20 }],
+    manaCost: 15,
+    priority: 0,
+    target: 'self',
+    description: 'Narrows the mind to a point (+20 Intelligence).',
+  },
+  manaFont: {
+    id: 'manaFont',
+    name: 'Mana Font',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'buff',
+    // +10 MP Regen and doubled regen on top of it: the field multiplies the
+    // stat (manaRegen.ts applies mpRegenMultiplier to the effective stat), so
+    // this one cast is worth +20 a round to each ally for as long as it holds.
+    statDeltas: [{ stat: 'mpRegen', amount: 10 }],
+    fieldEffectApplication: 'surgingMagic',
+    manaCost: 20,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Opens a well under the whole field (+10 MP Regen to allies, and sets Magical Surge).',
+  },
+  manaTap: {
+    id: 'manaTap',
+    name: 'Mana Tap',
     type: 'Arcane',
     category: 'magical',
     kind: 'damage',
-    basePower: 40,
-    manaCost: 18,
+    basePower: 20,
+    // The only 0-cost move in the game. A hero holding it can never be forced
+    // to Rest (state.ts hasAffordableMove is a >= check), which is the point:
+    // the type gives its mana away, and the floor under that is a button that
+    // costs nothing. See docs/authoring-moves.md for the hand-off note.
+    manaCost: 0,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Draws a trickle of ambient mana and flicks it at a foe. Costs nothing.',
+  },
+  empower: {
+    id: 'empower',
+    name: 'Empower',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [],
+    manaGrant: 80,
+    manaCost: 40,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Floods an ally with 80 mana — past their pool if it will not fit.',
+  },
+  arcaneBlast: {
+    id: 'arcaneBlast',
+    name: 'Arcane Blast',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 80,
+    manaCost: 60,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Raw power, undisguised.',
+  },
+  arcPulse: {
+    id: 'arcPulse',
+    name: 'Arc Pulse',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 45,
+    manaCost: 45,
     priority: 0,
     target: 'bothEnemies',
-    description: 'An unstable detonation of stored mana.',
+    description: 'A ring of force that crosses the whole enemy line.',
+  },
+  overload: {
+    id: 'overload',
+    name: 'Overload',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 70,
+    // The first move whose TARGETING reads the board (content.ts
+    // conditionalTarget). Resolved when the move lands, not when the round is
+    // ordered, so a partner's Mana Font earlier this same round has already
+    // spread it — the two are a combo, not a two-round setup. The player still
+    // declares against one enemy; the second target is added on the way in.
+    conditionalTarget: { requiresFieldEffect: 'surgingMagic', target: 'bothEnemies' },
+    manaCost: 50,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Dumps stored power into a foe — or into both, if the air is already singing.',
+  },
+  study: {
+    id: 'study',
+    name: 'Study',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [{ stat: 'intelligence', amount: 60 }],
+    manaCost: 40,
+    priority: 0,
+    target: 'self',
+    description: 'Reads the shape of the fight and rewrites it (+60 Intelligence).',
+  },
+  magicCloak: {
+    id: 'magicCloak',
+    name: 'Magic Cloak',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [],
+    fieldEffectApplication: 'surgingMagic',
+    // Duration 1, matching Shadow's Vanish and Shadow Form — the only other
+    // Stealth grants in the game, and the value that id has always carried.
+    // Stealth ticks at the START of a round (statuses.ts), so this covers the
+    // rest of the casting round plus the whole of the next.
+    statusApplication: { statusId: 'Stealth', duration: 1, target: 'self' },
+    manaCost: 40,
+    priority: 0,
+    target: 'self',
+    description: 'Wraps the caster in live mana (grants Stealth and sets Magical Surge).',
+  },
+  conduit: {
+    id: 'conduit',
+    name: 'Conduit',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [],
+    // 150 into a pool no hero in the roster can hold — this is the row the
+    // overflow rule exists for, and the one that makes Singularity castable.
+    manaGrant: 150,
+    manaCost: 60,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Becomes a channel between an ally and the raw source (150 mana, past their pool).',
+  },
+  singularity: {
+    id: 'singularity',
+    name: 'Singularity',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 200,
+    // Larger than any pool in the roster on purpose: the type authors its own
+    // way to pay for it (Conduit, Font of Power) rather than waiting on a run's
+    // mana growth. Not a finding — see docs/authoring-moves.md §8.
+    manaCost: 150,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Collapses a point of space onto one enemy.',
+  },
+  cataclysm: {
+    id: 'cataclysm',
+    name: 'Cataclysm',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 90,
+    manaCost: 90,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Unmakes the ground both foes are standing on.',
+  },
+  arcaneOverflow: {
+    id: 'arcaneOverflow',
+    name: 'Arcane Overflow',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [],
+    // No authored number: both grants are the caster's mana as it stood BEFORE
+    // this 80 was paid (content.ts derivedStatDeltas). Overflow counts, which
+    // is the whole combo — Font of Power into this puts a three-figure buff on
+    // both allies, and the mana is still there to spend afterward.
+    derivedStatDeltas: { source: 'userManaBeforeCast', stats: ['attack', 'intelligence'] },
+    manaCost: 80,
+    priority: 0,
+    target: 'bothAllies',
+    description: "Spills the caster's stored mana into both allies as raw Attack and Intelligence.",
+  },
+  fontOfPower: {
+    id: 'fontOfPower',
+    name: 'Font of Power',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [],
+    // bothAllies, so the caster is paid too (targeting.ts activeOf includes the
+    // caster on every ally mode): 100 out, 150 back to itself and 150 to the
+    // partner. The single biggest tempo swing in the type.
+    manaGrant: 150,
+    manaCost: 100,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Opens the source itself — 150 mana to both allies, past their pools.',
   },
 
   // --- Mind --------------------------------------------------------------
@@ -2467,23 +2713,20 @@ export const moves: Record<string, MoveDefinition> = {
   // cleanse-all back, the engine is ready for it.
 
   // --- Field Effect moves (docs/field-effects.md) -------------------------
-  // One per effect, EXCEPT Verdant Earth: the authored Nature slate
-  // (2026-08-30) sets it from two of its own moves — Magic Growth and Force of
-  // Nature, both in the Nature section above — and the standalone setter that
-  // used to live here was deleted, its id reused by the slate's Renew 100 buff.
-  arcaneSurge: {
-    id: 'arcaneSurge',
-    name: 'Arcane Surge',
-    type: 'Arcane',
-    category: 'magical',
-    kind: 'buff',
-    statDeltas: [],
-    fieldEffectApplication: 'surgingMagic',
-    manaCost: 20,
-    priority: 0,
-    target: 'self',
-    description: "Surging Magic for 5 rounds: every hero's MP Regen doubles.",
-  },
+  // What is LEFT of a block that used to hold one setter per effect. Three of
+  // the five have since been folded into their type's authored slate, which is
+  // the better shape — the field is a rider on a cast you wanted anyway rather
+  // than a turn spent on nothing:
+  //
+  //   - Verdant Earth (Nature, 2026-08-30) sets from Magic Growth and Force of
+  //     Nature; the standalone setter was deleted and its `overgrowth` id
+  //     reused by the slate's Renew 100 buff.
+  //   - Sanctuary (Light, 2026-08-30) sets from Consecrate, which is now a
+  //     45-mana bothAllies heal that turns the ground on the way past.
+  //   - Magical Surge (Arcane, 2026-08-30) sets from TWO of the Arcane slate's
+  //     own moves — Mana Font and Magic Cloak, both in the Arcane section
+  //     above — and `arcaneSurge`, the standalone setter that used to live
+  //     here, was deleted outright rather than having its id reused.
   stasisField: {
     id: 'stasisField',
     name: 'Stasis Field',

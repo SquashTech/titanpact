@@ -11,8 +11,8 @@
 //
 // A pool entry that's also in the hero's starting kit is dead weight —
 // levelUpMovePool filters out anything already unlocked, so it can never be
-// offered — which is why runescribe's pool carries arcaneSurge rather than
-// the curseMind it now starts with.
+// offered — which is why runescribe's pool carries Mana Font rather than the
+// Magic Bolt it now starts with.
 //
 // SCOPE NOTE: paths are stat-only (statGrants + description, no
 // unlocksMoveIds) — kept deliberately separate from the level-up move pool
@@ -144,7 +144,23 @@ export const progressionTable: ProgressionTable = {
       'judgment',
       'exalt',
     ],
-    runescribe: ['mindSpike', 'psychicLance', 'weaken', 'arcaneSurge'],
+    // The two Arcane heroes draw from the authored Arcane pool
+    // (src/data/moves.ts, 2026-08-30). Both are magical, so unlike every slate
+    // before this one the split is not physical-vs-magical — it is
+    // artillery-vs-battery (see heroes.ts). Glyph takes the damage line and
+    // both halves of the type's own engine: Mana Font, which sets Magical
+    // Surge, and Overload, which reads it back as a spread. Putting the field
+    // and the move that keys off it in ONE pool is deliberate, the same call
+    // Light's Consecrate/Smite pairing made — the combo grows on one hero
+    // rather than depending on a second Arcane draft.
+    //
+    // Mana Font also sits here for the reason Crimson carries Stoke the Flames
+    // and Riptide carries High Tide: it is the side-wide/field move, and Glyph
+    // is the only Arcane STARTER (heroes.ts), so it is the one that can be
+    // drafted alongside a second Arcane hero for the field to pay off twice.
+    // The off-type filler (mindSpike, psychicLance, weaken) is gone now that
+    // the type has its own line.
+    runescribe: ['manaFont', 'study', 'arcaneBlast', 'overload', 'magicCloak', 'arcPulse', 'singularity', 'cataclysm'],
     mindweaver: ['spectralBind', 'quickJab', 'vanish', 'stunningBlow', 'stasisField'],
     forgewright: ['ironFist', 'shrapnelBlast', 'quickJab', 'stunningBlow'],
     packAlpha: ['rendingClaw', 'quickJab', 'fortify', 'weaken'],
@@ -211,7 +227,15 @@ export const progressionTable: ProgressionTable = {
     scallywag: ['stormLash', 'shockSlice', 'overcharge', 'risingStatic', 'ironFist', 'stunningBlow', 'fangRush'],
     sentinel: ['bodyBlow', 'bastion', 'retribution', 'bodyCrush', 'stoneheart', 'toughenUp', 'rally'],
     steamColossus: ['sparkForge', 'ironFist', 'stunningBlow', 'quickJab', 'rockToss'],
-    zenith: ['overload', 'psychicLance', 'mindSpike', 'curseMind', 'stasisField'],
+    // Zenith takes the battery line — every mana grant the slate authors, plus
+    // Arcane Overflow, which is the only move that reads the pool back out. The
+    // three are one plan: bank with Font of Power, cash it as a three-figure
+    // Attack/Intelligence buff on both allies, and still have the mana to spend
+    // on Singularity afterward (moves.ts derivedStatDeltas reads the pool BEFORE
+    // the 80 is paid, and spends none of it). Magic Bolt and Cataclysm are the
+    // damage it can actually afford between grants; the rest of the artillery
+    // line stays on Glyph.
+    zenith: ['conduit', 'fontOfPower', 'arcaneOverflow', 'magicBolt', 'cataclysm', 'focus'],
   },
   evolutions: {
     // cinderKnight is now baseline Fire/Iron (src/data/heroes.ts, 2026-08-17)

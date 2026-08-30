@@ -137,7 +137,12 @@ export function CombatantCard({
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = Math.max(0, combatant.currentHp / maxHp);
-  const manaFraction = maxMana > 0 ? Math.max(0, combatant.currentMana / maxMana) : 0;
+  // Mana is the one resource that can sit ABOVE its maximum (state.ts
+  // Combatant.currentMana — Arcane's manaGrant). So the fill is clamped and
+  // the surplus gets its own band on top; unclamped, the div simply overflowed
+  // its own hidden track and a 210/85 hero looked identical to a full one.
+  const manaFraction = maxMana > 0 ? Math.max(0, Math.min(1, combatant.currentMana / maxMana)) : 0;
+  const manaOverFraction = maxMana > 0 ? Math.max(0, Math.min(1, (combatant.currentMana - maxMana) / maxMana)) : 0;
   const activeMods = compact || combatant.fainted ? [] : activeStatMods(hero, combatant, activeFieldEffect);
   const leftMods = activeMods.slice(0, Math.ceil(activeMods.length / 2));
   const rightMods = activeMods.slice(Math.ceil(activeMods.length / 2));
@@ -288,8 +293,9 @@ export function CombatantCard({
           <div className="resource">
             <div className="bar-track">
               <div className="bar-fill mana" style={{ width: `${manaFraction * 100}%` }} />
+              {manaOverFraction > 0 && <div className="bar-fill mana-over" style={{ width: `${manaOverFraction * 100}%` }} />}
             </div>
-            <div className="bar-label">
+            <div className={`bar-label${manaOverFraction > 0 ? ' is-overcharged' : ''}`}>
               MP {combatant.currentMana}/{maxMana}
             </div>
           </div>

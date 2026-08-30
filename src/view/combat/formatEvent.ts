@@ -145,6 +145,20 @@ export function formatEvents(
       case 'ManaRegenTicked':
         lines.push({ key, text: `${name(e.combatantId)} regens ${e.manaRegen} MP`, className: 'log-mana' });
         break;
+      // Named source AND named overflow. ManaChanged is deliberately omitted
+      // from this log as bookkeeping, so a grant with no line of its own would
+      // simply not appear — and the overflow half is the part a player cannot
+      // work out from the bar, which clamps its fill (events.ts
+      // ManaGrantedEvent).
+      case 'ManaGranted':
+        lines.push({
+          key,
+          text:
+            `${name(e.sourceCombatantId)} gives ${name(e.targetCombatantId)} ${e.amount} MP` +
+            (e.overflow > 0 ? ` (${e.newMana}/${e.maxMana} — ${e.overflow} over)` : ''),
+          className: 'log-mana',
+        });
+        break;
       case 'SwitchedIn': {
         const outText = e.outCombatantId ? ` for ${name(e.outCombatantId)}` : '';
         lines.push({ key, text: `${name(e.inCombatantId)} switches in${outText}`, className: 'log-mana' });

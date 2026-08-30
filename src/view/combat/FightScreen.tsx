@@ -16,6 +16,7 @@ import {
   hasStatus,
   hasAffordableMoveInFight,
   resolveManaCost,
+  resolveTargetMode,
   getEffectiveStat,
 } from '../../engine/state';
 import type { HealCaster } from '../../engine/heal/healPipeline';
@@ -108,6 +109,18 @@ interface MoveRowProps {
    * legal action.
    */
   userConditionMet: boolean;
+  /**
+   * What this move will ACTUALLY target if pressed right now (engine/state.ts
+   * resolveTargetMode) — which since Arcane's Overload is not always
+   * `move.target` (content.ts conditionalTarget, "spread if Magical Surge is
+   * active").
+   *
+   * Resolved by the caller off the live board, same as `cost` and `banked`.
+   * The row uses it only to say whether the swap is ON; the player still
+   * declares against the authored mode, so nothing about the target panel
+   * changes.
+   */
+  liveTargetMode: MoveDefinition['target'];
   /** The commanding hero's live heal inputs (healPipeline.ts), resolved by the caller for the same reason forceBonus is — a heal's number is a fact about the caster, not about the move. */
   caster: HealCaster;
   matchups: readonly MoveMatchup[];
@@ -134,7 +147,7 @@ interface MoveRowProps {
  * rules off `:disabled`), still refuses to act on a tap, and still opens its
  * dossier on a hold.
  */
-function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, userConditionMet, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
+function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, userConditionMet, liveTargetMode, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
   // Two independent ways a row can be dead, one shared treatment. `.is-unusable`
   // carries the dim; `.is-unaffordable` is kept as the narrower flag so the mana
   // gem only goes grey when mana is actually the problem (styles.css).
@@ -349,6 +362,18 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
             {move.conditionalManaCost && (
               <span className="move-eff-status">
                 {move.conditionalManaCost.manaCost} MP vs 2× {move.conditionalManaCost.requiresAllEnemiesStatus}
+              </span>
+            )}
+            {/* WHO it hits, when that depends on the board (content.ts
+                conditionalTarget). It answers itself and dims when the answer
+                is no, exactly like the user-side and field conditionalPower
+                chips — and it has to, because the matchup chips beside it
+                already list every enemy and would otherwise imply a spread the
+                move is not currently going to do. */}
+            {move.conditionalTarget && (
+              <span className={`move-eff-status${liveTargetMode === move.conditionalTarget.target ? '' : ' move-eff-unmet'}`}>
+                {TARGET_MODE_LABELS[move.conditionalTarget.target]} under{' '}
+                {fieldEffects[move.conditionalTarget.requiresFieldEffect]?.name ?? move.conditionalTarget.requiresFieldEffect}
               </span>
             )}
           </span>
@@ -1577,6 +1602,7 @@ export function FightScreen({
                             : !move.conditionalPower?.requiresUserStatus ||
                               hasStatus(combatant, move.conditionalPower.requiresUserStatus)
                         }
+                        liveTargetMode={resolveTargetMode(combat, move)}
                         caster={{
                           wisdom: getEffectiveStat(allCombatants[combatant.heroId], combatant, 'wisdom', {
                             active: combat.activeFieldEffect,

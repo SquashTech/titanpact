@@ -286,6 +286,36 @@ export interface ManaChangedEvent extends BaseEvent {
 }
 
 /**
+ * One combatant hands another flat mana (content.ts MoveDefinition.manaGrant —
+ * Arcane's Infuse, Empower, Conduit, Font of Power).
+ *
+ * Its own event rather than a bare ManaChanged, for the same reason a drain is
+ * emitted as a Healed pointing back at its own caster: ManaChanged is
+ * deliberately omitted from the Battle Log as bookkeeping (view/combat/
+ * formatEvent.ts), and a mana jump with no named source would be both
+ * invisible in the log and unattributable in the beat stream. This one IS the
+ * move's entire payload.
+ *
+ * `newMana` may exceed `maxMana` — that is the whole point of the mechanic
+ * (state.ts Combatant.currentMana, docs/mana.md "Overflow"). `overflow` is the
+ * surplus above the pool AFTER the grant, carried so the view can say
+ * "overcharged" without re-deriving it from a hero lookup it may not have.
+ */
+export interface ManaGrantedEvent extends BaseEvent {
+  type: 'ManaGranted';
+  sourceCombatantId: string;
+  targetCombatantId: string;
+  moveId: string;
+  /** The mana actually added. Never clamped — a full-pool target receives all of it. */
+  amount: number;
+  previousMana: number;
+  newMana: number;
+  maxMana: number;
+  /** `max(0, newMana - maxMana)` — 0 when the grant stayed inside the pool. */
+  overflow: number;
+}
+
+/**
  * Mana regen at the round boundary (engine/combat/manaRegen.ts), self-
  * contained like BenchRegenTicked rather than paired with a generic
  * ManaChanged — applies to active AND benched combatants alike (docs/mana.md
@@ -349,6 +379,7 @@ export type CombatEvent =
   | BenchRegenTickedEvent
   | RestedEvent
   | ManaChangedEvent
+  | ManaGrantedEvent
   | ManaRegenTickedEvent
   | FieldEffectSetEvent
   | FieldEffectTickedEvent

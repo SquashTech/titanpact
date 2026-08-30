@@ -83,6 +83,12 @@ function MatchupChip({ mult, higherIsBetter, stat, label }: { mult: number; high
 
 function Gauge({ kind, value, max }: { kind: 'hp' | 'mana'; value: number; max: number }) {
   const fraction = max > 0 ? value / max : 0;
+  // Mana can sit above its own pool (state.ts Combatant.currentMana — Arcane's
+  // manaGrant); HP cannot. The fill was already clamped here, so without this
+  // band a benched hero holding 210/85 read as merely full — and "who has the
+  // mana to come in and cast something big" is the entire question this panel
+  // exists to answer.
+  const overFraction = kind === 'mana' && max > 0 ? Math.max(0, Math.min(1, (value - max) / max)) : 0;
   return (
     <div className="switch-gauge">
       <span className="switch-gauge-label">{kind === 'hp' ? 'HP' : 'MP'}</span>
@@ -91,8 +97,9 @@ function Gauge({ kind, value, max }: { kind: 'hp' | 'mana'; value: number; max: 
           className={`bar-fill ${kind === 'hp' ? hpTier(fraction) : 'mana'}`}
           style={{ width: `${Math.max(0, Math.min(1, fraction)) * 100}%` }}
         />
+        {overFraction > 0 && <span className="bar-fill mana-over" style={{ width: `${overFraction * 100}%` }} />}
       </span>
-      <span className="switch-gauge-value">
+      <span className={`switch-gauge-value${overFraction > 0 ? ' is-overcharged' : ''}`}>
         {value}
         <span className="switch-gauge-max">/{max}</span>
       </span>

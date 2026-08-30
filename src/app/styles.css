@@ -31,6 +31,11 @@
   --hp-mid: #d9a441;
   --hp-low: #d9534f;
   --mana: #4a90d9;
+  /* Mana held ABOVE the pool (docs/mana.md "Overflow", Arcane's manaGrant).
+     A brighter, cooler relative of --mana rather than a fourth unrelated hue:
+     it has to read as "the same resource, charged past its container", not as
+     a different bar. */
+  --mana-over: #7fd4ff;
   --accent: #e0a63c;
   --enemy: #d9534f;
   --ally: #4a90d9;
@@ -695,7 +700,7 @@ textarea,
    across the whole battlefield rather than living only in the small divider
    badge. Tinted via --field-effect-rgb, an "r, g, b" triplet FightScreen.tsx
    sets inline per the active effect's flavorType (typeColors.ts
-   getTypeColorRgb) — falls back to Surging Magic's original Arcane purple
+   getTypeColorRgb) — falls back to Magical Surge's Arcane purple
    (195, 86, 208) if the var is ever unset, so a missing/unknown flavorType
    degrades gracefully instead of rendering colorless. `overflow: hidden` is
    scoped to this class (rather than living on the base .battlefield) so it
@@ -2547,6 +2552,9 @@ textarea,
   border-radius: var(--radius-pill);
   background: var(--well);
   overflow: hidden;
+  /* The containing block for .bar-fill.mana-over, which is drawn ON TOP of a
+     full mana bar rather than beside it — see that rule below. */
+  position: relative;
   margin-bottom: 3px;
   /* Inset shadow for the carved-in look, plus a 1px outer ring so the track
      still has a defined silhouette when it sits on a panel close to its own
@@ -2583,6 +2591,71 @@ textarea,
 }
 .bar-fill.mana {
   background-color: var(--mana);
+}
+
+/*
+ * Mana past the pool (docs/mana.md "Overflow"): the ONE gauge in the game
+ * whose value can exceed its own maximum, since Arcane's mana grants
+ * explicitly "can exceed their max" (engine/content.ts manaGrant).
+ *
+ * Drawn as a second capsule laid over a base bar that is already pinned at
+ * 100%, growing from the left as a FRACTION OF THE POOL — so a hero holding
+ * exactly double its pool shows a fully overcharged bar, and one holding a
+ * little extra shows a bright leading segment. Overlaying rather than
+ * extending is deliberate: the track cannot get longer (it is a fixed slot in
+ * a card that has to line up with the HP bar above it), so the surplus has to
+ * be carried by colour and not by length. The exact figure is always beside it
+ * in the label, which is what makes the approximation safe.
+ *
+ * Capped at 100% width in the components rather than here: past 2x pool the
+ * bar is simply saturated, and the numeral keeps counting.
+ */
+.bar-fill.mana-over {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  height: auto;
+  background-color: var(--mana-over);
+  box-shadow: 0 0 6px rgba(127, 212, 255, 0.55);
+  animation: mana-overcharge 1.6s ease-in-out infinite;
+}
+
+/* The numeral goes with it. Without this the bar says "charged" and the text
+   beside it says "210/85" in the same grey as every other resource readout —
+   and 210/85 is exactly the sort of number a player reads as a bug unless
+   something tells them it is on purpose.
+
+   This is the below-the-bar case only — the hero sheet and the switch-in
+   picker, where the numeral sits on the panel and the tint is free. */
+.bar-label.is-overcharged,
+.switch-gauge-value.is-overcharged {
+  color: var(--mana-over);
+}
+
+/* ...and NOT the battlefield/bench case. There (.team-row / .target-row /
+   .target-panel .bench-row below) the label is absolutely positioned ON TOP OF
+   the bar and is white-with-a-hard-shadow precisely because the fill slides
+   out from under it — so tinting it would paint the numeral the exact colour
+   of the band it is sitting on, which is a legibility regression, not a
+   signal. Confirmed in the app: at 125/85 the text straddles the band's
+   leading edge. The pulsing band and the value exceeding its own max are what
+   carry it here; these selectors have to be spelled out because the base rule
+   above matches them at equal specificity and later in the file. */
+.team-row .bar-label.is-overcharged,
+.target-row .bar-label.is-overcharged,
+.target-panel .bench-row .bar-label.is-overcharged {
+  color: #fff;
+}
+
+@keyframes mana-overcharge {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.3);
+  }
 }
 
 @keyframes hp-low-pulse {

@@ -252,17 +252,23 @@ test('shadow: an Ambush thrown without Stealth costs the same mana and lands at 
   assert.strictEqual(used.manaSpent, moves.ambush.manaCost);
 });
 
-test('shadow: every Stealth grant in the game is Shadow, duration 1, and self-targeted', () => {
-  // The design table gives Stealth no number for either of its two grants
+test('shadow: every Stealth grant in the game is duration 1 and self-targeted', () => {
+  // The design table gives Stealth no number for any of its grants
   // (authoring-moves.md §10, the Light lesson). 1 is the value this content has
   // always carried, confirmed by the designer 2026-08-30 — "Stealth is only
   // ever 1 turn" — and pinned here so a slate cannot quietly invent a second
   // length. Stealth ticks at the START of a round (statuses.ts), so 1 is the
   // rest of the cast round plus the whole of the next.
+  //
+  // The type assertion this test used to carry is GONE, and deliberately:
+  // Shadow held Stealth exclusively until the authored Arcane slate
+  // (2026-08-30) gave Magic Cloak the same rider, so a hero can now be hidden
+  // by a type with no Ambush to cash it in. The pinned LIST is what stays —
+  // a new grant has to be looked at and consciously added, exactly like
+  // stoneMoves' unreachable-move pin.
   const grants = Object.values(moves).filter((m) => m.statusApplication?.statusId === 'Stealth');
-  assert.deepStrictEqual(grants.map((m) => m.id).sort(), ['shadowForm', 'vanish']);
+  assert.deepStrictEqual(grants.map((m) => m.id).sort(), ['magicCloak', 'shadowForm', 'vanish']);
   for (const move of grants) {
-    assert.strictEqual(move.type, 'Shadow', `${move.id} grants Stealth off-type`);
     assert.strictEqual(move.statusApplication!.duration, 1, `${move.id} authors a non-standard Stealth length`);
     assert.strictEqual(move.statusApplication!.target, 'self', `${move.id} grants Stealth to someone else`);
   }

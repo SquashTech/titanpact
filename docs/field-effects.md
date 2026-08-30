@@ -15,7 +15,7 @@ sign-off).
   Duration is NOT authored per-definition; it's an engine constant
   (`engine/combat/fieldEffectEngine.ts` `FIELD_EFFECT_DURATION_ROUNDS`).
 - **Re-applying the currently active effect is a no-op** — it does not refresh the
-  clock. Trying to re-cast Surging Magic while it's already up just wastes the mana
+  clock. Trying to re-cast Magical Surge while it's already up just wastes the mana
   spent on the move; the countdown keeps going as if nothing happened.
 - **Setting a different effect while one is active overrides it** — the old effect's
   clock is discarded (not merged/extended), and the new one starts a fresh 5-round
@@ -96,17 +96,22 @@ Effect is actually authored.
 ## Content (2026-08-21 batch)
 
 Each is flavored around one type (`flavorType`, presentational only) but — like
-Surging Magic — mechanically **global**, affecting both sides. The original setting
+Magical Surge — mechanically **global**, affecting both sides. The original setting
 moves all mirrored `arcaneSurge`'s shape (`kind: 'buff'`, `target: 'self'`, 20 mana,
 sets its field effect), the same "small dedicated buff move" pattern `moves.ts`'s file
 header documents for status-granting moves like `vanish` (Stealth) and `secondWind`
-(Renew). The authored slates have been folding that bare setter into a move that also
-*does* something — Nature's Magic Growth and Force of Nature (2026-08-30), and Light's
-Consecrate, a 45-mana `bothAllies` heal that turns the ground on the way past:
+(Renew). **Every one of those bare setters is now gone**, folded by the authored slates
+into a move that also *does* something — Nature's Magic Growth and Force of Nature,
+Light's Consecrate (a 45-mana `bothAllies` heal that turns the ground on the way past)
+and Arcane's Mana Font and Magic Cloak (all 2026-08-30):
+
+**Surging Magic was renamed Magical Surge** on 2026-08-30, when the Arcane design table
+arrived calling it that three times over. Display name only — the `surgingMagic` id is
+unchanged, so nothing else moved.
 
 | Field Effect | flavorType | Effect | Move (starter) |
 | --- | --- | --- | --- |
-| Surging Magic | Arcane | Doubles MP Regen | `arcaneSurge` (Glyph) |
+| Magical Surge | Arcane | Doubles MP Regen | `manaFont`, `magicCloak` (Glyph) |
 | Scorched Land | Fire | Burn no longer decays | `spreadingBlaze` (Brimstone) |
 | Stasis Bubble | Mind | Reverses same-bracket Speed order | `stasisField` (Cortex) |
 | Sanctuary | Light | Heal-kind moves get +1 priority | `consecrate` (Solace) |
@@ -121,7 +126,7 @@ properties of the subsystem become load-bearing the moment content does this, an
 three are the LOCKED shape rather than anything new:
 
 - **One slot.** Any other effect overrides Sanctuary and switches the bonus straight
-  off — so a Surging Magic cast by either side is real counterplay to a Light team,
+  off — so a Magical Surge cast by either side is real counterplay to a Light team,
   which is the first time "whose field is up" has been a damage question.
 - **No owner.** The side that sets it arms *every* Smite on the field, its own and the
   enemy's. The setter is a tempo commitment, not a private buff.
@@ -132,6 +137,25 @@ three are the LOCKED shape rather than anything new:
 `consumesStatus` is deliberately inert on this form. "Consume the field effect" would
 end a global, both-sides state early — a field-effect mechanic, not a status one — and
 it has not been decided.
+
+### A field effect as a TARGETING condition (2026-08-30, Arcane)
+
+Magical Surge is the second field a move reads back, and the first read for something
+other than damage: Arcane's Overload is `singleEnemy` normally and `bothEnemies` while
+Magical Surge is up (`MoveDefinition.conditionalTarget` — see `docs/combat.md`).
+
+The same three properties above apply unchanged, and the same way round: one slot, so
+any other field switches the spread off; no owner, so an enemy's Magical Surge spreads
+your Overload; a 5-round rented clock. What is new is only that the type now **sets the
+field it reads** — Mana Font and Magic Cloak are both Arcane, both in the same slate as
+Overload, and Mana Font sits in the same level-up pool. That is the deliberate
+counterpart to Light's Consecrate/Smite pairing: the combo grows on one hero rather
+than depending on a second draft of the same type.
+
+Worth noting that Magical Surge is now doing two unrelated jobs at once — doubling MP
+Regen (which the Arcane battery is built around) and spreading one move. Neither
+interferes with the other, but it does mean an Arcane player has one field they always
+want up for two reasons, where Light's Sanctuary is a genuine choice.
 
 Each move is tied to that starter through `progressionTable.moveTiers`
 (`src/data/progression.ts`) — a **level-up unlock**, not part of the starting kit.
@@ -148,7 +172,7 @@ nothing here has been through a tuning pass.
 ### View layer: per-effect color
 
 The battlefield glow/border and the divider badge (`FightScreen.tsx`) were originally
-hardcoded to Surging Magic's Arcane purple — the CSS itself flagged this as
+hardcoded to Magical Surge's Arcane purple — the CSS itself flagged this as
 provisional ("revisit if/when a non-Arcane Field Effect ships"). Now generalized:
 `FightScreen.tsx` sets a `--field-effect-rgb` custom property (an "r, g, b" triplet
 from `typeColors.ts` `getTypeColorRgb(def.flavorType)`) on `.battlefield`, and
@@ -180,7 +204,7 @@ boundary.
   worth the turn; the halving curve is what bounds the window rather than the
   magnitude. Not a finding; do not re-report it.
 - **Verdant Earth's bonus applying to benched heroes too** — `getEffectiveStat` has no
-  active/bench distinction, so (like Surging Magic's `mpRegenMultiplier`) the
+  active/bench distinction, so (like Magical Surge's `mpRegenMultiplier`) the
   Attack/Intelligence bonus applies to any combatant carrying Renew regardless of bench
   status. Mostly moot while the bonus only feeds the damage pipeline (a benched hero
   isn't attacking), but it means a hero can be switched in mid-effect already boosted.

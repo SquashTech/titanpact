@@ -98,7 +98,7 @@ Plain, un-modified glyphs, so statuses read as the *base* family.
 
 | Effect | Index | Row × col |
 |---|---|---|
-| Surging Magic | 614 | Arcane × cycle |
+| Magical Surge | 614 | Arcane × cycle |
 | Scorched Land | 342 | Fire × cycle |
 | Stasis Bubble | 582 | Sleep × cycle |
 | Sanctuary | 438 | Light × cycle |

@@ -530,6 +530,29 @@ export function buildBeats(
         break;
       }
 
+      // One beat per grant rather than one for the whole move, mirroring
+      // Healed: Font of Power pays two allies and each is its own number
+      // arriving on its own card. The popup says "+150" and, when it spills
+      // past the pool, says so — the bar's fill clamps, so overflow has no
+      // other way to be seen (events.ts ManaGrantedEvent).
+      case 'ManaGranted': {
+        const targetName = name(e.targetCombatantId);
+        const sourceName = name(e.sourceCombatantId);
+        const over = e.overflow > 0 ? ` (${e.overflow} over)` : '';
+        push(
+          [e],
+          `${sourceName} gives ${targetName} ${e.amount} MP${over}`,
+          [{ combatantId: e.targetCombatantId, text: `+${e.amount} MP`, className: 'popup-mana' }],
+          {
+            bannerLead: `${sourceName} charges ${targetName}`,
+            bannerFocus: `+${e.amount} MP${over}`,
+            bannerFocusKind: 'mana',
+          }
+        );
+        i++;
+        break;
+      }
+
       case 'ManaRegenTicked': {
         const applied: CombatEvent[] = [];
         const popups: BeatPopup[] = [];

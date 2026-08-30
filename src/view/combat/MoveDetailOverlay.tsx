@@ -363,6 +363,9 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   const freeDef = move.conditionalManaCost ? statuses[move.conditionalManaCost.requiresAllEnemiesStatus] : undefined;
   const hasPayload = Boolean(
     move.statDeltas?.length ||
+      move.derivedStatDeltas ||
+      move.manaGrant ||
+      move.conditionalTarget ||
       move.statusApplication ||
       move.cleanses ||
       move.fieldEffectApplication ||
@@ -484,6 +487,18 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
 
       {hasPayload && (
         <div className="move-detail-effects">
+          {/* First, because on the four battery moves it is the entire payload
+              (content.ts manaGrant). The note carries the half the number
+              cannot: that a full-pool ally keeps the surplus instead of
+              wasting it, which is the only reason handing 150 to a 90 pool is
+              a play at all (docs/mana.md "Overflow"). */}
+          {move.manaGrant != null && (
+            <EffectRow
+              glyph={<StatGlyph stat="manaPool" />}
+              text={`Gives ${move.manaGrant} MP to ${TARGET_MODE_LABELS[move.target].toLowerCase()}`}
+              note="overflows past the pool and stays there — nothing takes it back but spending it"
+            />
+          )}
           {move.statDeltas?.map(({ stat, amount }) => (
             <EffectRow
               key={stat}
@@ -500,6 +515,45 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               ).toLowerCase()}`}
             />
           ))}
+          {/* The one stat grant in the game with no authored number — so the
+              row prints the LIVE figure when there is a caster to read it off,
+              and the rule when there is not (content.ts derivedStatDeltas).
+              Read before the cost is paid, which is why it is not
+              `manaAfter`. */}
+          {move.derivedStatDeltas?.stats.map((stat) => (
+            <EffectRow
+              key={`derived-${stat}`}
+              glyph={<StatGlyph stat={stat} />}
+              text={
+                attacker
+                  ? `+${attacker.currentMana} ${STAT_LABELS[stat]} on ${TARGET_MODE_LABELS[move.target].toLowerCase()}`
+                  : `+${STAT_LABELS[stat]} equal to your current Mana`
+              }
+              note={
+                attacker
+                  ? 'your Mana as it stands BEFORE this move is paid for — overflow included'
+                  : 'no fixed amount: it is whatever the caster is holding when they press it'
+              }
+            />
+          ))}
+          {/* Targeting, as an effect row, because on Overload it is the whole
+              difference between the move and its neighbours (content.ts
+              conditionalTarget). The note answers it live when there is a
+              board to answer it against. */}
+          {move.conditionalTarget && (
+            <EffectRow
+              glyph={<ElementGlyph type={fieldEffects[move.conditionalTarget.requiresFieldEffect]?.flavorType ?? 'Arcane'} />}
+              color={getTypeColor(fieldEffects[move.conditionalTarget.requiresFieldEffect]?.flavorType ?? 'Arcane')}
+              text={`Hits ${TARGET_MODE_LABELS[move.conditionalTarget.target].toLowerCase()} while ${
+                fieldEffects[move.conditionalTarget.requiresFieldEffect]?.name ?? move.conditionalTarget.requiresFieldEffect
+              } is up`}
+              note={
+                context?.combat.activeFieldEffect?.fieldEffectId === move.conditionalTarget.requiresFieldEffect
+                  ? 'the field is up right now — this cast spreads'
+                  : 'read when the move lands, so a partner setting the field earlier this round already counts'
+              }
+            />
+          )}
           {move.statusApplication && statusDef && (
             <EffectRow
               glyph={<StatusGlyph statusId={move.statusApplication.statusId} />}

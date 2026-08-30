@@ -2,7 +2,7 @@
 // "weather subsystem" open question. Covers the locked shape end to end: only
 // one active at a time, a flat 5-round duration regardless of which effect,
 // no-op on re-applying the active effect, override-and-restart on a
-// different one, and Surging Magic's mpRegenMultiplier actually doubling
+// different one, and Magical Surge's mpRegenMultiplier actually doubling
 // regen through the round loop.
 
 import * as assert from 'assert';
@@ -91,9 +91,9 @@ test('fieldEffects: tickFieldEffect is a no-op when nothing is active', () => {
   assert.strictEqual(events.length, 0);
 });
 
-// --- manaRegen.ts: Surging Magic actually doubles regen ----------------------
+// --- manaRegen.ts: Magical Surge actually doubles regen ---------------------
 
-test('fieldEffects: Surging Magic doubles every combatant\'s MP Regen', () => {
+test('fieldEffects: Magical Surge doubles every combatant\'s MP Regen', () => {
   const built = twoVTwoFixture(405);
   // Drain every combatant well below full mana first — createFightState
   // starts everyone at max, and the regen tick clamps to 0 headroom there,
@@ -112,7 +112,7 @@ test('fieldEffects: Surging Magic doubles every combatant\'s MP Regen', () => {
   }
 });
 
-test('fieldEffects: Surging Magic also doubles regen for a benched combatant', () => {
+test('fieldEffects: Magical Surge also doubles regen for a benched combatant', () => {
   const built = createFightState(
     4051,
     [{ combatantId: 'a1', heroId: 'cinderKnight', side: 'A' }],
@@ -138,11 +138,16 @@ test('fieldEffects: mana regen is unaffected once no Field Effect is active', ()
   assert.strictEqual(next.combatants.a1.currentMana, 1 + heroes.cinderKnight.baseStats.mpRegen);
 });
 
-// --- End to end via resolveRound: the arcaneSurge move sets the field -------
+// --- End to end via resolveRound: the magicCloak move sets the field -------
+// Repointed from arcaneSurge, which the authored Arcane slate deleted
+// (src/data/moves.ts, 2026-08-30). Magic Cloak rather than Mana Font, the
+// slate's other setter: Mana Font also grants +10 MP Regen to both allies,
+// which is the very quantity these tests measure. Magic Cloak's own rider is
+// Stealth on the caster, which none of them read.
 
-test('fieldEffects: casting arcaneSurge sets Surging Magic, and the very next regen tick is doubled', () => {
+test('fieldEffects: casting magicCloak sets Magical Surge, and the very next regen tick is doubled', () => {
   const state = twoVTwoFixture(407);
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'arcaneSurge' }];
+    const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'magicCloak' }];
   const { state: next, events } = resolveRound(state, actions, config);
 
   // The casting round's own end-of-round tick already fires once (resolveRound.ts
@@ -151,20 +156,20 @@ test('fieldEffects: casting arcaneSurge sets Surging Magic, and the very next re
   assert.deepStrictEqual(next.activeFieldEffect, { fieldEffectId: 'surgingMagic', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS - 1 });
   assert.ok(events.some((e) => e.type === 'FieldEffectSet' && e.fieldEffectId === 'surgingMagic'));
 
-  // a1 (cinderKnight, mpRegen 5) spent 20 mana on arcaneSurge this same round,
+  // a1 (cinderKnight, mpRegen 5) spent Magic Cloak's mana this same round,
   // then the round's own end-of-round mana regen tick already runs doubled —
-  // Surging Magic takes effect the same round it's cast, not the round after.
-  const spent = moves.arcaneSurge.manaCost;
+  // Magical Surge takes effect the same round it's cast, not the round after.
+  const spent = moves.magicCloak.manaCost;
   const expectedRegen = heroes.cinderKnight.baseStats.mpRegen * 2;
   assert.strictEqual(next.combatants.a1.currentMana, heroes.cinderKnight.baseStats.manaPool - spent + expectedRegen);
 });
 
-test('fieldEffects: Surging Magic expires after 5 rounds of resolveRound, reverting regen to normal', () => {
+test('fieldEffects: Magical Surge expires after 5 rounds of resolveRound, reverting regen to normal', () => {
   let state = twoVTwoFixture(408);
   // The cast round's own end-of-round tick already fires (resolveRound.ts
   // ticks every round, including the one that just set the effect), so the
   // clock reads 4 immediately after the casting round, not 5.
-  state = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'arcaneSurge' }], config).state;
+  state = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'magicCloak' }], config).state;
   assert.strictEqual(state.activeFieldEffect?.roundsRemaining, FIELD_EFFECT_DURATION_ROUNDS - 1);
 
   // Two more empty rounds keep it alive (remaining 3, then 2)...
@@ -182,12 +187,12 @@ test('fieldEffects: Surging Magic expires after 5 rounds of resolveRound, revert
   assert.ok(last.events.some((e) => e.type === 'FieldEffectExpired'));
 });
 
-test('fieldEffects: casting arcaneSurge again while it is already active does not refresh the duration', () => {
+test('fieldEffects: casting magicCloak again while it is already active does not refresh the duration', () => {
   let state = twoVTwoFixture(409);
-  state = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'arcaneSurge' }], config).state; // cast: 5 -> 4 (this round's own tick)
+  state = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'magicCloak' }], config).state; // cast: 5 -> 4 (this round's own tick)
   state = resolveRound(state, [], config).state; // empty round: 4 -> 3
 
-  const { state: next, events } = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'arcaneSurge' }], config);
+  const { state: next, events } = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'magicCloak' }], config);
   assert.strictEqual(events.some((e) => e.type === 'FieldEffectSet'), false);
   assert.strictEqual(next.activeFieldEffect?.roundsRemaining, 2); // ticked down again this round (3 -> 2), not reset to 5
 });

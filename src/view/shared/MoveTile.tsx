@@ -275,6 +275,13 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   const heal = healReadout(move, caster);
   if (heal) parts.push(`Restores ${heal.value} HP`);
 
+  // The mana grant leads, because on Infuse/Empower/Conduit/Font of Power it
+  // IS the move — there is no damage body and no stat delta to read it beside
+  // (content.ts manaGrant). "past their max" is not a footnote either: the
+  // whole reason to hand 150 mana to a hero with a 90 pool is that the surplus
+  // now stays (docs/mana.md "Overflow").
+  if (move.manaGrant) parts.push(`Gives ${move.manaGrant} MP, past their max`);
+
   if (move.statDeltas?.length) {
     // Landslide's deltas land on the caster's side while its damage lands on
     // the enemy's, so the trailing "— Both Enemies" target clause below is the
@@ -285,6 +292,22 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
       move.statDeltaTarget === 'bothAllies' ? ' (Both Allies)' : move.statDeltaTarget === 'self' ? ' (Self)' : '';
     const deltas = move.statDeltas.map(({ stat, amount }) => `${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]}`).join(', ');
     parts.push(deltas + where);
+  }
+
+  // Arcane Overflow's grants have no number to print — the number is whatever
+  // the caster's mana happens to be when they press it (content.ts
+  // derivedStatDeltas). So the clause states the RULE and lets the caster's own
+  // mana bar carry the value, the same split the ramp and conditional-cost
+  // clauses below use.
+  if (move.derivedStatDeltas) {
+    const where =
+      move.statDeltaTarget === 'bothAllies' || (move.statDeltaTarget == null && move.target === 'bothAllies')
+        ? ' (Both Allies)'
+        : move.statDeltaTarget === 'self' || (move.statDeltaTarget == null && move.target === 'self')
+          ? ' (Self)'
+          : '';
+    const stats = move.derivedStatDeltas.stats.map((stat) => STAT_LABELS[stat]).join(' and ');
+    parts.push(`+${stats} equal to your Mana before casting${where}`);
   }
 
   // The hard gate leads, because on Glaciate and Absolute Zero it is not a
@@ -325,6 +348,16 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
           ? `while you have ${gateName}`
           : `vs ${gateName}`;
     parts.push(`×${move.conditionalPower.multiplier} power ${clause}${spent}`);
+  }
+
+  // WHO this hits is not a rider — on Overload it is the difference between a
+  // 70-power poke and a 70-power spread, and it is the only thing separating it
+  // from Arcane Blast (content.ts conditionalTarget). Worded as the condition,
+  // not as the current answer: this summary is printed on surfaces with no
+  // fight in scope, where there is no field to read.
+  if (move.conditionalTarget) {
+    const field = fieldEffects[move.conditionalTarget.requiresFieldEffect]?.name ?? move.conditionalTarget.requiresFieldEffect;
+    parts.push(`Hits ${TARGET_MODE_LABELS[move.conditionalTarget.target].toLowerCase()} while ${field} is up`);
   }
 
   if (move.critChance != null) parts.push(`${Math.round(move.critChance * 100)}% crit`);

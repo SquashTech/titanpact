@@ -70,7 +70,10 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = maxHp > 0 ? Math.max(0, combatant.currentHp) / maxHp : 0;
-  const manaFraction = maxMana > 0 ? combatant.currentMana / maxMana : 0;
+  // Clamped, with the surplus as its own band — see CombatantCard for why
+  // (state.ts Combatant.currentMana, docs/mana.md "Overflow").
+  const manaFraction = maxMana > 0 ? Math.min(1, combatant.currentMana / maxMana) : 0;
+  const manaOverFraction = maxMana > 0 ? Math.max(0, Math.min(1, (combatant.currentMana - maxMana) / maxMana)) : 0;
   /** Long-press-triggered move/item/passive detail popup — shared by the moves row, the equipment grid, and the passives row below (mirrors LevelUpScreen's movePopup, "hold to inspect" standard). */
   const [popup, setPopup] = useState<{ kind: 'move' | 'equipment' | 'passive'; id: string } | null>(null);
 
@@ -150,8 +153,9 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           <div>
             <div className="bar-track">
               <div className="bar-fill mana" style={{ width: `${manaFraction * 100}%` }} />
+              {manaOverFraction > 0 && <div className="bar-fill mana-over" style={{ width: `${manaOverFraction * 100}%` }} />}
             </div>
-            <div className="bar-label">
+            <div className={`bar-label${manaOverFraction > 0 ? ' is-overcharged' : ''}`}>
               MP {combatant.currentMana}/{maxMana}
             </div>
           </div>

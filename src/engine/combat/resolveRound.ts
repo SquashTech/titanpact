@@ -9,9 +9,9 @@
 // except Stealth, which ticks at the START of the round (before actions
 // resolve) so it also protects the round after the one it was cast in.
 
-import type { FieldEffectDefinition, HeroDefinition, MoveDefinition, PassiveDefinition, StatusDefinition } from '../content';
+import type { FieldEffectDefinition, HeroDefinition, MoveDefinition, PassiveDefinition, StatDelta, StatusDefinition } from '../content';
 import type { CombatState, HeroLookup, Side } from '../state';
-import { getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, effectiveTypes, hasStatus } from '../state';
+import { getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveTargetMode, effectiveTypes, hasStatus } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
@@ -130,13 +130,19 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       events.push({ type: 'TurnStarted', round, combatantId: action.combatantId });
       const previousMana = actor.currentMana;
       const maxMana = getMaxHeroMaxMana(heroes, working, action.combatantId);
+      // Tops up TO the pool, and never below what the hero already holds — an
+      // overflowed combatant (content.ts manaGrant, docs/mana.md "Overflow")
+      // that Rests wastes a turn rather than being refunded down to its pool.
+      // A bare `currentMana: maxMana` was correct for as long as mana could
+      // not exceed the pool, which stopped being true on 2026-08-30.
+      const restedMana = Math.max(previousMana, maxMana);
       working = {
         ...working,
-        combatants: { ...working.combatants, [action.combatantId]: { ...actor, currentMana: maxMana } },
+        combatants: { ...working.combatants, [action.combatantId]: { ...actor, currentMana: restedMana } },
       };
       working = resetDamageTaken(working, action.combatantId);
       events.push({ type: 'Rested', round, combatantId: action.combatantId });
-      events.push({ type: 'ManaChanged', round, combatantId: action.combatantId, previousMana, newMana: maxMana, maxMana });
+      events.push({ type: 'ManaChanged', round, combatantId: action.combatantId, previousMana, newMana: restedMana, maxMana });
       continue;
     }
 
@@ -161,6 +167,19 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     const manaCost = resolveManaCost(working, action.combatantId, move);
     if (actor.currentMana < manaCost) continue; // engine-level legality guard; view must already prevent this
 
+    // Who this move actually hits, which since Arcane's Overload is no longer
+    // simply `move.target` (content.ts conditionalTarget, state.ts
+    // resolveTargetMode — "spread if Magical Surge is active"). Read off
+    // `working`, not the pre-round snapshot, for the same reason the live mana
+    // cost above is: a partner's Mana Font earlier THIS round has already
+    // turned the ground, and a target list — unlike a priority bracket — is
+    // resolved per action rather than settled before the round begins.
+    //
+    // Used everywhere `move.target` used to be, so a conditionally-spread move
+    // is a spread move for Stealth's redirect, Provoke's redirect and Haunt's
+    // expansion alike, exactly as an authored `bothEnemies` move is.
+    const targetMode = resolveTargetMode(working, move);
+
     let targetIds: string[];
     try {
       // Slot looked up against `state` — the pre-round snapshot — not `working`,
@@ -174,7 +193,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       const resolved = resolveTargetsRolled(
         working,
         action.combatantId,
-        move.target,
+        targetMode,
         working.rngState,
         action.declaredTarget ?? null,
         declaredTargetSlot
@@ -211,11 +230,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     // pulls the hit in first and Haunt then spreads from where it actually
     // landed.
     if (move.kind === 'damage') {
-      targetIds = applyStealthRedirect(working, move.target, move.kind, targetIds);
+      targetIds = applyStealthRedirect(working, targetMode, move.kind, targetIds);
     }
-    targetIds = applyProvokeRedirect(working, action.combatantId, move.target, targetIds, statuses);
+    targetIds = applyProvokeRedirect(working, action.combatantId, targetMode, targetIds, statuses);
     if (move.kind === 'damage') {
-      const spread = expandSpreadTargets(working, move.type, move.target, targetIds, statuses);
+      const spread = expandSpreadTargets(working, move.type, targetMode, targetIds, statuses);
       targetIds = spread.targetIds;
       spreadVia = spread.spreadVia;
     }
@@ -567,6 +586,43 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         break;
     }
 
+    // Mana grants (content.ts manaGrant — Arcane's Infuse, Empower, Conduit,
+    // Font of Power). UNCAPPED: the whole authored amount lands even when it
+    // carries the target past its pool, and nothing later in the round takes
+    // the surplus back (manaRegen.ts, and Rest above — docs/mana.md
+    // "Overflow"). Deliberately NOT routed through a clamp helper, because
+    // there is no helper to route it through: mana has no applyHpDelta
+    // equivalent precisely because it has no ceiling any more.
+    //
+    // Placed after the kind switch and before the stat deltas below so a move
+    // that ever did both would pay out its resource half first — nothing today
+    // authors both, and this is the order the two read in on a design row.
+    if (move.manaGrant) {
+      for (const targetId of targetIds) {
+        const target = working.combatants[targetId];
+        if (!target || target.fainted) continue;
+        const previousTargetMana = target.currentMana;
+        const newTargetMana = previousTargetMana + move.manaGrant;
+        const targetMaxMana = getMaxMana(heroes[target.heroId], target);
+        working = {
+          ...working,
+          combatants: { ...working.combatants, [targetId]: { ...target, currentMana: newTargetMana } },
+        };
+        events.push({
+          type: 'ManaGranted',
+          round,
+          sourceCombatantId: action.combatantId,
+          targetCombatantId: targetId,
+          moveId: move.id,
+          amount: move.manaGrant,
+          previousMana: previousTargetMana,
+          newMana: newTargetMana,
+          maxMana: targetMaxMana,
+          overflow: Math.max(0, newTargetMana - targetMaxMana),
+        });
+      }
+    }
+
     // Stat deltas (engine/content.ts MoveDefinition.statDeltas) layer on top of
     // any move kind, same as statusApplication/fieldEffectApplication below —
     // Fire's Molten Lash is a damage move that also drops the target's Defense.
@@ -577,7 +633,23 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     // targets rather than riding the move's — exactly the split
     // StatusApplication.target already makes for a status rider. Omitted means
     // 'moveTarget', which is every move authored before it.
-    const statDeltaTargets = !move.statDeltas?.length
+    //
+    // Arcane Overflow's deltas have no authored amount at all — the figure is
+    // read off the caster's mana as it stood BEFORE this move was paid for
+    // (content.ts derivedStatDeltas). Expanded into ordinary StatDeltas here,
+    // so everything downstream — the target resolution just below, the
+    // StatChanged events, statModifiers itself — is byte-for-byte the path an
+    // authored delta takes. `previousMana` is that pre-spend figure, captured
+    // above where the mana was actually deducted.
+    //
+    // These are EXEMPT from the multiples-of-5/10 rule by designer call
+    // (2026-08-30) — a mana pool is whatever it is, and rounding it would make
+    // the grant disagree with the numeral on the caster's own bar.
+    const derived = move.derivedStatDeltas;
+    const derivedDeltas: StatDelta[] = derived ? derived.stats.map((stat) => ({ stat, amount: previousMana })) : [];
+    const allStatDeltas: readonly StatDelta[] = derivedDeltas.length ? [...(move.statDeltas ?? []), ...derivedDeltas] : (move.statDeltas ?? []);
+
+    const statDeltaTargets = !allStatDeltas.length
       ? []
       : move.statDeltaTarget === 'self'
         ? [action.combatantId]
@@ -589,7 +661,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     for (const targetId of statDeltaTargets) {
       if (!working.combatants[targetId] || working.combatants[targetId].fainted) continue;
-      for (const delta of move.statDeltas ?? []) {
+      for (const delta of allStatDeltas) {
         const current = working.combatants[targetId];
         const newValue = (current.statModifiers[delta.stat] ?? 0) + delta.amount;
         working = {
