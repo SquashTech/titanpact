@@ -143,9 +143,13 @@ export function swallowGhostClick() {
  *   field, and the target is the only thing that says which reading applies
  *   (the same distinction moveEffectSummary spells as Grants vs Applies).
  *
- * A move carrying both a buff and a debuff would read as a debuff. None does
- * today; if one is ever authored, the honest answer is probably two glyphs
- * rather than a tiebreak, so revisit this rather than adding a rule.
+ * A move carrying both a buff and a debuff reads as a debuff. Storm's Rising
+ * Static (2026-08-30) is the first one authored — it hands an ally +20 Speed
+ * AND marks an enemy with Conduct — so the tiebreak below is now load-bearing
+ * rather than hypothetical. Left as-is deliberately: the honest answer is still
+ * probably two glyphs, which is a real UI decision and not something to settle
+ * inside a move slate. The full truth is in moveEffectSummary, which names the
+ * side each half lands on; only the one-bit glyph is lossy.
  */
 /**
  * Grants vs Applies — the verb that says whether a status is a gift or a
@@ -194,10 +198,12 @@ const CATEGORY_LABELS: Record<MoveDefinition['category'], string> = { physical: 
  * long-press MoveInfoPanel below and FightScreen's targeting-panel copy.
  * 'allOthers' reads as "All" (everyone but the caster) rather than a literal
  * "everyone including me" mode — Titanpact has no such mode today.
- * "Random" is reserved vocabulary for a future move that rolls its target
- * randomly rather than a distinct `TargetMode` — no move uses it yet, so it
- * isn't a key here; author it as a move-level description note (matching
- * "this will usually specify on the move itself") until an engine hook exists.
+ *
+ * "Random Ally"/"Random Enemy" stopped being reserved vocabulary when Storm's
+ * Rising Static landed (2026-08-30): they are real TargetModes now, rolled from
+ * the seeded RNG at resolution (engine/combat/targeting.ts). They are worded as
+ * a target and not as a caveat because that is what they are — the player picks
+ * nothing, and the move offers no target panel.
  */
 export const TARGET_MODE_LABELS: Record<MoveDefinition['target'], string> = {
   singleEnemy: 'Single Enemy',
@@ -206,7 +212,26 @@ export const TARGET_MODE_LABELS: Record<MoveDefinition['target'], string> = {
   bothAllies: 'Both Allies',
   self: 'Self',
   allOthers: 'All',
+  randomAlly: 'Random Ally',
+  randomEnemy: 'Random Enemy',
 };
+
+/**
+ * Where a status rider actually lands, when that is not simply the move's own
+ * target (content.ts StatusApplication.target). Returns null for 'moveTarget',
+ * whose answer is already printed as the summary's trailing target clause —
+ * only a rider that resolves independently needs to say so on its own.
+ *
+ * This exists because Rising Static is the first move whose payload lands on
+ * BOTH sides of the field: a summary that printed "+20 SPD · Applies Conduct —
+ * Random Ally" would be describing the Speed correctly and the Conduct exactly
+ * backwards.
+ */
+export function riderTargetLabel(app: NonNullable<MoveDefinition['statusApplication']>): string | null {
+  if (app.target === 'moveTarget') return null;
+  if (app.target === 'self') return 'Self';
+  return TARGET_MODE_LABELS[app.target];
+}
 
 /**
  * What a heal move actually restores, for whoever is about to cast it.
@@ -293,7 +318,11 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     // Elemental Force arrived, at which point this line started printing
     // "FireForce". The dossier has always used the name (MoveDetailOverlay).
     const statusName = statuses[statusId]?.name ?? statusId;
-    parts.push(`${odds}${verb} ${statusName}${amount != null ? ` ${amount}` : ''}`);
+    // The rider's own target, when it has one — see riderTargetLabel. The
+    // trailing "— Random Ally" clause below describes the MOVE's target, and
+    // on a two-sided move that is the wrong answer for this half.
+    const where = riderTargetLabel(move.statusApplication);
+    parts.push(`${odds}${verb} ${statusName}${amount != null ? ` ${amount}` : ''}${where ? ` (${where})` : ''}`);
   }
 
   // A limited cleanse has to say so, and has to say it is random — "Cleanses"
@@ -303,6 +332,28 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   // The ramp, on the summary line, because the authored cost beside it is only
   // the FIRST cast's price (content.ts manaDiscountOnUse).
   if (move.manaDiscountOnUse) parts.push(`−${move.manaDiscountOnUse} MP each use`);
+
+  // A bracket that depends on the board is still a bracket, and "strikes
+  // first" is the single most decision-relevant thing about a move in a
+  // declare-then-resolve game — it cannot live only in the dossier.
+  if (move.conditionalPriority) {
+    const gate = move.conditionalPriority.requiresTargetStatus;
+    const sign = move.conditionalPriority.bonus >= 0 ? '+' : '';
+    parts.push(`${sign}${move.conditionalPriority.bonus} priority vs ${statuses[gate]?.name ?? gate}`);
+  }
+
+  // Overcharge's whole reason to be pressed is that it is sometimes free, and
+  // the mana gem beside this line shows the LIVE price — so this says what the
+  // condition is, not what it costs right now.
+  if (move.conditionalManaCost) {
+    const gate = move.conditionalManaCost.requiresAllEnemiesStatus;
+    parts.push(`${move.conditionalManaCost.manaCost} MP if both enemies have ${statuses[gate]?.name ?? gate}`);
+  }
+
+  // The pivot. Second, after the buff it delivers, because that is the order it
+  // resolves in — and because a player who reads "switch out" first will assume
+  // the buff went with them.
+  if (move.switchesUserOut) parts.push('Then switch out');
 
   if (move.fieldEffectApplication) {
     parts.push(`Field: ${fieldEffects[move.fieldEffectApplication]?.name ?? move.fieldEffectApplication}`);

@@ -360,6 +360,113 @@ The design tension it exists to create: a Frost side holding both Cold Snap and
 a `requiresTargetStatus` move must choose, every time it lands a Freeze, between
 cashing the mark in for double damage and keeping it as the key to a bigger move.
 
+## Random targeting (2026-08-30, Storm)
+
+Two new `TargetMode`s, `randomAlly` and `randomEnemy`, plus the same two values
+on `StatusApplication.target` so a **rider can resolve its own target
+independently of the move's**. Storm's Rising Static ("randomly give an ally
++20 Speed and an enemy Conduct") is the first content, and the first move in the
+game whose payload lands on both sides of the field at once.
+
+- **The pure resolver stays pure.** `resolveTargets` returns the candidate
+  *pool* for a random mode; `resolveTargetsRolled` is the one that draws
+  (`engine/combat/targeting.ts`). Random targeting is the one mode that cannot
+  be a function of state alone, so it is fenced off rather than threaded
+  through every caller.
+- **Inert when absent.** A non-random mode leaves `rngState` byte-identical, so
+  every fight authored before this replays exactly as it did — the same
+  discipline as `StatusApplication.chance` and `cleanseCount`.
+- **The move's target rolls first, then the rider's.** A fixed, documented draw
+  order is what keeps the seed reproducible.
+- **The view offers no picker.** Random modes are grouped with the fixed-group
+  modes at declaration time: the target row shows who *could* be hit and doubles
+  as the confirm control, because there is nothing to choose.
+
+**Open question this leaves.** A two-sided move breaks the one-bit Buff/Debuff
+glyph (`MoveTile.tsx isDebuff`), whose own comment predicted exactly this and
+said the honest answer was probably *two* glyphs rather than a tiebreak. Rising
+Static currently reads as **Debuff**, which is half true; the full payload is in
+the effect summary, which names the side each half lands on. Left as-is
+deliberately — two glyphs is a UI decision, not something to settle inside a
+move slate.
+
+## Priority that varies with state (2026-08-30, Storm)
+
+`MoveDefinition.conditionalPriority`: adds a bonus to the move's bracket when
+its **declared target** carries a named status. Storm's Electric Burst
+("priority +1 if the target has Conduct") is the first content.
+
+The one rule that matters, and it is forced rather than chosen: **it is
+evaluated when the round is ORDERED**, off the pre-resolution board. A bracket
+has to be settled before anything resolves, so a partner planting Conduct
+earlier in the same round cannot retroactively speed this up. The mark has to
+already be standing when you press the button, which turns the move into a
+payoff for the *previous* round rather than a same-round combo.
+
+This is a deliberate asymmetry with the cost condition below, which *is* read at
+resolution and *can* see this round's work. Both are pinned by
+`test/stormMoves.test.ts` so the difference changes loudly if it ever changes.
+
+## Cost that varies with the BOARD (2026-08-30, Storm)
+
+`MoveDefinition.conditionalManaCost`: a **replacement** price that applies while
+every active enemy carries a named status. Storm's Overcharge ("costs 0 mana if
+both enemies have Conduct") is the first content.
+
+The second authored cost that varies with state, and the first that varies with
+something other than the caster's own history (`manaDiscountOnUse`, above).
+
+- **A replacement, not a discount**, so "costs 0" is authored as 0 rather than as
+  a subtraction to be checked against the base price. Composes with
+  `manaDiscountOnUse` by taking the **lower**.
+- **"All enemies" requires at least one.** A wiped enemy side vacuously
+  satisfies "every enemy is marked"; a condition nothing can meet must not read
+  as met.
+- **One board-aware reader, `state.ts resolveManaCost`**, for the same reason
+  `effectiveManaCost` had one: the engine's spend, the view's affordability
+  filter, the gem on the button and the crest all go through it.
+  `effectiveManaCost` remains correct for surfaces with no live fight (draft,
+  level-up, compendium), where the authored price is the honest answer.
+
+**Open question this leaves.** Overcharge (60) sits in the pools of two 50-mana
+heroes, so for Squall and Scallywag it is castable *only* at its conditional
+price — a move whose row is dead until the board is fully marked. That is either
+the best version of the design (a real payoff for a two-move setup, on the two
+heroes whose kits can build it) or a row that reads as broken for the first two
+rounds of every fight. Reported rather than tuned away, same as Fire's Inferno
+and Water's Wave Shred. `test/stormMoves.test.ts` asserts the pairing holds —
+any hero who can only afford a conditional-cost move at its discount can also
+reach the status it needs — but nothing in the engine enforces it.
+
+## A move that switches its user out (2026-08-30, Storm)
+
+`MoveDefinition.switchesUserOut` plus `MoveAction.switchToCombatantId`: the
+move's payload resolves, then the caster goes to the bench and a **declared**
+replacement comes in. Storm's Tailwind ("give your ally +40 Speed, switch out")
+is the first content.
+
+- **The incoming hero is chosen at declaration**, alongside the move's own
+  target — a pivot is a real decision, and declare-then-resolve is what makes
+  prediction the core skill (this file, "Turn & round structure").
+- **It respects lock-in** (2026-08-30 designer call). Routed through
+  `applyVoluntarySwitch`, so the LOCKED 2+ KO rule blocks it exactly as it
+  blocks a declared switch. There is no exemption.
+- **A block degrades the move rather than fizzling it.** The buff still lands and
+  the mana is still spent; only the pivot half is refused, with its own
+  `ActionBlocked` reason (`switchBlocked`). `requiresTargetStatus` is the
+  engine's one hard *gate*, and lock-in is already a phase the player is being
+  punished by — making Tailwind unpressable on top of that would punish twice.
+- **Resolved last**, after every rider, so the payload lands on a board the
+  caster is still standing on.
+
+**Open question this leaves.** The view now has two ways to reach the bench
+picker — a switch action and a pivot move — and only the first is on the
+`SWITCH_PRIORITY_BRACKET`. A pivot resolves in its move's own bracket, which
+means Tailwind's replacement arrives *after* attacks that a declared switch
+would have dodged. That is almost certainly right (the pivot is paying for a
+buff, not for the dodge), but it is a real difference between the two and it has
+not been playtested.
+
 ---
 
 ## Stat modifiers

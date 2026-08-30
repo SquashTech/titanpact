@@ -6,7 +6,7 @@
 import type { Action } from './actions';
 import type { CombatState } from '../state';
 import type { HeroLookup } from '../state';
-import { getEffectiveStat } from '../state';
+import { getEffectiveStat, hasStatus } from '../state';
 import type { FieldEffectDefinition, MoveDefinition } from '../content';
 import { nextInt, type RngState } from '../rng/seededRng';
 
@@ -33,8 +33,17 @@ export const REST_PRIORITY_BRACKET = Number.NEGATIVE_INFINITY;
  * bracket gets `healPriorityBonus` added while the effect is active. Read
  * generically off the move's own `kind`, same discipline as every other
  * Field Effect flag — no hardcoded move/status id check.
+ *
+ * MoveDefinition.conditionalPriority (Storm's Electric Burst, "+1 if the
+ * target has Conduct") is the second bonus term, and it is resolved HERE, off
+ * `state`, for a structural reason worth stating: a bracket has to be known
+ * before any action resolves, so the only board this can read is the
+ * pre-resolution one. A mark planted earlier in the same round does not count;
+ * the mark has to already be standing when the round is ordered. Read off the
+ * DECLARED target alone — a fixed-group move has none, and never gets it.
  */
 function actionPriority(
+  state: CombatState,
   action: Action,
   moves: Record<string, MoveDefinition>,
   activeFieldEffectDef: FieldEffectDefinition | undefined
@@ -43,7 +52,27 @@ function actionPriority(
   if (action.kind === 'rest') return REST_PRIORITY_BRACKET;
   const move = moves[action.moveId];
   const healBonus = move.kind === 'heal' ? (activeFieldEffectDef?.healPriorityBonus ?? 0) : 0;
-  return move.priority + healBonus;
+  const conditional = move.conditionalPriority;
+  const declared = action.declaredTarget ? state.combatants[action.declaredTarget] : undefined;
+  const conditionalBonus =
+    conditional && declared && !declared.fainted && hasStatus(declared, conditional.requiresTargetStatus) ? conditional.bonus : 0;
+  return move.priority + healBonus + conditionalBonus;
+}
+
+/**
+ * What bracket `action` will actually resolve in — the same number
+ * orderActions sorts on, exported so the view can print the LIVE priority of a
+ * conditional-priority move (the button and the dossier both claim to show
+ * "strikes first", and a move whose bracket depends on the board makes that
+ * claim wrong the moment it is only ever read off `move.priority`).
+ */
+export function effectivePriority(
+  state: CombatState,
+  action: Action,
+  moves: Record<string, MoveDefinition>,
+  activeFieldEffectDef?: FieldEffectDefinition
+): number {
+  return actionPriority(state, action, moves, activeFieldEffectDef);
 }
 
 export interface OrderedAction {
@@ -81,7 +110,7 @@ export function orderActions(
     const hero = heroes[combatant.heroId];
     return {
       action,
-      priority: actionPriority(action, moves, activeFieldEffectDef),
+      priority: actionPriority(state, action, moves, activeFieldEffectDef),
       speed: getEffectiveStat(hero, combatant, 'speed'),
     };
   });

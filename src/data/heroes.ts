@@ -129,7 +129,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Squall',
     types: ['Storm'],
     baseStats: { hp: 90, attack: 65, defense: 40, intelligence: 35, wisdom: 35, speed: 90, manaPool: 50, mpRegen: 10 },
-    moveIds: ['galeShot', 'rally', 'thunderclap'],
+    moveIds: ['thunderclap', 'risingStatic', 'rally'],
     starter: false,
   },
   tempest: {
@@ -137,7 +137,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Tempest',
     types: ['Storm'],
     baseStats: { hp: 90, attack: 70, defense: 45, intelligence: 70, wisdom: 35, speed: 65, manaPool: 75, mpRegen: 10 },
-    moveIds: ['galeShot', 'rally', 'thunderclap'],
+    moveIds: ['jolt', 'charge', 'rally'],
     starter: true,
   },
   scallywag: {
@@ -145,7 +145,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Scallywag',
     types: ['Storm'],
     baseStats: { hp: 95, attack: 75, defense: 40, intelligence: 30, wisdom: 35, speed: 80, manaPool: 50, mpRegen: 10 },
-    moveIds: ['galeShot', 'quickJab', 'rally'],
+    moveIds: ['thunderclap', 'quickJab', 'rally'],
     starter: false,
   },
 

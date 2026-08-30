@@ -9,7 +9,14 @@ import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { relics } from '../../data/relics';
 import type { CombatState, Side } from '../../engine/state';
-import { isLockedIn, effectiveManaCost, effectiveTypes, hasAffordableMove, getEffectiveStat } from '../../engine/state';
+import {
+  isLockedIn,
+  effectiveManaCost,
+  effectiveTypes,
+  hasAffordableMoveInFight,
+  resolveManaCost,
+  getEffectiveStat,
+} from '../../engine/state';
 import type { HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../engine/combat/switching';
@@ -38,7 +45,7 @@ import { buildBeats, type Beat } from './buildBeats';
 import { playBeatSfx } from '../../audio/beatSfx';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
-import { MoveKindBadge, TARGET_MODE_LABELS, healReadout, moveEffectSummary, useLongPress } from '../shared/MoveTile';
+import { MoveKindBadge, TARGET_MODE_LABELS, healReadout, moveEffectSummary, riderTargetLabel, useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { AudioSettings } from '../shared/AudioSettings';
 import { ManaCost } from '../shared/ManaCost';
@@ -211,7 +218,10 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, cast
               <span className="move-eff-status">
                 {move.statusApplication.chance != null ? `${Math.round(move.statusApplication.chance * 100)}% ` : '+'}
                 {move.statusApplication.statusId}
-                {move.statusApplication.target === 'self' ? ' (self)' : ''}
+                {/* Where it lands, whenever that is not simply what the move
+                    hit — 'self' was the only such case until riders learned to
+                    roll their own target (content.ts StatusApplication.target). */}
+                {riderTargetLabel(move.statusApplication) ? ` (${riderTargetLabel(move.statusApplication)})` : ''}
               </span>
             )}
             {/* A damage move's stat rider, which this row used to drop
@@ -255,6 +265,22 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, cast
                 THIS cast costs, so the chip says what the next one will. */}
             {move.manaDiscountOnUse != null && (
               <span className="move-eff-status">Next {Math.max(0, cost - move.manaDiscountOnUse)} MP</span>
+            )}
+            {/* A bracket that depends on the board belongs on the button, not
+                in the dossier: in a declare-then-resolve game "does this go
+                first" is the decision. `cost` beside it is already the live
+                price, so the chip states the CONDITION and lets the gem carry
+                the current answer — the same split the ramp chip uses. */}
+            {move.conditionalPriority && (
+              <span className="move-eff-status">
+                {move.conditionalPriority.bonus >= 0 ? '+' : ''}
+                {move.conditionalPriority.bonus} priority vs {move.conditionalPriority.requiresTargetStatus}
+              </span>
+            )}
+            {move.conditionalManaCost && (
+              <span className="move-eff-status">
+                {move.conditionalManaCost.manaCost} MP vs 2× {move.conditionalManaCost.requiresAllEnemiesStatus}
+              </span>
             )}
           </span>
         ) : (
@@ -321,6 +347,15 @@ interface PendingAction {
   moveId?: string;
   declaredTarget?: string | null;
   benchedCombatantId?: string;
+  /**
+   * Who comes in when a switchesUserOut move sends its caster out — the pivot
+   * half of a Tailwind declaration (engine/combat/actions.ts MoveAction). Kept
+   * separate from `benchedCombatantId`, which belongs to a switch ACTION: the
+   * two carry the same kind of value but a move and a switch are not
+   * interchangeable to the engine, and merging them would let one be read as
+   * the other.
+   */
+  switchToCombatantId?: string | null;
 }
 
 /**
@@ -355,6 +390,7 @@ interface PendingAction {
  * competing for the same strip of text.
  */
 function ConsoleCrest({
+  state,
   activeSlots,
   actingId,
   combatants,
@@ -363,6 +399,15 @@ function ConsoleCrest({
   label,
   labelRgb,
 }: {
+  /**
+   * The whole fight, not just `combatants`, purely so the committed-move gem
+   * below can be priced the way the engine prices it: Overcharge's cost is a
+   * fact about the ENEMY side's statuses (state.ts resolveManaCost), which no
+   * amount of the caster's own record can answer. The crest reporting 60 while
+   * the engine charges 0 is exactly the drift every other cost readout in this
+   * file is routed through one function to avoid.
+   */
+  state: CombatState;
   /**
    * The player's two active SLOTS in battlefield order (index 0 = the left
    * card, 1 = the right), nulls included — the crest mirrors the arena's
@@ -440,7 +485,7 @@ function ConsoleCrest({
               knocked the sprite off-centre and pushed the gem out toward the
               label. Beside the name it is also the truer statement: the cost
               is a fact about the move being reported, not about the hero. */}
-          {committedMove && <ManaCost cost={effectiveManaCost(committedMove, c.moveManaDiscounts)} size="sm" />}
+          {committedMove && <ManaCost cost={resolveManaCost(state, c.combatantId, committedMove)} size="sm" />}
           <span className="console-commander-text">{slotLabel}</span>
         </span>
       </span>
@@ -549,6 +594,14 @@ export function FightScreen({
   const [replacementPick, setReplacementPick] = useState<string | null>(null);
   const [pending, setPending] = useState<Record<string, PendingAction>>({});
   const [selecting, setSelecting] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
+  /**
+   * Second stage of declaring a move that sends its user out (content.ts
+   * switchesUserOut — Storm's Tailwind): the ally target is already chosen and
+   * held here while the player picks who comes IN. Distinct from `switchOpen`,
+   * which is the plain switch ACTION — this one commits a move, not a switch,
+   * and reuses SwitchInPanel only because the choice it presents is identical.
+   */
+  const [pivoting, setPivoting] = useState<{ combatantId: string; move: MoveDefinition; declaredTarget: string | null } | null>(null);
   const [actionStep, setActionStep] = useState(0);
   const [inspecting, setInspecting] = useState<string | null>(null);
   /** Whether the active Field Effect's full detail card (FieldEffectDetailOverlay) is open — opened via a long-press on the battlefield-divider badge. */
@@ -726,9 +779,9 @@ export function FightScreen({
         ? visibleTargets(selecting.move, playerActiveAlive)
         : selecting.move.target === 'self'
           ? [selecting.combatantId]
-          : selecting.move.target === 'bothEnemies'
+          : selecting.move.target === 'bothEnemies' || selecting.move.target === 'randomEnemy'
             ? visibleTargets(selecting.move, enemyActiveAlive)
-            : selecting.move.target === 'bothAllies'
+            : selecting.move.target === 'bothAllies' || selecting.move.target === 'randomAlly'
               ? visibleTargets(selecting.move, playerActiveAlive)
               : selecting.move.target === 'allOthers'
                 ? visibleTargets(
@@ -744,6 +797,17 @@ export function FightScreen({
     const move = moves[p.moveId!];
     if ((move.target === 'singleEnemy' || move.target === 'singleAlly') && !p.declaredTarget) return false;
     return true;
+  }
+
+  /**
+   * Whether a switchesUserOut move has anyone to actually pivot to. Both halves
+   * matter: an empty bench and a locked-in side (2+ KOs, the LOCKED rule) each
+   * mean the switch would be refused at resolution. The move stays pressable
+   * either way — it degrades to its buff, exactly as the engine resolves it —
+   * so this only decides whether to ask the player for a second choice.
+   */
+  function canPivot(): boolean {
+    return playerBench.length > 0 && !isLockedIn(combat, PLAYER_SIDE);
   }
 
   /**
@@ -789,17 +853,37 @@ export function FightScreen({
 
   function handleTargetClick(targetId: string) {
     if (!selecting) return;
+    // A pivot move is a two-stage declaration: the ally is chosen, then the
+    // hero who replaces the caster. Held rather than committed so the player
+    // can still back out of the whole move at the switch panel.
+    if (selecting.move.switchesUserOut && canPivot()) {
+      setPivoting({ combatantId: selecting.combatantId, move: selecting.move, declaredTarget: targetId });
+      setSelecting(null);
+      return;
+    }
     commitAction(selecting.combatantId, { kind: 'move', moveId: selecting.move.id, declaredTarget: targetId });
   }
 
   /** Fixed-group moves (bothEnemies/bothAllies/allOthers) have no target to choose — resolveTargets ignores declaredTarget for these — so the bottom targeting panel's Confirm button just commits the move as-is. */
   function handleConfirmSpread() {
     if (!selecting) return;
+    if (selecting.move.switchesUserOut && canPivot()) {
+      setPivoting({ combatantId: selecting.combatantId, move: selecting.move, declaredTarget: null });
+      setSelecting(null);
+      return;
+    }
     commitAction(selecting.combatantId, { kind: 'move', moveId: selecting.move.id, declaredTarget: null });
   }
 
+  /**
+   * Modes with nothing to pick between, so the target row doubles as a confirm
+   * button. The two random modes belong here for a different reason than the
+   * fixed groups do: their cards show who COULD be hit rather than who will be
+   * (engine/combat/targeting.ts rolls one at resolution), and offering a picker
+   * for a choice the engine makes would be a lie.
+   */
   function isSpreadTarget(mode: TargetMode): boolean {
-    return mode === 'bothEnemies' || mode === 'bothAllies' || mode === 'allOthers';
+    return mode === 'bothEnemies' || mode === 'bothAllies' || mode === 'allOthers' || mode === 'randomAlly' || mode === 'randomEnemy';
   }
 
   /** Lowercased for mid-sentence aria-label use ("Confirm — hits both enemies") — same canonical wording as TARGET_MODE_LABELS, just not title-cased. */
@@ -845,13 +929,13 @@ export function FightScreen({
     const hero = allCombatants[combatant.heroId];
     const entry = entryFor(aiRun.roster, combatantId);
     const moveIds = entry.unlockedMoveIds.length > 0 ? entry.unlockedMoveIds : hero.moveIds;
-    if (!hasAffordableMove(combatant.currentMana, moveIds, moves, combatant.moveManaDiscounts)) {
+    if (!hasAffordableMoveInFight(state, combatantId, moveIds, moves)) {
       // Same fallback as the player's move grid below: nothing is affordable,
       // so Rest rather than declaring a move that would just no-op in the
       // engine (resolveRound.ts's mana guard) and silently waste the turn.
       return { kind: 'rest', combatantId };
     }
-    const affordable = moveIds.filter((id) => combatant.currentMana >= effectiveManaCost(moves[id], combatant.moveManaDiscounts));
+    const affordable = moveIds.filter((id) => combatant.currentMana >= resolveManaCost(state, combatantId, moves[id]));
     // A status-gated move (content.ts requiresTargetStatus) with nothing marked
     // to aim at resolves into an ActionBlocked and silently wastes the AI's whole
     // turn — the same failure the affordability filter above exists to avoid.
@@ -866,7 +950,14 @@ export function FightScreen({
     const move = moves[moveId];
     const declaredTarget =
       move.target === 'singleEnemy' ? (aliveActiveIdsOn(state, PLAYER_SIDE)[0] ?? null) : move.target === 'singleAlly' ? combatantId : null;
-    return { kind: 'move', combatantId, moveId, declaredTarget };
+    // A switchesUserOut move with no declared replacement resolves into its
+    // buff and an ActionBlocked — the same silently-wasted half the gate and
+    // affordability filters above exist to avoid. First benched hero standing:
+    // this AI does not evaluate matchups anywhere else either.
+    const switchToCombatantId = move.switchesUserOut
+      ? (state.bench[AI_SIDE].find((bid) => !state.combatants[bid]?.fainted) ?? null)
+      : null;
+    return { kind: 'move', combatantId, moveId, declaredTarget, switchToCombatantId };
   }
 
   /** Type-effectiveness multiplier of `move` against whichever hero currently occupies `defenderId` — presentation-only read of the engine's own type resolution (docs/architecture.md "Resolution and presentation are separate layers"). */
@@ -914,7 +1005,13 @@ export function FightScreen({
       const p = pendingMap[id];
       if (p.kind === 'switch') return { kind: 'switch', combatantId: id, benchedCombatantId: p.benchedCombatantId! };
       if (p.kind === 'rest') return { kind: 'rest', combatantId: id };
-      return { kind: 'move', combatantId: id, moveId: p.moveId!, declaredTarget: p.declaredTarget };
+      return {
+        kind: 'move',
+        combatantId: id,
+        moveId: p.moveId!,
+        declaredTarget: p.declaredTarget,
+        switchToCombatantId: p.switchToCombatantId,
+      };
     });
     const aiActions: Action[] = enemyActiveAlive.map((id) => pickAiAction(combat, id));
 
@@ -1298,6 +1395,7 @@ export function FightScreen({
                       WHICH move they are aiming, so that is what the crest's
                       trailing label becomes, in the move's own type color. */}
                   <ConsoleCrest
+                    state={combat}
                     activeSlots={combat.active[PLAYER_SIDE]}
                     actingId={actingId}
                     combatants={combat.combatants}
@@ -1357,10 +1455,11 @@ export function FightScreen({
             // below as normal whenever a bench hero exists, so a player who
             // dumped mana into a big hit can still choose to swap in someone
             // fresh instead of resting this active hero.
-            const canAffordAnyMove = hasAffordableMove(combatant.currentMana, entry.unlockedMoveIds, moves, combatant.moveManaDiscounts);
+            const canAffordAnyMove = hasAffordableMoveInFight(combat, id, entry.unlockedMoveIds, moves);
             return (
               <div className="action-panel" key={id}>
                 <ConsoleCrest
+                  state={combat}
                   activeSlots={combat.active[PLAYER_SIDE]}
                   actingId={actingId}
                   combatants={combat.combatants}
@@ -1394,9 +1493,9 @@ export function FightScreen({
                       <MoveRow
                         key={moveId}
                         move={move}
-                        affordable={combatant.currentMana >= effectiveManaCost(move, combatant.moveManaDiscounts)}
+                        affordable={combatant.currentMana >= resolveManaCost(combat, id, move)}
                         gateUnmet={!hasLegalTarget(move, id)}
-                        cost={effectiveManaCost(move, combatant.moveManaDiscounts)}
+                        cost={resolveManaCost(combat, id, move)}
                         selected={isSelected}
                         forceBonus={resolveElementalForceBonus(combatant, move.type, statuses)}
                         caster={{
@@ -1588,6 +1687,58 @@ export function FightScreen({
           </div>
         </div>
       )}
+
+      {/* Stage two of a switchesUserOut declaration. Deliberately the same
+          panel a plain switch opens — the question is identical ("who comes
+          in?"), the enemy/matchup context it shows is just as relevant, and a
+          second bespoke bench list would be a second thing to keep in sync.
+          What differs is only what it commits: a move carrying its pivot, not
+          a switch action. Dismissing it drops the whole move rather than
+          committing a pivot-less one, so backing out of stage two backs out of
+          stage one too. */}
+      {pivoting &&
+        (() => {
+          const { combatantId, move, declaredTarget } = pivoting;
+          const outgoing = combat.combatants[combatantId];
+          return (
+            <SwitchInPanel
+              outgoingHero={allCombatants[outgoing.heroId]}
+              outgoing={outgoing}
+              typeChart={typeChart}
+              moves={moves}
+              enemies={enemyActiveAlive.map((eid) => {
+                const c = combat.combatants[eid];
+                return { hero: allCombatants[c.heroId], combatant: c };
+              })}
+              options={playerBench.map((benchId) => {
+                const benchCombatant = combat.combatants[benchId];
+                const entry = entryFor(playerRun.roster, benchId);
+                return {
+                  combatantId: benchId,
+                  hero: allCombatants[benchCombatant.heroId],
+                  combatant: benchCombatant,
+                  moveIds: entry.unlockedMoveIds,
+                  selected: false,
+                  // Same claim rule as the switch panel: another active hero
+                  // already sending this bench hero in cannot also be undercut
+                  // by a pivot into the same slot.
+                  claimedByOther: Object.entries(pending).some(
+                    ([pid, p]) =>
+                      pid !== combatantId &&
+                      ((p.kind === 'switch' && p.benchedCombatantId === benchId) ||
+                        (p.kind === 'move' && p.switchToCombatantId === benchId))
+                  ),
+                };
+              })}
+              onPick={(benchId) => {
+                setPivoting(null);
+                commitAction(combatantId, { kind: 'move', moveId: move.id, declaredTarget, switchToCombatantId: benchId });
+              }}
+              onInspect={(benchId) => setInspecting(benchId)}
+              onClose={() => setPivoting(null)}
+            />
+          );
+        })()}
 
       {switchOpen &&
         actingId &&

@@ -166,6 +166,55 @@ export function effectiveManaCost(move: MoveDefinition, discounts?: Partial<Reco
   return Math.max(0, move.manaCost - (discounts?.[move.id] ?? 0));
 }
 
+/**
+ * effectiveManaCost, plus the board-dependent half — Storm's Overcharge,
+ * "costs 0 mana if both enemies have Conduct"
+ * (content.ts conditionalManaCost).
+ *
+ * This is the price EVERY live-fight surface must read: the engine's legality
+ * guard, the mana it spends, the view's affordability filter and the gem on
+ * the button. effectiveManaCost stays correct — and stays the right call — for
+ * surfaces with no fight in scope (draft, level-up, compendium), where the
+ * authored price is the honest answer.
+ *
+ * The two conditions compose by taking the LOWER price, since neither is meant
+ * to be a way of making the other more expensive. "All enemies" reads over the
+ * ACTIVE, unfainted enemies and requires at least one of them: a wiped enemy
+ * side vacuously satisfies "every enemy is marked", and a condition nothing
+ * can meet must not read as met.
+ */
+export function resolveManaCost(state: CombatState, combatantId: string, move: MoveDefinition): number {
+  const combatant = state.combatants[combatantId];
+  const base = effectiveManaCost(move, combatant?.moveManaDiscounts);
+  const conditional = move.conditionalManaCost;
+  if (!conditional || !combatant) return base;
+
+  const enemySide: Side = combatant.side === 'A' ? 'B' : 'A';
+  const activeEnemies = state.active[enemySide]
+    .map((id) => (id ? state.combatants[id] : undefined))
+    .filter((c): c is Combatant => c != null && !c.fainted);
+
+  if (activeEnemies.length === 0) return base;
+  if (!activeEnemies.every((enemy) => hasStatus(enemy, conditional.requiresAllEnemiesStatus))) return base;
+  return Math.min(base, Math.max(0, conditional.manaCost));
+}
+
+/**
+ * hasAffordableMove's board-aware counterpart — the Rest-fallback check
+ * (combat/actions.ts RestAction) has to agree with what the button costs, or a
+ * hero holding nothing but a currently-free Overcharge gets forced to Rest
+ * while staring at a move it can afford.
+ */
+export function hasAffordableMoveInFight(
+  state: CombatState,
+  combatantId: string,
+  moveIds: readonly string[],
+  moves: Record<string, MoveDefinition>
+): boolean {
+  const currentMana = state.combatants[combatantId]?.currentMana ?? 0;
+  return moveIds.some((id) => currentMana >= resolveManaCost(state, combatantId, moves[id]));
+}
+
 /** Field Effect context threaded into getEffectiveStat/getCombatStatDelta only by callers that need a Field-Effect-driven stat hook (currently just Verdant Earth's statBonusEqualToStatusMagnitude) — omit entirely and both functions behave exactly as before. */
 export interface FieldEffectContext {
   active: ActiveFieldEffect | null;

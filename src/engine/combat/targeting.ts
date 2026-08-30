@@ -5,6 +5,7 @@
 
 import type { TargetMode } from '../content';
 import type { CombatState, Side } from '../state';
+import { nextInt, type RngState } from '../rng/seededRng';
 
 export function oppositeSide(side: Side): Side {
   return side === 'A' ? 'B' : 'A';
@@ -115,5 +116,67 @@ export function resolveTargets(
 
     case 'singleAlly':
       return resolveSingle(side, 'singleAlly');
+
+    // The random modes have no pure answer, so this returns everyone who COULD
+    // be picked rather than who was — narrowing to one is resolveTargetsRolled
+    // below, which is what resolveRound actually calls. The pool is what the
+    // view wants anyway (it highlights the candidates and offers no picker),
+    // and it is the same pool bothAllies/bothEnemies resolve to, caster
+    // included on the ally side.
+    case 'randomAlly':
+      return activeOf(state, side);
+
+    case 'randomEnemy':
+      return activeOf(state, enemySide);
   }
+}
+
+/** The two TargetModes whose resolution draws from the seeded RNG. */
+export function isRandomTargetMode(mode: TargetMode): boolean {
+  return mode === 'randomAlly' || mode === 'randomEnemy';
+}
+
+/**
+ * resolveTargets, plus the one draw a random mode needs — the resolution path
+ * resolveRound uses for every move.
+ *
+ * A non-random mode returns `rngState` completely untouched, which is the
+ * invariant every fight authored before random targeting existed replays on
+ * (docs/architecture.md "Determinism & RNG", same discipline as
+ * StatusApplication.chance and cleanseCount). Only 'randomAlly'/'randomEnemy'
+ * advance it, and only by one nextInt per resolution.
+ *
+ * An empty pool yields no targets and still draws nothing — a move whose side
+ * of the field is wiped rolls no dice for the privilege.
+ */
+export function resolveTargetsRolled(
+  state: CombatState,
+  actorCombatantId: string,
+  targetMode: TargetMode,
+  rngState: RngState,
+  declaredTarget?: string | null,
+  declaredTargetSlot?: { side: Side; slot: 0 | 1 } | null
+): { targetIds: string[]; nextRngState: RngState } {
+  const pool = resolveTargets(state, actorCombatantId, targetMode, declaredTarget, declaredTargetSlot);
+  if (!isRandomTargetMode(targetMode) || pool.length === 0) {
+    return { targetIds: pool, nextRngState: rngState };
+  }
+  const roll = nextInt(rngState, 0, pool.length);
+  return { targetIds: [pool[roll.value]], nextRngState: roll.nextState };
+}
+
+/**
+ * The candidate pool a rider-side random target draws from
+ * (StatusApplication.target 'randomAlly'/'randomEnemy'), resolved relative to
+ * the CASTER rather than to the move's own target — Rising Static's move
+ * target is an ally and its Conduct rider is an enemy, so the two cannot share
+ * one resolution.
+ */
+export function rollRiderTarget(
+  state: CombatState,
+  actorCombatantId: string,
+  riderTarget: 'randomAlly' | 'randomEnemy',
+  rngState: RngState
+): { targetIds: string[]; nextRngState: RngState } {
+  return resolveTargetsRolled(state, actorCombatantId, riderTarget, rngState);
 }

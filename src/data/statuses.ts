@@ -104,8 +104,10 @@ export const statuses: Record<string, StatusDefinition> = {
     // the old, now-cut Expose used), not an acute effect you dodge by pivoting.
     clearsOnSwitch: false,
     // Detonate-only. Only a move with its own `statusApplication: { statusId: 'Conduct' }`
-    // (moves.ts voltaicJolt) plants the mark; ANY Storm/Iron damage move can then cash it
-    // in via this list. 2026-08-21 designer correction: triggerTypes previously also drove
+    // plants the mark — the authored Storm slate does it five times (moves.ts Rising
+    // Static, Jolt, Ionize, Storm Lash, Thunderbolt); ANY Storm/Iron damage move can
+    // then cash it in via this list, which is nine more Storm rows carrying this hook
+    // for free. 2026-08-21 designer correction: triggerTypes previously also drove
     // auto-apply, which meant every Storm/Iron hit inflicted Conduct — see statusEngine.ts
     // detonateTriggeredStatuses.
     triggerTypes: ['Storm', 'Iron'],

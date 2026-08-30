@@ -10,6 +10,19 @@ export interface MoveAction {
   moveId: string;
   /** Required for singleEnemy/singleAlly moves; ignored otherwise. */
   declaredTarget?: string | null;
+  /**
+   * Who comes IN when this move sends its user out
+   * (content.ts switchesUserOut — Storm's Tailwind). Declared here, alongside
+   * the move's own target, rather than being rolled or defaulted at
+   * resolution: a pivot is a real decision, and this file's whole point is
+   * that decisions are made before the round resolves.
+   *
+   * Ignored on any move without `switchesUserOut`. Absent (or a hero no
+   * longer benched) means the buff still lands and the pivot half simply does
+   * not happen — see MoveDefinition.switchesUserOut for why it degrades
+   * rather than fizzling.
+   */
+  switchToCombatantId?: string | null;
 }
 
 export interface SwitchAction {

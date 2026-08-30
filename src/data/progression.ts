@@ -76,7 +76,27 @@ export const progressionTable: ProgressionTable = {
     // 'wildfire' dropped with the Fire rewrite — it was fixture filler on a
     // mono-Nature hero anyway, and naturesWrath already covers the spread slot.
     wildOracle: ['vineLash', 'soulRend', 'rendingClaw', 'naturesWrath', 'overgrowth', 'weaken'],
-    stormRanger: ['quickJab', 'thunderclap', 'galeSlash', 'fangRush'],
+    // The three Storm heroes draw from the authored Storm pool (src/data/moves.ts,
+    // 2026-08-30), split by the stat each actually attacks with, same as Fire,
+    // Water and Frost. Squall (Atk 65 vs Int 35) and Scallywag (Atk 75 vs Int
+    // 30) share the physical line and are separated by what each is FOR: Squall
+    // is the Speed-90 pivot, so it gets Tailwind; Scallywag is the Attack-75
+    // bruiser, so it gets a second mark planter to feed its own Overcharge.
+    //
+    // Overcharge sits in both 50-mana pools despite costing 60. That is the
+    // move: it is free while both enemies carry Conduct, so on these two heroes
+    // it is only ever castable off a fully-marked board — see docs/combat.md
+    // for the hand-off on whether that reads as a payoff or as a dead row.
+    stormRanger: ['stormLash', 'shockSlice', 'tailwind', 'overcharge', 'quickJab', 'fangRush'],
+    // Tempest had NO pool at all before the Storm slate — a starter that could
+    // never learn a move (levelUpMovePool returns an empty list for a hero with
+    // no moveTiers entry). It takes the magical line, and with it Storm Surge,
+    // for the reason Crimson carries Stoke the Flames and Riptide carries High
+    // Tide: it buffs the whole active side, and Tempest is the only Storm
+    // STARTER, so it is the one that can be drafted alongside a second Storm
+    // hero. That the +50 Attack lands better on that partner than on Tempest
+    // itself is the point, not an accident.
+    tempest: ['ionize', 'chainLightning', 'electricBurst', 'thunderbolt', 'stormSurge', 'ionicZap'],
     shadowMonk: ['duskStrike', 'shadowVeil', 'fangRush', 'quickJab', 'nightmareGrasp'],
     marrow: ['duskStrike', 'shadowVeil', 'fangRush', 'quickJab', 'nightmareGrasp'],
     // The three Frost heroes draw from the authored Frost pool (src/data/moves.ts,
@@ -118,7 +138,12 @@ export const progressionTable: ProgressionTable = {
     hollowbark: ['naturesWrath', 'venomousBite', 'healingRain', 'rendingClaw', 'weaken'],
     aegis: ['sunstrike', 'restoreVigor', 'purify', 'consecrate', 'stunningBlow'],
     brimstone: ['sparkFlash', 'spreadingBlaze', 'backdraft', 'sparkBurst', 'nightmareGrasp', 'duskStrike'],
-    gallant: ['shrapnelBlast', 'stunningBlow', 'fortify', 'savageMaul', 'galeShot'],
+    // galeShot dropped with the Storm rewrite — it was Storm filler on a
+    // mono-IRON hero, and Iron's own five moves are already split across
+    // Gallant's kit and the four below, so there is no same-type replacement to
+    // put in the slot. Left short rather than backfilled with more off-type
+    // filler; the real fix is Iron's own authored slate.
+    gallant: ['shrapnelBlast', 'stunningBlow', 'fortify', 'savageMaul'],
     nightshade: ['shadowVeil', 'weaken', 'curseMind', 'rendingClaw', 'stunningBlow'],
     // Pincer takes the physical line — and Wash Away, which scales off Wisdom
     // (45) rather than off the category, so the 20-Intelligence wall is a
@@ -126,7 +151,7 @@ export const progressionTable: ProgressionTable = {
     // only physical Water hero in the roster; see docs/combat.md for the open
     // question about its first cast being unaffordable on a 55 pool.
     pincer: ['aquaSlice', 'waveShred', 'washAway', 'shrapnelBlast', 'refresh'],
-    scallywag: ['thunderclap', 'galeSlash', 'ironFist', 'stunningBlow', 'fangRush'],
+    scallywag: ['stormLash', 'shockSlice', 'overcharge', 'risingStatic', 'ironFist', 'stunningBlow', 'fangRush'],
     sentinel: ['stoneQuake', 'shrapnelBlast', 'weaken', 'ironFist', 'rally'],
     steamColossus: ['sparkForge', 'ironFist', 'stunningBlow', 'quickJab', 'boulderToss'],
     zenith: ['overload', 'psychicLance', 'mindSpike', 'curseMind', 'stasisField'],

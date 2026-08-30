@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import type { CSSProperties, ReactNode } from 'react';
 import type { MoveDefinition } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
-import { effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana } from '../../engine/state';
+import { effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, hasStatus, resolveManaCost } from '../../engine/state';
 import { allCombatants } from '../../data/content';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
@@ -27,7 +27,7 @@ import { StatusGlyph, statusColor } from '../shared/statusIcons';
 import { STAT_LABELS, hpTier } from '../shared/StatBars';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { TARGET_MODE_LABELS, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel } from '../shared/MoveTile';
+import { TARGET_MODE_LABELS, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderTargetLabel } from '../shared/MoveTile';
 import { overlayHost } from '../shared/overlayHost';
 
 /**
@@ -291,10 +291,15 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   const stab =
     (move.kind === 'damage' || move.kind === 'heal') && healCaster ? resolveStab(move.type, healCaster.types) > 1 : false;
   const forceBonus = attacker ? resolveElementalForceBonus(attacker, move.type, statuses) : 0;
-  // The live price, not the authored one — Wave Shred is 80 on the first cast
-  // and less on every one after it (state.ts effectiveManaCost). Out of combat
-  // there is no attacker and no ramp, so this is simply move.manaCost.
-  const liveCost = effectiveManaCost(move, attacker?.moveManaDiscounts);
+  // The live price, not the authored one, and live in both senses: Wave Shred
+  // is 80 on the first cast and less on every one after it (manaDiscountOnUse),
+  // and Overcharge is 0 while both enemies carry Conduct (conditionalManaCost).
+  // The second needs the BOARD, so it is only answerable with a fight in scope —
+  // out of combat this falls back to the ramp-only price, which is
+  // move.manaCost with no attacker and no ramp (state.ts).
+  const liveCost = context
+    ? resolveManaCost(context.combat, context.attackerId, move)
+    : effectiveManaCost(move, attacker?.moveManaDiscounts);
   const manaAfter = attacker ? attacker.currentMana - liveCost : null;
   const manaPool = attacker && attackerHero ? getMaxMana(attackerHero, attacker) : null;
 
@@ -303,6 +308,24 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   const fieldDef = move.fieldEffectApplication ? fieldEffects[move.fieldEffectApplication] : undefined;
   const conditionalDef = move.conditionalPower ? statuses[move.conditionalPower.requiresTargetStatus] : undefined;
   const gateDef = move.requiresTargetStatus ? statuses[move.requiresTargetStatus] : undefined;
+  const priorityDef = move.conditionalPriority ? statuses[move.conditionalPriority.requiresTargetStatus] : undefined;
+  /**
+   * The bracket this move would actually resolve in. The dossier is opened
+   * BEFORE a target is declared, so there is no one target to read the
+   * condition off — this answers "can this strike first right now" by checking
+   * whether ANY prospective defender is carrying the mark, and leaves the exact
+   * rule (it is the declared target's mark, read when the round is ordered) to
+   * the effect row below, which states it in full.
+   */
+  const livePriority =
+    move.conditionalPriority &&
+    context?.defenderIds.some((id) => {
+      const defender = context.combat.combatants[id];
+      return defender && !defender.fainted && hasStatus(defender, move.conditionalPriority!.requiresTargetStatus);
+    })
+      ? move.priority + move.conditionalPriority.bonus
+      : move.priority;
+  const freeDef = move.conditionalManaCost ? statuses[move.conditionalManaCost.requiresAllEnemiesStatus] : undefined;
   const hasPayload = Boolean(
     move.statDeltas?.length ||
       move.statusApplication ||
@@ -312,7 +335,10 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
       move.requiresTargetStatus ||
       move.critChance != null ||
       move.drainPercent ||
-      move.manaDiscountOnUse
+      move.manaDiscountOnUse ||
+      move.conditionalPriority ||
+      move.conditionalManaCost ||
+      move.switchesUserOut
   );
 
   const forecastIds = context && move.kind === 'damage' ? context.defenderIds : [];
@@ -393,14 +419,19 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
         {/* Never shown anywhere in the game before this card, on ten authored
             moves. The Speed glyph is the honest one to borrow — priority is
             resolved before Speed and tie-broken by it (CLAUDE.md). */}
-        {move.priority !== 0 && (
-          <span className={`move-detail-stat move-detail-stat-priority${move.priority > 0 ? ' is-fast' : ' is-slow'}`}>
+        {/* Folds in conditionalPriority, so a marked board makes Electric
+            Burst read "+1 · Strikes first" rather than printing its authored 0
+            and being contradicted by its own effect row below. Shown whenever
+            the LIVE bracket is nonzero, which is why a base-0 move can appear
+            here at all. */}
+        {livePriority !== 0 && (
+          <span className={`move-detail-stat move-detail-stat-priority${livePriority > 0 ? ' is-fast' : ' is-slow'}`}>
             <StatGlyph stat="speed" tone="inherit" />
             <strong>
-              {move.priority > 0 ? '+' : ''}
-              {move.priority}
+              {livePriority > 0 ? '+' : ''}
+              {livePriority}
             </strong>
-            <span className="move-detail-unit">{move.priority > 0 ? 'Strikes first' : 'Strikes last'}</span>
+            <span className="move-detail-unit">{livePriority > 0 ? 'Strikes first' : 'Strikes last'}</span>
           </span>
         )}
         {manaAfter !== null && manaPool !== null && (
@@ -440,6 +471,11 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
                   : move.statusApplication.duration != null
                     ? ` ${move.statusApplication.duration}`
                     : ''
+              }${
+                /* Where it lands, when that is not the move's own target — on
+                   Rising Static the +20 Speed and the Conduct go to opposite
+                   sides of the field, and only this clause says so. */
+                riderTargetLabel(move.statusApplication) ? ` — ${riderTargetLabel(move.statusApplication)}` : ''
               }`}
               note={statusDef.description}
             />
@@ -505,6 +541,36 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
                   ? `costs ${liveCost} now, ${Math.max(0, liveCost - move.manaDiscountOnUse)} after this cast — for the rest of the fight`
                   : 'stacks for the rest of the fight, on this hero only'
               }
+            />
+          )}
+          {move.conditionalPriority && (
+            <EffectRow
+              glyph={<StatusGlyph statusId={move.conditionalPriority.requiresTargetStatus} />}
+              color={statusColor(move.conditionalPriority.requiresTargetStatus)}
+              text={`${move.conditionalPriority.bonus >= 0 ? '+' : ''}${move.conditionalPriority.bonus} priority vs ${
+                priorityDef?.name ?? move.conditionalPriority.requiresTargetStatus
+              }`}
+              note="read when the round is ordered, so the mark has to already be out there — a partner applying it this round is too late"
+            />
+          )}
+          {move.conditionalManaCost && (
+            <EffectRow
+              glyph={<StatGlyph stat="manaPool" />}
+              text={`${move.conditionalManaCost.manaCost} mana while both enemies carry ${
+                freeDef?.name ?? move.conditionalManaCost.requiresAllEnemiesStatus
+              }`}
+              note={
+                attacker
+                  ? `costs ${liveCost} right now`
+                  : `${move.manaCost} otherwise — the condition reads the live board`
+              }
+            />
+          )}
+          {move.switchesUserOut && (
+            <EffectRow
+              glyph={<MoveKindGlyph kind="buff" />}
+              text="Then switch out"
+              note="the payload lands first, then the caster goes to the bench — refused, buff and all costs kept, once the side is locked in at 2 KOs"
             />
           )}
           {fieldDef && (

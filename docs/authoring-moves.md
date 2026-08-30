@@ -7,13 +7,18 @@ The designer hands over a slate of ~15 moves for one type, as a table with the c
 asks you to remove that type's existing moves, replace them, and "distribute them
 appropriately."
 
-Fire was the first (2026-08-29), Water the second and Frost the third (both
-2026-08-30). Twelve types remain. This file is what those three cost to learn, written
+Fire was the first (2026-08-29), Water the second, Frost the third and Storm
+the fourth (all 2026-08-30). Eleven types remain. This file is what those four cost to learn, written
 down so the next one is an afternoon instead of a day. Water took about a third of
 Fire's time and Frost about the same as Water, and every hour of the saving came from
 §0 step 1 — naming the engine extensions before writing any content. Frost needed two
 (a targeting gate and a status consume) and both were visible in the table on the
 first read: the words to watch for are "can only target" and "consume".
+
+Storm needed **four**, and is the reason step 1 now says *stop and ask* as well as
+*name it* (§10). Its words to watch for were "randomly", "switch out", "priority
++1 if", and "costs 0 if" — every one of them a row that reads as a small clause
+and lands as an engine decision.
 
 Read this **before** opening `src/data/moves.ts`. Read `CLAUDE.md` first if you have not.
 
@@ -138,7 +143,9 @@ statusApplication: { statusId: 'Burn', magnitude: 10, target: 'moveTarget' }
 ```
 
 - `target: 'moveTarget'` = the move's own resolved targets. `'self'` = the user
-  (recoil, or a self-buff).
+  (recoil, or a self-buff). `'randomAlly'` / `'randomEnemy'` (Storm's Rising
+  Static) let the rider resolve its OWN target, independently of the move's —
+  which is how one move buffs an ally and marks an enemy in the same cast.
 - `magnitude` for magnitude/timer statuses; `duration` for duration statuses.
 - `chance: 0.1` gates the rider on a roll. **It gates the rider, never the move** —
   the damage still lands (`CLAUDE.md`: no accuracy stat). Rolls once per target.
@@ -206,6 +213,32 @@ by 20 every time they cast it, for the rest of the fight, floored at 0. The firs
 always the authored price. If you author one of these, sanity-check that a hero who holds
 it can afford the *first* cast — the ramp cannot start otherwise.
 
+### `conditionalPriority`
+
+`{ requiresTargetStatus: 'Conduct', bonus: 1 }` (Storm's Electric Burst) raises the
+move's bracket when its **declared target** carries the status. Evaluated when the
+round is ORDERED, not when the move resolves — a bracket has to be settled before
+anything happens, so a mark planted this same round is too late. Read off the
+declared target only, so a fixed-group move never gets it.
+
+### `conditionalManaCost`
+
+`{ requiresAllEnemiesStatus: 'Conduct', manaCost: 0 }` (Storm's Overcharge) is a
+**replacement** price while every active enemy carries the status — not a discount.
+Composes with `manaDiscountOnUse` by taking the lower. Unlike `conditionalPriority`
+this IS read at resolution, so a mark planted earlier in the same round pays for it.
+Every live-fight reader must go through `state.ts resolveManaCost`;
+`effectiveManaCost` stays the board-free answer for the draft/level-up/compendium
+surfaces.
+
+### `switchesUserOut`
+
+`true` (Storm's Tailwind) sends the caster to the bench after the move's payload
+lands, with the incoming hero declared up front on `MoveAction.switchToCombatantId`.
+Respects the LOCKED lock-in rule; a block degrades the move (buff lands, mana spent,
+only the pivot refused) rather than fizzling it. If you author one, the view needs a
+second declaration stage — FightScreen reuses `SwitchInPanel` for it.
+
 ### `fieldEffectApplication`
 
 Sets the single global battlefield state for a flat **5 rounds** (never authored
@@ -228,7 +261,13 @@ and not its own.
 
 ### `target`
 
-`singleEnemy` · `bothEnemies` · `singleAlly` · `bothAllies` · `self` · `allOthers`.
+`singleEnemy` · `bothEnemies` · `singleAlly` · `bothAllies` · `self` · `allOthers` ·
+`randomAlly` · `randomEnemy`.
+
+The two random modes draw one target from the seeded RNG at resolution
+(`targeting.ts resolveTargetsRolled`). The view groups them with the fixed-group
+modes — the target row shows the candidates and doubles as the confirm control,
+because there is nothing to pick.
 
 **"Spread" in a design table means `bothEnemies`.** `allOthers` also catches your own
 partner — a real authored downside, so only use it when the table says so explicitly.
@@ -263,21 +302,27 @@ extensions; some are design decisions above your pay grade. Either way, name it.
   a self-inflicted `Burn`, which is better content anyway (it halves, and switching
   clears it) — reach for that shape first.
 - **Two-turn / charge / recharge moves.** Nothing in the round model supports a move
-  that spans rounds.
+  that spans rounds. (A move that sends its user OUT now exists —
+  `switchesUserOut` — but that resolves entirely within its own round.)
 - **Protect / shield / damage negation.**
 - **A move that applies a damage-pipeline modifier** ("+20% Fire damage for 3 rounds").
   `DamageModifier` exists but is fed only by Passives, never by moves.
 - **A second status on one move** (see §3).
-- **Random targeting** or targeting the bench. (Conditional targeting now exists,
-  but only in the one shape `requiresTargetStatus` covers — "only a target
-  carrying status X". "Only the slower foe", "only a full-HP ally" and gating on
-  the *absence* of a status are all still conversations.)
+- **Targeting the bench.** (Random targeting now exists — `randomAlly` /
+  `randomEnemy`, on the move and on a status rider independently. Conditional
+  targeting exists too, but only in the one shape `requiresTargetStatus` covers —
+  "only a target carrying status X". "Only the slower foe", "only a full-HP ally"
+  and gating on the *absence* of a status are all still conversations.)
 - **Percentage stat modifiers**, or any stat growth. Flat multiples of 5/10 only.
 - **Accuracy.** Moves always land. A "70% to hit" row is a `chance`-gated *rider* or it
   is a conversation.
-- **Priority that varies with state.** (Cost that varies with state now exists, but only
-  in the one shape `manaDiscountOnUse` covers — a self-inflicted, monotonic, per-fight
-  discount. "Costs double while Burned" is still a conversation.)
+- **Priority or cost that varies with state in a shape not already covered.** Three
+  shapes exist now: `manaDiscountOnUse` (a self-inflicted, monotonic, per-fight
+  discount), `conditionalManaCost` (a replacement price gated on every enemy
+  carrying a status), and `conditionalPriority` (a bracket bonus gated on the
+  declared target's status). "Costs double while Burned", "priority scales with
+  missing HP" and anything reading a *number* rather than a status's presence are
+  still conversations.
 - **Field effects of a non-standard duration**, or more than one active at a time.
 
 There is also **no `isValidMoveDefinition`** — nothing catches a magnitude-shape status
@@ -515,6 +560,40 @@ recur:
   physical line's Late-tier capstone cannot be cast by either hero meant to hold
   it. Reported, not tuned away, same as Fire's Inferno and Water's Wave Shred.
 
+Storm's, as a fourth — and the first slate whose §4 rows were the bulk of the
+job rather than an afternoon's extension. Four of its fifteen needed engine
+vocabulary that did not exist, and two of those (random targeting, a
+move-forced switch) had genuine design forks that were **asked about before any
+content was written** rather than improvised. That call is the single reason
+this one did not need redoing:
+
+- **A capability the slate deleted.** Nothing, for once — the old fixture Storm
+  moves were four generic attacks, and the only vector among them
+  (`voltaicJolt`, Conduct's dedicated carrier) is replaced five times over by
+  the slate. Worth noting that "no gap" is a finding too, and only knowable by
+  running the §6 grep.
+- **A locked decision the slate brushed against.** `switchesUserOut` is the
+  first move that can move a hero between the active row and the bench, which
+  puts it directly against the LOCKED lock-in rule. Resolved by asking: it
+  respects lock-in, and a block degrades the move (the buff lands, only the
+  pivot is refused) rather than gating it. Recorded in docs/combat.md.
+- **A balance consequence outside the slate.** Overcharge (60) sits in two
+  50-mana pools, castable only at its conditional price — reported, not tuned.
+  And Tempest, a STARTER, turned out to have no `moveTiers` entry at all, so it
+  could never learn a move; the slate is what surfaced it, and it is fixed here.
+
 If the type you are authoring has a type-keyed status hook (Conduct on Storm/Iron, Haunt
 on Spirit/Mind), the equivalent question is almost certainly: *is the slate priced
-knowing every one of its damage moves carries that hook for free?*
+knowing every one of its damage moves carries that hook for free?* Storm answered
+it by counting: **ten of its fifteen moves are damage moves, and every one of
+them detonates Conduct for 10% max HP with no field authored**, while five plant
+the mark. That is the type's whole engine and it is invisible in the design
+table — `test/stormMoves.test.ts` pins the count so it cannot drift silently.
+
+**The one procedural lesson from Storm**: §0 step 1 says name the engine
+extensions up front. Storm is the case where that step should also **stop and
+ask**. "Randomly give an ally X and an enemy Y" and "switch out" are not
+extensions with an obvious shape — they are questions with two or three
+defensible answers each, and picking one silently would have meant rebuilding
+the targeting model or the switch path after the fact. Two questions cost one
+round trip and saved the slate.

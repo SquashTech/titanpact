@@ -55,7 +55,25 @@ export type TargetMode =
   | 'self'
   | 'bothEnemies'
   | 'bothAllies'
-  | 'allOthers';
+  | 'allOthers'
+  /**
+   * Rolled at resolution time from the seeded RNG rather than declared by the
+   * player — Storm's Rising Static, "randomly give an ally +20 Speed and an
+   * enemy Conduct". The candidate pool is the same one 'bothAllies' /
+   * 'bothEnemies' resolve to (active, unfainted, caster INCLUDED on the ally
+   * side, matching every other ally mode here), with exactly one drawn from it.
+   *
+   * Resolved by targeting.ts resolveTargetsRolled, NOT by resolveTargets —
+   * random targeting is the one mode that cannot be a pure function of state,
+   * so it is deliberately kept out of the pure resolver instead of threading
+   * RNG through every caller. Every non-random mode still draws no RNG at all
+   * (engine determinism, docs/architecture.md "Determinism & RNG").
+   *
+   * The view offers no target picker for these — they behave like the
+   * fixed-group modes at declaration time, because there is nothing to choose.
+   */
+  | 'randomAlly'
+  | 'randomEnemy';
 
 export type MoveCategory = 'physical' | 'magical';
 
@@ -175,8 +193,18 @@ export interface StatusApplication {
   magnitude?: number;
   /** Required for duration-shape statuses. */
   duration?: number;
-  /** 'self' = the move's user; 'moveTarget' = the move's own resolved target(s). */
-  target: 'self' | 'moveTarget';
+  /**
+   * 'self' = the move's user; 'moveTarget' = the move's own resolved target(s).
+   *
+   * 'randomAlly' / 'randomEnemy' let the RIDER resolve its own target,
+   * independently of the move's — Storm's Rising Static buffs a random ally
+   * (the move's own `target`) while marking a random ENEMY with Conduct, which
+   * is the first move whose payload lands on both sides of the field at once.
+   * Same pool and same draw as the TargetMode of the same name; the move's
+   * target is rolled first, then the rider's, which is the fixed draw order
+   * this stays deterministic under.
+   */
+  target: 'self' | 'moveTarget' | 'randomAlly' | 'randomEnemy';
   /**
    * Probability in [0, 1] that this rider actually lands. Omitted = always,
    * which is every move authored before Fire's Ember ("10% chance to apply
@@ -460,6 +488,31 @@ export interface MoveDefinition {
   fieldEffectApplication?: FieldEffectId;
   manaCost: number;
   /**
+   * A REPLACEMENT price that applies only while every active enemy carries
+   * `requiresAllEnemiesStatus` — Storm's Overcharge, "costs 0 mana if both
+   * enemies have Conduct".
+   *
+   * The second authored cost that varies with state, and the first that
+   * varies with the BOARD rather than with the caster's own history
+   * (manaDiscountOnUse below). Kept as a replacement rather than a discount
+   * so "costs 0" is authored as 0 and not as a subtraction that has to be
+   * arithmetic-checked against the base price.
+   *
+   * Composes with manaDiscountOnUse by taking the LOWER of the two — neither
+   * is meant to be a way to make the other more expensive. Resolved by
+   * state.ts resolveManaCost, which is the board-aware wrapper every caller
+   * (engine spend, view affordability, the gem on the button) must use;
+   * effectiveManaCost stays the board-free answer for surfaces with no live
+   * fight (draft, level-up, compendium), where the authored price is correct.
+   *
+   * "All enemies" reads over the ACTIVE enemies only, and an empty enemy side
+   * does not satisfy it — a condition nothing can meet must not read as met.
+   */
+  conditionalManaCost?: {
+    requiresAllEnemiesStatus: StatusId;
+    manaCost: number;
+  };
+  /**
    * Each time this combatant casts this move, its cost to THAT combatant drops
    * by this much for the rest of the fight, stacking, floored at 0 — Water's
    * Wave Shred, "costs 20 less mana this combat (stackable)".
@@ -483,6 +536,44 @@ export interface MoveDefinition {
   manaDiscountOnUse?: number;
   /** Integer priority bracket; higher resolves first. */
   priority: number;
+  /**
+   * Adds `bonus` to this move's priority bracket when its DECLARED target
+   * carries `requiresTargetStatus` — Storm's Electric Burst, "priority +1 if
+   * the target has Conduct".
+   *
+   * Evaluated once, in priority.ts, against the board as it stands when the
+   * round is ORDERED — i.e. before any action this round resolves. That is
+   * forced rather than chosen: a bracket has to be known before resolution
+   * begins, so a partner planting Conduct earlier in the same round cannot
+   * retroactively speed this up. The mark has to already be on the board when
+   * you press the button, which is what makes this a payoff for the previous
+   * round rather than a same-round combo.
+   *
+   * Read off `action.declaredTarget` only, so a fixed-group move (which has
+   * no declared target) never gets the bonus. Data, not a predicate — same
+   * discipline as conditionalPower above.
+   */
+  conditionalPriority?: {
+    requiresTargetStatus: StatusId;
+    bonus: number;
+  };
+  /**
+   * Sends the USER back to the bench after the move's own payload resolves —
+   * Storm's Tailwind, "give your ally +40 Speed, switch out". The incoming
+   * hero is chosen by the player when the move is DECLARED (MoveAction
+   * .switchToCombatantId), exactly like a switch action, rather than being
+   * rolled or defaulted.
+   *
+   * Respects the LOCKED lock-in rule (CLAUDE.md "Mana & tempo"): once the
+   * side has 2+ KOs this pivot is blocked like any other voluntary switch —
+   * 2026-08-30 designer call. The move does NOT become unpressable when that
+   * happens; the buff still lands and the mana is still spent, and only the
+   * switch half fizzles (ActionBlocked, reason 'switchBlocked'). Degrading
+   * rather than gating is deliberate: requiresTargetStatus is the engine's
+   * one move-level HARD gate, and lock-in is a phase the player is already
+   * being punished by.
+   */
+  switchesUserOut?: boolean;
   target: TargetMode;
   /** Presentational flavor text only — the engine never reads this. View layer use (docs/architecture.md "Resolution and presentation are separate layers"). */
   description?: string;

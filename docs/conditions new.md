@@ -50,8 +50,8 @@ discipline** and are collected at the bottom.
 
 ### Conduct — boolean
 - Applied only by a specific move that names Conduct in its own `statusApplication`
-  (moves.ts `voltaicJolt`) — same authoring convention as every other status, not
-  automatic.
+  (moves.ts `risingStatic`, `jolt`, `ionize`, `stormLash`, `thunderbolt`) — same
+  authoring convention as every other status, not automatic.
 - Once applied, **any** Storm OR Iron based attack can detonate the mark for an
   additional **10% of target's max HP** as damage, consuming it.
 - Sharing the detonate mechanic across Storm and Iron gives Iron a signature status
@@ -67,7 +67,9 @@ discipline** and are collected at the bottom.
   should be a per-move authored choice (like Burn/Bleed/Poison/etc. via
   `statusApplication`), while detonate stays automatic for any Storm/Iron hit. Fixed
   in statusEngine.ts (`applyOrDetonateTriggeredStatuses` → `detonateTriggeredStatuses`,
-  detonate-only) plus a new dedicated move, `voltaicJolt`.
+  detonate-only) plus a new dedicated move, `voltaicJolt` — since replaced by the
+  authored Storm slate (2026-08-30), which plants the mark on five of its fifteen
+  moves and detonates it on nine.
 
 ### Poison X — timer / delayed detonation
 - First instance starts a **3-turn timer**.

@@ -199,8 +199,14 @@ export interface ActionBlockedEvent extends BaseEvent {
    * declare-then-resolve race as above with one extra cause: Stealth can
    * redirect a gated hit onto an unmarked partner, in which case it fizzles
    * rather than landing somewhere it was never allowed to go.
+   *
+   * 'switchBlocked': a move that sends its user out (content.ts
+   * switchesUserOut — Storm's Tailwind) resolved while the side was locked in
+   * (2+ KOs), or with no bench hero left to send in. Unlike the two reasons
+   * above this does NOT mean the action fizzled: the move's own payload landed
+   * and its mana was spent, and only the pivot half was refused.
    */
-  reason: 'dazed' | 'noValidTarget' | 'targetStatusMissing';
+  reason: 'dazed' | 'noValidTarget' | 'targetStatusMissing' | 'switchBlocked';
 }
 
 export interface FaintedEvent extends BaseEvent {

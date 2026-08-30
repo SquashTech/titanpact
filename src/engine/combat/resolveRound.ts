@@ -11,11 +11,11 @@
 
 import type { FieldEffectDefinition, HeroDefinition, MoveDefinition, PassiveDefinition, StatusDefinition } from '../content';
 import type { CombatState, HeroLookup, Side } from '../state';
-import { getMaxHp, getMaxMana, getEffectiveStat, effectiveManaCost, effectiveTypes, hasStatus } from '../state';
+import { getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, effectiveTypes, hasStatus } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
-import { resolveTargets, slotOfActiveCombatant, TargetNoLongerValidError } from './targeting';
+import { resolveTargetsRolled, rollRiderTarget, slotOfActiveCombatant, TargetNoLongerValidError } from './targeting';
 import { applyVoluntarySwitch, applyBenchHpRegen, SwitchBlockedError } from './switching';
 import { applyManaRegen } from './manaRegen';
 import { setFieldEffect, tickFieldEffect } from './fieldEffectEngine';
@@ -119,10 +119,15 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     events.push({ type: 'TurnStarted', round, combatantId: action.combatantId });
 
-    // Live cost, not the authored one: Wave Shred gets cheaper every time this
-    // combatant casts it (content.ts manaDiscountOnUse, state.ts
-    // effectiveManaCost). Every move without a discount prices identically.
-    const manaCost = effectiveManaCost(move, actor.moveManaDiscounts);
+    // Live cost, not the authored one, and live in BOTH senses: Wave Shred
+    // gets cheaper every time this combatant casts it (manaDiscountOnUse) and
+    // Overcharge is free while both enemies are marked (conditionalManaCost).
+    // Read off `working`, not the pre-round snapshot, so a mark planted by a
+    // faster action THIS round already pays for this one — unlike
+    // conditionalPriority, which cannot see that far because a bracket has to
+    // be settled before anything resolves. Every move carrying neither field
+    // prices identically to before (state.ts resolveManaCost).
+    const manaCost = resolveManaCost(working, action.combatantId, move);
     if (actor.currentMana < manaCost) continue; // engine-level legality guard; view must already prevent this
 
     let targetIds: string[];
@@ -131,9 +136,20 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       // so it reflects where the declared target stood before any switch this
       // round already moved it to the bench (see resolveTargets' doc comment).
       const declaredTargetSlot = action.declaredTarget ? slotOfActiveCombatant(state, action.declaredTarget) : null;
-      targetIds = resolveTargets(working, action.combatantId, move.target, action.declaredTarget ?? null, declaredTargetSlot).filter(
-        (id) => !working.combatants[id]?.fainted
+      // resolveTargetsRolled, not resolveTargets: 'randomAlly'/'randomEnemy'
+      // draw one target from the seeded RNG here. Every other mode leaves
+      // rngState byte-identical, so nothing authored before random targeting
+      // replays differently (targeting.ts).
+      const resolved = resolveTargetsRolled(
+        working,
+        action.combatantId,
+        move.target,
+        working.rngState,
+        action.declaredTarget ?? null,
+        declaredTargetSlot
       );
+      working = { ...working, rngState: resolved.nextRngState };
+      targetIds = resolved.targetIds.filter((id) => !working.combatants[id]?.fainted);
     } catch (err) {
       if (err instanceof TargetNoLongerValidError) {
         // The declared target fainted earlier this same round, resolved before this action came up
@@ -426,7 +442,23 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       const app = move.statusApplication;
       const def = statuses[app.statusId];
       if (def) {
-        const applyTargets = app.target === 'self' ? [action.combatantId] : targetIds;
+        // Three ways a rider picks its own targets. 'moveTarget' rides along
+        // with the move (the default and the case for almost everything);
+        // 'self' is recoil or a self-buff; the two random modes resolve
+        // INDEPENDENTLY of the move's own target, which is what lets Rising
+        // Static buff a random ally while marking a random enemy. The rider's
+        // roll happens after the move's, which is the fixed draw order this
+        // stays deterministic under (content.ts StatusApplication.target).
+        let applyTargets: string[];
+        if (app.target === 'self') {
+          applyTargets = [action.combatantId];
+        } else if (app.target === 'randomAlly' || app.target === 'randomEnemy') {
+          const rolledRider = rollRiderTarget(working, action.combatantId, app.target, working.rngState);
+          working = { ...working, rngState: rolledRider.nextRngState };
+          applyTargets = rolledRider.targetIds;
+        } else {
+          applyTargets = targetIds;
+        }
         // A heal-over-turn is healing, so it runs the healing formula too —
         // snapshotted once here off the CASTER, not re-read per tick off the
         // holder (healPipeline.ts scaleHotMagnitude has the reasoning).
@@ -466,6 +498,38 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         const result = cleanseStatuses(working, round, targetId, statuses, move.cleanseCount);
         working = result.state;
         events.push(...result.events);
+      }
+    }
+
+    // The pivot (content.ts switchesUserOut — Storm's Tailwind). Dead last, so
+    // the move's whole payload has already landed on a board the user was
+    // still standing on: Tailwind's +40 Speed reaches the partner, and only
+    // then does the caster leave. Routed through applyVoluntarySwitch rather
+    // than performSwitch so the LOCKED lock-in rule (2+ KOs) applies to it
+    // exactly as it does to a declared switch — 2026-08-30 designer call. A
+    // block does not fizzle the move; the buff and the mana are already spent,
+    // so it degrades to "the buff, without the pivot" and says so.
+    if (move.switchesUserOut) {
+      const incoming = action.switchToCombatantId;
+      const stillStanding = working.combatants[action.combatantId];
+      const incomingOk =
+        incoming != null &&
+        working.bench[stillStanding.side].includes(incoming) &&
+        !working.combatants[incoming]?.fainted;
+      if (stillStanding && !stillStanding.fainted && incomingOk) {
+        try {
+          const pivot = applyVoluntarySwitch(working, round, action.combatantId, incoming as string, statuses);
+          working = pivot.state;
+          events.push(...pivot.events);
+        } catch (err) {
+          if (!(err instanceof SwitchBlockedError)) throw err;
+          events.push({ type: 'ActionBlocked', round, combatantId: action.combatantId, reason: 'switchBlocked' });
+        }
+      } else if (stillStanding && !stillStanding.fainted) {
+        // No legal replacement was declared (empty bench, or the chosen hero
+        // is gone). Same beat as a lock-in block: the player is told the pivot
+        // did not happen rather than left to infer it from the board.
+        events.push({ type: 'ActionBlocked', round, combatantId: action.combatantId, reason: 'switchBlocked' });
       }
     }
   }

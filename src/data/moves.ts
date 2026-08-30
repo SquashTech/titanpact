@@ -33,10 +33,13 @@
 // and Freeze's dedicated carrier (frostLock) went the same way when Frost was
 // authored, replaced by six Frost carriers of its own —
 // which is now the only move in the game that grants ANY Elemental Force, so
-// do not delete it without replacing that vector. Conduct included: only its own dedicated move (voltaicJolt)
-// plants the mark. ANY Storm/Iron damage move — this one included — can still
-// detonate an existing mark via StatusDefinition.triggerTypes; that half stays
-// automatic — see statusEngine.ts detonateTriggeredStatuses.
+// do not delete it without replacing that vector.
+// Conduct's dedicated fixture carrier (voltaicJolt) went the same way when
+// Storm was authored: the slate plants the mark five times over (Rising
+// Static, Jolt, Ionize, Storm Lash, Thunderbolt), so that vector needed no
+// patching. ANY Storm/Iron damage move can still detonate an existing mark via
+// StatusDefinition.triggerTypes; that half stays automatic — see
+// statusEngine.ts detonateTriggeredStatuses.
 
 import type { MoveDefinition } from '../engine/content';
 
@@ -65,18 +68,6 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
     description: 'A reckless overdraw of arcane power — no hero can currently afford it.',
-  },
-  galeShot: {
-    id: 'galeShot',
-    name: 'Gale Shot',
-    type: 'Storm',
-    category: 'physical',
-    kind: 'damage',
-    basePower: 50,
-    manaCost: 10,
-    priority: 0,
-    target: 'singleEnemy',
-    description: 'A wind-propelled shot fired with sniper precision.',
   },
   duskStrike: {
     id: 'duskStrike',
@@ -849,29 +840,230 @@ export const moves: Record<string, MoveDefinition> = {
   },
 
   // --- Storm -------------------------------------------------------------
+  // The authored Storm slate (2026-08-30), replacing the four fixture moves
+  // (galeShot, galeSlash, voltaicJolt and the old magical Thunderclap).
+  //
+  // Storm is the first type whose whole slate is priced around a status hook
+  // it gets for FREE: every damage move below is a Storm move, so every one of
+  // them detonates an existing Conduct for 10% of the target's max HP without
+  // authoring a single field (statuses.ts triggerTypes). Five moves plant the
+  // mark and nine cash it in, which is the type's engine — see
+  // docs/conditions new.md for the open question about pricing it.
+  //
+  // Two rows also carry the first move-level answers to "does the board change
+  // what this costs / how fast it is": Overcharge is free while both enemies
+  // are marked, and Electric Burst jumps a bracket against a marked target.
+  risingStatic: {
+    id: 'risingStatic',
+    name: 'Rising Static',
+    type: 'Storm',
+    category: 'magical',
+    kind: 'buff',
+    // The only move in the game whose payload lands on BOTH sides of the field:
+    // the Speed goes to a random ally (the move's own target) and the Conduct
+    // to a random enemy (the rider's own, content.ts StatusApplication.target).
+    // Neither is chosen, which is what prices a two-sided effect at Early tier.
+    statDeltas: [{ stat: 'speed', amount: 20 }],
+    statusApplication: { statusId: 'Conduct', target: 'randomEnemy' },
+    manaCost: 30,
+    priority: 0,
+    target: 'randomAlly',
+    description: 'Charge builds unbidden across the field — one ally quickens, one foe starts to conduct.',
+  },
+  jolt: {
+    id: 'jolt',
+    name: 'Jolt',
+    type: 'Storm',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 40,
+    statusApplication: { statusId: 'Conduct', target: 'moveTarget', chance: 0.2 },
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A cheap arc of current that sometimes leaves the target charged.',
+  },
+  charge: {
+    id: 'charge',
+    name: 'Charge',
+    type: 'Storm',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [
+      { stat: 'speed', amount: 10 },
+      { stat: 'intelligence', amount: 10 },
+    ],
+    manaCost: 20,
+    priority: 0,
+    target: 'self',
+    description: 'Draw the storm inward and hold it (+10 Speed, +10 Intelligence).',
+  },
+  zap: {
+    id: 'zap',
+    name: 'Zap',
+    type: 'Storm',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 20,
+    manaCost: 25,
+    priority: 1,
+    target: 'singleEnemy',
+    description: 'A flick of current that lands before anything else does.',
+  },
   thunderclap: {
     id: 'thunderclap',
     name: 'Thunderclap',
     type: 'Storm',
-    category: 'magical',
+    category: 'physical',
     kind: 'damage',
-    basePower: 58,
-    manaCost: 13,
+    basePower: 45,
+    manaCost: 25,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A crack of thunder channeled into a focused shock.',
+    description: 'A concussive crack of air, close enough to feel in the chest.',
   },
-  galeSlash: {
-    id: 'galeSlash',
-    name: 'Gale Slash',
+  ionize: {
+    id: 'ionize',
+    name: 'Ionize',
+    type: 'Storm',
+    category: 'magical',
+    // No damage body at all — kind 'buff' is the engine's kind for "a move
+    // whose entire payload is its riders", whatever those riders do to the
+    // enemy (authoring-moves.md §2). The view recovers "Debuff" on its own
+    // from a non-positive status aimed at someone other than the caster.
+    kind: 'buff',
+    statusApplication: { statusId: 'Conduct', target: 'moveTarget' },
+    manaCost: 35,
+    priority: 1,
+    target: 'bothEnemies',
+    description: 'Salts the air on the far side of the field — both foes start conducting.',
+  },
+  chainLightning: {
+    id: 'chainLightning',
+    name: 'Chain Lightning',
+    type: 'Storm',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 50,
+    manaCost: 50,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'An arc that refuses to stop at the first thing it touches.',
+  },
+  tailwind: {
+    id: 'tailwind',
+    name: 'Tailwind',
+    type: 'Storm',
+    category: 'physical',
+    kind: 'buff',
+    statDeltas: [{ stat: 'speed', amount: 40 }],
+    // The pivot (content.ts switchesUserOut): the buff lands, then the caster
+    // goes to the bench and a declared hero comes in. Blocked — but only the
+    // switch half — once the side is locked in at 2+ KOs.
+    switchesUserOut: true,
+    manaCost: 45,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Hand the wind to someone else and step out of it (+40 Speed, then switch out).',
+  },
+  electricBurst: {
+    id: 'electricBurst',
+    name: 'Electric Burst',
+    type: 'Storm',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 70,
+    // Reads the board as it stood when the round was ORDERED, so the mark has
+    // to already be there when you press the button — a partner planting
+    // Conduct this same round does not speed this up (content.ts).
+    conditionalPriority: { requiresTargetStatus: 'Conduct', bonus: 1 },
+    manaCost: 50,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Current finds a charged target early — and arrives ahead of everything else.',
+  },
+  stormLash: {
+    id: 'stormLash',
+    name: 'Storm Lash',
     type: 'Storm',
     category: 'physical',
     kind: 'damage',
-    basePower: 38,
-    manaCost: 15,
+    basePower: 55,
+    statusApplication: { statusId: 'Conduct', target: 'moveTarget' },
+    manaCost: 40,
     priority: 0,
-    target: 'bothEnemies',
-    description: 'A cutting gust that slices across both foes at once.',
+    target: 'singleEnemy',
+    description: 'A whipcrack that leaves the target humming (inflicts Conduct).',
+  },
+  shockSlice: {
+    id: 'shockSlice',
+    name: 'Shock Slice',
+    type: 'Storm',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 60,
+    statusApplication: { statusId: 'Bleed', target: 'moveTarget', chance: 0.3 },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A charged edge drawn across the guard, often deep enough to open it.',
+  },
+  overcharge: {
+    id: 'overcharge',
+    name: 'Overcharge',
+    type: 'Storm',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 80,
+    // The payoff for a fully-marked board: free, but only while BOTH enemies
+    // are still carrying Conduct — and this move's own detonation is what
+    // strips one of them, so it pays for itself exactly once per setup
+    // (content.ts conditionalManaCost).
+    conditionalManaCost: { requiresAllEnemiesStatus: 'Conduct', manaCost: 0 },
+    manaCost: 60,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Dump the whole charge at once — free, if the field is already carrying it.',
+  },
+  thunderbolt: {
+    id: 'thunderbolt',
+    name: 'Thunderbolt',
+    type: 'Storm',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 90,
+    statusApplication: { statusId: 'Conduct', target: 'moveTarget' },
+    manaCost: 75,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'The whole sky, through one point (inflicts Conduct).',
+  },
+  stormSurge: {
+    id: 'stormSurge',
+    name: 'Storm Surge',
+    type: 'Storm',
+    category: 'physical',
+    kind: 'buff',
+    statDeltas: [
+      { stat: 'attack', amount: 50 },
+      { stat: 'speed', amount: 50 },
+    ],
+    manaCost: 70,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'The front arrives, and it arrives on your side (+50 Attack, +50 Speed).',
+  },
+  ionicZap: {
+    id: 'ionicZap',
+    name: 'Ionic Zap',
+    type: 'Storm',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 50,
+    manaCost: 50,
+    priority: 1,
+    target: 'singleEnemy',
+    description: 'A heavier bolt that still arrives before the round properly begins.',
   },
 
   // --- Stone -------------------------------------------------------------
@@ -1306,19 +1498,6 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
     description: 'A rattling haymaker, priced high for what it denies (inflicts Daze 2).',
-  },
-  voltaicJolt: {
-    id: 'voltaicJolt',
-    name: 'Voltaic Jolt',
-    type: 'Storm',
-    category: 'magical',
-    kind: 'damage',
-    basePower: 35,
-    statusApplication: { statusId: 'Conduct', target: 'moveTarget' },
-    manaCost: 14,
-    priority: 0,
-    target: 'singleEnemy',
-    description: "Charges the target's frame with current (inflicts Conduct).",
   },
   spectralBind: {
     id: 'spectralBind',
