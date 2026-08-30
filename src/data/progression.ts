@@ -161,12 +161,22 @@ export const progressionTable: ProgressionTable = {
     // The off-type filler (mindSpike, psychicLance, weaken) is gone now that
     // the type has its own line.
     runescribe: ['manaFont', 'study', 'arcaneBlast', 'overload', 'magicCloak', 'arcPulse', 'singularity', 'cataclysm'],
-    mindweaver: ['spectralBind', 'quickJab', 'vanish', 'stunningBlow', 'stasisField'],
+    // Cortex takes the WISDOM/control line — the half of the slate its 55/55
+    // Int/Wis frame can actually play. Mind Shatter is the anchor (it swings
+    // Wisdom, so Mental Fortress is its ramp), and Break Will -> Brain Flay is
+    // the stat-reduction engine, which wants the bulkier hero because it costs
+    // whole turns before it pays. Stasis sits here for the same reason Crimson
+    // carries Stoke the Flames and Glyph carries Mana Font: it is the
+    // field-effect setter and Cortex is the type's only STARTER (heroes.ts),
+    // so it is the one that can be drafted alongside a second Mind hero.
+    // The off-type filler (spectralBind, quickJab, vanish, stunningBlow) is
+    // gone now that the type has its own line.
+    mindweaver: ['enervate', 'psychicBlow', 'stasis', 'mentalFortress', 'disorient', 'mindShatter', 'breakWill', 'brainFlay'],
     forgewright: ['ironFist', 'shrapnelBlast', 'quickJab', 'stunningBlow'],
     packAlpha: ['rendingClaw', 'quickJab', 'fortify', 'weaken'],
     // --- Stone/Spirit starters + the new Iron starter (2026-08-17) ---
     valor: ['quickJab', 'shrapnelBlast', 'stunningBlow', 'rally'],
-    revenant: ['specterHowl', 'purify', 'weaken', 'curseMind'],
+    revenant: ['specterHowl', 'purify', 'weaken', 'spectralBind'],
     crag: ['faultLine', 'rubbleRush', 'retribution', 'boulderSlam', 'provoke', 'weaken', 'rally'],
 
     // --- Rime, Cube, Mordrax (2026-08-17) ---
@@ -189,7 +199,13 @@ export const progressionTable: ProgressionTable = {
     // still grows a movepool like any other hero below EVOLUTION_LEVEL.
     // Int 75 / Atk 35, so the MAGICAL Shadow line — and the only hero holding
     // Eclipse, the slate's 80-mana execute.
-    lucius: ['umbralBeam', 'eclipse', 'umbralWave', 'enfeeble', 'psychicLance', 'mindSpike'],
+    // Lucius keeps the magical SHADOW line and takes the raw magical half of
+    // the Mind slate alongside it (§7: a dual-typed hero keeps both). Int 75
+    // is the type's real caster stat, so the straight-damage rows land here
+    // and the Wisdom-scaling ones go to Cortex. Wicked Fear is a deliberate
+    // upgrade path from the spectralBind already in its kit — same Haunt, 50
+    // base power attached.
+    lucius: ['umbralBeam', 'eclipse', 'umbralWave', 'enfeeble', 'psychock', 'wickedFear', 'psionicWave', 'lull'],
 
     // --- Hollowbark, Aegis, Brimstone, Gallant, Nightshade, Pincer,
     // Scallywag, Sentinel, Bellows, Zenith (2026-08-22) ---

@@ -262,7 +262,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Lucius',
     types: ['Shadow', 'Mind'],
     baseStats: { hp: 100, attack: 35, defense: 40, intelligence: 75, wisdom: 55, speed: 65, manaPool: 70, mpRegen: 10 },
-    moveIds: ['umbraBolt', 'curseMind', 'spectralBind'],
+    moveIds: ['umbraBolt', 'enervate', 'spectralBind'],
     starter: false,
   },
   nightshade: {
@@ -306,12 +306,22 @@ export const heroes: Record<string, HeroDefinition> = {
   },
 
   // --- Mind --------------------------------------------------------------
+  // Cortex is the type's only STARTER and its bulk/tempo half: HP 100 and
+  // Speed 67 against Lucius's Int 75. Its Intelligence and Wisdom are BOTH 55,
+  // which would normally make it a weak caster — and the authored slate is
+  // what rescues that, because Mind Shatter swings WISDOM in place of
+  // Intelligence (moves.ts offStatOverride). Cortex is the hero that move
+  // exists for: Brain Ward and Mental Fortress read as defensive buffs and are
+  // also its damage ramp. See docs/authoring-moves.md for the roster question
+  // its 53 Attack still raises.
   mindweaver: {
     id: 'mindweaver',
     name: 'Cortex',
     types: ['Mind'],
     baseStats: { hp: 100, attack: 53, defense: 45, intelligence: 55, wisdom: 55, speed: 67, manaPool: 75, mpRegen: 10 },
-    moveIds: ['psychicLance', 'mindSpike', 'curseMind'],
+    // The opener, the Wisdom stack that scales Mind Shatter later, and the
+    // slate's only heal. Floor 15, so a 75 pool acts every round from level 1.
+    moveIds: ['psiBolt', 'brainWard', 'dopamine'],
     starter: true,
   },
 
@@ -331,7 +341,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Warden',
     types: ['Iron'],
     baseStats: { hp: 135, attack: 55, defense: 90, intelligence: 20, wisdom: 50, speed: 30, manaPool: 40, mpRegen: 10 },
-    moveIds: ['quickJab', 'stunningBlow', 'curseMind'],
+    moveIds: ['quickJab', 'stunningBlow', 'fortify'],
     starter: false,
   },
   valor: {

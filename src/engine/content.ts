@@ -701,6 +701,77 @@ export interface MoveDefinition {
    */
   statDeltaTarget?: 'moveTarget' | 'self' | 'bothAllies';
   /**
+   * Probability in [0, 1] that this move's `statDeltas` actually land — Mind's
+   * Psi Bolt, Psychock and Psionic Wave, "20% chance to reduce the target's
+   * Wisdom by 20".
+   *
+   * The exact sibling of `StatusApplication.chance` and it inherits that
+   * field's three rules wholesale, because a chanced stat delta and a chanced
+   * status rider are the same mechanic pointed at different state:
+   *
+   * - **It gates the RIDER, never the move.** The damage/heal/buff body
+   *   resolves unconditionally — CLAUDE.md "No accuracy stat", moves always
+   *   land. Psi Bolt at 20% is a 40 BP hit that sometimes also debuffs, not a
+   *   debuff that sometimes misses.
+   * - **Rolled once per resolved stat-delta target**, so a chanced SPREAD move
+   *   (Psionic Wave) can catch one foe and miss the other. Rolled after this
+   *   action's damage rolls and before the next action's, the same fixed draw
+   *   order StatusApplication.chance sits in (docs/architecture.md
+   *   "Determinism & RNG").
+   * - **Omitted draws no RNG at all**, so every move authored before this
+   *   field replays identically.
+   *
+   * Gates the whole delta list together rather than per delta: a row reading
+   * "20% chance to reduce Intelligence and Wisdom by 30" is one coin flip with
+   * two consequences, not two flips. A move wanting independent odds per stat
+   * would need a different field, and nothing has asked for one.
+   *
+   * Applies to `derivedStatDeltas` too, since those expand into ordinary
+   * StatDeltas before this is read — no content combines them today.
+   */
+  statDeltaChance?: number;
+  /**
+   * Any kind. DOUBLES every stat this move's resolved targets are already
+   * debuffed on — Mind's Brain Flay, "spread, double stat reductions on
+   * enemies". The slate's capstone and the payoff for a type with six
+   * stat-reduction rows.
+   *
+   * Reads and writes `Combatant.statModifiers` ONLY, never
+   * `baselineStatModifiers`. That split is the whole definition: statModifiers
+   * is what this fight has inflicted, baselineStatModifiers is the loadout
+   * (equipment, relics, class, Evolution grants — src/run/). Doubling the NET
+   * of the two would make a target's armor change how hard its debuffs are
+   * amplified, which is not what "double stat reductions" says and is not a
+   * relationship anything else in the game has.
+   *
+   * Every stat with a negative modifier, not a named list. Break Will reduces
+   * Attack and Lull reduces Intelligence, so restricting this to the magical
+   * pair would make the slate's own biggest debuff not a payoff for its own
+   * capstone.
+   *
+   * Three things fix its shape:
+   *
+   * - **It COMPOUNDS** (2026-08-30 designer call). A second cast doubles the
+   *   already-doubled figure: -50 -> -100 -> -200. There is no per-fight flag
+   *   and no memory of the original reduction — the move reads the number on
+   *   the board and doubles it, which is the rule a player can do in their
+   *   head. The price is 80 mana, a spread cast, and needing the debuffs to
+   *   already be there.
+   * - **It cannot drive a stat below 1.** Nothing here clamps; state.ts
+   *   getEffectiveStat does, for every reader at once. The modifier itself is
+   *   allowed to go arbitrarily negative — what a player sees is the floored
+   *   stat, so a third cast into an already-bottomed-out target is a real
+   *   waste rather than a hidden one.
+   * - **It does not touch the multiples-of-5/10 lock** (CLAUDE.md). Doubling a
+   *   multiple of 5 is a multiple of 5, so unlike `derivedStatDeltas` this
+   *   needs no exemption.
+   *
+   * Emits an ordinary `StatChanged` per stat it doubles, with `delta` set to
+   * the amount ADDED (a -50 becoming -100 reports -50), so the Battle Log and
+   * every view reading the event stream need no special case.
+   */
+  doublesStatReductions?: boolean;
+  /**
    * Any kind. Stat deltas whose AMOUNT is read off live state at cast time
    * rather than authored as a number — Arcane's Arcane Overflow, "allies gain
    * Attack and Intelligence equal to the user's current Mana (before casting

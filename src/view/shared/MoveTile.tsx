@@ -172,6 +172,11 @@ export function grantsRatherThanInflicts(app: NonNullable<MoveDefinition['status
 
 function isDebuff(move: MoveDefinition): boolean {
   if (move.statDeltas?.some(({ amount }) => amount < 0)) return true;
+  // Brain Flay (content.ts doublesStatReductions) authors NO deltas of its own
+  // and no status — its whole payload is amplifying reductions already on the
+  // enemy — so neither rule below can see it and it would read as a Buff. It is
+  // the most one-sided debuff in the game.
+  if (move.doublesStatReductions) return true;
   const applied = move.statusApplication;
   return applied != null && applied.target !== 'self' && !statuses[applied.statusId]?.positive;
 }
@@ -291,8 +296,17 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     const where =
       move.statDeltaTarget === 'bothAllies' ? ' (Both Allies)' : move.statDeltaTarget === 'self' ? ' (Self)' : '';
     const deltas = move.statDeltas.map(({ stat, amount }) => `${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]}`).join(', ');
-    parts.push(deltas + where);
+    // A chanced delta has to say so, the same way Ember's Burn chip does
+    // (content.ts statDeltaChance). Without the odds "-20 Wisdom" reads as a
+    // guarantee, and Psi Bolt lands it one time in five.
+    const odds = move.statDeltaChance != null ? `${Math.round(move.statDeltaChance * 100)}% chance: ` : '';
+    parts.push(odds + deltas + where);
   }
+
+  // Brain Flay states a RULE rather than a number, for the same reason
+  // Arcane Overflow does below: what it is worth is whatever the enemy's stat
+  // line already says (content.ts doublesStatReductions).
+  if (move.doublesStatReductions) parts.push('Doubles stat reductions already on the target');
 
   // Arcane Overflow's grants have no number to print — the number is whatever
   // the caster's mana happens to be when they press it (content.ts

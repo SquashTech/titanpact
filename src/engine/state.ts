@@ -316,7 +316,27 @@ export function getEffectiveStat(
     raw += statusMagnitude(combatant, statusBonus.statusId);
   }
 
-  return raw;
+  // FLOOR OF 1 (2026-08-30 designer call, raised by the Mind slate). Every
+  // effective stat in the game bottoms out at 1 — this is the single
+  // chokepoint every reader already goes through (getMaxHp and getMaxMana are
+  // thin wrappers over it, and the damage pipeline reads both sides of its
+  // ratio through it), so the invariant lives in one place rather than in
+  // every caller.
+  //
+  // It was not merely a Brain Flay concern. Nothing clamped here before, and
+  // the authored slates had already outgrown the gap: Break Will alone is
+  // -50 Attack, which puts an Attack-25 caster at -25, and a NEGATIVE defStat
+  // inverts the off/def ratio so an attack HEALS its target, while a defStat
+  // of exactly 0 makes it Infinity. Mind's capstone (content.ts
+  // doublesStatReductions) only made it reachable twice as fast.
+  //
+  // Applied LAST, after Freeze's halving and Verdant Earth's bonus, so a
+  // Speed-1 hero that gets Frozen reads 1 rather than 0 and still takes a
+  // turn. Deliberately flat across every StatKey rather than carved out per
+  // stat: no content debuffs hp, manaPool or mpRegen today, so the floor
+  // cannot bind on those, and a future "MP Regen 0" debuff should be a
+  // conversation rather than something this clamp silently forbids.
+  return Math.max(1, raw);
 }
 
 export function hasStatus(combatant: Combatant, statusId: StatusId): boolean {

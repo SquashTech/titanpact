@@ -113,7 +113,7 @@ unchanged, so nothing else moved.
 | --- | --- | --- | --- |
 | Magical Surge | Arcane | Doubles MP Regen | `manaFont`, `magicCloak` (Glyph) |
 | Scorched Land | Fire | Burn no longer decays | `spreadingBlaze` (Brimstone) |
-| Stasis Bubble | Mind | Reverses same-bracket Speed order | `stasisField` (Cortex) |
+| Stasis Field | Mind | Reverses same-bracket Speed order | `stasis` (Cortex) |
 | Sanctuary | Light | Heal-kind moves get +1 priority | `consecrate` (Solace) |
 | Verdant Earth | Nature | +Attack/+Intelligence equal to your own Renew | `magicGrowth`, `forceOfNature` (Sylva) |
 

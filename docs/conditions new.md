@@ -232,6 +232,26 @@ that matter:
   present (`resolveRound.ts`) — an unchanced rider draws nothing, so every replay
   recorded before this existed reproduces byte-identically.
 
+## Chanced stat deltas (2026-08-30, Mind)
+
+`MoveDefinition.statDeltaChance` is the exact sibling of `StatusApplication.chance`
+above, for the three Mind rows reading "20% chance to reduce the target's Wisdom by 20"
+(Psi Bolt, Psychock, Psionic Wave). It inherits that field's three rules wholesale,
+because a chanced stat delta and a chanced status rider are the same mechanic pointed at
+different state:
+
+- **It gates the rider, never the move.** The damage body resolves unconditionally —
+  `CLAUDE.md` "No accuracy stat". Psi Bolt is a 40 BP hit that sometimes also debuffs,
+  not a debuff that sometimes misses.
+- **Rolled once per resolved target**, so a chanced spread (Psionic Wave) can catch one
+  foe and miss the other.
+- **Omitted draws no RNG at all**, so every move authored before it replays identically.
+
+One thing it does *not* copy: the roll gates the **whole delta list together**. A row
+reading "20% chance to reduce Intelligence and Wisdom by 30" is one coin flip with two
+consequences, not two flips. Independent odds per stat would be a different field and
+nothing has asked for one.
+
 ## Limited cleanse (2026-08-30)
 
 `MoveDefinition.cleanseCount` (`engine/content.ts`): paired with `cleanses`, strips

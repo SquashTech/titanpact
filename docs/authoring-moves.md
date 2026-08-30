@@ -9,8 +9,9 @@ appropriately."
 
 Fire was the first (2026-08-29), Water the second, Frost the third, Storm
 the fourth, Stone the fifth, Nature the sixth, Light the seventh, Shadow the
-eighth and Arcane the ninth (all 2026-08-30). Six types remain. This file is
-what those nine cost to learn, written down so the next one is an afternoon
+eighth, Arcane the ninth and Mind the tenth (all 2026-08-30). Five types
+remain. This file is
+what those ten cost to learn, written down so the next one is an afternoon
 instead of a day. Water took about a third of
 Fire's time and Frost about the same as Water, and every hour of the saving came from
 §0 step 1 — naming the engine extensions before writing any content. Frost needed two
@@ -112,6 +113,36 @@ this is not "how much?" but **"what takes it away?"** — a ceiling, a decay, a
 Rest, a round boundary, a switch, a map node are six different answers and the
 table gives none of them. Asked as one multiple-choice question up front, it
 cost one round trip; discovered afterwards, each one is a rebuild.
+
+Mind needed **two**, and its lesson is the sharpest version yet of Arcane's.
+Its words to watch for were "20% chance to reduce" and "double stat
+reductions" — but neither of those is the finding. The finding is what the
+designer said when asked about the second one: *"Compounds for sure, but I
+think it's worthy of mentioning at this point that we need to make sure stats
+can never drop below 1."*
+
+**The slate's most important change was to a function no Mind move calls.**
+`getEffectiveStat` had no clamp, and the authored slates had already outgrown
+that without anyone noticing: Break Will alone is −50 Attack, which puts an
+Attack-25 caster at −25, and a NEGATIVE `defStat` inverts the off/def ratio so
+an attack HEALS its target. That bug was reachable by Stone's and Shadow's
+content too. Nobody had written a stat low enough to find it.
+
+**The generalisation, and it is the counterpart to Arcane's:** Arcane's slate
+*removed an invariant* (mana's ceiling) and the work was grepping every reader
+of the field. Mind's slate *discovered a missing one* — and the way it got
+found was not by reading the design table at all. It got found by asking the
+designer a question about a move and having them answer about the SYSTEM.
+When a row would push an existing number somewhere no content has pushed it
+before, the question worth asking is not "how much?" but **"what happens at
+the extreme?"** — and the honest place to answer it is the chokepoint every
+reader shares, not the move that got there first.
+
+The corollary for §5: a clamp is not a feature of the move that needed it.
+Brain Flay writes an uncapped modifier and `getEffectiveStat` floors what is
+read out of it, which keeps "how far is this target debuffed" and "what can
+this target actually do" as two separate facts. Clamping at the write site
+would have made a third Brain Flay silently identical to a second.
 
 Read this **before** opening `src/data/moves.ts`. Read `CLAUDE.md` first if you have not.
 
@@ -441,6 +472,34 @@ targets — `'moveTarget'` (the default, and every move authored before it), `'s
 or `'bothAllies'`. Reach for it the moment a damage row also says "allies gain": that
 is a move whose two halves land on opposite sides of the field, and it is the exact
 shape `StatusApplication.target` already solves for a status rider.
+
+### `statDeltaChance`
+
+`statDeltaChance: 0.2` (Mind's Psi Bolt, Psychock, Psionic Wave) is
+`StatusApplication.chance` for stat deltas, and behaves identically: it gates the
+DELTAS and never the move's own body, it rolls once per resolved target (so a chanced
+spread catches one foe and misses the other), and it draws no RNG at all when absent.
+One difference — the roll gates the whole delta list together, so "20% chance to reduce
+Intelligence and Wisdom" is one flip with two consequences.
+
+### `doublesStatReductions`
+
+`doublesStatReductions: true` (Mind's Brain Flay) doubles every stat the move's resolved
+targets are already debuffed on. A move authoring this carries no `basePower`; what it
+is worth is entirely what the board already says.
+
+Reads and writes `statModifiers` ONLY, never `baselineStatModifiers` — the first is what
+this fight inflicted, the second is the loadout, and a target's armor must not change how
+hard its debuffs amplify. Every negatively-modified stat, not a named list. Positive
+modifiers are untouched.
+
+It **compounds** (−50 → −100 → −200): it doubles the number on the board, so a second
+cast doubles the doubled one. Nothing clamps here — `getEffectiveStat` floors every stat
+at 1 for every reader at once, which is where that invariant belongs. Pressing it on a
+clean board changes nothing and still costs the mana, the Retribution shape.
+
+If you author one of these, the button needs the LIVE figure and not only the rule:
+FightScreen carries a `−N more` chip for exactly the reason the retribution chip exists.
 
 ### `offStatOverride`
 
@@ -1164,6 +1223,63 @@ touched:
   artillery and battery, no shared pool entries — and it is the second slate
   running where §7 was what surfaced a roster problem. **Distribution keeps
   being a roster audit wearing a movepool hat.**
+
+Mind's, as a tenth — the slate whose engine work was two small fields and one
+invariant, and whose findings are all about a **roster of two**:
+
+- **A capability the slate deleted — one, and it is a price point again.**
+  `mindSpike` cost **6** and was priority **+1**; `psychicLance` cost 13 for 62 base
+  power, which was the best power-per-mana in the game. The authored floor is 15 and
+  the cheapest real attack is Psi Bolt at 20. The type kept its bracket row (Psychic
+  Blow, +1) but at 30 rather than 6, so Mind's "act every round, always first, on
+  nothing" option is gone. That is the same 18 → 45/50 shape Light and Arcane both
+  reported, now on its fourth slate — **it is a pattern across authored slates rather
+  than a per-type call**, and worth deciding deliberately rather than four more times
+  by omission.
+- **A locked decision the slate brushed against — and this one is the reason the
+  slate mattered.** `getEffectiveStat` now floors every stat at 1
+  (`docs/combat.md`). It does not break the two-pipeline lock or the
+  multiples-of-5/10 lock — it clamps what is READ, and every authored delta is still
+  a multiple of 5. What is new is that the stat pipeline now has a boundary it never
+  had, and the boundary is where the damage formula stops being defined. Recorded
+  rather than left implicit, along with the shape deliberately left unbuilt: the
+  modifier itself is NOT clamped, so "how far is this debuffed" and "what can this
+  hero do" stay two separate facts.
+- **A balance consequence outside the slate — three, and all three are about the two
+  heroes that hold the type.**
+  1. **Cortex is a 50/50 hero with no physical half to take.** Attack 53 against
+     Intelligence 55, and the authored sixteen contain **zero physical moves**, so
+     over half of Cortex's offensive stat budget is inert. It is not a trap pick —
+     Mind Shatter swings **Wisdom** (`offStatOverride`), which is the one move in the
+     game that makes a Wisdom-55/Int-55 frame a real attacker, and the distribution
+     is built around exactly that. But the 53 Attack is now paying for nothing, and
+     whether Cortex should become a proper caster (the Marrow treatment) or keep the
+     flat line as a type-graft hook is a roster decision, not a movepool one.
+  2. **Cerebral Shock has no holder, by design.** It applies Conduct, whose
+     `triggerTypes` are `['Storm', 'Iron']`, so no Mind move can detonate its own
+     mark — confirmed as intended (Mind sets up, a partner cashes in). It is
+     therefore the most partner-dependent move in the roster, and it is in the
+     `test/stoneMoves.test.ts` orphan list rather than stuffed into a pool where it
+     would be a dead button. Per Stone's rule: the deliverable is the list, not a fix.
+  3. **Mind has no enemy.** Zero Mind entries in `enemies.ts`, so none of these
+     sixteen ever appears on the side the player is fighting — Nature's and Arcane's
+     finding for the third time. It bites hardest here of the three, because Mind's
+     whole plan is a stat line the DEFENDER is supposed to answer by switching or
+     cleansing, and a player who has only ever cast Disorient has never had to.
+- **A fourth, and it is §7 doing its job for the third slate running.** Cortex and
+  Lucius were not duplicates (Int 55 vs 75 is a real gap) but their pools were both
+  off-type filler drawn from the same four fixture moves, so neither had a line.
+  They now split by the axis the slate actually has: Cortex takes the Wisdom/control
+  half its 55/55 frame can play, Lucius the raw magical half its Int 75 wants, with
+  no shared entries. **Distribution keeps being a roster audit wearing a movepool
+  hat** — that is three for three.
+
+**One more procedural note, from Mind.** §0 step 1 says name the extensions up front
+and §10 says report what you hit. Mind is the case where those were the same act:
+the stat floor exists because a question about Brain Flay's second cast was asked
+*before* any content was written, and the designer answered a question that had not
+been asked. **Ask the extension question in a form that invites the system answer** —
+"what does a second cast do?" got a better result than "which multiplier?" would have.
 
 **The procedural lesson from Stone**, extending Storm's: when you finish the
 slate, run the reachability check as well as the dangling-id one. They are

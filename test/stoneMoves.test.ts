@@ -511,6 +511,14 @@ test('stone: no move is unreachable that was not already known to be', () => {
   // both legitimate, and neither a reason to stuff them somewhere today. Storm's
   // Zap and both Ancient moves predate this slate for the same reason.
   //
+  // cerebralShock (Mind, 2026-08-30) is the newest entry and the clearest case
+  // for why this list exists. It applies CONDUCT, whose triggerTypes are
+  // ['Storm', 'Iron'] (src/data/statuses.ts), so it is worth its 40 mana only
+  // on a team that also fielded a Storm or Iron hero — and neither Mind hero
+  // is one. Putting it in Cortex's or Lucius's pool would not make it
+  // reachable in any sense that matters; it would make it a dead button on
+  // the two heroes least able to use it. Designer call: intended.
+  //
   // So this test does not say an orphan is wrong. It says a NEW one has to be
   // noticed and consciously added here rather than appearing by accident.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
@@ -521,5 +529,5 @@ test('stone: no move is unreachable that was not already known to be', () => {
   for (const pool of Object.values(progressionTable.moveTiers)) for (const id of pool) reachable.add(id);
 
   const unreachable = Object.keys(moves).filter((id) => !reachable.has(id)).sort();
-  assert.deepStrictEqual(unreachable, ['forgottenCurse', 'landslide', 'rockfall', 'runicBlast', 'tremor', 'zap']);
+  assert.deepStrictEqual(unreachable, ['cerebralShock', 'forgottenCurse', 'landslide', 'rockfall', 'runicBlast', 'tremor', 'zap']);
 });

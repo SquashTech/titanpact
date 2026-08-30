@@ -95,6 +95,18 @@ interface MoveRowProps {
    */
   banked: number;
   /**
+   * The total stat reduction currently standing on the active enemies — the
+   * number a `doublesStatReductions` move (Mind's Brain Flay) would ADD if
+   * pressed right now, which since it doubles is the same figure again.
+   *
+   * The exact reason `banked` exists, for the exact same failure: Brain Flay
+   * carries no Base Power and no authored number, so without this the row
+   * shows an 80-mana move with nothing on it, and pressing it on a clean board
+   * spends the mana for literally nothing. Resolved by the caller off the live
+   * board, same as `banked` and `cost`.
+   */
+  bankedReductions: number;
+  /**
    * Whether the half of a conditionalPower the player can already answer
    * WITHOUT declaring a target is met — the caster's own status (content.ts
    * conditionalPower.requiresUserStatus — Nature's Seed Shot and Branch Slam)
@@ -147,7 +159,7 @@ interface MoveRowProps {
  * rules off `:disabled`), still refuses to act on a tap, and still opens its
  * dossier on a hold.
  */
-function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, userConditionMet, liveTargetMode, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
+function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, bankedReductions, userConditionMet, liveTargetMode, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
   // Two independent ways a row can be dead, one shared treatment. `.is-unusable`
   // carries the dim; `.is-unaffordable` is kept as the narrower flag so the mana
   // gem only goes grey when mana is actually the problem (styles.css).
@@ -266,8 +278,13 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                 no status at all, so its whole payload was invisible and the
                 row read as a plain 35 BP poke. The non-damage branch below has
                 always printed these via moveEffectSummary. */}
-            {move.statDeltas?.map(({ stat, amount }) => (
+            {move.statDeltas?.map(({ stat, amount }, i) => (
               <span key={stat} className="move-eff-status">
+                {/* A chanced delta leads with its odds, for the same reason the
+                    status chip above does: Psi Bolt is a 20% -20 Wisdom, not a
+                    -20 Wisdom (content.ts statDeltaChance). Printed once, on
+                    the first chip, because one roll gates the whole list. */}
+                {move.statDeltaChance != null && i === 0 ? `${Math.round(move.statDeltaChance * 100)}% ` : ''}
                 {amount >= 0 ? '+' : ''}
                 {amount} {STAT_LABELS[stat]}
               </span>
@@ -378,7 +395,20 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
             )}
           </span>
         ) : (
-          <span className="move-effect-text">{moveEffectSummary(move, caster)}</span>
+          <span className="move-eff-row">
+            <span className="move-effect-text">{moveEffectSummary(move, caster)}</span>
+            {/* What it is worth RIGHT NOW, not what it does — the retribution
+                chip's problem exactly (content.ts doublesStatReductions).
+                Brain Flay has no Base Power and no authored number, so on a
+                clean board it is 80 mana for nothing, and the only thing that
+                changes that is a stat line the player has to be reading off
+                two enemy cards. Dims when there is nothing banked. */}
+            {move.doublesStatReductions && (
+              <span className={`move-eff-status${bankedReductions > 0 ? '' : ' move-eff-unmet'}`}>
+                −{bankedReductions} more
+              </span>
+            )}
+          </span>
         )}
       </div>
     </button>
@@ -1596,6 +1626,15 @@ export function FightScreen({
                         selected={isSelected}
                         forceBonus={resolveElementalForceBonus(combatant, move.type, statuses)}
                         banked={combatant.damageTakenSinceLastTurn}
+                        bankedReductions={enemyActiveAlive.reduce(
+                          (sum, eid) =>
+                            sum +
+                            Object.values(combat.combatants[eid].statModifiers).reduce(
+                              (acc, v) => acc + (typeof v === 'number' && v < 0 ? -v : 0),
+                              0
+                            ),
+                          0
+                        )}
                         userConditionMet={
                           move.conditionalPower?.requiresFieldEffect
                             ? combat.activeFieldEffect?.fieldEffectId === move.conditionalPower.requiresFieldEffect

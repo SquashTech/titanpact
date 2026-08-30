@@ -2416,30 +2416,310 @@ export const moves: Record<string, MoveDefinition> = {
     description: 'Opens the source itself — 150 mana to both allies, past their pools.',
   },
 
-  // --- Mind --------------------------------------------------------------
-  psychicLance: {
-    id: 'psychicLance',
-    name: 'Psychic Lance',
+  // --- Mind (AUTHORED 2026-08-30) ----------------------------------------
+  // The designed sixteen, replacing the four fixture Mind moves (psychicLance,
+  // mindSpike, curseMind, stasisField). No id is reused: `stasis` is a new id
+  // for the field-effect setter rather than `stasisField` re-authored, because
+  // the design table calls the effect "Stasis Field" and a move and a field
+  // effect sharing one name reads better than a move named after the field it
+  // is no longer the only content for.
+  //
+  // The type whose subject is the OPPONENT'S stat line. Every other slate
+  // buys damage, healing, tempo or a resource; this one buys the denominator.
+  // It runs as four lines:
+  //
+  //   1. **The Wisdom war.** Nine of the sixteen touch Wisdom, and they point
+  //      in both directions: Enervate (-30), Disorient (-30 spread) and the
+  //      three chanced riders push it down, while Brain Ward (+20) and Mental
+  //      Fortress (+30 to both allies) push it up. Wisdom is the magical
+  //      pair's DENOMINATOR (CLAUDE.md "Damage formula"), so every one of
+  //      those is a damage number wearing a support move's clothes — the type
+  //      attacks by making its own attacks bigger rather than by hitting
+  //      harder.
+  //   2. **Mind Shatter closes the loop.** It is the one move in the slate
+  //      that swings the user's WISDOM instead of Intelligence
+  //      (content.ts offStatOverride, pipeline 1). So Brain Ward and Mental
+  //      Fortress, authored as defensive buffs, are also its ramp, and the
+  //      target's Wisdom is on BOTH sides of the ratio: Enervate makes the
+  //      hit bigger and Mental Fortress makes it bigger again. 100 base power
+  //      for 80 mana is the ceiling of the slate and this is what feeds it.
+  //   3. **Brain Flay, the amplifier.** The capstone deals no damage at all
+  //      (content.ts doublesStatReductions): it doubles every reduction
+  //      already standing on both enemies. Break Will's -50/-50 becomes
+  //      -100/-100 for one more cast, and it COMPOUNDS, so the real ceiling
+  //      is however many turns the type is given. Stat mods persist through
+  //      switching (LOCKED), so nothing walks it off; the only bound is
+  //      getEffectiveStat's floor of 1.
+  //   4. **The two marks, and only one of them is Mind's.** Wicked Fear
+  //      applies HAUNT, and Mind is one of Haunt's spreadTriggerTypes
+  //      (statuses.ts), so the slate's eight single-target damage moves all
+  //      spread onto a Haunted holder's partner for free — a hidden rider
+  //      across half the slate, the same shape Conduct is for Storm, and it
+  //      is priced into these numbers. Cerebral Shock applies CONDUCT, whose
+  //      triggerTypes are ['Storm', 'Iron'] — so Mind plants a mark it can
+  //      never cash itself (2026-08-30 designer call: intended). It is the
+  //      slate's one move that is worth nothing without a specific partner.
+  //
+  // Cost floor 15 (Brain Ward), ceiling 80 (Mind Shatter, Brain Flay). One
+  // priority row (Psychic Blow, +1) and no Elemental Force grant.
+  psiBolt: {
+    id: 'psiBolt',
+    name: 'Psi Bolt',
     type: 'Mind',
     category: 'magical',
     kind: 'damage',
-    basePower: 62,
-    manaCost: 13,
+    basePower: 40,
+    // The type's opener, and the cheapest way it starts the Wisdom war: the
+    // debuff is a 1-in-5 rider (content.ts statDeltaChance), so this is a
+    // poke that occasionally sets up rather than a setup move that also pokes.
+    statDeltas: [{ stat: 'wisdom', amount: -20 }],
+    statDeltaChance: 0.2,
+    manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A piercing spear of pure thought.',
+    description: "A lance of raw thought that sometimes leaves the mind open.",
   },
-  mindSpike: {
-    id: 'mindSpike',
-    name: 'Mind Spike',
+  brainWard: {
+    id: 'brainWard',
+    name: 'Brain Ward',
+    type: 'Mind',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [{ stat: 'wisdom', amount: 20 }],
+    // The slate's cheapest move at 15, and deliberately double-purposed: read
+    // as defence it is +20 against every magical attacker, and read as offence
+    // it is +20 base power on the holder's own Mind Shatter.
+    manaCost: 15,
+    priority: 0,
+    target: 'singleAlly',
+    description: "Shores up an ally's mind — +20 Wisdom.",
+  },
+  enervate: {
+    id: 'enervate',
+    name: 'Enervate',
+    type: 'Mind',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [{ stat: 'wisdom', amount: -30 }],
+    manaCost: 25,
+    priority: 0,
+    target: 'singleEnemy',
+    description: "Drains a foe's guard — -30 Wisdom.",
+  },
+  lull: {
+    id: 'lull',
+    name: 'Lull',
+    type: 'Mind',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [{ stat: 'intelligence', amount: -20 }],
+    // The mirror of Enervate and the cheaper of the two, because Intelligence
+    // is the enemy's NUMERATOR — it blunts what comes back rather than
+    // sharpening what goes out, so it is worth less to a Mind hero on the
+    // turn it is cast and more over a long fight.
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: "Dulls a foe's focus — -20 Intelligence.",
+  },
+  dopamine: {
+    id: 'dopamine',
+    name: 'Dopamine',
+    type: 'Mind',
+    category: 'magical',
+    kind: 'heal',
+    // healPower, not flat HP: the figure the healing formula scales off the
+    // CASTER's Wisdom (docs/combat.md "The healing formula"). Which makes it
+    // the third move in the slate that Brain Ward and Mental Fortress ramp.
+    healPower: 30,
+    manaCost: 20,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Floods an ally with relief.',
+  },
+  psychock: {
+    id: 'psychock',
+    name: 'Psychock',
     type: 'Mind',
     category: 'magical',
     kind: 'damage',
-    basePower: 28,
-    manaCost: 6,
+    basePower: 60,
+    statDeltas: [{ stat: 'wisdom', amount: -30 }],
+    statDeltaChance: 0.2,
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A heavier shock that can leave the mind wide open.',
+  },
+  wickedFear: {
+    id: 'wickedFear',
+    name: 'Wicked Fear',
+    type: 'Mind',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 50,
+    // Haunt is the type's own hook (statuses.ts spreadTriggerTypes covers
+    // Spirit and Mind), so this is the slate's force multiplier: every
+    // single-target Mind attack after it also strikes the holder when it is
+    // aimed at the holder's PARTNER. Boolean-shape, so no magnitude and no
+    // duration to author.
+    statusApplication: { statusId: 'Haunt', target: 'moveTarget' },
+    manaCost: 45,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A terror that binds a foe to its partner.',
+  },
+  stasis: {
+    id: 'stasis',
+    name: 'Stasis',
+    type: 'Mind',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [
+      { stat: 'intelligence', amount: 20 },
+      { stat: 'wisdom', amount: 20 },
+    ],
+    fieldEffectApplication: 'stasisBubble',
+    // 45 for a field plus a two-stat self-buff, where the old bare setter was
+    // 20 for the field alone — the shape every authored slate has converged on
+    // (Nature, Light and Arcane all did the same): the field rides on a cast
+    // you wanted anyway rather than costing a turn spent on nothing.
+    manaCost: 45,
+    priority: 0,
+    target: 'self',
+    description: 'Stasis Field for 5 rounds: the slowest in a bracket acts first. +20 Int, +20 Wis.',
+  },
+  cerebralShock: {
+    id: 'cerebralShock',
+    name: 'Cerebral Shock',
+    type: 'Mind',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 50,
+    // Conduct's triggerTypes are ['Storm', 'Iron'] (statuses.ts), so no Mind
+    // move detonates this — the mark is for a PARTNER to cash in. 2026-08-30
+    // designer call: intended, and the most explicitly doubles-shaped move in
+    // the slate. Priced as a 50 BP hit whose rider is worth 10% of the
+    // target's max HP only on a team that brought a Storm or Iron hero.
+    statusApplication: { statusId: 'Conduct', target: 'moveTarget' },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: "Leaves a foe's nerves conducting — for an ally to set off.",
+  },
+  psychicBlow: {
+    id: 'psychicBlow',
+    name: 'Psychic Blow',
+    type: 'Mind',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 40,
+    manaCost: 30,
+    // The slate's only bracket row. Worth more to this type than the number
+    // suggests: Stasis Field REVERSES same-bracket order, so a Mind side that
+    // has set its own field is buying the front of a bracket it has also made
+    // hostile to everything else in bracket 0.
     priority: 1,
     target: 'singleEnemy',
-    description: 'A quick jab of psychic pressure — cheap and always fast.',
+    description: 'A thought that lands before the thinking does.',
+  },
+  disorient: {
+    id: 'disorient',
+    name: 'Disorient',
+    type: 'Mind',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [
+      { stat: 'intelligence', amount: -30 },
+      { stat: 'wisdom', amount: -30 },
+    ],
+    manaCost: 50,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Scrambles both foes — -30 Intelligence and -30 Wisdom.',
+  },
+  mentalFortress: {
+    id: 'mentalFortress',
+    name: 'Mental Fortress',
+    type: 'Mind',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [{ stat: 'wisdom', amount: 30 }],
+    manaCost: 40,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Both allies gain +30 Wisdom.',
+  },
+  psionicWave: {
+    id: 'psionicWave',
+    name: 'Psionic Wave',
+    type: 'Mind',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 70,
+    statDeltas: [{ stat: 'wisdom', amount: -30 }],
+    // Rolled per target (content.ts statDeltaChance), so this can debuff one
+    // foe and miss the other — the same per-target rule Ember's chanced Burn
+    // follows.
+    statDeltaChance: 0.2,
+    manaCost: 60,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'A wave of pressure across the whole field.',
+  },
+  mindShatter: {
+    id: 'mindShatter',
+    name: 'Mind Shatter',
+    type: 'Mind',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 100,
+    // PIPELINE 1 (content.ts offStatOverride): the ratio's NUMERATOR reads
+    // Wisdom instead of Intelligence. The DENOMINATOR is untouched — this is
+    // still a magical move, so it divides by the target's Wisdom — which makes
+    // it the only attack in the game where one stat sits on both sides of the
+    // ratio. Enervate makes it bigger by shrinking the bottom; Mental Fortress
+    // makes it bigger by growing the top.
+    offStatOverride: 'wisdom',
+    manaCost: 80,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Breaks a mind open with the strength of your own — swings Wisdom, not Intelligence.',
+  },
+  brainFlay: {
+    id: 'brainFlay',
+    name: 'Brain Flay',
+    type: 'Mind',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [],
+    // The capstone, and it deals nothing (content.ts doublesStatReductions):
+    // it doubles every reduction already standing on both enemies. Worth
+    // exactly what the type has already spent — 0 on a clean board, -100/-100
+    // on a board Break Will has been through. COMPOUNDS on a second cast.
+    doublesStatReductions: true,
+    manaCost: 80,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Tears open every wound already in both foes minds — doubles their stat reductions.',
+  },
+  breakWill: {
+    id: 'breakWill',
+    name: 'Break Will',
+    type: 'Mind',
+    category: 'magical',
+    kind: 'buff',
+    // -50 Attack is the slate's only touch on the PHYSICAL pipeline, and it is
+    // what stops the type being blank against a physical team. Paired with
+    // Brain Flay it is the biggest single stat swing in the game.
+    statDeltas: [
+      { stat: 'intelligence', amount: -50 },
+      { stat: 'attack', amount: -50 },
+    ],
+    manaCost: 70,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Empties both foes of the will to fight — -50 Intelligence and -50 Attack.',
   },
 
   // --- Spirit ------------------------------------------------------------
@@ -2619,18 +2899,6 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'bothAllies',
     description: 'A rousing howl that sharpens both allies’ offense.',
   },
-  curseMind: {
-    id: 'curseMind',
-    name: 'Curse Mind',
-    type: 'Mind',
-    category: 'magical',
-    kind: 'buff',
-    statDeltas: [{ stat: 'intelligence', amount: -10 }, { stat: 'wisdom', amount: -10 }],
-    manaCost: 11,
-    priority: 0,
-    target: 'singleEnemy',
-    description: "A disorienting pressure that dulls the target's mind.",
-  },
   // Goblin Chief's signature move (src/data/enemies.ts) — deliberately the
   // strongest buff in the fixture pool: 3 stats at once, both allies, where
   // every other buff move here caps at 2 stats and/or a single target.
@@ -2727,19 +2995,11 @@ export const moves: Record<string, MoveDefinition> = {
   //     own moves — Mana Font and Magic Cloak, both in the Arcane section
   //     above — and `arcaneSurge`, the standalone setter that used to live
   //     here, was deleted outright rather than having its id reused.
-  stasisField: {
-    id: 'stasisField',
-    name: 'Stasis Field',
-    type: 'Mind',
-    category: 'magical',
-    kind: 'buff',
-    statDeltas: [],
-    fieldEffectApplication: 'stasisBubble',
-    manaCost: 20,
-    priority: 0,
-    target: 'self',
-    description: "Stasis Bubble for 5 rounds: the slowest in a bracket acts first.",
-  },
+  // Stasis Bubble's standalone 20-mana setter used to sit here. The authored
+  // Mind slate (2026-08-30) replaced it with `stasis` in the Mind section
+  // above — 45 mana, and it buffs the caster's Intelligence and Wisdom on the
+  // way past. Same trade Nature, Light and Arcane all made; the effect still
+  // has exactly one setter, it is just no longer a bare one.
   // Sanctuary's standalone 20-mana setter used to sit here; the authored Light
   // slate (2026-08-30) reused its `consecrate` id for a 45-mana bothAllies HEAL
   // that also turns the ground — the same trade Nature made with Verdant Earth.

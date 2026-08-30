@@ -380,7 +380,8 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
       move.switchesUserOut ||
       move.offStatOverride ||
       move.retributionPercent != null ||
-      move.recoilPercent
+      move.recoilPercent ||
+      move.doublesStatReductions
   );
 
   const forecastIds = context && move.kind === 'damage' ? context.defenderIds : [];
@@ -506,15 +507,47 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               text={`${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]}`}
               /* Landslide buffs the caster's side while hitting the enemy's,
                  so the move's own target is the wrong answer here
-                 (content.ts statDeltaTarget). */
+                 (content.ts statDeltaTarget). A chanced delta also has to say
+                 what the odds are and that the move's own body lands anyway —
+                 the rider is gated, never the hit (content.ts
+                 statDeltaChance). */
               note={`on ${(move.statDeltaTarget === 'bothAllies'
                 ? TARGET_MODE_LABELS.bothAllies
                 : move.statDeltaTarget === 'self'
                   ? TARGET_MODE_LABELS.self
                   : TARGET_MODE_LABELS[move.target]
-              ).toLowerCase()}`}
+              ).toLowerCase()}${
+                move.statDeltaChance != null
+                  ? ` — ${Math.round(move.statDeltaChance * 100)}% chance, rolled per target; the hit itself always lands`
+                  : ''
+              }`}
             />
           ))}
+          {/* The capstone with no number at all: what it is worth is entirely
+              what the enemy's stat line already says (content.ts
+              doublesStatReductions). So the row states the rule and the note
+              carries the live total off the actual defenders, the same split
+              the derived-grant row below uses — and the same reason, that a
+              player deciding whether to spend 80 mana needs the figure, not
+              the mechanic. */}
+          {move.doublesStatReductions && (
+            <EffectRow
+              glyph={<StatGlyph stat="intelligence" />}
+              text="Doubles every stat reduction already on the target"
+              note={(() => {
+                const ids = context?.defenderIds ?? [];
+                const banked = ids.reduce((sum, id) => {
+                  const d = context?.combat.combatants[id];
+                  if (!d || d.fainted) return sum;
+                  return sum + Object.values(d.statModifiers).reduce((a, v) => a + (typeof v === 'number' && v < 0 ? -v : 0), 0);
+                }, 0);
+                if (!ids.length) return 'worth nothing against a clean stat line, and it compounds on a second cast';
+                return banked > 0
+                  ? `${banked} of reductions standing right now — this would add ${banked} more`
+                  : 'nothing is debuffed right now, so this would do nothing at all';
+              })()}
+            />
+          )}
           {/* The one stat grant in the game with no authored number — so the
               row prints the LIVE figure when there is a caster to read it off,
               and the rule when there is not (content.ts derivedStatDeltas).

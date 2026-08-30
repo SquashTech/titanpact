@@ -29,7 +29,7 @@
 // thing that stopped starting kits being uniform three across the draft
 // screen. So the attachment lives in src/data/progression.ts moveTiers now
 // (crimson→spreadingBlaze, wildOracle→magicGrowth, dawnwarden→consecrate,
-// runescribe→manaFont, mindweaver→stasisField), and each effect is
+// runescribe→manaFont, mindweaver→stasis), and each effect is
 // something a run grows into rather than opens with.
 //
 // The authored slates have since replaced the bare 20-mana setters with moves
@@ -48,6 +48,12 @@
 //     READS the field back as a targeting condition
 //     (engine/content.ts conditionalTarget) — the second field effect a move
 //     reads, and the first one read for something other than damage.
+//   - Stasis Bubble was renamed "Stasis Field" for display on 2026-08-30,
+//     when the Mind slate arrived calling it that — the same call Magical
+//     Surge got, and the `stasisBubble` id is likewise unchanged, so nothing
+//     else moved. Its bare 20-mana setter was replaced at the same time by
+//     the slate's own `stasis` (45 mana, and it buffs the caster's
+//     Intelligence and Wisdom on the way past).
 //   - Sanctuary keeps exactly one setter, but the Light slate (2026-08-30)
 //     reused the `consecrate` id for a 45-mana bothAllies HEAL that turns the
 //     ground on the way past. Sanctuary is also the first field effect a MOVE
@@ -74,7 +80,7 @@ export const fieldEffects: Record<string, FieldEffectDefinition> = {
   },
   stasisBubble: {
     id: 'stasisBubble',
-    name: 'Stasis Bubble',
+    name: 'Stasis Field',
     description: 'Reverse the move order in each priority bracket.',
     flavorType: 'Mind',
     reversesSpeedOrder: true,

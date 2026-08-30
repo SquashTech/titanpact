@@ -208,13 +208,13 @@ test('round: a declared Rest action fully restores mana and skips the turn (soft
 
 test('round: Rest resolves dead last regardless of speed — a faster Resting hero does not preempt a slower attacker', () => {
   const state = twoVTwoFixture(21);
-  // a2 (tidecaller, speed 55) rests; b1 (ironWarden, speed 30) uses curseMind (priority 0, same
+  // a2 (tidecaller, speed 55) rests; b1 (ironWarden, speed 30) uses quickJab (priority 0, same
   // bracket every other authored move lives in). Despite a2 being both faster AND in the same
   // priority bracket by default, the attack must still resolve first — Rest sorts below every
   // real move priority via REST_PRIORITY_BRACKET (priority.ts), not by winning a speed race.
   const actions: Action[] = [
     { kind: 'rest', combatantId: 'a2' },
-    { kind: 'move', combatantId: 'b1', moveId: 'curseMind', declaredTarget: 'a2' },
+    { kind: 'move', combatantId: 'b1', moveId: 'quickJab', declaredTarget: 'a2' },
   ];
   const { events } = resolveRound(state, actions, config);
   const restedIdx = events.findIndex((e) => e.type === 'Rested');

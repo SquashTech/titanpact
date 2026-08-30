@@ -9,7 +9,7 @@
 // except Stealth, which ticks at the START of the round (before actions
 // resolve) so it also protects the round after the one it was cast in.
 
-import type { FieldEffectDefinition, HeroDefinition, MoveDefinition, PassiveDefinition, StatDelta, StatusDefinition } from '../content';
+import type { FieldEffectDefinition, HeroDefinition, MoveDefinition, PassiveDefinition, StatDelta, StatKey, StatusDefinition } from '../content';
 import type { CombatState, HeroLookup, Side } from '../state';
 import { getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveTargetMode, effectiveTypes, hasStatus } from '../state';
 import type { CombatEvent } from '../events';
@@ -661,6 +661,18 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     for (const targetId of statDeltaTargets) {
       if (!working.combatants[targetId] || working.combatants[targetId].fainted) continue;
+      // Chanced deltas (content.ts statDeltaChance — Psi Bolt's "20% chance to
+      // reduce the target's Wisdom by 20"). The exact sibling of
+      // StatusApplication.chance below: rolled once PER TARGET so a chanced
+      // spread move catches one foe and misses the other, gating only the
+      // deltas and never the move's own body (CLAUDE.md "No accuracy stat"),
+      // and drawing NOTHING when the field is absent so every fight authored
+      // before it replays identically.
+      if (move.statDeltaChance !== undefined) {
+        const roll = nextFloat(working.rngState);
+        working = { ...working, rngState: roll.nextState };
+        if (roll.value >= move.statDeltaChance) continue;
+      }
       for (const delta of allStatDeltas) {
         const current = working.combatants[targetId];
         const newValue = (current.statModifiers[delta.stat] ?? 0) + delta.amount;
@@ -669,6 +681,48 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           combatants: { ...working.combatants, [targetId]: { ...current, statModifiers: { ...current.statModifiers, [delta.stat]: newValue } } },
         };
         events.push({ type: 'StatChanged', round, combatantId: targetId, stat: delta.stat, delta: delta.amount, newValue });
+      }
+    }
+
+    // The amplifier (content.ts doublesStatReductions — Mind's Brain Flay).
+    // Doubles every stat the target is already debuffed on, reading and
+    // writing statModifiers ONLY: baselineStatModifiers is the loadout
+    // (equipment/relics/class), and a target's armor must not change how hard
+    // its debuffs amplify.
+    //
+    // Placed after the deltas above so a move that ever did both would inflict
+    // its own reduction FIRST and then double it, which is the order the two
+    // read in on a design row. Brain Flay authors no deltas of its own, so
+    // nothing exercises that today.
+    //
+    // COMPOUNDS by construction (2026-08-30 designer call): it doubles the
+    // number on the board, so a second cast doubles the already-doubled one.
+    // No clamp here — state.ts getEffectiveStat floors every stat at 1 for
+    // every reader at once, which is where that invariant belongs.
+    if (move.doublesStatReductions) {
+      for (const targetId of targetIds) {
+        const target = working.combatants[targetId];
+        if (!target || target.fainted) continue;
+        const doubled: Partial<Record<StatKey, number>> = {};
+        for (const [stat, value] of Object.entries(target.statModifiers) as [StatKey, number][]) {
+          if (value >= 0) continue;
+          doubled[stat] = value * 2;
+        }
+        const doubledEntries = Object.entries(doubled) as [StatKey, number][];
+        if (!doubledEntries.length) continue;
+        working = {
+          ...working,
+          combatants: {
+            ...working.combatants,
+            [targetId]: { ...target, statModifiers: { ...target.statModifiers, ...doubled } },
+          },
+        };
+        for (const [stat, newValue] of doubledEntries) {
+          // `delta` is the amount ADDED, not the new total — a -50 becoming
+          // -100 reports -50, so the log and every event-stream reader treat
+          // this exactly as an ordinary debuff beat.
+          events.push({ type: 'StatChanged', round, combatantId: targetId, stat, delta: newValue - (target.statModifiers[stat] ?? 0), newValue });
+        }
       }
     }
 

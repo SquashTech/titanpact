@@ -882,6 +882,61 @@ mana is still available to spend. That is the same *shape* as Renew's stacked pa
 (below) and is intended for the same reason — a turn spent not attacking has to buy
 something worth the turn.
 
+### The floor: no effective stat below 1 (LOCKED — 2026-08-30 designer call)
+
+Raised by the Mind slate, but **not caused by it**. `getEffectiveStat` (state.ts) had
+no clamp at all, and the authored slates had already outgrown that: Break Will alone is
+−50 Attack, which puts an Attack-25 caster at −25. A **negative** `defStat` inverts the
+off/def ratio, so the attack HEALS its target; a `defStat` of exactly **0** makes the
+ratio `Infinity`. Neither is a rule anyone wrote — they were what the formula did in a
+region no content had reached yet.
+
+The clamp lives in `getEffectiveStat` and nowhere else, because that is the single
+chokepoint every reader already goes through: the damage pipeline reads both sides of
+its ratio through it, and `getMaxHp`/`getMaxMana` are thin wrappers over it. Three
+details:
+
+- **Applied last**, after Freeze's halving and Verdant Earth's bonus, so a Speed-1 hero
+  that gets Frozen still reads 1 and still takes a turn.
+- **Flat across every `StatKey`**, not carved out per stat. No content debuffs `hp`,
+  `manaPool` or `mpRegen` today, so the floor cannot bind on those — and a future
+  "MP Regen 0" debuff should be a conversation rather than something this clamp
+  silently forbids.
+- **The modifier itself is not clamped**, only what is read out of it. A stat driven to
+  −9999 stays at −9999 on `statModifiers`; healing it back is still a real amount of
+  work, and Brain Flay's third cast into an already-bottomed target is a visible waste
+  rather than a hidden one.
+
+`test/mindMoves.test.ts` pins it from both ends: the floored value itself, and that an
+attack into a floored defender still deals positive, finite damage.
+
+### Doubling the reductions already on the board (2026-08-30, Mind)
+
+Brain Flay is "spread, double stat reductions on enemies" —
+`MoveDefinition.doublesStatReductions`. It carries no `basePower` and no authored
+number: what it is worth is entirely what the type has already spent.
+
+- **It reads `statModifiers`, never `baselineStatModifiers`.** That split is the whole
+  definition — `statModifiers` is what *this fight* inflicted, `baselineStatModifiers`
+  is the loadout (equipment, relics, class, Evolution grants). Doubling the net of the
+  two would make a target's armor change how hard its debuffs amplify, which is not a
+  relationship anything else in the game has.
+- **Every negatively-modified stat, not a named list.** Break Will reduces Attack and
+  Lull reduces Intelligence, so restricting it to the magical pair would make the
+  slate's own biggest debuff not a payoff for its own capstone. A *positive* modifier is
+  untouched — doubling an enemy's own buff would be the opposite of what the row says.
+- **It COMPOUNDS** (2026-08-30 designer call): −50 → −100 → −200. It doubles the number
+  on the board, which is the rule a player can do in their head, and there is no
+  per-fight flag and no memory of the original reduction. The price is 80 mana, a spread
+  cast, and needing the debuffs to already be there. The ceiling is bounded by the stat
+  floor above rather than by the move.
+- **It needs no exemption from the multiples-of-5/10 lock**, unlike
+  `derivedStatDeltas`: doubling a multiple of 5 is a multiple of 5.
+
+Pressing it on a clean board changes nothing and still spends the mana — the Retribution
+shape (a move worth 0 when mistimed stays *pressable* rather than blinking out of the
+kit). That is why the button carries a live `−N more` chip rather than only the rule.
+
 ---
 
 **Persistence on switch (LOCKED — 2026-08-15 designer sign-off): stat mods persist
