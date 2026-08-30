@@ -119,6 +119,12 @@ Mana is the primary balance lever (`CLAUDE.md`) — there is no accuracy stat, s
 what separates a cheap poke from a finisher. Sanity-check the slate's **floor** against
 the mana pools of the heroes and enemies that will hold it (§7, and the trap in §8).
 
+**Check the floor, not the ceiling.** A hero's `baseStats.manaPool` is where it
+*starts*, and heroes gain mana all run from relics, equipment and Evolution
+(`docs/mana.md` "Mana pools GROW over a run") — commonly +40 by mid-run and well past
++100 in a run built for it. **A move costing more than any current hero's starting pool
+is intended, not a finding.** Do not report it, and do not tune it down.
+
 ### `Effect` → riders
 
 See §3. Every rider is an optional field layered on top of the move's kind; a damage
@@ -502,9 +508,19 @@ of the slate. Two rules:
   from 4–20 to 15–75. Torch Goblin, on a 28 pool, could suddenly act about once every
   three rounds. Check every holder — heroes *and* enemies — against the new floor, and
   bump the enemy's mana rather than cheapening the design.
-- **The top of the curve may be unreachable.** Fire's Inferno costs 75; no fixture hero
-  has a pool that large. That is a legitimate finding to report, not something to
-  silently tune away.
+- ~~**The top of the curve may be unreachable.**~~ **This was wrong, and it was
+  reported as a finding by all five slates before anyone caught it.** Fire's Inferno at
+  75, Water's Wave Shred at 80, Frost's Avalanche at 75, Storm's Overcharge at 60 and
+  Stone's Boulder Slam at 80 were each written up as "above every hero's pool". All five
+  were comparing against `baseStats.manaPool`, which is the **starting** pool. Heroes
+  gain mana all run (`docs/mana.md`, 2026-08-30) — a capstone the roster cannot cast on
+  turn one is the intended shape, not a defect. **The trap is not the move; it is the
+  reflex to check a cost against a starting pool.**
+- **Enemies are the real version of that check.** Enemies get no relics, no equipment
+  and no Evolution, so an enemy's pool genuinely is fixed for the whole game. An enemy
+  that cannot afford its own kit is a live finding — bump its mana rather than
+  cheapening the design. Same for a HERO that cannot afford its own three-move
+  **starting kit**, which is the one thing a player cannot fix by drafting.
 - **A deleted move's PRIORITY can be load-bearing in a test, not just its id.** Water's
   slate authors no priority column, so every Water move is bracket 0 — and repointing
   `test/statuses.test.ts`'s Freeze-order test from the old priority-1 Aqua Jet onto a
@@ -563,6 +579,16 @@ Then, beyond green tests:
 The last part of the job is telling the designer what the slate *implied* that they may
 not have decided. `CLAUDE.md`: present tensions and second-order questions, and prefer
 deferring an open question explicitly over forcing premature closure.
+
+**One shape has now been retired.** "A balance consequence outside the slate" was, in
+four of the five slates below, some version of *"the Late-tier capstone costs more than
+any hero's pool"* — and that turned out to be a misreading of `baseStats.manaPool` as a
+ceiling rather than a starting value (`docs/mana.md`, 2026-08-30 designer sign-off).
+The bullets below are left as written, because the *shape* of the finding is still the
+right one to look for and this is a useful record of how a plausible non-finding
+survived five repetitions. **But do not report this particular one again.** If your
+slate's only balance consequence is "the expensive moves are expensive", you have found
+nothing, and saying so is better than padding the hand-off.
 
 Fire's three, as a template for the shape of these:
 
@@ -652,6 +678,13 @@ mechanical. What the slate actually surfaced was three gaps in who can hold it:
   costs 40 and is **permanently unaffordable**. Confirmed in the app, not
   inferred: fielded with its own pool, Sentinel opens the fight on "Rest — out
   of mana".
+- **~~A balance consequence outside the slate.~~ RETRACTED (2026-08-30).** This
+  slate reported that Sentinel's 30 mana pool cannot afford Body Blow (40), the
+  move its Defense 100 exists to swing. That was the fifth repetition of the
+  non-finding above: 30 is Sentinel's STARTING pool, and one mana relic plus an
+  accessory plus an Evolution puts it at ~70. The move comes online partway
+  through a run, as intended. Left here rather than deleted because a retracted
+  finding is more useful to the next author than a clean page.
 - **A locked decision the slate brushed against.** `retributionPercent` is the
   first damage in the game that does not go through the LOCKED damage formula.
   It does not break the lock — the formula is still the only way a BasePower
