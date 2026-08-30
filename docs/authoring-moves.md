@@ -658,21 +658,39 @@ mechanical. What the slate actually surfaced was three gaps in who can hold it:
   move computes damage — but it creates a damage source the type chart cannot
   touch, and whether a future relic damage modifier should reach it is now an
   open question in `docs/combat.md` rather than something settled by accident.
-- **A balance consequence outside the slate.** **Three of the fifteen moves are
-  magical, and Stone has no magical hero** (Crag Int 20, Sentinel Int 15). Tremor,
-  Rockfall and Landslide are in no hero's pool and no enemy's kit — they are
-  authored content nothing in the game can reach. Reported rather than forced
-  into a pool, because putting a magical move in an Int-20 hero's line is exactly
-  the trap pick the north star forbids. There is precedent (Storm's Zap and both
-  Ancient moves are unreachable for the same reason), but three at once is the
-  largest gap so far, and it is a *roster* request, not a moves fix.
+- **A balance consequence outside the slate — raised, and answered.** **Three of
+  the fifteen moves are magical, and Stone has no magical hero** (Crag Int 20,
+  Sentinel Int 15), so Tremor, Rockfall and Landslide are in no hero's pool and
+  no enemy's kit. Reported rather than forced into a pool, because putting a
+  magical move in an Int-20 hero's line is exactly the trap pick the north star
+  forbids.
+
+  **Designer call, 2026-08-30: this is intended, not a gap.** A magical Stone
+  hero can arrive later, and an off-type pool is a legitimate home in the
+  meantime — non-Stone heroes already learn Stone moves (`ironWarden`, `cube`
+  and `steamColossus` all carry one), so nothing about these three is
+  structurally unreachable, only unplaced.
+
+  **The generalisation worth carrying to the next slate:** a slate is authored
+  for the type, not for the two heroes that currently happen to have it. Moves
+  with no holder today are a normal, healthy state — the roster is ~53 concepts
+  and 32 exist. What you owe the designer is the *list*, not a fix: name what
+  has no home so the decision (author a hero / place it off-type / leave it) is
+  theirs. Do not quietly stuff a move into the nearest pool to make the number
+  zero.
 
 **The procedural lesson from Stone**, extending Storm's: when you finish the
 slate, run the reachability check as well as the dangling-id one. They are
 opposite failures — a dangling id is a pool pointing at a move that does not
-exist, and this is a move no pool points at — and only the first has a test.
+exist, and this is a move no pool points at — and only the first had a test.
 Twenty lines over `moves` vs `heroes + enemies + moveTiers` is what turned
-"the slate is done" into "three of these fifteen are unreachable."
+"the slate is done" into "three of these fifteen have no holder yet."
+
+`test/stoneMoves.test.ts` now pins the unreachable set exactly rather than
+asserting it empty, which is the right shape for a list that is *expected* to be
+non-empty: it says nothing about whether an orphan is acceptable, only that a
+NEW one has to be looked at and consciously added. Update the list when a slate
+legitimately adds to it; never delete the assertion.
 
 If the type you are authoring has a type-keyed status hook (Conduct on Storm/Iron, Haunt
 on Spirit/Mind), the equivalent question is almost certainly: *is the slate priced

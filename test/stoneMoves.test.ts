@@ -499,14 +499,20 @@ test('stone: each Stone hero attacks with the stat it is actually good at', () =
 });
 
 test('stone: no move is unreachable that was not already known to be', () => {
-  // The opposite failure to the dangling-id test above, and the one nothing
-  // else catches: a move no hero kit and no level-up pool points at is authored
-  // content the game can never show anyone. Pinned as an exact set rather than
-  // asserted empty, because three of them are a live design finding
-  // (docs/authoring-moves.md §10, Stone): Tremor, Rockfall and Landslide are
-  // magical, and Stone has no magical hero. Storm's Zap and both Ancient moves
-  // predate this slate. If this list grows, a slate has silently dropped
-  // something.
+  // The opposite failure to the dangling-id test above, and the one nothing else
+  // catches: a move no hero kit and no level-up pool points at is authored
+  // content the game can never show anyone.
+  //
+  // Pinned as an exact set rather than asserted empty, because a non-empty list
+  // is EXPECTED (2026-08-30 designer call, docs/authoring-moves.md §10). A slate
+  // is authored for its type, not for whichever two heroes currently have it:
+  // Tremor, Rockfall and Landslide are magical and Stone's two heroes are both
+  // physical, so they wait for a magical Stone hero or for an off-type pool —
+  // both legitimate, and neither a reason to stuff them somewhere today. Storm's
+  // Zap and both Ancient moves predate this slate for the same reason.
+  //
+  // So this test does not say an orphan is wrong. It says a NEW one has to be
+  // noticed and consciously added here rather than appearing by accident.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   const { enemies } = require('../src/data/enemies') as typeof import('../src/data/enemies');
 
