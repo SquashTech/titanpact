@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { MoveDefinition } from '../../engine/content';
 import { statusApplicationsOf } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
-import { activePartnerTypes, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, hasStatus, resolveManaCost } from '../../engine/state';
+import { activePartnerTypes, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, hasStatus, resolveManaCost, resolveRandomBasePower } from '../../engine/state';
 import { allCombatants } from '../../data/content';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
@@ -102,7 +102,13 @@ interface Forecast {
  * mostly doesn't happen; the card states it as a separate footnote instead.
  */
 function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defenderId: string): Forecast | null {
-  if (move.kind !== 'damage' || move.basePower == null) return null;
+  // Jackpot authors no basePower at all, so the old guard refused it a
+  // forecast entirely — the dossier would have shown a damage move with no
+  // damage on it. It gets one off THIS round's rolled figure, which is the
+  // same number the button is showing and the same number the round is about
+  // to deal (content.ts randomBasePower, state.ts resolveRandomBasePower).
+  const rolledBasePower = resolveRandomBasePower(ctx.combat, ctx.attackerId, move);
+  if (move.kind !== 'damage' || (move.basePower == null && rolledBasePower == null)) return null;
   const attacker = ctx.combat.combatants[ctx.attackerId];
   const defender = ctx.combat.combatants[defenderId];
   if (!attacker || !defender) return null;
@@ -160,7 +166,12 @@ function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defender
         undefined,
         undefined,
         forceBonus,
-        conditionalMult
+        conditionalMult,
+        // Threaded in for exactly the reason offStatOverride and fieldEffectCtx
+        // are: a forecast that read the authored (absent) Base Power would
+        // print 0 while the round deals up to 150 — docs/authoring-moves.md §5,
+        // "pass your new term in or the forecast lies".
+        rolledBasePower
       )
         .damage
     );

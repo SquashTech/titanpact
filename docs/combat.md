@@ -979,6 +979,69 @@ not a habit.
 
 ---
 
+## Base Power that is rolled, not authored (2026-08-30, Mech)
+
+Mech's Jackpot is the first move with no authored `basePower` at all: the
+figure is rolled uniformly in [50, 150] at the start of every round and
+**shown on the button** before the player commits
+(`MoveDefinition.randomBasePower`).
+
+**It is not a second Variance term, and the distinction is load-bearing.**
+`Variance` (0.85-1.0, LOCKED, "never remove") is a post-hoc multiplier on the
+formula's RESULT that nobody sees before the hit lands. This is a
+BasePower-stage input, resolved before the formula runs, and its whole value is
+that it is legible in advance — a 61 is a reason not to press the button, which
+a hidden roll could never be. The two compose rather than collide, and the
+composition is worth stating once: a 50 roll into a 0.85 variance is 42.5
+effective power, a 150 into a 1.0 is 150, so **one button spans a 3.5x range**.
+That is the widest damage spread in the game by some distance and it is the
+intended shape of the row, not a tuning accident.
+
+Because it is a BasePower-stage term it composes with the other two exactly as
+an authored number does: `conditionalPower` multiplies the rolled figure, and
+Elemental Force is added afterward — the same "multiply, then add" order
+Immolate established.
+
+### Randomness that does not come off the shared stream
+
+`resolveRandomBasePower` (`engine/state.ts`) is the first randomness in the
+engine that is not drawn from `CombatState.rngState`. `seededRng.ts`'s rule —
+its mulberry32 is the only randomness source allowed under `/src/engine` —
+still holds, because this uses that same PRNG. What changed is that the SHARED
+STREAM is no longer the only place a roll may live.
+
+The value is **derived**: a pure function of
+`(seed, round, combatantId, moveId)`. That was forced rather than preferred.
+The view has to read the number to paint the button, and a read that advanced
+`rngState` would let a player re-roll Jackpot by opening the move dossier
+twice. The two alternatives are both worse:
+
+- A **stored** roll needs a new `CombatState` field, a seeding pass in both
+  state builders, and a place in the documented draw order.
+- A **stream** draw cannot be read before the round resolves at all, which is
+  precisely what the design row requires.
+
+Deriving it also bought three properties for free rather than by design: it
+re-rolls each round (`round` is an input), it differs per hero
+(`combatantId` is one), and every fight authored before it replays
+byte-identically, since nothing advances.
+
+**The rule this establishes, and the one to apply to the next random field:**
+a roll the player reads BEFORE committing must be derived from state; a roll
+they discover AFTER committing must come off the shared stream. Mech's other
+three random fields (`randomPriority`, `randomStatDeltas`,
+`randomStatusApplication`) are all in the second category and all draw
+normally. `randomPriority` is the sharpest case — it is rolled when the round
+is ordered, after both sides have committed, and keeping it off the derived
+path is what makes Cog Bop a gamble instead of a bracket the player could read
+off in advance and plan around.
+
+**Open, deliberately.** Whether a future crit-chance accessory, a damage
+modifier, or an Elemental Force grant should be able to shift a rolled range
+(rather than the rolled result) is unanswered. Nothing needs it, and "+20 to
+the low end of Jackpot" is a different kind of effect from anything the
+loadout layer does today.
+
 ## Renew's stacked payoffs (LOCKED — 2026-08-30 designer sign-off)
 
 Renew is currently read **three separate ways**, and as of the Nature slate all

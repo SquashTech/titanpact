@@ -12,7 +12,7 @@
 import type { FieldEffectDefinition, HeroDefinition, MoveDefinition, PassiveDefinition, StatDelta, StatKey, StatusDefinition } from '../content';
 import { statusApplicationsOf } from '../content';
 import type { CombatState, HeroLookup, Side } from '../state';
-import { activePartnerTypes, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveTargetMode, effectiveTypes, hasStatus } from '../state';
+import { activePartnerTypes, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveRandomBasePower, resolveTargetMode, effectiveTypes, hasStatus } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
@@ -45,7 +45,7 @@ import {
   tickStartOfRound,
 } from './statusEngine';
 import { collectPassiveDamageModifiers, resolvePassiveReactions } from './passiveEngine';
-import { nextFloat } from '../rng/seededRng';
+import { nextFloat, nextInt } from '../rng/seededRng';
 
 export interface RoundConfig {
   typeChart: TypeChart;
@@ -336,6 +336,16 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         // line between its first target and its second. Hoisted for the same
         // reason `retribution` is — it is a fact about the ATTACKER, asked
         // once, not a per-target question.
+        // This round's rolled BasePower, for a move that authors no number
+        // at all (content.ts randomBasePower — Mech's Jackpot). DERIVED from
+        // (seed, round, combatantId, moveId) rather than drawn, so reading it
+        // here costs no RNG and matches to the digit what the player was shown
+        // on the button before they committed (state.ts
+        // resolveRandomBasePower). Hoisted beside the attacker snapshot for
+        // the same reason: it is a fact about the CAST, identical for every
+        // target a spread version would hit.
+        const rolledBasePower = resolveRandomBasePower(working, action.combatantId, move);
+
         const attackerAtCast = working.combatants[action.combatantId];
         const attackerHpAtCast = { currentHp: attackerAtCast.currentHp, maxHp: getMaxHp(attackerHero, attackerAtCast) };
 
@@ -423,7 +433,8 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
                 modifiers,
                 move.critChance,
                 elementalForceBonus,
-                basePowerMultiplier
+                basePowerMultiplier,
+                rolledBasePower
               );
           working = { ...working, rngState: rolled.nextRngState };
 
@@ -442,7 +453,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             typeMult: rolled.typeMult,
             isCrit: rolled.isCrit,
             variance: rolled.variance,
-            basePower: move.basePower ?? 0,
+            // The rolled figure, not the authored absent one — the Battle
+            // Log prints the whole formula, and a Jackpot line reading
+            // "0 BP" would make the log wrong rather than merely terse
+            // (docs/authoring-moves.md §5).
+            basePower: rolledBasePower ?? move.basePower ?? 0,
             elementalForceBonus: rolled.basePowerBonus,
             basePowerMultiplier: rolled.basePowerMultiplier,
             offStat: getEffectiveStat(attackerHero, attackerNow, offKey, fieldEffectCtx),
@@ -720,7 +735,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         : (move.statDeltas ?? []).map(({ stat, amount }) => ({ stat, amount: amount * packMultiplier }));
     const allStatDeltas: readonly StatDelta[] = derivedDeltas.length ? [...authoredDeltas, ...derivedDeltas] : authoredDeltas;
 
-    const statDeltaTargets = !allStatDeltas.length
+    // Overclock and Jury-Rig author NO statDeltas at all — their whole body
+    // is the random draw below — so the emptiness guard has to ask about both
+    // lists or those two moves would resolve no targets and silently do
+    // nothing (content.ts randomStatDeltas).
+    const statDeltaTargets = !allStatDeltas.length && !move.randomStatDeltas
       ? []
       : move.statDeltaTarget === 'self'
         ? [action.combatantId]
@@ -744,7 +763,31 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         working = { ...working, rngState: roll.nextState };
         if (roll.value >= move.statDeltaChance) continue;
       }
-      for (const delta of allStatDeltas) {
+      // The reel (content.ts randomStatDeltas — Mech's Overclock, Piston
+      // Punch and Jury-Rig). Rolled INSIDE the target loop, which is what
+      // makes it independent per ally: Overclock can land +20 Defense on one
+      // and +20 Speed on the other (2026-08-30 designer call). Drawn without
+      // replacement, so Jury-Rig is +20 to two DIFFERENT stats rather than
+      // +40 to one, and a count at or above the pool size grants all of it.
+      //
+      // Expanded into ordinary StatDeltas and appended, so everything below —
+      // the statModifiers write, the StatChanged events, every view reading
+      // the stream — is byte-for-byte the path an authored delta takes. The
+      // amount is authored, so unlike derivedStatDeltas the multiples-of-5/10
+      // lock binds with no exemption.
+      const rolledDeltas: StatDelta[] = [];
+      const reel = move.randomStatDeltas;
+      if (reel) {
+        const pool = [...reel.from];
+        const draws = Math.min(reel.count, pool.length);
+        for (let i = 0; i < draws; i++) {
+          const pick = nextInt(working.rngState, 0, pool.length);
+          working = { ...working, rngState: pick.nextState };
+          rolledDeltas.push({ stat: pool.splice(pick.value, 1)[0], amount: reel.amount });
+        }
+      }
+
+      for (const delta of [...allStatDeltas, ...rolledDeltas]) {
         const current = working.combatants[targetId];
         const newValue = (current.statModifiers[delta.stat] ?? 0) + delta.amount;
         working = {
@@ -817,7 +860,22 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     // order, and each feeds its own passive reactions before the next runs:
     // two riders on one cast are two independent applications, not a compound
     // status, and a one-rider move draws exactly the RNG it drew before.
-    for (const app of statusApplicationsOf(move)) {
+    // The misfire (content.ts randomStatusApplication — Mech's Malfunction,
+    // "randomly apply Burn 20, Poison 20, or Conduct"). ONE candidate drawn
+    // per CAST, not per target: each candidate carries its own `target`, so a
+    // per-target draw would apply a self-targeted one once per enemy hit.
+    // Drawn here and appended to the authored riders, so the winner then
+    // resolves its own targets and rolls its own chance through the identical
+    // loop below rather than down a second path. A move authoring no reel
+    // draws nothing.
+    let riders = statusApplicationsOf(move);
+    if (move.randomStatusApplication?.length) {
+      const pick = nextInt(working.rngState, 0, move.randomStatusApplication.length);
+      working = { ...working, rngState: pick.nextState };
+      riders = [...riders, move.randomStatusApplication[pick.value]];
+    }
+
+    for (const app of riders) {
       const def = statuses[app.statusId];
       if (def) {
         // Three ways a rider picks its own targets. 'moveTarget' rides along

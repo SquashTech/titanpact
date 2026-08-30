@@ -448,11 +448,23 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Clockwork',
     types: ['Mech'],
     baseStats: { hp: 130, attack: 60, defense: 70, intelligence: 45, wisdom: 40, speed: 55, manaPool: 50, mpRegen: 10 },
-    // Fortify back (moves.ts, 2026-08-30, re-authored at 15 for +15 Defense).
-    // Clockwork's other two moves are both attacks, so the third slot is a
-    // buff either way — and at Defense 70 / 130 HP behind an Attack of 60,
-    // the guard buff is the truer read of the hero than Sharpen was.
-    moveIds: ['moltenHammer', 'sparkForge', 'fortify'],
+    // A full Mech kit now that the type is authored — Fortify comes back off
+    // (it had been the third slot for exactly one commit), because Clockwork
+    // is MONO Mech and every off-type slot is a slot with no STAB on it.
+    //
+    // The §7 shape: one low-power main-type attack plus two supports. Piston
+    // Punch is the attack, picked for the Attack 60 over the Intelligence 45,
+    // and it doubles as the ramp — every swing rolls another +5 somewhere.
+    // Overclock and Kickstart are the supports, and between them they are the
+    // whole reason to field this hero next to a bruiser.
+    //
+    // What it LOSES in the trade is a guaranteed defensive buff for a random
+    // one: Fortify was +15 Defense on demand, Overclock is +20 to a stat that
+    // is Defense one time in five. That is the type working as designed, and
+    // it is reported in docs/authoring-moves.md §10 rather than patched around.
+    //
+    // 20/15/20 against a 50 pool — every move castable from turn one.
+    moveIds: ['pistonPunch', 'overclock', 'kickstart'],
     starter: true,
   },
   steamColossus: {
@@ -460,12 +472,18 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Bellows',
     types: ['Mech', 'Iron'],
     baseStats: { hp: 145, attack: 90, defense: 80, intelligence: 15, wisdom: 35, speed: 15, manaPool: 40, mpRegen: 10 },
-    // Two of the three died with the Iron slate (Shrapnel Blast and Fortify,
-    // moves.ts 2026-08-30). Bellows is Mech/IRON, so unlike the other Fortify
-    // holders it gets STAB on the replacements — and at Atk 90 with Speed 15
-    // it is the exact body the ramp is for: Iron Fist to open, Sharpen to make
-    // the 90 into 120, and the mana pool reaches Onslaught later.
-    moveIds: ['moltenHammer', 'ironFist', 'sharpen'],
+    // Mech/IRON, so both halves of the kit get STAB and the Iron ramp stays:
+    // Iron Fist to open, Sharpen to turn the 90 into 120.
+    //
+    // Cog Bop is the Mech slot, and it is on this hero rather than on
+    // Clockwork for one reason — Speed 15 is the lowest in the roster, so a
+    // bracket Bellows can only reach by coin flip is worth more here than
+    // anywhere else in the game. Half the time it is the slowest hero on the
+    // field moving first.
+    //
+    // 20/20/25 against a 40 pool — the cheapest kit is affordable, which is
+    // the one thing a player cannot fix by drafting.
+    moveIds: ['cogBop', 'ironFist', 'sharpen'],
     starter: false,
   },
 

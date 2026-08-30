@@ -5,7 +5,7 @@
 // out of scope for this engine slice. Do not fold them in here.
 
 import type { FieldEffectDefinition, FieldEffectId, HeroDefinition, MoveDefinition, PassiveId, StatKey, StatLine, StatusId, TargetMode, TypeId } from './content';
-import type { RngState } from './rng/seededRng';
+import { nextRange, type RngState } from './rng/seededRng';
 
 export type Side = 'A' | 'B';
 export type ActiveSlotIndex = 0 | 1;
@@ -302,6 +302,61 @@ export function resolveTargetMode(state: CombatState, move: MoveDefinition): Tar
   const conditional = move.conditionalTarget;
   if (!conditional) return move.target;
   return state.activeFieldEffect?.fieldEffectId === conditional.requiresFieldEffect ? conditional.target : move.target;
+}
+
+/**
+ * Mixes a string into a 32-bit seed (FNV-1a). Not a randomness source of its
+ * own — it only spreads the identifiers below across the seed space so two
+ * combatants, or two moves, do not derive the same roll.
+ */
+function mixString(seed: number, text: string): number {
+  let h = seed >>> 0;
+  for (let i = 0; i < text.length; i++) {
+    h = (h ^ text.charCodeAt(i)) >>> 0;
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h >>> 0;
+}
+
+/**
+ * What `move` will hit for this round in the hands of `combatantId`, when its
+ * BasePower is rolled rather than authored (content.ts randomBasePower —
+ * Mech's Jackpot). `undefined` for every move that authors a flat number,
+ * which is all but one of them.
+ *
+ * The single source of truth for that figure, and the reason it can be one:
+ * the roll is DERIVED rather than stored or drawn. It is a pure function of
+ * `(seed, round, combatantId, moveId)` pushed through the same mulberry32
+ * `nextRange` the damage variance uses, so the engine's hit and the number on
+ * the player's button are the same computation over state both already hold —
+ * there is nothing to keep in sync, nothing to serialize, and nothing to seed
+ * at fight-build time.
+ *
+ * Three consequences, all of them the point rather than side effects:
+ *
+ * - **`state.rngState` is never touched**, so every fight authored before
+ *   Jackpot replays byte-identically and a player opening the move dossier
+ *   twice cannot shake the reel (docs/authoring-moves.md §5 "default to
+ *   inert").
+ * - **It re-rolls every round**, because `round` is an input. Nothing has to
+ *   remember to advance it.
+ * - **It is per combatant**, because `combatantId` is one. Two heroes holding
+ *   Jackpot in the same fight read different numbers off the same reel.
+ *
+ * Rounded, and inclusive of `max`: the design row says 50-150 and a player
+ * reading a decimal off a slot machine would be right to complain.
+ */
+export function resolveRandomBasePower(
+  state: CombatState,
+  combatantId: string,
+  move: MoveDefinition
+): number | undefined {
+  const roll = move.randomBasePower;
+  if (!roll) return undefined;
+  const seeded = mixString(mixString((state.seed ^ Math.imul(state.round, 0x9e3779b1)) >>> 0, combatantId), move.id);
+  // +1 on the ceiling so Math.round cannot only reach `max` from a half-width
+  // sliver of the range — every integer in [min, max] is equally likely.
+  return Math.min(roll.max, Math.floor(nextRange(seeded, roll.min, roll.max + 1).value));
 }
 
 /**

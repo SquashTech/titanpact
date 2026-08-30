@@ -342,13 +342,21 @@ test('iron: the slate authors exactly one priority row, and no heal, cleanse or 
   assert.strictEqual(firstStatusApplication(riders[0])?.chance, 0.3);
 });
 
-test('iron: the re-authored Fortify is a guard buff only, and every Wisdom grant left is Mind', () => {
+test('iron: the re-authored Fortify is a guard buff only, and Wisdom is grantable off-Mind only by Overdrive', () => {
   // The half of the deletion that STAYED deleted. The fixture Fortify granted
   // +10 Defense AND +10 Wisdom; the re-authored one is +15 Defense and nothing
-  // else. Wisdom is not unreachable — Mind grants it three ways — but all three
-  // are Mind, so a PHYSICAL hero can no longer buy magical defense from a move
-  // at all. Pinned as the exact set rather than as a count, so a later slate
+  // else. Pinned as the exact set rather than as a count, so a later slate
   // adding a non-Mind Wisdom grant has to notice it is reopening this.
+  //
+  // MECH REOPENED IT, PARTLY (2026-08-30). Overdrive is "+20 to all stats" and
+  // "all stats" is the five combat stats, Wisdom among them — so it is the
+  // fourth Wisdom grant in the game and the first outside Mind. The finding
+  // this test was written to pin is therefore narrowed rather than dead: a
+  // physical hero CAN now buy magical defense from a move, but only at 100
+  // mana, only as one fifth of a capstone, and only from a type it has to be
+  // standing next to. That is a much worse deal than the 10-mana Fortify that
+  // went away, which is why the shape of the finding survives the exception.
+  // Extended rather than deleted, per docs/authoring-moves.md §10.
   assert.deepStrictEqual(moves.fortify.statDeltas, [{ stat: 'defense', amount: 15 }]);
   assert.strictEqual(moves.fortify.target, 'self');
   // And NOT statDeltaTarget: naming 'self' on a move that already targets self
@@ -358,8 +366,18 @@ test('iron: the re-authored Fortify is a guard buff only, and every Wisdom grant
   const wisdomGrants = Object.values(moves).filter((m) =>
     m.statDeltas?.some((d) => d.stat === 'wisdom' && d.amount > 0)
   );
-  assert.deepStrictEqual(wisdomGrants.map((m) => m.id).sort(), ['brainWard', 'mentalFortress', 'stasis']);
-  for (const move of wisdomGrants) assert.strictEqual(move.type, 'Mind', `${move.id} grants Wisdom off-Mind`);
+  assert.deepStrictEqual(wisdomGrants.map((m) => m.id).sort(), ['brainWard', 'mentalFortress', 'overdrive', 'stasis']);
+  for (const move of wisdomGrants) {
+    assert.ok(
+      move.type === 'Mind' || move.id === 'overdrive',
+      `${move.id} grants Wisdom off-Mind — a third type reaching Wisdom is a decision, not a rounding`
+    );
+  }
+  // The exception earns its place by being expensive and indiscriminate: it is
+  // the whole five-stat block or nothing, so nobody reaches for Overdrive to
+  // solve a Wisdom problem specifically.
+  assert.strictEqual(moves.overdrive.manaCost, 100);
+  assert.strictEqual(moves.overdrive.statDeltas?.length, 5);
 });
 
 test('iron: Swift Blow lands its Conduct detonation ABOVE bracket 0 — the one thing no other Iron row can do', () => {

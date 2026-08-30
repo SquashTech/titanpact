@@ -434,6 +434,45 @@ export interface MoveDefinition {
   /** damage-kind only. */
   basePower?: number;
   /**
+   * damage-kind only, and MUTUALLY EXCLUSIVE with `basePower`: this move has
+   * no authored number at all. The formula's BasePower input is rolled fresh
+   * at the start of every round, uniformly in [min, max], and SHOWN to the
+   * player before they commit — Mech's Jackpot, "randomly roll this attack's
+   * base power from 50-150 at the start of each turn" (2026-08-30 designer
+   * call: the number is visible on the button).
+   *
+   * Visibility is the whole mechanic, and it is what fixes the shape. A hidden
+   * roll would be a second variance term — the formula already has one
+   * (0.85-1.0, LOCKED) — and would leave the row indistinguishable from a
+   * 100 BP move with a wider spread. A visible one makes it a DECISION: 80
+   * mana is a lot to spend on a 61, and holding the turn to see next round's
+   * 148 is a real play. The reel spins whether or not the move is pressed.
+   *
+   * Which forces the roll OUT of the shared RNG stream, and that is the part
+   * worth understanding before a second one is authored:
+   *
+   * - It is DERIVED, not stored and not drawn (state.ts
+   *   resolveRandomBasePower). The value is a pure function of
+   *   `(seed, round, combatantId, moveId)` run through the same mulberry32 the
+   *   rest of the engine uses, so the engine and the view compute the
+   *   identical number from state they both already hold.
+   * - Nothing is added to CombatState and `rngState` is never advanced, so
+   *   every fight authored before this field replays byte-identically — the
+   *   strongest form of the "default to inert" rule
+   *   (docs/authoring-moves.md §5). A STORED roll would have needed a new
+   *   state field and a seeding pass in both builders; a STREAM draw could not
+   *   have been read before the round resolved at all, which is precisely what
+   *   the design row asks for.
+   * - `round` is an input, so it re-rolls every round for free, and
+   *   `combatantId` is an input, so two heroes holding Jackpot see different
+   *   numbers. Both fall out of the derivation rather than being arranged.
+   *
+   * BasePower-stage, so it composes with Elemental Force and
+   * `conditionalPower` exactly as an authored number does: the rolled figure
+   * IS this round's authored BasePower — multiplied first, then added to.
+   */
+  randomBasePower?: { min: number; max: number };
+  /**
    * damage-kind only. Per-move crit rate in [0, 1], replacing the default
    * rate for this move only (damagePipeline.ts PROVISIONAL_CRIT_CHANCE) —
    * e.g. Fire's Singe/Firebrand at "30% crit chance".
@@ -897,6 +936,45 @@ export interface MoveDefinition {
     multiplier: number;
   };
   /**
+   * Any kind. Grants `amount` to `count` stats drawn at RANDOM from `from` —
+   * Mech's Overclock ("give allies +20 to a random stat"), Piston Punch ("gain
+   * +5 to a random stat") and Jury-Rig ("+20 to two random stats").
+   *
+   * Lands through the same path as `statDeltas`: same `statDeltaTarget`
+   * resolution, same StatChanged events, same flat additive integers on
+   * `statModifiers`, so a move may author both and they concatenate. What is
+   * new is only WHICH stats — the amount is authored, unlike
+   * `derivedStatDeltas`, so the multiples-of-5/10 lock (CLAUDE.md) binds here
+   * with no exemption.
+   *
+   * Three things fix its shape, and the first two are 2026-08-30 designer
+   * calls rather than mechanics:
+   *
+   * - **`from` is authored, not implied.** The pool is the five COMBAT stats
+   *   (RANDOM_STAT_POOL, src/data/moves.ts) rather than every StatKey, because
+   *   +20 is worth wildly different amounts across the eight: +20 MP Regen is
+   *   twice the Everflow banner and +20 HP on a 130-HP hero is noise, so a
+   *   reel including them would be mostly duds around one jackpot. Kept on the
+   *   move as DATA rather than hardcoded in the engine — the same discipline
+   *   StatusDefinition.triggerTypes follows.
+   * - **Rolled independently PER TARGET.** Overclock can land +20 Defense on
+   *   one ally and +20 Speed on the other. That is the grammar
+   *   `StatusApplication.chance` and `statDeltaChance` already use (one roll
+   *   per resolved target), and it is what makes the move read as a machine
+   *   misfiring rather than as a tidy team buff.
+   * - **`count` draws DISTINCT stats.** Jury-Rig is +20 to two different
+   *   stats, never +40 to one: it draws without replacement, and a `count` at
+   *   or above `from.length` simply grants all of them.
+   *
+   * Draws no RNG at all when absent, so every move authored before it replays
+   * identically.
+   */
+  randomStatDeltas?: {
+    count: number;
+    amount: number;
+    from: readonly StatKey[];
+  };
+  /**
    * Any kind. DOUBLES every stat this move's resolved targets are already
    * debuffed on — Mind's Brain Flay, "spread, double stat reductions on
    * enemies". The slate's capstone and the payoff for a type with six
@@ -1113,6 +1191,30 @@ export interface MoveDefinition {
    * share a cast, not a compound status.
    */
   statusApplication?: StatusApplication | readonly StatusApplication[];
+  /**
+   * Any kind. Applies exactly ONE rider, drawn at random from this list —
+   * Mech's Malfunction, "randomly apply Burn 20, Poison 20, or Conduct to the
+   * target".
+   *
+   * The counterpart to `statusApplication`'s list form, and deliberately its
+   * own field rather than a flag on it: that list applies ALL of its riders
+   * (Beast's Toxic Fangs is Bleed AND Poison 10), this one applies one OF
+   * them. A move may author both; the drawn rider resolves after the
+   * unconditional ones, through the identical path.
+   *
+   * Drawn once **per cast**, not per target, and that is forced rather than
+   * chosen: every candidate carries its own `target`, so drawing per target
+   * would apply a `self`-targeted candidate once for each enemy the move hit.
+   * One draw per cast also keeps the rule a player can state — "this applies
+   * one of three" — and the drawn rider then resolves its own targets and
+   * rolls its own `chance` exactly as an authored one does. Moot for
+   * Malfunction, which is single-target; the rule matters the moment a spread
+   * one is written.
+   *
+   * Uniform over the list. Weighting is deliberately not a field: nothing has
+   * asked for it, and a loaded reel is a different mechanic from a fair one.
+   */
+  randomStatusApplication?: readonly StatusApplication[];
   /** Any kind — strips non-positive statuses from the move's resolved target(s) (docs/conditions.md §4 Cleanse). Positive statuses (Renew, Stealth) are never stripped — §7 "Cleanse & positive statuses" resolved this as a flat rule, not a per-move choice. */
   cleanses?: boolean;
   /**
@@ -1252,6 +1354,33 @@ export interface MoveDefinition {
   manaDiscountOnUse?: number;
   /** Integer priority bracket; higher resolves first. */
   priority: number;
+  /**
+   * The bracket this move actually resolves in is drawn at random from this
+   * list, REPLACING `priority` above — Mech's Cog Bop and Cog Slam, "randomly
+   * Priority -1 or +1".
+   *
+   * Rolled in priority.ts when the round is ORDERED: after both sides have
+   * committed, before anything resolves. That timing is forced by the same
+   * structural fact `conditionalPriority` runs into — a bracket has to be
+   * settled before resolution begins — but here it is also the mechanic. The
+   * player presses Cog Bop knowing only that it is a coin flip, which is what
+   * makes it a gamble rather than a fast move with a drawback.
+   *
+   * It replaces rather than adds, because the design row names the brackets
+   * outright. `priority` is still authored (the field is required) and is
+   * still the honest answer on every surface with no round to roll in — the
+   * draft, the level-up screen, the compendium, and `effectivePriority`, which
+   * the view calls to print a live bracket and which deliberately does not
+   * roll. Author it as the midpoint of the list; the button prints the range.
+   *
+   * Draws from the SHARED stream, unlike `randomBasePower` above, and the
+   * asymmetry is the whole point: this roll must not be knowable before the
+   * player commits, so it belongs in the round's own RNG rather than in a
+   * figure the view could derive for itself. Drawn in action order, before the
+   * speed tiebreaks, so the sequence stays fixed. A move authoring no list
+   * draws nothing.
+   */
+  randomPriority?: readonly number[];
   /**
    * Adds `bonus` to this move's priority bracket when its DECLARED target
    * carries `requiresTargetStatus` — Storm's Electric Burst, "priority +1 if

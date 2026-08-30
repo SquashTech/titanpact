@@ -41,12 +41,23 @@ export const REST_PRIORITY_BRACKET = Number.NEGATIVE_INFINITY;
  * pre-resolution one. A mark planted earlier in the same round does not count;
  * the mark has to already be standing when the round is ordered. Read off the
  * DECLARED target alone — a fixed-group move has none, and never gets it.
+ *
+ * MoveDefinition.randomPriority (Mech's Cog Bop and Cog Slam, "randomly
+ * Priority -1 or +1") is the third term and the only one that is not a bonus:
+ * it REPLACES the authored bracket with one drawn from the move's own list.
+ * Passed in already-rolled rather than drawn here, because this function is
+ * also what `effectivePriority` calls to answer "what bracket is this in"
+ * for the view — and a display read must not spin the reel. orderActions
+ * below does the drawing, once per action; every other caller passes nothing
+ * and gets the authored bracket, which is the honest board-free answer.
  */
 function actionPriority(
   state: CombatState,
   action: Action,
   moves: Record<string, MoveDefinition>,
-  activeFieldEffectDef: FieldEffectDefinition | undefined
+  activeFieldEffectDef: FieldEffectDefinition | undefined,
+  /** The bracket randomPriority drew for THIS action, when orderActions rolled one. Undefined everywhere else, including every view read. */
+  rolledBracket?: number
 ): number {
   if (action.kind === 'switch') return SWITCH_PRIORITY_BRACKET;
   if (action.kind === 'rest') return REST_PRIORITY_BRACKET;
@@ -56,7 +67,11 @@ function actionPriority(
   const declared = action.declaredTarget ? state.combatants[action.declaredTarget] : undefined;
   const conditionalBonus =
     conditional && declared && !declared.fainted && hasStatus(declared, conditional.requiresTargetStatus) ? conditional.bonus : 0;
-  return move.priority + healBonus + conditionalBonus;
+  // The rolled bracket REPLACES the authored one rather than adding to it
+  // (content.ts randomPriority) — the design row names the brackets outright.
+  // The two bonus terms still apply on top, so a randomPriority heal would
+  // still catch Sanctuary; nothing authors that combination today.
+  return (rolledBracket ?? move.priority) + healBonus + conditionalBonus;
 }
 
 /**
@@ -105,12 +120,28 @@ export function orderActions(
   const activeFieldEffectDef = activeFieldEffectId ? fieldEffects[activeFieldEffectId] : undefined;
   const speedDirection = activeFieldEffectDef?.reversesSpeedOrder ? 1 : -1;
 
+  // The random brackets are drawn FIRST, in action order, before any speed
+  // tiebreak below touches the stream — one fixed sequence, so a replay of the
+  // same seed and the same declared actions orders identically (content.ts
+  // randomPriority, docs/architecture.md "Determinism & RNG"). A round with no
+  // Cog Bop in it draws nothing at all and is byte-identical to before.
+  let rollCursor = rngState;
+  const rolledBrackets = new Map<Action, number>();
+  for (const action of actions) {
+    if (action.kind !== 'move') continue;
+    const brackets = moves[action.moveId]?.randomPriority;
+    if (!brackets?.length) continue;
+    const draw = nextInt(rollCursor, 0, brackets.length);
+    rollCursor = draw.nextState;
+    rolledBrackets.set(action, brackets[draw.value]);
+  }
+
   const withKeys: OrderedAction[] = actions.map((action) => {
     const combatant = state.combatants[action.combatantId];
     const hero = heroes[combatant.heroId];
     return {
       action,
-      priority: actionPriority(state, action, moves, activeFieldEffectDef),
+      priority: actionPriority(state, action, moves, activeFieldEffectDef, rolledBrackets.get(action)),
       speed: getEffectiveStat(hero, combatant, 'speed'),
     };
   });
@@ -118,7 +149,7 @@ export function orderActions(
   withKeys.sort((a, b) => b.priority - a.priority || (a.speed - b.speed) * speedDirection);
 
   // Resolve exact priority+speed ties deterministically via the seeded RNG.
-  let cursor = rngState;
+  let cursor = rollCursor;
   let i = 0;
   while (i < withKeys.length) {
     let j = i + 1;

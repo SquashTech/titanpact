@@ -314,6 +314,23 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     parts.push(odds + deltas + where + pack);
   }
 
+  // The reel (content.ts randomStatDeltas — Overclock, Piston Punch,
+  // Jury-Rig). States WHICH stat is unknown rather than naming one, because on
+  // these three moves that is the entire mechanic — and says how many, since
+  // Jury-Rig's two-at-once is what separates it from Overclock at 35 more mana.
+  if (move.randomStatDeltas) {
+    const { count, amount } = move.randomStatDeltas;
+    // Only names a side when the deltas land somewhere OTHER than the move's
+    // own target — the rule the authored-statDeltas clause above already
+    // follows. Overclock is a bothAllies move granting to both allies, so
+    // naming it would print "(Both Allies) — Both Allies" against the trailing
+    // target clause; Piston Punch damages an enemy and buffs its caster, so
+    // there "(Self)" is the entire point of the line.
+    const where =
+      move.statDeltaTarget === 'bothAllies' ? ' (Both Allies)' : move.statDeltaTarget === 'self' ? ' (Self)' : '';
+    parts.push(`+${amount} to ${count === 1 ? 'a random stat' : `${count} random stats`}${where}`);
+  }
+
   // Brain Flay states a RULE rather than a number, for the same reason
   // Arcane Overflow does below: what it is worth is whatever the enemy's stat
   // line already says (content.ts doublesStatReductions).
@@ -407,6 +424,15 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     parts.push(`Hits ${TARGET_MODE_LABELS[move.conditionalTarget.target].toLowerCase()} while ${field} is up`);
   }
 
+  // Jackpot has no authored Base Power, so without this the summary would
+  // describe a damage move and never mention its damage (content.ts
+  // randomBasePower). Stated as the RANGE and the cadence, not as a number:
+  // this line is printed on the draft and compendium screens too, where there
+  // is no round to have rolled one.
+  if (move.randomBasePower) {
+    parts.push(`Base Power rolls ${move.randomBasePower.min}-${move.randomBasePower.max} each round`);
+  }
+
   if (move.critChance != null) parts.push(`${Math.round(move.critChance * 100)}% crit`);
 
   // Which stat this actually hits with. It leads the mechanical clauses
@@ -471,6 +497,21 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     parts.push(`${odds}${verb} ${statusName}${amount != null ? ` ${amount}` : ''}${where ? ` (${where})` : ''}`);
   }
 
+  // The misfire (content.ts randomStatusApplication — Malfunction). One of
+  // these lands, and the player is choosing to press a move whose outcome
+  // includes a mark their own type cannot cash, so the list is spelled out in
+  // full rather than summarised as "a random status".
+  if (move.randomStatusApplication?.length) {
+    const faces = move.randomStatusApplication
+      .map((app) => {
+        const name = statuses[app.statusId]?.name ?? app.statusId;
+        const amount = app.magnitude ?? app.duration;
+        return amount != null ? `${name} ${amount}` : name;
+      })
+      .join(', ');
+    parts.push(`Applies one of: ${faces}`);
+  }
+
   // Miasma's detonation is most of what the move does — a 50 BP magical hit
   // that also cashes in a Poison stack the player spent four moves building —
   // so it cannot be left to the dossier (content.ts detonatesStatus).
@@ -485,6 +526,15 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   // The ramp, on the summary line, because the authored cost beside it is only
   // the FIRST cast's price (content.ts manaDiscountOnUse).
   if (move.manaDiscountOnUse) parts.push(`−${move.manaDiscountOnUse} MP each use`);
+
+  // A bracket drawn at random is the same decision as a bracket that depends
+  // on the board, and needs saying for the same reason — except this one can
+  // never be answered in advance, which is itself the thing to communicate
+  // (content.ts randomPriority).
+  if (move.randomPriority?.length) {
+    const brackets = [...move.randomPriority].sort((a, b) => a - b).map((p) => (p >= 0 ? `+${p}` : `${p}`));
+    parts.push(`Priority ${brackets.join(' or ')}, at random`);
+  }
 
   // A bracket that depends on the board is still a bracket, and "strikes
   // first" is the single most decision-relevant thing about a move in a

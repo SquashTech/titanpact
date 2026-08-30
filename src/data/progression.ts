@@ -225,7 +225,23 @@ export const progressionTable: ProgressionTable = {
     // Three of Clockwork's four pool entries were Iron fixture moves and all
     // three died (moves.ts, 2026-08-30). Mech has no authored slate yet, so
     // the line stays off-type Iron — it is just a line now instead of filler.
-    forgewright: ['ironFist', 'heavyBlow', 'momentumSwing', 'rendArmor'],
+    // Clockwork takes the MAGICAL half of the slate, and it takes it by
+    // default rather than by fit: Intelligence 45 is the highest any Mech hero
+    // has, and the four magical rows (Backfire, Overheat, Malfunction,
+    // Meltdown) are otherwise in nobody's pool at all — Bellows is
+    // Intelligence 15. Reported in docs/authoring-moves.md §10; Stone's
+    // finding, with a fourth row on it.
+    //
+    // The line those four make is coherent even so: Mech's magic is heat it
+    // cannot contain, so every one of them burns the caster or gambles on
+    // what it does. Salvage is the answer to that — the only self-target heal
+    // in the game, and the reason this hero can keep pressing Overheat. Jury-
+    // Rig extends the reel it already opened with Overclock.
+    //
+    // Deliberately no physical rows: Bellows has those, and a pool shared
+    // between two heroes is the byte-identical-kits problem five slates have
+    // now reported (docs/authoring-moves.md §10).
+    forgewright: ['backfire', 'overheat', 'malfunction', 'meltdown', 'salvage', 'juryRig'],
     // Beast authored (src/data/moves.ts, 2026-08-30). Fang is the type's
     // only hero, so like Spirit's Revenant it draws the WHOLE physical half
     // rather than a line split against a sibling — eleven entries, and the
@@ -388,7 +404,20 @@ export const progressionTable: ProgressionTable = {
     // of the cheap ramp (Iron Fist and Sharpen are in its starting kit now).
     // Onslaught's 80 sits above its 40 starting pool on purpose; a run's mana
     // growth is what opens it (docs/mana.md).
-    steamColossus: ['sparkForge', 'momentumSwing', 'onslaught', 'swingingChain', 'rockToss'],
+    // Bellows takes the PHYSICAL half plus the two rows that scale off
+    // nothing. Atk 90 behind Speed 15 is the heaviest, slowest body in the
+    // roster, so it gets the big swings: Cog Slam (the 65 BP coin flip),
+    // Whirling Blades (the spread), and Jackpot, which wants exactly this
+    // hero — a 150 roll through an Attack of 90 is the largest single hit the
+    // type can produce, and the reel being visible means a slow hero can wait
+    // a round for it without wasting the turn.
+    //
+    // Overdrive and Perfect Creation are here rather than on Clockwork for
+    // the same reason as each other: neither reads a stat. Overdrive's +20 to
+    // all five is worth most on the body with the worst Speed, and Perfect
+    // Creation is six flat statuses, so Intelligence 15 costs it nothing.
+    // Onslaught keeps the Iron half of the ramp alive.
+    steamColossus: ['cogSlam', 'whirlingBlades', 'jackpot', 'overdrive', 'perfectCreation', 'onslaught'],
     // Zenith takes the battery line — every mana grant the slate authors, plus
     // Arcane Overflow, which is the only move that reads the pool back out. The
     // three are one plan: bank with Font of Power, cash it as a three-figure

@@ -203,8 +203,8 @@ authored roster.
   `progression.md`, `mana.md`, `architecture.md`, `field-effects.md`, `run-loop.md`,
   `locations.md`, `visual-language.md` (presentation only). Reference from here; don't inline them.
   **`authoring-moves.md` is a runbook, not a design module** — read it before implementing
-  a designed slate of moves for a type (2 types still to go — Mech and Ancient; Fire
-  and Water are the worked examples, and §10 carries all thirteen hand-offs).
+  a designed slate of moves for a type (1 type still to go — Ancient; Fire
+  and Water are the worked examples, and §10 carries all fourteen hand-offs).
 - `/prototypes/` — the two slices above, as behavioral reference.
 - `/src/engine/` — the pure resolution engine + the six contracts.
 - `/src/content/` — heroes, moves, abilities, relics, equipment as pure data.

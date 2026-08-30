@@ -10,9 +10,9 @@ appropriately."
 Fire was the first (2026-08-29), Water the second, Frost the third, Storm
 the fourth, Stone the fifth, Nature the sixth, Light the seventh, Shadow the
 eighth, Arcane the ninth, Mind the tenth, Spirit the eleventh, Iron the
-twelfth and Beast the thirteenth (all 2026-08-30). Two types remain — Mech and
-Ancient. This file is what those thirteen cost to learn, written down so the
-next one is an afternoon instead of a day. Water took about a third of
+twelfth, Beast the thirteenth and Mech the fourteenth (all 2026-08-30). One
+type remains — Ancient. This file is what those fourteen cost to learn, written
+down so the next one is an afternoon instead of a day. Water took about a third of
 Fire's time and Frost about the same as Water, and every hour of the saving came from
 §0 step 1 — naming the engine extensions before writing any content. Frost needed two
 (a targeting gate and a status consume) and both were visible in the table on the
@@ -244,6 +244,47 @@ needed thought. **A long-standing "raise before you build it" note is usually
 cheaper than it looks by the time something actually asks for it** — the
 reason to raise it is still that the designer might not want it, not that it
 is expensive.
+
+Mech needed **four**, and it is the first slate whose lesson is about
+*where a roll lives* rather than about what a field does. Its words to watch
+for were four different spellings of one word — "randomly Priority", "a random
+stat", "randomly apply", "randomly roll this attack's base power" — and the
+trap is that they look like one extension and are four, because chance can
+attach to four different parts of a move.
+
+**The finding, and it is worth banking: one of those four could not be drawn
+from the shared RNG stream at all.** Three of them (bracket, stat, rider) roll
+*after* the player commits, so they belong in the round's own seeded stream
+like every draw before them. Jackpot's does not: the design row says "at the
+start of each turn", the designer confirmed the number is SHOWN on the button,
+and a value the view must read before committing cannot be one the view
+advances by reading — a player would re-roll Jackpot by opening the move
+dossier twice.
+
+The fix is worth copying rather than re-deriving. It is **derived, not stored
+and not drawn**: a pure function of `(seed, round, combatantId, moveId)` pushed
+through the same mulberry32 (`state.ts resolveRandomBasePower`). That bought
+three things at once, none of which was designed for individually — it
+re-rolls every round because `round` is an input, it is per hero because
+`combatantId` is one, and `rngState` is never touched so every fight authored
+before it replays byte-identically. The two alternatives both cost more and
+delivered less: a STORED roll needs a new CombatState field and a seeding pass
+in both builders, and a STREAM draw cannot be read before the round resolves,
+which is the one thing the row actually requires.
+
+**The generalisable question, and it is a new one for §0 step 1:** for
+anything random, ask *when is it known, relative to the commit?* A roll the
+player sees before choosing and a roll they discover afterwards are not the
+same field with a different timing — they are different mechanics, and they
+live in different places. Mech has both, four rows apart in the same table.
+
+Mech's other lesson is Iron's inverted and is a roster fact rather than an
+engine one. Iron cashes Conduct eleven times and plants it zero; Mech plants
+Conduct twice and Haunt once and **cashes neither** — it is in no status's
+`triggerTypes` or `spreadTriggerTypes`. Asked up front rather than assumed,
+and confirmed as intended: Mech builds, a partner fires. Worth asking on every
+remaining slate, because "does this type interact with the marks it applies"
+is invisible in a design table and is a whole doubles axis.
 
 Read this **before** opening `src/data/moves.ts`. Read `CLAUDE.md` first if you have not.
 
@@ -1770,6 +1811,106 @@ signature that hero cannot use alone**:
   Marrow, Solace, Crimson, Glyph, Zenith, Revenant) are deliberately left
   unplaced per Stone's rule. Worth knowing that the previous slates' open
   lists are useful for placement and not only for engine work.
+
+Mech's, as a fourteenth — the slate whose engine work was four fields and
+whose findings are about a roster of two, one of which cannot cast a third of
+the type:
+
+- **A capability the slate deleted — one, and it is the price point again,
+  for the seventh slate running.** `sparkForge` cost **6** and was priority
+  **+1**; `moltenHammer` was 70 base power for **15** and priority **-1**. The
+  authored floor is 15 (Overclock) and the cheapest attack is 20. So Mech lost
+  the same "act every round on nothing" option Frost, Light, Arcane, Mind,
+  Shadow and Spirit each lost, and it is now seven slates rather than seven
+  calls — the unstated global policy §10 flagged after Spirit, still unstated.
+
+  What Mech did NOT lose is bracket play, and that is worth separating out:
+  the fixture pair covered -1 and +1 with two fixed rows, and Cog Bop and Cog
+  Slam cover the same two brackets with a coin flip. The type kept the axis
+  and made it a gamble, which is the slate working as designed rather than a
+  gap.
+
+  Smaller, and a consequence of a commit one hour older than this slate:
+  **Clockwork lost Fortify again.** It had been given the re-authored Fortify
+  (+15 Defense, 15 mana) to answer Iron's reported gap; a full Mech kit takes
+  it back off, because Clockwork is MONO Mech and an off-type slot is a slot
+  with no STAB. What replaces it is Overclock — +20 to a stat that is Defense
+  one time in five. That is a real downgrade in reliability for a hero whose
+  Defense 70 / 130 HP is its best feature, and it is reported rather than
+  patched around.
+
+- **A locked decision the slate brushed against — two, and the first is about
+  the LOCKED variance term.** Jackpot is the first move whose Base Power is
+  not a number, which puts a second random term into a formula that already
+  has exactly one (`Variance`, 0.85-1.0, "load-bearing — never remove",
+  CLAUDE.md). It does not break the lock and it is not a second variance: it
+  is a BasePower-stage term, resolved BEFORE the formula runs and visible to
+  the player, where variance is a post-hoc multiplier nobody sees. But the two
+  do compose, and the composition is worth stating once rather than
+  discovering: a 50 roll into a 0.85 variance is 42.5 effective power against
+  a 150 roll into a 1.0, which is a **3.5x spread on one button**. Recorded in
+  `docs/combat.md` rather than settled by accident.
+
+  The second: `resolveRandomBasePower` is the first randomness in the engine
+  that does not come off `CombatState.rngState`. `seededRng.ts` says its PRNG
+  is "the ONLY randomness source allowed inside /src/engine" and that still
+  holds — this uses the same mulberry32 — but the SHARED STREAM is no longer
+  the only place a roll can live, and that is a real change to how determinism
+  is reasoned about here. The rule that replaces it: a roll the player reads
+  before committing must be derived from state, and a roll they discover after
+  committing must come off the stream. Also in `docs/combat.md`.
+
+- **A balance consequence outside the slate — three.**
+  1. **Four of the fifteen are magical and Mech has no magical hero.** Backfire,
+     Overheat, Malfunction and Meltdown are `Mag`; Clockwork is Intelligence
+     **45** and Bellows is **15**. Stone's finding with a fourth row on it, and
+     one degree worse: Stone's three magical rows had NO holder and went to
+     the orphan list, while these four have a holder who is simply bad at
+     them. Meltdown at 80 base power through Intelligence 45 lands for less
+     than Whirling Blades at 45 does through Attack 60, so the slate's
+     magical capstone is worse than its mid-tier physical spread on the only
+     hero who can cast it. Not a trap pick — Clockwork's kit leads on Piston
+     Punch, a physical row — but half the slate is priced for a body the type
+     does not have. Whether Clockwork should become a proper caster (the
+     Marrow treatment) or whether Mech should get a third hero is a roster
+     decision, not a movepool one.
+  2. **Mech has no enemy.** Zero Mech entries in `enemies.ts` — Nature's,
+     Arcane's and Mind's finding for the fourth time, and it bites hardest
+     here of the four. Every other type's identity is a thing done TO the
+     player that they learn to answer; Mech's is a gamble, and a player who
+     has never had Jackpot rolled at them has never had to decide whether to
+     switch out of a 150. The type is also the cheapest to demonstrate from
+     the far side, because randomness needs no setup.
+  3. **Perfect Creation and Malfunction are the most partner-dependent rows in
+     the game, and they are dependent on FOUR types.** Conduct wants a Storm
+     or Iron ally, Haunt wants Spirit or Mind. Mind's Cerebral Shock has the
+     same shape with one type; Iron's Metallic Blade has it inverted. Mech is
+     now the third corner of that arrangement and the only one that plants two
+     different marks for two different pairs — so Perfect Creation's value
+     swings further on team composition than any other move, from "six
+     statuses, four of which do something" next to a Fire hero to all six next
+     to Bellows-and-a-Storm-partner. Reported, not tuned.
+
+- **A fourth, and §7 earns its keep for the sixth slate running.** Clockwork
+  and Bellows were not duplicates (Int 45/Atk 60 against Int 15/Atk 90), but
+  both pools were **entirely off-type Iron filler** and `momentumSwing`
+  appeared in both — so the mono-Mech starter's whole level-up line was moves
+  it got no STAB on, and the two heroes overlapped. They now split on the axis
+  the slate has: Clockwork takes the magical attrition line plus Salvage (the
+  only self-target heal in the game, and the answer to its own three self-Burn
+  rows), Bellows takes the heavy swings plus the two rows that read no stat at
+  all. No shared entries. **Distribution keeps being a roster audit wearing a
+  movepool hat** — six for six.
+
+- **A fifth, and it is a cross-slate assertion doing its job.** Iron pinned
+  "every Wisdom grant left in the game is Mind" as an exact set, explicitly so
+  that a later slate adding a non-Mind one would have to notice. Overdrive is
+  "+20 to all stats", "all stats" includes Wisdom, and the test failed on the
+  first run. Extended rather than deleted (`test/ironMoves.test.ts`): a
+  physical hero CAN now buy magical defense from a move, but only at 100 mana,
+  only as one fifth of a capstone, and only from a type it has to be standing
+  next to — so the shape of Iron's finding survives its own exception. **Write
+  the exact-set assertion, not the count.**
 
 **One more procedural note, from Mind.** §0 step 1 says name the extensions up front
 and §10 says report what you hit. Mind is the case where those were the same act:

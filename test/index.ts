@@ -19,6 +19,7 @@ import './arcaneMoves.test';
 import './mindMoves.test';
 import './ironMoves.test';
 import './beastMoves.test';
+import './mechMoves.test';
 import './run.test';
 import './recruitment.test';
 import './shop.test';

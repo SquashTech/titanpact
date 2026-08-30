@@ -18,6 +18,7 @@ import {
   hasStatus,
   hasAffordableMoveInFight,
   resolveManaCost,
+  resolveRandomBasePower,
   resolveTargetMode,
   getEffectiveStat,
   getMaxHp,
@@ -122,6 +123,25 @@ interface MoveRowProps {
    */
   selfHpCost: number;
   /**
+   * THIS ROUND's rolled Base Power for a move that authors none (content.ts
+   * randomBasePower — Mech's Jackpot), or undefined for the ~120 moves that
+   * carry a flat number.
+   *
+   * The most load-bearing prop in this list, because on Jackpot it is not a
+   * readout — it IS the mechanic. The designer's call (2026-08-30) was that
+   * the roll is visible BEFORE the player commits, which is the entire
+   * difference between a decision ("80 mana on a 61? no — wait a round") and a
+   * second variance term stacked on the locked 0.85-1.0 one. A row that hid it
+   * would leave the move strictly worse than the fixed-power alternative and
+   * the player unable to tell why.
+   *
+   * Resolved by the caller like every other live figure here, but unlike
+   * `banked` or `cost` it costs no state and draws no RNG: it is derived from
+   * (seed, round, combatantId, moveId), so reading it here and reading it in
+   * resolveRound produce the same number, and re-rendering cannot re-roll it.
+   */
+  rolledBasePower: number | undefined;
+  /**
    * Whether the half of a conditionalPower the player can already answer
    * WITHOUT declaring a target is met — the caster's own status (content.ts
    * conditionalPower.requiresUserStatus — Nature's Seed Shot and Branch Slam)
@@ -186,7 +206,7 @@ interface MoveRowProps {
  * rules off `:disabled`), still refuses to act on a tap, and still opens its
  * dossier on a hold.
  */
-function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, bankedReductions, selfHpCost, userConditionMet, packBonusActive, liveTargetMode, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
+function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, bankedReductions, selfHpCost, rolledBasePower, userConditionMet, packBonusActive, liveTargetMode, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
   // Two independent ways a row can be dead, one shared treatment. `.is-unusable`
   // carries the dim; `.is-unaffordable` is kept as the narrower flag so the mana
   // gem only goes grey when mana is actually the problem (styles.css).
@@ -237,13 +257,38 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
           <ElementGlyph type={move.type} />
         </span>
         <span className="move-name">{move.name}</span>
-        {move.kind === 'damage' && move.basePower != null && (
+        {/* The rolled figure takes precedence over the authored one, because
+            a move carrying randomBasePower has no authored one at all — and
+            because this readout is where Jackpot's whole decision lives
+            (content.ts randomBasePower). It wears the same .move-boosted
+            treatment Elemental Force gets when the reel comes up above its own
+            midpoint, so a good roll is visible at a glance across a four-row
+            list rather than needing to be read. */}
+        {move.kind === 'damage' && (move.basePower ?? rolledBasePower) != null && (
           <span
-            className={`move-power${forceBonus > 0 ? ' move-boosted' : ''}`}
-            title={forceBonus > 0 ? `Elemental Force: +${forceBonus} Base Power` : undefined}
+            className={`move-power${
+              forceBonus > 0 ||
+              (rolledBasePower != null &&
+                move.randomBasePower != null &&
+                rolledBasePower > (move.randomBasePower.min + move.randomBasePower.max) / 2)
+                ? ' move-boosted'
+                : ''
+            }`}
+            title={
+              rolledBasePower != null && move.randomBasePower != null
+                ? `Rolled this round: ${rolledBasePower} of ${move.randomBasePower.min}-${move.randomBasePower.max}${forceBonus > 0 ? ` · Elemental Force: +${forceBonus}` : ''}`
+                : forceBonus > 0
+                  ? `Elemental Force: +${forceBonus} Base Power`
+                  : undefined
+            }
           >
-            <strong>{move.basePower + forceBonus}</strong>BP
-            {forceBonus > 0 && <span className="move-boosted-arrow">▲</span>}
+            <strong>{(rolledBasePower ?? move.basePower ?? 0) + forceBonus}</strong>BP
+            {(forceBonus > 0 ||
+              (rolledBasePower != null &&
+                move.randomBasePower != null &&
+                rolledBasePower > (move.randomBasePower.min + move.randomBasePower.max) / 2)) && (
+              <span className="move-boosted-arrow">▲</span>
+            )}
           </span>
         )}
         {/* No "HEAL" suffix beside the number, unlike the damage row's "BP".
@@ -365,6 +410,43 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                         ? `with ${move.conditionalPower.requiresUserStatus}`
                         : `vs ${move.conditionalPower.requiresTargetStatus}`}
                 {move.conditionalPower.consumesStatus && !move.conditionalPower.requiresFieldEffect ? ' (spent)' : ''}
+              </span>
+            )}
+            {/* The reel's range, beside the rolled number in the power slot
+                above — the number says what you get NOW, this says what you
+                are choosing between rounds (content.ts randomBasePower). */}
+            {move.randomBasePower && (
+              <span className="move-eff-status">
+                Rolls {move.randomBasePower.min}-{move.randomBasePower.max}
+              </span>
+            )}
+            {/* A bracket nobody can predict is still the most decision-relevant
+                fact about a move in a declare-then-resolve game, so it goes on
+                the button exactly as conditionalPriority does — the difference
+                is that this chip can never light up, because the roll happens
+                after the player commits (content.ts randomPriority). */}
+            {move.randomPriority?.length && (
+              <span className="move-eff-status">
+                Priority {[...move.randomPriority].sort((a, b) => a - b).map((p) => (p >= 0 ? `+${p}` : `${p}`)).join('/')} random
+              </span>
+            )}
+            {/* Which stat, unknown — the reel on a damage move (Piston Punch).
+                The non-damage branch prints this through moveEffectSummary. */}
+            {move.randomStatDeltas && (
+              <span className="move-eff-status">
+                +{move.randomStatDeltas.amount}{' '}
+                {move.randomStatDeltas.count === 1 ? 'random stat' : `${move.randomStatDeltas.count} random stats`}
+                {move.statDeltaTarget === 'self' ? ' (Self)' : ''}
+              </span>
+            )}
+            {/* Every face of the reel, named. One of Malfunction's three
+                outcomes is a Conduct that no Mech move can cash, so a chip
+                reading "random status" would hide the one thing the player
+                needs to know before pressing it (content.ts
+                randomStatusApplication). */}
+            {move.randomStatusApplication?.length && (
+              <span className="move-eff-status">
+                1 of {move.randomStatusApplication.map((app) => app.statusId).join('/')}
               </span>
             )}
             {/* The detonation, on the button, because it is the difference
@@ -1737,6 +1819,7 @@ export function FightScreen({
                             ),
                           0
                         )}
+                        rolledBasePower={resolveRandomBasePower(combat, id, move)}
                         selfHpCost={
                           move.selfHpCost == null
                             ? 0

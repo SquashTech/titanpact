@@ -4,11 +4,11 @@
 // 2v2s while the real content gets authored.
 //
 // EXCEPT Fire (2026-08-29), Water, Frost, Storm, Stone, Nature, Light,
-// Shadow, Arcane, Mind, Spirit and Iron (all 2026-08-30), the twelve types
-// replaced wholesale by their designed movepools —
+// Shadow, Arcane, Mind, Spirit, Iron, Beast and Mech (all 2026-08-30), the
+// fourteen types replaced wholesale by their designed movepools —
 // see the "(AUTHORED)" blocks below. Those are balance-tuned content;
 // everything else here is still filler and should be read (and replaced) as
-// such, type by type. Three types are left: Mech, Beast, Ancient. As of the
+// such, type by type. One type is left: Ancient. As of the
 // Iron slate the "original fixture moves" section at the top of this file is
 // gone entirely — every remaining fixture move belongs to one of those three. Every engine field below exists because an authored slate
 // needed it, and each is generic vocabulary in engine/content.ts rather than a
@@ -37,6 +37,16 @@
 //           DETONATES the status it reads, which turns a price into a choice:
 //           swing at the marked foe and cash the mark, or swing at the other
 //           one and keep the discount (docs/combat.md)
+//   Mech  — the RANDOMNESS type, and the first whose identity is RNG rather
+//           than a status or a resource. Four fields, one per shape chance can
+//           take: randomPriority (Cog Bop, Cog Slam) rolls the BRACKET,
+//           randomStatDeltas (Overclock, Piston Punch, Jury-Rig) rolls WHICH
+//           STAT, randomStatusApplication (Malfunction) rolls WHICH RIDER, and
+//           randomBasePower (Jackpot) rolls the DAMAGE. Three draw from the
+//           shared stream after the player has committed; Jackpot alone is
+//           derived from (seed, round, combatantId, moveId) rather than drawn,
+//           because its whole mechanic is being READ before the commit
+//           (engine/state.ts resolveRandomBasePower)
 //
 // Most moves here are `kind: 'damage'` — variety comes from
 // type/category/power/cost/priority/targeting — including doubles-native
@@ -62,7 +72,27 @@
 // StatusDefinition.triggerTypes; that half stays automatic — see
 // statusEngine.ts detonateTriggeredStatuses.
 
-import type { MoveDefinition } from '../engine/content';
+import type { MoveDefinition, StatKey } from '../engine/content';
+
+/**
+ * The stats a Mech "random stat" row can roll (content.ts randomStatDeltas —
+ * Overclock, Piston Punch, Jury-Rig), and the exact set Overdrive grants at
+ * once. The five COMBAT stats: HP, Mana Pool and MP Regen are deliberately
+ * OUT (2026-08-30 designer call).
+ *
+ * The reason is that +20 is not worth the same thing eight times over. +20 MP
+ * Regen is twice the Everflow banner and would triple a typical hero's regen;
+ * +20 HP on a 130-HP body is noise. A reel including them would be four fair
+ * faces, one jackpot and two blanks, which is a different move from the one
+ * the table describes — and it would make Overdrive's "+20 to all stats" a
+ * far larger effect than its 100 mana is priced for.
+ *
+ * Lives here rather than in the engine because a candidate pool is content
+ * (CLAUDE.md "All acquirable content ... is pure data"), the same reason
+ * StatusDefinition.triggerTypes is data. A later slate wanting a different
+ * reel authors a different array.
+ */
+export const RANDOM_STAT_POOL: readonly StatKey[] = ['attack', 'defense', 'intelligence', 'wisdom', 'speed'];
 
 export const moves: Record<string, MoveDefinition> = {
   // The "original fixture moves" section used to open the file here, and its
@@ -3358,30 +3388,282 @@ export const moves: Record<string, MoveDefinition> = {
   },
 
 
-  // --- Mech --------------------------------------------------------------
-  moltenHammer: {
-    id: 'moltenHammer',
-    name: 'Molten Hammer',
+  // --- Mech (AUTHORED, 2026-08-30) ------------------------------------------
+  // The fourteenth authored slate, and the first type whose IDENTITY is
+  // randomness rather than a status, a resource or a stat axis. Every other
+  // type asks "what is on the board"; Mech asks "what did the machine do this
+  // time". Four of the fifteen rows below roll something, and they roll four
+  // DIFFERENT things on purpose — the bracket, the stat, the rider and the
+  // damage — so the type reads as one idea rather than four variants of a
+  // dice move.
+  //
+  // Two of the fifteen plant marks Mech itself can never cash: Malfunction can
+  // roll Conduct (Storm/Iron detonate it) and Perfect Creation applies both
+  // Conduct and Haunt (Spirit/Mind spread it). That is a 2026-08-30 designer
+  // call, not a gap — Mech BUILDS, a partner FIRES. It makes Perfect Creation
+  // the most partner-dependent row in the game and gives the type a real
+  // doubles reason to draft alongside four other types.
+  cogBop: {
+    id: 'cogBop',
+    name: 'Cog Bop',
     type: 'Mech',
     category: 'physical',
+    kind: 'damage',
+    basePower: 40,
+    manaCost: 20,
+    // Authored as the MIDPOINT of randomPriority's list, which is what every
+    // board-free surface prints (the draft, the compendium, effectivePriority)
+    // — see content.ts randomPriority. The bracket the move actually resolves
+    // in is drawn when the round is ordered, after both sides have committed.
+    priority: 0,
+    randomPriority: [-1, 1],
+    target: 'singleEnemy',
+    description: 'A cog swung on a chain. Whether it arrives early or late is between the machine and God.',
+  },
+  overclock: {
+    id: 'overclock',
+    name: 'Overclock',
+    type: 'Mech',
+    category: 'physical',
+    kind: 'buff',
+    // No authored statDeltas at all — the whole body is the reel, rolled
+    // independently for each ally (content.ts randomStatDeltas), so this can
+    // land +20 Defense on one and +20 Speed on the other.
+    randomStatDeltas: { count: 1, amount: 20, from: RANDOM_STAT_POOL },
+    manaCost: 15,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Push the governor past its stop and see which part of the machine wakes up.',
+  },
+  pistonPunch: {
+    id: 'pistonPunch',
+    name: 'Piston Punch',
+    type: 'Mech',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 30,
+    // The reel pointed at the caster instead of the move's target — the same
+    // opposite-sides split Landslide needs (content.ts statDeltaTarget), and
+    // the reason a damage move can carry a self-buff at all. +5 is the
+    // smallest legal grant, so this is Iron Fist's ramp with the stat unknown.
+    randomStatDeltas: { count: 1, amount: 5, from: RANDOM_STAT_POOL },
+    statDeltaTarget: 'self',
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Every swing seats another part correctly. Rarely the part you wanted.',
+  },
+  backfire: {
+    id: 'backfire',
+    name: 'Backfire',
+    type: 'Mech',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 40,
+    // Two riders, one cast — the LIST form Beast's Toxic Fangs introduced
+    // (content.ts statusApplication). Not recoilPercent and not selfHpCost:
+    // the cost here is a flat authored magnitude spread over rounds, which is
+    // exactly the shape Fire's Volcanic Surge established and the one
+    // docs/authoring-moves.md §3 says to keep for a flat number.
+    statusApplication: [
+      { statusId: 'Burn', magnitude: 10, target: 'moveTarget' },
+      { statusId: 'Burn', magnitude: 10, target: 'self' },
+    ],
+    manaCost: 25,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'The exhaust goes both ways.',
+  },
+  kickstart: {
+    id: 'kickstart',
+    name: 'Kickstart',
+    type: 'Mech',
+    category: 'magical',
+    kind: 'heal',
+    healPower: 25,
+    statDeltas: [{ stat: 'speed', amount: 10 }],
+    manaCost: 20,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'A boot to the housing. It runs again, and briefly runs hot.',
+  },
+  whirlingBlades: {
+    id: 'whirlingBlades',
+    name: 'Whirling Blades',
+    type: 'Mech',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 45,
+    manaCost: 45,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Spin up the cutting heads and walk forward.',
+  },
+  overheat: {
+    id: 'overheat',
+    name: 'Overheat',
+    type: 'Mech',
+    category: 'magical',
     kind: 'damage',
     basePower: 70,
-    manaCost: 15,
-    priority: -1,
+    statusApplication: [
+      { statusId: 'Burn', magnitude: 20, target: 'moveTarget' },
+      { statusId: 'Burn', magnitude: 20, target: 'self' },
+    ],
+    manaCost: 50,
+    priority: 0,
     target: 'singleEnemy',
-    description: 'A white-hot hammer blow, heavy and deliberate.',
+    description: 'Backfire with the safeties removed.',
   },
-  sparkForge: {
-    id: 'sparkForge',
-    name: 'Spark Forge',
+  salvage: {
+    id: 'salvage',
+    name: 'Salvage',
+    type: 'Mech',
+    category: 'magical',
+    kind: 'heal',
+    healPower: 60,
+    manaCost: 40,
+    priority: 0,
+    // The only self-target heal in the game, and the type's whole answer to
+    // its own self-Burn rows above.
+    target: 'self',
+    description: 'Strip the wreck for the parts that still turn.',
+  },
+  juryRig: {
+    id: 'juryRig',
+    name: 'Jury-Rig',
+    type: 'Mech',
+    category: 'physical',
+    kind: 'buff',
+    // Two DISTINCT stats per ally — the reel draws without replacement, so
+    // this is never +40 to one (content.ts randomStatDeltas).
+    randomStatDeltas: { count: 2, amount: 20, from: RANDOM_STAT_POOL },
+    manaCost: 50,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Wire two things to two other things. Both of them work now.',
+  },
+  malfunction: {
+    id: 'malfunction',
+    name: 'Malfunction',
+    type: 'Mech',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 45,
+    // ONE of the three, drawn per cast (content.ts randomStatusApplication).
+    // Poison's duration is 3 — the table omits it, and every one of the eleven
+    // Poison rows authored before this one says 3 (docs/authoring-moves.md's
+    // Light lesson: use the precedent, then say so).
+    //
+    // The Conduct face is a mark Mech cannot detonate itself — Conduct's
+    // triggerTypes are Storm and Iron. Intended (2026-08-30): a third of this
+    // move's outcomes is a gift to a partner rather than damage of its own.
+    randomStatusApplication: [
+      { statusId: 'Burn', magnitude: 20, target: 'moveTarget' },
+      { statusId: 'Poison', magnitude: 20, duration: 3, target: 'moveTarget' },
+      { statusId: 'Conduct', target: 'moveTarget' },
+    ],
+    manaCost: 45,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Something in there is broken. Point it at the enemy and find out which thing.',
+  },
+  cogSlam: {
+    id: 'cogSlam',
+    name: 'Cog Slam',
     type: 'Mech',
     category: 'physical',
     kind: 'damage',
-    basePower: 32,
-    manaCost: 6,
-    priority: 1,
+    basePower: 65,
+    priority: 0,
+    randomPriority: [-1, 1],
+    manaCost: 40,
     target: 'singleEnemy',
-    description: 'A quick flurry of glowing sparks.',
+    description: 'The big cog. Same gamble, more mass.',
+  },
+  jackpot: {
+    id: 'jackpot',
+    name: 'Jackpot',
+    type: 'Mech',
+    category: 'physical',
+    kind: 'damage',
+    // No basePower at all — the number is rolled fresh every round and SHOWN
+    // on the button before the player commits (content.ts randomBasePower,
+    // state.ts resolveRandomBasePower). That visibility is the entire move:
+    // hidden, this would be a second variance term on top of the locked
+    // 0.85-1.0 one; visible, it is a decision about whether 80 mana is worth
+    // spending on the number currently showing.
+    randomBasePower: { min: 50, max: 150 },
+    manaCost: 80,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Pull the lever. The machine has opinions about what you deserve.',
+  },
+  meltdown: {
+    id: 'meltdown',
+    name: 'Meltdown',
+    type: 'Mech',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 80,
+    // Self-Burn only — the table burns the user and NOT the targets on this
+    // one, unlike Backfire and Overheat above. A single rider, so it stays
+    // authored bare rather than as a one-element list.
+    statusApplication: { statusId: 'Burn', magnitude: 30, target: 'self' },
+    manaCost: 80,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Vent the core across the whole field. The core was load-bearing.',
+  },
+  overdrive: {
+    id: 'overdrive',
+    name: 'Overdrive',
+    type: 'Mech',
+    category: 'physical',
+    kind: 'buff',
+    // "All stats" is RANDOM_STAT_POOL spelled out — the same five faces
+    // Overclock rolls one of, granted at once and with nothing left to chance.
+    // The capstone of the reel line: 100 mana buys the certainty.
+    statDeltas: RANDOM_STAT_POOL.map((stat) => ({ stat, amount: 20 })),
+    manaCost: 100,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Every governor off at once. It will hold for exactly as long as it holds.',
+  },
+  perfectCreation: {
+    id: 'perfectCreation',
+    name: 'Perfect Creation',
+    type: 'Mech',
+    category: 'magical',
+    // No damage body at all — a move whose entire payload is its riders is
+    // kind 'buff' whatever it does to the enemy (docs/authoring-moves.md §2).
+    // MoveTile's isDebuff recovers the sign from the riders themselves.
+    kind: 'buff',
+    // Six riders, the longest list in the game, and the reason
+    // statusApplication had to become one. Applied in authored order, each
+    // resolving independently — six applications sharing a cast, not a
+    // compound status (content.ts statusApplication).
+    //
+    // Two of the six are marks Mech cannot cash: Conduct (Storm/Iron) and
+    // Haunt (Spirit/Mind). Confirmed intended, 2026-08-30 — this is the
+    // slate's statement that Mech builds the thing and somebody else fires it.
+    // Daze needs no number (it is flinch, cleared at end of round) and Bleed
+    // is a flat 5% of max HP; only Burn, Poison and their magnitudes are
+    // authored figures.
+    statusApplication: [
+      { statusId: 'Burn', magnitude: 50, target: 'moveTarget' },
+      { statusId: 'Poison', magnitude: 20, duration: 3, target: 'moveTarget' },
+      { statusId: 'Conduct', target: 'moveTarget' },
+      { statusId: 'Bleed', target: 'moveTarget' },
+      { statusId: 'Daze', target: 'moveTarget' },
+      { statusId: 'Haunt', target: 'moveTarget' },
+    ],
+    manaCost: 100,
+    priority: 0,
+    // Single-target: the table writes "Spread." explicitly on Whirling Blades
+    // and Meltdown, so its absence here is a statement rather than an omission.
+    target: 'singleEnemy',
+    description: 'Every failure mode the workshop knows, assembled into one flawless machine and handed to you.',
   },
 
   // --- Beast (AUTHORED, 2026-08-30) -----------------------------------------

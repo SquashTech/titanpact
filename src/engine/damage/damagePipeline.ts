@@ -256,7 +256,20 @@ export function calcDamage(
   stackingPolicy: ModifierStackingPolicy = LOCKED_MODIFIER_STACKING,
   critMultiplier: number = PROVISIONAL_CRIT_MULTIPLIER,
   basePowerBonus: number = 0,
-  basePowerMultiplier: number = 1
+  basePowerMultiplier: number = 1,
+  /**
+   * This round's rolled BasePower, in place of the move's authored one
+   * (content.ts randomBasePower — Mech's Jackpot). Optional on the same
+   * "omit it and every move behaves exactly as before" discipline every
+   * argument above it follows: Jackpot authors no `basePower`, so a caller
+   * that forgets this reads 0 rather than a wrong number, which fails loudly.
+   *
+   * Substituted for the authored figure BEFORE the multiplier and the Force
+   * bonus, so a rolled 120 doubles and takes Elemental Force exactly as an
+   * authored 120 would — the roll decides what the move is written at this
+   * round, it is not a term of its own.
+   */
+  basePowerOverride?: number
 ): DamageCalcResult {
   const stab = resolveStab(move.type, attackerTypes);
   const typeMult = resolveTypeMult(typeChart, move.type, defenderTypes);
@@ -269,7 +282,7 @@ export function calcDamage(
   // dealt at +20% damage. The conditional multiplier scales the AUTHORED
   // BasePower and Force is added after — Immolate at 30 BP with Fire Force 10
   // into a Burned target is 30x3 + 10 = 100, not (30+10)x3.
-  const effectiveBasePower = (move.basePower ?? 0) * basePowerMultiplier + basePowerBonus;
+  const effectiveBasePower = (basePowerOverride ?? move.basePower ?? 0) * basePowerMultiplier + basePowerBonus;
   const damage = effectiveBasePower * ratio * stab * typeMult * variance * crit * multiplierTerm;
 
   return { damage, ratio, stab, typeMult, variance, isCrit, critMultiplier: crit, multiplierTerm, basePowerBonus, basePowerMultiplier };
@@ -294,7 +307,9 @@ export function rollDamage(
   modifiers: readonly DamageModifier[] = [],
   critChance: number = PROVISIONAL_CRIT_CHANCE,
   basePowerBonus: number = 0,
-  basePowerMultiplier: number = 1
+  basePowerMultiplier: number = 1,
+  /** This round's rolled BasePower — see calcDamage. Drawn OUTSIDE this function (state.ts resolveRandomBasePower), so it costs no RNG here and the variance/crit draw order below is untouched. */
+  basePowerOverride?: number
 ): RolledDamage {
   const varianceRoll = nextRange(rngState, VARIANCE_MIN, VARIANCE_MAX);
   const critRoll = nextFloat(varianceRoll.nextState);
@@ -312,7 +327,8 @@ export function rollDamage(
     LOCKED_MODIFIER_STACKING,
     PROVISIONAL_CRIT_MULTIPLIER,
     basePowerBonus,
-    basePowerMultiplier
+    basePowerMultiplier,
+    basePowerOverride
   );
 
   return { ...result, nextRngState: critRoll.nextState };
