@@ -189,7 +189,9 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
   const entry = run.roster[0];
   assert.deepStrictEqual(
     levelUpMovePool(progressionTable, entry),
-    ['kindle', 'moltenLash', 'firebrand', 'volcanicSurge', 'quickJab', 'fangRush']
+    // kindle left this pool for Cinder's starting kit when the Spirit slate
+    // deleted Mend Wounds (src/data/heroes.ts, 2026-08-30).
+    ['moltenLash', 'firebrand', 'volcanicSurge', 'quickJab', 'fangRush']
   );
 
   const withMove = grantLevelUpMove(run, 'cinderKnight', 'firebrand');

@@ -314,16 +314,26 @@ test('shadow: the slate is fifteen moves, and every status and condition it name
 
 test('shadow: no move in the GAME authors two sides of conditionalPower', () => {
   // Widened past one type on purpose: `requiresTargetHpBelow` is a fourth way
-  // to make the same silent dud, and there is still no isValidMoveDefinition
-  // (authoring-moves.md §4). Checked oldest-first in damagePipeline.ts, so a
-  // move authoring two would silently answer the wrong question rather than
-  // fail.
+  // to make the same silent dud, and Spirit's `requiresUserHpBelow` a fifth
+  // (2026-08-30). There is still no isValidMoveDefinition
+  // (authoring-moves.md §4). The HP forms are checked first and the rest
+  // oldest-first in damagePipeline.ts, so a move authoring two would silently
+  // answer the wrong question rather than fail.
+  //
+  // This assertion is the reason the fifth sibling cost nothing to add: it
+  // failed the moment Spite was authored, before any Spirit test existed.
+  // Keep it exhaustive over the union as new forms land.
   for (const move of Object.values(moves)) {
     if (!move.conditionalPower) continue;
-    const { requiresTargetStatus, requiresUserStatus, requiresFieldEffect, requiresTargetHpBelow } = move.conditionalPower;
-    const authored = [requiresTargetStatus, requiresUserStatus, requiresFieldEffect, requiresTargetHpBelow].filter(
-      (v) => v != null
-    );
+    const { requiresTargetStatus, requiresUserStatus, requiresFieldEffect, requiresTargetHpBelow, requiresUserHpBelow } =
+      move.conditionalPower;
+    const authored = [
+      requiresTargetStatus,
+      requiresUserStatus,
+      requiresFieldEffect,
+      requiresTargetHpBelow,
+      requiresUserHpBelow,
+    ].filter((v) => v != null);
     assert.strictEqual(authored.length, 1, `${move.id} authors ${authored.length} sides of conditionalPower`);
   }
 });

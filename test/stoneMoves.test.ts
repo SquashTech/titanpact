@@ -529,5 +529,24 @@ test('stone: no move is unreachable that was not already known to be', () => {
   for (const pool of Object.values(progressionTable.moveTiers)) for (const id of pool) reachable.add(id);
 
   const unreachable = Object.keys(moves).filter((id) => !reachable.has(id)).sort();
-  assert.deepStrictEqual(unreachable, ['cerebralShock', 'forgottenCurse', 'landslide', 'rockfall', 'runicBlast', 'tremor', 'zap']);
+  assert.deepStrictEqual(unreachable, [
+    'cerebralShock',
+    'forgottenCurse',
+    'landslide',
+    // Spirit's PHYSICAL half (2026-08-30) — Stone's finding with the sides
+    // swapped, and the reason that finding was worth generalising rather than
+    // fixing. Stone authored three magical moves into a type with two physical
+    // heroes; Spirit authors three physical moves into a type with ONE hero,
+    // and that hero is Int 77 against Atk 56. Wailing Flight's 85 base power
+    // lands for less in Revenant's hands than Banish's 100 does, so putting
+    // these in its pool would make three of its picks strictly worse than the
+    // rest — the trap pick the north star forbids, dressed as coverage.
+    'phantomStrike',
+    'rockfall',
+    'runicBlast',
+    'spookySlice',
+    'tremor',
+    'wailingFlight',
+    'zap',
+  ]);
 });

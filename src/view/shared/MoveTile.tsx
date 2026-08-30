@@ -347,6 +347,11 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     // all: it asks a question about a NUMBER on the target, so it gets its
     // own clause rather than falling through to an empty status name.
     const hpSide = move.conditionalPower.requiresTargetHpBelow;
+    // The user-side HP form (content.ts requiresUserHpBelow) is the one clause
+    // here that describes the CASTER's own bar, and it has to be unmistakable:
+    // a Spite reading "below 50% HP" without saying whose would send the
+    // player hunting for a wounded enemy, which is the opposite move.
+    const userHpSide = move.conditionalPower.requiresUserHpBelow;
     const gate = move.conditionalPower.requiresTargetStatus ?? userSide ?? '';
     const gateName = statuses[gate]?.name ?? gate;
     // "consumed" is not a footnote. Cold Snap's double is paid for with the
@@ -356,11 +361,13 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     const spent = move.conditionalPower.consumesStatus && !fieldSide ? ', consumed' : '';
     const clause = fieldSide
       ? `while ${fieldEffects[fieldSide]?.name ?? fieldSide} is up`
-      : hpSide != null
-        ? `vs a target below ${Math.round(hpSide * 100)}% HP`
-        : userSide
-          ? `while you have ${gateName}`
-          : `vs ${gateName}`;
+      : userHpSide != null
+        ? `while you are below ${Math.round(userHpSide * 100)}% HP`
+        : hpSide != null
+          ? `vs a target below ${Math.round(hpSide * 100)}% HP`
+          : userSide
+            ? `while you have ${gateName}`
+            : `vs ${gateName}`;
     parts.push(`×${move.conditionalPower.multiplier} power ${clause}${spent}`);
   }
 
@@ -396,6 +403,19 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   // Recoil reads as a share for the same reason drain does: what it costs
   // depends on a hit that has not been rolled yet (content.ts recoilPercent).
   if (move.recoilPercent) parts.push(`Costs ${Math.round(move.recoilPercent * 100)}% of damage dealt as recoil`);
+
+  // The self-cost, unlike recoil, is a number the player can already read off
+  // their own bar — so it states the bill rather than a share of something
+  // unrolled, and it says out loud that it can be fatal (content.ts
+  // selfHpCost). On Soul Offering this clause IS the move's price; the mana
+  // gem beside it only tells half the story.
+  if (move.selfHpCost) {
+    parts.push(
+      move.selfHpCost.mode === 'percentMaxHp'
+        ? `Costs the user ${Math.round(move.selfHpCost.amount * 100)}% of max HP`
+        : `Drops the user to ${move.selfHpCost.amount} HP`
+    );
+  }
 
   // Drain reads as a percentage rather than as hit points on purpose: unlike a
   // heal move there is no number to resolve here, because what it returns

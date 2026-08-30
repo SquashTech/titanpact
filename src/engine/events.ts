@@ -10,7 +10,7 @@
 // contract per docs/conditions.md — see engine/combat/statusEngine.ts.
 
 import type { Side, DamageCategory } from './state';
-import type { FieldEffectId, PassiveId, StatusId, StatusRemovalReason, TypeId } from './content';
+import type { FieldEffectId, PassiveId, SelfHpCost, StatusId, StatusRemovalReason, TypeId } from './content';
 
 interface BaseEvent {
   round: number;
@@ -103,6 +103,21 @@ export interface DamageDealtEvent extends BaseEvent {
    * would be a readout of a calculation that never happened.
    */
   recoil?: { damageDealt: number; percent: number };
+  /**
+   * Set on the self-inflicted hit a move charges its own caster in HP
+   * (content.ts selfHpCost — Spirit's Soul Offering and Last Rites).
+   * `sourceCombatantId` and `targetCombatantId` are both the caster, exactly
+   * like `recoil` above, and every formula term is likewise an identity value
+   * because no formula was evaluated.
+   *
+   * Its own field rather than a third mode on `recoil` because the two bill
+   * against different things and the Battle Log has to say which: recoil is a
+   * share of a hit that landed, this is a share of the caster's own bar,
+   * knowable before the move was pressed. Carries the authored mode so the
+   * log can print "a quarter of its maximum" and "down to 1 HP" as the
+   * different sentences they are.
+   */
+  selfCost?: { mode: SelfHpCost['mode']; amount: number };
 }
 
 export interface HpChangedEvent extends BaseEvent {

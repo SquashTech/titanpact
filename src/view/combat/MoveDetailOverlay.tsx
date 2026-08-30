@@ -127,7 +127,17 @@ function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defender
   // getMaxHp threaded in for the same reason: an execute (content.ts
   // conditionalPower.requiresTargetHpBelow) forecast without it would print
   // half the number the round is about to deal against a wounded foe.
-  const conditionalMult = resolveConditionalPowerMultiplier(move, defender, attacker, fieldEffectCtx, getMaxHp(defenderHero, defender));
+  // The caster's own bar, threaded in for the third time and the same reason:
+  // a Vengeance forecast without it would print a THIRD of the number the
+  // round is about to deal (content.ts conditionalPower.requiresUserHpBelow).
+  const conditionalMult = resolveConditionalPowerMultiplier(
+    move,
+    defender,
+    attacker,
+    fieldEffectCtx,
+    getMaxHp(defenderHero, defender),
+    { currentHp: attacker.currentHp, maxHp: getMaxHp(attackerHero, attacker) }
+  );
   const attackerTypes = effectiveTypes(attackerHero, attacker);
   const defenderTypes = effectiveTypes(defenderHero, defender);
 
@@ -325,6 +335,12 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   // The HP form asks about neither a status nor the field, so it takes
   // neither of their rows (content.ts conditionalPower.requiresTargetHpBelow).
   const conditionalHpBelow = move.conditionalPower?.requiresTargetHpBelow;
+  // The user-side HP form (content.ts requiresUserHpBelow — Spirit's Spite and
+  // Vengeance). Its own variable rather than a `side` flag on the one above,
+  // because the two ask about opposite bars and the row has to say which: the
+  // execute is a fact about the enemy, this one is a fact about the hero whose
+  // sheet the player is already looking at, and it can be answered outright.
+  const conditionalUserHpBelow = move.conditionalPower?.requiresUserHpBelow;
   const conditionalStatusId = move.conditionalPower
     ? (move.conditionalPower.requiresTargetStatus ?? move.conditionalPower.requiresUserStatus ?? '')
     : '';
@@ -337,6 +353,18 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
         const hero = defender && allCombatants[defender.heroId];
         return defender && !defender.fainted && hero && defender.currentHp < getMaxHp(hero, defender) * conditionalHpBelow;
       })
+  );
+  /**
+   * Whether the CASTER is already under its own line — the one conditional in
+   * the game the player can answer by glancing at the hero they are holding
+   * the button on, so the row says yes or no outright rather than stating a
+   * rule (content.ts conditionalPower.requiresUserHpBelow).
+   */
+  const conditionalUserHpLive = Boolean(
+    conditionalUserHpBelow != null &&
+      attacker &&
+      allCombatants[attacker.heroId] &&
+      attacker.currentHp < getMaxHp(allCombatants[attacker.heroId], attacker) * conditionalUserHpBelow
   );
   const conditionalFieldDef = conditionalFieldId ? fieldEffects[conditionalFieldId] : undefined;
   /** Whether the field this move's conditional wants is the one actually up right now — answerable without a target, unlike the target-side form. */
@@ -381,6 +409,7 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
       move.offStatOverride ||
       move.retributionPercent != null ||
       move.recoilPercent ||
+      move.selfHpCost ||
       move.doublesStatReductions
   );
 
@@ -656,7 +685,26 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               }
             />
           )}
-          {move.conditionalPower && !conditionalFieldId && conditionalHpBelow == null && (
+          {/* The mirror of the execute row above, and it wears the same heart
+              for the same reason — but it is the only conditional row here
+              that can answer itself, because the bar it reads is the one on
+              the card the player is already holding
+              (content.ts conditionalPower.requiresUserHpBelow). */}
+          {move.conditionalPower && conditionalUserHpBelow != null && (
+            <EffectRow
+              glyph={<StatGlyph stat="hp" />}
+              text={`×${move.conditionalPower.multiplier} power while you are below ${Math.round(conditionalUserHpBelow * 100)}% HP`}
+              note={
+                conditionalUserHpLive
+                  ? 'scales base power, not the finished hit — and this hero is already under the line'
+                  : 'scales base power, not the finished hit — asked once per cast, so every hit gets it or none does'
+              }
+            />
+          )}
+          {move.conditionalPower &&
+            !conditionalFieldId &&
+            conditionalHpBelow == null &&
+            conditionalUserHpBelow == null && (
             <EffectRow
               glyph={<StatusGlyph statusId={conditionalStatusId} />}
               color={statusColor(conditionalStatusId)}
@@ -747,6 +795,26 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               glyph={<StatGlyph stat="hp" />}
               text={`Costs ${Math.round(move.recoilPercent * 100)}% of damage dealt as recoil`}
               note="a share of the hit itself — and there is no floor, so it can knock the caster out"
+            />
+          )}
+          {/* The self-cost wears the HP heart for the same reason the recoil
+              row does, but says the bill instead of a share: what this costs
+              is knowable before the move is pressed (content.ts selfHpCost).
+              The note is where the two modes actually differ — one can kill
+              you and the other cannot. */}
+          {move.selfHpCost != null && (
+            <EffectRow
+              glyph={<StatGlyph stat="hp" />}
+              text={
+                move.selfHpCost.mode === 'percentMaxHp'
+                  ? `Costs the user ${Math.round(move.selfHpCost.amount * 100)}% of max HP`
+                  : `Drops the user to ${move.selfHpCost.amount} HP`
+              }
+              note={
+                move.selfHpCost.mode === 'percentMaxHp'
+                  ? 'paid after the effect lands — and there is no floor, so it can knock the caster out'
+                  : 'paid after the damage lands, and never heals — a caster already lower stays there'
+              }
             />
           )}
           {move.cleanses && (

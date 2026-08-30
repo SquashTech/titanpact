@@ -581,6 +581,61 @@ lands.
 
 ---
 
+## HP as a move's price (2026-08-30, Spirit)
+
+`MoveDefinition.selfHpCost`: the **third** way a move can hurt its own caster,
+and the only one whose price is knowable before the button is pressed. Spirit's
+Soul Offering (`percentMaxHp: 0.25` — "user loses 25% of max HP") and Last Rites
+(`reduceToHp: 1` — "user drops to 1 HP after using this") are the first content.
+
+It is deliberately its own field rather than a mode on either of the other two,
+because the three bill against different things:
+
+| Shape | Bills against | Known when? |
+|---|---|---|
+| `recoilPercent` (Stone) | a fraction of damage this move **dealt** | after the hit lands |
+| self-inflicted Burn (Fire) | a flat authored magnitude, spread over rounds | at authoring time, but paid later and cleansable |
+| `selfHpCost` (Spirit) | the caster's **own bar**, now | before the move is pressed |
+
+That last column is the mechanic. Recoil is an *outcome* — you press Rubble Rush
+and find out what it cost. This is a *decision*: the button says −20 HP and the
+player decides whether the +40/+40 on their partner is worth it. Soul Offering
+has no damage body at all, so recoil could not have expressed it in any case.
+
+**Two modes, one small union** — the same discipline as
+`derivedStatDeltas.source`, so a later slate wanting "half of current HP" adds a
+member rather than a field:
+
+- `percentMaxHp` — a flat toll off MAX HP. It costs the same whether you are
+  full or nearly dead, which is precisely what makes it dangerous at low HP.
+- `reduceToHp` — end at N, losing however much that takes. **Never a heal**: a
+  caster already at or below N pays nothing rather than being topped up. The
+  wrong reading here would have turned a 120 BP move into a heal.
+
+**It can faint the user**, with no floor (2026-08-30 designer call) — the same
+answer `recoilPercent` got, and for a sharper reason. A Spirit hero cashing
+itself in to leave its partner +40 Attack and +40 Intelligence is the play the
+move exists to offer, and a floor would make the cost *cheapest* exactly when it
+should be most dangerous. A `reduceToHp` move cannot faint anyone by
+construction; a `percentMaxHp` one at low HP can, and it goes through
+`applyHpDelta` like any other damage, so that KO counts toward the side's KO
+count and can trigger your own lock-in.
+
+**Paid last, after the payload lands** — the same placement and reasoning as
+`switchesUserOut`, which it sits directly in front of, so a caster that killed
+itself cannot then pivot. Soul Offering's buff therefore reaches the ally even
+when the bill kills the caster, which is what makes it a sacrifice rather than a
+gamble on surviving one.
+
+It carries its own `DamageDealtEvent.selfCost` rather than reusing `recoil`,
+because the Battle Log has to say which bill it is: *"Revenant pays 20 HP for
+Soul Offering (25% of max HP)"* against recoil's *"takes 18 recoil (25% of 72
+dealt)"*. Like recoil, every formula term on the event is an identity value —
+no formula was evaluated, and printing a chain of 1× terms would be a readout of
+a calculation that never happened.
+
+---
+
 ## Stat deltas that land on their own side (2026-08-30, Stone)
 
 `MoveDefinition.statDeltaTarget`: where `statDeltas` land, when that is not
@@ -726,6 +781,51 @@ target's remaining HP move in the same direction.
 below half"), an inverse ("double against a target above half"), and reading
 any other continuous quantity — mana, stat totals, rounds elapsed — are all
 expressible-looking and none is decided. None is authored today.
+
+> **The user-side version is no longer open — Spirit authored it the next day.**
+> See the section below. The inverse and the other quantities remain open.
+
+---
+
+## The same NUMBER, asked of the USER (2026-08-30, Spirit)
+
+`MoveDefinition.conditionalPower.requiresUserHpBelow`: the fifth sibling, and
+the mirror of `requiresTargetHpBelow` across the field — the relationship
+`requiresUserStatus` already has to `requiresTargetStatus`. Spirit's Spite
+(35 BP / 25, ×2 below 50%) and Vengeance (60 BP / 45, ×3 below 25%) are the
+first content.
+
+Structurally it inherits everything: a fraction rather than a flag, scaling the
+formula's BasePower **input** and never the finished hit, strictly below the
+line, and `consumesStatus` inert on it for the same reason it is inert on the
+field and target-HP forms. Two moves at two different thresholds in one slate
+is why the fraction was worth keeping.
+
+**Two things make it a genuinely different mechanic, not the same one pointed
+backwards:**
+
+- **Asked ONCE PER CAST, off a snapshot taken before the target loop.** The
+  target-side form is re-read per hit; this one is not, matching the user-status
+  and field forms. The snapshot is load-bearing rather than incidental: a move
+  carrying both this and `drainPercent` would otherwise heal itself back over
+  the line between its first target and its second, and a cast would be doubled
+  against one foe and not the other for reasons the player cannot see. On this
+  type it is not hypothetical — Haunt turns every single-target Spirit move into
+  a two-hit cast, so Spirit content asks "per target or per cast" constantly.
+- **The condition is a resource the caster spends, not one it inflicts.** An
+  execute gets more likely as its victim dies; this gets more likely as *you*
+  die. Spirit's damage ceiling and its survival are deliberately the same bar,
+  and the type ships its own way to cross it (`selfHpCost`, below) — Last Rites
+  drops the caster to 1 HP, which is under every threshold there is, and hands
+  the survivor straight to Vengeance.
+
+**The counterplay difference, and it is worth stating because it inverts
+Shadow's.** An execute has no counterplay but healing above the line, and the
+enemy chose none of it. This one is bounded by the opposite problem: the caster
+has to *survive at low HP* to collect, so every point of pressure the enemy
+applies is simultaneously enabling the bonus and threatening to remove the hero
+holding it. It is self-limiting in a way the target-side form is not, which is
+why ×3 at 25% is affordable here where it would not be as an execute.
 
 ---
 

@@ -9,9 +9,9 @@ appropriately."
 
 Fire was the first (2026-08-29), Water the second, Frost the third, Storm
 the fourth, Stone the fifth, Nature the sixth, Light the seventh, Shadow the
-eighth, Arcane the ninth and Mind the tenth (all 2026-08-30). Five types
-remain. This file is
-what those ten cost to learn, written down so the next one is an afternoon
+eighth, Arcane the ninth, Mind the tenth and Spirit the eleventh (all
+2026-08-30). Four types remain — Iron, Mech, Beast, Ancient. This file is
+what those eleven cost to learn, written down so the next one is an afternoon
 instead of a day. Water took about a third of
 Fire's time and Frost about the same as Water, and every hour of the saving came from
 §0 step 1 — naming the engine extensions before writing any content. Frost needed two
@@ -143,6 +143,34 @@ Brain Flay writes an uncapped modifier and `getEffectiveStat` floors what is
 read out of it, which keeps "how far is this target debuffed" and "what can
 this target actually do" as two separate facts. Clamping at the write site
 would have made a third Brain Flay silently identical to a second.
+
+Spirit needed **two**, and it is the first slate whose engine work was
+*predicted in writing by the previous one*. Shadow's hand-off closed with a
+list of three shapes deliberately left unbuilt, and the first of them — "the
+user-side version, double damage while YOU are below half" — is two of
+Spirit's seventeen rows. It cost one edit to a switch and one new argument,
+because the fork Shadow had already answered (strictly below? read when?) did
+not have to be re-answered.
+
+**The generalisation, and it is a cheap one to bank: the "deliberately left
+unbuilt" list at the end of a hand-off is a work queue.** §0 step 1 says sort
+the table into *already expressible* vs *needs a new field*. There is a third
+bucket worth checking first — *already designed, not yet built* — and the only
+place it lives is §10. Reading the previous slate's open list before reading
+your own table turned what would have been a four-fork conversation into a
+zero-fork one.
+
+Spirit's other lesson is about the row that did NOT have a precedent. Its words
+to watch for were **"loses 25% of max HP"** and **"drops to 1 HP"** — two rows
+that look like one mechanic and are two, and neither is `recoilPercent`. The
+trap is specific and worth naming: the game already had a self-harm field, it
+was the obvious place to reach, and it is wrong for BOTH rows — it bills a
+fraction of *damage dealt*, and one of these moves deals none. **When a design
+row costs the caster something, the question is not "which self-harm field?"
+but "billed against WHAT, and known WHEN?"** Recoil is an outcome you discover;
+`selfHpCost` is a price you read before pressing. That distinction is the
+entire reason it is a separate field, and it is invisible if you only ask
+whether a field for self-damage exists.
 
 Read this **before** opening `src/data/moves.ts`. Read `CLAUDE.md` first if you have not.
 
@@ -526,6 +554,28 @@ a self-inflicted Burn, is still the better shape when the cost is a flat authore
 number; reach for `recoilPercent` only when the cost has to be a fraction of a hit
 nobody knows until it lands.
 
+### `selfHpCost`
+
+`{ mode: 'percentMaxHp', amount: 0.25 }` (Spirit's Soul Offering) or
+`{ mode: 'reduceToHp', amount: 1 }` (Last Rites) is the HP a move charges its
+own caster. The **third** self-harm shape, and the only one whose price is
+knowable before the button is pressed — `recoilPercent` bills a fraction of
+damage *dealt* (unknown until the hit lands, and meaningless on a move with no
+damage body), and Fire's self-Burn bills a flat magnitude spread over rounds.
+Reach for this one when the design row names a share of the caster's own bar.
+
+Four things fix its shape:
+
+- **It can faint the user**, no floor — the same answer `recoilPercent` got.
+  `reduceToHp` cannot by construction; `percentMaxHp` at low HP can.
+- **`reduceToHp` is a `Math.max`, never an assignment.** A caster already at or
+  below the floor pays nothing rather than being healed up to it.
+- **Paid last, after the payload**, directly before `switchesUserOut` — so the
+  buff reaches the ally even when the bill kills the caster, and a caster that
+  killed itself cannot then pivot.
+- It emits its own **`selfCost`** on the DamageDealt event, not `recoil`. The
+  log has to name which bill it is, and both carry identity formula terms.
+
 ### `retributionPercent`
 
 `retributionPercent: 0.5` (Stone's Retribution, and 1 on Stoneheart) replaces the
@@ -576,9 +626,23 @@ if the target is below 50% HP") and it asks about a **number** rather than the
 presence of anything: the target’s live HP fraction, read per target, checked
 STRICTLY below the line and BEFORE this hit’s own damage, so an execute can
 never double off HP it is itself about to remove. `consumesStatus` is inert on
-this form too. Author exactly one of the
-four; nothing validates that, and a `conditionalPower` authoring none is a
-silent dud. Two behavioural differences worth knowing before you reach for it:
+this form too.
+
+Swap in `requiresUserHpBelow: 0.5` (Spirit's Spite ×2, and Vengeance ×3 at
+0.25) and it asks that same number of the **attacker**. The fifth sibling, and
+the one behavioural difference that matters: it is asked **once per cast**, off
+a snapshot taken before the target loop, so a spread cast is doubled against
+every target or none — where the target-HP form is re-read per hit. The
+snapshot is load-bearing rather than incidental: a move carrying both this and
+`drainPercent` would otherwise heal itself back over the line partway through
+its own target list. `consumesStatus` is inert here too.
+
+Author exactly one of the
+five; nothing validates that, and a `conditionalPower` authoring none is a
+silent dud — but `test/shadowMoves.test.ts` pins "exactly one side" across the
+WHOLE move table, so extending that list is the cheapest part of adding a
+sixth, and it fails the moment you author the new field.
+Two behavioural differences worth knowing before you reach for it:
 
 - The target-side form is re-read per hit, so a spread move can double against
   one foe and not the other. The user-side form asks one question about one
@@ -604,9 +668,11 @@ If a row needs one of these, **stop and say so** before improvising. Some are ch
 extensions; some are design decisions above your pay grade. Either way, name it.
 
 - **Multi-hit** ("hits 2–5 times").
-- ~~**Recoil / self-damage as HP.**~~ **Now exists** — `recoilPercent` (§3), as a
-  fraction of the damage dealt. A recoil that is a flat authored number still has no
-  field, and Fire's self-Burn is still the better shape for that case.
+- ~~**Recoil / self-damage as HP.**~~ **Now exists in two shapes** —
+  `recoilPercent` (§3), a fraction of the damage dealt, and `selfHpCost` (§3),
+  a share of the caster's own max HP or a floor it drops to. Between them they
+  cover every self-harm row authored so far except a flat authored number,
+  which still has no field; Fire's self-Burn remains the better shape for that.
 - **Two-turn / charge / recharge moves.** Nothing in the round model supports a move
   that spans rounds. (A move that sends its user OUT now exists —
   `switchesUserOut` — but that resolves entirely within its own round.)
@@ -635,9 +701,11 @@ extensions; some are design decisions above your pay grade. Either way, name it.
   shapes exist now: `manaDiscountOnUse` (a self-inflicted, monotonic, per-fight
   discount), `conditionalManaCost` (a replacement price gated on every enemy
   carrying a status), and `conditionalPriority` (a bracket bonus gated on the
-  declared target's status). "Costs double while Burned", "priority scales with
-  missing HP" and anything reading a *number* rather than a status's presence are
-  still conversations.
+  declared target's status). "Costs double while Burned" and "priority scales
+  with missing HP" are still conversations. Note that reading a *number* is no
+  longer novel in itself — `conditionalPower` does it on both sides of the
+  field now (`requiresTargetHpBelow`, `requiresUserHpBelow`) — but no COST or
+  PRIORITY field reads one, and that is the part still open.
 - **Field effects of a non-standard duration**, or more than one active at a time.
 
 There is also **no `isValidMoveDefinition`** — nothing catches a magnitude-shape status
@@ -1273,6 +1341,97 @@ invariant, and whose findings are all about a **roster of two**:
   half its 55/55 frame can play, Lucius the raw magical half its Int 75 wants, with
   no shared entries. **Distribution keeps being a roster audit wearing a movepool
   hat** — that is three for three.
+
+Spirit's, as an eleventh — the slate whose engine work was half-predicted by
+the previous one, and whose findings are all about a type that has **one
+hero and no heal**:
+
+- **A capability the slate deleted — one, and it is the third time it has been
+  the same three heroes.** `mendWounds` (Spirit, heal 45, singleAlly, 16 mana)
+  is gone, and the authored seventeen contain **no heal-kind move and no
+  cleanse**. So the type that reads as the game's healer can no longer put HP
+  on an ALLY at all: Drain and Soul Rend return a share of a hit to the
+  *caster*, and Second Wind is a HoT on itself. Cinder, Crimson and Valor —
+  who were moved onto Mend Wounds one slate earlier when Light killed Restore
+  Vigor — lose their heal outright rather than being repointed a second time
+  (designer call, taken with the consequence stated). Sylva loses its only
+  direct heal too, which is the consequence Nature's own hand-off predicted,
+  arriving one slate later than expected. The cheapest heal in the game is now
+  Light's Mend at 25, up from 16.
+
+  **This is the fifth slate in a row to delete a price point, and it is worth
+  stopping on.** Light reported 18 → 50, Arcane 18 → 45, Mind 6 → 20, Shadow
+  9 → 15, and now Spirit 16 → 25 on the cheapest heal anywhere. Each was
+  reported as a per-type identity call. Five of them is not five calls; it is
+  an unstated global policy that authored slates start around 20 and fixture
+  content started around 10. Worth deciding once, deliberately, rather than a
+  sixth time by omission.
+
+- **A locked decision the slate brushed against — two.**
+  (1) `requiresUserHpBelow` is the fifth `conditionalPower` sibling and does
+  not break the two-pipeline lock (BasePower-stage, like all four before it).
+  What is new is the direction of the incentive: Shadow's execute has no
+  counterplay but healing above the line and gets stronger as the victim nears
+  death; this one gets stronger as the CASTER nears death, so it is
+  self-limiting in a way the target-side form is not. Recorded in
+  `docs/combat.md` rather than settled by accident.
+  (2) `selfHpCost` is the **third** way a move can hurt its own caster, after
+  `recoilPercent` and Fire's self-Burn, and the first whose price is knowable
+  before the button is pressed. It can faint the user with no floor — the same
+  designer call recoil got. The shape deliberately left unbuilt: a cost billed
+  against anything other than max HP or a floor (current HP, mana, a stat).
+
+- **A balance consequence outside the slate — three, and the first is the one
+  that reaches furthest.**
+  1. **Second Wind was re-priced from 15 to 30, and it is in SIX non-Spirit
+     starting kits.** Renew 20 → 30 for double the mana, on Cube, Sentinel,
+     Mordrax, Solace, Vesper and Revenant. The table says 30 and re-pricing an
+     existing move is clearly intended, but this is the largest cross-type
+     blast radius any slate has had — five heroes that have nothing to do with
+     Spirit had their sustain slot doubled in price by a Spirit decision.
+     Reported, not tuned.
+  2. **Spirit is a roster of ONE.** Revenant is the only Spirit hero, so there
+     is no second line to split the slate into — it draws the entire magical
+     half (eleven pool entries, against every other type's four to eight),
+     which is a deliberate departure from "keep the pool a line, not a sample"
+     and a fact about the roster rather than the slate. The three PHYSICAL
+     moves (Phantom Strike, Spooky Slice, Wailing Flight) have no home:
+     Revenant is Int 77 against Atk 56, so Wailing Flight's 85 base power
+     lands for less than Banish's 100 does. Stone's finding with the sides
+     swapped — and per Stone's rule the deliverable is the list, pinned in
+     `test/stoneMoves.test.ts`, not a fix.
+  3. **Spooky Goblin could not afford its own kit.** 30 mana / 4 regen against
+     a kit whose cheapest move went 11 → 50. Raised to 40/10 — the third time
+     that exact fix has been applied, after Torch Goblin and Goblin Skulker,
+     which makes 40/10 the de facto standard basic-enemy pool rather than a
+     per-case patch.
+
+- **A fourth, and it is the good news: Spirit is the first authored type since
+  Storm whose signature status the player can learn by having it used against
+  them.** Nature, Arcane and Mind each shipped with zero enemies of their type
+  — the same finding three slates running. Spooky Goblin now plants Haunt
+  (Wisp) and cashes it (Drain), so the mark, the spread and the counterplay
+  (switching clears Haunt) are all demonstrable from the far side of the field.
+
+- **A fifth, small, and it came out of §7 for the fourth slate running.**
+  Widening the "no starter in its own pool" assertion past the type being
+  authored found `ironWarden` carrying `fortify` in BOTH its kit and its
+  level-up pool — dead weight `levelUpMovePool` could never offer, which made
+  its pool read as five picks when it was four. Predates this slate and
+  nothing else would have found it. **Distribution keeps being a roster audit
+  wearing a movepool hat** — that is four for four, and the lesson has
+  sharpened: write the §9 assertions over the WHOLE roster, not over your
+  type's slice of it. The type-scoped version of this same check has shipped
+  in four previous slates and none of them caught it.
+
+**The Haunt count, per the type-keyed-hook question below.** Spirit's answer:
+**twelve of its seventeen moves are damage moves, every one of them is
+`singleEnemy`, and every one spreads onto a Haunted holder for free** — while
+three of them plant the mark. The slate reads as having no spread move and
+actually has twelve, gated behind one setup cast. That is Storm's Conduct
+arrangement with one difference worth pricing: Storm needs a partner of the
+right type to cash its mark in, and Spirit plants AND cashes with the same
+kit. `test/spiritMoves.test.ts` pins the count so it cannot drift silently.
 
 **One more procedural note, from Mind.** §0 step 1 says name the extensions up front
 and §10 says report what you hit. Mind is the case where those were the same act:

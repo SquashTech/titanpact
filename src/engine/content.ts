@@ -408,6 +408,21 @@ export function isValidFieldEffectDefinition(fieldEffect: FieldEffectDefinition)
   );
 }
 
+/**
+ * The HP a move charges its own caster — see MoveDefinition.selfHpCost below
+ * for which of the three self-harm shapes this is and why it is its own field.
+ *
+ * A closed union rather than an amount plus a flag: "lose a quarter of your
+ * maximum" and "end at 1" are different questions about the bar, and the
+ * second one has to be able to charge nothing (a caster already at 1 HP) where
+ * the first always charges the same toll.
+ */
+export type SelfHpCost =
+  /** Lose `amount` (a fraction in (0, 1]) of MAX HP. Flat toll — can faint the user at low HP. */
+  | { mode: 'percentMaxHp'; amount: number }
+  /** End at `amount` HP. Never heals: a caster already at or below it pays nothing. */
+  | { mode: 'reduceToHp'; amount: number };
+
 export interface MoveDefinition {
   id: string;
   name: string;
@@ -450,8 +465,8 @@ export interface MoveDefinition {
     /**
      * The multiplier applies when the HIT'S TARGET carries this status —
      * Fire's Immolate, Frost's Cold Snap. Exactly one of this,
-     * `requiresUserStatus`, `requiresFieldEffect` and
-     * `requiresTargetHpBelow` must be authored; authoring none leaves the
+     * `requiresUserStatus`, `requiresFieldEffect`, `requiresTargetHpBelow`
+     * and `requiresUserHpBelow` must be authored; authoring none leaves the
      * multiplier permanently unapplied, which is a silent dud rather than an
      * error (there is still no isValidMoveDefinition —
      * docs/authoring-moves.md §4).
@@ -540,6 +555,43 @@ export interface MoveDefinition {
      * exactly as before" discipline as `fieldEffectCtx`.
      */
     requiresTargetHpBelow?: number;
+    /**
+     * The multiplier applies when the move's USER is below this fraction of
+     * its own max HP — Spirit's Spite ("double base power if the user is
+     * below 50% HP") and Vengeance ("triple base power if the user is below
+     * 25% HP"). Authored as a fraction in (0, 1).
+     *
+     * The fifth sibling, and the exact mirror of `requiresTargetHpBelow`
+     * across the field — the same relationship `requiresUserStatus` has to
+     * `requiresTargetStatus`. It was named in Shadow's hand-off as a shape
+     * deliberately left unbuilt (docs/authoring-moves.md §10); Spirit is what
+     * asked for it. Three consequences worth authoring knowing, and the first
+     * two are what make it a genuinely different mechanic from the target-side
+     * form rather than the same one pointed backwards:
+     *
+     * 1. **All or nothing across a spread cast.** Like the user-status and
+     *    field forms, it asks ONE question about ONE combatant, so every hit
+     *    in a cast gets the multiplier or none does. It is read off a
+     *    SNAPSHOT of the caster taken before the target loop runs, which is
+     *    what keeps that true on a move that also drains: a cast cannot heal
+     *    itself back over the line partway through its own target list.
+     * 2. **The condition is a resource the caster spends, not one it
+     *    inflicts.** An execute gets more likely as its victim dies; this
+     *    gets more likely as YOU die, which means Spirit's damage ceiling and
+     *    its survival are the same bar. That is the whole type, and it is
+     *    also why the slate pairs it with `selfHpCost` — Soul Offering and
+     *    Last Rites are the moves that put you under the line on purpose.
+     * 3. **`consumesStatus` is inert on it**, for the same reason it is inert
+     *    on `requiresFieldEffect` and `requiresTargetHpBelow`: there is no
+     *    status and no holder to strip. resolveRound's consume branch reads
+     *    `requiresTargetStatus ?? requiresUserStatus`, so this form leaves it
+     *    undefined and the branch is a no-op.
+     *
+     * Needs the USER's max HP to answer, passed alongside its current HP as
+     * `attackerHp` on the same "omit it and every other form behaves exactly
+     * as before" discipline `targetMaxHp` and `fieldEffectCtx` follow.
+     */
+    requiresUserHpBelow?: number;
     multiplier: number;
     /**
      * Spend the status this move just cashed in — Frost's Cold Snap,
@@ -552,8 +604,9 @@ export interface MoveDefinition {
      * but the field is defined for both sides so the next slate does not
      * have to re-answer the question.
      *
-     * INERT on the `requiresFieldEffect` form (Light's Smite) and on the
-     * `requiresTargetHpBelow` form (Shadow’s Rend/Eclipse): there is no
+     * INERT on the `requiresFieldEffect` form (Light's Smite) and on both HP
+     * forms (`requiresTargetHpBelow` — Shadow’s Rend/Eclipse;
+     * `requiresUserHpBelow` — Spirit's Spite/Vengeance): there is no
      * status and no holder to strip it from. "Consume the field effect" is a
      * genuinely different mechanic — it would end a global, both-sides state
      * early, which is a field-effect question rather than a status one — and
@@ -611,6 +664,54 @@ export interface MoveDefinition {
    * 3-HP target returns 1 rather than 45. Summed per target on a spread move.
    */
   drainPercent?: number;
+  /**
+   * What this move costs its own caster in HP, on top of its mana — Spirit's
+   * Soul Offering ("user loses 25% of max HP") and Last Rites ("user drops to
+   * 1 HP after using this").
+   *
+   * The THIRD way a move can hurt its user, and deliberately its own field
+   * rather than a mode on either of the other two, because it is the only one
+   * whose price is knowable before the move is pressed:
+   *
+   * - `recoilPercent` bills a fraction of damage this move DEALT, so it is
+   *   unknown until the hit lands and is meaningless on a move with no
+   *   damage body. Soul Offering has none.
+   * - Fire's Volcanic Surge takes its cost as a self-inflicted Burn — a
+   *   status, spread over rounds, cleansable and switchable.
+   * - This is HP, now, off a figure the player can already read on their own
+   *   bar. It is what makes the cost a DECISION rather than an outcome.
+   *
+   * Two modes, a small union on the same discipline as
+   * `derivedStatDeltas.source` — a later slate wanting "half of current HP"
+   * adds a member, not a field, and certainly not a predicate:
+   *
+   * - `percentMaxHp` — lose `amount` (a fraction in (0, 1]) of MAX HP.
+   *   A flat toll: it costs the same whether you are full or nearly dead,
+   *   which is exactly what makes it dangerous at low HP.
+   * - `reduceToHp` — end at `amount` HP, losing however much that takes.
+   *   Never a heal: a caster already at or below `amount` loses nothing
+   *   rather than being topped up to it. Last Rites is the only content.
+   *
+   * **It can faint the user** (2026-08-30 designer call), with no floor —
+   * the same answer `recoilPercent` got and for the same reason: a Spirit
+   * hero cashing itself in to leave its partner +40 Attack and +40
+   * Intelligence is the play the move exists to offer, and a floor would
+   * make the cost cheapest exactly when it should be most dangerous. A
+   * `reduceToHp: 1` move cannot faint anyone by construction; a
+   * `percentMaxHp` one at low HP can, and applyHpDelta handles that KO
+   * exactly as it would an enemy's, lock-in included.
+   *
+   * Paid LAST, after the move's whole payload has landed on a board the
+   * caster was still standing on — the same placement and the same reasoning
+   * as `switchesUserOut`, which it sits directly in front of (so a caster
+   * that killed itself cannot then pivot). It routes through applyHpDelta
+   * like every other HP write, so it feeds `damageTakenSinceLastTurn`,
+   * faint handling and the HP bar with no special-casing.
+   *
+   * Composes with any `kind`. Nothing stops a damage move from authoring one
+   * alongside `recoilPercent`; both would be paid, recoil first.
+   */
+  selfHpCost?: SelfHpCost;
   /**
    * damage-kind only. Fraction of the damage this move actually removes that
    * is dealt back to the USER as HP — Stone's Rubble Rush, "user receives

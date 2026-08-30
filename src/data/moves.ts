@@ -2723,6 +2723,148 @@ export const moves: Record<string, MoveDefinition> = {
   },
 
   // --- Spirit ------------------------------------------------------------
+  // The authored slate (2026-08-30), replacing soulRend/specterHowl/
+  // spectralBind/secondWind/mendWounds. Two things fix the whole type and
+  // neither is visible in any one row:
+  //
+  // 1. **Every damage move here is single-target, and that is the spread.**
+  //    Haunt lists Spirit in its `spreadTriggerTypes` (statuses.ts), so any
+  //    singleEnemy Spirit hit on a Haunted hero's PARTNER also strikes the
+  //    holder. Twelve of these seventeen are damage moves and every one of
+  //    them carries that hook for free; three of them plant the mark (Wisp at
+  //    20%, Torment and Poltergeist outright). So the type reads as having no
+  //    spread move and actually has twelve, gated behind one setup cast —
+  //    Storm's Conduct arrangement, except Spirit both plants AND cashes with
+  //    the same kit rather than needing a partner. test/spiritMoves.test.ts
+  //    pins the count so it cannot drift silently.
+  // 2. **Two moves pay their own HP to power the other two.** Spite and
+  //    Vengeance multiply off `requiresUserHpBelow` (content.ts), and Soul
+  //    Offering and Last Rites are `selfHpCost` moves that put the caster
+  //    under those lines on purpose. Spirit's damage ceiling and its survival
+  //    are deliberately the same bar.
+  wisp: {
+    id: 'wisp',
+    name: 'Wisp',
+    type: 'Spirit',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 40,
+    // Chanced, so it is the opener that MIGHT set up rather than the one that
+    // does — Torment is the guaranteed version at 5 more mana and no damage.
+    // Both exist because Haunt's payoff is every other move in the type.
+    statusApplication: { statusId: 'Haunt', chance: 0.2, target: 'moveTarget' },
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A drifting light that sometimes catches and clings (20% chance to Haunt).',
+  },
+  torment: {
+    id: 'torment',
+    name: 'Torment',
+    type: 'Spirit',
+    category: 'magical',
+    // No damage body at all, so `buff` with a hostile payload — the engine's
+    // kind for "a move whose whole point is its rider" (MoveTile recovers the
+    // Debuff label from the non-positive status aimed at an enemy).
+    kind: 'buff',
+    statusApplication: { statusId: 'Haunt', target: 'moveTarget' },
+    manaCost: 25,
+    priority: 0,
+    target: 'singleEnemy',
+    description: "Binds the target's spirit to its partner, so a blow to one is a blow to both (applies Haunt).",
+  },
+  drain: {
+    id: 'drain',
+    name: 'Drain',
+    type: 'Spirit',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 30,
+    // The cheap half of the type's sustain, and the reason Spirit can afford
+    // to live under Spite's line: the HP comes back off the attacker's own
+    // offense, not off Wisdom, so it scales with what the hero already is
+    // (content.ts drainPercent).
+    drainPercent: 0.5,
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Draws the life out of a wound and takes it (heals 50% of damage dealt).',
+  },
+  secondWind: {
+    id: 'secondWind',
+    name: 'Second Wind',
+    type: 'Spirit',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [],
+    statusApplication: { statusId: 'Renew', magnitude: 30, target: 'self' },
+    manaCost: 30,
+    priority: 0,
+    target: 'self',
+    description: 'Steadies the caster’s breath, mending a little more each round (grants Renew 30).',
+  },
+  unbound: {
+    id: 'unbound',
+    name: 'Unbound',
+    type: 'Spirit',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [
+      { stat: 'intelligence', amount: 10 },
+      { stat: 'speed', amount: 10 },
+    ],
+    manaCost: 15,
+    priority: 0,
+    target: 'self',
+    description: 'Slips the body’s hold entirely (+10 Intelligence, +10 Speed).',
+  },
+  spite: {
+    id: 'spite',
+    name: 'Spite',
+    type: 'Spirit',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 35,
+    // The first move in the game whose bonus is a fact about the CASTER's HP
+    // (content.ts conditionalPower.requiresUserHpBelow). Asked once per cast,
+    // off a snapshot taken before the target loop — so on a Haunted pair,
+    // where this single-target move becomes two hits, both are doubled or
+    // neither is.
+    conditionalPower: { requiresUserHpBelow: 0.5, multiplier: 2 },
+    manaCost: 25,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Bitterness sharpened by injury — double base power while the user is below 50% HP.',
+  },
+  phantomStrike: {
+    id: 'phantomStrike',
+    name: 'Phantom Strike',
+    type: 'Spirit',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 45,
+    critChance: 0.3,
+    manaCost: 25,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A blow from somewhere the target was not watching (30% crit).',
+  },
+  spookySlice: {
+    id: 'spookySlice',
+    name: 'Spooky Slice',
+    type: 'Spirit',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 60,
+    // Bleed is the one status here that does NOT clear on a switch
+    // (statuses.ts), which makes the physical line's mark the durable one and
+    // Haunt the one a pivot answers.
+    statusApplication: { statusId: 'Bleed', chance: 0.3, target: 'moveTarget' },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A cut that arrives before the blade does (30% chance to inflict Bleed).',
+  },
   soulRend: {
     id: 'soulRend',
     name: 'Soul Rend',
@@ -2730,22 +2872,145 @@ export const moves: Record<string, MoveDefinition> = {
     category: 'magical',
     kind: 'damage',
     basePower: 55,
-    manaCost: 11,
+    drainPercent: 0.5,
+    manaCost: 50,
     priority: 0,
     target: 'singleEnemy',
-    description: "A tearing pull at the target's spirit.",
+    description: "A tearing pull at the target's spirit, and the taking of what comes loose (heals 50% of damage dealt).",
   },
-  specterHowl: {
-    id: 'specterHowl',
-    name: 'Specter Howl',
+  poltergeist: {
+    id: 'poltergeist',
+    name: 'Poltergeist',
     type: 'Spirit',
     category: 'magical',
     kind: 'damage',
-    basePower: 38,
-    manaCost: 16,
+    basePower: 50,
+    // Damage AND a guaranteed mark, which is what makes it the mid-game
+    // upgrade over both early setters at once: Wisp's hit without Wisp's roll,
+    // Torment's certainty without Torment's blank turn.
+    statusApplication: { statusId: 'Haunt', target: 'moveTarget' },
+    manaCost: 45,
     priority: 0,
-    target: 'bothEnemies',
-    description: 'A mournful wail that unsettles both foes at once.',
+    target: 'singleEnemy',
+    description: 'Hurls the room at one foe and ties them to the other (applies Haunt).',
+  },
+  soulOffering: {
+    id: 'soulOffering',
+    name: 'Soul Offering',
+    type: 'Spirit',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [
+      { stat: 'intelligence', amount: 40 },
+      { stat: 'attack', amount: 40 },
+    ],
+    // Both halves land on ONE ally, and 'singleAlly' includes the caster
+    // (targeting.ts activeOf) — so pointing it at yourself is legal, and was
+    // confirmed as intended (2026-08-30), the same call Arcane's Font of Power
+    // got. It buffs both offensive stats precisely so it does not care which
+    // pipeline the recipient drives.
+    //
+    // The cost is paid AFTER the buff lands and CAN faint the caster
+    // (content.ts selfHpCost): a Spirit hero cashing itself in to leave its
+    // partner +40/+40 is the play this move exists to offer.
+    selfHpCost: { mode: 'percentMaxHp', amount: 0.25 },
+    manaCost: 30,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Spends a quarter of the user’s life to give an ally +40 Intelligence and +40 Attack.',
+  },
+  vengeance: {
+    id: 'vengeance',
+    name: 'Vengeance',
+    type: 'Spirit',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 60,
+    // Spite's line, drawn half as low for half again the multiplier: 60 x 3 is
+    // 180 base power, the largest number in the game, and it is only ever
+    // available to a hero one hit from dying.
+    conditionalPower: { requiresUserHpBelow: 0.25, multiplier: 3 },
+    manaCost: 45,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Everything left, spent at once — triple base power while the user is below 25% HP.',
+  },
+  flicker: {
+    id: 'flicker',
+    name: 'Flicker',
+    type: 'Spirit',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 40,
+    manaCost: 40,
+    // The slate's only bracket row, and it is priced as a tax rather than a
+    // poke: 40 mana for 40 base power buys nothing but the order. That is the
+    // whole point on a type whose best moves want the caster to still be
+    // standing at low HP.
+    priority: 1,
+    target: 'singleEnemy',
+    description: 'Gone and back before the blow lands (always strikes first).',
+  },
+  banish: {
+    id: 'banish',
+    name: 'Banish',
+    type: 'Spirit',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 100,
+    manaCost: 80,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Sends the target somewhere it does not come back from the same.',
+  },
+  wailingFlight: {
+    id: 'wailingFlight',
+    name: 'Wailing Flight',
+    type: 'Spirit',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 85,
+    statDeltas: [{ stat: 'speed', amount: 20 }],
+    // Onto the CASTER, not the foe it just hit (content.ts statDeltaTarget) —
+    // the physical line's answer to Flicker, bought once and kept rather than
+    // rented a round at a time.
+    statDeltaTarget: 'self',
+    manaCost: 65,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A shrieking pass that leaves the user faster than it arrived (+20 Speed).',
+  },
+  lastRites: {
+    id: 'lastRites',
+    name: 'Last Rites',
+    type: 'Spirit',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 120,
+    // The largest authored base power in the game, and the price is the rest
+    // of the hero (content.ts selfHpCost, `reduceToHp`). It cannot faint the
+    // caster by construction and it never heals one already lower — what it
+    // does is hand the survivor to Vengeance, which wants exactly this.
+    selfHpCost: { mode: 'reduceToHp', amount: 1 },
+    manaCost: 100,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Everything the user has, in one blow (the user drops to 1 HP).',
+  },
+  ascendant: {
+    id: 'ascendant',
+    name: 'Ascendant',
+    type: 'Spirit',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [
+      { stat: 'intelligence', amount: 75 },
+      { stat: 'speed', amount: 25 },
+    ],
+    manaCost: 60,
+    priority: 0,
+    target: 'self',
+    description: 'Lets go of the body altogether (+75 Intelligence, +25 Speed).',
   },
 
   // --- Iron --------------------------------------------------------------
@@ -2861,18 +3126,23 @@ export const moves: Record<string, MoveDefinition> = {
   // The slate's own heals are Mend (singleAlly, which still resolves onto the
   // caster) and two bothAllies moves, so nothing is unreachable; what went away
   // is the price point, and a heal that needed no target declaration at all.
-  mendWounds: {
-    id: 'mendWounds',
-    name: 'Mend Wounds',
-    type: 'Spirit',
-    category: 'magical',
-    kind: 'heal',
-    healPower: 45,
-    manaCost: 16,
-    priority: 0,
-    target: 'singleAlly',
-    description: "A focused working that knits shut an ally's wounds.",
-  },
+  // Mend Wounds (Spirit, heal 45, singleAlly, 16 mana) lived here until the
+  // authored Spirit slate replaced it (2026-08-30), and it went the same way
+  // Restore Vigor did one slate earlier — which is the point worth recording,
+  // because it happened to the same three heroes twice.
+  //
+  // The seventeen authored Spirit moves contain NO heal-kind move and no
+  // cleanse: every drop of Spirit healing is now Drain and Soul Rend, which
+  // return a share of a hit, and Second Wind, which is a HoT. So the type that
+  // reads as the game's healer can no longer put HP on an ALLY at all — only
+  // on itself, and only by attacking. Designer call (2026-08-30), taken with
+  // the consequence stated: Cinder, Crimson and Valor, who were moved onto
+  // this move when Light killed Restore Vigor, lose their heal outright rather
+  // than being repointed a second time onto Light's Mend at 25.
+  //
+  // What remains heal-kind anywhere: Water's Oasis and Wash Away, Light's
+  // Mend, Consecrate and Divine Grace, Mind's Dopamine. The cheapest is now
+  // Mend at 25, up from 16.
 
   // --- Buff / debuff (flat stat deltas — CLAUDE.md "flat additive integers, multiples of 5 or 10") ---
   fortify: {
@@ -2946,32 +3216,14 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'A rattling haymaker, priced high for what it denies (inflicts Daze).',
   },
-  spectralBind: {
-    id: 'spectralBind',
-    name: 'Spectral Bind',
-    type: 'Spirit',
-    category: 'magical',
-    kind: 'damage',
-    basePower: 30,
-    statusApplication: { statusId: 'Haunt', target: 'moveTarget' },
-    manaCost: 12,
-    priority: 0,
-    target: 'singleEnemy',
-    description: "Tethers the target's spirit to its partner (inflicts Haunt).",
-  },
-  secondWind: {
-    id: 'secondWind',
-    name: 'Second Wind',
-    type: 'Spirit',
-    category: 'magical',
-    kind: 'buff',
-    statDeltas: [],
-    statusApplication: { statusId: 'Renew', magnitude: 20, target: 'self' },
-    manaCost: 15,
-    priority: 0,
-    target: 'self',
-    description: 'Steadies the caster’s breath, mending a little more each round (grants Renew 20).',
-  },
+  // Haunt's and Renew's fixture carriers both lived here (spectralBind, 30 BP
+  // at 12 mana; secondWind, Renew 20 at 15) until the authored Spirit slate
+  // (2026-08-30). Haunt is now planted three ways up in the Spirit block —
+  // Wisp chanced, Torment and Poltergeist outright — and Second Wind survives
+  // by id at the slate's price, Renew 30 for 30. That re-pricing is the one
+  // consequence worth knowing about here: six NON-Spirit starting kits carry
+  // Second Wind as their sustain slot, so a move that cost 15 all game now
+  // costs 30 for all of them (docs/authoring-moves.md §10, Spirit).
   // Cleanse's dedicated fixture carrier (purify — Light, heal 10 + cleanse-ALL,
   // 16 mana) went the same way when Light was authored (2026-08-30). The slate
   // re-authors the id as a pure cleanse at 20, but with `cleanseCount: 1`, so

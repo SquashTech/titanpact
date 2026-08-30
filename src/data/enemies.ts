@@ -45,8 +45,20 @@ export const enemies: Record<string, HeroDefinition> = {
     id: 'spookyGoblin',
     name: 'Spooky Goblin',
     types: ['Spirit'],
-    baseStats: { hp: 42, attack: 20, defense: 20, intelligence: 35, wisdom: 30, speed: 42, manaPool: 30, mpRegen: 4 },
-    moveIds: ['soulRend', 'spectralBind'],
+    // Mana raised from 30/4 when Spirit's authored movepool landed
+    // (src/data/moves.ts): its old kit was soulRend (11) and spectralBind
+    // (12), and the slate reprices soulRend to 50 and deletes spectralBind
+    // entirely, so on the old pool this goblin could not cast its own opener
+    // at all. Same fix and same numbers as Torch Goblin and Goblin Skulker
+    // before it. Stat line otherwise untouched.
+    baseStats: { hp: 42, attack: 20, defense: 20, intelligence: 35, wisdom: 30, speed: 42, manaPool: 40, mpRegen: 10 },
+    // Both at 20, which is what 40/10 can actually sustain — and between them
+    // they demonstrate Haunt end to end on the side of the field the player is
+    // fighting: Wisp plants the mark, and Drain (any Spirit damage move) then
+    // spreads onto the holder when it hits the partner. Spirit is the first
+    // authored type since Storm whose signature status the player can learn by
+    // having it used against them.
+    moveIds: ['wisp', 'drain'],
     starter: false,
   },
   goblinWarrior: {

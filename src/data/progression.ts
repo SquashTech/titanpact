@@ -59,12 +59,19 @@ export const progressionTable: ProgressionTable = {
     // magical burst line, Brimstone (Int 60, Fire/Shadow) the spread-and-
     // attrition line. Each hero's own starting move is deliberately absent —
     // levelUpMovePool filters unlocked moves out, so listing it is dead weight.
-    cinderKnight: ['kindle', 'moltenLash', 'firebrand', 'volcanicSurge', 'quickJab', 'fangRush'],
+    // kindle left this pool for Cinder's starting kit (heroes.ts) when the
+    // Spirit slate deleted Mend Wounds — a starting move in its own pool is
+    // dead weight levelUpMovePool can never offer.
+    cinderKnight: ['moltenLash', 'firebrand', 'volcanicSurge', 'quickJab', 'fangRush'],
     // stokeTheFlames sits here rather than on the other two deliberately:
     // it buffs the whole active side, and Crimson is the only Fire STARTER
     // (heroes.ts), so it is the one that can be drafted alongside a second
     // Fire hero for the ramp to pay off twice.
-    crimson: ['setAlight', 'stokeTheFlames', 'scorch', 'immolate', 'firestorm', 'inferno', 'purify'],
+    // stokeTheFlames likewise moved up into Crimson's starting kit
+    // (heroes.ts) when Mend Wounds died. The note above still holds — it is on
+    // the Fire STARTER because a side-wide ramp wants a second Fire hero
+    // beside it — it now just starts unlocked rather than being drawn for.
+    crimson: ['setAlight', 'scorch', 'immolate', 'firestorm', 'inferno', 'purify'],
     // The two Water heroes draw from the authored Water pool (src/data/moves.ts,
     // 2026-08-30), split the same way the Fire three are — by the stat each
     // actually attacks with. Riptide (Int 59) takes the magical line and, being
@@ -72,7 +79,12 @@ export const progressionTable: ProgressionTable = {
     // carries Stoke the Flames: it buffs the whole active side, so it wants to
     // be on the hero that can be drafted alongside a second Water hero.
     tidecaller: ['siphon', 'torrent', 'engulf', 'deluge', 'oasis', 'maelstrom', 'tsunami', 'highTide'],
-    ironWarden: ['rockToss', 'shrapnelBlast', 'bodyBlow', 'ironFist', 'fortify'],
+    // fortify dropped 2026-08-30: it is in Warden's own STARTING kit
+    // (heroes.ts), so levelUpMovePool filtered it out and it could never be
+    // offered — dead weight that made the pool read as 5 picks when it was 4.
+    // Predates the Spirit slate; found by widening §9's "no starter in its own
+    // pool" assertion past the type being authored (test/spiritMoves.test.ts).
+    ironWarden: ['rockToss', 'shrapnelBlast', 'bodyBlow', 'ironFist'],
     // The three Nature heroes draw from the authored Nature pool
     // (src/data/moves.ts, 2026-08-30), split by the stat each actually attacks
     // with, same as Fire/Water/Frost/Storm/Stone. Sylva (Int 60, Wis 60) takes
@@ -84,9 +96,12 @@ export const progressionTable: ProgressionTable = {
     // and Riptide carries High Tide: it is the side-wide/field move, and Sylva
     // is the only Nature STARTER (heroes.ts), so it is the one that can be
     // drafted alongside a second Nature hero for Verdant Earth to pay off twice.
-    // mendWounds survives the rewrite as Sylva's only heal-KIND move — the
-    // slate authors none (see the hand-off in docs/authoring-moves.md).
-    wildOracle: ['blight', 'corrode', 'magicGrowth', 'miasma', 'forceOfNature', 'wildBloom', 'mendWounds'],
+    // mendWounds survived the Nature rewrite as Sylva's only heal-KIND move
+    // and did not survive the Spirit one (moves.ts, 2026-08-30) — so Sylva now
+    // has no direct heal either, and every point of Nature healing in its pool
+    // is Renew. The consequence Nature's own hand-off predicted, arriving one
+    // slate later than expected.
+    wildOracle: ['blight', 'corrode', 'magicGrowth', 'miasma', 'forceOfNature', 'wildBloom'],
     // The three Storm heroes draw from the authored Storm pool (src/data/moves.ts,
     // 2026-08-30), split by the stat each actually attacks with, same as Fire,
     // Water and Frost. Squall (Atk 65 vs Int 35) and Scallywag (Atk 75 vs Int
@@ -175,8 +190,34 @@ export const progressionTable: ProgressionTable = {
     forgewright: ['ironFist', 'shrapnelBlast', 'quickJab', 'stunningBlow'],
     packAlpha: ['rendingClaw', 'quickJab', 'fortify', 'weaken'],
     // --- Stone/Spirit starters + the new Iron starter (2026-08-17) ---
-    valor: ['quickJab', 'shrapnelBlast', 'stunningBlow', 'rally'],
-    revenant: ['specterHowl', 'purify', 'weaken', 'spectralBind'],
+    // rally moved up into Valor's starting kit (heroes.ts) when Mend Wounds died.
+    valor: ['quickJab', 'shrapnelBlast', 'stunningBlow'],
+    // Revenant draws the ENTIRE magical half of the authored Spirit pool
+    // (src/data/moves.ts, 2026-08-30), which is a deliberate departure from
+    // the "keep the pool a line, not a sample" rule every other type here
+    // follows — and it is a fact about the roster, not about the slate.
+    // Spirit has exactly one hero, so there is no second line to split into,
+    // and anything left out is a move no pool in the game points at.
+    //
+    // What IS left out is the physical half — Phantom Strike, Spooky Slice and
+    // Wailing Flight. Revenant is Int 77 against Atk 56, so Wailing Flight's
+    // 85 base power lands for less than Banish's 100 does, and putting it here
+    // would be the trap pick the north star forbids. They are reported as
+    // orphans (test/spiritMoves.test.ts pins the list) rather than stuffed in,
+    // per the rule Stone's slate set: the deliverable is the list, not a fix.
+    revenant: [
+      'torment',
+      'drain',
+      'spite',
+      'soulRend',
+      'poltergeist',
+      'soulOffering',
+      'vengeance',
+      'flicker',
+      'banish',
+      'lastRites',
+      'ascendant',
+    ],
     crag: ['faultLine', 'rubbleRush', 'retribution', 'boulderSlam', 'provoke', 'weaken', 'rally'],
 
     // --- Rime, Cube, Mordrax (2026-08-17) ---
@@ -202,10 +243,11 @@ export const progressionTable: ProgressionTable = {
     // Lucius keeps the magical SHADOW line and takes the raw magical half of
     // the Mind slate alongside it (§7: a dual-typed hero keeps both). Int 75
     // is the type's real caster stat, so the straight-damage rows land here
-    // and the Wisdom-scaling ones go to Cortex. Wicked Fear is a deliberate
-    // upgrade path from the spectralBind already in its kit — same Haunt, 50
-    // base power attached.
-    lucius: ['umbralBeam', 'eclipse', 'umbralWave', 'enfeeble', 'psychock', 'wickedFear', 'psionicWave', 'lull'],
+    // and the Wisdom-scaling ones go to Cortex. Wicked Fear was the deliberate
+    // upgrade path from the spectralBind in its kit; the Spirit slate deleted
+    // spectralBind (moves.ts, 2026-08-30), so Wicked Fear moved up into the
+    // kit itself and out of this pool.
+    lucius: ['umbralBeam', 'eclipse', 'umbralWave', 'enfeeble', 'psychock', 'psionicWave', 'lull'],
 
     // --- Hollowbark, Aegis, Brimstone, Gallant, Nightshade, Pincer,
     // Scallywag, Sentinel, Bellows, Zenith (2026-08-22) ---

@@ -14,6 +14,7 @@ import './stoneMoves.test';
 import './natureMoves.test';
 import './lightMoves.test';
 import './shadowMoves.test';
+import './spiritMoves.test';
 import './arcaneMoves.test';
 import './mindMoves.test';
 import './run.test';

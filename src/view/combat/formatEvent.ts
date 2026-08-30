@@ -82,6 +82,24 @@ export function formatEvents(
           });
           break;
         }
+        // The self-cost is the caster paying its own bill, and it reads as
+        // nonsense in the attack phrasing below for the same reason recoil
+        // does. Its own line, no math line, and the parenthetical names the
+        // BILL rather than a hit: unlike recoil, what this cost was is
+        // something the player could read off their own bar before pressing
+        // it (events.ts DamageDealtEvent.selfCost).
+        if (e.selfCost) {
+          const bill =
+            e.selfCost.mode === 'percentMaxHp'
+              ? `${Math.round(e.selfCost.amount * 100)}% of max HP`
+              : `down to ${e.selfCost.amount} HP`;
+          lines.push({
+            key,
+            text: `${name(e.targetCombatantId)} pays ${e.amount} HP for ${move?.name ?? e.moveId} (${bill})`,
+            className: 'log-damage',
+          });
+          break;
+        }
         const tag = e.isCrit ? ' CRIT!' : '';
         const eff = e.typeMult >= 2 ? ' Super effective!' : e.typeMult <= 0.5 ? ' Not very effective...' : '';
         const via = e.viaStatusId ? ` (via ${e.viaStatusId})` : '';

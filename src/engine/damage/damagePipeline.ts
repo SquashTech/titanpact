@@ -93,13 +93,15 @@ export function resolveElementalForceBonus(
  * move authors no condition, or when whatever the condition asks about is not
  * the case.
  *
- * Four questions, one answer: `requiresTargetStatus` reads the defender,
+ * Five questions, one answer: `requiresTargetStatus` reads the defender,
  * `requiresUserStatus` reads the attacker, `requiresFieldEffect` reads the
- * board itself, and `requiresTargetHpBelow` reads a NUMBER off the defender
+ * board itself, `requiresTargetHpBelow` reads a NUMBER off the defender
  * (Shadow's Rend and Eclipse, "double damage if the target is below 50%
- * HP") rather than the presence of anything. A move authors exactly one;
- * they are checked oldest-first, and a move authoring two is malformed
- * content rather than a shape with a meaning.
+ * HP") rather than the presence of anything, and `requiresUserHpBelow` asks
+ * that same number of the ATTACKER (Spirit's Spite and Vengeance, "double
+ * base power if the USER is below 50% HP"). A move authors exactly one; the
+ * HP forms are checked first and the rest oldest-first, and a move authoring
+ * two is malformed content rather than a shape with a meaning.
  *
  * Read against LIVE state at the moment the hit resolves, so a Burn, a Renew —
  * or a Sanctuary — applied by a faster action earlier in the same round
@@ -128,10 +130,29 @@ export function resolveConditionalPowerMultiplier(
   attacker: Combatant,
   fieldEffectCtx?: FieldEffectContext,
   /** The TARGET's max HP — required only by the requiresTargetHpBelow form, which reports no bonus without it (see above). */
-  targetMaxHp?: number
+  targetMaxHp?: number,
+  /**
+   * The USER's HP as it stood when the cast began — required only by the
+   * requiresUserHpBelow form, which reports no bonus without it.
+   *
+   * A SNAPSHOT rather than the live `attacker`, and that is the whole point:
+   * this form promises all-or-nothing across a spread cast (content.ts
+   * requiresUserHpBelow), which a live read cannot keep on a move that also
+   * drains — the first target's drain would heal the caster back over the
+   * line before the second hit asked. Passed in rather than read off
+   * `attacker` so the snapshot lives at the one call site that knows when the
+   * cast began.
+   */
+  attackerHp?: { currentHp: number; maxHp: number }
 ): number {
   const conditional = move.conditionalPower;
   if (!conditional) return 1;
+  if (conditional.requiresUserHpBelow != null) {
+    // Strictly below, matching the target-side form: a caster sitting exactly
+    // at half has not yet earned Spite's double.
+    if (!attackerHp?.maxHp) return 1;
+    return attackerHp.currentHp < attackerHp.maxHp * conditional.requiresUserHpBelow ? conditional.multiplier : 1;
+  }
   if (conditional.requiresTargetHpBelow != null) {
     // Read off the target's LIVE currentHp, before this hit's own damage is
     // applied — an execute rewards a foe something else already softened,

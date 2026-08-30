@@ -18,6 +18,7 @@ import {
   resolveManaCost,
   resolveTargetMode,
   getEffectiveStat,
+  getMaxHp,
 } from '../../engine/state';
 import type { HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
@@ -107,6 +108,18 @@ interface MoveRowProps {
    */
   bankedReductions: number;
   /**
+   * What a `selfHpCost` move would actually take off THIS hero's bar if
+   * pressed right now (content.ts selfHpCost — Spirit's Soul Offering and
+   * Last Rites), already resolved against its live max HP and current HP. 0
+   * for every move that charges no HP.
+   *
+   * The same reasoning as `banked`: the authored figure is a fraction or a
+   * floor, and what the player is deciding is whether to pay the number it
+   * comes to on this hero, this turn. Resolved by the caller because it needs
+   * the Combatant and the HeroDefinition, neither of which this row has.
+   */
+  selfHpCost: number;
+  /**
    * Whether the half of a conditionalPower the player can already answer
    * WITHOUT declaring a target is met — the caster's own status (content.ts
    * conditionalPower.requiresUserStatus — Nature's Seed Shot and Branch Slam)
@@ -159,7 +172,7 @@ interface MoveRowProps {
  * rules off `:disabled`), still refuses to act on a tap, and still opens its
  * dossier on a hold.
  */
-function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, bankedReductions, userConditionMet, liveTargetMode, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
+function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, bankedReductions, selfHpCost, userConditionMet, liveTargetMode, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
   // Two independent ways a row can be dead, one shared treatment. `.is-unusable`
   // carries the dim; `.is-unaffordable` is kept as the narrower flag so the mana
   // gem only goes grey when mana is actually the problem (styles.css).
@@ -296,7 +309,10 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
             {move.conditionalPower && (
               <span
                 className={`move-eff-status${
-                  (move.conditionalPower.requiresUserStatus || move.conditionalPower.requiresFieldEffect) && !userConditionMet
+                  (move.conditionalPower.requiresUserStatus ||
+                    move.conditionalPower.requiresFieldEffect ||
+                    move.conditionalPower.requiresUserHpBelow != null) &&
+                  !userConditionMet
                     ? ' move-eff-unmet'
                     : ''
                 }`}
@@ -311,11 +327,17 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                 ×{move.conditionalPower.multiplier}{' '}
                 {move.conditionalPower.requiresFieldEffect
                   ? `under ${fieldEffects[move.conditionalPower.requiresFieldEffect]?.name ?? move.conditionalPower.requiresFieldEffect}`
-                  : move.conditionalPower.requiresTargetHpBelow != null
-                    ? `under ${Math.round(move.conditionalPower.requiresTargetHpBelow * 100)}% HP`
-                    : move.conditionalPower.requiresUserStatus
-                      ? `with ${move.conditionalPower.requiresUserStatus}`
-                      : `vs ${move.conditionalPower.requiresTargetStatus}`}
+                  : move.conditionalPower.requiresUserHpBelow != null
+                    ? // "while you are" rather than the execute's bare "under":
+                      // the two chips would otherwise be the same six
+                      // characters for opposite instructions, on rows a
+                      // Spirit hero can hold at the same time.
+                      `while you are under ${Math.round(move.conditionalPower.requiresUserHpBelow * 100)}% HP`
+                    : move.conditionalPower.requiresTargetHpBelow != null
+                      ? `under ${Math.round(move.conditionalPower.requiresTargetHpBelow * 100)}% HP`
+                      : move.conditionalPower.requiresUserStatus
+                        ? `with ${move.conditionalPower.requiresUserStatus}`
+                        : `vs ${move.conditionalPower.requiresTargetStatus}`}
                 {move.conditionalPower.consumesStatus && !move.conditionalPower.requiresFieldEffect ? ' (spent)' : ''}
               </span>
             )}
@@ -360,6 +382,15 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
             {/* Recoil, as a share, for the same reason Drain is: the hit it
                 bills against has not been rolled yet. */}
             {move.recoilPercent != null && <span className="move-eff-status">Recoil {Math.round(move.recoilPercent * 100)}%</span>}
+            {/* The self-cost belongs on the button more than any other rider
+                here, because it is the only one that is a PRICE: the mana gem
+                on the left tells half the story of what Last Rites costs, and
+                a player who reads only that is pressing a 100-mana move
+                without seeing the rest of the bill (content.ts selfHpCost).
+                The LIVE figure for the percentage mode, on the same reasoning
+                as the retribution chip — what is being decided is whether it
+                is worth paying RIGHT NOW. */}
+            {move.selfHpCost != null && <span className="move-eff-status">-{selfHpCost} HP</span>}
             {/* The ramp, priced forward: the gem on the left already says what
                 THIS cast costs, so the chip says what the next one will. */}
             {move.manaDiscountOnUse != null && (
@@ -408,6 +439,12 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                 −{bankedReductions} more
               </span>
             )}
+            {/* Soul Offering is the only selfHpCost move that is not a damage
+                move, so without this the summary states the RULE ("25% of max
+                HP") on the one row where the number matters most — it is the
+                whole price of a move whose mana cost is only 30. Live figure,
+                same reasoning as the chip above (content.ts selfHpCost). */}
+            {move.selfHpCost != null && <span className="move-eff-status">-{selfHpCost} HP</span>}
           </span>
         )}
       </div>
@@ -1635,11 +1672,27 @@ export function FightScreen({
                             ),
                           0
                         )}
+                        selfHpCost={
+                          move.selfHpCost == null
+                            ? 0
+                            : move.selfHpCost.mode === 'percentMaxHp'
+                              ? Math.round(getMaxHp(allCombatants[combatant.heroId], combatant) * move.selfHpCost.amount)
+                              : Math.max(0, combatant.currentHp - move.selfHpCost.amount)
+                        }
                         userConditionMet={
                           move.conditionalPower?.requiresFieldEffect
                             ? combat.activeFieldEffect?.fieldEffectId === move.conditionalPower.requiresFieldEffect
-                            : !move.conditionalPower?.requiresUserStatus ||
-                              hasStatus(combatant, move.conditionalPower.requiresUserStatus)
+                            : move.conditionalPower?.requiresUserHpBelow != null
+                              ? // The third thing the player can answer without
+                                // declaring a target, and the most volatile:
+                                // Spite's chip lights up the moment this hero
+                                // drops under half, which is the whole read
+                                // (content.ts requiresUserHpBelow).
+                                combatant.currentHp <
+                                getMaxHp(allCombatants[combatant.heroId], combatant) *
+                                  move.conditionalPower.requiresUserHpBelow
+                              : !move.conditionalPower?.requiresUserStatus ||
+                                hasStatus(combatant, move.conditionalPower.requiresUserStatus)
                         }
                         liveTargetMode={resolveTargetMode(combat, move)}
                         caster={{

@@ -78,11 +78,13 @@ test('heal: the Wisdom term clamps at both ends, so an unopposed stat can not ru
 // --- STAB --------------------------------------------------------------------
 
 test('heal: a heal takes STAB off the caster, exactly as a damage move does', () => {
-  // Revenant is Spirit and Mend Wounds is Spirit: 45 x 0.96 x 1.25.
-  assert.strictEqual(resolveHealFor(moves.mendWounds, { wisdom: 46, types: ['Spirit'] }).stab, 1.25);
-  assert.strictEqual(resolveHealFor(moves.mendWounds, { wisdom: 46, types: ['Spirit'] }).heal, 54);
+  // Repointed off Mend Wounds, which the authored Spirit slate deleted — the
+  // slate contains no heal-kind move at all, so Light's Mend (same healPower
+  // 45) carries this. A Light caster at 46 Wisdom: 45 x 0.96 x 1.25.
+  assert.strictEqual(resolveHealFor(moves.mend, { wisdom: 46, types: ['Light'] }).stab, 1.25);
+  assert.strictEqual(resolveHealFor(moves.mend, { wisdom: 46, types: ['Light'] }).heal, 54);
   // Sylva is Nature — more Wisdom, no STAB, and ends up healing LESS.
-  assert.strictEqual(resolveHealFor(moves.mendWounds, { wisdom: 60, types: ['Nature'] }).heal, 50);
+  assert.strictEqual(resolveHealFor(moves.mend, { wisdom: 60, types: ['Nature'] }).heal, 50);
 });
 
 // --- Through a real round ----------------------------------------------------
@@ -119,21 +121,25 @@ test('heal: the Healed event carries the formula terms, the way DamageDealt does
 });
 
 test('heal: NO max-HP term — one caster restores the same amount to a 135 HP wall and an 80 HP caster', () => {
+  // Repointed off Mend Wounds when the Spirit slate deleted it. Revenant is
+  // still the caster and Mend is Light, so there is no STAB now — 45 x 0.96 =
+  // 43 rather than 54. The point of the test is untouched: the number does not
+  // move with the TARGET, which is what the two fixtures below differ in.
   const onWall = resolveRound(
     hurt(fixture(202, 'revenant', 'ironWarden'), ['a2'], 10),
-    [{ kind: 'move', combatantId: 'a1', moveId: 'mendWounds', declaredTarget: 'a2' }] as Action[],
+    [{ kind: 'move', combatantId: 'a1', moveId: 'mend', declaredTarget: 'a2' }] as Action[],
     config
   );
   const onGlass = resolveRound(
     hurt(fixture(202, 'revenant', 'wildOracle'), ['a2'], 10),
-    [{ kind: 'move', combatantId: 'a1', moveId: 'mendWounds', declaredTarget: 'a2' }] as Action[],
+    [{ kind: 'move', combatantId: 'a1', moveId: 'mend', declaredTarget: 'a2' }] as Action[],
     config
   );
 
   assert.strictEqual(heroes.ironWarden.baseStats.hp, 135);
   assert.strictEqual(heroes.wildOracle.baseStats.hp, 80);
-  assert.deepStrictEqual(healedAmounts(onWall.events), [54]);
-  assert.deepStrictEqual(healedAmounts(onGlass.events), [54]);
+  assert.deepStrictEqual(healedAmounts(onWall.events), [43]);
+  assert.deepStrictEqual(healedAmounts(onGlass.events), [43]);
 });
 
 test('heal: a bothAllies heal resolves once and pays every ally the same number', () => {
@@ -165,7 +171,7 @@ test('heal: no variance — the same heal on two different seeds lands on the sa
 // --- Renew: the snapshot -----------------------------------------------------
 
 test('heal: a HoT snapshots the caster Wisdom and STAB at application time', () => {
-  // Second Wind grants Renew 20 and is Spirit. Revenant (Spirit, 46 Wisdom)
+  // Second Wind grants Renew 30 and is Spirit. Revenant (Spirit, 46 Wisdom)
   // gets STAB on it; Sylva (Nature, 60 Wisdom) does not.
   // Read off the end-of-round tick rather than off the surviving magnitude:
   // Renew decays by halving the moment it ticks, so the stored number is
@@ -180,8 +186,8 @@ test('heal: a HoT snapshots the caster Wisdom and STAB at application time', () 
     return tick && tick.type === 'StatusTicked' ? tick.amount : null;
   };
 
-  assert.strictEqual(firstTick('revenant'), 24); // 20 x 0.96 x 1.25
-  assert.strictEqual(firstTick('wildOracle'), 22); // 20 x 1.10, no STAB
+  assert.strictEqual(firstTick('revenant'), 36); // 30 x 0.96 x 1.25
+  assert.strictEqual(firstTick('wildOracle'), 33); // 30 x 1.10, no STAB
 });
 
 test('heal: the snapshot is gated on the HoT pipeline — a DoT rider is not scaled by the caster Wisdom', () => {

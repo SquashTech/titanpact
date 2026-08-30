@@ -46,7 +46,13 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Cinder',
     types: ['Fire', 'Iron'],
     baseStats: { hp: 100, attack: 70, defense: 60, intelligence: 30, wisdom: 40, speed: 50, manaPool: 60, mpRegen: 10 },
-    moveIds: ['singe', 'fortify', 'mendWounds'],
+    // Kindle in place of Mend Wounds, which the Spirit slate deleted
+    // (moves.ts) — promoted out of this hero's own level-up pool, so
+    // progression.ts drops it from there (a starting move in its own pool is
+    // dead weight levelUpMovePool can never offer). Cinder keeps three moves
+    // and loses healing outright; the designer call was to let the borrowers
+    // lose the heal rather than repoint them onto Light's Mend a second time.
+    moveIds: ['singe', 'fortify', 'kindle'],
     starter: false,
   },
   crimson: {
@@ -54,7 +60,11 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Crimson',
     types: ['Fire'],
     baseStats: { hp: 100, attack: 30, defense: 38, intelligence: 80, wisdom: 75, speed: 62, manaPool: 65, mpRegen: 10 },
-    moveIds: ['ember', 'weaken', 'mendWounds'],
+    // Stoke the Flames in place of Mend Wounds (see Cinder above). Its own
+    // type, its own pool, and the better support for an Intelligence 80 hero
+    // than a borrowed heal was: Fire Force scales every Fire move Crimson owns
+    // and reaches the partner too.
+    moveIds: ['ember', 'weaken', 'stokeTheFlames'],
     starter: true,
   },
   brimstone: {
@@ -262,7 +272,17 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Lucius',
     types: ['Shadow', 'Mind'],
     baseStats: { hp: 100, attack: 35, defense: 40, intelligence: 75, wisdom: 55, speed: 65, manaPool: 70, mpRegen: 10 },
-    moveIds: ['umbraBolt', 'enervate', 'spectralBind'],
+    // Wicked Fear in place of spectralBind, which the Spirit slate deleted
+    // (moves.ts). Its own type rather than a borrowed one, and the exact
+    // upgrade progression.ts already named as spectralBind's successor: same
+    // Haunt, 50 base power attached, 45 mana against 12. Promoted out of its
+    // own pool, so progression.ts drops it from there.
+    //
+    // Worth keeping in the kit rather than swapping the role out: Lucius is
+    // Shadow/MIND, and Mind is Haunt's other spreadTriggerTypes member
+    // (statuses.ts) — every single-target Mind move it owns cashes this mark
+    // in. 20 + 25 + 45 all sit inside a 70 pool.
+    moveIds: ['umbraBolt', 'enervate', 'wickedFear'],
     starter: false,
   },
   nightshade: {
@@ -331,7 +351,13 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Revenant',
     types: ['Spirit'],
     baseStats: { hp: 80, attack: 56, defense: 47, intelligence: 77, wisdom: 46, speed: 64, manaPool: 80, mpRegen: 10 },
-    moveIds: ['soulRend', 'secondWind', 'mendWounds'],
+    // The magical opener its Intelligence 77 actually wants, plus the type's
+    // two self-supports. Wisp over Torment because a level-1 kit needs damage
+    // in it (docs/authoring-moves.md §7), and Wisp is the row that plants
+    // Haunt AND hits; Unbound at 15 is the cheap turn it can always afford on
+    // an 80 pool once Second Wind went 15 -> 30. Soul Rend, its old opener,
+    // went 11 -> 50 with the slate and is now a pool pick.
+    moveIds: ['wisp', 'secondWind', 'unbound'],
     starter: true,
   },
 
@@ -349,7 +375,11 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Valor',
     types: ['Iron'],
     baseStats: { hp: 120, attack: 60, defense: 65, intelligence: 40, wisdom: 45, speed: 60, manaPool: 60, mpRegen: 10 },
-    moveIds: ['ironFist', 'fortify', 'mendWounds'],
+    // Rally in place of Mend Wounds (see Cinder above), promoted out of its
+    // own pool. Iron authors no support of its own beyond Fortify, and Gallant
+    // already carries Rally, so the off-type slot stays off-type — it just
+    // stops being a heal.
+    moveIds: ['ironFist', 'fortify', 'rally'],
     starter: true,
   },
   gallant: {

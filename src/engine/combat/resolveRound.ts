@@ -309,6 +309,17 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         // recoil can faint the user and a fainted caster must not keep swinging.
         let recoilBase = 0;
 
+        // The caster's HP as the cast BEGINS, for conditionalPower's
+        // requiresUserHpBelow (content.ts — Spirit's Spite and Vengeance).
+        // Snapshotted here rather than read live inside the loop, which is
+        // what makes the user-side HP form all-or-nothing across a spread:
+        // a move that also drained would otherwise heal itself back over the
+        // line between its first target and its second. Hoisted for the same
+        // reason `retribution` is — it is a fact about the ATTACKER, asked
+        // once, not a per-target question.
+        const attackerAtCast = working.combatants[action.combatantId];
+        const attackerHpAtCast = { currentHp: attackerAtCast.currentHp, maxHp: getMaxHp(attackerHero, attackerAtCast) };
+
         for (const targetId of targetIds) {
           const target = working.combatants[targetId];
           if (!target || target.fainted) continue;
@@ -350,7 +361,14 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           // (requiresTargetHpBelow), which is why maxHp goes in — read here,
           // BEFORE applyHpDelta, so an execute can never double against the HP
           // this very hit is about to remove.
-          const basePowerMultiplier = resolveConditionalPowerMultiplier(move, target, attackerNow, fieldEffectCtx, maxHp);
+          const basePowerMultiplier = resolveConditionalPowerMultiplier(
+            move,
+            target,
+            attackerNow,
+            fieldEffectCtx,
+            maxHp,
+            attackerHpAtCast
+          );
 
           const rolled = retribution
             ? {
@@ -821,6 +839,63 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         const result = cleanseStatuses(working, round, targetId, statuses, move.cleanseCount);
         working = result.state;
         events.push(...result.events);
+      }
+    }
+
+    // The bill (content.ts selfHpCost — Spirit's Soul Offering, "user loses
+    // 25% of max HP", and Last Rites, "user drops to 1 HP after using this").
+    //
+    // Paid here, after the whole payload above has landed on a board the
+    // caster was still standing on — the same placement and the same reasoning
+    // as the pivot below, which it sits directly in front of so that a caster
+    // who killed itself cannot then switch out. Soul Offering's +40/+40 has
+    // therefore already reached the ally by the time the 25% comes off, which
+    // is what makes it a sacrifice rather than a gamble on surviving one.
+    //
+    // It CAN faint the user (2026-08-30 designer call), with no floor —
+    // the same answer recoilPercent got. applyHpDelta handles that KO exactly
+    // as it would an enemy's, lock-in included, and the counter it feeds
+    // (damageTakenSinceLastTurn) is the same one every other HP write feeds.
+    if (move.selfHpCost) {
+      const user = working.combatants[action.combatantId];
+      if (user && !user.fainted) {
+        const userMaxHp = getMaxHp(heroes[user.heroId], user);
+        // reduceToHp is a Math.max, never a heal: a caster already at or below
+        // the floor pays nothing rather than being topped up to it
+        // (content.ts SelfHpCost).
+        const cost =
+          move.selfHpCost.mode === 'percentMaxHp'
+            ? Math.round(userMaxHp * move.selfHpCost.amount)
+            : Math.max(0, user.currentHp - move.selfHpCost.amount);
+        if (cost > 0) {
+          events.push({
+            type: 'DamageDealt',
+            round,
+            sourceCombatantId: action.combatantId,
+            targetCombatantId: action.combatantId,
+            moveId: move.id,
+            amount: cost,
+            category: move.category,
+            moveType: move.type,
+            typeMult: 1,
+            isCrit: false,
+            variance: 1,
+            basePower: 0,
+            elementalForceBonus: 0,
+            basePowerMultiplier: 1,
+            offStat: 0,
+            defStat: 0,
+            ratio: 1,
+            stab: 1,
+            critMultiplier: 1,
+            multiplierTerm: 1,
+            modifiers: [],
+            selfCost: { mode: move.selfHpCost.mode, amount: move.selfHpCost.amount },
+          });
+          const costResult = applyHpDelta(working, round, action.combatantId, -cost, userMaxHp);
+          working = costResult.state;
+          events.push(...costResult.events);
+        }
       }
     }
 
