@@ -136,7 +136,7 @@ const NECROPOLIS = (
 );
 
 /** Broken colonnade around a stepped altar — the shrines are ruined, the altar is not. */
-const BLIGHTED_SHRINES = (
+const BLIGHTED_SHRINE = (
   <>
     {/* Standing columns, capitals intact. */}
     <path d="M22 92 L22 30 L18 30 L18 22 L44 22 L44 30 L40 30 L40 92 Z" />
@@ -162,7 +162,7 @@ export const LOCATION_HORIZONS: Record<string, ReactNode> = {
   moltenFoundry: MOLTEN_FOUNDRY,
   stormCoast: STORM_COAST,
   necropolis: NECROPOLIS,
-  blightedShrines: BLIGHTED_SHRINES,
+  blightedShrine: BLIGHTED_SHRINE,
 };
 
 /**

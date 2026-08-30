@@ -11,7 +11,7 @@
  * Tracks are DECODED INTO MEMORY to loop seamlessly (music.ts explains why),
  * and downloaded in full before a note plays, so format is a real decision
  * and not a detail. These are FLAC: lossless, and about 60% of the WAV
- * master (13-16MB each, down from ~21-26MB).
+ * master (11-16MB each, down from ~18-26MB).
  *
  * A lossy export would be far smaller again, and MP3 in particular is the
  * trap. MP3 encoders pad the start and end of the stream, `decodeAudioData`
@@ -29,6 +29,7 @@
 
 import wildsEdgeUrl from '../../music/wilds edge.flac?url';
 import forbiddenForestUrl from '../../music/forbidden forest.flac?url';
+import blightedShrineUrl from '../../music/blighted shrine.flac?url';
 
 export interface TrackDefinition {
   /** Resolved by the bundler, so it is content-hashed and cache-safe. */
@@ -63,7 +64,12 @@ const trackTable = {
     url: forbiddenForestUrl,
     // Same reasoning, same number, and deliberately not tuned by ear yet —
     // 0.85 is the house level for a bed, and a per-track trim is worth
-    // spending only once the two have been heard back to back in a run.
+    // spending only once they have been heard back to back in a run.
+    gain: 0.85,
+  },
+  blightedShrine: {
+    url: blightedShrineUrl,
+    // House level again, unheard against the other two so far.
     gain: 0.85,
   },
 } as const;

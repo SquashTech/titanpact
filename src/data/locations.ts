@@ -75,9 +75,9 @@ export const locations: Record<string, LocationDefinition> = {
     ambience: 'fireflies',
   },
 
-  blightedShrines: {
-    id: 'blightedShrines',
-    name: 'Blighted Shrines',
+  blightedShrine: {
+    id: 'blightedShrine',
+    name: 'Blighted Shrine',
     faction: 'Cultists',
     flavor: 'Someone still tends these altars. That is the worrying part.',
     affinity: ['Shadow', 'Arcane', 'Mind'],

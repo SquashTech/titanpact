@@ -10109,7 +10109,7 @@ textarea,
    centre — much narrower than any other location's ground light, so it reads
    as a single burning point rather than as terrain — under a cold violet
    crown, with the darkest mid-field in the set between the two. */
-.map-screen[data-location="blightedShrines"] .map-well {
+.map-screen[data-location="blightedShrine"] .map-well {
   background:
     radial-gradient(ellipse 90% 28% at 50% -4%, rgba(var(--node-rgb), 0.32), transparent 74%),
     radial-gradient(ellipse 100% 80% at 50% 46%, transparent 42%, rgba(0, 0, 0, 0.44) 100%),

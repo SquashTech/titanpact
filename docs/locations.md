@@ -66,7 +66,7 @@ against `src/data/heroes.ts`'s 32 heroes:
 |---|---|---|
 | Wild's Edge | *all* | 32 |
 | Storm Coast | Storm / Iron / Water | 10 |
-| Blighted Shrines | Shadow / Arcane / Mind | 8 |
+| Blighted Shrine | Shadow / Arcane / Mind | 8 |
 | Molten Foundry | Fire / Mech / Iron | 8 |
 | Necropolis | Spirit / Frost / Shadow | 8 |
 | Forbidden Forest | Nature / Stone / Light | 7 |
@@ -75,7 +75,7 @@ A Skirmish fields 4. Under a hard filter, Necropolis on its originally proposed
 Spirit/Frost pair matched **exactly 4 heroes** — it would have fielded the identical four
 every single time, and its Elite and Guardian would have drawn from that same closed set.
 Shadow was added as a third Necropolis type to open it up, at the cost of overlapping
-Blighted Shrines. Weighting rather than filtering is what keeps every location varied
+Blighted Shrine. Weighting rather than filtering is what keeps every location varied
 without blocking the feature on authoring twenty more heroes.
 
 The one type no location claims is **Beast**, which lives at Wild's Edge with the
