@@ -261,6 +261,11 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
 
   if (move.critChance != null) parts.push(`${Math.round(move.critChance * 100)}% crit`);
 
+  // Drain reads as a percentage rather than as hit points on purpose: unlike a
+  // heal move there is no number to resolve here, because what it returns
+  // depends on the hit it is attached to (content.ts drainPercent).
+  if (move.drainPercent) parts.push(`Heals ${Math.round(move.drainPercent * 100)}% of damage dealt`);
+
   if (move.statusApplication) {
     const { statusId, magnitude, duration, chance } = move.statusApplication;
     // Granted vs inflicted — see grantsRatherThanInflicts above. The target
@@ -276,7 +281,13 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     parts.push(`${odds}${verb} ${statusName}${amount != null ? ` ${amount}` : ''}`);
   }
 
-  if (move.cleanses) parts.push('Cleanses');
+  // A limited cleanse has to say so, and has to say it is random — "Cleanses"
+  // on Wash Away would read as Purify's full strip and be wrong twice over.
+  if (move.cleanses) parts.push(move.cleanseCount != null ? `Cleanses ${move.cleanseCount} at random` : 'Cleanses');
+
+  // The ramp, on the summary line, because the authored cost beside it is only
+  // the FIRST cast's price (content.ts manaDiscountOnUse).
+  if (move.manaDiscountOnUse) parts.push(`−${move.manaDiscountOnUse} MP each use`);
 
   if (move.fieldEffectApplication) {
     parts.push(`Field: ${fieldEffects[move.fieldEffectApplication]?.name ?? move.fieldEffectApplication}`);

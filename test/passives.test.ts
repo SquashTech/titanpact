@@ -159,7 +159,7 @@ test('passives: collectPassiveDamageModifiers only matches the conditioned move 
   const fireMods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.singe, passives);
   assert.deepStrictEqual(fireMods, [{ source: 'emberheart', amount: 0.2 }]);
 
-  const waterMods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.tidalBolt, passives);
+  const waterMods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.splash, passives);
   assert.deepStrictEqual(waterMods, []);
 });
 

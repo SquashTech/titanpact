@@ -3,15 +3,17 @@
 // and a spread of priority brackets. Enough variety to run messy, interesting
 // 2v2s while the real content gets authored.
 //
-// EXCEPT Fire (2026-08-29), which is the first type replaced wholesale by its
-// designed movepool — see the "--- Fire (AUTHORED)" block below. Fire's
-// fifteen are balance-tuned content; everything else here is still filler and
-// should be read (and replaced) as such, type by type. Four engine fields
-// exist because Fire needed them and are so far used only by it:
-// StatusApplication.chance (Ember), MoveDefinition.critChance (Singe,
-// Firebrand), MoveDefinition.conditionalPower (Immolate), and statDeltas on a
-// damage-kind move (Molten Lash) — all four are generic vocabulary in
-// engine/content.ts, not Fire special cases.
+// EXCEPT Fire (2026-08-29) and Water (2026-08-30), the first two types
+// replaced wholesale by their designed movepools — see the "(AUTHORED)"
+// blocks below. Those thirty are balance-tuned content; everything else here
+// is still filler and should be read (and replaced) as such, type by type.
+// Seven engine fields exist because an authored slate needed them, and each is
+// generic vocabulary in engine/content.ts rather than a per-type special case:
+//
+//   Fire  — StatusApplication.chance (Ember), critChance (Singe, Firebrand),
+//           conditionalPower (Immolate), statDeltas on a damage move (Molten Lash)
+//   Water — drainPercent (Siphon, Engulf), cleanseCount (Wash Away),
+//           manaDiscountOnUse (Wave Shred)
 //
 // Most moves here are `kind: 'damage'` — variety comes from
 // type/category/power/cost/priority/targeting — including doubles-native
@@ -36,18 +38,6 @@ import type { MoveDefinition } from '../engine/content';
 
 export const moves: Record<string, MoveDefinition> = {
   // --- Original fixture moves (descriptions added) -------------------------
-  tidalBolt: {
-    id: 'tidalBolt',
-    name: 'Tidal Bolt',
-    type: 'Water',
-    category: 'magical',
-    kind: 'damage',
-    basePower: 55,
-    manaCost: 12,
-    priority: 0,
-    target: 'singleEnemy',
-    description: 'A concentrated bolt of surging water.',
-  },
   quickJab: {
     id: 'quickJab',
     name: 'Quick Jab',
@@ -95,20 +85,6 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
     description: 'A strike thrown from the edge of vision.',
-  },
-  // Tiered moves purchasable via the level-up pool (src/run/progression.ts,
-  // src/data/progression.ts) — not in any hero's starting moveIds.
-  ripCurrent: {
-    id: 'ripCurrent',
-    name: 'Rip Current',
-    type: 'Water',
-    category: 'magical',
-    kind: 'damage',
-    basePower: 70,
-    manaCost: 22,
-    priority: 0,
-    target: 'singleEnemy',
-    description: 'A crushing undertow that drags the target under.',
   },
 
   // --- Fire (AUTHORED, 2026-08-29) ------------------------------------------
@@ -359,30 +335,257 @@ export const moves: Record<string, MoveDefinition> = {
     description: 'Opens the ground under one foe, and pays for it (self-inflicts Burn 30).',
   },
 
-  // --- Water -------------------------------------------------------------
-  aquaJet: {
-    id: 'aquaJet',
-    name: 'Aqua Jet',
+  // --- Water (AUTHORED, 2026-08-30) ----------------------------------------
+  // The second designed movepool, after Fire. Where Fire's fifteen all orbit
+  // one status, Water's orbit one question: **how long can you stay in?** Four
+  // separate answers to it, none of which is a status the enemy can switch
+  // away from:
+  //
+  //   - drain (Siphon, Engulf)      — HP off the swing you were making anyway
+  //   - Renew (Refresh, High Tide)  — HP over time, and the ONE status here
+  //                                   that survives a switch (statuses.ts)
+  //   - flat heals (Oasis, Wash Away)
+  //   - guard (Tide Guard's +10 Def to the side, Undertow's -10 off a foe)
+  //
+  // Three consequences worth knowing before tuning anything here:
+  //
+  // 1. **Water has no priority move any more.** The fixture pool's Aqua Jet
+  //    (priority 1) and Tsunami Crash (priority -1) both died with this
+  //    rewrite, and the design table authors no priority column — so every
+  //    Water move resolves in bracket 0 and Water's whole tempo game is Speed
+  //    and mana, not brackets.
+  // 2. **The heals scale off the caster's Wisdom, not off Water.** Oasis, Wash
+  //    Away and both Renew moves run the healing formula (docs/combat.md), so a
+  //    Wisdom-40 Riptide gets 0.9x where a Wisdom-60 healer gets 1.1x — before
+  //    Water's own 1.25 STAB. The authored numbers are what a Wisdom-50 Water
+  //    caster restores, not a guarantee.
+  // 3. **Drain deliberately does NOT run that formula** (content.ts
+  //    drainPercent). It is half of a damage number that has already taken
+  //    variance, crit, STAB and TypeMult — so Siphon's return swings with the
+  //    matchup and with nothing else. Into a resisted target it returns almost
+  //    nothing; that is the intended shape and the reason it is cheap.
+  //
+  // Cost floor is 15 and the ceiling 80 — the same steep authored curve Fire
+  // set, and Water heroes' mana pools are read against THIS, not against the
+  // 7-mana Aqua Jet they used to hold.
+  splash: {
+    id: 'splash',
+    name: 'Splash',
+    type: 'Water',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 45,
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A hard slap of water with nothing clever behind it.',
+  },
+  siphon: {
+    id: 'siphon',
+    name: 'Siphon',
+    type: 'Water',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 30,
+    // Half of what it actually removes, not half of the roll — see
+    // content.ts drainPercent. At 30 BP the return is small in absolute terms
+    // and free in tempo terms, which is the whole pitch: an attack that does
+    // not cost you the turn you would have spent healing.
+    drainPercent: 0.5,
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Draws the water back out of a foe, and keeps half of it (heals 50% of damage dealt).',
+  },
+  tideGuard: {
+    id: 'tideGuard',
+    name: 'Tide Guard',
+    type: 'Water',
+    category: 'physical',
+    // Authored 'physical' because Defense is the physical pipeline's defending
+    // stat — category is inert on a buff move and this is documentation
+    // (authoring-moves.md §2).
+    kind: 'buff',
+    statDeltas: [{ stat: 'defense', amount: 10 }],
+    manaCost: 15,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'A standing swell in front of both allies (+10 Defense).',
+  },
+  refresh: {
+    id: 'refresh',
+    name: 'Refresh',
+    type: 'Water',
+    category: 'magical',
+    kind: 'buff',
+    // Renew is the one status in this pool a switch does not clear
+    // (statuses.ts clearsOnSwitch: false), which is what makes it Water's
+    // answer to the cycling game rather than another thing lost to it. The
+    // magnitude is snapshotted through the healing formula at cast time
+    // (healPipeline.ts scaleHotMagnitude), so a high-Wisdom caster's Renew is
+    // worth more for the whole time it ticks.
+    statusApplication: { statusId: 'Renew', magnitude: 20, target: 'moveTarget' },
+    manaCost: 20,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Sets an ally mending on their own again (grants Renew 20).',
+  },
+  undertow: {
+    id: 'undertow',
+    name: 'Undertow',
     type: 'Water',
     category: 'physical',
     kind: 'damage',
     basePower: 35,
-    manaCost: 7,
-    priority: 1,
+    // Lands AFTER this hit (resolveRound.ts) — the softened guard is for what
+    // comes next, which on a Water side is usually the partner.
+    statDeltas: [{ stat: 'defense', amount: -10 }],
+    manaCost: 25,
+    priority: 0,
     target: 'singleEnemy',
-    description: 'A high-pressure jet of water, fast enough to beat slower moves.',
+    description: 'Pulls the footing out from under a foe (-10 Defense).',
   },
-  tsunamiCrash: {
-    id: 'tsunamiCrash',
-    name: 'Tsunami Crash',
+  torrent: {
+    id: 'torrent',
+    name: 'Torrent',
     type: 'Water',
     category: 'magical',
     kind: 'damage',
-    basePower: 48,
-    manaCost: 22,
-    priority: -1,
-    target: 'allOthers',
-    description: 'A towering wave that crashes over the whole field except the caster. Priority -1.',
+    basePower: 65,
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A sustained column of water aimed at one place.',
+  },
+  oasis: {
+    id: 'oasis',
+    name: 'Oasis',
+    type: 'Water',
+    category: 'magical',
+    kind: 'heal',
+    healPower: 50,
+    manaCost: 50,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Still water for the whole side at once.',
+  },
+  engulf: {
+    id: 'engulf',
+    name: 'Engulf',
+    type: 'Water',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 50,
+    drainPercent: 0.5,
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Closes over a foe and does not give it back (heals 50% of damage dealt).',
+  },
+  aquaSlice: {
+    id: 'aquaSlice',
+    name: 'Aqua Slice',
+    type: 'Water',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 60,
+    // Bleed is boolean-shape and flat (5% max HP a round, statuses.ts): it
+    // does not decay and switching does not clear it, so a 30% chance at it is
+    // worth more on a long fight than the odds suggest.
+    statusApplication: { statusId: 'Bleed', target: 'moveTarget', chance: 0.3 },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A pressurised edge of water that opens a wound (30% chance of Bleed).',
+  },
+  deluge: {
+    id: 'deluge',
+    name: 'Deluge',
+    type: 'Water',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 45,
+    manaCost: 45,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Water enough for both of them.',
+  },
+  washAway: {
+    id: 'washAway',
+    name: 'Wash Away',
+    type: 'Water',
+    category: 'magical',
+    kind: 'heal',
+    healPower: 30,
+    cleanses: true,
+    // One, at random — not Purify's full strip (content.ts cleanseCount). On a
+    // hero carrying a single affliction the two are identical; the price is
+    // paid exactly when the player most wants to choose, which is what keeps
+    // this a tier below Purify rather than a cheaper copy of it.
+    cleanseCount: 1,
+    manaCost: 30,
+    priority: 0,
+    target: 'singleAlly',
+    description: "Rinses one of an ally's afflictions away, chosen by the current (cleanses 1 at random).",
+  },
+  tsunami: {
+    id: 'tsunami',
+    name: 'Tsunami',
+    type: 'Water',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 90,
+    manaCost: 70,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'The whole ocean, arriving at once, at one hero.',
+  },
+  maelstrom: {
+    id: 'maelstrom',
+    name: 'Maelstrom',
+    type: 'Water',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 70,
+    manaCost: 60,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'A turning of the water that takes the whole opposing side down with it.',
+  },
+  highTide: {
+    id: 'highTide',
+    name: 'High Tide',
+    type: 'Water',
+    category: 'magical',
+    kind: 'buff',
+    // Refresh at volume and across the side — and the pool's real payoff move,
+    // because Renew is the only thing Water hands out that a switch does not
+    // take back. Scaled by the caster's Wisdom + STAB at cast time like any
+    // Renew, so 50 is the floor a mid-Wisdom Water caster sees, not the cap.
+    statusApplication: { statusId: 'Renew', magnitude: 50, target: 'moveTarget' },
+    manaCost: 70,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'The tide comes in for the whole side (grants Renew 50).',
+  },
+  waveShred: {
+    id: 'waveShred',
+    name: 'Wave Shred',
+    type: 'Water',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 80,
+    // The pool's one variable cost (content.ts manaDiscountOnUse): 80, then
+    // 60, then 40, ... for the rest of the fight, per hero. The ramp is the
+    // move — it is a bad finisher and a very good fourth cast, which makes it
+    // the only Water move that rewards a LONG fight rather than a survivable
+    // one. Note the first cast is always charged 80: a hero who cannot reach
+    // that price never starts the ramp (see docs/combat.md).
+    manaDiscountOnUse: 20,
+    manaCost: 80,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Cuts a channel through the water — and every cut after it runs easier (costs 20 less each use).',
   },
 
   // --- Frost -------------------------------------------------------------

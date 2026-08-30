@@ -370,6 +370,24 @@ export interface MoveDefinition {
    * StatusDefinition.triggerTypes.
    */
   conditionalPower?: { requiresTargetStatus: StatusId; multiplier: number };
+  /**
+   * damage-kind only. Fraction of the damage this move actually removes that
+   * is restored to the USER — Water's Siphon/Engulf, "heal user for 50% of
+   * damage dealt".
+   *
+   * Deliberately NOT the healing formula (engine/heal/healPipeline.ts). It
+   * takes no HealPower, no WisdomMult and no STAB of its own: the number it
+   * scales is a damage number that has ALREADY been through variance, crit,
+   * STAB and TypeMult, so running the heal formula over it too would apply
+   * two independent scalings to one action and make a drain move read as a
+   * heal move that also happens to hit. The consequence — a drain's return is
+   * a fact about the attacker's offense, not about its Wisdom — is a real
+   * design choice; see docs/combat.md "Drain".
+   *
+   * Scales the HP actually removed, not the rolled amount, so overkill into a
+   * 3-HP target returns 1 rather than 45. Summed per target on a spread move.
+   */
+  drainPercent?: number;
   /** heal-kind only. The authored figure the healing formula scales (docs/combat.md "The healing formula", engine/heal/healPipeline.ts) — HP restored by a Wisdom-50 caster with no STAB, NOT a flat guaranteed amount. */
   healPower?: number;
   /**
@@ -384,9 +402,47 @@ export interface MoveDefinition {
   statusApplication?: StatusApplication;
   /** Any kind — strips non-positive statuses from the move's resolved target(s) (docs/conditions.md §4 Cleanse). Positive statuses (Renew, Stealth) are never stripped — §7 "Cleanse & positive statuses" resolved this as a flat rule, not a per-move choice. */
   cleanses?: boolean;
+  /**
+   * Paired with `cleanses`: strip at most this many statuses instead of all of
+   * them, picked at RANDOM from the eligible (non-positive) ones — Water's
+   * Wash Away, "cleanse a random negative status effect". Omitted keeps the
+   * all-or-nothing behaviour every Cleanse move before it had, and draws no
+   * RNG at all, so those fights replay identically (same discipline as
+   * StatusApplication.chance).
+   *
+   * Random rather than authored-priority because a chosen cleanse is a much
+   * stronger effect than a partial one: at 1 this is a coin flip between
+   * shedding the Poison timer and shedding the Freeze, which is what prices it
+   * a tier below Purify's full strip. There is deliberately still no
+   * "cleanse THIS named status" — docs/conditions.md §4 keeps Cleanse a
+   * quantity, not a query.
+   */
+  cleanseCount?: number;
   /** Any kind — sets the battlefield's Field Effect (docs/field-effects.md). Global, so unlike statusApplication there's no target to choose. */
   fieldEffectApplication?: FieldEffectId;
   manaCost: number;
+  /**
+   * Each time this combatant casts this move, its cost to THAT combatant drops
+   * by this much for the rest of the fight, stacking, floored at 0 — Water's
+   * Wave Shred, "costs 20 less mana this combat (stackable)".
+   *
+   * The first authored cost that varies with state. Two things keep it from
+   * being a special case:
+   *
+   * - The discount is per (combatant, move), stored on the combatant
+   *   (state.ts Combatant.moveManaDiscounts) rather than on the move — content
+   *   is shared, immutable data, and two heroes holding Wave Shred must ramp
+   *   independently.
+   * - Every read of "what does this cost right now" goes through
+   *   state.ts effectiveManaCost, including the view's affordability check and
+   *   the mana gem on the button. `manaCost` remains the AUTHORED cost and is
+   *   never mutated.
+   *
+   * It ramps on use, so the FIRST cast is always the authored price — a hero
+   * whose pool cannot reach that price can never start the ramp at all. That
+   * is a real gate on the move, not an oversight; see docs/combat.md.
+   */
+  manaDiscountOnUse?: number;
   /** Integer priority bracket; higher resolves first. */
   priority: number;
   target: TargetMode;

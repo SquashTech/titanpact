@@ -87,6 +87,14 @@ export interface Combatant {
   baselineStatusMagnitudes: Partial<Record<StatusId, number>>;
   /** Active statuses, keyed by StatusId — a status either isn't present or is one instance of it (docs/conditions.md: no status stacks as multiple independent instances). */
   statuses: Record<StatusId, StatusInstance>;
+  /**
+   * Accumulated per-move mana discounts (engine/content.ts
+   * MoveDefinition.manaDiscountOnUse — Water's Wave Shred), keyed by move id.
+   * Starts empty every fight and only ever grows: this is a within-combat ramp,
+   * not a loadout fact, so unlike baselineStatModifiers it is never seeded by
+   * buildCombatState. Read exclusively through effectiveManaCost below.
+   */
+  moveManaDiscounts: Partial<Record<string, number>>;
   /** Held Passives, keyed by PassiveId — populated once at fight-build time from equipment/relic/Evolution grants (src/run/passives.ts, buildCombatState.ts placeEntry). Unlike statuses, never changes mid-fight in this engine slice — nothing currently grants or removes a Passive during combat. */
   passives: Record<PassiveId, PassiveInstance>;
   fainted: boolean;
@@ -131,8 +139,31 @@ export function isLockedIn(state: CombatState, side: Side): boolean {
  * fall back to Rest (see RestAction, combat/actions.ts) because nothing else
  * is affordable.
  */
-export function hasAffordableMove(currentMana: number, moveIds: readonly string[], moves: Record<string, MoveDefinition>): boolean {
-  return moveIds.some((id) => currentMana >= moves[id].manaCost);
+export function hasAffordableMove(
+  currentMana: number,
+  moveIds: readonly string[],
+  moves: Record<string, MoveDefinition>,
+  /** The caster's accumulated per-move discounts (Combatant.moveManaDiscounts). Omit and every move is priced at its authored cost — which is what every caller did before Wave Shred existed. */
+  discounts?: Partial<Record<string, number>>
+): boolean {
+  return moveIds.some((id) => currentMana >= effectiveManaCost(moves[id], discounts));
+}
+
+/**
+ * What `move` costs THIS combatant right now: the authored cost less whatever
+ * `manaDiscountOnUse` has accumulated for it, floored at 0.
+ *
+ * The single source of truth for a move's live price. The engine's legality
+ * guard, the mana it actually spends, the view's affordability check and the
+ * gem on the button all call this — a second reader of `move.manaCost` is how
+ * a button ends up saying 80 while the engine charges 40.
+ *
+ * Takes the discount map rather than a whole Combatant so the view can price a
+ * move for a hero it has no live Combatant for (draft, level-up, compendium),
+ * where the answer is simply the authored cost.
+ */
+export function effectiveManaCost(move: MoveDefinition, discounts?: Partial<Record<string, number>>): number {
+  return Math.max(0, move.manaCost - (discounts?.[move.id] ?? 0));
 }
 
 /** Field Effect context threaded into getEffectiveStat/getCombatStatDelta only by callers that need a Field-Effect-driven stat hook (currently just Verdant Earth's statBonusEqualToStatusMagnitude) — omit entirely and both functions behave exactly as before. */
@@ -225,6 +256,7 @@ export function createCombatant(
     statModifiers: {},
     grantedTypes: [],
     baselineStatusMagnitudes: {},
+    moveManaDiscounts: {},
     statuses: {},
     passives: {},
     fainted: false,

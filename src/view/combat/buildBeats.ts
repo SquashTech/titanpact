@@ -341,11 +341,20 @@ export function buildBeats(
         i++;
         if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
         const targetName = name(e.targetCombatantId);
+        // A drain beat names its source. Same popup and same green number —
+        // it IS a heal, and the player should read it as one — but the banner
+        // says where it came from, because it arrives in the middle of an
+        // attack rather than on its own turn.
+        const drainedFrom = e.drain ? name(e.drain.fromCombatantId) : null;
         push(
           applied,
-          `${targetName} recovers ${e.amount} HP`,
+          drainedFrom ? `${targetName} drains ${e.amount} HP from ${drainedFrom}` : `${targetName} recovers ${e.amount} HP`,
           [{ combatantId: e.targetCombatantId, text: `+${e.amount}`, className: 'popup-heal' }],
-          { bannerLead: `${targetName} recovers`, bannerFocus: `+${e.amount} HP`, bannerFocusKind: 'heal' }
+          {
+            bannerLead: drainedFrom ? `${targetName} drains ${drainedFrom}` : `${targetName} recovers`,
+            bannerFocus: `+${e.amount} HP`,
+            bannerFocusKind: 'heal',
+          }
         );
         break;
       }

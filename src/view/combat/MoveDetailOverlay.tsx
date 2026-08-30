@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import type { CSSProperties, ReactNode } from 'react';
 import type { MoveDefinition } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
-import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana } from '../../engine/state';
+import { effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana } from '../../engine/state';
 import { allCombatants } from '../../data/content';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
@@ -291,7 +291,11 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   const stab =
     (move.kind === 'damage' || move.kind === 'heal') && healCaster ? resolveStab(move.type, healCaster.types) > 1 : false;
   const forceBonus = attacker ? resolveElementalForceBonus(attacker, move.type, statuses) : 0;
-  const manaAfter = attacker ? attacker.currentMana - move.manaCost : null;
+  // The live price, not the authored one — Wave Shred is 80 on the first cast
+  // and less on every one after it (state.ts effectiveManaCost). Out of combat
+  // there is no attacker and no ramp, so this is simply move.manaCost.
+  const liveCost = effectiveManaCost(move, attacker?.moveManaDiscounts);
+  const manaAfter = attacker ? attacker.currentMana - liveCost : null;
   const manaPool = attacker && attackerHero ? getMaxMana(attackerHero, attacker) : null;
 
   const kindGlyph = moveKindGlyph(move);
@@ -304,7 +308,9 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
       move.cleanses ||
       move.fieldEffectApplication ||
       move.conditionalPower ||
-      move.critChance != null
+      move.critChance != null ||
+      move.drainPercent ||
+      move.manaDiscountOnUse
   );
 
   const forecastIds = context && move.kind === 'damage' ? context.defenderIds : [];
@@ -334,7 +340,7 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
         {/* Cost leads the move button and so it leads the card too — mana is
             the primary balance lever (CLAUDE.md), and the gem is the picture
             the player already reads it as. */}
-        <ManaCost cost={move.manaCost} />
+        <ManaCost cost={liveCost} />
       </div>
 
       <div className="move-detail-stats">
@@ -451,11 +457,37 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               note="1.5× damage when it lands"
             />
           )}
+          {/* The drain row wears the HP heart, not the move's own pipeline
+              glyph: what it returns is hit points, and the number it scales is
+              the finished hit rather than anything the healing formula would
+              recognise (content.ts drainPercent). */}
+          {move.drainPercent != null && (
+            <EffectRow
+              glyph={<StatGlyph stat="hp" />}
+              text={`Heals ${Math.round(move.drainPercent * 100)}% of damage dealt`}
+              note="a share of the hit itself — Wisdom and STAB do not scale it"
+            />
+          )}
           {move.cleanses && (
             <EffectRow
               glyph={<MoveKindGlyph kind="buff" />}
-              text="Cleanses"
-              note="strips every negative status from the target"
+              text={move.cleanseCount != null ? `Cleanses ${move.cleanseCount} at random` : 'Cleanses'}
+              note={
+                move.cleanseCount != null
+                  ? 'one negative status, chosen at random — never a positive one'
+                  : 'strips every negative status from the target'
+              }
+            />
+          )}
+          {move.manaDiscountOnUse != null && (
+            <EffectRow
+              glyph={<StatGlyph stat="manaPool" />}
+              text={`−${move.manaDiscountOnUse} mana each use`}
+              note={
+                attacker
+                  ? `costs ${liveCost} now, ${Math.max(0, liveCost - move.manaDiscountOnUse)} after this cast — for the rest of the fight`
+                  : 'stacks for the rest of the fight, on this hero only'
+              }
             />
           )}
           {fieldDef && (

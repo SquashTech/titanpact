@@ -7,8 +7,10 @@ The designer hands over a slate of ~15 moves for one type, as a table with the c
 asks you to remove that type's existing moves, replace them, and "distribute them
 appropriately."
 
-Fire was the first (2026-08-29). Fourteen types remain. This file is what Fire cost to
-learn, written down so the next one is an afternoon instead of a day.
+Fire was the first (2026-08-29), Water the second (2026-08-30). Thirteen types remain.
+This file is what those two cost to learn, written down so the next one is an afternoon
+instead of a day. Water took about a third of Fire's time, and every hour of the saving
+came from §0 step 1 — naming the three engine extensions before writing any content.
 
 Read this **before** opening `src/data/moves.ts`. Read `CLAUDE.md` first if you have not.
 
@@ -167,10 +169,25 @@ row, that is what it should be. Fire's Stoke the Flames is the only move grantin
 today, and it is worth copying as a shape: `bothAllies` rather than `self`, which turns
 a personal ramp into a reason to draft two heroes of the same type.
 
-### `cleanses: true`
+### `cleanses: true` (+ `cleanseCount`)
 
-Strips every non-`positive` status from the resolved targets. All-or-nothing — there is
-no "cleanse one named status".
+Strips every non-`positive` status from the resolved targets. `cleanseCount: 1` (Water's
+Wash Away) caps it at N, picked at **random** — still never a `positive` status, and still
+no way to name which one. Omit `cleanseCount` and nothing draws RNG.
+
+### `drainPercent`
+
+`drainPercent: 0.5` on a damage move (Water's Siphon/Engulf) returns half the HP it
+actually removed to the user. It does **not** run the healing formula — no HealPower, no
+Wisdom, no STAB of its own — because the number it scales has already been through the
+damage formula. Read `docs/combat.md` "Drain" before authoring a variant.
+
+### `manaDiscountOnUse`
+
+`manaDiscountOnUse: 20` (Water's Wave Shred) drops this move's cost **for that combatant**
+by 20 every time they cast it, for the rest of the fight, floored at 0. The first cast is
+always the authored price. If you author one of these, sanity-check that a hero who holds
+it can afford the *first* cast — the ramp cannot start otherwise.
 
 ### `fieldEffectApplication`
 
@@ -221,8 +238,6 @@ extensions; some are design decisions above your pay grade. Either way, name it.
 - **Recoil / self-damage as HP.** Fire's Volcanic Surge dodged this by taking recoil as
   a self-inflicted `Burn`, which is better content anyway (it halves, and switching
   clears it) — reach for that shape first.
-- **Drain / lifesteal** (heal for a fraction of damage dealt). No primitive; the closest
-  existing thing is a reactive Passive, which is not a move.
 - **Two-turn / charge / recharge moves.** Nothing in the round model supports a move
   that spans rounds.
 - **Protect / shield / damage negation.**
@@ -233,7 +248,9 @@ extensions; some are design decisions above your pay grade. Either way, name it.
 - **Percentage stat modifiers**, or any stat growth. Flat multiples of 5/10 only.
 - **Accuracy.** Moves always land. A "70% to hit" row is a `chance`-gated *rider* or it
   is a conversation.
-- **Cost/priority that varies with state.**
+- **Priority that varies with state.** (Cost that varies with state now exists, but only
+  in the one shape `manaDiscountOnUse` covers — a self-inflicted, monotonic, per-fight
+  discount. "Costs double while Burned" is still a conversation.)
 - **Field effects of a non-standard duration**, or more than one active at a time.
 
 There is also **no `isValidMoveDefinition`** — nothing catches a magnitude-shape status
@@ -361,6 +378,13 @@ of the slate. Two rules:
 - **The top of the curve may be unreachable.** Fire's Inferno costs 75; no fixture hero
   has a pool that large. That is a legitimate finding to report, not something to
   silently tune away.
+- **A deleted move's PRIORITY can be load-bearing in a test, not just its id.** Water's
+  slate authors no priority column, so every Water move is bracket 0 — and repointing
+  `test/statuses.test.ts`'s Freeze-order test from the old priority-1 Aqua Jet onto a
+  priority-0 replacement silently put its two actions in *different brackets*, which
+  makes a Speed-tiebreak assertion pass or fail for reasons that have nothing to do with
+  Speed. Check the `priority` of what you delete, not only the `id`. The general form:
+  **a fixture move's every field is potentially what a test is standing on.**
 - **Bash heredocs break on apostrophes in this environment.** Use the `Write` tool for
   patch scripts, run them with `node`, and normalise CRLF (`s.split('\n').join(nl)`) —
   the repo is CRLF. Write scripts that **assert an exact match count** before replacing,
@@ -382,7 +406,13 @@ Then, beyond green tests:
 
 - **No dangling ids.** Walk `heroes`, `enemies`, and `progressionTable.moveTiers` and
   assert every `moveId` exists in `moves`. Nothing else catches this.
-- **Test the mechanic, not the balance.** `test/fireMoves.test.ts` is the model: assert
+- **No dangling ids, checked by a test rather than by hand.**
+  `test/waterMoves.test.ts` ends with two that are worth copying verbatim into every
+  slate: one walks `heroes` + `enemies` + `progressionTable.moveTiers` asserting every
+  move id resolves, the other asserts no hero lists its own starting move in its
+  level-up pool (dead weight `levelUpMovePool` can never offer).
+- **Test the mechanic, not the balance.** `test/fireMoves.test.ts` and
+  `test/waterMoves.test.ts` are the model: assert
   that a chanced rider rolls, that a conditional multiplier lands on BasePower and not
   on `multiplierTerm`, that a debuff applies after its own hit. Do **not** assert
   specific damage numbers — those are balance and will move.
@@ -420,6 +450,21 @@ Fire's three, as a template for the shape of these:
   silently settled.
 - **A balance consequence outside the slate.** The new cost floor forced a mana bump on
   an enemy and left one move unaffordable for the hero meant to cast it.
+
+Water's three, as a second data point on the same three shapes:
+
+- **A capability the slate deleted.** Water's authored fifteen are all priority 0, so
+  removing Aqua Jet (priority 1) and Tsunami Crash (priority -1) left the type with no
+  bracket play at all — a real identity decision (Water's tempo game is Speed and mana,
+  not brackets) that the table stated only by omission. Named, not patched.
+- **A locked decision the slate brushed against.** `drainPercent` restores HP without
+  touching the healing formula, which the 2026-08-28 sign-off locked. It does not break
+  the lock — a drain is a damage rider, not a heal-kind move — but it does create a
+  second way to restore HP that the Wisdom/support axis cannot invest in, recorded in
+  `docs/combat.md` rather than silently settled.
+- **A balance consequence outside the slate.** Pincer's mana went 40 → 55 (the new floor
+  made its own opener unplayable), and Wave Shred's 80 is still above every Water hero's
+  pool — and because the discount only applies *after* a cast, the ramp can never start.
 
 If the type you are authoring has a type-keyed status hook (Conduct on Storm/Iron, Haunt
 on Spirit/Mind), the equivalent question is almost certainly: *is the slate priced

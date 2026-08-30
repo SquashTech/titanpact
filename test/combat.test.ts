@@ -49,7 +49,7 @@ test('invariant: engine never mutates content data (heroes/moves untouched by re
   const state = twoVTwoFixture(3);
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
-    { kind: 'move', combatantId: 'a2', moveId: 'tidalBolt', declaredTarget: 'b1' },
+    { kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' },
     { kind: 'move', combatantId: 'b1', moveId: 'quickJab', declaredTarget: 'a1' },
     { kind: 'move', combatantId: 'b2', moveId: 'firestorm' },
   ];
@@ -85,7 +85,7 @@ test('invariant: stat grants must be multiples of 5 or 10', () => {
 test('golden replay: same seed + same inputs reproduce an identical event log', () => {
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
-    { kind: 'move', combatantId: 'a2', moveId: 'tidalBolt', declaredTarget: 'b2' },
+    { kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b2' },
     { kind: 'move', combatantId: 'b1', moveId: 'quickJab', declaredTarget: 'a1' },
     { kind: 'move', combatantId: 'b2', moveId: 'firestorm' },
   ];
@@ -213,7 +213,7 @@ test('round: a second attacker declared against a target the first attacker alre
   // still standing, so a1's attack should redirect onto it rather than fizzle.
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
-    { kind: 'move', combatantId: 'a2', moveId: 'tidalBolt', declaredTarget: 'b1' },
+    { kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' },
   ];
   const { events } = resolveRound(oneHp, actions, config);
 

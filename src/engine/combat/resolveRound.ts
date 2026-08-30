@@ -11,7 +11,7 @@
 
 import type { FieldEffectDefinition, HeroDefinition, MoveDefinition, PassiveDefinition, StatusDefinition } from '../content';
 import type { CombatState, HeroLookup, Side } from '../state';
-import { getMaxHp, getMaxMana, getEffectiveStat, effectiveTypes, hasStatus } from '../state';
+import { getMaxHp, getMaxMana, getEffectiveStat, effectiveManaCost, effectiveTypes, hasStatus } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
@@ -117,7 +117,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     events.push({ type: 'TurnStarted', round, combatantId: action.combatantId });
 
-    if (actor.currentMana < move.manaCost) continue; // engine-level legality guard; view must already prevent this
+    // Live cost, not the authored one: Wave Shred gets cheaper every time this
+    // combatant casts it (content.ts manaDiscountOnUse, state.ts
+    // effectiveManaCost). Every move without a discount prices identically.
+    const manaCost = effectiveManaCost(move, actor.moveManaDiscounts);
+    if (actor.currentMana < manaCost) continue; // engine-level legality guard; view must already prevent this
 
     let targetIds: string[];
     try {
@@ -156,12 +160,27 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     events.push({ type: 'MoveDeclared', round, combatantId: action.combatantId, moveId: move.id, targetCombatantIds: targetIds });
 
     const previousMana = actor.currentMana;
-    const newMana = previousMana - move.manaCost;
+    const newMana = previousMana - manaCost;
+    // The ramp itself: paying for the move is also what makes the NEXT cast
+    // cheaper, so the cast that starts the ramp is always charged the authored
+    // price. Per (combatant, move) — content is shared immutable data, so two
+    // heroes holding the same move ramp independently.
+    const nextDiscounts =
+      move.manaDiscountOnUse !== undefined
+        ? { ...actor.moveManaDiscounts, [move.id]: (actor.moveManaDiscounts[move.id] ?? 0) + move.manaDiscountOnUse }
+        : actor.moveManaDiscounts;
     working = {
       ...working,
-      combatants: { ...working.combatants, [action.combatantId]: { ...actor, currentMana: newMana } },
+      combatants: { ...working.combatants, [action.combatantId]: { ...actor, currentMana: newMana, moveManaDiscounts: nextDiscounts } },
     };
-    events.push({ type: 'MoveUsed', round, combatantId: action.combatantId, moveId: move.id, manaSpent: move.manaCost });
+    events.push({
+      type: 'MoveUsed',
+      round,
+      combatantId: action.combatantId,
+      moveId: move.id,
+      manaSpent: manaCost,
+      ...(manaCost !== move.manaCost ? { manaDiscount: move.manaCost - manaCost } : {}),
+    });
     events.push({
       type: 'ManaChanged',
       round,
@@ -246,9 +265,38 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           };
           events.push(damageDealtEvent);
 
+          const hpBefore = working.combatants[targetId].currentHp;
           const hpResult = applyHpDelta(working, round, targetId, -amount, maxHp);
           working = hpResult.state;
           events.push(...hpResult.events);
+
+          // Drain (content.ts drainPercent — Water's Siphon/Engulf). Scaled off
+          // the HP this hit ACTUALLY removed rather than the rolled amount, so
+          // overkill into a 3 HP target returns 1 and not half of 45. Resolved
+          // here, between the hit and Conduct's detonation, for the same reason
+          // the detonation is kept separate: each is its own beat, and folding
+          // the drain into the DamageDealt amount would make the log's formula
+          // readout wrong.
+          if (move.drainPercent) {
+            const removed = hpBefore - working.combatants[targetId].currentHp;
+            const drained = Math.round(removed * move.drainPercent);
+            const drainer = working.combatants[action.combatantId];
+            if (drained > 0 && drainer && !drainer.fainted) {
+              const drainerMaxHp = getMaxHp(heroes[drainer.heroId], drainer);
+              events.push({
+                type: 'Healed',
+                round,
+                sourceCombatantId: action.combatantId,
+                targetCombatantId: action.combatantId,
+                moveId: move.id,
+                amount: drained,
+                drain: { fromCombatantId: targetId, damageDealt: removed, percent: move.drainPercent },
+              });
+              const drainResult = applyHpDelta(working, round, action.combatantId, drained, drainerMaxHp);
+              working = drainResult.state;
+              events.push(...drainResult.events);
+            }
+          }
 
           // Passive reactions keyed off this hit landing (e.g. a defender-side
           // "when an enemy/ally is hit, do X" passive) — resolved off the
@@ -389,7 +437,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     if (move.cleanses) {
       for (const targetId of targetIds) {
         if (!working.combatants[targetId]) continue;
-        const result = cleanseStatuses(working, round, targetId, statuses);
+        const result = cleanseStatuses(working, round, targetId, statuses, move.cleanseCount);
         working = result.state;
         events.push(...result.events);
       }

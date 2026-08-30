@@ -9,7 +9,7 @@ import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { relics } from '../../data/relics';
 import type { CombatState, Side } from '../../engine/state';
-import { isLockedIn, effectiveTypes, hasAffordableMove, getEffectiveStat } from '../../engine/state';
+import { isLockedIn, effectiveManaCost, effectiveTypes, hasAffordableMove, getEffectiveStat } from '../../engine/state';
 import type { HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../engine/combat/switching';
@@ -63,6 +63,8 @@ interface MoveRowProps {
   move: MoveDefinition;
   /** Enough mana to actually press it. Unaffordable rows stay pressable at the DOM level (see below) and simply refuse to act. */
   affordable: boolean;
+  /** What it costs THIS hero right now (state.ts effectiveManaCost) — not `move.manaCost`, which is only the first cast's price on a move that ramps. Resolved by the caller, which is the one with the Combatant. */
+  cost: number;
   selected: boolean;
   /** Elemental Force's contribution to this move's BasePower right now (damagePipeline.ts), already resolved by the caller. */
   forceBonus: number;
@@ -92,7 +94,7 @@ interface MoveRowProps {
  * rules off `:disabled`), still refuses to act on a tap, and still opens its
  * dossier on a hold.
  */
-function MoveRow({ move, affordable, selected, forceBonus, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
+function MoveRow({ move, affordable, cost, selected, forceBonus, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
   const longPress = useLongPress(onInspect, () => {
     if (affordable) onSelect();
   });
@@ -112,7 +114,7 @@ function MoveRow({ move, affordable, selected, forceBonus, caster, matchups, mul
           own .move-row-mid fits beside the name, which frees the second line
           for what the button was missing entirely — the effect. */}
       <div className="move-row-top">
-        <ManaCost cost={move.manaCost} />
+        <ManaCost cost={cost} />
         {/* Was a filled TypeBadge chip. One move button used to hold three
             sub-boxes (mana crystal, type chip, kind chip) inside an
             already-boxed control — the nesting problem
@@ -198,6 +200,18 @@ function MoveRow({ move, affordable, selected, forceBonus, caster, matchups, mul
                 {move.statusApplication.target === 'self' ? ' (self)' : ''}
               </span>
             )}
+            {/* A damage move's stat rider, which this row used to drop
+                entirely: on Fire's Molten Lash the missing -10 DEF was merely
+                incomplete beside its visible +Burn, but Water's Undertow has
+                no status at all, so its whole payload was invisible and the
+                row read as a plain 35 BP poke. The non-damage branch below has
+                always printed these via moveEffectSummary. */}
+            {move.statDeltas?.map(({ stat, amount }) => (
+              <span key={stat} className="move-eff-status">
+                {amount >= 0 ? '+' : ''}
+                {amount} {STAT_LABELS[stat]}
+              </span>
+            ))}
             {/* A conditional-power move's whole decision is whether the
                 condition is met, so the rule belongs on the button. The live
                 per-defender number it produces is in the dossier's forecast,
@@ -206,6 +220,17 @@ function MoveRow({ move, affordable, selected, forceBonus, caster, matchups, mul
               <span className="move-eff-status">
                 ×{move.conditionalPower.multiplier} vs {move.conditionalPower.requiresTargetStatus}
               </span>
+            )}
+            {/* A drain move's whole reason to be pressed over a bigger one is
+                the HP it comes back with, so it says so beside the matchups
+                rather than only in the dossier. A percentage, not a number:
+                what it returns is a share of a hit that has not been rolled
+                yet (content.ts drainPercent). */}
+            {move.drainPercent != null && <span className="move-eff-status">Drain {Math.round(move.drainPercent * 100)}%</span>}
+            {/* The ramp, priced forward: the gem on the left already says what
+                THIS cast costs, so the chip says what the next one will. */}
+            {move.manaDiscountOnUse != null && (
+              <span className="move-eff-status">Next {Math.max(0, cost - move.manaDiscountOnUse)} MP</span>
             )}
           </span>
         ) : (
@@ -391,7 +416,7 @@ function ConsoleCrest({
               knocked the sprite off-centre and pushed the gem out toward the
               label. Beside the name it is also the truer statement: the cost
               is a fact about the move being reported, not about the hero. */}
-          {committedMove && <ManaCost cost={committedMove.manaCost} size="sm" />}
+          {committedMove && <ManaCost cost={effectiveManaCost(committedMove, c.moveManaDiscounts)} size="sm" />}
           <span className="console-commander-text">{slotLabel}</span>
         </span>
       </span>
@@ -766,13 +791,13 @@ export function FightScreen({
     const hero = allCombatants[combatant.heroId];
     const entry = entryFor(aiRun.roster, combatantId);
     const moveIds = entry.unlockedMoveIds.length > 0 ? entry.unlockedMoveIds : hero.moveIds;
-    if (!hasAffordableMove(combatant.currentMana, moveIds, moves)) {
+    if (!hasAffordableMove(combatant.currentMana, moveIds, moves, combatant.moveManaDiscounts)) {
       // Same fallback as the player's move grid below: nothing is affordable,
       // so Rest rather than declaring a move that would just no-op in the
       // engine (resolveRound.ts's mana guard) and silently waste the turn.
       return { kind: 'rest', combatantId };
     }
-    const affordable = moveIds.filter((id) => combatant.currentMana >= moves[id].manaCost);
+    const affordable = moveIds.filter((id) => combatant.currentMana >= effectiveManaCost(moves[id], combatant.moveManaDiscounts));
     const moveId = affordable[Math.floor(Math.random() * affordable.length)];
     const move = moves[moveId];
     const declaredTarget =
@@ -1268,7 +1293,7 @@ export function FightScreen({
             // below as normal whenever a bench hero exists, so a player who
             // dumped mana into a big hit can still choose to swap in someone
             // fresh instead of resting this active hero.
-            const canAffordAnyMove = hasAffordableMove(combatant.currentMana, entry.unlockedMoveIds, moves);
+            const canAffordAnyMove = hasAffordableMove(combatant.currentMana, entry.unlockedMoveIds, moves, combatant.moveManaDiscounts);
             return (
               <div className="action-panel" key={id}>
                 <ConsoleCrest
@@ -1305,7 +1330,8 @@ export function FightScreen({
                       <MoveRow
                         key={moveId}
                         move={move}
-                        affordable={combatant.currentMana >= move.manaCost}
+                        affordable={combatant.currentMana >= effectiveManaCost(move, combatant.moveManaDiscounts)}
+                        cost={effectiveManaCost(move, combatant.moveManaDiscounts)}
                         selected={isSelected}
                         forceBonus={resolveElementalForceBonus(combatant, move.type, statuses)}
                         caster={{

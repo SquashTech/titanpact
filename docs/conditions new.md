@@ -121,6 +121,27 @@ that matter:
   present (`resolveRound.ts`) — an unchanced rider draws nothing, so every replay
   recorded before this existed reproduces byte-identically.
 
+## Limited cleanse (2026-08-30)
+
+`MoveDefinition.cleanseCount` (`engine/content.ts`): paired with `cleanses`, strips
+**at most N** eligible statuses instead of all of them, chosen at **random**.
+Water's Wash Away is the first content, at 1. Omitted keeps the all-or-nothing
+behaviour every Cleanse move before it had. Three rules:
+
+- **Positive statuses are still never eligible.** The §7 rule is untouched — a
+  limited cleanse picks only from the non-positive ones, so Wash Away can never
+  spend its one pick removing an ally's Renew.
+- **Random, not authored-priority.** A cleanse that lets the caster *choose* which
+  affliction to shed is a much stronger effect than a partial one; the roll is
+  what prices this a tier below Purify's full strip rather than making it a
+  cheaper copy. There is still deliberately no "cleanse THIS named status" —
+  Cleanse stays a quantity, not a query.
+- **It draws RNG only when it genuinely has to choose.** With fewer eligible
+  statuses than the limit allows, the stream is untouched — the same replay
+  guarantee `StatusApplication.chance` carries.
+
+---
+
 ## Cut this review
 
 - **Bind** — cut. Too situational (many fights have only 2 enemies; no switching

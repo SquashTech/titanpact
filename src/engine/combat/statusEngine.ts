@@ -12,6 +12,7 @@ import type { CombatState, StatusInstance } from '../state';
 import { hasStatus } from '../state';
 import type { CombatEvent } from '../events';
 import { applyHpDelta } from './faintHandling';
+import { nextInt } from '../rng/seededRng';
 
 function setStatus(state: CombatState, combatantId: string, statusId: StatusId, instance: StatusInstance): CombatState {
   const combatant = state.combatants[combatantId];
@@ -273,15 +274,38 @@ export function cleanseStatuses(
   state: CombatState,
   round: number,
   combatantId: string,
-  statusDefs: Record<string, StatusDefinition>
+  statusDefs: Record<string, StatusDefinition>,
+  /**
+   * At most this many, chosen at random (MoveDefinition.cleanseCount — Wash
+   * Away's "a random negative status effect"). Omitted strips them all, which
+   * is what every Cleanse move before it did.
+   */
+  limit?: number
 ): { state: CombatState; events: CombatEvent[] } {
   let working = state;
   const events: CombatEvent[] = [];
   const combatant = working.combatants[combatantId];
   if (!combatant) return { state, events };
 
-  for (const statusId of Object.keys(combatant.statuses)) {
-    if (statusDefs[statusId]?.positive) continue;
+  const eligible = Object.keys(combatant.statuses).filter((statusId) => !statusDefs[statusId]?.positive);
+
+  // The RNG draw happens ONLY when a limit actually has to choose — no limit,
+  // or fewer statuses present than the limit allows, and this advances the
+  // stream not at all. Same discipline as StatusApplication.chance: a golden
+  // replay of any fight authored before cleanseCount existed is unaffected.
+  let selected = eligible;
+  if (limit !== undefined && eligible.length > limit) {
+    const pool = [...eligible];
+    const picked: string[] = [];
+    for (let i = 0; i < limit && pool.length > 0; i++) {
+      const roll = nextInt(working.rngState, 0, pool.length);
+      working = { ...working, rngState: roll.nextState };
+      picked.push(pool.splice(roll.value, 1)[0]);
+    }
+    selected = picked;
+  }
+
+  for (const statusId of selected) {
     const rm = removeStatus(working, round, combatantId, statusId, 'cleanse');
     working = rm.state;
     events.push(...rm.events);

@@ -36,7 +36,10 @@ export interface MoveUsedEvent extends BaseEvent {
   type: 'MoveUsed';
   combatantId: string;
   moveId: string;
+  /** What was ACTUALLY paid — the authored cost less any accumulated `manaDiscountOnUse` (state.ts effectiveManaCost). Read as the truth by the Battle Log's cost readout (buildBeats.ts). */
   manaSpent: number;
+  /** How much of the authored cost this cast was let off, when a discount applied. Absent (not 0) on every move that has none, so nothing authored before Wave Shred changes shape. */
+  manaDiscount?: number;
 }
 
 export interface DamageDealtEvent extends BaseEvent {
@@ -99,10 +102,25 @@ export interface HealedEvent extends BaseEvent {
   targetCombatantId: string;
   moveId: string;
   amount: number;
-  /** The formula's terms, carried the way DamageDealtEvent carries its own (docs/combat.md "The healing formula"): `amount` is the rounded result, these are how it got there, so the Battle Log can show the math without re-deriving it. */
-  healPower: number;
-  wisdomMult: number;
-  stab: number;
+  /**
+   * The formula's terms, carried the way DamageDealtEvent carries its own
+   * (docs/combat.md "The healing formula"): `amount` is the rounded result,
+   * these are how it got there, so the Battle Log can show the math without
+   * re-deriving it.
+   *
+   * Absent on a DRAIN heal (see `drain` below), which does not run the healing
+   * formula at all — printing a HealPower of 0 and a Wisdom multiplier of 1 for
+   * it would be a readout of a formula that was never evaluated.
+   */
+  healPower?: number;
+  wisdomMult?: number;
+  stab?: number;
+  /**
+   * Present iff this heal came from a damage move's `drainPercent` rider
+   * rather than from a heal-kind move. `targetCombatantId` is the drainer
+   * itself; this says whose HP it came out of and how the number was reached.
+   */
+  drain?: { fromCombatantId: string; damageDealt: number; percent: number };
 }
 
 export interface StatusAppliedEvent extends BaseEvent {

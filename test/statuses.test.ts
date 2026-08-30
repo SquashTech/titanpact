@@ -78,12 +78,15 @@ test('status: Freeze halves Speed (floored) and does not touch other stats', () 
 });
 
 test('status: a frozen combatant with higher base Speed is outsped by a faster-after-halving opponent', () => {
-  // tidecaller (55 speed) vs ironWarden (30 speed) frozen -> 30/2 = 15: tidecaller should now act first in the same priority bracket.
+  // tidecaller (66 speed) vs ironWarden (30 speed) frozen -> 30/2 = 15: tidecaller should now act first in the same priority bracket.
+  // Both moves are priority 0 so the bracket is shared and Speed is the only
+  // tiebreak — Water's authored pool has no priority move at all, so the
+  // priority-1 Aqua Jet this used to pair against quickJab no longer exists.
   const state = twoVTwoFixture(151);
   const frozen = withStatus(state, 'b1', 'Freeze', {});
   const actions: Action[] = [
-    { kind: 'move', combatantId: 'a2', moveId: 'aquaJet', declaredTarget: 'b1' }, // tidecaller, 55 speed
-    { kind: 'move', combatantId: 'b1', moveId: 'quickJab', declaredTarget: 'a2' }, // ironWarden, 30 base -> 15 frozen
+    { kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' }, // tidecaller, 66 speed
+    { kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a2' }, // ironWarden, 30 base -> 15 frozen
   ];
   const { events } = resolveRound(frozen, actions, config);
   const moveUsedOrder = events.filter((e) => e.type === 'MoveUsed').map((e: any) => e.combatantId);
@@ -257,7 +260,7 @@ test('status: a slower Stealth does not save its caster from an attack that reso
   // so a2's attack resolves before b1's Vanish ever lands.
   const actions: Action[] = [
     { kind: 'move', combatantId: 'b1', moveId: 'vanish' },
-    { kind: 'move', combatantId: 'a2', moveId: 'tidalBolt', declaredTarget: 'b1' },
+    { kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' },
   ];
   const { state: next, events } = resolveRound(state, actions, config);
 

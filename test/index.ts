@@ -7,6 +7,7 @@ import './passives.test';
 import './elementalForce.test';
 import './fieldEffects.test';
 import './fireMoves.test';
+import './waterMoves.test';
 import './run.test';
 import './recruitment.test';
 import './shop.test';

@@ -181,7 +181,7 @@ export function SwitchInPanel({
             const { combatantId, hero, combatant, moveIds, selected, claimedByOther } = option;
             const types = effectiveTypes(hero, combatant);
             const statusList = Object.values(combatant.statuses);
-            const ready = hasAffordableMove(combatant.currentMana, moveIds, moves);
+            const ready = hasAffordableMove(combatant.currentMana, moveIds, moves, combatant.moveManaDiscounts);
             // No enemy on the field (the last one just fainted mid-selection)
             // means there is no matchup to quote — drop the pair rather than
             // print a meaningless 1×.

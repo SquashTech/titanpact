@@ -128,7 +128,7 @@ test('elementalForce: Fire Force 20 raises rolled damage on a Fire move end to e
 test('elementalForce: Fire Force does not affect a non-Fire move', () => {
   const state = twoVTwoFixture(404);
   const withForce = withStatus(state, 'a1', 'FireForce', 999);
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a2', moveId: 'tidalBolt', declaredTarget: 'b1' }];
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' }];
 
   const plain = resolveRound(state, actions, config);
   const stillPlain = resolveRound(withForce, actions, config);

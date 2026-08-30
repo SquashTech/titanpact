@@ -65,7 +65,13 @@ export const progressionTable: ProgressionTable = {
     // (heroes.ts), so it is the one that can be drafted alongside a second
     // Fire hero for the ramp to pay off twice.
     crimson: ['setAlight', 'stokeTheFlames', 'scorch', 'immolate', 'firestorm', 'inferno', 'purify'],
-    tidecaller: ['aquaJet', 'tsunamiCrash', 'frostLock', 'ripCurrent', 'mendWounds', 'curseMind'],
+    // The two Water heroes draw from the authored Water pool (src/data/moves.ts,
+    // 2026-08-30), split the same way the Fire three are — by the stat each
+    // actually attacks with. Riptide (Int 59) takes the magical line and, being
+    // the only Water STARTER, also carries High Tide for the reason Crimson
+    // carries Stoke the Flames: it buffs the whole active side, so it wants to
+    // be on the hero that can be drafted alongside a second Water hero.
+    tidecaller: ['siphon', 'torrent', 'engulf', 'deluge', 'oasis', 'maelstrom', 'tsunami', 'highTide'],
     ironWarden: ['boulderToss', 'shrapnelBlast', 'stoneQuake', 'ironFist', 'fortify'],
     // 'wildfire' dropped with the Fire rewrite — it was fixture filler on a
     // mono-Nature hero anyway, and naturesWrath already covers the spread slot.
@@ -100,7 +106,12 @@ export const progressionTable: ProgressionTable = {
     brimstone: ['sparkFlash', 'spreadingBlaze', 'backdraft', 'sparkBurst', 'nightmareGrasp', 'duskStrike'],
     gallant: ['shrapnelBlast', 'stunningBlow', 'fortify', 'savageMaul', 'galeShot'],
     nightshade: ['shadowVeil', 'weaken', 'curseMind', 'rendingClaw', 'stunningBlow'],
-    pincer: ['tidalBolt', 'tsunamiCrash', 'ripCurrent', 'shrapnelBlast', 'frostLock'],
+    // Pincer takes the physical line — and Wash Away, which scales off Wisdom
+    // (45) rather than off the category, so the 20-Intelligence wall is a
+    // perfectly good carrier for it. Wave Shred sits here because Pincer is the
+    // only physical Water hero in the roster; see docs/combat.md for the open
+    // question about its first cast being unaffordable on a 55 pool.
+    pincer: ['aquaSlice', 'waveShred', 'washAway', 'shrapnelBlast', 'frostLock'],
     scallywag: ['thunderclap', 'galeSlash', 'ironFist', 'stunningBlow', 'fangRush'],
     sentinel: ['stoneQuake', 'shrapnelBlast', 'weaken', 'ironFist', 'rally'],
     steamColossus: ['sparkForge', 'ironFist', 'stunningBlow', 'quickJab', 'boulderToss'],

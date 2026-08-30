@@ -249,7 +249,7 @@ test('fieldEffects: Stasis Bubble reverses the Speed tiebreak within a shared pr
 test('fieldEffects: Stasis Bubble does not touch priority BRACKETS — a priority move still resolves in its own bracket', () => {
   const state = twoVTwoFixture(421);
   const actions: Action[] = [
-    { kind: 'move', combatantId: 'a2', moveId: 'tidalBolt', declaredTarget: 'b1' }, // tidecaller, priority 0, speed 55
+    { kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' }, // tidecaller, priority 0, speed 55
     { kind: 'move', combatantId: 'b1', moveId: 'quickJab', declaredTarget: 'a2' }, // ironWarden, priority 1, speed 30 (slower, but higher priority)
   ];
 

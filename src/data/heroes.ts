@@ -72,15 +72,28 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Riptide',
     types: ['Water'],
     baseStats: { hp: 110, attack: 55, defense: 55, intelligence: 59, wisdom: 40, speed: 66, manaPool: 65, mpRegen: 10 },
-    moveIds: ['tidalBolt', 'healingRain', 'weaken'],
+    // Water's authored pool (src/data/moves.ts, 2026-08-30). Splash is the
+    // magical opener (Int 59 > Atk 55), and both supports are now Water rather
+    // than borrowed Nature/Shadow — Riptide is the only Water STARTER, so its
+    // three moves are what a player learns the type from.
+    moveIds: ['splash', 'tideGuard', 'refresh'],
     starter: true,
   },
   pincer: {
     id: 'pincer',
     name: 'Pincer',
     types: ['Water'],
-    baseStats: { hp: 125, attack: 70, defense: 85, intelligence: 20, wisdom: 45, speed: 30, manaPool: 40, mpRegen: 10 },
-    moveIds: ['aquaJet', 'stunningBlow', 'fortify'],
+    // Mana raised from 40 when Water's authored movepool landed: the cheapest
+    // Water move is now 15 and its cheapest physical attack 25, against a
+    // 7-mana Aqua Jet before — at the old pool Pincer opened with Undertow and
+    // then had nothing legal for two rounds. Same fix (and same reason) as
+    // Torch Goblin's when Fire landed; stat line otherwise untouched, and 430
+    // is still inside the 450 budget the tuned starters use.
+    baseStats: { hp: 125, attack: 70, defense: 85, intelligence: 20, wisdom: 45, speed: 30, manaPool: 55, mpRegen: 10 },
+    // The physical read of the same pool (Atk 70 / Int 20): Undertow rather
+    // than Splash, and Tide Guard on the hero with 85 Defense already, whose
+    // job is to make the OTHER slot survivable too.
+    moveIds: ['undertow', 'tideGuard', 'stunningBlow'],
     starter: false,
   },
 

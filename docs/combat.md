@@ -255,6 +255,60 @@ number; running it through the formula as well would compound two multipliers.
 
 ---
 
+## Drain (2026-08-30, Water)
+
+`MoveDefinition.drainPercent` (`engine/content.ts`): a damage move returns a
+fraction of what it removed to its user. Water's Siphon and Engulf are the first
+content; the field is generic vocabulary, not a Water case.
+
+**It does not run the healing formula, deliberately.** The number it scales has
+already been through Variance, Crit, STAB and TypeMult *as damage*. Running
+`HealPower × WisdomMult × STAB` over it as well would scale one action twice, and
+would make a drain move's return a fact about the caster's Wisdom rather than
+about the hit it is attached to. So:
+
+- It scales the **HP actually removed**, not the rolled amount — overkill into a
+  3-HP target returns 1, not half of 45.
+- It resolves **after** the hit lands and **before** Conduct's detonation, as its
+  own event (`HealedEvent.drain`), so the Battle Log's damage readout stays a
+  readout of the damage formula.
+- It is summed per target on a spread move (nothing authored is spread yet).
+
+**Open question this leaves.** A drain's return is now the only healing in the
+game that ignores Wisdom. That is right for a rider on an attack, and it is also
+a second, parallel way to restore HP that support builds cannot invest in — if a
+later type wants a drain that *does* reward the support axis, that is a second
+field (a Wisdom-scaled drain), not a change to this one. Flagged rather than
+settled.
+
+## Cost that varies with state (2026-08-30, Water)
+
+`MoveDefinition.manaDiscountOnUse`: each cast permanently lowers that move's cost
+**for that combatant** for the rest of the fight, stacking, floored at 0. Water's
+Wave Shred (80, then 60, then 40, …) is the first and so far only content.
+
+Mana is the primary balance lever (CLAUDE.md), so a cost that moves is a real
+extension of the lever rather than a convenience. Two rules keep it honest:
+
+- The discount lives on the **combatant** (`state.ts Combatant.moveManaDiscounts`),
+  never on the move — content is shared immutable data, and two heroes holding the
+  same move must ramp independently.
+- **Every** reader of "what does this cost right now" goes through
+  `state.ts effectiveManaCost` — the engine's legality guard, the mana it spends,
+  the view's affordability check, and the gem on the button. A second reader of
+  `manaCost` is how a button ends up saying 80 while the engine charges 40.
+
+**Open question: the first cast is never discounted**, so a hero whose pool
+cannot reach the authored price can never start the ramp at all. Wave Shred at 80
+is above every Water hero's pool today (Pincer, its only physical-Water carrier,
+sits at 55) — the same shape as Fire's Inferno at 75, and reported rather than
+tuned away. If the intent is "expensive to open, cheap to sustain", it works as
+written the moment a mana relic or a Guild-Hall stat bump exists. If the intent
+is "a ramp you can always start", the discount has to apply *before* the first
+cast, or the authored cost has to come down. That is a designer call.
+
+---
+
 ## Stat modifiers
 
 - Stat modifiers are **flat numeric additives** — not the VGC stage/bracket system.

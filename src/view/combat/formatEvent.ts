@@ -56,7 +56,15 @@ export function formatEvents(
         break;
       case 'MoveUsed': {
         const move = moves[e.moveId];
-        lines.push({ key, text: `${name(e.combatantId)} uses ${move?.name ?? e.moveId} (-${e.manaSpent} MP)`, className: 'log-mana' });
+        // The discount is stated, not just absorbed into a smaller number:
+        // a cost that silently drops between rounds looks like a bug in the
+        // log, which is the one place claiming to show the whole accounting.
+        const discount = e.manaDiscount ? `, -${e.manaDiscount} discount` : '';
+        lines.push({
+          key,
+          text: `${name(e.combatantId)} uses ${move?.name ?? e.moveId} (-${e.manaSpent} MP${discount})`,
+          className: 'log-mana',
+        });
         break;
       }
       case 'DamageDealt': {
@@ -110,7 +118,16 @@ export function formatEvents(
         break;
       }
       case 'Healed':
-        lines.push({ key, text: `${name(e.targetCombatantId)} heals ${e.amount} HP`, className: 'log-heal' });
+        // A drain says whose HP it was: the log's job is the whole causal
+        // chain, and "Riptide heals 12 HP" on a turn Riptide attacked reads as
+        // a second, unexplained action (events.ts HealedEvent.drain).
+        lines.push({
+          key,
+          text: e.drain
+            ? `${name(e.targetCombatantId)} drains ${e.amount} HP from ${name(e.drain.fromCombatantId)}`
+            : `${name(e.targetCombatantId)} heals ${e.amount} HP`,
+          className: 'log-heal',
+        });
         break;
       case 'StatChanged': {
         const sign = e.delta > 0 ? '+' : '';
