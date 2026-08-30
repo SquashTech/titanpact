@@ -235,15 +235,26 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['fadeStrike', 'vanish', 'secondWind'],
     starter: false,
   },
+  // Marrow and Vesper were stat-for-stat identical until 2026-08-30, which the
+  // Shadow slate surfaced and the designer resolved by making Marrow the type's
+  // INTELLIGENCE user. They are now deliberate MIRRORS rather than duplicates:
+  // the same frame (85 HP / 45 Def / 40 Wis / 70 Speed, stat total 355 on both)
+  // driving opposite pipelines. Attack and Intelligence are swapped, and the
+  // only other change is mana — Vesper's 45 covers a physical line that starts
+  // at 15, where Marrow's magical one does not really open until Umbral Beam at
+  // 40, so 65 is what makes the kit castable rather than a buff.
+  //
+  // Shadow now has both halves twice over: Vesper/Nightshade physical, and
+  // Marrow/Lucius magical — with Marrow the mono-Shadow one and Lucius the
+  // Shadow/Mind controller.
   marrow: {
     id: 'marrow',
     name: 'Marrow',
     types: ['Shadow'],
-    baseStats: { hp: 85, attack: 75, defense: 45, intelligence: 40, wisdom: 40, speed: 70, manaPool: 45, mpRegen: 10 },
-    // The Bleed/debuff line, and deliberately NOT Vesper's kit: the two heroes
-    // are stat-for-stat identical, so the movepool is the only axis that tells
-    // them apart today.
-    moveIds: ['backstab', 'weaken', 'purify'],
+    baseStats: { hp: 85, attack: 40, defense: 45, intelligence: 75, wisdom: 40, speed: 70, manaPool: 65, mpRegen: 10 },
+    // The Poison/attrition line: the cheap magical opener, the debuff that
+    // softens for it, and the game's only cleanse.
+    moveIds: ['umbraBolt', 'weaken', 'purify'],
     starter: false,
   },
   lucius: {

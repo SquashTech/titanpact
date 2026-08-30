@@ -964,15 +964,33 @@ already held the type** rather than about the moves:
      looking. Fixed here (Fade Strike opens it now), but worth knowing that
      the *distribution* pass is what surfaces this class of problem and
      nothing else does.
-  3. **Vesper and Marrow are the same hero.** Identical stat block
-     (85/75/45/40/40/70/45/10), identical types, identical starting kits,
-     identical level-up pools, and three Evolution paths with identical names
-     AND identical descriptions (Nightreaver / Stillmind / Nightveil). The
-     slate is not the place to resolve that — it is a roster decision — so
-     what this pass did is the minimum that stops them being literally
-     interchangeable: Vesper took the Stealth payoffs (Ambush, Shadow Form)
-     and Marrow the pressure ones (Shadowstrike, Enfeeble). **Naming it is
-     the deliverable; merging or differentiating them is the designer's.**
+  3. **Vesper and Marrow were the same hero — raised, and answered the same
+     day.** Identical stat block (85/75/45/40/40/70/45/10), identical types,
+     identical starting kits, identical level-up pools, and three Evolution
+     paths with identical names AND identical descriptions (Nightreaver /
+     Stillmind / Nightveil). The slate's own pass did the minimum that stopped
+     them being interchangeable at level 1 — different kits, different pools —
+     and named the rest as a roster decision.
+
+     **Designer call, 2026-08-30: Marrow becomes the type's INTELLIGENCE
+     user.** Attack and Intelligence swap (75/40 → 40/75), mana goes 45 → 65
+     because the magical line does not really open until Umbral Beam at 40,
+     and everything else stays put — so the two are now deliberate **mirrors**
+     rather than duplicates: the same frame (85 HP / 45 Def / 40 Wis / 70
+     Speed, stat total 355 on both) driving opposite pipelines. Marrow's kit
+     and pool moved to the Poison/execute line, and its three Evolution paths
+     were rewritten (Carrion / Ossuary / Ashenwell), because the byte-identical
+     ones made the two heroes the same hero at every level rather than only at
+     level 1.
+
+     **The generalisation worth carrying:** the duplicate stat block was
+     visible in `heroes.ts` the whole time and nobody had opened that file
+     looking for it. What surfaced it was the *distribution* step (§7) — asking
+     "which of these two heroes should get which half of the slate" is a
+     question you cannot answer without diffing them, and it is the only step
+     in this runbook that forces you to. **Distribution is a roster audit
+     wearing a movepool hat.** Two of Shadow's three roster findings came out
+     of it and neither is about a move.
 - **A second one, smaller: the type is nearly absent from the enemy side.**
   One Shadow enemy exists (Goblin Skulker, two moves), so thirteen of the
   fifteen never appear on the side of the field the player is fighting. Less

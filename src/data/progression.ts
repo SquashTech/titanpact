@@ -108,12 +108,14 @@ export const progressionTable: ProgressionTable = {
     // hero. That the +50 Attack lands better on that partner than on Tempest
     // itself is the point, not an accident.
     tempest: ['ionize', 'chainLightning', 'electricBurst', 'thunderbolt', 'stormSurge', 'ionicZap'],
-    // Shadow's authored pool (src/data/moves.ts, 2026-08-30). Split into two
-    // physical lines so the two identical heroes at least LEVEL differently:
-    // Vesper takes the Stealth payoffs (Ambush, Shadow Form), Marrow the
-    // pressure ones (Shadowstrike's bracket, Enfeeble's spread debuff).
+    // Shadow's authored pool (src/data/moves.ts, 2026-08-30). Vesper is the
+    // physical Stealth line — Ambush and Shadow Form are the payoffs its own
+    // Vanish arms. Marrow is the MAGICAL line (heroes.ts: Attack and
+    // Intelligence swapped, 2026-08-30), so it takes the Poison escalation and
+    // the magical execute and none of the physical moves it can no longer
+    // swing.
     shadowMonk: ['ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm'],
-    marrow: ['fadeStrike', 'shadowSlice', 'rend', 'shadowstrike', 'enfeeble', 'duskBlade'],
+    marrow: ['umbralBeam', 'umbralWave', 'eclipse', 'enfeeble'],
     // The three Frost heroes draw from the authored Frost pool (src/data/moves.ts,
     // 2026-08-30), split by the stat each actually attacks with, same as Fire
     // and Water. Flurry (Int 70) takes the magical line and with it BOTH of the
@@ -436,34 +438,40 @@ export const progressionTable: ProgressionTable = {
       {
         level: EVOLUTION_LEVEL,
         paths: [
+          // Rewritten 2026-08-30 alongside the Attack/Intelligence swap. These
+          // three were byte-identical to Vesper's — same names, same
+          // descriptions, same grants — which is what made the two heroes the
+          // same hero at every level, not just at level 1. The offensive grant
+          // now follows the stat Marrow actually attacks with, and neither
+          // graft duplicates Vesper's (Spirit / Mind).
           {
             id: 'marrow-offensive',
             heroId: 'marrow',
             kind: 'offensive',
-            name: 'Nightreaver',
-            description: 'High-burst assassin strikes, safest under Stealth.',
-            statGrants: { attack: 10 },
+            name: 'Carrion',
+            description: 'Leans all the way into the rot; raw Intelligence behind Poison and Eclipse.',
+            statGrants: { intelligence: 10 },
             unlocksMoveIds: [],
           },
           {
             id: 'marrow-defensive',
             heroId: 'marrow',
             kind: 'defensive',
-            name: 'Stillmind',
-            description: 'Evasive sustain; self-cleanse.',
+            name: 'Ossuary',
+            description: 'Bone-deep endurance; outlasts whatever it poisoned.',
             statGrants: { wisdom: 10, hp: 10 },
             unlocksMoveIds: [],
-            typeGraft: 'Spirit',
+            typeGraft: 'Nature',
           },
           {
             id: 'marrow-utility',
             heroId: 'marrow',
             kind: 'utility',
-            name: 'Nightveil',
-            description: 'Daze control + debuffs; shuts a threat off.',
+            name: 'Ashenwell',
+            description: 'Casts deeper and more often; the attrition never stops.',
             statGrants: { speed: 10, mpRegen: 5 },
             unlocksMoveIds: [],
-            typeGraft: 'Mind',
+            typeGraft: 'Arcane',
           },
         ],
       },
