@@ -69,6 +69,19 @@ export function formatEvents(
       }
       case 'DamageDealt': {
         const move = moves[e.moveId];
+        // Recoil is the caster hitting itself, and reads as nonsense in the
+        // attack phrasing below ("Rubble Rush -> 18 dmg to Crag"). Its own
+        // line, and no math line at all, because no formula was evaluated
+        // (events.ts DamageDealtEvent.recoil).
+        if (e.recoil) {
+          const pct = Math.round(e.recoil.percent * 100);
+          lines.push({
+            key,
+            text: `${name(e.targetCombatantId)} takes ${e.amount} recoil from ${move?.name ?? e.moveId} (${pct}% of ${e.recoil.damageDealt} dealt)`,
+            className: 'log-damage',
+          });
+          break;
+        }
         const tag = e.isCrit ? ' CRIT!' : '';
         const eff = e.typeMult >= 2 ? ' Super effective!' : e.typeMult <= 0.5 ? ' Not very effective...' : '';
         const via = e.viaStatusId ? ` (via ${e.viaStatusId})` : '';
@@ -78,7 +91,27 @@ export function formatEvents(
           className: e.viaStatusId ? 'log-haunt' : e.isCrit ? 'log-crit' : 'log-damage',
         });
 
+        // Retribution never ran the formula, so printing the locked chain with
+        // every term at 1 would be a readout of a calculation that did not
+        // happen. The derivation it DID use goes out instead
+        // (events.ts DamageDealtEvent.retribution).
+        if (e.retribution) {
+          lines.push({
+            key: `${key}-math`,
+            text:
+              `${e.retribution.damageTaken} damage taken since last turn × ${fmt(e.retribution.percent)} = ${e.amount} dmg ` +
+              `(fixed — no ratio, STAB, type, variance or crit)`,
+            className: 'log-math',
+          });
+          break;
+        }
+
         const [offLabel, defLabel] = e.category === 'physical' ? ['Atk', 'Def'] : ['Int', 'Wis'];
+        // offStatOverride (content.ts) swaps the numerator's stat, so the log
+        // has to name the stat actually read — "90 Atk" on a Body Blow that
+        // read 100 Defense would make the printed math fail to multiply out.
+        const OFF_ABBR: Record<string, string> = { attack: 'Atk', defense: 'Def', intelligence: 'Int', wisdom: 'Wis' };
+        const offStatLabel = move?.offStatOverride ? (OFF_ABBR[move.offStatOverride] ?? offLabel) : offLabel;
         const modsText =
           e.modifiers.length > 0
             ? `, Mods ${fmt(e.multiplierTerm)}× (${e.modifiers.map((m) => `${m.source} ${m.amount >= 0 ? '+' : ''}${Math.round(m.amount * 100)}%`).join(', ')})`
@@ -97,7 +130,7 @@ export function formatEvents(
         lines.push({
           key: `${key}-math`,
           text:
-            `${bpText} × (${e.offStat} ${offLabel} ÷ ${e.defStat} ${defLabel} = ${fmt(e.ratio)}) ` +
+            `${bpText} × (${e.offStat} ${offStatLabel} ÷ ${e.defStat} ${defLabel} = ${fmt(e.ratio)}) ` +
             `× STAB ${fmt(e.stab)}× × Type ${fmt(e.typeMult)}× × Var ${fmt(e.variance)}× × Crit ${fmt(e.critMultiplier)}×${modsText} = ${e.amount} dmg`,
           className: 'log-math',
         });

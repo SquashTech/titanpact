@@ -155,6 +155,31 @@ export interface StatusDefinition {
    */
   spreadTriggerTypes?: readonly TypeId[];
   /**
+   * Provoke's hook: while any active combatant on a side carries this status,
+   * every SINGLE-TARGET move the opposing side aims at that side is redirected
+   * onto the holder — Stone's Provoke, "redirect single-target enemy attacks to
+   * the user this turn".
+   *
+   * The inverse of Stealth's redirect (statusEngine.ts applyStealthRedirect
+   * pushes an attack AWAY from its holder; this one pulls it TOWARD). Two
+   * deliberate differences, both 2026-08-30 designer calls:
+   *
+   * - It is NOT limited to `kind: 'damage'`. Any single-target move the enemy
+   *   aims at this side lands on the holder instead, debuffs and status riders
+   *   included, which is what makes Provoke a body-block for a fragile partner
+   *   rather than only an attack-soak.
+   * - It only catches moves cast from the OPPOSING side. A move resolved
+   *   against its own caster's side ('singleAlly' — a heal, a Toughen Up) is
+   *   untouched: redirecting an ally's buff onto the enemy taunt would be
+   *   nonsense, and "enemy attacks" is what the design row says.
+   *
+   * Spread moves are unaffected, same as Stealth. Read generically off this
+   * flag rather than as a literal 'Provoke' id check, so the next type that
+   * wants a taunt authors it as data — same discipline as triggerTypes /
+   * spreadTriggerTypes above.
+   */
+  redirectsSingleTargetEnemyMoves?: boolean;
+  /**
    * Elemental Force: which move type's BasePower this magnitude-shape status
    * adds to. Read generically by damagePipeline.ts's resolveElementalForceBonus
    * — a hero can hold several Force statuses (Fire Force, Water Force, ...)
@@ -417,6 +442,28 @@ export interface MoveDefinition {
     consumesStatus?: boolean;
   };
   /**
+   * damage-kind only. The stat that feeds the off/def ratio's NUMERATOR, in
+   * place of the one `category` would normally select — Stone's Body Blow and
+   * Body Crush, "calculates the user's Defense in place of Attack".
+   *
+   * PIPELINE 1, not pipeline 2 (CLAUDE.md "Two-pipeline separation"). This is
+   * emphatically not a damage modifier: it does not scale anything, it changes
+   * which of the attacker's stats is read before the ratio is even formed. It
+   * therefore composes with every multiplier term exactly as an ordinary
+   * Attack-based move does, and a hero buffed to Defense 130 hits with 130 —
+   * the same number Bastion and Toughen Up put there — rather than with a
+   * bonus derived from it.
+   *
+   * The DEFENDER's side of the ratio is untouched: `category` still selects it
+   * (Body Blow is physical, so it still divides by the target's Defense). Only
+   * the numerator moves. The design row says "in place of Attack" and nothing
+   * about the defender, and swapping both would make the move a mirror match
+   * of Defense against Defense, which is a different move.
+   *
+   * Data, not a predicate — same discipline as conditionalPower above.
+   */
+  offStatOverride?: StatKey;
+  /**
    * damage-kind only. Fraction of the damage this move actually removes that
    * is restored to the USER — Water's Siphon/Engulf, "heal user for 50% of
    * damage dealt".
@@ -434,6 +481,67 @@ export interface MoveDefinition {
    * 3-HP target returns 1 rather than 45. Summed per target on a spread move.
    */
   drainPercent?: number;
+  /**
+   * damage-kind only. Fraction of the damage this move actually removes that
+   * is dealt back to the USER as HP — Stone's Rubble Rush, "user receives
+   * 1/4th damage delivered as recoil".
+   *
+   * The exact mirror of `drainPercent` above and it inherits that field's
+   * reasoning wholesale: it scales the HP ACTUALLY removed (overkill into a
+   * 3 HP target costs you 1, not a quarter of 45), it summed across a spread
+   * move's targets, and it runs no formula of its own — the number it scales
+   * has already been through variance, crit, STAB and TypeMult.
+   *
+   * Two things it does NOT share with drain:
+   *
+   * - It is applied ONCE, after the whole target loop, rather than per target.
+   *   Drain can safely resolve inside the loop because healing cannot kill the
+   *   caster mid-move; recoil can, and a caster that faints against its first
+   *   target must not go on hitting the second.
+   * - It CAN faint the user (2026-08-30 designer call — no 1 HP floor). A
+   *   recoil KO counts toward that side's KO count like any other faint, so
+   *   Rubble Rush can be the hit that triggers your own lock-in.
+   *
+   * This is the recoil shape docs/authoring-moves.md §4 listed as unavailable.
+   * Fire's Volcanic Surge takes its recoil as a self-inflicted Burn instead and
+   * should stay that way — that shape is better content where it fits. It does
+   * not fit here: a Burn is a flat authored magnitude and this has to be a
+   * fraction of a number that is not known until the hit lands.
+   */
+  recoilPercent?: number;
+  /**
+   * damage-kind only. This move's ENTIRE damage body is a share of the damage
+   * its user has taken since its own last turn — Stone's Retribution (0.5) and
+   * Stoneheart (1.0). A move authoring this carries no `basePower`.
+   *
+   * FIXED (true) damage, 2026-08-30 designer call: the number is dealt exactly
+   * as counted. No off/def ratio, no STAB, no TypeMult, no variance, no crit,
+   * no multiplier term — the damage formula is not evaluated at all, and
+   * rollDamage is never called, so these two moves draw NO RNG (the same
+   * determinism discipline StatusApplication.chance follows).
+   *
+   * The consequence is deliberate and is the whole point of the move: the
+   * player can do the arithmetic themselves before pressing it, which is what
+   * makes "eat a hit, then answer it" a plan rather than a gamble. The price
+   * is that Stone's type chart does not apply to these two — a Stone-resistant
+   * defender takes full retribution — and neither does the caster's Attack.
+   * Retribution is a fact about the punishment you absorbed, not about your
+   * offense.
+   *
+   * The counter it reads is Combatant.damageTakenSinceLastTurn (state.ts),
+   * which is live: damage taken EARLIER IN THE SAME ROUND, by a faster enemy,
+   * already counts. That is what separates the two moves beyond their
+   * percentage — Stoneheart's Priority +1 means it acts before anything can hit
+   * it and so only ever cashes in the previous round, while Retribution at
+   * bracket 0 can bank a faster foe's opener first.
+   *
+   * A user that has taken nothing deals 0 and still spends the mana
+   * (2026-08-30 designer call): the move stays pressable rather than blinking
+   * out of the kit like a requiresTargetStatus move. Mistiming it is a real
+   * cost, and a button that is always there is worth more than one that
+   * protects you.
+   */
+  retributionPercent?: number;
   /** heal-kind only. The authored figure the healing formula scales (docs/combat.md "The healing formula", engine/heal/healPipeline.ts) — HP restored by a Wisdom-50 caster with no STAB, NOT a flat guaranteed amount. */
   healPower?: number;
   /**
@@ -444,6 +552,24 @@ export interface MoveDefinition {
    * so e.g. Molten Lash's -10 Defense shapes the NEXT hit, not its own.
    */
   statDeltas?: readonly StatDelta[];
+  /**
+   * Where `statDeltas` land, when that is not simply the move's own resolved
+   * targets — Stone's Landslide, "spread [damage]. Allies gain +20 Defense".
+   *
+   * The statDeltas equivalent of StatusApplication.target, and it exists for
+   * the same reason: Landslide is the first move whose deltas and whose damage
+   * land on OPPOSITE sides of the field, so the two cannot share one
+   * resolution. Omitted means 'moveTarget', which is what every move authored
+   * before it did and what almost everything should keep doing.
+   *
+   * Deliberately a small union rather than the full TargetMode. 'self' and
+   * 'bothAllies' are the two a damage move actually wants; the random modes
+   * are excluded because a second independent RNG draw inside one action is a
+   * determinism question worth asking before it is worth having, and
+   * 'singleAlly' is excluded because there would be no second target to
+   * declare.
+   */
+  statDeltaTarget?: 'moveTarget' | 'self' | 'bothAllies';
   /**
    * Any kind. A HARD targeting gate: this move may only ever resolve
    * against a combatant already carrying this status — Frost's Glaciate and

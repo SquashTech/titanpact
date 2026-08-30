@@ -7,8 +7,8 @@ The designer hands over a slate of ~15 moves for one type, as a table with the c
 asks you to remove that type's existing moves, replace them, and "distribute them
 appropriately."
 
-Fire was the first (2026-08-29), Water the second, Frost the third and Storm
-the fourth (all 2026-08-30). Eleven types remain. This file is what those four cost to learn, written
+Fire was the first (2026-08-29), Water the second, Frost the third, Storm
+the fourth and Stone the fifth (all 2026-08-30). Ten types remain. This file is what those five cost to learn, written
 down so the next one is an afternoon instead of a day. Water took about a third of
 Fire's time and Frost about the same as Water, and every hour of the saving came from
 §0 step 1 — naming the engine extensions before writing any content. Frost needed two
@@ -19,6 +19,16 @@ Storm needed **four**, and is the reason step 1 now says *stop and ask* as well 
 *name it* (§10). Its words to watch for were "randomly", "switch out", "priority
 +1 if", and "costs 0 if" — every one of them a row that reads as a small clause
 and lands as an engine decision.
+
+Stone needed **five**, the most of any slate so far, and confirmed Storm's lesson
+rather than adding a new one: four of the five were asked about in a single round
+trip before any content was written, and none of them had to be rebuilt. Its words
+to watch for were "in place of", "damage the user took", "as recoil", "redirect",
+and — the one that hides — **"Allies gain"** on a row whose damage targets enemies.
+That last one reads like an ordinary `statDeltas` clause and is actually a second,
+independent targeting resolution. **The general form of the trap: whenever one row's
+payload lands on a different side of the field from its damage, that is an engine
+field, not a rider.**
 
 Read this **before** opening `src/data/moves.ts`. Read `CLAUDE.md` first if you have not.
 
@@ -259,6 +269,49 @@ Flat additive integers, **multiples of 5 or 10**, no percentages
 damage move the deltas land **after** the hit, so a Defense debuff shapes the next hit
 and not its own.
 
+`statDeltaTarget` (Stone's Landslide) sends them somewhere other than the move's own
+targets — `'moveTarget'` (the default, and every move authored before it), `'self'`,
+or `'bothAllies'`. Reach for it the moment a damage row also says "allies gain": that
+is a move whose two halves land on opposite sides of the field, and it is the exact
+shape `StatusApplication.target` already solves for a status rider.
+
+### `offStatOverride`
+
+`offStatOverride: 'defense'` (Stone's Body Blow, Body Crush) makes the ratio's
+**numerator** read a named stat instead of the one `category` selects. **Pipeline 1** —
+it changes which stat is read, it does not scale anything, so it composes with every
+multiplier term like an ordinary move and nothing enters the damage pipeline. Only the
+numerator moves; the defender still blocks with the category's stat.
+
+If you author one, thread it into `MoveDetailOverlay`'s `forecastAgainst` as well as
+`resolveRound` — the dossier calls `resolveStatRatio` itself, and a forecast reading
+the wrong stat is the §5 "the forecast lies" failure in its purest form.
+
+### `recoilPercent`
+
+`recoilPercent: 0.25` (Stone's Rubble Rush) is the exact mirror of `drainPercent`:
+scaled off the HP actually removed, no formula of its own, summed across a spread
+move's targets. Two differences worth knowing before you author one — it is paid
+**once, after the target loop** (a caster that faints mid-move must not keep hitting),
+and it **can faint the user**, with no floor.
+
+This supersedes §4's "recoil as HP" entry. Fire's Volcanic Surge, which takes recoil as
+a self-inflicted Burn, is still the better shape when the cost is a flat authored
+number; reach for `recoilPercent` only when the cost has to be a fraction of a hit
+nobody knows until it lands.
+
+### `retributionPercent`
+
+`retributionPercent: 0.5` (Stone's Retribution, and 1 on Stoneheart) replaces the
+move's whole damage body with a share of `Combatant.damageTakenSinceLastTurn`. Such a
+move authors **no `basePower`**.
+
+It is **fixed damage**: the formula is never evaluated, so no ratio, STAB, TypeMult,
+variance or crit — and, importantly for replays, **no RNG is drawn**. The counter
+accumulates at `applyHpDelta` (so every damage source counts) and resets when the
+combatant commits to an action; a blocked or fizzled action does not reset it. Pressing
+one with nothing banked deals 0 and still costs the mana.
+
 ### `target`
 
 `singleEnemy` · `bothEnemies` · `singleAlly` · `bothAllies` · `self` · `allOthers` ·
@@ -298,13 +351,15 @@ If a row needs one of these, **stop and say so** before improvising. Some are ch
 extensions; some are design decisions above your pay grade. Either way, name it.
 
 - **Multi-hit** ("hits 2–5 times").
-- **Recoil / self-damage as HP.** Fire's Volcanic Surge dodged this by taking recoil as
-  a self-inflicted `Burn`, which is better content anyway (it halves, and switching
-  clears it) — reach for that shape first.
+- ~~**Recoil / self-damage as HP.**~~ **Now exists** — `recoilPercent` (§3), as a
+  fraction of the damage dealt. A recoil that is a flat authored number still has no
+  field, and Fire's self-Burn is still the better shape for that case.
 - **Two-turn / charge / recharge moves.** Nothing in the round model supports a move
   that spans rounds. (A move that sends its user OUT now exists —
   `switchesUserOut` — but that resolves entirely within its own round.)
-- **Protect / shield / damage negation.**
+- **Protect / shield / damage negation.** (A *redirect* now exists — Provoke pulls
+  every single-target enemy move onto its holder — but that moves a hit, it does not
+  stop one.)
 - **A move that applies a damage-pipeline modifier** ("+20% Fire damage for 3 rounds").
   `DamageModifier` exists but is fed only by Passives, never by moves.
 - **A second status on one move** (see §3).
@@ -581,6 +636,43 @@ this one did not need redoing:
   50-mana pools, castable only at its conditional price — reported, not tuned.
   And Tempest, a STARTER, turned out to have no `moveTiers` entry at all, so it
   could never learn a move; the slate is what surfaced it, and it is fixed here.
+
+Stone's, as a fifth — and the first slate whose findings were all about the
+*roster* rather than about the engine. Five engine fields is the most any
+slate has needed, and none of them was the hard part; four of the five were
+asked about up front (§0 step 1) and the fifth, `statDeltaTarget`, was
+mechanical. What the slate actually surfaced was three gaps in who can hold it:
+
+- **A capability the slate deleted.** Nothing mechanical — the two fixture
+  moves were generic attacks. But it deleted a *price point*: Boulder Toss cost
+  12 and Stone Quake 18, and the authored floor is 15. Sentinel, on a **30**
+  mana pool, went from a kit of 12/10/20 to one whose cheapest Stone move is
+  Mud Ball at 15, and its own signature move — Body Blow, the one
+  `offStatOverride` exists for and which its Defense 100 is built to swing —
+  costs 40 and is **permanently unaffordable**. Confirmed in the app, not
+  inferred: fielded with its own pool, Sentinel opens the fight on "Rest — out
+  of mana".
+- **A locked decision the slate brushed against.** `retributionPercent` is the
+  first damage in the game that does not go through the LOCKED damage formula.
+  It does not break the lock — the formula is still the only way a BasePower
+  move computes damage — but it creates a damage source the type chart cannot
+  touch, and whether a future relic damage modifier should reach it is now an
+  open question in `docs/combat.md` rather than something settled by accident.
+- **A balance consequence outside the slate.** **Three of the fifteen moves are
+  magical, and Stone has no magical hero** (Crag Int 20, Sentinel Int 15). Tremor,
+  Rockfall and Landslide are in no hero's pool and no enemy's kit — they are
+  authored content nothing in the game can reach. Reported rather than forced
+  into a pool, because putting a magical move in an Int-20 hero's line is exactly
+  the trap pick the north star forbids. There is precedent (Storm's Zap and both
+  Ancient moves are unreachable for the same reason), but three at once is the
+  largest gap so far, and it is a *roster* request, not a moves fix.
+
+**The procedural lesson from Stone**, extending Storm's: when you finish the
+slate, run the reachability check as well as the dangling-id one. They are
+opposite failures — a dangling id is a pool pointing at a move that does not
+exist, and this is a move no pool points at — and only the first has a test.
+Twenty lines over `moves` vs `heroes + enemies + moveTiers` is what turned
+"the slate is done" into "three of these fifteen are unreachable."
 
 If the type you are authoring has a type-keyed status hook (Conduct on Storm/Iron, Haunt
 on Spirit/Mind), the equivalent question is almost certainly: *is the slate priced

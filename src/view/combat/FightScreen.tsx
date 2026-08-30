@@ -85,6 +85,13 @@ interface MoveRowProps {
   selected: boolean;
   /** Elemental Force's contribution to this move's BasePower right now (damagePipeline.ts), already resolved by the caller. */
   forceBonus: number;
+  /**
+   * HP this hero has taken since its last turn (state.ts
+   * damageTakenSinceLastTurn) — the number a retributionPercent move deals a
+   * share of. Resolved by the caller for the same reason forceBonus is: it is
+   * a fact about the caster, not about the move.
+   */
+  banked: number;
   /** The commanding hero's live heal inputs (healPipeline.ts), resolved by the caller for the same reason forceBonus is — a heal's number is a fact about the caster, not about the move. */
   caster: HealCaster;
   matchups: readonly MoveMatchup[];
@@ -111,7 +118,7 @@ interface MoveRowProps {
  * rules off `:disabled`), still refuses to act on a tap, and still opens its
  * dossier on a hold.
  */
-function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
+function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
   // Two independent ways a row can be dead, one shared treatment. `.is-unusable`
   // carries the dim; `.is-unaffordable` is kept as the narrower flag so the mana
   // gem only goes grey when mana is actually the problem (styles.css).
@@ -261,6 +268,27 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, cast
                 what it returns is a share of a hit that has not been rolled
                 yet (content.ts drainPercent). */}
             {move.drainPercent != null && <span className="move-eff-status">Drain {Math.round(move.drainPercent * 100)}%</span>}
+            {/* Which stat drives the hit. On the button because it is the
+                difference between a 60-power move being weak and being this
+                hero's best attack, and the matchup row beside it would
+                otherwise be read against the wrong stat entirely
+                (content.ts offStatOverride). */}
+            {move.offStatOverride != null && (
+              <span className="move-eff-status">Uses {STAT_LABELS[move.offStatOverride]}</span>
+            )}
+            {/* A retribution move has no Base Power, so without this chip the
+                row shows a damage move with no damage on it. The LIVE banked
+                figure rather than the authored percentage, because what the
+                player is deciding is whether it is worth pressing RIGHT NOW
+                (content.ts retributionPercent). */}
+            {move.retributionPercent != null && (
+              <span className={`move-eff-status${banked > 0 ? '' : ' move-eff-unmet'}`}>
+                {Math.round(banked * move.retributionPercent)} dmg banked
+              </span>
+            )}
+            {/* Recoil, as a share, for the same reason Drain is: the hit it
+                bills against has not been rolled yet. */}
+            {move.recoilPercent != null && <span className="move-eff-status">Recoil {Math.round(move.recoilPercent * 100)}%</span>}
             {/* The ramp, priced forward: the gem on the left already says what
                 THIS cast costs, so the chip says what the next one will. */}
             {move.manaDiscountOnUse != null && (
@@ -750,7 +778,10 @@ export function FightScreen({
    * falls back to the unfiltered list rather than presenting nothing.
    */
   function visibleTargets(move: MoveDefinition, ids: string[]): string[] {
-    return selectableTargets(combat, move.target, move.kind, statusGatedTargets(combat, move, ids));
+    // `statuses` is what lets selectableTargets narrow the picker down to a
+    // Provoked enemy (statusEngine.ts) — without it the player could aim at the
+    // partner and watch the move silently move onto the taunt instead.
+    return selectableTargets(combat, move.target, move.kind, statusGatedTargets(combat, move, ids), statuses);
   }
 
   /**
@@ -1498,6 +1529,7 @@ export function FightScreen({
                         cost={resolveManaCost(combat, id, move)}
                         selected={isSelected}
                         forceBonus={resolveElementalForceBonus(combatant, move.type, statuses)}
+                        banked={combatant.damageTakenSinceLastTurn}
                         caster={{
                           wisdom: getEffectiveStat(allCombatants[combatant.heroId], combatant, 'wisdom', {
                             active: combat.activeFieldEffect,

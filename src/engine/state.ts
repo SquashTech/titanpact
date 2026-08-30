@@ -95,6 +95,29 @@ export interface Combatant {
    * buildCombatState. Read exclusively through effectiveManaCost below.
    */
   moveManaDiscounts: Partial<Record<string, number>>;
+  /**
+   * HP this combatant has lost since it last took a turn — the counter Stone's
+   * Retribution and Stoneheart deal their whole damage body off
+   * (content.ts retributionPercent).
+   *
+   * Incremented at the ONE choke point every HP loss goes through
+   * (combat/faintHandling.ts applyHpDelta), so it counts everything without
+   * anything having to opt in: attacks, Conduct detonations, Bleed and Poison
+   * ticks, and a hero's own Rubble Rush recoil.
+   *
+   * Reset to 0 when this combatant COMMITS to an action — a move whose mana is
+   * spent, a Rest, or a completed switch (combat/resolveRound.ts). An action
+   * that never happened does not reset it: a Dazed hero, or one whose move
+   * fizzled on an unmet target gate, keeps banking, because it did not take a
+   * turn. That is the literal reading of "since its last turn" and it means a
+   * Dazed Stone hero wakes up holding a very large Stoneheart, which is the
+   * correct payoff for having lost a round.
+   *
+   * Starts at 0 every fight and, like moveManaDiscounts above, is a
+   * within-combat fact rather than a loadout one — buildCombatState never
+   * seeds it.
+   */
+  damageTakenSinceLastTurn: number;
   /** Held Passives, keyed by PassiveId — populated once at fight-build time from equipment/relic/Evolution grants (src/run/passives.ts, buildCombatState.ts placeEntry). Unlike statuses, never changes mid-fight in this engine slice — nothing currently grants or removes a Passive during combat. */
   passives: Record<PassiveId, PassiveInstance>;
   fainted: boolean;
@@ -306,6 +329,7 @@ export function createCombatant(
     grantedTypes: [],
     baselineStatusMagnitudes: {},
     moveManaDiscounts: {},
+    damageTakenSinceLastTurn: 0,
     statuses: {},
     passives: {},
     fainted: false,

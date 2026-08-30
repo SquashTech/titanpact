@@ -118,6 +118,46 @@ discipline** and are collected at the bottom.
 
 ---
 
+### Provoke — 1-round redirect (2026-08-30, Stone)
+- While active, **every single-target move the enemy side aims at this side is
+  redirected onto the holder.** Spread moves are unaffected. Stone's Provoke
+  (25 mana, Priority +1) is the only carrier.
+- **The inverse of Stealth.** Stealth pushes an attack off its holder; Provoke
+  pulls every attack on the side onto it. Same hook point in `resolveRound`, same
+  narrow single-target shape, and the same two halves — a resolve-time redirect
+  (`applyProvokeRedirect`) and a declaration-time narrowing of the target picker
+  (`selectableTargets`), so the player is never offered a target the redirect
+  would silently move the move off. Where Stealth *hides* its holder from the
+  picker, Provoke narrows the picker **to** it.
+- **Every move kind, not just damage** (2026-08-30 designer call). A debuff or a
+  status rider the enemy aims at your fragile partner is exactly what a taunt is
+  for; limiting it to attacks would make Provoke an attack-soak rather than a
+  body-block. This is the one axis where it deliberately departs from Stealth's
+  precedent.
+- **Enemy side only.** A move resolved against its own caster's side
+  (`singleAlly` — a heal, a Toughen Up) is untouched: dragging an ally's buff
+  onto the opposing taunt would be nonsense, and "enemy attacks" is what the
+  design row says.
+- **Duration 1, ticking at end of round**, which is exactly "this turn": the tick
+  that closes the round it was cast in takes it to 0 and removes it.
+  Deliberately **not** Stealth's `ticksAtStartOfRound` — that flag exists to give
+  Stealth a full round *after* the one it was cast in, and Provoke is priced as a
+  single round of soak. **Priority +1 is load-bearing rather than flavour**: the
+  taunt has to be standing before the enemy's attacks resolve or it protects
+  nothing.
+- **It resolves after Stealth and before Haunt.** On the pathological board where
+  one hero holds both Stealth and Provoke, Provoke wins — a 25-mana action taken
+  this round to eat a hit should be the last word over a passive avoidance
+  effect. Haunt then spreads from wherever the hit actually landed.
+- Read generically off `StatusDefinition.redirectsSingleTargetEnemyMoves` rather
+  than as a literal `'Provoke'` id check, so the next type that wants a taunt
+  authors it as data — same discipline as `triggerTypes` / `spreadTriggerTypes`.
+  This is the first status-redirect hook to be data-driven; Stealth's is still a
+  literal id check, which is now the odd one out and worth folding in the next
+  time that code is touched.
+
+---
+
 ## Chanced applications (2026-08-29)
 
 `StatusApplication.chance` (`engine/content.ts`) gates a rider on a probability in

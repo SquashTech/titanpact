@@ -24,7 +24,7 @@ import {
   rollDamage,
   resolveElementalForceBonus,
   resolveConditionalPowerMultiplier,
-  statKeysForCategory,
+  statKeysForMove,
   type DamageModifier,
 } from '../damage/damagePipeline';
 import type { TypeChart } from '../damage/typeMult';
@@ -34,6 +34,7 @@ import {
   detonateTriggeredStatuses,
   applyStatus,
   applyStealthRedirect,
+  applyProvokeRedirect,
   cleanseStatuses,
   consumeStatus,
   statusGatedTargets,
@@ -60,6 +61,25 @@ export interface RoundResult {
   events: CombatEvent[];
 }
 
+/**
+ * Clears Combatant.damageTakenSinceLastTurn (state.ts) — called from the three
+ * points a combatant actually TAKES a turn: a move whose mana is spent, a
+ * Rest, and a completed switch. Kept as one helper so those three cannot drift
+ * apart on what "since its last turn" means, which is the whole contract
+ * Stone's Retribution and Stoneheart read.
+ *
+ * Deliberately not called for a blocked or fizzled action: a Dazed hero, or one
+ * whose target gate went unmet, did not take a turn and keeps banking.
+ */
+function resetDamageTaken(state: CombatState, combatantId: string): CombatState {
+  const combatant = state.combatants[combatantId];
+  if (!combatant || combatant.damageTakenSinceLastTurn === 0) return state;
+  return {
+    ...state,
+    combatants: { ...state.combatants, [combatantId]: { ...combatant, damageTakenSinceLastTurn: 0 } },
+  };
+}
+
 export function resolveRound(state: CombatState, actions: readonly Action[], config: RoundConfig): RoundResult {
   const { heroes, moves, typeChart, statuses, passives, fieldEffects } = config;
   const round = state.round;
@@ -80,11 +100,20 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     const actor = working.combatants[action.combatantId];
     if (!actor || actor.fainted) continue;
 
+    // Read ONCE, before anything this action does, and reset wherever the
+    // action actually commits below (state.ts damageTakenSinceLastTurn). This
+    // is the number Stone's Retribution and Stoneheart deal — captured here
+    // rather than read at payload time so a move cannot count its own recoil,
+    // and so the three commit points cannot disagree about what "since its
+    // last turn" spans.
+    const damageTakenBeforeTurn = actor.damageTakenSinceLastTurn;
+
     if (action.kind === 'switch') {
       try {
         const result = applyVoluntarySwitch(working, round, action.combatantId, action.benchedCombatantId, statuses);
         working = result.state;
         events.push(...result.events);
+        working = resetDamageTaken(working, action.combatantId);
       } catch (err) {
         if (err instanceof SwitchBlockedError) continue; // illegal declared action (lock-in): no-op
         throw err;
@@ -104,6 +133,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         ...working,
         combatants: { ...working.combatants, [action.combatantId]: { ...actor, currentMana: maxMana } },
       };
+      working = resetDamageTaken(working, action.combatantId);
       events.push({ type: 'Rested', round, combatantId: action.combatantId });
       events.push({ type: 'ManaChanged', round, combatantId: action.combatantId, previousMana, newMana: maxMana, maxMana });
       continue;
@@ -166,10 +196,24 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     // event for a dragged-in target can carry viaStatusId (events.ts).
     let spreadVia: Record<string, string> = {};
 
+    // Three status-driven retargeting layers, in a fixed order, all applied
+    // before MoveDeclared below so the event already reflects the final targets.
+    //
+    // Stealth (push away) and Haunt (spread) are damage-kind only; Provoke
+    // (pull toward) catches EVERY kind of single-target enemy move, which is
+    // why it sits outside the damage guard rather than beside its two cousins
+    // (content.ts redirectsSingleTargetEnemyMoves).
+    //
+    // Provoke resolves AFTER Stealth deliberately: on the pathological board
+    // where one hero holds both, the 25-mana action taken this round to eat a
+    // hit beats the passive avoidance. It resolves BEFORE Haunt so a taunt
+    // pulls the hit in first and Haunt then spreads from where it actually
+    // landed.
     if (move.kind === 'damage') {
-      // Stealth (redirect) then Haunt (spread) — both status-driven retargeting layered on
-      // top of TargetMode resolution, so MoveDeclared below already reflects the final targets.
       targetIds = applyStealthRedirect(working, move.target, move.kind, targetIds);
+    }
+    targetIds = applyProvokeRedirect(working, action.combatantId, move.target, targetIds, statuses);
+    if (move.kind === 'damage') {
       const spread = expandSpreadTargets(working, move.type, move.target, targetIds, statuses);
       targetIds = spread.targetIds;
       spreadVia = spread.spreadVia;
@@ -201,7 +245,14 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         : actor.moveManaDiscounts;
     working = {
       ...working,
-      combatants: { ...working.combatants, [action.combatantId]: { ...actor, currentMana: newMana, moveManaDiscounts: nextDiscounts } },
+      combatants: {
+        ...working.combatants,
+        // Spending the mana is what makes this a turn taken, so it is also
+        // where the damage-taken counter resets. A move blocked before this
+        // point (Daze, an unmet target gate, an unaffordable price) leaves the
+        // counter standing — no turn happened.
+        [action.combatantId]: { ...actor, currentMana: newMana, moveManaDiscounts: nextDiscounts, damageTakenSinceLastTurn: 0 },
+      },
     };
     events.push({
       type: 'MoveUsed',
@@ -224,6 +275,20 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     switch (move.kind) {
       case 'damage': {
+        // Retribution (content.ts retributionPercent — Stone's Retribution at
+        // 50% and Stoneheart at 100%). FIXED damage: the formula is not
+        // evaluated, rollDamage is never called, and so these two moves draw NO
+        // RNG at all — the same determinism discipline every optional field
+        // added since Fire follows. Computed once, outside the target loop,
+        // because it is a fact about the ATTACKER and does not vary per target.
+        const retribution =
+          move.retributionPercent != null ? { damageTaken: damageTakenBeforeTurn, percent: move.retributionPercent } : null;
+
+        // Summed across every target this move hits and paid ONCE after the
+        // loop (content.ts recoilPercent). Not per target like drain, because
+        // recoil can faint the user and a fainted caster must not keep swinging.
+        let recoilBase = 0;
+
         for (const targetId of targetIds) {
           const target = working.combatants[targetId];
           if (!target || target.fainted) continue;
@@ -236,7 +301,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           // action loop — a field effect a faster action set earlier THIS round
           // must already apply to a slower action's damage later in the same round.
           const fieldEffectCtx = { active: working.activeFieldEffect, defs: fieldEffects };
-          const ratio = resolveStatRatio(move.category, attackerHero, attackerNow, defenderHero, target, fieldEffectCtx);
+          // offStatOverride (Stone's Body Blow/Body Crush) rides in here, on
+          // pipeline 1, because it changes WHICH stat is read — not what the
+          // result is multiplied by. statKeysForMove below reads the same field
+          // so the event's offStat and this ratio cannot disagree.
+          const ratio = resolveStatRatio(move.category, attackerHero, attackerNow, defenderHero, target, fieldEffectCtx, move.offStatOverride);
 
           // Passive-driven damage-pipeline modifiers (e.g. Emberheart's "+20% Fire
           // damage") — collected fresh per hit, evaluated synchronously before the
@@ -252,23 +321,41 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           // conditional move can be tripled on one foe and not the other.
           const basePowerMultiplier = resolveConditionalPowerMultiplier(move, target);
 
-          const rolled = rollDamage(
-            move,
-            ratio,
-            effectiveTypes(attackerHero, attackerNow),
-            effectiveTypes(defenderHero, target),
-            typeChart,
-            working.rngState,
-            modifiers,
-            move.critChance,
-            elementalForceBonus,
-            basePowerMultiplier
-          );
+          const rolled = retribution
+            ? {
+                // Every term its identity value, because the formula genuinely
+                // did not run — see events.ts DamageDealtEvent.retribution. The
+                // rngState passes through untouched, which is what keeps these
+                // two moves RNG-free.
+                damage: retribution.damageTaken * retribution.percent,
+                ratio: 1,
+                stab: 1,
+                typeMult: 1,
+                variance: 1,
+                isCrit: false,
+                critMultiplier: 1,
+                multiplierTerm: 1,
+                basePowerBonus: 0,
+                basePowerMultiplier: 1,
+                nextRngState: working.rngState,
+              }
+            : rollDamage(
+                move,
+                ratio,
+                effectiveTypes(attackerHero, attackerNow),
+                effectiveTypes(defenderHero, target),
+                typeChart,
+                working.rngState,
+                modifiers,
+                move.critChance,
+                elementalForceBonus,
+                basePowerMultiplier
+              );
           working = { ...working, rngState: rolled.nextRngState };
 
           const amount = Math.round(rolled.damage);
 
-          const [offKey, defKey] = statKeysForCategory(move.category);
+          const [offKey, defKey] = statKeysForMove(move);
           const damageDealtEvent: CombatEvent = {
             type: 'DamageDealt',
             round,
@@ -290,8 +377,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             stab: rolled.stab,
             critMultiplier: rolled.critMultiplier,
             multiplierTerm: rolled.multiplierTerm,
-            modifiers,
+            modifiers: retribution ? [] : modifiers,
             ...(spreadVia[targetId] ? { viaStatusId: spreadVia[targetId] } : {}),
+            ...(retribution ? { retribution } : {}),
           };
           events.push(damageDealtEvent);
 
@@ -319,8 +407,13 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           // the detonation is kept separate: each is its own beat, and folding
           // the drain into the DamageDealt amount would make the log's formula
           // readout wrong.
+          // The HP this hit ACTUALLY removed — the number both drain and
+          // recoil scale, and deliberately read before Conduct's detonation
+          // below so neither is paid on damage this move did not itself deal.
+          const removed = hpBefore - working.combatants[targetId].currentHp;
+          recoilBase += removed;
+
           if (move.drainPercent) {
-            const removed = hpBefore - working.combatants[targetId].currentHp;
             const drained = Math.round(removed * move.drainPercent);
             const drainer = working.combatants[action.combatantId];
             if (drained > 0 && drainer && !drainer.fainted) {
@@ -361,6 +454,47 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             const bonusHpResult = applyHpDelta(working, round, targetId, -triggered.bonusDamage, maxHp);
             working = bonusHpResult.state;
             events.push(...bonusHpResult.events);
+          }
+        }
+
+        // Recoil (content.ts recoilPercent — Stone's Rubble Rush). Paid once,
+        // here, on the total HP this move removed, and it CAN faint the user:
+        // there is no 1 HP floor (2026-08-30 designer call), so applyHpDelta
+        // handles the KO exactly as it would an enemy's, lock-in included.
+        // Emitted as a DamageDealt whose source and target are both the caster,
+        // mirroring how drain is emitted as a Healed pointing back at itself.
+        if (move.recoilPercent && recoilBase > 0) {
+          const recoilAmount = Math.round(recoilBase * move.recoilPercent);
+          const user = working.combatants[action.combatantId];
+          if (recoilAmount > 0 && user && !user.fainted) {
+            const userMaxHp = getMaxHp(heroes[user.heroId], user);
+            events.push({
+              type: 'DamageDealt',
+              round,
+              sourceCombatantId: action.combatantId,
+              targetCombatantId: action.combatantId,
+              moveId: move.id,
+              amount: recoilAmount,
+              category: move.category,
+              moveType: move.type,
+              typeMult: 1,
+              isCrit: false,
+              variance: 1,
+              basePower: 0,
+              elementalForceBonus: 0,
+              basePowerMultiplier: 1,
+              offStat: 0,
+              defStat: 0,
+              ratio: 1,
+              stab: 1,
+              critMultiplier: 1,
+              multiplierTerm: 1,
+              modifiers: [],
+              recoil: { damageDealt: recoilBase, percent: move.recoilPercent },
+            });
+            const recoilResult = applyHpDelta(working, round, action.combatantId, -recoilAmount, userMaxHp);
+            working = recoilResult.state;
+            events.push(...recoilResult.events);
           }
         }
         break;
@@ -413,7 +547,22 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     // Fire's Molten Lash is a damage move that also drops the target's Defense.
     // Deliberately AFTER the damage/heal switch above: the debuff shapes the
     // NEXT hit, not the one that delivered it.
-    for (const targetId of move.statDeltas?.length ? targetIds : []) {
+    // Landslide (content.ts statDeltaTarget) is the first move whose deltas
+    // land on the OPPOSITE side from its damage, so the deltas resolve their own
+    // targets rather than riding the move's — exactly the split
+    // StatusApplication.target already makes for a status rider. Omitted means
+    // 'moveTarget', which is every move authored before it.
+    const statDeltaTargets = !move.statDeltas?.length
+      ? []
+      : move.statDeltaTarget === 'self'
+        ? [action.combatantId]
+        : move.statDeltaTarget === 'bothAllies'
+          ? working.active[working.combatants[action.combatantId].side].filter(
+              (id): id is string => id !== null && !working.combatants[id]?.fainted
+            )
+          : targetIds;
+
+    for (const targetId of statDeltaTargets) {
       if (!working.combatants[targetId] || working.combatants[targetId].fainted) continue;
       for (const delta of move.statDeltas ?? []) {
         const current = working.combatants[targetId];

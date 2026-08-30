@@ -469,6 +469,133 @@ not been playtested.
 
 ---
 
+## An offensive stat that is not the category's (2026-08-30, Stone)
+
+`MoveDefinition.offStatOverride`: the ratio's **numerator** reads a named stat
+instead of the one `category` selects. Stone's Body Blow and Body Crush
+("calculates the user's Defense in place of Attack") are the first content.
+
+**This is pipeline 1, and that is the whole point.** It does not scale anything;
+it changes which of the attacker's stats is read *before the ratio is formed*.
+The LOCKED two-pipeline separation is therefore untouched: nothing
+damage-shaped entered the stat pipeline, and nothing stat-shaped entered the
+multiplier term. A hero buffed to Defense 130 hits with 130 — the same number
+Bastion and Toughen Up put there — rather than with a bonus derived from it, and
+it composes with every multiplier term exactly as an Attack-based move does.
+
+**Only the numerator moves.** The defender's half of the ratio still comes from
+`category`: Body Blow is physical, so it still divides by the target's Defense.
+The design row says "in place of Attack" and nothing about the defender, and
+swapping both would make the move a Defense-vs-Defense mirror match, which is a
+different move.
+
+What it buys Stone is a type engine that is entirely visible: Toughen Up and
+Bastion pour Defense in, Body Blow and Body Crush spend it as Attack. Unlike
+Storm's Conduct — which fires off every Storm damage move for free and is
+invisible in the design table — nothing here is hidden from the player, and
+nothing is priced around a rider they cannot see.
+
+---
+
+## Damage that does not run the damage formula (2026-08-30, Stone)
+
+`MoveDefinition.retributionPercent`: the move's entire damage body is a share of
+`Combatant.damageTakenSinceLastTurn`. Stone's Retribution (50%) and Stoneheart
+(100%) are the first content; both author no `basePower`.
+
+**Fixed (true) damage — 2026-08-30 designer call.** The number is dealt exactly
+as counted. No off/def ratio, no STAB, no TypeMult, no variance, no crit, no
+multiplier term; `rollDamage` is never called, so these two moves **draw no RNG
+at all**.
+
+This is the first damage in the game that does not go through the LOCKED
+formula, so it is worth being explicit about what that does and does not mean.
+It does **not** break the lock: the formula is still the only way a *BasePower*
+move computes damage, and nothing here changes a term of it. What it does create
+is a second damage source the type chart cannot touch — a Stone-resistant
+defender takes full retribution, and the caster's Attack is irrelevant. That is
+the trade the fixed reading was chosen for: the player can do the arithmetic
+before pressing the button, which is what makes "eat a hit, then answer it" a
+plan rather than a gamble. **Open**: whether a future relic or equipment damage
+modifier (`DamageModifier`, the multiplier term) should reach these two. Today it
+does not, and "fixed means fixed" is the simplest defensible answer, but nothing
+in the engine states that as a rule rather than as a consequence.
+
+### The window: "since its last turn"
+
+`Combatant.damageTakenSinceLastTurn` accumulates at `applyHpDelta` — the one
+choke point every HP loss goes through — so it counts attacks, Conduct
+detonations, Bleed and Poison ticks and a hero's own recoil without any of them
+opting in. It counts **HP actually removed**, so overkill into a nearly-dead
+hero banks what was there, not what was rolled.
+
+It resets when the combatant **commits to an action**: a move whose mana is
+spent, a Rest, or a completed switch. It does **not** reset on an action that
+never happened — a Dazed hero, or one whose target gate went unmet, keeps
+banking. That is the literal reading of the row, and it means a Dazed Stone hero
+wakes up holding a very large Stoneheart, which is the correct payoff for having
+lost a round.
+
+The counter is **live**, which is what separates the two moves beyond their
+percentages:
+
+- **Retribution** is priority 0, so a faster enemy's opener this round is
+  already in the bank when it resolves.
+- **Stoneheart** is priority +1, so it acts before anything can hit it and only
+  ever cashes in the previous round.
+
+**Pressing it with nothing banked deals 0 and still costs the mana** (2026-08-30
+designer call) rather than gating the move out of the kit the way
+`requiresTargetStatus` does. Mistiming it is a real cost, and a button that is
+always there is worth more than one that protects the player from themselves.
+
+---
+
+## Recoil (2026-08-30, Stone)
+
+`MoveDefinition.recoilPercent`: the exact mirror of `drainPercent`, and it
+inherits that field's reasoning wholesale — it scales the HP **actually
+removed**, it is summed across a spread move's targets, and it runs no formula of
+its own, because the number it scales has already been through the damage
+formula once. Stone's Rubble Rush (75 BP for 25 mana, a quarter back as recoil)
+is the first content: the mana price is deliberately low and the recoil is the
+real cost.
+
+Two things it does not share with drain:
+
+- **It is paid once, after the whole target loop**, rather than per target.
+  Healing cannot kill the caster mid-move; recoil can, and a caster that faints
+  against its first target must not go on hitting the second.
+- **It can faint the user** (2026-08-30 designer call — no 1 HP floor). It goes
+  through `applyHpDelta` like any other damage, so a recoil KO counts toward that
+  side's KO count and can be the hit that triggers your own lock-in.
+
+This is the recoil shape `docs/authoring-moves.md` §4 listed as unavailable.
+Fire's Volcanic Surge takes its recoil as a self-inflicted Burn instead and
+should stay that way — that shape is better content where it fits (it halves,
+and switching clears it). It does not fit here: a Burn is a flat authored
+magnitude, and this has to be a fraction of a number nobody knows until the hit
+lands.
+
+---
+
+## Stat deltas that land on their own side (2026-08-30, Stone)
+
+`MoveDefinition.statDeltaTarget`: where `statDeltas` land, when that is not
+simply the move's own resolved targets. Stone's Landslide ("spread damage;
+allies gain +20 Defense") is the first move whose damage and whose buff resolve
+on **opposite sides of the field**, so the two cannot share one resolution.
+
+The `statDeltas` equivalent of `StatusApplication.target`, and it exists for the
+same reason and works the same way. Deliberately a small union
+(`'moveTarget' | 'self' | 'bothAllies'`) rather than the full `TargetMode`: the
+random modes are excluded because a second independent RNG draw inside one
+action is a determinism question worth asking before it is worth having, and
+`singleAlly` is excluded because there would be no second target to declare.
+Omitted means `'moveTarget'`, which is every move authored before it.
+
+---
+
 ## Stat modifiers
 
 - Stat modifiers are **flat numeric additives** — not the VGC stage/bracket system.

@@ -31,9 +31,19 @@ export function applyHpDelta(
   const newHp = delta < 0 ? Math.max(0, raw) : Math.min(maxHp, raw);
   const fainted = delta < 0 && newHp <= 0;
 
+  // The single choke point every HP loss in the engine goes through, which is
+  // why Combatant.damageTakenSinceLastTurn is accumulated here rather than at
+  // each call site: attacks, Conduct detonations, Bleed/Poison ticks and a
+  // hero's own recoil all count without any of them opting in. Counts the HP
+  // ACTUALLY removed, so overkill into a 4 HP target banks 4 and not 40 —
+  // Stone's Retribution pays out on the punishment absorbed, not on the
+  // punishment aimed. Healing (delta >= 0) never decrements it: the counter is
+  // a record of what happened, not a running HP deficit.
+  const damageTaken = delta < 0 ? target.damageTakenSinceLastTurn + (previousHp - newHp) : target.damageTakenSinceLastTurn;
+
   let working: CombatState = {
     ...state,
-    combatants: { ...state.combatants, [targetId]: { ...target, currentHp: newHp, fainted } },
+    combatants: { ...state.combatants, [targetId]: { ...target, currentHp: newHp, fainted, damageTakenSinceLastTurn: damageTaken } },
   };
   const events: CombatEvent[] = [{ type: 'HpChanged', round, combatantId: targetId, previousHp, newHp, maxHp }];
 

@@ -155,7 +155,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Crag',
     types: ['Stone'],
     baseStats: { hp: 140, attack: 90, defense: 75, intelligence: 20, wisdom: 35, speed: 40, manaPool: 50, mpRegen: 10 },
-    moveIds: ['boulderToss', 'fortify', 'secondWind'],
+    moveIds: ['rockToss', 'toughenUp', 'secondWind'],
     starter: true,
   },
   sentinel: {
@@ -163,7 +163,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Sentinel',
     types: ['Stone'],
     baseStats: { hp: 150, attack: 45, defense: 100, intelligence: 15, wisdom: 50, speed: 15, manaPool: 30, mpRegen: 10 },
-    moveIds: ['boulderToss', 'fortify', 'stunningBlow'],
+    moveIds: ['mudBall', 'provoke', 'fortify'],
     starter: false,
   },
 

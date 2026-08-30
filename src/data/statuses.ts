@@ -155,5 +155,23 @@ export const statuses: Record<string, StatusDefinition> = {
     description:
       "Hero cannot be the target of an attack. If Stealth is applied mid-round, attacks targeting this are redirected to this hero's partner. Spread moves still land. Both active heroes can never be Stealthed at the same time — a second Stealth fizzles while the other is still active and Stealthed.",
   },
+  Provoke: {
+    id: 'Provoke',
+    name: 'Provoke',
+    shape: 'duration',
+    // Duration 1 applied mid-round, ticking at END of round, is exactly "this
+    // turn": the tick that closes the round it was cast in takes it to 0 and
+    // removes it. Deliberately NOT Stealth's ticksAtStartOfRound — that flag
+    // exists to give Stealth a full round AFTER the one it was cast in, and
+    // Provoke is priced (25 mana, Priority +1) as a single round of soak.
+    ticksAtEndOfRound: true,
+    decay: 'none',
+    stacking: 'none',
+    clearsOnSwitch: true,
+    redirectsSingleTargetEnemyMoves: true,
+    pipeline: 'target',
+    description:
+      'Single-target enemy moves aimed at either hero on this side are redirected onto this hero instead. Spread moves are unaffected. Lasts until the end of the round it was used.',
+  },
   ...Object.fromEntries(TYPES.map((type) => [`${type}Force`, elementalForceStatus(type)])),
 };

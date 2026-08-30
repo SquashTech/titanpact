@@ -202,7 +202,16 @@ export function buildBeats(
         // that was declared against its partner — call that out explicitly rather than
         // letting it read like an ordinary spread move landed on both enemies.
         const haunted = e.viaStatusId === 'Haunt';
-        const banner = haunted ? `${targetName}'s Haunt drags them into the attack — takes ${e.amount} damage${tag}` : `${targetName} takes ${e.amount} damage${tag}`;
+        // Recoil and retribution are both damage a hero did to itself or
+        // billed an enemy for, not an attack landing — the default phrasing
+        // reads wrong for each (events.ts DamageDealtEvent.recoil/.retribution).
+        const banner = e.recoil
+          ? `${targetName} takes ${e.amount} recoil`
+          : e.retribution
+            ? `${targetName} takes ${e.amount} damage — everything ${name(e.sourceCombatantId)} absorbed, returned`
+            : haunted
+              ? `${targetName}'s Haunt drags them into the attack — takes ${e.amount} damage${tag}`
+              : `${targetName} takes ${e.amount} damage${tag}`;
         push(
           applied,
           banner,

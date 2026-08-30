@@ -109,6 +109,20 @@ export function statKeysForCategory(category: DamageCategory): readonly [StatKey
   return category === 'physical' ? (['attack', 'defense'] as const) : (['intelligence', 'wisdom'] as const);
 }
 
+/**
+ * statKeysForCategory, with MoveDefinition.offStatOverride applied — Stone's
+ * Body Blow swapping Defense in for Attack on the ratio's NUMERATOR only.
+ *
+ * The one place that swap is expressed, so the ratio the damage uses and the
+ * offStat the Battle Log prints cannot drift apart. The defender key is
+ * untouched by design: a physical move still divides by the target's Defense
+ * whatever the attacker is hitting with (content.ts offStatOverride).
+ */
+export function statKeysForMove(move: MoveDefinition): readonly [StatKey, StatKey] {
+  const [offKey, defKey] = statKeysForCategory(move.category);
+  return [move.offStatOverride ?? offKey, defKey] as const;
+}
+
 /** Pipeline 1: the off/def ratio only. Nothing damage-shaped may enter here. `fieldEffectCtx` is a stat-pipeline input (Verdant Earth's statBonusEqualToStatusMagnitude), not a damage modifier — see getEffectiveStat. */
 export function resolveStatRatio(
   category: DamageCategory,
@@ -116,9 +130,12 @@ export function resolveStatRatio(
   attacker: Combatant,
   defenderHero: HeroDefinition,
   defender: Combatant,
-  fieldEffectCtx?: FieldEffectContext
+  fieldEffectCtx?: FieldEffectContext,
+  /** MoveDefinition.offStatOverride — replaces the numerator's stat, never the denominator's. Still pipeline 1: this picks WHICH stat is read, it does not scale anything. */
+  offStatOverride?: StatKey
 ): number {
-  const [offKey, defKey] = statKeysForCategory(category);
+  const [defaultOffKey, defKey] = statKeysForCategory(category);
+  const offKey = offStatOverride ?? defaultOffKey;
   const offStat = getEffectiveStat(attackerHero, attacker, offKey, fieldEffectCtx);
   const defStat = getEffectiveStat(defenderHero, defender, defKey, fieldEffectCtx);
   return offStat / defStat;

@@ -446,6 +446,54 @@ export function applyStealthRedirect(
 }
 
 /**
+ * Provoke's redirect (content.ts StatusDefinition
+ * .redirectsSingleTargetEnemyMoves — Stone's Provoke, "redirect single-target
+ * enemy attacks to the user this turn"). The inverse of applyStealthRedirect
+ * above: that one pushes a hit off its holder, this one pulls every hit on the
+ * side onto it.
+ *
+ * Three deliberate differences from Stealth's version, all of them following
+ * the design row rather than the precedent:
+ *
+ * - Every move KIND, not just `kind: 'damage'`. A debuff the enemy aims at
+ *   your fragile partner is exactly what a taunt should be eating.
+ * - 'singleEnemy' only, read from the CASTER's side. A 'singleAlly' move is by
+ *   definition not an enemy attack, so an ally's heal is never dragged onto
+ *   the opposing taunt.
+ * - It runs AFTER Stealth in resolveRound, so on the pathological board where
+ *   a hero is somehow both Stealthed and Provoked, Provoke wins. That is the
+ *   right way round: Provoke is a 25-mana action taken THIS round to eat a
+ *   hit, and it should be the last word over a passive avoidance effect.
+ *
+ * Spread moves are untouched, same as Stealth. Reading the flag off the status
+ * catalog rather than checking for a literal 'Provoke' id keeps this the
+ * generic taunt hook the next type can author into.
+ */
+export function applyProvokeRedirect(
+  state: CombatState,
+  actorCombatantId: string,
+  targetMode: TargetMode,
+  targetIds: readonly string[],
+  statusDefs: Record<string, StatusDefinition>
+): string[] {
+  if (targetMode !== 'singleEnemy') return [...targetIds];
+  if (targetIds.length !== 1) return [...targetIds];
+
+  const actor = state.combatants[actorCombatantId];
+  if (!actor) return [...targetIds];
+  const enemySide = actor.side === 'A' ? 'B' : 'A';
+
+  const taunter = state.active[enemySide].find((id): id is string => {
+    if (!id) return false;
+    const combatant = state.combatants[id];
+    if (!combatant || combatant.fainted) return false;
+    return Object.values(statusDefs).some((def) => def.redirectsSingleTargetEnemyMoves && hasStatus(combatant, def.id));
+  });
+
+  return taunter ? [taunter] : [...targetIds];
+}
+
+/**
  * The declaration-time counterpart to applyStealthRedirect: which of
  * `candidateIds` a single-target move may legally be aimed at. A Stealthed
  * hero is not offered at all, so the player never declares an attack the
@@ -485,8 +533,25 @@ export function selectableTargets(
   state: CombatState,
   targetMode: TargetMode,
   moveKind: 'damage' | 'heal' | 'buff',
-  candidateIds: readonly string[]
+  candidateIds: readonly string[],
+  /** Status catalog — only needed for the Provoke narrowing below. Omitted keeps the pre-Provoke behaviour exactly. */
+  statusDefs?: Record<string, StatusDefinition>
 ): string[] {
+  // Provoke's declaration-time half (applyProvokeRedirect above). Narrows the
+  // picker to the taunter alone rather than hiding it, which is the opposite of
+  // what Stealth's filter below does but the same principle: the player must
+  // never be offered a target the redirect would silently move the move off.
+  // Applies to EVERY move kind, matching the redirect, and only to 'singleEnemy'
+  // — candidateIds for that mode are the enemy side, so no caster is needed.
+  if (statusDefs && targetMode === 'singleEnemy') {
+    const taunter = candidateIds.find((id) => {
+      const combatant = state.combatants[id];
+      if (!combatant || combatant.fainted) return false;
+      return Object.values(statusDefs).some((def) => def.redirectsSingleTargetEnemyMoves && hasStatus(combatant, def.id));
+    });
+    if (taunter) return [taunter];
+  }
+
   if (moveKind !== 'damage') return [...candidateIds];
   if (targetMode !== 'singleEnemy' && targetMode !== 'singleAlly') return [...candidateIds];
 

@@ -276,7 +276,15 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   if (heal) parts.push(`Restores ${heal.value} HP`);
 
   if (move.statDeltas?.length) {
-    parts.push(move.statDeltas.map(({ stat, amount }) => `${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]}`).join(', '));
+    // Landslide's deltas land on the caster's side while its damage lands on
+    // the enemy's, so the trailing "— Both Enemies" target clause below is the
+    // wrong answer for this half and the clause has to name its own side
+    // (content.ts statDeltaTarget). Same problem riderTargetLabel solves for a
+    // status rider, and the same fix.
+    const where =
+      move.statDeltaTarget === 'bothAllies' ? ' (Both Allies)' : move.statDeltaTarget === 'self' ? ' (Self)' : '';
+    const deltas = move.statDeltas.map(({ stat, amount }) => `${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]}`).join(', ');
+    parts.push(deltas + where);
   }
 
   // The hard gate leads, because on Glaciate and Absolute Zero it is not a
@@ -300,6 +308,27 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   }
 
   if (move.critChance != null) parts.push(`${Math.round(move.critChance * 100)}% crit`);
+
+  // Which stat this actually hits with. It leads the mechanical clauses
+  // because it changes what the printed Base Power is worth on THIS hero more
+  // than any rider does — a Sentinel reading "60 power" without it has no way
+  // to know the move is being driven by its 100 Defense (content.ts
+  // offStatOverride).
+  if (move.offStatOverride) {
+    const replaced = move.category === 'physical' ? 'attack' : 'intelligence';
+    parts.push(`Uses ${STAT_LABELS[move.offStatOverride]} in place of ${STAT_LABELS[replaced]}`);
+  }
+
+  // A move with no Base Power at all: this clause IS its damage body, so it
+  // cannot be a footnote (content.ts retributionPercent).
+  if (move.retributionPercent != null) {
+    const share = move.retributionPercent === 1 ? `all` : `${Math.round(move.retributionPercent * 100)}%`;
+    parts.push(`Deals ${share} of damage taken since your last turn`);
+  }
+
+  // Recoil reads as a share for the same reason drain does: what it costs
+  // depends on a hit that has not been rolled yet (content.ts recoilPercent).
+  if (move.recoilPercent) parts.push(`Costs ${Math.round(move.recoilPercent * 100)}% of damage dealt as recoil`);
 
   // Drain reads as a percentage rather than as hit points on purpose: unlike a
   // heal move there is no number to resolve here, because what it returns

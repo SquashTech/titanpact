@@ -10,6 +10,7 @@ import './fireMoves.test';
 import './waterMoves.test';
 import './frostMoves.test';
 import './stormMoves.test';
+import './stoneMoves.test';
 import './run.test';
 import './recruitment.test';
 import './shop.test';

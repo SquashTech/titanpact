@@ -110,7 +110,11 @@ function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defender
   if (!attackerHero || !defenderHero) return null;
 
   const fieldEffectCtx = { active: ctx.combat.activeFieldEffect, defs: fieldEffects };
-  const ratio = resolveStatRatio(move.category, attackerHero, attacker, defenderHero, defender, fieldEffectCtx);
+  // offStatOverride threaded in, or Body Blow forecasts off a Sentinel's
+  // Attack 45 while the round resolves it off Defense 100 — the exact failure
+  // docs/authoring-moves.md §5 warns about ("pass your new term in or the
+  // forecast lies").
+  const ratio = resolveStatRatio(move.category, attackerHero, attacker, defenderHero, defender, fieldEffectCtx, move.offStatOverride);
   const modifiers: DamageModifier[] = collectPassiveDamageModifiers(attacker, move, passives);
   const forceBonus = resolveElementalForceBonus(attacker, move.type, statuses);
   // Read against THIS defender, so a conditional move forecasts x3 on the
@@ -338,7 +342,10 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
       move.manaDiscountOnUse ||
       move.conditionalPriority ||
       move.conditionalManaCost ||
-      move.switchesUserOut
+      move.switchesUserOut ||
+      move.offStatOverride ||
+      move.retributionPercent != null ||
+      move.recoilPercent
   );
 
   const forecastIds = context && move.kind === 'damage' ? context.defenderIds : [];
@@ -450,7 +457,15 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               key={stat}
               glyph={<StatGlyph stat={stat} />}
               text={`${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]}`}
-              note={`on ${TARGET_MODE_LABELS[move.target].toLowerCase()}`}
+              /* Landslide buffs the caster's side while hitting the enemy's,
+                 so the move's own target is the wrong answer here
+                 (content.ts statDeltaTarget). */
+              note={`on ${(move.statDeltaTarget === 'bothAllies'
+                ? TARGET_MODE_LABELS.bothAllies
+                : move.statDeltaTarget === 'self'
+                  ? TARGET_MODE_LABELS.self
+                  : TARGET_MODE_LABELS[move.target]
+              ).toLowerCase()}`}
             />
           ))}
           {move.statusApplication && statusDef && (
@@ -519,6 +534,51 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               glyph={<StatGlyph stat="hp" />}
               text={`Heals ${Math.round(move.drainPercent * 100)}% of damage dealt`}
               note="a share of the hit itself — Wisdom and STAB do not scale it"
+            />
+          )}
+          {/* Pipeline 1, and the row says so: this does not scale the hit, it
+              changes which of the caster's stats the ratio reads
+              (content.ts offStatOverride). */}
+          {move.offStatOverride && (
+            <EffectRow
+              glyph={<StatGlyph stat={move.offStatOverride} />}
+              text={`Uses ${STAT_LABELS[move.offStatOverride]} in place of ${STAT_LABELS[move.category === 'physical' ? 'attack' : 'intelligence']}`}
+              note={
+                attacker && attackerHero
+                  ? `${getEffectiveStat(attackerHero, attacker, move.offStatOverride, {
+                      active: context?.combat.activeFieldEffect ?? null,
+                      defs: fieldEffects,
+                    })} right now — the target still defends with its own ${STAT_LABELS[move.category === 'physical' ? 'defense' : 'wisdom']}`
+                  : 'the defending stat is unchanged — only the attacking one moves'
+              }
+            />
+          )}
+          {/* This move has no Base Power, so this row IS the damage. The live
+              banked figure, because a percentage of an unknown number is not a
+              decision (content.ts retributionPercent). */}
+          {move.retributionPercent != null && (
+            <EffectRow
+              glyph={<StatGlyph stat="hp" />}
+              text={
+                attacker
+                  ? `Deals ${Math.round(attacker.damageTakenSinceLastTurn * move.retributionPercent)} damage right now`
+                  : `Deals ${Math.round(move.retributionPercent * 100)}% of damage taken since your last turn`
+              }
+              note={
+                attacker
+                  ? `${Math.round(move.retributionPercent * 100)}% of the ${attacker.damageTakenSinceLastTurn} taken since this hero last acted — fixed damage, no type chart, no variance, no crit`
+                  : 'fixed damage — the type chart, variance and crit do not apply'
+              }
+            />
+          )}
+          {/* The recoil row wears the HP heart for the same reason the drain
+              row does: what it costs is hit points, billed off the finished
+              hit (content.ts recoilPercent). */}
+          {move.recoilPercent != null && (
+            <EffectRow
+              glyph={<StatGlyph stat="hp" />}
+              text={`Costs ${Math.round(move.recoilPercent * 100)}% of damage dealt as recoil`}
+              note="a share of the hit itself — and there is no floor, so it can knock the caster out"
             />
           )}
           {move.cleanses && (

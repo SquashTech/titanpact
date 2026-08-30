@@ -1067,29 +1067,226 @@ export const moves: Record<string, MoveDefinition> = {
   },
 
   // --- Stone -------------------------------------------------------------
-  boulderToss: {
-    id: 'boulderToss',
-    name: 'Boulder Toss',
+  // The authored slate (2026-08-30), replacing the two fixture moves. Stone's
+  // engine is DEFENSE AS AN OFFENSIVE STAT: Toughen Up and Bastion pour
+  // Defense into a hero, Body Blow and Body Crush spend it as Attack, and
+  // Provoke, Retribution and Stoneheart turn being hit into the resource the
+  // whole line runs on. Nothing here reads a hidden type-keyed hook — unlike
+  // Storm's Conduct, Stone's payoff is entirely in what the player builds.
+  rockToss: {
+    id: 'rockToss',
+    name: 'Rock Toss',
     type: 'Stone',
     category: 'physical',
     kind: 'damage',
-    basePower: 65,
-    manaCost: 12,
+    basePower: 40,
+    critChance: 0.3,
+    manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A heaved chunk of rock thrown with bone-jarring force.',
+    description: 'A jagged stone hurled at a seam in the guard (30% crit chance).',
   },
-  stoneQuake: {
-    id: 'stoneQuake',
-    name: 'Stone Quake',
+  toughenUp: {
+    id: 'toughenUp',
+    name: 'Toughen Up',
+    type: 'Stone',
+    category: 'physical',
+    kind: 'buff',
+    statDeltas: [
+      { stat: 'attack', amount: 10 },
+      { stat: 'defense', amount: 10 },
+    ],
+    manaCost: 15,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Braces an ally into a fighting stance (+10 Attack, +10 Defense).',
+  },
+  provoke: {
+    id: 'provoke',
+    name: 'Provoke',
+    type: 'Stone',
+    category: 'physical',
+    kind: 'buff',
+    // Priority +1 is load-bearing rather than flavour: the taunt has to be
+    // standing before the enemy's attacks resolve or it protects nothing, and
+    // Provoke lasts only the round it was cast in (statuses.ts).
+    statusApplication: { statusId: 'Provoke', duration: 1, target: 'self' },
+    manaCost: 25,
+    priority: 1,
+    target: 'self',
+    description: 'Plants yourself in the way — single-target enemy moves aimed at either ally are redirected onto you this round.',
+  },
+  tremor: {
+    id: 'tremor',
+    name: 'Tremor',
+    type: 'Stone',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 35,
+    manaCost: 25,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'A low shudder through the ground beneath both foes.',
+  },
+  mudBall: {
+    id: 'mudBall',
+    name: 'Mud Ball',
     type: 'Stone',
     category: 'physical',
     kind: 'damage',
-    basePower: 45,
-    manaCost: 18,
+    basePower: 25,
+    // Lands after its own hit (resolveRound.ts), so the Speed drop shapes the
+    // NEXT round's order, not this one's.
+    statDeltas: [{ stat: 'speed', amount: -10 }],
+    manaCost: 15,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A clot of wet earth to the eyes — slow, cheap, and it sticks (-10 Speed).',
+  },
+  faultLine: {
+    id: 'faultLine',
+    name: 'Fault Line',
+    type: 'Stone',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 60,
+    critChance: 0.3,
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Splits the ground open under one foe (30% crit chance).',
+  },
+  bodyBlow: {
+    id: 'bodyBlow',
+    name: 'Body Blow',
+    type: 'Stone',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 60,
+    // Pipeline 1 (content.ts offStatOverride): the ratio's NUMERATOR reads
+    // Defense instead of Attack. The denominator is untouched — this still
+    // divides by the target's Defense.
+    offStatOverride: 'defense',
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: "A shoulder driven through the guard, powered by the caster's own bulk (uses Defense in place of Attack).",
+  },
+  bastion: {
+    id: 'bastion',
+    name: 'Bastion',
+    type: 'Stone',
+    category: 'physical',
+    kind: 'buff',
+    statDeltas: [{ stat: 'defense', amount: 30 }],
+    manaCost: 40,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Both heroes set their feet and hold the line (+30 Defense).',
+  },
+  retribution: {
+    id: 'retribution',
+    name: 'Retribution',
+    type: 'Stone',
+    category: 'physical',
+    kind: 'damage',
+    // No basePower: the whole damage body is the counter (content.ts
+    // retributionPercent). FIXED damage — no ratio, STAB, type chart, variance
+    // or crit, and no RNG drawn. At bracket 0 this can bank a faster foe's
+    // opener from THIS round before it fires; Stoneheart, at +1, cannot.
+    retributionPercent: 0.5,
+    manaCost: 35,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Returns half of every wound taken since your last turn, exactly as it was dealt.',
+  },
+  rockfall: {
+    id: 'rockfall',
+    name: 'Rockfall',
+    type: 'Stone',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 65,
+    manaCost: 45,
     priority: -1,
-    target: 'allOthers',
-    description: 'A ground-shaking tremor that spares no one standing on it — allies included.',
+    target: 'bothEnemies',
+    description: 'A slow collapse of stone over the whole enemy line.',
+  },
+  rubbleRush: {
+    id: 'rubbleRush',
+    name: 'Rubble Rush',
+    type: 'Stone',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 75,
+    // 75 BP for 25 mana is deliberately underpriced in mana; the recoil is the
+    // real cost, and it CAN faint the user (content.ts recoilPercent).
+    recoilPercent: 0.25,
+    manaCost: 25,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A headlong charge through the debris — cheap, heavy, and it costs you a quarter of what it deals.',
+  },
+  boulderSlam: {
+    id: 'boulderSlam',
+    name: 'Boulder Slam',
+    type: 'Stone',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 100,
+    critChance: 0.5,
+    manaCost: 80,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Everything the caster has, brought down at once (50% crit chance).',
+  },
+  bodyCrush: {
+    id: 'bodyCrush',
+    name: 'Body Crush',
+    type: 'Stone',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 90,
+    offStatOverride: 'defense',
+    manaCost: 75,
+    priority: 0,
+    target: 'singleEnemy',
+    description: "The full weight of a hero who has spent the fight getting harder to move (uses Defense in place of Attack).",
+  },
+  stoneheart: {
+    id: 'stoneheart',
+    name: 'Stoneheart',
+    type: 'Stone',
+    category: 'physical',
+    // The design table labels this Buff, which is only an artifact of its
+    // Base Power reading N — it deals damage, so it is a damage-kind move
+    // whose body is the counter (content.ts retributionPercent).
+    kind: 'damage',
+    retributionPercent: 1,
+    // Priority +1 is what separates this from Retribution beyond the
+    // percentage: it acts before anything can hit the user this round, so it
+    // only ever cashes in what the PREVIOUS round did.
+    manaCost: 70,
+    priority: 1,
+    target: 'singleEnemy',
+    description: 'Every wound taken since your last turn, returned whole and first.',
+  },
+  landslide: {
+    id: 'landslide',
+    name: 'Landslide',
+    type: 'Stone',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 60,
+    statDeltas: [{ stat: 'defense', amount: 20 }],
+    // The deltas land on the caster's side, not on the two enemies this hits
+    // (content.ts statDeltaTarget) — the first move whose damage and whose
+    // buff resolve on opposite sides of the field.
+    statDeltaTarget: 'bothAllies',
+    manaCost: 70,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Brings the hillside down on both foes and leaves your side dug into what it left (+20 Defense to allies).',
   },
 
   // --- Nature ------------------------------------------------------------

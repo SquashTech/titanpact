@@ -72,7 +72,7 @@ export const progressionTable: ProgressionTable = {
     // carries Stoke the Flames: it buffs the whole active side, so it wants to
     // be on the hero that can be drafted alongside a second Water hero.
     tidecaller: ['siphon', 'torrent', 'engulf', 'deluge', 'oasis', 'maelstrom', 'tsunami', 'highTide'],
-    ironWarden: ['boulderToss', 'shrapnelBlast', 'stoneQuake', 'ironFist', 'fortify'],
+    ironWarden: ['rockToss', 'shrapnelBlast', 'bodyBlow', 'ironFist', 'fortify'],
     // 'wildfire' dropped with the Fire rewrite — it was fixture filler on a
     // mono-Nature hero anyway, and naturesWrath already covers the spread slot.
     wildOracle: ['vineLash', 'soulRend', 'rendingClaw', 'naturesWrath', 'overgrowth', 'weaken'],
@@ -114,7 +114,7 @@ export const progressionTable: ProgressionTable = {
     // --- Stone/Spirit starters + the new Iron starter (2026-08-17) ---
     valor: ['quickJab', 'shrapnelBlast', 'stunningBlow', 'rally'],
     revenant: ['specterHowl', 'purify', 'weaken', 'curseMind'],
-    crag: ['stoneQuake', 'shrapnelBlast', 'weaken', 'rally'],
+    crag: ['faultLine', 'rubbleRush', 'retribution', 'boulderSlam', 'provoke', 'weaken', 'rally'],
 
     // --- Rime, Cube, Mordrax (2026-08-17) ---
     // Rime takes the physical line — and Frost Wall, for the reason Crimson
@@ -126,7 +126,7 @@ export const progressionTable: ProgressionTable = {
     // Cube's 45 pool is the tightest in the game, so its line is the cheap half
     // of the physical one plus its own Freeze setup — Deep Chill (25) and
     // Permafrost (45, exactly affordable) feeding Cold Snap (35).
-    cube: ['icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'boulderToss', 'shrapnelBlast', 'ironFist'],
+    cube: ['icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'rockToss', 'shrapnelBlast', 'ironFist'],
     mordax: ['naturesWrath', 'venomousBite', 'savageMaul', 'fangRush', 'weaken'],
 
     // Lucius: only his Evolutions are deferred (src/data/heroes.ts) — he
@@ -152,8 +152,8 @@ export const progressionTable: ProgressionTable = {
     // question about its first cast being unaffordable on a 55 pool.
     pincer: ['aquaSlice', 'waveShred', 'washAway', 'shrapnelBlast', 'refresh'],
     scallywag: ['stormLash', 'shockSlice', 'overcharge', 'risingStatic', 'ironFist', 'stunningBlow', 'fangRush'],
-    sentinel: ['stoneQuake', 'shrapnelBlast', 'weaken', 'ironFist', 'rally'],
-    steamColossus: ['sparkForge', 'ironFist', 'stunningBlow', 'quickJab', 'boulderToss'],
+    sentinel: ['bodyBlow', 'bastion', 'retribution', 'bodyCrush', 'stoneheart', 'toughenUp', 'rally'],
+    steamColossus: ['sparkForge', 'ironFist', 'stunningBlow', 'quickJab', 'rockToss'],
     zenith: ['overload', 'psychicLance', 'mindSpike', 'curseMind', 'stasisField'],
   },
   evolutions: {

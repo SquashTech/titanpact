@@ -78,6 +78,31 @@ export interface DamageDealtEvent extends BaseEvent {
    * of reading like an ordinary spread move landing on both enemies.
    */
   viaStatusId?: StatusId;
+  /**
+   * Set when this move's damage body was NOT the damage formula but a share of
+   * the attacker's own recently-taken damage (content.ts retributionPercent —
+   * Stone's Retribution and Stoneheart). Carries the derivation the formula
+   * fields cannot: how much was absorbed, and what fraction was returned.
+   *
+   * When present, every formula term above is its identity value (ratio, STAB,
+   * TypeMult, variance, crit and multiplierTerm all 1, basePower 0) because the
+   * formula genuinely was not evaluated — the Battle Log branches on this field
+   * and prints the real derivation instead of a chain of 1x terms
+   * (view/combat/formatEvent.ts). Same precedent as HealedEvent.drain, which
+   * omits the healing formula's terms for the same reason.
+   */
+  retribution?: { damageTaken: number; percent: number };
+  /**
+   * Set on the self-inflicted hit a recoil move deals its own user
+   * (content.ts recoilPercent — Stone's Rubble Rush). `sourceCombatantId` and
+   * `targetCombatantId` are both the caster.
+   *
+   * The damage mirror of HealedEvent.drain, and like it the formula terms are
+   * identity values: recoil scales a number that has already been through the
+   * whole formula once, so running it again would be wrong and printing it
+   * would be a readout of a calculation that never happened.
+   */
+  recoil?: { damageDealt: number; percent: number };
 }
 
 export interface HpChangedEvent extends BaseEvent {
