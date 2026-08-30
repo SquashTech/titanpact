@@ -592,6 +592,40 @@ export interface MoveDefinition {
      * as before" discipline `targetMaxHp` and `fieldEffectCtx` follow.
      */
     requiresUserHpBelow?: number;
+    /**
+     * The multiplier applies while the user's ACTIVE PARTNER is of this type —
+     * Beast's Pack Hunt, "double base power if partner is a Beast".
+     *
+     * The sixth sibling, and the first condition in the game that reads
+     * neither a status, nor a field, nor a number, but the OTHER HERO ON YOUR
+     * OWN SIDE. Four things fix its shape, all 2026-08-30 designer calls:
+     *
+     * 1. **The active partner only, read live at resolution.** The hero
+     *    standing in the other slot when the hit lands — not the bench, not
+     *    the roster. An empty slot, a fainted partner, or a partner switched
+     *    out earlier in the same round all answer NO, and a Beast switched IN
+     *    earlier in the same round answers yes.
+     * 2. **The partner, never the caster.** A Beast hero next to a Fire one
+     *    gets nothing; its own type is not what the row asks about. This is
+     *    deliberately a DOUBLES condition — the only one in the game that a
+     *    player answers at draft time rather than in the fight.
+     * 3. **Effective types, so a type-graft counts** (state.ts
+     *    effectiveTypes): a partner that grafted Beast onto its innate type
+     *    via an Evolution satisfies this exactly as an innate Beast does.
+     * 4. **All or nothing across a spread cast**, like the user-status, field
+     *    and user-HP forms: it asks one question about one combatant, so
+     *    every hit in the cast is doubled or none is.
+     *
+     * `consumesStatus` is inert on it — there is no status and no holder to
+     * strip, the same answer both HP forms and the field form got.
+     *
+     * Needs the partner's types to answer, which the damage pipeline does not
+     * otherwise have — passed to resolveConditionalPowerMultiplier as an
+     * optional argument on the same "omit it and every other form behaves
+     * exactly as before" discipline `targetMaxHp`, `attackerHp` and
+     * `fieldEffectCtx` follow.
+     */
+    requiresPartnerType?: TypeId;
     multiplier: number;
     /**
      * Spend the status this move just cashed in — Frost's Cold Snap,
@@ -832,6 +866,37 @@ export interface MoveDefinition {
    */
   statDeltaChance?: number;
   /**
+   * Multiplies every one of this move's `statDeltas` while the caster's ACTIVE
+   * PARTNER is of the named type — Beast's Prowl, "user gains +10 Attack and
+   * +10 Speed. Doubled if partner is a Beast".
+   *
+   * The third place the partner-type condition is hung (after
+   * `conditionalPower.requiresPartnerType`, which multiplies BasePower, and
+   * `conditionalManaCost.requiresPartnerType`, which replaces the price), and
+   * it exists for the same reason those are sibling fields rather than one
+   * shared predicate: the condition is the same question, but what hangs off
+   * the answer is a different mechanic each time, and folding them into one
+   * field would make a move that wants two of them unauthorable.
+   *
+   * Same partner rule as both (active slot only, effective types, live when
+   * the deltas land), and it multiplies the AMOUNTS rather than applying them
+   * twice — so a +10 becomes a +20 and lands as one StatChanged, not two.
+   * A debuff is multiplied the same way; nothing authors one today.
+   *
+   * It does NOT touch the multiples-of-5/10 lock (CLAUDE.md), the same
+   * reasoning `doublesStatReductions` gets: doubling a multiple of 5 is a
+   * multiple of 5. Author a multiplier that breaks that (1.5) and it is the
+   * multiplier that is wrong, not this field.
+   *
+   * Deliberately does NOT reach `derivedStatDeltas` — a derived amount is
+   * already read off live state, and scaling one would be two board reads
+   * stacked on a number the player is looking at. Nothing authors both.
+   */
+  conditionalStatDeltas?: {
+    requiresPartnerType: TypeId;
+    multiplier: number;
+  };
+  /**
    * Any kind. DOUBLES every stat this move's resolved targets are already
    * debuffed on — Mind's Brain Flay, "spread, double stat reductions on
    * enemies". The slate's capstone and the payoff for a type with six
@@ -909,9 +974,35 @@ export interface MoveDefinition {
    * it is intended: the number is a fact about a resource the player spent
    * whole turns banking, and it is spent the moment it is read, because the
    * mana is still there to be burned on something else.
+   *
+   * The second member is Beast's Apex Predator, "double the user's Attack"
+   * (2026-08-30 designer call): `userEffectiveAttack` reads the number on the
+   * caster's own bar RIGHT NOW — base, plus equipment and relics, plus every
+   * buff this fight has landed, minus every debuff — and grants that much
+   * Attack, which is what makes the move a doubling rather than a flat +90.
+   *
+   * Three consequences it is worth authoring knowing, and they are what the
+   * "read the board" answer buys:
+   *
+   * - **Setup compounds into it.** Rally (+20) and Prowl (+20 with a Beast
+   *   partner) before it are worth double again the moment it lands, so the
+   *   type's buff rows are a ramp rather than a list.
+   * - **A second cast doubles the doubled figure** (90 -> 180 -> 360), the
+   *   same rule and the same reasoning as `doublesStatReductions`: it doubles
+   *   the number on the board, which is arithmetic a player can do in their
+   *   head. Nothing memoises the original.
+   * - **A debuffed caster doubles the debuffed number.** It reads through
+   *   `getEffectiveStat`, so a Break Will landed first genuinely halves what
+   *   this capstone is worth — and the floor of 1 applies here like everywhere
+   *   else.
+   *
+   * It takes the same exemption from the multiples-of-5/10 rule the mana
+   * member does, and needs it for the same reason: an effective Attack of 53
+   * doubles to 106, and rounding it would make the buff disagree with the
+   * numeral on the caster's own stat block.
    */
   derivedStatDeltas?: {
-    source: 'userManaBeforeCast';
+    source: 'userManaBeforeCast' | 'userEffectiveAttack';
     stats: readonly StatKey[];
   };
   /**
@@ -1003,8 +1094,25 @@ export interface MoveDefinition {
    * noValidTarget race.
    */
   requiresTargetStatus?: StatusId;
-  /** Any kind — see StatusApplication above. */
-  statusApplication?: StatusApplication;
+  /**
+   * Any kind — see StatusApplication above. ONE rider written bare, or a LIST
+   * when a design row applies more than one status in a single cast: Beast's
+   * Toxic Fangs, "afflict Bleed and Poison 10" (2026-08-30 designer call).
+   *
+   * A union rather than an unconditional array so the ~50 moves authored
+   * before it stay byte-identical — a single rider reads as a single rider,
+   * which is what almost every row is. Nothing reads this field directly;
+   * every consumer goes through `statusApplicationsOf` below, which is the
+   * chokepoint that makes the two shapes one path.
+   *
+   * Ordered: the riders resolve in authored order, each resolving its OWN
+   * targets and rolling its OWN `chance` (so a list of one draws exactly the
+   * RNG it always did, and a two-rider move draws two rolls only if both
+   * author odds). Beyond the order there is no relationship between them —
+   * two riders on one move are two independent applications that happen to
+   * share a cast, not a compound status.
+   */
+  statusApplication?: StatusApplication | readonly StatusApplication[];
   /** Any kind — strips non-positive statuses from the move's resolved target(s) (docs/conditions.md §4 Cleanse). Positive statuses (Renew, Stealth) are never stripped — §7 "Cleanse & positive statuses" resolved this as a flat rule, not a per-move choice. */
   cleanses?: boolean;
   /**
@@ -1092,6 +1200,32 @@ export interface MoveDefinition {
   conditionalManaCost?: {
     requiresAllEnemiesStatus?: StatusId;
     requiresAnyEnemyStatus?: StatusId;
+    /**
+     * The replacement price applies while the caster's ACTIVE PARTNER is of
+     * this type — Beast's Pack Leader, "costs 50 mana if partner is a Beast".
+     *
+     * The THIRD side, and the first that reads the caster's OWN side of the
+     * field rather than the enemy's. Same partner rule as
+     * `conditionalPower.requiresPartnerType` (active slot only, effective
+     * types, live at resolution) and the same "author exactly one side"
+     * discipline as the two above it.
+     *
+     * One consequence worth authoring knowing, and it is the price of reading
+     * live: a partner KO'd earlier in the same round takes the discount away
+     * AFTER the player has already committed, and if the caster cannot cover
+     * the difference the action fizzles for no mana (resolveRound's mana
+     * legality guard) exactly as a cleansed Overcharge does. That is the
+     * accepted shape rather than an oversight — the condition is a fact about
+     * the board when the move lands, and every other board-reading price in
+     * the game is read the same way.
+     *
+     * Needs the hero definitions to answer (a Combatant carries a heroId, not
+     * its types), which is why resolveManaCost takes an optional `heroes`
+     * record: omit it and this side simply never fires, leaving the two
+     * enemy-side forms byte-identical for every caller that has no roster in
+     * scope.
+     */
+    requiresPartnerType?: TypeId;
     manaCost: number;
   };
   /**
@@ -1168,6 +1302,33 @@ export interface MoveDefinition {
  */
 export function isValidFlatStatGrant(amount: number): boolean {
   return Number.isInteger(amount) && amount % 5 === 0;
+}
+
+/**
+ * A move's status riders, always as a list — the one reader of
+ * `MoveDefinition.statusApplication`, which is authored bare when there is one
+ * and as an array when there is more than one (Beast's Toxic Fangs).
+ *
+ * Every consumer goes through this rather than touching the field: the engine's
+ * apply loop, the three player-facing surfaces (MoveTile, MoveDetailOverlay,
+ * FightScreen), the status-test fight builder, and the slate tests. That is
+ * what keeps "a move applies statuses" one code path instead of two, and it is
+ * why widening the field cost nothing at the ~50 call sites that only ever
+ * cared about the first one.
+ *
+ * Returns a frozen empty array for a move with no rider, so callers can map and
+ * filter unconditionally.
+ */
+const NO_STATUS_APPLICATIONS: readonly StatusApplication[] = Object.freeze([]);
+export function statusApplicationsOf(move: MoveDefinition): readonly StatusApplication[] {
+  const applied = move.statusApplication;
+  if (!applied) return NO_STATUS_APPLICATIONS;
+  return Array.isArray(applied) ? applied : [applied as StatusApplication];
+}
+
+/** `statusApplicationsOf`'s single-rider shorthand — the first rider, or undefined. For the many surfaces that only ever showed one, and for tests pinning a specific move's authored rider. */
+export function firstStatusApplication(move: MoveDefinition): StatusApplication | undefined {
+  return statusApplicationsOf(move)[0];
 }
 
 export interface HeroDefinition {

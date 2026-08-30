@@ -9,10 +9,10 @@ appropriately."
 
 Fire was the first (2026-08-29), Water the second, Frost the third, Storm
 the fourth, Stone the fifth, Nature the sixth, Light the seventh, Shadow the
-eighth, Arcane the ninth, Mind the tenth, Spirit the eleventh and Iron the
-twelfth (all 2026-08-30). Three types remain — Mech, Beast, Ancient. This file
-is what those twelve cost to learn, written down so the next one is an
-afternoon instead of a day. Water took about a third of
+eighth, Arcane the ninth, Mind the tenth, Spirit the eleventh, Iron the
+twelfth and Beast the thirteenth (all 2026-08-30). Two types remain — Mech and
+Ancient. This file is what those thirteen cost to learn, written down so the
+next one is an afternoon instead of a day. Water took about a third of
 Fire's time and Frost about the same as Water, and every hour of the saving came from
 §0 step 1 — naming the engine extensions before writing any content. Frost needed two
 (a targeting gate and a status consume) and both were visible in the table on the
@@ -203,6 +203,48 @@ across seven types**. That is not a §6 grep result you absorb; it is a design
 decision about eight heroes who have nothing to do with Iron, and it has to be
 made deliberately and reported. See §10.
 
+Beast needed **four**, second only to Stone, and three of the four are the
+SAME CONDITION. Its words to watch for were "if partner is a Beast" — and the
+trap is not the condition, which is easy. It is that the clause appears on
+three rows that hang three different mechanics off it: Prowl doubles a stat
+grant, Pack Hunt doubles base power, Pack Leader replaces a price. One of
+those already had a home (`conditionalPower` gained a sixth sibling), one
+nearly did (`conditionalManaCost` gained a third side), and one had none at
+all (`conditionalStatDeltas` is new).
+
+**The generalisation, and it is the cheapest one in this file to act on: count
+the HOSTS, not the conditions.** A condition repeated across rows costs one
+field. A condition repeated across rows *of different payload kinds* costs one
+field per kind, because what varies is not the question but what hangs off the
+answer. Reading the table for "how many distinct conditions?" gives you one
+here; reading it for "how many things does that condition modify?" gives you
+three, which is the real number. Sorting the table by the CLAUSE rather than
+by the row is what makes that visible in the first read.
+
+Beast's second lesson is about §7 and is genuinely new. **When a condition
+reads the ROSTER, run the reachability check on the CONDITION, not only on the
+moves.** Stone taught "a move with no holder is a normal state, name it"; this
+is its sibling one level up. Three of Beast's fifteen rows are gated on having
+a Beast partner, and the roster contains exactly ONE native Beast hero — so on
+its own the type can never satisfy its own signature. It turns out to be
+reachable anyway, but only because three heroes in a completely different file
+carry a Beast **type-graft Evolution** (`src/data/progression.ts` — Sylva,
+Rime, Mordrax). Nothing in moves.ts, heroes.ts or the design table says so.
+The check is one grep (`typeGraft: '<Type>'`) and without it this slate would
+have shipped three rows that read as unreachable and are not, or — worse the
+other way — three rows the author assumed were reachable and were not.
+
+The fourth field was the one this file has been carrying as a to-do since
+Fire: §3's "a move can carry exactly ONE statusApplication" was raised as an
+engine change on the Toxic Fangs row, and the designer widened the field
+rather than re-cutting the row. Worth knowing it cost about an hour, because
+the honest version (make the field a union, funnel every reader through one
+helper) touched ~40 call sites across twelve test files and none of them
+needed thought. **A long-standing "raise before you build it" note is usually
+cheaper than it looks by the time something actually asks for it** — the
+reason to raise it is still that the designer might not want it, not that it
+is expensive.
+
 Read this **before** opening `src/data/moves.ts`. Read `CLAUDE.md` first if you have not.
 
 ---
@@ -338,9 +380,14 @@ statusApplication: { statusId: 'Burn', magnitude: 10, target: 'moveTarget' }
 - `magnitude` for magnitude/timer statuses; `duration` for duration statuses.
 - `chance: 0.1` gates the rider on a roll. **It gates the rider, never the move** —
   the damage still lands (`CLAUDE.md`: no accuracy stat). Rolls once per target.
-- **A move can carry exactly ONE `statusApplication`.** If a design row wants two
-  statuses at once, that is an engine change (the field would have to become a list)
-  and worth raising before you build it.
+- **A move can carry ONE rider or a LIST of them** (2026-08-30, Beast's Toxic
+  Fangs — "afflict Bleed and Poison 10"). Author a single rider bare, exactly
+  as every move before it does; author an array when a row applies two. Riders
+  resolve in authored order, each resolving its own targets and rolling its own
+  `chance`, and a one-rider move draws exactly the RNG it always did. Read it
+  through `content.ts statusApplicationsOf` — never off the field directly,
+  which is a union — and remember the three player-facing surfaces have to show
+  ALL of them (§5).
 
 The catalog (`src/data/statuses.ts`, `docs/conditions new.md`):
 
@@ -419,6 +466,10 @@ discount. Two sides, and a move authors **exactly one**:
   every active enemy carries it.
 - `{ requiresAnyEnemyStatus: 'Conduct', manaCost: 0 }` (Iron's Metallic Blade) —
   at least one does, whether or not it is the foe being hit.
+- `{ requiresPartnerType: 'Beast', manaCost: 50 }` (Beast's Pack Leader) — the
+  caster's ACTIVE PARTNER is of a named type. The only side that reads the
+  caster's own row rather than the enemy's, and the only one whose condition a
+  player answers at draft time. See `requiresPartnerType` below.
 
 Nothing in the type system enforces "exactly one"; both fields are optional and
 a move authoring neither is a silent dud. `test/ironMoves.test.ts` pins it over
@@ -525,7 +576,13 @@ Two things fix its shape, and both are decisions rather than mechanics:
 
 `source` is a small union on purpose. A later slate wanting "equal to missing
 HP" adds a member; it does not add a field, and it certainly does not add a
-predicate function.
+predicate function. **Beast is the slate that proved it** —
+`'userEffectiveAttack'` (Apex Predator, "double the user's Attack") is a
+second member and cost one line in `resolveRound`. It reads the caster's live
+effective Attack through `getEffectiveStat`, so equipment and this fight's
+buffs and debuffs are all inside it, which is what makes it a DOUBLING: it
+compounds on a second cast, and a Rally landed first is doubled along with
+everything else.
 
 ### `fieldEffectApplication`
 
@@ -561,6 +618,43 @@ DELTAS and never the move's own body, it rolls once per resolved target (so a ch
 spread catches one foe and misses the other), and it draws no RNG at all when absent.
 One difference — the roll gates the whole delta list together, so "20% chance to reduce
 Intelligence and Wisdom" is one flip with two consequences.
+
+### `conditionalStatDeltas`
+
+`{ requiresPartnerType: 'Beast', multiplier: 2 }` (Beast's Prowl, "+10 Attack
+and +10 Speed. Doubled if partner is a Beast") multiplies every one of the
+move's `statDeltas` AMOUNTS while the condition holds — so a +10 lands as one
++20 and one `StatChanged`, not as two applications.
+
+The third host of the partner condition (§ below), and the reason it is a
+field of its own rather than a flag on `statDeltas`: what hangs off the
+answer here is a stat grant, where `conditionalPower` hangs BasePower and
+`conditionalManaCost` hangs a price. Deliberately does not reach
+`derivedStatDeltas` — that amount is already read off live state.
+
+### `requiresPartnerType` (the partner condition, three hosts)
+
+The one condition in the game that reads a combatant on the CASTER's own side.
+It appears on three different fields because three different mechanics hang
+off it, and `state.ts activePartnerTypes` is the single reader all three go
+through:
+
+| Field | What it changes |
+|---|---|
+| `conditionalPower.requiresPartnerType` | the BasePower multiplier (Pack Hunt) |
+| `conditionalManaCost.requiresPartnerType` | the price (Pack Leader) |
+| `conditionalStatDeltas` | the move's own stat grants (Prowl) |
+
+Four rules, all settled up front and all in `docs/combat.md`: the ACTIVE
+partner only (never the bench), a fainted partner counts for nothing, EFFECTIVE
+types so a type-graft Evolution satisfies it, and read LIVE at resolution — so
+a partner KO'd earlier in the same round can take a discount away after the
+player committed, and the cast fizzles for no mana if they cannot cover it.
+
+**Before authoring one, check who can satisfy it** (`grep "typeGraft: '<Type>'"`
+as well as `heroes.ts`). A condition that reads the roster can be trivially
+unreachable, and the enabler may live in a file the design table never
+mentions.
 
 ### `doublesStatReductions`
 
@@ -733,7 +827,10 @@ extensions; some are design decisions above your pay grade. Either way, name it.
   stop one.)
 - **A move that applies a damage-pipeline modifier** ("+20% Fire damage for 3 rounds").
   `DamageModifier` exists but is fed only by Passives, never by moves.
-- **A second status on one move** (see §3).
+- ~~**A second status on one move.**~~ **Now exists** — `statusApplication` is
+  one rider or a list of them (§3), Beast's Toxic Fangs. What is still a
+  conversation is any RELATIONSHIP between two riders: "apply X only if Y
+  landed", or a compound status that is more than its two halves.
 - **Targeting the bench.** (Random targeting now exists — `randomAlly` /
   `randomEnemy`, on the move and on a status rider independently. Conditional
   targeting exists in TWO shapes now: `requiresTargetStatus` restricts *which*
@@ -1587,6 +1684,92 @@ with the type**:
   Onslaught — Atk 80 behind Def 55), and Valor, the only starter, takes the
   middle and the side-wide Reinforce. **Distribution keeps being a roster audit
   wearing a movepool hat** — that is five for five.
+
+Beast's, as a thirteenth — the slate whose engine work was one condition in
+three costumes, and whose findings are about a type with **one hero, and a
+signature that hero cannot use alone**:
+
+- **A capability the slate deleted — three, and the third is the interesting
+  one.** (1) `fangRush` was 45 BP at **8 mana** and priority **1**: the
+  cheapest attack in the game after Quick Jab and Beast's whole bracket play.
+  The slate keeps a bracket row (Pounce, +1) but at 35 mana for 30 base power,
+  so the type still acts first and no longer does it for free. The floor went
+  8 → 15 and the cheapest ATTACK 8 → 20, which is the sixth slate in a row to
+  delete a price point — Spirit's hand-off already named that as an unstated
+  global policy rather than a per-type call, and **this is not being reported
+  again as a finding**, only counted. (2) `warHorn` was the only move in the
+  game granting THREE stats at once (+10 Attack/Defense/Speed, both allies, 24
+  mana), and it is gone with no equivalent: Pack Leader is two stats at five
+  times the magnitude for four times the price, which is a different move.
+  (3) `rendingClaw` was Bleed's dedicated fixture carrier and **the last
+  per-status fixture carrier in the game** — every one of the nine statuses is
+  now planted by authored content only. The slate replaces the vector three
+  times over, but the cheapest Bleed went 12 → 20 and the cheapest GUARANTEED
+  one 12 → 35.
+
+- **A locked decision the slate brushed against — the counterplay surface,
+  again, and this time it is gone entirely.** `requiresPartnerType` does not
+  break the two-pipeline separation (BasePower-stage, like all six siblings)
+  or the flat-modifier rule (doubling a multiple of 5 is one). What is new is
+  that **every damage condition before it could be answered by the defender**
+  — cleanse the Burn, switch off the Freeze, displace the field, heal above
+  the line. A partner's TYPE cannot be interacted with at all: it is not
+  answered, it is drafted, and the only thing that changes it mid-fight is the
+  holder's own switch. Recorded in `docs/combat.md` rather than settled by
+  accident, with three shapes deliberately left unbuilt (reading the ENEMY
+  pair's types, reading anything about a partner other than its type, and any
+  version that counts the bench).
+
+- **A balance consequence outside the slate — three.**
+  1. **Rally was re-priced 12 → 25 for +10 → +20, and it is in SIX non-Beast
+     starting kits** (Tempest, Voltaic, Scallywag, Mordrax, Valor, Gallant)
+     plus Crag's and Sentinel's pools. Second only to Spirit's Second Wind as
+     a cross-type blast radius, and the same shape: the table says 25 and
+     re-pricing an existing move is clearly intended, but eight heroes with
+     nothing to do with Beast had their buff slot doubled by a Beast decision.
+     Every one of them can still afford it (the tightest is Gallant, 45 pool);
+     reported, not tuned.
+  2. **Beast is a roster of ONE, and three of its fifteen rows need a Beast
+     PARTNER.** Fang is the only native Beast hero, and two Fangs cannot be on
+     one team — so on the roster as authored, Prowl's doubling, Pack Hunt's
+     doubling and Pack Leader's half-price are all unreachable. They are
+     reachable in practice, but only through a door in another file: **Sylva,
+     Rime and Mordrax each carry a Beast type-graft Evolution**
+     (`src/data/progression.ts`), and effective types satisfy the condition.
+     So the type's signature is a mid-run unlock gated on having drafted one
+     of three specific heroes, rather than a draft-time choice. Until it fires,
+     Pack Hunt (40 BP / 40 mana) is strictly worse than Lacerate (50 BP +
+     Bleed / 35). **That is the finding, and it is a roster decision rather
+     than a movepool one**: a second Beast hero, or a fourth graft path, or
+     leaving it as the reward for a specific pairing are three different
+     answers and the deliverable is the list, not a fix.
+  3. **Goblin Grunt could not afford its own kit** — 25/3 against a floor that
+     went 8 → 20 — and is raised to **40/10**, the FIFTH time that exact fix
+     has been applied (Torch Goblin, Goblin Skulker, Spooky Goblin, Goblin
+     Warrior). **Goblin Chief** is the first tougher-tier enemy to need one:
+     50/6 against a kit whose rows cost 35 and 40, raised to **70/14**. If a
+     sixth basic enemy ever needs it, 40/10 should probably just become the
+     authored default rather than a per-case patch.
+
+- **A fourth, and it is the good news.** Beast is only the second authored type
+  since Storm whose signature the player can learn by having it used against
+  them, and the FIRST whose signature requires two enemies to demonstrate:
+  Goblin Chief holds Pack Hunt and fights alongside a Beast Goblin Grunt, so
+  the pack bonus is visible from the far side of the field even on a run where
+  the player never grafts Beast onto anyone. Nature, Arcane and Mind each
+  shipped with no enemy of their type at all.
+
+- **A fifth, small, and it is §7 reaching across slates for the first time.**
+  Animal Spirit is the slate's one magical row, authored as "coverage for
+  certain casters" and homeless by construction (every Beast hero is
+  Intelligence 20). It went to **Sylva** — Int 60 on an 80 pool, an offensive
+  Evolution that grafts Beast so the move gains STAB on exactly the build that
+  wants it, and, the part that made it the least arguable home in the roster,
+  **Nature's own hand-off reported that its slate has no spread damage move
+  and nothing had filled that gap since**. The other candidates (Lucius,
+  Marrow, Solace, Crimson, Glyph, Zenith, Revenant) are deliberately left
+  unplaced per Stone's rule. Worth knowing that the previous slates' open
+  lists are useful for placement and not only for engine work.
 
 **One more procedural note, from Mind.** §0 step 1 says name the extensions up front
 and §10 says report what you hit. Mind is the case where those were the same act:

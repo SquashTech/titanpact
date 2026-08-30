@@ -25,6 +25,7 @@
 // target's partner — the same hidden hook Conduct is for Storm, and the count
 // is pinned below so it cannot drift silently.
 
+import { firstStatusApplication } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
 import { createFightState } from './fixtures';
@@ -313,7 +314,7 @@ test('mind: every single-target Mind damage move carries the Haunt spread for fr
   assert.strictEqual(singleTargetMindDamage.length, 6);
   // And exactly one move in the slate plants the mark it all keys off.
   const haunters = Object.values(moves).filter(
-    (m) => m.type === 'Mind' && m.statusApplication?.statusId === 'Haunt'
+    (m) => m.type === 'Mind' && firstStatusApplication(m)?.statusId === 'Haunt'
   );
   assert.deepStrictEqual(haunters.map((m) => m.id), ['wickedFear']);
 });
@@ -323,7 +324,7 @@ test('mind: Cerebral Shock plants a mark no Mind move can cash in', () => {
   // detonates. Pinned because it looks like a bug in every file it touches, and
   // because the move is deliberately left unreachable for the same reason
   // (test/stoneMoves.test.ts's orphan list).
-  assert.strictEqual(moves.cerebralShock.statusApplication?.statusId, 'Conduct');
+  assert.strictEqual(firstStatusApplication(moves.cerebralShock)?.statusId, 'Conduct');
   assert.deepStrictEqual(statuses.Conduct.triggerTypes, ['Storm', 'Iron']);
   assert.strictEqual((statuses.Conduct.triggerTypes as readonly string[]).includes('Mind'), false);
 });

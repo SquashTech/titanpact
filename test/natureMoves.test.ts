@@ -26,6 +26,7 @@
 //      have been worth, and emits the same three events in the same order the
 //      view already knows how to bundle (buildBeats.ts).
 
+import { firstStatusApplication, statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
 import { createFightState } from './fixtures';
@@ -290,8 +291,8 @@ test('nature: detonatesStatus is gated on the timer SHAPE, not on a status id', 
 test('nature: no Nature move applies, gates on, or detonates a status the catalog does not define', () => {
   for (const move of Object.values(moves)) {
     if (move.type !== 'Nature') continue;
-    if (move.statusApplication) {
-      assert.ok(statuses[move.statusApplication.statusId], `${move.id} applies unknown status ${move.statusApplication.statusId}`);
+    for (const app of statusApplicationsOf(move)) {
+      assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);
     }
     if (move.detonatesStatus) {
       const def = statuses[move.detonatesStatus];
@@ -317,9 +318,10 @@ test('nature: every Poison applier authors the timer duration the shape requires
   // status authored with no duration would sit at 0 and detonate on the very
   // next tick instead of in three rounds.
   for (const move of Object.values(moves)) {
-    if (move.statusApplication?.statusId !== 'Poison') continue;
+    const app = firstStatusApplication(move);
+    if (app?.statusId !== 'Poison') continue;
     assert.ok(
-      (move.statusApplication.duration ?? 0) > 0,
+      (app.duration ?? 0) > 0,
       `${move.id} applies Poison with no timer`
     );
   }
@@ -361,7 +363,7 @@ test("nature: every hero that can be offered a user-side conditional can also re
   // pick the north star forbids (CLAUDE.md).
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   const grantsRenew = (moveId: string) => {
-    const app = moves[moveId]?.statusApplication;
+    const app = moves[moveId] ? firstStatusApplication(moves[moveId]) : undefined;
     return app?.statusId === 'Renew' && app.chance === undefined;
   };
   for (const [heroId, hero] of Object.entries(heroes)) {

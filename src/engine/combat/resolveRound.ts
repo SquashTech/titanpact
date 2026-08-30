@@ -10,8 +10,9 @@
 // resolve) so it also protects the round after the one it was cast in.
 
 import type { FieldEffectDefinition, HeroDefinition, MoveDefinition, PassiveDefinition, StatDelta, StatKey, StatusDefinition } from '../content';
+import { statusApplicationsOf } from '../content';
 import type { CombatState, HeroLookup, Side } from '../state';
-import { getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveTargetMode, effectiveTypes, hasStatus } from '../state';
+import { activePartnerTypes, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveTargetMode, effectiveTypes, hasStatus } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
@@ -164,7 +165,14 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     // conditionalPriority, which cannot see that far because a bracket has to
     // be settled before anything resolves. Every move carrying neither field
     // prices identically to before (state.ts resolveManaCost).
-    const manaCost = resolveManaCost(working, action.combatantId, move);
+    // Pack Leader is priced off the caster's OWN row instead of the enemy's
+    // (content.ts conditionalManaCost.requiresPartnerType), which is why the
+    // roster goes in: a Combatant carries a heroId, not its types. Read off
+    // `working` like everything else here, so a partner KO'd by a faster
+    // action this round has already taken the discount away — and if the
+    // caster can no longer cover the difference, the guard on the next line
+    // fizzles the action for no mana, exactly as a cleansed Overcharge does.
+    const manaCost = resolveManaCost(working, action.combatantId, move, heroes);
     if (actor.currentMana < manaCost) continue; // engine-level legality guard; view must already prevent this
 
     // Who this move actually hits, which since Arcane's Overload is no longer
@@ -293,6 +301,17 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     const attackerHero = heroes[working.combatants[action.combatantId].heroId];
 
+    // Who is standing next to the caster — the answer all three of Beast's
+    // pack rows hang off (content.ts conditionalPower.requiresPartnerType,
+    // conditionalStatDeltas, and the price already resolved above). Asked ONCE
+    // per cast, above the kind switch because a damage row (Pack Hunt) and a
+    // buff row (Prowl) both read it, and asked HERE rather than before the
+    // action loop because that is what makes it live: a Beast switched in by a
+    // faster ally this round already counts, and one KO'd this round already
+    // does not. One question per cast is also what keeps a spread Pack Hunt
+    // doubled against both foes or neither.
+    const partnerTypes = activePartnerTypes(working, action.combatantId, heroes);
+
     switch (move.kind) {
       case 'damage': {
         // Retribution (content.ts retributionPercent — Stone's Retribution at
@@ -319,6 +338,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         // once, not a per-target question.
         const attackerAtCast = working.combatants[action.combatantId];
         const attackerHpAtCast = { currentHp: attackerAtCast.currentHp, maxHp: getMaxHp(attackerHero, attackerAtCast) };
+
 
         for (const targetId of targetIds) {
           const target = working.combatants[targetId];
@@ -361,13 +381,18 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           // (requiresTargetHpBelow), which is why maxHp goes in — read here,
           // BEFORE applyHpDelta, so an execute can never double against the HP
           // this very hit is about to remove.
+          // Beast: Pack Hunt asks it of the caster's PARTNER
+          // (requiresPartnerType), which is why the hoisted partner types go
+          // in — the one sibling whose answer is on the same side of the field
+          // as the attacker.
           const basePowerMultiplier = resolveConditionalPowerMultiplier(
             move,
             target,
             attackerNow,
             fieldEffectCtx,
             maxHp,
-            attackerHpAtCast
+            attackerHpAtCast,
+            partnerTypes
           );
 
           const rolled = retribution
@@ -663,9 +688,37 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     // These are EXEMPT from the multiples-of-5/10 rule by designer call
     // (2026-08-30) — a mana pool is whatever it is, and rounding it would make
     // the grant disagree with the numeral on the caster's own bar.
+    // Apex Predator's source is the caster's own Attack as it stands right
+    // now, read through getEffectiveStat so equipment, this fight's buffs and
+    // this fight's debuffs are all already in it (content.ts
+    // derivedStatDeltas 'userEffectiveAttack'). Granting that much Attack is
+    // what makes the row a DOUBLING, and it compounds on a second cast for
+    // the same reason Brain Flay does: it reads the number on the board.
+    // Exempt from multiples-of-5/10 like the mana member, and for the same
+    // reason — there is no authored number to round.
     const derived = move.derivedStatDeltas;
-    const derivedDeltas: StatDelta[] = derived ? derived.stats.map((stat) => ({ stat, amount: previousMana })) : [];
-    const allStatDeltas: readonly StatDelta[] = derivedDeltas.length ? [...(move.statDeltas ?? []), ...derivedDeltas] : (move.statDeltas ?? []);
+    const derivedAmount =
+      derived?.source === 'userEffectiveAttack'
+        ? getEffectiveStat(attackerHero, working.combatants[action.combatantId], 'attack', {
+            active: working.activeFieldEffect,
+            defs: fieldEffects,
+          })
+        : previousMana;
+    const derivedDeltas: StatDelta[] = derived ? derived.stats.map((stat) => ({ stat, amount: derivedAmount })) : [];
+    // Prowl's "doubled if partner is a Beast" (content.ts
+    // conditionalStatDeltas) scales the AMOUNTS, so a +10 lands as one +20
+    // rather than as two separate grants. Deliberately does not reach the
+    // derived deltas above — nothing authors both, and scaling a figure
+    // already read off live state would be two board reads on one number.
+    const packMultiplier =
+      move.conditionalStatDeltas && partnerTypes?.includes(move.conditionalStatDeltas.requiresPartnerType)
+        ? move.conditionalStatDeltas.multiplier
+        : 1;
+    const authoredDeltas: readonly StatDelta[] =
+      packMultiplier === 1
+        ? (move.statDeltas ?? [])
+        : (move.statDeltas ?? []).map(({ stat, amount }) => ({ stat, amount: amount * packMultiplier }));
+    const allStatDeltas: readonly StatDelta[] = derivedDeltas.length ? [...authoredDeltas, ...derivedDeltas] : authoredDeltas;
 
     const statDeltaTargets = !allStatDeltas.length
       ? []
@@ -756,8 +809,15 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     // Status application / cleanse (docs/conditions.md §5) layer on top of any move kind —
     // a damage move can inflict Burn, a buff move can also grant Renew, etc.
-    if (move.statusApplication) {
-      const app = move.statusApplication;
+    //
+    // A LIST since Beast's Toxic Fangs ("afflict Bleed and Poison 10" —
+    // content.ts statusApplication), read through statusApplicationsOf so a
+    // move authoring one bare rider takes byte-identical path it always did.
+    // Each rider resolves its own targets and rolls its own chance in authored
+    // order, and each feeds its own passive reactions before the next runs:
+    // two riders on one cast are two independent applications, not a compound
+    // status, and a one-rider move draws exactly the RNG it drew before.
+    for (const app of statusApplicationsOf(move)) {
       const def = statuses[app.statusId];
       if (def) {
         // Three ways a rider picks its own targets. 'moveTarget' rides along

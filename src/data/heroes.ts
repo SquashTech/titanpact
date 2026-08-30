@@ -475,7 +475,23 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Fang',
     types: ['Beast'],
     baseStats: { hp: 100, attack: 90, defense: 55, intelligence: 20, wisdom: 50, speed: 80, manaPool: 55, mpRegen: 10 },
-    moveIds: ['fangRush', 'savageMaul', 'rally'],
+    // Beast authored (moves.ts, 2026-08-30), and Fang is the type's ONLY
+    // hero — Spirit's Revenant situation exactly, so there is no second line
+    // to split the slate into and this kit is chosen against the pool rather
+    // than against a sibling.
+    //
+    // Two 20-mana attacks that plant the type's two clocks (Claw's 20% Bleed,
+    // Venom Bite's guaranteed Poison) plus the side-wide buff, which is 65 of
+    // a 55 pool — so the opening round is a real choice between two of the
+    // three rather than a script. Both DoTs survive a switch, which is what
+    // makes chipping on turn one worth an 80-mana Eviscerate on turn five.
+    //
+    // Prowl (15) is deliberately NOT here despite being the cheapest row in
+    // the slate: its whole point is the doubling beside a Beast partner, and
+    // Fang cannot have one at level 1 (see progression.ts and
+    // docs/authoring-moves.md §10). Undoubled it is a worse Rally, so it
+    // belongs one pick later rather than in the opening kit.
+    moveIds: ['claw', 'venomBite', 'rally'],
     starter: true,
   },
 };

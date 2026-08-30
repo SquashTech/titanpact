@@ -71,6 +71,13 @@ rather than slipping it in.
 - End of turn: target takes 5% of max HP.
 - **Does NOT cleanse on switch.**
 - Design intent: straightforward, flavorful; combo / lifesteal potential.
+- **The combo potential is now spent (2026-08-30, Beast).** Three Beast rows
+  plant it (Claw at 20%, Lacerate, Toxic Fangs) and two double their base
+  power against a target carrying it (Maul at 40, Eviscerate at 75), and
+  neither casher CONSUMES it. That combination is only playable because Bleed
+  survives a switch: the mark a 20-mana opener plants follows a foe to the
+  bench and back, which is what makes an 80-mana finisher worth holding.
+  Cleanse is the only answer to it.
 
 ### Renew — magnitude (positive / self-buff)
 - Standard heal-over-time.
@@ -231,6 +238,26 @@ that matter:
   and miss the other, and it draws from the seeded RNG only when the field is
   present (`resolveRound.ts`) — an unchanced rider draws nothing, so every replay
   recorded before this existed reproduces byte-identically.
+
+## More than one status per move (2026-08-30, Beast)
+
+`MoveDefinition.statusApplication` is **one rider or a list of them** — Beast's
+Toxic Fangs, "afflict Bleed and Poison 10", the first move in the game to apply
+two. Everything reads it through `content.ts statusApplicationsOf`, so a move
+authoring a single bare rider is unchanged in both the data and the code path.
+
+- **Ordered, and independent.** They resolve in authored order; each resolves
+  its own targets and rolls its own `chance`, and each feeds its own passive
+  reactions before the next runs. Two riders are two applications sharing a
+  cast — there is no compound status and no interaction between them beyond
+  the order.
+- **A one-rider move draws exactly the RNG it always did.** The list path adds
+  no draw of its own (`test/beastMoves.test.ts` pins it against a single-rider
+  cast from the same state).
+- Stacking is unchanged: each rider hits the ordinary `applyStatus` path, so
+  the same status named twice on one move would stack by its own
+  `StatusStacking` rule rather than by anything special here. Nothing authors
+  that, and there is no reason to.
 
 ## Chanced stat deltas (2026-08-30, Mind)
 

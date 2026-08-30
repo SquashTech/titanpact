@@ -32,6 +32,7 @@
 //   5. That every new field is inert when absent — golden replays depend on it
 //      (authoring-moves.md §5), and none of the three draws RNG.
 
+import { statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
 import { createFightState } from './fixtures';
@@ -377,7 +378,7 @@ test('arcane: the slate is sixteen moves, and every field effect and status it n
     if (move.conditionalTarget) {
       assert.ok(fieldEffects[move.conditionalTarget.requiresFieldEffect], `${move.id} reads an unknown field`);
     }
-    if (move.statusApplication) assert.ok(statuses[move.statusApplication.statusId], `${move.id} applies an unknown status`);
+    for (const app of statusApplicationsOf(move)) assert.ok(statuses[app.statusId], `${move.id} applies an unknown status`);
   }
 });
 

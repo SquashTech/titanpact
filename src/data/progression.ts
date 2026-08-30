@@ -66,7 +66,11 @@ export const progressionTable: ProgressionTable = {
     // only Fire hero for which Iron is an INNATE second type, and at Atk 70 it
     // is the one that can actually swing it, so the slot became a real Iron
     // line rather than one more off-type poke.
-    cinderKnight: ['moltenLash', 'firebrand', 'volcanicSurge', 'heavyBlow', 'momentumSwing', 'fangRush'],
+    // fangRush dropped with the Beast slate (moves.ts, 2026-08-30) rather
+    // than being repointed: Cinder is Fire/Iron and already draws a full line
+    // from both, so the off-type Beast slot was filler the moment the type
+    // had content of its own.
+    cinderKnight: ['moltenLash', 'firebrand', 'volcanicSurge', 'heavyBlow', 'momentumSwing'],
     // stokeTheFlames sits here rather than on the other two deliberately:
     // it buffs the whole active side, and Crimson is the only Fire STARTER
     // (heroes.ts), so it is the one that can be drafted alongside a second
@@ -113,7 +117,16 @@ export const progressionTable: ProgressionTable = {
     // has no direct heal either, and every point of Nature healing in its pool
     // is Renew. The consequence Nature's own hand-off predicted, arriving one
     // slate later than expected.
-    wildOracle: ['blight', 'corrode', 'magicGrowth', 'miasma', 'forceOfNature', 'wildBloom'],
+    // animalSpirit is the Beast slate's one magical row, authored as
+    // "coverage for certain casters" rather than for its own type (moves.ts,
+    // 2026-08-30), and this is the least arguable home in the roster: Sylva
+    // is Intelligence 60 on an 80 pool against the move's 50, its OFFENSIVE
+    // Evolution grafts Beast (so the move gains STAB on the exact build that
+    // wants it), and Nature's own slate has no spread damage move at all —
+    // the gap that type's hand-off reported and nothing has filled since.
+    // The other candidates are deliberately left unplaced; see
+    // docs/authoring-moves.md §10.
+    wildOracle: ['blight', 'corrode', 'magicGrowth', 'miasma', 'forceOfNature', 'wildBloom', 'animalSpirit'],
     // The three Storm heroes draw from the authored Storm pool (src/data/moves.ts,
     // 2026-08-30), split by the stat each actually attacks with, same as Fire,
     // Water and Frost. Squall (Atk 65 vs Int 35) and Scallywag (Atk 75 vs Int
@@ -125,7 +138,9 @@ export const progressionTable: ProgressionTable = {
     // move: it is free while both enemies carry Conduct, so on these two heroes
     // it is only ever castable off a fully-marked board — see docs/combat.md
     // for the hand-off on whether that reads as a payoff or as a dead row.
-    stormRanger: ['stormLash', 'shockSlice', 'tailwind', 'overcharge', 'heavyBlow', 'fangRush'],
+    // fangRush dropped with the Beast slate (moves.ts, 2026-08-30) — same
+    // reason as Cinder above: off-type filler, and Tempest has a Storm line.
+    stormRanger: ['stormLash', 'shockSlice', 'tailwind', 'overcharge', 'heavyBlow'],
     // Tempest had NO pool at all before the Storm slate — a starter that could
     // never learn a move (levelUpMovePool returns an empty list for a hero with
     // no moveTiers entry). It takes the magical line, and with it Storm Surge,
@@ -211,7 +226,35 @@ export const progressionTable: ProgressionTable = {
     // three died (moves.ts, 2026-08-30). Mech has no authored slate yet, so
     // the line stays off-type Iron — it is just a line now instead of filler.
     forgewright: ['ironFist', 'heavyBlow', 'momentumSwing', 'rendArmor'],
-    packAlpha: ['rendingClaw', 'ironFist', 'heavyBlow', 'weaken'],
+    // Beast authored (src/data/moves.ts, 2026-08-30). Fang is the type's
+    // only hero, so like Spirit's Revenant it draws the WHOLE physical half
+    // rather than a line split against a sibling — eleven entries, and the
+    // off-type filler (rendingClaw, ironFist, heavyBlow, weaken) is gone now
+    // that the type has rows of its own.
+    //
+    // Two of these are pack rows Fang cannot satisfy on its own (Pack Hunt,
+    // Pack Leader), and they are here rather than orphaned because the
+    // condition IS reachable — Sylva, Rime and Mordrax each have a
+    // Beast type-graft Evolution below, so a Fang drafted beside one of them
+    // turns both rows on mid-run. Named in docs/authoring-moves.md §10 rather
+    // than quietly tuned, because until that Evolution is taken Pack Hunt is
+    // strictly worse than Lacerate.
+    //
+    // animalSpirit is NOT here: it is the slate's one magical row and Fang is
+    // Intelligence 20 (see wildOracle below).
+    packAlpha: [
+      'prowl',
+      'pounce',
+      'lacerate',
+      'maul',
+      'toxicFangs',
+      'thrash',
+      'packHunt',
+      'rampage',
+      'eviscerate',
+      'apexPredator',
+      'packLeader',
+    ],
     // --- Stone/Spirit starters + the new Iron starter (2026-08-17) ---
     // rally moved up into Valor's starting kit (heroes.ts) when Mend Wounds died.
     //
@@ -259,7 +302,12 @@ export const progressionTable: ProgressionTable = {
     // stunningBlow dropped 2026-08-30 with the Iron slate. Not backfilled:
     // Rime's own Frost line is already eight deep and Iron has nothing at the
     // 20-mana price point that row occupied.
-    rime: ['icicleThrust', 'coldSnap', 'iceShatter', 'frostWall', 'permafrost', 'rendingClaw', 'fangRush'],
+    // rendingClaw and fangRush both died with the Beast slate (moves.ts,
+    // 2026-08-30) and ONE Beast row replaces the two: Claw keeps the off-type
+    // Bleed slot at the slate's price. Rime is one of the three heroes with a
+    // Beast type-graft Evolution (Direwing, below), so a Beast move here is
+    // the type it may actually become rather than filler.
+    rime: ['icicleThrust', 'coldSnap', 'iceShatter', 'frostWall', 'permafrost', 'claw'],
     // Cube's 45 pool is the tightest in the game, so its line is the cheap half
     // of the physical one plus its own Freeze setup — Deep Chill (25) and
     // Permafrost (45, exactly affordable) feeding Cold Snap (35).
@@ -332,7 +380,8 @@ export const progressionTable: ProgressionTable = {
     pincer: ['aquaSlice', 'waveShred', 'washAway', 'rendArmor', 'refresh'],
     // ironFist moved up into Scallywag's starting kit and stunningBlow died,
     // both with the Iron slate (2026-08-30); Heavy Blow is the one row left.
-    scallywag: ['stormLash', 'shockSlice', 'overcharge', 'risingStatic', 'heavyBlow', 'fangRush'],
+    // fangRush dropped with the Beast slate (moves.ts, 2026-08-30).
+    scallywag: ['stormLash', 'shockSlice', 'overcharge', 'risingStatic', 'heavyBlow'],
     sentinel: ['bodyBlow', 'bastion', 'retribution', 'bodyCrush', 'stoneheart', 'toughenUp', 'rally'],
     // Bellows is Mech/IRON at Atk 90 and Speed 15 — the heaviest body in the
     // roster — so its half of the slate is the big swings, with STAB, and none

@@ -33,6 +33,7 @@
 // pair — and three of them plant the mark themselves. Storm's Conduct
 // arrangement, except Spirit both plants and cashes with one kit.
 
+import { firstStatusApplication } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
 import { createFightState } from './fixtures';
@@ -335,15 +336,15 @@ test('spirit: every damage move in the slate is single-target, and Haunt is what
 
 test('spirit: three moves plant Haunt and all twelve damage moves cash it in', () => {
   const planters = Object.values(moves)
-    .filter((m) => m.type === 'Spirit' && m.statusApplication?.statusId === 'Haunt')
+    .filter((m) => m.type === 'Spirit' && firstStatusApplication(m)?.statusId === 'Haunt')
     .map((m) => m.id)
     .sort();
   assert.deepStrictEqual(planters, ['poltergeist', 'torment', 'wisp']);
   // Exactly one of the three is a roll, which is what separates the 20-mana
   // opener from the 25-mana guarantee.
-  assert.strictEqual(moves.wisp.statusApplication?.chance, 0.2);
-  assert.strictEqual(moves.torment.statusApplication?.chance, undefined);
-  assert.strictEqual(moves.poltergeist.statusApplication?.chance, undefined);
+  assert.strictEqual(firstStatusApplication(moves.wisp)?.chance, 0.2);
+  assert.strictEqual(firstStatusApplication(moves.torment)?.chance, undefined);
+  assert.strictEqual(firstStatusApplication(moves.poltergeist)?.chance, undefined);
 });
 
 test('spirit: Flicker is the slate only bracket play — everything else resolves at priority 0', () => {
@@ -437,7 +438,7 @@ test('spirit: the enemy side can demonstrate Haunt end to end', () => {
   const { enemies } = require('../src/data/enemies') as typeof import('../src/data/enemies');
   const spookyGoblin = enemies.spookyGoblin;
   const kit = spookyGoblin.moveIds.map((id: string) => moves[id]);
-  assert.ok(kit.some((m) => m.statusApplication?.statusId === 'Haunt'), 'no way to plant the mark');
+  assert.ok(kit.some((m) => firstStatusApplication(m)?.statusId === 'Haunt'), 'no way to plant the mark');
   assert.ok(kit.some((m) => m.kind === 'damage' && m.type === 'Spirit'), 'no way to cash it in');
   // And it can actually afford to do both on its own pool, every other round.
   for (const move of kit) assert.ok(move.manaCost <= spookyGoblin.baseStats.manaPool);

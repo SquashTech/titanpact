@@ -15,6 +15,7 @@
 //      every fight authored before cleanseCount existed replays identically
 //      (the same guarantee StatusApplication.chance carries).
 
+import { statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
 import { createFightState } from './fixtures';
@@ -106,8 +107,10 @@ test('water: every "Spread" move in the design table targets both enemies, and n
 
 test('water: no Water move applies a status the catalog does not define', () => {
   for (const move of Object.values(moves)) {
-    if (move.type !== 'Water' || !move.statusApplication) continue;
-    assert.ok(statuses[move.statusApplication.statusId], `${move.id} applies unknown status ${move.statusApplication.statusId}`);
+    if (move.type !== 'Water') continue;
+    for (const app of statusApplicationsOf(move)) {
+      assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);
+    }
   }
 });
 

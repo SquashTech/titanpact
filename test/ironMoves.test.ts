@@ -33,6 +33,7 @@
 //     Fortify the same day — so the counts below are pinned at sixteen and the
 //     "no priority" assertion became "exactly one".
 
+import { firstStatusApplication } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
 import { createFightState } from './fixtures';
@@ -196,10 +197,12 @@ test('iron: every conditionalManaCost in the game authors exactly one side', () 
   // move authoring neither is a silent dud that never fires. This is the
   // check that makes a third sibling fail loudly the moment it is added.
   const conditional = Object.values(moves).filter((m) => m.conditionalManaCost);
-  assert.ok(conditional.length >= 2, 'expected both Overcharge and Metallic Blade');
+  assert.ok(conditional.length >= 3, 'expected Overcharge, Metallic Blade and Pack Leader');
   for (const move of conditional) {
     const c = move.conditionalManaCost!;
-    const sides = [c.requiresAllEnemiesStatus, c.requiresAnyEnemyStatus].filter((s) => s != null);
+    // The third side is Beast's Pack Leader, which reads the caster's OWN
+    // row rather than the enemy side (content.ts requiresPartnerType).
+    const sides = [c.requiresAllEnemiesStatus, c.requiresAnyEnemyStatus, c.requiresPartnerType].filter((s) => s != null);
     assert.strictEqual(sides.length, 1, `${move.id} authors ${sides.length} sides of conditionalManaCost, not 1`);
   }
 });
@@ -285,7 +288,7 @@ test('iron: every damage row detonates Conduct for free, and the slate plants it
   // quietly change either half.
   const ironMoves = Object.values(moves).filter((m) => m.type === 'Iron');
   const damage = ironMoves.filter((m) => m.kind === 'damage');
-  const planters = ironMoves.filter((m) => m.statusApplication?.statusId === 'Conduct');
+  const planters = ironMoves.filter((m) => firstStatusApplication(m)?.statusId === 'Conduct');
 
   assert.strictEqual(ironMoves.length, 16, 'the authored slate is sixteen rows');
   assert.strictEqual(damage.length, 11, 'eleven of them detonate Conduct for free');
@@ -332,11 +335,11 @@ test('iron: the slate authors exactly one priority row, and no heal, cleanse or 
     assert.ok(!move.cleanses, `${move.id} cleanses`);
     assert.ok(!move.fieldEffectApplication, `${move.id} sets a field effect`);
   }
-  const riders = ironMoves.filter((m) => m.statusApplication);
+  const riders = ironMoves.filter((m) => firstStatusApplication(m));
   assert.strictEqual(riders.length, 1, 'exactly one status rider in sixteen rows');
   assert.strictEqual(riders[0].id, 'serratedSlice');
-  assert.strictEqual(riders[0].statusApplication?.statusId, 'Bleed');
-  assert.strictEqual(riders[0].statusApplication?.chance, 0.3);
+  assert.strictEqual(firstStatusApplication(riders[0])?.statusId, 'Bleed');
+  assert.strictEqual(firstStatusApplication(riders[0])?.chance, 0.3);
 });
 
 test('iron: the re-authored Fortify is a guard buff only, and every Wisdom grant left is Mind', () => {

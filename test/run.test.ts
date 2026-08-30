@@ -192,8 +192,11 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
     // kindle left this pool for Cinder's starting kit when the Spirit slate
     // deleted Mend Wounds (src/data/heroes.ts, 2026-08-30), and quickJab was
     // replaced by a real Iron line when the Iron slate landed — Cinder is
-    // Fire/Iron at Atk 70, so heavyBlow and momentumSwing are on-type.
-    ['moltenLash', 'firebrand', 'volcanicSurge', 'heavyBlow', 'momentumSwing', 'fangRush']
+    // Fire/Iron at Atk 70, so heavyBlow and momentumSwing are on-type. The
+    // Beast slate then took fangRush, the last off-type entry, with nothing
+    // put back: a Fire/Iron hero with a full line from both of its own types
+    // has no slot a third type's filler belongs in.
+    ['moltenLash', 'firebrand', 'volcanicSurge', 'heavyBlow', 'momentumSwing']
   );
 
   const withMove = grantLevelUpMove(run, 'cinderKnight', 'firebrand');

@@ -18,6 +18,8 @@
 //      applied — a conditional move that does not author `consumesStatus`
 //      leaves the mark exactly where it found it.
 
+import { firstStatusApplication } from '../src/engine/content';
+import { statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
 import { createFightState } from './fixtures';
@@ -121,8 +123,8 @@ test('frost: every "Spread" move in the design table targets both enemies, and t
 test('frost: no Frost move applies a status the catalog does not define, or gates on one', () => {
   for (const move of Object.values(moves)) {
     if (move.type !== 'Frost') continue;
-    if (move.statusApplication) {
-      assert.ok(statuses[move.statusApplication.statusId], `${move.id} applies unknown status ${move.statusApplication.statusId}`);
+    for (const app of statusApplicationsOf(move)) {
+      assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);
     }
     if (move.requiresTargetStatus) {
       assert.ok(statuses[move.requiresTargetStatus], `${move.id} gates on unknown status ${move.requiresTargetStatus}`);
@@ -319,7 +321,7 @@ test('frost: every hero that can be offered a gated move can also reach a Freeze
   // trap pick CLAUDE.md's north star forbids, and nothing else in the build
   // would notice.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
-  const marks = (moveId: string) => moves[moveId].statusApplication?.statusId === 'Freeze';
+  const marks = (moveId: string) => firstStatusApplication(moves[moveId])?.statusId === 'Freeze';
   for (const [heroId, hero] of Object.entries(heroes)) {
     const reachable = [...hero.moveIds, ...(progressionTable.moveTiers[heroId] ?? [])];
     if (!reachable.some((id) => moves[id].requiresTargetStatus)) continue;

@@ -234,11 +234,34 @@ export function effectiveManaCost(move: MoveDefinition, discounts?: Partial<Reco
  * empty-side guard is what makes that true for the `every` side; the `some`
  * side would already answer false.
  */
-export function resolveManaCost(state: CombatState, combatantId: string, move: MoveDefinition): number {
+export function resolveManaCost(
+  state: CombatState,
+  combatantId: string,
+  move: MoveDefinition,
+  /**
+   * The roster, required only by the `requiresPartnerType` side (Beast's Pack
+   * Leader), which has to read the partner's TYPES and a Combatant carries
+   * only a heroId. Omit it and that side never fires, leaving the two
+   * enemy-side forms byte-identical for every caller with no roster in scope
+   * — the same "omit it and everything else behaves exactly as before"
+   * discipline getEffectiveStat's fieldEffectCtx follows.
+   */
+  heroes?: Record<string, HeroDefinition>
+): number {
   const combatant = state.combatants[combatantId];
   const base = effectiveManaCost(move, combatant?.moveManaDiscounts);
   const conditional = move.conditionalManaCost;
   if (!conditional || !combatant) return base;
+
+  // The ally-side form, checked before the enemy-side ones because it has
+  // nothing to do with them: a wiped enemy side must not swallow a discount
+  // that reads the caster's own row (content.ts requiresPartnerType).
+  if (conditional.requiresPartnerType != null) {
+    if (!heroes) return base;
+    const partnerTypes = activePartnerTypes(state, combatantId, heroes);
+    if (!partnerTypes?.includes(conditional.requiresPartnerType)) return base;
+    return Math.min(base, Math.max(0, conditional.manaCost));
+  }
 
   const enemySide: Side = combatant.side === 'A' ? 'B' : 'A';
   const activeEnemies = state.active[enemySide]
@@ -291,10 +314,48 @@ export function hasAffordableMoveInFight(
   state: CombatState,
   combatantId: string,
   moveIds: readonly string[],
-  moves: Record<string, MoveDefinition>
+  moves: Record<string, MoveDefinition>,
+  /** Threaded straight through to resolveManaCost — see its note. Omit and a `requiresPartnerType` price is read at its authored cost, which can force a Rest the button would not have. */
+  heroes?: Record<string, HeroDefinition>
 ): boolean {
   const currentMana = state.combatants[combatantId]?.currentMana ?? 0;
-  return moveIds.some((id) => currentMana >= resolveManaCost(state, combatantId, moves[id]));
+  return moveIds.some((id) => currentMana >= resolveManaCost(state, combatantId, moves[id], heroes));
+}
+
+/**
+ * The effective types of the hero standing in the caster's OTHER active slot,
+ * or null when that slot is empty or its occupant is down — the one reader of
+ * "is my partner a Beast" (content.ts `conditionalPower.requiresPartnerType`,
+ * `conditionalManaCost.requiresPartnerType`, `conditionalStatDeltas`).
+ *
+ * Three decisions live here rather than at the three call sites, which is the
+ * whole reason it is a shared helper (2026-08-30 designer calls):
+ *
+ * - **Active only.** The bench does not count. A doubles condition is about
+ *   who is standing beside you, so switching a Beast in turns it on and
+ *   switching one out turns it off.
+ * - **Fainted does not count.** A partner that went down earlier this round
+ *   answers the same as an empty slot.
+ * - **Effective types, not authored ones** — a type-graft Evolution
+ *   (Combatant.grantedTypes) satisfies the condition exactly as an innate
+ *   type does.
+ *
+ * Returns the type list rather than a boolean so callers name their own type
+ * and nothing here knows the word "Beast".
+ */
+export function activePartnerTypes(
+  state: CombatState,
+  combatantId: string,
+  heroes: Record<string, HeroDefinition>
+): readonly TypeId[] | null {
+  const combatant = state.combatants[combatantId];
+  if (!combatant) return null;
+  const partnerId = state.active[combatant.side].find((id) => id != null && id !== combatantId);
+  if (!partnerId) return null;
+  const partner = state.combatants[partnerId];
+  if (!partner || partner.fainted) return null;
+  const hero = heroes[partner.heroId];
+  return hero ? effectiveTypes(hero, partner) : null;
 }
 
 /** Field Effect context threaded into getEffectiveStat/getCombatStatDelta only by callers that need a Field-Effect-driven stat hook (currently just Verdant Earth's statBonusEqualToStatusMagnitude) — omit entirely and both functions behave exactly as before. */

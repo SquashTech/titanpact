@@ -36,7 +36,9 @@ don't silently override it.
   There is **no automatic stat growth** from leveling. One documented exemption
   (2026-08-30): a **derived** grant, whose amount is read off live state rather than
   authored, lands unrounded — Arcane Overflow grants Attack/Intelligence equal to the
-  caster's current Mana (`MoveDefinition.derivedStatDeltas`, `docs/combat.md`).
+  caster's current Mana, and Beast's Apex Predator grants Attack equal to the caster's
+  own current Attack (`MoveDefinition.derivedStatDeltas`, `docs/combat.md`). Two
+  sources, one exemption; a third should be a conversation, not a habit.
 - **No accuracy stat.** Moves always land. **Mana cost is the primary balance lever** on
   reliable moves.
 - **Priority uses integer brackets; Speed is the tiebreaker within a bracket.**
@@ -201,8 +203,8 @@ authored roster.
   `progression.md`, `mana.md`, `architecture.md`, `field-effects.md`, `run-loop.md`,
   `locations.md`, `visual-language.md` (presentation only). Reference from here; don't inline them.
   **`authoring-moves.md` is a runbook, not a design module** — read it before implementing
-  a designed slate of moves for a type (13 types still to go; Fire and Water are the
-  worked examples).
+  a designed slate of moves for a type (2 types still to go — Mech and Ancient; Fire
+  and Water are the worked examples, and §10 carries all thirteen hand-offs).
 - `/prototypes/` — the two slices above, as behavioral reference.
 - `/src/engine/` — the pure resolution engine + the six contracts.
 - `/src/content/` — heroes, moves, abilities, relics, equipment as pure data.

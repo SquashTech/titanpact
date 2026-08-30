@@ -21,8 +21,20 @@ export const enemies: Record<string, HeroDefinition> = {
     id: 'goblinGrunt',
     name: 'Goblin Grunt',
     types: ['Beast'],
-    baseStats: { hp: 50, attack: 35, defense: 25, intelligence: 15, wisdom: 20, speed: 40, manaPool: 25, mpRegen: 3 },
-    moveIds: ['fangRush', 'savageMaul'],
+    // Mana raised from 25/3 when Beast's authored movepool landed
+    // (src/data/moves.ts, 2026-08-30): its old kit was fangRush (8) and
+    // savageMaul (16), and the slate's cheapest attack is 20, so at the old
+    // pool this goblin could open once and then Rest most of the fight. 40/10
+    // is the same fix and the same number Torch Goblin, Goblin Skulker,
+    // Spooky Goblin and Goblin Warrior all got — the fifth time, which makes
+    // it the standard basic-enemy pool rather than a per-case patch. Stat
+    // line otherwise untouched.
+    baseStats: { hp: 50, attack: 35, defense: 25, intelligence: 15, wisdom: 20, speed: 40, manaPool: 40, mpRegen: 10 },
+    // Both at 20, which is what 40/10 sustains, and between them they teach
+    // Beast's two clocks from the side of the field the player is fighting:
+    // Claw's chanced Bleed and Venom Bite's guaranteed Poison, neither of
+    // which the player can switch away from.
+    moveIds: ['claw', 'venomBite'],
     starter: false,
   },
   // Retyped Beast -> Shadow (per user direction) so the opening Goblin fight
@@ -102,8 +114,22 @@ export const enemies: Record<string, HeroDefinition> = {
     id: 'goblinChief',
     name: 'Goblin Chief',
     types: ['Beast'],
-    baseStats: { hp: 110, attack: 60, defense: 45, intelligence: 25, wisdom: 35, speed: 50, manaPool: 50, mpRegen: 6 },
-    moveIds: ['savageMaul', 'warHorn'],
+    // Mana raised from 50/6 with the Beast slate (src/data/moves.ts,
+    // 2026-08-30). Its old kit was savageMaul (16) and warHorn (24) and both
+    // died; the replacements cost 35 and 40, so the old pool could open once
+    // and then Rest for four rounds. 70/14 rather than the basics' 40/10
+    // because this is the tougher tier and its rows are Mid-tier ones —
+    // it opens, answers, and then has to wait, which is the right shape for
+    // a fight the player is meant to survive rather than win on tempo.
+    baseStats: { hp: 110, attack: 60, defense: 45, intelligence: 25, wisdom: 35, speed: 50, manaPool: 70, mpRegen: 14 },
+    // The Chief fights alongside 3 basic Goblins, one of which can be the
+    // Beast Grunt above — so it is the one enemy in the game that can satisfy
+    // Pack Hunt's partner condition, and pressing it beside a Grunt is 80
+    // base power for 40 mana. That is deliberate: the pack condition is the
+    // slate's signature and the player's own roster can only reach it through
+    // a type-graft Evolution (docs/authoring-moves.md §10), so this is where
+    // they see it work. Lacerate is the Bleed the whole type is built on.
+    moveIds: ['lacerate', 'packHunt'],
     starter: false,
   },
 };

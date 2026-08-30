@@ -25,6 +25,7 @@
 // move detonates Conduct for free (statuses.ts triggerTypes), with no field
 // authored on the move.
 
+import { firstStatusApplication } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
 import { createFightState } from './fixtures';
@@ -142,7 +143,7 @@ test('storm: every damage move in the slate carries Conduct detonation for free 
   assert.ok(detonators.includes('Storm'));
   const damage = Object.values(moves).filter((m) => m.type === 'Storm' && m.kind === 'damage');
   assert.strictEqual(damage.length, 10);
-  assert.strictEqual(damage.some((m) => m.statusApplication?.statusId === 'Conduct' && m.id === 'thunderbolt'), true);
+  assert.strictEqual(damage.some((m) => firstStatusApplication(m)?.statusId === 'Conduct' && m.id === 'thunderbolt'), true);
 });
 
 // --- Random targeting ------------------------------------------------------
@@ -408,10 +409,20 @@ test('storm: every hero that can be offered Overcharge can also reach Conduct �
   // CLAUDE.md's north star forbids — the same key-and-lock pairing Frost's
   // gated moves need, arriving here through cost instead of legality.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
-  const marks = (moveId: string) => moves[moveId].statusApplication?.statusId === 'Conduct';
+  const marks = (moveId: string) => firstStatusApplication(moves[moveId])?.statusId === 'Conduct';
   for (const [heroId, hero] of Object.entries(heroes)) {
     const reachable = [...hero.moveIds, ...(progressionTable.moveTiers[heroId] ?? [])];
-    const conditional = reachable.filter((id) => moves[id].conditionalManaCost);
+    // The status-gated sides only. Beast's Pack Leader is the third side
+    // (content.ts requiresPartnerType) and its 'key' is a partner's TYPE,
+    // not a mark anybody can apply — a hero can no more "reach" a Beast
+    // partner from its own movepool than it can reach a relic, so this
+    // pairing check has nothing to say about it. Beast's own hand-off
+    // covers that gap instead (docs/authoring-moves.md §10).
+    const conditional = reachable.filter(
+      (id) =>
+        moves[id].conditionalManaCost?.requiresAllEnemiesStatus != null ||
+        moves[id].conditionalManaCost?.requiresAnyEnemyStatus != null
+    );
     if (conditional.length === 0) continue;
     const pool = hero.baseStats.manaPool;
     if (conditional.every((id) => moves[id].manaCost <= pool)) continue; // affordable outright, no pairing needed

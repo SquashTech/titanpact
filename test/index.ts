@@ -18,6 +18,7 @@ import './spiritMoves.test';
 import './arcaneMoves.test';
 import './mindMoves.test';
 import './ironMoves.test';
+import './beastMoves.test';
 import './run.test';
 import './recruitment.test';
 import './shop.test';

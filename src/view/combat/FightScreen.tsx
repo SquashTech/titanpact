@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { statusApplicationsOf } from '../../engine/content';
 import { heroes } from '../../data/heroes';
 import { allCombatants } from '../../data/content';
 import { moves } from '../../data/moves';
@@ -10,6 +11,7 @@ import { fieldEffects } from '../../data/fieldEffects';
 import { relics } from '../../data/relics';
 import type { CombatState, Side } from '../../engine/state';
 import {
+  activePartnerTypes,
   isLockedIn,
   effectiveManaCost,
   effectiveTypes,
@@ -135,6 +137,18 @@ interface MoveRowProps {
    */
   userConditionMet: boolean;
   /**
+   * Whether the caster's ACTIVE PARTNER satisfies a `conditionalStatDeltas`
+   * row's type (content.ts — Beast's Prowl, "doubled if partner is a
+   * Beast"). `false` for every move that authors none.
+   *
+   * Its own flag rather than a second reading of `userConditionMet`, which
+   * answers for `conditionalPower` only: a move can author one, the other,
+   * or both, and folding them would make Pack Hunt and Prowl share a chip
+   * state they do not share a mechanic with. Resolved by the caller, same
+   * as `banked` and `cost`, because it needs the board and the roster.
+   */
+  packBonusActive: boolean;
+  /**
    * What this move will ACTUALLY target if pressed right now (engine/state.ts
    * resolveTargetMode) — which since Arcane's Overload is not always
    * `move.target` (content.ts conditionalTarget, "spread if Magical Surge is
@@ -172,7 +186,7 @@ interface MoveRowProps {
  * rules off `:disabled`), still refuses to act on a tap, and still opens its
  * dossier on a hold.
  */
-function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, bankedReductions, selfHpCost, userConditionMet, liveTargetMode, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
+function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, banked, bankedReductions, selfHpCost, userConditionMet, packBonusActive, liveTargetMode, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
   // Two independent ways a row can be dead, one shared treatment. `.is-unusable`
   // carries the dim; `.is-unaffordable` is kept as the narrower flag so the mana
   // gem only goes grey when mana is actually the problem (styles.css).
@@ -275,16 +289,20 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                 a Burn), and a self-targeted one says so (Volcanic Surge burns
                 the caster, and reading it as "the target catches fire" is the
                 exact wrong call). */}
-            {move.statusApplication && (
-              <span className="move-eff-status">
-                {move.statusApplication.chance != null ? `${Math.round(move.statusApplication.chance * 100)}% ` : '+'}
-                {move.statusApplication.statusId}
+            {/* One chip PER rider (content.ts statusApplication is a list
+                since Beast's Toxic Fangs): a button showing only the first
+                would price a move at half its payload, on the row where the
+                decision is actually made. */}
+            {statusApplicationsOf(move).map((app) => (
+              <span key={app.statusId} className="move-eff-status">
+                {app.chance != null ? `${Math.round(app.chance * 100)}% ` : '+'}
+                {app.statusId}
                 {/* Where it lands, whenever that is not simply what the move
                     hit — 'self' was the only such case until riders learned to
                     roll their own target (content.ts StatusApplication.target). */}
-                {riderTargetLabel(move.statusApplication) ? ` (${riderTargetLabel(move.statusApplication)})` : ''}
+                {riderTargetLabel(app) ? ` (${riderTargetLabel(app)})` : ''}
               </span>
-            )}
+            ))}
             {/* A damage move's stat rider, which this row used to drop
                 entirely: on Fire's Molten Lash the missing -10 DEF was merely
                 incomplete beside its visible +Burn, but Water's Undertow has
@@ -311,6 +329,7 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                 className={`move-eff-status${
                   (move.conditionalPower.requiresUserStatus ||
                     move.conditionalPower.requiresFieldEffect ||
+                    move.conditionalPower.requiresPartnerType ||
                     move.conditionalPower.requiresUserHpBelow != null) &&
                   !userConditionMet
                     ? ' move-eff-unmet'
@@ -325,7 +344,14 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                     would be the wrong preposition twice over: wrong side of
                     the field, and wrong verb. */}
                 ×{move.conditionalPower.multiplier}{' '}
-                {move.conditionalPower.requiresFieldEffect
+                {/* The pack form answers itself off the slot beside this
+                    hero, so like the user-side and field chips it dims
+                    when the answer is no — and it says "partner" because
+                    the thing being read is a hero, not a board state
+                    (content.ts requiresPartnerType). */}
+                {move.conditionalPower.requiresPartnerType
+                  ? `with a ${move.conditionalPower.requiresPartnerType} partner`
+                  : move.conditionalPower.requiresFieldEffect
                   ? `under ${fieldEffects[move.conditionalPower.requiresFieldEffect]?.name ?? move.conditionalPower.requiresFieldEffect}`
                   : move.conditionalPower.requiresUserHpBelow != null
                     ? // "while you are" rather than the execute's bare "under":
@@ -414,10 +440,22 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                 carries the live price. */}
             {move.conditionalManaCost && (
               <span className="move-eff-status">
-                {move.conditionalManaCost.manaCost} MP vs{' '}
-                {move.conditionalManaCost.requiresAllEnemiesStatus
-                  ? `2× ${move.conditionalManaCost.requiresAllEnemiesStatus}`
-                  : `1× ${move.conditionalManaCost.requiresAnyEnemyStatus}`}
+                {/* The ally side (Pack Leader) is not a count of marked
+                    enemies at all — it reads the slot beside this hero,
+                    so it drops the 2×/1× vocabulary and names the
+                    partner (content.ts requiresPartnerType). */}
+                {move.conditionalManaCost.requiresPartnerType ? (
+                  <>
+                    {move.conditionalManaCost.manaCost} MP with a {move.conditionalManaCost.requiresPartnerType} partner
+                  </>
+                ) : (
+                  <>
+                    {move.conditionalManaCost.manaCost} MP vs{' '}
+                    {move.conditionalManaCost.requiresAllEnemiesStatus
+                      ? `2× ${move.conditionalManaCost.requiresAllEnemiesStatus}`
+                      : `1× ${move.conditionalManaCost.requiresAnyEnemyStatus}`}
+                  </>
+                )}
               </span>
             )}
             {/* WHO it hits, when that depends on the board (content.ts
@@ -453,6 +491,21 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                 whole price of a move whose mana cost is only 30. Live figure,
                 same reasoning as the chip above (content.ts selfHpCost). */}
             {move.selfHpCost != null && <span className="move-eff-status">-{selfHpCost} HP</span>}
+            {/* Prowl is +10/+10 or +20/+20 depending on who is standing next
+                to this hero. The summary beside it already states the RULE —
+                it has to, since it is printed on the draft and level-up
+                screens where there is no partner to read — so this chip
+                ANSWERS instead of restating, the same split the gate chip
+                above uses ("Needs Freeze" / "Freeze only") rather than
+                printing the condition twice on one row (content.ts
+                conditionalStatDeltas). */}
+            {move.conditionalStatDeltas && (
+              <span className={`move-eff-status${packBonusActive ? '' : ' move-eff-unmet'}`}>
+                {packBonusActive
+                  ? `×${move.conditionalStatDeltas.multiplier} now`
+                  : `Needs a ${move.conditionalStatDeltas.requiresPartnerType} partner`}
+              </span>
+            )}
           </span>
         )}
       </div>
@@ -654,7 +707,7 @@ function ConsoleCrest({
               knocked the sprite off-centre and pushed the gem out toward the
               label. Beside the name it is also the truer statement: the cost
               is a fact about the move being reported, not about the hero. */}
-          {committedMove && <ManaCost cost={resolveManaCost(state, c.combatantId, committedMove)} size="sm" />}
+          {committedMove && <ManaCost cost={resolveManaCost(state, c.combatantId, committedMove, allCombatants)} size="sm" />}
           <span className="console-commander-text">{slotLabel}</span>
         </span>
       </span>
@@ -1101,13 +1154,17 @@ export function FightScreen({
     const hero = allCombatants[combatant.heroId];
     const entry = entryFor(aiRun.roster, combatantId);
     const moveIds = entry.unlockedMoveIds.length > 0 ? entry.unlockedMoveIds : hero.moveIds;
-    if (!hasAffordableMoveInFight(state, combatantId, moveIds, moves)) {
+    // `allCombatants` threaded in for the same reason the filter below takes
+    // it: a Pack Leader that is currently half-price is affordable, and an AI
+    // that priced it at 100 would Rest while holding a move it can cast
+    // (state.ts resolveManaCost).
+    if (!hasAffordableMoveInFight(state, combatantId, moveIds, moves, allCombatants)) {
       // Same fallback as the player's move grid below: nothing is affordable,
       // so Rest rather than declaring a move that would just no-op in the
       // engine (resolveRound.ts's mana guard) and silently waste the turn.
       return { kind: 'rest', combatantId };
     }
-    const affordable = moveIds.filter((id) => combatant.currentMana >= resolveManaCost(state, combatantId, moves[id]));
+    const affordable = moveIds.filter((id) => combatant.currentMana >= resolveManaCost(state, combatantId, moves[id], allCombatants));
     // A status-gated move (content.ts requiresTargetStatus) with nothing marked
     // to aim at resolves into an ActionBlocked and silently wastes the AI's whole
     // turn — the same failure the affordability filter above exists to avoid.
@@ -1627,7 +1684,7 @@ export function FightScreen({
             // below as normal whenever a bench hero exists, so a player who
             // dumped mana into a big hit can still choose to swap in someone
             // fresh instead of resting this active hero.
-            const canAffordAnyMove = hasAffordableMoveInFight(combat, id, entry.unlockedMoveIds, moves);
+            const canAffordAnyMove = hasAffordableMoveInFight(combat, id, entry.unlockedMoveIds, moves, allCombatants);
             return (
               <div className="action-panel" key={id}>
                 <ConsoleCrest
@@ -1665,9 +1722,9 @@ export function FightScreen({
                       <MoveRow
                         key={moveId}
                         move={move}
-                        affordable={combatant.currentMana >= resolveManaCost(combat, id, move)}
+                        affordable={combatant.currentMana >= resolveManaCost(combat, id, move, allCombatants)}
                         gateUnmet={!hasLegalTarget(move, id)}
-                        cost={resolveManaCost(combat, id, move)}
+                        cost={resolveManaCost(combat, id, move, allCombatants)}
                         selected={isSelected}
                         forceBonus={resolveElementalForceBonus(combatant, move.type, statuses)}
                         banked={combatant.damageTakenSinceLastTurn}
@@ -1688,7 +1745,15 @@ export function FightScreen({
                               : Math.max(0, combatant.currentHp - move.selfHpCost.amount)
                         }
                         userConditionMet={
-                          move.conditionalPower?.requiresFieldEffect
+                          move.conditionalPower?.requiresPartnerType
+                            ? // The fourth thing answerable without declaring
+                              // a target, and the only one that is a fact
+                              // about the player's own TEAM rather than about
+                              // the board (content.ts requiresPartnerType).
+                              (activePartnerTypes(combat, id, allCombatants) ?? []).includes(
+                                move.conditionalPower.requiresPartnerType
+                              )
+                            : move.conditionalPower?.requiresFieldEffect
                             ? combat.activeFieldEffect?.fieldEffectId === move.conditionalPower.requiresFieldEffect
                             : move.conditionalPower?.requiresUserHpBelow != null
                               ? // The third thing the player can answer without
@@ -1701,6 +1766,12 @@ export function FightScreen({
                                   move.conditionalPower.requiresUserHpBelow
                               : !move.conditionalPower?.requiresUserStatus ||
                                 hasStatus(combatant, move.conditionalPower.requiresUserStatus)
+                        }
+                        packBonusActive={
+                          move.conditionalStatDeltas != null &&
+                          (activePartnerTypes(combat, id, allCombatants) ?? []).includes(
+                            move.conditionalStatDeltas.requiresPartnerType
+                          )
                         }
                         liveTargetMode={resolveTargetMode(combat, move)}
                         caster={{

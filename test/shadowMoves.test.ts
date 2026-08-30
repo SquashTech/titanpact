@@ -28,6 +28,7 @@
 // use `consumesStatus` on the user-side half of conditionalPower, which Nature
 // deliberately declined.
 
+import { firstStatusApplication, statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
 import { createFightState } from './fixtures';
@@ -266,11 +267,11 @@ test('shadow: every Stealth grant in the game is duration 1 and self-targeted', 
   // by a type with no Ambush to cash it in. The pinned LIST is what stays —
   // a new grant has to be looked at and consciously added, exactly like
   // stoneMoves' unreachable-move pin.
-  const grants = Object.values(moves).filter((m) => m.statusApplication?.statusId === 'Stealth');
+  const grants = Object.values(moves).filter((m) => firstStatusApplication(m)?.statusId === 'Stealth');
   assert.deepStrictEqual(grants.map((m) => m.id).sort(), ['magicCloak', 'shadowForm', 'vanish']);
   for (const move of grants) {
-    assert.strictEqual(move.statusApplication!.duration, 1, `${move.id} authors a non-standard Stealth length`);
-    assert.strictEqual(move.statusApplication!.target, 'self', `${move.id} grants Stealth to someone else`);
+    assert.strictEqual(firstStatusApplication(move)!.duration, 1, `${move.id} authors a non-standard Stealth length`);
+    assert.strictEqual(firstStatusApplication(move)!.target, 'self', `${move.id} grants Stealth to someone else`);
   }
 });
 
@@ -284,7 +285,7 @@ test('shadow: every hero that can be offered Ambush can also reach a Stealth gra
     const reachable = [...hero.moveIds, ...(progressionTable.moveTiers[heroId] ?? [])];
     if (!reachable.includes('ambush')) continue;
     assert.ok(
-      reachable.some((id) => moves[id]?.statusApplication?.statusId === 'Stealth'),
+      reachable.some((id) => firstStatusApplication(moves[id])?.statusId === 'Stealth'),
       `${heroId} can be offered Ambush but has no way to enter Stealth`
     );
   }
@@ -296,14 +297,19 @@ test('shadow: the slate is fifteen moves, and every status and condition it name
   const shadow = Object.values(moves).filter((m) => m.type === 'Shadow');
   assert.strictEqual(shadow.length, 15);
   for (const move of shadow) {
-    if (move.statusApplication) {
-      assert.ok(statuses[move.statusApplication.statusId], `${move.id} applies unknown status ${move.statusApplication.statusId}`);
+    for (const app of statusApplicationsOf(move)) {
+      assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);
     }
     if (move.conditionalPower) {
-      const { requiresTargetStatus, requiresUserStatus, requiresFieldEffect, requiresTargetHpBelow } = move.conditionalPower;
-      const authored = [requiresTargetStatus, requiresUserStatus, requiresFieldEffect, requiresTargetHpBelow].filter(
-        (v) => v != null
-      );
+      const { requiresTargetStatus, requiresUserStatus, requiresFieldEffect, requiresTargetHpBelow, requiresPartnerType } =
+        move.conditionalPower;
+      const authored = [
+        requiresTargetStatus,
+        requiresUserStatus,
+        requiresFieldEffect,
+        requiresTargetHpBelow,
+        requiresPartnerType,
+      ].filter((v) => v != null);
       assert.strictEqual(authored.length, 1, `${move.id} must author exactly one side of conditionalPower`);
       if (requiresTargetHpBelow != null) {
         assert.ok(requiresTargetHpBelow > 0 && requiresTargetHpBelow < 1, `${move.id} authors an HP threshold outside (0, 1)`);
@@ -325,13 +331,22 @@ test('shadow: no move in the GAME authors two sides of conditionalPower', () => 
   // Keep it exhaustive over the union as new forms land.
   for (const move of Object.values(moves)) {
     if (!move.conditionalPower) continue;
-    const { requiresTargetStatus, requiresUserStatus, requiresFieldEffect, requiresTargetHpBelow, requiresUserHpBelow } =
-      move.conditionalPower;
+    const {
+      requiresTargetStatus,
+      requiresUserStatus,
+      requiresFieldEffect,
+      requiresTargetHpBelow,
+      requiresUserHpBelow,
+      // The sixth sibling (Beast's Pack Hunt), and the first that asks
+      // about a combatant on the CASTER's own side of the field.
+      requiresPartnerType,
+    } = move.conditionalPower;
     const authored = [
       requiresTargetStatus,
       requiresUserStatus,
       requiresFieldEffect,
       requiresTargetHpBelow,
+      requiresPartnerType,
       requiresUserHpBelow,
     ].filter((v) => v != null);
     assert.strictEqual(authored.length, 1, `${move.id} authors ${authored.length} sides of conditionalPower`);
@@ -344,20 +359,20 @@ test('shadow: every Poison the slate applies is chanced, and every one runs the 
   // accumulates it as a side effect of attacking and never has a guaranteed
   // applier at all. Pinned because a single un-chanced Poison would quietly
   // turn this into a second Nature.
-  const poisoners = Object.values(moves).filter((m) => m.type === 'Shadow' && m.statusApplication?.statusId === 'Poison');
+  const poisoners = Object.values(moves).filter((m) => m.type === 'Shadow' && firstStatusApplication(m)?.statusId === 'Poison');
   assert.deepStrictEqual(poisoners.map((m) => m.id).sort(), ['umbraBolt', 'umbralBeam', 'umbralWave']);
   for (const move of poisoners) {
-    assert.strictEqual(move.statusApplication!.chance, 0.2, `${move.id} is not a 20% Poison`);
-    assert.strictEqual(move.statusApplication!.duration, 3, `${move.id} authors a non-standard Poison timer`);
+    assert.strictEqual(firstStatusApplication(move)!.chance, 0.2, `${move.id} is not a 20% Poison`);
+    assert.strictEqual(firstStatusApplication(move)!.duration, 3, `${move.id} authors a non-standard Poison timer`);
   }
 });
 
 test('shadow: Dusk Blade is the only guaranteed Bleed, and Bleed is the type flat attrition', () => {
-  const bleeders = Object.values(moves).filter((m) => m.type === 'Shadow' && m.statusApplication?.statusId === 'Bleed');
+  const bleeders = Object.values(moves).filter((m) => m.type === 'Shadow' && firstStatusApplication(m)?.statusId === 'Bleed');
   assert.deepStrictEqual(bleeders.map((m) => m.id).sort(), ['backstab', 'duskBlade', 'shadowSlice']);
-  assert.strictEqual(moves.duskBlade.statusApplication!.chance, undefined);
-  assert.strictEqual(moves.backstab.statusApplication!.chance, 0.3);
-  assert.strictEqual(moves.shadowSlice.statusApplication!.chance, 0.3);
+  assert.strictEqual(firstStatusApplication(moves.duskBlade)!.chance, undefined);
+  assert.strictEqual(firstStatusApplication(moves.backstab)!.chance, 0.3);
+  assert.strictEqual(firstStatusApplication(moves.shadowSlice)!.chance, 0.3);
   // Neither decays nor clears on a switch, which is what makes three carriers
   // enough (statuses.ts) — the same rider on a Burn-shaped status would need
   // twice as many.

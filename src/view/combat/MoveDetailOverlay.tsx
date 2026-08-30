@@ -1,8 +1,9 @@
 import { createPortal } from 'react-dom';
 import type { CSSProperties, ReactNode } from 'react';
 import type { MoveDefinition } from '../../engine/content';
+import { statusApplicationsOf } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
-import { effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, hasStatus, resolveManaCost } from '../../engine/state';
+import { activePartnerTypes, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, hasStatus, resolveManaCost } from '../../engine/state';
 import { allCombatants } from '../../data/content';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
@@ -130,13 +131,17 @@ function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defender
   // The caster's own bar, threaded in for the third time and the same reason:
   // a Vengeance forecast without it would print a THIRD of the number the
   // round is about to deal (content.ts conditionalPower.requiresUserHpBelow).
+  // And the partner types for the fourth time and the same reason: a Pack
+  // Hunt forecast without them prints half the number the round is about to
+  // deal beside a Beast (content.ts conditionalPower.requiresPartnerType).
   const conditionalMult = resolveConditionalPowerMultiplier(
     move,
     defender,
     attacker,
     fieldEffectCtx,
     getMaxHp(defenderHero, defender),
-    { currentHp: attacker.currentHp, maxHp: getMaxHp(attackerHero, attacker) }
+    { currentHp: attacker.currentHp, maxHp: getMaxHp(attackerHero, attacker) },
+    activePartnerTypes(ctx.combat, ctx.attackerId, allCombatants)
   );
   const attackerTypes = effectiveTypes(attackerHero, attacker);
   const defenderTypes = effectiveTypes(defenderHero, defender);
@@ -319,13 +324,19 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   // out of combat this falls back to the ramp-only price, which is
   // move.manaCost with no attacker and no ramp (state.ts).
   const liveCost = context
-    ? resolveManaCost(context.combat, context.attackerId, move)
+    ? resolveManaCost(context.combat, context.attackerId, move, allCombatants)
     : effectiveManaCost(move, attacker?.moveManaDiscounts);
   const manaAfter = attacker ? attacker.currentMana - liveCost : null;
   const manaPool = attacker && attackerHero ? getMaxMana(attackerHero, attacker) : null;
 
   const kindGlyph = moveKindGlyph(move);
-  const statusDef = move.statusApplication ? statuses[move.statusApplication.statusId] : undefined;
+  // Every rider, each with its own catalog entry — a move can carry more
+  // than one since Beast's Toxic Fangs (content.ts statusApplication).
+  // Unknown ids are dropped rather than rendered as a blank row, the same
+  // guard discipline resolveRound's `def` lookup uses.
+  const statusRiders = statusApplicationsOf(move)
+    .map((app) => ({ app, def: statuses[app.statusId] }))
+    .filter((r): r is { app: (typeof r)['app']; def: NonNullable<(typeof r)['def']> } => r.def != null);
   const fieldDef = move.fieldEffectApplication ? fieldEffects[move.fieldEffectApplication] : undefined;
   // Whichever side of the board this move's conditional actually asks about
   // (content.ts conditionalPower.requiresUserStatus). Empty on the field form,
@@ -341,6 +352,15 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   // execute is a fact about the enemy, this one is a fact about the hero whose
   // sheet the player is already looking at, and it can be answered outright.
   const conditionalUserHpBelow = move.conditionalPower?.requiresUserHpBelow;
+  // The pack form (content.ts conditionalPower.requiresPartnerType — Beast's
+  // Pack Hunt). Like the two HP forms it takes neither the status row nor
+  // the field row, and like the user-side HP form it can answer itself:
+  // the hero it asks about is standing in the other slot of the same card
+  // list the player is looking at.
+  const conditionalPartnerType = move.conditionalPower?.requiresPartnerType;
+  const livePartnerTypes = context ? activePartnerTypes(context.combat, context.attackerId, allCombatants) : null;
+  const conditionalPartnerLive =
+    conditionalPartnerType != null && (livePartnerTypes ?? []).includes(conditionalPartnerType);
   const conditionalStatusId = move.conditionalPower
     ? (move.conditionalPower.requiresTargetStatus ?? move.conditionalPower.requiresUserStatus ?? '')
     : '';
@@ -400,7 +420,7 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
       move.derivedStatDeltas ||
       move.manaGrant ||
       move.conditionalTarget ||
-      move.statusApplication ||
+      statusApplicationsOf(move).length ||
       move.cleanses ||
       move.fieldEffectApplication ||
       move.conditionalPower ||
@@ -411,6 +431,7 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
       move.manaDiscountOnUse ||
       move.conditionalPriority ||
       move.conditionalManaCost ||
+      move.conditionalStatDeltas ||
       move.switchesUserOut ||
       move.offStatOverride ||
       move.retributionPercent != null ||
@@ -622,33 +643,30 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               }
             />
           )}
-          {move.statusApplication && statusDef && (
+          {statusRiders.map(({ app, def }) => (
             <EffectRow
-              glyph={<StatusGlyph statusId={move.statusApplication.statusId} />}
-              color={statusColor(move.statusApplication.statusId)}
+              key={app.statusId}
+              glyph={<StatusGlyph statusId={app.statusId} />}
+              color={statusColor(app.statusId)}
               /* Granted vs inflicted: same field, opposite reading, and the
                  verb is what separates them — see moveEffectSummary. */
               /* A chanced rider leads with its odds; an unchanced one says
                  nothing, so every move authored before the field reads exactly
                  as it did. */
-              text={`${move.statusApplication.chance != null ? `${Math.round(move.statusApplication.chance * 100)}% ` : ''}${
+              text={`${app.chance != null ? `${Math.round(app.chance * 100)}% ` : ''}${
                 /* Granted vs inflicted keys off the status's own sign, not off who it lands on — see grantsRatherThanInflicts. */
-                grantsRatherThanInflicts(move.statusApplication) ? 'Grants' : 'Applies'
-              } ${statusDef.name}${
-                move.statusApplication.magnitude != null
-                  ? ` ${move.statusApplication.magnitude}`
-                  : move.statusApplication.duration != null
-                    ? ` ${move.statusApplication.duration}`
-                    : ''
+                grantsRatherThanInflicts(app) ? 'Grants' : 'Applies'
+              } ${def.name}${
+                app.magnitude != null ? ` ${app.magnitude}` : app.duration != null ? ` ${app.duration}` : ''
               }${
                 /* Where it lands, when that is not the move's own target — on
                    Rising Static the +20 Speed and the Conduct go to opposite
                    sides of the field, and only this clause says so. */
-                riderTargetLabel(move.statusApplication) ? ` — ${riderTargetLabel(move.statusApplication)}` : ''
+                riderTargetLabel(app) ? ` — ${riderTargetLabel(app)}` : ''
               }`}
-              note={statusDef.description}
+              note={def.description}
             />
-          )}
+          ))}
           {/* The gate reads first, above the conditional row and above crit:
               it is the only effect in this list that can make the move
               unpressable rather than merely different. */}
@@ -707,8 +725,25 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               }
             />
           )}
+          {/* The pack row wears the partner TYPE's own glyph — the thing
+              being asked about is a hero on your own side, which is why it
+              is the only conditional here that a player answers at draft
+              time (content.ts conditionalPower.requiresPartnerType). */}
+          {move.conditionalPower && conditionalPartnerType != null && (
+            <EffectRow
+              glyph={<ElementGlyph type={conditionalPartnerType} />}
+              color={getTypeColor(conditionalPartnerType)}
+              text={`×${move.conditionalPower.multiplier} power while your partner is a ${conditionalPartnerType}`}
+              note={
+                conditionalPartnerLive
+                  ? 'scales base power, not the finished hit — and the hero beside you qualifies right now'
+                  : 'scales base power, not the finished hit — read off the ACTIVE partner, so switching one in turns it on'
+              }
+            />
+          )}
           {move.conditionalPower &&
             !conditionalFieldId &&
+            conditionalPartnerType == null &&
             conditionalHpBelow == null &&
             conditionalUserHpBelow == null && (
             <EffectRow
@@ -725,6 +760,21 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
                   : move.conditionalPower.requiresUserStatus
                     ? 'scales base power, not the finished hit — read off THIS hero, so a partner granting it earlier in the round already counts'
                     : 'scales base power, not the finished hit'
+              }
+            />
+          )}
+          {/* Prowl states its rule in the stat-delta line above; this row is
+              what says the printed +10 is a +20 beside the right partner
+              (content.ts conditionalStatDeltas). */}
+          {move.conditionalStatDeltas && (
+            <EffectRow
+              glyph={<ElementGlyph type={move.conditionalStatDeltas.requiresPartnerType} />}
+              color={getTypeColor(move.conditionalStatDeltas.requiresPartnerType)}
+              text={`×${move.conditionalStatDeltas.multiplier} stat grant while your partner is a ${move.conditionalStatDeltas.requiresPartnerType}`}
+              note={
+                (livePartnerTypes ?? []).includes(move.conditionalStatDeltas.requiresPartnerType)
+                  ? 'the hero beside you qualifies right now, so this lands at the doubled figure'
+                  : 'read off the ACTIVE partner when the buff lands — the bench does not count'
               }
             />
           )}

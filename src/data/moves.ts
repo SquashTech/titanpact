@@ -3384,30 +3384,321 @@ export const moves: Record<string, MoveDefinition> = {
     description: 'A quick flurry of glowing sparks.',
   },
 
-  // --- Beast -------------------------------------------------------------
-  fangRush: {
-    id: 'fangRush',
-    name: 'Fang Rush',
+  // --- Beast (AUTHORED, 2026-08-30) -----------------------------------------
+  // The thirteenth authored type, and the one that finally spends the roster's
+  // BLEED. Fifteen rows, fourteen of them physical, and three separate engines
+  // running through them:
+  //
+  //   1. **Bleed as a currency.** Three rows plant it (Claw at 20%, Lacerate
+  //      outright, Toxic Fangs outright) and two cash it for DOUBLE damage
+  //      (Maul at 40 base power, Eviscerate at 75). Bleed never clears on
+  //      switching (statuses.ts), so unlike Burn or Freeze the mark follows a
+  //      foe to the bench and is still there when it comes back — which is
+  //      what makes planting it early with a 20-mana move worth a 80-mana
+  //      finisher later.
+  //   2. **The pack.** Three rows read the caster's ACTIVE PARTNER's type and
+  //      pay double (Prowl's buff, Pack Hunt's base power) or half (Pack
+  //      Leader's price) when it is a Beast. The first condition in the game
+  //      that asks about a hero on your OWN side, and the only one a player
+  //      answers at draft time — see the three engine fields in
+  //      engine/content.ts and the hand-off in docs/authoring-moves.md §10,
+  //      because the roster has exactly ONE native Beast hero and the
+  //      condition is reached through a type-graft Evolution instead.
+  //   3. **The ramp.** Rally (+20 Attack, both allies), Prowl (+10/+10, or
+  //      +20/+20 beside a Beast) and Pack Leader (+50 Attack and Speed, both
+  //      allies) all feed Apex Predator, which doubles whatever the caster's
+  //      Attack has become — so the buffs are a multiplier on each other
+  //      rather than a list.
+  //
+  // What the type deliberately does not have, all stated by omission: no heal,
+  // no cleanse, no field effect, no drain, no debuff of any kind (every stat
+  // delta in the slate is positive), and exactly one magical row.
+  //
+  // Beast is in no status's triggerTypes or spreadTriggerTypes (statuses.ts),
+  // so unlike Storm/Iron (Conduct) and Spirit/Mind (Haunt) none of its twelve
+  // damage rows carries a hidden type-keyed rider — what is written is what
+  // it is worth.
+
+  // Early --------------------------------------------------------------------
+  // Rally survives by ID and is re-authored at the table's price: it was 12
+  // mana for +10 Attack and is now 25 for +20, so both halves doubled. It is
+  // the widest blast radius in the slate by far — SIX non-Beast starting kits
+  // carry it (Tempest, Voltaic, Scallywag, Mordrax, Valor, Gallant) plus two
+  // level-up pools — and this is Spirit's Second Wind re-pricing again, one
+  // slate later. See docs/authoring-moves.md §10.
+  rally: {
+    id: 'rally',
+    name: 'Rally',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'buff',
+    statDeltas: [{ stat: 'attack', amount: 20 }],
+    manaCost: 25,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'A rousing howl that sharpens both allies’ offense (+20 Attack).',
+  },
+  claw: {
+    id: 'claw',
+    name: 'Claw',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 40,
+    // The type's opener and its cheapest way to start a Bleed. 20% is a poke
+    // that sometimes becomes a plan rather than a setup move: the guaranteed
+    // carriers (Lacerate, Toxic Fangs) cost 35 and 40, so at 20 this is what
+    // an early-fight Beast presses while it waits to afford them.
+    statusApplication: { statusId: 'Bleed', target: 'moveTarget', chance: 0.2 },
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A raking swipe that sometimes opens a wound (20% Bleed).',
+  },
+  venomBite: {
+    id: 'venomBite',
+    name: 'Venom Bite',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 30,
+    // The slate's other DoT, and the only one that is GUARANTEED at 20 mana.
+    // Poison's timer is authored at 3 the same way every other Poison row in
+    // the game is (Shadow, Nature) — the table gives the magnitude and the
+    // duration is the established one, not a per-slate invention.
+    statusApplication: { statusId: 'Poison', target: 'moveTarget', magnitude: 10, duration: 3 },
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A bite that leaves venom working under the skin (Poison 10).',
+  },
+  prowl: {
+    id: 'prowl',
+    name: 'Prowl',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'buff',
+    // The type's cheapest row and the first of its three pack conditions
+    // (content.ts conditionalStatDeltas): +10/+10 alone, +20/+20 with a Beast
+    // in the other active slot. Both Attack AND Speed, which is what makes it
+    // the buff a fast bruiser presses on turn one rather than Rally — the
+    // Speed is what keeps it acting first while the Attack ramps.
+    statDeltas: [
+      { stat: 'attack', amount: 10 },
+      { stat: 'speed', amount: 10 },
+    ],
+    statDeltaTarget: 'self',
+    conditionalStatDeltas: { requiresPartnerType: 'Beast', multiplier: 2 },
+    manaCost: 15,
+    priority: 0,
+    target: 'self',
+    description: 'Circles for an opening (+10 Attack, +10 Speed — doubled beside a Beast).',
+  },
+  pounce: {
+    id: 'pounce',
+    name: 'Pounce',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 30,
+    // The slate's only bracket row, and the type's whole answer to being
+    // outsped. 30 base power for 35 mana is deliberately a bad rate: what is
+    // being bought is the ORDER, on a type whose damage rows are otherwise
+    // all worth more the longer a Bleed has been running.
+    manaCost: 35,
+    priority: 1,
+    target: 'singleEnemy',
+    description: 'Springs first, from cover.',
+  },
+
+  // Mid ----------------------------------------------------------------------
+  lacerate: {
+    id: 'lacerate',
+    name: 'Lacerate',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 50,
+    // The reliable half of Claw: 15 more mana turns a 20% chance into a
+    // certainty and adds 10 base power. This is the move Maul and Eviscerate
+    // are actually set up by.
+    statusApplication: { statusId: 'Bleed', target: 'moveTarget' },
+    manaCost: 35,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Opens a wound too deep to close (inflicts Bleed).',
+  },
+  maul: {
+    id: 'maul',
+    name: 'Maul',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 40,
+    // The cheap half of the payoff pair. Doubling the BASE POWER is where a
+    // "double damage" row belongs (CLAUDE.md two-pipeline separation): it
+    // scales the formula's own input, so it composes with STAB, the type
+    // chart and every relic modifier exactly as an 80 BP move would.
+    // No consumesStatus — the Bleed is still there for Eviscerate next round,
+    // which is the whole reason to plant it early.
+    conditionalPower: { requiresTargetStatus: 'Bleed', multiplier: 2 },
+    manaCost: 35,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Tears into an open wound (double damage vs Bleeding).',
+  },
+  toxicFangs: {
+    id: 'toxicFangs',
+    name: 'Toxic Fangs',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 40,
+    // The first move in the game to apply TWO statuses (content.ts
+    // statusApplication is a list since this row — 2026-08-30 designer call).
+    // Both guaranteed, both on the move's own target, resolved in this order.
+    // At 40 mana it is Lacerate plus Venom Bite for 15 less than casting both,
+    // and the pair is worth more than the sum: Bleed arms Maul and Eviscerate
+    // while the Poison timer runs, and neither is cleared by switching out.
+    statusApplication: [
+      { statusId: 'Bleed', target: 'moveTarget' },
+      { statusId: 'Poison', target: 'moveTarget', magnitude: 10, duration: 3 },
+    ],
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Fangs that tear and envenom at once (inflicts Bleed and Poison 10).',
+  },
+  rampage: {
+    id: 'rampage',
+    name: 'Rampage',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 70,
+    // Stone's Rubble Rush shape at a bigger number (content.ts recoilPercent):
+    // a quarter of the damage ACTUALLY dealt, paid once after the target loop,
+    // and it can faint the user with no floor. The highest single-target base
+    // power in the slate that asks no question of the board.
+    recoilPercent: 0.25,
+    manaCost: 50,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'An all-out assault that costs the attacker too (25% recoil).',
+  },
+  thrash: {
+    id: 'thrash',
+    name: 'Thrash',
     type: 'Beast',
     category: 'physical',
     kind: 'damage',
     basePower: 45,
-    manaCost: 8,
-    priority: 1,
-    target: 'singleEnemy',
-    description: 'A snarling flurry of bites, fast enough to beat most moves.',
+    // The type's only physical spread, and the only way it touches both foes
+    // without a magical stat. No rider: 45 into two targets for 45 mana is
+    // the whole row, which is what a type carrying this much conditional
+    // damage needs as its unconditional floor.
+    manaCost: 45,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Lashes out at everything within reach.',
   },
-  savageMaul: {
-    id: 'savageMaul',
-    name: 'Savage Maul',
+  packHunt: {
+    id: 'packHunt',
+    name: 'Pack Hunt',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 40,
+    // The second pack row, and the one that makes the condition a DAMAGE
+    // decision rather than a buff bonus (content.ts
+    // conditionalPower.requiresPartnerType). 40 base power alone is a bad
+    // 40-mana move; 80 beside a Beast is the best rate in the slate. Read off
+    // the ACTIVE partner when the hit lands, so switching a Beast in earlier
+    // in the same round already counts.
+    conditionalPower: { requiresPartnerType: 'Beast', multiplier: 2 },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Strikes as one of a pair (double power beside a Beast).',
+  },
+
+  // Late ---------------------------------------------------------------------
+  eviscerate: {
+    id: 'eviscerate',
+    name: 'Eviscerate',
     type: 'Beast',
     category: 'physical',
     kind: 'damage',
     basePower: 75,
-    manaCost: 16,
+    // Maul's capstone: same question, nearly double the base power and more
+    // than double the price. A Bleed planted by a 20-mana Claw on round one
+    // is what turns this into a 150 BP hit on round five, and nothing the
+    // defender does short of a Cleanse takes it away — Bleed survives a
+    // switch (statuses.ts).
+    conditionalPower: { requiresTargetStatus: 'Bleed', multiplier: 2 },
+    manaCost: 80,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A brutal, all-out mauling.',
+    description: 'Finishes what the wound started (double damage vs Bleeding).',
+  },
+  apexPredator: {
+    id: 'apexPredator',
+    name: 'Apex Predator',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'buff',
+    // "Double the user's Attack" as a DERIVED grant (content.ts
+    // derivedStatDeltas 'userEffectiveAttack', 2026-08-30 designer call):
+    // it grants Attack equal to whatever the caster's Attack currently reads,
+    // which is a doubling rather than a flat number. So Rally and Prowl before
+    // it are worth double again, a second cast doubles the doubled figure, and
+    // a debuffed caster doubles the debuffed one.
+    derivedStatDeltas: { source: 'userEffectiveAttack', stats: ['attack'] },
+    statDeltaTarget: 'self',
+    manaCost: 90,
+    priority: 0,
+    target: 'self',
+    description: "Sheds every restraint — doubles the user's Attack.",
+  },
+  packLeader: {
+    id: 'packLeader',
+    name: 'Pack Leader',
+    type: 'Beast',
+    category: 'physical',
+    kind: 'buff',
+    // The biggest stat grant in the game: +50 Attack AND +50 Speed to both
+    // allies, which is more than most heroes' entire authored Attack.
+    statDeltas: [
+      { stat: 'attack', amount: 50 },
+      { stat: 'speed', amount: 50 },
+    ],
+    // The third pack row, and the only one that pays out as a PRICE rather
+    // than as an effect (content.ts conditionalManaCost.requiresPartnerType).
+    // 100 is above every hero's starting pool; 50 beside a Beast is castable
+    // by mid-run, so the discount is not a bonus on top of the move — it is
+    // most of what decides whether the move exists for a given team.
+    conditionalManaCost: { requiresPartnerType: 'Beast', manaCost: 50 },
+    manaCost: 100,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Takes the front and the pack follows (+50 Attack and Speed to both allies).',
+  },
+  animalSpirit: {
+    id: 'animalSpirit',
+    name: 'Animal Spirit',
+    type: 'Beast',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 60,
+    // The slate's ONE magical row, authored as coverage for casters rather
+    // than for the type's own hero (designer note, 2026-08-30) — Beast's only
+    // native hero is Attack 90 / Intelligence 20, so this is deliberately not
+    // for it. It lives off-type, in a caster's pool; see
+    // docs/authoring-moves.md §10 for the candidates left unplaced.
+    manaCost: 50,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Calls something older than the caster down on both foes.',
   },
 
   // --- Ancient -----------------------------------------------------------
@@ -3481,52 +3772,38 @@ export const moves: Record<string, MoveDefinition> = {
   // stat is not unreachable — but all three are Mind, so a physical hero's
   // only route to magical defense is now equipment, relics, Evolution, or a
   // Mind partner. See docs/authoring-moves.md §10 (Iron).
-  rally: {
-    id: 'rally',
-    name: 'Rally',
-    type: 'Beast',
-    category: 'physical',
-    kind: 'buff',
-    statDeltas: [{ stat: 'attack', amount: 10 }],
-    manaCost: 12,
-    priority: 0,
-    target: 'bothAllies',
-    description: 'A rousing howl that sharpens both allies’ offense.',
-  },
-  // Goblin Chief's signature move (src/data/enemies.ts) — deliberately the
-  // strongest buff in the fixture pool: 3 stats at once, both allies, where
-  // every other buff move here caps at 2 stats and/or a single target.
-  warHorn: {
-    id: 'warHorn',
-    name: 'War Horn',
-    type: 'Beast',
-    category: 'physical',
-    kind: 'buff',
-    statDeltas: [
-      { stat: 'attack', amount: 10 },
-      { stat: 'defense', amount: 10 },
-      { stat: 'speed', amount: 10 },
-    ],
-    manaCost: 24,
-    priority: 0,
-    target: 'bothAllies',
-    description: "Whips both allies into a frenzy — Attack, Defense and Speed all up.",
-  },
+  //
+  // Rally (Beast, +10 Attack, both allies, 12 mana) lived here until the
+  // authored Beast slate (2026-08-30). It survives BY ID, re-authored up in
+  // the Beast block at the table's price — 25 mana for +20 Attack, so both
+  // halves doubled. That is the second-widest re-pricing any slate has done
+  // after Spirit's Second Wind, and for the same reason: SIX non-Beast
+  // starting kits carry it (Tempest, Voltaic, Scallywag, Mordrax, Valor,
+  // Gallant) plus Crag's and Sentinel's pools, so eight heroes with nothing
+  // to do with Beast had their buff slot re-priced by a Beast decision. It is
+  // still the game's cheapest side-wide Attack buff; it is no longer a
+  // 12-mana one. See docs/authoring-moves.md §10 (Beast).
+  //
+  // War Horn (Beast, +10 Attack/Defense/Speed, both allies, 24 mana) went
+  // with it and does NOT survive. It was Goblin Chief's signature and the
+  // only move in the game granting three stats at once; the slate's
+  // equivalent is Pack Leader, at 100 mana for two stats at five times the
+  // magnitude, which is not the same move and is not meant to be. The Chief
+  // is re-kitted onto the slate's own rows (src/data/enemies.ts).
 
   // --- Status moves (docs/conditions.md) — one per status, plus Cleanse ---
-  rendingClaw: {
-    id: 'rendingClaw',
-    name: 'Rending Claw',
-    type: 'Beast',
-    category: 'physical',
-    kind: 'damage',
-    basePower: 35,
-    statusApplication: { statusId: 'Bleed', target: 'moveTarget' },
-    manaCost: 12,
-    priority: 0,
-    target: 'singleEnemy',
-    description: "A raking slash that opens a wound too deep to close (inflicts Bleed).",
-  },
+  // Bleed's dedicated fixture carrier (rendingClaw — Beast, 35 BP + guaranteed
+  // Bleed at 12 mana) went when the authored Beast slate landed (2026-08-30),
+  // and this is the last of the per-status fixture carriers to go: every one
+  // of the nine statuses is now planted by authored content only.
+  //
+  // The slate replaces it five times over (Claw at 20%, Lacerate, Toxic
+  // Fangs, and two more rows that CASH the mark rather than plant it), so the
+  // vector needed no patching — but the cheapest Bleed in the game went from
+  // 12 mana to 20, and the cheapest GUARANTEED one from 12 to 35. It was also
+  // Rime's off-type Bleed row, which is repointed onto the slate's own Claw
+  // (src/data/progression.ts) since Rime is one of the three heroes that can
+  // graft Beast.
   // Daze's dedicated fixture carrier (stunningBlow — Iron, 25 BP + guaranteed
   // Daze at 20 mana) went the way Burn's, Freeze's, Conduct's, Haunt's and
   // Renew's did, when the authored Iron slate landed (2026-08-30). Unlike

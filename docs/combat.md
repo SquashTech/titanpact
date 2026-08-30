@@ -417,6 +417,7 @@ exactly one:
 |---|---|---|
 | `requiresAllEnemiesStatus` | every active enemy carries it | Storm's Overcharge, "costs 0 mana if both enemies have Conduct" |
 | `requiresAnyEnemyStatus` | at least one does | Iron's Metallic Blade, "costs 0 mana if an enemy has Conduct" |
+| `requiresPartnerType` | the caster's ACTIVE PARTNER is of a named type | Beast's Pack Leader, "costs 50 mana if partner is a Beast" |
 
 The second authored cost that varies with state, and the first that varies with
 something other than the caster's own history (`manaDiscountOnUse`, above).
@@ -428,13 +429,16 @@ something other than the caster's own history (`manaDiscountOnUse`, above).
   satisfies "every enemy is marked"; a condition nothing can meet must not read
   as met. The `some` side would answer false on its own, and the guard is
   shared rather than duplicated.
-- **Both sides read the ENEMY side only.** A mark that lands on the caster's own
-  partner — which Storm's Rising Static can do, since its rider resolves its own
-  target — never discounts anything.
-- **Exactly one side, unenforced by the type system.** Both fields are optional
-  and a move authoring neither is a silent dud that never fires. Pinned across
-  the whole move table by `test/ironMoves.test.ts`, the same discipline
-  `conditionalPower`'s five siblings follow.
+- **The two status sides read the ENEMY side only.** A mark that lands on the
+  caster's own partner — which Storm's Rising Static can do, since its rider
+  resolves its own target — never discounts anything. The third side is the
+  exception that proves it: `requiresPartnerType` reads the caster's OWN row
+  and nothing about the enemy at all (see "The same question, asked of the
+  PARTNER", below).
+- **Exactly one side, unenforced by the type system.** All three fields are
+  optional and a move authoring none is a silent dud that never fires. Pinned
+  across the whole move table by `test/ironMoves.test.ts`, the same discipline
+  `conditionalPower`'s six siblings follow.
 
 **Why "any" is a different mechanic and not a looser "all".** Iron is one of
 Conduct's `triggerTypes`, so an Iron damage move *detonates* the mark it reads.
@@ -856,6 +860,122 @@ has to *survive at low HP* to collect, so every point of pressure the enemy
 applies is simultaneously enabling the bonus and threatening to remove the hero
 holding it. It is self-limiting in a way the target-side form is not, which is
 why ×3 at 25% is affordable here where it would not be as an execute.
+
+---
+
+## The same question, asked of the PARTNER (2026-08-30, Beast)
+
+`requiresPartnerType`: the first condition in the game that reads **a
+combatant on the caster's own side of the field**, and the only one a player
+answers at *draft* time rather than during a fight. Beast authors it in three
+places, because the same question hangs a different mechanic each time:
+
+| Field | Hangs | Content |
+|---|---|---|
+| `conditionalPower.requiresPartnerType` | a BasePower multiplier | Pack Hunt, "double base power if partner is a Beast" |
+| `conditionalManaCost.requiresPartnerType` | a replacement price | Pack Leader, "costs 50 mana if partner is a Beast" |
+| `conditionalStatDeltas` | a multiplier on the move's own stat grants | Prowl, "+10 Attack and +10 Speed, doubled if partner is a Beast" |
+
+Three sibling fields rather than one shared predicate, for the same reason
+`conditionalPower`'s six siblings are siblings: content is **data, not a
+predicate function** (CLAUDE.md "Architecture"), and a move that wanted two of
+these at once would be unauthorable if they were folded into one.
+
+**What "partner" means — one answer, one reader.** `state.ts
+activePartnerTypes` is the only place that resolves it, and it settles three
+things (2026-08-30 designer calls):
+
+- **The ACTIVE partner only.** The hero in the other active slot. The bench
+  does not count, so switching a Beast in turns the condition on and switching
+  one out turns it off — which is what makes it a doubles condition rather
+  than a roster one.
+- **A fainted partner counts for nothing**, exactly like an empty slot.
+- **Effective types** (`grantedTypes` included), so a hero that grafted Beast
+  through an Evolution satisfies it exactly as an innate Beast does. This is
+  load-bearing rather than incidental: the roster has **one** native Beast
+  hero, and the three heroes with a Beast type-graft path (Sylva, Rime,
+  Mordrax) are how a player's own team reaches the condition at all.
+
+**Read LIVE, at resolution**, which puts it with `conditionalManaCost` and
+`conditionalPower.requiresFieldEffect` rather than with
+`conditionalPriority`. The consequence is real and was accepted rather than
+designed around: a partner KO'd by a faster action earlier in the same round
+takes Pack Leader's discount away **after** the player committed, and if the
+caster can no longer cover the difference the action fizzles for no mana —
+the same shape a cleansed Overcharge already had.
+
+**The locked decision it brushes against.** Nothing here breaks the
+two-pipeline separation (the multiplier is a BasePower-stage input like its
+five siblings) or the flat-stat-modifier rule (doubling a multiple of 5 is a
+multiple of 5). What is new is the **counterplay surface**: every damage
+condition before this one could be answered by the defender — cleanse the
+Burn, switch off the Freeze, displace the field, heal above the line. A
+partner's TYPE cannot be interacted with at all. It is not answered, it is
+*drafted*, and the only thing that changes it mid-fight is the holder's own
+switch. Recorded rather than settled by accident, along with the shapes
+deliberately left unbuilt: reading the partner's type on the **enemy** side,
+reading anything about a partner other than its type, and any version that
+counts the bench.
+
+---
+
+## A move that applies more than one status (2026-08-30, Beast)
+
+`MoveDefinition.statusApplication` is now **one rider or a list of them** —
+Beast's Toxic Fangs, "afflict Bleed and Poison 10". `docs/authoring-moves.md`
+§3 had carried "a move can carry exactly ONE statusApplication" as an engine
+change to raise before building since Fire; this is that change, and the
+designer's answer was to widen the field rather than re-cut the row.
+
+A union rather than an unconditional array, with `content.ts
+statusApplicationsOf` as the single reader every consumer goes through. That
+is what keeps the ~50 moves authored before it byte-identical in both the data
+and the code path.
+
+Three things fix its shape, and the third is the one that matters:
+
+- **Ordered.** Riders resolve in authored order, so a row reading "apply X,
+  then Y" is true rather than incidental — the same discipline
+  `detonatesStatus` resolving after `statusApplication` already established.
+- **Independent.** Each rider resolves its own targets and rolls its own
+  `chance`, and each feeds its own passive reactions before the next runs. Two
+  riders on one cast are two applications that share a cast, not a compound
+  status.
+- **A one-rider move draws exactly the RNG it drew before.** The list path adds
+  no draw of its own, which is the determinism rule every optional field since
+  Fire has been added under (`docs/architecture.md` "Determinism & RNG"), and
+  it is pinned in `test/beastMoves.test.ts` by casting a one-rider and a
+  two-rider move from the same state and comparing `rngState`.
+
+---
+
+## Apex Predator's doubling: a derived grant that reads a stat (2026-08-30, Beast)
+
+`derivedStatDeltas.source` gains `'userEffectiveAttack'` — a second member of
+an existing union rather than a new field, which is exactly the extension
+`content.ts` predicted when Arcane authored the first one.
+
+"Double the user's Attack" is expressed as *grant Attack equal to the Attack
+you currently have*, which is what makes it a doubling rather than a flat
+number. The designer's call (2026-08-30) was to read **what the bar reads** —
+base, plus equipment and relics, plus this fight's buffs, minus its debuffs —
+through `getEffectiveStat`, with three consequences that are the whole point:
+
+- **Setup compounds into it.** Rally (+20) and Prowl (+10/+20) before it are
+  doubled along with everything else, so Beast's buff rows are a ramp rather
+  than a list.
+- **A second cast doubles the doubled figure** (90 → 180 → 360). It reads the
+  number on the board, the same rule and the same reasoning as
+  `doublesStatReductions`; nothing memoises the original.
+- **A debuffed caster doubles the debuffed number**, and the floor of 1 applies
+  here like everywhere else.
+
+It takes the same exemption from the multiples-of-5/10 rule the mana member
+does, and needs it for the same reason: an effective Attack of 53 doubles to
+106, and rounding would make the grant disagree with the numeral on the
+caster's own stat block. That remains the ONE documented hole in the lock, now
+with two members rather than one — a third source should be a conversation,
+not a habit.
 
 ---
 

@@ -143,10 +143,26 @@ export function resolveConditionalPowerMultiplier(
    * `attacker` so the snapshot lives at the one call site that knows when the
    * cast began.
    */
-  attackerHp?: { currentHp: number; maxHp: number }
+  attackerHp?: { currentHp: number; maxHp: number },
+  /**
+   * The effective types of the caster's ACTIVE PARTNER (state.ts
+   * activePartnerTypes), or null/undefined when there is no live partner —
+   * required only by the requiresPartnerType form (Beast's Pack Hunt), which
+   * reports no bonus without it.
+   *
+   * A resolved type list rather than the state and a roster, so this stays a
+   * pure function of the hit's own context like every argument before it.
+   */
+  partnerTypes?: readonly string[] | null
 ): number {
   const conditional = move.conditionalPower;
   if (!conditional) return 1;
+  if (conditional.requiresPartnerType != null) {
+    // The only sibling that asks about a combatant on the caster's OWN side.
+    // All-or-nothing across a spread cast: one question, one answer, however
+    // many targets the move goes on to hit (content.ts requiresPartnerType).
+    return partnerTypes?.includes(conditional.requiresPartnerType) ? conditional.multiplier : 1;
+  }
   if (conditional.requiresUserHpBelow != null) {
     // Strictly below, matching the target-side form: a caster sitting exactly
     // at half has not yet earned Spite's double.

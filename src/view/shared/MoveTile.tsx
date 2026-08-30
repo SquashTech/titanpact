@@ -1,5 +1,6 @@
 import { useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent } from 'react';
-import type { MoveDefinition } from '../../engine/content';
+import type { MoveDefinition, StatusApplication } from '../../engine/content';
+import { statusApplicationsOf } from '../../engine/content';
 import { resolveHealFor, type HealCaster } from '../../engine/heal/healPipeline';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { fieldEffects } from '../../data/fieldEffects';
@@ -166,7 +167,7 @@ export function swallowGhostClick() {
  * (docs/conditions.md §7), so a status authored as a boon reads as one
  * everywhere the moment it is written.
  */
-export function grantsRatherThanInflicts(app: NonNullable<MoveDefinition['statusApplication']>): boolean {
+export function grantsRatherThanInflicts(app: StatusApplication): boolean {
   return app.target === 'self' || statuses[app.statusId]?.positive === true;
 }
 
@@ -177,8 +178,10 @@ function isDebuff(move: MoveDefinition): boolean {
   // enemy — so neither rule below can see it and it would read as a Buff. It is
   // the most one-sided debuff in the game.
   if (move.doublesStatReductions) return true;
-  const applied = move.statusApplication;
-  return applied != null && applied.target !== 'self' && !statuses[applied.statusId]?.positive;
+  // ANY rider that lands a non-positive status on someone else — a move
+  // whose first rider is a self-buff and whose second is a wound is still a
+  // debuff (content.ts statusApplication, now a list).
+  return statusApplicationsOf(move).some((app) => app.target !== 'self' && !statuses[app.statusId]?.positive);
 }
 
 /** Which of MoveKindGlyph's five glyphs a move wears: a damage move keys off `move.category` (the stat pipeline it draws from), a non-damage one off `move.kind`, with buff split by sign. The one MoveDefinition -> MoveKindGlyphKind mapping in the app. */
@@ -232,7 +235,7 @@ export const TARGET_MODE_LABELS: Record<MoveDefinition['target'], string> = {
  * Random Ally" would be describing the Speed correctly and the Conduct exactly
  * backwards.
  */
-export function riderTargetLabel(app: NonNullable<MoveDefinition['statusApplication']>): string | null {
+export function riderTargetLabel(app: StatusApplication): string | null {
   if (app.target === 'moveTarget') return null;
   if (app.target === 'self') return 'Self';
   return TARGET_MODE_LABELS[app.target];
@@ -300,7 +303,15 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     // (content.ts statDeltaChance). Without the odds "-20 Wisdom" reads as a
     // guarantee, and Psi Bolt lands it one time in five.
     const odds = move.statDeltaChance != null ? `${Math.round(move.statDeltaChance * 100)}% chance: ` : '';
-    parts.push(odds + deltas + where);
+    // Prowl's deltas are worth double beside a Beast, and the printed +10 is
+    // the wrong number half the time without this (content.ts
+    // conditionalStatDeltas). Worded as the condition rather than as the
+    // current answer, like every other clause here: this summary is printed on
+    // surfaces with no fight in scope, where there is no partner to read.
+    const pack = move.conditionalStatDeltas
+      ? `, ×${move.conditionalStatDeltas.multiplier} beside a ${move.conditionalStatDeltas.requiresPartnerType} partner`
+      : '';
+    parts.push(odds + deltas + where + pack);
   }
 
   // Brain Flay states a RULE rather than a number, for the same reason
@@ -321,7 +332,15 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
           ? ' (Self)'
           : '';
     const stats = move.derivedStatDeltas.stats.map((stat) => STAT_LABELS[stat]).join(' and ');
-    parts.push(`+${stats} equal to your Mana before casting${where}`);
+    // Apex Predator's source is the caster's own Attack, so the honest clause
+    // is what the grant DOES rather than what it reads: "+ATK equal to your
+    // Attack" is arithmetic the player has to do, and "doubles" is the same
+    // fact already done (content.ts derivedStatDeltas 'userEffectiveAttack').
+    parts.push(
+      move.derivedStatDeltas.source === 'userEffectiveAttack'
+        ? `Doubles your ${stats}${where}`
+        : `+${stats} equal to your Mana before casting${where}`
+    );
   }
 
   // The hard gate leads, because on Glaciate and Absolute Zero it is not a
@@ -352,6 +371,11 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     // a Spite reading "below 50% HP" without saying whose would send the
     // player hunting for a wounded enemy, which is the opposite move.
     const userHpSide = move.conditionalPower.requiresUserHpBelow;
+    // The partner form (content.ts requiresPartnerType) names no status, no
+    // field and no number — it asks about the OTHER HERO ON YOUR SIDE, which
+    // is a fact the player settles at draft time rather than in the fight, so
+    // it has to say "partner" out loud or it reads as one more board state.
+    const partnerSide = move.conditionalPower.requiresPartnerType;
     const gate = move.conditionalPower.requiresTargetStatus ?? userSide ?? '';
     const gateName = statuses[gate]?.name ?? gate;
     // "consumed" is not a footnote. Cold Snap's double is paid for with the
@@ -359,7 +383,9 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     // castable, and a player who cannot see that cannot make the choice.
     // Never printed on the field form, which cannot consume anything.
     const spent = move.conditionalPower.consumesStatus && !fieldSide ? ', consumed' : '';
-    const clause = fieldSide
+    const clause = partnerSide
+      ? `while your partner is a ${partnerSide}`
+      : fieldSide
       ? `while ${fieldEffects[fieldSide]?.name ?? fieldSide} is up`
       : userHpSide != null
         ? `while you are below ${Math.round(userHpSide * 100)}% HP`
@@ -422,14 +448,18 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   // depends on the hit it is attached to (content.ts drainPercent).
   if (move.drainPercent) parts.push(`Heals ${Math.round(move.drainPercent * 100)}% of damage dealt`);
 
-  if (move.statusApplication) {
-    const { statusId, magnitude, duration, chance } = move.statusApplication;
+  // One clause PER RIDER (content.ts statusApplication is a list since
+  // Beast's Toxic Fangs) — a summary that printed only the first would say
+  // "Applies Bleed" about a move that also poisons, which is the half of the
+  // payload the player is choosing it FOR.
+  for (const app of statusApplicationsOf(move)) {
+    const { statusId, magnitude, duration, chance } = app;
     // Granted vs inflicted — see grantsRatherThanInflicts above. The target
     // clause appended below reads "Self"/"Both Allies" either way, so the verb
     // is what actually disambiguates a boon from a wound.
     const amount = magnitude ?? duration;
     const odds = chance != null ? `${Math.round(chance * 100)}% ` : '';
-    const verb = grantsRatherThanInflicts(move.statusApplication) ? 'Grants' : 'Applies';
+    const verb = grantsRatherThanInflicts(app) ? 'Grants' : 'Applies';
     // The status's NAME, not its id — every status id was a single word until
     // Elemental Force arrived, at which point this line started printing
     // "FireForce". The dossier has always used the name (MoveDetailOverlay).
@@ -437,7 +467,7 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     // The rider's own target, when it has one — see riderTargetLabel. The
     // trailing "— Random Ally" clause below describes the MOVE's target, and
     // on a two-sided move that is the wrong answer for this half.
-    const where = riderTargetLabel(move.statusApplication);
+    const where = riderTargetLabel(app);
     parts.push(`${odds}${verb} ${statusName}${amount != null ? ` ${amount}` : ''}${where ? ` (${where})` : ''}`);
   }
 
@@ -470,8 +500,13 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   // condition is, not what it costs right now.
   if (move.conditionalManaCost) {
     const all = move.conditionalManaCost.requiresAllEnemiesStatus;
+    const partner = move.conditionalManaCost.requiresPartnerType;
     const gate = all ?? move.conditionalManaCost.requiresAnyEnemyStatus;
-    if (gate) {
+    // The ally side (Pack Leader) reads nothing about the enemy at all, so it
+    // gets its own clause rather than a status name it does not have.
+    if (partner) {
+      parts.push(`${move.conditionalManaCost.manaCost} MP beside a ${partner} partner`);
+    } else if (gate) {
       const name = statuses[gate]?.name ?? gate;
       parts.push(
         `${move.conditionalManaCost.manaCost} MP if ${all ? `both enemies have ${name}` : `an enemy has ${name}`}`

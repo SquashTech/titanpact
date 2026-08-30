@@ -29,6 +29,7 @@
 //      before — golden replays depend on a new optional field being inert
 //      (authoring-moves.md §5).
 
+import { firstStatusApplication, statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
 import { createFightState } from './fixtures';
@@ -234,8 +235,8 @@ test('light: the new field draws no RNG and leaves board-free callers answering 
 test('light: no Light move applies or scales off something the catalog does not define', () => {
   for (const move of Object.values(moves)) {
     if (move.type !== 'Light') continue;
-    if (move.statusApplication) {
-      assert.ok(statuses[move.statusApplication.statusId], `${move.id} applies unknown status ${move.statusApplication.statusId}`);
+    for (const app of statusApplicationsOf(move)) {
+      assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);
     }
     if (move.fieldEffectApplication) {
       assert.ok(fieldEffects[move.fieldEffectApplication], `${move.id} sets unknown field effect ${move.fieldEffectApplication}`);
@@ -258,9 +259,10 @@ test('light: no Daze applier authors a number — the status is flinch-shaped', 
   // one. Six of Light's seventeen carry Daze, which is why this is pinned.
   assert.strictEqual(statuses.Daze.shape, 'boolean');
   for (const move of Object.values(moves)) {
-    if (move.statusApplication?.statusId !== 'Daze') continue;
-    assert.strictEqual(move.statusApplication.duration, undefined, `${move.id} still authors a Daze duration`);
-    assert.strictEqual(move.statusApplication.magnitude, undefined, `${move.id} still authors a Daze magnitude`);
+    const app = firstStatusApplication(move);
+    if (app?.statusId !== 'Daze') continue;
+    assert.strictEqual(app.duration, undefined, `${move.id} still authors a Daze duration`);
+    assert.strictEqual(app.magnitude, undefined, `${move.id} still authors a Daze magnitude`);
   }
 });
 
@@ -312,7 +314,7 @@ test("light: Daze is a bet on turn order — Solace's own riders only pay when i
   // And the slate authors no priority anywhere, so there is no way for Light to
   // buy its way past a Speed disadvantage — the redesign's cost is real.
   for (const move of Object.values(moves)) {
-    if (move.type !== 'Light' || move.statusApplication?.statusId !== 'Daze') continue;
+    if (move.type !== 'Light' || firstStatusApplication(move)?.statusId !== 'Daze') continue;
     assert.strictEqual(move.priority, 0, `${move.id} would let Light buy its way past Speed`);
   }
 });

@@ -11,6 +11,7 @@
 // "Two-pipeline separation") — that last one is the easy thing to get wrong
 // and the hard thing to notice.
 
+import { statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
 import { createFightState } from './fixtures';
@@ -126,8 +127,10 @@ test('fire: every "Spread" move in the design table targets both enemies, and no
 
 test('fire: no Fire move applies a status the catalog does not define', () => {
   for (const move of Object.values(moves)) {
-    if (move.type !== 'Fire' || !move.statusApplication) continue;
-    assert.ok(statuses[move.statusApplication.statusId], `${move.id} applies unknown status ${move.statusApplication.statusId}`);
+    if (move.type !== 'Fire') continue;
+    for (const app of statusApplicationsOf(move)) {
+      assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);
+    }
   }
 });
 
