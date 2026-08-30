@@ -108,8 +108,12 @@ export const progressionTable: ProgressionTable = {
     // hero. That the +50 Attack lands better on that partner than on Tempest
     // itself is the point, not an accident.
     tempest: ['ionize', 'chainLightning', 'electricBurst', 'thunderbolt', 'stormSurge', 'ionicZap'],
-    shadowMonk: ['duskStrike', 'shadowVeil', 'fangRush', 'quickJab', 'nightmareGrasp'],
-    marrow: ['duskStrike', 'shadowVeil', 'fangRush', 'quickJab', 'nightmareGrasp'],
+    // Shadow's authored pool (src/data/moves.ts, 2026-08-30). Split into two
+    // physical lines so the two identical heroes at least LEVEL differently:
+    // Vesper takes the Stealth payoffs (Ambush, Shadow Form), Marrow the
+    // pressure ones (Shadowstrike's bracket, Enfeeble's spread debuff).
+    shadowMonk: ['ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm'],
+    marrow: ['fadeStrike', 'shadowSlice', 'rend', 'shadowstrike', 'enfeeble', 'duskBlade'],
     // The three Frost heroes draw from the authored Frost pool (src/data/moves.ts,
     // 2026-08-30), split by the stat each actually attacks with, same as Fire
     // and Water. Flurry (Int 70) takes the magical line and with it BOTH of the
@@ -165,7 +169,9 @@ export const progressionTable: ProgressionTable = {
 
     // Lucius: only his Evolutions are deferred (src/data/heroes.ts) — he
     // still grows a movepool like any other hero below EVOLUTION_LEVEL.
-    lucius: ['vanish', 'nightmareGrasp', 'psychicLance', 'mindSpike'],
+    // Int 75 / Atk 35, so the MAGICAL Shadow line — and the only hero holding
+    // Eclipse, the slate's 80-mana execute.
+    lucius: ['umbralBeam', 'eclipse', 'umbralWave', 'enfeeble', 'psychicLance', 'mindSpike'],
 
     // --- Hollowbark, Aegis, Brimstone, Gallant, Nightshade, Pincer,
     // Scallywag, Sentinel, Bellows, Zenith (2026-08-22) ---
@@ -181,14 +187,19 @@ export const progressionTable: ProgressionTable = {
     // is the hero that spends a turn making a MAGICAL partner enormous.
     // stunningBlow stays as the off-type physical it always was.
     aegis: ['holySlice', 'deityBlade', 'mend', 'purify', 'bless', 'exalt', 'consecrate', 'divineGrace', 'stunningBlow'],
-    brimstone: ['sparkFlash', 'spreadingBlaze', 'backdraft', 'sparkBurst', 'nightmareGrasp', 'duskStrike'],
+    // The spread-and-attrition line reads the same on both halves now: Fire's
+    // Burn spreads, Shadow's Poison spreads.
+    brimstone: ['sparkFlash', 'spreadingBlaze', 'backdraft', 'sparkBurst', 'umbralBeam', 'umbralWave'],
     // galeShot dropped with the Storm rewrite — it was Storm filler on a
     // mono-IRON hero, and Iron's own five moves are already split across
     // Gallant's kit and the four below, so there is no same-type replacement to
     // put in the slot. Left short rather than backfilled with more off-type
     // filler; the real fix is Iron's own authored slate.
     gallant: ['shrapnelBlast', 'stunningBlow', 'fortify', 'savageMaul'],
-    nightshade: ['shadowVeil', 'weaken', 'curseMind', 'rendingClaw', 'stunningBlow'],
+    // Speed 85, the fastest Shadow hero, so Shadowstrike's +1 bracket is worth
+    // most here. Off-type filler (curseMind, rendingClaw, stunningBlow) drops
+    // for the type's own line — docs/authoring-moves.md §7, "a line, not a sample".
+    nightshade: ['shadowstrike', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm'],
     // Pincer takes the physical line — and Wash Away, which scales off Wisdom
     // (45) rather than off the category, so the 20-Intelligence wall is a
     // perfectly good carrier for it. Wave Shred sits here because Pincer is the

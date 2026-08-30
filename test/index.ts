@@ -13,6 +13,7 @@ import './stormMoves.test';
 import './stoneMoves.test';
 import './natureMoves.test';
 import './lightMoves.test';
+import './shadowMoves.test';
 import './run.test';
 import './recruitment.test';
 import './shop.test';

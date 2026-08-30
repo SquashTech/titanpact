@@ -450,10 +450,11 @@ export interface MoveDefinition {
     /**
      * The multiplier applies when the HIT'S TARGET carries this status —
      * Fire's Immolate, Frost's Cold Snap. Exactly one of this,
-     * `requiresUserStatus` and `requiresFieldEffect` must be authored;
-     * authoring none leaves the multiplier permanently unapplied, which is a
-     * silent dud rather than an error (there is still no
-     * isValidMoveDefinition — docs/authoring-moves.md §4).
+     * `requiresUserStatus`, `requiresFieldEffect` and
+     * `requiresTargetHpBelow` must be authored; authoring none leaves the
+     * multiplier permanently unapplied, which is a silent dud rather than an
+     * error (there is still no isValidMoveDefinition —
+     * docs/authoring-moves.md §4).
      */
     requiresTargetStatus?: StatusId;
     /**
@@ -508,6 +509,37 @@ export interface MoveDefinition {
      * the same round already be doubled.
      */
     requiresFieldEffect?: FieldEffectId;
+    /**
+     * The multiplier applies when the HIT'S TARGET is below this fraction of
+     * its max HP — Shadow’s Rend and Eclipse, "double damage if the target is
+     * below 50% HP". Authored as a fraction in (0, 1); 0.5 is the only value
+     * content uses today, and it is a number rather than a boolean so a later
+     * slate can write an 0.25 execute without a second field.
+     *
+     * The fourth sibling, and the first condition in the game that reads a
+     * NUMBER off the board rather than the presence of a status or a field
+     * effect (docs/authoring-moves.md §4). Three consequences it is worth
+     * authoring knowing:
+     *
+     * 1. **Read BEFORE this hit’s own damage**, off the target’s live
+     *    currentHp at the moment the hit resolves. A move can never bring a
+     *    target under the line and then double against the HP it just took —
+     *    the execute rewards a target something ELSE already softened.
+     * 2. **Per target, like the target-status form.** A spread execute doubles
+     *    against the wounded foe and not the healthy one. (The user-side and
+     *    field forms ask one question for the whole cast; this one does not.)
+     * 3. **`consumesStatus` is inert on it**, for the same reason it is inert
+     *    on `requiresFieldEffect`: there is no status and no holder to strip.
+     *    resolveRound's consume branch reads
+     *    `requiresTargetStatus ?? requiresUserStatus`, so this form leaves it
+     *    undefined and the branch is a no-op rather than a third meaning.
+     *
+     * Needs the target’s max HP to answer, which the damage pipeline does not
+     * otherwise have — passed to resolveConditionalPowerMultiplier as an
+     * optional argument, on the same "omit it and the other forms behave
+     * exactly as before" discipline as `fieldEffectCtx`.
+     */
+    requiresTargetHpBelow?: number;
     multiplier: number;
     /**
      * Spend the status this move just cashed in — Frost's Cold Snap,
@@ -520,7 +552,8 @@ export interface MoveDefinition {
      * but the field is defined for both sides so the next slate does not
      * have to re-answer the question.
      *
-     * INERT on the `requiresFieldEffect` form (Light's Smite): there is no
+     * INERT on the `requiresFieldEffect` form (Light's Smite) and on the
+     * `requiresTargetHpBelow` form (Shadow’s Rend/Eclipse): there is no
      * status and no holder to strip it from. "Consume the field effect" is a
      * genuinely different mechanic — it would end a global, both-sides state
      * early, which is a field-effect question rather than a status one — and

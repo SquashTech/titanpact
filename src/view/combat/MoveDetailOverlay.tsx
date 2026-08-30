@@ -124,7 +124,10 @@ function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defender
   // forecast that ignored the Sanctuary already on the board would print half
   // the number the round is about to deal (docs/authoring-moves.md §5, "pass
   // your new term in or the forecast lies").
-  const conditionalMult = resolveConditionalPowerMultiplier(move, defender, attacker, fieldEffectCtx);
+  // getMaxHp threaded in for the same reason: an execute (content.ts
+  // conditionalPower.requiresTargetHpBelow) forecast without it would print
+  // half the number the round is about to deal against a wounded foe.
+  const conditionalMult = resolveConditionalPowerMultiplier(move, defender, attacker, fieldEffectCtx, getMaxHp(defenderHero, defender));
   const attackerTypes = effectiveTypes(attackerHero, attacker);
   const defenderTypes = effectiveTypes(defenderHero, defender);
 
@@ -319,10 +322,22 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   // which asks about no combatant at all and wears the field effect's own
   // glyph instead (requiresFieldEffect).
   const conditionalFieldId = move.conditionalPower?.requiresFieldEffect ?? '';
+  // The HP form asks about neither a status nor the field, so it takes
+  // neither of their rows (content.ts conditionalPower.requiresTargetHpBelow).
+  const conditionalHpBelow = move.conditionalPower?.requiresTargetHpBelow;
   const conditionalStatusId = move.conditionalPower
     ? (move.conditionalPower.requiresTargetStatus ?? move.conditionalPower.requiresUserStatus ?? '')
     : '';
   const conditionalDef = conditionalStatusId ? statuses[conditionalStatusId] : undefined;
+  /** Whether any prospective defender is ALREADY under an execute's line — answerable without declaring a target, same as conditionalFieldLive below. */
+  const conditionalHpLive = Boolean(
+    conditionalHpBelow != null &&
+      context?.defenderIds.some((id) => {
+        const defender = context.combat.combatants[id];
+        const hero = defender && allCombatants[defender.heroId];
+        return defender && !defender.fainted && hero && defender.currentHp < getMaxHp(hero, defender) * conditionalHpBelow;
+      })
+  );
   const conditionalFieldDef = conditionalFieldId ? fieldEffects[conditionalFieldId] : undefined;
   /** Whether the field this move's conditional wants is the one actually up right now — answerable without a target, unlike the target-side form. */
   const conditionalFieldLive = Boolean(conditionalFieldId && context?.combat.activeFieldEffect?.fieldEffectId === conditionalFieldId);
@@ -539,7 +554,22 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               }
             />
           )}
-          {move.conditionalPower && !conditionalFieldId && (
+          {/* The execute wears the HP heart rather than a status glyph: what
+              it asks about is a NUMBER on the target, and every other row
+              here points at something the player can see on a card's status
+              strip (content.ts conditionalPower.requiresTargetHpBelow). */}
+          {move.conditionalPower && conditionalHpBelow != null && (
+            <EffectRow
+              glyph={<StatGlyph stat="hp" />}
+              text={`×${move.conditionalPower.multiplier} power vs a target below ${Math.round(conditionalHpBelow * 100)}% HP`}
+              note={
+                conditionalHpLive
+                  ? 'scales base power, not the finished hit — and someone out there is already under the line'
+                  : 'scales base power, not the finished hit — read BEFORE this hit lands, so it never doubles off HP it is about to take'
+              }
+            />
+          )}
+          {move.conditionalPower && !conditionalFieldId && conditionalHpBelow == null && (
             <EffectRow
               glyph={<StatusGlyph statusId={conditionalStatusId} />}
               color={statusColor(conditionalStatusId)}

@@ -327,7 +327,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           // Light's Smite asks it of the BOARD (requiresFieldEffect), which is
           // why the same freshly-read fieldEffectCtx goes in: a Consecrate cast
           // earlier in this round has already turned the ground.
-          const basePowerMultiplier = resolveConditionalPowerMultiplier(move, target, attackerNow, fieldEffectCtx);
+          // Shadow: Rend and Eclipse ask it of the target HP FRACTION
+          // (requiresTargetHpBelow), which is why maxHp goes in — read here,
+          // BEFORE applyHpDelta, so an execute can never double against the HP
+          // this very hit is about to remove.
+          const basePowerMultiplier = resolveConditionalPowerMultiplier(move, target, attackerNow, fieldEffectCtx, maxHp);
 
           const rolled = retribution
             ? {

@@ -3,8 +3,9 @@
 // and a spread of priority brackets. Enough variety to run messy, interesting
 // 2v2s while the real content gets authored.
 //
-// EXCEPT Fire (2026-08-29), Water, Frost, Storm, Stone, Nature and Light (all
-// 2026-08-30), the seven types replaced wholesale by their designed movepools —
+// EXCEPT Fire (2026-08-29), Water, Frost, Storm, Stone, Nature, Light and
+// Shadow (all 2026-08-30), the eight types replaced wholesale by their
+// designed movepools —
 // see the "(AUTHORED)" blocks below. Those are balance-tuned content;
 // everything else here is still filler and should be read (and replaced) as
 // such, type by type. Every engine field below exists because an authored slate
@@ -19,6 +20,9 @@
 //           conditionalPower.consumesStatus (Cold Snap)
 //   Light — conditionalPower.requiresFieldEffect (Smite) — the first damage
 //           condition that reads the BOARD instead of a combatant
+//   Shadow — conditionalPower.requiresTargetHpBelow (Rend, Eclipse) — the
+//           first damage condition that reads a NUMBER rather than the
+//           presence of a status or a field
 //
 // Most moves here are `kind: 'damage'` — variety comes from
 // type/category/power/cost/priority/targeting — including doubles-native
@@ -71,18 +75,6 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
     description: 'A reckless overdraw of arcane power — no hero can currently afford it.',
-  },
-  duskStrike: {
-    id: 'duskStrike',
-    name: 'Dusk Strike',
-    type: 'Shadow',
-    category: 'physical',
-    kind: 'damage',
-    basePower: 55,
-    manaCost: 11,
-    priority: 0,
-    target: 'singleEnemy',
-    description: 'A strike thrown from the edge of vision.',
   },
 
   // --- Fire (AUTHORED, 2026-08-29) ------------------------------------------
@@ -1869,30 +1861,287 @@ export const moves: Record<string, MoveDefinition> = {
     description: 'Raises one ally past what they were built for (+100 Intelligence).',
   },
 
-  // --- Shadow ------------------------------------------------------------
-  shadowVeil: {
-    id: 'shadowVeil',
-    name: 'Shadow Veil',
+  // --- Shadow (AUTHORED 2026-08-30) --------------------------------------
+  // The designed fifteen, replacing the five fixture Shadow moves
+  // (duskStrike, shadowVeil, nightmareGrasp, weaken, vanish). Two ids are
+  // REUSED rather than retired because the slate re-authors the same idea at a
+  // new price: weaken (9 -> 15, and now hits Wisdom as well as Defense) and
+  // vanish (10 -> 15, otherwise unchanged).
+  //
+  // The most aggressive slate so far: twelve of the fifteen are damage or
+  // damage-shaped, and the three that are not are all setup for the twelve.
+  // It runs as four overlapping lines:
+  //
+  //   1. **Bleed, as flat attrition.** Backstab and Shadow Slice at 30%, Dusk
+  //      Blade guaranteed. Bleed is boolean and does NOT decay (statuses.ts):
+  //      a flat 5% of max HP every round, and it survives a switch. That makes
+  //      it the mirror of Fire's Burn — Burn is a burst that halves away, Bleed
+  //      is a small permanent tax you cannot pivot out of. Three carriers is
+  //      deliberately few; the type's plan is to apply it early and keep
+  //      pressing, not to stack it.
+  //   2. **Poison, as the magical line's clock.** Umbra Bolt / Umbral Beam /
+  //      Umbral Wave at 20% for 5 / 10 / 20. Every one is chanced, which is the
+  //      slate's own statement about how it differs from Nature: Nature plants
+  //      Poison on purpose and detonates it, Shadow accumulates it as a side
+  //      effect of attacking. Duration 3 throughout, matching every other
+  //      Poison in the game and the status's own "3-round timer".
+  //   3. **Stealth into Ambush.** Vanish (15) and Shadow Form (60) are the only
+  //      two Stealth grants in the game, and Ambush is the only payoff. Stealth
+  //      makes the holder untargetable by single-target moves, so the cast that
+  //      buys the double ALSO buys a round of safety — and Ambush spends it
+  //      (conditionalPower.consumesStatus), so the strike is what breaks cover.
+  //      Note the blanket rule in statuses.ts: a side's two actives can never
+  //      both be Stealthed, so a double-Shadow team gets one hidden hero, not
+  //      two.
+  //   4. **The execute.** Rend (40) and Eclipse (100) double against a target
+  //      under half HP — the game's first damage condition that reads a NUMBER
+  //      rather than the presence of a status or a field
+  //      (content.ts conditionalPower.requiresTargetHpBelow). Read BEFORE the
+  //      hit's own damage, so neither can double off HP it is about to take;
+  //      an execute is paid for by whatever softened the target first, which is
+  //      exactly the doubles-partner pressure this type wants to reward.
+  //
+  // Cost floor 15, ceiling 80 (Eclipse). The slate authors ONE priority row —
+  // Shadowstrike at +1, and it pays 45 mana for 35 base power to get it, which
+  // is the most expensive point-of-damage in the type. Weaken and Enfeeble are
+  // the only non-damage debuffs, and both hit Defense AND Wisdom, so a Shadow
+  // side softens for its own physical line and its own magical one with the
+  // same button.
+  umbraBolt: {
+    id: 'umbraBolt',
+    name: 'Umbra Bolt',
     type: 'Shadow',
     category: 'magical',
     kind: 'damage',
-    basePower: 52,
-    manaCost: 11,
+    basePower: 40,
+    // The cheap magical opener, and a 20% Poison rider rather than a plan —
+    // the type has no guaranteed Poison applier at all, which is what separates
+    // its clock from Nature's (see the block header).
+    statusApplication: { statusId: 'Poison', magnitude: 5, duration: 3, chance: 0.2, target: 'moveTarget' },
+    manaCost: 20,
     priority: 0,
     target: 'singleEnemy',
-    description: "Creeping darkness that gnaws at the target's resolve.",
+    description: 'A dart of congealed dark that sometimes leaves rot behind (20% chance of Poison 5).',
   },
-  nightmareGrasp: {
-    id: 'nightmareGrasp',
-    name: 'Nightmare Grasp',
+  vanish: {
+    id: 'vanish',
+    name: 'Vanish',
+    type: 'Shadow',
+    category: 'physical',
+    kind: 'buff',
+    statDeltas: [],
+    // Duration 1, and Stealth ticks at the START of a round (statuses.ts): this
+    // covers the rest of the round it is cast in plus the whole of the next,
+    // then goes. The table gives no number for it; 1 is the value this id has
+    // always carried and the only Stealth in the game — see docs/conditions.md.
+    statusApplication: { statusId: 'Stealth', duration: 1, target: 'self' },
+    manaCost: 15,
+    priority: 0,
+    target: 'self',
+    description: 'Steps out of sight for this round and the next (grants Stealth).',
+  },
+  fadeStrike: {
+    id: 'fadeStrike',
+    name: 'Fade Strike',
+    type: 'Shadow',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 45,
+    // Roughly five times the 1/16 default (damagePipeline.ts
+    // PROVISIONAL_CRIT_CHANCE). Crit SOURCE stays a loadout question
+    // (CLAUDE.md); this is a per-move override, not a stat.
+    critChance: 0.3,
+    manaCost: 25,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A strike thrown from the edge of vision, hard to guard against (30% crit).',
+  },
+  backstab: {
+    id: 'backstab',
+    name: 'Backstab',
+    type: 'Shadow',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 30,
+    statusApplication: { statusId: 'Bleed', chance: 0.3, target: 'moveTarget' },
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A short blade under the guard (30% chance of Bleed).',
+  },
+  weaken: {
+    id: 'weaken',
+    name: 'Weaken',
+    type: 'Shadow',
+    category: 'magical',
+    kind: 'buff',
+    // BOTH defensive stats, which is what makes this the type's universal
+    // opener: Shadow's own kit is split physical/magical, so one cast softens
+    // for either half of it and for whatever the partner is running.
+    statDeltas: [
+      { stat: 'defense', amount: -10 },
+      { stat: 'wisdom', amount: -10 },
+    ],
+    manaCost: 15,
+    priority: 0,
+    target: 'singleEnemy',
+    description: "Creeping shadow that erodes the target's guard and their will (-10 Defense, -10 Wisdom).",
+  },
+  shadowSlice: {
+    id: 'shadowSlice',
+    name: 'Shadow Slice',
+    type: 'Shadow',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 60,
+    statusApplication: { statusId: 'Bleed', chance: 0.3, target: 'moveTarget' },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A long cut that opens as it lands (30% chance of Bleed).',
+  },
+  ambush: {
+    id: 'ambush',
+    name: 'Ambush',
+    type: 'Shadow',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 50,
+    // The only payoff for the type's two Stealth grants, and it SPENDS the
+    // cover it cashed in (content.ts conditionalPower.consumesStatus). Read off
+    // the attacker's live statuses when the hit resolves, so the player can see
+    // the chip lit on the button before committing (FightScreen userConditionMet).
+    // Stealth only ever runs one round, so the consume costs the remainder of
+    // that round's protection rather than a standing buff.
+    conditionalPower: { requiresUserStatus: 'Stealth', multiplier: 2, consumesStatus: true },
+    manaCost: 35,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Breaks cover to strike (double power from Stealth, which it spends).',
+  },
+  rend: {
+    id: 'rend',
+    name: 'Rend',
+    type: 'Shadow',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 40,
+    // The cheap execute (content.ts conditionalPower.requiresTargetHpBelow).
+    // Read BEFORE this hit's damage, so it can never double off HP it is about
+    // to remove — the bonus is paid for by whatever softened the target first.
+    conditionalPower: { requiresTargetHpBelow: 0.5, multiplier: 2 },
+    manaCost: 30,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Tears at a wound that is already there (double damage below half HP).',
+  },
+  umbralBeam: {
+    id: 'umbralBeam',
+    name: 'Umbral Beam',
     type: 'Shadow',
     category: 'magical',
     kind: 'damage',
-    basePower: 68,
-    manaCost: 15,
-    priority: -1,
+    basePower: 60,
+    statusApplication: { statusId: 'Poison', magnitude: 10, duration: 3, chance: 0.2, target: 'moveTarget' },
+    manaCost: 40,
+    priority: 0,
     target: 'singleEnemy',
-    description: 'A dragging grip of pure dread, slow to summon but hard to shake.',
+    description: 'A sustained lance of darkness (20% chance of Poison 10).',
+  },
+  shadowstrike: {
+    id: 'shadowstrike',
+    name: 'Shadowstrike',
+    type: 'Shadow',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 35,
+    // The slate's only priority row, and the price is steep on purpose: 45 mana
+    // for 35 base power is the worst rate in the type. What it buys is the
+    // bracket — Shadow otherwise has no way to move before a faster foe, and
+    // this is the move that finishes something a Rend left standing.
+    manaCost: 45,
+    priority: 1,
+    target: 'singleEnemy',
+    description: 'Crosses the gap before the guard comes up (strikes first).',
+  },
+  enfeeble: {
+    id: 'enfeeble',
+    name: 'Enfeeble',
+    type: 'Shadow',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [
+      { stat: 'defense', amount: -30 },
+      { stat: 'wisdom', amount: -30 },
+    ],
+    // Weaken at three times the size and across both foes. Stat mods PERSIST
+    // through a switch (CLAUDE.md), so this is 50 mana spent once to make every
+    // hit the rest of the fight land harder — the type's biggest single tempo
+    // commitment that deals no damage at all.
+    manaCost: 50,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Drags the whole enemy line down (-30 Defense, -30 Wisdom on both).',
+  },
+  eclipse: {
+    id: 'eclipse',
+    name: 'Eclipse',
+    type: 'Shadow',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 100,
+    conditionalPower: { requiresTargetHpBelow: 0.5, multiplier: 2 },
+    manaCost: 80,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Puts out the light entirely (double damage below half HP).',
+  },
+  umbralWave: {
+    id: 'umbralWave',
+    name: 'Umbral Wave',
+    type: 'Shadow',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 70,
+    // Rolls per target (content.ts StatusApplication.chance), so this is the
+    // slate's best odds of getting Poison onto the board at all.
+    statusApplication: { statusId: 'Poison', magnitude: 20, duration: 3, chance: 0.2, target: 'moveTarget' },
+    manaCost: 65,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Dark rolls over the whole enemy line (20% chance of Poison 20 on each).',
+  },
+  duskBlade: {
+    id: 'duskBlade',
+    name: 'Dusk Blade',
+    type: 'Shadow',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 80,
+    // The only GUARANTEED Bleed in the game. Bleed does not decay and does not
+    // clear on a switch (statuses.ts), so this is 5% of max HP per round for
+    // the rest of the fight on top of an 80 BP hit.
+    statusApplication: { statusId: 'Bleed', target: 'moveTarget' },
+    manaCost: 60,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A cut that will not close (inflicts Bleed).',
+  },
+  shadowForm: {
+    id: 'shadowForm',
+    name: 'Shadow Form',
+    type: 'Shadow',
+    category: 'physical',
+    kind: 'buff',
+    // Vanish and Rally in one button, at four times Vanish's price. +75 Attack
+    // is flat, additive and persists through a switch (CLAUDE.md), so the 60 is
+    // buying a permanent buff plus a round of cover plus an armed Ambush.
+    statDeltas: [{ stat: 'attack', amount: 75 }],
+    statusApplication: { statusId: 'Stealth', duration: 1, target: 'self' },
+    manaCost: 60,
+    priority: 0,
+    target: 'self',
+    description: 'Becomes the dark itself (grants Stealth and +75 Attack).',
   },
 
   // --- Arcane ------------------------------------------------------------
@@ -2124,18 +2373,6 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'bothAllies',
     description: 'A rousing howl that sharpens both allies’ offense.',
   },
-  weaken: {
-    id: 'weaken',
-    name: 'Weaken',
-    type: 'Shadow',
-    category: 'magical',
-    kind: 'buff',
-    statDeltas: [{ stat: 'defense', amount: -10 }],
-    manaCost: 9,
-    priority: 0,
-    target: 'singleEnemy',
-    description: "Creeping shadow that erodes the target's guard.",
-  },
   curseMind: {
     id: 'curseMind',
     name: 'Curse Mind',
@@ -2207,19 +2444,6 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
     description: "Tethers the target's spirit to its partner (inflicts Haunt).",
-  },
-  vanish: {
-    id: 'vanish',
-    name: 'Vanish',
-    type: 'Shadow',
-    category: 'physical',
-    kind: 'buff',
-    statDeltas: [],
-    statusApplication: { statusId: 'Stealth', duration: 1, target: 'self' },
-    manaCost: 10,
-    priority: 0,
-    target: 'self',
-    description: "Enters Stealth for this round and the next.",
   },
   secondWind: {
     id: 'secondWind',

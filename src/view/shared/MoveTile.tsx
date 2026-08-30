@@ -306,6 +306,10 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     // (requiresFieldEffect).
     const fieldSide = move.conditionalPower.requiresFieldEffect;
     const userSide = move.conditionalPower.requiresUserStatus;
+    // The HP form (content.ts requiresTargetHpBelow) names no status at
+    // all: it asks a question about a NUMBER on the target, so it gets its
+    // own clause rather than falling through to an empty status name.
+    const hpSide = move.conditionalPower.requiresTargetHpBelow;
     const gate = move.conditionalPower.requiresTargetStatus ?? userSide ?? '';
     const gateName = statuses[gate]?.name ?? gate;
     // "consumed" is not a footnote. Cold Snap's double is paid for with the
@@ -315,9 +319,11 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     const spent = move.conditionalPower.consumesStatus && !fieldSide ? ', consumed' : '';
     const clause = fieldSide
       ? `while ${fieldEffects[fieldSide]?.name ?? fieldSide} is up`
-      : userSide
-        ? `while you have ${gateName}`
-        : `vs ${gateName}`;
+      : hpSide != null
+        ? `vs a target below ${Math.round(hpSide * 100)}% HP`
+        : userSide
+          ? `while you have ${gateName}`
+          : `vs ${gateName}`;
     parts.push(`×${move.conditionalPower.multiplier} power ${clause}${spent}`);
   }
 

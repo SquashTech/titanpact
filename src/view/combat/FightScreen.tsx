@@ -281,9 +281,11 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                 ×{move.conditionalPower.multiplier}{' '}
                 {move.conditionalPower.requiresFieldEffect
                   ? `under ${fieldEffects[move.conditionalPower.requiresFieldEffect]?.name ?? move.conditionalPower.requiresFieldEffect}`
-                  : move.conditionalPower.requiresUserStatus
-                    ? `with ${move.conditionalPower.requiresUserStatus}`
-                    : `vs ${move.conditionalPower.requiresTargetStatus}`}
+                  : move.conditionalPower.requiresTargetHpBelow != null
+                    ? `under ${Math.round(move.conditionalPower.requiresTargetHpBelow * 100)}% HP`
+                    : move.conditionalPower.requiresUserStatus
+                      ? `with ${move.conditionalPower.requiresUserStatus}`
+                      : `vs ${move.conditionalPower.requiresTargetStatus}`}
                 {move.conditionalPower.consumesStatus && !move.conditionalPower.requiresFieldEffect ? ' (spent)' : ''}
               </span>
             )}

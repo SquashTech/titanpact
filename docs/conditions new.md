@@ -158,6 +158,23 @@ rather than slipping it in.
   the one after) makes a benched Stealth surviving long enough to re-enter as active
   alongside an independently-Stealthed partner structurally unreachable today, given
   one action per hero per round.
+- **Length is 1, and that is now a decision rather than a default (2026-08-30,
+  Shadow).** The Shadow design table asks for Stealth twice — Vanish (15 mana) and
+  Shadow Form (60, Stealth + 75 Attack) — and gives a duration for neither. Designer
+  call: *"Stealth is only ever 1 turn."* So both authored grants carry
+  `duration: 1`, and `test/shadowMoves.test.ts` pins that every Stealth grant in the
+  game is Shadow-typed, self-targeted and duration 1, so a later slate cannot quietly
+  introduce a second length. Because Stealth ticks at the **start** of a round, 1
+  means the rest of the round it was cast in plus the whole of the next.
+- **It now has a payoff move (2026-08-30, Shadow).** Ambush doubles its base power
+  while the user is Stealthed (`conditionalPower.requiresUserStatus`) and **spends
+  the Stealth** (`consumesStatus`) — the first content to author the consume on the
+  user-side half of the conditional. Nothing about the status changed: attacking has
+  never broken Stealth and still does not. What Ambush costs is the remainder of that
+  round's protection, which is the whole reason Vanish is a choice (hide, or set up a
+  hit) rather than a strictly-correct opener. This also makes the exclusivity rule
+  above load-bearing for a second reason: a double-Shadow side gets **one** armed
+  Ambush per round, not two.
 
 ---
 

@@ -62,7 +62,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Brimstone',
     types: ['Fire', 'Shadow'],
     baseStats: { hp: 80, attack: 55, defense: 35, intelligence: 60, wisdom: 35, speed: 60, manaPool: 55, mpRegen: 10 },
-    moveIds: ['ember', 'shadowVeil', 'weaken'],
+    moveIds: ['ember', 'umbraBolt', 'weaken'],
     starter: false,
   },
 
@@ -230,7 +230,9 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Vesper',
     types: ['Shadow'],
     baseStats: { hp: 85, attack: 75, defense: 45, intelligence: 40, wisdom: 40, speed: 70, manaPool: 45, mpRegen: 10 },
-    moveIds: ['vanish', 'secondWind', 'purify'],
+    // The crit/Stealth line. Had no damage move at all before the slate landed
+    // — a mono-Shadow hero whose whole kit was two off-type supports.
+    moveIds: ['fadeStrike', 'vanish', 'secondWind'],
     starter: false,
   },
   marrow: {
@@ -238,7 +240,10 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Marrow',
     types: ['Shadow'],
     baseStats: { hp: 85, attack: 75, defense: 45, intelligence: 40, wisdom: 40, speed: 70, manaPool: 45, mpRegen: 10 },
-    moveIds: ['vanish', 'secondWind', 'purify'],
+    // The Bleed/debuff line, and deliberately NOT Vesper's kit: the two heroes
+    // are stat-for-stat identical, so the movepool is the only axis that tells
+    // them apart today.
+    moveIds: ['backstab', 'weaken', 'purify'],
     starter: false,
   },
   lucius: {
@@ -246,7 +251,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Lucius',
     types: ['Shadow', 'Mind'],
     baseStats: { hp: 100, attack: 35, defense: 40, intelligence: 75, wisdom: 55, speed: 65, manaPool: 70, mpRegen: 10 },
-    moveIds: ['shadowVeil', 'curseMind', 'spectralBind'],
+    moveIds: ['umbraBolt', 'curseMind', 'spectralBind'],
     starter: false,
   },
   nightshade: {
@@ -254,7 +259,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Nightshade',
     types: ['Shadow'],
     baseStats: { hp: 90, attack: 80, defense: 30, intelligence: 65, wisdom: 40, speed: 85, manaPool: 60, mpRegen: 10 },
-    moveIds: ['duskStrike', 'vanish', 'nightmareGrasp'],
+    moveIds: ['backstab', 'vanish', 'weaken'],
     starter: true,
   },
 

@@ -32,8 +32,13 @@ export const enemies: Record<string, HeroDefinition> = {
     id: 'goblinSkulker',
     name: 'Goblin Skulker',
     types: ['Shadow'],
-    baseStats: { hp: 45, attack: 30, defense: 20, intelligence: 15, wisdom: 20, speed: 45, manaPool: 25, mpRegen: 3 },
-    moveIds: ['duskStrike', 'weaken'],
+    // Mana raised from 25/3 when Shadow's authored movepool landed
+    // (src/data/moves.ts): the cheapest Shadow damage move is now 20, not 11,
+    // and Weaken went 9 -> 15, so at the old pool this goblin could open once
+    // and then Rest most of the fight. Same fix, same reason, as Torch Goblin
+    // below. Stat line otherwise untouched.
+    baseStats: { hp: 45, attack: 30, defense: 20, intelligence: 15, wisdom: 20, speed: 45, manaPool: 40, mpRegen: 10 },
+    moveIds: ['backstab', 'weaken'],
     starter: false,
   },
   spookyGoblin: {

@@ -93,11 +93,13 @@ export function resolveElementalForceBonus(
  * move authors no condition, or when whatever the condition asks about is not
  * the case.
  *
- * Three questions, one answer: `requiresTargetStatus` reads the defender,
- * `requiresUserStatus` reads the attacker, and `requiresFieldEffect` reads the
- * board itself. A move authors exactly one; they are checked oldest-first, and
- * a move authoring two is malformed content rather than a shape with a
- * meaning.
+ * Four questions, one answer: `requiresTargetStatus` reads the defender,
+ * `requiresUserStatus` reads the attacker, `requiresFieldEffect` reads the
+ * board itself, and `requiresTargetHpBelow` reads a NUMBER off the defender
+ * (Shadow's Rend and Eclipse, "double damage if the target is below 50%
+ * HP") rather than the presence of anything. A move authors exactly one;
+ * they are checked oldest-first, and a move authoring two is malformed
+ * content rather than a shape with a meaning.
  *
  * Read against LIVE state at the moment the hit resolves, so a Burn, a Renew —
  * or a Sanctuary — applied by a faster action earlier in the same round
@@ -107,10 +109,14 @@ export function resolveElementalForceBonus(
  * Light partner cast Consecrate and have the same round's Smite already be
  * doubled.
  *
- * `fieldEffectCtx` is optional for the same reason it is everywhere else it is
- * threaded: omit it and the two status forms behave exactly as before, so
- * every caller that has no board in scope keeps working. A field-gated move
- * asked without a context simply reports its unbuffed power.
+ * `fieldEffectCtx` and `targetMaxHp` are both optional for the same reason:
+ * omit them and the two status forms behave exactly as before, so every
+ * caller that has no board (or no hero definition) in scope keeps working. A
+ * field-gated or HP-gated move asked without its context simply reports its
+ * unbuffed power. The HP form takes the max as an argument rather than
+ * reaching for getMaxHp itself: that lives in state.ts alongside the stat
+ * pipeline, and pipeline 2 does not get to read stats (CLAUDE.md
+ * "Two-pipeline separation").
  *
  * Pipeline 2's concern (it changes the formula's BasePower input, not a stat),
  * so it lives here next to resolveElementalForceBonus rather than in
@@ -120,10 +126,21 @@ export function resolveConditionalPowerMultiplier(
   move: MoveDefinition,
   target: Combatant,
   attacker: Combatant,
-  fieldEffectCtx?: FieldEffectContext
+  fieldEffectCtx?: FieldEffectContext,
+  /** The TARGET's max HP — required only by the requiresTargetHpBelow form, which reports no bonus without it (see above). */
+  targetMaxHp?: number
 ): number {
   const conditional = move.conditionalPower;
   if (!conditional) return 1;
+  if (conditional.requiresTargetHpBelow != null) {
+    // Read off the target's LIVE currentHp, before this hit's own damage is
+    // applied — an execute rewards a foe something else already softened,
+    // never one this very hit pushed under the line (content.ts
+    // requiresTargetHpBelow). Strictly below, so a target sitting exactly at
+    // half is not yet executable.
+    if (!targetMaxHp) return 1;
+    return target.currentHp < targetMaxHp * conditional.requiresTargetHpBelow ? conditional.multiplier : 1;
+  }
   if (conditional.requiresFieldEffect) {
     // One global slot, so no holder to read it off (content.ts
     // requiresFieldEffect). Compared by id rather than by definition lookup:

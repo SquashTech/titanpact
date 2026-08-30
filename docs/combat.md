@@ -677,6 +677,58 @@ expressible-looking and neither is decided. Neither is authored today.
 
 ---
 
+## A damage bonus that reads a NUMBER (2026-08-30, Shadow)
+
+`MoveDefinition.conditionalPower.requiresTargetHpBelow`: the fourth sibling on
+the same BasePower-stage multiplier, and the first damage condition in the game
+that asks about a **quantity** rather than the presence of something. Shadow's
+Rend (40 BP / 30) and Eclipse (100 BP / 80) are the first content — "double
+damage if the target is below 50% HP".
+
+Authored as a fraction rather than a boolean flag, so a later slate can write a
+0.25 execute without a second field. Everything structural is unchanged from
+its three siblings: it scales the formula's BasePower **input**, never the
+finished hit (the two-pipeline separation is LOCKED), and it is read against
+live state at the moment the hit resolves.
+
+Four things fix its shape, and each was a real fork:
+
+- **Read BEFORE the hit's own damage.** An execute can never double off HP it
+  is itself about to remove. That is what makes it a *reward for pressure* — the
+  bonus is paid for by whatever softened the target on an earlier action, which
+  is exactly the partner-pressure a doubles game wants to price. The other
+  reading (check after, so a big hit executes itself) would have made the move a
+  self-contained nuke.
+- **Strictly below**, so a target sitting on exactly half is not yet
+  executable. Pinned in `test/shadowMoves.test.ts` because "below 50%" has two
+  readings and the engine only implements one.
+- **Read per target**, like the target-status form and unlike the user-side and
+  field ones. A spread execute would double against the wounded foe and not the
+  healthy one. No content is spread *and* an execute today; the shape is pinned
+  so a later slate can author one.
+- **`consumesStatus` is inert on it**, exactly as on the field form — there is
+  no status and no holder to strip. `resolveRound` resolves the holder as
+  `requiresTargetStatus ?? requiresUserStatus`, which this form leaves
+  undefined, so a greedy authoring is a no-op rather than a third meaning.
+
+**The one thing worth watching, and NOT settled here.** Every condition before
+this one could be answered by looking at a status strip or the field banner —
+present or absent, and the player either put it there or the enemy did. An HP
+threshold is a *continuous* board state nobody chose, so an execute is the first
+damage bonus with no counterplay other than healing above the line, and the
+first that gets stronger precisely as the target gets closer to dying anyway.
+That is a normal roguelike shape (Pokémon's Brine, VGC's Low Kick family) and
+Shadow is a deliberately aggressive type, but it is a category and not a move:
+if a second type wants one, it should be priced knowing that this bonus and its
+target's remaining HP move in the same direction.
+
+**Open, deliberately:** the *user*-side version ("double damage while YOU are
+below half"), an inverse ("double against a target above half"), and reading
+any other continuous quantity — mana, stat totals, rounds elapsed — are all
+expressible-looking and none is decided. None is authored today.
+
+---
+
 ## Renew's stacked payoffs (LOCKED — 2026-08-30 designer sign-off)
 
 Renew is currently read **three separate ways**, and as of the Nature slate all

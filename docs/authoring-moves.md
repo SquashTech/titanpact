@@ -8,9 +8,9 @@ asks you to remove that type's existing moves, replace them, and "distribute the
 appropriately."
 
 Fire was the first (2026-08-29), Water the second, Frost the third, Storm
-the fourth, Stone the fifth, Nature the sixth and Light the seventh (all 2026-08-30).
-Eight types remain. This file is what those seven cost to learn, written
-down so the next one is an afternoon instead of a day. Water took about a third of
+the fourth, Stone the fifth, Nature the sixth, Light the seventh and Shadow the
+eighth (all 2026-08-30). Seven types remain. This file is what those eight cost
+to learn, written down so the next one is an afternoon instead of a day. Water took about a third of
 Fire's time and Frost about the same as Water, and every hour of the saving came from
 §0 step 1 — naming the engine extensions before writing any content. Frost needed two
 (a targeting gate and a status consume) and both were visible in the table on the
@@ -62,6 +62,29 @@ number — it was to **redesign the status so the number stops existing**: Daze
 became flinch the same day (boolean, `clearsAtEndOfRound`, gone at the end of
 the round it landed in). A silently-chosen 2 would have hidden the question the
 mechanic was actually posing, and the type would have shipped around it.
+
+Shadow also needed **one**, and it is the cleanest example yet of §0 step 1
+paying for itself. Its words to watch for were "below 50% HP" — and the reason
+they matter is not that the clause is complicated. It is that **every damage
+condition in the game before it asked whether something was PRESENT**: a status
+on the target, a status on the user, a field effect on the board. "Below 50%"
+asks a *quantity*, and §4 already said so ("anything reading a **number** rather
+than a status's presence"). One question, asked before any content was written,
+settled the four forks that would each have been a rebuild afterwards — read
+before or after this hit's own damage, strict or inclusive at the line, per
+target or per cast, and what `consumesStatus` means when there is nothing to
+consume.
+
+The other thing Shadow is worth remembering for: **two of its rows were
+answered by the designer with something other than a value.** "Double base power
+if the user HAD Stealth" was raised as a consume-or-not fork; the answer was
+*"Stealth only ever lasts one turn anyway, so it gets Consumed regardless — it
+should just check during the move selection phase"*, which is a statement about
+how the mechanic should READ to a player, not about the engine. It turned into
+`consumesStatus` plus a check that the FightScreen chip lights up before the
+player commits — and the chip was then confirmed in the app, unlit and lit, one
+round apart. **When the designer answers a mechanical fork with a sentence about
+legibility, the deliverable includes the surface, not just the field.**
 
 Read this **before** opening `src/data/moves.ts`. Read `CLAUDE.md` first if you have not.
 
@@ -399,8 +422,15 @@ Sanctuary is active") and it asks about the **board**, which nobody holds:
 `CombatState.activeFieldEffect` is one global slot, so a spread cast is doubled
 against every target or none, an enemy setting the field arms your move and
 yours arms theirs, and *any other* field effect displaces it. `consumesStatus`
-is inert on that form — there is nothing to strip. Author exactly one of the
-three; nothing validates that, and a `conditionalPower` authoring none is a
+is inert on that form — there is nothing to strip.
+
+Swap in `requiresTargetHpBelow: 0.5` (Shadow’s Rend, Eclipse — "double damage
+if the target is below 50% HP") and it asks about a **number** rather than the
+presence of anything: the target’s live HP fraction, read per target, checked
+STRICTLY below the line and BEFORE this hit’s own damage, so an execute can
+never double off HP it is itself about to remove. `consumesStatus` is inert on
+this form too. Author exactly one of the
+four; nothing validates that, and a `conditionalPower` authoring none is a
 silent dud. Two behavioural differences worth knowing before you reach for it:
 
 - The target-side form is re-read per hit, so a spread move can double against
@@ -891,6 +921,65 @@ the first whose findings are all about **what the table did not say**:
   hand-off is not only "which value?" but "should this mechanic want a value at
   all?" — and asking it that way is what produced a better status instead of a
   tuned one.
+
+Shadow's, as an eighth — the second-cheapest slate on engine work (one
+field) and the first whose findings are mostly about **the heroes that
+already held the type** rather than about the moves:
+
+- **A capability the slate deleted — two, and both are stated by omission.**
+  (1) `nightmareGrasp` was priority **−1**, and the authored fifteen contain
+  exactly one bracket row: Shadowstrike at +1. So the type lost its slow-heavy
+  option entirely and kept only the fast-cheap one, which is a real identity
+  call (Shadow commits to acting first, never to hitting harder for acting
+  last) that the table states only by leaving the column blank.
+  (2) **The slate contains no heal and no cleanse.** Vesper's and Marrow's old
+  kits were `vanish + secondWind + purify` — two off-type supports and no
+  attack — so mono-Shadow sustain was always borrowed, and it still is: Vesper
+  keeps `secondWind` (Spirit) and Marrow keeps `purify` (Light) only because
+  the distribution put them there. Nothing in fifteen authored moves puts a
+  point of HP back. Named rather than patched.
+- **A locked decision the slate brushed against.**
+  `conditionalPower.requiresTargetHpBelow` is the first damage condition that
+  reads a **continuous quantity** rather than the presence of a status or a
+  field. It does not break the two-pipeline lock (it is a BasePower-stage
+  input like its three siblings) and it draws no RNG. What is new is the
+  *counterplay surface*: a Burn can be cleansed, a Freeze switched off, a
+  field displaced — an HP fraction can only be answered by healing back above
+  the line, and it gets more likely precisely as the target gets closer to
+  dying anyway. Recorded in `docs/combat.md` rather than settled by accident,
+  along with the three shapes deliberately left unbuilt (a user-side version,
+  an inverse, and reading any other continuous quantity).
+- **A balance consequence outside the slate — and this one is about the
+  roster.** Three things, in increasing order of how much they need a
+  designer:
+  1. **Goblin Skulker could not afford its own kit.** 25 mana / 3 regen
+     against a floor that went 9 → 15 and a cheapest damage move that went
+     11 → 20. Raised to 40/10, the same fix and the same reasoning as Torch
+     Goblin when Fire landed. This is the affordability check that IS a
+     finding — enemies get no relics, no equipment and no Evolution, so their
+     pools are fixed for the whole game.
+  2. **Vesper had no damage move at all.** A mono-Shadow hero whose entire
+     starting kit was two off-type supports and a Stealth grant — the trap
+     pick the north star forbids, sitting in the roster until a slate went
+     looking. Fixed here (Fade Strike opens it now), but worth knowing that
+     the *distribution* pass is what surfaces this class of problem and
+     nothing else does.
+  3. **Vesper and Marrow are the same hero.** Identical stat block
+     (85/75/45/40/40/70/45/10), identical types, identical starting kits,
+     identical level-up pools, and three Evolution paths with identical names
+     AND identical descriptions (Nightreaver / Stillmind / Nightveil). The
+     slate is not the place to resolve that — it is a roster decision — so
+     what this pass did is the minimum that stops them being literally
+     interchangeable: Vesper took the Stealth payoffs (Ambush, Shadow Form)
+     and Marrow the pressure ones (Shadowstrike, Enfeeble). **Naming it is
+     the deliverable; merging or differentiating them is the designer's.**
+- **A second one, smaller: the type is nearly absent from the enemy side.**
+  One Shadow enemy exists (Goblin Skulker, two moves), so thirteen of the
+  fifteen never appear on the side of the field the player is fighting. Less
+  acute than Nature's version of this finding — Shadow's mechanics are read
+  off the player's own board, not off a clock the defender has to answer —
+  but Stealth in particular is a status a player will never learn to play
+  around until something casts it at them.
 
 **The procedural lesson from Stone**, extending Storm's: when you finish the
 slate, run the reachability check as well as the dangling-id one. They are
