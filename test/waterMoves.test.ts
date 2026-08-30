@@ -254,8 +254,10 @@ test('water: a limited cleanse draws RNG only when it actually has to choose', (
 });
 
 test('water: an unlimited cleanse still strips everything, and draws nothing either way', () => {
-  // Purify (cleanses, no cleanseCount) is the control: the new field must
-  // leave every Cleanse move authored before it byte-identical.
+  // The unlimited path, called directly. It has no MOVE any more: the authored
+  // Light slate (2026-08-30) re-authored Purify with cleanseCount 1, so every
+  // Cleanse move in the game is now limited and this is the only thing keeping
+  // the engine's cleanse-all behaviour honest.
   let state = withDeepPools(waterFixture(712));
   state = afflict(state, 'a1', 'Burn', 20);
   state = afflict(state, 'a1', 'Bleed');

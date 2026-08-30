@@ -94,14 +94,18 @@ interface MoveRowProps {
    */
   banked: number;
   /**
-   * Whether this hero is carrying what a user-side conditionalPower demands
-   * (content.ts conditionalPower.requiresUserStatus — Nature's Seed Shot and
-   * Branch Slam). `true` for every move that asks nothing of its caster.
+   * Whether the half of a conditionalPower the player can already answer
+   * WITHOUT declaring a target is met — the caster's own status (content.ts
+   * conditionalPower.requiresUserStatus — Nature's Seed Shot and Branch Slam)
+   * or the active field effect (requiresFieldEffect — Light's Smite). `true`
+   * for every move that asks nothing but the target, which is the one question
+   * the row genuinely cannot answer yet.
    *
    * Resolved by the caller for the same reason `banked` is: it is a fact about
-   * the caster. Deliberately NOT folded into `gateUnmet` — this condition
-   * makes the move weaker, never unpressable, and greying the row out over a
-   * bonus the player is choosing to skip would be a lie about a legal action.
+   * the board, not about the move. Deliberately NOT folded into `gateUnmet` —
+   * these conditions make the move weaker, never unpressable, and greying the
+   * row out over a bonus the player is choosing to skip would be a lie about a
+   * legal action.
    */
   userConditionMet: boolean;
   /** The commanding hero's live heal inputs (healPipeline.ts), resolved by the caller for the same reason forceBonus is — a heal's number is a fact about the caster, not about the move. */
@@ -261,18 +265,26 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
                 which already runs the multiplier against each enemy. */}
             {move.conditionalPower && (
               <span
-                className={`move-eff-status${move.conditionalPower.requiresUserStatus && !userConditionMet ? ' move-eff-unmet' : ''}`}
+                className={`move-eff-status${
+                  (move.conditionalPower.requiresUserStatus || move.conditionalPower.requiresFieldEffect) && !userConditionMet
+                    ? ' move-eff-unmet'
+                    : ''
+                }`}
               >
                 {/* The user-side form (content.ts requiresUserStatus) asks
-                    about a hero the player is already looking at, so unlike
-                    the target-side one this chip can answer it — and dims when
-                    the answer is no. "vs" would be the wrong preposition twice
-                    over: wrong side of the field, and wrong verb. */}
+                    about a hero the player is already looking at, and the
+                    field form (requiresFieldEffect) about ground both sides
+                    can see — so unlike the target-side one these chips can
+                    answer themselves, and dim when the answer is no. "vs"
+                    would be the wrong preposition twice over: wrong side of
+                    the field, and wrong verb. */}
                 ×{move.conditionalPower.multiplier}{' '}
-                {move.conditionalPower.requiresUserStatus
-                  ? `with ${move.conditionalPower.requiresUserStatus}`
-                  : `vs ${move.conditionalPower.requiresTargetStatus}`}
-                {move.conditionalPower.consumesStatus ? ' (spent)' : ''}
+                {move.conditionalPower.requiresFieldEffect
+                  ? `under ${fieldEffects[move.conditionalPower.requiresFieldEffect]?.name ?? move.conditionalPower.requiresFieldEffect}`
+                  : move.conditionalPower.requiresUserStatus
+                    ? `with ${move.conditionalPower.requiresUserStatus}`
+                    : `vs ${move.conditionalPower.requiresTargetStatus}`}
+                {move.conditionalPower.consumesStatus && !move.conditionalPower.requiresFieldEffect ? ' (spent)' : ''}
               </span>
             )}
             {/* The detonation, on the button, because it is the difference
@@ -1558,8 +1570,10 @@ export function FightScreen({
                         forceBonus={resolveElementalForceBonus(combatant, move.type, statuses)}
                         banked={combatant.damageTakenSinceLastTurn}
                         userConditionMet={
-                          !move.conditionalPower?.requiresUserStatus ||
-                          hasStatus(combatant, move.conditionalPower.requiresUserStatus)
+                          move.conditionalPower?.requiresFieldEffect
+                            ? combat.activeFieldEffect?.fieldEffectId === move.conditionalPower.requiresFieldEffect
+                            : !move.conditionalPower?.requiresUserStatus ||
+                              hasStatus(combatant, move.conditionalPower.requiresUserStatus)
                         }
                         caster={{
                           wisdom: getEffectiveStat(allCombatants[combatant.heroId], combatant, 'wisdom', {

@@ -46,7 +46,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Cinder',
     types: ['Fire', 'Iron'],
     baseStats: { hp: 100, attack: 70, defense: 60, intelligence: 30, wisdom: 40, speed: 50, manaPool: 60, mpRegen: 10 },
-    moveIds: ['singe', 'fortify', 'restoreVigor'],
+    moveIds: ['singe', 'fortify', 'mendWounds'],
     starter: false,
   },
   crimson: {
@@ -54,7 +54,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Crimson',
     types: ['Fire'],
     baseStats: { hp: 100, attack: 30, defense: 38, intelligence: 80, wisdom: 75, speed: 62, manaPool: 65, mpRegen: 10 },
-    moveIds: ['ember', 'weaken', 'restoreVigor'],
+    moveIds: ['ember', 'weaken', 'mendWounds'],
     starter: true,
   },
   brimstone: {
@@ -212,7 +212,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Solace',
     types: ['Light'],
     baseStats: { hp: 110, attack: 29, defense: 50, intelligence: 60, wisdom: 70, speed: 61, manaPool: 70, mpRegen: 10 },
-    moveIds: ['radiantBeam', 'restoreVigor', 'purify'],
+    moveIds: ['glimmer', 'mend', 'purify'],
     starter: true,
   },
   aegis: {
@@ -220,7 +220,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Aegis',
     types: ['Light'],
     baseStats: { hp: 120, attack: 45, defense: 80, intelligence: 40, wisdom: 75, speed: 35, manaPool: 70, mpRegen: 10 },
-    moveIds: ['radiantBeam', 'fortify', 'secondWind'],
+    moveIds: ['holyStrike', 'fortify', 'secondWind'],
     starter: false,
   },
 
@@ -310,7 +310,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Valor',
     types: ['Iron'],
     baseStats: { hp: 120, attack: 60, defense: 65, intelligence: 40, wisdom: 45, speed: 60, manaPool: 60, mpRegen: 10 },
-    moveIds: ['ironFist', 'fortify', 'restoreVigor'],
+    moveIds: ['ironFist', 'fortify', 'mendWounds'],
     starter: true,
   },
   gallant: {

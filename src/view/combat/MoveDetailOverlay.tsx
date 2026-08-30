@@ -120,7 +120,11 @@ function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defender
   // Read against THIS defender, so a conditional move forecasts x3 on the
   // Burned foe and x1 on the clean one — the whole point of showing a
   // per-defender band rather than one number.
-  const conditionalMult = resolveConditionalPowerMultiplier(move, defender, attacker);
+  // fieldEffectCtx threaded in for the same reason offStatOverride is: a Smite
+  // forecast that ignored the Sanctuary already on the board would print half
+  // the number the round is about to deal (docs/authoring-moves.md §5, "pass
+  // your new term in or the forecast lies").
+  const conditionalMult = resolveConditionalPowerMultiplier(move, defender, attacker, fieldEffectCtx);
   const attackerTypes = effectiveTypes(attackerHero, attacker);
   const defenderTypes = effectiveTypes(defenderHero, defender);
 
@@ -311,11 +315,17 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   const statusDef = move.statusApplication ? statuses[move.statusApplication.statusId] : undefined;
   const fieldDef = move.fieldEffectApplication ? fieldEffects[move.fieldEffectApplication] : undefined;
   // Whichever side of the board this move's conditional actually asks about
-  // (content.ts conditionalPower.requiresUserStatus).
+  // (content.ts conditionalPower.requiresUserStatus). Empty on the field form,
+  // which asks about no combatant at all and wears the field effect's own
+  // glyph instead (requiresFieldEffect).
+  const conditionalFieldId = move.conditionalPower?.requiresFieldEffect ?? '';
   const conditionalStatusId = move.conditionalPower
     ? (move.conditionalPower.requiresTargetStatus ?? move.conditionalPower.requiresUserStatus ?? '')
     : '';
   const conditionalDef = conditionalStatusId ? statuses[conditionalStatusId] : undefined;
+  const conditionalFieldDef = conditionalFieldId ? fieldEffects[conditionalFieldId] : undefined;
+  /** Whether the field this move's conditional wants is the one actually up right now — answerable without a target, unlike the target-side form. */
+  const conditionalFieldLive = Boolean(conditionalFieldId && context?.combat.activeFieldEffect?.fieldEffectId === conditionalFieldId);
   const detonateDef = move.detonatesStatus ? statuses[move.detonatesStatus] : undefined;
   const gateDef = move.requiresTargetStatus ? statuses[move.requiresTargetStatus] : undefined;
   const priorityDef = move.conditionalPriority ? statuses[move.conditionalPriority.requiresTargetStatus] : undefined;
@@ -513,7 +523,23 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               note="no legal target, and no way to declare it, unless the status is already out there"
             />
           )}
-          {move.conditionalPower && (
+          {/* The field form wears the FIELD's glyph and colour, not a status's:
+              what it is asking about is the ground, and a Sanctuary-gated Smite
+              carrying a blank status glyph would be pointing at nothing
+              (content.ts conditionalPower.requiresFieldEffect). */}
+          {move.conditionalPower && conditionalFieldId && (
+            <EffectRow
+              glyph={<ElementGlyph type={conditionalFieldDef?.flavorType ?? 'Arcane'} />}
+              color={getTypeColor(conditionalFieldDef?.flavorType ?? 'Arcane')}
+              text={`×${move.conditionalPower.multiplier} power while ${conditionalFieldDef?.name ?? conditionalFieldId} is up`}
+              note={
+                conditionalFieldLive
+                  ? `scales base power, not the finished hit — and ${conditionalFieldDef?.name ?? conditionalFieldId} is up right now`
+                  : 'scales base power, not the finished hit — the field is global, so either side setting it arms this move'
+              }
+            />
+          )}
+          {move.conditionalPower && !conditionalFieldId && (
             <EffectRow
               glyph={<StatusGlyph statusId={conditionalStatusId} />}
               color={statusColor(conditionalStatusId)}

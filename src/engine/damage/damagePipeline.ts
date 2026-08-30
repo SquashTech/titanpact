@@ -89,28 +89,47 @@ export function resolveElementalForceBonus(
  * The conditional-BasePower multiplier for one pending hit
  * (MoveDefinition.conditionalPower — Fire's Immolate, "triple base power if
  * the target is Burned"; Nature's Seed Shot, "double damage if the USER has
- * Renew"). 1 when the move authors no condition, or when whichever combatant
- * the condition asks about isn't carrying the named status.
+ * Renew"; Light's Smite, "double damage if SANCTUARY is active"). 1 when the
+ * move authors no condition, or when whatever the condition asks about is not
+ * the case.
  *
- * Two questions, one answer: `requiresTargetStatus` reads the defender and
- * `requiresUserStatus` reads the attacker. A move authors exactly one; the
- * target-side form is checked first only because it is the older of the two,
- * and a move authoring both is malformed content rather than a shape with a
+ * Three questions, one answer: `requiresTargetStatus` reads the defender,
+ * `requiresUserStatus` reads the attacker, and `requiresFieldEffect` reads the
+ * board itself. A move authors exactly one; they are checked oldest-first, and
+ * a move authoring two is malformed content rather than a shape with a
  * meaning.
  *
- * Read against LIVE statuses at the moment the hit resolves, so a Burn — or a
- * Renew — applied by a faster action earlier in the same round already counts.
- * That freshness matters more on the user side than it ever did on the target
- * side: it is what lets a Nature partner cast Regrowth and have the same
- * round's Branch Slam already be doubled.
+ * Read against LIVE state at the moment the hit resolves, so a Burn, a Renew —
+ * or a Sanctuary — applied by a faster action earlier in the same round
+ * already counts. That freshness matters more on the user and field sides than
+ * it ever did on the target side: it is what lets a Nature partner cast
+ * Regrowth and have the same round's Branch Slam already be doubled, and a
+ * Light partner cast Consecrate and have the same round's Smite already be
+ * doubled.
+ *
+ * `fieldEffectCtx` is optional for the same reason it is everywhere else it is
+ * threaded: omit it and the two status forms behave exactly as before, so
+ * every caller that has no board in scope keeps working. A field-gated move
+ * asked without a context simply reports its unbuffed power.
  *
  * Pipeline 2's concern (it changes the formula's BasePower input, not a stat),
  * so it lives here next to resolveElementalForceBonus rather than in
  * statusEngine.ts.
  */
-export function resolveConditionalPowerMultiplier(move: MoveDefinition, target: Combatant, attacker: Combatant): number {
+export function resolveConditionalPowerMultiplier(
+  move: MoveDefinition,
+  target: Combatant,
+  attacker: Combatant,
+  fieldEffectCtx?: FieldEffectContext
+): number {
   const conditional = move.conditionalPower;
   if (!conditional) return 1;
+  if (conditional.requiresFieldEffect) {
+    // One global slot, so no holder to read it off (content.ts
+    // requiresFieldEffect). Compared by id rather than by definition lookup:
+    // what matters is which effect is ACTIVE, not what it does.
+    return fieldEffectCtx?.active?.fieldEffectId === conditional.requiresFieldEffect ? conditional.multiplier : 1;
+  }
   const holder = conditional.requiresTargetStatus ? target : conditional.requiresUserStatus ? attacker : null;
   const statusId = conditional.requiresTargetStatus ?? conditional.requiresUserStatus;
   if (!holder || !statusId) return 1;

@@ -88,32 +88,32 @@ test('heal: a heal takes STAB off the caster, exactly as a damage move does', ()
 // --- Through a real round ----------------------------------------------------
 
 test('heal: the same move restores different amounts in different hands', () => {
-  // Restore Vigor (Light, 40) on its caster. Solace is Light with 70 Wisdom;
-  // Cinder is Fire/Iron with 40. Same move, same target, 24 HP apart.
+  // Mend (Light, 45) cast on its own caster. Solace is Light with 70 Wisdom;
+  // Cinder is Fire/Iron with 40. Same move, same target, 27 HP apart.
   const solace = resolveRound(
     hurt(fixture(200, 'dawnwarden', 'ironWarden'), ['a1'], 10),
-    [{ kind: 'move', combatantId: 'a1', moveId: 'restoreVigor' }] as Action[],
+    [{ kind: 'move', combatantId: 'a1', moveId: 'mend', declaredTarget: 'a1' }] as Action[],
     config
   );
   const cinder = resolveRound(
     hurt(fixture(200, 'cinderKnight', 'ironWarden'), ['a1'], 10),
-    [{ kind: 'move', combatantId: 'a1', moveId: 'restoreVigor' }] as Action[],
+    [{ kind: 'move', combatantId: 'a1', moveId: 'mend', declaredTarget: 'a1' }] as Action[],
     config
   );
 
-  assert.deepStrictEqual(healedAmounts(solace.events), [60]); // 40 x 1.20 x 1.25 STAB
-  assert.deepStrictEqual(healedAmounts(cinder.events), [36]); // 40 x 0.90, no STAB
+  assert.deepStrictEqual(healedAmounts(solace.events), [68]); // 45 x 1.20 x 1.25 STAB
+  assert.deepStrictEqual(healedAmounts(cinder.events), [41]); // 45 x 0.90, no STAB
 });
 
 test('heal: the Healed event carries the formula terms, the way DamageDealt does', () => {
   const { events } = resolveRound(
     hurt(fixture(201, 'dawnwarden', 'ironWarden'), ['a1'], 10),
-    [{ kind: 'move', combatantId: 'a1', moveId: 'restoreVigor' }] as Action[],
+    [{ kind: 'move', combatantId: 'a1', moveId: 'mend', declaredTarget: 'a1' }] as Action[],
     config
   );
   const healed = events.find((e) => e.type === 'Healed');
   assert.ok(healed && healed.type === 'Healed');
-  assert.strictEqual(healed.healPower, 40);
+  assert.strictEqual(healed.healPower, 45);
   assert.strictEqual(healed.wisdomMult, 1.2);
   assert.strictEqual(healed.stab, 1.25);
 });
@@ -154,7 +154,7 @@ test('heal: no variance — the same heal on two different seeds lands on the sa
     healedAmounts(
       resolveRound(
         hurt(fixture(seed, 'dawnwarden', 'ironWarden'), ['a1'], 10),
-        [{ kind: 'move', combatantId: 'a1', moveId: 'restoreVigor' }] as Action[],
+        [{ kind: 'move', combatantId: 'a1', moveId: 'mend', declaredTarget: 'a1' }] as Action[],
         config
       ).events
     );

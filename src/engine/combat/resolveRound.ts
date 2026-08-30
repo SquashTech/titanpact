@@ -324,7 +324,10 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           // ATTACKER instead (content.ts conditionalPower.requiresUserStatus),
           // which is why `attackerNow` is passed in: read fresh per hit, so a
           // Renew granted by a faster partner this same round already counts.
-          const basePowerMultiplier = resolveConditionalPowerMultiplier(move, target, attackerNow);
+          // Light's Smite asks it of the BOARD (requiresFieldEffect), which is
+          // why the same freshly-read fieldEffectCtx goes in: a Consecrate cast
+          // earlier in this round has already turned the ground.
+          const basePowerMultiplier = resolveConditionalPowerMultiplier(move, target, attackerNow, fieldEffectCtx);
 
           const rolled = retribution
             ? {
@@ -405,7 +408,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             // (content.ts conditionalPower.consumesStatus). The user branch
             // is unused by content today; it is here so the field means the
             // same thing on both halves of conditionalPower rather than
-            // silently only working on one.
+            // silently only working on one. The FIELD form has no holder at
+            // all, so `heldStatus` is undefined there and the guard below
+            // makes it a no-op rather than a third meaning.
             const cond = move.conditionalPower;
             const holderId = cond.requiresTargetStatus ? targetId : action.combatantId;
             const heldStatus = cond.requiresTargetStatus ?? cond.requiresUserStatus;

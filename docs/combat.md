@@ -635,6 +635,46 @@ worth a turn, so the payoffs hanging off it are *supposed* to be large and
 
 ---
 
+## A damage bonus that lives on the board (2026-08-30, Light)
+
+`MoveDefinition.conditionalPower.requiresFieldEffect`: the third sibling on the
+same BasePower-stage multiplier, asking about neither combatant. Light's Smite
+(50 BP) is the first content — "double damage if Sanctuary is active".
+
+A sibling field rather than a `side` discriminator, for a blunter reason than
+the user-side one: a field effect is not a status and **nobody holds it**, so
+there is no "whose" to answer. `CombatState.activeFieldEffect` is one global
+slot (`docs/field-effects.md`), which means the question has exactly one answer
+per moment for every hit on the board. Everything else is unchanged — it scales
+the formula's BasePower **input**, not the finished hit (the two-pipeline
+separation is LOCKED), and it is read at resolution, so a Consecrate cast by a
+faster ally earlier in the same round already counts.
+
+Three consequences worth stating rather than discovering:
+
+- **All-or-nothing across a spread**, for the same reason the user-side form
+  is: one question, one answer.
+- **The enabler is global, so it arms both sides.** The Consecrate a Light hero
+  casts to heal its own team also switches on an enemy Smite. That is the
+  locked shape of the subsystem, not an oversight.
+- **It is the first damage condition with a clock and an override.** Statuses
+  are removed by cleansing, switching or expiry; a field effect is displaced by
+  *any other field effect* and runs out after 5 rounds regardless. A Surging
+  Magic cast by either side is now counterplay to a Light damage move — the
+  first time the field-effect slot has been contested for a reason other than
+  its own effect.
+
+`consumesStatus` is **inert** on this form: there is no holder to strip it
+from, and ending a global both-sides field early is a different mechanic.
+`test/lightMoves.test.ts` pins that it is a no-op rather than a guessed-at
+third meaning.
+
+**Open, deliberately:** gating on a field effect's **absence** ("×2 while no
+field is up"), and on *any* field rather than a named one, are both
+expressible-looking and neither is decided. Neither is authored today.
+
+---
+
 ## Renew's stacked payoffs (LOCKED — 2026-08-30 designer sign-off)
 
 Renew is currently read **three separate ways**, and as of the Nature slate all

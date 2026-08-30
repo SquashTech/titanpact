@@ -425,11 +425,11 @@ export interface MoveDefinition {
   conditionalPower?: {
     /**
      * The multiplier applies when the HIT'S TARGET carries this status —
-     * Fire's Immolate, Frost's Cold Snap. Exactly one of this and
-     * `requiresUserStatus` must be authored; authoring neither leaves the
-     * multiplier permanently unapplied, which is a silent dud rather than an
-     * error (there is still no isValidMoveDefinition —
-     * docs/authoring-moves.md §4).
+     * Fire's Immolate, Frost's Cold Snap. Exactly one of this,
+     * `requiresUserStatus` and `requiresFieldEffect` must be authored;
+     * authoring none leaves the multiplier permanently unapplied, which is a
+     * silent dud rather than an error (there is still no
+     * isValidMoveDefinition — docs/authoring-moves.md §4).
      */
     requiresTargetStatus?: StatusId;
     /**
@@ -451,6 +451,39 @@ export interface MoveDefinition {
      * counts.
      */
     requiresUserStatus?: StatusId;
+    /**
+     * The multiplier applies while this FIELD EFFECT is the active one —
+     * Light's Smite, "double damage if Sanctuary is active".
+     *
+     * The third sibling, and the first conditional that asks about neither
+     * combatant. It is deliberately NOT a `side` discriminator on the other
+     * two: a field effect is not a status, nobody holds it, and there is no
+     * "whose" to answer — CombatState.activeFieldEffect is one global slot
+     * (docs/field-effects.md), so the question has exactly one answer per
+     * round for every hit on the board.
+     *
+     * Two consequences that follow from that and are worth authoring
+     * knowing:
+     *
+     * 1. **All or nothing across a spread cast.** The target-side form is
+     *    re-read per hit, so a spread move can double against one foe and
+     *    not the other. This form, like the user-side one, asks a single
+     *    question — so a spread conditional gated on a field is doubled
+     *    against every target or none.
+     * 2. **The enabler is GLOBAL, so it arms both sides.** Field effects
+     *    have no owner: the Consecrate a Light hero casts to heal its own
+     *    team also switches on every Smite on the field, including the
+     *    enemy's. That is the locked shape of the subsystem
+     *    (docs/field-effects.md "one active at a time, both sides"), not an
+     *    oversight — the setter is a tempo commitment, and this is what it
+     *    costs.
+     *
+     * Read at the moment the hit RESOLVES, exactly like the status forms, so
+     * a field a faster action set earlier this same round already counts —
+     * which is what lets one hero cast Consecrate and its partner's Smite in
+     * the same round already be doubled.
+     */
+    requiresFieldEffect?: FieldEffectId;
     multiplier: number;
     /**
      * Spend the status this move just cashed in — Frost's Cold Snap,
@@ -462,6 +495,12 @@ export interface MoveDefinition {
      * would stop being the standing investment Verdant Earth also reads —
      * but the field is defined for both sides so the next slate does not
      * have to re-answer the question.
+     *
+     * INERT on the `requiresFieldEffect` form (Light's Smite): there is no
+     * status and no holder to strip it from. "Consume the field effect" is a
+     * genuinely different mechanic — it would end a global, both-sides state
+     * early, which is a field-effect question rather than a status one — and
+     * is left unanswered rather than guessed at (docs/field-effects.md).
      *
      * Only fires on a hit that ACTUALLY got the multiplier, so a spread
      * conditional move strips the mark off the foe it doubled against and

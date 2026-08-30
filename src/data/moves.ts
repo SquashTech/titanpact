@@ -3,12 +3,13 @@
 // and a spread of priority brackets. Enough variety to run messy, interesting
 // 2v2s while the real content gets authored.
 //
-// EXCEPT Fire (2026-08-29), Water (2026-08-30) and Frost (2026-08-30), the
-// first three types replaced wholesale by their designed movepools — see the "(AUTHORED)"
-// blocks below. Those forty-five are balance-tuned content; everything else here
-// is still filler and should be read (and replaced) as such, type by type.
-// Nine engine fields exist because an authored slate needed them, and each is
-// generic vocabulary in engine/content.ts rather than a per-type special case:
+// EXCEPT Fire (2026-08-29), Water, Frost, Storm, Stone, Nature and Light (all
+// 2026-08-30), the seven types replaced wholesale by their designed movepools —
+// see the "(AUTHORED)" blocks below. Those are balance-tuned content;
+// everything else here is still filler and should be read (and replaced) as
+// such, type by type. Every engine field below exists because an authored slate
+// needed it, and each is generic vocabulary in engine/content.ts rather than a
+// per-type special case:
 //
 //   Fire  — StatusApplication.chance (Ember), critChance (Singe, Firebrand),
 //           conditionalPower (Immolate), statDeltas on a damage move (Molten Lash)
@@ -16,6 +17,8 @@
 //           manaDiscountOnUse (Wave Shred)
 //   Frost — requiresTargetStatus (Glaciate, Absolute Zero),
 //           conditionalPower.consumesStatus (Cold Snap)
+//   Light — conditionalPower.requiresFieldEffect (Smite) — the first damage
+//           condition that reads the BOARD instead of a combatant
 //
 // Most moves here are `kind: 'damage'` — variety comes from
 // type/category/power/cost/priority/targeting — including doubles-native
@@ -1560,30 +1563,302 @@ export const moves: Record<string, MoveDefinition> = {
     description: 'Everything this side has planted goes off at once (Poison 5, then detonates the whole stack).',
   },
 
-  // --- Light -------------------------------------------------------------
+  // --- Light (AUTHORED 2026-08-30) ---------------------------------------
+  // The designed seventeen, replacing the five fixture Light moves
+  // (radiantBeam, sunstrike, restoreVigor, purify, consecrate — the first two
+  // in this block, the other three in the Heal / Cleanse / Field Effect blocks
+  // below). Three ids are REUSED rather than retired, because the slate
+  // re-authors the same idea at a new price: radiantBeam, purify, consecrate.
+  //
+  // The type is three overlapping lines rather than one:
+  //
+  //   1. **Daze pressure.** Six of the seventeen carry Daze — one guaranteed
+  //      (Blind) and five chance-gated at 10/20/30/30/30%. The slate authors no
+  //      DURATION, so every one of them uses 2, the only precedent in the game
+  //      (stunningBlow). That is a real number and not a formality: a landed
+  //      Daze 2 denies the rest of this round plus all of the next, so
+  //      Blinding Flash is a 30% roll at that outcome on BOTH foes. See
+  //      docs/authoring-moves.md §10.
+  //   2. **Intelligence buffs.** Bless / Radiance / Exalt are +20 single, +40
+  //      both, +100 single. Flat additive multiples of 5 (CLAUDE.md), and
+  //      pointedly INTELLIGENCE — a Light hero's own damage line is magical, so
+  //      these compound with the type's own kit as well as with a magical
+  //      partner's. Exalt's +100 is larger than any base stat in the roster.
+  //   3. **Sanctuary as an enabler.** Consecrate is the only setter, and Smite
+  //      is the only payoff — the game's first move whose damage condition is
+  //      the BOARD rather than a combatant (content.ts
+  //      conditionalPower.requiresFieldEffect). Sanctuary is global, so the
+  //      same cast that gives this side +1 priority on heals also arms an
+  //      enemy Smite; that is the locked shape of field effects, and it is
+  //      what the 45 mana is buying against.
+  //
+  // Cost floor 15, ceiling 120 (Judgment, the highest-priced move in the game),
+  // and the slate authors no priority column, so every Light move resolves in
+  // bracket 0 — Sanctuary is the type's only bracket play, and it is rented for
+  // 5 rounds rather than owned.
+
+  // -- Early --
+  glimmer: {
+    id: 'glimmer',
+    name: 'Glimmer',
+    type: 'Light',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 40,
+    // A 10% opener, not a Daze plan — Blind is the guaranteed applier. The
+    // chance gates the RIDER and never the hit (CLAUDE.md "No accuracy stat").
+    statusApplication: { statusId: 'Daze', duration: 2, chance: 0.1, target: 'moveTarget' },
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A needle of light, occasionally straight across the eyes (10% chance of Daze 2).',
+  },
+  bless: {
+    id: 'bless',
+    name: 'Bless',
+    type: 'Light',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [{ stat: 'intelligence', amount: 20 }],
+    manaCost: 15,
+    priority: 0,
+    target: 'singleAlly',
+    description: "Lays a hand on an ally and sharpens what they already know (+20 Intelligence).",
+  },
+  mend: {
+    id: 'mend',
+    name: 'Mend',
+    type: 'Light',
+    category: 'magical',
+    kind: 'heal',
+    // Not flat HP: 45 is what the healing formula SCALES, off the caster's own
+    // Wisdom and Light's STAB (healPipeline.ts). Solace at Wisdom 70 restores
+    // 68; a Wisdom-40 borrower of this move restores 41.
+    healPower: 45,
+    manaCost: 25,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Closes an ally up, cleanly and immediately.',
+  },
+  purify: {
+    id: 'purify',
+    name: 'Purify',
+    type: 'Light',
+    category: 'magical',
+    // The fixture Purify healed 10 as well as cleansing; the authored one is
+    // pure cleanse, so 'buff' with no deltas — the engine's kind for a move
+    // whose entire payload is its riders (docs/authoring-moves.md §2).
+    kind: 'buff',
+    statDeltas: [],
+    cleanses: true,
+    // "A negative status", singular — so one, picked at RANDOM from the
+    // eligible ones (content.ts cleanseCount). Never a positive status, and
+    // still no way to name which. This makes Purify the ONLY cleanse move
+    // besides Water's Wash Away, and the game now has no cleanse-all move at
+    // all; the unlimited path survives only in the engine.
+    cleanseCount: 1,
+    manaCost: 20,
+    priority: 0,
+    target: 'singleAlly',
+    description: "Burns one affliction off an ally, whichever the light finds first.",
+  },
+  blind: {
+    id: 'blind',
+    name: 'Blind',
+    type: 'Light',
+    category: 'magical',
+    // No damage body, so 'buff' with a hostile payload — MoveTile recovers the
+    // Debuff label from the rider's target (docs/authoring-moves.md §2).
+    kind: 'buff',
+    statDeltas: [],
+    statusApplication: { statusId: 'Daze', duration: 2, target: 'moveTarget' },
+    manaCost: 25,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Floods a foe with white until there is nothing to aim at (inflicts Daze 2).',
+  },
+  holyStrike: {
+    id: 'holyStrike',
+    name: 'Holy Strike',
+    type: 'Light',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 40,
+    // The type's only self-sustain outside the heal line, and the reason a
+    // physical Light hero is not purely a damage seat: Renew is snapshotted
+    // through the caster's Wisdom and STAB at application (healPipeline.ts
+    // scaleHotMagnitude), so Aegis at Wisdom 75 banks more than the 10 written.
+    statusApplication: { statusId: 'Renew', magnitude: 10, target: 'self' },
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A struck blow that gives something back (grants the user Renew 10).',
+  },
+
+  // -- Mid --
   radiantBeam: {
     id: 'radiantBeam',
     name: 'Radiant Beam',
     type: 'Light',
     category: 'magical',
     kind: 'damage',
-    basePower: 58,
-    manaCost: 12,
+    basePower: 60,
+    statusApplication: { statusId: 'Daze', duration: 2, chance: 0.2, target: 'moveTarget' },
+    manaCost: 40,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A focused lance of blinding light.',
+    description: 'A focused lance of blinding light (20% chance of Daze 2).',
   },
-  sunstrike: {
-    id: 'sunstrike',
-    name: 'Sunstrike',
+  consecrate: {
+    id: 'consecrate',
+    name: 'Consecrate',
+    type: 'Light',
+    category: 'magical',
+    kind: 'heal',
+    healPower: 40,
+    // The slate's whole tempo game in one cast: a two-target heal that also
+    // turns the ground, which then gives every subsequent heal on the field +1
+    // priority AND switches on Smite. Note what the 45 is really buying —
+    // Sanctuary is global (docs/field-effects.md), so this arms an enemy Smite
+    // too, and its heal bonus helps whoever is healing.
+    fieldEffectApplication: 'sanctuary',
+    manaCost: 45,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Hallows the ground and lifts both allies (heals, and sets Sanctuary for 5 rounds).',
+  },
+  radiance: {
+    id: 'radiance',
+    name: 'Radiance',
+    type: 'Light',
+    category: 'magical',
+    kind: 'buff',
+    statDeltas: [{ stat: 'intelligence', amount: 40 }],
+    manaCost: 50,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Both allies burn brighter (+40 Intelligence each).',
+  },
+  holySlice: {
+    id: 'holySlice',
+    name: 'Holy Slice',
+    type: 'Light',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 60,
+    statusApplication: { statusId: 'Bleed', chance: 0.3, target: 'moveTarget' },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A clean cut that does not close on its own (30% chance of Bleed).',
+  },
+  smite: {
+    id: 'smite',
+    name: 'Smite',
+    type: 'Light',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 50,
+    // The first conditional in the game that reads the BOARD rather than a
+    // combatant (content.ts conditionalPower.requiresFieldEffect). Three things
+    // follow, all of them intended:
+    //   - Consecrate is the only setter, so the type carries its own key — but
+    //     a Surging Magic or a Verdant Earth cast by ANYONE overrides Sanctuary
+    //     and switches this back off mid-fight.
+    //   - The field is global, so an enemy Light hero's Consecrate arms this
+    //     too, and this side's Consecrate arms theirs.
+    //   - No consumesStatus: there is no holder to strip, and ending a global
+    //     field early is a different mechanic that has not been decided.
+    conditionalPower: { requiresFieldEffect: 'sanctuary', multiplier: 2 },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Calls the judgment down — twice as hard on hallowed ground (×2 while Sanctuary is up).',
+  },
+  blindingFlash: {
+    id: 'blindingFlash',
+    name: 'Blinding Flash',
     type: 'Light',
     category: 'magical',
     kind: 'damage',
     basePower: 40,
-    manaCost: 18,
+    // Rolled once PER TARGET (content.ts StatusApplication.chance), so this is
+    // two independent 30% rolls, not one — the most Daze the slate can put on
+    // the board in a single cast, which is what the 50 is priced for.
+    statusApplication: { statusId: 'Daze', duration: 2, chance: 0.3, target: 'moveTarget' },
+    manaCost: 50,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'A white detonation across the whole enemy line (30% chance of Daze 2 on each).',
+  },
+
+  // -- Late --
+  judgment: {
+    id: 'judgment',
+    name: 'Judgment',
+    type: 'Light',
+    category: 'magical',
+    kind: 'damage',
+    // The highest BasePower AND the highest mana cost in the game. No rider at
+    // all, deliberately: it is the slate's one move that is only a number.
+    basePower: 150,
+    manaCost: 120,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'The verdict, delivered. Nothing subtle about it.',
+  },
+  divineGrace: {
+    id: 'divineGrace',
+    name: 'Divine Grace',
+    type: 'Light',
+    category: 'magical',
+    kind: 'heal',
+    healPower: 90,
+    manaCost: 70,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Grace enough for both, poured out at once.',
+  },
+  solarFlare: {
+    id: 'solarFlare',
+    name: 'Solar Flare',
+    type: 'Light',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 70,
+    manaCost: 60,
     priority: 0,
     target: 'bothEnemies',
     description: 'A flare of searing light that washes over both foes.',
+  },
+  deityBlade: {
+    id: 'deityBlade',
+    name: 'Deity Blade',
+    type: 'Light',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 80,
+    statusApplication: { statusId: 'Daze', duration: 2, chance: 0.3, target: 'moveTarget' },
+    manaCost: 75,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A blade of borrowed divinity, and a light nobody looks straight at (30% chance of Daze 2).',
+  },
+  exalt: {
+    id: 'exalt',
+    name: 'Exalt',
+    type: 'Light',
+    category: 'magical',
+    kind: 'buff',
+    // +100 is larger than any base Intelligence in the roster, and stat mods
+    // PERSIST across a switch (CLAUDE.md "Resolved design questions") — so this
+    // is a one-cast investment in one hero for the rest of the fight, which is
+    // what the 60 and the single target are pricing.
+    statDeltas: [{ stat: 'intelligence', amount: 100 }],
+    manaCost: 60,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Raises one ally past what they were built for (+100 Intelligence).',
   },
 
   // --- Shadow ------------------------------------------------------------
@@ -1795,18 +2070,14 @@ export const moves: Record<string, MoveDefinition> = {
   },
 
   // --- Heal (docs/conditions.md-adjacent: the resource these moves spend against is mana, per CLAUDE.md's "mana cost is the primary balance lever") ---
-  restoreVigor: {
-    id: 'restoreVigor',
-    name: 'Restore Vigor',
-    type: 'Light',
-    category: 'magical',
-    kind: 'heal',
-    healPower: 40,
-    manaCost: 14,
-    priority: 0,
-    target: 'self',
-    description: 'A burst of restorative light poured into the caster.',
-  },
+  // Restore Vigor (Light, heal 40, target 'self', 14 mana) lived here until the
+  // authored Light slate replaced it (2026-08-30). It was the game's ONLY
+  // heal-kind move targeting 'self' and the cheapest heal anywhere, and three
+  // non-Light heroes carried it as their sustain (Cinder, Crimson, Valor) —
+  // all three now hold Mend Wounds, which is the same role at the same price.
+  // The slate's own heals are Mend (singleAlly, which still resolves onto the
+  // caster) and two bothAllies moves, so nothing is unreachable; what went away
+  // is the price point, and a heal that needed no target declaration at all.
   mendWounds: {
     id: 'mendWounds',
     name: 'Mend Wounds',
@@ -1955,19 +2226,13 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'self',
     description: 'Steadies the caster’s breath, mending a little more each round (grants Renew 20).',
   },
-  purify: {
-    id: 'purify',
-    name: 'Purify',
-    type: 'Light',
-    category: 'magical',
-    kind: 'heal',
-    healPower: 10,
-    cleanses: true,
-    manaCost: 16,
-    priority: 0,
-    target: 'singleAlly',
-    description: "Washes away an ally's afflictions (Grant Cleanse).",
-  },
+  // Cleanse's dedicated fixture carrier (purify — Light, heal 10 + cleanse-ALL,
+  // 16 mana) went the same way when Light was authored (2026-08-30). The slate
+  // re-authors the id as a pure cleanse at 20, but with `cleanseCount: 1`, so
+  // NO move in the game strips more than one status any more — the unlimited
+  // path is engine-only now (statusEngine.ts cleanseStatuses with no cap, still
+  // pinned by test/waterMoves.test.ts). If a future relic or move wants
+  // cleanse-all back, the engine is ready for it.
 
   // --- Field Effect moves (docs/field-effects.md) -------------------------
   // One per effect, EXCEPT Verdant Earth: the authored Nature slate
@@ -2000,17 +2265,8 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'self',
     description: "Stasis Bubble for 5 rounds: the slowest in a bracket acts first.",
   },
-  consecrate: {
-    id: 'consecrate',
-    name: 'Consecrate',
-    type: 'Light',
-    category: 'magical',
-    kind: 'buff',
-    statDeltas: [],
-    fieldEffectApplication: 'sanctuary',
-    manaCost: 20,
-    priority: 0,
-    target: 'self',
-    description: "Sanctuary for 5 rounds: healing moves gain +1 priority.",
-  },
+  // Sanctuary's standalone 20-mana setter used to sit here; the authored Light
+  // slate (2026-08-30) reused its `consecrate` id for a 45-mana bothAllies HEAL
+  // that also turns the ground — the same trade Nature made with Verdant Earth.
+  // The effect still has exactly one setter, it is just no longer a bare one.
 };

@@ -117,13 +117,27 @@ export const progressionTable: ProgressionTable = {
     // its starting kit, so the key and the lock grow on the same hero rather
     // than depending on a second Frost draft.
     glacialWarden: ['snowBlast', 'glaciate', 'permafrost', 'quickFreeze', 'frigidAir', 'absoluteZero', 'avalanche', 'purify'],
-    // healingRain dropped with the Nature rewrite — it was Nature filler on a
-    // mono-LIGHT hero, and Light's own five moves are already split across
-    // Solace's kit and the four below, so there is no same-type replacement for
-    // the slot. Left short rather than backfilled with more off-type filler,
-    // same call the Storm slate made for Gallant; the real fix is Light's own
-    // authored slate.
-    dawnwarden: ['sunstrike', 'fortify', 'purify', 'consecrate'],
+    // Light authored (2026-08-30): Solace is Int 60 / Wis 70, so it takes the
+    // MAGICAL half of the slate plus the whole support line — the two spread
+    // moves, both big heals, every Intelligence buff, and Consecrate + Smite,
+    // which are the only pair in the game where one move is the other's damage
+    // condition (moves.ts conditionalPower.requiresFieldEffect). Its three
+    // starters (Glimmer, Mend, Purify) are deliberately absent: levelUpMovePool
+    // filters unlocked moves out, so listing them here would be dead weight.
+    // The off-type filler (fortify) is gone now that the type has its own.
+    dawnwarden: [
+      'radiantBeam',
+      'blind',
+      'bless',
+      'consecrate',
+      'smite',
+      'radiance',
+      'blindingFlash',
+      'solarFlare',
+      'divineGrace',
+      'judgment',
+      'exalt',
+    ],
     runescribe: ['mindSpike', 'psychicLance', 'weaken', 'arcaneSurge'],
     mindweaver: ['spectralBind', 'quickJab', 'vanish', 'stunningBlow', 'stasisField'],
     forgewright: ['ironFist', 'shrapnelBlast', 'quickJab', 'stunningBlow'],
@@ -160,7 +174,13 @@ export const progressionTable: ProgressionTable = {
     // swings a run's mana growth eventually reaches (docs/mana.md).
     // rendingClaw dropped: Leaf Slice is the slate's own Bleed carrier.
     hollowbark: ['vineLash', 'blight', 'leafSlice', 'thornWhip', 'branchSlam', 'regrowth', 'weaken'],
-    aegis: ['sunstrike', 'restoreVigor', 'purify', 'consecrate', 'stunningBlow'],
+    // Aegis is Atk 45 / Int 40 / Wis 75 / Def 80 — the slate's PHYSICAL half
+    // (Holy Slice, Deity Blade, on top of the Holy Strike it opens with) plus
+    // the support line its Wisdom actually pays for. Bless and Exalt are here
+    // despite granting a stat Aegis barely uses: both are singleAlly, so this
+    // is the hero that spends a turn making a MAGICAL partner enormous.
+    // stunningBlow stays as the off-type physical it always was.
+    aegis: ['holySlice', 'deityBlade', 'mend', 'purify', 'bless', 'exalt', 'consecrate', 'divineGrace', 'stunningBlow'],
     brimstone: ['sparkFlash', 'spreadingBlaze', 'backdraft', 'sparkBurst', 'nightmareGrasp', 'duskStrike'],
     // galeShot dropped with the Storm rewrite — it was Storm filler on a
     // mono-IRON hero, and Iron's own five moves are already split across

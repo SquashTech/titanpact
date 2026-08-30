@@ -96,10 +96,13 @@ Effect is actually authored.
 ## Content (2026-08-21 batch)
 
 Each is flavored around one type (`flavorType`, presentational only) but — like
-Surging Magic — mechanically **global**, affecting both sides. Every setting move
-mirrors `arcaneSurge`'s shape (`kind: 'buff'`, `target: 'self'`, 20 mana, sets its
-field effect), the same "small dedicated buff move" pattern `moves.ts`'s file header
-documents for status-granting moves like `vanish` (Stealth) and `secondWind` (Renew):
+Surging Magic — mechanically **global**, affecting both sides. The original setting
+moves all mirrored `arcaneSurge`'s shape (`kind: 'buff'`, `target: 'self'`, 20 mana,
+sets its field effect), the same "small dedicated buff move" pattern `moves.ts`'s file
+header documents for status-granting moves like `vanish` (Stealth) and `secondWind`
+(Renew). The authored slates have been folding that bare setter into a move that also
+*does* something — Nature's Magic Growth and Force of Nature (2026-08-30), and Light's
+Consecrate, a 45-mana `bothAllies` heal that turns the ground on the way past:
 
 | Field Effect | flavorType | Effect | Move (starter) |
 | --- | --- | --- | --- |
@@ -108,6 +111,27 @@ documents for status-granting moves like `vanish` (Stealth) and `secondWind` (Re
 | Stasis Bubble | Mind | Reverses same-bracket Speed order | `stasisField` (Cortex) |
 | Sanctuary | Light | Heal-kind moves get +1 priority | `consecrate` (Solace) |
 | Verdant Earth | Nature | +Attack/+Intelligence equal to your own Renew | `magicGrowth`, `forceOfNature` (Sylva) |
+
+### A field effect as a damage condition (2026-08-30, Light)
+
+Sanctuary is the first field effect a **move reads back**, rather than only being
+affected by: Light's Smite doubles its BasePower while Sanctuary is the active effect
+(`MoveDefinition.conditionalPower.requiresFieldEffect` — see `docs/combat.md`). Three
+properties of the subsystem become load-bearing the moment content does this, and all
+three are the LOCKED shape rather than anything new:
+
+- **One slot.** Any other effect overrides Sanctuary and switches the bonus straight
+  off — so a Surging Magic cast by either side is real counterplay to a Light team,
+  which is the first time "whose field is up" has been a damage question.
+- **No owner.** The side that sets it arms *every* Smite on the field, its own and the
+  enemy's. The setter is a tempo commitment, not a private buff.
+- **A 5-round clock.** The bonus is rented, never owned; nothing in the type can
+  refresh it except re-paying for the setter, and re-applying the *active* effect is a
+  no-op that does not restart the clock.
+
+`consumesStatus` is deliberately inert on this form. "Consume the field effect" would
+end a global, both-sides state early — a field-effect mechanic, not a status one — and
+it has not been decided.
 
 Each move is tied to that starter through `progressionTable.moveTiers`
 (`src/data/progression.ts`) — a **level-up unlock**, not part of the starting kit.

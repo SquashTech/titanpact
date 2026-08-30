@@ -265,7 +265,7 @@ test('fieldEffects: Stasis Bubble does not touch priority BRACKETS — a priorit
 test('fieldEffects: Sanctuary bumps a heal-kind move\'s priority bracket by 1, regardless of Speed', () => {
   const state = twoVTwoFixture(430);
   const actions: Action[] = [
-    { kind: 'move', combatantId: 'a1', moveId: 'restoreVigor' }, // cinderKnight, heal, speed 50, target self
+    { kind: 'move', combatantId: 'a1', moveId: 'mendWounds', declaredTarget: 'a1' }, // cinderKnight, heal, speed 50, cast on itself
     { kind: 'move', combatantId: 'b2', moveId: 'vineLash', declaredTarget: 'a1' }, // wildOracle, damage, speed 65
   ];
 
@@ -281,7 +281,7 @@ test('fieldEffects: Sanctuary — a heal actually lands before a same-bracket da
   const built = twoVTwoFixture(431);
   const state = { ...built, activeFieldEffect: { fieldEffectId: 'sanctuary', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
   const actions: Action[] = [
-    { kind: 'move', combatantId: 'a1', moveId: 'restoreVigor' },
+    { kind: 'move', combatantId: 'a1', moveId: 'mendWounds', declaredTarget: 'a1' },
     { kind: 'move', combatantId: 'b2', moveId: 'vineLash', declaredTarget: 'a1' },
   ];
 

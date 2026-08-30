@@ -12,6 +12,7 @@ import './frostMoves.test';
 import './stormMoves.test';
 import './stoneMoves.test';
 import './natureMoves.test';
+import './lightMoves.test';
 import './run.test';
 import './recruitment.test';
 import './shop.test';

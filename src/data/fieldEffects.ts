@@ -19,8 +19,8 @@
 // its own dedicated move (moves.ts "Field Effect moves").
 //
 // Each setter is tied to its type's starter, but as a LEVEL-UP unlock, not a
-// starting move (2026-08-26): every one of them costs 20 mana, which made it
-// the outlier in a kit otherwise built from a cheap main-type move and one
+// starting move (2026-08-26): the original five all cost 20 mana, which made
+// one the outlier in a kit otherwise built from a cheap main-type move and one
 // or two supports, and it was the 4th slot in a hero that had one — the
 // thing that stopped starting kits being uniform three across the draft
 // screen. So the attachment lives in src/data/progression.ts moveTiers now
@@ -28,11 +28,21 @@
 // runescribe→arcaneSurge, mindweaver→stasisField), and each effect is
 // something a run grows into rather than opens with.
 //
-// Verdant Earth is the one exception to "one setter per effect" (2026-08-30):
-// the authored Nature slate sets it from TWO of its own moves — Magic Growth
-// (40, a Renew grant that also turns the ground) and Force of Nature (75, the
-// type's biggest hit) — and the standalone 20-mana setter that used to carry it
-// was deleted, its `overgrowth` id reused by the slate's Renew 100 buff.
+// The authored slates have since replaced the bare 20-mana setters with moves
+// that also DO something, which is the better shape — the field is a rider on
+// a cast you wanted anyway rather than a turn spent on nothing:
+//
+//   - Verdant Earth is the one exception to "one setter per effect"
+//     (2026-08-30): the Nature slate sets it from TWO of its own moves — Magic
+//     Growth (40, a Renew grant) and Force of Nature (75, the type's biggest
+//     hit) — and the standalone setter that used to carry it was deleted, its
+//     `overgrowth` id reused by the slate's Renew 100 buff.
+//   - Sanctuary keeps exactly one setter, but the Light slate (2026-08-30)
+//     reused the `consecrate` id for a 45-mana bothAllies HEAL that turns the
+//     ground on the way past. Sanctuary is also the first field effect a MOVE
+//     READS BACK: Light's Smite doubles its BasePower while it is active
+//     (engine/content.ts conditionalPower.requiresFieldEffect), which makes
+//     "whose field is up" a damage question and not only a tempo one.
 
 import type { FieldEffectDefinition } from '../engine/content';
 

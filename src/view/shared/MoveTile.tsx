@@ -298,18 +298,26 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   }
 
   if (move.conditionalPower) {
-    // "vs Freeze" and "while you have Renew" are opposite instructions and the
-    // summary has to say which — a Branch Slam reading "×2 power vs Renew"
-    // would send the player looking for an enemy to put Renew on
-    // (content.ts conditionalPower.requiresUserStatus).
+    // "vs Freeze", "while you have Renew" and "while Sanctuary is up" are three
+    // different instructions and the summary has to say which — a Branch Slam
+    // reading "×2 power vs Renew" would send the player looking for an enemy to
+    // put Renew on (content.ts conditionalPower.requiresUserStatus), and a Smite
+    // reading either status form would name something nobody is holding
+    // (requiresFieldEffect).
+    const fieldSide = move.conditionalPower.requiresFieldEffect;
     const userSide = move.conditionalPower.requiresUserStatus;
     const gate = move.conditionalPower.requiresTargetStatus ?? userSide ?? '';
     const gateName = statuses[gate]?.name ?? gate;
     // "consumed" is not a footnote. Cold Snap's double is paid for with the
     // exact mark a requiresTargetStatus move in the same kit needs to be
     // castable, and a player who cannot see that cannot make the choice.
-    const spent = move.conditionalPower.consumesStatus ? ', consumed' : '';
-    const clause = userSide ? `while you have ${gateName}` : `vs ${gateName}`;
+    // Never printed on the field form, which cannot consume anything.
+    const spent = move.conditionalPower.consumesStatus && !fieldSide ? ', consumed' : '';
+    const clause = fieldSide
+      ? `while ${fieldEffects[fieldSide]?.name ?? fieldSide} is up`
+      : userSide
+        ? `while you have ${gateName}`
+        : `vs ${gateName}`;
     parts.push(`×${move.conditionalPower.multiplier} power ${clause}${spent}`);
   }
 

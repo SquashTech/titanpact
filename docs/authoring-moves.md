@@ -8,7 +8,8 @@ asks you to remove that type's existing moves, replace them, and "distribute the
 appropriately."
 
 Fire was the first (2026-08-29), Water the second, Frost the third, Storm
-the fourth, Stone the fifth and Nature the sixth (all 2026-08-30). Nine types remain. This file is what those six cost to learn, written
+the fourth, Stone the fifth, Nature the sixth and Light the seventh (all 2026-08-30).
+Eight types remain. This file is what those seven cost to learn, written
 down so the next one is an afternoon instead of a day. Water took about a third of
 Fire's time and Frost about the same as Water, and every hour of the saving came from
 §0 step 1 — naming the engine extensions before writing any content. Frost needed two
@@ -40,6 +41,20 @@ just which status it names** — a slate can reuse an engine field's exact
 grammar and still be asking it a question it has never been asked. The general
 form is a sibling of Stone's: Stone's trap was a payload landing on the wrong
 side of the field, and Nature's is a *condition being read* off the wrong side.
+
+Light needed **one**, the fewest of any slate, and it was visible in four
+words — "if Sanctuary is active". The lesson is not about the extension. It is
+about the column that **is not there**: the table says "apply Daze" six times
+and never says *for how long*. Base Power, Mana Cost and the rider's chance are
+all columns; a duration-shape status's duration is not, and there is no
+`isValidMoveDefinition` to catch a zero. **Before authoring, list every status
+your slate applies and check the shape it needs against `src/data/statuses.ts` —
+magnitude, duration, or timer — and whether the table supplies that number.**
+Where it does not, the honest move is to use the existing precedent, say so in
+the hand-off, and let the designer overrule it; the wrong move is to pick a
+different value per row and quietly invent a balance split the table never
+asked for. Light used `duration: 2` (stunningBlow's, the only precedent) on all
+six and reported it.
 
 Read this **before** opening `src/data/moves.ts`. Read `CLAUDE.md` first if you have not.
 
@@ -372,9 +387,14 @@ a status applied earlier in the same round already counts.
 
 Swap in `requiresUserStatus` (Nature's Seed Shot, Branch Slam — "double damage
 if the user has Renew") and the same multiplier asks about the **attacker**
-instead. Author exactly one of the two; nothing validates that, and a
-`conditionalPower` authoring neither is a silent dud. Two behavioural
-differences worth knowing before you reach for it:
+instead. Swap in `requiresFieldEffect` (Light's Smite — "double damage if
+Sanctuary is active") and it asks about the **board**, which nobody holds:
+`CombatState.activeFieldEffect` is one global slot, so a spread cast is doubled
+against every target or none, an enemy setting the field arms your move and
+yours arms theirs, and *any other* field effect displaces it. `consumesStatus`
+is inert on that form — there is nothing to strip. Author exactly one of the
+three; nothing validates that, and a `conditionalPower` authoring none is a
+silent dud. Two behavioural differences worth knowing before you reach for it:
 
 - The target-side form is re-read per hit, so a spread move can double against
   one foe and not the other. The user-side form asks one question about one
@@ -810,6 +830,43 @@ mechanical. What the slate actually surfaced was three gaps in who can hold it:
   has no home so the decision (author a hero / place it off-type / leave it) is
   theirs. Do not quietly stuff a move into the nearest pool to make the number
   zero.
+
+Light's, as a seventh — the cheapest slate yet on engine work (one field) and
+the first whose findings are all about **what the table did not say**:
+
+- **A capability the slate deleted — three, and the third is the one that
+  matters.** (1) `restoreVigor` was the game's only heal-kind move targeting
+  `'self'`, its cheapest heal at 14, and the sustain in three NON-Light kits
+  (Cinder, Crimson, Valor). All three now hold `mendWounds` — same role, 16
+  mana — and the type's own heals start at 25. (2) `sunstrike`, Light's spread
+  poke at 18, is replaced by Solar Flare at 60, so the type's cheapest way to
+  touch both foes went 18 → 50 (Blinding Flash). (3) **The game no longer has
+  a cleanse-all move.** The fixture Purify stripped everything; the authored
+  one is `cleanseCount: 1`, faithfully reading "a negative status", so every
+  Cleanse in the game is now limited and the unlimited path survives only in
+  the engine (`test/waterMoves.test.ts` still pins it). That is a real
+  identity call about how answerable a stacked-up status board should be, and
+  the table states it only by the word "a".
+- **A locked decision the slate brushed against.**
+  `conditionalPower.requiresFieldEffect` makes a **global, both-sides,
+  5-round, single-slot** state into a damage term. It does not break the
+  two-pipeline lock (it is a BasePower-stage input like its two siblings), but
+  it does mean an enemy's Consecrate arms your Smite and any Surging Magic
+  switches it off — the first time the field-effect slot is contested for a
+  reason other than its own effect. Recorded in `docs/combat.md` and
+  `docs/field-effects.md` rather than settled by accident, along with the two
+  shapes deliberately left unbuilt: gating on a field's *absence*, and on
+  *any* field rather than a named one.
+- **A balance consequence outside the slate — and it is a value the table
+  omits.** Six of seventeen Light moves apply **Daze**, and Daze is a
+  duration-shape status whose duration the table never gives. Every one uses
+  `2`, the only precedent in the game (`stunningBlow`). That is not a
+  formality: a landed Daze 2 denies the rest of the current round *and* all of
+  the next, so Blind is a guaranteed two-round lockout for 25 mana and
+  Blinding Flash is two independent 30% rolls at that outcome. If the intent
+  was flinch-shaped (deny the rest of this round only) the value is `1`, and
+  it is a one-token change across six rows — but it is the designer's call,
+  not the author's.
 
 **The procedural lesson from Stone**, extending Storm's: when you finish the
 slate, run the reachability check as well as the dangling-id one. They are
