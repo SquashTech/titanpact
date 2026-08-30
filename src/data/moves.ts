@@ -3,17 +3,19 @@
 // and a spread of priority brackets. Enough variety to run messy, interesting
 // 2v2s while the real content gets authored.
 //
-// EXCEPT Fire (2026-08-29) and Water (2026-08-30), the first two types
-// replaced wholesale by their designed movepools — see the "(AUTHORED)"
-// blocks below. Those thirty are balance-tuned content; everything else here
+// EXCEPT Fire (2026-08-29), Water (2026-08-30) and Frost (2026-08-30), the
+// first three types replaced wholesale by their designed movepools — see the "(AUTHORED)"
+// blocks below. Those forty-five are balance-tuned content; everything else here
 // is still filler and should be read (and replaced) as such, type by type.
-// Seven engine fields exist because an authored slate needed them, and each is
+// Nine engine fields exist because an authored slate needed them, and each is
 // generic vocabulary in engine/content.ts rather than a per-type special case:
 //
 //   Fire  — StatusApplication.chance (Ember), critChance (Singe, Firebrand),
 //           conditionalPower (Immolate), statDeltas on a damage move (Molten Lash)
 //   Water — drainPercent (Siphon, Engulf), cleanseCount (Wash Away),
 //           manaDiscountOnUse (Wave Shred)
+//   Frost — requiresTargetStatus (Glaciate, Absolute Zero),
+//           conditionalPower.consumesStatus (Cold Snap)
 //
 // Most moves here are `kind: 'damage'` — variety comes from
 // type/category/power/cost/priority/targeting — including doubles-native
@@ -28,6 +30,8 @@
 // Cleanse move. Burn and Fire Force lost their dedicated fixture carriers
 // when Fire was authored, and both were replaced from inside the authored
 // pool: Burn by eight Fire-typed carriers, Fire Force by Stoke the Flames —
+// and Freeze's dedicated carrier (frostLock) went the same way when Frost was
+// authored, replaced by six Frost carriers of its own —
 // which is now the only move in the game that grants ANY Elemental Force, so
 // do not delete it without replacing that vector. Conduct included: only its own dedicated move (voltaicJolt)
 // plants the mark. ANY Storm/Iron damage move — this one included — can still
@@ -588,30 +592,260 @@ export const moves: Record<string, MoveDefinition> = {
     description: 'Cuts a channel through the water — and every cut after it runs easier (costs 20 less each use).',
   },
 
-  // --- Frost -------------------------------------------------------------
-  frostBite: {
-    id: 'frostBite',
-    name: 'Frostbite',
+  // --- Frost (AUTHORED, 2026-08-30) -----------------------------------------
+  // The third designed movepool. Fire's fifteen orbit Burn and Water's orbit
+  // staying in; Frost's orbit **Freeze** — a boolean status whose entire
+  // printed effect is halving Speed, and which eleven of these fifteen either
+  // apply, pay off, or spend.
+  //
+  // Four consequences worth knowing before tuning anything here:
+  //
+  // 1. **Freeze is worth little on its own and a great deal to this pool.**
+  //    Halved Speed is a tempo nudge; what actually prices Deep Chill (25 for
+  //    no damage at all) and Permafrost is that they turn on Glaciate,
+  //    Absolute Zero and Cold Snap. Frost is the first type whose SETUP is the
+  //    expensive half and whose payoff is the cheap one.
+  // 2. **Freeze is cleared by switching** (statuses.ts), so every payoff here
+  //    is one voluntary switch away from evaporating — right up until a side
+  //    has 2+ heroes KO'd and the lock-in rule (CLAUDE.md "Mana & tempo")
+  //    removes switching entirely. Frost is the first pool whose best turn is
+  //    a function of which PHASE of the fight it is, and it is deliberately
+  //    the weaker half of the fight it is good in.
+  // 3. **Two of the payoffs are hard targeting gates, not damage bonuses.**
+  //    Glaciate and Absolute Zero carry `requiresTargetStatus` (content.ts):
+  //    with no Frozen enemy on the field they have no legal target and cannot
+  //    be declared at all. Cold Snap is the softer shape — it lands either way
+  //    and doubles by SPENDING the Freeze (conditionalPower.consumesStatus).
+  //    A Frost side holding both therefore has to choose, every time it lands
+  //    a mark, between cashing it in and keeping it as a key.
+  // 4. **Frost keeps bracket play, which Water gave up.** Quick Freeze is
+  //    priority 1; every other move here resolves in bracket 0.
+  //
+  // Cost floor is 15 and the ceiling 75 — the same steep authored curve Fire
+  // and Water set. The three Frost heroes' pools are 45/60/70 and are read
+  // against THIS, not against the 10-mana Frostbite they used to hold.
+  iceShard: {
+    id: 'iceShard',
+    name: 'Ice Shard',
+    type: 'Frost',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 40,
+    // The cheap way onto the Freeze track, and the only one that also does
+    // damage at Early tier. A fifth of the time it does Deep Chill's whole job
+    // for 5 less mana and a 40 BP hit on top — which is the reason Deep Chill
+    // has to be a guarantee rather than a bigger chance.
+    statusApplication: { statusId: 'Freeze', target: 'moveTarget', chance: 0.2 },
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A splinter of ice thrown hard enough to stick (20% chance of Freeze).',
+  },
+  frostArmor: {
+    id: 'frostArmor',
+    name: 'Frost Armor',
+    type: 'Frost',
+    // Authored 'physical' because Defense is the physical pipeline's defending
+    // stat — category is inert on a buff move and this is documentation
+    // (authoring-moves.md §2).
+    category: 'physical',
+    kind: 'buff',
+    statDeltas: [{ stat: 'defense', amount: 20 }],
+    manaCost: 15,
+    priority: 0,
+    target: 'singleAlly',
+    description: 'Sheathes one ally in rime (+20 Defense).',
+  },
+  deepChill: {
+    id: 'deepChill',
+    name: 'Deep Chill',
+    type: 'Frost',
+    category: 'magical',
+    kind: 'buff',
+    // No damage body at all — `kind: 'buff'` is the engine's kind for a move
+    // that is only its rider, and the UI recovers the sign on its own
+    // (MoveTile's isDebuff). This is the pool's key-cutter: the guaranteed
+    // mark that makes Glaciate and Absolute Zero declarable at all.
+    statusApplication: { statusId: 'Freeze', target: 'moveTarget' },
+    manaCost: 25,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Drives the cold all the way in, no strike required (inflicts Freeze).',
+  },
+  rimeWind: {
+    id: 'rimeWind',
+    name: 'Rime Wind',
+    type: 'Frost',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 25,
+    manaCost: 35,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'A thin, cutting wind across the whole far side.',
+  },
+  snowBlast: {
+    id: 'snowBlast',
+    name: 'Snow Blast',
+    type: 'Frost',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 50,
+    manaCost: 25,
+    priority: 0,
+    // Hits your own partner too — the VGC Surf/Earthquake shape, and an
+    // authored downside rather than a targeting convenience. Note Frost Armor
+    // does NOT cover a partner against this one: Snow Blast is magical, so it
+    // reads Wisdom, and the +20 it grants is Defense.
+    target: 'allOthers',
+    description: 'A wall of driven snow that does not care who is standing in it.',
+  },
+  icicleThrust: {
+    id: 'icicleThrust',
+    name: 'Icicle Thrust',
+    type: 'Frost',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 60,
+    statusApplication: { statusId: 'Freeze', target: 'moveTarget', chance: 0.3 },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A driven spear of ice, aimed to stay in (30% chance of Freeze).',
+  },
+  glaciate: {
+    id: 'glaciate',
+    name: 'Glaciate',
+    type: 'Frost',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 75,
+    // A hard gate, not a bonus (content.ts requiresTargetStatus): with no
+    // Frozen enemy on the field this move cannot be declared at all. That is
+    // what buys 75 BP at 40 mana — the same price as Icicle Thrust's 60, for a
+    // move that spends a whole earlier turn to become castable.
+    requiresTargetStatus: 'Freeze',
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Grows the ice already in a foe until it does the work (only targets a Frozen enemy).',
+  },
+  permafrost: {
+    id: 'permafrost',
+    name: 'Permafrost',
+    type: 'Frost',
+    category: 'magical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Freeze', target: 'moveTarget' },
+    manaCost: 45,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Sets the cold into the whole far side at once (inflicts Freeze).',
+  },
+  frigidAir: {
+    id: 'frigidAir',
+    name: 'Frigid Air',
+    type: 'Frost',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 90,
+    manaCost: 50,
+    priority: 0,
+    target: 'allOthers',
+    description: 'The air itself turns lethal, for everyone still breathing it.',
+  },
+  quickFreeze: {
+    id: 'quickFreeze',
+    name: 'Quick Freeze',
+    type: 'Frost',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 30,
+    manaCost: 45,
+    // Frost's one bracket play, and the pool's steepest price per point of
+    // BasePower by a wide margin — 45 mana for 30 BP buys the bracket, not the
+    // hit. It applies no Freeze despite the name (see the hand-off note in
+    // docs/combat.md); what it is for is finishing a foe before it can switch
+    // its Freeze off and take your gated move with it.
+    priority: 1,
+    target: 'singleEnemy',
+    description: 'Cold, arriving before anything else does.',
+  },
+  coldSnap: {
+    id: 'coldSnap',
+    name: 'Cold Snap',
     type: 'Frost',
     category: 'physical',
     kind: 'damage',
     basePower: 55,
-    manaCost: 10,
+    // The soft counterpart to Glaciate's hard gate: this one lands whether or
+    // not the target is marked, and doubles by SPENDING the mark
+    // (content.ts conditionalPower.consumesStatus). Doubling a 55 BP physical
+    // hit is worth less than unlocking Absolute Zero's 120, which is exactly
+    // the choice it exists to pose.
+    conditionalPower: { requiresTargetStatus: 'Freeze', multiplier: 2, consumesStatus: true },
+    manaCost: 35,
     priority: 0,
     target: 'singleEnemy',
-    description: 'A biting chill that numbs muscle and armor alike.',
+    description: 'Shatters the ice off a foe and puts it through them (×2 vs Frozen, consuming it).',
   },
-  glacialSpike: {
-    id: 'glacialSpike',
-    name: 'Glacial Spike',
+  avalanche: {
+    id: 'avalanche',
+    name: 'Avalanche',
     type: 'Frost',
     category: 'magical',
     kind: 'damage',
     basePower: 60,
-    manaCost: 13,
-    priority: -1,
+    statusApplication: { statusId: 'Freeze', target: 'moveTarget' },
+    manaCost: 75,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'The whole mountain comes down on both of them (inflicts Freeze).',
+  },
+  absoluteZero: {
+    id: 'absoluteZero',
+    name: 'Absolute Zero',
+    type: 'Frost',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 120,
+    // The pool's ceiling, and the reason the whole Freeze economy exists: the
+    // biggest single number in any authored slate so far, payable only against
+    // a foe somebody already spent a turn marking.
+    requiresTargetStatus: 'Freeze',
+    manaCost: 70,
+    priority: 0,
     target: 'singleEnemy',
-    description: 'A slow-forming spike of enchanted ice — devastating but sluggish.',
+    description: 'Takes everything that was left (only targets a Frozen enemy).',
+  },
+  iceShatter: {
+    id: 'iceShatter',
+    name: 'Ice Shatter',
+    type: 'Frost',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 80,
+    statusApplication: { statusId: 'Freeze', target: 'moveTarget', chance: 0.5 },
+    manaCost: 70,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A blow that breaks and re-forms at once (50% chance of Freeze).',
+  },
+  frostWall: {
+    id: 'frostWall',
+    name: 'Frost Wall',
+    type: 'Frost',
+    category: 'physical',
+    kind: 'buff',
+    // +60 to both, which is the largest stat grant any move hands out. Flat
+    // additive and a multiple of 10, per CLAUDE.md — so its value is inversely
+    // proportional to what the defenders already have, and it is worth most on
+    // the squishy side rather than on the wall it looks like it belongs to.
+    statDeltas: [{ stat: 'defense', amount: 60 }],
+    manaCost: 60,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'A wall of ice across the near side of the field (+60 Defense).',
   },
 
   // --- Storm -------------------------------------------------------------
@@ -1059,19 +1293,6 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'singleEnemy',
     description: 'A venom-laced bite that starts a 3-round countdown (inflicts Poison 10).',
-  },
-  frostLock: {
-    id: 'frostLock',
-    name: 'Frost Lock',
-    type: 'Frost',
-    category: 'magical',
-    kind: 'damage',
-    basePower: 35,
-    statusApplication: { statusId: 'Freeze', target: 'moveTarget' },
-    manaCost: 13,
-    priority: 0,
-    target: 'singleEnemy',
-    description: "Chills the target's limbs, halving their Speed (inflicts Freeze)." ,
   },
   stunningBlow: {
     id: 'stunningBlow',

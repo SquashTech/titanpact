@@ -35,6 +35,8 @@ import {
   applyStatus,
   applyStealthRedirect,
   cleanseStatuses,
+  consumeStatus,
+  statusGatedTargets,
   expandSpreadTargets,
   tickEndOfRound,
   tickStartOfRound,
@@ -157,6 +159,18 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       spreadVia = spread.spreadVia;
     }
 
+    // The status targeting gate (content.ts requiresTargetStatus). Applied
+    // LAST — after Stealth's redirect and Haunt's spread — because both of
+    // those move a hit onto a hero the gate never approved: a Frozen-only
+    // strike bounced onto an unmarked partner has to fizzle, not land. And
+    // BEFORE the mana spend below, so an unmet gate costs the turn and
+    // nothing else, exactly like the noValidTarget race above.
+    targetIds = statusGatedTargets(working, move, targetIds);
+    if (move.requiresTargetStatus && targetIds.length === 0) {
+      events.push({ type: 'ActionBlocked', round, combatantId: action.combatantId, reason: 'targetStatusMissing' });
+      continue;
+    }
+
     events.push({ type: 'MoveDeclared', round, combatantId: action.combatantId, moveId: move.id, targetCombatantIds: targetIds });
 
     const previousMana = actor.currentMana;
@@ -269,6 +283,18 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           const hpResult = applyHpDelta(working, round, targetId, -amount, maxHp);
           working = hpResult.state;
           events.push(...hpResult.events);
+
+          // Cold Snap spending the mark it cashed in (content.ts
+          // conditionalPower.consumesStatus). Keyed off the multiplier that was
+          // ACTUALLY applied rather than off a second status read, so on a spread
+          // conditional move only the target that got doubled pays for it. Its own
+          // StatusRemoved beat after the damage, for the same reason Conduct's
+          // detonation is its own beat rather than a bigger DamageDealt number.
+          if (move.conditionalPower?.consumesStatus && basePowerMultiplier !== 1 && !working.combatants[targetId].fainted) {
+            const spent = consumeStatus(working, round, targetId, move.conditionalPower.requiresTargetStatus);
+            working = spent.state;
+            events.push(...spent.events);
+          }
 
           // Drain (content.ts drainPercent — Water's Siphon/Engulf). Scaled off
           // the HP this hit ACTUALLY removed rather than the rolled amount, so

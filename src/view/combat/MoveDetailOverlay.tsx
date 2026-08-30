@@ -302,12 +302,14 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   const statusDef = move.statusApplication ? statuses[move.statusApplication.statusId] : undefined;
   const fieldDef = move.fieldEffectApplication ? fieldEffects[move.fieldEffectApplication] : undefined;
   const conditionalDef = move.conditionalPower ? statuses[move.conditionalPower.requiresTargetStatus] : undefined;
+  const gateDef = move.requiresTargetStatus ? statuses[move.requiresTargetStatus] : undefined;
   const hasPayload = Boolean(
     move.statDeltas?.length ||
       move.statusApplication ||
       move.cleanses ||
       move.fieldEffectApplication ||
       move.conditionalPower ||
+      move.requiresTargetStatus ||
       move.critChance != null ||
       move.drainPercent ||
       move.manaDiscountOnUse
@@ -442,12 +444,27 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               note={statusDef.description}
             />
           )}
+          {/* The gate reads first, above the conditional row and above crit:
+              it is the only effect in this list that can make the move
+              unpressable rather than merely different. */}
+          {move.requiresTargetStatus && (
+            <EffectRow
+              glyph={<StatusGlyph statusId={move.requiresTargetStatus} />}
+              color={statusColor(move.requiresTargetStatus)}
+              text={`Only targets ${gateDef?.name ?? move.requiresTargetStatus}`}
+              note="no legal target, and no way to declare it, unless the status is already out there"
+            />
+          )}
           {move.conditionalPower && (
             <EffectRow
               glyph={<StatusGlyph statusId={move.conditionalPower.requiresTargetStatus} />}
               color={statusColor(move.conditionalPower.requiresTargetStatus)}
               text={`×${move.conditionalPower.multiplier} power vs ${conditionalDef?.name ?? move.conditionalPower.requiresTargetStatus}`}
-              note="scales base power, not the finished hit"
+              note={
+                move.conditionalPower.consumesStatus
+                  ? `scales base power, not the finished hit — and spends the ${conditionalDef?.name ?? move.conditionalPower.requiresTargetStatus} it cashed in`
+                  : 'scales base power, not the finished hit'
+              }
             />
           )}
           {move.critChance != null && (

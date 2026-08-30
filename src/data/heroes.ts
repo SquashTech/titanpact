@@ -103,7 +103,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Flurry',
     types: ['Frost'],
     baseStats: { hp: 140, attack: 30, defense: 55, intelligence: 70, wisdom: 60, speed: 45, manaPool: 70, mpRegen: 10 },
-    moveIds: ['glacialSpike', 'frostLock', 'secondWind'],
+    moveIds: ['rimeWind', 'frostArmor', 'deepChill'],
     starter: false,
   },
   rime: {
@@ -111,7 +111,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Rime',
     types: ['Frost'],
     baseStats: { hp: 110, attack: 65, defense: 55, intelligence: 65, wisdom: 53, speed: 42, manaPool: 60, mpRegen: 10 },
-    moveIds: ['frostBite', 'rendingClaw', 'secondWind'],
+    moveIds: ['iceShard', 'deepChill', 'secondWind'],
     starter: true,
   },
   cube: {
@@ -119,7 +119,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Cube',
     types: ['Frost'],
     baseStats: { hp: 90, attack: 50, defense: 80, intelligence: 40, wisdom: 50, speed: 25, manaPool: 45, mpRegen: 10 },
-    moveIds: ['frostBite', 'fortify', 'stunningBlow'],
+    moveIds: ['iceShard', 'frostArmor', 'fortify'],
     starter: false,
   },
 

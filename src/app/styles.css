@@ -3979,14 +3979,14 @@ textarea,
 /* Hover lights the facet from its own edge and grows the light bar to the
    facet's full height — the surface never lifts, because a facet that lifted
    would be a card again. */
-.move-list .move-button:hover:not(.is-unaffordable) {
+.move-list .move-button:hover:not(.is-unusable) {
   background:
     linear-gradient(90deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.3), rgba(var(--move-type-rgb, 53, 59, 74), 0.08) 36%, transparent 64%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012));
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.055);
 }
 
-.move-list .move-button:hover:not(.is-unaffordable)::before {
+.move-list .move-button:hover:not(.is-unusable)::before {
   top: 0;
   bottom: 0;
   box-shadow:
@@ -3994,7 +3994,7 @@ textarea,
     0 0 34px 7px rgba(var(--move-type-rgb, 53, 59, 74), 0.45);
 }
 
-.move-list .move-button:not(.is-unaffordable):active {
+.move-list .move-button:not(.is-unusable):active {
   background:
     linear-gradient(90deg, rgba(var(--move-type-rgb, 53, 59, 74), 0.36), rgba(var(--move-type-rgb, 53, 59, 74), 0.1) 38%, transparent 66%),
     linear-gradient(180deg, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.14));
@@ -4026,16 +4026,23 @@ textarea,
 
 /* Unaffordable: the groove is empty and unlit. Losing the domain light
    entirely is the cue — a dimmed-but-still-glowing slot reads as available. */
-/* Unaffordable: the facet goes dark and its light goes out. Losing the domain
+/* Unusable: the facet goes dark and its light goes out. Losing the domain
    light entirely is the cue — a dimmed-but-still-glowing slot reads as
-   available. */
-.move-list .move-button.is-unaffordable {
+   available.
+
+   TWO reasons a row is dead and one treatment for both: no mana, or a status
+   targeting gate with nothing on the field to satisfy it (content.ts
+   requiresTargetStatus). `.is-unusable` is the dim; `.is-unaffordable` is the
+   narrower flag, still applied alongside it, and is what the mana gem's own
+   grey-out keys off further down — a gated move the player can well afford
+   must not accuse them of being broke. */
+.move-list .move-button.is-unusable {
   opacity: 0.4;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.16));
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.03);
 }
 
-.move-list .move-button.is-unaffordable::before {
+.move-list .move-button.is-unusable::before {
   opacity: 0.18;
   box-shadow: none;
 }
@@ -4082,7 +4089,7 @@ textarea,
   }
 }
 
-.move-button:hover:not(.is-unaffordable) {
+.move-button:hover:not(.is-unusable) {
   border-color: var(--accent);
   transform: translateY(-1px);
   box-shadow: var(--hairline-strong), var(--elev-2);
@@ -4115,7 +4122,7 @@ textarea,
    which made the one move a player most wants explained (the expensive one
    they can't press yet) the only move in the game that couldn't be held for
    its dossier. They now refuse the tap in JS and keep the gesture. */
-.move-button.is-unaffordable {
+.move-button.is-unusable {
   opacity: 0.35;
   box-shadow: none;
   cursor: not-allowed;
@@ -4262,6 +4269,15 @@ textarea,
   font-weight: 700;
   color: var(--accent);
   opacity: 0.85;
+}
+
+/* An unmet targeting gate ("Needs Freeze"). Off the accent entirely: every
+   other chip on this line describes something the move WILL do, and the one
+   that describes what is missing has to read as a condition rather than as a
+   feature. */
+.move-eff-status.move-eff-unmet {
+  color: var(--text-dim, #8b93a7);
+  font-weight: 600;
 }
 
 /* Selected and unaffordable rows: the effect line is the row's quietest

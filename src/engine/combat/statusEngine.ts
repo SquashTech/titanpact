@@ -7,7 +7,7 @@
 // Stealth's untargetable-while-active redirect (applyStealthRedirect below —
 // narrow enough to stay a literal status-id check, same precedent as Freeze).
 
-import type { FieldEffectDefinition, StatusDefinition, StatusId, StatusRemovalReason, TargetMode, TypeId } from '../content';
+import type { FieldEffectDefinition, MoveDefinition, StatusDefinition, StatusId, StatusRemovalReason, TargetMode, TypeId } from '../content';
 import type { CombatState, StatusInstance } from '../state';
 import { hasStatus } from '../state';
 import type { CombatEvent } from '../events';
@@ -37,6 +37,25 @@ function removeStatus(
     state: { ...state, combatants: { ...state.combatants, [combatantId]: { ...combatant, statuses: nextStatuses } } },
     events: [{ type: 'StatusRemoved', round, combatantId, statusId, reason }],
   };
+}
+
+/**
+ * Spend a status as the PRICE of an effect that just cashed it in — Frost's
+ * Cold Snap doubling its BasePower and consuming the Freeze it read
+ * (content.ts conditionalPower.consumesStatus).
+ *
+ * A thin wrapper rather than an exported removeStatus: 'consumed' is the
+ * only removal reason content is allowed to reach for, and keeping the
+ * other four (decay/expired/switch/cleanse) inside this module is what
+ * stops a content field from inventing a fifth way to strip a status.
+ */
+export function consumeStatus(
+  state: CombatState,
+  round: number,
+  combatantId: string,
+  statusId: StatusId
+): { state: CombatState; events: CombatEvent[] } {
+  return removeStatus(state, round, combatantId, statusId, 'consumed');
 }
 
 export interface StatusApplyParams {
@@ -438,6 +457,30 @@ export function applyStealthRedirect(
  * aim at, mirroring the redirect's own "no alternate, the attack goes through"
  * branch rather than presenting an empty target list.
  */
+/**
+ * The hard targeting gate (content.ts requiresTargetStatus — Frost's
+ * Glaciate and Absolute Zero, "can only target Frozen enemies"): of
+ * `targetIds`, the ones actually carrying the status the move demands.
+ *
+ * Unlike selectableTargets' Stealth filter below there is deliberately NO
+ * fallback to the unfiltered list. An empty result is the correct answer and
+ * it means the move has no legal target at all — the view then refuses to
+ * offer it (FightScreen) and the engine fizzles it (resolveRound), both off
+ * this one function so declaration-time and resolve-time cannot drift apart.
+ *
+ * Generic in the status, not a Freeze check: the next type that wants a
+ * "only vs. Poisoned" move authors it as data, same discipline as
+ * StatusDefinition.triggerTypes.
+ */
+export function statusGatedTargets(state: CombatState, move: MoveDefinition, targetIds: readonly string[]): string[] {
+  const required = move.requiresTargetStatus;
+  if (!required) return [...targetIds];
+  return targetIds.filter((id) => {
+    const combatant = state.combatants[id];
+    return combatant != null && hasStatus(combatant, required);
+  });
+}
+
 export function selectableTargets(
   state: CombatState,
   targetMode: TargetMode,

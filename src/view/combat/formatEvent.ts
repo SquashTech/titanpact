@@ -159,7 +159,15 @@ export function formatEvents(
         lines.push({ key, text: `${name(e.combatantId)} rests, restoring Mana to full`, className: 'log-mana' });
         break;
       case 'ActionBlocked': {
-        const reasonText = e.reason === 'dazed' ? 'dazed' : "out of valid targets";
+        const reasonText =
+          e.reason === 'dazed'
+            ? 'dazed'
+            : e.reason === 'targetStatusMissing'
+              ? // The gate, named as the reason it failed — "out of valid targets"
+                // would be true but would read as "everything died" rather than
+                // "nothing out there is Frozen" (content.ts requiresTargetStatus).
+                'left without a marked target'
+              : 'out of valid targets';
         lines.push({ key, text: `${name(e.combatantId)} is ${reasonText} and can't act`, className: 'log-faint' });
         break;
       }

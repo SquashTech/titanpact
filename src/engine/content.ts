@@ -369,7 +369,25 @@ export interface MoveDefinition {
    * Data, not a predicate function — same discipline as
    * StatusDefinition.triggerTypes.
    */
-  conditionalPower?: { requiresTargetStatus: StatusId; multiplier: number };
+  conditionalPower?: {
+    requiresTargetStatus: StatusId;
+    multiplier: number;
+    /**
+     * Spend the status this move just cashed in — Frost's Cold Snap,
+     * "if the target is Frozen, consume it to deal double damage".
+     *
+     * Only fires on a hit that ACTUALLY got the multiplier, so a spread
+     * conditional move strips the mark off the foe it doubled against and
+     * leaves the clean one alone. Resolved after the damage lands, as its
+     * own StatusRemoved beat (reason 'consumed', the same one Conduct's
+     * detonation uses) rather than folded into the DamageDealt event.
+     *
+     * The design tension it exists to create: a Frost side holding both
+     * Cold Snap and a `requiresTargetStatus` move has to choose between
+     * cashing a Freeze in and keeping it as a key.
+     */
+    consumesStatus?: boolean;
+  };
   /**
    * damage-kind only. Fraction of the damage this move actually removes that
    * is restored to the USER — Water's Siphon/Engulf, "heal user for 50% of
@@ -398,6 +416,26 @@ export interface MoveDefinition {
    * so e.g. Molten Lash's -10 Defense shapes the NEXT hit, not its own.
    */
   statDeltas?: readonly StatDelta[];
+  /**
+   * Any kind. A HARD targeting gate: this move may only ever resolve
+   * against a combatant already carrying this status — Frost's Glaciate and
+   * Absolute Zero, "can only target Frozen enemies".
+   *
+   * The legality counterpart to `conditionalPower.requiresTargetStatus`,
+   * which is the same query used as a damage bonus instead of a
+   * restriction. Deliberately the same field name: same question, two
+   * different things hung off the answer.
+   *
+   * Applied by statusEngine.ts's statusGatedTargets at BOTH ends — the
+   * view refuses to offer the move when nothing legal is on the field
+   * (FightScreen), and resolveRound.ts fizzles it into an ActionBlocked
+   * ('targetStatusMissing') if the gate is unmet by the time it resolves,
+   * which is what happens when a faster action cleanses the mark, the
+   * target switches out, or Stealth redirects the hit onto an unmarked
+   * partner. A fizzle costs the turn and no mana, same as the
+   * noValidTarget race.
+   */
+  requiresTargetStatus?: StatusId;
   /** Any kind — see StatusApplication above. */
   statusApplication?: StatusApplication;
   /** Any kind — strips non-positive statuses from the move's resolved target(s) (docs/conditions.md §4 Cleanse). Positive statuses (Renew, Stealth) are never stripped — §7 "Cleanse & positive statuses" resolved this as a flat rule, not a per-move choice. */

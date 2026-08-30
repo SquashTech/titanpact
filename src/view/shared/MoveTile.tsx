@@ -254,9 +254,24 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     parts.push(move.statDeltas.map(({ stat, amount }) => `${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]}`).join(', '));
   }
 
+  // The hard gate leads, because on Glaciate and Absolute Zero it is not a
+  // bonus clause: with nothing on the field carrying the status the move has
+  // no legal target and cannot be cast at all (content.ts
+  // requiresTargetStatus). A summary that buried it under the base power
+  // would be describing a move the player may not be able to press.
+  if (move.requiresTargetStatus) {
+    const gate = move.requiresTargetStatus;
+    parts.push(`Only targets ${statuses[gate]?.name ?? gate}`);
+  }
+
   if (move.conditionalPower) {
     const gate = move.conditionalPower.requiresTargetStatus;
-    parts.push(`×${move.conditionalPower.multiplier} power vs ${statuses[gate]?.name ?? gate}`);
+    const gateName = statuses[gate]?.name ?? gate;
+    // "consumed" is not a footnote. Cold Snap's double is paid for with the
+    // exact mark a requiresTargetStatus move in the same kit needs to be
+    // castable, and a player who cannot see that cannot make the choice.
+    const spent = move.conditionalPower.consumesStatus ? ', consumed' : '';
+    parts.push(`×${move.conditionalPower.multiplier} power vs ${gateName}${spent}`);
   }
 
   if (move.critChance != null) parts.push(`${Math.round(move.critChance * 100)}% crit`);

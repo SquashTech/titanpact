@@ -307,6 +307,59 @@ written the moment a mana relic or a Guild-Hall stat bump exists. If the intent
 is "a ramp you can always start", the discount has to apply *before* the first
 cast, or the authored cost has to come down. That is a designer call.
 
+## Status-gated targeting (2026-08-30, Frost)
+
+`MoveDefinition.requiresTargetStatus` (`engine/content.ts`): a move that may
+only ever resolve against a combatant already carrying a named status. Frost's
+Glaciate and Absolute Zero ("can only target Frozen enemies") are the first
+content; the field is generic vocabulary, not a Frost case.
+
+It is the **legality** counterpart to `conditionalPower.requiresTargetStatus`,
+which asks the same question and hangs a damage bonus off the answer instead of
+a restriction. Three rules:
+
+- **An unmet gate fizzles the action for no mana**, exactly like the
+  `noValidTarget` race — it is not a damage penalty, and there is no weaker
+  version of the move that lands anyway. Its own `ActionBlocked` reason
+  (`targetStatusMissing`), so the Battle Log says *why*.
+- **It is read LAST**, after Stealth's redirect and Haunt's spread, because both
+  of those move a hit onto a hero the gate never approved. A Frozen-only strike
+  bounced by Stealth onto an unmarked partner fizzles rather than landing.
+- **One function, both ends** (`statusEngine.ts statusGatedTargets`): the target
+  picker refuses to offer an unsatisfiable move and the engine refuses to
+  resolve it, off the same code, so declaration-time and resolve-time cannot
+  drift apart.
+
+**Open question this leaves.** This is the first move property that can make a
+move *unpressable* rather than merely worse, which means a hero's usable
+movepool is now a function of the board. Two heroes drafted with Absolute Zero
+and no Freeze source between them would be a dead card — content-side today
+(both Frozen-only moves sit in a pool that also carries Deep Chill and
+Permafrost, and `test/frostMoves.test.ts` asserts the key ships with the lock),
+but there is no *engine* rule enforcing it. If gated moves spread beyond Frost,
+that assertion wants to become a content validator.
+
+## Spending a status as a cost (2026-08-30, Frost)
+
+`MoveDefinition.conditionalPower.consumesStatus`: the conditional multiplier
+still scales the formula's BasePower input exactly as before, and the hit that
+actually got the multiplier then **removes** the status it read
+(`StatusRemoved`, reason `consumed` — the same reason Conduct's detonation
+uses). Frost's Cold Snap is the first content.
+
+- **Keyed off the multiplier that was applied**, not off a second status read,
+  so a spread conditional move would strip the mark only from the target it
+  doubled against.
+- **Its own beat after the damage**, for the same reason Conduct's detonation is
+  its own beat: folding it into `DamageDealt` would make the log's formula
+  readout describe something other than the formula.
+- **Opt-in.** Fire's Immolate authors `conditionalPower` without it and leaves
+  the Burn alone; nothing about a conditional implies consumption.
+
+The design tension it exists to create: a Frost side holding both Cold Snap and
+a `requiresTargetStatus` move must choose, every time it lands a Freeze, between
+cashing the mark in for double damage and keeping it as the key to a bigger move.
+
 ---
 
 ## Stat modifiers

@@ -13,7 +13,7 @@ import { isLockedIn, effectiveManaCost, effectiveTypes, hasAffordableMove, getEf
 import type { HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../engine/combat/switching';
-import { selectableTargets } from '../../engine/combat/statusEngine';
+import { selectableTargets, statusGatedTargets } from '../../engine/combat/statusEngine';
 import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
 import type { Action } from '../../engine/combat/actions';
 import type { CombatEvent } from '../../engine/events';
@@ -63,6 +63,16 @@ interface MoveRowProps {
   move: MoveDefinition;
   /** Enough mana to actually press it. Unaffordable rows stay pressable at the DOM level (see below) and simply refuse to act. */
   affordable: boolean;
+  /**
+   * The move's status targeting gate is unmet right now — nothing on the
+   * field is carrying what `requiresTargetStatus` demands (content.ts), so
+   * there is nobody to aim it at. Same dead-but-inspectable treatment as an
+   * unaffordable row, and for the same reason: the move a player most needs
+   * explained is the one they cannot press yet. Kept a separate flag from
+   * `affordable` because the mana gem must not grey out over it — the player
+   * can pay for this one perfectly well.
+   */
+  gateUnmet: boolean;
   /** What it costs THIS hero right now (state.ts effectiveManaCost) — not `move.manaCost`, which is only the first cast's price on a move that ramps. Resolved by the caller, which is the one with the Combatant. */
   cost: number;
   selected: boolean;
@@ -94,20 +104,24 @@ interface MoveRowProps {
  * rules off `:disabled`), still refuses to act on a tap, and still opens its
  * dossier on a hold.
  */
-function MoveRow({ move, affordable, cost, selected, forceBonus, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
+function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, caster, matchups, multClass, formatMult, onSelect, onInspect }: MoveRowProps) {
+  // Two independent ways a row can be dead, one shared treatment. `.is-unusable`
+  // carries the dim; `.is-unaffordable` is kept as the narrower flag so the mana
+  // gem only goes grey when mana is actually the problem (styles.css).
+  const usable = affordable && !gateUnmet;
   const longPress = useLongPress(onInspect, () => {
-    if (affordable) onSelect();
+    if (usable) onSelect();
   });
   const heal = healReadout(move, caster);
 
   return (
     <button
-      className={`move-button${selected ? ' selected' : ''}${affordable ? '' : ' is-unaffordable'}`}
+      className={`move-button${selected ? ' selected' : ''}${usable ? '' : ' is-unusable'}${affordable ? '' : ' is-unaffordable'}`}
       /* Type is carried by the button's own material now (a tinted wash +
          tinted rim, styles.css) instead of a 3px stripe glued to the left
          edge, so the whole control is type-coded rather than wearing a tag. */
       style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
-      aria-disabled={!affordable}
+      aria-disabled={!usable}
       {...longPress}
     >
       {/* One line, not two: at full row width the meta that used to need its
@@ -219,6 +233,16 @@ function MoveRow({ move, affordable, cost, selected, forceBonus, caster, matchup
             {move.conditionalPower && (
               <span className="move-eff-status">
                 ×{move.conditionalPower.multiplier} vs {move.conditionalPower.requiresTargetStatus}
+                {move.conditionalPower.consumesStatus ? ' (spent)' : ''}
+              </span>
+            )}
+            {/* The gate, and whether it is met, on the face of the button. A row
+                that just said "Freeze only" while the whole enemy side is
+                unmarked would read as a move the player forgot how to press;
+                the unmet form names what is missing instead. */}
+            {move.requiresTargetStatus && (
+              <span className={`move-eff-status${gateUnmet ? ' move-eff-unmet' : ''}`}>
+                {gateUnmet ? `Needs ${move.requiresTargetStatus}` : `${move.requiresTargetStatus} only`}
               </span>
             )}
             {/* A drain move's whole reason to be pressed over a bigger one is
@@ -662,9 +686,36 @@ export function FightScreen({
   })();
   const consoleStyle = { '--console-rgb': consoleRgb, '--console-origin': consoleOrigin } as CSSProperties;
 
-  /** Stealth hides its holder from the target picker entirely — the engine rule lives with its resolve-time counterpart (selectableTargets, statusEngine.ts) so the two can't drift apart. */
+  /**
+   * Who this move may actually be aimed at, by the engine's own rules rather
+   * than by a view-side copy of them (statusEngine.ts), so declaration-time
+   * and resolve-time can't drift apart.
+   *
+   * Gate first, Stealth second, matching resolveRound's order: the status gate
+   * is absolute (a Frozen-only move simply has no other legal target, and an
+   * empty result is the correct answer), while Stealth is a soft hide that
+   * falls back to the unfiltered list rather than presenting nothing.
+   */
   function visibleTargets(move: MoveDefinition, ids: string[]): string[] {
-    return selectableTargets(combat, move.target, move.kind, ids);
+    return selectableTargets(combat, move.target, move.kind, statusGatedTargets(combat, move, ids));
+  }
+
+  /**
+   * Whether a status-gated move (content.ts requiresTargetStatus) has anyone to
+   * hit at all right now. Drives the dead row in the move grid, so the player
+   * is refused at the button rather than dropped into an empty target panel.
+   */
+  function hasLegalTarget(move: MoveDefinition, casterId: string): boolean {
+    if (!move.requiresTargetStatus) return true;
+    const pool =
+      move.target === 'singleAlly' || move.target === 'bothAllies'
+        ? playerActiveAlive
+        : move.target === 'self'
+          ? [casterId]
+          : move.target === 'allOthers'
+            ? [...enemyActiveAlive, ...playerActiveAlive].filter((cid) => cid !== casterId)
+            : enemyActiveAlive;
+    return statusGatedTargets(combat, move, pool).length > 0;
   }
 
   const targetableIds: string[] = !selecting
@@ -676,11 +727,14 @@ export function FightScreen({
         : selecting.move.target === 'self'
           ? [selecting.combatantId]
           : selecting.move.target === 'bothEnemies'
-            ? enemyActiveAlive
+            ? visibleTargets(selecting.move, enemyActiveAlive)
             : selecting.move.target === 'bothAllies'
-              ? playerActiveAlive
+              ? visibleTargets(selecting.move, playerActiveAlive)
               : selecting.move.target === 'allOthers'
-                ? [...enemyActiveAlive, ...playerActiveAlive].filter((cid) => cid !== selecting.combatantId)
+                ? visibleTargets(
+                    selecting.move,
+                    [...enemyActiveAlive, ...playerActiveAlive].filter((cid) => cid !== selecting.combatantId)
+                  )
                 : [];
 
   function isPendingComplete(p: PendingAction | undefined): boolean {
@@ -798,7 +852,17 @@ export function FightScreen({
       return { kind: 'rest', combatantId };
     }
     const affordable = moveIds.filter((id) => combatant.currentMana >= effectiveManaCost(moves[id], combatant.moveManaDiscounts));
-    const moveId = affordable[Math.floor(Math.random() * affordable.length)];
+    // A status-gated move (content.ts requiresTargetStatus) with nothing marked
+    // to aim at resolves into an ActionBlocked and silently wastes the AI's whole
+    // turn — the same failure the affordability filter above exists to avoid.
+    // Falls back to the unfiltered list rather than to Rest if nothing survives,
+    // so the AI never stops acting over a filter.
+    const gateTargets = aliveActiveIdsOn(state, PLAYER_SIDE);
+    const legal = affordable.filter(
+      (id) => !moves[id].requiresTargetStatus || statusGatedTargets(state, moves[id], gateTargets).length > 0
+    );
+    const pickable = legal.length > 0 ? legal : affordable;
+    const moveId = pickable[Math.floor(Math.random() * pickable.length)];
     const move = moves[moveId];
     const declaredTarget =
       move.target === 'singleEnemy' ? (aliveActiveIdsOn(state, PLAYER_SIDE)[0] ?? null) : move.target === 'singleAlly' ? combatantId : null;
@@ -1331,6 +1395,7 @@ export function FightScreen({
                         key={moveId}
                         move={move}
                         affordable={combatant.currentMana >= effectiveManaCost(move, combatant.moveManaDiscounts)}
+                        gateUnmet={!hasLegalTarget(move, id)}
                         cost={effectiveManaCost(move, combatant.moveManaDiscounts)}
                         selected={isSelected}
                         forceBonus={resolveElementalForceBonus(combatant, move.type, statuses)}

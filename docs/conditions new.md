@@ -25,6 +25,15 @@ discipline** and are collected at the bottom.
 ### Freeze — *boolean · control*
 - **Effect:** **halve Speed.**
 - **Removal:** cleared by **switching**; cleared by **Cleanse.**
+- **Load-bearing beyond its own effect (2026-08-30, Frost).** Halved Speed is a
+  tempo nudge; what actually prices Freeze now is that Frost's authored pool
+  hangs three payoffs off it — two hard targeting gates (Glaciate, Absolute
+  Zero) and one consume-for-double (Cold Snap). It is the first status whose
+  worth is mostly a function of what a type can *do with it* rather than of what
+  it does. Two consequences to keep in view when tuning either half: a single
+  voluntary switch still deletes the whole setup, and the lock-in rule
+  (CLAUDE.md) stops it doing so once a side is two heroes down — so Frost is
+  deliberately the weaker half of the fight it is strongest in.
 
 ### Bleed — boolean
 - End of turn: target takes 5% of max HP.
@@ -139,6 +148,29 @@ behaviour every Cleanse move before it had. Three rules:
 - **It draws RNG only when it genuinely has to choose.** With fewer eligible
   statuses than the limit allows, the stream is untouched — the same replay
   guarantee `StatusApplication.chance` carries.
+
+## Status queries: Gate and Consume (2026-08-30)
+
+The two verbs a move can now hang off "does the target carry X?", both authored
+as data on `MoveDefinition` (`engine/content.ts`) and both generic in the
+status, not Freeze checks:
+
+- **Gate** — `requiresTargetStatus`: the move may only resolve against a
+  carrier. Unmet, the action fizzles for no mana with its own `ActionBlocked`
+  reason. Applied after Stealth/Haunt retargeting, so a redirect cannot smuggle
+  a gated hit onto an unmarked hero. See docs/combat.md.
+- **Consume** — `conditionalPower.consumesStatus`: the hit that got the
+  conditional multiplier spends the status it read, as a `StatusRemoved` with
+  reason `consumed`. Opt-in; a conditional without it leaves the status alone.
+
+Both are pure reads of live status at the moment the action resolves, so a mark
+applied by a faster action earlier in the same round already counts — the same
+freshness rule `conditionalPower` and the field-effect context already followed.
+Neither draws RNG.
+
+What is still **not** in this vocabulary, and would be a real extension rather
+than another flag: gating on the *caster's* own status, gating on the absence of
+one, and transmuting one status into another. Nothing has asked for them yet.
 
 ---
 

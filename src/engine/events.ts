@@ -192,8 +192,15 @@ export interface ActionBlockedEvent extends BaseEvent {
    * attackers both declared against the same lone enemy and the first one's
    * hit already knocked it out. Declare-then-resolve means this is a normal
    * mid-round race, not a UI-preventable player error (resolveRound.ts).
+   *
+   * 'targetStatusMissing': the move carries a status targeting gate
+   * (content.ts requiresTargetStatus — Frost's Glaciate/Absolute Zero) and
+   * nothing it resolved against is carrying the status any more. Same
+   * declare-then-resolve race as above with one extra cause: Stealth can
+   * redirect a gated hit onto an unmarked partner, in which case it fizzles
+   * rather than landing somewhere it was never allowed to go.
    */
-  reason: 'dazed' | 'noValidTarget';
+  reason: 'dazed' | 'noValidTarget' | 'targetStatusMissing';
 }
 
 export interface FaintedEvent extends BaseEvent {

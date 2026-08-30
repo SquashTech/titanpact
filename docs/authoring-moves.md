@@ -7,10 +7,13 @@ The designer hands over a slate of ~15 moves for one type, as a table with the c
 asks you to remove that type's existing moves, replace them, and "distribute them
 appropriately."
 
-Fire was the first (2026-08-29), Water the second (2026-08-30). Thirteen types remain.
-This file is what those two cost to learn, written down so the next one is an afternoon
-instead of a day. Water took about a third of Fire's time, and every hour of the saving
-came from §0 step 1 — naming the three engine extensions before writing any content.
+Fire was the first (2026-08-29), Water the second and Frost the third (both
+2026-08-30). Twelve types remain. This file is what those three cost to learn, written
+down so the next one is an afternoon instead of a day. Water took about a third of
+Fire's time and Frost about the same as Water, and every hour of the saving came from
+§0 step 1 — naming the engine extensions before writing any content. Frost needed two
+(a targeting gate and a status consume) and both were visible in the table on the
+first read: the words to watch for are "can only target" and "consume".
 
 Read this **before** opening `src/data/moves.ts`. Read `CLAUDE.md` first if you have not.
 
@@ -169,6 +172,20 @@ row, that is what it should be. Fire's Stoke the Flames is the only move grantin
 today, and it is worth copying as a shape: `bothAllies` rather than `self`, which turns
 a personal ramp into a reason to draft two heroes of the same type.
 
+### `requiresTargetStatus`
+
+`requiresTargetStatus: 'Freeze'` (Frost's Glaciate, Absolute Zero) makes the move
+**illegal** against anything not carrying that status: with no legal target the
+view will not offer it and the engine fizzles it for no mana
+(`ActionBlocked`, reason `targetStatusMissing`). A hard gate, not a damage
+penalty — do not confuse it with `conditionalPower` below, which asks the same
+question and pays a bonus instead of refusing.
+
+Two things to check before authoring one: that every hero who can be offered the
+move can also reach the status (`test/frostMoves.test.ts` asserts this), and that
+the pool has a *guaranteed* applier rather than only chanced ones — a gate behind
+a 20% roll is a move the player cannot plan around.
+
 ### `cleanses: true` (+ `cleanseCount`)
 
 Strips every non-`positive` status from the resolved targets. `cleanseCount: 1` (Water's
@@ -227,6 +244,13 @@ Per-move override of the 1/16 default. See §10 — this has an open question at
 input** when the target carries the named status. Read per target, off live statuses, so
 a status applied earlier in the same round already counts.
 
+Add `consumesStatus: true` (Frost's Cold Snap) and the hit that actually got the
+multiplier also **strips** the status, as its own `StatusRemoved` beat with reason
+`consumed`. Opt-in: Fire's Immolate authors the multiplier without it. Worth
+authoring when the type also has a `requiresTargetStatus` move, because that is
+what turns "which move do I press" into a real choice — spend the mark, or keep
+it as the key.
+
 ---
 
 ## 4. What the engine cannot express yet
@@ -244,7 +268,10 @@ extensions; some are design decisions above your pay grade. Either way, name it.
 - **A move that applies a damage-pipeline modifier** ("+20% Fire damage for 3 rounds").
   `DamageModifier` exists but is fed only by Passives, never by moves.
 - **A second status on one move** (see §3).
-- **Random targeting**, conditional targeting, or targeting the bench.
+- **Random targeting** or targeting the bench. (Conditional targeting now exists,
+  but only in the one shape `requiresTargetStatus` covers — "only a target
+  carrying status X". "Only the slower foe", "only a full-HP ally" and gating on
+  the *absence* of a status are all still conversations.)
 - **Percentage stat modifiers**, or any stat growth. Flat multiples of 5/10 only.
 - **Accuracy.** Moves always land. A "70% to hit" row is a `chance`-gated *rider* or it
   is a conversation.
@@ -465,6 +492,28 @@ Water's three, as a second data point on the same three shapes:
 - **A balance consequence outside the slate.** Pincer's mana went 40 → 55 (the new floor
   made its own opener unplayable), and Wave Shred's 80 is still above every Water hero's
   pool — and because the discount only applies *after* a cast, the ramp can never start.
+
+Frost's three, as a third data point — note how consistently the three shapes
+recur:
+
+- **A capability the slate deleted.** Frostbite (10 mana) and Frost Lock (13) were
+  the cheapest moves any Frost hero held, and the authored floor is 15. Cube, on a
+  45 pool, went from three cheap moves to a kit whose Frost content starts at 15 —
+  survivable, but the type lost its "act every round on a small pool" option
+  entirely, which is a real identity decision the table states only by omission.
+  Frost Lock was also Freeze's only dedicated carrier; the slate replaces that six
+  times over, so that half needed no patching.
+- **A locked decision the slate brushed against.** `requiresTargetStatus` is the
+  first move property that can make a move **unpressable** rather than merely
+  worse — a hero's usable movepool is now a function of the board. It does not
+  break the north star ("no hero is a trap pick") because the gated moves ship in
+  pools that also carry a guaranteed Freeze, but nothing in the *engine* enforces
+  that pairing; it is a test assertion, and it is recorded in docs/combat.md
+  rather than silently settled.
+- **A balance consequence outside the slate.** Avalanche (75) is above every Frost
+  hero's pool, and Ice Shatter (70) is above both PHYSICAL Frost heroes' — so the
+  physical line's Late-tier capstone cannot be cast by either hero meant to hold
+  it. Reported, not tuned away, same as Fire's Inferno and Water's Wave Shred.
 
 If the type you are authoring has a type-keyed status hook (Conduct on Storm/Iron, Haunt
 on Spirit/Mind), the equivalent question is almost certainly: *is the slate priced

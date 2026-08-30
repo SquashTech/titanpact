@@ -79,7 +79,13 @@ export const progressionTable: ProgressionTable = {
     stormRanger: ['quickJab', 'thunderclap', 'galeSlash', 'fangRush'],
     shadowMonk: ['duskStrike', 'shadowVeil', 'fangRush', 'quickJab', 'nightmareGrasp'],
     marrow: ['duskStrike', 'shadowVeil', 'fangRush', 'quickJab', 'nightmareGrasp'],
-    glacialWarden: ['frostBite', 'purify', 'mendWounds', 'weaken'],
+    // The three Frost heroes draw from the authored Frost pool (src/data/moves.ts,
+    // 2026-08-30), split by the stat each actually attacks with, same as Fire
+    // and Water. Flurry (Int 70) takes the magical line and with it BOTH of the
+    // `requiresTargetStatus` moves — it is also the hero carrying Deep Chill in
+    // its starting kit, so the key and the lock grow on the same hero rather
+    // than depending on a second Frost draft.
+    glacialWarden: ['snowBlast', 'glaciate', 'permafrost', 'quickFreeze', 'frigidAir', 'absoluteZero', 'avalanche', 'purify'],
     dawnwarden: ['sunstrike', 'healingRain', 'fortify', 'purify', 'consecrate'],
     runescribe: ['mindSpike', 'psychicLance', 'weaken', 'arcaneSurge'],
     mindweaver: ['spectralBind', 'quickJab', 'vanish', 'stunningBlow', 'stasisField'],
@@ -91,8 +97,16 @@ export const progressionTable: ProgressionTable = {
     crag: ['stoneQuake', 'shrapnelBlast', 'weaken', 'rally'],
 
     // --- Rime, Cube, Mordrax (2026-08-17) ---
-    rime: ['glacialSpike', 'frostLock', 'fangRush', 'rendingClaw', 'stunningBlow', 'mendWounds'],
-    cube: ['glacialSpike', 'frostLock', 'boulderToss', 'shrapnelBlast', 'ironFist'],
+    // Rime takes the physical line — and Frost Wall, for the reason Crimson
+    // carries Stoke the Flames and Riptide carries High Tide: it buffs the whole
+    // active side, and Rime is the only Frost STARTER (heroes.ts), so it is the
+    // one that can be drafted alongside a second Frost hero. Ice Shatter sits
+    // here at 70 despite Rime's 60 pool; see docs/combat.md for that hand-off.
+    rime: ['icicleThrust', 'coldSnap', 'iceShatter', 'frostWall', 'permafrost', 'rendingClaw', 'fangRush', 'stunningBlow'],
+    // Cube's 45 pool is the tightest in the game, so its line is the cheap half
+    // of the physical one plus its own Freeze setup — Deep Chill (25) and
+    // Permafrost (45, exactly affordable) feeding Cold Snap (35).
+    cube: ['icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'boulderToss', 'shrapnelBlast', 'ironFist'],
     mordax: ['naturesWrath', 'venomousBite', 'savageMaul', 'fangRush', 'weaken'],
 
     // Lucius: only his Evolutions are deferred (src/data/heroes.ts) — he
@@ -111,7 +125,7 @@ export const progressionTable: ProgressionTable = {
     // perfectly good carrier for it. Wave Shred sits here because Pincer is the
     // only physical Water hero in the roster; see docs/combat.md for the open
     // question about its first cast being unaffordable on a 55 pool.
-    pincer: ['aquaSlice', 'waveShred', 'washAway', 'shrapnelBlast', 'frostLock'],
+    pincer: ['aquaSlice', 'waveShred', 'washAway', 'shrapnelBlast', 'refresh'],
     scallywag: ['thunderclap', 'galeSlash', 'ironFist', 'stunningBlow', 'fangRush'],
     sentinel: ['stoneQuake', 'shrapnelBlast', 'weaken', 'ironFist', 'rally'],
     steamColossus: ['sparkForge', 'ironFist', 'stunningBlow', 'quickJab', 'boulderToss'],
