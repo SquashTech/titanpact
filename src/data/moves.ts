@@ -73,11 +73,15 @@ export const moves: Record<string, MoveDefinition> = {
   // waiting for a slate (Mech, Beast, Ancient).
   //
   // Quick Jab was the game's cheapest move at 4 mana and one of only two
-  // fixture priority-1 rows a test ever stood on; Iron authors no priority at
-  // all, so the type lost bracket play outright — see
-  // docs/authoring-moves.md §10. The priority fixtures moved onto Beast's
-  // fangRush (test/combat.test.ts, test/fieldEffects.test.ts), which is still
-  // priority 1 and still cheap.
+  // fixture priority-1 rows a test ever stood on. The slate shipped with no
+  // priority row at all and reported that as a deleted capability
+  // (docs/authoring-moves.md §10); the designer answered it the same day with
+  // **Swift Blow**, in the Iron block above — 15 mana for 15 base power at
+  // bracket 1, so the type buys the turn order rather than the exchange. The
+  // priority fixtures point back at an Iron move accordingly.
+  //
+  // Quick Jab's actual price point is still gone: 4 mana was less than a third
+  // of anything the slate authors, and Iron's floor is 15.
   // --- Fire (AUTHORED, 2026-08-29) ------------------------------------------
   // The first type whose movepool is designer-authored rather than fixture
   // filler. Early/Mid/Late in the design table is the level-up tier a move
@@ -3051,12 +3055,47 @@ export const moves: Record<string, MoveDefinition> = {
   // spend-it-or-bank-it decision that falls out of Iron detonating what it
   // reads.
   //
-  // What the type deliberately does not have, all stated by omission: no
-  // priority anywhere (Quick Jab's bracket 1 died with the fixture pool), no
-  // heal, no cleanse, no field effect, no drain, and exactly ONE status rider
-  // in fourteen rows.
+  // Two rows were added the same day the first fourteen shipped, and they are
+  // the two capabilities the slate's own hand-off reported as deleted
+  // (docs/authoring-moves.md §10). Worth knowing they are answers rather than
+  // afterthoughts, because neither is a like-for-like restoration:
+  //
+  //   - **Fortify** re-authors the fixture id at 15 mana for +15 DEFENSE, where
+  //     the fixture move was 10 for +10 Defense AND +10 Wisdom. So the type
+  //     gets its cheap guard buff back and the Wisdom half stays deleted. The
+  //     three moves that still grant Wisdom are all MIND (Brain Ward, Stasis,
+  //     Mental Fortress), so a physical hero can no longer buy any magical
+  //     defense without a Mind partner.
+  //   - **Swift Blow** re-opens the bracket Quick Jab closed, at 15 mana for
+  //     15 base power rather than 4 for 30. It is the type's ONLY priority row,
+  //     and at a quarter of Onslaught's power it buys the turn order rather
+  //     than the exchange.
+  //
+  // What the type still deliberately does not have, all stated by omission: no
+  // heal, no cleanse, no field effect, no drain, no bracket below 0, and
+  // exactly ONE status rider in sixteen rows.
 
   // Early --------------------------------------------------------------------
+  swiftBlow: {
+    id: 'swiftBlow',
+    name: 'Swift Blow',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 15,
+    // The type's only priority row, and the whole of its bracket play. 15 base
+    // power is a quarter of Serrated Slice's and a seventh of Onslaught's — it
+    // is not bought to deal damage, it is bought to act first, which is worth
+    // most on the Iron heroes that cannot (Warden at Speed 30, Bellows at 15).
+    //
+    // It is also a Conduct detonation that resolves ABOVE bracket 0, which is
+    // the one thing no other Iron row can do: 15 power plus 10% of a max HP
+    // bar, delivered before the target moves.
+    manaCost: 15,
+    priority: 1,
+    target: 'singleEnemy',
+    description: 'A short, early jab that lands before almost anything else.',
+  },
   ironFist: {
     id: 'ironFist',
     name: 'Iron Fist',
@@ -3081,12 +3120,38 @@ export const moves: Record<string, MoveDefinition> = {
     type: 'Iron',
     category: 'physical',
     kind: 'buff',
+    // No statDeltaTarget: the move already targets 'self', so naming it again
+    // is a no-op that makes MoveTile print "(Self) — Self".
     statDeltas: [{ stat: 'attack', amount: 30 }],
-    statDeltaTarget: 'self',
     manaCost: 25,
     priority: 0,
     target: 'self',
     description: 'A turn spent on the edge instead of the enemy (+30 Attack).',
+  },
+  fortify: {
+    id: 'fortify',
+    name: 'Fortify',
+    type: 'Iron',
+    category: 'physical',
+    kind: 'buff',
+    // Re-authored, not restored. The fixture Fortify was 10 mana for +10
+    // Defense AND +10 Wisdom and sat in NINE starting kits across seven types;
+    // this is 15 for +15 Defense and nothing else. The Wisdom half stays
+    // deleted, and what that costs is narrower than it looks but real: the
+    // only remaining Wisdom grants are Mind's (Brain Ward, Stasis, Mental
+    // Fortress), so this move used to be how a PHYSICAL hero bought magical
+    // defense and now nothing is.
+    //
+    // Four of the nine ex-holders take it back (Warden, Sentinel, Hollowbark,
+    // Clockwork — the ones whose slot was genuinely defensive). The other five
+    // keep the Iron row they were repointed onto, because +30 Attack on an
+    // Atk-70 Cinder or an Atk-90 Bellows is a better move than +15 Defense and
+    // reverting it would be a worse hero for the sake of a tidier history.
+    statDeltas: [{ stat: 'defense', amount: 15 }],
+    manaCost: 15,
+    priority: 0,
+    target: 'self',
+    description: "Hardens the caster's guard (+15 Defense).",
   },
   openingStrike: {
     id: 'openingStrike',
@@ -3400,20 +3465,22 @@ export const moves: Record<string, MoveDefinition> = {
 
   // --- Buff / debuff (flat stat deltas — CLAUDE.md "flat additive integers, multiples of 5 or 10") ---
   // Fortify (Iron, +10 Defense / +10 Wisdom, self, 10 mana) lived here until
-  // the authored Iron slate replaced the type (2026-08-30), and it is the
+  // the authored Iron slate replaced the type (2026-08-30), and it was the
   // largest single deletion any slate has made: NINE starting kits carried it
   // (Cinder, Cube, Sentinel, Hollowbark, Aegis, Warden, Valor, Clockwork,
   // Bellows) across seven types, plus two level-up pools.
   //
-  // What went away with it is a role, not just a price: it was the game's
-  // cheapest buff at 10 mana, its only move granting WISDOM, and the only
-  // cheap defensive self-buff anywhere. Iron's fourteen authored rows contain
-  // no defensive buff under 50 mana — Reinforce (50, both allies, +20 Atk /
-  // +20 Def) and Juggernaut (70, self, +50/+50/+50) are the whole of it — so
-  // the nine kits were repointed onto the nearest Iron row that keeps each
-  // hero's slot shape rather than onto a same-role replacement, because there
-  // is no longer a same-role replacement to point at.
-  // See docs/authoring-moves.md §10 (Iron).
+  // The designer re-authored it into the slate the same day, which is the
+  // second time reporting a deleted capability has produced better content
+  // than patching around it would have (Fire's Stoke the Flames was the
+  // first). It now lives in the Iron block above at 15 mana for +15 Defense.
+  //
+  // The half that stayed deleted is the one worth remembering: the fixture
+  // move granted WISDOM as well, and the re-authored one does not. Mind still
+  // grants Wisdom three ways (Brain Ward, Stasis, Mental Fortress), so the
+  // stat is not unreachable — but all three are Mind, so a physical hero's
+  // only route to magical defense is now equipment, relics, Evolution, or a
+  // Mind partner. See docs/authoring-moves.md §10 (Iron).
   rally: {
     id: 'rally',
     name: 'Rally',

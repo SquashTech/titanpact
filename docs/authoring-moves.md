@@ -1489,28 +1489,51 @@ Iron's, as a twelfth — the slate that emptied the fixture pool, and whose
 findings are almost entirely about the **eight heroes that have nothing to do
 with the type**:
 
-- **A capability the slate deleted — and it is the biggest deletion any slate
-  has made.** `fortify` (Iron, +10 Defense / +10 Wisdom, self, **10 mana**) was
-  in **NINE starting kits across seven types** — Cinder, Cube, Sentinel,
-  Hollowbark, Aegis, Warden, Valor, Clockwork, Bellows — plus two level-up
-  pools. Iron's fourteen authored rows contain **no defensive buff under 50
-  mana** (Reinforce at 50, Juggernaut at 70), so what went away is a role and
-  not just a price point: the game's cheapest buff, its only move granting
-  WISDOM, and the only cheap defensive self-buff anywhere.
+- **A capability the slate deleted — the biggest deletion any slate has made,
+  and the fastest one a designer has ever answered.** `fortify` (Iron, +10
+  Defense / +10 Wisdom, self, **10 mana**) was in **NINE starting kits across
+  seven types** — Cinder, Cube, Sentinel, Hollowbark, Aegis, Warden, Valor,
+  Clockwork, Bellows — plus two level-up pools. The slate's fourteen rows
+  contained **no defensive buff under 50 mana** (Reinforce at 50, Juggernaut at
+  70), so what went away was a role and not a price point: the game's cheapest
+  buff, and the only cheap defensive self-buff anywhere.
 
   Eight of the nine were repointed onto the nearest Iron row that keeps each
   hero's slot shape (Sharpen for the Attack users, Pin Down for the cheap
   slots); Aegis, the one with a 70 pool and Wisdom 75, went onto its OWN type's
-  Mend instead. **None of them got a defensive buff back**, because there is no
-  longer one to point at. Reported, not patched around.
+  Mend. **None got a defensive buff back**, because there was none to point at.
 
-  Two smaller deletions on the same pass. `quickJab` (30 BP, **4 mana**,
-  priority **1**) was the cheapest move in the game and Iron authors no
-  priority at all, so the type lost bracket play outright — the Water/Shadow
-  shape again, and Juggernaut's +50 Speed at 70 mana is now the type's only
-  answer to being outsped. And `stunningBlow` was Daze's dedicated carrier;
-  Light replaces it six times over, but the cheapest Daze in the game went 20 →
-  25 and the status is now entirely Light's.
+  **Designer call, same day: Fortify is re-authored into the slate** at **15
+  mana for +15 Defense**, and Quick Jab's bracket comes back as **Swift Blow**
+  (Phy 15, 15 mana, **priority +1**). Sixteen rows, not fourteen. Three things
+  about how that landed are worth carrying:
+
+  1. **Neither is a restoration.** Fortify lost its Wisdom half permanently, and
+     Swift Blow is 15 base power at 15 mana where Quick Jab was 30 at 4. The
+     designer answered the *role* both times and re-priced the row — which is
+     the same shape as Fire's Stoke the Flames (12/`self` → 30/`bothAllies`)
+     and Light's Daze-becomes-flinch. **A reported gap comes back as better
+     content, not as the old row.**
+  2. **Only four of the nine kits took Fortify back** — Warden, Sentinel,
+     Hollowbark, Clockwork, the ones whose slot was genuinely defensive. The
+     other five keep the Iron row they were repointed onto, because +30 Attack
+     on an Atk-70 Cinder or an Atk-90 Bellows is a better move than +15 Defense
+     and reverting it would be a worse hero for the sake of a tidier history.
+     **Do not treat a re-authored move as an undo.**
+  3. **The half that stayed deleted is the finding now.** Fortify no longer
+     grants Wisdom, and the only three moves that do are all **Mind** (Brain
+     Ward, Stasis, Mental Fortress). So a PHYSICAL hero can no longer buy
+     magical defense from a move at all — it is equipment, relics, Evolution,
+     or a Mind partner. Pinned as an exact set in `test/ironMoves.test.ts`
+     rather than as a count. *(This corrects the first version of this
+     hand-off, which claimed Fortify was the game's only Wisdom grant. It was
+     not — Mind's slate had three, six rows earlier in the same file. Left
+     visible rather than silently fixed, because "the only X in the game" is
+     exactly the kind of claim a slate author should grep before writing.)*
+
+  One smaller deletion on the same pass survives unanswered: `stunningBlow` was
+  Daze's dedicated carrier. Light replaces it six times over, but the cheapest
+  Daze in the game went 20 → 25 and the status is now entirely Light's.
 
 - **A locked decision the slate brushed against.**
   `conditionalManaCost.requiresAnyEnemyStatus` does not break anything —

@@ -255,15 +255,16 @@ test('fieldEffects: Stasis Bubble does not touch priority BRACKETS — a priorit
   const state = twoVTwoFixture(421);
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' }, // tidecaller, priority 0, speed 55
-    { kind: 'move', combatantId: 'b1', moveId: 'fangRush', declaredTarget: 'a2' }, // ironWarden, priority 1, speed 30 (slower, but higher priority)
+    { kind: 'move', combatantId: 'b1', moveId: 'swiftBlow', declaredTarget: 'a2' }, // ironWarden, priority 1, speed 30 (slower, but higher priority)
   ];
 
   const stasis = { ...state, activeFieldEffect: { fieldEffectId: 'stasisBubble', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
   const { ordered } = orderActions(stasis, heroes, actions, moves, stasis.rngState, fieldEffects);
-  // b1's priority-1 fangRush still goes first even though it's the slower actor and
+  // b1's priority-1 swiftBlow still goes first even though it's the slower actor and
   // Stasis Bubble is active — the reversal only ever changes a same-bracket tiebreak.
-  // This stood on Iron's quickJab until the authored Iron slate deleted it
-  // (2026-08-30); Iron has no priority row at all now, so the fixture is Beast's.
+  // This stood on Iron's quickJab, spent a day on Beast's fangRush while the
+  // authored Iron slate had no priority row, and is back on an Iron move now
+  // that Swift Blow exists (moves.ts, 2026-08-30).
   assert.deepStrictEqual(ordered.map((a) => a.combatantId), ['b1', 'a2']);
 });
 

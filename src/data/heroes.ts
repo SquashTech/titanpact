@@ -166,11 +166,12 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Scallywag',
     types: ['Storm'],
     baseStats: { hp: 95, attack: 75, defense: 40, intelligence: 30, wisdom: 35, speed: 80, manaPool: 50, mpRegen: 10 },
-    // Iron Fist in place of Quick Jab, which the Iron slate deleted (moves.ts,
-    // 2026-08-30): the same role at the authored floor (4 mana -> 20, and no
-    // priority bracket any more), and it drops out of Scallywag's own pool
-    // below, where it would otherwise be dead weight.
-    moveIds: ['thunderclap', 'ironFist', 'rally'],
+    // Swift Blow in place of Quick Jab (moves.ts, 2026-08-30). Iron Fist stood
+    // in for a day while the slate had no priority row at all; Swift Blow is
+    // the actual successor — same bracket, 4 mana -> 15, 30 base power -> 15 —
+    // and it is what a Speed-80 Attack-75 hero wants beside a 25-mana
+    // Thunderclap.
+    moveIds: ['thunderclap', 'swiftBlow', 'rally'],
     starter: false,
   },
 
@@ -188,10 +189,12 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Sentinel',
     types: ['Stone'],
     baseStats: { hp: 150, attack: 45, defense: 100, intelligence: 15, wisdom: 50, speed: 15, manaPool: 30, mpRegen: 10 },
-    // Pin Down in place of Fortify (moves.ts, 2026-08-30) — 15 rather than
-    // 10, which the 30 pool can still open on, and a debuff rather than a
-    // guard buff on a hero that already has Defense 100.
-    moveIds: ['mudBall', 'provoke', 'pinDown'],
+    // Fortify, re-authored by the designer the same day the Iron slate
+    // deleted it (moves.ts, 2026-08-30) at 15 mana for +15 Defense. Sentinel
+    // is the game's Defense-100 wall behind a Provoke that pulls every
+    // single-target hit onto it, so this is the hero the buff exists for —
+    // and 15/25/15 still opens on the tightest pool in the roster.
+    moveIds: ['mudBall', 'provoke', 'fortify'],
     starter: false,
   },
 
@@ -230,9 +233,10 @@ export const heroes: Record<string, HeroDefinition> = {
     // Ivy Spike at 15 is the cheapest move in the slate, which is what a 40
     // pool wants; Second Wind is its Renew (Spirit, so no STAB) and therefore
     // its route into Branch Slam later.
-    // Pin Down in place of Fortify (moves.ts, 2026-08-30); Ivy Spike and it
-    // are both 15, which is what the 40 pool wants beside a 30-mana Renew.
-    moveIds: ['ivySpike', 'pinDown', 'secondWind'],
+    // Fortify back, re-authored at 15 for +15 Defense (moves.ts, 2026-08-30).
+    // Same price as the Pin Down that stood in for it, and the right one for
+    // the 135 HP / 80 Defense wall of the Nature three.
+    moveIds: ['ivySpike', 'fortify', 'secondWind'],
     starter: false,
   },
 
@@ -393,13 +397,19 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Warden',
     types: ['Iron'],
     baseStats: { hp: 135, attack: 55, defense: 90, intelligence: 20, wisdom: 50, speed: 30, manaPool: 40, mpRegen: 10 },
-    // Iron authored (moves.ts, 2026-08-30). Warden is Atk 55 against Def 90,
-    // so it plays the DENOMINATOR half of the type: Opening Strike and Pin
-    // Down both shrink what it is hitting rather than growing what it hits
-    // with. Second Wind is the sustain slot a 135 HP wall wants and the one
-    // Fortify actually cost it — nothing in the slate is a defensive buff
-    // under 50 mana.
-    moveIds: ['openingStrike', 'pinDown', 'secondWind'],
+    // Iron authored (moves.ts, 2026-08-30), then re-kitted the same day when
+    // the designer answered both of the slate's reported gaps. This is
+    // Warden's ORIGINAL kit re-authored rather than replaced: Quick Jab ->
+    // Swift Blow (still bracket 1, 4 mana -> 15) and Fortify -> Fortify (10
+    // for +10 Def/+10 Wis -> 15 for +15 Def), with Opening Strike in the slot
+    // Stunning Blow held.
+    //
+    // It is also the hero the priority row is FOR. Warden is Speed 30 behind
+    // Defense 90, so bracket 1 is the only way it ever acts first, and Swift
+    // Blow's real payload on a marked target is the Conduct detonation it
+    // delivers before the target moves. Pin Down and Second Wind drop to its
+    // pool and to the other walls respectively.
+    moveIds: ['swiftBlow', 'openingStrike', 'fortify'],
     starter: false,
   },
   valor: {
@@ -438,10 +448,11 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Clockwork',
     types: ['Mech'],
     baseStats: { hp: 130, attack: 60, defense: 70, intelligence: 45, wisdom: 40, speed: 55, manaPool: 50, mpRegen: 10 },
-    // Sharpen in place of Fortify (moves.ts, 2026-08-30) — Clockwork is Atk 60
-    // and Mech is still fixture content, so the off-type slot stays off-type
-    // and just stops being a guard buff.
-    moveIds: ['moltenHammer', 'sparkForge', 'sharpen'],
+    // Fortify back (moves.ts, 2026-08-30, re-authored at 15 for +15 Defense).
+    // Clockwork's other two moves are both attacks, so the third slot is a
+    // buff either way — and at Defense 70 / 130 HP behind an Attack of 60,
+    // the guard buff is the truer read of the hero than Sharpen was.
+    moveIds: ['moltenHammer', 'sparkForge', 'fortify'],
     starter: true,
   },
   steamColossus: {

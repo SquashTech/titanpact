@@ -94,7 +94,9 @@ export const progressionTable: ProgressionTable = {
     // the game that answers Speed 30. The two Stone entries stay: Body Blow
     // swings DEFENSE (offStatOverride), which is the single best move in the
     // game for a Defense-90 hero and the reason it was put here.
-    ironWarden: ['ironFist', 'rendArmor', 'juggernaut', 'rockToss', 'bodyBlow'],
+    // pinDown moved down here from Warden's kit when Fortify was re-authored
+    // (heroes.ts, 2026-08-30) — still the debuff line, one pick later.
+    ironWarden: ['ironFist', 'pinDown', 'rendArmor', 'juggernaut', 'rockToss', 'bodyBlow'],
     // The three Nature heroes draw from the authored Nature pool
     // (src/data/moves.ts, 2026-08-30), split by the stat each actually attacks
     // with, same as Fire/Water/Frost/Storm/Stone. Sylva (Int 60, Wis 60) takes
@@ -317,7 +319,7 @@ export const progressionTable: ProgressionTable = {
     // most to the hero that wants to press an attack every single round — and
     // because Gallant's 45 pool is the one that most needs the rows it cannot
     // otherwise afford.
-    gallant: ['ironFist', 'momentumSwing', 'serratedSlice', 'metallicBlade', 'onslaught'],
+    gallant: ['swiftBlow', 'ironFist', 'momentumSwing', 'serratedSlice', 'metallicBlade', 'onslaught'],
     // Speed 85, the fastest Shadow hero, so Shadowstrike's +1 bracket is worth
     // most here. Off-type filler (curseMind, rendingClaw, stunningBlow) drops
     // for the type's own line — docs/authoring-moves.md §7, "a line, not a sample".

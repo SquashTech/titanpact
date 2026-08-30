@@ -165,14 +165,14 @@ test('round: a resolved move spends mana and deals damage', () => {
 
 test('round: higher priority move resolves before a higher-speed move in a lower bracket', () => {
   const state = twoVTwoFixture(12);
-  // fangRush (priority 1) from the slower b1 should still resolve before singe (priority 0) from faster a1.
-  // This stood on Iron's quickJab until the authored Iron slate deleted it
-  // (2026-08-30); Iron authors no priority bracket anywhere now, so the
-  // fixture moved onto Beast's fangRush, which is still priority 1 and still
-  // cheap enough for Warden's 40 pool.
+  // swiftBlow (priority 1) from the slower b1 should still resolve before singe (priority 0) from faster a1.
+  // This stood on Iron's quickJab until the authored Iron slate deleted it, and
+  // spent a day on Beast's fangRush while the slate had no priority row at all
+  // (2026-08-30). Swift Blow is the successor the designer authored back in:
+  // same bracket, same hero, 4 mana -> 15 on Warden's 40 pool.
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
-    { kind: 'move', combatantId: 'b1', moveId: 'fangRush', declaredTarget: 'a1' },
+    { kind: 'move', combatantId: 'b1', moveId: 'swiftBlow', declaredTarget: 'a1' },
   ];
   const { events } = resolveRound(state, actions, config);
   const moveUsedOrder = events.filter((e) => e.type === 'MoveUsed').map((e: any) => e.combatantId);

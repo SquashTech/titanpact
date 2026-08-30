@@ -26,8 +26,12 @@
 //     every one of those deltas is PERMANENT for the fight (stat mods persist
 //     through a switch, CLAUDE.md 2026-08-15). Pinned as a compounding
 //     sequence rather than as one cast.
-//   - No priority anywhere, no heal, no cleanse, no field effect, and exactly
-//     one status rider in fourteen rows.
+//   - Exactly ONE priority row and no heal, no cleanse, no field effect, and
+//     exactly one status rider in sixteen rows. The slate shipped at fourteen
+//     with no bracket and no cheap guard buff, reported both as deleted
+//     capabilities, and the designer answered with Swift Blow and a re-authored
+//     Fortify the same day — so the counts below are pinned at sixteen and the
+//     "no priority" assertion became "exactly one".
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -283,8 +287,8 @@ test('iron: every damage row detonates Conduct for free, and the slate plants it
   const damage = ironMoves.filter((m) => m.kind === 'damage');
   const planters = ironMoves.filter((m) => m.statusApplication?.statusId === 'Conduct');
 
-  assert.strictEqual(ironMoves.length, 14, 'the authored slate is fourteen rows');
-  assert.strictEqual(damage.length, 10, 'ten of them detonate Conduct for free');
+  assert.strictEqual(ironMoves.length, 16, 'the authored slate is sixteen rows');
+  assert.strictEqual(damage.length, 11, 'eleven of them detonate Conduct for free');
   assert.strictEqual(planters.length, 0, 'and none of them plants it');
   assert.ok(statuses.Conduct.triggerTypes?.includes('Iron'));
 });
@@ -312,23 +316,67 @@ test('iron: an Iron hit on a marked foe is worth 10% max HP more than the same h
 
 // --- What the slate does NOT have, stated by omission -------------------------
 
-test('iron: the slate authors no priority, no heal, no cleanse and no field effect', () => {
-  // Quick Jab (priority 1, 4 mana) died with the fixture pool and nothing
-  // replaces its bracket, so Iron has no way to buy past a Speed
-  // disadvantage — Juggernaut's +50 Speed is the type's only answer, and it
-  // costs a whole turn and 70 mana. Named, not tuned (authoring-moves.md §10).
+test('iron: the slate authors exactly one priority row, and no heal, cleanse or field effect', () => {
+  // Quick Jab (priority 1, 4 mana) died with the fixture pool, the slate
+  // shipped with no bracket at all, and Swift Blow is what the designer
+  // authored back (moves.ts, 2026-08-30). It is deliberately ONE row: the type
+  // buys turn order once, at 15 base power, and Juggernaut's +50 Speed is
+  // still the only other answer to being outsped.
   const ironMoves = Object.values(moves).filter((m) => m.type === 'Iron');
+  const bracketed = ironMoves.filter((m) => m.priority !== 0);
+  assert.deepStrictEqual(bracketed.map((m) => m.id), ['swiftBlow']);
+  assert.strictEqual(moves.swiftBlow.priority, 1, 'and it is a POSITIVE bracket — Iron never swings slow');
+
   for (const move of ironMoves) {
-    assert.strictEqual(move.priority, 0, `${move.id} authors a priority bracket`);
     assert.notStrictEqual(move.kind, 'heal', `${move.id} is heal-kind`);
     assert.ok(!move.cleanses, `${move.id} cleanses`);
     assert.ok(!move.fieldEffectApplication, `${move.id} sets a field effect`);
   }
   const riders = ironMoves.filter((m) => m.statusApplication);
-  assert.strictEqual(riders.length, 1, 'exactly one status rider in fourteen rows');
+  assert.strictEqual(riders.length, 1, 'exactly one status rider in sixteen rows');
   assert.strictEqual(riders[0].id, 'serratedSlice');
   assert.strictEqual(riders[0].statusApplication?.statusId, 'Bleed');
   assert.strictEqual(riders[0].statusApplication?.chance, 0.3);
+});
+
+test('iron: the re-authored Fortify is a guard buff only, and every Wisdom grant left is Mind', () => {
+  // The half of the deletion that STAYED deleted. The fixture Fortify granted
+  // +10 Defense AND +10 Wisdom; the re-authored one is +15 Defense and nothing
+  // else. Wisdom is not unreachable — Mind grants it three ways — but all three
+  // are Mind, so a PHYSICAL hero can no longer buy magical defense from a move
+  // at all. Pinned as the exact set rather than as a count, so a later slate
+  // adding a non-Mind Wisdom grant has to notice it is reopening this.
+  assert.deepStrictEqual(moves.fortify.statDeltas, [{ stat: 'defense', amount: 15 }]);
+  assert.strictEqual(moves.fortify.target, 'self');
+  // And NOT statDeltaTarget: naming 'self' on a move that already targets self
+  // is a no-op the label renders as "(Self) — Self".
+  assert.strictEqual(moves.fortify.statDeltaTarget, undefined);
+
+  const wisdomGrants = Object.values(moves).filter((m) =>
+    m.statDeltas?.some((d) => d.stat === 'wisdom' && d.amount > 0)
+  );
+  assert.deepStrictEqual(wisdomGrants.map((m) => m.id).sort(), ['brainWard', 'mentalFortress', 'stasis']);
+  for (const move of wisdomGrants) assert.strictEqual(move.type, 'Mind', `${move.id} grants Wisdom off-Mind`);
+});
+
+test('iron: Swift Blow lands its Conduct detonation ABOVE bracket 0 — the one thing no other Iron row can do', () => {
+  // 15 base power is not what the row is bought for. On a marked target it is
+  // 15 power plus 10% of a max HP bar, delivered before the target acts, which
+  // is the only way Iron cashes a mark pre-emptively.
+  const state = withStatus(withDeepPools(ironFixture(630)), 'b1', 'Conduct');
+  const { events } = resolveRound(
+    state,
+    [
+      { kind: 'move', combatantId: 'b1', moveId: 'openingStrike', declaredTarget: 'a1' },
+      { kind: 'move', combatantId: 'a1', moveId: 'swiftBlow', declaredTarget: 'b1' },
+    ],
+    config
+  );
+  const order = events.filter((e) => e.type === 'MoveUsed').map((e: any) => e.combatantId);
+  // Gallant (Speed 70) would beat Warden (30) anyway, so pin the BRACKET rather
+  // than the outcome: swiftBlow sorts above a priority-0 move regardless.
+  assert.strictEqual(order[0], 'a1');
+  assert.ok(events.some((e) => e.type === 'StatusDetonated' && e.statusId === 'Conduct'));
 });
 
 test('iron: Conjured Sword is the one magical row, and no Iron hero holds it', () => {
