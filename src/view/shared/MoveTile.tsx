@@ -147,6 +147,25 @@ export function swallowGhostClick() {
  * today; if one is ever authored, the honest answer is probably two glyphs
  * rather than a tiebreak, so revisit this rather than adding a rule.
  */
+/**
+ * Grants vs Applies — the verb that says whether a status is a gift or a
+ * wound. It used to key on `target === 'self'`, which was right for exactly as
+ * long as a self-cast was the only way to hand somebody a positive status.
+ * Fire's Stoke the Flames (Fire Force 20 on `bothAllies`) broke that: it read
+ * as "Applies FireForce" — the same phrasing as inflicting Poison — because it
+ * targets someone other than the caster.
+ *
+ * The honest rule is the status's own sign, with the target as the tiebreak
+ * for a status the catalog has not flagged either way: a `positive` status is
+ * always granted, never inflicted, whoever it lands on. Same
+ * StatusDefinition.positive flag Cleanse and isDebuff already read
+ * (docs/conditions.md §7), so a status authored as a boon reads as one
+ * everywhere the moment it is written.
+ */
+export function grantsRatherThanInflicts(app: NonNullable<MoveDefinition['statusApplication']>): boolean {
+  return app.target === 'self' || statuses[app.statusId]?.positive === true;
+}
+
 function isDebuff(move: MoveDefinition): boolean {
   if (move.statDeltas?.some(({ amount }) => amount < 0)) return true;
   const applied = move.statusApplication;
@@ -235,14 +254,26 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     parts.push(move.statDeltas.map(({ stat, amount }) => `${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]}`).join(', '));
   }
 
+  if (move.conditionalPower) {
+    const gate = move.conditionalPower.requiresTargetStatus;
+    parts.push(`×${move.conditionalPower.multiplier} power vs ${statuses[gate]?.name ?? gate}`);
+  }
+
+  if (move.critChance != null) parts.push(`${Math.round(move.critChance * 100)}% crit`);
+
   if (move.statusApplication) {
-    const { statusId, magnitude, duration, target } = move.statusApplication;
-    // A status landing on the user is granted; one landing on the move's resolved
-    // target is inflicted. Same field, opposite reading — and since the target
-    // clause appended below reads "Self" for a self-buff either way, the verb is
-    // what actually disambiguates the two.
+    const { statusId, magnitude, duration, chance } = move.statusApplication;
+    // Granted vs inflicted — see grantsRatherThanInflicts above. The target
+    // clause appended below reads "Self"/"Both Allies" either way, so the verb
+    // is what actually disambiguates a boon from a wound.
     const amount = magnitude ?? duration;
-    parts.push(`${target === 'self' ? 'Grants' : 'Applies'} ${statusId}${amount != null ? ` ${amount}` : ''}`);
+    const odds = chance != null ? `${Math.round(chance * 100)}% ` : '';
+    const verb = grantsRatherThanInflicts(move.statusApplication) ? 'Grants' : 'Applies';
+    // The status's NAME, not its id — every status id was a single word until
+    // Elemental Force arrived, at which point this line started printing
+    // "FireForce". The dossier has always used the name (MoveDetailOverlay).
+    const statusName = statuses[statusId]?.name ?? statusId;
+    parts.push(`${odds}${verb} ${statusName}${amount != null ? ` ${amount}` : ''}`);
   }
 
   if (move.cleanses) parts.push('Cleanses');

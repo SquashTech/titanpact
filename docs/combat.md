@@ -137,6 +137,19 @@ via equipment/relics — it does not become a per-hero authoring axis.
 follow-up work: add a crit-chance grant to equipment/relic definitions and thread it
 into `rollDamage` in place of the flat constant.
 
+**A second crit source now exists (2026-08-29, from Fire's authored movepool):
+`MoveDefinition.critChance`** — a per-move rate replacing the default for that move
+only (Singe and Firebrand at 30%). This does not break the lock: the lock says crit
+is not a *base stat* / per-hero authoring axis, and a move-authored rate is neither.
+It does raise one question the lock did not anticipate, deliberately left **OPEN**:
+
+> When a crit-chance accessory finally exists, how does it combine with a
+> high-crit move — replace, add, or take-higher?
+
+Do not settle that silently while implementing equipment crit. Additive is the
+obvious default and is also the one that makes a 30% move plus a +15% accessory
+strictly better than the designer priced either at.
+
 ---
 
 ## The healing formula

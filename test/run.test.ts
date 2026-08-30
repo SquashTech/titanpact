@@ -189,12 +189,12 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
   const entry = run.roster[0];
   assert.deepStrictEqual(
     levelUpMovePool(progressionTable, entry),
-    ['emberSlash', 'flareBurst', 'quickJab', 'fangRush', 'cinderNova', 'infernoWave']
+    ['kindle', 'moltenLash', 'firebrand', 'volcanicSurge', 'quickJab', 'fangRush']
   );
 
-  const withMove = grantLevelUpMove(run, 'cinderKnight', 'cinderNova');
-  assert.ok(withMove.roster[0].unlockedMoveIds.includes('cinderNova'));
-  assert.ok(!levelUpMovePool(progressionTable, withMove.roster[0]).includes('cinderNova')); // granted move drops out of the pool
+  const withMove = grantLevelUpMove(run, 'cinderKnight', 'firebrand');
+  assert.ok(withMove.roster[0].unlockedMoveIds.includes('firebrand'));
+  assert.ok(!levelUpMovePool(progressionTable, withMove.roster[0]).includes('firebrand')); // granted move drops out of the pool
   assert.strictEqual(withMove.roster[0].unlockedMoveIds.length, 4); // starting 3 + this grant hits MOVE_CAP
 
   // Already at MOVE_CAP: further offers require replacing an unlocked move.

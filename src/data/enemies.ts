@@ -56,8 +56,12 @@ export const enemies: Record<string, HeroDefinition> = {
     id: 'torchGoblin',
     name: 'Torch Goblin',
     types: ['Fire'],
-    baseStats: { hp: 42, attack: 32, defense: 18, intelligence: 25, wisdom: 18, speed: 48, manaPool: 28, mpRegen: 4 },
-    moveIds: ['cinderBite', 'emberSlash'],
+    // Mana raised from 28/4 when Fire's authored movepool landed
+    // (src/data/moves.ts): the cheapest Fire damage move is now 20, not 10,
+    // so at the old pool this goblin could act roughly every third round and
+    // Rest the rest of the fight. Stat line otherwise untouched.
+    baseStats: { hp: 42, attack: 32, defense: 18, intelligence: 25, wisdom: 18, speed: 48, manaPool: 40, mpRegen: 10 },
+    moveIds: ['ember', 'singe'],
     starter: false,
   },
   // Considerably stronger than the basic 5 (docs/run-loop.md "Per-act

@@ -48,10 +48,10 @@ test('invariant: locked-in side cannot voluntarily switch', () => {
 test('invariant: engine never mutates content data (heroes/moves untouched by reference)', () => {
   const state = twoVTwoFixture(3);
   const actions: Action[] = [
-    { kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' },
+    { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
     { kind: 'move', combatantId: 'a2', moveId: 'tidalBolt', declaredTarget: 'b1' },
     { kind: 'move', combatantId: 'b1', moveId: 'quickJab', declaredTarget: 'a1' },
-    { kind: 'move', combatantId: 'b2', moveId: 'wildfire' },
+    { kind: 'move', combatantId: 'b2', moveId: 'firestorm' },
   ];
   const heroesBefore = heroes;
   resolveRound(state, actions, config);
@@ -84,10 +84,10 @@ test('invariant: stat grants must be multiples of 5 or 10', () => {
 
 test('golden replay: same seed + same inputs reproduce an identical event log', () => {
   const actions: Action[] = [
-    { kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' },
+    { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
     { kind: 'move', combatantId: 'a2', moveId: 'tidalBolt', declaredTarget: 'b2' },
     { kind: 'move', combatantId: 'b1', moveId: 'quickJab', declaredTarget: 'a1' },
-    { kind: 'move', combatantId: 'b2', moveId: 'wildfire' },
+    { kind: 'move', combatantId: 'b2', moveId: 'firestorm' },
   ];
 
   const stateA = twoVTwoFixture(555);
@@ -100,7 +100,7 @@ test('golden replay: same seed + same inputs reproduce an identical event log', 
 });
 
 test('golden replay: a different seed produces a different (but still valid) log', () => {
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }];
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
   const resultA = resolveRound(twoVTwoFixture(1), actions, config);
   const resultB = resolveRound(twoVTwoFixture(2), actions, config);
   assert.notDeepStrictEqual(resultA.events, resultB.events);
@@ -110,7 +110,7 @@ test('golden replay: a different seed produces a different (but still valid) log
 
 test('round: RoundStarted is first event, RoundEnded is last', () => {
   const state = twoVTwoFixture(10);
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }];
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
   const { events } = resolveRound(state, actions, config);
   assert.strictEqual(events[0].type, 'RoundStarted');
   assert.strictEqual(events[events.length - 1].type, 'RoundEnded');
@@ -118,11 +118,11 @@ test('round: RoundStarted is first event, RoundEnded is last', () => {
 
 test('round: a resolved move spends mana and deals damage', () => {
   const state = twoVTwoFixture(11);
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }];
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
   const { state: next, events } = resolveRound(state, actions, config);
 
   // Spend, then the round-boundary mana regen tick (docs/mana.md) adds mpRegen back on top.
-  const spent = heroes.cinderKnight.baseStats.manaPool - moves.emberSlash.manaCost;
+  const spent = heroes.cinderKnight.baseStats.manaPool - moves.singe.manaCost;
   const afterRegen = Math.min(heroes.cinderKnight.baseStats.manaPool, spent + heroes.cinderKnight.baseStats.mpRegen);
   assert.strictEqual(next.combatants.a1.currentMana, afterRegen);
   assert.ok(next.combatants.b1.currentHp < heroes.ironWarden.baseStats.hp);
@@ -133,9 +133,9 @@ test('round: a resolved move spends mana and deals damage', () => {
 
 test('round: higher priority move resolves before a higher-speed move in a lower bracket', () => {
   const state = twoVTwoFixture(12);
-  // quickJab (priority 1) from the slower b1 should still resolve before emberSlash (priority 0) from faster a1.
+  // quickJab (priority 1) from the slower b1 should still resolve before singe (priority 0) from faster a1.
   const actions: Action[] = [
-    { kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' },
+    { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
     { kind: 'move', combatantId: 'b1', moveId: 'quickJab', declaredTarget: 'a1' },
   ];
   const { events } = resolveRound(state, actions, config);
@@ -153,9 +153,9 @@ test('round: an unaffordable move is a legality no-op (engine-level guard)', () 
 
 test('hasAffordableMove: true iff at least one candidate move is within current mana', () => {
   assert.strictEqual(hasAffordableMove(0, ['overload'], moves), false); // 999 cost, 0 mana
-  assert.strictEqual(hasAffordableMove(0, ['overload', 'emberSlash'], moves), false); // emberSlash costs 10, still unaffordable at 0
-  assert.strictEqual(hasAffordableMove(moves.emberSlash.manaCost, ['overload', 'emberSlash'], moves), true);
-  assert.strictEqual(hasAffordableMove(moves.emberSlash.manaCost - 1, ['overload', 'emberSlash'], moves), false);
+  assert.strictEqual(hasAffordableMove(0, ['overload', 'singe'], moves), false); // singe costs 20, still unaffordable at 0
+  assert.strictEqual(hasAffordableMove(moves.singe.manaCost, ['overload', 'singe'], moves), true);
+  assert.strictEqual(hasAffordableMove(moves.singe.manaCost - 1, ['overload', 'singe'], moves), false);
 });
 
 test('round: a declared Rest action fully restores mana and skips the turn (softlock fallback, CLAUDE.md "Mana & tempo")', () => {
@@ -195,7 +195,7 @@ test('round: KO increments KO count and emits Fainted, clearing the active slot'
   const state = twoVTwoFixture(14);
   // Overwrite b1 to 1 HP so a single hit KOs it.
   const damaged = { ...state, combatants: { ...state.combatants, b1: { ...state.combatants.b1, currentHp: 1 } } };
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }];
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
   const { state: next, events } = resolveRound(damaged, actions, config);
 
   assert.strictEqual(next.koCount.B, 1);
@@ -212,7 +212,7 @@ test('round: a second attacker declared against a target the first attacker alre
   // first and KOs b1 — a1's declared target is then stale by the time its own action comes up. b2 is
   // still standing, so a1's attack should redirect onto it rather than fizzle.
   const actions: Action[] = [
-    { kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' },
+    { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
     { kind: 'move', combatantId: 'a2', moveId: 'tidalBolt', declaredTarget: 'b1' },
   ];
   const { events } = resolveRound(oneHp, actions, config);
@@ -235,7 +235,7 @@ test('round: an attacker still fizzles when its declared target is gone and the 
     active: { ...state.active, B: [null, null] as [string | null, string | null] },
     koCount: { ...state.koCount, B: 1 },
   };
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }];
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
   const { events } = resolveRound(b1Fainted, actions, config);
 
   assert.strictEqual(events.some((e) => e.type === 'MoveUsed'), false);
@@ -260,7 +260,7 @@ test('round: a move targeting a slot the enemy switched out of hits the replacem
   // first, priority.ts SWITCH_PRIORITY_BRACKET) — the attack should retarget onto b3, the new
   // occupant of that slot, exactly like 2v2 Pokemon, instead of fizzling and wasting a's turn/mana.
   const actions: Action[] = [
-    { kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' },
+    { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
     { kind: 'switch', combatantId: 'b1', benchedCombatantId: 'b3' },
   ];
   const { state: next, events } = resolveRound(withBufferedHp, actions, config);
@@ -282,7 +282,7 @@ test('round: bench regen ticks for a damaged benched combatant, clamped at max H
     bench: { ...state.bench, B: ['b2'] },
     combatants: { ...state.combatants, b2: { ...state.combatants.b2, currentHp: maxHp - 2 } },
   };
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }];
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
   const { state: next, events } = resolveRound(withBench, actions, config);
 
   const tick = events.find((e) => e.type === 'BenchRegenTicked' && (e as any).combatantId === 'b2') as any;
@@ -304,7 +304,7 @@ test('round: mana regen ticks every round for active AND benched combatants alik
       b2: { ...state.combatants.b2, currentMana: maxMana - 2 }, // benched, near-full
     },
   };
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }];
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
   const { state: next, events } = resolveRound(withBench, actions, config);
 
   const activeTick = events.find((e) => e.type === 'ManaRegenTicked' && (e as any).combatantId === 'b1') as any;

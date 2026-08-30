@@ -104,7 +104,7 @@ documents for status-granting moves like `vanish` (Stealth) and `secondWind` (Re
 | Field Effect | flavorType | Effect | Move (starter) |
 | --- | --- | --- | --- |
 | Surging Magic | Arcane | Doubles MP Regen | `arcaneSurge` (Glyph) |
-| Scorched Land | Fire | Burn no longer decays | `scorchTheEarth` (Crimson) |
+| Scorched Land | Fire | Burn no longer decays | `spreadingBlaze` (Brimstone) |
 | Stasis Bubble | Mind | Reverses same-bracket Speed order | `stasisField` (Cortex) |
 | Sanctuary | Light | Heal-kind moves get +1 priority | `consecrate` (Solace) |
 | Verdant Earth | Nature | +Attack/+Intelligence equal to your own Renew | `overgrowth` (Sylva) |

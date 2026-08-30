@@ -107,6 +107,20 @@ discipline** and are collected at the bottom.
 
 ---
 
+## Chanced applications (2026-08-29)
+
+`StatusApplication.chance` (`engine/content.ts`) gates a rider on a probability in
+[0, 1]; omitted means always, which is every move authored before Fire. Two rules
+that matter:
+
+- **It gates the rider, never the move.** The damage/heal/buff body always resolves
+  — CLAUDE.md's "No accuracy stat / moves always land" is untouched. Fire's Ember
+  always hits; only its Burn is a 10% roll.
+- **It rolls once per resolved target**, so a chanced spread move can catch one foe
+  and miss the other, and it draws from the seeded RNG only when the field is
+  present (`resolveRound.ts`) — an unchanced rider draws nothing, so every replay
+  recorded before this existed reproduces byte-identically.
+
 ## Cut this review
 
 - **Bind** — cut. Too situational (many fights have only 2 enemies; no switching

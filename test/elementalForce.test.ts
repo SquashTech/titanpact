@@ -3,6 +3,13 @@
 // (engine/damage/damagePipeline.ts resolveElementalForceBonus). Covers all
 // three grant vectors end to end: a move's statusApplication (stokeTheFlames),
 // equipment (Ember Band), and a relic (Cinder Standard).
+//
+// stokeTheFlames is now the ONLY move in the game granting any Elemental
+// Force — it was cut with the rest of the fixture Fire moves when Fire was
+// authored (2026-08-29) and deliberately re-authored into the slate a day
+// later, at 30 mana and `bothAllies` instead of 12 and `self`. Which is why
+// the move vector is asserted through it rather than through a test-local
+// fixture: if it is ever removed again, this file is the alarm.
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -91,15 +98,15 @@ test('elementalForce: independent Force statuses for different types both apply 
 
 // --- Stacking: reapplying via a move's statusApplication adds additively ---
 
-test('elementalForce: stokeTheFlames grants Fire Force 10, and a second cast stacks additively to 20', () => {
+test('elementalForce: stokeTheFlames grants Fire Force 20, and a second cast stacks additively to 40', () => {
   const state = twoVTwoFixture(402);
   const cast: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'stokeTheFlames' }];
 
   const once = resolveRound(state, cast, config);
-  assert.strictEqual(once.state.combatants.a1.statuses.FireForce.magnitude, 10);
+  assert.strictEqual(once.state.combatants.a1.statuses.FireForce.magnitude, 20);
 
   const twice = resolveRound(once.state, cast, config);
-  assert.strictEqual(twice.state.combatants.a1.statuses.FireForce.magnitude, 20);
+  assert.strictEqual(twice.state.combatants.a1.statuses.FireForce.magnitude, 40);
 });
 
 // --- End to end: Fire Force actually raises rolled damage on a Fire move ---
@@ -107,7 +114,7 @@ test('elementalForce: stokeTheFlames grants Fire Force 10, and a second cast sta
 test('elementalForce: Fire Force 20 raises rolled damage on a Fire move end to end', () => {
   const state = twoVTwoFixture(403);
   const withForce = withStatus(state, 'a1', 'FireForce', 20);
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }];
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
 
   const plain = resolveRound(state, actions, config);
   const boosted = resolveRound(withForce, actions, config);
@@ -137,12 +144,12 @@ test('elementalForce: Fire Force does not affect a non-Fire move', () => {
 test('elementalForce: DamageDealt event carries elementalForceBonus separately from basePower', () => {
   const state = twoVTwoFixture(405);
   const withForce = withStatus(state, 'a1', 'FireForce', 20);
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }];
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
 
   const { events } = resolveRound(withForce, actions, config);
   const dealt = events.find((e) => e.type === 'DamageDealt');
   assert.ok(dealt && dealt.type === 'DamageDealt');
-  assert.strictEqual(dealt!.basePower, moves.emberSlash.basePower);
+  assert.strictEqual(dealt!.basePower, moves.singe.basePower);
   assert.strictEqual(dealt!.elementalForceBonus, 20);
 });
 

@@ -177,6 +177,18 @@ export interface StatusApplication {
   duration?: number;
   /** 'self' = the move's user; 'moveTarget' = the move's own resolved target(s). */
   target: 'self' | 'moveTarget';
+  /**
+   * Probability in [0, 1] that this rider actually lands. Omitted = always,
+   * which is every move authored before Fire's Ember ("10% chance to apply
+   * Burn 5"). Rolled independently per resolved target, so a chanced spread
+   * move can catch one foe and miss the other.
+   *
+   * NOT an accuracy stat (CLAUDE.md "No accuracy stat" — moves always land):
+   * the move's damage/heal/buff body resolves unconditionally, only the
+   * status rider is gated. Keeping the chance on the rider rather than on the
+   * move is what preserves that invariant.
+   */
+  chance?: number;
 }
 
 /** Opaque passive-catalog key. Concrete passives are DATA — see src/data/passives.ts. */
@@ -329,9 +341,44 @@ export interface MoveDefinition {
   kind: 'damage' | 'heal' | 'buff';
   /** damage-kind only. */
   basePower?: number;
+  /**
+   * damage-kind only. Per-move crit rate in [0, 1], replacing the default
+   * rate for this move only (damagePipeline.ts PROVISIONAL_CRIT_CHANCE) —
+   * e.g. Fire's Singe/Firebrand at "30% crit chance".
+   *
+   * Crit SOURCE stays locked to the loadout/equipment layer (CLAUDE.md
+   * "Resolved design questions", docs/combat.md "Crit"): this is a
+   * move-authored override, not a crit stat, so nothing here reaches the stat
+   * pipeline. OPEN: when equipment crit chance actually exists, how a
+   * high-crit move and a crit-chance accessory combine (replace / add /
+   * take-higher) is a real decision — do not assume one silently.
+   */
+  critChance?: number;
+  /**
+   * damage-kind only. A BasePower multiplier that applies only when the hit's
+   * target carries `requiresTargetStatus` at the moment it resolves — e.g.
+   * Fire's Immolate, "triple base power if the target is Burned".
+   *
+   * Scales the formula's own BasePower INPUT, like Elemental Force's
+   * basePowerBonus, NOT the already-computed result (that is what a
+   * DamageModifier / multiplierTerm is for — CLAUDE.md "Two-pipeline
+   * separation"). Order is authored BasePower x multiplier, THEN + Elemental
+   * Force: "triple base power" triples the 30 the move is written at, not the
+   * 40 a Fire Force accessory turns it into.
+   *
+   * Data, not a predicate function — same discipline as
+   * StatusDefinition.triggerTypes.
+   */
+  conditionalPower?: { requiresTargetStatus: StatusId; multiplier: number };
   /** heal-kind only. The authored figure the healing formula scales (docs/combat.md "The healing formula", engine/heal/healPipeline.ts) — HP restored by a Wisdom-50 caster with no STAB, NOT a flat guaranteed amount. */
   healPower?: number;
-  /** buff-kind only. Negative amounts are debuffs — same move kind covers both. */
+  /**
+   * Any kind. Negative amounts are debuffs — the same field covers both, and
+   * a buff-kind move is simply one whose whole body is its deltas.
+   *
+   * On a damage move the deltas land AFTER the hit resolves (resolveRound.ts),
+   * so e.g. Molten Lash's -10 Defense shapes the NEXT hit, not its own.
+   */
   statDeltas?: readonly StatDelta[];
   /** Any kind — see StatusApplication above. */
   statusApplication?: StatusApplication;

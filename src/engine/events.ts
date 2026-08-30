@@ -59,6 +59,8 @@ export interface DamageDealtEvent extends BaseEvent {
   basePower: number;
   /** Elemental Force's contribution to this hit's BasePower (0 if none) — added to `basePower` BEFORE the ratio/STAB/TypeMult/Variance/Crit/multiplierTerm chain, unlike `modifiers`/multiplierTerm which scale the already-computed result (damagePipeline.ts resolveElementalForceBonus). */
   elementalForceBonus: number;
+  /** The conditional-BasePower multiplier this hit actually got, 1 when none (damagePipeline.ts resolveConditionalPowerMultiplier — e.g. Immolate x3 into a Burned target). Scales `basePower` BEFORE `elementalForceBonus` is added on. */
+  basePowerMultiplier: number;
   offStat: number;
   defStat: number;
   ratio: number;

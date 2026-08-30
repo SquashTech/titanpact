@@ -24,7 +24,7 @@
 // or two supports, and it was the 4th slot in a hero that had one — the
 // thing that stopped starting kits being uniform three across the draft
 // screen. So the attachment lives in src/data/progression.ts moveTiers now
-// (crimson→scorchTheEarth, wildOracle→overgrowth, dawnwarden→consecrate,
+// (crimson→spreadingBlaze, wildOracle→overgrowth, dawnwarden→consecrate,
 // runescribe→arcaneSurge, mindweaver→stasisField), and each effect is
 // something a run grows into rather than opens with.
 

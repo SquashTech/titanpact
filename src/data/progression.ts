@@ -53,11 +53,23 @@ import { EVOLUTION_LEVEL } from '../run/progression';
 
 export const progressionTable: ProgressionTable = {
   moveTiers: {
-    cinderKnight: ['emberSlash', 'flareBurst', 'quickJab', 'fangRush', 'cinderNova', 'infernoWave'],
-    crimson: ['emberSlash', 'infernoWave', 'cinderNova', 'arcaneBolt', 'manaBurst', 'purify', 'scorchTheEarth'],
+    // The three Fire heroes draw from the authored Fire pool (src/data/moves.ts),
+    // split by the stat each one actually attacks with rather than by tier:
+    // Cinder (Atk 70 / Int 30) takes the physical line, Crimson (Int 80) the
+    // magical burst line, Brimstone (Int 60, Fire/Shadow) the spread-and-
+    // attrition line. Each hero's own starting move is deliberately absent —
+    // levelUpMovePool filters unlocked moves out, so listing it is dead weight.
+    cinderKnight: ['kindle', 'moltenLash', 'firebrand', 'volcanicSurge', 'quickJab', 'fangRush'],
+    // stokeTheFlames sits here rather than on the other two deliberately:
+    // it buffs the whole active side, and Crimson is the only Fire STARTER
+    // (heroes.ts), so it is the one that can be drafted alongside a second
+    // Fire hero for the ramp to pay off twice.
+    crimson: ['setAlight', 'stokeTheFlames', 'scorch', 'immolate', 'firestorm', 'inferno', 'purify'],
     tidecaller: ['aquaJet', 'tsunamiCrash', 'frostLock', 'ripCurrent', 'mendWounds', 'curseMind'],
     ironWarden: ['boulderToss', 'shrapnelBlast', 'stoneQuake', 'ironFist', 'fortify'],
-    wildOracle: ['wildfire', 'vineLash', 'soulRend', 'rendingClaw', 'naturesWrath', 'overgrowth'],
+    // 'wildfire' dropped with the Fire rewrite — it was fixture filler on a
+    // mono-Nature hero anyway, and naturesWrath already covers the spread slot.
+    wildOracle: ['vineLash', 'soulRend', 'rendingClaw', 'naturesWrath', 'overgrowth', 'weaken'],
     stormRanger: ['quickJab', 'thunderclap', 'galeSlash', 'fangRush'],
     shadowMonk: ['duskStrike', 'shadowVeil', 'fangRush', 'quickJab', 'nightmareGrasp'],
     marrow: ['duskStrike', 'shadowVeil', 'fangRush', 'quickJab', 'nightmareGrasp'],
@@ -85,7 +97,7 @@ export const progressionTable: ProgressionTable = {
     // Scallywag, Sentinel, Bellows, Zenith (2026-08-22) ---
     hollowbark: ['naturesWrath', 'venomousBite', 'healingRain', 'rendingClaw', 'weaken'],
     aegis: ['sunstrike', 'restoreVigor', 'purify', 'consecrate', 'stunningBlow'],
-    brimstone: ['wildfire', 'nightmareGrasp', 'stokeTheFlames', 'duskStrike', 'scorchTheEarth'],
+    brimstone: ['sparkFlash', 'spreadingBlaze', 'backdraft', 'sparkBurst', 'nightmareGrasp', 'duskStrike'],
     gallant: ['shrapnelBlast', 'stunningBlow', 'fortify', 'savageMaul', 'galeShot'],
     nightshade: ['shadowVeil', 'weaken', 'curseMind', 'rendingClaw', 'stunningBlow'],
     pincer: ['tidalBolt', 'tsunamiCrash', 'ripCurrent', 'shrapnelBlast', 'frostLock'],

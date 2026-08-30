@@ -55,7 +55,7 @@ function withStatus(
 
 test('status: Daze blocks a move action — no MoveUsed, mana untouched, ActionBlocked emitted', () => {
   const state = withStatus(twoVTwoFixture(100), 'a1', 'Daze', { duration: 2 });
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }];
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
   const { state: next, events } = resolveRound(state, actions, config);
 
   assert.strictEqual(events.some((e) => e.type === 'MoveUsed'), false);
@@ -228,7 +228,7 @@ test('status: Haunt turns a singleEnemy Spirit/Mind attack into a spread hit on 
 test('status: a non-Spirit/Mind attack does not trigger Haunt spread', () => {
   const state = twoVTwoFixture(221);
   const haunted = withStatus(state, 'b2', 'Haunt', {});
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }]; // Fire-typed
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }]; // Fire-typed
 
   const { state: next } = resolveRound(haunted, actions, config);
   assert.strictEqual(next.combatants.b2.currentHp, heroes.wildOracle.baseStats.hp); // untouched
@@ -242,7 +242,7 @@ test('status: a faster Stealth redirects an already-declared attack onto the oth
   // so b2's Vanish (grants Stealth) resolves before a1's attack comes up.
   const actions: Action[] = [
     { kind: 'move', combatantId: 'b2', moveId: 'vanish' },
-    { kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b2' },
+    { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b2' },
   ];
   const { state: next, events } = resolveRound(state, actions, config);
 
@@ -277,7 +277,7 @@ test('status: Stealth ticks at the start of a round, so it still protects the ro
   // it present), so a single-target attack on b2 still redirects onto b1.
   const round2 = resolveRound(
     round1.state,
-    [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b2' }],
+    [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b2' }],
     config
   );
   assert.ok(round2.events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1'));
@@ -287,7 +287,7 @@ test('status: Stealth ticks at the start of a round, so it still protects the ro
   // Round 3: the start-of-round tick removes Stealth before actions run, so the same attack lands on b2 directly.
   const round3 = resolveRound(
     round2.state,
-    [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b2' }],
+    [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b2' }],
     config
   );
   assert.ok(round3.events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b2'));

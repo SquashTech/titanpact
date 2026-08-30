@@ -6,6 +6,7 @@ import './heal.test';
 import './passives.test';
 import './elementalForce.test';
 import './fieldEffects.test';
+import './fireMoves.test';
 import './run.test';
 import './recruitment.test';
 import './shop.test';

@@ -156,7 +156,7 @@ test('passives: collectPassiveDamageModifiers only matches the conditioned move 
   const state = twoVTwoFixture(310);
   const withGrant = withPassive(state, 'a1', 'emberheart');
 
-  const fireMods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.emberSlash, passives);
+  const fireMods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.singe, passives);
   assert.deepStrictEqual(fireMods, [{ source: 'emberheart', amount: 0.2 }]);
 
   const waterMods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.tidalBolt, passives);
@@ -167,7 +167,7 @@ test('passives: two stacks of Emberheart push two modifier entries, stacking mul
   const state = twoVTwoFixture(311);
   const withGrant = withPassive(state, 'a1', 'emberheart', 2);
 
-  const mods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.emberSlash, passives);
+  const mods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.singe, passives);
   assert.strictEqual(mods.length, 2);
   assert.strictEqual(resolveMultiplierTerm(mods), 1.2 * 1.2);
 });
@@ -175,7 +175,7 @@ test('passives: two stacks of Emberheart push two modifier entries, stacking mul
 test('passives: Emberheart actually raises rolled damage on a Fire move end to end', () => {
   const state = twoVTwoFixture(312);
   const withGrant = withPassive(state, 'a1', 'emberheart');
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'emberSlash', declaredTarget: 'b1' }];
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
 
   const plain = resolveRound(state, actions, config);
   const boosted = resolveRound(withGrant, actions, config);

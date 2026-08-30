@@ -19,7 +19,14 @@ import { resolveTargets, slotOfActiveCombatant, TargetNoLongerValidError } from 
 import { applyVoluntarySwitch, applyBenchHpRegen, SwitchBlockedError } from './switching';
 import { applyManaRegen } from './manaRegen';
 import { setFieldEffect, tickFieldEffect } from './fieldEffectEngine';
-import { resolveStatRatio, rollDamage, resolveElementalForceBonus, statKeysForCategory, type DamageModifier } from '../damage/damagePipeline';
+import {
+  resolveStatRatio,
+  rollDamage,
+  resolveElementalForceBonus,
+  resolveConditionalPowerMultiplier,
+  statKeysForCategory,
+  type DamageModifier,
+} from '../damage/damagePipeline';
 import type { TypeChart } from '../damage/typeMult';
 import { resolveHeal, scaleHotMagnitude } from '../heal/healPipeline';
 import { applyHpDelta } from './faintHandling';
@@ -33,6 +40,7 @@ import {
   tickStartOfRound,
 } from './statusEngine';
 import { collectPassiveDamageModifiers, resolvePassiveReactions } from './passiveEngine';
+import { nextFloat } from '../rng/seededRng';
 
 export interface RoundConfig {
   typeChart: TypeChart;
@@ -190,6 +198,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           // type add flat BasePower before the roll (damagePipeline.ts).
           const elementalForceBonus = resolveElementalForceBonus(attackerNow, move.type, statuses);
 
+          // Conditional BasePower (Immolate's "triple power vs a Burned
+          // target") — read per target off its LIVE statuses, so a spread
+          // conditional move can be tripled on one foe and not the other.
+          const basePowerMultiplier = resolveConditionalPowerMultiplier(move, target);
+
           const rolled = rollDamage(
             move,
             ratio,
@@ -198,8 +211,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             typeChart,
             working.rngState,
             modifiers,
-            undefined,
-            elementalForceBonus
+            move.critChance,
+            elementalForceBonus,
+            basePowerMultiplier
           );
           working = { ...working, rngState: rolled.nextRngState };
 
@@ -220,6 +234,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             variance: rolled.variance,
             basePower: move.basePower ?? 0,
             elementalForceBonus: rolled.basePowerBonus,
+            basePowerMultiplier: rolled.basePowerMultiplier,
             offStat: getEffectiveStat(attackerHero, attackerNow, offKey, fieldEffectCtx),
             defStat: getEffectiveStat(defenderHero, target, defKey, fieldEffectCtx),
             ratio: rolled.ratio,
@@ -296,20 +311,28 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         break;
       }
 
-      case 'buff': {
-        for (const targetId of targetIds) {
-          if (!working.combatants[targetId] || working.combatants[targetId].fainted) continue;
-          for (const delta of move.statDeltas ?? []) {
-            const current = working.combatants[targetId];
-            const newValue = (current.statModifiers[delta.stat] ?? 0) + delta.amount;
-            working = {
-              ...working,
-              combatants: { ...working.combatants, [targetId]: { ...current, statModifiers: { ...current.statModifiers, [delta.stat]: newValue } } },
-            };
-            events.push({ type: 'StatChanged', round, combatantId: targetId, stat: delta.stat, delta: delta.amount, newValue });
-          }
-        }
+      case 'buff':
+        // A buff move's whole body is its statDeltas, and those are applied
+        // below alongside every other rider — a buff-kind move with no deltas
+        // (a pure status or field-effect move) is legal and simply has no body.
         break;
+    }
+
+    // Stat deltas (engine/content.ts MoveDefinition.statDeltas) layer on top of
+    // any move kind, same as statusApplication/fieldEffectApplication below —
+    // Fire's Molten Lash is a damage move that also drops the target's Defense.
+    // Deliberately AFTER the damage/heal switch above: the debuff shapes the
+    // NEXT hit, not the one that delivered it.
+    for (const targetId of move.statDeltas?.length ? targetIds : []) {
+      if (!working.combatants[targetId] || working.combatants[targetId].fainted) continue;
+      for (const delta of move.statDeltas ?? []) {
+        const current = working.combatants[targetId];
+        const newValue = (current.statModifiers[delta.stat] ?? 0) + delta.amount;
+        working = {
+          ...working,
+          combatants: { ...working.combatants, [targetId]: { ...current, statModifiers: { ...current.statModifiers, [delta.stat]: newValue } } },
+        };
+        events.push({ type: 'StatChanged', round, combatantId: targetId, stat: delta.stat, delta: delta.amount, newValue });
       }
     }
 
@@ -341,6 +364,17 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         const statusAppliedEvents: CombatEvent[] = [];
         for (const applyTargetId of applyTargets) {
           if (!working.combatants[applyTargetId] || working.combatants[applyTargetId].fainted) continue;
+          // Chanced rider (StatusApplication.chance — Ember's "10% chance to
+          // apply Burn 5"). Rolled once PER TARGET, after this action's damage
+          // rolls and before the next action's, which is the fixed, documented
+          // draw order this stays deterministic under (docs/architecture.md
+          // "Determinism & RNG"). An unchanced rider draws nothing at all, so
+          // every fight authored before this field replays identically.
+          if (app.chance !== undefined) {
+            const roll = nextFloat(working.rngState);
+            working = { ...working, rngState: roll.nextState };
+            if (roll.value >= app.chance) continue;
+          }
           const result = applyStatus(working, round, applyTargetId, def, { magnitude, duration: app.duration });
           working = result.state;
           events.push(...result.events);

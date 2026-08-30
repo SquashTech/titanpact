@@ -46,7 +46,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Cinder',
     types: ['Fire', 'Iron'],
     baseStats: { hp: 100, attack: 70, defense: 60, intelligence: 30, wisdom: 40, speed: 50, manaPool: 60, mpRegen: 10 },
-    moveIds: ['cinderBite', 'fortify', 'restoreVigor'],
+    moveIds: ['singe', 'fortify', 'restoreVigor'],
     starter: false,
   },
   crimson: {
@@ -54,7 +54,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Crimson',
     types: ['Fire'],
     baseStats: { hp: 100, attack: 30, defense: 38, intelligence: 80, wisdom: 75, speed: 62, manaPool: 65, mpRegen: 10 },
-    moveIds: ['flareBurst', 'weaken', 'restoreVigor'],
+    moveIds: ['ember', 'weaken', 'restoreVigor'],
     starter: true,
   },
   brimstone: {
@@ -62,7 +62,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Brimstone',
     types: ['Fire', 'Shadow'],
     baseStats: { hp: 80, attack: 55, defense: 35, intelligence: 60, wisdom: 35, speed: 60, manaPool: 55, mpRegen: 10 },
-    moveIds: ['cinderBite', 'shadowVeil', 'weaken'],
+    moveIds: ['ember', 'shadowVeil', 'weaken'],
     starter: false,
   },
 

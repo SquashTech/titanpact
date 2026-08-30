@@ -185,7 +185,28 @@ function MoveRow({ move, affordable, selected, forceBonus, caster, matchups, mul
                 <span className="move-eff-mult">{formatMult(mult)}</span>
               </span>
             ))}
-            {move.statusApplication && <span className="move-eff-status">+{move.statusApplication.statusId}</span>}
+            {/* Three things a damage move's rider can be, and the bare
+                "+Burn" this used to print was only honest about one of them:
+                a chanced rider leads with its odds (Ember is a 10% Burn, not
+                a Burn), and a self-targeted one says so (Volcanic Surge burns
+                the caster, and reading it as "the target catches fire" is the
+                exact wrong call). */}
+            {move.statusApplication && (
+              <span className="move-eff-status">
+                {move.statusApplication.chance != null ? `${Math.round(move.statusApplication.chance * 100)}% ` : '+'}
+                {move.statusApplication.statusId}
+                {move.statusApplication.target === 'self' ? ' (self)' : ''}
+              </span>
+            )}
+            {/* A conditional-power move's whole decision is whether the
+                condition is met, so the rule belongs on the button. The live
+                per-defender number it produces is in the dossier's forecast,
+                which already runs the multiplier against each enemy. */}
+            {move.conditionalPower && (
+              <span className="move-eff-status">
+                ×{move.conditionalPower.multiplier} vs {move.conditionalPower.requiresTargetStatus}
+              </span>
+            )}
           </span>
         ) : (
           <span className="move-effect-text">{moveEffectSummary(move, caster)}</span>

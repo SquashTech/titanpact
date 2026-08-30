@@ -75,8 +75,17 @@ export function formatEvents(
           e.modifiers.length > 0
             ? `, Mods ${fmt(e.multiplierTerm)}× (${e.modifiers.map((m) => `${m.source} ${m.amount >= 0 ? '+' : ''}${Math.round(m.amount * 100)}%`).join(', ')})`
             : '';
-        const bpText =
-          e.elementalForceBonus > 0 ? `${e.basePower + e.elementalForceBonus} BP (${e.basePower} + ${e.elementalForceBonus} Force)` : `${e.basePower} BP`;
+        // BasePower's own two stage-1 terms, spelled out in the order the
+        // pipeline applies them: authored BP x conditional multiplier, then
+        // + Elemental Force (damagePipeline.ts calcDamage).
+        const conditionalMult = e.basePowerMultiplier ?? 1;
+        const scaledBp = e.basePower * conditionalMult;
+        const bpParts: string[] = [];
+        if (conditionalMult !== 1) bpParts.push(`${e.basePower} × ${fmt(conditionalMult)}`);
+        if (e.elementalForceBonus > 0) bpParts.push(`${bpParts.length ? '' : `${e.basePower} `}+ ${e.elementalForceBonus} Force`);
+        const bpText = bpParts.length
+          ? `${scaledBp + e.elementalForceBonus} BP (${bpParts.join(' ')})`
+          : `${e.basePower} BP`;
         lines.push({
           key: `${key}-math`,
           text:

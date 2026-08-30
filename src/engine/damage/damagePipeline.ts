@@ -11,7 +11,7 @@
 
 import type { HeroDefinition, MoveDefinition, StatKey, StatusDefinition } from '../content';
 import type { Combatant, DamageCategory, FieldEffectContext } from '../state';
-import { getEffectiveStat } from '../state';
+import { getEffectiveStat, hasStatus } from '../state';
 import { nextRange, nextFloat, type RngState } from '../rng/seededRng';
 import { resolveStab, resolveTypeMult, type TypeChart } from './typeMult';
 
@@ -24,6 +24,12 @@ export const VARIANCE_MAX = 1.0;
  * field yet, so this stays a flat, unsourced placeholder until that's built.
  * When it is, thread the equipped crit-chance grant into rollDamage in place of
  * this constant rather than adding a crit StatKey to the stat pipeline.
+ *
+ * A move may author its OWN rate (MoveDefinition.critChance — Fire's
+ * Singe/Firebrand at 30%), which replaces this default for that move only.
+ * That is still not a stat, so the lock holds; how a high-crit move and a
+ * future crit-chance accessory combine is an open decision, flagged on the
+ * field itself.
  */
 export const PROVISIONAL_CRIT_CHANCE = 1 / 16;
 export const PROVISIONAL_CRIT_MULTIPLIER = 1.5;
@@ -79,6 +85,25 @@ export function resolveElementalForceBonus(
   return bonus;
 }
 
+/**
+ * The conditional-BasePower multiplier for one pending hit
+ * (MoveDefinition.conditionalPower — Fire's Immolate, "triple base power if
+ * the target is Burned"). 1 when the move authors no condition or the target
+ * isn't carrying the named status.
+ *
+ * Read against the target's LIVE statuses at the moment the hit resolves, so
+ * a Burn applied by a faster action earlier in the same round already counts —
+ * same freshness rule the field-effect context follows in resolveRound.ts.
+ * Pipeline 2's concern (it changes the formula's BasePower input, not a stat),
+ * so it lives here next to resolveElementalForceBonus rather than in
+ * statusEngine.ts.
+ */
+export function resolveConditionalPowerMultiplier(move: MoveDefinition, target: Combatant): number {
+  const conditional = move.conditionalPower;
+  if (!conditional) return 1;
+  return hasStatus(target, conditional.requiresTargetStatus) ? conditional.multiplier : 1;
+}
+
 /** Which raw stats feed the off/def ratio for a damage category — shared by resolveStatRatio and by callers that want the raw values (e.g. the Battle Log's math readout) without duplicating the mapping. */
 export function statKeysForCategory(category: DamageCategory): readonly [StatKey, StatKey] {
   return category === 'physical' ? (['attack', 'defense'] as const) : (['intelligence', 'wisdom'] as const);
@@ -111,6 +136,8 @@ export interface DamageCalcResult {
   multiplierTerm: number;
   /** Elemental Force's contribution to this hit's BasePower (0 if none) — see resolveElementalForceBonus above. Added to move.basePower BEFORE every multiplier term, unlike `modifiers`/multiplierTerm which scale the already-computed result. */
   basePowerBonus: number;
+  /** The conditional-BasePower multiplier as actually applied (1 when none) — see resolveConditionalPowerMultiplier above. Multiplies the AUTHORED BasePower, before basePowerBonus is added on. */
+  basePowerMultiplier: number;
 }
 
 /** Pure: pipeline 2. Takes pre-rolled variance/crit so this stays testable without RNG. */
@@ -125,20 +152,24 @@ export function calcDamage(
   modifiers: readonly DamageModifier[] = [],
   stackingPolicy: ModifierStackingPolicy = LOCKED_MODIFIER_STACKING,
   critMultiplier: number = PROVISIONAL_CRIT_MULTIPLIER,
-  basePowerBonus: number = 0
+  basePowerBonus: number = 0,
+  basePowerMultiplier: number = 1
 ): DamageCalcResult {
   const stab = resolveStab(move.type, attackerTypes);
   const typeMult = resolveTypeMult(typeChart, move.type, defenderTypes);
   const crit = isCrit ? critMultiplier : 1;
   const multiplierTerm = resolveMultiplierTerm(modifiers, stackingPolicy);
 
-  // Elemental Force adds directly to the formula's own BasePower input — a 40
-  // BP move with Fire Force 20 becomes a 60 BP move, not a 40 BP move dealt at
-  // +20% damage (that's what `modifiers`/multiplierTerm are for instead).
-  const effectiveBasePower = (move.basePower ?? 0) + basePowerBonus;
+  // Both BasePower-stage terms land here, on the formula's own BasePower input
+  // rather than on its result (that's what `modifiers`/multiplierTerm are for):
+  // a 40 BP move with Fire Force 20 becomes a 60 BP move, not a 40 BP move
+  // dealt at +20% damage. The conditional multiplier scales the AUTHORED
+  // BasePower and Force is added after — Immolate at 30 BP with Fire Force 10
+  // into a Burned target is 30x3 + 10 = 100, not (30+10)x3.
+  const effectiveBasePower = (move.basePower ?? 0) * basePowerMultiplier + basePowerBonus;
   const damage = effectiveBasePower * ratio * stab * typeMult * variance * crit * multiplierTerm;
 
-  return { damage, ratio, stab, typeMult, variance, isCrit, critMultiplier: crit, multiplierTerm, basePowerBonus };
+  return { damage, ratio, stab, typeMult, variance, isCrit, critMultiplier: crit, multiplierTerm, basePowerBonus, basePowerMultiplier };
 }
 
 export interface RolledDamage extends DamageCalcResult {
@@ -159,7 +190,8 @@ export function rollDamage(
   rngState: RngState,
   modifiers: readonly DamageModifier[] = [],
   critChance: number = PROVISIONAL_CRIT_CHANCE,
-  basePowerBonus: number = 0
+  basePowerBonus: number = 0,
+  basePowerMultiplier: number = 1
 ): RolledDamage {
   const varianceRoll = nextRange(rngState, VARIANCE_MIN, VARIANCE_MAX);
   const critRoll = nextFloat(varianceRoll.nextState);
@@ -176,7 +208,8 @@ export function rollDamage(
     modifiers,
     LOCKED_MODIFIER_STACKING,
     PROVISIONAL_CRIT_MULTIPLIER,
-    basePowerBonus
+    basePowerBonus,
+    basePowerMultiplier
   );
 
   return { ...result, nextRngState: critRoll.nextState };

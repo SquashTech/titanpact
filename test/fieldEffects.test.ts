@@ -234,7 +234,7 @@ test('fieldEffects: Scorched Land keeps Burn at full magnitude across several ro
 test('fieldEffects: Stasis Bubble reverses the Speed tiebreak within a shared priority bracket', () => {
   const state = twoVTwoFixture(420);
   const actions: Action[] = [
-    { kind: 'move', combatantId: 'a1', moveId: 'cinderBite', declaredTarget: 'b1' }, // cinderKnight, speed 50
+    { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }, // cinderKnight, speed 50
     { kind: 'move', combatantId: 'b2', moveId: 'venomousBite', declaredTarget: 'a1' }, // wildOracle, speed 65
   ];
 
@@ -357,7 +357,7 @@ test('fieldEffects: Verdant Earth raises the damage-pipeline stat ratio via the 
 test('fieldEffects: Verdant Earth — a DamageDealt event\'s offStat reflects the Renew bonus end to end', () => {
   const built = withRenew(twoVTwoFixture(442), 'a1', 20);
   const state = { ...built, activeFieldEffect: { fieldEffectId: 'verdantEarth', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'cinderBite', declaredTarget: 'b1' }]; // physical, cinderKnight
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }]; // physical, cinderKnight
 
   const { events } = resolveRound(state, actions, config);
   const dmg = events.find((e) => e.type === 'DamageDealt');

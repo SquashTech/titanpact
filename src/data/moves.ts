@@ -1,8 +1,17 @@
-// ⚠️ TEST FIXTURE CONTENT — a broader spread of moves to exercise the engine
-// across all 15 types, both categories, every implemented TargetMode, and a
-// spread of priority brackets. Still not the authored movepool (that's ~53
-// heroes' worth of hand-tuned kits) — this is enough variety to run messier,
-// more interesting 2v2s while that content gets authored.
+// ⚠️ MOSTLY TEST FIXTURE CONTENT — a broad spread of moves to exercise the
+// engine across all 15 types, both categories, every implemented TargetMode,
+// and a spread of priority brackets. Enough variety to run messy, interesting
+// 2v2s while the real content gets authored.
+//
+// EXCEPT Fire (2026-08-29), which is the first type replaced wholesale by its
+// designed movepool — see the "--- Fire (AUTHORED)" block below. Fire's
+// fifteen are balance-tuned content; everything else here is still filler and
+// should be read (and replaced) as such, type by type. Four engine fields
+// exist because Fire needed them and are so far used only by it:
+// StatusApplication.chance (Ember), MoveDefinition.critChance (Singe,
+// Firebrand), MoveDefinition.conditionalPower (Immolate), and statDeltas on a
+// damage-kind move (Molten Lash) — all four are generic vocabulary in
+// engine/content.ts, not Fire special cases.
 //
 // Most moves here are `kind: 'damage'` — variety comes from
 // type/category/power/cost/priority/targeting — including doubles-native
@@ -14,7 +23,11 @@
 // `statusApplication` to a small dedicated damage/buff move rather than
 // retrofitted onto the moves above, so the original fixture moves — and the
 // tests/demo script that reference them by id — stay untouched) and a
-// Cleanse move. Conduct included: only its own dedicated move (voltaicJolt)
+// Cleanse move. Burn and Fire Force lost their dedicated fixture carriers
+// when Fire was authored, and both were replaced from inside the authored
+// pool: Burn by eight Fire-typed carriers, Fire Force by Stoke the Flames —
+// which is now the only move in the game that grants ANY Elemental Force, so
+// do not delete it without replacing that vector. Conduct included: only its own dedicated move (voltaicJolt)
 // plants the mark. ANY Storm/Iron damage move — this one included — can still
 // detonate an existing mark via StatusDefinition.triggerTypes; that half stays
 // automatic — see statusEngine.ts detonateTriggeredStatuses.
@@ -23,18 +36,6 @@ import type { MoveDefinition } from '../engine/content';
 
 export const moves: Record<string, MoveDefinition> = {
   // --- Original fixture moves (descriptions added) -------------------------
-  emberSlash: {
-    id: 'emberSlash',
-    name: 'Ember Slash',
-    type: 'Fire',
-    category: 'physical',
-    kind: 'damage',
-    basePower: 60,
-    manaCost: 10,
-    priority: 0,
-    target: 'singleEnemy',
-    description: 'A blazing sword strike wreathed in flame.',
-  },
   tidalBolt: {
     id: 'tidalBolt',
     name: 'Tidal Bolt',
@@ -58,18 +59,6 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 1,
     target: 'singleEnemy',
     description: 'A cheap, fast punch that moves before most other moves.',
-  },
-  wildfire: {
-    id: 'wildfire',
-    name: 'Wildfire',
-    type: 'Fire',
-    category: 'magical',
-    kind: 'damage',
-    basePower: 40,
-    manaCost: 20,
-    priority: 0,
-    target: 'bothEnemies',
-    description: 'An uncontrolled blaze that scorches both foes.',
   },
   overload: {
     id: 'overload',
@@ -109,18 +98,6 @@ export const moves: Record<string, MoveDefinition> = {
   },
   // Tiered moves purchasable via the level-up pool (src/run/progression.ts,
   // src/data/progression.ts) — not in any hero's starting moveIds.
-  cinderNova: {
-    id: 'cinderNova',
-    name: 'Cinder Nova',
-    type: 'Fire',
-    category: 'physical',
-    kind: 'damage',
-    basePower: 45,
-    manaCost: 16,
-    priority: 0,
-    target: 'bothEnemies',
-    description: 'An explosive burst of embers that catches both foes.',
-  },
   ripCurrent: {
     id: 'ripCurrent',
     name: 'Rip Current',
@@ -134,30 +111,252 @@ export const moves: Record<string, MoveDefinition> = {
     description: 'A crushing undertow that drags the target under.',
   },
 
-  // --- Fire ------------------------------------------------------------------
-  flareBurst: {
-    id: 'flareBurst',
-    name: 'Flare Burst',
+  // --- Fire (AUTHORED, 2026-08-29) ------------------------------------------
+  // The first type whose movepool is designer-authored rather than fixture
+  // filler. Early/Mid/Late in the design table is the level-up tier a move
+  // belongs to (src/data/progression.ts moveTiers), not an engine field.
+  //
+  // Fire's whole identity is Burn: eleven of the fifteen either apply it, feed
+  // off it, or stop it decaying. Three consequences worth knowing before
+  // tuning anything here:
+  //
+  // 1. **Burn halves every round** (src/data/statuses.ts), so a big raw
+  //    magnitude is a burst, not a plan. Scorched Land (Spreading Blaze) is
+  //    what turns a stack into attrition, and it is why Spark Burst's Burn 50
+  //    and Spark Flash's Burn 10 are the same card at two volumes rather than
+  //    two different effects.
+  // 2. **Burn is cleared by switching.** Every no-damage Burn move here loses
+  //    its whole payload to one switch — priced in as the reason they cost
+  //    less than a damage move of the same tier, not overlooked.
+  // 3. **Mana is the balance lever** (CLAUDE.md): nothing here is
+  //    accuracy-gated, so cost is what separates Ember from Inferno. The floor
+  //    is 15 and the ceiling 75 — a much steeper curve than the fixture moves
+  //    around it, and Fire heroes' mana pools are read against THIS curve.
+  ember: {
+    id: 'ember',
+    name: 'Ember',
     type: 'Fire',
     category: 'magical',
     kind: 'damage',
-    basePower: 48,
-    manaCost: 10,
-    priority: 0,
-    target: 'singleEnemy',
-    description: 'A concentrated flash of searing heat.',
-  },
-  infernoWave: {
-    id: 'infernoWave',
-    name: 'Inferno Wave',
-    type: 'Fire',
-    category: 'magical',
-    kind: 'damage',
-    basePower: 42,
+    basePower: 40,
+    statusApplication: { statusId: 'Burn', magnitude: 5, target: 'moveTarget', chance: 0.1 },
     manaCost: 20,
     priority: 0,
-    target: 'allOthers',
-    description: 'A rolling wave of flame that engulfs everyone but the caster — allies included.',
+    target: 'singleEnemy',
+    description: 'A thrown coal that occasionally catches (10% chance of Burn 5).',
+  },
+  sparkFlash: {
+    id: 'sparkFlash',
+    name: 'Spark Flash',
+    type: 'Fire',
+    category: 'magical',
+    // No damage body at all: the Burn IS the move. 'buff' is the engine kind
+    // for "a move whose whole payload is its riders" — the UI recovers the
+    // sign from the rider and calls this a Debuff (MoveTile.tsx isDebuff).
+    kind: 'buff',
+    statusApplication: { statusId: 'Burn', magnitude: 10, target: 'moveTarget' },
+    manaCost: 30,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'A snap of flame across the field, leaving both foes smoldering (Burn 10).',
+  },
+  kindle: {
+    id: 'kindle',
+    name: 'Kindle',
+    type: 'Fire',
+    category: 'physical',
+    kind: 'buff',
+    statDeltas: [{ stat: 'attack', amount: 20 }],
+    manaCost: 15,
+    priority: 0,
+    target: 'self',
+    description: 'Draws the inner fire up into the arms (+20 Attack).',
+  },
+  singe: {
+    id: 'singe',
+    name: 'Singe',
+    type: 'Fire',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 30,
+    critChance: 0.3,
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A glancing burn that finds the gap surprisingly often (30% crit).',
+  },
+  setAlight: {
+    id: 'setAlight',
+    name: 'Set Alight',
+    type: 'Fire',
+    category: 'magical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Burn', magnitude: 20, target: 'moveTarget' },
+    manaCost: 20,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Takes hold of one foe and does not let go (Burn 20).',
+  },
+  stokeTheFlames: {
+    id: 'stokeTheFlames',
+    name: 'Stoke the Flames',
+    type: 'Fire',
+    category: 'magical',
+    kind: 'buff',
+    // The pool's only ramp, and the one move here built for the SIDE rather
+    // than for a hero: 'bothAllies' is both active heroes including the caster
+    // (targeting.ts), so a second Fire hero standing next to this one gets the
+    // same +20 Base Power on every Fire move it owns. Fire Force stacks
+    // additively, persists through switching, and Cleanse never strips it
+    // (statuses.ts flags it positive) — so the ramp survives the cycling game
+    // that most Fire setup does not.
+    //
+    // Worth knowing before tuning: +20 BP is worth proportionally more on the
+    // cheap moves than the expensive ones (+50% on Ember's 40, +20% on
+    // Inferno's 100), so this rewards a wide cheap kit rather than a
+    // one-big-move kit — the opposite of what the 30 mana suggests at a glance.
+    statusApplication: { statusId: 'FireForce', magnitude: 20, target: 'moveTarget' },
+    manaCost: 30,
+    priority: 0,
+    target: 'bothAllies',
+    description: 'Feeds the fire in both allies (grants Fire Force 20 to the whole active side, stacks).',
+  },
+  scorch: {
+    id: 'scorch',
+    name: 'Scorch',
+    type: 'Fire',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 60,
+    statusApplication: { statusId: 'Burn', magnitude: 10, target: 'moveTarget' },
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A sustained lick of flame that leaves the skin cooking (Burn 10).',
+  },
+  spreadingBlaze: {
+    id: 'spreadingBlaze',
+    name: 'Spreading Blaze',
+    type: 'Fire',
+    category: 'magical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Burn', magnitude: 10, target: 'moveTarget' },
+    fieldEffectApplication: 'scorchedLand',
+    manaCost: 30,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Sets the ground itself alight — Scorched Land for 5 rounds, and Burn 10 on both foes.',
+  },
+  firebrand: {
+    id: 'firebrand',
+    name: 'Firebrand',
+    type: 'Fire',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 75,
+    critChance: 0.3,
+    manaCost: 40,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A weapon swung white-hot, and it bites (30% crit).',
+  },
+  moltenLash: {
+    id: 'moltenLash',
+    name: 'Molten Lash',
+    type: 'Fire',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 50,
+    statusApplication: { statusId: 'Burn', magnitude: 10, target: 'moveTarget' },
+    // Lands AFTER this hit resolves (resolveRound.ts) — the softened armour is
+    // for whatever comes next, not for the lash itself.
+    statDeltas: [{ stat: 'defense', amount: -10 }],
+    manaCost: 35,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'A whip of molten rope that burns through armour (Burn 10, -10 Defense).',
+  },
+  backdraft: {
+    id: 'backdraft',
+    name: 'Backdraft',
+    type: 'Fire',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 40,
+    statusApplication: { statusId: 'Burn', magnitude: 10, target: 'moveTarget' },
+    manaCost: 45,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Fire doubling back through the room, catching both foes (Burn 10).',
+  },
+  immolate: {
+    id: 'immolate',
+    name: 'Immolate',
+    type: 'Fire',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 30,
+    // The payoff every other Burn move in this pool is setting up: 30 BP into
+    // a clean target, 90 into a burning one. Checked per target off live
+    // statuses, so a Burn landed earlier this same round already counts.
+    conditionalPower: { requiresTargetStatus: 'Burn', multiplier: 3 },
+    manaCost: 30,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Feeds a fire that is already lit — triple power against a Burned target.',
+  },
+  sparkBurst: {
+    id: 'sparkBurst',
+    name: 'Spark Burst',
+    type: 'Fire',
+    category: 'magical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Burn', magnitude: 50, target: 'moveTarget' },
+    manaCost: 70,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'Both foes go up at once (Burn 50).',
+  },
+  inferno: {
+    id: 'inferno',
+    name: 'Inferno',
+    type: 'Fire',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 100,
+    manaCost: 75,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Everything the caster has, aimed at one place.',
+  },
+  firestorm: {
+    id: 'firestorm',
+    name: 'Firestorm',
+    type: 'Fire',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 70,
+    manaCost: 60,
+    priority: 0,
+    target: 'bothEnemies',
+    description: 'A firefront that takes the whole opposing side at once.',
+  },
+  volcanicSurge: {
+    id: 'volcanicSurge',
+    name: 'Volcanic Surge',
+    type: 'Fire',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 120,
+    // Recoil as a Burn on the USER rather than flat self-damage: it halves
+    // each round like any Burn, and the user's own switch clears it — so the
+    // cost is real but escapable, which makes this a tempo decision rather
+    // than a flat tax.
+    statusApplication: { statusId: 'Burn', magnitude: 30, target: 'self' },
+    manaCost: 75,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Opens the ground under one foe, and pays for it (self-inflicts Burn 30).',
   },
 
   // --- Water -------------------------------------------------------------
@@ -632,19 +831,6 @@ export const moves: Record<string, MoveDefinition> = {
   },
 
   // --- Status moves (docs/conditions.md) — one per status, plus Cleanse ---
-  cinderBite: {
-    id: 'cinderBite',
-    name: 'Cinder Bite',
-    type: 'Fire',
-    category: 'physical',
-    kind: 'damage',
-    basePower: 40,
-    statusApplication: { statusId: 'Burn', magnitude: 20, target: 'moveTarget' },
-    manaCost: 13,
-    priority: 0,
-    target: 'singleEnemy',
-    description: 'A searing bite that leaves the wound smoldering (inflicts Burn 20).',
-  },
   rendingClaw: {
     id: 'rendingClaw',
     name: 'Rending Claw',
@@ -749,19 +935,6 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'self',
     description: 'Steadies the caster’s breath, mending a little more each round (grants Renew 20).',
   },
-  stokeTheFlames: {
-    id: 'stokeTheFlames',
-    name: 'Stoke the Flames',
-    type: 'Fire',
-    category: 'magical',
-    kind: 'buff',
-    statDeltas: [],
-    statusApplication: { statusId: 'FireForce', magnitude: 10, target: 'self' },
-    manaCost: 12,
-    priority: 0,
-    target: 'self',
-    description: "Feeds the caster's inner flame (grants Fire Force 10, stacks).",
-  },
   purify: {
     id: 'purify',
     name: 'Purify',
@@ -789,19 +962,6 @@ export const moves: Record<string, MoveDefinition> = {
     priority: 0,
     target: 'self',
     description: "Surging Magic for 5 rounds: every hero's MP Regen doubles.",
-  },
-  scorchTheEarth: {
-    id: 'scorchTheEarth',
-    name: 'Scorch the Earth',
-    type: 'Fire',
-    category: 'magical',
-    kind: 'buff',
-    statDeltas: [],
-    fieldEffectApplication: 'scorchedLand',
-    manaCost: 20,
-    priority: 0,
-    target: 'self',
-    description: "Scorched Land for 5 rounds: Burn stops decaying.",
   },
   stasisField: {
     id: 'stasisField',

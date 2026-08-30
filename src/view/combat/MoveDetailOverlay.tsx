@@ -12,6 +12,7 @@ import { resolveStab, resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/dama
 import { resolveHealFor, type HealCaster } from '../../engine/heal/healPipeline';
 import {
   calcDamage,
+  resolveConditionalPowerMultiplier,
   resolveElementalForceBonus,
   resolveStatRatio,
   VARIANCE_MAX,
@@ -26,7 +27,7 @@ import { StatusGlyph, statusColor } from '../shared/statusIcons';
 import { STAT_LABELS, hpTier } from '../shared/StatBars';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { TARGET_MODE_LABELS, healReadout, moveKindGlyph, moveKindLabel } from '../shared/MoveTile';
+import { TARGET_MODE_LABELS, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel } from '../shared/MoveTile';
 import { overlayHost } from '../shared/overlayHost';
 
 /**
@@ -112,12 +113,29 @@ function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defender
   const ratio = resolveStatRatio(move.category, attackerHero, attacker, defenderHero, defender, fieldEffectCtx);
   const modifiers: DamageModifier[] = collectPassiveDamageModifiers(attacker, move, passives);
   const forceBonus = resolveElementalForceBonus(attacker, move.type, statuses);
+  // Read against THIS defender, so a conditional move forecasts x3 on the
+  // Burned foe and x1 on the clean one — the whole point of showing a
+  // per-defender band rather than one number.
+  const conditionalMult = resolveConditionalPowerMultiplier(move, defender);
   const attackerTypes = effectiveTypes(attackerHero, attacker);
   const defenderTypes = effectiveTypes(defenderHero, defender);
 
   const roll = (variance: number) =>
     Math.round(
-      calcDamage(move, ratio, attackerTypes, defenderTypes, typeChart, variance, false, modifiers, undefined, undefined, forceBonus)
+      calcDamage(
+        move,
+        ratio,
+        attackerTypes,
+        defenderTypes,
+        typeChart,
+        variance,
+        false,
+        modifiers,
+        undefined,
+        undefined,
+        forceBonus,
+        conditionalMult
+      )
         .damage
     );
 
@@ -279,7 +297,15 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   const kindGlyph = moveKindGlyph(move);
   const statusDef = move.statusApplication ? statuses[move.statusApplication.statusId] : undefined;
   const fieldDef = move.fieldEffectApplication ? fieldEffects[move.fieldEffectApplication] : undefined;
-  const hasPayload = Boolean(move.statDeltas?.length || move.statusApplication || move.cleanses || move.fieldEffectApplication);
+  const conditionalDef = move.conditionalPower ? statuses[move.conditionalPower.requiresTargetStatus] : undefined;
+  const hasPayload = Boolean(
+    move.statDeltas?.length ||
+      move.statusApplication ||
+      move.cleanses ||
+      move.fieldEffectApplication ||
+      move.conditionalPower ||
+      move.critChance != null
+  );
 
   const forecastIds = context && move.kind === 'damage' ? context.defenderIds : [];
 
@@ -394,7 +420,13 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               color={statusColor(move.statusApplication.statusId)}
               /* Granted vs inflicted: same field, opposite reading, and the
                  verb is what separates them — see moveEffectSummary. */
-              text={`${move.statusApplication.target === 'self' ? 'Grants' : 'Applies'} ${statusDef.name}${
+              /* A chanced rider leads with its odds; an unchanced one says
+                 nothing, so every move authored before the field reads exactly
+                 as it did. */
+              text={`${move.statusApplication.chance != null ? `${Math.round(move.statusApplication.chance * 100)}% ` : ''}${
+                /* Granted vs inflicted keys off the status's own sign, not off who it lands on — see grantsRatherThanInflicts. */
+                grantsRatherThanInflicts(move.statusApplication) ? 'Grants' : 'Applies'
+              } ${statusDef.name}${
                 move.statusApplication.magnitude != null
                   ? ` ${move.statusApplication.magnitude}`
                   : move.statusApplication.duration != null
@@ -402,6 +434,21 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
                     : ''
               }`}
               note={statusDef.description}
+            />
+          )}
+          {move.conditionalPower && (
+            <EffectRow
+              glyph={<StatusGlyph statusId={move.conditionalPower.requiresTargetStatus} />}
+              color={statusColor(move.conditionalPower.requiresTargetStatus)}
+              text={`×${move.conditionalPower.multiplier} power vs ${conditionalDef?.name ?? move.conditionalPower.requiresTargetStatus}`}
+              note="scales base power, not the finished hit"
+            />
+          )}
+          {move.critChance != null && (
+            <EffectRow
+              glyph={<MoveKindGlyph kind={move.kind === 'damage' ? move.category : 'buff'} />}
+              text={`${Math.round(move.critChance * 100)}% crit chance`}
+              note="1.5× damage when it lands"
             />
           )}
           {move.cleanses && (
@@ -433,7 +480,10 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
           {/* Stated, not hidden: the band is the variance roll only, and a
               player who sees 41 land after being shown "38-45" should know
               exactly which term the game rolled. */}
-          <div className="move-detail-footnote">Range is the 0.85–1.0 variance roll. A crit multiplies it by 1.5.</div>
+          <div className="move-detail-footnote">
+            Range is the 0.85–1.0 variance roll. A crit multiplies it by 1.5
+            {move.critChance != null ? ` (${Math.round(move.critChance * 100)}% on this move)` : ''}.
+          </div>
         </div>
       )}
     </div>
