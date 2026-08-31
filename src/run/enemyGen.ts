@@ -24,6 +24,12 @@ import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
 import type { RunState, RosterEntry } from './state';
 import { createRunState, createRosterEntry, addRosterEntry } from './state';
 import { MOVE_CAP, availableEvolution, chooseEvolutionPath, levelUpMovePool, type ProgressionTable } from './progression';
+// The one place this module reaches for content rather than taking it as a
+// parameter (`heroPool`, `table`): levelUpMovePool now gates by a move's
+// authored tier, and unlike the hero pool there is exactly one move table in
+// the game — nothing substitutes it, including the tests. Same precedent as
+// src/run/statusTestFight.ts.
+import { moves } from '../data/moves';
 import { mergeStatMods } from './statMods';
 import { NO_SCALING, ACT_STEP_STAT_COUNT, ACT_STEP_AMOUNT, type ActScaling } from './difficulty';
 import type { Squad } from './squad';
@@ -212,7 +218,7 @@ function applyLevelProgression(
   const room = Math.max(0, MOVE_CAP - entry.unlockedMoveIds.length);
   const { picked: learned, nextState: afterMoves } = shuffledPick(
     state,
-    levelUpMovePool(table, entry),
+    levelUpMovePool(table, moves, entry),
     Math.min(moveLevelUps, room)
   );
   state = afterMoves;

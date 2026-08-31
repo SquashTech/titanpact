@@ -50,6 +50,35 @@ all; it triggers Evolution instead (Part 2). Below that level, a level-up either
 The player may **decline** a replacement and keep the current four — a level-up at cap
 is an *offer*, not a forced overwrite.
 
+### Which move is offered: the tier gate (2026-08-31)
+
+The move is drawn at random from the hero's pool (`progressionTable.moveTiers`), but
+**not from all of it.** Every move carries the designer table's `Early / Mid / Late`
+column as `MoveDefinition.tier`, and `MOVE_TIER_LEVEL` (`src/run/progression.ts`) gates
+each tier behind a hero level: **Early from 1, Mid from 4, Late from 7.** A hero is
+never offered a capstone at level 2.
+
+Three properties, all deliberate:
+
+- **Cumulative, not windows.** Reaching a tier's level adds it; it never closes the tier
+  below. Exclusive windows would make a move the hero simply never rolled permanently
+  unreachable, and could leave the pool empty at exactly the level the player is feeding
+  it points.
+- **Read at the level just reached.** The level-up that takes a hero to 4 can draw a Mid
+  move — the point pays out on the level it buys, not the one before it.
+- **An empty pool is legal.** A hero whose Early moves are exhausted at level 3 gets a
+  level and nothing else; the level-up screen labels that card "Level only" *before* the
+  point is spent, so it is a visible signal to feed someone else, not a silent dud.
+
+The gate applies to generated enemies through the same function
+(`src/run/enemyGen.ts`), so an Act 1 enemy at level 1 fields only Early moves and the
+Act 5 level-10 enemies field the capstones — the act curve buys movepool depth for free.
+
+**Only the slates whose tier column survived into the code are gated** — Light, Iron and
+Beast as of this writing. A move with no authored `tier` counts as Early, i.e. ungated,
+which is exactly the behavior it had before the gate existed. See
+`docs/authoring-moves.md` §2 and `test/moveTiers.test.ts`.
+
 ### The four-move cap (LOCKED)
 
 A hero holds a **maximum of four moves.** This is a hard cap. Once at four, growth in

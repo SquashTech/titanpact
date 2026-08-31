@@ -20,6 +20,7 @@ import './mindMoves.test';
 import './ironMoves.test';
 import './beastMoves.test';
 import './mechMoves.test';
+import './moveTiers.test';
 import './run.test';
 import './recruitment.test';
 import './shop.test';

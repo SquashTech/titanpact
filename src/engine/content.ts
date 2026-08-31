@@ -77,6 +77,14 @@ export type TargetMode =
 
 export type MoveCategory = 'physical' | 'magical';
 
+/**
+ * A move's level-up tier — the `Early / Mid / Late` column of the designer's
+ * move table (docs/authoring-moves.md §2). Not an engine concept: nothing in
+ * combat reads it. See MoveDefinition.tier and src/run/progression.ts
+ * MOVE_TIER_LEVEL.
+ */
+export type MoveTier = 'early' | 'mid' | 'late';
+
 /** Opaque status-catalog key. The concrete 8 statuses are DATA — see src/data/statuses.ts. */
 export type StatusId = string;
 
@@ -1420,6 +1428,25 @@ export interface MoveDefinition {
    */
   switchesUserOut?: boolean;
   target: TargetMode;
+  /**
+   * The `Early / Mid / Late` column of the designer's move table
+   * (docs/authoring-moves.md §2), and the only level-up-facing field on a
+   * move — the engine never reads it. It gates when a move may first be
+   * OFFERED on level-up: `MOVE_TIER_LEVEL` (src/run/progression.ts) maps each
+   * tier to the hero level that unlocks it, and `levelUpMovePool` filters a
+   * hero's pool by it.
+   *
+   * Cumulative, not a window: a tier unlocked stays unlocked, so a level-9
+   * hero can still draw an Early move it never happened to be offered.
+   * Exclusive windows would make a skipped move permanently unreachable and
+   * could empty a pool outright — a Training Point spent on nothing.
+   *
+   * OMITTED MEANS `'early'`, i.e. ungated: the behavior every move had before
+   * this field existed. Deliberate — a slate whose tier column was never
+   * recorded keeps working, and no move is ever gated by an unauthored guess.
+   * Which slates carry real tiers is pinned by test/moveTiers.test.ts.
+   */
+  tier?: MoveTier;
   /** Presentational flavor text only — the engine never reads this. View layer use (docs/architecture.md "Resolution and presentation are separate layers"). */
   description?: string;
 }

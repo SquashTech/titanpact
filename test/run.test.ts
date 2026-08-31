@@ -3,6 +3,7 @@ import { test } from './harness';
 import { heroes } from '../src/data/heroes';
 import { equipment } from '../src/data/equipment';
 import { progressionTable } from '../src/data/progression';
+import { moves } from '../src/data/moves';
 import {
   createRunState,
   createRosterEntry,
@@ -188,7 +189,10 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
   let run = seedRoster(['cinderKnight']);
   const entry = run.roster[0];
   assert.deepStrictEqual(
-    levelUpMovePool(progressionTable, entry),
+    // Read at a level past every tier gate, so this stays an assertion about
+    // the authored POOL (below) rather than about the level curve — the gate
+    // itself is test/moveTiers.test.ts's job.
+    levelUpMovePool(progressionTable, moves, { ...entry, level: 99 }),
     // kindle left this pool for Cinder's starting kit when the Spirit slate
     // deleted Mend Wounds (src/data/heroes.ts, 2026-08-30), and quickJab was
     // replaced by a real Iron line when the Iron slate landed — Cinder is
@@ -201,7 +205,7 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
 
   const withMove = grantLevelUpMove(run, 'cinderKnight', 'firebrand');
   assert.ok(withMove.roster[0].unlockedMoveIds.includes('firebrand'));
-  assert.ok(!levelUpMovePool(progressionTable, withMove.roster[0]).includes('firebrand')); // granted move drops out of the pool
+  assert.ok(!levelUpMovePool(progressionTable, moves, { ...withMove.roster[0], level: 99 }).includes('firebrand')); // granted move drops out of the pool
   assert.strictEqual(withMove.roster[0].unlockedMoveIds.length, 4); // starting 3 + this grant hits MOVE_CAP
 
   // Already at MOVE_CAP: further offers require replacing an unlocked move.

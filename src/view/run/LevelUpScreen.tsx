@@ -64,7 +64,11 @@ function payoffFor(entry: RosterEntry): Payoff {
   if (availableEvolution(progressionTable, entry)) return 'evolve';
   const pending = pendingEvolution(progressionTable, entry);
   if (pending && entry.level + 1 >= pending.level) return 'brink';
-  if (levelUpMovePool(progressionTable, entry).length === 0) return 'level';
+  // The pool is read at the level this point WOULD reach, not the current
+  // one, because move tiers are level-gated (run/progression.ts
+  // MOVE_TIER_LEVEL): a level-3 hero whose Early moves are spent still has a
+  // Mid move waiting, and the card must promise the move it will actually get.
+  if (levelUpMovePool(progressionTable, moves, { ...entry, level: entry.level + 1 }).length === 0) return 'level';
   return entry.unlockedMoveIds.length >= MOVE_CAP ? 'swap' : 'move';
 }
 
@@ -234,7 +238,6 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     const entry = run.roster.find((r) => r.rosterId === rosterId);
     if (!entry) return;
     const heroName = heroes[entry.heroId].name;
-    const pool = levelUpMovePool(progressionTable, entry);
     const wasAtCap = entry.unlockedMoveIds.length >= MOVE_CAP;
 
     let next: RunState;
@@ -261,6 +264,10 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
       return;
     }
 
+    // Rolled off the POST-level-up entry: the level just reached is what
+    // decides which move tiers are on the table (run/progression.ts
+    // MOVE_TIER_LEVEL), so the level-up that reaches 4 can draw a Mid move.
+    const pool = levelUpMovePool(progressionTable, moves, nextEntry);
     if (pool.length === 0) {
       onRunChange(next);
       setFeedback(`${heroName} reached Lv ${nextEntry.level}.`);

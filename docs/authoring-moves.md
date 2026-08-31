@@ -386,14 +386,28 @@ is intended, not a finding.** Do not report it, and do not tune it down.
 See §3. Every rider is an optional field layered on top of the move's kind; a damage
 move can carry all of them at once.
 
-### `Early / Mid / Late` → `progressionTable.moveTiers`
+### `Early / Mid / Late` → `MoveDefinition.tier`
 
-**Not an engine field.** It is the level-up pool a move belongs to. Early moves are
-starting-kit candidates; Mid/Late go in `moveTiers`. There is currently no per-tier
-gating in `src/run/progression.ts` — the pool is one flat list per hero, offered at
-random — so the tier column is your guide for *which hero gets what*, not a value you
-encode. If the designer wants tiers actually gated by level, that is a progression
-change and a conversation, not a moves change.
+**Author it.** As of 2026-08-31 the tier column is real data and it is gated by level:
+`tier: 'early' | 'mid' | 'late'` on the move, and `MOVE_TIER_LEVEL`
+(`src/run/progression.ts`) maps each tier to the hero level that unlocks it — **1 / 4 /
+7**. `levelUpMovePool` filters a hero's pool by it, so a Late move cannot be offered to
+a level-3 hero. Still not an *engine* field: nothing in combat reads it.
+
+Three things to know before you author a slate's column:
+
+- **The gate is cumulative.** Reaching level 4 ADDS Mid to what can be offered; it does
+  not close Early. A hero that never happened to roll an Early move can still get it at
+  level 9.
+- **Omitting `tier` means Early**, i.e. ungated — the behavior every move had before the
+  field existed. That is why the nine slates authored before this change still work, and
+  why a slate you leave untiered fails silently rather than loudly. `TIERED_TYPES` in
+  `test/moveTiers.test.ts` is the list of slates that are done: **add your type to it**
+  and the test then demands a tier on every one of its moves.
+- **Tier is still also your distribution guide** (§7): Early moves are starting-kit
+  candidates, Mid/Late go in `moveTiers`. A hero's pool wants moves across all three
+  tiers, not five Late rows — a pool with nothing the hero's level has reached spends a
+  Training Point on nothing (the level-up screen renders it as "Level only").
 
 ### `priority`
 

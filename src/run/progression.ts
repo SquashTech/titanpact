@@ -11,7 +11,7 @@
 // authored for a subset of the roster only — see the SCOPE NOTE there. This
 // module only implements the generic mechanism.
 
-import type { HeroDefinition, PassiveId, StatKey, TypeId } from '../engine/content';
+import type { HeroDefinition, MoveDefinition, MoveTier, PassiveId, StatKey, TypeId } from '../engine/content';
 import { isValidFlatStatGrant } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
 import type { RosterEntry, RunState } from './state';
@@ -31,6 +31,40 @@ export const MOVE_CAP = 4;
  * abandoned — see leveling-and-ranks.md's scope note.
  */
 export const EVOLUTION_LEVEL = 5;
+
+/**
+ * The hero level at which each move tier (engine/content.ts MoveTier, the
+ * designer table's `Early / Mid / Late` column) becomes offerable on
+ * level-up. 2026-08-31 designer call: "only Early moves offered from levels
+ * 1-4, Mid from 4-7, Late 7+".
+ *
+ * Read CUMULATIVELY — reaching a tier's level ADDS it to what can be
+ * offered, it does not close the tier below (see levelUpMovePool). A hero at
+ * level 8 draws from all three. The alternative, exclusive windows, makes a
+ * move the hero simply never rolled permanently unreachable and can leave a
+ * pool empty at exactly the level the player is feeding it points.
+ *
+ * Placeholder numbers, in CLAUDE.md's sense: the SHAPE (three tiers, gated by
+ * level, cumulative) is the decision; 1/4/7 is a first-pass curve for
+ * playtest. Note it straddles EVOLUTION_LEVEL — a hero unlocks Mid one level
+ * before it evolves and Late two after — so a run that spends points evenly
+ * across four heroes reaches Late only in the back half.
+ */
+export const MOVE_TIER_LEVEL: Record<MoveTier, number> = {
+  early: 1,
+  mid: 4,
+  late: 7,
+};
+
+/**
+ * Whether a move is offerable to a hero at `level`. A move with no authored
+ * `tier` counts as Early (engine/content.ts MoveDefinition.tier) — ungated,
+ * which is what every move was before the field existed, so an untiered slate
+ * behaves exactly as it did.
+ */
+export function isMoveTierUnlocked(move: MoveDefinition | undefined, level: number): boolean {
+  return level >= MOVE_TIER_LEVEL[move?.tier ?? 'early'];
+}
 
 export interface EvolutionPath {
   id: string;
@@ -92,18 +126,38 @@ function replaceEntry(run: RunState, rosterId: string, next: RosterEntry, spend:
  * (HeroDefinition.moveIds) followed by everything the level-up table can
  * ever offer them, deduped. Leveling itself never needs this — it walks the
  * two halves separately (levelUpMovePool above filters the table pool against
- * what is already unlocked). This is for callers that need the whole surface
- * at once, e.g. Quick Battle rolling a random MOVE_CAP loadout so a test
- * fight can exercise moves a hero would only reach several levels in.
+ * what is already unlocked AND against the hero's level). Deliberately NOT
+ * tier-gated: a caller asking for the whole surface is asking past the level
+ * curve, which is exactly what Quick Battle wants — a random MOVE_CAP loadout
+ * so a test fight can exercise moves a hero would only reach several levels in.
  */
 export function fullMovepool(table: ProgressionTable, hero: HeroDefinition): string[] {
   return [...new Set([...hero.moveIds, ...(table.moveTiers[hero.id] ?? [])])];
 }
 
-/** The moves still available to offer this hero on level-up: the table's pool minus whatever's already unlocked. */
-export function levelUpMovePool(table: ProgressionTable, entry: RosterEntry): string[] {
+/**
+ * The moves still available to offer this hero on level-up: the table's pool,
+ * minus whatever is already unlocked, minus every move whose tier the hero's
+ * LEVEL has not reached yet (MOVE_TIER_LEVEL above).
+ *
+ * The level read is `entry.level` — the level the hero currently HAS — so a
+ * caller resolving a level-up's move offer must pass the entry it got back
+ * from `levelUpHero`, not the one it went in with, or the level-up that
+ * reaches 4 will still be offered an Early-only pool. LevelUpScreen does this;
+ * so does enemyGen, which only ever calls this at an enemy's final level.
+ *
+ * Can legitimately return empty (a hero whose Early moves are exhausted at
+ * level 3): that is the gate doing its job, and the screen already renders
+ * that case as the "Level only" payoff, which is a visible signal to spend
+ * the next point on someone else rather than a silent dud.
+ */
+export function levelUpMovePool(
+  table: ProgressionTable,
+  moves: Record<string, MoveDefinition>,
+  entry: RosterEntry
+): string[] {
   const pool = table.moveTiers[entry.heroId] ?? [];
-  return pool.filter((id) => !entry.unlockedMoveIds.includes(id));
+  return pool.filter((id) => !entry.unlockedMoveIds.includes(id) && isMoveTierUnlocked(moves[id], entry.level));
 }
 
 /**
