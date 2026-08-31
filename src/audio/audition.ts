@@ -14,13 +14,30 @@ import { renderSpec } from './synth';
 
 initSfx();
 
-const UI_IDS: SfxId[] = ['ui.tap', 'ui.confirm', 'ui.commit', 'ui.back', 'ui.select', 'ui.denied', 'ui.page', 'levelUp'];
+const UI_IDS: SfxId[] = [
+  'ui.tap',
+  'ui.confirm',
+  'ui.commit',
+  'ui.launch',
+  'ui.back',
+  'ui.select',
+  'ui.denied',
+  'ui.page',
+  'levelUp',
+  'pact.bind',
+  'equip',
+  'contract.sign',
+];
 
 const NOTES: Partial<Record<SfxId, string>> = {
   'ui.tap': 'default for every tappable control',
   'ui.confirm': 'commit — lock in, claim, buy',
   'ui.commit': 'the big one — draft sealed, class taken, evolution chosen',
+  'ui.launch': 'Start a Run — the biggest sound in the UI table',
   levelUp: 'a hero gains a level',
+  'pact.bind': 'a starter bound in the draft',
+  equip: 'gear going onto a hero',
+  'contract.sign': 'a Recruit Contract signed',
   'ui.back': 'close, cancel, exit',
   'ui.select': 'highlight without committing',
   'ui.denied': 'unaffordable move, unreachable node',

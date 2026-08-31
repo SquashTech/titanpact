@@ -34,6 +34,9 @@ const CLASS_SFX: readonly (readonly [string, SfxId])[] = [
   ['detail-close-button', 'ui.back'],
   ['exit-button', 'ui.back'],
   ['bottom-action-back', 'ui.back'],
+  // Leaving the menu for an actual run. Also carries `resolve-button`, so
+  // like the two below it has to be matched before the generic confirm.
+  ['title-cta', 'ui.launch'],
   // The run-shaping commitments — sealing the starter draft, taking a
   // Mentor's class. These carry `resolve-button` too, so they must be
   // matched BEFORE it or the generic confirm wins.

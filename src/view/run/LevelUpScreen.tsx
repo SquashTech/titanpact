@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
@@ -230,6 +230,27 @@ function OfferHeroHead({ hero, onPreview }: { hero: HeroDefinition; onPreview: (
 const LEVEL_UP_ANIM_MS = 550;
 
 /**
+ * How long the screen lingers after the last Training Point is resolved
+ * before handing off on its own (2026-08-31, user direction: the Continue
+ * button is gone).
+ *
+ * There was nothing left for that button to decide. It was disabled for the
+ * entire life of the screen and became pressable exactly when the screen had
+ * no remaining state — a press whose only outcome was "yes, I am finished",
+ * asked of a player the screen had already finished with. Every other forced
+ * allocation gate in the run (ForceEquipScreen's queue, the Recruit
+ * Contract's offers) leaves the moment its work is done; this one asked for a
+ * receipt.
+ *
+ * The delay is what the button was actually buying, and it is the part worth
+ * keeping: the last level-up's readout ("Cinder reached Lv 5 and learned
+ * Ember Wall!") lands in the header at the same instant the pool empties, and
+ * cutting on that frame would make the payoff of the final point the one the
+ * player never gets to read.
+ */
+const AUTO_CONTINUE_MS = 1250;
+
+/**
  * Forced immediately-after-battle spend screen (CLAUDE.md "After winning a
  * fight, you are given training points that must be instantly allocated
  * before the run continues"). Every Training Point earned must be put into a
@@ -398,6 +419,50 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     setEvolvingRosterId(null);
   }
 
+  const pendingEvolutions = run.roster.filter((entry) => !!availableEvolution(progressionTable, entry)).length;
+
+  /**
+   * The hand-off. Fires once the screen has nothing left to resolve —
+   * no points, no earned Evolution, no offer open, no animation running, and
+   * nothing the player has opened over the top of it.
+   *
+   * The overlay checks are not paranoia: the pool empties on a card tap, and
+   * a player who then holds a card to read a hero sheet must not have the
+   * screen pulled out from under them. Because those are effect
+   * dependencies, opening a sheet cancels the pending hand-off and closing it
+   * starts a fresh one — which is the behaviour that wants writing anyway.
+   *
+   * `ui.page` rather than silence: this is the only transition in the app the
+   * player did not press for, and an unannounced screen change reads as a
+   * glitch. A whoosh is what makes it read as the screen leaving on purpose.
+   */
+  const done =
+    run.levelUpPool < 1 &&
+    pendingEvolutions === 0 &&
+    !offer &&
+    !masteryOffer &&
+    !animatingRosterId &&
+    !evolvingRosterId &&
+    !movePopup &&
+    !previewEntry;
+
+  /* Read through a ref so the effect below can depend on `done` alone. App.tsx
+     passes `onDone` as an inline arrow, so its identity changes on every
+     parent render — as a dependency it would tear down and restart the timer
+     each time, and a screen that re-rendered often enough would simply never
+     leave. */
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+
+  useEffect(() => {
+    if (!done) return;
+    const timer = window.setTimeout(() => {
+      playSfx('ui.page');
+      onDoneRef.current();
+    }, AUTO_CONTINUE_MS);
+    return () => window.clearTimeout(timer);
+  }, [done]);
+
   const offerEntry = offer ? (run.roster.find((r) => r.rosterId === offer.rosterId) ?? null) : null;
 
   const masteryEntry = masteryOffer ? (run.roster.find((r) => r.rosterId === masteryOffer.rosterId) ?? null) : null;
@@ -419,8 +484,6 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
       />
     );
   }
-
-  const pendingEvolutions = run.roster.filter((entry) => !!availableEvolution(progressionTable, entry)).length;
 
   return (
     <div className="levelup-screen">
@@ -450,7 +513,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
               ? `${pendingEvolutions === 1 ? 'A hero is' : `${pendingEvolutions} heroes are`} ready to evolve — tap to choose a path.`
               : run.levelUpPool >= 1
                 ? 'Tap a hero to spend a point. Hold to review its sheet.'
-                : 'Every point is spent.')
+                : 'Every point is spent — moving on.')
           }
         >
           {/* The pool, as orbs that go out one at a time rather than a
@@ -611,19 +674,16 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
         </HeroPickGrid>
       )}
 
-      {/* Gone entirely while the move-replace offer is up, rather than sitting
-          under it disabled: the offer already carries its own CTA (the
-          Decline/Confirm pair), so a second greyed-out gold bar below that
-          pair read as the screen's real button while costing the ~90px that
-          pushed the offer into a scroll. Nothing in the offer may sit below
-          the fold — it is a comparison between the offered move and four
-          existing ones, and a comparison you have to scroll to complete is one
-          you make from memory. */}
-      {!offer && !masteryOffer && (
-        <button className="resolve-button" disabled={run.levelUpPool > 0 || pendingEvolutions > 0} onClick={onDone}>
-          Continue
-        </button>
-      )}
+      {/* There is no Continue button here — see AUTO_CONTINUE_MS. It was
+          disabled for the whole life of the screen and unlocked exactly when
+          the screen had nothing left to ask, so the screen now leaves on its
+          own instead. Its ~90px went to the hero grid, which is the one thing
+          on this screen the player is actually reading.
+
+          (It was already unmounted while the move-replace offer was up, for
+          a related reason: the offer carries its own Decline/Confirm pair,
+          and a greyed-out gold bar under them read as the real button while
+          pushing the comparison below the fold.) */}
 
       {/* Long-press-triggered move detail popup (MoveButtonReplica's onLongPress) — reuses .log-overlay/.log-panel like FightScreen's move-button popup, including "tap anywhere to close" (no stopPropagation on the panel). */}
       {movePopup && (

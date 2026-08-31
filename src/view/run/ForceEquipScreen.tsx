@@ -1,4 +1,5 @@
 import { useState, type CSSProperties } from 'react';
+import { playSfx } from '../../audio/sfx';
 import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition, StatKey } from '../../engine/content';
@@ -35,6 +36,10 @@ interface ForceEquipHeroCardProps {
   entry: RosterEntry;
   slot: EquipmentSlot;
   currentItem: EquipmentDefinition | null;
+  /** True from the tap until the item is actually applied — see EQUIP_ANIM_MS. */
+  isEquipping: boolean;
+  /** True while ANOTHER card is mid-animation: the grid is briefly inert. */
+  locked: boolean;
   onEquip: () => void;
   onPreview: () => void;
 }
@@ -49,14 +54,20 @@ interface ForceEquipHeroCardProps {
  * sheet first, so a player can check a hero's loadout and stats before
  * committing to bump something off them.
  */
-function ForceEquipHeroCard({ hero, entry, slot, currentItem, onEquip, onPreview }: ForceEquipHeroCardProps) {
+function ForceEquipHeroCard({ hero, entry, slot, currentItem, isEquipping, locked, onEquip, onPreview }: ForceEquipHeroCardProps) {
   return (
     <HeroPickCard
       hero={hero}
       entry={entry}
+      className={isEquipping ? 'is-equipping' : ''}
+      disabled={locked}
       onActivate={onEquip}
       onPreview={onPreview}
       ariaLabel={`${hero.name}, level ${entry.level} — ${currentItem ? `replace ${currentItem.name}` : 'equip'}`}
+      /* Mounted only while the strap is being pulled tight, so mounting it is
+         what starts it — same reason LevelUpScreen's charge is an overlay
+         rather than a class on the card. */
+      overlay={isEquipping ? <span className="equip-seat-flare" aria-hidden="true" /> : undefined}
       detail={
         <span className={`pick-slot${currentItem ? ' filled' : ' empty'}`}>
           <EquipmentIcon item={currentItem} slot={slot} className="pick-slot-icon" />
@@ -68,6 +79,19 @@ function ForceEquipHeroCard({ hero, entry, slot, currentItem, onEquip, onPreview
     />
   );
 }
+
+/**
+ * How long the seating animation runs before the item is actually applied
+ * (styles.css @keyframes equip-seat-*). Same deferred-commit shape as
+ * LevelUpScreen's LEVEL_UP_ANIM_MS: equipping can advance the queue or leave
+ * the screen entirely, and doing that on the frame of the tap would cut the
+ * animation off at its first frame.
+ *
+ * Shorter than the level-up's 550ms on purpose. A level is a promotion and
+ * gets a fanfare; this is a buckle closing, and a buckle that takes half a
+ * second to close is a broken buckle.
+ */
+const EQUIP_ANIM_MS = 420;
 
 /**
  * Forced resolution gate (CLAUDE.md-style "instantly allocated before the run
@@ -85,6 +109,8 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
   const [confirmTrash, setConfirmTrash] = useState(false);
   /** Long-press-triggered full hero sheet (HeroPreviewOverlay) — lets the player check a hero's current loadout before bumping something off them. */
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
+  /** Roster id whose card is mid seating animation, if any — every other card is inert until it finishes, so an item can't be equipped onto two heroes inside one animation (see EQUIP_ANIM_MS). */
+  const [seatingRosterId, setSeatingRosterId] = useState<string | null>(null);
 
   const current = queue[0];
   const itemLookup = current ? equipment[current.itemId] : undefined;
@@ -105,7 +131,23 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
     if (nextQueue.length === 0) onDone();
   }
 
+  /**
+   * Tapping a hero: play the buckle, run the seating animation on that card,
+   * and only then hand the item over. The sound fires here rather than with
+   * the state change because it IS the press's feedback — the metal is what
+   * the tap sounds like, and delaying it 420ms would read as lag.
+   */
   function handleEquip(rosterId: string) {
+    if (seatingRosterId) return;
+    playSfx('equip');
+    setSeatingRosterId(rosterId);
+    window.setTimeout(() => {
+      setSeatingRosterId(null);
+      applyEquip(rosterId);
+    }, EQUIP_ANIM_MS);
+  }
+
+  function applyEquip(rosterId: string) {
     try {
       const { run: nextRun, bumpedItemId } = equipToRoster(run, rosterId, item.id, equipment);
       onRunChange(nextRun);
@@ -192,6 +234,8 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
               entry={entry}
               slot={item.slot}
               currentItem={currentItem}
+              isEquipping={seatingRosterId === entry.rosterId}
+              locked={!!seatingRosterId && seatingRosterId !== entry.rosterId}
               onEquip={() => handleEquip(entry.rosterId)}
               onPreview={() => setPreviewEntry({ hero, entry })}
             />
@@ -199,7 +243,11 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
         })}
       </HeroPickGrid>
 
-      <button className="secondary-button trash-button" onClick={() => setConfirmTrash(true)}>
+      {/* Inert while a card is seating, for the same reason the other cards
+          are: the deferred equip is holding a snapshot of this queue, and
+          trashing the head of it mid-animation would resolve the same item
+          twice. */}
+      <button className="secondary-button trash-button" disabled={!!seatingRosterId} onClick={() => setConfirmTrash(true)}>
         🗑️ Trash {item.name}
       </button>
 

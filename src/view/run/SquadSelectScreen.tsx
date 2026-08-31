@@ -36,6 +36,20 @@ const SLOT_ROWS: readonly { key: string; label: string; indices: readonly [numbe
 const DRAG_KEY = 'text/titanpact-squad-slot';
 
 /**
+ * Fisher-Yates over a copy. Used to scramble the scouted enemy row — see
+ * where it's called for why the order has to be lost rather than just the
+ * active/bench styling.
+ */
+function shuffled<T>(items: readonly T[]): T[] {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+/**
  * Bring-6-pick-4 squad selection (docs/combat.md "Bring-6-pick-4
  * sideboard"), shown before every fight/elite/boss map node (docs/run-loop.md)
  * — team-preview-style, matching CLAUDE.md's VGC framing rather than a
@@ -60,6 +74,26 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
     const ids = run.roster.map((r) => r.rosterId);
     return Array.from({ length: SLOT_COUNT }, (_, i) => ids[i] ?? null);
   });
+  /**
+   * The scouted enemy row, in an order that says nothing (2026-08-31, user
+   * direction: "don't show the player which enemies are active and which are
+   * bench").
+   *
+   * Scouting is meant to answer *what is in this fight*, not *what will be
+   * standing on turn one* — knowing the opening pair up front lets the player
+   * hard-counter it before a single command is given, which flattens the
+   * lead-off read that VGC team preview exists to create. Dimming the bench
+   * was half the tell; the other half was the order, since
+   * `encounter.run.roster` is generated active-first and a fixed row is a
+   * label whether or not it is styled like one. So the row is scrambled AND
+   * drawn uniformly.
+   *
+   * Shuffled once into state rather than per render: this component re-renders
+   * on every slot drag, and a row that reshuffled under the player's thumb
+   * would look broken — and worse, repeated reshuffles would leak the answer
+   * to anyone who watched which sprite the dimming used to follow.
+   */
+  const [scoutOrder] = useState(() => shuffled(encounter.run.roster));
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
   /** `enemy` distinguishes a scouted-opponent sheet from one of the player's own heroes — only the latter gets the team's relic grants folded into its stats (HeroPreviewOverlay's relicIds). */
@@ -141,13 +175,12 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
         <div className="squad-section squad-section-enemy">
           <h2 className="squad-section-title">⚔️ Scouted Enemies</h2>
           <div className="enemy-scout-grid">
-            {encounter.run.roster.map((entry) => {
+            {scoutOrder.map((entry) => {
               const hero = allCombatants[entry.heroId];
-              const isBench = !encounter.squad.activeIds.includes(entry.rosterId);
               return (
                 <button
                   key={entry.rosterId}
-                  className={`enemy-scout-chip${isBench ? ' enemy-scout-chip-bench' : ''}`}
+                  className="enemy-scout-chip"
                   style={{ borderColor: getTypeColor(hero.types[0]) }}
                   onClick={() => setInspecting({ hero, entry, enemy: true })}
                   aria-label={`View ${hero.name} details`}

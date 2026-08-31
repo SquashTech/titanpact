@@ -19,6 +19,19 @@ interface Props {
 const EMBER_COUNT = 18;
 
 /**
+ * How long "Start a Run" holds the title screen before handing off to the
+ * draft (styles.css `.title-screen.is-launching`, @keyframes
+ * title-launch-*). Same deferred-commit shape as LevelUpScreen's
+ * LEVEL_UP_ANIM_MS: the press starts an animation, and the state change it
+ * causes waits for that animation instead of cutting it off.
+ *
+ * Matched to `ui.launch` in sounds.ts — the slam lands with the shockwave
+ * leaving the button, the bell with the screen going white — so the two
+ * halves of the gesture stay one gesture. Change either and re-check both.
+ */
+const LAUNCH_ANIM_MS = 620;
+
+/**
  * Ember field for .title-embers. Positions/timings are derived from a
  * golden-angle sequence (not Math.random) so the scatter is stable across
  * re-renders — no seed to store, no useEffect, just a pure function of
@@ -59,10 +72,24 @@ export function TitleScreen({
   const [showCompendium, setShowCompendium] = useState(false);
   const [showReference, setShowReference] = useState(false);
   const [showLocations, setShowLocations] = useState(false);
+  /** True from the press of Start a Run until the handoff to the draft — see LAUNCH_ANIM_MS. */
+  const [launching, setLaunching] = useState(false);
   const embers = useEmbers();
 
+  /**
+   * The gate opening. The sound is already playing (the delegated
+   * pointerdown listener resolves `.title-cta` to `ui.launch` — see
+   * audio/uiSfx.ts), so all that is left here is to run the shockwave and
+   * hold the screen long enough for it to finish.
+   */
+  function handleStart() {
+    if (launching) return;
+    setLaunching(true);
+    window.setTimeout(onStartRun, LAUNCH_ANIM_MS);
+  }
+
   return (
-    <div className="title-screen">
+    <div className={`title-screen${launching ? ' is-launching' : ''}`}>
       <div className="title-embers" aria-hidden="true">
         {embers.map((e, i) => (
           <span
@@ -94,8 +121,22 @@ export function TitleScreen({
         <div className="title-tagline">Draft. Battle. Ascend.</div>
       </div>
 
+      {/* The shockwave and the whiteout, mounted only while launching so
+          mounting them IS what starts them — no stale animation state to
+          reset, the same trick LevelUpScreen's `.growth-charge` uses. The
+          flash also covers the whole screen and DOES take pointer events —
+          it is the shield that stops a second press landing on anything
+          during the hold, which is why `data-sfx` never fires for it (a bare
+          span resolves to no sound at all). */}
+      {launching && (
+        <>
+          <span className="title-launch-ring" aria-hidden="true" />
+          <span className="title-launch-flash" aria-hidden="true" />
+        </>
+      )}
+
       <div className="title-buttons">
-        <button className="resolve-button title-cta" onClick={onStartRun}>
+        <button className="resolve-button title-cta" onClick={handleStart} disabled={launching}>
           Start a Run
         </button>
         <button className="title-secondary-button" onClick={onQuickBattle}>

@@ -27,8 +27,12 @@ export type SfxId =
   | 'ui.denied'
   | 'ui.page'
   | 'ui.commit'
+  | 'ui.launch'
   // Run
   | 'levelUp'
+  | 'pact.bind'
+  | 'equip'
+  | 'contract.sign'
   // Combat
   | 'cast'
   | 'hit.physical'
@@ -136,6 +140,42 @@ export const sounds: Record<SfxId, SoundSpec> = {
   },
 
   /**
+   * "Start a Run" — and nothing else. The single loudest, longest sound in
+   * the UI table, because it fires at most a handful of times a *session*
+   * and marks the one boundary the player crosses from menu into game.
+   *
+   * Built as a gate opening rather than a chime: a hard slam transient
+   * (noise through a closing lowpass, the same construction as
+   * `hit.physical` but slower and heavier), a sub drop under it for the
+   * chunk, and only then a struck bronze fifth ringing out over a long
+   * upward rush of air. The 90ms gap before the bell is deliberate — the
+   * slam has to be over before the ring starts, or the two blur into one
+   * mid-sized noise and the weight goes with it.
+   *
+   * Timed against TitleScreen's LAUNCH_ANIM_MS: the slam lands with the
+   * shockwave, the bell with the screen going white.
+   */
+  'ui.launch': {
+    gain: 0.5,
+    jitter: 0.006,
+    voices: [
+      // The slam. Wide-open noise shut down hard is what reads as mass.
+      { wave: 'noise', gain: 0.5, attack: 0.001, decay: 0.26, filter: { type: 'lowpass', freq: 2600, freqEnd: 180, q: 1.2 } },
+      // The chunk under it — an octave drop into the sub, held a moment.
+      { wave: 'sine', freq: 132, freqEnd: 42, gain: 0.6, attack: 0.002, hold: 0.03, decay: 0.42 },
+      { wave: 'triangle', freq: 88, freqEnd: 58, detune: 12, gain: 0.34, attack: 0.004, hold: 0.05, decay: 0.6 },
+      // Bronze. A struck fifth, not a triad: two notes ring as a bell, three
+      // ring as music, and this is a door, not a fanfare.
+      { wave: 'triangle', freq: 294, detune: 10, gain: 0.24, attack: 0.004, hold: 0.04, decay: 0.9, delay: 0.09 },
+      { wave: 'sine', freq: 441, gain: 0.2, attack: 0.006, decay: 0.85, delay: 0.1 },
+      { wave: 'sine', freq: 882, detune: 16, gain: 0.09, attack: 0.01, decay: 0.8, delay: 0.11 },
+      // The rush: slow-attacked air opening upward, swelling into the bell
+      // rather than announcing it.
+      { wave: 'noise', gain: 0.2, attack: 0.16, decay: 0.55, filter: { type: 'bandpass', freq: 400, freqEnd: 4200, q: 0.8 } },
+    ],
+  },
+
+  /**
    * A hero gaining a level: a four-note fanfare in D, landing on the octave
    * with a bell over it and the root arriving underneath.
    *
@@ -165,6 +205,76 @@ export const sounds: Record<SfxId, SoundSpec> = {
       // three notes stay light and the fourth has somewhere to land.
       { wave: 'sine', freq: 293, gain: 0.34, attack: 0.006, decay: 0.6, delay: 0.25 },
       { wave: 'noise', gain: 0.1, attack: 0.12, decay: 0.3, filter: { type: 'bandpass', freq: 1800, freqEnd: 5200, q: 1.4 } },
+    ],
+  },
+
+  /**
+   * A starter being bound in the draft (DraftScreen's Choose button). Half
+   * a hero's pact, so half a `ui.commit`: the same rising fifth, but two
+   * notes instead of an arpeggio and a fraction of the tail — the seal on
+   * the whole pact still has to be able to outsize it.
+   *
+   * The snap is what makes it a *binding* rather than a selection. A very
+   * short highpassed noise crack, delayed just past the note's attack, so
+   * the ear hears a clasp closing on something rather than a chord.
+   */
+  'pact.bind': {
+    gain: 0.42,
+    jitter: 0.008,
+    voices: [
+      { wave: 'triangle', freq: 330, freqEnd: 494, detune: 8, gain: 0.32, attack: 0.005, hold: 0.03, decay: 0.34 },
+      { wave: 'sine', freq: 988, gain: 0.16, attack: 0.006, decay: 0.42, delay: 0.05 },
+      // The clasp.
+      { wave: 'noise', gain: 0.26, attack: 0.001, decay: 0.05, delay: 0.03, filter: { type: 'highpass', freq: 2400 } },
+      { wave: 'sine', freq: 165, gain: 0.28, attack: 0.004, decay: 0.3 },
+    ],
+  },
+
+  /**
+   * A piece of equipment going onto a hero (ForceEquipScreen). Entirely
+   * mechanical — no tuned chord at all beyond the dull body of the strap
+   * pulling tight, because gear is the one thing the player gains that is
+   * an *object* rather than a promotion.
+   *
+   * Two noise layers doing two jobs: a bright short crack (the buckle) and
+   * a duller ring-off behind it (the metal). The tiny second crack at 60ms
+   * is the difference between "a click" and "a latch that seated".
+   */
+  equip: {
+    gain: 0.46,
+    jitter: 0.05,
+    voices: [
+      { wave: 'noise', gain: 0.4, attack: 0.001, decay: 0.055, filter: { type: 'bandpass', freq: 2700, q: 1.6 } },
+      { wave: 'noise', gain: 0.22, attack: 0.001, decay: 0.04, delay: 0.06, filter: { type: 'highpass', freq: 3400 } },
+      { wave: 'triangle', freq: 196, freqEnd: 147, gain: 0.34, attack: 0.002, decay: 0.19 },
+      // Metal ringing off the strike, quiet and detuned so it colours the
+      // hit rather than becoming a note of its own.
+      { wave: 'sine', freq: 1568, detune: 22, gain: 0.08, attack: 0.003, decay: 0.34, delay: 0.02 },
+    ],
+  },
+
+  /**
+   * Signing a Recruit Contract (RecruitScreen). A wax seal, in three
+   * strokes: paper drawn across paper, the stamp coming down, and one
+   * clear tone as the sigil takes.
+   *
+   * The stamp is the loudest thing here and lands at 70ms, after the
+   * rustle — the order is the whole gesture, and playing them together
+   * would just be a thud with hiss on it.
+   */
+  'contract.sign': {
+    gain: 0.44,
+    jitter: 0.02,
+    voices: [
+      // Parchment.
+      { wave: 'noise', gain: 0.16, attack: 0.02, decay: 0.13, filter: { type: 'bandpass', freq: 3400, freqEnd: 1800, q: 0.9 } },
+      // The stamp coming down: a soft-edged thud, lowpassed so it reads as
+      // pressed rather than struck.
+      { wave: 'noise', gain: 0.36, attack: 0.002, decay: 0.16, delay: 0.07, filter: { type: 'lowpass', freq: 1400, freqEnd: 240, q: 1 } },
+      { wave: 'sine', freq: 146, freqEnd: 73, gain: 0.44, attack: 0.003, hold: 0.02, decay: 0.3, delay: 0.07 },
+      // The sigil taking — one note, held, with an octave shimmer over it.
+      { wave: 'triangle', freq: 392, detune: 9, gain: 0.24, attack: 0.008, hold: 0.04, decay: 0.55, delay: 0.16 },
+      { wave: 'sine', freq: 1176, gain: 0.08, attack: 0.01, decay: 0.5, delay: 0.18 },
     ],
   },
 

@@ -1,4 +1,5 @@
 import { useState, type CSSProperties } from 'react';
+import { playSfx } from '../../audio/sfx';
 import { heroes } from '../../data/heroes';
 import type { HeroDefinition, MoveDefinition } from '../../engine/content';
 import { createRosterEntry } from '../../run/state';
@@ -60,19 +61,70 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
   const [inspecting, setInspecting] = useState<HeroDefinition | null>(null);
   /** The starting move whose detail popup is open over the stage, or null. Tapping a kit chip opens it; a tap anywhere dismisses it. */
   const [popupMove, setPopupMove] = useState<MoveDefinition | null>(null);
+  /**
+   * The binding flare over the stage: a monotonically rising counter used as
+   * a React key, plus whether that bind completed the pact.
+   *
+   * A counter rather than a boolean-and-a-timer because the flare is a
+   * mount-once animation (same idiom as `.growth-charge` and the title
+   * screen's shockwave) — remounting it is what replays it, so binding the
+   * second starter can't inherit the first one's half-finished flare, and
+   * nothing has to clean up after it.
+   */
+  const [bindFlare, setBindFlare] = useState<{ tick: number; final: boolean } | null>(null);
 
   const featured = heroes[featuredId];
   const featuredRgb = getTypeColorRgb(featured.types[0]);
   const featuredChosen = pickedIds.includes(featuredId);
   const pactFull = pickedIds.length >= STARTER_PICK_COUNT;
+  /**
+   * The commit button's sound is chosen in `toggle` (three outcomes, one
+   * button), so the delegated listener must stay out of the way — except
+   * when the button is inert, which `toggle` never runs for. Leaving the
+   * attribute off in that one case lets the listener's own disabled rule
+   * supply the refusal buzz; `data-sfx="none"` would win over it and the
+   * press would go silent. See audio/uiSfx.ts resolveSfx.
+   */
+  const chooseSfx = !featuredChosen && pactFull ? undefined : 'none';
   const complete = pickedIds.length === STARTER_PICK_COUNT;
 
+  /**
+   * Bring a candidate to the stage. Clears any binding flare first: the
+   * flare is drawn inside `StageFigure`, which is keyed on the featured
+   * hero, so a live one would be remounted — and replayed — around whoever
+   * the player tapped next. The flare belongs to the bind that just
+   * happened, not to the stage it happened on.
+   */
+  function feature(heroId: string) {
+    setBindFlare(null);
+    setFeaturedId(heroId);
+  }
+
+  /**
+   * Bind or release the featured candidate.
+   *
+   * The button silences the delegated click sound (see `chooseSfx`) because
+   * a bind is not a tap: this decides between two different sounds, and the
+   * listener firing `ui.tap` underneath either would blur the one that
+   * matters. Releasing gets `ui.back` — the inverse of a commitment is a
+   * cancel, which is exactly what that sound already means everywhere else.
+   *
+   * The pact-completing bind is the same sound pitched down and pushed a
+   * little louder rather than a second sound of its own. The two binds are
+   * the same act; the second one is just the one that finishes it, and a
+   * different sound would say they were different in kind.
+   */
   function toggle(heroId: string) {
-    setPickedIds((prev) => {
-      if (prev.includes(heroId)) return prev.filter((id) => id !== heroId);
-      if (prev.length >= STARTER_PICK_COUNT) return prev;
-      return [...prev, heroId];
-    });
+    if (pickedIds.includes(heroId)) {
+      playSfx('ui.back');
+      setPickedIds((prev) => prev.filter((id) => id !== heroId));
+      return;
+    }
+    if (pickedIds.length >= STARTER_PICK_COUNT) return;
+    const final = pickedIds.length + 1 === STARTER_PICK_COUNT;
+    playSfx('pact.bind', final ? { pitch: 0.92, gain: 1.2 } : {});
+    setBindFlare((prev) => ({ tick: (prev?.tick ?? 0) + 1, final }));
+    setPickedIds((prev) => [...prev, heroId]);
   }
 
   return (
@@ -119,7 +171,24 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
       <div className="draft-stage">
         {/* Keyed on the featured hero so switching candidates remounts the
             figure and replays its arrival. */}
-        <StageFigure key={featuredId} heroId={featured.id} heroName={featured.name} onInspect={() => setInspecting(featured)} />
+        <StageFigure key={featuredId} heroId={featured.id} heroName={featured.name} onInspect={() => setInspecting(featured)}>
+          {/* The bind itself: a ring closing inward onto the figure, in the
+              candidate's own type colour (`--pact-rgb`, already set on the
+              screen root). Inward, not outward — every other burst in the app
+              expands, because every other burst is something being released,
+              and this is the one moment that is something being *caught*.
+              ┄
+              Drawn inside the figure rather than beside it so it centres on
+              the summoning sigil at any viewport height; `feature()` is what
+              keeps the figure's remount from replaying it. */}
+          {bindFlare && (
+            <span
+              key={bindFlare.tick}
+              className={`draft-bind-flare${bindFlare.final ? ' is-final' : ''}`}
+              aria-hidden="true"
+            />
+          )}
+        </StageFigure>
 
         <div className="draft-ident" key={`${featuredId}-ident`}>
           <h3 className="draft-name">{featured.name}</h3>
@@ -130,6 +199,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
 
         <button
           className={`draft-choose${featuredChosen ? ' chosen' : ''}`}
+          data-sfx={chooseSfx}
           disabled={!featuredChosen && pactFull}
           onClick={() => toggle(featuredId)}
         >
@@ -148,7 +218,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
               primaryType={hero.types[0]}
               featured={heroId === featuredId}
               sealed={pickedIds.includes(heroId)}
-              onSelect={() => setFeaturedId(heroId)}
+              onSelect={() => feature(heroId)}
             />
           );
         })}

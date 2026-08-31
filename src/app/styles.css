@@ -7643,6 +7643,83 @@ textarea,
   padding: 11px 13px 6px;
 }
 
+/* --- The bind (DraftScreen, .draft-bind-flare) ---------------------------
+   Binding a starter used to be silent and nearly still: the socket in the
+   header sealed, 36px away at the top of the screen, and the button under
+   the figure changed its own colour. Neither happens where the player is
+   looking, which is at the 144px figure in the middle — so the most
+   consequential press of the run had less feedback than tapping a move.
+   ┄
+   A ring collapsing *onto* the figure. Every other burst in this stylesheet
+   expands (@keyframes class-learn-flash-burst, title-launch-ring-out,
+   equip-chest-burst) because they are all things being released; this is the
+   one moment that is something being caught, and reversing the direction is
+   what makes it read that way without any new vocabulary.
+
+   Type-coloured off `--pact-rgb`, which the screen root already sets from
+   the featured candidate — so the ring is the hero's own colour closing
+   around them, and it changes as the rail is browsed.
+
+   Drawn INSIDE `.draft-figure` (DraftScreen passes it as StageFigure's
+   child) and centred exactly like `.draft-sigil`, so it closes onto the
+   summoning ring at any viewport height — the stage's auto-margin centring
+   means a percentage against the stage itself would drift with the
+   viewport. */
+.draft-bind-flare {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  left: 50%;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  border-radius: 50%;
+  border: 2px solid rgba(var(--pact-rgb), 0.95);
+  box-shadow: 0 0 26px rgba(var(--pact-rgb), 0.55), inset 0 0 30px rgba(var(--pact-rgb), 0.35);
+  opacity: 0;
+  pointer-events: none;
+  animation: draft-bind-close 0.52s cubic-bezier(0.3, 0, 0.2, 1) forwards;
+}
+
+/* The second bind — the one that fills the pact. Same ring, gold instead of
+   the hero's type, and it overshoots inward before settling: the pact's own
+   palette arriving on the last figure to join it. Deliberately a modifier
+   rather than a separate effect, for the same reason the sound is the same
+   sample pitched down — the two binds are one act, and the second is only
+   the one that finishes it. */
+.draft-bind-flare.is-final {
+  border-color: rgba(255, 228, 171, 0.95);
+  box-shadow: 0 0 34px rgba(224, 166, 60, 0.7), inset 0 0 40px rgba(224, 166, 60, 0.45);
+  animation-duration: 0.68s;
+}
+
+/* The opening scale is capped at 1.7× on purpose: `.draft-stage` scrolls
+   internally and the figure does not clip, so a ring wider than the stage
+   (150 × 1.7 = 255px against a ~340px inner width on the 394px design
+   canvas — see app/uiScale.ts) would push a horizontal scroll range into it
+   for half a second. It closes to 1.05 — just outside the 144px portrait,
+   so the ring lands ON the figure rather than inside it. */
+@keyframes draft-bind-close {
+  0% {
+    transform: scale(1.7);
+    opacity: 0;
+    border-width: 1px;
+  }
+  30% {
+    opacity: 1;
+  }
+  78% {
+    transform: scale(0.86);
+    opacity: 0.9;
+    border-width: 3px;
+  }
+  100% {
+    transform: scale(1.05);
+    opacity: 0;
+    border-width: 2px;
+  }
+}
+
 /* The commit. A box, legitimately — it's the control that binds a hero, and
    under the rule that is exactly what earns a rectangle. Type-tinted at rest
    so it belongs to the figure above it, gold once bound so it joins the
@@ -7954,6 +8031,108 @@ textarea,
   transform: translateY(1px);
 }
 
+/* The moment there is nothing left to sign — every offer taken, or no
+   Contract left to pay with — the reasoning above inverts. This stops being
+   the quiet way past a decision and becomes the only live control on the
+   screen, so it takes back the gold slab the run loop's terminal CTAs wear
+   (.title-cta, .draft-cta:not(:disabled)) and their shared pulse. Same
+   treatment, deliberately, rather than a fourth variant of gold: the player
+   has learned that surface means "this is the press". */
+.recruit-screen > .recruit-leave.is-only-option {
+  background: linear-gradient(135deg, #f3c877, var(--accent) 55%, #b9822a);
+  border-color: transparent;
+  color: #1a1300;
+  font-weight: 800;
+  box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.5), 0 6px 18px rgba(224, 166, 60, 0.22), 0 0 18px rgba(224, 166, 60, 0.16);
+  animation: title-cta-pulse 2.4s ease-in-out infinite;
+}
+
+/* --- The signature (RecruitScreen, .recruit-stamp) -----------------------
+   A signed contract used to change three small things — the button's label,
+   a line of header text, and the rail chip going sealed — none of them where
+   the player is looking, which is at the figure. The most expensive
+   acquisition in the run resolved more quietly than tapping a move.
+   ┄
+   A wax seal pressed onto the stage: the mark drops in fast from above scale
+   and lands hard, and the ring spreads out from under it as the wax squeezes
+   out. Gold, not the hero's type colour — the draft's `.draft-bind-flare` is
+   a hero's own domain closing around them, and this is the opposite
+   transaction, one of the PLAYER's Contracts being spent. The two moments
+   sit on the same stage and must not be mistaken for each other. */
+.recruit-stamp {
+  position: absolute;
+  z-index: 3;
+  top: 34%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.recruit-stamp-mark {
+  position: absolute;
+  font-size: 62px;
+  line-height: 1;
+  color: #ffe4ab;
+  text-shadow: 0 0 18px rgba(224, 166, 60, 0.9), 0 0 40px rgba(224, 166, 60, 0.5);
+  opacity: 0;
+  animation: recruit-stamp-press 0.62s cubic-bezier(0.2, 0.9, 0.25, 1) forwards;
+}
+
+/* Held at full scale for a beat before it fades: a stamp that begins
+   receding the instant it lands reads as a bounce, not as a press. */
+@keyframes recruit-stamp-press {
+  0% {
+    transform: scale(3.2) rotate(-14deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  46% {
+    transform: scale(0.92) rotate(0deg);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.06) rotate(0deg);
+    opacity: 0;
+  }
+}
+
+/* The wax squeezing out from under the mark. Delayed to the frame the stamp
+   actually lands (46% of 0.62s ≈ 0.28s) — starting them together would make
+   it a burst that happens to have a glyph in it. */
+.recruit-stamp-ring {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 2px solid rgba(224, 166, 60, 0.9);
+  box-shadow: 0 0 26px rgba(224, 166, 60, 0.5);
+  opacity: 0;
+  animation: recruit-stamp-wax 0.42s ease-out 0.28s forwards;
+}
+
+@keyframes recruit-stamp-wax {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.95;
+    border-width: 3px;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+    border-width: 1px;
+  }
+}
+
 /* Scouted enemy squad (SquadSelectScreen) — deliberately minimal: sprite +
    type only, no name/level/active-bench label, so a full 4-hero enemy
    squad (2 active + 2 bench) costs one compact row instead of stacking
@@ -7988,12 +8167,13 @@ textarea,
   box-shadow: var(--hairline-strong), var(--elev-2);
 }
 
-/* Bench members dimmed rather than labeled — still legible as "won't start
-   the fight" at a glance without spending any of the freed-up space on
-   text. */
-.enemy-scout-chip-bench {
-  opacity: 0.55;
-}
+/* `.enemy-scout-chip-bench` used to dim the two who start on the bench. Gone
+   (2026-08-31, user direction): scouting says WHAT is in the fight, not what
+   will be standing on turn one, and knowing the opening pair up front let the
+   player hard-counter it before a command was given. The row is also drawn in
+   a shuffled order now, since `encounter.run.roster` is generated
+   active-first and a fixed order is the same tell without the styling — see
+   SquadSelectScreen.tsx `scoutOrder`. */
 
 .enemy-scout-portrait {
   display: block;
@@ -8582,7 +8762,9 @@ textarea,
 .node-screen > .resolve-button,
 .node-screen > .secondary-button,
 .node-screen > .reward-panel-actions,
-.levelup-screen > .resolve-button,
+/* `.levelup-screen > .resolve-button` used to be here. That screen has no
+   bottom CTA any more — it hands off on its own once every Training Point is
+   spent (LevelUpScreen.tsx AUTO_CONTINUE_MS). */
 .squad-select > .resolve-button,
 .draft-screen > .resolve-button {
   margin-bottom: 12px;
@@ -11005,6 +11187,125 @@ textarea,
   }
 }
 
+/* --- The launch (TitleScreen `.is-launching`) ----------------------------
+   "Start a Run" is the only press on this screen that leaves it, and it was
+   an instant cut: the title was simply gone and the draft was simply there.
+   Everything else in the run loop that commits the player to something — the
+   pact sockets sealing, a Class being conferred, a level landing — takes a
+   beat to say so, and this is the largest commitment of the lot.
+   ┄
+   Three layers, all timed against TitleScreen's LAUNCH_ANIM_MS and the
+   `ui.launch` sound: the screen takes the hit (a fast compress, then a slow
+   push toward the viewer), a shockwave leaves the middle, and the whole thing
+   blooms out into the draft. The compress is what makes it read as *impact*
+   rather than as a zoom — a push with no recoil in front of it is a camera
+   move, not a blow. */
+.title-screen.is-launching {
+  animation: title-launch-slam 620ms var(--ease-out) both;
+}
+
+/* The button is disabled for the hold (TitleScreen guards the double-press),
+   and `.resolve-button:disabled` would drop it to 0.32 opacity with its glow
+   gone — so the control the player just pressed would grey out under the
+   shockwave it set off. Hold it lit and blow the glow out instead: it is
+   still inert, it just doesn't look retracted. */
+.title-screen.is-launching .title-cta:disabled {
+  opacity: 1;
+  cursor: default;
+  box-shadow: 0 0 0 1px rgba(255, 236, 194, 0.9), 0 0 34px rgba(224, 166, 60, 0.6), 0 0 60px rgba(224, 166, 60, 0.35);
+  animation: none;
+}
+
+@keyframes title-launch-slam {
+  0% {
+    transform: scale(1);
+  }
+  11% {
+    transform: scale(0.975);
+  }
+  40% {
+    transform: scale(1.014);
+  }
+  100% {
+    transform: scale(1.06);
+    filter: brightness(1.2);
+  }
+}
+
+/* Starts small enough to read as a point source and ends past the corners of
+   any phone the app targets (40px × 26 ≈ 1040px). The border thinning as it
+   grows is what sells it as a wave losing energy rather than a circle being
+   scaled up. */
+.title-launch-ring {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 50%;
+  border: 6px solid rgba(255, 236, 194, 0.9);
+  box-shadow: 0 0 34px rgba(224, 166, 60, 0.7), inset 0 0 24px rgba(224, 166, 60, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  animation: title-launch-ring-out 620ms cubic-bezier(0.12, 0.75, 0.3, 1) forwards;
+}
+
+@keyframes title-launch-ring-out {
+  0% {
+    transform: scale(0.2);
+    opacity: 0;
+    border-width: 6px;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(26);
+    opacity: 0;
+    border-width: 1px;
+  }
+}
+
+/* Deliberately NOT pointer-events: none — this is also the shield that
+   absorbs a second press during the hold. A bare <span> resolves to no sound
+   at all in the delegated click handler (audio/uiSfx.ts), so the absorbed
+   press is silent rather than playing the refusal buzz a disabled button
+   would. */
+.title-launch-flash {
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, #fff6e0, rgba(240, 188, 95, 0.85) 40%, rgba(18, 15, 12, 0.92) 100%);
+  opacity: 0;
+  animation: title-launch-bloom 620ms ease-in forwards;
+}
+
+@keyframes title-launch-bloom {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* The one place the global reduce-motion collapse at the top of this file
+   does the wrong thing. It keeps final states, and this animation's final
+   state is a full-screen whiteout — which would be *held* for the whole
+   620ms hand-off instead of being passed through. Drop the two decorative
+   layers entirely; the transition still happens, it just cuts. */
+@media (prefers-reduced-motion: reduce) {
+  .title-launch-ring,
+  .title-launch-flash {
+    display: none;
+  }
+}
+
 .title-secondary-button {
   width: 100%;
   background: var(--surface-raised);
@@ -11902,6 +12203,77 @@ textarea,
 
 .pick-slot.empty {
   opacity: 0.55;
+}
+
+/* --- The seating (ForceEquipScreen, `.is-equipping` + `.equip-seat-flare`)
+   Handing a hero a piece of gear was the one grant in the run loop that
+   happened with no acknowledgement at all: the tap and the screen change
+   were the same frame, so the card the player chose never got to be the
+   subject of anything. A level-up charges the card for 550ms; a Class is
+   conferred in a two-portrait reveal; this just cut.
+   ┄
+   Everything here is keyed to `--rarity-color`, which the screen root already
+   carries (ForceEquipScreen sets it from the item's tier) — so a mythic
+   seats in mythic colour and a common in grey, and the stylesheet never
+   names a rarity. Duration must stay in step with EQUIP_ANIM_MS: the equip
+   is applied by a JS timeout, not an animationend listener, so the two only
+   have to agree on how long tap-to-payoff feels. */
+.pick-card.is-equipping {
+  cursor: default;
+  border-color: var(--rarity-color, var(--accent));
+  box-shadow: 0 0 0 1px var(--rarity-color, var(--accent)), 0 0 22px rgba(255, 255, 255, 0.14), var(--elev-2);
+  animation: equip-seat-jolt 420ms var(--ease-out);
+}
+
+/* The card takes the weight of the item. Down first, then a small settle —
+   a buckle pulling tight, not a card being selected. */
+@keyframes equip-seat-jolt {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  22% {
+    transform: translateY(3px) scale(0.972);
+  }
+  62% {
+    transform: translateY(-1px) scale(1.016);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* A band of the rarity's own light sweeping down the card and closing on
+   it — the item arriving from the header above and settling onto the hero.
+   Downward, because that is the direction it travelled on screen. */
+.equip-seat-flare {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.5) 44%, var(--rarity-color, var(--accent)) 50%, rgba(255, 255, 255, 0.5) 56%, transparent 100%);
+  opacity: 0;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  animation: equip-seat-sweep 420ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+@keyframes equip-seat-sweep {
+  0% {
+    opacity: 0;
+    transform: translateY(-104%) scaleY(1);
+  }
+  18% {
+    opacity: 0.95;
+  }
+  70% {
+    opacity: 0.8;
+    transform: translateY(0) scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0) scaleY(0.18);
+  }
 }
 
 /* --- Level Up screen ------------------------------------------------------

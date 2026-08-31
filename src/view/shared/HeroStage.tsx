@@ -101,7 +101,17 @@ export function StageFigure({
   heroId: string;
   heroName: string;
   onInspect?: () => void;
-  /** A corner mark on the figure itself (the recruit screen's level pip). */
+  /**
+   * Anything drawn on the figure itself rather than beside it — the recruit
+   * screen's level pip, the draft's binding ring. Painted over the portrait
+   * and under the info button.
+   *
+   * Note for callers that also key this component on the hero (both of them
+   * do, so switching candidates replays the arrival): a remount replays
+   * whatever is passed here too. A one-shot animation handed in as a child
+   * has to be cleared by the caller when the featured hero changes, or it
+   * fires again on the next candidate — see DraftScreen's `feature`.
+   */
   children?: ReactNode;
 }) {
   return (
