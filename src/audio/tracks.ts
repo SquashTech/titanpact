@@ -22,9 +22,11 @@
  * and would be smaller still; Ableton does not export it.)
  *
  * What no format changes: the decoded PCM is identical whatever the file was,
- * so a 2-minute stereo 44.1k track costs ~43MB of RAM regardless. If that
- * ever bites on a phone, the levers are a mono bed or a shorter loop — both
- * musical decisions, not encoding ones.
+ * so a 2-minute stereo 44.1k track costs ~43MB of RAM regardless. Only two
+ * are ever held at once (MAX_DECODED in music.ts), so the ceiling is fixed
+ * however many tracks land here; what a new one adds is download, not RAM.
+ * To lower the ceiling itself the levers are a mono bed or a shorter loop —
+ * both musical decisions, not encoding ones.
  */
 
 import wildsEdgeUrl from '../../music/wilds edge.flac?url';

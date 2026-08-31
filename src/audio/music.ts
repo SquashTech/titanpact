@@ -27,6 +27,22 @@ const FADE_IN = 2.5;
 const FADE_OUT = 1.4;
 /** Web Audio can't ramp exponentially to zero; everything lands here and then stops. */
 const SILENCE = 0.0001;
+/**
+ * How many decoded tracks to keep resident. Two, because a change of place
+ * overlaps the outgoing fade with the incoming one and both want to be here.
+ *
+ * This cap is not a micro-optimisation. Web Audio decodes to float32 per
+ * channel, so a 2-minute stereo 44.1k track costs ~42MB — the four tracks
+ * authored today total 178MB if every one is allowed to stay. An unbounded
+ * cache grows with the number of PLACES A RUN VISITS, which is precisely the
+ * number that rises as the game gets bigger, and it ends in a killed tab on
+ * the portrait-mode phone this is built for.
+ *
+ * Evicting is cheap to undo: the file is still in the HTTP cache, so
+ * returning to a place costs a decode and no download, and FADE_IN is long
+ * enough to cover it.
+ */
+const MAX_DECODED = 2;
 
 interface Playing {
   id: TrackId;
@@ -45,9 +61,31 @@ const buffers = new Map<TrackId, AudioBuffer>();
 const loading = new Map<TrackId, Promise<AudioBuffer | null>>();
 let unlockHooked = false;
 
+/**
+ * Drops least-recently-used buffers past the cap.
+ *
+ * Safe to run while a track is playing, even in the case where it evicts
+ * that very track: a live AudioBufferSourceNode holds its own reference to
+ * the AudioBuffer, so the sound carries on untouched and the only thing
+ * discarded is the right to skip a future decode.
+ */
+function evictStaleBuffers(): void {
+  while (buffers.size > MAX_DECODED) {
+    const oldest = buffers.keys().next();
+    if (oldest.done) return;
+    buffers.delete(oldest.value);
+  }
+}
+
 async function loadBuffer(context: AudioContext, id: TrackId): Promise<AudioBuffer | null> {
   const cached = buffers.get(id);
-  if (cached) return cached;
+  if (cached) {
+    // Re-insert to mark it most-recently-used. A Map iterates in insertion
+    // order, and that ordering is the whole eviction policy.
+    buffers.delete(id);
+    buffers.set(id, cached);
+    return cached;
+  }
   const inFlight = loading.get(id);
   if (inFlight) return inFlight;
 
@@ -58,6 +96,7 @@ async function loadBuffer(context: AudioContext, id: TrackId): Promise<AudioBuff
       const bytes = await response.arrayBuffer();
       const buffer = await context.decodeAudioData(bytes);
       buffers.set(id, buffer);
+      evictStaleBuffers();
       return buffer;
     } catch (err) {
       // A missing or undecodable track costs the score, not the game.
