@@ -374,6 +374,52 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['psiBolt', 'brainWard', 'dopamine'],
     starter: true,
   },
+  // Trance (2026-08-30) is Mind's DEBUFF engine, and it exists because the
+  // type had authored one and staffed it with nobody. Mind's slate carries
+  // five rows that take stats AWAY (Lull, Enervate, Disorient, Break Will,
+  // and Brain Flay, which doubles whatever the other four left behind) —
+  // and all three Mind heroes before this one ramp their OWN side instead:
+  // Cortex is built around Brain Ward and Mental Fortress raising its
+  // Wisdom until Mind Shatter swings it, Lucius is the Shadow attrition
+  // line, Coil is Beast's enabler. Nobody was the hero the strip line was
+  // written for.
+  //
+  // Mono Mind on purpose (designer call, 2026-08-30). Two things follow
+  // from it that a dual could not have: it is a valid terminal identity
+  // rather than a larval one (CLAUDE.md), and it is the only one of the
+  // four Mind heroes still eligible for a type-graft Evolution — the other
+  // three are dual-typed and chooseEvolutionPath refuses a graft to those.
+  trance: {
+    id: 'trance',
+    name: 'Trance',
+    types: ['Mind'],
+    baseStats: { hp: 95, attack: 25, defense: 50, intelligence: 60, wisdom: 55, speed: 55, manaPool: 80, mpRegen: 10 },
+    // The stat line is shaped by a fact about debuffs rather than about
+    // damage: a flat stat delta is the same size whoever casts it
+    // (CLAUDE.md, stat mods are flat additive integers), so Trance's own
+    // offense is nearly irrelevant to its job. What it needs is to still be
+    // standing on round four with mana left. Hence 95 HP behind Defense 50
+    // at Attack 25, and an 80 pool — the strip chain costs 25 + 50 + 70 + 80
+    // and this is the hero that has to pay it. 80 ties Revenant rather than
+    // approaching the roster's 90 ceiling.
+    //
+    // Wisdom is deliberately 55 and NOT higher, which is the one number here
+    // that is a roster decision rather than a hero one. Mind Shatter swings
+    // WISDOM in place of Intelligence (moves.ts offStatOverride) and it is
+    // the move that rescues Cortex's flat 55/55 — so a second mono-Mind hero
+    // with more Wisdom than Cortex would quietly take Cortex's signature
+    // away. Ties, does not pass. (Mind Shatter is also kept out of the pool
+    // below, for the same reason and belt-and-braces.)
+    //
+    // THE KIT is the rule exactly — a low-power main-type move plus two
+    // supports — and the two supports are both strips, which is the whole
+    // pitch stated on turn one: Enervate takes 30 Wisdom, Lull takes 20
+    // Intelligence, and every magical hit either hero throws afterwards is
+    // worth more for it. In a doubles game the PARTNER is the main
+    // beneficiary, which is what keeps Attack 25 from being a trap.
+    moveIds: ['psiBolt', 'enervate', 'lull'],
+    starter: false,
+  },
 
   // --- Spirit ------------------------------------------------------------
   revenant: {

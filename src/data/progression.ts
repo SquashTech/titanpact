@@ -349,6 +349,41 @@ export const progressionTable: ProgressionTable = {
       'breakWill',
       'packLeader',
     ],
+    // Trance (heroes.ts, 2026-08-30) takes the strip chain its kit opens:
+    // Disorient widens the two debuffs it already starts with to both foes,
+    // Break Will adds Attack to the list, and Brain Flay DOUBLES every
+    // reduction standing on both of them. That is the same shape as Beast's
+    // Bleed-then-Eviscerate — plant cheap early, cash expensive late — with
+    // stat deltas as the currency instead of a status.
+    //
+    // Stasis is here and is not filler: Trance is Speed 55, and a Stasis
+    // Field makes the slowest in a bracket act FIRST, so the hero that most
+    // wants its debuffs to land before the enemy moves is also the one the
+    // field effect is worth most to.
+    //
+    // Overlaps Cortex's pool on four rows (stasis, disorient, breakWill,
+    // brainFlay), which is normal — Vesper and Nightshade already share five
+    // — but Brain Flay is worth flagging rather than leaving as overlap.
+    // Its payoff is proportional to how many reductions are already on the
+    // target, and Cortex is the hero that raises its OWN stats while Trance
+    // is the one that lowers theirs. Brain Flay's real home is here. Cortex's
+    // pool is left untouched today because re-cutting an existing hero is a
+    // separate decision from adding one; naming it, not fixing it.
+    //
+    // Kept OUT, both deliberately: mindShatter (Cortex's signature, see the
+    // Wisdom note in heroes.ts) and cerebralShock, which is still the
+    // intended orphan — it applies Conduct, whose triggerTypes are Storm and
+    // Iron, and Trance is mono Mind, so it would be a dead button here too.
+    trance: [
+      'brainWard',
+      'psychock',
+      'wickedFear',
+      'stasis',
+      'disorient',
+      'psionicWave',
+      'breakWill',
+      'brainFlay',
+    ],
     // --- Stone/Spirit starters + the new Iron starter (2026-08-17) ---
     // rally moved up into Valor's starting kit (heroes.ts) when Mend Wounds died.
     //
@@ -1054,6 +1089,46 @@ export const progressionTable: ProgressionTable = {
             description: 'Holds the whole field in the coil — deeper reserves, the pack-support path.',
             statGrants: { manaPool: 10, mpRegen: 5 },
             unlocksMoveIds: [],
+          },
+        ],
+      },
+    ],
+    // Trance is MONO, so unlike Widow and Coil it can carry type-grafts —
+    // and it keeps exactly one mono path as a terminal identity, per this
+    // file's rule. Puppeteer is that path: the debuff specialist that just
+    // gets better at being one.
+    trance: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'trance-offensive',
+            heroId: 'trance',
+            kind: 'offensive',
+            name: 'Puppeteer',
+            description: 'Stops suggesting and starts pulling.',
+            statGrants: { intelligence: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'trance-defensive',
+            heroId: 'trance',
+            kind: 'defensive',
+            name: 'Somnambulist',
+            description: 'Walks in the deep sleep, where very little can reach it.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Spirit',
+          },
+          {
+            id: 'trance-utility',
+            heroId: 'trance',
+            kind: 'utility',
+            name: 'Ringmaster',
+            description: 'Runs the whole show — deeper reserves and a faster refill.',
+            statGrants: { manaPool: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Arcane',
           },
         ],
       },

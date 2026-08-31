@@ -34,6 +34,7 @@ import tempestArt from '../../../art/heroes/starters/Tempest.png';
 import sunPriestArt from '../../../art/heroes/starters/solace.png';
 import tidecallerArt from '../../../art/heroes/starters/riptide.png';
 import torchGoblinArt from '../../../art/enemies/torchgoblin.png';
+import tranceArt from '../../../art/heroes/trance.png';
 import valorArt from '../../../art/heroes/starters/valor.png';
 import widowArt from '../../../art/heroes/Widow.png';
 import wildOracleArt from '../../../art/heroes/starters/sylva.png';
@@ -77,6 +78,7 @@ export const heroArt: Partial<Record<string, string>> = {
   glacialWarden: flurryArt,
   tidecaller: tidecallerArt,
   torchGoblin: torchGoblinArt,
+  trance: tranceArt,
   valor: valorArt,
   widow: widowArt,
   wildOracle: wildOracleArt,
