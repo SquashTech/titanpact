@@ -91,8 +91,28 @@ export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs
   );
 }
 
-/** The full item sheet a hold opens — the same dossier treatment a move gets, so gear and moves read alike wherever an offer is made. */
-export function EquipInspectOverlay({ item, onClose }: { item: EquipmentDefinition; onClose: () => void }) {
+interface EquipInspectOverlayProps {
+  item: EquipmentDefinition;
+  /**
+   * Turns the sheet from a readout into a decision — a confirm button under
+   * the effects, plus a Cancel. Same shape and same reasoning as
+   * HeroPreviewOverlay's `action`: the Guild Hall's shelf is the caller, where
+   * an item costs gold and the tap that used to spend it opened nothing.
+   * Omit for the read-only inspects (the Equipment Cache, the Loot Pile),
+   * where the item is already yours and the only question is what it does.
+   */
+  action?: {
+    label: string;
+    /** Rendered above the button — why it is inert, or what confirming will additionally cost. */
+    note?: string;
+    disabled?: boolean;
+    onConfirm: () => void;
+  };
+  onClose: () => void;
+}
+
+/** The full item sheet — the same dossier treatment a move gets, so gear and moves read alike wherever an offer is made. */
+export function EquipInspectOverlay({ item, action, onClose }: EquipInspectOverlayProps) {
   const grants = Object.entries(item.statGrants).filter(([, amount]) => amount) as [StatKey, number][];
   const hasEffects = grants.length > 0 || (item.grantsPassiveIds?.length ?? 0) > 0 || (item.grantsStatusIds?.length ?? 0) > 0;
   return (
@@ -117,7 +137,19 @@ export function EquipInspectOverlay({ item, onClose }: { item: EquipmentDefiniti
           <EquipmentEffectList item={item} />
           {!hasEffects && <div className="move-info-placeholder">No effects.</div>}
         </div>
-        <div className="move-popup-hint">Tap anywhere to close</div>
+        {action ? (
+          <div className="detail-action">
+            {action.note && <div className="detail-action-note">{action.note}</div>}
+            <button className="resolve-button" disabled={action.disabled} onClick={action.onConfirm}>
+              {action.label}
+            </button>
+            <button className="detail-action-cancel" onClick={onClose}>
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <div className="move-popup-hint">Tap anywhere to close</div>
+        )}
       </div>
     </div>
   );

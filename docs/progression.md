@@ -313,7 +313,12 @@ Hall asking before it takes:
 - **The equipment shelf is 4 wide** (`GUILD_HALL_EQUIPMENT_OFFER_COUNT`, up from 3,
   absorbing the freed room) and each card now carries the same benefit line every other
   gear card in the run does (`itemHighlights`, `EquipChoiceCard.tsx`) instead of hiding
-  it behind a long-press nobody discovers. The hold still opens the full sheet.
+  it behind a long-press nobody discovers.
+- **A tap on an item opens its sheet rather than buying it**, and the sheet asks
+  (`EquipInspectOverlay`'s new `action`, the same shape as `HeroPreviewOverlay`'s). With
+  this every purchase in the Hall follows one rule — show the thing, then ask — which
+  heroes reached on 2026-08-28 and gear had been the last exception to. Unaffordable
+  items still open; the confirm is what goes inert.
 - **A bought item greys out in place** rather than vanishing off the shelf
   (`soldOutEquipmentIds`, carried on App.tsx's `shop` Screen because the purchase
   unmounts the screen on its way through the equip gate).

@@ -9,7 +9,6 @@ import type { EquipmentDefinition } from '../../run/equipment';
 import { recruitFromGuildHall, buyContract, RecruitmentError, type GuildHallOffer } from '../../run/recruitment';
 import { EQUIPMENT_PRICE_BY_RARITY, type GuildHallOffers } from '../../run/shop';
 import { getTypeColor } from '../combat/typeColors';
-import { useLongPress } from '../shared/MoveTile';
 import { EQUIP_SLOT_LABELS, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -84,7 +83,6 @@ interface EquipCardProps {
   cost: number;
   affordable: boolean;
   soldOut: boolean;
-  onBuy: () => void;
   onInspect: () => void;
 }
 
@@ -93,27 +91,32 @@ interface EquipCardProps {
  * Loot Pile draw (EquipChoiceCard's `.equip-cache-*` family) — right down to
  * `itemHighlights`, the "+10 Attack · Ember Ward" benefit line.
  *
- * That line is the point of the 2026-08-31 pass. The shop card used to show
- * name/rarity/slot and a price, so the only way to learn what 90 gold was
- * buying was a ~500ms hold nobody discovers — every OTHER screen that offers
- * gear already spelled it out on the card face, and the one screen where the
- * item costs money was the one that didn't. The hold still opens the full
- * sheet (EquipInspectOverlay, for passive descriptions); it is no longer the
- * only way to read the item.
+ * That line is half the point of the 2026-08-31 pass. The shop card used to
+ * show name/rarity/slot and a price, so the only way to learn what 90 gold
+ * was buying was a ~500ms hold nobody discovers — every OTHER screen that
+ * offers gear already spelled it out on the card face, and the one screen
+ * where the item costs money was the one that didn't.
+ *
+ * The other half is that a tap no longer buys. It opens the item's sheet, and
+ * the sheet is what asks (user direction, 2026-08-31) — the same correction
+ * the hero cards got on the 28th, for the same reason: the fast, obvious
+ * gesture was the one that spent the gold, and the careful gesture was the
+ * hidden one. Every commitment in this Hall now shows the thing and then
+ * asks. Unaffordable items still open, since browsing what you cannot yet
+ * afford is the point of a shop; the sheet's confirm is what goes inert.
  *
  * A bought item stays on the shelf rather than vanishing: the stock is the
  * memory of what this Guild Hall had, and a card that disappears mid-scroll
  * reads as a bug. `sold-out` greys it and makes it inert.
  */
-function GuildHallEquipCard({ item, cost, affordable, soldOut, onBuy, onInspect }: EquipCardProps) {
-  const longPress = useLongPress(soldOut ? undefined : onInspect, soldOut ? undefined : onBuy);
+function GuildHallEquipCard({ item, cost, affordable, soldOut, onInspect }: EquipCardProps) {
   const highlights = itemHighlights(item);
   return (
     <button
       className={`equip-cache-card guild-hall-equip-card${soldOut ? ' sold-out' : affordable ? '' : ' unaffordable'}`}
       style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}
       disabled={soldOut}
-      {...longPress}
+      onClick={onInspect}
     >
       <div className="equip-cache-card-icon-badge">
         <EquipmentIcon item={item} slot={item.slot} className="equip-cache-card-icon" />
@@ -140,10 +143,15 @@ function GuildHallEquipCard({ item, cost, affordable, soldOut, onBuy, onInspect 
  *
  * Second pass, 2026-08-31 (user direction): the relic shelf is gone entirely
  * (see run/shop.ts's header for why), the equipment shelf widened to 4 and
- * now says what each item does on its face, a bought item greys out instead
- * of vanishing, and the Recruit Contract — the one purchase here that spends
- * gold on a thing you cannot look at — asks before it takes the money, next
- * to a readout of how many you already hold.
+ * now says what each item does on its face, and a bought item greys out
+ * instead of vanishing.
+ *
+ * With that pass, every purchase in the Hall follows one rule: a tap opens
+ * the thing, and the thing asks. Heroes got there first (2026-08-28); gear
+ * followed; and the Recruit Contract — the one purchase with nothing to open,
+ * no stat sheet and no highlight line — gets a confirm of its own, next to a
+ * readout of how many you already hold. Nothing on this screen spends gold on
+ * the gesture that merely brushes it.
  */
 export function GuildHallPanel({
   run,
@@ -240,7 +248,7 @@ export function GuildHallPanel({
       <div className="guild-hall-section">
         <div className="guild-hall-section-head">
           <span className="guild-hall-section-title">🛡️ Equipment</span>
-          <span className="guild-hall-section-hint">Tap to buy · hold for details</span>
+          <span className="guild-hall-section-hint">Tap an item to view and buy</span>
         </div>
         {equipmentOffers.length > 0 ? (
           <div className="equip-cache-list guild-hall-equip-list">
@@ -253,7 +261,6 @@ export function GuildHallPanel({
                   cost={cost}
                   affordable={run.gold >= cost}
                   soldOut={soldOutEquipmentIds.includes(item.id)}
-                  onBuy={() => onBuyEquipment(item.id)}
                   onInspect={() => setPreviewEquipId(item.id)}
                 />
               );
@@ -311,8 +318,31 @@ export function GuildHallPanel({
           );
         })()}
 
-      {/* The same item sheet the Equipment Cache and the Loot Pile open, rather than this panel's own hand-rolled one — gear reads identically wherever it is offered. */}
-      {previewEquip && <EquipInspectOverlay item={previewEquip} onClose={() => setPreviewEquipId(null)} />}
+      {/* The same item sheet the Equipment Cache and the Loot Pile open — gear
+          reads identically wherever it is offered — plus the confirm footer
+          those two don't need, since there the item is already yours. */}
+      {previewEquip &&
+        (() => {
+          const cost = EQUIPMENT_PRICE_BY_RARITY[previewEquip.rarity];
+          const affordable = run.gold >= cost;
+          return (
+            <EquipInspectOverlay
+              item={previewEquip}
+              action={{
+                label: `Buy ${previewEquip.name} — ${cost}g`,
+                disabled: !affordable,
+                note: affordable
+                  ? 'You will equip it, or trash it, before leaving the Hall.'
+                  : `Not enough gold — ${cost}g needed, you have ${run.gold}g.`,
+                onConfirm: () => {
+                  setPreviewEquipId(null);
+                  onBuyEquipment(previewEquip.id);
+                },
+              }}
+              onClose={() => setPreviewEquipId(null)}
+            />
+          );
+        })()}
 
       {/* A Recruit Contract is the one purchase here with nothing to look at
           first — no stat sheet, no highlight line, just a row that took your
