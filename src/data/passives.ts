@@ -90,7 +90,41 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
   },
 };
 
-export const passives: Record<string, PassiveDefinition> = { ...fixturePassives, ...equipmentPassives, ...classes };
+/**
+ * Passives granted by a map EVENT (src/data/events.ts `grantPassive`), as
+ * opposed to by an item, a relic or an Evolution. They live in their own group
+ * for the same reason equipmentPassives does — where a passive can come from
+ * is the first thing you want to know when you meet one in this file.
+ */
+const eventPassives: Record<string, PassiveDefinition> = {
+  imposingPresence: {
+    id: 'imposingPresence',
+    name: 'Imposing Presence',
+    description: 'When this hero enters the battlefield, enemies lose 10 Attack.',
+    /*
+     * The first user of the entry hook (engine/content.ts PassiveHook
+     * 'SwitchedIn') and of a group target (PassiveEffectTarget
+     * 'activeEnemies'). `relativeTo: 'self'` because SwitchedIn's subject is
+     * the INCOMING combatant — so this matches only when its own owner is the
+     * one arriving.
+     *
+     * It fires on EVERY arrival, including the fight's opening lead
+     * (passiveEngine.ts resolveBattleStartEntries), and re-fires each time the
+     * hero cycles back in. That is deliberate and unbounded within a fight,
+     * the same shape Vengeful Emblem already has — cycling this hero IS the
+     * build, and the price is the tempo every switch costs. Worth watching in
+     * playtest: paired with a fast pivot it is the only debuff in the game
+     * that compounds without spending mana.
+     */
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'attack', amount: -10 },
+    },
+  },
+};
+
+export const passives: Record<string, PassiveDefinition> = { ...fixturePassives, ...equipmentPassives, ...eventPassives, ...classes };
 
 /**
  * What a passive is WORTH when an item grants it, in the same points

@@ -213,7 +213,7 @@ authored roster.
 - `CLAUDE.md` — this file. Keep it lean (<200 lines); adherence drops past that.
 - `/docs/` — the deeper design modules (generate next): `combat.md`, `types-and-heroes.md`,
   `progression.md`, `mana.md`, `architecture.md`, `field-effects.md`, `run-loop.md`,
-  `locations.md`, `visual-language.md` (presentation only). Reference from here; don't inline them.
+  `locations.md`, `events.md`, `visual-language.md` (presentation only). Reference from here; don't inline them.
   **`authoring-moves.md` is a runbook, not a design module** — read it before implementing
   a designed slate of moves for a type (1 type still to go — Ancient; Fire
   and Water are the worked examples, and §10 carries all fourteen hand-offs).

@@ -13,10 +13,15 @@
 //   - collectPassiveDamageModifiers: synchronous. Evaluated BEFORE a hit is
 //     rolled, contributing to the damage pipeline's DamageModifier
 //     accumulator (damagePipeline.ts) — never a reaction to a past event.
+//
+// resolveBattleStartEntries is a third, small entry point rather than a third
+// family: it is resolvePassiveReactions run against a SYNTHESISED SwitchedIn
+// context for the combatants a fight opens with, because those never produce a
+// real SwitchedIn event (they are placed, not switched in). See its own doc.
 
 import type { HeroLookup, CombatState, Combatant, Side } from '../state';
 import { getMaxHp } from '../state';
-import type { FieldEffectDefinition, PassiveDefinition, PassiveId, PassiveEffect, PassiveTriggerCondition, PassiveAmount, StatusDefinition, MoveDefinition } from '../content';
+import type { FieldEffectDefinition, PassiveDefinition, PassiveId, PassiveEffect, PassiveEffectTarget, PassiveTriggerCondition, PassiveAmount, StatusDefinition, MoveDefinition } from '../content';
 import type { CombatEvent } from '../events';
 import type { DamageModifier } from '../damage/damagePipeline';
 import { applyHpDelta } from './faintHandling';
@@ -60,9 +65,11 @@ export function matchesTrigger(
  * DamageDealt's subject is the TARGET (not the source) — this makes the hook
  * a defender-perspective reaction ("when an enemy/ally is hit, do X"), not an
  * attacker-perspective one ("when I deal damage, do X"); that second
- * direction isn't needed by any passive yet and isn't implemented. Event
- * types outside PassiveHook return undefined — harmless, since the hook
- * match already filters them out before subjectOf is ever consulted for them.
+ * direction isn't needed by any passive yet and isn't implemented.
+ * SwitchedIn's subject is the INCOMING combatant, not the one leaving — an
+ * entry hook is about who arrived. Event types outside PassiveHook return
+ * undefined — harmless, since the hook match already filters them out before
+ * subjectOf is ever consulted for them.
  */
 function subjectOf(event: CombatEvent): string | undefined {
   switch (event.type) {
@@ -71,6 +78,8 @@ function subjectOf(event: CombatEvent): string | undefined {
       return event.combatantId;
     case 'DamageDealt':
       return event.targetCombatantId;
+    case 'SwitchedIn':
+      return event.inCombatantId;
     default:
       return undefined;
   }
@@ -101,10 +110,49 @@ function resolveEffect(
     return setFieldEffect(state, round, effect.fieldEffectId);
   }
 
-  const targetId = effect.target === 'self' ? ownerId : subjectId;
-  const target = targetId ? state.combatants[targetId] : undefined;
-  if (!targetId || !target || target.fainted) return { state, events: [] };
+  // A group target ('activeEnemies') resolves the same effect once per
+  // member, in slot order, threading state through — so one trigger emits N
+  // state-change events after its single PassiveTriggered. The two singular
+  // targets are the one-element case of exactly this loop.
+  let working = state;
+  const produced: CombatEvent[] = [];
+  for (const targetId of resolveTargetIds(state, ownerId, subjectId, effect.target)) {
+    const target = working.combatants[targetId];
+    if (!target || target.fainted) continue;
+    const resolved = resolveEffectOn(working, round, heroes, statusDefs, targetId, target, effect, context);
+    working = resolved.state;
+    produced.push(...resolved.events);
+  }
+  return { state: working, events: produced };
+}
 
+/** The combatant(s) an effect's `target` names, relative to the passive's owner. Missing/absent ids are simply not returned — the caller skips fainted members too. */
+function resolveTargetIds(state: CombatState, ownerId: string, subjectId: string | undefined, target: PassiveEffectTarget): string[] {
+  switch (target) {
+    case 'self':
+      return [ownerId];
+    case 'triggerSubject':
+      return subjectId ? [subjectId] : [];
+    case 'activeEnemies': {
+      const ownerSide = state.combatants[ownerId]?.side;
+      if (!ownerSide) return [];
+      const enemySide: Side = ownerSide === 'A' ? 'B' : 'A';
+      return state.active[enemySide].filter((id): id is string => id !== null);
+    }
+  }
+}
+
+/** One effect, one already-resolved living target — the body the target loop above runs per member. */
+function resolveEffectOn(
+  state: CombatState,
+  round: number,
+  heroes: HeroLookup,
+  statusDefs: Record<string, StatusDefinition>,
+  targetId: string,
+  target: Combatant,
+  effect: Exclude<PassiveEffect, { kind: 'setFieldEffect' }>,
+  context: TriggerContext
+): { state: CombatState; events: CombatEvent[] } {
   switch (effect.kind) {
     case 'heal': {
       const amount = resolveAmount(effect.amount, context);
@@ -176,6 +224,48 @@ export function resolvePassiveReactions(
   }
 
   return { state: working, events: produced };
+}
+
+/**
+ * The opening lead's entry trigger (PassiveHook 'SwitchedIn').
+ *
+ * A fight's starting four are PLACED by buildCombatState, not switched in, so
+ * the battlefield they are standing on produced no SwitchedIn event and an
+ * entry passive would sit silent until its owner happened to be cycled. That
+ * is the wrong reading of "when this hero enters the battlefield" and, worse,
+ * an inconsistent one: the same passive would fire on the hero's SECOND
+ * arrival but not its first.
+ *
+ * So this synthesises exactly the event a switch would have produced for each
+ * currently-active combatant and runs it through the same matcher — no second
+ * code path, no per-passive special case. `outCombatantId` is null (nobody
+ * left), which is already legal on SwitchedInEvent for a switch into an empty
+ * slot.
+ *
+ * The synthesised events are NOT returned: the view would narrate them as
+ * "X switches in!" over a board where nothing switched. Only what the passives
+ * actually did comes back, which is what the opening log should say.
+ *
+ * Called once, at fight construction (view/combat/FightScreen.tsx), on the
+ * state buildCombatState just produced — not inside resolveRound, which starts
+ * from an already-open board.
+ */
+export function resolveBattleStartEntries(
+  state: CombatState,
+  round: number,
+  heroes: HeroLookup,
+  statusDefs: Record<string, StatusDefinition>,
+  passiveDefs: Record<PassiveId, PassiveDefinition>,
+  fieldEffectDefs: Record<string, FieldEffectDefinition>
+): { state: CombatState; events: CombatEvent[] } {
+  const entries: CombatEvent[] = [];
+  for (const side of ['A', 'B'] as const) {
+    state.active[side].forEach((inCombatantId, slot) => {
+      if (!inCombatantId) return;
+      entries.push({ type: 'SwitchedIn', round, side, slot: slot as 0 | 1, outCombatantId: null, inCombatantId });
+    });
+  }
+  return resolvePassiveReactions(state, round, entries, heroes, statusDefs, passiveDefs, fieldEffectDefs);
 }
 
 /**

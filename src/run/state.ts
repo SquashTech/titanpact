@@ -49,6 +49,21 @@ export interface RosterEntry {
    */
   evolutionPassiveGrants: readonly PassiveId[];
   /**
+   * Passives (engine/content.ts PassiveDefinition) granted by a map EVENT
+   * (src/data/events.ts `grantPassive` — Assertiveness Training teaching
+   * Imposing Presence). The passive-grant sibling of `bonusStatGrants` below,
+   * and kept off `evolutionPassiveGrants` for exactly the same reason that
+   * field is kept off the equipment loadout: it comes from neither an equipped
+   * item nor a chosen Evolution path, and folding the three together would
+   * make "where did this passive come from" unanswerable on a hero sheet.
+   *
+   * Duplicates are allowed and STACK (src/run/entryStats.ts counts them, and
+   * engine/state.ts PassiveInstance resolves N stacks N times), so a hero
+   * taught the same passive twice gets it twice — consistent with how
+   * duplicate relics and duplicate item grants already behave.
+   */
+  bonusPassiveGrants: readonly PassiveId[];
+  /**
    * Permanent stat grants from map-node rewards (`hpBoostReward`/
    * `manaBoostReward` — runProgress.ts `grantStatBonus`), always multiples of
    * 5/10. Kept on its own field rather than folded into `evolutionStatGrants`
@@ -167,6 +182,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     chosenPathIds: [],
     evolutionStatGrants: {},
     evolutionPassiveGrants: [],
+    bonusPassiveGrants: [],
     bonusStatGrants: {},
     evolutionTypeGraft: null,
     classId: null,

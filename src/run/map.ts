@@ -111,8 +111,9 @@ function rowWidthsFor(actNumber: number): number[] {
  * grants (no 3-choice picker, unlike `equipmentReward`'s mixed-slot pick),
  * `hpBoostReward`/`manaBoostReward`/`manaRegenBoostReward` each grant a flat
  * permanent stat bonus to one chosen hero (+20 HP / +10 Mana / +5 MP Regen),
- * and `event` is a placeholder node with no content yet (user direction —
- * "don't create any yet, we will design these when it's time"). `classReward`
+ * and `event` rolls one of the authored map events (src/data/events.ts,
+ * docs/events.md) — a move, a passive, a stat trade or a pile of gear.
+ * `classReward`
  * is deliberately NOT in this pool (2026-08-22 revision, per user direction):
  * it's the Act-1-only forced Mentor row (MENTOR_ROW below) exclusively now,
  * never a random pick-1-of-3 option in any act — see that row's doc comment.
@@ -129,7 +130,17 @@ const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   ['hpBoostReward', 10],
   ['manaBoostReward', 10],
   ['manaRegenBoostReward', 10],
-  ['event', 8],
+  /*
+   * Raised 8 -> 14 on 2026-08-31, when `event` stopped being an empty
+   * placeholder and became real content (src/data/events.ts). 8 was the
+   * rarest entry in the table, which was right for a node that granted
+   * nothing and is wrong for one that can hand over a move, a passive, a
+   * stat trade or three pieces of gear. 14 puts it mid-pack, alongside
+   * upgradeReward. FLAGGED FOR THE DESIGNER: this is an inference from why
+   * the old number was low, not a decision that was made — with five events
+   * in the pool, how often a run should meet one is a real tuning question.
+   */
+  ['event', 14],
 ];
 
 /**

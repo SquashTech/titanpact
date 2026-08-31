@@ -284,8 +284,17 @@ export type PassiveId = string;
  * CombatEvent['type'] (engine/events.ts) that make sense as hook points.
  * Extend this union only when a passive actually needs the new hook, not
  * speculatively — same discipline as StatusDefinition.triggerTypes.
+ *
+ * `SwitchedIn` is the ENTRY hook (added 2026-08-31 for Imposing Presence,
+ * src/data/passives.ts). Its subject is the INCOMING combatant
+ * (passiveEngine.ts subjectOf), so `relativeTo: 'self'` reads as "when I step
+ * onto the battlefield". It fires for every way a hero arrives — a declared
+ * switch, a pivot move (MoveDefinition.switchesUserOut), a forced replacement
+ * after a KO, and the opening lead (passiveEngine.ts resolveBattleStartEntries,
+ * which synthesises the same context for the combatants a fight STARTS with,
+ * since those never produce a SwitchedIn event of their own).
  */
-export type PassiveHook = 'DamageDealt' | 'StatusApplied' | 'StatusTicked';
+export type PassiveHook = 'DamageDealt' | 'StatusApplied' | 'StatusTicked' | 'SwitchedIn';
 
 /**
  * Relationship the triggering event's subject (passiveEngine.ts subjectOf)
@@ -308,11 +317,26 @@ export interface PassiveTriggerCondition {
 /** Where a reactive effect's magnitude comes from. matchTriggerAmount powers Sanguine's "heals for the same amount [the enemy just took]". */
 export type PassiveAmount = { kind: 'flat'; value: number } | { kind: 'matchTriggerAmount'; multiplier?: number };
 
+/**
+ * Who a reactive effect lands on. The first two are single combatants; the
+ * third is a GROUP — every non-fainted combatant currently ACTIVE (on the
+ * battlefield, not benched) on the side opposing the passive's owner. A group
+ * target resolves the effect once per member (passiveEngine.ts resolveEffect),
+ * so one trigger can produce several state-change events.
+ *
+ * `activeEnemies` is deliberately active-only. Reaching the bench would let an
+ * entry passive debuff heroes that have not been committed to the fight yet,
+ * which turns the switching game (CLAUDE.md "Mana & tempo") into a pre-emptive
+ * tax on the opponent's whole roster rather than a read on the two heroes
+ * standing in front of you.
+ */
+export type PassiveEffectTarget = 'self' | 'triggerSubject' | 'activeEnemies';
+
 /** The reactive effect primitives — the atomic verbs a Passive's reaction resolves into. */
 export type PassiveEffect =
-  | { kind: 'heal'; target: 'self' | 'triggerSubject'; amount: PassiveAmount }
-  | { kind: 'applyStatus'; target: 'self' | 'triggerSubject'; statusId: StatusId; magnitude?: number; duration?: number }
-  | { kind: 'statDelta'; target: 'self' | 'triggerSubject'; stat: StatKey; amount: number }
+  | { kind: 'heal'; target: PassiveEffectTarget; amount: PassiveAmount }
+  | { kind: 'applyStatus'; target: PassiveEffectTarget; statusId: StatusId; magnitude?: number; duration?: number }
+  | { kind: 'statDelta'; target: PassiveEffectTarget; stat: StatKey; amount: number }
   /** Sets the battlefield's Field Effect (docs/field-effects.md) — global, so unlike the other three shapes above it has no `target`. */
   | { kind: 'setFieldEffect'; fieldEffectId: FieldEffectId };
 

@@ -14265,3 +14265,92 @@ textarea,
   text-transform: uppercase;
   color: var(--text-dim);
 }
+
+/* ---------------------------------------------------------------------------
+   Map events (EventNodeScreen, src/data/events.ts)
+   ---------------------------------------------------------------------------
+   Four rules, and deliberately only four. The event screen is assembled almost
+   entirely out of parts that already exist — the node stage, HeroPickCard's
+   grid, LevelUpScreen's move-replace panel, the Equipment Cache's own drop card
+   — so what is left is the small amount of chrome none of those owned:
+   presenting an offered MOVE above the hero grid, and presenting an offered
+   PASSIVE inside the header. Everything else here would have been a second
+   dialect for the same objects, which is exactly what docs/visual-language.md's
+   ninth pass took out of the node screens. */
+
+/* The Wildcard/Fruit Slicer offer, sitting between the header and the roster.
+   Not in `.screen-scroll`: the hero grid below it is the thing being chosen
+   from and has to land at the same height it does on Level Up and the stat
+   shrines, so the move card takes its natural height here and the grid keeps
+   the remaining space (the same reason ClassNodeScreen's student grid is a
+   direct child of the screen rather than a scrolled block). Capped and
+   internally scrollable so a move with a long status payload cannot push the
+   figures down. */
+.event-offer-move {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto 12px;
+  max-height: 38vh;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Assertiveness Training's passive, carried in the header where the Mentor
+   carries a discipline's stat chips. Chromeless for the same reason
+   `.node-item-effects .equip-spotlight-passive` is: this is the one part of
+   the screen you cannot press, and a filled rectangle around it would read as
+   a control. The passive's identity colour (passiveIcons.tsx passiveColor)
+   comes in as `--passive-color` from the screen. */
+.event-passive-offer {
+  gap: 4px;
+}
+
+.event-passive-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--passive-color, var(--accent));
+}
+
+.event-passive-desc {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* A drop card that is being SHOWN, not chosen between (the Loot Pile — all
+   three are already yours). It keeps the hold-to-inspect gesture, so it is
+   still a button in the DOM; it stops advertising a tap it does not have.
+   The rarity bloom and the left rail stay: "how good is this drop" is still
+   the question the card is answering. */
+.equip-cache-card.is-static {
+  cursor: default;
+}
+
+.equip-cache-card.is-static:hover {
+  transform: none;
+  box-shadow: var(--hairline), var(--elev-2), 0 0 16px -6px var(--rarity-color, transparent);
+}
+
+/* The event's flavor line, between its title and its ask. Deliberately quieter
+   and narrower than `.node-readout` below it: two lines of centred prose at the
+   same weight would read as one paragraph with a non-sequitur in the middle,
+   since one is fiction and the other is an instruction. Italic and dimmed says
+   which is which without a label. */
+.event-flavor {
+  margin: 6px auto 0;
+  max-width: 32ch;
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--text-dim);
+  opacity: 0.82;
+  text-align: center;
+}

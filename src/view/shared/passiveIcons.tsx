@@ -9,12 +9,14 @@ import type { PassiveDefinition } from '../../engine/content';
 export const passiveEmoji: Record<string, string> = {
   sanguine: '🩸',
   emberheart: '🔥',
+  imposingPresence: '👁️',
 };
 
 /** Identity color per passive, same purpose as statusIcons.tsx's STATUS_COLOR — a passive chip reads as "which passive" by color alone, not just its emoji. Unlisted ids fall back to a neutral gold, same fallback statusColor uses. */
 const PASSIVE_COLOR: Record<string, string> = {
   sanguine: '#c0392b',
   emberheart: '#e2683c',
+  imposingPresence: '#7d6bc4',
 };
 
 export function passiveColor(passiveId: string): string {

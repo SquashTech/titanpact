@@ -23,8 +23,9 @@ import { mergeStatMods } from './statMods';
 
 /**
  * Every passive this entry holds, as id -> stack count: equipment grants,
- * Evolution grants, its Class (at most one), plus whatever the team's relics
- * broadcast to everyone on the side.
+ * Evolution grants, event grants (RosterEntry.bonusPassiveGrants), its Class
+ * (at most one), plus whatever the team's relics broadcast to everyone on the
+ * side.
  */
 export function entryPassiveCounts(
   entry: RosterEntry,
@@ -33,8 +34,16 @@ export function entryPassiveCounts(
 ): Record<PassiveId, number> {
   const evolutionGrants: Record<PassiveId, number> = {};
   for (const id of entry.evolutionPassiveGrants) evolutionGrants[id] = (evolutionGrants[id] ?? 0) + 1;
+  const eventGrants: Record<PassiveId, number> = {};
+  for (const id of entry.bonusPassiveGrants) eventGrants[id] = (eventGrants[id] ?? 0) + 1;
   const classGrants: Record<PassiveId, number> = entry.classId ? { [entry.classId]: 1 } : {};
-  return mergePassiveGrants(equipmentPassiveGrants(entry.equipment, equipmentLookup), evolutionGrants, classGrants, teamPassiveGrants);
+  return mergePassiveGrants(
+    equipmentPassiveGrants(entry.equipment, equipmentLookup),
+    evolutionGrants,
+    eventGrants,
+    classGrants,
+    teamPassiveGrants
+  );
 }
 
 /**

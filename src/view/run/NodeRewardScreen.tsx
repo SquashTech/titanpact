@@ -1,27 +1,14 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { equipment } from '../../data/equipment';
 import { drawableRelics } from '../../data/relics';
-import { passives } from '../../data/passives';
-import { statuses } from '../../data/statuses';
-import type { StatKey } from '../../engine/content';
 import type { RunState } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { pickWeightedEquipment, rarityWeightsFor } from '../../run/equipment';
 import { grantCurrencyReward, grantUpgradeReward, grantRelicReward } from '../../run/runProgress';
-import {
-  EQUIP_SLOT_LABELS,
-  EquipmentEffectList,
-  EquipmentIcon,
-  fmtGrant,
-  RARITY_COLOR_VARS,
-  RARITY_LABELS,
-  RelicIcon,
-} from '../shared/EquipmentBox';
-import { StatGlyph } from '../shared/StatBars';
-import { STAT_FULL_LABELS } from '../shared/relicStacks';
-import { useLongPress } from '../shared/MoveTile';
+import { RelicIcon } from '../shared/EquipmentBox';
 import { ResourceMark, RunGlyph } from '../shared/RunGlyph';
 import { NodeHeader, NodeSky, NODE_TINT_ARCANE, NODE_TINT_GOLD, NODE_TINT_VITAL } from '../shared/NodeStage';
+import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
 import { RelicChoiceCard } from './RelicChoiceCard';
 import { RosterPeek } from './RosterPeek';
 
@@ -55,65 +42,6 @@ function pickRandom<T>(pool: readonly T[], count: number): T[] {
     picked.push(remaining.splice(Math.floor(Math.random() * remaining.length), 1)[0]);
   }
   return picked;
-}
-
-/**
- * "+10 Attack, +20 HP, Fire Force +10" — the one-line benefit preview on the
- * card face. Folds in passive/status grants (not just raw stats) so an item
- * like Ember Band — no statGrants, all its value is a granted status — never
- * reads as blank; the long-press popup below is where the full description
- * for each of those lives.
- */
-function itemHighlights(item: EquipmentDefinition): string[] {
-  const statParts = Object.entries(item.statGrants)
-    .filter(([, amount]) => amount)
-    .map(([stat, amount]) => `${(amount as number) > 0 ? '+' : ''}${amount} ${STAT_FULL_LABELS[stat as StatKey] ?? stat}`);
-  const passiveParts = (item.grantsPassiveIds ?? []).flatMap((id) => (passives[id] ? [passives[id].name] : []));
-  const statusParts = (item.grantsStatusIds ?? []).flatMap(({ statusId, magnitude }) =>
-    statuses[statusId] ? [`${statuses[statusId].name} +${magnitude}`] : []
-  );
-  return [...statParts, ...passiveParts, ...statusParts];
-}
-
-interface EquipCacheCardProps {
-  item: EquipmentDefinition;
-  picked: boolean;
-  onPick: () => void;
-  onInspect: () => void;
-  /** Staggers this card's fade-up-in behind the chest-reveal (see `chestPhase` in NodeRewardScreen). */
-  revealDelayMs: number;
-}
-
-/**
- * One Equipment Cache offer card. Tap selects it (highlighted — the actual
- * claim happens via the resolve button below, mirroring RelicChoiceCard's
- * two-step); a ~500ms hold instead opens the full-detail popup, same
- * tap-picks/hold-inspects split as the relic cards so gear and relics read
- * the same everywhere an offer is made. Pulled out of the .map() below
- * because useLongPress is a hook.
- */
-function EquipCacheCard({ item, picked, onPick, onInspect, revealDelayMs }: EquipCacheCardProps) {
-  const longPress = useLongPress(onInspect, onPick);
-  const highlights = itemHighlights(item);
-  return (
-    <button
-      className={`equip-cache-card equip-cache-reveal-in${picked ? ' picked' : ''}`}
-      style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity], animationDelay: `${revealDelayMs}ms` } as CSSProperties}
-      {...longPress}
-    >
-      <div className="equip-cache-card-icon-badge">
-        <EquipmentIcon item={item} slot={item.slot} className="equip-cache-card-icon" />
-      </div>
-      <div className="equip-cache-card-body">
-        <div className="equip-cache-card-name">{item.name}</div>
-        <div className="equip-cache-card-meta">
-          <span className="equip-cache-card-rarity">{RARITY_LABELS[item.rarity]}</span>
-          <span className="equip-cache-card-slot">{EQUIP_SLOT_LABELS[item.slot]}</span>
-        </div>
-        <div className="equip-cache-card-stats">{highlights.length > 0 ? highlights.join(' · ') : 'No effect'}</div>
-      </div>
-    </button>
-  );
 }
 
 /**
@@ -274,7 +202,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
           <div className="stage-centered">
             <div className="equip-cache-list">
               {equipmentChoices.map((item, i) => (
-                <EquipCacheCard
+                <EquipChoiceCard
                   key={item.id}
                   item={item}
                   picked={pickedItemId === item.id}
@@ -369,37 +297,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
       {inspectItemId &&
         (() => {
           const item = equipmentChoices.find((i) => i.id === inspectItemId);
-          if (!item) return null;
-          const grants = Object.entries(item.statGrants).filter(([, amount]) => amount) as [StatKey, number][];
-          const grantedPassives = item.grantsPassiveIds ?? [];
-          const grantedStatuses = item.grantsStatusIds ?? [];
-          const hasEffects = grants.length > 0 || grantedPassives.length > 0 || grantedStatuses.length > 0;
-          return (
-            <div className="log-overlay" onClick={() => setInspectItemId(null)}>
-              <div className="log-panel move-popup-panel" onClick={(e) => e.stopPropagation()}>
-                <div className="move-info-panel" style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}>
-                  <div className="move-info-head">
-                    <span className="move-info-name">{item.name}</span>
-                    <span className="move-info-kind">
-                      {RARITY_LABELS[item.rarity]} · {EQUIP_SLOT_LABELS[item.slot]}
-                    </span>
-                  </div>
-                  {grants.length > 0 && (
-                    <div className="detail-modifier-list">
-                      {grants.map(([stat, amount]) => (
-                        <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
-                          <StatGlyph stat={stat} tone="inherit" /> {STAT_FULL_LABELS[stat]} {fmtGrant(amount)}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <EquipmentEffectList item={item} />
-                  {!hasEffects && <div className="move-info-placeholder">No effects.</div>}
-                </div>
-                <div className="move-popup-hint">Tap anywhere to close</div>
-              </div>
-            </div>
-          );
+          return item ? <EquipInspectOverlay item={item} onClose={() => setInspectItemId(null)} /> : null;
         })()}
     </div>
   );

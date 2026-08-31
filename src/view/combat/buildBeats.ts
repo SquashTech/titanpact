@@ -294,23 +294,33 @@ export function buildBeats(
             { bannerLead: `${label} · ${name(applied2.combatantId)}`, bannerFocus: applied2.statusId, bannerFocusKind: 'status' }
           );
         } else if (effectKind === 'statDelta' && events[i]?.type === 'StatChanged') {
-          const changed = events[i++] as StatChangedEvent;
-          applied.push(changed);
-          const sign = changed.delta > 0 ? '+' : '';
+          // EVERY consecutive StatChanged, not just the first: a group-target
+          // effect (content.ts PassiveEffectTarget 'activeEnemies' — Imposing
+          // Presence hitting both enemies) emits one per member behind a
+          // single PassiveTriggered. Taking only the head would strand the
+          // second, which then falls through to the generic StatChanged case
+          // below and reads as a second, sourceless beat.
+          const changes: StatChangedEvent[] = [];
+          while (events[i]?.type === 'StatChanged') {
+            const changed = events[i++] as StatChangedEvent;
+            changes.push(changed);
+            applied.push(changed);
+          }
+          const head = changes[0];
+          const sign = head.delta > 0 ? '+' : '';
+          const who = changes.map((c) => name(c.combatantId)).join(' and ');
           push(
             applied,
-            `${label} shifts ${name(changed.combatantId)}'s ${changed.stat} (${sign}${changed.delta})`,
-            [
-              {
-                combatantId: changed.combatantId,
-                text: `${sign}${changed.delta} ${changed.stat}`,
-                className: changed.delta > 0 ? 'popup-buff' : 'popup-debuff',
-              },
-            ],
+            `${label} shifts ${who}'s ${head.stat} (${sign}${head.delta})`,
+            changes.map((c) => ({
+              combatantId: c.combatantId,
+              text: `${c.delta > 0 ? '+' : ''}${c.delta} ${c.stat}`,
+              className: c.delta > 0 ? 'popup-buff' : 'popup-debuff',
+            })),
             {
-              bannerLead: `${label} · ${name(changed.combatantId)}`,
-              bannerFocus: `${changed.stat} ${sign}${changed.delta}`,
-              bannerFocusKind: changed.delta > 0 ? 'buff' : 'debuff',
+              bannerLead: `${label} · ${who}`,
+              bannerFocus: `${head.stat} ${sign}${head.delta}`,
+              bannerFocusKind: head.delta > 0 ? 'buff' : 'debuff',
             }
           );
         } else {

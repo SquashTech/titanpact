@@ -115,6 +115,13 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         const result = applyVoluntarySwitch(working, round, action.combatantId, action.benchedCombatantId, statuses);
         working = result.state;
         events.push(...result.events);
+        // The entry hook (content.ts PassiveHook 'SwitchedIn' — Imposing
+        // Presence). Fed this switch's own events only, same discipline as
+        // every other resolvePassiveReactions call site: a checkpoint reacts
+        // to its own new slice, never to the round's accumulated log.
+        const entry = resolvePassiveReactions(working, round, result.events, heroes, statuses, passives, fieldEffects);
+        working = entry.state;
+        events.push(...entry.events);
         working = resetDamageTaken(working, action.combatantId);
       } catch (err) {
         if (err instanceof SwitchBlockedError) continue; // illegal declared action (lock-in): no-op
@@ -1037,6 +1044,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           const pivot = applyVoluntarySwitch(working, round, action.combatantId, incoming as string, statuses);
           working = pivot.state;
           events.push(...pivot.events);
+          // Same entry hook as a declared switch above — a pivot is still an
+          // arrival, so Imposing Presence fires for the hero Tailwind pulls in.
+          const pivotEntry = resolvePassiveReactions(working, round, pivot.events, heroes, statuses, passives, fieldEffects);
+          working = pivotEntry.state;
+          events.push(...pivotEntry.events);
         } catch (err) {
           if (!(err instanceof SwitchBlockedError)) throw err;
           events.push({ type: 'ActionBlocked', round, combatantId: action.combatantId, reason: 'switchBlocked' });

@@ -16,6 +16,8 @@ import { RecruitScreen } from '../view/run/RecruitScreen';
 import { StatBoostScreen, type StatBoostNodeType } from '../view/run/StatBoostScreen';
 import { ClassNodeScreen } from '../view/run/ClassNodeScreen';
 import { EventNodeScreen } from '../view/run/EventNodeScreen';
+import { runEvents } from '../data/events';
+import { rollRunEvent } from '../run/events';
 import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
 import { heroes } from '../data/heroes';
 import { enemies, basicGoblins, BASIC_GOBLIN_IDS, GOBLIN_CHIEF_ID } from '../data/enemies';
@@ -93,7 +95,16 @@ type Screen =
   | { kind: 'statBoost'; nodeId: string; nodeType: StatBoostNodeType }
   /** classReward node (docs/run-loop.md, ClassNodeScreen) — one screen handles both the 1-of-3 Class pick and the target-hero assignment internally, so this kind only needs the node id. */
   | { kind: 'classNode'; nodeId: string }
-  | { kind: 'event'; nodeId: string }
+  /**
+   * `event` node (docs/run-loop.md, src/data/events.ts). Which event this node
+   * turns out to be is rolled ONCE here at node-select time and carried on the
+   * screen, same discipline as the shop's offers — the screen re-renders on
+   * every onRunChange, and a roll made inside it would be a different event
+   * each time the run state moved. The event's own contents (which move, which
+   * loot) roll inside the screen instead; see EventNodeScreen for why that one
+   * is safe there.
+   */
+  | { kind: 'event'; nodeId: string; eventId: string }
   /**
    * The Guardian's Banner (docs/run-loop.md, GuardianBannerScreen) — the
    * fixed 1-of-3 that follows every Guardian win in acts 1-4. Not a map node:
@@ -457,7 +468,15 @@ export function App() {
     } else if (node.type === 'classReward') {
       setScreen({ kind: 'classNode', nodeId });
     } else if (node.type === 'event') {
-      setScreen({ kind: 'event', nodeId });
+      // Location is passed so a Location-gated event (src/data/events.ts
+      // `locationIds`) can be authored later without touching this call site.
+      const location = locationForAct(playerRun.locationIds, playerRun.actNumber);
+      const rolled = rollRunEvent(runEvents, playerRun.actNumber, location.id);
+      // Nothing eligible is not a crash: skip the node rather than stranding
+      // the player on a screen with no content, exactly as a contract-less win
+      // skips the recruit offer.
+      if (rolled) setScreen({ kind: 'event', nodeId, eventId: rolled.id });
+      else handleNodeContinue(nodeId);
     } else {
       setScreen({ kind: 'reward', nodeId, nodeType: node.type });
     }
@@ -573,11 +592,16 @@ export function App() {
    * it — mirrors handleFightResolved's Goblin-fight drop, but also advances
    * the map node first since NodeRewardScreen no longer has its own Continue
    * button for this node type.
+   *
+   * Takes a QUEUE rather than one item because the Loot Pile event
+   * (src/data/events.ts) hands over three at once. ForceEquipScreen already
+   * walks a queue — a bumped item joins it mid-flow — so this needed no new
+   * machinery, only the plural.
    */
-  function handleClaimEquipment(nodeId: string, itemId: string) {
+  function handleClaimEquipment(nodeId: string, itemIds: string | string[]) {
     setPlayerRun((run) => advanceToNode(run, nodeId));
     const afterScreen: Screen = playerRun.levelUpPool > 0 ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' };
-    setScreen({ kind: 'forceEquip', queue: [itemId], next: afterScreen });
+    setScreen({ kind: 'forceEquip', queue: Array.isArray(itemIds) ? itemIds : [itemIds], next: afterScreen });
   }
 
   /**
@@ -907,7 +931,20 @@ export function App() {
         <ClassNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
-      {screen.kind === 'event' && <EventNodeScreen run={playerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />}
+      {screen.kind === 'event' &&
+        runEvents[screen.eventId] &&
+        (() => {
+          const { nodeId, eventId } = screen;
+          return (
+            <EventNodeScreen
+              event={runEvents[eventId]}
+              run={playerRun}
+              onRunChange={setPlayerRun}
+              onGrantEquipment={(itemIds) => handleClaimEquipment(nodeId, itemIds)}
+              onContinue={() => handleNodeContinue(nodeId)}
+            />
+          );
+        })()}
 
       {screen.kind === 'guardianBanner' && (
         <GuardianBannerScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />

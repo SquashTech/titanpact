@@ -73,8 +73,11 @@ const NODE_NAMES: Record<MapNodeType, string> = {
  * color language StatBars.tsx (STAT_COLORS) already established per-stat
  * (attack red, defense gray, hp green, manaPool blue, mpRegen teal) so a
  * player who's learned that vocabulary reading hero stat blocks recognizes
- * it on the map too. `event` gets a neutral gray — it's an unknown/mystery
- * placeholder, not tied to any stat.
+ * it on the map too. `event` keeps its neutral gray now that it has real
+ * content (src/data/events.ts): what it holds is genuinely unknown until you
+ * arrive, and the events span every reward axis, so any stat colour here
+ * would be a lie about which one you are walking into. The colour arrives on
+ * the node SCREEN instead, from the rolled event's own `tone`.
  *
  * The four encounter types split the work with NODE_NAMES rather than
  * duplicating it, which is why the 2026-08-29 rename left these alone. **The
@@ -138,7 +141,7 @@ const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
   manaBoostReward: '+10 max Mana, permanent for the run, to one hero you choose.',
   manaRegenBoostReward: '+5 Mana Regen, permanent for the run, to one hero you choose.',
   classReward: 'Mentor’s Hall: pick a Class, then a hero with no Class yet to teach it to.',
-  event: 'Unknown — not yet implemented.',
+  event: 'An unknown encounter: a move, a passive, a trade, or gear. What it is stays hidden until you arrive.',
 };
 
 /**

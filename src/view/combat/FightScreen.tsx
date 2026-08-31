@@ -26,6 +26,7 @@ import {
 import type { HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
 import { applyForcedReplacement } from '../../engine/combat/switching';
+import { resolveBattleStartEntries, resolvePassiveReactions } from '../../engine/combat/passiveEngine';
 import { selectableTargets, statusGatedTargets } from '../../engine/combat/statusEngine';
 import { FIELD_EFFECT_DURATION_ROUNDS } from '../../engine/combat/fieldEffectEngine';
 import type { Action } from '../../engine/combat/actions';
@@ -872,6 +873,17 @@ export function FightScreen({
   const teamPassiveGrants = relicTeamPassiveGrants(playerRelicIds, relics);
   const teamStatusGrants = relicTeamStatusGrants(playerRelicIds, relics);
 
+  /**
+   * The board a fight OPENS on: what buildCombatState produced, plus whatever
+   * the four starting heroes' entry passives (content.ts PassiveHook
+   * 'SwitchedIn') did on arrival. Returns the events too, so the opening log
+   * says why an enemy's Attack is already down rather than leaving the player
+   * to find it on a stat sheet.
+   */
+  function openBattle(seed: number): { state: CombatState; events: CombatEvent[] } {
+    return resolveBattleStartEntries(buildInitialState(seed), 1, allCombatants, statuses, passives, fieldEffects);
+  }
+
   function buildInitialState(seed: number): CombatState {
     return buildCombatState(
       seed,
@@ -885,8 +897,11 @@ export function FightScreen({
     );
   }
 
-  const [combat, setCombat] = useState<CombatState>(() => buildInitialState(Math.floor(Math.random() * 2 ** 31)));
-  const [log, setLog] = useState<LogLine[]>([]);
+  const [opening] = useState(() => openBattle(Math.floor(Math.random() * 2 ** 31)));
+  const [combat, setCombat] = useState<CombatState>(opening.state);
+  const [log, setLog] = useState<LogLine[]>(() =>
+    formatEvents(opening.events, allCombatants, opening.state.combatants, moves).map((l, i) => ({ ...l, key: `open-${i}-${l.key}` }))
+  );
   const [logOpen, setLogOpen] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
@@ -1208,8 +1223,12 @@ export function FightScreen({
 
   function handleForcedReplacement(slot: 0 | 1, benchedCombatantId: string) {
     const result = applyForcedReplacement(combat, combat.round, PLAYER_SIDE, slot, benchedCombatantId, statuses);
-    setCombat(result.state);
-    appendLog(formatEvents(result.events, allCombatants, result.state.combatants, moves));
+    // A replacement after a KO is still an arrival — same entry hook a
+    // declared switch runs (resolveRound.ts), applied here because forced
+    // replacement is resolved by the view, outside a round.
+    const entry = resolvePassiveReactions(result.state, combat.round, result.events, allCombatants, statuses, passives, fieldEffects);
+    setCombat(entry.state);
+    appendLog(formatEvents([...result.events, ...entry.events], allCombatants, entry.state.combatants, moves));
     setReplacementPick(null);
   }
 
@@ -1337,6 +1356,9 @@ export function FightScreen({
         const r = applyForcedReplacement(nextState, nextState.round, AI_SIDE, slot, inId, statuses);
         nextState = r.state;
         events.push(...r.events);
+        const entry = resolvePassiveReactions(nextState, nextState.round, r.events, allCombatants, statuses, passives, fieldEffects);
+        nextState = entry.state;
+        events.push(...entry.events);
       }
     }
 

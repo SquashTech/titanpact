@@ -190,13 +190,17 @@ boundary.
   Field Effect is authored.
 - **Should a relic be able to grant a Field Effect passively at fight-build time**
   (like `RelicDefinition.grantsStatusIds` does for Elemental Force), rather than only
-  through a reactive Passive hook firing mid-fight? Nothing needs this yet — no
-  reactive hook exists today that would plausibly fire "on fight start" or "on switch
-  in" (`PassiveHook` is `DamageDealt | StatusApplied | StatusTicked` only), so a
-  relic-granted Field Effect is currently unreachable in practice even though the
-  `setFieldEffect` `PassiveEffect` shape technically supports it. Revisit once a
-  Field Effect is actually meant to be always-on from a relic rather than
-  move-triggered.
+  through a reactive Passive hook firing mid-fight? **Half of the premise this was
+  written on has since changed** (2026-08-31): `PassiveHook` now includes
+  `SwitchedIn`, the entry hook Imposing Presence needed (docs/events.md), and it fires
+  for the opening lead as well as for every mid-fight arrival
+  (`passiveEngine.ts` `resolveBattleStartEntries`). So a relic granting a Field
+  Effect on entry IS now reachable — a relic-held `{ hook: 'SwitchedIn', effect:
+  { kind: 'setFieldEffect' } }` would set it the moment a fight opens, since a relic
+  broadcasts to every combatant on the side. The question that remains is narrower and
+  still open: should it be expressible as a plain build-time grant (like
+  `RelicDefinition.grantsStatusIds`) rather than as a hook that has to fire? Nothing
+  needs either yet.
 - **Verdant Earth's bonus size**, as of the Nature slate, is no longer bounded by the
   20–30 Renew the fixture content granted: Overgrowth's Renew 100 makes this a ~+125
   Attack/Intelligence swing. **Signed off 2026-08-30** — see docs/combat.md "Renew's
