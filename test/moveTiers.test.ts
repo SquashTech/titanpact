@@ -27,13 +27,9 @@ import type { MoveTier, TypeId } from '../src/engine/content';
  * the only type left out, and only because it is still two fixture moves
  * with no authored slate behind them: nothing to read a tier column off.
  *
- * Light, Iron and Beast are EXACT — their design table's tier column survived
- * into the code as the `// -- Early --` block markers in src/data/moves.ts.
- * The other eleven are DERIVED (2026-08-31) and flagged as provisional in
- * moves.ts: the three exact slates prove each type was authored in table
- * order as contiguous Early→Mid→Late blocks, so the split was read back off
- * that ordering and the cost curve. Correct individual rows freely — that is
- * what they are there for.
+ * Every one of them carries the designer's own column, verified against the
+ * source table on 2026-08-31 — see the TIER PROVENANCE block in moves.ts for
+ * how eleven of the fourteen got there and what that exercise proved.
  */
 const TIERED_TYPES: readonly TypeId[] = [
   'Fire',
@@ -123,31 +119,23 @@ test('move tiers: levelUpMovePool only offers what the hero\'s level has reached
   assert.ok(!held.includes('juggernaut'));
 });
 
-test('move tiers: the pools that hold nothing a level-1 hero can be offered, pinned', () => {
-  // A CONSEQUENCE of the gate, not a bug in it, and the thing to look at
-  // first if the early game reads as flat. These pools were authored while
-  // the tier column was documentation only (docs/authoring-moves.md §7 told
-  // slate authors it was "your guide for which hero gets what, not a value
-  // you encode"), so nothing ever asked them to hold an Early move. Six do
-  // not, and those heroes learn nothing at all until level 4.
+test('move tiers: every level-up pool holds something a level-1 hero can be offered', () => {
+  // The invariant the gate created, and the first thing to check if the early
+  // game reads as flat. A pool of nothing but Mid and Late moves means that
+  // hero learns NOTHING until level 4 — its level-up card reads "Level only"
+  // three times over.
   //
-  // It costs the player less than it reads: a starting kit is 3 moves against
-  // a cap of 4, so a hero has room for exactly ONE outright gain anyway, and
-  // the level-up card labels these "Level only" BEFORE the point is spent.
-  // Pinned rather than fixed because the fix is a content call — either these
-  // pools gain an Early entry or the type's split moves — and either way this
-  // list must not grow silently.
+  // Six pools were in exactly that state when the gate landed (Sylva, Tempest,
+  // Vesper, Marrow, Nightshade, Bellows) — they were authored while the tier
+  // column was documentation only (docs/authoring-moves.md §7 told slate
+  // authors it was "your guide for which hero gets what, not a value you
+  // encode"), so nothing ever asked them to hold an Early move. All six were
+  // given one on 2026-08-31; see the comments on each in data/progression.ts
+  // for what each type's Early tier actually left available.
   const starved = Object.keys(progressionTable.moveTiers)
     .filter((heroId) => levelUpMovePool(progressionTable, moves, entryAt(heroId, 1)).length === 0)
     .sort();
-  assert.deepStrictEqual(starved, [
-    'nightshade', // Shadow: 4 Mid, 2 Late
-    'marrow', // Shadow: 2 Mid, 2 Late
-    'steamColossus', // Mech: 2 Mid, 4 Late
-    'shadowMonk', // Shadow: 3 Mid, 2 Late
-    'tempest', // Storm: 3 Mid, 3 Late
-    'wildOracle', // Nature: 4 Mid, 3 Late
-  ].sort());
+  assert.deepStrictEqual(starved, [], 'these pools hold no move a level-1 hero can be offered');
 });
 
 test('move tiers: a pool can legitimately empty out, which the screen reads as "Level only"', () => {

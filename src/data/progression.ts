@@ -126,7 +126,15 @@ export const progressionTable: ProgressionTable = {
     // the gap that type's hand-off reported and nothing has filled since.
     // The other candidates are deliberately left unplaced; see
     // docs/authoring-moves.md §10.
-    wildOracle: ['blight', 'corrode', 'magicGrowth', 'miasma', 'forceOfNature', 'wildBloom', 'animalSpirit'],
+    // Vine Lash is the 2026-08-31 tier-gate fix: Sylva's pool was Mid and Late
+    // only, so under the gate (run/progression.ts MOVE_TIER_LEVEL) it learned
+    // nothing at all until level 4. It is a physical row on an Int-60/Atk-45
+    // hero and that is deliberate — Nature's Early tier authors exactly ONE
+    // magical row (Seed Shot) and Sylva already starts with it, so the choice
+    // was an off-stat row of its own type or an off-type row of the right
+    // stat. Vine Lash wins on the identity Sylva is built around: 20 mana of
+    // Poison, feeding the same Blight/Corrode stack that Miasma detonates.
+    wildOracle: ['vineLash', 'blight', 'corrode', 'magicGrowth', 'miasma', 'forceOfNature', 'wildBloom', 'animalSpirit'],
     // The three Storm heroes draw from the authored Storm pool (src/data/moves.ts,
     // 2026-08-30), split by the stat each actually attacks with, same as Fire,
     // Water and Frost. Squall (Atk 65 vs Int 35) and Scallywag (Atk 75 vs Int
@@ -149,15 +157,29 @@ export const progressionTable: ProgressionTable = {
     // STARTER, so it is the one that can be drafted alongside a second Storm
     // hero. That the +50 Attack lands better on that partner than on Tempest
     // itself is the point, not an accident.
-    tempest: ['ionize', 'chainLightning', 'electricBurst', 'thunderbolt', 'stormSurge', 'ionicZap'],
+    // Zap and Rising Static are the 2026-08-31 tier-gate fix — the pool was
+    // Mid and Late only. Both are the magical line one tier down rather than
+    // filler: Zap is Ionic Zap's +1 bracket at a fifth of the price, and
+    // Rising Static plants the Conduct that Electric Burst and Ionize are
+    // written to read. Tempest starts with Jolt and Charge, the type's other
+    // two Early rows, so this is the whole rest of Storm's Early tier.
+    tempest: ['zap', 'risingStatic', 'ionize', 'chainLightning', 'electricBurst', 'thunderbolt', 'stormSurge', 'ionicZap'],
     // Shadow's authored pool (src/data/moves.ts, 2026-08-30). Vesper is the
     // physical Stealth line — Ambush and Shadow Form are the payoffs its own
     // Vanish arms. Marrow is the MAGICAL line (heroes.ts: Attack and
     // Intelligence swapped, 2026-08-30), so it takes the Poison escalation and
     // the magical execute and none of the physical moves it can no longer
     // swing.
-    shadowMonk: ['ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm'],
-    marrow: ['umbralBeam', 'umbralWave', 'eclipse', 'enfeeble'],
+    //
+    // Both gained Early rows on 2026-08-31 (the tier gate), and what each
+    // could take is the cleanest illustration of the split above. Vesper is
+    // Attack 75, so it takes Backstab and Weaken — the Bleed opener its own
+    // Ambush wants and the 15-mana Defense/Wisdom cut that prices the burst.
+    // Marrow is Attack 40, so of Shadow's five Early rows it can use exactly
+    // one: Vanish. Umbra Bolt (the tier's only magical row) is already in its
+    // starting kit and so is Weaken, and the other two are physical.
+    shadowMonk: ['backstab', 'weaken', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm'],
+    marrow: ['vanish', 'umbralBeam', 'umbralWave', 'eclipse', 'enfeeble'],
     // The three Frost heroes draw from the authored Frost pool (src/data/moves.ts,
     // 2026-08-30), split by the stat each actually attacks with, same as Fire
     // and Water. Flurry (Int 70) takes the magical line and with it BOTH of the
@@ -500,7 +522,12 @@ export const progressionTable: ProgressionTable = {
     // Speed 85, the fastest Shadow hero, so Shadowstrike's +1 bracket is worth
     // most here. Off-type filler (curseMind, rendingClaw, stunningBlow) drops
     // for the type's own line — docs/authoring-moves.md §7, "a line, not a sample".
-    nightshade: ['shadowstrike', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm'],
+    // Fade Strike is the 2026-08-31 tier-gate fix. Nightshade starts with
+    // Backstab, Vanish and Weaken — three of Shadow's five Early rows — and
+    // the fifth is magical, so the type leaves exactly one row an Attack-80
+    // hero can be offered. One Early entry is thin, but it is the whole
+    // remainder of the tier rather than a choice to widen it.
+    nightshade: ['fadeStrike', 'shadowstrike', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm'],
     // Pincer takes the physical line — and Wash Away, which scales off Wisdom
     // (45) rather than off the category, so the 20-Intelligence wall is a
     // perfectly good carrier for it. Wave Shred sits here because Pincer is the
@@ -530,7 +557,14 @@ export const progressionTable: ProgressionTable = {
     // all five is worth most on the body with the worst Speed, and Perfect
     // Creation is six flat statuses, so Intelligence 15 costs it nothing.
     // Onslaught keeps the Iron half of the ramp alive.
-    steamColossus: ['cogSlam', 'whirlingBlades', 'jackpot', 'overdrive', 'perfectCreation', 'onslaught'],
+    // Swift Blow and Piston Punch are the 2026-08-31 tier-gate fix, one from
+    // each of Bellows' two types, and both chosen against Speed 15. Swift
+    // Blow is the game's answer to that number — 15 base power in bracket 1,
+    // so the type buys the turn order rather than the exchange — and Piston
+    // Punch is the Mech ramp that makes a 15-Speed body worth leaving in.
+    // Backfire and Kickstart are the other Mech Early rows and both are wrong
+    // here: Intelligence 15 and Wisdom 35.
+    steamColossus: ['swiftBlow', 'pistonPunch', 'cogSlam', 'whirlingBlades', 'jackpot', 'overdrive', 'perfectCreation', 'onslaught'],
     // Zenith takes the battery line — every mana grant the slate authors, plus
     // Arcane Overflow, which is the only move that reads the pool back out. The
     // three are one plan: bank with Font of Power, cash it as a three-figure

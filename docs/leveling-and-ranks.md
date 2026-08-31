@@ -74,21 +74,21 @@ The gate applies to generated enemies through the same function
 (`src/run/enemyGen.ts`), so an Act 1 enemy at level 1 fields only Early moves and the
 Act 5 level-10 enemies field the capstones — the act curve buys movepool depth for free.
 
-**All fourteen authored slates are tiered**, but only three of them exactly. Light, Iron
-and Beast recorded their tier column in the code; the other eleven lost theirs during
-authoring and had it reconstructed from the authoring order and the cost curve — those
-are **provisional** and marked as such at the top of `src/data/moves.ts`. Ancient is
-untiered because it has no authored slate yet, and a move with no `tier` counts as
-Early, i.e. ungated. See `docs/authoring-moves.md` §2 and `test/moveTiers.test.ts`.
+**All fourteen authored slates carry the designer's tier column**, checked against the
+source table on 2026-08-31. Ancient is untiered because it has no authored slate yet,
+and a move with no `tier` counts as Early, i.e. ungated. See `docs/authoring-moves.md`
+§2 and `test/moveTiers.test.ts`.
 
 **The gate exposed a pool-composition problem it did not cause.** Six heroes' level-up
-pools (Sylva, Tempest, Vesper, Marrow, Nightshade, Bellows) contain no Early move at
-all, so they learn nothing until level 4 — those pools were built while the tier column
-was documentation only, and nothing ever asked them to hold one. Eleven more hold
-exactly one. It costs less than it reads (a 3-move starting kit against a 4-move cap
-leaves room for exactly one outright gain anyway, and the card says "Level only" before
-the point is spent), but it is a real flat spot in the early game. Pinned by
-`test/moveTiers.test.ts` so the list cannot grow silently; the fix is a content call.
+pools (Sylva, Tempest, Vesper, Marrow, Nightshade, Bellows) held no Early move at all,
+so they learned nothing until level 4 — those pools were built while the tier column
+was documentation only, and nothing ever asked them to hold one. All six were given
+one; `test/moveTiers.test.ts` now asserts that **every pool holds something a level-1
+hero can be offered**, which is the invariant the gate creates.
+
+Fourteen pools hold exactly one Early move. That is thin but not broken: a 3-move
+starting kit against a 4-move cap leaves room for exactly one outright gain anyway, and
+every offer after that is a replacement offer the player may decline.
 
 ### The four-move cap (LOCKED)
 

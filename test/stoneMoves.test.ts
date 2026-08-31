@@ -508,8 +508,13 @@ test('stone: no move is unreachable that was not already known to be', () => {
   // is authored for its type, not for whichever two heroes currently have it:
   // Tremor, Rockfall and Landslide are magical and Stone's two heroes are both
   // physical, so they wait for a magical Stone hero or for an off-type pool —
-  // both legitimate, and neither a reason to stuff them somewhere today. Storm's
-  // Zap and both Ancient moves predate this slate for the same reason.
+  // both legitimate, and neither a reason to stuff them somewhere today. Both
+  // Ancient moves predate this slate for the same reason.
+  //
+  // Storm's Zap left this list on 2026-08-31: the tier gate
+  // (run/progression.ts MOVE_TIER_LEVEL) found Tempest's pool held nothing an
+  // Early-level hero could be offered, and Zap is Ionic Zap's +1 bracket one
+  // tier down — so it went in as the fix rather than staying an orphan.
   //
   // cerebralShock (Mind, 2026-08-30) is the newest entry and the clearest case
   // for why this list exists. It applies CONDUCT, whose triggerTypes are
@@ -547,6 +552,5 @@ test('stone: no move is unreachable that was not already known to be', () => {
     'spookySlice',
     'tremor',
     'wailingFlight',
-    'zap',
   ]);
 });

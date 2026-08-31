@@ -404,15 +404,18 @@ Three things to know before you author a slate's column:
   `TIERED_TYPES` in `test/moveTiers.test.ts` is the list of slates that are done:
   **add your type to it** and the test then demands a tier on every one of its moves.
   Only Ancient is still off that list.
-- **Eleven slates' tiers are a reconstruction, not the designer's column** — everything
-  except Light, Iron and Beast, whose `// -- Early --` block markers survived. Read the
-  TIER PROVENANCE block at the top of `src/data/moves.ts` before treating one as
-  authoritative, and correct rows freely if you have the original table.
+- **Every authored slate's column has been checked against the designer's table**
+  (2026-08-31). Eleven of them were reconstructed first and then verified; the TIER
+  PROVENANCE block at the top of `src/data/moves.ts` records what that cost and what it
+  proved about how these slates get authored.
 - **Tier is still also your distribution guide** (§7), and now it binds: Early moves are
   starting-kit candidates, Mid/Late go in `moveTiers`. **Give every pool at least one
-  Early entry.** Six pools authored before the gate have none and learn nothing until
-  level 4 (`test/moveTiers.test.ts` pins the list) — that is the failure to avoid, not a
-  precedent.
+  Early entry** — `test/moveTiers.test.ts` fails if one has none. Six pools authored
+  before the gate did, and those heroes learned nothing until level 4.
+- **Author more than one magical row into the Early tier.** Every slate so far puts
+  exactly one there, and the type's magical hero starts with it — which is why Sylva and
+  Marrow had *no legal Early pick left* and had to take an off-stat or utility row. It
+  is the single most repeated shape in the whole set.
 
 ### `priority`
 

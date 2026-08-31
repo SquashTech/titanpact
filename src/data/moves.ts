@@ -102,29 +102,29 @@ export const RANDOM_STAT_POOL: readonly StatKey[] = ['attack', 'defense', 'intel
  * reaches its tier's level (1 / 4 / 7 — src/run/progression.ts
  * MOVE_TIER_LEVEL, docs/leveling-and-ranks.md). Nothing in combat reads it.
  *
- * Three slates are EXACT. Light, Iron and Beast recorded their tier column in
- * the code as `// -- Early --` block markers, and those markers are what the
- * field was populated from.
+ * EVERY tier below is the designer's own column, checked row by row against
+ * the source table on 2026-08-31. Ancient is the only untiered type, because
+ * it is still two fixture moves with no slate behind them; an omitted tier
+ * reads as Early, i.e. ungated.
  *
- * Eleven are DERIVED, and are PROVISIONAL in CLAUDE.md's sense — Fire, Water,
- * Frost, Storm, Stone, Nature, Shadow, Arcane, Mind, Spirit, Mech. Their tier
- * column was lost during authoring (§2 of the runbook told slate authors it
- * was documentation, not a value to encode), so it was read back off two
- * things the three exact slates establish:
+ * The part worth keeping is how eleven of them got here. Only Light, Iron and
+ * Beast had recorded their column in the code (as `// -- Early --` block
+ * markers) — the other eleven lost theirs during authoring, because §2 of the
+ * runbook told slate authors the column was documentation rather than a value
+ * to encode. They were reconstructed from two things the three surviving
+ * slates establish:
  *
- *   1. every slate was authored in TABLE ORDER, as contiguous Early→Mid→Late
+ *   1. every slate is authored in TABLE ORDER, as contiguous Early→Mid→Late
  *      blocks of roughly 5-7 / 5-7 / 4-5 moves, and
  *   2. the tiers track the cost curve — Early sits at the type's 15-35 mana
  *      floor, Mid at 35-50, Late at 50+.
  *
- * Every derived boundary landed exactly where the slate's cost curve steps,
- * which is what makes them worth shipping — but they are a reconstruction,
- * not the designer's column. Correct any row freely; the field is the source
- * of truth, and test/moveTiers.test.ts only asserts that each authored slate
- * has all three tiers, never which move sits in which.
- *
- * Ancient is untiered because it is still two fixture moves with no slate
- * behind them. An omitted tier reads as Early, i.e. ungated.
+ * The designer then supplied the original table, and the reconstruction was
+ * wrong on exactly TWO rows out of 170: Stoke the Flames is Early, not Mid,
+ * and Conduit is Late, not Mid. Both are moves whose price sits a tier below
+ * where the table puts them, which is the failure mode to expect if this ever
+ * has to be done again — cost predicts tier well, but the designer prices
+ * some rows against what they DO rather than when they arrive.
  */
 
 export const moves: Record<string, MoveDefinition> = {
@@ -239,7 +239,7 @@ export const moves: Record<string, MoveDefinition> = {
   stokeTheFlames: {
     id: 'stokeTheFlames',
     name: 'Stoke the Flames',
-    tier: 'mid',
+    tier: 'early',
     type: 'Fire',
     category: 'magical',
     kind: 'buff',
@@ -2552,7 +2552,7 @@ export const moves: Record<string, MoveDefinition> = {
   conduit: {
     id: 'conduit',
     name: 'Conduit',
-    tier: 'mid',
+    tier: 'late',
     type: 'Arcane',
     category: 'magical',
     kind: 'buff',
