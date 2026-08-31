@@ -8433,10 +8433,16 @@ textarea,
    item greys out in place, and Recruit Contracts got a held-count readout and
    a confirm step. `.guild-hall-relic-*` was deleted with the shelf. */
 
+/* 14px, not 18. With Contracts folded into Recruits there are only two
+   sections left, and the goal is a Hall that fits without scrolling on a
+   typical phone (user direction, 2026-08-31) — the eyebrow head already
+   separates sections with an accent tick and uppercase tracking, so it does
+   not need a generous gap doing the same job twice. This trim plus the two
+   below is what closes the last ~24px. */
 .guild-hall {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
 
 /* On a shop node the corner roster glyph sits over the top-right of this row,
@@ -8595,12 +8601,24 @@ textarea,
   color: var(--enemy);
 }
 
-.guild-hall-equip-list {
+/* Both of these are written as `.equip-cache-* .guild-hall-*` (0,2,0) rather
+   than as the bare `.guild-hall-*` class they used to be. The base
+   `.equip-cache-list` / `.equip-cache-card` rules are defined LATER in this
+   file, so at equal (0,1,0) specificity they won on source order and these
+   two overrides had never applied at all — the shop's shelf was silently
+   wearing the Equipment Cache's own 10px gap and 14px/16px padding. Found
+   when trimming the Hall to fit without scrolling (2026-08-31) and the trims
+   did nothing.
+
+   Tighter than the cache on purpose: the cache reveals 3 cards as a moment,
+   this lists 4 as a shelf, and 10px vertical still clears the 46px icon badge
+   that actually sets the row height. */
+.equip-cache-list.guild-hall-equip-list {
   gap: 8px;
 }
 
-.guild-hall-equip-card {
-  padding: 10px 12px;
+.equip-cache-card.guild-hall-equip-card {
+  padding: 10px 14px;
 }
 
 .guild-hall-equip-card.unaffordable {
@@ -8653,26 +8671,22 @@ textarea,
 
 /* --- Contracts ---------------------------------------------------------- */
 
-/* How many Recruit Contracts the player is already holding, sitting in the
-   section head where the other sections put their hint. A contract's value
-   depends entirely on how many you already have (they are spent one per
-   claim, and a claim needs a fight left to win), so the price below is not
-   readable without this number next to it. */
+/* How many Recruit Contracts the player already holds, as a chip ON the
+   contract row rather than in a section head of its own — the row moved under
+   Recruits (2026-08-31) and the head went with it. A contract's value depends
+   entirely on how many you have (one is spent per claim, and a claim needs a
+   fight left to win), so it belongs immediately beside the price it is the
+   context for. */
 .guild-hall-contract-held {
   flex-shrink: 0;
-  padding: 3px 10px;
+  padding: 2px 8px;
   border-radius: var(--radius-pill);
   background: rgba(224, 166, 60, 0.08);
   border: 1px solid rgba(224, 166, 60, 0.28);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-dim);
-  white-space: nowrap;
-}
-
-.guild-hall-contract-held strong {
-  font-weight: 800;
+  font-size: 10px;
+  font-weight: 700;
   color: var(--accent);
+  white-space: nowrap;
 }
 
 /* The purchase confirm's two blocks (see GuildHallPanel). `.move-info-desc`
@@ -8731,11 +8745,15 @@ textarea,
   flex-shrink: 0;
 }
 
+/* Takes the row's free space, so the held chip and the price sit together at
+   the right rather than being pushed apart by two competing `margin-left:
+   auto`s (flexbox splits free space evenly between auto margins). */
 .guild-hall-contract-body {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .guild-hall-contract-name {

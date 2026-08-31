@@ -53,7 +53,13 @@ export function ShopNodeScreen({
   return (
     <div className="node-screen shop-node-screen" style={{ '--node-rgb': NODE_TINT_MANA } as CSSProperties}>
       <NodeSky />
-      <RosterPeek run={run} />
+      {/* The full Manage Roster screen behind the corner glyph, not the
+          read-only peek (user direction, 2026-08-31). A shop's real question
+          is "do I already have something better in that slot", and answering
+          it needs the whole roster's equipment laid out at once — plus the
+          ability to shuffle gear between heroes before deciding what is
+          actually worth buying. See RosterPeek's `onRunChange`. */}
+      <RosterPeek run={run} onRunChange={onRunChange} />
       <div className="screen-scroll">
         <GuildHallPanel
           run={run}

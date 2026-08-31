@@ -12,6 +12,7 @@ import { RelicIcon } from '../shared/EquipmentBox';
 import { stackedGrantSummary, stackedRelicName } from '../shared/relicStacks';
 import { ResourceMark } from '../shared/RunGlyph';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
+import { RosterManagementScreen } from './RosterManagementScreen';
 
 interface Props {
   run: RunState;
@@ -21,6 +22,22 @@ interface Props {
    * SquadSelectScreen).
    */
   className?: string;
+  /**
+   * Opt in to the FULL Manage Roster screen (the one the map's menu opens)
+   * behind this same corner glyph, instead of the read-only peek panel.
+   *
+   * The Guild Hall is the caller (user direction, 2026-08-31): the question a
+   * shop actually asks is "do I already have something better in that slot",
+   * and the peek panel could only answer it one hero at a time, three taps
+   * deep, with no way to act on the answer. Every screen's corner glyph is
+   * the same button; what it opens is the screen's call.
+   *
+   * Omit — the default — anywhere the glyph is opened from inside a forced
+   * allocation gate (ForceEquipScreen, LevelUpScreen, the Class and Evolution
+   * nodes). Those hand the player a thing to place, and a roster panel that
+   * can move gear mid-placement could quietly change the thing being placed.
+   */
+  onRunChange?: (next: RunState) => void;
 }
 
 /**
@@ -34,10 +51,11 @@ interface Props {
  * in the top corner, no words: the same discoverable-icon language the map
  * footer and the fight screen's log toggle already use.
  *
- * Deliberately read-only. Equipment is *moved* on the Manage Roster screen
- * (RosterManagementScreen, reachable from the map and before a fight); this
- * is inspection only, so opening it from inside a forced allocation gate
- * can't quietly change the thing being allocated.
+ * Read-only by default — so opening it from inside a forced allocation gate
+ * can't quietly change the thing being allocated. A screen that wants the
+ * full Manage Roster screen (RosterManagementScreen, where equipment is
+ * actually *moved*) behind the same glyph passes `onRunChange`; see that
+ * prop.
  *
  * The grid is the shared HeroPickCard — the same figures the screen behind it
  * is already showing — so the overlay reads as the roster the player is
@@ -45,7 +63,7 @@ interface Props {
  * that hero is currently specialised into (its Class, or its level when it
  * has none), and tapping one opens the full HeroPreviewOverlay sheet.
  */
-export function RosterPeek({ run, className }: Props) {
+export function RosterPeek({ run, className, onRunChange }: Props) {
   const [open, setOpen] = useState(false);
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
 
@@ -66,7 +84,10 @@ export function RosterPeek({ run, className }: Props) {
         <span aria-hidden="true">👥</span>
       </button>
 
-      {open && (
+      {/* Same glyph, fuller screen — see the `onRunChange` prop. */}
+      {open && onRunChange && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setOpen(false)} />}
+
+      {open && !onRunChange && (
         <div className="log-overlay roster-peek-overlay" onClick={() => setOpen(false)}>
           <div className="log-panel roster-peek-panel" onClick={(e) => e.stopPropagation()}>
             <div className="log-panel-header">

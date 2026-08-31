@@ -323,8 +323,21 @@ Hall asking before it takes:
   (`soldOutEquipmentIds`, carried on App.tsx's `shop` Screen because the purchase
   unmounts the screen on its way through the equip gate).
 - **A Recruit Contract asks before it buys**, in a confirm that spells out both
-  before→after numbers, and the section head shows how many the player already holds —
-  the number the price is only readable against.
+  before→after numbers, and the row carries a "N held" chip beside the price — the
+  number the price is only readable against.
+- **The Hall fits on one screen.** Contracts folded into the Recruits section (it is the
+  other way to gain a hero, and a section head of its own cost ~40px), plus tighter
+  section and shelf spacing, take a typical 394x780 phone from ~64px of overflow to 0.
+  Two of those shelf rules had never applied: `.guild-hall-equip-list` /
+  `.guild-hall-equip-card` were (0,1,0) and the base `.equip-cache-*` rules are defined
+  later in `styles.css`, so source order won. They are `.equip-cache-*.guild-hall-*`
+  now.
+- **The corner roster glyph opens the full Manage Roster screen**, not the read-only
+  peek (`RosterPeek`'s new optional `onRunChange`). A shop's real question is "do I
+  already have something better in that slot", which needs the whole roster's equipment
+  at once and the ability to shuffle it. The read-only peek stays the default everywhere
+  else, and specifically in the forced allocation gates, where a roster panel that can
+  move gear mid-placement could change the thing being placed.
 
 **Recruit Contracts are a scarce currency, not a free-and-unlimited claim (2026-08-16
 playtest pass).** `RunState.recruitContracts` starts at 1 per run and is spent (not

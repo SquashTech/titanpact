@@ -243,6 +243,22 @@ export function GuildHallPanel({
             Roster is full ({ROSTER_CAP}/{ROSTER_CAP}) — recruiting will ask you to terminate a hero to make room.
           </p>
         )}
+        {/* A Recruit Contract belongs under Recruits, not in a section of its
+            own (user direction, 2026-08-31): it is the OTHER way to gain a
+            hero here, and giving it a whole eyebrow head of its own was
+            spending ~40px of a screen that only just overflowed to say so.
+            The held count rides on the row itself, next to the price it is
+            the context for — a second contract is worth much less than a
+            first if there is little left to beat. */}
+        <button className="guild-hall-contract-row" disabled={!canBuyContract} onClick={() => setConfirmingContract(true)}>
+          <span className="guild-hall-contract-icon">📜</span>
+          <span className="guild-hall-contract-body">
+            <span className="guild-hall-contract-name">Recruit Contract</span>
+            <span className="guild-hall-contract-desc">Claim a beaten enemy hero for free, later.</span>
+          </span>
+          <span className="guild-hall-contract-held">{run.recruitContracts} held</span>
+          <span className="guild-hall-contract-price">{CONTRACT_PURCHASE_COST}g</span>
+        </button>
       </div>
 
       <div className="guild-hall-section">
@@ -269,26 +285,6 @@ export function GuildHallPanel({
         ) : (
           <p className="hint">No gear on offer this visit.</p>
         )}
-      </div>
-
-      <div className="guild-hall-section">
-        <div className="guild-hall-section-head">
-          <span className="guild-hall-section-title">📜 Contracts</span>
-          {/* The count is what makes the price legible: a second contract is
-              worth much less than a first if there is nothing left to beat,
-              and the player cannot weigh that without knowing the balance. */}
-          <span className="guild-hall-contract-held">
-            You hold <strong>{run.recruitContracts}</strong>
-          </span>
-        </div>
-        <button className="guild-hall-contract-row" disabled={!canBuyContract} onClick={() => setConfirmingContract(true)}>
-          <span className="guild-hall-contract-icon">📜</span>
-          <span className="guild-hall-contract-body">
-            <span className="guild-hall-contract-name">Recruit Contract</span>
-            <span className="guild-hall-contract-desc">Claim a beaten enemy hero for free, later.</span>
-          </span>
-          <span className="guild-hall-contract-price">{CONTRACT_PURCHASE_COST}g</span>
-        </button>
       </div>
 
       {previewOffer &&
