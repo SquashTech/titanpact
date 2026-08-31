@@ -61,9 +61,12 @@ don't silently override it.
   tier; the level-up that reaches the Evolution level instead **surfaces the Evolution
   choice** — no move that level-up. **They never directly raise stats**, with one
   documented exemption (2026-08-31): past `MASTERY_LEVEL` = 10 the movepool is spent, so a
-  level-up instead grants a flat **+10 to a randomly drawn combat stat** — the sink that
-  keeps hyperfocusing one hero a real option (`MASTERY_STAT_POOL`, `grantMasteryStat`,
-  `src/run/progression.ts`). The reel is the **five combat stats only**; HP/Mana/MP Regen
+  level-up instead rolls **three distinct combat stats and the player picks one**, for a
+  flat **+10** — the sink that keeps hyperfocusing one hero a real option
+  (`MASTERY_CHOICE_COUNT`, `drawMasteryStats`, `grantMasteryStat`, `src/run/progression.ts`).
+  A choice rather than a single forced roll because hyperfocus needs *aim*; three of five
+  still withholds two stats, so the roll keeps mattering. The reel is the
+  **five combat stats only**; HP/Mana/MP Regen
   are excluded because a flat +10 is not worth the same thing across all eight — the same
   call `RANDOM_STAT_POOL` made for moves. Enforced by `test/mastery.test.ts`.
 - **A level-up never pays out nothing** (2026-08-31). Every hero's move pool is authored to

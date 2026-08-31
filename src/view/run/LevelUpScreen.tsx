@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
-import type { HeroDefinition } from '../../engine/content';
+import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import {
   levelUpHero,
@@ -13,15 +13,16 @@ import {
   chosenEvolutionPaths,
   chooseEvolutionPath,
   MOVE_CAP,
-  MASTERY_STAT_POOL,
   MASTERY_STAT_AMOUNT,
+  drawMasteryStats,
   grantMasteryStat,
   levelUpPayout,
   ProgressionError,
   type EvolutionNode,
 } from '../../run/progression';
 import { MoveButtonReplica, useLongPress } from '../shared/MoveTile';
-import { STAT_LABELS } from '../shared/StatBars';
+import { STAT_LABELS, STAT_COLORS, StatGlyph } from '../shared/StatBars';
+import { entryStatTotals } from '../shared/entryStatTotals';
 import { healCasterForEntry } from '../shared/healCaster';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -42,6 +43,19 @@ interface Props {
 interface MoveOffer {
   rosterId: string;
   moveId: string;
+}
+
+/**
+ * A mastery level-up's three rolled stats, awaiting the player's pick
+ * (run/progression.ts drawMasteryStats). The level is already banked when
+ * this is set — only the +10 is outstanding — so this offer has no decline:
+ * every option is a strict gain, and refusing one would just burn the point.
+ * That is the difference from MoveOffer, where declining a swap is a real
+ * choice because the replacement can be worse than what it displaces.
+ */
+interface MasteryOffer {
+  rosterId: string;
+  stats: StatKey[];
 }
 
 /**
@@ -166,6 +180,37 @@ function GrowthCard({ hero, entry, node, canAct, isAnimating, onActivate, onPrev
 }
 
 /**
+ * One rolled stat on the mastery picker: what the hero has now, and what
+ * this pick would make it.
+ *
+ * Showing the CURRENT value is the whole reason this is a choice screen and
+ * not three bare labels — "+10 Attack" means something very different on a
+ * 90-Attack bruiser than on a 20-Attack caster, and the player is being asked
+ * to decide exactly that. `current` already includes equipment, Evolution,
+ * map-node and earlier mastery grants (run/entryStats.ts entryStatModifiers),
+ * so it is the number the hero actually fights with.
+ */
+function MasteryStatOption({ stat, current, onPick }: { stat: StatKey; current: number; onPick: () => void }) {
+  return (
+    <button className="mastery-option" onClick={onPick}>
+      <span className="mastery-option-glyph" aria-hidden="true">
+        <StatGlyph stat={stat} />
+      </span>
+      <span className="mastery-option-label">{STAT_LABELS[stat]}</span>
+      <span className="mastery-option-math">
+        <span className="mastery-option-from">{current}</span>
+        <span className="mastery-option-arrow" aria-hidden="true">
+          →
+        </span>
+        <span className="mastery-option-to" style={{ color: STAT_COLORS[stat] }}>
+          {current + MASTERY_STAT_AMOUNT}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+/**
  * The move-replace offer's headline hero portrait/name — a plain hold (no
  * click action of its own to protect) opens the same HeroPreviewOverlay
  * sheet as the roster, so a player unsure about a swap can check the hero's
@@ -223,6 +268,8 @@ const LEVEL_UP_ANIM_MS = 550;
  */
 export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
   const [offer, setOffer] = useState<MoveOffer | null>(null);
+  /** The mastery level-up's three rolled stats, awaiting a pick. Mutually exclusive with `offer` in practice — one level-up pays out either a move or a stat, never both. */
+  const [masteryOffer, setMasteryOffer] = useState<MasteryOffer | null>(null);
   /** The move offer's currently-highlighted replacement target — a click selects it, but nothing is applied until Confirm. */
   const [selectedReplaceId, setSelectedReplaceId] = useState<string | null>(null);
   /** Which roster entry, if any, has taken over the screen with its full-screen Evolution choice (see EvolutionScreen). */
@@ -280,10 +327,14 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     // that keeps a maxed hero worth investing in (run/progression.ts
     // grantMasteryStat). Also the catch-all for an empty pool below the cap,
     // so no level-up can pay out nothing.
+    //
+    // The level is banked immediately and the GRANT waits on the player's
+    // pick, the same split the move-replace offer already uses: the point is
+    // spent either way, so the level must not be contingent on the choice.
     if (levelUpPayout(progressionTable, moves, nextEntry) === 'mastery') {
-      const stat = MASTERY_STAT_POOL[Math.floor(Math.random() * MASTERY_STAT_POOL.length)];
-      onRunChange(grantMasteryStat(next, rosterId, stat));
-      setFeedback(`${heroName} reached Lv ${nextEntry.level} — +${MASTERY_STAT_AMOUNT} ${STAT_LABELS[stat]}!`);
+      onRunChange(next);
+      setFeedback(null);
+      setMasteryOffer({ rosterId, stats: drawMasteryStats(Math.random) });
       return;
     }
 
@@ -330,12 +381,30 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     setSelectedReplaceId(null);
   }
 
+  /** Applies the mastery pick. No null case, unlike resolveOffer — the picker has no decline (see MasteryOffer). */
+  function resolveMasteryOffer(stat: StatKey) {
+    if (!masteryOffer) return;
+    const entry = run.roster.find((r) => r.rosterId === masteryOffer.rosterId);
+    if (!entry) return;
+    onRunChange(grantMasteryStat(run, masteryOffer.rosterId, stat));
+    setFeedback(
+      `${heroes[entry.heroId].name} reached Lv ${entry.level} — +${MASTERY_STAT_AMOUNT} ${STAT_LABELS[stat]}!`
+    );
+    setMasteryOffer(null);
+  }
+
   function handleChooseEvolution(rosterId: string, pathId: string) {
     onRunChange(chooseEvolutionPath(run, progressionTable, heroes, rosterId, pathId));
     setEvolvingRosterId(null);
   }
 
   const offerEntry = offer ? (run.roster.find((r) => r.rosterId === offer.rosterId) ?? null) : null;
+
+  const masteryEntry = masteryOffer ? (run.roster.find((r) => r.rosterId === masteryOffer.rosterId) ?? null) : null;
+  /* What the picker's "80 → 90" reads off: base plus every flat grant already
+     on the hero, so the comparison is against what it actually fights with
+     rather than against its authored line. */
+  const masteryTotals = masteryEntry ? entryStatTotals(heroes[masteryEntry.heroId], masteryEntry, run.relics) : null;
 
   const evolvingEntry = evolvingRosterId ? (run.roster.find((r) => r.rosterId === evolvingRosterId) ?? null) : null;
   const evolvingNode = evolvingEntry ? availableEvolution(progressionTable, evolvingEntry) : null;
@@ -369,7 +438,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
       {/* Hidden while the move-replace offer is up: that panel has its own
           headline, and it is the one layout here tall enough to need the
           whole screen. */}
-      {!offer && (
+      {!offer && !masteryOffer && (
         <NodeHeader
           eyebrow="Growth Phase"
           title="Level Up"
@@ -406,7 +475,31 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
         </NodeHeader>
       )}
 
-      {offer && offerEntry ? (
+      {masteryOffer && masteryEntry && masteryTotals ? (
+        <div className="screen-scroll moveoffer-stage">
+          <div className="stage-centered">
+            <div className="reward-panel mastery-panel">
+              <OfferHeroHead
+                hero={heroes[masteryEntry.heroId]}
+                onPreview={() => setPreviewEntry({ hero: heroes[masteryEntry.heroId], entry: masteryEntry })}
+              />
+              <p className="offer-hero-sub">
+                Lv {masteryEntry.level} — the movepool is spent. Pick a stat to raise, permanently.
+              </p>
+              <div className="mastery-options">
+                {masteryOffer.stats.map((stat) => (
+                  <MasteryStatOption
+                    key={stat}
+                    stat={stat}
+                    current={masteryTotals[stat]}
+                    onPick={() => resolveMasteryOffer(stat)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : offer && offerEntry ? (
         <div className="screen-scroll moveoffer-stage">
           <div className="stage-centered">
             <div className="reward-panel">
@@ -526,7 +619,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
           the fold — it is a comparison between the offered move and four
           existing ones, and a comparison you have to scroll to complete is one
           you make from memory. */}
-      {!offer && (
+      {!offer && !masteryOffer && (
         <button className="resolve-button" disabled={run.levelUpPool > 0 || pendingEvolutions > 0} onClick={onDone}>
           Continue
         </button>

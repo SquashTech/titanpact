@@ -30,6 +30,8 @@ import {
   MASTERY_LEVEL,
   MASTERY_STAT_AMOUNT,
   MASTERY_STAT_POOL,
+  MASTERY_CHOICE_COUNT,
+  drawMasteryStats,
   ProgressionError,
 } from '../src/run/progression';
 
@@ -153,6 +155,54 @@ test('mastery: grants reach combat through the same merge every other flat grant
   const counts = entryPassiveCounts(entry, equipment, {});
   const mods = entryStatModifiers(entry, equipment, passives, counts);
   assert.strictEqual(mods.attack, MASTERY_STAT_AMOUNT * 2);
+});
+
+test('mastery: the offer is three DISTINCT stats drawn from the reel', () => {
+  // Distinctness is the whole feature, not a nicety: a repeat would silently
+  // turn the three-way pick back into a two-way one, which is the slot-machine
+  // problem the choice was added to fix. Swept across many seeds rather than
+  // spot-checked, since a shuffle bug is exactly the kind that hides behind
+  // one lucky draw.
+  for (let seed = 0; seed < 400; seed++) {
+    // A cheap deterministic sequence — this only needs to be varied, not good.
+    let n = seed;
+    const random = () => {
+      n = (n * 1103515245 + 12345) % 2147483648;
+      return n / 2147483648;
+    };
+    const drawn = drawMasteryStats(random);
+    assert.strictEqual(drawn.length, MASTERY_CHOICE_COUNT, `seed ${seed} drew ${drawn.length}`);
+    assert.strictEqual(new Set(drawn).size, MASTERY_CHOICE_COUNT, `seed ${seed} repeated a stat: ${drawn.join(', ')}`);
+    for (const stat of drawn) assert.ok(isValidMasteryStat(stat), `seed ${seed} drew off-reel ${stat}`);
+  }
+});
+
+test('mastery: every stat on the reel is reachable, and none dominates', () => {
+  // The draw must not be able to strand a stat — a hero that can never be
+  // offered Speed is a hero the "hyperfocus" pitch quietly lies to. Counts the
+  // appearances across a sweep and asserts each stat shows up at a plausible
+  // rate rather than exactly 3/5, which would be testing the PRNG.
+  const seen: Record<string, number> = {};
+  const rounds = 1000;
+  let n = 7;
+  const random = () => {
+    n = (n * 1103515245 + 12345) % 2147483648;
+    return n / 2147483648;
+  };
+  for (let i = 0; i < rounds; i++) for (const stat of drawMasteryStats(random)) seen[stat] = (seen[stat] ?? 0) + 1;
+
+  for (const stat of MASTERY_STAT_POOL) {
+    const share = (seen[stat] ?? 0) / rounds;
+    assert.ok(share > 0.4 && share < 0.8, `${stat} appeared in ${(share * 100).toFixed(1)}% of draws (expect ~60%)`);
+  }
+});
+
+test('mastery: asking for more than the reel holds yields the whole reel, not a hang', () => {
+  // The guard that keeps a future MASTERY_CHOICE_COUNT bump (or a shrunk reel)
+  // from turning a draw-without-replacement loop into an infinite one.
+  const all = drawMasteryStats(() => 0.5, MASTERY_STAT_POOL.length + 3);
+  assert.strictEqual(all.length, MASTERY_STAT_POOL.length);
+  assert.deepStrictEqual([...all].sort(), [...MASTERY_STAT_POOL].sort());
 });
 
 test('mastery: an unknown roster id is rejected rather than silently ignored', () => {

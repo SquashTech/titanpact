@@ -12165,6 +12165,80 @@ textarea,
   text-shadow: 0 0 10px rgba(224, 166, 60, 0.85);
 }
 
+/* The mastery stat picker (LevelUpScreen, level-ups past MASTERY_LEVEL).
+   Three rolled stats, one tap each — no Confirm step, unlike the move-replace
+   offer beneath it: there is nothing to compare against and no decline, so a
+   second tap would be ceremony. The row reads as a stat block rather than as
+   three reward cards, because that is the comparison being asked for. */
+.mastery-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.mastery-option {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-2, rgba(255, 255, 255, 0.03));
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.14s ease,
+    background 0.14s ease,
+    transform 0.14s ease;
+}
+
+.mastery-option:hover,
+.mastery-option:focus-visible {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
+}
+
+.mastery-option:active {
+  transform: translateY(0);
+}
+
+.mastery-option-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mastery-option-label {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Tabular figures so the three rows' arrows line up in a column — the whole
+   point of the panel is scanning "which of these is worth the most to me". */
+.mastery-option-math {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.mastery-option-from {
+  color: var(--text-dim);
+}
+
+.mastery-option-arrow {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
 /* Move-replace offer headline (LevelUpScreen's OfferHeroHead) — 48px, a clean
    1x, rather than the shared .training-hero-portrait's 32px 0.667x downscale
    (that class is still SandboxBattleScreen's and is left alone). */

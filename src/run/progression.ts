@@ -111,6 +111,43 @@ export function isValidMasteryStat(stat: StatKey): boolean {
 }
 
 /**
+ * How many stats a mastery level-up puts on the table. The player picks one
+ * (2026-08-31, second pass): a single forced roll made "hyperfocus one hero"
+ * a slot machine rather than a decision — a physical body could roll Wisdom
+ * four times out of six and the investment was simply wasted. Three of five
+ * keeps the roll meaningful (the reel still withholds two stats, so the
+ * player rarely gets exactly what they came for) while making every mastery
+ * level-up a real choice.
+ */
+export const MASTERY_CHOICE_COUNT = 3;
+
+/**
+ * Draws the stats a mastery level-up offers: `count` DISTINCT stats from
+ * MASTERY_STAT_POOL, in rolled order.
+ *
+ * Distinct because the choice is the whole point — the same stat twice would
+ * silently narrow a three-way pick to a two-way one. Draws by partial
+ * Fisher-Yates over a copy, so a `count` at or above the pool size simply
+ * yields the whole (shuffled) pool rather than looping forever.
+ *
+ * Takes `random` as a parameter rather than calling Math.random itself,
+ * matching how every other roll in this layer works: /src/engine forbids
+ * ambient randomness outright (engine/rng/seededRng.ts), and while the run
+ * tier is not bound by that rule, keeping the roll injected is what lets this
+ * be tested against a fixed sequence and lets a future seeded run-tier RNG
+ * drop in without touching the mechanism.
+ */
+export function drawMasteryStats(random: () => number, count: number = MASTERY_CHOICE_COUNT): StatKey[] {
+  const bag = [...MASTERY_STAT_POOL];
+  const draw = Math.min(count, bag.length);
+  for (let i = 0; i < draw; i++) {
+    const j = i + Math.floor(random() * (bag.length - i));
+    [bag[i], bag[j]] = [bag[j], bag[i]];
+  }
+  return bag.slice(0, draw);
+}
+
+/**
  * What a level-up actually pays out, read off the POST-level-up entry (the
  * one `levelUpHero` returned) for the same reason `levelUpMovePool` is: the
  * level just reached is what decides the answer.
