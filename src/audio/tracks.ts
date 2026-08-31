@@ -30,6 +30,7 @@
 import wildsEdgeUrl from '../../music/wilds edge.flac?url';
 import forbiddenForestUrl from '../../music/forbidden forest.flac?url';
 import blightedShrineUrl from '../../music/blighted shrine.flac?url';
+import moltenFoundryUrl from '../../music/molten foundry.flac?url';
 
 export interface TrackDefinition {
   /** Resolved by the bundler, so it is content-hashed and cache-safe. */
@@ -70,6 +71,12 @@ const trackTable = {
   blightedShrine: {
     url: blightedShrineUrl,
     // House level again, unheard against the other two so far.
+    gain: 0.85,
+  },
+  moltenFoundry: {
+    url: moltenFoundryUrl,
+    // House level again: a per-track trim is worth spending only once these
+    // have been heard back to back in a run.
     gain: 0.85,
   },
 } as const;
