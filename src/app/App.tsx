@@ -48,6 +48,7 @@ import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } fr
 import { generateMap, type MapNodeType } from '../run/map';
 import { generateStarterOptions } from '../run/draft';
 import { generateEncounter, generateGoblinChiefEncounter, type EncounterNodeType, type Encounter } from '../run/enemyGen';
+import { actScaling, type ScalingTrack } from '../run/difficulty';
 import { generateItinerary, locationBias, locationForAct } from '../run/locations';
 import { locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
@@ -383,9 +384,22 @@ export function App() {
       // which have their own fixed sizing) is a deliberately lighter 2v2
       // breather between the opener and elites kicking in.
       const isSecondFight = encounterKind === 'fight' && playerRun.fightsStarted === 1;
+      // The per-act difficulty curve (src/run/difficulty.ts). The track split
+      // is the same pool split `isMobFight` already makes — the two families
+      // scale at the same rate but from different baseline acts, because the
+      // monster pool's content is still a placeholder for per-act monster
+      // tiers that don't exist yet.
+      const track: ScalingTrack = isMobFight ? 'monsters' : 'skirmish';
+      const scaling = actScaling(track, playerRun.actNumber);
       let encounter: Encounter;
       if (node.type === 'battle') {
-        encounter = generateGoblinChiefEncounter(Math.floor(Math.random() * 2 ** 31), BASIC_GOBLIN_IDS, GOBLIN_CHIEF_ID, enemies);
+        encounter = generateGoblinChiefEncounter(
+          Math.floor(Math.random() * 2 ** 31),
+          BASIC_GOBLIN_IDS,
+          GOBLIN_CHIEF_ID,
+          enemies,
+          scaling
+        );
       } else {
         const encounterPool = node.type === 'fight' ? basicGoblins : heroes;
         const heroCountOverride = node.type === 'fight' ? 2 : isSecondFight ? 2 : undefined;
@@ -400,14 +414,15 @@ export function App() {
           encounterPool === heroes
             ? locationBias(locationForAct(playerRun.locationIds, playerRun.actNumber), heroes, heroCount)
             : undefined;
-        encounter = generateEncounter(
-          encounterKind,
-          Math.floor(Math.random() * 2 ** 31),
-          encounterPool,
-          heroCountOverride,
-          undefined,
-          bias
-        );
+        encounter = generateEncounter(encounterKind, Math.floor(Math.random() * 2 ** 31), encounterPool, {
+          heroCount: heroCountOverride,
+          bias,
+          scaling,
+          // Cashes the act's enemy level in for Evolutions and extra moves.
+          // The Goblin pool has no progression data, so passing it there is a
+          // no-op rather than a special case worth branching on.
+          progression: progressionTable,
+        });
       }
       const isFirstFight = encounterKind === 'fight' && playerRun.fightsStarted === 0;
       if (isMobFight && isFirstFight) {
@@ -627,8 +642,8 @@ export function App() {
    */
   function handleQuickBattle() {
     const movepools = Object.fromEntries(Object.values(heroes).map((hero) => [hero.id, fullMovepool(progressionTable, hero)]));
-    const player = generateEncounter('fight', Math.floor(Math.random() * 2 ** 31), heroes, undefined, movepools);
-    const ai = generateEncounter('fight', Math.floor(Math.random() * 2 ** 31), heroes, undefined, movepools);
+    const player = generateEncounter('fight', Math.floor(Math.random() * 2 ** 31), heroes, { movepools });
+    const ai = generateEncounter('fight', Math.floor(Math.random() * 2 ** 31), heroes, { movepools });
     setScreen({ kind: 'quickBattle', player, ai });
   }
 

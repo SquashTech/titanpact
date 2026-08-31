@@ -157,8 +157,14 @@ what's still unimplemented:
   Banner** (2026-08-30): a fixed, never-rolled 1-of-3 team-wide relic — Vitality
   (+30 HP), Wellspring (+20 Mana), Everflow (+10 MP Regen) — stackable across the
   four acts and displayed folded ("Banner of Vitality +2"). Their relative values
-  are an open balance question (`docs/run-loop.md`). Encounter difficulty does not yet scale by act number — open question,
-  `docs/run-loop.md` §3. HP/mana **fully restore
+  are an open balance question (`docs/run-loop.md`). **Encounters scale by act**
+  (2026-08-30) on two tracks (`src/run/difficulty.ts`): **Monsters** baselines at Act 2
+  (placeholder — per-act monster content isn't authored yet), **Skirmish/Guardian** at
+  Act 1, and each act past a track's baseline adds **+30 enemy stat total** on top of
+  the node-kind bonus. Enemy level runs **1 / 3 / 5 / 7 / 10** by act, so from Act 3 on
+  every hero-pool enemy arrives already **evolved**, and a Recruit Contract claims it at
+  that level. Every number here is a first-pass figure for playtest; only the shape is
+  decided. HP/mana **fully restore
   between map nodes** — reversed same-day from an initial persist-across-nodes design
   after first playtest showed a KO'd hero simply stayed dead-weight into the next
   fight with no way to recover it (`docs/run-loop.md`). Relics are **minimal and

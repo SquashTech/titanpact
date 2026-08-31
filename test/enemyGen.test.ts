@@ -53,8 +53,8 @@ test('enemyGen: picked heroIds are distinct and drawn from the given pool', () =
   for (const id of heroIds) assert.ok(heroes[id], `${id} is not in the fixture hero pool`);
 });
 
-test('enemyGen: heroCountOverride shrinks a fight encounter below the default 4 (the run\'s 2nd-fight 2v2 breather)', () => {
-  const { run, squad } = generateEncounter('fight', 1, heroes, 2);
+test('enemyGen: options.heroCount shrinks a fight encounter below the default 4 (the run\'s 2nd-fight 2v2 breather)', () => {
+  const { run, squad } = generateEncounter('fight', 1, heroes, { heroCount: 2 });
   assert.strictEqual(run.roster.length, 2);
   assert.strictEqual(squad.activeIds.filter(Boolean).length, 2);
   assert.strictEqual(squad.benchIds.length, 0);
@@ -73,7 +73,7 @@ test('enemyGen: is generic over any HeroDefinition-shaped pool, gracefully cappi
 });
 
 test('enemyGen: the opening (row 0) fight draws exactly 2 random heroes from the basic-Goblin pool, never the Chief', () => {
-  const { run, squad } = generateEncounter('fight', 7, basicGoblins, 2);
+  const { run, squad } = generateEncounter('fight', 7, basicGoblins, { heroCount: 2 });
   assert.strictEqual(run.roster.length, 2);
   assert.strictEqual(squad.activeIds.filter(Boolean).length, 2);
   assert.strictEqual(squad.benchIds.length, 0);

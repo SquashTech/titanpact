@@ -119,6 +119,11 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `classReward` ("Mentor's Hall") | `ClassNodeScreen` — pick 1 of 3 Classes (`src/data/classes.ts`), then pick which roster hero learns it, filtered to heroes with no Class yet (`src/run/classes.ts` `grantClass`, stored on `RosterEntry.classId` — a hero can hold at most one Class per run, so `grantClass` REPLACES rather than stacks). If every roster hero already has a Class, the offer is simply wasted. **Not in `REWARD_WEIGHTS`** (2026-08-22 revision, per user direction) — the only way to encounter this node type is the forced Act-1 Mentor row (§1), never a random pick-1-of-3 option in any act. |
 | `event` | `EventNodeScreen` — placeholder, no content yet (deferred: "we will design these when it's time"). |
 
+The stat bonuses above are the **node-kind** axis only — what `elite` costs relative to
+`battle` *within one act*. Every encounter node also carries the **per-act** axis on top
+(§3 "Per-act difficulty scaling"), so an Act 4 `elite` fields its +10×2 plus three
+act-steps, and its heroes arrive at level 7 already evolved.
+
 ### Winning a fight: the post-fight gates
 
 A won encounter resolves through up to four gates before the map comes back
@@ -168,13 +173,85 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   to the map screen; otherwise show "Run Complete." Roster, gold, relics, and Recruit
   Contracts all carry over between acts — only the map itself and per-act position reset,
   same "fully restore HP/mana between nodes" spirit already locked below, just at the
-  act boundary instead of the node boundary. Difficulty does **not** yet scale by act
-  number — every act's `fight`/`elite`/`boss` nodes use the same stat-bonus figures
-  (§2) regardless of which act they're in, so acts 2-5 are only harder in practice via
-  the player's own accumulated gear/relics/levels, not via any deliberate curve. Whether
-  that's enough escalation over 5 acts, or whether encounters need an explicit
-  per-act difficulty multiplier, is now an open balance question — flag before assuming
-  either answer.
+  act boundary instead of the node boundary.
+- **Per-act difficulty scaling (2026-08-30, per user direction).** Resolves the open
+  question this bullet used to carry ("difficulty does not yet scale by act number").
+  `src/run/difficulty.ts` is a pure `(track, actNumber) -> ActScaling` table;
+  `enemyGen.ts` applies what it returns. `App.tsx` reads the track off the node type and
+  the act off `RunState.actNumber` — nothing else in the run loop participates.
+
+  **Why act-indexed.** Locations are drawn in random order (`locations.md`), so act
+  number is the only stable measure of run depth. Without this, an Act 2 power level
+  fight can land in Act 5.
+
+  **Two tracks, differing only in baseline act** — they scale at the same rate:
+
+  | Track | Node types | Baseline act | Why |
+  | --- | --- | --- | --- |
+  | `monsters` | `fight`, `battle` | **2** | ⚠️ Placeholder. Per-act monster content does not exist — every act still fields Goblins (`locations.md` §5). Declaring today's Goblin roster the *Act 2* baseline lets the curve be written now and the content authored later: whatever monster roster ships is tuned to feel right in Act 2 and the curve carries it forward. Act 1 clamps to zero steps rather than going negative (the row-0 opener is meant to be the run's weakest fight, not a debuffed one), so **Acts 1 and 2 currently field identically-scaled monsters** — a known consequence of the placeholder, not a curve decision. |
+  | `skirmish` | `skirmish`, `elite`, `boss` | **1** | The hero roster is authored and already sits at the power level a run starts at, so it starts scaling right away — every act past the first adds a step. Guardians ride this track: they are hero-pool content. |
+
+  **One act-step = +30 to an enemy's stat total** — 3 distinct growth stats at +10 each
+  (both figures satisfy CLAUDE.md's multiples-of-5/10 rule; +10×3 over +5×6 so a step is
+  felt where it lands rather than smeared). Each step rolls its **own** 3 stats and the
+  steps merge, so a 4-step Act 5 enemy has a broad line rather than +40 in one stat.
+  This is a **second, independent axis** on top of the node-kind bonuses in §2 — kind
+  says how hard a fight is *for its act*, the curve says how deep the act is. An Act 4
+  `elite` therefore carries its +10×2 **plus** 3 act-steps.
+
+  **Enemy level by act: 1 / 3 / 5 / 7 / 10.** Level is not a stat multiplier (CLAUDE.md:
+  no automatic stat growth), so it buys exactly two things, both intended: it gates
+  Evolution at `EVOLUTION_LEVEL = 5` — which is why the table jumps 3 → 5 at Act 3, so
+  **from Act 3 on every hero-pool enemy arrives already evolved** — and it is how many
+  move unlocks a hero has had, so a scaled enemy fills toward the 4-move cap instead of
+  fighting on its 3-move starting kit. Both are cashed in by `enemyGen.ts` in the same
+  order a player's hero earns them (Evolution first, remaining level-ups on moves). The
+  Evolution path is picked at random with no weighting — choosing the path that best
+  suits a hero is authored design, deliberately not guessed at by the generator, and is
+  the natural seam for hand-authored encounters to take over. On the `monsters` track
+  level is currently cosmetic (the Goblin pool has no progression data), but it is the
+  honest tier label and starts working the moment monster content gets a table.
+
+  **Measured baseline** — mean enemy stat total (HP+Atk+Def+Int+Wis+Spd through
+  `getEffectiveStat`, 40 seeds per act), for reading playtest against:
+
+  | Act | `elite` | `boss` (Guardian) | `battle` (Goblin Chief node) | Level |
+  | --- | --- | --- | --- | --- |
+  | 1 | 392 | 432 | 218 | 1 |
+  | 2 | 422 | 462 | 218 | 3 |
+  | 3 | 464 | 504 | 248 | 5 |
+  | 4 | 494 | 534 | 278 | 7 |
+  | 5 | 524 | 563 | 308 | 10 |
+
+  Note Act 2 → 3 climbs ~42, not the flat 30: that act also turns Evolution on, and the
+  chosen path carries its own stat grant. The Act 3 spike is therefore the largest in
+  the run by design — it is where enemies stop being unevolved.
+
+  Note too how far the `monsters` column sits below the others. The Goblin roster was
+  authored as deliberately-weaker fodder, and the curve moves it without fixing that —
+  more evidence that the Act 2 monster baseline is content still owed, not a number to
+  tune upward here.
+
+  **Open, and deliberately so:**
+  - **Every number is a first-pass figure**, per the direction that set them: only the
+    curve's *shape* is decided. Tune by playtest.
+  - **Stats are drawn uniformly, and a point of HP is not a point of Attack** (the
+    equipment budget already prices HP at ½ — `STAT_POINT_VALUE`). So an enemy that
+    rolls its steps into HP is a genuinely easier fight than one that rolls offense.
+    Acceptable variance for a first curve — `elite`'s existing bonus has the same
+    property — but weighting the draw by `STAT_POINT_VALUE` is the knob to reach for
+    before changing the totals.
+  - **Recruit Contracts carry the whole thing.** `deriveContractOffer` already carries
+    `level`, `chosenPathIds`, `evolutionStatGrants` and `unlockedMoveIds`, so claiming a
+    beaten Act 4 enemy hands the player a level-7, already-evolved hero holding ~90
+    points of act scaling. That is the existing behaviour amplified (elite's +20 always
+    rode along the same way) and it reads as the intended meaning of "recruiting them
+    gets them at the same level" — but it makes late-act contracts dramatically stronger
+    than early-act ones. Flag before assuming it stays. The knob is
+    `deriveContractOffer`, not the curve.
+  - **Authored encounters are the intended successor,** not a rewrite of this. The
+    generator takes an `ActScaling` rather than deriving one, so a hand-built encounter
+    can hand over its own numbers — or ignore the table entirely — through the same seam.
 - **The Guardian's Banner (2026-08-30, per user direction).** Beating an act's Guardian
   grants a second reward on top of the Recruit Contract: a **fixed 1-of-3 relic choice**
   (`GuardianBannerScreen`), shown after the wins that end **acts 1-4** and not after act
@@ -368,8 +445,12 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   for the full stat-bar readout) plus reassigning already-equipped gear between heroes
   (`swapEquipment`/`trashEquipment` — see "The unequipped-item inventory was removed"
   above), no longer a spend surface and no longer backed by a stash.
-- **Per-act difficulty scaling.** Multi-act sequencing itself is now built (§3), but
-  encounter difficulty doesn't yet scale with `actNumber` — see §3's note on this.
+- **Per-act difficulty scaling — the curve is built (§3), the numbers are not settled.**
+  `src/run/difficulty.ts` gives every act a baseline; what remains open is the tuning
+  (all figures are first-pass), the uniform stat draw ignoring that HP is worth less
+  than Attack, whether a Recruit Contract should carry the act scaling it was fought
+  under, and the authored per-act monster tiers the `monsters` track's Act 2 baseline is
+  standing in for. Each is written up under §3's bullet.
 - **Per-location choice.** Acts now happen in named Locations with their own
   faction, type affinity and arrival screen (`locations.md`, 2026-08-28), but the
   itinerary is currently drawn *for* the player. The decided design — **each act

@@ -27,6 +27,7 @@ import './equipment.test';
 import './map.test';
 import './relics.test';
 import './enemyGen.test';
+import './difficulty.test';
 import './runProgress.test';
 import './classes.test';
 import './locations.test';

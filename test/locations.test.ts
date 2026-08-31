@@ -66,7 +66,7 @@ test('locations: a biased encounter fills all but one slot on-theme, and the las
 
   const onTheme = new Set(affinityHeroIds(necropolis, heroes));
   for (let seed = 1; seed <= 30; seed++) {
-    const { run } = generateEncounter('fight', seed, heroes, undefined, undefined, bias);
+    const { run } = generateEncounter('fight', seed, heroes, { bias });
     assert.strictEqual(run.roster.length, 4);
     const matching = run.roster.filter((entry) => onTheme.has(entry.heroId)).length;
     // At least 3 on-theme; the wildcard slot may also happen to draw one.
@@ -81,7 +81,7 @@ test('locations: an unbiased encounter is byte-identical to one with no bias arg
   // exactly what it drew before.
   for (let seed = 1; seed <= 10; seed++) {
     const before = generateEncounter('fight', seed, heroes);
-    const after = generateEncounter('fight', seed, heroes, undefined, undefined, undefined);
+    const after = generateEncounter('fight', seed, heroes, {});
     assert.deepStrictEqual(
       after.run.roster.map((e) => e.heroId),
       before.run.roster.map((e) => e.heroId)
