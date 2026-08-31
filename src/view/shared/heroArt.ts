@@ -1,6 +1,7 @@
 import aegisArt from '../../../art/heroes/aegis.png';
 import brimstoneArt from '../../../art/heroes/brimstone.png';
 import cinderKnightArt from '../../../art/heroes/cinder.png';
+import coilArt from '../../../art/heroes/coil.png';
 import cragArt from '../../../art/heroes/starters/Crag.png';
 import crimsonArt from '../../../art/heroes/starters/crimson.png';
 import cubeArt from '../../../art/heroes/cube.png';
@@ -34,6 +35,7 @@ import sunPriestArt from '../../../art/heroes/starters/solace.png';
 import tidecallerArt from '../../../art/heroes/starters/riptide.png';
 import torchGoblinArt from '../../../art/enemies/torchgoblin.png';
 import valorArt from '../../../art/heroes/starters/valor.png';
+import widowArt from '../../../art/heroes/Widow.png';
 import wildOracleArt from '../../../art/heroes/starters/sylva.png';
 import zenithArt from '../../../art/heroes/zenith.png';
 
@@ -42,6 +44,7 @@ export const heroArt: Partial<Record<string, string>> = {
   aegis: aegisArt,
   brimstone: brimstoneArt,
   cinderKnight: cinderKnightArt,
+  coil: coilArt,
   crag: cragArt,
   crimson: crimsonArt,
   cube: cubeArt,
@@ -75,6 +78,7 @@ export const heroArt: Partial<Record<string, string>> = {
   tidecaller: tidecallerArt,
   torchGoblin: torchGoblinArt,
   valor: valorArt,
+  widow: widowArt,
   wildOracle: wildOracleArt,
   zenith: zenithArt,
 };

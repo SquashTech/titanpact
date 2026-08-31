@@ -119,6 +119,10 @@ A hero is in exactly one pool, never both, and never neither. This split is
 independent of type coverage — a type can have both a starter and a recruit-only
 hero (Iron currently does: Valor starts, Warden is recruit-only), and recruit-only
 status says nothing about a hero's power level, just where you first meet them.
+The **one-starter-per-type** shape below is a consequence of the current fixture
+roster, not a rule — but it is load-bearing enough that new heroes have been added
+as recruit-only to preserve it (Widow and Coil, Beast, 2026-08-30). If a type ever
+wants two draftable heroes, that should be a decision taken on purpose.
 
 **Current fixture state (2026-08-17):** 14 starters give **one starter per type**
 (every type except Ancient, which is intentionally near-undraftable per "Ancient is

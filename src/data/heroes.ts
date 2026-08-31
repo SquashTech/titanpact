@@ -512,4 +512,81 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['claw', 'venomBite', 'rally'],
     starter: true,
   },
+  // Widow and Coil (2026-08-30) are the ROSTER answer to the Beast slate's
+  // second hand-off finding (docs/authoring-moves.md §10): three of Beast's
+  // fifteen rows read the caster's ACTIVE PARTNER's type, and with Fang the
+  // only native Beast hero — and two Fangs illegal on one roster — Prowl's
+  // doubling, Pack Hunt's doubling and Pack Leader's half price were all
+  // unreachable except through a type-graft Evolution on one of three
+  // specific heroes. That finding listed three answers and fixed none; this
+  // is the first of them ("a second Beast hero"), taken twice.
+  //
+  // Both are `starter: false`, which keeps the roster's one-starter-per-type
+  // shape intact (docs/types-and-heroes.md "Starters vs. recruit-only
+  // heroes" — Fang stays Beast's draft slot). So the pack condition is still
+  // not a draft-time choice; it is now a Guild Hall / Recruit Contract one,
+  // which is a strictly earlier and less conditional door than the
+  // Evolution it had before.
+  //
+  // They split Beast the way the type could not split itself: Widow takes
+  // the physical half a fourteen-of-fifteen-physical slate is built for,
+  // Coil the magical row it has exactly one of.
+  widow: {
+    id: 'widow',
+    name: 'Widow',
+    types: ['Beast', 'Shadow'],
+    baseStats: { hp: 75, attack: 85, defense: 35, intelligence: 25, wisdom: 40, speed: 90, manaPool: 50, mpRegen: 10 },
+    // Beast/Shadow is the roster's most fragile pairing on the current chart
+    // — five 2x weaknesses (Frost, Storm and Mech through Beast; Light and
+    // Spirit through Shadow), against Shadow's own 0.5x into Beast doing
+    // nothing for it. That is the price of the line: Attack 85 at Speed 90
+    // on 75 HP. It TIES Squall for fastest in the roster rather than passing
+    // it, deliberately — this is an untuned recruit-only line and raising
+    // the ceiling should be a decision, not a side effect.
+    //
+    // Widow is where Beast's Bleed and Shadow's Stealth are innate at once.
+    // The two types already overlap on Bleed (Backstab, Shadow Slice, Dusk
+    // Blade), so both the mark it plants and the payoffs it grows into
+    // (Maul, Eviscerate) carry STAB — which no hero could do before.
+    //
+    // THE KIT is the rule exactly (a low-power main-type move plus two
+    // supports), and Prowl is the interesting slot. Fang deliberately does
+    // NOT start with Prowl because Fang cannot have a Beast partner at level
+    // 1; Widow can, because a RECRUITED hero arrives into a roster that may
+    // already hold one. Same move, opposite verdict, for the same reason.
+    // Venom Bite over Claw because guaranteed beats 20% on a hero that plans
+    // to be somewhere else next round, and Vanish is the Shadow half plus
+    // the setup for the Ambush its pool leads to.
+    moveIds: ['venomBite', 'vanish', 'prowl'],
+    starter: false,
+  },
+  coil: {
+    id: 'coil',
+    name: 'Coil',
+    types: ['Beast', 'Mind'],
+    baseStats: { hp: 85, attack: 30, defense: 45, intelligence: 75, wisdom: 60, speed: 60, manaPool: 65, mpRegen: 10 },
+    // The first Beast hero that is not an Attack stat, and that is the whole
+    // point. The Beast slate's FIFTH hand-off finding was that Animal Spirit,
+    // its one magical row, was "homeless by construction — every Beast hero
+    // is Intelligence 20", and had to be lent to Sylva through a Nature
+    // Evolution that grafts Beast on. Coil is Intelligence 75 with Beast as
+    // an INNATE type, so that row finally has a holder swinging it with STAB
+    // without spending an Evolution to get there.
+    //
+    // A tension worth naming rather than hiding: every hero in this file
+    // starts with "a low-power move of the hero's MAIN type", and Beast has
+    // no low-power magical row for Coil to take — Animal Spirit is 60 base
+    // power at 50 mana. So the opener is Psi Bolt, off Coil's SECOND type.
+    // Brimstone is the precedent for drawing one from each, but this is the
+    // first time a primary type had nothing at all to offer at the low end,
+    // and it is a movepool gap rather than a hero problem.
+    //
+    // Rally rather than Prowl for the third slot, and it is the same pack
+    // question read from the other side: half of Prowl is dead on Attack 30,
+    // where Rally's +20 Attack is worth full price on the PARTNER. Coil is
+    // Beast's enabler half — the hero that makes Fang bigger and takes Pack
+    // Leader's discount, rather than the one cashing it.
+    moveIds: ['psiBolt', 'lull', 'rally'],
+    starter: false,
+  },
 };

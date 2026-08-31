@@ -271,6 +271,84 @@ export const progressionTable: ProgressionTable = {
       'apexPredator',
       'packLeader',
     ],
+    // Widow and Coil (heroes.ts, 2026-08-30) split the Beast pool the way
+    // Fire's three heroes split theirs — by the stat each one actually
+    // attacks with — except that here the split is also the type's
+    // physical/magical seam, and Beast has only one row on the far side of
+    // it.
+    //
+    // Widow (Beast/Shadow, Atk 85 / Spd 90) takes the Bleed line through
+    // BOTH types: Beast plants it (Claw, Lacerate, Toxic Fangs) and cashes
+    // it (Maul, Eviscerate), Shadow plants it three more times (Backstab,
+    // Shadow Slice, Dusk Blade), and every one of those carries STAB on this
+    // hero. Stealth is the second thread — Ambush doubles off the Vanish in
+    // its starting kit, and Shadow Form is the capstone that grants both.
+    //
+    // Deliberately absent, each for a stated reason: Rampage (25% recoil is
+    // a bad trade on 75 HP, and this is the one hero in the game the recoil
+    // could routinely kill), Pounce (a +1 bracket row on the hero that is
+    // already tied for fastest is the definition of a dead pick), Thrash and
+    // Pack Leader (Fang's side-wide rows — Widow is the one who cashes the
+    // pack bonus, not the one who hands it out). Pack Hunt IS here: doubled
+    // beside Fang it is the best rate in the slate, and Widow is now one of
+    // exactly two heroes that can be the Beast on the other side of it.
+    widow: [
+      'claw',
+      'backstab',
+      'lacerate',
+      'ambush',
+      'fadeStrike',
+      'maul',
+      'packHunt',
+      'toxicFangs',
+      'shadowSlice',
+      'duskBlade',
+      'eviscerate',
+      'shadowForm',
+      'apexPredator',
+    ],
+    // Coil (Beast/Mind, Int 75 / Atk 30) is the inverse: an ENTIRELY magical
+    // pool on a Beast hero. Not a stylistic choice — every Beast row but one
+    // is physical, and offering any of them to Attack 30 would be the trap
+    // pick the north star forbids (Pack Hunt doubled off Atk 30 is still
+    // worse than Psychock). So Beast contributes exactly two: animalSpirit,
+    // which is the reason this hero exists, and packLeader, whose +50 Speed
+    // half is live on Coil while its +50 Attack half is the partner's, and
+    // whose 100 -> 50 discount is exactly the condition Coil is here to
+    // satisfy.
+    //
+    // The Mind half is split against Cortex rather than duplicated wholesale.
+    // Cortex keeps the WISDOM line it was authored around (Mind Shatter
+    // swings Wisdom, Brain Ward and Mental Fortress ramp it, Stasis and
+    // Psychic Blow are its tempo); Coil takes the straight INTELLIGENCE line
+    // — the damage rows plus the debuffs that widen them. Enervate, Disorient
+    // and Break Will sit in both pools on purpose, the way Vesper's and
+    // Nightshade's Shadow pools already overlap on five rows.
+    //
+    // Dopamine is the one entry here that is about the DUAL rather than about
+    // Mind: the Beast slate authored no heal at all, on purpose, and Coil is
+    // the only Beast hero that can have one without the type getting it.
+    // Wisdom 60 also heals for more than Cortex's 55, so it is not a borrowed
+    // row — it is the better home for it.
+    //
+    // Cerebral Shock is deliberately NOT here even though it is Mind, Int-
+    // swinging, and currently unreachable. It applies Conduct, whose
+    // triggerTypes are ['Storm', 'Iron'] (statuses.ts), and Coil is Beast/
+    // Mind — so it would be the same dead button on a third hero rather than
+    // a rescue. Its orphan status is a designer call (test/stoneMoves.test.ts
+    // pins the list and states the reason), and a new Mind hero is not a
+    // reason to overturn it.
+    coil: [
+      'animalSpirit',
+      'psychock',
+      'wickedFear',
+      'dopamine',
+      'enervate',
+      'disorient',
+      'psionicWave',
+      'breakWill',
+      'packLeader',
+    ],
     // --- Stone/Spirit starters + the new Iron starter (2026-08-17) ---
     // rally moved up into Valor's starting kit (heroes.ts) when Mend Wounds died.
     //
@@ -903,6 +981,79 @@ export const progressionTable: ProgressionTable = {
             statGrants: { speed: 10, mpRegen: 5 },
             unlocksMoveIds: [],
             typeGraft: 'Spirit',
+          },
+        ],
+      },
+    ],
+    // Widow and Coil are DUAL-typed by design, so neither gets a typeGraft
+    // path — chooseEvolutionPath throws on a graft offered to a dual hero,
+    // and Lucius (Shadow/Mind) is the standing precedent for what a
+    // dual-typed hero's three paths look like instead: same offensive /
+    // defensive / utility split, stat grants only, no second type to give.
+    widow: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'widow-offensive',
+            heroId: 'widow',
+            kind: 'offensive',
+            name: 'Venomfang',
+            description: 'Leans all the way into the kill — Bleed, Poison, and nothing held back.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'widow-defensive',
+            heroId: 'widow',
+            kind: 'defensive',
+            name: 'Carapace',
+            description: 'Hardens the shell so the wounds it opens outlast it.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'widow-utility',
+            heroId: 'widow',
+            kind: 'utility',
+            name: 'Silkbinder',
+            description: 'Sets the trap before the fight — faster, and cheaper to keep hidden.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+          },
+        ],
+      },
+    ],
+    coil: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'coil-offensive',
+            heroId: 'coil',
+            kind: 'offensive',
+            name: 'Basilisk',
+            description: 'The gaze stops being a suggestion.',
+            statGrants: { intelligence: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'coil-defensive',
+            heroId: 'coil',
+            kind: 'defensive',
+            name: 'Hooded',
+            description: 'Spreads the hood — harder to reach, harder to unsettle.',
+            statGrants: { defense: 10, wisdom: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'coil-utility',
+            heroId: 'coil',
+            kind: 'utility',
+            name: 'Mesmer',
+            description: 'Holds the whole field in the coil — deeper reserves, the pack-support path.',
+            statGrants: { manaPool: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
           },
         ],
       },

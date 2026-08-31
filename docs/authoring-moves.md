@@ -1784,6 +1784,13 @@ signature that hero cannot use alone**:
      than a movepool one**: a second Beast hero, or a fourth graft path, or
      leaving it as the reward for a specific pairing are three different
      answers and the deliverable is the list, not a fix.
+     **ANSWERED 2026-08-30 — the first option, taken twice.** `Widow`
+     (Beast/Shadow) and `Coil` (Beast/Mind) are on the roster
+     (`src/data/heroes.ts`). Both are `starter: false`, so the roster keeps
+     its one-starter-per-type shape and the pack condition is still not a
+     DRAFT-time choice — it is now a Guild Hall / Recruit Contract one,
+     which is earlier and far less conditional than the Evolution door it
+     had. The graft paths on Sylva, Rime and Mordrax are untouched.
   3. **Goblin Grunt could not afford its own kit** — 25/3 against a floor that
      went 8 → 20 — and is raised to **40/10**, the FIFTH time that exact fix
      has been applied (Torch Goblin, Goblin Skulker, Spooky Goblin, Goblin
@@ -1811,6 +1818,12 @@ signature that hero cannot use alone**:
   Marrow, Solace, Crimson, Glyph, Zenith, Revenant) are deliberately left
   unplaced per Stone's rule. Worth knowing that the previous slates' open
   lists are useful for placement and not only for engine work.
+  **ANSWERED 2026-08-30, and by the roster rather than by placement.**
+  `Coil` is Beast/Mind at Intelligence 75, so Animal Spirit now has a holder
+  for which Beast is an INNATE type — STAB without spending an Evolution to
+  get it. The Sylva placement stands (an Int 60 Nature caster is still a good
+  home, and it is the graft build that wants it); this just means the row is
+  no longer homeless by construction, because the construction changed.
 
 Mech's, as a fourteenth — the slate whose engine work was four fields and
 whose findings are about a roster of two, one of which cannot cast a third of
