@@ -12705,6 +12705,31 @@ textarea,
   filter: drop-shadow(0 0 14px rgba(224, 166, 60, 0.55));
 }
 
+/* The Confirm bar's reserved home (2026-08-31, per user direction — the same
+   pass that unmounted LevelUpScreen's disabled Continue during the move
+   offer). EvolutionScreen renders the button only once a path is picked, but
+   the slot holds its height either way: the three path cards are centred in
+   whatever is left, and a slot that appeared and disappeared would slide them
+   ~46px between reading a path and pressing it.
+   ┄
+   `min-height` is .resolve-button's own 68px and the margin is the 12px lift
+   `.node-screen > .resolve-button` would have given it — that selector is a
+   direct-child rule and stops applying once the button is nested in here, so
+   the slot carries the lift instead. */
+.evolution-cta-slot {
+  flex: none;
+  display: flex;
+  min-height: 68px;
+  margin-bottom: 12px;
+}
+
+/* Fades up the way the Equipment Cache's cards do (@keyframes
+   equip-cache-fade-up) rather than snapping in — this is the one control on
+   the screen and it arrives under the player's thumb. */
+.evolution-cta-slot .resolve-button {
+  animation: equip-cache-fade-up 0.22s ease-out;
+}
+
 .evolution-path-list-big {
   gap: 10px;
 }
