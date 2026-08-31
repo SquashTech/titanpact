@@ -59,7 +59,19 @@ don't silently override it.
 - **Level-ups are a pooled currency** distributed freely after each battle (benched heroes
   included). Below the Evolution level, a level-up **unlocks a move** from the current
   tier; the level-up that reaches the Evolution level instead **surfaces the Evolution
-  choice** — no move that level-up. **They never directly raise stats.**
+  choice** — no move that level-up. **They never directly raise stats**, with one
+  documented exemption (2026-08-31): past `MASTERY_LEVEL` = 10 the movepool is spent, so a
+  level-up instead grants a flat **+10 to a randomly drawn combat stat** — the sink that
+  keeps hyperfocusing one hero a real option (`MASTERY_STAT_POOL`, `grantMasteryStat`,
+  `src/run/progression.ts`). The reel is the **five combat stats only**; HP/Mana/MP Regen
+  are excluded because a flat +10 is not worth the same thing across all eight — the same
+  call `RANDOM_STAT_POOL` made for moves. Enforced by `test/mastery.test.ts`.
+- **A level-up never pays out nothing** (2026-08-31). Every hero's move pool is authored to
+  cover the level curve — **≥2 Early, ≥4 Early+Mid, ≥8 total** after the starting kit is
+  filtered out (the FLOOR block in `src/data/progression.ts`, `test/moveTiers.test.ts`) —
+  and an empty pool below the cap falls back to the mastery stat rather than to a bare
+  level. Filling that floor is worth pulling an **off-type** move from an adjacent slate;
+  a dead level-up is the worse outcome.
 - **Evolutions are authored branch points**, each option carrying a **single
   identifiable name** (e.g. Cinder's Explosive / Ironclad / Thunderblaze).
   Options differ *in kind* (defensive / offensive / utility), are **permanent within a

@@ -66,6 +66,78 @@ export function isMoveTierUnlocked(move: MoveDefinition | undefined, level: numb
   return level >= MOVE_TIER_LEVEL[move?.tier ?? 'early'];
 }
 
+/**
+ * The last level whose level-up pays out a MOVE. Past it a Training Point
+ * spent on a hero buys a stat instead (grantMasteryStat below).
+ *
+ * This is a deliberate, designer-signed amendment (2026-08-31) to CLAUDE.md's
+ * "level-ups never directly raise stats" / "no automatic stat growth from
+ * leveling" — recorded there as an exemption rather than left as a silent
+ * contradiction. The reason for the amendment: the pooled currency had no
+ * sink once a hero's movepool ran out, so a player who wanted to hyperfocus
+ * one hero was simply told no. The reason for the CAP still existing: moves
+ * are the interesting payoff, so stats only take over once the authored
+ * movepool has actually been spent, not as a competing choice alongside it.
+ *
+ * 10 is the level the move pools are authored to reach
+ * (data/progression.ts FLOOR, test/moveTiers.test.ts), so the two numbers are
+ * the same decision seen from both sides — move the floor and this moves with
+ * it.
+ */
+export const MASTERY_LEVEL = 10;
+
+/** Flat grant per mastery level-up. A multiple of 10, so CLAUDE.md's multiples-of-5/10 lock binds here with no exemption. */
+export const MASTERY_STAT_AMOUNT = 10;
+
+/**
+ * The stats a mastery level-up can roll. The five COMBAT stats, deliberately
+ * NOT all eight of StatKey — the same call, for the same reason, that
+ * data/moves.ts RANDOM_STAT_POOL made on 2026-08-30: a flat +10 is worth
+ * wildly different amounts across the eight. +10 MP Regen is the whole
+ * Everflow banner and +10 HP on a 130-HP body is noise, so a reel including
+ * them would be four fair faces, one jackpot and two blanks.
+ *
+ * Duplicated rather than imported from data/moves.ts on purpose: this module
+ * takes its content by injection (see levelUpMovePool's `moves` parameter)
+ * and never imports the content layer, and the two reels are independently
+ * authorable — a later slate re-pointing the move reel should not silently
+ * re-point the progression one.
+ */
+export const MASTERY_STAT_POOL: readonly StatKey[] = ['attack', 'defense', 'intelligence', 'wisdom', 'speed'];
+
+/** Whether a stat may be rolled/granted by a mastery level-up. Exported so a UI can filter before offering rather than catching a throw. */
+export function isValidMasteryStat(stat: StatKey): boolean {
+  return MASTERY_STAT_POOL.includes(stat);
+}
+
+/**
+ * What a level-up actually pays out, read off the POST-level-up entry (the
+ * one `levelUpHero` returned) for the same reason `levelUpMovePool` is: the
+ * level just reached is what decides the answer.
+ *
+ * One function so every caller agrees. The order is the precedence:
+ *
+ * - `evolution` — the level-up that reaches an Evolution's trigger level
+ *   surfaces the choice and rolls no move (CLAUDE.md, docs/leveling-and-ranks.md).
+ * - `move` — the ordinary case, all the way through MASTERY_LEVEL.
+ * - `mastery` — past MASTERY_LEVEL, or (as a safety net) any level whose move
+ *   pool has come up empty. That second clause is what makes "the point bought
+ *   nothing" unreachable: the authored floor is supposed to keep the pool full
+ *   through level 10, and this catches it if a future slate edit ever breaks
+ *   that. A stat is a worse payoff than a move, not a dud.
+ */
+export type LevelUpPayout = 'evolution' | 'move' | 'mastery';
+
+export function levelUpPayout(
+  table: ProgressionTable,
+  moves: Record<string, MoveDefinition>,
+  entry: RosterEntry
+): LevelUpPayout {
+  if (availableEvolution(table, entry)) return 'evolution';
+  if (entry.level > MASTERY_LEVEL) return 'mastery';
+  return levelUpMovePool(table, moves, entry).length > 0 ? 'move' : 'mastery';
+}
+
 export interface EvolutionPath {
   id: string;
   heroId: string;
@@ -146,10 +218,12 @@ export function fullMovepool(table: ProgressionTable, hero: HeroDefinition): str
  * reaches 4 will still be offered an Early-only pool. LevelUpScreen does this;
  * so does enemyGen, which only ever calls this at an enemy's final level.
  *
- * Can legitimately return empty (a hero whose Early moves are exhausted at
- * level 3): that is the gate doing its job, and the screen already renders
- * that case as the "Level only" payoff, which is a visible signal to spend
- * the next point on someone else rather than a silent dud.
+ * Can return empty as a MECHANISM, and the screen renders that as the "Level
+ * only" payoff — but no hero is allowed to reach it in normal play up to
+ * level 10. A spent Training Point must always buy a move offer (2026-08-31
+ * designer call); the pools in data/progression.ts are sized to guarantee it
+ * and test/moveTiers.test.ts pins the thresholds. Treat a "Level only" card
+ * on a real run as a data bug, not as the gate working.
  */
 export function levelUpMovePool(
   table: ProgressionTable,
@@ -197,6 +271,35 @@ export function grantLevelUpMove(run: RunState, rosterId: string, moveId: string
     ? entry.unlockedMoveIds.map((id) => (id === replaceMoveId ? moveId : id))
     : [...entry.unlockedMoveIds, moveId];
   return replaceEntry(run, rosterId, { ...entry, unlockedMoveIds }, 0);
+}
+
+/**
+ * Applies a mastery level-up's payout: a flat +MASTERY_STAT_AMOUNT to `stat`,
+ * accumulated on the entry's `masteryStatGrants` (state.ts) and permanent for
+ * the rest of the run. Free, exactly like grantLevelUpMove — the Training
+ * Point was already spent by levelUpHero; this only resolves what that
+ * level-up turned into.
+ *
+ * The ROLL is the caller's, not this function's, matching how the move offer
+ * already works (LevelUpScreen rolls the move id and passes it in). That keeps
+ * this module pure and makes the grant replayable from a recorded choice; it
+ * also means a future deterministic caller can feed it a seeded roll without
+ * this module needing an RngState it has no other use for.
+ *
+ * Rejects a stat outside MASTERY_STAT_POOL rather than trusting the caller —
+ * the whole point of the restricted reel is that +10 MP Regen is not a
+ * comparable prize, and an unchecked caller would quietly reintroduce it.
+ */
+export function grantMasteryStat(run: RunState, rosterId: string, stat: StatKey): RunState {
+  const entry = requireEntry(run, rosterId);
+  if (!isValidMasteryStat(stat)) {
+    throw new ProgressionError(`${stat} is not a mastery stat`);
+  }
+  const nextEntry: RosterEntry = {
+    ...entry,
+    masteryStatGrants: mergeStatMods(entry.masteryStatGrants, { [stat]: MASTERY_STAT_AMOUNT }),
+  };
+  return replaceEntry(run, rosterId, nextEntry, 0);
 }
 
 /**

@@ -12142,10 +12142,17 @@ textarea,
 
 /* The payoff line's colours, layered on the shared .pick-cta: the roster
    sorts itself by eye — the earned Evolution burns, the next-level-triggers-
-   one is warm, an ordinary move roll is gold, and the two duds sit back in
-   --text-dim. */
+   one is warm, an ordinary move roll is gold, the mastery stat is a cooler
+   accent that reads as "still worth it, but not a move", and the one
+   remaining dud (a swap) sits back in --text-dim. */
 .pick-cta.payoff-move {
   color: var(--accent);
+}
+
+/* Deliberately NOT gold: a maxed hero should not compete visually with a
+   hero still learning moves, or the roster stops sorting itself. */
+.pick-cta.payoff-mastery {
+  color: #9fc7e8;
 }
 
 .pick-cta.payoff-brink {

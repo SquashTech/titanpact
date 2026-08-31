@@ -13,10 +13,15 @@ import {
   chosenEvolutionPaths,
   chooseEvolutionPath,
   MOVE_CAP,
+  MASTERY_STAT_POOL,
+  MASTERY_STAT_AMOUNT,
+  grantMasteryStat,
+  levelUpPayout,
   ProgressionError,
   type EvolutionNode,
 } from '../../run/progression';
 import { MoveButtonReplica, useLongPress } from '../shared/MoveTile';
+import { STAT_LABELS } from '../shared/StatBars';
 import { healCasterForEntry } from '../shared/healCaster';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -46,10 +51,15 @@ interface MoveOffer {
  *
  * Ordered by how much it should pull the eye: an Evolution already earned
  * outranks everything, then the level-up that *triggers* one, then the
- * ordinary move roll, then the two duds (a swap the player may not want, and
- * a hero whose pool is exhausted so the point buys a bare level).
+ * ordinary move roll, then the mastery stat (a real payoff, just a smaller
+ * one), then the one dud left — a swap the player may not want.
+ *
+ * 'level' ("Level only") is GONE as of 2026-08-31: past MASTERY_LEVEL, and on
+ * any empty pool below it, the point now buys a stat instead of nothing
+ * (run/progression.ts levelUpPayout). There is no longer a state in which a
+ * Training Point pays out nothing at all.
  */
-type Payoff = 'evolve' | 'brink' | 'move' | 'swap' | 'level';
+type Payoff = 'evolve' | 'brink' | 'move' | 'swap' | 'mastery';
 
 /** Kept short on purpose: this sits in a ~100px card at 9px/800 uppercase, and a label that wraps or clips is worse than a vaguer one. */
 const PAYOFF_LABEL: Record<Payoff, string> = {
@@ -57,18 +67,20 @@ const PAYOFF_LABEL: Record<Payoff, string> = {
   brink: 'Evolve next',
   move: 'New move',
   swap: 'Move swap',
-  level: 'Level only',
+  mastery: '+10 stat',
 };
 
 function payoffFor(entry: RosterEntry): Payoff {
   if (availableEvolution(progressionTable, entry)) return 'evolve';
   const pending = pendingEvolution(progressionTable, entry);
   if (pending && entry.level + 1 >= pending.level) return 'brink';
-  // The pool is read at the level this point WOULD reach, not the current
-  // one, because move tiers are level-gated (run/progression.ts
-  // MOVE_TIER_LEVEL): a level-3 hero whose Early moves are spent still has a
-  // Mid move waiting, and the card must promise the move it will actually get.
-  if (levelUpMovePool(progressionTable, moves, { ...entry, level: entry.level + 1 }).length === 0) return 'level';
+  // Asked of the level this point WOULD reach, not the current one, because
+  // both halves of the answer are level-gated: move tiers open at a level
+  // (run/progression.ts MOVE_TIER_LEVEL), so a level-3 hero whose Early moves
+  // are spent still has a Mid move waiting; and mastery starts at a level too.
+  // The card must promise what the point will actually buy.
+  const payout = levelUpPayout(progressionTable, moves, { ...entry, level: entry.level + 1 });
+  if (payout === 'mastery') return 'mastery';
   return entry.unlockedMoveIds.length >= MOVE_CAP ? 'swap' : 'move';
 }
 
@@ -264,16 +276,21 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
       return;
     }
 
+    // Past MASTERY_LEVEL the point buys a stat rather than a move — the sink
+    // that keeps a maxed hero worth investing in (run/progression.ts
+    // grantMasteryStat). Also the catch-all for an empty pool below the cap,
+    // so no level-up can pay out nothing.
+    if (levelUpPayout(progressionTable, moves, nextEntry) === 'mastery') {
+      const stat = MASTERY_STAT_POOL[Math.floor(Math.random() * MASTERY_STAT_POOL.length)];
+      onRunChange(grantMasteryStat(next, rosterId, stat));
+      setFeedback(`${heroName} reached Lv ${nextEntry.level} — +${MASTERY_STAT_AMOUNT} ${STAT_LABELS[stat]}!`);
+      return;
+    }
+
     // Rolled off the POST-level-up entry: the level just reached is what
     // decides which move tiers are on the table (run/progression.ts
     // MOVE_TIER_LEVEL), so the level-up that reaches 4 can draw a Mid move.
     const pool = levelUpMovePool(progressionTable, moves, nextEntry);
-    if (pool.length === 0) {
-      onRunChange(next);
-      setFeedback(`${heroName} reached Lv ${nextEntry.level}.`);
-      return;
-    }
-
     const moveId = pool[Math.floor(Math.random() * pool.length)];
     if (!wasAtCap) {
       onRunChange(grantLevelUpMove(next, rosterId, moveId));

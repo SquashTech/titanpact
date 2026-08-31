@@ -200,7 +200,21 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
     // Beast slate then took fangRush, the last off-type entry, with nothing
     // put back: a Fire/Iron hero with a full line from both of its own types
     // has no slot a third type's filler belongs in.
-    ['moltenLash', 'firebrand', 'volcanicSurge', 'heavyBlow', 'momentumSwing']
+    //
+    // The last three arrived on 2026-08-31 with the level-up offer floor
+    // (test/moveTiers.test.ts): the pool held one Early move, so the level-3
+    // Training Point bought nothing. All three are Iron, Cinder's own second
+    // type — no off-type filler was needed here.
+    [
+      'moltenLash',
+      'firebrand',
+      'volcanicSurge',
+      'heavyBlow',
+      'momentumSwing',
+      'ironFist',
+      'openingStrike',
+      'serratedSlice',
+    ]
   );
 
   const withMove = grantLevelUpMove(run, 'cinderKnight', 'firebrand');

@@ -73,6 +73,23 @@ export interface RosterEntry {
    */
   bonusStatGrants: Partial<Record<StatKey, number>>;
   /**
+   * Permanent stat grants from MASTERY level-ups — every Training Point spent
+   * on a hero already past MASTERY_LEVEL (progression.ts), each one a flat
+   * +MASTERY_STAT_AMOUNT to a randomly drawn combat stat. The one documented
+   * exemption to CLAUDE.md's "level-ups never directly raise stats", added by
+   * designer call on 2026-08-31 so a maxed hero is still worth investing in;
+   * see progression.ts grantMasteryStat for the reasoning and the guardrails.
+   *
+   * A fourth independent stat-grant source rather than a fold into
+   * `bonusStatGrants`, for the reason that field's own comment gives: three
+   * sources with different lifetimes and different provenance already share
+   * one merge (entryStats.ts entryStatModifiers), and collapsing them makes
+   * "where did this Speed come from" unanswerable on a hero sheet. This one
+   * is also the only source the player can aim at deliberately, so it is the
+   * one most worth showing separately.
+   */
+  masteryStatGrants: Partial<Record<StatKey, number>>;
+  /**
    * The hero's current secondary-type-slot grant, if any, from the most
    * recently chosen type-graft Evolution path (docs/progression.md
    * "Type-graft paths"). null until first grafted; a later graft path SHIFTS
@@ -184,6 +201,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     evolutionPassiveGrants: [],
     bonusPassiveGrants: [],
     bonusStatGrants: {},
+    masteryStatGrants: {},
     evolutionTypeGraft: null,
     classId: null,
   };

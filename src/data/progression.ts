@@ -53,6 +53,12 @@ import { EVOLUTION_LEVEL } from '../run/progression';
 
 export const progressionTable: ProgressionTable = {
   moveTiers: {
+    // FLOOR (2026-08-31, enforced by test/moveTiers.test.ts): every pool must
+    // hold, after its hero's starting kit is filtered out, >=2 Early, >=4
+    // Early+Mid, and >=8 total — the counts that keep a level-up from ever
+    // offering nothing through level 10. 26 of 35 pools failed this when it
+    // landed and were topped up, own type first, an adjacent slate second.
+    //
     // The three Fire heroes draw from the authored Fire pool (src/data/moves.ts),
     // split by the stat each one actually attacks with rather than by tier:
     // Cinder (Atk 70 / Int 30) takes the physical line, Crimson (Int 80) the
@@ -70,7 +76,7 @@ export const progressionTable: ProgressionTable = {
     // than being repointed: Cinder is Fire/Iron and already draws a full line
     // from both, so the off-type Beast slot was filler the moment the type
     // had content of its own.
-    cinderKnight: ['moltenLash', 'firebrand', 'volcanicSurge', 'heavyBlow', 'momentumSwing'],
+    cinderKnight: ['moltenLash', 'firebrand', 'volcanicSurge', 'heavyBlow', 'momentumSwing', 'ironFist', 'openingStrike', 'serratedSlice'],
     // stokeTheFlames sits here rather than on the other two deliberately:
     // it buffs the whole active side, and Crimson is the only Fire STARTER
     // (heroes.ts), so it is the one that can be drafted alongside a second
@@ -79,14 +85,14 @@ export const progressionTable: ProgressionTable = {
     // (heroes.ts) when Mend Wounds died. The note above still holds — it is on
     // the Fire STARTER because a side-wide ramp wants a second Fire hero
     // beside it — it now just starts unlocked rather than being drawn for.
-    crimson: ['setAlight', 'scorch', 'immolate', 'firestorm', 'inferno', 'purify'],
+    crimson: ['setAlight', 'scorch', 'immolate', 'firestorm', 'inferno', 'purify', 'spreadingBlaze', 'sparkBurst'],
     // The two Water heroes draw from the authored Water pool (src/data/moves.ts,
     // 2026-08-30), split the same way the Fire three are — by the stat each
     // actually attacks with. Riptide (Int 59) takes the magical line and, being
     // the only Water STARTER, also carries High Tide for the reason Crimson
     // carries Stoke the Flames: it buffs the whole active side, so it wants to
     // be on the hero that can be drafted alongside a second Water hero.
-    tidecaller: ['siphon', 'torrent', 'engulf', 'deluge', 'oasis', 'maelstrom', 'tsunami', 'highTide'],
+    tidecaller: ['siphon', 'torrent', 'engulf', 'deluge', 'oasis', 'maelstrom', 'tsunami', 'highTide', 'undertow'],
     // fortify dropped 2026-08-30: it is in Warden's own STARTING kit
     // (heroes.ts), so levelUpMovePool filtered it out and it could never be
     // offered — dead weight that made the pool read as 5 picks when it was 4.
@@ -100,7 +106,7 @@ export const progressionTable: ProgressionTable = {
     // game for a Defense-90 hero and the reason it was put here.
     // pinDown moved down here from Warden's kit when Fortify was re-authored
     // (heroes.ts, 2026-08-30) — still the debuff line, one pick later.
-    ironWarden: ['ironFist', 'pinDown', 'rendArmor', 'juggernaut', 'rockToss', 'bodyBlow'],
+    ironWarden: ['ironFist', 'pinDown', 'rendArmor', 'juggernaut', 'rockToss', 'bodyBlow', 'reinforce', 'bastion'],
     // The three Nature heroes draw from the authored Nature pool
     // (src/data/moves.ts, 2026-08-30), split by the stat each actually attacks
     // with, same as Fire/Water/Frost/Storm/Stone. Sylva (Int 60, Wis 60) takes
@@ -137,7 +143,7 @@ export const progressionTable: ProgressionTable = {
     // Off-stat is a legitimate pick, not a compromise (2026-08-31 designer
     // call) — the trap the north star forbids is a hero whose ONLY damage
     // move is off-stat, and Sylva starts with Seed Shot.
-    wildOracle: ['vineLash', 'blight', 'corrode', 'magicGrowth', 'miasma', 'forceOfNature', 'wildBloom', 'animalSpirit'],
+    wildOracle: ['vineLash', 'blight', 'corrode', 'magicGrowth', 'miasma', 'forceOfNature', 'wildBloom', 'animalSpirit', 'drain'],
     // The three Storm heroes draw from the authored Storm pool (src/data/moves.ts,
     // 2026-08-30), split by the stat each actually attacks with, same as Fire,
     // Water and Frost. Squall (Atk 65 vs Int 35) and Scallywag (Atk 75 vs Int
@@ -151,7 +157,7 @@ export const progressionTable: ProgressionTable = {
     // for the hand-off on whether that reads as a payoff or as a dead row.
     // fangRush dropped with the Beast slate (moves.ts, 2026-08-30) — same
     // reason as Cinder above: off-type filler, and Tempest has a Storm line.
-    stormRanger: ['stormLash', 'shockSlice', 'tailwind', 'overcharge', 'heavyBlow'],
+    stormRanger: ['stormLash', 'shockSlice', 'tailwind', 'overcharge', 'heavyBlow', 'charge', 'swiftBlow', 'ionize'],
     // Tempest had NO pool at all before the Storm slate — a starter that could
     // never learn a move (levelUpMovePool returns an empty list for a hero with
     // no moveTiers entry). It takes the magical line, and with it Storm Surge,
@@ -181,8 +187,8 @@ export const progressionTable: ProgressionTable = {
     // Marrow is Attack 40, so of Shadow's five Early rows it can use exactly
     // one: Vanish. Umbra Bolt (the tier's only magical row) is already in its
     // starting kit and so is Weaken, and the other two are physical.
-    shadowMonk: ['backstab', 'weaken', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm'],
-    marrow: ['vanish', 'umbralBeam', 'umbralWave', 'eclipse', 'enfeeble'],
+    shadowMonk: ['backstab', 'weaken', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm', 'shadowstrike'],
+    marrow: ['vanish', 'umbralBeam', 'umbralWave', 'eclipse', 'enfeeble', 'drain', 'torment', 'soulRend'],
     // The three Frost heroes draw from the authored Frost pool (src/data/moves.ts,
     // 2026-08-30), split by the stat each actually attacks with, same as Fire
     // and Water. Flurry (Int 70) takes the magical line and with it BOTH of the
@@ -235,7 +241,7 @@ export const progressionTable: ProgressionTable = {
     // arguable home for it. WHICH other casters should learn it is a roster
     // decision, not a movepool one — see docs/authoring-moves.md §10 (Iron)
     // for the candidate list, left unplaced rather than stuffed in.
-    runescribe: ['manaFont', 'study', 'arcaneBlast', 'overload', 'magicCloak', 'arcPulse', 'singularity', 'cataclysm', 'conjuredSword'],
+    runescribe: ['manaFont', 'study', 'arcaneBlast', 'overload', 'magicCloak', 'arcPulse', 'singularity', 'cataclysm', 'conjuredSword', 'manaTap'],
     // Cortex takes the WISDOM/control line — the half of the slate its 55/55
     // Int/Wis frame can actually play. Mind Shatter is the anchor (it swings
     // Wisdom, so Mental Fortress is its ramp), and Break Will -> Brain Flay is
@@ -246,7 +252,7 @@ export const progressionTable: ProgressionTable = {
     // so it is the one that can be drafted alongside a second Mind hero.
     // The off-type filler (spectralBind, quickJab, vanish, stunningBlow) is
     // gone now that the type has its own line.
-    mindweaver: ['enervate', 'psychicBlow', 'stasis', 'mentalFortress', 'disorient', 'mindShatter', 'breakWill', 'brainFlay'],
+    mindweaver: ['enervate', 'psychicBlow', 'stasis', 'mentalFortress', 'disorient', 'mindShatter', 'breakWill', 'brainFlay', 'lull'],
     // Three of Clockwork's four pool entries were Iron fixture moves and all
     // three died (moves.ts, 2026-08-30). Mech has no authored slate yet, so
     // the line stays off-type Iron — it is just a line now instead of filler.
@@ -266,7 +272,7 @@ export const progressionTable: ProgressionTable = {
     // Deliberately no physical rows: Bellows has those, and a pool shared
     // between two heroes is the byte-identical-kits problem five slates have
     // now reported (docs/authoring-moves.md §10).
-    forgewright: ['backfire', 'overheat', 'malfunction', 'meltdown', 'salvage', 'juryRig'],
+    forgewright: ['backfire', 'overheat', 'malfunction', 'meltdown', 'salvage', 'juryRig', 'cogBop', 'reinforce'],
     // Beast authored (src/data/moves.ts, 2026-08-30). Fang is the type's
     // only hero, so like Spirit's Revenant it draws the WHOLE physical half
     // rather than a line split against a sibling — eleven entries, and the
@@ -408,6 +414,7 @@ export const progressionTable: ProgressionTable = {
       'psionicWave',
       'breakWill',
       'brainFlay',
+      'dopamine',
     ],
     // --- Stone/Spirit starters + the new Iron starter (2026-08-17) ---
     // rally moved up into Valor's starting kit (heroes.ts) when Mend Wounds died.
@@ -418,7 +425,7 @@ export const progressionTable: ProgressionTable = {
     // Iron hero that can be drafted alongside a second one for it to pay off
     // twice. The rest is the type's middle — the Bleed carrier, the spread,
     // and the two mid attacks its Atk 60 can afford before the capstones.
-    valor: ['openingStrike', 'heavyBlow', 'momentumSwing', 'serratedSlice', 'reinforce', 'swingingChain'],
+    valor: ['openingStrike', 'heavyBlow', 'momentumSwing', 'serratedSlice', 'reinforce', 'swingingChain', 'metallicBlade', 'juggernaut'],
     // Revenant draws the ENTIRE magical half of the authored Spirit pool
     // (src/data/moves.ts, 2026-08-30), which is a deliberate departure from
     // the "keep the pool a line, not a sample" rule every other type here
@@ -445,7 +452,7 @@ export const progressionTable: ProgressionTable = {
       'lastRites',
       'ascendant',
     ],
-    crag: ['faultLine', 'rubbleRush', 'retribution', 'boulderSlam', 'provoke', 'weaken', 'rally'],
+    crag: ['faultLine', 'rubbleRush', 'retribution', 'boulderSlam', 'provoke', 'weaken', 'rally', 'bodyCrush'],
 
     // --- Rime, Cube, Mordrax (2026-08-17) ---
     // Rime takes the physical line — and Frost Wall, for the reason Crimson
@@ -461,15 +468,15 @@ export const progressionTable: ProgressionTable = {
     // Bleed slot at the slate's price. Rime is one of the three heroes with a
     // Beast type-graft Evolution (Direwing, below), so a Beast move here is
     // the type it may actually become rather than filler.
-    rime: ['icicleThrust', 'coldSnap', 'iceShatter', 'frostWall', 'permafrost', 'claw'],
+    rime: ['icicleThrust', 'coldSnap', 'iceShatter', 'frostWall', 'permafrost', 'claw', 'frostArmor', 'snowBlast'],
     // Cube's 45 pool is the tightest in the game, so its line is the cheap half
     // of the physical one plus its own Freeze setup — Deep Chill (25) and
     // Permafrost (45, exactly affordable) feeding Cold Snap (35).
-    cube: ['icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'rockToss', 'openingStrike', 'ironFist'],
+    cube: ['icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'rockToss', 'openingStrike', 'ironFist', 'frostWall'],
     // Mordrax takes the physical line and, with Overgrowth, the Renew that
     // doubles Branch Slam — the two are one pick, and putting them in the same
     // pool is what makes that legible rather than accidental.
-    mordax: ['ivySpike', 'thornWhip', 'leafSlice', 'branchSlam', 'overgrowth', 'toxicSpores', 'weaken'],
+    mordax: ['ivySpike', 'thornWhip', 'leafSlice', 'branchSlam', 'overgrowth', 'toxicSpores', 'weaken', 'lacerate'],
 
     // Lucius: only his Evolutions are deferred (src/data/heroes.ts) — he
     // still grows a movepool like any other hero below EVOLUTION_LEVEL.
@@ -482,7 +489,7 @@ export const progressionTable: ProgressionTable = {
     // upgrade path from the spectralBind in its kit; the Spirit slate deleted
     // spectralBind (moves.ts, 2026-08-30), so Wicked Fear moved up into the
     // kit itself and out of this pool.
-    lucius: ['umbralBeam', 'eclipse', 'umbralWave', 'enfeeble', 'psychock', 'psionicWave', 'lull'],
+    lucius: ['umbralBeam', 'eclipse', 'umbralWave', 'enfeeble', 'psychock', 'psionicWave', 'lull', 'weaken'],
 
     // --- Hollowbark, Aegis, Brimstone, Gallant, Nightshade, Pincer,
     // Scallywag, Sentinel, Bellows, Zenith (2026-08-22) ---
@@ -490,7 +497,7 @@ export const progressionTable: ProgressionTable = {
     // half of it is the cheap end (Vine Lash 20, Blight 30) plus the two big
     // swings a run's mana growth eventually reaches (docs/mana.md).
     // rendingClaw dropped: Leaf Slice is the slate's own Bleed carrier.
-    hollowbark: ['vineLash', 'blight', 'leafSlice', 'thornWhip', 'branchSlam', 'regrowth', 'weaken'],
+    hollowbark: ['vineLash', 'blight', 'leafSlice', 'thornWhip', 'branchSlam', 'regrowth', 'weaken', 'stoneheart'],
     // Aegis is Atk 45 / Int 40 / Wis 75 / Def 80 — the slate's PHYSICAL half
     // (Holy Slice, Deity Blade, on top of the Holy Strike it opens with) plus
     // the support line its Wisdom actually pays for. Bless and Exalt are here
@@ -506,7 +513,7 @@ export const progressionTable: ProgressionTable = {
     aegis: ['holySlice', 'deityBlade', 'purify', 'bless', 'exalt', 'consecrate', 'divineGrace', 'reinforce'],
     // The spread-and-attrition line reads the same on both halves now: Fire's
     // Burn spreads, Shadow's Poison spreads.
-    brimstone: ['sparkFlash', 'spreadingBlaze', 'backdraft', 'sparkBurst', 'umbralBeam', 'umbralWave'],
+    brimstone: ['sparkFlash', 'spreadingBlaze', 'backdraft', 'sparkBurst', 'umbralBeam', 'umbralWave', 'setAlight', 'enfeeble'],
     // galeShot dropped with the Storm rewrite — it was Storm filler on a
     // mono-IRON hero, and Iron's own five moves are already split across
     // Gallant's kit and the four below, so there is no same-type replacement to
@@ -521,7 +528,7 @@ export const progressionTable: ProgressionTable = {
     // most to the hero that wants to press an attack every single round — and
     // because Gallant's 45 pool is the one that most needs the rows it cannot
     // otherwise afford.
-    gallant: ['swiftBlow', 'ironFist', 'momentumSwing', 'serratedSlice', 'metallicBlade', 'onslaught'],
+    gallant: ['swiftBlow', 'ironFist', 'momentumSwing', 'serratedSlice', 'metallicBlade', 'onslaught', 'rendArmor', 'swingingChain'],
     // Speed 85, the fastest Shadow hero, so Shadowstrike's +1 bracket is worth
     // most here. Off-type filler (curseMind, rendingClaw, stunningBlow) drops
     // for the type's own line — docs/authoring-moves.md §7, "a line, not a sample".
@@ -530,18 +537,18 @@ export const progressionTable: ProgressionTable = {
     // the fifth is magical, so the type leaves exactly one row an Attack-80
     // hero can be offered. One Early entry is thin, but it is the whole
     // remainder of the tier rather than a choice to widen it.
-    nightshade: ['fadeStrike', 'shadowstrike', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm'],
+    nightshade: ['fadeStrike', 'shadowstrike', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm', 'claw'],
     // Pincer takes the physical line — and Wash Away, which scales off Wisdom
     // (45) rather than off the category, so the 20-Intelligence wall is a
     // perfectly good carrier for it. Wave Shred sits here because Pincer is the
     // only physical Water hero in the roster; see docs/combat.md for the open
     // question about its first cast being unaffordable on a 55 pool.
-    pincer: ['aquaSlice', 'waveShred', 'washAway', 'rendArmor', 'refresh'],
+    pincer: ['aquaSlice', 'waveShred', 'washAway', 'rendArmor', 'refresh', 'ironFist', 'heavyBlow', 'serratedSlice'],
     // ironFist moved up into Scallywag's starting kit and stunningBlow died,
     // both with the Iron slate (2026-08-30); Heavy Blow is the one row left.
     // fangRush dropped with the Beast slate (moves.ts, 2026-08-30).
-    scallywag: ['stormLash', 'shockSlice', 'overcharge', 'risingStatic', 'heavyBlow'],
-    sentinel: ['bodyBlow', 'bastion', 'retribution', 'bodyCrush', 'stoneheart', 'toughenUp', 'rally'],
+    scallywag: ['stormLash', 'shockSlice', 'overcharge', 'risingStatic', 'heavyBlow', 'tailwind', 'momentumSwing', 'swingingChain'],
+    sentinel: ['bodyBlow', 'bastion', 'retribution', 'bodyCrush', 'stoneheart', 'toughenUp', 'rally', 'faultLine'],
     // Bellows is Mech/IRON at Atk 90 and Speed 15 — the heaviest body in the
     // roster — so its half of the slate is the big swings, with STAB, and none
     // of the cheap ramp (Iron Fist and Sharpen are in its starting kit now).
@@ -576,7 +583,7 @@ export const progressionTable: ProgressionTable = {
     // the 80 is paid, and spends none of it). Magic Bolt and Cataclysm are the
     // damage it can actually afford between grants; the rest of the artillery
     // line stays on Glyph.
-    zenith: ['conduit', 'fontOfPower', 'arcaneOverflow', 'magicBolt', 'cataclysm', 'focus'],
+    zenith: ['conduit', 'fontOfPower', 'arcaneOverflow', 'magicBolt', 'cataclysm', 'focus', 'arcPulse', 'magicCloak'],
   },
   evolutions: {
     // cinderKnight is now baseline Fire/Iron (src/data/heroes.ts, 2026-08-17)

@@ -63,6 +63,7 @@ export function entryStatModifiers(
     equipmentStatModifiers(entry.equipment, equipmentLookup),
     entry.evolutionStatGrants,
     entry.bonusStatGrants,
+    entry.masteryStatGrants,
     teamStatModifiers,
     passiveStatModifiers(passiveCounts, passiveDefs)
   );

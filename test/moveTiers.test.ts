@@ -18,7 +18,8 @@ import { test } from './harness';
 import { moves } from '../src/data/moves';
 import { progressionTable } from '../src/data/progression';
 import { createRunState, createRosterEntry, addRosterEntry } from '../src/run/state';
-import { levelUpMovePool, isMoveTierUnlocked, MOVE_TIER_LEVEL } from '../src/run/progression';
+import { levelUpMovePool, isMoveTierUnlocked, MOVE_TIER_LEVEL, EVOLUTION_LEVEL } from '../src/run/progression';
+import { heroes as heroesById } from '../src/data/heroes';
 import type { MoveTier, TypeId } from '../src/engine/content';
 
 /**
@@ -138,8 +139,16 @@ test('move tiers: every level-up pool holds something a level-1 hero can be offe
   assert.deepStrictEqual(starved, [], 'these pools hold no move a level-1 hero can be offered');
 });
 
-test('move tiers: a pool can legitimately empty out, which the screen reads as "Level only"', () => {
+test('move tiers: a pool can still empty out as a MECHANISM, which now pays a mastery stat', () => {
   // Every Early/untiered entry already unlocked, nothing Mid+ reached yet.
+  // Unreachable from real play since the FLOOR landed (the test above), and no
+  // longer a dud even if it were: run/progression.ts levelUpPayout turns an
+  // empty pool into a mastery stat rather than into the "Level only" card the
+  // 2026-08-31 mastery pass deleted outright. This still pins the GATE.
+  // Unreachable from real play since the FLOOR landed (the test above), and
+  // no longer a dud even if it were: run/progression.ts levelUpPayout turns an
+  // empty pool into a mastery stat rather than into "Level only", which the
+  // 2026-08-31 mastery pass deleted outright. This still pins the GATE.
   const drained = levelUpMovePool(
     progressionTable,
     moves,
@@ -151,4 +160,42 @@ test('move tiers: a pool can legitimately empty out, which the screen reads as "
       .length > 0,
     'and the very next level pays it back — Mid opens at 4'
   );
+});
+
+test('move tiers: no hero can reach level 10 on a level-up that offers nothing', () => {
+  // The floor the designer asked for on 2026-08-31: a Training Point spent on
+  // a hero must always buy that hero something. Below EVOLUTION_LEVEL the
+  // level-up's payoff IS the move offer, so an empty pool turns the point
+  // into a dud — the player pays and the card reads "Level only".
+  //
+  // The check is exact, not a sample, because the tier gate is CUMULATIVE:
+  // every move consumed by an earlier offer was already tier-unlocked, so the
+  // count still on the table at the nth offer is
+  //   |moves whose tier this level has reached| - (n - 1)
+  // no matter WHICH ones the roll happened to hand out. Requiring that to
+  // stay >= 1 collapses to three thresholds on the pool (the hero's starting
+  // kit filtered out, since levelUpMovePool never re-offers it):
+  //   >= 2 Early          (levels 2 and 3, before Mid opens)
+  //   >= 4 Early+Mid      (level 6, the fourth offer, before Late opens)
+  //   >= 8 all tiers      (level 10, the eighth offer)
+  // Every hero clears all three as of 2026-08-31; several needed off-type
+  // moves pulled in from an adjacent slate to get there, which is a
+  // deliberate trade — an off-type button beats a dead level-up
+  // (docs/authoring-moves.md §2 on the tier column).
+  for (const hero of Object.values(heroesById)) {
+    const pool = (progressionTable.moveTiers[hero.id] ?? []).filter((id) => !hero.moveIds.includes(id));
+    let offers = 0;
+    for (let level = 2; level <= 10; level++) {
+      // The level-up that reaches EVOLUTION_LEVEL surfaces the Evolution
+      // instead of rolling a move, so it owes the pool nothing.
+      if (level === EVOLUTION_LEVEL) continue;
+      offers++;
+      const reachable = pool.filter((id) => isMoveTierUnlocked(moves[id], level)).length;
+      assert.ok(
+        reachable >= offers,
+        `${hero.id} has nothing to offer at level ${level}: ${reachable} move(s) tier-unlocked, ` +
+          `${offers} level-up offer(s) made by then`
+      );
+    }
+  }
 });
