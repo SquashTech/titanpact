@@ -27,6 +27,9 @@ const UI_IDS: SfxId[] = [
   'pact.bind',
   'equip',
   'contract.sign',
+  'shrine',
+  'blessing',
+  'class.learn',
 ];
 
 const NOTES: Partial<Record<SfxId, string>> = {
@@ -38,6 +41,9 @@ const NOTES: Partial<Record<SfxId, string>> = {
   'pact.bind': 'a starter bound in the draft',
   equip: 'gear going onto a hero',
   'contract.sign': 'a Recruit Contract signed',
+  shrine: 'arriving at a blessing shrine — re-pitched per shrine',
+  blessing: 'a shrine grant landing on a hero',
+  'class.learn': 'a Class conferred on a hero',
   'ui.back': 'close, cancel, exit',
   'ui.select': 'highlight without committing',
   'ui.denied': 'unaffordable move, unreachable node',

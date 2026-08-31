@@ -1,4 +1,5 @@
 import { useState, type CSSProperties } from 'react';
+import { playSfx } from '../../audio/sfx';
 import mentorArt from '../../../art/npc/mentor.png';
 import { heroes } from '../../data/heroes';
 import { classes } from '../../data/classes';
@@ -123,8 +124,21 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
   const assignedEntry = assignedTo ? run.roster.find((r) => r.rosterId === assignedTo) ?? null : null;
   const assignedHero = assignedEntry ? heroes[assignedEntry.heroId] : null;
 
+  /**
+   * Phase 2's commit: the Class actually lands on a hero and the grid gives
+   * way to the learn-reveal.
+   *
+   * The reveal has had its flash and its portrait pop since the 2026-08-22
+   * overhaul and has been silent under both — the screen's only sound was
+   * `ui.commit` one press earlier, on confirming the *discipline*, so the
+   * louder of the two moments was the one that only decided what would be
+   * taught. `class.learn` is timed to the flash (sounds.ts), and is a struck
+   * chord where `ui.commit` is an arpeggio: a discipline is handed over
+   * whole, not assembled in front of the player.
+   */
   function handleAssign(rosterId: string) {
     if (!confirmedClassId) return;
+    playSfx('class.learn');
     onRunChange(grantClass(run, classes, rosterId, confirmedClassId));
     setAssignedTo(rosterId);
   }

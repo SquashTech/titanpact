@@ -33,6 +33,9 @@ export type SfxId =
   | 'pact.bind'
   | 'equip'
   | 'contract.sign'
+  | 'shrine'
+  | 'blessing'
+  | 'class.learn'
   // Combat
   | 'cast'
   | 'hit.physical'
@@ -275,6 +278,104 @@ export const sounds: Record<SfxId, SoundSpec> = {
       // The sigil taking — one note, held, with an octave shimmer over it.
       { wave: 'triangle', freq: 392, detune: 9, gain: 0.24, attack: 0.008, hold: 0.04, decay: 0.55, delay: 0.16 },
       { wave: 'sine', freq: 1176, gain: 0.08, attack: 0.01, decay: 0.5, delay: 0.18 },
+    ],
+  },
+
+  /**
+   * Arriving at one of the three blessing shrines — Vitality, the Mana Well,
+   * the Regen Spring (StatBoostScreen). The only sound in the game that
+   * fires on a screen *opening* rather than on a press, which is the whole
+   * reason it is built the way it is: nothing here has a transient. There is
+   * no click, no strike, no attack under 0.15s anywhere in it, so it cannot
+   * be mistaken for feedback on the tap that got the player here — it swells
+   * up underneath that tap and becomes the room.
+   *
+   * A consecrated space, in three layers: a fifth opening in the low end, a
+   * struck bowl ringing over it, and air. The bowl is delayed past the pad's
+   * attack so the space exists before anything sounds in it.
+   *
+   * Played with a per-shrine `pitch` (StatBoostScreen's STAT_BOOST_CONFIG),
+   * not as three separate sounds. The three shrines are one kind of place —
+   * they should be as obviously related in the ear as they already are in the
+   * eye, where they differ only by `--node-rgb`.
+   */
+  shrine: {
+    gain: 0.34,
+    jitter: 0.004,
+    voices: [
+      // The space opening. A fifth, arriving slowly enough that there is no
+      // moment you could point at as its start.
+      { wave: 'triangle', freq: 131, freqEnd: 196, detune: 10, gain: 0.34, attack: 0.3, hold: 0.1, decay: 0.9 },
+      { wave: 'sine', freq: 65, gain: 0.28, attack: 0.35, decay: 1.1 },
+      // The bowl. Two partials a fifth apart, the upper one detuned so it
+      // beats — struck metal is never quite in tune with itself.
+      { wave: 'sine', freq: 523, gain: 0.2, attack: 0.16, decay: 1.3, delay: 0.22 },
+      { wave: 'sine', freq: 784, detune: 12, gain: 0.13, attack: 0.18, decay: 1.2, delay: 0.26 },
+      { wave: 'sine', freq: 1568, detune: 18, gain: 0.05, attack: 0.2, decay: 1.0, delay: 0.3 },
+      // Air, opening upward under all of it.
+      { wave: 'noise', gain: 0.12, attack: 0.4, decay: 0.9, filter: { type: 'bandpass', freq: 500, freqEnd: 3000, q: 0.7 } },
+    ],
+  },
+
+  /**
+   * The blessing landing on the chosen hero (StatBoostScreen's grant). The
+   * shrine's own bowl struck properly this time — same intervals, but with an
+   * attack, so the ambience the player has been standing in for a few seconds
+   * suddenly *speaks*. Carries the same per-shrine pitch as `shrine` above,
+   * so a Vitality blessing and a Mana one are the same gesture in two keys.
+   *
+   * Deliberately not `heal`, which is the closest thing already in the table:
+   * that is a flat sine triad and reads as medical. This one has a low root
+   * arriving under it and a two-octave shimmer over it, which is what makes
+   * it read as something being *given* rather than something being restored.
+   */
+  blessing: {
+    gain: 0.42,
+    jitter: 0.006,
+    voices: [
+      // The root, arriving with the strike rather than after it — this is a
+      // gift, not a fanfare, so there is nothing to build toward.
+      { wave: 'triangle', freq: 196, detune: 8, gain: 0.3, attack: 0.01, hold: 0.05, decay: 0.6 },
+      { wave: 'sine', freq: 392, gain: 0.26, attack: 0.012, decay: 0.55 },
+      { wave: 'sine', freq: 587, gain: 0.22, attack: 0.014, decay: 0.6, delay: 0.07 },
+      { wave: 'sine', freq: 784, gain: 0.18, attack: 0.014, decay: 0.7, delay: 0.14 },
+      // Two octaves up, held longest of anything here: the part still ringing
+      // after the card has finished lighting up.
+      { wave: 'sine', freq: 1568, detune: 14, gain: 0.09, attack: 0.02, decay: 0.9, delay: 0.15 },
+      { wave: 'noise', gain: 0.1, attack: 0.1, decay: 0.5, filter: { type: 'bandpass', freq: 1400, freqEnd: 4600, q: 1.2 } },
+    ],
+  },
+
+  /**
+   * A Class being conferred on a hero (ClassNodeScreen phase 2, the moment
+   * the learn-reveal replaces the grid). Distinct from `ui.commit`, which
+   * this screen already plays one press earlier when the *discipline* is
+   * confirmed — that is choosing what to teach, this is the teaching.
+   *
+   * The difference is written into the shape: `ui.commit` is an arpeggio, one
+   * note at a time arriving at something. This is a chord, struck whole, with
+   * only a bell over it — a discipline is handed over complete or not at all,
+   * and nothing about it is assembled in front of the player.
+   *
+   * Timed against the reveal (styles.css @keyframes class-learn-flash-burst
+   * 0.6s, class-learn-pop 0.5s): the chord lands with the flash, and the bell
+   * is still going when the stat chips finish cascading in.
+   */
+  'class.learn': {
+    gain: 0.44,
+    jitter: 0.004,
+    voices: [
+      // The chord: root, fourth, octave. A suspended fourth rather than a
+      // major third — it reads as knowledge conferred rather than as victory.
+      { wave: 'triangle', freq: 147, detune: 10, gain: 0.32, attack: 0.008, hold: 0.05, decay: 0.7 },
+      { wave: 'triangle', freq: 294, gain: 0.24, attack: 0.008, hold: 0.04, decay: 0.65 },
+      { wave: 'sine', freq: 392, gain: 0.22, attack: 0.01, decay: 0.7 },
+      { wave: 'sine', freq: 588, detune: 8, gain: 0.16, attack: 0.012, decay: 0.75 },
+      // The bell, arriving a beat late and outlasting everything — the one
+      // part that is allowed to sound like a lesson landing.
+      { wave: 'sine', freq: 1176, gain: 0.1, attack: 0.006, decay: 1.0, delay: 0.12 },
+      // A short breath of air on the strike, so the chord has an edge.
+      { wave: 'noise', gain: 0.14, attack: 0.02, decay: 0.36, filter: { type: 'bandpass', freq: 1200, freqEnd: 3800, q: 1.1 } },
     ],
   },
 

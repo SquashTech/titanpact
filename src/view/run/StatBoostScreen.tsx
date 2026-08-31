@@ -1,4 +1,5 @@
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
+import { playSfx } from '../../audio/sfx';
 import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition, StatKey } from '../../engine/content';
@@ -25,6 +26,17 @@ interface StatBoostConfig {
   glyph: RunGlyphKind | null;
   /** The node's hue — carried by the sky, the eyebrow and the title's bloom (see NodeStage). */
   tint: string;
+  /**
+   * This shrine's key: multiplies every frequency in `shrine` (the arrival)
+   * and `blessing` (the grant), so the three shrines are one sound in three
+   * registers rather than three sounds.
+   *
+   * The order is the order of the stats themselves. Vitality is the body and
+   * sits lowest; the Mana Well is the middle; the Regen Spring is a thin
+   * trickle and sits highest. A player who has heard two of them can place
+   * the third before the title has finished fading in.
+   */
+  pitch: number;
   eyebrow: string;
   title: string;
   /** What the grant is, in the exact words the card's CTA line and the readout both use. */
@@ -37,6 +49,7 @@ const STAT_BOOST_CONFIG: Record<StatBoostNodeType, StatBoostConfig> = {
     amount: 20,
     glyph: null,
     tint: NODE_TINT_VITAL,
+    pitch: 0.86,
     eyebrow: 'A Blessing',
     title: 'Vitality Shrine',
     ctaLabel: '+20 Max HP',
@@ -46,6 +59,7 @@ const STAT_BOOST_CONFIG: Record<StatBoostNodeType, StatBoostConfig> = {
     amount: 10,
     glyph: 'mana',
     tint: NODE_TINT_MANA,
+    pitch: 1,
     eyebrow: 'A Blessing',
     title: 'Mana Well',
     ctaLabel: '+10 Mana',
@@ -55,6 +69,7 @@ const STAT_BOOST_CONFIG: Record<StatBoostNodeType, StatBoostConfig> = {
     amount: 5,
     glyph: 'mana',
     tint: NODE_TINT_MANA,
+    pitch: 1.18,
     eyebrow: 'A Blessing',
     title: 'Regen Spring',
     ctaLabel: '+5 MP Regen',
@@ -83,7 +98,26 @@ export function StatBoostScreen({ nodeType, run, onRunChange, onContinue }: Prop
   const [grantedTo, setGrantedTo] = useState<string | null>(null);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
 
+  /**
+   * The arrival. Fires once on mount — the only sound in the game triggered
+   * by a screen opening rather than by a press, which is why `shrine` is
+   * built with no transient in it (see sounds.ts): it swells up underneath
+   * the map node's own `ui.confirm` instead of competing with it, and the
+   * short delay is what keeps the two from landing together.
+   *
+   * Empty deps on purpose. `config` is derived from `nodeType`, which cannot
+   * change without App.tsx routing a different node — and a different node is
+   * a different mount.
+   */
+  useEffect(() => {
+    playSfx('shrine', { pitch: config.pitch, delay: 0.12 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function handleGrant(rosterId: string) {
+    // Before the state change, not after: this is the press's feedback, and
+    // the light welling up through the card starts on the same frame.
+    playSfx('blessing', { pitch: config.pitch });
     onRunChange(grantStatBonus(run, rosterId, config.stat, config.amount));
     setGrantedTo(rosterId);
   }
@@ -91,8 +125,15 @@ export function StatBoostScreen({ nodeType, run, onRunChange, onContinue }: Prop
   const grantedHero = grantedTo ? heroes[run.roster.find((r) => r.rosterId === grantedTo)!.heroId] : null;
 
   return (
-    <div className="node-screen" style={{ '--node-rgb': config.tint } as CSSProperties}>
+    <div className="node-screen shrine-screen" style={{ '--node-rgb': config.tint } as CSSProperties}>
       <NodeSky />
+
+      {/* The shrine's light coming down over the room, once, as the screen
+          opens. A curtain in `--node-rgb` — so the Vitality Shrine is lit
+          green and the two mana ones blue, from the same one property the
+          sky and the header already read. It plays and is done; the ambient
+          motes NodeSky draws are what the room settles into. */}
+      <span className="shrine-descent" aria-hidden="true" />
 
       <RosterPeek run={run} />
 
@@ -118,10 +159,18 @@ export function StatBoostScreen({ nodeType, run, onRunChange, onContinue }: Prop
               key={entry.rosterId}
               hero={hero}
               entry={entry}
+              className={isGranted ? 'is-blessed' : ''}
               disabled={!!grantedTo && !isGranted}
               onActivate={() => !grantedTo && handleGrant(entry.rosterId)}
               onPreview={() => setPreviewEntry({ hero, entry })}
               ariaLabel={`${hero.name}, level ${entry.level} — grant ${config.ctaLabel}`}
+              /* Light welling UP through the card, against the forced-equip
+                 screen's sweep coming DOWN it (`.equip-seat-flare`). The
+                 direction is the difference between the two grants: gear is
+                 strapped on from outside, a blessing rises through the hero
+                 it lands on. Mounted only on the granted card, so mounting
+                 is what starts it. */
+              overlay={isGranted ? <span className="blessing-flare" aria-hidden="true" /> : undefined}
               ctaClassName={isGranted ? 'is-done' : 'is-accent'}
               cta={isGranted ? 'Granted' : config.ctaLabel}
             />
