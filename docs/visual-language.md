@@ -1470,6 +1470,111 @@ regression check on the extraction. The gold "Leave Them" was only visible in
 the first PNG. `npm run typecheck:view`, `npm run typecheck` and `npm test`
 (203 passing) all pass.
 
+## Twelfth pass — the equip screen becomes a comparison (2026-08-31)
+
+A direct report: *the "give a piece of equipment to a hero" screen has some
+issues once you've reached the middle/lategame. There's no way of knowing if
+the piece of equipment you have now is better or worse than what your heroes
+already have equipped. You have to go through multiple informational
+menus/overlays to read what each hero has equipped, and it's very cumbersome
+and inefficient.* With a stated ask: handle six heroes on screen, show what
+each hero's currently equipped item is doing, and show what the offered item
+does.
+
+### What was wrong
+
+**The screen asked a numeric question in a shape built for an identity
+question.** `ForceEquipScreen` drew six `HeroPickCard`s — the shared
+figure-on-type-tinted-ground card the tenth pass generalised — each with one
+detail line reading `⚔ Torch`. That card is exactly right when the question is
+*which of these heroes*; it says who they are and what the tap buys. But the
+question this screen actually asks is *is this better than what they have*,
+asked six times over with the same terms each time, and a 118px card in a
+three-column grid has no room to answer it once, let alone six times.
+
+**So the answer lived in six overlays.** The name of the held item was on the
+card; everything that made the name mean something — its stats, its granted
+passive, its Elemental Force — was behind a long-press into
+`HeroPreviewOverlay`, one hero at a time. Answering "who should get this" meant
+opening six sheets and holding twelve stat lines in your head, which is the
+"cumbersome and inefficient" in the report, stated precisely.
+
+**Early-game hid the problem.** Empty slots compare against nothing, so the
+card grid was fine for the first act and quietly stopped working as the
+roster filled — which is why the report arrives from the midgame.
+
+### What replaced it
+
+The six cards became six rows: `EquipCompareRow`, a table with the same
+columns in the same order, scanned down rather than hunted across.
+
+| Was | Is |
+|---|---|
+| `HeroPickGrid` of six `.pick-card`s | `.equip-compare-table` — a `.screen-scroll` column of `.equip-row`s, one hero each |
+| `⚔ Torch` as the whole answer | Three lines: **who** (figure, name, level, types), **what they hold** (icon + name in its own rarity colour), **what would change** |
+| The comparison, in six long-presses | `compareEquipment` (`src/run/equipCompare.ts`) — a pure diff of two `EquipmentDefinition`s, rendered as chips |
+| Nothing said what the offered item does per hero | Every chip is written as a **transition**: `ATK 5→15`, not `ATK +10` |
+| One layout for two to six heroes | Two scales at HeroPickGrid's own threshold: 48px rows past four heroes, 96px rows at four or fewer |
+| 25px title, which ran "Mantle of the Archmage" under the roster glyph | `NodeHeader`'s existing `compact` (19px) plus a symmetric 38px corner guard |
+
+Details worth keeping:
+
+- **The transition chip is the whole idea.** `ATK 5→15` answers both halves of
+  the report in one token — the left number is what the hero's current item is
+  doing (the fact that used to cost an overlay), the right is what it would
+  become. Where one side is zero the arrow is dropped for a bare `+15` / `−5`;
+  `0→15` spends three characters saying nothing.
+- **Silence is a feature.** An effect both items carry equally produces no chip
+  at all. An item granting +10 Attack replacing one that grants +10 Attack has
+  nothing to say about Attack, and saying it anyway is what buries the two
+  lines that matter. This is the invariant `test/equipCompare.test.ts` exists
+  to defend.
+- **No verdict.** It would be easy to sum the deltas into a better/worse arrow
+  and it would be wrong: Attack on an Intelligence hero is not worth what
+  Attack on a physical one is, Fire Force is worth nothing to a hero with no
+  Fire moves, and the north star ("every hero must be viable under *some*
+  combination") means the game cannot know what the player is building toward.
+  The one verdict the screen *can* state is that an empty slot costs nothing,
+  so `EQUIP` is green and `REPLACE` is gold.
+- **Type codes are load-bearing, not decoration.** An Elemental Force chip is
+  worth its full magnitude to a hero of that type and nothing to anyone else,
+  so the chip carries its type's colour and the codes it is checked against sit
+  two lines above it.
+- **The header did not become redundant.** It is the *absolute* reading of the
+  item and the table is the *relative* one. A player meeting an item for the
+  first time should not have to reconstruct what it is from six diffs of it,
+  and a diff has no room for a passive's prose.
+- **The chips are chromeless.** Six rows × up to six chips is 36 small
+  rectangles on one screen if they are pills; colour and weight carry the
+  grouping instead.
+- **`flex: none` on the row is load-bearing.** Without it a column of six flex
+  items inside a fixed-height scroll box squashes to fit rather than
+  overflowing — which is not scrolling, it is six rows quietly losing 15px of
+  content each on a short viewport. Caught in verification, not in review.
+- **`justify-content: safe center`**, not plain `center`: the table is centred
+  in the space between the header and Trash so a small roster does not leave a
+  hole, and `safe` is what stops a full roster being centred by clipping its
+  first row somewhere no scroll can reach.
+- **The seating animation survived the move unchanged.** `equip-seat-jolt` and
+  `.equip-seat-flare` were written for the cards; what they animate is a thing
+  accepting weight, not a card, so they read the same on a row.
+
+### Verification
+
+Same method as the ninth through eleventh passes: a throwaway harness (root
+`equipcheck.html` + `src/app/equipcheck.tsx` mounting the real
+`ForceEquipScreen` from a synthetic mid-run `RunState`, both deleted before
+committing) served by vite, driven and shot in the Browser pane. Shot and
+looked at: a legendary weapon against six heroes (five filled slots and one
+empty), the same screen after equipping — which proves the bump path, since
+the displaced Torch returns as the queue head under "Needs a New Home" with
+every row recomputed against it — a common weapon whose holder already has
+one (the `No change` row), a mythic armour against six armours (five chips per
+row, wrapping), the roomy scale at four heroes, the `i` sheet opening over the
+table, and the seating flare frozen mid-sweep. The short-viewport squash and
+the clipped 25px title were both found this way. `npm run typecheck`,
+`npm run typecheck:view` and `npm test` (581 passing) all pass.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.

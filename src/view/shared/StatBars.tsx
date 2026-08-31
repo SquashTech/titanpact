@@ -1,7 +1,9 @@
 import type { StatKey, StatLine } from '../../engine/content';
 import { STAT_COLORS, StatGlyph } from './statIcons';
 
-export const STAT_ORDER: StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool', 'mpRegen'];
+/** Re-exported from the engine's shared vocabulary, where the run layer can reach it too (src/run/equipCompare.ts) — the same reason STAT_COLORS/StatGlyph are re-exported below rather than defined here. Imported as well as re-exported because the bars below iterate it. */
+import { STAT_ORDER } from '../../engine/content';
+export { STAT_ORDER };
 
 /** Abbreviated everywhere a stat block reads (StatBars, buff/debuff chips, equipment/Evolution grant chips) — Pokémon-VGC-style short codes instead of full words, so the fixed-width bar-label column never wraps or truncates. */
 export const STAT_LABELS: Record<StatKey, string> = {

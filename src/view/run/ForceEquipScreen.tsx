@@ -4,12 +4,11 @@ import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
-import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
 import { equipToRoster, RunProgressError } from '../../run/runProgress';
-import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { EQUIP_SLOT_LABELS, EquipmentEffectList, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
+import { EquipCompareRow } from './EquipCompareRow';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
 
@@ -29,55 +28,6 @@ interface QueueEntry {
 
 function fmtGrant(amount: number): string {
   return amount > 0 ? `+${amount}` : `${amount}`;
-}
-
-interface ForceEquipHeroCardProps {
-  hero: HeroDefinition;
-  entry: RosterEntry;
-  slot: EquipmentSlot;
-  currentItem: EquipmentDefinition | null;
-  /** True from the tap until the item is actually applied — see EQUIP_ANIM_MS. */
-  isEquipping: boolean;
-  /** True while ANOTHER card is mid-animation: the grid is briefly inert. */
-  locked: boolean;
-  onEquip: () => void;
-  onPreview: () => void;
-}
-
-/**
- * One hero on the placement grid: the shared HeroPickCard, carrying what is
- * in that hero's matching slot right now as its detail row — the fact the
- * whole choice turns on, since equipping over a filled slot bumps the old
- * item back onto this same queue.
- *
- * A tap equips/replaces immediately; holding opens the full HeroPreviewOverlay
- * sheet first, so a player can check a hero's loadout and stats before
- * committing to bump something off them.
- */
-function ForceEquipHeroCard({ hero, entry, slot, currentItem, isEquipping, locked, onEquip, onPreview }: ForceEquipHeroCardProps) {
-  return (
-    <HeroPickCard
-      hero={hero}
-      entry={entry}
-      className={isEquipping ? 'is-equipping' : ''}
-      disabled={locked}
-      onActivate={onEquip}
-      onPreview={onPreview}
-      ariaLabel={`${hero.name}, level ${entry.level} — ${currentItem ? `replace ${currentItem.name}` : 'equip'}`}
-      /* Mounted only while the strap is being pulled tight, so mounting it is
-         what starts it — same reason LevelUpScreen's charge is an overlay
-         rather than a class on the card. */
-      overlay={isEquipping ? <span className="equip-seat-flare" aria-hidden="true" /> : undefined}
-      detail={
-        <span className={`pick-slot${currentItem ? ' filled' : ' empty'}`}>
-          <EquipmentIcon item={currentItem} slot={slot} className="pick-slot-icon" />
-          <span className="pick-slot-item">{currentItem ? currentItem.name : 'Empty'}</span>
-        </span>
-      }
-      ctaClassName="is-accent"
-      cta={currentItem ? 'Replace' : 'Equip'}
-    />
-  );
 }
 
 /**
@@ -185,24 +135,38 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
           ┄
           The icon used to be the header's `art` — a 52px figure standing above
           the eyebrow — and what the effects are now inside used to be a fourth
-          band of its own between the header and the grid. Together those two
-          put this screen's hero figures 33px lower than the Level Up screen's,
-          and since a won fight hands equipment straight to Level Up, the whole
+          band of its own between the header and the body. Together those two
+          put this screen's figures 33px lower than the Level Up screen's, and
+          since a won fight hands equipment straight to Level Up, the whole
           roster visibly jumped up the moment the player pressed Trash/Equip
           (2026-08-29 pass). The chips sit in the header's `children` slot —
-          exactly where Level Up puts its XP orb track — so the two headers now
-          have the same four rows and the grid lands at the same height. */}
+          exactly where Level Up puts its XP orb track.
+          ┄
+          This is the ABSOLUTE reading of the item and the table below is the
+          RELATIVE one, which is why both exist and neither is redundant. A
+          player meeting an item for the first time should not have to
+          reconstruct what it is from six diffs of it, and a diff cannot carry
+          a passive's prose. */}
       <NodeHeader
+        /* NodeHeader's own step-down, for exactly what it is for: "a screen
+           whose body is already tall gets the same header one size down
+           rather than a different header". The body below is now a six-row
+           table. It also buys the margin the titles here need that no other
+           node screen does — a node is called "Guild Hall", an item is called
+           "Mantle of the Archmage", and at 25px that ran off the canvas and
+           under the roster glyph. */
+        compact
         eyebrow={current.bumped ? 'Needs a New Home' : 'New Equipment'}
         glyph={<EquipmentIcon item={item} slot={item.slot} className="equip-spotlight-icon" />}
         title={item.name}
         readout={`${RARITY_LABELS[item.rarity]} · ${EQUIP_SLOT_LABELS[item.slot]}${
-          current.bumped ? ' — unequipped; give it to another hero, or trash it' : ''
+          current.bumped ? ' — unequipped; give it to another hero, or trash it' : ' — tap a hero to hand it over'
         }`}
       >
         {/* Capped and internally scrolling: an item with three granted
-            passives and one with none must still put the hero figures at the
-            same height. */}
+            passives and one with none must leave the table below the same
+            height, or the row a player is reaching for moves under their
+            thumb between one item and the next. */}
         <div className="node-item-effects">
           {grants.some(([, amount]) => amount) && (
             <div className="detail-modifier-list">
@@ -216,24 +180,37 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
             </div>
           )}
           {/* Full passive/status description (not just the "Grants: Name"
-              chip used elsewhere) — the more economical hero grid below
-              frees up room to spell out exactly what the item does. */}
+              chip used elsewhere). The table below abbreviates a granted
+              passive to its name, since a diff has no room for prose; this is
+              the one place the prose gets said. */}
           <EquipmentEffectList item={item} />
         </div>
       </NodeHeader>
 
-      <HeroPickGrid count={run.roster.length} fill>
+      {/* The comparison table (EquipCompareRow). Six rows of one hero each,
+          scrolling internally rather than pushing Trash off the screen —
+          .app-shell's standing rule, and the reason a full roster needs no
+          layout of its own here: a seventh hero would simply be a seventh
+          row. What was here: HeroPickGrid, six identity cards with one line
+          of slot text each, which is what forced the player through six hero
+          sheets to answer a question about numbers (2026-08-31). */}
+      {/* Two scales at one threshold, the same one HeroPickGrid uses (`count
+          > 4`): past four heroes the rows go dense so six of them fit the
+          stage, at four or fewer they double the portrait so an early-run
+          roster doesn't leave a hole where the grid used to fill one. */}
+      <div className={`equip-compare-table screen-scroll${run.roster.length > 4 ? '' : ' is-roomy'}`}>
         {run.roster.map((entry) => {
           const hero = heroes[entry.heroId];
           const currentId = entry.equipment[item.slot];
           const currentItem = currentId ? equipment[currentId] : null;
           return (
-            <ForceEquipHeroCard
+            <EquipCompareRow
               key={entry.rosterId}
               hero={hero}
               entry={entry}
               slot={item.slot}
               currentItem={currentItem}
+              offered={item}
               isEquipping={seatingRosterId === entry.rosterId}
               locked={!!seatingRosterId && seatingRosterId !== entry.rosterId}
               onEquip={() => handleEquip(entry.rosterId)}
@@ -241,7 +218,7 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
             />
           );
         })}
-      </HeroPickGrid>
+      </div>
 
       {/* Inert while a card is seating, for the same reason the other cards
           are: the deferred equip is holding a snapshot of this queue, and

@@ -12166,7 +12166,9 @@ textarea,
   color: var(--rarity-color, var(--accent));
 }
 
-/* ForceEquipScreen's detail row: what is already in this hero's matching slot.
+/* A pick card's detail row, saying what is in a slot. Written for
+   ForceEquipScreen, which has since moved to a comparison table
+   (`.equip-row`); RosterReplaceScreen is what still uses it.
    Chromeless — `.equip-slot-box`, which this replaces on these cards, is a
    dashed sunken box, and a box inside a card inside a grid is exactly the
    nesting docs/visual-language.md exists to stop. The icon is set in px
@@ -12205,6 +12207,429 @@ textarea,
   opacity: 0.55;
 }
 
+/* --- The equip comparison table (ForceEquipScreen / EquipCompareRow) ------
+
+   2026-08-31, per user report: past the early game every hero already holds
+   something, and this screen asked "who gets this?" while answering "compared
+   to what?" nowhere at all — "you have to go through multiple informational
+   menus/overlays to read what each hero has equipped, and it's very
+   cumbersome and inefficient".
+
+   So the six hero CARDS became six hero ROWS. That is the whole change, and
+   the reason is that a card and a table answer different questions. A
+   `.pick-card` is an identity: a figure on type-tinted ground with one line
+   saying what the tap buys, which is exactly right when the question is
+   "which of these heroes". Here the question is numeric and asked six times
+   over with the same terms each time, and six instances of one numeric
+   question is a table — same columns in the same order, scanned straight down
+   instead of hunted across a grid. A grid of six cards also has no room for a
+   comparison at 118px wide, which is how the comparison ended up in six
+   separate overlays in the first place.
+
+   Deliberately still not boxes-inside-boxes (docs/visual-language.md): the
+   row itself is bordered because it genuinely is a button, and nothing inside
+   it is. The chips are chromeless coloured text, the held item is an icon and
+   a name, the type codes are `.move-type-code`'s idiom. The only fill on the
+   row is the hero's own type wash, entering from the LEFT — the end the
+   figure stands at — rather than `.pick-card`'s top-left, because a row is
+   read left to right and the light should come from where the reading
+   starts. */
+
+/* The corner glyph (RosterPeek) is absolutely positioned over the header's
+   top-right, which every other node screen gets away with because a node's
+   name is two short words. An item's name is not: "Mantle of the Archmage"
+   reached the button and disappeared under it. Symmetric, so the title stays
+   optically centred, and wrapping rather than clipping if a longer name ever
+   arrives. */
+.force-equip-screen .node-title {
+  padding: 0 38px;
+  text-wrap: balance;
+}
+
+.equip-compare-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* Centred in the space between the header and Trash, the same as
+     `.pick-grid`'s `align-content: center` — an early-run roster of two heroes
+     should not leave 300px of floor under it. `safe` is what makes that
+     legal inside a scroll container: without it, a roster that overflows is
+     centred by clipping its first row off the top, where no scrolling can
+     reach it. A browser that doesn't know `safe` drops the whole declaration
+     and falls back to flex-start, which is the correct failure. */
+  justify-content: safe center;
+  /* .screen-scroll gives it flex/min-height/overflow; this is only the
+     gutter that keeps a scrollbar off the rows' right rim. */
+  padding-right: 2px;
+
+  /* Every size in a row derives from the portrait, so the two scales below
+     are one composition at 1x and 2x rather than two hand-tuned layouts —
+     the same discipline `.pick-cols-2` / `.pick-cols-3` follow, and the same
+     threshold (a roster past four). Defaults are the dense scale. */
+  --row-portrait: 48px;
+  --row-name: 13px;
+  --row-held: 10px;
+  --row-chip: 9px;
+}
+
+/* Four heroes or fewer — an early-run roster, or a mid-run one mid-rebuild.
+   Six 48px rows fill the stage; three of them leave a hole in it, and the
+   grid this table replaced answered exactly that by doubling its portrait at
+   the same count. 96px is 2x the 48px source (art/heroes/*.png), never a
+   fractional scale. */
+.equip-compare-table.is-roomy {
+  gap: 8px;
+  --row-portrait: 96px;
+  --row-name: 16px;
+  --row-held: 12px;
+  --row-chip: 10px;
+}
+
+/* The three things NOT derived from the portrait, because they are labels
+   rather than content and stop being labels if they grow: the type codes, the
+   CTA and the level. They step once and stop. */
+.equip-compare-table.is-roomy .equip-row-type,
+.equip-compare-table.is-roomy .equip-row-cta {
+  font-size: 10px;
+}
+
+.equip-compare-table.is-roomy .equip-row-level {
+  font-size: 11px;
+}
+
+.equip-compare-table.is-roomy .equip-row {
+  padding: 6px 10px;
+  gap: 10px;
+}
+
+.equip-compare-table.is-roomy .equip-row-body {
+  gap: 3px;
+}
+
+.equip-row {
+  position: relative;
+  /* A flex item shrinks by default, and a column of six of them inside a
+     fixed-height scroll box will happily squash to fit rather than overflow —
+     which is not scrolling, it is six rows quietly losing 15px of their
+     content each on a short viewport. `flex: none` is what makes the overflow
+     real, so .screen-scroll has something to scroll. */
+  flex: none;
+  display: grid;
+  grid-template-columns: var(--row-portrait) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--type-rgb), 0.3);
+  background:
+    linear-gradient(90deg, rgba(var(--type-rgb), 0.2), transparent 46%),
+    var(--surface-raised);
+  box-shadow: var(--hairline), var(--elev-1);
+  color: var(--text);
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-mid) var(--ease-out),
+    border-color var(--dur-mid) var(--ease-out),
+    opacity var(--dur-mid) var(--ease-out);
+}
+
+.equip-row > * {
+  position: relative;
+  z-index: 1;
+}
+
+.equip-row:hover:not(.is-locked):not(.is-equipping) {
+  transform: translateX(2px);
+  border-color: rgba(var(--type-rgb), 0.7);
+  box-shadow: var(--hairline-strong), var(--elev-2);
+}
+
+.equip-row:not(.is-locked):active {
+  transform: translateX(0);
+}
+
+.equip-row:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring), var(--elev-2);
+}
+
+/* Same rule as `.move-button` / `.pick-card`: an unavailable row drops its
+   elevation as well as dimming, so "can't act on this" reads from the
+   silhouette and not only from the opacity. */
+.equip-row.is-locked {
+  cursor: default;
+  opacity: 0.42;
+  box-shadow: none;
+}
+
+/* 48px at 1x — the sprite's own size (art/heroes/*.png), never a fractional
+   downscale (docs/visual-language.md opens on that defect). It is also what
+   sets the row's height: three lines of body text fit inside it exactly, so
+   the figure costs the table nothing. */
+.equip-row-figure {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: var(--row-portrait);
+  height: var(--row-portrait);
+}
+
+/* The same ground mark `.pick-ground` and the battlefield's
+   `.combatant-platform` make — shadow and colour in one ellipse — so a hero
+   stands on the same kind of ground in a table row as in a fight. */
+.equip-row-ground {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--row-portrait) * 0.04);
+  width: calc(var(--row-portrait) * 0.88);
+  height: calc(var(--row-portrait) * 0.19);
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(var(--type-rgb), 0.5),
+    rgba(var(--type-rgb), 0.14) 54%,
+    transparent 72%
+  );
+}
+
+.equip-row-portrait {
+  position: relative;
+  z-index: 1;
+  width: var(--row-portrait);
+  height: var(--row-portrait);
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.65));
+}
+
+.equip-row-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.equip-row-who {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+}
+
+.equip-row-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--row-name);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+/* The unit set smaller than the numeral, the same label/value split
+   `.pick-level` makes on the cards. */
+.equip-row-level {
+  flex: none;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--text-dim);
+}
+
+.equip-row-type {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+/* Pinned rather than sized off the 8px code, for the same reason
+   `.pick-type-code .element-glyph` is: 1.15em of 8px is under the floor these
+   shapes were drawn to — Beast's paw pads merge, Ancient's urn lip vanishes. */
+.equip-row-type .element-glyph {
+  width: 11px;
+  height: 11px;
+  vertical-align: 0;
+}
+
+/* What the hero is holding in the matching slot right now — the fact that
+   used to cost an overlay each. The name takes its own rarity colour, so the
+   tier of what is about to be bumped reads before the name is even parsed. */
+.equip-row-held {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: var(--row-held);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.equip-row-held-icon {
+  flex: none;
+  font-size: calc(var(--row-held) * 1.3);
+  opacity: 0.9;
+}
+
+.equip-row-held-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.equip-row-held.is-empty {
+  opacity: 0.5;
+}
+
+.equip-row-held.is-empty .equip-row-held-name {
+  font-weight: 600;
+  font-style: italic;
+}
+
+/* The diff. Wraps rather than truncating: a row that grows a line is honest,
+   a row that hides the loss it is asking the player to accept is not — and
+   the table scrolls, so the growth costs nothing but a scroll. */
+.equip-row-changes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px 6px;
+  min-width: 0;
+  margin-top: 1px;
+}
+
+/* Chromeless: no fill, no border, no pill. Six rows x up to six chips is 36
+   small rectangles on one screen if these are boxed, which is the exact
+   clutter the no-boxes rule exists to stop. Colour and weight carry the
+   grouping instead. */
+.equip-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--row-chip);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: var(--text-dim);
+}
+
+.equip-chip-glyph {
+  width: calc(var(--row-chip) + 2px);
+  height: calc(var(--row-chip) + 2px);
+  vertical-align: 0;
+  /* The Elemental Force chips carry their own type's colour (set inline as
+     --chip-tint); a stat glyph keeps STAT_COLORS, which StatGlyph sets. */
+  color: var(--chip-tint, inherit);
+}
+
+.equip-chip-label {
+  opacity: 0.78;
+}
+
+.equip-chip .equip-chip-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The old magnitude, kept legible but subordinate — it is the thing being
+   left behind, and the eye should land on the number after the arrow. */
+.equip-chip-was {
+  opacity: 0.6;
+  font-weight: 700;
+}
+
+.equip-chip-arrow {
+  margin: 0 1px;
+  opacity: 0.45;
+  font-weight: 400;
+}
+
+/* Green up, red down — the same two colours a buff and a debuff take
+   everywhere else in the app (`.stat-buff` / `.stat-debuff`), so the reading
+   needs no new vocabulary. */
+.equip-chip.is-gain {
+  color: var(--hp-high);
+}
+
+.equip-chip.is-loss {
+  color: var(--hp-low);
+}
+
+/* A granted passive is present or absent, so it has no numbers to show —
+   just its sign, which is why the +/- is set as its own hard mark rather than
+   folded into a value. */
+.equip-chip.is-effect .equip-chip-label {
+  opacity: 1;
+}
+
+.equip-chip-mark {
+  font-weight: 900;
+}
+
+.equip-chip.is-neutral {
+  font-style: italic;
+  font-weight: 600;
+  opacity: 0.55;
+}
+
+/* What the tap buys, on the row's far edge. The `i` under it is the
+   discoverable, no-hold alternative to the hold-to-inspect sheet — the same
+   pair `.pick-cta` + `.pick-info` make on the cards. */
+.equip-row-act {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding-left: 2px;
+}
+
+.equip-row-cta {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--accent);
+}
+
+/* An empty slot is a pure gain — nothing is displaced, nothing rejoins the
+   queue — and it is the one verdict this screen can state without knowing
+   what the player is building toward. So it, and only it, gets the green. */
+.equip-row.is-empty .equip-row-cta {
+  color: var(--hp-high);
+}
+
+.equip-row.is-locked .equip-row-cta {
+  color: var(--text-dim);
+}
+
+/* Chromeless glyph, the same treatment as `.pick-info` and `.draft-info`:
+   circle, border, fill and shadow all go, the glyph stays for
+   discoverability and for keyboard/screen-reader users. */
+.equip-row-info {
+  width: 22px;
+  height: 18px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 700;
+  font-style: italic;
+  cursor: pointer;
+  opacity: 0.42;
+  transition: opacity var(--dur-mid) var(--ease-out);
+}
+
+.equip-row-info:hover {
+  opacity: 1;
+}
+
 /* --- The seating (ForceEquipScreen, `.is-equipping` + `.equip-seat-flare`)
    Handing a hero a piece of gear was the one grant in the run loop that
    happened with no acknowledgement at all: the tap and the screen change
@@ -12218,15 +12643,17 @@ textarea,
    names a rarity. Duration must stay in step with EQUIP_ANIM_MS: the equip
    is applied by a JS timeout, not an animationend listener, so the two only
    have to agree on how long tap-to-payoff feels. */
-.pick-card.is-equipping {
+.equip-row.is-equipping {
   cursor: default;
   border-color: var(--rarity-color, var(--accent));
   box-shadow: 0 0 0 1px var(--rarity-color, var(--accent)), 0 0 22px rgba(255, 255, 255, 0.14), var(--elev-2);
   animation: equip-seat-jolt 420ms var(--ease-out);
 }
 
-/* The card takes the weight of the item. Down first, then a small settle —
-   a buckle pulling tight, not a card being selected. */
+/* The row takes the weight of the item. Down first, then a small settle —
+   a buckle pulling tight, not a row being selected. (Written for the hero
+   cards this screen used to draw; it survived the move to rows unchanged,
+   because what it animates is a thing accepting weight, not a card.) */
 @keyframes equip-seat-jolt {
   0% {
     transform: translateY(0) scale(1);

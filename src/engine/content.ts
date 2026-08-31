@@ -33,6 +33,18 @@ export type TypeId = string;
 
 export type StatKey = 'hp' | 'attack' | 'defense' | 'intelligence' | 'wisdom' | 'speed' | 'manaPool' | 'mpRegen';
 
+/**
+ * The canonical order the eight stats are read in, everywhere they are listed
+ * — stat blocks, buff chips, equipment grants, the equip comparison
+ * (src/run/equipCompare.ts). Lives here beside the type rather than in the
+ * view because the run layer needs it too, and two hand-kept orderings that
+ * silently disagree is how a comparison lists Speed above Defense on one
+ * screen and below it on the next. Re-exported by
+ * src/view/shared/StatBars.tsx, which is where the view has always imported
+ * it from.
+ */
+export const STAT_ORDER: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool', 'mpRegen'];
+
 export interface StatLine {
   hp: number;
   attack: number;
