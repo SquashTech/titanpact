@@ -383,7 +383,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
       )}
 
       {offer && offerEntry ? (
-        <div className="screen-scroll">
+        <div className="screen-scroll moveoffer-stage">
           <div className="stage-centered">
             <div className="reward-panel">
               <OfferHeroHead
@@ -494,13 +494,19 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
         </HeroPickGrid>
       )}
 
-      <button
-        className="resolve-button"
-        disabled={run.levelUpPool > 0 || !!offer || pendingEvolutions > 0}
-        onClick={onDone}
-      >
-        Continue
-      </button>
+      {/* Gone entirely while the move-replace offer is up, rather than sitting
+          under it disabled: the offer already carries its own CTA (the
+          Decline/Confirm pair), so a second greyed-out gold bar below that
+          pair read as the screen's real button while costing the ~90px that
+          pushed the offer into a scroll. Nothing in the offer may sit below
+          the fold — it is a comparison between the offered move and four
+          existing ones, and a comparison you have to scroll to complete is one
+          you make from memory. */}
+      {!offer && (
+        <button className="resolve-button" disabled={run.levelUpPool > 0 || pendingEvolutions > 0} onClick={onDone}>
+          Continue
+        </button>
+      )}
 
       {/* Long-press-triggered move detail popup (MoveButtonReplica's onLongPress) — reuses .log-overlay/.log-panel like FightScreen's move-button popup, including "tap anywhere to close" (no stopPropagation on the panel). */}
       {movePopup && (

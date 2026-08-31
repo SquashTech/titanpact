@@ -9794,6 +9794,41 @@ textarea,
   color: var(--enemy);
 }
 
+/* The move-replace offer as a whole-screen prompt (2026-08-30, per user
+   direction: "let the entire screen just be the move replacement prompt …
+   prevent screen scroll here and have all info always be present").
+   ┄
+   LevelUpScreen already hid its NodeHeader for the offer; what was left above
+   it was the disabled Continue bar, which is now unmounted for the duration
+   (see LevelUpScreen.tsx). This block spends the room that frees. The panel's
+   own 24px top/bottom padding was separating it from a header and a CTA that
+   are both gone — kept only as the small clearance the RosterPeek glyph and
+   the bottom edge actually need. The gap between the offer's five bands comes
+   down with it, because a column that fits by 4px reads as tight and a column
+   that scrolls by 4px reads as broken; between them these are the cheapest
+   60-odd px on the screen and none of it is information.
+   ┄
+   `.screen-scroll` stays underneath as a safety net, but it should never
+   engage: uiScale.ts makes the design canvas at least REFERENCE_HEIGHT (700)
+   tall for any real viewport 700px or over, and the tallest form of this
+   panel — the widest move dossier in the game, two payload lines over a
+   three-line flavour — measures 676 at 700, exactly filling it with nothing
+   cut. Below a ~674px viewport the net takes over; that is a device shorter
+   than anything the rest of the run loop fits either. Re-measure here if the
+   dossier ever grows a row. */
+.moveoffer-stage .reward-panel {
+  padding: 2px 12px 0;
+  gap: 6px;
+}
+
+/* 12px is the lift `.resolve-button` takes at the foot of a screen, and this
+   pair inherits it from `.moveoffer-actions` because it is normally sitting
+   above one. Here it is the last thing on the screen and the lift is just the
+   last 4px between fitting and scrolling on a short viewport. */
+.moveoffer-stage .moveoffer-actions {
+  margin-bottom: 8px;
+}
+
 /* Permanent readout of the move being offered, sitting up top where the old
    hover-driven info panel used to live — unlike that panel (which followed
    whatever the player was currently hovering/long-pressing among the
