@@ -412,10 +412,12 @@ Three things to know before you author a slate's column:
   starting-kit candidates, Mid/Late go in `moveTiers`. **Give every pool at least one
   Early entry** — `test/moveTiers.test.ts` fails if one has none. Six pools authored
   before the gate did, and those heroes learned nothing until level 4.
-- **Author more than one magical row into the Early tier.** Every slate so far puts
-  exactly one there, and the type's magical hero starts with it — which is why Sylva and
-  Marrow had *no legal Early pick left* and had to take an off-stat or utility row. It
-  is the single most repeated shape in the whole set.
+- **Know what your Early tier leaves the type's magical hero.** All fourteen slates put
+  exactly one magical row there, and the type's magical hero starts with it — so Sylva
+  and Marrow had only off-stat or utility rows left to draw. That is fine (2026-08-31
+  designer call: a hero holding a move off its better stat is a legitimate pick, the way
+  it is in Pokémon, not the "trap pick" the north star forbids — that is a hero whose
+  *only* damage move is off-stat). Worth knowing you are doing it, not worth avoiding.
 
 ### `priority`
 

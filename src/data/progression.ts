@@ -134,6 +134,9 @@ export const progressionTable: ProgressionTable = {
     // was an off-stat row of its own type or an off-type row of the right
     // stat. Vine Lash wins on the identity Sylva is built around: 20 mana of
     // Poison, feeding the same Blight/Corrode stack that Miasma detonates.
+    // Off-stat is a legitimate pick, not a compromise (2026-08-31 designer
+    // call) — the trap the north star forbids is a hero whose ONLY damage
+    // move is off-stat, and Sylva starts with Seed Shot.
     wildOracle: ['vineLash', 'blight', 'corrode', 'magicGrowth', 'miasma', 'forceOfNature', 'wildBloom', 'animalSpirit'],
     // The three Storm heroes draw from the authored Storm pool (src/data/moves.ts,
     // 2026-08-30), split by the stat each actually attacks with, same as Fire,
