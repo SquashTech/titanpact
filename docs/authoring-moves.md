@@ -400,14 +400,19 @@ Three things to know before you author a slate's column:
   not close Early. A hero that never happened to roll an Early move can still get it at
   level 9.
 - **Omitting `tier` means Early**, i.e. ungated — the behavior every move had before the
-  field existed. That is why the nine slates authored before this change still work, and
-  why a slate you leave untiered fails silently rather than loudly. `TIERED_TYPES` in
-  `test/moveTiers.test.ts` is the list of slates that are done: **add your type to it**
-  and the test then demands a tier on every one of its moves.
-- **Tier is still also your distribution guide** (§7): Early moves are starting-kit
-  candidates, Mid/Late go in `moveTiers`. A hero's pool wants moves across all three
-  tiers, not five Late rows — a pool with nothing the hero's level has reached spends a
-  Training Point on nothing (the level-up screen renders it as "Level only").
+  field existed, so a slate you leave untiered fails silently rather than loudly.
+  `TIERED_TYPES` in `test/moveTiers.test.ts` is the list of slates that are done:
+  **add your type to it** and the test then demands a tier on every one of its moves.
+  Only Ancient is still off that list.
+- **Eleven slates' tiers are a reconstruction, not the designer's column** — everything
+  except Light, Iron and Beast, whose `// -- Early --` block markers survived. Read the
+  TIER PROVENANCE block at the top of `src/data/moves.ts` before treating one as
+  authoritative, and correct rows freely if you have the original table.
+- **Tier is still also your distribution guide** (§7), and now it binds: Early moves are
+  starting-kit candidates, Mid/Late go in `moveTiers`. **Give every pool at least one
+  Early entry.** Six pools authored before the gate have none and learn nothing until
+  level 4 (`test/moveTiers.test.ts` pins the list) — that is the failure to avoid, not a
+  precedent.
 
 ### `priority`
 

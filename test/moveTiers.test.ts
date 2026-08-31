@@ -22,12 +22,35 @@ import { levelUpMovePool, isMoveTierUnlocked, MOVE_TIER_LEVEL } from '../src/run
 import type { MoveTier, TypeId } from '../src/engine/content';
 
 /**
- * The slates whose designer table recorded an `Early / Mid / Late` column
- * that survived into the code (the `// -- Early --` block markers in
- * src/data/moves.ts). Every move of these types must carry a tier; every
- * other type is deliberately untiered — see docs/authoring-moves.md §2.
+ * Every AUTHORED slate. Each must carry a tier on every move; every other
+ * type is deliberately untiered — see docs/authoring-moves.md §2. Ancient is
+ * the only type left out, and only because it is still two fixture moves
+ * with no authored slate behind them: nothing to read a tier column off.
+ *
+ * Light, Iron and Beast are EXACT — their design table's tier column survived
+ * into the code as the `// -- Early --` block markers in src/data/moves.ts.
+ * The other eleven are DERIVED (2026-08-31) and flagged as provisional in
+ * moves.ts: the three exact slates prove each type was authored in table
+ * order as contiguous Early→Mid→Late blocks, so the split was read back off
+ * that ordering and the cost curve. Correct individual rows freely — that is
+ * what they are there for.
  */
-const TIERED_TYPES: readonly TypeId[] = ['Light', 'Iron', 'Beast'];
+const TIERED_TYPES: readonly TypeId[] = [
+  'Fire',
+  'Water',
+  'Frost',
+  'Storm',
+  'Stone',
+  'Nature',
+  'Light',
+  'Shadow',
+  'Arcane',
+  'Mind',
+  'Spirit',
+  'Iron',
+  'Beast',
+  'Mech',
+];
 
 function entryAt(heroId: string, level: number, unlocked: readonly string[] = []) {
   let run = createRunState(0);
@@ -71,8 +94,9 @@ test('move tiers: MOVE_TIER_LEVEL gates cumulatively, and an untiered move is un
   );
 
   // The default: no authored tier reads as Early, i.e. offerable from level 1.
-  assert.strictEqual(moves.ember.tier, undefined);
-  assert.ok(isMoveTierUnlocked(moves.ember, 1));
+  // Ancient is the only untiered type left (no authored slate behind it yet).
+  assert.strictEqual(moves.runicBlast.tier, undefined);
+  assert.ok(isMoveTierUnlocked(moves.runicBlast, 1));
   assert.ok(isMoveTierUnlocked(undefined, 1), 'a missing move must not gate — it is a content bug, not a lock');
 
   assert.deepStrictEqual(MOVE_TIER_LEVEL, { early: 1, mid: 4, late: 7 });
@@ -97,6 +121,33 @@ test('move tiers: levelUpMovePool only offers what the hero\'s level has reached
   // The gate composes with the already-unlocked filter rather than replacing it.
   const held = levelUpMovePool(progressionTable, moves, entryAt('ironWarden', 9, ['juggernaut']));
   assert.ok(!held.includes('juggernaut'));
+});
+
+test('move tiers: the pools that hold nothing a level-1 hero can be offered, pinned', () => {
+  // A CONSEQUENCE of the gate, not a bug in it, and the thing to look at
+  // first if the early game reads as flat. These pools were authored while
+  // the tier column was documentation only (docs/authoring-moves.md §7 told
+  // slate authors it was "your guide for which hero gets what, not a value
+  // you encode"), so nothing ever asked them to hold an Early move. Six do
+  // not, and those heroes learn nothing at all until level 4.
+  //
+  // It costs the player less than it reads: a starting kit is 3 moves against
+  // a cap of 4, so a hero has room for exactly ONE outright gain anyway, and
+  // the level-up card labels these "Level only" BEFORE the point is spent.
+  // Pinned rather than fixed because the fix is a content call — either these
+  // pools gain an Early entry or the type's split moves — and either way this
+  // list must not grow silently.
+  const starved = Object.keys(progressionTable.moveTiers)
+    .filter((heroId) => levelUpMovePool(progressionTable, moves, entryAt(heroId, 1)).length === 0)
+    .sort();
+  assert.deepStrictEqual(starved, [
+    'nightshade', // Shadow: 4 Mid, 2 Late
+    'marrow', // Shadow: 2 Mid, 2 Late
+    'steamColossus', // Mech: 2 Mid, 4 Late
+    'shadowMonk', // Shadow: 3 Mid, 2 Late
+    'tempest', // Storm: 3 Mid, 3 Late
+    'wildOracle', // Nature: 4 Mid, 3 Late
+  ].sort());
 });
 
 test('move tiers: a pool can legitimately empty out, which the screen reads as "Level only"', () => {

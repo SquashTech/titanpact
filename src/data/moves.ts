@@ -94,6 +94,39 @@ import type { MoveDefinition, StatKey } from '../engine/content';
  */
 export const RANDOM_STAT_POOL: readonly StatKey[] = ['attack', 'defense', 'intelligence', 'wisdom', 'speed'];
 
+/*
+ * TIER PROVENANCE (2026-08-31) — read before trusting a `tier` below.
+ *
+ * `tier` is the designer table's `Early / Mid / Late` column, and as of
+ * 2026-08-31 it is gated: a move is not OFFERED on level-up until the hero
+ * reaches its tier's level (1 / 4 / 7 — src/run/progression.ts
+ * MOVE_TIER_LEVEL, docs/leveling-and-ranks.md). Nothing in combat reads it.
+ *
+ * Three slates are EXACT. Light, Iron and Beast recorded their tier column in
+ * the code as `// -- Early --` block markers, and those markers are what the
+ * field was populated from.
+ *
+ * Eleven are DERIVED, and are PROVISIONAL in CLAUDE.md's sense — Fire, Water,
+ * Frost, Storm, Stone, Nature, Shadow, Arcane, Mind, Spirit, Mech. Their tier
+ * column was lost during authoring (§2 of the runbook told slate authors it
+ * was documentation, not a value to encode), so it was read back off two
+ * things the three exact slates establish:
+ *
+ *   1. every slate was authored in TABLE ORDER, as contiguous Early→Mid→Late
+ *      blocks of roughly 5-7 / 5-7 / 4-5 moves, and
+ *   2. the tiers track the cost curve — Early sits at the type's 15-35 mana
+ *      floor, Mid at 35-50, Late at 50+.
+ *
+ * Every derived boundary landed exactly where the slate's cost curve steps,
+ * which is what makes them worth shipping — but they are a reconstruction,
+ * not the designer's column. Correct any row freely; the field is the source
+ * of truth, and test/moveTiers.test.ts only asserts that each authored slate
+ * has all three tiers, never which move sits in which.
+ *
+ * Ancient is untiered because it is still two fixture moves with no slate
+ * behind them. An omitted tier reads as Early, i.e. ungated.
+ */
+
 export const moves: Record<string, MoveDefinition> = {
   // The "original fixture moves" section used to open the file here, and its
   // last survivor was Quick Jab (Iron, 30 BP, 4 mana, priority 1). The
@@ -114,8 +147,8 @@ export const moves: Record<string, MoveDefinition> = {
   // of anything the slate authors, and Iron's floor is 15.
   // --- Fire (AUTHORED, 2026-08-29) ------------------------------------------
   // The first type whose movepool is designer-authored rather than fixture
-  // filler. Early/Mid/Late in the design table is the level-up tier a move
-  // belongs to (src/data/progression.ts moveTiers), not an engine field.
+  // filler. Early/Mid/Late in the design table is the `tier` field on each
+  // move below — see the tier-provenance note at the top of this file.
   //
   // Fire's whole identity is Burn: eleven of the fifteen either apply it, feed
   // off it, or stop it decaying. Three consequences worth knowing before
@@ -136,6 +169,7 @@ export const moves: Record<string, MoveDefinition> = {
   ember: {
     id: 'ember',
     name: 'Ember',
+    tier: 'early',
     type: 'Fire',
     category: 'magical',
     kind: 'damage',
@@ -149,6 +183,7 @@ export const moves: Record<string, MoveDefinition> = {
   sparkFlash: {
     id: 'sparkFlash',
     name: 'Spark Flash',
+    tier: 'early',
     type: 'Fire',
     category: 'magical',
     // No damage body at all: the Burn IS the move. 'buff' is the engine kind
@@ -164,6 +199,7 @@ export const moves: Record<string, MoveDefinition> = {
   kindle: {
     id: 'kindle',
     name: 'Kindle',
+    tier: 'early',
     type: 'Fire',
     category: 'physical',
     kind: 'buff',
@@ -176,6 +212,7 @@ export const moves: Record<string, MoveDefinition> = {
   singe: {
     id: 'singe',
     name: 'Singe',
+    tier: 'early',
     type: 'Fire',
     category: 'physical',
     kind: 'damage',
@@ -189,6 +226,7 @@ export const moves: Record<string, MoveDefinition> = {
   setAlight: {
     id: 'setAlight',
     name: 'Set Alight',
+    tier: 'early',
     type: 'Fire',
     category: 'magical',
     kind: 'buff',
@@ -201,6 +239,7 @@ export const moves: Record<string, MoveDefinition> = {
   stokeTheFlames: {
     id: 'stokeTheFlames',
     name: 'Stoke the Flames',
+    tier: 'mid',
     type: 'Fire',
     category: 'magical',
     kind: 'buff',
@@ -225,6 +264,7 @@ export const moves: Record<string, MoveDefinition> = {
   scorch: {
     id: 'scorch',
     name: 'Scorch',
+    tier: 'mid',
     type: 'Fire',
     category: 'magical',
     kind: 'damage',
@@ -238,6 +278,7 @@ export const moves: Record<string, MoveDefinition> = {
   spreadingBlaze: {
     id: 'spreadingBlaze',
     name: 'Spreading Blaze',
+    tier: 'mid',
     type: 'Fire',
     category: 'magical',
     kind: 'buff',
@@ -251,6 +292,7 @@ export const moves: Record<string, MoveDefinition> = {
   firebrand: {
     id: 'firebrand',
     name: 'Firebrand',
+    tier: 'mid',
     type: 'Fire',
     category: 'physical',
     kind: 'damage',
@@ -264,6 +306,7 @@ export const moves: Record<string, MoveDefinition> = {
   moltenLash: {
     id: 'moltenLash',
     name: 'Molten Lash',
+    tier: 'mid',
     type: 'Fire',
     category: 'physical',
     kind: 'damage',
@@ -280,6 +323,7 @@ export const moves: Record<string, MoveDefinition> = {
   backdraft: {
     id: 'backdraft',
     name: 'Backdraft',
+    tier: 'mid',
     type: 'Fire',
     category: 'magical',
     kind: 'damage',
@@ -293,6 +337,7 @@ export const moves: Record<string, MoveDefinition> = {
   immolate: {
     id: 'immolate',
     name: 'Immolate',
+    tier: 'mid',
     type: 'Fire',
     category: 'magical',
     kind: 'damage',
@@ -309,6 +354,7 @@ export const moves: Record<string, MoveDefinition> = {
   sparkBurst: {
     id: 'sparkBurst',
     name: 'Spark Burst',
+    tier: 'late',
     type: 'Fire',
     category: 'magical',
     kind: 'buff',
@@ -321,6 +367,7 @@ export const moves: Record<string, MoveDefinition> = {
   inferno: {
     id: 'inferno',
     name: 'Inferno',
+    tier: 'late',
     type: 'Fire',
     category: 'magical',
     kind: 'damage',
@@ -333,6 +380,7 @@ export const moves: Record<string, MoveDefinition> = {
   firestorm: {
     id: 'firestorm',
     name: 'Firestorm',
+    tier: 'late',
     type: 'Fire',
     category: 'magical',
     kind: 'damage',
@@ -345,6 +393,7 @@ export const moves: Record<string, MoveDefinition> = {
   volcanicSurge: {
     id: 'volcanicSurge',
     name: 'Volcanic Surge',
+    tier: 'late',
     type: 'Fire',
     category: 'physical',
     kind: 'damage',
@@ -396,6 +445,7 @@ export const moves: Record<string, MoveDefinition> = {
   splash: {
     id: 'splash',
     name: 'Splash',
+    tier: 'early',
     type: 'Water',
     category: 'magical',
     kind: 'damage',
@@ -408,6 +458,7 @@ export const moves: Record<string, MoveDefinition> = {
   siphon: {
     id: 'siphon',
     name: 'Siphon',
+    tier: 'early',
     type: 'Water',
     category: 'magical',
     kind: 'damage',
@@ -425,6 +476,7 @@ export const moves: Record<string, MoveDefinition> = {
   tideGuard: {
     id: 'tideGuard',
     name: 'Tide Guard',
+    tier: 'early',
     type: 'Water',
     category: 'physical',
     // Authored 'physical' because Defense is the physical pipeline's defending
@@ -440,6 +492,7 @@ export const moves: Record<string, MoveDefinition> = {
   refresh: {
     id: 'refresh',
     name: 'Refresh',
+    tier: 'early',
     type: 'Water',
     category: 'magical',
     kind: 'buff',
@@ -458,6 +511,7 @@ export const moves: Record<string, MoveDefinition> = {
   undertow: {
     id: 'undertow',
     name: 'Undertow',
+    tier: 'early',
     type: 'Water',
     category: 'physical',
     kind: 'damage',
@@ -473,6 +527,7 @@ export const moves: Record<string, MoveDefinition> = {
   torrent: {
     id: 'torrent',
     name: 'Torrent',
+    tier: 'mid',
     type: 'Water',
     category: 'magical',
     kind: 'damage',
@@ -485,6 +540,7 @@ export const moves: Record<string, MoveDefinition> = {
   oasis: {
     id: 'oasis',
     name: 'Oasis',
+    tier: 'mid',
     type: 'Water',
     category: 'magical',
     kind: 'heal',
@@ -497,6 +553,7 @@ export const moves: Record<string, MoveDefinition> = {
   engulf: {
     id: 'engulf',
     name: 'Engulf',
+    tier: 'mid',
     type: 'Water',
     category: 'magical',
     kind: 'damage',
@@ -510,6 +567,7 @@ export const moves: Record<string, MoveDefinition> = {
   aquaSlice: {
     id: 'aquaSlice',
     name: 'Aqua Slice',
+    tier: 'mid',
     type: 'Water',
     category: 'physical',
     kind: 'damage',
@@ -526,6 +584,7 @@ export const moves: Record<string, MoveDefinition> = {
   deluge: {
     id: 'deluge',
     name: 'Deluge',
+    tier: 'mid',
     type: 'Water',
     category: 'magical',
     kind: 'damage',
@@ -538,6 +597,7 @@ export const moves: Record<string, MoveDefinition> = {
   washAway: {
     id: 'washAway',
     name: 'Wash Away',
+    tier: 'mid',
     type: 'Water',
     category: 'magical',
     kind: 'heal',
@@ -556,6 +616,7 @@ export const moves: Record<string, MoveDefinition> = {
   tsunami: {
     id: 'tsunami',
     name: 'Tsunami',
+    tier: 'late',
     type: 'Water',
     category: 'magical',
     kind: 'damage',
@@ -568,6 +629,7 @@ export const moves: Record<string, MoveDefinition> = {
   maelstrom: {
     id: 'maelstrom',
     name: 'Maelstrom',
+    tier: 'late',
     type: 'Water',
     category: 'magical',
     kind: 'damage',
@@ -580,6 +642,7 @@ export const moves: Record<string, MoveDefinition> = {
   highTide: {
     id: 'highTide',
     name: 'High Tide',
+    tier: 'late',
     type: 'Water',
     category: 'magical',
     kind: 'buff',
@@ -596,6 +659,7 @@ export const moves: Record<string, MoveDefinition> = {
   waveShred: {
     id: 'waveShred',
     name: 'Wave Shred',
+    tier: 'late',
     type: 'Water',
     category: 'physical',
     kind: 'damage',
@@ -648,6 +712,7 @@ export const moves: Record<string, MoveDefinition> = {
   iceShard: {
     id: 'iceShard',
     name: 'Ice Shard',
+    tier: 'early',
     type: 'Frost',
     category: 'physical',
     kind: 'damage',
@@ -665,6 +730,7 @@ export const moves: Record<string, MoveDefinition> = {
   frostArmor: {
     id: 'frostArmor',
     name: 'Frost Armor',
+    tier: 'early',
     type: 'Frost',
     // Authored 'physical' because Defense is the physical pipeline's defending
     // stat — category is inert on a buff move and this is documentation
@@ -680,6 +746,7 @@ export const moves: Record<string, MoveDefinition> = {
   deepChill: {
     id: 'deepChill',
     name: 'Deep Chill',
+    tier: 'early',
     type: 'Frost',
     category: 'magical',
     kind: 'buff',
@@ -696,6 +763,7 @@ export const moves: Record<string, MoveDefinition> = {
   rimeWind: {
     id: 'rimeWind',
     name: 'Rime Wind',
+    tier: 'early',
     type: 'Frost',
     category: 'magical',
     kind: 'damage',
@@ -708,6 +776,7 @@ export const moves: Record<string, MoveDefinition> = {
   snowBlast: {
     id: 'snowBlast',
     name: 'Snow Blast',
+    tier: 'early',
     type: 'Frost',
     category: 'magical',
     kind: 'damage',
@@ -724,6 +793,7 @@ export const moves: Record<string, MoveDefinition> = {
   icicleThrust: {
     id: 'icicleThrust',
     name: 'Icicle Thrust',
+    tier: 'mid',
     type: 'Frost',
     category: 'physical',
     kind: 'damage',
@@ -737,6 +807,7 @@ export const moves: Record<string, MoveDefinition> = {
   glaciate: {
     id: 'glaciate',
     name: 'Glaciate',
+    tier: 'mid',
     type: 'Frost',
     category: 'magical',
     kind: 'damage',
@@ -754,6 +825,7 @@ export const moves: Record<string, MoveDefinition> = {
   permafrost: {
     id: 'permafrost',
     name: 'Permafrost',
+    tier: 'mid',
     type: 'Frost',
     category: 'magical',
     kind: 'buff',
@@ -766,6 +838,7 @@ export const moves: Record<string, MoveDefinition> = {
   frigidAir: {
     id: 'frigidAir',
     name: 'Frigid Air',
+    tier: 'mid',
     type: 'Frost',
     category: 'magical',
     kind: 'damage',
@@ -778,6 +851,7 @@ export const moves: Record<string, MoveDefinition> = {
   quickFreeze: {
     id: 'quickFreeze',
     name: 'Quick Freeze',
+    tier: 'mid',
     type: 'Frost',
     category: 'magical',
     kind: 'damage',
@@ -795,6 +869,7 @@ export const moves: Record<string, MoveDefinition> = {
   coldSnap: {
     id: 'coldSnap',
     name: 'Cold Snap',
+    tier: 'mid',
     type: 'Frost',
     category: 'physical',
     kind: 'damage',
@@ -813,6 +888,7 @@ export const moves: Record<string, MoveDefinition> = {
   avalanche: {
     id: 'avalanche',
     name: 'Avalanche',
+    tier: 'late',
     type: 'Frost',
     category: 'magical',
     kind: 'damage',
@@ -826,6 +902,7 @@ export const moves: Record<string, MoveDefinition> = {
   absoluteZero: {
     id: 'absoluteZero',
     name: 'Absolute Zero',
+    tier: 'late',
     type: 'Frost',
     category: 'magical',
     kind: 'damage',
@@ -842,6 +919,7 @@ export const moves: Record<string, MoveDefinition> = {
   iceShatter: {
     id: 'iceShatter',
     name: 'Ice Shatter',
+    tier: 'late',
     type: 'Frost',
     category: 'physical',
     kind: 'damage',
@@ -855,6 +933,7 @@ export const moves: Record<string, MoveDefinition> = {
   frostWall: {
     id: 'frostWall',
     name: 'Frost Wall',
+    tier: 'late',
     type: 'Frost',
     category: 'physical',
     kind: 'buff',
@@ -886,6 +965,7 @@ export const moves: Record<string, MoveDefinition> = {
   risingStatic: {
     id: 'risingStatic',
     name: 'Rising Static',
+    tier: 'early',
     type: 'Storm',
     category: 'magical',
     kind: 'buff',
@@ -903,6 +983,7 @@ export const moves: Record<string, MoveDefinition> = {
   jolt: {
     id: 'jolt',
     name: 'Jolt',
+    tier: 'early',
     type: 'Storm',
     category: 'magical',
     kind: 'damage',
@@ -916,6 +997,7 @@ export const moves: Record<string, MoveDefinition> = {
   charge: {
     id: 'charge',
     name: 'Charge',
+    tier: 'early',
     type: 'Storm',
     category: 'magical',
     kind: 'buff',
@@ -931,6 +1013,7 @@ export const moves: Record<string, MoveDefinition> = {
   zap: {
     id: 'zap',
     name: 'Zap',
+    tier: 'early',
     type: 'Storm',
     category: 'magical',
     kind: 'damage',
@@ -943,6 +1026,7 @@ export const moves: Record<string, MoveDefinition> = {
   thunderclap: {
     id: 'thunderclap',
     name: 'Thunderclap',
+    tier: 'early',
     type: 'Storm',
     category: 'physical',
     kind: 'damage',
@@ -955,6 +1039,7 @@ export const moves: Record<string, MoveDefinition> = {
   ionize: {
     id: 'ionize',
     name: 'Ionize',
+    tier: 'mid',
     type: 'Storm',
     category: 'magical',
     // No damage body at all — kind 'buff' is the engine's kind for "a move
@@ -971,6 +1056,7 @@ export const moves: Record<string, MoveDefinition> = {
   chainLightning: {
     id: 'chainLightning',
     name: 'Chain Lightning',
+    tier: 'mid',
     type: 'Storm',
     category: 'magical',
     kind: 'damage',
@@ -983,6 +1069,7 @@ export const moves: Record<string, MoveDefinition> = {
   tailwind: {
     id: 'tailwind',
     name: 'Tailwind',
+    tier: 'mid',
     type: 'Storm',
     category: 'physical',
     kind: 'buff',
@@ -999,6 +1086,7 @@ export const moves: Record<string, MoveDefinition> = {
   electricBurst: {
     id: 'electricBurst',
     name: 'Electric Burst',
+    tier: 'mid',
     type: 'Storm',
     category: 'magical',
     kind: 'damage',
@@ -1015,6 +1103,7 @@ export const moves: Record<string, MoveDefinition> = {
   stormLash: {
     id: 'stormLash',
     name: 'Storm Lash',
+    tier: 'mid',
     type: 'Storm',
     category: 'physical',
     kind: 'damage',
@@ -1028,6 +1117,7 @@ export const moves: Record<string, MoveDefinition> = {
   shockSlice: {
     id: 'shockSlice',
     name: 'Shock Slice',
+    tier: 'mid',
     type: 'Storm',
     category: 'physical',
     kind: 'damage',
@@ -1041,6 +1131,7 @@ export const moves: Record<string, MoveDefinition> = {
   overcharge: {
     id: 'overcharge',
     name: 'Overcharge',
+    tier: 'late',
     type: 'Storm',
     category: 'physical',
     kind: 'damage',
@@ -1058,6 +1149,7 @@ export const moves: Record<string, MoveDefinition> = {
   thunderbolt: {
     id: 'thunderbolt',
     name: 'Thunderbolt',
+    tier: 'late',
     type: 'Storm',
     category: 'magical',
     kind: 'damage',
@@ -1071,6 +1163,7 @@ export const moves: Record<string, MoveDefinition> = {
   stormSurge: {
     id: 'stormSurge',
     name: 'Storm Surge',
+    tier: 'late',
     type: 'Storm',
     category: 'physical',
     kind: 'buff',
@@ -1086,6 +1179,7 @@ export const moves: Record<string, MoveDefinition> = {
   ionicZap: {
     id: 'ionicZap',
     name: 'Ionic Zap',
+    tier: 'late',
     type: 'Storm',
     category: 'magical',
     kind: 'damage',
@@ -1106,6 +1200,7 @@ export const moves: Record<string, MoveDefinition> = {
   rockToss: {
     id: 'rockToss',
     name: 'Rock Toss',
+    tier: 'early',
     type: 'Stone',
     category: 'physical',
     kind: 'damage',
@@ -1119,6 +1214,7 @@ export const moves: Record<string, MoveDefinition> = {
   toughenUp: {
     id: 'toughenUp',
     name: 'Toughen Up',
+    tier: 'early',
     type: 'Stone',
     category: 'physical',
     kind: 'buff',
@@ -1134,6 +1230,7 @@ export const moves: Record<string, MoveDefinition> = {
   provoke: {
     id: 'provoke',
     name: 'Provoke',
+    tier: 'early',
     type: 'Stone',
     category: 'physical',
     kind: 'buff',
@@ -1149,6 +1246,7 @@ export const moves: Record<string, MoveDefinition> = {
   tremor: {
     id: 'tremor',
     name: 'Tremor',
+    tier: 'early',
     type: 'Stone',
     category: 'magical',
     kind: 'damage',
@@ -1161,6 +1259,7 @@ export const moves: Record<string, MoveDefinition> = {
   mudBall: {
     id: 'mudBall',
     name: 'Mud Ball',
+    tier: 'early',
     type: 'Stone',
     category: 'physical',
     kind: 'damage',
@@ -1176,6 +1275,7 @@ export const moves: Record<string, MoveDefinition> = {
   faultLine: {
     id: 'faultLine',
     name: 'Fault Line',
+    tier: 'mid',
     type: 'Stone',
     category: 'physical',
     kind: 'damage',
@@ -1189,6 +1289,7 @@ export const moves: Record<string, MoveDefinition> = {
   bodyBlow: {
     id: 'bodyBlow',
     name: 'Body Blow',
+    tier: 'mid',
     type: 'Stone',
     category: 'physical',
     kind: 'damage',
@@ -1205,6 +1306,7 @@ export const moves: Record<string, MoveDefinition> = {
   bastion: {
     id: 'bastion',
     name: 'Bastion',
+    tier: 'mid',
     type: 'Stone',
     category: 'physical',
     kind: 'buff',
@@ -1217,6 +1319,7 @@ export const moves: Record<string, MoveDefinition> = {
   retribution: {
     id: 'retribution',
     name: 'Retribution',
+    tier: 'mid',
     type: 'Stone',
     category: 'physical',
     kind: 'damage',
@@ -1233,6 +1336,7 @@ export const moves: Record<string, MoveDefinition> = {
   rockfall: {
     id: 'rockfall',
     name: 'Rockfall',
+    tier: 'mid',
     type: 'Stone',
     category: 'magical',
     kind: 'damage',
@@ -1245,6 +1349,7 @@ export const moves: Record<string, MoveDefinition> = {
   rubbleRush: {
     id: 'rubbleRush',
     name: 'Rubble Rush',
+    tier: 'mid',
     type: 'Stone',
     category: 'physical',
     kind: 'damage',
@@ -1260,6 +1365,7 @@ export const moves: Record<string, MoveDefinition> = {
   boulderSlam: {
     id: 'boulderSlam',
     name: 'Boulder Slam',
+    tier: 'late',
     type: 'Stone',
     category: 'physical',
     kind: 'damage',
@@ -1273,6 +1379,7 @@ export const moves: Record<string, MoveDefinition> = {
   bodyCrush: {
     id: 'bodyCrush',
     name: 'Body Crush',
+    tier: 'late',
     type: 'Stone',
     category: 'physical',
     kind: 'damage',
@@ -1286,6 +1393,7 @@ export const moves: Record<string, MoveDefinition> = {
   stoneheart: {
     id: 'stoneheart',
     name: 'Stoneheart',
+    tier: 'late',
     type: 'Stone',
     category: 'physical',
     // The design table labels this Buff, which is only an artifact of its
@@ -1304,6 +1412,7 @@ export const moves: Record<string, MoveDefinition> = {
   landslide: {
     id: 'landslide',
     name: 'Landslide',
+    tier: 'late',
     type: 'Stone',
     category: 'magical',
     kind: 'damage',
@@ -1359,6 +1468,7 @@ export const moves: Record<string, MoveDefinition> = {
   vineLash: {
     id: 'vineLash',
     name: 'Vine Lash',
+    tier: 'early',
     type: 'Nature',
     category: 'physical',
     kind: 'damage',
@@ -1375,6 +1485,7 @@ export const moves: Record<string, MoveDefinition> = {
   toxicSpores: {
     id: 'toxicSpores',
     name: 'Toxic Spores',
+    tier: 'early',
     type: 'Nature',
     category: 'magical',
     // No damage body at all, so 'buff' with a negative payload — the engine has
@@ -1391,6 +1502,7 @@ export const moves: Record<string, MoveDefinition> = {
   regrowth: {
     id: 'regrowth',
     name: 'Regrowth',
+    tier: 'early',
     type: 'Nature',
     category: 'magical',
     kind: 'buff',
@@ -1407,6 +1519,7 @@ export const moves: Record<string, MoveDefinition> = {
   seedShot: {
     id: 'seedShot',
     name: 'Seed Shot',
+    tier: 'early',
     type: 'Nature',
     category: 'magical',
     kind: 'damage',
@@ -1425,6 +1538,7 @@ export const moves: Record<string, MoveDefinition> = {
   ivySpike: {
     id: 'ivySpike',
     name: 'Ivy Spike',
+    tier: 'early',
     type: 'Nature',
     category: 'physical',
     kind: 'damage',
@@ -1440,6 +1554,7 @@ export const moves: Record<string, MoveDefinition> = {
   blight: {
     id: 'blight',
     name: 'Blight',
+    tier: 'mid',
     type: 'Nature',
     category: 'magical',
     kind: 'buff',
@@ -1452,6 +1567,7 @@ export const moves: Record<string, MoveDefinition> = {
   corrode: {
     id: 'corrode',
     name: 'Corrode',
+    tier: 'mid',
     type: 'Nature',
     category: 'magical',
     kind: 'damage',
@@ -1466,6 +1582,7 @@ export const moves: Record<string, MoveDefinition> = {
   thornWhip: {
     id: 'thornWhip',
     name: 'Thorn Whip',
+    tier: 'mid',
     type: 'Nature',
     category: 'physical',
     kind: 'damage',
@@ -1485,6 +1602,7 @@ export const moves: Record<string, MoveDefinition> = {
   wildBloom: {
     id: 'wildBloom',
     name: 'Wild Bloom',
+    tier: 'mid',
     type: 'Nature',
     category: 'magical',
     kind: 'buff',
@@ -1497,6 +1615,7 @@ export const moves: Record<string, MoveDefinition> = {
   magicGrowth: {
     id: 'magicGrowth',
     name: 'Magic Growth',
+    tier: 'mid',
     type: 'Nature',
     category: 'magical',
     kind: 'buff',
@@ -1513,6 +1632,7 @@ export const moves: Record<string, MoveDefinition> = {
   leafSlice: {
     id: 'leafSlice',
     name: 'Leaf Slice',
+    tier: 'mid',
     type: 'Nature',
     category: 'physical',
     kind: 'damage',
@@ -1529,6 +1649,7 @@ export const moves: Record<string, MoveDefinition> = {
   overgrowth: {
     id: 'overgrowth',
     name: 'Overgrowth',
+    tier: 'late',
     type: 'Nature',
     category: 'magical',
     kind: 'buff',
@@ -1544,6 +1665,7 @@ export const moves: Record<string, MoveDefinition> = {
   forceOfNature: {
     id: 'forceOfNature',
     name: 'Force of Nature',
+    tier: 'late',
     type: 'Nature',
     category: 'magical',
     kind: 'damage',
@@ -1557,6 +1679,7 @@ export const moves: Record<string, MoveDefinition> = {
   branchSlam: {
     id: 'branchSlam',
     name: 'Branch Slam',
+    tier: 'late',
     type: 'Nature',
     category: 'physical',
     kind: 'damage',
@@ -1574,6 +1697,7 @@ export const moves: Record<string, MoveDefinition> = {
   miasma: {
     id: 'miasma',
     name: 'Miasma',
+    tier: 'late',
     type: 'Nature',
     category: 'magical',
     kind: 'damage',
@@ -1962,6 +2086,7 @@ export const moves: Record<string, MoveDefinition> = {
   umbraBolt: {
     id: 'umbraBolt',
     name: 'Umbra Bolt',
+    tier: 'early',
     type: 'Shadow',
     category: 'magical',
     kind: 'damage',
@@ -1978,6 +2103,7 @@ export const moves: Record<string, MoveDefinition> = {
   vanish: {
     id: 'vanish',
     name: 'Vanish',
+    tier: 'early',
     type: 'Shadow',
     category: 'physical',
     kind: 'buff',
@@ -1995,6 +2121,7 @@ export const moves: Record<string, MoveDefinition> = {
   fadeStrike: {
     id: 'fadeStrike',
     name: 'Fade Strike',
+    tier: 'early',
     type: 'Shadow',
     category: 'physical',
     kind: 'damage',
@@ -2011,6 +2138,7 @@ export const moves: Record<string, MoveDefinition> = {
   backstab: {
     id: 'backstab',
     name: 'Backstab',
+    tier: 'early',
     type: 'Shadow',
     category: 'physical',
     kind: 'damage',
@@ -2024,6 +2152,7 @@ export const moves: Record<string, MoveDefinition> = {
   weaken: {
     id: 'weaken',
     name: 'Weaken',
+    tier: 'early',
     type: 'Shadow',
     category: 'magical',
     kind: 'buff',
@@ -2042,6 +2171,7 @@ export const moves: Record<string, MoveDefinition> = {
   shadowSlice: {
     id: 'shadowSlice',
     name: 'Shadow Slice',
+    tier: 'mid',
     type: 'Shadow',
     category: 'physical',
     kind: 'damage',
@@ -2055,6 +2185,7 @@ export const moves: Record<string, MoveDefinition> = {
   ambush: {
     id: 'ambush',
     name: 'Ambush',
+    tier: 'mid',
     type: 'Shadow',
     category: 'physical',
     kind: 'damage',
@@ -2074,6 +2205,7 @@ export const moves: Record<string, MoveDefinition> = {
   rend: {
     id: 'rend',
     name: 'Rend',
+    tier: 'mid',
     type: 'Shadow',
     category: 'physical',
     kind: 'damage',
@@ -2090,6 +2222,7 @@ export const moves: Record<string, MoveDefinition> = {
   umbralBeam: {
     id: 'umbralBeam',
     name: 'Umbral Beam',
+    tier: 'mid',
     type: 'Shadow',
     category: 'magical',
     kind: 'damage',
@@ -2103,6 +2236,7 @@ export const moves: Record<string, MoveDefinition> = {
   shadowstrike: {
     id: 'shadowstrike',
     name: 'Shadowstrike',
+    tier: 'mid',
     type: 'Shadow',
     category: 'physical',
     kind: 'damage',
@@ -2119,6 +2253,7 @@ export const moves: Record<string, MoveDefinition> = {
   enfeeble: {
     id: 'enfeeble',
     name: 'Enfeeble',
+    tier: 'mid',
     type: 'Shadow',
     category: 'magical',
     kind: 'buff',
@@ -2138,6 +2273,7 @@ export const moves: Record<string, MoveDefinition> = {
   eclipse: {
     id: 'eclipse',
     name: 'Eclipse',
+    tier: 'late',
     type: 'Shadow',
     category: 'magical',
     kind: 'damage',
@@ -2151,6 +2287,7 @@ export const moves: Record<string, MoveDefinition> = {
   umbralWave: {
     id: 'umbralWave',
     name: 'Umbral Wave',
+    tier: 'late',
     type: 'Shadow',
     category: 'magical',
     kind: 'damage',
@@ -2166,6 +2303,7 @@ export const moves: Record<string, MoveDefinition> = {
   duskBlade: {
     id: 'duskBlade',
     name: 'Dusk Blade',
+    tier: 'late',
     type: 'Shadow',
     category: 'physical',
     kind: 'damage',
@@ -2182,6 +2320,7 @@ export const moves: Record<string, MoveDefinition> = {
   shadowForm: {
     id: 'shadowForm',
     name: 'Shadow Form',
+    tier: 'late',
     type: 'Shadow',
     category: 'physical',
     kind: 'buff',
@@ -2244,6 +2383,7 @@ export const moves: Record<string, MoveDefinition> = {
   infuse: {
     id: 'infuse',
     name: 'Infuse',
+    tier: 'early',
     type: 'Arcane',
     category: 'magical',
     kind: 'buff',
@@ -2261,6 +2401,7 @@ export const moves: Record<string, MoveDefinition> = {
   magicBolt: {
     id: 'magicBolt',
     name: 'Magic Bolt',
+    tier: 'early',
     type: 'Arcane',
     category: 'magical',
     kind: 'damage',
@@ -2273,6 +2414,7 @@ export const moves: Record<string, MoveDefinition> = {
   focus: {
     id: 'focus',
     name: 'Focus',
+    tier: 'early',
     type: 'Arcane',
     category: 'magical',
     kind: 'buff',
@@ -2285,6 +2427,7 @@ export const moves: Record<string, MoveDefinition> = {
   manaFont: {
     id: 'manaFont',
     name: 'Mana Font',
+    tier: 'early',
     type: 'Arcane',
     category: 'magical',
     kind: 'buff',
@@ -2301,6 +2444,7 @@ export const moves: Record<string, MoveDefinition> = {
   manaTap: {
     id: 'manaTap',
     name: 'Mana Tap',
+    tier: 'early',
     type: 'Arcane',
     category: 'magical',
     kind: 'damage',
@@ -2317,6 +2461,7 @@ export const moves: Record<string, MoveDefinition> = {
   empower: {
     id: 'empower',
     name: 'Empower',
+    tier: 'mid',
     type: 'Arcane',
     category: 'magical',
     kind: 'buff',
@@ -2330,6 +2475,7 @@ export const moves: Record<string, MoveDefinition> = {
   arcaneBlast: {
     id: 'arcaneBlast',
     name: 'Arcane Blast',
+    tier: 'mid',
     type: 'Arcane',
     category: 'magical',
     kind: 'damage',
@@ -2342,6 +2488,7 @@ export const moves: Record<string, MoveDefinition> = {
   arcPulse: {
     id: 'arcPulse',
     name: 'Arc Pulse',
+    tier: 'mid',
     type: 'Arcane',
     category: 'magical',
     kind: 'damage',
@@ -2354,6 +2501,7 @@ export const moves: Record<string, MoveDefinition> = {
   overload: {
     id: 'overload',
     name: 'Overload',
+    tier: 'mid',
     type: 'Arcane',
     category: 'magical',
     kind: 'damage',
@@ -2372,6 +2520,7 @@ export const moves: Record<string, MoveDefinition> = {
   study: {
     id: 'study',
     name: 'Study',
+    tier: 'mid',
     type: 'Arcane',
     category: 'magical',
     kind: 'buff',
@@ -2384,6 +2533,7 @@ export const moves: Record<string, MoveDefinition> = {
   magicCloak: {
     id: 'magicCloak',
     name: 'Magic Cloak',
+    tier: 'mid',
     type: 'Arcane',
     category: 'magical',
     kind: 'buff',
@@ -2402,6 +2552,7 @@ export const moves: Record<string, MoveDefinition> = {
   conduit: {
     id: 'conduit',
     name: 'Conduit',
+    tier: 'mid',
     type: 'Arcane',
     category: 'magical',
     kind: 'buff',
@@ -2417,6 +2568,7 @@ export const moves: Record<string, MoveDefinition> = {
   singularity: {
     id: 'singularity',
     name: 'Singularity',
+    tier: 'late',
     type: 'Arcane',
     category: 'magical',
     kind: 'damage',
@@ -2432,6 +2584,7 @@ export const moves: Record<string, MoveDefinition> = {
   cataclysm: {
     id: 'cataclysm',
     name: 'Cataclysm',
+    tier: 'late',
     type: 'Arcane',
     category: 'magical',
     kind: 'damage',
@@ -2444,6 +2597,7 @@ export const moves: Record<string, MoveDefinition> = {
   arcaneOverflow: {
     id: 'arcaneOverflow',
     name: 'Arcane Overflow',
+    tier: 'late',
     type: 'Arcane',
     category: 'magical',
     kind: 'buff',
@@ -2461,6 +2615,7 @@ export const moves: Record<string, MoveDefinition> = {
   fontOfPower: {
     id: 'fontOfPower',
     name: 'Font of Power',
+    tier: 'late',
     type: 'Arcane',
     category: 'magical',
     kind: 'buff',
@@ -2524,6 +2679,7 @@ export const moves: Record<string, MoveDefinition> = {
   psiBolt: {
     id: 'psiBolt',
     name: 'Psi Bolt',
+    tier: 'early',
     type: 'Mind',
     category: 'magical',
     kind: 'damage',
@@ -2541,6 +2697,7 @@ export const moves: Record<string, MoveDefinition> = {
   brainWard: {
     id: 'brainWard',
     name: 'Brain Ward',
+    tier: 'early',
     type: 'Mind',
     category: 'magical',
     kind: 'buff',
@@ -2556,6 +2713,7 @@ export const moves: Record<string, MoveDefinition> = {
   enervate: {
     id: 'enervate',
     name: 'Enervate',
+    tier: 'early',
     type: 'Mind',
     category: 'magical',
     kind: 'buff',
@@ -2568,6 +2726,7 @@ export const moves: Record<string, MoveDefinition> = {
   lull: {
     id: 'lull',
     name: 'Lull',
+    tier: 'early',
     type: 'Mind',
     category: 'magical',
     kind: 'buff',
@@ -2584,6 +2743,7 @@ export const moves: Record<string, MoveDefinition> = {
   dopamine: {
     id: 'dopamine',
     name: 'Dopamine',
+    tier: 'early',
     type: 'Mind',
     category: 'magical',
     kind: 'heal',
@@ -2599,6 +2759,7 @@ export const moves: Record<string, MoveDefinition> = {
   psychock: {
     id: 'psychock',
     name: 'Psychock',
+    tier: 'mid',
     type: 'Mind',
     category: 'magical',
     kind: 'damage',
@@ -2613,6 +2774,7 @@ export const moves: Record<string, MoveDefinition> = {
   wickedFear: {
     id: 'wickedFear',
     name: 'Wicked Fear',
+    tier: 'mid',
     type: 'Mind',
     category: 'magical',
     kind: 'damage',
@@ -2631,6 +2793,7 @@ export const moves: Record<string, MoveDefinition> = {
   stasis: {
     id: 'stasis',
     name: 'Stasis',
+    tier: 'mid',
     type: 'Mind',
     category: 'magical',
     kind: 'buff',
@@ -2651,6 +2814,7 @@ export const moves: Record<string, MoveDefinition> = {
   cerebralShock: {
     id: 'cerebralShock',
     name: 'Cerebral Shock',
+    tier: 'mid',
     type: 'Mind',
     category: 'magical',
     kind: 'damage',
@@ -2669,6 +2833,7 @@ export const moves: Record<string, MoveDefinition> = {
   psychicBlow: {
     id: 'psychicBlow',
     name: 'Psychic Blow',
+    tier: 'mid',
     type: 'Mind',
     category: 'magical',
     kind: 'damage',
@@ -2685,6 +2850,7 @@ export const moves: Record<string, MoveDefinition> = {
   disorient: {
     id: 'disorient',
     name: 'Disorient',
+    tier: 'mid',
     type: 'Mind',
     category: 'magical',
     kind: 'buff',
@@ -2700,6 +2866,7 @@ export const moves: Record<string, MoveDefinition> = {
   mentalFortress: {
     id: 'mentalFortress',
     name: 'Mental Fortress',
+    tier: 'mid',
     type: 'Mind',
     category: 'magical',
     kind: 'buff',
@@ -2712,6 +2879,7 @@ export const moves: Record<string, MoveDefinition> = {
   psionicWave: {
     id: 'psionicWave',
     name: 'Psionic Wave',
+    tier: 'late',
     type: 'Mind',
     category: 'magical',
     kind: 'damage',
@@ -2729,6 +2897,7 @@ export const moves: Record<string, MoveDefinition> = {
   mindShatter: {
     id: 'mindShatter',
     name: 'Mind Shatter',
+    tier: 'late',
     type: 'Mind',
     category: 'magical',
     kind: 'damage',
@@ -2748,6 +2917,7 @@ export const moves: Record<string, MoveDefinition> = {
   brainFlay: {
     id: 'brainFlay',
     name: 'Brain Flay',
+    tier: 'late',
     type: 'Mind',
     category: 'magical',
     kind: 'buff',
@@ -2765,6 +2935,7 @@ export const moves: Record<string, MoveDefinition> = {
   breakWill: {
     id: 'breakWill',
     name: 'Break Will',
+    tier: 'late',
     type: 'Mind',
     category: 'magical',
     kind: 'buff',
@@ -2804,6 +2975,7 @@ export const moves: Record<string, MoveDefinition> = {
   wisp: {
     id: 'wisp',
     name: 'Wisp',
+    tier: 'early',
     type: 'Spirit',
     category: 'magical',
     kind: 'damage',
@@ -2820,6 +2992,7 @@ export const moves: Record<string, MoveDefinition> = {
   torment: {
     id: 'torment',
     name: 'Torment',
+    tier: 'early',
     type: 'Spirit',
     category: 'magical',
     // No damage body at all, so `buff` with a hostile payload — the engine's
@@ -2835,6 +3008,7 @@ export const moves: Record<string, MoveDefinition> = {
   drain: {
     id: 'drain',
     name: 'Drain',
+    tier: 'early',
     type: 'Spirit',
     category: 'magical',
     kind: 'damage',
@@ -2852,6 +3026,7 @@ export const moves: Record<string, MoveDefinition> = {
   secondWind: {
     id: 'secondWind',
     name: 'Second Wind',
+    tier: 'early',
     type: 'Spirit',
     category: 'magical',
     kind: 'buff',
@@ -2865,6 +3040,7 @@ export const moves: Record<string, MoveDefinition> = {
   unbound: {
     id: 'unbound',
     name: 'Unbound',
+    tier: 'early',
     type: 'Spirit',
     category: 'magical',
     kind: 'buff',
@@ -2880,6 +3056,7 @@ export const moves: Record<string, MoveDefinition> = {
   spite: {
     id: 'spite',
     name: 'Spite',
+    tier: 'early',
     type: 'Spirit',
     category: 'magical',
     kind: 'damage',
@@ -2898,6 +3075,7 @@ export const moves: Record<string, MoveDefinition> = {
   phantomStrike: {
     id: 'phantomStrike',
     name: 'Phantom Strike',
+    tier: 'early',
     type: 'Spirit',
     category: 'physical',
     kind: 'damage',
@@ -2911,6 +3089,7 @@ export const moves: Record<string, MoveDefinition> = {
   spookySlice: {
     id: 'spookySlice',
     name: 'Spooky Slice',
+    tier: 'mid',
     type: 'Spirit',
     category: 'physical',
     kind: 'damage',
@@ -2927,6 +3106,7 @@ export const moves: Record<string, MoveDefinition> = {
   soulRend: {
     id: 'soulRend',
     name: 'Soul Rend',
+    tier: 'mid',
     type: 'Spirit',
     category: 'magical',
     kind: 'damage',
@@ -2940,6 +3120,7 @@ export const moves: Record<string, MoveDefinition> = {
   poltergeist: {
     id: 'poltergeist',
     name: 'Poltergeist',
+    tier: 'mid',
     type: 'Spirit',
     category: 'magical',
     kind: 'damage',
@@ -2956,6 +3137,7 @@ export const moves: Record<string, MoveDefinition> = {
   soulOffering: {
     id: 'soulOffering',
     name: 'Soul Offering',
+    tier: 'mid',
     type: 'Spirit',
     category: 'magical',
     kind: 'buff',
@@ -2981,6 +3163,7 @@ export const moves: Record<string, MoveDefinition> = {
   vengeance: {
     id: 'vengeance',
     name: 'Vengeance',
+    tier: 'mid',
     type: 'Spirit',
     category: 'magical',
     kind: 'damage',
@@ -2997,6 +3180,7 @@ export const moves: Record<string, MoveDefinition> = {
   flicker: {
     id: 'flicker',
     name: 'Flicker',
+    tier: 'mid',
     type: 'Spirit',
     category: 'magical',
     kind: 'damage',
@@ -3013,6 +3197,7 @@ export const moves: Record<string, MoveDefinition> = {
   banish: {
     id: 'banish',
     name: 'Banish',
+    tier: 'late',
     type: 'Spirit',
     category: 'magical',
     kind: 'damage',
@@ -3025,6 +3210,7 @@ export const moves: Record<string, MoveDefinition> = {
   wailingFlight: {
     id: 'wailingFlight',
     name: 'Wailing Flight',
+    tier: 'late',
     type: 'Spirit',
     category: 'physical',
     kind: 'damage',
@@ -3042,6 +3228,7 @@ export const moves: Record<string, MoveDefinition> = {
   lastRites: {
     id: 'lastRites',
     name: 'Last Rites',
+    tier: 'late',
     type: 'Spirit',
     category: 'magical',
     kind: 'damage',
@@ -3059,6 +3246,7 @@ export const moves: Record<string, MoveDefinition> = {
   ascendant: {
     id: 'ascendant',
     name: 'Ascendant',
+    tier: 'late',
     type: 'Spirit',
     category: 'magical',
     kind: 'buff',
@@ -3439,6 +3627,7 @@ export const moves: Record<string, MoveDefinition> = {
   cogBop: {
     id: 'cogBop',
     name: 'Cog Bop',
+    tier: 'early',
     type: 'Mech',
     category: 'physical',
     kind: 'damage',
@@ -3456,6 +3645,7 @@ export const moves: Record<string, MoveDefinition> = {
   overclock: {
     id: 'overclock',
     name: 'Overclock',
+    tier: 'early',
     type: 'Mech',
     category: 'physical',
     kind: 'buff',
@@ -3471,6 +3661,7 @@ export const moves: Record<string, MoveDefinition> = {
   pistonPunch: {
     id: 'pistonPunch',
     name: 'Piston Punch',
+    tier: 'early',
     type: 'Mech',
     category: 'physical',
     kind: 'damage',
@@ -3489,6 +3680,7 @@ export const moves: Record<string, MoveDefinition> = {
   backfire: {
     id: 'backfire',
     name: 'Backfire',
+    tier: 'early',
     type: 'Mech',
     category: 'magical',
     kind: 'damage',
@@ -3510,6 +3702,7 @@ export const moves: Record<string, MoveDefinition> = {
   kickstart: {
     id: 'kickstart',
     name: 'Kickstart',
+    tier: 'early',
     type: 'Mech',
     category: 'magical',
     kind: 'heal',
@@ -3523,6 +3716,7 @@ export const moves: Record<string, MoveDefinition> = {
   whirlingBlades: {
     id: 'whirlingBlades',
     name: 'Whirling Blades',
+    tier: 'mid',
     type: 'Mech',
     category: 'physical',
     kind: 'damage',
@@ -3535,6 +3729,7 @@ export const moves: Record<string, MoveDefinition> = {
   overheat: {
     id: 'overheat',
     name: 'Overheat',
+    tier: 'mid',
     type: 'Mech',
     category: 'magical',
     kind: 'damage',
@@ -3551,6 +3746,7 @@ export const moves: Record<string, MoveDefinition> = {
   salvage: {
     id: 'salvage',
     name: 'Salvage',
+    tier: 'mid',
     type: 'Mech',
     category: 'magical',
     kind: 'heal',
@@ -3565,6 +3761,7 @@ export const moves: Record<string, MoveDefinition> = {
   juryRig: {
     id: 'juryRig',
     name: 'Jury-Rig',
+    tier: 'mid',
     type: 'Mech',
     category: 'physical',
     kind: 'buff',
@@ -3579,6 +3776,7 @@ export const moves: Record<string, MoveDefinition> = {
   malfunction: {
     id: 'malfunction',
     name: 'Malfunction',
+    tier: 'mid',
     type: 'Mech',
     category: 'magical',
     kind: 'damage',
@@ -3604,6 +3802,7 @@ export const moves: Record<string, MoveDefinition> = {
   cogSlam: {
     id: 'cogSlam',
     name: 'Cog Slam',
+    tier: 'mid',
     type: 'Mech',
     category: 'physical',
     kind: 'damage',
@@ -3617,6 +3816,7 @@ export const moves: Record<string, MoveDefinition> = {
   jackpot: {
     id: 'jackpot',
     name: 'Jackpot',
+    tier: 'late',
     type: 'Mech',
     category: 'physical',
     kind: 'damage',
@@ -3635,6 +3835,7 @@ export const moves: Record<string, MoveDefinition> = {
   meltdown: {
     id: 'meltdown',
     name: 'Meltdown',
+    tier: 'late',
     type: 'Mech',
     category: 'magical',
     kind: 'damage',
@@ -3651,6 +3852,7 @@ export const moves: Record<string, MoveDefinition> = {
   overdrive: {
     id: 'overdrive',
     name: 'Overdrive',
+    tier: 'late',
     type: 'Mech',
     category: 'physical',
     kind: 'buff',
@@ -3666,6 +3868,7 @@ export const moves: Record<string, MoveDefinition> = {
   perfectCreation: {
     id: 'perfectCreation',
     name: 'Perfect Creation',
+    tier: 'late',
     type: 'Mech',
     category: 'magical',
     // No damage body at all — a move whose entire payload is its riders is
