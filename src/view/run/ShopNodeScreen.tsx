@@ -1,7 +1,7 @@
+import { useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
 import type { GuildHallOffers } from '../../run/shop';
 import type { GuildHallOffer } from '../../run/recruitment';
-import type { CSSProperties } from 'react';
 import { GuildHallPanel } from './GuildHallPanel';
 import { RosterPeek } from './RosterPeek';
 import { NodeSky, NODE_TINT_MANA } from '../shared/NodeStage';
@@ -9,6 +9,8 @@ import { NodeSky, NODE_TINT_MANA } from '../shared/NodeStage';
 interface Props {
   run: RunState;
   offers: GuildHallOffers;
+  /** Equipment already bought on this visit — carried on the `shop` Screen (App.tsx) because a purchase unmounts this whole screen through the equip gate. */
+  soldOutEquipmentIds: readonly string[];
   onRunChange: (next: RunState) => void;
   /** Equipment purchases route through App.tsx's forced equip-or-trash gate — GuildHallPanel can't transition to that screen itself. */
   onBuyEquipment: (itemId: string) => void;
@@ -29,8 +31,25 @@ interface Props {
  * §5.5); the tint is `NODE_TINT_MANA`, which is the same blue the Guild Hall's
  * own tile wears on the map (MapScreen's NODE_COLORS), so arriving here looks
  * like arriving at the thing you tapped.
+ *
+ * The Continue button stands down while the panel has a modal open
+ * (2026-08-31, user report). A hero sheet's own "Recruit X — 50g" confirm is
+ * a full-width gold button in the middle of the screen, and this one is a
+ * full-width gold button just below it, outside the panel but visibly through
+ * its scrim — two identical-looking CTAs for two completely different
+ * commitments. Hiding it while a modal is up leaves exactly one press on
+ * screen, which is what a modal is for.
  */
-export function ShopNodeScreen({ run, offers, onRunChange, onBuyEquipment, onRequestRosterReplace, onContinue }: Props) {
+export function ShopNodeScreen({
+  run,
+  offers,
+  soldOutEquipmentIds,
+  onRunChange,
+  onBuyEquipment,
+  onRequestRosterReplace,
+  onContinue,
+}: Props) {
+  const [overlayOpen, setOverlayOpen] = useState(false);
   return (
     <div className="node-screen shop-node-screen" style={{ '--node-rgb': NODE_TINT_MANA } as CSSProperties}>
       <NodeSky />
@@ -39,14 +58,18 @@ export function ShopNodeScreen({ run, offers, onRunChange, onBuyEquipment, onReq
         <GuildHallPanel
           run={run}
           offers={offers}
+          soldOutEquipmentIds={soldOutEquipmentIds}
           onRunChange={onRunChange}
           onBuyEquipment={onBuyEquipment}
           onRequestRosterReplace={onRequestRosterReplace}
+          onOverlayChange={setOverlayOpen}
         />
       </div>
-      <button className="resolve-button" onClick={onContinue}>
-        Continue
-      </button>
+      {!overlayOpen && (
+        <button className="resolve-button" onClick={onContinue}>
+          Continue
+        </button>
+      )}
     </div>
   );
 }

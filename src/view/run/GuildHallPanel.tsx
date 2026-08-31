@@ -1,31 +1,44 @@
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
-import { relics } from '../../data/relics';
 import { guildHallOffers, CONTRACT_PURCHASE_COST } from '../../data/recruitment';
 import type { HeroDefinition } from '../../engine/content';
 import type { RunState } from '../../run/state';
 import { ROSTER_CAP, RosterFullError, createRosterEntry } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
-import type { RelicDefinition } from '../../run/relics';
 import { recruitFromGuildHall, buyContract, RecruitmentError, type GuildHallOffer } from '../../run/recruitment';
-import { buyRelic, ShopError, EQUIPMENT_PRICE_BY_RARITY, RELIC_PURCHASE_COST, type GuildHallOffers } from '../../run/shop';
+import { EQUIPMENT_PRICE_BY_RARITY, type GuildHallOffers } from '../../run/shop';
 import { getTypeColor } from '../combat/typeColors';
 import { useLongPress } from '../shared/MoveTile';
-import { EQUIP_SLOT_LABELS, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS, EquipmentInfoPanel, RelicIcon } from '../shared/EquipmentBox';
+import { EQUIP_SLOT_LABELS, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
+import { EquipInspectOverlay, itemHighlights } from './EquipChoiceCard';
 
 interface Props {
   run: RunState;
   /** Rolled once at node-select time (App.tsx, run/shop.ts rollGuildHallOffers) — see that module's header for why this isn't rolled here in component state. */
   offers: GuildHallOffers;
+  /**
+   * Equipment already bought on this visit (App.tsx carries it on the `shop`
+   * Screen, since a purchase unmounts this panel through the equip gate). The
+   * card stays on the shelf, greyed and inert — see GuildHallEquipCard.
+   */
+  soldOutEquipmentIds: readonly string[];
   onRunChange: (next: RunState) => void;
   /** Equipment purchases hand off to App.tsx's forced equip-or-trash gate (ForceEquipScreen) — this panel can't transition screens itself. */
   onBuyEquipment: (itemId: string) => void;
   /** Recruiting while the roster is already full hands off to App.tsx's RosterReplaceScreen gate instead of the normal recruitFromGuildHall call — same reason as onBuyEquipment, this panel can't transition screens itself. */
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
+  /**
+   * Fires whenever this panel opens or closes a modal of its own. The host
+   * screen uses it to pull its bottom-docked Continue button (ShopNodeScreen)
+   * — that button is a second full-width gold CTA sitting right under the hero
+   * sheet's own "Recruit X" one, which read as part of the sheet and made the
+   * recruit decision genuinely ambiguous (user report, 2026-08-31).
+   */
+  onOverlayChange?: (open: boolean) => void;
 }
 
 interface HeroCardProps {
@@ -70,49 +83,50 @@ interface EquipCardProps {
   item: EquipmentDefinition;
   cost: number;
   affordable: boolean;
+  soldOut: boolean;
   onBuy: () => void;
   onInspect: () => void;
 }
 
-/** Same tap-buys/hold-inspects split as GuildHallHeroCard above — pulled out for the same useLongPress-is-a-hook reason. */
-function GuildHallEquipCard({ item, cost, affordable, onBuy, onInspect }: EquipCardProps) {
-  const longPress = useLongPress(onInspect, onBuy);
+/**
+ * One item on the shelf, drawn as the same card the Equipment Cache and the
+ * Loot Pile draw (EquipChoiceCard's `.equip-cache-*` family) — right down to
+ * `itemHighlights`, the "+10 Attack · Ember Ward" benefit line.
+ *
+ * That line is the point of the 2026-08-31 pass. The shop card used to show
+ * name/rarity/slot and a price, so the only way to learn what 90 gold was
+ * buying was a ~500ms hold nobody discovers — every OTHER screen that offers
+ * gear already spelled it out on the card face, and the one screen where the
+ * item costs money was the one that didn't. The hold still opens the full
+ * sheet (EquipInspectOverlay, for passive descriptions); it is no longer the
+ * only way to read the item.
+ *
+ * A bought item stays on the shelf rather than vanishing: the stock is the
+ * memory of what this Guild Hall had, and a card that disappears mid-scroll
+ * reads as a bug. `sold-out` greys it and makes it inert.
+ */
+function GuildHallEquipCard({ item, cost, affordable, soldOut, onBuy, onInspect }: EquipCardProps) {
+  const longPress = useLongPress(soldOut ? undefined : onInspect, soldOut ? undefined : onBuy);
+  const highlights = itemHighlights(item);
   return (
     <button
-      className={`equip-cache-card guild-hall-equip-card${affordable ? '' : ' unaffordable'}`}
+      className={`equip-cache-card guild-hall-equip-card${soldOut ? ' sold-out' : affordable ? '' : ' unaffordable'}`}
       style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}
+      disabled={soldOut}
       {...longPress}
     >
-      <EquipmentIcon item={item} slot={item.slot} className="equip-cache-card-icon" />
+      <div className="equip-cache-card-icon-badge">
+        <EquipmentIcon item={item} slot={item.slot} className="equip-cache-card-icon" />
+      </div>
       <div className="equip-cache-card-body">
         <div className="equip-cache-card-name">{item.name}</div>
         <div className="equip-cache-card-meta">
           <span className="equip-cache-card-rarity">{RARITY_LABELS[item.rarity]}</span>
           <span className="equip-cache-card-slot">{EQUIP_SLOT_LABELS[item.slot]}</span>
         </div>
+        <div className="equip-cache-card-stats">{highlights.length > 0 ? highlights.join(' · ') : 'No effect'}</div>
       </div>
-      <span className="guild-hall-equip-price">{cost}g</span>
-    </button>
-  );
-}
-
-interface RelicCardProps {
-  relic: RelicDefinition;
-  affordable: boolean;
-  onBuy: () => void;
-  onInspect: () => void;
-}
-
-/** Same tap-buys/hold-inspects split as GuildHallHeroCard above. */
-function GuildHallRelicCard({ relic, affordable, onBuy, onInspect }: RelicCardProps) {
-  const longPress = useLongPress(onInspect, onBuy);
-  return (
-    <button className={`relic-card guild-hall-relic-card${affordable ? '' : ' unaffordable'}`} {...longPress}>
-      <div className="relic-card-head">
-        <RelicIcon relicId={relic.id} className="relic-card-icon" />
-        <span className="relic-card-name">{relic.name}</span>
-        <span className="guild-hall-relic-price">{RELIC_PURCHASE_COST}g</span>
-      </div>
+      {soldOut ? <span className="guild-hall-equip-soldout">Sold out</span> : <span className="guild-hall-equip-price">{cost}g</span>}
     </button>
   );
 }
@@ -121,34 +135,49 @@ function GuildHallRelicCard({ relic, affordable, onBuy, onInspect }: RelicCardPr
  * Guild Hall (raise) recruitment (docs/progression.md "The raise-vs-recruit
  * axis"), overhauled per user direction (2026-08-18): only 2-3 heroes on
  * offer at a time (not the whole non-starter catalog) at a steeper price,
- * plus a small rotating selection of equipment and relics for sale — the
- * Hall is now a real shop, not just a hero-raise counter. Recruit Contracts
- * (recruit) still aren't offered as heroes here — they're claimed off a
- * beaten enemy at fight's end (FightScreen) or bought blank below.
+ * plus a small rotating shelf of equipment for sale — the Hall is now a real
+ * shop, not just a hero-raise counter.
  *
- * Equipment and relic cards buy on a short tap and preview on a ~500ms hold.
- * Heroes no longer do (2026-08-28, user direction): a hero is permanent, the
- * priciest thing in the Hall, and the one purchase whose value is a page of
- * stats rather than a line of text, so its tap opens the sheet and the sheet
- * asks. See GuildHallHeroCard.
+ * Second pass, 2026-08-31 (user direction): the relic shelf is gone entirely
+ * (see run/shop.ts's header for why), the equipment shelf widened to 4 and
+ * now says what each item does on its face, a bought item greys out instead
+ * of vanishing, and the Recruit Contract — the one purchase here that spends
+ * gold on a thing you cannot look at — asks before it takes the money, next
+ * to a readout of how many you already hold.
  */
-export function GuildHallPanel({ run, offers, onRunChange, onBuyEquipment, onRequestRosterReplace }: Props) {
+export function GuildHallPanel({
+  run,
+  offers,
+  soldOutEquipmentIds,
+  onRunChange,
+  onBuyEquipment,
+  onRequestRosterReplace,
+  onOverlayChange,
+}: Props) {
   const [previewOfferId, setPreviewOfferId] = useState<string | null>(null);
   const [previewEquipId, setPreviewEquipId] = useState<string | null>(null);
-  const [previewRelicId, setPreviewRelicId] = useState<string | null>(null);
+  const [confirmingContract, setConfirmingContract] = useState(false);
 
   const heroOffers = offers.heroOfferIds
     .map((id) => guildHallOffers.find((o) => o.id === id))
     .filter((o): o is GuildHallOffer => !!o && !run.roster.some((r) => r.heroId === o.heroId));
   const equipmentOffers = offers.equipmentOfferIds.map((id) => equipment[id]).filter((i): i is EquipmentDefinition => !!i);
-  const relicOffers = offers.relicOfferIds
-    .map((id) => relics[id])
-    .filter((r): r is RelicDefinition => !!r && !run.relics.includes(r.id));
 
   const rosterFull = run.roster.length >= ROSTER_CAP;
   const previewOffer = previewOfferId ? heroOffers.find((o) => o.id === previewOfferId) : undefined;
   const previewEquip = previewEquipId ? equipmentOffers.find((i) => i.id === previewEquipId) : undefined;
-  const previewRelic = previewRelicId ? relicOffers.find((r) => r.id === previewRelicId) : undefined;
+  const canBuyContract = run.gold >= CONTRACT_PURCHASE_COST;
+
+  /**
+   * Tell the host screen whether one of this panel's modals is up, so it can
+   * stand its own bottom CTA down (see `onOverlayChange`). Derived from the
+   * three pieces of state rather than pushed from each setter, so a modal
+   * added later can't forget to report itself.
+   */
+  const overlayOpen = !!previewOffer || !!previewEquip || confirmingContract;
+  useEffect(() => {
+    onOverlayChange?.(overlayOpen);
+  }, [overlayOpen, onOverlayChange]);
 
   function handleRecruit(offer: GuildHallOffer) {
     if (rosterFull) {
@@ -163,18 +192,11 @@ export function GuildHallPanel({ run, offers, onRunChange, onBuyEquipment, onReq
   }
 
   function handleBuyContract() {
+    setConfirmingContract(false);
     try {
       onRunChange(buyContract(run, CONTRACT_PURCHASE_COST));
     } catch (err) {
       if (!(err instanceof RecruitmentError)) throw err;
-    }
-  }
-
-  function handleBuyRelic(relic: RelicDefinition) {
-    try {
-      onRunChange(buyRelic(run, relic));
-    } catch (err) {
-      if (!(err instanceof ShopError)) throw err;
     }
   }
 
@@ -218,7 +240,7 @@ export function GuildHallPanel({ run, offers, onRunChange, onBuyEquipment, onReq
       <div className="guild-hall-section">
         <div className="guild-hall-section-head">
           <span className="guild-hall-section-title">🛡️ Equipment</span>
-          <span className="guild-hall-section-hint">Hold an item to inspect</span>
+          <span className="guild-hall-section-hint">Tap to buy · hold for details</span>
         </div>
         {equipmentOffers.length > 0 ? (
           <div className="equip-cache-list guild-hall-equip-list">
@@ -230,6 +252,7 @@ export function GuildHallPanel({ run, offers, onRunChange, onBuyEquipment, onReq
                   item={item}
                   cost={cost}
                   affordable={run.gold >= cost}
+                  soldOut={soldOutEquipmentIds.includes(item.id)}
                   onBuy={() => onBuyEquipment(item.id)}
                   onInspect={() => setPreviewEquipId(item.id)}
                 />
@@ -243,34 +266,23 @@ export function GuildHallPanel({ run, offers, onRunChange, onBuyEquipment, onReq
 
       <div className="guild-hall-section">
         <div className="guild-hall-section-head">
-          <span className="guild-hall-section-title">💠 Relics</span>
-          <span className="guild-hall-section-hint">Hold a relic to inspect</span>
+          <span className="guild-hall-section-title">📜 Contracts</span>
+          {/* The count is what makes the price legible: a second contract is
+              worth much less than a first if there is nothing left to beat,
+              and the player cannot weigh that without knowing the balance. */}
+          <span className="guild-hall-contract-held">
+            You hold <strong>{run.recruitContracts}</strong>
+          </span>
         </div>
-        {relicOffers.length > 0 ? (
-          <div className="relics-grid guild-hall-relic-list">
-            {relicOffers.map((relic) => (
-              <GuildHallRelicCard
-                key={relic.id}
-                relic={relic}
-                affordable={run.gold >= RELIC_PURCHASE_COST}
-                onBuy={() => handleBuyRelic(relic)}
-                onInspect={() => setPreviewRelicId(relic.id)}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="hint">No relics on offer this visit.</p>
-        )}
+        <button className="guild-hall-contract-row" disabled={!canBuyContract} onClick={() => setConfirmingContract(true)}>
+          <span className="guild-hall-contract-icon">📜</span>
+          <span className="guild-hall-contract-body">
+            <span className="guild-hall-contract-name">Recruit Contract</span>
+            <span className="guild-hall-contract-desc">Claim a beaten enemy hero for free, later.</span>
+          </span>
+          <span className="guild-hall-contract-price">{CONTRACT_PURCHASE_COST}g</span>
+        </button>
       </div>
-
-      <button className="guild-hall-contract-row" disabled={run.gold < CONTRACT_PURCHASE_COST} onClick={handleBuyContract}>
-        <span className="guild-hall-contract-icon">📜</span>
-        <span className="guild-hall-contract-body">
-          <span className="guild-hall-contract-name">Recruit Contract</span>
-          <span className="guild-hall-contract-desc">Claim a beaten enemy hero for free, later.</span>
-        </span>
-        <span className="guild-hall-contract-price">{CONTRACT_PURCHASE_COST}g</span>
-      </button>
 
       {previewOffer &&
         (() => {
@@ -299,25 +311,41 @@ export function GuildHallPanel({ run, offers, onRunChange, onBuyEquipment, onReq
           );
         })()}
 
-      {previewEquip && (
-        <div className="log-overlay" onClick={() => setPreviewEquipId(null)}>
-          <div className="log-panel move-popup-panel" onClick={(e) => e.stopPropagation()}>
-            <EquipmentInfoPanel item={previewEquip} />
-            <div className="move-popup-hint">Tap anywhere to close</div>
-          </div>
-        </div>
-      )}
+      {/* The same item sheet the Equipment Cache and the Loot Pile open, rather than this panel's own hand-rolled one — gear reads identically wherever it is offered. */}
+      {previewEquip && <EquipInspectOverlay item={previewEquip} onClose={() => setPreviewEquipId(null)} />}
 
-      {previewRelic && (
-        <div className="log-overlay" onClick={() => setPreviewRelicId(null)}>
+      {/* A Recruit Contract is the one purchase here with nothing to look at
+          first — no stat sheet, no highlight line, just a row that took your
+          gold the instant you brushed it. So it asks (user direction,
+          2026-08-31), and the ask is where the gold arithmetic is spelled out. */}
+      {confirmingContract && (
+        <div className="log-overlay" onClick={() => setConfirmingContract(false)}>
           <div className="log-panel move-popup-panel" onClick={(e) => e.stopPropagation()}>
             <div className="move-info-panel">
               <div className="move-info-head">
-                <span className="move-info-name">{previewRelic.name}</span>
+                <span className="move-info-name">📜 Recruit Contract</span>
+                <span className="move-info-kind">{CONTRACT_PURCHASE_COST}g</span>
               </div>
-              <div className="move-info-desc">{previewRelic.description ?? 'No effect described.'}</div>
+              <div className="guild-hall-confirm-body">
+                A blank contract lets you claim one beaten enemy hero onto your roster, free, after any winnable fight.
+              </div>
+              <div className="guild-hall-confirm-ledger">
+                <span>
+                  Gold {run.gold}g → <strong>{run.gold - CONTRACT_PURCHASE_COST}g</strong>
+                </span>
+                <span>
+                  Contracts {run.recruitContracts} → <strong>{run.recruitContracts + 1}</strong>
+                </span>
+              </div>
             </div>
-            <div className="move-popup-hint">Tap anywhere to close</div>
+            <div className="detail-action">
+              <button className="resolve-button" disabled={!canBuyContract} onClick={handleBuyContract}>
+                Buy for {CONTRACT_PURCHASE_COST}g
+              </button>
+              <button className="detail-action-cancel" onClick={() => setConfirmingContract(false)}>
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,7 +1,14 @@
 // Guild Hall commerce beyond hero recruitment (recruitment.ts covers raising
 // a hero and buying Recruit Contracts): rolling the one-time offer set a
 // `shop` map node presents, and the gold-spend mechanics for buying
-// equipment and relics outright.
+// equipment outright.
+//
+// Relics used to be a third shelf here and are no longer sold at all (user
+// direction, 2026-08-31). They stay in the run as a reward-only axis (the
+// Relic Shrine node and the Guardian's Banner), which is what keeps them
+// reading as a team-wide *axis* rather than a stat purchase: a shop that
+// sells one of everything makes gold the only real decision on the screen.
+// The equipment shelf absorbed the freed room (3 offers -> 4).
 //
 // Offers are rolled ONCE per shop-node visit (App.tsx handleSelectNode, at
 // node-select time) and carried on the `shop` Screen variant rather than
@@ -17,7 +24,6 @@
 
 import type { RunState } from './state';
 import { pickWeightedEquipment, rarityWeightsFor, type EquipmentDefinition, type EquipmentRarity } from './equipment';
-import type { RelicDefinition } from './relics';
 import type { GuildHallOffer } from './recruitment';
 
 export class ShopError extends Error {}
@@ -35,20 +41,14 @@ export const EQUIPMENT_PRICE_BY_RARITY: Record<EquipmentRarity, number> = {
   mythic: 150,
 };
 
-/** Flat, untuned gold price to buy any relic outright at a Guild Hall. */
-export const RELIC_PURCHASE_COST = 60;
-
-/** How many of each good a shop node's Guild Hall offers, per visit — heroes stay capped low (2-3) per user direction; equipment/relics get a small rotating selection alongside them. */
-export const GUILD_HALL_EQUIPMENT_OFFER_COUNT = 3;
-export const GUILD_HALL_RELIC_OFFER_COUNT = 2;
+/** How many of each good a shop node's Guild Hall offers, per visit — heroes stay capped low (2-3) per user direction; equipment gets a small rotating shelf alongside them, widened to 4 (2026-08-31) when the relic shelf was removed. */
+export const GUILD_HALL_EQUIPMENT_OFFER_COUNT = 4;
 
 export interface GuildHallOffers {
   /** GuildHallOffer.id values (src/data/recruitment.ts), 2 or 3 of them. */
   heroOfferIds: string[];
   /** EquipmentDefinition.id values. */
   equipmentOfferIds: string[];
-  /** RelicDefinition.id values. */
-  relicOfferIds: string[];
 }
 
 function sample<T>(pool: readonly T[], count: number): T[] {
@@ -63,8 +63,7 @@ function sample<T>(pool: readonly T[], count: number): T[] {
 /**
  * Rolls a shop node's one-time offer set: 2-3 heroes not already on the
  * roster (a curated pick rather than the full non-starter catalog — user
- * direction 2026-08-18), a handful of equipment items, and a couple of relics
- * not already owned.
+ * direction 2026-08-18) and a shelf of equipment.
  *
  * The equipment shelf is the one place a player can BUY a specific tier, so
  * it rolls the same act curve every drop does (rarityWeightsFor,
@@ -77,12 +76,10 @@ function sample<T>(pool: readonly T[], count: number): T[] {
 export function rollGuildHallOffers(
   run: RunState,
   heroPool: readonly GuildHallOffer[],
-  equipmentPool: readonly EquipmentDefinition[],
-  relicPool: readonly RelicDefinition[]
+  equipmentPool: readonly EquipmentDefinition[]
 ): GuildHallOffers {
   const rosterHeroIds = new Set(run.roster.map((r) => r.heroId));
   const availableHeroes = heroPool.filter((o) => !rosterHeroIds.has(o.heroId));
-  const availableRelics = relicPool.filter((r) => !run.relics.includes(r.id));
   const heroCount = Math.random() < 0.5 ? 2 : 3;
   return {
     heroOfferIds: sample(availableHeroes, heroCount).map((o) => o.id),
@@ -91,7 +88,6 @@ export function rollGuildHallOffers(
       GUILD_HALL_EQUIPMENT_OFFER_COUNT,
       rarityWeightsFor(run.actNumber, 'standard')
     ).map((i) => i.id),
-    relicOfferIds: sample(availableRelics, GUILD_HALL_RELIC_OFFER_COUNT).map((r) => r.id),
   };
 }
 
@@ -109,10 +105,4 @@ function spendGold(run: RunState, cost: number, what: string): RunState {
  */
 export function buyEquipment(run: RunState, item: EquipmentDefinition): RunState {
   return spendGold(run, EQUIPMENT_PRICE_BY_RARITY[item.rarity], item.name);
-}
-
-/** Spends gold and adds the relic directly — relics have no placement step (RelicsOverlay is read-only), so there's nothing further to resolve. */
-export function buyRelic(run: RunState, relic: RelicDefinition): RunState {
-  const spent = spendGold(run, RELIC_PURCHASE_COST, relic.name);
-  return { ...spent, relics: [...spent.relics, relic.id] };
 }

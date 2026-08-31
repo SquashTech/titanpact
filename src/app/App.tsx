@@ -22,7 +22,6 @@ import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
 import { heroes } from '../data/heroes';
 import { enemies, basicGoblins, BASIC_GOBLIN_IDS, GOBLIN_CHIEF_ID } from '../data/enemies';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
-import { drawableRelics } from '../data/relics';
 import { equipment } from '../data/equipment';
 import {
   equipItem,
@@ -89,8 +88,17 @@ type Screen =
   | { kind: 'sandboxFight'; player: Encounter; ai: Encounter; playerRelics: string[] }
   /** ⚠️ TEMPORARY DEV/TEST — see src/run/statusTestFight.ts. Its own kind rather than a reuse of 'sandboxFight' so leaving it returns to the title screen instead of an unrelated (and empty) Sandbox Battle config. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
-  /** `offers` is rolled once at node-select time (run/shop.ts rollGuildHallOffers) rather than inside GuildHallPanel's own state — see shop.ts's header for why a component-local roll would reroll on every equipment purchase. */
-  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers }
+  /**
+   * `offers` is rolled once at node-select time (run/shop.ts
+   * rollGuildHallOffers) rather than inside GuildHallPanel's own state — see
+   * shop.ts's header for why a component-local roll would reroll on every
+   * equipment purchase. `soldOutEquipmentIds` rides along for exactly the same
+   * reason: a bought item greys out on the shelf instead of vanishing (user
+   * direction, 2026-08-31), and the purchase that greyed it out is itself what
+   * unmounts the shop screen on the way through the equip gate, so
+   * component-local state would forget it before it came back.
+   */
+  | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; soldOutEquipmentIds: string[] }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
   | { kind: 'statBoost'; nodeId: string; nodeType: StatBoostNodeType }
   /** classReward node (docs/run-loop.md, ClassNodeScreen) — one screen handles both the 1-of-3 Class pick and the target-hero assignment internally, so this kind only needs the node id. */
@@ -453,7 +461,12 @@ export function App() {
         setScreen({ kind: 'squadSelect', nodeId, nodeType: encounterKind, encounter });
       }
     } else if (node.type === 'shop') {
-      setScreen({ kind: 'shop', nodeId, offers: rollGuildHallOffers(playerRun, guildHallOffers, Object.values(equipment), drawableRelics) });
+      setScreen({
+        kind: 'shop',
+        nodeId,
+        offers: rollGuildHallOffers(playerRun, guildHallOffers, Object.values(equipment)),
+        soldOutEquipmentIds: [],
+      });
     } else if (node.type === 'weaponReward' || node.type === 'armorReward' || node.type === 'accessoryReward') {
       // Single guaranteed item of a fixed slot, no 3-choice picker — rolls
       // straight into the forced equip-or-trash gate, same as the Goblin
@@ -613,6 +626,10 @@ export function App() {
    * `playerRun` directly and only commits on success, same
    * validate-before-commit shape as GuildHallPanel's own recruit/contract
    * handlers, rather than throwing inside a setState updater.
+   *
+   * The shop screen the player returns to is the current one with the bought
+   * item added to `soldOutEquipmentIds` — the shelf keeps the card, greyed,
+   * rather than dropping it (user direction, 2026-08-31).
    */
   function handleBuyGuildEquipment(itemId: string) {
     const item = equipment[itemId];
@@ -625,7 +642,9 @@ export function App() {
       return;
     }
     setPlayerRun(next);
-    setScreen({ kind: 'forceEquip', queue: [itemId], next: screen });
+    const backToShop: Screen =
+      screen.kind === 'shop' ? { ...screen, soldOutEquipmentIds: [...screen.soldOutEquipmentIds, itemId] } : screen;
+    setScreen({ kind: 'forceEquip', queue: [itemId], next: backToShop });
   }
 
   /** "Start a Run" from the title screen opens the draft (DraftScreen) rather than building the run directly — the starting pair isn't chosen yet. */
@@ -866,6 +885,7 @@ export function App() {
         <ShopNodeScreen
           run={playerRun}
           offers={screen.offers}
+          soldOutEquipmentIds={screen.soldOutEquipmentIds}
           onRunChange={setPlayerRun}
           onBuyEquipment={handleBuyGuildEquipment}
           onRequestRosterReplace={handleRequestRosterReplace}

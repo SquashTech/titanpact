@@ -8421,12 +8421,17 @@ textarea,
 
 /* --- Guild Hall panel -----------------------------------------------------
    Overhauled (2026-08-18, per user direction): a real multi-good shop —
-   2-3 curated hero recruits, a small equipment selection, and relics —
-   rather than a flat grid of every recruitable hero. Each section reuses an
-   established card family (guild-hall-hero-card is new; equipment reuses
-   .equip-cache-card, relics reuse .relic-card) so the shop reads as one
-   consistent surface with the rest of the run loop rather than a bolted-on
-   screen. */
+   2-3 curated hero recruits plus a small equipment shelf — rather than a flat
+   grid of every recruitable hero. Each section reuses an established card
+   family (guild-hall-hero-card is new; equipment reuses .equip-cache-card) so
+   the shop reads as one consistent surface with the rest of the run loop
+   rather than a bolted-on screen.
+
+   2026-08-31, per user direction: the relic shelf is gone (relics are a
+   reward-only axis again — see src/run/shop.ts), the equipment shelf is 4
+   wide and carries the same benefit line every other gear card does, a bought
+   item greys out in place, and Recruit Contracts got a held-count readout and
+   a confirm step. `.guild-hall-relic-*` was deleted with the shelf. */
 
 .guild-hall {
   display: flex;
@@ -8440,6 +8445,16 @@ textarea,
    else it is embedded. */
 .shop-node-screen .guild-hall-header {
   padding-right: 50px;
+}
+
+/* Clearance for the bottom-docked Continue button. `.screen-scroll` ends
+   flush with that button, so at the very bottom of the scroll the last
+   section's card had its rounded bottom corners shaved off — which reads as a
+   rendering bug, not as "there is nothing below this". Noticed once Contracts
+   became the last section (2026-08-31); the relic grid that used to sit there
+   ended in a gap and hid it. */
+.shop-node-screen .guild-hall {
+  padding-bottom: 10px;
 }
 
 .guild-hall-header {
@@ -8604,39 +8619,88 @@ textarea,
   color: var(--enemy);
 }
 
-.guild-hall-relic-list {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+/* Bought (2026-08-31). The card stays on the shelf so the stock reads as a
+   place you emptied rather than a list that shuffled under your thumb — but
+   it has to stop looking purchasable, which `unaffordable`'s bare opacity
+   doesn't do (that state still means "come back with more gold"). Grayscale
+   plus the flat surface drains the rarity color out of the border and the
+   icon badge at once, which is the loudest thing a card here says. */
+.guild-hall-equip-card.sold-out {
+  opacity: 0.42;
+  filter: grayscale(1);
+  cursor: default;
+  box-shadow: var(--hairline);
 }
 
-.guild-hall-relic-card {
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-  width: 100%;
-  text-align: left;
-  font: inherit;
-  color: inherit;
+.guild-hall-equip-card.sold-out:hover {
+  transform: none;
+  box-shadow: var(--hairline);
 }
 
-.guild-hall-relic-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-}
-
-.guild-hall-relic-card.unaffordable {
-  opacity: 0.5;
-}
-
-.guild-hall-relic-price {
+.guild-hall-equip-soldout {
+  flex-shrink: 0;
   margin-left: auto;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+/* --- Contracts ---------------------------------------------------------- */
+
+/* How many Recruit Contracts the player is already holding, sitting in the
+   section head where the other sections put their hint. A contract's value
+   depends entirely on how many you already have (they are spent one per
+   claim, and a claim needs a fight left to win), so the price below is not
+   readable without this number next to it. */
+.guild-hall-contract-held {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(224, 166, 60, 0.08);
+  border: 1px solid rgba(224, 166, 60, 0.28);
   font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.guild-hall-contract-held strong {
   font-weight: 800;
   color: var(--accent);
 }
 
-.guild-hall-relic-card.unaffordable .guild-hall-relic-price {
-  color: var(--enemy);
+/* The purchase confirm's two blocks (see GuildHallPanel). `.move-info-desc`
+   is deliberately not reused: it line-clamps to 2 lines for a move tile's
+   fixed box, which would silently eat the end of this sentence. */
+.guild-hall-confirm-body {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+/* Before → after, for both numbers the press moves. A confirm that only says
+   the price makes the player do the subtraction; showing the result is what
+   turns "20g" into a decision. */
+.guild-hall-confirm-ledger {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.guild-hall-confirm-ledger strong {
+  font-weight: 800;
+  color: var(--accent);
 }
 
 .guild-hall-contract-row {

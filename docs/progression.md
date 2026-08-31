@@ -296,14 +296,30 @@ rolls a curated, one-time offer set (`src/run/shop.ts` `rollGuildHallOffers`, ca
 once at node-select time — see that module's header for why it isn't rolled inside the
 panel component) rather than presenting the entire non-starter hero catalog at once —
 **2-3 heroes**, at a flat **50g** each (`GUILD_HALL_RECRUIT_COST`, up from 20g). The
-same visit also offers a small rotating selection of **equipment** (priced by rarity
-tier, `EQUIPMENT_PRICE_BY_RARITY`, `src/run/shop.ts` — common 15g through mythic 150g)
-and **relics** (flat 60g, `RELIC_PURCHASE_COST`) for direct gold purchase — a new axis
-alongside hero recruitment. A bought equipment item still resolves through the same
-forced equip-or-trash gate (`ForceEquipScreen`) every other equipment grant uses; a
-bought relic is added directly (no placement step, same as any other relic grant).
-Players can tap-and-hold a hero offer (`GuildHallPanel.tsx`'s `useLongPress`, same hook
-`RosterManagementScreen` uses) to preview its full stat/move block before buying.
+same visit also offers a rotating shelf of **equipment** (priced by rarity tier,
+`EQUIPMENT_PRICE_BY_RARITY`, `src/run/shop.ts` — common 15g through mythic 150g) for
+direct gold purchase — a new axis alongside hero recruitment. A bought equipment item
+still resolves through the same forced equip-or-trash gate (`ForceEquipScreen`) every
+other equipment grant uses. Tapping a hero offer opens its full stat/move sheet, which
+is where the gold is actually spent (2026-08-28 — `HeroPreviewOverlay`'s `action`).
+
+**Second pass (2026-08-31, per user direction).** Four changes, all of them about the
+Hall asking before it takes:
+
+- **Relics are no longer sold at all.** `RELIC_PURCHASE_COST`, `buyRelic` and
+  `GuildHallOffers.relicOfferIds` are gone; relics stay a reward-only axis (the
+  `relicReward` node and the Guardian's Banner). A shop that sells one of everything
+  makes gold the only decision on the screen.
+- **The equipment shelf is 4 wide** (`GUILD_HALL_EQUIPMENT_OFFER_COUNT`, up from 3,
+  absorbing the freed room) and each card now carries the same benefit line every other
+  gear card in the run does (`itemHighlights`, `EquipChoiceCard.tsx`) instead of hiding
+  it behind a long-press nobody discovers. The hold still opens the full sheet.
+- **A bought item greys out in place** rather than vanishing off the shelf
+  (`soldOutEquipmentIds`, carried on App.tsx's `shop` Screen because the purchase
+  unmounts the screen on its way through the equip gate).
+- **A Recruit Contract asks before it buys**, in a confirm that spells out both
+  before→after numbers, and the section head shows how many the player already holds —
+  the number the price is only readable against.
 
 **Recruit Contracts are a scarce currency, not a free-and-unlimited claim (2026-08-16
 playtest pass).** `RunState.recruitContracts` starts at 1 per run and is spent (not
