@@ -511,6 +511,16 @@ test('stone: no move is unreachable that was not already known to be', () => {
   // both legitimate, and neither a reason to stuff them somewhere today. Both
   // Ancient moves predate this slate for the same reason.
   //
+  // Spirit's PHYSICAL half — Phantom Strike, Spooky Slice and Wailing Flight —
+  // left this list on 2026-09-01, and it is the case the list was built to
+  // produce. They were orphaned on 2026-08-30 for a reason about the ROSTER,
+  // not the slate: Spirit authored three physical moves into a type whose only
+  // hero was Int 77 against Atk 56. Naming them instead of stuffing them into
+  // Revenant's pool kept the gap legible until a hero arrived that wanted
+  // exactly it — Sorrow (Atk 80 / Spd 90, src/data/heroes.ts), which now holds
+  // Phantom Strike in its kit and the other two in its pool. An orphan list
+  // read as a to-do rather than as a burial.
+  //
   // Storm's Zap left this list on 2026-08-31: the tier gate
   // (run/progression.ts MOVE_TIER_LEVEL) found Tempest's pool held nothing an
   // Early-level hero could be offered, and Zap is Ionic Zap's +1 bracket one
@@ -538,19 +548,8 @@ test('stone: no move is unreachable that was not already known to be', () => {
     'cerebralShock',
     'forgottenCurse',
     'landslide',
-    // Spirit's PHYSICAL half (2026-08-30) — Stone's finding with the sides
-    // swapped, and the reason that finding was worth generalising rather than
-    // fixing. Stone authored three magical moves into a type with two physical
-    // heroes; Spirit authors three physical moves into a type with ONE hero,
-    // and that hero is Int 77 against Atk 56. Wailing Flight's 85 base power
-    // lands for less in Revenant's hands than Banish's 100 does, so putting
-    // these in its pool would make three of its picks strictly worse than the
-    // rest — the trap pick the north star forbids, dressed as coverage.
-    'phantomStrike',
     'rockfall',
     'runicBlast',
-    'spookySlice',
     'tremor',
-    'wailingFlight',
   ]);
 });

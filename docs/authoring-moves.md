@@ -1614,6 +1614,20 @@ hero and no heal**:
      lands for less than Banish's 100 does. Stone's finding with the sides
      swapped — and per Stone's rule the deliverable is the list, pinned in
      `test/stoneMoves.test.ts`, not a fix.
+
+     **RESOLVED 2026-09-01 — Sorrow.** Spirit is a roster of two. Sorrow
+     (Atk 80 / Spd 90 / Def 38, recruit-only, `src/data/heroes.ts`) is the
+     deliberate mirror of Revenant — same type, same fragility, opposite
+     pipeline — and it takes the physical half whole: Phantom Strike in its
+     starting kit, Spooky Slice and Wailing Flight in its pool. All three
+     left the orphan list. Worth recording as a vindication of the rule
+     rather than as a late patch: naming the gap instead of stuffing the
+     moves into Revenant's pool is what left them available for a hero that
+     actually wanted them, five slates later. **The cost the fix carried:**
+     three physical moves cannot fill a nine-entry pool, so five of Sorrow's
+     nine are SHADOW — the deepest adjacent physical line, and the graft on
+     its offensive Evolution, so the one path that makes the borrowed line
+     STAB. That is the §2 trade taken knowingly, not a second finding.
   3. **Spooky Goblin could not afford its own kit.** 30 mana / 4 regen against
      a kit whose cheapest move went 11 → 50. Raised to 40/10 — the third time
      that exact fix has been applied, after Torch Goblin and Goblin Skulker,

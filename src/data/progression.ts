@@ -436,9 +436,11 @@ export const progressionTable: ProgressionTable = {
     // What IS left out is the physical half — Phantom Strike, Spooky Slice and
     // Wailing Flight. Revenant is Int 77 against Atk 56, so Wailing Flight's
     // 85 base power lands for less than Banish's 100 does, and putting it here
-    // would be the trap pick the north star forbids. They are reported as
-    // orphans (test/spiritMoves.test.ts pins the list) rather than stuffed in,
-    // per the rule Stone's slate set: the deliverable is the list, not a fix.
+    // would be the trap pick the north star forbids. They were reported as
+    // orphans rather than stuffed in, per the rule Stone's slate set: the
+    // deliverable is the list, not a fix. SORROW is that fix arriving on its
+    // own schedule (heroes.ts, 2026-09-01) — the physical three now live in
+    // its pool below, and left the orphan list in test/stoneMoves.test.ts.
     revenant: [
       'torment',
       'drain',
@@ -451,6 +453,45 @@ export const progressionTable: ProgressionTable = {
       'banish',
       'lastRites',
       'ascendant',
+    ],
+    // Sorrow (heroes.ts, 2026-09-01) takes the half Revenant cannot: the two
+    // physical Spirit moves left after Phantom Strike goes into its kit, plus
+    // Soul Offering — which is the one support in the slate that does not care
+    // which pipeline holds it, since it buffs Attack AND Intelligence.
+    //
+    // That is THREE entries, against a floor of eight (the FLOOR block above),
+    // and the shortfall is a fact about the slate rather than about the hero:
+    // Spirit authored exactly three physical moves and one of them is already
+    // unlocked. So five come from SHADOW, and that is the deliberate trade the
+    // floor rule names — an off-type button beats a dead level-up. Shadow
+    // specifically for three reasons, in order of weight:
+    //
+    //   1. It is the only adjacent slate with a physical line deep enough to
+    //      close a five-move gap on its own (nine physical rows).
+    //   2. It is the graft on Sorrow's OFFENSIVE Evolution (Banshee, below),
+    //      so the borrowed line is the one path that turns it all into STAB.
+    //      No other hero's off-type filler has that property.
+    //   3. It is the same line, thematically: Vanish -> Ambush is strike-from-
+    //      concealment, and Backstab/Shadow Slice/Dusk Blade is the Bleed
+    //      ladder Spooky Slice already opens at 30%. Rend doubles below half
+    //      HP, which is what a Bleed ladder produces.
+    //
+    // Shadow Slice is deliberately NOT here despite fitting: 60 BP / 40 mana /
+    // 30% Bleed is Spooky Slice's row exactly, and a pool that offers the same
+    // numbers under two names spends a level-up teaching nothing.
+    //
+    // Counts after the kit filter: 3 Early (vanish, backstab, fadeStrike),
+    // 4 Mid, 2 Late — 9 total, clearing 2/4/8 with room.
+    sorrow: [
+      'vanish',
+      'backstab',
+      'fadeStrike',
+      'spookySlice',
+      'ambush',
+      'rend',
+      'soulOffering',
+      'wailingFlight',
+      'duskBlade',
     ],
     crag: ['faultLine', 'rubbleRush', 'retribution', 'boulderSlam', 'provoke', 'weaken', 'rally', 'bodyCrush'],
 
@@ -1245,6 +1286,61 @@ export const progressionTable: ProgressionTable = {
             name: 'Soulbinder',
             description: 'Control and setup; status steering from beyond.',
             statGrants: { manaPool: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Mind',
+          },
+        ],
+      },
+    ],
+    // Sorrow (2026-09-01). The one node here whose grafts are chosen by what
+    // the hero's POOL actually holds rather than by flavor, because Sorrow is
+    // the only hero whose pool is majority off-type: five of its nine entries
+    // are Shadow (see moveTiers above), so Banshee is the path that turns a
+    // borrowed line into a native one. Grafts are stat-only by the scope note
+    // at the top of this file — the payoff is the type chart, and here that
+    // means STAB on five moves no other path reaches.
+    //
+    // Mourner is the mono path every hero keeps ("mono remains a legitimate
+    // terminal state"), and it is the honest one for this body: Defense 38 /
+    // HP 75 is the roster's most fragile frame, so the defensive path buying
+    // it a second trade is a real choice rather than a consolation.
+    //
+    // Dirge grafts Mind, which grants Sorrow STAB on nothing — the same is
+    // true of Revenant's Soulbinder, and it is not an oversight in either
+    // case. Mind is Haunt's OTHER spreadTriggerTypes member (statuses.ts), so
+    // the graft is an identity and defensive-typing pick on the game's two
+    // mark-planting types. It is priced accordingly: Wisdom rather than
+    // Revenant's mana, so the two Mind paths are not the same node twice.
+    sorrow: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'sorrow-offensive',
+            heroId: 'sorrow',
+            kind: 'offensive',
+            name: 'Banshee',
+            description: 'The wail sharpened to an edge; strikes from nowhere, faster.',
+            statGrants: { attack: 10, speed: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Shadow',
+          },
+          {
+            id: 'sorrow-defensive',
+            heroId: 'sorrow',
+            kind: 'defensive',
+            name: 'Mourner',
+            description: 'Grief that will not be moved; stays to be hit and stays after.',
+            statGrants: { hp: 10, defense: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'sorrow-utility',
+            heroId: 'sorrow',
+            kind: 'utility',
+            name: 'Dirge',
+            description: 'A song that gets inside; binds the pair and guards against the mind.',
+            statGrants: { wisdom: 10, mpRegen: 5 },
             unlocksMoveIds: [],
             typeGraft: 'Mind',
           },

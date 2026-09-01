@@ -28,6 +28,7 @@ import scallywagArt from '../../../art/heroes/scallywag.png';
 import sentinelArt from '../../../art/heroes/sentinel.png';
 import shadowMonkArt from '../../../art/heroes/vesper.png';
 import clockworkArt from '../../../art/heroes/starters/clockwork.png';
+import sorrowArt from '../../../art/heroes/sorrow.png';
 import spookyGoblinArt from '../../../art/enemies/spookygoblin.png';
 import steamColossusArt from '../../../art/heroes/steamcolossus.png';
 import stormRangerArt from '../../../art/heroes/stormranger.png';
@@ -72,6 +73,7 @@ export const heroArt: Partial<Record<string, string>> = {
   sentinel: sentinelArt,
   shadowMonk: shadowMonkArt,
   forgewright: clockworkArt,
+  sorrow: sorrowArt,
   spookyGoblin: spookyGoblinArt,
   steamColossus: steamColossusArt,
   stormRanger: stormRangerArt,

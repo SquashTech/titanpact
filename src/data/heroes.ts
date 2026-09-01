@@ -436,6 +436,55 @@ export const heroes: Record<string, HeroDefinition> = {
     moveIds: ['wisp', 'secondWind', 'unbound'],
     starter: true,
   },
+  sorrow: {
+    id: 'sorrow',
+    name: 'Sorrow',
+    types: ['Spirit'],
+    baseStats: { hp: 75, attack: 80, defense: 38, intelligence: 45, wisdom: 50, speed: 90, manaPool: 62, mpRegen: 10 },
+    // Spirit's SECOND hero, and the answer to the finding its own slate filed
+    // against itself (docs/authoring-moves.md §10, Spirit #2): the type
+    // authored three PHYSICAL moves into a roster of one Int-77 caster, so
+    // Phantom Strike, Spooky Slice and Wailing Flight sat in the orphan list
+    // in test/stoneMoves.test.ts with nowhere to go. Sorrow is where they go.
+    //
+    // A deliberate MIRROR of Revenant rather than a second copy of it — the
+    // Vesper/Marrow arrangement one type over: same type, same fragility,
+    // opposite pipelines. Attack 80 against Revenant's Intelligence 77, and
+    // the rest of the frame is spent on the difference rather than copied:
+    //
+    //   - SPEED 90 over Revenant's 64 — tied with Squall and Widow for the
+    //     roster's fastest — because the art is a thing that dives and is
+    //     gone before the wail lands. It is also what pays for
+    //     Defense 38 — the lowest here — since a body that never trades twice
+    //     does not need to survive being hit twice.
+    //   - MANA 62 against Revenant's 80, and the 18 it gives up is the reason
+    //     it can afford Speed 90. Revenant's magical line runs to Banish (80)
+    //     and Last Rites (100); Sorrow's physical line tops out at Wailing
+    //     Flight (65), so 80 would be a pool it could never spend. Marrow's
+    //     65-vs-Vesper's-45 reasoning, run in the other direction.
+    //
+    // Stat total 440 — recruit-only, so outside the 450 STARTER budget by
+    // convention (see the header), and in band with the other recruit-only
+    // lines (Lucius 440, Marrow 420).
+    //
+    // THE KIT is the rule exactly — a low-power main-type move plus two
+    // supports — and unusually all three are the hero's OWN type. Phantom
+    // Strike is the physical opener no other hero in the game can hold;
+    // Torment is the setup that makes it, and everything after it, hit TWICE
+    // (Haunt lists Spirit in spreadTriggerTypes, statuses.ts), which is the
+    // whole pitch stated on turn one. Torment over Wisp deliberately, the
+    // reverse of Revenant's call: Wisp is a 20% roll on a MAGICAL body, worth
+    // little to Attack 80, where Torment's guarantee is worth the blank turn
+    // precisely because Sorrow's follow-up is the biggest single-target
+    // physical hit the type has.
+    //
+    // Second Wind is the one move shared with Revenant's kit, and knowingly:
+    // deleting Mend Wounds left it as Spirit's ONLY self-sustain, and a
+    // 75/38 body wants it at least as much as a 80/47 one. 25 + 25 + 30 all
+    // sit inside a 62 pool.
+    moveIds: ['phantomStrike', 'torment', 'secondWind'],
+    starter: false,
+  },
 
   // --- Iron --------------------------------------------------------------
   ironWarden: {

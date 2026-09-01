@@ -410,23 +410,74 @@ test('spirit: no hero or enemy starts with a move it cannot pay for, or has a st
   }
 });
 
-test('spirit: Revenant holds the magical line, and the physical three have no home yet', () => {
-  // The distribution pass as a roster audit (authoring-moves.md §7). Spirit is
-  // a roster of ONE, so there is no second line to split into — Revenant draws
-  // the whole magical half, and the three physical moves are orphans pinned in
-  // test/stoneMoves.test.ts rather than stuffed into an Int-77 hero's pool.
+test('spirit: Revenant holds the magical line and Sorrow the physical one — split by pipeline, not by tier', () => {
+  // The distribution pass as a roster audit (authoring-moves.md §7), and the
+  // one type where it took two passes. Spirit was a roster of ONE when the
+  // slate landed, so Revenant drew the whole magical half and the three
+  // physical moves were named as orphans (test/stoneMoves.test.ts) rather than
+  // stuffed into an Int-77 hero's pool. Sorrow (2026-09-01, Atk 80 / Spd 90)
+  // is the second line the slate was always missing.
+  //
+  // What this pins is the SPLIT, in both directions: neither hero may reach
+  // the other's pipeline. A Spirit move drifting into the wrong pool is the
+  // trap pick the north star forbids, and it would be invisible — the move
+  // works, it just lands for less than everything beside it.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
-  const reachable = [...heroes.revenant.moveIds, ...progressionTable.moveTiers.revenant];
+  const reachableBy = (heroId: string) => [
+    ...heroes[heroId].moveIds,
+    ...progressionTable.moveTiers[heroId],
+  ];
+  const revenant = reachableBy('revenant');
+  const sorrow = reachableBy('sorrow');
   const spiritMoves = Object.values(moves).filter((m) => m.type === 'Spirit');
 
   for (const move of spiritMoves) {
     if (move.category === 'physical') {
-      assert.ok(!reachable.includes(move.id), `${move.id} is physical and Revenant is Int 77 / Atk 56`);
+      assert.ok(!revenant.includes(move.id), `${move.id} is physical and Revenant is Int 77 / Atk 56`);
+      assert.ok(sorrow.includes(move.id), `${move.id} is physical Spirit and Sorrow does not reach it`);
     } else {
-      assert.ok(reachable.includes(move.id), `${move.id} is magical Spirit and nothing points at it`);
+      assert.ok(revenant.includes(move.id), `${move.id} is magical Spirit and nothing points at it`);
     }
   }
+
+  // The mirror the split rests on — if either hero's frame ever flips, the
+  // pools above are pointing the wrong way round.
   assert.ok(heroes.revenant.baseStats.intelligence > heroes.revenant.baseStats.attack);
+  assert.ok(heroes.sorrow.baseStats.attack > heroes.sorrow.baseStats.intelligence);
+
+  // Sorrow takes NO magical damage move off the type. Soul Offering is the
+  // deliberate exception and the only one: it is a buff, and it grants Attack
+  // and Intelligence both, so it is the one Spirit support that does not care
+  // which pipeline holds it.
+  const magicalReached = spiritMoves.filter((m) => m.category === 'magical' && sorrow.includes(m.id));
+  assert.deepStrictEqual(
+    magicalReached.filter((m) => m.kind === 'damage').map((m) => m.id),
+    [],
+    'Sorrow is Int 45 — a magical Spirit attack in its pool is strictly worse than the physical row beside it'
+  );
+  assert.ok(magicalReached.every((m) => m.kind !== 'damage'));
+});
+
+test('spirit: Sorrow is a recruit-only mirror of Revenant, and its kit is all its own type', () => {
+  // The two facts about this hero that live outside any move row, both easy to
+  // break by a one-word edit and neither caught anywhere else.
+  //
+  // `starter: false` is load-bearing rather than cosmetic: it is the single
+  // source of truth for the draft pool vs. the Guild Hall pool
+  // (src/data/recruitment.ts derives its offers from it), so flipping it does
+  // not add Sorrow to the draft — it silently REMOVES it from the Guild Hall.
+  assert.strictEqual(heroes.sorrow.starter, false);
+  assert.strictEqual(heroes.revenant.starter, true, 'Spirit keeps exactly one hero in the draft');
+
+  // The kit rule is exactly three (heroes.ts header), and Sorrow is one of the
+  // few heroes whose three are all its own type — the pitch is legible on turn
+  // one only if Torment and the move it sets up are both in hand.
+  assert.strictEqual(heroes.sorrow.moveIds.length, 3);
+  for (const id of heroes.sorrow.moveIds) assert.strictEqual(moves[id].type, 'Spirit');
+  assert.ok(
+    firstStatusApplication(moves[heroes.sorrow.moveIds[1]])?.statusId === 'Haunt',
+    'Sorrow starts able to plant the mark its own physical line cashes'
+  );
 });
 
 test('spirit: the enemy side can demonstrate Haunt end to end', () => {
