@@ -369,20 +369,25 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   bonus** — the 600 is the authored number, and a generated bonus on top of it would
   make it something else.
 
-  **Two second-order effects worth watching in playtest.** First, `SquadSelectScreen`
-  scouts the whole enemy roster, so the player *sees* a third enemy before committing a
-  squad — they know he is coming, they just do not know when. That is consistent with
-  the 2026-08-31 decision to scramble the scout row (what is in this fight, not who
-  leads it), but it does mean the entrance is a surprise of timing only. Second, he
-  arrives fresh into a fight the player has already spent resources on, which is the
-  intended pressure — but it also means a squad that wins the opening exchange badly
-  enough may never see him at all, since the Guardian pair falling before either takes
-  a KO is not a state that can occur (a KO is what summons him), and a player who wins
-  both slots simultaneously ends the fight. Whether that last case is reachable often
-  enough to matter is a playtest question.
+  **He cannot be skipped.** `sideDefeated` (FightScreen) tests every combatant on the
+  side, bench included — not just the two active slots — so a round that KOs the whole
+  Guardian pair at once does not end the fight. The post-round forced-replacement loop
+  fills a slot from the bench and play continues. This is a normal fight against an
+  enemy team of **three**; the Lord is simply the third enemy, and the bench is about
+  *when* he arrives, never *whether*.
+
+  **He is concealed until he arrives (2026-09-01, second pass, per user direction).**
+  `SquadSelectScreen` scouts the whole enemy roster, which would have handed the player
+  his name, portrait, stat line and movepool before a command was given — the entrance
+  would still have been a surprise of timing, and nothing else. His scout chip is a
+  **silhouette and its typing** instead, and it opens no stat sheet
+  (`view/shared/entrances.ts`, the same set that drives the entrance itself). Typing is
+  deliberately kept: the player has to be able to build a squad against this fight, and
+  "there is a Beast/Ancient in here somewhere" is the difference between a hard read and
+  an unfair one. What is withheld is everything that would let them pre-solve it.
 
   **The entrance is presentation, not a Field Effect.** It sets nothing on the
-  battlefield and changes no rules — `view/combat/entrances.ts` names the hero ids that
+  battlefield and changes no rules — `view/shared/entrances.ts` names the hero ids that
   get it, `buildBeats` flags the beat, and the veil/lurch/horn/music-drop hang off that
   flag. See `visual-language.md`.
 - **HP/mana fully restore between map nodes (reversed 2026-08-16, first playtest).**

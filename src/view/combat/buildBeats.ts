@@ -21,7 +21,7 @@ import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
 import { passiveEmoji } from '../shared/passiveIcons';
 import { getTypeColor } from './typeColors';
-import { hasDramaticEntrance } from './entrances';
+import { hasDramaticEntrance } from '../shared/entrances';
 
 export interface BeatPopup {
   combatantId: string;

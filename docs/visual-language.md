@@ -1593,13 +1593,24 @@ fight's reinforcement would have walked on looking like a routine pivot.
 
 ### What replaced it
 
-A **dramatic entrance**: one flag, four answers.
+A **dramatic entrance**: one flag, five answers.
 
-- `view/combat/entrances.ts` — a set of hero ids, keyed exactly like
+- `view/shared/entrances.ts` — a set of hero ids, keyed exactly like
   `heroArt.ts`. Presentation data in the presentation layer; the engine never
   learns this exists, which is what CLAUDE.md's "never bake timing, animation, or
   sound into the engine" requires and also what makes an entrance addable or
   removable without a number in a fight changing.
+- `SquadSelectScreen.tsx` — the same set conceals the chip on the battle
+  preview: a **silhouette and its typing**, no name, no portrait, no stat sheet.
+  The two halves are one flag on purpose, because either alone is worse than
+  neither — concealing something that then walks on like an ordinary bench pivot
+  is a promise not kept, and announcing something the player already read a full
+  stat sheet for is a reveal of nothing. The silhouette is drawn from the *real*
+  portrait through `brightness(0) invert(1)`, so it is honestly that figure's
+  outline at 32px: the player gets its size and stance and none of its identity.
+  The chip is a `div`, not a `button` — one that looks pressable and opens
+  nothing reads as broken, where one that plainly cannot be pressed reads as
+  withheld.
 - `buildBeats.ts` — a `SwitchedIn` for one of those ids gets its own sentence
   ("Something comes out of the treeline" / **Goblin Lord** / "The ground goes
   quiet."), the `ko` headline red rather than the switch-in `buff` green, and a
@@ -1638,8 +1649,14 @@ peak at 32% now.
 The music path was confirmed live rather than reasoned about: the harness
 exposed `setTrack`/`setMusicRate`/`musicDebug` on `window`, and with
 `wildsEdge` actually sounding (`contextState: "running"`) the rate moved
-1 → 0.8 → 1 through the real AudioParam ramp. `npm run typecheck`,
-`npm run typecheck:view` and `npm test` (594 passing) all pass.
+1 → 0.8 → 1 through the real AudioParam ramp.
+
+The concealed chip got a second harness of its own (`scoutcheck.html` +
+`src/app/scoutcheck.tsx`, mounting the real `SquadSelectScreen` against the same
+encounter, likewise deleted). Shot at 1x and again at 4x to read the silhouette
+itself: three chips, two of them clickable, the third a dim outline over `BST` /
+`ANC` badges that opens nothing and reports `cursor: default`. `npm run
+typecheck`, `npm run typecheck:view` and `npm test` (594 passing) all pass.
 
 ## Open / future improvements
 

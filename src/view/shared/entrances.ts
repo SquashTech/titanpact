@@ -1,6 +1,18 @@
-// Which combatants get a DRAMATIC ENTRANCE — the veil, the shake, the horn
-// and the music dropping a tone (styles.css `.dramatic-entrance-veil`,
-// audio/sounds.ts `entrance.dread`, audio/music.ts `setMusicRate`).
+// Which combatants are the fight's HIDDEN CARD — concealed on the battle
+// preview, and then given a real entrance when they finally walk on.
+//
+// Two halves of one authored moment, deliberately behind ONE set:
+//
+//   1. Scouting shows a silhouette and the typing, and nothing else — no
+//      portrait, no name, no stat sheet (view/run/SquadSelectScreen.tsx).
+//   2. Arriving gets the veil, the lurch, the horn and the music drop
+//      (view/combat/buildBeats.ts, FightScreen.tsx, styles.css,
+//      audio/sounds.ts `entrance.dread`, audio/music.ts `setMusicRate`).
+//
+// They are one flag rather than two because either alone is worse than
+// neither: concealing something that then walks on like an ordinary bench
+// pivot is a promise not kept, and announcing something the player already
+// read a full stat sheet for is a reveal of nothing.
 //
 // Presentation data, in the presentation layer, keyed by hero id — exactly the
 // shape view/shared/heroArt.ts already uses for portraits, and for the same
@@ -17,10 +29,10 @@
 // "this is not the fight you thought you were winning", and a second routine
 // user would spend it.
 
-/** Hero ids whose arrival on the battlefield is an event in its own right. */
+/** Hero ids concealed in scouting, and whose arrival on the battlefield is an event in its own right. */
 export const DRAMATIC_ENTRANCE_HERO_IDS: ReadonlySet<string> = new Set(['goblinLord']);
 
-/** Whether this hero id's arrival gets the treatment. Tolerates undefined so callers can pass a lookup straight through. */
+/** Whether this hero id gets the treatment. Tolerates undefined so callers can pass a lookup straight through. */
 export function hasDramaticEntrance(heroId: string | undefined): boolean {
   return heroId !== undefined && DRAMATIC_ENTRANCE_HERO_IDS.has(heroId);
 }

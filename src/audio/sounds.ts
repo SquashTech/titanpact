@@ -634,7 +634,7 @@ export const sounds: Record<SfxId, SoundSpec> = {
   },
 
   /**
-   * A named enemy walking onto the field (view/combat/entrances.ts). The
+   * A named enemy walking onto the field (view/shared/entrances.ts). The
    * biggest and longest sound in the table, and the only one that fires at
    * most ONCE in a run — the Goblin Lord's arrival at Wild's Edge — which is
    * the entire licence for its size. If a second thing ever plays it, it is

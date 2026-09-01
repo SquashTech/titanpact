@@ -644,7 +644,7 @@ const AUTO_ADVANCE_STEP_MS = 450;
 
 /**
  * ⚠️ EXPERIMENTAL. What the act's music slows to once a named enemy takes the
- * field (view/combat/entrances.ts) — 0.8 is the "slow it by 20%" the effect was
+ * field (view/shared/entrances.ts) — 0.8 is the "slow it by 20%" the effect was
  * asked for, and because Web Audio has no time-stretch it drops the pitch by
  * roughly three semitones along with it (audio/music.ts `setMusicRate`).
  *

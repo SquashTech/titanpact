@@ -823,7 +823,7 @@ textarea,
 }
 
 /* ── A named enemy taking the field ───────────────────────────────────────
-   The visual half of a dramatic entrance (view/combat/entrances.ts) — the
+   The visual half of a dramatic entrance (view/shared/entrances.ts) — the
    Goblin Lord arriving off the bench at Wild's Edge's Guardian fight, and
    nothing else today.
 
@@ -8296,6 +8296,47 @@ textarea,
    a shuffled order now, since `encounter.run.roster` is generated
    active-first and a fixed order is the same tell without the styling — see
    SquadSelectScreen.tsx `scoutOrder`. */
+
+/* The fight's hidden card (view/shared/entrances.ts) — scouted as a shape and
+   a typing, nothing more. Rendered from the REAL portrait rather than a
+   placeholder glyph, so the silhouette is honestly that figure's outline: the
+   player gets the size and stance of what is coming, and none of its identity.
+
+   Not a button (SquadSelectScreen), so the hover lift and the pointer are both
+   cancelled here — a chip that looks pressable and opens nothing reads as
+   broken, where one that plainly cannot be pressed reads as withheld. */
+.enemy-scout-chip-concealed {
+  cursor: default;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 38%, rgba(217, 83, 79, 0.16), transparent 72%),
+    var(--surface-raised);
+}
+
+.enemy-scout-chip-concealed:hover {
+  border-color: inherit;
+  transform: none;
+  box-shadow: var(--hairline), var(--elev-1);
+}
+
+/* brightness(0) flattens the sprite to solid black and keeps its alpha; the
+   invert then lifts it to white so it reads against a dark card, where a black
+   silhouette would simply disappear. Held well under full opacity so it stays
+   a shape rather than becoming a bright new figure, and given a red rim so the
+   eye lands on it. */
+.enemy-scout-chip-concealed .enemy-scout-portrait {
+  filter: brightness(0) invert(1) opacity(0.32) drop-shadow(0 0 3px rgba(217, 83, 79, 0.75));
+  animation: enemy-scout-concealed-breathe 3.4s ease-in-out infinite;
+}
+
+@keyframes enemy-scout-concealed-breathe {
+  0%,
+  100% {
+    filter: brightness(0) invert(1) opacity(0.26) drop-shadow(0 0 2px rgba(217, 83, 79, 0.55));
+  }
+  50% {
+    filter: brightness(0) invert(1) opacity(0.4) drop-shadow(0 0 5px rgba(217, 83, 79, 0.9));
+  }
+}
 
 .enemy-scout-portrait {
   display: block;

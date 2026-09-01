@@ -14,6 +14,7 @@ import { RosterManagementScreen } from './RosterManagementScreen';
 import { getTypeColor } from '../combat/typeColors';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { hasDramaticEntrance } from '../shared/entrances';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
 import { useAmbientLocation } from '../shared/LocationContext';
@@ -197,6 +198,36 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
           <div className="enemy-scout-grid">
             {scoutOrder.map((entry) => {
               const hero = allCombatants[entry.heroId];
+              const types = rosterEntryTypes(hero, entry);
+              // The fight's hidden card (view/shared/entrances.ts) — a
+              // silhouette and its typing, and nothing else. NOT a button:
+              // there is no sheet behind it, and a chip that opens nothing
+              // reads as broken, where one that plainly cannot be pressed
+              // reads as withheld.
+              //
+              // Typing is deliberately still shown. The player must be able to
+              // build a squad against this fight, and "there is a Beast/Ancient
+              // in here somewhere" is the difference between a hard read and an
+              // unfair one — what is withheld is the name, the figure, the stat
+              // line and the movepool, which is everything that would let them
+              // pre-solve the entrance.
+              if (hasDramaticEntrance(hero.id)) {
+                return (
+                  <div
+                    key={entry.rosterId}
+                    className="enemy-scout-chip enemy-scout-chip-concealed"
+                    style={{ borderColor: getTypeColor(types[0]) }}
+                    aria-label={`An unidentified ${types.join('/')} enemy`}
+                  >
+                    <HeroPortrait heroId={hero.id} className="enemy-scout-portrait" />
+                    <div className="enemy-scout-types">
+                      {types.map((t) => (
+                        <TypeBadge key={t} type={t} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
               return (
                 <button
                   key={entry.rosterId}
@@ -207,7 +238,7 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
                 >
                   <HeroPortrait heroId={hero.id} className="enemy-scout-portrait" />
                   <div className="enemy-scout-types">
-                    {rosterEntryTypes(hero, entry).map((t) => (
+                    {types.map((t) => (
                       <TypeBadge key={t} type={t} />
                     ))}
                   </div>
