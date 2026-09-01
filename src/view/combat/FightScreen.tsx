@@ -38,6 +38,7 @@ import type { RunState, RosterEntry } from '../../run/state';
 import type { Squad } from '../../run/squad';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { buildCombatState } from '../../run/buildCombatState';
+import { pickAiAction, type AiContext } from '../../run/ai';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
 import { relicTeamStatusGrants } from '../../run/statusGrants';
@@ -1276,51 +1277,21 @@ export function FightScreen({
   }
 
   /**
-   * Picks randomly among the AI's currently-affordable moves rather than
-   * always its first listed move — with a wider fixture movepool per hero
-   * (src/data/heroes.ts) a deterministic first-pick would never exercise the
-   * variety, and a fight that always plays out the same way isn't useful for
-   * testing more complex battles.
+   * Everything src/run/ai.ts needs to pick the enemy side's actions. The brain
+   * itself lives there (and is tested there); this only hands it the content
+   * catalogs and the roster read it deliberately does not know how to make.
    */
-  function pickAiAction(state: CombatState, combatantId: string): Action {
-    const combatant = state.combatants[combatantId];
-    const hero = allCombatants[combatant.heroId];
-    const entry = entryFor(aiRun.roster, combatantId);
-    const moveIds = entry.unlockedMoveIds.length > 0 ? entry.unlockedMoveIds : hero.moveIds;
-    // `allCombatants` threaded in for the same reason the filter below takes
-    // it: a Pack Leader that is currently half-price is affordable, and an AI
-    // that priced it at 100 would Rest while holding a move it can cast
-    // (state.ts resolveManaCost).
-    if (!hasAffordableMoveInFight(state, combatantId, moveIds, moves, allCombatants)) {
-      // Same fallback as the player's move grid below: nothing is affordable,
-      // so Rest rather than declaring a move that would just no-op in the
-      // engine (resolveRound.ts's mana guard) and silently waste the turn.
-      return { kind: 'rest', combatantId };
-    }
-    const affordable = moveIds.filter((id) => combatant.currentMana >= resolveManaCost(state, combatantId, moves[id], allCombatants));
-    // A status-gated move (content.ts requiresTargetStatus) with nothing marked
-    // to aim at resolves into an ActionBlocked and silently wastes the AI's whole
-    // turn — the same failure the affordability filter above exists to avoid.
-    // Falls back to the unfiltered list rather than to Rest if nothing survives,
-    // so the AI never stops acting over a filter.
-    const gateTargets = aliveActiveIdsOn(state, PLAYER_SIDE);
-    const legal = affordable.filter(
-      (id) => !moves[id].requiresTargetStatus || statusGatedTargets(state, moves[id], gateTargets).length > 0
-    );
-    const pickable = legal.length > 0 ? legal : affordable;
-    const moveId = pickable[Math.floor(Math.random() * pickable.length)];
-    const move = moves[moveId];
-    const declaredTarget =
-      move.target === 'singleEnemy' ? (aliveActiveIdsOn(state, PLAYER_SIDE)[0] ?? null) : move.target === 'singleAlly' ? combatantId : null;
-    // A switchesUserOut move with no declared replacement resolves into its
-    // buff and an ActionBlocked — the same silently-wasted half the gate and
-    // affordability filters above exist to avoid. First benched hero standing:
-    // this AI does not evaluate matchups anywhere else either.
-    const switchToCombatantId = move.switchesUserOut
-      ? (state.bench[AI_SIDE].find((bid) => !state.combatants[bid]?.fainted) ?? null)
-      : null;
-    return { kind: 'move', combatantId, moveId, declaredTarget, switchToCombatantId };
-  }
+  const aiContext: AiContext = {
+    heroes: allCombatants,
+    moves,
+    statuses,
+    typeChart,
+    moveIdsFor: (combatantId) => {
+      const entry = entryFor(aiRun.roster, combatantId);
+      if (entry.unlockedMoveIds.length > 0) return entry.unlockedMoveIds;
+      return allCombatants[combat.combatants[combatantId].heroId].moveIds;
+    },
+  };
 
   /** Type-effectiveness multiplier of `move` against whichever hero currently occupies `defenderId` — presentation-only read of the engine's own type resolution (docs/architecture.md "Resolution and presentation are separate layers"). */
   function effectivenessAgainst(move: MoveDefinition, defenderId: string): number {
@@ -1375,7 +1346,7 @@ export function FightScreen({
         switchToCombatantId: p.switchToCombatantId,
       };
     });
-    const aiActions: Action[] = enemyActiveAlive.map((id) => pickAiAction(combat, id));
+    const aiActions: Action[] = enemyActiveAlive.map((id) => pickAiAction(combat, id, aiContext));
 
     const result = resolveRound(combat, [...playerActions, ...aiActions], config);
     let nextState = result.state;
