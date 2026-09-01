@@ -26,10 +26,12 @@ import {
   chooseEvolutionPath,
   rosterEntryTypes,
   EVOLUTION_LEVEL,
+  levelUpCost,
+  costToReachLevel,
   ProgressionError,
 } from '../src/run/progression';
 
-/** Test helper: spends `n` Training Points on a hero, ignoring each level's move offer — for tests that only care about `level` crossing EVOLUTION_LEVEL. */
+/** Test helper: buys `n` levels on a hero, ignoring each level's move offer — for tests that only care about `level` crossing EVOLUTION_LEVEL. `n` is a count of LEVELS, not of points: the pool each caller seeds has to cover run/progression.ts costToReachLevel over the range. */
 function levelUpTimes(run: import('../src/run/state').RunState, rosterId: string, n: number) {
   let next = run;
   for (let i = 0; i < n; i++) next = levelUpHero(next, rosterId);
@@ -208,11 +210,14 @@ test('buildCombatState: same rosterId on both sides does not collide (side-prefi
 
 // --- Level-up pool: leveling (moves + Evolution) -----------------
 
-test('progression: levelUpHero spends one point and bumps level; insufficient points is rejected', () => {
+test('progression: levelUpHero spends levelUpCost and bumps level; insufficient points is rejected', () => {
   let run = seedRoster(['cinderKnight']);
   run = { ...run, levelUpPool: 0 };
   assert.throws(() => levelUpHero(run, 'cinderKnight'), ProgressionError);
 
+  // A level-1 hero's first level costs 1 — the one point on the curve where
+  // the old flat price and the new one agree. The curve itself is
+  // test/levelCost.test.ts's subject.
   run = { ...run, levelUpPool: 1 };
   const next = levelUpHero(run, 'cinderKnight');
   assert.strictEqual(next.levelUpPool, 0);
@@ -268,7 +273,7 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
 
 test('progression: Evolution unlocks only at EVOLUTION_LEVEL, offers exactly three paths, grants stats, and is one-shot', () => {
   let run = seedRoster(['cinderKnight']);
-  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
+  run = { ...run, levelUpPool: costToReachLevel(1, EVOLUTION_LEVEL) };
 
   assert.strictEqual(availableEvolution(progressionTable, run.roster[0]), null);
 
@@ -276,7 +281,7 @@ test('progression: Evolution unlocks only at EVOLUTION_LEVEL, offers exactly thr
   assert.strictEqual(run.roster[0].level, EVOLUTION_LEVEL - 1);
   assert.strictEqual(availableEvolution(progressionTable, run.roster[0]), null); // level EVOLUTION_LEVEL - 1 hasn't crossed yet
 
-  run = { ...run, levelUpPool: 1 };
+  run = { ...run, levelUpPool: levelUpCost(EVOLUTION_LEVEL - 1) };
   run = levelUpTimes(run, 'cinderKnight', 1);
   assert.strictEqual(run.roster[0].level, EVOLUTION_LEVEL);
   const node = availableEvolution(progressionTable, run.roster[0]);
@@ -293,7 +298,7 @@ test('progression: Evolution unlocks only at EVOLUTION_LEVEL, offers exactly thr
 
 test('progression: an Evolution path with a non-multiple-of-5 stat grant is rejected', () => {
   let run = seedRoster(['cinderKnight']);
-  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
+  run = { ...run, levelUpPool: costToReachLevel(1, EVOLUTION_LEVEL) };
   run = levelUpTimes(run, 'cinderKnight', EVOLUTION_LEVEL - 1);
 
   const badTable = {
@@ -318,7 +323,7 @@ test('progression: an Evolution path with a non-multiple-of-5 stat grant is reje
 
 test('progression: a graft path adds its learnableMoveIds to the level-up pool without granting them', () => {
   let run = seedRoster(['crimson']);
-  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
+  run = { ...run, levelUpPool: costToReachLevel(1, EVOLUTION_LEVEL) };
   run = levelUpTimes(run, 'crimson', EVOLUTION_LEVEL - 1);
 
   const before = levelUpMovePool(progressionTable, moves, { ...run.roster[0], level: 99 });
@@ -339,7 +344,7 @@ test('progression: a graft path adds its learnableMoveIds to the level-up pool w
 
 test('progression: an untaken path\'s learnableMoveIds stay out of the pool, and tier gating still applies', () => {
   let run = seedRoster(['crimson']);
-  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
+  run = { ...run, levelUpPool: costToReachLevel(1, EVOLUTION_LEVEL) };
   run = levelUpTimes(run, 'crimson', EVOLUTION_LEVEL - 1);
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-utility');
@@ -352,7 +357,7 @@ test('progression: an untaken path\'s learnableMoveIds stay out of the pool, and
 
 test('progression: a path that grants a Passive records it on the entry (Crimson\'s Pyroclasm)', () => {
   let run = seedRoster(['crimson']);
-  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
+  run = { ...run, levelUpPool: costToReachLevel(1, EVOLUTION_LEVEL) };
   run = levelUpTimes(run, 'crimson', EVOLUTION_LEVEL - 1);
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-offensive');
@@ -364,7 +369,7 @@ test('progression: a path that grants a Passive records it on the entry (Crimson
 
 test('progression: Warhowl inverts Fang\'s attacking stat — a NEGATIVE Evolution grant is legal and lands', () => {
   let run = seedRoster(['packAlpha']);
-  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
+  run = { ...run, levelUpPool: costToReachLevel(1, EVOLUTION_LEVEL) };
   run = levelUpTimes(run, 'packAlpha', EVOLUTION_LEVEL - 1);
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'packAlpha', 'packAlpha-utility');
@@ -391,7 +396,7 @@ test('progression: Warhowl inverts Fang\'s attacking stat — a NEGATIVE Evoluti
 
 test('progression: a type-graft path grants a second type without touching the innate HeroDefinition', () => {
   let run = seedRoster(['tidecaller']);
-  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
+  run = { ...run, levelUpPool: costToReachLevel(1, EVOLUTION_LEVEL) };
   run = levelUpTimes(run, 'tidecaller', EVOLUTION_LEVEL - 1);
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'tidecaller', 'tidecaller-defensive');
@@ -413,7 +418,7 @@ test('progression: a type-graft path grants a second type without touching the i
 
 test('progression: a type-graft path is rejected for an already-dual-typed hero', () => {
   let run = seedRoster(['ironWarden']);
-  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
+  run = { ...run, levelUpPool: costToReachLevel(1, EVOLUTION_LEVEL) };
   run = levelUpTimes(run, 'ironWarden', EVOLUTION_LEVEL - 1);
 
   // Synthetic dual-typed override for this hero lookup only — the fixture
@@ -447,7 +452,7 @@ test('progression: a type-graft path is rejected for an already-dual-typed hero'
 
 test('progression: a later type-graft path shifts (replaces) the secondary type rather than stacking a third', () => {
   let run = seedRoster(['tidecaller']);
-  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
+  run = { ...run, levelUpPool: costToReachLevel(1, EVOLUTION_LEVEL) };
   run = levelUpTimes(run, 'tidecaller', EVOLUTION_LEVEL - 1);
   run = chooseEvolutionPath(run, progressionTable, heroes, 'tidecaller', 'tidecaller-defensive');
   assert.strictEqual(run.roster[0].evolutionTypeGraft, 'Spirit');

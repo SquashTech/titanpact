@@ -33,13 +33,17 @@ import {
   MASTERY_CHOICE_COUNT,
   drawMasteryStats,
   ProgressionError,
+  costToReachLevel,
 } from '../src/run/progression';
 
 /** A roster of one, seeded at `level` with its hero's authored starting kit. */
 function seed(heroId: string, level: number) {
   let run = createRunState(0);
   run = addRosterEntry(run, { ...createRosterEntry(heroId, heroId, heroes[heroId].moveIds), level });
-  return { ...run, levelUpPool: 20 };
+  // Generous on purpose: under the level-price curve (run/progression.ts
+  // levelUpCost) walking a hero past MASTERY_LEVEL costs costToReachLevel(1, 11)
+  // = 55, and these tests are about what the level PAYS OUT, not what it costs.
+  return { ...run, levelUpPool: costToReachLevel(1, MASTERY_LEVEL + 6) };
 }
 
 test('mastery: a level-up pays out a move through MASTERY_LEVEL and a stat past it', () => {

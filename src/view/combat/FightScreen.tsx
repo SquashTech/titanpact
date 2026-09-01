@@ -25,6 +25,7 @@ import {
 } from '../../engine/state';
 import type { HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
+import { DEFAULT_PACT_CLOCK, PACT_WARNING_ROUNDS, pactFractionFor } from '../../engine/combat/pactClock';
 import { applyForcedReplacement } from '../../engine/combat/switching';
 import { resolveBattleStartEntries, resolvePassiveReactions } from '../../engine/combat/passiveEngine';
 import { selectableTargets, statusGatedTargets } from '../../engine/combat/statusEngine';
@@ -1558,6 +1559,33 @@ export function FightScreen({
             who taps back into the same beat via auto-play should see it fire
             rather than sit on a finished keyframe. */}
         {resolving && beat?.dramaticEntrance && <div key={beatSeq} className="dramatic-entrance-veil" aria-hidden="true" />}
+
+        {/* The Pact Clock's face (engine/combat/pactClock.ts). The clock is the
+            only thing in the game that kills a hero the player never let get
+            hit, so it is the one thing that MUST be seen coming: the strip
+            appears PACT_WARNING_ROUNDS before the first tick, counts down in
+            words, and then switches to reporting the escalating bite. A
+            countdown the player can read is what makes a stall-breaker feel
+            like a rule rather than a rug-pull.
+
+            Driven off `combat.round` and the exported constants rather than
+            off any event, so it is correct on the very first render of a
+            loaded fight and does not depend on having watched a beat. */}
+        {combat.round >= DEFAULT_PACT_CLOCK.startRound - PACT_WARNING_ROUNDS && (
+          <div
+            className={`pact-warning${combat.round >= DEFAULT_PACT_CLOCK.startRound ? ' is-due' : ''}`}
+            role="status"
+          >
+            <span className="pact-warning-mark" aria-hidden="true" />
+            <span className="pact-warning-text">
+              {combat.round >= DEFAULT_PACT_CLOCK.startRound
+                ? `The pact is due — ${Math.round(pactFractionFor(combat.round, DEFAULT_PACT_CLOCK) * 100)}% HP from everyone this round`
+                : `The pact comes due in ${DEFAULT_PACT_CLOCK.startRound - combat.round} ${
+                    DEFAULT_PACT_CLOCK.startRound - combat.round === 1 ? 'round' : 'rounds'
+                  }`}
+            </span>
+          </div>
+        )}
 
         <div className="team-row enemy">
           {renderActiveSlot(AI_SIDE, 0)}

@@ -7,6 +7,7 @@
 
 import type {
   BenchRegenTickedEvent,
+  FaintedEvent,
   CombatEvent,
   HpChangedEvent,
   ManaRegenTickedEvent,
@@ -549,6 +550,44 @@ export function buildBeats(
           bannerAccent: fx?.flavorType ? getTypeColor(fx.flavorType) : undefined,
         });
         i++;
+        break;
+      }
+
+      /* The Pact Clock coming due (engine/combat/pactClock.ts). One beat for
+         the whole board — the announcement plus every combatant's HP loss
+         together — because the pact is a single thing happening to everyone,
+         not eight separate things. KOs still split off into their own beats,
+         the same split DamageDealt and StatusTicked already make, so the bar
+         is seen to drain before the card leaves.
+
+         Bench combatants take it too, so some of these popups land on cards
+         that aren't on the field; the popup layer already tolerates that
+         (BenchRegenTicked does the same). */
+      case 'PactTicked': {
+        i++;
+        const applied: CombatEvent[] = [e];
+        const popups: BeatPopup[] = [];
+        const faints: FaintedEvent[] = [];
+        while (events[i]?.type === 'HpChanged' || events[i]?.type === 'Fainted') {
+          const next = events[i++];
+          if (next.type === 'HpChanged') {
+            applied.push(next);
+            const lost = next.previousHp - next.newHp;
+            if (lost > 0) popups.push({ combatantId: next.combatantId, text: `-${lost}`, className: 'popup-damage' });
+          } else if (next.type === 'Fainted') {
+            faints.push(next);
+          }
+        }
+        const pct = Math.round(e.fraction * 100);
+        push(applied, `The pact comes due — every combatant loses ${pct}% of their health!`, popups, {
+          bannerLead: e.step === 0 ? 'The pact comes due' : 'The pact tightens',
+          bannerFocus: `-${pct}% HP, everyone`,
+          bannerFocusKind: 'damage',
+          bannerMeta: 'The Titan is done waiting. This will not stop.',
+        });
+        for (const faint of faints) {
+          push([faint], `${name(faint.combatantId)} is knocked out!`, [], { bannerFocusKind: 'ko' });
+        }
         break;
       }
 

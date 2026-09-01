@@ -6,6 +6,8 @@ import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import {
   levelUpHero,
+  levelUpCost,
+  canAffordAnyLevelUp,
   levelUpMovePool,
   grantLevelUpMove,
   availableEvolution,
@@ -103,6 +105,8 @@ interface GrowthCardProps {
   hero: HeroDefinition;
   entry: RosterEntry;
   node: EvolutionNode | null;
+  /** True while the pool cannot cover this hero's next level (run/progression.ts levelUpCost). The card is disabled either way; this is what makes it say WHY. */
+  unaffordable: boolean;
   canAct: boolean;
   isAnimating: boolean;
   onActivate: () => void;
@@ -119,8 +123,12 @@ interface GrowthCardProps {
  * Tap levels up (or opens Evolution); hold opens the full hero sheet, the
  * "hold to inspect" language used for moves and equipment everywhere else.
  */
-function GrowthCard({ hero, entry, node, canAct, isAnimating, onActivate, onPreview }: GrowthCardProps) {
+function GrowthCard({ hero, entry, node, unaffordable, canAct, isAnimating, onActivate, onPreview }: GrowthCardProps) {
   const payoff = payoffFor(entry);
+  // An earned Evolution was already paid for by the level-up that reached
+  // EVOLUTION_LEVEL, so those cards carry no price at all — the one state in
+  // which tapping a card costs nothing.
+  const cost = node ? null : levelUpCost(entry.level);
   const pending = pendingEvolution(progressionTable, entry);
   // Post-Evolution heroes have no pending node and so no track; their
   // identity line becomes the path they took, which is the more interesting
@@ -139,11 +147,26 @@ function GrowthCard({ hero, entry, node, canAct, isAnimating, onActivate, onPrev
       disabled={!canAct}
       onActivate={onActivate}
       onPreview={onPreview}
-      ariaLabel={`${hero.name}, level ${entry.level} — ${PAYOFF_LABEL[payoff]}`}
+      ariaLabel={`${hero.name}, level ${entry.level} — ${PAYOFF_LABEL[payoff]}${cost === null ? '' : `, costs ${cost} XP`}`}
       /* The rising charge only exists while the level-up timer is running —
          mounting it is what starts its animation, so there is no stale state
          to reset between level-ups. */
-      overlay={isAnimating ? <span className="growth-charge" aria-hidden="true" /> : undefined}
+      overlay={
+        <>
+          {/* The price, as a corner mark on the figure — the mirror of
+              `.pick-level` opposite it, because the two numbers are read
+              together: a level-up costs as many points as the level it leaves
+              (run/progression.ts levelUpCost). Dimmed rather than hidden when
+              the pool can't cover it, so the card says "too expensive" and not
+              just "no". */}
+          {cost !== null && (
+            <span className={`growth-cost${unaffordable ? ' is-unaffordable' : ''}`} aria-hidden="true">
+              {cost}
+            </span>
+          )}
+          {isAnimating && <span className="growth-charge" aria-hidden="true" />}
+        </>
+      }
       /* The rank track: a fixed denominator (the pending Evolution's trigger
          level) whose shape the player learns once, exactly like the Field
          Effect plaque's duration clock and the draft's pact sockets. This is
@@ -444,7 +467,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
       setEvolvingRosterId(rosterId);
       return;
     }
-    if (run.levelUpPool < 1) return;
+    if (run.levelUpPool < levelUpCost(entry.level)) return;
     setFeedback(null);
     setAnimatingRosterId(rosterId);
     window.setTimeout(() => {
@@ -496,9 +519,16 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
    * player did not press for, and an unannounced screen change reads as a
    * glitch. A whoosh is what makes it read as the screen leaving on purpose.
    */
+  /* Affordability, not emptiness. Under the level-priced curve
+     (run/progression.ts levelUpCost) a leftover point or two that cannot buy
+     anybody a level is the NORMAL end state, and it banks for a later node —
+     so the screen has to leave on "nothing left I can buy", or it would sit
+     open forever holding 2 points against a roster that all costs 3. */
+  const canAffordAny = canAffordAnyLevelUp(run);
+
   const done =
     introDone &&
-    run.levelUpPool < 1 &&
+    !canAffordAny &&
     pendingEvolutions === 0 &&
     !offer &&
     !masteryOffer &&
@@ -578,9 +608,11 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
               : feedback ??
                 (pendingEvolutions > 0
                   ? `${pendingEvolutions === 1 ? 'A hero is' : `${pendingEvolutions} heroes are`} ready to evolve — tap to choose a path.`
-                  : run.levelUpPool >= 1
-                    ? 'Tap a hero to spend a point. Hold to review its sheet.'
-                    : 'Every point is spent — moving on.')
+                  : canAffordAny
+                    ? 'Tap a hero to spend. A level costs as much as the hero has — hold to review its sheet.'
+                    : run.levelUpPool >= 1
+                      ? `${run.levelUpPool} XP banked — not enough for anyone yet. Moving on.`
+                      : 'Every point is spent — moving on.')
           }
         >
           {/* The pool, as orbs that go out one at a time rather than a
@@ -738,7 +770,8 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
             // by keyboard, and a card that answers Enter while it is invisible
             // spends a point the player never saw arrive.
             const blockedByOtherAnim = !!animatingRosterId && !isAnimating;
-            const canLevelUp = introDone && run.levelUpPool >= 1 && !node && !blockedByOtherAnim;
+            const affordable = run.levelUpPool >= levelUpCost(entry.level);
+            const canLevelUp = introDone && affordable && !node && !blockedByOtherAnim;
             const canAct = introDone && (canLevelUp || !!node) && !blockedByOtherAnim;
             return (
               <GrowthCard
@@ -746,6 +779,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
                 hero={hero}
                 entry={entry}
                 node={node}
+                unaffordable={!node && !affordable}
                 canAct={canAct}
                 isAnimating={isAnimating}
                 onActivate={() => {

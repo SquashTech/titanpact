@@ -52,7 +52,12 @@ function pickRandom<T>(pool: readonly T[], count: number): T[] {
  */
 export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onClaimEquipment }: Props) {
   const [currencyAmount] = useState(() => 15 + Math.floor(Math.random() * 16)); // 15-30
-  const [upgradeAmount] = useState(() => 2 + Math.floor(Math.random() * 2)); // 2-3
+  // Rescaled with the level-price curve (run/progression.ts levelUpCost) and
+  // the per-fight payouts it forced (App.tsx trainingPointsFor): 2-3 was a
+  // third of a level-1 hero's Evolution under flat pricing and a twentieth of
+  // it under the curve. At 4-6 the XP option stays a live pick against 15-30
+  // gold and a relic, which is the only reason the reward row is a choice.
+  const [upgradeAmount] = useState(() => 4 + Math.floor(Math.random() * 3)); // 4-6
   // The cache's 3 offers roll the act's own curve (rarityWeightsFor,
   // src/run/equipment.ts) — an Act-1 cache cannot show a Legendary and an
   // Act-5 one cannot show a Common.

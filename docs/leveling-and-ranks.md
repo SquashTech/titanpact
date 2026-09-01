@@ -21,6 +21,86 @@ Think of level-ups as a **pooled resource earned per battle**, not as XP that
 accumulates invisibly on individual heroes. (This is the concrete form of the "pooled
 level-up currency" referenced in `progression.md`.)
 
+## What a level-up COSTS (LOCKED, 2026-09-01)
+
+**A level-up costs as many Training Points as the hero's current level.** Level 1 → 2
+costs 1, level 4 → 5 costs 4, level 10 → 11 costs 10 (`levelUpCost`,
+`costToReachLevel`, `src/run/progression.ts`; `test/levelCost.test.ts`).
+
+### Why it is a curve
+
+The price used to be a flat 1 at every level. Walk what that 1 actually bought:
+
+| Levels | What the point buys | Value |
+|---|---|---|
+| 2–4 | A move gain, then *declinable* replacement offers (kit is 3, cap is 4) | Low, and falling |
+| 5 | **Evolution** — 20–40 equipment points, plus a type, plus a passive or a move line | Enormous |
+| 6–10 | Replacement offers again | Low |
+| 11+ | **+10 to a chosen combat stat, forever, unbounded** | High, and never falls |
+
+That curve is **convex**: the eleventh point sunk into a hero was worth strictly more than
+the fourth, which was worth more than a declined offer on a bench hero. The system paid
+*more* per point the harder the player concentrated — so pouring everything into one carry
+was not merely available, it was the dominant line, and a 45-minute run resolved into
+"whose one attacker sweeps".
+
+### Why it is a price and not a cap
+
+A per-act **level cap** was the obvious alternative and is the weaker one. It fences the
+outcome without touching the convexity that causes it, and it strands currency the moment
+every hero sits at the ceiling — a level-up screen that has nothing to sell is worse than
+one that sells something expensive. A rising price leaves the carry build **legal** and
+charges for it in **breadth**, which in a bring-6-pick-4 doubles game is the currency that
+actually decides fights. Hyperfocus remains a real option (that is what `MASTERY_LEVEL` is
+for); it is no longer a free one.
+
+The concrete shape of the choice, which is the whole design claim:
+
+- One hero rushed from level 1 to their Evolution: **10 points.**
+- The four-hero battle core lifted to level 3: **12 points.**
+- An act pays **~15–16** from fights. So an act buys either one, not both.
+
+### Three consequences, all load-bearing
+
+- **The mastery treadmill self-limits.** Level 11 costs 10, level 12 costs 11. The
+  unbounded +10 tail needs no cap; it prices itself out.
+- **A leftover pool that buys nobody is NORMAL, and it banks.** Every gate that used to
+  read `levelUpPool > 0` now reads `canAffordAnyLevelUp` (`src/app/App.tsx`,
+  `LevelUpScreen`) — otherwise the level-up screen reopens at every map node holding 2
+  points against a roster that all costs 3. Banking toward an expensive level is a real
+  and intended play; `RosterPeek` is where the banked figure is read.
+- **Recruits are cheap to raise; veterans are not.** A Guild Hall hero arriving
+  underleveled is now genuinely competitive with pouring the same points into an existing
+  carry. That is the raise-vs-recruit axis (`progression.md`) finally having a price
+  attached, and it reinforces strategic churn rather than fighting it.
+
+### Income was rescaled with it
+
+The curve is meaningless without the income it is denominated in, so per-fight payouts
+moved in the same pass (`trainingPointsFor`, `src/app/App.tsx`): **3** for Monsters
+(`fight`, `battle`), **4** for Skirmish (`skirmish`, `elite`), **5** for the Guardian —
+an act's four fights pay **15–16**, and the reward-row XP option moved from 2–3 to **4–6**
+(`NodeRewardScreen`) so it stays a live pick against 15–30 gold or a relic.
+
+Income is deliberately **flat across acts**. Scaling it by act would inflate the price
+curve away, and the resulting deceleration — the same income buying fewer levels every act
+— *is* the brake. Over five acts a run pays ~80 from fights, which lands a four-hero core
+around level 7–8 against Act 5 enemies at level 10 (`ENEMY_LEVEL_BY_ACT`,
+`src/run/difficulty.ts`): the player is meant to be behind on level and ahead on gear.
+
+> 🔒 **OPEN — flag before hardening.** Every number above is a first-pass playtest figure;
+> only the shape is decided. Three specific questions the curve creates:
+>
+> - **Should Evolution cost a premium** over its linear price? It is the single most
+>   run-defining purchase in the game and currently costs the same as any other level.
+> - **A Recruit Contract hands over a leveled hero for free** — an Act 3 claim is a
+>   level-5, already-evolved hero, i.e. 10 points of curve nobody paid. Contracts were a
+>   modest bonus under flat pricing and are noticeably stronger under the curve. That may
+>   be correct (contracts are documented as flat-value), but it is a change in their power.
+> - **Does income ever scale by act?** The answer above is "no, on purpose". If playtest
+>   says the player falls too far behind the enemy level curve, the fix to reach for first
+>   is the enemy curve or the gear curve — not income, which un-does the brake.
+
 ## The pool is distributed freely — including to the bench
 
 After a battle, the player **assigns the earned level-ups to any heroes they choose**,

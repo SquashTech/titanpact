@@ -56,6 +56,15 @@ don't silently override it.
 - Heroes are **named, authored, fixed specialists** (~53 concepts). Not procedurally generated.
 - **Mono typing is a valid terminal state**, not a larval stage. Precedent: Pokémon
   Normal/Water/Bug. A numerically common mono type is not a design flaw.
+- **A level-up costs as many pool points as the hero's current level** (2026-09-01):
+  1→2 costs 1, 4→5 costs 4, 10→11 costs 10 (`levelUpCost`, `costToReachLevel`,
+  `src/run/progression.ts`). The flat 1 it replaced made the payout curve **convex** —
+  the system paid more per point the harder the player hyperfocused. **Priced, not
+  capped:** the carry build stays legal and is charged for in breadth. A **leftover pool
+  that buys nobody is normal and banks**, so every gate is `canAffordAnyLevelUp`, never
+  `levelUpPool > 0`. Per-fight income was rescaled with it and is **flat across acts** so
+  the curve is not inflated away (`trainingPointsFor`, `src/app/App.tsx`). Rationale,
+  figures and the open tuning questions: `docs/leveling-and-ranks.md`.
 - **Level-ups are a pooled currency** distributed freely after each battle (benched heroes
   included). Below the Evolution level, a level-up **unlocks a move** from the current
   tier; the level-up that reaches the Evolution level instead **surfaces the Evolution
@@ -113,6 +122,15 @@ don't silently override it.
   Recovers all mana, but skips the turn.
 - **Mana tuning invariant:** *mana investment must pay out later than the point at which a weak
   team dies.* Keep this true when tuning any mana node or regen value.
+- **The Pact Clock — the upper bracket on the invariant above** (2026-09-01,
+  `src/engine/combat/pactClock.ts`). From **round 30** every combatant — both sides,
+  **active and benched** — loses **10%** of max HP at the round boundary, rising **+5% per
+  round**, so a full-HP hero dies five rounds in. Direct HP loss: no Defense, no type
+  chart, no variance, and **no passive reaction pass** — the terminator is not a trigger
+  source. It closes the stall nothing else bracketed (mana regenerates, rounds were
+  unbounded, stat mods have no ceiling). Escalating chip, not instant death, so the side
+  that is ahead still wins and only the stall loses. Round 30 is a placeholder for a
+  measurement — see `docs/combat.md`.
 
 ### Architecture
 - **All acquirable content — heroes, moves, abilities, relics, equipment — is pure data**

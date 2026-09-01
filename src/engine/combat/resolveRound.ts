@@ -46,6 +46,7 @@ import {
 } from './statusEngine';
 import { collectPassiveDamageModifiers, resolvePassiveReactions } from './passiveEngine';
 import { nextFloat, nextInt } from '../rng/seededRng';
+import { DEFAULT_PACT_CLOCK, tickPactClock, type PactClockConfig } from './pactClock';
 
 export interface RoundConfig {
   typeChart: TypeChart;
@@ -56,6 +57,14 @@ export interface RoundConfig {
   fieldEffects: Record<string, FieldEffectDefinition>;
   /** Data-tunable, untuned placeholder — see switching.ts applyBenchHpRegen. */
   benchHpRegenFlat: number;
+  /**
+   * The Pact Clock (combat/pactClock.ts) — the upper bracket on fight length.
+   * Optional, defaulting to DEFAULT_PACT_CLOCK, because unlike benchHpRegenFlat
+   * this is a RULE that applies identically to every fight in the game rather
+   * than a per-encounter rate. Callers override it only to test it, or to turn
+   * it off (a startRound past any reachable round) in a sandbox.
+   */
+  pactClock?: PactClockConfig;
 }
 
 export interface RoundResult {
@@ -1092,6 +1101,14 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   const fieldEffectTick = tickFieldEffect(working, round);
   working = fieldEffectTick.state;
   events.push(...fieldEffectTick.events);
+
+  // The Pact Clock (combat/pactClock.ts), LAST of the round-boundary steps —
+  // after regen, statuses and the Field Effect countdown, so a hero the pact
+  // kills has already been given everything this round was going to give it.
+  // No passive-reaction pass follows, by design: see tickPactClock.
+  const pact = tickPactClock(working, round, config.pactClock ?? DEFAULT_PACT_CLOCK, maxHpOf);
+  working = pact.state;
+  events.push(...pact.events);
 
   events.push({ type: 'RoundEnded', round });
 

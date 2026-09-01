@@ -21,6 +21,71 @@ import { mergeStatMods } from './statMods';
 export const MOVE_CAP = 4;
 
 /**
+ * What one level-up COSTS from the pooled currency: **as many Training Points
+ * as the hero's current level.** Level 1 -> 2 costs 1, level 4 -> 5 costs 4,
+ * level 10 -> 11 costs 10 (2026-09-01 designer call).
+ *
+ * Why a curve and not the flat 1 this used to be. Walk the old payout curve:
+ * levels 2-4 bought declinable move-replacement offers, level 5 bought the
+ * run-defining Evolution, and every level past MASTERY_LEVEL bought a flat +10
+ * stat FOREVER. That curve is **convex** — the 11th point sunk into a hero was
+ * worth strictly more than the 4th — so the system paid the player more, per
+ * point, the harder they hyperfocused. Hyperfocus is supposed to be a valid
+ * strategy (that is what the mastery sink is for, see MASTERY_LEVEL); it was
+ * not supposed to be the dominant one, and a flat price made it dominant.
+ *
+ * Pricing rather than capping, deliberately. A per-act level cap would fence
+ * the outcome without touching the convexity, and would strand currency the
+ * moment every hero hit the ceiling. A rising price leaves the carry build
+ * legal and simply makes the player pay for it in breadth — which, in a
+ * bring-6-pick-4 doubles game, is the currency that actually matters.
+ *
+ * Three consequences worth stating, because they are load-bearing:
+ *
+ * - **The mastery treadmill self-limits.** Level 11 costs 10, level 12 costs
+ *   11. No cap is needed on the tail; it prices itself out.
+ * - **Leftover points are normal, and bank.** A pool of 2 buys nothing on a
+ *   level-3 hero, so callers must gate the level-up screen on
+ *   `canAffordAnyLevelUp` rather than on `levelUpPool > 0`, or the screen
+ *   reopens at every node with nothing to sell.
+ * - **Recruits get cheaper to raise than veterans.** A Guild Hall hero
+ *   arriving underleveled is now genuinely competitive with pouring the same
+ *   points into an existing carry, which is the raise-vs-recruit axis
+ *   (docs/progression.md) finally having a price attached.
+ *
+ * Reads the level being LEFT, not the one being reached, so the first
+ * level-up a hero ever receives costs 1.
+ */
+export function levelUpCost(level: number): number {
+  return Math.max(1, level);
+}
+
+/**
+ * Total cost of taking a hero from `fromLevel` to `toLevel` — the triangular
+ * sum of levelUpCost over the range. Exists so callers (and tests, and any
+ * future "what would it take to evolve this hero" readout) state the figure
+ * once instead of each re-deriving the curve.
+ */
+export function costToReachLevel(fromLevel: number, toLevel: number): number {
+  let total = 0;
+  for (let level = fromLevel; level < toLevel; level++) total += levelUpCost(level);
+  return total;
+}
+
+/**
+ * Whether the pool can still buy ANY hero on the roster a level. The
+ * successor to every `levelUpPool > 0` check in the view: under a price curve
+ * a non-empty pool is no longer proof that there is anything to spend it on.
+ *
+ * Deliberately does not consider a hero with an earned-but-unresolved
+ * Evolution — that choice was already paid for by the level-up that reached
+ * EVOLUTION_LEVEL, and callers check `availableEvolution` for it separately.
+ */
+export function canAffordAnyLevelUp(run: RunState): boolean {
+  return run.roster.some((entry) => run.levelUpPool >= levelUpCost(entry.level));
+}
+
+/**
  * The flat, uniform hero level at which every hero's (single, for now)
  * Evolution becomes available (docs/leveling-and-ranks.md "Trigger").
  * CLAUDE.md's variable evolution depth (Capstone = 0, Single = 1, Deep line
@@ -302,9 +367,10 @@ export function levelUpMovePool(
 }
 
 /**
- * Spends one pooled Training Point leveling up a hero
- * (docs/leveling-and-ranks.md, CLAUDE.md "Each Training Point levels up a
- * hero"): increments level by one. Does not touch the movepool itself — the
+ * Spends `levelUpCost(entry.level)` pooled Training Points leveling up a hero
+ * (docs/leveling-and-ranks.md): increments level by one. The price RISES with
+ * the hero's level — see levelUpCost for why it is a curve and not a flat 1.
+ * Does not touch the movepool itself — the
  * caller checks availableEvolution() against the new level first: if an
  * Evolution just became available, no move is rolled this level-up at all
  * (grantLevelUpMove is simply never called); otherwise the caller resolves
@@ -315,9 +381,10 @@ export function levelUpMovePool(
  */
 export function levelUpHero(run: RunState, rosterId: string): RunState {
   const entry = requireEntry(run, rosterId);
-  if (run.levelUpPool < 1) throw new ProgressionError('Not enough training points');
+  const cost = levelUpCost(entry.level);
+  if (run.levelUpPool < cost) throw new ProgressionError('Not enough training points');
 
-  return replaceEntry(run, rosterId, { ...entry, level: entry.level + 1 }, 1);
+  return replaceEntry(run, rosterId, { ...entry, level: entry.level + 1 }, cost);
 }
 
 /**

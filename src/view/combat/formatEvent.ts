@@ -247,6 +247,14 @@ export function formatEvents(
         lines.push({ key, text: `${fx?.name ?? e.fieldEffectId} continues (${e.roundsRemaining} rounds left)`, className: 'log-field-effect' });
         break;
       }
+      case 'PactTicked': {
+        lines.push({
+          key,
+          text: `The pact comes due — every combatant loses ${Math.round(e.fraction * 100)}% of their max HP`,
+          className: 'log-field-effect',
+        });
+        break;
+      }
       case 'FieldEffectExpired': {
         const fx = fieldEffects[e.fieldEffectId];
         lines.push({ key, text: `${fx?.name ?? e.fieldEffectId} fades from the battlefield`, className: 'log-field-effect' });

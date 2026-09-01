@@ -591,8 +591,12 @@ function MapPlacard({ location }: { location: LocationDefinition }) {
  * ascends node by node, plus always-on access to Manage Roster — full stat
  * spreads and equipment reassignment (RosterManagementScreen). Training
  * Points are no longer spent here: they're forced-allocated immediately
- * after a win via LevelUpScreen (App.tsx), so by the time the player is back
- * on the map `run.levelUpPool` is always 0 — nothing to show in the header.
+ * after a win via LevelUpScreen (App.tsx). That screen used to drain the pool
+ * to exactly 0 every time; under the level-price curve (run/progression.ts
+ * levelUpCost) it drains it to whatever no hero on the roster can afford, so a
+ * banked remainder sitting on the map is now NORMAL rather than impossible. It
+ * shows on RosterPeek's resource row rather than in this header — a number the
+ * player is saving toward one specific hero belongs beside the roster.
  */
 export function MapScreen({ run, onRunChange, onSelectNode, onQuitToTitle }: Props) {
   const [showRoster, setShowRoster] = useState(false);

@@ -384,6 +384,20 @@ export interface FieldEffectExpiredEvent extends BaseEvent {
   fieldEffectId: FieldEffectId;
 }
 
+/**
+ * The Pact Clock coming due (engine/combat/pactClock.ts) — one beat for the
+ * whole board, emitted at the round boundary BEFORE the per-combatant
+ * HpChanged/Fainted stream it causes. Carries no combatantId and no total:
+ * it is the announcement, and the HP changes that follow are the accounting.
+ */
+export interface PactTickedEvent extends BaseEvent {
+  type: 'PactTicked';
+  /** Rounds past the clock's start round — 0 on the very first tick, and what the view escalates its presentation on. */
+  step: number;
+  /** The fraction of max HP every combatant loses on this tick (0.1 = 10%). */
+  fraction: number;
+}
+
 export interface RoundEndedEvent extends BaseEvent {
   type: 'RoundEnded';
 }
@@ -413,4 +427,5 @@ export type CombatEvent =
   | FieldEffectSetEvent
   | FieldEffectTickedEvent
   | FieldEffectExpiredEvent
+  | PactTickedEvent
   | RoundEndedEvent;

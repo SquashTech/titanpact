@@ -13604,6 +13604,48 @@ textarea,
    stay in step with LevelUpScreen's LEVEL_UP_ANIM_MS: the level-up is applied
    by a JS timeout, not an animationend listener, so the two only have to
    agree on how long tap-to-payoff feels. */
+/* The price of the next level, as a corner mark mirroring .pick-level on the
+   opposite side of the figure. It carries a spelled-out "XP" for a reason that
+   is specific to this rule: a level-up costs exactly as many points as the
+   level it leaves (run/progression.ts levelUpCost), so this number is ALWAYS
+   identical to the "Lv" mark opposite it. Two bare 4s in opposite corners is
+   not a pair, it is a puzzle — the units are the only thing that makes the
+   card readable, and reading "Lv 4 / 4 XP" across the figure is also how the
+   player learns the pricing rule without being told it.
+
+   Dimmed rather than removed when the pool can't cover it: the card is already
+   locked, and a price that vanished when unaffordable would answer "why not?"
+   with silence at exactly the moment the player asks. */
+.growth-cost {
+  position: absolute;
+  z-index: 2;
+  right: 4px;
+  bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+/* Unit set smaller than the numeral, the same label/value split .pick-level
+   makes with "Lv" — so the two corner marks read as one sentence. */
+.growth-cost::after {
+  content: 'XP';
+  margin-left: 2px;
+  font-size: 7px;
+  opacity: 0.7;
+}
+
+.growth-cost.is-unaffordable {
+  color: var(--text-dim);
+  opacity: 0.6;
+}
+
 .growth-charge {
   position: absolute;
   z-index: 0;
@@ -16024,4 +16066,79 @@ textarea,
    entrance. */
 .event-reveal-in {
   animation: title-tagline-fade 0.42s var(--ease-out) both;
+}
+
+/* --- The Pact Clock ------------------------------------------------------- */
+
+/* The doom strip (engine/combat/pactClock.ts, FightScreen). Sits across the
+   top of the battlefield, above the enemy row, because it is a fact about the
+   whole fight rather than about either side — the same reason the Field Effect
+   plaque takes the horizon instead of a corner.
+
+   Two states, and the jump between them is the point. Warning: dim, amber,
+   stated in rounds, easy to ignore if the player is winning. Due: red, pulsing,
+   and reporting a percentage that goes up every round. The player should learn
+   the rule once, from watching it, and never need it explained again. */
+.pact-warning {
+  position: absolute;
+  z-index: 4;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 94%;
+  padding: 2px 8px;
+  border: 1px solid rgba(224, 166, 60, 0.35);
+  border-radius: 9px;
+  background: rgba(20, 14, 6, 0.82);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--accent);
+  pointer-events: none;
+}
+
+.pact-warning-mark {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pact-warning-pulse 1.6s var(--ease-out) infinite;
+}
+
+.pact-warning.is-due {
+  border-color: rgba(217, 83, 79, 0.55);
+  background: rgba(30, 8, 8, 0.88);
+  color: var(--hp-low);
+}
+
+.pact-warning.is-due .pact-warning-mark {
+  animation-duration: 0.7s;
+}
+
+.pact-warning-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes pact-warning-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pact-warning-mark {
+    animation: none;
+    opacity: 1;
+  }
 }

@@ -61,7 +61,7 @@ import { pickSquad } from '../run/squad';
 import { advanceToNode, advanceToNextAct, grantCurrencyReward, grantUpgradeReward, grantContractReward } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { createStatusTestSides } from '../run/statusTestFight';
-import { fullMovepool } from '../run/progression';
+import { fullMovepool, canAffordAnyLevelUp } from '../run/progression';
 import { progressionTable } from '../data/progression';
 import type { RunState, RosterEntry } from '../run/state';
 import type { Squad } from '../run/squad';
@@ -328,16 +328,32 @@ function goldRewardFor(nodeType: EncounterMapNodeType): number {
  * "tougher fights grant more"; CLAUDE.md "After winning a fight, you are
  * given training points").
  *
- * 1 for Monsters (`fight`, `battle`), 2 for Skirmish (`skirmish`, `elite`),
- * 2 for the Guardian — 2026-09-01, per user direction, replacing a
- * difficulty grade (1 / 2 / 3-4) that paid out roughly 8-11 an act. The
- * Guardian's old 3-4 was the specific complaint: too much currency landing
- * in one place, and no longer necessary now that the Banner is the fight's
- * headline reward. An act now pays 6-7.
+ * 3 for Monsters (`fight`, `battle`), 4 for Skirmish (`skirmish`, `elite`),
+ * 5 for the Guardian: an act's four fights pay **15-16**.
+ *
+ * Rescaled 2026-09-01 alongside the level-price curve (run/progression.ts
+ * levelUpCost), and only because of it. The old figures (1 / 2 / 2, ~6-7 an
+ * act) were denominated in a currency where every level cost exactly 1; under
+ * a curve where taking one hero from level 1 to their Evolution costs 10, the
+ * same income would have bought a single Evolution per act and nothing else,
+ * which is not a brake on hyperfocus but a halt on progression.
+ *
+ * The figures are set so an act's income buys EITHER one hero rushed to
+ * Evolution (10) with change to spare, OR the four-hero battle core lifted to
+ * level 3 (12) — which is the choice the price curve exists to create. A run's
+ * ~80 from fights lands a 4-hero core around level 7-8 against Act 5 enemies
+ * at level 10 (run/difficulty.ts ENEMY_LEVEL_BY_ACT); the player is meant to
+ * be behind on level and ahead on gear.
+ *
+ * Deliberately FLAT across acts. Scaling income by act would inflate the price
+ * curve away, and the resulting deceleration — the same income buying fewer
+ * levels every act — IS the brake. All six figures are first-pass playtest
+ * numbers; only the shape is decided.
  */
 function trainingPointsFor(nodeType: EncounterMapNodeType): number {
-  if (nodeType === 'fight' || nodeType === 'battle') return 1;
-  return 2;
+  if (nodeType === 'fight' || nodeType === 'battle') return 3;
+  if (nodeType === 'boss') return 5;
+  return 4;
 }
 
 /**
@@ -547,7 +563,7 @@ export function App() {
       const slot: EquipmentSlot = node.type === 'weaponReward' ? 'weapon' : node.type === 'armorReward' ? 'armor' : 'accessory';
       const item = pickWeightedEquipmentBySlot(Object.values(equipment), slot, rarityWeightsFor(playerRun.actNumber, 'standard'));
       setPlayerRun((run) => advanceToNode(run, nodeId));
-      const afterScreen: Screen = playerRun.levelUpPool > 0 ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' };
+      const afterScreen: Screen = canAffordAnyLevelUp(playerRun) ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' };
       setScreen(
         item ? { kind: 'cacheOpen', slot, next: { kind: 'forceEquip', queue: [item.id], next: afterScreen } } : afterScreen
       );
@@ -644,7 +660,7 @@ export function App() {
     }
 
     setPlayerRun(next);
-    const afterLevelUp: Screen = next.levelUpPool > 0 ? { kind: 'levelUp', next: afterScreen } : afterScreen;
+    const afterLevelUp: Screen = canAffordAnyLevelUp(next) ? { kind: 'levelUp', next: afterScreen } : afterScreen;
     const afterEquip: Screen = equipmentReward ? { kind: 'forceEquip', queue: [equipmentReward.id], next: afterLevelUp } : afterLevelUp;
 
     // The Recruit Contract claim, first of the post-fight gates: recruiting
@@ -669,7 +685,7 @@ export function App() {
 
   function handleNodeContinue(nodeId: string) {
     setPlayerRun((run) => advanceToNode(run, nodeId));
-    setScreen(playerRun.levelUpPool > 0 ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' });
+    setScreen(canAffordAnyLevelUp(playerRun) ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' });
   }
 
   /**
@@ -686,7 +702,7 @@ export function App() {
    */
   function handleClaimEquipment(nodeId: string, itemIds: string | string[]) {
     setPlayerRun((run) => advanceToNode(run, nodeId));
-    const afterScreen: Screen = playerRun.levelUpPool > 0 ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' };
+    const afterScreen: Screen = canAffordAnyLevelUp(playerRun) ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' };
     setScreen({ kind: 'forceEquip', queue: Array.isArray(itemIds) ? itemIds : [itemIds], next: afterScreen });
   }
 

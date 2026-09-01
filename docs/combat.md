@@ -1334,3 +1334,85 @@ regression:
 - **No percentage-of-max-HP healing, and no variance on heals.** Both are covered
   in "The healing formula" above, with the reasoning; both look like consistency
   fixes and are regressions.
+
+---
+
+## The Pact Clock — the upper bracket on fight length (LOCKED, 2026-09-01)
+
+### The problem
+
+Three facts about this engine compose into an unbounded fight:
+
+1. **Mana regenerates** every round, for the active pair *and* the bench (`mana.md`), so
+   it is not a finite resource over a long enough fight.
+2. **There is no accuracy stat and no PP**, so a move's only cost is that mana.
+3. **Stat modifiers have no ceiling.** `getEffectiveStat` floors every stat at 1 and
+   nothing caps it, and two moves — Arcane Overflow and Beast's Apex Predator — are
+   authored to *compound* deliberately.
+
+So a side whose sustain per round exceeds the opposing side's damage per round wins by
+attrition, and there was **no round limit anywhere in the engine** to notice. Read the
+other way, this is `mana.md`'s own tuning invariant — *"mana investment must pay out later
+than the point at which a weak team dies"* — which has always had a lower bracket and
+never an upper one. The Pact Clock is the upper one.
+
+### The rule
+
+From **`PACT_START_ROUND` = 30**, at the round boundary, **every combatant on the board**
+loses a fraction of its **max HP**:
+
+    fraction = 0.10 + 0.05 × (round − 30)
+
+10% on round 30, 15% on 31, 20% on 32 — cumulatively 100% by round 34, so a combatant at
+full HP is dead **five rounds** after the clock starts. Minimum 1 HP per tick, so no
+small-pool hero is quietly exempt to rounding.
+
+Four properties, each deliberate:
+
+- **It is direct HP loss, not a damage-pipeline hit.** No Defense, no type chart, no
+  variance, no crit — nothing to buff, resist, or wall. A stall is not supposed to be
+  survivable by playing the stall better.
+- **It hits the BENCH as well as the field.** This is what makes it airtight: a stalling
+  side with two healthy heroes in reserve could otherwise cycle fresh bodies in and outlast
+  a clock that only touched the active pair. It also matches the fiction — the pact comes
+  due on everyone who showed up.
+- **No passive-reaction pass follows it** (unlike the status ticks it sits beside in
+  `resolveRound`). A passive that healed off the pact would blunt the exact thing that must
+  not be blunted, and "the terminator is not a trigger source" is a cheaper rule to hold
+  than auditing every future passive against it.
+- **Escalating chip, not instant death.** The side that is actually **ahead** still wins;
+  the fight ends decisively instead of as a coin flip, and the *stall* is what loses. If
+  both sides wipe on the same tick the fight reads as a **loss for the player** —
+  `FightScreen`'s winner check tests the player side first — which is the correct fail-safe:
+  a player who let the clock run out does not get to take the enemy with them.
+
+### Presentation
+
+The clock is the only thing in the game that can kill a hero the player never let get hit,
+so it is the one thing that **must** be seen coming. `FightScreen` shows a strip across the
+top of the battlefield from `PACT_WARNING_ROUNDS` = 5 rounds out: amber and counting down
+in rounds while it is a warning, red and reporting the escalating percentage once it is
+due. The engine emits one **`PactTicked`** event for the whole board — the announcement —
+followed by the ordinary `HpChanged`/`Fainted` stream, so a pact death replays exactly the
+way a Bleed death does.
+
+### What it is not
+
+It is **not** the answer to setup on its own, and should not be tuned as though it were.
+Two cheaper levers were considered alongside it and remain open:
+
+- **A cap on stat modifiers.** `getEffectiveStat` already floors every stat at 1 and never
+  ceilings one — the invariant is half-built. Capping the modifier would bound Apex
+  Predator and Brain Flay rather than break them, and is the Pokémon-standard, instantly
+  legible version of "stats stop going up". **Not implemented.**
+- **A stat-clearing effect primitive (a Haze).** Setup bounded by *the opponent having an
+  answer* rather than by a number is the VGC-native shape, and it is one new verb in the
+  effect vocabulary. **Not implemented.**
+
+> 🔒 **OPEN — flag before hardening.** Round 30 is the designer's number, not a measured
+> one. The number to replace it with is the **95th percentile of real Act 3–5 fight
+> lengths** — and the measurement has to respect that the switching game is *supposed* to be
+> slow: bench mana regen is the resource-cycling engine, and the lock-in rule already turns
+> a 2-KO fight into a grind on purpose. A clock set too early does not break a stall, it
+> breaks the cycling game. The two fractions (10% base, +5% per round) are chosen only to
+> make the wrap-up take five rounds; they are equally provisional.
