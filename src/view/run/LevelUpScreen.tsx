@@ -33,6 +33,7 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
 import { EvolutionScreen } from './EvolutionScreen';
 import { playSfx } from '../../audio/sfx';
+import { prefersReducedMotion } from '../shared/reducedMotion';
 
 interface Props {
   run: RunState;
@@ -251,6 +252,29 @@ const LEVEL_UP_ANIM_MS = 550;
 const AUTO_CONTINUE_MS = 1250;
 
 /**
+ * The arrival beat: how long the screen spends telling the player what they
+ * won before it asks them to spend it.
+ *
+ * This screen arrives straight off a victory and used to land whole — header,
+ * a full orb track and six hero cards, all on the first frame — so the one
+ * fact it exists to deliver ("you earned three points") was never *delivered*,
+ * it was simply already true when the screen appeared. The pool is the reward;
+ * a reward that is only ever shown in its final state is a number, not a
+ * payoff. Now the orbs land one at a time, each with its own note a step above
+ * the last, and the roster wakes up once they have all arrived.
+ *
+ * Deliberately short. Three points cost 300 + 3x130 + 340 = about a second,
+ * which is a beat, not a cutscene — and the roster is dark rather than absent
+ * throughout, so nothing moves when it lights up.
+ */
+const ORB_LEAD_MS = 300;
+const ORB_STAGGER_MS = 130;
+/** The pause between the last orb landing and the roster waking — the note needs somewhere to finish. */
+const ORB_SETTLE_MS = 340;
+/** Past this many orbs the header falls back to a count (see orbCount), and a count has nothing to stagger. Same threshold, one source. */
+const ORB_TRACK_MAX = 12;
+
+/**
  * Forced immediately-after-battle spend screen (CLAUDE.md "After winning a
  * fight, you are given training points that must be instantly allocated
  * before the run continues"). Every Training Point earned must be put into a
@@ -312,6 +336,42 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
    */
   const startingPool = useRef(run.levelUpPool);
   const orbCount = Math.max(startingPool.current, run.levelUpPool);
+
+  /**
+   * How many orbs the arrival beat has to count in. Zero means there is
+   * nothing to count — an empty pool (the screen is only open to resolve a
+   * pending Evolution) or a pool too big for the track to draw — and the beat
+   * is skipped outright rather than being run with nothing in it.
+   */
+  const introOrbs = startingPool.current > 0 && startingPool.current <= ORB_TRACK_MAX ? startingPool.current : 0;
+  /** Orbs that have landed so far. Starts full when there is no beat, so the render path below needs no second branch. */
+  const [arrivedOrbs, setArrivedOrbs] = useState(introOrbs > 0 ? 0 : orbCount);
+  /** False while the pool is still being counted in — the roster is dark and inert until it flips (see `is-asleep`). */
+  const [introDone, setIntroDone] = useState(introOrbs === 0);
+
+  useEffect(() => {
+    if (introOrbs === 0) return;
+    // Reduced motion gets the pool, not a second of it appearing (see
+    // reducedMotion.ts — the stylesheet cannot reach a chain of timeouts).
+    if (prefersReducedMotion()) {
+      setArrivedOrbs(introOrbs);
+      setIntroDone(true);
+      return;
+    }
+    const timers: number[] = [];
+    for (let i = 0; i < introOrbs; i++) {
+      timers.push(
+        window.setTimeout(() => {
+          setArrivedOrbs(i + 1);
+          // A step up per orb, capped so an eight-point pool doesn't climb out
+          // of the register it started in.
+          playSfx('xp.orb', { pitch: 1 + Math.min(i, 7) * 0.06 });
+        }, ORB_LEAD_MS + i * ORB_STAGGER_MS)
+      );
+    }
+    timers.push(window.setTimeout(() => setIntroDone(true), ORB_LEAD_MS + introOrbs * ORB_STAGGER_MS + ORB_SETTLE_MS));
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, [introOrbs]);
 
   /** The actual level-up effect — spends the pooled point and applies whatever it rolled. Called after the charge animation finishes (see handleCardClick), never directly from a click, so a screen transition it triggers (the move-replace offer, or handing off to EvolutionScreen) always happens after the animation rather than cutting it off. */
   function applyLevelUp(rosterId: string) {
@@ -437,6 +497,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
    * glitch. A whoosh is what makes it read as the screen leaving on purpose.
    */
   const done =
+    introDone &&
     run.levelUpPool < 1 &&
     pendingEvolutions === 0 &&
     !offer &&
@@ -505,15 +566,21 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
         <NodeHeader
           eyebrow="Growth Phase"
           title="Level Up"
-          readoutKey={feedback ?? 'idle'}
-          readoutLive={!!feedback}
+          readoutKey={introDone ? (feedback ?? 'idle') : 'arriving'}
+          readoutLive={!introDone || !!feedback}
+          /* While the orbs are landing the line reports the win rather than
+             giving an instruction — asking "tap a hero" of a player who cannot
+             yet tap one is the kind of thing that trains people to stop reading
+             this line at all. */
           readout={
-            feedback ??
-            (pendingEvolutions > 0
-              ? `${pendingEvolutions === 1 ? 'A hero is' : `${pendingEvolutions} heroes are`} ready to evolve — tap to choose a path.`
-              : run.levelUpPool >= 1
-                ? 'Tap a hero to spend a point. Hold to review its sheet.'
-                : 'Every point is spent — moving on.')
+            !introDone
+              ? `${startingPool.current} ${startingPool.current === 1 ? 'point' : 'points'} earned.`
+              : feedback ??
+                (pendingEvolutions > 0
+                  ? `${pendingEvolutions === 1 ? 'A hero is' : `${pendingEvolutions} heroes are`} ready to evolve — tap to choose a path.`
+                  : run.levelUpPool >= 1
+                    ? 'Tap a hero to spend a point. Hold to review its sheet.'
+                    : 'Every point is spent — moving on.')
           }
         >
           {/* The pool, as orbs that go out one at a time rather than a
@@ -523,15 +590,24 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
               Past a dozen points (never reachable from one fight, but the
               pool can carry over) it falls back to a count so the row can't
               wrap into the roster. */}
-          {orbCount > 12 ? (
+          {orbCount > ORB_TRACK_MAX ? (
             <div className="levelup-orb-count">
               <span className="levelup-orb filled" aria-hidden="true" />
               <span>{run.levelUpPool} XP to spend</span>
             </div>
           ) : (
             <div className="levelup-orbs" aria-label={`${run.levelUpPool} of ${orbCount} XP left to spend`}>
+              {/* Three states, not two: an orb that has not landed yet is
+                  `unarrived` (collapsed and invisible), and the transition
+                  already on `.levelup-orb` is what pops it in when the arrival
+                  beat reaches it. The spent/filled split is unchanged — after
+                  the beat, `arrivedOrbs` is the full count and this reads
+                  exactly as it always did. */}
               {Array.from({ length: orbCount }, (_, i) => (
-                <span key={i} className={`levelup-orb${i < run.levelUpPool ? ' filled' : ' spent'}`} />
+                <span
+                  key={i}
+                  className={`levelup-orb${i >= arrivedOrbs ? ' unarrived' : i < run.levelUpPool ? ' filled' : ' spent'}`}
+                />
               ))}
             </div>
           )}
@@ -641,7 +717,12 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
           </div>
         </div>
       ) : (
-        <HeroPickGrid count={run.roster.length} fill>
+        /* Dark and inert while the pool counts in, then waking card by card
+           (`.pick-grid.is-waking > .pick-card`). Rendered either way rather
+           than mounted on `introDone`: the grid owns the space between the
+           header and the bottom of the screen, and a roster that arrives by
+           *appearing* would shove the orb track up the instant it landed. */
+        <HeroPickGrid count={run.roster.length} fill className={introDone ? 'is-waking' : 'is-asleep'}>
           {run.roster.map((entry) => {
             const hero = heroes[entry.heroId];
             const node = availableEvolution(progressionTable, entry);
@@ -652,9 +733,13 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
             // stack of unresolved levels. Any card is briefly inert while
             // another one's animation is running, so a point can't be spent
             // mid-animation.
+            // `introDone` joins the other two locks rather than relying on the
+            // grid's own `pointer-events: none`: the cards are also reachable
+            // by keyboard, and a card that answers Enter while it is invisible
+            // spends a point the player never saw arrive.
             const blockedByOtherAnim = !!animatingRosterId && !isAnimating;
-            const canLevelUp = run.levelUpPool >= 1 && !node && !blockedByOtherAnim;
-            const canAct = (canLevelUp || !!node) && !blockedByOtherAnim;
+            const canLevelUp = introDone && run.levelUpPool >= 1 && !node && !blockedByOtherAnim;
+            const canAct = introDone && (canLevelUp || !!node) && !blockedByOtherAnim;
             return (
               <GrowthCard
                 key={entry.rosterId}

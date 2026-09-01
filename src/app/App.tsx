@@ -8,6 +8,7 @@ import { SquadSelectScreen } from '../view/run/SquadSelectScreen';
 import { MapScreen } from '../view/run/MapScreen';
 import { ShopNodeScreen } from '../view/run/ShopNodeScreen';
 import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScreen';
+import { CacheOpenScreen } from '../view/run/CacheOpenScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { ForceEquipScreen } from '../view/run/ForceEquipScreen';
@@ -100,6 +101,15 @@ type Screen =
    */
   | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; soldOutEquipmentIds: string[] }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
+  /**
+   * The Weapon/Armor/Accessory caches' opening beat (CacheOpenScreen). Not a
+   * node screen in its own right — the node is already resolved and the item
+   * already rolled by the time this mounts; `next` is the equip gate it hands
+   * off to about 1.3 seconds later. It exists because those three nodes were
+   * otherwise invisible: the map showed a cache, and what arrived was a hero
+   * grid.
+   */
+  | { kind: 'cacheOpen'; slot: EquipmentSlot; next: Screen }
   | { kind: 'statBoost'; nodeId: string; nodeType: StatBoostNodeType }
   /** classReward node (docs/run-loop.md, ClassNodeScreen) — one screen handles both the 1-of-3 Class pick and the target-hero assignment internally, so this kind only needs the node id. */
   | { kind: 'classNode'; nodeId: string }
@@ -480,13 +490,17 @@ export function App() {
       });
     } else if (node.type === 'weaponReward' || node.type === 'armorReward' || node.type === 'accessoryReward') {
       // Single guaranteed item of a fixed slot, no 3-choice picker — rolls
-      // straight into the forced equip-or-trash gate, same as the Goblin
-      // fight's guaranteed common-item drop below.
+      // through the cache-opening beat and into the forced equip-or-trash
+      // gate. The beat is the only thing on this path that says which node the
+      // player pressed: without it the map's Weapon Cache resolved into a
+      // ForceEquipScreen hero grid with no cache anywhere in it.
       const slot: EquipmentSlot = node.type === 'weaponReward' ? 'weapon' : node.type === 'armorReward' ? 'armor' : 'accessory';
       const item = pickWeightedEquipmentBySlot(Object.values(equipment), slot, rarityWeightsFor(playerRun.actNumber, 'standard'));
       setPlayerRun((run) => advanceToNode(run, nodeId));
       const afterScreen: Screen = playerRun.levelUpPool > 0 ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' };
-      setScreen(item ? { kind: 'forceEquip', queue: [item.id], next: afterScreen } : afterScreen);
+      setScreen(
+        item ? { kind: 'cacheOpen', slot, next: { kind: 'forceEquip', queue: [item.id], next: afterScreen } } : afterScreen
+      );
     } else if (node.type === 'hpBoostReward' || node.type === 'manaBoostReward' || node.type === 'manaRegenBoostReward') {
       setScreen({ kind: 'statBoost', nodeId, nodeType: node.type });
     } else if (node.type === 'classReward') {
@@ -947,6 +961,10 @@ export function App() {
           onContinue={() => handleNodeContinue(screen.nodeId)}
           onClaimEquipment={(itemId) => handleClaimEquipment(screen.nodeId, itemId)}
         />
+      )}
+
+      {screen.kind === 'cacheOpen' && (
+        <CacheOpenScreen slot={screen.slot} onDone={() => setScreen(screen.next)} />
       )}
 
       {screen.kind === 'statBoost' && (

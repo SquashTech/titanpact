@@ -1,4 +1,6 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { playSfx } from '../../audio/sfx';
+import { prefersReducedMotion } from '../shared/reducedMotion';
 import { equipment } from '../../data/equipment';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
@@ -48,6 +50,41 @@ const TONE_TINT: Record<EventTone, string> = {
   vital: NODE_TINT_VITAL,
   mana: NODE_TINT_MANA,
 };
+
+/**
+ * The same tone, in the ear. One `discovery` sound played in five keys rather
+ * than five sounds — the events are one kind of place and already differ only
+ * by `--node-rgb`, exactly the argument sounds.ts makes for the three shrines
+ * sharing one `shrine`.
+ *
+ * The spread is deliberately narrow (a whole tone either side of centre). Wide
+ * enough that an arcane event and a vital one are not the same arrival; narrow
+ * enough that none of the five stops sounding like the others.
+ */
+const TONE_PITCH: Record<EventTone, number> = {
+  gold: 1,
+  arcane: 0.9,
+  teal: 1.06,
+  vital: 1.12,
+  mana: 0.95,
+};
+
+/**
+ * How long the event holds on its own voice before the offer and the roster
+ * arrive (ms).
+ *
+ * Everything on this screen used to land on one frame: the name, the flavor,
+ * the mechanical offer and six tappable heroes. The flavor is the only line in
+ * the run loop that is not mechanical — it is the whole reason five events do
+ * not read as five reward nodes — and it was competing for the first look with
+ * a grid of buttons, which it loses every time. So it gets the screen to
+ * itself for a beat, and the decision arrives after it has been read.
+ *
+ * Long enough for a short sentence, short enough that a player on their tenth
+ * event is not waiting on it — and the beat is skippable in the only way that
+ * matters, since nothing is hidden that the player could have acted on sooner.
+ */
+const EVENT_BEAT_MS = 1150;
 
 /** "+20 Mana" / "−20 Max HP", in the same words and the same order every time — a stat shift is read as a trade, so the two halves must be legible side by side. */
 function shiftEntries(deltas: Partial<Record<StatKey, number>>): [StatKey, number][] {
@@ -135,6 +172,22 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onC
   const [selectedReplaceId, setSelectedReplaceId] = useState<string | null>(null);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   const [inspectItemId, setInspectItemId] = useState<string | null>(null);
+
+  /** False for the screen's first beat, while the place introduces itself (see EVENT_BEAT_MS). */
+  const [arrived, setArrived] = useState(false);
+
+  useEffect(() => {
+    // Fired on mount rather than on the reveal: this is the room, not
+    // feedback on anything, and it is built with no transient anywhere in it
+    // so it cannot be mistaken for the latter (sounds.ts `discovery`).
+    playSfx('discovery', { pitch: TONE_PITCH[event.tone] });
+    if (prefersReducedMotion()) {
+      setArrived(true);
+      return;
+    }
+    const timer = window.setTimeout(() => setArrived(true), EVENT_BEAT_MS);
+    return () => window.clearTimeout(timer);
+  }, [event.tone]);
 
   const offeredMove = offeredMoveId ? moves[offeredMoveId] : undefined;
   const grantedPassive = outcome.kind === 'grantPassive' ? passives[outcome.passiveId] : undefined;
@@ -224,9 +277,13 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onC
           compact={outcome.kind !== 'statShift'}
           eyebrow={event.eyebrow}
           title={event.name}
-          readoutKey={resolvedTo ?? 'idle'}
+          readoutKey={arrived ? (resolvedTo ?? 'idle') : 'arriving'}
           readoutLive={!!resolvedHero}
-          readout={readout()}
+          /* Empty, not absent, during the first beat: NodeHeader reserves the
+             readout's height whenever it is not `undefined`, so the ask fades
+             in where it will live rather than pushing the flavor line and the
+             whole grid up when it arrives. */
+          readout={arrived ? readout() : ''}
         >
           {/* The event's own voice. Its own line, above the offer and above
               the ask, because it answers a different question than either: not
@@ -241,14 +298,14 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onC
               stays visible while the player looks along the hero grid — the
               same slot, and the same chips, the Mentor uses for the discipline
               it is about to teach. */}
-          {outcome.kind === 'statShift' && (
-            <div className="node-item-effects">
+          {arrived && outcome.kind === 'statShift' && (
+            <div className="node-item-effects event-reveal-in">
               <ShiftChips deltas={outcome.deltas} />
             </div>
           )}
-          {outcome.kind === 'grantPassive' && grantedPassive && (
+          {arrived && outcome.kind === 'grantPassive' && grantedPassive && (
             <div
-              className="node-item-effects event-passive-offer"
+              className="node-item-effects event-passive-offer event-reveal-in"
               style={{ '--passive-color': passiveColor(grantedPassive.id) } as CSSProperties}
             >
               <span className="event-passive-name">
@@ -322,33 +379,45 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onC
       ) : (
         <>
           {/* --- learnMove: the offered move, above the grid --------------- */}
-          {outcome.kind === 'learnMove' && offeredMove && (
-            <div className="event-offer-move">
+          {arrived && outcome.kind === 'learnMove' && offeredMove && (
+            <div className="event-offer-move event-reveal-in">
               <MoveDetailCard move={offeredMove} label="Offered by the event" />
             </div>
           )}
 
           {/* --- loot: the three drops ------------------------------------- */}
+          {/* The `.screen-scroll` wrapper is rendered through the first beat
+              even though the cards inside it are not. It is this screen's only
+              `flex: 1` child on the loot path, so gating the wrapper itself on
+              `arrived` collapsed the column and pulled the bottom CTA up under
+              the title for the length of the beat. Hide the contents, keep the
+              box — the same rule the hero grid follows two blocks down. */}
           {outcome.kind === 'loot' && (
             <div className="screen-scroll">
               <div className="stage-centered">
-                <div className="equip-cache-list">
-                  {lootItems.map((item, i) => (
-                    <EquipChoiceCard
-                      key={item.id}
-                      item={item}
-                      onInspect={() => setInspectItemId(item.id)}
-                      revealDelayMs={120 + i * 90}
-                    />
-                  ))}
-                </div>
+                {arrived && (
+                  <div className="equip-cache-list">
+                    {lootItems.map((item, i) => (
+                      <EquipChoiceCard
+                        key={item.id}
+                        item={item}
+                        onInspect={() => setInspectItemId(item.id)}
+                        revealDelayMs={120 + i * 90}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
 
           {/* --- the hero grid -------------------------------------------- */}
+          {/* Dark and inert for the first beat, then waking card by card —
+              same two classes the level-up screen's roster uses, and for the
+              same reason: the grid keeps its space so nothing moves when it
+              lights up. */}
           {heroPicking && (
-            <HeroPickGrid count={run.roster.length} fill>
+            <HeroPickGrid count={run.roster.length} fill className={arrived ? 'is-waking' : 'is-asleep'}>
               {run.roster.map((entry) => {
                 const hero = heroes[entry.heroId];
                 const isResolved = resolvedTo === entry.rosterId;
@@ -357,7 +426,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onC
                     key={entry.rosterId}
                     hero={hero}
                     entry={entry}
-                    disabled={(resolvedTo !== null && !isResolved) || heroBlocked(entry)}
+                    disabled={!arrived || (resolvedTo !== null && !isResolved) || heroBlocked(entry)}
                     onActivate={() => handleHeroPick(entry)}
                     onPreview={() => setPreviewEntry({ hero, entry })}
                     ariaLabel={`${hero.name}, level ${entry.level} — ${event.name}`}
@@ -374,13 +443,21 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onC
       {/* One CTA at the bottom, as on every node. Loot has nothing to decide
           here — the decision is which hero wears it, which is the equip gate's
           whole job — so its button hands straight off instead of resolving. */}
+      {/* Disabled through the first beat along with everything else. A live
+          Continue under a screen that has not finished introducing itself is
+          an invitation to skip the introduction, which is the one thing this
+          beat exists to stop. */}
       {!swapping &&
         (outcome.kind === 'loot' ? (
-          <button className="resolve-button" onClick={() => onGrantEquipment(lootItems.map((i) => i.id))}>
+          <button
+            className="resolve-button"
+            disabled={!arrived}
+            onClick={() => onGrantEquipment(lootItems.map((i) => i.id))}
+          >
             {lootItems.length > 0 ? `Take all ${lootItems.length}` : 'Continue'}
           </button>
         ) : (
-          <button className="resolve-button" disabled={!canContinue} onClick={onContinue}>
+          <button className="resolve-button" disabled={!arrived || !canContinue} onClick={onContinue}>
             Continue
           </button>
         ))}

@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { equipment } from '../../data/equipment';
 import { drawableRelics } from '../../data/relics';
 import type { RunState } from '../../run/state';
@@ -7,7 +7,9 @@ import { pickWeightedEquipment, rarityWeightsFor } from '../../run/equipment';
 import { grantCurrencyReward, grantUpgradeReward, grantRelicReward } from '../../run/runProgress';
 import { RelicIcon } from '../shared/EquipmentBox';
 import { ResourceMark, RunGlyph } from '../shared/RunGlyph';
+import { SectionGlyph } from '../shared/sectionIcons';
 import { NodeHeader, NodeSky, NODE_TINT_ARCANE, NODE_TINT_GOLD, NODE_TINT_VITAL } from '../shared/NodeStage';
+import { CacheOpening, useCacheOpening } from './CacheReveal';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
 import { RelicChoiceCard } from './RelicChoiceCard';
 import { RosterPeek } from './RosterPeek';
@@ -21,10 +23,6 @@ const NODE_TINT: Record<RewardNodeType, string> = {
   equipmentReward: NODE_TINT_GOLD,
   relicReward: NODE_TINT_ARCANE,
 };
-
-/** Equipment Cache chest-reveal timing (ms) — see `chestPhase` in NodeRewardScreen. */
-const CHEST_SHAKE_MS = 900;
-const CHEST_BURST_MS = 350;
 
 interface Props {
   nodeType: RewardNodeType;
@@ -76,26 +74,17 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
   const claimedRelic = claimed && pickedRelicId ? relicChoices.find((r) => r.id === pickedRelicId) ?? null : null;
 
   /**
-   * Equipment Cache only: a brief chest-opens-into-the-loot beat before the
-   * offer cards appear, instead of dumping the picker on screen instantly.
-   * `idle` shakes in anticipation, `opening` plays the burst-open keyframe,
-   * `revealed` swaps in the real panel (whose banner/cards/button then
-   * cascade in via their own `equip-cache-reveal-in` fade-up, staggered by
-   * index in the equipmentChoices.map() below).
+   * Equipment Cache only: the chest-opens-into-the-loot beat, shared with the
+   * three slot caches (CacheReveal.tsx — which is also where the account of
+   * what was wrong with the version that used to live in this file sits).
+   * `open` swaps in the real panel, whose header/cards/button then cascade in
+   * via their own `equip-cache-reveal-in` fade-up, staggered by index in the
+   * equipmentChoices.map() below.
+   *
+   * The other three node types pass `false` and start `open` — the hook takes
+   * the flag rather than the call site taking a conditional hook.
    */
-  const [chestPhase, setChestPhase] = useState<'idle' | 'opening' | 'revealed'>(
-    nodeType === 'equipmentReward' ? 'idle' : 'revealed'
-  );
-
-  useEffect(() => {
-    if (nodeType !== 'equipmentReward') return;
-    const openTimer = window.setTimeout(() => setChestPhase('opening'), CHEST_SHAKE_MS);
-    const revealTimer = window.setTimeout(() => setChestPhase('revealed'), CHEST_SHAKE_MS + CHEST_BURST_MS);
-    return () => {
-      window.clearTimeout(openTimer);
-      window.clearTimeout(revealTimer);
-    };
-  }, [nodeType]);
+  const chestPhase = useCacheOpening(nodeType === 'equipmentReward');
 
   function handleClaimInstant(next: RunState) {
     onRunChange(next);
@@ -153,12 +142,18 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
         />
       )}
 
-      {nodeType === 'equipmentReward' && chestPhase === 'revealed' && (
+      {nodeType === 'equipmentReward' && chestPhase === 'open' && (
         <NodeHeader
           compact
           eyebrow="A Cache Opens"
           title="Equipment Cache"
-          glyph={<RunGlyph kind="equipment" />}
+          /* The vector chest — the same shape the map node wears
+             (nodeIcons.tsx `equipmentReward`) and the same one that just
+             finished swinging open above this line. It was `RunGlyph
+             kind="equipment"`, which is cell 97 of the pixel sheet: a sword.
+             An Equipment Cache is a container, not a weapon, and the map had
+             already said so. */
+          glyph={<SectionGlyph name="equipment" />}
           readout="Tap a piece of gear to select it, hold to read it in full."
         />
       )}
@@ -186,19 +181,11 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
           </div>
         )}
 
-        {nodeType === 'equipmentReward' && chestPhase !== 'revealed' && (
-          <div className="equip-cache-chest-screen">
-            <div className="equip-cache-chest-reveal">
-              <div className="equip-cache-chest-glow" aria-hidden="true" />
-              <div className={`equip-cache-chest-icon${chestPhase === 'opening' ? ' opening' : ''}`}>
-                <RunGlyph kind="equipment" />
-              </div>
-              <p className="hint">Opening the cache…</p>
-            </div>
-          </div>
+        {nodeType === 'equipmentReward' && chestPhase !== 'open' && (
+          <CacheOpening phase={chestPhase} caption="Three ways this could go." />
         )}
 
-        {nodeType === 'equipmentReward' && chestPhase === 'revealed' && (
+        {nodeType === 'equipmentReward' && chestPhase === 'open' && (
           <div className="stage-centered">
             <div className="equip-cache-list">
               {equipmentChoices.map((item, i) => (
@@ -267,7 +254,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
         </button>
       )}
 
-      {nodeType === 'equipmentReward' && chestPhase === 'revealed' && (
+      {nodeType === 'equipmentReward' && chestPhase === 'open' && (
         <button
           className="resolve-button equip-cache-reveal-in"
           style={{ animationDelay: `${120 + equipmentChoices.length * 90}ms` } as CSSProperties}

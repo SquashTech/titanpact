@@ -36,6 +36,9 @@ export type SfxId =
   | 'shrine'
   | 'blessing'
   | 'class.learn'
+  | 'cache.open'
+  | 'xp.orb'
+  | 'discovery'
   // Combat
   | 'cast'
   | 'hit.physical'
@@ -376,6 +379,93 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'sine', freq: 1176, gain: 0.1, attack: 0.006, decay: 1.0, delay: 0.12 },
       // A short breath of air on the strike, so the chord has an edge.
       { wave: 'noise', gain: 0.14, attack: 0.02, decay: 0.36, filter: { type: 'bandpass', freq: 1200, freqEnd: 3800, q: 1.1 } },
+    ],
+  },
+
+  /**
+   * A cache giving up its lid (CacheReveal.tsx, on the frame the lid swings).
+   * The one sound in the table that is a *mechanism* first and a reward
+   * second, in that order and audibly: latch, lid, then light.
+   *
+   * Deliberately not `equip`, which is the nearest thing already here. That
+   * one is metal seating — bright, tight, closed. This is wood letting go, so
+   * the crack is lower and drier and there is nothing tight about what follows
+   * it. A player should be able to tell a chest opening from a buckle closing
+   * without looking at the screen, because for the first 200ms of this beat
+   * they are looking at a chest and not at what came out of it.
+   *
+   * The swell is the only voice with a slow attack, which is what makes the
+   * back half read as light *spilling* rather than as a second strike.
+   */
+  'cache.open': {
+    gain: 0.44,
+    jitter: 0.02,
+    voices: [
+      // The latch giving.
+      { wave: 'noise', gain: 0.3, attack: 0.001, decay: 0.05, filter: { type: 'bandpass', freq: 1500, q: 1.4 } },
+      // The lid going over, and the body of the chest rocking under it.
+      { wave: 'triangle', freq: 165, freqEnd: 110, gain: 0.3, attack: 0.003, decay: 0.22, delay: 0.01 },
+      // Light coming out: a noise swell opening upward through the filter.
+      { wave: 'noise', gain: 0.16, attack: 0.09, decay: 0.5, delay: 0.05, filter: { type: 'bandpass', freq: 900, freqEnd: 6000, q: 0.8 } },
+      // What is inside. Root and major third two octaves up, arriving after
+      // the lid — the chest opens, and *then* there is something in it.
+      { wave: 'triangle', freq: 262, gain: 0.22, attack: 0.01, decay: 0.55, delay: 0.13 },
+      { wave: 'sine', freq: 1047, gain: 0.16, attack: 0.008, decay: 0.6, delay: 0.13 },
+      { wave: 'sine', freq: 1319, detune: 9, gain: 0.13, attack: 0.01, decay: 0.7, delay: 0.19 },
+    ],
+  },
+
+  /**
+   * One XP orb landing on the level-up screen's track (LevelUpScreen's arrival
+   * beat). Fires once per orb, ~130ms apart, and the caller raises `pitch` a
+   * step or so each time — so two points and five points are audibly different
+   * *runs* rather than the same blip repeated.
+   *
+   * Sized like a UI sound rather than a reward one, and for the same reason
+   * those are kept under 120ms: this can fire five times in three quarters of
+   * a second, and five copies of anything with a tail is a chord nobody
+   * composed. The fanfare is still `levelUp`, which plays when a point is
+   * *spent*; this is only the counting-in.
+   */
+  'xp.orb': {
+    gain: 0.3,
+    jitter: 0.006,
+    voices: [
+      { wave: 'triangle', freq: 784, gain: 0.24, attack: 0.002, hold: 0.015, decay: 0.13 },
+      { wave: 'sine', freq: 1568, gain: 0.1, attack: 0.003, decay: 0.2, delay: 0.005 },
+      { wave: 'noise', gain: 0.05, attack: 0.004, decay: 0.07, filter: { type: 'highpass', freq: 4000 } },
+    ],
+  },
+
+  /**
+   * Arriving at an event node (EventNodeScreen, on mount). Built to the same
+   * rule as `shrine` — no transient anywhere in it, nothing with an attack
+   * under 0.15s — so it cannot be mistaken for feedback on the map tap that
+   * got the player here. It swells up under that tap and becomes the room,
+   * which is exactly what the screen's first beat is for: the flavor line is
+   * on screen alone for a moment, and this is what that moment sounds like.
+   *
+   * Where `shrine` is a consecrated space (a fifth, a struck bowl), this is an
+   * *unresolved* one: a suspended fourth that never gets its third, with the
+   * upper partial drifting in late and detuned. An event has not told you yet
+   * whether it is good.
+   *
+   * Played with a per-tone `pitch` (EventNodeScreen's TONE_PITCH) rather than
+   * as five sounds, the same way the three shrines share one — the events are
+   * one kind of place, and they already differ only by `--node-rgb`.
+   */
+  discovery: {
+    gain: 0.34,
+    jitter: 0.006,
+    voices: [
+      { wave: 'triangle', freq: 175, freqEnd: 233, detune: 9, gain: 0.3, attack: 0.32, hold: 0.12, decay: 0.9 },
+      { wave: 'sine', freq: 87, gain: 0.24, attack: 0.38, decay: 1.0 },
+      // The fourth, arriving late enough to read as a question rather than a
+      // chord, and detuned so it never quite settles.
+      { wave: 'sine', freq: 466, detune: 14, gain: 0.15, attack: 0.24, decay: 1.1, delay: 0.24 },
+      { wave: 'sine', freq: 932, detune: 20, gain: 0.06, attack: 0.28, decay: 0.9, delay: 0.34 },
+      // Air moving somewhere ahead of the player.
+      { wave: 'noise', gain: 0.1, attack: 0.45, decay: 0.85, filter: { type: 'bandpass', freq: 420, freqEnd: 2400, q: 0.7 } },
     ],
   },
 
