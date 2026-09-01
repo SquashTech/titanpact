@@ -72,6 +72,31 @@ test('enemyGen: is generic over any HeroDefinition-shaped pool, gracefully cappi
   for (const entry of run.roster) assert.ok(smallPool[entry.heroId], `${entry.heroId} is not in the enemy pool`);
 });
 
+test('enemyGen: options.excludeHeroIds bars heroes already on the roster from spawning, over every seed', () => {
+  const owned = Object.keys(heroes).slice(0, 6);
+  for (let seed = 0; seed < 60; seed++) {
+    const { run } = generateEncounter('fight', seed, heroes, { excludeHeroIds: owned });
+    assert.strictEqual(run.roster.length, 4);
+    for (const entry of run.roster) {
+      assert.ok(!owned.includes(entry.heroId), `seed ${seed} spawned owned hero ${entry.heroId}`);
+    }
+  }
+});
+
+test('enemyGen: options.excludeHeroIds beats the location bias — the preferred stage cannot smuggle an owned hero in', () => {
+  const affinity = Object.keys(heroes).slice(0, 8);
+  const owned = affinity.slice(0, 4);
+  for (let seed = 0; seed < 60; seed++) {
+    const { run } = generateEncounter('fight', seed, heroes, {
+      bias: { preferredIds: affinity, slots: 3 },
+      excludeHeroIds: owned,
+    });
+    for (const entry of run.roster) {
+      assert.ok(!owned.includes(entry.heroId), `seed ${seed} spawned owned hero ${entry.heroId}`);
+    }
+  }
+});
+
 test('enemyGen: the opening (row 0) fight draws exactly 2 random heroes from the basic-Goblin pool, never the Chief', () => {
   const { run, squad } = generateEncounter('fight', 7, basicGoblins, { heroCount: 2 });
   assert.strictEqual(run.roster.length, 2);

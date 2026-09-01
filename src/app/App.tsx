@@ -421,6 +421,16 @@ export function App() {
         );
       } else {
         const encounterPool = node.type === 'fight' ? basicGoblins : heroes;
+        // A hero already on the roster is barred from the recruitable pool
+        // outright (2026-08-31, user direction): every recruitable-pool node
+        // can hand its beaten heroes over as a Recruit Contract, so a
+        // spawn the player already owns is the one way two copies of the same
+        // hero could end up on one roster. Barring the SPAWN rather than the
+        // claim is what keeps the rule invisible — the player never sees the
+        // offer they'd have to be told no about — and it matches the Guild
+        // Hall shelf, which has always filtered its own offers the same way
+        // (src/run/shop.ts `rollGuildHallOffers`).
+        const excludeHeroIds = encounterPool === heroes ? playerRun.roster.map((r) => r.heroId) : undefined;
         const heroCountOverride = node.type === 'fight' ? 2 : isSecondFight ? 2 : undefined;
         // The act's Location weights which heroes show up (docs/locations.md
         // §2) — all but one slot drawn from its affinity types, the last from
@@ -436,6 +446,7 @@ export function App() {
         encounter = generateEncounter(encounterKind, Math.floor(Math.random() * 2 ** 31), encounterPool, {
           heroCount: heroCountOverride,
           bias,
+          excludeHeroIds,
           scaling,
           // Cashes the act's enemy level in for Evolutions and extra moves.
           // The Goblin pool has no progression data, so passing it there is a

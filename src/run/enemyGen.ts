@@ -106,12 +106,13 @@ function biasedPick(
   rng: RngState,
   heroPool: HeroLookup,
   heroCount: number,
-  bias: PoolBias | undefined
+  bias: PoolBias | undefined,
+  excluded: ReadonlySet<string>
 ): { picked: string[]; nextState: RngState } {
-  const allIds = Object.keys(heroPool);
+  const allIds = Object.keys(heroPool).filter((id) => !excluded.has(id));
   if (!bias || bias.slots <= 0) return shuffledPick(rng, allIds, heroCount);
 
-  const preferred = bias.preferredIds.filter((id) => id in heroPool);
+  const preferred = bias.preferredIds.filter((id) => id in heroPool && !excluded.has(id));
   const { picked: onTheme, nextState } = shuffledPick(rng, preferred, Math.min(bias.slots, heroCount));
   const rest = allIds.filter((id) => !onTheme.includes(id));
   const { picked: wildcards, nextState: afterWild } = shuffledPick(nextState, rest, heroCount - onTheme.length);
@@ -148,6 +149,23 @@ export interface EncounterOptions {
    * the pick is uniform over the whole pool.
    */
   bias?: PoolBias;
+  /**
+   * heroIds this encounter must never draw, whatever the pool or the bias
+   * says — the player's roster, for the recruitable pool (App.tsx). A beaten
+   * recruitable enemy can be claimed as a Recruit Contract, so a hero the
+   * player already owns showing up here is the one route to two copies of
+   * the same hero on one roster; excluding it at the *pick* is what closes
+   * that (2026-08-31, user direction), and it is the rule the Guild Hall
+   * shelf already applies to its own offers (src/run/shop.ts
+   * `rollGuildHallOffers`).
+   *
+   * Deliberately not expressed as a `PoolBias` with zero weight: a bias is a
+   * preference the wildcard slot is *meant* to escape, this is a hard filter
+   * both stages of the pick obey. A pool exhausted by the exclusion just
+   * fields fewer heroes (`shuffledPick` already clamps to pool size) —
+   * unreachable against the authored roster with ROSTER_CAP at 6.
+   */
+  excludeHeroIds?: readonly string[];
   /**
    * The act curve (src/run/difficulty.ts `actScaling`). Omitted = authored
    * content exactly as written at level 1, which is what Quick Battle and
@@ -259,12 +277,12 @@ export function generateEncounter(
   heroPool: HeroLookup,
   options: EncounterOptions = {}
 ): Encounter {
-  const { heroCount: heroCountOverride, movepools, bias, scaling = NO_SCALING, progression } = options;
+  const { heroCount: heroCountOverride, movepools, bias, excludeHeroIds, scaling = NO_SCALING, progression } = options;
   let rng = createRng(seed);
   const heroCount = heroCountOverride ?? (nodeType === 'boss' ? 2 : 4);
   const [statCount, amountEach] = nodeType === 'boss' ? [3, 20] : nodeType === 'elite' ? [2, 10] : [0, 0];
 
-  const { picked: heroIds, nextState: afterPick } = biasedPick(rng, heroPool, heroCount, bias);
+  const { picked: heroIds, nextState: afterPick } = biasedPick(rng, heroPool, heroCount, bias, new Set(excludeHeroIds ?? []));
   rng = afterPick;
 
   let run = createRunState(0);
