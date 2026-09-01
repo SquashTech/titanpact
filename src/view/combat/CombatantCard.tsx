@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import type { HeroDefinition, StatKey } from '../../engine/content';
-import type { ActiveFieldEffect, Combatant, StatusInstance } from '../../engine/state';
+import type { Combatant, StatContext, StatusInstance } from '../../engine/state';
 import { effectiveTypes, getCombatStatDelta, getMaxHp, getMaxMana } from '../../engine/state';
 import { fieldEffects } from '../../data/fieldEffects';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -55,7 +55,8 @@ interface Props {
    * repeating them here was pure redundancy bloating the target-picker boxes. */
   compact?: boolean;
   /** The battlefield's current Field Effect, if any (docs/field-effects.md) — threaded into activeStatMods so a Verdant Earth-boosted Attack/Intelligence badges here like any other combat-only stat delta. Defaults to null (no bonus) for callers that don't pass it. */
-  activeFieldEffect?: ActiveFieldEffect | null;
+  /** Everything a stat read needs beyond the combatant itself (state.ts StatContext): the Field Effect, and the board a conditional passive is measured against. Omitted, the card shows stats with neither hook applied. */
+  statCtx?: StatContext;
 }
 
 /**
@@ -103,8 +104,8 @@ function StatusChip({ instance, onInspect }: { instance: StatusInstance; onInspe
  * like Verdant Earth's Attack/Intelligence bonus, docs/field-effects.md)
  * shows up here.
  */
-function activeStatMods(hero: HeroDefinition, combatant: Combatant, activeFieldEffect: ActiveFieldEffect | null): Array<{ stat: StatKey; mod: number }> {
-  const fieldEffectCtx = { active: activeFieldEffect, defs: fieldEffects };
+function activeStatMods(hero: HeroDefinition, combatant: Combatant, statCtx: StatContext | undefined): Array<{ stat: StatKey; mod: number }> {
+  const fieldEffectCtx = statCtx ?? { active: null, defs: fieldEffects };
   return STAT_ORDER.flatMap((stat) => {
     const mod = getCombatStatDelta(hero, combatant, stat, fieldEffectCtx);
     return mod !== 0 ? [{ stat, mod }] : [];
@@ -131,7 +132,7 @@ export function CombatantCard({
   acting,
   effBadge,
   compact,
-  activeFieldEffect = null,
+  statCtx,
 }: Props) {
   const [inspectingStatus, setInspectingStatus] = useState<string | null>(null);
   const maxHp = getMaxHp(hero, combatant);
@@ -143,7 +144,7 @@ export function CombatantCard({
   // its own hidden track and a 210/85 hero looked identical to a full one.
   const manaFraction = maxMana > 0 ? Math.max(0, Math.min(1, combatant.currentMana / maxMana)) : 0;
   const manaOverFraction = maxMana > 0 ? Math.max(0, Math.min(1, (combatant.currentMana - maxMana) / maxMana)) : 0;
-  const activeMods = compact || combatant.fainted ? [] : activeStatMods(hero, combatant, activeFieldEffect);
+  const activeMods = compact || combatant.fainted ? [] : activeStatMods(hero, combatant, statCtx);
   const leftMods = activeMods.slice(0, Math.ceil(activeMods.length / 2));
   const rightMods = activeMods.slice(Math.ceil(activeMods.length / 2));
 

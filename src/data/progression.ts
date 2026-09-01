@@ -14,9 +14,17 @@
 // offered — which is why runescribe's pool carries Mana Font rather than the
 // Magic Bolt it now starts with.
 //
-// SCOPE NOTE: paths are stat-only (statGrants + description, no
-// unlocksMoveIds) — kept deliberately separate from the level-up move pool
-// so the two growth axes don't gate the same content twice. Every fixture
+// SCOPE NOTE (amended 2026-09-01): paths WERE stat-only (statGrants +
+// description) on the reasoning that the two growth axes shouldn't gate the
+// same content twice. That still holds for `unlocksMoveIds`, which nothing
+// uses — a path handing over moves outright is the axis collision the note
+// was written against. It does NOT hold for `learnableMoveIds`, which is the
+// opposite thing: the path doesn't grant the move, it adds it to the pool the
+// level-up axis draws from, so the two axes COMPOSE rather than duplicate.
+// That is docs/leveling-and-ranks.md "Evolution steers future level-up
+// offerings" — locked behavior that had simply never been built. Crimson is
+// the first hero authored under the amended note; the other 34 are still on
+// the stat-only shape and read as flat next to it. Every fixture
 // hero's evolution node sits at EVOLUTION_LEVEL and offers exactly three
 // paths differing in kind (CLAUDE.md "the player is presented with a choice
 // of three options"): one offensive, one defensive, one utility — not every
@@ -288,7 +296,10 @@ export const progressionTable: ProgressionTable = {
     // strictly worse than Lacerate.
     //
     // animalSpirit is NOT here: it is the slate's one magical row and Fang is
-    // Intelligence 20 (see wildOracle below).
+    // Intelligence 20 (see wildOracle below). Still true of BASE Fang — but as
+    // of 2026-09-01 the Warhowl Evolution path (below) puts it back within
+    // reach via learnableMoveIds, because that path is what raises the
+    // Intelligence the row was always waiting on.
     packAlpha: [
       'prowl',
       'pounce',
@@ -1069,6 +1080,24 @@ export const progressionTable: ProgressionTable = {
         ],
       },
     ],
+    // Fang, re-authored 2026-09-01 — the SECOND hero onto the framework
+    // Crimson established (see that node's block above), and the one that
+    // states the framework's third clause. Written out in full because these
+    // three sentences are what the remaining 33 heroes get held to:
+    //
+    // 1. The MONO path trades stats for a PASSIVE. Bloodhunt takes the
+    //    smallest stat line on the node (20 points) and Bloodthirsty, which no
+    //    graft can offer.
+    // 2. A GRAFT path pays MORE stats, a second type, and a line of that
+    //    type's moves — three payoffs against the mono path's two, because a
+    //    graft is also giving up the passive.
+    // 3. A path may DRAMATICALLY REFOCUS the hero. Warhowl is that clause's
+    //    worked example, and it is the first path in the game with a NEGATIVE
+    //    stat grant: Fang stops being a 90-Attack physical body and becomes an
+    //    80-Intelligence caster that kept its Speed 80. Nothing about the
+    //    contract needed changing for it — `statGrants` has always been signed
+    //    (src/run/equipment.ts already prices a negative grant as a refund) —
+    //    it had simply never been used to say something this loud.
     packAlpha: [
       {
         level: EVOLUTION_LEVEL,
@@ -1078,29 +1107,91 @@ export const progressionTable: ProgressionTable = {
             heroId: 'packAlpha',
             kind: 'offensive',
             name: 'Bloodhunt',
-            description: 'Bleed-momentum aggressor.',
-            statGrants: { attack: 10 },
+            description: 'Something is bleeding, and it knows.',
+            // Attack and Speed rather than Attack alone, because the passive
+            // grants exactly those two and the flat +10s are the half that is
+            // always on: the path has a floor when nothing is Bleeding and a
+            // ceiling (Atk 120 / Spd 110) when something is.
+            //
+            // Bloodthirsty is priced against the fact that Fang has to LAND
+            // the Bleed first, and Beast's own sources are Claw (20% rider)
+            // and Lacerate — so the passive is the payoff for the type's
+            // opening play rather than a free stat line, and it switches off
+            // the moment that enemy is switched out, cleansed, or killed.
+            statGrants: { attack: 10, speed: 10 },
             unlocksMoveIds: [],
+            grantsPassiveIds: ['bloodthirsty'],
           },
           {
             id: 'packAlpha-defensive',
             heroId: 'packAlpha',
             kind: 'defensive',
             name: 'Stonehide',
-            description: 'Thick-hide bruiser; endure.',
-            statGrants: { defense: 10, hp: 10 },
+            description: 'Hide like the ground it fights on; takes the hit and gives it back.',
+            statGrants: { hp: 20, defense: 10 },
             unlocksMoveIds: [],
             typeGraft: 'Stone',
+            // Stone's ENDURE line, and it is chosen so the graft compounds with
+            // the stat grant rather than sitting beside it. Fang keeps Attack
+            // 90, so these stay physical rows it can actually swing:
+            //
+            // - Rock Toss is the cheap STAB opener the graft would be half a
+            //   graft without.
+            // - Bastion (+30 Defense to BOTH allies) is the doubles-facing
+            //   reason to be Stone at all, and the only defensive tool Fang
+            //   has ever had access to.
+            // - Rubble Rush is the type's efficiency row — 75 power for 25
+            //   mana, paid for with 25% recoil — and the recoil is a feature
+            //   here rather than a cost, because it feeds Stoneheart.
+            // - Stoneheart returns every wound taken since the last turn,
+            //   whole and at +1 priority. It is the capstone the +20 HP is
+            //   FOR: on this path being hit is how the hero loads its gun.
+            //
+            // Deliberately NOT Body Blow / Body Crush, Stone's two
+            // offStatOverride rows: they attack with Defense, and even at 65
+            // Fang's Defense is far below its Attack 90 — the type's signature
+            // trick is the one row of it this hero should not take.
+            learnableMoveIds: ['rockToss', 'bastion', 'rubbleRush', 'stoneheart'],
           },
           {
             id: 'packAlpha-utility',
             heroId: 'packAlpha',
             kind: 'utility',
             name: 'Warhowl',
-            description: 'Pack-support — partner buffs, the doubles-facing path.',
-            statGrants: { speed: 10, mpRegen: 5 },
+            description: 'Lets go of the body and leads from somewhere else.',
+            // The refocus. -30 Attack / +60 Intelligence inverts which half of
+            // the damage formula this hero lives on (Atk 90 -> 60, Int 20 ->
+            // 80), and +20 Mana pays for the casting the old body never did.
+            // Speed 80 is untouched on purpose: what survives the change is
+            // the thing that made Fang Fang.
+            //
+            // The Attack is spent rather than merely unused, which is what
+            // makes this a choice instead of a strict upgrade — a Warhowl Fang
+            // holding Claw and Eviscerate has made its old kit worse, and the
+            // path is only correct for a player willing to rebuild the loadout
+            // around it.
+            statGrants: { attack: -30, intelligence: 60, manaPool: 20 },
             unlocksMoveIds: [],
             typeGraft: 'Spirit',
+            // Two Early rows deliberately at the front: Fang's ENTIRE authored
+            // pool is physical (see moveTiers above), so on this path the
+            // learnable list is not a bonus — it is the hero's only route to a
+            // move that reads the Intelligence it was just given. Wisp and
+            // Drain are both Early so the very next level-up can offer one.
+            //
+            // Ascendant is the capstone and the path's thesis in one row: +75
+            // Intelligence and +25 Speed, described as letting go of the body
+            // altogether. Soul Rend is the drain line that makes an Attack-60
+            // frame survivable.
+            //
+            // Animal Spirit is the fifth entry and the only one that is not
+            // Spirit: it is Beast's single MAGICAL row, authored 2026-08-30 as
+            // coverage "for casters rather than for the type's own hero"
+            // because Fang was Intelligence 20 — and left out of Fang's pool
+            // for exactly that reason. Warhowl is the thing that makes it
+            // reachable, and being innate Beast it arrives with STAB, which no
+            // Spirit row on this path does.
+            learnableMoveIds: ['wisp', 'drain', 'soulRend', 'ascendant', 'animalSpirit'],
           },
         ],
       },
@@ -1385,6 +1476,40 @@ export const progressionTable: ProgressionTable = {
     ],
 
     // --- Crimson, Rime, Cube, Mordrax (2026-08-17) ---
+    //
+    // Crimson was re-authored 2026-09-01 as the FIRST hero off the placeholder
+    // three-paths-of-two-stats shape, and is the worked example the rest of the
+    // roster gets brought up to. Three things changed, in the designer's order:
+    //
+    // 1. The grants got bigger. A permanent, run-defining, once-per-hero choice
+    //    was paying out the same 20 points a Common item does; every path here
+    //    now pays 20-35 in equipment currency (src/run/equipment.ts
+    //    STAT_POINT_VALUE — HP and Mana at 1/2, MP Regen at 3x), which is
+    //    Rare-to-Epic. The numbers are still flat multiples of 5/10, so the
+    //    locked stat-modifier rule is untouched; only the magnitude moved.
+    //
+    // 2. The MONO path now pays for staying mono. A graft buys a whole second
+    //    column of the type chart and (see 3) a second slate to draw from; two
+    //    stats and a shrug could not compete with that, which quietly made
+    //    "mono is a legitimate terminal state" (CLAUDE.md) false in practice.
+    //    Pyroclasm's answer is a PASSIVE — the thing a hero can only get here.
+    //
+    // 3. The graft paths open MOVES, not just a type. `learnableMoveIds`
+    //    (src/run/progression.ts) implements docs/leveling-and-ranks.md's
+    //    "Evolution steers future level-up offerings", LOCKED since 2026-08-16
+    //    and unimplemented until now: the moves JOIN the level-up pool rather
+    //    than being handed over, so the graft redirects the hero's future
+    //    instead of rewriting its loadout on the spot.
+    //
+    // The open tension, named rather than resolved: the three `kind` labels no
+    // longer describe the grants cleanly. Emberweave carries the biggest raw
+    // offensive number in the node (+20 Int on an Int-80 body) under the
+    // 'utility' label, and Pyroclasm carries Defense and Mana under
+    // 'offensive'. `kind` is documentation of intent, not mechanics, and the
+    // INTENT still reads right — Emberweave's Int is there to be spent on
+    // sustained casting, Pyroclasm's bulk is there so it survives to use the
+    // field it set — but if the labels stay this loose across the next few
+    // heroes they are the thing to fix, not the numbers.
     crimson: [
       {
         level: EVOLUTION_LEVEL,
@@ -1394,29 +1519,78 @@ export const progressionTable: ProgressionTable = {
             heroId: 'crimson',
             kind: 'offensive',
             name: 'Pyroclasm',
-            description: 'Unrestrained magical firepower; raw Int nuke.',
-            statGrants: { intelligence: 10 },
+            description: 'The fire it starts no longer goes out on its own.',
+            // The mono path's "something extra". Firestarter (src/data/passives.ts)
+            // sets Scorched Land — Burn stops decaying — the first time Crimson
+            // lands a Burn, which every one of its own attacks except Immolate
+            // and Inferno already does. The stats are Defense and Mana rather
+            // than Intelligence on purpose: the passive IS the offense, and what
+            // a Def-38 caster lacks is the turns to spend the window it opened.
+            //
+            // Known anti-synergy, and it is the intended cost of the path, not
+            // an oversight: Crimson's pool already holds Spreading Blaze, whose
+            // whole rider is setting Scorched Land. Taking Pyroclasm makes that
+            // rider redundant and turns Spreading Blaze back into a plain 30-mana
+            // spread Burn — so the path is worth more to a Crimson that never
+            // rolled it, and a player who has it is being asked to give something
+            // up. Only one field can be active at a time (docs/field-effects.md),
+            // which is the same trade Emberweave makes from the other side.
+            statGrants: { defense: 10, manaPool: 10 },
             unlocksMoveIds: [],
+            grantsPassiveIds: ['firestarter'],
           },
           {
             id: 'crimson-defensive',
             heroId: 'crimson',
             kind: 'defensive',
             name: 'Cinderveil',
-            description: 'Wreathes itself in protective embers; a bulkier caster.',
-            statGrants: { wisdom: 10, hp: 10 },
+            description: 'Wreathed in protective embers; a caster that stays on the field.',
+            // HP over Defense because Crimson is a magical body being asked to
+            // survive, and +20 HP helps against both damage pairs where +10
+            // Defense helps against one. Wisdom does the other half.
+            statGrants: { hp: 20, wisdom: 10 },
             unlocksMoveIds: [],
             typeGraft: 'Spirit',
+            // Spirit's sustain line, tiered to arrive across the rest of the
+            // curve rather than all at once: two Early (available the moment
+            // the graft happens at level 5), one Mid, one Late. Drain and Soul
+            // Rend are the same move at two sizes, which is deliberate — the
+            // path's promise is "you stay in", and drain healing is the only
+            // sustain in the game that costs no turn. Second Wind is the Renew
+            // this hero has no other route to. Banish is the finisher, and the
+            // real point of a graft: a second STAB nuke on a different column
+            // of the type chart, so Cinderveil answers the Water and Stone
+            // leads that wall mono-Fire.
+            learnableMoveIds: ['drain', 'secondWind', 'soulRend', 'banish'],
           },
           {
             id: 'crimson-utility',
             heroId: 'crimson',
             kind: 'utility',
             name: 'Emberweave',
-            description: 'Fuses flame with raw arcane current; efficient, sustained casting.',
-            statGrants: { manaPool: 10, mpRegen: 5 },
+            description: 'Flame fused to raw arcane current; casts, and keeps casting.',
+            // +20 Intelligence is the largest single stat grant in the file and
+            // is meant to be: it is a 25% raise on Crimson's Int 80 and it is
+            // what makes the Arcane slate's expensive nukes worth the mana they
+            // cost. MP Regen +5 (15 points at STAT_POINT_VALUE's 3x) is the
+            // other half of the same sentence — the grant pays for the casting,
+            // not for one cast.
+            statGrants: { intelligence: 20, mpRegen: 5 },
             unlocksMoveIds: [],
             typeGraft: 'Arcane',
+            // The Arcane line chosen for TEMPO rather than for raw power, which
+            // is what separates this from Pyroclasm's identity. Mana Tap is a
+            // 0-cost attack — the move that makes Rest (CLAUDE.md "Mana &
+            // tempo") avoidable, and the clearest single expression of
+            // "sustained casting". Mana Font sets Magical Surge, doubling MP
+            // Regen on top of the +5, and is the deliberate mirror of
+            // Pyroclasm's Scorched Land: both paths want the battlefield, only
+            // one effect fits on it, so which Crimson evolved is legible from
+            // the field it sets. Overload and Cataclysm are what the mana is
+            // for, and Overload reads Magical Surge back to hit both enemies —
+            // so Mana Font and Overload are a two-card combo this path can
+            // actually assemble.
+            learnableMoveIds: ['manaTap', 'manaFont', 'overload', 'cataclysm'],
           },
         ],
       },

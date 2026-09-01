@@ -188,7 +188,27 @@ export interface EvolutionPath {
   /** One-line flavor/mechanical summary shown on the Evolution choice screen so the player can judge the three paths on more than just their name. */
   description?: string;
   statGrants: Partial<Record<StatKey, number>>;
+  /** Moves this path hands over OUTRIGHT the moment it is chosen — added straight to the hero's unlocked kit. */
   unlocksMoveIds: string[];
+  /**
+   * Moves this path makes LEARNABLE: they join the hero's level-up pool
+   * (levelUpMovePool) rather than being granted, so a later level-up can roll
+   * them. This is docs/leveling-and-ranks.md "Evolution steers future level-up
+   * offerings", which has been LOCKED behavior since 2026-08-16 and until now
+   * had no implementation — the mechanical half of a type-graft ("gain Spirit
+   * type AND the ability to learn new Spirit moves"), and the reason an
+   * Evolution is compounding rather than a one-off package.
+   *
+   * Kept separate from `unlocksMoveIds` because they are different promises:
+   * one is a move, the other is a set of futures. A graft that opened four
+   * moves as outright grants would blow straight past MOVE_CAP and hand the
+   * player a loadout instead of a direction.
+   *
+   * Tier gating still applies — these go through isMoveTierUnlocked like any
+   * other pool entry, so a late-tier graft move stays locked until level 7
+   * even though the graft happened at 5.
+   */
+  learnableMoveIds?: readonly string[];
   /**
    * Optional secondary-type grant/shift (docs/progression.md "Type-graft
    * paths"). Only legal when the hero is mono-type by design — enforced in
@@ -245,9 +265,18 @@ export function fullMovepool(table: ProgressionTable, hero: HeroDefinition): str
 }
 
 /**
- * The moves still available to offer this hero on level-up: the table's pool,
- * minus whatever is already unlocked, minus every move whose tier the hero's
- * LEVEL has not reached yet (MOVE_TIER_LEVEL above).
+ * The moves still available to offer this hero on level-up: the table's pool
+ * PLUS whatever the Evolution paths it has already taken made learnable
+ * (EvolutionPath.learnableMoveIds), minus whatever is already unlocked, minus
+ * every move whose tier the hero's LEVEL has not reached yet
+ * (MOVE_TIER_LEVEL above).
+ *
+ * The graft half is appended rather than substituted: docs/leveling-and-ranks.md
+ * expects the retained primary's moves to keep being offered alongside the new
+ * type's, so a grafted hero draws from a WIDER pool, not a redirected one.
+ * Deduped, since a graft may legitimately open a move the base pool already
+ * lists (an off-type entry pulled in to satisfy the FLOOR, say, that the graft
+ * has now made native).
  *
  * The level read is `entry.level` — the level the hero currently HAS — so a
  * caller resolving a level-up's move offer must pass the entry it got back
@@ -267,7 +296,8 @@ export function levelUpMovePool(
   moves: Record<string, MoveDefinition>,
   entry: RosterEntry
 ): string[] {
-  const pool = table.moveTiers[entry.heroId] ?? [];
+  const grafted = chosenEvolutionPaths(table, entry).flatMap((path) => path.learnableMoveIds ?? []);
+  const pool = [...new Set([...(table.moveTiers[entry.heroId] ?? []), ...grafted])];
   return pool.filter((id) => !entry.unlockedMoveIds.includes(id) && isMoveTierUnlocked(moves[id], entry.level));
 }
 

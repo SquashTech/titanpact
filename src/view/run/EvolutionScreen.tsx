@@ -2,6 +2,8 @@ import { useState } from 'react';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import type { EvolutionNode } from '../../run/progression';
+import { passives } from '../../data/passives';
+import { moves } from '../../data/moves';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { TypeBadge } from '../shared/TypeBadge';
 import { ElementGlyph } from '../shared/elementIcons';
@@ -74,9 +76,14 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
                   </div>
                   {path.description && <p className="evolution-path-description">{path.description}</p>}
                   <div className="evolution-path-grants">
+                    {/* Signed, not always "+": a refocus path SPENDS a stat to
+                        buy another (Fang's Warhowl, -30 Attack for +60
+                        Intelligence), and a permanent choice must show the
+                        cost as plainly as the gain. */}
                     {statEntries.map(([stat, amount]) => (
-                      <span key={stat} className="evolution-path-grant-chip">
-                        <StatGlyph stat={stat} /> {STAT_LABELS[stat]} +{amount}
+                      <span key={stat} className={`evolution-path-grant-chip${amount < 0 ? ' evolution-path-grant-loss' : ''}`}>
+                        <StatGlyph stat={stat} /> {STAT_LABELS[stat]} {amount > 0 ? '+' : ''}
+                        {amount}
                       </span>
                     ))}
                     {path.typeGraft && (
@@ -93,7 +100,37 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
                         stays mono <ElementGlyph type={hero.types[0]} /> {hero.types[0]}
                       </span>
                     )}
+                    {/* A granted Passive is usually the whole reason to take a
+                        mono path (src/data/progression.ts, Crimson's Pyroclasm),
+                        so it gets a chip of its own — an unnamed passive would
+                        make that path read as two small stats and nothing else.
+                        Unknown ids are skipped rather than rendered raw. */}
+                    {(path.grantsPassiveIds ?? []).map((id) => passives[id] && (
+                      <span key={id} className="evolution-path-grant-chip evolution-path-passive">
+                        ✦ {passives[id].name}
+                      </span>
+                    ))}
                   </div>
+                  {/* The graft's other half: which moves this path lets the
+                      hero LEARN later (EvolutionPath.learnableMoveIds). Its own
+                      line rather than another chip in the row above, because
+                      these are futures, not grants — the player is choosing a
+                      direction for the rest of the run's level-ups, and that
+                      reads wrong sitting between two stat chips. */}
+                  {(path.learnableMoveIds?.length ?? 0) > 0 && (
+                    <p className="evolution-path-learnable">
+                      <span className="evolution-path-learnable-label">Can learn</span>
+                      {path.learnableMoveIds!.map((id) => moves[id]?.name ?? id).join(' · ')}
+                    </p>
+                  )}
+                  {/* Named for the same reason the passive is: the Passive
+                      description is the mechanic, and a name alone ("Firestarter")
+                      tells the player nothing about a choice they cannot undo. */}
+                  {(path.grantsPassiveIds ?? []).map((id) => passives[id] && (
+                    <p key={id} className="evolution-path-passive-text">
+                      {passives[id].description}
+                    </p>
+                  ))}
                 </button>
               );
             })}

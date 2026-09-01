@@ -116,7 +116,10 @@ function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defender
   const defenderHero = allCombatants[defender.heroId];
   if (!attackerHero || !defenderHero) return null;
 
-  const fieldEffectCtx = { active: ctx.combat.activeFieldEffect, defs: fieldEffects };
+  // board threaded in for the same reason offStatOverride is: a conditional
+  // passive (content.ts PassiveConditionalStatGrants) moves the ratio, so a
+  // forecast built without it lies about the number the round will roll.
+  const fieldEffectCtx = { active: ctx.combat.activeFieldEffect, defs: fieldEffects, board: { state: ctx.combat, passives } };
   // offStatOverride threaded in, or Body Blow forecasts off a Sentinel's
   // Attack 45 while the round resolves it off Defense 100 — the exact failure
   // docs/authoring-moves.md §5 warns about ("pass your new term in or the
@@ -319,7 +322,7 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   const healCaster: HealCaster | undefined =
     attacker && attackerHero
       ? {
-          wisdom: getEffectiveStat(attackerHero, attacker, 'wisdom', { active: context?.combat.activeFieldEffect ?? null, defs: fieldEffects }),
+          wisdom: getEffectiveStat(attackerHero, attacker, 'wisdom', { active: context?.combat.activeFieldEffect ?? null, defs: fieldEffects, board: context ? { state: context.combat, passives } : undefined }),
           types: effectiveTypes(attackerHero, attacker),
         }
       : caster;
@@ -831,6 +834,7 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
                   ? `${getEffectiveStat(attackerHero, attacker, move.offStatOverride, {
                       active: context?.combat.activeFieldEffect ?? null,
                       defs: fieldEffects,
+                      board: context ? { state: context.combat, passives } : undefined,
                     })} right now — the target still defends with its own ${STAT_LABELS[move.category === 'physical' ? 'defense' : 'wisdom']}`
                   : 'the defending stat is unchanged — only the attacking one moves'
               }

@@ -95,7 +95,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
   const maxHpOf = (id: string) => getMaxHp(heroes[working.combatants[id].heroId], working.combatants[id]);
 
-  const { ordered, nextRngState } = orderActions(working, heroes, actions, moves, working.rngState, fieldEffects);
+  const { ordered, nextRngState } = orderActions(working, heroes, actions, moves, working.rngState, fieldEffects, passives);
   working = { ...working, rngState: nextRngState };
 
   for (const action of ordered) {
@@ -368,7 +368,11 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           // stat-pipeline input, read fresh here rather than hoisted before the
           // action loop — a field effect a faster action set earlier THIS round
           // must already apply to a slower action's damage later in the same round.
-          const fieldEffectCtx = { active: working.activeFieldEffect, defs: fieldEffects };
+          // `board` is the other half of the same freshness argument: a
+          // conditional passive (content.ts PassiveConditionalStatGrants) reads
+          // the live board, so a Bleed a faster action just landed already
+          // counts for a slower one this round.
+          const fieldEffectCtx = { active: working.activeFieldEffect, defs: fieldEffects, board: { state: working, passives } };
           // offStatOverride (Stone's Body Blow/Body Crush) rides in here, on
           // pipeline 1, because it changes WHICH stat is read — not what the
           // result is multiplied by. statKeysForMove below reads the same field
@@ -724,6 +728,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         ? getEffectiveStat(attackerHero, working.combatants[action.combatantId], 'attack', {
             active: working.activeFieldEffect,
             defs: fieldEffects,
+            board: { state: working, passives },
           })
         : previousMana;
     const derivedDeltas: StatDelta[] = derived ? derived.stats.map((stat) => ({ stat, amount: derivedAmount })) : [];
@@ -924,7 +929,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             working = { ...working, rngState: roll.nextState };
             if (roll.value >= app.chance) continue;
           }
-          const result = applyStatus(working, round, applyTargetId, def, { magnitude, duration: app.duration });
+          const result = applyStatus(working, round, applyTargetId, def, { magnitude, duration: app.duration, sourceCombatantId: action.combatantId });
           working = result.state;
           events.push(...result.events);
           statusAppliedEvents.push(...result.events);
@@ -1066,7 +1071,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   working = regen.state;
   events.push(...regen.events);
 
-  const manaRegen = applyManaRegen(working, round, heroes, fieldEffects);
+  const manaRegen = applyManaRegen(working, round, heroes, fieldEffects, passives);
   working = manaRegen.state;
   events.push(...manaRegen.events);
 

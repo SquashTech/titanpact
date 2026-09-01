@@ -15,6 +15,7 @@ import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import { matchesTrigger, collectPassiveDamageModifiers } from '../src/engine/combat/passiveEngine';
+import { getEffectiveStat } from '../src/engine/state';
 import { resolveMultiplierTerm } from '../src/engine/damage/damagePipeline';
 import type { CombatState, PassiveInstance } from '../src/engine/state';
 import { equipmentPassiveGrants, relicTeamPassiveGrants, mergePassiveGrants, toPassiveInstances } from '../src/run/passives';
@@ -184,6 +185,151 @@ test('passives: Emberheart actually raises rolled damage on a Fire move end to e
   const plainDamage = maxHp - plain.state.combatants.b1.currentHp;
   const boostedDamage = maxHp - boosted.state.combatants.b1.currentHp;
   assert.ok(boostedDamage > plainDamage, `expected boosted damage (${boostedDamage}) > plain damage (${plainDamage})`);
+});
+
+// --- Firestarter: source-role attribution + oncePerFight ---------------------
+// The two contract additions of 2026-09-01 (engine/content.ts
+// PassiveTriggerCondition.subjectRole, reactive.oncePerFight), exercised
+// through the only content that uses them (Crimson's Pyroclasm path).
+
+const burnAlly: Action = { kind: 'move', combatantId: 'a2', moveId: 'setAlight', declaredTarget: 'b1' };
+const burnOwner: Action = { kind: 'move', combatantId: 'a1', moveId: 'setAlight', declaredTarget: 'b1' };
+
+test('passives: Firestarter sets Scorched Land when ITS OWNER applies Burn', () => {
+  const state = withPassive(twoVTwoFixture(320), 'a1', 'firestarter');
+  const { state: next, events } = resolveRound(state, [burnOwner], config);
+
+  assert.strictEqual(next.activeFieldEffect?.fieldEffectId, 'scorchedLand');
+  assert.ok(events.some((e) => e.type === 'PassiveTriggered' && e.combatantId === 'a1' && e.passiveId === 'firestarter'));
+  assert.strictEqual(next.combatants.a1.passives.firestarter.firedThisFight, true);
+});
+
+test('passives: Firestarter does NOT fire off an ALLY applying Burn — subjectRole source is attribution, not proximity', () => {
+  const state = withPassive(twoVTwoFixture(321), 'a1', 'firestarter');
+  const { state: next } = resolveRound(state, [burnAlly], config);
+
+  assert.strictEqual(next.activeFieldEffect, null);
+  assert.ok(!next.combatants.a1.passives.firestarter.firedThisFight);
+});
+
+test('passives: Firestarter does NOT fire when its owner is the one BURNED — source role, not target role', () => {
+  const state = withPassive(twoVTwoFixture(322), 'b1', 'firestarter'); // the victim holds it
+  const { state: next } = resolveRound(state, [burnOwner], config);
+
+  assert.strictEqual(next.activeFieldEffect, null);
+});
+
+test('passives: Firestarter fires only once per fight — a later Burn does not re-set the field', () => {
+  const state = withPassive(twoVTwoFixture(323), 'a1', 'firestarter');
+  const first = resolveRound(state, [burnOwner], config);
+  assert.strictEqual(first.state.activeFieldEffect?.fieldEffectId, 'scorchedLand');
+
+  // Something else takes the battlefield, which is the only way to tell a
+  // spent trigger apart from a no-op re-apply (setFieldEffect already ignores
+  // re-applying the effect that is already up).
+  const overridden: CombatState = { ...first.state, activeFieldEffect: { fieldEffectId: 'stasisBubble', roundsRemaining: 5 } };
+  const second = resolveRound(overridden, [burnOwner], config);
+
+  assert.strictEqual(second.state.activeFieldEffect?.fieldEffectId, 'stasisBubble');
+  assert.ok(!second.events.some((e) => e.type === 'PassiveTriggered' && e.passiveId === 'firestarter'));
+});
+
+test('passives: two stacks of a oncePerFight passive still fire only once', () => {
+  const state = withPassive(twoVTwoFixture(324), 'a1', 'firestarter', 2);
+  const { events } = resolveRound(state, [burnOwner], config);
+
+  const fired = events.filter((e) => e.type === 'PassiveTriggered' && e.passiveId === 'firestarter');
+  assert.strictEqual(fired.length, 1);
+});
+
+// --- Bloodthirsty: the conditional stat grant --------------------------------
+// engine/content.ts PassiveConditionalStatGrants, resolved live in
+// state.ts getEffectiveStat (2026-09-01, Fang's Bloodhunt path).
+
+const boardOf = (state: CombatState) => ({ active: state.activeFieldEffect, defs: fieldEffects, board: { state, passives } });
+
+test('passives: Bloodthirsty is OFF with no Bleeding enemy and ON the moment one appears', () => {
+  const base = twoVTwoFixture(340);
+  const held = withPassive(base, 'a1', 'bloodthirsty');
+  const hero = heroes.cinderKnight;
+
+  const off = getEffectiveStat(hero, held.combatants.a1, 'attack', boardOf(held));
+  assert.strictEqual(off, hero.baseStats.attack, 'no Bleed on the board — the condition does not hold');
+
+  const bleeding = withStatus(held, 'b1', 'Bleed', {});
+  assert.strictEqual(getEffectiveStat(hero, bleeding.combatants.a1, 'attack', boardOf(bleeding)), hero.baseStats.attack + 20);
+  assert.strictEqual(getEffectiveStat(hero, bleeding.combatants.a1, 'speed', boardOf(bleeding)), hero.baseStats.speed + 20);
+});
+
+test('passives: Bloodthirsty reads ENEMIES only — an ally or the owner Bleeding does not arm it', () => {
+  const held = withPassive(twoVTwoFixture(341), 'a1', 'bloodthirsty');
+  const hero = heroes.cinderKnight;
+
+  for (const id of ['a1', 'a2']) {
+    const state = withStatus(held, id, 'Bleed', {});
+    assert.strictEqual(getEffectiveStat(hero, state.combatants.a1, 'attack', boardOf(state)), hero.baseStats.attack, `${id} Bleeding must not arm it`);
+  }
+});
+
+test('passives: Bloodthirsty switches OFF again when the Bleeding enemy faints — nothing has to revoke it', () => {
+  const held = withPassive(twoVTwoFixture(342), 'a1', 'bloodthirsty');
+  const bleeding = withStatus(held, 'b1', 'Bleed', {});
+  const hero = heroes.cinderKnight;
+  assert.strictEqual(getEffectiveStat(hero, bleeding.combatants.a1, 'attack', boardOf(bleeding)), hero.baseStats.attack + 20);
+
+  const downed: CombatState = {
+    ...bleeding,
+    combatants: { ...bleeding.combatants, b1: { ...bleeding.combatants.b1, fainted: true } },
+  };
+  assert.strictEqual(getEffectiveStat(hero, downed.combatants.a1, 'attack', boardOf(downed)), hero.baseStats.attack);
+});
+
+test('passives: a BENCHED Bleeding enemy does not arm Bloodthirsty — active enemies only', () => {
+  // Own fixture: twoVTwoFixture has no bench, and a bench is the whole point here.
+  const withBench = createFightState(
+    343,
+    [
+      { combatantId: 'a1', heroId: 'cinderKnight', side: 'A' },
+      { combatantId: 'a2', heroId: 'tidecaller', side: 'A' },
+    ],
+    [
+      { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+      { combatantId: 'b2', heroId: 'wildOracle', side: 'B' },
+      { combatantId: 'b3', heroId: 'stormRanger', side: 'B' },
+    ]
+  );
+  const held = withPassive(withBench, 'a1', 'bloodthirsty');
+  assert.deepStrictEqual(held.bench.B, ['b3']);
+  const state = withStatus(held, 'b3', 'Bleed', {});
+  assert.strictEqual(
+    getEffectiveStat(heroes.cinderKnight, state.combatants.a1, 'attack', boardOf(state)),
+    heroes.cinderKnight.baseStats.attack
+  );
+});
+
+test('passives: without a board in the context the conditional grant is simply absent, not applied', () => {
+  const held = withPassive(twoVTwoFixture(344), 'a1', 'bloodthirsty');
+  const bleeding = withStatus(held, 'b1', 'Bleed', {});
+  assert.strictEqual(getEffectiveStat(heroes.cinderKnight, bleeding.combatants.a1, 'attack'), heroes.cinderKnight.baseStats.attack);
+});
+
+test('passives: Bloodthirsty moves the damage roll and the turn order, not just the readout', () => {
+  const base = withPassive(twoVTwoFixture(345), 'a1', 'bloodthirsty');
+  const bleeding = withStatus(base, 'b2', 'Bleed', {});
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
+
+  // b2 Bleeds, b1 is hit: hitting the Bleeding enemy itself would fold its own
+  // Bleed tick into the HP comparison and stop measuring the ratio. b1 is also
+  // the 135-HP body, so neither roll is lethal and both numbers are real.
+  const maxHp = heroes.ironWarden.baseStats.hp;
+  const plain = maxHp - resolveRound(base, actions, config).state.combatants.b1.currentHp;
+  const armed = maxHp - resolveRound(bleeding, actions, config).state.combatants.b1.currentHp;
+  assert.ok(armed > plain, `expected the armed roll (${armed}) to beat the plain one (${plain})`);
+
+  // Speed: priority.ts reads the same hook, so the ordering the round uses and
+  // the number on the card cannot disagree.
+  const withBonus = getEffectiveStat(heroes.cinderKnight, bleeding.combatants.a1, 'speed', boardOf(bleeding));
+  assert.strictEqual(withBonus, heroes.cinderKnight.baseStats.speed + 20);
 });
 
 // --- Run-tier grant aggregation (src/run/passives.ts) -----------------------

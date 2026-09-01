@@ -166,6 +166,20 @@ export interface HealedEvent extends BaseEvent {
 export interface StatusAppliedEvent extends BaseEvent {
   type: 'StatusApplied';
   combatantId: string;
+  /**
+   * Who APPLIED it, when there is an actor to name — the acting combatant for
+   * a move's `statusApplication` rider, the owner for a passive-applied one.
+   * Mirrors DamageDealtEvent's source/target pair and exists for the same
+   * reason that event carries both: a passive may want to key off "the one
+   * who did it" rather than "the one it happened to" (content.ts
+   * PassiveTriggerCondition.subjectRole — Firestarter, src/data/passives.ts).
+   *
+   * Optional because not every application has an actor, and absent means
+   * "nobody in particular" rather than "unknown": a source-role passive simply
+   * never matches it (passiveEngine.ts subjectOf returns undefined, which
+   * relationHolds already reads as no match).
+   */
+  sourceCombatantId?: string;
   statusId: StatusId;
   magnitude?: number;
   duration?: number;

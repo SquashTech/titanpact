@@ -177,10 +177,57 @@ A path may grant any of:
 
 - **A secondary type** (mono → dual, or a shift of the secondary slot), and/or
 - **A stat grant** — always in **multiples of 5 or 10** (`progression.md`), and/or
-- **An ability** (a passive or triggered effect).
+- **An ability** (a passive or triggered effect), and/or
+- **A set of newly LEARNABLE moves** — see "Evolution steers future level-up
+  offerings" below. These join the level-up pool; they are not handed over.
 
 Not every path changes typing — **staying mono is a valid path** and a valid terminal
-identity. Typing usually shifts by *adding* a secondary (mono → dual), but a path may
+identity.
+
+> ### The Evolution framework (2026-09-01 designer call)
+>
+> The shape every hero's node is being re-authored to. Crimson and Fang
+> (`src/data/progression.ts`) are the two worked examples; the other 33 are
+> still on the old two-stats shape and are the backlog.
+>
+> **1. Grants got bigger.** An Evolution is permanent, once per hero, and
+> run-defining; paying out the ~20 points a Common item pays was the wrong
+> order of magnitude. Re-authored nodes sit at roughly 20–40 points in
+> equipment currency (`src/run/equipment.ts` `STAT_POINT_VALUE` — HP and Mana
+> at ½, MP Regen at 3×), i.e. Rare-to-Epic. The multiples-of-5/10 rule is
+> untouched; only magnitude moved.
+>
+> **2. The MONO path trades stats for a PASSIVE.** A graft buys a whole second
+> column of the type chart *and* a second slate to draw level-up offers from. A
+> mono path offering only stats cannot compete, which quietly made "mono is a
+> valid terminal identity" false in practice. So a mono path takes the
+> **smallest stat line on its node** and carries something no graft can offer:
+> Crimson's **Pyroclasm** grants Firestarter, Fang's **Bloodhunt** grants
+> Bloodthirsty.
+>
+> **3. A GRAFT path pays three ways** — more stats, the new type, and a line of
+> that type's moves via `learnableMoveIds` (below). Three payoffs against the
+> mono path's two, because the graft is also giving up the passive. STAB on the
+> grafted line is the point: a type with no moves in it is half a graft.
+>
+> **4. A path may DRAMATICALLY REFOCUS the hero.** `statGrants` is signed, and a
+> refocus path spends one stat to buy another. Fang's **Warhowl** is the worked
+> example: −30 Attack / +60 Intelligence turns a 90-Attack physical body into an
+> 80-Intelligence caster that kept its Speed. Nothing in the contract needed
+> changing for this — the field has always been signed — it had simply never
+> been used to say something that loud. The Attack is *spent*, not merely
+> unused, which is what makes it a choice rather than a strict upgrade.
+>
+> **The open risk a refocus path carries** (unresolved, 2026-09-01): a hero
+> whose authored pool is entirely one category — Fang's is entirely physical —
+> comes out of a refocus with a loadout that no longer reads the stat it now
+> lives on, and `learnableMoveIds` only *offers* the fix on a later level-up. A
+> path cannot guarantee it, because `unlocksMoveIds` grants outright with **no
+> MOVE_CAP check** (`chooseEvolutionPath`), and a level-5 hero is usually
+> already at the cap. Mitigated for now by weighting Warhowl's list toward Early
+> tiers so the very next level-up can offer one. The real fix — a cap-aware
+> grant, or a forced move offer following a refocus — is a design decision, not
+> an implementation detail. Typing usually shifts by *adding* a secondary (mono → dual), but a path may
 also *replace* an already-granted secondary outright — e.g. a hero flavored around
 "Iron Stone" might Evolve down an **Iron / Light** path instead of the expected
 Iron / Stone, if that's the path chosen. This is the same secondary-slot-shift
@@ -239,9 +286,29 @@ attacks** it could not have received as Mono Frost.
 
 This makes the Evolution choice compounding: it is not just an immediate package of
 type/stats/ability, it **redirects the hero's whole future movepool** toward the
-chosen identity. The path you *don't* pick does not open its offerings. (Whether the
-retained primary's moves continue to be offered alongside the new type's — expected
-yes — and the exact weighting are `/data` details to specify.)
+chosen identity. The path you *don't* pick does not open its offerings.
+
+> **Implemented (2026-09-01):** `EvolutionPath.learnableMoveIds`
+> (`src/run/progression.ts`). `levelUpMovePool` unions the hero's authored pool
+> with the `learnableMoveIds` of every path it has taken, deduped, then applies
+> the same unlocked-filter and tier gate to the whole thing. Three consequences
+> worth stating, since the rule above left them open:
+>
+> - **The retained primary keeps being offered** — the pool is *widened*, not
+>   redirected. That is the "expected yes" above, now settled.
+> - **Weighting stays uniform.** The level-up roll is flat across the pool, so a
+>   graft's moves compete with the primary's on equal footing. If a grafted hero
+>   should skew toward its new type, that is a weighting change to `levelUpMovePool`,
+>   not more entries in the list — open, not decided.
+> - **Tier gating still applies.** A Late graft move is unreachable until level 7
+>   even though the graft happens at 5, so a graft arrives as a curve rather than
+>   as a dump.
+>
+> Learnable moves also feed the level-up **floor** (`src/data/progression.ts`
+> FLOOR, `test/moveTiers.test.ts`): a graft can only ever *add* to the pool, so
+> it can widen a hero past the floor but never below it. The floor is still
+> authored on the base pool, which is correct — it must hold for a hero that
+> takes the mono path.
 
 ---
 

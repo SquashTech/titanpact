@@ -111,10 +111,16 @@ an opaque level curve.
   secondary-slot grant (if any), resolved at the combat layer — never written
   back onto the authored hero data.
 - A path that grafts a type may **also** carry `statGrants` /
-  `unlocksMoveIds` — grafting isn't mutually exclusive with the rest of a
-  path's payload, it's one more thing a path's "kind" can express
-  (typically fits an `offensive` or `utility` path reframing the hero's
+  `unlocksMoveIds` / `learnableMoveIds` — grafting isn't mutually exclusive
+  with the rest of a path's payload, it's one more thing a path's "kind" can
+  express (typically fits an `offensive` or `utility` path reframing the hero's
   toolkit around a new domain, but nothing mechanically requires that pairing).
+- **In practice a graft should carry `learnableMoveIds`** (2026-09-01). A type
+  the hero has no moves in is defence and STAB it will rarely collect — half a
+  graft. Opening a line of the grafted type's slate is the other half, and is
+  what makes the graft read as "gain Spirit **and the ability to learn Spirit
+  moves**". See `leveling-and-ranks.md` "Evolution steers future level-up
+  offerings" for the mechanism and its open weighting question.
 - **Mono remains a legitimate terminal state.** Not grafting is always a valid
   choice among a node's paths — a graft path should normally be offered
   alongside a non-graft alternative at that node, not forced.

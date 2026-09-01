@@ -117,6 +117,30 @@ unchanged, so nothing else moved.
 | Sanctuary | Light | Heal-kind moves get +1 priority | `consecrate` (Solace) |
 | Verdant Earth | Nature | +Attack/+Intelligence equal to your own Renew | `magicGrowth`, `forceOfNature` (Sylva) |
 
+### A field effect set by a PASSIVE (2026-09-01, Fire)
+
+**Firestarter** (`src/data/passives.ts`, granted by Crimson's Pyroclasm Evolution) is
+the first content to use the `setFieldEffect` `PassiveEffect` the contract has carried
+since it was written: *the first time this hero afflicts Burn during combat, set
+Scorched Land.* It is the first field effect that costs **no turn** — the field arrives
+as a rider on a Burn the player wanted to land anyway.
+
+Two engine additions were needed and both are general, not Fire-specific:
+
+- `PassiveTriggerCondition.subjectRole: 'source'` — the ACTOR perspective on a hook,
+  so a passive can read "when **I** afflict" rather than "when this happens to me". The
+  default `'target'` role is unchanged, so every passive authored before it behaves
+  identically. `StatusApplied` now carries `sourceCombatantId` to answer it.
+- `reactive.oncePerFight` — what makes Firestarter a **threshold** rather than an
+  engine. Without it every subsequent Burn would re-set the field and restart its
+  5-round clock, so Scorched Land would never expire while Crimson kept casting. Once
+  means the field is a window the player has to spend, which is the shape every other
+  setter already has.
+
+Note the consequence for the table above: **Scorched Land now has two routes**, and a
+Crimson holding both `spreadingBlaze` and Firestarter is paying for the same field
+twice — a deliberate anti-synergy priced into the path, not an oversight.
+
 ### A field effect as a damage condition (2026-08-30, Light)
 
 Sanctuary is the first field effect a **move reads back**, rather than only being

@@ -61,17 +61,35 @@ export function matchesTrigger(
 }
 
 /**
- * Which combatant a CombatEvent is "about", for relational matching.
- * DamageDealt's subject is the TARGET (not the source) — this makes the hook
- * a defender-perspective reaction ("when an enemy/ally is hit, do X"), not an
- * attacker-perspective one ("when I deal damage, do X"); that second
- * direction isn't needed by any passive yet and isn't implemented.
- * SwitchedIn's subject is the INCOMING combatant, not the one leaving — an
- * entry hook is about who arrived. Event types outside PassiveHook return
- * undefined — harmless, since the hook match already filters them out before
- * subjectOf is ever consulted for them.
+ * Which combatant a CombatEvent is "about", for relational matching — from
+ * the perspective the condition asked for (content.ts
+ * PassiveTriggerCondition.subjectRole).
+ *
+ * The default 'target' role is the DEFENDER perspective: DamageDealt's
+ * subject is the target rather than the source, so the hook reads "when an
+ * enemy/ally is hit, do X". SwitchedIn's subject is the INCOMING combatant,
+ * not the one leaving — an entry hook is about who arrived.
+ *
+ * The 'source' role is the ACTOR perspective ("when I deal damage / when I
+ * afflict"), and only the two events that carry an actor can answer it.
+ * Everything else — SwitchedIn, StatusTicked, a StatusApplied with no actor
+ * behind it — returns undefined, which relationHolds already reads as no
+ * match, so a source-role passive is silent rather than wrong.
+ *
+ * Event types outside PassiveHook return undefined too — harmless, since the
+ * hook match already filters them out before subjectOf is ever consulted.
  */
-function subjectOf(event: CombatEvent): string | undefined {
+function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | undefined {
+  if (role === 'source') {
+    switch (event.type) {
+      case 'StatusApplied':
+        return event.sourceCombatantId;
+      case 'DamageDealt':
+        return event.sourceCombatantId;
+      default:
+        return undefined;
+    }
+  }
   switch (event.type) {
     case 'StatusTicked':
     case 'StatusApplied':
@@ -119,7 +137,7 @@ function resolveEffect(
   for (const targetId of resolveTargetIds(state, ownerId, subjectId, effect.target)) {
     const target = working.combatants[targetId];
     if (!target || target.fainted) continue;
-    const resolved = resolveEffectOn(working, round, heroes, statusDefs, targetId, target, effect, context);
+    const resolved = resolveEffectOn(working, round, heroes, statusDefs, ownerId, targetId, target, effect, context);
     working = resolved.state;
     produced.push(...resolved.events);
   }
@@ -148,6 +166,7 @@ function resolveEffectOn(
   round: number,
   heroes: HeroLookup,
   statusDefs: Record<string, StatusDefinition>,
+  ownerId: string,
   targetId: string,
   target: Combatant,
   effect: Exclude<PassiveEffect, { kind: 'setFieldEffect' }>,
@@ -163,7 +182,10 @@ function resolveEffectOn(
     case 'applyStatus': {
       const def = statusDefs[effect.statusId];
       if (!def) return { state, events: [] };
-      return applyStatus(state, round, targetId, def, { magnitude: effect.magnitude, duration: effect.duration });
+      // The passive's OWNER is the actor here — a passive that applies a
+      // status is that hero doing it, which is what lets a source-role passive
+      // (subjectRole 'source') see a status another passive planted.
+      return applyStatus(state, round, targetId, def, { magnitude: effect.magnitude, duration: effect.duration, sourceCombatantId: ownerId });
     }
     case 'statDelta': {
       const newValue = (target.statModifiers[effect.stat] ?? 0) + effect.amount;
@@ -176,13 +198,29 @@ function resolveEffectOn(
   }
 }
 
+/** Marks a once-per-fight reaction spent on its owner's held instance (state.ts PassiveInstance.firedThisFight). No-ops if the owner or the instance is gone. */
+function markFired(state: CombatState, ownerId: string, passiveId: PassiveId): CombatState {
+  const owner = state.combatants[ownerId];
+  const instance = owner?.passives[passiveId];
+  if (!owner || !instance) return state;
+  return {
+    ...state,
+    combatants: {
+      ...state.combatants,
+      [ownerId]: { ...owner, passives: { ...owner.passives, [passiveId]: { ...instance, firedThisFight: true } } },
+    },
+  };
+}
+
 /**
  * Scans `events` (a checkpoint's own newly-produced slice, e.g. one round's
  * status ticks or one move's status-application results — resolveRound.ts's
  * call sites, not the whole round's accumulated log) for every combatant's
  * held passives whose `reactive.hook` matches an event's type and whose
  * condition matches. N held stacks of a match resolve the effect N
- * independent times (state.ts PassiveInstance doc comment).
+ * independent times (state.ts PassiveInstance doc comment) — except a
+ * `oncePerFight` reaction, which resolves once no matter how many stacks are
+ * held and then never again this combat.
  */
 export function resolvePassiveReactions(
   state: CombatState,
@@ -197,8 +235,6 @@ export function resolvePassiveReactions(
   const produced: CombatEvent[] = [];
 
   for (const event of events) {
-    const subjectId = subjectOf(event);
-    const subjectSide = subjectId ? working.combatants[subjectId]?.side : undefined;
     const context = event as unknown as TriggerContext;
 
     for (const ownerId of Object.keys(working.combatants)) {
@@ -208,9 +244,24 @@ export function resolvePassiveReactions(
       for (const instance of Object.values(owner.passives)) {
         const reactive = passiveDefs[instance.passiveId]?.reactive;
         if (!reactive || reactive.hook !== event.type) continue;
+        // Resolved per passive, not per event: which combatant the event is
+        // "about" depends on the perspective the condition asked for
+        // (content.ts subjectRole), so two passives can read the same event
+        // from opposite ends.
+        const subjectId = subjectOf(event, reactive.condition.subjectRole ?? 'target');
+        const subjectSide = subjectId ? working.combatants[subjectId]?.side : undefined;
         if (!matchesTrigger(reactive.condition, context, ownerId, owner.side, subjectId, subjectSide)) continue;
+        // "The first time ... during combat" (content.ts reactive.oncePerFight).
+        // Checked AFTER the match so a spent passive is skipped by the flag
+        // rather than by a condition it would still satisfy, and marked before
+        // the effect resolves so a reaction that re-enters this scan cannot
+        // fire itself a second time.
+        if (reactive.oncePerFight) {
+          if (working.combatants[ownerId]?.passives[instance.passiveId]?.firedThisFight) continue;
+          working = markFired(working, ownerId, instance.passiveId);
+        }
 
-        for (let i = 0; i < instance.stacks; i++) {
+        for (let i = 0; i < (reactive.oncePerFight ? 1 : instance.stacks); i++) {
           const resolved = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, ownerId, subjectId, reactive.effect, context);
           working = resolved.state;
           // Emitted even if resolveEffect no-op'd (e.g. target already

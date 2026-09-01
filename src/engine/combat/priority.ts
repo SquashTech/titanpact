@@ -7,7 +7,7 @@ import type { Action } from './actions';
 import type { CombatState } from '../state';
 import type { HeroLookup } from '../state';
 import { getEffectiveStat, hasStatus } from '../state';
-import type { FieldEffectDefinition, MoveDefinition } from '../content';
+import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition } from '../content';
 import { nextInt, type RngState } from '../rng/seededRng';
 
 /**
@@ -114,7 +114,16 @@ export function orderActions(
   actions: readonly Action[],
   moves: Record<string, MoveDefinition>,
   rngState: RngState,
-  fieldEffects: Record<string, FieldEffectDefinition> = {}
+  fieldEffects: Record<string, FieldEffectDefinition> = {},
+  /**
+   * Only for the conditional-passive stat hook (content.ts
+   * PassiveConditionalStatGrants — Bloodthirsty's +20 Speed). Turn order is
+   * read off effective Speed, so a passive that grants Speed has to be
+   * visible HERE or the number on the hero's card and the number that decides
+   * who moves first would disagree. Defaults to empty, which reproduces the
+   * previous behavior exactly.
+   */
+  passives: Record<string, PassiveDefinition> = {}
 ): { ordered: Action[]; nextRngState: RngState } {
   const activeFieldEffectId = state.activeFieldEffect?.fieldEffectId;
   const activeFieldEffectDef = activeFieldEffectId ? fieldEffects[activeFieldEffectId] : undefined;
@@ -142,7 +151,7 @@ export function orderActions(
     return {
       action,
       priority: actionPriority(state, action, moves, activeFieldEffectDef, rolledBrackets.get(action)),
-      speed: getEffectiveStat(hero, combatant, 'speed'),
+      speed: getEffectiveStat(hero, combatant, 'speed', { active: state.activeFieldEffect, defs: fieldEffects, board: { state, passives } }),
     };
   });
 

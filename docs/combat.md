@@ -1195,6 +1195,40 @@ mana is still available to spend. That is the same *shape* as Renew's stacked pa
 (below) and is intended for the same reason — a turn spent not attacking has to buy
 something worth the turn.
 
+### A stat grant that is CONDITIONAL on the board (2026-09-01, Fang)
+
+`PassiveDefinition.conditionalStatGrants` (engine/content.ts) is a flat stat grant
+that applies only while a board condition holds. First and only content:
+**Bloodthirsty** (Fang's Bloodhunt Evolution) — *+20 Attack and +20 Speed while an
+enemy is Bleeding.*
+
+It is resolved **live inside `getEffectiveStat`**, on every read, rather than applied
+once and revoked later. That placement is the whole decision, and the alternative was
+tried on paper first: a reactive `statDelta` off `StatusApplied` would have been wrong
+in four ordinary situations that all happen in a normal fight — the Bleeding enemy
+switches out, faints, is cleansed, or simply runs its Bleed down. A granted buff
+survives all four. There is no "un-apply" verb in the effect vocabulary, and adding one
+to serve this would have been the worse design.
+
+Three properties follow from it being a stat hook rather than an effect:
+
+- **It is stat pipeline, not damage pipeline.** Flat additive integers, multiples of
+  5/10, feeding the off/def ratio and Speed — never a multiplier term. The
+  two-pipeline separation is untouched.
+- **Every reader has to see it.** Speed decides turn order, so `orderActions`
+  (priority.ts) takes the passive catalog for exactly this reason; the fight screen
+  builds one `StatContext` and hands it to every card, dossier and damage forecast, so
+  the number displayed and the number rolled cannot disagree.
+- **`getMaxHp`/`getMaxMana` deliberately do NOT pass a board.** A conditional grant
+  naming `hp` or `manaPool` would swing a hero's maximum mid-fight, which is a
+  different and much messier mechanic. No content does it; if some should, that is a
+  conversation.
+
+The condition vocabulary is deliberately one member wide (`requiresEnemyStatus`, read
+against **active** enemies only — a benched opponent has not been committed to the
+fight). Grow it when content needs a second condition, the same discipline
+`PassiveHook` and `StatusDefinition.triggerTypes` follow.
+
 ### The floor: no effective stat below 1 (LOCKED — 2026-08-30 designer call)
 
 Raised by the Mind slate, but **not caused by it**. `getEffectiveStat` (state.ts) had

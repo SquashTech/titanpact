@@ -12,14 +12,16 @@
 
 import type { CombatState, HeroLookup } from '../state';
 import { getEffectiveStat, getMaxMana } from '../state';
-import type { FieldEffectDefinition } from '../content';
+import type { FieldEffectDefinition, PassiveDefinition } from '../content';
 import type { ManaRegenTickedEvent } from '../events';
 
 export function applyManaRegen(
   state: CombatState,
   round: number,
   heroes: HeroLookup,
-  fieldEffects: Record<string, FieldEffectDefinition>
+  fieldEffects: Record<string, FieldEffectDefinition>,
+  /** Same reason priority.ts takes it: a conditional passive (content.ts PassiveConditionalStatGrants) could name mpRegen, and every reader of an effective stat must agree on the number. No authored passive does today. */
+  passives: Record<string, PassiveDefinition> = {}
 ): { state: CombatState; events: ManaRegenTickedEvent[] } {
   const events: ManaRegenTickedEvent[] = [];
   const combatants = { ...state.combatants };
@@ -33,7 +35,7 @@ export function applyManaRegen(
     const hero = heroes[combatant.heroId];
     const maxMana = getMaxMana(hero, combatant);
     const previousMana = combatant.currentMana;
-    const regen = Math.round(getEffectiveStat(hero, combatant, 'mpRegen') * mpRegenMultiplier);
+    const regen = Math.round(getEffectiveStat(hero, combatant, 'mpRegen', { active: state.activeFieldEffect, defs: fieldEffects, board: { state, passives } }) * mpRegenMultiplier);
     // Clamps a GAIN to the pool, but never pulls an already-overflowed
     // combatant back down to it (state.ts Combatant.currentMana, docs/mana.md
     // "Overflow"). A plain Math.min would have made every Arcane mana grant

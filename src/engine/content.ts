@@ -322,6 +322,26 @@ export type PassiveRelation = 'self' | 'ally' | 'enemy';
  */
 export interface PassiveTriggerCondition {
   relativeTo: PassiveRelation;
+  /**
+   * WHICH combatant on the event `relativeTo` is measured against — the
+   * event's perspective, not its content.
+   *
+   * - `'target'` (the default, and what every passive authored before this
+   *   field existed gets) is the DEFENDER perspective: the one the event
+   *   happened TO. `relativeTo: 'enemy'` then reads "when an enemy is hit /
+   *   is afflicted".
+   * - `'source'` is the ACTOR perspective: the one who did it.
+   *   `relativeTo: 'self'` then reads "when I hit / when I afflict", which is
+   *   the direction Firestarter needs (src/data/passives.ts) and the one
+   *   subjectOf's doc comment used to name as unimplemented.
+   *
+   * Only meaningful on hooks whose event carries a source (`DamageDealt`,
+   * `StatusApplied`). On the others — and on a StatusApplied with no actor
+   * behind it — the subject resolves to undefined and the passive simply
+   * never fires, which is the correct failure for "when I do X" on an event
+   * nobody did.
+   */
+  subjectRole?: 'target' | 'source';
   /** Every key must equal the triggering event's same-named field (compared as a string). e.g. { statusId: 'Bleed', kind: 'damage' } for a Bleed-tick hook. */
   eventFieldEquals?: Partial<Record<string, string>>;
 }
@@ -366,6 +386,32 @@ export interface PassiveDamageModifier {
 }
 
 /**
+ * A stat grant that applies only while a BOARD CONDITION holds — read live off
+ * state on every stat read (state.ts getEffectiveStat) rather than folded into
+ * baselineStatModifiers at fight-build time, so it switches on and off as the
+ * board changes and nothing ever has to remember to take it away again.
+ *
+ * This is the third shape of "stat grant" and the only conditional one. It is
+ * squarely in the STAT pipeline (CLAUDE.md's two-pipeline separation): flat
+ * additive integers, multiples of 5/10, contributing to the off/def ratio and
+ * to Speed. It is NOT a damage modifier and must never be authored as one.
+ *
+ * Deliberately narrow for now — one condition, "an active enemy carries this
+ * status". Grow the union when content actually needs a second condition, the
+ * same discipline PassiveHook and StatusDefinition.triggerTypes follow.
+ */
+export interface PassiveConditionalStatGrants {
+  /**
+   * Holds while ANY living, ACTIVE enemy of the passive's owner carries this
+   * status. Active-only for the reason PassiveEffectTarget 'activeEnemies'
+   * gives: reading the bench would let a hero be buffed by a condition on an
+   * opponent that has not been committed to the fight yet.
+   */
+  requiresEnemyStatus: StatusId;
+  statGrants: Partial<Record<StatKey, number>>;
+}
+
+/**
  * A Passive may carry a reactive effect, a damage modifier, flat stat grants,
  * or any combination — a PassiveDefinition with none of the three is invalid
  * content (nothing for it to do). `statGrants` is the always-on shape (no
@@ -381,17 +427,32 @@ export interface PassiveDefinition {
   name: string;
   /** Player-facing, required — readability is the whole point (CLAUDE.md "visible, readable... to the player"). */
   description: string;
-  reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect };
+  /**
+   * `oncePerFight` caps the whole reaction at one firing per combat, not one
+   * per stack: a second stack of a once-per-fight passive buys nothing, which
+   * is the honest reading of "the first time" and the reason it is a flag on
+   * the reaction rather than a per-stack counter. Tracked on the held instance
+   * (state.ts PassiveInstance.firedThisFight), so it resets with the rest of
+   * combat state at every map node like everything else.
+   */
+  reactive?: { hook: PassiveHook; condition: PassiveTriggerCondition; effect: PassiveEffect; oncePerFight?: boolean };
   damageModifier?: PassiveDamageModifier;
   /** Flat additive grants (CLAUDE.md "Stat modifiers are flat additive integers, multiples of 5 or 10") — see isValidPassiveDefinition. */
   statGrants?: Partial<Record<StatKey, number>>;
+  /** The conditional counterpart of `statGrants` — on only while the board says so (Bloodthirsty, src/data/passives.ts). */
+  conditionalStatGrants?: PassiveConditionalStatGrants;
 }
 
-/** Same discipline as isValidEquipmentDefinition/isValidRelicDefinition: every statGrants entry must be a valid flat grant, and the passive must actually do something. */
+/** Same discipline as isValidEquipmentDefinition/isValidRelicDefinition: every statGrants entry (conditional or not) must be a valid flat grant, and the passive must actually do something. */
 export function isValidPassiveDefinition(passive: PassiveDefinition): boolean {
-  const hasEffect = passive.reactive !== undefined || passive.damageModifier !== undefined || passive.statGrants !== undefined;
+  const hasEffect =
+    passive.reactive !== undefined ||
+    passive.damageModifier !== undefined ||
+    passive.statGrants !== undefined ||
+    passive.conditionalStatGrants !== undefined;
   if (!hasEffect) return false;
-  return Object.values(passive.statGrants ?? {}).every((amount) => amount === undefined || isValidFlatStatGrant(amount));
+  const grants = [...Object.values(passive.statGrants ?? {}), ...Object.values(passive.conditionalStatGrants?.statGrants ?? {})];
+  return grants.every((amount) => amount === undefined || isValidFlatStatGrant(amount));
 }
 
 /** Opaque field-effect-catalog key. Concrete field effects are DATA — see src/data/fieldEffects.ts. */

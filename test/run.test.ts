@@ -312,6 +312,81 @@ test('progression: an Evolution path with a non-multiple-of-5 stat grant is reje
   assert.throws(() => chooseEvolutionPath(run, badTable, heroes, 'cinderKnight', 'bad'), ProgressionError);
 });
 
+// --- learnableMoveIds: "Evolution steers future level-up offerings" --------
+// docs/leveling-and-ranks.md, LOCKED 2026-08-16 and implemented 2026-09-01.
+// Crimson's Cinderveil is the first path that carries it.
+
+test('progression: a graft path adds its learnableMoveIds to the level-up pool without granting them', () => {
+  let run = seedRoster(['crimson']);
+  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
+  run = levelUpTimes(run, 'crimson', EVOLUTION_LEVEL - 1);
+
+  const before = levelUpMovePool(progressionTable, moves, { ...run.roster[0], level: 99 });
+  assert.ok(!before.includes('soulRend'), 'Spirit moves must not be offerable before the graft');
+
+  const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-defensive');
+  const after = levelUpMovePool(progressionTable, moves, { ...next.roster[0], level: 99 });
+
+  for (const id of ['drain', 'secondWind', 'soulRend', 'banish']) {
+    assert.ok(after.includes(id), `${id} should be learnable after Cinderveil`);
+    assert.ok(!next.roster[0].unlockedMoveIds.includes(id), `${id} should be LEARNABLE, not granted`);
+  }
+  // The Fire pool is widened, not replaced — the retained primary keeps being
+  // offered alongside the grafted type.
+  assert.ok(after.includes('inferno'));
+  assert.strictEqual(next.roster[0].unlockedMoveIds.length, heroes.crimson.moveIds.length);
+});
+
+test('progression: an untaken path\'s learnableMoveIds stay out of the pool, and tier gating still applies', () => {
+  let run = seedRoster(['crimson']);
+  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
+  run = levelUpTimes(run, 'crimson', EVOLUTION_LEVEL - 1);
+
+  const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-utility');
+  const atEvolutionLevel = levelUpMovePool(progressionTable, moves, next.roster[0]);
+
+  assert.ok(atEvolutionLevel.includes('manaTap')); // Early — reachable the moment the graft lands
+  assert.ok(!atEvolutionLevel.includes('cataclysm')); // Late — still gated until level 7
+  assert.ok(!atEvolutionLevel.includes('soulRend')); // Cinderveil's, and Cinderveil was not taken
+});
+
+test('progression: a path that grants a Passive records it on the entry (Crimson\'s Pyroclasm)', () => {
+  let run = seedRoster(['crimson']);
+  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
+  run = levelUpTimes(run, 'crimson', EVOLUTION_LEVEL - 1);
+
+  const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-offensive');
+  assert.deepStrictEqual(next.roster[0].evolutionPassiveGrants, ['firestarter']);
+  assert.ok(!next.roster[0].evolutionTypeGraft); // the mono path stays mono
+  assert.strictEqual(next.roster[0].evolutionStatGrants.defense, 10);
+  assert.strictEqual(next.roster[0].evolutionStatGrants.manaPool, 10);
+});
+
+test('progression: Warhowl inverts Fang\'s attacking stat — a NEGATIVE Evolution grant is legal and lands', () => {
+  let run = seedRoster(['packAlpha']);
+  run = { ...run, levelUpPool: EVOLUTION_LEVEL - 1 };
+  run = levelUpTimes(run, 'packAlpha', EVOLUTION_LEVEL - 1);
+
+  const next = chooseEvolutionPath(run, progressionTable, heroes, 'packAlpha', 'packAlpha-utility');
+  const grants = next.roster[0].evolutionStatGrants;
+  assert.strictEqual(grants.attack, -30);
+  assert.strictEqual(grants.intelligence, 60);
+  assert.strictEqual(grants.manaPool, 20);
+
+  // The point of the path: Fang stops being a physical body.
+  const base = heroes.packAlpha.baseStats;
+  assert.ok(base.attack > base.intelligence, 'base Fang attacks with Attack');
+  assert.ok(base.intelligence + grants.intelligence! > base.attack + grants.attack!, 'Warhowl Fang attacks with Intelligence');
+
+  // Animal Spirit is Beast's one magical row, deliberately absent from Fang's
+  // authored pool because base Fang is Intelligence 20. Warhowl is what makes
+  // it reachable — and being innate Beast, it arrives with STAB.
+  const pool = levelUpMovePool(progressionTable, moves, { ...next.roster[0], level: 99 });
+  assert.ok(!progressionTable.moveTiers.packAlpha.includes('animalSpirit'));
+  assert.ok(pool.includes('animalSpirit'));
+  assert.strictEqual(moves.animalSpirit.type, 'Beast');
+});
+
 // --- Type-graft Evolution paths (docs/progression.md "Type-graft paths") ---
 
 test('progression: a type-graft path grants a second type without touching the innate HeroDefinition', () => {

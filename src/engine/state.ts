@@ -4,7 +4,7 @@
 // survives a run) are separate, longer-lived tiers that build on this one —
 // out of scope for this engine slice. Do not fold them in here.
 
-import type { FieldEffectDefinition, FieldEffectId, HeroDefinition, MoveDefinition, PassiveId, StatKey, StatLine, StatusId, TargetMode, TypeId } from './content';
+import type { FieldEffectDefinition, FieldEffectId, HeroDefinition, MoveDefinition, PassiveDefinition, PassiveId, StatKey, StatLine, StatusId, TargetMode, TypeId } from './content';
 import { nextRange, type RngState } from './rng/seededRng';
 
 export type Side = 'A' | 'B';
@@ -38,6 +38,18 @@ export interface StatusInstance {
 export interface PassiveInstance {
   passiveId: PassiveId;
   stacks: number;
+  /**
+   * Set once a `reactive.oncePerFight` passive has fired (content.ts
+   * PassiveDefinition, passiveEngine.ts) — the only field on a held passive
+   * that changes mid-fight. Absent/false on every other passive, which is why
+   * it is optional rather than seeded at fight-build time: buildCombatState
+   * has no opinion about it, and a passive that never sets `oncePerFight`
+   * never reads it.
+   *
+   * It is combat state, not run state, so it resets with the fight — "the
+   * first time during combat" means the first time in THIS combat.
+   */
+  firedThisFight?: boolean;
 }
 
 /**
@@ -140,7 +152,7 @@ export interface Combatant {
    * seeds it.
    */
   damageTakenSinceLastTurn: number;
-  /** Held Passives, keyed by PassiveId — populated once at fight-build time from equipment/relic/Evolution grants (src/run/passives.ts, buildCombatState.ts placeEntry). Unlike statuses, never changes mid-fight in this engine slice — nothing currently grants or removes a Passive during combat. */
+  /** Held Passives, keyed by PassiveId — populated once at fight-build time from equipment/relic/Evolution grants (src/run/passives.ts, buildCombatState.ts placeEntry). The SET never changes mid-fight: nothing grants or removes a Passive during combat. The only thing that moves is a once-per-fight reaction marking itself spent (PassiveInstance.firedThisFight). */
   passives: Record<PassiveId, PassiveInstance>;
   fainted: boolean;
 }
@@ -413,10 +425,47 @@ export function activePartnerTypes(
   return hero ? effectiveTypes(hero, partner) : null;
 }
 
-/** Field Effect context threaded into getEffectiveStat/getCombatStatDelta only by callers that need a Field-Effect-driven stat hook (currently just Verdant Earth's statBonusEqualToStatusMagnitude) — omit entirely and both functions behave exactly as before. */
-export interface FieldEffectContext {
+/**
+ * Everything getEffectiveStat needs BEYOND the hero and the combatant itself —
+ * the two stat hooks that read the wider board rather than the combatant's own
+ * record. Every field is optional to supply and omitting the whole context
+ * makes both functions behave exactly as they did before either hook existed.
+ *
+ * - `active`/`defs` — the Field Effect (Verdant Earth's
+ *   statBonusEqualToStatusMagnitude).
+ * - `board` — the opposing side, for a conditional passive
+ *   (content.ts PassiveConditionalStatGrants — Bloodthirsty).
+ *
+ * `board` carries the whole CombatState rather than a precomputed "is there a
+ * Bleeding enemy" flag on purpose: one context object is shared between the
+ * ATTACKER and the DEFENDER inside resolveStatRatio, and "enemy" means the
+ * opposite thing for each. Resolving it per combatant, off `combatant.side`,
+ * is the only reading that is correct for both.
+ */
+export interface StatContext {
   active: ActiveFieldEffect | null;
   defs: Record<string, FieldEffectDefinition>;
+  board?: { state: CombatState; passives: Record<PassiveId, PassiveDefinition> };
+}
+
+/** The name this context had when the Field Effect hook was its only content (2026-08-30). Kept so existing call sites and imports read unchanged; prefer StatContext in new code. */
+export type FieldEffectContext = StatContext;
+
+/**
+ * Whether any living, currently-ACTIVE combatant on the side opposing
+ * `side` carries `statusId` — the one board question
+ * PassiveConditionalStatGrants asks today.
+ *
+ * Active-only and living-only for the reasons PassiveEffectTarget
+ * 'activeEnemies' already gives: a benched opponent has not been committed to
+ * the fight, and a fainted one answers like an empty slot.
+ */
+function anyActiveEnemyHasStatus(state: CombatState, side: Side, statusId: StatusId): boolean {
+  const enemySide: Side = side === 'A' ? 'B' : 'A';
+  return state.active[enemySide].some((id) => {
+    const enemy = id ? state.combatants[id] : undefined;
+    return !!enemy && !enemy.fainted && hasStatus(enemy, statusId);
+  });
 }
 
 export function getEffectiveStat(
@@ -445,6 +494,24 @@ export function getEffectiveStat(
     : undefined;
   if (statusBonus?.stats.includes(stat)) {
     raw += statusMagnitude(combatant, statusBonus.statusId);
+  }
+
+  // Conditional passive grants (content.ts PassiveConditionalStatGrants —
+  // Bloodthirsty). Read live, every call, off the board as it stands: the
+  // bonus appears the moment a Bleed lands on an active enemy and is gone the
+  // moment that enemy is switched out, faints, or the Bleed runs out. Nothing
+  // has to remember to revoke it, which is the whole reason this is a stat
+  // hook rather than a reactive statDelta.
+  //
+  // N stacks resolve N times, same discipline as every other passive shape.
+  if (fieldEffectCtx?.board) {
+    for (const instance of Object.values(combatant.passives)) {
+      const conditional = fieldEffectCtx.board.passives[instance.passiveId]?.conditionalStatGrants;
+      const amount = conditional?.statGrants[stat];
+      if (!conditional || !amount) continue;
+      if (!anyActiveEnemyHasStatus(fieldEffectCtx.board.state, combatant.side, conditional.requiresEnemyStatus)) continue;
+      raw += amount * instance.stacks;
+    }
   }
 
   // FLOOR OF 1 (2026-08-30 designer call, raised by the Mind slate). Every

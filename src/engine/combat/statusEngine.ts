@@ -61,6 +61,8 @@ export function consumeStatus(
 export interface StatusApplyParams {
   magnitude?: number;
   duration?: number;
+  /** Who is applying it, when there is an actor to name — passed straight through onto the StatusApplied event (events.ts StatusAppliedEvent.sourceCombatantId), never read by this module. */
+  sourceCombatantId?: string;
 }
 
 /**
@@ -112,7 +114,10 @@ export function applyStatus(
   }
 
   const nextState = setStatus(state, combatantId, def.id, { statusId: def.id, magnitude, duration });
-  return { state: nextState, events: [{ type: 'StatusApplied', round, combatantId, statusId: def.id, magnitude, duration }] };
+  return {
+    state: nextState,
+    events: [{ type: 'StatusApplied', round, combatantId, sourceCombatantId: params.sourceCombatantId, statusId: def.id, magnitude, duration }],
+  };
 }
 
 /**

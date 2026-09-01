@@ -1012,6 +1012,16 @@ export function FightScreen({
     };
   }, []);
 
+  /**
+   * The one stat-read context this screen hands to everything that displays a
+   * number (state.ts StatContext). Built here, from the live `combat`, rather
+   * than per component: every card, dossier and forecast has to agree with
+   * what resolveRound will actually roll, and the two board-reading stat hooks
+   * — Verdant Earth's Renew bonus and a conditional passive's board condition
+   * — both change between rounds.
+   */
+  const statCtx = { active: combat.activeFieldEffect, defs: fieldEffects, board: { state: combat, passives } };
+
   const playerActiveAlive = aliveActiveIdsOn(combat, PLAYER_SIDE);
   const enemyActiveAlive = aliveActiveIdsOn(combat, AI_SIDE);
   const playerBench = combat.bench[PLAYER_SIDE];
@@ -1490,7 +1500,7 @@ export function FightScreen({
           onSelectTarget={() => handleTargetClick(id)}
           onInspect={() => setInspecting(id)}
           popup={popups[id]}
-          activeFieldEffect={combat.activeFieldEffect}
+          statCtx={statCtx}
         />
       );
     }
@@ -1700,7 +1710,7 @@ export function FightScreen({
                         onSelectTarget={() => setReplacementPick(benchId)}
                         onInspect={() => setInspecting(benchId)}
                         popup={popups[benchId]}
-                        activeFieldEffect={combat.activeFieldEffect}
+                        statCtx={statCtx}
                       />
                     );
                   })}
@@ -1904,10 +1914,7 @@ export function FightScreen({
                         }
                         liveTargetMode={resolveTargetMode(combat, move)}
                         caster={{
-                          wisdom: getEffectiveStat(allCombatants[combatant.heroId], combatant, 'wisdom', {
-                            active: combat.activeFieldEffect,
-                            defs: fieldEffects,
-                          }),
+                          wisdom: getEffectiveStat(allCombatants[combatant.heroId], combatant, 'wisdom', statCtx),
                           types: effectiveTypes(allCombatants[combatant.heroId], combatant),
                         }}
                         matchups={
@@ -2233,7 +2240,7 @@ export function FightScreen({
               combatant={combatant}
               rosterEntry={rosterEntry}
               equipmentLookup={equipment}
-              activeFieldEffect={combat.activeFieldEffect}
+              statCtx={statCtx}
               onClose={() => setInspecting(null)}
             />
           );

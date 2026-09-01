@@ -14243,6 +14243,42 @@ textarea,
   font-style: italic;
 }
 
+/* A granted Passive is the loudest thing on a mono path, so its chip is the
+   only one in the row that carries the gold — it has to win the glance
+   against a graft's type badge sitting on the card beside it. */
+.evolution-path-passive {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* A stat this path SPENDS rather than grants (Warhowl's -30 Attack). Reads as
+   a cost at a glance so a refocus path cannot be mistaken for a pure gain. */
+.evolution-path-grant-loss {
+  border-color: var(--enemy);
+  color: var(--enemy);
+}
+
+/* The two prose lines under the chip row. Both are the "what this actually
+   does" half of a permanent choice, so they share the description's size and
+   dimness rather than competing with it. */
+.evolution-path-learnable,
+.evolution-path-passive-text {
+  margin: 4px 0 0;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--text-dim);
+  text-align: left;
+}
+
+.evolution-path-learnable-label {
+  margin-right: 5px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
 .evolution-path-button.evolution-offensive {
   border-left-color: var(--enemy);
 }

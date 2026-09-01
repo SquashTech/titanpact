@@ -124,7 +124,84 @@ const eventPassives: Record<string, PassiveDefinition> = {
   },
 };
 
-export const passives: Record<string, PassiveDefinition> = { ...fixturePassives, ...equipmentPassives, ...eventPassives, ...classes };
+/**
+ * Passives granted by an EVOLUTION path (src/data/progression.ts
+ * `grantsPassiveIds`) — their own group for the same reason the equipment and
+ * event ones have theirs: where a passive comes from is the first thing you
+ * want to know when you meet one.
+ *
+ * Sanguine (Lucius's Evolution) is the exception that stayed above, in the
+ * fixture block, because it is fixture content that a path happens to hand
+ * out. Firestarter is the first passive authored FOR a path.
+ */
+const evolutionPassives: Record<string, PassiveDefinition> = {
+  firestarter: {
+    id: 'firestarter',
+    name: 'Firestarter',
+    description: 'The first time this hero afflicts Burn during combat, set Scorched Land.',
+    /*
+     * Two firsts, both of which the contract had named as gaps rather than
+     * decisions:
+     *
+     * - `subjectRole: 'source'` (engine/content.ts) is the ACTOR perspective.
+     *   `relativeTo: 'self'` on the default target role would have read "when
+     *   I am burned", which is the opposite passive; `relativeTo: 'enemy'`
+     *   would have fired off a Burn the PARTNER landed, handing this hero's
+     *   identity to whoever it was drafted beside. Source + self is the only
+     *   reading of "this hero afflicts" that survives a doubles board.
+     *
+     * - `oncePerFight` is what makes it a threshold rather than an engine.
+     *   Without it every subsequent Burn would re-set the field and refresh
+     *   its 5-round clock, so Scorched Land would simply never expire while
+     *   Crimson kept casting — which is a different, much stronger card than
+     *   the one written. Firing once means the field is a WINDOW the player
+     *   has to use: it opens on the first Burn and closes five rounds later
+     *   whatever else happens.
+     *
+     * Note it fires on ANY Burn this hero applies, including Ember's 10%
+     * rider and (were it ever holding one) a self-Burn — "afflicts Burn" is
+     * deliberately not narrowed to enemies, because the interesting decision
+     * is WHEN to spend the trigger, not on whom.
+     */
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Burn' } },
+      effect: { kind: 'setFieldEffect', fieldEffectId: 'scorchedLand' },
+      oncePerFight: true,
+    },
+  },
+  bloodthirsty: {
+    id: 'bloodthirsty',
+    name: 'Bloodthirsty',
+    description: 'This hero has +20 Attack and +20 Speed while an enemy is Bleeding.',
+    /*
+     * The first CONDITIONAL stat grant (engine/content.ts
+     * PassiveConditionalStatGrants), and the shape matters more than the
+     * numbers: it is read live at every stat read rather than applied and
+     * later revoked. The alternative — a reactive statDelta off StatusApplied
+     * — would have been wrong in four ordinary situations, all of which happen
+     * in a normal fight: the Bleeding enemy switches out, faints, is cleansed,
+     * or simply runs its Bleed down. A granted buff survives all four; a
+     * condition does not. There is no "un-apply" verb in the effect vocabulary
+     * and adding one would have been the worse design.
+     *
+     * It reads ACTIVE enemies only, so Fang cannot bank a Bleed on a benched
+     * hero and keep the buff while a fresh enemy stands in front of it.
+     *
+     * Attack AND Speed together on a body already at 90/80 is the largest
+     * conditional swing in the game — deliberately, because Fang has to LAND
+     * the Bleed first and Beast's Bleed sources are Claw (20% chance) and
+     * Lacerate. The passive is the reward for the type's opening play, not a
+     * free stat line, and it turns off the moment the target does.
+     */
+    conditionalStatGrants: {
+      requiresEnemyStatus: 'Bleed',
+      statGrants: { attack: 20, speed: 20 },
+    },
+  },
+};
+
+export const passives: Record<string, PassiveDefinition> = { ...fixturePassives, ...equipmentPassives, ...eventPassives, ...evolutionPassives, ...classes };
 
 /**
  * What a passive is WORTH when an item grants it, in the same points
