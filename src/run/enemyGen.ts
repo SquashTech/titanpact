@@ -325,6 +325,53 @@ export function generateEncounter(
 }
 
 /**
+ * Appends one fixed enemy to an already-generated encounter's BENCH, so it is
+ * the last combatant to reach the field — a location's faction champion
+ * reinforcing its Guardian (`LocationDefinition.guardianFinalEnemyId`,
+ * docs/locations.md; Wild's Edge's Goblin Lord is the only one today).
+ *
+ * On the bench and not in an active slot, because "final" is the entire
+ * point. The AI never switches voluntarily (FightScreen `pickAiAction` only
+ * pivots on a `switchesUserOut` move, which nothing here carries), so the one
+ * way this combatant reaches the field is the forced replacement that follows
+ * an enemy KO — it arrives when the fight is already going the player's way,
+ * which is what makes it land.
+ *
+ * Takes the encounter rather than being an option on `generateEncounter`
+ * because the two draw from DIFFERENT POOLS: the boss's own cast is
+ * recruitable hero content and this is not, so folding them into one
+ * `heroPool` would let `biasedPick` roll the champion into an ordinary slot —
+ * and, worse, make a beaten Goblin Lord look recruitable to
+ * `isRecruitable` (which tests pool membership). Kept apart, he can be
+ * neither drawn nor claimed.
+ *
+ * `scaling` is applied the same way `generateGoblinChiefEncounter` applies it
+ * to the Chief, so this generalizes to a later act's champion untouched; at
+ * Wild's Edge, which is always Act 1, it is a no-op. Unknown ids return the
+ * encounter unchanged: a content typo should cost the entrance, not the fight.
+ */
+export function appendFinalEnemy(
+  encounter: Encounter,
+  enemyId: string,
+  enemyPool: HeroLookup,
+  seed: number,
+  scaling: ActScaling = NO_SCALING
+): Encounter {
+  const definition = enemyPool[enemyId];
+  if (!definition) return encounter;
+  // rosterId === enemyId, matching what generateEncounter does for its own
+  // picks. A collision would mean the boss pool and the enemy pool share an
+  // id, which they do not by construction (data/content.ts) — bail rather
+  // than silently produce two roster entries answering to one id.
+  if (encounter.run.roster.some((r) => r.rosterId === enemyId)) return encounter;
+
+  const { bonus } = actStatBonus(createRng(seed), scaling.statSteps);
+  const entry = createRosterEntry(enemyId, enemyId, definition.moveIds);
+  const run = addRosterEntry(encounter.run, { ...entry, level: scaling.level, evolutionStatGrants: bonus });
+  return { run, squad: { ...encounter.squad, benchIds: [...encounter.squad.benchIds, enemyId] } };
+}
+
+/**
  * The "Monsters" battle node (map row 4, next to Elite — docs/run-loop.md
  * §2 "battle") — Goblin Chief plus 3 random basic Goblins, per user
  * direction: the Chief is always present (not randomly drawn like

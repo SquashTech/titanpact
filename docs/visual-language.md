@@ -1575,6 +1575,72 @@ table, and the seating flare frozen mid-sweep. The short-viewport squash and
 the clipped 25px title were both found this way. `npm run typecheck`,
 `npm run typecheck:view` and `npm test` (581 passing) all pass.
 
+## Thirteenth pass — a named enemy takes the field (2026-09-01)
+
+The ask, alongside the Goblin Lord content itself: *have some battlefield effect
+play when he enters to denote that a powerful enemy has just entered play. Maybe
+even the music could slow by 20% or something to lower the pitch and give the
+battle an epic effect. That is experimental though and we may walk that back.*
+
+### What was wrong
+
+Nothing was broken. What was missing is that the engine has exactly one way of
+saying a combatant arrived — a `SwitchedIn` event — and the view had exactly one
+way of showing it: `"X switches in!"` in the console, the `switchIn` whoosh, and
+a card appearing. That is the right treatment for the fourth bench cycle of an
+ordinary fight, and it is the *only* treatment available, so the Guardian
+fight's reinforcement would have walked on looking like a routine pivot.
+
+### What replaced it
+
+A **dramatic entrance**: one flag, four answers.
+
+- `view/combat/entrances.ts` — a set of hero ids, keyed exactly like
+  `heroArt.ts`. Presentation data in the presentation layer; the engine never
+  learns this exists, which is what CLAUDE.md's "never bake timing, animation, or
+  sound into the engine" requires and also what makes an entrance addable or
+  removable without a number in a fight changing.
+- `buildBeats.ts` — a `SwitchedIn` for one of those ids gets its own sentence
+  ("Something comes out of the treeline" / **Goblin Lord** / "The ground goes
+  quiet."), the `ko` headline red rather than the switch-in `buff` green, and a
+  `dramaticEntrance: true` flag on the beat.
+- `styles.css` — a veil clipped to `.battlefield`: a red bloom on the enemy row,
+  dusk closing from the top, an expanding ring, and a four-step lurch on
+  `.team-row.enemy`. **Not** a full-screen overlay, and **not** a transform on
+  `.battlefield` itself: the arena is full-bleed against the shell's negative
+  margins, so translating it opens a sliver of page background at the edges. The
+  lurch goes on the row, which is inside the clip and is also the thing the
+  player should be looking at.
+- `sounds.ts` / `music.ts` — a slow falling horn (`entrance.dread`), and
+  ⚠️ **experimentally**, the act's track dropped to `playbackRate` 0.8 for the
+  rest of the fight. Web Audio has no time-stretch, so speed and pitch move
+  together: the score goes about three semitones flat and stays there.
+  `FightScreen` restores 1 on unmount, which is what scopes it to the fight —
+  the track belongs to the act and would otherwise carry the drop out onto the
+  map. One constant, `DREAD_MUSIC_RATE`, walks it back.
+
+### Verification
+
+The standard method (ninth pass onward): a throwaway `lordcheck.html` +
+`src/app/lordcheck.tsx` mounting the real `FightScreen` against a real
+`appendFinalEnemy`-ed boss encounter, with the enemy pair given `hp: -9999` so
+the first exchange KOs one and the forced replacement fires on round 1. Both
+deleted before committing.
+
+Two things were found and fixed by looking at it. The shockwave ring was first
+authored at 60% width scaling to 2.6 — a ~340px final radius on a ~430px arena,
+which read not as a shockwave but as a stray arc sweeping across the player's own
+team. It is 26%/2.2 now, sized to die on the horizon. And the veil held full
+opacity to 55% of its run, which washed out the portrait for the better part of a
+second — the beat exists to make the player look at that card. It comes off the
+peak at 32% now.
+
+The music path was confirmed live rather than reasoned about: the harness
+exposed `setTrack`/`setMusicRate`/`musicDebug` on `window`, and with
+`wildsEdge` actually sounding (`contextState: "running"`) the rate moved
+1 → 0.8 → 1 through the real AudioParam ramp. `npm run typecheck`,
+`npm run typecheck:view` and `npm test` (594 passing) all pass.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.

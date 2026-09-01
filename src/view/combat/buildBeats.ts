@@ -21,6 +21,7 @@ import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
 import { passiveEmoji } from '../shared/passiveIcons';
 import { getTypeColor } from './typeColors';
+import { hasDramaticEntrance } from './entrances';
 
 export interface BeatPopup {
   combatantId: string;
@@ -92,6 +93,18 @@ export interface BeatFlavor {
   bannerMeta?: string;
   /** Extra class for the bannerMeta span, so a meta line that isn't a mana cost doesn't inherit .combat-banner-meta's mana blue. */
   bannerMetaClass?: string;
+  /**
+   * This beat is a DRAMATIC ENTRANCE (entrances.ts) — the only flag here that
+   * asks for more than words. FightScreen answers it with a full-field veil
+   * and a shake, beatSfx.ts with the horn instead of the usual switch-in
+   * whoosh, and music.ts by dropping the track's playback rate for the rest of
+   * the fight.
+   *
+   * A flag rather than three separate ones because it is one authored moment,
+   * not three effects that happen to coincide: a future entrance should be
+   * able to opt in by adding an id to entrances.ts and nothing else.
+   */
+  dramaticEntrance?: true;
 }
 
 export interface Beat extends BeatFlavor {
@@ -332,14 +345,32 @@ export function buildBeats(
         break;
       }
 
-      case 'SwitchedIn':
-        push([e], `${name(e.inCombatantId)} switches in!`, [], {
+      case 'SwitchedIn': {
+        const inName = name(e.inCombatantId);
+        // A named arrival (entrances.ts) is not a switch — it is the fight
+        // changing shape — so it gets its own sentence, the 'ko' headline
+        // colour (the console's alarm red, already the KO beat's), and the
+        // flag FightScreen/beatSfx/music read to make the field answer.
+        if (hasDramaticEntrance(combatants[e.inCombatantId]?.heroId)) {
+          push([e], `${inName} takes the field!`, [], {
+            bannerLead: 'Something comes out of the treeline',
+            bannerFocus: inName,
+            bannerFocusKind: 'ko',
+            bannerMeta: 'The ground goes quiet.',
+            bannerMetaClass: 'banner-meta-rules',
+            dramaticEntrance: true,
+          });
+          i++;
+          break;
+        }
+        push([e], `${inName} switches in!`, [], {
           bannerLead: 'Switching in',
-          bannerFocus: name(e.inCombatantId),
+          bannerFocus: inName,
           bannerFocusKind: 'buff',
         });
         i++;
         break;
+      }
 
       case 'Rested': {
         const applied: CombatEvent[] = [e];

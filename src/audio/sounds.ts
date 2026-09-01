@@ -52,7 +52,8 @@ export type SfxId =
   | 'faint'
   | 'mana'
   | 'switchIn'
-  | 'field';
+  | 'field'
+  | 'entrance.dread';
 
 export const sounds: Record<SfxId, SoundSpec> = {
   /**
@@ -629,6 +630,43 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'sawtooth', freq: 110, freqEnd: 232, detune: 22, gain: 0.3, attack: 0.12, decay: 0.8, filter: { type: 'lowpass', freq: 300, freqEnd: 2600, q: 2.4 } },
       { wave: 'noise', gain: 0.24, attack: 0.18, decay: 0.62, filter: { type: 'bandpass', freq: 600, freqEnd: 3000, q: 0.8 } },
       { wave: 'sine', freq: 660, freqEnd: 990, gain: 0.12, attack: 0.2, decay: 0.5, delay: 0.16 },
+    ],
+  },
+
+  /**
+   * A named enemy walking onto the field (view/combat/entrances.ts). The
+   * biggest and longest sound in the table, and the only one that fires at
+   * most ONCE in a run — the Goblin Lord's arrival at Wild's Edge — which is
+   * the entire licence for its size. If a second thing ever plays it, it is
+   * too big.
+   *
+   * Built downward where `field` (the other slow sound above) is built upward:
+   * every sweep here falls, because this marks something arriving rather than
+   * a state turning on. Three layers, in the order the ear reads them — the
+   * step that lands, the sub that drops out from under it, and a detuned horn
+   * that comes in late and holds, so the sound is still going when the veil
+   * clears and the card is on screen.
+   */
+  'entrance.dread': {
+    gain: 0.52,
+    // No jitter at all: this is a scripted moment, not a repeated impact, and
+    // a randomised pitch would only make it sound like a mis-fired hit.
+    jitter: 0,
+    voices: [
+      { wave: 'noise', gain: 0.38, attack: 0.004, decay: 0.5, filter: { type: 'lowpass', freq: 800, freqEnd: 140, q: 0.9 } },
+      { wave: 'sine', freq: 62, freqEnd: 36, gain: 0.5, attack: 0.02, hold: 0.35, decay: 1.1 },
+      {
+        wave: 'sawtooth',
+        freq: 96,
+        freqEnd: 87,
+        detune: 18,
+        gain: 0.28,
+        attack: 0.22,
+        hold: 0.5,
+        decay: 1.0,
+        delay: 0.16,
+        filter: { type: 'lowpass', freq: 300, freqEnd: 760, q: 2.6 },
+      },
     ],
   },
 };

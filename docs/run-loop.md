@@ -108,7 +108,7 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `skirmish` | Mechanically identical to `fight` (same 4-hero, no-bonus `generateEncounter` call — App.tsx collapses it to `EncounterNodeType: 'fight'`), but draws from the **recruitable hero pool** and is named differently on the map (2026-08-17, per user direction) so the player can see, before committing a squad, that beating this one is a shot at a Recruit Contract claim. Always row 2. |
 | `battle` (map-facing name "Monsters", 2026-08-22 revision) | Also mechanically identical to `fight`/`skirmish` (collapses to `EncounterNodeType: 'fight'`), but draws from the **non-recruitable enemy pool**, same as `fight` — not `skirmish`'s recruitable pool. Row 4's non-Elite alternative to `elite`. **2026-08-23 revision, per user direction:** no longer a plain `generateEncounter` call over the whole enemy pool — `App.tsx`'s `handleSelectNode` calls the dedicated `generateGoblinChiefEncounter` (`enemyGen.ts`) instead, which always fields `goblinChief` plus 3 random draws from `BASIC_GOBLIN_IDS`. This is what makes `battle` a real, considerably-tougher alternative to `elite` rather than a same-difficulty reskin of the opener — see "Goblin roster" below for the content this draws on. Different-themed (non-Goblin) monster tiers for later acts remain future work, see "Per-act difficulty scaling" below. |
 | `elite` | The AI's 4 heroes each carry a flat +10 bonus to 2 random growth stats. Draws from the recruitable pool, same as `skirmish`/`battle`. Row 4's difficulty-spike alternative to `battle` — the player picks one or the other, never both. |
-| `boss` | `FightScreen` vs. 2 AI heroes (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Winning grants 1 Recruit Contract, the Guardian's Banner in acts 1-4, and ends the act (§3). |
+| `boss` | `FightScreen` vs. 2 AI heroes (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Winning grants 1 Recruit Contract, the Guardian's Banner in acts 1-4, and ends the act (§3). **2026-09-01 exception:** a location may hold a **faction champion** on the boss's bench — see "The Guardian's champion" below. |
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. Overhauled 2026-08-18: offers 2-3 curated hero recruits (50g each, `GUILD_HALL_RECRUIT_COST`) rather than the full catalog, plus a rarity-priced equipment shelf, rolled once per visit (`src/run/shop.ts` `rollGuildHallOffers`). Second pass 2026-08-31: relics are no longer sold anywhere, the shelf is 4 wide and readable on its face, sold stock greys out, and Recruit Contracts confirm before buying (`docs/progression.md` "Second pass"). |
 | `equipmentReward` | `NodeRewardScreen` — pick 1 of 3 equipment items, rarity-weighted (`equipment.ts` `pickWeightedEquipment`); claiming hands off to the forced equip-or-trash gate (`ForceEquipScreen`) rather than a stash — see "The unequipped-item inventory was removed" below. |
 | `relicReward` | `NodeRewardScreen` — pick 1 of 3 relics not already owned. |
@@ -349,6 +349,42 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   difficulty scaling" below. Which rows/node types pull from which pool, and how
   the pool itself scales by act number, is still open balance work, not
   architecture work.
+- **The Guardian's champion (2026-09-01, per user direction).** A Location may name one
+  enemy id (`LocationDefinition.guardianFinalEnemyId`, `locations.md` §3) that is placed
+  on the **enemy bench** of that act's Guardian fight — `enemyGen.ts`'s
+  `appendFinalEnemy`, called by `handleSelectNode` after the boss encounter is
+  generated. The bench is the whole mechanism: the AI never switches voluntarily
+  (`FightScreen`'s `pickAiAction` only pivots on a `switchesUserOut` move), so the one
+  way this combatant reaches the field is the **forced replacement after an enemy KO**.
+  He is therefore the last thing to walk on, and he walks on at the moment the fight
+  had started going the player's way. This is the first authored exception to "boss = 2
+  heroes, no bench" above, and it is deliberately not a general widening of it: every
+  other location's field is `null`.
+
+  Wild's Edge's is the **Goblin Lord** (`enemies.ts`) — Beast/Ancient, 600 stat total,
+  20 MP Regen, four moves across four types (Thrash, Momentum Swing, Enfeeble, and the
+  Ancient row authored for him, Archon Blast). He is enemy-pool content, so
+  `isRecruitable` excludes him by pool membership exactly as it does every Goblin: a
+  beaten Goblin Lord produces no contract offer. He carries **no node-kind or act stat
+  bonus** — the 600 is the authored number, and a generated bonus on top of it would
+  make it something else.
+
+  **Two second-order effects worth watching in playtest.** First, `SquadSelectScreen`
+  scouts the whole enemy roster, so the player *sees* a third enemy before committing a
+  squad — they know he is coming, they just do not know when. That is consistent with
+  the 2026-08-31 decision to scramble the scout row (what is in this fight, not who
+  leads it), but it does mean the entrance is a surprise of timing only. Second, he
+  arrives fresh into a fight the player has already spent resources on, which is the
+  intended pressure — but it also means a squad that wins the opening exchange badly
+  enough may never see him at all, since the Guardian pair falling before either takes
+  a KO is not a state that can occur (a KO is what summons him), and a player who wins
+  both slots simultaneously ends the fight. Whether that last case is reachable often
+  enough to matter is a playtest question.
+
+  **The entrance is presentation, not a Field Effect.** It sets nothing on the
+  battlefield and changes no rules — `view/combat/entrances.ts` names the hero ids that
+  get it, `buildBeats` flags the beat, and the veil/lurch/horn/music-drop hang off that
+  flag. See `visual-language.md`.
 - **HP/mana fully restore between map nodes (reversed 2026-08-16, first playtest).**
   The original pass persisted HP/mana across nodes (`RosterEntry.currentHp`/
   `currentMana`, clamped to max on the next fight) on the theory that escalating

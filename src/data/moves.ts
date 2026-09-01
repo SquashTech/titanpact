@@ -4259,6 +4259,32 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'bothEnemies',
     description: 'An old curse that settles over both foes at once.',
   },
+  // The type's first non-fixture row (2026-09-01, designer-supplied), and the
+  // only Ancient move authored against a specific holder rather than a slate:
+  // it is Goblin Lord's magical half (src/data/enemies.ts). Deliberately NOT
+  // tiered — Ancient stays the one untiered type until its slate lands
+  // (test/moveTiers.test.ts, the TIER PROVENANCE block at the top of this file).
+  //
+  // The +20 lands on the caster's WISDOM, the DEFENSIVE half of the magical
+  // pair — so this is an attack that pays for itself in resilience rather than
+  // in escalating its own damage. Momentum Swing's shape (+20 Attack on a
+  // physical hit) points at the other pipeline and at the other side of it, so
+  // a hero holding both — as Goblin Lord does — has one row that makes the next
+  // hit it LANDS hurt more and one that makes the next hit it TAKES hurt less.
+  archonBlast: {
+    id: 'archonBlast',
+    name: 'Archon Blast',
+    type: 'Ancient',
+    category: 'magical',
+    kind: 'damage',
+    basePower: 75,
+    statDeltas: [{ stat: 'wisdom', amount: 20 }],
+    statDeltaTarget: 'self',
+    manaCost: 50,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Old authority spoken aloud — and the speaker steadies behind it (+20 Wisdom).',
+  },
 
   // --- Heal (docs/conditions.md-adjacent: the resource these moves spend against is mana, per CLAUDE.md's "mana cost is the primary balance lever") ---
   // Restore Vigor (Light, heal 40, target 'self', 14 mana) lived here until the

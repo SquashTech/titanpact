@@ -44,6 +44,9 @@ const SILENCE = 0.0001;
  */
 const MAX_DECODED = 2;
 
+/** Seconds a `setMusicRate` change takes to arrive. Long enough that the track SAGS rather than snapping to a new speed — a hard jump reads as a bug, a slow one reads as dread. */
+const RATE_RAMP = 1.6;
+
 interface Playing {
   id: TrackId;
   source: AudioBufferSourceNode;
@@ -60,6 +63,16 @@ let desired: TrackId | null = null;
 const buffers = new Map<TrackId, AudioBuffer>();
 const loading = new Map<TrackId, Promise<AudioBuffer | null>>();
 let unlockHooked = false;
+/**
+ * The current playback rate, applied to whatever is sounding AND to whatever
+ * starts next — module scope for the same reason `desired` is: the rate
+ * belongs to the moment, not to the file, and it has to survive a track change
+ * or a decode landing late.
+ *
+ * ⚠️ EXPERIMENTAL (2026-09-01, user's own framing: "we may walk that back").
+ * See `setMusicRate` for what it actually does to the sound.
+ */
+let rate = 1;
 
 /**
  * Drops least-recently-used buffers past the cap.
@@ -140,6 +153,9 @@ function startTrack(context: AudioContext, bus: GainNode, id: TrackId, buffer: A
   // bed wants.
   if (def.loopStart !== undefined) source.loopStart = def.loopStart;
   if (def.loopEnd !== undefined) source.loopEnd = def.loopEnd;
+  // Loop points are BUFFER time and so are unaffected by the rate — a slowed
+  // track still loops at the authored seam, just more slowly.
+  source.playbackRate.value = rate;
   source.connect(gain);
 
   const now = context.currentTime;
@@ -216,6 +232,41 @@ export function setTrack(id: TrackId | null): void {
   void applyDesired();
 }
 
+/**
+ * Bends the score's speed — and, unavoidably, its pitch — for a scripted
+ * moment. `0.8` plays the track 20% slow, which is very close to two semitones
+ * down (2^(-2/12) ≈ 0.891 would be exactly two; 0.8 is nearer three). The
+ * Goblin Lord's entrance is the only caller today (view/combat/FightScreen.tsx).
+ *
+ * There is NO time-stretch in Web Audio: `playbackRate` moves speed and pitch
+ * together, the way slowing a record does. That is the effect being asked for
+ * here rather than a limitation to work around — but it does mean the music
+ * goes flat against every other pitched thing in the mix (the sfx table is
+ * unaffected, since it runs on the separate sfx bus). Anything relying on the
+ * track's tuning would notice; nothing does today.
+ *
+ * Ramped, not set: a step change in playbackRate is audible as a glitch. The
+ * value sticks until something sets it back — FightScreen restores 1 when it
+ * unmounts, so the effect lasts exactly as long as the fight it belongs to.
+ *
+ * Safe to call before any track is playing: the rate is remembered and applied
+ * to whatever starts next.
+ */
+export function setMusicRate(next: number, rampSeconds = RATE_RAMP): void {
+  if (rate === next) return;
+  rate = next;
+  const bus = getMusicBus();
+  if (!current || !bus) return;
+  const now = bus.context.currentTime;
+  const p = current.source.playbackRate;
+  // Same cancel-then-re-assert dance as fadeOutAndStop: cancelAndHold is
+  // missing on Safari, so a rate change landing mid-ramp has to be told where
+  // the value actually is before it can ramp on from there.
+  p.cancelScheduledValues(now);
+  p.setValueAtTime(p.value, now);
+  p.linearRampToValueAtTime(next, now + rampSeconds);
+}
+
 /** What is actually sounding right now — for debugging and verification. */
 export function currentTrack(): TrackId | null {
   return current?.id ?? null;
@@ -231,6 +282,7 @@ export function musicDebug(): Record<string, unknown> {
   return {
     desired,
     current: current?.id ?? null,
+    rate,
     contextState: bus?.context.state ?? 'no context',
     decoded: [...buffers.keys()],
     loading: [...loading.keys()],

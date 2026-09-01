@@ -49,7 +49,7 @@ import { guildHallOffers } from '../data/recruitment';
 import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } from '../run/shop';
 import { generateMap, type MapNodeType } from '../run/map';
 import { generateStarterOptions } from '../run/draft';
-import { generateEncounter, generateGoblinChiefEncounter, type EncounterNodeType, type Encounter } from '../run/enemyGen';
+import { generateEncounter, generateGoblinChiefEncounter, appendFinalEnemy, type EncounterNodeType, type Encounter } from '../run/enemyGen';
 import { actScaling, type ScalingTrack } from '../run/difficulty';
 import { generateItinerary, locationBias, locationForAct } from '../run/locations';
 import { locations } from '../data/locations';
@@ -463,6 +463,17 @@ export function App() {
           // no-op rather than a special case worth branching on.
           progression: progressionTable,
         });
+        // The act's Location may hold a faction champion back for its Guardian
+        // fight (data/locations.ts `guardianFinalEnemyId` — Wild's Edge's
+        // Goblin Lord, and nothing else today). Benched, so the fight's first
+        // enemy KO is what brings him in: he is the LAST thing to reach the
+        // field, which is the whole design (src/run/enemyGen.ts
+        // `appendFinalEnemy`).
+        const finalEnemyId =
+          node.type === 'boss' ? locationForAct(playerRun.locationIds, playerRun.actNumber).guardianFinalEnemyId : null;
+        if (finalEnemyId) {
+          encounter = appendFinalEnemy(encounter, finalEnemyId, enemies, Math.floor(Math.random() * 2 ** 31), scaling);
+        }
       }
       const isFirstFight = encounterKind === 'fight' && playerRun.fightsStarted === 0;
       if (isMobFight && isFirstFight) {

@@ -34,6 +34,7 @@ import './difficulty.test';
 import './runProgress.test';
 import './classes.test';
 import './locations.test';
+import './goblinLord.test';
 import './events.test';
 import { run } from './harness';
 

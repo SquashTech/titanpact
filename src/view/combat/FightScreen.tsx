@@ -50,6 +50,7 @@ import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
 import { playBeatSfx } from '../../audio/beatSfx';
+import { setMusicRate } from '../../audio/music';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
 import { MoveKindBadge, MoveTraitChips, TARGET_MODE_LABELS, healReadout, moveEffectSummary, riderTargetLabel, useLongPress } from '../shared/MoveTile';
@@ -641,6 +642,17 @@ const config = { typeChart, heroes: allCombatants, moves, statuses, passives, fi
 const AUTO_ADVANCE_HOLD_MS = 350;
 const AUTO_ADVANCE_STEP_MS = 450;
 
+/**
+ * ⚠️ EXPERIMENTAL. What the act's music slows to once a named enemy takes the
+ * field (view/combat/entrances.ts) — 0.8 is the "slow it by 20%" the effect was
+ * asked for, and because Web Audio has no time-stretch it drops the pitch by
+ * roughly three semitones along with it (audio/music.ts `setMusicRate`).
+ *
+ * The dial for walking this back: 1 disables it outright and leaves the veil,
+ * the shake and the horn untouched.
+ */
+const DREAD_MUSIC_RATE = 0.8;
+
 function rosterIdOf(combatantId: string): string {
   return combatantId.slice(combatantId.indexOf(':') + 1);
 }
@@ -989,6 +1001,13 @@ export function FightScreen({
     return () => {
       if (holdTimer.current !== null) clearTimeout(holdTimer.current);
       if (autoPlayInterval.current !== null) clearInterval(autoPlayInterval.current);
+      // A dramatic entrance drags the score down for the rest of the fight
+      // (handleAdvance below). Restoring it here — on unmount, unconditionally
+      // — is what scopes it to the fight: the track itself is the act's and
+      // keeps playing across the victory screen and back onto the map
+      // (audio/music.ts's whole design), so nothing else would ever put it
+      // back. Cheap no-op when the rate was never changed.
+      setMusicRate(1);
     };
   }, []);
 
@@ -1432,6 +1451,14 @@ export function FightScreen({
     // Audio subscribes to the same beat the visuals do, at the same moment —
     // one call, no timing knowledge anywhere near the engine (audio/beatSfx.ts).
     playBeatSfx(revealed);
+    // ⚠️ EXPERIMENTAL (2026-09-01, user direction — "we may walk that back"):
+    // a named enemy taking the field drags the act's music down 20%, which in
+    // Web Audio also drops its pitch (audio/music.ts setMusicRate). It stays
+    // down for the rest of the fight, which is the claim being tested — that a
+    // fight can change key partway through and stay there. The unmount effect
+    // above puts it back. To drop this, delete these two lines: nothing else
+    // in the entrance depends on it.
+    if (revealed.dramaticEntrance) setMusicRate(DREAD_MUSIC_RATE);
     setBeat(revealed);
     setBeatSeq((n) => n + 1);
     setPopups(Object.fromEntries(revealed.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className }])));
@@ -1531,13 +1558,26 @@ export function FightScreen({
       )}
 
       <div
-        className={`battlefield${combat.activeFieldEffect ? ' field-effect-active' : ''}`}
+        className={`battlefield${combat.activeFieldEffect ? ' field-effect-active' : ''}${
+          resolving && beat?.dramaticEntrance ? ' dramatic-entrance' : ''
+        }`}
         style={
           combat.activeFieldEffect
             ? ({ '--field-effect-rgb': getTypeColorRgb(fieldEffects[combat.activeFieldEffect.fieldEffectId]?.flavorType ?? 'Arcane') } as CSSProperties)
             : undefined
         }
       >
+        {/* A named enemy taking the field (entrances.ts). Purely decorative —
+            pointer-events: none, and it plays out over whatever the beat
+            already did to the board, since the SwitchedIn has been applied by
+            the time this renders and the new card is underneath it.
+
+            Keyed on beatSeq for the same reason the banner headline is: the
+            animation is one-shot and has to replay per reveal, and a player
+            who taps back into the same beat via auto-play should see it fire
+            rather than sit on a finished keyframe. */}
+        {resolving && beat?.dramaticEntrance && <div key={beatSeq} className="dramatic-entrance-veil" aria-hidden="true" />}
+
         <div className="team-row enemy">
           {renderActiveSlot(AI_SIDE, 0)}
           {renderActiveSlot(AI_SIDE, 1)}

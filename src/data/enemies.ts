@@ -132,12 +132,57 @@ export const enemies: Record<string, HeroDefinition> = {
     moveIds: ['lacerate', 'packHunt'],
     starter: false,
   },
+  // The Goblins' own Guardian (2026-09-01, per user direction). Enters LAST at
+  // Wild's Edge's boss node — held on the enemy bench, so the fight's first KO
+  // is what brings him in (src/run/enemyGen.ts `appendFinalEnemy`,
+  // src/data/locations.ts `guardianFinalEnemyId`). Not drawn by any generator
+  // and not in `BASIC_GOBLIN_IDS`: he appears in exactly one encounter in the
+  // whole run.
+  //
+  // Beast/Ancient. Beast is the faction he leads; Ancient is where his power
+  // comes from, which is the type reframe applied literally (CLAUDE.md: "type =
+  // the domain a hero's power draws from"). It also makes him the game's first
+  // combatant with an Ancient STAB, and the reason Archon Blast exists.
+  goblinLord: {
+    id: 'goblinLord',
+    name: 'Goblin Lord',
+    types: ['Beast', 'Ancient'],
+    // Stat total 600 on the game's own convention (HP+Atk+Def+Int+Wis+Spd —
+    // docs/run-loop.md "Measured baseline"), a first-pass figure per user
+    // direction. For scale: the mean Act 1 Guardian sits at 432 and the Goblin
+    // Chief at 218, so he arrives worth roughly one and a half of the boss he
+    // is reinforcing. That is the intent — he is the reason the fight is not
+    // over when the Guardian's partner falls — but it is a playtest number,
+    // not a tuned one.
+    //
+    // Shaped as a bruiser who can also cast: Attack leads, Intelligence is
+    // close enough behind that Archon Blast is a real threat rather than a
+    // flavour row, and Wisdom is the one deliberately-soft stat — it is the
+    // stat Archon Blast itself repairs, so the line and the kit answer each
+    // other. 20 MP Regen (per user direction) is double the basic Goblin pool
+    // and the highest in the game: his cheapest move is 35 and his kit averages
+    // 45, so he acts on his own terms every round instead of Resting, which is
+    // what a boss's reinforcement has to do to matter.
+    baseStats: { hp: 190, attack: 105, defense: 85, intelligence: 80, wisdom: 65, speed: 75, manaPool: 120, mpRegen: 20 },
+    // Four moves — the MOVE_CAP, which no other enemy in this file reaches —
+    // and deliberately drawn from four different types: Thrash (Beast) is the
+    // STAB spread, Momentum Swing (Iron) is the physical snowball, Enfeeble
+    // (Shadow) drags the player's whole line down for the rest of the fight,
+    // and Archon Blast (Ancient) is the second STAB, on the other pipeline.
+    // Off-type rows on a boss are the point: he answers a squad built to beat
+    // one type.
+    moveIds: ['thrash', 'momentumSwing', 'enfeeble', 'archonBlast'],
+    starter: false,
+  },
 };
 
 /** The 5 basic, opener-tier Goblin types (docs/run-loop.md) — row 0's opening fight draws 2 of these; the "Monsters" battle node (row 4) draws 3 alongside `GOBLIN_CHIEF_ID`. Excludes `goblinChief`, which is never randomly drawn — it's always present in its own encounter. */
 export const BASIC_GOBLIN_IDS = ['goblinGrunt', 'goblinSkulker', 'spookyGoblin', 'goblinWarrior', 'torchGoblin'] as const;
 
 export const GOBLIN_CHIEF_ID = 'goblinChief';
+
+/** The Goblins' Guardian-fight reinforcement — pointed at by `LocationDefinition.guardianFinalEnemyId` (Wild's Edge only), never randomly drawn. */
+export const GOBLIN_LORD_ID = 'goblinLord';
 
 /** `enemies` filtered to just `BASIC_GOBLIN_IDS`, for encounter generation that must never draw the Chief. */
 export const basicGoblins: Record<string, HeroDefinition> = Object.fromEntries(

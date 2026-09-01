@@ -127,6 +127,26 @@ unbuilt, and locations supply the reason to author six of them rather than one. 
 location's Guardian is its faction's apex. That is a far better authoring prompt than
 "make a Guardian."
 
+### `guardianFinalEnemyId` — the faction champion
+
+One enemy id per location, held on the **bench** of that location's Guardian fight so it
+is the last combatant to reach the field (`run-loop.md` "The Guardian's champion" for the
+mechanism and the balance questions). **Wild's Edge's Goblin Lord is the only one today;**
+every other location is `null`, for the same reason `factionEnemyIds` is — there is no
+authored Cultist or Fae or Undead champion to point at yet.
+
+A **location** property rather than a boss-node one, and that placement is the decision
+worth recording. What comes out of the treeline at Wild's Edge is a Goblin Lord because
+Wild's Edge is where the Goblins are; the same node type in the Necropolis should produce
+something else entirely. Hanging it off the node would have made it a property of *how
+hard this fight is*, which is what `run-loop.md` §2's node kinds already say and what the
+act curve already scales. This says *whose ground you are standing on* — the same thing
+`faction`, `factionEnemyIds` and `affinity` say, and so it belongs beside them.
+
+It is also the first half of the faction bill above that has actually been paid: the
+Goblins now have an apex, which is the authoring prompt that section asks for, worked
+once. Five to go.
+
 ## 4. The arrival screen
 
 `src/view/run/ActIntroScreen.tsx` — shown once per act, before the map: after the draft
@@ -201,6 +221,15 @@ here and one branch in `handleSelectNode`; they can arrive one at a time.
 two fixture heroes with a bigger stat bonus. Locations are the reason to author
 six of them instead of one: each location's Guardian is its faction's apex. Blocked
 behind 5.2 in practice, since a Guardian without its faction reads as unrelated.
+
+**Partly answered, from an unexpected direction (2026-09-01).** The Goblin Lord is the
+Goblins' apex, and he shipped without waiting on 5.2 — because
+`guardianFinalEnemyId` puts him *beside* the generated boss rather than in place of it.
+That is a cheaper shape than this section assumed: a champion is one enemy definition and
+one field, where replacing the Guardian outright would mean authoring a whole boss and
+deciding what happens to the +20-to-3-stats bonus, the Banner, and the contract claim.
+Whether the other five factions want a champion, a replacement Guardian, or both is now a
+real choice rather than a foregone one.
 
 ### 5.4 `exclusiveHeroIds` has no consumer
 

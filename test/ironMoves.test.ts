@@ -366,10 +366,10 @@ test('iron: the re-authored Fortify is a guard buff only, and Wisdom is grantabl
   const wisdomGrants = Object.values(moves).filter((m) =>
     m.statDeltas?.some((d) => d.stat === 'wisdom' && d.amount > 0)
   );
-  assert.deepStrictEqual(wisdomGrants.map((m) => m.id).sort(), ['brainWard', 'mentalFortress', 'overdrive', 'stasis']);
+  assert.deepStrictEqual(wisdomGrants.map((m) => m.id).sort(), ['archonBlast', 'brainWard', 'mentalFortress', 'overdrive', 'stasis']);
   for (const move of wisdomGrants) {
     assert.ok(
-      move.type === 'Mind' || move.id === 'overdrive',
+      move.type === 'Mind' || move.id === 'overdrive' || move.id === 'archonBlast',
       `${move.id} grants Wisdom off-Mind — a third type reaching Wisdom is a decision, not a rounding`
     );
   }
@@ -378,6 +378,30 @@ test('iron: the re-authored Fortify is a guard buff only, and Wisdom is grantabl
   // solve a Wisdom problem specifically.
   assert.strictEqual(moves.overdrive.manaCost, 100);
   assert.strictEqual(moves.overdrive.statDeltas?.length, 5);
+
+  // ARCHON BLAST REOPENED IT AGAIN (2026-09-01), and on a different axis than
+  // Overdrive did. Overdrive is a player-reachable move made safe by PRICE;
+  // this one is made safe by REACH — it is enemy-only content, authored for
+  // Goblin Lord (src/data/enemies.ts) and held by nothing else in the game.
+  // The finding this test defends is "a physical hero cannot buy magical
+  // defense cheaply", and a move no hero can hold cannot violate it: what a
+  // boss does to its own Wisdom is a fight the player is on the other side of.
+  //
+  // So the guard that keeps the exception honest is not its cost — 50 mana on
+  // a damage move would be a real bargain in a player's hands — but the two
+  // assertions below. The day an Ancient slate lands and a hero can reach this
+  // row, this stops passing, which is exactly when the question is worth
+  // asking again.
+  const { heroes } = require('../src/data/heroes') as typeof import('../src/data/heroes');
+  const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
+  assert.ok(
+    !Object.values(heroes).some((h) => h.moveIds.includes('archonBlast')),
+    'Archon Blast is in a recruitable hero\'s starting kit — it is a Wisdom grant a player can now hold'
+  );
+  assert.ok(
+    !Object.values(progressionTable.moveTiers).some((pool) => pool.includes('archonBlast')),
+    'Archon Blast is in a level-up pool — it is a Wisdom grant a player can now learn'
+  );
 });
 
 test('iron: Swift Blow lands its Conduct detonation ABOVE bracket 0 — the one thing no other Iron row can do', () => {

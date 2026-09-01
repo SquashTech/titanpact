@@ -9,6 +9,7 @@
 // imports this file.
 
 import type { TypeId } from '../engine/content';
+import { GOBLIN_LORD_ID } from './enemies';
 
 /**
  * How a location's particle field behaves — direction, speed, drift and
@@ -49,6 +50,20 @@ export interface LocationDefinition {
    * refactor.
    */
   factionEnemyIds: readonly string[] | null;
+  /**
+   * An enemy id (src/data/enemies.ts) held on the BENCH of this location's
+   * Guardian fight, so it is the last thing to walk onto the field — the
+   * faction's own champion arriving to reinforce the boss
+   * (src/run/enemyGen.ts `appendFinalEnemy`).
+   *
+   * A location property rather than a boss-node property because it is a fact
+   * about the PLACE: the thing that comes out of the treeline at Wild's Edge
+   * is a Goblin Lord, and whatever comes out of the Necropolis will not be.
+   * `null` on every location but Wild's Edge today — the other five factions
+   * have no authored champion yet, exactly as `factionEnemyIds` has no
+   * authored roster yet (docs/locations.md §3 "The faction bill").
+   */
+  guardianFinalEnemyId: string | null;
   /** rgb triple driving `--node-rgb` on the arrival screen — the stage routes it through the wash, the title bloom and the particles. */
   tintRgb: string;
   /** Which motion the particle field runs. */
@@ -69,6 +84,11 @@ export const locations: Record<string, LocationDefinition> = {
     affinity: null,
     exclusiveHeroIds: [],
     factionEnemyIds: null,
+    // The only location with one today. Act 1's Guardian is a hero-pool boss
+    // like every other act's; the Goblin Lord is what makes the run's FIRST
+    // Guardian fight also the first time the player is shown that a fight can
+    // get worse after it starts.
+    guardianFinalEnemyId: GOBLIN_LORD_ID,
     // Warm moss-gold — the wilderness at dusk, adjacent to the run loop's
     // default gold rather than a departure from it.
     tintRgb: '154, 176, 84',
@@ -83,6 +103,7 @@ export const locations: Record<string, LocationDefinition> = {
     affinity: ['Shadow', 'Arcane', 'Mind'],
     exclusiveHeroIds: [],
     factionEnemyIds: null,
+    guardianFinalEnemyId: null,
     /** var(--magical), the game's established arcane violet. */
     tintRgb: '139, 127, 224',
     ambience: 'sigils',
@@ -96,6 +117,7 @@ export const locations: Record<string, LocationDefinition> = {
     affinity: ['Nature', 'Stone', 'Light'],
     exclusiveHeroIds: [],
     factionEnemyIds: null,
+    guardianFinalEnemyId: null,
     tintRgb: '86, 190, 130',
     ambience: 'spores',
   },
@@ -108,6 +130,7 @@ export const locations: Record<string, LocationDefinition> = {
     affinity: ['Fire', 'Mech', 'Iron'],
     exclusiveHeroIds: [],
     factionEnemyIds: null,
+    guardianFinalEnemyId: null,
     tintRgb: '226, 104, 60',
     ambience: 'embers',
   },
@@ -120,6 +143,7 @@ export const locations: Record<string, LocationDefinition> = {
     affinity: ['Storm', 'Iron', 'Water'],
     exclusiveHeroIds: [],
     factionEnemyIds: null,
+    guardianFinalEnemyId: null,
     tintRgb: '74, 144, 217',
     ambience: 'rain',
   },
@@ -136,6 +160,7 @@ export const locations: Record<string, LocationDefinition> = {
     affinity: ['Spirit', 'Frost', 'Shadow'],
     exclusiveHeroIds: [],
     factionEnemyIds: null,
+    guardianFinalEnemyId: null,
     tintRgb: '132, 198, 208',
     ambience: 'snow',
   },

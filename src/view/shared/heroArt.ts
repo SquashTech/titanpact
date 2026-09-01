@@ -10,6 +10,7 @@ import flurryArt from '../../../art/heroes/flurry.png';
 import gallantArt from '../../../art/heroes/gallant.png';
 import goblinChiefArt from '../../../art/enemies/goblinchief.png';
 import goblinGruntArt from '../../../art/enemies/goblingrunt.png';
+import goblinLordArt from '../../../art/enemies/goblinlord.png';
 import goblinSkulkerArt from '../../../art/enemies/goblinskulker.png';
 import goblinWarriorArt from '../../../art/enemies/goblinwarrior.png';
 import hollowbarkArt from '../../../art/heroes/Hollowbark.png';
@@ -53,6 +54,7 @@ export const heroArt: Partial<Record<string, string>> = {
   gallant: gallantArt,
   goblinChief: goblinChiefArt,
   goblinGrunt: goblinGruntArt,
+  goblinLord: goblinLordArt,
   goblinSkulker: goblinSkulkerArt,
   goblinWarrior: goblinWarriorArt,
   hollowbark: hollowbarkArt,

@@ -1,8 +1,8 @@
 import * as assert from 'assert';
 import { test } from './harness';
-import { generateEncounter, generateGoblinChiefEncounter } from '../src/run/enemyGen';
+import { generateEncounter, generateGoblinChiefEncounter, appendFinalEnemy } from '../src/run/enemyGen';
 import { heroes } from '../src/data/heroes';
-import { enemies, basicGoblins, BASIC_GOBLIN_IDS, GOBLIN_CHIEF_ID } from '../src/data/enemies';
+import { enemies, basicGoblins, BASIC_GOBLIN_IDS, GOBLIN_CHIEF_ID, GOBLIN_LORD_ID } from '../src/data/enemies';
 
 test('enemyGen: fight encounters field 4 heroes (2 active + 2 bench) with no stat bonus', () => {
   const { run, squad } = generateEncounter('fight', 1, heroes);
@@ -126,4 +126,53 @@ test('enemyGen: generateGoblinChiefEncounter is deterministic for a given seed',
     a.run.roster.map((r) => r.heroId),
     b.run.roster.map((r) => r.heroId)
   );
+});
+
+// ── The Guardian's final enemy (appendFinalEnemy) ─────────────────────────
+// The Goblin Lord at Wild's Edge (src/data/locations.ts
+// `guardianFinalEnemyId`). What these pin is the one property the whole
+// design rests on — he is LAST — plus the two ways the seam could quietly go
+// wrong: an unknown id crashing a boss fight, and the champion leaking into
+// the recruitable pool.
+
+test('enemyGen: appendFinalEnemy puts the champion on the bench, behind everyone already in the fight', () => {
+  const boss = generateEncounter('boss', 7, heroes);
+  const { run, squad } = appendFinalEnemy(boss, GOBLIN_LORD_ID, enemies, 7);
+
+  assert.strictEqual(run.roster.length, 3);
+  // The boss's own pair is untouched — the champion reinforces, it does not
+  // take a starting slot.
+  assert.deepStrictEqual(squad.activeIds, boss.squad.activeIds);
+  assert.deepStrictEqual(squad.benchIds, [GOBLIN_LORD_ID]);
+  // Last in the bench order, which is what the AI's forced replacement reads
+  // (FightScreen `resolveRoundWith` takes bench[0], and only once a slot has
+  // actually opened) — so he cannot arrive before someone falls.
+  assert.strictEqual(squad.benchIds[squad.benchIds.length - 1], GOBLIN_LORD_ID);
+  assert.strictEqual(run.roster[run.roster.length - 1].heroId, GOBLIN_LORD_ID);
+});
+
+test('enemyGen: the appended champion arrives with its authored kit and no node-kind bonus', () => {
+  const { run } = appendFinalEnemy(generateEncounter('boss', 3, heroes), GOBLIN_LORD_ID, enemies, 3);
+  const lord = run.roster.find((r) => r.heroId === GOBLIN_LORD_ID)!;
+  assert.deepStrictEqual(lord.unlockedMoveIds, [...enemies[GOBLIN_LORD_ID].moveIds]);
+  // The boss's +20-to-3-stats is a bonus on the heroes the GENERATOR rolled.
+  // This one is hand-authored content: its 600 stat total is the number, and
+  // stacking a generated bonus on top would make it something else.
+  assert.deepStrictEqual(lord.evolutionStatGrants, {});
+});
+
+test('enemyGen: appendFinalEnemy is a no-op on an unknown id rather than a crashed boss fight', () => {
+  const boss = generateEncounter('boss', 5, heroes);
+  const after = appendFinalEnemy(boss, 'noSuchChampion', enemies, 5);
+  assert.deepStrictEqual(after.run.roster, boss.run.roster);
+  assert.deepStrictEqual(after.squad, boss.squad);
+});
+
+test('enemyGen: the champion is not recruitable — he is enemy-pool content, so a Contract can never claim him', () => {
+  const { isRecruitable } = require('../src/run/recruitment') as typeof import('../src/run/recruitment');
+  assert.ok(!isRecruitable(GOBLIN_LORD_ID, heroes));
+  // And he is never randomly drawn either: not a basic Goblin, and not in the
+  // recruitable pool the boss's own cast comes from.
+  assert.ok(!BASIC_GOBLIN_IDS.includes(GOBLIN_LORD_ID as (typeof BASIC_GOBLIN_IDS)[number]));
+  assert.ok(!(GOBLIN_LORD_ID in heroes));
 });

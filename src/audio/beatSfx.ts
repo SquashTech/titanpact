@@ -97,6 +97,15 @@ function statVoicing(e: StatChangedEvent): { id: SfxId; pitch: number; gain: num
  * revealed — it is a fire-and-forget side effect and never throws.
  */
 export function playBeatSfx(beat: Beat): void {
+  // Checked ahead of the PRIORITY table rather than added to it: a dramatic
+  // entrance IS a SwitchedIn, so priority alone could never separate the two,
+  // and the whole point is that this one does not sound like a switch
+  // (view/combat/entrances.ts, sounds.ts 'entrance.dread').
+  if (beat.dramaticEntrance) {
+    playSfx('entrance.dread');
+    return;
+  }
+
   const lead = leadEvent(beat);
   if (!lead) return;
 

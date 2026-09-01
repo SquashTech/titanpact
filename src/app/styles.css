@@ -822,6 +822,123 @@ textarea,
   }
 }
 
+/* ── A named enemy taking the field ───────────────────────────────────────
+   The visual half of a dramatic entrance (view/combat/entrances.ts) — the
+   Goblin Lord arriving off the bench at Wild's Edge's Guardian fight, and
+   nothing else today.
+
+   Deliberately built INSIDE .battlefield rather than as a full-screen overlay:
+   the thing that just changed is the enemy row, and darkening the console and
+   the player's own hand alongside it would say "a cutscene is happening"
+   instead of "look up there". .battlefield already sets overflow: hidden (for
+   the Field Effect shimmer), so everything here is clipped to the arena for
+   free.
+
+   Nothing here moves the battlefield itself. It is full-bleed against the
+   shell's negative margins, so a translate on it would open a sliver of page
+   background at the edges — the lurch is put on .team-row.enemy instead, which
+   is both safely inside the clip and the row the player should be watching. */
+.dramatic-entrance-veil {
+  position: absolute;
+  inset: 0;
+  /* Over the cards, briefly. It fades to nothing and never takes a tap, so
+     the advance-overlay (z-index 15, and fixed) still owns the gesture. */
+  z-index: 4;
+  pointer-events: none;
+  background:
+    /* The bloom the figure arrives out of, sat on the enemy row. */
+    radial-gradient(ellipse 90% 55% at 50% 22%, rgba(217, 83, 79, 0.6), transparent 68%),
+    /* Dusk closing from the top down — the treeline going dark. Deliberately
+       under 0.8 at its darkest: the point of the beat is that the player LOOKS
+       at the new card, and a veil opaque enough to hide it is working against
+       the thing it is announcing. */
+    linear-gradient(180deg, rgba(10, 4, 6, 0.76), rgba(10, 4, 6, 0.3) 58%, transparent);
+  animation: dramatic-entrance-veil 1.5s cubic-bezier(0.2, 0.75, 0.3, 1) forwards;
+}
+
+/* The shockwave: one ring pushed out from where the figure lands. Its own
+   element (a pseudo) rather than a fourth gradient layer, because it has to
+   SCALE, and a background can't.
+
+   Sized so the ring DIES ON THE HORIZON. 26% of the arena's width at scale 2.2
+   is a ~113px radius from a centre sat on the enemy row, which lands just shy
+   of the divider — a first pass at 60%/2.6 put the final radius three times
+   that, and what the player saw was not a shockwave but a stray arc sweeping
+   across their own team. If either number is retuned, retune the other. */
+.dramatic-entrance-veil::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  width: 26%;
+  aspect-ratio: 1;
+  margin: -13% 0 0 -13%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 196, 120, 0.75);
+  animation: dramatic-entrance-ring 0.95s cubic-bezier(0.1, 0.7, 0.25, 1) forwards;
+}
+
+@keyframes dramatic-entrance-veil {
+  0% {
+    opacity: 0;
+  }
+  /* Snaps on rather than fading in — the impact is the start of the beat, not
+     a third of the way through it. */
+  9% {
+    opacity: 1;
+  }
+  /* Off the peak quickly and then out slowly: the flash is the arrival, the
+     long tail is what the card is read through. */
+  32% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes dramatic-entrance-ring {
+  0% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* The lurch. Short, and on the enemy row alone — see the block header for why
+   it is not on .battlefield. Decays across its four steps so it reads as one
+   impact settling rather than a rumble. */
+.battlefield.dramatic-entrance .team-row.enemy {
+  animation: dramatic-entrance-lurch 0.44s ease-out;
+}
+
+@keyframes dramatic-entrance-lurch {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  15% {
+    transform: translate3d(-5px, 3px, 0);
+  }
+  38% {
+    transform: translate3d(4px, -2px, 0);
+  }
+  62% {
+    transform: translate3d(-2px, 1px, 0);
+  }
+  82% {
+    transform: translate3d(1px, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 /* Invisible full-viewport click-catcher while a round is playing out, so any
    tap advances the beat rather than only one aimed at the banner. Also the
    hold-to-auto-play target (FightScreen's handleAdvancePointerDown). */
