@@ -1,4 +1,4 @@
-import { useState, type DragEvent } from 'react';
+import { useMemo, useState, type DragEvent } from 'react';
 import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
 import { relics } from '../../data/relics';
@@ -18,6 +18,8 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { EQUIP_SLOT_ORDER, EQUIP_SLOT_LABELS, EquipmentIcon, EquipmentInfoPanel } from '../shared/EquipmentBox';
+
+const DRAG_KEY = 'text/titanpact-equip-move';
 
 interface Props {
   run: RunState;
@@ -45,14 +47,7 @@ interface RosterMgmtHeadProps {
   onInspect: () => void;
 }
 
-/**
- * One hero's name/types row — pulled out of the roster .map() below
- * because useLongPress is a hook (same reason EquipSlotButton is its own
- * component). A tap does nothing here (the "i" button is the discoverable
- * way in); a hold opens the same HeroPreviewOverlay sheet, matching the
- * "hold a hero to review it" language this app now uses everywhere a hero
- * card sits inside a bigger tappable/draggable surface.
- */
+/** Own component because useLongPress is a hook. Tap does nothing; hold (or the "i") opens the sheet. */
 function RosterMgmtHead({ hero, entry, onInspect }: RosterMgmtHeadProps) {
   const longPress = useLongPress(onInspect);
   return (
@@ -71,14 +66,7 @@ function RosterMgmtHead({ hero, entry, onInspect }: RosterMgmtHeadProps) {
   );
 }
 
-/**
- * One hero's equip slot. Pulled out of the roster .map() below because
- * useLongPress is a hook — it can't be called from inside a loop body, only
- * from a component's own top level (same reason LevelUpScreen's
- * ReplaceMoveCard is its own component rather than an inline callback). Tap
- * still does the select/move dance (handled by the caller); holding shows
- * the item's description instead of a persistent selected-item banner.
- */
+/** Own component because useLongPress is a hook. Tap selects/moves (caller); hold shows the item's description. */
 function EquipSlotButton({
   item,
   slot,
@@ -113,27 +101,23 @@ function EquipSlotButton({
 }
 
 /**
- * The Manage Roster screen (map-node-reachable, not a fight-blocking flow —
- * that's LevelUpScreen now). Condensed hero rows (name/types + an Info
- * button opening the full StatBars readout via HeroPreviewOverlay) each show
- * their 3 equipment slots underneath, empty by default. There is no
- * unequipped-item stash anymore (per user direction — every newly obtained
- * item is resolved on the spot by ForceEquipScreen): this screen only
- * reassigns gear that's already equipped somewhere. Tap a filled slot to
- * select it, then tap the matching slot on another hero to move it there
- * (swapping with whatever's already in that slot, if anything) — or drag it
- * directly. No banner or trash action clutters the screen for this — a
- * held press instead shows the item's description (EquipSlotButton above).
+ * Manage Roster: reassigns gear that is already equipped somewhere (there is no unequipped stash —
+ * ForceEquipScreen resolves every new item on the spot). Tap a filled slot then the matching slot
+ * on another hero to swap, or drag.
  */
 export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
   const [selected, setSelected] = useState<{ rosterId: string; slot: EquipmentSlot } | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   const [viewedItemId, setViewedItemId] = useState<string | null>(null);
-  /** What the run's relics are currently adding to EVERY hero below (src/run/entryStats.ts) — banner-only, since the stats themselves are already applied wherever they're read. */
-  const relicGrants = Object.entries(
-    relicStatContribution(relicTeamStatModifiers(run.relics, relics), relicTeamPassiveGrants(run.relics, relics), passives)
-  ) as [StatKey, number][];
+  /** Banner-only: the relic grants are already applied wherever stats are read. */
+  const relicGrants = useMemo(
+    () =>
+      Object.entries(
+        relicStatContribution(relicTeamStatModifiers(run.relics, relics), relicTeamPassiveGrants(run.relics, relics), passives)
+      ) as [StatKey, number][],
+    [run.relics]
+  );
 
   function selectSlot(rosterId: string, slot: EquipmentSlot) {
     setSelected((prev) => (prev && prev.rosterId === rosterId && prev.slot === slot ? null : { rosterId, slot }));
@@ -177,14 +161,9 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
     <div
       className="log-overlay roster-mgmt-overlay"
       onClick={() => {
-        // A long-press-opened item popup (below) is inserted mid-gesture,
-        // while the pointer is still down over the equip-slot button —
-        // release then fires a "click" whose mousedown target (the button)
-        // and mouseup target (the popup, now covering that spot) differ. In
-        // that case the browser dispatches the click on their nearest common
-        // ancestor, which is THIS overlay, skipping right past the popup's
-        // own stopPropagation and closing Manage Roster instead of just the
-        // popup. Treat that click as dismissing the popup, not the screen.
+        // The long-press item popup mounts mid-gesture, so the release click's mousedown and
+        // mouseup targets differ and the browser dispatches it on their common ancestor — this
+        // overlay — bypassing the popup's own stopPropagation. Treat that click as closing the popup.
         if (viewedItemId) {
           setViewedItemId(null);
           return;
@@ -238,11 +217,11 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
                           onLongPress={() => item && setViewedItemId(item.id)}
                           onDragStart={(e) => {
                             if (!item) return;
-                            e.dataTransfer.setData('text/titanpact-equip-move', `${entry.rosterId}:${slot}`);
+                            e.dataTransfer.setData(DRAG_KEY, dragKey);
                             e.dataTransfer.effectAllowed = 'move';
                           }}
                           onDragOver={(e) => {
-                            if (e.dataTransfer.types.includes('text/titanpact-equip-move')) {
+                            if (e.dataTransfer.types.includes(DRAG_KEY)) {
                               e.preventDefault();
                               setDragOverKey(dragKey);
                             }
@@ -250,7 +229,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
                           onDragLeave={() => setDragOverKey((k) => (k === dragKey ? null : k))}
                           onDrop={(e) => {
                             e.preventDefault();
-                            const raw = e.dataTransfer.getData('text/titanpact-equip-move');
+                            const raw = e.dataTransfer.getData(DRAG_KEY);
                             if (!raw) return;
                             const [fromRosterId, fromSlot] = raw.split(':');
                             handleDrop(entry.rosterId, slot, fromRosterId, fromSlot as EquipmentSlot);

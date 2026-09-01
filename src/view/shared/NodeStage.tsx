@@ -2,37 +2,16 @@ import { useMemo, type CSSProperties, type ReactNode } from 'react';
 import { useAmbientLocation } from './LocationContext';
 import { LocationAmbience } from './LocationSky';
 
-/**
- * The shared stage every map-node screen is set on — the full-bleed sky and
- * the unboxed header LevelUpScreen introduced in the fourth pass of
- * docs/visual-language.md, lifted out of that screen so the rest of the run
- * loop can stand on the same ground.
- *
- * The node screens were the last place in the app where a *bordered banner
- * carrying no action* introduced a grid of buttons — `.equip-cache-banner`,
- * `.relic-shrine-banner`, `.class-shrine-banner`, `.equip-spotlight` and the
- * plain `.reward-panel` were five variations on the same box. This module is
- * what replaced them: a place (the sky), a voice (the header), and nothing
- * drawn around either.
- *
- * Everything here is tinted from one custom property, `--node-rgb`, so a node
- * keeps the hue it already had — gold for a cache, violet for the Relic
- * Shrine, teal for the Mentor, the item's own rarity colour for a forced
- * equip — without the stylesheet naming any of them.
- *
- * **The screen sets that property once, on its own root** (`style={{
- * '--node-rgb': NODE_TINT_ARCANE }}` on the `.node-screen` div), and the sky,
- * the header and anything else the screen draws inherit it. Neither component
- * takes a tint of its own: when they did, a sibling of the header — the gold
- * cache's amount, say — silently fell back to the default while the header
- * beside it was green.
- */
+// The shared stage every map-node screen is set on: a full-bleed sky and an unboxed header.
+// Everything is tinted from `--node-rgb`, which THE SCREEN sets once on its own `.node-screen`
+// root; neither component takes a tint of its own (a sibling of the header would fall back to
+// the default while the header beside it was tinted).
 
-/** Gold, the run loop's default reward hue (var(--accent) as an rgb triple). */
+/** var(--accent) — the run loop's default reward hue. */
 export const NODE_TINT_GOLD = '224, 166, 60';
 /** var(--magical) — relics and pacts. */
 export const NODE_TINT_ARCANE = '139, 127, 224';
-/** var(--buff) — the Mentor's teal. */
+/** var(--buff) — the Mentor. */
 export const NODE_TINT_TEAL = '63, 184, 175';
 /** var(--hp-high) — vitality grants. */
 export const NODE_TINT_VITAL = '76, 175, 106';
@@ -41,11 +20,7 @@ export const NODE_TINT_MANA = '74, 144, 217';
 
 const MOTE_COUNT = 12;
 
-/**
- * Ambient motes drifting up the screen — the same golden-angle scatter the
- * draft, the title and the level-up screen use (a pure function of the index,
- * so it is stable across re-renders with no seed to store).
- */
+// Golden-angle scatter: a pure function of the index, stable across re-renders with no seed.
 function useMotes(count: number) {
   return useMemo(
     () =>
@@ -63,38 +38,17 @@ function useMotes(count: number) {
 }
 
 interface NodeSkyProps {
-  /** Fewer motes for a screen with a lot of figures on it; more for one holding a single object. */
   motes?: number;
 }
 
-/** How much of a location's authored weather a node screen carries — see NodeSky. */
+/** How much of a location's authored weather a node screen carries. */
 const NODE_MOTE_DENSITY = 0.5;
 
 /**
- * Full-bleed past .app-shell's padding, same negative-inset trick as
- * .battlefield and .draft-sky: a place, not a container. Must be the first
- * child of a `position: relative` screen root, and everything after it needs
- * `position: relative; z-index: 1` (the `.node-screen > *` rule does this) —
- * the sky paints at z-index 0 and its wash bottoms out opaque, so a static
- * in-flow sibling would paint *under* it and vanish.
- *
- * **Inside an act it also carries the Location** (docs/locations.md §5.5,
- * LocationContext.tsx). The two do not compete, because they answer different
- * questions and were given different halves of the screen: the node's own
- * `--node-rgb` still owns the wash's upper pool and the header bloom — what
- * *kind* of moment this is — and the location owns the ground, the horizon and
- * the weather — *where* it is happening. A Guild Hall is still violet-lit and
- * unmistakably a Guild Hall; it is now unmistakably a Guild Hall in the
- * Necropolis.
- *
- * The generic rising motes are REPLACED rather than joined when a location is
- * present. Two particle fields on one screen is not twice the atmosphere, it
- * is noise — and the generic updraft is the weaker of the two, since it says
- * nothing the wash has not already said.
- *
- * Outside a run the context is null and this renders exactly what it always
- * did, with no opt-out needed at the call sites (the title screen, the
- * sandbox tools).
+ * Full-bleed sky. Must be the first child of a `position: relative` screen root; everything after
+ * it needs `position: relative; z-index: 1` (`.node-screen > *` does this) or it paints under the
+ * wash. Inside an act the Location replaces the generic motes (two fields is noise, not atmosphere):
+ * the node's `--node-rgb` keeps the wash and header, the location owns ground, horizon and weather.
  */
 export function NodeSky({ motes = MOTE_COUNT }: NodeSkyProps) {
   const field = useMotes(motes);
@@ -129,23 +83,23 @@ export function NodeSky({ motes = MOTE_COUNT }: NodeSkyProps) {
 }
 
 interface NodeHeaderProps {
-  /** Small letterspaced kicker above the title — what *kind* of moment this is ("Spoils", "A Pact Awaits"). */
+  /** Letterspaced kicker above the title — what *kind* of moment this is ("Spoils", "A Pact Awaits"). */
   eyebrow?: string;
-  /** The node's name. A string, not a node: it is duplicated blurred behind itself to make the bloom. */
+  /** A string, not a node: it is duplicated blurred behind itself to make the bloom. */
   title: string;
-  /** Drawn inline before the title (a RunGlyph, a ResourceMark). Deliberately not part of the bloom — a blurred icon reads as a smudge. */
+  /** Drawn inline before the title; not part of the bloom (a blurred icon is a smudge). */
   glyph?: ReactNode;
-  /** The line under the title: what the player is being asked to do, or what just happened. Height is reserved either way so nothing below shifts. */
+  /** Line under the title. Height is reserved either way so nothing below shifts. */
   readout?: ReactNode;
-  /** True once `readout` is reporting an outcome rather than an instruction — brightens it, same as the level-up screen's feedback line. */
+  /** True once `readout` reports an outcome rather than an instruction — brightens it. */
   readoutLive?: boolean;
-  /** Remounts the readout (and so replays its fade) when it changes, rather than swapping the text in place. Keying the whole header instead would replay the title's arrival on every update. */
+  /** Remounts the readout (replaying its fade) when it changes; keying the whole header would replay the title. */
   readoutKey?: string;
   /** Art standing above the eyebrow (the Mentor). */
   art?: ReactNode;
-  /** A slowly rotating dashed ring framing the header's art — ambient magic, the one piece of the shrine banners worth keeping. Ignored without art: around a bare title it reads as a stray circle drawn through the line of text under it, not as light. */
+  /** Rotating dashed ring around the art. Ignored without art. */
   ring?: boolean;
-  /** Smaller type for a screen whose body is already tall (the Mentor's three discipline cards). */
+  /** Smaller type for a screen whose body is already tall. */
   compact?: boolean;
   children?: ReactNode;
 }
@@ -174,8 +128,7 @@ export function NodeHeader({
         {glyph && <span className="node-title-glyph">{glyph}</span>}
         {title}
       </h2>
-      {/* Between the title and the readout: whatever this node counts out
-          before it says anything (the level-up screen's orb track). */}
+      {/* Between the title and the readout: whatever this node counts out first (the orb track). */}
       {children}
       {readout !== undefined && (
         <p className={`node-readout${readoutLive ? ' is-live' : ''}`} key={readoutKey}>

@@ -1,30 +1,4 @@
-// Nature's authored movepool (src/data/moves.ts, 2026-08-30) and the two engine
-// fields it is the first content to need:
-//
-//   - `conditionalPower.requiresUserStatus` (Seed Shot, Branch Slam) — the same
-//     BasePower-stage multiplier Immolate and Cold Snap use, asked of the
-//     ATTACKER instead of the defender. The first damage bonus in the game you
-//     set up on yourself rather than inflict;
-//   - `detonatesStatus` (Miasma) — forcing a 'timer'-shape status to pay out
-//     NOW instead of when its clock runs down.
-//
-// Same discipline as fire/water/frost/storm/stoneMoves: these assert the
-// MECHANIC with Nature's moves as the vehicle, never Nature's numbers, which are
-// balance and will move. What IS pinned is what is easy to get wrong and hard to
-// notice afterwards:
-//
-//   1. the user-side multiplier lands on the formula's BasePower INPUT and not
-//      on `multiplierTerm` — the two-pipeline separation is LOCKED (CLAUDE.md),
-//      and a term on the wrong side of it is invisible until two of them stack;
-//   2. it reads the ATTACKER, so a spread cast is doubled against every target
-//      or none, where the target-side form varies per foe. That asymmetry is the
-//      whole difference between the two halves of one field;
-//   3. Miasma's detonation resolves AFTER its own statusApplication, which is
-//      what makes the design row's "apply Poison 5, THEN detonate" true rather
-//      than merely the order it was written in;
-//   4. a forced detonation is worth exactly what the timer's own expiry would
-//      have been worth, and emits the same three events in the same order the
-//      view already knows how to bundle (buildBeats.ts).
+// Nature's authored movepool: conditionalPower.requiresUserStatus and detonatesStatus. Mechanics, not numbers.
 
 import { firstStatusApplication, statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
@@ -60,17 +34,7 @@ function natureFixture(seed: number) {
   );
 }
 
-/**
- * The two fixture problems every authored slate hits (authoring-moves.md §8),
- * solved once:
- *
- * - **Mana.** Nature's curve tops out at 75, above every Nature hero's STARTING
- *   pool — which is the intended shape (docs/mana.md, pools grow all run), not
- *   something these tests should be gated on.
- * - **Lethality.** A defender that faints to the hit never reaches the riders,
- *   which would silently turn a Poison test into a KO test. getMaxHp reads
- *   baseStats + statModifiers, so the hp modifier has to move with currentHp.
- */
+/** Deep mana and HP so no test is gated on the mana curve or turned into a KO test; the hp modifier moves with currentHp because getMaxHp reads both. */
 function withDeepPools(state: CombatState): CombatState {
   const combatants = Object.fromEntries(
     Object.entries(state.combatants).map(([id, c]) => [
@@ -91,14 +55,12 @@ function withPoison(state: CombatState, combatantId: string, magnitude: number):
   return applyStatus(state, 1, combatantId, statuses.Poison, { magnitude, duration: 3 }).state;
 }
 
-// --- conditionalPower.requiresUserStatus: the mirror of the target-side form -
+// --- conditionalPower.requiresUserStatus ---
 
 test('nature: Seed Shot doubles off the USER carrying Renew, not the target', () => {
   const plain = withDeepPools(natureFixture(101));
   assert.strictEqual(resolveConditionalPowerMultiplier(moves.seedShot, plain.combatants.b1, plain.combatants.a1), 1);
 
-  // Renew on the DEFENDER must not satisfy a user-side condition — the exact
-  // confusion the second field exists to make impossible.
   const renewedTarget = withRenew(plain, 'b1', 20);
   assert.strictEqual(
     resolveConditionalPowerMultiplier(moves.seedShot, renewedTarget.combatants.b1, renewedTarget.combatants.a1),
@@ -109,16 +71,11 @@ test('nature: Seed Shot doubles off the USER carrying Renew, not the target', ()
   const renewedUser = withRenew(plain, 'a1', 20);
   assert.strictEqual(resolveConditionalPowerMultiplier(moves.seedShot, renewedUser.combatants.b1, renewedUser.combatants.a1), 2);
 
-  // And the older target-side form still reads the target, unchanged.
   const frozen = applyStatus(plain, 1, 'b1', statuses.Freeze, {}).state;
   assert.strictEqual(resolveConditionalPowerMultiplier(moves.coldSnap, frozen.combatants.b1, frozen.combatants.a1), 2);
 });
 
 test('nature: the user-side multiplier is a BasePower-stage term, not a damage modifier', () => {
-  // The LOCKED two-pipeline separation (CLAUDE.md), asserted structurally for
-  // the same reason test/fireMoves.test.ts asserts it for Immolate: a term on
-  // the wrong side of the split produces identical damage until a second
-  // modifier stacks against it, at which point it is already shipped.
   const doubled = calcDamage(moves.branchSlam, 1, ['Nature'], ['Iron'], typeChart, 1, false, [], undefined, undefined, 0, 2);
   assert.strictEqual(doubled.basePowerMultiplier, 2, 'the multiplier rides the BasePower input');
   assert.strictEqual(doubled.multiplierTerm, 1, 'and never becomes a multiplier on the finished hit');
@@ -143,17 +100,13 @@ test('nature: Branch Slam actually hits twice as hard through resolveRound once 
   const bare = swing(false);
   const boosted = swing(true);
   assert.ok(bare && boosted);
-  // Same seed, so the same variance and crit roll — the only difference is the
-  // BasePower term the event now carries.
   assert.strictEqual(bare.basePowerMultiplier, 1);
   assert.strictEqual(boosted.basePowerMultiplier, 2);
   assert.ok(boosted.amount > bare.amount, `expected the Renewed swing to hit harder (${boosted.amount} vs ${bare.amount})`);
 });
 
 test('nature: a Renew granted earlier in the SAME round already counts', () => {
-  // The freshness rule that matters more on the user side than it ever did on
-  // the target side: Sylva (speed 65) outruns Mordrax (50), so Regrowth lands
-  // on both allies before Branch Slam resolves.
+  // Sylva (speed 65) outruns Mordrax (50), so Regrowth lands before Branch Slam resolves.
   const state = withDeepPools(natureFixture(103));
   const { events } = resolveRound(
     state,
@@ -169,10 +122,6 @@ test('nature: a Renew granted earlier in the SAME round already counts', () => {
 });
 
 test('nature: a user-side conditional is all-or-nothing across a spread, where a target-side one is per target', () => {
-  // The asymmetry worth pinning: the target-side form is read per hit off each
-  // defender, so it can double against one foe and not the other. The user-side
-  // form asks one question about one combatant, so every target of a single cast
-  // gets the same answer.
   const state = withRenew(withDeepPools(natureFixture(104)), 'a1', 20);
   const spread = { ...moves.blight, id: 'testSpreadSeedShot', kind: 'damage' as const, basePower: 30, statusApplication: undefined, conditionalPower: moves.seedShot.conditionalPower };
   const withSpread = { ...config, moves: { ...moves, testSpreadSeedShot: spread } };
@@ -182,9 +131,6 @@ test('nature: a user-side conditional is all-or-nothing across a spread, where a
 });
 
 test('nature: neither user-side move consumes the Renew it read', () => {
-  // Deliberate, and the reason consumesStatus is authored on neither: the same
-  // Renew is also healing the caster and, under Verdant Earth, IS its Attack
-  // and Intelligence (fieldEffects.ts). One press must not undo the other two.
   assert.strictEqual(moves.seedShot.conditionalPower?.consumesStatus, undefined);
   assert.strictEqual(moves.branchSlam.conditionalPower?.consumesStatus, undefined);
 
@@ -197,7 +143,7 @@ test('nature: neither user-side move consumes the Renew it read', () => {
   assert.ok(hasStatus(after.combatants.a1, 'Renew'), 'the caster keeps it');
 });
 
-// --- detonatesStatus: paying a timer out early ------------------------------
+// --- detonatesStatus ---
 
 test('nature: Miasma detonates the accumulated Poison, its own application included', () => {
   const state = withPoison(withDeepPools(natureFixture(201)), 'b1', 20);
@@ -211,9 +157,7 @@ test('nature: Miasma detonates the accumulated Poison, its own application inclu
 
   const detonation = events.find((e) => e.type === 'StatusDetonated');
   assert.ok(detonation && detonation.type === 'StatusDetonated');
-  // 20 already standing + the 5 Miasma plants, because the detonation resolves
-  // AFTER the statusApplication (resolveRound.ts). This is the design row's
-  // "apply Poison 5, THEN detonate" as an assertion.
+  // 20 standing + the 5 Miasma plants: the detonation resolves AFTER its own statusApplication.
   assert.strictEqual(detonation.amount, Math.ceil((maxHp * 25) / 100));
   assert.strictEqual(hasStatus(after.combatants.b1, 'Poison'), false, 'the stack is spent, not left ticking');
 });
@@ -232,14 +176,11 @@ test('nature: Miasma into a clean target is worth only the Poison it brought wit
 });
 
 test('nature: a forced detonation is worth exactly what the timer expiry would have been', () => {
-  // The invariant Miasma is priced against: it buys TIME, not damage. If these
-  // two numbers ever diverge, the move has quietly become its own damage source.
   const state = withPoison(withDeepPools(natureFixture(203)), 'b1', 30);
   const maxHp = getMaxHp(heroes[state.combatants.b1.heroId], state.combatants.b1);
 
   const forced = detonateStatusNow(state, 1, 'b1', 'Poison', statuses, maxHp);
 
-  // The natural path: three empty rounds, letting the timer run down on its own.
   let waited = state;
   let expiryAmount = 0;
   for (let i = 0; i < 3; i++) {
@@ -254,9 +195,6 @@ test('nature: a forced detonation is worth exactly what the timer expiry would h
 });
 
 test('nature: the detonation emits Detonated / Removed / HpChanged, in the order the view bundles', () => {
-  // buildBeats.ts reads exactly this run of events to fold the pop, the status
-  // clear and the bar drain into one tap — a different order silently splits
-  // Miasma into three beats.
   const state = withPoison(withDeepPools(natureFixture(204)), 'b1', 20);
   const { events } = resolveRound(
     state,
@@ -271,8 +209,6 @@ test('nature: the detonation emits Detonated / Removed / HpChanged, in the order
 });
 
 test('nature: detonatesStatus is gated on the timer SHAPE, not on a status id', () => {
-  // Naming a magnitude/boolean/duration status is a silent no-op rather than an
-  // error — the same guard discipline statusApplication's unknown-id lookup uses.
   const state = withRenew(withDeepPools(natureFixture(205)), 'b1', 20);
   const maxHp = getMaxHp(heroes[state.combatants.b1.heroId], state.combatants.b1);
 
@@ -286,7 +222,7 @@ test('nature: detonatesStatus is gated on the timer SHAPE, not on a status id', 
   assert.deepStrictEqual(absent.events, []);
 });
 
-// --- the slate's own shape --------------------------------------------------
+// --- The slate's own shape ---
 
 test('nature: no Nature move applies, gates on, or detonates a status the catalog does not define', () => {
   for (const move of Object.values(moves)) {
@@ -314,9 +250,7 @@ test('nature: every Nature move resolves in bracket 0 — the slate authors no p
 });
 
 test('nature: every Poison applier authors the timer duration the shape requires', () => {
-  // There is no isValidMoveDefinition (authoring-moves.md §4), so a timer-shape
-  // status authored with no duration would sit at 0 and detonate on the very
-  // next tick instead of in three rounds.
+  // A timer-shape status with no duration sits at 0 and detonates on the next tick.
   for (const move of Object.values(moves)) {
     const app = firstStatusApplication(move);
     if (app?.statusId !== 'Poison') continue;
@@ -327,7 +261,7 @@ test('nature: every Poison applier authors the timer duration the shape requires
   }
 });
 
-// --- Distribution -----------------------------------------------------------
+// --- Distribution ---
 
 test('nature: every move id a hero or level-up pool points at actually exists', () => {
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
@@ -357,10 +291,6 @@ test('nature: no Nature hero starts with a move it cannot pay for, or has a star
 });
 
 test("nature: every hero that can be offered a user-side conditional can also reach Renew", () => {
-  // The equivalent of frostMoves' "the gate has a guaranteed key in the same
-  // pool" assertion. Nothing in the ENGINE pairs these — a Branch Slam on a hero
-  // with no route to Renew is a permanently half-power move, which is the trap
-  // pick the north star forbids (CLAUDE.md).
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   const grantsRenew = (moveId: string) => {
     const app = moves[moveId] ? firstStatusApplication(moves[moveId]) : undefined;

@@ -28,6 +28,11 @@ import { STAT_ORDER, StatGlyph } from '../shared/StatBars';
 
 type SideKey = 'A' | 'B';
 
+const HERO_LIST = Object.values(heroes).sort((a, b) => a.name.localeCompare(b.name));
+
+const EQUIPMENT_BY_SLOT: Record<EquipmentSlot, EquipmentDefinition[]> = { weapon: [], armor: [], accessory: [] };
+for (const item of Object.values(equipment)) EQUIPMENT_BY_SLOT[item.slot].push(item);
+
 function displayTypesFor(hero: HeroDefinition, config: SandboxHeroConfig, table: ProgressionTable): readonly string[] {
   if (!config.pathId) return hero.types;
   const node = table.evolutions[hero.id]?.[0];
@@ -41,7 +46,6 @@ interface HeroConfigCardProps {
   isActive: boolean;
   movePool: string[];
   evolutionNode: EvolutionNode | null;
-  equipmentBySlot: Record<EquipmentSlot, EquipmentDefinition[]>;
   onLevelChange: (level: number) => void;
   onToggleActive: () => void;
   onRemove: () => void;
@@ -51,21 +55,12 @@ interface HeroConfigCardProps {
   onBonusStatChange: (stat: StatKey, amount: number) => void;
 }
 
-/**
- * One roster slot's full config — level, moves, equipment, evolution, bonus
- * stats — all editable inline rather than behind further modals, since a
- * dev/design tool benefits from everything being visible and tweakable at
- * once. Pulled out of the side's .map() for readability, same as every other
- * per-item card component in this codebase (RosterManagementScreen's
- * EquipSlotButton, LevelUpScreen's ReplaceMoveCard).
- */
 function HeroConfigCard({
   hero,
   config,
   isActive,
   movePool,
   evolutionNode,
-  equipmentBySlot,
   onLevelChange,
   onToggleActive,
   onRemove,
@@ -124,7 +119,7 @@ function HeroConfigCard({
             <span>{EQUIP_SLOT_LABELS[slot]}</span>
             <select value={config.equipment[slot] ?? ''} onChange={(e) => onEquipChange(slot, e.target.value || null)}>
               <option value="">— empty —</option>
-              {equipmentBySlot[slot].map((item) => (
+              {EQUIPMENT_BY_SLOT[slot].map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
                 </option>
@@ -175,23 +170,8 @@ interface Props {
   onClose: () => void;
 }
 
-/**
- * Permanent team-builder tool (not a temp dev button like the Lv4/Conditions
- * test shortcuts on TitleScreen): pick exact rosters — level, moves,
- * equipment, evolution path, bonus stats, team relics — for both sides of a
- * fight, then drop straight into the real FightScreen (App.tsx's
- * 'sandboxFight' screen kind). Replaces hand-written one-off test-encounter
- * functions with a reusable, data-driven builder that stays useful as new
- * content types are added. Relics are Side A only — Sandbox Battle has no
- * enemy-relic support (user direction).
- *
- * sideA/sideB are owned by App.tsx, not local state here: App.tsx swaps this
- * component out for FightScreen while a sandbox fight is in progress
- * ('sandboxBattle' vs 'sandboxFight' screen kinds), which unmounts this
- * component — local useState would lose the whole configuration the moment
- * "Start Fight" is pressed. Lifting the state up is what makes
- * tweak-then-rerun actually work once the fight resolves back to this screen.
- */
+// Permanent team-builder tool. Relics are Side A only. Side state lives in
+// App.tsx because this component unmounts while the sandbox fight runs.
 export function SandboxBattleScreen({ sideA, sideB, onChangeSideA, onChangeSideB, onStartFight, onClose }: Props) {
   const [tab, setTab] = useState<SideKey>('A');
   const [addHeroId, setAddHeroId] = useState('');
@@ -283,12 +263,6 @@ export function SandboxBattleScreen({ sideA, sideB, onChangeSideA, onChangeSideB
     setSelectedPreset('');
   }
 
-  const heroList = Object.values(heroes).sort((a, b) => a.name.localeCompare(b.name));
-  const equipmentBySlot: Record<EquipmentSlot, EquipmentDefinition[]> = {
-    weapon: Object.values(equipment).filter((item) => item.slot === 'weapon'),
-    armor: Object.values(equipment).filter((item) => item.slot === 'armor'),
-    accessory: Object.values(equipment).filter((item) => item.slot === 'accessory'),
-  };
   const canStart = sideA.activeIds.some(Boolean) && sideB.activeIds.some(Boolean);
 
   return (
@@ -313,7 +287,7 @@ export function SandboxBattleScreen({ sideA, sideB, onChangeSideA, onChangeSideB
         <div className="sandbox-add-row">
           <select value={addHeroId} onChange={(e) => setAddHeroId(e.target.value)}>
             <option value="">Add a hero…</option>
-            {heroList.map((h) => (
+            {HERO_LIST.map((h) => (
               <option key={h.id} value={h.id}>
                 {h.name}
               </option>
@@ -346,7 +320,6 @@ export function SandboxBattleScreen({ sideA, sideB, onChangeSideA, onChangeSideB
                 isActive={side.activeIds.includes(config.rosterId)}
                 movePool={movePool}
                 evolutionNode={evolutionNode}
-                equipmentBySlot={equipmentBySlot}
                 onLevelChange={(level) => updateHero(tab, config.rosterId, (h) => ({ ...h, level }))}
                 onToggleActive={() => toggleActive(tab, config.rosterId)}
                 onRemove={() => removeHero(tab, config.rosterId)}

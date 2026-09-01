@@ -1,217 +1,41 @@
-// ⚠️ TEST FIXTURE CONTENT — a level-up move pool and Evolution paths for the
-// fixture roster's starter heroes, enough to exercise both consequences of
-// leveling end to end (docs/leveling-and-ranks.md: a level-up either "offers
-// a random move" or, at EVOLUTION_LEVEL, surfaces the Evolution choice
-// instead). Every hero's starting kit (src/data/heroes.ts) is exactly three
-// moves — a low-power main-type move plus two supports — so the moveTiers
-// pool below is where the rest of a hero's thematic movepool lives, offered
-// randomly (not in authored order) as the hero levels up toward the 4-move
-// cap (src/run/progression.ts MOVE_CAP). Not the authored 53-hero
-// progression content.
-//
-// A pool entry that's also in the hero's starting kit is dead weight —
-// levelUpMovePool filters out anything already unlocked, so it can never be
-// offered — which is why runescribe's pool carries Mana Font rather than the
-// Magic Bolt it now starts with.
-//
-// SCOPE NOTE (amended 2026-09-01): paths WERE stat-only (statGrants +
-// description) on the reasoning that the two growth axes shouldn't gate the
-// same content twice. That still holds for `unlocksMoveIds`, which nothing
-// uses — a path handing over moves outright is the axis collision the note
-// was written against. It does NOT hold for `learnableMoveIds`, which is the
-// opposite thing: the path doesn't grant the move, it adds it to the pool the
-// level-up axis draws from, so the two axes COMPOSE rather than duplicate.
-// That is docs/leveling-and-ranks.md "Evolution steers future level-up
-// offerings" — locked behavior that had simply never been built. Crimson is
-// the first hero authored under the amended note; the other 34 are still on
-// the stat-only shape and read as flat next to it. Every fixture
-// hero's evolution node sits at EVOLUTION_LEVEL and offers exactly three
-// paths differing in kind (CLAUDE.md "the player is presented with a choice
-// of three options"): one offensive, one defensive, one utility — not every
-// path grafts a type ("mono remains a legitimate terminal state",
-// docs/progression.md); each hero keeps exactly one mono path as a valid
-// terminal identity. `description` is the one-line flavor/mechanical pitch
-// shown on the Evolution choice screen (src/view/run/LevelUpScreen.tsx) —
-// this is the 2026-08-16 designer draft verbatim, not final balance copy.
-//
-// ironWarden and wildOracle were promoted from dual- to mono-typed in
-// src/data/heroes.ts to fit this framework's mono-base-plus-graft shape
-// (matching the "50/50 heroes" pattern in CLAUDE.md, even though neither is
-// on that specific list) — Iron/Stone and Nature/Spirit are now reachable
-// only via their defensive Evolution paths (Bulwark/Heartwood keep them
-// mono; the type comes from a sibling path instead, same as any other
-// hero here). Type-chart tuning is unaffected: the chart is keyed per
-// single type, not per pair.
-//
-// cinderKnight and tidecaller's paths were renamed/retyped from an earlier
-// placeholder pass (Blazing Vanguard/Ember Bulwark/Kindled Spirit, Deluge
-// Adept/Glacial Bastion/Mana Current) to match the same designer draft —
-// stat grants are unchanged, only names and typeGraft targets moved to line
-// up with the other 10 heroes' authored framework.
-//
-// Lucius (dual Shadow/Mind — no typeGraft path, per the mono-only rule
-// chooseEvolutionPath enforces) is the one exception to the stat-only scope
-// note above: his defensive path also grants a Passive (grantsPassiveIds,
-// src/run/progression.ts EvolutionPath, engine/content.ts PassiveDefinition)
-// — Sanguine (src/data/passives.ts), the first Evolution-granted Passive now
-// that the contract exists (engine/combat/passiveEngine.ts).
+// Level-up move pools and Evolution nodes for the fixture roster (not the
+// authored 53-hero content). A pool entry that is also in the hero's starting
+// kit is dead weight: levelUpMovePool filters unlocked moves out, so it can
+// never be offered. Every Evolution node offers three paths differing in kind
+// and keeps at least one mono (no typeGraft) path; a dual-typed hero gets no
+// graft path at all (chooseEvolutionPath throws). A graft's `learnableMoveIds`
+// JOIN the level-up pool rather than being handed over (docs/leveling-and-ranks.md).
 
 import type { ProgressionTable } from '../run/progression';
 import { EVOLUTION_LEVEL } from '../run/progression';
 
 export const progressionTable: ProgressionTable = {
   moveTiers: {
-    // FLOOR (2026-08-31, enforced by test/moveTiers.test.ts): every pool must
-    // hold, after its hero's starting kit is filtered out, >=2 Early, >=4
-    // Early+Mid, and >=8 total — the counts that keep a level-up from ever
-    // offering nothing through level 10. 26 of 35 pools failed this when it
-    // landed and were topped up, own type first, an adjacent slate second.
-    //
-    // The three Fire heroes draw from the authored Fire pool (src/data/moves.ts),
-    // split by the stat each one actually attacks with rather than by tier:
-    // Cinder (Atk 70 / Int 30) takes the physical line, Crimson (Int 80) the
-    // magical burst line, Brimstone (Int 60, Fire/Shadow) the spread-and-
-    // attrition line. Each hero's own starting move is deliberately absent —
-    // levelUpMovePool filters unlocked moves out, so listing it is dead weight.
-    // kindle left this pool for Cinder's starting kit (heroes.ts) when the
-    // Spirit slate deleted Mend Wounds — a starting move in its own pool is
-    // dead weight levelUpMovePool can never offer.
-    // quickJab died with the Iron slate (moves.ts, 2026-08-30). Cinder is the
-    // only Fire hero for which Iron is an INNATE second type, and at Atk 70 it
-    // is the one that can actually swing it, so the slot became a real Iron
-    // line rather than one more off-type poke.
-    // fangRush dropped with the Beast slate (moves.ts, 2026-08-30) rather
-    // than being repointed: Cinder is Fire/Iron and already draws a full line
-    // from both, so the off-type Beast slot was filler the moment the type
-    // had content of its own.
+    // FLOOR (test/moveTiers.test.ts): after the starting kit is filtered out, every
+    // pool holds >=2 Early, >=4 Early+Mid and >=8 total, so no level-up pays nothing.
+    // --- Fire ---
     cinderKnight: ['moltenLash', 'firebrand', 'volcanicSurge', 'heavyBlow', 'momentumSwing', 'ironFist', 'openingStrike', 'serratedSlice'],
-    // stokeTheFlames sits here rather than on the other two deliberately:
-    // it buffs the whole active side, and Crimson is the only Fire STARTER
-    // (heroes.ts), so it is the one that can be drafted alongside a second
-    // Fire hero for the ramp to pay off twice.
-    // stokeTheFlames likewise moved up into Crimson's starting kit
-    // (heroes.ts) when Mend Wounds died. The note above still holds — it is on
-    // the Fire STARTER because a side-wide ramp wants a second Fire hero
-    // beside it — it now just starts unlocked rather than being drawn for.
     crimson: ['setAlight', 'scorch', 'immolate', 'firestorm', 'inferno', 'purify', 'spreadingBlaze', 'sparkBurst'],
-    // The two Water heroes draw from the authored Water pool (src/data/moves.ts,
-    // 2026-08-30), split the same way the Fire three are — by the stat each
-    // actually attacks with. Riptide (Int 59) takes the magical line and, being
-    // the only Water STARTER, also carries High Tide for the reason Crimson
-    // carries Stoke the Flames: it buffs the whole active side, so it wants to
-    // be on the hero that can be drafted alongside a second Water hero.
+    brimstone: ['sparkFlash', 'spreadingBlaze', 'backdraft', 'sparkBurst', 'umbralBeam', 'umbralWave', 'setAlight', 'enfeeble'],
+    // --- Water ---
     tidecaller: ['siphon', 'torrent', 'engulf', 'deluge', 'oasis', 'maelstrom', 'tsunami', 'highTide', 'undertow'],
-    // fortify dropped 2026-08-30: it is in Warden's own STARTING kit
-    // (heroes.ts), so levelUpMovePool filtered it out and it could never be
-    // offered — dead weight that made the pool read as 5 picks when it was 4.
-    // Predates the Spirit slate; found by widening §9's "no starter in its own
-    // pool" assertion past the type being authored (test/spiritMoves.test.ts).
-    // Iron authored (moves.ts, 2026-08-30). Warden takes the DEBUFF line its
-    // Atk 55 / Def 90 frame can actually play — Rend Armor is the escalation
-    // of the Opening Strike it starts with, and Juggernaut is the one row in
-    // the game that answers Speed 30. The two Stone entries stay: Body Blow
-    // swings DEFENSE (offStatOverride), which is the single best move in the
-    // game for a Defense-90 hero and the reason it was put here.
-    // pinDown moved down here from Warden's kit when Fortify was re-authored
-    // (heroes.ts, 2026-08-30) — still the debuff line, one pick later.
-    ironWarden: ['ironFist', 'pinDown', 'rendArmor', 'juggernaut', 'rockToss', 'bodyBlow', 'reinforce', 'bastion'],
-    // The three Nature heroes draw from the authored Nature pool
-    // (src/data/moves.ts, 2026-08-30), split by the stat each actually attacks
-    // with, same as Fire/Water/Frost/Storm/Stone. Sylva (Int 60, Wis 60) takes
-    // the magical line and with it BOTH halves of the type's engine — the
-    // Poison stack (Blight, Corrode) and the move that detonates it (Miasma) —
-    // because it is the only Nature hero that can hold all three at once.
-    //
-    // Magic Growth sits here for the reason Crimson carries Stoke the Flames
-    // and Riptide carries High Tide: it is the side-wide/field move, and Sylva
-    // is the only Nature STARTER (heroes.ts), so it is the one that can be
-    // drafted alongside a second Nature hero for Verdant Earth to pay off twice.
-    // mendWounds survived the Nature rewrite as Sylva's only heal-KIND move
-    // and did not survive the Spirit one (moves.ts, 2026-08-30) — so Sylva now
-    // has no direct heal either, and every point of Nature healing in its pool
-    // is Renew. The consequence Nature's own hand-off predicted, arriving one
-    // slate later than expected.
-    // animalSpirit is the Beast slate's one magical row, authored as
-    // "coverage for certain casters" rather than for its own type (moves.ts,
-    // 2026-08-30), and this is the least arguable home in the roster: Sylva
-    // is Intelligence 60 on an 80 pool against the move's 50, its OFFENSIVE
-    // Evolution grafts Beast (so the move gains STAB on the exact build that
-    // wants it), and Nature's own slate has no spread damage move at all —
-    // the gap that type's hand-off reported and nothing has filled since.
-    // The other candidates are deliberately left unplaced; see
-    // docs/authoring-moves.md §10.
-    // Vine Lash is the 2026-08-31 tier-gate fix: Sylva's pool was Mid and Late
-    // only, so under the gate (run/progression.ts MOVE_TIER_LEVEL) it learned
-    // nothing at all until level 4. It is a physical row on an Int-60/Atk-45
-    // hero and that is deliberate — Nature's Early tier authors exactly ONE
-    // magical row (Seed Shot) and Sylva already starts with it, so the choice
-    // was an off-stat row of its own type or an off-type row of the right
-    // stat. Vine Lash wins on the identity Sylva is built around: 20 mana of
-    // Poison, feeding the same Blight/Corrode stack that Miasma detonates.
-    // Off-stat is a legitimate pick, not a compromise (2026-08-31 designer
-    // call) — the trap the north star forbids is a hero whose ONLY damage
-    // move is off-stat, and Sylva starts with Seed Shot.
-    wildOracle: ['vineLash', 'blight', 'corrode', 'magicGrowth', 'miasma', 'forceOfNature', 'wildBloom', 'animalSpirit', 'drain'],
-    // The three Storm heroes draw from the authored Storm pool (src/data/moves.ts,
-    // 2026-08-30), split by the stat each actually attacks with, same as Fire,
-    // Water and Frost. Squall (Atk 65 vs Int 35) and Scallywag (Atk 75 vs Int
-    // 30) share the physical line and are separated by what each is FOR: Squall
-    // is the Speed-90 pivot, so it gets Tailwind; Scallywag is the Attack-75
-    // bruiser, so it gets a second mark planter to feed its own Overcharge.
-    //
-    // Overcharge sits in both 50-mana pools despite costing 60. That is the
-    // move: it is free while both enemies carry Conduct, so on these two heroes
-    // it is only ever castable off a fully-marked board — see docs/combat.md
-    // for the hand-off on whether that reads as a payoff or as a dead row.
-    // fangRush dropped with the Beast slate (moves.ts, 2026-08-30) — same
-    // reason as Cinder above: off-type filler, and Tempest has a Storm line.
-    stormRanger: ['stormLash', 'shockSlice', 'tailwind', 'overcharge', 'heavyBlow', 'charge', 'swiftBlow', 'ionize'],
-    // Tempest had NO pool at all before the Storm slate — a starter that could
-    // never learn a move (levelUpMovePool returns an empty list for a hero with
-    // no moveTiers entry). It takes the magical line, and with it Storm Surge,
-    // for the reason Crimson carries Stoke the Flames and Riptide carries High
-    // Tide: it buffs the whole active side, and Tempest is the only Storm
-    // STARTER, so it is the one that can be drafted alongside a second Storm
-    // hero. That the +50 Attack lands better on that partner than on Tempest
-    // itself is the point, not an accident.
-    // Zap and Rising Static are the 2026-08-31 tier-gate fix — the pool was
-    // Mid and Late only. Both are the magical line one tier down rather than
-    // filler: Zap is Ionic Zap's +1 bracket at a fifth of the price, and
-    // Rising Static plants the Conduct that Electric Burst and Ionize are
-    // written to read. Tempest starts with Jolt and Charge, the type's other
-    // two Early rows, so this is the whole rest of Storm's Early tier.
-    tempest: ['zap', 'risingStatic', 'ionize', 'chainLightning', 'electricBurst', 'thunderbolt', 'stormSurge', 'ionicZap'],
-    // Shadow's authored pool (src/data/moves.ts, 2026-08-30). Vesper is the
-    // physical Stealth line — Ambush and Shadow Form are the payoffs its own
-    // Vanish arms. Marrow is the MAGICAL line (heroes.ts: Attack and
-    // Intelligence swapped, 2026-08-30), so it takes the Poison escalation and
-    // the magical execute and none of the physical moves it can no longer
-    // swing.
-    //
-    // Both gained Early rows on 2026-08-31 (the tier gate), and what each
-    // could take is the cleanest illustration of the split above. Vesper is
-    // Attack 75, so it takes Backstab and Weaken — the Bleed opener its own
-    // Ambush wants and the 15-mana Defense/Wisdom cut that prices the burst.
-    // Marrow is Attack 40, so of Shadow's five Early rows it can use exactly
-    // one: Vanish. Umbra Bolt (the tier's only magical row) is already in its
-    // starting kit and so is Weaken, and the other two are physical.
-    shadowMonk: ['backstab', 'weaken', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm', 'shadowstrike'],
-    marrow: ['vanish', 'umbralBeam', 'umbralWave', 'eclipse', 'enfeeble', 'drain', 'torment', 'soulRend'],
-    // The three Frost heroes draw from the authored Frost pool (src/data/moves.ts,
-    // 2026-08-30), split by the stat each actually attacks with, same as Fire
-    // and Water. Flurry (Int 70) takes the magical line and with it BOTH of the
-    // `requiresTargetStatus` moves — it is also the hero carrying Deep Chill in
-    // its starting kit, so the key and the lock grow on the same hero rather
-    // than depending on a second Frost draft.
+    pincer: ['aquaSlice', 'waveShred', 'washAway', 'rendArmor', 'refresh', 'ironFist', 'heavyBlow', 'serratedSlice'],
+    // --- Frost ---
     glacialWarden: ['snowBlast', 'glaciate', 'permafrost', 'quickFreeze', 'frigidAir', 'absoluteZero', 'avalanche', 'purify'],
-    // Light authored (2026-08-30): Solace is Int 60 / Wis 70, so it takes the
-    // MAGICAL half of the slate plus the whole support line — the two spread
-    // moves, both big heals, every Intelligence buff, and Consecrate + Smite,
-    // which are the only pair in the game where one move is the other's damage
-    // condition (moves.ts conditionalPower.requiresFieldEffect). Its three
-    // starters (Glimmer, Mend, Purify) are deliberately absent: levelUpMovePool
-    // filters unlocked moves out, so listing them here would be dead weight.
-    // The off-type filler (fortify) is gone now that the type has its own.
+    rime: ['icicleThrust', 'coldSnap', 'iceShatter', 'frostWall', 'permafrost', 'claw', 'frostArmor', 'snowBlast'],
+    cube: ['icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'rockToss', 'openingStrike', 'ironFist', 'frostWall'],
+    // --- Storm ---
+    stormRanger: ['stormLash', 'shockSlice', 'tailwind', 'overcharge', 'heavyBlow', 'charge', 'swiftBlow', 'ionize'],
+    tempest: ['zap', 'risingStatic', 'ionize', 'chainLightning', 'electricBurst', 'thunderbolt', 'stormSurge', 'ionicZap'],
+    scallywag: ['stormLash', 'shockSlice', 'overcharge', 'risingStatic', 'heavyBlow', 'tailwind', 'momentumSwing', 'swingingChain'],
+    // --- Stone ---
+    crag: ['faultLine', 'rubbleRush', 'retribution', 'boulderSlam', 'provoke', 'weaken', 'rally', 'bodyCrush'],
+    sentinel: ['bodyBlow', 'bastion', 'retribution', 'bodyCrush', 'stoneheart', 'toughenUp', 'rally', 'faultLine'],
+    // --- Nature ---
+    wildOracle: ['vineLash', 'blight', 'corrode', 'magicGrowth', 'miasma', 'forceOfNature', 'wildBloom', 'animalSpirit', 'drain'],
+    mordax: ['ivySpike', 'thornWhip', 'leafSlice', 'branchSlam', 'overgrowth', 'toxicSpores', 'weaken', 'lacerate'],
+    hollowbark: ['vineLash', 'blight', 'leafSlice', 'thornWhip', 'branchSlam', 'regrowth', 'weaken', 'stoneheart'],
+    // --- Light ---
     dawnwarden: [
       'radiantBeam',
       'blind',
@@ -225,81 +49,61 @@ export const progressionTable: ProgressionTable = {
       'judgment',
       'exalt',
     ],
-    // The two Arcane heroes draw from the authored Arcane pool
-    // (src/data/moves.ts, 2026-08-30). Both are magical, so unlike every slate
-    // before this one the split is not physical-vs-magical — it is
-    // artillery-vs-battery (see heroes.ts). Glyph takes the damage line and
-    // both halves of the type's own engine: Mana Font, which sets Magical
-    // Surge, and Overload, which reads it back as a spread. Putting the field
-    // and the move that keys off it in ONE pool is deliberate, the same call
-    // Light's Consecrate/Smite pairing made — the combo grows on one hero
-    // rather than depending on a second Arcane draft.
-    //
-    // Mana Font also sits here for the reason Crimson carries Stoke the Flames
-    // and Riptide carries High Tide: it is the side-wide/field move, and Glyph
-    // is the only Arcane STARTER (heroes.ts), so it is the one that can be
-    // drafted alongside a second Arcane hero for the field to pay off twice.
-    // The off-type filler (mindSpike, psychicLance, weaken) is gone now that
-    // the type has its own line.
-    // Conjured Sword (Iron, moves.ts 2026-08-30) is the one row of that slate
-    // authored for heroes who do NOT have the type — "a lategame learnable for
-    // certain spellcasters", per the designer. Glyph is the game's highest
-    // Intelligence (90) on the game's second-biggest pool (85, against the
-    // move's 80), and this is already the artillery line, so it is the least
-    // arguable home for it. WHICH other casters should learn it is a roster
-    // decision, not a movepool one — see docs/authoring-moves.md §10 (Iron)
-    // for the candidate list, left unplaced rather than stuffed in.
+    aegis: ['holySlice', 'deityBlade', 'purify', 'bless', 'exalt', 'consecrate', 'divineGrace', 'reinforce'],
+    // --- Shadow ---
+    shadowMonk: ['backstab', 'weaken', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm', 'shadowstrike'],
+    marrow: ['vanish', 'umbralBeam', 'umbralWave', 'eclipse', 'enfeeble', 'drain', 'torment', 'soulRend'],
+    lucius: ['umbralBeam', 'eclipse', 'umbralWave', 'enfeeble', 'psychock', 'psionicWave', 'lull', 'weaken'],
+    nightshade: ['fadeStrike', 'shadowstrike', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm', 'claw'],
+    // --- Arcane ---
     runescribe: ['manaFont', 'study', 'arcaneBlast', 'overload', 'magicCloak', 'arcPulse', 'singularity', 'cataclysm', 'conjuredSword', 'manaTap'],
-    // Cortex takes the WISDOM/control line — the half of the slate its 55/55
-    // Int/Wis frame can actually play. Mind Shatter is the anchor (it swings
-    // Wisdom, so Mental Fortress is its ramp), and Break Will -> Brain Flay is
-    // the stat-reduction engine, which wants the bulkier hero because it costs
-    // whole turns before it pays. Stasis sits here for the same reason Crimson
-    // carries Stoke the Flames and Glyph carries Mana Font: it is the
-    // field-effect setter and Cortex is the type's only STARTER (heroes.ts),
-    // so it is the one that can be drafted alongside a second Mind hero.
-    // The off-type filler (spectralBind, quickJab, vanish, stunningBlow) is
-    // gone now that the type has its own line.
+    zenith: ['conduit', 'fontOfPower', 'arcaneOverflow', 'magicBolt', 'cataclysm', 'focus', 'arcPulse', 'magicCloak'],
+    // --- Mind ---
     mindweaver: ['enervate', 'psychicBlow', 'stasis', 'mentalFortress', 'disorient', 'mindShatter', 'breakWill', 'brainFlay', 'lull'],
-    // Three of Clockwork's four pool entries were Iron fixture moves and all
-    // three died (moves.ts, 2026-08-30). Mech has no authored slate yet, so
-    // the line stays off-type Iron — it is just a line now instead of filler.
-    // Clockwork takes the MAGICAL half of the slate, and it takes it by
-    // default rather than by fit: Intelligence 45 is the highest any Mech hero
-    // has, and the four magical rows (Backfire, Overheat, Malfunction,
-    // Meltdown) are otherwise in nobody's pool at all — Bellows is
-    // Intelligence 15. Reported in docs/authoring-moves.md §10; Stone's
-    // finding, with a fourth row on it.
-    //
-    // The line those four make is coherent even so: Mech's magic is heat it
-    // cannot contain, so every one of them burns the caster or gambles on
-    // what it does. Salvage is the answer to that — the only self-target heal
-    // in the game, and the reason this hero can keep pressing Overheat. Jury-
-    // Rig extends the reel it already opened with Overclock.
-    //
-    // Deliberately no physical rows: Bellows has those, and a pool shared
-    // between two heroes is the byte-identical-kits problem five slates have
-    // now reported (docs/authoring-moves.md §10).
+    trance: [
+      'brainWard',
+      'psychock',
+      'wickedFear',
+      'stasis',
+      'disorient',
+      'psionicWave',
+      'breakWill',
+      'brainFlay',
+      'dopamine',
+    ],
+    // --- Spirit ---
+    revenant: [
+      'torment',
+      'drain',
+      'spite',
+      'soulRend',
+      'poltergeist',
+      'soulOffering',
+      'vengeance',
+      'flicker',
+      'banish',
+      'lastRites',
+      'ascendant',
+    ],
+    sorrow: [
+      'vanish',
+      'backstab',
+      'fadeStrike',
+      'spookySlice',
+      'ambush',
+      'rend',
+      'soulOffering',
+      'wailingFlight',
+      'duskBlade',
+    ],
+    // --- Iron ---
+    ironWarden: ['ironFist', 'pinDown', 'rendArmor', 'juggernaut', 'rockToss', 'bodyBlow', 'reinforce', 'bastion'],
+    valor: ['openingStrike', 'heavyBlow', 'momentumSwing', 'serratedSlice', 'reinforce', 'swingingChain', 'metallicBlade', 'juggernaut'],
+    gallant: ['swiftBlow', 'ironFist', 'momentumSwing', 'serratedSlice', 'metallicBlade', 'onslaught', 'rendArmor', 'swingingChain'],
+    // --- Mech ---
     forgewright: ['backfire', 'overheat', 'malfunction', 'meltdown', 'salvage', 'juryRig', 'cogBop', 'reinforce'],
-    // Beast authored (src/data/moves.ts, 2026-08-30). Fang is the type's
-    // only hero, so like Spirit's Revenant it draws the WHOLE physical half
-    // rather than a line split against a sibling — eleven entries, and the
-    // off-type filler (rendingClaw, ironFist, heavyBlow, weaken) is gone now
-    // that the type has rows of its own.
-    //
-    // Two of these are pack rows Fang cannot satisfy on its own (Pack Hunt,
-    // Pack Leader), and they are here rather than orphaned because the
-    // condition IS reachable — Sylva, Rime and Mordrax each have a
-    // Beast type-graft Evolution below, so a Fang drafted beside one of them
-    // turns both rows on mid-run. Named in docs/authoring-moves.md §10 rather
-    // than quietly tuned, because until that Evolution is taken Pack Hunt is
-    // strictly worse than Lacerate.
-    //
-    // animalSpirit is NOT here: it is the slate's one magical row and Fang is
-    // Intelligence 20 (see wildOracle below). Still true of BASE Fang — but as
-    // of 2026-09-01 the Warhowl Evolution path (below) puts it back within
-    // reach via learnableMoveIds, because that path is what raises the
-    // Intelligence the row was always waiting on.
+    steamColossus: ['swiftBlow', 'pistonPunch', 'cogSlam', 'whirlingBlades', 'jackpot', 'overdrive', 'perfectCreation', 'onslaught'],
+    // --- Beast ---
     packAlpha: [
       'prowl',
       'pounce',
@@ -313,27 +117,6 @@ export const progressionTable: ProgressionTable = {
       'apexPredator',
       'packLeader',
     ],
-    // Widow and Coil (heroes.ts, 2026-08-30) split the Beast pool the way
-    // Fire's three heroes split theirs — by the stat each one actually
-    // attacks with — except that here the split is also the type's
-    // physical/magical seam, and Beast has only one row on the far side of
-    // it.
-    //
-    // Widow (Beast/Shadow, Atk 85 / Spd 90) takes the Bleed line through
-    // BOTH types: Beast plants it (Claw, Lacerate, Toxic Fangs) and cashes
-    // it (Maul, Eviscerate), Shadow plants it three more times (Backstab,
-    // Shadow Slice, Dusk Blade), and every one of those carries STAB on this
-    // hero. Stealth is the second thread — Ambush doubles off the Vanish in
-    // its starting kit, and Shadow Form is the capstone that grants both.
-    //
-    // Deliberately absent, each for a stated reason: Rampage (25% recoil is
-    // a bad trade on 75 HP, and this is the one hero in the game the recoil
-    // could routinely kill), Pounce (a +1 bracket row on the hero that is
-    // already tied for fastest is the definition of a dead pick), Thrash and
-    // Pack Leader (Fang's side-wide rows — Widow is the one who cashes the
-    // pack bonus, not the one who hands it out). Pack Hunt IS here: doubled
-    // beside Fang it is the best rate in the slate, and Widow is now one of
-    // exactly two heroes that can be the Beast on the other side of it.
     widow: [
       'claw',
       'backstab',
@@ -349,37 +132,6 @@ export const progressionTable: ProgressionTable = {
       'shadowForm',
       'apexPredator',
     ],
-    // Coil (Beast/Mind, Int 75 / Atk 30) is the inverse: an ENTIRELY magical
-    // pool on a Beast hero. Not a stylistic choice — every Beast row but one
-    // is physical, and offering any of them to Attack 30 would be the trap
-    // pick the north star forbids (Pack Hunt doubled off Atk 30 is still
-    // worse than Psychock). So Beast contributes exactly two: animalSpirit,
-    // which is the reason this hero exists, and packLeader, whose +50 Speed
-    // half is live on Coil while its +50 Attack half is the partner's, and
-    // whose 100 -> 50 discount is exactly the condition Coil is here to
-    // satisfy.
-    //
-    // The Mind half is split against Cortex rather than duplicated wholesale.
-    // Cortex keeps the WISDOM line it was authored around (Mind Shatter
-    // swings Wisdom, Brain Ward and Mental Fortress ramp it, Stasis and
-    // Psychic Blow are its tempo); Coil takes the straight INTELLIGENCE line
-    // — the damage rows plus the debuffs that widen them. Enervate, Disorient
-    // and Break Will sit in both pools on purpose, the way Vesper's and
-    // Nightshade's Shadow pools already overlap on five rows.
-    //
-    // Dopamine is the one entry here that is about the DUAL rather than about
-    // Mind: the Beast slate authored no heal at all, on purpose, and Coil is
-    // the only Beast hero that can have one without the type getting it.
-    // Wisdom 60 also heals for more than Cortex's 55, so it is not a borrowed
-    // row — it is the better home for it.
-    //
-    // Cerebral Shock is deliberately NOT here even though it is Mind, Int-
-    // swinging, and currently unreachable. It applies Conduct, whose
-    // triggerTypes are ['Storm', 'Iron'] (statuses.ts), and Coil is Beast/
-    // Mind — so it would be the same dead button on a third hero rather than
-    // a rescue. Its orphan status is a designer call (test/stoneMoves.test.ts
-    // pins the list and states the reason), and a new Mind hero is not a
-    // reason to overturn it.
     coil: [
       'animalSpirit',
       'psychock',
@@ -391,259 +143,9 @@ export const progressionTable: ProgressionTable = {
       'breakWill',
       'packLeader',
     ],
-    // Trance (heroes.ts, 2026-08-30) takes the strip chain its kit opens:
-    // Disorient widens the two debuffs it already starts with to both foes,
-    // Break Will adds Attack to the list, and Brain Flay DOUBLES every
-    // reduction standing on both of them. That is the same shape as Beast's
-    // Bleed-then-Eviscerate — plant cheap early, cash expensive late — with
-    // stat deltas as the currency instead of a status.
-    //
-    // Stasis is here and is not filler: Trance is Speed 55, and a Stasis
-    // Field makes the slowest in a bracket act FIRST, so the hero that most
-    // wants its debuffs to land before the enemy moves is also the one the
-    // field effect is worth most to.
-    //
-    // Overlaps Cortex's pool on four rows (stasis, disorient, breakWill,
-    // brainFlay), which is normal — Vesper and Nightshade already share five
-    // — but Brain Flay is worth flagging rather than leaving as overlap.
-    // Its payoff is proportional to how many reductions are already on the
-    // target, and Cortex is the hero that raises its OWN stats while Trance
-    // is the one that lowers theirs. Brain Flay's real home is here. Cortex's
-    // pool is left untouched today because re-cutting an existing hero is a
-    // separate decision from adding one; naming it, not fixing it.
-    //
-    // Kept OUT, both deliberately: mindShatter (Cortex's signature, see the
-    // Wisdom note in heroes.ts) and cerebralShock, which is still the
-    // intended orphan — it applies Conduct, whose triggerTypes are Storm and
-    // Iron, and Trance is mono Mind, so it would be a dead button here too.
-    trance: [
-      'brainWard',
-      'psychock',
-      'wickedFear',
-      'stasis',
-      'disorient',
-      'psionicWave',
-      'breakWill',
-      'brainFlay',
-      'dopamine',
-    ],
-    // --- Stone/Spirit starters + the new Iron starter (2026-08-17) ---
-    // rally moved up into Valor's starting kit (heroes.ts) when Mend Wounds died.
-    //
-    // Iron authored (moves.ts, 2026-08-30). Valor is Iron's ONLY starter, so
-    // Reinforce sits here for the reason Crimson carries Stoke the Flames and
-    // Riptide carries High Tide: it is the side-wide row, and this is the one
-    // Iron hero that can be drafted alongside a second one for it to pay off
-    // twice. The rest is the type's middle — the Bleed carrier, the spread,
-    // and the two mid attacks its Atk 60 can afford before the capstones.
-    valor: ['openingStrike', 'heavyBlow', 'momentumSwing', 'serratedSlice', 'reinforce', 'swingingChain', 'metallicBlade', 'juggernaut'],
-    // Revenant draws the ENTIRE magical half of the authored Spirit pool
-    // (src/data/moves.ts, 2026-08-30), which is a deliberate departure from
-    // the "keep the pool a line, not a sample" rule every other type here
-    // follows — and it is a fact about the roster, not about the slate.
-    // Spirit has exactly one hero, so there is no second line to split into,
-    // and anything left out is a move no pool in the game points at.
-    //
-    // What IS left out is the physical half — Phantom Strike, Spooky Slice and
-    // Wailing Flight. Revenant is Int 77 against Atk 56, so Wailing Flight's
-    // 85 base power lands for less than Banish's 100 does, and putting it here
-    // would be the trap pick the north star forbids. They were reported as
-    // orphans rather than stuffed in, per the rule Stone's slate set: the
-    // deliverable is the list, not a fix. SORROW is that fix arriving on its
-    // own schedule (heroes.ts, 2026-09-01) — the physical three now live in
-    // its pool below, and left the orphan list in test/stoneMoves.test.ts.
-    revenant: [
-      'torment',
-      'drain',
-      'spite',
-      'soulRend',
-      'poltergeist',
-      'soulOffering',
-      'vengeance',
-      'flicker',
-      'banish',
-      'lastRites',
-      'ascendant',
-    ],
-    // Sorrow (heroes.ts, 2026-09-01) takes the half Revenant cannot: the two
-    // physical Spirit moves left after Phantom Strike goes into its kit, plus
-    // Soul Offering — which is the one support in the slate that does not care
-    // which pipeline holds it, since it buffs Attack AND Intelligence.
-    //
-    // That is THREE entries, against a floor of eight (the FLOOR block above),
-    // and the shortfall is a fact about the slate rather than about the hero:
-    // Spirit authored exactly three physical moves and one of them is already
-    // unlocked. So five come from SHADOW, and that is the deliberate trade the
-    // floor rule names — an off-type button beats a dead level-up. Shadow
-    // specifically for three reasons, in order of weight:
-    //
-    //   1. It is the only adjacent slate with a physical line deep enough to
-    //      close a five-move gap on its own (nine physical rows).
-    //   2. It is the graft on Sorrow's OFFENSIVE Evolution (Banshee, below),
-    //      so the borrowed line is the one path that turns it all into STAB.
-    //      No other hero's off-type filler has that property.
-    //   3. It is the same line, thematically: Vanish -> Ambush is strike-from-
-    //      concealment, and Backstab/Shadow Slice/Dusk Blade is the Bleed
-    //      ladder Spooky Slice already opens at 30%. Rend doubles below half
-    //      HP, which is what a Bleed ladder produces.
-    //
-    // Shadow Slice is deliberately NOT here despite fitting: 60 BP / 40 mana /
-    // 30% Bleed is Spooky Slice's row exactly, and a pool that offers the same
-    // numbers under two names spends a level-up teaching nothing.
-    //
-    // Counts after the kit filter: 3 Early (vanish, backstab, fadeStrike),
-    // 4 Mid, 2 Late — 9 total, clearing 2/4/8 with room.
-    sorrow: [
-      'vanish',
-      'backstab',
-      'fadeStrike',
-      'spookySlice',
-      'ambush',
-      'rend',
-      'soulOffering',
-      'wailingFlight',
-      'duskBlade',
-    ],
-    crag: ['faultLine', 'rubbleRush', 'retribution', 'boulderSlam', 'provoke', 'weaken', 'rally', 'bodyCrush'],
-
-    // --- Rime, Cube, Mordrax (2026-08-17) ---
-    // Rime takes the physical line — and Frost Wall, for the reason Crimson
-    // carries Stoke the Flames and Riptide carries High Tide: it buffs the whole
-    // active side, and Rime is the only Frost STARTER (heroes.ts), so it is the
-    // one that can be drafted alongside a second Frost hero. Ice Shatter sits
-    // here at 70 despite Rime's 60 pool; see docs/combat.md for that hand-off.
-    // stunningBlow dropped 2026-08-30 with the Iron slate. Not backfilled:
-    // Rime's own Frost line is already eight deep and Iron has nothing at the
-    // 20-mana price point that row occupied.
-    // rendingClaw and fangRush both died with the Beast slate (moves.ts,
-    // 2026-08-30) and ONE Beast row replaces the two: Claw keeps the off-type
-    // Bleed slot at the slate's price. Rime is one of the three heroes with a
-    // Beast type-graft Evolution (Direwing, below), so a Beast move here is
-    // the type it may actually become rather than filler.
-    rime: ['icicleThrust', 'coldSnap', 'iceShatter', 'frostWall', 'permafrost', 'claw', 'frostArmor', 'snowBlast'],
-    // Cube's 45 pool is the tightest in the game, so its line is the cheap half
-    // of the physical one plus its own Freeze setup — Deep Chill (25) and
-    // Permafrost (45, exactly affordable) feeding Cold Snap (35).
-    cube: ['icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'rockToss', 'openingStrike', 'ironFist', 'frostWall'],
-    // Mordrax takes the physical line and, with Overgrowth, the Renew that
-    // doubles Branch Slam — the two are one pick, and putting them in the same
-    // pool is what makes that legible rather than accidental.
-    mordax: ['ivySpike', 'thornWhip', 'leafSlice', 'branchSlam', 'overgrowth', 'toxicSpores', 'weaken', 'lacerate'],
-
-    // Lucius: only his Evolutions are deferred (src/data/heroes.ts) — he
-    // still grows a movepool like any other hero below EVOLUTION_LEVEL.
-    // Int 75 / Atk 35, so the MAGICAL Shadow line — and the only hero holding
-    // Eclipse, the slate's 80-mana execute.
-    // Lucius keeps the magical SHADOW line and takes the raw magical half of
-    // the Mind slate alongside it (§7: a dual-typed hero keeps both). Int 75
-    // is the type's real caster stat, so the straight-damage rows land here
-    // and the Wisdom-scaling ones go to Cortex. Wicked Fear was the deliberate
-    // upgrade path from the spectralBind in its kit; the Spirit slate deleted
-    // spectralBind (moves.ts, 2026-08-30), so Wicked Fear moved up into the
-    // kit itself and out of this pool.
-    lucius: ['umbralBeam', 'eclipse', 'umbralWave', 'enfeeble', 'psychock', 'psionicWave', 'lull', 'weaken'],
-
-    // --- Hollowbark, Aegis, Brimstone, Gallant, Nightshade, Pincer,
-    // Scallywag, Sentinel, Bellows, Zenith (2026-08-22) ---
-    // Hollowbark shares the physical line but is the 40-mana wall, so its
-    // half of it is the cheap end (Vine Lash 20, Blight 30) plus the two big
-    // swings a run's mana growth eventually reaches (docs/mana.md).
-    // rendingClaw dropped: Leaf Slice is the slate's own Bleed carrier.
-    hollowbark: ['vineLash', 'blight', 'leafSlice', 'thornWhip', 'branchSlam', 'regrowth', 'weaken', 'stoneheart'],
-    // Aegis is Atk 45 / Int 40 / Wis 75 / Def 80 — the slate's PHYSICAL half
-    // (Holy Slice, Deity Blade, on top of the Holy Strike it opens with) plus
-    // the support line its Wisdom actually pays for. Bless and Exalt are here
-    // despite granting a stat Aegis barely uses: both are singleAlly, so this
-    // is the hero that spends a turn making a MAGICAL partner enormous.
-    // stunningBlow died with the Iron slate and Mend moved up into Aegis's own
-    // starting kit (both 2026-08-30), so two entries left this pool. Reinforce
-    // replaces them: Iron's +20 Attack / +20 Defense to BOTH allies is the
-    // closest thing left in the game to the Fortify that Aegis lost, it is
-    // singleAlly-adjacent in exactly the way Bless and Exalt are, and Aegis's
-    // 70 pool is the only one of the nine ex-Fortify heroes that can pay 50
-    // for it.
-    aegis: ['holySlice', 'deityBlade', 'purify', 'bless', 'exalt', 'consecrate', 'divineGrace', 'reinforce'],
-    // The spread-and-attrition line reads the same on both halves now: Fire's
-    // Burn spreads, Shadow's Poison spreads.
-    brimstone: ['sparkFlash', 'spreadingBlaze', 'backdraft', 'sparkBurst', 'umbralBeam', 'umbralWave', 'setAlight', 'enfeeble'],
-    // galeShot dropped with the Storm rewrite — it was Storm filler on a
-    // mono-IRON hero, and Iron's own five moves are already split across
-    // Gallant's kit and the four below, so there is no same-type replacement to
-    // put in the slot. Left short rather than backfilled with more off-type
-    // filler; the real fix is Iron's own authored slate.
-    //
-    // Which landed 2026-08-30, so savageMaul goes too and the pool is now
-    // wholly Iron. Gallant is the AGGRO line: Atk 80 behind Def 55, so it takes
-    // the Attack ramp (Iron Fist, Momentum Swing) into Onslaught, the type's
-    // 100-power capstone, plus the Bleed carrier. Metallic Blade is here
-    // rather than on Warden or Valor because a free 50-power swing is worth
-    // most to the hero that wants to press an attack every single round — and
-    // because Gallant's 45 pool is the one that most needs the rows it cannot
-    // otherwise afford.
-    gallant: ['swiftBlow', 'ironFist', 'momentumSwing', 'serratedSlice', 'metallicBlade', 'onslaught', 'rendArmor', 'swingingChain'],
-    // Speed 85, the fastest Shadow hero, so Shadowstrike's +1 bracket is worth
-    // most here. Off-type filler (curseMind, rendingClaw, stunningBlow) drops
-    // for the type's own line — docs/authoring-moves.md §7, "a line, not a sample".
-    // Fade Strike is the 2026-08-31 tier-gate fix. Nightshade starts with
-    // Backstab, Vanish and Weaken — three of Shadow's five Early rows — and
-    // the fifth is magical, so the type leaves exactly one row an Attack-80
-    // hero can be offered. One Early entry is thin, but it is the whole
-    // remainder of the tier rather than a choice to widen it.
-    nightshade: ['fadeStrike', 'shadowstrike', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm', 'claw'],
-    // Pincer takes the physical line — and Wash Away, which scales off Wisdom
-    // (45) rather than off the category, so the 20-Intelligence wall is a
-    // perfectly good carrier for it. Wave Shred sits here because Pincer is the
-    // only physical Water hero in the roster; see docs/combat.md for the open
-    // question about its first cast being unaffordable on a 55 pool.
-    pincer: ['aquaSlice', 'waveShred', 'washAway', 'rendArmor', 'refresh', 'ironFist', 'heavyBlow', 'serratedSlice'],
-    // ironFist moved up into Scallywag's starting kit and stunningBlow died,
-    // both with the Iron slate (2026-08-30); Heavy Blow is the one row left.
-    // fangRush dropped with the Beast slate (moves.ts, 2026-08-30).
-    scallywag: ['stormLash', 'shockSlice', 'overcharge', 'risingStatic', 'heavyBlow', 'tailwind', 'momentumSwing', 'swingingChain'],
-    sentinel: ['bodyBlow', 'bastion', 'retribution', 'bodyCrush', 'stoneheart', 'toughenUp', 'rally', 'faultLine'],
-    // Bellows is Mech/IRON at Atk 90 and Speed 15 — the heaviest body in the
-    // roster — so its half of the slate is the big swings, with STAB, and none
-    // of the cheap ramp (Iron Fist and Sharpen are in its starting kit now).
-    // Onslaught's 80 sits above its 40 starting pool on purpose; a run's mana
-    // growth is what opens it (docs/mana.md).
-    // Bellows takes the PHYSICAL half plus the two rows that scale off
-    // nothing. Atk 90 behind Speed 15 is the heaviest, slowest body in the
-    // roster, so it gets the big swings: Cog Slam (the 65 BP coin flip),
-    // Whirling Blades (the spread), and Jackpot, which wants exactly this
-    // hero — a 150 roll through an Attack of 90 is the largest single hit the
-    // type can produce, and the reel being visible means a slow hero can wait
-    // a round for it without wasting the turn.
-    //
-    // Overdrive and Perfect Creation are here rather than on Clockwork for
-    // the same reason as each other: neither reads a stat. Overdrive's +20 to
-    // all five is worth most on the body with the worst Speed, and Perfect
-    // Creation is six flat statuses, so Intelligence 15 costs it nothing.
-    // Onslaught keeps the Iron half of the ramp alive.
-    // Swift Blow and Piston Punch are the 2026-08-31 tier-gate fix, one from
-    // each of Bellows' two types, and both chosen against Speed 15. Swift
-    // Blow is the game's answer to that number — 15 base power in bracket 1,
-    // so the type buys the turn order rather than the exchange — and Piston
-    // Punch is the Mech ramp that makes a 15-Speed body worth leaving in.
-    // Backfire and Kickstart are the other Mech Early rows and both are wrong
-    // here: Intelligence 15 and Wisdom 35.
-    steamColossus: ['swiftBlow', 'pistonPunch', 'cogSlam', 'whirlingBlades', 'jackpot', 'overdrive', 'perfectCreation', 'onslaught'],
-    // Zenith takes the battery line — every mana grant the slate authors, plus
-    // Arcane Overflow, which is the only move that reads the pool back out. The
-    // three are one plan: bank with Font of Power, cash it as a three-figure
-    // Attack/Intelligence buff on both allies, and still have the mana to spend
-    // on Singularity afterward (moves.ts derivedStatDeltas reads the pool BEFORE
-    // the 80 is paid, and spends none of it). Magic Bolt and Cataclysm are the
-    // damage it can actually afford between grants; the rest of the artillery
-    // line stays on Glyph.
-    zenith: ['conduit', 'fontOfPower', 'arcaneOverflow', 'magicBolt', 'cataclysm', 'focus', 'arcPulse', 'magicCloak'],
   },
   evolutions: {
-    // cinderKnight is now baseline Fire/Iron (src/data/heroes.ts, 2026-08-17)
-    // rather than mono Fire grafting Iron via Evolution — none of its three
-    // paths may carry a typeGraft any more (chooseEvolutionPath rejects a
-    // type-graft path on an already-dual-typed hero, src/run/progression.ts),
-    // so Ironclad and Thunderblaze were re-themed to amplify the existing
-    // Fire/Iron kit instead of reaching for a third type.
+    // --- Fire ---
     cinderKnight: [
       {
         level: EVOLUTION_LEVEL,
@@ -678,6 +180,80 @@ export const progressionTable: ProgressionTable = {
         ],
       },
     ],
+    crimson: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'crimson-offensive',
+            heroId: 'crimson',
+            kind: 'offensive',
+            name: 'Pyroclasm',
+            description: 'The fire it starts no longer goes out on its own.',
+            statGrants: { defense: 10, manaPool: 10 },
+            unlocksMoveIds: [],
+            grantsPassiveIds: ['firestarter'],
+          },
+          {
+            id: 'crimson-defensive',
+            heroId: 'crimson',
+            kind: 'defensive',
+            name: 'Cinderveil',
+            description: 'Wreathed in protective embers; a caster that stays on the field.',
+            statGrants: { hp: 20, wisdom: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Spirit',
+            learnableMoveIds: ['drain', 'secondWind', 'soulRend', 'banish'],
+          },
+          {
+            id: 'crimson-utility',
+            heroId: 'crimson',
+            kind: 'utility',
+            name: 'Emberweave',
+            description: 'Flame fused to raw arcane current; casts, and keeps casting.',
+            statGrants: { intelligence: 20, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Arcane',
+            learnableMoveIds: ['manaTap', 'manaFont', 'overload', 'cataclysm'],
+          },
+        ],
+      },
+    ],
+    brimstone: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'brimstone-offensive',
+            heroId: 'brimstone',
+            kind: 'offensive',
+            name: 'Cauldronborn',
+            description: 'The pot boils over; raw Intelligence.',
+            statGrants: { intelligence: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'brimstone-defensive',
+            heroId: 'brimstone',
+            kind: 'defensive',
+            name: 'Ashguard',
+            description: 'Caked-on ash and cinder harden into a crude shell.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'brimstone-utility',
+            heroId: 'brimstone',
+            kind: 'utility',
+            name: 'Hexfume',
+            description: 'A choking, cursed smoke that lingers over the field.',
+            statGrants: { wisdom: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+          },
+        ],
+      },
+    ],
+    // --- Water ---
     tidecaller: [
       {
         level: EVOLUTION_LEVEL,
@@ -714,192 +290,43 @@ export const progressionTable: ProgressionTable = {
         ],
       },
     ],
-    ironWarden: [
+    pincer: [
       {
         level: EVOLUTION_LEVEL,
         paths: [
           {
-            id: 'ironWarden-offensive',
-            heroId: 'ironWarden',
+            id: 'pincer-offensive',
+            heroId: 'pincer',
             kind: 'offensive',
-            name: 'Sunderer',
-            description: 'Armor-piercing heavy hits; cuts enemy Def.',
+            name: 'Tideclaw',
+            description: 'Bigger claws, harder strikes; raw Attack.',
             statGrants: { attack: 10 },
             unlocksMoveIds: [],
-            typeGraft: 'Mech',
           },
           {
-            id: 'ironWarden-defensive',
-            heroId: 'ironWarden',
+            id: 'pincer-defensive',
+            heroId: 'pincer',
             kind: 'defensive',
-            name: 'Bulwark',
-            description: 'Redirect/protect partner — the doubles anchor.',
+            name: 'Ironshell',
+            description: 'The carapace hardens past shell into plate.',
             statGrants: { defense: 10, hp: 10 },
             unlocksMoveIds: [],
+            typeGraft: 'Iron',
           },
           {
-            id: 'ironWarden-utility',
-            heroId: 'ironWarden',
+            id: 'pincer-utility',
+            heroId: 'pincer',
             kind: 'utility',
-            name: 'Lodestar',
-            description: 'Cleanse + ally support; the paladin path.',
-            statGrants: { wisdom: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Light',
-          },
-        ],
-      },
-    ],
-    wildOracle: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'wildOracle-offensive',
-            heroId: 'wildOracle',
-            kind: 'offensive',
-            name: 'Thornwrath',
-            description: 'Feral on-hit aggression; Bleed/Poison pressure.',
-            statGrants: { attack: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Beast',
-          },
-          {
-            id: 'wildOracle-defensive',
-            heroId: 'wildOracle',
-            kind: 'defensive',
-            name: 'Heartwood',
-            description: 'Renew bulwark; sustains the pair.',
-            statGrants: { wisdom: 10, hp: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'wildOracle-utility',
-            heroId: 'wildOracle',
-            kind: 'utility',
-            name: 'Augur',
-            description: 'Foresight/control; status manipulation and priority steering.',
-            statGrants: { speed: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Mind',
-          },
-        ],
-      },
-    ],
-    stormRanger: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'stormRanger-offensive',
-            heroId: 'stormRanger',
-            kind: 'offensive',
-            name: 'Tempest',
-            description: 'High-crit, high-priority skirmisher.',
-            statGrants: { attack: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'stormRanger-defensive',
-            heroId: 'stormRanger',
-            kind: 'defensive',
-            name: 'Bedrock',
-            description: 'Grounded tank; hazard/redirect.',
-            statGrants: { defense: 10, hp: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Stone',
-          },
-          {
-            id: 'stormRanger-utility',
-            heroId: 'stormRanger',
-            kind: 'utility',
-            name: 'Whiteout',
-            description: 'Spread slow/Freeze; tempo denial across both targets.',
-            statGrants: { speed: 10, mpRegen: 5 },
+            name: 'Brinefrost',
+            description: 'Retreats to colder water; slows everything around it.',
+            statGrants: { manaPool: 10, mpRegen: 5 },
             unlocksMoveIds: [],
             typeGraft: 'Frost',
           },
         ],
       },
     ],
-    shadowMonk: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'shadowMonk-offensive',
-            heroId: 'shadowMonk',
-            kind: 'offensive',
-            name: 'Nightreaver',
-            description: 'High-burst assassin strikes, safest under Stealth.',
-            statGrants: { attack: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'shadowMonk-defensive',
-            heroId: 'shadowMonk',
-            kind: 'defensive',
-            name: 'Stillmind',
-            description: 'Evasive sustain; self-cleanse.',
-            statGrants: { wisdom: 10, hp: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Spirit',
-          },
-          {
-            id: 'shadowMonk-utility',
-            heroId: 'shadowMonk',
-            kind: 'utility',
-            name: 'Nightveil',
-            description: 'Daze control + debuffs; shuts a threat off.',
-            statGrants: { speed: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Mind',
-          },
-        ],
-      },
-    ],
-    marrow: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          // Rewritten 2026-08-30 alongside the Attack/Intelligence swap. These
-          // three were byte-identical to Vesper's — same names, same
-          // descriptions, same grants — which is what made the two heroes the
-          // same hero at every level, not just at level 1. The offensive grant
-          // now follows the stat Marrow actually attacks with, and neither
-          // graft duplicates Vesper's (Spirit / Mind).
-          {
-            id: 'marrow-offensive',
-            heroId: 'marrow',
-            kind: 'offensive',
-            name: 'Carrion',
-            description: 'Leans all the way into the rot; raw Intelligence behind Poison and Eclipse.',
-            statGrants: { intelligence: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'marrow-defensive',
-            heroId: 'marrow',
-            kind: 'defensive',
-            name: 'Ossuary',
-            description: 'Bone-deep endurance; outlasts whatever it poisoned.',
-            statGrants: { wisdom: 10, hp: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Nature',
-          },
-          {
-            id: 'marrow-utility',
-            heroId: 'marrow',
-            kind: 'utility',
-            name: 'Ashenwell',
-            description: 'Casts deeper and more often; the attrition never stops.',
-            statGrants: { speed: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Arcane',
-          },
-        ],
-      },
-    ],
+    // --- Frost ---
     glacialWarden: [
       {
         level: EVOLUTION_LEVEL,
@@ -932,665 +359,6 @@ export const progressionTable: ProgressionTable = {
             statGrants: { manaPool: 10, mpRegen: 5 },
             unlocksMoveIds: [],
             typeGraft: 'Water',
-          },
-        ],
-      },
-    ],
-    dawnwarden: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'dawnwarden-offensive',
-            heroId: 'dawnwarden',
-            kind: 'offensive',
-            name: 'Sunflare',
-            description: 'Radiant burst; Burn pressure.',
-            statGrants: { intelligence: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Fire',
-          },
-          {
-            id: 'dawnwarden-defensive',
-            heroId: 'dawnwarden',
-            kind: 'defensive',
-            name: 'Sanctuary',
-            description: 'Healer-tank; Renew + protect.',
-            statGrants: { wisdom: 10, hp: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Spirit',
-          },
-          {
-            id: 'dawnwarden-utility',
-            heroId: 'dawnwarden',
-            kind: 'utility',
-            name: 'Dawnherald',
-            description: 'Cleanse/buff support; the classic support priest.',
-            statGrants: { manaPool: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-          },
-        ],
-      },
-    ],
-    runescribe: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'runescribe-offensive',
-            heroId: 'runescribe',
-            kind: 'offensive',
-            name: 'Spellstorm',
-            description: 'Raw Int nuke; scaling burst.',
-            statGrants: { intelligence: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'runescribe-defensive',
-            heroId: 'runescribe',
-            kind: 'defensive',
-            name: 'Sigilward',
-            description: 'Barrier/ward tank.',
-            statGrants: { defense: 10, hp: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Stone',
-          },
-          {
-            id: 'runescribe-utility',
-            heroId: 'runescribe',
-            kind: 'utility',
-            name: 'Loreweaver',
-            description: 'Setup/control; status steering.',
-            statGrants: { speed: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Mind',
-          },
-        ],
-      },
-    ],
-    mindweaver: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'mindweaver-offensive',
-            heroId: 'mindweaver',
-            kind: 'offensive',
-            name: 'Mindrend',
-            description: 'Daze-punishing burst.',
-            statGrants: { intelligence: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'mindweaver-defensive',
-            heroId: 'mindweaver',
-            kind: 'defensive',
-            name: 'Adamant',
-            description: 'Mental + physical bulk; status resistance.',
-            statGrants: { defense: 10, wisdom: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Iron',
-          },
-          {
-            id: 'mindweaver-utility',
-            heroId: 'mindweaver',
-            kind: 'utility',
-            name: 'Dominion',
-            description: 'Control lock — Daze, Haunt, domination debuffs.',
-            statGrants: { speed: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Shadow',
-          },
-        ],
-      },
-    ],
-    forgewright: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'forgewright-offensive',
-            heroId: 'forgewright',
-            kind: 'offensive',
-            name: 'Overdrive',
-            description: 'Ramping heavy hitter; Atk builds over turns.',
-            statGrants: { attack: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'forgewright-defensive',
-            heroId: 'forgewright',
-            kind: 'defensive',
-            name: 'Juggernaut',
-            description: 'Armored machine; max bulk, endure.',
-            statGrants: { defense: 10, hp: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Iron',
-          },
-          {
-            id: 'forgewright-utility',
-            heroId: 'forgewright',
-            kind: 'utility',
-            name: 'Boilover',
-            description: 'Steam control — Burn spread + hazard/tempo.',
-            statGrants: { manaPool: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Water',
-          },
-        ],
-      },
-    ],
-    // Fang, re-authored 2026-09-01 — the SECOND hero onto the framework
-    // Crimson established (see that node's block above), and the one that
-    // states the framework's third clause. Written out in full because these
-    // three sentences are what the remaining 33 heroes get held to:
-    //
-    // 1. The MONO path trades stats for a PASSIVE. Bloodhunt takes the
-    //    smallest stat line on the node (20 points) and Bloodthirsty, which no
-    //    graft can offer.
-    // 2. A GRAFT path pays MORE stats, a second type, and a line of that
-    //    type's moves — three payoffs against the mono path's two, because a
-    //    graft is also giving up the passive.
-    // 3. A path may DRAMATICALLY REFOCUS the hero. Warhowl is that clause's
-    //    worked example, and it is the first path in the game with a NEGATIVE
-    //    stat grant: Fang stops being a 90-Attack physical body and becomes an
-    //    80-Intelligence caster that kept its Speed 80. Nothing about the
-    //    contract needed changing for it — `statGrants` has always been signed
-    //    (src/run/equipment.ts already prices a negative grant as a refund) —
-    //    it had simply never been used to say something this loud.
-    packAlpha: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'packAlpha-offensive',
-            heroId: 'packAlpha',
-            kind: 'offensive',
-            name: 'Bloodhunt',
-            description: 'Something is bleeding, and it knows.',
-            // Attack and Speed rather than Attack alone, because the passive
-            // grants exactly those two and the flat +10s are the half that is
-            // always on: the path has a floor when nothing is Bleeding and a
-            // ceiling (Atk 120 / Spd 110) when something is.
-            //
-            // Bloodthirsty is priced against the fact that Fang has to LAND
-            // the Bleed first, and Beast's own sources are Claw (20% rider)
-            // and Lacerate — so the passive is the payoff for the type's
-            // opening play rather than a free stat line, and it switches off
-            // the moment that enemy is switched out, cleansed, or killed.
-            statGrants: { attack: 10, speed: 10 },
-            unlocksMoveIds: [],
-            grantsPassiveIds: ['bloodthirsty'],
-          },
-          {
-            id: 'packAlpha-defensive',
-            heroId: 'packAlpha',
-            kind: 'defensive',
-            name: 'Stonehide',
-            description: 'Hide like the ground it fights on; takes the hit and gives it back.',
-            statGrants: { hp: 20, defense: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Stone',
-            // Stone's ENDURE line, and it is chosen so the graft compounds with
-            // the stat grant rather than sitting beside it. Fang keeps Attack
-            // 90, so these stay physical rows it can actually swing:
-            //
-            // - Rock Toss is the cheap STAB opener the graft would be half a
-            //   graft without.
-            // - Bastion (+30 Defense to BOTH allies) is the doubles-facing
-            //   reason to be Stone at all, and the only defensive tool Fang
-            //   has ever had access to.
-            // - Rubble Rush is the type's efficiency row — 75 power for 25
-            //   mana, paid for with 25% recoil — and the recoil is a feature
-            //   here rather than a cost, because it feeds Stoneheart.
-            // - Stoneheart returns every wound taken since the last turn,
-            //   whole and at +1 priority. It is the capstone the +20 HP is
-            //   FOR: on this path being hit is how the hero loads its gun.
-            //
-            // Deliberately NOT Body Blow / Body Crush, Stone's two
-            // offStatOverride rows: they attack with Defense, and even at 65
-            // Fang's Defense is far below its Attack 90 — the type's signature
-            // trick is the one row of it this hero should not take.
-            learnableMoveIds: ['rockToss', 'bastion', 'rubbleRush', 'stoneheart'],
-          },
-          {
-            id: 'packAlpha-utility',
-            heroId: 'packAlpha',
-            kind: 'utility',
-            name: 'Warhowl',
-            description: 'Lets go of the body and leads from somewhere else.',
-            // The refocus. -30 Attack / +60 Intelligence inverts which half of
-            // the damage formula this hero lives on (Atk 90 -> 60, Int 20 ->
-            // 80), and +20 Mana pays for the casting the old body never did.
-            // Speed 80 is untouched on purpose: what survives the change is
-            // the thing that made Fang Fang.
-            //
-            // The Attack is spent rather than merely unused, which is what
-            // makes this a choice instead of a strict upgrade — a Warhowl Fang
-            // holding Claw and Eviscerate has made its old kit worse, and the
-            // path is only correct for a player willing to rebuild the loadout
-            // around it.
-            statGrants: { attack: -30, intelligence: 60, manaPool: 20 },
-            unlocksMoveIds: [],
-            typeGraft: 'Spirit',
-            // Two Early rows deliberately at the front: Fang's ENTIRE authored
-            // pool is physical (see moveTiers above), so on this path the
-            // learnable list is not a bonus — it is the hero's only route to a
-            // move that reads the Intelligence it was just given. Wisp and
-            // Drain are both Early so the very next level-up can offer one.
-            //
-            // Ascendant is the capstone and the path's thesis in one row: +75
-            // Intelligence and +25 Speed, described as letting go of the body
-            // altogether. Soul Rend is the drain line that makes an Attack-60
-            // frame survivable.
-            //
-            // Animal Spirit is the fifth entry and the only one that is not
-            // Spirit: it is Beast's single MAGICAL row, authored 2026-08-30 as
-            // coverage "for casters rather than for the type's own hero"
-            // because Fang was Intelligence 20 — and left out of Fang's pool
-            // for exactly that reason. Warhowl is the thing that makes it
-            // reachable, and being innate Beast it arrives with STAB, which no
-            // Spirit row on this path does.
-            learnableMoveIds: ['wisp', 'drain', 'soulRend', 'ascendant', 'animalSpirit'],
-          },
-        ],
-      },
-    ],
-    // Widow and Coil are DUAL-typed by design, so neither gets a typeGraft
-    // path — chooseEvolutionPath throws on a graft offered to a dual hero,
-    // and Lucius (Shadow/Mind) is the standing precedent for what a
-    // dual-typed hero's three paths look like instead: same offensive /
-    // defensive / utility split, stat grants only, no second type to give.
-    widow: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'widow-offensive',
-            heroId: 'widow',
-            kind: 'offensive',
-            name: 'Venomfang',
-            description: 'Leans all the way into the kill — Bleed, Poison, and nothing held back.',
-            statGrants: { attack: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'widow-defensive',
-            heroId: 'widow',
-            kind: 'defensive',
-            name: 'Carapace',
-            description: 'Hardens the shell so the wounds it opens outlast it.',
-            statGrants: { defense: 10, hp: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'widow-utility',
-            heroId: 'widow',
-            kind: 'utility',
-            name: 'Silkbinder',
-            description: 'Sets the trap before the fight — faster, and cheaper to keep hidden.',
-            statGrants: { speed: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-          },
-        ],
-      },
-    ],
-    coil: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'coil-offensive',
-            heroId: 'coil',
-            kind: 'offensive',
-            name: 'Basilisk',
-            description: 'The gaze stops being a suggestion.',
-            statGrants: { intelligence: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'coil-defensive',
-            heroId: 'coil',
-            kind: 'defensive',
-            name: 'Hooded',
-            description: 'Spreads the hood — harder to reach, harder to unsettle.',
-            statGrants: { defense: 10, wisdom: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'coil-utility',
-            heroId: 'coil',
-            kind: 'utility',
-            name: 'Mesmer',
-            description: 'Holds the whole field in the coil — deeper reserves, the pack-support path.',
-            statGrants: { manaPool: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-          },
-        ],
-      },
-    ],
-    // Trance is MONO, so unlike Widow and Coil it can carry type-grafts —
-    // and it keeps exactly one mono path as a terminal identity, per this
-    // file's rule. Puppeteer is that path: the debuff specialist that just
-    // gets better at being one.
-    trance: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'trance-offensive',
-            heroId: 'trance',
-            kind: 'offensive',
-            name: 'Puppeteer',
-            description: 'Stops suggesting and starts pulling.',
-            statGrants: { intelligence: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'trance-defensive',
-            heroId: 'trance',
-            kind: 'defensive',
-            name: 'Somnambulist',
-            description: 'Walks in the deep sleep, where very little can reach it.',
-            statGrants: { defense: 10, hp: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Spirit',
-          },
-          {
-            id: 'trance-utility',
-            heroId: 'trance',
-            kind: 'utility',
-            name: 'Ringmaster',
-            description: 'Runs the whole show — deeper reserves and a faster refill.',
-            statGrants: { manaPool: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Arcane',
-          },
-        ],
-      },
-    ],
-
-    // --- Stone/Spirit starters + the new Iron starter (2026-08-17) ---
-    valor: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'valor-offensive',
-            heroId: 'valor',
-            kind: 'offensive',
-            name: 'Crusader',
-            description: 'All-out armored assault; raw Attack.',
-            statGrants: { attack: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'valor-defensive',
-            heroId: 'valor',
-            kind: 'defensive',
-            name: 'Bastion',
-            description: 'Shield-wall anchor; protect partner, max Defense.',
-            statGrants: { defense: 10, hp: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Stone',
-          },
-          {
-            id: 'valor-utility',
-            heroId: 'valor',
-            kind: 'utility',
-            name: 'Dawnblade',
-            description: 'Righteous support; cleanse and speed control.',
-            statGrants: { speed: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Light',
-          },
-        ],
-      },
-    ],
-    revenant: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'revenant-offensive',
-            heroId: 'revenant',
-            kind: 'offensive',
-            name: 'Wraithblade',
-            description: 'Draining spectral assault; raw Intelligence.',
-            statGrants: { intelligence: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'revenant-defensive',
-            heroId: 'revenant',
-            kind: 'defensive',
-            name: 'Hollow Warden',
-            description: 'Undying bulwark; bleeds momentum from the living.',
-            statGrants: { defense: 10, wisdom: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Shadow',
-          },
-          {
-            id: 'revenant-utility',
-            heroId: 'revenant',
-            kind: 'utility',
-            name: 'Soulbinder',
-            description: 'Control and setup; status steering from beyond.',
-            statGrants: { manaPool: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Mind',
-          },
-        ],
-      },
-    ],
-    // Sorrow (2026-09-01). The one node here whose grafts are chosen by what
-    // the hero's POOL actually holds rather than by flavor, because Sorrow is
-    // the only hero whose pool is majority off-type: five of its nine entries
-    // are Shadow (see moveTiers above), so Banshee is the path that turns a
-    // borrowed line into a native one. Grafts are stat-only by the scope note
-    // at the top of this file — the payoff is the type chart, and here that
-    // means STAB on five moves no other path reaches.
-    //
-    // Mourner is the mono path every hero keeps ("mono remains a legitimate
-    // terminal state"), and it is the honest one for this body: Defense 38 /
-    // HP 75 is the roster's most fragile frame, so the defensive path buying
-    // it a second trade is a real choice rather than a consolation.
-    //
-    // Dirge grafts Mind, which grants Sorrow STAB on nothing — the same is
-    // true of Revenant's Soulbinder, and it is not an oversight in either
-    // case. Mind is Haunt's OTHER spreadTriggerTypes member (statuses.ts), so
-    // the graft is an identity and defensive-typing pick on the game's two
-    // mark-planting types. It is priced accordingly: Wisdom rather than
-    // Revenant's mana, so the two Mind paths are not the same node twice.
-    sorrow: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'sorrow-offensive',
-            heroId: 'sorrow',
-            kind: 'offensive',
-            name: 'Banshee',
-            description: 'The wail sharpened to an edge; strikes from nowhere, faster.',
-            statGrants: { attack: 10, speed: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Shadow',
-          },
-          {
-            id: 'sorrow-defensive',
-            heroId: 'sorrow',
-            kind: 'defensive',
-            name: 'Mourner',
-            description: 'Grief that will not be moved; stays to be hit and stays after.',
-            statGrants: { hp: 10, defense: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'sorrow-utility',
-            heroId: 'sorrow',
-            kind: 'utility',
-            name: 'Dirge',
-            description: 'A song that gets inside; binds the pair and guards against the mind.',
-            statGrants: { wisdom: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Mind',
-          },
-        ],
-      },
-    ],
-    crag: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'crag-offensive',
-            heroId: 'crag',
-            kind: 'offensive',
-            name: 'Stonebreaker',
-            description: 'Rock-fisted heavy hitter; raw Attack.',
-            statGrants: { attack: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'crag-defensive',
-            heroId: 'crag',
-            kind: 'defensive',
-            name: 'Mountainheart',
-            description: 'Immovable armored mass; max bulk.',
-            statGrants: { defense: 10, hp: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Iron',
-          },
-          {
-            id: 'crag-utility',
-            heroId: 'crag',
-            kind: 'utility',
-            name: 'Warden of Roots',
-            description: 'Overgrown guardian; sustain and support.',
-            statGrants: { wisdom: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Nature',
-          },
-        ],
-      },
-    ],
-
-    // --- Crimson, Rime, Cube, Mordrax (2026-08-17) ---
-    //
-    // Crimson was re-authored 2026-09-01 as the FIRST hero off the placeholder
-    // three-paths-of-two-stats shape, and is the worked example the rest of the
-    // roster gets brought up to. Three things changed, in the designer's order:
-    //
-    // 1. The grants got bigger. A permanent, run-defining, once-per-hero choice
-    //    was paying out the same 20 points a Common item does; every path here
-    //    now pays 20-35 in equipment currency (src/run/equipment.ts
-    //    STAT_POINT_VALUE — HP and Mana at 1/2, MP Regen at 3x), which is
-    //    Rare-to-Epic. The numbers are still flat multiples of 5/10, so the
-    //    locked stat-modifier rule is untouched; only the magnitude moved.
-    //
-    // 2. The MONO path now pays for staying mono. A graft buys a whole second
-    //    column of the type chart and (see 3) a second slate to draw from; two
-    //    stats and a shrug could not compete with that, which quietly made
-    //    "mono is a legitimate terminal state" (CLAUDE.md) false in practice.
-    //    Pyroclasm's answer is a PASSIVE — the thing a hero can only get here.
-    //
-    // 3. The graft paths open MOVES, not just a type. `learnableMoveIds`
-    //    (src/run/progression.ts) implements docs/leveling-and-ranks.md's
-    //    "Evolution steers future level-up offerings", LOCKED since 2026-08-16
-    //    and unimplemented until now: the moves JOIN the level-up pool rather
-    //    than being handed over, so the graft redirects the hero's future
-    //    instead of rewriting its loadout on the spot.
-    //
-    // The open tension, named rather than resolved: the three `kind` labels no
-    // longer describe the grants cleanly. Emberweave carries the biggest raw
-    // offensive number in the node (+20 Int on an Int-80 body) under the
-    // 'utility' label, and Pyroclasm carries Defense and Mana under
-    // 'offensive'. `kind` is documentation of intent, not mechanics, and the
-    // INTENT still reads right — Emberweave's Int is there to be spent on
-    // sustained casting, Pyroclasm's bulk is there so it survives to use the
-    // field it set — but if the labels stay this loose across the next few
-    // heroes they are the thing to fix, not the numbers.
-    crimson: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'crimson-offensive',
-            heroId: 'crimson',
-            kind: 'offensive',
-            name: 'Pyroclasm',
-            description: 'The fire it starts no longer goes out on its own.',
-            // The mono path's "something extra". Firestarter (src/data/passives.ts)
-            // sets Scorched Land — Burn stops decaying — the first time Crimson
-            // lands a Burn, which every one of its own attacks except Immolate
-            // and Inferno already does. The stats are Defense and Mana rather
-            // than Intelligence on purpose: the passive IS the offense, and what
-            // a Def-38 caster lacks is the turns to spend the window it opened.
-            //
-            // Known anti-synergy, and it is the intended cost of the path, not
-            // an oversight: Crimson's pool already holds Spreading Blaze, whose
-            // whole rider is setting Scorched Land. Taking Pyroclasm makes that
-            // rider redundant and turns Spreading Blaze back into a plain 30-mana
-            // spread Burn — so the path is worth more to a Crimson that never
-            // rolled it, and a player who has it is being asked to give something
-            // up. Only one field can be active at a time (docs/field-effects.md),
-            // which is the same trade Emberweave makes from the other side.
-            statGrants: { defense: 10, manaPool: 10 },
-            unlocksMoveIds: [],
-            grantsPassiveIds: ['firestarter'],
-          },
-          {
-            id: 'crimson-defensive',
-            heroId: 'crimson',
-            kind: 'defensive',
-            name: 'Cinderveil',
-            description: 'Wreathed in protective embers; a caster that stays on the field.',
-            // HP over Defense because Crimson is a magical body being asked to
-            // survive, and +20 HP helps against both damage pairs where +10
-            // Defense helps against one. Wisdom does the other half.
-            statGrants: { hp: 20, wisdom: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Spirit',
-            // Spirit's sustain line, tiered to arrive across the rest of the
-            // curve rather than all at once: two Early (available the moment
-            // the graft happens at level 5), one Mid, one Late. Drain and Soul
-            // Rend are the same move at two sizes, which is deliberate — the
-            // path's promise is "you stay in", and drain healing is the only
-            // sustain in the game that costs no turn. Second Wind is the Renew
-            // this hero has no other route to. Banish is the finisher, and the
-            // real point of a graft: a second STAB nuke on a different column
-            // of the type chart, so Cinderveil answers the Water and Stone
-            // leads that wall mono-Fire.
-            learnableMoveIds: ['drain', 'secondWind', 'soulRend', 'banish'],
-          },
-          {
-            id: 'crimson-utility',
-            heroId: 'crimson',
-            kind: 'utility',
-            name: 'Emberweave',
-            description: 'Flame fused to raw arcane current; casts, and keeps casting.',
-            // +20 Intelligence is the largest single stat grant in the file and
-            // is meant to be: it is a 25% raise on Crimson's Int 80 and it is
-            // what makes the Arcane slate's expensive nukes worth the mana they
-            // cost. MP Regen +5 (15 points at STAT_POINT_VALUE's 3x) is the
-            // other half of the same sentence — the grant pays for the casting,
-            // not for one cast.
-            statGrants: { intelligence: 20, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Arcane',
-            // The Arcane line chosen for TEMPO rather than for raw power, which
-            // is what separates this from Pyroclasm's identity. Mana Tap is a
-            // 0-cost attack — the move that makes Rest (CLAUDE.md "Mana &
-            // tempo") avoidable, and the clearest single expression of
-            // "sustained casting". Mana Font sets Magical Surge, doubling MP
-            // Regen on top of the +5, and is the deliberate mirror of
-            // Pyroclasm's Scorched Land: both paths want the battlefield, only
-            // one effect fits on it, so which Crimson evolved is legible from
-            // the field it sets. Overload and Cataclysm are what the mana is
-            // for, and Overload reads Magical Surge back to hit both enemies —
-            // so Mana Font and Overload are a two-card combo this path can
-            // actually assemble.
-            learnableMoveIds: ['manaTap', 'manaFont', 'overload', 'cataclysm'],
           },
         ],
       },
@@ -1667,292 +435,37 @@ export const progressionTable: ProgressionTable = {
         ],
       },
     ],
-    mordax: [
+    // --- Storm ---
+    stormRanger: [
       {
         level: EVOLUTION_LEVEL,
         paths: [
           {
-            id: 'mordax-offensive',
-            heroId: 'mordax',
+            id: 'stormRanger-offensive',
+            heroId: 'stormRanger',
             kind: 'offensive',
-            name: 'Bloomfang',
-            description: 'Thorn and claw working together; raw aggression.',
+            name: 'Tempest',
+            description: 'High-crit, high-priority skirmisher.',
             statGrants: { attack: 10 },
             unlocksMoveIds: [],
           },
           {
-            id: 'mordax-defensive',
-            heroId: 'mordax',
+            id: 'stormRanger-defensive',
+            heroId: 'stormRanger',
             kind: 'defensive',
-            name: 'Ironbark',
-            description: 'Bark hardens to something closer to stone than wood.',
+            name: 'Bedrock',
+            description: 'Grounded tank; hazard/redirect.',
             statGrants: { defense: 10, hp: 10 },
             unlocksMoveIds: [],
             typeGraft: 'Stone',
           },
           {
-            id: 'mordax-utility',
-            heroId: 'mordax',
+            id: 'stormRanger-utility',
+            heroId: 'stormRanger',
             kind: 'utility',
-            name: 'Wildheart',
-            description: 'Leans fully into its feral side; faster, hungrier.',
+            name: 'Whiteout',
+            description: 'Spread slow/Freeze; tempo denial across both targets.',
             statGrants: { speed: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Beast',
-          },
-        ],
-      },
-    ],
-
-    lucius: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'lucius-offensive',
-            heroId: 'lucius',
-            kind: 'offensive',
-            name: 'Voidcaller',
-            description: 'Leans fully into raw spellpower, restraint be damned.',
-            statGrants: { intelligence: 10, speed: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'lucius-defensive',
-            heroId: 'lucius',
-            kind: 'defensive',
-            name: 'Sanguine',
-            description: "Feeds on the enemy's open wounds — heals for every point of Bleed damage they take, from any source.",
-            statGrants: { hp: 10, wisdom: 10 },
-            unlocksMoveIds: [],
-            grantsPassiveIds: ['sanguine'],
-          },
-          {
-            id: 'lucius-utility',
-            heroId: 'lucius',
-            kind: 'utility',
-            name: 'Cipher',
-            description: 'Trades offense for a deep, self-sustaining mana reserve.',
-            statGrants: { manaPool: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-          },
-        ],
-      },
-    ],
-
-    // --- Hollowbark, Aegis, Brimstone, Gallant, Nightshade, Pincer,
-    // Scallywag, Sentinel, Bellows, Zenith (2026-08-22) — Brimstone
-    // and Bellows are already dual-typed, so per the mono-only graft
-    // rule none of their paths carry a typeGraft (same treatment as
-    // cinderKnight/lucius above).
-    hollowbark: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'hollowbark-offensive',
-            heroId: 'hollowbark',
-            kind: 'offensive',
-            name: 'Thornheart',
-            description: 'Thorn and root turned weapon; raw Attack.',
-            statGrants: { attack: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'hollowbark-defensive',
-            heroId: 'hollowbark',
-            kind: 'defensive',
-            name: 'Rootstone',
-            description: 'Bark petrifies into bark-over-stone armor.',
-            statGrants: { defense: 10, hp: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Stone',
-          },
-          {
-            id: 'hollowbark-utility',
-            heroId: 'hollowbark',
-            kind: 'utility',
-            name: 'Wraithwood',
-            description: 'The hollow trunk lets something else move in.',
-            statGrants: { wisdom: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Spirit',
-          },
-        ],
-      },
-    ],
-    aegis: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'aegis-offensive',
-            heroId: 'aegis',
-            kind: 'offensive',
-            name: 'Vanguard',
-            description: 'Shield becomes spear; leads the charge instead of holding the line.',
-            statGrants: { attack: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'aegis-defensive',
-            heroId: 'aegis',
-            kind: 'defensive',
-            name: 'Warforged',
-            description: 'The shield-arm becomes literal, unbreakable iron.',
-            statGrants: { defense: 10, hp: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Iron',
-          },
-          {
-            id: 'aegis-utility',
-            heroId: 'aegis',
-            kind: 'utility',
-            name: 'Sanctified',
-            description: 'A guardian blessing extended to the whole team.',
-            statGrants: { wisdom: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Spirit',
-          },
-        ],
-      },
-    ],
-    brimstone: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'brimstone-offensive',
-            heroId: 'brimstone',
-            kind: 'offensive',
-            name: 'Cauldronborn',
-            description: 'The pot boils over; raw Intelligence.',
-            statGrants: { intelligence: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'brimstone-defensive',
-            heroId: 'brimstone',
-            kind: 'defensive',
-            name: 'Ashguard',
-            description: 'Caked-on ash and cinder harden into a crude shell.',
-            statGrants: { defense: 10, hp: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'brimstone-utility',
-            heroId: 'brimstone',
-            kind: 'utility',
-            name: 'Hexfume',
-            description: 'A choking, cursed smoke that lingers over the field.',
-            statGrants: { wisdom: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-          },
-        ],
-      },
-    ],
-    gallant: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'gallant-offensive',
-            heroId: 'gallant',
-            kind: 'offensive',
-            name: 'Charger',
-            description: 'All-out lance rush; raw Attack.',
-            statGrants: { attack: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'gallant-defensive',
-            heroId: 'gallant',
-            kind: 'defensive',
-            name: 'Rampart',
-            description: 'Barded and braced; an immovable cavalry wall.',
-            statGrants: { defense: 10, hp: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Stone',
-          },
-          {
-            id: 'gallant-utility',
-            heroId: 'gallant',
-            kind: 'utility',
-            name: 'Oathbound',
-            description: 'The knightly oath made literal; a radiant, faster escort.',
-            statGrants: { speed: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Light',
-          },
-        ],
-      },
-    ],
-    nightshade: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'nightshade-offensive',
-            heroId: 'nightshade',
-            kind: 'offensive',
-            name: 'Umbral',
-            description: 'Pure killing focus; raw Attack.',
-            statGrants: { attack: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'nightshade-defensive',
-            heroId: 'nightshade',
-            kind: 'defensive',
-            name: 'Wraithstep',
-            description: 'Half a step out of the material world at all times.',
-            statGrants: { wisdom: 10, hp: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Spirit',
-          },
-          {
-            id: 'nightshade-utility',
-            heroId: 'nightshade',
-            kind: 'utility',
-            name: 'Duskweaver',
-            description: 'Reads intent before the strike lands; control over kill.',
-            statGrants: { speed: 10, mpRegen: 5 },
-            unlocksMoveIds: [],
-            typeGraft: 'Mind',
-          },
-        ],
-      },
-    ],
-    pincer: [
-      {
-        level: EVOLUTION_LEVEL,
-        paths: [
-          {
-            id: 'pincer-offensive',
-            heroId: 'pincer',
-            kind: 'offensive',
-            name: 'Tideclaw',
-            description: 'Bigger claws, harder strikes; raw Attack.',
-            statGrants: { attack: 10 },
-            unlocksMoveIds: [],
-          },
-          {
-            id: 'pincer-defensive',
-            heroId: 'pincer',
-            kind: 'defensive',
-            name: 'Ironshell',
-            description: 'The carapace hardens past shell into plate.',
-            statGrants: { defense: 10, hp: 10 },
-            unlocksMoveIds: [],
-            typeGraft: 'Iron',
-          },
-          {
-            id: 'pincer-utility',
-            heroId: 'pincer',
-            kind: 'utility',
-            name: 'Brinefrost',
-            description: 'Retreats to colder water; slows everything around it.',
-            statGrants: { manaPool: 10, mpRegen: 5 },
             unlocksMoveIds: [],
             typeGraft: 'Frost',
           },
@@ -1995,6 +508,43 @@ export const progressionTable: ProgressionTable = {
         ],
       },
     ],
+    // --- Stone ---
+    crag: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'crag-offensive',
+            heroId: 'crag',
+            kind: 'offensive',
+            name: 'Stonebreaker',
+            description: 'Rock-fisted heavy hitter; raw Attack.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'crag-defensive',
+            heroId: 'crag',
+            kind: 'defensive',
+            name: 'Mountainheart',
+            description: 'Immovable armored mass; max bulk.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Iron',
+          },
+          {
+            id: 'crag-utility',
+            heroId: 'crag',
+            kind: 'utility',
+            name: 'Warden of Roots',
+            description: 'Overgrown guardian; sustain and support.',
+            statGrants: { wisdom: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Nature',
+          },
+        ],
+      },
+    ],
     sentinel: [
       {
         level: EVOLUTION_LEVEL,
@@ -2027,6 +577,697 @@ export const progressionTable: ProgressionTable = {
             statGrants: { wisdom: 10, mpRegen: 5 },
             unlocksMoveIds: [],
             typeGraft: 'Spirit',
+          },
+        ],
+      },
+    ],
+    // --- Nature ---
+    wildOracle: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'wildOracle-offensive',
+            heroId: 'wildOracle',
+            kind: 'offensive',
+            name: 'Thornwrath',
+            description: 'Feral on-hit aggression; Bleed/Poison pressure.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Beast',
+          },
+          {
+            id: 'wildOracle-defensive',
+            heroId: 'wildOracle',
+            kind: 'defensive',
+            name: 'Heartwood',
+            description: 'Renew bulwark; sustains the pair.',
+            statGrants: { wisdom: 10, hp: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'wildOracle-utility',
+            heroId: 'wildOracle',
+            kind: 'utility',
+            name: 'Augur',
+            description: 'Foresight/control; status manipulation and priority steering.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Mind',
+          },
+        ],
+      },
+    ],
+    mordax: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'mordax-offensive',
+            heroId: 'mordax',
+            kind: 'offensive',
+            name: 'Bloomfang',
+            description: 'Thorn and claw working together; raw aggression.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'mordax-defensive',
+            heroId: 'mordax',
+            kind: 'defensive',
+            name: 'Ironbark',
+            description: 'Bark hardens to something closer to stone than wood.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Stone',
+          },
+          {
+            id: 'mordax-utility',
+            heroId: 'mordax',
+            kind: 'utility',
+            name: 'Wildheart',
+            description: 'Leans fully into its feral side; faster, hungrier.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Beast',
+          },
+        ],
+      },
+    ],
+    hollowbark: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'hollowbark-offensive',
+            heroId: 'hollowbark',
+            kind: 'offensive',
+            name: 'Thornheart',
+            description: 'Thorn and root turned weapon; raw Attack.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'hollowbark-defensive',
+            heroId: 'hollowbark',
+            kind: 'defensive',
+            name: 'Rootstone',
+            description: 'Bark petrifies into bark-over-stone armor.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Stone',
+          },
+          {
+            id: 'hollowbark-utility',
+            heroId: 'hollowbark',
+            kind: 'utility',
+            name: 'Wraithwood',
+            description: 'The hollow trunk lets something else move in.',
+            statGrants: { wisdom: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Spirit',
+          },
+        ],
+      },
+    ],
+    // --- Light ---
+    dawnwarden: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'dawnwarden-offensive',
+            heroId: 'dawnwarden',
+            kind: 'offensive',
+            name: 'Sunflare',
+            description: 'Radiant burst; Burn pressure.',
+            statGrants: { intelligence: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Fire',
+          },
+          {
+            id: 'dawnwarden-defensive',
+            heroId: 'dawnwarden',
+            kind: 'defensive',
+            name: 'Sanctuary',
+            description: 'Healer-tank; Renew + protect.',
+            statGrants: { wisdom: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Spirit',
+          },
+          {
+            id: 'dawnwarden-utility',
+            heroId: 'dawnwarden',
+            kind: 'utility',
+            name: 'Dawnherald',
+            description: 'Cleanse/buff support; the classic support priest.',
+            statGrants: { manaPool: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+          },
+        ],
+      },
+    ],
+    aegis: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'aegis-offensive',
+            heroId: 'aegis',
+            kind: 'offensive',
+            name: 'Vanguard',
+            description: 'Shield becomes spear; leads the charge instead of holding the line.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'aegis-defensive',
+            heroId: 'aegis',
+            kind: 'defensive',
+            name: 'Warforged',
+            description: 'The shield-arm becomes literal, unbreakable iron.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Iron',
+          },
+          {
+            id: 'aegis-utility',
+            heroId: 'aegis',
+            kind: 'utility',
+            name: 'Sanctified',
+            description: 'A guardian blessing extended to the whole team.',
+            statGrants: { wisdom: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Spirit',
+          },
+        ],
+      },
+    ],
+    // --- Shadow ---
+    shadowMonk: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'shadowMonk-offensive',
+            heroId: 'shadowMonk',
+            kind: 'offensive',
+            name: 'Nightreaver',
+            description: 'High-burst assassin strikes, safest under Stealth.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'shadowMonk-defensive',
+            heroId: 'shadowMonk',
+            kind: 'defensive',
+            name: 'Stillmind',
+            description: 'Evasive sustain; self-cleanse.',
+            statGrants: { wisdom: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Spirit',
+          },
+          {
+            id: 'shadowMonk-utility',
+            heroId: 'shadowMonk',
+            kind: 'utility',
+            name: 'Nightveil',
+            description: 'Daze control + debuffs; shuts a threat off.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Mind',
+          },
+        ],
+      },
+    ],
+    marrow: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'marrow-offensive',
+            heroId: 'marrow',
+            kind: 'offensive',
+            name: 'Carrion',
+            description: 'Leans all the way into the rot; raw Intelligence behind Poison and Eclipse.',
+            statGrants: { intelligence: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'marrow-defensive',
+            heroId: 'marrow',
+            kind: 'defensive',
+            name: 'Ossuary',
+            description: 'Bone-deep endurance; outlasts whatever it poisoned.',
+            statGrants: { wisdom: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Nature',
+          },
+          {
+            id: 'marrow-utility',
+            heroId: 'marrow',
+            kind: 'utility',
+            name: 'Ashenwell',
+            description: 'Casts deeper and more often; the attrition never stops.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Arcane',
+          },
+        ],
+      },
+    ],
+    lucius: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'lucius-offensive',
+            heroId: 'lucius',
+            kind: 'offensive',
+            name: 'Voidcaller',
+            description: 'Leans fully into raw spellpower, restraint be damned.',
+            statGrants: { intelligence: 10, speed: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'lucius-defensive',
+            heroId: 'lucius',
+            kind: 'defensive',
+            name: 'Sanguine',
+            description: "Feeds on the enemy's open wounds — heals for every point of Bleed damage they take, from any source.",
+            statGrants: { hp: 10, wisdom: 10 },
+            unlocksMoveIds: [],
+            grantsPassiveIds: ['sanguine'],
+          },
+          {
+            id: 'lucius-utility',
+            heroId: 'lucius',
+            kind: 'utility',
+            name: 'Cipher',
+            description: 'Trades offense for a deep, self-sustaining mana reserve.',
+            statGrants: { manaPool: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+          },
+        ],
+      },
+    ],
+    nightshade: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'nightshade-offensive',
+            heroId: 'nightshade',
+            kind: 'offensive',
+            name: 'Umbral',
+            description: 'Pure killing focus; raw Attack.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'nightshade-defensive',
+            heroId: 'nightshade',
+            kind: 'defensive',
+            name: 'Wraithstep',
+            description: 'Half a step out of the material world at all times.',
+            statGrants: { wisdom: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Spirit',
+          },
+          {
+            id: 'nightshade-utility',
+            heroId: 'nightshade',
+            kind: 'utility',
+            name: 'Duskweaver',
+            description: 'Reads intent before the strike lands; control over kill.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Mind',
+          },
+        ],
+      },
+    ],
+    // --- Arcane ---
+    runescribe: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'runescribe-offensive',
+            heroId: 'runescribe',
+            kind: 'offensive',
+            name: 'Spellstorm',
+            description: 'Raw Int nuke; scaling burst.',
+            statGrants: { intelligence: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'runescribe-defensive',
+            heroId: 'runescribe',
+            kind: 'defensive',
+            name: 'Sigilward',
+            description: 'Barrier/ward tank.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Stone',
+          },
+          {
+            id: 'runescribe-utility',
+            heroId: 'runescribe',
+            kind: 'utility',
+            name: 'Loreweaver',
+            description: 'Setup/control; status steering.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Mind',
+          },
+        ],
+      },
+    ],
+    zenith: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'zenith-offensive',
+            heroId: 'zenith',
+            kind: 'offensive',
+            name: 'Apex',
+            description: 'Unrestrained arcane output; raw Intelligence.',
+            statGrants: { intelligence: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'zenith-defensive',
+            heroId: 'zenith',
+            kind: 'defensive',
+            name: 'Halo',
+            description: 'The orb blooms into a standing radiant shield.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Light',
+          },
+          {
+            id: 'zenith-utility',
+            heroId: 'zenith',
+            kind: 'utility',
+            name: 'Oracle',
+            description: 'Reads the whole field at once; setup and control.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Mind',
+          },
+        ],
+      },
+    ],
+    // --- Mind ---
+    mindweaver: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'mindweaver-offensive',
+            heroId: 'mindweaver',
+            kind: 'offensive',
+            name: 'Mindrend',
+            description: 'Daze-punishing burst.',
+            statGrants: { intelligence: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'mindweaver-defensive',
+            heroId: 'mindweaver',
+            kind: 'defensive',
+            name: 'Adamant',
+            description: 'Mental + physical bulk; status resistance.',
+            statGrants: { defense: 10, wisdom: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Iron',
+          },
+          {
+            id: 'mindweaver-utility',
+            heroId: 'mindweaver',
+            kind: 'utility',
+            name: 'Dominion',
+            description: 'Control lock — Daze, Haunt, domination debuffs.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Shadow',
+          },
+        ],
+      },
+    ],
+    trance: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'trance-offensive',
+            heroId: 'trance',
+            kind: 'offensive',
+            name: 'Puppeteer',
+            description: 'Stops suggesting and starts pulling.',
+            statGrants: { intelligence: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'trance-defensive',
+            heroId: 'trance',
+            kind: 'defensive',
+            name: 'Somnambulist',
+            description: 'Walks in the deep sleep, where very little can reach it.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Spirit',
+          },
+          {
+            id: 'trance-utility',
+            heroId: 'trance',
+            kind: 'utility',
+            name: 'Ringmaster',
+            description: 'Runs the whole show — deeper reserves and a faster refill.',
+            statGrants: { manaPool: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Arcane',
+          },
+        ],
+      },
+    ],
+    // --- Spirit ---
+    revenant: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'revenant-offensive',
+            heroId: 'revenant',
+            kind: 'offensive',
+            name: 'Wraithblade',
+            description: 'Draining spectral assault; raw Intelligence.',
+            statGrants: { intelligence: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'revenant-defensive',
+            heroId: 'revenant',
+            kind: 'defensive',
+            name: 'Hollow Warden',
+            description: 'Undying bulwark; bleeds momentum from the living.',
+            statGrants: { defense: 10, wisdom: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Shadow',
+          },
+          {
+            id: 'revenant-utility',
+            heroId: 'revenant',
+            kind: 'utility',
+            name: 'Soulbinder',
+            description: 'Control and setup; status steering from beyond.',
+            statGrants: { manaPool: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Mind',
+          },
+        ],
+      },
+    ],
+    sorrow: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'sorrow-offensive',
+            heroId: 'sorrow',
+            kind: 'offensive',
+            name: 'Banshee',
+            description: 'The wail sharpened to an edge; strikes from nowhere, faster.',
+            statGrants: { attack: 10, speed: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Shadow',
+          },
+          {
+            id: 'sorrow-defensive',
+            heroId: 'sorrow',
+            kind: 'defensive',
+            name: 'Mourner',
+            description: 'Grief that will not be moved; stays to be hit and stays after.',
+            statGrants: { hp: 10, defense: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'sorrow-utility',
+            heroId: 'sorrow',
+            kind: 'utility',
+            name: 'Dirge',
+            description: 'A song that gets inside; binds the pair and guards against the mind.',
+            statGrants: { wisdom: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Mind',
+          },
+        ],
+      },
+    ],
+    // --- Iron ---
+    ironWarden: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'ironWarden-offensive',
+            heroId: 'ironWarden',
+            kind: 'offensive',
+            name: 'Sunderer',
+            description: 'Armor-piercing heavy hits; cuts enemy Def.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Mech',
+          },
+          {
+            id: 'ironWarden-defensive',
+            heroId: 'ironWarden',
+            kind: 'defensive',
+            name: 'Bulwark',
+            description: 'Redirect/protect partner — the doubles anchor.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'ironWarden-utility',
+            heroId: 'ironWarden',
+            kind: 'utility',
+            name: 'Lodestar',
+            description: 'Cleanse + ally support; the paladin path.',
+            statGrants: { wisdom: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Light',
+          },
+        ],
+      },
+    ],
+    valor: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'valor-offensive',
+            heroId: 'valor',
+            kind: 'offensive',
+            name: 'Crusader',
+            description: 'All-out armored assault; raw Attack.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'valor-defensive',
+            heroId: 'valor',
+            kind: 'defensive',
+            name: 'Bastion',
+            description: 'Shield-wall anchor; protect partner, max Defense.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Stone',
+          },
+          {
+            id: 'valor-utility',
+            heroId: 'valor',
+            kind: 'utility',
+            name: 'Dawnblade',
+            description: 'Righteous support; cleanse and speed control.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Light',
+          },
+        ],
+      },
+    ],
+    gallant: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'gallant-offensive',
+            heroId: 'gallant',
+            kind: 'offensive',
+            name: 'Charger',
+            description: 'All-out lance rush; raw Attack.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'gallant-defensive',
+            heroId: 'gallant',
+            kind: 'defensive',
+            name: 'Rampart',
+            description: 'Barded and braced; an immovable cavalry wall.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Stone',
+          },
+          {
+            id: 'gallant-utility',
+            heroId: 'gallant',
+            kind: 'utility',
+            name: 'Oathbound',
+            description: 'The knightly oath made literal; a radiant, faster escort.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Light',
+          },
+        ],
+      },
+    ],
+    // --- Mech ---
+    forgewright: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'forgewright-offensive',
+            heroId: 'forgewright',
+            kind: 'offensive',
+            name: 'Overdrive',
+            description: 'Ramping heavy hitter; Atk builds over turns.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'forgewright-defensive',
+            heroId: 'forgewright',
+            kind: 'defensive',
+            name: 'Juggernaut',
+            description: 'Armored machine; max bulk, endure.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Iron',
+          },
+          {
+            id: 'forgewright-utility',
+            heroId: 'forgewright',
+            kind: 'utility',
+            name: 'Boilover',
+            description: 'Steam control — Burn spread + hazard/tempo.',
+            statGrants: { manaPool: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+            typeGraft: 'Water',
           },
         ],
       },
@@ -2065,38 +1306,110 @@ export const progressionTable: ProgressionTable = {
         ],
       },
     ],
-    zenith: [
+    // --- Beast ---
+    packAlpha: [
       {
         level: EVOLUTION_LEVEL,
         paths: [
           {
-            id: 'zenith-offensive',
-            heroId: 'zenith',
+            id: 'packAlpha-offensive',
+            heroId: 'packAlpha',
             kind: 'offensive',
-            name: 'Apex',
-            description: 'Unrestrained arcane output; raw Intelligence.',
+            name: 'Bloodhunt',
+            description: 'Something is bleeding, and it knows.',
+            statGrants: { attack: 10, speed: 10 },
+            unlocksMoveIds: [],
+            grantsPassiveIds: ['bloodthirsty'],
+          },
+          {
+            id: 'packAlpha-defensive',
+            heroId: 'packAlpha',
+            kind: 'defensive',
+            name: 'Stonehide',
+            description: 'Hide like the ground it fights on; takes the hit and gives it back.',
+            statGrants: { hp: 20, defense: 10 },
+            unlocksMoveIds: [],
+            typeGraft: 'Stone',
+            learnableMoveIds: ['rockToss', 'bastion', 'rubbleRush', 'stoneheart'],
+          },
+          {
+            id: 'packAlpha-utility',
+            heroId: 'packAlpha',
+            kind: 'utility',
+            name: 'Warhowl',
+            description: 'Lets go of the body and leads from somewhere else.',
+            statGrants: { attack: -30, intelligence: 60, manaPool: 20 },
+            unlocksMoveIds: [],
+            typeGraft: 'Spirit',
+            learnableMoveIds: ['wisp', 'drain', 'soulRend', 'ascendant', 'animalSpirit'],
+          },
+        ],
+      },
+    ],
+    widow: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'widow-offensive',
+            heroId: 'widow',
+            kind: 'offensive',
+            name: 'Venomfang',
+            description: 'Leans all the way into the kill — Bleed, Poison, and nothing held back.',
+            statGrants: { attack: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'widow-defensive',
+            heroId: 'widow',
+            kind: 'defensive',
+            name: 'Carapace',
+            description: 'Hardens the shell so the wounds it opens outlast it.',
+            statGrants: { defense: 10, hp: 10 },
+            unlocksMoveIds: [],
+          },
+          {
+            id: 'widow-utility',
+            heroId: 'widow',
+            kind: 'utility',
+            name: 'Silkbinder',
+            description: 'Sets the trap before the fight — faster, and cheaper to keep hidden.',
+            statGrants: { speed: 10, mpRegen: 5 },
+            unlocksMoveIds: [],
+          },
+        ],
+      },
+    ],
+    coil: [
+      {
+        level: EVOLUTION_LEVEL,
+        paths: [
+          {
+            id: 'coil-offensive',
+            heroId: 'coil',
+            kind: 'offensive',
+            name: 'Basilisk',
+            description: 'The gaze stops being a suggestion.',
             statGrants: { intelligence: 10 },
             unlocksMoveIds: [],
           },
           {
-            id: 'zenith-defensive',
-            heroId: 'zenith',
+            id: 'coil-defensive',
+            heroId: 'coil',
             kind: 'defensive',
-            name: 'Halo',
-            description: 'The orb blooms into a standing radiant shield.',
-            statGrants: { defense: 10, hp: 10 },
+            name: 'Hooded',
+            description: 'Spreads the hood — harder to reach, harder to unsettle.',
+            statGrants: { defense: 10, wisdom: 10 },
             unlocksMoveIds: [],
-            typeGraft: 'Light',
           },
           {
-            id: 'zenith-utility',
-            heroId: 'zenith',
+            id: 'coil-utility',
+            heroId: 'coil',
             kind: 'utility',
-            name: 'Oracle',
-            description: 'Reads the whole field at once; setup and control.',
-            statGrants: { speed: 10, mpRegen: 5 },
+            name: 'Mesmer',
+            description: 'Holds the whole field in the coil — deeper reserves, the pack-support path.',
+            statGrants: { manaPool: 10, mpRegen: 5 },
             unlocksMoveIds: [],
-            typeGraft: 'Mind',
           },
         ],
       },

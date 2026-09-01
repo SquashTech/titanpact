@@ -1,15 +1,5 @@
-// The pooled level-up currency (docs/progression.md "The level-up currency
-// (pooled, freely distributed)"; docs/leveling-and-ranks.md is the
-// authoritative spec for the mechanic below — this module implements it).
-// Each Training Point spent on a hero does exactly one thing — level them up
-// — and a level-up always does one of two things as a consequence: below
-// EVOLUTION_LEVEL it offers a random move from the hero's remaining pool;
-// AT EVOLUTION_LEVEL it instead surfaces the hero's Evolution — no move is
-// rolled that level-up (docs/leveling-and-ranks.md "Evolution replaces that
-// level-up's move offer"). Concrete pool/path CONTENT (which moves, which
-// paths, which stat grants) is fixture data in src/data/progression.ts,
-// authored for a subset of the roster only — see the SCOPE NOTE there. This
-// module only implements the generic mechanism.
+// The pooled level-up currency — mechanism only; pool/path content is in
+// src/data/progression.ts. Spec: docs/leveling-and-ranks.md.
 
 import type { HeroDefinition, MoveDefinition, MoveTier, PassiveId, StatKey, TypeId } from '../engine/content';
 import { isValidFlatStatGrant } from '../engine/content';
@@ -17,55 +7,15 @@ import type { HeroLookup } from '../engine/state';
 import type { RosterEntry, RunState } from './state';
 import { mergeStatMods } from './statMods';
 
-/** A hero holds at most 4 moves (docs/leveling-and-ranks.md "The four-move cap"). Past the cap, growth is substitution, never expansion. */
+/** Past the cap, growth is substitution, never expansion. */
 export const MOVE_CAP = 4;
 
-/**
- * What one level-up COSTS from the pooled currency: **as many Training Points
- * as the hero's current level.** Level 1 -> 2 costs 1, level 4 -> 5 costs 4,
- * level 10 -> 11 costs 10 (2026-09-01 designer call).
- *
- * Why a curve and not the flat 1 this used to be. Walk the old payout curve:
- * levels 2-4 bought declinable move-replacement offers, level 5 bought the
- * run-defining Evolution, and every level past MASTERY_LEVEL bought a flat +10
- * stat FOREVER. That curve is **convex** — the 11th point sunk into a hero was
- * worth strictly more than the 4th — so the system paid the player more, per
- * point, the harder they hyperfocused. Hyperfocus is supposed to be a valid
- * strategy (that is what the mastery sink is for, see MASTERY_LEVEL); it was
- * not supposed to be the dominant one, and a flat price made it dominant.
- *
- * Pricing rather than capping, deliberately. A per-act level cap would fence
- * the outcome without touching the convexity, and would strand currency the
- * moment every hero hit the ceiling. A rising price leaves the carry build
- * legal and simply makes the player pay for it in breadth — which, in a
- * bring-6-pick-4 doubles game, is the currency that actually matters.
- *
- * Three consequences worth stating, because they are load-bearing:
- *
- * - **The mastery treadmill self-limits.** Level 11 costs 10, level 12 costs
- *   11. No cap is needed on the tail; it prices itself out.
- * - **Leftover points are normal, and bank.** A pool of 2 buys nothing on a
- *   level-3 hero, so callers must gate the level-up screen on
- *   `canAffordAnyLevelUp` rather than on `levelUpPool > 0`, or the screen
- *   reopens at every node with nothing to sell.
- * - **Recruits get cheaper to raise than veterans.** A Guild Hall hero
- *   arriving underleveled is now genuinely competitive with pouring the same
- *   points into an existing carry, which is the raise-vs-recruit axis
- *   (docs/progression.md) finally having a price attached.
- *
- * Reads the level being LEFT, not the one being reached, so the first
- * level-up a hero ever receives costs 1.
- */
+/** A level-up costs as many points as the level being LEFT (CLAUDE.md), so a hero's first level-up costs 1. */
 export function levelUpCost(level: number): number {
   return Math.max(1, level);
 }
 
-/**
- * Total cost of taking a hero from `fromLevel` to `toLevel` — the triangular
- * sum of levelUpCost over the range. Exists so callers (and tests, and any
- * future "what would it take to evolve this hero" readout) state the figure
- * once instead of each re-deriving the curve.
- */
+/** Triangular sum of levelUpCost over [fromLevel, toLevel). */
 export function costToReachLevel(fromLevel: number, toLevel: number): number {
   let total = 0;
   for (let level = fromLevel; level < toLevel; level++) total += levelUpCost(level);
@@ -73,135 +23,50 @@ export function costToReachLevel(fromLevel: number, toLevel: number): number {
 }
 
 /**
- * Whether the pool can still buy ANY hero on the roster a level. The
- * successor to every `levelUpPool > 0` check in the view: under a price curve
- * a non-empty pool is no longer proof that there is anything to spend it on.
- *
- * Deliberately does not consider a hero with an earned-but-unresolved
- * Evolution — that choice was already paid for by the level-up that reached
- * EVOLUTION_LEVEL, and callers check `availableEvolution` for it separately.
+ * The gate every level-up screen must use instead of `levelUpPool > 0` — a
+ * non-empty pool may buy nobody. Ignores an earned-but-unresolved Evolution;
+ * callers check `availableEvolution` for that separately.
  */
 export function canAffordAnyLevelUp(run: RunState): boolean {
   return run.roster.some((entry) => run.levelUpPool >= levelUpCost(entry.level));
 }
 
-/**
- * The flat, uniform hero level at which every hero's (single, for now)
- * Evolution becomes available (docs/leveling-and-ranks.md "Trigger").
- * CLAUDE.md's variable evolution depth (Capstone = 0, Single = 1, Deep line
- * = 2+) is the eventual per-hero-authored design; this constant is the
- * current scoped-down implementation of the "Single" shape applied
- * uniformly across the whole roster. A per-hero-authored trigger level (and
- * multiple ordered Evolutions for deep-line heroes) is deferred, not
- * abandoned — see leveling-and-ranks.md's scope note.
- */
+/** Uniform Evolution trigger level for every hero (per-hero depth is deferred). */
 export const EVOLUTION_LEVEL = 5;
 
-/**
- * The hero level at which each move tier (engine/content.ts MoveTier, the
- * designer table's `Early / Mid / Late` column) becomes offerable on
- * level-up. 2026-08-31 designer call: "only Early moves offered from levels
- * 1-4, Mid from 4-7, Late 7+".
- *
- * Read CUMULATIVELY — reaching a tier's level ADDS it to what can be
- * offered, it does not close the tier below (see levelUpMovePool). A hero at
- * level 8 draws from all three. The alternative, exclusive windows, makes a
- * move the hero simply never rolled permanently unreachable and can leave a
- * pool empty at exactly the level the player is feeding it points.
- *
- * Placeholder numbers, in CLAUDE.md's sense: the SHAPE (three tiers, gated by
- * level, cumulative) is the decision; 1/4/7 is a first-pass curve for
- * playtest. Note it straddles EVOLUTION_LEVEL — a hero unlocks Mid one level
- * before it evolves and Late two after — so a run that spends points evenly
- * across four heroes reaches Late only in the back half.
- */
+/** Level at which each move tier becomes offerable. Cumulative: reaching a tier adds it, never closes the tier below. Placeholder curve. */
 export const MOVE_TIER_LEVEL: Record<MoveTier, number> = {
   early: 1,
   mid: 4,
   late: 7,
 };
 
-/**
- * Whether a move is offerable to a hero at `level`. A move with no authored
- * `tier` counts as Early (engine/content.ts MoveDefinition.tier) — ungated,
- * which is what every move was before the field existed, so an untiered slate
- * behaves exactly as it did.
- */
+/** A move with no authored `tier` counts as Early (ungated). */
 export function isMoveTierUnlocked(move: MoveDefinition | undefined, level: number): boolean {
   return level >= MOVE_TIER_LEVEL[move?.tier ?? 'early'];
 }
 
-/**
- * The last level whose level-up pays out a MOVE. Past it a Training Point
- * spent on a hero buys a stat instead (grantMasteryStat below).
- *
- * This is a deliberate, designer-signed amendment (2026-08-31) to CLAUDE.md's
- * "level-ups never directly raise stats" / "no automatic stat growth from
- * leveling" — recorded there as an exemption rather than left as a silent
- * contradiction. The reason for the amendment: the pooled currency had no
- * sink once a hero's movepool ran out, so a player who wanted to hyperfocus
- * one hero was simply told no. The reason for the CAP still existing: moves
- * are the interesting payoff, so stats only take over once the authored
- * movepool has actually been spent, not as a competing choice alongside it.
- *
- * 10 is the level the move pools are authored to reach
- * (data/progression.ts FLOOR, test/moveTiers.test.ts), so the two numbers are
- * the same decision seen from both sides — move the floor and this moves with
- * it.
- */
+/** Last level whose level-up pays out a move; past it a level-up buys a stat (CLAUDE.md exemption). Same decision as data/progression.ts FLOOR — move one, move both. */
 export const MASTERY_LEVEL = 10;
 
-/** Flat grant per mastery level-up. A multiple of 10, so CLAUDE.md's multiples-of-5/10 lock binds here with no exemption. */
+/** Flat grant per mastery level-up — a multiple of 10, so the 5/10 lock binds without exemption. */
 export const MASTERY_STAT_AMOUNT = 10;
 
 /**
- * The stats a mastery level-up can roll. The five COMBAT stats, deliberately
- * NOT all eight of StatKey — the same call, for the same reason, that
- * data/moves.ts RANDOM_STAT_POOL made on 2026-08-30: a flat +10 is worth
- * wildly different amounts across the eight. +10 MP Regen is the whole
- * Everflow banner and +10 HP on a 130-HP body is noise, so a reel including
- * them would be four fair faces, one jackpot and two blanks.
- *
- * Duplicated rather than imported from data/moves.ts on purpose: this module
- * takes its content by injection (see levelUpMovePool's `moves` parameter)
- * and never imports the content layer, and the two reels are independently
- * authorable — a later slate re-pointing the move reel should not silently
- * re-point the progression one.
+ * The five combat stats only — HP/Mana/MP Regen are excluded because +10 is not
+ * worth the same thing across all eight. Deliberately NOT imported from
+ * data/moves.ts RANDOM_STAT_POOL: the two reels are independently authorable.
  */
 export const MASTERY_STAT_POOL: readonly StatKey[] = ['attack', 'defense', 'intelligence', 'wisdom', 'speed'];
 
-/** Whether a stat may be rolled/granted by a mastery level-up. Exported so a UI can filter before offering rather than catching a throw. */
 export function isValidMasteryStat(stat: StatKey): boolean {
   return MASTERY_STAT_POOL.includes(stat);
 }
 
-/**
- * How many stats a mastery level-up puts on the table. The player picks one
- * (2026-08-31, second pass): a single forced roll made "hyperfocus one hero"
- * a slot machine rather than a decision — a physical body could roll Wisdom
- * four times out of six and the investment was simply wasted. Three of five
- * keeps the roll meaningful (the reel still withholds two stats, so the
- * player rarely gets exactly what they came for) while making every mastery
- * level-up a real choice.
- */
+/** Stats offered per mastery level-up; the player picks one. */
 export const MASTERY_CHOICE_COUNT = 3;
 
-/**
- * Draws the stats a mastery level-up offers: `count` DISTINCT stats from
- * MASTERY_STAT_POOL, in rolled order.
- *
- * Distinct because the choice is the whole point — the same stat twice would
- * silently narrow a three-way pick to a two-way one. Draws by partial
- * Fisher-Yates over a copy, so a `count` at or above the pool size simply
- * yields the whole (shuffled) pool rather than looping forever.
- *
- * Takes `random` as a parameter rather than calling Math.random itself,
- * matching how every other roll in this layer works: /src/engine forbids
- * ambient randomness outright (engine/rng/seededRng.ts), and while the run
- * tier is not bound by that rule, keeping the roll injected is what lets this
- * be tested against a fixed sequence and lets a future seeded run-tier RNG
- * drop in without touching the mechanism.
- */
+/** `count` DISTINCT stats from MASTERY_STAT_POOL via partial Fisher-Yates; `random` is injected so tests can pin a draw. */
 export function drawMasteryStats(random: () => number, count: number = MASTERY_CHOICE_COUNT): StatKey[] {
   const bag = [...MASTERY_STAT_POOL];
   const draw = Math.min(count, bag.length);
@@ -213,20 +78,9 @@ export function drawMasteryStats(random: () => number, count: number = MASTERY_C
 }
 
 /**
- * What a level-up actually pays out, read off the POST-level-up entry (the
- * one `levelUpHero` returned) for the same reason `levelUpMovePool` is: the
- * level just reached is what decides the answer.
- *
- * One function so every caller agrees. The order is the precedence:
- *
- * - `evolution` — the level-up that reaches an Evolution's trigger level
- *   surfaces the choice and rolls no move (CLAUDE.md, docs/leveling-and-ranks.md).
- * - `move` — the ordinary case, all the way through MASTERY_LEVEL.
- * - `mastery` — past MASTERY_LEVEL, or (as a safety net) any level whose move
- *   pool has come up empty. That second clause is what makes "the point bought
- *   nothing" unreachable: the authored floor is supposed to keep the pool full
- *   through level 10, and this catches it if a future slate edit ever breaks
- *   that. A stat is a worse payoff than a move, not a dud.
+ * What a level-up pays out, read off the POST-level-up entry. Precedence:
+ * evolution > move > mastery. `mastery` below MASTERY_LEVEL means the move pool
+ * came up empty — a data bug (the FLOOR should prevent it), not the gate working.
  */
 export type LevelUpPayout = 'evolution' | 'move' | 'mastery';
 
@@ -243,59 +97,32 @@ export function levelUpPayout(
 export interface EvolutionPath {
   id: string;
   heroId: string;
-  /**
-   * Paths "differ in kind, not degree" (docs/progression.md) — this label
-   * is documentation of that intent, not a mechanical multiplier or type.
-   */
+  /** Documentation of intent ("differ in kind"), not a mechanical multiplier. */
   kind: 'defensive' | 'offensive' | 'utility';
-  /** Single identifiable name (docs/leveling-and-ranks.md), e.g. "Explosive", "Ironclad", "Thunderblaze". */
   name: string;
-  /** One-line flavor/mechanical summary shown on the Evolution choice screen so the player can judge the three paths on more than just their name. */
+  /** Shown on the Evolution choice screen. */
   description?: string;
   statGrants: Partial<Record<StatKey, number>>;
-  /** Moves this path hands over OUTRIGHT the moment it is chosen — added straight to the hero's unlocked kit. */
+  /** Granted outright the moment the path is chosen. */
   unlocksMoveIds: string[];
-  /**
-   * Moves this path makes LEARNABLE: they join the hero's level-up pool
-   * (levelUpMovePool) rather than being granted, so a later level-up can roll
-   * them. This is docs/leveling-and-ranks.md "Evolution steers future level-up
-   * offerings", which has been LOCKED behavior since 2026-08-16 and until now
-   * had no implementation — the mechanical half of a type-graft ("gain Spirit
-   * type AND the ability to learn new Spirit moves"), and the reason an
-   * Evolution is compounding rather than a one-off package.
-   *
-   * Kept separate from `unlocksMoveIds` because they are different promises:
-   * one is a move, the other is a set of futures. A graft that opened four
-   * moves as outright grants would blow straight past MOVE_CAP and hand the
-   * player a loadout instead of a direction.
-   *
-   * Tier gating still applies — these go through isMoveTierUnlocked like any
-   * other pool entry, so a late-tier graft move stays locked until level 7
-   * even though the graft happened at 5.
-   */
+  /** Join the hero's level-up pool (still tier-gated) rather than being granted — a set of futures, not a loadout. */
   learnableMoveIds?: readonly string[];
-  /**
-   * Optional secondary-type grant/shift (docs/progression.md "Type-graft
-   * paths"). Only legal when the hero is mono-type by design — enforced in
-   * chooseEvolutionPath, not just by authoring convention. A later path's
-   * typeGraft overwrites (shifts) any earlier one; it's not additive.
-   */
+  /** Secondary-type grant; only legal on a mono-type hero (enforced in chooseEvolutionPath). A later graft overwrites, never stacks. */
   typeGraft?: TypeId;
-  /** Passives (engine/content.ts PassiveDefinition, src/data/passives.ts) this path grants permanently once chosen — e.g. Lucius's Sanguine path. Optional/omitted for a plain stat-grant path. */
   grantsPassiveIds?: readonly PassiveId[];
 }
 
 export interface EvolutionNode {
-  /** Hero level at which this path choice becomes available. Currently always EVOLUTION_LEVEL for every hero. */
+  /** Currently always EVOLUTION_LEVEL. */
   level: number;
-  /** Exactly three paths, differing in kind (CLAUDE.md "the player is presented with a choice of three options"). */
+  /** Exactly three, differing in kind. */
   paths: EvolutionPath[];
 }
 
 export interface ProgressionTable {
-  /** heroId -> pool of moves that can be randomly offered on level-up, beyond the hero's starting kit. */
+  /** heroId -> moves offerable on level-up beyond the starting kit. */
   moveTiers: Record<string, string[]>;
-  /** heroId -> ordered Evolution nodes (docs/leveling-and-ranks.md Part 2). Currently exactly one node per hero, at EVOLUTION_LEVEL. */
+  /** heroId -> ordered Evolution nodes (currently one per hero). */
   evolutions: Record<string, EvolutionNode[]>;
 }
 
@@ -315,46 +142,15 @@ function replaceEntry(run: RunState, rosterId: string, next: RosterEntry, spend:
   };
 }
 
-/**
- * A hero's ENTIRE movepool: the authored starting kit
- * (HeroDefinition.moveIds) followed by everything the level-up table can
- * ever offer them, deduped. Leveling itself never needs this — it walks the
- * two halves separately (levelUpMovePool above filters the table pool against
- * what is already unlocked AND against the hero's level). Deliberately NOT
- * tier-gated: a caller asking for the whole surface is asking past the level
- * curve, which is exactly what Quick Battle wants — a random MOVE_CAP loadout
- * so a test fight can exercise moves a hero would only reach several levels in.
- */
+/** Starting kit plus everything the table can ever offer, deduped and NOT tier-gated — Quick Battle's random-loadout surface. */
 export function fullMovepool(table: ProgressionTable, hero: HeroDefinition): string[] {
   return [...new Set([...hero.moveIds, ...(table.moveTiers[hero.id] ?? [])])];
 }
 
 /**
- * The moves still available to offer this hero on level-up: the table's pool
- * PLUS whatever the Evolution paths it has already taken made learnable
- * (EvolutionPath.learnableMoveIds), minus whatever is already unlocked, minus
- * every move whose tier the hero's LEVEL has not reached yet
- * (MOVE_TIER_LEVEL above).
- *
- * The graft half is appended rather than substituted: docs/leveling-and-ranks.md
- * expects the retained primary's moves to keep being offered alongside the new
- * type's, so a grafted hero draws from a WIDER pool, not a redirected one.
- * Deduped, since a graft may legitimately open a move the base pool already
- * lists (an off-type entry pulled in to satisfy the FLOOR, say, that the graft
- * has now made native).
- *
- * The level read is `entry.level` — the level the hero currently HAS — so a
- * caller resolving a level-up's move offer must pass the entry it got back
- * from `levelUpHero`, not the one it went in with, or the level-up that
- * reaches 4 will still be offered an Early-only pool. LevelUpScreen does this;
- * so does enemyGen, which only ever calls this at an enemy's final level.
- *
- * Can return empty as a MECHANISM, and the screen renders that as the "Level
- * only" payoff — but no hero is allowed to reach it in normal play up to
- * level 10. A spent Training Point must always buy a move offer (2026-08-31
- * designer call); the pools in data/progression.ts are sized to guarantee it
- * and test/moveTiers.test.ts pins the thresholds. Treat a "Level only" card
- * on a real run as a data bug, not as the gate working.
+ * Table pool plus chosen paths' learnableMoveIds, minus unlocked, minus tiers
+ * above `entry.level`. Pass the POST-level-up entry, or the level-up that
+ * reaches 4 is still offered an Early-only pool.
  */
 export function levelUpMovePool(
   table: ProgressionTable,
@@ -366,19 +162,7 @@ export function levelUpMovePool(
   return pool.filter((id) => !entry.unlockedMoveIds.includes(id) && isMoveTierUnlocked(moves[id], entry.level));
 }
 
-/**
- * Spends `levelUpCost(entry.level)` pooled Training Points leveling up a hero
- * (docs/leveling-and-ranks.md): increments level by one. The price RISES with
- * the hero's level — see levelUpCost for why it is a curve and not a flat 1.
- * Does not touch the movepool itself — the
- * caller checks availableEvolution() against the new level first: if an
- * Evolution just became available, no move is rolled this level-up at all
- * (grantLevelUpMove is simply never called); otherwise the caller resolves
- * the random move offer (rolling from levelUpMovePool, and asking the
- * player to accept a replacement or decline if the hero is already at
- * MOVE_CAP) and applies it separately via grantLevelUpMove, since that's a
- * player decision rather than a mechanical consequence of spending the point.
- */
+/** Spends levelUpCost(entry.level) and increments level. The move/Evolution payout is resolved separately by the caller. */
 export function levelUpHero(run: RunState, rosterId: string): RunState {
   const entry = requireEntry(run, rosterId);
   const cost = levelUpCost(entry.level);
@@ -387,15 +171,7 @@ export function levelUpHero(run: RunState, rosterId: string): RunState {
   return replaceEntry(run, rosterId, { ...entry, level: entry.level + 1 }, cost);
 }
 
-/**
- * Applies a level-up's move offer to a roster entry: adds `moveId` outright
- * if there's room under MOVE_CAP, or swaps it in for `replaceMoveId` if the
- * hero is already at the cap and the player accepted the replacement. Free —
- * the point was already spent via levelUpHero; this only resolves what that
- * level-up's move offer turned into (accept, swap, or the caller simply never
- * calls this at all if the player declined, or if the level-up triggered an
- * Evolution instead of a move offer).
- */
+/** Free — the point was spent by levelUpHero. Adds `moveId`, or swaps it in for `replaceMoveId` at the cap. */
 export function grantLevelUpMove(run: RunState, rosterId: string, moveId: string, replaceMoveId?: string): RunState {
   const entry = requireEntry(run, rosterId);
   if (replaceMoveId && !entry.unlockedMoveIds.includes(replaceMoveId)) {
@@ -407,23 +183,7 @@ export function grantLevelUpMove(run: RunState, rosterId: string, moveId: string
   return replaceEntry(run, rosterId, { ...entry, unlockedMoveIds }, 0);
 }
 
-/**
- * Applies a mastery level-up's payout: a flat +MASTERY_STAT_AMOUNT to `stat`,
- * accumulated on the entry's `masteryStatGrants` (state.ts) and permanent for
- * the rest of the run. Free, exactly like grantLevelUpMove — the Training
- * Point was already spent by levelUpHero; this only resolves what that
- * level-up turned into.
- *
- * The ROLL is the caller's, not this function's, matching how the move offer
- * already works (LevelUpScreen rolls the move id and passes it in). That keeps
- * this module pure and makes the grant replayable from a recorded choice; it
- * also means a future deterministic caller can feed it a seeded roll without
- * this module needing an RngState it has no other use for.
- *
- * Rejects a stat outside MASTERY_STAT_POOL rather than trusting the caller —
- * the whole point of the restricted reel is that +10 MP Regen is not a
- * comparable prize, and an unchecked caller would quietly reintroduce it.
- */
+/** Free, like grantLevelUpMove. The roll is the caller's; the reel restriction is enforced here so a caller can't reintroduce +10 MP Regen. */
 export function grantMasteryStat(run: RunState, rosterId: string, stat: StatKey): RunState {
   const entry = requireEntry(run, rosterId);
   if (!isValidMasteryStat(stat)) {
@@ -436,44 +196,24 @@ export function grantMasteryStat(run: RunState, rosterId: string, stat: StatKey)
   return replaceEntry(run, rosterId, nextEntry, 0);
 }
 
-/**
- * The next Evolution node a roster entry is working toward — the first one
- * it has not yet chosen a path from — regardless of whether its trigger
- * level has been reached. Null once every authored node has been resolved
- * (or for a hero with no authored Evolution at all).
- *
- * Distinct from availableEvolution below, which is the *gate*: it answers
- * "may this hero evolve right now". This one answers "where is this hero
- * headed", which is what a UI showing progress toward Evolution needs —
- * LevelUpScreen's rank track draws its denominator from `node.level`.
- */
+/** The next unresolved Evolution node regardless of level ("where is this hero headed"); null once all are resolved. */
 export function pendingEvolution(table: ProgressionTable, entry: RosterEntry): EvolutionNode | null {
   const nodes = table.evolutions[entry.heroId] ?? [];
   return nodes[entry.chosenPathIds.length] ?? null;
 }
 
-/** The Evolution node currently on offer for a roster entry, or null if none is available yet (or it's already been chosen). */
+/** The gate: the pending node only once its level is reached. */
 export function availableEvolution(table: ProgressionTable, entry: RosterEntry): EvolutionNode | null {
   const node = pendingEvolution(table, entry);
   if (!node) return null;
   return entry.level >= node.level ? node : null;
 }
 
-/**
- * A roster entry's current types for display purposes outside combat:
- * innate hero types plus the current type-graft grant, if any (mirrors
- * engine/state.ts effectiveTypes, but works from a RosterEntry directly
- * since there's no Combatant to read from until a fight is actually built).
- * UI screens that show a roster entry's types (previews, roster management,
- * squad select, training) should call this instead of reading
- * `hero.types` directly, or a grafted secondary type silently fails to
- * appear anywhere outside combat.
- */
+/** Innate types plus the current graft — the out-of-combat mirror of engine/state.ts effectiveTypes. UI must read this, not `hero.types`. */
 export function rosterEntryTypes(hero: HeroDefinition, entry: RosterEntry): readonly TypeId[] {
   return entry.evolutionTypeGraft ? [...hero.types, entry.evolutionTypeGraft] : hero.types;
 }
 
-/** The Evolution path(s) a roster entry has already chosen, resolved back to their full data (name/description/grants) — for read-only display (stat blocks) after the choice was made, as opposed to availableEvolution's still-being-offered node. */
 export function chosenEvolutionPaths(table: ProgressionTable, entry: RosterEntry): EvolutionPath[] {
   const allPaths = (table.evolutions[entry.heroId] ?? []).flatMap((node) => node.paths);
   return entry.chosenPathIds
@@ -481,17 +221,7 @@ export function chosenEvolutionPaths(table: ProgressionTable, entry: RosterEntry
     .filter((p): p is EvolutionPath => p !== undefined);
 }
 
-/**
- * Applies a chosen Evolution path: grants permanent stats (validated as
- * multiples of 5/10, CLAUDE.md "Stat modifiers are flat additive integers,
- * multiples of 5 or 10"), unlocks its moves, and grafts/shifts the secondary
- * type slot if the path carries a typeGraft (docs/progression.md
- * "Type-graft paths") — a later graft overwrites an earlier one rather than
- * stacking. Free — spending the points to reach the trigger level already
- * cost the pool; choosing the path itself is not a second charge. Requires
- * the hero lookup solely to validate a type-graft against the hero's innate
- * types, which are never themselves modified.
- */
+/** Free — reaching the trigger level already cost the pool. `heroes` is needed only to validate a type-graft against innate types. */
 export function chooseEvolutionPath(
   run: RunState,
   table: ProgressionTable,
@@ -520,9 +250,7 @@ export function chooseEvolutionPath(
     if (hero.types.includes(path.typeGraft)) {
       throw new ProgressionError(`Type-graft ${path.typeGraft} duplicates ${entry.heroId}'s innate type`);
     }
-    // A later graft path SHIFTS the secondary type slot rather than stacking
-    // a third type (docs/progression.md "Type-graft paths", 2026-08-15): it
-    // simply overwrites whatever was grafted before, if anything.
+    // A later graft SHIFTS the secondary slot; it never stacks a third type.
     evolutionTypeGraft = path.typeGraft;
   }
 

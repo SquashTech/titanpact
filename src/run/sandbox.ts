@@ -1,10 +1,5 @@
-// Sandbox Battle (dev/design tool, not a run-tier mechanic): lets the user
-// hand-assemble two full rosters — level, moves, equipment, evolution path,
-// bonus stats, team relics — and drop straight into the real FightScreen.
-// Replaces one-off hardcoded test-encounter functions (App.tsx
-// createConditionsTestEncounter et al.) with a reusable, data-driven builder.
-// This module only builds throwaway RunState/Squad pairs from a config; it
-// never touches a real run's state.
+// Sandbox Battle (dev/design tool): hand-assembled rosters dropped into the
+// real FightScreen. Builds throwaway RunState/Squad pairs only.
 
 import type { HeroDefinition, StatKey } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
@@ -18,7 +13,7 @@ export interface SandboxHeroConfig {
   heroId: string;
   level: number;
   moveIds: string[];
-  /** Chosen Evolution path id, or null for not-yet-evolved. Applied regardless of `level` — see buildSandboxSide. */
+  /** Applied regardless of `level` — see buildSandboxSide. */
   pathId: string | null;
   equipment: EquipmentLoadout;
   bonusStatGrants: Partial<Record<StatKey, number>>;
@@ -26,15 +21,14 @@ export interface SandboxHeroConfig {
 
 export interface SandboxSideConfig {
   heroes: SandboxHeroConfig[];
-  /** Up to 2 active rosterIds; the rest of `heroes` starts benched. */
+  /** Up to 2 active rosterIds; the rest start benched. */
   activeIds: [string | null, string | null];
-  /** Team-wide relic ids — Side A (player) only; Sandbox Battle has no enemy-relic support. */
+  /** Side A only; no enemy-relic support. */
   relicIds: string[];
 }
 
 let nextRosterSuffix = 1;
 
-/** A rosterId that won't collide with an already-added hero on the same side, even for repeated picks of the same hero. */
 export function freshSandboxRosterId(existing: readonly SandboxHeroConfig[], heroId: string): string {
   if (!existing.some((h) => h.rosterId === heroId)) return heroId;
   return `${heroId}-${nextRosterSuffix++}`;
@@ -56,19 +50,7 @@ export function createEmptySandboxSide(): SandboxSideConfig {
   return { heroes: [], activeIds: [null, null], relicIds: [] };
 }
 
-/**
- * Turns a SandboxSideConfig into a throwaway RunState + Squad, the same
- * inputs buildCombatState.ts already expects — hand-assembled the same way
- * App.tsx's createConditionsTestEncounter builds one, just parameterized by
- * UI-driven config instead of hardcoded per-scenario.
- *
- * Evolution paths are gated in real play by hero level
- * (progression.ts availableEvolution), which Sandbox Battle deliberately
- * ignores — the level a user sets is a display/stat-testing choice, not a
- * gate. To reuse chooseEvolutionPath's validation as-is (rather than forking
- * it), the entry's level is bumped to EVOLUTION_LEVEL just long enough to
- * pass the gate, then restored to whatever the user actually chose.
- */
+/** The level gate on Evolution is ignored here: level is bumped to EVOLUTION_LEVEL just long enough to reuse chooseEvolutionPath's validation, then restored. */
 export function buildSandboxSide(config: SandboxSideConfig, heroes: HeroLookup, table: ProgressionTable): { run: RunState; squad: Squad } {
   let run = createRunState(0, 0);
 
@@ -84,7 +66,7 @@ export function buildSandboxSide(config: SandboxSideConfig, heroes: HeroLookup, 
       try {
         run = chooseEvolutionPath(run, table, heroes, hc.rosterId, hc.pathId);
       } catch {
-        // Invalid/unavailable path for this hero — leave it un-evolved rather than throw, so a bad preset can't crash the builder.
+        // Invalid path for this hero — leave it un-evolved so a bad preset can't crash the builder.
       }
       run = { ...run, roster: run.roster.map((r) => (r.rosterId === hc.rosterId ? { ...r, level: hc.level } : r)) };
     }
@@ -94,7 +76,7 @@ export function buildSandboxSide(config: SandboxSideConfig, heroes: HeroLookup, 
   return { run, squad: { activeIds: config.activeIds, benchIds } };
 }
 
-// --- Preset save/load (localStorage, plain JSON — no engine types involved) ---
+// --- Preset save/load (localStorage, plain JSON) ---
 
 export interface SandboxPreset {
   name: string;

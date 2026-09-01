@@ -26,25 +26,12 @@ interface Props {
   hero: HeroDefinition;
   entry: RosterEntry;
   equipmentLookup: Record<string, EquipmentDefinition>;
-  /**
-   * The owning team's relics (RunState.relics), so this sheet shows the same
-   * numbers the fight will (relics are team-wide — src/run/relics.ts — and
-   * every combatant on the side gets them at build time). Omit for a hero
-   * that is NOT on this team: the scouted enemy squad (SquadSelectScreen)
-   * and the pre-run draft, where the player owns no relics yet.
-   */
+  /** The owning team's relics (RunState.relics). Omit for a hero not on this team — a scouted enemy, or the pre-run draft. */
   relicIds?: readonly string[];
-  /**
-   * Turns the sheet from a readout into a decision: a confirm button under the
-   * loadout, plus a Cancel. The Guild Hall's recruit is the first caller —
-   * buying a hero used to happen on the tap that opened nothing, so the player
-   * spent 120 gold before seeing a single stat. Omit for the read-only
-   * previews (squad select, the scouted enemy squad, roster management), which
-   * is still what most callers want.
-   */
+  /** Turns the sheet into a decision: a confirm button under the loadout, plus Cancel. Omit for read-only previews. */
   action?: {
     label: string;
-    /** Rendered above the button — why the button is inert, or what confirming will additionally cost (a full roster's termination). */
+    /** Rendered above the button — why it is inert, or what confirming will additionally cost. */
     note?: string;
     disabled?: boolean;
     onConfirm: () => void;
@@ -53,13 +40,8 @@ interface Props {
 }
 
 /**
- * Out-of-combat stat/loadout preview, opened by an info button before a
- * fight starts (SquadSelectScreen — both the player's own roster and the
- * scouted enemy squad). Unlike combat's HeroDetailOverlay, there's no live
- * Combatant to read yet (no fight exists), so stats come from entryStats.ts
- * — literally the same function buildCombatState.ts calls to produce a
- * Combatant's baselineStatModifiers, so this sheet can't drift out of sync
- * with what the fight actually uses (it did: relic grants were missing here).
+ * Out-of-combat stat/loadout sheet. Stats come from entryStats.ts — the same function
+ * buildCombatState.ts uses for a Combatant's baseline — so this sheet cannot drift from the fight.
  */
 export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = [], action, onClose }: Props) {
   const heroClass = chosenClass(classes, entry);
@@ -67,24 +49,15 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
   const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);
   const passiveCounts = entryPassiveCounts(entry, equipmentLookup, teamPassiveGrants);
   const grants = entryStatModifiers(entry, equipmentLookup, passives, passiveCounts, teamStatModifiers);
-  /** The relic-sourced slice of `grants`, called out under the bars so a team-wide buff is legible as a relic's doing rather than looking like the hero's own numbers. */
   const relicGrants = Object.entries(relicStatContribution(teamStatModifiers, teamPassiveGrants, passives)) as [StatKey, number][];
   const evolved = chosenEvolutionPaths(progressionTable, entry);
-  /** What a heal move on this sheet actually restores in this hero's hands (healPipeline.ts). Built from `grants` rather than from healCasterForEntry, since this component has already done that work — same inputs either way. */
-  const healCaster = { wisdom: hero.baseStats.wisdom + (grants.wisdom ?? 0), types: rosterEntryTypes(hero, entry) };
-  /** Long-press-triggered move/item/class detail popup — shared by the moves row, the equipment grid, and the Class badge below (mirrors LevelUpScreen's movePopup, "hold to inspect" standard). */
+  const types = rosterEntryTypes(hero, entry);
+  // Not healCasterForEntry: that reads the global equipment table, and this sheet must honour `equipmentLookup`.
+  const healCaster = { wisdom: hero.baseStats.wisdom + (grants.wisdom ?? 0), types };
   const [popup, setPopup] = useState<{ kind: 'move' | 'equipment' | 'class'; id: string } | null>(null);
 
-  /**
-   * Opens the popup and arms swallowGhostClick (MoveTile.tsx) — releasing
-   * the hold that got us here fires a browser-synthesized "ghost" click
-   * (the popup now covers the tile, so pointerup lands on it instead of the
-   * original element) that would otherwise reach whichever ancestor's
-   * onClick and get misread as a deliberate dismiss — including, when this
-   * overlay is opened from inside another modal like Manage Roster, an
-   * ancestor further out than this component even knows about. See that
-   * function's doc comment for the full mechanism.
-   */
+  // swallowGhostClick: releasing the hold fires a synthetic click on whatever now covers the tile,
+  // which would reach an ancestor's onClick (possibly outside this component) and read as a dismiss.
   function openPopup(next: { kind: 'move' | 'equipment' | 'class'; id: string }) {
     swallowGhostClick();
     setPopup(next);
@@ -92,14 +65,8 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
 
   const classLongPress = useLongPress(heroClass ? () => openPopup({ kind: 'class', id: heroClass.id }) : undefined);
 
-  /**
-   * Stops propagation here (not just on the panel) so a click anywhere in
-   * this overlay — backdrop or panel background alike — closes only THIS
-   * overlay and never bubbles into whatever screen rendered it (e.g.
-   * RosterManagementScreen's own backdrop, which would otherwise also close
-   * on the same click). A deliberate click elsewhere in the panel while the
-   * popup is open dismisses just the popup, not the whole hero sheet.
-   */
+  // Stops propagation on the backdrop too, so a click here never also closes the screen that
+  // rendered this overlay (e.g. Manage Roster's own backdrop).
   function closeAndStop(e: { stopPropagation: () => void }) {
     e.stopPropagation();
     if (popup) {
@@ -114,10 +81,6 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
       <button className="detail-close-button" onClick={onClose} aria-label="Close">
         ✕
       </button>
-      {/* Tapping the panel background itself closes it too (matches the
-          "Tap elsewhere to close" hint below) — only a move tile or an
-          equipped item's box stops propagation, so inspecting one doesn't
-          also dismiss the overlay. */}
       <div className="detail-panel" onClick={closeAndStop}>
         <HeroPortrait heroId={hero.id} className="detail-portrait" />
         <div className="detail-header">
@@ -125,7 +88,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
             {hero.name} — Lv {entry.level}
           </div>
           <div className="combatant-types">
-            {rosterEntryTypes(hero, entry).map((t) => (
+            {types.map((t) => (
               <TypeBadge key={t} type={t} />
             ))}
           </div>
@@ -147,10 +110,8 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
           )}
         </div>
 
-        {/* Reads rosterEntryTypes, not hero.types, so an Evolution type-graft
-            moves the matchups the moment it lands. */}
         <div className="detail-section-title"><SectionGlyph name="matchups" /> Matchups</div>
-        <TypeMatchups types={rosterEntryTypes(hero, entry)} />
+        <TypeMatchups types={types} />
 
         <div className="detail-section-title"><SectionGlyph name="stats" /> Stats</div>
         <StatBars baseStats={hero.baseStats} deltas={grants} />
@@ -185,9 +146,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
         <div className="detail-section-title"><SectionGlyph name="equipment" /> Equipment</div>
         <EquipmentSlotGrid loadout={entry.equipment} equipmentLookup={equipmentLookup} onInspect={(id) => openPopup({ kind: 'equipment', id })} />
 
-        {/* stopPropagation on the whole block: closeAndStop above treats a tap
-            anywhere in the panel as "dismiss", which would fire before the
-            confirm ever ran. */}
+        {/* stopPropagation: closeAndStop treats any tap in the panel as dismiss, which would fire before the confirm. */}
         {action && (
           <div className="detail-action" onClick={(e) => e.stopPropagation()}>
             {action.note && <div className="detail-action-note">{action.note}</div>}
@@ -205,12 +164,10 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
         </div>
       </div>
 
-      {/* Long-press-triggered move/item/class detail popup (see `popup` state above) — reuses .log-overlay/.log-panel like LevelUpScreen's move popup, including "tap anywhere to close" (no stopPropagation on the panel). */}
       {popup && (
         <div className="log-overlay" onClick={() => setPopup(null)}>
           <div className="log-panel move-popup-panel">
             {popup.kind === 'move' ? (
-              /* Same move dossier as everywhere else (MoveDetailOverlay.tsx), minus the forecast — a preview screen has no fight to forecast against. */
               moves[popup.id] ? <MoveDetailCard move={moves[popup.id]} caster={healCaster} /> : null
             ) : popup.kind === 'equipment' ? (
               <EquipmentInfoPanel item={equipmentLookup[popup.id] ?? null} />

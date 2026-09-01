@@ -1,32 +1,4 @@
-// Shadow's authored slate (src/data/moves.ts, 2026-08-30) and the ONE engine
-// field it is the first content to need:
-//
-//   - `conditionalPower.requiresTargetHpBelow` (Rend, Eclipse) — the fourth
-//     sibling on the same BasePower-stage multiplier, and the first damage
-//     condition in the game that reads a NUMBER off the board rather than the
-//     presence of a status (Immolate/Cold Snap), the caster's own status (Seed
-//     Shot), or a field effect (Smite).
-//
-// Four things about it are pinned here because none of them is enforced by a
-// type and all four would be invisible if they broke:
-//
-//   1. It scales the formula's BasePower INPUT, never `multiplierTerm`. The
-//      two-pipeline separation is LOCKED (CLAUDE.md); the equivalent assertion
-//      exists in fireMoves/natureMoves/lightMoves and this is Shadow's.
-//   2. It is read BEFORE the hit's own damage lands, so an execute can never
-//      double off HP it is itself about to remove.
-//   3. It is read PER TARGET, like the target-status form and unlike the
-//      user-side and field forms — a spread execute could double against one
-//      foe and not the other.
-//   4. `consumesStatus` is inert on it, the same way it is on the field form:
-//      there is no status and no holder to strip (resolveRound reads
-//      `requiresTargetStatus ?? requiresUserStatus`, which this form leaves
-//      undefined).
-//
-// Plus the type's own shape: Ambush is the only payoff for the game's only two
-// Stealth grants, and it SPENDS the cover it cashed in — the first content to
-// use `consumesStatus` on the user-side half of conditionalPower, which Nature
-// deliberately declined.
+// Shadow slate: conditionalPower.requiresTargetHpBelow (the first numeric damage condition), Stealth into Ambush with consumesStatus. Hand-off findings: docs/authoring-moves.md §10.
 
 import { firstStatusApplication, statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
@@ -60,21 +32,7 @@ function shadowFixture(seed: number) {
   );
 }
 
-/**
- * The two fixture problems every authored slate hits (authoring-moves.md §8),
- * solved once — and one extra that is specific to this type.
- *
- * - **Mana.** Shadow's curve tops out at 80 (Eclipse), above every Shadow
- *   hero's STARTING pool, which is the intended shape (docs/mana.md — pools
- *   grow all run) rather than something these tests should be gated on.
- * - **Lethality.** A defender that faints to the hit never reaches the riders.
- *   getMaxHp reads baseStats + statModifiers, so the hp modifier has to move
- *   with currentHp or the two disagree.
- * - **The execute reads a FRACTION**, so a fixture that inflates max HP has to
- *   set currentHp deliberately afterwards — see `wounded` below. Every
- *   combatant here starts at FULL, which is what makes the "not below the
- *   line" control case honest.
- */
+/** Deep mana and HP so no test is gated on the mana curve or turned into a KO test; the hp modifier moves with currentHp because getMaxHp reads both. Everyone starts at FULL, so the execute's control case is honest — use `wounded` to drop one. */
 function withDeepPools(state: CombatState): CombatState {
   const combatants = Object.fromEntries(
     Object.entries(state.combatants).map(([id, c]) => [
@@ -95,7 +53,6 @@ function wounded(state: CombatState, combatantId: string, fraction: number): Com
   } as CombatState;
 }
 
-/** Grants a status the way a resolved statusApplication would, without spending a round on the setter. */
 function withStatus(state: CombatState, combatantId: string, statusId: string, instance: object): CombatState {
   const c = state.combatants[combatantId];
   return {
@@ -107,7 +64,7 @@ function withStatus(state: CombatState, combatantId: string, statusId: string, i
   } as CombatState;
 }
 
-// --- conditionalPower.requiresTargetHpBelow: a condition that is a NUMBER ----
+// --- conditionalPower.requiresTargetHpBelow ---
 
 test('shadow: Rend doubles off the target HP FRACTION, not off any status', () => {
   const healthy = withDeepPools(shadowFixture(11));
@@ -124,8 +81,7 @@ test('shadow: Rend doubles off the target HP FRACTION, not off any status', () =
 });
 
 test('shadow: the execute line is strict — a target sitting exactly at half is not under it', () => {
-  // Deliberate, and pinned because "below 50%" has two readings and the engine
-  // only implements one (damagePipeline.ts, `<` not `<=`).
+  // damagePipeline.ts uses `<`, not `<=`.
   const state = withDeepPools(shadowFixture(12));
   const maxHp = getMaxHp(heroes[state.combatants.b1.heroId], state.combatants.b1);
 
@@ -140,20 +96,13 @@ test('shadow: the execute line is strict — a target sitting exactly at half is
 });
 
 test('shadow: without a max HP to compare against, the execute reports its unbuffed power', () => {
-  // The same "omit the context and the other forms behave exactly as before"
-  // discipline fieldEffectCtx has (content.ts). A caller with no hero
-  // definition in scope gets 1 rather than a crash or a wrong double.
   const state = withDeepPools(shadowFixture(13));
   const hurt = wounded(state, 'b1', 0.1);
   assert.strictEqual(resolveConditionalPowerMultiplier(moves.rend, hurt.combatants.b1, hurt.combatants.a1), 1);
 });
 
 test('shadow: the execute multiplier lands on BASE POWER, never on multiplierTerm', () => {
-  // The LOCKED two-pipeline separation (CLAUDE.md). The same assertion Fire,
-  // Nature and Light each carry for their own conditionalPower sibling: a
-  // BasePower-stage term must not leak into the damage pipeline's multiplier,
-  // because the two compose differently and the difference is invisible until
-  // something else stacks with it.
+  // Locked: two-pipeline separation (CLAUDE.md).
   const doubled = calcDamage(moves.rend, 1, ['Shadow'], ['Iron'], typeChart, 1, false, [], undefined, undefined, 0, 2);
   const plain = calcDamage(moves.rend, 1, ['Shadow'], ['Iron'], typeChart, 1, false, [], undefined, undefined, 0, 1);
   assert.strictEqual(doubled.multiplierTerm, plain.multiplierTerm);
@@ -162,11 +111,7 @@ test('shadow: the execute multiplier lands on BASE POWER, never on multiplierTer
 });
 
 test('shadow: Eclipse cannot double off HP it is itself about to remove', () => {
-  // The whole reason resolveRound reads the multiplier BEFORE applyHpDelta. A
-  // target above the line takes an ordinary hit even when that hit is what
-  // drops it below half — the execute is paid for by whatever softened the
-  // target on an EARLIER action, which is the doubles-partner pressure the
-  // move exists to reward.
+  // resolveRound reads the multiplier BEFORE applyHpDelta.
   const state = wounded(withDeepPools(shadowFixture(14)), 'b1', 0.51);
   const before = state.combatants.b1.currentHp;
   const { state: after, events } = resolveRound(
@@ -180,9 +125,6 @@ test('shadow: Eclipse cannot double off HP it is itself about to remove', () => 
 });
 
 test('shadow: the execute is read PER TARGET — a spread cast doubles against the wounded foe only', () => {
-  // The behavioural difference from the user-side and field forms, which ask a
-  // single question for the whole cast (content.ts). No content is spread AND
-  // an execute today; this pins the shape so a later slate can author one.
   const state = wounded(withDeepPools(shadowFixture(15)), 'b1', 0.2);
   const spread = { ...moves.eclipse, id: 'testSpreadEclipse', target: 'bothEnemies' as const };
   const { events } = resolveRound(
@@ -197,9 +139,6 @@ test('shadow: the execute is read PER TARGET — a spread cast doubles against t
 });
 
 test('shadow: consumesStatus is inert on the HP form — there is nothing to strip', () => {
-  // The same guard the field form relies on: resolveRound resolves the holder
-  // as `requiresTargetStatus ?? requiresUserStatus`, which this form leaves
-  // undefined, so a greedy authoring is a no-op rather than a third meaning.
   const greedy = {
     ...moves.rend,
     id: 'testGreedyRend',
@@ -215,15 +154,9 @@ test('shadow: consumesStatus is inert on the HP form — there is nothing to str
   assert.ok(!events.some((e) => e.type === 'StatusRemoved' && (e as { reason?: string }).reason === 'consumed'));
 });
 
-// --- Stealth into Ambush ---------------------------------------------------
+// --- Stealth into Ambush ---
 
 test('shadow: Ambush doubles off the USER Stealth and spends it', () => {
-  // The first content to author consumesStatus on the user-side half of
-  // conditionalPower (Nature's Seed Shot and Branch Slam deliberately decline
-  // it). Stealth only ever runs one round, so what the consume actually costs
-  // is the remainder of that round's protection — the strike is what breaks
-  // cover, which is the past tense in the design table's "if the user HAD
-  // Stealth".
   const hidden = withStatus(withDeepPools(shadowFixture(17)), 'a1', 'Stealth', { duration: 1 });
   assert.strictEqual(
     resolveConditionalPowerMultiplier(moves.ambush, hidden.combatants.b1, hidden.combatants.a1),
@@ -254,19 +187,7 @@ test('shadow: an Ambush thrown without Stealth costs the same mana and lands at 
 });
 
 test('shadow: every Stealth grant in the game is duration 1 and self-targeted', () => {
-  // The design table gives Stealth no number for any of its grants
-  // (authoring-moves.md §10, the Light lesson). 1 is the value this content has
-  // always carried, confirmed by the designer 2026-08-30 — "Stealth is only
-  // ever 1 turn" — and pinned here so a slate cannot quietly invent a second
-  // length. Stealth ticks at the START of a round (statuses.ts), so 1 is the
-  // rest of the cast round plus the whole of the next.
-  //
-  // The type assertion this test used to carry is GONE, and deliberately:
-  // Shadow held Stealth exclusively until the authored Arcane slate
-  // (2026-08-30) gave Magic Cloak the same rider, so a hero can now be hidden
-  // by a type with no Ambush to cash it in. The pinned LIST is what stays —
-  // a new grant has to be looked at and consciously added, exactly like
-  // stoneMoves' unreachable-move pin.
+  // Pinned list: a new Stealth grant (any type) must be added here consciously.
   const grants = Object.values(moves).filter((m) => firstStatusApplication(m)?.statusId === 'Stealth');
   assert.deepStrictEqual(grants.map((m) => m.id).sort(), ['magicCloak', 'shadowForm', 'vanish']);
   for (const move of grants) {
@@ -276,10 +197,6 @@ test('shadow: every Stealth grant in the game is duration 1 and self-targeted', 
 });
 
 test('shadow: every hero that can be offered Ambush can also reach a Stealth grant', () => {
-  // frostMoves' "the gate has a key in the same pool" assertion, in the shape
-  // this type needs it. Nothing in the engine pairs them: an Ambush in a pool
-  // with no route to Stealth is a permanently half-power move, which is the
-  // trap pick the north star forbids (CLAUDE.md).
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   for (const [heroId, hero] of Object.entries(heroes)) {
     const reachable = [...hero.moveIds, ...(progressionTable.moveTiers[heroId] ?? [])];
@@ -291,7 +208,7 @@ test('shadow: every hero that can be offered Ambush can also reach a Stealth gra
   }
 });
 
-// --- The slate's own shape -------------------------------------------------
+// --- The slate's own shape ---
 
 test('shadow: the slate is fifteen moves, and every status and condition it names exists', () => {
   const shadow = Object.values(moves).filter((m) => m.type === 'Shadow');
@@ -319,16 +236,8 @@ test('shadow: the slate is fifteen moves, and every status and condition it name
 });
 
 test('shadow: no move in the GAME authors two sides of conditionalPower', () => {
-  // Widened past one type on purpose: `requiresTargetHpBelow` is a fourth way
-  // to make the same silent dud, and Spirit's `requiresUserHpBelow` a fifth
-  // (2026-08-30). There is still no isValidMoveDefinition
-  // (authoring-moves.md §4). The HP forms are checked first and the rest
-  // oldest-first in damagePipeline.ts, so a move authoring two would silently
-  // answer the wrong question rather than fail.
-  //
-  // This assertion is the reason the fifth sibling cost nothing to add: it
-  // failed the moment Spite was authored, before any Spirit test existed.
-  // Keep it exhaustive over the union as new forms land.
+  // No isValidMoveDefinition exists; damagePipeline.ts checks the forms in a fixed order, so a
+  // move authoring two would silently answer the wrong question. Keep exhaustive as new forms land.
   for (const move of Object.values(moves)) {
     if (!move.conditionalPower) continue;
     const {
@@ -337,8 +246,6 @@ test('shadow: no move in the GAME authors two sides of conditionalPower', () => 
       requiresFieldEffect,
       requiresTargetHpBelow,
       requiresUserHpBelow,
-      // The sixth sibling (Beast's Pack Hunt), and the first that asks
-      // about a combatant on the CASTER's own side of the field.
       requiresPartnerType,
     } = move.conditionalPower;
     const authored = [
@@ -354,11 +261,7 @@ test('shadow: no move in the GAME authors two sides of conditionalPower', () => 
 });
 
 test('shadow: every Poison the slate applies is chanced, and every one runs the standard 3-round timer', () => {
-  // The type's whole statement about how it differs from Nature: Nature plants
-  // Poison on purpose (four guaranteed appliers) and detonates it; Shadow
-  // accumulates it as a side effect of attacking and never has a guaranteed
-  // applier at all. Pinned because a single un-chanced Poison would quietly
-  // turn this into a second Nature.
+  // Shadow accumulates Poison as a side effect; a guaranteed applier would make it a second Nature.
   const poisoners = Object.values(moves).filter((m) => m.type === 'Shadow' && firstStatusApplication(m)?.statusId === 'Poison');
   assert.deepStrictEqual(poisoners.map((m) => m.id).sort(), ['umbraBolt', 'umbralBeam', 'umbralWave']);
   for (const move of poisoners) {
@@ -373,9 +276,6 @@ test('shadow: Dusk Blade is the only guaranteed Bleed, and Bleed is the type fla
   assert.strictEqual(firstStatusApplication(moves.duskBlade)!.chance, undefined);
   assert.strictEqual(firstStatusApplication(moves.backstab)!.chance, 0.3);
   assert.strictEqual(firstStatusApplication(moves.shadowSlice)!.chance, 0.3);
-  // Neither decays nor clears on a switch, which is what makes three carriers
-  // enough (statuses.ts) — the same rider on a Burn-shaped status would need
-  // twice as many.
   assert.strictEqual(statuses.Bleed.decay, 'none');
   assert.strictEqual(statuses.Bleed.clearsOnSwitch, false);
 });
@@ -387,7 +287,7 @@ test('shadow: Shadowstrike is the slate only bracket play — everything else re
   }
 });
 
-// --- The two sweeps every slate ends with (authoring-moves.md §9, §10) ------
+// --- Distribution ---
 
 test('shadow: every move id a hero or level-up pool points at actually exists', () => {
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
@@ -401,11 +301,6 @@ test('shadow: every move id a hero or level-up pool points at actually exists', 
 });
 
 test('shadow: no Shadow hero or enemy starts with a move it cannot pay for, or has a starter in its own pool', () => {
-  // The one affordability check that IS a finding (authoring-moves.md §8): a
-  // starting kit is the one thing a player cannot fix by drafting, and an
-  // enemy's pool is fixed for the whole game — no relics, no equipment, no
-  // Evolution. The Late-tier ceiling being above a STARTING pool is the
-  // intended shape and is deliberately not asserted here.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   const { enemies } = require('../src/data/enemies') as typeof import('../src/data/enemies');
   for (const [heroId, hero] of Object.entries({ ...heroes, ...enemies })) {
@@ -423,12 +318,7 @@ test('shadow: no Shadow hero or enemy starts with a move it cannot pay for, or h
 });
 
 test('shadow: every authored Shadow move has a holder', () => {
-  // The reachability half of the dangling-id check (authoring-moves.md §10) —
-  // the opposite failure, and the one with no type to catch it. Shadow comes
-  // out at zero: four mono-Shadow heroes plus one Fire/Shadow, split physical
-  // and magical, are enough to place fifteen. If a later slate legitimately
-  // orphans one, NAME it here rather than deleting the assertion — see
-  // stoneMoves' pinned list for that shape.
+  // A legitimate orphan gets named here, not the assertion deleted.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   const { enemies } = require('../src/data/enemies') as typeof import('../src/data/enemies');
   const reachable = new Set<string>();

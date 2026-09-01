@@ -26,7 +26,7 @@ function seedRoster(heroIds: string[], gold = 0) {
   return run;
 }
 
-// --- Guild Hall (raise) --------------------------------------------------
+// --- Guild Hall (raise) ---
 
 test('recruitment: Guild Hall recruit spends gold and adds a fresh 0-progress entry', () => {
   const run = seedRoster(['cinderKnight'], 100);
@@ -55,7 +55,7 @@ test('recruitment: Guild Hall recruit still enforces the roster cap', () => {
   assert.throws(() => recruitFromGuildHall(run, offer, 'extra-ironWarden'));
 });
 
-// --- Recruit Contracts (recruit) -----------------------------------------
+// --- Recruit Contracts (recruit) ---
 
 test('recruitment: a contract offer carries over Evolution state but not equipment or rosterId', () => {
   const run = seedRoster(['ironWarden']);
@@ -118,7 +118,7 @@ test('recruitment: buyContract spends gold and grants a Recruit Contract; insuff
   assert.strictEqual(next.recruitContracts, run.recruitContracts + 1);
 });
 
-// --- Roster-full replacement (RosterReplaceScreen) ------------------------
+// --- Roster-full replacement (RosterReplaceScreen) ---
 
 test('recruitment: recruitFromGuildHallReplacing swaps the terminated hero for a fresh recruit, inheriting its equipment', () => {
   const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk'];
@@ -188,7 +188,7 @@ test('recruitment: freshRosterId returns the heroId itself when unclaimed, else 
   assert.strictEqual(freshRosterId(run, 'cinderKnight'), 'cinderKnight-2');
 });
 
-// --- Non-recruitable enemy content ----------------------------------------
+// --- Non-recruitable enemy content ---
 
 test('recruitment: isRecruitable accepts a heroId from the recruitable pool and rejects one that is not in it', () => {
   assert.strictEqual(isRecruitable('cinderKnight', heroes), true);

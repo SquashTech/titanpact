@@ -30,7 +30,6 @@ function pickRandom<T>(pool: readonly T[], count: number): T[] {
   return picked;
 }
 
-/** "+10 Attack, +10 Defense" — a Class's whole mechanical effect, shown alongside its flavor description on the offer card. */
 function fmtStatGrants(grants: Partial<Record<StatKey, number>> | undefined): [StatKey, number][] {
   return Object.entries(grants ?? {}).filter(([, amount]) => !!amount) as [StatKey, number][];
 }
@@ -41,7 +40,6 @@ interface ClassChoiceCardProps {
   onPick: () => void;
 }
 
-/** One Class offer on the Mentor's Hall screen — tap selects it, same select-then-confirm two-step as the Relic Shrine's cards (NodeRewardScreen). */
 function ClassChoiceCard({ cls, picked, onPick }: ClassChoiceCardProps) {
   return (
     <button className={`relic-card class-shrine-card${picked ? ' picked' : ''}`} onClick={onPick}>
@@ -70,14 +68,6 @@ interface ClassHeroCardProps {
   onPreview: () => void;
 }
 
-/**
- * One candidate on the "who studies it" grid — the shared HeroPickCard. A tap
- * teaches the Class immediately; holding opens the full HeroPreviewOverlay
- * sheet first — stats, moves and gear, not just the name/level/types the card
- * shows — so committing a permanent, one-per-run Class to a hero isn't a
- * guess. The "i" button is the discoverable, no-hold alternative to the same
- * overlay.
- */
 function ClassHeroCard({ hero, entry, onAssign, onPreview }: ClassHeroCardProps) {
   return (
     <HeroPickCard
@@ -93,21 +83,8 @@ function ClassHeroCard({ hero, entry, onAssign, onPreview }: ClassHeroCardProps)
 }
 
 /**
- * `classReward` node resolution: pick 1 of 3 Classes (src/data/classes.ts —
- * PassiveDefinition entries whose only content is a flat two-stat grant),
- * then pick which roster hero learns it (src/run/classes.ts grantClass,
- * which REPLACES rather than stacks — a hero can only ever hold one Class
- * per run). Kept as one component with three internal phases rather than a
- * second App.tsx-routed screen: unlike equipmentReward (which hands off to
- * the general-purpose ForceEquipScreen, reused by several other flows),
- * nothing else in the app needs a "pick a Class, then a hero" screen, so
- * it isn't worth promoting to its own routed step. Phase 1 mirrors
- * NodeRewardScreen's relicReward (tap-to-select, then confirm); phase 2
- * mirrors LevelUpScreen's/ForceEquipScreen's hero grid (tap-to-act, hold-to-
- * preview); phase 3 (2026-08-22 overhaul) is a dedicated reveal — same "this
- * is a big deal" logic as EvolutionScreen — that replaces the grid entirely
- * once a pick lands, so teaching a Class reads as a moment rather than a
- * list item quietly changing state.
+ * `classReward` node: pick 1 of 3 Classes, then the hero who learns it (grantClass replaces rather
+ * than stacks). Three phases in one component — select-then-confirm, tap-to-assign, then a reveal.
  */
 export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
   const [classChoices] = useState(() => pickRandom(Object.values(classes), 3));
@@ -117,25 +94,12 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
 
   const confirmedClass = confirmedClassId ? classes[confirmedClassId] : null;
-  // Includes the just-assigned hero even after their classId stops being
-  // null (the grant just applied) — otherwise the card they were tapped on
-  // would vanish out from under the "Learned" label the instant it's shown.
+  // Keeps the just-assigned hero (whose classId is no longer null) so their card doesn't vanish
+  // out from under the "Learned" label.
   const eligibleRoster = run.roster.filter((entry) => entry.classId === null || entry.rosterId === assignedTo);
   const assignedEntry = assignedTo ? run.roster.find((r) => r.rosterId === assignedTo) ?? null : null;
   const assignedHero = assignedEntry ? heroes[assignedEntry.heroId] : null;
 
-  /**
-   * Phase 2's commit: the Class actually lands on a hero and the grid gives
-   * way to the learn-reveal.
-   *
-   * The reveal has had its flash and its portrait pop since the 2026-08-22
-   * overhaul and has been silent under both — the screen's only sound was
-   * `ui.commit` one press earlier, on confirming the *discipline*, so the
-   * louder of the two moments was the one that only decided what would be
-   * taught. `class.learn` is timed to the flash (sounds.ts), and is a struck
-   * chord where `ui.commit` is an arpeggio: a discipline is handed over
-   * whole, not assembled in front of the player.
-   */
   function handleAssign(rosterId: string) {
     if (!confirmedClassId) return;
     playSfx('class.learn');
@@ -149,29 +113,12 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
     <div className="node-screen class-node-screen" style={{ '--node-rgb': NODE_TINT_TEAL } as CSSProperties}>
       <NodeSky />
 
-      {/* Was a full-width "👥 Check Your Roster" secondary button sitting
-          under the discipline list, which only existed on this screen and
-          only during phase 1. Now the same corner glyph every other pick
-          screen carries, present through all three phases — see
-          RosterPeek.tsx. */}
       <RosterPeek run={run} />
 
-      {/* The Mentor speaks from the stage rather than from inside a bordered
-          plaque — `.class-shrine-banner` was a box (inside `.reward-panel`,
-          a second box) around the one part of this screen you cannot act on.
-          The portrait, the ring and the teal all survive it; see
-          docs/visual-language.md's ninth pass. */}
       {!assignedTo && (
         <NodeHeader
           compact
-          /* Only while the Mentor is at full size. The ring is 116px and the
-             figure drops to 48px the moment a discipline is confirmed, so on
-             the student-picking screen the dashed circle had nothing left to
-             frame and its lower arc cut straight through the eyebrow and the
-             title — a stray ellipse drawn over the line of text under it,
-             which is the exact failure NodeHeader's own `ring` note says to
-             avoid around a bare title (2026-08-29, per user report of a
-             visual bug at the top of the second screen). */
+          /* Ring only while the Mentor is full-size; at 48px its lower arc cut through the title. */
           ring={!confirmedClass}
           art={
             <img
@@ -183,27 +130,14 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
           }
           eyebrow={confirmedClass ? 'Choose a Student' : 'The Mentor Awaits'}
           title={confirmedClass ? confirmedClass.name : "Mentor's Hall"}
-          /* No glyph on either phase. The Mentor is already standing directly
-             above the title at 96px, so a second small class sprite wedged in
-             front of the words added nothing but a mark the eye tries to read
-             as part of the heading. */
           readout={
             confirmedClass
               ? eligibleRoster.length === 0
                 ? 'Every hero has already learned a Class — this teaching goes to waste.'
-                : /* Not "Choose who will study X" any more: the eyebrow says
-                     Choose a Student, the title says X, and the chips below it
-                     say what X does — a sentence repeating both was the third
-                     printing of the same name on one header. */
-                  'Hold a hero to review its sheet before committing.'
+                : 'Hold a hero to review its sheet before committing.'
               : "Tap a discipline to select it, then confirm — you'll choose who studies it next."
           }
         >
-          {/* The discipline the player just committed to, carried through the
-              student pick. The title says its name, but the name alone is not
-              what the choice was made on — the grants are — and by this screen
-              the card that showed them is gone. Same slot, and the same chips,
-              the forced-equip gate uses for the item it is placing. */}
           {confirmedClass && (
             <div className="node-item-effects">
               <div className="detail-modifier-list">
@@ -218,12 +152,8 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
         </NodeHeader>
       )}
 
-      {/* Phase 2's grid is a direct child of the screen, not a `.stage-centered`
-          block inside `.screen-scroll` — that is what puts the figures at the
-          same height here as on Level Up, Equipment and the stat shrines
-          (2026-08-28 pass). Phases 1 and 3 keep the scroll region: a list of
-          three disciplines and the learn-reveal are both content to read, not
-          a roster to compare. */}
+      {/* Phase 2's grid is a direct child of the screen (not inside `.screen-scroll`) so its figures
+          sit at the same height as on Level Up, Equipment and the stat shrines. */}
       {!confirmedClass ? (
         <div className="screen-scroll">
           <div className="stage-centered">
@@ -286,10 +216,6 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
         </div>
       )}
 
-      {/* One CTA at the bottom, whichever the screen is waiting for — the
-          Confirm used to sit inside the scroll area with a second, disabled
-          gold Continue directly beneath it, two identical-looking primaries
-          of which one was inert. */}
       {!confirmedClass ? (
         <button
           className="resolve-button class-shrine-confirm-button"

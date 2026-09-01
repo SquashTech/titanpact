@@ -1,90 +1,105 @@
-import aegisArt from '../../../art/heroes/aegis.png';
-import brimstoneArt from '../../../art/heroes/brimstone.png';
 import cinderKnightArt from '../../../art/heroes/cinder.png';
-import coilArt from '../../../art/heroes/coil.png';
-import cragArt from '../../../art/heroes/starters/Crag.png';
 import crimsonArt from '../../../art/heroes/starters/crimson.png';
-import cubeArt from '../../../art/heroes/cube.png';
-import fangArt from '../../../art/heroes/starters/fang.png';
-import flurryArt from '../../../art/heroes/flurry.png';
-import gallantArt from '../../../art/heroes/gallant.png';
-import goblinChiefArt from '../../../art/enemies/goblinchief.png';
-import goblinGruntArt from '../../../art/enemies/goblingrunt.png';
-import goblinLordArt from '../../../art/enemies/goblinlord.png';
-import goblinSkulkerArt from '../../../art/enemies/goblinskulker.png';
-import goblinWarriorArt from '../../../art/enemies/goblinwarrior.png';
-import hollowbarkArt from '../../../art/heroes/Hollowbark.png';
-import ironWardenArt from '../../../art/heroes/ironwarden.png';
-import luciusArt from '../../../art/heroes/lucius.png';
-import marrowArt from '../../../art/heroes/marrow.png';
-import mindweaverArt from '../../../art/heroes/starters/cortex.png';
-import mordaxArt from '../../../art/heroes/mordax.png';
-import nightshadeArt from '../../../art/heroes/starters/nightshade.png';
+import brimstoneArt from '../../../art/heroes/brimstone.png';
+import tidecallerArt from '../../../art/heroes/starters/riptide.png';
 import pincerArt from '../../../art/heroes/pincer.png';
-import revenantArt from '../../../art/heroes/starters/revenant.png';
+import flurryArt from '../../../art/heroes/flurry.png';
 import rimeArt from '../../../art/heroes/starters/rime.png';
-import runescribeArt from '../../../art/heroes/starters/glyph.png';
-import scallywagArt from '../../../art/heroes/scallywag.png';
-import sentinelArt from '../../../art/heroes/sentinel.png';
-import shadowMonkArt from '../../../art/heroes/vesper.png';
-import clockworkArt from '../../../art/heroes/starters/clockwork.png';
-import sorrowArt from '../../../art/heroes/sorrow.png';
-import spookyGoblinArt from '../../../art/enemies/spookygoblin.png';
-import steamColossusArt from '../../../art/heroes/steamcolossus.png';
+import cubeArt from '../../../art/heroes/cube.png';
 import stormRangerArt from '../../../art/heroes/stormranger.png';
 import tempestArt from '../../../art/heroes/starters/Tempest.png';
-import sunPriestArt from '../../../art/heroes/starters/solace.png';
-import tidecallerArt from '../../../art/heroes/starters/riptide.png';
-import torchGoblinArt from '../../../art/enemies/torchgoblin.png';
-import tranceArt from '../../../art/heroes/trance.png';
-import valorArt from '../../../art/heroes/starters/valor.png';
-import widowArt from '../../../art/heroes/Widow.png';
+import scallywagArt from '../../../art/heroes/scallywag.png';
+import cragArt from '../../../art/heroes/starters/Crag.png';
+import sentinelArt from '../../../art/heroes/sentinel.png';
 import wildOracleArt from '../../../art/heroes/starters/sylva.png';
+import mordaxArt from '../../../art/heroes/mordax.png';
+import hollowbarkArt from '../../../art/heroes/Hollowbark.png';
+import sunPriestArt from '../../../art/heroes/starters/solace.png';
+import aegisArt from '../../../art/heroes/aegis.png';
+import shadowMonkArt from '../../../art/heroes/vesper.png';
+import marrowArt from '../../../art/heroes/marrow.png';
+import luciusArt from '../../../art/heroes/lucius.png';
+import nightshadeArt from '../../../art/heroes/starters/nightshade.png';
+import runescribeArt from '../../../art/heroes/starters/glyph.png';
 import zenithArt from '../../../art/heroes/zenith.png';
+import mindweaverArt from '../../../art/heroes/starters/cortex.png';
+import tranceArt from '../../../art/heroes/trance.png';
+import revenantArt from '../../../art/heroes/starters/revenant.png';
+import sorrowArt from '../../../art/heroes/sorrow.png';
+import ironWardenArt from '../../../art/heroes/ironwarden.png';
+import valorArt from '../../../art/heroes/starters/valor.png';
+import gallantArt from '../../../art/heroes/gallant.png';
+import clockworkArt from '../../../art/heroes/starters/clockwork.png';
+import steamColossusArt from '../../../art/heroes/steamcolossus.png';
+import fangArt from '../../../art/heroes/starters/fang.png';
+import widowArt from '../../../art/heroes/Widow.png';
+import coilArt from '../../../art/heroes/coil.png';
+import goblinGruntArt from '../../../art/enemies/goblingrunt.png';
+import goblinSkulkerArt from '../../../art/enemies/goblinskulker.png';
+import spookyGoblinArt from '../../../art/enemies/spookygoblin.png';
+import goblinWarriorArt from '../../../art/enemies/goblinwarrior.png';
+import torchGoblinArt from '../../../art/enemies/torchgoblin.png';
+import goblinChiefArt from '../../../art/enemies/goblinchief.png';
+import goblinLordArt from '../../../art/enemies/goblinlord.png';
 
-/** Hero portraits (art/heroes/[starters/]<file>.png), keyed by hero id. Heroes without an entry fall back to text-only rendering wherever HeroPortrait/heroArt is used. */
+/** Portraits keyed by hero id (heroes.ts order, then enemies.ts order). A missing entry renders text-only. */
 export const heroArt: Partial<Record<string, string>> = {
-  aegis: aegisArt,
-  brimstone: brimstoneArt,
+  // --- Fire ---
   cinderKnight: cinderKnightArt,
-  coil: coilArt,
-  crag: cragArt,
   crimson: crimsonArt,
-  cube: cubeArt,
-  packAlpha: fangArt,
-  gallant: gallantArt,
-  goblinChief: goblinChiefArt,
-  goblinGrunt: goblinGruntArt,
-  goblinLord: goblinLordArt,
-  goblinSkulker: goblinSkulkerArt,
-  goblinWarrior: goblinWarriorArt,
-  hollowbark: hollowbarkArt,
-  ironWarden: ironWardenArt,
-  lucius: luciusArt,
-  marrow: marrowArt,
-  mindweaver: mindweaverArt,
-  mordax: mordaxArt,
-  nightshade: nightshadeArt,
+  brimstone: brimstoneArt,
+  // --- Water ---
+  tidecaller: tidecallerArt,
   pincer: pincerArt,
-  revenant: revenantArt,
+  // --- Frost ---
+  glacialWarden: flurryArt,
   rime: rimeArt,
-  runescribe: runescribeArt,
-  scallywag: scallywagArt,
-  sentinel: sentinelArt,
-  shadowMonk: shadowMonkArt,
-  forgewright: clockworkArt,
-  sorrow: sorrowArt,
-  spookyGoblin: spookyGoblinArt,
-  steamColossus: steamColossusArt,
+  cube: cubeArt,
+  // --- Storm ---
   stormRanger: stormRangerArt,
   tempest: tempestArt,
-  dawnwarden: sunPriestArt,
-  glacialWarden: flurryArt,
-  tidecaller: tidecallerArt,
-  torchGoblin: torchGoblinArt,
-  trance: tranceArt,
-  valor: valorArt,
-  widow: widowArt,
+  scallywag: scallywagArt,
+  // --- Stone ---
+  crag: cragArt,
+  sentinel: sentinelArt,
+  // --- Nature ---
   wildOracle: wildOracleArt,
+  mordax: mordaxArt,
+  hollowbark: hollowbarkArt,
+  // --- Light ---
+  dawnwarden: sunPriestArt,
+  aegis: aegisArt,
+  // --- Shadow ---
+  shadowMonk: shadowMonkArt,
+  marrow: marrowArt,
+  lucius: luciusArt,
+  nightshade: nightshadeArt,
+  // --- Arcane ---
+  runescribe: runescribeArt,
   zenith: zenithArt,
+  // --- Mind ---
+  mindweaver: mindweaverArt,
+  trance: tranceArt,
+  // --- Spirit ---
+  revenant: revenantArt,
+  sorrow: sorrowArt,
+  // --- Iron ---
+  ironWarden: ironWardenArt,
+  valor: valorArt,
+  gallant: gallantArt,
+  // --- Mech ---
+  forgewright: clockworkArt,
+  steamColossus: steamColossusArt,
+  // --- Beast ---
+  packAlpha: fangArt,
+  widow: widowArt,
+  coil: coilArt,
+  // --- Enemies ---
+  goblinGrunt: goblinGruntArt,
+  goblinSkulker: goblinSkulkerArt,
+  spookyGoblin: spookyGoblinArt,
+  goblinWarrior: goblinWarriorArt,
+  torchGoblin: torchGoblinArt,
+  goblinChief: goblinChiefArt,
+  goblinLord: goblinLordArt,
 };

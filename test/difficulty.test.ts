@@ -94,8 +94,7 @@ test('difficulty: a scaled enemy spends its remaining level-ups on moves, never 
   for (const entry of run.roster) {
     assert.ok(entry.unlockedMoveIds.length <= MOVE_CAP, `${entry.heroId} has ${entry.unlockedMoveIds.length} moves`);
     assert.strictEqual(new Set(entry.unlockedMoveIds).size, entry.unlockedMoveIds.length);
-    // Act 5 is level 10: three starting moves plus level-ups is always enough
-    // to reach the cap from the fixture pools.
+    // Act 5 is level 10: starting moves plus level-ups always reach the cap.
     assert.strictEqual(entry.unlockedMoveIds.length, MOVE_CAP);
   }
 });

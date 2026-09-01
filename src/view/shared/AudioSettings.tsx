@@ -1,30 +1,12 @@
 import { useRef, useState } from 'react';
 import { getAudioPrefs, playSfx, setMusicLevel, setMuted, setSfxLevel } from '../../audio/sfx';
 
-/**
- * Volume and mute, as a drop-in block for a menu's .options-list.
- *
- * Lives in shared/ rather than inside FightScreen because the fight's pause
- * menu is only the FIRST place this belongs — a player on the map or the
- * title screen has just as much reason to mute, and this should be one
- * component when that happens rather than two that drift.
- *
- * The two faders are separate on purpose (audio/synth.ts runs an sfx bus and
- * a music bus off the master): turning combat noise down to read the numbers
- * shouldn't also silence the score, and playing the score quietly under loud
- * hits is a mix decision the player gets to make.
- */
+// Volume and mute, as a drop-in block for a menu's .options-list.
 
-/**
- * A dragged fader that plays nothing is a fader set blind. Effects preview a
- * tick as they move — but no faster than this, because `input` fires per
- * pixel of travel and an unthrottled preview is a machine-gun.
- */
+// `input` fires per pixel of travel; throttle the preview tick.
 const PREVIEW_THROTTLE_MS = 140;
 
 export function AudioSettings() {
-  // Seeded from the live prefs (they persist in localStorage), then held
-  // locally so the sliders track the thumb rather than the store.
   const [muted, setMutedState] = useState(() => getAudioPrefs().muted);
   const [sfx, setSfx] = useState(() => getAudioPrefs().sfx);
   const [music, setMusic] = useState(() => getAudioPrefs().music);
@@ -34,8 +16,7 @@ export function AudioSettings() {
     const next = !muted;
     setMuted(next);
     setMutedState(next);
-    // Unmuting is otherwise silent: the row's own tap sound was suppressed on
-    // pointerdown, while the mute was still on. Say something on the way back.
+    // The row's own tap sound was suppressed while muted; say something on the way back.
     if (!next) playSfx('ui.confirm');
   }
 
@@ -51,8 +32,7 @@ export function AudioSettings() {
   function handleMusic(value: number) {
     setMusic(value);
     setMusicLevel(value);
-    // Deliberately no preview: the music bus has no source yet, and previewing
-    // it with an EFFECT would play at the effects volume and mislead.
+    // No preview: an effect would play at the effects volume and mislead.
   }
 
   return (

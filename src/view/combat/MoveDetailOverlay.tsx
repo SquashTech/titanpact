@@ -31,38 +31,23 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { TARGET_MODE_LABELS, grantsRatherThanInflicts, healReadout, moveKindGlyph, moveKindLabel, riderTargetLabel } from '../shared/MoveTile';
 import { overlayHost } from '../shared/overlayHost';
 
-/**
- * The live fight a move is being inspected *inside*. Optional everywhere the
- * card is shown, because half the places a player holds a move — the hero
- * sheet, the level-up screen's replace offer, a recruit preview — have no
- * combat to forecast against. With it, the card stops describing the move in
- * the abstract and starts answering the question the hold was asked for:
- * *what happens if I press this, right now, against those two.*
- */
+/** The live fight a move is inspected inside. Optional: the hero sheet, level-up and recruit preview have no combat to forecast against. */
 export interface MoveDossierContext {
   combat: CombatState;
-  /** The hero whose button was held — the attacker in every number below. */
+  /** The hero whose button was held — the attacker in every number on the card. */
   attackerId: string;
   /** Enemy combatants still standing, in battlefield order. */
   defenderIds: readonly string[];
 }
 
-/**
- * The one-word pipeline name for the title line — damage moves only, since
- * they are the only ones that draw from a stat pipeline at all (CLAUDE.md
- * "Two-pipeline separation"). Everything else says what it is via
- * moveKindLabel, which is also what splits Buff from Debuff. Deliberately one
- * word either way: the line also carries the type and the target, and at
- * three items it has to fit 214px of a 340px card without wrapping and
- * orphaning a separator.
- */
+// One word: the title line also carries type and target and must not wrap at 214px.
 const PIPELINE_WORDS: Record<MoveDefinition['category'], string> = {
   physical: 'Physical',
   magical: 'Magical',
 };
 
-/** Same tiering as FightScreen's inline matchup readout, and deliberately the same class names — a 4x on the move row and a 4x in the dossier must not be two different greens. */
-function multClass(mult: number): string {
+/** Shared with FightScreen's move rows and SwitchInPanel — a 4x must be the same green everywhere. */
+export function multClass(mult: number): string {
   if (mult >= 4) return 'eff-quad-super';
   if (mult > 1) return 'eff-super';
   if (mult === 1) return 'eff-neutral';
@@ -70,43 +55,31 @@ function multClass(mult: number): string {
   return 'eff-resist';
 }
 
-function formatMult(mult: number): string {
+export function formatMult(mult: number): string {
   return `${Math.round(mult * 100) / 100}×`;
 }
 
 interface Forecast {
   min: number;
   max: number;
-  /** Fractions of the defender's MAX HP the two ends of the roll take off — the "how big a bite is this" number. */
+  /** Fractions of the defender's MAX HP the two ends of the roll take off. */
   maxFraction: number;
   minFraction: number;
-  /** Fraction of max HP the defender is currently standing on, so the bite can be drawn against what's actually left. */
+  /** Fraction of max HP the defender currently stands on, so the bite is drawn against what is left. */
   hpFraction: number;
   typeMult: number;
-  /** 'sure' when even the worst variance roll finishes it, 'maybe' when only the best one does. */
+  /** 'sure' when even the worst roll finishes it, 'maybe' when only the best one does. */
   ko: 'sure' | 'maybe' | null;
 }
 
 /**
- * Runs the locked damage formula (CLAUDE.md) forwards for both ends of the
- * variance roll, using the *engine's own* pipeline functions rather than a
- * view-side reimplementation — `calcDamage` takes pre-rolled variance and crit
- * precisely so it can be called without RNG, which is what makes an honest
- * forecast possible at all. Every input is read the same way resolveRound.ts
- * reads it (field-effect context into the stat ratio, passive damage modifiers,
- * Elemental Force into BasePower), so the band the player is shown is the band
- * the round will actually roll inside.
- *
- * Crit is deliberately excluded from the band. It is a 1/16 event and folding
- * it into the maximum would inflate every forecast by 50% for a case that
- * mostly doesn't happen; the card states it as a separate footnote instead.
+ * Runs the locked damage formula forward for both ends of the variance roll, through the engine's
+ * own pipeline functions (calcDamage takes pre-rolled variance/crit, so no RNG). Every live term is
+ * threaded in exactly as resolveRound reads it — docs/authoring-moves.md §5, "pass your new term in
+ * or the forecast lies". Crit is excluded from the band and stated as a footnote instead.
  */
 function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defenderId: string): Forecast | null {
-  // Jackpot authors no basePower at all, so the old guard refused it a
-  // forecast entirely — the dossier would have shown a damage move with no
-  // damage on it. It gets one off THIS round's rolled figure, which is the
-  // same number the button is showing and the same number the round is about
-  // to deal (content.ts randomBasePower, state.ts resolveRandomBasePower).
+  // A randomBasePower move authors no basePower; it forecasts off this round's rolled figure.
   const rolledBasePower = resolveRandomBasePower(ctx.combat, ctx.attackerId, move);
   if (move.kind !== 'damage' || (move.basePower == null && rolledBasePower == null)) return null;
   const attacker = ctx.combat.combatants[ctx.attackerId];
@@ -116,39 +89,18 @@ function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defender
   const defenderHero = allCombatants[defender.heroId];
   if (!attackerHero || !defenderHero) return null;
 
-  // board threaded in for the same reason offStatOverride is: a conditional
-  // passive (content.ts PassiveConditionalStatGrants) moves the ratio, so a
-  // forecast built without it lies about the number the round will roll.
   const fieldEffectCtx = { active: ctx.combat.activeFieldEffect, defs: fieldEffects, board: { state: ctx.combat, passives } };
-  // offStatOverride threaded in, or Body Blow forecasts off a Sentinel's
-  // Attack 45 while the round resolves it off Defense 100 — the exact failure
-  // docs/authoring-moves.md §5 warns about ("pass your new term in or the
-  // forecast lies").
   const ratio = resolveStatRatio(move.category, attackerHero, attacker, defenderHero, defender, fieldEffectCtx, move.offStatOverride);
   const modifiers: DamageModifier[] = collectPassiveDamageModifiers(attacker, move, passives);
   const forceBonus = resolveElementalForceBonus(attacker, move.type, statuses);
-  // Read against THIS defender, so a conditional move forecasts x3 on the
-  // Burned foe and x1 on the clean one — the whole point of showing a
-  // per-defender band rather than one number.
-  // fieldEffectCtx threaded in for the same reason offStatOverride is: a Smite
-  // forecast that ignored the Sanctuary already on the board would print half
-  // the number the round is about to deal (docs/authoring-moves.md §5, "pass
-  // your new term in or the forecast lies").
-  // getMaxHp threaded in for the same reason: an execute (content.ts
-  // conditionalPower.requiresTargetHpBelow) forecast without it would print
-  // half the number the round is about to deal against a wounded foe.
-  // The caster's own bar, threaded in for the third time and the same reason:
-  // a Vengeance forecast without it would print a THIRD of the number the
-  // round is about to deal (content.ts conditionalPower.requiresUserHpBelow).
-  // And the partner types for the fourth time and the same reason: a Pack
-  // Hunt forecast without them prints half the number the round is about to
-  // deal beside a Beast (content.ts conditionalPower.requiresPartnerType).
+  const maxHp = getMaxHp(defenderHero, defender);
+  // Read against THIS defender, so a conditional move forecasts per enemy.
   const conditionalMult = resolveConditionalPowerMultiplier(
     move,
     defender,
     attacker,
     fieldEffectCtx,
-    getMaxHp(defenderHero, defender),
+    maxHp,
     { currentHp: attacker.currentHp, maxHp: getMaxHp(attackerHero, attacker) },
     activePartnerTypes(ctx.combat, ctx.attackerId, allCombatants)
   );
@@ -170,10 +122,6 @@ function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defender
         undefined,
         forceBonus,
         conditionalMult,
-        // Threaded in for exactly the reason offStatOverride and fieldEffectCtx
-        // are: a forecast that read the authored (absent) Base Power would
-        // print 0 while the round deals up to 150 — docs/authoring-moves.md §5,
-        // "pass your new term in or the forecast lies".
         rolledBasePower
       )
         .damage
@@ -181,7 +129,6 @@ function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defender
 
   const min = roll(VARIANCE_MIN);
   const max = roll(VARIANCE_MAX);
-  const maxHp = getMaxHp(defenderHero, defender);
   return {
     min,
     max,
@@ -193,17 +140,7 @@ function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defender
   };
 }
 
-/**
- * One enemy's line in the forecast: who they are, how the type chart treats
- * this move against them, and how much of what they have left it takes.
- *
- * The bar is the point. A range of numerals ("38-45") is precise and says
- * nothing about whether that matters against a hero standing on 52 HP, and the
- * player is reading it under a turn clock. Drawing the bite *out of the
- * defender's own remaining track* is the same fixed-denominator idiom as the
- * Field Effect plaque's 5-pip clock and the level-up screen's rank track
- * (docs/visual-language.md) — a shape learned once and then read at a glance.
- */
+// One enemy's line: the bite is drawn out of the defender's own remaining track (docs/visual-language.md fixed-denominator idiom).
 function ForecastRow({ move, ctx, defenderId }: { move: MoveDefinition; ctx: MoveDossierContext; defenderId: string }) {
   const defender = ctx.combat.combatants[defenderId];
   const hero = allCombatants[defender.heroId];
@@ -212,31 +149,18 @@ function ForecastRow({ move, ctx, defenderId }: { move: MoveDefinition; ctx: Mov
   if (!forecast) return null;
 
   const { min, max, maxFraction, minFraction, hpFraction, typeMult, ko } = forecast;
-  // The bite is drawn from the right-hand end of what the defender is standing
-  // on, eating leftwards — so a lethal hit visibly reaches the track's origin
-  // instead of overflowing past it.
+  // The bite eats leftwards from the right-hand end of what is left, so a lethal hit reaches the origin instead of overflowing.
   const biteWidth = Math.min(maxFraction, hpFraction);
   const biteLeft = Math.max(0, hpFraction - maxFraction);
-  // Where the *worst* roll would leave them. Sits inside the bite as a notch,
-  // which is what turns a solid block into a range without drawing a second bar.
+  // Where the worst roll would leave them — a notch inside the bite that turns a block into a range.
   const floorMark = Math.max(0, hpFraction - Math.min(minFraction, hpFraction));
 
   return (
     <div className="move-forecast-row">
-      {/* 48px — the source's native size. The 24px this used to draw at is the
-          other legal scale (docs/visual-language.md defect 1) and it made the
-          enemy a footnote in a readout that is entirely about that enemy; at
-          native size the row is worth the space it takes, and the name/matchup
-          line and the meter stack beside it rather than under it. */}
       <HeroPortrait heroId={defender.heroId} className="move-forecast-portrait" seed={defenderId} />
       <div className="move-forecast-body">
       <div className="move-forecast-who">
         <span className="move-forecast-name">{hero.name}</span>
-        {/* Chromeless, not TypeBadge: a filled chip here would put back exactly
-            the sub-box the console's move rows had removed, twice per row, and
-            it out-shouted the defender's own name. The glyph in the type's
-            colour separates fifteen types on its own — the same argument
-            .move-type-code makes on the button. */}
         {effectiveTypes(hero, defender).map((t) => (
           <span key={t} className="move-forecast-type" style={{ color: getTypeColor(t) }} title={t}>
             <ElementGlyph type={t} />
@@ -276,53 +200,27 @@ function EffectRow({ glyph, text, note, color }: { glyph: ReactNode; text: strin
 
 interface CardProps {
   move: MoveDefinition;
-  /** Optional eyebrow above the name — LevelUpScreen's replace offer uses it to say which slot is being inspected. */
+  /** Optional eyebrow above the name — LevelUpScreen's replace offer says which slot is being inspected. */
   label?: string;
   context?: MoveDossierContext;
-  /** Who is casting, for screens that have a hero but no live fight (level-up, hero sheet, draft). A `context` supersedes it — that carries a real Combatant, so the field effect and any mid-fight Wisdom buff are already in the number. Without either, a heal falls back to its authored HealPower (healReadout). */
+  /** Who is casting, for screens with a hero but no live fight. A `context` supersedes it. Without either, a heal falls back to its authored HealPower. */
   caster?: HealCaster;
 }
 
-/**
- * The move dossier: everything a hold on a move is worth, in the vector
- * vocabulary the rest of the game now speaks.
- *
- * It replaces a card that was five text chips in a row (a filled TypeBadge, a
- * bordered PHY/MAG badge, two uppercase word-spans and a bare "STAB" tag)
- * above a flavor line and a name/multiplier list — which is the *exact*
- * "competing rectangles" defect docs/visual-language.md's second pass removed
- * from the button this popup opens from, left standing in the popup itself.
- * Every one of those facts is now a glyph from an authored family: the type
- * from `elementIcons`, the pipeline from `statIcons` (the move-kind glyph is
- * literally the stat the damage formula reads), the payload from
- * `statusIcons`, the cost from the mana gem the button already wears.
- *
- * And it answers three questions the old card never asked, which is the second
- * half of the procedure that doc keeps arriving at — the rule governs whether a
- * thing is boxed, not whether the box holds the decision:
- *
- * - **How hard does this actually hit?** A real damage band, run through the
- *   engine's own pipeline (see `forecastAgainst`), drawn against the target's
- *   remaining HP. The move row already shows the type multiplier; a multiplier
- *   is not a number of hit points.
- * - **Does it move first?** `priority` is a locked mechanic (CLAUDE.md
- *   "Priority uses integer brackets") that ten authored moves carry and that
- *   the UI has never displayed anywhere, at all.
- * - **What is left in the tank?** The cost gem says what it costs; with a live
- *   fight it now also says what the hero is standing on afterwards.
- */
+const SCALES_BASE_POWER = 'scales base power, not the finished hit';
+
+/** The move dossier: a live damage band, the priority bracket, and the mana left after casting. */
 export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   const typeColor = getTypeColor(move.type);
   const attacker = context ? context.combat.combatants[context.attackerId] : undefined;
   const attackerHero = attacker ? allCombatants[attacker.heroId] : undefined;
+  const statCtx = { active: context?.combat.activeFieldEffect ?? null, defs: fieldEffects, board: context ? { state: context.combat, passives } : undefined };
 
-  // Heals take STAB too (docs/combat.md "The healing formula"), so this is no
-  // longer damage-only — a Light healer's Light heal is 1.25x for exactly the
-  // same reason a Light nuke is.
+  // Heals take STAB too (docs/combat.md "The healing formula").
   const healCaster: HealCaster | undefined =
     attacker && attackerHero
       ? {
-          wisdom: getEffectiveStat(attackerHero, attacker, 'wisdom', { active: context?.combat.activeFieldEffect ?? null, defs: fieldEffects, board: context ? { state: context.combat, passives } : undefined }),
+          wisdom: getEffectiveStat(attackerHero, attacker, 'wisdom', statCtx),
           types: effectiveTypes(attackerHero, attacker),
         }
       : caster;
@@ -331,12 +229,7 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   const stab =
     (move.kind === 'damage' || move.kind === 'heal') && healCaster ? resolveStab(move.type, healCaster.types) > 1 : false;
   const forceBonus = attacker ? resolveElementalForceBonus(attacker, move.type, statuses) : 0;
-  // The live price, not the authored one, and live in both senses: Wave Shred
-  // is 80 on the first cast and less on every one after it (manaDiscountOnUse),
-  // and Overcharge is 0 while both enemies carry Conduct (conditionalManaCost).
-  // The second needs the BOARD, so it is only answerable with a fight in scope —
-  // out of combat this falls back to the ramp-only price, which is
-  // move.manaCost with no attacker and no ramp (state.ts).
+  // conditionalManaCost needs the board, so only a fight in scope prices it; otherwise the ramp-only price.
   const liveCost = context
     ? resolveManaCost(context.combat, context.attackerId, move, allCombatants)
     : effectiveManaCost(move, attacker?.moveManaDiscounts);
@@ -344,33 +237,16 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   const manaPool = attacker && attackerHero ? getMaxMana(attackerHero, attacker) : null;
 
   const kindGlyph = moveKindGlyph(move);
-  // Every rider, each with its own catalog entry — a move can carry more
-  // than one since Beast's Toxic Fangs (content.ts statusApplication).
-  // Unknown ids are dropped rather than rendered as a blank row, the same
-  // guard discipline resolveRound's `def` lookup uses.
-  const statusRiders = statusApplicationsOf(move)
+  const statusApps = statusApplicationsOf(move);
+  // Unknown ids are dropped rather than rendered as a blank row.
+  const statusRiders = statusApps
     .map((app) => ({ app, def: statuses[app.statusId] }))
     .filter((r): r is { app: (typeof r)['app']; def: NonNullable<(typeof r)['def']> } => r.def != null);
   const fieldDef = move.fieldEffectApplication ? fieldEffects[move.fieldEffectApplication] : undefined;
-  // Whichever side of the board this move's conditional actually asks about
-  // (content.ts conditionalPower.requiresUserStatus). Empty on the field form,
-  // which asks about no combatant at all and wears the field effect's own
-  // glyph instead (requiresFieldEffect).
+  // Each conditionalPower form takes its own row; the status form is the fallthrough.
   const conditionalFieldId = move.conditionalPower?.requiresFieldEffect ?? '';
-  // The HP form asks about neither a status nor the field, so it takes
-  // neither of their rows (content.ts conditionalPower.requiresTargetHpBelow).
   const conditionalHpBelow = move.conditionalPower?.requiresTargetHpBelow;
-  // The user-side HP form (content.ts requiresUserHpBelow — Spirit's Spite and
-  // Vengeance). Its own variable rather than a `side` flag on the one above,
-  // because the two ask about opposite bars and the row has to say which: the
-  // execute is a fact about the enemy, this one is a fact about the hero whose
-  // sheet the player is already looking at, and it can be answered outright.
   const conditionalUserHpBelow = move.conditionalPower?.requiresUserHpBelow;
-  // The pack form (content.ts conditionalPower.requiresPartnerType — Beast's
-  // Pack Hunt). Like the two HP forms it takes neither the status row nor
-  // the field row, and like the user-side HP form it can answer itself:
-  // the hero it asks about is standing in the other slot of the same card
-  // list the player is looking at.
   const conditionalPartnerType = move.conditionalPower?.requiresPartnerType;
   const livePartnerTypes = context ? activePartnerTypes(context.combat, context.attackerId, allCombatants) : null;
   const conditionalPartnerLive =
@@ -379,7 +255,7 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
     ? (move.conditionalPower.requiresTargetStatus ?? move.conditionalPower.requiresUserStatus ?? '')
     : '';
   const conditionalDef = conditionalStatusId ? statuses[conditionalStatusId] : undefined;
-  /** Whether any prospective defender is ALREADY under an execute's line — answerable without declaring a target, same as conditionalFieldLive below. */
+  // The dossier opens before a target is declared, so target-side conditions check ANY prospective defender.
   const conditionalHpLive = Boolean(
     conditionalHpBelow != null &&
       context?.defenderIds.some((id) => {
@@ -388,32 +264,17 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
         return defender && !defender.fainted && hero && defender.currentHp < getMaxHp(hero, defender) * conditionalHpBelow;
       })
   );
-  /**
-   * Whether the CASTER is already under its own line — the one conditional in
-   * the game the player can answer by glancing at the hero they are holding
-   * the button on, so the row says yes or no outright rather than stating a
-   * rule (content.ts conditionalPower.requiresUserHpBelow).
-   */
   const conditionalUserHpLive = Boolean(
     conditionalUserHpBelow != null &&
       attacker &&
-      allCombatants[attacker.heroId] &&
-      attacker.currentHp < getMaxHp(allCombatants[attacker.heroId], attacker) * conditionalUserHpBelow
+      attackerHero &&
+      attacker.currentHp < getMaxHp(attackerHero, attacker) * conditionalUserHpBelow
   );
   const conditionalFieldDef = conditionalFieldId ? fieldEffects[conditionalFieldId] : undefined;
-  /** Whether the field this move's conditional wants is the one actually up right now — answerable without a target, unlike the target-side form. */
   const conditionalFieldLive = Boolean(conditionalFieldId && context?.combat.activeFieldEffect?.fieldEffectId === conditionalFieldId);
   const detonateDef = move.detonatesStatus ? statuses[move.detonatesStatus] : undefined;
   const gateDef = move.requiresTargetStatus ? statuses[move.requiresTargetStatus] : undefined;
   const priorityDef = move.conditionalPriority ? statuses[move.conditionalPriority.requiresTargetStatus] : undefined;
-  /**
-   * The bracket this move would actually resolve in. The dossier is opened
-   * BEFORE a target is declared, so there is no one target to read the
-   * condition off — this answers "can this strike first right now" by checking
-   * whether ANY prospective defender is carrying the mark, and leaves the exact
-   * rule (it is the declared target's mark, read when the round is ordered) to
-   * the effect row below, which states it in full.
-   */
   const livePriority =
     move.conditionalPriority &&
     context?.defenderIds.some((id) => {
@@ -422,19 +283,18 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
     })
       ? move.priority + move.conditionalPriority.bonus
       : move.priority;
-  // Whichever side of conditionalManaCost the move authored (content.ts) —
-  // "every active enemy carries it" (Overcharge) or "at least one does"
-  // (Metallic Blade). Exactly one is ever set.
+  // Exactly one side of conditionalManaCost is ever set.
   const freeGate = move.conditionalManaCost
     ? move.conditionalManaCost.requiresAllEnemiesStatus ?? move.conditionalManaCost.requiresAnyEnemyStatus
     : undefined;
   const freeDef = freeGate ? statuses[freeGate] : undefined;
+  const conditionalTargetField = move.conditionalTarget ? fieldEffects[move.conditionalTarget.requiresFieldEffect] : undefined;
   const hasPayload = Boolean(
     move.statDeltas?.length ||
       move.derivedStatDeltas ||
       move.manaGrant ||
       move.conditionalTarget ||
-      statusApplicationsOf(move).length ||
+      statusApps.length ||
       move.cleanses ||
       move.fieldEffectApplication ||
       move.conditionalPower ||
@@ -461,10 +321,6 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
       {label && <div className="move-detail-label">{label}</div>}
 
       <div className="move-detail-head">
-        {/* The same 44px tinted disc StatusDetailOverlay gives a status, for
-            the same reason: it is the one slot in the app big enough to show
-            an authored glyph at full size, so this is where a player actually
-            learns what the Storm mark or the Iron anvil looks like. */}
         <span className="move-detail-disc" style={{ color: typeColor }}>
           <ElementGlyph type={move.type} />
         </span>
@@ -478,9 +334,6 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
             <span>{TARGET_MODE_LABELS[move.target]}</span>
           </div>
         </div>
-        {/* Cost leads the move button and so it leads the card too — mana is
-            the primary balance lever (CLAUDE.md), and the gem is the picture
-            the player already reads it as. */}
         <ManaCost cost={liveCost} />
       </div>
 
@@ -507,11 +360,7 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
             <span className="move-detail-unit">{heal.resolved ? 'HP' : 'HEAL'}</span>
           </span>
         )}
-        {/* The Wisdom term, stated the way STAB below is: a heal that reads 60
-            on one hero and 36 on another has to say WHY on the card, or the
-            formula just looks like the numbers are unstable. Hidden at
-            exactly 1.00 — a caster sitting on the reference Wisdom has no
-            story to tell. */}
+        {/* Hidden at exactly 1.00 — a caster on the reference Wisdom has no story to tell. */}
         {healTerms && healTerms.wisdomMult !== 1 && (
           <span className="move-detail-stat move-detail-stat-wis" title="Wisdom scales healing: ±1% per point off 50">
             <StatGlyph stat="wisdom" tone="inherit" />
@@ -519,9 +368,6 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
             <span className="move-detail-unit">WIS</span>
           </span>
         )}
-        {/* STAB wears the attacker's own type glyph rather than the word
-            alone: the bonus exists because those two types match, and showing
-            the matching element is the shortest way to say so. */}
         {stab && (
           <span className="move-detail-stat move-detail-stat-stab" title="Same-Type Attack Bonus">
             <ElementGlyph type={move.type} />
@@ -529,14 +375,7 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
             <span className="move-detail-unit">STAB</span>
           </span>
         )}
-        {/* Never shown anywhere in the game before this card, on ten authored
-            moves. The Speed glyph is the honest one to borrow — priority is
-            resolved before Speed and tie-broken by it (CLAUDE.md). */}
-        {/* Folds in conditionalPriority, so a marked board makes Electric
-            Burst read "+1 · Strikes first" rather than printing its authored 0
-            and being contradicted by its own effect row below. Shown whenever
-            the LIVE bracket is nonzero, which is why a base-0 move can appear
-            here at all. */}
+        {/* The LIVE bracket (conditionalPriority folded in), so a base-0 move can appear here. */}
         {livePriority !== 0 && (
           <span className={`move-detail-stat move-detail-stat-priority${livePriority > 0 ? ' is-fast' : ' is-slow'}`}>
             <StatGlyph stat="speed" tone="inherit" />
@@ -558,11 +397,6 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
 
       {hasPayload && (
         <div className="move-detail-effects">
-          {/* First, because on the four battery moves it is the entire payload
-              (content.ts manaGrant). The note carries the half the number
-              cannot: that a full-pool ally keeps the surplus instead of
-              wasting it, which is the only reason handing 150 to a 90 pool is
-              a play at all (docs/mana.md "Overflow"). */}
           {move.manaGrant != null && (
             <EffectRow
               glyph={<StatGlyph stat="manaPool" />}
@@ -575,12 +409,6 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               key={stat}
               glyph={<StatGlyph stat={stat} />}
               text={`${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]}`}
-              /* Landslide buffs the caster's side while hitting the enemy's,
-                 so the move's own target is the wrong answer here
-                 (content.ts statDeltaTarget). A chanced delta also has to say
-                 what the odds are and that the move's own body lands anyway —
-                 the rider is gated, never the hit (content.ts
-                 statDeltaChance). */
               note={`on ${(move.statDeltaTarget === 'bothAllies'
                 ? TARGET_MODE_LABELS.bothAllies
                 : move.statDeltaTarget === 'self'
@@ -593,13 +421,6 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               }`}
             />
           ))}
-          {/* The capstone with no number at all: what it is worth is entirely
-              what the enemy's stat line already says (content.ts
-              doublesStatReductions). So the row states the rule and the note
-              carries the live total off the actual defenders, the same split
-              the derived-grant row below uses — and the same reason, that a
-              player deciding whether to spend 80 mana needs the figure, not
-              the mechanic. */}
           {move.doublesStatReductions && (
             <EffectRow
               glyph={<StatGlyph stat="intelligence" />}
@@ -618,11 +439,7 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               })()}
             />
           )}
-          {/* The one stat grant in the game with no authored number — so the
-              row prints the LIVE figure when there is a caster to read it off,
-              and the rule when there is not (content.ts derivedStatDeltas).
-              Read before the cost is paid, which is why it is not
-              `manaAfter`. */}
+          {/* Read before the cost is paid, which is why it is not `manaAfter`. */}
           {move.derivedStatDeltas?.stats.map((stat) => (
             <EffectRow
               key={`derived-${stat}`}
@@ -639,16 +456,12 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               }
             />
           ))}
-          {/* Targeting, as an effect row, because on Overload it is the whole
-              difference between the move and its neighbours (content.ts
-              conditionalTarget). The note answers it live when there is a
-              board to answer it against. */}
           {move.conditionalTarget && (
             <EffectRow
-              glyph={<ElementGlyph type={fieldEffects[move.conditionalTarget.requiresFieldEffect]?.flavorType ?? 'Arcane'} />}
-              color={getTypeColor(fieldEffects[move.conditionalTarget.requiresFieldEffect]?.flavorType ?? 'Arcane')}
+              glyph={<ElementGlyph type={conditionalTargetField?.flavorType ?? 'Arcane'} />}
+              color={getTypeColor(conditionalTargetField?.flavorType ?? 'Arcane')}
               text={`Hits ${TARGET_MODE_LABELS[move.conditionalTarget.target].toLowerCase()} while ${
-                fieldEffects[move.conditionalTarget.requiresFieldEffect]?.name ?? move.conditionalTarget.requiresFieldEffect
+                conditionalTargetField?.name ?? move.conditionalTarget.requiresFieldEffect
               } is up`}
               note={
                 context?.combat.activeFieldEffect?.fieldEffectId === move.conditionalTarget.requiresFieldEffect
@@ -657,33 +470,23 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               }
             />
           )}
-          {statusRiders.map(({ app, def }) => (
-            <EffectRow
-              key={app.statusId}
-              glyph={<StatusGlyph statusId={app.statusId} />}
-              color={statusColor(app.statusId)}
-              /* Granted vs inflicted: same field, opposite reading, and the
-                 verb is what separates them — see moveEffectSummary. */
-              /* A chanced rider leads with its odds; an unchanced one says
-                 nothing, so every move authored before the field reads exactly
-                 as it did. */
-              text={`${app.chance != null ? `${Math.round(app.chance * 100)}% ` : ''}${
-                /* Granted vs inflicted keys off the status's own sign, not off who it lands on — see grantsRatherThanInflicts. */
-                grantsRatherThanInflicts(app) ? 'Grants' : 'Applies'
-              } ${def.name}${
-                app.magnitude != null ? ` ${app.magnitude}` : app.duration != null ? ` ${app.duration}` : ''
-              }${
-                /* Where it lands, when that is not the move's own target — on
-                   Rising Static the +20 Speed and the Conduct go to opposite
-                   sides of the field, and only this clause says so. */
-                riderTargetLabel(app) ? ` — ${riderTargetLabel(app)}` : ''
-              }`}
-              note={def.description}
-            />
-          ))}
-          {/* The gate reads first, above the conditional row and above crit:
-              it is the only effect in this list that can make the move
-              unpressable rather than merely different. */}
+          {statusRiders.map(({ app, def }) => {
+            const where = riderTargetLabel(app);
+            return (
+              <EffectRow
+                key={app.statusId}
+                glyph={<StatusGlyph statusId={app.statusId} />}
+                color={statusColor(app.statusId)}
+                text={`${app.chance != null ? `${Math.round(app.chance * 100)}% ` : ''}${
+                  grantsRatherThanInflicts(app) ? 'Grants' : 'Applies'
+                } ${def.name}${
+                  app.magnitude != null ? ` ${app.magnitude}` : app.duration != null ? ` ${app.duration}` : ''
+                }${where ? ` — ${where}` : ''}`}
+                note={def.description}
+              />
+            );
+          })}
+          {/* The gate reads first: it is the only effect that can make the move unpressable. */}
           {move.requiresTargetStatus && (
             <EffectRow
               glyph={<StatusGlyph statusId={move.requiresTargetStatus} />}
@@ -692,10 +495,6 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               note="no legal target, and no way to declare it, unless the status is already out there"
             />
           )}
-          {/* The field form wears the FIELD's glyph and colour, not a status's:
-              what it is asking about is the ground, and a Sanctuary-gated Smite
-              carrying a blank status glyph would be pointing at nothing
-              (content.ts conditionalPower.requiresFieldEffect). */}
           {move.conditionalPower && conditionalFieldId && (
             <EffectRow
               glyph={<ElementGlyph type={conditionalFieldDef?.flavorType ?? 'Arcane'} />}
@@ -703,46 +502,33 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               text={`×${move.conditionalPower.multiplier} power while ${conditionalFieldDef?.name ?? conditionalFieldId} is up`}
               note={
                 conditionalFieldLive
-                  ? `scales base power, not the finished hit — and ${conditionalFieldDef?.name ?? conditionalFieldId} is up right now`
-                  : 'scales base power, not the finished hit — the field is global, so either side setting it arms this move'
+                  ? `${SCALES_BASE_POWER} — and ${conditionalFieldDef?.name ?? conditionalFieldId} is up right now`
+                  : `${SCALES_BASE_POWER} — the field is global, so either side setting it arms this move`
               }
             />
           )}
-          {/* The execute wears the HP heart rather than a status glyph: what
-              it asks about is a NUMBER on the target, and every other row
-              here points at something the player can see on a card's status
-              strip (content.ts conditionalPower.requiresTargetHpBelow). */}
           {move.conditionalPower && conditionalHpBelow != null && (
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
               text={`×${move.conditionalPower.multiplier} power vs a target below ${Math.round(conditionalHpBelow * 100)}% HP`}
               note={
                 conditionalHpLive
-                  ? 'scales base power, not the finished hit — and someone out there is already under the line'
-                  : 'scales base power, not the finished hit — read BEFORE this hit lands, so it never doubles off HP it is about to take'
+                  ? `${SCALES_BASE_POWER} — and someone out there is already under the line`
+                  : `${SCALES_BASE_POWER} — read BEFORE this hit lands, so it never doubles off HP it is about to take`
               }
             />
           )}
-          {/* The mirror of the execute row above, and it wears the same heart
-              for the same reason — but it is the only conditional row here
-              that can answer itself, because the bar it reads is the one on
-              the card the player is already holding
-              (content.ts conditionalPower.requiresUserHpBelow). */}
           {move.conditionalPower && conditionalUserHpBelow != null && (
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
               text={`×${move.conditionalPower.multiplier} power while you are below ${Math.round(conditionalUserHpBelow * 100)}% HP`}
               note={
                 conditionalUserHpLive
-                  ? 'scales base power, not the finished hit — and this hero is already under the line'
-                  : 'scales base power, not the finished hit — asked once per cast, so every hit gets it or none does'
+                  ? `${SCALES_BASE_POWER} — and this hero is already under the line`
+                  : `${SCALES_BASE_POWER} — asked once per cast, so every hit gets it or none does`
               }
             />
           )}
-          {/* The pack row wears the partner TYPE's own glyph — the thing
-              being asked about is a hero on your own side, which is why it
-              is the only conditional here that a player answers at draft
-              time (content.ts conditionalPower.requiresPartnerType). */}
           {move.conditionalPower && conditionalPartnerType != null && (
             <EffectRow
               glyph={<ElementGlyph type={conditionalPartnerType} />}
@@ -750,8 +536,8 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               text={`×${move.conditionalPower.multiplier} power while your partner is a ${conditionalPartnerType}`}
               note={
                 conditionalPartnerLive
-                  ? 'scales base power, not the finished hit — and the hero beside you qualifies right now'
-                  : 'scales base power, not the finished hit — read off the ACTIVE partner, so switching one in turns it on'
+                  ? `${SCALES_BASE_POWER} — and the hero beside you qualifies right now`
+                  : `${SCALES_BASE_POWER} — read off the ACTIVE partner, so switching one in turns it on`
               }
             />
           )}
@@ -770,16 +556,13 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               }
               note={
                 move.conditionalPower.consumesStatus
-                  ? `scales base power, not the finished hit — and spends the ${conditionalDef?.name ?? conditionalStatusId} it cashed in`
+                  ? `${SCALES_BASE_POWER} — and spends the ${conditionalDef?.name ?? conditionalStatusId} it cashed in`
                   : move.conditionalPower.requiresUserStatus
-                    ? 'scales base power, not the finished hit — read off THIS hero, so a partner granting it earlier in the round already counts'
-                    : 'scales base power, not the finished hit'
+                    ? `${SCALES_BASE_POWER} — read off THIS hero, so a partner granting it earlier in the round already counts`
+                    : SCALES_BASE_POWER
               }
             />
           )}
-          {/* Prowl states its rule in the stat-delta line above; this row is
-              what says the printed +10 is a +20 beside the right partner
-              (content.ts conditionalStatDeltas). */}
           {move.conditionalStatDeltas && (
             <EffectRow
               glyph={<ElementGlyph type={move.conditionalStatDeltas.requiresPartnerType} />}
@@ -792,10 +575,6 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               }
             />
           )}
-          {/* The detonation wears the detonated status's own glyph, not the
-              move's: what the row is really reporting is how big the player's
-              Poison stack has grown, and the move is only the trigger
-              (content.ts detonatesStatus). */}
           {move.detonatesStatus && (
             <EffectRow
               glyph={<StatusGlyph statusId={move.detonatesStatus} />}
@@ -811,10 +590,6 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               note="1.5× damage when it lands"
             />
           )}
-          {/* The drain row wears the HP heart, not the move's own pipeline
-              glyph: what it returns is hit points, and the number it scales is
-              the finished hit rather than anything the healing formula would
-              recognise (content.ts drainPercent). */}
           {move.drainPercent != null && (
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
@@ -822,27 +597,17 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               note="a share of the hit itself — Wisdom and STAB do not scale it"
             />
           )}
-          {/* Pipeline 1, and the row says so: this does not scale the hit, it
-              changes which of the caster's stats the ratio reads
-              (content.ts offStatOverride). */}
           {move.offStatOverride && (
             <EffectRow
               glyph={<StatGlyph stat={move.offStatOverride} />}
               text={`Uses ${STAT_LABELS[move.offStatOverride]} in place of ${STAT_LABELS[move.category === 'physical' ? 'attack' : 'intelligence']}`}
               note={
                 attacker && attackerHero
-                  ? `${getEffectiveStat(attackerHero, attacker, move.offStatOverride, {
-                      active: context?.combat.activeFieldEffect ?? null,
-                      defs: fieldEffects,
-                      board: context ? { state: context.combat, passives } : undefined,
-                    })} right now — the target still defends with its own ${STAT_LABELS[move.category === 'physical' ? 'defense' : 'wisdom']}`
+                  ? `${getEffectiveStat(attackerHero, attacker, move.offStatOverride, statCtx)} right now — the target still defends with its own ${STAT_LABELS[move.category === 'physical' ? 'defense' : 'wisdom']}`
                   : 'the defending stat is unchanged — only the attacking one moves'
               }
             />
           )}
-          {/* This move has no Base Power, so this row IS the damage. The live
-              banked figure, because a percentage of an unknown number is not a
-              decision (content.ts retributionPercent). */}
           {move.retributionPercent != null && (
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
@@ -858,9 +623,6 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               }
             />
           )}
-          {/* The recoil row wears the HP heart for the same reason the drain
-              row does: what it costs is hit points, billed off the finished
-              hit (content.ts recoilPercent). */}
           {move.recoilPercent != null && (
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
@@ -868,11 +630,6 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
               note="a share of the hit itself — and there is no floor, so it can knock the caster out"
             />
           )}
-          {/* The self-cost wears the HP heart for the same reason the recoil
-              row does, but says the bill instead of a share: what this costs
-              is knowable before the move is pressed (content.ts selfHpCost).
-              The note is where the two modes actually differ — one can kill
-              you and the other cannot. */}
           {move.selfHpCost != null && (
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
@@ -959,9 +716,6 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
           {forecastIds.map((id) => (
             <ForecastRow key={id} move={move} ctx={context} defenderId={id} />
           ))}
-          {/* Stated, not hidden: the band is the variance roll only, and a
-              player who sees 41 land after being shown "38-45" should know
-              exactly which term the game rolled. */}
           <div className="move-detail-footnote">
             Range is the 0.85–1.0 variance roll. A crit multiplies it by 1.5
             {move.critChance != null ? ` (${Math.round(move.critChance * 100)}% on this move)` : ''}.
@@ -972,24 +726,7 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   );
 }
 
-/**
- * The dossier as a modal, for the fight screen's move rows.
- *
- * Moved off `.log-overlay`/`.log-panel` — the *Battle Log's* chassis, which it
- * had been borrowing — and onto `.detail-overlay`/`.detail-panel`, the shell
- * every other hold-to-inspect card in combat already uses (StatusDetailOverlay,
- * FieldEffectDetailOverlay, HeroDetailOverlay). Same identity stripe across the
- * top in the subject's own color, same "tap anywhere to close". The one
- * long-press a player performs most often was the only one that opened
- * something shaped differently from all the others.
- *
- * Portalled for the reason StatusDetailOverlay documents — the console and its
- * rows carry transforms and filters, either of which would make a
- * `position: fixed` descendant resolve against the row — but into
- * `.app-shell`, not `document.body`. See overlayHost.ts: body is outside the
- * transform-scaled design canvas, which on a zoomed browser rendered this card
- * at half the size of everything around it.
- */
+// Portalled into overlayHost(), never document.body — see overlayHost.ts.
 export function MoveDetailOverlay({
   move,
   context,
@@ -998,7 +735,7 @@ export function MoveDetailOverlay({
 }: {
   move: MoveDefinition;
   context?: MoveDossierContext;
-  /** Who is casting, for the screens that hold a hero but no live fight — the draft stage and the Recruit Contract claim reach this overlay through StageMovePopup. Superseded by `context`, exactly as on MoveDetailCard. */
+  /** Who is casting, for screens that hold a hero but no live fight. Superseded by `context`. */
   caster?: HealCaster;
   onClose: () => void;
 }) {
@@ -1011,11 +748,7 @@ export function MoveDetailOverlay({
     <div className="detail-overlay" onClick={closeAndStop}>
       <div
         className="detail-panel move-detail-panel"
-        /* The type var is set here as well as on the card inside: the panel's
-           own domain wash has to bleed to the modal's edges, and a custom
-           property only travels down. The card re-declares it so it still
-           works standalone, inside the shared popup wrapper the hero sheet and
-           the level-up offer open it in. */
+        /* Set here as well as on the card: the panel's wash must reach the modal's edges, and a custom property only travels down. */
         style={{ borderTopColor: getTypeColor(move.type), '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
         onClick={closeAndStop}
       >

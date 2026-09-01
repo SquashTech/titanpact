@@ -29,77 +29,38 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
 import { RosterReplaceScreen } from './RosterReplaceScreen';
 
-/** Contracts owned are drawn as seal pips up to this many; past it the track collapses to a single seal and a count, since twelve pips stop being countable at a glance. */
+/** Past this many, the contract track collapses to a single seal and a count. */
 const MAX_CONTRACT_PIPS = 6;
 
 interface Props {
-  /** The player's run — the contracts being spent, the roster being added to, and the relics the recruit will inherit once they join. */
   run: RunState;
-  /**
-   * The beaten heroes this win puts on offer (App.tsx handleFightResolved,
-   * via recruitment.ts pickContractOffers). Sampled once by the caller and
-   * held in Screen state, so re-renders here can't reshuffle who is offered.
-   */
+  /** Sampled once by the caller (App.tsx, via pickContractOffers) so re-renders can't reshuffle the offer. */
   offers: readonly RosterEntry[];
-  /** Spends one contract and adds the hero. Returns whether it succeeded (false only if the run's contracts ran out between render and tap). */
+  /** Spends one contract and adds the hero; false only if contracts ran out between render and tap. */
   onClaim: (defeated: RosterEntry) => boolean;
   /** Roster-full variant, wired to the in-place RosterReplaceScreen below. */
   onClaimReplace: (defeated: RosterEntry, terminatedRosterId: string) => boolean;
-  /** Leave for the map — whether or not anything was claimed. */
   onDone: () => void;
 }
 
 /**
- * The Recruit Contract claim (CLAUDE.md "claim a beaten hero"), as its own
- * screen.
- *
- * It used to be a band inside FightScreen's victory box: two 56px portraits
- * under a line of text, stacked below the gold/XP chips and an equipment
- * spotlight, inside a panel the player reads as "the fight is over." Adding
- * a hero to a six-slot roster for the rest of the run was presented as a
- * smaller decision than the item drop above it, and the price — one of a
- * currency the player might hold exactly one of all run — was a number in an
- * eyebrow.
- *
- * So it stands on the draft's stage instead (shared/HeroStage.tsx): the same
- * 144px figure in the same sigil, the same stat silhouette and movepool, the
- * same rail. The draft and this screen ask one question — *do you want this
- * hero, permanently, for a price* — and now they ask it the same way. What is
- * different is what the draft has no equivalent of and this screen must make
- * unmissable: the contract track, which counts what the player owns in seals
- * and dims the one about to be spent.
- *
- * The screen is skipped entirely when the player holds no contracts — App.tsx
- * never opens it, since an offer that cannot be taken is a tap that only
- * teaches the player their taps are decorative.
- *
- * A veteran arrives with their Evolutions and unlocked moves intact but their
- * gear stripped (recruitment.ts deriveContractOffer), so everything drawn
- * here — silhouette, kit, hero sheet — reads off an ungeared copy of the
- * entry rather than the enemy build that just fought, which would advertise a
- * weapon that does not come with them.
+ * The Recruit Contract claim, on the draft's stage (shared/HeroStage.tsx). App.tsx skips it when the
+ * player holds no contracts. A veteran arrives with Evolutions and moves intact but gear stripped
+ * (deriveContractOffer), so everything drawn here reads off an ungeared copy of the entry.
  */
 export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone }: Props) {
   const [featuredRosterId, setFeaturedRosterId] = useState<string>(offers[0].rosterId);
   const [claimedRosterIds, setClaimedRosterIds] = useState<string[]>([]);
   const [popupMove, setPopupMove] = useState<MoveDefinition | null>(null);
   const [inspecting, setInspecting] = useState(false);
-  /** The offer a roster-full claim is trying to sign — opens RosterReplaceScreen over this screen rather than as its own App Screen, so leaving and coming back can't lose which offers are already signed. */
+  /** Opens RosterReplaceScreen over this screen rather than as an App Screen, so leaving and returning can't lose which offers are signed. */
   const [rosterReplaceEntry, setRosterReplaceEntry] = useState<RosterEntry | null>(null);
   /** The last hero signed, for the header's live readout. */
   const [signed, setSigned] = useState<string | null>(null);
-  /**
-   * Rising counter used as a React key for the seal stamp over the stage.
-   * A counter, not a boolean: the stamp is a mount-once animation (same
-   * idiom as the draft's bind flare and LevelUpScreen's charge), so
-   * remounting it is what replays it — a second contract signed in the same
-   * visit can't inherit the first one's half-finished stamp, and there is
-   * nothing to clean up afterwards.
-   */
+  /** React key for the seal stamp: a rising counter, so remounting replays the mount-once animation. */
   const [stampTick, setStampTick] = useState(0);
 
   const featured = offers.find((entry) => entry.rosterId === featuredRosterId) ?? offers[0];
-  /** What actually arrives: the veteran's build minus the gear that doesn't carry over. */
   const arriving: RosterEntry = { ...featured, equipment: createEmptyLoadout() };
   const hero = heroes[featured.heroId];
   const featuredClaimed = claimedRosterIds.includes(featured.rosterId);
@@ -107,7 +68,6 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone }: 
   const rosterFull = run.roster.length >= ROSTER_CAP;
   const allClaimed = claimedRosterIds.length >= offers.length;
   const canSign = contracts > 0 && !featuredClaimed;
-  /** No offer left to take, or nothing left to pay with — the bottom button is now the screen's only live control. */
   const nothingLeftToSign = allClaimed || contracts <= 0;
 
   const passiveCounts = entryPassiveCounts(arriving, {});
@@ -124,16 +84,8 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone }: 
     if (onClaim(featured)) markSigned(featured);
   }
 
-  /**
-   * Marks an offer signed and moves the stage on to whoever is still
-   * available, so a second contract doesn't need a rail tap to spend.
-   *
-   * This is also where the signature lands — not `handleSign` — because the
-   * roster-full path detours through RosterReplaceScreen first, and a wax
-   * seal that stamped before the player had chosen who to terminate would be
-   * congratulating them on a deal they might still back out of. Both paths
-   * reach here only once the hero is actually on the roster.
-   */
+  // The stamp lands here, not in handleSign: the roster-full path detours through
+  // RosterReplaceScreen first, and both paths reach here only once the hero is on the roster.
   function markSigned(entry: RosterEntry) {
     playSfx('contract.sign');
     setStampTick((n) => n + 1);
@@ -159,11 +111,7 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone }: 
           Recruit Contract
         </h2>
 
-        {/* The price, counted out. Same fixed-denominator pip idiom as the
-            draft's pact sockets, except the denominator here is what the
-            player owns — so the track both answers "how many do I have" and,
-            by dimming the leftmost seal the moment a signable hero is on
-            stage, shows which one this signature costs. */}
+        {/* Contracts owned as seal pips; the leftmost dims while a signable hero is on stage. */}
         <div
           className={`recruit-contracts${canSign ? ' is-spending' : ''}`}
           aria-label={`${contracts} Recruit Contract${contracts === 1 ? '' : 's'} available`}
@@ -192,11 +140,6 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone }: 
       </header>
 
       <div className="draft-stage">
-        {/* The signature: a seal pressed onto the stage over the hero who
-            just joined. Gold rather than the candidate's type colour — the
-            draft's bind flare is the hero's own domain closing around them,
-            and this is the opposite transaction, a contract of the player's
-            being spent on them. */}
         {stampTick > 0 && (
           <span key={stampTick} className="recruit-stamp" aria-hidden="true">
             <span className="recruit-stamp-ring" />
@@ -214,11 +157,6 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone }: 
           <h3 className="draft-name">{hero.name}</h3>
           <StageTypes types={rosterEntryTypes(hero, featured)} />
 
-          {/* What a veteran brings that a drafted rookie cannot: the branches
-              they already took. "Arrives with branches partially locked"
-              (CLAUDE.md) is the whole character of this acquisition path, and
-              it was previously invisible until the hero was already on the
-              roster. */}
           {(evolutions.length > 0 || heroClass) && (
             <div className="recruit-veteran">
               {evolutions.map((path) => (
@@ -234,11 +172,8 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone }: 
           <StageKit moveIds={featured.unlockedMoveIds} onPick={setPopupMove} />
         </div>
 
-        {/* Silenced for the delegated click sound only while it can actually
-            sign: `contract.sign` is the sound of this press, and a `ui.tap`
-            underneath it would blur the stamp. Left alone when inert so the
-            listener's own disabled rule still supplies the refusal buzz —
-            `data-sfx="none"` wins over that (audio/uiSfx.ts resolveSfx). */}
+        {/* `data-sfx="none"` only while it can sign — `contract.sign` is this press's sound. Left
+            off when inert so the delegated listener's disabled buzz still fires (audio/uiSfx.ts). */}
         <button
           className={`draft-choose recruit-sign${featuredClaimed ? ' chosen' : ''}`}
           data-sfx={canSign ? 'none' : undefined}
@@ -255,8 +190,6 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone }: 
         </button>
       </div>
 
-      {/* Only drawn for a second offer: a rail of one is a button that
-          switches to what is already on stage. */}
       {offers.length > 1 && (
         <StageRail>
           {offers.map((entry) => {
@@ -276,16 +209,8 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone }: 
         </StageRail>
       )}
 
-      {/* Deliberately the quiet button while a signature is still possible —
-          walking away must not be the loudest thing on a screen whose point
-          is the commit above it (see `.recruit-screen > .recruit-leave`).
-          ┄
-          Once nothing is left to sign, that reasoning inverts: this is not
-          "the way past the decision" any more, it IS the decision, and the
-          only control on the screen that still does anything. `is-only-option`
-          gives it back the gold slab every other terminal CTA in the run loop
-          wears, so the player isn't left hunting a greyed-looking button for
-          the way out. */}
+      {/* Quiet while a signature is still possible; `is-only-option` restores the gold slab once
+          this is the only live control on the screen. */}
       <button
         className={`resolve-button recruit-leave${nothingLeftToSign ? ' is-only-option' : ''}`}
         onClick={onDone}

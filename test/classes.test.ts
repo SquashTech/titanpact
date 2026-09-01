@@ -1,8 +1,4 @@
-// The Class system (src/data/classes.ts, src/run/classes.ts): a Class is a
-// Passive whose only content is a flat, thematic two-stat grant, and a hero
-// can hold at most one per run. Covers the authored catalog's validity, the
-// grant/replace mechanic, and the buildCombatState seam that actually moves
-// the buff into a fought combatant's stats.
+// The Class system (src/data/classes.ts, src/run/classes.ts): a Class is a statGrants-only Passive; one per hero per run.
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -17,7 +13,7 @@ import { getEffectiveStat } from '../src/engine/state';
 import { grantClass, chosenClass, ClassError } from '../src/run/classes';
 import { passiveStatModifiers } from '../src/run/passives';
 
-// --- Catalog validity --------------------------------------------------
+// --- Catalog validity ---
 
 test('classes: every fixture class is valid content (multiples of 5/10, does something)', () => {
   for (const cls of Object.values(classes)) {
@@ -45,7 +41,7 @@ test('classes: no class touches manaPool/mpRegen (open question, not yet decided
   }
 });
 
-// --- grantClass / chosenClass -------------------------------------------
+// --- grantClass / chosenClass ---
 
 function seedRoster(heroIds: string[]) {
   let run = createRunState(10);
@@ -82,7 +78,7 @@ test('classes: chosenClass resolves a granted classId back to its full data, or 
   assert.strictEqual(chosenClass(classes, withWarrior.roster[0])?.name, 'Class - Warrior');
 });
 
-// --- passiveStatModifiers (src/run/passives.ts) -------------------------
+// --- passiveStatModifiers (src/run/passives.ts) ---
 
 test('classes: passiveStatModifiers reads a held Class passive\'s statGrants back into StatModifiers', () => {
   const mods = passiveStatModifiers({ warrior: 1 }, classes);
@@ -99,7 +95,7 @@ test('classes: passiveStatModifiers ignores passives with no statGrants (e.g. pu
   assert.deepStrictEqual(mods, {});
 });
 
-// --- buildCombatState integration ---------------------------------------
+// --- buildCombatState integration ---
 
 test('buildCombatState: a granted Class raises the combatant\'s effective stats in a real fight', () => {
   let run = seedRoster(['cinderKnight', 'tidecaller']);

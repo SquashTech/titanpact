@@ -1,11 +1,5 @@
-/**
- * The public audio surface. Everything outside src/audio/ talks to the game's
- * sound through this file and nothing else — call `playSfx('ui.confirm')`,
- * never touch an AudioContext.
- *
- * Volume and mute persist in localStorage so a player who turns the game
- * down stays turned down across sessions.
- */
+// The public audio surface: everything outside src/audio/ goes through `playSfx`.
+// Volume and mute persist in localStorage.
 
 import { sounds, type SfxId } from './sounds';
 import { playSpec, setMasterVolume, setMusicVolume, setSfxVolume, unlockAudio, type PlayOptions } from './synth';
@@ -16,7 +10,7 @@ interface AudioPrefs {
   muted: boolean;
   /** 0–1, the effects bus. */
   sfx: number;
-  /** 0–1, reserved for the atmospheric music tracks. */
+  /** 0–1, the music bus. */
   music: number;
 }
 
@@ -25,12 +19,8 @@ const DEFAULT_PREFS: AudioPrefs = { muted: false, sfx: 0.7, music: 0.5 };
 let prefs: AudioPrefs = { ...DEFAULT_PREFS };
 let started = false;
 
-/**
- * Last play time per sound id. Several beats can land inside one frame (a
- * spread move hitting two targets, a status tick chain), and two identical
- * impacts a millisecond apart don't sound like two hits — they sound like
- * one loud, phasey hit. Suppressing the duplicate is better than either.
- */
+// Two identical impacts a millisecond apart (a spread move, a tick chain) sound like one
+// loud phasey hit, so the duplicate is suppressed.
 const lastPlayedAt = new Map<SfxId, number>();
 const DEDUPE_MS = 35;
 
@@ -45,8 +35,7 @@ function loadPrefs(): AudioPrefs {
       music: typeof parsed.music === 'number' ? parsed.music : DEFAULT_PREFS.music,
     };
   } catch {
-    // Private-mode Safari throws on localStorage access rather than
-    // returning null. Silence there means silent settings, not a crash.
+    // Private-mode Safari throws on localStorage access.
     return { ...DEFAULT_PREFS };
   }
 }
@@ -55,7 +44,7 @@ function savePrefs(): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
   } catch {
-    /* Storage unavailable — the session's settings still apply, just don't persist. */
+    /* Storage unavailable — settings still apply for the session. */
   }
 }
 
@@ -65,11 +54,7 @@ function applyPrefs(): void {
   setMusicVolume(prefs.music);
 }
 
-/**
- * Installs the audio system. Call once at startup. The AudioContext itself
- * stays suspended until the first real gesture — browsers require that — so
- * this also arms one-shot unlock listeners.
- */
+/** Installs the audio system; call once at startup. Arms the gesture-unlock listeners. */
 export function initSfx(): void {
   if (started) return;
   started = true;
@@ -79,8 +64,7 @@ export function initSfx(): void {
     unlockAudio();
     applyPrefs();
   };
-  // pointerdown rather than click: it fires at the start of the press, so the
-  // context is already running by the time the press's own sound plays.
+  // pointerdown, not click: the context is running by the time the press's own sound plays.
   window.addEventListener('pointerdown', unlock, { capture: true });
   window.addEventListener('keydown', unlock, { capture: true });
   window.addEventListener('touchstart', unlock, { capture: true, passive: true });
@@ -99,19 +83,10 @@ export function playSfx(id: SfxId, opts: PlayOptions = {}): void {
   playSpec(spec, opts);
 }
 
-export function isMuted(): boolean {
-  return prefs.muted;
-}
-
 export function setMuted(muted: boolean): void {
   prefs.muted = muted;
   applyPrefs();
   savePrefs();
-}
-
-export function toggleMuted(): boolean {
-  setMuted(!prefs.muted);
-  return prefs.muted;
 }
 
 export function getAudioPrefs(): Readonly<AudioPrefs> {

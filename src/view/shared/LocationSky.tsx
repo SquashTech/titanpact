@@ -2,73 +2,45 @@ import { useMemo, type CSSProperties } from 'react';
 import type { AmbienceKind, LocationDefinition } from '../../data/locations';
 import { LocationHorizon } from './locationArt';
 
-/**
- * The arrival screen's place (docs/locations.md §4). Same full-bleed,
- * z-index-0, "a place, not a container" contract as `NodeSky`
- * (NodeStage.tsx) — it deliberately keeps the `.node-sky` class so
- * `.node-screen`'s existing stacking rule and negative-inset already apply to
- * it — but with two things NodeSky has no business knowing about:
- *
- * 1. a **horizon silhouette** along the bottom edge (locationArt.tsx), and
- * 2. an **ambience** that is not the one rising-ember keyframe every other
- *    screen shares.
- *
- * Point 2 is the one worth defending. Reusing `title-ember-rise` for all six
- * locations was the first attempt, and it made the Necropolis look like a
- * cold-tinted foundry: everything still drifted *upward*, so snow rose. What
- * separates a forest from a foundry at a glance is as much motion as colour,
- * so each kind gets its own keyframe (styles.css, "Location sky" block) and
- * its own particle proportions below.
- *
- * The scatter is a golden-angle sequence, not `Math.random` — the same trick
- * the title, draft and node skies use, so positions are stable across
- * re-renders with no seed to store.
- */
+// The arrival screen's place (docs/locations.md §4): NodeSky's contract (keeps `.node-sky` so
+// `.node-screen`'s stacking rule applies) plus a horizon band and a per-kind ambience. Each kind
+// has its own keyframe — one shared rising-ember animation made snow rise. Scatter is a
+// golden-angle sequence so positions are stable across re-renders with no seed.
 
 interface AmbienceSpec {
   count: number;
-  /** CSS animation-name; authored in styles.css alongside the rest of this system. */
+  /** CSS animation-name, authored in styles.css "Location sky". */
   animation: string;
   /** px, min and span. */
   size: [number, number];
   /** seconds, min and span. */
   duration: [number, number];
-  /** px of horizontal travel, min and span. Negative values are produced by centring the range. */
+  /** px of horizontal travel, min and span. */
   drift: [number, number];
   /** Multiplier on height — >1 elongates a particle into a streak (rain). */
   stretch?: number;
 }
 
 const AMBIENCE: Record<AmbienceKind, AmbienceSpec> = {
-  /** Warm, lazy, wandering wide — the only ambience that should read as alive. */
   fireflies: { count: 16, animation: 'loc-rise-wander', size: [2, 3], duration: [7, 5], drift: [-30, 60] },
-  /** Fast, hot, tight — updraft off a furnace, not a breeze. */
   embers: { count: 24, animation: 'loc-rise-fast', size: [2, 3], duration: [3.5, 3], drift: [-14, 28] },
-  /** Falls and sways. Big, soft, slow. */
   snow: { count: 26, animation: 'loc-fall-sway', size: [2, 4], duration: [8, 5], drift: [-26, 52] },
-  /** Falls hard on a slant, and is drawn as a streak rather than a dot (see `stretch`). */
   rain: { count: 34, animation: 'loc-fall-streak', size: [1, 1], duration: [0.9, 0.7], drift: [-40, 20], stretch: 12 },
-  /** Barely moves. Drifts up and very wide — the air itself is doing something. */
   spores: { count: 14, animation: 'loc-drift-up', size: [3, 4], duration: [12, 7], drift: [-48, 96] },
-  /** Falls slowly while pulsing, so the field reads as script rather than weather. */
   sigils: { count: 18, animation: 'loc-fall-pulse', size: [3, 3], duration: [9, 6], drift: [-18, 36] },
 };
 
 function useField(kind: AmbienceKind, density: number) {
   return useMemo(() => {
     const spec = AMBIENCE[kind];
-    // Floored at one: a location whose weather rounds away to nothing has lost
-    // its identity, it has not become quiet.
+    // Floored at one: a location whose weather rounds away has lost its identity, not gone quiet.
     const count = Math.max(1, Math.round(spec.count * density));
     return Array.from({ length: count }, (_, i) => {
       const seed = i * 137.51;
       const size = spec.size[0] + ((seed * 0.13) % spec.size[1]);
       return {
         left: seed % 100,
-        // NEGATIVE: a positive delay leaves the sky empty for as long as the
-        // longest delay (13s for snow), so the screen you actually arrive on
-        // has no weather in it. Offsetting backwards starts every particle
-        // mid-flight, so the field is full on the first frame.
+        // Negative delay starts every particle mid-flight so the field is full on the first frame.
         delay: -((seed * 1.7) % (spec.duration[0] + spec.duration[1])),
         duration: spec.duration[0] + ((seed * 0.37) % spec.duration[1]),
         width: size,
@@ -80,17 +52,8 @@ function useField(kind: AmbienceKind, density: number) {
 }
 
 /**
- * The particle field on its own, so a screen that wants a location's weather
- * without inheriting its whole sky can have it — which is exactly what the map
- * well needs (MapScreen's `MapAtmosphere`).
- *
- * `data-ambience` now lives on THIS element rather than on `.location-sky`,
- * because it is the only ancestor both call sites share and the per-kind mote
- * shapes in styles.css key off it.
- *
- * `density` scales the authored count. The arrival screen runs at a full 1;
- * the map runs thinner, because the map is a screen you *plan* on and its
- * weather has to stay behind the route rather than compete with it.
+ * The particle field alone (the map well uses it without the sky). `data-ambience` lives here
+ * because styles.css keys per-kind mote shapes off it. `density` scales the authored count.
  */
 export function LocationMotes({ kind, density = 1 }: { kind: AmbienceKind; density?: number }) {
   const field = useField(kind, density);
@@ -120,23 +83,9 @@ export function LocationMotes({ kind, density = 1 }: { kind: AmbienceKind; densi
 }
 
 /**
- * A location's weather and horizon as one drop-in layer, for any surface that
- * wants to stand *in* the place without adopting the arrival screen's whole
- * sky: the map well (`.map-atmosphere`) and every node screen
- * (`.node-location`, NodeStage's `NodeSky`).
- *
- * It sets `--node-rgb` to the location's tint **on its own root**, which is
- * the point of the component. On the map that is already the ambient value
- * and the assignment is a no-op; on a node screen it very much is not — those
- * screens set `--node-rgb` to their own semantic tint (gold for a cache,
- * violet for a relic, teal for the Mentor), and that tint is load-bearing:
- * it is how a screen says what *kind* of moment this is. Scoping the location's
- * colour to this subtree is what lets the two coexist — the node keeps the
- * event, the location gets the ground.
- *
- * `className` rather than a fixed class because the two call sites need
- * genuinely different boxes (the map's reaches back over the well's padding
- * and clips to its radius; a node screen's is a plain full-bleed inset).
+ * Weather + horizon as one layer for the map well and node screens. Sets `--node-rgb` to the
+ * location tint on its own root so a node screen's semantic tint (gold cache, violet relic) keeps
+ * the wash and header while the location gets the ground.
  */
 export function LocationAmbience({
   location,

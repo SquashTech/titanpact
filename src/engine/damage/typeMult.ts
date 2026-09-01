@@ -1,17 +1,12 @@
-// Type-effectiveness resolution (docs/types-and-heroes.md "Effectiveness resolution").
-// The 15x15 matrix itself is DATA (src/data/typechart.ts); this module only
-// implements how cells combine.
+// Type-effectiveness resolution. The 15×15 matrix is data (src/data/typechart.ts);
+// this module only combines cells.
 
 import type { TypeId } from '../content';
 
 /** chart[moveType][defenderType] -> multiplier for a single type pairing. */
 export type TypeChart = Record<TypeId, Record<TypeId, number>>;
 
-/**
- * LOCKED (docs/types-and-heroes.md "Effectiveness resolution", 2026-08-15):
- * soft 0.25x floor only, no hard immunities. Multiplicative dual-type
- * stacking always clamps here — no chart cell should ever be authored as 0.
- */
+// Locked: soft 0.25× floor, no hard immunities (CLAUDE.md) — no chart cell may be authored as 0.
 export const TYPE_MULT_FLOOR = 0.25;
 
 export function resolveTypeMult(
@@ -28,7 +23,7 @@ export function resolveTypeMult(
   return Math.max(mult, floor);
 }
 
-/** STAB = 1.25x if the move's type matches ANY of the user's types (never doubles for dual match). */
+// Locked: STAB = 1.25 if the move's type is one of the user's types; never doubles for a dual match (CLAUDE.md)
 export const STAB_MULTIPLIER = 1.25;
 
 export function resolveStab(moveType: TypeId, attackerTypes: readonly TypeId[]): number {

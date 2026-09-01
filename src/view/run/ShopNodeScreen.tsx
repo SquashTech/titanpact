@@ -9,37 +9,16 @@ import { NodeSky, NODE_TINT_MANA } from '../shared/NodeStage';
 interface Props {
   run: RunState;
   offers: GuildHallOffers;
-  /** Equipment already bought on this visit — carried on the `shop` Screen (App.tsx) because a purchase unmounts this whole screen through the equip gate. */
+  /** Carried on the `shop` Screen (App.tsx) because a purchase unmounts this screen through the equip gate. */
   soldOutEquipmentIds: readonly string[];
   onRunChange: (next: RunState) => void;
-  /** Equipment purchases route through App.tsx's forced equip-or-trash gate — GuildHallPanel can't transition to that screen itself. */
   onBuyEquipment: (itemId: string) => void;
-  /** Recruiting at a full roster routes through App.tsx's RosterReplaceScreen gate — same reason as onBuyEquipment. */
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   onContinue: () => void;
 }
 
-/**
- * A `shop` map node (docs/run-loop.md): the existing GuildHallPanel, which
- * previously only ever lived inside SquadSelectScreen and had no exit of its
- * own, wrapped with a Continue button so it can stand alone as a node.
- *
- * It carried `.node-screen` from the day it was written but never actually
- * stood on the stage — no sky, no tint — so it was the one node in the run
- * loop rendered on bare page background. Giving it the sky is what lets it
- * carry the act's Location like every other node screen (docs/locations.md
- * §5.5); the tint is `NODE_TINT_MANA`, which is the same blue the Guild Hall's
- * own tile wears on the map (MapScreen's NODE_COLORS), so arriving here looks
- * like arriving at the thing you tapped.
- *
- * The Continue button stands down while the panel has a modal open
- * (2026-08-31, user report). A hero sheet's own "Recruit X — 50g" confirm is
- * a full-width gold button in the middle of the screen, and this one is a
- * full-width gold button just below it, outside the panel but visibly through
- * its scrim — two identical-looking CTAs for two completely different
- * commitments. Hiding it while a modal is up leaves exactly one press on
- * screen, which is what a modal is for.
- */
+// The `shop` node. Continue stands down while the panel has a modal open —
+// otherwise two identical gold CTAs sit on screen for two different commitments.
 export function ShopNodeScreen({
   run,
   offers,
@@ -53,12 +32,8 @@ export function ShopNodeScreen({
   return (
     <div className="node-screen shop-node-screen" style={{ '--node-rgb': NODE_TINT_MANA } as CSSProperties}>
       <NodeSky />
-      {/* The full Manage Roster screen behind the corner glyph, not the
-          read-only peek (user direction, 2026-08-31). A shop's real question
-          is "do I already have something better in that slot", and answering
-          it needs the whole roster's equipment laid out at once — plus the
-          ability to shuffle gear between heroes before deciding what is
-          actually worth buying. See RosterPeek's `onRunChange`. */}
+      {/* Full Manage Roster behind the glyph, not the read-only peek — a shop's
+          question is "do I already have something better in that slot". */}
       <RosterPeek run={run} onRunChange={onRunChange} />
       <div className="screen-scroll">
         <GuildHallPanel

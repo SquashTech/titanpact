@@ -19,13 +19,18 @@ interface Props {
   onClose: () => void;
 }
 
-/**
- * Read-only hero browser, reachable from the title screen before a run even
- * starts. Shows every authored HeroDefinition's base stats — unlike
- * HeroPreviewOverlay, there's no RosterEntry here (no level, no Evolution
- * grants, no equipment): this is the hero as designed, not a specific run's
- * build of it.
- */
+// Primary type in type-chart order (TYPES); a stable sort keeps same-type heroes in authoring order.
+function byPrimaryType(a: HeroDefinition, b: HeroDefinition): number {
+  return TYPES.indexOf(a.types[0] as (typeof TYPES)[number]) - TYPES.indexOf(b.types[0] as (typeof TYPES)[number]);
+}
+const STARTER_HEROES = Object.values(heroes).filter((hero) => hero.starter).sort(byPrimaryType);
+const RECRUIT_HEROES = Object.values(heroes).filter((hero) => !hero.starter).sort(byPrimaryType);
+// Slot order, then rarity; stable, so same-slot-same-rarity items keep authoring order.
+const EQUIPMENT_LIST = Object.values(equipment).sort(
+  (a, b) => EQUIP_SLOT_ORDER.indexOf(a.slot) - EQUIP_SLOT_ORDER.indexOf(b.slot) || RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity)
+);
+
+/** The hero as authored — base stats only, no RosterEntry (no level, Evolution grants or equipment). */
 function CompendiumHeroCard({ hero }: { hero: HeroDefinition }) {
   return (
     <div className="roster-mgmt-card" style={{ borderLeftColor: getTypeColor(hero.types[0]) }}>
@@ -42,8 +47,6 @@ function CompendiumHeroCard({ hero }: { hero: HeroDefinition }) {
         </div>
       </div>
 
-      {/* hero.types, not an entry’s effective types — the Compendium shows the
-          hero as authored, so no Evolution graft exists to fold in here. */}
       <div className="detail-section-title"><SectionGlyph name="matchups" /> Matchups</div>
       <TypeMatchups types={hero.types} />
 
@@ -53,7 +56,7 @@ function CompendiumHeroCard({ hero }: { hero: HeroDefinition }) {
   );
 }
 
-/** "+10 Attack, +20 HP, Fire Force +10" — mirrors NodeRewardScreen's itemHighlights, folding passive/status grants in alongside raw stats so a stat-less item (e.g. an Elemental Force accessory) never reads as blank on the card face. */
+/** Card-face summary, folding passive/status grants in so a stat-less item never reads as blank. Uses the short STAT_LABELS, unlike EquipChoiceCard's full-word `itemHighlights` — not interchangeable. */
 function itemHighlights(item: EquipmentDefinition): string[] {
   const statParts = Object.entries(item.statGrants)
     .filter(([, amount]) => amount)
@@ -70,7 +73,7 @@ interface CompendiumEquipmentCardProps {
   onInspect: () => void;
 }
 
-/** Read-only version of NodeRewardScreen's EquipCacheCard — same card visual (rarity-tinted left border, icon badge, one-line highlight summary) but tap just opens the detail popup, no select-then-claim step. */
+/** Read-only EquipChoiceCard: tap opens the detail popup, no select-then-claim. */
 function CompendiumEquipmentCard({ item, onInspect }: CompendiumEquipmentCardProps) {
   const highlights = itemHighlights(item);
   return (
@@ -98,21 +101,9 @@ function CompendiumEquipmentCard({ item, onInspect }: CompendiumEquipmentCardPro
 type CompendiumTab = 'starters' | 'recruitable' | 'equipment';
 
 export function CompendiumScreen({ onClose }: Props) {
-  /** Starters is the default tab; Recruitable and Equipment are additional tabs the player has to select — the hero pools mirror the draft vs. Guild Hall split (HeroDefinition.starter, src/data/heroes.ts), Equipment is every authored item regardless of drop source. */
   const [tab, setTab] = useState<CompendiumTab>('starters');
   const [inspectItemId, setInspectItemId] = useState<string | null>(null);
-  // Ordered by the hero's primary type's position in the 15-type chart
-  // (src/data/typechart.ts TYPES), not authoring order — a stable sort keeps
-  // same-primary-type heroes (e.g. Warden/Valor, both Iron) in their existing
-  // relative order instead of reshuffling them further.
-  const heroList = Object.values(heroes)
-    .filter((hero) => (tab === 'starters' ? hero.starter : !hero.starter))
-    .sort((a, b) => TYPES.indexOf(a.types[0] as (typeof TYPES)[number]) - TYPES.indexOf(b.types[0] as (typeof TYPES)[number]));
-
-  // Weapon, then armor, then accessory (EQUIP_SLOT_ORDER); within a slot, common through mythic (RARITY_ORDER); a stable sort keeps same-slot-same-rarity items in their authoring order.
-  const equipmentList = Object.values(equipment).sort(
-    (a, b) => EQUIP_SLOT_ORDER.indexOf(a.slot) - EQUIP_SLOT_ORDER.indexOf(b.slot) || RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity)
-  );
+  const heroList = tab === 'starters' ? STARTER_HEROES : RECRUIT_HEROES;
   const inspectItem = inspectItemId ? equipment[inspectItemId] : null;
 
   return (
@@ -138,7 +129,7 @@ export function CompendiumScreen({ onClose }: Props) {
         <div className="screen-scroll">
           {tab === 'equipment' ? (
             <div className="equip-cache-list">
-              {equipmentList.map((item) => (
+              {EQUIPMENT_LIST.map((item) => (
                 <CompendiumEquipmentCard key={item.id} item={item} onInspect={() => setInspectItemId(item.id)} />
               ))}
             </div>

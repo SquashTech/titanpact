@@ -1,8 +1,4 @@
-// Bring-6-pick-4 squad selection (docs/combat.md "Bring-6-pick-4 sideboard",
-// CLAUDE.md "Roster hard cap = 6, doubling as the bring-6-pick-4 battle
-// sideboard"). Turns a chosen subset of the roster into the {active, bench}
-// shape buildCombatState.ts needs to seed a CombatState. This module knows
-// nothing about combat state or hero content — it only validates the pick.
+// Bring-6-pick-4 squad selection: validates the pick and shapes it for buildCombatState.ts.
 
 import type { RosterEntry } from './state';
 
@@ -14,18 +10,12 @@ export interface Squad {
 
 export class SquadSelectionError extends Error {}
 
-/** How many heroes a fight fields, given the current roster size — exactly 4 (2 active + 2 bench) once the roster reaches 4, or the whole roster below that (docs/combat.md "bring-6-pick-4"). A player must never be able to under-pick and leave a recruited hero benched by omission. */
+/** Exactly 4 once the roster reaches 4, the whole roster below that — a hero can never be benched by omission. */
 export function requiredSquadSize(rosterSize: number): number {
   return Math.min(4, rosterSize);
 }
 
-/**
- * Picks a squad from the roster. A fight fields 4 (2 active + 2 bench) per
- * docs/combat.md; below 4 recruited heroes (early run), the whole roster must
- * be picked — no partial pick is legal, so a player can never accidentally
- * bench a hero by leaving them unselected. The first two picks become the
- * active pair; the rest start benched.
- */
+/** The first two picks become the active pair; the rest start benched. */
 export function pickSquad(roster: readonly RosterEntry[], pickedRosterIds: readonly string[]): Squad {
   const required = requiredSquadSize(roster.length);
   if (pickedRosterIds.length !== required) {

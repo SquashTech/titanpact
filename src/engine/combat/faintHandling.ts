@@ -1,20 +1,13 @@
-// Shared "land an HP change on state" logic — the one place that owns how
-// damage and healing actually mutate currentHp and trigger a faint, so move
-// damage, move healing, and status DoT/HoT ticks (engine/combat/statusEngine.ts)
-// all produce identical HpChanged/Fainted behavior instead of three copies of
-// it. Extracted from the logic that used to live inline in resolveRound.ts's
-// move-damage branch.
+// The one place an HP change lands on state, so move damage, healing and
+// status ticks all produce identical HpChanged/Fainted behaviour.
 
 import type { CombatState } from '../state';
 import type { CombatEvent } from '../events';
-import { findCombatantSide } from './targeting';
 
 /**
- * Applies `delta` to `targetId`'s currentHp (negative = damage, floors at 0
- * and can faint; positive = heal, caps at maxHp and never faints), emitting
- * HpChanged and — for a damage delta that brings HP to 0 — Fainted, mirroring
- * the KO-handling in resolveRound.ts (koCount increment, active slot cleared).
- * No-ops (returns state unchanged, no events) if the target is already fainted.
+ * Applies `delta` to currentHp (negative floors at 0 and can faint; positive caps at
+ * maxHp). Emits HpChanged and, on a KO, Fainted (koCount incremented, slot cleared).
+ * No-ops on an already-fainted target.
  */
 export function applyHpDelta(
   state: CombatState,
@@ -31,14 +24,8 @@ export function applyHpDelta(
   const newHp = delta < 0 ? Math.max(0, raw) : Math.min(maxHp, raw);
   const fainted = delta < 0 && newHp <= 0;
 
-  // The single choke point every HP loss in the engine goes through, which is
-  // why Combatant.damageTakenSinceLastTurn is accumulated here rather than at
-  // each call site: attacks, Conduct detonations, Bleed/Poison ticks and a
-  // hero's own recoil all count without any of them opting in. Counts the HP
-  // ACTUALLY removed, so overkill into a 4 HP target banks 4 and not 40 —
-  // Stone's Retribution pays out on the punishment absorbed, not on the
-  // punishment aimed. Healing (delta >= 0) never decrements it: the counter is
-  // a record of what happened, not a running HP deficit.
+  // damageTakenSinceLastTurn accumulates here (every HP loss passes through), counting
+  // HP ACTUALLY removed. Healing never decrements it.
   const damageTaken = delta < 0 ? target.damageTakenSinceLastTurn + (previousHp - newHp) : target.damageTakenSinceLastTurn;
 
   let working: CombatState = {
@@ -48,7 +35,7 @@ export function applyHpDelta(
   const events: CombatEvent[] = [{ type: 'HpChanged', round, combatantId: targetId, previousHp, newHp, maxHp }];
 
   if (fainted) {
-    const side = findCombatantSide(working, targetId);
+    const side = target.side;
     const koCount = working.koCount[side] + 1;
     working = {
       ...working,

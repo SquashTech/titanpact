@@ -1,7 +1,5 @@
-// The Passives contract (engine/content.ts PassiveDefinition, engine/combat/
-// passiveEngine.ts) — covers the two effect shapes end to end: Sanguine
-// (reactive, heals off an enemy's Bleed tick) and Emberheart (damage
-// modifier, conditional on move type, stacking multiplicatively).
+// The Passives contract (engine/content.ts PassiveDefinition, passiveEngine.ts): reactive (Sanguine,
+// Firestarter), damage modifier (Emberheart), conditional stat grant (Bloodthirsty), run-tier aggregation.
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -62,7 +60,7 @@ function withPassive(state: CombatState, combatantId: string, passiveId: string,
   };
 }
 
-// --- isValidPassiveDefinition -------------------------------------------
+// --- isValidPassiveDefinition ---
 
 test('passives: fixture catalog (sanguine, emberheart, and the merged-in Class catalog) is all valid content', () => {
   for (const passive of Object.values(passives)) {
@@ -88,7 +86,7 @@ test('passives: isValidPassiveDefinition accepts a statGrants-only passive (a Cl
   );
 });
 
-// --- matchesTrigger: relation matching ---------------------------------------
+// --- matchesTrigger ---
 
 test('passives: matchesTrigger relation — self/ally/enemy read correctly off side + identity', () => {
   const selfCond = { relativeTo: 'self' as const };
@@ -110,7 +108,7 @@ test('passives: matchesTrigger also requires every eventFieldEquals key to match
   assert.strictEqual(matchesTrigger(cond, { statusId: 'Bleed', kind: 'duration' }, 'a1', 'A', 'b1', 'B'), false);
 });
 
-// --- Sanguine: reactive, off an enemy's Bleed tick ---------------------------
+// --- Sanguine: reactive, off an enemy's Bleed tick ---
 
 test('passives: Sanguine heals its owner by the enemy Bleed tick amount', () => {
   const state = twoVTwoFixture(300);
@@ -151,7 +149,7 @@ test('passives: two stacks of Sanguine heal twice per enemy Bleed tick', () => {
   assert.strictEqual(next.combatants.a1.currentHp, 10 + expectedTick * 2);
 });
 
-// --- Emberheart: damage-pipeline modifier, conditional + stacking -----------
+// --- Emberheart: damage-pipeline modifier, conditional + stacking ---
 
 test('passives: collectPassiveDamageModifiers only matches the conditioned move type', () => {
   const state = twoVTwoFixture(310);
@@ -187,10 +185,7 @@ test('passives: Emberheart actually raises rolled damage on a Fire move end to e
   assert.ok(boostedDamage > plainDamage, `expected boosted damage (${boostedDamage}) > plain damage (${plainDamage})`);
 });
 
-// --- Firestarter: source-role attribution + oncePerFight ---------------------
-// The two contract additions of 2026-09-01 (engine/content.ts
-// PassiveTriggerCondition.subjectRole, reactive.oncePerFight), exercised
-// through the only content that uses them (Crimson's Pyroclasm path).
+// --- Firestarter: subjectRole attribution + oncePerFight ---
 
 const burnAlly: Action = { kind: 'move', combatantId: 'a2', moveId: 'setAlight', declaredTarget: 'b1' };
 const burnOwner: Action = { kind: 'move', combatantId: 'a1', moveId: 'setAlight', declaredTarget: 'b1' };
@@ -224,9 +219,7 @@ test('passives: Firestarter fires only once per fight — a later Burn does not 
   const first = resolveRound(state, [burnOwner], config);
   assert.strictEqual(first.state.activeFieldEffect?.fieldEffectId, 'scorchedLand');
 
-  // Something else takes the battlefield, which is the only way to tell a
-  // spent trigger apart from a no-op re-apply (setFieldEffect already ignores
-  // re-applying the effect that is already up).
+  // Override the field first: a re-apply of the same effect is already a no-op, so it could not tell a spent trigger apart.
   const overridden: CombatState = { ...first.state, activeFieldEffect: { fieldEffectId: 'stasisBubble', roundsRemaining: 5 } };
   const second = resolveRound(overridden, [burnOwner], config);
 
@@ -242,9 +235,7 @@ test('passives: two stacks of a oncePerFight passive still fire only once', () =
   assert.strictEqual(fired.length, 1);
 });
 
-// --- Bloodthirsty: the conditional stat grant --------------------------------
-// engine/content.ts PassiveConditionalStatGrants, resolved live in
-// state.ts getEffectiveStat (2026-09-01, Fang's Bloodhunt path).
+// --- Bloodthirsty: PassiveConditionalStatGrants, resolved live in getEffectiveStat ---
 
 const boardOf = (state: CombatState) => ({ active: state.activeFieldEffect, defs: fieldEffects, board: { state, passives } });
 
@@ -318,21 +309,17 @@ test('passives: Bloodthirsty moves the damage roll and the turn order, not just 
   const bleeding = withStatus(base, 'b2', 'Bleed', {});
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
 
-  // b2 Bleeds, b1 is hit: hitting the Bleeding enemy itself would fold its own
-  // Bleed tick into the HP comparison and stop measuring the ratio. b1 is also
-  // the 135-HP body, so neither roll is lethal and both numbers are real.
+  // b2 Bleeds, b1 is hit, so the Bleed tick does not fold into the HP comparison.
   const maxHp = heroes.ironWarden.baseStats.hp;
   const plain = maxHp - resolveRound(base, actions, config).state.combatants.b1.currentHp;
   const armed = maxHp - resolveRound(bleeding, actions, config).state.combatants.b1.currentHp;
   assert.ok(armed > plain, `expected the armed roll (${armed}) to beat the plain one (${plain})`);
 
-  // Speed: priority.ts reads the same hook, so the ordering the round uses and
-  // the number on the card cannot disagree.
   const withBonus = getEffectiveStat(heroes.cinderKnight, bleeding.combatants.a1, 'speed', boardOf(bleeding));
   assert.strictEqual(withBonus, heroes.cinderKnight.baseStats.speed + 20);
 });
 
-// --- Run-tier grant aggregation (src/run/passives.ts) -----------------------
+// --- Run-tier grant aggregation (src/run/passives.ts) ---
 
 const fireCharm: EquipmentDefinition = { id: 'fireCharm', name: 'Fire Charm', slot: 'accessory', rarity: 'rare', statGrants: {}, grantsPassiveIds: ['emberheart'] };
 const plainSword: EquipmentDefinition = { id: 'plainSword', name: 'Plain Sword', slot: 'weapon', rarity: 'common', statGrants: { attack: 5 } };

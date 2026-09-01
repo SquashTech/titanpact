@@ -1,7 +1,5 @@
-// Switching, bench regen, and lock-in (docs/combat.md "Switching, bench regen,
-// and lock-in"). Lock-in itself is LOCKED: 2+ KOs disables voluntary switching
-// for that side; forced replacement of a downed hero still happens regardless
-// (CLAUDE.md "Mana & tempo").
+// Switching, bench regen, and lock-in (docs/combat.md). Lock-in is locked:
+// 2+ KOs disables voluntary switching; forced replacement still happens.
 
 import type { CombatState, Side } from '../state';
 import { isLockedIn } from '../state';
@@ -18,11 +16,7 @@ function slotOf(state: CombatState, side: Side, combatantId: string): 0 | 1 {
   throw new Error(`${combatantId} is not active on side ${side}`);
 }
 
-/**
- * Voluntary switch, declared as a round action. Blocked once the side is
- * locked in (docs/combat.md lock-in rule) — the only remaining voluntary-
- * switch block now that Bind is cut.
- */
+/** Voluntary switch, declared as a round action. Throws SwitchBlockedError once the side is locked in. */
 export function applyVoluntarySwitch(
   state: CombatState,
   round: number,
@@ -37,11 +31,7 @@ export function applyVoluntarySwitch(
   return performSwitch(state, round, side, outCombatantId, inCombatantId, statusDefs);
 }
 
-/**
- * Forced replacement of a fainted active slot. Ignores lock-in by design —
- * a fainted combatant isn't voluntarily leaving, so the lock-in block on
- * voluntary switching doesn't apply here.
- */
+/** Forced replacement of a fainted active slot. Ignores lock-in by design. */
 export function applyForcedReplacement(
   state: CombatState,
   round: number,
@@ -83,9 +73,6 @@ function performSwitch(
 
   const events: CombatEvent[] = [{ type: 'SwitchedIn', round, side, slot, outCombatantId, inCombatantId }];
 
-  // docs/conditions.md §4: switching to bench clears Burn/Freeze/Daze on the outgoing combatant.
-  // (The Daze half is moot since it became flinch: switches resolve in their own
-  // bracket above every move, so a Daze can never be present when one happens.)
   if (outCombatantId) {
     const cleared = clearOnSwitch(nextState, round, outCombatantId, statusDefs);
     nextState = cleared.state;
@@ -95,14 +82,7 @@ function performSwitch(
   return { state: nextState, events };
 }
 
-/**
- * Bench HP regen at the round boundary (docs/combat.md: "Benched heroes
- * regenerate (HP, ...), which makes switching a productive action"). The
- * concrete rate is undocumented/untuned — callers pass it as data, not an
- * engine default. HP regen is bench-only, unlike mana regen (docs/mana.md
- * "every round, active + bench") — see engine/combat/manaRegen.ts, a
- * separate tick covering both active and bench.
- */
+/** Bench-only HP regen at the round boundary. The rate is untuned and passed as data. (Mana regen covers active + bench — manaRegen.ts.) */
 export function applyBenchHpRegen(
   state: CombatState,
   round: number,

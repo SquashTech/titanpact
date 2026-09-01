@@ -1,12 +1,7 @@
 import type { CSSProperties } from 'react';
 import iconset from '../../../art/2500plusIcons/No Border/Iconset.png';
 
-/**
- * A deliberately small set of icons from the supplied 2500+ Pixel Odyssey
- * sheet. Each value is the documented RPG Maker icon index (see
- * docs/icon-pack.md), which keeps the generic run UI in a single art style
- * instead of borrowing the earlier placeholder equipment/relic thumbnails.
- */
+/** RPG Maker icon indices into the 2500+ Pixel Odyssey sheet (docs/icon-pack.md). */
 const ICON_INDEX = {
   equipment: 97, // sword
   weapon: 97,
@@ -20,7 +15,7 @@ const ICON_INDEX = {
 
 export type RunGlyphKind = keyof typeof ICON_INDEX;
 
-/** Renders one 32px cell from the licensed 2500+ sheet at a crisp CSS size. */
+/** One 32px cell from the sheet. */
 export function IconsetGlyph({ index, className, title }: { index: number; className?: string; title?: string }) {
   const style = {
     '--sprite-col': index % 16,
@@ -34,7 +29,7 @@ export function RunGlyph({ kind, className, title }: { kind: RunGlyphKind; class
   return <IconsetGlyph index={ICON_INDEX[kind]} className={`run-glyph${className ? ` ${className}` : ''}`} title={title} />;
 }
 
-/** A compact typographic marker for resources with no matching supplied asset. */
+/** Typographic marker for resources with no matching sheet asset. */
 export function ResourceMark({ label, tone = 'gold', className }: { label: string; tone?: 'gold' | 'green' | 'blue'; className?: string }) {
   return (
     <span className={`resource-mark resource-mark-${tone}${className ? ` ${className}` : ''}`} aria-hidden="true">

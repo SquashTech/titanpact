@@ -1,16 +1,9 @@
-// Presentation-only color mapping for the 15 types (docs/architecture.md
-// "Resolution and presentation are separate layers" — the engine never sees
-// this). Keyed by string rather than importing TitanpactType so it degrades
-// gracefully if a type shows up here before the chart is updated.
+// Presentation-only type colors; the engine never sees these. Keyed by string
+// so an unlisted type degrades to a hashed fallback rather than blank.
 
-/* Storm and Shadow used to sit one value-step apart in the same violet
-   (#a78be0 / #7a6fa8) and read as a single type at badge size. They are now
-   split on two axes at once: Storm is the brightest, highest-chroma violet in
-   the set (lightning), Shadow the darkest and nearly achromatic (smoke).
-   Shadow stops short of true black because this same value is also used as
-   *ink* — ElementGlyph fill, the 8px type codes on LevelUpScreen — over --bg
-   #0f1117 and --panel #1b1e27, where #000 would vanish. #6a637a is as close
-   to black as that foreground duty allows while staying legible. */
+// Storm and Shadow are split on brightness AND chroma so they read apart at
+// badge size. Shadow stops short of black because it doubles as ink
+// (ElementGlyph fill, LevelUpScreen type codes) over --bg/--panel.
 const TYPE_COLORS: Record<string, string> = {
   Fire: '#e2683c',
   Water: '#4a90d9',
@@ -29,7 +22,6 @@ const TYPE_COLORS: Record<string, string> = {
   Ancient: '#8a9c5e',
 };
 
-/** Deterministic fallback for any type not in the fixture chart yet, so new content never renders blank. */
 export function getTypeColor(type: string): string {
   if (TYPE_COLORS[type]) return TYPE_COLORS[type];
   let hash = 0;
@@ -37,7 +29,7 @@ export function getTypeColor(type: string): string {
   return `hsl(${hash % 360}, 45%, 60%)`;
 }
 
-/** Three-letter badge label (TypeBadge.tsx) — Pokémon-style abbreviated type chip in place of plain colored text. */
+/** Three-letter badge label (TypeBadge.tsx). */
 const TYPE_ABBR: Record<string, string> = {
   Fire: 'FIR',
   Water: 'WTR',
@@ -67,20 +59,13 @@ function hexToRgb(hex: string): [number, number, number] | null {
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
-/**
- * "r, g, b" triplet for a type's color, for CSS that needs to build its own
- * rgba()/translucent variants (Field Effect badge/glow — FightScreen.tsx sets
- * this as a --field-effect-rgb custom property so styles.css can vary opacity
- * per state without a fixed color baked into the stylesheet). Falls back to a
- * neutral gray for the non-hex hsl() fallback getTypeColor produces for an
- * unlisted type, same graceful-degrade spirit as getTypeColor itself.
- */
+/** "r, g, b" triplet for CSS that builds its own rgba() variants; neutral gray for the non-hex fallback. */
 export function getTypeColorRgb(type: string): string {
   const rgb = hexToRgb(getTypeColor(type));
   return rgb ? rgb.join(', ') : '150, 150, 150';
 }
 
-/** Picks readable badge text (near-black or near-white) against a type color background. Non-hex colors (the hsl() fallback above) default to dark text, which reads fine against that fallback's fixed 60% lightness. */
+/** Readable badge text (near-black or near-white) against a type color; non-hex colors default to dark text. */
 export function getContrastText(bg: string): string {
   const rgb = hexToRgb(bg);
   if (!rgb) return '#161616';

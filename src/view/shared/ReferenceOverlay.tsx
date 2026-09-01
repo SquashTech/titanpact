@@ -9,7 +9,6 @@ import { passiveEmoji, passiveColor, passiveTint, passiveEffectSummary } from '.
 
 interface Props {
   onClose: () => void;
-  /** Which tab opens first — callers reached via a "Types"-flavored button (FightScreen's 📊) land on the matchup grid; a future "Statuses" entry point can open straight to the catalog instead. Defaults to the grid, matching this overlay's original type-chart-only behavior. */
   initialTab?: Tab;
 }
 
@@ -25,16 +24,7 @@ function formatCell(mult: number): string {
   return mult === 1 ? '–' : `${mult}`;
 }
 
-/**
- * Full player-facing reference, reachable from every screen that benefits
- * from a rules lookup (title, map, squad-select/battle-preview, combat).
- * Two tabs: the 15x15 type effectiveness matrix (src/data/typechart.ts) and
- * the 9-status condition catalog (src/data/statuses.ts) — the same
- * definitions StatusDetailOverlay reads for its live in-combat readout, just
- * presented as a static list instead of one instance's magnitude/duration.
- * Read-only: the matrix rendered here is the authored chart (typechart.ts),
- * so what a player reads off this table is what the damage pipeline applies.
- */
+/** Player-facing rules reference: the authored type chart, the status catalog, the passive catalog. */
 export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
   const [tab, setTab] = useState<Tab>(initialTab);
 
@@ -69,11 +59,6 @@ export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
               ))}
               {TYPES.map((row) => (
                 <div className="tc-row" key={row}>
-                  {/* Glyph-only on both axes: a header repeats down every
-                      one of 15 rows, so the three letters were being read 30
-                      times to answer a question the position already answers,
-                      and they were doing it at the 9px the 30px column
-                      allows. The glyph gets that width to itself instead. */}
                   <div className="tc-cell tc-row-header">
                     <TypeBadge type={row} iconOnly />
                   </div>
@@ -107,7 +92,6 @@ export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
   );
 }
 
-/** Mirrors StatusReferenceRow's layout exactly (same .status-ref-* classes — a catalog row is a catalog row regardless of content type) since passives don't yet have their own reference-catalog styling. */
 function PassiveReferenceRow({ def }: { def: PassiveDefinition }) {
   const emoji = passiveEmoji[def.id];
   const color = passiveColor(def.id);
@@ -138,9 +122,7 @@ function StatusReferenceRow({ def }: { def: StatusDefinition }) {
 
   return (
     <div className="status-ref-row" style={{ borderLeftColor: color }}>
-      {/* `color` as well as `background`: the glyph inside is a currentColor
-          path now (statusIcons.tsx), not the full-colour PNG this disc used to
-          hold, so the status's identity colour has to reach it from here. */}
+      {/* `color` too: the glyph is a currentColor path. */}
       <span className="status-ref-icon" style={{ color, background: statusTint(def.id, 0.16) }}>
         <StatusGlyph statusId={def.id} />
       </span>

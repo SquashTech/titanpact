@@ -1,15 +1,6 @@
-// Elemental Force: a magnitude-shape status per type (src/data/statuses.ts's
-// `${Type}Force` catalog) that adds flat BasePower to that type's moves
-// (engine/damage/damagePipeline.ts resolveElementalForceBonus). Covers all
-// three grant vectors end to end: a move's statusApplication (stokeTheFlames),
-// equipment (Ember Band), and a relic (Cinder Standard).
-//
-// stokeTheFlames is now the ONLY move in the game granting any Elemental
-// Force — it was cut with the rest of the fixture Fire moves when Fire was
-// authored (2026-08-29) and deliberately re-authored into the slate a day
-// later, at 30 mana and `bothAllies` instead of 12 and `self`. Which is why
-// the move vector is asserted through it rather than through a test-local
-// fixture: if it is ever removed again, this file is the alarm.
+// Elemental Force: the `${Type}Force` statuses add flat BasePower to that type's moves
+// (damagePipeline.ts resolveElementalForceBonus). All three grant vectors: a move's statusApplication
+// (stokeTheFlames — the only move granting any Force, asserted directly on purpose), equipment, relic.
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -54,7 +45,7 @@ function withStatus(state: CombatState, combatantId: string, statusId: string, m
   };
 }
 
-// --- calcDamage: BasePower bonus applies before every multiplier term ------
+// --- calcDamage: BasePower bonus applies before every multiplier term ---
 
 test('elementalForce: calcDamage adds basePowerBonus to BasePower before the multiplier chain', () => {
   const move: MoveDefinition = {
@@ -77,7 +68,7 @@ test('elementalForce: calcDamage adds basePowerBonus to BasePower before the mul
   assert.strictEqual(withForce.basePowerBonus, 20);
 });
 
-// --- resolveElementalForceBonus: sums only the matching type's Force -------
+// --- resolveElementalForceBonus ---
 
 test('elementalForce: resolveElementalForceBonus only counts Force statuses matching the move type', () => {
   const state = twoVTwoFixture(400);
@@ -96,7 +87,7 @@ test('elementalForce: independent Force statuses for different types both apply 
   assert.strictEqual(resolveElementalForceBonus(both.combatants.a1, 'Frost', statuses), 0);
 });
 
-// --- Stacking: reapplying via a move's statusApplication adds additively ---
+// --- Stacking ---
 
 test('elementalForce: stokeTheFlames grants Fire Force 20, and a second cast stacks additively to 40', () => {
   const state = twoVTwoFixture(402);
@@ -109,7 +100,7 @@ test('elementalForce: stokeTheFlames grants Fire Force 20, and a second cast sta
   assert.strictEqual(twice.state.combatants.a1.statuses.FireForce.magnitude, 40);
 });
 
-// --- End to end: Fire Force actually raises rolled damage on a Fire move ---
+// --- End to end ---
 
 test('elementalForce: Fire Force 20 raises rolled damage on a Fire move end to end', () => {
   const state = twoVTwoFixture(403);
@@ -139,7 +130,7 @@ test('elementalForce: Fire Force does not affect a non-Fire move', () => {
   assert.strictEqual(otherDamage, plainDamage);
 });
 
-// --- The DamageDealt event carries the bonus for view-layer transparency ---
+// --- The DamageDealt event ---
 
 test('elementalForce: DamageDealt event carries elementalForceBonus separately from basePower', () => {
   const state = twoVTwoFixture(405);
@@ -153,7 +144,7 @@ test('elementalForce: DamageDealt event carries elementalForceBonus separately f
   assert.strictEqual(dealt!.elementalForceBonus, 20);
 });
 
-// --- Run-tier grant aggregation (src/run/statusGrants.ts) -------------------
+// --- Run-tier grant aggregation (src/run/statusGrants.ts) ---
 
 const emberBandLookup: Record<string, EquipmentDefinition> = { emberBand: equipment.emberBand, dagger: equipment.dagger };
 

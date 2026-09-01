@@ -1,19 +1,6 @@
-// The 9-status condition vocabulary (docs/conditions.md, the engine's 6th
-// contract) as DATA — every status is an instance of one of 4 shapes; the
-// engine (engine/combat/statusEngine.ts) reads these flags generically rather
-// than special-casing each status by name. Replaces the earlier 8-status
-// catalog: Bind, Blight, and Expose were cut in design review; Conduct,
-// Poison, Haunt, and Stealth replace them.
-//
-// Elemental Force: one magnitude-shape status per type (`${Type}Force`,
-// generated below from typechart.ts's TYPES rather than hand-authored 15
-// times), adding its magnitude as flat BasePower to that type's moves
-// (damagePipeline.ts resolveElementalForceBonus). Granted via a move's
-// statusApplication (self-target, additive stacking — no new engine plumbing
-// needed there), or via equipment/relics at fight-build time
-// (src/run/statusGrants.ts). Persistent (no decay, doesn't clear on switch)
-// and positive (Cleanse can't strip it) since it's meant to represent a
-// standing investment, not an acute buff.
+// The status vocabulary (docs/conditions.md) as data — statusEngine.ts reads these flags
+// generically. Elemental Force is one persistent, positive magnitude status per type
+// (`${Type}Force`), adding its magnitude as flat BasePower to that type's moves.
 
 import type { StatusDefinition } from '../engine/content';
 import { TYPES, type TitanpactType } from './typechart';
@@ -69,30 +56,16 @@ export const statuses: Record<string, StatusDefinition> = {
     pipeline: 'control',
     description: 'Halves Speed. Cleared by switching.',
   },
-  // Redesigned 2026-08-30 from a duration-shape lockout (authored per-move at
-  // 2 rounds) into FLINCH, in the Pokemon sense. It is boolean, carries no
-  // number, and is gone at the end of the round it landed in.
-  //
-  // What that buys: Daze is now a bet on TURN ORDER rather than a purchase of
-  // enemy turns. resolveRound reads it live when each actor's turn comes up, so
-  // a Daze lands only if its applier moved first — a fast hero's chanced rider
-  // is a real tempo swing and a slow hero's is close to nothing. Speed and
-  // priority became the whole cost/benefit of the status, and no move has to
-  // author a magnitude to say so.
+  // Flinch: no magnitude, gone at the end of the round it lands in. resolveRound reads it live,
+  // so it only bites when the applier moved first — Speed/priority is its whole price.
   Daze: {
     id: 'Daze',
     name: 'Daze',
     shape: 'boolean',
     ticksAtEndOfRound: false,
     decay: 'none',
-    // Nothing to combine: it is present or it is not, and a second application
-    // in the same round is a no-op on a hero already denied its action.
     stacking: 'none',
-    // Kept honest rather than kept useful. Voluntary switches resolve in their
-    // own bracket ABOVE every move (priority.ts), so a Daze applied during the
-    // move phase can never be dodged by switching in the round it exists — this
-    // flag is unreachable for Daze today, and stays true because it is still
-    // what would happen.
+    // Unreachable today (switches resolve before every move) but still the correct value.
     clearsOnSwitch: true,
     clearsAtEndOfRound: true,
     pipeline: 'control',
@@ -117,17 +90,10 @@ export const statuses: Record<string, StatusDefinition> = {
     ticksAtEndOfRound: false,
     decay: 'none',
     stacking: 'none',
-    // Persists through switch — provisional call, not stated explicitly by the
-    // design doc. Treated as a mark meant to be cashed in later (same reasoning
-    // the old, now-cut Expose used), not an acute effect you dodge by pivoting.
+    // Persists through switch — provisional; treated as a mark to cash in later.
     clearsOnSwitch: false,
-    // Detonate-only. Only a move with its own `statusApplication: { statusId: 'Conduct' }`
-    // plants the mark — the authored Storm slate does it five times (moves.ts Rising
-    // Static, Jolt, Ionize, Storm Lash, Thunderbolt); ANY Storm/Iron damage move can
-    // then cash it in via this list, which is nine more Storm rows carrying this hook
-    // for free. 2026-08-21 designer correction: triggerTypes previously also drove
-    // auto-apply, which meant every Storm/Iron hit inflicted Conduct — see statusEngine.ts
-    // detonateTriggeredStatuses.
+    // Detonate-only: `triggerTypes` never auto-applies Conduct. Only a move's own
+    // statusApplication plants it (statusEngine.ts detonateTriggeredStatuses).
     triggerTypes: ['Storm', 'Iron'],
     detonateBonusPercentMaxHp: 0.1,
     pipeline: 'trigger',
@@ -177,11 +143,8 @@ export const statuses: Record<string, StatusDefinition> = {
     id: 'Provoke',
     name: 'Provoke',
     shape: 'duration',
-    // Duration 1 applied mid-round, ticking at END of round, is exactly "this
-    // turn": the tick that closes the round it was cast in takes it to 0 and
-    // removes it. Deliberately NOT Stealth's ticksAtStartOfRound — that flag
-    // exists to give Stealth a full round AFTER the one it was cast in, and
-    // Provoke is priced (25 mana, Priority +1) as a single round of soak.
+    // Duration 1 ticking at END of round = exactly the round it was cast in. Deliberately not
+    // Stealth's start-of-round tick, which would give it a full extra round.
     ticksAtEndOfRound: true,
     decay: 'none',
     stacking: 'none',

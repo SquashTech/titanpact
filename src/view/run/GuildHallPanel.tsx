@@ -17,26 +17,16 @@ import { EquipInspectOverlay, itemHighlights } from './EquipChoiceCard';
 
 interface Props {
   run: RunState;
-  /** Rolled once at node-select time (App.tsx, run/shop.ts rollGuildHallOffers) — see that module's header for why this isn't rolled here in component state. */
+  /** Rolled once at node-select time (App.tsx, run/shop.ts rollGuildHallOffers). */
   offers: GuildHallOffers;
-  /**
-   * Equipment already bought on this visit (App.tsx carries it on the `shop`
-   * Screen, since a purchase unmounts this panel through the equip gate). The
-   * card stays on the shelf, greyed and inert — see GuildHallEquipCard.
-   */
+  /** Bought on this visit; carried by App.tsx because a purchase unmounts this panel through the equip gate. */
   soldOutEquipmentIds: readonly string[];
   onRunChange: (next: RunState) => void;
-  /** Equipment purchases hand off to App.tsx's forced equip-or-trash gate (ForceEquipScreen) — this panel can't transition screens itself. */
+  /** Hands off to App.tsx's forced equip-or-trash gate — this panel can't transition screens. */
   onBuyEquipment: (itemId: string) => void;
-  /** Recruiting while the roster is already full hands off to App.tsx's RosterReplaceScreen gate instead of the normal recruitFromGuildHall call — same reason as onBuyEquipment, this panel can't transition screens itself. */
+  /** Recruiting at a full roster hands off to App.tsx's RosterReplaceScreen gate. */
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
-  /**
-   * Fires whenever this panel opens or closes a modal of its own. The host
-   * screen uses it to pull its bottom-docked Continue button (ShopNodeScreen)
-   * — that button is a second full-width gold CTA sitting right under the hero
-   * sheet's own "Recruit X" one, which read as part of the sheet and made the
-   * recruit decision genuinely ambiguous (user report, 2026-08-31).
-   */
+  /** Fires when this panel opens/closes a modal, so the host can pull its own bottom CTA. */
   onOverlayChange?: (open: boolean) => void;
 }
 
@@ -47,18 +37,7 @@ interface HeroCardProps {
   onInspect: () => void;
 }
 
-/**
- * One recruit offer. A tap opens the hero's sheet, where the gold is actually
- * spent (user direction, 2026-08-28).
- *
- * It used to buy on the spot, with a ~500ms hold as the only way to see what
- * you were buying — so the fast, obvious gesture was the irreversible one and
- * the careful gesture was the hidden one. Every other permanent commitment in
- * the run (the draft, a Recruit Contract, a Class) shows the hero and then
- * asks; this is the same decision and now asks the same way. Unaffordable
- * offers still open — browsing a hero you cannot yet afford is the point of a
- * shop — and the sheet's confirm button is what goes inert.
- */
+// A tap opens the sheet; the sheet is where gold is spent. Unaffordable offers still open.
 function GuildHallHeroCard({ hero, offer, affordable, onInspect }: HeroCardProps) {
   return (
     <button
@@ -86,29 +65,8 @@ interface EquipCardProps {
   onInspect: () => void;
 }
 
-/**
- * One item on the shelf, drawn as the same card the Equipment Cache and the
- * Loot Pile draw (EquipChoiceCard's `.equip-cache-*` family) — right down to
- * `itemHighlights`, the "+10 Attack · Ember Ward" benefit line.
- *
- * That line is half the point of the 2026-08-31 pass. The shop card used to
- * show name/rarity/slot and a price, so the only way to learn what 90 gold
- * was buying was a ~500ms hold nobody discovers — every OTHER screen that
- * offers gear already spelled it out on the card face, and the one screen
- * where the item costs money was the one that didn't.
- *
- * The other half is that a tap no longer buys. It opens the item's sheet, and
- * the sheet is what asks (user direction, 2026-08-31) — the same correction
- * the hero cards got on the 28th, for the same reason: the fast, obvious
- * gesture was the one that spent the gold, and the careful gesture was the
- * hidden one. Every commitment in this Hall now shows the thing and then
- * asks. Unaffordable items still open, since browsing what you cannot yet
- * afford is the point of a shop; the sheet's confirm is what goes inert.
- *
- * A bought item stays on the shelf rather than vanishing: the stock is the
- * memory of what this Guild Hall had, and a card that disappears mid-scroll
- * reads as a bug. `sold-out` greys it and makes it inert.
- */
+// Same card as the Equipment Cache. A bought item stays on the shelf, greyed
+// and inert — a card that vanishes mid-scroll reads as a bug.
 function GuildHallEquipCard({ item, cost, affordable, soldOut, onInspect }: EquipCardProps) {
   const highlights = itemHighlights(item);
   return (
@@ -134,25 +92,8 @@ function GuildHallEquipCard({ item, cost, affordable, soldOut, onInspect }: Equi
   );
 }
 
-/**
- * Guild Hall (raise) recruitment (docs/progression.md "The raise-vs-recruit
- * axis"), overhauled per user direction (2026-08-18): only 2-3 heroes on
- * offer at a time (not the whole non-starter catalog) at a steeper price,
- * plus a small rotating shelf of equipment for sale — the Hall is now a real
- * shop, not just a hero-raise counter.
- *
- * Second pass, 2026-08-31 (user direction): the relic shelf is gone entirely
- * (see run/shop.ts's header for why), the equipment shelf widened to 4 and
- * now says what each item does on its face, and a bought item greys out
- * instead of vanishing.
- *
- * With that pass, every purchase in the Hall follows one rule: a tap opens
- * the thing, and the thing asks. Heroes got there first (2026-08-28); gear
- * followed; and the Recruit Contract — the one purchase with nothing to open,
- * no stat sheet and no highlight line — gets a confirm of its own, next to a
- * readout of how many you already hold. Nothing on this screen spends gold on
- * the gesture that merely brushes it.
- */
+// Guild Hall (docs/progression.md "The raise-vs-recruit axis"). One rule for
+// every purchase: a tap opens the thing, and the thing asks.
 export function GuildHallPanel({
   run,
   offers,
@@ -176,12 +117,7 @@ export function GuildHallPanel({
   const previewEquip = previewEquipId ? equipmentOffers.find((i) => i.id === previewEquipId) : undefined;
   const canBuyContract = run.gold >= CONTRACT_PURCHASE_COST;
 
-  /**
-   * Tell the host screen whether one of this panel's modals is up, so it can
-   * stand its own bottom CTA down (see `onOverlayChange`). Derived from the
-   * three pieces of state rather than pushed from each setter, so a modal
-   * added later can't forget to report itself.
-   */
+  // Derived from state rather than pushed from each setter, so a later modal can't forget to report.
   const overlayOpen = !!previewOffer || !!previewEquip || confirmingContract;
   useEffect(() => {
     onOverlayChange?.(overlayOpen);
@@ -243,13 +179,6 @@ export function GuildHallPanel({
             Roster is full ({ROSTER_CAP}/{ROSTER_CAP}) — recruiting will ask you to terminate a hero to make room.
           </p>
         )}
-        {/* A Recruit Contract belongs under Recruits, not in a section of its
-            own (user direction, 2026-08-31): it is the OTHER way to gain a
-            hero here, and giving it a whole eyebrow head of its own was
-            spending ~40px of a screen that only just overflowed to say so.
-            The held count rides on the row itself, next to the price it is
-            the context for — a second contract is worth much less than a
-            first if there is little left to beat. */}
         <button className="guild-hall-contract-row" disabled={!canBuyContract} onClick={() => setConfirmingContract(true)}>
           <span className="guild-hall-contract-icon">📜</span>
           <span className="guild-hall-contract-body">
@@ -314,9 +243,6 @@ export function GuildHallPanel({
           );
         })()}
 
-      {/* The same item sheet the Equipment Cache and the Loot Pile open — gear
-          reads identically wherever it is offered — plus the confirm footer
-          those two don't need, since there the item is already yours. */}
       {previewEquip &&
         (() => {
           const cost = EQUIPMENT_PRICE_BY_RARITY[previewEquip.rarity];
@@ -340,10 +266,7 @@ export function GuildHallPanel({
           );
         })()}
 
-      {/* A Recruit Contract is the one purchase here with nothing to look at
-          first — no stat sheet, no highlight line, just a row that took your
-          gold the instant you brushed it. So it asks (user direction,
-          2026-08-31), and the ask is where the gold arithmetic is spelled out. */}
+      {/* The one purchase with nothing to open first, so it gets its own confirm. */}
       {confirmingContract && (
         <div className="log-overlay" onClick={() => setConfirmingContract(false)}>
           <div className="log-panel move-popup-panel" onClick={(e) => e.stopPropagation()}>

@@ -15,27 +15,14 @@ interface Props {
   onContinue: () => void;
 }
 
-/**
- * The Guardian's Banner (docs/run-loop.md): the extra reward for beating an
- * act's Guardian, shown after the wins that end acts 1-4 (the act-5 Guardian
- * ends the run, so there is nothing left to carry a banner into).
- *
- * Deliberately NOT a map node and deliberately NOT a random draw. Every other
- * relic source rolls something; this one offers the same three every time
- * (guardianBannerRelics, src/data/relics.ts) so the player can plan four acts
- * ahead — and because the three are stackable, the interesting question is
- * "spread them, or commit to one axis four times", which only works if the
- * offer is known in advance.
- *
- * Structurally the Relic Shrine's select-then-claim two-step (NodeRewardScreen)
- * with the pool fixed and a note on each card saying what a repeat pick would
- * stack to.
- */
+// The Guardian's Banner (docs/run-loop.md): a fixed, never-rolled 1-of-3 after
+// acts 1-4, so the player can plan four acts of stacking ahead.
 export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
   const [pickedRelicId, setPickedRelicId] = useState<string | null>(null);
   const [claimed, setClaimed] = useState(false);
 
-  const claimedRelic = claimed && pickedRelicId ? guardianBannerRelics.find((r) => r.id === pickedRelicId) ?? null : null;
+  const pickedRelic = pickedRelicId ? guardianBannerRelics.find((r) => r.id === pickedRelicId) ?? null : null;
+  const claimedRelic = claimed ? pickedRelic : null;
   const claimedCount = claimedRelic ? run.relics.filter((id) => id === claimedRelic.id).length : 0;
 
   function handleClaim(relicId: string) {
@@ -63,9 +50,6 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
           <div className="stage-centered">
             <div className="relic-shrine-list">
               {guardianBannerRelics.map((relic, i) => {
-                // How many of this banner the team already carries, so a
-                // repeat pick advertises its real total rather than making
-                // the player multiply the description by hand.
                 const held = run.relics.filter((id) => id === relic.id).length;
                 return (
                   <RelicChoiceCard
@@ -86,8 +70,6 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
           </div>
         )}
 
-        {/* Replaces the picker entirely once claimed, same as the Relic
-            Shrine's reveal — obtaining the banner is its own beat. */}
         {claimedRelic && (
           <div className="relic-reveal">
             <div className="relic-reveal-flash" aria-hidden="true" />
@@ -107,7 +89,7 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
           disabled={!pickedRelicId}
           onClick={() => pickedRelicId && handleClaim(pickedRelicId)}
         >
-          {pickedRelicId ? `Raise ${guardianBannerRelics.find((r) => r.id === pickedRelicId)?.name}` : 'Choose a banner'}
+          {pickedRelicId ? `Raise ${pickedRelic?.name}` : 'Choose a banner'}
         </button>
       ) : (
         <button className="resolve-button" onClick={onContinue}>

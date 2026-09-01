@@ -19,9 +19,9 @@ export type { RosterReplaceCandidate };
 interface Props {
   roster: RosterEntry[];
   candidate: RosterReplaceCandidate;
-  /** The team's owned relics (RunState.relics) — passed straight through to the hero sheets opened from here so their stats include team-wide relic grants, same as everywhere else the player inspects their own heroes. */
+  /** The team's relics (RunState.relics), passed through to the hero sheets opened from here. */
   relicIds?: readonly string[];
-  /** Attempts the swap; returns whether it succeeded. Only expected to fail if the offer was invalidated between this screen opening and confirming (e.g. gold/contracts spent elsewhere in a way the caller's own guards didn't already rule out) — rare enough not to need bespoke failure UI here. */
+  /** Attempts the swap; false only if the offer was invalidated while this screen was open. */
   onConfirm: (terminatedRosterId: string) => boolean;
   onCancel: () => void;
 }
@@ -34,20 +34,7 @@ interface ReplaceHeroCardProps {
   onPreview: () => void;
 }
 
-/**
- * One roster-grid card — tap SELECTS rather than acting immediately (unlike
- * LevelUpScreen's/ForceEquipScreen's grids), since termination is
- * destructive and permanent; the confirm button below the grid is what
- * actually commits. A hold still opens the full HeroPreviewOverlay sheet, so
- * the player can check exactly what they'd be giving up before picking them.
- *
- * The shared HeroPickCard as of 2026-08-28: this was the last pick-a-hero
- * grid in the run loop still on the legacy `.hero-grid-card`, whose 30px
- * portrait is the fractional-downscale defect docs/visual-language.md opens
- * with. Its detail row carries what the termination actually costs — the
- * gear that strips off (CLAUDE.md "Equipment strips on termination") — since
- * that is the part of the price the grid used to leave unsaid.
- */
+/** Tap selects rather than acts — termination is permanent; the confirm button commits. The detail row shows the gear that strips off. */
 function ReplaceHeroCard({ hero, entry, selected, onSelect, onPreview }: ReplaceHeroCardProps) {
   const equippedCount = EQUIP_SLOT_ORDER.filter((slot) => entry.equipment[slot]).length;
   return (
@@ -72,22 +59,9 @@ function ReplaceHeroCard({ hero, entry, selected, onSelect, onPreview }: Replace
 }
 
 /**
- * Roster-full replacement gate (CLAUDE.md "Gaining a hero requires
- * terminating an existing one" once at the roster cap): the incoming hero is
- * the header's art, and the player picks one of the 6 current heroes (the
- * shared HeroPickGrid, same as LevelUpScreen/ForceEquipScreen) to terminate
- * in their place. Select-then-confirm, not tap-to-act like the other two
- * grids — termination is permanent and shouldn't be one accidental tap away.
- *
- * Rendered two different ways depending on which acquisition path triggered
- * it: Guild Hall recruiting at cap goes through App.tsx as a genuine
- * top-level Screen (`{ kind: 'rosterReplace' }`) since ShopNodeScreen has no
- * irreplaceable state to lose on a remount. A Recruit Contract claim at cap
- * (RecruitScreen) instead renders this as an in-place modal over itself,
- * since going out to App.tsx's Screen state and back would remount that
- * screen and lose which of its offers have already been signed. Either way
- * this component only needs the current roster + the incoming candidate; it
- * doesn't know or care which context it's in.
+ * Roster-full replacement gate: pick one of the current heroes to terminate for the incoming one.
+ * Rendered as an App Screen from the Guild Hall but as an in-place modal from RecruitScreen (a
+ * remount there would lose which offers were already signed); this component doesn't care which.
  */
 export function RosterReplaceScreen({ roster, candidate, relicIds = [], onConfirm, onCancel }: Props) {
   const [selectedRosterId, setSelectedRosterId] = useState<string | null>(null);
@@ -109,12 +83,6 @@ export function RosterReplaceScreen({ roster, candidate, relicIds = [], onConfir
 
   return (
     <div className="detail-overlay roster-replace-overlay" onClick={onCancel}>
-      {/* Stands on the same node stage as the rest of the run loop's
-          pick-a-hero screens (2026-08-28 pass): sky, unboxed header, filling
-          grid, chunky CTA. The incoming hero used to be introduced by an
-          `.equip-spotlight` — a bordered, glowing card around the one thing
-          on this screen you cannot act on — sitting on top of a `.hero-grid`
-          of 30px portraits. */}
       <div className="node-screen roster-replace-screen" onClick={(e) => e.stopPropagation()}>
         <NodeSky motes={8} />
 

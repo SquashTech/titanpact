@@ -22,13 +22,7 @@ test('locations: an itinerary covers every act and never repeats a location', ()
 });
 
 test('locations: the authored pool leaves the last act a real choice', () => {
-  // Acts 2-TOTAL_ACTS are TOTAL_ACTS - 1 picks, so filling a run only needs
-  // that many non-Act-1 locations. The 1-of-2 choice per act
-  // (docs/locations.md §1) needs exactly one more, so the FINAL act still has
-  // two candidates left to choose between rather than one forced remainder:
-  // Act 2 picks from 5, Act 3 from 4, Act 4 from 3, Act 5 from the last 2.
-  // Authoring a location, or dropping one, changes that — this pins it so it
-  // cannot happen by accident.
+  // TOTAL_ACTS - 1 picks plus one spare, so the final act's 1-of-2 choice is real (docs/locations.md §1).
   assert.strictEqual(ITINERARY_POOL_IDS.length, TOTAL_ACTS);
 });
 
@@ -46,11 +40,7 @@ test("locations: Wild's Edge biases nothing — its null affinity is every type"
 });
 
 test('locations: every affinity location matches more heroes than a Skirmish fields', () => {
-  // The reason affinity is a weighting and not a filter (docs/locations.md
-  // §2): Necropolis on its originally proposed Spirit/Frost pair matched
-  // exactly 4 heroes, which is the size of a Skirmish — every fight there
-  // would have been the identical four. Shadow was added to open it up. This
-  // guards the authored affinities against drifting back under that line.
+  // An affinity matching exactly 4 heroes would make every Skirmish there the identical four (docs/locations.md §2).
   for (const location of Object.values(locations)) {
     if (!location.affinity) continue;
     const matches = affinityHeroIds(location, heroes);
@@ -76,9 +66,6 @@ test('locations: a biased encounter fills all but one slot on-theme, and the las
 });
 
 test('locations: an unbiased encounter is byte-identical to one with no bias argument', () => {
-  // The bias seam must not perturb the RNG when nothing is biasing — every
-  // existing encounter (the Goblin pools, Wild's Edge) has to keep drawing
-  // exactly what it drew before.
   for (let seed = 1; seed <= 10; seed++) {
     const before = generateEncounter('fight', seed, heroes);
     const after = generateEncounter('fight', seed, heroes, {});

@@ -1,57 +1,15 @@
-// Equipment content.
-//
-// Every item here spends its rarity's POINT BUDGET exactly — common 10, rare
-// 20, epic 30, legendary 40, mythic 50 (src/run/equipment.ts RARITY_BUDGET,
-// user direction 2026-08-30). Stats, Elemental Force magnitudes and granted
-// passives all convert into the same points (STAT_POINT_VALUE,
-// FORCE_POINT_VALUE, PASSIVE_ITEM_COST), and test/equipment.test.ts asserts
-// the whole catalog against it, so an item that comes in under- or
-// over-curve is a build failure rather than a balance surprise five acts in.
-//
-// The other half of that direction is the drop curve, which lives entirely in
-// src/run/equipment.ts (rarityWeightsFor): legendary/mythic cannot appear in
-// Act 1 and commons cannot appear in Act 5, so the catalog below is authored
-// for the act each tier actually shows up in.
-//
-// Four layers, in file order:
-//   1. The Act-1 commons — the 12 weapons the designer authored by hand
-//      ("Iron Blade / Dagger / Torch / ..."), verbatim, plus armor and
-//      accessory kits built in the same idiom: 10 points, usually split 5/5
-//      across two things, and freely mixing stats with a type's Elemental
-//      Force. That split IS the brief ("these stats should cover more
-//      possibilities") — a common weapon is no longer just "10 Attack".
-//   2. Generated per-type gear (weapon + armor + accessory for each of the
-//      14 non-Ancient types, docs/types-and-heroes.md) — same discipline
-//      src/data/statuses.ts uses for Elemental Force: derive 42 items from
-//      TYPES rather than hand-duplicating the same 3-slot shape 14 times.
-//      Ancient is skipped — no hero is Ancient-typed (it's reserved for the
-//      Guardian fights), so that gear would be unusable by any player. This
-//      layer is rare-and-up only; Act 1's shelf is hand-curated in layer 1.
-//   3. Hand-authored signature items spanning all 3 slots and rare through
-//      mythic, including the ones wired to equipment-flavored passives
-//      (src/data/passives.ts) — CLAUDE.md "Equipment and relics use the same
-//      hook-and-condition system as abilities."
-//   4. Nothing — but note that six ids are load-bearing for tests and App.tsx
-//      (ironBlade must stay common/cheap, guardianPlate mythic/expensive,
-//      dagger the Goblin Skulker's starter weapon, emberBand's FireForce
-//      magnitude 10, plus arcaneFocus/oakenArmor/swiftBoots/vitalCharm).
-//      Their ids and rarities are pinned; their numbers were re-budgeted.
+// Equipment catalog. Every item spends its rarity's point budget exactly (RARITY_BUDGET,
+// STAT_POINT_VALUE, PASSIVE_ITEM_COST — enforced by test/equipment.test.ts). Three layers:
+// hand-authored Act-1 commons, generated per-type gear (rare+), hand-authored signatures.
+// Ids pinned by tests/App.tsx: ironBlade (common), guardianPlate (mythic), dagger,
+// emberBand (FireForce 10), arcaneFocus, oakenArmor, swiftBoots, vitalCharm.
 
 import type { EquipmentDefinition } from '../run/equipment';
 import { RARITY_BUDGET, type EquipmentRarity } from '../run/equipment';
 import { TYPES, type TitanpactType } from './typechart';
 
-// ---------------------------------------------------------------------------
-// 1. Act-1 commons — 10 points each
-// ---------------------------------------------------------------------------
+// --- 1. Act-1 commons — 10 points each ---
 
-/**
- * The designer's authored common weapons, transcribed exactly (2026-08-30).
- * Read them as the worked example for the whole tier: 10 points, spent as one
- * 10 or as two 5s, and the second 5 is allowed to be ANY stat or a type's
- * Elemental Force. Torch (5 Attack / 5 Fire Force) is what pins
- * FORCE_POINT_VALUE at 1.
- */
 const commonWeapons: Record<string, EquipmentDefinition> = {
   ironBlade: {
     id: 'ironBlade',
@@ -60,9 +18,6 @@ const commonWeapons: Record<string, EquipmentDefinition> = {
     rarity: 'common',
     statGrants: { attack: 10 },
   },
-  // Also the Goblin Skulker's starter weapon — see App.tsx equipTestDagger,
-  // which arms it in the run's opening battle so the equip-slot inspect UI
-  // has a real item to show.
   dagger: {
     id: 'dagger',
     name: 'Dagger',
@@ -146,7 +101,7 @@ const commonWeapons: Record<string, EquipmentDefinition> = {
   },
 };
 
-/** The armor half of the Act-1 shelf, built to the same 10-point rule. HP appears in 10s and 20s rather than 5s because it is priced at half (STAT_POINT_VALUE) — 20 HP and 10 Defense cost the same. */
+// HP and Mana appear at double amounts because they are priced at half (STAT_POINT_VALUE).
 const commonArmor: Record<string, EquipmentDefinition> = {
   leatherJerkin: {
     id: 'leatherJerkin',
@@ -208,7 +163,6 @@ const commonArmor: Record<string, EquipmentDefinition> = {
   },
 };
 
-/** The accessory half of the Act-1 shelf. Mana appears in 20s for the same reason HP appears in 10s and 20s — half price, so 20 Mana costs a common's other 5 points. MP Regen is absent from the whole tier: at triple price the cheapest legal grant (+5) would eat 15 of a 10-point budget. */
 const commonAccessories: Record<string, EquipmentDefinition> = {
   travelersCharm: {
     id: 'travelersCharm',
@@ -269,17 +223,14 @@ const commonAccessories: Record<string, EquipmentDefinition> = {
   },
 };
 
-// ---------------------------------------------------------------------------
-// 2. Generated per-type gear — 14 types x 3 slots
-// ---------------------------------------------------------------------------
+// --- 2. Generated per-type gear — 14 non-Ancient types x 3 slots, rare and up ---
 
-/** The tiers generated gear is allowed to roll on. Common is excluded on purpose: Act 1 is the only act that sees commons in quantity (rarityWeightsFor), and its shelf is the hand-authored kit in layer 1 rather than 42 machine-shaped pieces. */
 const GENERATED_TIERS: readonly EquipmentRarity[] = ['rare', 'epic', 'legendary', 'mythic'];
 
 interface TypeGearFlavor {
-  /** Physical types grant Attack (weapon) / Defense (armor); magical types grant Intelligence (weapon) / Wisdom (armor) — CLAUDE.md's physical/magical pair split. */
+  /** 'attack' grants Attack/Defense on weapon/armor; 'intelligence' grants Intelligence/Wisdom. */
   kind: 'attack' | 'intelligence';
-  /** The non-Force half of this type's accessory. Rotated across the roster so the 14 accessories aren't one shape repainted — Fire runs fast, Water runs deep, Frost runs thick. `mpRegen` is deliberately absent: at triple price it cannot split a budget evenly. */
+  /** The non-Force half of the accessory. No `mpRegen`: at triple price it cannot split a budget evenly. */
   accessoryStat: 'speed' | 'manaPool' | 'hp';
   weaponName: string;
   armorName: string;
@@ -308,30 +259,18 @@ function lowerFirst(value: string): string {
   return value.charAt(0).toLowerCase() + value.slice(1);
 }
 
-/**
- * Generated per-type gear: 14 types x 3 slots = 42 items. Rarity is staggered
- * per slot (offsets of 0/1/2 through GENERATED_TIERS) so a single type's
- * weapon/armor/accessory never all land on the same tier — a Fire player
- * should have to hunt across acts to complete the set, not find it all at
- * once.
- *
- * Each shape spends its whole budget B, split in half by point value:
- *   - weapon:    B/2 of the offensive stat + B/2 of the type's Force. The
- *     Force half is what makes these build-arounds rather than stat sticks,
- *     and it stacks additively with the accessory's (run/statusGrants.ts), so
- *     a matched weapon + accessory is a deliberate payoff, not an oversight.
- *   - armor:     B HP (half price = B/2 points) + B/2 of the defensive stat.
- *   - accessory: B/2 of the type's Force + the flavor stat, sized by its own
- *     point value so the halves cost the same.
- */
+// Rarity is staggered per slot so one type's three pieces never share a tier. Each item
+// splits its budget in half by point value: weapon = stat + Force, armor = HP + stat,
+// accessory = Force + flavor stat.
 const generatedTypeEquipment: Record<string, EquipmentDefinition> = {};
 TYPES.filter((type) => type !== 'Ancient').forEach((type, i) => {
   const gear = TYPE_GEAR[type];
+  const idPrefix = lowerFirst(type);
   const weaponRarity = GENERATED_TIERS[i % GENERATED_TIERS.length];
   const armorRarity = GENERATED_TIERS[(i + 1) % GENERATED_TIERS.length];
   const accessoryRarity = GENERATED_TIERS[(i + 2) % GENERATED_TIERS.length];
 
-  const weaponId = `${lowerFirst(type)}Weapon`;
+  const weaponId = `${idPrefix}Weapon`;
   const weaponBudget = RARITY_BUDGET[weaponRarity];
   generatedTypeEquipment[weaponId] = {
     id: weaponId,
@@ -342,7 +281,7 @@ TYPES.filter((type) => type !== 'Ancient').forEach((type, i) => {
     grantsStatusIds: [{ statusId: `${type}Force`, magnitude: weaponBudget / 2 }],
   };
 
-  const armorId = `${lowerFirst(type)}Armor`;
+  const armorId = `${idPrefix}Armor`;
   const armorBudget = RARITY_BUDGET[armorRarity];
   generatedTypeEquipment[armorId] = {
     id: armorId,
@@ -352,11 +291,9 @@ TYPES.filter((type) => type !== 'Ancient').forEach((type, i) => {
     statGrants: { hp: armorBudget, [gear.kind === 'attack' ? 'defense' : 'wisdom']: armorBudget / 2 },
   };
 
-  const accessoryId = `${lowerFirst(type)}Charm`;
+  const accessoryId = `${idPrefix}Charm`;
   const accessoryBudget = RARITY_BUDGET[accessoryRarity];
-  // speed is priced 1:1, hp and manaPool at half — so the same half-budget
-  // buys twice as much of the latter two. Deriving the amount from the point
-  // table rather than authoring it keeps the two halves equal by construction.
+  // speed is priced 1:1, hp and manaPool at half, so the same half-budget buys twice as much.
   const flavorAmount = gear.accessoryStat === 'speed' ? accessoryBudget / 2 : accessoryBudget;
   generatedTypeEquipment[accessoryId] = {
     id: accessoryId,
@@ -368,13 +305,10 @@ TYPES.filter((type) => type !== 'Ancient').forEach((type, i) => {
   };
 });
 
-// ---------------------------------------------------------------------------
-// 3. Signature items — rare through mythic
-// ---------------------------------------------------------------------------
+// --- 3. Signature items — rare through mythic ---
 
-/** Hand-authored signature items. These are where the budget gets spent in shapes the generator can't produce: a drawback funding a spike (Berserker's Cleaver), a passive eating two thirds of a tier (Bloodletter Fang), and the wide five-stat mythics. */
 const signatureEquipment: Record<string, EquipmentDefinition> = {
-  // --- Weapons -----------------------------------------------------------
+  // --- Weapons ---
   battlewornGreatsword: {
     id: 'battlewornGreatsword',
     name: 'Battleworn Greatsword',
@@ -404,9 +338,7 @@ const signatureEquipment: Record<string, EquipmentDefinition> = {
     statGrants: { intelligence: 20 },
     grantsStatusIds: [{ statusId: 'ArcaneForce', magnitude: 10 }],
   },
-  // The drawback item. -10 Defense refunds 10 points, which is what pays for
-  // an Attack line a full tier above its rarity — see the open question in
-  // docs/progression.md about capping how much of a budget a downside may buy.
+  // -10 Defense refunds 10 points; how much a downside may buy is an open question (docs/progression.md).
   berserkersCleaver: {
     id: 'berserkersCleaver',
     name: "Berserker's Cleaver",
@@ -469,7 +401,7 @@ const signatureEquipment: Record<string, EquipmentDefinition> = {
     grantsPassiveIds: ['shadowfang'],
   },
 
-  // --- Armor -------------------------------------------------------------
+  // --- Armor ---
   oakenArmor: {
     id: 'oakenArmor',
     name: 'Oaken Armor',
@@ -542,7 +474,7 @@ const signatureEquipment: Record<string, EquipmentDefinition> = {
     statGrants: { wisdom: 25, intelligence: 15, manaPool: 20 },
   },
 
-  // --- Accessories -------------------------------------------------------
+  // --- Accessories ---
   swiftBoots: {
     id: 'swiftBoots',
     name: 'Swift Boots',
@@ -550,8 +482,7 @@ const signatureEquipment: Record<string, EquipmentDefinition> = {
     rarity: 'rare',
     statGrants: { speed: 20 },
   },
-  // FireForce magnitude 10 is pinned by test/elementalForce.test.ts; the
-  // Attack line is what brings the item up to its rare budget.
+  // FireForce magnitude 10 is pinned by test/elementalForce.test.ts.
   emberBand: {
     id: 'emberBand',
     name: 'Ember Band',
@@ -614,9 +545,7 @@ const signatureEquipment: Record<string, EquipmentDefinition> = {
     statGrants: { hp: 20 },
     grantsPassiveIds: ['emberheart'],
   },
-  // The two MP Regen items in the catalog, both legendary — at triple price
-  // (STAT_POINT_VALUE) +10 MP Regen alone is 30 of a 40-point budget, so the
-  // stat cannot appear below this tier without swallowing the whole item.
+  // MP Regen is triple price, so +10 alone is 30 points — it cannot appear below legendary.
   vitalCharm: {
     id: 'vitalCharm',
     name: 'Vital Charm',

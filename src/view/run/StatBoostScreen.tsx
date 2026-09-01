@@ -24,22 +24,12 @@ interface StatBoostConfig {
   stat: StatKey;
   amount: number;
   glyph: RunGlyphKind | null;
-  /** The node's hue — carried by the sky, the eyebrow and the title's bloom (see NodeStage). */
   tint: string;
-  /**
-   * This shrine's key: multiplies every frequency in `shrine` (the arrival)
-   * and `blessing` (the grant), so the three shrines are one sound in three
-   * registers rather than three sounds.
-   *
-   * The order is the order of the stats themselves. Vitality is the body and
-   * sits lowest; the Mana Well is the middle; the Regen Spring is a thin
-   * trickle and sits highest. A player who has heard two of them can place
-   * the third before the title has finished fading in.
-   */
+  /** Multiplies every frequency in `shrine` and `blessing` — one sound in three registers. */
   pitch: number;
   eyebrow: string;
   title: string;
-  /** What the grant is, in the exact words the card's CTA line and the readout both use. */
+  /** Used verbatim by the card CTA and the readout. */
   ctaLabel: string;
 }
 
@@ -76,47 +66,19 @@ const STAT_BOOST_CONFIG: Record<StatBoostNodeType, StatBoostConfig> = {
   },
 };
 
-/**
- * hpBoostReward/manaBoostReward/manaRegenBoostReward node resolution: pick
- * one roster hero to receive a flat, permanent-for-the-run stat grant
- * (runProgress.ts grantStatBonus) — CLAUDE.md "flat additive integers,
- * multiples of 5 or 10". No 3-choice picker here, just which hero receives
- * it.
- *
- * Rebuilt 2026-08-28 onto the shared node stage (docs/visual-language.md,
- * ninth pass). What was here: a bordered `.reward-panel` carrying a heading
- * and a line of hint text — a box around no action — above `.hero-grid`,
- * whose 30px portraits were the fractional-downscale defect that doc opens
- * with. The panel is now the sky and the header; the grid is the shared
- * HeroPickCard, so the six figures are the only boxed things on the screen
- * and each one says what the tap buys. The grant is also worth inspecting a
- * hero for now — a permanent +20 HP is a real decision — so the cards carry
- * the same hold-to-inspect sheet the rest of the run loop's pick screens do.
- */
+// Pick one hero for a flat, permanent-for-the-run stat grant (runProgress.ts grantStatBonus).
 export function StatBoostScreen({ nodeType, run, onRunChange, onContinue }: Props) {
   const config = STAT_BOOST_CONFIG[nodeType];
   const [grantedTo, setGrantedTo] = useState<string | null>(null);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
 
-  /**
-   * The arrival. Fires once on mount — the only sound in the game triggered
-   * by a screen opening rather than by a press, which is why `shrine` is
-   * built with no transient in it (see sounds.ts): it swells up underneath
-   * the map node's own `ui.confirm` instead of competing with it, and the
-   * short delay is what keeps the two from landing together.
-   *
-   * Empty deps on purpose. `config` is derived from `nodeType`, which cannot
-   * change without App.tsx routing a different node — and a different node is
-   * a different mount.
-   */
+  // Empty deps on purpose: `nodeType` cannot change without a different mount.
   useEffect(() => {
     playSfx('shrine', { pitch: config.pitch, delay: 0.12 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function handleGrant(rosterId: string) {
-    // Before the state change, not after: this is the press's feedback, and
-    // the light welling up through the card starts on the same frame.
     playSfx('blessing', { pitch: config.pitch });
     onRunChange(grantStatBonus(run, rosterId, config.stat, config.amount));
     setGrantedTo(rosterId);
@@ -128,11 +90,6 @@ export function StatBoostScreen({ nodeType, run, onRunChange, onContinue }: Prop
     <div className="node-screen shrine-screen" style={{ '--node-rgb': config.tint } as CSSProperties}>
       <NodeSky />
 
-      {/* The shrine's light coming down over the room, once, as the screen
-          opens. A curtain in `--node-rgb` — so the Vitality Shrine is lit
-          green and the two mana ones blue, from the same one property the
-          sky and the header already read. It plays and is done; the ambient
-          motes NodeSky draws are what the room settles into. */}
       <span className="shrine-descent" aria-hidden="true" />
 
       <RosterPeek run={run} />
@@ -164,12 +121,7 @@ export function StatBoostScreen({ nodeType, run, onRunChange, onContinue }: Prop
               onActivate={() => !grantedTo && handleGrant(entry.rosterId)}
               onPreview={() => setPreviewEntry({ hero, entry })}
               ariaLabel={`${hero.name}, level ${entry.level} — grant ${config.ctaLabel}`}
-              /* Light welling UP through the card, against the forced-equip
-                 screen's sweep coming DOWN it (`.equip-seat-flare`). The
-                 direction is the difference between the two grants: gear is
-                 strapped on from outside, a blessing rises through the hero
-                 it lands on. Mounted only on the granted card, so mounting
-                 is what starts it. */
+              /* Mounted only on the granted card, so mounting is what starts it. */
               overlay={isGranted ? <span className="blessing-flare" aria-hidden="true" /> : undefined}
               ctaClassName={isGranted ? 'is-done' : 'is-accent'}
               cta={isGranted ? 'Granted' : config.ctaLabel}

@@ -9,20 +9,13 @@ interface Props {
   onClose: () => void;
 }
 
-/** Counts each distinct relic id, so duplicates render as ONE card carrying the summed total rather than N identical cards — same pattern as RosterManagementScreen's groupInventory. */
+/** Duplicates render as one card carrying the summed total. */
 function groupRelics(ownedRelicIds: readonly string[]): { relicId: string; count: number }[] {
   const counts = new Map<string, number>();
   for (const id of ownedRelicIds) counts.set(id, (counts.get(id) ?? 0) + 1);
   return [...counts.entries()].map(([relicId, count]) => ({ relicId, count }));
 }
 
-/**
- * Read-only relic collection view, reachable from the map header's Relics
- * button. Relics are minimal and stat-only for this pass (CLAUDE.md "Relics
- * are team-wide passives", docs/run-loop.md "Relics: minimal, stat-only") —
- * this overlay just lists what's owned; there's no per-relic management
- * since relics aren't assigned or unequipped like gear.
- */
 export function RelicsOverlay({ ownedRelicIds, onClose }: Props) {
   const groups = groupRelics(ownedRelicIds);
 
@@ -40,11 +33,7 @@ export function RelicsOverlay({ ownedRelicIds, onClose }: Props) {
             {groups.map(({ relicId, count }) => {
               const relic = relics[relicId];
               if (!relic) return null;
-              // A stack renames itself ("Banner of Vitality +2") and states
-              // its summed grant, because the authored description is written
-              // for a single copy and would otherwise read as a third of what
-              // the team is actually getting. No separate ×N badge alongside
-              // it: two counters in two different bases for one fact.
+              // A stack states its summed grant; the authored description is written for one copy.
               const stackedTotal = count > 1 ? stackedGrantSummary(relic, count) : '';
               return (
                 <div key={relicId} className="relic-card">

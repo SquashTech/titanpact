@@ -1,13 +1,5 @@
-// Map EVENTS (src/data/events.ts content, src/run/events.ts mechanism,
-// view/run/EventNodeScreen.tsx presentation) plus the engine hook the first
-// authored event passive needed: PassiveHook 'SwitchedIn' and the
-// 'activeEnemies' group target (engine/combat/passiveEngine.ts).
-//
-// The catalog assertions at the top are the ones that matter long-term: they
-// are what stops an event authored later from shipping with a move filter that
-// matches nothing, an unpriced passive id, or a stat delta that breaks
-// CLAUDE.md's multiples-of-5 rule — the same "validate the whole catalog"
-// discipline equipment.test.ts and classes.test.ts already apply.
+// Map events (src/data/events.ts, src/run/events.ts) plus the engine hook the first event passive
+// needed: PassiveHook 'SwitchedIn' and the 'activeEnemies' group target (passiveEngine.ts).
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -52,7 +44,7 @@ function seedRoster(heroIds: string[]) {
   return run;
 }
 
-// --- The authored catalog --------------------------------------------------
+// --- The authored catalog ---
 
 test('events: every authored event is coherent content — a resolvable outcome, and nothing that would dead-end a node', () => {
   const problems: string[] = [];
@@ -67,8 +59,7 @@ test('events: every authored event is coherent content — a resolvable outcome,
       const entries = Object.entries(outcome.deltas).filter(([, amount]) => amount);
       if (entries.length === 0) problems.push(`${event.id} is a statShift that shifts nothing`);
       for (const [stat, amount] of entries) {
-        // CLAUDE.md "flat additive integers, multiples of 5 or 10" — the rule
-        // is about magnitude, so a cost obeys it exactly as a grant does.
+        // The multiples-of-5 rule is about magnitude, so a cost obeys it exactly as a grant does.
         if (!isValidFlatStatGrant(Math.abs(amount as number))) problems.push(`${event.id}'s ${stat} delta ${amount} is not a multiple of 5`);
       }
     }
@@ -90,8 +81,6 @@ test("events: Fruit Slicer's pool is exactly the Slice moves, and Wildcard's is 
     slicePool.every((id) => moves[id].name.includes('Slice')),
     'the Slice filter let a non-Slice move through'
   );
-  // The point of Fruit Slicer is that it is NARROW — if the filter ever
-  // matched everything, the event would silently become a second Wildcard.
   assert.ok(slicePool.length < Object.keys(moves).length);
   assert.strictEqual(movePoolFor(undefined, moves).length, Object.keys(moves).length);
 });
@@ -110,7 +99,7 @@ test('events: movePoolFor ANDs its filters, and an empty filter object is permis
   assert.strictEqual(movePoolFor({}, moves).length, Object.keys(moves).length);
 });
 
-// --- Selection: the act and Location gates ---------------------------------
+// --- Selection: the act and Location gates ---
 
 test('events: an ungated event is eligible in every act and every Location', () => {
   const eligible = eligibleEvents(runEvents, 1, 'wildsEdge').map((e) => e.id);
@@ -132,8 +121,7 @@ test('events: a Location-gated event is only eligible in its own Locations', () 
   };
   assert.ok(eligibleEvents(gated, 3, 'moltenFoundry').some((e) => e.id === 'forgeRite'));
   assert.ok(!eligibleEvents(gated, 3, 'wildsEdge').some((e) => e.id === 'forgeRite'));
-  // A run with no itinerary (an enemyGen throwaway, a fixture) must not roll a
-  // Location-specific event into a Location it cannot name.
+  // A run with no itinerary must not roll a Location-specific event.
   assert.ok(!eligibleEvents(gated, 3, null).some((e) => e.id === 'forgeRite'));
 });
 
@@ -154,13 +142,12 @@ test('events: rollRunEvent only ever returns something eligible', () => {
   }
 });
 
-// --- Resolution: stat shift ------------------------------------------------
+// --- Resolution: stat shift ---
 
 test('events: applyStatShift folds every delta onto one hero in a single transform', () => {
   const run = seedRoster(['cinderKnight', 'tidecaller']);
   const next = applyStatShift(run, 'cinderKnight', { hp: -20, manaPool: 20 });
   assert.deepStrictEqual(next.roster[0].bonusStatGrants, { hp: -20, manaPool: 20 });
-  // The other hero is untouched — a trade is one hero's decision.
   assert.deepStrictEqual(next.roster[1].bonusStatGrants, {});
 });
 
@@ -179,7 +166,6 @@ test('events: the HP floor blocks a drain that would leave a hero unplayable, an
   assert.ok(statShiftAllowed({ hp: -20 }, 100));
   assert.ok(!statShiftAllowed({ hp: -20 }, MIN_HP_AFTER_SHIFT + 19));
   assert.ok(statShiftAllowed({ hp: -20 }, MIN_HP_AFTER_SHIFT + 20));
-  // A pure gain is never blocked, whatever the hero is standing on.
   assert.ok(statShiftAllowed({ manaPool: 20 }, 1));
 });
 
@@ -192,7 +178,7 @@ test('events: Soul Transfer is applicable to every authored hero at base — the
   }
 });
 
-// --- Resolution: passive grant ---------------------------------------------
+// --- Resolution: passive grant ---
 
 test('events: grantEventPassive lands the passive on the chosen hero and nowhere else', () => {
   const run = seedRoster(['cinderKnight', 'tidecaller']);
@@ -219,7 +205,7 @@ test('events: an event-granted passive reaches the combat seam through entryPass
   assert.strictEqual(entryPassiveCounts(run.roster[0], equipment).imposingPresence, 1);
 });
 
-// --- The engine hook: Imposing Presence ------------------------------------
+// --- The engine hook: Imposing Presence ---
 
 function fixture(seed: number): CombatState {
   return createFightState(
@@ -259,7 +245,6 @@ test('imposingPresence: switching in drops BOTH active enemies 10 Attack, and le
 
   assert.strictEqual(attackOf(result.state, 'b1'), before[0] - 10);
   assert.strictEqual(attackOf(result.state, 'b2'), before[1] - 10);
-  // The bench is deliberately out of reach — see PassiveEffectTarget's doc.
   assert.strictEqual(attackOf(result.state, 'b3'), before[2]);
 });
 
@@ -276,15 +261,13 @@ test('imposingPresence: it fires for the OPENING lead too, not only for a later 
   const opened = resolveBattleStartEntries(state, 1, heroes, statuses, passives, fieldEffects);
   assert.strictEqual(attackOf(opened.state, 'b1'), before - 10);
   assert.ok(opened.events.some((e) => e.type === 'PassiveTriggered'));
-  // The synthesised SwitchedIn events must NOT come back out — the view would
-  // narrate them as "X switches in!" over a board where nothing switched.
+  // The synthesised SwitchedIn events must not leak out — the view would narrate a switch that never happened.
   assert.ok(!opened.events.some((e) => e.type === 'SwitchedIn'));
 });
 
 test('imposingPresence: a benched holder is silent — the hook is about arriving, not about being present', () => {
   const state = withPassive(fixture(10), 'a3', 'imposingPresence');
   const before = attackOf(state, 'b1');
-  // a1 -> a2 is not a thing a3 did; a3 stays on the bench.
   const opened = resolveBattleStartEntries(state, 1, heroes, statuses, passives, fieldEffects);
   assert.strictEqual(attackOf(opened.state, 'b1'), before);
   assert.deepStrictEqual(opened.events, []);
@@ -319,7 +302,6 @@ test('imposingPresence: one trigger emits one PassiveTriggered followed by one S
   const opened = resolveBattleStartEntries(state, 1, heroes, statuses, passives, fieldEffects);
   assert.strictEqual(opened.events.filter((e) => e.type === 'PassiveTriggered').length, 1);
   assert.strictEqual(opened.events.filter((e) => e.type === 'StatChanged').length, 2);
-  // Order matters: buildBeats reads the trigger, then consumes the run of
-  // StatChanged events behind it into one beat.
+  // buildBeats reads the trigger, then consumes the run of StatChanged events behind it into one beat.
   assert.strictEqual(opened.events[0].type, 'PassiveTriggered');
 });

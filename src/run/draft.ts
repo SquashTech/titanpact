@@ -1,14 +1,10 @@
-// Start-of-run hero draft: 4 random candidates offered, player picks 2
-// (App.tsx's opening screen, replacing a fixed cinderKnight+tidecaller
-// opener so no two runs start the same way). Pure data selection, no view
-// or engine concerns — same seeded-RNG discipline as map.ts/enemyGen.ts.
+// Start-of-run hero draft: STARTER_OPTION_COUNT random candidates, the player picks STARTER_PICK_COUNT.
 
 import { createRng, nextFloat } from '../engine/rng/seededRng';
 
 export const STARTER_OPTION_COUNT = 4;
 export const STARTER_PICK_COUNT = 2;
 
-/** Draws `STARTER_OPTION_COUNT` distinct hero ids from `heroIds` as this run's starter draft pool. */
 export function generateStarterOptions(seed: number, heroIds: readonly string[]): string[] {
   const pool = [...heroIds];
   const picked: string[] = [];

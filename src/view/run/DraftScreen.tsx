@@ -24,96 +24,33 @@ interface Props {
 }
 
 /**
- * Start-of-run draft: pick 2 of 4 random candidates (App.tsx's opening
- * screen, replacing a fixed cinderKnight+tidecaller opener — CLAUDE.md
- * "every hero must be viable", so runs shouldn't always begin identically).
- *
- * Rebuilt 2026-08-25 as a *stage* rather than a grid of cards, applying
- * docs/visual-language.md's rule ("a rectangle means you can act on this")
- * outside combat for the first time — its open item 6. The old screen spent
- * 227px on a flavor banner and then showed each candidate as a 158x112 card
- * carrying a 40px sprite, a name and two type chips: nothing to look at and
- * nothing to decide with, so the pick was uninformed unless the player dug
- * through the info overlay. It read, accurately, as clicking boxes.
- *
- * Now one candidate at a time stands at 144px (a clean 3x of the 48px
- * sources — the scale docs/visual-language.md item 5 wanted to try and could
- * never afford on a battlefield holding four figures) inside a summoning
- * sigil, with the stat silhouette and starting kit that actually inform the
- * choice. The rail below is the roster of candidates; tapping one brings it
- * to the stage, and the stage's own button is what commits. Two taps per
- * pick, on the most consequential decision of the run — the ceremony is the
- * point.
- *
- * The stage itself now lives in shared/HeroStage.tsx: the Recruit Contract
- * claim (RecruitScreen) asks the same question about the same kind of
- * figure, so it stands on the same ground rather than reimplementing it.
- * What stays here is what only the draft has — the pact sockets and the
- * two-pick commit.
- *
- * Candidates are unrecruited (no roster entry yet), so the info-button
- * preview synthesizes a throwaway level-1 RosterEntry the same way
- * SquadSelectScreen does for real roster members.
+ * Start-of-run draft: pick 2 of 4 on the shared stage (shared/HeroStage.tsx). Candidates have no
+ * roster entry yet, so the info-button preview synthesizes a throwaway level-1 one.
  */
 export function DraftScreen({ optionIds, onConfirm }: Props) {
   const [featuredId, setFeaturedId] = useState<string>(optionIds[0]);
   const [pickedIds, setPickedIds] = useState<string[]>([]);
   const [inspecting, setInspecting] = useState<HeroDefinition | null>(null);
-  /** The starting move whose detail popup is open over the stage, or null. Tapping a kit chip opens it; a tap anywhere dismisses it. */
   const [popupMove, setPopupMove] = useState<MoveDefinition | null>(null);
-  /**
-   * The binding flare over the stage: a monotonically rising counter used as
-   * a React key, plus whether that bind completed the pact.
-   *
-   * A counter rather than a boolean-and-a-timer because the flare is a
-   * mount-once animation (same idiom as `.growth-charge` and the title
-   * screen's shockwave) — remounting it is what replays it, so binding the
-   * second starter can't inherit the first one's half-finished flare, and
-   * nothing has to clean up after it.
-   */
+  /** Keyed by a rising counter so remounting replays the mount-once flare; `final` marks the pact-completing bind. */
   const [bindFlare, setBindFlare] = useState<{ tick: number; final: boolean } | null>(null);
 
   const featured = heroes[featuredId];
   const featuredRgb = getTypeColorRgb(featured.types[0]);
   const featuredChosen = pickedIds.includes(featuredId);
   const pactFull = pickedIds.length >= STARTER_PICK_COUNT;
-  /**
-   * The commit button's sound is chosen in `toggle` (three outcomes, one
-   * button), so the delegated listener must stay out of the way — except
-   * when the button is inert, which `toggle` never runs for. Leaving the
-   * attribute off in that one case lets the listener's own disabled rule
-   * supply the refusal buzz; `data-sfx="none"` would win over it and the
-   * press would go silent. See audio/uiSfx.ts resolveSfx.
-   */
+  // `toggle` picks the real sound, so the delegated listener stays silent — except when the button
+  // is inert, where leaving the attribute off lets its disabled buzz fire (audio/uiSfx.ts resolveSfx).
   const chooseSfx = !featuredChosen && pactFull ? undefined : 'none';
   const complete = pickedIds.length === STARTER_PICK_COUNT;
 
-  /**
-   * Bring a candidate to the stage. Clears any binding flare first: the
-   * flare is drawn inside `StageFigure`, which is keyed on the featured
-   * hero, so a live one would be remounted — and replayed — around whoever
-   * the player tapped next. The flare belongs to the bind that just
-   * happened, not to the stage it happened on.
-   */
+  // Clears the flare first: StageFigure is keyed on the featured hero, and a remount would replay
+  // a live flare around whoever was tapped next.
   function feature(heroId: string) {
     setBindFlare(null);
     setFeaturedId(heroId);
   }
 
-  /**
-   * Bind or release the featured candidate.
-   *
-   * The button silences the delegated click sound (see `chooseSfx`) because
-   * a bind is not a tap: this decides between two different sounds, and the
-   * listener firing `ui.tap` underneath either would blur the one that
-   * matters. Releasing gets `ui.back` — the inverse of a commitment is a
-   * cancel, which is exactly what that sound already means everywhere else.
-   *
-   * The pact-completing bind is the same sound pitched down and pushed a
-   * little louder rather than a second sound of its own. The two binds are
-   * the same act; the second one is just the one that finishes it, and a
-   * different sound would say they were different in kind.
-   */
   function toggle(heroId: string) {
     if (pickedIds.includes(heroId)) {
       playSfx('ui.back');
@@ -140,10 +77,6 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
           Forge Your Pact
         </h2>
         <p className="draft-flavor">Two will carry a fraction of its power. Choose them.</p>
-        {/* The pick counter as two sockets that fill with the chosen hero's own
-            sprite, rather than an "(n/2)" in a section heading. Same pip-track
-            idiom as the Field Effect plaque's duration clock: a fixed
-            denominator the player learns the shape of once. */}
         <div className="draft-sockets" aria-label={`${pickedIds.length} of ${STARTER_PICK_COUNT} allies chosen`}>
           {Array.from({ length: STARTER_PICK_COUNT }, (_, i) => {
             const id = pickedIds[i];
@@ -169,18 +102,8 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
       </header>
 
       <div className="draft-stage">
-        {/* Keyed on the featured hero so switching candidates remounts the
-            figure and replays its arrival. */}
+        {/* Keyed on the featured hero so switching remounts the figure and replays its arrival. */}
         <StageFigure key={featuredId} heroId={featured.id} heroName={featured.name} onInspect={() => setInspecting(featured)}>
-          {/* The bind itself: a ring closing inward onto the figure, in the
-              candidate's own type colour (`--pact-rgb`, already set on the
-              screen root). Inward, not outward — every other burst in the app
-              expands, because every other burst is something being released,
-              and this is the one moment that is something being *caught*.
-              ┄
-              Drawn inside the figure rather than beside it so it centres on
-              the summoning sigil at any viewport height; `feature()` is what
-              keeps the figure's remount from replaying it. */}
           {bindFlare && (
             <span
               key={bindFlare.tick}

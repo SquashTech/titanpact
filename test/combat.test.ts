@@ -14,20 +14,7 @@ import { applyVoluntarySwitch, SwitchBlockedError } from '../src/engine/combat/s
 import { isValidFlatStatGrant } from '../src/engine/content';
 import type { MoveDefinition } from '../src/engine/content';
 
-/**
- * The mana-legality guard's fixture, and the one piece of coverage the
- * authored Arcane slate (2026-08-30) took away rather than replaced.
- *
- * `overload` used to be a shipped 999-mana move that no hero could ever cast —
- * content authored purely so this file could prove the engine refuses an
- * unaffordable action. The slate re-authors that id as a real 50-mana move, so
- * the fixture moves here instead of staying in the game as an uncastable
- * button (docs/authoring-moves.md §6: move the coverage into a test-local
- * definition, do not quietly re-add the old move as content).
- *
- * It is spliced into this file's own `moves` lookup only — src/data/moves.ts
- * never sees it, and nothing else in the app can reach it.
- */
+// Test-local uncastable move for the mana-legality guard (docs/authoring-moves.md §6: never ship one as content).
 const UNAFFORDABLE_MOVE_ID = 'testUnaffordable';
 const testMoves = {
   ...moves,
@@ -61,7 +48,7 @@ function twoVTwoFixture(seed: number) {
   );
 }
 
-// --- Invariant tests -------------------------------------------------------
+// --- Invariant tests ---
 
 test('invariant: lock-in engages at exactly 2 KOs, not before', () => {
   const state = twoVTwoFixture(1);
@@ -87,15 +74,15 @@ test('invariant: engine never mutates content data (heroes/moves untouched by re
   ];
   const heroesBefore = heroes;
   resolveRound(state, actions, config);
-  assert.strictEqual(heroes, heroesBefore); // same object reference: never reassigned or mutated
-  assert.strictEqual(heroes.tidecaller.types.length, 1); // innate type shape untouched
+  assert.strictEqual(heroes, heroesBefore);
+  assert.strictEqual(heroes.tidecaller.types.length, 1);
 });
 
 test('effectiveTypes: a type-graft grant adds to the innate types without mutating HeroDefinition', () => {
-  const hero = heroes.tidecaller; // mono Water
+  const hero = heroes.tidecaller;
   const grafted = { ...createCombatant('x', 'tidecaller', 'A', 0, 0), grantedTypes: ['Stone'] };
   assert.deepStrictEqual(effectiveTypes(hero, grafted), ['Water', 'Stone']);
-  assert.deepStrictEqual(hero.types, ['Water']); // innate type untouched by the grant
+  assert.deepStrictEqual(hero.types, ['Water']);
 });
 
 test('effectiveTypes: no graft returns exactly the innate types', () => {
@@ -112,7 +99,7 @@ test('invariant: stat grants must be multiples of 5 or 10', () => {
   assert.strictEqual(isValidFlatStatGrant(12), false);
 });
 
-// --- Golden replay / determinism -------------------------------------------
+// --- Golden replay / determinism ---
 
 test('golden replay: same seed + same inputs reproduce an identical event log', () => {
   const actions: Action[] = [
@@ -138,7 +125,7 @@ test('golden replay: a different seed produces a different (but still valid) log
   assert.notDeepStrictEqual(resultA.events, resultB.events);
 });
 
-// --- Round integration -------------------------------------------------
+// --- Round integration ---
 
 test('round: RoundStarted is first event, RoundEnded is last', () => {
   const state = twoVTwoFixture(10);
@@ -153,7 +140,7 @@ test('round: a resolved move spends mana and deals damage', () => {
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
   const { state: next, events } = resolveRound(state, actions, config);
 
-  // Spend, then the round-boundary mana regen tick (docs/mana.md) adds mpRegen back on top.
+  // Spend, then the round-boundary regen tick adds mpRegen back.
   const spent = heroes.cinderKnight.baseStats.manaPool - moves.singe.manaCost;
   const afterRegen = Math.min(heroes.cinderKnight.baseStats.manaPool, spent + heroes.cinderKnight.baseStats.mpRegen);
   assert.strictEqual(next.combatants.a1.currentMana, afterRegen);
@@ -165,11 +152,7 @@ test('round: a resolved move spends mana and deals damage', () => {
 
 test('round: higher priority move resolves before a higher-speed move in a lower bracket', () => {
   const state = twoVTwoFixture(12);
-  // swiftBlow (priority 1) from the slower b1 should still resolve before singe (priority 0) from faster a1.
-  // This stood on Iron's quickJab until the authored Iron slate deleted it, and
-  // spent a day on Beast's fangRush while the slate had no priority row at all
-  // (2026-08-30). Swift Blow is the successor the designer authored back in:
-  // same bracket, same hero, 4 mana -> 15 on Warden's 40 pool.
+  // swiftBlow (priority 1) from the slower b1 resolves before singe (priority 0) from the faster a1.
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
     { kind: 'move', combatantId: 'b1', moveId: 'swiftBlow', declaredTarget: 'a1' },
@@ -188,8 +171,8 @@ test('round: an unaffordable move is a legality no-op (engine-level guard)', () 
 });
 
 test('hasAffordableMove: true iff at least one candidate move is within current mana', () => {
-  assert.strictEqual(hasAffordableMove(0, [UNAFFORDABLE_MOVE_ID], testMoves), false); // 999 cost, 0 mana
-  assert.strictEqual(hasAffordableMove(0, [UNAFFORDABLE_MOVE_ID, 'singe'], testMoves), false); // singe costs 20, still unaffordable at 0
+  assert.strictEqual(hasAffordableMove(0, [UNAFFORDABLE_MOVE_ID], testMoves), false);
+  assert.strictEqual(hasAffordableMove(0, [UNAFFORDABLE_MOVE_ID, 'singe'], testMoves), false);
   assert.strictEqual(hasAffordableMove(moves.singe.manaCost, [UNAFFORDABLE_MOVE_ID, 'singe'], testMoves), true);
   assert.strictEqual(hasAffordableMove(moves.singe.manaCost - 1, [UNAFFORDABLE_MOVE_ID, 'singe'], testMoves), false);
 });
@@ -212,10 +195,7 @@ test('round: a declared Rest action fully restores mana and skips the turn (soft
 
 test('round: Rest resolves dead last regardless of speed — a faster Resting hero does not preempt a slower attacker', () => {
   const state = twoVTwoFixture(21);
-  // a2 (tidecaller, speed 55) rests; b1 (ironWarden, speed 30) uses ironFist (priority 0, same
-  // bracket every other authored move lives in). Despite a2 being both faster AND in the same
-  // priority bracket by default, the attack must still resolve first — Rest sorts below every
-  // real move priority via REST_PRIORITY_BRACKET (priority.ts), not by winning a speed race.
+  // The faster a2 rests; the slower b1 attacks and must still go first (REST_PRIORITY_BRACKET).
   const actions: Action[] = [
     { kind: 'rest', combatantId: 'a2' },
     { kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a2' },
@@ -229,7 +209,6 @@ test('round: Rest resolves dead last regardless of speed — a faster Resting he
 
 test('round: KO increments KO count and emits Fainted, clearing the active slot', () => {
   const state = twoVTwoFixture(14);
-  // Overwrite b1 to 1 HP so a single hit KOs it.
   const damaged = { ...state, combatants: { ...state.combatants, b1: { ...state.combatants.b1, currentHp: 1 } } };
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
   const { state: next, events } = resolveRound(damaged, actions, config);
@@ -242,11 +221,8 @@ test('round: KO increments KO count and emits Fainted, clearing the active slot'
 
 test('round: a second attacker declared against a target the first attacker already knocked out redirects onto the other enemy', () => {
   const state = twoVTwoFixture(16);
-  // b1 (ironWarden) at 1 HP: whichever of a1/a2 resolves first this round KOs it outright.
   const oneHp = { ...state, combatants: { ...state.combatants, b1: { ...state.combatants.b1, currentHp: 1 } } };
-  // tidecaller (a2, speed 55) outpaces cinderKnight (a1, speed 50) at equal priority, so a2 resolves
-  // first and KOs b1 — a1's declared target is then stale by the time its own action comes up. b2 is
-  // still standing, so a1's attack should redirect onto it rather than fizzle.
+  // The faster a2 KOs b1 first; a1's stale target should redirect onto b2.
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
     { kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' },
@@ -254,7 +230,7 @@ test('round: a second attacker declared against a target the first attacker alre
   const { events } = resolveRound(oneHp, actions, config);
 
   const moveUsedIds = events.filter((e) => e.type === 'MoveUsed').map((e: any) => e.combatantId);
-  assert.deepStrictEqual(moveUsedIds, ['a2', 'a1']); // both moves resolve — a1's redirects onto b2
+  assert.deepStrictEqual(moveUsedIds, ['a2', 'a1']);
   assert.strictEqual(events.some((e) => e.type === 'ActionBlocked' && (e as any).combatantId === 'a1'), false);
   const a1Damage = events.find((e) => e.type === 'DamageDealt' && (e as any).sourceCombatantId === 'a1') as any;
   assert.ok(a1Damage);
@@ -263,8 +239,6 @@ test('round: a second attacker declared against a target the first attacker alre
 
 test('round: an attacker still fizzles when its declared target is gone and the whole enemy side is empty', () => {
   const state = createFightState(18, [{ combatantId: 'a1', heroId: 'cinderKnight', side: 'A' }], [{ combatantId: 'b1', heroId: 'ironWarden', side: 'B' }]);
-  // b1 is the only enemy and it's already fainted before the round starts — there's nothing to
-  // redirect onto, so this must still fizzle rather than throw.
   const b1Fainted = {
     ...state,
     combatants: { ...state.combatants, b1: { ...state.combatants.b1, currentHp: 0, fainted: true } },
@@ -288,13 +262,8 @@ test('round: a move targeting a slot the enemy switched out of hits the replacem
       { combatantId: 'b3', heroId: 'wildOracle', side: 'B' },
     ]
   );
-  // Overwritten well above its real max HP so the incoming attack can't coincidentally KO it —
-  // this test is about retargeting, not survival, and getMaxHp reads from baseStats/statModifiers,
-  // never currentHp, so this doesn't disturb the HP-clamping logic it goes through.
+  // b3 gets buffer HP so the hit cannot coincidentally KO it; the test is about retargeting.
   const withBufferedHp = { ...state, combatants: { ...state.combatants, b3: { ...state.combatants.b3, currentHp: 1000 } } };
-  // a1 declares against b1's slot; B switches b1 out for the bench b3 (switches always resolve
-  // first, priority.ts SWITCH_PRIORITY_BRACKET) — the attack should retarget onto b3, the new
-  // occupant of that slot, exactly like 2v2 Pokemon, instead of fizzling and wasting a's turn/mana.
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
     { kind: 'switch', combatantId: 'b1', benchedCombatantId: 'b3' },
@@ -304,14 +273,14 @@ test('round: a move targeting a slot the enemy switched out of hits the replacem
   assert.ok(events.some((e) => e.type === 'MoveUsed' && (e as any).combatantId === 'a1'));
   assert.ok(events.some((e) => e.type === 'DamageDealt' && (e as any).targetCombatantId === 'b3'));
   assert.strictEqual(events.some((e) => e.type === 'ActionBlocked'), false);
-  assert.strictEqual(next.combatants.b1.currentHp, heroes.ironWarden.baseStats.hp); // switched-out b1 untouched
-  assert.ok(next.combatants.b3.currentHp < 1000); // b3, the replacement, took the hit
+  assert.strictEqual(next.combatants.b1.currentHp, heroes.ironWarden.baseStats.hp);
+  assert.ok(next.combatants.b3.currentHp < 1000);
   assert.strictEqual(next.active.B[0], 'b3');
 });
 
 test('round: bench regen ticks for a damaged benched combatant, clamped at max HP', () => {
   const state = twoVTwoFixture(15);
-  const maxHp = heroes.wildOracle.baseStats.hp; // b2 is wildOracle
+  const maxHp = heroes.wildOracle.baseStats.hp;
   const withBench = {
     ...state,
     active: { ...state.active, B: ['b1', null] as [string | null, string | null] },
@@ -323,21 +292,21 @@ test('round: bench regen ticks for a damaged benched combatant, clamped at max H
 
   const tick = events.find((e) => e.type === 'BenchRegenTicked' && (e as any).combatantId === 'b2') as any;
   assert.ok(tick, 'expected a BenchRegenTicked event for b2');
-  assert.strictEqual(tick.hpRegen, 2); // clamped: only 2 HP of headroom even though benchHpRegenFlat is 5
+  assert.strictEqual(tick.hpRegen, 2); // clamped to the 2 HP of headroom
   assert.strictEqual(next.combatants.b2.currentHp, maxHp);
 });
 
 test('round: mana regen ticks every round for active AND benched combatants alike, clamped at max mana', () => {
   const state = twoVTwoFixture(16);
-  const maxMana = heroes.wildOracle.baseStats.manaPool; // b2 is wildOracle, benched below
+  const maxMana = heroes.wildOracle.baseStats.manaPool;
   const withBench = {
     ...state,
     active: { ...state.active, B: ['b1', null] as [string | null, string | null] },
     bench: { ...state.bench, B: ['b2'] },
     combatants: {
       ...state.combatants,
-      b1: { ...state.combatants.b1, currentMana: state.combatants.b1.currentMana - 20 }, // active, damaged mana pool
-      b2: { ...state.combatants.b2, currentMana: maxMana - 2 }, // benched, near-full
+      b1: { ...state.combatants.b1, currentMana: state.combatants.b1.currentMana - 20 },
+      b2: { ...state.combatants.b2, currentMana: maxMana - 2 },
     },
   };
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
@@ -348,6 +317,6 @@ test('round: mana regen ticks every round for active AND benched combatants alik
   assert.ok(activeTick, 'expected a ManaRegenTicked event for the active b1, not just the benched b2');
   assert.strictEqual(activeTick.manaRegen, heroes.ironWarden.baseStats.mpRegen);
   assert.ok(benchTick, 'expected a ManaRegenTicked event for the benched b2');
-  assert.strictEqual(benchTick.manaRegen, 2); // clamped: only 2 mana of headroom even though wildOracle's mpRegen is higher
+  assert.strictEqual(benchTick.manaRegen, 2); // clamped to the 2 mana of headroom
   assert.strictEqual(next.combatants.b2.currentMana, maxMana);
 });

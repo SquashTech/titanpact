@@ -31,7 +31,7 @@ import {
   ProgressionError,
 } from '../src/run/progression';
 
-/** Test helper: buys `n` levels on a hero, ignoring each level's move offer — for tests that only care about `level` crossing EVOLUTION_LEVEL. `n` is a count of LEVELS, not of points: the pool each caller seeds has to cover run/progression.ts costToReachLevel over the range. */
+/** Buys `n` LEVELS (not points) on a hero, ignoring each level's move offer; the caller's pool must cover costToReachLevel over the range. */
 function levelUpTimes(run: import('../src/run/state').RunState, rosterId: string, n: number) {
   let next = run;
   for (let i = 0; i < n; i++) next = levelUpHero(next, rosterId);
@@ -46,7 +46,7 @@ function seedRoster(heroIds: string[]) {
   return run;
 }
 
-// --- Roster cap / termination ------------------------------------------
+// --- Roster cap / termination ---
 
 test('run: roster accepts up to the 6-hero cap, then throws', () => {
   const allSix = ['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk'];
@@ -100,9 +100,7 @@ test('run: replaceRosterEntry rejects an unknown terminated rosterId and a roste
 test('run: reorderRoster rewrites order without touching membership, and the arrangement is what a later pickSquad reads', () => {
   const run = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle']);
 
-  // The battle-preview grid reads top-to-bottom: slots 0-1 are active, 2-3
-  // bench, 4-5 reserve (view/run/SquadSelectScreen.tsx). Arranging wildOracle
-  // and ironWarden into the active row is exactly this list.
+  // Slots 0-1 are active, 2-3 bench, 4-5 reserve (view/run/SquadSelectScreen.tsx).
   const next = reorderRoster(run, ['wildOracle', 'ironWarden', 'cinderKnight', 'tidecaller']);
   assert.deepStrictEqual(
     next.roster.map((r) => r.rosterId),
@@ -110,9 +108,6 @@ test('run: reorderRoster rewrites order without touching membership, and the arr
   );
   assert.strictEqual(next.roster.length, run.roster.length);
 
-  // The point of persisting it: the next screen seeded from roster order —
-  // and the sub-4 auto-pick that skips the screen — leads with the pair the
-  // player put on top.
   const squad = pickSquad(next.roster, next.roster.map((r) => r.rosterId));
   assert.deepStrictEqual(squad.activeIds, ['wildOracle', 'ironWarden']);
 });
@@ -120,9 +115,7 @@ test('run: reorderRoster rewrites order without touching membership, and the arr
 test('run: reorderRoster tolerates a stale or partial list — unknown ids are dropped, unmentioned heroes keep their place at the back', () => {
   const run = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle']);
 
-  // 'stormRanger' was never recruited and 'tidecaller' is named twice: the
-  // caller is a view holding six slots that outlive any one roster, so this
-  // reorders rather than throwing.
+  // The caller is a view holding six slots that outlive any one roster, so this reorders rather than throwing.
   const next = reorderRoster(run, ['stormRanger', 'wildOracle', 'tidecaller', 'tidecaller']);
   assert.deepStrictEqual(
     next.roster.map((r) => r.rosterId),
@@ -130,7 +123,7 @@ test('run: reorderRoster tolerates a stale or partial list — unknown ids are d
   );
 });
 
-// --- Squad selection (bring-6-pick-4) -----------------------------------
+// --- Squad selection (bring-6-pick-4) ---
 
 test('squad: picking 4 of 6 splits into 2 active + 2 bench, in pick order', () => {
   const run = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle', 'stormRanger', 'shadowMonk']);
@@ -167,7 +160,7 @@ test('squad: 0 picks, 5 picks (roster of 5, above the 4-cap), duplicates, and un
   assert.throws(() => pickSquad(run.roster, ['nonexistent']), SquadSelectionError);
 });
 
-// --- buildCombatState: equipment + Evolution grants feed the stat pipeline ---
+// --- buildCombatState ---
 
 test('buildCombatState: equipped item stat grants raise the combatant\'s effective stat', () => {
   let run = seedRoster(['cinderKnight', 'tidecaller']);
@@ -208,16 +201,14 @@ test('buildCombatState: same rosterId on both sides does not collide (side-prefi
   assert.strictEqual(state.active.B[0], 'B:cinderKnight');
 });
 
-// --- Level-up pool: leveling (moves + Evolution) -----------------
+// --- Level-up pool: moves + Evolution ---
 
 test('progression: levelUpHero spends levelUpCost and bumps level; insufficient points is rejected', () => {
   let run = seedRoster(['cinderKnight']);
   run = { ...run, levelUpPool: 0 };
   assert.throws(() => levelUpHero(run, 'cinderKnight'), ProgressionError);
 
-  // A level-1 hero's first level costs 1 — the one point on the curve where
-  // the old flat price and the new one agree. The curve itself is
-  // test/levelCost.test.ts's subject.
+  // A level-1 hero's first level costs 1; the curve itself is test/levelCost.test.ts's subject.
   run = { ...run, levelUpPool: 1 };
   const next = levelUpHero(run, 'cinderKnight');
   assert.strictEqual(next.levelUpPool, 0);
@@ -228,22 +219,8 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
   let run = seedRoster(['cinderKnight']);
   const entry = run.roster[0];
   assert.deepStrictEqual(
-    // Read at a level past every tier gate, so this stays an assertion about
-    // the authored POOL (below) rather than about the level curve — the gate
-    // itself is test/moveTiers.test.ts's job.
+    // Read at a level past every tier gate, so this pins the authored POOL, not the level curve.
     levelUpMovePool(progressionTable, moves, { ...entry, level: 99 }),
-    // kindle left this pool for Cinder's starting kit when the Spirit slate
-    // deleted Mend Wounds (src/data/heroes.ts, 2026-08-30), and quickJab was
-    // replaced by a real Iron line when the Iron slate landed — Cinder is
-    // Fire/Iron at Atk 70, so heavyBlow and momentumSwing are on-type. The
-    // Beast slate then took fangRush, the last off-type entry, with nothing
-    // put back: a Fire/Iron hero with a full line from both of its own types
-    // has no slot a third type's filler belongs in.
-    //
-    // The last three arrived on 2026-08-31 with the level-up offer floor
-    // (test/moveTiers.test.ts): the pool held one Early move, so the level-3
-    // Training Point bought nothing. All three are Iron, Cinder's own second
-    // type — no off-type filler was needed here.
     [
       'moltenLash',
       'firebrand',
@@ -262,9 +239,6 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
   assert.strictEqual(withMove.roster[0].unlockedMoveIds.length, 4); // starting 3 + this grant hits MOVE_CAP
 
   // Already at MOVE_CAP: further offers require replacing an unlocked move.
-  // quickJab and fortify both died with the authored Iron slate (2026-08-30);
-  // heavyBlow is the pool entry that replaced the first and sharpen is the
-  // starting move that replaced the second (src/data/heroes.ts).
   const swapped = grantLevelUpMove(withMove, 'cinderKnight', 'heavyBlow', 'sharpen');
   assert.ok(!swapped.roster[0].unlockedMoveIds.includes('sharpen'));
   assert.ok(swapped.roster[0].unlockedMoveIds.includes('heavyBlow'));
@@ -317,9 +291,7 @@ test('progression: an Evolution path with a non-multiple-of-5 stat grant is reje
   assert.throws(() => chooseEvolutionPath(run, badTable, heroes, 'cinderKnight', 'bad'), ProgressionError);
 });
 
-// --- learnableMoveIds: "Evolution steers future level-up offerings" --------
-// docs/leveling-and-ranks.md, LOCKED 2026-08-16 and implemented 2026-09-01.
-// Crimson's Cinderveil is the first path that carries it.
+// --- learnableMoveIds: Evolution steers future level-up offerings (docs/leveling-and-ranks.md) ---
 
 test('progression: a graft path adds its learnableMoveIds to the level-up pool without granting them', () => {
   let run = seedRoster(['crimson']);
@@ -336,8 +308,7 @@ test('progression: a graft path adds its learnableMoveIds to the level-up pool w
     assert.ok(after.includes(id), `${id} should be learnable after Cinderveil`);
     assert.ok(!next.roster[0].unlockedMoveIds.includes(id), `${id} should be LEARNABLE, not granted`);
   }
-  // The Fire pool is widened, not replaced — the retained primary keeps being
-  // offered alongside the grafted type.
+  // The Fire pool is widened, not replaced.
   assert.ok(after.includes('inferno'));
   assert.strictEqual(next.roster[0].unlockedMoveIds.length, heroes.crimson.moveIds.length);
 });
@@ -378,14 +349,11 @@ test('progression: Warhowl inverts Fang\'s attacking stat — a NEGATIVE Evoluti
   assert.strictEqual(grants.intelligence, 60);
   assert.strictEqual(grants.manaPool, 20);
 
-  // The point of the path: Fang stops being a physical body.
   const base = heroes.packAlpha.baseStats;
   assert.ok(base.attack > base.intelligence, 'base Fang attacks with Attack');
   assert.ok(base.intelligence + grants.intelligence! > base.attack + grants.attack!, 'Warhowl Fang attacks with Intelligence');
 
-  // Animal Spirit is Beast's one magical row, deliberately absent from Fang's
-  // authored pool because base Fang is Intelligence 20. Warhowl is what makes
-  // it reachable — and being innate Beast, it arrives with STAB.
+  // Animal Spirit is Beast's one magical row, absent from base Fang's pool (Int 20); Warhowl makes it reachable.
   const pool = levelUpMovePool(progressionTable, moves, { ...next.roster[0], level: 99 });
   assert.ok(!progressionTable.moveTiers.packAlpha.includes('animalSpirit'));
   assert.ok(pool.includes('animalSpirit'));
@@ -411,8 +379,7 @@ test('progression: a type-graft path grants a second type without touching the i
     { side: 'B', squad: aiSquad, roster: aiRun.roster },
   ]);
   assert.deepStrictEqual(state.combatants['A:tidecaller'].grantedTypes, ['Spirit']);
-  // Out-of-combat screens (roster mgmt, squad select, training) read the
-  // graft off the RosterEntry directly, with no Combatant built yet.
+  // Out-of-combat screens read the graft off the RosterEntry, with no Combatant built yet.
   assert.deepStrictEqual(rosterEntryTypes(heroes.tidecaller, next.roster[0]), ['Water', 'Spirit']);
 });
 
@@ -421,9 +388,7 @@ test('progression: a type-graft path is rejected for an already-dual-typed hero'
   run = { ...run, levelUpPool: costToReachLevel(1, EVOLUTION_LEVEL) };
   run = levelUpTimes(run, 'ironWarden', EVOLUTION_LEVEL - 1);
 
-  // Synthetic dual-typed override for this hero lookup only — the fixture
-  // roster is all mono/pre-graft now, so this exercises the enforcement
-  // itself rather than depending on any particular hero's canonical typing.
+  // Synthetic dual-typed override so this exercises the enforcement rather than any hero's canonical typing.
   const dualHeroes = { ...heroes, ironWarden: { ...heroes.ironWarden, types: ['Iron', 'Stone'] as const } };
 
   const dualGraftTable = {
@@ -457,8 +422,7 @@ test('progression: a later type-graft path shifts (replaces) the secondary type 
   run = chooseEvolutionPath(run, progressionTable, heroes, 'tidecaller', 'tidecaller-defensive');
   assert.strictEqual(run.roster[0].evolutionTypeGraft, 'Spirit');
 
-  // A synthetic second node offering a shift to a different secondary type
-  // (exercises the future multi-node "Deep line" shape, docs/leveling-and-ranks.md).
+  // A synthetic second node (the future multi-node "Deep line" shape, docs/leveling-and-ranks.md).
   const shiftTable = {
     moveTiers: {},
     evolutions: {

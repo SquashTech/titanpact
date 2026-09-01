@@ -1,36 +1,4 @@
-// Arcane's authored movepool (src/data/moves.ts, 2026-08-30) and the THREE
-// engine fields it is the first content to need:
-//
-//   - `manaGrant` (Infuse, Empower, Conduit, Font of Power) — the first content
-//     that moves mana between combatants, and the reason
-//     `Combatant.currentMana` is no longer bounded by the hero's pool. The
-//     overflow is UNCAPPED and STICKY by designer call (2026-08-30).
-//   - `conditionalTarget` (Overload) — the first move whose TARGETING depends
-//     on the board, read at resolution rather than when the round is ordered.
-//   - `derivedStatDeltas` (Arcane Overflow) — the first stat grant with no
-//     authored number, and the one documented exemption from the LOCKED
-//     "multiples of 5 or 10" rule.
-//
-// Same discipline as fire/water/frost/storm/stone/nature/light/shadowMoves:
-// these assert the MECHANIC with Arcane's moves as the vehicle, never Arcane's
-// numbers, which are balance and will move. What IS pinned is the set of things
-// that are easy to get wrong and silent when they break:
-//
-//   1. Every path that could claw overflow back. Three of them existed before
-//      this slate and all three were written when mana had a ceiling: the regen
-//      tick's Math.min, Rest's assignment TO the pool, and the view's
-//      fraction-of-max bar. The first two are engine and are pinned here; the
-//      third is a clamp in three components and is checked in the app.
-//   2. That a grant survives a switch to the bench and the round boundary — an
-//      overflow that only lasts until end of round would make Conduit into
-//      Singularity a same-round-only trick rather than a plan.
-//   3. That the conditional target is read LATE, so a partner's Mana Font in
-//      the same round already spreads Overload, and that it composes with the
-//      status retargeting layers as an authored spread move would.
-//   4. That the derived grant reads the caster's mana BEFORE the cost, spends
-//      none of it, and lands on statModifiers like any other delta.
-//   5. That every new field is inert when absent — golden replays depend on it
-//      (authoring-moves.md §5), and none of the three draws RNG.
+// Arcane slate: manaGrant / overflow, conditionalTarget, derivedStatDeltas. Hand-off findings: docs/authoring-moves.md §10.
 
 import { statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
@@ -66,21 +34,7 @@ function arcaneFixture(seed: number) {
   );
 }
 
-/**
- * The two fixture problems every authored slate hits (authoring-moves.md §8),
- * with one twist unique to this one.
- *
- * - **Mana.** Arcane's ceiling is 150, above every pool in the roster, which is
- *   the intended shape (docs/mana.md) and not something these tests gate on.
- * - **Lethality.** A defender that faints to the hit never reaches the riders;
- *   getMaxHp reads baseStats + statModifiers, so the hp modifier has to move
- *   with currentHp.
- * - **The twist: `manaPool` must NOT be inflated here the way other slates
- *   inflate it.** Overflow is defined relative to the pool, so a fixture that
- *   sets every pool to 999 makes the mechanic under test unobservable. Mana is
- *   set to the hero's real pool instead, and the tests that need a hero with
- *   room to spend say so explicitly.
- */
+/** Deep HP so riders are reached; mana is deliberately NOT inflated, since overflow is defined relative to the real pool. */
 function survivable(state: CombatState): CombatState {
   const combatants = Object.fromEntries(
     Object.entries(state.combatants).map(([id, c]) => [
@@ -102,7 +56,7 @@ function maxManaOf(state: CombatState, combatantId: string): number {
   return getMaxMana(heroes[c.heroId], c);
 }
 
-// --- manaGrant: mana moves between combatants, and may exceed the pool -------
+// --- manaGrant ---
 
 test('arcane: Infuse hands an ally the whole grant even when it carries them past their pool', () => {
   const state = survivable(arcaneFixture(1));
@@ -121,9 +75,7 @@ test('arcane: Infuse hands an ally the whole grant even when it carries them pas
   assert.strictEqual(granted!.targetCombatantId, 'a2');
   assert.strictEqual(granted!.amount, moves.infuse.manaGrant);
 
-  // a2 started at its full pool, so the entire grant is overflow — minus
-  // whatever the round's own regen tick would have added (it adds nothing above
-  // the pool, which is the next test).
+  // a2 started at its full pool, so the entire grant is overflow (regen adds nothing above the pool).
   assert.ok(next.combatants.a2.currentMana > pool, 'the ally ends the round holding more than its pool');
   assert.strictEqual(next.combatants.a2.currentMana, pool + moves.infuse.manaGrant!);
   assert.ok(granted!.overflow > 0, 'the event reports the surplus so the view need not re-derive it');
@@ -139,17 +91,13 @@ test('arcane: the caster pays its own cost, so a grant is a net gain for the SID
     config
   );
 
-  // Regen ticks at the round boundary, so compare against the spend, not the
-  // absolute figure: the caster is DOWN by its own cost, and the pair is UP by
-  // the difference.
+  // Regen ticks at the round boundary, so compare against the spend, not the absolute figure.
   assert.ok(next.combatants.a1.currentMana < casterBefore, 'the caster is out of pocket');
   assert.ok(moves.infuse.manaGrant! > moves.infuse.manaCost, 'and the side is up on the trade');
 });
 
 test('arcane: Font of Power pays BOTH allies, the caster included', () => {
-  // Zenith's 90 pool cannot reach Font of Power's 100 unaided — which is the
-  // authored shape, not a fixture problem (docs/authoring-moves.md §8). Given
-  // the mana, so the test is about who gets PAID rather than about the price.
+  // Zenith's pool cannot reach Font of Power's cost unaided (authored shape, not a fixture problem).
   const state = withMana(survivable(arcaneFixture(3)), 'a2', 400);
   const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'fontOfPower' }], config);
 
@@ -157,12 +105,9 @@ test('arcane: Font of Power pays BOTH allies, the caster included', () => {
   assert.deepStrictEqual(grants.map((g) => g.targetCombatantId).sort(), ['a1', 'a2']);
 });
 
-// --- Overflow is sticky: the three paths that used to claw it back -----------
+// --- Overflow is sticky ---
 
 test('arcane: the round-boundary regen tick never pulls an overflowed combatant back to its pool', () => {
-  // The regen tick was `Math.min(maxMana, current + regen)` for as long as mana
-  // had a ceiling. Unchanged, that line would have deleted every grant at the
-  // end of the round it landed in (manaRegen.ts).
   const built = survivable(arcaneFixture(4));
   const pool = maxManaOf(built, 'a1');
   const state = withMana(built, 'a1', pool + 100);
@@ -178,8 +123,6 @@ test('arcane: the round-boundary regen tick never pulls an overflowed combatant 
 });
 
 test('arcane: a combatant BELOW its pool still regens normally, and still clamps at the pool', () => {
-  // The other half of the same branch: the overflow rule must not turn the
-  // regen tick into an uncapped one for everybody else.
   const built = survivable(arcaneFixture(5));
   const pool = maxManaOf(built, 'a1');
   const state = withMana(built, 'a1', pool - 1);
@@ -189,8 +132,6 @@ test('arcane: a combatant BELOW its pool still regens normally, and still clamps
 });
 
 test('arcane: Rest tops an overflowed hero up TO its pool and never below what it holds', () => {
-  // Rest assigned `currentMana: maxMana` outright, which was a refund down to
-  // the pool the moment mana could exceed it (resolveRound.ts).
   const built = survivable(arcaneFixture(6));
   const pool = maxManaOf(built, 'a1');
   const state = withMana(built, 'a1', pool + 60);
@@ -204,9 +145,6 @@ test('arcane: Rest tops an overflowed hero up TO its pool and never below what i
 });
 
 test('arcane: overflow survives a switch to the bench', () => {
-  // Statuses clear on a switch (docs/conditions.md §4) and mana never has —
-  // pinned because a grant handed to a hero who then pivots out is exactly the
-  // play the bench-regen engine is supposed to reward (CLAUDE.md "Mana & tempo").
   const built = survivable(arcaneFixture(7));
   const pool = maxManaOf(built, 'a1');
   const state = withMana(built, 'a1', pool + 75);
@@ -221,13 +159,10 @@ test('arcane: overflow survives a switch to the bench', () => {
 });
 
 test('arcane: Conduit is what makes Singularity castable at all', () => {
-  // The slate's own answer to a 150-mana capstone on a roster whose biggest
-  // pool is 90 (docs/authoring-moves.md §8 — not a finding, an authored plan).
   const built = survivable(arcaneFixture(8));
   const pool = maxManaOf(built, 'a1');
   assert.ok(moves.singularity.manaCost > pool, 'the capstone is deliberately above a starting pool');
 
-  // a2 (Zenith) hands a1 (Glyph) 150 mana; a1 can then afford it.
   const { state: after } = resolveRound(
     built,
     [{ kind: 'move', combatantId: 'a2', moveId: 'conduit', declaredTarget: 'a1' }],
@@ -243,7 +178,7 @@ test('arcane: Conduit is what makes Singularity castable at all', () => {
   assert.ok(events.some((e) => e.type === 'MoveUsed' && e.moveId === 'singularity'), 'and the engine lets it through');
 });
 
-// --- conditionalTarget: targeting that reads the board -----------------------
+// --- conditionalTarget ---
 
 test('arcane: Overload is single-target with no field up and spread under Magical Surge', () => {
   const plain = survivable(arcaneFixture(9));
@@ -252,9 +187,6 @@ test('arcane: Overload is single-target with no field up and spread under Magica
   const surging = setFieldEffect(plain, 1, 'surgingMagic').state;
   assert.strictEqual(resolveTargetMode(surging, moves.overload), 'bothEnemies');
 
-  // A DIFFERENT field displaces it and switches the spread straight back off —
-  // one global slot, so this is real counterplay and not a hypothetical
-  // (docs/field-effects.md).
   const displaced = setFieldEffect(surging, 1, 'scorchedLand').state;
   assert.strictEqual(resolveTargetMode(displaced, moves.overload), 'singleEnemy');
 });
@@ -273,10 +205,7 @@ test('arcane: an Overload cast under Magical Surge actually hits both enemies', 
 });
 
 test('arcane: the field is read at RESOLUTION, so a partner setting it earlier the same round already spreads it', () => {
-  // The deliberate difference from conditionalPriority, which cannot see a
-  // same-round setter because a bracket has to be settled first (content.ts).
-  // Zenith (Speed 50) is slower than Glyph (58), so the setter is put on the
-  // FASTER hero and the reader on the slower one.
+  // Zenith (Speed 50) is slower than Glyph (58): setter on the faster hero, reader on the slower one.
   const built = withMana(withMana(survivable(arcaneFixture(11)), 'a1', 400), 'a2', 400);
   assert.strictEqual(built.activeFieldEffect, null);
 
@@ -293,8 +222,6 @@ test('arcane: the field is read at RESOLUTION, so a partner setting it earlier t
 });
 
 test('arcane: a move with no conditionalTarget answers exactly as move.target, field or no field', () => {
-  // Inertness, the §5 discipline: a new optional field must leave every move
-  // authored before it byte-identical.
   const state = setFieldEffect(survivable(arcaneFixture(12)), 1, 'surgingMagic').state;
   for (const move of Object.values(moves)) {
     if (move.conditionalTarget) continue;
@@ -302,7 +229,7 @@ test('arcane: a move with no conditionalTarget answers exactly as move.target, f
   }
 });
 
-// --- derivedStatDeltas: a grant with no authored number ----------------------
+// --- derivedStatDeltas ---
 
 test('arcane: Arcane Overflow grants Attack and Intelligence equal to the mana held BEFORE the cost', () => {
   const banked = 173; // deliberately not a multiple of 5 — see the next test
@@ -318,26 +245,19 @@ test('arcane: Arcane Overflow grants Attack and Intelligence equal to the mana h
     assert.strictEqual(next.combatants[id].statModifiers.attack, banked, `${id} Attack`);
     assert.strictEqual(next.combatants[id].statModifiers.intelligence, banked, `${id} Intelligence`);
   }
-  // Not `banked - manaCost`: the row says "before casting this", and charging
-  // the move first would quietly make it worth 80 less than it reads.
+  // Not `banked - manaCost`: the row reads the mana BEFORE the cost.
   const changes = events.filter((e) => e.type === 'StatChanged') as Array<{ delta: number }>;
   assert.ok(changes.length > 0 && changes.every((c) => c.delta === banked));
 });
 
 test('arcane: the derived grant is the one stat modifier exempt from the multiples-of-5 rule', () => {
-  // CLAUDE.md locks stat modifiers to multiples of 5 or 10 and
-  // isValidFlatStatGrant enforces it for passives. 2026-08-30 designer call:
-  // a derived grant has no authored number to round, and rounding it would make
-  // the buff disagree with the mana numeral on the caster's own bar.
   const built = withMana(survivable(arcaneFixture(14)), 'a2', 173);
   const { state: next } = resolveRound(built, [{ kind: 'move', combatantId: 'a2', moveId: 'arcaneOverflow' }], config);
   assert.strictEqual(next.combatants.a2.statModifiers.attack! % 5, 3, 'the exact figure lands, unrounded');
 
-  // Every AUTHORED delta in the game still obeys the lock.
   for (const move of Object.values(moves)) {
     for (const delta of move.statDeltas ?? []) {
-      // Math.abs, because -10 % 5 is -0 in JS and strictEqual distinguishes it
-      // from 0 (Object.is semantics) — every debuff in the game would 'fail'.
+      // Math.abs: -10 % 5 is -0, which strictEqual distinguishes from 0.
       assert.strictEqual(Math.abs(delta.amount % 5), 0, `${move.id} authors a non-multiple-of-5 stat delta`);
     }
   }
@@ -348,16 +268,14 @@ test('arcane: the derived grant READS the mana, it does not spend it', () => {
   const built = withMana(survivable(arcaneFixture(15)), 'a2', banked);
   const { state: next } = resolveRound(built, [{ kind: 'move', combatantId: 'a2', moveId: 'arcaneOverflow' }], config);
 
-  // Only the move's own cost comes out — plus whatever the round's regen tick
-  // put back, which is nothing while the hero is still above its pool.
+  // Only the cost comes out; regen adds nothing while the hero is above its pool.
   assert.strictEqual(next.combatants.a2.currentMana, banked - moves.arcaneOverflow.manaCost);
 });
 
 test('arcane: overflow counts toward the derived grant — the Font of Power into Arcane Overflow combo', () => {
   const raw = survivable(arcaneFixture(16));
   const pool = maxManaOf(raw, 'a2');
-  // Exactly the price, so what it ends up holding is the GRANT and nothing
-  // else — 150 into a 90 pool, which is the overflow the next cast reads.
+  // Exactly the price, so what it ends up holding is the grant and nothing else.
   const built = withMana(raw, 'a2', moves.fontOfPower.manaCost);
 
   const { state: charged } = resolveRound(built, [{ kind: 'move', combatantId: 'a2', moveId: 'fontOfPower' }], config);
@@ -368,7 +286,7 @@ test('arcane: overflow counts toward the derived grant — the Font of Power int
   assert.strictEqual(next.combatants.a1.statModifiers.attack, held, 'the buff is the FULL held figure, overflow included');
 });
 
-// --- The slate as a whole ----------------------------------------------------
+// --- The slate as a whole ---
 
 test('arcane: the slate is sixteen moves, and every field effect and status it names exists', () => {
   const slate = Object.values(moves).filter((m) => m.type === 'Arcane');
@@ -383,10 +301,7 @@ test('arcane: the slate is sixteen moves, and every field effect and status it n
 });
 
 test('arcane: Mana Tap is the only 0-mana move in the game, so its holder can never be forced to Rest', () => {
-  // A real consequence, not a curiosity: hasAffordableMove is a `>=` check, so
-  // 0 is always affordable (state.ts). Pinned so a rebalance that gives Mana Tap
-  // a price has to notice it is also removing Zenith's floor — the battery
-  // gives its pool away and this is what it acts with afterwards.
+  // hasAffordableMove is a `>=` check, so 0 is always affordable (state.ts).
   const free = Object.values(moves).filter((m) => m.manaCost === 0);
   assert.deepStrictEqual(free.map((m) => m.id), ['manaTap']);
 
@@ -400,10 +315,6 @@ test('arcane: Mana Tap is the only 0-mana move in the game, so its holder can ne
 });
 
 test('arcane: every hero that can be offered a mana sink can also reach a way to pay for it', () => {
-  // frostMoves' "the gate has a key in the same pool" assertion, in the shape
-  // this type needs it. Nothing in the engine pairs them: Singularity in a pool
-  // with no route to a mana grant is a move its holder can only cast after a
-  // whole run of mana upgrades, which is the trap pick the north star forbids.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   const grantIds = Object.values(moves)
     .filter((m) => m.manaGrant)
@@ -414,8 +325,7 @@ test('arcane: every hero that can be offered a mana sink can also reach a way to
     if (!reachable.includes('singularity')) continue;
     assert.ok(
       reachable.some((id) => grantIds.includes(id)) ||
-        // Or a partner can hand it over: the grants are singleAlly/bothAllies,
-        // so a second Arcane hero on the team is a legitimate route too.
+        // Or a second Arcane hero on the team can hand it over.
         Object.values(heroes).some((other) => other.types.includes('Arcane') && other.id !== heroId),
       `${heroId} can be offered Singularity with no way to pay for it`
     );
@@ -423,9 +333,6 @@ test('arcane: every hero that can be offered a mana sink can also reach a way to
 });
 
 test('arcane: no move id in any kit, pool or enemy loadout is dangling', () => {
-  // The dangling-id walk waterMoves introduced, re-run for this slate because
-  // it deleted four ids (arcaneBolt, manaBurst, arcaneSurge, and the fixture
-  // overload) that were spread across two hero kits, two pools and a test.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   const { enemies } = require('../src/data/enemies') as typeof import('../src/data/enemies');
 
@@ -448,9 +355,6 @@ test('arcane: neither Arcane hero lists its own starting move in its level-up po
 });
 
 test('arcane: both Arcane heroes can afford every move in their own starting kit', () => {
-  // The one affordability check that IS a finding (authoring-moves.md §8): a
-  // hero that cannot cast its own opener is the one thing a player cannot fix
-  // by drafting.
   for (const heroId of ['runescribe', 'zenith']) {
     const hero = heroes[heroId];
     for (const id of hero.moveIds) {

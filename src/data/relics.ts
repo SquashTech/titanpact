@@ -1,20 +1,5 @@
-// Relics (CLAUDE.md "Relics are team-wide passives", docs/progression.md
-// "Relics (team-wide)"): a separate progression axis from per-hero equipment,
-// applying flat/passive/status grants to the whole side rather than a slot
-// (src/run/relics.ts RelicDefinition). This is now a real, sizeable catalog —
-// quantity for run variety per designer request (2026-08-23), values are
-// still provisional and expected to be tuned later.
-//
-// The first 8 (ironStandard through cinderStandard) are the original set —
-// ironStandard/warHorn/sagesLantern/windcallersBanner/deepWellstone/
-// bulwarkCore exercise plain statGrants end to end, emberheart exercises
-// grantsPassiveIds (src/run/passives.ts), cinderStandard exercises
-// grantsStatusIds (src/run/statusGrants.ts, Elemental Force). Everything
-// after reuses those same three grant shapes — no new engine vocabulary —
-// to cover: a second, stronger tier of single-stat relics; two-stat combo
-// relics; mana/tempo specialists; one Elemental Force relic per type (15
-// types total, TYPES in typechart.ts); and relics granting each existing
-// reactive/damage-modifier passive (src/data/passives.ts) team-wide.
+// Relics: team-wide passives (docs/progression.md "Relics (team-wide)"), built from the three
+// grant shapes statGrants / grantsPassiveIds / grantsStatusIds. Values are provisional.
 
 import type { RelicDefinition } from '../run/relics';
 import { TYPES } from './typechart';
@@ -72,7 +57,7 @@ const originalRelics: Record<string, RelicDefinition> = {
   },
 };
 
-// Second, stronger tier of the same single-stat pattern above.
+// --- Single-stat, stronger tier ---
 const singleStatRelics: Record<string, RelicDefinition> = {
   titansBulwark: {
     id: 'titansBulwark',
@@ -112,7 +97,7 @@ const singleStatRelics: Record<string, RelicDefinition> = {
   },
 };
 
-// Two-stat combo relics — each pairs two stats into a small build identity.
+// --- Two-stat combos ---
 const comboStatRelics: Record<string, RelicDefinition> = {
   duelistsSignet: {
     id: 'duelistsSignet',
@@ -194,7 +179,7 @@ const comboStatRelics: Record<string, RelicDefinition> = {
   },
 };
 
-// Small all-rounder / utility relics that don't fit the single- or two-stat pattern.
+// --- Utility ---
 const utilityStatRelics: Record<string, RelicDefinition> = {
   balancedWhetstone: {
     id: 'balancedWhetstone',
@@ -228,10 +213,7 @@ const utilityStatRelics: Record<string, RelicDefinition> = {
   },
 };
 
-// One Elemental Force relic per type (statuses.ts elementalForceStatus,
-// generated from TYPES) — cinderStandard above already covers Fire, so this
-// fills in the remaining 14. Each grants `${Type}Force` magnitude 10 team-wide
-// (flat +10 Base Power to that type's moves), same shape as cinderStandard.
+// --- Elemental Force, one per type (cinderStandard above covers Fire) ---
 const elementalForceNames: Partial<Record<(typeof TYPES)[number], { id: string; name: string }>> = {
   Water: { id: 'tideStandard', name: 'Tide Standard' },
   Frost: { id: 'rimeStandard', name: 'Rime Standard' },
@@ -262,9 +244,7 @@ const elementalForceRelics: Record<string, RelicDefinition> = Object.fromEntries
   ])
 );
 
-// One relic per existing reactive/damage-modifier passive (src/data/passives.ts)
-// besides emberheart above, so each of those passives has a relic path onto
-// the team, not just equipment.
+// --- One relic per equipment passive (passives.ts), so each has a team-wide path ---
 const passiveRelics: Record<string, RelicDefinition> = {
   vampiricIdol: {
     id: 'vampiricIdol',
@@ -311,14 +291,8 @@ const passiveRelics: Record<string, RelicDefinition> = {
   },
 };
 
-
-// The Guardian's Banner (docs/run-loop.md): the fixed 1-of-3 handed out after
-// every Guardian win in acts 1-4. Deliberately the same three every time and
-// deliberately stackable — a player who wants one axis can take it four times
-// (a 4-stack Banner of Vitality is +120 HP on every hero, present and future),
-// and RelicsOverlay folds duplicates into one card ("Banner of Vitality +3").
-// `guardianBanner` keeps all three out of the random pools (drawableRelics
-// below), so they are never a Shrine or Guild Hall offer.
+// --- Guardian's Banner: the fixed, stackable 1-of-3 after each act 1-4 Guardian (docs/run-loop.md).
+// `guardianBanner: true` keeps them out of drawableRelics.
 const guardianBanners: Record<string, RelicDefinition> = {
   bannerOfVitality: {
     id: 'bannerOfVitality',
@@ -353,14 +327,8 @@ export const relics: Record<string, RelicDefinition> = {
   ...guardianBanners,
 };
 
-/** The three fixed Banners, in the order the post-Guardian screen offers them (App.tsx GuardianBannerScreen). */
+/** The three fixed Banners, in the order the post-Guardian screen offers them. */
 export const guardianBannerRelics: RelicDefinition[] = Object.values(guardianBanners);
 
-/**
- * Every relic a random offer may draw — the catalog minus the Guardian
- * Banners. Both random sources use it (the Relic Shrine's 1-of-3 and the
- * Guild Hall's rotating stock); the banners reach the player only through the
- * post-Guardian choice, which is what keeps that choice the same three every
- * act.
- */
+/** Every relic a random offer (Shrine, Guild Hall) may draw — the catalog minus the Banners. */
 export const drawableRelics: RelicDefinition[] = Object.values(relics).filter((relic) => !relic.guardianBanner);

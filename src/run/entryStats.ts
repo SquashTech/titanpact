@@ -1,17 +1,6 @@
-// The single definition of "what a roster entry's stats actually are right
-// now" — every flat grant source folded together in one place: equipment,
-// Evolution, map-node stat bonuses, Class, and team-wide relic grants.
-//
-// This exists because there are two callers that MUST agree and previously
-// didn't: buildCombatState.ts (the run -> combat seam, which fed the engine
-// relic grants) and the out-of-combat hero sheet (HeroPreviewOverlay, which
-// didn't — so a relic's +Speed was real in a fight but invisible on the
-// roster screen). Any new grant source belongs here, not in either caller.
-//
-// Still just the flat-additive stat pipeline (CLAUDE.md "two-pipeline
-// separation"): nothing here touches damage-pipeline multipliers, and
-// live in-combat deltas stay on Combatant.statModifiers, apart from this
-// baseline.
+// The single definition of a roster entry's flat stat/passive totals. Both
+// buildCombatState.ts and the out-of-combat hero sheet read this; any new
+// grant source belongs here, not in either caller.
 
 import type { PassiveDefinition, PassiveId } from '../engine/content';
 import type { StatModifiers } from '../engine/state';
@@ -21,12 +10,7 @@ import { equipmentStatModifiers } from './equipment';
 import { equipmentPassiveGrants, mergePassiveGrants, passiveStatModifiers } from './passives';
 import { mergeStatMods } from './statMods';
 
-/**
- * Every passive this entry holds, as id -> stack count: equipment grants,
- * Evolution grants, event grants (RosterEntry.bonusPassiveGrants), its Class
- * (at most one), plus whatever the team's relics broadcast to everyone on the
- * side.
- */
+/** id -> stack count across equipment, Evolution, events, Class and team relics. */
 export function entryPassiveCounts(
   entry: RosterEntry,
   equipmentLookup: Record<string, EquipmentDefinition>,
@@ -46,12 +30,7 @@ export function entryPassiveCounts(
   );
 }
 
-/**
- * The entry's full flat stat delta over its hero's base stats. Pass the
- * already-merged passive counts from `entryPassiveCounts` so callers that
- * also need the counts (buildCombatState, for Combatant.passives) compute
- * them once.
- */
+/** Full flat delta over base stats. Takes the counts from `entryPassiveCounts` so callers needing both compute them once. */
 export function entryStatModifiers(
   entry: RosterEntry,
   equipmentLookup: Record<string, EquipmentDefinition>,
@@ -69,13 +48,7 @@ export function entryStatModifiers(
   );
 }
 
-/**
- * What the team's relics alone contribute to one combatant's stats — the
- * relic slice of `entryStatModifiers`, broken out so the UI can show
- * "this much of your Speed is coming from relics" rather than silently
- * folding it into the total. Includes the stats held by relic-GRANTED
- * passives, not just the relic's own statGrants.
- */
+/** The relic slice alone (including relic-granted passives' stats), for the UI's "from relics" readout. */
 export function relicStatContribution(
   teamStatModifiers: StatModifiers,
   teamPassiveGrants: Record<PassiveId, number>,

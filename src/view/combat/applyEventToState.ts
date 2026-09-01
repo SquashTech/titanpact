@@ -1,10 +1,5 @@
-// Replays a single engine event onto a CombatState for sequenced playback
-// (docs/architecture.md "engine / presentation separation"). This does no
-// game logic of its own — no damage math, no RNG, no targeting — it only
-// copies the values each event already carries (newHp, newMana, ...) onto
-// the corresponding field. That's what keeps it presentation-layer: the
-// engine computed the round in one synchronous pass, and this just lets the
-// view reveal that already-decided outcome one beat at a time.
+// Replays one engine event onto a CombatState for sequenced playback. No game
+// logic here — it only copies the values each event already carries.
 
 import type { CombatEvent } from '../../engine/events';
 import type { CombatState } from '../../engine/state';
@@ -36,10 +31,7 @@ export function applyEventToState(state: CombatState, event: CombatEvent): Comba
         combatants: { ...state.combatants, [event.combatantId]: { ...state.combatants[event.combatantId], currentMana: event.newMana } },
       };
 
-    // Copies the engine's own figure, which may exceed the pool — the view
-    // must not re-clamp it (state.ts Combatant.currentMana, docs/mana.md
-    // "Overflow"). Keyed on targetCombatantId, not combatantId: this is the
-    // one mana event with two combatants in it.
+    // May exceed the pool — never re-clamp (docs/mana.md "Overflow"). Keyed on targetCombatantId.
     case 'ManaGranted':
       return {
         ...state,
@@ -60,8 +52,7 @@ export function applyEventToState(state: CombatState, event: CombatEvent): Comba
         },
       };
 
-    // Mirrors switching.ts performSwitch exactly, using the event's own
-    // recorded outcome rather than recomputing it.
+    // Mirrors switching.ts performSwitch, from the event's recorded outcome.
     case 'SwitchedIn': {
       const nextActive = [...state.active[event.side]] as [string | null, string | null];
       nextActive[event.slot] = event.inCombatantId;
@@ -101,8 +92,7 @@ export function applyEventToState(state: CombatState, event: CombatEvent): Comba
         },
       };
 
-    // Carries the post-tick magnitude/duration (engine/combat/statusEngine.ts) — a
-    // trailing StatusRemoved handles the decay-to-zero/expiry case instead.
+    // Post-tick figures; a trailing StatusRemoved handles expiry.
     case 'StatusTicked': {
       const combatant = state.combatants[event.combatantId];
       const existing = combatant.statuses[event.statusId];
@@ -142,12 +132,7 @@ export function applyEventToState(state: CombatState, event: CombatEvent): Comba
     case 'FieldEffectExpired':
       return { ...state, activeFieldEffect: null };
 
-    // RoundStarted / TurnStarted / MoveDeclared / MoveUsed / DamageDealt /
-    // Healed / StatusDetonated / PassiveTriggered / ActionBlocked /
-    // RoundEnded: no CombatState field this view reads changes from these
-    // directly (DamageDealt/Healed/StatusDetonated/PassiveTriggered are
-    // always paired with a HpChanged/StatusApplied/StatChanged that carries
-    // the actual new value).
+    // Everything else is always paired with an event above that carries the new value.
     default:
       return state;
   }

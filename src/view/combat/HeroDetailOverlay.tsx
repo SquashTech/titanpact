@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { moves } from '../../data/moves';
-import { fieldEffects } from '../../data/fieldEffects';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { Combatant, StatContext } from '../../engine/state';
 import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana } from '../../engine/state';
@@ -23,81 +22,58 @@ import { passiveEmoji, passiveColor, passiveTint, PassiveInfoPanel } from '../sh
 interface Props {
   hero: HeroDefinition;
   combatant: Combatant;
-  /** null when the roster this combatant belongs to has no matching entry (shouldn't happen in practice, guarded for safety). */
+  /** null when the roster has no matching entry (guarded for safety). */
   rosterEntry: RosterEntry | null;
   equipmentLookup: Record<string, EquipmentDefinition>;
-  /** The battlefield's current Field Effect, if any (docs/field-effects.md) — threaded into getEffectiveStat so a Verdant Earth-boosted Attack/Intelligence reads correctly here instead of showing the unboosted loadout value. */
-  /** See CombatantCard: the Field Effect plus the board a conditional passive reads (state.ts StatContext). */
+  /** Field Effect plus the board a conditional passive reads (state.ts StatContext). */
   statCtx: StatContext;
   onClose: () => void;
 }
+
+type PopupRef = { kind: 'move' | 'equipment' | 'passive'; id: string };
 
 function fmtMod(n: number): string {
   if (n === 0) return '—';
   return n > 0 ? `+${n}` : `${n}`;
 }
 
-/** "Burn 20" / "Poison 15" / "Bleed" — mirrors CombatantCard's badge text (magnitude/duration shown when the status carries one; boolean statuses like Bleed and Daze carry neither and render bare). */
+/** "Burn 20" / "Bleed" — boolean statuses carry no number and render bare. */
 function fmtStatus(statusId: string, magnitude: number | undefined, duration: number | undefined): string {
   const n = magnitude ?? duration;
   return n !== undefined ? `${statusId} ${n}` : statusId;
 }
 
-/**
- * Full stat/loadout readout for a single combatant, opened by tapping a
- * battlefield card's info button (CombatantCard.tsx). Works for either side —
- * everything it reads (hero, combatant, roster entry) is already visible to
- * the player once a hero is on the battlefield, so there's no hidden-info
- * concern the way there is for the enemy bench. Dismisses on any tap,
- * anywhere (docs/architecture.md presentation-layer convention shared with
- * the battle log overlay).
- */
+/** Full stat/loadout readout for one combatant, either side. Dismisses on any tap. */
 export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLookup, statCtx, onClose }: Props) {
-  // Loadout (equipment/relic/Evolution/Class) grants combined with whatever a
-  // move/passive has changed THIS fight — this full sheet shows both, unlike
-  // the battlefield card's badges (CombatantCard.tsx activeStatMods), which
-  // only flag the latter.
+  // Loadout grants plus in-fight changes — unlike CombatantCard's badges, which flag only the latter.
   const totalModifiers = Object.fromEntries(
     STAT_ORDER.map((stat) => [stat, (combatant.baselineStatModifiers[stat] ?? 0) + (combatant.statModifiers[stat] ?? 0)])
   ) as Record<StatKey, number>;
-  const fieldEffectCtx = statCtx;
   const hasModifiers = STAT_ORDER.some((stat) => totalModifiers[stat] !== 0);
   const effectiveTotals = Object.fromEntries(
-    STAT_ORDER.map((stat) => [stat, getEffectiveStat(hero, combatant, stat, fieldEffectCtx)])
+    STAT_ORDER.map((stat) => [stat, getEffectiveStat(hero, combatant, stat, statCtx)])
   ) as Record<StatKey, number>;
   const evolved = rosterEntry ? chosenEvolutionPaths(progressionTable, rosterEntry) : [];
-  /** In-fight, so this reads the same effective Wisdom the round will (mid-fight buffs and the field effect included) rather than the loadout baseline. */
-  const healCaster = { wisdom: effectiveTotals.wisdom, types: effectiveTypes(hero, combatant) };
+  const types = effectiveTypes(hero, combatant);
+  // Effective Wisdom (mid-fight buffs and field effect included), not the loadout baseline.
+  const healCaster = { wisdom: effectiveTotals.wisdom, types };
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = maxHp > 0 ? Math.max(0, combatant.currentHp) / maxHp : 0;
-  // Clamped, with the surplus as its own band — see CombatantCard for why
-  // (state.ts Combatant.currentMana, docs/mana.md "Overflow").
   const manaFraction = maxMana > 0 ? Math.min(1, combatant.currentMana / maxMana) : 0;
   const manaOverFraction = maxMana > 0 ? Math.max(0, Math.min(1, (combatant.currentMana - maxMana) / maxMana)) : 0;
-  /** Long-press-triggered move/item/passive detail popup — shared by the moves row, the equipment grid, and the passives row below (mirrors LevelUpScreen's movePopup, "hold to inspect" standard). */
-  const [popup, setPopup] = useState<{ kind: 'move' | 'equipment' | 'passive'; id: string } | null>(null);
+  // Hide a duration-shape status once its counter hits 0 (see CombatantCard).
+  const visibleStatuses = Object.values(combatant.statuses).filter((s) => s.duration === undefined || s.duration > 0);
+  const passiveList = Object.values(combatant.passives);
+  const [popup, setPopup] = useState<PopupRef | null>(null);
 
-  /**
-   * Opens the popup and arms swallowGhostClick (MoveTile.tsx) — releasing
-   * the hold that got us here fires a browser-synthesized "ghost" click
-   * (the popup now covers the tile, so pointerup lands on it instead of the
-   * original element) that would otherwise reach whichever ancestor's
-   * onClick and get misread as a deliberate dismiss. See that function's
-   * doc comment for the full mechanism.
-   */
-  function openPopup(next: { kind: 'move' | 'equipment' | 'passive'; id: string }) {
+  // swallowGhostClick: releasing the hold fires a synthesized click that would otherwise read as a dismiss (MoveTile.tsx).
+  function openPopup(next: PopupRef) {
     swallowGhostClick();
     setPopup(next);
   }
 
-  /**
-   * Stops propagation here (not just on the panel) so a click anywhere in
-   * this overlay — backdrop or panel background alike — closes only THIS
-   * overlay and never bubbles into whatever screen rendered it. A deliberate
-   * click elsewhere in the panel while the popup is open dismisses just the
-   * popup, not the whole hero sheet.
-   */
+  // A click anywhere closes only THIS overlay (never bubbles to the screen beneath); with the popup open it closes just the popup.
   function closeAndStop(e: { stopPropagation: () => void }) {
     e.stopPropagation();
     if (popup) {
@@ -112,16 +88,12 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
       <button className="detail-close-button" onClick={onClose} aria-label="Close">
         ✕
       </button>
-      {/* Tapping the panel background itself closes it too (matches the
-          "Tap elsewhere to close" hint below) — only a move tile or an
-          equipped item's box stops propagation, so inspecting one doesn't
-          also dismiss the overlay. */}
       <div className="detail-panel" onClick={closeAndStop}>
         <HeroPortrait heroId={hero.id} className="detail-portrait" />
         <div className="detail-header">
           <div className="detail-name">{hero.name}</div>
           <div className="combatant-types">
-            {effectiveTypes(hero, combatant).map((t) => (
+            {types.map((t) => (
               <TypeBadge key={t} type={t} />
             ))}
           </div>
@@ -136,11 +108,8 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           )}
         </div>
 
-        {/* Above the stat bars, not below the moves: mid-fight this is the
-            question the sheet gets opened to answer, and the hero’s own type
-            chips are two lines up. */}
         <div className="detail-section-title"><SectionGlyph name="matchups" /> Matchups</div>
-        <TypeMatchups types={effectiveTypes(hero, combatant)} />
+        <TypeMatchups types={types} />
 
         <div className="detail-resource-row">
           <div>
@@ -182,40 +151,32 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
         )}
 
         <div className="detail-section-title"><SectionGlyph name="statuses" /> Statuses</div>
-        {/* Hide a duration-shape status (Stealth) once its counter hits 0 — see
-            CombatantCard.tsx's matching filter for why it can still be present
-            in state for the rest of that round. */}
-        {(() => {
-          const visibleStatuses = Object.values(combatant.statuses).filter((s) => s.duration === undefined || s.duration > 0);
-          return visibleStatuses.length > 0 ? (
-            <div className="detail-modifier-list">
-              {visibleStatuses.map((s) => {
-                return (
-                  <span
-                    key={s.statusId}
-                    className="detail-status-chip"
-                    style={{
-                      color: statusColor(s.statusId),
-                      background: statusTint(s.statusId, 0.12),
-                      borderColor: statusTint(s.statusId, 0.5),
-                    }}
-                  >
-                    <StatusGlyph statusId={s.statusId} />
-                    {fmtStatus(s.statusId, s.magnitude, s.duration)}
-                    {s.statusId === 'Poison' && <PoisonPips duration={s.duration} />}
-                  </span>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="detail-empty">No active statuses.</div>
-          );
-        })()}
+        {visibleStatuses.length > 0 ? (
+          <div className="detail-modifier-list">
+            {visibleStatuses.map((s) => (
+              <span
+                key={s.statusId}
+                className="detail-status-chip"
+                style={{
+                  color: statusColor(s.statusId),
+                  background: statusTint(s.statusId, 0.12),
+                  borderColor: statusTint(s.statusId, 0.5),
+                }}
+              >
+                <StatusGlyph statusId={s.statusId} />
+                {fmtStatus(s.statusId, s.magnitude, s.duration)}
+                {s.statusId === 'Poison' && <PoisonPips duration={s.duration} />}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div className="detail-empty">No active statuses.</div>
+        )}
 
         <div className="detail-section-title"><SectionGlyph name="passives" /> Passives</div>
-        {Object.keys(combatant.passives).length > 0 ? (
+        {passiveList.length > 0 ? (
           <div className="detail-modifier-list">
-            {Object.values(combatant.passives).map((instance) => {
+            {passiveList.map((instance) => {
               const def = passives[instance.passiveId];
               if (!def) return null;
               return (
@@ -270,12 +231,11 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
         <div className="detail-close-hint">Hold a move or item, or tap a passive, to inspect it — tap elsewhere to close</div>
       </div>
 
-      {/* Long-press-triggered move/item detail popup (see `popup` state above) — reuses .log-overlay/.log-panel like LevelUpScreen's move popup, including "tap anywhere to close" (no stopPropagation on the panel). */}
       {popup && (
         <div className="log-overlay" onClick={() => setPopup(null)}>
           <div className="log-panel move-popup-panel">
             {popup.kind === 'move' ? (
-              /* The same dossier the fight screen's move rows open — one card for a move, wherever the player holds one. No combat context here: this sheet is read out of a fight as often as in one, so the forecast half simply doesn't render. */
+              // No combat context: this sheet is read out of a fight as often as in one, so the forecast half does not render.
               moves[popup.id] ? <MoveDetailCard move={moves[popup.id]} caster={healCaster} /> : null
             ) : popup.kind === 'equipment' ? (
               <EquipmentInfoPanel item={equipmentLookup[popup.id] ?? null} />

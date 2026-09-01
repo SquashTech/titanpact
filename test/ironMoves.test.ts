@@ -1,37 +1,4 @@
-// Iron's authored slate (src/data/moves.ts, 2026-08-30) and the ONE engine
-// field it needed:
-//
-//   - `conditionalManaCost.requiresAnyEnemyStatus` (Metallic Blade) — the
-//     second side of a field that previously had one. Storm's Overcharge is
-//     free while EVERY active enemy carries Conduct; this is free while ANY
-//     of them does, whether or not it is the foe being hit. Designer call,
-//     2026-08-30, asked before any content was written.
-//
-// The reason that distinction is worth a field rather than a rounding of the
-// design table: Iron is one of Conduct's `triggerTypes` (src/data/statuses.ts),
-// so an Iron damage move DETONATES the mark it reads. Swing Metallic Blade at
-// the marked foe and it cashes the mark and ends its own discount; swing it at
-// the unmarked one and the mark survives, so it is free again next round.
-// Overcharge cannot pose that choice — a board satisfying "both marked" cannot
-// survive the cast that reads it. Both halves are pinned below.
-//
-// Plus the type's own shape, which the design table states only by omission:
-//
-//   - Iron is a Conduct trigger type, so ALL TEN damage rows detonate an
-//     existing mark for 10% max HP with nothing authored, and the slate plants
-//     Conduct ZERO times (designer call: Iron cashes, a partner sets). The
-//     count is pinned so it cannot drift silently, the same way Storm's and
-//     Spirit's are.
-//   - The type is an Attack ramp with a Defense debuff on the other end, and
-//     every one of those deltas is PERMANENT for the fight (stat mods persist
-//     through a switch, CLAUDE.md 2026-08-15). Pinned as a compounding
-//     sequence rather than as one cast.
-//   - Exactly ONE priority row and no heal, no cleanse, no field effect, and
-//     exactly one status rider in sixteen rows. The slate shipped at fourteen
-//     with no bracket and no cheap guard buff, reported both as deleted
-//     capabilities, and the designer answered with Swift Blow and a re-authored
-//     Fortify the same day — so the counts below are pinned at sixteen and the
-//     "no priority" assertion became "exactly one".
+// Iron slate: conditionalManaCost.requiresAnyEnemyStatus, the permanent Attack ramp, Conduct detonation with zero planting. Hand-off findings: docs/authoring-moves.md §10.
 
 import { firstStatusApplication } from '../src/engine/content';
 import * as assert from 'assert';
@@ -50,7 +17,7 @@ import type { Action } from '../src/engine/combat/actions';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
-/** Gallant and Valor (the Iron aggressor and the Iron starter) attack; Warden and Sentinel defend. */
+/** Gallant and Valor attack; Warden and Sentinel defend. */
 function ironFixture(seed: number) {
   return createFightState(
     seed,
@@ -65,13 +32,7 @@ function ironFixture(seed: number) {
   );
 }
 
-/**
- * The two fixture problems every authored slate hits (authoring-moves.md §8):
- * an authored curve the fixture pools cannot pay for, and defenders fragile
- * enough that the hit KOs them before the rider is ever reached — which
- * silently turns a rider test into a KO test. getMaxHp reads
- * `baseStats + statModifiers`, so the hp modifier has to move with currentHp.
- */
+/** Deep mana and HP so no test is gated on the mana curve or turned into a KO test; the hp modifier moves with currentHp because getMaxHp reads both. */
 function withDeepPools(state: CombatState): CombatState {
   const combatants = Object.fromEntries(
     Object.entries(state.combatants).map(([id, c]) => [
@@ -97,7 +58,7 @@ function modifiersOf(state: CombatState, combatantId: string) {
   return state.combatants[combatantId].statModifiers as Record<string, number>;
 }
 
-// --- conditionalManaCost.requiresAnyEnemyStatus ------------------------------
+// --- conditionalManaCost.requiresAnyEnemyStatus ---
 
 test('iron: Metallic Blade is free while ANY enemy carries Conduct, and full price on a clean board', () => {
   const state = withDeepPools(ironFixture(600));
@@ -105,8 +66,7 @@ test('iron: Metallic Blade is free while ANY enemy carries Conduct, and full pri
 
   assert.strictEqual(resolveManaCost(state, 'a1', move), 40, 'clean board pays the authored price');
 
-  // One enemy marked is enough — and deliberately the one a1 is NOT obliged
-  // to hit. That is the whole difference from Overcharge.
+  // Marked foe is deliberately the one a1 is NOT obliged to hit.
   const oneMarked = withStatus(state, 'b2', 'Conduct');
   assert.strictEqual(resolveManaCost(oneMarked, 'a1', move), 0);
 
@@ -127,20 +87,13 @@ test('iron: the two sides of conditionalManaCost are genuinely different — one
 });
 
 test('iron: a mark on the CASTER\'s own side never makes Metallic Blade free', () => {
-  // Conduct is a mark you plant on an enemy, but nothing stops one landing on
-  // your own hero (Storm's Rising Static resolves its rider independently).
-  // resolveManaCost reads the enemy side only, and the direction matters:
-  // a hero paying nothing because its own partner is marked would be an
-  // engine bug that no design row asks for.
   const state = withDeepPools(ironFixture(602));
   const allyMarked = withStatus(state, 'a2', 'Conduct');
   assert.strictEqual(resolveManaCost(allyMarked, 'a1', moves.metallicBlade), 40);
 });
 
 test('iron: a wiped enemy side satisfies NEITHER side of conditionalManaCost', () => {
-  // "A condition nothing can meet must not read as met" (state.ts). The `some`
-  // side would answer false on its own; the shared empty-side guard is what
-  // stops the `every` side answering true vacuously. Pinned from both.
+  // The empty-side guard is what stops the `every` side answering true vacuously.
   const base = withDeepPools(ironFixture(603));
   const empty = {
     ...base,
@@ -164,8 +117,6 @@ test('iron: the free cast actually spends 0 mana in a live round, not just in th
 });
 
 test('iron: swinging Metallic Blade at the MARKED foe cashes the mark; at the other foe it banks it', () => {
-  // The decision the `any` side creates, and the reason it is not a rounding
-  // of Overcharge. Both casts are free; only one of them stays free.
   const state = withStatus(withDeepPools(ironFixture(605)), 'b1', 'Conduct');
 
   const cashed = resolveRound(
@@ -187,33 +138,23 @@ test('iron: swinging Metallic Blade at the MARKED foe cashes the mark; at the ot
 });
 
 test('iron: effectiveManaCost stays the board-free answer — the conditional price is resolveManaCost\'s alone', () => {
-  // The draft, level-up and compendium surfaces have no fight in scope and
-  // must show the authored price. Same discipline Overcharge established.
   assert.strictEqual(effectiveManaCost(moves.metallicBlade), 40);
 });
 
 test('iron: every conditionalManaCost in the game authors exactly one side', () => {
-  // Nothing in the type system enforces it — both fields are optional, and a
-  // move authoring neither is a silent dud that never fires. This is the
-  // check that makes a third sibling fail loudly the moment it is added.
+  // Both fields are optional; a move authoring neither is a silent dud.
   const conditional = Object.values(moves).filter((m) => m.conditionalManaCost);
   assert.ok(conditional.length >= 3, 'expected Overcharge, Metallic Blade and Pack Leader');
   for (const move of conditional) {
     const c = move.conditionalManaCost!;
-    // The third side is Beast's Pack Leader, which reads the caster's OWN
-    // row rather than the enemy side (content.ts requiresPartnerType).
     const sides = [c.requiresAllEnemiesStatus, c.requiresAnyEnemyStatus, c.requiresPartnerType].filter((s) => s != null);
     assert.strictEqual(sides.length, 1, `${move.id} authors ${sides.length} sides of conditionalManaCost, not 1`);
   }
 });
 
-// --- The Attack ramp: five rows, all permanent -------------------------------
+// --- The Attack ramp: five rows, all permanent ---
 
 test('iron: the Attack ramp compounds across casts and is never spent', () => {
-  // Sharpen +30 into Momentum Swing +20 into Iron Fist +5 is +55, and stat
-  // mods persist (CLAUDE.md, 2026-08-15) — nothing here decays, expires or
-  // clears at end of round, so the type's whole plan is legible only across
-  // rounds and must not be priced against a single exchange.
   let state = withDeepPools(ironFixture(610));
   const casts = ['sharpen', 'momentumSwing', 'ironFist'];
   const expected = [30, 50, 55];
@@ -227,8 +168,6 @@ test('iron: the Attack ramp compounds across casts and is never spent', () => {
 });
 
 test('iron: a damage row\'s stat delta lands AFTER its own hit, so Opening Strike shapes the next swing', () => {
-  // statDeltas resolve after the target loop, which is what makes Opening
-  // Strike an opener rather than a cheap nuke that discounts itself.
   const state = withDeepPools(ironFixture(611));
   const twice = (moveId: string) =>
     resolveRound(
@@ -244,13 +183,11 @@ test('iron: a damage row\'s stat delta lands AFTER its own hit, so Opening Strik
   );
   assert.strictEqual(modifiersOf(first.state, 'b1').defense ?? 0, -10);
 
-  // The second cast hits a target already at -10 and takes it to -20.
   const second = twice('openingStrike');
   assert.strictEqual(modifiersOf(second.state, 'b1').defense ?? 0, -20);
 });
 
 test('iron: Pin Down is a debuff — a buff-kind move with a negative payload aimed at an enemy', () => {
-  // There is no 'debuff' kind (authoring-moves.md §2); the sign is the label.
   const state = withDeepPools(ironFixture(612));
   const { state: next, events } = resolveRound(
     state,
@@ -279,13 +216,9 @@ test('iron: Reinforce pays BOTH allies, including the caster', () => {
   assert.strictEqual(modifiersOf(next, 'b1').attack ?? 0, 0, 'and nothing on the enemy side');
 });
 
-// --- The type-keyed hook the design table never mentions ----------------------
+// --- Conduct: Iron cashes, never plants ---
 
 test('iron: every damage row detonates Conduct for free, and the slate plants it zero times', () => {
-  // Storm's arrangement with the halves separated (designer call, 2026-08-30):
-  // Iron CASHES the mark and never sets it, so planting is a Storm partner's
-  // job or Mind's Cerebral Shock. Pinned as counts so a later slate cannot
-  // quietly change either half.
   const ironMoves = Object.values(moves).filter((m) => m.type === 'Iron');
   const damage = ironMoves.filter((m) => m.kind === 'damage');
   const planters = ironMoves.filter((m) => firstStatusApplication(m)?.statusId === 'Conduct');
@@ -309,22 +242,16 @@ test('iron: an Iron hit on a marked foe is worth 10% max HP more than the same h
   const plainDamage = state.combatants.b1.currentHp - plain.state.combatants.b1.currentHp;
   const cashedDamage = marked.combatants.b1.currentHp - cashed.state.combatants.b1.currentHp;
 
-  // heavyBlow rolls a 30% crit, so the two hits are not comparable directly —
-  // assert the detonation event and its amount instead of the difference.
+  // heavyBlow rolls a 30% crit, so assert the detonation amount rather than the hit difference.
   const detonated = cashed.events.find((e) => e.type === 'StatusDetonated') as any;
   assert.ok(detonated, 'no detonation');
   assert.strictEqual(detonated.amount, expectedBonus);
   assert.ok(cashedDamage > 0 && plainDamage > 0);
 });
 
-// --- What the slate does NOT have, stated by omission -------------------------
+// --- What the slate does NOT have ---
 
 test('iron: the slate authors exactly one priority row, and no heal, cleanse or field effect', () => {
-  // Quick Jab (priority 1, 4 mana) died with the fixture pool, the slate
-  // shipped with no bracket at all, and Swift Blow is what the designer
-  // authored back (moves.ts, 2026-08-30). It is deliberately ONE row: the type
-  // buys turn order once, at 15 base power, and Juggernaut's +50 Speed is
-  // still the only other answer to being outsped.
   const ironMoves = Object.values(moves).filter((m) => m.type === 'Iron');
   const bracketed = ironMoves.filter((m) => m.priority !== 0);
   assert.deepStrictEqual(bracketed.map((m) => m.id), ['swiftBlow']);
@@ -343,24 +270,11 @@ test('iron: the slate authors exactly one priority row, and no heal, cleanse or 
 });
 
 test('iron: the re-authored Fortify is a guard buff only, and Wisdom is grantable off-Mind only by Overdrive', () => {
-  // The half of the deletion that STAYED deleted. The fixture Fortify granted
-  // +10 Defense AND +10 Wisdom; the re-authored one is +15 Defense and nothing
-  // else. Pinned as the exact set rather than as a count, so a later slate
-  // adding a non-Mind Wisdom grant has to notice it is reopening this.
-  //
-  // MECH REOPENED IT, PARTLY (2026-08-30). Overdrive is "+20 to all stats" and
-  // "all stats" is the five combat stats, Wisdom among them — so it is the
-  // fourth Wisdom grant in the game and the first outside Mind. The finding
-  // this test was written to pin is therefore narrowed rather than dead: a
-  // physical hero CAN now buy magical defense from a move, but only at 100
-  // mana, only as one fifth of a capstone, and only from a type it has to be
-  // standing next to. That is a much worse deal than the 10-mana Fortify that
-  // went away, which is why the shape of the finding survives the exception.
-  // Extended rather than deleted, per docs/authoring-moves.md §10.
+  // Off-Mind Wisdom grants are a pinned list: Overdrive (safe by price — one fifth of a 100-mana capstone)
+  // and Archon Blast (safe by reach — enemy-only, held by no hero kit or pool). A new one is a decision.
   assert.deepStrictEqual(moves.fortify.statDeltas, [{ stat: 'defense', amount: 15 }]);
   assert.strictEqual(moves.fortify.target, 'self');
-  // And NOT statDeltaTarget: naming 'self' on a move that already targets self
-  // is a no-op the label renders as "(Self) — Self".
+  // statDeltaTarget 'self' on a self-target move is a no-op the label renders as "(Self) — Self".
   assert.strictEqual(moves.fortify.statDeltaTarget, undefined);
 
   const wisdomGrants = Object.values(moves).filter((m) =>
@@ -373,26 +287,9 @@ test('iron: the re-authored Fortify is a guard buff only, and Wisdom is grantabl
       `${move.id} grants Wisdom off-Mind — a third type reaching Wisdom is a decision, not a rounding`
     );
   }
-  // The exception earns its place by being expensive and indiscriminate: it is
-  // the whole five-stat block or nothing, so nobody reaches for Overdrive to
-  // solve a Wisdom problem specifically.
   assert.strictEqual(moves.overdrive.manaCost, 100);
   assert.strictEqual(moves.overdrive.statDeltas?.length, 5);
 
-  // ARCHON BLAST REOPENED IT AGAIN (2026-09-01), and on a different axis than
-  // Overdrive did. Overdrive is a player-reachable move made safe by PRICE;
-  // this one is made safe by REACH — it is enemy-only content, authored for
-  // Goblin Lord (src/data/enemies.ts) and held by nothing else in the game.
-  // The finding this test defends is "a physical hero cannot buy magical
-  // defense cheaply", and a move no hero can hold cannot violate it: what a
-  // boss does to its own Wisdom is a fight the player is on the other side of.
-  //
-  // So the guard that keeps the exception honest is not its cost — 50 mana on
-  // a damage move would be a real bargain in a player's hands — but the two
-  // assertions below. The day an Ancient slate lands and a hero can reach this
-  // row, this stops passing, which is exactly when the question is worth
-  // asking again.
-  const { heroes } = require('../src/data/heroes') as typeof import('../src/data/heroes');
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   assert.ok(
     !Object.values(heroes).some((h) => h.moveIds.includes('archonBlast')),
@@ -405,9 +302,6 @@ test('iron: the re-authored Fortify is a guard buff only, and Wisdom is grantabl
 });
 
 test('iron: Swift Blow lands its Conduct detonation ABOVE bracket 0 — the one thing no other Iron row can do', () => {
-  // 15 base power is not what the row is bought for. On a marked target it is
-  // 15 power plus 10% of a max HP bar, delivered before the target acts, which
-  // is the only way Iron cashes a mark pre-emptively.
   const state = withStatus(withDeepPools(ironFixture(630)), 'b1', 'Conduct');
   const { events } = resolveRound(
     state,
@@ -418,18 +312,12 @@ test('iron: Swift Blow lands its Conduct detonation ABOVE bracket 0 — the one 
     config
   );
   const order = events.filter((e) => e.type === 'MoveUsed').map((e: any) => e.combatantId);
-  // Gallant (Speed 70) would beat Warden (30) anyway, so pin the BRACKET rather
-  // than the outcome: swiftBlow sorts above a priority-0 move regardless.
   assert.strictEqual(order[0], 'a1');
   assert.ok(events.some((e) => e.type === 'StatusDetonated' && e.statusId === 'Conduct'));
 });
 
 test('iron: Conjured Sword is the one magical row, and no Iron hero holds it', () => {
-  // Designer note, 2026-08-30: "a lategame learnable for certain spellcasters,
-  // not necessarily intended for native Iron heroes." Every Iron hero is
-  // Intelligence 40 or below (Warden 20, Valor 40, Gallant 20, Bellows 15),
-  // so putting it in one of their pools would be the trap pick the north star
-  // forbids. It lives on Glyph (Int 90) instead.
+  // Every Iron hero is Int 40 or below; the row lives on casters only.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   const magical = Object.values(moves).filter((m) => m.type === 'Iron' && m.category === 'magical');
   assert.deepStrictEqual(magical.map((m) => m.id), ['conjuredSword']);
@@ -451,7 +339,7 @@ test('iron: Conjured Sword is the one magical row, and no Iron hero holds it', (
   }
 });
 
-// --- Distribution and roster checks (authoring-moves.md §7, §9) --------------
+// --- Distribution and roster checks ---
 
 test('iron: every move id in a kit, an enemy kit or a level-up pool resolves', () => {
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
@@ -465,11 +353,6 @@ test('iron: every move id in a kit, an enemy kit or a level-up pool resolves', (
 });
 
 test('iron: no hero or enemy starts with a move it cannot pay for, or has a starter in its own pool', () => {
-  // Widened past the type being authored, per the lesson Spirit's slate wrote
-  // down — the type-scoped version of this check shipped in five slates and
-  // none of them caught Warden carrying Fortify in both its kit and its pool.
-  // It matters more here than usual: Fortify was in NINE starting kits and all
-  // nine changed, and Goblin Warrior went from 20/2 to 40/10 for it.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   const { enemies } = require('../src/data/enemies') as typeof import('../src/data/enemies');
   for (const [heroId, hero] of Object.entries({ ...heroes, ...enemies })) {
@@ -498,10 +381,6 @@ test('iron: no hero attacks off its weaker stat — the three Iron heroes are al
 });
 
 test('iron: the enemy side can demonstrate the type end to end', () => {
-  // Nature, Arcane and Mind each shipped with zero enemies of their type.
-  // Goblin Warrior swings Iron Fist and Opening Strike, which between them are
-  // the whole plan — grow the numerator, shrink the denominator — shown from
-  // the side of the field the player is fighting.
   const { enemies } = require('../src/data/enemies') as typeof import('../src/data/enemies');
   const warrior = enemies.goblinWarrior;
   const kit = warrior.moveIds.map((id: string) => moves[id]);

@@ -1,13 +1,8 @@
-/**
- * Renders the PWA app icons from code rather than checking in hand-made PNGs,
- * so the mark stays in sync with the title screen's palette (styles.css
- * --accent and the .title-logo gradient) and can be re-rasterized at any size.
- *
- *   node scripts/generate-icons.mjs
- *
- * Pure Node — no image library. Shapes are evaluated in normalized 0..1 space
- * and supersampled for antialiasing, then encoded as 8-bit RGBA PNG by hand.
- */
+// Renders the PWA app icons from code so the mark stays in sync with the title screen's
+// palette (styles.css --accent, .title-logo gradient). Pure Node: shapes are evaluated in
+// normalized 0..1 space, supersampled, and encoded as 8-bit RGBA PNG by hand.
+//
+//   node scripts/generate-icons.mjs
 import { deflateSync } from 'node:zlib';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -44,7 +39,6 @@ function mix(a, b, k) {
   return [0, 1, 2].map((ch) => a[ch] + (b[ch] - a[ch]) * k);
 }
 
-/** Rounded-rectangle coverage test in normalized space. */
 function inRoundedRect(x, y, x0, y0, x1, y1, r) {
   if (x < x0 || x > x1 || y < y0 || y > y1) return false;
   const cx = Math.min(Math.max(x, x0 + r), x1 - r);
@@ -52,10 +46,7 @@ function inRoundedRect(x, y, x0, y0, x1, y1, r) {
   return (x - cx) ** 2 + (y - cy) ** 2 <= r * r;
 }
 
-/**
- * The T monogram. `scale` shrinks it toward the center so the maskable
- * variant keeps its content inside Android's safe circle.
- */
+/** The T monogram; `scale` shrinks it toward the center for the maskable variant. */
 function inMark(x, y, scale) {
   const px = 0.5 + (x - 0.5) / scale;
   const py = 0.5 + (y - 0.5) / scale;
@@ -77,15 +68,13 @@ function render(size, { markScale = 1, glowScale = 1 } = {}) {
           const nx = (x + (sx + 0.5) / SS) / size;
           const ny = (y + (sy + 0.5) / SS) / size;
 
-          // Warm ember bloom behind the mark, brightest just above center —
-          // the icon-scale echo of .title-core-glow.
+          // Ember bloom behind the mark, brightest just above center (.title-core-glow).
           const d = Math.hypot(nx - 0.5, ny - 0.44) / (0.58 * glowScale);
           const bloom = Math.max(0, 1 - d) ** 2.2 * 0.3;
           let c = mix(BG, GLOW, bloom);
 
           if (inMark(nx, ny, markScale)) {
-            // Gradient runs across the mark's own height, not the canvas, so
-            // it reads the same at every scale.
+            // Gradient spans the mark's own height, so it reads the same at every scale.
             const top = 0.5 + (0.205 - 0.5) * markScale;
             const bottom = 0.5 + (0.815 - 0.5) * markScale;
             c = goldAt((ny - top) / (bottom - top));
@@ -106,7 +95,7 @@ function render(size, { markScale = 1, glowScale = 1 } = {}) {
   return px;
 }
 
-// --- minimal PNG encoder -------------------------------------------------
+// --- minimal PNG encoder ---
 
 const CRC_TABLE = (() => {
   const t = new Int32Array(256);
@@ -156,14 +145,12 @@ function encodePng(size, rgba) {
   ]);
 }
 
-// --- outputs -------------------------------------------------------------
+// --- outputs ---
 
 const TARGETS = [
   ['icon-192.png', 192, {}],
   ['icon-512.png', 512, {}],
-  // Android crops maskable icons to its own shape; content must survive a
-  // circle inscribed in the middle 80%, so the mark shrinks and the bloom
-  // widens to keep the cropped field from going flat.
+  // Android crops maskable icons to a circle in the middle 80%: shrink the mark, widen the bloom.
   ['icon-maskable-512.png', 512, { markScale: 0.62, glowScale: 1.5 }],
   ['apple-touch-icon-180.png', 180, { markScale: 0.86 }],
 ];

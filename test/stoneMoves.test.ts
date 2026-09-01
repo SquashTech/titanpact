@@ -1,34 +1,4 @@
-// Stone's authored movepool (src/data/moves.ts, 2026-08-30) and the five engine
-// fields it is the first content to need:
-//
-//   - `offStatOverride` (Body Blow, Body Crush) — a PIPELINE 1 swap: the ratio's
-//     numerator reads Defense instead of Attack;
-//   - `retributionPercent` (Retribution, Stoneheart) — a move whose whole damage
-//     body is a share of Combatant.damageTakenSinceLastTurn, dealt as FIXED
-//     damage with the formula never evaluated;
-//   - `recoilPercent` (Rubble Rush) — the mirror of drainPercent, and the recoil
-//     shape docs/authoring-moves.md §4 listed as unavailable;
-//   - `statDeltaTarget` (Landslide) — deltas that resolve their own side,
-//     independently of the move's target;
-//   - `StatusDefinition.redirectsSingleTargetEnemyMoves` (Provoke) — the inverse
-//     of Stealth's redirect, pulling every single-target enemy move onto its
-//     holder.
-//
-// Same discipline as fireMoves/waterMoves/frostMoves/stormMoves: these assert
-// the MECHANIC with Stone's moves as the vehicle, never Stone's numbers, which
-// are balance and will move. What IS pinned is what the design table locks and
-// what is easy to get wrong and hard to notice afterwards:
-//
-//   1. the Defense swap lands on the RATIO, not on the multiplier term — the
-//      two-pipeline separation is LOCKED (CLAUDE.md), and a stat-shaped effect
-//      leaking into pipeline 2 is invisible until two of them stack;
-//   2. retribution draws NO RNG, because a move that quietly advanced rngState
-//      would shift every golden replay downstream of it;
-//   3. "since its last turn" resets on a turn TAKEN and not on a turn BLOCKED,
-//      which is the whole difference between Retribution at bracket 0 and
-//      Stoneheart at +1;
-//   4. Provoke catches every move KIND but only from the enemy side, and only
-//      single-target — the three axes its scope was decided on.
+// Stone's authored movepool: offStatOverride, retributionPercent, recoilPercent, statDeltaTarget, Provoke. Mechanics, not numbers.
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -63,17 +33,7 @@ function stoneFixture(seed: number) {
   );
 }
 
-/**
- * The two fixture problems every authored slate hits (authoring-moves.md §8),
- * solved once:
- *
- * - **Mana.** Stone's curve tops out at Boulder Slam's 80, above both Stone
- *   heroes' pools (50 and 30). A live design finding (docs/combat.md), not
- *   something these tests should be gated on.
- * - **Lethality.** A defender that faints to the hit never reaches the riders,
- *   which would silently turn a recoil test into a KO test. getMaxHp reads
- *   baseStats + statModifiers, so the hp modifier has to move with currentHp.
- */
+/** Deep mana and HP so no test is gated on the mana curve or turned into a KO test; the hp modifier moves with currentHp because getMaxHp reads both. */
 function withDeepPools(state: CombatState): CombatState {
   const combatants = Object.fromEntries(
     Object.entries(state.combatants).map(([id, c]) => [
@@ -99,7 +59,7 @@ function withBanked(state: CombatState, combatantId: string, amount: number): Co
   };
 }
 
-// --- offStatOverride: pipeline 1, and only the numerator ---------------------
+// --- offStatOverride ---
 
 test('stone: Body Blow reads the caster Defense in place of Attack, on the RATIO', () => {
   const state = withDeepPools(stoneFixture(101));
@@ -121,10 +81,6 @@ test('stone: Body Blow reads the caster Defense in place of Attack, on the RATIO
 });
 
 test('stone: the Defense swap does NOT leak into the multiplier term', () => {
-  // The LOCKED two-pipeline separation (CLAUDE.md). This is the equivalent of
-  // test/fireMoves.test.ts's conditional-multiplier assertion, and it exists for
-  // the same reason: a stat-shaped effect that quietly became a damage modifier
-  // is invisible until a second modifier stacks against it.
   const result = calcDamage(moves.bodyBlow, 2, ['Stone'], ['Nature'], typeChart, 1, false);
   assert.strictEqual(result.multiplierTerm, 1, 'no modifiers authored, so the term stays 1');
   assert.strictEqual(result.basePowerMultiplier, 1, 'and it is not a BasePower-stage term either');
@@ -152,9 +108,6 @@ test('stone: the DamageDealt event reports the stat actually read, so the log ma
 });
 
 test('stone: Bastion into Body Crush is the type engine — the buff raises the hit', () => {
-  // Not a balance assertion: the point is that a Defense buff reaches the
-  // ATTACK side of the formula at all, which is what makes Bastion and Body
-  // Crush one line rather than two unrelated moves.
   const base = withDeepPools(stoneFixture(103));
   const buffed = {
     ...base,
@@ -172,7 +125,7 @@ test('stone: Bastion into Body Crush is the type engine — the buff raises the 
   assert.ok(buffedHit.amount > plainHit.amount, 'and the hit is bigger — same seed, same variance roll');
 });
 
-// --- retributionPercent: fixed damage, no formula, no RNG -------------------
+// --- retributionPercent ---
 
 test('stone: Retribution deals a flat share of what the user absorbed, with no formula applied', () => {
   const state = withBanked(withDeepPools(stoneFixture(201)), 'a1', 80);
@@ -196,18 +149,12 @@ test('stone: Stoneheart returns the whole figure', () => {
 });
 
 test('stone: a retribution move draws NO rng', () => {
-  // The determinism invariant every optional field since Fire has had to hold
-  // (docs/architecture.md "Determinism & RNG"). A move that quietly advanced
-  // rngState would shift every replay downstream of it.
   const state = withBanked(withDeepPools(stoneFixture(203)), 'a1', 50);
   const after = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'retribution', declaredTarget: 'b1' }], config);
   assert.deepStrictEqual(after.state.rngState, state.rngState, 'variance and crit were never rolled');
 });
 
 test('stone: with nothing banked, a retribution move still presses and still costs its mana', () => {
-  // 2026-08-30 designer call: pressable for 0, not gated out of the kit like a
-  // requiresTargetStatus move. A button that blinks in and out is worth less
-  // than one that is always there.
   const state = withDeepPools(stoneFixture(204));
   const after = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'stoneheart', declaredTarget: 'b1' }], config);
 
@@ -215,17 +162,15 @@ test('stone: with nothing banked, a retribution move still presses and still cos
   assert.strictEqual(blocked, undefined, 'not fizzled');
   const hit = after.events.find((e) => e.type === 'DamageDealt') as any;
   assert.strictEqual(hit.amount, 0);
-  // Read the spend off the event rather than off the final pool: mana regen
-  // ticks at the round boundary, so the pool has already been topped back up.
+  // Read the spend off the event: regen has already topped the pool back up at the round boundary.
   const used = after.events.find((e) => e.type === 'MoveUsed') as any;
   assert.strictEqual(used.manaSpent, moves.stoneheart.manaCost, 'the mana is spent regardless');
 });
 
-// --- the counter itself: what "since its last turn" spans -------------------
+// --- damageTakenSinceLastTurn ---
 
 test('stone: damage taken accumulates from every source, at the one choke point', () => {
   const state = withDeepPools(stoneFixture(301));
-  // A plain enemy attack on a1.
   const after = resolveRound(state, [{ kind: 'move', combatantId: 'b1', moveId: 'vineLash', declaredTarget: 'a1' }], config);
   const hit = after.events.find((e) => e.type === 'DamageDealt') as any;
   assert.ok(hit.amount > 0);
@@ -235,15 +180,12 @@ test('stone: damage taken accumulates from every source, at the one choke point'
 test('stone: taking a turn resets the counter; being blocked does not', () => {
   const banked = withBanked(withDeepPools(stoneFixture(302)), 'a1', 90);
 
-  // A move whose mana is spent is a turn taken.
   const acted = resolveRound(banked, [{ kind: 'move', combatantId: 'a1', moveId: 'rockToss', declaredTarget: 'b1' }], config);
   assert.strictEqual(acted.state.combatants.a1.damageTakenSinceLastTurn, 0);
 
-  // Rest is a turn taken too.
   const rested = resolveRound(banked, [{ kind: 'rest', combatantId: 'a1' }], config);
   assert.strictEqual(rested.state.combatants.a1.damageTakenSinceLastTurn, 0);
 
-  // Daze blocks the action, so no turn happened and the bank stands.
   const dazed = applyStatus(banked, 1, 'a1', statuses.Daze, {}).state;
   const stalled = resolveRound(dazed, [{ kind: 'move', combatantId: 'a1', moveId: 'rockToss', declaredTarget: 'b1' }], config);
   assert.ok(
@@ -260,7 +202,7 @@ test('stone: the counter is read once, before the payload, so a move cannot bill
   assert.strictEqual(hit.amount, 20, 'half of the 40 that was standing when the turn began');
 });
 
-// --- recoilPercent ---------------------------------------------------------
+// --- recoilPercent ---
 
 test('stone: Rubble Rush bills its user a quarter of what it dealt', () => {
   const state = withDeepPools(stoneFixture(401));
@@ -279,8 +221,6 @@ test('stone: Rubble Rush bills its user a quarter of what it dealt', () => {
 });
 
 test('stone: recoil scales the HP actually removed, not the rolled amount', () => {
-  // The same overkill rule drainPercent follows: a 4 HP target costs you 1, not
-  // a quarter of the number that was rolled at it.
   const state = withDeepPools(stoneFixture(402));
   const nearlyDead = {
     ...state,
@@ -294,8 +234,6 @@ test('stone: recoil scales the HP actually removed, not the rolled amount', () =
 });
 
 test('stone: recoil can faint the user, with no floor', () => {
-  // 2026-08-30 designer call. It goes through applyHpDelta like any other
-  // damage, so the KO counts toward that side's lock-in as well.
   const state = withDeepPools(stoneFixture(403));
   const brittle = {
     ...state,
@@ -321,7 +259,7 @@ test('stone: the recoil event carries no formula, because none was run', () => {
   assert.strictEqual(recoil.isCrit, false);
 });
 
-// --- statDeltaTarget -------------------------------------------------------
+// --- statDeltaTarget ---
 
 test('stone: Landslide hits both enemies and buffs both ALLIES', () => {
   const state = withDeepPools(stoneFixture(501));
@@ -345,7 +283,7 @@ test('stone: a move authoring no statDeltaTarget still puts its deltas on its ow
   assert.strictEqual(after.state.combatants.a1.statModifiers.speed ?? 0, 0);
 });
 
-// --- Provoke ---------------------------------------------------------------
+// --- Provoke ---
 
 test('stone: Provoke pulls a single-target enemy attack off the partner and onto the taunt', () => {
   const state = withDeepPools(stoneFixture(601));
@@ -357,8 +295,6 @@ test('stone: Provoke pulls a single-target enemy attack off the partner and onto
 });
 
 test('stone: Provoke catches every move KIND, not just damage', () => {
-  // The axis where it deliberately differs from Stealth (2026-08-30 designer
-  // call): a debuff aimed at the fragile partner is exactly what a taunt is for.
   const state = withDeepPools(stoneFixture(602));
   const taunted = applyStatus(state, 1, 'a2', statuses.Provoke, { duration: 1 }).state;
 
@@ -375,7 +311,6 @@ test('stone: Provoke does not touch spread moves, or moves aimed at the enemy ow
   const spreadHits = (spread.events.filter((e) => e.type === 'DamageDealt') as any[]).map((h) => h.targetCombatantId);
   assert.deepStrictEqual(spreadHits.sort(), ['a1', 'a2'], 'a spread move still hits both, taunt or no taunt');
 
-  // A singleAlly move cast on the enemy own side is not an enemy attack.
   const selfBuff = resolveRound(taunted, [{ kind: 'move', combatantId: 'b1', moveId: 'toughenUp', declaredTarget: 'b2' }], config);
   const declared = selfBuff.events.find((e) => e.type === 'MoveDeclared') as any;
   assert.deepStrictEqual(declared.targetCombatantIds, ['b2'], "an ally-side move is never dragged onto the enemy taunt");
@@ -404,9 +339,6 @@ test('stone: Provoke self-casts, so the taunt lands on the caster and nobody els
 });
 
 test('stone: the target picker narrows to the taunt, so the player never aims where the move will not go', () => {
-  // The declaration-time half. Without it a player picks the partner and
-  // watches the attack silently move — the same failure Stealth hiding its
-  // holder exists to prevent, in the opposite direction.
   const state = withDeepPools(stoneFixture(606));
   const taunted = applyStatus(state, 1, 'b2', statuses.Provoke, { duration: 1 }).state;
   const enemies = ['b1', 'b2'];
@@ -421,14 +353,10 @@ test('stone: the target picker narrows to the taunt, so the player never aims wh
   );
 });
 
-// --- Slate-wide ------------------------------------------------------------
+// --- Slate-wide ---
 
 test('stone: the slate authors no new field effect and no type-keyed status hook', () => {
-  // Storm is priced around Conduct firing for free off every damage move
-  // (statuses.ts triggerTypes). Stone has no such hook, which is a fact worth
-  // pinning: its payoff is entirely in what the player builds, and if a future
-  // status ever adds 'Stone' to triggerTypes, every number in this slate
-  // silently changes.
+  // If a status ever adds 'Stone' to triggerTypes, every number in this slate silently changes.
   const stone = Object.values(moves).filter((m) => m.type === 'Stone');
   assert.strictEqual(stone.length, 15, 'the designed fifteen, no more');
 
@@ -440,8 +368,6 @@ test('stone: the slate authors no new field effect and no type-keyed status hook
 });
 
 test('stone: every retribution move authors no basePower, and every other damage move authors one', () => {
-  // There is no isValidMoveDefinition (authoring-moves.md §4), so this stands
-  // in for one over the shape the slate actually introduced.
   for (const move of Object.values(moves).filter((m) => m.type === 'Stone')) {
     if (move.retributionPercent != null) {
       assert.strictEqual(move.kind, 'damage', `${move.id} deals damage, so it is a damage-kind move`);
@@ -452,11 +378,9 @@ test('stone: every retribution move authors no basePower, and every other damage
   }
 });
 
-// --- Distribution ----------------------------------------------------------
+// --- Distribution ---
 
 test('stone: every move id a hero or level-up pool points at actually exists', () => {
-  // Nothing else catches a dangling id — the run layer only looks a move up
-  // when the hero is offered it, which can be several fights in.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   const { enemies } = require('../src/data/enemies') as typeof import('../src/data/enemies');
   for (const [heroId, hero] of Object.entries({ ...heroes, ...enemies })) {
@@ -474,18 +398,12 @@ test('stone: neither Stone hero starts with a move it cannot pay for, or has a s
     const cheapest = Math.min(...hero.moveIds.map((id) => moves[id].manaCost));
     assert.ok(cheapest <= hero.baseStats.manaPool, `${heroId} cannot afford its own cheapest starting move`);
     for (const moveId of progressionTable.moveTiers[heroId] ?? []) {
-      // levelUpMovePool filters unlocked moves out, so a starter in the pool is
-      // dead weight that can never be offered.
       assert.ok(!hero.moveIds.includes(moveId), `${heroId}'s pool lists its own starting move ${moveId}`);
     }
   }
 });
 
 test('stone: each Stone hero attacks with the stat it is actually good at', () => {
-  // The north star's trap-pick rule (CLAUDE.md): a hero whose only damage move
-  // runs off its worse stat is a hero that cannot function. Both Stone heroes
-  // are physical, which is also why the slate three magical moves have no
-  // natural home — a live finding, not something to assert away.
   for (const heroId of ['crag', 'sentinel']) {
     const hero = heroes[heroId];
     const wants = hero.baseStats.attack >= hero.baseStats.intelligence ? 'physical' : 'magical';
@@ -499,43 +417,7 @@ test('stone: each Stone hero attacks with the stat it is actually good at', () =
 });
 
 test('stone: no move is unreachable that was not already known to be', () => {
-  // The opposite failure to the dangling-id test above, and the one nothing else
-  // catches: a move no hero kit and no level-up pool points at is authored
-  // content the game can never show anyone.
-  //
-  // Pinned as an exact set rather than asserted empty, because a non-empty list
-  // is EXPECTED (2026-08-30 designer call, docs/authoring-moves.md §10). A slate
-  // is authored for its type, not for whichever two heroes currently have it:
-  // Tremor, Rockfall and Landslide are magical and Stone's two heroes are both
-  // physical, so they wait for a magical Stone hero or for an off-type pool —
-  // both legitimate, and neither a reason to stuff them somewhere today. Both
-  // Ancient moves predate this slate for the same reason.
-  //
-  // Spirit's PHYSICAL half — Phantom Strike, Spooky Slice and Wailing Flight —
-  // left this list on 2026-09-01, and it is the case the list was built to
-  // produce. They were orphaned on 2026-08-30 for a reason about the ROSTER,
-  // not the slate: Spirit authored three physical moves into a type whose only
-  // hero was Int 77 against Atk 56. Naming them instead of stuffing them into
-  // Revenant's pool kept the gap legible until a hero arrived that wanted
-  // exactly it — Sorrow (Atk 80 / Spd 90, src/data/heroes.ts), which now holds
-  // Phantom Strike in its kit and the other two in its pool. An orphan list
-  // read as a to-do rather than as a burial.
-  //
-  // Storm's Zap left this list on 2026-08-31: the tier gate
-  // (run/progression.ts MOVE_TIER_LEVEL) found Tempest's pool held nothing an
-  // Early-level hero could be offered, and Zap is Ionic Zap's +1 bracket one
-  // tier down — so it went in as the fix rather than staying an orphan.
-  //
-  // cerebralShock (Mind, 2026-08-30) is the newest entry and the clearest case
-  // for why this list exists. It applies CONDUCT, whose triggerTypes are
-  // ['Storm', 'Iron'] (src/data/statuses.ts), so it is worth its 40 mana only
-  // on a team that also fielded a Storm or Iron hero — and neither Mind hero
-  // is one. Putting it in Cortex's or Lucius's pool would not make it
-  // reachable in any sense that matters; it would make it a dead button on
-  // the two heroes least able to use it. Designer call: intended.
-  //
-  // So this test does not say an orphan is wrong. It says a NEW one has to be
-  // noticed and consciously added here rather than appearing by accident.
+  // Pinned as an exact set: an orphan is expected, a NEW one must be added here consciously. Hand-off findings: docs/authoring-moves.md §10.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   const { enemies } = require('../src/data/enemies') as typeof import('../src/data/enemies');
 

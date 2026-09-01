@@ -1,76 +1,34 @@
-// The six run Locations (docs/locations.md). A Location is the identity an
-// act wears — a name, a faction, a type affinity, the heroes findable only
-// there, and a look.
-//
-// Pure data, same as every other content module (CLAUDE.md "Architecture"):
-// nothing here is behaviour. `affinity` is read by src/run/locations.ts to
-// build an encounter PoolBias; the three presentation fields are read by
-// src/view/shared/locationArt.tsx and ActIntroScreen. No engine module
-// imports this file.
+// The six run Locations (docs/locations.md): the identity an act wears. Pure data — `affinity`
+// feeds src/run/locations.ts's PoolBias; the presentation fields feed locationArt/ActIntroScreen.
 
 import type { TypeId } from '../engine/content';
 import { GOBLIN_LORD_ID } from './enemies';
 
-/**
- * How a location's particle field behaves — direction, speed, drift and
- * shape. Six distinct motions rather than one keyframe recoloured six ways:
- * motion is half of what separates a forest from a foundry
- * (docs/locations.md §4).
- */
+/** Particle-field motion (docs/locations.md §4). */
 export type AmbienceKind = 'fireflies' | 'embers' | 'snow' | 'rain' | 'spores' | 'sigils';
 
 export interface LocationDefinition {
   id: string;
-  /** Player-facing name — the act's title card. */
+  /** The act's title card. */
   name: string;
-  /** The faction that holds this place: the flavour name over its non-recruitable mob pool. */
+  /** Flavour name over the location's non-recruitable mob pool. */
   faction: string;
-  /** One line, spoken on arrival, under the name. */
+  /** One line, spoken on arrival. */
   flavor: string;
-  /**
-   * The types this location's `skirmish`/`elite`/`boss` encounters lean on.
-   * A **weighting, not a filter** (docs/locations.md §2) — all but one slot
-   * is drawn from heroes matching these, the last from the whole pool.
-   * `null` means "every type", which is Wild's Edge and only Wild's Edge.
-   */
+  /** Types the skirmish/elite/boss encounters lean on — a weighting, not a filter (docs/locations.md §2). `null` = every type. */
   affinity: readonly TypeId[] | null;
-  /**
-   * Hero ids obtainable only while this location is current — the rare-hero
-   * hunt. Threaded through but **empty on every location today**: which
-   * heroes are rare and where they live is authoring work for when the real
-   * roster lands (docs/locations.md §3).
-   */
+  /** Hero ids obtainable only here. Empty on every location today (docs/locations.md §3). */
   exclusiveHeroIds: readonly string[];
-  /**
-   * The enemy ids this location's `fight`/`battle` nodes field. Every
-   * location points at the Goblins today because they are the only authored
-   * enemy content — see docs/locations.md §3 "The faction bill". `null`
-   * means "fall back to the default Goblin pool", which is what makes
-   * authoring a Cultist roster a one-line change here rather than a
-   * refactor.
-   */
+  /** Enemy ids the fight/battle nodes field. `null` = the default Goblin pool. */
   factionEnemyIds: readonly string[] | null;
-  /**
-   * An enemy id (src/data/enemies.ts) held on the BENCH of this location's
-   * Guardian fight, so it is the last thing to walk onto the field — the
-   * faction's own champion arriving to reinforce the boss
-   * (src/run/enemyGen.ts `appendFinalEnemy`).
-   *
-   * A location property rather than a boss-node property because it is a fact
-   * about the PLACE: the thing that comes out of the treeline at Wild's Edge
-   * is a Goblin Lord, and whatever comes out of the Necropolis will not be.
-   * `null` on every location but Wild's Edge today — the other five factions
-   * have no authored champion yet, exactly as `factionEnemyIds` has no
-   * authored roster yet (docs/locations.md §3 "The faction bill").
-   */
+  /** Enemy held on the Guardian fight's bench so it enters last (enemyGen.ts `appendFinalEnemy`). */
   guardianFinalEnemyId: string | null;
-  /** rgb triple driving `--node-rgb` on the arrival screen — the stage routes it through the wash, the title bloom and the particles. */
+  /** rgb triple driving `--node-rgb` on the arrival screen. */
   tintRgb: string;
-  /** Which motion the particle field runs. */
   ambience: AmbienceKind;
 }
 
-/** Act 1 is always this one (docs/locations.md §1) — the tutorial ground, and the only all-types location. */
+/** Act 1 is always this one (docs/locations.md §1). */
 export const ACT_ONE_LOCATION_ID = 'wildsEdge';
 
 export const locations: Record<string, LocationDefinition> = {
@@ -79,18 +37,10 @@ export const locations: Record<string, LocationDefinition> = {
     name: "Wild's Edge",
     faction: 'Goblins',
     flavor: 'The last tilled field behind you, the treeline ahead. Everything lives out here.',
-    // The only null affinity in the set: the player has no team identity yet
-    // in Act 1, so nothing should be pressuring it.
     affinity: null,
     exclusiveHeroIds: [],
     factionEnemyIds: null,
-    // The only location with one today. Act 1's Guardian is a hero-pool boss
-    // like every other act's; the Goblin Lord is what makes the run's FIRST
-    // Guardian fight also the first time the player is shown that a fight can
-    // get worse after it starts.
     guardianFinalEnemyId: GOBLIN_LORD_ID,
-    // Warm moss-gold — the wilderness at dusk, adjacent to the run loop's
-    // default gold rather than a departure from it.
     tintRgb: '154, 176, 84',
     ambience: 'fireflies',
   },
@@ -104,7 +54,6 @@ export const locations: Record<string, LocationDefinition> = {
     exclusiveHeroIds: [],
     factionEnemyIds: null,
     guardianFinalEnemyId: null,
-    /** var(--magical), the game's established arcane violet. */
     tintRgb: '139, 127, 224',
     ambience: 'sigils',
   },
@@ -153,10 +102,7 @@ export const locations: Record<string, LocationDefinition> = {
     name: 'Necropolis',
     faction: 'Undead',
     flavor: 'A city that kept its citizens. None of them left.',
-    // Shadow is the third type here for a mechanical reason, not a flavour
-    // one: Spirit/Frost alone matched exactly 4 heroes on the current roster,
-    // which is the size of a Skirmish — every Necropolis fight would have
-    // been the identical four (docs/locations.md §2).
+    // Shadow is here so the affinity matches more than one Skirmish's worth of heroes (§2).
     affinity: ['Spirit', 'Frost', 'Shadow'],
     exclusiveHeroIds: [],
     factionEnemyIds: null,
@@ -166,5 +112,5 @@ export const locations: Record<string, LocationDefinition> = {
   },
 };
 
-/** Every location that is not Act 1's — the pool acts 2-5 draw from, without replacement. */
+/** The pool acts 2-5 draw from, without replacement. */
 export const ITINERARY_POOL_IDS: readonly string[] = Object.keys(locations).filter((id) => id !== ACT_ONE_LOCATION_ID);

@@ -1,9 +1,4 @@
-// docs/conditions.md — the 6th engine contract. Covers the paths the browser
-// playtest can't cheaply exercise exhaustively: Daze blocking a move,
-// Freeze halving Speed, Conduct's apply-vs-detonate split off Storm/Iron
-// hits, Poison's active-only timer, Haunt's singleEnemy-to-spread expansion,
-// Stealth's speed-dependent redirect, Renew's decay mirroring Burn, and
-// Cleanse always sparing positive statuses.
+// Status conditions (docs/conditions.md).
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -51,16 +46,7 @@ function withStatus(
   };
 }
 
-// --- Daze: flinch ------------------------------------------------------------
-// Redesigned 2026-08-30 from a duration-shape lockout into Pokemon-style
-// flinch: boolean, no number, gone at the end of the round it landed in
-// (content.ts clearsAtEndOfRound). The three things that shape pins:
-//   1. it still hard-denies a move action, mana untouched;
-//   2. it only denies anything when its applier moved FIRST — a Daze landed on
-//      a hero that has already acted is worth exactly nothing, which is the
-//      whole mechanic and the reason Speed is now the price;
-//   3. it never survives into the next round, so a hero can never begin a round
-//      already Dazed and there is no number to carry.
+// --- Daze: flinch ---
 
 test('status: Daze blocks a move action — no MoveUsed, mana untouched, ActionBlocked emitted', () => {
   const state = withStatus(twoVTwoFixture(100), 'a1', 'Daze', {});
@@ -70,7 +56,7 @@ test('status: Daze blocks a move action — no MoveUsed, mana untouched, ActionB
   assert.strictEqual(events.some((e) => e.type === 'MoveUsed'), false);
   assert.strictEqual(events.some((e) => e.type === 'ActionBlocked' && e.combatantId === 'a1' && e.reason === 'dazed'), true);
   assert.strictEqual(next.combatants.a1.currentMana, heroes.cinderKnight.baseStats.manaPool);
-  assert.strictEqual(next.combatants.b1.currentHp, heroes.ironWarden.baseStats.hp); // no damage landed
+  assert.strictEqual(next.combatants.b1.currentHp, heroes.ironWarden.baseStats.hp);
 });
 
 test('status: Daze is gone by the end of the round it was applied in — nobody ever starts a round Dazed', () => {
@@ -87,23 +73,17 @@ test('status: Daze is gone by the end of the round it was applied in — nobody 
     true,
     'the clear is an event, so the view can drop the badge'
   );
-  // And it carries no number to have counted down: the instance the fixture put
-  // on is boolean-shaped, exactly like Bleed's.
   assert.strictEqual(statuses.Daze.shape, 'boolean');
   assert.strictEqual(statuses.Daze.clearsAtEndOfRound, true);
 });
 
 test('status: a Daze only denies a turn when its applier moved first — flinch, not a purchased turn', () => {
-  // Blind (Light) is the guaranteed applier — Iron's Stunning Blow, which used
-  // to be, died with the authored Iron slate (moves.ts, 2026-08-30) and the
-  // slate authors no Daze at all. Cinder (speed 50) vs Warden (30):
-  // cast by the faster hero it deletes the slower one's action, and cast by the
-  // slower one it lands on a hero that has already swung and does nothing.
+  // Blind is the guaranteed Daze applier. cinderKnight (speed 50) vs ironWarden (30).
   const fast = resolveRound(
     twoVTwoFixture(102),
     [
-      { kind: 'move', combatantId: 'a1', moveId: 'blind', declaredTarget: 'b1' }, // cinderKnight, 50
-      { kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a1' }, // ironWarden, 30
+      { kind: 'move', combatantId: 'a1', moveId: 'blind', declaredTarget: 'b1' },
+      { kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a1' },
     ],
     config
   );
@@ -116,8 +96,8 @@ test('status: a Daze only denies a turn when its applier moved first — flinch,
   const slow = resolveRound(
     twoVTwoFixture(102),
     [
-      { kind: 'move', combatantId: 'b1', moveId: 'blind', declaredTarget: 'a1' }, // ironWarden, 30 — acts second
-      { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }, // cinderKnight, 50 — already gone
+      { kind: 'move', combatantId: 'b1', moveId: 'blind', declaredTarget: 'a1' },
+      { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' },
     ],
     config
   );
@@ -129,7 +109,7 @@ test('status: a Daze only denies a turn when its applier moved first — flinch,
   assert.strictEqual(hasStatus(slow.state.combatants.a1, 'Daze'), false, 'and is gone before it could ever matter');
 });
 
-// --- Freeze: halves Speed, including in turn-order resolution ---------------
+// --- Freeze: halves Speed, including in turn-order resolution ---
 
 test('status: Freeze halves Speed (floored) and does not touch other stats', () => {
   const state = twoVTwoFixture(150);
@@ -143,22 +123,19 @@ test('status: Freeze halves Speed (floored) and does not touch other stats', () 
 });
 
 test('status: a frozen combatant with higher base Speed is outsped by a faster-after-halving opponent', () => {
-  // tidecaller (66 speed) vs ironWarden (30 speed) frozen -> 30/2 = 15: tidecaller should now act first in the same priority bracket.
-  // Both moves are priority 0 so the bracket is shared and Speed is the only
-  // tiebreak — Water's authored pool has no priority move at all, so the
-  // priority-1 Aqua Jet this used to pair against quickJab no longer exists.
+  // Both moves are priority 0, so Speed is the only tiebreak.
   const state = twoVTwoFixture(151);
   const frozen = withStatus(state, 'b1', 'Freeze', {});
   const actions: Action[] = [
-    { kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' }, // tidecaller, 66 speed
-    { kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a2' }, // ironWarden, 30 base -> 15 frozen
+    { kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' },
+    { kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a2' },
   ];
   const { events } = resolveRound(frozen, actions, config);
   const moveUsedOrder = events.filter((e) => e.type === 'MoveUsed').map((e: any) => e.combatantId);
   assert.deepStrictEqual(moveUsedOrder, ['a2', 'b1']);
 });
 
-// --- Renew: the positive mirror of Burn --------------------------------------
+// --- Renew: the positive mirror of Burn ---
 
 test('status: Renew heals at end of round and decays by halving, like Burn', () => {
   const state = twoVTwoFixture(106);
@@ -184,7 +161,7 @@ test('status: Burn/Renew decay to 0 removes the status entirely', () => {
   assert.ok(events.some((e) => e.type === 'StatusRemoved' && e.statusId === 'Burn' && e.reason === 'decay'));
 });
 
-// --- Cleanse: always spares positive statuses --------------------------------
+// --- Cleanse: always spares positive statuses ---
 
 test('status: cleanseStatuses strips every non-positive status, leaving Renew (positive) alone', () => {
   const state = twoVTwoFixture(108);
@@ -198,11 +175,11 @@ test('status: cleanseStatuses strips every non-positive status, leaving Renew (p
   assert.strictEqual(hasStatus(cleansed.combatants.a1, 'Renew'), true);
 });
 
-// --- Conduct: apply-vs-detonate split off Storm/Iron hits --------------------
+// --- Conduct: apply-vs-detonate split off Storm/Iron hits ---
 
 test('status: Conduct is only applied by its dedicated move, not any Storm/Iron hit', () => {
   const state = twoVTwoFixture(200);
-  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'ironFist', declaredTarget: 'b1' }]; // ironFist is Iron-typed, no statusApplication
+  const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'ironFist', declaredTarget: 'b1' }]; // Iron-typed, no statusApplication
   const { state: next, events } = resolveRound(state, actions, config);
 
   assert.strictEqual(hasStatus(next.combatants.b1, 'Conduct'), false);
@@ -236,7 +213,7 @@ test('status: Conduct detonates on the next Storm/Iron hit — bonus damage, the
   assert.ok(markedResult.events.some((e) => e.type === 'StatusRemoved' && e.statusId === 'Conduct' && e.reason === 'consumed'));
 });
 
-// --- Poison: active-only timer, then delayed detonation ---------------------
+// --- Poison: active-only timer, then delayed detonation ---
 
 test('status: Poison counts down while active without dealing damage until the timer hits zero', () => {
   const state = twoVTwoFixture(210);
@@ -267,7 +244,7 @@ test('status: Poison does not tick while benched — switching stalls the timer 
   const poisoned = withStatus(state, 'b3', 'Poison', { magnitude: 20, duration: 2 });
   const { state: next } = resolveRound(poisoned, [], config);
 
-  assert.strictEqual(next.combatants.b3.statuses.Poison.duration, 2); // unchanged — still benched
+  assert.strictEqual(next.combatants.b3.statuses.Poison.duration, 2);
 });
 
 test('status: reapplying Poison mid-timer adds to magnitude without resetting the duration', () => {
@@ -279,7 +256,7 @@ test('status: reapplying Poison mid-timer adds to magnitude without resetting th
   assert.strictEqual(reapplied.combatants.b1.statuses.Poison.duration, 2); // held, not reset to 3
 });
 
-// --- Haunt: singleEnemy Spirit/Mind attacks become spread --------------------
+// --- Haunt: singleEnemy Spirit/Mind attacks become spread ---
 
 test('status: Haunt turns a singleEnemy Spirit/Mind attack into a spread hit on the Haunted partner', () => {
   const state = twoVTwoFixture(220);
@@ -299,30 +276,28 @@ test('status: a non-Spirit/Mind attack does not trigger Haunt spread', () => {
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }]; // Fire-typed
 
   const { state: next } = resolveRound(haunted, actions, config);
-  assert.strictEqual(next.combatants.b2.currentHp, heroes.wildOracle.baseStats.hp); // untouched
+  assert.strictEqual(next.combatants.b2.currentHp, heroes.wildOracle.baseStats.hp);
 });
 
-// --- Stealth: speed-dependent redirect ---------------------------------------
+// --- Stealth: speed-dependent redirect ---
 
 test('status: a faster Stealth redirects an already-declared attack onto the other active hero', () => {
   const state = twoVTwoFixture(230);
-  // wildOracle (b2, 65 speed) out-paces cinderKnight (a1, 50 speed) at equal priority,
-  // so b2's Vanish (grants Stealth) resolves before a1's attack comes up.
+  // b2 (speed 65) out-paces a1 (50), so Vanish resolves before the attack.
   const actions: Action[] = [
     { kind: 'move', combatantId: 'b2', moveId: 'vanish' },
     { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b2' },
   ];
   const { state: next, events } = resolveRound(state, actions, config);
 
-  assert.ok(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1')); // redirected onto the partner
+  assert.ok(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1'));
   assert.strictEqual(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b2'), false);
-  assert.strictEqual(next.combatants.b2.currentHp, heroes.wildOracle.baseStats.hp); // untouched
+  assert.strictEqual(next.combatants.b2.currentHp, heroes.wildOracle.baseStats.hp);
 });
 
 test('status: a slower Stealth does not save its caster from an attack that resolves first', () => {
   const state = twoVTwoFixture(231);
-  // tidecaller (a2, 55 speed) out-paces ironWarden (b1, 30 speed) at equal priority,
-  // so a2's attack resolves before b1's Vanish ever lands.
+  // a2 (speed 55) out-paces b1 (30), so the attack resolves before Vanish lands.
   const actions: Action[] = [
     { kind: 'move', combatantId: 'b1', moveId: 'vanish' },
     { kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' },
@@ -336,13 +311,10 @@ test('status: a slower Stealth does not save its caster from an attack that reso
 test('status: Stealth ticks at the start of a round, so it still protects the round after it lands', () => {
   const state = twoVTwoFixture(230);
 
-  // Round 1: b2 goes Stealth and nothing targets b2, so the redirect never
-  // triggers this round — only the start-of-round tick timing is under test.
   const round1 = resolveRound(state, [{ kind: 'move', combatantId: 'b2', moveId: 'vanish' }], config);
   assert.ok(hasStatus(round1.state.combatants.b2, 'Stealth'));
 
-  // Round 2: Stealth is still up (start-of-round tick decremented 1 -> 0 but kept
-  // it present), so a single-target attack on b2 still redirects onto b1.
+  // Round 2: the start-of-round tick took duration 1 -> 0 but kept it present.
   const round2 = resolveRound(
     round1.state,
     [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b2' }],
@@ -350,9 +322,9 @@ test('status: Stealth ticks at the start of a round, so it still protects the ro
   );
   assert.ok(round2.events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1'));
   assert.strictEqual(round2.events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b2'), false);
-  assert.ok(hasStatus(round2.state.combatants.b2, 'Stealth')); // still present (duration 0) — expires at the start of round 3
+  assert.ok(hasStatus(round2.state.combatants.b2, 'Stealth'));
 
-  // Round 3: the start-of-round tick removes Stealth before actions run, so the same attack lands on b2 directly.
+  // Round 3: the start-of-round tick removes it before actions run.
   const round3 = resolveRound(
     round2.state,
     [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b2' }],
@@ -363,8 +335,7 @@ test('status: Stealth ticks at the start of a round, so it still protects the ro
 
 test('status: both active heroes can never be Stealthed at once — the slower Vanish fizzles', () => {
   const state = twoVTwoFixture(230);
-  // tidecaller (a2, 55 speed) out-paces cinderKnight (a1, 50 speed) at equal priority,
-  // so a2's Vanish resolves first and locks out a1's Vanish this same round.
+  // a2 (speed 55) out-paces a1 (50), so its Vanish resolves first.
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'vanish' },
     { kind: 'move', combatantId: 'a2', moveId: 'vanish' },
@@ -375,25 +346,18 @@ test('status: both active heroes can never be Stealthed at once — the slower V
   assert.strictEqual(hasStatus(next.combatants.a1, 'Stealth'), false);
   assert.ok(events.some((e) => e.type === 'StatusApplied' && e.combatantId === 'a2' && e.statusId === 'Stealth'));
   assert.strictEqual(events.some((e) => e.type === 'StatusApplied' && e.combatantId === 'a1' && e.statusId === 'Stealth'), false);
-  // a1's mana was still spent — the move itself went off, only the status application fizzled.
-  assert.ok(events.some((e) => e.type === 'MoveUsed' && e.combatantId === 'a1' && e.manaSpent === moves.vanish.manaCost));
+  assert.ok(events.some((e) => e.type === 'MoveUsed' && e.combatantId === 'a1' && e.manaSpent === moves.vanish.manaCost)); // move went off, only the status fizzled
 });
 
 test('status: a Stealthed hero is not a selectable target for a single-target attack, but is for a spread one', () => {
   const state = twoVTwoFixture(230);
-  // Round 1: b2 goes Stealth with nothing aimed at it, so the redirect never
-  // fires and the status is simply up when targets are next declared.
   const { state: stealthed } = resolveRound(state, [{ kind: 'move', combatantId: 'b2', moveId: 'vanish' }], config);
   assert.ok(hasStatus(stealthed.combatants.b2, 'Stealth'));
 
   const enemies = ['b1', 'b2'];
-  // Single-target attack: b2 is hidden from the picker entirely.
   assert.deepStrictEqual(selectableTargets(stealthed, 'singleEnemy', 'damage', enemies), ['b1']);
-  // Spread attack: still lists (and still hits) b2.
   assert.deepStrictEqual(selectableTargets(stealthed, 'bothEnemies', 'damage', enemies), enemies);
-  // Non-damage single-target move: Stealth only blocks attacks.
   assert.deepStrictEqual(selectableTargets(stealthed, 'singleEnemy', 'heal', enemies), enemies);
-  // Last hero standing is Stealthed — offer it anyway rather than an empty picker,
-  // matching applyStealthRedirect's own "no alternate, the attack goes through" branch.
+  // Last hero standing is offered rather than an empty picker (mirrors applyStealthRedirect).
   assert.deepStrictEqual(selectableTargets(stealthed, 'singleEnemy', 'damage', ['b2']), ['b2']);
 });

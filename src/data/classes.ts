@@ -1,25 +1,7 @@
-// Classes (CLAUDE.md-adjacent design, 2026-08-20 conversation): a Class is a
-// Passive (engine/content.ts PassiveDefinition, isValidPassiveDefinition)
-// whose only content is a flat, thematic statGrants buff — a hero can hold
-// at most one per run (src/run/classes.ts grantClass, RosterEntry.classId).
-// Fifteen of the sixteen below cover every one of the C(6,2)=15 possible
-// pairs across the six core stats (hp/attack/defense/intelligence/wisdom/
-// speed — deliberately NOT manaPool/mpRegen, an open question flagged in the
-// 2026-08-20 conversation: a tempo-stat Class would be a second axis of mana
-// tuning on top of the LOCKED mana-tuning invariant, docs/mana.md, and
-// hasn't been decided). Champion is the one generalist outlier: +5 to all
-// six instead of +10 to two, same total-ish magnitude spread thin rather
-// than concentrated. All grants are multiples of 5/10 per CLAUDE.md "Stat
-// modifiers" and match the +10-per-stat convention Evolution paths already
-// use (src/data/progression.ts) — see isValidPassiveDefinition for the
-// checked invariant (test/classes.test.ts asserts every entry here passes).
-//
-// `name` is prefixed "Class - " on every entry (2026-08-21, per user
-// direction) — a Class shares the same Passive display surface as reactive/
-// damage-modifier passives (HeroDetailOverlay's Passives row, ReferenceOverlay),
-// so an unprefixed "Warrior" would read as generic passive flavor text rather
-// than telegraphing "this is the hero's Class." `id` stays bare (grantClass/
-// chosenClass key off it, not the display name).
+// A Class is a statGrants-only Passive; a hero holds at most one per run (src/run/classes.ts).
+// Fifteen cover every pair of the six core stats — manaPool/mpRegen deliberately excluded, an
+// open mana-tuning question (docs/mana.md) — and Champion is +5 to all six. `name` carries the
+// "Class - " prefix because Classes share the Passive display surface; `id` stays bare.
 
 import type { PassiveDefinition } from '../engine/content';
 

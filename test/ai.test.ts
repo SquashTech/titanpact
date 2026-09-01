@@ -8,13 +8,7 @@ import type { MoveDefinition } from '../src/engine/content';
 import type { CombatState } from '../src/engine/state';
 import { pickAiAction, type AiContext } from '../src/run/ai';
 
-/**
- * Test-local movepool. The AI's rules are about SHAPES of move (a damage move
- * with a type matchup, a heal with no other payload, a rider that does not
- * stack), so pinning them to authored content would make this file fail every
- * time a slate is retuned rather than when the AI changes. Same discipline as
- * combat.test.ts's `testUnaffordable` — src/data/moves.ts never sees these.
- */
+/** Test-local movepool: the AI's rules are about SHAPES of move, so authored content would make this fail on every slate retune. */
 const base = {
   category: 'magical' as const,
   manaCost: 10,
@@ -66,12 +60,7 @@ function contextFor(moveIds: readonly string[], random: () => number): AiContext
   return { heroes, moves: testMoves, statuses, typeChart, moveIdsFor: () => moveIds, random };
 }
 
-/**
- * Every action the AI would take across the whole [0, 1) roll space, sampled
- * finely enough that a 1-in-24 branch still shows up. The AI is deliberately
- * non-deterministic, so every assertion below is about the SET of outcomes it
- * can reach — never about one roll.
- */
+/** Every action the AI would take across the [0, 1) roll space; assertions are about the SET of outcomes, never one roll. */
 function sweep(state: CombatState, moveIds: readonly string[]): { moveIds: Set<string>; targets: Set<string | null> } {
   const picked = { moveIds: new Set<string>(), targets: new Set<string | null>() };
   for (let i = 0; i < 200; i++) {
@@ -93,8 +82,7 @@ test('ai splits a neutral attack across both enemy slots instead of always the l
 });
 
 test('ai aims a super-effective attack at the slot it is super-effective against', () => {
-  // Fire is 2x into Frost, 1x into Storm — and the Frost hero is on the RIGHT,
-  // so a pass would be indistinguishable from the old always-leftmost bug.
+  // Fire is 2x into Frost, 1x into Storm; the Frost hero is on the RIGHT so always-leftmost would fail.
   const state = board('crimson', 'tempest', 'rime');
   const { targets } = sweep(state, ['fireBolt']);
   assert.deepStrictEqual([...targets], [RIGHT]);
@@ -105,8 +93,7 @@ test('ai favours the super-effective move without ever committing to it', () => 
   const { moveIds } = sweep(state, ['fireBolt', 'arcaneBolt']);
   assert.deepStrictEqual([...moveIds].sort(), ['arcaneBolt', 'fireBolt']);
 
-  // 6 (super) against 2 (neutral): the matchup should pull the majority of
-  // picks, and the neutral option should keep a real share of them.
+  // Weights 6 (super) against 2 (neutral).
   let fire = 0;
   for (let i = 0; i < 200; i++) {
     const roll = (i + 0.5) / 200;

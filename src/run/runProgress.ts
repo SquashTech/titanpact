@@ -1,6 +1,5 @@
-// Map-node progression (docs/run-loop.md): moving across a RunMap, and
-// resolving what each node type grants. Pure RunState transforms — no view,
-// no engine internals.
+// Map-node progression (docs/run-loop.md): moving across a RunMap and
+// resolving what each node type grants. Pure RunState transforms.
 
 import type { StatKey } from '../engine/content';
 import type { RunState, RosterEntry } from './state';
@@ -11,19 +10,14 @@ import { mergeStatMods } from './statMods';
 
 export class RunProgressError extends Error {}
 
-/** The nodes the player may currently move to: the map's start row if the map hasn't been entered yet, otherwise the current node's outgoing edges. */
+/** The start row if the map hasn't been entered yet, otherwise the current node's outgoing edges. */
 export function reachableNodeIds(run: RunState): string[] {
   if (!run.map) return [];
   if (run.currentNodeId === null) return run.map.startNodeIds;
   return run.map.nodes[run.currentNodeId]?.nextIds ?? [];
 }
 
-/**
- * Moves the player onto `nodeId` once it's been resolved (fight won, reward
- * claimed, shop exited). `visitedNodeIds` tracks completed nodes for
- * MapScreen's greyed-out rendering; `currentNodeId` is the frontier
- * `reachableNodeIds` branches from next.
- */
+/** Moves onto `nodeId` once it has been resolved (fight won, reward claimed, shop exited). */
 export function advanceToNode(run: RunState, nodeId: string): RunState {
   if (!run.map) throw new RunProgressError('Run has no map');
   if (!run.map.nodes[nodeId]) throw new RunProgressError(`${nodeId} is not a node on this map`);
@@ -37,30 +31,20 @@ export function advanceToNode(run: RunState, nodeId: string): RunState {
   };
 }
 
-/** currencyReward node resolution: a flat gold grant. */
 export function grantCurrencyReward(run: RunState, amount: number): RunState {
   return { ...run, gold: run.gold + amount };
 }
 
-/** upgradeReward node resolution: a flat grant to the pooled level-up currency (docs/progression.md). */
 export function grantUpgradeReward(run: RunState, points: number): RunState {
   return { ...run, levelUpPool: run.levelUpPool + points };
 }
 
-/** A flat grant to the scarce Recruit Contract currency (docs/progression.md "raise-vs-recruit axis") — used at the end of every act (App.tsx, on the boss-node win) since the old contractReward map node was removed (2026-08-17). */
+/** The per-act contract grant (App.tsx, on the boss-node win). */
 export function grantContractReward(run: RunState, amount: number): RunState {
   return { ...run, recruitContracts: run.recruitContracts + amount };
 }
 
-/**
- * End-of-act transition (docs/run-loop.md "Multi-act sequencing"): replaces
- * the current map with a freshly generated one for the next act and resets
- * the per-act position fields (`currentNodeId`, `visitedNodeIds`) — the
- * player starts the new act's map from its own start row, same as entering
- * the run's very first map. Does not touch roster/gold/relics/contracts or
- * bump `actNumber` itself — callers (App.tsx) own the TOTAL_ACTS check and
- * increment `actNumber` alongside this.
- */
+/** Fresh map for the next act, per-act position fields reset. Roster/gold/relics/contracts untouched; callers own the TOTAL_ACTS check. */
 export function advanceToNextAct(run: RunState, seed: number): RunState {
   return {
     ...run,
@@ -71,16 +55,12 @@ export function advanceToNextAct(run: RunState, seed: number): RunState {
   };
 }
 
-/** relicReward node resolution: adds an owned relic id. Duplicates are allowed (their flat grants simply stack) — the reward screen is expected to only offer relics not yet owned. */
+/** Duplicates are allowed (grants stack); the reward screen is expected to offer only unowned relics. */
 export function grantRelicReward(run: RunState, relicId: string): RunState {
   return { ...run, relics: [...run.relics, relicId] };
 }
 
-/**
- * hpBoostReward/manaBoostReward node resolution: a flat, permanent-for-the-run
- * stat grant to one chosen roster hero (CLAUDE.md "flat additive integers,
- * multiples of 5 or 10"), folded into that entry's `bonusStatGrants`.
- */
+/** hpBoost/manaBoost/manaRegenBoost node resolution, folded into `bonusStatGrants`. */
 export function grantStatBonus(run: RunState, rosterId: string, stat: StatKey, amount: number): RunState {
   const entry = run.roster.find((r) => r.rosterId === rosterId);
   if (!entry) throw new RunProgressError(`${rosterId} is not on the roster`);
@@ -90,17 +70,11 @@ export function grantStatBonus(run: RunState, rosterId: string, stat: StatKey, a
 
 export interface EquipOutcome {
   run: RunState;
-  /** Whatever was already in that slot, now unequipped — or null if the slot was empty. There is no stash to drop it into: the caller (ForceEquipScreen) is responsible for making sure it goes somewhere, another hero or the trash. */
+  /** Whatever the slot held, now unequipped. There is no stash: the caller (ForceEquipScreen) must send it somewhere. */
   bumpedItemId: string | null;
 }
 
-/**
- * Equips `itemId` onto `rosterId`'s matching slot. Every piece of equipment
- * obtained must be resolved on the spot (ForceEquipScreen) — equip it to a
- * hero or trash it — there is no unequipped inventory to fall back on. If
- * the target slot already held something, that item comes back as
- * `bumpedItemId` so the caller can queue it for the same forced choice.
- */
+/** Every obtained item is resolved on the spot — equipped or trashed — since there is no inventory. */
 export function equipToRoster(
   run: RunState,
   rosterId: string,
@@ -120,13 +94,7 @@ export function equipToRoster(
   };
 }
 
-/**
- * Moves whatever is in `slot` from one roster hero to another
- * (RosterManagementScreen's tap/drag-to-reassign). If the destination
- * already has an item there, it moves back into the source's now-empty
- * slot — a true swap, never orphaning a copy since there's no stash to park
- * it in.
- */
+/** A true swap: anything already in the destination slot moves back into the source's. */
 export function swapEquipment(run: RunState, fromRosterId: string, toRosterId: string, slot: EquipmentSlot): RunState {
   const fromEntry = run.roster.find((r) => r.rosterId === fromRosterId);
   const toEntry = run.roster.find((r) => r.rosterId === toRosterId);
@@ -147,7 +115,7 @@ export function swapEquipment(run: RunState, fromRosterId: string, toRosterId: s
   };
 }
 
-/** Permanently destroys whatever is equipped in `slot` on `rosterId` — the only way to shed unwanted gear now that there's no stash to return it to. */
+/** Permanently destroys the item in `slot` — the only way to shed gear. */
 export function trashEquipment(run: RunState, rosterId: string, slot: EquipmentSlot): RunState {
   const entry = run.roster.find((r) => r.rosterId === rosterId);
   if (!entry) throw new RunProgressError(`${rosterId} is not on the roster`);

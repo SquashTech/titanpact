@@ -1,8 +1,4 @@
-// A scripted, printable 2v2 fight — NOT a game, just a way to watch the real
-// engine (src/engine) run a fight round by round without a view layer yet.
-// Uses the same test-fixture content as the test suite (src/data): 4
-// untuned heroes, 5 untuned moves, a placeholder type chart.
-//
+// Scripted, printable 2v2 fight on the real engine, using the src/data fixture content.
 // Run with: npm run demo
 
 import { heroes } from '../src/data/heroes';
@@ -34,8 +30,6 @@ function name(id: string): string {
   return displayName[id] ?? id;
 }
 
-// Explicit starting-resource choice for this demo (full HP/mana) — NOT an
-// engine default. Starting mana is still 🔒 OPEN per docs/mana.md.
 const combatants: CombatState['combatants'] = {};
 for (const r of roster) {
   const hero = heroes[r.heroId];
@@ -47,7 +41,7 @@ let state: CombatState = {
   rngState: createRng(SEED),
   round: 1,
   active: { A: ['a1', 'a2'], B: ['b1', 'b2'] },
-  bench: { A: [], B: [] }, // this fixture roster is exactly 2v2, no bench — see note below
+  bench: { A: [], B: [] },
   combatants,
   koCount: { A: 0, B: 0 },
   activeFieldEffect: null,
@@ -59,10 +53,10 @@ function firstActiveOn(s: CombatState, side: Side): string | null {
   return s.active[side].find((id) => id && !s.combatants[id].fainted) ?? null;
 }
 
+// Deliberately dumb policy: always the hero's first listed move.
 function pickAction(s: CombatState, combatantId: string): Action {
   const combatant = s.combatants[combatantId];
   const hero = heroes[combatant.heroId];
-  // Always the hero's first listed move — a deliberately dumb policy, just to drive the demo.
   const moveId = hero.moveIds[0];
   const move = moves[moveId];
   const enemySide: Side = combatant.side === 'A' ? 'B' : 'A';
@@ -93,7 +87,7 @@ function formatEvent(e: CombatEvent): string | null {
     case 'ManaRegenTicked':
       return `  ${name(e.combatantId)} regens ${e.manaRegen} MP (${e.newMana}/${e.maxMana})`;
     default:
-      return null; // TurnStarted / MoveDeclared / HpChanged / ManaChanged / SwitchedIn / RoundEnded omitted for readability
+      return null;
   }
 }
 
@@ -117,7 +111,7 @@ while (round < MAX_ROUNDS && !sideDefeated(state, 'A') && !sideDefeated(state, '
     if (line) console.log(line);
   }
 
-  // Forced replacement of any fainted active slot (no bench in this 2v2 fixture, so slots just stay empty).
+  // Forced replacement of fainted active slots (no bench in this fixture, so slots stay empty).
   for (const side of ['A', 'B'] as const) {
     state.active[side].forEach((id, slot) => {
       if (id === null && state.bench[side].length > 0) {

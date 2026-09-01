@@ -73,15 +73,7 @@ test('map: the single-node rows before a pick-3 reward row connect to all 3 of t
   }
 });
 
-/*
- * NARROWED 2026-08-26. This used to assert that every row-3 reward node
- * connects to BOTH row-4 options. The reward row now steers (left commits to
- * the Elite, right to the Battle, middle keeps both), so that assertion is
- * gone — but the guarantee it was protecting is not, and this is what's left
- * of it: on every seed, from anywhere in row 3, the player can still REACH
- * both options. What they can't do is take a specific side reward and keep
- * the choice. See the steering test at the bottom of this file.
- */
+// The reward row steers (see the steering test below), so this asserts reachability, not full connection.
 test('map: the Elite/Battle choice stays reachable from the reward row on every seed (Act 2+)', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
     const map = generateMap(seed, 2);
@@ -89,8 +81,6 @@ test('map: the Elite/Battle choice stays reachable from the reward row on every 
     for (const optionId of map.rows[4]) {
       assert.ok(reachableFromRow3.has(optionId), `seed ${seed}: ${optionId} unreachable from row 3`);
     }
-    // ...and at least one row-3 node keeps BOTH open, so the choice is never
-    // a coin flip made one row early.
     assert.ok(
       map.rows[3].some((id) => map.rows[4].every((o) => map.nodes[id].nextIds.includes(o))),
       `seed ${seed}: no row-3 node preserves the full Elite/Battle choice`,
@@ -121,10 +111,7 @@ test('map: Act 1 inserts a standalone single-node Mentor (classReward) row right
     assert.deepStrictEqual(rowTypes(2), ['skirmish']);
     assert.strictEqual(rows[3].length, 1, `Mentor row (seed ${seed}) should be a single node`);
     assert.deepStrictEqual(rowTypes(3), ['classReward']);
-    // The reward row that used to sit right after Skirmish shifts down a row,
-    // unchanged — a normal pick of 3, which (2026-08-22) can never itself
-    // reroll classReward: it's excluded from REWARD_WEIGHTS entirely, so the
-    // Mentor row above is the only place it can appear.
+    // classReward is excluded from REWARD_WEIGHTS, so the Mentor row is the only place it can appear.
     assert.ok(rowTypes(4).every((t) => REWARD_TYPES.has(t)), `row 4 (seed ${seed}) has a non-reward type: ${rowTypes(4)}`);
     assert.ok(!rowTypes(4).includes('classReward'), `row 4 (seed ${seed}) rerolled classReward — it should only ever appear in the forced Mentor row`);
     assert.strictEqual(rows[4].length, 3);
@@ -180,13 +167,7 @@ test('map: every node past row 0 has at least one incoming edge (no orphans)', (
   }
 });
 
-/*
- * The reward row before Elite-or-Battle steers instead of fully connecting
- * (2026-08-26): left commits to the Elite, right commits to the Battle,
- * middle keeps both. The load-bearing half of that is the middle node — it's
- * what keeps the Elite/Battle choice reachable on every seed and every act,
- * which is the guarantee the old full-connect rule existed to provide.
- */
+// The middle node is load-bearing: it is what keeps the Elite/Battle choice reachable on every seed.
 test('map: the reward row before Elite-or-Battle steers left->Elite, right->Battle, middle->both', () => {
   for (const act of [1, 2, 3]) {
     for (const seed of [1, 7, 42, 99, 2024]) {
@@ -209,9 +190,6 @@ test('map: no edge into the Elite-or-Battle row ever crosses another (the fix th
   for (const seed of [3, 11, 500]) {
     const map = generateMap(seed, 2);
     const eliteRow = map.rows.length - 3;
-    // A crossing exists iff some node reaches a target further from its own
-    // column than a node on the other side of it does — with steering, each
-    // outer node reaches only its own side, so no pair can invert.
     const feeding = map.rows[eliteRow - 1];
     const [eliteId, battleId] = map.rows[eliteRow];
     assert.ok(!map.nodes[feeding[0]].nextIds.includes(battleId), `seed ${seed}: left still reaches across to the Battle`);

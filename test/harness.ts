@@ -1,6 +1,4 @@
-// Minimal describe/it-free test harness. No Jest/Vitest dependency on purpose:
-// this repo's installed Node (v14.15.1) predates the toolchains those require.
-// Swap this out once the dev environment is upgraded — see the note in README.
+// Minimal test harness: no Jest/Vitest because the installed Node (v14) predates them.
 
 type TestFn = () => void;
 

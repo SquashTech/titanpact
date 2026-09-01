@@ -1,9 +1,5 @@
-// Groups the engine's flat event stream into player-legible "beats" for
-// sequenced playback. A beat is the unit FightScreen reveals per tap: e.g.
-// MoveDeclared + MoveUsed + ManaChanged land together so the mana bar drains
-// at the exact moment the "uses Move!" banner appears, rather than a step
-// later. This is presentation-only grouping — it doesn't change what
-// happened, just how many taps it takes to read it.
+// Groups the engine's flat event stream into player-legible "beats" — the unit
+// FightScreen reveals per tap. Presentation-only grouping.
 
 import type {
   BenchRegenTickedEvent,
@@ -30,15 +26,7 @@ export interface BeatPopup {
   className: string;
 }
 
-/**
- * Per-status tick flavor (Burn/Bleed/Poison/Renew — the DoT/HoT statuses that
- * fire a StatusTicked kind 'damage'/'heal' every end-of-round) so each reads
- * as its own beat rather than a copy of a plain attack-damage/heal beat, the
- * same way Conduct's detonation got its own banner/popup below. Poison only
- * ever ticks once, on detonation (statusEngine.ts tickEndOfRound's timer
- * branch), but shares the same treatment since it's still a kind 'damage'
- * StatusTicked.
- */
+/** Per-status flavor for DoT/HoT ticks. Poison only ticks once (on detonation) but shares the treatment. */
 const STATUS_TICK_BANNER: Record<string, (targetName: string, amount: number) => string> = {
   Burn: (n, a) => `${n} is scorched by Burn for ${a} damage!`,
   Bleed: (n, a) => `${n} bleeds for ${a} damage!`,
@@ -54,25 +42,19 @@ const STATUS_TICK_EMOJI: Record<string, string> = {
 };
 
 /**
- * The optional, *presentational* half of a beat — everything past the plain
- * sentence. `banner` stays the whole sentence and is what the event log reads
- * and what the console falls back to; these fields exist only so the console
- * can set the interesting words large and the bookkeeping small.
- *
- * Nothing here is required: a beat that supplies none of it still renders,
- * with `banner` itself taking the headline slot. Reach for the split only
- * when a beat genuinely has a subject and a payload — "Cinder uses" /
- * "Ember Burst", "Bramble takes" / "47 damage" — never to decorate a sentence
- * that already reads as one thought.
+ * The optional presentational half of a beat. `banner` stays the whole
+ * sentence (the log and the console fallback); these only let the console
+ * set the interesting words large. Use the split only when a beat has a
+ * genuine subject and payload.
  */
 export interface BeatFlavor {
   /** Small line above the headline: who is acting, or who is being hit. */
   bannerLead?: string;
-  /** The headline itself, replacing `banner` on screen — the words worth setting large. */
+  /** The headline itself, replacing `banner` on screen. */
   bannerFocus?: string;
   /** Small line below the headline — a move's targets, so far. */
   bannerSub?: string;
-  /** Colors the headline. Maps to a .banner-focus-* class in styles.css. */
+  /** Colors the headline; maps to a .banner-focus-* class. */
   bannerFocusKind?:
     | 'crit'
     | 'super'
@@ -86,25 +68,15 @@ export interface BeatFlavor {
     | 'detonate'
     | 'mana'
     | 'field';
-  /** Type color (typeColors.ts) the headline glows in, overriding the kind's own. Set on move beats, so a Fire move arrives orange and a Frost move cyan. */
+  /** Type color the headline glows in, overriding the kind's own. */
   bannerAccent?: string;
-  /** Stamp under the headline — "Critical hit!", "Super effective!". Rendered as a struck-in chip, not a fragment trailing an em-dash. */
+  /** Stamp under the headline — "Critical hit!", "Super effective!". */
   bannerTag?: string;
-  /** Secondary readout — a declared move's mana cost, or the rules text of a Field Effect that just landed. */
+  /** Secondary readout — a mana cost, or a Field Effect's rules text. */
   bannerMeta?: string;
-  /** Extra class for the bannerMeta span, so a meta line that isn't a mana cost doesn't inherit .combat-banner-meta's mana blue. */
+  /** Extra class for the bannerMeta span. */
   bannerMetaClass?: string;
-  /**
-   * This beat is a DRAMATIC ENTRANCE (entrances.ts) — the only flag here that
-   * asks for more than words. FightScreen answers it with a full-field veil
-   * and a shake, beatSfx.ts with the horn instead of the usual switch-in
-   * whoosh, and music.ts by dropping the track's playback rate for the rest of
-   * the fight.
-   *
-   * A flag rather than three separate ones because it is one authored moment,
-   * not three effects that happen to coincide: a future entrance should be
-   * able to opt in by adding an id to entrances.ts and nothing else.
-   */
+  /** A dramatic entrance (entrances.ts): FightScreen veils and shakes, beatSfx plays the horn, music drops rate. One flag so a future entrance opts in by id alone. */
   dramaticEntrance?: true;
 }
 
@@ -115,12 +87,7 @@ export interface Beat extends BeatFlavor {
   popups: BeatPopup[];
 }
 
-/**
- * "TargetA" / "TargetA and TargetB" / "TargetA, TargetB and TargetC" — the
- * banner's "on {target}" clause. A move that targets only its own user (no
- * spread moves do yet, but 'self' is a defined TargetMode) omits the clause
- * entirely rather than reading "X uses Move on X".
- */
+/** " on A" / " on A and B" / " on A, B and C"; empty when the only target is the actor. */
 function targetClause(targetIds: readonly string[], actorId: string, name: (id: string) => string): string {
   const ids = targetIds.filter((id) => id !== actorId);
   if (ids.length === 0) return '';
@@ -138,9 +105,7 @@ export function buildBeats(
 ): Beat[] {
   const name = (id: string) => heroes[combatants[id]?.heroId]?.name ?? id;
   const beats: Beat[] = [];
-  // Events with no beat of their own (RoundStarted, TurnStarted, RoundEnded —
-  // no state effect, and RoundStarted's log line is the only one worth
-  // keeping) ride along on the next beat that has one.
+  // Events with no beat of their own ride along on the next beat that has one.
   let carry: CombatEvent[] = [];
   let i = 0;
 
@@ -175,13 +140,10 @@ export function buildBeats(
         const actorName = `${actorSide && actorSide !== playerSide ? 'Enemy ' : ''}${name(e.combatantId)}`;
         const clause = targetClause(e.targetCombatantIds, e.combatantId, name);
         const cost = manaSpent ?? move.manaCost;
-        // The beat with the clearest subject/payload split: the actor is context
-        // the player already has (they just picked it), the move NAME is the
-        // thing worth reading, and it arrives lit in its own type's color.
         push(applied, `${actorName} uses ${move.name}${clause}`, [], {
           bannerLead: actorName,
           bannerFocus: move.name,
-          // `clause` is " on X and Y" — slice past " on" and point at them instead.
+          // `clause` is " on X and Y" — slice past " on".
           bannerSub: clause ? `▸${clause.slice(3)}` : undefined,
           bannerAccent: getTypeColor(move.type),
           bannerMeta: `${cost} MP`,
@@ -193,11 +155,7 @@ export function buildBeats(
         const applied: CombatEvent[] = [e];
         i++;
         if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
-        // Fainted is deliberately held back into its OWN beat below, rather
-        // than bundled into this one: applying it here would clear the
-        // combatant's active slot (applyEventToState) in the same tap that
-        // drains the HP bar, so the card would vanish before the player ever
-        // saw it hit 0. Splitting the beat gives that a tap of its own.
+        // Fainted gets its OWN beat so the bar is seen to hit 0 before the card vanishes.
         let faintEvent: CombatEvent | null = null;
         if (events[i]?.type === 'Fainted') faintEvent = events[i++];
         const tag = e.isCrit
@@ -207,19 +165,11 @@ export function buildBeats(
             : e.typeMult <= 0.5
               ? ' — Not very effective...'
               : '';
-        // The same three outcomes as `tag`, split off the sentence so the console
-        // can stamp them rather than trail them behind an em-dash. `tag` above
-        // stays exactly as written — it is also the event-log line.
         const tagText = e.isCrit ? 'Critical hit!' : e.typeMult >= 2 ? 'Super effective!' : e.typeMult <= 0.5 ? 'Not very effective...' : undefined;
         const tagKind = e.isCrit ? 'crit' : e.typeMult >= 2 ? 'super' : e.typeMult <= 0.5 ? 'resist' : 'damage';
         const targetName = name(e.targetCombatantId);
-        // Haunt (statusEngine.ts expandSpreadTargets) dragged this target into a hit
-        // that was declared against its partner — call that out explicitly rather than
-        // letting it read like an ordinary spread move landed on both enemies.
+        // Haunt dragged this target into a hit declared against its partner.
         const haunted = e.viaStatusId === 'Haunt';
-        // Recoil and retribution are both damage a hero did to itself or
-        // billed an enemy for, not an attack landing — the default phrasing
-        // reads wrong for each (events.ts DamageDealtEvent.recoil/.retribution).
         const banner = e.recoil
           ? `${targetName} takes ${e.amount} recoil`
           : e.retribution
@@ -249,10 +199,7 @@ export function buildBeats(
       }
 
       case 'StatusDetonated': {
-        // Always immediately followed by the removeStatus reason 'consumed'
-        // (statusEngine.ts detonateTriggeredStatuses) and its own
-        // HpChanged/Fainted pair — bundled into one beat so the zap and the
-        // bar drain land on the same tap.
+        // Always followed by StatusRemoved 'consumed' and its own HpChanged/Fainted pair.
         const applied: CombatEvent[] = [e];
         i++;
         if (events[i]?.type === 'StatusRemoved') applied.push(events[i++]);
@@ -274,12 +221,7 @@ export function buildBeats(
         break;
       }
 
-      // A held Passive reacting (passiveEngine.ts resolvePassiveReactions) —
-      // e.g. Sanguine mending its owner off an enemy's Bleed tick, right after
-      // that tick's own beat. Dispatches on the granting PassiveDefinition's
-      // effect kind to know which trailing state-change event to fold in,
-      // mirroring the dedicated Healed/StatusApplied/StatChanged beats below
-      // rather than introducing a passive-specific one.
+      // Dispatches on the passive's effect kind to know which trailing state-change event to fold in.
       case 'PassiveTriggered': {
         const applied: CombatEvent[] = [e];
         i++;
@@ -308,12 +250,7 @@ export function buildBeats(
             { bannerLead: `${label} · ${name(applied2.combatantId)}`, bannerFocus: applied2.statusId, bannerFocusKind: 'status' }
           );
         } else if (effectKind === 'statDelta' && events[i]?.type === 'StatChanged') {
-          // EVERY consecutive StatChanged, not just the first: a group-target
-          // effect (content.ts PassiveEffectTarget 'activeEnemies' — Imposing
-          // Presence hitting both enemies) emits one per member behind a
-          // single PassiveTriggered. Taking only the head would strand the
-          // second, which then falls through to the generic StatChanged case
-          // below and reads as a second, sourceless beat.
+          // EVERY consecutive StatChanged: a group-target effect emits one per member behind a single trigger.
           const changes: StatChangedEvent[] = [];
           while (events[i]?.type === 'StatChanged') {
             const changed = events[i++] as StatChangedEvent;
@@ -338,9 +275,7 @@ export function buildBeats(
             }
           );
         } else {
-          // No state-change event followed (e.g. resolveEffect no-op'd
-          // because the target already fainted) — carry the bare trigger
-          // event along rather than surfacing an empty beat.
+          // No state change followed (e.g. target already fainted) — carry rather than surface an empty beat.
           carry.push(...applied);
         }
         break;
@@ -348,10 +283,6 @@ export function buildBeats(
 
       case 'SwitchedIn': {
         const inName = name(e.inCombatantId);
-        // A named arrival (entrances.ts) is not a switch — it is the fight
-        // changing shape — so it gets its own sentence, the 'ko' headline
-        // colour (the console's alarm red, already the KO beat's), and the
-        // flag FightScreen/beatSfx/music read to make the field answer.
         if (hasDramaticEntrance(combatants[e.inCombatantId]?.heroId)) {
           push([e], `${inName} takes the field!`, [], {
             bannerLead: 'Something comes out of the treeline',
@@ -393,10 +324,6 @@ export function buildBeats(
         i++;
         if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
         const targetName = name(e.targetCombatantId);
-        // A drain beat names its source. Same popup and same green number —
-        // it IS a heal, and the player should read it as one — but the banner
-        // says where it came from, because it arrives in the middle of an
-        // attack rather than on its own turn.
         const drainedFrom = e.drain ? name(e.drain.fromCombatantId) : null;
         push(
           applied,
@@ -445,8 +372,6 @@ export function buildBeats(
         const applied: CombatEvent[] = [e];
         i++;
         if (events[i]?.type === 'HpChanged') applied.push(events[i++]);
-        // Same split as DamageDealt above — Fainted gets its own beat so a
-        // DoT-tick KO also shows the drained bar before the card disappears.
         let faintEvent: CombatEvent | null = null;
         if (events[i]?.type === 'Fainted') faintEvent = events[i++];
         const targetName = name(e.combatantId);
@@ -479,11 +404,7 @@ export function buildBeats(
       }
 
       case 'StatusRemoved': {
-        // A flinch-shaped status (content.ts clearsAtEndOfRound — Daze) never
-        // survives the round it landed in, so its removal is bookkeeping rather
-        // than news: the player already watched it deny an action, or watched it
-        // do nothing. Carried so the badge still disappears, without costing a
-        // tap to be told a thing that was never going to last expired.
+        // A flinch-shaped status (Daze) expiring is bookkeeping, not news — carried so the badge still clears.
         if (statuses[e.statusId]?.clearsAtEndOfRound && e.reason === 'expired') {
           carry.push(e);
           i++;
@@ -508,11 +429,7 @@ export function buildBeats(
       case 'FieldEffectSet': {
         const fx = fieldEffects[e.fieldEffectId];
         const label = fx?.name ?? e.fieldEffectId;
-        /* The one moment the player has to understand *what* just changed.
-           A Field Effect rewrites how every move in every following round
-           resolves, so the banner's meta line carries the effect's actual
-           rules text rather than making the player go find it — this beat is
-           the only place the description is guaranteed to be read. */
+        // The meta line carries the effect's rules text: this beat is the one place it is guaranteed to be read.
         push(
           [e],
           e.previousFieldEffectId ? `${label} surges across the battlefield, overriding the old field!` : `${label} surges across the battlefield!`,
@@ -530,13 +447,7 @@ export function buildBeats(
         break;
       }
 
-      /* Deliberately NOT its own beat. The tick carries no new information —
-         the divider plaque's pip track already shows rounds remaining, and it
-         updates from this event either way — so giving it a beat charged the
-         player one mandatory tap per round, every round, for five rounds, to
-         be told nothing. Carried instead: the event still applies (and still
-         reaches the event log via formatEvents on beat.events), it just rides
-         along on the next beat that actually has something to say. */
+      // Not its own beat: the plaque's pip track already shows rounds remaining.
       case 'FieldEffectTicked':
         carry.push(e);
         i++;
@@ -553,16 +464,7 @@ export function buildBeats(
         break;
       }
 
-      /* The Pact Clock coming due (engine/combat/pactClock.ts). One beat for
-         the whole board — the announcement plus every combatant's HP loss
-         together — because the pact is a single thing happening to everyone,
-         not eight separate things. KOs still split off into their own beats,
-         the same split DamageDealt and StatusTicked already make, so the bar
-         is seen to drain before the card leaves.
-
-         Bench combatants take it too, so some of these popups land on cards
-         that aren't on the field; the popup layer already tolerates that
-         (BenchRegenTicked does the same). */
+      // One beat for the whole board; KOs still split off so the bar drains before the card leaves.
       case 'PactTicked': {
         i++;
         const applied: CombatEvent[] = [e];
@@ -610,11 +512,7 @@ export function buildBeats(
         break;
       }
 
-      // One beat per grant rather than one for the whole move, mirroring
-      // Healed: Font of Power pays two allies and each is its own number
-      // arriving on its own card. The popup says "+150" and, when it spills
-      // past the pool, says so — the bar's fill clamps, so overflow has no
-      // other way to be seen (events.ts ManaGrantedEvent).
+      // One beat per grant, mirroring Healed. The popup names overflow since the bar's fill clamps.
       case 'ManaGranted': {
         const targetName = name(e.targetCombatantId);
         const sourceName = name(e.sourceCombatantId);
@@ -653,8 +551,7 @@ export function buildBeats(
     }
   }
 
-  // Leftover trailing bookkeeping (e.g. a final RoundEnded) with nothing after
-  // it to ride along on — fold it into the last real beat rather than drop it.
+  // Trailing bookkeeping (e.g. a final RoundEnded) folds into the last real beat.
   if (carry.length > 0 && beats.length > 0) {
     beats[beats.length - 1].events.push(...carry);
   }

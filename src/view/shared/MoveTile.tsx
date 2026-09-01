@@ -10,41 +10,18 @@ import { ElementGlyph } from './elementIcons';
 import { MoveKindGlyph, type MoveKindGlyphKind } from './statIcons';
 import { ManaCost } from './ManaCost';
 
-/**
- * Shared hold-to-inspect gesture: a ~500ms press opens details, a tap acts.
- * Originally inlined in MoveTile below; pulled out so other custom-styled
- * tappable elements that want the same split (e.g. LevelUpScreen's
- * move-replace picker, which needs its own bordered card layout rather than
- * MoveTile's compact span) can reuse it instead of re-implementing the timer
- * dance. The click that follows a completed long-press is swallowed so it
- * can't also fire `onClick`.
- *
- * Three things beyond the timer, none of which the hand-rolled copies had:
- *
- * 1. **The hold is visible while it happens.** The returned props carry
- *    `data-holding` for as long as the timer is running, so the pressed
- *    control can draw its own charge (styles.css, `[data-holding]`). A 500ms
- *    gesture that shows nothing until the instant it completes is
- *    indistinguishable from a dead control, which is most of why "hold for
- *    info" goes undiscovered. It is spelled as a data attribute rather than
- *    as a returned flag precisely so every existing `{...longPress}` call
- *    site picks it up without touching its JSX — and unlike a bare boolean,
- *    a `data-*` prop is legal to spread onto a DOM element.
- * 2. **Movement cancels it.** `.move-list` scrolls at short viewports and the
- *    roster/compendium lists scroll everywhere, and on touch the pointer
- *    stays captured by the element it went down on — `pointerleave` never
- *    fires mid-drag, so a flick to scroll sat perfectly still as far as the
- *    DOM was concerned and popped a detail card 500ms later. A pointer that
- *    travels past HOLD_CANCEL_PX is a scroll, not a hold.
- * 3. **It ticks.** One short vibration at the moment the hold completes,
- *    where the platform offers one: the gesture ends under the player's own
- *    finger, which is covering the thing that just changed.
- */
+// --- Hold-to-inspect gesture ---
+
 export const LONG_PRESS_MS = 500;
 
-/** Past this much travel the gesture is a scroll or a drag, not a hold. Deliberately generous — a thumb resting on glass wanders several pixels over half a second without its owner meaning anything by it. */
+/** Past this much travel the gesture is a scroll, not a hold. Generous: a resting thumb wanders. */
 const HOLD_CANCEL_PX = 12;
 
+/**
+ * A ~500ms press calls `onLongPress`, a tap calls `onClick`; the click after a completed hold is
+ * swallowed. Returns `data-holding` while the timer runs (styles.css `[data-holding]`) and cancels
+ * on movement — on touch the pointer stays captured, so `pointerleave` never fires mid-scroll.
+ */
 export function useLongPress(onLongPress?: () => void, onClick?: () => void) {
   const timer = useRef<number | null>(null);
   const fired = useRef(false);
@@ -61,9 +38,7 @@ export function useLongPress(onLongPress?: () => void, onClick?: () => void) {
   }
 
   return {
-    /* Absent rather than `false` when idle: a CSS `[data-holding]` selector
-       matches any value, empty string included, so the attribute's presence
-       is the whole signal. */
+    // Absent rather than `false` when idle: `[data-holding]` matches any value, empty string included.
     'data-holding': holding ? '' : undefined,
     onContextMenu: (e: MouseEvent) => e.preventDefault(),
     onPointerDown: (e: PointerEvent) => {
@@ -74,8 +49,7 @@ export function useLongPress(onLongPress?: () => void, onClick?: () => void) {
       timer.current = window.setTimeout(() => {
         fired.current = true;
         clearTimer();
-        // Feature-detected, not assumed: iOS Safari has no Vibration API at
-        // all, and a desktop mouse holding a move button must not throw.
+        // Feature-detected: iOS Safari has no Vibration API.
         if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate(12);
         onLongPress();
       }, LONG_PRESS_MS);
@@ -100,23 +74,9 @@ export function useLongPress(onLongPress?: () => void, onClick?: () => void) {
 }
 
 /**
- * Swallows the very next click anywhere in the document, for a short grace
- * window — call this the instant a long-press opens a popup that visually
- * covers the tile the hold started on (e.g. HeroDetailOverlay/
- * HeroPreviewOverlay's move/equipment popup). Releasing the hold fires a
- * "ghost" click: the popup is now the topmost element at the pointer's
- * position, so the pointerup that ends the gesture lands on it instead of
- * the original tile, and the mousedown-target/pointerup-target mismatch
- * makes the browser synthesize a click on whichever ancestor happens to be
- * common to both — RosterManagementScreen's own equip popup ran into this
- * first. Which ancestor that lands on (and whether it even has a click
- * handler that would misinterpret it as a deliberate dismiss) depends on
- * how deeply the popup is nested — a plain screen vs. one opened from
- * inside another modal like Manage Roster — so rather than guessing the
- * right ancestor to guard, this intercepts the click at the document's
- * capture phase, before it reaches any component's onClick at all. A
- * genuine subsequent tap (after the grace window, since only one click is
- * ever swallowed) reaches handlers normally.
+ * Swallows the next document click for a short grace window. Call when a long-press opens a popup
+ * covering the tile: the pointerup lands on the popup, and the mousedown/pointerup target mismatch
+ * makes the browser synthesize a click on the common ancestor — which may dismiss it.
  */
 export function swallowGhostClick() {
   const swallow = (e: Event) => e.stopPropagation();
@@ -124,73 +84,29 @@ export function swallowGhostClick() {
   window.setTimeout(() => document.removeEventListener('click', swallow, { capture: true }), 400);
 }
 
-/**
- * `kind: 'buff'` covers both directions in the data — "Negative amounts are
- * debuffs — same move kind covers both" (engine/content.ts) — which is right
- * for the engine, where there is genuinely one resolution path, and wrong for
- * the UI, where Rally and Weaken were the same word and the same picture. The
- * sign is recovered here, once, so the glyph, the badge colour and the
- * "Buff"/"Debuff" text can never disagree with each other.
- *
- * Two ways a buff-kind move points downward, and a move needs only one:
- *
- * - **A negative stat delta** — Weaken (-10 DEF), Curse Mind (-10 INT/WIS).
- * - **A status pushed onto somebody else that isn't flagged `positive`** —
- *   the same StatusDefinition flag Cleanse reads (docs/conditions.md §7), so
- *   a status authored as harmful counts here the moment it is written, with
- *   no second list to keep in sync. `target: 'self'` is what separates
- *   granting Renew from inflicting Poison; both are one StatusApplication
- *   field, and the target is the only thing that says which reading applies
- *   (the same distinction moveEffectSummary spells as Grants vs Applies).
- *
- * A move carrying both a buff and a debuff reads as a debuff. Storm's Rising
- * Static (2026-08-30) is the first one authored — it hands an ally +20 Speed
- * AND marks an enemy with Conduct — so the tiebreak below is now load-bearing
- * rather than hypothetical. Left as-is deliberately: the honest answer is still
- * probably two glyphs, which is a real UI decision and not something to settle
- * inside a move slate. The full truth is in moveEffectSummary, which names the
- * side each half lands on; only the one-bit glyph is lossy.
- */
-/**
- * Grants vs Applies — the verb that says whether a status is a gift or a
- * wound. It used to key on `target === 'self'`, which was right for exactly as
- * long as a self-cast was the only way to hand somebody a positive status.
- * Fire's Stoke the Flames (Fire Force 20 on `bothAllies`) broke that: it read
- * as "Applies FireForce" — the same phrasing as inflicting Poison — because it
- * targets someone other than the caster.
- *
- * The honest rule is the status's own sign, with the target as the tiebreak
- * for a status the catalog has not flagged either way: a `positive` status is
- * always granted, never inflicted, whoever it lands on. Same
- * StatusDefinition.positive flag Cleanse and isDebuff already read
- * (docs/conditions.md §7), so a status authored as a boon reads as one
- * everywhere the moment it is written.
- */
+// --- Move kind / labels ---
+
+/** Grants vs Applies: a `positive` status is granted whoever it lands on; a self-cast is always a grant. */
 export function grantsRatherThanInflicts(app: StatusApplication): boolean {
   return app.target === 'self' || statuses[app.statusId]?.positive === true;
 }
 
+// `kind: 'buff'` covers both signs in the data; the sign is recovered here, once, so glyph, badge
+// colour and label can never disagree. A move carrying both reads as a debuff (open UI question).
 function isDebuff(move: MoveDefinition): boolean {
   if (move.statDeltas?.some(({ amount }) => amount < 0)) return true;
-  // Brain Flay (content.ts doublesStatReductions) authors NO deltas of its own
-  // and no status — its whole payload is amplifying reductions already on the
-  // enemy — so neither rule below can see it and it would read as a Buff. It is
-  // the most one-sided debuff in the game.
+  // doublesStatReductions authors no deltas and no status of its own.
   if (move.doublesStatReductions) return true;
-  // ANY rider that lands a non-positive status on someone else — a move
-  // whose first rider is a self-buff and whose second is a wound is still a
-  // debuff (content.ts statusApplication, now a list).
   return statusApplicationsOf(move).some((app) => app.target !== 'self' && !statuses[app.statusId]?.positive);
 }
 
-/** Which of MoveKindGlyph's five glyphs a move wears: a damage move keys off `move.category` (the stat pipeline it draws from), a non-damage one off `move.kind`, with buff split by sign. The one MoveDefinition -> MoveKindGlyphKind mapping in the app. */
+/** The one MoveDefinition -> MoveKindGlyphKind mapping in the app. */
 export function moveKindGlyph(move: MoveDefinition): MoveKindGlyphKind {
   if (move.kind === 'damage') return move.category;
   if (move.kind === 'heal') return 'heal';
   return isDebuff(move) ? 'debuff' : 'buff';
 }
 
-/** The player-facing word for what a move does, matching the glyph exactly. Replaces a KIND_LABELS table whose buff entry read "Buff/Debuff" — a hedge that was only ever there because nothing could tell the two apart. */
 export function moveKindLabel(move: MoveDefinition): string {
   if (move.kind === 'damage') return 'Damage';
   if (move.kind === 'heal') return 'Heal';
@@ -199,19 +115,7 @@ export function moveKindLabel(move: MoveDefinition): string {
 
 const CATEGORY_LABELS: Record<MoveDefinition['category'], string> = { physical: 'PHY', magical: 'MAG' };
 
-/**
- * Canonical player-facing name for each `TargetMode` (engine/content.ts) —
- * the single source of truth so this wording doesn't drift between the
- * long-press MoveInfoPanel below and FightScreen's targeting-panel copy.
- * 'allOthers' reads as "All" (everyone but the caster) rather than a literal
- * "everyone including me" mode — Titanpact has no such mode today.
- *
- * "Random Ally"/"Random Enemy" stopped being reserved vocabulary when Storm's
- * Rising Static landed (2026-08-30): they are real TargetModes now, rolled from
- * the seeded RNG at resolution (engine/combat/targeting.ts). They are worded as
- * a target and not as a caveat because that is what they are — the player picks
- * nothing, and the move offers no target panel.
- */
+/** Canonical player-facing name per TargetMode; FightScreen's targeting copy reads this too. */
 export const TARGET_MODE_LABELS: Record<MoveDefinition['target'], string> = {
   singleEnemy: 'Single Enemy',
   bothEnemies: 'Both Enemies',
@@ -223,17 +127,7 @@ export const TARGET_MODE_LABELS: Record<MoveDefinition['target'], string> = {
   randomEnemy: 'Random Enemy',
 };
 
-/**
- * The target modes that hit more than one slot at once — VGC's "spread".
- *
- * The random modes are deliberately NOT here even though their pool is the
- * same one `bothAllies`/`bothEnemies` resolve from (content.ts TargetMode):
- * exactly one combatant is drawn, so a Rising Static labelled Spread would
- * promise two hits and land one. And there is no spread damage reduction in
- * this game (CLAUDE.md, "doubles-only"), which is precisely why the label is
- * worth showing — a spread move is strictly two hits for one mana bill, with
- * no penalty term to discount it by.
- */
+// Random modes are not spread: exactly one combatant is drawn.
 const SPREAD_TARGET_MODES: ReadonlySet<MoveDefinition['target']> = new Set(['bothEnemies', 'bothAllies', 'allOthers']);
 
 export function isSpreadTarget(target: MoveDefinition['target']): boolean {
@@ -241,45 +135,19 @@ export function isSpreadTarget(target: MoveDefinition['target']): boolean {
 }
 
 /**
- * The two facts about HOW a move resolves that the move button never said out
- * loud: which priority bracket it goes in, and whether it hits one slot or
- * both.
- *
- * Both are locked mechanics (CLAUDE.md — "Priority uses integer brackets;
- * Speed is the tiebreaker within a bracket", "No spread damage reduction"),
- * and both are decisions rather than trivia in a command-then-resolve game:
- * whether your heal lands before the hit that would make it moot, and whether
- * one press answers both enemies. The button carried neither. Priority
- * appeared only in its exotic forms — the conditional bracket and the random
- * one, each with a chip of its own — so the eleven moves with a plain flat +1
- * were the ones that said nothing, and the matchup chips beside them list
- * both enemies whether or not the move actually reaches both.
- *
- * They lead the effect row rather than joining the rider chips downstream of
- * it: a rider says what happens when the move lands, and these two say
- * whether and how it lands at all. `.move-eff-trait` gives them their own
- * register for the same reason (styles.css) — the accent-gold rider chips are
- * a list of payloads, and these are not payloads.
- *
- * `liveTargetMode` is the board's answer where the board has one (Arcane's
- * Overload spreads only under Magical Surge — content.ts conditionalTarget),
- * so the chip tracks what pressing the button would actually do. That move's
- * own conditional-target chip still states the rule; this one states the
- * current answer, the same split the mana gem and the ramp chip already use.
+ * Priority bracket and spread, leading the effect row: these say whether and how the move lands,
+ * where rider chips say what happens when it does. `liveTargetMode` is the board's answer for a
+ * conditional target; omit outside combat.
  */
 export function MoveTraitChips({
   move,
   liveTargetMode,
 }: {
   move: MoveDefinition;
-  /** What the move will really target if pressed right now (engine/state.ts resolveTargetMode). Omit outside combat, where there is no board to read and the authored mode is the honest answer. */
   liveTargetMode?: MoveDefinition['target'];
 }) {
   const target = liveTargetMode ?? move.target;
-  // A move whose bracket is drawn from a list has no flat bracket to print —
-  // `priority` is still authored on it (the field is required) and is dead
-  // (content.ts randomPriority), and the row already carries a chip that says
-  // so honestly. Printing both would put two different brackets on one button.
+  // A randomPriority move's authored `priority` is dead; the row already carries a chip saying so.
   const bracket = move.randomPriority?.length ? 0 : move.priority;
   if (!bracket && !isSpreadTarget(target)) return null;
   return (
@@ -296,8 +164,6 @@ export function MoveTraitChips({
           {bracket > 0 ? '↟' : '↡'} Priority {bracket > 0 ? `+${bracket}` : bracket}
         </span>
       )}
-      {/* Two arrows for two targets, deliberately from the same arrow family
-          as the bracket glyph above — the pair has to read as one stamp. */}
       {isSpreadTarget(target) && (
         <span className="move-eff-trait" title={`Spread — hits ${TARGET_MODE_LABELS[target]}, at no damage penalty`}>
           ⇉ Spread
@@ -307,17 +173,7 @@ export function MoveTraitChips({
   );
 }
 
-/**
- * Where a status rider actually lands, when that is not simply the move's own
- * target (content.ts StatusApplication.target). Returns null for 'moveTarget',
- * whose answer is already printed as the summary's trailing target clause —
- * only a rider that resolves independently needs to say so on its own.
- *
- * This exists because Rising Static is the first move whose payload lands on
- * BOTH sides of the field: a summary that printed "+20 SPD · Applies Conduct —
- * Random Ally" would be describing the Speed correctly and the Conduct exactly
- * backwards.
- */
+/** Where a rider lands when not the move's own target; null for 'moveTarget' (the summary's trailing clause says it). */
 export function riderTargetLabel(app: StatusApplication): string | null {
   if (app.target === 'moveTarget') return null;
   if (app.target === 'self') return 'Self';
@@ -325,19 +181,8 @@ export function riderTargetLabel(app: StatusApplication): string | null {
 }
 
 /**
- * What a heal move actually restores, for whoever is about to cast it.
- *
- * Healing stopped being a flat authored number when the healing formula
- * landed (docs/combat.md), so every readout that used to print
- * `move.healPower` as literal HP now has to run the formula or lie —
- * Solace's Restore Vigor says 60 on Solace's own sheet and 36 on Cinder's,
- * and those are both correct. Callers pass a `caster` wherever a hero is in
- * scope, which is everywhere a move is shown except the type compendium.
- *
- * Without one this falls back to the authored HealPower, which is the same
- * number a Wisdom-50 caster with no STAB gets — honest as a baseline, and
- * flagged `resolved: false` so the caller can drop the "HP" unit rather
- * than promise hit points it can't compute.
+ * What a heal restores for this caster (docs/combat.md). Without a caster falls back to the
+ * authored HealPower, flagged `resolved: false` so the caller can drop the "HP" unit.
  */
 export function healReadout(move: MoveDefinition | undefined, caster?: HealCaster): { value: number; resolved: boolean } | null {
   if (!move || move.kind !== 'heal' || move.healPower == null) return null;
@@ -345,20 +190,16 @@ export function healReadout(move: MoveDefinition | undefined, caster?: HealCaste
   return { value: resolveHealFor(move, caster).heal, resolved: true };
 }
 
+// Display rule for `statDeltaTarget` (content.ts): a side is named only when the deltas land somewhere
+// OTHER than the move's own target, so a bothAllies move never prints "(Both Allies) — Both Allies".
+function statDeltaWhere(move: MoveDefinition): string {
+  return move.statDeltaTarget === 'bothAllies' ? ' (Both Allies)' : move.statDeltaTarget === 'self' ? ' (Self)' : '';
+}
+
 /**
- * One-line "what this actually does" summary for a move, in the vocabulary the
- * hero sheet and the long-press popup already use (STAT_LABELS abbreviations,
- * TARGET_MODE_LABELS wording).
- *
- * This exists because of the question docs/visual-language.md keeps arriving at:
- * the no-boxes rule governs whether a control is drawn as a box, not whether the
- * box holds the decision. A combat move button carried name / type / cost / BP and
- * nothing about the *effect*, so the only way to learn that Second Wind grants
- * +10 ATK was a 500ms hold on it — every turn, for every move.
- *
- * Damage moves deliberately don't route through here. Their decision-relevant
- * line is the per-target effectiveness readout, which needs live combat state and
- * so is built by the caller (FightScreen).
+ * One-line "what this actually does" summary, in the hero sheet's vocabulary. Every clause is worded
+ * as the CONDITION rather than the current answer, because this is printed on surfaces with no
+ * fight in scope. Damage moves' per-target effectiveness line is built by FightScreen instead.
  */
 export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): string {
   const parts: string[] = [];
@@ -366,64 +207,26 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   const heal = healReadout(move, caster);
   if (heal) parts.push(`Restores ${heal.value} HP`);
 
-  // The mana grant leads, because on Infuse/Empower/Conduit/Font of Power it
-  // IS the move — there is no damage body and no stat delta to read it beside
-  // (content.ts manaGrant). "past their max" is not a footnote either: the
-  // whole reason to hand 150 mana to a hero with a 90 pool is that the surplus
-  // now stays (docs/mana.md "Overflow").
+  // Leads: on Infuse/Empower/Conduit it IS the move. Overflow is the point (docs/mana.md "Overflow").
   if (move.manaGrant) parts.push(`Gives ${move.manaGrant} MP, past their max`);
 
   if (move.statDeltas?.length) {
-    // Landslide's deltas land on the caster's side while its damage lands on
-    // the enemy's, so the trailing "— Both Enemies" target clause below is the
-    // wrong answer for this half and the clause has to name its own side
-    // (content.ts statDeltaTarget). Same problem riderTargetLabel solves for a
-    // status rider, and the same fix.
-    const where =
-      move.statDeltaTarget === 'bothAllies' ? ' (Both Allies)' : move.statDeltaTarget === 'self' ? ' (Self)' : '';
     const deltas = move.statDeltas.map(({ stat, amount }) => `${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]}`).join(', ');
-    // A chanced delta has to say so, the same way Ember's Burn chip does
-    // (content.ts statDeltaChance). Without the odds "-20 Wisdom" reads as a
-    // guarantee, and Psi Bolt lands it one time in five.
     const odds = move.statDeltaChance != null ? `${Math.round(move.statDeltaChance * 100)}% chance: ` : '';
-    // Prowl's deltas are worth double beside a Beast, and the printed +10 is
-    // the wrong number half the time without this (content.ts
-    // conditionalStatDeltas). Worded as the condition rather than as the
-    // current answer, like every other clause here: this summary is printed on
-    // surfaces with no fight in scope, where there is no partner to read.
     const pack = move.conditionalStatDeltas
       ? `, ×${move.conditionalStatDeltas.multiplier} beside a ${move.conditionalStatDeltas.requiresPartnerType} partner`
       : '';
-    parts.push(odds + deltas + where + pack);
+    parts.push(odds + deltas + statDeltaWhere(move) + pack);
   }
 
-  // The reel (content.ts randomStatDeltas — Overclock, Piston Punch,
-  // Jury-Rig). States WHICH stat is unknown rather than naming one, because on
-  // these three moves that is the entire mechanic — and says how many, since
-  // Jury-Rig's two-at-once is what separates it from Overclock at 35 more mana.
   if (move.randomStatDeltas) {
     const { count, amount } = move.randomStatDeltas;
-    // Only names a side when the deltas land somewhere OTHER than the move's
-    // own target — the rule the authored-statDeltas clause above already
-    // follows. Overclock is a bothAllies move granting to both allies, so
-    // naming it would print "(Both Allies) — Both Allies" against the trailing
-    // target clause; Piston Punch damages an enemy and buffs its caster, so
-    // there "(Self)" is the entire point of the line.
-    const where =
-      move.statDeltaTarget === 'bothAllies' ? ' (Both Allies)' : move.statDeltaTarget === 'self' ? ' (Self)' : '';
-    parts.push(`+${amount} to ${count === 1 ? 'a random stat' : `${count} random stats`}${where}`);
+    parts.push(`+${amount} to ${count === 1 ? 'a random stat' : `${count} random stats`}${statDeltaWhere(move)}`);
   }
 
-  // Brain Flay states a RULE rather than a number, for the same reason
-  // Arcane Overflow does below: what it is worth is whatever the enemy's stat
-  // line already says (content.ts doublesStatReductions).
   if (move.doublesStatReductions) parts.push('Doubles stat reductions already on the target');
 
-  // Arcane Overflow's grants have no number to print — the number is whatever
-  // the caster's mana happens to be when they press it (content.ts
-  // derivedStatDeltas). So the clause states the RULE and lets the caster's own
-  // mana bar carry the value, the same split the ramp and conditional-cost
-  // clauses below use.
+  // No number to print: the value is whatever live state says. States the rule.
   if (move.derivedStatDeltas) {
     const where =
       move.statDeltaTarget === 'bothAllies' || (move.statDeltaTarget == null && move.target === 'bothAllies')
@@ -432,10 +235,6 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
           ? ' (Self)'
           : '';
     const stats = move.derivedStatDeltas.stats.map((stat) => STAT_LABELS[stat]).join(' and ');
-    // Apex Predator's source is the caster's own Attack, so the honest clause
-    // is what the grant DOES rather than what it reads: "+ATK equal to your
-    // Attack" is arithmetic the player has to do, and "doubles" is the same
-    // fact already done (content.ts derivedStatDeltas 'userEffectiveAttack').
     parts.push(
       move.derivedStatDeltas.source === 'userEffectiveAttack'
         ? `Doubles your ${stats}${where}`
@@ -443,44 +242,20 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     );
   }
 
-  // The hard gate leads, because on Glaciate and Absolute Zero it is not a
-  // bonus clause: with nothing on the field carrying the status the move has
-  // no legal target and cannot be cast at all (content.ts
-  // requiresTargetStatus). A summary that buried it under the base power
-  // would be describing a move the player may not be able to press.
+  // A hard gate: with no legal target the move cannot be cast at all.
   if (move.requiresTargetStatus) {
     const gate = move.requiresTargetStatus;
     parts.push(`Only targets ${statuses[gate]?.name ?? gate}`);
   }
 
   if (move.conditionalPower) {
-    // "vs Freeze", "while you have Renew" and "while Sanctuary is up" are three
-    // different instructions and the summary has to say which — a Branch Slam
-    // reading "×2 power vs Renew" would send the player looking for an enemy to
-    // put Renew on (content.ts conditionalPower.requiresUserStatus), and a Smite
-    // reading either status form would name something nobody is holding
-    // (requiresFieldEffect).
     const fieldSide = move.conditionalPower.requiresFieldEffect;
     const userSide = move.conditionalPower.requiresUserStatus;
-    // The HP form (content.ts requiresTargetHpBelow) names no status at
-    // all: it asks a question about a NUMBER on the target, so it gets its
-    // own clause rather than falling through to an empty status name.
     const hpSide = move.conditionalPower.requiresTargetHpBelow;
-    // The user-side HP form (content.ts requiresUserHpBelow) is the one clause
-    // here that describes the CASTER's own bar, and it has to be unmistakable:
-    // a Spite reading "below 50% HP" without saying whose would send the
-    // player hunting for a wounded enemy, which is the opposite move.
     const userHpSide = move.conditionalPower.requiresUserHpBelow;
-    // The partner form (content.ts requiresPartnerType) names no status, no
-    // field and no number — it asks about the OTHER HERO ON YOUR SIDE, which
-    // is a fact the player settles at draft time rather than in the fight, so
-    // it has to say "partner" out loud or it reads as one more board state.
     const partnerSide = move.conditionalPower.requiresPartnerType;
     const gate = move.conditionalPower.requiresTargetStatus ?? userSide ?? '';
     const gateName = statuses[gate]?.name ?? gate;
-    // "consumed" is not a footnote. Cold Snap's double is paid for with the
-    // exact mark a requiresTargetStatus move in the same kit needs to be
-    // castable, and a player who cannot see that cannot make the choice.
     // Never printed on the field form, which cannot consume anything.
     const spent = move.conditionalPower.consumesStatus && !fieldSide ? ', consumed' : '';
     const clause = partnerSide
@@ -497,53 +272,29 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     parts.push(`×${move.conditionalPower.multiplier} power ${clause}${spent}`);
   }
 
-  // WHO this hits is not a rider — on Overload it is the difference between a
-  // 70-power poke and a 70-power spread, and it is the only thing separating it
-  // from Arcane Blast (content.ts conditionalTarget). Worded as the condition,
-  // not as the current answer: this summary is printed on surfaces with no
-  // fight in scope, where there is no field to read.
   if (move.conditionalTarget) {
     const field = fieldEffects[move.conditionalTarget.requiresFieldEffect]?.name ?? move.conditionalTarget.requiresFieldEffect;
     parts.push(`Hits ${TARGET_MODE_LABELS[move.conditionalTarget.target].toLowerCase()} while ${field} is up`);
   }
 
-  // Jackpot has no authored Base Power, so without this the summary would
-  // describe a damage move and never mention its damage (content.ts
-  // randomBasePower). Stated as the RANGE and the cadence, not as a number:
-  // this line is printed on the draft and compendium screens too, where there
-  // is no round to have rolled one.
   if (move.randomBasePower) {
     parts.push(`Base Power rolls ${move.randomBasePower.min}-${move.randomBasePower.max} each round`);
   }
 
   if (move.critChance != null) parts.push(`${Math.round(move.critChance * 100)}% crit`);
 
-  // Which stat this actually hits with. It leads the mechanical clauses
-  // because it changes what the printed Base Power is worth on THIS hero more
-  // than any rider does — a Sentinel reading "60 power" without it has no way
-  // to know the move is being driven by its 100 Defense (content.ts
-  // offStatOverride).
   if (move.offStatOverride) {
     const replaced = move.category === 'physical' ? 'attack' : 'intelligence';
     parts.push(`Uses ${STAT_LABELS[move.offStatOverride]} in place of ${STAT_LABELS[replaced]}`);
   }
 
-  // A move with no Base Power at all: this clause IS its damage body, so it
-  // cannot be a footnote (content.ts retributionPercent).
   if (move.retributionPercent != null) {
     const share = move.retributionPercent === 1 ? `all` : `${Math.round(move.retributionPercent * 100)}%`;
     parts.push(`Deals ${share} of damage taken since your last turn`);
   }
 
-  // Recoil reads as a share for the same reason drain does: what it costs
-  // depends on a hit that has not been rolled yet (content.ts recoilPercent).
   if (move.recoilPercent) parts.push(`Costs ${Math.round(move.recoilPercent * 100)}% of damage dealt as recoil`);
 
-  // The self-cost, unlike recoil, is a number the player can already read off
-  // their own bar — so it states the bill rather than a share of something
-  // unrolled, and it says out loud that it can be fatal (content.ts
-  // selfHpCost). On Soul Offering this clause IS the move's price; the mana
-  // gem beside it only tells half the story.
   if (move.selfHpCost) {
     parts.push(
       move.selfHpCost.mode === 'percentMaxHp'
@@ -552,38 +303,19 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     );
   }
 
-  // Drain reads as a percentage rather than as hit points on purpose: unlike a
-  // heal move there is no number to resolve here, because what it returns
-  // depends on the hit it is attached to (content.ts drainPercent).
   if (move.drainPercent) parts.push(`Heals ${Math.round(move.drainPercent * 100)}% of damage dealt`);
 
-  // One clause PER RIDER (content.ts statusApplication is a list since
-  // Beast's Toxic Fangs) — a summary that printed only the first would say
-  // "Applies Bleed" about a move that also poisons, which is the half of the
-  // payload the player is choosing it FOR.
+  // One clause per rider; the verb (Grants/Applies) is what separates a boon from a wound.
   for (const app of statusApplicationsOf(move)) {
     const { statusId, magnitude, duration, chance } = app;
-    // Granted vs inflicted — see grantsRatherThanInflicts above. The target
-    // clause appended below reads "Self"/"Both Allies" either way, so the verb
-    // is what actually disambiguates a boon from a wound.
     const amount = magnitude ?? duration;
     const odds = chance != null ? `${Math.round(chance * 100)}% ` : '';
     const verb = grantsRatherThanInflicts(app) ? 'Grants' : 'Applies';
-    // The status's NAME, not its id — every status id was a single word until
-    // Elemental Force arrived, at which point this line started printing
-    // "FireForce". The dossier has always used the name (MoveDetailOverlay).
     const statusName = statuses[statusId]?.name ?? statusId;
-    // The rider's own target, when it has one — see riderTargetLabel. The
-    // trailing "— Random Ally" clause below describes the MOVE's target, and
-    // on a two-sided move that is the wrong answer for this half.
     const where = riderTargetLabel(app);
     parts.push(`${odds}${verb} ${statusName}${amount != null ? ` ${amount}` : ''}${where ? ` (${where})` : ''}`);
   }
 
-  // The misfire (content.ts randomStatusApplication — Malfunction). One of
-  // these lands, and the player is choosing to press a move whose outcome
-  // includes a mark their own type cannot cash, so the list is spelled out in
-  // full rather than summarised as "a random status".
   if (move.randomStatusApplication?.length) {
     const faces = move.randomStatusApplication
       .map((app) => {
@@ -595,48 +327,30 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     parts.push(`Applies one of: ${faces}`);
   }
 
-  // Miasma's detonation is most of what the move does — a 50 BP magical hit
-  // that also cashes in a Poison stack the player spent four moves building —
-  // so it cannot be left to the dossier (content.ts detonatesStatus).
   if (move.detonatesStatus) {
     parts.push(`Detonates ${statuses[move.detonatesStatus]?.name ?? move.detonatesStatus}`);
   }
 
-  // A limited cleanse has to say so, and has to say it is random — "Cleanses"
-  // on Wash Away would read as Purify's full strip and be wrong twice over.
   if (move.cleanses) parts.push(move.cleanseCount != null ? `Cleanses ${move.cleanseCount} at random` : 'Cleanses');
 
-  // The ramp, on the summary line, because the authored cost beside it is only
-  // the FIRST cast's price (content.ts manaDiscountOnUse).
   if (move.manaDiscountOnUse) parts.push(`−${move.manaDiscountOnUse} MP each use`);
 
-  // A bracket drawn at random is the same decision as a bracket that depends
-  // on the board, and needs saying for the same reason — except this one can
-  // never be answered in advance, which is itself the thing to communicate
-  // (content.ts randomPriority).
   if (move.randomPriority?.length) {
     const brackets = [...move.randomPriority].sort((a, b) => a - b).map((p) => (p >= 0 ? `+${p}` : `${p}`));
     parts.push(`Priority ${brackets.join(' or ')}, at random`);
   }
 
-  // A bracket that depends on the board is still a bracket, and "strikes
-  // first" is the single most decision-relevant thing about a move in a
-  // declare-then-resolve game — it cannot live only in the dossier.
   if (move.conditionalPriority) {
     const gate = move.conditionalPriority.requiresTargetStatus;
     const sign = move.conditionalPriority.bonus >= 0 ? '+' : '';
     parts.push(`${sign}${move.conditionalPriority.bonus} priority vs ${statuses[gate]?.name ?? gate}`);
   }
 
-  // Overcharge's whole reason to be pressed is that it is sometimes free, and
-  // the mana gem beside this line shows the LIVE price — so this says what the
-  // condition is, not what it costs right now.
+  // The mana gem beside this line shows the LIVE price; this states the condition.
   if (move.conditionalManaCost) {
     const all = move.conditionalManaCost.requiresAllEnemiesStatus;
     const partner = move.conditionalManaCost.requiresPartnerType;
     const gate = all ?? move.conditionalManaCost.requiresAnyEnemyStatus;
-    // The ally side (Pack Leader) reads nothing about the enemy at all, so it
-    // gets its own clause rather than a status name it does not have.
     if (partner) {
       parts.push(`${move.conditionalManaCost.manaCost} MP beside a ${partner} partner`);
     } else if (gate) {
@@ -647,59 +361,30 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     }
   }
 
-  // The pivot. Second, after the buff it delivers, because that is the order it
-  // resolves in — and because a player who reads "switch out" first will assume
-  // the buff went with them.
+  // After the buff it delivers, because that is the resolution order.
   if (move.switchesUserOut) parts.push('Then switch out');
 
   if (move.fieldEffectApplication) {
     parts.push(`Field: ${fieldEffects[move.fieldEffectApplication]?.name ?? move.fieldEffectApplication}`);
   }
 
-  // Falls back to the authored flavor line rather than rendering an empty row —
-  // the row's height is reserved either way, so a move with no mechanical payload
-  // should still say something rather than leave a gap.
+  // The row's height is reserved either way; say something rather than leave a gap.
   if (parts.length === 0) return move.description ?? '';
 
   return `${parts.join(' · ')} — ${TARGET_MODE_LABELS[move.target]}`;
 }
 
-/**
- * Physical (Attack/Defense pipeline) vs Magical (Intelligence/Wisdom pipeline) —
- * see CLAUDE.md "Two-pipeline separation". Shown everywhere a move's type badge
- * is shown, so the pipeline a move draws from is always legible alongside its type.
- */
+// --- Badges and tiles ---
+
 export function CategoryBadge({ category }: { category: MoveDefinition['category'] }) {
   return <span className={`category-badge category-${category}`}>{CATEGORY_LABELS[category]}</span>;
 }
 
-/**
- * Compact glyph for the always-visible move button (FightScreen's move grid)
- * — replaces CategoryBadge's PHY/MAG text there. Category (physical/magical)
- * only matters for `kind: 'damage'` moves (resolveRound.ts reads it for the
- * stat ratio; heal/buff moves ignore it entirely), so showing PHY/MAG on a
- * heal or buff was decorative noise that also failed to say "this doesn't
- * attack." Damage moves keep the category glyph; heal/buff/debuff moves show
- * their kind instead, so attacks and non-attacks read apart at a glance. The
- * long-press move popup still spells the full PHY/MAG + Damage/Heal/Buff/
- * Debuff text out via CategoryBadge + moveKindLabel for anyone unsure what a
- * glyph means.
- *
- * The glyph itself is now MoveKindGlyph — the same vector set the stat blocks
- * use, and for physical/magical/heal the *same glyph as the stat the move
- * actually reads* (see its note in statIcons.tsx). It replaced the pixel-art
- * badge, which was picked from a 32px iconset and drawn here at 16px: a true
- * halving that survives, but a size this slot was locked to rather than one
- * it chose. Vector lets the badge sit at the row's own scale.
- */
+/** Compact kind glyph for the move button: damage moves show their pipeline, others their kind. */
 export function MoveKindBadge({ move }: { move: MoveDefinition }) {
   const kind = moveKindGlyph(move);
-  // Damage moves are coloured by pipeline, everything else by kind — so the
-  // class follows `kind` rather than `move.kind`, which is what gives debuff
-  // its own .kind-debuff red instead of inheriting the buff teal.
+  // Class follows `kind`, not `move.kind`, so debuff gets its own red rather than the buff teal.
   const tierClass = move.kind === 'damage' ? `category-${move.category}` : `kind-${kind}`;
-  // Still PHY/MAG for a damage move: the title's job there is to expand the
-  // abbreviation the badge replaced, not to name the kind.
   const title = move.kind === 'damage' ? CATEGORY_LABELS[move.category] : moveKindLabel(move);
   return (
     <span className={`category-badge move-kind-badge ${tierClass}`} title={title}>
@@ -709,30 +394,8 @@ export function MoveKindBadge({ move }: { move: MoveDefinition }) {
 }
 
 /**
- * Uniform move tile — just the name, type shown as a colored left edge
- * (matching the border-left type coding used elsewhere in this app, e.g. the
- * hero card itself) rather than a separate dot glyph, so more tiles fit per
- * row before wrapping. Stats and description aren't shown on the tile at
- * all; hovering (mouse) or tapping (touch/click) loads them into the
- * caller's fixed MoveInfoPanel instead of popping a tooltip next to the
- * cursor, so the text can never hang off a screen edge on this portrait
- * mobile layout.
- *
- * `onHover` and `onClick` are separate so a caller can distinguish "just
- * looking" from "picking" (e.g. CompendiumScreen/HeroPreviewOverlay, where
- * hovering previews a move into their fixed MoveInfoPanel but only a click
- * sets the persisted selection) — most callers just pass the same handler
- * to both, matching the old combined `onSelect` behavior.
- *
- * `onLongPress` is a third, independent trigger — a ~500ms hold (mirrors
- * FightScreen's move-button long-press), backed by the shared `useLongPress`
- * hook above, for callers where the tile sits inside a larger clickable card
- * (e.g. LevelUpScreen's hero cards) and a plain tap must never fire it, or
- * where there's no hover affordance to lean on at all (touch). The click
- * that follows a completed long-press is swallowed so it can't also invoke
- * `onClick`. Click always stops propagation regardless of which handlers
- * are passed, since a bare tap on a tile must never bubble to a
- * surrounding card's own click handler.
+ * Name-only tile, type as a coloured left edge. `onHover` previews, `onClick` picks, `onLongPress`
+ * inspects; click always stops propagation so a tap never bubbles to a surrounding card.
  */
 export function MoveTile({
   move,
@@ -762,26 +425,9 @@ export function MoveTile({
 }
 
 /**
- * Visual replica of FightScreen's in-combat move row (its `MoveRow`) for
- * screens that offer a hero's moves outside of combat — currently
- * LevelUpScreen's move-replace picker — so the same button language is
- * recognizable wherever a move is shown. Presentational only: no mana-
- * affordability check and no Elemental Force bonus, since both are
- * live-combat-only state that doesn't apply here.
- *
- * It had drifted. FightScreen's button was rebuilt into a full-width row —
- * cost, type glyph, name, power and kind badge on ONE line, with the second
- * line freed for the effect readout that used to need a 500ms hold — and this
- * replica stayed on the old two-line `.move-row-top` / `.move-row-mid` shape
- * in a 2-column grid, with no effect line and no kind badge at all. The result
- * was that the one screen in the run loop whose entire job is comparing four
- * moves showed less about each move than the fight screen does, in a layout
- * that no longer looked like it (2026-08-29 pass).
- *
- * The one honest divergence from `MoveRow`: a damage move's effect line is its
- * description rather than the per-enemy matchup chips. Those need a live
- * CombatState, and there isn't one here — a move being *learned* has no
- * defenders to be effective against yet.
+ * Visual replica of FightScreen's in-combat `MoveRow` for out-of-combat screens (LevelUpScreen's
+ * move-replace picker). Keep in lockstep with it. No affordability check, no Elemental Force, and
+ * no `liveTargetMode` — there is no board here.
  */
 export function MoveButtonReplica({
   move,
@@ -792,7 +438,7 @@ export function MoveButtonReplica({
 }: {
   move: MoveDefinition;
   selected?: boolean;
-  /** The hero whose button this is, so a heal shows what IT restores — see healReadout. Elemental Force still isn't applied here (live-combat-only), but Wisdom and STAB are loadout facts that read fine out of combat. */
+  /** So a heal shows what THIS hero restores — see healReadout. */
   caster?: HealCaster;
   onClick?: () => void;
   onLongPress?: () => void;
@@ -803,16 +449,11 @@ export function MoveButtonReplica({
     <button
       type="button"
       className={`move-button${selected ? ' selected' : ''}`}
-      /* Kept in lockstep with FightScreen's own move button — this is the
-         replica, and the two diverging is exactly what makes a reward screen
-         stop feeling like the same game as the fight screen. */
       style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
       {...longPress}
     >
       <div className="move-row-top">
         <ManaCost cost={move.manaCost} />
-        {/* Glyph only, no abbreviation — kept in lockstep with FightScreen's
-            own move button, which has the reasoning. */}
         <span className="move-type-code" title={move.type}>
           <ElementGlyph type={move.type} />
         </span>
@@ -822,22 +463,15 @@ export function MoveButtonReplica({
             <strong>{move.basePower}</strong>BP
           </span>
         )}
-        {/* Bare number, no "HEAL" — kept in lockstep with FightScreen's own
-            move button, which has the reasoning. */}
         {heal && (
           <span className="move-power move-heal">
             <strong>{heal.value}</strong>
           </span>
         )}
-        {/* Holds the power column open on a move with no number to put in it,
-            so the badges don't rag between rows — same as MoveRow. */}
+        {/* Holds the power column open so the badges don't rag between rows. */}
         {move.kind === 'buff' && <span className="move-power move-power-empty" aria-hidden="true" />}
         <MoveKindBadge move={move} />
       </div>
-      {/* Same shape as MoveRow's non-damage branch, traits included — a move
-          being learned goes in the same bracket and hits the same number of
-          slots as the one being pressed. No `liveTargetMode`: there is no
-          board here for a conditional target to read. */}
       <div className="move-row-effect">
         <span className="move-eff-row">
           <MoveTraitChips move={move} />

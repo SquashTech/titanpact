@@ -21,13 +21,13 @@ import { useAmbientLocation } from '../shared/LocationContext';
 
 interface Props {
   run: RunState;
-  /** This node's already-generated encounter (src/run/enemyGen.ts) — generated at node-select time (App.tsx) specifically so the enemy squad can be scouted here, before the player commits a squad. */
+  /** Generated at node-select time (App.tsx) so the enemy squad can be scouted before the player commits. */
   encounter: Encounter;
   onRunChange: (next: RunState) => void;
   onConfirm: (squad: Squad) => void;
 }
 
-/** Row-major 2-wide/3-tall squad grid: top row is who fields the fight, middle row cycles in off the bench, bottom row stays home. Always 6 cells (the roster hard cap) regardless of current roster size — unfilled cells beyond the roster just render empty. */
+/** 2-wide/3-tall grid: active, bench, reserve. Always 6 cells (the roster cap); cells past the roster render empty. */
 const SLOT_COUNT = 6;
 const SLOT_ROWS: readonly { key: string; label: string; indices: readonly [number, number] }[] = [
   { key: 'active', label: 'Active', indices: [0, 1] },
@@ -37,11 +37,6 @@ const SLOT_ROWS: readonly { key: string; label: string; indices: readonly [numbe
 
 const DRAG_KEY = 'text/titanpact-squad-slot';
 
-/**
- * Fisher-Yates over a copy. Used to scramble the scouted enemy row — see
- * where it's called for why the order has to be lost rather than just the
- * active/bench styling.
- */
 function shuffled<T>(items: readonly T[]): T[] {
   const out = [...items];
   for (let i = out.length - 1; i > 0; i--) {
@@ -51,59 +46,24 @@ function shuffled<T>(items: readonly T[]): T[] {
   return out;
 }
 
-/**
- * Bring-6-pick-4 squad selection (docs/combat.md "Bring-6-pick-4
- * sideboard"), shown before every fight/elite/boss map node (docs/run-loop.md)
- * — team-preview-style, matching CLAUDE.md's VGC framing rather than a
- * once-per-run pick. Guild Hall recruitment lives exclusively behind `shop`
- * map nodes now (ShopNodeScreen) — deliberately NOT embedded here, so it
- * stays a map choice rather than being freely available before every fight.
- * Recruit Contracts are claimed off a beaten enemy at fight's end
- * (FightScreen), not bought up front. Also shows the scouted enemy squad
- * (playtest ask: see who you might face before committing) with the same
- * info-button stat-preview pattern as the player's own roster.
- *
- * The player's own roster is arranged on a fixed 2x3 grid (one cell per
- * roster slot, up to the roster hard cap of 6) rather than a pick-order
- * list: row 1 is who starts the fight active, row 2 is bench, row 3 is
- * reserve (sits this fight out entirely). Heroes are repositioned by
- * dragging one cell onto another (swapping their contents) or, for touch,
- * tapping a filled cell then tapping the destination — same
- * select-then-target pattern as RosterManagementScreen's equipment grid.
- */
+/** Bring-6-pick-4 squad selection before every fight node (docs/combat.md "Bring-6-pick-4 sideboard"). Drag, or tap-then-tap, swaps two cells. */
 export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Props) {
   const [slots, setSlots] = useState<(string | null)[]>(() => {
     const ids = run.roster.map((r) => r.rosterId);
     return Array.from({ length: SLOT_COUNT }, (_, i) => ids[i] ?? null);
   });
-  /**
-   * The scouted enemy row, in an order that says nothing (2026-08-31, user
-   * direction: "don't show the player which enemies are active and which are
-   * bench").
-   *
-   * Scouting is meant to answer *what is in this fight*, not *what will be
-   * standing on turn one* — knowing the opening pair up front lets the player
-   * hard-counter it before a single command is given, which flattens the
-   * lead-off read that VGC team preview exists to create. Dimming the bench
-   * was half the tell; the other half was the order, since
-   * `encounter.run.roster` is generated active-first and a fixed row is a
-   * label whether or not it is styled like one. So the row is scrambled AND
-   * drawn uniformly.
-   *
-   * Shuffled once into state rather than per render: this component re-renders
-   * on every slot drag, and a row that reshuffled under the player's thumb
-   * would look broken — and worse, repeated reshuffles would leak the answer
-   * to anyone who watched which sprite the dimming used to follow.
-   */
+  // Scrambled once into state: `encounter.run.roster` is generated active-first, and a fixed
+  // order (or a per-drag reshuffle) would tell the player which enemies open the fight.
   const [scoutOrder] = useState(() => shuffled(encounter.run.roster));
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
-  /** `enemy` distinguishes a scouted-opponent sheet from one of the player's own heroes — only the latter gets the team's relic grants folded into its stats (HeroPreviewOverlay's relicIds). */
+  /** `enemy`: a scouted-opponent sheet gets no relic grants folded in. */
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry; enemy: boolean } | null>(null);
   const [showReference, setShowReference] = useState(false);
   const [showRoster, setShowRoster] = useState(false);
   const required = requiredSquadSize(run.roster.length);
   const location = useAmbientLocation();
+  const rosterById = new Map(run.roster.map((r) => [r.rosterId, r]));
 
   const activeIds = [slots[0], slots[1]] as const;
   const benchIds = [slots[2], slots[3]].filter((id): id is string => id !== null);
@@ -129,23 +89,8 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
     setSelectedSlot(null);
   }
 
-  /**
-   * Commit the squad — and keep the arrangement.
-   *
-   * The grid seeds itself from roster order, and roster order used to be
-   * recruitment order and nothing else, so a player who spent this screen
-   * building an active pair and a bench found the exact same default waiting
-   * for them at the next fight and rebuilt it by hand, every fight, all run
-   * (2026-08-31, playtest). Writing the arrangement back to the roster is
-   * what makes it stick: `reorderRoster` moves membership nowhere, and the
-   * same order is what `pickSquad` already reads on the sub-4 rosters that
-   * skip this screen entirely.
-   *
-   * Nulls are dropped rather than preserved as gaps, which also normalizes a
-   * hole a swap left in the middle — the grid repacks from index 0 on the
-   * way back in, so an empty cell always sits at the end of the reserve row
-   * where it means "nobody else to bring".
-   */
+  // Writes the arrangement back to the roster so it seeds the next fight's grid (and pickSquad
+  // on sub-4 rosters). Nulls are dropped so the grid repacks from index 0 next time.
   function handleConfirm() {
     const squad = pickSquad(run.roster, pickedIds);
     onRunChange(reorderRoster(run, slots.filter((id): id is string => id !== null)));
@@ -153,25 +98,11 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
   }
 
   return (
-    // The Location's ground under the last screen before the fight
-    // (docs/locations.md §5.5). `.squad-select` was already the node stage's
-    // root rule copied verbatim — position: relative, flex column, the same
-    // gap — so it needed nothing but the sky itself and a place in the
-    // stacking rule (styles.css) to stand on it.
-    //
-    // `--node-rgb` is the LOCATION's tint here, not a semantic one. Every
-    // other screen carrying a sky is a node — a cache, a shrine, a Mentor —
-    // and its tint says which. This one is not a node at all: it is the
-    // moment before a fight, and the only thing it has to say about itself is
-    // where the fight is about to happen.
+    // `--node-rgb` is the Location's tint here (docs/locations.md §5.5), not a node's.
     <div className="squad-select" style={{ '--node-rgb': location?.tintRgb ?? NODE_TINT_GOLD } as CSSProperties}>
       <NodeSky />
 
-      {/* The same top-corner glyphs the node screens carry (RosterPeek.tsx),
-          rather than the two worded chips in a `.map-header` bar that used to
-          sit above the scouted-enemy row. The roster one opens Manage Roster
-          rather than the read-only peek: this is the one moment before a
-          fight where moving gear between heroes is the point. */}
+      {/* Opens Manage Roster, not the read-only peek: moving gear before a fight is the point here. */}
       <button
         type="button"
         className="corner-glyph-button"
@@ -191,26 +122,14 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
         <span aria-hidden="true">📖</span>
       </button>
       <div className="screen-scroll">
-        {/* Enemies first, mirroring the combat screen's enemy-row-on-top layout —
-            scout the threat before committing a squad against it. */}
         <div className="squad-section squad-section-enemy">
           <h2 className="squad-section-title">⚔️ Scouted Enemies</h2>
           <div className="enemy-scout-grid">
             {scoutOrder.map((entry) => {
               const hero = allCombatants[entry.heroId];
               const types = rosterEntryTypes(hero, entry);
-              // The fight's hidden card (view/shared/entrances.ts) — a
-              // silhouette and its typing, and nothing else. NOT a button:
-              // there is no sheet behind it, and a chip that opens nothing
-              // reads as broken, where one that plainly cannot be pressed
-              // reads as withheld.
-              //
-              // Typing is deliberately still shown. The player must be able to
-              // build a squad against this fight, and "there is a Beast/Ancient
-              // in here somewhere" is the difference between a hard read and an
-              // unfair one — what is withheld is the name, the figure, the stat
-              // line and the movepool, which is everything that would let them
-              // pre-solve the entrance.
+              // Hidden-card enemy (shared/entrances.ts): silhouette and typing only, and
+              // deliberately not a button — there is no sheet behind it.
               if (hasDramaticEntrance(hero.id)) {
                 return (
                   <div
@@ -259,7 +178,7 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
                 <div className="squad-grid-row-cells">
                   {row.indices.map((index) => {
                     const rosterId = slots[index];
-                    const entry = rosterId ? run.roster.find((r) => r.rosterId === rosterId) : undefined;
+                    const entry = rosterId ? rosterById.get(rosterId) : undefined;
                     const hero = entry ? heroes[entry.heroId] : undefined;
                     const isSelected = selectedSlot === index;
                     const isDropTarget = selectedSlot !== null && selectedSlot !== index;

@@ -24,7 +24,7 @@ function seedRoster(heroIds: string[]) {
   return run;
 }
 
-// --- Reachability / advancing -------------------------------------------
+// --- Reachability / advancing ---
 
 test('runProgress: a run with no map has no reachable nodes', () => {
   const run = seedRoster(['cinderKnight']);
@@ -60,7 +60,7 @@ test('runProgress: advanceToNode rejects an unreachable node, an unknown node, a
   }
 });
 
-// --- Reward grants ----------------------------------------------------------
+// --- Reward grants ---
 
 test('runProgress: grantCurrencyReward and grantUpgradeReward add flat amounts', () => {
   const run = seedRoster(['cinderKnight']);

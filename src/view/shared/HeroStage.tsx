@@ -10,35 +10,13 @@ import { ManaCost } from './ManaCost';
 import { TypeBadge } from './TypeBadge';
 import { STAT_COLORS, STAT_LABELS, computeStatTotal, statFraction } from './StatBars';
 
-/**
- * The hero *stage* — one hero standing at 144px inside a summoning sigil,
- * with the stat silhouette and movepool that inform whether to commit to
- * them, and a rail of the other candidates underneath.
- *
- * Lifted out of DraftScreen (docs/visual-language.md, third pass) when the
- * Recruit Contract claim became a screen of its own rather than a strip of
- * portrait buttons on the victory box: both screens ask the same question —
- * *do you want this hero on your team, permanently, for a price* — so they
- * are the same screen, the way every pick-a-hero grid became one card
- * (HeroPickCard, ninth pass).
- *
- * The CSS family keeps its `.draft-*` prefix. That prefix now names the
- * idiom, not the screen: renaming ~200 selectors would silently invalidate
- * every `.draft-figure` / `.draft-portrait` measurement docs/visual-
- * language.md's third and fifth passes record, and the history is worth more
- * than the prefix. Screens layer their own `.recruit-*`-style block on top
- * for what only they have.
- */
+// The hero stage shared by the draft and the Recruit Contract claim: one hero at 144px in a sigil,
+// a stat silhouette, the kit, and a rail of other candidates. The CSS family keeps its `.draft-*`
+// prefix on purpose — it names the idiom, not the screen.
 
 const DEFAULT_MOTES = 16;
 
-/**
- * Ambient motes drifting up the whole screen — the same golden-angle-sequence
- * trick as TitleScreen's useEmbers and NodeStage's field (pure function of
- * index, so the scatter is stable across re-renders with no seed to store).
- * They take the featured hero's type color from `--pact-rgb`, so switching
- * candidates re-tints the air as well as the figure.
- */
+// Golden-angle scatter: pure function of the index, stable across re-renders with no seed.
 function useMotes(count: number) {
   return useMemo(
     () =>
@@ -55,12 +33,7 @@ function useMotes(count: number) {
   );
 }
 
-/**
- * The scene: a two-tone gold/violet wash and a mote field, both full-bleed
- * past .app-shell's padding. Not a container — nothing sits "in" it — and it
- * paints at z-index 0, so every sibling after it must be lifted above it
- * (see `.draft-cta`'s comment in styles.css).
- */
+/** Full-bleed wash and mote field at z-index 0; every sibling after it must be lifted above it. */
 export function StageSky({ motes = DEFAULT_MOTES }: { motes?: number }) {
   const field = useMotes(motes);
   return (
@@ -87,11 +60,7 @@ export function StageSky({ motes = DEFAULT_MOTES }: { motes?: number }) {
   );
 }
 
-/**
- * The figure on stage. Callers key it on the hero so switching candidates
- * remounts it and replays the arrival — a new hero should read as summoned
- * in, not as a swapped <img src>.
- */
+/** Callers key this on the hero so switching candidates remounts it and replays the arrival. */
 export function StageFigure({
   heroId,
   heroName,
@@ -101,17 +70,7 @@ export function StageFigure({
   heroId: string;
   heroName: string;
   onInspect?: () => void;
-  /**
-   * Anything drawn on the figure itself rather than beside it — the recruit
-   * screen's level pip, the draft's binding ring. Painted over the portrait
-   * and under the info button.
-   *
-   * Note for callers that also key this component on the hero (both of them
-   * do, so switching candidates replays the arrival): a remount replays
-   * whatever is passed here too. A one-shot animation handed in as a child
-   * has to be cleared by the caller when the featured hero changes, or it
-   * fires again on the next candidate — see DraftScreen's `feature`.
-   */
+  /** Drawn on the figure (level pip, binding ring). A remount replays it too — clear one-shot animations when the hero changes. */
   children?: ReactNode;
 }) {
   return (
@@ -128,30 +87,10 @@ export function StageFigure({
   );
 }
 
-/**
- * The stats the Stat Total beside them is summed from, in the same order
- * StatBars uses. Mana Pool joined the strip when it joined the total
- * (2026-08-28): a hero pays for its power out of the same 450 budget its pool
- * comes from, so a strip that hid the pool showed a 62-Speed hero and an
- * 85-Speed hero as if the difference were free. Seven bars that add up to the
- * number next to them beats six that do not.
- *
- * MP Regen stays off — flat 10 on every hero, so it is a column of identical
- * bars, and this strip exists to be compared across candidates at a glance.
- * The full eight-stat block is one tap away on the hero sheet.
- */
+// Same set the Stat Total sums (StatBars TOTAL_STATS); MP Regen is flat across the roster.
 const SILHOUETTE_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool'];
 
-/**
- * Seven bars on StatBars' shared ceilings (statFraction) plus the Stat Total
- * they sum to. `grants` is the flat delta a hero already carries into the
- * pick (entryStats.ts) — a drafted candidate has none, a beaten veteran
- * offered on a contract usually does — added to the bar and called out in the
- * accent, so the numbers on screen are the ones that will fight. The total
- * sums those same granted numbers rather than the authored base (2026-08-28),
- * so the strip stays internally consistent: the bars and the number beside
- * them always describe the same hero.
- */
+/** Seven bars on StatBars' shared ceilings plus their total. `grants` is the flat delta the hero already carries (entryStats.ts). */
 export function StageSilhouette({ baseStats, grants = {} }: { baseStats: StatLine; grants?: StatModifiers }) {
   const effective = Object.fromEntries(
     SILHOUETTE_STATS.map((stat) => [stat, baseStats[stat] + (grants[stat] ?? 0)])
@@ -160,7 +99,7 @@ export function StageSilhouette({ baseStats, grants = {} }: { baseStats: StatLin
     <div className="draft-silhouette">
       {SILHOUETTE_STATS.map((stat) => {
         const granted = grants[stat] ?? 0;
-        const value = baseStats[stat] + granted;
+        const value = effective[stat];
         return (
           <div className="draft-stat" key={stat}>
             <span className={`draft-stat-value${granted ? ' is-boosted' : ''}`}>{value}</span>
@@ -183,7 +122,6 @@ export function StageSilhouette({ baseStats, grants = {} }: { baseStats: StatLin
   );
 }
 
-/** The hero's types, under the name. */
 export function StageTypes({ types }: { types: readonly TypeId[] }) {
   return (
     <div className="draft-types">
@@ -194,15 +132,7 @@ export function StageTypes({ types }: { types: readonly TypeId[] }) {
   );
 }
 
-/**
- * The hero's kit. These were chromeless spans — the mana crystal with the
- * type carried as the name's own color — because at the time they were a
- * readout, and docs/visual-language.md's rule reserves a rectangle for things
- * you can act on. They ARE actionable: tapping one pops its full detail over
- * the stage, which is the only way the player can find out what a kit
- * actually does before committing to a hero for the rest of the run. So under
- * the same rule they get their boxes back, and the box advertises the tap.
- */
+/** Boxed because they are actionable: tapping one pops its detail over the stage. */
 export function StageKit({ moveIds, onPick }: { moveIds: readonly string[]; onPick: (move: MoveDefinition) => void }) {
   return (
     <div className="draft-kit">
@@ -226,37 +156,16 @@ export function StageKit({ moveIds, onPick }: { moveIds: readonly string[]; onPi
   );
 }
 
-/**
- * Move detail as an overlay rather than a slab pinned under the kit: it
- * appears over the stage, right where the eye already is, and a tap anywhere
- * dismisses it (same contract as the in-combat long-press move popup).
- *
- * It is now that popup, not a lookalike of it. This used to open the
- * one-line `MoveInfoPanel` — name, type chip, PHY/MAG chip, POW/MP numbers,
- * flavor line — inside a stage-flavored frame of its own, which is the exact
- * "five competing rectangles" card MoveDetailOverlay's dossier replaced in
- * combat months ago. So the draft and the Recruit Contract claim, the two
- * screens where a player commits to a hero's kit for the rest of a run, were
- * the only places left showing LESS about a move than a 500ms hold does
- * mid-fight: no priority bracket, no rider list, no resolved heal, no target
- * mode. Same overlay now, minus the forecast — a stage has no fight to
- * forecast against, which is what `caster` (rather than a `context`) says.
- */
+/** The in-combat move dossier, minus the forecast — `caster` rather than a `context` says there is no fight. */
 export function StageMovePopup({ move, caster, onClose }: { move: MoveDefinition; caster?: HealCaster; onClose: () => void }) {
   return <MoveDetailOverlay move={move} caster={caster} onClose={onClose} />;
 }
 
-/** The other candidates, waiting in the dark. */
 export function StageRail({ children }: { children: ReactNode }) {
   return <div className="draft-rail">{children}</div>;
 }
 
-/**
- * One candidate on the rail. Chromeless at rest — the frame is the
- * affordance, and it appears on the one that's on stage
- * (docs/visual-language.md). `sealed` is the screen's own "this one is
- * already spoken for" state: a drafted pick, a signed contract.
- */
+/** One candidate on the rail. `sealed` is the screen's "already spoken for" state. */
 export function StageCandidate({
   heroId,
   heroName,

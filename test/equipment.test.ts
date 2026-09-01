@@ -1,14 +1,5 @@
-// The two equipment economies added 2026-08-30 (user direction), both of
-// which are invariants rather than tunables:
-//
-//   1. RARITY BUDGET — every authored item spends its tier's points exactly.
-//      This is the test that makes the budget real: an item that comes in
-//      over- or under-curve fails the build, so the catalog can't quietly
-//      drift the way an unenforced convention does.
-//   2. THE ACT CURVE — "Legendary and Mythic should be impossible to find in
-//      Act 1, but common items should be impossible to find in Act 5." The
-//      word there is IMPOSSIBLE, so these assert zero weight AND that the
-//      sampler never returns one, not just that the odds are low.
+// Equipment invariants: every item spends its rarity budget exactly, and the act curve makes
+// Legendary/Mythic IMPOSSIBLE in Act 1 and Common IMPOSSIBLE in Act 5 (zero weight AND never sampled).
 
 import assert from 'assert';
 import { test } from './harness';
@@ -34,7 +25,7 @@ const catalog = Object.values(equipment);
 const SLOTS: readonly EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 const ACTS = [1, 2, 3, 4, 5];
 
-// --- The rarity budget -----------------------------------------------------
+// --- The rarity budget ---
 
 test('equipment: every authored item spends its rarity budget exactly', () => {
   const offenders = catalog
@@ -45,9 +36,7 @@ test('equipment: every authored item spends its rarity budget exactly', () => {
 });
 
 test('equipment: the designer-authored common weapons are transcribed as specified', () => {
-  // The 12 weapons in the 2026-08-30 brief, verbatim — the worked example the
-  // whole common tier (and FORCE_POINT_VALUE) is derived from. Any change to
-  // one of these is a design decision, not a balance tweak.
+  // The 12 designer-specified common weapons the whole common tier is derived from; a change is a design decision.
   assert.deepStrictEqual(equipment.ironBlade.statGrants, { attack: 10 });
   assert.deepStrictEqual(equipment.dagger.statGrants, { attack: 5, speed: 5 });
   assert.deepStrictEqual(equipment.torch.statGrants, { attack: 5 });
@@ -77,8 +66,7 @@ test('equipment: an unpriced granted passive is a budget failure, not free value
 });
 
 test('equipment: a negative grant refunds budget, funding an above-curve stat line', () => {
-  // Berserker's Cleaver is the one drawback item: 40 Attack is a Legendary
-  // line, paid for at Epic by -10 Defense.
+  // Berserker's Cleaver: a Legendary 40 Attack paid for at Epic by -10 Defense.
   const cleaver = equipment.berserkersCleaver;
   assert.strictEqual(cleaver.statGrants.attack, 40);
   assert.strictEqual(cleaver.statGrants.defense, -10);
@@ -97,7 +85,7 @@ test('equipment: every passive an item grants has a price, and every price names
   }
 });
 
-// --- The act curve ---------------------------------------------------------
+// --- The act curve ---
 
 test('equipment: every loot tier row is a clean percentage split', () => {
   for (let tier = 1; tier <= MAX_LOOT_TIER; tier++) {
@@ -108,9 +96,6 @@ test('equipment: every loot tier row is a clean percentage split', () => {
 });
 
 test('equipment: rarity odds climb monotonically across the run', () => {
-  // The brief's actual ask — "rates should change throughout the run to
-  // account for increasing power levels of enemies". Common only ever gets
-  // rarer act to act; Mythic only ever gets commoner.
   for (let act = 2; act <= 5; act++) {
     const prev = rarityWeightsFor(act - 1);
     const now = rarityWeightsFor(act);
@@ -124,8 +109,7 @@ test('equipment: Legendary and Mythic are impossible in Act 1, from any source',
     const weights = rarityWeightsFor(1, source);
     assert.strictEqual(weights.legendary, 0, `act 1 ${source} can roll legendary`);
     assert.strictEqual(weights.mythic, 0, `act 1 ${source} can roll mythic`);
-    // The elite bump raises the tier but must not punch through the act's
-    // hard window — this is the case a weights table alone would get wrong.
+    // The elite bump must not punch through the act's hard window.
     assert.ok(weights.epic > 0, `act 1 ${source} should still reach epic`);
   }
   assert.strictEqual(lootTierFor(1, 'elite'), 2);
@@ -138,9 +122,7 @@ test('equipment: Common is impossible in Act 5, from any source', () => {
 });
 
 test('equipment: the sampler never returns a rarity the act forbids', () => {
-  // Weight 0 is not enough on its own — pickWeightedEquipment has to filter
-  // ineligible items out, or float drift in the weighted walk can still land
-  // on one. 400 rolls per act/source/slot combination.
+  // Weight 0 alone is not enough — float drift in the weighted walk can still land on one.
   for (const act of ACTS) {
     for (const source of ['standard', 'elite'] as const) {
       const weights = rarityWeightsFor(act, source);
@@ -160,9 +142,7 @@ test('equipment: the sampler never returns a rarity the act forbids', () => {
 });
 
 test('equipment: the catalog can actually fill every act/slot the curve asks for', () => {
-  // The sampler falls back to the unfiltered pool when a filter empties it,
-  // which would silently reintroduce a banned rarity. That fallback must
-  // never fire: every act's window has to contain real items in every slot.
+  // The sampler falls back to the unfiltered pool when a filter empties it; that fallback must never fire.
   for (const act of ACTS) {
     const [minRarity, maxRarity] = ACT_RARITY_WINDOW[act];
     const min = RARITY_ORDER.indexOf(minRarity);

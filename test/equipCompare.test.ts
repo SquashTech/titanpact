@@ -1,10 +1,5 @@
-// The equip-screen diff (src/run/equipCompare.ts): what changes when one item
-// takes another's place in a slot.
-//
-// The invariant worth defending here is the SILENCE — an effect both items
-// carry equally must produce no entry at all. That is what keeps six rows of
-// a mid-run roster readable, and it is the easy thing to break by "helpfully"
-// listing everything the offered item does on every row.
+// The equip-screen diff (src/run/equipCompare.ts). The invariant is SILENCE: an effect both items
+// carry equally must produce no entry at all.
 
 import assert from 'assert';
 import { test } from './harness';
@@ -87,9 +82,7 @@ test('equipCompare: a passive both items grant is not reported as a change', () 
 });
 
 test('equipCompare: every authored item compares against every other without throwing', () => {
-  // The screen runs this over six roster slots against whatever just dropped,
-  // so any pair in the catalog is reachable. Also pins the ordering contract:
-  // stats before statuses before passives, whatever the items carry.
+  // Also pins the ordering contract: stats before statuses before passives.
   const catalog = Object.values(equipment);
   for (const current of catalog) {
     for (const next of catalog) {

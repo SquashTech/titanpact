@@ -1,13 +1,5 @@
-// The healing formula (docs/combat.md "The healing formula",
-// src/engine/heal/healPipeline.ts).
-//
-//   Heal = HealPower x WisdomMult x STAB
-//
-// The three things worth pinning down are the three that took a decision:
-// healing scales with the CASTER (Wisdom + STAB, so the same move is worth
-// different amounts in different hands), it does NOT scale with the target
-// (no max-HP term — a heal buys turns, and % of max HP would make low-HP
-// heroes un-healable), and it carries no variance.
+// Heal = HealPower x WisdomMult x STAB (docs/combat.md "The healing formula"): scales with the
+// caster, never with the target's max HP, and carries no variance.
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -57,7 +49,7 @@ function healedAmounts(events: readonly { type: string }[]): number[] {
   return events.filter((e): e is { type: 'Healed'; amount: number } => e.type === 'Healed').map((e) => e.amount);
 }
 
-// --- The Wisdom term ---------------------------------------------------------
+// --- The Wisdom term ---
 
 test('heal: Wisdom at the reference heals exactly the authored HealPower', () => {
   assert.strictEqual(wisdomMultFromStat(HEAL_WISDOM_REFERENCE), 1);
@@ -75,23 +67,20 @@ test('heal: the Wisdom term clamps at both ends, so an unopposed stat can not ru
   assert.strictEqual(wisdomMultFromStat(-100), HEAL_MULT_MIN);
 });
 
-// --- STAB --------------------------------------------------------------------
+// --- STAB ---
 
 test('heal: a heal takes STAB off the caster, exactly as a damage move does', () => {
-  // Repointed off Mend Wounds, which the authored Spirit slate deleted — the
-  // slate contains no heal-kind move at all, so Light's Mend (same healPower
-  // 45) carries this. A Light caster at 46 Wisdom: 45 x 0.96 x 1.25.
+  // Mend is Light, healPower 45. A Light caster at 46 Wisdom: 45 x 0.96 x 1.25.
   assert.strictEqual(resolveHealFor(moves.mend, { wisdom: 46, types: ['Light'] }).stab, 1.25);
   assert.strictEqual(resolveHealFor(moves.mend, { wisdom: 46, types: ['Light'] }).heal, 54);
-  // Sylva is Nature — more Wisdom, no STAB, and ends up healing LESS.
+  // More Wisdom, no STAB, heals LESS.
   assert.strictEqual(resolveHealFor(moves.mend, { wisdom: 60, types: ['Nature'] }).heal, 50);
 });
 
-// --- Through a real round ----------------------------------------------------
+// --- Through a real round ---
 
 test('heal: the same move restores different amounts in different hands', () => {
-  // Mend (Light, 45) cast on its own caster. Solace is Light with 70 Wisdom;
-  // Cinder is Fire/Iron with 40. Same move, same target, 27 HP apart.
+  // Solace is Light with 70 Wisdom; Cinder is Fire/Iron with 40.
   const solace = resolveRound(
     hurt(fixture(200, 'dawnwarden', 'ironWarden'), ['a1'], 10),
     [{ kind: 'move', combatantId: 'a1', moveId: 'mend', declaredTarget: 'a1' }] as Action[],
@@ -121,10 +110,7 @@ test('heal: the Healed event carries the formula terms, the way DamageDealt does
 });
 
 test('heal: NO max-HP term — one caster restores the same amount to a 135 HP wall and an 80 HP caster', () => {
-  // Repointed off Mend Wounds when the Spirit slate deleted it. Revenant is
-  // still the caster and Mend is Light, so there is no STAB now — 45 x 0.96 =
-  // 43 rather than 54. The point of the test is untouched: the number does not
-  // move with the TARGET, which is what the two fixtures below differ in.
+  // Revenant (Spirit, 46 Wisdom) casting Light's Mend: 45 x 0.96 = 43, no STAB.
   const onWall = resolveRound(
     hurt(fixture(202, 'revenant', 'ironWarden'), ['a2'], 10),
     [{ kind: 'move', combatantId: 'a1', moveId: 'mend', declaredTarget: 'a2' }] as Action[],
@@ -143,10 +129,7 @@ test('heal: NO max-HP term — one caster restores the same amount to a 135 HP w
 });
 
 test('heal: a bothAllies heal resolves once and pays every ally the same number', () => {
-  // Repointed off Healing Rain, which the authored Nature slate deleted — the
-  // slate has no heal-KIND move at all, so Water's Oasis is now the game's only
-  // bothAllies heal. Cast by Sylva (Nature, Wisdom 60) rather than by a Water
-  // hero, which keeps this the bare Wisdom term the test was written for.
+  // Oasis (Water) cast by Sylva (Nature, Wisdom 60): the bare Wisdom term, no STAB.
   const { events } = resolveRound(
     hurt(fixture(203, 'wildOracle', 'ironWarden'), ['a1', 'a2'], 10),
     [{ kind: 'move', combatantId: 'a1', moveId: 'oasis' }] as Action[],
@@ -168,14 +151,11 @@ test('heal: no variance — the same heal on two different seeds lands on the sa
   assert.deepStrictEqual(cast(1), cast(99999));
 });
 
-// --- Renew: the snapshot -----------------------------------------------------
+// --- Renew: the snapshot ---
 
 test('heal: a HoT snapshots the caster Wisdom and STAB at application time', () => {
-  // Second Wind grants Renew 30 and is Spirit. Revenant (Spirit, 46 Wisdom)
-  // gets STAB on it; Sylva (Nature, 60 Wisdom) does not.
-  // Read off the end-of-round tick rather than off the surviving magnitude:
-  // Renew decays by halving the moment it ticks, so the stored number is
-  // already half the snapshot by the time the round returns.
+  // Second Wind grants Renew 30 (Spirit). Read off the end-of-round tick: Renew halves the moment it
+  // ticks, so the stored magnitude is already half the snapshot by the time the round returns.
   const firstTick = (heroId: string) => {
     const { events } = resolveRound(
       hurt(fixture(204, heroId, 'ironWarden'), ['a1'], 10),
@@ -191,9 +171,7 @@ test('heal: a HoT snapshots the caster Wisdom and STAB at application time', () 
 });
 
 test('heal: the snapshot is gated on the HoT pipeline — a DoT rider is not scaled by the caster Wisdom', () => {
-  // Toxic Spores inflicts Poison 10 (repointed off the deleted Venomous Bite).
-  // Sylva's 60 Wisdom must not touch it — scaleHotMagnitude is gated on the
-  // status's pipeline, not on the move's kind, and Poison's is 'timer'.
+  // scaleHotMagnitude is gated on the status's pipeline, not the move's kind; Poison's is 'timer'.
   const { state } = resolveRound(
     fixture(205, 'wildOracle', 'ironWarden'),
     [{ kind: 'move', combatantId: 'a1', moveId: 'toxicSpores', declaredTarget: 'b1' }] as Action[],

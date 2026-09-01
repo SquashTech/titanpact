@@ -15,34 +15,18 @@ interface Props {
   hero: HeroDefinition;
   entry: RosterEntry;
   node: EvolutionNode;
-  /** The run this Evolution is happening in — only used for the corner roster glyph (RosterPeek), which is what lets the player check the rest of the team's type coverage before locking a permanent type-graft in. */
+  /** Only for the corner roster glyph — checking the team's type coverage before locking a graft in. */
   run: RunState;
   onChoose: (pathId: string) => void;
 }
 
-/**
- * Full-screen Evolution moment (CLAUDE.md "Evolutions are authored branch
- * points" / "differ in kind"). Previously this choice rendered inline inside
- * the hero's card on LevelUpScreen, which pushed a full 6-hero roster into
- * scrolling and buried a permanent, exciting decision in the middle of a
- * routine list. Pulled out into its own takeover screen so the moment reads
- * as the big deal it is; picking a path returns the caller (LevelUpScreen)
- * to the normal training list.
- *
- * Selecting a path only highlights it — matching the select-then-confirm
- * pattern used for move replacement (MoveInfoPanel-driven screens) — since
- * this choice is permanent for the run and a stray tap shouldn't lock it in.
- */
+/** Full-screen Evolution choice. Select-then-confirm: the choice is permanent for the run, so a stray tap must not lock it in. */
 export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
   const [selectedPathId, setSelectedPathId] = useState<string | null>(null);
   const selectedPath = node.paths.find((p) => p.id === selectedPathId) ?? null;
 
   return (
     <div className="node-screen evolution-screen">
-      {/* The same stage the node screens stand on (docs/visual-language.md,
-          ninth pass) — this screen is reached from the level-up screen and was
-          the last one still introducing its choice with a bordered banner. The
-          hero is the header's art; the glow behind it stays. */}
       <NodeSky />
       <RosterPeek run={run} />
       <NodeHeader
@@ -76,10 +60,7 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
                   </div>
                   {path.description && <p className="evolution-path-description">{path.description}</p>}
                   <div className="evolution-path-grants">
-                    {/* Signed, not always "+": a refocus path SPENDS a stat to
-                        buy another (Fang's Warhowl, -30 Attack for +60
-                        Intelligence), and a permanent choice must show the
-                        cost as plainly as the gain. */}
+                    {/* Signed, not always "+": a refocus path spends a stat to buy another. */}
                     {statEntries.map(([stat, amount]) => (
                       <span key={stat} className={`evolution-path-grant-chip${amount < 0 ? ' evolution-path-grant-loss' : ''}`}>
                         <StatGlyph stat={stat} /> {STAT_LABELS[stat]} {amount > 0 ? '+' : ''}
@@ -91,41 +72,23 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
                         <TypeBadge type={path.typeGraft} /> secondary type
                       </span>
                     )}
-                    {/* The graft branch above answers "which second type" with a
-                        chip; this one answers "none, and here is the one you
-                        keep" — so it names that type the same way rather than
-                        as bare text sitting beside a chip that isn't there. */}
                     {!path.typeGraft && (
                       <span className="evolution-path-grant-chip evolution-path-mono">
                         stays mono <ElementGlyph type={hero.types[0]} /> {hero.types[0]}
                       </span>
                     )}
-                    {/* A granted Passive is usually the whole reason to take a
-                        mono path (src/data/progression.ts, Crimson's Pyroclasm),
-                        so it gets a chip of its own — an unnamed passive would
-                        make that path read as two small stats and nothing else.
-                        Unknown ids are skipped rather than rendered raw. */}
                     {(path.grantsPassiveIds ?? []).map((id) => passives[id] && (
                       <span key={id} className="evolution-path-grant-chip evolution-path-passive">
                         ✦ {passives[id].name}
                       </span>
                     ))}
                   </div>
-                  {/* The graft's other half: which moves this path lets the
-                      hero LEARN later (EvolutionPath.learnableMoveIds). Its own
-                      line rather than another chip in the row above, because
-                      these are futures, not grants — the player is choosing a
-                      direction for the rest of the run's level-ups, and that
-                      reads wrong sitting between two stat chips. */}
                   {(path.learnableMoveIds?.length ?? 0) > 0 && (
                     <p className="evolution-path-learnable">
                       <span className="evolution-path-learnable-label">Can learn</span>
                       {path.learnableMoveIds!.map((id) => moves[id]?.name ?? id).join(' · ')}
                     </p>
                   )}
-                  {/* Named for the same reason the passive is: the Passive
-                      description is the mechanic, and a name alone ("Firestarter")
-                      tells the player nothing about a choice they cannot undo. */}
                   {(path.grantsPassiveIds ?? []).map((id) => passives[id] && (
                     <p key={id} className="evolution-path-passive-text">
                       {passives[id].description}
@@ -137,20 +100,8 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
           </div>
         </div>
       </div>
-      {/* The CTA only exists once there is something to confirm. Disabled, it
-          was a full-width faded gold slab reading "Choose a path to evolve" —
-          an instruction the header's own readout already gives, drawn as the
-          loudest object on the screen, in the one place the eye goes last.
-          ┄
-          The slot it lives in stays mounted and keeps its height, so the three
-          path cards do not move when the button arrives — on a permanent
-          choice, the cards you are comparing must not shift under your thumb
-          between reading them and pressing one. Empty, the slot is just the
-          bottom margin the screen would have had anyway. */}
+      {/* The slot stays mounted at full height so the path cards don't shift when the button arrives. */}
       <div className="evolution-cta-slot">
-        {/* The heaviest button in the run — the choice is permanent and gates
-            the movepool — so it takes the ceremonial commit sound rather than
-            the generic `resolve-button` confirm. */}
         {selectedPath && (
           <button className="resolve-button" data-sfx="ui.commit" onClick={() => onChoose(selectedPath.id)}>
             Confirm — Evolve into {selectedPath.name}

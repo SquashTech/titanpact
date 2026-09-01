@@ -1,19 +1,4 @@
-// Water's authored movepool (src/data/moves.ts, 2026-08-30) and the three
-// engine fields it is the first content to need: `drainPercent` (Siphon,
-// Engulf), `cleanseCount` (Wash Away), and `manaDiscountOnUse` (Wave Shred).
-//
-// Same discipline as test/fireMoves.test.ts: these assert the MECHANIC with
-// Water's moves as the vehicle, not Water's numbers, which are balance and
-// will move. The numbers that ARE asserted are the ones the design table
-// locks — which moves are spread, which drain, and the two structural facts
-// that are easy to get wrong and hard to notice afterwards:
-//
-//   1. drain scales the HP actually REMOVED, not the rolled damage, and does
-//      not run the healing formula (CLAUDE.md's healing lock covers heal-kind
-//      moves; a drain rider is a share of a hit, see content.ts drainPercent);
-//   2. a limited cleanse draws RNG only when it genuinely has to choose, so
-//      every fight authored before cleanseCount existed replays identically
-//      (the same guarantee StatusApplication.chance carries).
+// Water's movepool: drainPercent, cleanseCount, manaDiscountOnUse. Hand-off findings for this slate: docs/authoring-moves.md §10.
 
 import { statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
@@ -33,7 +18,7 @@ import { effectiveManaCost, hasAffordableMove } from '../src/engine/state';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
-/** tidecaller (Int 59, mono Water) and pincer (Atk 70, mono Water) attack; ironWarden/wildOracle defend — the same shape the other combat tests use. */
+/** tidecaller (Int) and pincer (Atk) attack; ironWarden/wildOracle defend. */
 function waterFixture(seed: number) {
   return createFightState(
     seed,
@@ -48,17 +33,7 @@ function waterFixture(seed: number) {
   );
 }
 
-/**
- * The two fixture problems every one of these shares, solved once — same
- * reasoning as fireMoves.test.ts's withDeepPools:
- *
- * - **Mana.** Water's authored curve tops out at Wave Shred's 80 and Tsunami's
- *   70, both above every Water hero's real pool. That is a live design finding
- *   (docs/combat.md), not something these tests should be gated on.
- * - **Lethality.** A defender that faints to the hit never reaches the riders,
- *   which silently turns a drain test into a KO test. getMaxHp reads
- *   baseStats + statModifiers, so the hp modifier has to move with currentHp.
- */
+/** Unlimited mana for everyone and 1200 HP for side B, so riders resolve instead of KOs (hp modifier moves with currentHp because getMaxHp reads both). */
 function withDeepPools(state: CombatState): CombatState {
   const combatants = Object.fromEntries(
     Object.entries(state.combatants).map(([id, c]) => [
@@ -74,7 +49,7 @@ function withDeepPools(state: CombatState): CombatState {
   return { ...state, combatants } as CombatState;
 }
 
-/** Drops a combatant to `hp` so a drain has somewhere to go — healing into a full bar is clamped and proves nothing. */
+/** Drops a combatant to `hp` so a drain has somewhere to go. */
 function wounded(state: CombatState, combatantId: string, hp: number): CombatState {
   const c = state.combatants[combatantId];
   return { ...state, combatants: { ...state.combatants, [combatantId]: { ...c, currentHp: hp } } };
@@ -84,7 +59,7 @@ function afflict(state: CombatState, combatantId: string, statusId: string, magn
   return applyStatus(state, 1, combatantId, statuses[statusId], magnitude !== undefined ? { magnitude } : {}).state;
 }
 
-// --- The pool itself -------------------------------------------------------
+// --- The pool itself ---
 
 test('water: the authored pool is exactly the fifteen designed moves, all Water-typed', () => {
   const water = Object.values(moves).filter((m) => m.type === 'Water');
@@ -121,7 +96,7 @@ test('water: the authored pool resolves entirely in priority bracket 0 — Water
   }
 });
 
-// --- MoveDefinition.drainPercent (Siphon, Engulf) --------------------------
+// --- MoveDefinition.drainPercent (Siphon, Engulf) ---
 
 test('water: Siphon heals its caster for half the damage it dealt, and a plain attack heals nobody', () => {
   const state = wounded(withDeepPools(waterFixture(700)), 'a1', 20);
@@ -144,11 +119,7 @@ test('water: Siphon heals its caster for half the damage it dealt, and a plain a
 });
 
 test('water: a drain does NOT run the healing formula — no HealPower, Wisdom or STAB term on the event', () => {
-  // The distinction content.ts drainPercent turns on. What it returns has
-  // already been through variance, crit, STAB and TypeMult as DAMAGE; running
-  // the heal formula over it too would scale one action twice. Asserted
-  // structurally, because with a Wisdom-40 caster the two happen to differ by
-  // little enough that a numeric check would pass either way.
+  // Asserted structurally: with a Wisdom-40 caster the two formulas differ too little for a numeric check to tell them apart.
   const state = wounded(withDeepPools(waterFixture(701)), 'a1', 20);
   const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'engulf', declaredTarget: 'b1' }], config);
 
@@ -159,7 +130,6 @@ test('water: a drain does NOT run the healing formula — no HealPower, Wisdom o
   assert.strictEqual(healed.stab, undefined);
   assert.strictEqual(healed.drain?.percent, 0.5);
 
-  // ...and a real heal-kind move still carries all three.
   const oasis = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'oasis' }], config);
   const realHeal = oasis.events.find((e) => e.type === 'Healed');
   assert.ok(realHeal && realHeal.type === 'Healed');
@@ -169,9 +139,7 @@ test('water: a drain does NOT run the healing formula — no HealPower, Wisdom o
 });
 
 test('water: a drain returns a share of the HP actually removed, so overkill is not a windfall', () => {
-  // b1 on 3 HP: Siphon rolls for far more than that, but only 3 leaves the
-  // target, so only 2 (round(3 x 0.5)) comes back. Reading the rolled amount
-  // instead would hand the caster a full drain off a 3 HP kill.
+  // b1 on 3 HP: only 3 leaves the target, so round(3 x 0.5) = 2 comes back.
   const base = wounded(withDeepPools(waterFixture(702)), 'a1', 20);
   const state = wounded(base, 'b1', 3);
   const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'siphon', declaredTarget: 'b1' }], config);
@@ -187,9 +155,6 @@ test('water: a drain returns a share of the HP actually removed, so overkill is 
 
 test('water: a drain into a target that is already down heals nothing at all', () => {
   const state = wounded(withDeepPools(waterFixture(703)), 'a1', 20);
-  // Both enemies drop to the first hit; the second attacker's Siphon redirects
-  // onto the survivor, so this instead checks the simple case: no target left
-  // standing means no DamageDealt and therefore no drain.
   const dead = {
     ...state,
     combatants: Object.fromEntries(
@@ -200,7 +165,7 @@ test('water: a drain into a target that is already down heals nothing at all', (
   assert.strictEqual(events.some((e) => e.type === 'Healed'), false);
 });
 
-// --- MoveDefinition.cleanseCount (Wash Away) -------------------------------
+// --- MoveDefinition.cleanseCount (Wash Away) ---
 
 test('water: Wash Away strips exactly one negative status and leaves the rest — and never the positive one', () => {
   let state = withDeepPools(waterFixture(710));
@@ -236,14 +201,11 @@ test('water: which status Wash Away takes varies with the seed — it is a roll,
       if (next.combatants.a1.statuses[id] === undefined) survivors.add(id);
     }
   }
-  // Wide deliberately: this asserts the choice is random across seeds, not that
-  // mulberry32 is uniform over three buckets.
+  // Wide deliberately: asserts the choice varies across seeds, not that the RNG is uniform over three buckets.
   assert.ok(survivors.size > 1, `expected the cleansed status to vary across seeds, only ever saw ${[...survivors]}`);
 });
 
 test('water: a limited cleanse draws RNG only when it actually has to choose', () => {
-  // The replay guarantee. With one eligible status there is nothing to pick
-  // between, so the stream must be untouched — exactly as it is with none.
   const base = withDeepPools(waterFixture(711));
   const cast: Action[] = [{ kind: 'move', combatantId: 'a2', moveId: 'washAway', declaredTarget: 'a1' }];
 
@@ -257,10 +219,7 @@ test('water: a limited cleanse draws RNG only when it actually has to choose', (
 });
 
 test('water: an unlimited cleanse still strips everything, and draws nothing either way', () => {
-  // The unlimited path, called directly. It has no MOVE any more: the authored
-  // Light slate (2026-08-30) re-authored Purify with cleanseCount 1, so every
-  // Cleanse move in the game is now limited and this is the only thing keeping
-  // the engine's cleanse-all behaviour honest.
+  // Called directly: no authored move is an unlimited cleanse any more, so this is the only coverage of that path.
   let state = withDeepPools(waterFixture(712));
   state = afflict(state, 'a1', 'Burn', 20);
   state = afflict(state, 'a1', 'Bleed');
@@ -274,7 +233,7 @@ test('water: an unlimited cleanse still strips everything, and draws nothing eit
   assert.strictEqual(Object.keys(limited.state.combatants.a1.statuses).length, 2);
 });
 
-// --- MoveDefinition.manaDiscountOnUse (Wave Shred) -------------------------
+// --- MoveDefinition.manaDiscountOnUse (Wave Shred) ---
 
 test('water: Wave Shred is charged its authored cost the first time and 20 less every time after', () => {
   const state = withDeepPools(waterFixture(720));
@@ -290,8 +249,6 @@ test('water: Wave Shred is charged its authored cost the first time and 20 less 
   assert.strictEqual(spentOn(second), moves.waveShred.manaCost - 20);
   assert.strictEqual(spentOn(third), moves.waveShred.manaCost - 40);
 
-  // Stated on the event so the Battle Log can say so rather than silently
-  // printing a smaller number.
   assert.strictEqual((first.events.find((e) => e.type === 'MoveUsed') as any).manaDiscount, undefined);
   assert.strictEqual((second.events.find((e) => e.type === 'MoveUsed') as any).manaDiscount, 20);
 });
@@ -314,19 +271,14 @@ test('water: effectiveManaCost floors at 0 and leaves every move without a disco
 });
 
 test('water: the affordability query prices a ramped move at what it now costs, not what it was authored at', () => {
-  // The half of this that is easy to miss: the engine charges the discounted
-  // price, so a legality check still reading move.manaCost would hide a move
-  // the hero can in fact afford (state.ts hasAffordableMove).
   const cost = moves.waveShred.manaCost;
   assert.strictEqual(hasAffordableMove(cost - 20, ['waveShred'], moves), false);
   assert.strictEqual(hasAffordableMove(cost - 20, ['waveShred'], moves, { waveShred: 20 }), true);
 });
 
-// --- Distribution ----------------------------------------------------------
+// --- Distribution ---
 
 test('water: every move id a hero or level-up pool points at actually exists', () => {
-  // Nothing else catches a dangling id — the run layer only looks a move up
-  // when the hero is offered it, which can be several fights in.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   const { enemies } = require('../src/data/enemies') as typeof import('../src/data/enemies');
   for (const [heroId, hero] of Object.entries({ ...heroes, ...enemies })) {
@@ -344,8 +296,7 @@ test('water: neither Water hero starts with a move it cannot pay for, or has a s
     const cheapest = Math.min(...hero.moveIds.map((id) => moves[id].manaCost));
     assert.ok(cheapest <= hero.baseStats.manaPool, `${heroId} cannot afford its own cheapest starting move`);
     for (const moveId of progressionTable.moveTiers[heroId] ?? []) {
-      // levelUpMovePool filters unlocked moves out, so a starter in the pool is
-      // dead weight that can never be offered.
+      // levelUpMovePool filters unlocked moves out, so a starter in the pool can never be offered.
       assert.ok(!hero.moveIds.includes(moveId), `${heroId}'s pool lists its own starting move ${moveId}`);
     }
   }

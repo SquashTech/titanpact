@@ -1,11 +1,5 @@
-// Renders the engine's event stream as human-readable log lines. This is
-// presentation-layer code: the engine only knows it emitted a DamageDealt
-// event, not that it should read as "super effective!" in prose.
-//
-// The Battle Log is the one place the full damage-formula math is spelled
-// out (docs/combat.md "The damage formula") — everywhere else in the view
-// (banners, popups) stays terse. formatEvents is only ever fed into that
-// optional log panel, so the verbosity here is deliberate.
+// Renders the engine's event stream as Battle Log lines. This is the one
+// place the full damage-formula math is spelled out; everywhere else stays terse.
 
 import type { CombatEvent } from '../../engine/events';
 import type { HeroDefinition, MoveDefinition } from '../../engine/content';
@@ -19,25 +13,20 @@ export interface LogLine {
   className: string;
 }
 
-/**
- * Trims to 4dp for non-integer terms (variance, ratios) without cluttering
- * whole numbers like BasePower or a 2x type multiplier. 4dp rather than 2dp
- * so the printed line actually multiplies out to the shown `amount` before
- * rounding — this log exists for players to verify the math by hand,
- * and 0.85-1.0 variance rolls lose enough precision at 2dp to visibly
- * disagree with the final rounded damage.
- */
+// 4dp, not 2: the printed line must multiply out to the shown amount by hand.
 function fmt(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(4);
 }
 
-/** Per-status log color (styles.css) for the DoT/HoT statuses' end-of-round tick — mirrors STATUS_COLOR in statusIcons.tsx so the log reads consistently with the badge. */
+/** Per-status log color for DoT/HoT ticks — mirrors STATUS_COLOR in statusIcons.tsx. */
 const STATUS_TICK_LOG_CLASS: Record<string, string> = {
   Burn: 'log-burn',
   Bleed: 'log-bleed',
   Poison: 'log-poison',
   Renew: 'log-renew',
 };
+
+const OFF_ABBR: Record<string, string> = { attack: 'Atk', defense: 'Def', intelligence: 'Int', wisdom: 'Wis' };
 
 export function formatEvents(
   events: readonly CombatEvent[],
@@ -56,9 +45,6 @@ export function formatEvents(
         break;
       case 'MoveUsed': {
         const move = moves[e.moveId];
-        // The discount is stated, not just absorbed into a smaller number:
-        // a cost that silently drops between rounds looks like a bug in the
-        // log, which is the one place claiming to show the whole accounting.
         const discount = e.manaDiscount ? `, -${e.manaDiscount} discount` : '';
         lines.push({
           key,
@@ -69,10 +55,7 @@ export function formatEvents(
       }
       case 'DamageDealt': {
         const move = moves[e.moveId];
-        // Recoil is the caster hitting itself, and reads as nonsense in the
-        // attack phrasing below ("Rubble Rush -> 18 dmg to Crag"). Its own
-        // line, and no math line at all, because no formula was evaluated
-        // (events.ts DamageDealtEvent.recoil).
+        // Recoil and self-cost are the caster billing itself: own line, no math line.
         if (e.recoil) {
           const pct = Math.round(e.recoil.percent * 100);
           lines.push({
@@ -82,12 +65,6 @@ export function formatEvents(
           });
           break;
         }
-        // The self-cost is the caster paying its own bill, and it reads as
-        // nonsense in the attack phrasing below for the same reason recoil
-        // does. Its own line, no math line, and the parenthetical names the
-        // BILL rather than a hit: unlike recoil, what this cost was is
-        // something the player could read off their own bar before pressing
-        // it (events.ts DamageDealtEvent.selfCost).
         if (e.selfCost) {
           const bill =
             e.selfCost.mode === 'percentMaxHp'
@@ -109,10 +86,7 @@ export function formatEvents(
           className: e.viaStatusId ? 'log-haunt' : e.isCrit ? 'log-crit' : 'log-damage',
         });
 
-        // Retribution never ran the formula, so printing the locked chain with
-        // every term at 1 would be a readout of a calculation that did not
-        // happen. The derivation it DID use goes out instead
-        // (events.ts DamageDealtEvent.retribution).
+        // Retribution never ran the formula; print the derivation it did use.
         if (e.retribution) {
           lines.push({
             key: `${key}-math`,
@@ -125,18 +99,13 @@ export function formatEvents(
         }
 
         const [offLabel, defLabel] = e.category === 'physical' ? ['Atk', 'Def'] : ['Int', 'Wis'];
-        // offStatOverride (content.ts) swaps the numerator's stat, so the log
-        // has to name the stat actually read — "90 Atk" on a Body Blow that
-        // read 100 Defense would make the printed math fail to multiply out.
-        const OFF_ABBR: Record<string, string> = { attack: 'Atk', defense: 'Def', intelligence: 'Int', wisdom: 'Wis' };
+        // offStatOverride swaps the numerator's stat; name the stat actually read.
         const offStatLabel = move?.offStatOverride ? (OFF_ABBR[move.offStatOverride] ?? offLabel) : offLabel;
         const modsText =
           e.modifiers.length > 0
             ? `, Mods ${fmt(e.multiplierTerm)}× (${e.modifiers.map((m) => `${m.source} ${m.amount >= 0 ? '+' : ''}${Math.round(m.amount * 100)}%`).join(', ')})`
             : '';
-        // BasePower's own two stage-1 terms, spelled out in the order the
-        // pipeline applies them: authored BP x conditional multiplier, then
-        // + Elemental Force (damagePipeline.ts calcDamage).
+        // Stage-1 terms in pipeline order: authored BP × conditional multiplier, then + Elemental Force.
         const conditionalMult = e.basePowerMultiplier ?? 1;
         const scaledBp = e.basePower * conditionalMult;
         const bpParts: string[] = [];
@@ -163,11 +132,7 @@ export function formatEvents(
       case 'ManaRegenTicked':
         lines.push({ key, text: `${name(e.combatantId)} regens ${e.manaRegen} MP`, className: 'log-mana' });
         break;
-      // Named source AND named overflow. ManaChanged is deliberately omitted
-      // from this log as bookkeeping, so a grant with no line of its own would
-      // simply not appear — and the overflow half is the part a player cannot
-      // work out from the bar, which clamps its fill (events.ts
-      // ManaGrantedEvent).
+      // ManaChanged is omitted as bookkeeping, so the grant needs its own line, overflow included.
       case 'ManaGranted':
         lines.push({
           key,
@@ -183,9 +148,6 @@ export function formatEvents(
         break;
       }
       case 'Healed':
-        // A drain says whose HP it was: the log's job is the whole causal
-        // chain, and "Riptide heals 12 HP" on a turn Riptide attacked reads as
-        // a second, unexplained action (events.ts HealedEvent.drain).
         lines.push({
           key,
           text: e.drain
@@ -205,7 +167,7 @@ export function formatEvents(
         break;
       }
       case 'StatusTicked': {
-        if (e.kind === 'duration') break; // no HP/log-worthy change; the eventual StatusRemoved covers expiry
+        if (e.kind === 'duration') break; // the eventual StatusRemoved covers expiry
         const verb = e.kind === 'damage' ? 'takes' : 'heals';
         const className = STATUS_TICK_LOG_CLASS[e.statusId] ?? (e.kind === 'damage' ? 'log-damage' : 'log-heal');
         lines.push({ key, text: `${name(e.combatantId)} ${verb} ${e.amount} from ${e.statusId}`, className });
@@ -228,10 +190,7 @@ export function formatEvents(
           e.reason === 'dazed'
             ? 'dazed'
             : e.reason === 'targetStatusMissing'
-              ? // The gate, named as the reason it failed — "out of valid targets"
-                // would be true but would read as "everything died" rather than
-                // "nothing out there is Frozen" (content.ts requiresTargetStatus).
-                'left without a marked target'
+              ? 'left without a marked target'
               : 'out of valid targets';
         lines.push({ key, text: `${name(e.combatantId)} is ${reasonText} and can't act`, className: 'log-faint' });
         break;

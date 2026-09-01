@@ -15,30 +15,7 @@ import { StatGlyph } from '../shared/StatBars';
 import { STAT_FULL_LABELS } from '../shared/relicStacks';
 import { useLongPress } from '../shared/MoveTile';
 
-/**
- * One piece of gear, drawn as a card, plus the sheet a hold opens on it.
- *
- * Lifted out of NodeRewardScreen (where it was the Equipment Cache's private
- * `EquipCacheCard`) the moment a second screen needed the same object — the
- * Loot Pile event (src/data/events.ts, view/run/EventNodeScreen.tsx). Exactly
- * the reason RelicChoiceCard.tsx was extracted before it: an item offered by
- * one node and an item offered by another are the same thing to the player,
- * and the fastest way to make a run stop feeling like one game is to let two
- * screens draw it two ways.
- *
- * The class names are unchanged (`.equip-cache-*`), so the cache keeps its
- * exact appearance and the stylesheet needed no edit — the names are now a
- * little wider than their origin, which is what happens when a thing turns out
- * to be general.
- */
-
-/**
- * "+10 Attack, +20 HP, Fire Force +10" — the one-line benefit preview on the
- * card face. Folds in passive/status grants (not just raw stats) so an item
- * like Ember Band — no statGrants, all its value is a granted status — never
- * reads as blank; the long-press sheet below is where the full description
- * for each of those lives.
- */
+/** Card-face summary ("+10 Attack · Ember Ward"), folding passive/status grants in so a stat-less item never reads as blank. */
 export function itemHighlights(item: EquipmentDefinition): string[] {
   const statParts = Object.entries(item.statGrants)
     .filter(([, amount]) => amount)
@@ -53,16 +30,10 @@ export function itemHighlights(item: EquipmentDefinition): string[] {
 interface EquipChoiceCardProps {
   item: EquipmentDefinition;
   picked?: boolean;
-  /**
-   * Tap. OMITTED for a card that is being SHOWN rather than chosen between
-   * (the Loot Pile, where all three are already yours) — the card then renders
-   * as a plain surface that still holds-to-inspect, rather than as a button
-   * that does nothing, which is the fastest way to teach a player their taps
-   * are decorative.
-   */
+  /** Omit for a card that is shown rather than chosen (the Loot Pile): it renders as a static surface that still holds-to-inspect. */
   onPick?: () => void;
   onInspect?: () => void;
-  /** Staggers this card's fade-up-in behind whatever revealed it (NodeRewardScreen's chest, the Loot Pile's arrival). */
+  /** Staggers this card's fade-in behind whatever revealed it. */
   revealDelayMs: number;
 }
 
@@ -93,14 +64,7 @@ export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs
 
 interface EquipInspectOverlayProps {
   item: EquipmentDefinition;
-  /**
-   * Turns the sheet from a readout into a decision — a confirm button under
-   * the effects, plus a Cancel. Same shape and same reasoning as
-   * HeroPreviewOverlay's `action`: the Guild Hall's shelf is the caller, where
-   * an item costs gold and the tap that used to spend it opened nothing.
-   * Omit for the read-only inspects (the Equipment Cache, the Loot Pile),
-   * where the item is already yours and the only question is what it does.
-   */
+  /** Turns the sheet into a decision (the Guild Hall shelf): a confirm button plus Cancel. Omit for read-only inspects. */
   action?: {
     label: string;
     /** Rendered above the button — why it is inert, or what confirming will additionally cost. */
@@ -111,7 +75,6 @@ interface EquipInspectOverlayProps {
   onClose: () => void;
 }
 
-/** The full item sheet — the same dossier treatment a move gets, so gear and moves read alike wherever an offer is made. */
 export function EquipInspectOverlay({ item, action, onClose }: EquipInspectOverlayProps) {
   const grants = Object.entries(item.statGrants).filter(([, amount]) => amount) as [StatKey, number][];
   const hasEffects = grants.length > 0 || (item.grantsPassiveIds?.length ?? 0) > 0 || (item.grantsStatusIds?.length ?? 0) > 0;

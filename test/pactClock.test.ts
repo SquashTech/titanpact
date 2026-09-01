@@ -35,7 +35,7 @@ function fixture(seed: number): CombatState {
 
 const maxHpOf = (state: CombatState) => (id: string) => heroes[state.combatants[id].heroId].baseStats.hp;
 
-// --- The curve -------------------------------------------------------------
+// --- The curve ---
 
 test('pact: no fraction before the start round, then base, then a step per round', () => {
   const c = DEFAULT_PACT_CLOCK;
@@ -52,12 +52,11 @@ test('pact: the defaults kill a full-HP combatant within five rounds of starting
     total += pactFractionFor(c.startRound + rounds, c);
     rounds++;
   }
-  // 10 + 15 + 20 + 25 + 30 = 100%. Load-bearing: the clock has to be a
-  // terminator, not a tax. If this ever exceeds 5 the stall outlives the fix.
+  // 10 + 15 + 20 + 25 + 30 = 100%. Load-bearing: a terminator, not a tax.
   assert.strictEqual(rounds, 5);
 });
 
-// --- The tick --------------------------------------------------------------
+// --- The tick ---
 
 test('pact: the tick is inert before the start round and emits nothing', () => {
   const state = fixture(1);
@@ -71,8 +70,7 @@ test('pact: the tick hits every living combatant on BOTH sides, bench included',
   const result = tickPactClock(state, SHORT_CLOCK.startRound, SHORT_CLOCK, maxHpOf(state));
 
   const hit = new Set(result.events.filter((e) => e.type === 'HpChanged').map((e) => (e as { combatantId: string }).combatantId));
-  // a3 is on the bench (fixtures.ts places slot 2 onward there) and is hit anyway:
-  // a stalling side must not be able to cycle fresh bodies in to outlast the clock.
+  // a3 is on the bench (fixtures.ts places slot 2 onward there) and is hit anyway.
   assert.deepStrictEqual([...hit].sort(), ['a1', 'a2', 'a3', 'b1', 'b2']);
 
   for (const id of hit) {
@@ -109,8 +107,6 @@ test('pact: it faints, and a fainted combatant is not hit twice', () => {
   assert.strictEqual(first.state.koCount.A, 3);
   assert.strictEqual(first.state.koCount.B, 2);
 
-  // Everyone is already down, so a second tick is a no-op with no events —
-  // applyHpDelta's already-fainted guard, exercised through the pact.
   const second = tickPactClock(first.state, 2, lethal, maxHpOf(state));
   assert.deepStrictEqual(
     second.events.filter((e) => e.type !== 'PactTicked'),
@@ -118,7 +114,7 @@ test('pact: it faints, and a fainted combatant is not hit twice', () => {
   );
 });
 
-// --- Wired into the round --------------------------------------------------
+// --- Wired into the round ---
 
 test('pact: resolveRound ticks it at the round boundary, after the status ticks', () => {
   const state = { ...fixture(6), round: SHORT_CLOCK.startRound };
@@ -147,7 +143,6 @@ test('pact: a fight that ends before the start round never sees it', () => {
     { kind: 'rest', combatantId: 'b1' },
     { kind: 'rest', combatantId: 'b2' },
   ];
-  // Default clock, round 1: the overwhelming majority of fights, untouched.
   const result = resolveRound(state, actions, baseConfig);
   assert.strictEqual(
     result.events.some((e) => e.type === 'PactTicked'),
@@ -155,25 +150,13 @@ test('pact: a fight that ends before the start round never sees it', () => {
   );
 });
 
-// --- The acceptance test: the stall it exists to break ---------------------
+// --- The acceptance test: the stall it exists to break ---
 
 /**
- * The scenario the Pact Clock was built for, run end-to-end.
- *
- * Side A is a wall with an effectively infinite mana pool spamming Reinforce
- * (+20 Attack / +20 Defense to both allies, no cap on either — see
- * docs/combat.md, stat modifiers have no ceiling). Side B attacks it every
- * round. Within a handful of rounds A's Defense outruns B's Attack by enough
- * that the damage ratio collapses, and from then on nothing on the board can
- * finish the fight: A's mana never runs out, B's damage never lands, and the
- * engine had no round limit to notice.
- *
- * The two halves of the assertion are the whole design claim:
- *   1. With the clock pushed out of reach, 80 rounds pass with nobody down.
- *      That is the bug, reproduced.
- *   2. With the default clock, the same fight is over — and it takes the
- *      SETUP side down too, because the pact does not care who is winning the
- *      attrition war.
+ * An infinite-mana wall spamming Reinforce (uncapped +20 Def per cast) against a foe attacking every
+ * round: the damage ratio collapses within a few rounds and nothing else in the engine ends the fight.
+ * The wall's setup goes on baselineStatModifiers (the loadout channel) so `statModifiers` stays a
+ * clean record of what Reinforce alone added.
  */
 function stall(): { state: CombatState; actions: Action[] } {
   const base = createFightState(
@@ -186,13 +169,6 @@ function stall(): { state: CombatState; actions: Action[] } {
       ...base,
       combatants: {
         ...base.combatants,
-        // The wall as it stands AFTER a player has already set up and geared:
-        // an effectively infinite mana pool (so mana never ends the fight) and
-        // enough Defense and HP that the foe's damage ratio has collapsed. This
-        // is not a contrived number — it is the state the reported bug
-        // describes, reached and then held. It goes on baselineStatModifiers,
-        // the loadout channel, so `statModifiers` below stays a clean record of
-        // what Reinforce alone added over the fight.
         wall: {
           ...base.combatants.wall,
           currentMana: 1_000_000,
@@ -226,7 +202,6 @@ test('pact: WITHOUT the clock, an infinite-mana setup loop never resolves', () =
   const { state } = runStall(80, { startRound: 10_000, baseFraction: 0.1, stepFraction: 0.05 });
   assert.strictEqual(state.combatants.wall.fainted, false);
   assert.strictEqual(state.combatants.foe.fainted, false);
-  // ...and the wall is still climbing, with nothing in the engine to stop it.
   assert.ok(
     (state.combatants.wall.statModifiers.defense ?? 0) >= 20 * 70,
     'Defense should have compounded for the whole fight, unbounded'
@@ -241,7 +216,6 @@ test('pact: WITH the clock, the same stall is over inside five rounds of round 3
   );
   // 10+15+20+25+30 = 100% of max HP: round 34 at the latest, from full.
   assert.ok(lastRound <= DEFAULT_PACT_CLOCK.startRound + 5, `ended on round ${lastRound}`);
-  // The setup side goes down too. The pact is not a tiebreaker that rewards
-  // whoever stalled better — it is the fight being taken away from both of them.
+  // The setup side goes down too: the pact is not a tiebreaker for whoever stalled better.
   assert.strictEqual(state.combatants.wall.fainted, true);
 });

@@ -20,7 +20,7 @@ function seedRoster(heroIds: string[], gold = 0) {
   return run;
 }
 
-// --- Equipment purchase ----------------------------------------------------
+// --- Equipment purchase ---
 
 test('shop: buyEquipment spends gold priced by rarity', () => {
   const run = seedRoster([], 100);
@@ -33,7 +33,7 @@ test('shop: buyEquipment rejects insufficient gold', () => {
   assert.throws(() => buyEquipment(run, equipment.guardianPlate), ShopError); // mythic, expensive
 });
 
-// --- Offer rolling ------------------------------------------------------
+// --- Offer rolling ---
 
 test('shop: rollGuildHallOffers excludes heroes already on the roster', () => {
   const run = seedRoster(['ironWarden']);
@@ -49,8 +49,7 @@ test('shop: rollGuildHallOffers offers at most 3 heroes and at least 2 when the 
   assert.ok(offers.heroOfferIds.length >= 2 && offers.heroOfferIds.length <= 3);
 });
 
-// The shelf widened from 3 to 4 (2026-08-31) when the relic shelf came out —
-// pinned here so it can't quietly drift back while the layout still assumes 4.
+// The Guild Hall layout assumes a 4-wide shelf.
 test('shop: rollGuildHallOffers stocks the full equipment shelf', () => {
   const run = seedRoster([]);
   const offers = rollGuildHallOffers(run, guildHallOffers, Object.values(equipment));

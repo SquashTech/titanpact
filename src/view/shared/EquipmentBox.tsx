@@ -19,8 +19,7 @@ const RELIC_ICON_INDICES: Partial<Record<string, number>> = {
   windcallersBanner: 66,
   deepWellstone: 68,
   bulwarkCore: 83,
-  // The three Guardian's Banners, each drawn as the resource it grants:
-  // heart for HP, blue orb for the mana pool, the cycle arrows for regen.
+  // Guardian's Banners: heart / mana orb / cycle arrows, the resource each grants.
   bannerOfVitality: 84,
   bannerOfTheWellspring: 165,
   bannerOfTheEverflow: 75,
@@ -32,18 +31,7 @@ interface EquipmentIconProps {
   className?: string;
 }
 
-/**
- * The item's silhouette (equipmentIcons.tsx) — a bow draws as a bow, boots as
- * boots, a necklace as a necklace, derived from the item's own name rather
- * than from a hand-kept id table.
- *
- * That derivation is the point of the change. This used to be three iconset
- * cells and a seven-entry override map, which meant the other 48 items in
- * src/data/equipment.ts shared one generic sword, one shield and one sparkle
- * between them — a roster screen showed the same sword for a greatsword, a
- * maul and a scythe. `equipmentForm` reads the noun the item is already named
- * after, so new gear is drawn correctly the moment it is written.
- */
+/** The item's silhouette, derived from its name (equipmentIcons.tsx) rather than an id table. */
 export function EquipmentIcon({ item, slot, className }: EquipmentIconProps) {
   return <EquipmentFormGlyph item={item} slot={slot} className={className} />;
 }
@@ -53,7 +41,7 @@ interface RelicIconProps {
   className?: string;
 }
 
-/** Same 2500+ sprite treatment for relics; the gem is the neutral fallback. */
+/** Gem (index 3) is the fallback. */
 export function RelicIcon({ relicId, className }: RelicIconProps) {
   return <IconsetGlyph index={RELIC_ICON_INDICES[relicId] ?? 3} className={`equip-icon-img ${className ?? ''}`} />;
 }
@@ -64,7 +52,7 @@ export const EQUIP_SLOT_LABELS: Record<EquipmentSlot, string> = {
   accessory: 'Accessory',
 };
 
-/** Gray/blue/purple/gold/red — the tier palette (styles.css :root --tier-*), referenced by CSS var so every rarity-colored element (cards, borders, glows) stays in sync from one source. */
+/** Tier palette as CSS vars (styles.css :root --tier-*). */
 export const RARITY_COLOR_VARS: Record<EquipmentRarity, string> = {
   common: 'var(--tier-common)',
   rare: 'var(--tier-rare)',
@@ -73,7 +61,7 @@ export const RARITY_COLOR_VARS: Record<EquipmentRarity, string> = {
   mythic: 'var(--tier-mythic)',
 };
 
-/** The same five tiers as bare `r, g, b` triples (styles.css :root --tier-*-rgb) — for the rgba() consumers, chiefly the node stage's sky, which tints a whole screen in the dropped item's tier. */
+/** Same tiers as bare `r, g, b` triples, for rgba() consumers (the node sky). */
 export const RARITY_RGB_VARS: Record<EquipmentRarity, string> = {
   common: 'var(--tier-common-rgb)',
   rare: 'var(--tier-rare-rgb)',
@@ -97,9 +85,9 @@ export function fmtGrant(amount: number): string {
 interface EquipmentSlotGridProps {
   loadout: EquipmentLoadout;
   equipmentLookup: Record<string, EquipmentDefinition>;
-  /** Long-press on a filled slot — opens the shared item-detail popup (matches the "hold a move or item to inspect it" standard, e.g. RosterManagementScreen's EquipSlotButton). Omit for an inert, non-inspectable grid. */
+  /** Long-press on a filled slot. Omit for an inert grid. */
   onInspect?: (itemId: string) => void;
-  /** Slot to mark with the .target outline — the slot an incoming item would land in (ForceEquipScreen). */
+  /** Slot to mark with the .target outline — where an incoming item would land. */
   highlightSlot?: EquipmentSlot | null;
 }
 
@@ -110,17 +98,7 @@ interface EquipSlotBoxProps {
   highlighted?: boolean;
 }
 
-/**
- * One slot box — pulled out of EquipmentSlotGrid's .map() because
- * useLongPress is a hook and can't be called from inside a loop body (same
- * reason RosterManagementScreen's EquipSlotButton is its own component).
- * Tap does nothing here (this grid is inspection-only); a ~500ms hold opens
- * the shared item-detail popup, mirroring MoveTile's "hold for details" rule
- * so moves and equipment share one interaction language everywhere a hero's
- * loadout is shown. The rarity tint on a filled box's left edge (borrowed
- * from the Equipment Cache/Relic Shrine's --rarity-color convention) lets a
- * player clock an item's tier before ever opening the popup.
- */
+// Its own component because useLongPress is a hook. Tap does nothing; hold inspects.
 function EquipSlotBox({ slot, item, onInspect, highlighted }: EquipSlotBoxProps) {
   const longPress = useLongPress(item && onInspect ? () => onInspect(item.id) : undefined);
   return (
@@ -137,13 +115,7 @@ function EquipSlotBox({ slot, item, onInspect, highlighted }: EquipSlotBoxProps)
   );
 }
 
-/**
- * Read-only rectangular equip-slot boxes — the same equip-slot-box visual
- * convention RosterManagementScreen established for its equip/unequip grid
- * (.equip-slot-row/.equip-slot-box, styles.css), reused here for stat-block
- * contexts (HeroDetailOverlay, HeroPreviewOverlay) where a filled box's only
- * interaction is a long-press to inspect it. Empty slots are inert.
- */
+/** Read-only equip-slot boxes; a filled box's only interaction is a long-press to inspect. */
 export function EquipmentSlotGrid({ loadout, equipmentLookup, onInspect, highlightSlot }: EquipmentSlotGridProps) {
   return (
     <div className="equip-slot-row">
@@ -156,17 +128,7 @@ export function EquipmentSlotGrid({ loadout, equipmentLookup, onInspect, highlig
   );
 }
 
-/**
- * What an item actually *does*, spelled out — every granted passive and
- * status with its full description, not the "Grants: Name" chip a compact
- * readout uses. Renders nothing for an item that only moves stats.
- *
- * One component rather than the four hand-copied blocks it replaces
- * (ForceEquipScreen, NodeRewardScreen, CompendiumScreen, and the victory
- * summary, which was the fourth and had been going without): they were
- * identical down to the emoji prefix, so a fix to one silently left the
- * others behind.
- */
+/** Every granted passive and status with its full description. Nothing for a stats-only item. */
 export function EquipmentEffectList({ item }: { item: EquipmentDefinition | null }) {
   const grantedPassives = item?.grantsPassiveIds ?? [];
   const grantedStatuses = item?.grantsStatusIds ?? [];
@@ -207,12 +169,7 @@ interface EquipmentInfoPanelProps {
   placeholder?: string;
 }
 
-/**
- * Fixed detail readout paired with EquipmentSlotGrid — mirrors MoveInfoPanel's
- * fixed-box-regardless-of-content convention (MoveTile.tsx doc comment,
- * shared .move-info-panel styling) so tapping a slot never reflows the panel
- * beneath it.
- */
+/** Fixed-size detail readout, same `.move-info-panel` box as MoveInfoPanel. */
 export function EquipmentInfoPanel({ item, placeholder = 'Tap an equipped item to see what it does.' }: EquipmentInfoPanelProps) {
   const grants = item ? (Object.entries(item.statGrants) as [StatKey, number][]) : [];
   const grantedPassives = item?.grantsPassiveIds ?? [];

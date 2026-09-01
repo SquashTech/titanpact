@@ -1,38 +1,4 @@
-// Mech's authored slate (src/data/moves.ts, 2026-08-30) and the FOUR engine
-// fields it needed. Mech is the first type whose IDENTITY is randomness, and
-// the four fields are four DIFFERENT things chance can attach to:
-//
-//   - `randomPriority` (Cog Bop, Cog Slam) — rolls the BRACKET. Drawn in
-//     priority.ts when the round is ordered, after both sides have committed,
-//     so it is a gamble rather than a drawback.
-//   - `randomStatDeltas` (Overclock, Piston Punch, Jury-Rig) — rolls WHICH
-//     STAT. Per resolved target, without replacement, over a pool the move
-//     authors as data.
-//   - `randomStatusApplication` (Malfunction) — rolls WHICH RIDER. Once per
-//     CAST, not per target, because every candidate carries its own `target`.
-//   - `randomBasePower` (Jackpot) — rolls the DAMAGE, and is the one that is
-//     not drawn at all.
-//
-// The last is the interesting one and most of what this file pins. Jackpot's
-// roll is DERIVED from (seed, round, combatantId, moveId) rather than taken
-// from the shared stream (engine/state.ts resolveRandomBasePower), because the
-// 2026-08-30 designer call is that the number is VISIBLE before the player
-// commits — and a value the view must read cannot be one the view would
-// advance by reading. Three consequences are asserted below: the stream is
-// untouched, the value is stable within a round and different across rounds,
-// and the button, the dossier forecast and the resolved hit all agree.
-//
-// Plus the type's own shape, which the design table states only by omission:
-//
-//   - Mech is in NO status's triggerTypes or spreadTriggerTypes, yet the slate
-//     PLANTS both Conduct and Haunt (Malfunction, Perfect Creation). It is the
-//     only type that marks targets exclusively for somebody else to cash —
-//     Iron's arrangement inverted, and a 2026-08-30 designer call rather than
-//     a gap. Pinned so it cannot drift silently.
-//   - Three rows Burn their own caster and exactly one heals it (Salvage, the
-//     only self-target heal in the game). That pairing is the type's engine.
-//   - Two bracket rows, both random; the slate authors no fixed nonzero
-//     priority at all.
+// Mech slate: randomPriority, randomStatDeltas, randomStatusApplication, and the derived (never drawn) randomBasePower. Hand-off findings: docs/authoring-moves.md §10.
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -44,7 +10,7 @@ import { typeChart } from '../src/data/typechart';
 import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
-import { statusApplicationsOf } from '../src/engine/content';
+import { isValidFlatStatGrant, statusApplicationsOf } from '../src/engine/content';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import { orderActions } from '../src/engine/combat/priority';
 import { resolveRandomBasePower } from '../src/engine/state';
@@ -68,13 +34,7 @@ function mechFixture(seed: number) {
   );
 }
 
-/**
- * The two fixture problems every authored slate hits (authoring-moves.md §8):
- * a curve the fixture pools cannot pay for, and defenders fragile enough that
- * the hit KOs them before a rider is reached — which silently turns a rider
- * test into a KO test. getMaxHp reads `baseStats + statModifiers`, so the hp
- * modifier has to move with currentHp.
- */
+/** Deep mana and HP so no test is gated on the mana curve or turned into a KO test; the hp modifier moves with currentHp because getMaxHp reads both. */
 function withDeepPools(state: CombatState): CombatState {
   const combatants = Object.fromEntries(
     Object.entries(state.combatants).map(([id, c]) => [
@@ -93,12 +53,11 @@ function statusesOn(state: CombatState, combatantId: string) {
   return Object.keys(state.combatants[combatantId].statuses).sort();
 }
 
-// --- randomBasePower: the reel the player can read -------------------------
+// --- randomBasePower ---
 
 test('mech: Jackpot rolls inside its authored band, and never draws from the shared RNG', () => {
-  // The whole reason the roll is derived rather than drawn: the view reads it
-  // to paint the button, and a read that advanced rngState would let a player
-  // re-roll Jackpot by opening the move dossier (content.ts randomBasePower).
+  // The view reads the roll to paint the button; a read that advanced rngState would let the
+  // player re-roll by opening the dossier.
   const state = withDeepPools(mechFixture(800));
   const before = state.rngState;
 
@@ -110,35 +69,26 @@ test('mech: Jackpot rolls inside its authored band, and never draws from the sha
   }
 
   assert.strictEqual(state.rngState, before, 'reading the reel advanced the shared stream');
-  // And it is inert for every move that authors a flat number.
   assert.strictEqual(resolveRandomBasePower(state, 'a2', moves.cogSlam), undefined);
 });
 
 test('mech: the reel is stable within a round, moves between rounds, and differs per hero', () => {
   const state = withDeepPools(mechFixture(801));
 
-  // Stable: the button, the dossier forecast and resolveRound all call this,
-  // and a player who opens the dossier must see the number they are about to
-  // get rather than a fresh one.
   const first = resolveRandomBasePower(state, 'a2', moves.jackpot);
   assert.strictEqual(resolveRandomBasePower(state, 'a2', moves.jackpot), first);
   assert.strictEqual(resolveRandomBasePower(state, 'a2', moves.jackpot), first);
 
-  // Moves: `round` is an input, so nothing has to remember to advance it.
   const overRounds = new Set<number>();
   for (let round = 1; round <= 30; round++) overRounds.add(resolveRandomBasePower({ ...state, round }, 'a2', moves.jackpot)!);
   assert.ok(overRounds.size > 5, `reel stuck across rounds: only ${overRounds.size} distinct values`);
 
-  // Differs per hero: two heroes holding Jackpot read their own machines.
   const perHero = new Set<number>();
   for (let round = 1; round <= 30; round++) perHero.add(resolveRandomBasePower({ ...state, round }, 'a1', moves.jackpot)!);
   assert.notDeepStrictEqual([...overRounds].sort(), [...perHero].sort(), 'both heroes read the same reel');
 });
 
 test('mech: the hit resolveRound deals is the number the button was showing', () => {
-  // docs/authoring-moves.md §5, "pass your new term in or the forecast lies" —
-  // here the failure would be worse than a lying forecast, because the player
-  // committed 80 mana on the strength of the figure.
   const state = withDeepPools(mechFixture(802));
   const shown = resolveRandomBasePower(state, 'a2', moves.jackpot)!;
 
@@ -149,21 +99,19 @@ test('mech: the hit resolveRound deals is the number the button was showing', ()
   );
   const hit = events.find((e) => e.type === 'DamageDealt') as any;
   assert.ok(hit, 'Jackpot dealt nothing');
-  // The event carries the ROLLED figure, not the authored (absent) one — the
-  // Battle Log prints the whole formula and "0 BP" would make it wrong.
+  // The event carries the ROLLED figure — the Battle Log prints the formula.
   assert.strictEqual(hit.basePower, shown);
   assert.ok(hit.amount > 0);
 });
 
-// --- randomPriority: the bracket nobody can predict ------------------------
+// --- randomPriority ---
 
 test('mech: Cog Bop resolves in both of its brackets across seeds, and only those two', () => {
   const brackets = new Set<number>();
   for (let seed = 0; seed < 60; seed++) {
     const state = withDeepPools(mechFixture(seed));
     const actions: Action[] = [{ kind: 'move', combatantId: 'a2', moveId: 'cogBop', declaredTarget: 'b1' }];
-    // orderActions is where the draw happens; read the bracket back out of the
-    // ordering by racing it against a known priority-0 move on a faster hero.
+    // Read the bracket back out of the ordering by racing a known priority-0 move on a faster hero.
     const { events } = resolveRound(
       state,
       [
@@ -179,10 +127,7 @@ test('mech: Cog Bop resolves in both of its brackets across seeds, and only thos
 });
 
 test('mech: a randomPriority move authors its own midpoint, and the view reads that', () => {
-  // `priority` stays the honest board-free answer for the draft, the
-  // compendium and effectivePriority, which deliberately does not roll
-  // (content.ts randomPriority). Authoring it as anything but the midpoint
-  // would make those surfaces claim a bias the move does not have.
+  // `priority` is the board-free answer for draft/compendium/effectivePriority, which do not roll.
   for (const id of ['cogBop', 'cogSlam']) {
     const move = moves[id];
     const list = move.randomPriority!;
@@ -192,9 +137,6 @@ test('mech: a randomPriority move authors its own midpoint, and the view reads t
 });
 
 test('mech: a round with no randomPriority move in it draws exactly the RNG it always did', () => {
-  // The determinism discipline every optional field since Fire has followed:
-  // absent means no draw at all, so every fight authored before Mech replays
-  // byte-identically (docs/authoring-moves.md §5).
   const state = withDeepPools(mechFixture(803));
   const plain: Action[] = [
     { kind: 'move', combatantId: 'a1', moveId: 'pistonPunch', declaredTarget: 'b1' },
@@ -204,11 +146,9 @@ test('mech: a round with no randomPriority move in it draws exactly the RNG it a
   assert.strictEqual(nextRngState, state.rngState, 'ordering a Mech-free round advanced the stream');
 });
 
-// --- randomStatDeltas: the reel that picks a stat --------------------------
+// --- randomStatDeltas ---
 
 test('mech: Overclock rolls independently for each ally, and only over the authored pool', () => {
-  // The designer call (2026-08-30): each ally rolls its own stat, matching how
-  // StatusApplication.chance and statDeltaChance already roll per target.
   const seen = { a1: new Set<string>(), a2: new Set<string>() };
   let differed = false;
 
@@ -233,14 +173,10 @@ test('mech: Overclock rolls independently for each ally, and only over the autho
   for (const stat of [...seen.a1, ...seen.a2]) {
     assert.ok(RANDOM_STAT_POOL.includes(stat as any), `${stat} is outside the authored pool`);
   }
-  // And the pool is genuinely all five, not four with a dead face.
   assert.strictEqual(seen.a1.size + seen.a2.size >= 5, true, 'the reel never reached most of its faces');
 });
 
 test('mech: Jury-Rig grants two DIFFERENT stats, never +40 to one', () => {
-  // Drawn without replacement (content.ts randomStatDeltas). The alternative
-  // would make the move sometimes a doubled Overclock, which is a different
-  // row from the one the table describes.
   for (let seed = 0; seed < 30; seed++) {
     const state = withDeepPools(mechFixture(seed));
     const { state: after } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'juryRig' }], config);
@@ -251,8 +187,6 @@ test('mech: Jury-Rig grants two DIFFERENT stats, never +40 to one', () => {
 });
 
 test('mech: Piston Punch damages the enemy and buffs the CASTER', () => {
-  // statDeltaTarget 'self' on a move whose damage targets the enemy — the
-  // opposite-sides split Landslide needed, now on a random grant.
   const state = withDeepPools(mechFixture(804));
   const { state: after } = resolveRound(
     state,
@@ -268,9 +202,6 @@ test('mech: Piston Punch damages the enemy and buffs the CASTER', () => {
 });
 
 test('mech: every authored random stat grant is a legal flat multiple of 5', () => {
-  // CLAUDE.md's multiples-of-5/10 lock. Unlike derivedStatDeltas there is no
-  // exemption here — the amount is authored, so it has to obey.
-  const { isValidFlatStatGrant } = require('../src/engine/content') as typeof import('../src/engine/content');
   for (const move of Object.values(moves)) {
     if (!move.randomStatDeltas) continue;
     assert.ok(isValidFlatStatGrant(move.randomStatDeltas.amount), `${move.id} grants ${move.randomStatDeltas.amount}`);
@@ -279,7 +210,7 @@ test('mech: every authored random stat grant is a legal flat multiple of 5', () 
   }
 });
 
-// --- randomStatusApplication: the reel that picks a rider ------------------
+// --- randomStatusApplication ---
 
 test('mech: Malfunction lands exactly one of its three faces, and reaches all three', () => {
   const landed = new Set<string>();
@@ -298,7 +229,6 @@ test('mech: Malfunction lands exactly one of its three faces, and reaches all th
 });
 
 test('mech: Malfunction still deals its damage whichever face comes up', () => {
-  // CLAUDE.md "No accuracy stat": the reel gates the RIDER, never the body.
   for (let seed = 0; seed < 12; seed++) {
     const state = withDeepPools(mechFixture(seed));
     const { state: after } = resolveRound(
@@ -311,10 +241,6 @@ test('mech: Malfunction still deals its damage whichever face comes up', () => {
 });
 
 test("mech: Poison from a reel carries the catalog's duration, like every other Poison row", () => {
-  // The table omits the duration — the Light lesson (docs/authoring-moves.md).
-  // Every one of the eleven Poison rows authored before this slate says 3, so
-  // the precedent is what these two use, and it is pinned rather than left to
-  // drift.
   const poisonRows = Object.values(moves).flatMap((m) => [
     ...statusApplicationsOf(m),
     ...(m.randomStatusApplication ?? []),
@@ -323,7 +249,7 @@ test("mech: Poison from a reel carries the catalog's duration, like every other 
   for (const app of poisonRows) assert.strictEqual(app.duration, 3, 'a Poison row disagrees with the catalog duration');
 });
 
-// --- The two-status rows ---------------------------------------------------
+// --- The two-status rows ---
 
 test('mech: Backfire and Overheat Burn the target AND the caster', () => {
   for (const [id, magnitude] of [['backfire', 10], ['overheat', 20]] as const) {
@@ -333,17 +259,13 @@ test('mech: Backfire and Overheat Burn the target AND the caster', () => {
       [{ kind: 'move', combatantId: 'a1', moveId: id, declaredTarget: 'b1' }],
       config
     );
-    // Statuses tick at end of round in the round they were applied, and Burn
-    // halves after its tick — so a freshly applied Burn N reads N/2 here
-    // (docs/authoring-moves.md §8, the first trap).
+    // Burn ticks and halves at end of the round it was applied, so a fresh Burn N reads N/2.
     assert.strictEqual(after.combatants.b1.statuses.Burn?.magnitude, magnitude / 2, `${id}: target not Burned`);
     assert.strictEqual(after.combatants.a1.statuses.Burn?.magnitude, magnitude / 2, `${id}: caster not Burned`);
   }
 });
 
 test('mech: Meltdown burns only the CASTER, and hits both enemies', () => {
-  // The asymmetry is authored: the table burns the user on Meltdown and both
-  // parties on Backfire/Overheat, so a single bare rider is correct here.
   const state = withDeepPools(mechFixture(806));
   const { state: after } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'meltdown' }], config);
   assert.ok(after.combatants.b1.currentHp < state.combatants.b1.currentHp);
@@ -359,9 +281,7 @@ test('mech: Perfect Creation applies all six of its riders in one cast', () => {
     [{ kind: 'move', combatantId: 'a1', moveId: 'perfectCreation', declaredTarget: 'b1' }],
     config
   );
-  // Daze clears at the end of the round it landed in (it IS flinch — boolean,
-  // clearsAtEndOfRound), so it is correctly absent from the board by the time
-  // the round returns. Five of the six survive; that is the sixth working.
+  // Daze clears at end of round, so five of six survive; that is the sixth working.
   assert.deepStrictEqual(statusesOn(after, 'b1'), ['Bleed', 'Burn', 'Conduct', 'Haunt', 'Poison']);
   assert.strictEqual(after.combatants.b1.statuses.Burn?.magnitude, 25, 'Burn 50 should read 25 post-tick');
   assert.strictEqual(after.combatants.b1.statuses.Poison?.duration, 2, 'Poison should have ticked once');
@@ -376,12 +296,8 @@ test('mech: Perfect Creation is single-target and reads as a Debuff', () => {
   );
   assert.deepStrictEqual(statusesOn(after, 'b2'), [], 'Perfect Creation spread');
 
-  // It is kind 'buff' — the engine's kind for a move whose whole payload is
-  // its riders, whatever those riders do (docs/authoring-moves.md §2). The
-  // view recovers the sign on its own: MoveTile's isDebuff reads a rider that
-  // is neither self-targeted nor positive, so the exact condition it keys on
-  // is asserted here rather than importing the view, which this build does
-  // not compile.
+  // MoveTile's isDebuff reads a rider that is neither self-targeted nor positive; asserted here
+  // rather than importing the view, which this build does not compile.
   assert.strictEqual(moves.perfectCreation.kind, 'buff');
   const riders = statusApplicationsOf(moves.perfectCreation);
   assert.strictEqual(riders.length, 6);
@@ -391,13 +307,10 @@ test('mech: Perfect Creation is single-target and reads as a Debuff', () => {
   );
 });
 
-// --- The type's shape ------------------------------------------------------
+// --- The type's shape ---
 
 test('mech: the slate plants two marks it can never cash itself', () => {
-  // The 2026-08-30 designer call, and the inverse of Iron's arrangement: Iron
-  // cashes Conduct eleven times and plants it zero, Mech plants Conduct twice
-  // and Haunt once and cashes neither. Pinned as the exact counts so a later
-  // slate adding Mech to a triggerTypes list has to come here and say so.
+  // Iron's arrangement inverted: Mech plants Conduct/Haunt and cashes neither.
   assert.ok(!statuses.Conduct.triggerTypes?.includes('Mech'), 'Mech can now detonate Conduct');
   assert.ok(!statuses.Haunt.spreadTriggerTypes?.includes('Mech'), 'Mech can now spread Haunt');
 
@@ -411,24 +324,18 @@ test('mech: the slate is fifteen rows with the authored shape', () => {
   const mechMoves = Object.values(moves).filter((m) => m.type === 'Mech');
   assert.strictEqual(mechMoves.length, 15, 'the authored slate is fifteen rows');
 
-  // Four magical rows against a roster whose best Intelligence is 45 — the
-  // finding, pinned so it cannot silently grow (docs/authoring-moves.md §10).
+  // Four magical rows against a roster whose best Intelligence is 45 — pinned so it cannot silently grow.
   assert.strictEqual(mechMoves.filter((m) => m.category === 'magical' && m.kind === 'damage').length, 4);
-  // Two heals, and one of them is the only self-target heal in the game.
   const heals = mechMoves.filter((m) => m.kind === 'heal');
   assert.strictEqual(heals.length, 2);
   assert.strictEqual(moves.salvage.target, 'self');
   assert.strictEqual(Object.values(moves).filter((m) => m.kind === 'heal' && m.target === 'self').length, 1);
 
-  // Every bracket row is a random one — the slate authors no fixed nonzero
-  // priority, which is a real identity call the table states only by omission.
   for (const move of mechMoves) {
     if (move.priority !== 0) assert.fail(`${move.id} authors a fixed nonzero bracket`);
   }
   assert.strictEqual(mechMoves.filter((m) => m.randomPriority).length, 2);
 
-  // No cleanse, no field effect, no drain, no recoil, no self-HP cost: Mech
-  // pays its bills in Burn (three rows) and in variance, not in HP.
   for (const move of mechMoves) {
     assert.ok(!move.cleanses, `${move.id} cleanses`);
     assert.ok(!move.fieldEffectApplication, `${move.id} sets a field`);
@@ -440,7 +347,7 @@ test('mech: the slate is fifteen rows with the authored shape', () => {
   assert.strictEqual(selfBurn.length, 3, 'three rows Burn their own caster');
 });
 
-// --- Distribution ---------------------------------------------------------
+// --- Distribution ---
 
 test('mech: every move id a hero, enemy or level-up pool points at actually exists', () => {
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
@@ -453,8 +360,6 @@ test('mech: every move id a hero, enemy or level-up pool points at actually exis
 });
 
 test('mech: no hero in the ROSTER lists a starting move in its own level-up pool', () => {
-  // Over the whole roster, not Mech's slice — Spirit's slate is what found
-  // `fortify` in both halves of Warden, and only the widened check could have.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   for (const [heroId, hero] of Object.entries(heroes)) {
     for (const moveId of progressionTable.moveTiers[heroId] ?? []) {
@@ -468,8 +373,6 @@ test('mech: both Mech heroes can afford their own kits and attack off their bett
     const hero = heroes[id];
     const cheapest = Math.min(...hero.moveIds.map((mid) => moves[mid].manaCost));
     assert.ok(cheapest <= hero.baseStats.manaPool, `${id} cannot afford its own cheapest starting move`);
-    // The north star's "no trap pick" at the kit level: both are Attack-first
-    // bodies (60/45 and 90/15), so neither kit may lead on Intelligence.
     const attacks = hero.moveIds.map((mid) => moves[mid]).filter((m) => m.kind === 'damage');
     assert.ok(attacks.length > 0, `${id} has no attack`);
     assert.ok(attacks.every((m) => m.category === 'physical'), `${id} attacks off its worse stat`);
@@ -477,17 +380,12 @@ test('mech: both Mech heroes can afford their own kits and attack off their bett
 });
 
 test('mech: Clockwork and Bellows share no pool entry, and split the slate by stat', () => {
-  // Distribution as a roster audit (docs/authoring-moves.md §10, five slates
-  // running): the failure this catches is two heroes reading differently and
-  // playing identically.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   const clockwork = progressionTable.moveTiers.forgewright ?? [];
   const bellows = progressionTable.moveTiers.steamColossus ?? [];
   assert.ok(clockwork.length > 0 && bellows.length > 0);
   for (const id of clockwork) assert.ok(!bellows.includes(id), `${id} is in both pools`);
 
-  // Every magical Mech row is Clockwork's (Int 45 against Bellows' 15), and
-  // Bellows takes no magical damage row at all.
   for (const id of bellows) {
     const move = moves[id];
     if (move.type === 'Mech' && move.kind === 'damage') {
@@ -497,8 +395,6 @@ test('mech: Clockwork and Bellows share no pool entry, and split the slate by st
 });
 
 test('mech: every authored Mech move has a holder', () => {
-  // Stone's reachability check — the opposite failure from a dangling id, and
-  // the one that has no other test.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   const held = new Set<string>();
   for (const hero of [...Object.values(heroes), ...Object.values(enemies)]) for (const id of hero.moveIds) held.add(id);

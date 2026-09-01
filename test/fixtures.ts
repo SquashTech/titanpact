@@ -9,7 +9,7 @@ export interface FixtureCombatant {
   side: Side;
 }
 
-/** Builds a 2v2 fight (2 active + 2 bench per side) from full-HP/full-mana fixture combatants. Test-only: starting resource fullness is a choice this helper makes for convenience, not an engine default (see createCombatant). */
+/** Builds a fight (first 2 per side active, rest benched) at full HP/mana — a test convenience, not an engine default. */
 export function createFightState(seed: number, sideA: FixtureCombatant[], sideB: FixtureCombatant[]): CombatState {
   const combatants: CombatState['combatants'] = {};
 

@@ -37,10 +37,7 @@ test('relics: no owned relics yields no modifiers', () => {
   assert.deepStrictEqual(relicTeamStatModifiers([], relics), {});
 });
 
-// --- The Guardian's Banner (docs/run-loop.md) --------------------------
-// The three fixed banners are the one part of the catalog that must NEVER
-// appear in a random offer, and the one part designed to be taken more than
-// once. Both properties are load-bearing for the post-Guardian choice.
+// --- The Guardian's Banner (docs/run-loop.md): never randomly offered, designed to stack ---
 
 test('relics: the three Guardian Banners are catalogued, in offer order', () => {
   assert.deepStrictEqual(
@@ -71,11 +68,7 @@ test('relics: the three Banners cover three different resources', () => {
   assert.deepStrictEqual(grantedStats, ['hp', 'manaPool', 'mpRegen']);
 });
 
-// --- Out-of-combat sheet parity ----------------------------------------
-// The bug this guards: relic grants reached the fight (buildCombatState) but
-// not the roster/hero sheet, which recomputed stats on its own and forgot
-// relics — so a claimed "team-wide +20 Speed" looked inert outside combat.
-// Both now go through entryStats.ts; these assert they can't diverge again.
+// --- Out-of-combat sheet parity: the sheet and buildCombatState both go through entryStats.ts ---
 
 test('entryStats: the out-of-combat sheet math equals the combatant a fight actually builds', () => {
   const relicIds = ['windcallersBanner', 'ironStandard'];
@@ -98,7 +91,6 @@ test('entryStats: the out-of-combat sheet math equals the combatant a fight actu
   );
 
   assert.deepStrictEqual(sheetMods, state.combatants['A:cinderKnight'].baselineStatModifiers);
-  // ...and the relic is genuinely in there, not merely equal-because-both-empty.
   assert.strictEqual(sheetMods.speed, 10);
   assert.strictEqual(sheetMods.defense, 10 + (classes.warrior.statGrants?.defense ?? 0));
 });

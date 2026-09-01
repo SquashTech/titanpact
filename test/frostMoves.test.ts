@@ -1,22 +1,4 @@
-// Frost's authored movepool (src/data/moves.ts, 2026-08-30) and the two engine
-// fields it is the first content to need: `requiresTargetStatus` (Glaciate,
-// Absolute Zero) and `conditionalPower.consumesStatus` (Cold Snap).
-//
-// Same discipline as test/fireMoves.test.ts and test/waterMoves.test.ts: these
-// assert the MECHANIC with Frost's moves as the vehicle, not Frost's numbers,
-// which are balance and will move. The facts that ARE pinned are the ones the
-// design table locks and the two that are easy to get wrong and hard to notice
-// afterwards:
-//
-//   1. a hard targeting gate is LEGALITY, not damage — an unmet gate fizzles
-//      the action for no mana rather than landing a weaker hit, and it is read
-//      LAST, after Stealth's redirect and Haunt's spread, so a gated strike
-//      bounced onto an unmarked partner cannot sneak through;
-//   2. a conditional multiplier lands on the formula's BasePower INPUT and
-//      never leaks into multiplierTerm (CLAUDE.md two-pipeline separation),
-//      and consuming the status is keyed off the multiplier that was ACTUALLY
-//      applied — a conditional move that does not author `consumesStatus`
-//      leaves the mark exactly where it found it.
+// Frost's movepool: requiresTargetStatus, conditionalPower.consumesStatus. Hand-off findings for this slate: docs/authoring-moves.md §10.
 
 import { firstStatusApplication } from '../src/engine/content';
 import { statusApplicationsOf } from '../src/engine/content';
@@ -37,7 +19,7 @@ import { hasStatus } from '../src/engine/state';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
-/** Flurry (Int 70, mono Frost) and Rime (Atk 65, mono Frost) attack; ironWarden/wildOracle defend — the shape the other move-slate tests use. */
+/** glacialWarden (Int) and rime (Atk) attack; ironWarden/wildOracle defend. */
 function frostFixture(seed: number) {
   return createFightState(
     seed,
@@ -52,18 +34,7 @@ function frostFixture(seed: number) {
   );
 }
 
-/**
- * The same two fixture problems every authored slate hits (authoring-moves.md
- * §8), solved once:
- *
- * - **Mana.** Frost's curve tops out at Avalanche's 75 and Absolute Zero /
- *   Ice Shatter's 70, all above every Frost hero's real pool. That is a live
- *   design finding (docs/combat.md), not something these tests should be
- *   gated on.
- * - **Lethality.** A defender that faints to the hit never reaches the riders,
- *   which would silently turn a consume test into a KO test. getMaxHp reads
- *   baseStats + statModifiers, so the hp modifier has to move with currentHp.
- */
+/** Unlimited mana for everyone and 1200 HP for side B, so riders resolve instead of KOs (hp modifier moves with currentHp because getMaxHp reads both). */
 function withDeepPools(state: CombatState): CombatState {
   const combatants = Object.fromEntries(
     Object.entries(state.combatants).map(([id, c]) => [
@@ -83,12 +54,12 @@ function afflict(state: CombatState, combatantId: string, statusId: string, magn
   return applyStatus(state, 1, combatantId, statuses[statusId], magnitude !== undefined ? { magnitude } : {}).state;
 }
 
-/** Stealth is duration-shaped and ticks at the START of a round, so one applied with no duration is stripped before any action resolves (statuses.ts). */
+/** Stealth ticks at the START of a round, so it needs a duration to survive until actions resolve. */
 function stealth(state: CombatState, combatantId: string): CombatState {
   return applyStatus(state, 1, combatantId, statuses.Stealth, { duration: 2 }).state;
 }
 
-/** Forces `combatantId` to act first regardless of the fixture's stat lines — Speed is the tiebreak within a bracket, so a big enough modifier settles it. */
+/** Forces `combatantId` to act first within its bracket. */
 function outspeeds(state: CombatState, combatantId: string): CombatState {
   const c = state.combatants[combatantId];
   return {
@@ -97,7 +68,7 @@ function outspeeds(state: CombatState, combatantId: string): CombatState {
   };
 }
 
-// --- The pool itself -------------------------------------------------------
+// --- The pool itself ---
 
 test('frost: the authored pool is exactly the fifteen designed moves, all Frost-typed', () => {
   const frost = Object.values(moves).filter((m) => m.type === 'Frost');
@@ -143,7 +114,7 @@ test('frost: Quick Freeze is the pool\'s only bracket play — everything else r
   }
 });
 
-// --- MoveDefinition.requiresTargetStatus (Glaciate, Absolute Zero) ---------
+// --- MoveDefinition.requiresTargetStatus (Glaciate, Absolute Zero) ---
 
 test('frost: statusGatedTargets keeps only the marked candidates, and passes an ungated move straight through', () => {
   const state = afflict(withDeepPools(frostFixture(400)), 'b1', 'Freeze');
@@ -167,9 +138,7 @@ test('frost: Glaciate lands on a Frozen foe', () => {
 test('frost: an unmet gate fizzles the action for NO mana rather than landing a weaker hit', () => {
   const state = withDeepPools(frostFixture(402)); // nobody is Frozen
   const result = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'glaciate', declaredTarget: 'b1' }], config);
-  // Against a round in which a1 does nothing at all, rather than against its
-  // mana before the round: the round-boundary regen tick (docs/mana.md) moves
-  // the number either way, and what is being asserted is that nothing was SPENT.
+  // Compared against an idle round, not pre-round mana: the regen tick moves the number either way.
   const idle = resolveRound(state, [], config);
 
   assert.ok(
@@ -189,9 +158,6 @@ test('frost: an unmet gate fizzles the action for NO mana rather than landing a 
 });
 
 test('frost: the gate reads the mark LIVE, so a Freeze applied earlier in the same round already counts', () => {
-  // Deep Chill from the faster hero, Glaciate from the slower one, both
-  // declared before either resolves. Same freshness rule the field-effect
-  // context and conditionalPower follow (resolveRound.ts).
   const state = outspeeds(withDeepPools(frostFixture(403)), 'a2');
   const actions: Action[] = [
     { kind: 'move', combatantId: 'a2', moveId: 'deepChill', declaredTarget: 'b1' },
@@ -209,9 +175,6 @@ test('frost: the gate reads the mark LIVE, so a Freeze applied earlier in the sa
 });
 
 test('frost: Stealth redirecting a gated strike onto an unmarked partner fizzles it rather than letting it land', () => {
-  // The reason the gate is applied AFTER the retargeting layers rather than
-  // before them: Stealth moves a single-target hit to the partner, and the
-  // partner was never a legal target for this move.
   const stealthed = stealth(afflict(withDeepPools(frostFixture(404)), 'b1', 'Freeze'), 'b1');
   const result = resolveRound(stealthed, [{ kind: 'move', combatantId: 'a1', moveId: 'glaciate', declaredTarget: 'b1' }], config);
 
@@ -223,7 +186,7 @@ test('frost: Stealth redirecting a gated strike onto an unmarked partner fizzles
   );
 });
 
-// --- conditionalPower.consumesStatus (Cold Snap) ---------------------------
+// --- conditionalPower.consumesStatus (Cold Snap) ---
 
 test('frost: Cold Snap doubles into a Frozen foe and spends the mark, and is a plain hit into a clean one', () => {
   const clean = withDeepPools(frostFixture(405));
@@ -256,10 +219,6 @@ test('frost: Cold Snap doubles into a Frozen foe and spends the mark, and is a p
 });
 
 test('frost: the conditional multiplier lands on BasePower and never leaks into multiplierTerm', () => {
-  // CLAUDE.md's two-pipeline separation, asserted the same way
-  // test/fireMoves.test.ts asserts it for Immolate: a BasePower-stage term and
-  // a damage-pipeline modifier are not interchangeable, and mixing them is
-  // invisible until two of them stack.
   const frozen = afflict(withDeepPools(frostFixture(406)), 'b1', 'Freeze');
   const result = resolveRound(frozen, [{ kind: 'move', combatantId: 'a2', moveId: 'coldSnap', declaredTarget: 'b1' }], config);
 
@@ -271,9 +230,7 @@ test('frost: the conditional multiplier lands on BasePower and never leaks into 
 });
 
 test('frost: a conditional move that does not author consumesStatus leaves the mark exactly where it found it', () => {
-  // Fire's Immolate is the control case — same conditionalPower shape, no
-  // consumption, so the field is genuinely opt-in rather than implied by the
-  // multiplier.
+  // Fire's Immolate is the control case: same conditionalPower shape, no consumption.
   assert.strictEqual(moves.immolate.conditionalPower?.consumesStatus, undefined);
   const burned = afflict(withDeepPools(frostFixture(407)), 'b1', 'Burn', 40);
   const result = resolveRound(burned, [{ kind: 'move', combatantId: 'a1', moveId: 'immolate', declaredTarget: 'b1' }], config);
@@ -287,11 +244,9 @@ test('frost: a conditional move that does not author consumesStatus leaves the m
   assert.strictEqual(hasStatus(result.state.combatants.b1, 'Burn'), true);
 });
 
-// --- Distribution ----------------------------------------------------------
+// --- Distribution ---
 
 test('frost: every move id a hero or level-up pool points at actually exists', () => {
-  // Nothing else catches a dangling id — the run layer only looks a move up
-  // when the hero is offered it, which can be several fights in.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   const { enemies } = require('../src/data/enemies') as typeof import('../src/data/enemies');
   for (const [heroId, hero] of Object.entries({ ...heroes, ...enemies })) {
@@ -309,17 +264,13 @@ test('frost: no Frost hero starts with a move it cannot pay for, or has a starte
     const cheapest = Math.min(...hero.moveIds.map((id) => moves[id].manaCost));
     assert.ok(cheapest <= hero.baseStats.manaPool, `${heroId} cannot afford its own cheapest starting move`);
     for (const moveId of progressionTable.moveTiers[heroId] ?? []) {
-      // levelUpMovePool filters unlocked moves out, so a starter in the pool is
-      // dead weight that can never be offered.
+      // levelUpMovePool filters unlocked moves out, so a starter in the pool can never be offered.
       assert.ok(!hero.moveIds.includes(moveId), `${heroId}'s pool lists its own starting move ${moveId}`);
     }
   }
 });
 
 test('frost: every hero that can be offered a gated move can also reach a Freeze — the key and the lock ship together', () => {
-  // A hero holding Absolute Zero with no way to mark anything would be the
-  // trap pick CLAUDE.md's north star forbids, and nothing else in the build
-  // would notice.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
   const marks = (moveId: string) => firstStatusApplication(moves[moveId])?.statusId === 'Freeze';
   for (const [heroId, hero] of Object.entries(heroes)) {

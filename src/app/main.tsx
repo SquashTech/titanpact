@@ -6,9 +6,7 @@ import { initSfx } from '../audio/sfx';
 import { installUiSfx } from '../audio/uiSfx';
 import './styles.css';
 
-// Audio is presentation, so it installs alongside the view and never from
-// the engine. Both calls are inert until the first user gesture unlocks the
-// AudioContext (browsers require that), so running them at import time is safe.
+// Audio is presentation; both are inert until the first user gesture unlocks the AudioContext.
 initSfx();
 installUiSfx();
 
