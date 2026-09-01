@@ -124,6 +124,63 @@ The stat bonuses above are the **node-kind** axis only — what `elite` costs re
 (§3 "Per-act difficulty scaling"), so an Act 4 `elite` fields its +10×2 plus three
 act-steps, and its heroes arrive at level 7 already evolved.
 
+### The two reward lanes (2026-09-01, per user direction)
+
+The Monsters / Skirmish split used to be a **naming + pool** split only: both lanes paid
+the same kind of reward, graded by difficulty, so `elite` simply out-paid `battle` on
+every axis at once and row 4's Elite-or-Battle pick collapsed into "how hard a fight do
+you want." The per-win payout tables in `App.tsx` (`goldRewardFor`, `trainingPointsFor`,
+`EQUIPMENT_DROP_CHANCE`/`LOOT_SOURCE`, all keyed on `EncounterMapNodeType` — the **map**
+node type, since `skirmish` and `battle` are indistinguishable once collapsed to
+`EncounterNodeType`) now make the two lanes pay in different currencies:
+
+| Node | Lane | Training Points | Gold | Equipment drop |
+|---|---|---|---|---|
+| `fight` (row 0 opener) | Monsters | 1 | 15-25 | **always**, act's standard curve |
+| `battle` (row 4) | Monsters | 1 | **30-45** | **always**, act's standard curve |
+| `skirmish` (row 2) | Skirmish | **2** | 15-25 | 25%, act's standard curve |
+| `elite` (row 4) | Skirmish | **2** | 15-25 | 55%, **one tier ahead** (`rarityWeightsFor(act, 'elite')`) |
+| `boss` | Guardian | **2** | 0 | 70%, one tier ahead |
+
+- **Monsters is the loot-and-gold lane.** The guaranteed drop was previously a hard-coded
+  special case for the row-0 opener; it is now the lane's rule. `battle` additionally
+  carries the fat gold band. The opener is held at the thin band on purpose — it is
+  deliberately the run's lightest fight and already ships a free item, and making it the
+  map's richest gold node would undercut everything after it.
+- **Skirmish is the XP lane.** Double the Training Points, plus the recruitable pool
+  (the Recruit Contract shot), paid for with the thin gold band and a drop that is a roll
+  rather than a promise. `elite` buys rarity, not quantity.
+- **Row 4 is now a real trade.** `elite`: 2 points, a recruitable roster, 55% at a
+  tier-ahead item, against a harder fight. `battle`: 1 point, double gold, a certain
+  item, against an easier one.
+
+**The Guardian pays 2, down from 3-4.** The old figure was the specific complaint — too
+much of the run's currency landing in a single beat — and it is no longer load-bearing
+now that the Banner (§3, always granted in acts 1-4) is the fight's headline reward.
+
+Net effect on the curve: an act pays **6-7 Training Points**, down from 8-11.
+
+**Scarcity is the point, and it prices two other things up.** The cut is deliberately
+more than a trim — it changes what a Training Point is worth relative to every other
+way of gaining power, and two of those get sharper:
+
+- **The raise-vs-recruit pivot** (`docs/progression.md`). A contract hero arrives at
+  the act's enemy level — 5 in Act 3, 7 in Act 4, 10 in Act 5 (`ENEMY_LEVEL_BY_ACT`,
+  `src/run/difficulty.ts`). Against an act that pays 6-7 points, claiming a level-5
+  hero mid-run is close to *four acts* of banked leveling arriving in one spend, on a
+  hero chosen because they fit the plan the run has actually turned into. That is the
+  intended shape: **strategic churn should be a live option, not a concession.** A
+  hero who is lagging is meant to be pivotable away from, and the scarcer the pooled
+  currency is, the more a ready-made replacement is worth against pouring more points
+  into the laggard. The roster cap (6, gaining requires terminating) is what keeps this
+  a decision rather than a free upgrade.
+- **The `upgradeReward` node** (2-3 points) is now worth roughly a third to a half of
+  an act's entire fight income in a single pick-1-of-3. Its value is deliberately
+  swingy: near-worthless to a player whose roster is already where they want it,
+  near-decisive to one holding a hero two levels short of an Evolution branch point.
+  That spread is the node doing its job — it is the strategic pull toward Evolution
+  the node was kept for (§4), and the XP cut is what gives it teeth.
+
 ### Winning a fight: the post-fight gates
 
 A won encounter resolves through up to four gates before the map comes back
@@ -430,10 +487,11 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   directly from `RosterEntry`/`HeroDefinition` rather than a live `Combatant` since no
   fight exists yet).
 - **Training Points now paid out per fight win, not only via `upgradeReward` nodes
-  (2026-08-16, second playtest; retuned 2026-08-26).** `App.tsx`'s `trainingPointsFor`
-  keys on the **map** node type — 1 for the act's opening `fight` (the light 2v2
-  against the non-recruitable mob pool), 2 for a normal `skirmish`/`battle`, 3-4 for
-  `elite`/`boss`. It takes a `MapNodeType` rather than an `EncounterNodeType`
+  (2026-08-16, second playtest; retuned 2026-08-26, relaned 2026-09-01).** `App.tsx`'s
+  `trainingPointsFor` keys on the **map** node type — 1 for Monsters (`fight`,
+  `battle`), 2 for Skirmish (`skirmish`, `elite`) and for the Guardian. The previous
+  difficulty grade (1 / 2 / 3-4) is superseded by the lane split — see "The two reward
+  lanes" in §2. It takes a `MapNodeType` rather than an `EncounterNodeType`
   precisely because `skirmish` and `battle` collapse to a mechanical `fight`
   encounter, so the opener is otherwise indistinguishable from its successors —
   `upgradeReward` nodes remain a second,
@@ -468,10 +526,10 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   gear that's already equipped, via `swapEquipment` (a true hero-to-hero swap — tap a
   filled slot then tap the matching slot on another hero, or drag it — never orphaning
   an item since both slots always end up occupied by *something*, possibly the other
-  hero's old item) or trashes it outright. Each act's opening Goblin fight (row 0) also
-  always grants one random Common item on top of its gold/training-point rewards
-  (`App.tsx` `handleFightResolved`), so the player exercises this loop from turn one
-  rather than waiting on `equipmentReward` node luck.
+  hero's old item) or trashes it outright. Every **Monsters** node (the row-0
+  opener and row 4's `battle`) also always grants one random act-curve item on top of its
+  gold/training-point rewards — see "The two reward lanes" above — so the player exercises
+  this loop from turn one rather than waiting on `equipmentReward` node luck.
 
 ## 4. What's still not built
 

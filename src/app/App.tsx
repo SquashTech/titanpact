@@ -31,6 +31,7 @@ import {
   rarityWeightsFor,
   type EquipmentDefinition,
   type EquipmentSlot,
+  type LootSource,
 } from '../run/equipment';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP, TOTAL_ACTS } from '../run/state';
 import {
@@ -282,9 +283,43 @@ function equipTestDagger(encounter: Encounter): Encounter {
   return { ...encounter, run: { ...encounter.run, roster } };
 }
 
-function goldRewardFor(nodeType: EncounterNodeType): number {
+/**
+ * The five encounter map-node types, the axis every per-fight payout below is
+ * keyed on. Keyed on the **map** node type rather than the collapsed
+ * `EncounterNodeType`: `skirmish` and `battle` both flatten to a mechanical
+ * `fight` encounter (handleNodeSelected's `encounterKind`), so a function
+ * taking the encounter kind physically cannot tell the two halves of the
+ * map's two-word vocabulary apart.
+ */
+type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss';
+
+/**
+ * ## The two reward lanes (2026-09-01, per user direction)
+ *
+ * The map's two-word vocabulary (CLAUDE.md: **Monsters** = `fight`/`battle`,
+ * **Skirmish** = `skirmish`/`elite`) used to be a naming + recruitability
+ * split only — elite simply out-paid battle on *every* axis at once, which
+ * made the mid-act Elite-or-Battle pick (docs/run-loop.md §1) a difficulty
+ * question rather than a reward one. The three tables below turn it into a
+ * trade:
+ *
+ * - **Monsters is the loot-and-gold lane** — a guaranteed drop and, for
+ *   `battle`, the fat gold band, but only 1 Training Point.
+ * - **Skirmish is the XP lane** — double the Training Points and a
+ *   recruitable roster, paid for with the thin gold band and a drop that is
+ *   a roll rather than a promise.
+ * - **The Guardian is its own thing** — no gold, and the Banner
+ *   (handleFightResolved) is the prize, so its XP no longer has to carry the
+ *   whole payout.
+ */
+function goldRewardFor(nodeType: EncounterMapNodeType): number {
+  // The Guardian pays in the Banner, not coin.
   if (nodeType === 'boss') return 0;
-  if (nodeType === 'elite') return 30 + Math.floor(Math.random() * 16); // 30-45
+  // Monsters' fat band. The row-0 opener is excluded: it is deliberately the
+  // run's lightest fight (see trainingPointsFor) and already ships a
+  // guaranteed drop — making it the map's richest gold node too would
+  // undercut every node after it.
+  if (nodeType === 'battle') return 30 + Math.floor(Math.random() * 16); // 30-45
   return 15 + Math.floor(Math.random() * 11); // 15-25
 }
 
@@ -293,42 +328,46 @@ function goldRewardFor(nodeType: EncounterNodeType): number {
  * "tougher fights grant more"; CLAUDE.md "After winning a fight, you are
  * given training points").
  *
- * Keyed on the **map** node type rather than the collapsed
- * EncounterNodeType, which is the whole reason this takes a MapNodeType:
- * `skirmish` and `battle` both flatten to a mechanical `fight` encounter
- * (handleNodeSelected's `encounterKind`), so a function taking the encounter
- * kind physically cannot tell the act's opening Goblin fight apart from the
- * normal fights that follow it.
- *
- * 1 for that opener (2026-08-26, per user direction — it is a deliberately
- * light 2v2 against the weak non-recruitable mob pool and was paying out the
- * same as a real fight), 2 for every normal fight after it, 3-4 for elite —
- * boss folds into the elite figure since no separate boss value was
- * specified.
+ * 1 for Monsters (`fight`, `battle`), 2 for Skirmish (`skirmish`, `elite`),
+ * 2 for the Guardian — 2026-09-01, per user direction, replacing a
+ * difficulty grade (1 / 2 / 3-4) that paid out roughly 8-11 an act. The
+ * Guardian's old 3-4 was the specific complaint: too much currency landing
+ * in one place, and no longer necessary now that the Banner is the fight's
+ * headline reward. An act now pays 6-7.
  */
-function trainingPointsFor(nodeType: MapNodeType): number {
-  if (nodeType === 'fight') return 1;
-  if (nodeType === 'skirmish' || nodeType === 'battle') return 2;
-  return 3 + Math.floor(Math.random() * 2); // 3-4
+function trainingPointsFor(nodeType: EncounterMapNodeType): number {
+  if (nodeType === 'fight' || nodeType === 'battle') return 1;
+  return 2;
 }
 
 /**
- * Per-fight equipment-drop odds beyond the Goblin fight's guaranteed drop
- * (handleSquadConfirmed's isGoblinFight branch, which uses the same act curve
- * but skips this chance roll). Elite/boss fights roll both more often AND one
- * loot tier ahead of the act they're in — `rarityWeightsFor(act, 'elite')`,
- * src/run/equipment.ts — so a tough fight is "higher % to drop higher tier
- * loot," not just a higher drop chance.
+ * Per-fight equipment-drop odds. Monsters drop **always** — that guarantee
+ * is the lane's whole identity, and it is what the row-0 opener's
+ * hard-coded drop used to be alone in having. Skirmish nodes roll for it
+ * instead; `elite`/`boss` roll both more often AND one loot tier ahead of
+ * the act they're in (`rarityWeightsFor(act, 'elite')`, src/run/equipment.ts)
+ * — so the Skirmish lane trades certainty for rarity.
  */
-const EQUIPMENT_DROP_CHANCE: Record<EncounterNodeType, number> = {
-  fight: 0.25,
+const EQUIPMENT_DROP_CHANCE: Record<EncounterMapNodeType, number> = {
+  fight: 1,
+  battle: 1,
+  skirmish: 0.25,
   elite: 0.55,
   boss: 0.7,
 };
 
-function equipmentDropFor(nodeType: EncounterNodeType, actNumber: number): EquipmentDefinition | null {
+/** Which act-rarity curve a node's drop rolls on — the Skirmish lane's tough half rolls a tier ahead. */
+const LOOT_SOURCE: Record<EncounterMapNodeType, LootSource> = {
+  fight: 'standard',
+  battle: 'standard',
+  skirmish: 'standard',
+  elite: 'elite',
+  boss: 'elite',
+};
+
+function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): EquipmentDefinition | null {
   if (Math.random() >= EQUIPMENT_DROP_CHANCE[nodeType]) return null;
-  const weights = rarityWeightsFor(actNumber, nodeType === 'fight' ? 'standard' : 'elite');
+  const weights = rarityWeightsFor(actNumber, LOOT_SOURCE[nodeType]);
   return pickWeightedEquipment(Object.values(equipment), 1, weights)[0] ?? null;
 }
 
@@ -532,31 +571,29 @@ export function App() {
   }
 
   function handleSquadConfirmed(squad: Squad, nodeId: string, nodeType: EncounterNodeType, encounter: Encounter) {
-    // The `fight` node (docs/run-loop.md "fight vs skirmish" — always row 0,
-    // the act's opening Goblin fight) always grants one random piece of gear,
-    // on top of the normal gold/training-point rewards — an early,
-    // guaranteed taste of the equip loop rather than leaving it to the
-    // reward-node economy's luck. It rolls the act's own standard curve
-    // rather than a hard-coded Common: in Act 1 that is ~65% Common anyway,
-    // and by Act 5 Commons no longer exist to hand out (rarityWeightsFor,
-    // src/run/equipment.ts). Rolled here, before the fight even starts, so
-    // the victory screen can spotlight the exact item that's coming —
-    // handleFightResolved below reuses this same value instead of re-rolling.
-    const mapNodeType = playerRun.map!.nodes[nodeId].type;
-    const isGoblinFight = mapNodeType === 'fight';
-    const equipmentReward = isGoblinFight
-      ? pickWeightedEquipment(Object.values(equipment), 1, rarityWeightsFor(playerRun.actNumber, 'standard'))[0] ?? null
-      : equipmentDropFor(nodeType, playerRun.actNumber);
+    // Every payout reads off the **map** node type, not the collapsed
+    // `nodeType` the fight itself runs on — see EncounterMapNodeType above:
+    // `skirmish` and `battle` are indistinguishable once flattened, and they
+    // now sit in opposite reward lanes.
+    //
+    // The Monsters lane's guaranteed drop (EQUIPMENT_DROP_CHANCE = 1) used to
+    // be a hard-coded special case for the row-0 opener alone; it is now the
+    // lane's rule, so there is no branch here. It rolls the act's own
+    // standard curve rather than a hard-coded Common: in Act 1 that is ~65%
+    // Common anyway, and by Act 5 Commons no longer exist to hand out
+    // (rarityWeightsFor, src/run/equipment.ts). Rolled here, before the fight
+    // even starts, so the victory screen can spotlight the exact item that's
+    // coming — handleFightResolved below reuses this same value instead of
+    // re-rolling.
+    const mapNodeType = playerRun.map!.nodes[nodeId].type as EncounterMapNodeType;
+    const equipmentReward = equipmentDropFor(mapNodeType, playerRun.actNumber);
     setScreen({
       kind: 'fight',
       nodeId,
       nodeType,
       squad,
       encounter,
-      goldReward: goldRewardFor(nodeType),
-      // The map node type, not `nodeType` — see trainingPointsFor: the
-      // opener and the later normal fights are indistinguishable once
-      // they collapse to the mechanical `fight` encounter kind.
+      goldReward: goldRewardFor(mapNodeType),
       trainingPointsReward: trainingPointsFor(mapNodeType),
       equipmentReward,
     });
