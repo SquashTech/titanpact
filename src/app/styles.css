@@ -132,6 +132,38 @@
   --shell-pad: 12px;
   --shell-gap: 10px;
 
+  /* One battlefield figure's height, band by band, plus the sum of them.
+     Every band below is declared from its own token here and the reservation
+     that holds a row open when a side is wiped out
+     (`.team-row .combatant-card`) is `--figure-h`, so the reservation cannot
+     drift from the thing it reserves.
+     ┄
+     It had drifted. The reservation was a hand-summed `181px` with the
+     arithmetic written in a comment — "stage 104 + name pill 24 + status band
+     26 + two bars 27" — and two of those three had since grown by 2px each. A
+     real figure measured 185px, so the instant both enemies went down and the
+     row fell back to its placeholders, the battlefield lost 4px and the whole
+     console under it jumped up. That is the shift this block exists to make
+     impossible, not just to correct: nothing here is added up by hand any
+     more.
+     ┄
+     `.eff-badge-row` is the one band with no token, because on the
+     battlefield it is always empty — `renderActiveSlot` (FightScreen) passes
+     no `effBadge`; only the target picker does, and that row reserves its own
+     16px. If a battlefield figure is ever given one, it needs a token here
+     too. */
+  --figure-stage-h: 104px;
+  --figure-name-h: 19px;
+  --figure-name-gap: 5px;
+  --figure-status-h: 24px;
+  --figure-status-gap: 4px;
+  --figure-bar-h: 13px;
+  --figure-bar-gap: 3px;
+  --figure-h: calc(
+    var(--figure-stage-h) + var(--figure-name-h) + var(--figure-name-gap) + var(--figure-status-h) +
+      var(--figure-status-gap) + var(--figure-bar-h) * 2 + var(--figure-bar-gap)
+  );
+
   /* Motion. --ease-out for state changes (hover, color, width), --ease-spring
      for anything that enters or pops — the slight overshoot is what makes an
      appearing element feel placed rather than teleported. Durations are
@@ -1594,9 +1626,11 @@ textarea,
 /* Holds the row open at a full figure's height so an .empty-slot placeholder
    — both active slots on a side once it's wiped out, with no bench left to
    auto-replace it — doesn't collapse the row and shift the scene underneath
-   it. 181px = stage 104 + name pill 24 + status band 26 + two bars 27. */
+   it. `--figure-h` is the sum of the band tokens the bands below are
+   themselves declared from (see :root), so it stays equal to a real figure on
+   its own; it used to be a hand-summed literal, and had fallen 4px behind. */
 .team-row .combatant-card {
-  min-height: 181px;
+  min-height: var(--figure-h);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1614,7 +1648,7 @@ textarea,
 .team-row .combatant-stage {
   position: relative;
   width: 100%;
-  height: 104px;
+  height: var(--figure-stage-h);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -1688,7 +1722,14 @@ textarea,
   gap: 5px;
   flex: none;
   max-width: 100%;
-  margin: 0 0 5px;
+  /* Pinned rather than left to its own text metrics. It was the last band of
+     the figure whose height nothing declared — it happened to come out at
+     19px from an 11px line plus 4px of padding, and the reservation that
+     holds a wiped row open had to guess at it. Pinning it also means a type
+     glyph a pixel taller than the name, or a name that wraps, can no longer
+     grow the figure and shove the console down. */
+  height: var(--figure-name-h);
+  margin: 0 0 var(--figure-name-gap);
   padding: 2px 8px;
   border-radius: var(--radius-pill);
   background: rgba(8, 10, 14, 0.62);
@@ -1717,7 +1758,7 @@ textarea,
 .target-row .resource-row {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--figure-bar-gap);
   width: 100%;
   flex: none;
 }
@@ -1730,7 +1771,7 @@ textarea,
 
 .team-row .bar-track,
 .target-row .bar-track {
-  height: 13px;
+  height: var(--figure-bar-h);
   margin-bottom: 0;
 }
 
@@ -1774,8 +1815,8 @@ textarea,
   position: relative;
   z-index: 2;
   width: 100%;
-  min-height: 24px;
-  margin: 0 0 4px;
+  min-height: var(--figure-status-h);
+  margin: 0 0 var(--figure-status-gap);
   gap: 4px;
   align-items: center;
   align-content: flex-start;
