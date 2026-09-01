@@ -10,6 +10,7 @@ import {
   addRosterEntry,
   terminateRosterEntry,
   replaceRosterEntry,
+  reorderRoster,
   RosterFullError,
   ROSTER_CAP,
 } from '../src/run/state';
@@ -92,6 +93,39 @@ test('run: replaceRosterEntry rejects an unknown terminated rosterId and a roste
 
   const collidingEntry = createRosterEntry('cinderKnight', 'wildOracle', heroes.wildOracle.moveIds);
   assert.throws(() => replaceRosterEntry(run, 'tidecaller', collidingEntry));
+});
+
+test('run: reorderRoster rewrites order without touching membership, and the arrangement is what a later pickSquad reads', () => {
+  const run = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle']);
+
+  // The battle-preview grid reads top-to-bottom: slots 0-1 are active, 2-3
+  // bench, 4-5 reserve (view/run/SquadSelectScreen.tsx). Arranging wildOracle
+  // and ironWarden into the active row is exactly this list.
+  const next = reorderRoster(run, ['wildOracle', 'ironWarden', 'cinderKnight', 'tidecaller']);
+  assert.deepStrictEqual(
+    next.roster.map((r) => r.rosterId),
+    ['wildOracle', 'ironWarden', 'cinderKnight', 'tidecaller']
+  );
+  assert.strictEqual(next.roster.length, run.roster.length);
+
+  // The point of persisting it: the next screen seeded from roster order —
+  // and the sub-4 auto-pick that skips the screen — leads with the pair the
+  // player put on top.
+  const squad = pickSquad(next.roster, next.roster.map((r) => r.rosterId));
+  assert.deepStrictEqual(squad.activeIds, ['wildOracle', 'ironWarden']);
+});
+
+test('run: reorderRoster tolerates a stale or partial list — unknown ids are dropped, unmentioned heroes keep their place at the back', () => {
+  const run = seedRoster(['cinderKnight', 'tidecaller', 'ironWarden', 'wildOracle']);
+
+  // 'stormRanger' was never recruited and 'tidecaller' is named twice: the
+  // caller is a view holding six slots that outlive any one roster, so this
+  // reorders rather than throwing.
+  const next = reorderRoster(run, ['stormRanger', 'wildOracle', 'tidecaller', 'tidecaller']);
+  assert.deepStrictEqual(
+    next.roster.map((r) => r.rosterId),
+    ['wildOracle', 'tidecaller', 'cinderKnight', 'ironWarden']
+  );
 });
 
 // --- Squad selection (bring-6-pick-4) -----------------------------------

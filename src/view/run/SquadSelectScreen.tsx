@@ -4,6 +4,7 @@ import { allCombatants } from '../../data/content';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition } from '../../engine/content';
 import type { RunState, RosterEntry } from '../../run/state';
+import { reorderRoster } from '../../run/state';
 import type { Squad } from '../../run/squad';
 import { pickSquad, requiredSquadSize } from '../../run/squad';
 import { rosterEntryTypes } from '../../run/progression';
@@ -127,8 +128,27 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
     setSelectedSlot(null);
   }
 
+  /**
+   * Commit the squad — and keep the arrangement.
+   *
+   * The grid seeds itself from roster order, and roster order used to be
+   * recruitment order and nothing else, so a player who spent this screen
+   * building an active pair and a bench found the exact same default waiting
+   * for them at the next fight and rebuilt it by hand, every fight, all run
+   * (2026-08-31, playtest). Writing the arrangement back to the roster is
+   * what makes it stick: `reorderRoster` moves membership nowhere, and the
+   * same order is what `pickSquad` already reads on the sub-4 rosters that
+   * skip this screen entirely.
+   *
+   * Nulls are dropped rather than preserved as gaps, which also normalizes a
+   * hole a swap left in the middle — the grid repacks from index 0 on the
+   * way back in, so an empty cell always sits at the end of the reserve row
+   * where it means "nobody else to bring".
+   */
   function handleConfirm() {
-    onConfirm(pickSquad(run.roster, pickedIds));
+    const squad = pickSquad(run.roster, pickedIds);
+    onRunChange(reorderRoster(run, slots.filter((id): id is string => id !== null)));
+    onConfirm(squad);
   }
 
   return (

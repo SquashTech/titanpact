@@ -4344,6 +4344,25 @@ textarea,
   opacity: 0.85;
 }
 
+/* How the move RESOLVES — its priority bracket and whether it is a spread
+   (MoveTraitChips, MoveTile.tsx). Its own register rather than another
+   accent-gold .move-eff-status, because everything in that color is a payload
+   the move delivers and these two are not: they are the terms it lands under.
+   Plain --text rather than a hue of their own — every colour on this button
+   is already spoken for (gold is a rider, blue is mana, teal is a buff, green
+   and red are the matchup), and an unclaimed sixth would be one more thing to
+   learn. Bright and wider-tracked against a row that is otherwise --text-dim
+   is enough to make the pair read as a stamp rather than as the first two
+   items of the rider list. Never dims: unlike a conditional gate, there is
+   nothing here that can be unmet. */
+.move-eff-trait {
+  flex-shrink: 0;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--text);
+  opacity: 0.85;
+}
+
 /* An unmet targeting gate ("Needs Freeze"). Off the accent entirely: every
    other chip on this line describes something the move WILL do, and the one
    that describes what is missing has to read as a condition rather than as a
@@ -7582,66 +7601,11 @@ textarea,
    exists to stop. Nothing left to style here beyond the half-scale size the
    component's own `sm` modifier already carries. */
 
-/*
- * The move detail popup (a tap on a kit chip opens it; a tap anywhere
- * closes it). Sits inside the shared .log-overlay scrim, like every other
- * modal here, but keeps the stage's own grammar rather than .log-panel's
- * flat gray rect: it takes the tapped move's type color as a lit top edge,
- * a tinted wash and a soft outer glow, so the card reads as the same object
- * as the chip that opened it.
- *
- * Sized to content — this replaced a fixed-height slab pinned under the kit,
- * where the height had to be frozen so a 1-line and a 2-line move couldn't
- * shove the figure around mid-comparison. Floating over the stage, nothing
- * is underneath it to push.
- */
-.draft-move-popup {
-  width: 100%;
-  max-width: 380px;
-  position: relative;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  padding-bottom: 8px;
-  border: 1px solid rgba(var(--move-type-rgb), 0.42);
-  background: radial-gradient(ellipse 120% 100% at 50% 0%, rgba(var(--move-type-rgb), 0.16), transparent 72%),
-    linear-gradient(180deg, var(--surface-raised), rgba(0, 0, 0, 0.3));
-  box-shadow: var(--hairline), 0 10px 32px rgba(0, 0, 0, 0.55), 0 0 22px rgba(var(--move-type-rgb), 0.18);
-  animation: draft-move-popup-in var(--dur-mid) var(--ease-out);
-}
-
-/* The lit top edge — same mark .combatant-card uses to say "whose power this
-   is", reused here for "which move this is". */
-.draft-move-popup::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 12%;
-  right: 12%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(var(--move-type-rgb), 0.85), transparent);
-}
-
-@keyframes draft-move-popup-in {
-  from {
-    opacity: 0;
-    transform: scale(0.94);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* The shared panel is now purely the text layout — the wrapper above owns
-   every surface treatment, so this strips the box off it entirely rather
-   than nesting two frames. */
-.draft-move-popup .move-info-panel {
-  margin-bottom: 0;
-  border: none;
-  border-radius: 0;
-  background: none;
-  padding: 11px 13px 6px;
-}
+/* The move detail popup a tap on a kit chip opens is now the combat move
+   dossier itself (.move-detail-panel — see HeroStage's StageMovePopup), so
+   the stage-flavored frame that used to live here is gone with it. It was a
+   handsome box around a card that said less than the one the fight screen
+   shows, and the box was the smaller half of that trade. */
 
 /* --- The bind (DraftScreen, .draft-bind-flare) ---------------------------
    Binding a starter used to be silent and nearly still: the socket in the
@@ -13473,14 +13437,6 @@ textarea,
   margin-bottom: 10px;
 }
 
-.move-info-label {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
 .move-info-placeholder {
   font-size: 11px;
   color: var(--text-dim);
@@ -13503,37 +13459,6 @@ textarea,
 .move-info-name {
   font-size: 14px;
   font-weight: 700;
-}
-
-.move-stat {
-  display: inline-flex;
-  align-items: baseline;
-}
-
-.move-stat strong {
-  font-size: 17px;
-  font-weight: 800;
-  margin-right: 3px;
-}
-
-.move-stat-power strong {
-  color: var(--accent);
-}
-
-.move-stat-heal strong {
-  color: var(--hp-high);
-}
-
-.move-stat-cost strong {
-  color: var(--mana);
-}
-
-.move-stat-unit {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-dim);
 }
 
 .move-info-kind {

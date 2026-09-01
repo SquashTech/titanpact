@@ -52,7 +52,7 @@ import { buildBeats, type Beat } from './buildBeats';
 import { playBeatSfx } from '../../audio/beatSfx';
 import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
-import { MoveKindBadge, TARGET_MODE_LABELS, healReadout, moveEffectSummary, riderTargetLabel, useLongPress } from '../shared/MoveTile';
+import { MoveKindBadge, MoveTraitChips, TARGET_MODE_LABELS, healReadout, moveEffectSummary, riderTargetLabel, useLongPress } from '../shared/MoveTile';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { AudioSettings } from '../shared/AudioSettings';
 import { ManaCost } from '../shared/ManaCost';
@@ -323,6 +323,13 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
       <div className="move-row-effect">
         {move.kind === 'damage' ? (
           <span className="move-eff-row">
+            {/* How it LANDS, ahead of what it lands on: the bracket it
+                resolves in and whether it reaches one enemy or both
+                (MoveTraitChips, MoveTile.tsx). Leading the row because both
+                are read before the matchups are worth anything — a 2x on the
+                right-hand enemy means something different if the move hits
+                them both, and the matchup chips list both either way. */}
+            <MoveTraitChips move={move} liveTargetMode={liveTargetMode} />
             {matchups.map(({ id, name, mult }) => (
               <span key={id} className={`move-eff-chip ${multClass(mult)}`}>
                 <span className="move-eff-name">{name}</span>
@@ -556,6 +563,12 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
           </span>
         ) : (
           <span className="move-eff-row">
+            {/* Same two chips as the damage branch, and they matter here at
+                least as much: whether a heal outruns the hit it is answering
+                is the whole question on Light's +1 brackets, and the summary
+                text beside them buries the target mode in a trailing clause
+                that a one-line clamp is free to eat. */}
+            <MoveTraitChips move={move} liveTargetMode={liveTargetMode} />
             <span className="move-effect-text">{moveEffectSummary(move, caster)}</span>
             {/* What it is worth RIGHT NOW, not what it does — the retribution
                 chip's problem exactly (content.ts doublesStatReductions).

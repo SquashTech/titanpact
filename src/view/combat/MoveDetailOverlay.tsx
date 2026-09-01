@@ -986,7 +986,18 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
  * transform-scaled design canvas, which on a zoomed browser rendered this card
  * at half the size of everything around it.
  */
-export function MoveDetailOverlay({ move, context, onClose }: { move: MoveDefinition; context?: MoveDossierContext; onClose: () => void }) {
+export function MoveDetailOverlay({
+  move,
+  context,
+  caster,
+  onClose,
+}: {
+  move: MoveDefinition;
+  context?: MoveDossierContext;
+  /** Who is casting, for the screens that hold a hero but no live fight — the draft stage and the Recruit Contract claim reach this overlay through StageMovePopup. Superseded by `context`, exactly as on MoveDetailCard. */
+  caster?: HealCaster;
+  onClose: () => void;
+}) {
   function closeAndStop(e: { stopPropagation: () => void }) {
     e.stopPropagation();
     onClose();
@@ -1004,7 +1015,7 @@ export function MoveDetailOverlay({ move, context, onClose }: { move: MoveDefini
         style={{ borderTopColor: getTypeColor(move.type), '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
         onClick={closeAndStop}
       >
-        <MoveDetailCard move={move} context={context} />
+        <MoveDetailCard move={move} context={context} caster={caster} />
         <div className="detail-close-hint">Tap anywhere to close</div>
       </div>
     </div>,

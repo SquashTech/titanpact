@@ -4,9 +4,9 @@ import type { MoveDefinition, StatKey, StatLine, TypeId } from '../../engine/con
 import type { HealCaster } from '../../engine/heal/healPipeline';
 import type { StatModifiers } from '../../engine/state';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
+import { MoveDetailOverlay } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from './HeroPortrait';
 import { ManaCost } from './ManaCost';
-import { MoveInfoPanel } from './MoveTile';
 import { TypeBadge } from './TypeBadge';
 import { STAT_COLORS, STAT_LABELS, computeStatTotal, statFraction } from './StatBars';
 
@@ -229,24 +229,21 @@ export function StageKit({ moveIds, onPick }: { moveIds: readonly string[]; onPi
 /**
  * Move detail as an overlay rather than a slab pinned under the kit: it
  * appears over the stage, right where the eye already is, and a tap anywhere
- * dismisses it (same contract as the in-combat long-press move popup). It
- * carries the move's own type color, so the card still reads as the same
- * object as the chip that opened it.
+ * dismisses it (same contract as the in-combat long-press move popup).
+ *
+ * It is now that popup, not a lookalike of it. This used to open the
+ * one-line `MoveInfoPanel` — name, type chip, PHY/MAG chip, POW/MP numbers,
+ * flavor line — inside a stage-flavored frame of its own, which is the exact
+ * "five competing rectangles" card MoveDetailOverlay's dossier replaced in
+ * combat months ago. So the draft and the Recruit Contract claim, the two
+ * screens where a player commits to a hero's kit for the rest of a run, were
+ * the only places left showing LESS about a move than a 500ms hold does
+ * mid-fight: no priority bracket, no rider list, no resolved heal, no target
+ * mode. Same overlay now, minus the forecast — a stage has no fight to
+ * forecast against, which is what `caster` (rather than a `context`) says.
  */
 export function StageMovePopup({ move, caster, onClose }: { move: MoveDefinition; caster?: HealCaster; onClose: () => void }) {
-  return (
-    <div className="log-overlay" onClick={onClose}>
-      <div
-        className="draft-move-popup"
-        role="dialog"
-        aria-label={`${move.name} details`}
-        style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
-      >
-        <MoveInfoPanel move={move} caster={caster} />
-        <div className="move-popup-hint">Tap anywhere to close</div>
-      </div>
-    </div>
-  );
+  return <MoveDetailOverlay move={move} caster={caster} onClose={onClose} />;
 }
 
 /** The other candidates, waiting in the dark. */

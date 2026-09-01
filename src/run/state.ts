@@ -262,3 +262,36 @@ export function replaceRosterEntry(run: RunState, terminatedRosterId: string, ne
   }
   return { ...run, roster: run.roster.map((r) => (r.rosterId === terminatedRosterId ? newEntry : r)) };
 }
+
+/**
+ * Rewrites roster ORDER — membership is untouched, and any id the caller
+ * omits keeps its existing relative position at the back.
+ *
+ * Roster order was already load-bearing: it seeds the battle-preview screen's
+ * 2x3 grid (active / bench / reserve, view/run/SquadSelectScreen.tsx) and it
+ * is what `pickSquad` reads when a sub-4 roster skips that screen entirely.
+ * It just had no way to be *set*, so every fight re-proposed the recruitment
+ * order and a player who had arranged their squad last fight arranged it
+ * again from scratch this fight (2026-08-31, playtest). Confirming a squad
+ * now writes the arrangement back here, which is what makes it the default
+ * next time.
+ *
+ * Tolerant of a partial or stale list on purpose: the caller is a view
+ * holding six slots that outlive any single roster, so an id that has since
+ * been terminated is dropped rather than throwing, and a hero recruited
+ * between arrangements simply keeps its place at the end. Duplicates are
+ * ignored after the first mention for the same reason — this reorders, and a
+ * reorder can never change what is on the roster.
+ */
+export function reorderRoster(run: RunState, orderedRosterIds: readonly string[]): RunState {
+  const seen = new Set<string>();
+  const front: RosterEntry[] = [];
+  for (const id of orderedRosterIds) {
+    if (seen.has(id)) continue;
+    const entry = run.roster.find((r) => r.rosterId === id);
+    if (!entry) continue;
+    seen.add(id);
+    front.push(entry);
+  }
+  return { ...run, roster: [...front, ...run.roster.filter((r) => !seen.has(r.rosterId))] };
+}

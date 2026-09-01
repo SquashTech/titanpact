@@ -6,7 +6,6 @@ import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
 import { STAT_LABELS } from './StatBars';
-import { TypeBadge } from './TypeBadge';
 import { ElementGlyph } from './elementIcons';
 import { MoveKindGlyph, type MoveKindGlyphKind } from './statIcons';
 import { ManaCost } from './ManaCost';
@@ -223,6 +222,90 @@ export const TARGET_MODE_LABELS: Record<MoveDefinition['target'], string> = {
   randomAlly: 'Random Ally',
   randomEnemy: 'Random Enemy',
 };
+
+/**
+ * The target modes that hit more than one slot at once — VGC's "spread".
+ *
+ * The random modes are deliberately NOT here even though their pool is the
+ * same one `bothAllies`/`bothEnemies` resolve from (content.ts TargetMode):
+ * exactly one combatant is drawn, so a Rising Static labelled Spread would
+ * promise two hits and land one. And there is no spread damage reduction in
+ * this game (CLAUDE.md, "doubles-only"), which is precisely why the label is
+ * worth showing — a spread move is strictly two hits for one mana bill, with
+ * no penalty term to discount it by.
+ */
+const SPREAD_TARGET_MODES: ReadonlySet<MoveDefinition['target']> = new Set(['bothEnemies', 'bothAllies', 'allOthers']);
+
+export function isSpreadTarget(target: MoveDefinition['target']): boolean {
+  return SPREAD_TARGET_MODES.has(target);
+}
+
+/**
+ * The two facts about HOW a move resolves that the move button never said out
+ * loud: which priority bracket it goes in, and whether it hits one slot or
+ * both.
+ *
+ * Both are locked mechanics (CLAUDE.md — "Priority uses integer brackets;
+ * Speed is the tiebreaker within a bracket", "No spread damage reduction"),
+ * and both are decisions rather than trivia in a command-then-resolve game:
+ * whether your heal lands before the hit that would make it moot, and whether
+ * one press answers both enemies. The button carried neither. Priority
+ * appeared only in its exotic forms — the conditional bracket and the random
+ * one, each with a chip of its own — so the eleven moves with a plain flat +1
+ * were the ones that said nothing, and the matchup chips beside them list
+ * both enemies whether or not the move actually reaches both.
+ *
+ * They lead the effect row rather than joining the rider chips downstream of
+ * it: a rider says what happens when the move lands, and these two say
+ * whether and how it lands at all. `.move-eff-trait` gives them their own
+ * register for the same reason (styles.css) — the accent-gold rider chips are
+ * a list of payloads, and these are not payloads.
+ *
+ * `liveTargetMode` is the board's answer where the board has one (Arcane's
+ * Overload spreads only under Magical Surge — content.ts conditionalTarget),
+ * so the chip tracks what pressing the button would actually do. That move's
+ * own conditional-target chip still states the rule; this one states the
+ * current answer, the same split the mana gem and the ramp chip already use.
+ */
+export function MoveTraitChips({
+  move,
+  liveTargetMode,
+}: {
+  move: MoveDefinition;
+  /** What the move will really target if pressed right now (engine/state.ts resolveTargetMode). Omit outside combat, where there is no board to read and the authored mode is the honest answer. */
+  liveTargetMode?: MoveDefinition['target'];
+}) {
+  const target = liveTargetMode ?? move.target;
+  // A move whose bracket is drawn from a list has no flat bracket to print —
+  // `priority` is still authored on it (the field is required) and is dead
+  // (content.ts randomPriority), and the row already carries a chip that says
+  // so honestly. Printing both would put two different brackets on one button.
+  const bracket = move.randomPriority?.length ? 0 : move.priority;
+  if (!bracket && !isSpreadTarget(target)) return null;
+  return (
+    <>
+      {bracket !== 0 && (
+        <span
+          className="move-eff-trait"
+          title={
+            bracket > 0
+              ? `Priority +${bracket} — resolves before every priority-0 move, whatever the Speed`
+              : `Priority ${bracket} — resolves after every priority-0 move, whatever the Speed`
+          }
+        >
+          {bracket > 0 ? '↟' : '↡'} Priority {bracket > 0 ? `+${bracket}` : bracket}
+        </span>
+      )}
+      {/* Two arrows for two targets, deliberately from the same arrow family
+          as the bracket glyph above — the pair has to read as one stamp. */}
+      {isSpreadTarget(target) && (
+        <span className="move-eff-trait" title={`Spread — hits ${TARGET_MODE_LABELS[target]}, at no damage penalty`}>
+          ⇉ Spread
+        </span>
+      )}
+    </>
+  );
+}
 
 /**
  * Where a status rider actually lands, when that is not simply the move's own
@@ -751,69 +834,16 @@ export function MoveButtonReplica({
         {move.kind === 'buff' && <span className="move-power move-power-empty" aria-hidden="true" />}
         <MoveKindBadge move={move} />
       </div>
+      {/* Same shape as MoveRow's non-damage branch, traits included — a move
+          being learned goes in the same bracket and hits the same number of
+          slots as the one being pressed. No `liveTargetMode`: there is no
+          board here for a conditional target to read. */}
       <div className="move-row-effect">
-        <span className="move-effect-text">{moveEffectSummary(move, caster)}</span>
+        <span className="move-eff-row">
+          <MoveTraitChips move={move} />
+          <span className="move-effect-text">{moveEffectSummary(move, caster)}</span>
+        </span>
       </div>
     </button>
-  );
-}
-
-interface MoveInfoPanelProps {
-  move: MoveDefinition | null;
-  /** The hero this panel is describing the move FOR, so a heal reads as real hit points rather than as its authored baseline (healReadout). */
-  caster?: HealCaster;
-  /** Shown above the move name while a move is loaded, e.g. "Hover or tap a move". Omit for no label row. */
-  label?: string;
-  /** Shown in place of move details when nothing is loaded yet. */
-  placeholder?: string;
-}
-
-/**
- * Fixed-position move detail readout paired with MoveTile — see MoveTile's
- * doc comment for why this isn't a cursor-anchored tooltip. Power/heal and
- * mana cost share the name/type/category row rather than getting a row of
- * their own — one fewer line keeps the panel short enough that a full
- * 6-hero roster doesn't push LevelUpScreen into scrolling.
- */
-export function MoveInfoPanel({ move, caster, label, placeholder = 'Hover or tap a move to see its details.' }: MoveInfoPanelProps) {
-  const heal = healReadout(move ?? undefined, caster);
-  return (
-    <div className="move-info-panel">
-      {move ? (
-        <>
-          {label && <div className="move-info-label">{label}</div>}
-          <div className="move-info-head">
-            <span className="move-info-name">{move.name}</span>
-            <TypeBadge type={move.type} />
-            <CategoryBadge category={move.category} />
-            {move.kind === 'damage' && move.basePower != null && (
-              <span className="move-stat move-stat-power">
-                <strong>{move.basePower}</strong>
-                <span className="move-stat-unit">POW</span>
-              </span>
-            )}
-            {heal && (
-              <span className="move-stat move-stat-heal">
-                <strong>{heal.value}</strong>
-                {/* "HP" only once the number IS hit points. Unresolved it is
-                    still the authored HealPower, and calling that HP would be
-                    the exact lie healReadout exists to avoid. */}
-                <span className="move-stat-unit">{heal.resolved ? 'HP' : 'HEAL'}</span>
-              </span>
-            )}
-            <span className="move-stat move-stat-cost">
-              <strong>{move.manaCost}</strong>
-              <span className="move-stat-unit">MP</span>
-            </span>
-            <span className="move-info-kind">
-              {TARGET_MODE_LABELS[move.target]} &middot; {moveKindLabel(move)}
-            </span>
-          </div>
-          {move.description && <div className="move-info-desc">{move.description}</div>}
-        </>
-      ) : (
-        <div className="move-info-placeholder">{placeholder}</div>
-      )}
-    </div>
   );
 }
