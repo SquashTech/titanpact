@@ -32,8 +32,8 @@ function formatCell(mult: number): string {
  * the 9-status condition catalog (src/data/statuses.ts) — the same
  * definitions StatusDetailOverlay reads for its live in-combat readout, just
  * presented as a static list instead of one instance's magnitude/duration.
- * Read-only: this is the current fixture chart, not the authored balance
- * content (see typechart.ts's placeholder warning).
+ * Read-only: the matrix rendered here is the authored chart (typechart.ts),
+ * so what a player reads off this table is what the damage pipeline applies.
  */
 export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
   const [tab, setTab] = useState<Tab>(initialTab);

@@ -33,6 +33,14 @@ in `/data`; the authoring rule above is what governs assignment.)
 boss/threat type, not a standard roster option. Its chart row/column is deliberately
 lopsided; that's a feature, not a tuning bug to "fix."
 
+**The lopsidedness is purely defensive.** Ancient's *column* resists all 14 other
+types (0.5× each — the fantasy is "almost impossible to burst down"). Its *attacker
+row is empty*: **every Ancient attack resolves at exactly 1×**, super-effective
+against nothing and resisted by nothing. It had a single `Ancient → Mech = 2` cell,
+removed 2026-09-01 — it taxed one type for no design reason, and Ancient's threat is
+meant to come from the length of the fight, not from an offensive edge. Do not add
+offensive cells to that row.
+
 ---
 
 ## Effectiveness resolution
@@ -55,27 +63,56 @@ matching both — STAB is a single 1.25× term).
 
 ---
 
-## Known balance state (NOT yet resolved — these are tracked tuning issues)
+## Known balance state
 
-The chart is playable but knowingly mistuned in these spots. Carry these forward as
-open tuning work, not as settled values:
+### The chart is authored (2026-09-01)
 
-- **Nature and Beast are fragile** — each currently carries **three weaknesses**,
-  which makes them hard to justify drafting.
+`typechart.ts` was a placeholder fixture for a long time — a minimal matrix built to
+exercise the engine, carrying a "do not hand-tune this into *the* chart" banner. A
+full designer pass promoted it. The banner is gone; the matrix in `/data` is now the
+chart, and cells are tuned in place rather than replaced wholesale.
 
-These are balance-tuning items, not structural changes. Adjust in `/data`, playtest,
-don't silently rewrite the type philosophy to paper over them.
+The pass added **15 cells** (2× cells 31 → 38, 0.5× 44 → 51; neutral cells 67% → 60%
+of the matrix). It was motivated by the chart reading as *thin* — too many matchups
+resolved to a flat 1×, so type identity wasn't doing enough work in a fight. Four
+motifs carry the new cells, and new cells should extend one of them rather than
+land ad hoc:
+
+- **Magic vs. machine** — Arcane and Mech are a mutual 2× rivalry, deliberately the
+  same shape as Light/Shadow.
+- **The intangible** — Spirit resists Iron and can't reach Mech (no soul to touch);
+  Arcane's binding wards are what *does* get through to it.
+- **Sensors** — Mech hits what it can see, so Shadow resists it and Water gets in.
+- **Instinct over intellect** — Beast resists Mind and hits it hard.
+
+### Resolved: Nature and Beast's fragility
+
+Both carried **three weaknesses with nothing compensating**, which made them hard to
+justify drafting. Fixed from opposite directions:
+
+- **Beast** gained a resistance — `Mind → Beast = 0.5`, instinct has no argument to
+  lose. Now 3 weaknesses vs. 3 resistances.
+- **Nature** gained a resistance *and* a weakness — `Storm → Nature = 0.5` (a forest
+  grounds the lightning and breaks the wind) plus `Shadow → Nature = 2` (lightless
+  rot). Now 4 vs. 4: not softened, but given more action in both directions, which
+  was the point of the pass.
 
 ### Resolved: Light/Shadow over-resist
 
-Light and Shadow used to resist each other (a mutual 0.5×), which was flagged above
-as over-tuned defensively. A chart pass retuned them to **mutual 2× weakness**
-instead — Light and Shadow now hit each other hard rather than shrugging each other
-off — and gave each a shared weakness to **Spirit** (2×). Net profile for both is now
-2 weaknesses vs. 1 resistance (Light resists Fire; Shadow resists Mind), so this is no
-longer an over-resist problem. Not yet playtested at this new setting — watch whether
-it swings the other way into fragility, the same failure mode Nature/Beast already
-have.
+Light and Shadow used to resist each other (a mutual 0.5×), flagged as over-tuned
+defensively. An earlier pass retuned them to **mutual 2× weakness** — they hit each
+other hard rather than shrugging each other off — and gave each a shared weakness to
+**Spirit**. That left them at 2 weaknesses vs. only **1** resistance, i.e. swung into
+the opposite failure mode. The 2026-09-01 pass gave each a second resistance:
+`Arcane → Light = 0.5` (consecration sheds woven spellcraft) and `Mech → Shadow = 0.5`
+(sensors can't lock onto what won't be seen). Light also picked up a third weakness,
+`Mind → Light = 2` — doubt unmakes conviction. That direction is the one arguable cell
+in the pass: the opposite reading (conviction is precisely what shrugs off doubt) is
+just as defensible, and it was taken this way because Mind was the chart's weakest
+type and needed the offensive target. Watch it in playtest.
+
+None of this is playtested yet. Adjust in `/data`, playtest, don't silently rewrite
+the type philosophy to paper over a bad matchup.
 
 ---
 
