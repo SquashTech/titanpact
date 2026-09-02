@@ -525,7 +525,7 @@ export const progressionTable: ProgressionTable = {
             kind: 'utility',
             name: 'Thunderhead',
             description: 'Gets there first, marks everything, and feeds on what it marks.',
-            statGrants: { speed: 20 },
+            statGrants: { speed: 30 },
             unlocksMoveIds: [],
             grantsPassiveIds: ['feedbackLoop'],
           },

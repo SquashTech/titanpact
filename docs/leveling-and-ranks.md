@@ -300,6 +300,13 @@ identity.
 > that too: Riptide's Tidecaller has Lizard Rush, Rime's Avalanche has Snowball. What
 > stays true is that a mono path offering *only stats* cannot compete.
 >
+> Tempest's Thunderhead breaks the other half (2026-09-02): +30 Speed ties Lightning
+> Rod's net 30 rather than sitting under it, and it carries Feedback Loop on top. The
+> designer's read is that a grant spent entirely on ONE axis that is neither offense
+> nor defense is not the same 30 points as a mixed line — Speed only orders actions —
+> and that 65 to 95 is worth being the loudest thing on the node. Watch it: if a mono
+> path can out-pay both grafts, the clause was measuring the wrong thing.
+>
 > **3. A GRAFT path pays three ways** — more stats, the new type, and a line of
 > that type's moves via `learnableMoveIds` (below). Three payoffs against the
 > mono path's two, because the graft is also giving up the passive. STAB on the
