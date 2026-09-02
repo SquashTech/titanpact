@@ -13,7 +13,7 @@ import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import { matchesTrigger, collectPassiveDamageModifiers } from '../src/engine/combat/passiveEngine';
-import { getEffectiveStat } from '../src/engine/state';
+import { getEffectiveStat, hasStatus } from '../src/engine/state';
 import { resolveMultiplierTerm } from '../src/engine/damage/damagePipeline';
 import type { CombatState, PassiveInstance } from '../src/engine/state';
 import { equipmentPassiveGrants, relicTeamPassiveGrants, mergePassiveGrants, toPassiveInstances } from '../src/run/passives';
@@ -238,6 +238,105 @@ test('passives: two stacks of a oncePerFight passive still fire only once', () =
 // --- Bloodthirsty: PassiveConditionalStatGrants, resolved live in getEffectiveStat ---
 
 const boardOf = (state: CombatState) => ({ active: state.activeFieldEffect, defs: fieldEffects, board: { state, passives } });
+
+// --- Frozen Stone (Rime's Glacier): the StatChanged hook, a positive-delta gate, a rolled target ---
+
+/** a1 buffs its own Defense; frostArmor is +20 Defense to one ally. */
+const guardSelf: Action = { kind: 'move', combatantId: 'a1', moveId: 'frostArmor', declaredTarget: 'a1' };
+const frozenEnemies = (state: CombatState) => ['b1', 'b2'].filter((id) => hasStatus(state.combatants[id], 'Freeze'));
+
+test('passives: Frozen Stone freezes exactly one enemy when its owner\'s Defense rises', () => {
+  const state = withPassive(twoVTwoFixture(360), 'a1', 'frozenStone');
+  const { state: next, events } = resolveRound(state, [guardSelf], config);
+
+  assert.strictEqual(frozenEnemies(next).length, 1, 'one of the two, not both — this is a rolled target, not a spread');
+  assert.ok(events.some((e) => e.type === 'PassiveTriggered' && e.combatantId === 'a1' && e.passiveId === 'frozenStone'));
+});
+
+test('passives: Frozen Stone reads the SIGN — a Defense debuff is a stat change, but not a rise', () => {
+  const state = withPassive(twoVTwoFixture(361), 'b1', 'frozenStone'); // the hero being peeled holds it
+  const { state: next } = resolveRound(
+    state,
+    [{ kind: 'move', combatantId: 'a1', moveId: 'rendArmor', declaredTarget: 'b1' }],
+    config
+  );
+
+  assert.strictEqual(frozenEnemies(next).length, 0);
+  assert.ok(!hasStatus(next.combatants.a1, 'Freeze'), 'and nothing lands on the attacker either');
+});
+
+test('passives: Frozen Stone reads the STAT — a Speed buff on its owner does nothing', () => {
+  const state = withPassive(twoVTwoFixture(362), 'a1', 'frozenStone');
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'charge' }], config);
+  assert.strictEqual(frozenEnemies(next).length, 0);
+});
+
+test('passives: Frozen Stone is relative to its OWNER — a partner\'s Defense rising is not its own', () => {
+  const state = withPassive(twoVTwoFixture(363), 'a1', 'frozenStone');
+  const { state: next } = resolveRound(
+    state,
+    [{ kind: 'move', combatantId: 'a2', moveId: 'frostArmor', declaredTarget: 'a2' }],
+    config
+  );
+  assert.strictEqual(frozenEnemies(next).length, 0);
+});
+
+test('passives: a rolled passive target does not always land on the same enemy', () => {
+  const hit = new Set<string>();
+  for (let seed = 0; seed < 40; seed++) {
+    const state = withPassive(twoVTwoFixture(seed), 'a1', 'frozenStone');
+    const { state: next } = resolveRound(state, [guardSelf], config);
+    for (const id of frozenEnemies(next)) hit.add(id);
+  }
+  assert.deepStrictEqual([...hit].sort(), ['b1', 'b2'], 'both slots are reachable — the draw is real, not a fixed slot order');
+});
+
+test('passives: the rolled target draws RNG only when a passive asks for one', () => {
+  const bare = twoVTwoFixture(364);
+  const held = withPassive(bare, 'a1', 'frozenStone');
+  const without = resolveRound(bare, [guardSelf], config);
+  const with_ = resolveRound(held, [guardSelf], config);
+
+  assert.notDeepStrictEqual(with_.state.rngState, without.state.rngState, 'the draw is real');
+  // And the same board with an unrelated passive costs exactly what no passive costs.
+  const unrelated = resolveRound(withPassive(bare, 'a1', 'firestarter'), [guardSelf], config);
+  assert.deepStrictEqual(unrelated.state.rngState, without.state.rngState);
+});
+
+// --- Static Tide (Riptide's Maelstrom): a source-role reaction that lands on the DEFENDER ---
+
+const waterHitByOwner: Action = { kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' };
+
+test('passives: Static Tide plants Conduct on the hero its owner just hit with a Water move, and not on the owner', () => {
+  const state = withPassive(twoVTwoFixture(340), 'a2', 'staticTide');
+  const { state: next, events } = resolveRound(state, [waterHitByOwner], config);
+
+  assert.ok(hasStatus(next.combatants.b1, 'Conduct'), 'the defender is left conducting');
+  assert.ok(!hasStatus(next.combatants.a2, 'Conduct'), 'triggerTarget, not triggerSubject — the source role must not mark itself');
+  assert.ok(events.some((e) => e.type === 'PassiveTriggered' && e.combatantId === 'a2' && e.passiveId === 'staticTide'));
+});
+
+test('passives: Static Tide reads the move TYPE — a Fire hit from the same owner plants nothing', () => {
+  const state = withPassive(twoVTwoFixture(341), 'a1', 'staticTide');
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'ember', declaredTarget: 'b1' }], config);
+
+  assert.ok(!hasStatus(next.combatants.b1, 'Conduct'));
+});
+
+test('passives: Static Tide is attribution, not proximity — an ALLY\'s Water move does not plant it', () => {
+  const state = withPassive(twoVTwoFixture(342), 'a1', 'staticTide'); // a1 holds it, a2 does the hitting
+  const { state: next } = resolveRound(state, [waterHitByOwner], config);
+
+  assert.ok(!hasStatus(next.combatants.b1, 'Conduct'));
+});
+
+test('passives: Static Tide marks EVERY target of a spread Water move — one DamageDealt each', () => {
+  const state = withPassive(twoVTwoFixture(343), 'a2', 'staticTide');
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'deluge', declaredTarget: 'b1' }], config);
+
+  assert.ok(hasStatus(next.combatants.b1, 'Conduct'));
+  assert.ok(hasStatus(next.combatants.b2, 'Conduct'));
+});
 
 test('passives: Bloodthirsty is OFF with no Bleeding enemy and ON the moment one appears', () => {
   const base = twoVTwoFixture(340);

@@ -16,7 +16,7 @@ import {
   hasStatus,
   hasAffordableMoveInFight,
   resolveManaCost,
-  resolveRandomBasePower,
+  resolveCastBasePower,
   resolveTargetMode,
   getEffectiveStat,
   getMaxHp,
@@ -115,7 +115,9 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
     rolledBasePower != null &&
     move.randomBasePower != null &&
     rolledBasePower > (move.randomBasePower.min + move.randomBasePower.max) / 2;
-  const boosted = forceBonus > 0 || rolledHigh;
+  // A ramp that has actually accrued reads as boosted; the first cast, still at its authored figure, does not.
+  const ramped = move.basePowerGainOnUse != null && rolledBasePower != null && rolledBasePower > (move.basePower ?? 0);
+  const boosted = forceBonus > 0 || rolledHigh || ramped;
 
   return (
     <button
@@ -136,6 +138,8 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
             title={
               rolledBasePower != null && move.randomBasePower != null
                 ? `Rolled this round: ${rolledBasePower} of ${move.randomBasePower.min}-${move.randomBasePower.max}${forceBonus > 0 ? ` · Elemental Force: +${forceBonus}` : ''}`
+                : move.basePowerGainOnUse != null
+                ? `Stacked to ${rolledBasePower ?? move.basePower} of ${move.basePowerGainOnUse.max} this fight${forceBonus > 0 ? ` · Elemental Force: +${forceBonus}` : ''}`
                 : forceBonus > 0
                   ? `Elemental Force: +${forceBonus} Base Power`
                   : undefined
@@ -251,6 +255,16 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
             {move.selfHpCost != null && <span className="move-eff-status">-{selfHpCost} HP</span>}
             {move.manaDiscountOnUse != null && (
               <span className="move-eff-status">Next {Math.max(0, cost - move.manaDiscountOnUse)} MP</span>
+            )}
+            {move.basePowerGainOnUse && (
+              <span className="move-eff-status">
+                Next{' '}
+                {Math.min(
+                  move.basePowerGainOnUse.max,
+                  (rolledBasePower ?? move.basePower ?? 0) + move.basePowerGainOnUse.amount
+                )}{' '}
+                BP
+              </span>
             )}
             {move.conditionalPriority && (
               <span className="move-eff-status">
@@ -1204,7 +1218,7 @@ export function FightScreen({
                         forceBonus={resolveElementalForceBonus(combatant, move.type, statuses)}
                         banked={combatant.damageTakenSinceLastTurn}
                         bankedReductions={bankedReductions}
-                        rolledBasePower={resolveRandomBasePower(combat, id, move)}
+                        rolledBasePower={resolveCastBasePower(combat, id, move, combatant.moveBasePowerBonuses)}
                         selfHpCost={
                           move.selfHpCost == null
                             ? 0

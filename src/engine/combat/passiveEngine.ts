@@ -8,6 +8,7 @@ import { getMaxHp } from '../state';
 import type { FieldEffectDefinition, PassiveDefinition, PassiveId, PassiveEffect, PassiveEffectTarget, PassiveTriggerCondition, PassiveAmount, StatusDefinition, MoveDefinition } from '../content';
 import type { CombatEvent } from '../events';
 import type { DamageModifier } from '../damage/damagePipeline';
+import { nextInt } from '../rng/seededRng';
 import { applyHpDelta } from './faintHandling';
 import { applyStatus } from './statusEngine';
 import { setFieldEffect } from './fieldEffectEngine';
@@ -18,6 +19,13 @@ type TriggerContext = Record<string, unknown>;
 function matchesFields(eventFieldEquals: Partial<Record<string, string>> | undefined, context: TriggerContext): boolean {
   if (!eventFieldEquals) return true;
   return Object.entries(eventFieldEquals).every(([key, value]) => String(context[key]) === value);
+}
+
+/** A missing or non-numeric field never matches — an unreadable condition is a no-fire, not a free pass. */
+function matchesPositiveField(field: string | undefined, context: TriggerContext): boolean {
+  if (field === undefined) return true;
+  const value = context[field];
+  return typeof value === 'number' && value > 0;
 }
 
 function relationHolds(relation: PassiveTriggerCondition['relativeTo'], ownerId: string, ownerSide: Side, subjectId: string | undefined, subjectSide: Side | undefined): boolean {
@@ -41,7 +49,11 @@ export function matchesTrigger(
   subjectId: string | undefined,
   subjectSide: Side | undefined
 ): boolean {
-  return relationHolds(condition.relativeTo, ownerId, ownerSide, subjectId, subjectSide) && matchesFields(condition.eventFieldEquals, context);
+  return (
+    relationHolds(condition.relativeTo, ownerId, ownerSide, subjectId, subjectSide) &&
+    matchesFields(condition.eventFieldEquals, context) &&
+    matchesPositiveField(condition.eventFieldPositive, context)
+  );
 }
 
 // Who an event is "about": 'target' is the defender/arriver perspective, 'source' the
@@ -60,6 +72,7 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
   switch (event.type) {
     case 'StatusTicked':
     case 'StatusApplied':
+    case 'StatChanged':
       return event.combatantId;
     case 'DamageDealt':
       return event.targetCombatantId;
@@ -84,6 +97,7 @@ function resolveEffect(
   fieldEffectDefs: Record<string, FieldEffectDefinition>,
   ownerId: string,
   subjectId: string | undefined,
+  eventTargetId: string | undefined,
   effect: PassiveEffect,
   context: TriggerContext
 ): { state: CombatState; events: CombatEvent[] } {
@@ -93,9 +107,10 @@ function resolveEffect(
   }
 
   // A group target resolves once per member in slot order, threading state through.
-  let working = state;
+  const aimed = resolveTargetIdsRolled(state, ownerId, subjectId, eventTargetId, effect.target);
+  let working = aimed.state;
   const produced: CombatEvent[] = [];
-  for (const targetId of resolveTargetIds(state, ownerId, subjectId, effect.target)) {
+  for (const targetId of aimed.targetIds) {
     const target = working.combatants[targetId];
     if (!target || target.fainted) continue;
     const resolved = resolveEffectOn(working, round, heroes, statusDefs, ownerId, targetId, target, effect, context);
@@ -105,19 +120,45 @@ function resolveEffect(
   return { state: working, events: produced };
 }
 
-function resolveTargetIds(state: CombatState, ownerId: string, subjectId: string | undefined, target: PassiveEffectTarget): string[] {
+function resolveTargetIds(
+  state: CombatState,
+  ownerId: string,
+  subjectId: string | undefined,
+  eventTargetId: string | undefined,
+  target: PassiveEffectTarget
+): string[] {
   switch (target) {
     case 'self':
       return [ownerId];
     case 'triggerSubject':
       return subjectId ? [subjectId] : [];
-    case 'activeEnemies': {
+    case 'triggerTarget':
+      return eventTargetId ? [eventTargetId] : [];
+    case 'activeEnemies':
+    case 'randomEnemy': {
       const ownerSide = state.combatants[ownerId]?.side;
       if (!ownerSide) return [];
       const enemySide: Side = ownerSide === 'A' ? 'B' : 'A';
-      return state.active[enemySide].filter((id): id is string => id !== null);
+      const active = state.active[enemySide].filter((id): id is string => id !== null);
+      // The random mode returns the POOL; resolveTargetIdsRolled narrows it. Fainted foes are
+      // dropped there and only there, so an existing group target keeps its slot-order semantics.
+      return target === 'randomEnemy' ? active.filter((id) => !state.combatants[id]?.fainted) : active;
     }
   }
+}
+
+/** resolveTargetIds plus the single draw 'randomEnemy' needs; every other mode leaves rngState untouched. */
+function resolveTargetIdsRolled(
+  state: CombatState,
+  ownerId: string,
+  subjectId: string | undefined,
+  eventTargetId: string | undefined,
+  target: PassiveEffectTarget
+): { state: CombatState; targetIds: string[] } {
+  const pool = resolveTargetIds(state, ownerId, subjectId, eventTargetId, target);
+  if (target !== 'randomEnemy' || pool.length === 0) return { state, targetIds: pool };
+  const roll = nextInt(state.rngState, 0, pool.length);
+  return { state: { ...state, rngState: roll.nextState }, targetIds: [pool[roll.value]] };
 }
 
 function resolveEffectOn(
@@ -196,6 +237,8 @@ export function resolvePassiveReactions(
         const reactive = passiveDefs[instance.passiveId]?.reactive;
         if (!reactive || reactive.hook !== event.type) continue;
         const subjectId = subjectOf(event, reactive.condition.subjectRole ?? 'target');
+        // Kept apart from `subjectId`: a source-role condition ("I dealt this") still needs the defender.
+        const eventTargetId = subjectOf(event, 'target');
         const subjectSide = subjectId ? working.combatants[subjectId]?.side : undefined;
         if (!matchesTrigger(reactive.condition, context, ownerId, owner.side, subjectId, subjectSide)) continue;
         // Checked AFTER the match and marked BEFORE the effect resolves, so a re-entrant reaction cannot fire itself twice.
@@ -205,7 +248,7 @@ export function resolvePassiveReactions(
         }
 
         for (let i = 0; i < (reactive.oncePerFight ? 1 : instance.stacks); i++) {
-          const resolved = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, ownerId, subjectId, reactive.effect, context);
+          const resolved = resolveEffect(working, round, heroes, statusDefs, fieldEffectDefs, ownerId, subjectId, eventTargetId, reactive.effect, context);
           working = resolved.state;
           // Emitted even when the effect no-op'd, so the view knows the passive attempted to fire.
           produced.push({ type: 'PassiveTriggered', round, combatantId: ownerId, passiveId: instance.passiveId }, ...resolved.events);

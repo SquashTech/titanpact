@@ -108,6 +108,46 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       oncePerFight: true,
     },
   },
+  unstoppableGrowth: {
+    id: 'unstoppableGrowth',
+    name: 'Unstoppable Growth',
+    description: 'When this hero enters the battlefield, it gains Renew 20.',
+    // Same arrival shape as Imposing Presence, pointed inward: every arrival including the
+    // opening lead, so a pivot out and back re-seeds it. Renew stacks additively, which is
+    // the intended payoff. A passive-applied HoT is FLAT — the healing formula's Wisdom
+    // scaling belongs to a move's own heal, and a passive has no move to take STAB from.
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 20 },
+    },
+  },
+  frozenStone: {
+    id: 'frozenStone',
+    name: 'Frozen Stone',
+    description: 'Whenever this hero\'s Defense rises, Freeze a random enemy.',
+    // eventFieldPositive is what makes this "rises" rather than "changes" — a Defense DEBUFF
+    // must not freeze anyone. Fed only by a move's own stat deltas, so the hero's own Bastion
+    // and a partner's Frost Wall both arm it, and a passive-caused change never chains.
+    reactive: {
+      hook: 'StatChanged',
+      condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
+      effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Freeze' },
+    },
+  },
+  staticTide: {
+    id: 'staticTide',
+    name: 'Static Tide',
+    description: 'Every Water attack this hero lands leaves its target Conducting.',
+    // subjectRole 'source' + relativeTo 'self' = "I dealt this hit"; the Conduct then has to
+    // land on 'triggerTarget', the defender, because the condition's subject is the attacker.
+    // Maelstrom's own Storm moves are what cash the mark in (Conduct.triggerTypes).
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Conduct' },
+    },
+  },
   bloodthirsty: {
     id: 'bloodthirsty',
     name: 'Bloodthirsty',

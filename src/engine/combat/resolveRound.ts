@@ -5,11 +5,11 @@
 import type { FieldEffectDefinition, MoveDefinition, PassiveDefinition, StatDelta, StatKey, StatusDefinition } from '../content';
 import { statusApplicationsOf } from '../content';
 import type { CombatState, HeroLookup } from '../state';
-import { activePartnerTypes, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveRandomBasePower, resolveTargetMode, effectiveTypes, hasStatus } from '../state';
+import { activePartnerTypes, getMaxHp, getMaxMana, getEffectiveStat, resolveManaCost, resolveCastBasePower, resolveTargetMode, effectiveTypes, hasStatus } from '../state';
 import type { CombatEvent } from '../events';
 import type { Action } from './actions';
 import { orderActions } from './priority';
-import { resolveTargetsRolled, rollRiderTarget, slotOfActiveCombatant, TargetNoLongerValidError } from './targeting';
+import { resolveTargets, resolveTargetsRolled, rollRiderTarget, slotOfActiveCombatant, TargetNoLongerValidError } from './targeting';
 import { applyVoluntarySwitch, applyBenchHpRegen, SwitchBlockedError } from './switching';
 import { applyManaRegen } from './manaRegen';
 import { setFieldEffect, tickFieldEffect } from './fieldEffectEngine';
@@ -196,11 +196,21 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       move.manaDiscountOnUse !== undefined
         ? { ...actor.moveManaDiscounts, [move.id]: (actor.moveManaDiscounts[move.id] ?? 0) + move.manaDiscountOnUse }
         : actor.moveManaDiscounts;
+    // Banked on the actor BEFORE the hit rolls, so this cast lands at the pre-increment power.
+    const nextBasePowerBonuses = move.basePowerGainOnUse
+      ? { ...actor.moveBasePowerBonuses, [move.id]: (actor.moveBasePowerBonuses[move.id] ?? 0) + move.basePowerGainOnUse.amount }
+      : actor.moveBasePowerBonuses;
     working = {
       ...working,
       combatants: {
         ...working.combatants,
-        [action.combatantId]: { ...actor, currentMana: newMana, moveManaDiscounts: nextDiscounts, damageTakenSinceLastTurn: 0 },
+        [action.combatantId]: {
+          ...actor,
+          currentMana: newMana,
+          moveManaDiscounts: nextDiscounts,
+          moveBasePowerBonuses: nextBasePowerBonuses,
+          damageTakenSinceLastTurn: 0,
+        },
       },
     };
     events.push({
@@ -236,7 +246,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         let recoilBase = 0;
 
         // Rolled BasePower is derived, not drawn — costs no RNG (state.ts resolveRandomBasePower).
-        const rolledBasePower = resolveRandomBasePower(working, action.combatantId, move);
+        // A ramping move substitutes its own figure through the same override slot; `actor` is the
+        // pre-cast snapshot, so this hit lands at the power the button showed.
+        const rolledBasePower = resolveCastBasePower(working, action.combatantId, move, actor.moveBasePowerBonuses);
 
         // Snapshot so requiresUserHpBelow is all-or-nothing across a spread that also drains.
         const attackerAtCast = working.combatants[action.combatantId];
@@ -483,6 +495,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
       }
     }
 
+    // Collected across both stat-writing blocks and fed to one reaction pass below (Frozen Stone).
+    const statChangedEvents: CombatEvent[] = [];
+
     // Stat deltas resolve AFTER the damage/heal body: the debuff shapes the next hit, not this one.
     // Derived deltas (content.ts derivedStatDeltas) are the documented exemption from the
     // multiples-of-5/10 rule: mana is read pre-spend (`previousMana`), Attack is read live.
@@ -547,7 +562,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           ...working,
           combatants: { ...working.combatants, [targetId]: { ...current, statModifiers: { ...current.statModifiers, [delta.stat]: newValue } } },
         };
-        events.push({ type: 'StatChanged', round, combatantId: targetId, stat: delta.stat, delta: delta.amount, newValue });
+        const statChanged: CombatEvent = { type: 'StatChanged', round, combatantId: targetId, stat: delta.stat, delta: delta.amount, newValue };
+        events.push(statChanged);
+        statChangedEvents.push(statChanged);
       }
     }
 
@@ -574,9 +591,26 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         };
         for (const [stat, newValue] of doubledEntries) {
           // `delta` is the amount ADDED, not the new total.
-          events.push({ type: 'StatChanged', round, combatantId: targetId, stat, delta: newValue - (target.statModifiers[stat] ?? 0), newValue });
+          const statChanged: CombatEvent = {
+            type: 'StatChanged',
+            round,
+            combatantId: targetId,
+            stat,
+            delta: newValue - (target.statModifiers[stat] ?? 0),
+            newValue,
+          };
+          events.push(statChanged);
+          statChangedEvents.push(statChanged);
         }
       }
+    }
+
+    // One checkpoint for the whole move's stat changes, after both blocks that produce them and
+    // before the riders — the buff lands, the passive answers it, then the move's own riders resolve.
+    if (statChangedEvents.length > 0) {
+      const statReactions = resolvePassiveReactions(working, round, statChangedEvents, heroes, statuses, passives, fieldEffects);
+      working = statReactions.state;
+      events.push(...statReactions.events);
     }
 
     if (move.fieldEffectApplication && fieldEffects[move.fieldEffectApplication]) {
@@ -605,6 +639,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           const rolledRider = rollRiderTarget(working, action.combatantId, app.target, working.rngState);
           working = { ...working, rngState: rolledRider.nextRngState };
           applyTargets = rolledRider.targetIds;
+        } else if (app.target === 'bothAllies') {
+          // Relative to the CASTER, like the random ally mode — a damage move can hit a foe and mend its own side.
+          applyTargets = resolveTargets(working, action.combatantId, 'bothAllies');
         } else {
           applyTargets = targetIds;
         }

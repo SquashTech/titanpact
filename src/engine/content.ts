@@ -111,8 +111,8 @@ export interface StatusApplication {
   magnitude?: number;
   /** Required for duration-shape statuses. */
   duration?: number;
-  /** 'moveTarget' = the move's resolved targets; the random modes roll independently of the move's target (same pool; the move's roll comes first). */
-  target: 'self' | 'moveTarget' | 'randomAlly' | 'randomEnemy';
+  /** 'moveTarget' = the move's resolved targets; 'bothAllies' and the random modes resolve against the CASTER's side instead (the random modes roll after the move's own roll). */
+  target: 'self' | 'moveTarget' | 'bothAllies' | 'randomAlly' | 'randomEnemy';
   /** Probability in [0, 1] the rider lands, rolled per resolved target; omitted = always, no RNG drawn. Gates only the rider — the move body always lands. */
   chance?: number;
 }
@@ -120,8 +120,13 @@ export interface StatusApplication {
 /** Opaque passive-catalog key; concrete passives are data (src/data/passives.ts). */
 export type PassiveId = string;
 
-/** Event types a reactive Passive may key off. SwitchedIn's subject is the INCOMING combatant and fires for the opening lead too (passiveEngine.ts resolveBattleStartEntries). */
-export type PassiveHook = 'DamageDealt' | 'StatusApplied' | 'StatusTicked' | 'SwitchedIn';
+/**
+ * Event types a reactive Passive may key off. SwitchedIn's subject is the INCOMING combatant
+ * and fires for the opening lead too (passiveEngine.ts resolveBattleStartEntries).
+ * StatChanged carries no source, so it is target-role only, and it is fed from a move's own
+ * stat deltas — a stat change a PASSIVE caused does not chain into another passive.
+ */
+export type PassiveHook = 'DamageDealt' | 'StatusApplied' | 'StatusTicked' | 'SwitchedIn' | 'StatChanged';
 
 /** 'ally' = the owner's partner, not the owner. */
 export type PassiveRelation = 'self' | 'ally' | 'enemy';
@@ -133,13 +138,23 @@ export interface PassiveTriggerCondition {
   subjectRole?: 'target' | 'source';
   /** Every key must equal the event's same-named field (string compare), e.g. { statusId: 'Bleed', kind: 'damage' }. */
   eventFieldEquals?: Partial<Record<string, string>>;
+  /** The named numeric event field must be > 0 — the only way to say "increased" rather than "changed" (Frozen Stone reads StatChanged.delta). */
+  eventFieldPositive?: string;
 }
 
 /** matchTriggerAmount = the triggering event's amount (Sanguine). */
 export type PassiveAmount = { kind: 'flat'; value: number } | { kind: 'matchTriggerAmount'; multiplier?: number };
 
-/** 'activeEnemies' = every living ACTIVE enemy of the owner, resolved once per member. Never the bench: an entry passive must not tax uncommitted heroes. */
-export type PassiveEffectTarget = 'self' | 'triggerSubject' | 'activeEnemies';
+/**
+ * 'triggerSubject' follows the condition's `subjectRole`; 'triggerTarget' is the event's
+ * target-role combatant whatever the condition read — the defender of a DamageDealt — which
+ * is the only way a source-role passive (Static Tide) reaches the hero it just hit.
+ * 'activeEnemies' = every living ACTIVE enemy of the owner, resolved once per member, and
+ * 'randomEnemy' is one of them drawn at resolution — the only passive target that costs RNG,
+ * and it draws nothing unless a passive actually asks for it. Never the bench: an entry
+ * passive must not tax uncommitted heroes.
+ */
+export type PassiveEffectTarget = 'self' | 'triggerSubject' | 'triggerTarget' | 'activeEnemies' | 'randomEnemy';
 
 /** The reactive effect primitives. */
 export type PassiveEffect =
@@ -323,6 +338,15 @@ export interface MoveDefinition {
   };
   /** Each cast drops this move's cost for THAT combatant by this much for the rest of the fight, stacking, floored at 0 (Wave Shred; Combatant.moveManaDiscounts). */
   manaDiscountOnUse?: number;
+  /**
+   * damage-kind only, the mana ramp's mirror: each cast raises this move's BasePower for THAT
+   * combatant by `amount` for the rest of the fight, capped at `max` TOTAL (Snowball;
+   * Combatant.moveBasePowerBonuses, read via state.ts effectiveBasePower). The cast pays the
+   * PRE-increment figure, exactly as manaDiscountOnUse charges the pre-increment price. It
+   * replaces the authored BasePower INPUT, so `max` caps the ramp alone — the conditional
+   * multiplier and Elemental Force still apply on top of the capped figure.
+   */
+  basePowerGainOnUse?: { amount: number; max: number };
   /** Integer priority bracket; higher resolves first. */
   priority: number;
   /** Bracket drawn uniformly from this list, REPLACING `priority`, when the round is ordered (priority.ts) — not knowable before commit. Author `priority` as the midpoint. */

@@ -61,13 +61,14 @@ function afflict(state: CombatState, combatantId: string, statusId: string, magn
 
 // --- The pool itself ---
 
-test('water: the authored pool is exactly the fifteen designed moves, all Water-typed', () => {
+test('water: the authored pool is the fifteen designed moves plus Riptide\'s two Evolution moves, all Water-typed', () => {
   const water = Object.values(moves).filter((m) => m.type === 'Water');
   assert.deepStrictEqual(
     water.map((m) => m.id).sort(),
     [
-      'aquaSlice', 'deluge', 'engulf', 'highTide', 'maelstrom', 'oasis', 'refresh', 'siphon',
-      'splash', 'tideGuard', 'torrent', 'tsunami', 'undertow', 'washAway', 'waveShred',
+      'aquaSlice', 'deluge', 'engulf', 'highTide', 'lizardRush', 'maelstrom', 'oasis', 'refresh',
+      'shockBubble', 'siphon', 'splash', 'tideGuard', 'torrent', 'tsunami', 'undertow', 'washAway',
+      'waveShred',
     ]
   );
 });
@@ -300,4 +301,39 @@ test('water: neither Water hero starts with a move it cannot pay for, or has a s
       assert.ok(!hero.moveIds.includes(moveId), `${heroId}'s pool lists its own starting move ${moveId}`);
     }
   }
+});
+
+// --- StatusApplication target 'bothAllies' (Lizard Rush) ---
+
+test('water: Lizard Rush damages one enemy and mends BOTH allies — the rider resolves against the caster, not the move target', () => {
+  const state = withDeepPools(waterFixture(730));
+  const before = state.combatants.b1.currentHp;
+  const { state: next } = resolveRound(
+    state,
+    [{ kind: 'move', combatantId: 'a1', moveId: 'lizardRush', declaredTarget: 'b1' }],
+    config
+  );
+
+  assert.ok(next.combatants.b1.currentHp < before, 'the damage body still lands on the declared enemy');
+  assert.ok(next.combatants.a1.statuses.Renew, 'the caster is an ally of itself');
+  assert.ok(next.combatants.a2.statuses.Renew, 'and so is its partner');
+  assert.strictEqual(next.combatants.b1.statuses.Renew, undefined, 'the enemy it hit gets nothing');
+});
+
+test('water: an unchanced bothAllies rider draws no RNG — same rngState as the same hit without one', () => {
+  const state = withDeepPools(waterFixture(731));
+  const rush = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'lizardRush', declaredTarget: 'b1' }], config);
+  const plain = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'waveShred', declaredTarget: 'b1' }], config);
+  assert.deepStrictEqual(rush.state.rngState, plain.state.rngState);
+});
+
+test('water: Shock Bubble plants Conduct for a Storm partner to cash — Water itself never detonates it', () => {
+  const state = withDeepPools(waterFixture(732));
+  const { state: next } = resolveRound(
+    state,
+    [{ kind: 'move', combatantId: 'a1', moveId: 'shockBubble', declaredTarget: 'b1' }],
+    config
+  );
+  assert.ok(next.combatants.b1.statuses.Conduct, 'the mark is left standing');
+  assert.ok(!statuses.Conduct.triggerTypes?.includes('Water'));
 });

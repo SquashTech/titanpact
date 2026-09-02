@@ -82,6 +82,12 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
                       </span>
                     ))}
                   </div>
+                  {path.unlocksMoveIds.length > 0 && (
+                    <p className="evolution-path-learnable">
+                      <span className="evolution-path-learnable-label">Learns</span>
+                      {path.unlocksMoveIds.map((id) => moves[id]?.name ?? id).join(' · ')}
+                    </p>
+                  )}
                   {(path.learnableMoveIds?.length ?? 0) > 0 && (
                     <p className="evolution-path-learnable">
                       <span className="evolution-path-learnable-label">Can learn</span>

@@ -24,6 +24,7 @@ import {
   grantLevelUpMove,
   availableEvolution,
   chooseEvolutionPath,
+  applyEvolutionMoves,
   rosterEntryTypes,
   EVOLUTION_LEVEL,
   levelUpCost,
@@ -310,7 +311,8 @@ test('progression: a graft path adds its learnableMoveIds to the level-up pool w
   }
   // The Fire pool is widened, not replaced.
   assert.ok(after.includes('inferno'));
-  assert.strictEqual(next.roster[0].unlockedMoveIds.length, heroes.crimson.moveIds.length);
+  // Cinderveil's own grant is the one exception to "learnable, not granted": Flicker arrives outright.
+  assert.deepStrictEqual(next.roster[0].unlockedMoveIds, [...heroes.crimson.moveIds, 'flicker']);
 });
 
 test('progression: an untaken path\'s learnableMoveIds stay out of the pool, and tier gating still applies', () => {
@@ -347,7 +349,8 @@ test('progression: Warhowl inverts Fang\'s attacking stat — a NEGATIVE Evoluti
   const grants = next.roster[0].evolutionStatGrants;
   assert.strictEqual(grants.attack, -30);
   assert.strictEqual(grants.intelligence, 60);
-  assert.strictEqual(grants.manaPool, 20);
+  assert.strictEqual(grants.mpRegen, 5);
+  assert.ok(next.roster[0].unlockedMoveIds.includes('poltergeist'), 'Warhowl hands Fang a Spirit attack to use the new Intelligence on');
 
   const base = heroes.packAlpha.baseStats;
   assert.ok(base.attack > base.intelligence, 'base Fang attacks with Attack');
@@ -360,6 +363,33 @@ test('progression: Warhowl inverts Fang\'s attacking stat — a NEGATIVE Evoluti
   assert.strictEqual(moves.animalSpirit.type, 'Beast');
 });
 
+// --- unlocksMoveIds: an Evolution grants its move outright, under the same MOVE_CAP as a level-up ---
+
+test('progression: an Evolution grant fills an open slot, and the cap refuses the rest as overflow rather than growing the loadout', () => {
+  const under = applyEvolutionMoves(['a', 'b', 'c'], ['spireClaw']);
+  assert.deepStrictEqual(under.unlockedMoveIds, ['a', 'b', 'c', 'spireClaw']);
+  assert.deepStrictEqual(under.overflow, []);
+
+  const atCap = applyEvolutionMoves(['a', 'b', 'c', 'd'], ['spireClaw']);
+  assert.deepStrictEqual(atCap.unlockedMoveIds, ['a', 'b', 'c', 'd'], 'never five moves');
+  assert.deepStrictEqual(atCap.overflow, ['spireClaw'], 'the caller offers it as a replace-or-decline');
+
+  // Already known is neither granted again nor overflow — it costs the player no choice.
+  assert.deepStrictEqual(applyEvolutionMoves(['a', 'b', 'c', 'spireClaw'], ['spireClaw']).overflow, []);
+});
+
+test('progression: choosing Stonehide at the move cap leaves the loadout untouched — the grant does not silently displace a move', () => {
+  let run = createRunState(0);
+  run = addRosterEntry(run, createRosterEntry('packAlpha', 'packAlpha', [...heroes.packAlpha.moveIds, 'maul']));
+  run = { ...run, levelUpPool: costToReachLevel(1, EVOLUTION_LEVEL) };
+  run = levelUpTimes(run, 'packAlpha', EVOLUTION_LEVEL - 1);
+  assert.strictEqual(run.roster[0].unlockedMoveIds.length, 4);
+
+  const next = chooseEvolutionPath(run, progressionTable, heroes, 'packAlpha', 'packAlpha-defensive');
+  assert.deepStrictEqual(next.roster[0].unlockedMoveIds, run.roster[0].unlockedMoveIds);
+  assert.strictEqual(next.roster[0].evolutionTypeGraft, 'Stone');
+});
+
 // --- Type-graft Evolution paths (docs/progression.md "Type-graft paths") ---
 
 test('progression: a type-graft path grants a second type without touching the innate HeroDefinition', () => {
@@ -368,7 +398,7 @@ test('progression: a type-graft path grants a second type without touching the i
   run = levelUpTimes(run, 'tidecaller', EVOLUTION_LEVEL - 1);
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'tidecaller', 'tidecaller-defensive');
-  assert.strictEqual(next.roster[0].evolutionTypeGraft, 'Spirit');
+  assert.strictEqual(next.roster[0].evolutionTypeGraft, 'Frost');
   assert.deepStrictEqual(heroes.tidecaller.types, ['Water']); // innate type untouched
 
   const squad = pickSquad(next.roster, ['tidecaller']);
@@ -378,9 +408,9 @@ test('progression: a type-graft path grants a second type without touching the i
     { side: 'A', squad, roster: next.roster },
     { side: 'B', squad: aiSquad, roster: aiRun.roster },
   ]);
-  assert.deepStrictEqual(state.combatants['A:tidecaller'].grantedTypes, ['Spirit']);
+  assert.deepStrictEqual(state.combatants['A:tidecaller'].grantedTypes, ['Frost']);
   // Out-of-combat screens read the graft off the RosterEntry, with no Combatant built yet.
-  assert.deepStrictEqual(rosterEntryTypes(heroes.tidecaller, next.roster[0]), ['Water', 'Spirit']);
+  assert.deepStrictEqual(rosterEntryTypes(heroes.tidecaller, next.roster[0]), ['Water', 'Frost']);
 });
 
 test('progression: a type-graft path is rejected for an already-dual-typed hero', () => {
@@ -420,7 +450,7 @@ test('progression: a later type-graft path shifts (replaces) the secondary type 
   run = { ...run, levelUpPool: costToReachLevel(1, EVOLUTION_LEVEL) };
   run = levelUpTimes(run, 'tidecaller', EVOLUTION_LEVEL - 1);
   run = chooseEvolutionPath(run, progressionTable, heroes, 'tidecaller', 'tidecaller-defensive');
-  assert.strictEqual(run.roster[0].evolutionTypeGraft, 'Spirit');
+  assert.strictEqual(run.roster[0].evolutionTypeGraft, 'Frost');
 
   // A synthetic second node (the future multi-node "Deep line" shape, docs/leveling-and-ranks.md).
   const shiftTable = {
@@ -438,7 +468,7 @@ test('progression: a later type-graft path shifts (replaces) the secondary type 
               name: 'Shifted Graft',
               statGrants: {},
               unlocksMoveIds: [],
-              typeGraft: 'Frost',
+              typeGraft: 'Spirit',
             },
           ],
         },
@@ -446,7 +476,7 @@ test('progression: a later type-graft path shifts (replaces) the secondary type 
     },
   };
   const shifted = chooseEvolutionPath(run, shiftTable, heroes, 'tidecaller', 'tidecaller-shift');
-  assert.strictEqual(shifted.roster[0].evolutionTypeGraft, 'Frost'); // replaced, not stacked
+  assert.strictEqual(shifted.roster[0].evolutionTypeGraft, 'Spirit'); // replaced, not stacked
 
   const squad = pickSquad(shifted.roster, ['tidecaller']);
   const aiRun = seedRoster(['ironWarden']);
@@ -455,5 +485,5 @@ test('progression: a later type-graft path shifts (replaces) the secondary type 
     { side: 'A', squad, roster: shifted.roster },
     { side: 'B', squad: aiSquad, roster: aiRun.roster },
   ]);
-  assert.deepStrictEqual(state.combatants['A:tidecaller'].grantedTypes, ['Frost']); // not ['Spirit', 'Frost']
+  assert.deepStrictEqual(state.combatants['A:tidecaller'].grantedTypes, ['Spirit']); // not ['Frost', 'Spirit']
 });

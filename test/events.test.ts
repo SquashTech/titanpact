@@ -15,6 +15,7 @@ import { locations } from '../src/data/locations';
 import { runEvents, type RunEventDefinition } from '../src/data/events';
 import { isValidFlatStatGrant } from '../src/engine/content';
 import type { PassiveInstance, CombatState } from '../src/engine/state';
+import type { CombatEvent } from '../src/engine/events';
 import { getEffectiveStat } from '../src/engine/state';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import { resolveBattleStartEntries, resolvePassiveReactions } from '../src/engine/combat/passiveEngine';
@@ -304,4 +305,65 @@ test('imposingPresence: one trigger emits one PassiveTriggered followed by one S
   assert.strictEqual(opened.events.filter((e) => e.type === 'StatChanged').length, 2);
   // buildBeats reads the trigger, then consumes the run of StatChanged events behind it into one beat.
   assert.strictEqual(opened.events[0].type, 'PassiveTriggered');
+});
+
+
+// --- The same hook pointed inward: Unstoppable Growth (Crag's Rootwarden) ---
+
+function renewOf(state: CombatState, id: string): number {
+  return state.combatants[id].statuses.Renew?.magnitude ?? 0;
+}
+
+/** Renew's magnitude as each StatusApplied reports it — the RESULTING total, read before the round-boundary tick halves it. */
+function renewGrants(events: readonly CombatEvent[], id: string): number[] {
+  return events
+    .filter((e): e is Extract<CombatEvent, { type: 'StatusApplied' }> => e.type === 'StatusApplied' && e.combatantId === id && e.statusId === 'Renew')
+    .map((e) => e.magnitude ?? 0);
+}
+
+test('unstoppableGrowth: arriving grants the hero itself Renew 20, and nobody else', () => {
+  const state = withPassive(fixture(20), 'a3', 'unstoppableGrowth');
+  const result = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config);
+
+  assert.deepStrictEqual(renewGrants(result.events, 'a3'), [20]);
+  assert.strictEqual(renewOf(result.state, 'a3'), 10, 'and the round boundary has already healed it once and halved it');
+  assert.strictEqual(renewOf(result.state, 'a2'), 0, 'the partner is not part of this');
+  assert.strictEqual(renewOf(result.state, 'b1'), 0);
+});
+
+test('unstoppableGrowth: the opening lead counts as arriving', () => {
+  const state = withPassive(fixture(21), 'a1', 'unstoppableGrowth');
+  const opened = resolveBattleStartEntries(state, 1, heroes, statuses, passives, fieldEffects);
+  assert.strictEqual(renewOf(opened.state, 'a1'), 20);
+});
+
+test('unstoppableGrowth: a pivot out and back re-seeds it, stacking onto what survived the tick', () => {
+  let state = withPassive(fixture(22), 'a3', 'unstoppableGrowth');
+  state = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config).state;
+  assert.strictEqual(renewOf(state, 'a3'), 10, '20 granted, ticked, halved');
+
+  state = resolveRound(state, [{ kind: 'switch', combatantId: 'a3', benchedCombatantId: 'a1' }], config).state;
+  const back = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config);
+
+  // Renew survives switching and stacks additively, so the second grant lands ON the remainder (5 + 20).
+  assert.deepStrictEqual(renewGrants(back.events, 'a3'), [25]);
+  assert.ok(renewOf(back.state, 'a3') > 10, 'the second arrival adds to what was left, it does not replace it');
+});
+
+test('unstoppableGrowth: a passive-applied HoT is FLAT — it is not run through the healing formula', () => {
+  // cinderKnight and sentinel hold different Wisdom and must both read the authored 20.
+  assert.notStrictEqual(
+    heroes.cinderKnight.baseStats.wisdom,
+    heroes.sentinel.baseStats.wisdom,
+    'the two holders must differ in Wisdom for this to prove anything'
+  );
+  const lead = resolveBattleStartEntries(withPassive(fixture(23), 'a1', 'unstoppableGrowth'), 1, heroes, statuses, passives, fieldEffects);
+  const arrival = resolveRound(
+    withPassive(fixture(24), 'a3', 'unstoppableGrowth'),
+    [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }],
+    config
+  );
+
+  assert.strictEqual(renewOf(lead.state, 'a1'), 20);
+  assert.deepStrictEqual(renewGrants(arrival.events, 'a3'), [20]);
 });

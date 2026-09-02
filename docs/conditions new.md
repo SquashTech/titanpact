@@ -66,6 +66,11 @@ rather than slipping it in.
   voluntary switch still deletes the whole setup, and the lock-in rule
   (CLAUDE.md) stops it doing so once a side is two heroes down — so Frost is
   deliberately the weaker half of the fight it is strongest in.
+- **2026-09-02:** the first Freeze applied by something other than a move. Rime's
+  Glacier Evolution grants **Frozen Stone** — *whenever this hero's Defense rises,
+  Freeze a random enemy* — which lets a defensive turn plant the setup the three
+  payoffs above are waiting for, and gives the Stone graft it arrives with a second
+  reason to exist.
 
 ### Bleed — boolean
 - End of turn: target takes 5% of max HP.
@@ -86,11 +91,22 @@ rather than slipping it in.
   prose and code identifiers, and that collision had already produced one real bug —
   Verdant Earth's stat bonus was wired to `mpRegen` instead of this status. The stat
   keeps its name; the status took the distinct one.
+- **A PASSIVE-applied Renew is flat (2026-09-02).** Crag's Rootwarden grants **Unstoppable
+  Growth** — *when this hero enters the battlefield, it gains Renew 20* — and that 20 is the
+  authored 20, not a figure run through the healing formula. A move's HoT snapshots
+  `HealPower × WisdomMult × STAB` at application; a passive has no move to take STAB from,
+  and passive healing has always been flat (Sanguine). Worth knowing when reading a path
+  that grants both Wisdom and a healing passive: the Wisdom buys the *moves*, not the
+  passive. It still stacks additively on arrival, like any other Renew.
 
 ### Conduct — boolean
 - Applied only by a specific move that names Conduct in its own `statusApplication`
-  (moves.ts `risingStatic`, `jolt`, `ionize`, `stormLash`, `thunderbolt`) — same
-  authoring convention as every other status, not automatic.
+  (moves.ts `risingStatic`, `jolt`, `ionize`, `stormLash`, `thunderbolt`, and Water's
+  `shockBubble`) — same authoring convention as every other status, not automatic.
+- **2026-09-01:** a passive may also plant it. **Static Tide** (Riptide's Maelstrom
+  Evolution) marks the target of every Water attack its owner lands, which is what
+  turns a Water/Storm hero into its own applier *and* detonator. Still an authored
+  choice, still never the detonation pass planting its own mark.
 - Once applied, **any** Storm OR Iron based attack can detonate the mark for an
   additional **10% of target's max HP** as damage, consuming it.
 - Sharing the detonate mechanic across Storm and Iron gives Iron a signature status

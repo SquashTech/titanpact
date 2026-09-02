@@ -281,6 +281,10 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     parts.push(`Base Power rolls ${move.randomBasePower.min}-${move.randomBasePower.max} each round`);
   }
 
+  if (move.basePowerGainOnUse) {
+    parts.push(`+${move.basePowerGainOnUse.amount} Base Power each use this fight, up to ${move.basePowerGainOnUse.max}`);
+  }
+
   if (move.critChance != null) parts.push(`${Math.round(move.critChance * 100)}% crit`);
 
   if (move.offStatOverride) {

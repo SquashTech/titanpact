@@ -46,6 +46,8 @@ export interface Combatant {
   statuses: Record<StatusId, StatusInstance>;
   /** Accumulated manaDiscountOnUse per move id; grows only within a fight. Read via effectiveManaCost. */
   moveManaDiscounts: Partial<Record<string, number>>;
+  /** Accumulated basePowerGainOnUse per move id; grows only within a fight. Read via effectiveBasePower. */
+  moveBasePowerBonuses: Partial<Record<string, number>>;
   /** HP lost since this combatant last COMMITTED an action (paid move, Rest, completed switch); a Dazed or fizzled turn keeps banking. Incremented in applyHpDelta. Feeds retributionPercent. */
   damageTakenSinceLastTurn: number;
   /** Populated once at fight build (src/run/passives.ts); only `firedThisFight` changes mid-fight. */
@@ -92,6 +94,37 @@ export function hasAffordableMove(
 /** Authored cost less accumulated discount, floored at 0. The single source of a move's price on fight-free surfaces — never read `move.manaCost` directly for display. */
 export function effectiveManaCost(move: MoveDefinition, discounts?: Partial<Record<string, number>>): number {
   return Math.max(0, move.manaCost - (discounts?.[move.id] ?? 0));
+}
+
+/**
+ * Authored BasePower plus this combatant's accumulated ramp, capped at the authored `max`.
+ * The single source of a ramping move's power for engine and view alike — never read
+ * `move.basePower` directly once a move can ramp. Undefined for a move with no BasePower
+ * (a heal, a buff, a retribution move), which is what the damage pipeline expects.
+ */
+export function effectiveBasePower(move: MoveDefinition, bonuses?: Partial<Record<string, number>>): number | undefined {
+  if (move.basePower == null) return undefined;
+  const ramp = move.basePowerGainOnUse;
+  if (!ramp) return move.basePower;
+  return Math.min(ramp.max, move.basePower + (bonuses?.[move.id] ?? 0));
+}
+
+/**
+ * What a cast's BasePower actually is: this round's randomBasePower roll, else the ramp
+ * accrued in `bonuses`, else undefined (the authored figure stands, and the damage pipeline
+ * reads it itself). Engine and view MUST agree on the number on the button, so both read this.
+ * `bonuses` is passed rather than read off the state because the engine banks a cast's
+ * increment before the hit rolls, and the hit is owed the PRE-increment figure.
+ */
+export function resolveCastBasePower(
+  state: CombatState,
+  combatantId: string,
+  move: MoveDefinition,
+  bonuses: Partial<Record<string, number>> | undefined
+): number | undefined {
+  const rolled = resolveRandomBasePower(state, combatantId, move);
+  if (rolled !== undefined) return rolled;
+  return move.basePowerGainOnUse ? effectiveBasePower(move, bonuses) : undefined;
 }
 
 /** effectiveManaCost plus conditionalManaCost (the lower wins) — the price EVERY live-fight surface must read. Enemy-side forms read ACTIVE unfainted enemies; an empty enemy side satisfies neither. */
@@ -292,6 +325,7 @@ export function createCombatant(
     grantedTypes: [],
     baselineStatusMagnitudes: {},
     moveManaDiscounts: {},
+    moveBasePowerBonuses: {},
     damageTakenSinceLastTurn: 0,
     statuses: {},
     passives: {},

@@ -70,13 +70,14 @@ function outspeeds(state: CombatState, combatantId: string): CombatState {
 
 // --- The pool itself ---
 
-test('frost: the authored pool is exactly the fifteen designed moves, all Frost-typed', () => {
+test('frost: the authored pool is the fifteen designed moves plus Snowball, Rime\'s Evolution move, all Frost-typed', () => {
   const frost = Object.values(moves).filter((m) => m.type === 'Frost');
   assert.deepStrictEqual(
     frost.map((m) => m.id).sort(),
     [
       'absoluteZero', 'avalanche', 'coldSnap', 'deepChill', 'frigidAir', 'frostArmor', 'frostWall',
-      'glaciate', 'iceShard', 'iceShatter', 'icicleThrust', 'permafrost', 'quickFreeze', 'rimeWind', 'snowBlast',
+      'glaciate', 'iceShard', 'iceShatter', 'icicleThrust', 'permafrost', 'quickFreeze', 'rimeWind',
+      'snowBlast', 'snowball',
     ]
   );
 });
@@ -278,4 +279,67 @@ test('frost: every hero that can be offered a gated move can also reach a Freeze
     if (!reachable.some((id) => moves[id].requiresTargetStatus)) continue;
     assert.ok(reachable.some(marks), `${heroId} can be offered a Frozen-only move but can never apply Freeze`);
   }
+});
+
+// --- basePowerGainOnUse (Snowball, Rime's Avalanche Evolution) ---
+
+function snowball(combatantId: string, targetId: string): Action {
+  return { kind: 'move', combatantId, moveId: 'snowball', declaredTarget: targetId };
+}
+
+function basePowerOf(events: readonly { type: string }[]): number {
+  const hit = events.find((e) => e.type === 'DamageDealt') as { basePower: number } | undefined;
+  assert.ok(hit, 'expected a DamageDealt event');
+  return hit!.basePower;
+}
+
+test('frost: the first Snowball lands at its authored power, and each later one is 40 heavier', () => {
+  let state = withDeepPools(frostFixture(800));
+  const powers: number[] = [];
+  for (let i = 0; i < 3; i++) {
+    const result = resolveRound(state, [snowball('a2', 'b1')], config);
+    powers.push(basePowerOf(result.events));
+    state = { ...result.state, round: result.state.round + 1 };
+  }
+  assert.deepStrictEqual(powers, [40, 80, 120], 'the cast pays the pre-increment figure, like manaDiscountOnUse');
+  assert.strictEqual(state.combatants.a2.moveBasePowerBonuses.snowball, 120);
+});
+
+test('frost: the ramp stops at its authored max and the damage stops climbing with it', () => {
+  let state = withDeepPools(frostFixture(801));
+  const powers: number[] = [];
+  for (let i = 0; i < 7; i++) {
+    const result = resolveRound(state, [snowball('a2', 'b1')], config);
+    powers.push(basePowerOf(result.events));
+    state = { ...result.state, round: result.state.round + 1 };
+  }
+  assert.deepStrictEqual(powers, [40, 80, 120, 160, 200, 200, 200]);
+});
+
+test('frost: the ramp is per hero and per move — a partner throwing its own Snowball starts at 40', () => {
+  const state = withDeepPools(frostFixture(802));
+  const first = resolveRound(state, [snowball('a2', 'b1')], config);
+  assert.strictEqual(first.state.combatants.a2.moveBasePowerBonuses.snowball, 40);
+  assert.deepStrictEqual(first.state.combatants.a1.moveBasePowerBonuses, {}, 'the partner has not thrown one');
+
+  const second = resolveRound({ ...first.state, round: first.state.round + 1 }, [snowball('a1', 'b1')], config);
+  assert.strictEqual(basePowerOf(second.events), 40);
+});
+
+test('frost: a stacked Snowball actually hits harder — the ramp reaches the damage, not just the readout', () => {
+  const state = withDeepPools(frostFixture(803));
+  const first = resolveRound(state, [snowball('a2', 'b1')], config);
+  const firstHit = first.events.find((e) => e.type === 'DamageDealt') as any;
+  // Same seed for the second round would re-roll variance anyway, so compare against the same board twice.
+  const second = resolveRound({ ...first.state, round: first.state.round + 1 }, [snowball('a2', 'b1')], config);
+  const secondHit = second.events.find((e) => e.type === 'DamageDealt') as any;
+
+  assert.strictEqual(secondHit.basePower, firstHit.basePower * 2);
+  assert.ok(secondHit.amount > firstHit.amount, 'a doubled BasePower cannot be swallowed by the 0.85-1.0 variance band');
+});
+
+test('frost: a move with no ramp banks nothing, so no existing move changed shape', () => {
+  const state = withDeepPools(frostFixture(804));
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'iceShard', declaredTarget: 'b1' }], config);
+  assert.deepStrictEqual(next.combatants.a2.moveBasePowerBonuses, {});
 });

@@ -103,7 +103,7 @@ export interface EvolutionPath {
   /** Shown on the Evolution choice screen. */
   description?: string;
   statGrants: Partial<Record<StatKey, number>>;
-  /** Granted outright the moment the path is chosen. */
+  /** Granted outright the moment the path is chosen, up to MOVE_CAP — see applyEvolutionMoves for the overflow. */
   unlocksMoveIds: string[];
   /** Join the hero's level-up pool (still tier-gated) rather than being granted — a set of futures, not a loadout. */
   learnableMoveIds?: readonly string[];
@@ -124,6 +124,26 @@ export interface ProgressionTable {
   moveTiers: Record<string, string[]>;
   /** heroId -> ordered Evolution nodes (currently one per hero). */
   evolutions: Record<string, EvolutionNode[]>;
+}
+
+/**
+ * A path's granted moves fill open slots in order; the rest are refused by MOVE_CAP and
+ * returned as `overflow` for the caller to offer as a replace-or-decline, exactly like a
+ * level-up move offered to a hero already at the cap. By the Evolution level a hero is
+ * normally at the cap, so the overflow branch is the usual one, not the edge case.
+ */
+export function applyEvolutionMoves(
+  unlockedMoveIds: readonly string[],
+  unlocksMoveIds: readonly string[]
+): { unlockedMoveIds: string[]; overflow: string[] } {
+  const kept = [...unlockedMoveIds];
+  const overflow: string[] = [];
+  for (const id of unlocksMoveIds) {
+    if (kept.includes(id)) continue;
+    if (kept.length >= MOVE_CAP) overflow.push(id);
+    else kept.push(id);
+  }
+  return { unlockedMoveIds: kept, overflow };
 }
 
 export class ProgressionError extends Error {}
@@ -257,7 +277,7 @@ export function chooseEvolutionPath(
   const nextEntry: RosterEntry = {
     ...entry,
     chosenPathIds: [...entry.chosenPathIds, path.id],
-    unlockedMoveIds: [...new Set([...entry.unlockedMoveIds, ...path.unlocksMoveIds])],
+    unlockedMoveIds: applyEvolutionMoves(entry.unlockedMoveIds, path.unlocksMoveIds).unlockedMoveIds,
     evolutionStatGrants: mergeStatMods(entry.evolutionStatGrants, path.statGrants),
     evolutionPassiveGrants: [...new Set([...entry.evolutionPassiveGrants, ...(path.grantsPassiveIds ?? [])])],
     evolutionTypeGraft,

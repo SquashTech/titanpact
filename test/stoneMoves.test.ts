@@ -358,7 +358,8 @@ test('stone: the target picker narrows to the taunt, so the player never aims wh
 test('stone: the slate authors no new field effect and no type-keyed status hook', () => {
   // If a status ever adds 'Stone' to triggerTypes, every number in this slate silently changes.
   const stone = Object.values(moves).filter((m) => m.type === 'Stone');
-  assert.strictEqual(stone.length, 15, 'the designed fifteen, no more');
+  // The designed fifteen, plus the two Evolution moves — Fang's Spire Claw and Crag's Titanic Crush.
+  assert.strictEqual(stone.length, 17);
 
   for (const def of Object.values(statuses)) {
     assert.ok(!def.triggerTypes?.includes('Stone'), `${def.id} would detonate off every Stone damage move`);
@@ -424,6 +425,15 @@ test('stone: no move is unreachable that was not already known to be', () => {
   const reachable = new Set<string>();
   for (const hero of Object.values({ ...heroes, ...enemies })) for (const id of hero.moveIds) reachable.add(id);
   for (const pool of Object.values(progressionTable.moveTiers)) for (const id of pool) reachable.add(id);
+  // An Evolution path reaches moves two ways: granted outright, or added to the level-up pool.
+  for (const nodes of Object.values(progressionTable.evolutions)) {
+    for (const node of nodes) {
+      for (const path of node.paths) {
+        for (const id of path.unlocksMoveIds) reachable.add(id);
+        for (const id of path.learnableMoveIds ?? []) reachable.add(id);
+      }
+    }
+  }
 
   const unreachable = Object.keys(moves).filter((id) => !reachable.has(id)).sort();
   assert.deepStrictEqual(unreachable, [
@@ -434,4 +444,28 @@ test('stone: no move is unreachable that was not already known to be', () => {
     'runicBlast',
     'tremor',
   ]);
+});
+
+// --- statDeltaTarget 'self' on a damage move (Spire Claw) ---
+
+test('stone: Spire Claw hits an enemy and puts its +20 Defense on the CASTER, not the target', () => {
+  const state = withDeepPools(stoneFixture(760));
+  const { state: next } = resolveRound(
+    state,
+    [{ kind: 'move', combatantId: 'a1', moveId: 'spireClaw', declaredTarget: 'b1' }],
+    config
+  );
+
+  assert.strictEqual(next.combatants.a1.statModifiers.defense, 20);
+  assert.strictEqual(next.combatants.b1.statModifiers.defense ?? 0, 0);
+  assert.ok(next.combatants.b1.currentHp < state.combatants.b1.currentHp);
+});
+
+test('stone: Titanic Crush hits both foes at full power — no spread reduction in a doubles-only game', () => {
+  const state = withDeepPools(stoneFixture(770));
+  const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'titanicCrush' }], config);
+  const hits = events.filter((e) => e.type === 'DamageDealt') as any[];
+
+  assert.deepStrictEqual(hits.map((h) => h.targetCombatantId).sort(), ['b1', 'b2']);
+  for (const hit of hits) assert.strictEqual(hit.basePower, moves.titanicCrush.basePower);
 });

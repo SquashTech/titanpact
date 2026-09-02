@@ -258,6 +258,8 @@ A path may grant any of:
 - **A secondary type** (mono → dual, or a shift of the secondary slot), and/or
 - **A stat grant** — always in **multiples of 5 or 10** (`progression.md`), and/or
 - **An ability** (a passive or triggered effect), and/or
+- **A move, granted outright** (`unlocksMoveIds`), subject to MOVE_CAP — see
+  clause 5 below, and/or
 - **A set of newly LEARNABLE moves** — see "Evolution steers future level-up
   offerings" below. These join the level-up pool; they are not handed over.
 
@@ -266,8 +268,8 @@ identity.
 
 > ### The Evolution framework (2026-09-01 designer call)
 >
-> The shape every hero's node is being re-authored to. Crimson and Fang
-> (`src/data/progression.ts`) are the two worked examples; the other 33 are
+> The shape every hero's node is being re-authored to. Crimson, Fang, Riptide, Rime
+> and Crag (`src/data/progression.ts`) are the worked examples; the other 30 are
 > still on the old two-stats shape and are the backlog.
 >
 > **1. Grants got bigger.** An Evolution is permanent, once per hero, and
@@ -285,6 +287,13 @@ identity.
 > Crimson's **Pyroclasm** grants Firestarter, Fang's **Bloodhunt** grants
 > Bloodthirsty.
 >
+> **A default, not a law** (2026-09-02): Riptide and Rime both put the passive on a
+> GRAFT instead — Maelstrom's Static Tide, Glacier's Frozen Stone — and pay for it in
+> the stat line (Maelstrom grants no stats at all). What the clause protects is that a
+> mono path must carry something a graft cannot, and a signature MOVE (clause 5) serves
+> that too: Riptide's Tidecaller has Lizard Rush, Rime's Avalanche has Snowball. What
+> stays true is that a mono path offering *only stats* cannot compete.
+>
 > **3. A GRAFT path pays three ways** — more stats, the new type, and a line of
 > that type's moves via `learnableMoveIds` (below). Three payoffs against the
 > mono path's two, because the graft is also giving up the passive. STAB on the
@@ -298,16 +307,26 @@ identity.
 > been used to say something that loud. The Attack is *spent*, not merely
 > unused, which is what makes it a choice rather than a strict upgrade.
 >
-> **The open risk a refocus path carries** (unresolved, 2026-09-01): a hero
-> whose authored pool is entirely one category — Fang's is entirely physical —
-> comes out of a refocus with a loadout that no longer reads the stat it now
-> lives on, and `learnableMoveIds` only *offers* the fix on a later level-up. A
-> path cannot guarantee it, because `unlocksMoveIds` grants outright with **no
-> MOVE_CAP check** (`chooseEvolutionPath`), and a level-5 hero is usually
-> already at the cap. Mitigated for now by weighting Warhowl's list toward Early
-> tiers so the very next level-up can offer one. The real fix — a cap-aware
-> grant, or a forced move offer following a refocus — is a design decision, not
-> an implementation detail. Typing usually shifts by *adding* a secondary (mono → dual), but a path may
+> **5. A path GRANTS a move, not only the promise of one** (2026-09-01, the fix
+> for the refocus risk below). `unlocksMoveIds` is now authored, and it is what
+> makes a refocus land the same turn it is chosen: Warhowl hands Fang
+> **Poltergeist**, so the 60 Intelligence has something to read immediately
+> rather than waiting on a level-up roll. `learnableMoveIds` still carries the
+> *line*; `unlocksMoveIds` carries the one move the path is incomplete without.
+>
+> **The refocus risk, and how the grant is priced against MOVE_CAP** (closed
+> 2026-09-01): a hero whose authored pool is entirely one category — Fang's is
+> entirely physical — used to come out of a refocus with a loadout that no
+> longer read the stat it now lived on, because `learnableMoveIds` only
+> *offers* the fix on a later level-up. A granted move fixes that, but a level-5
+> hero is normally already at MOVE_CAP, so the grant is **priced, not free**:
+> `applyEvolutionMoves` (`src/run/progression.ts`) fills open slots in order and
+> returns the rest as `overflow`, which `LevelUpScreen` puts to the player as the
+> same **replace-or-decline** offer a level-up at the cap makes. The loadout
+> never grows to five, and the player — not the path — decides what the new move
+> displaces.
+
+Typing usually shifts by *adding* a secondary (mono → dual), but a path may
 also *replace* an already-granted secondary outright — e.g. a hero flavored around
 "Iron Stone" might Evolve down an **Iron / Light** path instead of the expected
 Iron / Stone, if that's the path chosen. This is the same secondary-slot-shift

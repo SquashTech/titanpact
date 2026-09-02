@@ -439,9 +439,11 @@ statusApplication: { statusId: 'Burn', magnitude: 10, target: 'moveTarget' }
 ```
 
 - `target: 'moveTarget'` = the move's own resolved targets. `'self'` = the user
-  (recoil, or a self-buff). `'randomAlly'` / `'randomEnemy'` (Storm's Rising
-  Static) let the rider resolve its OWN target, independently of the move's —
-  which is how one move buffs an ally and marks an enemy in the same cast.
+  (recoil, or a self-buff). `'bothAllies'` (2026-09-01, Water's Lizard Rush) and
+  `'randomAlly'` / `'randomEnemy'` (Storm's Rising Static) let the rider resolve
+  its OWN target relative to the CASTER, independently of the move's — which is
+  how one move hits an enemy and mends its own side in the same cast. Only the
+  random pair draws RNG; `'bothAllies'` costs the same rolls as no rider at all.
 - `magnitude` for magnitude/timer statuses; `duration` for duration statuses.
 - `chance: 0.1` gates the rider on a roll. **It gates the rider, never the move** —
   the damage still lands (`CLAUDE.md`: no accuracy stat). Rolls once per target.
@@ -513,6 +515,25 @@ damage formula. Read `docs/combat.md` "Drain" before authoring a variant.
 by 20 every time they cast it, for the rest of the fight, floored at 0. The first cast is
 always the authored price. If you author one of these, sanity-check that a hero who holds
 it can afford the *first* cast — the ramp cannot start otherwise.
+
+### `basePowerGainOnUse`
+
+`{ amount: 40, max: 200 }` (Frost's Snowball, 2026-09-02) is the mana ramp's mirror on the
+other side of the formula: every cast raises this move's BasePower **for that combatant**
+by `amount` for the rest of the fight, capped at `max` TOTAL. Like the mana ramp, the cast
+pays the **pre-increment** figure — Snowball's first throw is the authored 40 — and the
+accrual lives on `Combatant.moveBasePowerBonuses`, so it is per hero, per move, and gone
+when the fight is.
+
+Two things to get right:
+
+- **It is a BasePower-stage substitution, not a modifier.** It replaces the authored
+  BasePower *input*, so `max` caps the ramp alone: the conditional multiplier and Elemental
+  Force still apply on top of the capped figure, exactly as they do to any other move.
+- **Read it through `state.ts resolveCastBasePower`, never `move.basePower`.** That is the
+  one function the engine, the move button, and the dossier's damage forecast all call, and
+  it also covers `randomBasePower` (the two fields are exclusive). A surface that reads the
+  authored number shows a lie the moment the ramp starts.
 
 ### `conditionalPriority`
 

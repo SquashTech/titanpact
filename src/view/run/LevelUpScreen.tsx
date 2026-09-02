@@ -14,6 +14,7 @@ import {
   pendingEvolution,
   chosenEvolutionPaths,
   chooseEvolutionPath,
+  applyEvolutionMoves,
   MOVE_CAP,
   MASTERY_STAT_AMOUNT,
   drawMasteryStats,
@@ -191,6 +192,8 @@ const ORB_TRACK_MAX = 12;
 // button; RosterManagementScreen never spends the pool.
 export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
   const [offer, setOffer] = useState<MoveOffer | null>(null);
+  /** Only an Evolution can grant more than one move at once; each waits its turn behind `offer`. */
+  const [offerQueue, setOfferQueue] = useState<string[]>([]);
   /** Mutually exclusive with `offer` in practice — one level-up pays out a move or a stat. */
   const [masteryOffer, setMasteryOffer] = useState<MasteryOffer | null>(null);
   const [selectedReplaceId, setSelectedReplaceId] = useState<string | null>(null);
@@ -299,7 +302,8 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     if (replaceMoveId) {
       onRunChange(grantLevelUpMove(run, offer.rosterId, offer.moveId, replaceMoveId));
     }
-    setOffer(null);
+    setOffer(offerQueue.length > 0 ? { rosterId: offer.rosterId, moveId: offerQueue[0] } : null);
+    setOfferQueue(offerQueue.slice(1));
     setSelectedReplaceId(null);
   }
 
@@ -315,8 +319,21 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
   }
 
   function handleChooseEvolution(rosterId: string, pathId: string) {
+    const entry = run.roster.find((r) => r.rosterId === rosterId);
+    const path = entry
+      ? (availableEvolution(progressionTable, entry)?.paths.find((p) => p.id === pathId) ?? null)
+      : null;
+    // Read BEFORE the choice lands: the path's moves that MOVE_CAP refused become the same
+    // replace-or-decline offer a level-up makes, one at a time.
+    const overflow = entry && path ? applyEvolutionMoves(entry.unlockedMoveIds, path.unlocksMoveIds).overflow : [];
+
     onRunChange(chooseEvolutionPath(run, progressionTable, heroes, rosterId, pathId));
     setEvolvingRosterId(null);
+    if (overflow.length > 0) {
+      setOfferQueue(overflow.slice(1));
+      setOffer({ rosterId, moveId: overflow[0] });
+      setSelectedReplaceId(null);
+    }
   }
 
   const pendingEvolutions = run.roster.filter((entry) => !!availableEvolution(progressionTable, entry)).length;

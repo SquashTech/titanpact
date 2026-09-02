@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { MoveDefinition } from '../../engine/content';
 import { statusApplicationsOf } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
-import { activePartnerTypes, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, hasStatus, resolveManaCost, resolveRandomBasePower } from '../../engine/state';
+import { activePartnerTypes, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, effectiveBasePower, hasStatus, resolveCastBasePower, resolveManaCost } from '../../engine/state';
 import { allCombatants } from '../../data/content';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
@@ -79,8 +79,9 @@ interface Forecast {
  * or the forecast lies". Crit is excluded from the band and stated as a footnote instead.
  */
 function forecastAgainst(move: MoveDefinition, ctx: MoveDossierContext, defenderId: string): Forecast | null {
-  // A randomBasePower move authors no basePower; it forecasts off this round's rolled figure.
-  const rolledBasePower = resolveRandomBasePower(ctx.combat, ctx.attackerId, move);
+  // A randomBasePower move authors no basePower, and a ramping one has outgrown its authored
+  // figure; both forecast off the number the button is showing (state.ts resolveCastBasePower).
+  const rolledBasePower = resolveCastBasePower(ctx.combat, ctx.attackerId, move, ctx.combat.combatants[ctx.attackerId]?.moveBasePowerBonuses);
   if (move.kind !== 'damage' || (move.basePower == null && rolledBasePower == null)) return null;
   const attacker = ctx.combat.combatants[ctx.attackerId];
   const defender = ctx.combat.combatants[defenderId];
@@ -233,6 +234,8 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
   const liveCost = context
     ? resolveManaCost(context.combat, context.attackerId, move, allCombatants)
     : effectiveManaCost(move, attacker?.moveManaDiscounts);
+  // The ramp needs no board — only this hero's own accrual — so it reads off the attacker either way.
+  const liveBasePower = move.basePowerGainOnUse ? effectiveBasePower(move, attacker?.moveBasePowerBonuses) : undefined;
   const manaAfter = attacker ? attacker.currentMana - liveCost : null;
   const manaPool = attacker && attackerHero ? getMaxMana(attackerHero, attacker) : null;
 
@@ -303,6 +306,7 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
       move.critChance != null ||
       move.drainPercent ||
       move.manaDiscountOnUse ||
+      move.basePowerGainOnUse ||
       move.conditionalPriority ||
       move.conditionalManaCost ||
       move.conditionalStatDeltas ||
@@ -653,6 +657,20 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
                 move.cleanseCount != null
                   ? 'one negative status, chosen at random — never a positive one'
                   : 'strips every negative status from the target'
+              }
+            />
+          )}
+          {move.basePowerGainOnUse && (
+            <EffectRow
+              glyph={<MoveKindGlyph kind={move.category} />}
+              text={`+${move.basePowerGainOnUse.amount} Base Power each use`}
+              note={
+                attacker
+                  ? `${liveBasePower} now, ${Math.min(
+                      move.basePowerGainOnUse.max,
+                      (liveBasePower ?? 0) + move.basePowerGainOnUse.amount
+                    )} after this cast — for the rest of the fight, up to ${move.basePowerGainOnUse.max}`
+                  : `stacks for the rest of the fight, on this hero only, up to ${move.basePowerGainOnUse.max}`
               }
             />
           )}

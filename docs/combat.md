@@ -1229,6 +1229,50 @@ against **active** enemies only — a benched opponent has not been committed to
 fight). Grow it when content needs a second condition, the same discipline
 `PassiveHook` and `StatusDefinition.triggerTypes` follow.
 
+### A reaction that lands on the hero it just hit (2026-09-01, Riptide)
+
+`PassiveEffectTarget` gained **`'triggerTarget'`**. Content: **Static Tide** (Riptide's
+Maelstrom Evolution) — *every Water attack this hero lands leaves its target
+Conducting* — which then feeds its own grafted Storm moves, since Conduct detonates off
+any Storm or Iron hit.
+
+The existing `'triggerSubject'` could not express it. A condition reading "**I** dealt
+this hit" is `subjectRole: 'source'`, and `'triggerSubject'` follows that role — so the
+mark would have landed on the attacker. `'triggerTarget'` is the event's target-role
+combatant *whatever the condition read*: the defender of a `DamageDealt`, the arriver of
+a `SwitchedIn`. The two are the same target for every target-role passive already
+authored, and only diverge for the source-role ones — which is exactly the case that had
+no vocabulary.
+
+Attribution is unchanged: the condition still says whose hit it was, so a partner's
+Water move plants nothing, and a spread Water move marks each target once (one
+`DamageDealt` each). `test/passives.test.ts` pins all four.
+
+### Reacting to a stat CHANGE (2026-09-02, Rime)
+
+`PassiveHook` gained **`'StatChanged'`**. Content: **Frozen Stone** (Rime's Glacier
+Evolution) — *whenever this hero's Defense rises, Freeze a random enemy* — which pairs with
+the Stone line the same path opens: Toughen Up and Bastion are now openers, and Body Crush
+cashes the Defense back out as damage.
+
+Three pieces had to exist for one passive, and each is worth knowing separately:
+
+- **`eventFieldPositive`** (a `PassiveTriggerCondition` field) names a numeric event field
+  that must be `> 0`. It is the whole difference between "rises" and "changes": without it
+  Rend Armor would freeze someone for peeling Rime's armor off. A missing or non-numeric
+  field never matches — an unreadable condition is a no-fire, not a free pass.
+- **`PassiveEffectTarget 'randomEnemy'`** is the first passive target that costs RNG. It
+  draws exactly one `nextInt` and only when a passive asks for it, so every existing golden
+  replay is byte-identical. Fainted foes are dropped from the pool before the draw, and an
+  empty pool draws nothing at all.
+- **The hook is fed from a MOVE's stat deltas**, at one checkpoint after both blocks that
+  write `statModifiers` and before the move's own status riders. A stat change a *passive*
+  caused does not chain into another passive — the reaction pass never re-scans what it
+  produced, which is what keeps two stat-reacting passives from feeding each other.
+
+`StatChanged` carries no source, so it is target-role only: the subject is the hero whose
+stat moved, and `relativeTo` is what says whose hero that is.
+
 ### The floor: no effective stat below 1 (LOCKED — 2026-08-30 designer call)
 
 Raised by the Mind slate, but **not caused by it**. `getEffectiveStat` (state.ts) had
