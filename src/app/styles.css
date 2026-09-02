@@ -13760,6 +13760,16 @@ textarea,
   }
 }
 
+/* Floor room under the CTA for .growth-cost's footer line, which is absolutely
+   positioned and so cannot ask for it itself. Uniform across the whole grid —
+   including the evolving card, whose price is null — because .pick-cta's
+   bottom-alignment is what lines the payoff lines up across the roster, and a
+   card that reserved the strip only when it had a price would break that row
+   for the one card the eye is already on. */
+.growth-card {
+  padding-bottom: 22px;
+}
+
 /* One level-up away from the branch. A hairline of gold on the rim only —
    the loud treatment belongs to .is-evolving, and if both shouted the
    already-earned Evolution would stop being the brightest thing on screen. */
@@ -13802,14 +13812,22 @@ textarea,
    stay in step with LevelUpScreen's LEVEL_UP_ANIM_MS: the level-up is applied
    by a JS timeout, not an animationend listener, so the two only have to
    agree on how long tap-to-payoff feels. */
-/* The price of the next level, as a corner mark mirroring .pick-level on the
-   opposite side of the figure. It carries a spelled-out "XP" for a reason that
-   is specific to this rule: a level-up costs exactly as many points as the
-   level it leaves (run/progression.ts levelUpCost), so this number is ALWAYS
-   identical to the "Lv" mark opposite it. Two bare 4s in opposite corners is
-   not a pair, it is a puzzle — the units are the only thing that makes the
-   card readable, and reading "Lv 4 / 4 XP" across the figure is also how the
-   player learns the pricing rule without being told it.
+/* The price of the next level, on a footer line of its own. It carries a
+   spelled-out "XP" for a reason that is specific to this rule: a level-up
+   costs exactly as many points as the level it leaves (run/progression.ts
+   levelUpCost), so this number is ALWAYS identical to the "Lv" mark on the
+   figure. Two bare 4s on one card is not a pair, it is a puzzle — the units
+   are the only thing that makes the card readable, and reading "Lv 4 / 4 XP"
+   down the card is also how the player learns the pricing rule without being
+   told it.
+
+   A centred footer rather than the bottom-right corner mark it started as: at
+   three columns — a full roster of six, the case the screen is actually
+   played in — the CTA fills the card's width and the price sat a glyph away
+   from it, reading as the tail of the payoff instead of as its price. The room
+   is bought with .growth-card's padding-bottom below rather than by shrinking
+   anything, because the grid has vertical space going spare at both column
+   counts.
 
    Dimmed rather than removed when the pool can't cover it: the card is already
    locked, and a price that vanished when unaffordable would answer "why not?"
@@ -13817,10 +13835,12 @@ textarea,
 .growth-cost {
   position: absolute;
   z-index: 2;
-  right: 4px;
-  bottom: 3px;
+  left: 0;
+  right: 0;
+  bottom: 4px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 2px;
   font-size: 11px;
   font-weight: 800;
@@ -13831,7 +13851,7 @@ textarea,
 }
 
 /* Unit set smaller than the numeral, the same label/value split .pick-level
-   makes with "Lv" — so the two corner marks read as one sentence. */
+   makes with "Lv" — so the two marks read as one sentence. */
 .growth-cost::after {
   content: 'XP';
   margin-left: 2px;
