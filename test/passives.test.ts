@@ -661,7 +661,7 @@ test('passives: Entanglement does not double a move that ALREADY spreads — onl
 
 // --- Afterimage (Nightshade / Penumbra) ---
 
-// Both sides given deep mana; the point of these is the targeting, not the economy.
+// Deep mana on both sides; the point of these is the ramp and the targeting, not the economy.
 function nightshadeFixture(seed: number) {
   const base = createFightState(
     seed,
@@ -680,50 +680,65 @@ function nightshadeFixture(seed: number) {
   } as CombatState;
 }
 
-const nightshadeStrikes: Action = { kind: 'move', combatantId: 'a1', moveId: 'backstab', declaredTarget: 'b1' };
-const enemySwings: Action = { kind: 'move', combatantId: 'b1', moveId: 'heavyBlow', declaredTarget: 'a1' };
+const vanishes: Action = { kind: 'move', combatantId: 'a1', moveId: 'vanish' };
+const strikes: Action = { kind: 'move', combatantId: 'a1', moveId: 'backstab', declaredTarget: 'b1' };
 
-test('passives: Afterimage Stealths its owner off a landed hit, and nobody else', () => {
+test('passives: Afterimage pays 20 Attack for going hidden', () => {
   const state = withPassive(nightshadeFixture(400), 'a1', 'afterimage');
-  const { state: next } = resolveRound(state, [nightshadeStrikes], config);
+  const { state: next } = resolveRound(state, [vanishes], config);
 
   assert.ok(hasStatus(next.combatants.a1, 'Stealth'));
-  assert.ok(!hasStatus(next.combatants.a2, 'Stealth') && !hasStatus(next.combatants.b1, 'Stealth'));
+  assert.strictEqual(next.combatants.a1.statModifiers.attack, 20);
 });
 
-test('passives: Afterimage is what the path is FOR — the counter-attack redirects onto the partner', () => {
+test("passives: Afterimage costs a FRESH Stealth — Vanishing again while still hidden pays nothing", () => {
   const state = withPassive(nightshadeFixture(401), 'a1', 'afterimage');
-  // Nightshade at 85 Speed acts first, so the Stealth is up before Heavy Blow resolves.
-  const { events } = resolveRound(state, [nightshadeStrikes, enemySwings], config);
+  const once = resolveRound(state, [vanishes], config).state;
+  const twice = resolveRound(once, [vanishes], config).state;
+
+  // Stealth is stacking 'none', so the second application emits no StatusApplied at all.
+  assert.strictEqual(twice.combatants.a1.statModifiers.attack, 20, 'the ramp is gated by the status, not by a cooldown');
+});
+
+test('passives: Afterimage ramps on the vanish-strike loop — 20 per cycle, hidden throughout', () => {
+  let state = withPassive(nightshadeFixture(402), 'a1', 'afterimage');
+  const expected = [20, 20, 40, 40, 60];
+  [vanishes, strikes, vanishes, strikes, vanishes].forEach((action, i) => {
+    state = resolveRound(state, [action], config).state;
+    assert.strictEqual(state.combatants.a1.statModifiers.attack, expected[i], `round ${i + 1}`);
+    assert.ok(hasStatus(state.combatants.a1, 'Stealth'), `round ${i + 1} stays hidden`);
+  });
+});
+
+test('passives: Afterimage pays on top of Shadow Form, which brings its own +75', () => {
+  const state = withPassive(nightshadeFixture(403), 'a1', 'afterimage');
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'shadowForm' } as Action], config);
+
+  assert.strictEqual(next.combatants.a1.statModifiers.attack, 95, "the move's 75 and the passive's 20 in one cast");
+});
+
+test('passives: Afterimage is the RECEIVER role — an enemy going hidden pays Nightshade nothing', () => {
+  const state = withPassive(nightshadeFixture(404), 'a1', 'afterimage');
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'b1', moveId: 'vanish' } as Action], config);
+
+  assert.ok(hasStatus(next.combatants.b1, 'Stealth'));
+  assert.strictEqual(next.combatants.a1.statModifiers.attack ?? 0, 0);
+});
+
+test('passives: the Stealth Penumbra runs on still bills the PARTNER — a single-target swing redirects', () => {
+  const state = withPassive(nightshadeFixture(405), 'a1', 'afterimage');
+  const hidden = resolveRound(state, [vanishes], config).state;
+  const { events } = resolveRound(hidden, [{ kind: 'move', combatantId: 'b1', moveId: 'heavyBlow', declaredTarget: 'a1' } as Action], config);
 
   const swing = (events.filter((e) => e.type === 'DamageDealt') as any[]).find((e) => e.sourceCombatantId === 'b1');
   assert.strictEqual(swing.targetCombatantId, 'a2', 'aimed at Nightshade, landed on Crag — that is the price of the path');
 });
 
-test('passives: Afterimage holds across the round boundary while its owner keeps hitting', () => {
-  const state = withPassive(nightshadeFixture(402), 'a1', 'afterimage');
-  const r1 = resolveRound(state, [nightshadeStrikes, enemySwings], config).state;
-  const { events } = resolveRound(r1, [nightshadeStrikes, enemySwings], config);
+test('passives: Stealth is not immunity — a SPREAD move ignores it and lands on Nightshade', () => {
+  const state = withPassive(nightshadeFixture(406), 'a1', 'afterimage');
+  const hidden = resolveRound(state, [vanishes], config).state;
+  const { events } = resolveRound(hidden, [{ kind: 'move', combatantId: 'b1', moveId: 'swingingChain' } as Action], config);
 
-  const swing = (events.filter((e) => e.type === 'DamageDealt') as any[]).find((e) => e.sourceCombatantId === 'b1');
-  assert.strictEqual(swing.targetCombatantId, 'a2', 'still redirected a round later');
-});
-
-test('passives: Afterimage is not immunity — a SPREAD move ignores Stealth and lands on Nightshade', () => {
-  const state = withPassive(nightshadeFixture(403), 'a1', 'afterimage');
-  const { events } = resolveRound(
-    state,
-    [nightshadeStrikes, { kind: 'move', combatantId: 'b1', moveId: 'swingingChain' } as Action],
-    config
-  );
-
-  const hit = (events.filter((e) => e.type === 'DamageDealt') as any[]).filter((e) => e.sourceCombatantId === 'b1');
-  assert.deepStrictEqual(hit.map((h) => h.targetCombatantId).sort(), ['a1', 'a2'], 'hitting both is the counterplay');
-});
-
-test('passives: Afterimage is source-role — TAKING a hit does not hide you', () => {
-  const state = withPassive(nightshadeFixture(404), 'a1', 'afterimage');
-  const { state: next } = resolveRound(state, [enemySwings], config);
-
-  assert.ok(!hasStatus(next.combatants.a1, 'Stealth'), 'it has to land one first');
+  const hits = (events.filter((e) => e.type === 'DamageDealt') as any[]).filter((e) => e.sourceCombatantId === 'b1');
+  assert.deepStrictEqual(hits.map((h) => h.targetCombatantId).sort(), ['a1', 'a2'], 'hitting both is the counterplay');
 });

@@ -151,15 +151,16 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   afterimage: {
     id: 'afterimage',
     name: 'Afterimage',
-    description: 'Every attack this hero lands leaves it Stealthed.',
-    // Static Tide's shape turned inward. Stealth redirects SINGLE-target damage to the partner
-    // and spread moves ignore it entirely, so this is not immunity — it is a tax paid by whoever
-    // stands next to Nightshade, and the counter is any move that hits both. Two actives can
-    // never both be Stealthed, so applyStatus fizzles harmlessly when the partner already is.
+    description: 'Whenever this hero gains Stealth, it gains 20 Attack.',
+    // Target-role StatusApplied: the subject is whoever RECEIVED the status, so this reads
+    // "I became hidden". Nightshade's own Vanish (15 mana) and Shadow Form are the sources, which
+    // makes the ramp a turn spent rather than a rider on attacking. Stealth is stacking 'none',
+    // so re-applying while already hidden emits no event and pays nothing — the ramp costs a
+    // fresh Stealth every time, and Stealth's start-of-round tick is what frees one up.
     reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Stealth', duration: 1 },
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Stealth' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 20 },
     },
   },
   entanglement: {
