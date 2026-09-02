@@ -229,18 +229,18 @@ export function appendFinalEnemy(
   return { run, squad: { ...encounter.squad, benchIds: [...encounter.squad.benchIds, enemyId] } };
 }
 
-/** The `battle` node: the Chief always present plus 3 of the basic Goblins. No node-kind bonus; takes the act curve on the monsters track. */
-export function generateGoblinChiefEncounter(
+/** The `battle` node: the faction's leader always present plus 3 of its basics. No node-kind bonus; takes the act curve on the monsters track. */
+export function generateLeaderEncounter(
   seed: number,
-  basicGoblinIds: readonly string[],
-  chiefId: string,
+  basicIds: readonly string[],
+  leaderId: string,
   enemyPool: HeroLookup,
   scaling: ActScaling = NO_SCALING
 ): Encounter {
   let rng = createRng(seed);
-  const { picked: goblinIds, nextState } = shuffledPick(rng, basicGoblinIds, 3);
+  const { picked: supportIds, nextState } = shuffledPick(rng, basicIds, 3);
   rng = nextState;
-  const heroIds = [chiefId, ...goblinIds];
+  const heroIds = [leaderId, ...supportIds];
 
   let run = createRunState(0);
   for (const heroId of heroIds) {

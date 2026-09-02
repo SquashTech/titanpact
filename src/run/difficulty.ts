@@ -4,7 +4,13 @@
 /** `monsters` = non-recruitable pool (fight/battle); `skirmish` = hero pool (skirmish/elite/boss). Same rate, different baseline act. */
 export type ScalingTrack = 'monsters' | 'skirmish';
 
-/** The act each track's authored stat lines represent (zero scaling). `monsters` is 2 as a placeholder until per-act monster content exists; Act 1 clamps to zero steps rather than going negative. */
+/**
+ * The act each track's authored stat lines represent (zero scaling); Act 1 clamps to zero
+ * steps rather than going negative. The `monsters` default is the fallback for callers with
+ * no faction in hand — a faction that authors its own line overrides it with
+ * `FactionRoster.baselineAct` (enemies.ts), which is why the Cultists' 2 is a real figure
+ * where the Goblins' is still a placeholder.
+ */
 export const BASELINE_ACT: Record<ScalingTrack, number> = {
   monsters: 2,
   skirmish: 1,
@@ -31,11 +37,11 @@ function clampAct(actNumber: number): number {
   return Math.floor(actNumber);
 }
 
-/** Acts past the level table hold at its last entry. */
-export function actScaling(track: ScalingTrack, actNumber: number): ActScaling {
+/** Acts past the level table hold at its last entry. `baselineAct` overrides the track default — a faction authored for a later act. */
+export function actScaling(track: ScalingTrack, actNumber: number, baselineAct: number = BASELINE_ACT[track]): ActScaling {
   const act = clampAct(actNumber);
   return {
-    statSteps: Math.max(0, act - BASELINE_ACT[track]),
+    statSteps: Math.max(0, act - baselineAct),
     level: ENEMY_LEVEL_BY_ACT[Math.min(act, ENEMY_LEVEL_BY_ACT.length) - 1],
   };
 }

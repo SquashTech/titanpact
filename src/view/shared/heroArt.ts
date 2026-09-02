@@ -42,6 +42,13 @@ import torchGoblinArt from '../../../art/enemies/torchgoblin.png';
 import goblinChiefArt from '../../../art/enemies/goblinchief.png';
 import goblinLordArt from '../../../art/enemies/goblinlord.png';
 
+import cultBladeArt from '../../../art/enemies/cultists/cultblade.png';
+import dreadCultistArt from '../../../art/enemies/cultists/dreadcultist.png';
+import blightedCultistArt from '../../../art/enemies/cultists/blightedcultist.png';
+import frozenCultistArt from '../../../art/enemies/cultists/frozencultist.png';
+import cultMysticArt from '../../../art/enemies/cultists/cultmystic.png';
+import yugzulachArt from '../../../art/enemies/cultists/yugzulach.png';
+
 /** Portraits keyed by hero id (heroes.ts order, then enemies.ts order). A missing entry renders text-only. */
 export const heroArt: Partial<Record<string, string>> = {
   // --- Fire ---
@@ -94,7 +101,7 @@ export const heroArt: Partial<Record<string, string>> = {
   packAlpha: fangArt,
   widow: widowArt,
   coil: coilArt,
-  // --- Enemies ---
+  // --- Enemies: Goblins ---
   goblinGrunt: goblinGruntArt,
   goblinSkulker: goblinSkulkerArt,
   spookyGoblin: spookyGoblinArt,
@@ -102,4 +109,11 @@ export const heroArt: Partial<Record<string, string>> = {
   torchGoblin: torchGoblinArt,
   goblinChief: goblinChiefArt,
   goblinLord: goblinLordArt,
+  // --- Enemies: Cultists ---
+  cultBlade: cultBladeArt,
+  dreadCultist: dreadCultistArt,
+  blightedCultist: blightedCultistArt,
+  frozenCultist: frozenCultistArt,
+  cultMystic: cultMysticArt,
+  yugzulach: yugzulachArt,
 };

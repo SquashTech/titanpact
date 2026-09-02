@@ -436,12 +436,11 @@ test('stone: no move is unreachable that was not already known to be', () => {
   }
 
   const unreachable = Object.keys(moves).filter((id) => !reachable.has(id)).sort();
+  // Runic Blast and Forgotten Curse left this list when Yugzulach was authored (src/data/enemies.ts).
   assert.deepStrictEqual(unreachable, [
     'cerebralShock',
-    'forgottenCurse',
     'landslide',
     'rockfall',
-    'runicBlast',
     // RESERVED (2026-09-02), not an accident: Shock Bubble is the Water move that plants Conduct,
     // and it was reachable only through Riptide's Storm graft, which became Water/Mind. Held with
     // the Static Tide passive for a future recruit-only Water hero that grafts Storm.

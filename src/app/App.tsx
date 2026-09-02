@@ -21,7 +21,7 @@ import { runEvents } from '../data/events';
 import { rollRunEvent } from '../run/events';
 import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
 import { heroes } from '../data/heroes';
-import { enemies, basicGoblins, BASIC_GOBLIN_IDS, GOBLIN_CHIEF_ID } from '../data/enemies';
+import { enemies, factions, basicEnemiesOf } from '../data/enemies';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
 import { equipment } from '../data/equipment';
 import {
@@ -50,7 +50,7 @@ import { guildHallOffers } from '../data/recruitment';
 import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } from '../run/shop';
 import { generateMap, type MapNodeType } from '../run/map';
 import { generateStarterOptions } from '../run/draft';
-import { generateEncounter, generateGoblinChiefEncounter, appendFinalEnemy, type EncounterNodeType, type Encounter } from '../run/enemyGen';
+import { generateEncounter, generateLeaderEncounter, appendFinalEnemy, type EncounterNodeType, type Encounter } from '../run/enemyGen';
 import { actScaling, type ScalingTrack } from '../run/difficulty';
 import { generateItinerary, locationBias, locationForAct } from '../run/locations';
 import { locations } from '../data/locations';
@@ -285,19 +285,20 @@ export function App() {
       node.type === 'boss'
     ) {
       // Generated at node-select time so SquadSelectScreen can scout the enemy squad.
-      // `fight`/`battle` draw from the Goblin pool; `skirmish`/`elite`/`boss` from the recruitable hero pool.
+      // `fight`/`battle` draw from the Location's faction; `skirmish`/`elite`/`boss` from the recruitable hero pool.
       const isMobFight = node.type === 'fight' || node.type === 'battle';
+      const faction = factions[location.factionId];
       // `skirmish` and `battle` are mechanically plain `fight` encounters.
       const encounterKind: EncounterNodeType = node.type === 'skirmish' || node.type === 'battle' ? 'fight' : node.type;
       // The run's 2nd plain encounter is a deliberately lighter 2v2.
       const isSecondFight = encounterKind === 'fight' && playerRun.fightsStarted === 1;
       const track: ScalingTrack = isMobFight ? 'monsters' : 'skirmish';
-      const scaling = actScaling(track, playerRun.actNumber);
+      const scaling = actScaling(track, playerRun.actNumber, isMobFight ? faction.baselineAct : undefined);
       let encounter: Encounter;
       if (node.type === 'battle') {
-        encounter = generateGoblinChiefEncounter(randomSeed(), BASIC_GOBLIN_IDS, GOBLIN_CHIEF_ID, enemies, scaling);
+        encounter = generateLeaderEncounter(randomSeed(), faction.basicIds, faction.leaderId, enemies, scaling);
       } else {
-        const encounterPool = node.type === 'fight' ? basicGoblins : heroes;
+        const encounterPool = node.type === 'fight' ? basicEnemiesOf(faction) : heroes;
         // A hero already on the roster is barred from the recruitable SPAWN, so two copies can never
         // reach one roster via a contract claim (mirrors rollGuildHallOffers).
         const excludeHeroIds = encounterPool === heroes ? playerRun.roster.map((r) => r.heroId) : undefined;

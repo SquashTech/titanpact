@@ -26,7 +26,7 @@ test('goblinLord: every stat is a multiple of 5 — the locked authoring rule, n
   }
 });
 
-test('goblinLord: 20 MP Regen is the highest in the game, and it is what makes the kit castable', () => {
+test('goblinLord: 20 MP Regen is the ceiling, and it is what makes the kit castable', () => {
   const lord = enemies[GOBLIN_LORD_ID];
   assert.strictEqual(lord.baseStats.mpRegen, 20);
   for (const other of Object.values(enemies)) {
@@ -48,10 +48,10 @@ test('goblinLord: the kit is four moves — the MOVE_CAP — spanning both damag
   for (const type of lord.types) assert.ok(kitTypes.has(type), `nothing in the kit gets STAB off ${type}`);
 });
 
-test('goblinLord: Wild\'s Edge is the only location that fields a Guardian champion today', () => {
+test('goblinLord: only the two locations with an authored faction field a Guardian champion today', () => {
   assert.strictEqual(locations[ACT_ONE_LOCATION_ID].guardianFinalEnemyId, GOBLIN_LORD_ID);
   const withChampions = Object.values(locations).filter((l) => l.guardianFinalEnemyId !== null);
-  assert.deepStrictEqual(withChampions.map((l) => l.id), [ACT_ONE_LOCATION_ID]);
+  assert.deepStrictEqual(withChampions.map((l) => l.id), [ACT_ONE_LOCATION_ID, 'blightedShrine']);
   // appendFinalEnemy no-ops on an unknown id, so a dangling id silently skips the entrance.
   for (const location of withChampions) assert.ok(location.guardianFinalEnemyId! in enemies);
 });

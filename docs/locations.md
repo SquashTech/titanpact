@@ -113,39 +113,65 @@ work is data entry rather than plumbing.
 
 ### The faction bill
 
-`enemies.ts` holds 5 basic Goblins plus a Chief. `fight` and `battle` are the two node
-types that read as *faction*; `skirmish` reads as *region*. So until Cultist, Fae,
-Automaton, Raider and Undead rosters are authored — roughly 30 enemy definitions —
-**acts 2-5 name their faction on the arrival screen while still fielding Goblins.**
+`enemies.ts` groups its content by **faction** (`FactionRoster`: a `baselineAct`, a list of
+`basicIds`, and one `leaderId`), and a Location names the one it fields through
+`LocationDefinition.factionId`. `fight` and `battle` are the two node types that read as
+*faction*; `skirmish` reads as *region*.
+
+Two are paid: **Goblins** (5 basics + the Chief, Wild's Edge) and, since 2026-09-02,
+**Cultists** (4 basics + the Cult Mystic, Blighted Shrine). Fae, Automaton and Raider and
+Undead rosters are still unwritten, so **the Forbidden Forest, Molten Foundry, Storm Coast
+and Necropolis name their faction on the arrival screen while still fielding Goblins.**
 
 This is a known and accepted intermediate state, not an oversight. The affinity layer (§2)
-costs zero new content and works today; faction rosters can land one at a time, each one
-flipping `LocationDefinition.factionEnemyIds` off the Goblin default. Scoped in §5.2.
+costs zero new content and works today; faction rosters land one at a time, and each one is
+a block of data in `enemies.ts` plus one field on its Location. Scoped in §5.2.
 
 The upside buried in it: `run-loop.md` §4 still lists "a real Guardian boss hero" as
 unbuilt, and locations supply the reason to author six of them rather than one. Each
 location's Guardian is its faction's apex. That is a far better authoring prompt than
 "make a Guardian."
 
+**What a faction is authored against (2026-09-02, the Cultists).** `FactionRoster
+.baselineAct` is the act a roster's stat lines *are* — `difficulty.ts`'s `actScaling` takes
+it as an override on the `monsters` track default, so the same four Cultists are an Act 2
+encounter as written and pick up +30 stats per act beyond it. The Goblins' 2 is a fudge (they
+are Act 1 content that never appears past Act 1, so the clamp does the work); the Cultists' 2
+is a real figure, and the field exists so the next faction can honestly say 3 without moving
+a global. The Cultists were briefed as "considerably stronger than Goblins": ~280 combat stat
+total against the Goblins' ~180, which is more than a full act-step of daylight, and still
+under the weakest authored hero at 325.
+
+The Cultists are also the first faction with a **shared type spine** — every one of them
+leads on Shadow, with the second type fanning out (Iron / none / Nature / Frost, then Arcane
+on the Mystic and Ancient on Yugzulach). That is the legibility trade the shape is for: the
+faction reads as one cult at a glance, and it pays for that with one common answer — Light
+and Spirit are super-effective against the whole roster. Whether a faction *should* be
+counterable as a unit is an open balance question (§6), not a settled one; the Goblins, whose
+five basics are five different types, are the counter-example already in the game.
+
 ### `guardianFinalEnemyId` — the faction champion
 
 One enemy id per location, held on the **bench** of that location's Guardian fight so it
 is the last combatant to reach the field (`run-loop.md` "The Guardian's champion" for the
-mechanism and the balance questions). **Wild's Edge's Goblin Lord is the only one today;**
-every other location is `null`, for the same reason `factionEnemyIds` is — there is no
-authored Cultist or Fae or Undead champion to point at yet.
+mechanism and the balance questions). Two locations have one today: Wild's Edge's **Goblin
+Lord** (600 stat total, Beast/Ancient, physical) and the Blighted Shrine's **Yugzulach**
+(700, Shadow/Ancient, magical — the same silhouette one act later and down the other damage
+pipeline). The remaining four are `null`, for the same reason their `factionId` still points
+at the Goblins: there is no authored Fae or Raider or Undead champion to point at yet.
 
-A **location** property rather than a boss-node one, and that placement is the decision
-worth recording. What comes out of the treeline at Wild's Edge is a Goblin Lord because
-Wild's Edge is where the Goblins are; the same node type in the Necropolis should produce
-something else entirely. Hanging it off the node would have made it a property of *how
-hard this fight is*, which is what `run-loop.md` §2's node kinds already say and what the
-act curve already scales. This says *whose ground you are standing on* — the same thing
-`faction`, `factionEnemyIds` and `affinity` say, and so it belongs beside them.
+A **location** property rather than a faction or boss-node one, and that placement is the
+decision worth recording. What comes out of the treeline at Wild's Edge is a Goblin Lord
+because Wild's Edge is where the Goblins are; the same node type in the Necropolis should
+produce something else entirely. Hanging it off the node would have made it a property of
+*how hard this fight is*, which is what `run-loop.md` §2's node kinds already say and what
+the act curve already scales. Hanging it off the *faction* would have handed the four
+placeholder Goblin locations a Goblin Lord they were never meant to field. This says *whose
+ground you are standing on* — the same thing `faction`, `factionId` and `affinity` say, and
+so it belongs beside them.
 
-It is also the first half of the faction bill above that has actually been paid: the
-Goblins now have an apex, which is the authoring prompt that section asks for, worked
-once. Five to go.
+It is also the half of the faction bill above that has actually been paid twice: Goblins and
+Cultists both have an apex, which is the authoring prompt that section asks for. Four to go.
 
 ## 4. The arrival screen
 
@@ -202,18 +228,25 @@ Until it lands, acts 2-5 are effectively random-without-replacement, which is
 explicitly **not** the decided design. Do not read the current behaviour as a
 decision.
 
-### 5.2 Faction enemy content — the largest chunk of actual work
+### 5.2 Faction enemy content — still the largest chunk of actual work
 
-`LocationDefinition.factionEnemyIds` is `null` on all six locations and **nothing
-reads it yet**. `App.tsx`'s `handleSelectNode` still hardcodes `basicGoblins` for
-`fight` and `generateGoblinChiefEncounter` for `battle`, so every act fields
-Goblins while the arrival screen names Cultists, Fae, Automatons, Raiders or
-Undead.
+**Plumbed and half-paid (2026-09-02).** `LocationDefinition.factionId` names a
+`FactionRoster` in `enemies.ts`, and `App.tsx`'s `handleSelectNode` reads it for
+both mob node types — `basicEnemiesOf(faction)` for `fight`,
+`generateLeaderEncounter(…, faction.basicIds, faction.leaderId, …)` for `battle`.
+Nothing about a Goblin is hardcoded in the app layer any more; the old
+`generateGoblinChiefEncounter` is the same function under a name that no longer
+names a faction.
 
-Roughly 5 basic + 1 leader per faction, ~30 `HeroDefinition`s in the shape
+Two rosters exist. **Four do not:** the Forbidden Forest, Molten Foundry, Storm
+Coast and Necropolis all point at `'goblins'` (`DEFAULT_FACTION_ID`) and field
+Goblins while the arrival screen names Fae, Automatons, Raiders or Undead.
+
+Roughly 4-5 basics + 1 leader per faction, `HeroDefinition`s in the shape
 `enemies.ts` already uses (a Goblin does not need a different schema, it needs
-different numbers — `run-loop.md` §3). Each faction that lands flips one field
-here and one branch in `handleSelectNode`; they can arrive one at a time.
+different numbers — `run-loop.md` §3), plus a `baselineAct` saying which act the
+numbers are for. Each faction that lands is a block of data and one field here.
+The Cultists are the worked example.
 
 ### 5.3 Per-location Guardians
 
@@ -230,6 +263,15 @@ one field, where replacing the Guardian outright would mean authoring a whole bo
 deciding what happens to the +20-to-3-stats bonus, the Banner, and the contract claim.
 Whether the other five factions want a champion, a replacement Guardian, or both is now a
 real choice rather than a foregone one.
+
+**Worked a second time (2026-09-02).** Yugzulach, Shadow/Ancient, arrives on the Blighted
+Shrine Guardian bench exactly as the Lord does at Wild's Edge. Two data points make the
+shape look deliberate rather than opportunistic: both champions are dual-typed with
+**Ancient** as the second type, which is what that type keeps itself for, and both spend
+their four moves across both damage pipelines. They differ in which pipeline they *lean* on
+— the Lord is 105 Attack to 80 Intelligence, Yugzulach 120 Intelligence to 90 Attack — so
+the answer a player needs at the end of Act 1 is not the answer they need again later. Four
+to go.
 
 ### 5.4 `exclusiveHeroIds` has no consumer
 
@@ -445,3 +487,15 @@ enough that half of it clears whatever button the screen ends in.
   a Foundry that re-lights itself, is the natural marriage of this system and
   `field-effects.md`. Deliberately not attempted — Field Effects has exactly one authored
   effect today, and the second one should not be a location's ambient passive.
+- **May a faction share one type spine?** The Cultists all lead on Shadow, so Light and
+  Spirit answer the entire Blighted Shrine, basics and Guardian alike; the Goblins' five
+  basics are five different types and answer to nothing in particular. Both readings are
+  defensible — a cult *should* look like a cult, and a location the right hero trivialises
+  is a legitimate reason to have drafted that hero — but which one is the house style is
+  not decided, and the four unwritten factions will each restate the question. Measure it
+  before generalising the Cultists' shape.
+- **Where does the mob curve sit against the player curve?** `FactionRoster.baselineAct`
+  makes "which act is this roster for" authorable, but the Cultists' ~280 stat total at
+  Act 2 and the +30/act above it are first-pass figures chosen against the hero roster as
+  written, not measured against a played Act 3. Same status as every other number in
+  `difficulty.ts`.

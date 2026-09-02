@@ -37,6 +37,7 @@ import './runProgress.test';
 import './classes.test';
 import './locations.test';
 import './goblinLord.test';
+import './cultists.test';
 import './events.test';
 import './ai.test';
 import { run } from './harness';

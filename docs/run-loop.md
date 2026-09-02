@@ -106,7 +106,7 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 |---|---|
 | `fight` | `FightScreen` vs. a generated 4-hero AI squad (`src/run/enemyGen.ts`), no bonus. Always row 0, each act's opening node — draws from the non-recruitable enemy pool (Goblins), not the draftable hero roster. |
 | `skirmish` | Mechanically identical to `fight` (same 4-hero, no-bonus `generateEncounter` call — App.tsx collapses it to `EncounterNodeType: 'fight'`), but draws from the **recruitable hero pool** and is named differently on the map (2026-08-17, per user direction) so the player can see, before committing a squad, that beating this one is a shot at a Recruit Contract claim. Always row 2. |
-| `battle` (map-facing name "Monsters", 2026-08-22 revision) | Also mechanically identical to `fight`/`skirmish` (collapses to `EncounterNodeType: 'fight'`), but draws from the **non-recruitable enemy pool**, same as `fight` — not `skirmish`'s recruitable pool. Row 4's non-Elite alternative to `elite`. **2026-08-23 revision, per user direction:** no longer a plain `generateEncounter` call over the whole enemy pool — `App.tsx`'s `handleSelectNode` calls the dedicated `generateGoblinChiefEncounter` (`enemyGen.ts`) instead, which always fields `goblinChief` plus 3 random draws from `BASIC_GOBLIN_IDS`. This is what makes `battle` a real, considerably-tougher alternative to `elite` rather than a same-difficulty reskin of the opener — see "Goblin roster" below for the content this draws on. Different-themed (non-Goblin) monster tiers for later acts remain future work, see "Per-act difficulty scaling" below. |
+| `battle` (map-facing name "Monsters", 2026-08-22 revision) | Also mechanically identical to `fight`/`skirmish` (collapses to `EncounterNodeType: 'fight'`), but draws from the **non-recruitable enemy pool**, same as `fight` — not `skirmish`'s recruitable pool. Row 4's non-Elite alternative to `elite`. **2026-08-23 revision, per user direction:** no longer a plain `generateEncounter` call over the whole enemy pool — `App.tsx`'s `handleSelectNode` calls the dedicated `generateLeaderEncounter` (`enemyGen.ts`) instead, which always fields the Location faction's leader plus 3 random draws from its basics. This is what makes `battle` a real, considerably-tougher alternative to `elite` rather than a same-difficulty reskin of the opener — see "Goblin roster" and "Factions, and the Cultists" below for the content this draws on. |
 | `elite` | The AI's 4 heroes each carry a flat +10 bonus to 2 random growth stats. Draws from the recruitable pool, same as `skirmish`/`battle`. Row 4's difficulty-spike alternative to `battle` — the player picks one or the other, never both. |
 | `boss` | `FightScreen` vs. 2 AI heroes (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Winning grants 1 Recruit Contract, the Guardian's Banner in acts 1-4, and ends the act (§3). **2026-09-01 exception:** a location may hold a **faction champion** on the boss's bench — see "The Guardian's champion" below. |
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. Overhauled 2026-08-18: offers 2-3 curated hero recruits (50g each, `GUILD_HALL_RECRUIT_COST`) rather than the full catalog, plus a rarity-priced equipment shelf, rolled once per visit (`src/run/shop.ts` `rollGuildHallOffers`). Second pass 2026-08-31: relics are no longer sold anywhere, the shelf is 4 wide and readable on its face, sold stock greys out, and Recruit Contracts confirm before buying (`docs/progression.md` "Second pass"). |
@@ -393,19 +393,46 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   (Spirit), `goblinWarrior` (Iron), `torchGoblin` (Fire) — plus a considerably
   stronger `goblinChief` (mono Beast, ~2x the basic Goblins' stats, wielding a
   powerful team-wide buff move, War Horn). The 5 basic ids live in
-  `BASIC_GOBLIN_IDS`/`basicGoblins`; `goblinChief` is never drawn randomly.
+  `factions.goblins.basicIds`; `goblinChief` is never drawn randomly.
   `handleSelectNode` specializes both mob-fight node types on this split: the row-0
-  `fight` opener draws exactly 2 random heroes from `basicGoblins`
+  `fight` opener draws exactly 2 random heroes from the faction basics
   (`generateEncounter(..., heroCountOverride: 2)`), and the row-4 `battle` node
-  ("Monsters") calls the dedicated `generateGoblinChiefEncounter` (`enemyGen.ts`),
-  which always fields `goblinChief` alongside 3 random draws from
-  `BASIC_GOBLIN_IDS` — a fixed threat backed by variable support, rather than a
+  ("Monsters") calls the dedicated leader generator (`enemyGen.ts`), which always
+  fields `goblinChief` alongside 3 random draws from the faction basics — a fixed
+  threat backed by variable support, rather than a
   fully random 4-pick. This is what makes `battle` a real, harder alternative to
-  `elite` instead of a same-difficulty reskin of the opener. Different-themed
-  (non-Goblin) monster tiers for later acts remain future work — see "Per-act
-  difficulty scaling" below. Which rows/node types pull from which pool, and how
+  `elite` instead of a same-difficulty reskin of the opener. Generalised into
+  `FactionRoster` on 2026-09-02, below — the ids named here now live on
+  `factions.goblins`. Which rows/node types pull from which pool, and how
   the pool itself scales by act number, is still open balance work, not
   architecture work.
+- **Factions, and the Cultists (2026-09-02, per user direction).** The mob pool is no
+  longer one flat list with Goblin-shaped constants around it. `enemies.ts` exports
+  `factions`: a `FactionRoster` is `{ baselineAct, basicIds, leaderId }`, a Location names
+  one through `LocationDefinition.factionId`, and `handleSelectNode` reads it —
+  `basicEnemiesOf(faction)` for the `fight` opener, `generateLeaderEncounter` (the renamed
+  `generateGoblinChiefEncounter`; the function was already generic, only its name was not)
+  for `battle`. `guardianFinalEnemyId` deliberately stayed on the **Location** rather than
+  moving into the faction: the four locations still pointing at the Goblin default were
+  never meant to inherit a Goblin Lord (`locations.md` §3).
+  The **Cultists** are the first faction authored for an act other than Act 1, and the
+  first content to use `FactionRoster.baselineAct` — `actScaling` takes it as an override
+  on the `monsters` track, so the roster *is* an Act 2 encounter as written and takes
+  +30 stats per act above that (Act 3 +30, Act 4 +60, Act 5 +90). Four basics —
+  **Cult Blade** (Shadow/Iron, physical), **Dread Cultist** (mono Shadow, caster with
+  Drain sustain), **Blighted Cultist** (Shadow/Nature, Poison), **Frozen Cultist**
+  (Shadow/Frost, Deep Chill into Glaciate) — at ~280 combat stat total against the
+  Goblins' ~180, which is more than a full act-step clear of them and still under the
+  weakest authored hero at 325. The leader is the **Cult Mystic** (Shadow/Arcane, 450),
+  whose Empower hands a basic 80 mana — more than any of their pools hold, so the
+  overflow rule (`mana.md`) is what the faction's leader does for a living. The Guardian
+  champion is **Yugzulach** (Shadow/Ancient, 700), and authoring him took Runic Blast and
+  Forgotten Curse off the unreachable-move list they had sat on since Ancient was written
+  as filler.
+  Two consequences worth naming rather than discovering later: every Cultist leads on
+  **Shadow**, so Light and Spirit answer the whole Location at once (open question,
+  `locations.md` §6), and the faction is four basics rather than five, so a `battle` node
+  there shows three of four every time — thinner variety than Wild's Edge's three of five.
 - **The Guardian's champion (2026-09-01, per user direction).** A Location may name one
   enemy id (`LocationDefinition.guardianFinalEnemyId`, `locations.md` §3) that is placed
   on the **enemy bench** of that act's Guardian fight — `enemyGen.ts`'s

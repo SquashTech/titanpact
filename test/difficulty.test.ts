@@ -7,10 +7,12 @@ import {
   ENEMY_LEVEL_BY_ACT,
   NO_SCALING,
 } from '../src/run/difficulty';
-import { generateEncounter, generateGoblinChiefEncounter } from '../src/run/enemyGen';
+import { generateEncounter, generateLeaderEncounter } from '../src/run/enemyGen';
 import { EVOLUTION_LEVEL, MOVE_CAP } from '../src/run/progression';
 import { heroes } from '../src/data/heroes';
-import { enemies, basicGoblins, BASIC_GOBLIN_IDS, GOBLIN_CHIEF_ID } from '../src/data/enemies';
+import { enemies, factions, basicEnemiesOf } from '../src/data/enemies';
+
+const GOBLINS = factions.goblins;
 import { progressionTable } from '../src/data/progression';
 import { TOTAL_ACTS } from '../src/run/state';
 
@@ -110,7 +112,7 @@ test('difficulty: an unscaled encounter is byte-for-byte the authored content at
 
 test('difficulty: the Goblin Chief encounter takes the monsters curve, and its pool has no progression to cash a level in for', () => {
   const act5 = actScaling('monsters', 5);
-  const { run } = generateGoblinChiefEncounter(11, BASIC_GOBLIN_IDS, GOBLIN_CHIEF_ID, enemies, act5);
+  const { run } = generateLeaderEncounter(11, GOBLINS.basicIds, GOBLINS.leaderId, enemies, act5);
   for (const entry of run.roster) {
     assert.strictEqual(entry.level, act5.level);
     assert.strictEqual(statTotal(entry.evolutionStatGrants), act5.statSteps * ACT_STEP_STAT_TOTAL);
@@ -119,7 +121,7 @@ test('difficulty: the Goblin Chief encounter takes the monsters curve, and its p
   }
 
   // The row-0 opener is on the same track: untouched in Act 1.
-  const { run: opener } = generateEncounter('fight', 7, basicGoblins, {
+  const { run: opener } = generateEncounter('fight', 7, basicEnemiesOf(GOBLINS), {
     heroCount: 2,
     scaling: actScaling('monsters', 1),
     progression: progressionTable,
