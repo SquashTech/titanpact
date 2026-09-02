@@ -658,3 +658,72 @@ test('passives: Entanglement does not double a move that ALREADY spreads — onl
   const hits = events.filter((e) => e.type === 'DamageDealt') as any[];
   assert.strictEqual(hits.length, 2, 'two foes, two hits — not four');
 });
+
+// --- Afterimage (Nightshade / Penumbra) ---
+
+// Both sides given deep mana; the point of these is the targeting, not the economy.
+function nightshadeFixture(seed: number) {
+  const base = createFightState(
+    seed,
+    [
+      { combatantId: 'a1', heroId: 'nightshade', side: 'A' },
+      { combatantId: 'a2', heroId: 'crag', side: 'A' },
+    ],
+    [
+      { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+      { combatantId: 'b2', heroId: 'crag', side: 'B' },
+    ]
+  );
+  return {
+    ...base,
+    combatants: Object.fromEntries(Object.entries(base.combatants).map(([id, c]) => [id, { ...c, currentMana: 999 }])),
+  } as CombatState;
+}
+
+const nightshadeStrikes: Action = { kind: 'move', combatantId: 'a1', moveId: 'backstab', declaredTarget: 'b1' };
+const enemySwings: Action = { kind: 'move', combatantId: 'b1', moveId: 'heavyBlow', declaredTarget: 'a1' };
+
+test('passives: Afterimage Stealths its owner off a landed hit, and nobody else', () => {
+  const state = withPassive(nightshadeFixture(400), 'a1', 'afterimage');
+  const { state: next } = resolveRound(state, [nightshadeStrikes], config);
+
+  assert.ok(hasStatus(next.combatants.a1, 'Stealth'));
+  assert.ok(!hasStatus(next.combatants.a2, 'Stealth') && !hasStatus(next.combatants.b1, 'Stealth'));
+});
+
+test('passives: Afterimage is what the path is FOR — the counter-attack redirects onto the partner', () => {
+  const state = withPassive(nightshadeFixture(401), 'a1', 'afterimage');
+  // Nightshade at 85 Speed acts first, so the Stealth is up before Heavy Blow resolves.
+  const { events } = resolveRound(state, [nightshadeStrikes, enemySwings], config);
+
+  const swing = (events.filter((e) => e.type === 'DamageDealt') as any[]).find((e) => e.sourceCombatantId === 'b1');
+  assert.strictEqual(swing.targetCombatantId, 'a2', 'aimed at Nightshade, landed on Crag — that is the price of the path');
+});
+
+test('passives: Afterimage holds across the round boundary while its owner keeps hitting', () => {
+  const state = withPassive(nightshadeFixture(402), 'a1', 'afterimage');
+  const r1 = resolveRound(state, [nightshadeStrikes, enemySwings], config).state;
+  const { events } = resolveRound(r1, [nightshadeStrikes, enemySwings], config);
+
+  const swing = (events.filter((e) => e.type === 'DamageDealt') as any[]).find((e) => e.sourceCombatantId === 'b1');
+  assert.strictEqual(swing.targetCombatantId, 'a2', 'still redirected a round later');
+});
+
+test('passives: Afterimage is not immunity — a SPREAD move ignores Stealth and lands on Nightshade', () => {
+  const state = withPassive(nightshadeFixture(403), 'a1', 'afterimage');
+  const { events } = resolveRound(
+    state,
+    [nightshadeStrikes, { kind: 'move', combatantId: 'b1', moveId: 'swingingChain' } as Action],
+    config
+  );
+
+  const hit = (events.filter((e) => e.type === 'DamageDealt') as any[]).filter((e) => e.sourceCombatantId === 'b1');
+  assert.deepStrictEqual(hit.map((h) => h.targetCombatantId).sort(), ['a1', 'a2'], 'hitting both is the counterplay');
+});
+
+test('passives: Afterimage is source-role — TAKING a hit does not hide you', () => {
+  const state = withPassive(nightshadeFixture(404), 'a1', 'afterimage');
+  const { state: next } = resolveRound(state, [enemySwings], config);
+
+  assert.ok(!hasStatus(next.combatants.a1, 'Stealth'), 'it has to land one first');
+});

@@ -148,6 +148,20 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Conduct' },
     },
   },
+  afterimage: {
+    id: 'afterimage',
+    name: 'Afterimage',
+    description: 'Every attack this hero lands leaves it Stealthed.',
+    // Static Tide's shape turned inward. Stealth redirects SINGLE-target damage to the partner
+    // and spread moves ignore it entirely, so this is not immunity — it is a tax paid by whoever
+    // stands next to Nightshade, and the counter is any move that hits both. Two actives can
+    // never both be Stealthed, so applyStatus fizzles harmlessly when the partner already is.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Stealth', duration: 1 },
+    },
+  },
   entanglement: {
     id: 'entanglement',
     name: 'Entanglement',
