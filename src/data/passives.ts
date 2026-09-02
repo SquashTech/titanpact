@@ -148,6 +148,21 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Conduct' },
     },
   },
+  entanglement: {
+    id: 'entanglement',
+    name: 'Entanglement',
+    description: 'When this hero enters the battlefield, both active enemies are Haunted.',
+    // Imposing Presence's arrival shape carrying Mind's own status. Haunt only expands a
+    // singleEnemy move (statusEngine expandSpreadTargets), so marking BOTH does not double a
+    // spread move — it removes the aiming constraint and survives one foe pivoting out.
+    // Bounded on purpose: Haunt clearsOnSwitch, so the enemy's counterplay is to switch and
+    // Cortex's answer is to pivot out and back. That trade is the path.
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Haunt' },
+    },
+  },
   restorativeToxin: {
     id: 'restorativeToxin',
     name: 'Restorative Toxin',
