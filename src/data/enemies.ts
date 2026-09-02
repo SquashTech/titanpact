@@ -51,11 +51,15 @@ export const enemies: Record<string, HeroDefinition> = {
     starter: false,
   },
   // Fields the "Monsters" battle node alongside 3 random basic Goblins; never randomly drawn.
+  // +100 HP over the original 110 (2026-09-02): everything else about him was already a
+  // step up from the basics, but he died on the same timetable they did, so the fixed
+  // threat backing the variable support never got to be one. The extra bulk is all in HP
+  // on purpose — he outlasts the player's opening, he does not out-hit it.
   goblinChief: {
     id: 'goblinChief',
     name: 'Goblin Chief',
     types: ['Beast'],
-    baseStats: { hp: 110, attack: 60, defense: 45, intelligence: 25, wisdom: 35, speed: 50, manaPool: 70, mpRegen: 14 },
+    baseStats: { hp: 210, attack: 60, defense: 45, intelligence: 25, wisdom: 35, speed: 50, manaPool: 70, mpRegen: 14 },
     moveIds: ['lacerate', 'packHunt'],
     starter: false,
   },

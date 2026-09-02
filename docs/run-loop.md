@@ -391,8 +391,12 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   original 2 mono-Beast Goblins to 5 basic, mono-typed Goblin variants —
   `goblinGrunt` (Beast), `goblinSkulker` (retyped Beast → Shadow), `spookyGoblin`
   (Spirit), `goblinWarrior` (Iron), `torchGoblin` (Fire) — plus a considerably
-  stronger `goblinChief` (mono Beast, ~2x the basic Goblins' stats, wielding a
-  powerful team-wide buff move, War Horn). The 5 basic ids live in
+  stronger `goblinChief` (mono Beast, wielding a powerful team-wide buff move,
+  War Horn). Originally ~2x the basic Goblins' stats; **+100 HP on 2026-09-02, per
+  user direction**, taking him to 210/425 — he was a step up on every stat except
+  the one that decides whether a fixed threat gets to be a threat at all, and died
+  on the same timetable as the support he was meant to anchor. All of it in HP, so
+  he outlasts the player's opening rather than out-hitting it. The 5 basic ids live in
   `factions.goblins.basicIds`; `goblinChief` is never drawn randomly.
   `handleSelectNode` specializes both mob-fight node types on this split: the row-0
   `fight` opener draws exactly 2 random heroes from the faction basics
