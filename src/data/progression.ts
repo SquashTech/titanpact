@@ -26,7 +26,22 @@ export const progressionTable: ProgressionTable = {
     cube: ['icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'rockToss', 'openingStrike', 'ironFist', 'frostWall'],
     // --- Storm ---
     stormRanger: ['stormLash', 'shockSlice', 'tailwind', 'overcharge', 'heavyBlow', 'charge', 'swiftBlow', 'ionize'],
-    tempest: ['zap', 'risingStatic', 'ionize', 'chainLightning', 'electricBurst', 'thunderbolt', 'stormSurge', 'ionicZap'],
+    // The mixed pool: Storm's physical column (Thunderclap 45 -> Storm Lash 55 + Conduct ->
+    // Overcharge 80, free once both foes are marked) alongside the magical one, because 70/70
+    // means picking whichever of the target's Defense and Wisdom is lower. Ten, not eight —
+    // two columns need the room.
+    tempest: [
+      'thunderclap',
+      'zap',
+      'risingStatic',
+      'stormLash',
+      'ionize',
+      'electricBurst',
+      'overcharge',
+      'thunderbolt',
+      'stormSurge',
+      'ionicZap',
+    ],
     scallywag: ['stormLash', 'shockSlice', 'overcharge', 'risingStatic', 'heavyBlow', 'tailwind', 'momentumSwing', 'swingingChain'],
     // --- Stone ---
     crag: ['faultLine', 'rubbleRush', 'retribution', 'boulderSlam', 'provoke', 'weaken', 'rally', 'bodyCrush'],
@@ -509,8 +524,8 @@ export const progressionTable: ProgressionTable = {
             heroId: 'tempest',
             kind: 'utility',
             name: 'Thunderhead',
-            description: 'Every mark it lays feeds the next one; the storm builds on itself.',
-            statGrants: { intelligence: 10, manaPool: 20 },
+            description: 'Gets there first, marks everything, and feeds on what it marks.',
+            statGrants: { speed: 20 },
             unlocksMoveIds: [],
             grantsPassiveIds: ['feedbackLoop'],
           },
