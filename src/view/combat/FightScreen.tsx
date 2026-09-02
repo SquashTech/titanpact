@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { memo, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { statusApplicationsOf } from '../../engine/content';
 import { allCombatants } from '../../data/content';
 import { moves } from '../../data/moves';
@@ -60,6 +60,9 @@ import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { EquipmentEffectList, EquipmentIcon, EQUIP_SLOT_LABELS, RARITY_COLOR_VARS, RARITY_LABELS, fmtGrant } from '../shared/EquipmentBox';
+import { useAmbientLocation } from '../shared/LocationContext';
+import { LocationAmbience } from '../shared/LocationSky';
+import type { LocationDefinition } from '../../data/locations';
 
 /** One enemy's live matchup for a move row, precomputed by FightScreen so MoveRow needs no combat state of its own. */
 interface MoveMatchup {
@@ -305,6 +308,20 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
 const PLAYER_SIDE: Side = 'A';
 const AI_SIDE: Side = 'B';
 
+/**
+ * How much of a Location's authored weather the arena carries. Lower than any other surface:
+ * this is the one screen where a mote can cross a hit number.
+ */
+const ARENA_MOTE_DENSITY = 0.45;
+
+/**
+ * The act's place, standing behind the fight (docs/locations.md §5.5). Memoised because the
+ * arena re-renders on every beat and the particle field has nothing to say about any of them.
+ */
+const ArenaLocation = memo(function ArenaLocation({ location }: { location: LocationDefinition }) {
+  return <LocationAmbience location={location} density={ARENA_MOTE_DENSITY} className="battlefield-location" />;
+});
+
 // Same golden-angle scatter as the title's useEmbers / draft's useMotes; stable across renders.
 const CONSOLE_EMBERS = Array.from({ length: 9 }, (_, i) => {
   const seed = i * 137.51;
@@ -490,6 +507,9 @@ export function FightScreen({
   onQuitToTitle,
   onExitToTitle,
 }: Props) {
+  /** null outside an act (sandbox, quick battle): the arena keeps its placeless neutral scene. */
+  const location = useAmbientLocation();
+
   const teamStatModifiers = relicTeamStatModifiers(playerRelicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(playerRelicIds, relics);
   const teamStatusGrants = relicTeamStatusGrants(playerRelicIds, relics);
@@ -923,12 +943,18 @@ export function FightScreen({
         className={`battlefield${combat.activeFieldEffect ? ' field-effect-active' : ''}${
           resolving && beat?.dramaticEntrance ? ' dramatic-entrance' : ''
         }`}
+        /* The Location's lighting recipe keys off this; absent, styles.css's placeless arena stands. */
+        data-location={location?.id}
         style={
-          combat.activeFieldEffect
-            ? ({ '--field-effect-rgb': getTypeColorRgb(fieldEffects[combat.activeFieldEffect.fieldEffectId]?.flavorType ?? 'Arcane') } as CSSProperties)
-            : undefined
+          {
+            ...(combat.activeFieldEffect
+              ? { '--field-effect-rgb': getTypeColorRgb(fieldEffects[combat.activeFieldEffect.fieldEffectId]?.flavorType ?? 'Arcane') }
+              : null),
+            ...(location ? { '--node-rgb': location.tintRgb } : null),
+          } as CSSProperties
         }
       >
+        {location && <ArenaLocation location={location} />}
         {/* Keyed on beatSeq so the one-shot animation replays per reveal. */}
         {resolving && beat?.dramaticEntrance && <div key={beatSeq} className="dramatic-entrance-veil" aria-hidden="true" />}
 

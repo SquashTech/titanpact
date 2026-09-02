@@ -337,10 +337,58 @@ No per-location wash recipes on node screens, unlike the map well. The map is
 dwelt on and can afford six lighting ideas; a node screen is passed through in
 seconds and already has a tint of its own competing for the same field.
 
-**Still owed.** `FightScreen` is untouched — the battlefield is its own
-established place and dropping a horizon into it is a bigger question than this
-pass. Nothing outside the view layer knows about any of this; the location
-still changes only *who* you fight (§5.6).
+#### The arena
+
+**Closed 2026-09-01.** `FightScreen` was the last surface that did not know
+where it was, and the worst one to leave out: the map is looked at between
+nodes, the fight is where the act is actually spent.
+
+The three channels again, in the arena's own grammar rather than the node
+stage's — `.battlefield` carries `data-location` and the location's
+`--node-rgb`, and renders one `LocationAmbience` layer (`ArenaLocation`,
+memoised because the arena re-renders on every beat and the weather has nothing
+to say about any of them):
+
+- **Six lighting recipes**, full overrides of the placeless scene, on the same
+  rule the map well follows: the light is what separates the places, not the
+  hue. Each keeps the two zone tints at a slightly reduced 0.18 — "enemy up
+  there, me down here" is information and the location is only mood — and each
+  carries its own weight of tactical grid, which finally means something: a
+  foundry has plating, a forest has no floor to draw.
+- **The horizon silhouette, anchored to `.battlefield-divider`.** On every
+  other screen the far distance is the bottom edge; here it is the middle,
+  which is the whole reason that divider became a horizon. So the treeline
+  stands *behind the enemy row*, which is where "over there" is.
+- **Weather at `ARENA_MOTE_DENSITY` = 0.45**, the lowest of any surface. This
+  is the one screen where a mote can cross a damage numeral.
+
+The console below is deliberately untouched. The scene is the place; the
+console is the instrument panel it is read through, and weather in both would
+erase the one line on this screen that separates world from UI.
+
+Three things the horizon band cost, all of them invisible until it was on
+screen (`visual-language.md` fourteenth pass has the shots):
+
+- **It has to be TALL**, which is the opposite of what it looks like it wants.
+  Sized to sit in the gap under the enemy row, the whole silhouette lands
+  behind that row's HP and MP pills and the only thing visible is its own
+  ground — a black bar across the middle of the screen. It is 28% of the
+  arena, reaching up past the pills to the portraits.
+- **Its base has to dissolve.** Every band in `locationArt.tsx` ends in a
+  full-width ground fill, which is correct where the band sits on the bottom
+  edge and is a hard slab anywhere else. A `mask-image` fading the lowest 26%
+  turns it into mist at the foot of the treeline.
+- **Half a pixel of blur**, which is depth of field rather than softening: the
+  skyline is the only far-away thing on the screen, and a hard edge on it put
+  the treeline in the same focal plane as the name pills in front of it.
+
+An active Field Effect still owns the horizon line and its haze — those rules
+are authored later in `styles.css` at equal specificity, deliberately, so
+standing battlefield state outranks the place it is standing in.
+
+**Still owed.** Nothing outside the view layer knows about any of this; the
+location still changes only *who* you fight (§5.6). A location-specific Field
+Effect remains explicitly deferred (§6).
 
 ### 5.6 Difficulty is location-blind
 
@@ -361,11 +409,11 @@ Two that are easy to violate and only visible on device:
   Forest's original canopy; its trunks now run past y=0 and are clipped flat by
   the SVG viewport instead.
 
-Every presentation surface — the arrival screen, the map well, and the node
-screens (§5.5) — has **no automated coverage**. Each was verified by
-screenshot, which is the standard method for this repo (`visual-language.md`);
-the map well was checked across all six locations, the node screens across
-three. The data and selection layers are tested (`test/locations.test.ts`).
+Every presentation surface — the arrival screen, the map well, the node
+screens and the arena (§5.5) — has **no automated coverage**. Each was verified
+by screenshot, which is the standard method for this repo
+(`visual-language.md`); the map well and the arena were checked across all six
+locations, the node screens across three. The data and selection layers are tested (`test/locations.test.ts`).
 
 A second trap, this one on the map: the atmosphere layer has to reach back over
 the well's padding so its horizon meets the frame's real inside edge, and it

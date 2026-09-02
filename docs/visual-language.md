@@ -1658,6 +1658,100 @@ itself: three chips, two of them clickable, the third a dim outline over `BST` /
 `ANC` badges that opens nothing and reports `cursor: default`. `npm run
 typecheck`, `npm run typecheck:view` and `npm test` (594 passing) all pass.
 
+## Fourteenth pass — the arena stands somewhere (2026-09-01)
+
+The ask: *implement location aesthetics into the battlefield. Wild's Edge
+should look different than Storm Coast and Forbidden Forest. The degree to
+which the screen can take on the aesthetics is tough to say, so this will be
+somewhat experimental.*
+
+### What was wrong
+
+`docs/locations.md` §5.5 already carried a Location through the map well and
+all ten node screens, and closed with an admission: `FightScreen` is untouched.
+That left the run's identity system covering every screen the player passes
+*through* and missing the one they sit *in*. A Necropolis fight and a Molten
+Foundry fight were the same slate-blue box with different sprites in it.
+
+The reason it was left is real, and it is the interesting part of this pass:
+the arena is not a node stage. It is not a lit room with a subject in the
+middle — it is a two-zone tactical field whose "horizon" is a divider halfway
+down the screen, and whose every square inch is either a figure, a numeral, or
+the space a damage popup flies through. Dropping the node stage's sky into it
+would have been the wrong shape at the wrong strength.
+
+### What replaced it
+
+The same three channels, re-fitted rather than re-used.
+
+**Light, not hue.** Six full `background` overrides on
+`.battlefield[data-location="…"]`, the same discipline `.map-well` follows —
+open dusk with the softest, widest ground light in the set; a forest lit only
+by a canopy gap between two black edges; a furnace with a hard-edged floor
+under a black ceiling; an overcast coast with the light overhead and a diagonal
+squall across it; a snowfield with no light source at all, only flat cold fog
+lying on the ground; and a shrine that is nothing but one tight altar bloom
+under a violet crown. Each recipe keeps the enemy-red and ally-blue zone tints
+at 0.18 — those are *information* — and each sets its own weight of tactical
+grid, which is the one place the grid finally earns its keep: a foundry has
+plating at 0.03, a forest has nothing to draw at 0.008.
+
+**The horizon silhouette, hung on `.battlefield-divider`.** Everywhere else the
+far distance is the bottom edge of the screen. Here it is the middle, which is
+the entire reason that divider stopped being a rule between two panels and
+became a horizon in the fifth pass. So the treeline stands behind the *enemy
+row* — which is exactly where "over there" is.
+
+**Weather at 0.45 density and 0.34 opacity**, the quietest field in the game.
+
+**And the console left alone.** The scene is the place; the console is the
+instrument panel it is read through. Giving both the location's weather would
+erase the only line on this screen separating world from UI — which is the
+same argument the third pass used to give the arena a scene and the console a
+box in the first place.
+
+### What looking at it changed
+
+Three, all of which read as fine in the stylesheet and were wrong on screen.
+
+1. **The band has to be tall.** First cut was 13% of the arena, sized to sit in
+   the strip under the enemy row. Every silhouette landed entirely behind that
+   row's HP and MP pills, and the only part of it that cleared them was its own
+   ground fill: a solid black bar across the middle of the screen. It is 28%
+   now, tall enough that the skyline reaches past the pills to the portraits.
+2. **The base has to dissolve.** Every band in `locationArt.tsx` ends in a
+   full-width ground fill, which is right when the band sits on the bottom edge
+   of a screen and is a slab anywhere else. `mask-image: linear-gradient(to
+   top, transparent 0%, #000 26%)` turns it into mist at the foot of the
+   treeline instead — and mist at a treeline base is what a distant one
+   actually looks like.
+3. **Half a pixel of blur.** At full contrast the Wild's Edge pines read as
+   sharp black cutouts pasted behind the name pills. `blur(0.5px)` with opacity
+   down to 0.5 is depth of field, not softening: the skyline is the only
+   far-away object on the screen, and it should not be in the same focal plane
+   as the type badge in front of it.
+
+An active Field Effect still owns the horizon line and its haze. Those rules
+sit later in `styles.css` at equal specificity, which is deliberate and is
+worth not "tidying": standing battlefield state outranks the place it is
+standing in.
+
+### Verification
+
+The standard method (ninth pass onward): a throwaway `harness.html` +
+`src/app/harness.tsx` mounting the real `FightScreen` inside a
+`LocationProvider` chosen by `?loc=`, both deleted before committing. All six
+locations shot at 394x790, plus `?loc=none` to confirm the placeless arena
+(sandbox, quick battle) is byte-for-byte the scene it was. The Field Effect
+override was checked live rather than reasoned about — `.field-effect-active`
+forced on with a location set, and `getComputedStyle(divider, '::before')`
+reporting the effect's colour, not the location's. No console errors. `npm run
+typecheck`, `npm run typecheck:view` and `npm test` (637 passing) all pass.
+
+One thing was tuned and left deliberately quiet: the Molten Foundry's floor
+heat. It wants to be brighter than it is, and the ally row's HP and MP bars are
+sitting in it.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.

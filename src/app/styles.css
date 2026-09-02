@@ -510,6 +510,204 @@ textarea,
   box-shadow: none;
 }
 
+/* --- The arena's Location (docs/locations.md §5.5) ------------------------
+ * The battlefield was the one screen an act's Location never reached. Every
+ * other surface — the arrival card, the map well, all ten node screens —
+ * already says where the run is; the fight, which is where the player spends
+ * most of the act, was the same slate-blue box in the Necropolis as in the
+ * Molten Foundry.
+ *
+ * It takes the same three identity channels as everywhere else, and it takes
+ * them in the arena's own grammar rather than the node stage's:
+ *
+ *   TINT + LIGHT  six full background recipes below, replacing the placeless
+ *                 scene wholesale. Each keeps the two zone tints, because
+ *                 "enemy up there / me down here" is information and the
+ *                 location is only mood.
+ *   HORIZON       the silhouette band, anchored to .battlefield-divider's
+ *                 line rather than to the bottom edge — on this screen the
+ *                 far distance is the middle of the screen, not the foot of
+ *                 it, which is the whole reason the divider became a horizon
+ *                 in the first place. The treeline therefore stands BEHIND
+ *                 the enemy row, which is exactly where "over there" is.
+ *   WEATHER       LocationMotes at the lowest density of any surface
+ *                 (ARENA_MOTE_DENSITY). A mote that crosses a damage numeral
+ *                 has stopped being atmosphere.
+ *
+ * What deliberately does NOT change: the console below. The scene is the
+ * place; the console is the instrument panel you are reading it through, and
+ * giving both the same weather would erase the one line on this screen that
+ * separates world from UI.
+ *
+ * Placeless fights (sandbox, quick battle) render no `data-location` and keep
+ * the neutral scene above, unchanged.
+ */
+
+/* Weather and silhouette, over the ground and under the figures. `.team-row`
+   already carries `z-index: 1` and `.battlefield-divider` is positioned later
+   in the DOM, so both paint above this without needing a stack of their own. */
+.battlefield-location {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Anchored at the divider, not the bottom edge. The percentage is measured
+   rather than reasoned (49.3% measured, so 50.7% from the bottom): the two
+   team rows are equal, but the arena's padding is not — top is --shell-pad + 2,
+   bottom is 20px — so the horizon line sits just above the box's midpoint.
+
+   TALL, not short, which is the opposite of what it looks like it wants. A
+   band sized to sit under the enemy row lands entirely behind that row's HP
+   and MP pills and shows nothing but its own ground; the skyline has to reach
+   up past those pills to the portraits before any of it is visible. No settle
+   animation — a band that re-enters on every fight reads as a transition. */
+.battlefield-location .location-horizon {
+  bottom: 50.7%;
+  height: 28%;
+  color: rgba(5, 7, 12, 0.92);
+  opacity: 0.5;
+  /* Half a pixel of blur is doing depth-of-field, not softening: the skyline
+     is the only thing on this screen that is far away, and a hard edge on it
+     put the treeline in the same focal plane as the name pills in front of it. */
+  filter: blur(0.5px) drop-shadow(0 -1px 0 rgba(var(--node-rgb), 0.3));
+  /* Dissolves the band's own ground slab into the horizon glow. Without it the
+     silhouette lands as a hard black bar across the middle of the screen: the
+     shapes that carry the place are its skyline, and its base is a rectangle. */
+  -webkit-mask-image: linear-gradient(to top, transparent 0%, #000 26%);
+  mask-image: linear-gradient(to top, transparent 0%, #000 26%);
+  animation: none;
+}
+
+/* The quietest weather in the game. */
+.battlefield-location .location-motes {
+  opacity: 0.34;
+}
+
+/* The horizon line and its haze take the location's colour — the same 1px
+   rule and the same glow, lit by the place instead of by nothing. Overridden
+   in turn by .field-effect-active further down, which is the stronger claim
+   on the same element and is authored later on purpose. */
+.battlefield[data-location] .battlefield-divider::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(var(--node-rgb), 0.34) 22%,
+    rgba(var(--node-rgb), 0.34) 78%,
+    transparent
+  );
+}
+
+.battlefield[data-location] .battlefield-divider::after {
+  background: radial-gradient(ellipse 60% 100% at 50% 50%, rgba(var(--node-rgb), 0.16), transparent 70%);
+}
+
+/*
+ * Six recipes, one per location, on the same rule the map well follows: each
+ * is a FULL override of the placeless stack rather than a patch on it,
+ * because a place is one lighting idea and half of these want a layer the
+ * base scene does not have.
+ *
+ * The tactical grid is inside each stack rather than in a shared rule, which
+ * makes its weight part of the recipe: a foundry has a plated deck, a forest
+ * has none.
+ */
+
+/* Open country at dusk. The widest, softest field in the set and the only one
+   with a second, warmer light: the sun is behind the treeline, low, and the
+   ground still holds some of it. Lightest vignette — this location should
+   read as distance rather than enclosure. */
+.battlefield[data-location='wildsEdge'] {
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.014) 0px, rgba(255, 255, 255, 0.014) 1px, transparent 1px, transparent 26px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.014) 0px, rgba(255, 255, 255, 0.014) 1px, transparent 1px, transparent 26px),
+    radial-gradient(ellipse 110% 46% at 50% -4%, rgba(217, 83, 79, 0.18), transparent 62%),
+    radial-gradient(ellipse 110% 46% at 50% 104%, rgba(74, 144, 217, 0.18), transparent 62%),
+    radial-gradient(ellipse 88% 22% at 50% 52%, rgba(232, 174, 92, 0.22), transparent 74%),
+    radial-gradient(ellipse 150% 40% at 50% 110%, rgba(var(--node-rgb), 0.24), transparent 74%),
+    radial-gradient(ellipse 130% 38% at 50% -12%, rgba(var(--node-rgb), 0.1), transparent 70%),
+    radial-gradient(ellipse 96% 62% at 50% 50%, #181d17, #0a0d0a 82%);
+}
+
+/* Enclosure. Hard darkness down both edges, and the only light is a shaft
+   through a canopy gap above the centre — so the two teams meet in the one
+   lit corridor on the screen. The grid all but disappears: there is no floor
+   out here to draw. */
+.battlefield[data-location='forbiddenForest'] {
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.008) 0px, rgba(255, 255, 255, 0.008) 1px, transparent 1px, transparent 26px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.008) 0px, rgba(255, 255, 255, 0.008) 1px, transparent 1px, transparent 26px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.5), transparent 26%, transparent 74%, rgba(0, 0, 0, 0.5)),
+    radial-gradient(ellipse 110% 46% at 50% -4%, rgba(217, 83, 79, 0.18), transparent 62%),
+    radial-gradient(ellipse 110% 46% at 50% 104%, rgba(74, 144, 217, 0.18), transparent 62%),
+    radial-gradient(ellipse 36% 46% at 50% 2%, rgba(var(--node-rgb), 0.22), transparent 74%),
+    radial-gradient(ellipse 130% 34% at 50% 108%, rgba(var(--node-rgb), 0.22), transparent 72%),
+    radial-gradient(ellipse 88% 60% at 50% 46%, #131c16, #070b08 80%);
+}
+
+/* A furnace floor. The ground light is the tightest and hottest in the set —
+   a hard inner edge rather than a fade — under a near-black ceiling, with a
+   thin heat shimmer sitting on the horizon itself. The grid is at its
+   heaviest here and means something for once: plating. */
+.battlefield[data-location='moltenFoundry'] {
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0px, rgba(255, 255, 255, 0.03) 1px, transparent 1px, transparent 26px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0px, rgba(255, 255, 255, 0.03) 1px, transparent 1px, transparent 26px),
+    radial-gradient(ellipse 110% 46% at 50% -4%, rgba(217, 83, 79, 0.18), transparent 62%),
+    radial-gradient(ellipse 110% 46% at 50% 104%, rgba(74, 144, 217, 0.18), transparent 62%),
+    linear-gradient(180deg, transparent 44%, rgba(var(--node-rgb), 0.16) 51%, transparent 60%),
+    radial-gradient(ellipse 104% 34% at 50% 110%, rgba(var(--node-rgb), 0.58) 0%, rgba(var(--node-rgb), 0.24) 44%, transparent 74%),
+    radial-gradient(ellipse 100% 58% at 50% 38%, #1d1512, #0a0706 78%);
+}
+
+/* Weather over open water: the brightest, flattest, coldest field in the set.
+   The light is overhead — an overcast sky, not a ground glow — a wide
+   diagonal sheen carries the squall the rain is falling out of, and the
+   ground below the horizon is wet enough to give some of it back. */
+.battlefield[data-location='stormCoast'] {
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.014) 0px, rgba(255, 255, 255, 0.014) 1px, transparent 1px, transparent 26px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.014) 0px, rgba(255, 255, 255, 0.014) 1px, transparent 1px, transparent 26px),
+    linear-gradient(104deg, transparent 14%, rgba(var(--node-rgb), 0.12) 46%, transparent 74%),
+    radial-gradient(ellipse 110% 46% at 50% -4%, rgba(217, 83, 79, 0.18), transparent 62%),
+    radial-gradient(ellipse 110% 46% at 50% 104%, rgba(74, 144, 217, 0.18), transparent 62%),
+    radial-gradient(ellipse 150% 40% at 50% -10%, rgba(var(--node-rgb), 0.26), transparent 74%),
+    radial-gradient(ellipse 140% 28% at 50% 108%, rgba(var(--node-rgb), 0.24), transparent 70%),
+    radial-gradient(ellipse 100% 64% at 50% 48%, #141b25, #080b11 80%);
+}
+
+/* A city under snow. There is no light source anywhere in this one: the glow
+   is a flat, even, cold fog LYING ON the ground with a hard top edge, plus a
+   second band of haze out at the horizon. The darkest ceiling in the set. */
+.battlefield[data-location='necropolis'] {
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.012) 0px, rgba(255, 255, 255, 0.012) 1px, transparent 1px, transparent 26px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.012) 0px, rgba(255, 255, 255, 0.012) 1px, transparent 1px, transparent 26px),
+    radial-gradient(ellipse 110% 46% at 50% -4%, rgba(217, 83, 79, 0.18), transparent 62%),
+    radial-gradient(ellipse 110% 46% at 50% 104%, rgba(74, 144, 217, 0.18), transparent 62%),
+    linear-gradient(0deg, rgba(var(--node-rgb), 0.26) 0%, rgba(var(--node-rgb), 0.13) 13%, rgba(var(--node-rgb), 0.04) 28%, transparent 44%),
+    linear-gradient(0deg, transparent 46%, rgba(var(--node-rgb), 0.11) 52%, transparent 62%),
+    radial-gradient(ellipse 96% 62% at 50% 44%, #171e21, #070a0c 80%);
+}
+
+/* Something is still lit down there. A single tight bloom sitting just under
+   the horizon — far narrower than any other location's light, so it reads as
+   one burning altar rather than as terrain — under a cold violet crown, with
+   the darkest mid-field in the set between them. */
+.battlefield[data-location='blightedShrine'] {
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.014) 0px, rgba(255, 255, 255, 0.014) 1px, transparent 1px, transparent 26px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.014) 0px, rgba(255, 255, 255, 0.014) 1px, transparent 1px, transparent 26px),
+    radial-gradient(ellipse 110% 46% at 50% -4%, rgba(217, 83, 79, 0.18), transparent 62%),
+    radial-gradient(ellipse 110% 46% at 50% 104%, rgba(74, 144, 217, 0.18), transparent 62%),
+    radial-gradient(ellipse 90% 22% at 50% -8%, rgba(var(--node-rgb), 0.24), transparent 72%),
+    radial-gradient(ellipse 22% 12% at 50% 56%, rgba(var(--node-rgb), 0.46), transparent 76%),
+    radial-gradient(ellipse 130% 30% at 50% 110%, rgba(var(--node-rgb), 0.2), transparent 70%),
+    radial-gradient(ellipse 92% 62% at 50% 50%, #181626, #08070f 80%);
+}
+
 /* "VS" chip between the enemy and ally rows — purely decorative, gives the
    battlefield a center of gravity instead of two rows floating in a stack.
    `position: relative` anchors .field-effect-badge below (positioned
