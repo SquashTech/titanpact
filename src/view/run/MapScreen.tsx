@@ -68,27 +68,34 @@ const NODE_COLORS: Record<MapNodeType, string> = {
   event: 'var(--tier-common)',
 };
 
-// Long-press preview text. Each line names its own difficulty — the label can't.
+// Long-press preview text: what the node pays out, and nothing else. Difficulty
+// rides on NODE_COLORS, recruitability on NODE_NAMES.
 const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
-  fight: 'A weak Monster squad (4v4, no bonus) — not recruitable. The act’s opener.',
-  skirmish: 'A recruitable hero squad (4v4, no bonus). Win to claim a Recruit Contract.',
-  battle: 'A Monster squad (4v4, no bonus) — not recruitable, same pool as the act’s opener.',
-  elite: 'A recruitable hero squad, each with +10 to 2 stats — the act’s difficulty spike.',
-  boss: 'The act’s Guardian: 2 heroes, no bench, each with +20 to 3 stats. Ends the act.',
-  shop: 'Guild Hall: spend gold on hero recruits, equipment, and relics before the boss.',
-  equipmentReward: 'Pick 1 of 3 equipment items.',
-  relicReward: 'Pick 1 of 3 team-wide relics.',
-  currencyReward: 'An instant grant of gold.',
-  upgradeReward: 'An instant grant to your pooled level-up currency.',
-  weaponReward: 'A guaranteed weapon (no 3-choice pick).',
-  armorReward: 'A guaranteed piece of armor (no 3-choice pick).',
-  accessoryReward: 'A guaranteed accessory (no 3-choice pick).',
-  hpBoostReward: '+20 max HP, permanent for the run, to one hero you choose.',
-  manaBoostReward: '+10 max Mana, permanent for the run, to one hero you choose.',
-  manaRegenBoostReward: '+5 Mana Regen, permanent for the run, to one hero you choose.',
-  classReward: 'Mentor’s Hall: pick a Class, then a hero with no Class yet to teach it to.',
-  event: 'An unknown encounter: a move, a passive, a trade, or gear. What it is stays hidden until you arrive.',
+  fight: '15–25g · 3 XP · equipment',
+  skirmish: '15–25g · 4 XP · 25% equipment · recruitable',
+  battle: '30–45g · 3 XP · equipment',
+  elite: '15–25g · 4 XP · 55% elite equipment · recruitable — enemies carry +10 to 2 stats',
+  boss: '5 XP · 70% elite equipment · 1 Recruit Contract',
+  shop: 'Spend gold on heroes, equipment and relics',
+  equipmentReward: '1 of 3 equipment',
+  relicReward: '1 of 3 team-wide relics',
+  currencyReward: '15–30g',
+  upgradeReward: '4–6 XP',
+  weaponReward: '1 weapon',
+  armorReward: '1 armor',
+  accessoryReward: '1 accessory',
+  hpBoostReward: '+20 max HP to one hero',
+  manaBoostReward: '+10 max Mana to one hero',
+  manaRegenBoostReward: '+5 MP Regen to one hero',
+  classReward: '1 of 3 Classes, taught to one hero',
+  event: 'Hidden until you arrive: a move, a passive, gear or a trade',
 };
+
+// The last act’s Guardian pays no Banner — nothing left to spend it on (App.tsx).
+function nodeRewardText(type: MapNodeType, actNumber: number): string {
+  const base = NODE_DESCRIPTIONS[type];
+  return type === 'boss' && actNumber < TOTAL_ACTS ? `${base} · Guardian’s Banner` : base;
+}
 
 // Silhouette tier, done with border-radius rather than clip-path so the
 // reachable/current box-shadow glows are never cropped.
@@ -330,7 +337,7 @@ function MapNodeButton({
   );
 }
 
-function MapNodePreviewPopup({ node, onClose }: { node: MapNode; onClose: () => void }) {
+function MapNodePreviewPopup({ node, actNumber, onClose }: { node: MapNode; actNumber: number; onClose: () => void }) {
   return (
     <div className="log-overlay" onClick={onClose}>
       <div className="log-panel move-popup-panel" style={{ '--node-color': NODE_COLORS[node.type] } as CSSProperties}>
@@ -339,7 +346,7 @@ function MapNodePreviewPopup({ node, onClose }: { node: MapNode; onClose: () => 
             <NodeGlyph type={node.type} className="map-popup-glyph" /> {NODE_NAMES[node.type]}
           </span>
         </div>
-        <div className="move-popup-description">{NODE_DESCRIPTIONS[node.type]}</div>
+        <div className="move-popup-description">{nodeRewardText(node.type, actNumber)}</div>
         <div className="move-popup-hint">Tap anywhere to close</div>
       </div>
     </div>
@@ -539,7 +546,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onQuitToTitle }: Pro
       {showRoster && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setShowRoster(false)} />}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
       {showRelics && <RelicsOverlay ownedRelicIds={run.relics} onClose={() => setShowRelics(false)} />}
-      {previewNode && <MapNodePreviewPopup node={previewNode} onClose={() => setPreviewNode(null)} />}
+      {previewNode && <MapNodePreviewPopup node={previewNode} actNumber={run.actNumber} onClose={() => setPreviewNode(null)} />}
     </div>
   );
 }
