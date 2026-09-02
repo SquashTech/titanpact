@@ -586,14 +586,12 @@ test("passives: Nature's Purification spares a positive status — the partner k
 
 // --- Entanglement (Cortex / Overmind) ---
 
-// Cortex benched behind a pair, so arriving is a real switch rather than a lead.
-function benchedCortexFixture(seed: number) {
+function cortexFixture(seed: number) {
   return createFightState(
     seed,
     [
-      { combatantId: 'a1', heroId: 'cinderKnight', side: 'A' },
+      { combatantId: 'a1', heroId: 'mindweaver', side: 'A' },
       { combatantId: 'a2', heroId: 'tidecaller', side: 'A' },
-      { combatantId: 'a3', heroId: 'mindweaver', side: 'A' },
     ],
     [
       { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
@@ -602,43 +600,61 @@ function benchedCortexFixture(seed: number) {
   );
 }
 
-const cortexArrives: Action = { kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' };
+test('passives: Entanglement Haunts the enemy whose Wisdom just dropped — Enervate marks without any damage', () => {
+  const state = withPassive(cortexFixture(370), 'a1', 'entanglement');
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'enervate', declaredTarget: 'b1' } as Action], config);
 
-test('passives: Entanglement Haunts BOTH active enemies on arrival, and touches neither ally', () => {
-  const state = withPassive(benchedCortexFixture(370), 'a3', 'entanglement');
-  const { state: next } = resolveRound(state, [cortexArrives], config);
-
-  assert.ok(hasStatus(next.combatants.b1, 'Haunt') && hasStatus(next.combatants.b2, 'Haunt'));
-  assert.ok(!hasStatus(next.combatants.a2, 'Haunt') && !hasStatus(next.combatants.a3, 'Haunt'));
+  assert.ok(hasStatus(next.combatants.b1, 'Haunt'), 'the -30 Wisdom planted the mark');
+  assert.ok(!hasStatus(next.combatants.b2, 'Haunt'), 'and only on the one it hit');
 });
 
-test('passives: Entanglement is what the path is FOR — a single-target Mind move then hits both', () => {
-  const state = withPassive(benchedCortexFixture(371), 'a3', 'entanglement');
-  const arrived = resolveRound(state, [cortexArrives], config).state;
-  const { events } = resolveRound(arrived, [{ kind: 'move', combatantId: 'a3', moveId: 'psiBolt', declaredTarget: 'b1' } as Action], config);
+test('passives: Entanglement reads the SIGN — an enemy whose Wisdom RISES is not marked', () => {
+  const state = withPassive(cortexFixture(371), 'a1', 'entanglement');
+  // The enemy side buffs its own Wisdom: a stat change on an enemy, but not a drop.
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'b2', moveId: 'mentalFortress' } as Action], config);
 
+  assert.ok(next.combatants.b1.statModifiers.wisdom! > 0, 'the buff landed');
+  assert.ok(!hasStatus(next.combatants.b1, 'Haunt') && !hasStatus(next.combatants.b2, 'Haunt'));
+});
+
+test('passives: Entanglement reads the STAT — Lull drops Intelligence and marks nobody', () => {
+  const state = withPassive(cortexFixture(372), 'a1', 'entanglement');
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'lull', declaredTarget: 'b1' } as Action], config);
+
+  assert.strictEqual(next.combatants.b1.statModifiers.intelligence, -20, 'the debuff landed');
+  assert.ok(!hasStatus(next.combatants.b1, 'Haunt'));
+});
+
+test("passives: Entanglement is relative to the ENEMY side — the owner's own Wisdom dropping marks nothing", () => {
+  const state = withPassive(cortexFixture(373), 'a1', 'entanglement');
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'b2', moveId: 'enervate', declaredTarget: 'a1' }], config);
+
+  assert.ok(next.combatants.a1.statModifiers.wisdom! < 0, 'Cortex took the Wisdom hit');
+  assert.ok(!hasStatus(next.combatants.a1, 'Haunt'));
+});
+
+test('passives: Entanglement is what the path is FOR — Disorient marks both, then one Psi Bolt hits both', () => {
+  const state = withPassive(cortexFixture(374), 'a1', 'entanglement');
+  const marked = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'disorient' } as Action], config).state;
+  assert.ok(hasStatus(marked.combatants.b1, 'Haunt') && hasStatus(marked.combatants.b2, 'Haunt'), 'one spread debuff, two marks');
+
+  const { events } = resolveRound(marked, [{ kind: 'move', combatantId: 'a1', moveId: 'psiBolt', declaredTarget: 'b1' } as Action], config);
   const hits = events.filter((e) => e.type === 'DamageDealt') as any[];
-  assert.deepStrictEqual(hits.map((h) => h.targetCombatantId).sort(), ['b1', 'b2'], 'Psi Bolt aimed at one lands on both');
-  assert.strictEqual(hits.find((h) => h.targetCombatantId === 'b2').viaStatusId, 'Haunt', 'the second hit is attributed to the mark');
+  assert.deepStrictEqual(hits.map((h) => h.targetCombatantId).sort(), ['b1', 'b2'], 'aimed at one, lands on both');
+  assert.strictEqual(hits.find((h) => h.targetCombatantId === 'b2').viaStatusId, 'Haunt');
 });
 
 test('passives: Entanglement does not double a move that ALREADY spreads — only singleEnemy expands', () => {
-  const state = withPassive(benchedCortexFixture(372), 'a3', 'entanglement');
-  const arrived = resolveRound(state, [cortexArrives], config).state;
-  const { events } = resolveRound(arrived, [{ kind: 'move', combatantId: 'a3', moveId: 'psionicWave' } as Action], config);
+  // Disorient 50 + Psionic Wave 60 is past Cortex's 75 pool, so this one needs the mana to cast both.
+  const base = cortexFixture(375);
+  const state = withPassive(
+    { ...base, combatants: Object.fromEntries(Object.entries(base.combatants).map(([id, c]) => [id, { ...c, currentMana: 999 }])) } as CombatState,
+    'a1',
+    'entanglement'
+  );
+  const marked = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'disorient' } as Action], config).state;
+  const { events } = resolveRound(marked, [{ kind: 'move', combatantId: 'a1', moveId: 'psionicWave' } as Action], config);
 
   const hits = events.filter((e) => e.type === 'DamageDealt') as any[];
   assert.strictEqual(hits.length, 2, 'two foes, two hits — not four');
-});
-
-test('passives: Entanglement re-arms by pivoting — the enemy clears Haunt by switching, Cortex re-enters', () => {
-  const state = withPassive(benchedCortexFixture(373), 'a3', 'entanglement');
-  const arrived = resolveRound(state, [cortexArrives], config).state;
-  assert.ok(hasStatus(arrived.combatants.b1, 'Haunt'));
-
-  // Cortex steps back out; the mark it left is still on the board (Haunt only clears on the
-  // HAUNTED hero's own switch), and stepping back in re-applies it either way.
-  const out = resolveRound(arrived, [{ kind: 'switch', combatantId: 'a3', benchedCombatantId: 'a1' } as Action], config).state;
-  const back = resolveRound(out, [cortexArrives], config).state;
-  assert.ok(hasStatus(back.combatants.b1, 'Haunt') && hasStatus(back.combatants.b2, 'Haunt'));
 });

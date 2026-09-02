@@ -151,16 +151,18 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   entanglement: {
     id: 'entanglement',
     name: 'Entanglement',
-    description: 'When this hero enters the battlefield, both active enemies are Haunted.',
-    // Imposing Presence's arrival shape carrying Mind's own status. Haunt only expands a
-    // singleEnemy move (statusEngine expandSpreadTargets), so marking BOTH does not double a
-    // spread move — it removes the aiming constraint and survives one foe pivoting out.
-    // Bounded on purpose: Haunt clearsOnSwitch, so the enemy's counterplay is to switch and
-    // Cortex's answer is to pivot out and back. That trade is the path.
+    description: "Whenever an enemy's Wisdom drops, that enemy is Haunted.",
+    // Frozen Stone inverted: eventFieldNegative is what makes this "drops" and not "changes", so
+    // a Wisdom BUFF on a foe never marks them. Cortex's slate is a Wisdom shredder end to end
+    // (Psi Bolt, Enervate, Psychock, Disorient, Psionic Wave), so the debuffs it was already
+    // casting now plant Haunt for free — and Wisdom is the magical defStat, so the same point
+    // both softens the target and marks it.
+    // ATTRIBUTION: StatChanged carries no source, so this reads "an enemy's Wisdom dropped",
+    // not "I dropped it" — a Mind PARTNER's debuff arms it too. Deliberate, docs/combat.md.
     reactive: {
-      hook: 'SwitchedIn',
-      condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Haunt' },
+      hook: 'StatChanged',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { stat: 'wisdom' }, eventFieldNegative: 'delta' },
+      effect: { kind: 'applyStatus', target: 'triggerSubject', statusId: 'Haunt' },
     },
   },
   restorativeToxin: {

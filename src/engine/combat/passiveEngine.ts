@@ -28,6 +28,13 @@ function matchesPositiveField(field: string | undefined, context: TriggerContext
   return typeof value === 'number' && value > 0;
 }
 
+/** The mirror of the above, on the same terms: unreadable is a no-fire, and zero is neither. */
+function matchesNegativeField(field: string | undefined, context: TriggerContext): boolean {
+  if (field === undefined) return true;
+  const value = context[field];
+  return typeof value === 'number' && value < 0;
+}
+
 function relationHolds(relation: PassiveTriggerCondition['relativeTo'], ownerId: string, ownerSide: Side, subjectId: string | undefined, subjectSide: Side | undefined): boolean {
   if (!subjectId || !subjectSide) return false;
   switch (relation) {
@@ -52,7 +59,8 @@ export function matchesTrigger(
   return (
     relationHolds(condition.relativeTo, ownerId, ownerSide, subjectId, subjectSide) &&
     matchesFields(condition.eventFieldEquals, context) &&
-    matchesPositiveField(condition.eventFieldPositive, context)
+    matchesPositiveField(condition.eventFieldPositive, context) &&
+    matchesNegativeField(condition.eventFieldNegative, context)
   );
 }
 

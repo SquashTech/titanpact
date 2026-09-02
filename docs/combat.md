@@ -1302,6 +1302,35 @@ owner, at the event, or at the enemy side; a doubles game with a bench needed on
 points at the hero standing next to you. Cleanse spares `positive` statuses, so it never
 strips the partner's own Renew. `test/passives.test.ts` pins all five.
 
+### Reacting to a stat DROP, and off-type coverage as policy (2026-09-02, Cortex)
+
+`PassiveTriggerCondition` gained **`eventFieldNegative`**, the exact mirror of the
+`eventFieldPositive` Rime needed, on the same terms: a missing or non-numeric field
+never matches, and zero is neither a rise nor a drop. Content: **Entanglement**
+(Cortex's Overmind Evolution) — *whenever an enemy's Wisdom drops, that enemy is
+Haunted*.
+
+The pairing is the point. Wisdom is the magical `defStat`, so the same debuff that
+softens a target now also marks it, and Cortex's slate is a Wisdom shredder end to end
+(Psi Bolt, Enervate, Psychock, Disorient, Psionic Wave). Haunt then expands any
+**`singleEnemy`** Mind or Spirit move onto the marked hero's partner — and only
+`singleEnemy` expands, locked — so Disorient marking both foes turns every single-target
+cast into a spread without ever double-hitting a move that already spreads.
+
+> **Attribution is not available here, deliberately.** `StatChangedEvent` carries no
+> `sourceCombatantId`, so the condition reads "*an enemy's* Wisdom dropped", not "*I*
+> dropped it" — a Mind partner's debuff arms Cortex's passive too. That is the same
+> limitation the Frozen Stone note records, not a new one; closing it means adding a
+> source to every `StatChanged` emitter, which no content has yet needed.
+
+**Off-type coverage in a natural pool is now policy** (designer call, same day). A hero's
+`moveTiers` may carry a few moves outside its own type, with no Evolution and no STAB —
+the Pokémon TM precedent, where the option existing matters more than the option being
+optimal. First content: Cortex takes **Phantom Strike** (Spirit) and **Cog Bop** (Mech),
+the only two things a base Cortex can point its 53 Attack at, since the Mind slate is
+100% magical. Coverage is a handful of moves, never a second slate — that is what a
+`typeGraft` and its `learnableMoveIds` are for.
+
 ### The floor: no effective stat below 1 (LOCKED — 2026-08-30 designer call)
 
 Raised by the Mind slate, but **not caused by it**. `getEffectiveStat` (state.ts) had

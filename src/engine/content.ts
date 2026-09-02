@@ -140,6 +140,8 @@ export interface PassiveTriggerCondition {
   eventFieldEquals?: Partial<Record<string, string>>;
   /** The named numeric event field must be > 0 — the only way to say "increased" rather than "changed" (Frozen Stone reads StatChanged.delta). */
   eventFieldPositive?: string;
+  /** Its mirror: the named numeric event field must be < 0, i.e. "dropped" (Entanglement reads StatChanged.delta). */
+  eventFieldNegative?: string;
 }
 
 /** matchTriggerAmount reads the triggering event's `field` (default 'amount'): Sanguine takes a tick's amount, Restorative Toxin a StatusApplied's magnitude. */

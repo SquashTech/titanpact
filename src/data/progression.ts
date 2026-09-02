@@ -74,7 +74,24 @@ export const progressionTable: ProgressionTable = {
     runescribe: ['manaFont', 'study', 'arcaneBlast', 'overload', 'magicCloak', 'arcPulse', 'singularity', 'cataclysm', 'conjuredSword', 'manaTap'],
     zenith: ['conduit', 'fontOfPower', 'arcaneOverflow', 'magicBolt', 'cataclysm', 'focus', 'arcPulse', 'magicCloak'],
     // --- Mind ---
-    mindweaver: ['enervate', 'psychicBlow', 'stasis', 'mentalFortress', 'disorient', 'mindShatter', 'breakWill', 'brainFlay', 'lull'],
+    // Psychock and Psionic Wave are the mid/late damage the pool had none of, and both shred
+    // Wisdom, so they double as Entanglement fuel. Phantom Strike and Cog Bop are deliberate
+    // OFF-TYPE coverage: no STAB, no Evolution needed, and the only two things a base Cortex
+    // can point its 53 Attack at. Lull leaves — the one debuff that feeds nothing.
+    mindweaver: [
+      'psychicBlow',
+      'enervate',
+      'psychock',
+      'stasis',
+      'mentalFortress',
+      'disorient',
+      'psionicWave',
+      'mindShatter',
+      'breakWill',
+      'brainFlay',
+      'phantomStrike',
+      'cogBop',
+    ],
     trance: [
       'brainWard',
       'psychock',
