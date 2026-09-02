@@ -768,54 +768,52 @@ function solaceFixture(seed: number) {
 
 const mends: Action = { kind: 'move', combatantId: 'a1', moveId: 'mend', declaredTarget: 'a2' };
 
-test('passives: Afterglow leaves Renew worth half the heal on whoever was healed', () => {
+test('passives: Afterglow buys the healed ally 20 Attack AND 20 Intelligence', () => {
   const state = withPassive(solaceFixture(500), 'a1', 'afterglow');
-  const { state: next, events } = resolveRound(state, [mends], config);
+  const { state: next } = resolveRound(state, [mends], config);
 
-  const healed = (events.find((e) => e.type === 'Healed') as any).amount;
-  const applied = events.find((e) => e.type === 'StatusApplied' && (e as any).statusId === 'Renew') as any;
-  // Read the EVENT: by the time the round returns, the HoT has already ticked and halved once.
-  assert.strictEqual(applied.magnitude, Math.round(healed / 2));
-  assert.strictEqual(applied.combatantId, 'a2');
-  assert.ok(!hasStatus(next.combatants.a1, 'Renew'), 'and only on the target');
+  assert.strictEqual(next.combatants.a2.statModifiers.attack, 20);
+  assert.strictEqual(next.combatants.a2.statModifiers.intelligence, 20);
+  assert.strictEqual(next.combatants.a1.statModifiers.attack ?? 0, 0, 'only the one healed');
 });
 
-test('passives: Afterglow reads the heal it just did — a bigger heal leaves a bigger mark', () => {
-  const small = resolveRound(withPassive(solaceFixture(501), 'a1', 'afterglow'), [mends], config).state;
-  const big = resolveRound(
-    withPassive(solaceFixture(501), 'a1', 'afterglow'),
-    [{ kind: 'move', combatantId: 'a1', moveId: 'divineGrace' } as Action],
-    config
-  ).state;
+test('passives: Afterglow reports one StatChanged per stat, the way a move does', () => {
+  const state = withPassive(solaceFixture(501), 'a1', 'afterglow');
+  const { events } = resolveRound(state, [mends], config);
 
-  assert.ok(
-    big.combatants.a2.statuses.Renew!.magnitude! > small.combatants.a2.statuses.Renew!.magnitude!,
-    'matchTriggerAmount, not an authored flat'
-  );
+  const changes = (events.filter((e) => e.type === 'StatChanged') as any[]).filter((e) => e.combatantId === 'a2');
+  assert.deepStrictEqual(changes.map((c) => c.stat).sort(), ['attack', 'intelligence']);
+  assert.ok(changes.every((c) => c.delta === 20));
 });
 
-test('passives: Afterglow fires once per target of a spread heal', () => {
+test('passives: Afterglow fires once per target of a spread heal, and stacks across casts', () => {
   const state = withPassive(solaceFixture(502), 'a1', 'afterglow');
-  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'consecrate' } as Action], config);
+  const consecrates: Action = { kind: 'move', combatantId: 'a1', moveId: 'consecrate' };
+  const once = resolveRound(state, [consecrates], config).state;
+  assert.strictEqual(once.combatants.a1.statModifiers.attack, 20, 'a self-heal counts');
+  assert.strictEqual(once.combatants.a2.statModifiers.attack, 20);
 
-  assert.ok(hasStatus(next.combatants.a1, 'Renew') && hasStatus(next.combatants.a2, 'Renew'), 'both allies, one cast');
+  const twice = resolveRound(once, [consecrates], config).state;
+  assert.strictEqual(twice.combatants.a2.statModifiers.attack, 40, 'nothing caps it but the mana');
 });
 
 test('passives: Afterglow is source-role — being healed BY someone does not arm it', () => {
-  // b2 is also a Solace; it heals a1 across the field via nothing, so instead: a2 has the passive
-  // and a1 does the healing. The healer is not the holder, so nothing should land.
   const state = withPassive(solaceFixture(503), 'a2', 'afterglow');
   const { state: next } = resolveRound(state, [mends], config);
 
-  assert.ok(!hasStatus(next.combatants.a2, 'Renew'), 'receiving a heal is not casting one');
+  assert.strictEqual(next.combatants.a2.statModifiers.attack ?? 0, 0, 'receiving a heal is not casting one');
 });
 
-test('passives: Afterglow cannot feed itself — a Renew TICK emits StatusTicked, never Healed', () => {
-  const state = withPassive(solaceFixture(504), 'a1', 'afterglow');
-  const healed = resolveRound(state, [mends], config).state;
-  const planted = healed.combatants.a2.statuses.Renew!.magnitude!;
+test('passives: Afterglow pays at FULL HP — the heal is wasted and the buff is not', () => {
+  const base = solaceFixture(504);
+  const full = {
+    ...base,
+    combatants: Object.fromEntries(
+      Object.entries(base.combatants).map(([id, c]) => [id, { ...c, currentHp: heroes[c.heroId].baseStats.hp }])
+    ),
+  } as CombatState;
+  const { state: next } = resolveRound(withPassive(full, 'a1', 'afterglow'), [mends], config);
 
-  // A round in which nobody heals: the HoT ticks and halves on its own decay, and does not re-arm.
-  const later = resolveRound(healed, [{ kind: 'move', combatantId: 'a1', moveId: 'bless', declaredTarget: 'a2' } as Action], config).state;
-  assert.ok(later.combatants.a2.statuses.Renew!.magnitude! < planted, 'it decayed rather than renewing itself');
+  assert.strictEqual(next.combatants.a2.currentHp, heroes.crag.baseStats.hp, 'no HP to give back');
+  assert.strictEqual(next.combatants.a2.statModifiers.attack, 20, 'the turn still bought something');
 });

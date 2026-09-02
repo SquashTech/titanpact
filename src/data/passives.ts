@@ -151,20 +151,15 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   afterglow: {
     id: 'afterglow',
     name: 'Afterglow',
-    description: 'Whenever this hero heals an ally, that ally gains Renew equal to half the healing.',
-    // Static Tide's source-role shape on the new Healed hook, with Sylva's read-off-the-event
-    // magnitude. Not "heals harder" — heals that KEEP working: Renew persists through a switch,
-    // so Solace can top the pair up, pivot to the bench for mana, and the light stays on.
-    // Renew ticks emit StatusTicked and never Healed, so this cannot feed itself.
+    description: 'Whenever this hero heals an ally, that ally gains 20 Attack and 20 Intelligence.',
+    // Source-role on the Healed hook: "I did the healing", landing on triggerTarget, the ally
+    // who received it. BOTH offensive stats on purpose — Solace does not get to choose her
+    // partner, so the buff has to be worth the same to a Crag as to a Glyph. It also means a
+    // heal is never a wasted turn: at full HP the healing is nothing and the buff is everything.
     reactive: {
       hook: 'Healed',
       condition: { relativeTo: 'self', subjectRole: 'source' },
-      effect: {
-        kind: 'applyStatus',
-        target: 'triggerTarget',
-        statusId: 'Renew',
-        magnitude: { kind: 'matchTriggerAmount', field: 'amount', multiplier: 0.5 },
-      },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: ['attack', 'intelligence'], amount: 20 },
     },
   },
   afterimage: {

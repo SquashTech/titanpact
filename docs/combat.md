@@ -1335,26 +1335,28 @@ the only two things a base Cortex can point its 53 Attack at, since the Mind sla
 
 `PassiveHook` gained **`'Healed'`**, and `resolveRound`'s heal case gained the reaction
 checkpoint it never had — per target, straight after the HP lands, mirroring the
-`DamageDealt` one. Content: **Afterglow** (Solace's Dawnherald Evolution) — *whenever
-this hero heals an ally, that ally gains Renew equal to half the healing* — which is
-Static Tide's source-role shape on the new hook carrying Sylva's read-off-the-event
-magnitude. The healer archetype had no way to react to the thing it does; this is it.
+`DamageDealt` one. The healer archetype had no way to react to the thing it does.
+Content: **Afterglow** (Solace's Dawnherald Evolution) — *whenever this hero heals an
+ally, that ally gains 20 Attack and 20 Intelligence*.
 
-**It cannot feed itself, structurally rather than by a guard.** `Healed` has exactly two
-emitters, both in the move resolution path (a `heal`-kind move, and a `drainPercent`
-rider). A **Renew tick emits `StatusTicked`**, never `Healed` — so the HoT this passive
-plants can never re-arm it, and it decays on the normal halving curve. Verified rather
-than assumed: 34 → 17 → 8.
+**A heal is never a wasted turn.** The payout is a buff rather than more healing, so the
+cast pays out at full HP, when the healing itself is worth nothing — pinned in
+`test/passives.test.ts`. Both offensive stats, because Solace does not pick her partner:
+it has to be worth the same to a Crag as to a Glyph.
 
-> **The number to watch is Divine Grace.** Solace's Wisdom 70 and Light STAB put it at
-> 135 healing to *both* allies, so Afterglow plants **Renew 68 on each** — roughly another
-> 127 per ally as it decays, taking one cast from ~270 total healing to ~525. That is
-> inside the standing "Renew payoffs are intended" call, and the multiplier is the one
-> knob if it proves too much.
+`PassiveEffect { kind: 'statDelta' }` grew to accept `stat` as one key **or several
+sharing an amount**, emitting one `StatChanged` each, exactly as a move's `statDeltas`
+does — which keeps a stat-reactive passive (Entanglement) reading them one at a time.
+Existing single-stat content is untouched.
 
-The path is deliberately not "heals harder". Renew persists through a switch, so
-Dawnherald's real play is to top the pair up, pivot to the bench for mana, and leave the
-light on — which is the bench-cycling engine, not a bigger number.
+> **Nothing caps it but the mana.** Consecrate hits both allies, so one 45-mana cast is
+> +20/+20 on two heroes and the next cast stacks on top. Compare Rally: a whole turn for
+> +20 Attack to both, and no heal. The dial is the amount; 10 is the obvious step down.
+
+> **The hook cannot feed itself, structurally rather than by a guard.** `Healed` has
+> exactly two emitters, both on the move resolution path (a `heal`-kind move, and a
+> `drainPercent` rider). A **Renew tick emits `StatusTicked`**, never `Healed` — so a
+> heal-reactive passive that plants a HoT could not re-arm itself either.
 
 > **Naming:** the old defensive path was called **Sanctuary**, which is also a Light-flavored
 > FIELD EFFECT (`src/data/fieldEffects.ts`). Renamed **Solstice**. Worth a scan when authoring

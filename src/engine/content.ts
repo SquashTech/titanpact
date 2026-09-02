@@ -165,7 +165,8 @@ export type PassiveEffect =
   | { kind: 'heal'; target: PassiveEffectTarget; amount: PassiveAmount }
   /** `magnitude` may read off the triggering event rather than being authored flat. */
   | { kind: 'applyStatus'; target: PassiveEffectTarget; statusId: StatusId; magnitude?: number | PassiveAmount; duration?: number }
-  | { kind: 'statDelta'; target: PassiveEffectTarget; stat: StatKey; amount: number }
+  /** One stat, or several sharing an amount (Afterglow's Attack and Intelligence) — one StatChanged each. */
+  | { kind: 'statDelta'; target: PassiveEffectTarget; stat: StatKey | readonly StatKey[]; amount: number }
   /** Strips non-`positive` statuses, same rules as a move's `cleanses`; `count` omitted = all. */
   | { kind: 'cleanse'; target: PassiveEffectTarget; count?: number }
   /** Global — no `target`. */

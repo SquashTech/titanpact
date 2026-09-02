@@ -5,7 +5,7 @@
 
 import type { HeroLookup, CombatState, Combatant, Side } from '../state';
 import { getMaxHp } from '../state';
-import type { FieldEffectDefinition, PassiveDefinition, PassiveId, PassiveEffect, PassiveEffectTarget, PassiveTriggerCondition, PassiveAmount, StatusDefinition, MoveDefinition } from '../content';
+import type { FieldEffectDefinition, PassiveDefinition, PassiveId, PassiveEffect, PassiveEffectTarget, PassiveTriggerCondition, PassiveAmount, StatKey, StatusDefinition, MoveDefinition } from '../content';
 import type { CombatEvent } from '../events';
 import type { DamageModifier } from '../damage/damagePipeline';
 import { nextInt } from '../rng/seededRng';
@@ -218,12 +218,21 @@ function resolveEffectOn(
     case 'cleanse':
       return cleanseStatuses(state, round, targetId, statusDefs, effect.count);
     case 'statDelta': {
-      const newValue = (target.statModifiers[effect.stat] ?? 0) + effect.amount;
+      // One stat or several; each lands separately and reports its own StatChanged, so a
+      // stat-reactive passive (Entanglement) sees them one at a time exactly as a move's would.
+      const stats: readonly StatKey[] = Array.isArray(effect.stat) ? (effect.stat as readonly StatKey[]) : [effect.stat as StatKey];
+      let modifiers = target.statModifiers;
+      const changes: CombatEvent[] = [];
+      for (const stat of stats) {
+        const newValue = (modifiers[stat] ?? 0) + effect.amount;
+        modifiers = { ...modifiers, [stat]: newValue };
+        changes.push({ type: 'StatChanged', round, combatantId: targetId, stat, delta: effect.amount, newValue });
+      }
       const nextState: CombatState = {
         ...state,
-        combatants: { ...state.combatants, [targetId]: { ...target, statModifiers: { ...target.statModifiers, [effect.stat]: newValue } } },
+        combatants: { ...state.combatants, [targetId]: { ...target, statModifiers: modifiers } },
       };
-      return { state: nextState, events: [{ type: 'StatChanged', round, combatantId: targetId, stat: effect.stat, delta: effect.amount, newValue }] };
+      return { state: nextState, events: changes };
     }
   }
 }
