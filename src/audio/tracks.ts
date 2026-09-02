@@ -10,6 +10,7 @@ import wildsEdgeUrl from '../../music/wilds edge.flac?url';
 import forbiddenForestUrl from '../../music/forbidden forest.flac?url';
 import blightedShrineUrl from '../../music/blighted shrine.flac?url';
 import moltenFoundryUrl from '../../music/molten foundry.flac?url';
+import stormCoastUrl from '../../music/stormcoast.flac?url';
 
 export interface TrackDefinition {
   /** Bundler-resolved, content-hashed. */
@@ -40,6 +41,10 @@ const trackTable = {
   },
   moltenFoundry: {
     url: moltenFoundryUrl,
+    gain: 0.85,
+  },
+  stormCoast: {
+    url: stormCoastUrl,
     gain: 0.85,
   },
 } as const;
