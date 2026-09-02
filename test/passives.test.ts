@@ -742,3 +742,80 @@ test('passives: Stealth is not immunity — a SPREAD move ignores it and lands o
   const hits = (events.filter((e) => e.type === 'DamageDealt') as any[]).filter((e) => e.sourceCombatantId === 'b1');
   assert.deepStrictEqual(hits.map((h) => h.targetCombatantId).sort(), ['a1', 'a2'], 'hitting both is the counterplay');
 });
+
+// --- Afterglow (Solace / Dawnherald), and the Healed hook it needed ---
+
+// Everyone at a third HP so a heal has room to land, and deep mana.
+function solaceFixture(seed: number) {
+  const base = createFightState(
+    seed,
+    [
+      { combatantId: 'a1', heroId: 'dawnwarden', side: 'A' },
+      { combatantId: 'a2', heroId: 'crag', side: 'A' },
+    ],
+    [
+      { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+      { combatantId: 'b2', heroId: 'dawnwarden', side: 'B' },
+    ]
+  );
+  return {
+    ...base,
+    combatants: Object.fromEntries(
+      Object.entries(base.combatants).map(([id, c]) => [id, { ...c, currentMana: 999, currentHp: Math.floor(c.currentHp / 3) }])
+    ),
+  } as CombatState;
+}
+
+const mends: Action = { kind: 'move', combatantId: 'a1', moveId: 'mend', declaredTarget: 'a2' };
+
+test('passives: Afterglow leaves Renew worth half the heal on whoever was healed', () => {
+  const state = withPassive(solaceFixture(500), 'a1', 'afterglow');
+  const { state: next, events } = resolveRound(state, [mends], config);
+
+  const healed = (events.find((e) => e.type === 'Healed') as any).amount;
+  const applied = events.find((e) => e.type === 'StatusApplied' && (e as any).statusId === 'Renew') as any;
+  // Read the EVENT: by the time the round returns, the HoT has already ticked and halved once.
+  assert.strictEqual(applied.magnitude, Math.round(healed / 2));
+  assert.strictEqual(applied.combatantId, 'a2');
+  assert.ok(!hasStatus(next.combatants.a1, 'Renew'), 'and only on the target');
+});
+
+test('passives: Afterglow reads the heal it just did — a bigger heal leaves a bigger mark', () => {
+  const small = resolveRound(withPassive(solaceFixture(501), 'a1', 'afterglow'), [mends], config).state;
+  const big = resolveRound(
+    withPassive(solaceFixture(501), 'a1', 'afterglow'),
+    [{ kind: 'move', combatantId: 'a1', moveId: 'divineGrace' } as Action],
+    config
+  ).state;
+
+  assert.ok(
+    big.combatants.a2.statuses.Renew!.magnitude! > small.combatants.a2.statuses.Renew!.magnitude!,
+    'matchTriggerAmount, not an authored flat'
+  );
+});
+
+test('passives: Afterglow fires once per target of a spread heal', () => {
+  const state = withPassive(solaceFixture(502), 'a1', 'afterglow');
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'consecrate' } as Action], config);
+
+  assert.ok(hasStatus(next.combatants.a1, 'Renew') && hasStatus(next.combatants.a2, 'Renew'), 'both allies, one cast');
+});
+
+test('passives: Afterglow is source-role — being healed BY someone does not arm it', () => {
+  // b2 is also a Solace; it heals a1 across the field via nothing, so instead: a2 has the passive
+  // and a1 does the healing. The healer is not the holder, so nothing should land.
+  const state = withPassive(solaceFixture(503), 'a2', 'afterglow');
+  const { state: next } = resolveRound(state, [mends], config);
+
+  assert.ok(!hasStatus(next.combatants.a2, 'Renew'), 'receiving a heal is not casting one');
+});
+
+test('passives: Afterglow cannot feed itself — a Renew TICK emits StatusTicked, never Healed', () => {
+  const state = withPassive(solaceFixture(504), 'a1', 'afterglow');
+  const healed = resolveRound(state, [mends], config).state;
+  const planted = healed.combatants.a2.statuses.Renew!.magnitude!;
+
+  // A round in which nobody heals: the HoT ticks and halves on its own decay, and does not re-arm.
+  const later = resolveRound(healed, [{ kind: 'move', combatantId: 'a1', moveId: 'bless', declaredTarget: 'a2' } as Action], config).state;
+  assert.ok(later.combatants.a2.statuses.Renew!.magnitude! < planted, 'it decayed rather than renewing itself');
+});

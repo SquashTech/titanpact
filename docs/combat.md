@@ -1331,6 +1331,35 @@ the only two things a base Cortex can point its 53 Attack at, since the Mind sla
 100% magical. Coverage is a handful of moves, never a second slate — that is what a
 `typeGraft` and its `learnableMoveIds` are for.
 
+### Reacting to a HEAL (2026-09-02, Solace)
+
+`PassiveHook` gained **`'Healed'`**, and `resolveRound`'s heal case gained the reaction
+checkpoint it never had — per target, straight after the HP lands, mirroring the
+`DamageDealt` one. Content: **Afterglow** (Solace's Dawnherald Evolution) — *whenever
+this hero heals an ally, that ally gains Renew equal to half the healing* — which is
+Static Tide's source-role shape on the new hook carrying Sylva's read-off-the-event
+magnitude. The healer archetype had no way to react to the thing it does; this is it.
+
+**It cannot feed itself, structurally rather than by a guard.** `Healed` has exactly two
+emitters, both in the move resolution path (a `heal`-kind move, and a `drainPercent`
+rider). A **Renew tick emits `StatusTicked`**, never `Healed` — so the HoT this passive
+plants can never re-arm it, and it decays on the normal halving curve. Verified rather
+than assumed: 34 → 17 → 8.
+
+> **The number to watch is Divine Grace.** Solace's Wisdom 70 and Light STAB put it at
+> 135 healing to *both* allies, so Afterglow plants **Renew 68 on each** — roughly another
+> 127 per ally as it decays, taking one cast from ~270 total healing to ~525. That is
+> inside the standing "Renew payoffs are intended" call, and the multiplier is the one
+> knob if it proves too much.
+
+The path is deliberately not "heals harder". Renew persists through a switch, so
+Dawnherald's real play is to top the pair up, pivot to the bench for mana, and leave the
+light on — which is the bench-cycling engine, not a bigger number.
+
+> **Naming:** the old defensive path was called **Sanctuary**, which is also a Light-flavored
+> FIELD EFFECT (`src/data/fieldEffects.ts`). Renamed **Solstice**. Worth a scan when authoring
+> any path name — field effects, statuses and moves all share the player's vocabulary.
+
 ### The floor: no effective stat below 1 (LOCKED — 2026-08-30 designer call)
 
 Raised by the Mind slate, but **not caused by it**. `getEffectiveStat` (state.ts) had

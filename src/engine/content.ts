@@ -126,7 +126,7 @@ export type PassiveId = string;
  * StatChanged carries no source, so it is target-role only, and it is fed from a move's own
  * stat deltas — a stat change a PASSIVE caused does not chain into another passive.
  */
-export type PassiveHook = 'DamageDealt' | 'StatusApplied' | 'StatusTicked' | 'SwitchedIn' | 'StatChanged';
+export type PassiveHook = 'DamageDealt' | 'Healed' | 'StatusApplied' | 'StatusTicked' | 'SwitchedIn' | 'StatChanged';
 
 /** 'ally' = the owner's partner, not the owner. */
 export type PassiveRelation = 'self' | 'ally' | 'enemy';

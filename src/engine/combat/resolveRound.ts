@@ -444,7 +444,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
           if (!target || target.fainted) continue;
           const maxHp = getMaxHp(heroes[target.heroId], target);
 
-          events.push({
+          const healedEvent: CombatEvent = {
             type: 'Healed',
             round,
             sourceCombatantId: action.combatantId,
@@ -454,11 +454,18 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             healPower: healed.healPower,
             wisdomMult: healed.wisdomMult,
             stab: healed.stab,
-          });
+          };
+          events.push(healedEvent);
 
           const hpResult = applyHpDelta(working, round, targetId, healed.heal, maxHp);
           working = hpResult.state;
           events.push(...hpResult.events);
+
+          // Per target, after the HP lands, mirroring the DamageDealt checkpoint. Renew's own tick
+          // emits StatusTicked and never Healed, so a heal-reactive passive cannot feed itself.
+          const healReactions = resolvePassiveReactions(working, round, [healedEvent], heroes, statuses, passives, fieldEffects);
+          working = healReactions.state;
+          events.push(...healReactions.events);
         }
         break;
       }

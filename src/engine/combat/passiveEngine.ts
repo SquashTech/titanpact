@@ -73,6 +73,8 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
         return event.sourceCombatantId;
       case 'DamageDealt':
         return event.sourceCombatantId;
+      case 'Healed':
+        return event.sourceCombatantId;
       default:
         return undefined;
     }
@@ -83,6 +85,8 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
     case 'StatChanged':
       return event.combatantId;
     case 'DamageDealt':
+      return event.targetCombatantId;
+    case 'Healed':
       return event.targetCombatantId;
     case 'SwitchedIn':
       return event.inCombatantId;

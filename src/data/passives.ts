@@ -148,6 +148,25 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Conduct' },
     },
   },
+  afterglow: {
+    id: 'afterglow',
+    name: 'Afterglow',
+    description: 'Whenever this hero heals an ally, that ally gains Renew equal to half the healing.',
+    // Static Tide's source-role shape on the new Healed hook, with Sylva's read-off-the-event
+    // magnitude. Not "heals harder" — heals that KEEP working: Renew persists through a switch,
+    // so Solace can top the pair up, pivot to the bench for mana, and the light stays on.
+    // Renew ticks emit StatusTicked and never Healed, so this cannot feed itself.
+    reactive: {
+      hook: 'Healed',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: {
+        kind: 'applyStatus',
+        target: 'triggerTarget',
+        statusId: 'Renew',
+        magnitude: { kind: 'matchTriggerAmount', field: 'amount', multiplier: 0.5 },
+      },
+    },
+  },
   afterimage: {
     id: 'afterimage',
     name: 'Afterimage',
