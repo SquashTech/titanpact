@@ -421,11 +421,17 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   +30 stats per act above that (Act 3 +30, Act 4 +60, Act 5 +90). Four basics —
   **Cult Blade** (Shadow/Iron, physical), **Dread Cultist** (mono Shadow, caster with
   Drain sustain), **Blighted Cultist** (Shadow/Nature, Poison), **Frozen Cultist**
-  (Shadow/Frost, Deep Chill into Glaciate) — at ~280 combat stat total against the
-  Goblins' ~180, which is more than a full act-step clear of them and still under the
-  weakest authored hero at 325. The leader is the **Cult Mystic** (Shadow/Arcane, 450),
-  whose Empower hands a basic 80 mana — more than any of their pools hold, so the
-  overflow rule (`mana.md`) is what the faction's leader does for a living. The Guardian
+  (Shadow/Frost, Deep Chill into Glaciate) — each a flat **400** combat stat total
+  against the Goblins' ~180. **Revised the same day, per user direction:** they were
+  first authored at ~280, under the weakest hero (325), on the theory that a mob belongs
+  below the hero band; an Act 2 squad carrying two acts of equipment just deletes that,
+  so they now sit level with the *strongest* hero instead. Their **mana was left where it
+  was** (50-65 pools, 12 MP Regen) and that is the brake — they hit like the top of the
+  roster and run dry like a mob. The leader is the **Cult Mystic** (Shadow/Arcane, 500 —
+  only a quarter clear of its own support, far flatter than the Goblin Chief's 1.8x,
+  because its edge is Enfeeble and Empower rather than a bigger healthbar), whose Empower
+  hands a basic 80 mana — more than any of their pools hold, so the overflow rule
+  (`mana.md`) is what the faction's leader does for a living. The Guardian
   champion is **Yugzulach** (Shadow/Ancient, 700), and authoring him took Runic Blast and
   Forgotten Curse off the unreachable-move list they had sat on since Ancient was written
   as filler.

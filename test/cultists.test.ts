@@ -62,20 +62,35 @@ test('cultists: every stat but MP Regen is a multiple of 5 — the locked author
 
 // --- The curve ---
 
-test('cultists: a basic out-stats a basic Goblin by more than a full act-step', () => {
-  // "Considerably stronger than Goblins" is the authoring brief; an act-step is 30 points,
-  // so anything less would mean an Act 2 Goblin caught up with them for free.
-  const gap = meanTotal(CULTISTS.basicIds) - meanTotal(GOBLINS.basicIds);
-  assert.ok(gap > ACT_STEP_STAT_TOTAL, `only ${gap} points clear of the Goblins`);
-  // Still mob-tier: the weakest authored hero is 325 (Brimstone).
+test('cultists: a basic is a flat 400 — the top of the hero band, not a Goblin with a raise', () => {
+  // Revised 2026-09-02: the first pass put them at ~280 and a played Act 2 squad simply
+  // deleted them. A Cultist is not fodder, so it does not sit under the weakest hero (325)
+  // — it sits level with the strongest (400). Fodder is what the Goblins are for.
   for (const id of CULTISTS.basicIds) {
-    assert.ok(statTotal(enemies[id]) < 325, `${id} out-stats the weakest hero`);
+    assert.strictEqual(statTotal(enemies[id]), 400, `${id} is off the faction's flat line`);
+  }
+  const gap = meanTotal(CULTISTS.basicIds) - meanTotal(GOBLINS.basicIds);
+  assert.ok(gap > ACT_STEP_STAT_TOTAL * 4, `only ${gap} points clear of the Goblins`);
+});
+
+test('cultists: mana is the brake on hero-sized stat lines', () => {
+  // The one place a Cultist is still a mob: every hero pool starts at 30-90 with 10 MP
+  // Regen, and a Cultist matches the bottom of that band, not the top. A 400-stat enemy
+  // that could also cast all fight would be a hero the player does not get to keep.
+  for (const id of CULTISTS.basicIds) {
+    assert.ok(enemies[id].baseStats.manaPool <= 65, `${id} casts like a hero as well as hitting like one`);
   }
 });
 
-test('cultists: the Mystic backs the basics and Yugzulach out-stats them both', () => {
+test('cultists: the Mystic leads on its kit, and Yugzulach out-stats them both', () => {
   const mystic = statTotal(enemies[CULTISTS.leaderId]);
-  assert.ok(mystic > meanTotal(CULTISTS.basicIds) * 1.5, 'the leader is not a step up from its support');
+  assert.strictEqual(mystic, 500);
+  // Deliberately flatter than the Goblin Chief's 1.8x over his own support: the leader's
+  // edge here is Enfeeble and Empower, and the support is already worth buffing.
+  const overSupport = mystic / meanTotal(CULTISTS.basicIds);
+  assert.ok(overSupport > 1, 'the leader does not out-stat its own support');
+  assert.ok(overSupport < statTotal(enemies[GOBLINS.leaderId]) / meanTotal(GOBLINS.basicIds));
+
   assert.strictEqual(statTotal(enemies[YUGZULACH_ID]), 700);
   assert.ok(statTotal(enemies[YUGZULACH_ID]) > mystic);
   // One act later than the Goblin Lord's 600, and authored for it.

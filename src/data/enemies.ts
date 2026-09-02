@@ -74,11 +74,16 @@ export const enemies: Record<string, HeroDefinition> = {
   // --- Cultists (Blighted Shrine) — authored for Act 2, scaled up from there ---
   // Every one is Shadow-primary: the faction reads as one cult, and its shared
   // weakness to Light and Spirit is the price of that legibility.
+  //
+  // The basics sit at 400 combat stats — the TOP of the hero band, not under it.
+  // A Goblin is fodder on purpose; a Cultist is not, and an Act 2 squad carrying
+  // two acts of equipment should have to actually fight one. Their mana is where
+  // they are still mobs: hero-sized pools would let them cast a hero's whole game.
   cultBlade: {
     id: 'cultBlade',
     name: 'Cult Blade',
     types: ['Shadow', 'Iron'],
-    baseStats: { hp: 75, attack: 60, defense: 50, intelligence: 20, wisdom: 30, speed: 45, manaPool: 50, mpRegen: 12 },
+    baseStats: { hp: 105, attack: 85, defense: 75, intelligence: 25, wisdom: 45, speed: 65, manaPool: 50, mpRegen: 12 },
     moveIds: ['backstab', 'heavyBlow', 'pinDown'],
     starter: false,
   },
@@ -86,7 +91,7 @@ export const enemies: Record<string, HeroDefinition> = {
     id: 'dreadCultist',
     name: 'Dread Cultist',
     types: ['Shadow'],
-    baseStats: { hp: 70, attack: 25, defense: 40, intelligence: 60, wisdom: 45, speed: 40, manaPool: 60, mpRegen: 12 },
+    baseStats: { hp: 100, attack: 30, defense: 60, intelligence: 90, wisdom: 70, speed: 50, manaPool: 60, mpRegen: 12 },
     moveIds: ['umbraBolt', 'weaken', 'drain'],
     starter: false,
   },
@@ -94,7 +99,7 @@ export const enemies: Record<string, HeroDefinition> = {
     id: 'blightedCultist',
     name: 'Blighted Cultist',
     types: ['Shadow', 'Nature'],
-    baseStats: { hp: 85, attack: 30, defense: 45, intelligence: 55, wisdom: 45, speed: 25, manaPool: 55, mpRegen: 12 },
+    baseStats: { hp: 125, attack: 40, defense: 70, intelligence: 80, wisdom: 60, speed: 25, manaPool: 55, mpRegen: 12 },
     moveIds: ['toxicSpores', 'umbraBolt', 'blight'],
     starter: false,
   },
@@ -104,18 +109,21 @@ export const enemies: Record<string, HeroDefinition> = {
     id: 'frozenCultist',
     name: 'Frozen Cultist',
     types: ['Shadow', 'Frost'],
-    baseStats: { hp: 70, attack: 30, defense: 45, intelligence: 60, wisdom: 45, speed: 30, manaPool: 65, mpRegen: 12 },
+    baseStats: { hp: 100, attack: 35, defense: 70, intelligence: 90, wisdom: 70, speed: 35, manaPool: 65, mpRegen: 12 },
     moveIds: ['deepChill', 'glaciate', 'umbraBolt'],
     starter: false,
   },
   // Fields the "Monsters" battle node alongside 3 random basic Cultists; never randomly drawn.
   // Empower is the faction's tell: the Mystic pours 80 mana into a Cultist that cannot
-  // otherwise afford its own best move.
+  // otherwise afford its own best move. At 500 it is only a quarter clear of its own
+  // support — deliberately flatter than the Goblin Chief's 1.8x, because what makes a
+  // Blighted Shrine `battle` hard is Enfeeble and Empower landing on three real threats,
+  // not one fat healthbar.
   cultMystic: {
     id: 'cultMystic',
     name: 'Cult Mystic',
     types: ['Shadow', 'Arcane'],
-    baseStats: { hp: 135, attack: 35, defense: 65, intelligence: 85, wisdom: 70, speed: 60, manaPool: 100, mpRegen: 16 },
+    baseStats: { hp: 145, attack: 40, defense: 75, intelligence: 100, wisdom: 80, speed: 60, manaPool: 100, mpRegen: 16 },
     moveIds: ['magicBolt', 'umbralBeam', 'enfeeble', 'empower'],
     starter: false,
   },

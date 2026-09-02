@@ -138,9 +138,22 @@ it as an override on the `monsters` track default, so the same four Cultists are
 encounter as written and pick up +30 stats per act beyond it. The Goblins' 2 is a fudge (they
 are Act 1 content that never appears past Act 1, so the clamp does the work); the Cultists' 2
 is a real figure, and the field exists so the next faction can honestly say 3 without moving
-a global. The Cultists were briefed as "considerably stronger than Goblins": ~280 combat stat
-total against the Goblins' ~180, which is more than a full act-step of daylight, and still
-under the weakest authored hero at 325.
+a global.
+
+How far above the Goblins is a **decision that was made twice** (2026-09-02), and the second
+answer is the one to reason from. The first pass read "considerably stronger than Goblins"
+as ~280 against their ~180 — more than a full act-step of daylight, and deliberately under
+the weakest authored hero at 325, on the theory that a mob should stay under the hero band.
+Per user direction that theory is wrong at this point in a run: an Act 2 squad is four heroes
+carrying two acts of equipment and level-ups, and a 280-stat enemy is deleted before it acts.
+The basics are now a flat **400** — level with the *strongest* authored hero, not under the
+weakest — and the Mystic 500. Fodder is what the Goblins are for; a faction with a shrine and
+a Guardian is not fodder.
+
+What keeps them from simply being heroes is **mana**, which was left where it was when the
+stat lines went up: 50-65 pools against a hero band of 30-90, with kits costing 15-30 a cast.
+They hit like the top of the roster and run dry like a mob, which is the intended shape — the
+fight is decided in the first few rounds or it is decided by who can still cast.
 
 The Cultists are also the first faction with a **shared type spine** — every one of them
 leads on Shadow, with the second type fanning out (Iron / none / Nature / Frost, then Arcane
@@ -495,7 +508,8 @@ enough that half of it clears whatever button the screen ends in.
   not decided, and the four unwritten factions will each restate the question. Measure it
   before generalising the Cultists' shape.
 - **Where does the mob curve sit against the player curve?** `FactionRoster.baselineAct`
-  makes "which act is this roster for" authorable, but the Cultists' ~280 stat total at
-  Act 2 and the +30/act above it are first-pass figures chosen against the hero roster as
-  written, not measured against a played Act 3. Same status as every other number in
-  `difficulty.ts`.
+  makes "which act is this roster for" authorable, but the Cultists' 400 stat total at
+  Act 2 and the +30/act above it are figures chosen against the hero roster as written,
+  not measured against a played Act 3. The 400 already replaced a 280 that was wrong by
+  inspection rather than by measurement; the +30/act has had neither test. Same status as
+  every other number in `difficulty.ts`.
