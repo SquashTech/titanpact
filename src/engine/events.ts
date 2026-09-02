@@ -195,7 +195,8 @@ export interface ManaGrantedEvent extends BaseEvent {
   type: 'ManaGranted';
   sourceCombatantId: string;
   targetCombatantId: string;
-  moveId: string;
+  /** Absent when a PASSIVE granted the mana rather than a move. */
+  moveId?: string;
   /** Never clamped — a full-pool target receives all of it. */
   amount: number;
   previousMana: number;

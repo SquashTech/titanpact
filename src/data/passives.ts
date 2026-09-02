@@ -148,6 +148,59 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Conduct' },
     },
   },
+  overspill: {
+    id: 'overspill',
+    name: 'Overspill',
+    description: 'When this hero enters the battlefield, it gains 50 mana, past its pool.',
+    // Mana overflow is a locked pillar (docs/mana.md) that only MOVES could reach until now.
+    // It matters most here: Singularity costs 150 and Glyph's pool is 85, so its best move is
+    // unreachable without overflow. Uncapped, survives switching, so the play is to pivot to the
+    // bench, regen, come back 50 up — the bench-cycling engine pointed at one enormous cast.
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 50 } },
+    },
+  },
+  communion: {
+    id: 'communion',
+    name: 'Communion',
+    description: 'Whenever this hero is healed, its partner is healed for the same amount.',
+    // Target-role Healed: "I was healed". Revenant's Drain and Soul Rend are drainPercent riders,
+    // which DO emit Healed, so every drain now sustains the pair. A passive heal runs applyHpDelta
+    // and emits HpChanged rather than Healed, so this cannot bounce between the two of them.
+    reactive: {
+      hook: 'Healed',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'heal', target: 'ally', amount: { kind: 'matchTriggerAmount' } },
+    },
+  },
+  tempering: {
+    id: 'tempering',
+    name: 'Tempering',
+    description: 'Whenever this hero takes damage, it gains 10 Defense.',
+    // Target-role DamageDealt: "I was hit". Steel worked by blows. Unbounded within a fight on
+    // purpose — Valor is the hero that wins the long one, and the Pact Clock is what brackets it.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'defense', amount: 10 },
+    },
+  },
+  combustion: {
+    id: 'combustion',
+    name: 'Combustion',
+    description: 'Whenever this hero is Burned, it gains 20 Attack.',
+    // Target-role StatusApplied: "I caught fire". Mech's whole Burn line burns its OWN caster —
+    // Backfire, Overheat and Meltdown each apply Burn to the target AND to self — so the drawback
+    // written into the type becomes the fuel, and an enemy burning Clockwork is a mistake.
+    // Burn is stacking additive, so every re-application pays again.
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Burn' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 20 },
+    },
+  },
   afterglow: {
     id: 'afterglow',
     name: 'Afterglow',

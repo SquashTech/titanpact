@@ -318,7 +318,7 @@ test('passives: Static Tide plants Conduct on the hero its owner just hit with a
 
 test('passives: Static Tide reads the move TYPE — a Fire hit from the same owner plants nothing', () => {
   const state = withPassive(twoVTwoFixture(341), 'a1', 'staticTide');
-  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'ember', declaredTarget: 'b1' }], config);
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'setAlight', declaredTarget: 'b1' }], config);
 
   assert.ok(!hasStatus(next.combatants.b1, 'Conduct'));
 });
@@ -816,4 +816,110 @@ test('passives: Afterglow pays at FULL HP — the heal is wasted and the buff is
 
   assert.strictEqual(next.combatants.a2.currentHp, heroes.crag.baseStats.hp, 'no HP to give back');
   assert.strictEqual(next.combatants.a2.statModifiers.attack, 20, 'the turn still bought something');
+});
+
+// --- The last four starters: Overspill, Communion, Tempering, Combustion ---
+
+function pairFixture(seed: number, a1: string, a2: string, bench?: string) {
+  const allies = [
+    { combatantId: 'a1', heroId: a1, side: 'A' as const },
+    { combatantId: 'a2', heroId: a2, side: 'A' as const },
+    ...(bench ? [{ combatantId: 'a3', heroId: bench, side: 'A' as const }] : []),
+  ];
+  const base = createFightState(seed, allies, [
+    { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+    { combatantId: 'b2', heroId: 'crag', side: 'B' },
+  ]);
+  return {
+    ...base,
+    combatants: Object.fromEntries(
+      Object.entries(base.combatants).map(([id, c]) => [id, { ...c, currentMana: 999, currentHp: Math.floor(c.currentHp / 2) }])
+    ),
+  } as CombatState;
+}
+
+test('passives: Overspill grants mana on arrival, and it OVERFLOWS the pool', () => {
+  const state = withPassive(pairFixture(600, 'crag', 'crag', 'runescribe'), 'a3', 'overspill');
+  const before = state.combatants.a3.currentMana;
+  const { state: next, events } = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action], config);
+
+  assert.strictEqual(next.combatants.a3.currentMana, before + 50);
+  const granted = events.find((e) => e.type === 'ManaGranted') as any;
+  assert.strictEqual(granted.amount, 50);
+  assert.ok(granted.overflow > 0, 'past the 85 pool — uncapped, like a move grant');
+  assert.strictEqual(granted.moveId, undefined, 'no move did this');
+});
+
+test('passives: Overspill is what makes Singularity castable — 150 mana against an 85 pool', () => {
+  const base = pairFixture(601, 'crag', 'crag', 'runescribe');
+  const drained = {
+    ...base,
+    combatants: { ...base.combatants, a3: { ...base.combatants.a3, currentMana: 110 } },
+  } as CombatState;
+  const { state: next } = resolveRound(
+    withPassive(drained, 'a3', 'overspill'),
+    [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action],
+    config
+  );
+
+  assert.ok(next.combatants.a3.currentMana >= moves.singularity.manaCost, 'arrives able to cast it');
+});
+
+test('passives: Communion passes a DRAIN through to the partner, one for one', () => {
+  const state = withPassive(pairFixture(602, 'revenant', 'crag'), 'a1', 'communion');
+  const before = state.combatants.a2.currentHp;
+  const { state: next, events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'drain', declaredTarget: 'b1' } as Action], config);
+
+  const drained = (events.find((e) => e.type === 'Healed') as any).amount;
+  assert.ok(drained > 0, 'the drain landed');
+  assert.strictEqual(next.combatants.a2.currentHp, before + drained, 'the partner got the same');
+});
+
+test('passives: Communion needs a partner — alone on the field it is silent, not a crash', () => {
+  const base = pairFixture(603, 'revenant', 'crag');
+  const solo = { ...base, active: { ...base.active, A: ['a1', null] } } as CombatState;
+  const { state: next } = resolveRound(withPassive(solo, 'a1', 'communion'), [{ kind: 'move', combatantId: 'a1', moveId: 'drain', declaredTarget: 'b1' } as Action], config);
+
+  assert.ok(next.combatants.a1.currentHp > 0);
+});
+
+test('passives: Tempering hardens Valor every time it is hit', () => {
+  // Full HP: at half, Heavy Blow twice kills Valor before the second stack can land.
+  const base = pairFixture(604, 'valor', 'crag');
+  const state = withPassive(
+    { ...base, combatants: Object.fromEntries(Object.entries(base.combatants).map(([id, c]) => [id, { ...c, currentHp: heroes[c.heroId].baseStats.hp }])) } as CombatState,
+    'a1',
+    'tempering'
+  );
+  const swing: Action = { kind: 'move', combatantId: 'b1', moveId: 'heavyBlow', declaredTarget: 'a1' };
+  const once = resolveRound(state, [swing], config).state;
+  assert.strictEqual(once.combatants.a1.statModifiers.defense, 10);
+
+  const twice = resolveRound(once, [swing], config).state;
+  assert.strictEqual(twice.combatants.a1.statModifiers.defense, 20, 'it compounds — the Pact Clock is what ends this');
+});
+
+test('passives: Tempering is the RECEIVER role — Valor dealing damage hardens nothing', () => {
+  const state = withPassive(pairFixture(605, 'valor', 'crag'), 'a1', 'tempering');
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'ironFist', declaredTarget: 'b1' } as Action], config);
+
+  assert.strictEqual(next.combatants.a1.statModifiers.defense ?? 0, 0);
+});
+
+test('passives: Combustion turns Clockwork\'s own Meltdown backfire into Attack', () => {
+  const state = withPassive(pairFixture(606, 'forgewright', 'crag'), 'a1', 'combustion');
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'meltdown' } as Action], config);
+
+  assert.ok(hasStatus(next.combatants.a1, 'Burn'), 'Meltdown burns its own caster');
+  assert.strictEqual(next.combatants.a1.statModifiers.attack, 20, 'and that is the point');
+});
+
+test('passives: Combustion reads the ROLE — burning a FOE with a clean Fire move pays nothing', () => {
+  // Set Alight, not Backfire: Mech's own Burn moves all hit the caster too, so they cannot
+  // separate the roles. Fire's line is the only clean way to burn a foe and nobody else.
+  const state = withPassive(pairFixture(607, 'forgewright', 'crag'), 'a1', 'combustion');
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'setAlight', declaredTarget: 'b1' } as Action], config);
+
+  assert.ok(hasStatus(next.combatants.b1, 'Burn'), 'the foe is burning');
+  assert.strictEqual(next.combatants.a1.statModifiers.attack ?? 0, 0, 'but Clockwork is not');
 });

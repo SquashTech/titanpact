@@ -364,7 +364,7 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
             const drainer = working.combatants[action.combatantId];
             if (drained > 0 && drainer && !drainer.fainted) {
               const drainerMaxHp = getMaxHp(attackerHero, drainer);
-              events.push({
+              const drainHealed: CombatEvent = {
                 type: 'Healed',
                 round,
                 sourceCombatantId: action.combatantId,
@@ -372,10 +372,17 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
                 moveId: move.id,
                 amount: drained,
                 drain: { fromCombatantId: targetId, damageDealt: removed, percent: move.drainPercent },
-              });
+              };
+              events.push(drainHealed);
               const drainResult = applyHpDelta(working, round, action.combatantId, drained, drainerMaxHp);
               working = drainResult.state;
               events.push(...drainResult.events);
+
+              // A drain IS a heal, so it feeds the Healed hook like any other — without this the
+              // hook would silently cover only heal-kind moves.
+              const drainReactions = resolvePassiveReactions(working, round, [drainHealed], heroes, statuses, passives, fieldEffects);
+              working = drainReactions.state;
+              events.push(...drainReactions.events);
             }
           }
 

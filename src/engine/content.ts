@@ -169,6 +169,8 @@ export type PassiveEffect =
   | { kind: 'statDelta'; target: PassiveEffectTarget; stat: StatKey | readonly StatKey[]; amount: number }
   /** Strips non-`positive` statuses, same rules as a move's `cleanses`; `count` omitted = all. */
   | { kind: 'cleanse'; target: PassiveEffectTarget; count?: number }
+  /** UNCAPPED, like a move's `manaGrant` — overflow past the pool is the point (docs/mana.md). */
+  | { kind: 'manaGrant'; target: PassiveEffectTarget; amount: PassiveAmount }
   /** Global — no `target`. */
   | { kind: 'setFieldEffect'; fieldEffectId: FieldEffectId };
 

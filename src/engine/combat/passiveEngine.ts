@@ -4,7 +4,7 @@
 // (synchronous, evaluated before a hit is rolled).
 
 import type { HeroLookup, CombatState, Combatant, Side } from '../state';
-import { getMaxHp } from '../state';
+import { getMaxHp, getMaxMana } from '../state';
 import type { FieldEffectDefinition, PassiveDefinition, PassiveId, PassiveEffect, PassiveEffectTarget, PassiveTriggerCondition, PassiveAmount, StatKey, StatusDefinition, MoveDefinition } from '../content';
 import type { CombatEvent } from '../events';
 import type { DamageModifier } from '../damage/damagePipeline';
@@ -217,6 +217,34 @@ function resolveEffectOn(
     }
     case 'cleanse':
       return cleanseStatuses(state, round, targetId, statusDefs, effect.count);
+    case 'manaGrant': {
+      const amount = resolveAmount(effect.amount, context);
+      if (amount <= 0) return { state, events: [] };
+      // Uncapped by design, exactly as a move's manaGrant is — the overflow IS the payout.
+      const previousMana = target.currentMana;
+      const newMana = previousMana + amount;
+      const nextState: CombatState = {
+        ...state,
+        combatants: { ...state.combatants, [targetId]: { ...target, currentMana: newMana } },
+      };
+      const maxMana = getMaxMana(heroes[target.heroId], target);
+      return {
+        state: nextState,
+        events: [
+          {
+            type: 'ManaGranted',
+            round,
+            sourceCombatantId: ownerId,
+            targetCombatantId: targetId,
+            amount,
+            previousMana,
+            newMana,
+            maxMana,
+            overflow: Math.max(0, newMana - maxMana),
+          },
+        ],
+      };
+    }
     case 'statDelta': {
       // One stat or several; each lands separately and reports its own StatChanged, so a
       // stat-reactive passive (Entanglement) sees them one at a time exactly as a move's would.

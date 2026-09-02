@@ -1362,6 +1362,34 @@ Existing single-stat content is untouched.
 > FIELD EFFECT (`src/data/fieldEffects.ts`). Renamed **Solstice**. Worth a scan when authoring
 > any path name — field effects, statuses and moves all share the player's vocabulary.
 
+### A passive that grants MANA, and the drain that was missing its hook (2026-09-02, the last four starters)
+
+`PassiveEffect` gained **`{ kind: 'manaGrant' }`** — uncapped, exactly as a move's
+`manaGrant` is, because the overflow past the pool is the payout (`docs/mana.md`).
+`ManaGrantedEvent.moveId` is now optional, absent when a passive did it. Content:
+**Overspill** (Glyph's Thaumaturge) — *on entering the battlefield, gain 50 mana past the
+pool*. Mana overflow is a locked pillar that only MOVES could reach until now, and it
+matters most on this hero: **Singularity costs 150 against Glyph's 85 pool**, so its best
+move was uncastable without help. Overflow survives switching, so the path is the
+bench-cycling engine aimed at one enormous cast.
+
+**A drain is a heal, and the `Healed` hook was only half wired.** The checkpoint added
+with Solace covered `heal`-kind moves; the `drainPercent` rider emits its own `Healed`
+event from the damage path and had no reaction pass at all. Caught by **Communion**
+(Revenant's Undying — *whenever this hero is healed, its partner is healed the same*)
+simply not firing on Drain. Both emitters now feed the hook.
+
+> **Two authoring traps this batch hit, worth knowing.** `moveTiers` and `evolutions` are
+> keyed by the same hero id, so a blind first-match edit rewrites the wrong one — it type-errors
+> immediately, but check. And **every Mech Burn move burns its own caster** (Backfire, Overheat
+> and Meltdown all carry a `target: 'self'` Burn alongside the target's), which is what makes
+> **Combustion** — *whenever this hero is Burned, gain 20 Attack* — read the type's built-in
+> drawback as its fuel rather than needing an enemy to cooperate.
+
+**Valor's Tempering** (*whenever this hero takes damage, gain 10 Defense*) is deliberately
+unbounded within a fight: Valor is the hero that wins the long one, and the Pact Clock is
+what brackets that, not a cap on the passive.
+
 ### The floor: no effective stat below 1 (LOCKED — 2026-08-30 designer call)
 
 Raised by the Mind slate, but **not caused by it**. `getEffectiveStat` (state.ts) had
