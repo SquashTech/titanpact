@@ -268,9 +268,15 @@ identity.
 
 > ### The Evolution framework (2026-09-01 designer call)
 >
-> The shape every hero's node is being re-authored to. Crimson, Fang, Riptide, Rime
-> and Crag (`src/data/progression.ts`) are the worked examples; the other 30 are
-> still on the old two-stats shape and are the backlog.
+> The shape every hero's node is being re-authored to. Crimson, Fang, Riptide, Rime,
+> Crag and Tempest (`src/data/progression.ts`) are the worked examples; the other 30
+> are still on the old two-stats shape and are the backlog.
+>
+> Tempest was authored from nothing (2026-09-02) rather than re-authored: it was the
+> one hero of 36 with no `evolutions` entry at all, and nothing failed — the lookup is
+> `?? []`, so it simply never evolved, in the player's roster and in `enemyGen` alike.
+> `test/moveTiers.test.ts` now pins the coverage, the three kinds, and the graft's
+> learnable line, so the next omission is a red test rather than a silent one.
 >
 > **1. Grants got bigger.** An Evolution is permanent, once per hero, and
 > run-defining; paying out the ~20 points a Common item pays was the wrong

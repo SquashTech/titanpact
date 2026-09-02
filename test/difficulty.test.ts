@@ -76,8 +76,7 @@ test('difficulty: scaled enemies arrive at the act level, and from Act 3 on they
     const { run } = generateEncounter('elite', 12, heroes, { scaling, progression: progressionTable });
     for (const entry of run.roster) {
       assert.strictEqual(entry.level, scaling.level, `act ${act} level`);
-      const hasEvolutionContent = (progressionTable.evolutions[entry.heroId] ?? []).length > 0;
-      if (scaling.level >= EVOLUTION_LEVEL && hasEvolutionContent) {
+      if (scaling.level >= EVOLUTION_LEVEL) {
         assert.strictEqual(entry.chosenPathIds.length, 1, `act ${act} ${entry.heroId} should have evolved`);
       } else {
         assert.strictEqual(entry.chosenPathIds.length, 0, `act ${act} ${entry.heroId} should not have evolved`);

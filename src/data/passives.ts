@@ -148,6 +148,20 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Conduct' },
     },
   },
+  feedbackLoop: {
+    id: 'feedbackLoop',
+    name: 'Feedback Loop',
+    description: 'Whenever this hero applies Conduct, it gains +10 Intelligence.',
+    // Firestarter's shape (source-role StatusApplied) pointed at the mark Tempest already
+    // builds its slate around, so planting is also ramping. NOT oncePerFight: the ramp IS the
+    // path, and Ionize plants on both foes for two firings. Conduct is stacking 'none', so a
+    // re-plant on an already-marked target does not re-fire; the ramp costs fresh targets.
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Conduct' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
+    },
+  },
   bloodthirsty: {
     id: 'bloodthirsty',
     name: 'Bloodthirsty',

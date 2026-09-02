@@ -139,3 +139,42 @@ test('move tiers: no hero can reach level 10 on a level-up that offers nothing',
     }
   }
 });
+
+test('move tiers: every hero has an Evolution node — the precondition the test above skips a level on', () => {
+  // The FLOOR test skips EVOLUTION_LEVEL because that level-up surfaces the Evolution instead of a
+  // move. A hero with no node gets a move offer there instead, so the skip quietly over-credits it —
+  // which is how Tempest sat evolution-less without a single test noticing.
+  const missing = Object.keys(heroesById)
+    .filter((heroId) => (progressionTable.evolutions[heroId] ?? []).length === 0)
+    .sort();
+  assert.deepStrictEqual(missing, [], 'these heroes can never evolve');
+});
+
+test('move tiers: every Evolution node offers exactly three paths, differing in kind', () => {
+  for (const [heroId, nodes] of Object.entries(progressionTable.evolutions)) {
+    for (const node of nodes) {
+      const kinds = node.paths.map((p) => p.kind).sort();
+      assert.deepStrictEqual(kinds, ['defensive', 'offensive', 'utility'], `${heroId} at level ${node.level}`);
+    }
+  }
+});
+
+test('move tiers: every move an Evolution grants or unlocks exists, and a graft only grants its own type', () => {
+  for (const [heroId, nodes] of Object.entries(progressionTable.evolutions)) {
+    for (const node of nodes) {
+      for (const path of node.paths) {
+        assert.strictEqual(path.heroId, heroId, `${path.id} is filed under the wrong hero`);
+        for (const id of [...path.unlocksMoveIds, ...(path.learnableMoveIds ?? [])]) {
+          assert.ok(moves[id], `${path.id} references unknown move ${id}`);
+        }
+        // A graft that hands over moves of some third type would be paying in something it did not buy.
+        if (path.typeGraft) {
+          const off = (path.learnableMoveIds ?? []).filter(
+            (id) => moves[id].type !== path.typeGraft && !heroesById[heroId].types.includes(moves[id].type)
+          );
+          assert.deepStrictEqual(off, [], `${path.id} learns moves of neither its graft nor its innate type`);
+        }
+      }
+    }
+  }
+});

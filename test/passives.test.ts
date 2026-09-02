@@ -442,3 +442,57 @@ test('passives: toPassiveInstances converts counts to PassiveInstance records an
   const instances = toPassiveInstances({ sanguine: 2, emberheart: 0 });
   assert.deepStrictEqual(instances, { sanguine: { passiveId: 'sanguine', stacks: 2 } });
 });
+
+// --- Feedback Loop (Tempest / Thunderhead) ---
+
+function stormFixture(seed: number) {
+  return createFightState(
+    seed,
+    [
+      { combatantId: 'a1', heroId: 'tempest', side: 'A' },
+      { combatantId: 'a2', heroId: 'tempest', side: 'A' },
+    ],
+    [
+      { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+      { combatantId: 'b2', heroId: 'wildOracle', side: 'B' },
+    ]
+  );
+}
+
+const ionizeByOwner: Action = { kind: 'move', combatantId: 'a1', moveId: 'ionize' };
+
+test('passives: Feedback Loop ramps the holder once per Conduct it plants — Ionize marks both foes for +20', () => {
+  const state = withPassive(stormFixture(350), 'a1', 'feedbackLoop');
+  const { state: next, events } = resolveRound(state, [ionizeByOwner], config);
+
+  assert.ok(hasStatus(next.combatants.b1, 'Conduct') && hasStatus(next.combatants.b2, 'Conduct'));
+  assert.strictEqual(next.combatants.a1.statModifiers.intelligence, 20, 'one firing per application');
+  assert.strictEqual(events.filter((e) => e.type === 'PassiveTriggered' && e.passiveId === 'feedbackLoop').length, 2);
+});
+
+test('passives: Feedback Loop does not re-ramp on an already-Conducting target — Conduct stacks none, so no event fires', () => {
+  const marked = withStatus(withStatus(withPassive(stormFixture(351), 'a1', 'feedbackLoop'), 'b1', 'Conduct', {}), 'b2', 'Conduct', {});
+  const { state: next } = resolveRound(marked, [ionizeByOwner], config);
+
+  assert.strictEqual(next.combatants.a1.statModifiers.intelligence ?? 0, 0, 'the ramp is priced in fresh marks');
+});
+
+test('passives: Feedback Loop is attribution, not proximity — an ally planting Conduct does not ramp the holder', () => {
+  const state = withPassive(stormFixture(352), 'a1', 'feedbackLoop'); // a1 holds it, a2 does the marking
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a2', moveId: 'ionize' } as Action], config);
+
+  assert.ok(hasStatus(next.combatants.b1, 'Conduct'), 'the mark still lands');
+  assert.strictEqual(next.combatants.a1.statModifiers.intelligence ?? 0, 0);
+  assert.strictEqual(next.combatants.a2.statModifiers.intelligence ?? 0, 0, 'and the planter does not ramp either');
+});
+
+test('passives: Feedback Loop reads the STATUS — a Bleed the holder inflicts pays nothing', () => {
+  const state = withPassive(stormFixture(353), 'a1', 'feedbackLoop');
+  const { state: next } = resolveRound(
+    state,
+    [{ kind: 'move', combatantId: 'a1', moveId: 'serratedSlice', declaredTarget: 'b1' } as Action],
+    config
+  );
+
+  assert.strictEqual(next.combatants.a1.statModifiers.intelligence ?? 0, 0);
+});
