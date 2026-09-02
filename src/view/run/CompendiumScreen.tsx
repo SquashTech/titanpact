@@ -7,13 +7,12 @@ import { statuses } from '../../data/statuses';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { RARITY_ORDER } from '../../run/equipment';
-import { getTypeColor } from '../combat/typeColors';
-import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
-import { SectionGlyph } from '../shared/sectionIcons';
-import { TypeBadge } from '../shared/TypeBadge';
-import { TypeMatchups } from '../shared/TypeMatchups';
+import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors';
+import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
+import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { EQUIP_SLOT_LABELS, EQUIP_SLOT_ORDER, EquipmentEffectList, EquipmentIcon, fmtGrant, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { HeroDossierOverlay } from './HeroDossierOverlay';
 
 interface Props {
   onClose: () => void;
@@ -30,29 +29,34 @@ const EQUIPMENT_LIST = Object.values(equipment).sort(
   (a, b) => EQUIP_SLOT_ORDER.indexOf(a.slot) - EQUIP_SLOT_ORDER.indexOf(b.slot) || RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity)
 );
 
-/** The hero as authored — base stats only, no RosterEntry (no level, Evolution grants or equipment). */
-function CompendiumHeroCard({ hero }: { hero: HeroDefinition }) {
+/**
+ * Roster tile: sprite, name, types, nothing else — the whole hero is one tap away in
+ * HeroDossierOverlay. Wears `.pick-card`'s clothes (the shared "pick a hero" card) minus the
+ * level mark and CTA line, which need a RosterEntry the compendium deliberately does not have.
+ */
+function CompendiumHeroTile({ hero, onOpen }: { hero: HeroDefinition; onOpen: () => void }) {
   return (
-    <div className="roster-mgmt-card" style={{ borderLeftColor: getTypeColor(hero.types[0]) }}>
-      <span className={`roster-card-badge ${hero.starter ? 'badge-ally' : 'badge-recruit'}`}>
-        {hero.starter ? 'STARTER' : 'RECRUIT ONLY'}
-      </span>
-      <div className="roster-mgmt-head">
-        <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
-        <div className="roster-mgmt-name">{hero.name}</div>
-        <div className="roster-card-types">
-          {hero.types.map((t) => (
-            <TypeBadge key={t} type={t} />
-          ))}
-        </div>
+    <button
+      type="button"
+      className="pick-card compendium-tile"
+      style={{ '--type-rgb': getTypeColorRgb(hero.types[0]) } as CSSProperties}
+      onClick={onOpen}
+      aria-label={`${hero.name} — view details`}
+    >
+      <div className="pick-figure">
+        <span className="pick-ground" aria-hidden="true" />
+        <HeroPortrait heroId={hero.id} className="pick-portrait" />
       </div>
-
-      <div className="detail-section-title"><SectionGlyph name="matchups" /> Matchups</div>
-      <TypeMatchups types={hero.types} />
-
-      <div className="detail-section-title"><SectionGlyph name="stats" /> Stats</div>
-      <StatBars baseStats={hero.baseStats} />
-    </div>
+      <span className="pick-name">{hero.name}</span>
+      <span className="pick-types">
+        {hero.types.map((t) => (
+          <span key={t} className="pick-type-code" style={{ color: getTypeColor(t) }} title={t}>
+            <ElementGlyph type={t} />
+            {getTypeAbbr(t)}
+          </span>
+        ))}
+      </span>
+    </button>
   );
 }
 
@@ -103,8 +107,10 @@ type CompendiumTab = 'starters' | 'recruitable' | 'equipment';
 export function CompendiumScreen({ onClose }: Props) {
   const [tab, setTab] = useState<CompendiumTab>('starters');
   const [inspectItemId, setInspectItemId] = useState<string | null>(null);
+  const [dossierHeroId, setDossierHeroId] = useState<string | null>(null);
   const heroList = tab === 'starters' ? STARTER_HEROES : RECRUIT_HEROES;
   const inspectItem = inspectItemId ? equipment[inspectItemId] : null;
+  const dossierHero = dossierHeroId ? heroes[dossierHeroId] : null;
 
   return (
     <div className="log-overlay roster-mgmt-overlay" onClick={onClose}>
@@ -134,14 +140,16 @@ export function CompendiumScreen({ onClose }: Props) {
               ))}
             </div>
           ) : (
-            <div className="roster-mgmt-list">
+            <div className="pick-grid pick-cols-3 compendium-grid">
               {heroList.map((hero) => (
-                <CompendiumHeroCard key={hero.id} hero={hero} />
+                <CompendiumHeroTile key={hero.id} hero={hero} onOpen={() => setDossierHeroId(hero.id)} />
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {dossierHero && <HeroDossierOverlay hero={dossierHero} onClose={() => setDossierHeroId(null)} />}
 
       {inspectItem &&
         (() => {
