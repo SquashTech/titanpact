@@ -58,7 +58,6 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
                     <span className="evolution-path-name">{path.name}</span>
                     <span className="evolution-path-kind">{path.kind}</span>
                   </div>
-                  {path.description && <p className="evolution-path-description">{path.description}</p>}
                   <div className="evolution-path-grants">
                     {/* Signed, not always "+": a refocus path spends a stat to buy another. */}
                     {statEntries.map(([stat, amount]) => (

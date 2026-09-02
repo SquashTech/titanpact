@@ -708,8 +708,6 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
         </div>
       )}
 
-      {move.description && <div className="move-detail-desc">{move.description}</div>}
-
       {forecastIds.length > 0 && context && (
         <div className="move-detail-forecast">
           <div className="move-detail-eyebrow">Forecast</div>

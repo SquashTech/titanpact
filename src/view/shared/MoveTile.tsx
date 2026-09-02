@@ -369,7 +369,7 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
   }
 
   // The row's height is reserved either way; say something rather than leave a gap.
-  if (parts.length === 0) return move.description ?? '';
+  if (parts.length === 0) return TARGET_MODE_LABELS[move.target];
 
   return `${parts.join(' · ')} — ${TARGET_MODE_LABELS[move.target]}`;
 }

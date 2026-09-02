@@ -49,7 +49,6 @@ function ClassChoiceCard({ cls, picked, onPick }: ClassChoiceCardProps) {
         </span>
         <span className="relic-card-name">{cls.name}</span>
       </div>
-      {cls.description && <p className="class-shrine-card-flavor">{cls.description}</p>}
       <div className="class-shrine-card-grants">
         {fmtStatGrants(cls.statGrants).map(([stat, amount]) => (
           <span key={stat} className="evolution-path-grant-chip">
@@ -203,7 +202,6 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
               <div className="class-learn-eyebrow">Discipline Learned</div>
               <h2 className="class-learn-title">{assignedHero.name}</h2>
               <div className="class-learn-classname">{confirmedClass.name}</div>
-              {confirmedClass.description && <p className="class-learn-desc">{confirmedClass.description}</p>}
               <div className="class-learn-grants">
                 {fmtStatGrants(confirmedClass.statGrants).map(([stat, amount], i) => (
                   <span key={stat} className="class-learn-grant-chip" style={{ animationDelay: `${0.15 + i * 0.1}s` }}>

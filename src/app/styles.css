@@ -10356,13 +10356,6 @@ textarea,
   font-size: 14px;
 }
 
-.class-shrine-card-flavor {
-  font-size: 11px;
-  color: var(--text-dim);
-  line-height: 1.4;
-  margin: 0;
-}
-
 .class-shrine-card-grants {
   display: flex;
   flex-wrap: wrap;
@@ -10497,16 +10490,7 @@ textarea,
   font-size: 15px;
   font-weight: 700;
   color: var(--buff);
-  margin: 0 0 6px;
-}
-
-.class-learn-desc {
-  position: relative;
-  font-size: 12px;
-  color: var(--text-dim);
-  max-width: 320px;
-  margin: 0 0 12px;
-  line-height: 1.5;
+  margin: 0 0 14px;
 }
 
 .class-learn-grants {
@@ -14467,13 +14451,6 @@ textarea,
   white-space: nowrap;
 }
 
-.evolution-path-description {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--text-dim);
-}
-
 .evolution-path-grants {
   display: flex;
   flex-wrap: wrap;
@@ -14648,10 +14625,6 @@ textarea,
 
 .evolution-path-list-big .evolution-path-name {
   font-size: 15px;
-}
-
-.evolution-path-list-big .evolution-path-description {
-  font-size: 12px;
 }
 
 /* --- Sandbox Battle (team-builder tool — App.tsx 'sandboxBattle'/'sandboxFight',
@@ -15300,15 +15273,6 @@ textarea,
   font-weight: 400;
   font-size: 12px;
   color: var(--text-dim);
-}
-
-/* Authored flavor. Deliberately the quietest thing on the card: everything
-   above it is mechanics. */
-.move-detail-desc {
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--text-dim);
-  font-style: italic;
 }
 
 .move-detail-forecast {
