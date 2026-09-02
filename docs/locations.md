@@ -282,7 +282,7 @@ Shrine Guardian bench exactly as the Lord does at Wild's Edge. Two data points m
 shape look deliberate rather than opportunistic: both champions are dual-typed with
 **Ancient** as the second type, which is what that type keeps itself for, and both spend
 their four moves across both damage pipelines. They differ in which pipeline they *lean* on
-— the Lord is 105 Attack to 80 Intelligence, Yugzulach 120 Intelligence to 90 Attack — so
+— the Lord is 90 Attack to 70 Intelligence, Yugzulach 120 Intelligence to 90 Attack — so
 the answer a player needs at the end of Act 1 is not the answer they need again later. Four
 to go.
 

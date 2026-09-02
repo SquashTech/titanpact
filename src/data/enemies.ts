@@ -66,11 +66,14 @@ export const enemies: Record<string, HeroDefinition> = {
   // Wild's Edge's Guardian reinforcement: held on the enemy bench so the fight's first KO
   // brings him in (enemyGen.ts `appendFinalEnemy`, locations.ts `guardianFinalEnemyId`).
   // Not in the faction's basics and not drawn by any generator. Stat total 600 is a playtest figure.
+  // Redistributed 2026-09-02, per user direction: -15 Attack and -10 Intelligence into +25 HP,
+  // total untouched. He walks on after a KO with the fight already going the player's way, so
+  // his job is to take that back over several rounds rather than to two-shot whoever is left.
   goblinLord: {
     id: 'goblinLord',
     name: 'Goblin Lord',
     types: ['Beast', 'Ancient'],
-    baseStats: { hp: 190, attack: 105, defense: 85, intelligence: 80, wisdom: 65, speed: 75, manaPool: 120, mpRegen: 20 },
+    baseStats: { hp: 215, attack: 90, defense: 85, intelligence: 70, wisdom: 65, speed: 75, manaPool: 120, mpRegen: 20 },
     moveIds: ['thrash', 'momentumSwing', 'enfeeble', 'archonBlast'],
     starter: false,
   },
