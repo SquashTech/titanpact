@@ -295,8 +295,8 @@ identity.
 > Bloodthirsty.
 >
 > **A default, not a law** (2026-09-02): Riptide and Rime both put the passive on a
-> GRAFT instead — Maelstrom's Static Tide, Glacier's Frozen Stone — and pay for it in
-> the stat line (Maelstrom grants no stats at all). What the clause protects is that a
+> GRAFT instead — Siren's Enthrall, Glacier's Frozen Stone — and pay for it in
+> the stat line (Siren grants no stats at all). What the clause protects is that a
 > mono path must carry something a graft cannot, and a signature MOVE (clause 5) serves
 > that too: Riptide's Tidecaller has Lizard Rush, Rime's Avalanche has Snowball. What
 > stays true is that a mono path offering *only stats* cannot compete.

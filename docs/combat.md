@@ -1248,6 +1248,18 @@ Attribution is unchanged: the condition still says whose hit it was, so a partne
 Water move plants nothing, and a spread Water move marks each target once (one
 `DamageDealt` each). `test/passives.test.ts` pins all four.
 
+> **The content moved, the mechanism did not (2026-09-02).** Evening the starter graft table
+> to exactly 2 per type turned Riptide's Storm graft into **Water/Mind**, which would have left
+> Static Tide planting a mark nothing could cash. Its replacement, **Enthrall** (Siren), is the
+> same shape transposed: Water plants **Haunt**, and the grafted **Mind** line cashes it, because
+> `Haunt.spreadTriggerTypes` is Spirit and Mind. Planting and cashing stay in two different
+> columns either way — that separation is what makes the graft load-bearing rather than flavour.
+>
+> **Static Tide and Shock Bubble are RESERVED, not deleted** — held for a future recruit-only
+> Water hero that grafts Storm. The passive keeps its four tests (nothing grants it, so nothing
+> else covers it), and Shock Bubble sits in the pinned orphan list in `stoneMoves.test.ts` with
+> the reason written next to it.
+
 ### Reacting to a stat CHANGE (2026-09-02, Rime)
 
 `PassiveHook` gained **`'StatChanged'`**. Content: **Frozen Stone** (Rime's Glacier

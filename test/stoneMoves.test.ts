@@ -442,6 +442,10 @@ test('stone: no move is unreachable that was not already known to be', () => {
     'landslide',
     'rockfall',
     'runicBlast',
+    // RESERVED (2026-09-02), not an accident: Shock Bubble is the Water move that plants Conduct,
+    // and it was reachable only through Riptide's Storm graft, which became Water/Mind. Held with
+    // the Static Tide passive for a future recruit-only Water hero that grafts Storm.
+    'shockBubble',
     'tremor',
   ]);
 });

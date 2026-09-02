@@ -103,7 +103,7 @@ rather than slipping it in.
 - Applied only by a specific move that names Conduct in its own `statusApplication`
   (moves.ts `risingStatic`, `jolt`, `ionize`, `stormLash`, `thunderbolt`, and Water's
   `shockBubble`) — same authoring convention as every other status, not automatic.
-- **2026-09-01:** a passive may also plant it. **Static Tide** (Riptide's Maelstrom
+- **2026-09-01:** a passive may also plant it. **Static Tide** (reserved since 2026-09-02, once Riptide's Maelstrom
   Evolution) marks the target of every Water attack its owner lands, which is what
   turns a Water/Storm hero into its own applier *and* detonator. Still an authored
   choice, still never the detonation pass planting its own mark.

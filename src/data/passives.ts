@@ -135,10 +135,27 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'randomEnemy', statusId: 'Freeze' },
     },
   },
+  enthrall: {
+    id: 'enthrall',
+    name: 'Enthrall',
+    description: 'Every Water attack this hero lands leaves its target Haunted.',
+    // Static Tide's exact shape, transposed off Conduct/Storm onto Haunt/Mind: the Water hit
+    // plants the mark and the GRAFTED line is what cashes it. Haunt expands a singleEnemy Spirit
+    // or Mind move onto the marked hero's partner, so Siren's Mind moves spread and its Water
+    // ones never do — planting and cashing stay two different columns, which is the point.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Water' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Haunt' },
+    },
+  },
   staticTide: {
     id: 'staticTide',
     name: 'Static Tide',
     description: 'Every Water attack this hero lands leaves its target Conducting.',
+    // RESERVED, not dead (2026-09-02): Riptide's Storm graft became Water/Mind, so nothing grants
+    // this today. Held for a future recruit-only Water hero that grafts Storm — with Shock Bubble,
+    // the Water move that plants Conduct, which is parked in the orphan list for the same reason.
     // subjectRole 'source' + relativeTo 'self' = "I dealt this hit"; the Conduct then has to
     // land on 'triggerTarget', the defender, because the condition's subject is the attacker.
     // Maelstrom's own Storm moves are what cash the mark in (Conduct.triggerTypes).
