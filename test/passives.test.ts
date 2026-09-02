@@ -496,3 +496,90 @@ test('passives: Feedback Loop reads the STATUS — a Bleed the holder inflicts p
 
   assert.strictEqual(next.combatants.a1.statModifiers.intelligence ?? 0, 0);
 });
+
+// --- Restorative Toxin and Nature's Purification (Sylva / Wildbloom, Lightsage) ---
+
+function natureFixture(seed: number) {
+  return createFightState(
+    seed,
+    [
+      { combatantId: 'a1', heroId: 'wildOracle', side: 'A' },
+      { combatantId: 'a2', heroId: 'cinderKnight', side: 'A' },
+    ],
+    [
+      { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+      { combatantId: 'b2', heroId: 'mordax', side: 'B' },
+    ]
+  );
+}
+
+test('passives: Restorative Toxin reads the Poison it just applied — Toxic Spores 10 pays Renew 20', () => {
+  const state = withPassive(natureFixture(360), 'a1', 'restorativeToxin');
+  const { state: next } = resolveRound(
+    state,
+    [{ kind: 'move', combatantId: 'a1', moveId: 'toxicSpores', declaredTarget: 'b1' } as Action],
+    config
+  );
+
+  assert.strictEqual(next.combatants.b1.statuses.Poison?.magnitude, 10);
+  // 2x the TRIGGERING magnitude, not an authored flat — the Renew has already ticked and halved once
+  // by end of round, so read what it was worth when it landed: 20 healed, 10 left.
+  assert.strictEqual(next.combatants.a1.statuses.Renew?.magnitude, 10);
+});
+
+test('passives: Restorative Toxin scales with the Poison, so Blight 20 on both foes pays four times over', () => {
+  const state = withPassive(natureFixture(361), 'a1', 'restorativeToxin');
+  const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'blight' } as Action], config);
+
+  const renews = events.filter((e) => e.type === 'StatusApplied' && (e as any).statusId === 'Renew') as any[];
+  assert.strictEqual(renews.length, 2, 'one firing per Poison application');
+  assert.deepStrictEqual(renews.map((r) => r.magnitude), [40, 80], 'Renew 40 twice, stacking additively');
+});
+
+test('passives: Restorative Toxin is source-role — a Poison the holder RECEIVES pays nothing', () => {
+  const held = withStatus(withPassive(natureFixture(362), 'a1', 'restorativeToxin'), 'a1', 'Poison', { magnitude: 10, duration: 3 });
+  assert.ok(!hasStatus(held.combatants.a1, 'Renew'), 'the fixture itself grants nothing');
+
+  const { state: next } = resolveRound(
+    held,
+    [{ kind: 'move', combatantId: 'b2', moveId: 'toxicSpores', declaredTarget: 'a1' } as Action],
+    config
+  );
+  assert.ok(!hasStatus(next.combatants.a1, 'Renew'), 'being poisoned is not applying Poison');
+});
+
+// Sylva benched behind a pair, so arriving is a real switch (a3 in, a1 out) rather than a lead.
+function benchedSylvaFixture(seed: number) {
+  return createFightState(
+    seed,
+    [
+      { combatantId: 'a1', heroId: 'cinderKnight', side: 'A' },
+      { combatantId: 'a2', heroId: 'mordax', side: 'A' },
+      { combatantId: 'a3', heroId: 'wildOracle', side: 'A' },
+    ],
+    [
+      { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+      { combatantId: 'b2', heroId: 'tidecaller', side: 'B' },
+    ]
+  );
+}
+
+const sylvaArrives: Action = { kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' };
+
+test("passives: Nature's Purification cleanses the PARTNER on arrival, and never the owner", () => {
+  const base = withPassive(benchedSylvaFixture(363), 'a3', 'naturesPurification');
+  const afflicted = withStatus(withStatus(base, 'a2', 'Burn', { magnitude: 10 }), 'a3', 'Burn', { magnitude: 10 });
+  const { state: next } = resolveRound(afflicted, [sylvaArrives], config);
+
+  assert.ok(!hasStatus(next.combatants.a2, 'Burn'), 'the partner is cleansed');
+  assert.ok(hasStatus(next.combatants.a3, 'Burn'), "the owner is not — 'ally' aims sideways, never at self");
+});
+
+test("passives: Nature's Purification spares a positive status — the partner keeps its Renew", () => {
+  const base = withPassive(benchedSylvaFixture(364), 'a3', 'naturesPurification');
+  const mixed = withStatus(withStatus(base, 'a2', 'Poison', { magnitude: 10, duration: 3 }), 'a2', 'Renew', { magnitude: 40 });
+  const { state: next } = resolveRound(mixed, [sylvaArrives], config);
+
+  assert.ok(!hasStatus(next.combatants.a2, 'Poison'));
+  assert.ok(hasStatus(next.combatants.a2, 'Renew'), 'Cleanse spares `positive`, so it never strips its own side up');
+});

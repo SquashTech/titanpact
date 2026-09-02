@@ -148,6 +148,37 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Conduct' },
     },
   },
+  restorativeToxin: {
+    id: 'restorativeToxin',
+    name: 'Restorative Toxin',
+    description: 'Whenever this hero applies Poison, it gains twice that amount as Renew.',
+    // Firestarter's source-role shape, but the payout is READ off the event rather than authored:
+    // matchTriggerAmount on StatusApplied's `magnitude`. Note the units differ either side of the
+    // 2x — Poison magnitude is a PERCENT of the victim's max HP, Renew magnitude is FLAT HP on
+    // Sylva. Poison also stacks, so every re-application pays again (docs/leveling-and-ranks.md).
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Poison' } },
+      effect: {
+        kind: 'applyStatus',
+        target: 'self',
+        statusId: 'Renew',
+        magnitude: { kind: 'matchTriggerAmount', field: 'magnitude', multiplier: 2 },
+      },
+    },
+  },
+  naturesPurification: {
+    id: 'naturesPurification',
+    name: "Nature's Purification",
+    description: 'When this hero enters the battlefield, its partner is Cleansed.',
+    // Imposing Presence's arrival shape aimed sideways. Cleanse spares `positive` statuses, so it
+    // never strips the partner's own Renew. Alone on the field it resolves to nobody and is silent.
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'cleanse', target: 'ally' },
+    },
+  },
   feedbackLoop: {
     id: 'feedbackLoop',
     name: 'Feedback Loop',

@@ -10,7 +10,7 @@ import type { CombatEvent } from '../events';
 import type { DamageModifier } from '../damage/damagePipeline';
 import { nextInt } from '../rng/seededRng';
 import { applyHpDelta } from './faintHandling';
-import { applyStatus } from './statusEngine';
+import { applyStatus, cleanseStatuses } from './statusEngine';
 import { setFieldEffect } from './fieldEffectEngine';
 
 /** A CombatEvent (or a synthetic pre-roll context) read generically by field name. */
@@ -85,8 +85,15 @@ function subjectOf(event: CombatEvent, role: 'target' | 'source'): string | unde
 
 function resolveAmount(amount: PassiveAmount, context: TriggerContext): number {
   if (amount.kind === 'flat') return amount.value;
-  const base = typeof context.amount === 'number' ? context.amount : 0;
+  const raw = context[amount.field ?? 'amount'];
+  const base = typeof raw === 'number' ? raw : 0;
   return Math.round(base * (amount.multiplier ?? 1));
+}
+
+/** An authored number passes through; a PassiveAmount is read off the triggering event. */
+function resolveMagnitude(magnitude: number | PassiveAmount | undefined, context: TriggerContext): number | undefined {
+  if (magnitude === undefined || typeof magnitude === 'number') return magnitude;
+  return resolveAmount(magnitude, context);
 }
 
 function resolveEffect(
@@ -130,6 +137,13 @@ function resolveTargetIds(
   switch (target) {
     case 'self':
       return [ownerId];
+    case 'ally': {
+      // The owner's ACTIVE partner. Alone on the field (a KO not yet replaced), this aims at nobody.
+      const side = state.combatants[ownerId]?.side;
+      if (!side) return [];
+      const partner = state.active[side].find((id): id is string => id !== null && id !== ownerId);
+      return partner ? [partner] : [];
+    }
     case 'triggerSubject':
       return subjectId ? [subjectId] : [];
     case 'triggerTarget':
@@ -183,8 +197,14 @@ function resolveEffectOn(
       const def = statusDefs[effect.statusId];
       if (!def) return { state, events: [] };
       // The passive's OWNER is the actor, so a source-role passive can see it.
-      return applyStatus(state, round, targetId, def, { magnitude: effect.magnitude, duration: effect.duration, sourceCombatantId: ownerId });
+      return applyStatus(state, round, targetId, def, {
+        magnitude: resolveMagnitude(effect.magnitude, context),
+        duration: effect.duration,
+        sourceCombatantId: ownerId,
+      });
     }
+    case 'cleanse':
+      return cleanseStatuses(state, round, targetId, statusDefs, effect.count);
     case 'statDelta': {
       const newValue = (target.statModifiers[effect.stat] ?? 0) + effect.amount;
       const nextState: CombatState = {

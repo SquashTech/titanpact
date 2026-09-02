@@ -1273,6 +1273,35 @@ Three pieces had to exist for one passive, and each is worth knowing separately:
 `StatChanged` carries no source, so it is target-role only: the subject is the hero whose
 stat moved, and `relativeTo` is what says whose hero that is.
 
+### A payout READ off the event, and a reaction aimed at the partner (2026-09-02, Sylva)
+
+Two additions, both from one hero's Evolution node.
+
+**`PassiveAmount` now names its field.** `matchTriggerAmount` gained an optional
+`field` (default `'amount'`, so Sanguine and the two Class passives are untouched), and
+`PassiveEffect { kind: 'applyStatus' }`'s `magnitude` accepts a `PassiveAmount` as well
+as a flat number. Content: **Restorative Toxin** (Wildbloom) — *whenever this hero
+applies Poison, it gains twice that amount as Renew* — which reads `StatusApplied`'s
+`magnitude` at `multiplier: 2`. Before this, a passive could only hand out a magnitude
+the author had typed, so "twice what you just did" had no vocabulary; the `heal`
+primitive had it and `applyStatus` did not, for no reason beyond nobody having needed it.
+
+> **Units differ across the 2x, deliberately noted rather than fixed.** Poison's
+> magnitude is a *percent of the victim's max HP*; Renew's is *flat HP on the caster*.
+> So Toxic Spores (Poison 10) pays Renew 20 — a quarter of Sylva's 80 HP — and Blight,
+> which is Poison 20 on *both* foes, fires twice for Renew 40 each, stacking to **80**
+> off one cast. Poison stacks too, so a re-application pays again. This is inside the
+> "Renew payoffs are intended" call, but 80 is the number to watch first.
+
+**`PassiveEffectTarget` gained `'ally'`** — the owner's *active partner*, never the owner,
+resolving to nobody when the owner is alone on the field — and **`PassiveEffect` gained
+`{ kind: 'cleanse' }`**, the same `cleanseStatuses` a move's `cleanses` flag runs, with an
+optional `count`. Content: **Nature's Purification** (Lightsage) — *when this hero enters
+the battlefield, its partner is Cleansed*. Every passive target until now pointed at the
+owner, at the event, or at the enemy side; a doubles game with a bench needed one that
+points at the hero standing next to you. Cleanse spares `positive` statuses, so it never
+strips the partner's own Renew. `test/passives.test.ts` pins all five.
+
 ### The floor: no effective stat below 1 (LOCKED — 2026-08-30 designer call)
 
 Raised by the Mind slate, but **not caused by it**. `getEffectiveStat` (state.ts) had

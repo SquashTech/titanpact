@@ -142,25 +142,30 @@ export interface PassiveTriggerCondition {
   eventFieldPositive?: string;
 }
 
-/** matchTriggerAmount = the triggering event's amount (Sanguine). */
-export type PassiveAmount = { kind: 'flat'; value: number } | { kind: 'matchTriggerAmount'; multiplier?: number };
+/** matchTriggerAmount reads the triggering event's `field` (default 'amount'): Sanguine takes a tick's amount, Restorative Toxin a StatusApplied's magnitude. */
+export type PassiveAmount = { kind: 'flat'; value: number } | { kind: 'matchTriggerAmount'; field?: string; multiplier?: number };
 
 /**
  * 'triggerSubject' follows the condition's `subjectRole`; 'triggerTarget' is the event's
  * target-role combatant whatever the condition read — the defender of a DamageDealt — which
  * is the only way a source-role passive (Static Tide) reaches the hero it just hit.
+ * 'ally' is the owner's ACTIVE partner and never the owner (Nature's Purification); it
+ * resolves to nothing when the owner is alone on the field.
  * 'activeEnemies' = every living ACTIVE enemy of the owner, resolved once per member, and
  * 'randomEnemy' is one of them drawn at resolution — the only passive target that costs RNG,
  * and it draws nothing unless a passive actually asks for it. Never the bench: an entry
  * passive must not tax uncommitted heroes.
  */
-export type PassiveEffectTarget = 'self' | 'triggerSubject' | 'triggerTarget' | 'activeEnemies' | 'randomEnemy';
+export type PassiveEffectTarget = 'self' | 'ally' | 'triggerSubject' | 'triggerTarget' | 'activeEnemies' | 'randomEnemy';
 
 /** The reactive effect primitives. */
 export type PassiveEffect =
   | { kind: 'heal'; target: PassiveEffectTarget; amount: PassiveAmount }
-  | { kind: 'applyStatus'; target: PassiveEffectTarget; statusId: StatusId; magnitude?: number; duration?: number }
+  /** `magnitude` may read off the triggering event rather than being authored flat. */
+  | { kind: 'applyStatus'; target: PassiveEffectTarget; statusId: StatusId; magnitude?: number | PassiveAmount; duration?: number }
   | { kind: 'statDelta'; target: PassiveEffectTarget; stat: StatKey; amount: number }
+  /** Strips non-`positive` statuses, same rules as a move's `cleanses`; `count` omitted = all. */
+  | { kind: 'cleanse'; target: PassiveEffectTarget; count?: number }
   /** Global — no `target`. */
   | { kind: 'setFieldEffect'; fieldEffectId: FieldEffectId };
 

@@ -269,7 +269,7 @@ identity.
 > ### The Evolution framework (2026-09-01 designer call)
 >
 > The shape every hero's node is being re-authored to. Crimson, Fang, Riptide, Rime,
-> Crag and Tempest (`src/data/progression.ts`) are the worked examples; the other 30
+> Crag, Tempest and Sylva (`src/data/progression.ts`) are the worked examples; the other 29
 > are still on the old two-stats shape and are the backlog.
 >
 > Tempest was authored from nothing (2026-09-02) rather than re-authored: it was the
