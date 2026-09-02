@@ -676,7 +676,7 @@ export const progressionTable: ProgressionTable = {
             id: 'wildOracle-utility',
             heroId: 'wildOracle',
             kind: 'utility',
-            name: 'Wildbloom',
+            name: 'Apothecary',
             description: 'What she puts in them comes back through her.',
             statGrants: { intelligence: 10, wisdom: 10 },
             unlocksMoveIds: [],

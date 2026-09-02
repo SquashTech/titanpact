@@ -1280,7 +1280,7 @@ Two additions, both from one hero's Evolution node.
 **`PassiveAmount` now names its field.** `matchTriggerAmount` gained an optional
 `field` (default `'amount'`, so Sanguine and the two Class passives are untouched), and
 `PassiveEffect { kind: 'applyStatus' }`'s `magnitude` accepts a `PassiveAmount` as well
-as a flat number. Content: **Restorative Toxin** (Wildbloom) — *whenever this hero
+as a flat number. Content: **Restorative Toxin** (Apothecary) — *whenever this hero
 applies Poison, it gains twice that amount as Renew* — which reads `StatusApplied`'s
 `magnitude` at `multiplier: 2`. Before this, a passive could only hand out a magnitude
 the author had typed, so "twice what you just did" had no vocabulary; the `heal`

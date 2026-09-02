@@ -497,7 +497,7 @@ test('passives: Feedback Loop reads the STATUS — a Bleed the holder inflicts p
   assert.strictEqual(next.combatants.a1.statModifiers.intelligence ?? 0, 0);
 });
 
-// --- Restorative Toxin and Nature's Purification (Sylva / Wildbloom, Lightsage) ---
+// --- Restorative Toxin and Nature's Purification (Sylva / Apothecary, Lightsage) ---
 
 function natureFixture(seed: number) {
   return createFightState(
