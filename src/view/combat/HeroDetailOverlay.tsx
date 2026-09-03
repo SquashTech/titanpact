@@ -17,7 +17,7 @@ import { TypeMatchups } from '../shared/TypeMatchups';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { StatusGlyph, statusColor, statusTint, PoisonPips } from '../shared/statusIcons';
 import { passives } from '../../data/passives';
-import { passiveEmoji, passiveColor, passiveTint, PassiveInfoPanel } from '../shared/passiveIcons';
+import { PassiveGlyph, passiveColor, passiveTint, PassiveInfoPanel } from '../shared/passiveIcons';
 
 interface Props {
   hero: HeroDefinition;
@@ -180,9 +180,11 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
               const def = passives[instance.passiveId];
               if (!def) return null;
               return (
-                <span
+                <button
                   key={instance.passiveId}
-                  className="detail-status-chip"
+                  type="button"
+                  className="detail-status-chip detail-passive-chip"
+                  aria-label={`${def.name} — inspect`}
                   style={{
                     color: passiveColor(instance.passiveId),
                     background: passiveTint(instance.passiveId, 0.12),
@@ -193,10 +195,10 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
                     openPopup({ kind: 'passive', id: instance.passiveId });
                   }}
                 >
-                  {passiveEmoji[instance.passiveId] && <span className="status-emoji">{passiveEmoji[instance.passiveId]}</span>}
+                  <PassiveGlyph passiveId={instance.passiveId} />
                   {def.name}
-                  {instance.stacks > 1 && ` ×${instance.stacks}`}
-                </span>
+                  {instance.stacks > 1 && <span className="detail-passive-stacks">×{instance.stacks}</span>}
+                </button>
               );
             })}
           </div>

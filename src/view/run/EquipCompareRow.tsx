@@ -13,7 +13,7 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { useLongPress } from '../shared/MoveTile';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { EQUIP_SLOT_LABELS, EquipmentIcon, RARITY_COLOR_VARS } from '../shared/EquipmentBox';
-import { passiveEmoji } from '../shared/passiveIcons';
+import { PassiveGlyph } from '../shared/passiveIcons';
 
 /**
  * One hero as a row of the forced-equip comparison table: who, what they hold in the slot, and
@@ -55,7 +55,7 @@ function ChangeChip({ change }: ChangeChipProps) {
         <span className="equip-chip-mark" aria-hidden="true">
           {change.delta > 0 ? '+' : '−'}
         </span>
-        {passiveEmoji[change.key] ? <span aria-hidden="true">{passiveEmoji[change.key]}</span> : null}
+        {def ? <PassiveGlyph passiveId={change.key} className="equip-chip-glyph" /> : null}
         <span className="equip-chip-label">{name}</span>
       </span>
     );

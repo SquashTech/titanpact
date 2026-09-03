@@ -16,7 +16,6 @@ import type { HeroDefinition, MoveDefinition } from '../../engine/content';
 import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
-import { passiveEmoji } from '../shared/passiveIcons';
 import { getTypeColor } from './typeColors';
 import { hasDramaticEntrance } from '../shared/entrances';
 
@@ -227,7 +226,7 @@ export function buildBeats(
         i++;
         const def = passives[e.passiveId];
         const ownerName = name(e.combatantId);
-        const label = `${passiveEmoji[e.passiveId] ? `${passiveEmoji[e.passiveId]} ` : ''}${def?.name ?? e.passiveId}`;
+        const label = def?.name ?? e.passiveId;
         const effectKind = def?.reactive?.effect.kind;
 
         if (effectKind === 'heal' && events[i]?.type === 'HpChanged') {
@@ -237,7 +236,7 @@ export function buildBeats(
           push(
             applied,
             `${label} heals ${ownerName} for ${amount} HP!`,
-            [{ combatantId: e.combatantId, text: `${passiveEmoji[e.passiveId] ?? ''} +${amount}`, className: 'popup-passive-heal' }],
+            [{ combatantId: e.combatantId, text: `+${amount}`, className: 'popup-passive-heal' }],
             { bannerLead: `${label} · ${ownerName}`, bannerFocus: `+${amount} HP`, bannerFocusKind: 'heal' }
           );
         } else if (effectKind === 'applyStatus' && events[i]?.type === 'StatusApplied') {

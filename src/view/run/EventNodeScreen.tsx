@@ -26,7 +26,7 @@ import {
   NODE_TINT_TEAL,
   NODE_TINT_VITAL,
 } from '../shared/NodeStage';
-import { passiveColor, passiveEmoji } from '../shared/passiveIcons';
+import { passiveColor, PassiveGlyph } from '../shared/passiveIcons';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
@@ -211,7 +211,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onC
               style={{ '--passive-color': passiveColor(grantedPassive.id) } as CSSProperties}
             >
               <span className="event-passive-name">
-                {passiveEmoji[grantedPassive.id] && <span aria-hidden="true">{passiveEmoji[grantedPassive.id]}</span>}
+                <PassiveGlyph passiveId={grantedPassive.id} />
                 {grantedPassive.name}
               </span>
               <p className="event-passive-desc">{grantedPassive.description}</p>

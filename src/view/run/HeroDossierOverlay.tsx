@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
 import { progressionTable } from '../../data/progression';
@@ -8,7 +8,7 @@ import { MASTERY_LEVEL, MASTERY_STAT_AMOUNT, MOVE_TIER_LEVEL } from '../../run/p
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { MoveTile } from '../shared/MoveTile';
-import { PassiveInfoPanel, passiveEmoji } from '../shared/passiveIcons';
+import { PassiveInfoPanel, PassiveGlyph, passiveColor, passiveTint } from '../shared/passiveIcons';
 import { SectionGlyph } from '../shared/sectionIcons';
 import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -114,9 +114,10 @@ function EvolutionPathCard({
                 key={id}
                 type="button"
                 className="evo-passive-chip"
+                style={{ '--passive-color': passiveColor(id), '--passive-tint': passiveTint(id, 0.14) } as CSSProperties}
                 onClick={() => onInspect({ kind: 'passive', id })}
               >
-                {passiveEmoji[id] ? `${passiveEmoji[id]} ` : ''}
+                <PassiveGlyph passiveId={id} />
                 {passives[id].name}
               </button>
             ))}

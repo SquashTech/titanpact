@@ -6613,23 +6613,34 @@ textarea,
 }
 
 /* A .detail-modifier-chip that is a button, because a passive has a
-   description worth opening. */
+   description worth opening. Wears the passive's own identity colour
+   (--passive-color / --passive-tint, passiveIcons.tsx) rather than the
+   generic gold, so the chip on a path card, the chip in a fight, and the
+   panel it opens are all the same colour — that colour is the only thing
+   telling a player these three surfaces are showing one passive. */
 .evo-passive-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font: inherit;
   font-size: 11px;
   font-weight: 700;
   padding: 3px 8px;
   border-radius: var(--radius-pill);
-  background: var(--well);
-  border: 1px solid var(--border);
-  color: var(--text);
+  background: var(--passive-tint, var(--well));
+  border: 1px solid var(--passive-color, var(--border));
+  color: var(--passive-color, var(--text));
   cursor: pointer;
-  transition: color var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out);
+  transition: filter var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
 .evo-passive-chip:hover {
-  color: var(--accent);
-  border-color: var(--accent);
+  filter: brightness(1.25);
+  box-shadow: 0 0 8px -2px currentColor;
+}
+
+.evo-passive-chip:active {
+  filter: brightness(1.1);
 }
 
 .roster-mgmt-card {
@@ -7097,6 +7108,21 @@ textarea,
   gap: 6px;
 }
 
+/* A passive glyph is a .status-glyph, which is display:block at a fixed 16px
+   — right for a badge over a portrait, wrong inside an 11px chip, where it
+   would both break the line and tower over the text. Every chip that carries
+   one pulls it back to .stat-glyph's inline contract, sized off the chip's
+   own font rather than a constant so the three chip scales stay in step. */
+.detail-modifier-chip .status-glyph,
+.detail-passive-chip .status-glyph,
+.evo-passive-chip .status-glyph,
+.evolution-path-passive .status-glyph {
+  display: inline-block;
+  width: 1.2em;
+  height: 1.2em;
+  vertical-align: -0.24em;
+}
+
 .detail-modifier-chip {
   font-size: 11px;
   font-weight: 700;
@@ -7122,6 +7148,40 @@ textarea,
   background: var(--well);
   border: 1px solid var(--hp-mid);
   color: var(--hp-mid);
+}
+
+/* The same chip as a BUTTON: a passive carries a description worth opening,
+   and a status on this sheet does not. It was a bare <span> with an onClick
+   — indistinguishable from the inert status chips beside it — so everything
+   here exists to say "press me" without breaking the chip family: a font
+   reset (a <button> does not inherit one), the pointer, and a lift/press
+   pair. Colour, background and border still arrive inline per
+   passiveIcons.tsx passiveColor/passiveTint, so the hover state has to be
+   built from the box rather than from a colour it cannot know. */
+.detail-passive-chip {
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out),
+    filter var(--dur-fast) var(--ease-out);
+}
+
+.detail-passive-chip:hover {
+  filter: brightness(1.25);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 0 8px -2px currentColor;
+}
+
+.detail-passive-chip:active {
+  transform: scale(0.95);
+}
+
+/* Stacks are a count, not part of the name — dimmed and tabular so two
+   stacked passives line up rather than reading as one long label. */
+.detail-passive-stacks {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
 }
 
 .detail-empty {
@@ -10754,10 +10814,21 @@ textarea,
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
+/* inline-flex so the passive glyph sits on the name's baseline row rather
+   than pushing the text down a line at the start of a long name. */
 .equip-spotlight-passive-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11px;
   font-weight: 700;
   color: var(--text);
+}
+
+.equip-spotlight-passive-name .status-glyph {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
 }
 
 /* RosterReplaceScreen: renders as a full-viewport modal (usable both as a
@@ -14449,6 +14520,85 @@ textarea,
   color: var(--text-dim);
 }
 
+/* --- Passive info panel (passiveIcons.tsx PassiveInfoPanel) -------------
+
+   The passive's readout, opened from any passive chip. It shares
+   .move-info-panel's box so the popup keeps one chassis whatever kind of
+   thing is being examined, and borrows StatusDetailOverlay's head shape —
+   medallion, coloured name, kind label — so a Passive and a Status read as
+   two members of one family rather than two different apps. It deliberately
+   does NOT inherit that box's min-height floor as a ceiling: a passive
+   carries a full sentence of description plus grant chips, so it grows.
+   border-color arrives inline (passiveColor), replacing the panel's flat
+   gold with the passive's own identity colour — the same colour the chip
+   that opened it was wearing, which is what ties the two together. */
+.passive-info-panel {
+  justify-content: flex-start;
+  gap: 7px;
+  margin-bottom: 0;
+}
+
+.passive-info-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+/* Same tinted disc as .status-detail-icon, one step down: this one sits in a
+   popup panel rather than owning its own overlay. */
+.passive-info-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.passive-info-icon .status-glyph {
+  width: 22px;
+  height: 22px;
+}
+
+.passive-info-titles {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* color set inline (passiveColor) — no default, every caller supplies one. */
+.passive-info-name {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.passive-info-kind {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.passive-info-desc {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+/* The derived line (a damage modifier's %, a conditional grant's condition) —
+   italic and dim, the same "and here is the fine print" role
+   .status-detail-meta plays under a status. */
+.passive-info-meta {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
 /* Name/type/category and the Power/heal/mana-cost numbers share one row
    (rather than stacking as two) so the panel stays short enough that a full
    6-hero roster never pushes LevelUpScreen into scrolling. Power/heal and
@@ -14626,11 +14776,17 @@ textarea,
 }
 
 /* A granted Passive is the loudest thing on a mono path, so its chip is the
-   only one in the row that carries the gold — it has to win the glance
-   against a graft's type badge sitting on the card beside it. */
+   only one in the row that is filled — it has to win the glance against a
+   graft's type badge sitting on the card beside it. The gold it used to
+   carry is now the passive's own identity colour (--passive-color), which
+   is what the same passive wears on every other screen. */
 .evolution-path-passive {
-  border-color: var(--accent);
-  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--passive-tint, transparent);
+  border-color: var(--passive-color, var(--accent));
+  color: var(--passive-color, var(--accent));
 }
 
 /* A stat this path SPENDS rather than grants (Warhowl's -30 Attack). Reads as
@@ -16329,6 +16485,13 @@ textarea,
   font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--passive-color, var(--accent));
+}
+
+/* The one reveal-scale use of the glyph — this is a node's whole payload, so
+   it is sized to the 15px name beside it rather than to a chip. */
+.event-passive-name .status-glyph {
+  width: 19px;
+  height: 19px;
 }
 
 .event-passive-desc {

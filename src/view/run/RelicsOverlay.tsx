@@ -1,7 +1,6 @@
 import { relics } from '../../data/relics';
 import { passives } from '../../data/passives';
 import { RelicIcon } from '../shared/EquipmentBox';
-import { passiveEmoji } from '../shared/passiveIcons';
 import { stackedGrantSummary, stackedRelicName } from '../shared/relicStacks';
 
 interface Props {
@@ -50,7 +49,7 @@ export function RelicsOverlay({ ownedRelicIds, onClose }: Props) {
                     <div className="relic-card-desc">
                       Grants:{' '}
                       {relic.grantsPassiveIds
-                        .map((id) => `${passiveEmoji[id] ? `${passiveEmoji[id]} ` : ''}${passives[id]?.name ?? id}`)
+                        .map((id) => passives[id]?.name ?? id)
                         .join(', ')}
                     </div>
                   )}

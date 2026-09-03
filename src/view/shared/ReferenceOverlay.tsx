@@ -5,7 +5,7 @@ import { passives } from '../../data/passives';
 import type { PassiveDefinition, StatusDefinition } from '../../engine/content';
 import { TypeBadge } from './TypeBadge';
 import { StatusGlyph, statusColor, statusTint, statusClearText, pipelineLabel } from './statusIcons';
-import { passiveEmoji, passiveColor, passiveTint, passiveEffectSummary } from './passiveIcons';
+import { PassiveGlyph, passiveColor, passiveTint, passiveEffectSummary, passiveKindLabel, PassiveStatChips } from './passiveIcons';
 
 interface Props {
   onClose: () => void;
@@ -93,24 +93,24 @@ export function ReferenceOverlay({ onClose, initialTab = 'types' }: Props) {
 }
 
 function PassiveReferenceRow({ def }: { def: PassiveDefinition }) {
-  const emoji = passiveEmoji[def.id];
   const color = passiveColor(def.id);
   const summary = passiveEffectSummary(def);
 
   return (
     <div className="status-ref-row" style={{ borderLeftColor: color }}>
-      {emoji && (
-        <span className="status-ref-icon" style={{ background: passiveTint(def.id, 0.16) }}>
-          {emoji}
-        </span>
-      )}
+      {/* `color` too: the glyph is a currentColor path. */}
+      <span className="status-ref-icon" style={{ color, background: passiveTint(def.id, 0.16) }}>
+        <PassiveGlyph passiveId={def.id} />
+      </span>
       <div className="status-ref-body">
         <div className="status-ref-head">
           <span className="status-ref-name" style={{ color }}>
             {def.name}
           </span>
+          <span className="status-ref-pipeline">{passiveKindLabel(def)}</span>
         </div>
         <div className="status-ref-desc">{def.description}</div>
+        <PassiveStatChips def={def} />
         {summary && <div className="status-ref-meta">{summary}</div>}
       </div>
     </div>

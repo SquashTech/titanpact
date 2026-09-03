@@ -14,7 +14,7 @@ function forceStatusType(statusId: string): string | undefined {
 }
 
 // The nine authored statuses: 24x24, `currentColor` only, nothing finer than ~2 units.
-const STATUS_PATHS: Record<string, ReactNode> = {
+export const STATUS_PATHS: Record<string, ReactNode> = {
   // Shared with the Fire element on purpose; the Force chip's arrow is what says "buff".
   Burn: FLAME,
   // Gash plus two drops — either alone is another glyph (claw, Mana droplet).

@@ -6,7 +6,7 @@ import { IconsetGlyph } from './RunGlyph';
 import { EquipmentFormGlyph } from './equipmentIcons';
 import { useLongPress } from './MoveTile';
 import { passives } from '../../data/passives';
-import { passiveEmoji } from './passiveIcons';
+import { PassiveGlyph } from './passiveIcons';
 import { statuses } from '../../data/statuses';
 
 export const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
@@ -141,7 +141,7 @@ export function EquipmentEffectList({ item }: { item: EquipmentDefinition | null
         return (
           <div key={passiveId} className="equip-spotlight-passive">
             <span className="equip-spotlight-passive-name">
-              {passiveEmoji[passiveId] ? `${passiveEmoji[passiveId]} ` : ''}
+              <PassiveGlyph passiveId={passiveId} />{" "}
               {def.name}
             </span>
             <span className="equip-spotlight-passive-desc">{def.description}</span>
@@ -198,7 +198,7 @@ export function EquipmentInfoPanel({ item, placeholder = 'Tap an equipped item t
                 if (!def) return null;
                 return (
                   <span key={passiveId} className="detail-modifier-chip">
-                    {passiveEmoji[passiveId] ? `${passiveEmoji[passiveId]} ` : ''}
+                    <PassiveGlyph passiveId={passiveId} />{" "}
                     Grants: {def.name}
                   </span>
                 );

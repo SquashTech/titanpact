@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import type { EvolutionNode } from '../../run/progression';
 import { passives } from '../../data/passives';
+import { PassiveGlyph, passiveColor, passiveTint } from '../shared/passiveIcons';
 import { moves } from '../../data/moves';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { TypeBadge } from '../shared/TypeBadge';
@@ -77,8 +78,12 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
                       </span>
                     )}
                     {(path.grantsPassiveIds ?? []).map((id) => passives[id] && (
-                      <span key={id} className="evolution-path-grant-chip evolution-path-passive">
-                        ✦ {passives[id].name}
+                      <span
+                        key={id}
+                        className="evolution-path-grant-chip evolution-path-passive"
+                        style={{ '--passive-color': passiveColor(id), '--passive-tint': passiveTint(id, 0.16) } as CSSProperties}
+                      >
+                        <PassiveGlyph passiveId={id} /> {passives[id].name}
                       </span>
                     ))}
                   </div>
