@@ -76,6 +76,11 @@ export function playBeatSfx(beat: Beat): void {
     playSfx('entrance.dread');
     return;
   }
+  // The opening beat carries no events at all, so PRIORITY has nothing to read off it.
+  if (beat.engagement) {
+    playSfx('battle.join');
+    return;
+  }
 
   const lead = leadEvent(beat);
   if (!lead) return;

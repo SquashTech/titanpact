@@ -40,6 +40,7 @@ export type SfxId =
   | 'mana'
   | 'switchIn'
   | 'field'
+  | 'battle.join'
   | 'entrance.dread';
 
 export const sounds: Record<SfxId, SoundSpec> = {
@@ -412,6 +413,23 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'sawtooth', freq: 110, freqEnd: 232, detune: 22, gain: 0.3, attack: 0.12, decay: 0.8, filter: { type: 'lowpass', freq: 300, freqEnd: 2600, q: 2.4 } },
       { wave: 'noise', gain: 0.24, attack: 0.18, decay: 0.62, filter: { type: 'bandpass', freq: 600, freqEnd: 3000, q: 0.8 } },
       { wave: 'sine', freq: 660, freqEnd: 990, gain: 0.12, attack: 0.2, decay: 0.5, delay: 0.16 },
+    ],
+  },
+
+  /**
+   * The beat a fight opens on (view/combat/openingBeats.ts): a struck low drum, then a swell that rises where `entrance.dread`'s sweeps fall.
+   * Once per battle, so it may have presence — but it is deliberately capped under dread. The engagement is the frame; a named enemy
+   * arriving inside it is the event, and the frame must never outsize the event.
+   */
+  'battle.join': {
+    gain: 0.44,
+    // No jitter: a scripted moment, same reasoning as entrance.dread.
+    jitter: 0,
+    voices: [
+      { wave: 'noise', gain: 0.42, attack: 0.002, decay: 0.3, filter: { type: 'lowpass', freq: 1400, freqEnd: 160, q: 1 } },
+      { wave: 'sine', freq: 82, freqEnd: 55, gain: 0.5, attack: 0.004, hold: 0.06, decay: 0.5 },
+      { wave: 'triangle', freq: 164, freqEnd: 146, detune: 14, gain: 0.2, attack: 0.01, hold: 0.08, decay: 0.55 },
+      { wave: 'noise', gain: 0.16, attack: 0.2, decay: 0.34, delay: 0.05, filter: { type: 'bandpass', freq: 500, freqEnd: 3000, q: 0.9 } },
     ],
   },
 

@@ -55,6 +55,7 @@ const NOTES: Partial<Record<SfxId, string>> = {
   mana: 'mana regen, Rest',
   switchIn: 'a hero arriving',
   field: 'a Field Effect taking the battlefield',
+  'battle.join': 'the beat a fight opens on',
 };
 
 // Peak-per-column waveform on a SQRT amplitude scale: linear buries the decay tail under

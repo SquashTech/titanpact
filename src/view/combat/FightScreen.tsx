@@ -49,6 +49,7 @@ import { MoveDetailOverlay, formatMult, multClass } from './MoveDetailOverlay';
 import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
+import { openingBeat } from './openingBeats';
 import { playBeatSfx } from '../../audio/beatSfx';
 import { setMusicRate } from '../../audio/music';
 import { getTypeColorRgb } from './typeColors';
@@ -352,6 +353,10 @@ const config = { typeChart, heroes: allCombatants, moves, statuses, passives, fi
 const AUTO_ADVANCE_HOLD_MS = 350;
 const AUTO_ADVANCE_STEP_MS = 450;
 
+// The intro advances itself, a beat slower than a round's auto-play: its beats are read, not
+// watched, and the whole thing is over in a second when no entry passive fires.
+const INTRO_BEAT_MS = 1000;
+
 // EXPERIMENTAL: music rate once a named enemy takes the field (also drops pitch — no time-stretch in Web Audio). 1 disables it.
 const DREAD_MUSIC_RATE = 0.8;
 
@@ -528,9 +533,17 @@ export function FightScreen({
   const teamPassiveGrants = relicTeamPassiveGrants(playerRelicIds, relics);
   const teamStatusGrants = relicTeamStatusGrants(playerRelicIds, relics);
 
-  /** The board a fight opens on, plus the starting heroes' SwitchedIn passives and their events for the opening log. */
-  function openBattle(seed: number): { state: CombatState; events: CombatEvent[] } {
-    return resolveBattleStartEntries(buildInitialState(seed), 1, allCombatants, statuses, passives, fieldEffects);
+  /**
+   * The two boards the intro plays between. `start` is what the player sees at first render —
+   * both leads on the field, their entry passives NOT yet applied — `events` is what those
+   * passives then did, and `final` is the board round 1 is declared on. Split because folding
+   * them together is what made an entry passive invisible: the fight would open on stats
+   * already changed, with nothing on screen having named the passive that changed them.
+   */
+  function openBattle(seed: number): { start: CombatState; events: CombatEvent[]; final: CombatState } {
+    const start = buildInitialState(seed);
+    const resolved = resolveBattleStartEntries(start, 1, allCombatants, statuses, passives, fieldEffects);
+    return { start, events: resolved.events, final: resolved.state };
   }
 
   function buildInitialState(seed: number): CombatState {
@@ -547,10 +560,9 @@ export function FightScreen({
   }
 
   const [opening] = useState(() => openBattle(Math.floor(Math.random() * 2 ** 31)));
-  const [combat, setCombat] = useState<CombatState>(opening.state);
-  const [log, setLog] = useState<LogLine[]>(() =>
-    formatEvents(opening.events, allCombatants, opening.state.combatants, moves).map((l, i) => ({ ...l, key: `open-${i}-${l.key}` }))
-  );
+  const [combat, setCombat] = useState<CombatState>(opening.start);
+  /** Empty at open: the opening events reach the log through the intro's beats as they reveal, like any round's. */
+  const [log, setLog] = useState<LogLine[]>([]);
   const [logOpen, setLogOpen] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
@@ -569,7 +581,11 @@ export function FightScreen({
   // Tap-advanced round playback: `resolving` gates input while the already-decided event stream
   // is revealed one beat at a time. The queue, display state and authoritative end state live
   // in refs — only ever touched inside handleAdvance, never rendered.
-  const [resolving, setResolving] = useState(false);
+  // Starts true: a fight opens mid-playback (the intro), and the mount effect below fills the
+  // queue. Initialising it false would paint one frame of a live action console first.
+  const [resolving, setResolving] = useState(true);
+  /** The intro specifically — a tap skips what is left of it, where a tap during a round advances one beat. */
+  const [introPlaying, setIntroPlaying] = useState(true);
   const [beat, setBeat] = useState<Beat | null>(null);
   /** Only a React key: consecutive beats can carry identical text, and the headline must remount to replay its arrival. */
   const [beatSeq, setBeatSeq] = useState(0);
@@ -592,6 +608,19 @@ export function FightScreen({
       // The act's track keeps playing past this screen, so the dread rate is restored here or never.
       setMusicRate(1);
     };
+  }, []);
+
+  // The fight's intro, played through the same beat player a round uses: the engagement beat,
+  // then whatever the leads' entry passives did. It advances itself, so a fight with no entry
+  // passive costs one beat and zero inputs; a tap skips the rest (skipIntro).
+  useEffect(() => {
+    startBeatPlayback(opening.start, opening.events, opening.final, [
+      openingBeat(opening.start, allCombatants, AI_SIDE, location),
+    ]);
+    autoPlayInterval.current = window.setInterval(() => {
+      if (!handleAdvance()) stopAutoAdvance();
+    }, INTRO_BEAT_MS);
+    return stopAutoAdvance;
   }, []);
 
   /** The one StatContext every number on this screen reads through, so cards, dossier and forecast agree with resolveRound. */
@@ -829,8 +858,9 @@ export function FightScreen({
 
   // Loads the resolved round's beats and reveals the first; `finalState` is applied verbatim once
   // the queue empties, so playback can never drift from the authoritative result.
-  function startBeatPlayback(startState: CombatState, events: CombatEvent[], nextFinalState: CombatState) {
-    const beats = buildBeats(events, allCombatants, moves, startState.combatants, PLAYER_SIDE);
+  // `prelude` is for beats that are not grouped from events — today only the intro's engagement beat.
+  function startBeatPlayback(startState: CombatState, events: CombatEvent[], nextFinalState: CombatState, prelude: Beat[] = []) {
+    const beats = [...prelude, ...buildBeats(events, allCombatants, moves, startState.combatants, PLAYER_SIDE)];
     displayState.current = startState;
     finalState.current = nextFinalState;
     beatQueue.current = beats;
@@ -847,6 +877,7 @@ export function FightScreen({
       setPopups({});
       setBeat(null);
       setResolving(false);
+      setIntroPlaying(false);
       setPending({});
       setSelecting(null);
       setMovePopup(null);
@@ -868,6 +899,20 @@ export function FightScreen({
     setBeatSeq((n) => n + 1);
     setPopups(Object.fromEntries(revealed.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className }])));
     return true;
+  }
+
+  /**
+   * A tap during the intro drops the rest of it. Only the log needs catching up: an empty queue
+   * finalizes onto `finalState`, so a player who taps through lands on the same board as one who
+   * watched — the skipped beats' events are already in it.
+   */
+  function skipIntro() {
+    stopAutoAdvance();
+    const remaining = beatQueue.current;
+    beatQueue.current = [];
+    const events = remaining.flatMap((b) => b.events);
+    if (events.length > 0) appendLog(formatEvents(events, allCombatants, finalState.current!.combatants, moves));
+    handleAdvance();
   }
 
   function stopAutoAdvance() {
@@ -941,17 +986,22 @@ export function FightScreen({
 
   return (
     <>
-      {/* Full-screen tap-to-advance catcher; sits below the log overlay's z-index. */}
-      {resolving && (
-        <div
-          className="advance-overlay"
-          onClick={handleAdvanceClick}
-          onPointerDown={handleAdvancePointerDown}
-          onPointerUp={stopAutoAdvance}
-          onPointerLeave={stopAutoAdvance}
-          onPointerCancel={stopAutoAdvance}
-        />
-      )}
+      {/* Full-screen tap-to-advance catcher; sits below the log overlay's z-index. The intro takes
+          a plain tap-to-skip instead: it is already advancing itself, so hold-to-auto-play has
+          nothing to add, and stepping a beat at a time is not what an impatient tap is asking for. */}
+      {resolving &&
+        (introPlaying ? (
+          <div className="advance-overlay" onClick={skipIntro} />
+        ) : (
+          <div
+            className="advance-overlay"
+            onClick={handleAdvanceClick}
+            onPointerDown={handleAdvancePointerDown}
+            onPointerUp={stopAutoAdvance}
+            onPointerLeave={stopAutoAdvance}
+            onPointerCancel={stopAutoAdvance}
+          />
+        ))}
 
       <div
         className={`battlefield${combat.activeFieldEffect ? ' field-effect-active' : ''}${
@@ -1059,7 +1109,7 @@ export function FightScreen({
                 <span className={`combat-banner-meta${beat.bannerMetaClass ? ` ${beat.bannerMetaClass}` : ''}`}>{beat.bannerMeta}</span>
               )}
             </div>
-            <span className="combat-banner-hint">tap ▸ or hold to auto-play ⏵⏵</span>
+            <span className="combat-banner-hint">{introPlaying ? 'tap to skip ▸' : 'tap ▸ or hold to auto-play ⏵⏵'}</span>
           </div>
         )}
         {/* Forced replacement: select-then-Confirm, since it cannot be undone once committed. */}

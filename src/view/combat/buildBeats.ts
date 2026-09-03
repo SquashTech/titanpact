@@ -12,7 +12,8 @@ import type {
   StatusAppliedEvent,
 } from '../../engine/events';
 import type { CombatState, Side } from '../../engine/state';
-import type { HeroDefinition, MoveDefinition } from '../../engine/content';
+import type { HeroDefinition, MoveDefinition, StatKey } from '../../engine/content';
+import { STAT_LABELS } from '../shared/StatBars';
 import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
@@ -77,6 +78,8 @@ export interface BeatFlavor {
   bannerMetaClass?: string;
   /** A dramatic entrance (entrances.ts): FightScreen veils and shakes, beatSfx plays the horn, music drops rate. One flag so a future entrance opts in by id alone. */
   dramaticEntrance?: true;
+  /** The fight's opening beat (openingBeats.ts). Carries no events, so beatSfx has to be told what it is. */
+  engagement?: true;
 }
 
 export interface Beat extends BeatFlavor {
@@ -84,6 +87,11 @@ export interface Beat extends BeatFlavor {
   events: CombatEvent[];
   banner: string;
   popups: BeatPopup[];
+}
+
+/** The card vocabulary (ATK, WIS), not the engine's field name — StatChangedEvent.stat is a bare string. */
+function statLabel(stat: string): string {
+  return STAT_LABELS[stat as StatKey] ?? stat;
 }
 
 /** " on A" / " on A and B" / " on A, B and C"; empty when the only target is the actor. */
@@ -261,15 +269,15 @@ export function buildBeats(
           const who = changes.map((c) => name(c.combatantId)).join(' and ');
           push(
             applied,
-            `${label} shifts ${who}'s ${head.stat} (${sign}${head.delta})`,
+            `${label} shifts ${who}'s ${statLabel(head.stat)} (${sign}${head.delta})`,
             changes.map((c) => ({
               combatantId: c.combatantId,
-              text: `${c.delta > 0 ? '+' : ''}${c.delta} ${c.stat}`,
+              text: `${c.delta > 0 ? '+' : ''}${c.delta} ${statLabel(c.stat)}`,
               className: c.delta > 0 ? 'popup-buff' : 'popup-debuff',
             })),
             {
               bannerLead: `${label} · ${who}`,
-              bannerFocus: `${head.stat} ${sign}${head.delta}`,
+              bannerFocus: `${statLabel(head.stat)} ${sign}${head.delta}`,
               bannerFocusKind: head.delta > 0 ? 'buff' : 'debuff',
             }
           );

@@ -1752,6 +1752,113 @@ One thing was tuned and left deliberately quiet: the Molten Foundry's floor
 heat. It wants to be brighter than it is, and the ally row's HP and MP bars are
 sitting in it.
 
+## Fifteenth pass — a fight opens on a beat (2026-09-03)
+
+The ask: *we now have passives like Imposing Presence that trigger whenever a hero
+enters the battlefield. So what happens is that, currently, I open a battle and we
+jump straight to the move selection phase, and the two enemies have their attack
+lowered from Imposing Presence. As the designer of the game, I know why this is,
+but for new players I think that the information needs to be conveyed as its own
+beat.* Explicitly: not lengthy, not many inputs.
+
+### What was wrong
+
+The engine had been doing the right thing since entry passives existed.
+`resolveBattleStartEntries` synthesises the `SwitchedIn` each starting lead would
+have produced, runs the normal matcher, and hands back both the resulting board
+and the events. `FightScreen` used the board and dropped the events into the
+**log** — a panel two taps deep behind the Menu. So a fight opened on a board
+that had already changed, with nothing on screen having named what changed it. The
+one player who could read it was the person who wrote the passive.
+
+The fix needed no engine work and no new screen, because both halves already
+existed and had never been connected: a generic beat player
+(`startBeatPlayback(startState, events, finalState)` — tap-advance, popups,
+banner, SFX, log append) and a `PassiveTriggered` + `statDelta` grouping in
+`buildBeats` that already renders *"Imposing Presence · Cortex and Crimson /
+**ATK −10**"* with debuff numbers floating off both enemy cards. The opening
+events were the one event stream in the game that never reached it.
+
+### What replaced it
+
+`openBattle` now returns **two boards and the events between them** — `start`
+(both leads on the field, entry passives *not* applied), `events`, and `final`
+(what round 1 is declared on). The fight renders `start` and plays the difference.
+That split is the whole fix; everything below is presentation on top of it.
+
+- `view/combat/openingBeats.ts` — the **engagement beat**, and deliberately
+  event-less (`events: []`): both leads are already on the board at first render,
+  so there is nothing to replay. It exists so the passive beats are not the first
+  thing a fight ever shows, which would read as "something happened before I did
+  anything". Lead is the **Location** (`Wild's Edge`, falling back to `Battle`
+  when placeless — Quick Battle, sandbox), headline is the **enemy leads**, stamp
+  is `Battle begins`, and the headline glows in the Location's own `tintRgb`
+  through the existing `bannerAccent`. It does **not** re-reveal the enemy roster:
+  `SquadSelectScreen` already scouts that, so this beat says *where and against
+  whom* and stops.
+- `FightScreen.tsx` — `resolving` now **initialises true**. A fight opens
+  mid-playback by definition, and initialising it false paints one frame of a live
+  action console before the mount effect takes it away. `startBeatPlayback` gained
+  a `prelude` parameter for beats that aren't grouped from events.
+- **It advances itself.** `INTRO_BEAT_MS` = 1000, a beat slower than a round's
+  auto-play (450ms) because these are read, not watched. A fight with no entry
+  passive is therefore **one beat, ~1s, zero inputs**; the common case costs the
+  player nothing. Always one beat even when there is nothing to say — an intro that
+  appears only sometimes reads as an interruption rather than a ritual, and it
+  would announce "something happened" before the player could know what.
+- **A tap skips the rest, rather than stepping through it.** The intro is already
+  advancing, so hold-to-auto-play has nothing to add, and one-beat-per-tap is not
+  what an impatient tap is asking for. `skipIntro` only catches the **log** up: an
+  empty queue finalizes onto `finalState`, so the board is identical either way by
+  construction rather than by the flush being careful. The hint line says
+  `tap to skip ▸` instead of the round's `tap ▸ or hold to auto-play ⏵⏵`.
+- `sounds.ts` — one row, `battle.join`: a struck low drum, then a swell that rises
+  where `entrance.dread`'s sweeps fall. Fires once a battle so it may have
+  presence, but it is capped under dread (0.44 against 0.52) on purpose — **the
+  engagement is the frame; a named enemy arriving inside it is the event**, and the
+  frame must never outsize the event. `beatSfx` reads it off an `engagement` flag,
+  checked before `PRIORITY` for the same reason `dramaticEntrance` is: the beat
+  carries no events, so there is nothing for `PRIORITY` to rank.
+- `buildBeats.ts`, incidental but in the sentence this pass exists to deliver:
+  stat beats read `attack` straight off `StatChangedEvent.stat`. They now go
+  through `STAT_LABELS`, so the headline is **`ATK -10`** and the popup `-10 ATK`,
+  in the same vocabulary the cards use. This changes mid-fight stat beats too.
+
+The thirteenth pass's dramatic entrance is untouched and does not collide: a
+Guardian never leads a fight, so a staged arrival is still only ever a mid-fight
+event.
+
+### Verification
+
+The standard method: a throwaway `introharness.html` + `src/app/introHarness.tsx`
+mounting the real `FightScreen` against a real `generateEncounter` pair, with
+`imposingPresence` pushed onto both player leads' `bonusPassiveGrants` (its only
+real source is a map event, too many clicks deep to reach for a view check).
+`?p=0` drops the passive and `?loc=none` goes placeless. Both files deleted before
+committing.
+
+Read as a recording rather than as a screenshot, since the thing under test is a
+sequence: a 40ms poller over `.combat-banner-current`, `.move-button` and the
+popup classes, collapsed to distinct states.
+
+- With two holders: engagement beat at t=0 → `IMPOSING PRESENCE · CORTEX AND
+  CRIMSON / ATK -10` with `-10 ATK,-10 ATK` popups at t=976 → console with 4 move
+  buttons at t=2997. Input gated (`moveBtns=0`) for the whole intro.
+- With none: one beat, then the console at t=994. Zero inputs, as intended.
+- Placeless: the lead reads `BATTLE`.
+- Skip: tapped at 150ms; banner gone and the console live within 300ms. The
+  **battle log after skipping is byte-identical to the log after watching** — six
+  lines, both `Imposing Presence triggers` and all four `attack -10` — which is the
+  claim that actually needed proving.
+
+`npm run typecheck:view` and `npm test` (720 passing) pass.
+
+One thing found by looking at it and **not** fixed: two holders of the same
+passive produce two consecutive beats with identical text, distinguishable only by
+the headline replaying its arrival animation (`beatSeq` remounts it). That is
+pre-existing `buildBeats` behaviour for any repeated passive and reads the same
+mid-fight, so it is left alone rather than special-cased here.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.
