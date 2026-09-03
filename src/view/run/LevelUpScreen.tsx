@@ -23,6 +23,7 @@ import {
   ProgressionError,
   type EvolutionNode,
 } from '../../run/progression';
+import { deferLevelUp } from '../../run/runProgress';
 import { MoveButtonReplica, useLongPress } from '../shared/MoveTile';
 import { STAT_LABELS, STAT_COLORS, StatGlyph } from '../shared/StatBars';
 import { entryStatTotals } from '../shared/entryStatTotals';
@@ -354,6 +355,17 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     !movePopup &&
     !previewEntry;
 
+  // The out: a pool that buys nobody leaves on its own, and this is for one the player
+  // wants to keep. Evolutions are excluded — those are already paid for, not a spend.
+  const canBank =
+    introDone && canAffordAny && pendingEvolutions === 0 && !offer && !masteryOffer && !animatingRosterId && !evolvingRosterId;
+
+  function handleBank() {
+    playSfx('ui.page');
+    onRunChange(deferLevelUp(run));
+    onDone();
+  }
+
   // Ref, so the effect depends on `done` alone — App.tsx passes an inline arrow.
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
@@ -540,6 +552,12 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
             );
           })}
         </HeroPickGrid>
+      )}
+
+      {canBank && (
+        <button className="secondary-button levelup-bank-button" onClick={handleBank}>
+          Bank {run.levelUpPool} XP for later
+        </button>
       )}
 
       {movePopup && (

@@ -77,15 +77,20 @@ The concrete shape of the choice, which is the whole design claim:
 ### Income was rescaled with it
 
 The curve is meaningless without the income it is denominated in, so per-fight payouts
-moved in the same pass (`trainingPointsFor`, `src/app/App.tsx`): **3** for Monsters
-(`fight`, `battle`), **4** for Skirmish (`skirmish`, `elite`), **5** for the Guardian —
-an act's four fights pay **15–16**, and the reward-row XP option moved from 2–3 to **4–6**
-(`NodeRewardScreen`) so it stays a live pick against 15–30 gold or a relic.
+moved in the same pass (`trainingPointsFor`, `src/app/App.tsx`): **2** for the act's
+row-0 opener (`fight`), **3** for Monsters (`battle`), **4** for Skirmish (`skirmish`,
+`elite`) and **4** for the Guardian — an act's four fights pay **13–14**, and the
+reward-row XP option is a flat **2** (`UPGRADE_REWARD_XP`, `NodeRewardScreen`).
+
+The opener is priced below the rest of the Monsters lane deliberately: it is the lightest
+fight on the map, the one every path takes, and the one a player meets before owning
+anything. The XP cache is priced *below one fight* for the same reason it exists — a
+top-up the player can take instead of gold or a relic, not a substitute for fighting.
 
 Income is deliberately **flat across acts**. Scaling it by act would inflate the price
 curve away, and the resulting deceleration — the same income buying fewer levels every act
-— *is* the brake. Over five acts a run pays ~80 from fights, which lands a four-hero core
-around level 7–8 against Act 5 enemies at level 10 (`ENEMY_LEVEL_BY_ACT`,
+— *is* the brake. Over five acts a run pays ~65–70 from fights, which lands a four-hero core
+a level or so behind Act 5 enemies at level 10 (`ENEMY_LEVEL_BY_ACT`,
 `src/run/difficulty.ts`): the player is meant to be behind on level and ahead on gear.
 
 > 🔒 **OPEN — flag before hardening.** Every number above is a first-pass playtest figure;
@@ -100,6 +105,21 @@ around level 7–8 against Act 5 enemies at level 10 (`ENEMY_LEVEL_BY_ACT`,
 > - **Does income ever scale by act?** The answer above is "no, on purpose". If playtest
 >   says the player falls too far behind the enemy level curve, the fix to reach for first
 >   is the enemy curve or the gear curve — not income, which un-does the brake.
+
+## Spending is optional — the pool banks on the map
+
+The Level Up screen is offered after every node that can afford a level, but it is no
+longer a wall: **Bank _n_ XP for later** leaves it with the pool intact
+(`RunState.levelUpDeferred`, `deferLevelUp`). The flag suppresses the automatic gate so a
+banked pool is not re-offered at every node, and **any XP grant clears it**
+(`grantUpgradeReward`) — new income always re-opens the screen. An unresolved Evolution
+still blocks the out: that is a payout the player already bought, not a spend.
+
+Banking only works if the banked figure is visible, so the map's status bar carries **Gold
+· XP · Contracts** beside the act count, and the XP chip is a button whenever the pool can
+afford a level — the way back into the screen the player walked out of. This is the
+"banking toward an expensive level is a real and intended play" line above finally having
+an interface.
 
 ## The pool is distributed freely — including to the bench
 

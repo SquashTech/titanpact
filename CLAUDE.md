@@ -62,8 +62,11 @@ don't silently override it.
   the system paid more per point the harder the player hyperfocused. **Priced, not
   capped:** the carry build stays legal and is charged for in breadth. A **leftover pool
   that buys nobody is normal and banks**, so every gate is `canAffordAnyLevelUp`, never
-  `levelUpPool > 0`. Per-fight income was rescaled with it and is **flat across acts** so
-  the curve is not inflated away (`trainingPointsFor`, `src/app/App.tsx`). Rationale,
+  `levelUpPool > 0`. **Spending is optional** (2026-09-03): the player may bank a
+  spendable pool and walk on (`RunState.levelUpDeferred`), which suppresses the gate
+  until the next XP grant clears it; the map's status bar carries the banked figure and
+  re-opens the screen. Per-fight income was rescaled with it and is **flat across acts**
+  so the curve is not inflated away (`trainingPointsFor`, `src/app/App.tsx`). Rationale,
   figures and the open tuning questions: `docs/leveling-and-ranks.md`.
 - **Level-ups are a pooled currency** distributed freely after each battle (benched heroes
   included). Below the Evolution level, a level-up **unlocks a move** from the current

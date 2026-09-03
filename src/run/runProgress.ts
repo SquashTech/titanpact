@@ -35,8 +35,14 @@ export function grantCurrencyReward(run: RunState, amount: number): RunState {
   return { ...run, gold: run.gold + amount };
 }
 
+/** New XP always re-opens the Level Up gate, whatever the player banked before it. */
 export function grantUpgradeReward(run: RunState, points: number): RunState {
-  return { ...run, levelUpPool: run.levelUpPool + points };
+  return { ...run, levelUpPool: run.levelUpPool + points, levelUpDeferred: false };
+}
+
+/** The player chose to bank rather than spend (LevelUpScreen's Continue). */
+export function deferLevelUp(run: RunState): RunState {
+  return { ...run, levelUpDeferred: true };
 }
 
 /** The per-act contract grant (App.tsx, on the boss-node win). */

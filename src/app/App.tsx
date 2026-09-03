@@ -200,10 +200,11 @@ function goldRewardFor(nodeType: EncounterMapNodeType): number {
   return 15 + Math.floor(Math.random() * 11); // 15-25
 }
 
-/** Training Points per win: 3 Monsters / 4 Skirmish / 5 Guardian. Deliberately FLAT across acts — the level-price curve is the brake (docs/leveling-and-ranks.md). */
+/** Training Points per win: 2 the act opener / 3 Monsters / 4 Skirmish and Guardian. Deliberately FLAT across acts — the level-price curve is the brake (docs/leveling-and-ranks.md). */
 function trainingPointsFor(nodeType: EncounterMapNodeType): number {
-  if (nodeType === 'fight' || nodeType === 'battle') return 3;
-  if (nodeType === 'boss') return 5;
+  // The opener is the lightest fight on the map and pays the least; `battle` is the full Monsters rate.
+  if (nodeType === 'fight') return 2;
+  if (nodeType === 'battle') return 3;
   return 4;
 }
 
@@ -230,9 +231,13 @@ function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): Eq
   return pickWeightedEquipment(EQUIPMENT_POOL, 1, weights)[0] ?? null;
 }
 
-/** The map, behind the level-up gate if anyone can afford one. */
+/** The map, behind the level-up gate if anyone can afford one and the player has not banked the pool. */
+function levelUpPending(run: RunState): boolean {
+  return canAffordAnyLevelUp(run) && !run.levelUpDeferred;
+}
+
 function mapAfterLevelUp(run: RunState): Screen {
-  return canAffordAnyLevelUp(run) ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' };
+  return levelUpPending(run) ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' };
 }
 
 export function App() {
@@ -414,7 +419,7 @@ export function App() {
     }
 
     setPlayerRun(next);
-    const afterLevelUp: Screen = canAffordAnyLevelUp(next) ? { kind: 'levelUp', next: afterScreen } : afterScreen;
+    const afterLevelUp: Screen = levelUpPending(next) ? { kind: 'levelUp', next: afterScreen } : afterScreen;
     const afterEquip: Screen = equipmentReward ? { kind: 'forceEquip', queue: [equipmentReward.id], next: afterLevelUp } : afterLevelUp;
 
     // Gate order is deliberate: banner, then recruit, then equip, then level-up — so a hero recruited
@@ -584,6 +589,7 @@ export function App() {
           run={playerRun}
           onRunChange={setPlayerRun}
           onSelectNode={handleSelectNode}
+          onOpenLevelUp={() => setScreen({ kind: 'levelUp', next: { kind: 'map' } })}
           onQuitToTitle={() => setScreen({ kind: 'title' })}
         />
       )}

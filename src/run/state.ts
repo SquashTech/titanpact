@@ -42,6 +42,11 @@ export interface RunState {
   roster: RosterEntry[];
   /** Pooled, freely distributable across the roster. */
   levelUpPool: number;
+  /**
+   * The player walked away from the Level Up screen with a spendable pool. Suppresses the
+   * post-node gate so a banked pool is not re-offered at every node; any XP grant clears it.
+   */
+  levelUpDeferred: boolean;
   /** Spent at a Guild Hall; contracts are claimed, not bought with this. */
   gold: number;
   /** Owned relic ids — duplicates stack. */
@@ -66,6 +71,7 @@ export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1):
   return {
     roster: [],
     levelUpPool,
+    levelUpDeferred: false,
     gold,
     relics: [],
     recruitContracts,

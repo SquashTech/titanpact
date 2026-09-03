@@ -9,6 +9,7 @@ import {
   advanceToNode,
   grantCurrencyReward,
   grantUpgradeReward,
+  deferLevelUp,
   grantRelicReward,
   equipToRoster,
   swapEquipment,
@@ -66,6 +67,20 @@ test('runProgress: grantCurrencyReward and grantUpgradeReward add flat amounts',
   const run = seedRoster(['cinderKnight']);
   assert.strictEqual(grantCurrencyReward(run, 20).gold, 20);
   assert.strictEqual(grantUpgradeReward(run, 2).levelUpPool, 2);
+});
+
+test('runProgress: banking the pool suppresses the level-up gate until new XP arrives', () => {
+  const run = grantUpgradeReward(seedRoster(['cinderKnight']), 4);
+  assert.strictEqual(run.levelUpDeferred, false);
+
+  const banked = deferLevelUp(run);
+  assert.strictEqual(banked.levelUpDeferred, true);
+  // The pool itself is untouched — banking is a decision about the screen, not about the points.
+  assert.strictEqual(banked.levelUpPool, 4);
+
+  const earned = grantUpgradeReward(banked, 2);
+  assert.strictEqual(earned.levelUpDeferred, false);
+  assert.strictEqual(earned.levelUpPool, 6);
 });
 
 test('runProgress: grantRelicReward appends a relic id, duplicates allowed', () => {

@@ -7,8 +7,9 @@ import { useLongPress } from '../shared/MoveTile';
 import { RosterManagementScreen } from './RosterManagementScreen';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { RelicsOverlay } from './RelicsOverlay';
-import { ResourceMark } from '../shared/RunGlyph';
+import { ResourceGlyph, type ResourceKind } from '../shared/RunGlyph';
 import { HubGlyph, NodeGlyph, type HubGlyphName } from '../shared/nodeIcons';
+import { canAffordAnyLevelUp } from '../../run/progression';
 import { locationForAct } from '../../run/locations';
 import type { LocationDefinition } from '../../data/locations';
 import { LocationAmbience } from '../shared/LocationSky';
@@ -18,8 +19,35 @@ interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
   onSelectNode: (nodeId: string) => void;
+  /** Re-opens the Level Up screen for a pool the player banked rather than spent. */
+  onOpenLevelUp: () => void;
   /** Omit and the pause menu drops its quit entry. */
   onQuitToTitle?: () => void;
+}
+
+/**
+ * One run resource in the header track. Spendable XP is the only one with somewhere to go
+ * from this screen, so it is the only one that is ever a button.
+ */
+function ResourceStat({ kind, label, value, onSpend }: { kind: ResourceKind; label: string; value: number; onSpend?: () => void }) {
+  const body = (
+    <>
+      <ResourceGlyph kind={kind} />
+      <span className="map-stat-value">{value}</span>
+    </>
+  );
+  if (!onSpend) {
+    return (
+      <span className="map-stat" aria-label={`${label}: ${value}`}>
+        {body}
+      </span>
+    );
+  }
+  return (
+    <button type="button" className="map-stat is-spendable" onClick={onSpend} aria-label={`${label}: ${value} — spend now`} title="Spend XP">
+      {body}
+    </button>
+  );
 }
 
 // Name carries recruitability (Monsters vs Skirmish); NODE_COLORS carries
@@ -71,16 +99,16 @@ const NODE_COLORS: Record<MapNodeType, string> = {
 // Long-press preview text: what the node pays out, and nothing else. Difficulty
 // rides on NODE_COLORS, recruitability on NODE_NAMES.
 const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
-  fight: '15–25g · 3 XP · equipment',
+  fight: '15–25g · 2 XP · equipment',
   skirmish: '15–25g · 4 XP · 25% equipment · recruitable',
   battle: '30–45g · 3 XP · equipment',
   elite: '15–25g · 4 XP · 55% elite equipment · recruitable — enemies carry +10 to 2 stats',
-  boss: '5 XP · 70% elite equipment · 1 Recruit Contract',
+  boss: '4 XP · 70% elite equipment · 1 Recruit Contract',
   shop: 'Spend gold on heroes, equipment and relics',
   equipmentReward: '1 of 3 equipment',
   relicReward: '1 of 3 team-wide relics',
   currencyReward: '15–30g',
-  upgradeReward: '4–6 XP',
+  upgradeReward: '2 XP',
   weaponReward: '1 weapon',
   armorReward: '1 armor',
   accessoryReward: '1 accessory',
@@ -378,7 +406,7 @@ function MapPlacard({ location }: { location: LocationDefinition }) {
 
 // The run's hub (docs/run-loop.md). Training Points are spent on LevelUpScreen,
 // not here; a banked remainder on the map is normal.
-export function MapScreen({ run, onRunChange, onSelectNode, onQuitToTitle }: Props) {
+export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onQuitToTitle }: Props) {
   const [showRoster, setShowRoster] = useState(false);
   const [showReference, setShowReference] = useState(false);
   const [showRelics, setShowRelics] = useState(false);
@@ -412,16 +440,25 @@ export function MapScreen({ run, onRunChange, onSelectNode, onQuitToTitle }: Pro
 
   return (
     <div className="map-screen" data-location={location.id} style={{ '--node-rgb': location.tintRgb } as CSSProperties}>
+      {/* Act on the left is a position, not a thing you hold; the purse on the right is. */}
       <div className="map-header">
-        <span className="map-stat" title="Act">
-          <ResourceMark label="ACT" tone="blue" /> {run.actNumber}/{TOTAL_ACTS}
+        <span className="map-act" aria-label={`Act ${run.actNumber} of ${TOTAL_ACTS}`}>
+          <span className="map-act-label">Act</span>
+          <span className="map-act-count">
+            {run.actNumber}
+            <span className="map-act-total">/{TOTAL_ACTS}</span>
+          </span>
         </span>
-        <span className="map-stat" title="Gold">
-          <ResourceMark label="G" /> {run.gold}
-        </span>
-        <span className="map-stat" title="Recruit Contracts">
-          <ResourceMark label="C" tone="green" /> {run.recruitContracts}
-        </span>
+        <div className="map-purse">
+          <ResourceStat kind="gold" label="Gold" value={run.gold} />
+          <ResourceStat
+            kind="xp"
+            label="Unspent XP"
+            value={run.levelUpPool}
+            onSpend={canAffordAnyLevelUp(run) ? onOpenLevelUp : undefined}
+          />
+          <ResourceStat kind="contract" label="Recruit Contracts" value={run.recruitContracts} />
+        </div>
       </div>
 
       {/* The well is a frame with a scroller inside it: atmosphere and placard

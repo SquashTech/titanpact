@@ -38,7 +38,8 @@ const OPEN_BOOK = (
   </>
 );
 
-const NODE_PATHS: Record<MapNodeType, ReactNode> = {
+// Exported so the run HUD can wear the exact glyph of the node that pays it out (RunGlyph.tsx).
+export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   fight: CLAW,
   skirmish: HELM,
   // Same monster pool as `fight`, same glyph.

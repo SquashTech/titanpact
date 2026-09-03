@@ -6,7 +6,7 @@ import type { EquipmentDefinition } from '../../run/equipment';
 import { pickWeightedEquipment, rarityWeightsFor } from '../../run/equipment';
 import { grantCurrencyReward, grantUpgradeReward, grantRelicReward } from '../../run/runProgress';
 import { RelicIcon } from '../shared/EquipmentBox';
-import { ResourceMark, RunGlyph } from '../shared/RunGlyph';
+import { ResourceGlyph, RunGlyph } from '../shared/RunGlyph';
 import { SectionGlyph } from '../shared/sectionIcons';
 import { NodeHeader, NodeSky, NODE_TINT_ARCANE, NODE_TINT_GOLD, NODE_TINT_VITAL } from '../shared/NodeStage';
 import { CacheOpening, useCacheOpening } from './CacheReveal';
@@ -15,6 +15,9 @@ import { RelicChoiceCard } from './RelicChoiceCard';
 import { RosterPeek } from './RosterPeek';
 
 export type RewardNodeType = 'currencyReward' | 'upgradeReward' | 'equipmentReward' | 'relicReward';
+
+/** Flat, and deliberately under one fight's pay: the XP cache is a top-up, not a substitute for fighting. */
+const UPGRADE_REWARD_XP = 2;
 
 const NODE_TINT: Record<RewardNodeType, string> = {
   currencyReward: NODE_TINT_GOLD,
@@ -44,8 +47,6 @@ function pickRandom<T>(pool: readonly T[], count: number): T[] {
 /** The four instant reward nodes (docs/run-loop.md): gold, XP and equipment grant on one tap; the relic shrine offers 3. */
 export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onClaimEquipment }: Props) {
   const [currencyAmount] = useState(() => 15 + Math.floor(Math.random() * 16)); // 15-30
-  // 4-6: scaled with the level-price curve (run/progression.ts levelUpCost) so XP stays a live pick against gold or a relic.
-  const [upgradeAmount] = useState(() => 4 + Math.floor(Math.random() * 3));
   const [equipmentChoices] = useState<EquipmentDefinition[]>(() =>
     nodeType === 'equipmentReward'
       ? pickWeightedEquipment(Object.values(equipment), 3, rarityWeightsFor(run.actNumber, 'standard'))
@@ -95,7 +96,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
         <NodeHeader
           eyebrow="Spoils"
           title="Gold Cache"
-          glyph={<ResourceMark label="G" />}
+          glyph={<ResourceGlyph kind="gold" className="node-header-resource" />}
           readoutLive={claimed}
           readout={claimed ? `${currencyAmount}g added to the purse.` : 'A pile of gold, left where it fell.'}
         />
@@ -105,9 +106,9 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
         <NodeHeader
           eyebrow="Spoils"
           title="XP Cache"
-          glyph={<ResourceMark label="XP" tone="green" />}
+          glyph={<ResourceGlyph kind="xp" className="node-header-resource" />}
           readoutLive={claimed}
-          readout={claimed ? `${upgradeAmount} XP added to the pool.` : 'Hard-won experience, there for the taking.'}
+          readout={claimed ? `${UPGRADE_REWARD_XP} XP added to the pool.` : 'Hard-won experience, there for the taking.'}
         />
       )}
 
@@ -135,7 +136,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
         {(nodeType === 'currencyReward' || nodeType === 'upgradeReward') && (
           <div className={`node-hoard${claimed ? ' is-claimed' : ''}`}>
             <span className="node-hoard-amount">
-              {nodeType === 'currencyReward' ? currencyAmount : upgradeAmount}
+              {nodeType === 'currencyReward' ? currencyAmount : UPGRADE_REWARD_XP}
               <span className="node-hoard-unit">{nodeType === 'currencyReward' ? 'g' : 'XP'}</span>
             </span>
           </div>
@@ -196,11 +197,11 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
           className="resolve-button"
           onClick={() =>
             handleClaimInstant(
-              nodeType === 'currencyReward' ? grantCurrencyReward(run, currencyAmount) : grantUpgradeReward(run, upgradeAmount)
+              nodeType === 'currencyReward' ? grantCurrencyReward(run, currencyAmount) : grantUpgradeReward(run, UPGRADE_REWARD_XP)
             )
           }
         >
-          {nodeType === 'currencyReward' ? `Claim ${currencyAmount}g` : `Claim ${upgradeAmount} XP`}
+          {nodeType === 'currencyReward' ? `Claim ${currencyAmount}g` : `Claim ${UPGRADE_REWARD_XP} XP`}
         </button>
       )}
 

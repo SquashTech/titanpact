@@ -9430,9 +9430,11 @@ textarea,
 .node-screen > .resolve-button,
 .node-screen > .secondary-button,
 .node-screen > .reward-panel-actions,
-/* `.levelup-screen > .resolve-button` used to be here. That screen has no
-   bottom CTA any more — it hands off on its own once every Training Point is
-   spent (LevelUpScreen.tsx AUTO_CONTINUE_MS). */
+/* The Level Up screen still hands off on its own once the pool can buy nobody
+   (LevelUpScreen.tsx AUTO_CONTINUE_MS), so its CTA is the *secondary* only:
+   the bank-and-leave out for a pool the player would rather keep. Spending
+   stays the primary action and lives on the hero cards themselves. */
+.levelup-screen > .secondary-button,
 .squad-select > .resolve-button,
 .draft-screen > .resolve-button {
   margin-bottom: 12px;
@@ -11129,28 +11131,67 @@ textarea,
  *
  * The rule below is dropped in favour of the track's own border: two
  * horizontal lines 10px apart was the busiest part of this screen.
+ *
+ * The four readouts are NOT four equal chips: the act is a position on the
+ * run and the other three are things the player holds. Splitting them left
+ * and right is what lets the purse read as one group of three rather than as
+ * a list the act happens to head, and it is the room the XP chip needed.
  */
 .map-header {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  padding: 4px;
+  gap: 8px;
+  padding: 4px 4px 4px 10px;
   background: var(--surface-sunken);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
-.map-stat {
-  flex: 1 1 0;
+/* Bare on the track, not a chip — a chip would make it a fourth resource. */
+.map-act {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
   min-width: 0;
+  white-space: nowrap;
+}
+
+.map-act-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.map-act-count {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.map-act-total {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.map-purse {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 4px 6px;
+  gap: 4px;
+}
+
+.map-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 7px;
+  border: 0;
   background: var(--surface-raised);
   border-radius: var(--radius-xs);
   box-shadow: var(--hairline);
@@ -11158,8 +11199,33 @@ textarea,
   font-weight: 700;
   color: var(--text);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.map-stat-value {
+  font-variant-numeric: tabular-nums;
+  min-width: 1ch;
+  text-align: right;
+}
+
+/*
+ * The one chip that is a control: XP the player banked instead of spending has
+ * somewhere to go from here, and a HUD number you can act on has to say so.
+ * Tinted rather than raised — it is still a readout first, and the raised
+ * pressable language on this screen belongs to .map-footer-button.
+ */
+.map-stat.is-spendable {
+  cursor: pointer;
+  color: var(--hp-high);
+  background: linear-gradient(180deg, rgba(76, 175, 106, 0.24), rgba(76, 175, 106, 0.1));
+  box-shadow: var(--hairline), 0 0 0 1px rgba(76, 175, 106, 0.34);
+}
+
+.map-stat.is-spendable:hover {
+  box-shadow: var(--hairline), 0 0 0 1px rgba(76, 175, 106, 0.6);
+}
+
+.map-stat.is-spendable:active {
+  transform: translateY(1px);
 }
 
 /* Supplied pixel-art used for durable run landmarks.  These are kept at a
@@ -11182,38 +11248,20 @@ textarea,
   --iconset-glyph-size: 16px;
 }
 
-/* A restrained resource monogram for concepts for which this particular art
-   pack has no truthful image (gold, contracts, act count). It is intentionally
-   typography, not a substitute emoji: the mark inherits the surface's visual
-   system and remains consistent on every operating system. */
-.resource-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 3px;
-  border: 1px solid rgba(224, 166, 60, 0.55);
-  border-radius: 5px;
-  background: linear-gradient(180deg, rgba(224, 166, 60, 0.2), rgba(224, 166, 60, 0.05));
-  color: #f2c76d;
-  font-size: 8px;
-  font-weight: 900;
-  line-height: 1;
-  letter-spacing: 0.02em;
-  vertical-align: -2px;
+/* Gold / XP / Contract, drawn (RunGlyph.tsx). These replace three typographic
+   monograms — G, XP, C — which were legible but told the player nothing they
+   did not already know from the number beside them. Sized in `em` like
+   .stat-glyph so one component serves a 12px HUD chip and a 20px node header. */
+.resource-glyph {
+  flex-shrink: 0;
+  width: 1.2em;
+  height: 1.2em;
+  vertical-align: -0.24em;
 }
 
-.resource-mark-green {
-  border-color: rgba(76, 175, 106, 0.56);
-  background: linear-gradient(180deg, rgba(76, 175, 106, 0.2), rgba(76, 175, 106, 0.05));
-  color: #8ddba5;
-}
-
-.resource-mark-blue {
-  border-color: rgba(74, 144, 217, 0.6);
-  background: linear-gradient(180deg, rgba(74, 144, 217, 0.2), rgba(74, 144, 217, 0.05));
-  color: #9bc9ff;
+.node-header-resource {
+  width: 20px;
+  height: 20px;
 }
 
 /* The map field itself: a recessed well the route sits inside, so the

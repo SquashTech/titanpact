@@ -10,7 +10,7 @@ import type { RelicDefinition } from '../../run/relics';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { RelicIcon } from '../shared/EquipmentBox';
 import { stackedGrantSummary, stackedRelicName } from '../shared/relicStacks';
-import { ResourceMark } from '../shared/RunGlyph';
+import { ResourceGlyph } from '../shared/RunGlyph';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterManagementScreen } from './RosterManagementScreen';
 
@@ -63,13 +63,13 @@ export function RosterPeek({ run, className, onRunChange }: Props) {
 
             <div className="roster-peek-resources">
               <span className="roster-peek-resource" title="Gold">
-                <ResourceMark label="G" /> {run.gold}
+                <ResourceGlyph kind="gold" /> {run.gold}
               </span>
               <span className="roster-peek-resource" title="Unspent XP">
-                <ResourceMark label="XP" tone="green" /> {run.levelUpPool}
+                <ResourceGlyph kind="xp" /> {run.levelUpPool}
               </span>
               <span className="roster-peek-resource" title="Recruit Contracts">
-                <ResourceMark label="C" tone="blue" /> {run.recruitContracts}
+                <ResourceGlyph kind="contract" /> {run.recruitContracts}
               </span>
             </div>
 
