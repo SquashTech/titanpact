@@ -4708,15 +4708,35 @@ textarea,
    is already spoken for (gold is a rider, blue is mana, teal is a buff, green
    and red are the matchup), and an unclaimed sixth would be one more thing to
    learn. Bright and wider-tracked against a row that is otherwise --text-dim
-   is enough to make the pair read as a stamp rather than as the first two
-   items of the rider list. Never dims: unlike a conditional gate, there is
-   nothing here that can be unmet. */
+   is enough to make the pair read as a stamp rather than as two more items of
+   the rider list they now sit among. Never dims: unlike a conditional gate,
+   there is nothing here that can be unmet. */
 .move-eff-trait {
   flex-shrink: 0;
   font-weight: 700;
   letter-spacing: 0.03em;
   color: var(--text);
   opacity: 0.85;
+}
+
+/* Priority reads as the Speed glyph and a signed bracket, the same pair the
+   move dossier shows, rather than as the word "Priority" — a nine-letter word
+   in front of the rider list was the widest thing on the line and the least
+   informative. Green strikes first, red strikes last: the sign is the message,
+   so it is carried by colour and the arrows, not by prose. */
+.move-eff-priority {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 1;
+}
+
+.move-eff-priority.is-fast {
+  color: var(--hp-high);
+}
+
+.move-eff-priority.is-slow {
+  color: var(--hp-low);
 }
 
 /* An unmet targeting gate ("Needs Freeze"). Off the accent entirely: every

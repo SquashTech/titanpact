@@ -163,13 +163,15 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
       <div className="move-row-effect">
         {move.kind === 'damage' ? (
           <span className="move-eff-row">
-            <MoveTraitChips move={move} liveTargetMode={liveTargetMode} />
+            {/* The matchups lead on a damage move so the two enemy names start at the same x on
+                every row; priority and spread fall in behind them with the riders. */}
             {matchups.map(({ id, name, mult }) => (
               <span key={id} className={`move-eff-chip ${multClass(mult)}`}>
                 <span className="move-eff-name">{name}</span>
                 <span className="move-eff-mult">{formatMult(mult)}</span>
               </span>
             ))}
+            <MoveTraitChips move={move} liveTargetMode={liveTargetMode} />
             {statusApplicationsOf(move).map((app) => {
               const where = riderTargetLabel(app);
               return (

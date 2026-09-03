@@ -7,7 +7,7 @@ import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
 import { STAT_LABELS } from './StatBars';
 import { ElementGlyph } from './elementIcons';
-import { MoveKindGlyph, type MoveKindGlyphKind } from './statIcons';
+import { MoveKindGlyph, StatGlyph, type MoveKindGlyphKind } from './statIcons';
 import { ManaCost } from './ManaCost';
 
 // --- Hold-to-inspect gesture ---
@@ -135,9 +135,10 @@ export function isSpreadTarget(target: MoveDefinition['target']): boolean {
 }
 
 /**
- * Priority bracket and spread, leading the effect row: these say whether and how the move lands,
- * where rider chips say what happens when it does. `liveTargetMode` is the board's answer for a
- * conditional target; omit outside combat.
+ * Priority bracket and spread: these say whether and how the move lands, where rider chips say what
+ * happens when it does. Placement is the caller's — a damage row puts the matchups first so the two
+ * enemy names start at the same x on every row, and these fall in behind them. `liveTargetMode` is
+ * the board's answer for a conditional target; omit outside combat.
  */
 export function MoveTraitChips({
   move,
@@ -154,14 +155,15 @@ export function MoveTraitChips({
     <>
       {bracket !== 0 && (
         <span
-          className="move-eff-trait"
+          className={`move-eff-trait move-eff-priority${bracket > 0 ? ' is-fast' : ' is-slow'}`}
           title={
             bracket > 0
               ? `Priority +${bracket} — resolves before every priority-0 move, whatever the Speed`
               : `Priority ${bracket} — resolves after every priority-0 move, whatever the Speed`
           }
         >
-          {bracket > 0 ? '↟' : '↡'} Priority {bracket > 0 ? `+${bracket}` : bracket}
+          <StatGlyph stat="speed" tone="inherit" />
+          {bracket > 0 ? `+${bracket}` : bracket}
         </span>
       )}
       {isSpreadTarget(target) && (
