@@ -12031,17 +12031,27 @@ textarea,
 
 /* --- Title screen --------------------------------------------------------- */
 
-/* Epic treatment: a moody arcane-gold vignette (same layered-gradient +
-   faint tactical-grid language as .battlefield, so the title reads as the
-   same world rather than a generic menu screen), a slow-spinning godray
-   burst and pulsing core glow behind the logo (.title-logo::before/::after —
-   deliberately anchored to .title-logo itself rather than positioned by
-   percentage-of-screen against .title-screen, so the glow tracks the
-   wordmark's actual position instead of drifting into empty space whenever
-   the button stack below it grows or shrinks), and a rising ember field
-   (.title-embers/.title-ember, positions/timings authored in TitleScreen.tsx
-   useEmbers via a golden-angle sequence rather than PNG art or Math.random —
-   see memory: combat juice here is CSS, not sprites). */
+/* Haunted treatment. The screen is COLD — a drowned blue-green ground with a
+   sickly cyan haze low and a bruised violet high — and the gold CTA is the
+   only warm thing on it, which is the whole point: one lit lamp in a dark
+   place reads as an invitation, a gold screen reads as a menu.
+   ┄
+   Four atmosphere layers, all CSS, no raster art (see memory: juice here is
+   CSS, not sprites). Back to front: the layered-gradient ground plus the
+   faint tactical grid .battlefield also carries, so the title reads as the
+   same world; three slow blurred fog bands drifting at different speeds and
+   in opposite directions (.title-fog-*), which is what makes the stillness
+   feel like held breath rather than a static image; a cold ash field rising
+   and swaying (.title-motes/.title-mote, positions and timings authored in
+   TitleScreen.tsx via a golden-angle sequence rather than Math.random); and
+   a hard vignette (.title-vignette) crushing the corners so the wordmark
+   sits in the only lit part of the frame.
+   ┄
+   Behind the logo, a slow-spinning godray burst and pulsing core glow
+   (.title-ray-burst/.title-core-glow) — deliberately anchored to .title-logo
+   itself rather than positioned by percentage-of-screen against
+   .title-screen, so the glow tracks the wordmark's actual position instead
+   of drifting into empty space whenever the stack below it changes. */
 .title-screen {
   position: relative;
   flex: 1 1 auto;
@@ -12054,34 +12064,167 @@ textarea,
   text-align: center;
   overflow: hidden;
   border-radius: 14px;
+  /* This screen's layers are ordered by z-index against each other, and
+     .app-shell is transform-scaled, so without a stacking context of its own
+     they'd be ordered against the shell's other children instead. */
+  isolation: isolate;
   background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 24px),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 24px),
-    radial-gradient(ellipse 90% 55% at 50% 28%, rgba(224, 166, 60, 0.18), transparent 65%),
-    radial-gradient(ellipse 100% 70% at 50% 105%, rgba(139, 127, 224, 0.16), transparent 70%),
-    linear-gradient(180deg, #17131d, #14161c 55%, #100e14);
+    repeating-linear-gradient(0deg, rgba(190, 220, 235, 0.018) 0px, rgba(190, 220, 235, 0.018) 1px, transparent 1px, transparent 24px),
+    repeating-linear-gradient(90deg, rgba(190, 220, 235, 0.018) 0px, rgba(190, 220, 235, 0.018) 1px, transparent 1px, transparent 24px),
+    radial-gradient(ellipse 78% 44% at 50% 30%, rgba(122, 150, 168, 0.15), transparent 68%),
+    radial-gradient(ellipse 120% 46% at 50% 104%, rgba(86, 168, 148, 0.16), transparent 72%),
+    radial-gradient(ellipse 90% 60% at 50% -12%, rgba(96, 84, 150, 0.22), transparent 70%),
+    linear-gradient(180deg, #0a0c12, #090d10 52%, #060809);
+}
+
+/* Drifting fog. Each band is a wide soft ellipse translated well past both
+   edges of its travel, so the seam where the animation restarts is always
+   off-screen — a fog bank that visibly snaps back is worse than no fog. The
+   opposed directions and prime-ish durations keep the three from ever
+   settling into a shared beat. */
+.title-fog {
+  position: absolute;
+  inset: -12% -30%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.title-fog-band {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  border-radius: 50%;
+  filter: blur(26px);
+}
+
+.title-fog-a {
+  top: 8%;
+  height: 34%;
+  background: radial-gradient(ellipse 46% 50% at 50% 50%, rgba(118, 138, 178, 0.2), transparent 70%);
+  animation: title-fog-drift-right 61s linear infinite;
+}
+
+.title-fog-b {
+  top: 44%;
+  height: 40%;
+  background: radial-gradient(ellipse 40% 50% at 50% 50%, rgba(78, 158, 142, 0.16), transparent 72%);
+  animation: title-fog-drift-left 83s linear infinite;
+}
+
+.title-fog-c {
+  bottom: -6%;
+  height: 46%;
+  background: radial-gradient(ellipse 60% 46% at 50% 60%, rgba(60, 120, 118, 0.22), transparent 68%);
+  animation: title-fog-drift-right 107s linear infinite;
+}
+
+@keyframes title-fog-drift-right {
+  from {
+    transform: translateX(-22%);
+  }
+  to {
+    transform: translateX(22%);
+  }
+}
+
+@keyframes title-fog-drift-left {
+  from {
+    transform: translateX(20%);
+  }
+  to {
+    transform: translateX(-20%);
+  }
+}
+
+/* Film grain — an inline feTurbulence tile, not an asset, so it costs one
+   data URI and no request. It is the difference between "dark UI" and "old
+   footage of somewhere you should not be": every one of the layers under it
+   is a smooth gradient, and smooth gradients read as clean. The tile is
+   jumped to eight positions by `steps(8)` rather than slid continuously —
+   grain that slides is a moving texture, grain that jumps is grain.
+   ┄
+   Plain alpha, no blend mode: `overlay`/`soft-light` both collapse to
+   nothing over a near-black ground, which is the entire ground here. The
+   inset overhang is so the jitter never drags an untextured edge into view. */
+.title-grain {
+  position: absolute;
+  inset: -60px;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.15;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
+  animation: title-grain-jitter 0.9s steps(8, end) infinite;
+}
+
+@keyframes title-grain-jitter {
+  0% {
+    transform: translate(0, 0);
+  }
+  12.5% {
+    transform: translate(-14px, 8px);
+  }
+  25% {
+    transform: translate(9px, -12px);
+  }
+  37.5% {
+    transform: translate(-6px, -9px);
+  }
+  50% {
+    transform: translate(13px, 6px);
+  }
+  62.5% {
+    transform: translate(-11px, 13px);
+  }
+  75% {
+    transform: translate(7px, 11px);
+  }
+  87.5% {
+    transform: translate(-9px, -6px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+/* Corners crushed to near-black. An inset shadow rather than a gradient
+   because it hugs the 14px radius of the shell without a second mask. */
+.title-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 14px;
+  pointer-events: none;
+  box-shadow: inset 0 0 70px 16px rgba(2, 4, 5, 0.95), inset 0 0 160px 44px rgba(2, 4, 5, 0.8),
+    inset 0 0 300px 100px rgba(2, 4, 5, 0.5);
 }
 
 .title-ray-burst {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 440px;
-  height: 440px;
+  width: 460px;
+  height: 460px;
   transform: translate(-50%, -50%);
   background: conic-gradient(
     from 0deg,
     transparent 0deg,
-    rgba(224, 166, 60, 0.14) 8deg,
+    rgba(150, 196, 214, 0.1) 8deg,
     transparent 22deg,
     transparent 160deg,
-    rgba(224, 166, 60, 0.1) 172deg,
+    rgba(122, 176, 200, 0.07) 172deg,
     transparent 186deg,
     transparent 338deg,
-    rgba(224, 166, 60, 0.14) 352deg,
+    rgba(150, 196, 214, 0.1) 352deg,
     transparent 360deg
   );
-  animation: title-rays-spin 44s linear infinite;
+  /* Blurred and radially faded to nothing at its own edge. Unmasked, a conic
+     gradient ends in a hard straight wedge that reads as a solid prop lying
+     across the screen; the point here is a shaft of light in bad air. */
+  filter: blur(9px);
+  -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 68%);
+  mask-image: radial-gradient(circle, #000 18%, transparent 68%);
+  animation: title-rays-spin 76s linear infinite;
   pointer-events: none;
   z-index: -2;
 }
@@ -12090,12 +12233,12 @@ textarea,
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 240px;
-  height: 240px;
+  width: 260px;
+  height: 260px;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(224, 166, 60, 0.3), transparent 70%);
-  filter: blur(2px);
-  animation: title-core-pulse 3.6s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(126, 178, 196, 0.24), transparent 70%);
+  filter: blur(3px);
+  animation: title-core-pulse 7.5s ease-in-out infinite;
   pointer-events: none;
   z-index: -2;
 }
@@ -12109,33 +12252,63 @@ textarea,
 @keyframes title-core-pulse {
   0%,
   100% {
-    opacity: 0.65;
+    opacity: 0.45;
   }
   50% {
-    opacity: 1;
+    opacity: 0.9;
   }
 }
 
-.title-embers {
+.title-motes {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: 1;
   overflow: hidden;
   pointer-events: none;
 }
 
-.title-ember {
+/* Cold ash, not embers: no warm core, a much wider halo than a spark would
+   have, and slow enough (14–26s, authored in TitleScreen.tsx) that a single
+   mote is never the thing the eye is tracking. */
+.title-mote {
   position: absolute;
   bottom: -4%;
   border-radius: 50%;
-  background: radial-gradient(circle, #ffe4ab 0%, var(--accent) 55%, transparent 75%);
-  box-shadow: 0 0 6px 1px rgba(224, 166, 60, 0.65);
+  background: radial-gradient(circle, rgba(232, 248, 252, 1) 0%, rgba(158, 214, 226, 0.85) 48%, transparent 76%);
+  box-shadow: 0 0 9px 3px rgba(150, 206, 222, 0.4);
   opacity: 0;
-  animation-name: title-ember-rise;
-  animation-timing-function: ease-in;
+  animation-name: title-mote-rise;
+  animation-timing-function: linear;
   animation-iteration-count: infinite;
 }
 
+/* The mid-flight `--sway` is what separates drifting from falling upward:
+   the horizontal path bends and then comes back, so the mote reads as
+   carried on air rather than fired from below. */
+@keyframes title-mote-rise {
+  0% {
+    bottom: -4%;
+    opacity: 0;
+    transform: translateX(0);
+  }
+  14% {
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateX(var(--sway));
+  }
+  78% {
+    opacity: 0.45;
+  }
+  100% {
+    bottom: 104%;
+    opacity: 0;
+    transform: translateX(var(--drift));
+  }
+}
+
+/* Still used by the draft, the level-up screen and the node screens (search
+   `title-ember-rise`); the title itself moved to the colder mote field above. */
 @keyframes title-ember-rise {
   0% {
     bottom: -4%;
@@ -12188,16 +12361,19 @@ textarea,
  */
 .title-logo {
   position: relative;
-  font-size: 38px;
+  font-size: 40px;
   font-weight: 900;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.16em;
   color: var(--accent);
-  background: linear-gradient(180deg, #ffe7b0 0%, #f0bc5f 38%, var(--accent) 62%, #a4701f 100%);
+  /* Bone at the top falling to a tarnished, almost-green bronze at the
+     baseline — the same vertical-falloff logic as before, relit by a cold
+     source. The gold survives; it just stops looking freshly struck. */
+  background: linear-gradient(180deg, #eef1e6 0%, #d9c48a 34%, #b08c3c 64%, #5c4a24 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 12px rgba(224, 166, 60, 0.45)) drop-shadow(0 2px 1px rgba(0, 0, 0, 0.6));
-  animation: title-logo-breathe 4.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 14px rgba(150, 196, 214, 0.3)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.85));
+  animation: title-logo-breathe 9s ease-in-out infinite;
 }
 
 /* Duplicate text sitting behind the crisp copy, heavily blurred, giving the
@@ -12206,14 +12382,46 @@ textarea,
   position: absolute;
   inset: 0;
   z-index: -1;
-  color: var(--accent);
+  color: #9ec6d4;
   /* Mandatory reset, not decoration: -webkit-text-fill-color INHERITS, so
      the parent's `transparent` (needed for its gradient-clipped fill) would
      otherwise propagate down here and blank out the very glyphs whose blur
      is the bloom. */
-  -webkit-text-fill-color: var(--accent);
-  filter: blur(14px);
-  opacity: 0.55;
+  -webkit-text-fill-color: #9ec6d4;
+  filter: blur(16px);
+  opacity: 0.5;
+  /* A guttering lamp. The stops are deliberately uneven and not on any
+     multiple of each other — an evenly-spaced flicker reads as a pulse, and
+     a pulse reads as a machine rather than as a flame about to go out. */
+  animation: title-logo-gutter 5.3s steps(1, end) infinite;
+}
+
+@keyframes title-logo-gutter {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  17% {
+    opacity: 0.28;
+  }
+  20% {
+    opacity: 0.62;
+  }
+  46% {
+    opacity: 0.42;
+  }
+  49% {
+    opacity: 0.16;
+  }
+  52% {
+    opacity: 0.55;
+  }
+  78% {
+    opacity: 0.36;
+  }
+  81% {
+    opacity: 0.5;
+  }
 }
 
 @keyframes title-logo-breathe {
@@ -12222,18 +12430,19 @@ textarea,
     transform: scale(1);
   }
   50% {
-    transform: scale(1.015);
+    transform: scale(1.012);
   }
 }
 
 .title-tagline {
-  margin-bottom: 30px;
-  font-size: 12px;
+  margin-bottom: 34px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
   text-transform: uppercase;
-  color: var(--text-dim);
-  animation: title-tagline-fade 0.9s ease 0.25s both;
+  color: rgba(158, 182, 194, 0.6);
+  animation: title-tagline-fade 1.6s ease 0.5s both;
 }
 
 @keyframes title-tagline-fade {
@@ -12251,11 +12460,11 @@ textarea,
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 260px;
+  max-width: 268px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  animation: title-buttons-rise 0.6s var(--ease-spring) 0.15s both;
+  gap: 14px;
+  animation: title-buttons-rise 0.9s var(--ease-spring) 0.35s both;
 }
 
 @keyframes title-buttons-rise {
@@ -12274,12 +12483,15 @@ textarea,
    gradient fill and a slow glow-pulse so "Start a Run" reads as the one
    action the whole screen is built around. */
 .title-cta {
-  font-size: 16px;
-  letter-spacing: 0.04em;
+  font-size: 17px;
+  letter-spacing: 0.06em;
+  padding: 15px;
   background: linear-gradient(135deg, #f3c877, var(--accent) 55%, #b9822a);
   box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.5), 0 6px 18px rgba(224, 166, 60, 0.22), 0 0 18px rgba(224, 166, 60, 0.16);
   transition: transform 0.15s ease;
-  animation: title-cta-pulse 2.4s ease-in-out infinite;
+  /* Slower than the 2.4s it was: on a cold, near-still screen the one warm
+     element setting a brisk tempo drags the whole frame's pulse up with it. */
+  animation: title-cta-pulse 4.6s ease-in-out infinite;
 }
 
 .title-cta:hover {
@@ -12415,99 +12627,100 @@ textarea,
   }
 }
 
-.title-secondary-button {
+/* The second of the two title actions. Deliberately NOT the gold CTA
+   treatment and deliberately not the 14px row the old secondary buttons
+   were either: it is a cold slab with an icon and a subtitle, so it reads as
+   the other half of a pair rather than as the first entry in a list. The
+   inner glow warms on hover — it is a book on a dark shelf catching light. */
+.title-compendium-button {
   width: 100%;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  text-align: left;
   border-radius: var(--radius-sm);
+  border: 1px solid rgba(146, 182, 196, 0.28);
+  background: linear-gradient(180deg, rgba(28, 40, 48, 0.9), rgba(14, 20, 26, 0.9));
   color: var(--text);
-  padding: 12px;
-  font-size: 14px;
-  font-weight: 700;
   cursor: pointer;
-  box-shadow: var(--hairline), var(--elev-1);
+  box-shadow: inset 0 1px 0 rgba(190, 224, 236, 0.08), 0 6px 16px rgba(0, 0, 0, 0.45);
   transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
-.title-secondary-button:hover {
-  border-color: var(--accent);
+.title-compendium-button:hover {
+  border-color: rgba(224, 166, 60, 0.55);
   transform: translateY(-1px);
-  box-shadow: var(--hairline-strong), var(--elev-2);
+  box-shadow: inset 0 1px 0 rgba(255, 226, 170, 0.12), 0 8px 20px rgba(0, 0, 0, 0.5), 0 0 18px rgba(224, 166, 60, 0.12);
 }
 
-.title-secondary-button:active {
+.title-compendium-button:active {
   transform: translateY(0);
 }
 
-/* ⚠️ TEMPORARY DEV/TEST button (App.tsx createLevel4TestRun) — deliberately
-   styled as "not a real menu item" (dashed border, warning color, explicit
-   "temp" tag) so it reads as scaffolding rather than a shipped feature.
-   Remove alongside its handler when no longer needed. */
-.title-debug-button {
-  width: 100%;
-  background: var(--panel-alt);
-  border: 1px dashed var(--enemy);
-  border-radius: 8px;
-  color: var(--enemy);
-  padding: 10px 12px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
+.title-compendium-icon {
+  font-size: 20px;
+  line-height: 1;
+  filter: saturate(0.7) drop-shadow(0 0 6px rgba(150, 196, 214, 0.35));
+}
+
+.title-compendium-text {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.title-debug-button:hover {
-  background: var(--panel);
+.title-compendium-label {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
-.title-debug-tag {
-  font-size: 9px;
+.title-compendium-sub {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  border: 1px solid var(--enemy);
-  border-radius: 8px;
-  padding: 1px 5px;
+  color: rgba(158, 182, 194, 0.55);
 }
 
-/* Compendium/Reference — secondary lookup tools, not run-starting actions,
-   so they're pulled out of .title-buttons entirely and pinned as small
-   emoji-icon buttons along the bottom edge rather than competing with the
-   real menu for vertical weight. */
+/* Reference — a lookup tool, not a run-starting action, so it keeps the
+   small emoji-icon treatment and sits in the corner opposite Dev rather
+   than competing with the two real actions for vertical weight. */
 .title-icon-row {
   position: absolute;
-  bottom: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
+  bottom: 12px;
+  left: 12px;
+  z-index: 3;
   display: flex;
-  gap: 14px;
-  animation: title-icon-row-fade 0.7s ease 0.4s both;
+  gap: 10px;
+  animation: title-icon-row-fade 0.7s ease 0.8s both;
 }
 
 .title-icon-button {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
+  background: rgba(16, 24, 30, 0.75);
+  border: 1px solid rgba(146, 182, 196, 0.22);
   color: var(--text);
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1;
+  opacity: 0.6;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: var(--hairline), var(--elev-1);
-  transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  transition: border-color var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out),
+    transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
 .title-icon-button:hover {
-  border-color: var(--accent);
+  opacity: 1;
+  border-color: rgba(224, 166, 60, 0.55);
   transform: translateY(-1px);
-  box-shadow: var(--hairline-strong), var(--elev-2);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5), 0 0 14px rgba(224, 166, 60, 0.14);
 }
 
 .title-icon-button:active {
@@ -12517,12 +12730,105 @@ textarea,
 @keyframes title-icon-row-fade {
   from {
     opacity: 0;
-    transform: translate(-50%, 6px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translateY(0);
   }
+}
+
+/* ⚠️ TEMPORARY DEV/TEST corner. Everything reachable from here is either an
+   authoring tool (Quick Battle, Sandbox Battle, Visit Location) or a
+   throwaway fixture (the two 🧪 rows). Kept deliberately quiet — low
+   opacity until hovered, no accent colour, tucked into the corner opposite
+   Reference — so it reads as scaffolding rather than as a shipped feature,
+   and so the two real actions own the middle of the screen. */
+.title-dev {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  animation: title-icon-row-fade 0.7s ease 0.8s both;
+}
+
+.title-dev-button {
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px dashed rgba(146, 182, 196, 0.3);
+  background: rgba(16, 24, 30, 0.75);
+  color: rgba(158, 182, 194, 0.75);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out);
+}
+
+.title-dev-button:hover,
+.title-dev.is-open .title-dev-button {
+  opacity: 1;
+  border-color: rgba(146, 182, 196, 0.6);
+}
+
+/* Column order is reversed so the menu grows UP from the button while the
+   button itself stays pinned to the corner — no absolute positioning, so
+   the panel can be any height without re-measuring. */
+.title-dev-menu {
+  order: -1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 170px;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px dashed rgba(146, 182, 196, 0.3);
+  background: rgba(10, 15, 19, 0.96);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  animation: title-dev-menu-in 0.18s var(--ease-out) both;
+}
+
+@keyframes title-dev-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.title-dev-item {
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(196, 212, 220, 0.85);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+
+.title-dev-item:hover {
+  background: rgba(146, 182, 196, 0.12);
+  color: var(--text);
+}
+
+/* Catches the dismissing tap. Sits under .title-dev (z-index 5) and over
+   everything else on the screen. */
+.title-dev-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
 }
 
 /* --- Training panel (level-up pool spend UI) ----------------------------- */
