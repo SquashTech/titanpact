@@ -14816,6 +14816,15 @@ textarea,
   color: var(--enemy);
 }
 
+/* The move the path hands over on the spot. Drawn in the move's own type
+   colour, which on a graft path is the grafted type — the chip and the type
+   badge beside it then read as one claim, and neither can be mistaken for the
+   passive chip, which wears the passive's identity colour instead. */
+.evolution-path-move {
+  border-color: var(--move-color, var(--accent));
+  color: var(--move-color, var(--accent));
+}
+
 /* The two prose lines under the chip row. Both are the "what this actually
    does" half of a permanent choice, so they share the description's size and
    dimness rather than competing with it. */
@@ -14826,15 +14835,6 @@ textarea,
   line-height: 1.4;
   color: var(--text-dim);
   text-align: left;
-}
-
-.evolution-path-learnable-label {
-  margin-right: 5px;
-  font-size: 9px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-dim);
 }
 
 .evolution-path-button.evolution-offensive {
@@ -14946,6 +14946,42 @@ textarea,
 
 .evolution-path-list-big .evolution-path-name {
   font-size: 15px;
+}
+
+/* A path card is one press target end to end — tap picks, hold reads, the same
+   gesture the move rows and the equipment caches use — so the way in to the
+   dossier is stated here rather than left to be discovered. */
+.evolution-inspect-hint {
+  margin: 10px 0 0;
+  font-size: 10px;
+  font-style: italic;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.evolution-dossier {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.evolution-dossier-desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.evolution-dossier-pool {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  font-style: italic;
+  color: var(--text-dim);
+}
+
+.evolution-dossier-confirm {
+  margin-top: 4px;
 }
 
 /* --- Sandbox Battle (team-builder tool — App.tsx 'sandboxBattle'/'sandboxFight',
