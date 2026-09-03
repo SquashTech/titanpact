@@ -12927,6 +12927,13 @@ textarea,
   text-align: center;
   cursor: pointer;
   overflow: hidden;
+  /* Carried in a variable because the wake animation below has to END on it: a
+     keyframe closing on a literal `opacity: 1` lights a locked card to full and
+     then lets it fade back down the moment the animation lets go — which, on a
+     grid that wakes staggered, reads as the roster going dark one card at a
+     time. */
+  --card-opacity: 1;
+  opacity: var(--card-opacity);
   transition:
     transform var(--dur-fast) var(--ease-out),
     box-shadow var(--dur-mid) var(--ease-out),
@@ -12959,7 +12966,7 @@ textarea,
    silhouette and not only from the opacity. */
 .pick-card.is-locked {
   cursor: default;
-  opacity: 0.48;
+  --card-opacity: 0.48;
   box-shadow: none;
 }
 
@@ -13910,6 +13917,14 @@ textarea,
   gap: 8px;
 }
 
+/* Reserves the strip, draws nothing. The bank-and-leave out is unavailable for
+   the half second a card spends charging and again once the pool runs dry, and
+   the roster above it centres in the room left under it — a button that left the
+   flow at either moment would slide the whole grid down mid-tap. */
+.levelup-bank-button.is-inert {
+  visibility: hidden;
+}
+
 /* The pool, as orbs that go out one at a time. Same fixed-denominator idiom
    as the draft's pact sockets and the Field Effect plaque's duration clock:
    the track's width is what the fight paid out, and it empties left to right
@@ -14043,7 +14058,7 @@ textarea,
     transform: translateY(10px) scale(0.96);
   }
   to {
-    opacity: 1;
+    opacity: var(--card-opacity);
     transform: none;
   }
 }
@@ -14069,7 +14084,7 @@ textarea,
    card stays fully interactive and lit even with an empty pool, because
    tapping it opens the choice rather than spending anything. */
 .growth-card.is-evolving {
-  opacity: 1;
+  --card-opacity: 1;
   cursor: pointer;
   border-color: var(--accent);
   background:

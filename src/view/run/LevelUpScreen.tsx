@@ -189,6 +189,9 @@ const ORB_SETTLE_MS = 340;
 /** Past this the header falls back to a count, which has nothing to stagger. */
 const ORB_TRACK_MAX = 12;
 
+/** The card wake stagger plus its longest delay (styles.css .pick-grid.is-waking). */
+const GRID_WAKE_MS = 700;
+
 // Forced post-battle spend screen. Each hero card is itself the level-up
 // button; RosterManagementScreen never spends the pool.
 export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
@@ -233,6 +236,17 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
     timers.push(window.setTimeout(() => setIntroDone(true), ORB_LEAD_MS + introOrbs * ORB_STAGGER_MS + ORB_SETTLE_MS));
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [introOrbs]);
+
+  /**
+   * The arrival beat plays once. A move offer unmounts the grid, and replaying the
+   * stagger on the way back would re-introduce a roster the player never left.
+   */
+  const [wakeDone, setWakeDone] = useState(false);
+  useEffect(() => {
+    if (!introDone || wakeDone) return;
+    const timer = window.setTimeout(() => setWakeDone(true), GRID_WAKE_MS);
+    return () => window.clearTimeout(timer);
+  }, [introDone, wakeDone]);
 
   /** Called after the charge animation (handleCardClick), never directly from a click. */
   function applyLevelUp(rosterId: string) {
@@ -524,7 +538,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
         </div>
       ) : (
         /* Rendered dark rather than mounted on `introDone`, so nothing shifts when it wakes. */
-        <HeroPickGrid count={run.roster.length} fill className={introDone ? 'is-waking' : 'is-asleep'}>
+        <HeroPickGrid count={run.roster.length} fill className={introDone ? (wakeDone ? '' : 'is-waking') : 'is-asleep'}>
           {run.roster.map((entry) => {
             const hero = heroes[entry.heroId];
             const node = availableEvolution(progressionTable, entry);
@@ -554,8 +568,16 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
         </HeroPickGrid>
       )}
 
-      {canBank && (
-        <button className="secondary-button levelup-bank-button" onClick={handleBank}>
+      {/* Kept in the layout even when it cannot be pressed. The grid centres in
+          whatever room is left under it, so unmounting the button — for the half
+          second a card spends charging, or the moment the pool runs dry — would
+          slide the whole roster down under the player's own thumb. */}
+      {!offer && !masteryOffer && (
+        <button
+          className={`secondary-button levelup-bank-button${canBank ? '' : ' is-inert'}`}
+          onClick={handleBank}
+          disabled={!canBank}
+        >
           Bank {run.levelUpPool} XP for later
         </button>
       )}
