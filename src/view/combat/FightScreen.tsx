@@ -353,10 +353,6 @@ const config = { typeChart, heroes: allCombatants, moves, statuses, passives, fi
 const AUTO_ADVANCE_HOLD_MS = 350;
 const AUTO_ADVANCE_STEP_MS = 450;
 
-// The intro advances itself, a beat slower than a round's auto-play: its beats are read, not
-// watched, and the whole thing is over in a second when no entry passive fires.
-const INTRO_BEAT_MS = 1000;
-
 // EXPERIMENTAL: music rate once a named enemy takes the field (also drops pitch — no time-stretch in Web Audio). 1 disables it.
 const DREAD_MUSIC_RATE = 0.8;
 
@@ -584,8 +580,6 @@ export function FightScreen({
   // Starts true: a fight opens mid-playback (the intro), and the mount effect below fills the
   // queue. Initialising it false would paint one frame of a live action console first.
   const [resolving, setResolving] = useState(true);
-  /** The intro specifically — a tap skips what is left of it, where a tap during a round advances one beat. */
-  const [introPlaying, setIntroPlaying] = useState(true);
   const [beat, setBeat] = useState<Beat | null>(null);
   /** Only a React key: consecutive beats can carry identical text, and the headline must remount to replay its arrival. */
   const [beatSeq, setBeatSeq] = useState(0);
@@ -610,17 +604,13 @@ export function FightScreen({
     };
   }, []);
 
-  // The fight's intro, played through the same beat player a round uses: the engagement beat,
-  // then whatever the leads' entry passives did. It advances itself, so a fight with no entry
-  // passive costs one beat and zero inputs; a tap skips the rest (skipIntro).
+  // The fight's intro: the engagement beat, then whatever the leads' entry passives did. Queued
+  // into the same beat player a round uses and advanced the same way — tap per beat, hold to
+  // auto-play — so the fight's first input teaches the input every round after it wants.
   useEffect(() => {
     startBeatPlayback(opening.start, opening.events, opening.final, [
       openingBeat(opening.start, allCombatants, AI_SIDE, location),
     ]);
-    autoPlayInterval.current = window.setInterval(() => {
-      if (!handleAdvance()) stopAutoAdvance();
-    }, INTRO_BEAT_MS);
-    return stopAutoAdvance;
   }, []);
 
   /** The one StatContext every number on this screen reads through, so cards, dossier and forecast agree with resolveRound. */
@@ -877,7 +867,6 @@ export function FightScreen({
       setPopups({});
       setBeat(null);
       setResolving(false);
-      setIntroPlaying(false);
       setPending({});
       setSelecting(null);
       setMovePopup(null);
@@ -899,20 +888,6 @@ export function FightScreen({
     setBeatSeq((n) => n + 1);
     setPopups(Object.fromEntries(revealed.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className }])));
     return true;
-  }
-
-  /**
-   * A tap during the intro drops the rest of it. Only the log needs catching up: an empty queue
-   * finalizes onto `finalState`, so a player who taps through lands on the same board as one who
-   * watched — the skipped beats' events are already in it.
-   */
-  function skipIntro() {
-    stopAutoAdvance();
-    const remaining = beatQueue.current;
-    beatQueue.current = [];
-    const events = remaining.flatMap((b) => b.events);
-    if (events.length > 0) appendLog(formatEvents(events, allCombatants, finalState.current!.combatants, moves));
-    handleAdvance();
   }
 
   function stopAutoAdvance() {
@@ -986,22 +961,17 @@ export function FightScreen({
 
   return (
     <>
-      {/* Full-screen tap-to-advance catcher; sits below the log overlay's z-index. The intro takes
-          a plain tap-to-skip instead: it is already advancing itself, so hold-to-auto-play has
-          nothing to add, and stepping a beat at a time is not what an impatient tap is asking for. */}
-      {resolving &&
-        (introPlaying ? (
-          <div className="advance-overlay" onClick={skipIntro} />
-        ) : (
-          <div
-            className="advance-overlay"
-            onClick={handleAdvanceClick}
-            onPointerDown={handleAdvancePointerDown}
-            onPointerUp={stopAutoAdvance}
-            onPointerLeave={stopAutoAdvance}
-            onPointerCancel={stopAutoAdvance}
-          />
-        ))}
+      {/* Full-screen tap-to-advance catcher; sits below the log overlay's z-index. */}
+      {resolving && (
+        <div
+          className="advance-overlay"
+          onClick={handleAdvanceClick}
+          onPointerDown={handleAdvancePointerDown}
+          onPointerUp={stopAutoAdvance}
+          onPointerLeave={stopAutoAdvance}
+          onPointerCancel={stopAutoAdvance}
+        />
+      )}
 
       <div
         className={`battlefield${combat.activeFieldEffect ? ' field-effect-active' : ''}${
@@ -1109,7 +1079,7 @@ export function FightScreen({
                 <span className={`combat-banner-meta${beat.bannerMetaClass ? ` ${beat.bannerMetaClass}` : ''}`}>{beat.bannerMeta}</span>
               )}
             </div>
-            <span className="combat-banner-hint">{introPlaying ? 'tap to skip ▸' : 'tap ▸ or hold to auto-play ⏵⏵'}</span>
+            <span className="combat-banner-hint">tap ▸ or hold to auto-play ⏵⏵</span>
           </div>
         )}
         {/* Forced replacement: select-then-Confirm, since it cannot be undone once committed. */}

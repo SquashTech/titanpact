@@ -1800,18 +1800,25 @@ That split is the whole fix; everything below is presentation on top of it.
   mid-playback by definition, and initialising it false paints one frame of a live
   action console before the mount effect takes it away. `startBeatPlayback` gained
   a `prelude` parameter for beats that aren't grouped from events.
-- **It advances itself.** `INTRO_BEAT_MS` = 1000, a beat slower than a round's
-  auto-play (450ms) because these are read, not watched. A fight with no entry
-  passive is therefore **one beat, ~1s, zero inputs**; the common case costs the
-  player nothing. Always one beat even when there is nothing to say — an intro that
-  appears only sometimes reads as an interruption rather than a ritual, and it
-  would announce "something happened" before the player could know what.
-- **A tap skips the rest, rather than stepping through it.** The intro is already
-  advancing, so hold-to-auto-play has nothing to add, and one-beat-per-tap is not
-  what an impatient tap is asking for. `skipIntro` only catches the **log** up: an
-  empty queue finalizes onto `finalState`, so the board is identical either way by
-  construction rather than by the flush being careful. The hint line says
-  `tap to skip ▸` instead of the round's `tap ▸ or hold to auto-play ⏵⏵`.
+- **The player advances it, a tap per beat.** Always at least one beat, even when
+  there is nothing to say — an intro that appears only sometimes reads as an
+  interruption rather than a ritual, and it would announce "something happened"
+  before the player could know what. So an ordinary fight is **exactly one tap**,
+  and a fight with an entry passive on both leads is three.
+  - ⚠️ **Reversed same day, on user direction, after the first phone test.** This
+    shipped auto-advancing at `INTRO_BEAT_MS` = 1000 with a tap to skip, on the
+    reasoning that the common case should cost **zero** inputs. Held in the hand
+    that was worse, not better: *"I honestly think it's okay and won't be too
+    cumbersome."* A timed beat the player cannot control is a wait, however short,
+    and it also made the fight's very first input mean something (**skip**) that
+    the identical tap means nothing like for the rest of the fight (**advance**).
+    Tap-advancing it deletes `INTRO_BEAT_MS`, `introPlaying` and `skipIntro`
+    outright — the intro is now *only* `startBeatPlayback` with a prelude, sharing
+    the round's overlay, its hold-to-auto-play and its
+    `tap ▸ or hold to auto-play ⏵⏵` hint. The general lesson is the cheaper one:
+    **a new moment should borrow the input the surrounding screen already
+    teaches**, and inventing a second verb for the same gesture costs more than
+    the input it saves.
 - `sounds.ts` — one row, `battle.join`: a struck low drum, then a swell that rises
   where `entrance.dread`'s sweeps fall. Fires once a battle so it may have
   presence, but it is capped under dread (0.44 against 0.52) on purpose — **the
@@ -1838,18 +1845,21 @@ real source is a map event, too many clicks deep to reach for a view check).
 committing.
 
 Read as a recording rather than as a screenshot, since the thing under test is a
-sequence: a 40ms poller over `.combat-banner-current`, `.move-button` and the
-popup classes, collapsed to distinct states.
+sequence: `.combat-banner-current`, `.combat-banner-hint` and `.move-button`
+sampled after each synthetic tap.
 
-- With two holders: engagement beat at t=0 → `IMPOSING PRESENCE · CORTEX AND
-  CRIMSON / ATK -10` with `-10 ATK,-10 ATK` popups at t=976 → console with 4 move
-  buttons at t=2997. Input gated (`moveBtns=0`) for the whole intro.
-- With none: one beat, then the console at t=994. Zero inputs, as intended.
+- With none: the engagement beat **holds indefinitely** with no tap (`moveBtns=0`,
+  hint reads `tap ▸ or hold to auto-play ⏵⏵`), and **one** tap puts 4 move buttons
+  on screen. One tap, exactly as asked.
+- With two holders: hold → tap 1 → `IMPOSING PRESENCE · CORTEX AND CRIMSON /
+  ATK -10` → tap 2 → the second holder's identical beat → tap 3 → console. Input
+  gated for the whole intro.
 - Placeless: the lead reads `BATTLE`.
-- Skip: tapped at 150ms; banner gone and the console live within 300ms. The
-  **battle log after skipping is byte-identical to the log after watching** — six
-  lines, both `Imposing Presence triggers` and all four `attack -10` — which is the
-  claim that actually needed proving.
+
+Under the auto-advancing first cut, the same harness proved the board and the
+**battle log after skipping were byte-identical to watching** — six lines, both
+`Imposing Presence triggers` and all four `attack -10`. That property is now free:
+with no skip path, there is only the one path.
 
 `npm run typecheck:view` and `npm test` (720 passing) pass.
 
