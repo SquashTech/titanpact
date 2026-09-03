@@ -144,6 +144,86 @@ export const enemies: Record<string, HeroDefinition> = {
     moveIds: ['runicBlast', 'forgottenCurse', 'duskBlade', 'eclipse'],
     starter: false,
   },
+
+  // --- Raiders (Storm Coast) — authored for Act 2, scaled up from there ---
+  // Every one is Iron-primary: a warband in mail, not five unrelated coastal things.
+  // The price of that spine is Fire, Storm and Mech, which all read 2x off Iron.
+  //
+  // What makes them a different fight from the Cultists at the same stat band is
+  // Conduct. The status is authored to detonate off `triggerTypes: ['Storm', 'Iron']`
+  // — which is this faction's entire damage output — and two of their moves go FREE
+  // against a marked field (metallicBlade on any mark, overcharge on both). So the
+  // Stormraider's Ionize is worth a whole turn: it buys the warband a round where the
+  // mana brake is off and every hit carries +10% max HP on top. The counterplay is
+  // that detonating consumes the mark, so the discount and the damage compete.
+  raider: {
+    id: 'raider',
+    name: 'Raider',
+    types: ['Iron'],
+    baseStats: { hp: 110, attack: 90, defense: 75, intelligence: 20, wisdom: 40, speed: 65, manaPool: 50, mpRegen: 12 },
+    moveIds: ['openingStrike', 'heavyBlow', 'metallicBlade'],
+    starter: false,
+  },
+  // The one who salts the field. Ionize is priority +1 and hits both, but the AI prices
+  // moves off the pre-round snapshot, so the marks it plants pay out the round AFTER —
+  // the pool is sized to cast it and still reach Storm Lash next round.
+  stormRaider: {
+    id: 'stormRaider',
+    name: 'Stormraider',
+    types: ['Iron', 'Storm'],
+    baseStats: { hp: 115, attack: 90, defense: 80, intelligence: 25, wisdom: 40, speed: 50, manaPool: 65, mpRegen: 12 },
+    moveIds: ['ionize', 'stormLash', 'ironFist'],
+    starter: false,
+  },
+  // The fastest Raider, and Swift Blow is why: priority +1 on 15 base power is nothing on
+  // its own, but it cashes a Conduct mark for 10% of the target's max HP before the round
+  // properly starts. Its Water half opens the holes the rest of the line swings into.
+  surfRaider: {
+    id: 'surfRaider',
+    name: 'Surfraider',
+    types: ['Iron', 'Water'],
+    baseStats: { hp: 95, attack: 85, defense: 65, intelligence: 25, wisdom: 45, speed: 85, manaPool: 55, mpRegen: 12 },
+    moveIds: ['swiftBlow', 'undertow', 'aquaSlice'],
+    starter: false,
+  },
+  // Infuse is the basic-tier answer to the faction's own mana brake: 40 mana tops an
+  // ally back up to a second cast rather than overflowing it, which is the Champion's job.
+  // Fortify is the Iron a caster actually uses — no Attack in the line to spend, and the
+  // reason this is the one Raider that neither plants a Conduct mark nor cashes one: the
+  // only Iron move that runs off Intelligence is Conjured Sword, at twice its pool.
+  mysticRaider: {
+    id: 'mysticRaider',
+    name: 'Mysticraider',
+    types: ['Iron', 'Arcane'],
+    baseStats: { hp: 100, attack: 30, defense: 70, intelligence: 95, wisdom: 70, speed: 35, manaPool: 65, mpRegen: 12 },
+    moveIds: ['fortify', 'infuse', 'magicBolt'],
+    starter: false,
+  },
+  // Fields the "Monsters" battle node alongside 3 random basic Raiders; never randomly drawn.
+  // 500, the Cult Mystic's figure, but spent the other way round: he is a pure physical
+  // line where she is a caster. His tell is Overcharge — 80 base power for nothing once
+  // the field is conducting, on top of the detonation the hit itself sets off.
+  championRaider: {
+    id: 'championRaider',
+    name: 'Champion Raider',
+    types: ['Iron', 'Storm'],
+    baseStats: { hp: 150, attack: 110, defense: 90, intelligence: 30, wisdom: 50, speed: 70, manaPool: 100, mpRegen: 16 },
+    moveIds: ['heavyBlow', 'stormLash', 'reinforce', 'overcharge'],
+    starter: false,
+  },
+  // The Storm Coast's Guardian reinforcement, and the one thing on this coast that is
+  // not a Raider — which is the point: the champion hangs off the Location, not the
+  // faction. 700, matching Yugzulach, and Water/Ancient rather than the warband's Iron.
+  // Archon Blast is the Goblin Lord's move because the Ancient slate is three moves
+  // long and unauthored (CLAUDE.md "Repo map"); it should be revisited when Ancient lands.
+  leviathan: {
+    id: 'leviathan',
+    name: 'Leviathan',
+    types: ['Water', 'Ancient'],
+    baseStats: { hp: 230, attack: 95, defense: 95, intelligence: 130, wisdom: 100, speed: 50, manaPool: 150, mpRegen: 20 },
+    moveIds: ['aquaSlice', 'maelstrom', 'archonBlast', 'tsunami'],
+    starter: false,
+  },
 };
 
 /**
@@ -177,6 +257,13 @@ export const factions: Record<string, FactionRoster> = {
     basicIds: ['cultBlade', 'dreadCultist', 'blightedCultist', 'frozenCultist'],
     leaderId: 'cultMystic',
   },
+  raiders: {
+    id: 'raiders',
+    name: 'Raiders',
+    baselineAct: 2,
+    basicIds: ['raider', 'stormRaider', 'surfRaider', 'mysticRaider'],
+    leaderId: 'championRaider',
+  },
 };
 
 /** The faction every location without an authored one still fields (docs/locations.md "The faction bill"). */
@@ -185,6 +272,7 @@ export const DEFAULT_FACTION_ID = 'goblins';
 /** Pointed at by `LocationDefinition.guardianFinalEnemyId`. */
 export const GOBLIN_LORD_ID = 'goblinLord';
 export const YUGZULACH_ID = 'yugzulach';
+export const LEVIATHAN_ID = 'leviathan';
 
 /** `enemies` narrowed to one faction's basics, for the generators that must never draw its leader. */
 export function basicEnemiesOf(faction: FactionRoster): HeroLookup {

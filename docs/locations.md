@@ -251,9 +251,9 @@ Nothing about a Goblin is hardcoded in the app layer any more; the old
 `generateGoblinChiefEncounter` is the same function under a name that no longer
 names a faction.
 
-Two rosters exist. **Four do not:** the Forbidden Forest, Molten Foundry, Storm
-Coast and Necropolis all point at `'goblins'` (`DEFAULT_FACTION_ID`) and field
-Goblins while the arrival screen names Fae, Automatons, Raiders or Undead.
+Three rosters exist. **Three do not:** the Forbidden Forest, Molten Foundry and
+Necropolis all point at `'goblins'` (`DEFAULT_FACTION_ID`) and field Goblins while
+the arrival screen names Fae, Automatons or Undead.
 
 Roughly 4-5 basics + 1 leader per faction, `HeroDefinition`s in the shape
 `enemies.ts` already uses (a Goblin does not need a different schema, it needs
@@ -261,12 +261,53 @@ different numbers — `run-loop.md` §3), plus a `baselineAct` saying which act 
 numbers are for. Each faction that lands is a block of data and one field here.
 The Cultists are the worked example.
 
+**The Raiders (2026-09-03), and what a second faction settled.** The Storm Coast now
+fields `'raiders'` — four basics at a flat 400, the Champion Raider at 500, the
+Leviathan at 700, and `baselineAct: 2`. Every one of those figures is the Cultists'
+figure, deliberately: Storm Coast and Blighted Shrine are both drawn from the same
+acts 2-5 pool, so the two rosters are interchangeable in an itinerary and a second
+stat band would only make the location pick a difficulty roll. Separating them is
+`difficulty.ts`'s job, not the roster's.
+
+They keep the **shared type spine** the Cultists introduced — every Raider is
+Iron-primary, second types fanning out over none / Storm / Water / Arcane, then Storm
+again on the Champion. So the open balance question in §6 now has two data points
+rather than one: an Iron warband answers to Fire, Storm and Mech as a unit the same
+way a Shadow cult answers to Light and Spirit.
+
+What makes it a *different fight* at the same numbers is **Conduct**. The status
+detonates off `triggerTypes: ['Storm', 'Iron']` (`statuses.ts`) — which is what this
+faction is made of — and two of their moves go free against a marked field:
+`metallicBlade` on any mark, `overcharge` on both. The Stormraider's Ionize is
+therefore worth a whole turn: it buys the warband a round where the mana brake is off
+*and* every hit carries an extra 10% of max HP. The counterplay is built in, because
+detonating consumes the mark — the discount and the damage compete for it.
+
+Two things that fell out of authoring it, both worth knowing before the next faction:
+
+- **A faction gimmick wants a cheap detonator on every member.** The Surfraider's
+  first kit was two Water moves and a non-damaging Iron debuff, which left the fastest
+  Raider unable to cash a mark at all. `swiftBlow` (Iron, 15 power, priority +1) fixed
+  it and is better content besides — the fast one detonates before the round starts.
+- **The Mysticraider still cannot**, and that is a content gap rather than a choice:
+  the only Iron move that runs off Intelligence is `conjuredSword` at 80 mana, well
+  past the faction's mana brake. An Iron **magical** move in the 20-30 range would
+  close it. Until then the caster plants nothing and cashes nothing — it makes the
+  marks affordable, which is a clean enough division of labour to leave alone.
+
 ### 5.3 Per-location Guardians
 
 `run-loop.md` §4 still lists "a real Guardian boss hero" as unbuilt — the boss is
 two fixture heroes with a bigger stat bonus. Locations are the reason to author
 six of them instead of one: each location's Guardian is its faction's apex. Blocked
 behind 5.2 in practice, since a Guardian without its faction reads as unrelated.
+
+**Three of six authored (2026-09-03).** The Leviathan joins the Goblin Lord and
+Yugzulach, and is the case that proves the field belongs on the Location rather than
+the faction: it is Water/Ancient where every Raider is Iron, because what comes out of
+the surf is not a member of the warband. One open dependency — its Ancient STAB is
+`archonBlast`, already the Goblin Lord's, because the Ancient slate is three
+placeholder moves long (`CLAUDE.md` "Repo map"). Revisit when Ancient is authored.
 
 **Partly answered, from an unexpected direction (2026-09-01).** The Goblin Lord is the
 Goblins' apex, and he shipped without waiting on 5.2 — because

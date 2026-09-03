@@ -2,7 +2,7 @@
 // feeds src/run/locations.ts's PoolBias; the presentation fields feed locationArt/ActIntroScreen.
 
 import type { TypeId } from '../engine/content';
-import { DEFAULT_FACTION_ID, GOBLIN_LORD_ID, YUGZULACH_ID } from './enemies';
+import { DEFAULT_FACTION_ID, GOBLIN_LORD_ID, LEVIATHAN_ID, YUGZULACH_ID } from './enemies';
 
 /** Particle-field motion (docs/locations.md §4). */
 export type AmbienceKind = 'fireflies' | 'embers' | 'snow' | 'rain' | 'spores' | 'sigils';
@@ -58,7 +58,7 @@ export const locations: Record<string, LocationDefinition> = {
     ambience: 'sigils',
   },
 
-  // These four still field Goblins: their own rosters are unauthored (docs/locations.md §5.2).
+  // These three still field Goblins: their own rosters are unauthored (docs/locations.md §5.2).
   forbiddenForest: {
     id: 'forbiddenForest',
     name: 'Forbidden Forest',
@@ -92,8 +92,8 @@ export const locations: Record<string, LocationDefinition> = {
     flavor: 'Longships in the shallows, and the weather is on their side.',
     affinity: ['Storm', 'Iron', 'Water'],
     exclusiveHeroIds: [],
-    factionId: DEFAULT_FACTION_ID,
-    guardianFinalEnemyId: null,
+    factionId: 'raiders',
+    guardianFinalEnemyId: LEVIATHAN_ID,
     tintRgb: '74, 144, 217',
     ambience: 'rain',
   },

@@ -48,10 +48,10 @@ test('goblinLord: the kit is four moves — the MOVE_CAP — spanning both damag
   for (const type of lord.types) assert.ok(kitTypes.has(type), `nothing in the kit gets STAB off ${type}`);
 });
 
-test('goblinLord: only the two locations with an authored faction field a Guardian champion today', () => {
+test('goblinLord: only the locations with an authored faction field a Guardian champion today', () => {
   assert.strictEqual(locations[ACT_ONE_LOCATION_ID].guardianFinalEnemyId, GOBLIN_LORD_ID);
   const withChampions = Object.values(locations).filter((l) => l.guardianFinalEnemyId !== null);
-  assert.deepStrictEqual(withChampions.map((l) => l.id), [ACT_ONE_LOCATION_ID, 'blightedShrine']);
+  assert.deepStrictEqual(withChampions.map((l) => l.id), [ACT_ONE_LOCATION_ID, 'blightedShrine', 'stormCoast']);
   // appendFinalEnemy no-ops on an unknown id, so a dangling id silently skips the entrance.
   for (const location of withChampions) assert.ok(location.guardianFinalEnemyId! in enemies);
 });

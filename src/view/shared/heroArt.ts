@@ -49,6 +49,13 @@ import frozenCultistArt from '../../../art/enemies/cultists/frozencultist.png';
 import cultMysticArt from '../../../art/enemies/cultists/cultmystic.png';
 import yugzulachArt from '../../../art/enemies/cultists/yugzulach.png';
 
+import raiderArt from '../../../art/enemies/raiders/raider.png';
+import stormRaiderArt from '../../../art/enemies/raiders/stormraider.png';
+import surfRaiderArt from '../../../art/enemies/raiders/surfraider.png';
+import mysticRaiderArt from '../../../art/enemies/raiders/mysticraider.png';
+import championRaiderArt from '../../../art/enemies/raiders/championraider.png';
+import leviathanArt from '../../../art/enemies/raiders/leviathan.png';
+
 /** Portraits keyed by hero id (heroes.ts order, then enemies.ts order). A missing entry renders text-only. */
 export const heroArt: Partial<Record<string, string>> = {
   // --- Fire ---
@@ -116,4 +123,11 @@ export const heroArt: Partial<Record<string, string>> = {
   frozenCultist: frozenCultistArt,
   cultMystic: cultMysticArt,
   yugzulach: yugzulachArt,
+  // --- Enemies: Raiders ---
+  raider: raiderArt,
+  stormRaider: stormRaiderArt,
+  surfRaider: surfRaiderArt,
+  mysticRaider: mysticRaiderArt,
+  championRaider: championRaiderArt,
+  leviathan: leviathanArt,
 };

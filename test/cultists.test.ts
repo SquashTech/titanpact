@@ -168,7 +168,7 @@ test('cultists: the Blighted Shrine is the location that fields them', () => {
   // Every other location still points at the Goblin default (docs/locations.md §5.2).
   for (const location of Object.values(locations)) {
     assert.ok(factions[location.factionId], `${location.id} points at unknown faction ${location.factionId}`);
-    if (location.id !== 'blightedShrine') assert.strictEqual(location.factionId, 'goblins');
+    if (location.id !== 'blightedShrine' && location.id !== 'stormCoast') assert.strictEqual(location.factionId, 'goblins');
   }
 });
 
