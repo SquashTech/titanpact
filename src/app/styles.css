@@ -1688,10 +1688,11 @@ textarea,
  * double-width pair (glyph beside label) and the caption-stacked utility key
  * (glyph over label) still land on the same baseline.
  *
- * Down to three: Log and Ref moved into the Menu. Five keys meant the row's
- * width was being split between two things a player presses constantly and
- * three they consult occasionally, and the occasional three were winning
- * 60% of it.
+ * Log and Ref moved into the Menu. Five keys meant the row's width was being
+ * split between two things a player presses constantly and three they consult
+ * occasionally, and the occasional three were winning 60% of it. The three
+ * that remain are all things played or navigated with; Menu is the only key
+ * here that is merely consulted, and it gets the narrowest slice.
  */
 /* Set INTO the console, like the move rows above them. These were raised chips
    — a lighter --surface-raised face, a --border rectangle, a hairline and a
@@ -1770,15 +1771,13 @@ textarea,
   transition: color var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out);
 }
 
-/* Back and Switch: the two keys pressed mid-decision, several times a turn.
-   Roughly double width, a label at body size next to the glyph rather than
-   under it, and a lit face — they are the row's foreground, and the other
-   three are reference material that happens to live in the same strip. */
-/* Back and Switch keep their double width and their brighter label — they are
-   the two keys pressed mid-decision — but they earn it with a lit key face
-   rather than by being the only raised objects in the row. */
+/* Back, Switch and Rest: the keys pressed mid-decision. Roughly double width,
+   a label at body size next to the glyph rather than under it, and a lit face
+   — they are the row's foreground, and Menu is reference material that happens
+   to live in the same strip. They earn that width with a lit key face rather
+   than by being the only raised objects in the row. */
 .bottom-action-primary {
-  flex: 2.1 1 0;
+  flex: 1.75 1 0;
   gap: 7px;
   font-size: 14px;
   letter-spacing: 0.01em;
@@ -1843,6 +1842,40 @@ textarea,
 .bottom-action-switch:hover:not(:disabled) {
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(74, 144, 217, 0.85),
     inset 0 -1px 0 rgba(120, 175, 235, 0.24), inset 0 0 22px -6px rgba(74, 144, 217, 0.6);
+}
+
+/* Rest: a play, like Switch — it spends the hero's turn — but chosen a handful
+   of times a fight rather than several times a turn, so it takes a step less
+   width than the two keys beside it and a colder, unsaturated rim instead of a
+   fourth hue. Mana blue is deliberately NOT used: --mana and --ally are the
+   same value, and a second key in that blue would cost Switch the only thing
+   its colour is for. Cut in after Switch on purpose — see FightScreen. */
+.bottom-action-rest {
+  flex: 1.35 1 0;
+}
+
+.bottom-action-rest:not(:disabled) {
+  background: linear-gradient(180deg, rgba(150, 172, 214, 0.12), rgba(150, 172, 214, 0.02));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(150, 172, 214, 0.34),
+    inset 0 -1px 0 rgba(190, 208, 238, 0.13);
+}
+
+.bottom-action-rest:not(:disabled) .bottom-action-glyph {
+  color: rgba(196, 212, 240, 0.9);
+}
+
+.bottom-action-rest:hover:not(:disabled) {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(150, 172, 214, 0.75),
+    inset 0 -1px 0 rgba(190, 208, 238, 0.22), inset 0 0 22px -6px rgba(150, 172, 214, 0.5);
+}
+
+/* Stepping Back onto a hero who is already resting has to show it, the same way
+   a chosen move row stays lit while the console sits on its hero. */
+.bottom-action-rest.selected:not(:disabled) {
+  color: #f2f6ff;
+  background: linear-gradient(180deg, rgba(150, 172, 214, 0.3), rgba(150, 172, 214, 0.09));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(190, 208, 238, 0.9),
+    inset 0 -1px 0 rgba(214, 228, 250, 0.28), inset 0 0 24px -7px rgba(190, 208, 238, 0.7);
 }
 
 /* Menu: consulted, not played. Narrow, and the glyph stacks over a caption so

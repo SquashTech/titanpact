@@ -20,6 +20,7 @@ import {
   resolveTargetMode,
   getEffectiveStat,
   getMaxHp,
+  getMaxMana,
 } from '../../engine/state';
 import type { HealCaster } from '../../engine/heal/healPipeline';
 import { resolveRound } from '../../engine/combat/resolveRound';
@@ -639,6 +640,17 @@ export function FightScreen({
   /** Drives the target panel and the Back button (exit targeting rather than step to the previous hero). */
   const showingTargetPanel = selecting !== null && selecting.combatantId === actingId;
 
+  /**
+   * Rest is a recovery, not a pass: the key stays dark while the hero has nothing to recover, so
+   * the row never offers a turn that would only be spent. Any missing mana at all opens it —
+   * partial recovery is a real play. Overflow (docs/mana.md) reads as full: `<`, not `!==`.
+   * The out-of-mana Rest row in the grid is unaffected, so the softlock escape is never gated.
+   */
+  const actingCanRest =
+    actingId !== null &&
+    combat.combatants[actingId].currentMana <
+      getMaxMana(allCombatants[combat.combatants[actingId].heroId], combat.combatants[actingId]);
+
   // The console is lit in the commanding hero's domain color, from under that hero's side of the
   // field; gold and centred while a round resolves (nobody is commanding).
   const consoleRgb = (() => {
@@ -1178,7 +1190,7 @@ export function FightScreen({
               );
             }
 
-            // Softlock fallback (CLAUDE.md "Mana & tempo"): Rest replaces an all-unaffordable grid. Switch stays available below.
+            // Softlock fallback (CLAUDE.md "Mana & tempo"): Rest replaces an all-unaffordable grid, carrying the explanation the bottom-bar key has no room for.
             const canAffordAnyMove = hasAffordableMoveInFight(combat, id, entry.unlockedMoveIds, moves, allCombatants);
             const maxHp = getMaxHp(hero, combatant);
             const partnerTypes = activePartnerTypes(combat, id, allCombatants) ?? [];
@@ -1309,6 +1321,22 @@ export function FightScreen({
                 ⇄
               </span>
               Switch
+            </button>
+            {/* A one-tap commit, like the out-of-mana Rest row it duplicates. Deliberately not
+                adjacent to Back: the keys either side of it only open panels, so the row's one
+                irreversible key never sits under the thumb that is reaching for undo. Dark at
+                full mana — see actingCanRest. */}
+            <button
+              className={`bottom-action bottom-action-primary bottom-action-rest${
+                actingId !== null && pending[actingId]?.kind === 'rest' ? ' selected' : ''
+              }`}
+              disabled={!actingCanRest}
+              onClick={() => actingId !== null && handleRestClick(actingId)}
+            >
+              <span className="bottom-action-glyph" aria-hidden="true">
+                ☾
+              </span>
+              Rest
             </button>
             <button
               className="bottom-action bottom-action-utility"
