@@ -1324,7 +1324,7 @@ Haunted*.
 
 The pairing is the point. Wisdom is the magical `defStat`, so the same debuff that
 softens a target now also marks it, and Cortex's slate is a Wisdom shredder end to end
-(Psi Bolt, Enervate, Psychock, Disorient, Psionic Wave). Haunt then expands any
+(Psi Bolt, Enervate, Psyshock, Disorient, Psionic Wave). Haunt then expands any
 **`singleEnemy`** Mind or Spirit move onto the marked hero's partner — and only
 `singleEnemy` expands, locked — so Disorient marking both foes turns every single-target
 cast into a spread without ever double-hitting a move that already spreads.

@@ -68,7 +68,7 @@ export const progressionTable: ProgressionTable = {
     // --- Shadow ---
     shadowMonk: ['backstab', 'weaken', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm', 'shadowstrike'],
     marrow: ['vanish', 'umbralBeam', 'umbralWave', 'eclipse', 'enfeeble', 'drain', 'torment', 'soulRend'],
-    lucius: ['umbralBeam', 'eclipse', 'umbralWave', 'enfeeble', 'psychock', 'psionicWave', 'lull', 'weaken'],
+    lucius: ['umbralBeam', 'eclipse', 'umbralWave', 'enfeeble', 'psyshock', 'psionicWave', 'lull', 'weaken'],
     // Claw is long-standing off-type coverage; Umbra Bolt is the in-type fix — Shadow has a whole
     // magical column and Nightshade's 65 Intelligence could reach none of it.
     nightshade: ['fadeStrike', 'shadowstrike', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm', 'claw', 'umbraBolt'],
@@ -76,14 +76,14 @@ export const progressionTable: ProgressionTable = {
     runescribe: ['manaFont', 'study', 'arcaneBlast', 'overload', 'magicCloak', 'arcPulse', 'singularity', 'cataclysm', 'conjuredSword', 'manaTap'],
     zenith: ['conduit', 'fontOfPower', 'arcaneOverflow', 'magicBolt', 'cataclysm', 'focus', 'arcPulse', 'magicCloak'],
     // --- Mind ---
-    // Psychock and Psionic Wave are the mid/late damage the pool had none of, and both shred
+    // Psyshock and Psionic Wave are the mid/late damage the pool had none of, and both shred
     // Wisdom, so they double as Entanglement fuel. Phantom Strike and Cog Bop are deliberate
     // OFF-TYPE coverage: no STAB, no Evolution needed, and the only two things a base Cortex
     // can point its 53 Attack at. Lull leaves — the one debuff that feeds nothing.
     mindweaver: [
       'psychicBlow',
       'enervate',
-      'psychock',
+      'psyshock',
       'stasis',
       'mentalFortress',
       'disorient',
@@ -96,7 +96,7 @@ export const progressionTable: ProgressionTable = {
     ],
     trance: [
       'brainWard',
-      'psychock',
+      'psyshock',
       'wickedFear',
       'stasis',
       'disorient',
@@ -168,7 +168,7 @@ export const progressionTable: ProgressionTable = {
     ],
     coil: [
       'animalSpirit',
-      'psychock',
+      'psyshock',
       'wickedFear',
       'dopamine',
       'enervate',
@@ -319,7 +319,7 @@ export const progressionTable: ProgressionTable = {
             name: 'Siren',
             description: 'Sings the water at them until they stop being able to tell it apart from their own thoughts.',
             statGrants: {},
-            unlocksMoveIds: ['psychock'],
+            unlocksMoveIds: ['psyshock'],
             typeGraft: 'Mind',
             learnableMoveIds: ['lull', 'enervate', 'wickedFear', 'disorient', 'psionicWave'],
             grantsPassiveIds: ['enthrall'],
@@ -1186,7 +1186,7 @@ export const progressionTable: ProgressionTable = {
             statGrants: { intelligence: 20, wisdom: 10 },
             unlocksMoveIds: ['wickedFear'],
             typeGraft: 'Mind',
-            learnableMoveIds: ['lull', 'enervate', 'psychock', 'disorient', 'psionicWave'],
+            learnableMoveIds: ['lull', 'enervate', 'psyshock', 'disorient', 'psionicWave'],
           },
         ],
       },

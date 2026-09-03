@@ -698,7 +698,7 @@ shape `StatusApplication.target` already solves for a status rider.
 
 ### `statDeltaChance`
 
-`statDeltaChance: 0.2` (Mind's Psi Bolt, Psychock, Psionic Wave) is
+`statDeltaChance: 0.2` (Mind's Psi Bolt, Psyshock, Psionic Wave) is
 `StatusApplication.chance` for stat deltas, and behaves identically: it gates the
 DELTAS and never the move's own body, it rolls once per resolved target (so a chanced
 spread catches one foe and misses the other), and it draws no RNG at all when absent.

@@ -253,7 +253,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
     description: "Whenever an enemy's Wisdom drops, that enemy is Haunted.",
     // Frozen Stone inverted: eventFieldNegative is what makes this "drops" and not "changes", so
     // a Wisdom BUFF on a foe never marks them. Cortex's slate is a Wisdom shredder end to end
-    // (Psi Bolt, Enervate, Psychock, Disorient, Psionic Wave), so the debuffs it was already
+    // (Psi Bolt, Enervate, Psyshock, Disorient, Psionic Wave), so the debuffs it was already
     // casting now plant Haunt for free — and Wisdom is the magical defStat, so the same point
     // both softens the target and marks it.
     // ATTRIBUTION: StatChanged carries no source, so this reads "an enemy's Wisdom dropped",

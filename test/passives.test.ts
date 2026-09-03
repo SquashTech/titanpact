@@ -957,7 +957,7 @@ test('passives: Enthrall Haunts what its Water hits, and only that', () => {
 test('passives: Enthrall plants with Water and cashes with the GRAFT — a Mind move then hits both', () => {
   const state = withPassive(riptideFixture(701), 'a1', 'enthrall');
   const marked = resolveRound(state, [waterHit], config).state;
-  const { events } = resolveRound(marked, [{ kind: 'move', combatantId: 'a1', moveId: 'psychock', declaredTarget: 'b2' } as Action], config);
+  const { events } = resolveRound(marked, [{ kind: 'move', combatantId: 'a1', moveId: 'psyshock', declaredTarget: 'b2' } as Action], config);
 
   const hits = (events.filter((e) => e.type === 'DamageDealt') as any[]).filter((h) => h.sourceCombatantId === 'a1');
   assert.deepStrictEqual(hits.map((h) => h.targetCombatantId).sort(), ['b1', 'b2']);
@@ -977,7 +977,7 @@ test('passives: Enthrall keeps planting and cashing in SEPARATE columns — Wate
 
 test('passives: Enthrall reads the move TYPE — a non-Water hit from the same hero plants nothing', () => {
   const state = withPassive(riptideFixture(703), 'a1', 'enthrall');
-  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'psychock', declaredTarget: 'b1' } as Action], config);
+  const { state: next } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'psyshock', declaredTarget: 'b1' } as Action], config);
 
   assert.ok(!hasStatus(next.combatants.b1, 'Haunt'));
 });

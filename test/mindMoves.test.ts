@@ -218,7 +218,7 @@ test('mind: an attack into a floored defender still deals POSITIVE damage', () =
 
 test('mind: Mind Shatter swings Wisdom, and only the numerator moves', () => {
   assert.deepStrictEqual(statKeysForMove(moves.mindShatter), ['wisdom', 'wisdom']);
-  assert.deepStrictEqual(statKeysForMove(moves.psychock), ['intelligence', 'wisdom']);
+  assert.deepStrictEqual(statKeysForMove(moves.psyshock), ['intelligence', 'wisdom']);
 });
 
 test('mind: buffing the caster Wisdom actually makes Mind Shatter hit harder', () => {

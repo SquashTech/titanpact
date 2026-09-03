@@ -2092,9 +2092,9 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleAlly',
     description: 'Floods an ally with relief.',
   },
-  psychock: {
-    id: 'psychock',
-    name: 'Psychock',
+  psyshock: {
+    id: 'psyshock',
+    name: 'Psyshock',
     tier: 'mid',
     type: 'Mind',
     category: 'magical',

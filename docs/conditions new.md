@@ -279,7 +279,7 @@ authoring a single bare rider is unchanged in both the data and the code path.
 
 `MoveDefinition.statDeltaChance` is the exact sibling of `StatusApplication.chance`
 above, for the three Mind rows reading "20% chance to reduce the target's Wisdom by 20"
-(Psi Bolt, Psychock, Psionic Wave). It inherits that field's three rules wholesale,
+(Psi Bolt, Psyshock, Psionic Wave). It inherits that field's three rules wholesale,
 because a chanced stat delta and a chanced status rider are the same mechanic pointed at
 different state:
 
