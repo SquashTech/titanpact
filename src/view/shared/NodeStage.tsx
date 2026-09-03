@@ -101,6 +101,8 @@ interface NodeHeaderProps {
   ring?: boolean;
   /** Smaller type for a screen whose body is already tall. */
   compact?: boolean;
+  /** Lifts the header out of the column so what follows centres on the whole screen, not on what is left under it. */
+  floating?: boolean;
   children?: ReactNode;
 }
 
@@ -114,10 +116,13 @@ export function NodeHeader({
   art,
   ring,
   compact,
+  floating,
   children,
 }: NodeHeaderProps) {
   return (
-    <header className={`node-header${compact ? ' is-compact' : ''}${art ? ' has-art' : ''}`}>
+    <header
+      className={`node-header${compact ? ' is-compact' : ''}${art ? ' has-art' : ''}${floating ? ' is-floating' : ''}`}
+    >
       {ring && art && <span className="node-ring" aria-hidden="true" />}
       {art}
       {eyebrow && <div className="node-eyebrow">{eyebrow}</div>}

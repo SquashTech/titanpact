@@ -9828,6 +9828,26 @@ textarea,
   gap: 16px;
 }
 
+/* A header that names the moment without taking part in centring what follows.
+   The Weapon/Armor/Accessory cache screen keeps its title — it is the only
+   thing saying which slot is about to drop — but in flow the title pushed the
+   beat down: `.screen-scroll` started under it, the chest centred in what was
+   left, and landed ~43px below the middle of the phone. Out of flow the scroll
+   area is the whole screen again and the chest centres on the screen, the way
+   the Equipment Cache's does (that one renders no header at all while the chest
+   is shut). Only for a screen with nothing but sky under the title.
+   ┄
+   `.is-floating` is named in the `.node-screen > *` exclusion list, which
+   would otherwise force it back to `position: relative`; `z-index: 1` is what
+   that rule was giving it, kept so the header still paints over `.node-sky`. */
+.node-header.is-floating {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+}
+
 /* The fixed box everything in the beat is sized against. */
 .cache-open-stage {
   position: relative;
@@ -12633,7 +12653,7 @@ textarea,
    positions itself absolutely and paints BELOW the content — being lifted to
    z-index 1 with everything else would put the shrine's falling light over
    the header and the hero cards instead of behind them. */
-.node-screen > *:not(.node-sky):not(.shrine-descent):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button),
+.node-screen > *:not(.node-sky):not(.shrine-descent):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button):not(.is-floating),
 .levelup-screen > *:not(.node-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button),
 /* .squad-select joined the stage in 2026-08-29 so it could carry the act's
    Location (docs/locations.md §5.5). Its root rule was already this stage's,

@@ -40,7 +40,7 @@ export function CacheOpenScreen({ slot, onDone }: Props) {
       <NodeSky motes={8} />
 
       {/* No RosterPeek: this screen tells, it doesn't ask. */}
-      <NodeHeader compact eyebrow="A Cache Opens" title={SLOT_TITLE[slot]} readout="" />
+      <NodeHeader floating compact eyebrow="A Cache Opens" title={SLOT_TITLE[slot]} readout="" />
 
       <div className="screen-scroll">
         <CacheOpening
