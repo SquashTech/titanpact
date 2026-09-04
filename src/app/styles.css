@@ -1392,8 +1392,23 @@ textarea,
   font-weight: 800;
   line-height: 1.14;
   letter-spacing: -0.02em;
-  color: var(--banner-color);
-  text-shadow: 0 0 26px rgba(0, 0, 0, 0.55), 0 2px 3px rgba(0, 0, 0, 0.85);
+  /* Set in its own types, not the beat's color: the name is the one place in the
+     opening where the player learns what they are up against, and Fire orange /
+     Frost cyan says it before the badges on the cards are read. FightScreen sets
+     both stops inline, repeating the first for a mono type, so this is one rule
+     for both cases — and passes them through getTypeTextColor, since the raw 15
+     are tuned as fills and the dim end of the set goes muddy set as type. */
+  background: linear-gradient(
+    100deg,
+    var(--roster-color, var(--banner-color)) 18%,
+    var(--roster-color-2, var(--roster-color, var(--banner-color))) 82%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  /* Not text-shadow: the fill is transparent for the clip above, so a shadow
+     would paint straight through the letters (same trade .title-logo makes). */
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 18px rgba(0, 0, 0, 0.5));
   /* Staggered from FightScreen by index, so the two leads land one after the
      other instead of together. */
   animation: banner-strike 0.26s cubic-bezier(0.2, 1.5, 0.5, 1) both;
@@ -10179,12 +10194,21 @@ textarea,
 
 /* --- The chest itself ---------------------------------------------------- */
 
+/* Sized outright rather than by `inset` + `width: auto`. An <svg> is a REPLACED
+   element, and a replaced box whose width and height are auto does not reliably
+   take its size from its insets: Chrome solved this to the 108px the insets
+   describe, iOS WebKit sized it to the whole 158px stage and kept only the left
+   and top offsets — so on a phone the chest rendered 46% too big and sat down
+   and to the right of where it was drawn here. Anything absolutely positioned in
+   this beat that is an image or an SVG must state its own width and height for
+   the same reason. */
 .cache-chest {
   position: absolute;
-  inset: 25px;
+  left: 25px;
+  top: 25px;
   z-index: 3;
-  width: auto;
-  height: auto;
+  width: calc(100% - 50px);
+  height: calc(100% - 50px);
   color: rgb(var(--node-rgb));
   filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.55));
   overflow: visible;

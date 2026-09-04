@@ -1093,9 +1093,20 @@ export function FightScreen({
                     VS
                   </span>
                   <span className="combat-banner-roster">
-                    {beat.bannerRoster.map((name, i) => (
-                      <span key={name} className="combat-banner-roster-name" style={{ animationDelay: `${0.06 * i}s` }}>
-                        {name}
+                    {beat.bannerRoster.map((entry, i) => (
+                      <span
+                        key={entry.name}
+                        className="combat-banner-roster-name"
+                        style={
+                          {
+                            animationDelay: `${0.06 * i}s`,
+                            // A mono type passes the same color twice, so one gradient rule paints both cases.
+                            '--roster-color': entry.colors[0] ?? 'var(--banner-color)',
+                            '--roster-color-2': entry.colors[1] ?? entry.colors[0] ?? 'var(--banner-color)',
+                          } as CSSProperties
+                        }
+                      >
+                        {entry.name}
                       </span>
                     ))}
                   </span>

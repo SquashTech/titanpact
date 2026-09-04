@@ -65,6 +65,26 @@ export function getTypeColorRgb(type: string): string {
   return rgb ? rgb.join(', ') : '150, 150, 150';
 }
 
+/**
+ * A type color lifted until it carries as large text on the console's dark face.
+ * The 15 are tuned as fills — ink sits ON them (getContrastText) — so the dim end
+ * of the set, Shadow and Beast especially, goes muddy the moment a color is used
+ * AS the text instead. Bright types come back untouched; the rest are mixed toward
+ * white by the gap to a brightness floor, which keeps each one recognisably its own
+ * hue rather than flattening the set to one legible gray.
+ */
+export function getTypeTextColor(type: string): string {
+  const rgb = hexToRgb(getTypeColor(type));
+  if (!rgb) return getTypeColor(type);
+  const [r, g, b] = rgb;
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  const FLOOR = 0.58;
+  if (lum >= FLOOR) return getTypeColor(type);
+  const t = ((FLOOR - lum) / (1 - lum)) * 0.85;
+  const lift = (c: number) => Math.round(c + (255 - c) * t);
+  return `rgb(${lift(r)}, ${lift(g)}, ${lift(b)})`;
+}
+
 /** Readable badge text (near-black or near-white) against a type color; non-hex colors default to dark text. */
 export function getContrastText(bg: string): string {
   const rgb = hexToRgb(bg);

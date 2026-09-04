@@ -47,13 +47,20 @@ const STATUS_TICK_EMOJI: Record<string, string> = {
  * set the interesting words large. Use the split only when a beat has a
  * genuine subject and payload.
  */
+/** One lead in the opening beat's roster. */
+export interface BeatRosterEntry {
+  name: string;
+  /** The type colors the name is set in — one, or two for a dual type, which the view gradients across. */
+  colors: readonly string[];
+}
+
 export interface BeatFlavor {
   /** Small line above the headline: who is acting, or who is being hit. */
   bannerLead?: string;
   /** The headline itself, replacing `banner` on screen. */
   bannerFocus?: string;
   /** Names set one per line under a VS mark, replacing the headline (openingBeats.ts). */
-  bannerRoster?: readonly string[];
+  bannerRoster?: readonly BeatRosterEntry[];
   /** Small line below the headline — a move's targets, so far. */
   bannerSub?: string;
   /** Colors the headline; maps to a .banner-focus-* class. */
