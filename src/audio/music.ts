@@ -33,6 +33,9 @@ let current: Playing | null = null;
 let desired: TrackId | null = null;
 const buffers = new Map<TrackId, AudioBuffer>();
 const loading = new Map<TrackId, Promise<AudioBuffer | null>>();
+// Ids prefetchTrack has pulled down, and the controllers for the transfers still running.
+const prefetched = new Set<TrackId>();
+const prefetching = new Map<TrackId, AbortController>();
 let unlockHooked = false;
 // Playback rate, applied to whatever is sounding and to whatever starts next. Experimental.
 let rate = 1;
@@ -59,6 +62,9 @@ async function loadBuffer(context: AudioContext, id: TrackId): Promise<AudioBuff
   if (inFlight) return inFlight;
 
   const promise = (async () => {
+    // A prefetch of this same track is now redundant; hand the connection to the real load
+    // rather than pulling the file down twice.
+    prefetching.get(id)?.abort();
     try {
       const response = await fetch(tracks[id].url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -78,6 +84,36 @@ async function loadBuffer(context: AudioContext, id: TrackId): Promise<AudioBuff
 
   loading.set(id, promise);
   return promise;
+}
+
+/**
+ * Warms a track the player has not reached yet — the next act's, say. Best-effort and
+ * fire-and-forget: a failure costs a slow start later and nothing else.
+ */
+export function prefetchTrack(id: TrackId | null): void {
+  if (!id || prefetched.has(id) || buffers.has(id) || loading.has(id)) return;
+  prefetched.add(id);
+  void (async () => {
+    // Never race the track the player is actually waiting on — a prefetch is for a place they
+    // have not walked into yet, so it yields the connection to whatever is loading now.
+    await Promise.allSettled([...loading.values()]);
+    if (buffers.has(id) || loading.has(id)) return;
+    const controller = new AbortController();
+    prefetching.set(id, controller);
+    try {
+      const response = await fetch(tracks[id].url, { signal: controller.signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      // Drained, then dropped: consuming the body is what commits it to the caches. Decoding it
+      // here instead would hold a second ~42MB buffer for a whole act (see MAX_DECODED).
+      await response.arrayBuffer();
+    } catch (err) {
+      prefetched.delete(id);
+      // An abort is the real load taking the file over, not a failure.
+      if (!controller.signal.aborted) console.warn(`[titanpact] could not prefetch music track "${id}"`, err);
+    } finally {
+      prefetching.delete(id);
+    }
+  })();
 }
 
 function fadeOutAndStop(playing: Playing, context: AudioContext): void {

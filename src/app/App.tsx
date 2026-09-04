@@ -53,9 +53,9 @@ import { generateStarterOptions } from '../run/draft';
 import { generateEncounter, generateLeaderEncounter, appendFinalEnemy, type EncounterNodeType, type Encounter } from '../run/enemyGen';
 import { actScaling, type ScalingTrack } from '../run/difficulty';
 import { generateItinerary, locationBias, locationForAct } from '../run/locations';
-import { locations } from '../data/locations';
+import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
-import { setTrack } from '../audio/music';
+import { prefetchTrack, setTrack } from '../audio/music';
 import { hasTrack } from '../audio/tracks';
 import { pickSquad } from '../run/squad';
 import { advanceToNode, advanceToNextAct, grantCurrencyReward, grantUpgradeReward, grantContractReward } from '../run/runProgress';
@@ -523,6 +523,14 @@ export function App() {
   useEffect(() => {
     setTrack(trackId);
   }, [trackId]);
+
+  // The itinerary is drawn once at run start, so the track after this one is known rather than
+  // guessed; from the title the next thing needed is Act 1's, always the same place. Warmed so
+  // an act break doesn't sit in silence through a multi-megabyte download.
+  const nextLocationId = screen.kind === 'title' ? ACT_ONE_LOCATION_ID : playerRun.locationIds[playerRun.actNumber] ?? null;
+  useEffect(() => {
+    if (hasTrack(nextLocationId)) prefetchTrack(nextLocationId);
+  }, [nextLocationId]);
 
   return (
     <LocationProvider location={ambientLocation}>
