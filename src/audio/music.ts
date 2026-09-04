@@ -148,6 +148,10 @@ async function applyDesired(): Promise<void> {
   if (current?.id === target) return;
   if (context.state !== 'running') {
     unlockAudio();
+    // Decode does not need a running context, and the gesture that unlocks one is often many
+    // seconds out — a title screen sits there while the player reads it. Warming the buffer now
+    // means the track starts ON the tap rather than a download and a decode after it.
+    void loadBuffer(context, target);
     return;
   }
 
