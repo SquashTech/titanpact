@@ -1326,6 +1326,79 @@ textarea,
   letter-spacing: 0;
 }
 
+/*
+ * The opening beat only (openingBeats.ts): the leads the player is about to
+ * fight, under a struck VS. Prose set them in one headline run — "Vulcan and
+ * Bramble" at 30px wrapped inside a 316px console and broke across a name,
+ * which is the one word in the beat that has to survive intact. A name is the
+ * unit here, so a name is a line, and the joiner goes away with the wrap.
+ *
+ * The VS is a divider rather than a word in the stack: hairlines out to both
+ * margins, the glyph struck in the beat's color between them. It reads as the
+ * fight being called, and it gives the roster under it something to hang from
+ * so two centred names are not just floating text.
+ */
+.combat-banner-versus {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  max-width: 210px;
+  margin: 1px 0 3px;
+  font-size: 14px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.24em;
+  /* letter-spacing hangs off the S, so the glyph sits right of true centre
+     between the two rules; half a step back puts it on the axis. */
+  text-indent: 0.24em;
+  color: var(--banner-color);
+  text-shadow: 0 0 16px color-mix(in srgb, var(--banner-color) 55%, transparent);
+  animation: banner-stamp 0.24s cubic-bezier(0.2, 1.4, 0.45, 1) both;
+}
+
+.combat-banner-versus::before,
+.combat-banner-versus::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--banner-color) 60%, transparent));
+}
+
+/* Mirrored, so both rules fade *away* from the glyph rather than both running
+   left to right. */
+.combat-banner-versus::after {
+  transform: scaleX(-1);
+}
+
+.combat-banner-roster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  width: 100%;
+}
+
+/* One lead. Ellipsis rather than wrap: a name that will not fit is still read
+   as one name, and the card it belongs to is on screen behind this. A tier
+   under .combat-banner-focus because there are two of these, plus the VS and
+   the stamp, in the height that line gets to itself. */
+.combat-banner-roster-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.14;
+  letter-spacing: -0.02em;
+  color: var(--banner-color);
+  text-shadow: 0 0 26px rgba(0, 0, 0, 0.55), 0 2px 3px rgba(0, 0, 0, 0.85);
+  /* Staggered from FightScreen by index, so the two leads land one after the
+     other instead of together. */
+  animation: banner-strike 0.26s cubic-bezier(0.2, 1.5, 0.5, 1) both;
+}
+
 /* A move's targets, under its name. An arrow rather than the word "on", since
    the lead above already established who is acting — the two lines read as
    "CINDER / Ember Burst / ▸ Bramble", an order of operations rather than a

@@ -1086,7 +1086,25 @@ export function FightScreen({
           >
             <div className="combat-banner-current" key={beatSeq}>
               {beat.bannerLead && <span className="combat-banner-lead">{beat.bannerLead}</span>}
-              <span className={`combat-banner-focus${beat.bannerFocus ? '' : ' banner-focus-sentence'}`}>{beat.bannerFocus ?? beat.banner}</span>
+              {beat.bannerRoster ? (
+                /* The opening beat: a VS mark, then one lead per line. */
+                <>
+                  <span className="combat-banner-versus" aria-hidden="true">
+                    VS
+                  </span>
+                  <span className="combat-banner-roster">
+                    {beat.bannerRoster.map((name, i) => (
+                      <span key={name} className="combat-banner-roster-name" style={{ animationDelay: `${0.06 * i}s` }}>
+                        {name}
+                      </span>
+                    ))}
+                  </span>
+                </>
+              ) : (
+                <span className={`combat-banner-focus${beat.bannerFocus ? '' : ' banner-focus-sentence'}`}>
+                  {beat.bannerFocus ?? beat.banner}
+                </span>
+              )}
               {beat.bannerSub && <span className="combat-banner-sub">{beat.bannerSub}</span>}
               {beat.bannerTag && <span className="combat-banner-tag">{beat.bannerTag}</span>}
               {beat.bannerMeta && (

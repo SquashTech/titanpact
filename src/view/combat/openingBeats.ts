@@ -10,7 +10,7 @@ import type { HeroDefinition } from '../../engine/content';
 import type { LocationDefinition } from '../../data/locations';
 import type { Beat } from './buildBeats';
 
-/** "A" / "A and B" — the enemy leads in slot order. */
+/** "A" / "A and B" — the enemy leads in slot order. For the log line only. */
 function joinNames(names: readonly string[]): string {
   if (names.length === 0) return 'The enemy';
   if (names.length === 1) return names[0];
@@ -26,18 +26,19 @@ export function openingBeat(
   const names = state.active[enemySide]
     .filter((id): id is string => id !== null)
     .map((id) => heroes[state.combatants[id]?.heroId ?? '']?.name ?? id);
-  const focus = joinNames(names);
 
   return {
     events: [],
-    banner: `${focus} take the field!`,
+    banner: `${joinNames(names)} take the field!`,
     // No floating numbers: nothing has happened to anybody yet. The entry-passive beats behind
     // this one are where the cards get marked up.
     popups: [],
     // The place, not a name for the fight: the lead line is where the player already reads
     // context, and the arena behind it is this same Location's.
     bannerLead: location?.name ?? 'Battle',
-    bannerFocus: focus,
+    // A roster, not a sentence. Two names joined by "and" at headline size wrapped inside the
+    // console and broke across a name; here the name is the unit, so the name is the line.
+    bannerRoster: names.length > 0 ? names : ['The enemy'],
     bannerTag: 'Battle begins',
     // No bannerFocusKind, and no accent when placeless: the beat then lands in the console's
     // own gold, which is already the "nobody is commanding" color of the resolving state.

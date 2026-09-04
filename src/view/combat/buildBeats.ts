@@ -52,6 +52,8 @@ export interface BeatFlavor {
   bannerLead?: string;
   /** The headline itself, replacing `banner` on screen. */
   bannerFocus?: string;
+  /** Names set one per line under a VS mark, replacing the headline (openingBeats.ts). */
+  bannerRoster?: readonly string[];
   /** Small line below the headline — a move's targets, so far. */
   bannerSub?: string;
   /** Colors the headline; maps to a .banner-focus-* class. */
