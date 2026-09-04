@@ -9980,10 +9980,16 @@ textarea,
 }
 
 /* The pool of light the chest stands in — inset past the stage rather than
-   sized and re-centred, so the breathing keyframe owns `transform`. */
+   sized and re-centred, so the breathing keyframe owns `transform`.
+   ┄
+   The insets are uneven by 15px so the circle centres on the CHEST rather than
+   on the stage: the art sits low in its own 24-unit box (it spans y 8.66-21.9,
+   leaving room over the lid for the swing), so a stage-centred pool of light
+   hangs above the thing it is meant to be lighting. Height and width still come
+   out equal — 158 + 29 + 59 = 158 + 44 + 44 — so it stays a circle. */
 .cache-open-glow {
   position: absolute;
-  inset: -44px;
+  inset: -29px -44px -59px;
   z-index: 0;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(var(--node-rgb), 0.32), transparent 66%);
@@ -10037,9 +10043,11 @@ textarea,
 
 /* One ring off the lid — the shockwave, and the only thing in the beat that
    reads as a shape rather than as light. */
+/* Shifted down the same 15px as the glow, and by the same trick — 158 - 51 - 21
+   is 158 - 36 - 36, so the ring stays a circle centred on the chest. */
 .cache-open-burst {
   position: absolute;
-  inset: 36px;
+  inset: 51px 36px 21px;
   z-index: 1;
   border-radius: 50%;
   border: 2px solid rgba(255, 231, 176, 0.8);
