@@ -54,7 +54,12 @@ don't silently override it.
 - **Type = the domain a hero's power draws from, not what its body is made of.** This reframe
   is the identity filter for the whole roster — apply it everywhere.
 - A hero's **innate primary type is immutable.** Evolution may add or shift a *secondary*
-  type (type-graft); it never changes the innate primary.
+  type (type-graft); it never changes the innate primary. **The graft owns the secondary
+  SLOT, it does not append** (2026-09-05): a mono hero gains a second type, an innately
+  dual one TRADES the one it was born with, and nothing ever reaches three types
+  (`effectiveTypes`, `rosterEntryTypes`). A retype is a swap — it costs the old column and
+  the STAB with it — so exactly one path per dual hero offers it, and that path carries the
+  new type's line (`docs/leveling-and-ranks.md` "The RETYPE").
 
 ### Heroes & progression
 - Heroes are **named, authored, fixed specialists** (~53 concepts). Not procedurally generated.

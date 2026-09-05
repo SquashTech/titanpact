@@ -40,12 +40,35 @@ test('roster: no hero starts with a move it cannot pay for', () => {
   }
 });
 
-test('roster: a dual-typed hero is offered no type-graft path — chooseEvolutionPath would throw', () => {
+test('roster: a dual-typed hero gets exactly one RETYPE path — its secondary is traded, never added to', () => {
+  // A graft owns the secondary slot, so on an innately dual hero it SPENDS the type it was born
+  // with. One path per node does it: three would make the innate pairing a starting state rather
+  // than an identity, and none leaves the node with no way to move on the type chart at all.
   for (const hero of Object.values(heroes)) {
     if (hero.types.length < 2) continue;
     for (const node of progressionTable.evolutions[hero.id] ?? []) {
-      const grafts = node.paths.filter((path) => path.typeGraft).map((path) => path.id);
-      assert.deepStrictEqual(grafts, [], `${hero.id} is already dual-typed`);
+      const retypes = node.paths.filter((path) => path.typeGraft);
+      assert.strictEqual(retypes.length, 1, `${hero.id} offers ${retypes.length} retype paths, not 1`);
+      for (const path of retypes) {
+        assert.ok(
+          !hero.types.includes(path.typeGraft!),
+          `${path.id} trades ${path.typeGraft} for itself — a no-op chooseEvolutionPath refuses`
+        );
+      }
+    }
+  }
+});
+
+test('roster: a retype pays for the STAB it costs — it carries a line of the type it bought', () => {
+  // The hero keeps moves that just stopped being same-type. Clause 5's fix for a stat refocus is
+  // the fix here too: hand over the move that makes the new typing land, plus the line behind it.
+  for (const hero of Object.values(heroes)) {
+    if (hero.types.length < 2) continue;
+    for (const node of progressionTable.evolutions[hero.id] ?? []) {
+      for (const path of node.paths.filter((p) => p.typeGraft)) {
+        assert.ok(path.unlocksMoveIds.length > 0, `${path.id} retypes and grants no move`);
+        assert.ok((path.learnableMoveIds ?? []).length >= 4, `${path.id} retypes and opens no line`);
+      }
     }
   }
 });
@@ -119,6 +142,28 @@ test('roster: every passive an Evolution grants exists, and every status a passi
   }
 });
 
+test('roster: every passive in the catalog has a granter — a passive nobody grants is dead content', () => {
+  // The mirror of the per-type "every move has a holder" tests. Forge Heat was the first casualty:
+  // it was filler on Cinder's Thunderblaze, and the Storm retype replaced the reason it existed.
+  const { equipment } = require('../src/data/equipment') as typeof import('../src/data/equipment');
+  const { relics } = require('../src/data/relics') as typeof import('../src/data/relics');
+  const { runEvents } = require('../src/data/events') as typeof import('../src/data/events');
+  const { classes } = require('../src/data/classes') as typeof import('../src/data/classes');
+
+  const granted = new Set<string>(Object.keys(classes));
+  for (const nodes of Object.values(progressionTable.evolutions)) {
+    for (const node of nodes) for (const path of node.paths) for (const id of path.grantsPassiveIds ?? []) granted.add(id);
+  }
+  for (const item of Object.values(equipment)) for (const id of item.grantsPassiveIds ?? []) granted.add(id);
+  for (const relic of Object.values(relics)) for (const id of relic.grantsPassiveIds ?? []) granted.add(id);
+  for (const event of Object.values(runEvents)) {
+    if (event.outcome.kind === 'grantPassive') granted.add(event.outcome.passiveId);
+  }
+
+  // Static Tide was RESERVED for a year and then used (Pincer). A new orphan should be a decision.
+  const orphans = Object.keys(passives).filter((id) => !granted.has(id)).sort();
+  assert.deepStrictEqual(orphans, [], 'these passives exist but nothing hands them out');
+});
 test('roster: an Evolution stat line is Rare-to-Epic in equipment currency, spent or refunded', () => {
   // src/run/equipment.ts RARITY_BUDGET: Rare 20, Epic 30, Legendary 40, Mythic 50. Read GROSS —
   // a refocus path's negative half is spent, not discounted — so Warhowl's -30/+60 reads 105, and

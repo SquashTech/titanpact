@@ -349,5 +349,8 @@ export type HeroLookup = Record<string, HeroDefinition>;
 
 /** Innate types plus type-graft grants (STAB, TypeMult). Never written back to HeroDefinition. */
 export function effectiveTypes(hero: HeroDefinition, combatant: Combatant): readonly TypeId[] {
-  return combatant.grantedTypes.length === 0 ? hero.types : [...hero.types, ...combatant.grantedTypes];
+  // A grant fills the SECONDARY SLOT, it does not append: the primary is immutable and nothing
+  // ever reaches three types. Identical to appending for a mono hero; for an innately dual one
+  // the grant REPLACES the secondary, which is what lets a dual hero be offered a graft at all.
+  return combatant.grantedTypes.length === 0 ? hero.types : [hero.types[0], ...combatant.grantedTypes];
 }

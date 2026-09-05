@@ -415,12 +415,12 @@ test('progression: a type-graft path grants a second type without touching the i
   assert.deepStrictEqual(rosterEntryTypes(heroes.tidecaller, next.roster[0]), ['Water', 'Frost']);
 });
 
-test('progression: a type-graft path is rejected for an already-dual-typed hero', () => {
+test('progression: a graft on an already-dual-typed hero TRADES the innate secondary, never stacks a third', () => {
   let run = seedRoster(['ironWarden']);
   run = { ...run, levelUpPool: costToReachLevel(1, EVOLUTION_LEVEL) };
   run = levelUpTimes(run, 'ironWarden', EVOLUTION_LEVEL - 1);
 
-  // Synthetic dual-typed override so this exercises the enforcement rather than any hero's canonical typing.
+  // Synthetic dual-typed override so this exercises the rule rather than any hero's canonical typing.
   const dualHeroes = { ...heroes, ironWarden: { ...heroes.ironWarden, types: ['Iron', 'Stone'] as const } };
 
   const dualGraftTable = {
@@ -434,17 +434,40 @@ test('progression: a type-graft path is rejected for an already-dual-typed hero'
               id: 'iw-graft',
               heroId: 'ironWarden',
               kind: 'utility' as const,
-              name: 'Bad Graft',
+              name: 'Retype',
               statGrants: {},
               unlocksMoveIds: [],
               typeGraft: 'Nature',
+            },
+            {
+              id: 'iw-redundant',
+              heroId: 'ironWarden',
+              kind: 'offensive' as const,
+              name: 'Redundant',
+              statGrants: {},
+              unlocksMoveIds: [],
+              typeGraft: 'Stone',
             },
           ],
         },
       ],
     },
   };
-  assert.throws(() => chooseEvolutionPath(run, dualGraftTable, dualHeroes, 'ironWarden', 'iw-graft'), ProgressionError);
+
+  const next = chooseEvolutionPath(run, dualGraftTable, dualHeroes, 'ironWarden', 'iw-graft');
+  assert.strictEqual(next.roster[0].evolutionTypeGraft, 'Nature');
+  // The graft owns the SECONDARY SLOT: Iron (the immutable primary) is kept, Stone is spent.
+  assert.deepStrictEqual(rosterEntryTypes(dualHeroes.ironWarden, next.roster[0]), [
+    'Iron',
+    'Nature',
+  ]);
+  assert.deepStrictEqual(dualHeroes.ironWarden.types, ['Iron', 'Stone'], 'the HeroDefinition is untouched');
+
+  // Trading the secondary for the secondary it already has is still a no-op, and still refused.
+  assert.throws(
+    () => chooseEvolutionPath(run, dualGraftTable, dualHeroes, 'ironWarden', 'iw-redundant'),
+    ProgressionError
+  );
 });
 
 test('progression: a later type-graft path shifts (replaces) the secondary type rather than stacking a third', () => {

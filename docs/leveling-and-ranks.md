@@ -295,15 +295,47 @@ identity.
 > stat line, and a gross stat line inside the Rare-to-Mythic band.
 >
 > The recruit-only pass also took the five DUAL-typed recruits — Cinder, Brimstone,
-> Bellows, Widow and Coil — somewhere the starters never had to go. A dual hero is
-> offered no graft at all (`chooseEvolutionPath` throws), so its three paths compete
-> with each other rather than with a second column of the type chart, and every one of
-> them has to carry a passive or a granted move. What pays for them is
-> `learnableMoveIds` **without** a `typeGraft`: the field is only type-checked when a
-> graft is present, so a dual hero's path can still hand over a LINE — Cinder's
-> Explosive opens Fire's whole magical column, which its physical body could never
-> read. Lucius went the other way and was retyped mono-Mind (`types-and-heroes.md`
-> "The stat budget"), trading an inherent second type for three real branches.
+> Bellows, Widow and Coil — somewhere the starters never had to go, and it took two
+> passes to get there. Duals used to be offered no graft at all, so their three paths
+> could only compete with each other; each one carries a passive or a granted move for
+> that reason, and `learnableMoveIds` **without** a `typeGraft` is what lets a path hand
+> over a whole LINE (the field is only type-checked when a graft is present). Cinder's
+> Explosive opens Fire's magical column that way, which its physical body could never
+> read.
+>
+> ### The RETYPE (2026-09-05, designer call)
+>
+> Then the prohibition itself came off. **The graft owns the SECONDARY SLOT** rather than
+> appending to the type list — `effectiveTypes` and `rosterEntryTypes` both compose
+> `[primary, graft]` — so a mono hero gains a second type exactly as before, and an
+> innately dual one **trades the one it was born with**. Nothing ever reaches three types
+> and the primary is never touched, which is the invariant that was actually load-bearing;
+> the old throw was guarding an append that could not express a replacement.
+>
+> **A retype is a swap, not a gain**, which is what makes it safe: a mono hero's graft is
+> pure addition (a chart column plus a slate plus STAB), while a dual hero pays for its
+> new column with the old one and loses STAB on moves it is already holding. So it does
+> not make duals better than monos — it makes their node contain a real fork instead of
+> three flavours of the same currency.
+>
+> **Exactly one path per dual hero retypes** (`test/roster.test.ts`). Three would make the
+> innate pairing a starting state rather than an identity; none is what the pass was fixing.
+> And a retype path must carry the new type's line — `unlocksMoveIds` plus at least four
+> `learnableMoveIds` — because clause 5's problem (a hero left holding a loadout that no
+> longer reads what it now is) is the same problem a lost STAB creates. The five:
+>
+> | Hero | Path | Trade | What it buys |
+> | --- | --- | --- | --- |
+> | Cinder | Thunderblaze | Iron → **Storm** | The name always wanted it. The Iron it *keeps* still detonates Conduct — `Conduct.triggerTypes` is Storm and Iron, and detonation never asked for STAB. |
+> | Brimstone | Hexfume | Shadow → **Nature** | The smoke was always the poison. Its Hexfume passive (arrival Poisons both foes) and Nature's Poison line are the same idea twice. |
+> | Bellows | Overpressure | Iron → **Fire** | It is a boiler. Mech is the PRIMARY, so the self-burning Mech column stays learnable alongside the Fire one — which is what keeps Superheat fuelled. |
+> | Widow | Silkbinder | Shadow → **Nature** | The trapper rather than the assassin. Nature has a physical column, which a 20-Intelligence spider needs. |
+> | Coil | Hooded | Mind → **Stone** | A basilisk's gaze. The riskiest of the five: Coil's pool is almost all Mind, so this spends nearly every STAB it has. Stone's magical column is exactly three moves, which is just enough to refill a loadout — watch it in playtest. |
+>
+> Lucius is the counter-example that still stands. He was retyped **mono-Mind** in the same
+> pass (`types-and-heroes.md` "The stat budget"), and the retype rule does not undo that: a
+> mono hero gets two graft paths plus a mono one, where a dual gets one retype. Being born
+> dual is no longer a tax, but it is still less branching than being born mono.
 >
 > Tempest was authored from nothing (2026-09-02) rather than re-authored: it was the
 > one hero of 36 with no `evolutions` entry at all, and nothing failed — the lookup is
@@ -373,7 +405,8 @@ identity.
 > displaces.
 
 Typing usually shifts by *adding* a secondary (mono → dual), but a path may
-also *replace* an already-granted secondary outright — e.g. a hero flavored around
+also *replace* the secondary outright — whether it was granted by an earlier graft or
+is the hero's INNATE second type (the retype, above). A hero flavored around
 "Iron Stone" might Evolve down an **Iron / Light** path instead of the expected
 Iron / Stone, if that's the path chosen. This is the same secondary-slot-shift
 mechanic `progression.md`'s "Type-graft paths" already specifies; it just means the

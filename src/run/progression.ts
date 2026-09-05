@@ -229,9 +229,9 @@ export function availableEvolution(table: ProgressionTable, entry: RosterEntry):
   return entry.level >= node.level ? node : null;
 }
 
-/** Innate types plus the current graft — the out-of-combat mirror of engine/state.ts effectiveTypes. UI must read this, not `hero.types`. */
+/** The primary plus the current graft — the out-of-combat mirror of engine/state.ts effectiveTypes, and it must stay identical to it. UI must read this, not `hero.types`. */
 export function rosterEntryTypes(hero: HeroDefinition, entry: RosterEntry): readonly TypeId[] {
-  return entry.evolutionTypeGraft ? [...hero.types, entry.evolutionTypeGraft] : hero.types;
+  return entry.evolutionTypeGraft ? [hero.types[0], entry.evolutionTypeGraft] : hero.types;
 }
 
 export function chosenEvolutionPaths(table: ProgressionTable, entry: RosterEntry): EvolutionPath[] {
@@ -264,13 +264,12 @@ export function chooseEvolutionPath(
   if (path.typeGraft) {
     const hero = heroes[entry.heroId];
     if (!hero) throw new ProgressionError(`Unknown hero ${entry.heroId}`);
-    if (hero.types.length !== 1) {
-      throw new ProgressionError(`${entry.heroId} is already dual-typed — a type-graft path cannot be offered`);
-    }
     if (hero.types.includes(path.typeGraft)) {
       throw new ProgressionError(`Type-graft ${path.typeGraft} duplicates ${entry.heroId}'s innate type`);
     }
-    // A later graft SHIFTS the secondary slot; it never stacks a third type.
+    // The graft OWNS the secondary slot (rosterEntryTypes): a mono hero gains a second type, an
+    // innately dual one TRADES the one it was born with, and a later graft shifts whatever is
+    // there. The primary is untouched in every case, and nothing ever reaches three types.
     evolutionTypeGraft = path.typeGraft;
   }
 

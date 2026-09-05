@@ -2,9 +2,10 @@
 // authored 53-hero content). A pool entry that is also in the hero's starting
 // kit is dead weight: levelUpMovePool filters unlocked moves out, so it can
 // never be offered. Every Evolution node offers three paths differing in kind
-// and keeps at least one mono (no typeGraft) path; a dual-typed hero gets no
-// graft path at all (chooseEvolutionPath throws). A graft's `learnableMoveIds`
-// JOIN the level-up pool rather than being handed over (docs/leveling-and-ranks.md).
+// and keeps at least one path that leaves the typing alone. The graft owns the SECONDARY SLOT, so a
+// mono hero gains a type and an innately dual one TRADES the one it was born with — exactly one path
+// per dual hero does, and it pays for the STAB it costs by carrying the new type's line. A graft's
+// `learnableMoveIds` JOIN the level-up pool rather than being handed over (docs/leveling-and-ranks.md).
 
 import type { ProgressionTable } from '../run/progression';
 import { EVOLUTION_LEVEL } from '../run/progression';
@@ -225,10 +226,11 @@ export const progressionTable: ProgressionTable = {
             heroId: 'cinderKnight',
             kind: 'utility',
             name: 'Thunderblaze',
-            description: 'Molten-forged tempo — the hotter it runs, the sooner it moves.',
-            statGrants: { speed: 20, mpRegen: 5 },
-            unlocksMoveIds: [],
-            grantsPassiveIds: ['forgeHeat'],
+            description: 'Sheds the plate for the storm that was always chasing it — and the iron it keeps still sets the charge off.',
+            statGrants: { attack: 10, speed: 30 },
+            unlocksMoveIds: ['stormLash'],
+            typeGraft: 'Storm',
+            learnableMoveIds: ['thunderclap', 'shockSlice', 'tailwind', 'overcharge', 'ionize'],
           },
         ],
       },
@@ -301,9 +303,11 @@ export const progressionTable: ProgressionTable = {
             heroId: 'brimstone',
             kind: 'utility',
             name: 'Hexfume',
-            description: 'A choking, cursed smoke that is already in their lungs when it arrives.',
-            statGrants: { intelligence: 10, wisdom: 10, manaPool: 20 },
-            unlocksMoveIds: [],
+            description: 'Lets the shadow go and keeps the smoke — which turns out to have been the poison all along.',
+            statGrants: { intelligence: 10, manaPool: 20 },
+            unlocksMoveIds: ['blight'],
+            typeGraft: 'Nature',
+            learnableMoveIds: ['toxicSpores', 'corrode', 'miasma', 'wildBloom', 'forceOfNature'],
             grantsPassiveIds: ['hexfume'],
           },
         ],
@@ -1477,10 +1481,11 @@ export const progressionTable: ProgressionTable = {
             heroId: 'steamColossus',
             kind: 'utility',
             name: 'Overpressure',
-            description: 'Stops driving the pistons and points the boiler instead.',
+            description: 'Stops driving the pistons and points the boiler instead — the iron was only ever the housing.',
             statGrants: { attack: -40, intelligence: 50, manaPool: 20 },
             unlocksMoveIds: ['meltdown'],
-            learnableMoveIds: ['backfire', 'overheat', 'malfunction', 'salvage', 'juryRig'],
+            typeGraft: 'Fire',
+            learnableMoveIds: ['backfire', 'overheat', 'malfunction', 'scorch', 'inferno'],
             grantsPassiveIds: ['superheat'],
           },
         ],
@@ -1554,9 +1559,11 @@ export const progressionTable: ProgressionTable = {
             heroId: 'widow',
             kind: 'utility',
             name: 'Silkbinder',
-            description: 'Sets the trap before the fight, and nothing crosses it at speed.',
-            statGrants: { speed: 20, mpRegen: 5 },
-            unlocksMoveIds: [],
+            description: 'Stops hiding and starts gardening — the web is a thing that grows, and nothing crosses it at speed.',
+            statGrants: { attack: 10, speed: 20 },
+            unlocksMoveIds: ['thornWhip'],
+            typeGraft: 'Nature',
+            learnableMoveIds: ['ivySpike', 'vineLash', 'leafSlice', 'branchSlam', 'toxicSpores'],
             grantsPassiveIds: ['snare'],
           },
         ],
@@ -1581,9 +1588,11 @@ export const progressionTable: ProgressionTable = {
             heroId: 'coil',
             kind: 'defensive',
             name: 'Hooded',
-            description: 'Spreads the hood; harder to reach, and harder to unsettle — for the pair of them.',
+            description: 'Spreads the hood, and it comes up stone — what the gaze does to them, it did to itself first.',
             statGrants: { hp: 40, wisdom: 20 },
-            unlocksMoveIds: ['mentalFortress'],
+            unlocksMoveIds: ['landslide'],
+            typeGraft: 'Stone',
+            learnableMoveIds: ['tremor', 'rockfall', 'toughenUp', 'bastion', 'stoneheart'],
           },
           {
             id: 'coil-utility',

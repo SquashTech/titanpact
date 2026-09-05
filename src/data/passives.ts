@@ -334,18 +334,6 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 5 },
     },
   },
-  forgeHeat: {
-    id: 'forgeHeat',
-    name: 'Forge Heat',
-    description: 'Whenever this hero lands a Fire-type attack, it gains 10 Speed.',
-    // Static Tide's source-role shape pointed inward instead of at the defender. Cinder's Fire
-    // column is its cheap one, so the ramp is paid for in singeing rather than in setup turns.
-    reactive: {
-      hook: 'DamageDealt',
-      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'speed', amount: 10 },
-    },
-  },
   ashfeast: {
     id: 'ashfeast',
     name: 'Ashfeast',

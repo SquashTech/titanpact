@@ -210,12 +210,18 @@ Before 2026-09-05 only the 14 starters were on budget and the 22 recruit-only he
 ran 390–480. That gap read as "recruits are the weaker pool", which is exactly what
 `starter: false` is *not* supposed to mean (see "Starters vs. recruit-only heroes").
 
-**Lucius is mono-Mind** as of the same pass — a deliberate retype, not a graft.
-Shadow/Mind was a dual typing doing the work an Evolution branch should do, and it
-cost him every graft path (`chooseEvolutionPath` refuses a graft on a dual-typed
-hero). Mono-Mind Lucius gets three branches back and **Voidcaller grafts Shadow**, so
-the old pairing is now something the player chooses rather than something he is born
-into. His pool follows the primary type; Weaken stays as the one Shadow keepsake.
+**Lucius is mono-Mind** as of the same pass — a deliberate retype of the authored
+hero, not an in-run graft. Shadow/Mind was a dual typing doing the work an Evolution
+branch should do. Mono-Mind Lucius gets three branches and **Voidcaller grafts
+Shadow**, so the old pairing is something the player chooses rather than something he
+is born into. His pool follows the primary type; Weaken stays as the one Shadow
+keepsake.
+
+This still holds now that a dual hero *can* trade its secondary in-run
+(`leveling-and-ranks.md` "The RETYPE"): a mono hero is offered two grafts and a mono
+path, a dual hero one retype. Born dual is no longer a tax on Evolution, but it is
+still less branching than born mono — so the choice between the two is a real
+authoring decision, not a default.
 
 ### The authored roster
 
