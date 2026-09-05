@@ -76,6 +76,8 @@ import surfRaiderArt from '../../../art/enemies/raiders/surfraider.png';
 import mysticRaiderArt from '../../../art/enemies/raiders/mysticraider.png';
 import championRaiderArt from '../../../art/enemies/raiders/championraider.png';
 import leviathanArt from '../../../art/enemies/raiders/leviathan.png';
+import endbringerArt from '../../../art/enemies/final boss/endbringer.png';
+import { CHAMPION_IDS, unsealedIdFor } from '../../data/enemies';
 
 /** Portraits keyed by hero id (heroes.ts order, then enemies.ts order). A missing entry renders text-only. */
 export const heroArt: Partial<Record<string, string>> = {
@@ -172,4 +174,13 @@ export const heroArt: Partial<Record<string, string>> = {
   mysticRaider: mysticRaiderArt,
   championRaider: championRaiderArt,
   leviathan: leviathanArt,
+  // --- The Threshold ---
+  endbringer: endbringerArt,
 };
+
+// An unsealed champion is the same creature with the seal taken off it (docs/lore.md §6),
+// so it wears the same art. Appended rather than listed so a new champion cannot arrive at
+// the finale unpainted.
+for (const championId of CHAMPION_IDS) {
+  heroArt[unsealedIdFor(championId)] = heroArt[championId];
+}

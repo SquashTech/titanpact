@@ -28,6 +28,10 @@ interface Props {
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   /** Fires when this panel opens/closes a modal, so the host can pull its own bottom CTA. */
   onOverlayChange?: (open: boolean) => void;
+  /** Heading, so Act 6's Vigil is not a fourth Guild Hall (docs/run-loop.md §4). */
+  title?: string;
+  /** The Vigil musters rather than sells: a 6v4 finale is a bug the player cannot see coming. */
+  freeRecruits?: boolean;
 }
 
 interface HeroCardProps {
@@ -52,7 +56,7 @@ function GuildHallHeroCard({ hero, offer, affordable, onInspect }: HeroCardProps
           <TypeBadge key={t} type={t} />
         ))}
       </div>
-      <div className="guild-hall-hero-cost">{offer.cost}g</div>
+      <div className="guild-hall-hero-cost">{offer.cost === 0 ? 'Free' : `${offer.cost}g`}</div>
     </button>
   );
 }
@@ -102,6 +106,8 @@ export function GuildHallPanel({
   onBuyEquipment,
   onRequestRosterReplace,
   onOverlayChange,
+  title = 'Guild Hall',
+  freeRecruits = false,
 }: Props) {
   const [previewOfferId, setPreviewOfferId] = useState<string | null>(null);
   const [previewEquipId, setPreviewEquipId] = useState<string | null>(null);
@@ -109,7 +115,9 @@ export function GuildHallPanel({
 
   const heroOffers = offers.heroOfferIds
     .map((id) => guildHallOffers.find((o) => o.id === id))
-    .filter((o): o is GuildHallOffer => !!o && !run.roster.some((r) => r.heroId === o.heroId));
+    .filter((o): o is GuildHallOffer => !!o && !run.roster.some((r) => r.heroId === o.heroId))
+    // Every downstream read goes through the offer's own cost, so zeroing it here is the whole discount.
+    .map((offer) => (freeRecruits ? { ...offer, cost: 0 } : offer));
   const equipmentOffers = offers.equipmentOfferIds.map((id) => equipment[id]).filter((i): i is EquipmentDefinition => !!i);
 
   const rosterFull = run.roster.length >= ROSTER_CAP;
@@ -147,7 +155,7 @@ export function GuildHallPanel({
   return (
     <div className="guild-hall">
       <div className="guild-hall-header">
-        <h2>Guild Hall</h2>
+        <h2>{title}</h2>
         <span className="guild-hall-gold">💰 {run.gold}g</span>
       </div>
 
@@ -226,7 +234,10 @@ export function GuildHallPanel({
               equipmentLookup={equipment}
               relicIds={run.relics}
               action={{
-                label: `Recruit ${heroes[previewOffer.heroId].name} — ${previewOffer.cost}g`,
+                label:
+                  previewOffer.cost === 0
+                    ? `Muster ${heroes[previewOffer.heroId].name}`
+                    : `Recruit ${heroes[previewOffer.heroId].name} — ${previewOffer.cost}g`,
                 disabled: !affordable,
                 note: !affordable
                   ? `Not enough gold — ${previewOffer.cost}g needed, you have ${run.gold}g.`

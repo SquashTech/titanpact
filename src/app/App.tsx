@@ -473,7 +473,7 @@ export function App() {
       setScreen({
         kind: 'shop',
         nodeId,
-        offers: rollGuildHallOffers(playerRun, guildHallOffers, EQUIPMENT_POOL),
+        offers: rollGuildHallOffers(playerRun, guildHallOffers, EQUIPMENT_POOL, node.type === 'muster'),
         soldOutEquipmentIds: [],
       });
     } else if (node.type === 'weaponReward' || node.type === 'armorReward' || node.type === 'accessoryReward') {
@@ -583,8 +583,11 @@ export function App() {
   }
 
   function handleNodeContinue(nodeId: string) {
-    setPlayerRun((run) => advanceToNode(run, nodeId));
-    setScreen(mapAfterLevelUp(playerRun));
+    // The Vigil is the run's last node before the Titan, so a banked pool is re-offered
+    // there or never — walking on clears the defer rather than honouring it.
+    const unbank = playerRun.map?.nodes[nodeId]?.type === 'muster';
+    setPlayerRun((run) => advanceToNode(unbank ? { ...run, levelUpDeferred: false } : run, nodeId));
+    setScreen(mapAfterLevelUp(unbank ? { ...playerRun, levelUpDeferred: false } : playerRun));
   }
 
   /** Claiming an item advances the node and hands off to the equip gate. A queue, because the Loot Pile event hands over three at once. */
@@ -824,6 +827,7 @@ export function App() {
           onBuyEquipment={handleBuyGuildEquipment}
           onRequestRosterReplace={handleRequestRosterReplace}
           onContinue={() => handleNodeContinue(screen.nodeId)}
+          muster={playerRun.map?.nodes[screen.nodeId]?.type === 'muster'}
         />
       )}
 

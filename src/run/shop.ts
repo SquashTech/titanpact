@@ -3,7 +3,7 @@
 // time and carried on the Screen — a component-local roll would reroll on
 // every forceEquip remount. Relics are reward-only, never sold.
 
-import type { RunState } from './state';
+import { ROSTER_CAP, type RunState } from './state';
 import { pickWeightedEquipment, rarityWeightsFor, type EquipmentDefinition, type EquipmentRarity } from './equipment';
 import type { GuildHallOffer } from './recruitment';
 
@@ -39,17 +39,20 @@ function sample<T>(pool: readonly T[], count: number): T[] {
 export function rollGuildHallOffers(
   run: RunState,
   heroPool: readonly GuildHallOffer[],
-  equipmentPool: readonly EquipmentDefinition[]
+  equipmentPool: readonly EquipmentDefinition[],
+  /** Act 6's Vigil: enough recruits to fill the roster plus one, and the run's last shelf. */
+  muster = false
 ): GuildHallOffers {
   const rosterHeroIds = new Set(run.roster.map((r) => r.heroId));
   const availableHeroes = heroPool.filter((o) => !rosterHeroIds.has(o.heroId));
-  const heroCount = Math.random() < 0.5 ? 2 : 3;
+  // Fill the gap and leave one spare, so the Vigil still poses a choice rather than a queue.
+  const heroCount = muster ? Math.max(2, ROSTER_CAP - run.roster.length + 1) : Math.random() < 0.5 ? 2 : 3;
   return {
     heroOfferIds: sample(availableHeroes, heroCount).map((o) => o.id),
     equipmentOfferIds: pickWeightedEquipment(
       equipmentPool,
       GUILD_HALL_EQUIPMENT_OFFER_COUNT,
-      rarityWeightsFor(run.actNumber, 'standard')
+      rarityWeightsFor(run.actNumber, muster ? 'elite' : 'standard')
     ).map((i) => i.id),
   };
 }

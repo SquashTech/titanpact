@@ -19,8 +19,20 @@ import { generateFinaleEncounter } from '../src/run/enemyGen';
 import { generateItinerary, unbrokenSealLocationId } from '../src/run/locations';
 import { generateMap } from '../src/run/map';
 import { recordBrokenSeal } from '../src/run/runProgress';
+import { rollGuildHallOffers } from '../src/run/shop';
+import { guildHallOffers } from '../src/data/recruitment';
+import { equipment } from '../src/data/equipment';
 import { requiredSquadSize, STANDARD_SQUAD_SIZE } from '../src/run/squad';
-import { createRunState, FINALE_ACT, ROSTER_CAP, SEAL_ACTS, TOTAL_ACTS, type BrokenSeal } from '../src/run/state';
+import {
+  addRosterEntry,
+  createRosterEntry,
+  createRunState,
+  FINALE_ACT,
+  ROSTER_CAP,
+  SEAL_ACTS,
+  TOTAL_ACTS,
+  type BrokenSeal,
+} from '../src/run/state';
 import type { StatKey } from '../src/engine/content';
 
 const COMBAT_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed'];
@@ -193,6 +205,30 @@ test('finale: the seal acts still get the branching map — act 6 is the only co
     const map = generateMap(5, act);
     assert.ok(map.rows.length > 2, `act ${act} collapsed to a corridor`);
     assert.strictEqual(map.nodes[map.bossNodeId].type, 'boss');
+  }
+});
+
+// --- The Vigil ---
+
+test('vigil: it offers enough recruits to fill the roster, plus one so it stays a choice', () => {
+  for (const rosterSize of [2, 3, 4, 5]) {
+    let run = { ...createRunState(), actNumber: FINALE_ACT };
+    for (let i = 0; i < rosterSize; i++) {
+      run = addRosterEntry(run, createRosterEntry(`r${i}`, 'cinderKnight', []));
+    }
+    const offers = rollGuildHallOffers(run, guildHallOffers, Object.values(equipment), true);
+    assert.ok(
+      offers.heroOfferIds.length >= ROSTER_CAP - rosterSize,
+      `roster ${rosterSize} cannot be filled from ${offers.heroOfferIds.length} offers`
+    );
+  }
+});
+
+test('vigil: a plain Guild Hall still offers 2-3, so the fill is the Vigil doing it', () => {
+  const run = { ...createRunState(), actNumber: 3 };
+  for (let i = 0; i < 20; i++) {
+    const offers = rollGuildHallOffers(run, guildHallOffers, Object.values(equipment));
+    assert.ok(offers.heroOfferIds.length === 2 || offers.heroOfferIds.length === 3);
   }
 });
 

@@ -15,6 +15,8 @@ interface Props {
   onBuyEquipment: (itemId: string) => void;
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
   onContinue: () => void;
+  /** Act 6's Vigil: the last node of the run, and the one that musters rather than sells. */
+  muster?: boolean;
 }
 
 // The `shop` node. Continue stands down while the panel has a modal open —
@@ -27,6 +29,7 @@ export function ShopNodeScreen({
   onBuyEquipment,
   onRequestRosterReplace,
   onContinue,
+  muster = false,
 }: Props) {
   const [overlayOpen, setOverlayOpen] = useState(false);
   return (
@@ -44,11 +47,13 @@ export function ShopNodeScreen({
           onBuyEquipment={onBuyEquipment}
           onRequestRosterReplace={onRequestRosterReplace}
           onOverlayChange={setOverlayOpen}
+          title={muster ? 'The Vigil' : 'Guild Hall'}
+          freeRecruits={muster}
         />
       </div>
       {!overlayOpen && (
         <button className="resolve-button" onClick={onContinue}>
-          Continue
+          {muster ? 'Walk on' : 'Continue'}
         </button>
       )}
     </div>
