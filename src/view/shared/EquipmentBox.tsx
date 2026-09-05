@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import type { StatKey } from '../../engine/content';
 import type { EquipmentDefinition, EquipmentLoadout, EquipmentRarity, EquipmentSlot } from '../../run/equipment';
 import { StatGlyph, STAT_LABELS } from './StatBars';
-import { IconsetGlyph } from './RunGlyph';
+import { RelicGlyph } from './relicIcons';
 import { EquipmentFormGlyph } from './equipmentIcons';
 import { useLongPress } from './MoveTile';
 import { passives } from '../../data/passives';
@@ -10,20 +10,6 @@ import { PassiveGlyph } from './passiveIcons';
 import { statuses } from '../../data/statuses';
 
 export const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
-
-/** 2500+ icon-sheet indices for the authored relic catalogue. */
-const RELIC_ICON_INDICES: Partial<Record<string, number>> = {
-  ironStandard: 81,
-  warHorn: 77,
-  sagesLantern: 70,
-  windcallersBanner: 66,
-  deepWellstone: 68,
-  bulwarkCore: 83,
-  // Guardian's Banners: heart / mana orb / cycle arrows, the resource each grants.
-  bannerOfVitality: 84,
-  bannerOfTheWellspring: 165,
-  bannerOfTheEverflow: 75,
-};
 
 interface EquipmentIconProps {
   item: EquipmentDefinition | null;
@@ -41,9 +27,9 @@ interface RelicIconProps {
   className?: string;
 }
 
-/** Gem (index 3) is the fallback. */
+/** Form from the relic's name, colour from its grant (relicIcons.tsx). */
 export function RelicIcon({ relicId, className }: RelicIconProps) {
-  return <IconsetGlyph index={RELIC_ICON_INDICES[relicId] ?? 3} className={`equip-icon-img ${className ?? ''}`} />;
+  return <RelicGlyph relicId={relicId} className={className} />;
 }
 
 export const EQUIP_SLOT_LABELS: Record<EquipmentSlot, string> = {

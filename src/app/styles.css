@@ -7132,6 +7132,20 @@ textarea,
   vertical-align: -0.14em;
 }
 
+/* Relic glyph (relicIcons.tsx). Same em sizing as .equip-glyph — one rule
+   serves the 14px overlay row, the 28px shrine card and the 48px reveal —
+   because every call site sets the font-size those numbers come from.
+
+   The color is set inline per relic (its type, passive or lead stat), not
+   inherited: a relic's grant is the only thing distinguishing two copies of
+   the same silhouette, so it can't fall through to the surface's text. */
+.relic-glyph {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  vertical-align: -0.14em;
+}
+
 .equip-slot-item {
   font-size: 10px;
   font-weight: 600;

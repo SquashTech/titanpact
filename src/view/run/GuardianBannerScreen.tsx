@@ -4,7 +4,7 @@ import type { RunState } from '../../run/state';
 import { grantRelicReward } from '../../run/runProgress';
 import { RelicIcon } from '../shared/EquipmentBox';
 import { NodeHeader, NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
-import { RunGlyph } from '../shared/RunGlyph';
+import { RelicKindGlyph } from '../shared/relicIcons';
 import { stackedGrantSummary, stackedRelicName } from '../shared/relicStacks';
 import { RelicChoiceCard } from './RelicChoiceCard';
 import { RosterPeek } from './RosterPeek';
@@ -40,7 +40,7 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
           compact
           eyebrow="The Guardian Falls"
           title="Raise a Banner"
-          glyph={<RunGlyph kind="relic" />}
+          glyph={<RelicKindGlyph form="banner" />}
           readout="One standard for the acts ahead. Every hero carries it — the ones you have and the ones you haven't met."
         />
       )}

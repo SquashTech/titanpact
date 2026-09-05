@@ -8,7 +8,6 @@ const ICON_INDEX = {
   weapon: 97,
   armor: 81, // ward shield
   accessory: 70, // arcane sparkle
-  relic: 3, // gem
   guild: 70,
   class: 81,
   mana: 75, // restorative cycle

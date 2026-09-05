@@ -6,7 +6,8 @@ import type { EquipmentDefinition } from '../../run/equipment';
 import { pickWeightedEquipment, rarityWeightsFor } from '../../run/equipment';
 import { grantCurrencyReward, grantUpgradeReward, grantRelicReward } from '../../run/runProgress';
 import { RelicIcon } from '../shared/EquipmentBox';
-import { ResourceGlyph, RunGlyph } from '../shared/RunGlyph';
+import { ResourceGlyph } from '../shared/RunGlyph';
+import { RelicKindGlyph } from '../shared/relicIcons';
 import { SectionGlyph } from '../shared/sectionIcons';
 import { NodeHeader, NodeSky, NODE_TINT_ARCANE, NODE_TINT_GOLD, NODE_TINT_VITAL } from '../shared/NodeStage';
 import { CacheOpening, useCacheOpening } from './CacheReveal';
@@ -127,7 +128,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
           compact
           eyebrow="A Pact Awaits"
           title="Relic Shrine"
-          glyph={<RunGlyph kind="relic" />}
+          glyph={<RelicKindGlyph form="crystal" />}
           readout={relicChoices.length > 0 ? 'Tap a relic to select it, then claim it.' : 'Every relic here is already yours.'}
         />
       )}
