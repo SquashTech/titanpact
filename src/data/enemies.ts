@@ -145,6 +145,100 @@ export const enemies: Record<string, HeroDefinition> = {
     starter: false,
   },
 
+  // --- Fae (Forbidden Forest) — authored for Act 2, scaled up from there ---
+  // Every one is Nature-primary, the Cultists' shared-spine shape a third time. It is the
+  // widest answer any faction has handed out: Fire, Frost, Shadow AND Beast all read 2x off
+  // Nature, where the Cultists' Shadow gives up two types and the Raiders' Iron three. That
+  // is deliberate — the Fae are the faction a player is most likely to meet already holding
+  // the counter, and the engine below is what they get in exchange.
+  //
+  // The tell is Renew, and it runs one step further than the Raiders' Conduct. Conduct is a
+  // mark that pays out on a hit; Renew is a buff that pays out three ways at once —
+  //   1. it heals at the end of every round (the status),
+  //   2. Seed Shot and Branch Slam deal DOUBLE damage while the user carries it,
+  //   3. under Verdant Earth every combatant's Attack and Intelligence go up by their live
+  //      Renew value — so the Light Fairy's Magic Growth is worth a whole turn the way the
+  //      Stormraider's Ionize is.
+  // The brake is that Renew halves at the end of every round, so the whole engine decays on
+  // its own clock, and Verdant Earth is SYMMETRIC — a player side that brought its own Renew
+  // gets the same stats out of the Fae's ground. Planting is the faction; keeping it planted
+  // is what it spends its turns on.
+  pixie: {
+    id: 'pixie',
+    name: 'Pixie',
+    types: ['Nature'],
+    baseStats: { hp: 85, attack: 25, defense: 55, intelligence: 85, wisdom: 65, speed: 85, manaPool: 55, mpRegen: 12 },
+    moveIds: ['regrowth', 'seedShot', 'toxicSpores'],
+    starter: false,
+  },
+  // The physical half, and the one that needs no payoff move of its own: under Verdant Earth
+  // its Attack carries the whole line's Renew, so Leaf Slice and Heavy Blow scale off a buff
+  // somebody else paid for. Mono-Nature would have made that a fair trade; the Iron makes it
+  // a bruiser that survives long enough to collect.
+  faeWarrior: {
+    id: 'faeWarrior',
+    name: 'Fae Warrior',
+    types: ['Nature', 'Iron'],
+    baseStats: { hp: 115, attack: 95, defense: 90, intelligence: 20, wisdom: 40, speed: 40, manaPool: 55, mpRegen: 12 },
+    moveIds: ['ivySpike', 'leafSlice', 'heavyBlow'],
+    starter: false,
+  },
+  // Sets the ground. Magic Growth is this faction's Ionize — a turn spent on the field rather
+  // than the enemy, and the reason the tell shows up at a plain `fight` node and not only
+  // behind the Queen. Mend is the second half of why the Fae are a slow fight: Renew heals at
+  // the end of the round, this heals inside it.
+  lightFairy: {
+    id: 'lightFairy',
+    name: 'Light Fairy',
+    types: ['Nature', 'Light'],
+    baseStats: { hp: 100, attack: 25, defense: 65, intelligence: 85, wisdom: 80, speed: 45, manaPool: 65, mpRegen: 12 },
+    moveIds: ['magicGrowth', 'mend', 'glimmer'],
+    starter: false,
+  },
+  // Carries Seed Shot, so it is the basic that cashes what the other two plant. Backfire
+  // burning its own user is the joke and the cost at once: a Nature body taking 2x off Fire
+  // is the worst thing on the field to be running a furnace inside.
+  mechaFairy: {
+    id: 'mechaFairy',
+    name: 'Mecha Fairy',
+    types: ['Nature', 'Mech'],
+    baseStats: { hp: 95, attack: 30, defense: 70, intelligence: 90, wisdom: 55, speed: 60, manaPool: 60, mpRegen: 12 },
+    moveIds: ['overclock', 'seedShot', 'backfire'],
+    starter: false,
+  },
+  // Fields the "Monsters" battle node alongside 3 random basic Fae; never randomly drawn.
+  // 500, the third leader at that figure, and spent like the Cult Mystic rather than the
+  // Champion Raider — a caster, because what a Fae leader adds is more of the engine, not a
+  // bigger swing. Wild Bloom is the escalation the basics cannot afford: Renew 50 on both,
+  // which under her own Magic Growth is +50 Attack and +50 Intelligence to the whole side.
+  pixieQueen: {
+    id: 'pixieQueen',
+    name: 'Pixie Queen',
+    types: ['Nature', 'Arcane'],
+    baseStats: { hp: 140, attack: 35, defense: 80, intelligence: 105, wisdom: 85, speed: 55, manaPool: 100, mpRegen: 16 },
+    moveIds: ['magicGrowth', 'wildBloom', 'arcaneBlast', 'magicBolt'],
+    starter: false,
+  },
+  // The Forbidden Forest's Guardian reinforcement, and the apex of the engine rather than a
+  // bigger version of the Queen: Overgrowth is Renew 100 on itself, which is ~200 HP healed
+  // over the following rounds AND +100 Attack under Verdant Earth AND the switch that turns
+  // Branch Slam's 80 base power into 160. Three payouts off one turn is the most any single
+  // action in the game does, and Speed 30 — the slowest champion by 20 — is the price: it
+  // sets up in front of you, in the open, while you hit it.
+  //
+  // Unlike the Goblin Lord and the Leviathan it sits INSIDE its faction's spine (Yugzulach's
+  // shape), so the Fire/Frost/Shadow/Beast answer that beat the basics still beats the boss.
+  // Renew 100 stacking on top of 260 HP is the figure in here most likely to move in a
+  // balance pass — it is a first-pass number, not a decision.
+  elderBough: {
+    id: 'elderBough',
+    name: 'Elder Bough',
+    types: ['Nature', 'Ancient'],
+    baseStats: { hp: 260, attack: 105, defense: 110, intelligence: 105, wisdom: 90, speed: 30, manaPool: 150, mpRegen: 20 },
+    moveIds: ['runicBlast', 'overgrowth', 'branchSlam', 'forceOfNature'],
+    starter: false,
+  },
+
   // --- Raiders (Storm Coast) — authored for Act 2, scaled up from there ---
   // Every one is Iron-primary: a warband in mail, not five unrelated coastal things.
   // The price of that spine is Fire, Storm and Mech, which all read 2x off Iron.
@@ -264,6 +358,13 @@ export const factions: Record<string, FactionRoster> = {
     basicIds: ['raider', 'stormRaider', 'surfRaider', 'mysticRaider'],
     leaderId: 'championRaider',
   },
+  fae: {
+    id: 'fae',
+    name: 'Fae',
+    baselineAct: 2,
+    basicIds: ['pixie', 'faeWarrior', 'lightFairy', 'mechaFairy'],
+    leaderId: 'pixieQueen',
+  },
 };
 
 /** The faction every location without an authored one still fields (docs/locations.md "The faction bill"). */
@@ -273,6 +374,7 @@ export const DEFAULT_FACTION_ID = 'goblins';
 export const GOBLIN_LORD_ID = 'goblinLord';
 export const YUGZULACH_ID = 'yugzulach';
 export const LEVIATHAN_ID = 'leviathan';
+export const ELDER_BOUGH_ID = 'elderBough';
 
 /** `enemies` narrowed to one faction's basics, for the generators that must never draw its leader. */
 export function basicEnemiesOf(faction: FactionRoster): HeroLookup {

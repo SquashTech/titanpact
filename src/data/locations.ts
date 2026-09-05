@@ -2,7 +2,7 @@
 // feeds src/run/locations.ts's PoolBias; the presentation fields feed locationArt/ActIntroScreen.
 
 import type { TypeId } from '../engine/content';
-import { DEFAULT_FACTION_ID, GOBLIN_LORD_ID, LEVIATHAN_ID, YUGZULACH_ID } from './enemies';
+import { DEFAULT_FACTION_ID, ELDER_BOUGH_ID, GOBLIN_LORD_ID, LEVIATHAN_ID, YUGZULACH_ID } from './enemies';
 
 /** Particle-field motion (docs/locations.md §4). */
 export type AmbienceKind = 'fireflies' | 'embers' | 'snow' | 'rain' | 'spores' | 'sigils';
@@ -58,7 +58,6 @@ export const locations: Record<string, LocationDefinition> = {
     ambience: 'sigils',
   },
 
-  // These three still field Goblins: their own rosters are unauthored (docs/locations.md §5.2).
   forbiddenForest: {
     id: 'forbiddenForest',
     name: 'Forbidden Forest',
@@ -66,12 +65,13 @@ export const locations: Record<string, LocationDefinition> = {
     flavor: 'The path closes behind you. It was never a path.',
     affinity: ['Nature', 'Stone', 'Light'],
     exclusiveHeroIds: [],
-    factionId: DEFAULT_FACTION_ID,
-    guardianFinalEnemyId: null,
+    factionId: 'fae',
+    guardianFinalEnemyId: ELDER_BOUGH_ID,
     tintRgb: '86, 190, 130',
     ambience: 'spores',
   },
 
+  // These two still field Goblins: their own rosters are unauthored (docs/locations.md §5.2).
   moltenFoundry: {
     id: 'moltenFoundry',
     name: 'Molten Foundry',

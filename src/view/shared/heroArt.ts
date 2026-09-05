@@ -49,6 +49,13 @@ import frozenCultistArt from '../../../art/enemies/cultists/frozencultist.png';
 import cultMysticArt from '../../../art/enemies/cultists/cultmystic.png';
 import yugzulachArt from '../../../art/enemies/cultists/yugzulach.png';
 
+import pixieArt from '../../../art/enemies/fae/pixie.png';
+import faeWarriorArt from '../../../art/enemies/fae/faewarrior.png';
+import lightFairyArt from '../../../art/enemies/fae/lightfairy.png';
+import mechaFairyArt from '../../../art/enemies/fae/mechafairy.png';
+import pixieQueenArt from '../../../art/enemies/fae/pixiequeen.png';
+import elderBoughArt from '../../../art/enemies/fae/elderbough.png';
+
 import raiderArt from '../../../art/enemies/raiders/raider.png';
 import stormRaiderArt from '../../../art/enemies/raiders/stormraider.png';
 import surfRaiderArt from '../../../art/enemies/raiders/surfraider.png';
@@ -123,6 +130,13 @@ export const heroArt: Partial<Record<string, string>> = {
   frozenCultist: frozenCultistArt,
   cultMystic: cultMysticArt,
   yugzulach: yugzulachArt,
+  // --- Enemies: Fae ---
+  pixie: pixieArt,
+  faeWarrior: faeWarriorArt,
+  lightFairy: lightFairyArt,
+  mechaFairy: mechaFairyArt,
+  pixieQueen: pixieQueenArt,
+  elderBough: elderBoughArt,
   // --- Enemies: Raiders ---
   raider: raiderArt,
   stormRaider: stormRaiderArt,

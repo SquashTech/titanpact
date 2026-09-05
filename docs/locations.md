@@ -118,10 +118,11 @@ work is data entry rather than plumbing.
 `LocationDefinition.factionId`. `fight` and `battle` are the two node types that read as
 *faction*; `skirmish` reads as *region*.
 
-Two are paid: **Goblins** (5 basics + the Chief, Wild's Edge) and, since 2026-09-02,
-**Cultists** (4 basics + the Cult Mystic, Blighted Shrine). Fae, Automaton and Raider and
-Undead rosters are still unwritten, so **the Forbidden Forest, Molten Foundry, Storm Coast
-and Necropolis name their faction on the arrival screen while still fielding Goblins.**
+Four are paid: **Goblins** (5 basics + the Chief, Wild's Edge), **Cultists** (4 basics +
+the Cult Mystic, Blighted Shrine) and **Raiders** (4 basics + the Champion Raider, Storm
+Coast) since 2026-09-02, and **Fae** (4 basics + the Pixie Queen, Forbidden Forest) since
+2026-09-05. Automaton and Undead rosters are still unwritten, so **the Molten Foundry and
+the Necropolis name their faction on the arrival screen while still fielding Goblins.**
 
 This is a known and accepted intermediate state, not an oversight. The affinity layer (§2)
 costs zero new content and works today; faction rosters land one at a time, and each one is
@@ -163,15 +164,42 @@ and Spirit are super-effective against the whole roster. Whether a faction *shou
 counterable as a unit is an open balance question (§6), not a settled one; the Goblins, whose
 five basics are five different types, are the counter-example already in the game.
 
+The shared spine is now the house shape rather than one faction's experiment: the Raiders
+lead on Iron and the Fae on Nature, each fanning its second type out across the basics the
+way the Cultists do. What each spine costs is the whole point of picking one — Shadow gives
+up two attacking types (Light, Spirit), Iron three (Fire, Storm, Mech), and Nature four
+(Fire, Frost, Shadow, Beast). The Fae are therefore the most counterable faction in the game
+on purpose, and the Renew engine below is what they are paid for it.
+
+**What a faction's tell is (2026-09-05, the Fae).** A roster at the same 400/500/700 band as
+the last two has to be a different *fight*, not a different colour, and the lever is a status
+the whole kit is built around. The Raiders' is Conduct — a mark that pays out on the next hit.
+The Fae's is **Renew**, which pays out three ways off one turn: the end-of-round heal, the
+x2 on Seed Shot and Branch Slam while the user carries it, and — under **Verdant Earth**, set
+by the Light Fairy's Magic Growth at a plain `fight` node — Attack and Intelligence equal to
+the live Renew value. Two brakes keep it honest: Renew halves every round, so the engine
+decays on its own clock, and Verdant Earth is **symmetric**, so a player side carrying its own
+Renew gets the same stats out of the Fae's ground. The Elder Bough is the apex of it —
+Overgrowth is Renew 100 on itself, three payouts from one action — and Speed 30, the slowest
+champion by 20, is what it pays. Whether that self-plant is too much on top of 260 HP is a
+first-pass number for playtest, not a decision.
+
 ### `guardianFinalEnemyId` — the faction champion
 
 One enemy id per location, held on the **bench** of that location's Guardian fight so it
 is the last combatant to reach the field (`run-loop.md` "The Guardian's champion" for the
-mechanism and the balance questions). Two locations have one today: Wild's Edge's **Goblin
-Lord** (600 stat total, Beast/Ancient, physical) and the Blighted Shrine's **Yugzulach**
+mechanism and the balance questions). Four locations have one today: Wild's Edge's **Goblin
+Lord** (600 stat total, Beast/Ancient, physical), the Blighted Shrine's **Yugzulach**
 (700, Shadow/Ancient, magical — the same silhouette one act later and down the other damage
-pipeline). The remaining four are `null`, for the same reason their `factionId` still points
-at the Goblins: there is no authored Fae or Raider or Undead champion to point at yet.
+pipeline), the Storm Coast's **Leviathan** (700, Water/Ancient) and the Forbidden Forest's
+**Elder Bough** (700, Nature/Ancient). The remaining two are `null`, for the same reason
+their `factionId` still points at the Goblins: there is no authored Automaton or Undead
+champion to point at yet.
+
+Whether the champion sits inside its faction's type spine is a per-location call, and both
+answers are in the game. Yugzulach and the Elder Bough do, so the answer that beat the basics
+still beats the boss — the readable version. The Leviathan does not, because the Storm
+Coast's apex is a thing that lives in the water rather than a bigger Raider.
 
 A **location** property rather than a faction or boss-node one, and that placement is the
 decision worth recording. What comes out of the treeline at Wild's Edge is a Goblin Lord
@@ -183,8 +211,8 @@ placeholder Goblin locations a Goblin Lord they were never meant to field. This 
 ground you are standing on* — the same thing `faction`, `factionId` and `affinity` say, and
 so it belongs beside them.
 
-It is also the half of the faction bill above that has actually been paid twice: Goblins and
-Cultists both have an apex, which is the authoring prompt that section asks for. Four to go.
+It is also the half of the faction bill above that has actually been paid four times, which
+is the authoring prompt that section asks for. Two to go.
 
 ## 4. The arrival screen
 
