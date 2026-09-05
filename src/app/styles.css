@@ -10824,11 +10824,16 @@ textarea,
   pointer-events: none;
 }
 
+/* The bloom is the relic's own colour (relicIcons.tsx sets it inline, so
+   currentColor is it), not the shrine's violet: the badge, its ring and the
+   burst behind are all still violet, which is what says "a relic was claimed"
+   — the glow says WHICH one. Tighter than the 16px it replaced because
+   currentColor lands at full alpha where the violet was at .75. */
 .relic-reveal-icon {
   position: relative;
   font-size: 48px;
   line-height: 1;
-  filter: drop-shadow(0 0 16px rgba(139, 127, 224, 0.75));
+  filter: drop-shadow(0 0 14px currentColor);
 }
 
 .relic-reveal-eyebrow {
