@@ -1,9 +1,9 @@
 # run-loop.md — The Escalating-Fight Run Loop
 
 > Module of the Titanpact `/docs` suite. Companion to `combat.md`, `progression.md`,
-> `mana.md`, `architecture.md`, and `locations.md` — which owns the layer directly
+> `mana.md`, `architecture.md`, `locations.md` — which owns the layer directly
 > above this one: **which place** an act happens in, and how that biases the encounter
-> pools §2 describes. The map/node structure that turns the single fixed
+> pools §2 describes — and `lore.md`, which owns what §4's finale *means*. The map/node structure that turns the single fixed
 > demo fight into the roguelike run CLAUDE.md's north star describes: draft →
 > escalating fights → relics.
 
@@ -220,7 +220,8 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
 ## 3. Decisions locked for this pass (2026-08-16 sign-off, multi-act entry 2026-08-17)
 
 - **Multi-act sequencing (2026-08-17, per user direction).** A run now chains
-  `TOTAL_ACTS = 5` acts (`src/run/state.ts`) instead of ending at the first boss.
+  `TOTAL_ACTS` acts (`src/run/state.ts`) instead of ending at the first boss — 5 of the
+  §1 shape, then the finale act (§4).
   `RunState.actNumber` (1-indexed) tracks which act is current. On a boss-node win
   (`App.tsx handleFightResolved`): grant 1 Recruit Contract
   (`runProgress.ts grantContractReward` — this is where the removed `contractReward`
@@ -568,7 +569,126 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   gold/training-point rewards — see "The two reward lanes" above — so the player exercises
   this loop from turn one rather than waiting on `equipmentReward` node luck.
 
-## 4. What's still not built
+## 4. Act 6 — the Pact (2026-09-05, per user direction)
+
+The fiction this implements is `docs/lore.md`; this section owns only the structure. In
+one line: **five acts break five seals, and Act 6 is the thing behind them.**
+
+### The Pact Seal — the between-acts beat
+
+A run's five Guardians are its five broken seals, so the run needs a place to *count*
+them. `PactSealScreen` is a five-socket seal — the same fixed-denominator socket idiom as
+the draft's pact sockets and the Field Effect plaque's 5-pip clock
+(`visual-language.md`) — and each act's Guardian win fills one with that location's
+champion sigil in the faction's `tintRgb`.
+
+It grants nothing, so it goes **last** in the act-boundary chain, after the post-fight
+gates and immediately before the next act's `ActIntroScreen`: the seal fills, then you
+arrive somewhere new. That ordering is the opposite of the Banner's (which goes first
+precisely *because* it grants something) and for the same reason.
+
+The fifth socket is the payoff. It fills, and instead of an act intro **the seal breaks**
+— which is Act 6's opening beat, bought with one animation on a screen that had to exist
+anyway.
+
+### Act 6's shape
+
+`TOTAL_ACTS` becomes **6**. Act 6 is not another act of the §1 shape; it is two nodes:
+
+- **Row 0: a single `muster` node — the Vigil.** A Guild Hall variant, and the run's last
+  node of any kind. Three jobs, in descending order of how load-bearing they are:
+  1. **Fills the roster to `ROSTER_CAP`.** The finale is 6v6 and a roster can legitimately
+     be *under* 6 — the draft grants 2 (`STARTER_PICK_COUNT`) and the cap is a ceiling,
+     not a floor. Recruits taken here to reach 6 are **free**; a 6v4 finale is not a
+     difficulty setting, it is a bug the player cannot see coming.
+  2. **Spends the gold.** Gold is otherwise dead currency the moment Act 5's Guardian
+     falls. The Vigil's equipment shelf is the run's last, at one rarity tier ahead.
+  3. **Spends banked Training Points**, since `levelUpDeferred` lets a pool ride.
+- **Row 1: the single `finale` node.** No branch, no choice — the map is a corridor, and
+  drawing it as one is the point.
+
+Act 6 happens at a **fixed location** the acts-2-5 draw can never produce, the way Act 1 is
+fixed to Wild's Edge. It has no faction and no affinity: it is where the binding was made.
+
+### The final battle — 6v6
+
+**The board is still 2v2.** Six-a-side is a *bench* change, not a field change — targeting,
+the spread rule, priority brackets and the whole damage pipeline are untouched. That is
+what makes this affordable.
+
+**The player fields the entire roster.** No bring-6-pick-4 sideboard; `requiredSquadSize`
+returns 6 and squad select becomes a *lead-order* screen rather than a *pick* screen. This
+does systemic work the rest of the run cannot: every other fight lets a hyperfocus build
+bench its dead weight, and this one drags all six onto the field. It is the single place
+where breadth is priced in gameplay rather than in `levelUpCost`, and it lands where that
+reads as drama instead of punishment.
+
+**The enemy is the five you broke, then the thing they were holding shut.**
+
+| Bench position | Who |
+|---|---|
+| active, active | The Act 1 and Act 2 champions |
+| bench 0-2 | The Act 3, 4 and 5 champions, in that order |
+| bench 3 | **Endbringer** — mono-Ancient, the last combatant to reach the field |
+
+Order is not decoration: forced replacement pulls from the bench in order, so the fight
+**escalates across itself** and the Endbringer arrives only once the five in front of it
+are gone.
+
+**The five arrive unsealed.** They field as their base type alone — Goblin Lord mono-Beast,
+Yugzulach mono-Shadow, Leviathan mono-Water, Elder Bough mono-Nature, Lava Beast mono-Fire,
+Skeleton King mono-Spirit — because the Ancient half *was* the seal and the player already
+took it (`lore.md` §6). This is balance and fiction agreeing: six X/Ancient bodies at ~700
+stat total, none takeable at super-effective damage, against the Pact Clock, is a finale
+that ends in a timeout — and `FightScreen` resolves a mutual wipe as a **player loss**. The
+Endbringer is the only true wall, which is what a Titan should be.
+
+Deriving the unsealed form from the authored champion (drop the Ancient type, keep
+everything else) rather than authoring six more enemies is the pure-data version and the
+one that cannot drift.
+
+**They arrive at the power they were beaten at.** Each boss win snapshots the champion's
+actual `RosterEntry` — level, act scaling, unlocked moves — into the run's broken-seal
+ledger, and the finale rebuilds it verbatim. Named consequence, accepted rather than
+accidental: this **rewards taking hard locations early**, because a champion beaten in Act
+2 returns at Act 2 power. It puts a price on `locations.md`'s "when, not whether", payable
+at the only moment the whole run is on the table at once.
+
+### The windows 6v6 actually moves
+
+Small list, and that is the finding — most of the engine does not care how deep a bench is.
+
+| Window | Today | Finale |
+|---|---|---|
+| `requiredSquadSize` (`squad.ts`) | `min(4, rosterSize)` | 6 |
+| `isLockedIn` (`engine/state.ts`) | `koCount >= 2` | **3** |
+| Enemy bench order | generated | authored (table above) |
+| Squad select | pick 4 of 6 | order 6 of 6 |
+| Bench rails (`FightScreen`) | 2 slots | 4 slots |
+
+The lock-in threshold is the one with teeth. Two of four is half a side; two of six is a
+third, which would take voluntary switching away while two thirds of the fight is still
+standing. **Three** holds the ratio, and lock-in stays in the finale rather than being
+dropped — it is the intentional phase transition, and the last third of a 6v6 with the
+Endbringer already out is exactly what it is for.
+
+> 🔒 **OPEN — flag before hardening.**
+> - **The Pact Clock has not been measured against a 6v6.** Twelve bodies, four benched
+>   per side regenerating mana every round, and one enemy resisting everything is the
+>   deepest HP pool in the game — round 30 may well be a timeout rather than a bracket,
+>   and a timeout is a player loss. The cheap fix is a bigger number; the *better* one, if
+>   it is needed, is a rule: **the Endbringer's entry starts the clock.** The pact comes
+>   due when the thing you came for reaches the field. Do not reach for either until the
+>   fight has actually been measured — `combat.md` already flags 30 as unmeasured.
+> - **Act 5's Guardian now pays a Banner.** The Banner was acts 1-4 only because act 5's
+>   win ended the run and a team-wide permanent handed to a finished run buys nothing.
+>   That reasoning is void: there is a fight after it. Five stacks instead of four also
+>   moves the spread-or-commit decision the fixed 1-of-3 exists to create, and the MP
+>   Regen banner's open balance question (§3) gets one act sharper.
+> - **The win condition is reduction to 0 HP**, and `lore.md` §7 records the alternative
+>   (survival) and why it is better fiction and a new engine primitive.
+
+## 5. What's still not built
 
 - **Level-up spend UI, superseded (2026-08-16 playtest pass):** the original gap (no
   view-layer way to spend the pooled level-up currency) was first filled by

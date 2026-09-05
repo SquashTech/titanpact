@@ -184,15 +184,16 @@ what's still unimplemented:
   glyph instead of by a third and fourth word. Node type *ids* are unchanged.
   **2026-08-26:** the reward row
   feeding that choice **steers** — left→Elite, right→Battle, middle→both — so the choice
-  is never removed, only priced against taking a side reward. **5 acts** are
+  is never removed, only priced against taking a side reward. **5 acts of that shape,
+  then a finale act** (2026-09-05, `docs/lore.md` + `run-loop.md` §4), are
   chained per run (`RunState.actNumber`, `TOTAL_ACTS`), each with a fresh map generated
   once the previous act's Guardian falls; 1 Recruit Contract is granted at the end of
   every act (replacing the removed `contractReward` map-node type — Recruit Contracts
   now come only from that per-act grant, a beaten enemy's contract claim, or a Guild
-  Hall purchase). Beating the Guardian of acts 1-4 also grants **the Guardian's
+  Hall purchase). Beating an act's Guardian also grants **the Guardian's
   Banner** (2026-08-30): a fixed, never-rolled 1-of-3 team-wide relic — Vitality
   (+30 HP), Wellspring (+20 Mana), Everflow (+10 MP Regen) — stackable across the
-  four acts and displayed folded ("Banner of Vitality +2"). Their relative values
+  five acts and displayed folded ("Banner of Vitality +2"). Their relative values
   are an open balance question (`docs/run-loop.md`). **Encounters scale by act**
   (2026-08-30) on two tracks (`src/run/difficulty.ts`): **Monsters** baselines at Act 2
   (placeholder — per-act monster content isn't authored yet), **Skirmish/Guardian** at
@@ -249,7 +250,7 @@ authored roster.
 - `CLAUDE.md` — this file. Keep it lean (<200 lines); adherence drops past that.
 - `/docs/` — the deeper design modules (generate next): `combat.md`, `types-and-heroes.md`,
   `progression.md`, `mana.md`, `architecture.md`, `field-effects.md`, `run-loop.md`,
-  `locations.md`, `events.md`, `visual-language.md` (presentation only). Reference from here; don't inline them.
+  `locations.md`, `events.md`, `lore.md`, `visual-language.md` (presentation only). Reference from here; don't inline them.
   **`authoring-moves.md` is a runbook, not a design module** — read it before implementing
   a designed slate of moves for a type (1 type still to go — Ancient; Fire
   and Water are the worked examples, and §10 carries all fourteen hand-offs).

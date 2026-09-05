@@ -4,7 +4,7 @@
 > per-act *map shape*) and `types-and-heroes.md` (which owns the type roster). This doc
 > owns the layer above the map: **which place an act happens in**, and what that changes.
 
-A run chains `TOTAL_ACTS = 5` acts (`run-loop.md` §3). Until now every act was the same
+A run chains 5 acts of the standard shape, then the finale act (`run-loop.md` §3-4). Until now every act was the same
 act — same generated map shape, same encounter pools, same Goblins, differing only in
 seed. A **Location** is the identity an act wears: a name, a faction, a type affinity, a
 set of heroes findable nowhere else, and a look.
@@ -20,6 +20,14 @@ already exists (`src/data/enemies.ts`).
 
 **Acts 2-5 draw from the remaining locations without replacement.** A location is never
 visited twice in one run.
+
+**Act 6 is a fixed location the draw can never produce** — no faction, no affinity, and no
+map of the `run-loop.md` §1 shape. It is where the binding was made (`run-loop.md` §4).
+
+**Exactly one location goes unvisited every run**, and that is load-bearing rather than
+leftover: six locations, five seals broken, and the sixth is why there is a world left at
+all (`lore.md` §5). It is also the natural anchor for `progression.md`'s light
+meta-progression — the thread between runs.
 
 ### Choice, not a roll (decided 2026-08-28, per user direction)
 
