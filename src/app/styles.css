@@ -6521,8 +6521,12 @@ textarea,
 
 /* Sized with .resolve-button (2026-08-28, same user direction): this is the
    most-pressed button in the game — it ends every fight — and it was a 15px
-   label in 12px of padding, floating centred rather than filling the row. */
-.result-panel button {
+   label in 12px of padding, floating centred rather than filling the row.
+   ┄
+   Scoped to .result-buttons, not every button in the panel (2026-09-04): the
+   run summary puts hero cards in this panel, and each card carries its own
+   little `i` button, which this rule was inflating into a second gold CTA. */
+.result-panel .result-buttons button {
   min-height: 56px;
   background: var(--accent);
   color: #1a1300;
@@ -6553,6 +6557,135 @@ textarea,
   color: var(--text);
   border: 1px solid var(--border);
   box-shadow: var(--hairline), var(--elev-1);
+}
+
+/* --- Run summary (RunSummaryScreen.tsx) ---------------------------------
+   Wears the fight result panel's clothes so the end of a RUN reads as the
+   same kind of moment as the end of a fight, only wider: this one carries the
+   finishing roster, and a 3-column card grid does not fit 340px. */
+
+.run-summary-panel {
+  max-width: 400px;
+  max-height: 92%;
+  gap: 10px;
+  padding: 24px 18px 18px;
+  align-items: stretch;
+  text-align: center;
+}
+
+.run-summary-where {
+  margin: -6px 0 2px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.run-summary-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.run-summary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(146, 182, 196, 0.16);
+  background: var(--well);
+}
+
+.run-summary-stat-value {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--accent);
+}
+
+.run-summary-stat-label {
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.run-summary-relics {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+}
+
+.run-summary-section-title {
+  padding-top: 4px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* Sits on the card the star was just earned by. Selected through .pick-card so
+   it outweighs `.pick-card > * { position: relative }`, which would otherwise
+   drop it into the flow and push the sprite down. */
+.pick-card > .run-summary-card-star {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  z-index: 1;
+  font-size: 12px;
+  color: var(--accent);
+  text-shadow: 0 0 8px rgba(224, 166, 60, 0.75);
+  animation: run-summary-star-land 0.5s var(--ease-spring) 0.35s both;
+}
+
+@keyframes run-summary-star-land {
+  from {
+    opacity: 0;
+    transform: scale(2.4) rotate(-25deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.run-summary-records {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.run-summary-record-chip {
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(146, 182, 196, 0.24);
+  background: var(--well);
+  font-size: 10.5px;
+  color: var(--text);
+}
+
+.run-summary-record-chip.is-star {
+  border-color: rgba(224, 166, 60, 0.5);
+  color: var(--accent);
+}
+
+/* Pinned to the bottom of the scrolling panel: a six-hero roster pushes the
+   buttons past the fold, and "what do I do now" must never be the thing the
+   player has to scroll to find. Opaque, so cards do not read through it. */
+.run-summary-buttons {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 0 2px;
+  background: var(--surface-raised);
 }
 
 .exit-button {

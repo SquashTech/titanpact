@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { initUiScale } from './uiScale';
 import { useReloadOnNewBuild } from './useReloadOnNewBuild';
 import { clearSave, readSave, writeSave } from './saveStorage';
@@ -25,6 +25,7 @@ import { EventNodeScreen } from '../view/run/EventNodeScreen';
 import { runEvents } from '../data/events';
 import { rollRunEvent } from '../run/events';
 import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
+import { RunSummaryScreen } from '../view/run/RunSummaryScreen';
 import { heroes } from '../data/heroes';
 import { enemies, factions, basicEnemiesOf } from '../data/enemies';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
@@ -269,6 +270,9 @@ export function App() {
   // timer, and putting that in React state would re-render the tree for a number nothing shows.
   const [profile, setProfile] = useState<Profile>(() => readProfile());
 
+  /** The profile either side of the finished run, so the summary can show what the run added. */
+  const [runOutcome, setRunOutcome] = useState<{ before: Profile; after: Profile } | null>(null);
+
   // Owned here rather than in SandboxBattleScreen, which unmounts during a sandbox fight.
   const [sandboxSideA, setSandboxSideA] = useState<SandboxSideConfig>(() => createEmptySandboxSide());
   const [sandboxSideB, setSandboxSideB] = useState<SandboxSideConfig>(() => createEmptySandboxSide());
@@ -307,18 +311,26 @@ export function App() {
     updateProfile((current) => recordActReached(current, playerRun.actNumber));
   }, [playerRun.actNumber, playerRun.map]);
 
-  // A finished run has nothing left to resume; the save would otherwise re-offer the map
-  // of a run the player already lost or cleared. `playerRun` is final here: the handler that
-  // set this screen committed the run in the same batch, so this render already has it.
-  useEffect(() => {
+  // A finished run has nothing left to resume; the save would otherwise re-offer the map of a
+  // run the player already lost or cleared. `playerRun` is final here: the handler that set this
+  // screen committed the run in the same batch, so this render already has it — and it must be
+  // read HERE rather than at the fight, because the recruit and level-up gates sit between the
+  // last Guardian falling and this screen, and both can still change the roster.
+  //
+  // useLayoutEffect, not useEffect: the summary reads `runOutcome` to show what the run added to
+  // the profile, and a post-paint effect would show the panel once without that block and then
+  // reflow it in.
+  useLayoutEffect(() => {
     if (screen.kind !== 'runFailed' && screen.kind !== 'runComplete') return;
     clearSave();
     setSaveSlot({ save: null, staleReason: null });
     const now = Date.now();
     const finalHeroIds = playerRun.roster.map((entry) => entry.heroId);
-    updateProfile((current) =>
+    const before = readProfile();
+    const after = updateProfile((current) =>
       screen.kind === 'runComplete' ? recordRunCompleted(current, finalHeroIds, now) : recordRunFailed(current, now)
     );
+    setRunOutcome({ before, after });
   }, [screen.kind]);
 
   function handleEraseAllData() {
@@ -489,6 +501,8 @@ export function App() {
     let next = grantCurrencyReward(playerRun, goldReward);
     next = grantUpgradeReward(next, trainingPointsReward);
     next = advanceToNode(next, nodeId);
+    // Every node kind, unlike `fightsStarted` — this one is the run summary's tally.
+    next = { ...next, encountersWon: next.encountersWon + 1 };
 
     let afterScreen: Screen;
     if (isBossNode) {
@@ -849,24 +863,16 @@ export function App() {
         <ForceEquipScreen run={playerRun} queue={screen.queue} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />
       )}
 
-      {screen.kind === 'runComplete' && (
-        <div className="result-overlay">
-          <h2>Run Complete!</h2>
-          <p className="hint">You defeated the Guardian {TOTAL_ACTS} times. All acts are cleared.</p>
-          <div className="result-buttons">
-            <button onClick={handleStartNewRun}>Start New Run</button>
-          </div>
-        </div>
-      )}
-
-      {screen.kind === 'runFailed' && (
-        <div className="result-overlay">
-          <h2>Run Failed</h2>
-          <p className="hint">Your squad was defeated.</p>
-          <div className="result-buttons">
-            <button onClick={handleStartNewRun}>Start New Run</button>
-          </div>
-        </div>
+      {/* `runOutcome` is set in the layout effect above, so it is already there on the first paint. */}
+      {(screen.kind === 'runComplete' || screen.kind === 'runFailed') && runOutcome && (
+        <RunSummaryScreen
+          outcome={screen.kind === 'runComplete' ? 'win' : 'loss'}
+          run={playerRun}
+          profileBefore={runOutcome.before}
+          profileAfter={runOutcome.after}
+          onNewRun={handleStartNewRun}
+          onReturnToTitle={() => setScreen({ kind: 'title' })}
+        />
       )}
     </div>
     </LocationProvider>

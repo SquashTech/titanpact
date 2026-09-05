@@ -61,6 +61,11 @@ export interface RunState {
   visitedNodeIds: string[];
   /** `fight` nodes entered this run (whole run, not per act) — drives the one-time 2v2 breather. */
   fightsStarted: number;
+  /**
+   * Encounters won this run, every node kind included. Display only (the run summary) — kept
+   * apart from `fightsStarted`, which is a gameplay flag that deliberately counts less.
+   */
+  encountersWon: number;
   /** 1-indexed. */
   actNumber: number;
   /** One location id per act, index 0 = Act 1. Empty on throwaway RunStates; locationForAct falls back. */
@@ -79,6 +84,7 @@ export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1):
     currentNodeId: null,
     visitedNodeIds: [],
     fightsStarted: 0,
+    encountersWon: 0,
     actNumber: 1,
     locationIds: [],
   };

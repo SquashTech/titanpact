@@ -21,8 +21,12 @@ import type { ProgressionTable } from './progression';
 import type { RosterEntry, RunState } from './state';
 import { ROSTER_CAP, TOTAL_ACTS } from './state';
 
-/** Bump whenever a change to RunState or RunMap makes older files unreadable. Older versions are refused, not migrated. */
-export const SAVE_VERSION = 1;
+/**
+ * Bump whenever a change to RunState or RunMap makes older files unreadable. Older versions
+ * are refused, not migrated — the same all-or-nothing stance as the content checks below.
+ * v2 (2026-09-04): RunState gained `encountersWon`.
+ */
+export const SAVE_VERSION = 2;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the
@@ -270,6 +274,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   if (!isInt(value.gold, 0)) reject('run.gold is not a count');
   if (!isInt(value.recruitContracts, 0)) reject('run.recruitContracts is not a count');
   if (!isInt(value.fightsStarted, 0)) reject('run.fightsStarted is not a count');
+  if (!isInt(value.encountersWon, 0)) reject('run.encountersWon is not a count');
   if (!isInt(value.actNumber, 1, TOTAL_ACTS)) reject(`run.actNumber is not an act in 1-${TOTAL_ACTS}`);
 
   // A checkpoint is only ever written from the map or an act intro, both of which have one.
@@ -296,6 +301,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     currentNodeId,
     visitedNodeIds: [...value.visitedNodeIds],
     fightsStarted: value.fightsStarted,
+    encountersWon: value.encountersWon,
     actNumber: value.actNumber,
     locationIds: requireIds(value.locationIds, index.locationIds, 'run.locationIds'),
   };

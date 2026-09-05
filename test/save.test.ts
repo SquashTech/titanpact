@@ -47,6 +47,7 @@ function sampleRun(): RunState {
     currentNodeId: walked,
     visitedNodeIds: [walked],
     fightsStarted: 2,
+    encountersWon: 5,
     locationIds: Object.keys(locations).slice(0, 5),
   };
 }
@@ -138,6 +139,10 @@ test('save: an over-cap or duplicated roster is refused', () => {
   });
   assert.ok(reason.includes('cap'));
   assert.ok(rejectionOf((raw) => raw.run.roster.push({ ...raw.run.roster[0] })).includes('repeats'));
+});
+
+test('save: a run field this version added is required, so a v1 file cannot slip through', () => {
+  assert.ok(rejectionOf((raw) => delete raw.run.encountersWon).includes('encountersWon'));
 });
 
 test('save: nonsense numbers are refused', () => {
