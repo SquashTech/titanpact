@@ -136,7 +136,9 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30, more for nothing having been spent yet). |
 | `upgradeReward` | `NodeRewardScreen` — an instant flat grant to the pooled level-up currency (2-3 points), on top of the per-fight-win grant (see below). |
 | `weaponReward` / `armorReward` / `accessoryReward` | Rolls a single rarity-weighted item of that fixed slot (`equipment.ts` `pickWeightedEquipmentBySlot`) and hands off straight to `ForceEquipScreen` — no 3-choice picker, unlike `equipmentReward`'s mixed-slot pick. |
-| `hpBoostReward` / `manaBoostReward` / `manaRegenBoostReward` | `StatBoostScreen` — pick one roster hero to receive a flat, permanent-for-the-run stat grant (+20 HP / +10 Mana / +5 MP Regen, `runProgress.ts` `grantStatBonus`), stored on `RosterEntry.bonusStatGrants`. `manaRegenBoostReward` added 2026-08-22, per user direction. |
+| `gemReward` ("Gem Cache") | `GemChoiceScreen` — pick 1 of 3 Gems, drawn from all eight without filtering what is already held. See "Gems" below. |
+| `hpBoostReward` | `StatBoostScreen` — pick one roster hero to receive a flat, permanent-for-the-run +20 max HP (`runProgress.ts` `grantStatBonus`), stored on `RosterEntry.bonusStatGrants`. The **last** hero-targeted stat node: HP is the one grant worth concentrating, because a single hero surviving is what a shrine can actually change. |
+| `manaBoostReward` / `manaRegenBoostReward` | **2026-09-05, per user direction:** these no longer make the player pick a hero. Each hands over the one Gem that carries its stat — Sapphire (+5 Mana Pool) at the Mana Well, Peridot (+5 MP Regen) at the Regen Spring — through `GemChoiceScreen` with the offer fixed to one. Their names, tints and place-flavour are unchanged; only the grant is. |
 | `classReward` ("Mentor's Hall") | `ClassNodeScreen` — pick 1 of 3 Classes (`src/data/classes.ts`), then pick which roster hero learns it, filtered to heroes with no Class yet (`src/run/classes.ts` `grantClass`, stored on `RosterEntry.classId` — a hero can hold at most one Class per run, so `grantClass` REPLACES rather than stacks). If every roster hero already has a Class, the offer is simply wasted. **Not in `REWARD_WEIGHTS`** (2026-08-22 revision, per user direction) — the only way to encounter this node type is a forced Mentor row (§1), never a random pick-1-of-3 option in any act. Acts 1-4 each guarantee one, so a run can Class up to four heroes; the offer filters to heroes with no Class yet and is wasted only once every hero has one. |
 | `event` | `EventNodeScreen` — rolls one of the authored map events (`src/data/events.ts`, `src/run/events.ts`) and resolves it: a move taught to a chosen hero, a Passive taught to a chosen hero, a flat stat trade, or a pile of act-curve loot handed to `ForceEquipScreen`. Which event a node turns out to be is rolled once at node-select time and gated by act and Location. See **docs/events.md**. |
 
@@ -202,13 +204,64 @@ way of gaining power, and two of those get sharper:
   That spread is the node doing its job — it is the strategic pull toward Evolution
   the node was kept for (§4), and the XP cut is what gives it teeth.
 
+### Gems (2026-09-05, per user direction)
+
+A **Gem** is an ordinary team-wide relic with a deliberately small, deliberately uniform
+grant: **+5 to one stat, for every hero**. There are exactly eight, one per stat, named for
+the stone whose colour the stat already wears (`src/data/relics.ts` `GEM_TABLE`):
+
+| Stat | Gem | Stat | Gem |
+|---|---|---|---|
+| HP | Emerald | Speed | Citrine |
+| Attack | Ruby | Intelligence | Amethyst |
+| Defense | Onyx | Mana Pool | Sapphire |
+| Wisdom | Aquamarine | MP Regen | Peridot |
+
+They exist to **smooth the power curve**. The Banner and the Relic Shrine are both sparse and
+both large; between them a run's team-wide power moved in a few big steps, and the measured
+problem was that the run was simply too hard between them. Gems are the drip-feed: small enough
+that one is never the answer to a fight, common enough that a run holds several by Act 3, and
+stackable without limit, so a player who keeps taking Rubies is building something.
+
+They stack through the ordinary relic pipeline — `relicTeamStatModifiers` already sums duplicate
+ids — and display folded, exactly as a Banner does ("Ruby +2", `stackedRelicName`). Nothing in
+the engine knows the word "Gem": `RelicDefinition.gem` exists only to keep them out of
+`drawableRelics`, because a Gem in the Relic Shrine's pool would be the smallest grant in the
+game occupying a slot meant for the largest.
+
+**Where they come from** (`src/run/gems.ts`):
+
+- **The run's first fight always pays one.** Act 1, row 0, 100%, no roll — the first Gem
+  teaches the system rather than rolling for it.
+- **Every other won fight rolls for one**, by node type: `fight` 30%, `battle`/`skirmish` 35%,
+  `elite` 50%. **All first-pass placeholders for playtest; only the shape is decided.** The
+  Guardian pays none — it already pays a Banner, and a Gem stacked on top would blur which
+  grant the act-boundary spike came from. The finale pays none: the run ends on it.
+- **The `gemReward` map node** — a 1-of-3 of any Gem, weight 16 in `REWARD_WEIGHTS`.
+- **The Mana Well and the Regen Spring**, which now hand over their stat's Gem outright.
+
+A fight's Gem offer is the **first** post-fight gate, ahead of the Banner, so a hero recruited
+two gates later already stands under it.
+
+**Always listed, held or not.** The Relics screen shows all eight Gems from the first node of a
+run, dimmed at ×0 (`RelicsOverlay`, `.gem-rail`). An unheld Gem is a slot to fill rather than an
+absence — the player is expected to collect most of them, so the empty ones are a plan.
+
+**Open — the flat +5 is not priced by stat.** `STAT_POINT_VALUE` (`src/run/equipment.ts`) holds
+HP and Mana Pool at half a point and MP Regen at three, and the Gems ignore that on purpose:
+eight identically-shaped stones is the legible version, and one Peridot is a sixth of a Banner
+of the Everflow. Whether Peridot needs to be rarer, or Emerald bigger, is a playtest question,
+not a decision.
+
 ### Winning a fight: the post-fight gates
 
-A won encounter resolves through up to four gates before the map comes back
+A won encounter resolves through up to five gates before the map comes back
 (`App.tsx handleFightResolved`), in this order:
 
-0. **The Guardian's Banner** (`GuardianBannerScreen`) — boss nodes in acts 1-4 only; a
-   fixed 1-of-3 team-wide relic, ahead of everything else so a hero recruited at gate 1
+0. **The Gem offer** (`GemChoiceScreen`) — guaranteed on the run's first fight, rolled on
+   every other one. See "Gems" above.
+0. **The Guardian's Banner** (`GuardianBannerScreen`) — boss nodes only; a fixed 1-of-3
+   team-wide relic, ahead of everything else remaining so a hero recruited at gate 1
    arrives under it. See §3.
 1. **Recruit Contract claim** (`RecruitScreen`) — the beaten recruitable heroes, up to
    `MAX_CONTRACT_OFFERS` = 2 of them (`recruitment.ts pickContractOffers`). **Skipped

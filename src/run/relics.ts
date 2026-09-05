@@ -16,6 +16,8 @@ export interface RelicDefinition {
   grantsStatusIds?: readonly StatusGrant[];
   /** One of the three fixed post-Guardian Banners — EXCLUDED from every random offer pool (src/data/relics.ts drawableRelics). Nothing in the engine reads it. */
   guardianBanner?: true;
+  /** One of the eight Gems — likewise kept out of every random relic offer, because Gems have their own channels (src/run/gems.ts). Nothing in the engine reads it. */
+  gem?: true;
 }
 
 export function isValidRelicDefinition(relic: RelicDefinition): boolean {

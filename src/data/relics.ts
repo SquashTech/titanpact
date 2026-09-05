@@ -1,6 +1,7 @@
 // Relics: team-wide passives (docs/progression.md "Relics (team-wide)"), built from the three
 // grant shapes statGrants / grantsPassiveIds / grantsStatusIds. Values are provisional.
 
+import type { StatKey } from '../engine/content';
 import type { RelicDefinition } from '../run/relics';
 import { TYPES } from './typechart';
 
@@ -322,6 +323,39 @@ const guardianBanners: Record<string, RelicDefinition> = {
   },
 };
 
+
+// --- Gems: the common, stacking half of the relic axis (docs/run-loop.md "Gems"). One per stat,
+// every one a flat +5, handed out often enough that the Relics screen lists all eight from the
+// first node — a run is expected to hold several.  keeps them out of drawableRelics:
+// they have their own channels (a fight drop, the Gem Cache node, the two stat shrines), and
+// letting them into the Shrine pool would only dilute it with the smallest grant in the game.
+export const GEM_STAT_GRANT = 5;
+
+/** Stat -> the one Gem that carries it. Ordered by STAT_ORDER, which is the order every Gem surface lists them in. */
+const GEM_TABLE: readonly { stat: StatKey; id: string; name: string; label: string }[] = [
+  { stat: 'hp', id: 'emeraldGem', name: 'Emerald', label: 'HP' },
+  { stat: 'attack', id: 'rubyGem', name: 'Ruby', label: 'Attack' },
+  { stat: 'defense', id: 'onyxGem', name: 'Onyx', label: 'Defense' },
+  { stat: 'intelligence', id: 'amethystGem', name: 'Amethyst', label: 'Intelligence' },
+  { stat: 'wisdom', id: 'aquamarineGem', name: 'Aquamarine', label: 'Wisdom' },
+  { stat: 'speed', id: 'citrineGem', name: 'Citrine', label: 'Speed' },
+  { stat: 'manaPool', id: 'sapphireGem', name: 'Sapphire', label: 'Mana Pool' },
+  { stat: 'mpRegen', id: 'peridotGem', name: 'Peridot', label: 'MP Regen' },
+];
+
+const gems: Record<string, RelicDefinition> = Object.fromEntries(
+  GEM_TABLE.map(({ stat, id, name, label }) => [
+    id,
+    {
+      id,
+      name,
+      description: `Team-wide +${GEM_STAT_GRANT} ${label}.`,
+      statGrants: { [stat]: GEM_STAT_GRANT },
+      gem: true,
+    } satisfies RelicDefinition,
+  ])
+);
+
 export const relics: Record<string, RelicDefinition> = {
   ...originalRelics,
   ...singleStatRelics,
@@ -330,10 +364,19 @@ export const relics: Record<string, RelicDefinition> = {
   ...elementalForceRelics,
   ...passiveRelics,
   ...guardianBanners,
+  ...gems,
 };
+
+/** The eight Gems in STAT_ORDER — the order every Gem surface lists them in. */
+export const gemRelics: RelicDefinition[] = GEM_TABLE.map(({ id }) => gems[id]);
+
+/** The Gem that carries each stat, for the nodes that grant a fixed one rather than offering a choice. */
+export const gemForStat: Record<StatKey, RelicDefinition> = Object.fromEntries(
+  GEM_TABLE.map(({ stat, id }) => [stat, gems[id]])
+) as Record<StatKey, RelicDefinition>;
 
 /** The three fixed Banners, in the order the post-Guardian screen offers them. */
 export const guardianBannerRelics: RelicDefinition[] = Object.values(guardianBanners);
 
-/** Every relic a random offer (Shrine, Guild Hall) may draw — the catalog minus the Banners. */
-export const drawableRelics: RelicDefinition[] = Object.values(relics).filter((relic) => !relic.guardianBanner);
+/** Every relic a random offer (Shrine, Guild Hall) may draw — the catalog minus the Banners and the Gems. */
+export const drawableRelics: RelicDefinition[] = Object.values(relics).filter((relic) => !relic.guardianBanner && !relic.gem);

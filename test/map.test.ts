@@ -36,6 +36,7 @@ test('map: row 0 is a single plain fight, the funnel row is a single shop, the b
 const REWARD_TYPES = new Set([
   'equipmentReward',
   'relicReward',
+  'gemReward',
   'currencyReward',
   'upgradeReward',
   'weaponReward',

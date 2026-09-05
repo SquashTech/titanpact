@@ -6,12 +6,17 @@ import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import { grantStatBonus } from '../../run/runProgress';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
-import { NodeHeader, NodeSky, NODE_TINT_MANA, NODE_TINT_VITAL } from '../shared/NodeStage';
-import { RunGlyph, type RunGlyphKind } from '../shared/RunGlyph';
+import { NodeHeader, NodeSky, NODE_TINT_VITAL } from '../shared/NodeStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
 
-export type StatBoostNodeType = 'hpBoostReward' | 'manaBoostReward' | 'manaRegenBoostReward';
+/**
+ * The Vitality Shrine is the LAST hero-targeted stat node (2026-09-05, per user direction). The
+ * Mana Well and Regen Spring now hand out a Gem for their stat instead — a team-wide grant that
+ * does not make the player pick a favourite. HP stays here on purpose: it is the one grant worth
+ * concentrating, since a single hero's survival is what a shrine can actually change.
+ */
+export type StatBoostNodeType = 'hpBoostReward';
 
 interface Props {
   nodeType: StatBoostNodeType;
@@ -23,7 +28,6 @@ interface Props {
 interface StatBoostConfig {
   stat: StatKey;
   amount: number;
-  glyph: RunGlyphKind | null;
   tint: string;
   /** Multiplies every frequency in `shrine` and `blessing` — one sound in three registers. */
   pitch: number;
@@ -37,32 +41,11 @@ const STAT_BOOST_CONFIG: Record<StatBoostNodeType, StatBoostConfig> = {
   hpBoostReward: {
     stat: 'hp',
     amount: 20,
-    glyph: null,
     tint: NODE_TINT_VITAL,
     pitch: 0.86,
     eyebrow: 'A Blessing',
     title: 'Vitality Shrine',
     ctaLabel: '+20 Max HP',
-  },
-  manaBoostReward: {
-    stat: 'manaPool',
-    amount: 10,
-    glyph: 'mana',
-    tint: NODE_TINT_MANA,
-    pitch: 1,
-    eyebrow: 'A Blessing',
-    title: 'Mana Well',
-    ctaLabel: '+10 Mana',
-  },
-  manaRegenBoostReward: {
-    stat: 'mpRegen',
-    amount: 5,
-    glyph: 'mana',
-    tint: NODE_TINT_MANA,
-    pitch: 1.18,
-    eyebrow: 'A Blessing',
-    title: 'Regen Spring',
-    ctaLabel: '+5 MP Regen',
   },
 };
 
@@ -97,7 +80,6 @@ export function StatBoostScreen({ nodeType, run, onRunChange, onContinue }: Prop
       <NodeHeader
         eyebrow={config.eyebrow}
         title={config.title}
-        glyph={config.glyph ? <RunGlyph kind={config.glyph} /> : undefined}
         readoutKey={grantedTo ?? 'idle'}
         readoutLive={!!grantedHero}
         readout={

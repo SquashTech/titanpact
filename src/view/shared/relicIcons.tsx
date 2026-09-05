@@ -25,6 +25,14 @@ const FLASK = (
   </>
 );
 
+/**
+ * The Gem (docs/run-loop.md): one unbroken brilliant — flat table, girdle at the shoulders, a
+ * point — with the table facet knocked OUT of the crown. `crystal` is the same cut split in two
+ * at the girdle, so the two never read as the same picture: a Gem is one solid stone with a
+ * window in it, a crystal is two shards. Exported because the map node wears it too (nodeIcons).
+ */
+export const GEM = <path fillRule="evenodd" d="M7.4 2.6h9.2l5 6.4L12 21.8 2.4 9ZM8.8 5h6.4l2.4 3H6.4Z" />;
+
 const RELIC_FORM_PATHS = {
   // Crossbar over a swallowtail field. No pole: at 14px the pole and the field merge into a lolly.
   banner: (
@@ -82,6 +90,7 @@ const RELIC_FORM_PATHS = {
       <path d="M2.6 9.8h18.8L12 22.2Z" />
     </>
   ),
+  gem: GEM,
   core: EQUIP_FORM_PATHS.orb,
   shield: EQUIP_FORM_PATHS.shield,
   plate: EQUIP_FORM_PATHS.plate,
@@ -130,9 +139,25 @@ const NOUN_FORMS: Readonly<Record<string, RelicFormName>> = {
   fountain: 'font',
   crystal: 'crystal',
   catalyst: 'crystal',
-  gem: 'crystal',
   shard: 'crystal',
   prism: 'crystal',
+  // Every Gem is named for a stone and nothing else, so the stone names ARE the lookup.
+  gem: 'gem',
+  gemstone: 'gem',
+  jewel: 'gem',
+  emerald: 'gem',
+  ruby: 'gem',
+  onyx: 'gem',
+  amethyst: 'gem',
+  aquamarine: 'gem',
+  citrine: 'gem',
+  sapphire: 'gem',
+  peridot: 'gem',
+  garnet: 'gem',
+  topaz: 'gem',
+  opal: 'gem',
+  jade: 'gem',
+  diamond: 'gem',
   core: 'core',
   focus: 'core',
   orb: 'core',
@@ -236,7 +261,7 @@ export function relicTint(relicId: string, alpha: number): string {
  * `.section-glyph` because it sits in the same NodeHeader slot as the Equipment Cache's, and the
  * two headers should be the same size.
  */
-export function RelicKindGlyph({ form }: { form: 'crystal' | 'banner' }) {
+export function RelicKindGlyph({ form }: { form: 'crystal' | 'banner' | 'gem' }) {
   return (
     <svg className="section-glyph" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
       {RELIC_FORM_PATHS[form]}

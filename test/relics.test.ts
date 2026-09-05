@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { isValidRelicDefinition, relicTeamStatModifiers } from '../src/run/relics';
-import { relics, drawableRelics, guardianBannerRelics } from '../src/data/relics';
+import { relics, drawableRelics, gemRelics, guardianBannerRelics } from '../src/data/relics';
 import { heroes } from '../src/data/heroes';
 import { equipment } from '../src/data/equipment';
 import { passives } from '../src/data/passives';
@@ -55,7 +55,7 @@ test('relics: no Guardian Banner is drawable by a random offer', () => {
   for (const banner of guardianBannerRelics) {
     assert.ok(!drawableIds.has(banner.id), `${banner.id} leaked into the random relic pool`);
   }
-  assert.strictEqual(drawableRelics.length, Object.values(relics).length - guardianBannerRelics.length);
+  assert.strictEqual(drawableRelics.length, Object.values(relics).length - guardianBannerRelics.length - gemRelics.length);
 });
 
 test('relics: a Banner taken four times stacks to four times its grant', () => {

@@ -20,6 +20,7 @@ import { ForceEquipScreen } from '../view/run/ForceEquipScreen';
 import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
 import { RecruitScreen } from '../view/run/RecruitScreen';
 import { StatBoostScreen, type StatBoostNodeType } from '../view/run/StatBoostScreen';
+import { GemChoiceScreen } from '../view/run/GemChoiceScreen';
 import { ClassNodeScreen } from '../view/run/ClassNodeScreen';
 import { EventNodeScreen } from '../view/run/EventNodeScreen';
 import { runEvents } from '../data/events';
@@ -54,8 +55,10 @@ import {
   type RosterReplaceCandidate,
 } from '../run/recruitment';
 import { guildHallOffers } from '../data/recruitment';
+import { gemForStat } from '../data/relics';
 import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } from '../run/shop';
 import { generateMap, type MapNodeType } from '../run/map';
+import { pickGemOffers, rollGemOffers } from '../run/gems';
 import { generateStarterOptions } from '../run/draft';
 import {
   generateEncounter,
@@ -69,6 +72,7 @@ import { actScaling, trainingPointsFor, type ScalingTrack } from '../run/difficu
 import { generateItinerary, locationBias, locationForAct } from '../run/locations';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
+import { NODE_TINT_MANA } from '../view/shared/NodeStage';
 import { prefetchTrack, setTrack } from '../audio/music';
 import { hasTrack } from '../audio/tracks';
 import { pickSquad, STANDARD_SQUAD_SIZE } from '../run/squad';
@@ -118,6 +122,8 @@ type Screen =
   /** Cache-opening beat; the node is already resolved and the item rolled. `next` is the equip gate. */
   | { kind: 'cacheOpen'; slot: EquipmentSlot; next: Screen }
   | { kind: 'statBoost'; nodeId: string; nodeType: StatBoostNodeType }
+  /** A Gem offer — the gemReward node, the two stat shrines, and a fight that rolled one. Already-resolved, so no nodeId. */
+  | { kind: 'gemChoice'; gemIds: string[]; eyebrow: string; title: string; tint?: string; next: Screen }
   | { kind: 'classNode'; nodeId: string }
   /** Which event this node is gets rolled ONCE at node-select time — the screen re-renders on every onRunChange. */
   | { kind: 'event'; nodeId: string; eventId: string }
@@ -250,6 +256,16 @@ function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): Eq
   const weights = rarityWeightsFor(actNumber, LOOT_SOURCE[nodeType]);
   return pickWeightedEquipment(EQUIPMENT_POOL, 1, weights)[0] ?? null;
 }
+
+/**
+ * How each Gem-granting node dresses the one GemChoiceScreen. The Mana Well and Regen Spring keep
+ * the names, tints and place-flavour they had as hero-targeted shrines — only the grant changed.
+ */
+const GEM_NODE_PRESENTATION: Record<'gemReward' | 'manaBoostReward' | 'manaRegenBoostReward', { eyebrow: string; title: string; tint?: string }> = {
+  gemReward: { eyebrow: 'A Seam Opens', title: 'Gem Cache' },
+  manaBoostReward: { eyebrow: 'A Blessing', title: 'Mana Well', tint: NODE_TINT_MANA },
+  manaRegenBoostReward: { eyebrow: 'A Blessing', title: 'Regen Spring', tint: NODE_TINT_MANA },
+};
 
 /** The map, behind the level-up gate if anyone can afford one and the player has not banked the pool. */
 function levelUpPending(run: RunState): boolean {
@@ -481,8 +497,14 @@ export function App() {
       setScreen(
         item ? { kind: 'cacheOpen', slot, next: { kind: 'forceEquip', queue: [item.id], next: afterScreen } } : afterScreen
       );
-    } else if (node.type === 'hpBoostReward' || node.type === 'manaBoostReward' || node.type === 'manaRegenBoostReward') {
+    } else if (node.type === 'hpBoostReward') {
       setScreen({ kind: 'statBoost', nodeId, nodeType: node.type });
+    } else if (node.type === 'gemReward' || node.type === 'manaBoostReward' || node.type === 'manaRegenBoostReward') {
+      // The Gem Cache offers 1 of 3; the two stat shrines hand over the one Gem that carries their stat.
+      const preset = GEM_NODE_PRESENTATION[node.type];
+      const gemIds = node.type === 'gemReward' ? pickGemOffers() : [gemForStat[node.type === 'manaBoostReward' ? 'manaPool' : 'mpRegen'].id];
+      setPlayerRun((run) => advanceToNode(run, nodeId));
+      setScreen({ kind: 'gemChoice', gemIds, ...preset, next: mapAfterLevelUp(playerRun) });
     } else if (node.type === 'classReward') {
       setScreen({ kind: 'classNode', nodeId });
     } else if (node.type === 'event') {
@@ -571,13 +593,23 @@ export function App() {
     const afterLevelUp: Screen = levelUpPending(next) ? { kind: 'levelUp', next: afterScreen } : afterScreen;
     const afterEquip: Screen = equipmentReward ? { kind: 'forceEquip', queue: [equipmentReward.id], next: afterLevelUp } : afterLevelUp;
 
-    // Gate order is deliberate: banner, then recruit, then equip, then level-up — so a hero recruited
-    // this beat already stands under the banner and can receive this win's gear and points.
+    // Gate order is deliberate: gem, banner, then recruit, then equip, then level-up — so a hero
+    // recruited this beat already stands under both team-wide grants and can receive this win's
+    // gear and points.
     // `next`, not `playerRun`: a boss node has just granted the contract that is spendable here.
     const contractOffers =
       next.recruitContracts > 0 ? pickContractOffers(defeatedRoster.filter((entry) => isRecruitable(entry.heroId, heroes))) : [];
     const afterRecruit: Screen = contractOffers.length > 0 ? { kind: 'recruit', offers: contractOffers, next: afterEquip } : afterEquip;
-    setScreen(banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit);
+    const afterBanner: Screen = banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit;
+
+    // The run's very first fight always pays a Gem; every other fight rolls for one (run/gems.ts).
+    const isRunOpener = playerRun.actNumber === 1 && playerRun.map!.nodes[nodeId].row === 0;
+    const gemIds = isFinale ? [] : rollGemOffers(mapNodeType as EncounterMapNodeType, isRunOpener);
+    setScreen(
+      gemIds.length > 0
+        ? { kind: 'gemChoice', gemIds, eyebrow: 'Spoils', title: 'Gem Recovered', next: afterBanner }
+        : afterBanner
+    );
   }
 
   function handleNodeContinue(nodeId: string) {
@@ -886,6 +918,18 @@ export function App() {
           run={playerRun}
           onRunChange={setPlayerRun}
           onContinue={() => handleNodeContinue(screen.nodeId)}
+        />
+      )}
+
+      {screen.kind === 'gemChoice' && (
+        <GemChoiceScreen
+          gemIds={screen.gemIds}
+          eyebrow={screen.eyebrow}
+          title={screen.title}
+          tint={screen.tint}
+          run={playerRun}
+          onRunChange={setPlayerRun}
+          onContinue={() => setScreen(screen.next)}
         />
       )}
 

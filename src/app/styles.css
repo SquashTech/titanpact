@@ -9351,6 +9351,68 @@ textarea,
   font-weight: 700;
 }
 
+/* --- Gems (docs/run-loop.md) ---------------------------------------------
+   All eight are always listed, held or not, because a run collects them
+   steadily — an unheld one is a slot to fill, not an absence. Two columns of
+   chips rather than the .relic-card list: eight full cards would bury the
+   handful of real relics under them. */
+
+.relics-section-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.gem-rail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 6px;
+}
+
+/* Two lines, not one: "Aquamarine ×0" and "+0 Wisdom" side by side overflow a half-width
+   chip, and the full stat names are what make the totals readable. */
+.gem-chip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 6px;
+  padding: 4px 7px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--hairline);
+}
+
+.gem-chip.is-empty {
+  opacity: 0.42;
+}
+
+.gem-chip-icon {
+  grid-row: 1 / span 2;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.gem-chip-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.gem-chip-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.gem-chip-grant {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
 .relic-card-desc {
   font-size: 11px;
   color: var(--text-dim);

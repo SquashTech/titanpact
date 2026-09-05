@@ -21,13 +21,17 @@ export function stackedRelicName(relic: RelicDefinition, count: number): string 
   return count > 1 ? `${relic.name} +${count - 1}` : relic.name;
 }
 
-/** Flat grants times copies held: "+90 HP", "+40 Mana Pool, +20 MP Regen". Empty for all-passive relics. */
+/**
+ * Flat grants times copies held: "+90 HP", "+40 Mana Pool, +20 MP Regen". Empty for all-passive
+ * relics. A count of 0 is a real case — the Relics screen lists every Gem, held or not — and
+ * reads "+0 HP" rather than "0 HP", so a column of totals stays uniform.
+ */
 export function stackedGrantSummary(relic: RelicDefinition, count: number): string {
   return Object.entries(relic.statGrants)
     .filter(([, amount]) => amount)
     .map(([stat, amount]) => {
       const total = (amount as number) * count;
-      return `${total > 0 ? '+' : ''}${total} ${STAT_FULL_LABELS[stat as StatKey] ?? stat}`;
+      return `${total >= 0 ? '+' : ''}${total} ${STAT_FULL_LABELS[stat as StatKey] ?? stat}`;
     })
     .join(', ');
 }

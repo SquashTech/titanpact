@@ -16,6 +16,7 @@ export const MAP_NODE_TYPES = [
   'shop',
   'equipmentReward',
   'relicReward',
+  'gemReward',
   'currencyReward',
   'upgradeReward',
   'weaponReward',
@@ -89,6 +90,7 @@ function rowWidthsFor(actNumber: number): number[] {
 const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   ['equipmentReward', 20],
   ['relicReward', 18],
+  ['gemReward', 16],
   ['currencyReward', 16],
   ['upgradeReward', 14],
   ['weaponReward', 12],

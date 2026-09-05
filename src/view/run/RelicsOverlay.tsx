@@ -1,4 +1,4 @@
-import { relics } from '../../data/relics';
+import { gemRelics, relics } from '../../data/relics';
 import { passives } from '../../data/passives';
 import { RelicIcon } from '../shared/EquipmentBox';
 import { stackedGrantSummary, stackedRelicName } from '../shared/relicStacks';
@@ -9,14 +9,18 @@ interface Props {
 }
 
 /** Duplicates render as one card carrying the summed total. */
-function groupRelics(ownedRelicIds: readonly string[]): { relicId: string; count: number }[] {
+function countRelics(ownedRelicIds: readonly string[]): Map<string, number> {
   const counts = new Map<string, number>();
   for (const id of ownedRelicIds) counts.set(id, (counts.get(id) ?? 0) + 1);
-  return [...counts.entries()].map(([relicId, count]) => ({ relicId, count }));
+  return counts;
 }
 
 export function RelicsOverlay({ ownedRelicIds, onClose }: Props) {
-  const groups = groupRelics(ownedRelicIds);
+  const counts = countRelics(ownedRelicIds);
+  const gemIds = new Set(gemRelics.map((gem) => gem.id));
+  const groups = [...counts.entries()]
+    .filter(([relicId]) => !gemIds.has(relicId))
+    .map(([relicId, count]) => ({ relicId, count }));
 
   return (
     <div className="log-overlay" onClick={onClose}>
@@ -27,9 +31,28 @@ export function RelicsOverlay({ ownedRelicIds, onClose }: Props) {
             ✕
           </button>
         </div>
-        {groups.length > 0 ? (
-          <div className="relics-grid">
-            {groups.map(({ relicId, count }) => {
+        <div className="relics-grid">
+          {/* All eight, held or not: a run collects Gems steadily enough that the empty slots are a
+              plan rather than a blank — the player can see what is still out there to stack. */}
+          <div className="relics-section-label">Gems</div>
+          <div className="gem-rail">
+            {gemRelics.map((gem) => {
+              const count = counts.get(gem.id) ?? 0;
+              return (
+                <div key={gem.id} className={`gem-chip${count > 0 ? '' : ' is-empty'}`}>
+                  <RelicIcon relicId={gem.id} className="gem-chip-icon" />
+                  <span className="gem-chip-name">
+                    {gem.name} <span className="gem-chip-count">×{count}</span>
+                  </span>
+                  <span className="gem-chip-grant">{stackedGrantSummary(gem, count)}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="relics-section-label">Relics</div>
+          {groups.length > 0 ? (
+            groups.map(({ relicId, count }) => {
               const relic = relics[relicId];
               if (!relic) return null;
               // A stack states its summed grant; the authored description is written for one copy.
@@ -55,11 +78,11 @@ export function RelicsOverlay({ ownedRelicIds, onClose }: Props) {
                   )}
                 </div>
               );
-            })}
-          </div>
-        ) : (
-          <div className="detail-empty">No relics yet — they'll show up as map rewards.</div>
-        )}
+            })
+          ) : (
+            <div className="detail-empty">No relics yet — they'll show up as map rewards.</div>
+          )}
+        </div>
       </div>
     </div>
   );

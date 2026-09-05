@@ -3,6 +3,7 @@ import type { MapNodeType } from '../../run/map';
 import { STAT_PATHS } from './statIcons';
 import { SECTION_PATHS } from './sectionIcons';
 import { EQUIP_FORM_PATHS } from './equipmentIcons';
+import { GEM } from './relicIcons';
 
 // One glyph per map node type, 24x24, `currentColor` only. The grouping is the information:
 // encounters say who you fight (claw = monsters, helm = recruitable heroes, skull = Guardian);
@@ -73,6 +74,8 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   equipmentReward: SECTION_PATHS.equipment,
   // Cut gem.
   relicReward: <path d="M7.4 3.2h9.2l4.8 5.8L12 21.2 2.6 9Z" />,
+  // The Gem's own cut (relicIcons.tsx) — one picture per concept, the same rule gold and XP follow.
+  gemReward: GEM,
   // Money bag.
   currencyReward: (
     <>
