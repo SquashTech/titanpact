@@ -2,7 +2,7 @@
 // feeds src/run/locations.ts's PoolBias; the presentation fields feed locationArt/ActIntroScreen.
 
 import type { TypeId } from '../engine/content';
-import { DEFAULT_FACTION_ID, ELDER_BOUGH_ID, GOBLIN_LORD_ID, LAVA_BEAST_ID, LEVIATHAN_ID, SKELETON_KING_ID, YUGZULACH_ID } from './enemies';
+import { DEFAULT_FACTION_ID, ELDER_BOUGH_ID, ENDBRINGER_ID, GOBLIN_LORD_ID, LAVA_BEAST_ID, LEVIATHAN_ID, SKELETON_KING_ID, YUGZULACH_ID } from './enemies';
 
 /** Particle-field motion (docs/locations.md §4). */
 export type AmbienceKind = 'fireflies' | 'embers' | 'snow' | 'rain' | 'spores' | 'sigils';
@@ -30,6 +30,9 @@ export interface LocationDefinition {
 
 /** Act 1 is always this one (docs/locations.md §1). */
 export const ACT_ONE_LOCATION_ID = 'wildsEdge';
+
+/** Act 6 is always this one, and the itinerary draw can never produce it. */
+export const FINALE_LOCATION_ID = 'theThreshold';
 
 export const locations: Record<string, LocationDefinition> = {
   wildsEdge: {
@@ -110,7 +113,26 @@ export const locations: Record<string, LocationDefinition> = {
     tintRgb: '132, 198, 208',
     ambience: 'snow',
   },
+
+  // Act 6 only, and never drawn (docs/run-loop.md §4). No Skirmish, `fight` or `battle`
+  // node exists here, so `affinity` and `factionId` are never read — the two fields are
+  // filled with the neutral and the default rather than made nullable for one location.
+  // `guardianFinalEnemyId` IS read: it is what the finale's bench ends on.
+  theThreshold: {
+    id: 'theThreshold',
+    name: 'The Threshold',
+    faction: 'The Endbringer',
+    flavor: 'Six wardens stood here once. You are the reason five of them do not.',
+    affinity: null,
+    exclusiveHeroIds: [],
+    factionId: DEFAULT_FACTION_ID,
+    guardianFinalEnemyId: ENDBRINGER_ID,
+    tintRgb: '222, 196, 132',
+    ambience: 'sigils',
+  },
 };
 
-/** The pool acts 2-5 draw from, without replacement. */
-export const ITINERARY_POOL_IDS: readonly string[] = Object.keys(locations).filter((id) => id !== ACT_ONE_LOCATION_ID);
+/** The pool acts 2-5 draw from, without replacement. Neither fixed act is in it. */
+export const ITINERARY_POOL_IDS: readonly string[] = Object.keys(locations).filter(
+  (id) => id !== ACT_ONE_LOCATION_ID && id !== FINALE_LOCATION_ID
+);

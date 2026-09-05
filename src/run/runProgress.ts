@@ -2,7 +2,7 @@
 // resolving what each node type grants. Pure RunState transforms.
 
 import type { StatKey } from '../engine/content';
-import type { RunState, RosterEntry } from './state';
+import type { BrokenSeal, RunState, RosterEntry } from './state';
 import type { EquipmentDefinition, EquipmentSlot } from './equipment';
 import { equipItem, unequipSlot } from './equipment';
 import { generateMap } from './map';
@@ -48,6 +48,16 @@ export function deferLevelUp(run: RunState): RunState {
 /** The per-act contract grant (App.tsx, on the boss-node win). */
 export function grantContractReward(run: RunState, amount: number): RunState {
   return { ...run, recruitContracts: run.recruitContracts + amount };
+}
+
+/**
+ * A Guardian's fall, snapshotted so the finale can field it again at the power it was
+ * beaten at (docs/lore.md §6). Idempotent per act — a re-resolved boss node never
+ * double-records.
+ */
+export function recordBrokenSeal(run: RunState, seal: BrokenSeal): RunState {
+  if (run.brokenSeals.some((s) => s.actNumber === seal.actNumber)) return run;
+  return { ...run, brokenSeals: [...run.brokenSeals, seal] };
 }
 
 /** Fresh map for the next act, per-act position fields reset. Roster/gold/relics/contracts untouched; callers own the TOTAL_ACTS check. */

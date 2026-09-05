@@ -538,6 +538,32 @@ export const enemies: Record<string, HeroDefinition> = {
     moveIds: ['aquaSlice', 'maelstrom', 'archonBlast', 'tsunami'],
     starter: false,
   },
+
+  // --- The Threshold — the thing the six seals were holding (docs/lore.md) ---
+  //
+  // The only mono-Ancient combatant in the game, and the fiction says it stays that way:
+  // Ancient resists every type and is super-effective against none, which is the correct
+  // silhouette for something that cannot be killed and does not need to hurry.
+  //
+  // 900 combat stats against the champions' 700 — a step, not a different number class.
+  // Magical-leaning (135 Int / 100 Atk) because the whole Ancient slate is magical, and
+  // Speed 95 for one reason: the fastest authored hero is 90, so nothing outruns it, but
+  // it is still a Speed number rather than an exemption and every priority bracket still
+  // beats it.
+  //
+  // The kit is PROVISIONAL. Ancient is the one type slate still unauthored
+  // (CLAUDE.md "Repo map", docs/authoring-moves.md), so this is the three existing Ancient
+  // moves plus Enfeeble — which is the shape the real kit should keep: a Titan does not
+  // need to hit harder, it makes everything else softer. Revisit when Ancient lands, and
+  // watch Enfeeble specifically — stat mods have no ceiling, and two casts is -60/-60.
+  endbringer: {
+    id: 'endbringer',
+    name: 'Endbringer',
+    types: ['Ancient'],
+    baseStats: { hp: 340, attack: 100, defense: 115, intelligence: 135, wisdom: 115, speed: 95, manaPool: 200, mpRegen: 25 },
+    moveIds: ['runicBlast', 'forgottenCurse', 'archonBlast', 'enfeeble'],
+    starter: false,
+  },
 };
 
 /**
@@ -616,6 +642,44 @@ export const LEVIATHAN_ID = 'leviathan';
 export const ELDER_BOUGH_ID = 'elderBough';
 export const LAVA_BEAST_ID = 'lavaBeast';
 export const SKELETON_KING_ID = 'skeletonKing';
+
+/** The Threshold's, and the only mono-Ancient id in the game (docs/lore.md §7). */
+export const ENDBRINGER_ID = 'endbringer';
+
+/** Every faction champion, in no particular order — a run breaks five of these six. */
+export const CHAMPION_IDS: readonly string[] = [
+  GOBLIN_LORD_ID,
+  YUGZULACH_ID,
+  LEVIATHAN_ID,
+  ELDER_BOUGH_ID,
+  LAVA_BEAST_ID,
+  SKELETON_KING_ID,
+];
+
+export function unsealedIdFor(championId: string): string {
+  return `${championId}Unsealed`;
+}
+
+/**
+ * docs/lore.md §6: a champion's Ancient half IS the seal, so the one that comes back for
+ * the finale comes back without it. Derived rather than authored — six duplicated stat
+ * lines would drift, and the only difference is the type that was taken off it.
+ */
+function unseal(champion: HeroDefinition): HeroDefinition {
+  const [primary, secondary] = champion.types;
+  // The Ancient-second convention is a rule, not a habit (docs/lore.md §8): a champion
+  // without a seal to take off it is not part of the binding.
+  if (secondary !== 'Ancient') throw new Error(`${champion.id} is not Ancient-second — it carries no seal to break`);
+  return { ...champion, id: unsealedIdFor(champion.id), types: [primary] };
+}
+
+/** Keyed by `unsealedIdFor(championId)`. Folded into `allCombatants` (data/content.ts). */
+export const unsealedChampions: HeroLookup = Object.fromEntries(
+  CHAMPION_IDS.map((id) => [unsealedIdFor(id), unseal(enemies[id])])
+);
+
+/** Everything the finale can field, and nothing else — `generateFinaleEncounter`'s pool. */
+export const finaleEnemies: HeroLookup = { ...unsealedChampions, [ENDBRINGER_ID]: enemies[ENDBRINGER_ID] };
 
 /** `enemies` narrowed to one faction's basics, for the generators that must never draw its leader. */
 export function basicEnemiesOf(faction: FactionRoster): HeroLookup {

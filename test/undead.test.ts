@@ -270,7 +270,8 @@ test('undead: the Necropolis is the location that fields them, and the faction b
     assert.ok(location.guardianFinalEnemyId, `${location.id} still has no Guardian champion`);
     assert.ok(enemies[location.guardianFinalEnemyId], `${location.id} points at a champion that does not exist`);
   }
-  assert.strictEqual(Object.keys(factions).length, Object.keys(locations).length);
+  // One faction per SEAL location; the finale's Threshold has none of its own (docs/run-loop.md §4).
+  assert.strictEqual(Object.keys(factions).length, Object.keys(locations).length - 1);
 });
 
 test('undead: the fight node draws basics only, and the battle node always fields the Raven', () => {

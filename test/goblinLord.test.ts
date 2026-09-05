@@ -4,7 +4,7 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { moves } from '../src/data/moves';
-import { enemies, GOBLIN_LORD_ID } from '../src/data/enemies';
+import { enemies, ENDBRINGER_ID, GOBLIN_LORD_ID } from '../src/data/enemies';
 import { locations, ACT_ONE_LOCATION_ID } from '../src/data/locations';
 import type { StatKey } from '../src/engine/content';
 
@@ -31,8 +31,12 @@ test('goblinLord: 20 MP Regen is the ceiling, and it is what makes the kit casta
   assert.strictEqual(lord.baseStats.mpRegen, 20);
   for (const other of Object.values(enemies)) {
     if (other.id === GOBLIN_LORD_ID) continue;
+    // The Endbringer is the documented exception and the only one: it out-scales every
+    // champion on every axis by design (docs/lore.md §7).
+    if (other.id === ENDBRINGER_ID) continue;
     assert.ok(other.baseStats.mpRegen <= 20, `${other.id} out-regens the champion`);
   }
+  assert.ok(enemies[ENDBRINGER_ID].baseStats.mpRegen > 20, 'the Endbringer should be the one thing above the band');
   // He must never arrive and then Rest.
   const costs = lord.moveIds.map((id) => moves[id].manaCost);
   assert.ok(Math.min(...costs) <= lord.baseStats.mpRegen * 2, 'a full round of regen does not reach his cheapest move');
@@ -51,7 +55,16 @@ test('goblinLord: the kit is four moves — the MOVE_CAP — spanning both damag
 test('goblinLord: only the locations with an authored faction field a Guardian champion today', () => {
   assert.strictEqual(locations[ACT_ONE_LOCATION_ID].guardianFinalEnemyId, GOBLIN_LORD_ID);
   const withChampions = Object.values(locations).filter((l) => l.guardianFinalEnemyId !== null);
-  assert.deepStrictEqual(withChampions.map((l) => l.id), [ACT_ONE_LOCATION_ID, 'blightedShrine', 'forbiddenForest', 'moltenFoundry', 'stormCoast', 'necropolis']);
+  // The Threshold's "champion" is the Endbringer itself — the finale's bench ends on it.
+  assert.deepStrictEqual(withChampions.map((l) => l.id), [
+    ACT_ONE_LOCATION_ID,
+    'blightedShrine',
+    'forbiddenForest',
+    'moltenFoundry',
+    'stormCoast',
+    'necropolis',
+    'theThreshold',
+  ]);
   // appendFinalEnemy no-ops on an unknown id, so a dangling id silently skips the entrance.
   for (const location of withChampions) assert.ok(location.guardianFinalEnemyId! in enemies);
 });

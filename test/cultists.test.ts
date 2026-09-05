@@ -7,7 +7,7 @@ import { test } from './harness';
 import { moves } from '../src/data/moves';
 import { statusApplicationsOf } from '../src/engine/content';
 import { enemies, factions, basicEnemiesOf, YUGZULACH_ID } from '../src/data/enemies';
-import { locations } from '../src/data/locations';
+import { FINALE_LOCATION_ID, locations } from '../src/data/locations';
 import { actScaling, ACT_STEP_STAT_TOTAL } from '../src/run/difficulty';
 import { generateEncounter, generateLeaderEncounter } from '../src/run/enemyGen';
 import type { HeroDefinition, StatKey } from '../src/engine/content';
@@ -171,7 +171,10 @@ test('cultists: the Blighted Shrine is the location that fields them', () => {
     assert.ok(factions[location.factionId], `${location.id} points at unknown faction ${location.factionId}`);
   }
   assert.strictEqual(locations.wildsEdge.factionId, 'goblins');
-  assert.strictEqual(new Set(Object.values(locations).map((l) => l.factionId)).size, Object.keys(locations).length);
+  // The finale's Threshold is the one location with no faction of its own — its factionId is
+  // the default and nothing reads it, since Act 6 has no fight or battle node.
+  const sealLocations = Object.values(locations).filter((l) => l.id !== FINALE_LOCATION_ID);
+  assert.strictEqual(new Set(sealLocations.map((l) => l.factionId)).size, sealLocations.length);
 });
 
 test('cultists: the fight node draws basics only, and the battle node always fields the Mystic', () => {

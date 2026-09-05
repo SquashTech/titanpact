@@ -14,7 +14,7 @@ import { enemies, factions, basicEnemiesOf } from '../src/data/enemies';
 
 const GOBLINS = factions.goblins;
 import { progressionTable } from '../src/data/progression';
-import { TOTAL_ACTS } from '../src/run/state';
+import { SEAL_ACTS, TOTAL_ACTS } from '../src/run/state';
 
 function statTotal(grants: Partial<Record<string, number>>): number {
   return Object.values(grants).reduce<number>((sum, v) => sum + (v ?? 0), 0);
@@ -37,9 +37,11 @@ test('difficulty: the monsters track baselines at Act 2 and never goes negative 
 
 test('difficulty: enemy levels follow the authored act table and hold past its end', () => {
   assert.deepStrictEqual([...ENEMY_LEVEL_BY_ACT], [1, 3, 5, 7, 10]);
-  for (let act = 1; act <= TOTAL_ACTS; act++) {
+  // The table covers the five seal acts; the finale act reuses its last entry.
+  for (let act = 1; act <= SEAL_ACTS; act++) {
     assert.strictEqual(actScaling('skirmish', act).level, ENEMY_LEVEL_BY_ACT[act - 1]);
   }
+  assert.strictEqual(actScaling('skirmish', TOTAL_ACTS).level, 10);
   // A TOTAL_ACTS bump must not produce an undefined level.
   assert.strictEqual(actScaling('skirmish', TOTAL_ACTS + 3).level, ENEMY_LEVEL_BY_ACT[ENEMY_LEVEL_BY_ACT.length - 1]);
   // Nor may a nonsense act number.

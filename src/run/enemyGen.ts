@@ -6,8 +6,9 @@
 import type { StatKey } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
 import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
-import type { RunState, RosterEntry } from './state';
+import type { BrokenSeal, RunState, RosterEntry } from './state';
 import { createRunState, createRosterEntry, addRosterEntry } from './state';
+import { unsealedIdFor } from '../data/enemies';
 import { MOVE_CAP, availableEvolution, chooseEvolutionPath, levelUpMovePool, type ProgressionTable } from './progression';
 // The one content import: there is exactly one move table, and tier gating needs it.
 import { moves } from '../data/moves';
@@ -227,6 +228,50 @@ export function appendFinalEnemy(
   const entry = createRosterEntry(enemyId, enemyId, definition.moveIds);
   const run = addRosterEntry(encounter.run, { ...entry, level: scaling.level, evolutionStatGrants: bonus });
   return { run, squad: { ...encounter.squad, benchIds: [...encounter.squad.benchIds, enemyId] } };
+}
+
+/**
+ * The finale (docs/run-loop.md §4): the five broken seals in the order they were broken,
+ * then the Endbringer. Nothing is rolled — every champion is rebuilt verbatim from the
+ * snapshot taken when the player beat it, so the fight escalates across itself and ends
+ * on the one thing that was never scaled at all.
+ *
+ * The champions field UNSEALED (`unsealedIdFor`): the Ancient half was the seal, and the
+ * player already took it (docs/lore.md §6).
+ */
+export function generateFinaleEncounter(
+  brokenSeals: readonly BrokenSeal[],
+  endbringerId: string,
+  enemyPool: HeroLookup,
+  endbringerScaling: ActScaling = NO_SCALING
+): Encounter {
+  const ordered = [...brokenSeals].sort((a, b) => a.actNumber - b.actNumber);
+
+  let run = createRunState(0);
+  const orderedIds: string[] = [];
+  for (const seal of ordered) {
+    const unsealedId = unsealedIdFor(seal.championId);
+    const definition = enemyPool[unsealedId];
+    if (!definition || run.roster.some((r) => r.rosterId === unsealedId)) continue;
+    const entry = createRosterEntry(unsealedId, unsealedId, definition.moveIds);
+    run = addRosterEntry(run, { ...entry, level: seal.level, evolutionStatGrants: seal.statGrants });
+    orderedIds.push(unsealedId);
+  }
+
+  const endbringer = enemyPool[endbringerId];
+  if (endbringer) {
+    const entry = createRosterEntry(endbringerId, endbringerId, endbringer.moveIds);
+    run = addRosterEntry(run, { ...entry, level: endbringerScaling.level });
+    orderedIds.push(endbringerId);
+  }
+
+  // Built by hand rather than through pickSquad: bench ORDER is the design here, and
+  // pickSquad's job is validating a player's pick against a required size.
+  const squad: Squad = {
+    activeIds: [orderedIds[0] ?? null, orderedIds[1] ?? null],
+    benchIds: orderedIds.slice(2),
+  };
+  return { run, squad };
 }
 
 /** The `battle` node: the faction's leader always present plus 3 of its basics. No node-kind bonus; takes the act curve on the monsters track. */

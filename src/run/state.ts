@@ -8,7 +8,14 @@ import type { RunMap } from './map';
 
 export const ROSTER_CAP = 6;
 
-export const TOTAL_ACTS = 5;
+/** 5 acts of the run-loop.md §1 shape, then the finale act. */
+export const TOTAL_ACTS = 6;
+
+/** Acts that break a seal — the ones with a Guardian, a location draw and a §1 map. */
+export const SEAL_ACTS = 5;
+
+/** Act 6: the Vigil and the final battle (docs/run-loop.md §4). */
+export const FINALE_ACT = TOTAL_ACTS;
 
 export interface RosterEntry {
   rosterId: string;
@@ -36,6 +43,22 @@ export interface RosterEntry {
   evolutionTypeGraft: TypeId | null;
   /** One Class per run holds structurally — a single slot, and classes.ts grantClass replaces. */
   classId: PassiveId | null;
+}
+
+/**
+ * One Guardian's fall, recorded so the finale can field it again at the power it was
+ * beaten at (docs/lore.md §6). Level and the act-scaling roll are the ONLY things that
+ * ever differ from the authored champion (`enemyGen.ts appendFinalEnemy` sets exactly
+ * those two), so snapshotting them is snapshotting the fight.
+ */
+export interface BrokenSeal {
+  /** 1-indexed, and also the order the seals return in — Act 1's first, Act 5's last. */
+  actNumber: number;
+  locationId: string;
+  /** The sealed (Ancient-second) id. The finale fields `unsealedIdFor` it. */
+  championId: string;
+  level: number;
+  statGrants: Partial<Record<StatKey, number>>;
 }
 
 export interface RunState {
@@ -70,6 +93,8 @@ export interface RunState {
   actNumber: number;
   /** One location id per act, index 0 = Act 1. Empty on throwaway RunStates; locationForAct falls back. */
   locationIds: readonly string[];
+  /** Appended on each Guardian win, in act order — the Pact Seal's filled sockets and the finale's enemy side. */
+  brokenSeals: readonly BrokenSeal[];
 }
 
 export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1): RunState {
@@ -87,6 +112,7 @@ export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1):
     encountersWon: 0,
     actNumber: 1,
     locationIds: [],
+    brokenSeals: [],
   };
 }
 

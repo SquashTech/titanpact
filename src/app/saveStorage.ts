@@ -2,6 +2,7 @@
 // The rules live in src/run/save.ts; this file only binds them to a key and a browser.
 
 import { classes } from '../data/classes';
+import { CHAMPION_IDS } from '../data/enemies';
 import { equipment } from '../data/equipment';
 import { heroes } from '../data/heroes';
 import { locations } from '../data/locations';
@@ -30,6 +31,7 @@ const contentIndex = buildContentIndex({
   passives,
   classes,
   locations,
+  championIds: CHAMPION_IDS,
   types: TYPES,
   progression: progressionTable,
 });

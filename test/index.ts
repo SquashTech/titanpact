@@ -42,6 +42,7 @@ import './raiders.test';
 import './fae.test';
 import './vulcans.test';
 import './undead.test';
+import './finale.test';
 import './events.test';
 import './ai.test';
 import './save.test';

@@ -102,6 +102,23 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
       <circle cx="12" cy="19.6" r="2.4" />
     </>
   ),
+  // The Vigil: a brazier kept lit through the last night before the Threshold.
+  muster: (
+    <>
+      <path d="M12 1.8c2.2 2.7 3.3 4.7 3.3 6.2a3.3 3.3 0 0 1-6.6 0c0-1.5 1.1-3.5 3.3-6.2Z" />
+      <path d="M4.4 11.4h15.2l-2.2 7.2H6.6Z" />
+      <path d="M11 18.6h2v2.2h-2Z" />
+      <path d="M7 20.6h10v1.6H7Z" />
+    </>
+  ),
+  // A broken ring, split top and bottom by what came through it. The only glyph on the
+  // map that is not a thing you fight or take — it is the seal itself, failing.
+  finale: (
+    <path
+      fillRule="evenodd"
+      d="M12 2.2a9.8 9.8 0 1 1 0 19.6 9.8 9.8 0 0 1 0-19.6Zm0 3.6a6.2 6.2 0 1 0 0 12.4 6.2 6.2 0 0 0 0-12.4ZM14.6 1.2 8.2 11.4h3.4L9.4 22.8l6.4-11.2h-3.4Z"
+    />
+  ),
 };
 
 // The map footer signpost (Relics / Roster / Reference / Menu).

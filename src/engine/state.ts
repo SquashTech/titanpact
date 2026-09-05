@@ -75,9 +75,21 @@ export interface CombatState {
   activeFieldEffect: ActiveFieldEffect | null;
 }
 
-/** Locked: 2+ KOs disables voluntary switching. The single switch restriction — do not layer more on it. */
+/**
+ * Locked: half a side down disables voluntary switching — 2 of the standard 4.
+ * Derived from the side's own size rather than stored, so the 6v6 finale
+ * (docs/run-loop.md §4) lands on 3 without a second mechanism, and every smaller
+ * side — the 2-hero Guardian fight included — keeps the authored 2.
+ */
+export function lockInThreshold(state: CombatState, side: Side): number {
+  let size = 0;
+  for (const id in state.combatants) if (state.combatants[id].side === side) size++;
+  return Math.max(2, Math.ceil(size / 2));
+}
+
+/** The single switch restriction — do not layer more on it. */
 export function isLockedIn(state: CombatState, side: Side): boolean {
-  return state.koCount[side] >= 2;
+  return state.koCount[side] >= lockInThreshold(state, side);
 }
 
 /** Pure mana check against the caller's authoritative move list; drives the Rest fallback. */

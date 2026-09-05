@@ -9,7 +9,7 @@ import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
-import { isLockedIn, createCombatant, effectiveTypes, hasAffordableMove } from '../src/engine/state';
+import { isLockedIn, lockInThreshold, createCombatant, effectiveTypes, hasAffordableMove } from '../src/engine/state';
 import { applyVoluntarySwitch, SwitchBlockedError } from '../src/engine/combat/switching';
 import { isValidFlatStatGrant } from '../src/engine/content';
 import type { MoveDefinition } from '../src/engine/content';
@@ -56,6 +56,23 @@ test('invariant: lock-in engages at exactly 2 KOs, not before', () => {
   const twoKo = { ...state, koCount: { ...state.koCount, A: 2 } };
   assert.strictEqual(isLockedIn(oneKo, 'A'), false);
   assert.strictEqual(isLockedIn(twoKo, 'A'), true);
+});
+
+test('invariant: the threshold is half a side, so a 6v6 finale locks at 3 and nothing smaller moves', () => {
+  const base = twoVTwoFixture(1);
+  const sideOf = (size: number) => {
+    const combatants = { ...base.combatants };
+    for (let i = 0; i < size - 2; i++) {
+      combatants[`extra${i}`] = { ...base.combatants.a1, combatantId: `extra${i}` };
+    }
+    return { ...base, combatants };
+  };
+  assert.strictEqual(lockInThreshold(sideOf(2), 'A'), 2);
+  assert.strictEqual(lockInThreshold(sideOf(4), 'A'), 2);
+  assert.strictEqual(lockInThreshold(sideOf(6), 'A'), 3);
+  // And the derivation is what enforces it — a 6-side is not locked at 2.
+  assert.strictEqual(isLockedIn({ ...sideOf(6), koCount: { A: 2, B: 0 } }, 'A'), false);
+  assert.strictEqual(isLockedIn({ ...sideOf(6), koCount: { A: 3, B: 0 } }, 'A'), true);
 });
 
 test('invariant: locked-in side cannot voluntarily switch', () => {

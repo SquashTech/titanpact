@@ -18,15 +18,18 @@ import { createEmptyLoadout } from './equipment';
 import type { MapNode, MapNodeType, RunMap } from './map';
 import { MAP_NODE_TYPES } from './map';
 import type { ProgressionTable } from './progression';
-import type { RosterEntry, RunState } from './state';
+import type { BrokenSeal, RosterEntry, RunState } from './state';
 import { ROSTER_CAP, TOTAL_ACTS } from './state';
 
 /**
  * Bump whenever a change to RunState or RunMap makes older files unreadable. Older versions
  * are refused, not migrated — the same all-or-nothing stance as the content checks below.
  * v2 (2026-09-04): RunState gained `encountersWon`.
+ * v3 (2026-09-05): the finale act — RunState gained `brokenSeals`, TOTAL_ACTS went 5 -> 6,
+ * and an itinerary gained its sixth entry. A v2 run would arrive at Act 6 with no ledger
+ * to field and no location to stand in.
  */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the
@@ -57,6 +60,7 @@ export interface SaveContentIndex {
   passiveIds: ReadonlySet<PassiveId>;
   classIds: ReadonlySet<PassiveId>;
   locationIds: ReadonlySet<string>;
+  championIds: ReadonlySet<string>;
   typeIds: ReadonlySet<TypeId>;
   evolutionPathIds: ReadonlySet<string>;
 }
@@ -76,6 +80,8 @@ export interface SaveCatalogs {
   passives: Record<string, unknown>;
   classes: Record<string, unknown>;
   locations: Record<string, unknown>;
+  /** Faction champion ids (enemies.ts CHAMPION_IDS) — a broken seal names one, and it is never a hero. */
+  championIds: readonly string[];
   types: readonly string[];
   progression: ProgressionTable;
 }
@@ -98,6 +104,7 @@ export function buildContentIndex(catalogs: SaveCatalogs): SaveContentIndex {
     // Narrow on purpose: `passives` folds the Class catalog in, but a classId must name a Class.
     classIds: new Set(Object.keys(catalogs.classes)),
     locationIds: new Set(Object.keys(catalogs.locations)),
+    championIds: new Set(catalogs.championIds),
     typeIds: new Set<string>(catalogs.types),
     evolutionPathIds,
   };
@@ -257,6 +264,36 @@ function decodeMap(value: unknown): RunMap {
   return { seed: value.seed, nodes, rows, startNodeIds: [...value.startNodeIds], bossNodeId: value.bossNodeId };
 }
 
+/** The Pact Seal's filled sockets, and the finale's enemy side (docs/lore.md §6). */
+function decodeBrokenSeals(value: unknown, index: SaveContentIndex): BrokenSeal[] {
+  if (!Array.isArray(value)) reject('run.brokenSeals is not a list');
+
+  const seals: BrokenSeal[] = [];
+  const seenActs = new Set<number>();
+  value.forEach((entry, at) => {
+    const label = `brokenSeals[${at}]`;
+    if (!isObject(entry)) reject(`${label} is not an object`);
+    if (!isInt(entry.actNumber, 1, TOTAL_ACTS)) reject(`${label}.actNumber is not an act in 1-${TOTAL_ACTS}`);
+    if (seenActs.has(entry.actNumber)) reject(`${label} repeats act ${entry.actNumber}`);
+    seenActs.add(entry.actNumber);
+    if (typeof entry.locationId !== 'string' || !index.locationIds.has(entry.locationId)) {
+      reject(`${label} references unknown location "${String(entry.locationId)}"`);
+    }
+    if (typeof entry.championId !== 'string' || !index.championIds.has(entry.championId)) {
+      reject(`${label} references unknown champion "${String(entry.championId)}"`);
+    }
+    if (!isInt(entry.level, 1)) reject(`${label}.level is not a level`);
+    seals.push({
+      actNumber: entry.actNumber,
+      locationId: entry.locationId,
+      championId: entry.championId,
+      level: entry.level,
+      statGrants: decodeStatGrants(entry.statGrants, `${label}.statGrants`),
+    });
+  });
+  return seals.sort((a, b) => a.actNumber - b.actNumber);
+}
+
 function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   if (!isObject(value)) reject('run is not an object');
   if (!Array.isArray(value.roster)) reject('run.roster is not a list');
@@ -304,6 +341,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     encountersWon: value.encountersWon,
     actNumber: value.actNumber,
     locationIds: requireIds(value.locationIds, index.locationIds, 'run.locationIds'),
+    brokenSeals: decodeBrokenSeals(value.brokenSeals, index),
   };
 }
 

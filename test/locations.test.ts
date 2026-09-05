@@ -1,10 +1,10 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { generateItinerary, locationForAct, affinityHeroIds, locationBias } from '../src/run/locations';
-import { ACT_ONE_LOCATION_ID, ITINERARY_POOL_IDS, locations } from '../src/data/locations';
+import { ACT_ONE_LOCATION_ID, FINALE_LOCATION_ID, ITINERARY_POOL_IDS, locations } from '../src/data/locations';
 import { generateEncounter } from '../src/run/enemyGen';
 import { heroes } from '../src/data/heroes';
-import { TOTAL_ACTS } from '../src/run/state';
+import { SEAL_ACTS, TOTAL_ACTS } from '../src/run/state';
 
 test('locations: Act 1 is always Wild\'s Edge, whatever the seed', () => {
   for (let seed = 1; seed <= 40; seed++) {
@@ -22,8 +22,10 @@ test('locations: an itinerary covers every act and never repeats a location', ()
 });
 
 test('locations: the authored pool leaves the last act a real choice', () => {
-  // TOTAL_ACTS - 1 picks plus one spare, so the final act's 1-of-2 choice is real (docs/locations.md §1).
-  assert.strictEqual(ITINERARY_POOL_IDS.length, TOTAL_ACTS);
+  // SEAL_ACTS - 1 picks plus one spare, so the last seal act's 1-of-2 choice is real — and
+  // exactly one location goes unvisited every run, which is the sixth seal (docs/lore.md §5).
+  assert.strictEqual(ITINERARY_POOL_IDS.length, SEAL_ACTS);
+  assert.ok(!ITINERARY_POOL_IDS.includes(FINALE_LOCATION_ID), 'the finale location must never be drawn');
 });
 
 test('locations: locationForAct falls back rather than throwing on an empty itinerary', () => {

@@ -73,6 +73,8 @@ const NODE_NAMES: Record<MapNodeType, string> = {
   manaRegenBoostReward: 'Regen',
   classReward: 'Mentor',
   event: 'Event',
+  muster: 'The Vigil',
+  finale: 'Endbringer',
 };
 
 // Stat-reward colours match StatBars' STAT_COLORS. `battle` stays `--ally`,
@@ -96,6 +98,9 @@ const NODE_COLORS: Record<MapNodeType, string> = {
   manaRegenBoostReward: '#4cd9a0',
   classReward: 'var(--buff)',
   event: 'var(--tier-common)',
+  muster: 'var(--accent)',
+  // The only node in a run that wears the mythic red, because there is only one of it.
+  finale: 'var(--tier-mythic)',
 };
 
 // Long-press preview text: what the node pays out, and nothing else. Difficulty
@@ -119,12 +124,14 @@ const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
   manaRegenBoostReward: '+5 MP Regen to one hero',
   classReward: '1 of 3 Classes, taught to one hero',
   event: 'Hidden until you arrive: a move, a passive, gear or a trade',
+  muster: 'Fill the roster to six, then spend everything left',
+  finale: 'The five seals you broke — then the thing they were holding',
 };
 
-// The last act’s Guardian pays no Banner — nothing left to spend it on (App.tsx).
-function nodeRewardText(type: MapNodeType, actNumber: number): string {
+// Every Guardian pays a Banner now that the finale act follows act 5 (App.tsx).
+function nodeRewardText(type: MapNodeType): string {
   const base = NODE_DESCRIPTIONS[type];
-  return type === 'boss' && actNumber < TOTAL_ACTS ? `${base} · Guardian’s Banner` : base;
+  return type === 'boss' ? `${base} · Guardian’s Banner` : base;
 }
 
 // Silhouette tier, done with border-radius rather than clip-path so the
@@ -150,6 +157,8 @@ const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   manaRegenBoostReward: 'reward',
   classReward: 'reward',
   event: 'reward',
+  muster: 'landmark',
+  finale: 'ancient',
 };
 
 // Fixed 3-column geometry shared by .map-row and the edge overlay; a 2-node
@@ -367,7 +376,7 @@ function MapNodeButton({
   );
 }
 
-function MapNodePreviewPopup({ node, actNumber, onClose }: { node: MapNode; actNumber: number; onClose: () => void }) {
+function MapNodePreviewPopup({ node, onClose }: { node: MapNode; onClose: () => void }) {
   return (
     <div className="log-overlay" onClick={onClose}>
       <div className="log-panel move-popup-panel" style={{ '--node-color': NODE_COLORS[node.type] } as CSSProperties}>
@@ -376,7 +385,7 @@ function MapNodePreviewPopup({ node, actNumber, onClose }: { node: MapNode; actN
             <NodeGlyph type={node.type} className="map-popup-glyph" /> {NODE_NAMES[node.type]}
           </span>
         </div>
-        <div className="move-popup-description">{nodeRewardText(node.type, actNumber)}</div>
+        <div className="move-popup-description">{nodeRewardText(node.type)}</div>
         <div className="move-popup-hint">Tap anywhere to close</div>
       </div>
     </div>
@@ -600,7 +609,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
       {showRoster && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setShowRoster(false)} />}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
       {showRelics && <RelicsOverlay ownedRelicIds={run.relics} onClose={() => setShowRelics(false)} />}
-      {previewNode && <MapNodePreviewPopup node={previewNode} actNumber={run.actNumber} onClose={() => setPreviewNode(null)} />}
+      {previewNode && <MapNodePreviewPopup node={previewNode} onClose={() => setPreviewNode(null)} />}
     </div>
   );
 }

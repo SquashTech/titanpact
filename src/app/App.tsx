@@ -27,7 +27,7 @@ import { rollRunEvent } from '../run/events';
 import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
 import { RunSummaryScreen } from '../view/run/RunSummaryScreen';
 import { heroes } from '../data/heroes';
-import { enemies, factions, basicEnemiesOf } from '../data/enemies';
+import { enemies, factions, basicEnemiesOf, finaleEnemies, ENDBRINGER_ID } from '../data/enemies';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
 import { equipment } from '../data/equipment';
 import {
@@ -39,7 +39,7 @@ import {
   type EquipmentSlot,
   type LootSource,
 } from '../run/equipment';
-import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP, TOTAL_ACTS } from '../run/state';
+import { createRunState, createRosterEntry, addRosterEntry, FINALE_ACT, ROSTER_CAP, TOTAL_ACTS } from '../run/state';
 import {
   deriveContractOffer,
   claimContract,
@@ -56,15 +56,29 @@ import { guildHallOffers } from '../data/recruitment';
 import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } from '../run/shop';
 import { generateMap, type MapNodeType } from '../run/map';
 import { generateStarterOptions } from '../run/draft';
-import { generateEncounter, generateLeaderEncounter, appendFinalEnemy, type EncounterNodeType, type Encounter } from '../run/enemyGen';
+import {
+  generateEncounter,
+  generateLeaderEncounter,
+  generateFinaleEncounter,
+  appendFinalEnemy,
+  type EncounterNodeType,
+  type Encounter,
+} from '../run/enemyGen';
 import { actScaling, type ScalingTrack } from '../run/difficulty';
 import { generateItinerary, locationBias, locationForAct } from '../run/locations';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
 import { prefetchTrack, setTrack } from '../audio/music';
 import { hasTrack } from '../audio/tracks';
-import { pickSquad } from '../run/squad';
-import { advanceToNode, advanceToNextAct, grantCurrencyReward, grantUpgradeReward, grantContractReward } from '../run/runProgress';
+import { pickSquad, STANDARD_SQUAD_SIZE } from '../run/squad';
+import {
+  advanceToNode,
+  advanceToNextAct,
+  grantCurrencyReward,
+  grantUpgradeReward,
+  grantContractReward,
+  recordBrokenSeal,
+} from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { createStatusTestSides } from '../run/statusTestFight';
 import { fullMovepool, canAffordAnyLevelUp } from '../run/progression';
@@ -78,7 +92,7 @@ type Screen =
   /** Per-act arrival beat; reads its location off the run's itinerary. */
   | { kind: 'actIntro' }
   | { kind: 'map' }
-  | { kind: 'squadSelect'; nodeId: string; nodeType: EncounterNodeType; encounter: Encounter }
+  | { kind: 'squadSelect'; nodeId: string; nodeType: EncounterNodeType; encounter: Encounter; squadSize: number }
   | {
       kind: 'fight';
       nodeId: string;
@@ -194,13 +208,14 @@ function equipTestDagger(encounter: Encounter): Encounter {
 }
 
 /** Payouts key on the MAP node type: `skirmish` and `battle` both flatten to a `fight` encounter but sit in opposite reward lanes. */
-type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss';
+type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';
 
 // Two reward lanes: Monsters (fight/battle) is loot-and-gold with a guaranteed drop and 1 lane of
 // XP; Skirmish (skirmish/elite) is the XP lane with a thin gold band and a rolled drop. The
 // Guardian pays in the Banner, not coin.
 function goldRewardFor(nodeType: EncounterMapNodeType): number {
-  if (nodeType === 'boss') return 0;
+  // The finale pays nothing at all: the run ends on it, and there is no node after it.
+  if (nodeType === 'boss' || nodeType === 'finale') return 0;
   // The row-0 opener stays on the thin band: it is the lightest fight and already ships a drop.
   if (nodeType === 'battle') return 30 + Math.floor(Math.random() * 16); // 30-45
   return 15 + Math.floor(Math.random() * 11); // 15-25
@@ -208,6 +223,7 @@ function goldRewardFor(nodeType: EncounterMapNodeType): number {
 
 /** Training Points per win: 2 the act opener / 3 Monsters / 4 Skirmish and Guardian. Deliberately FLAT across acts — the level-price curve is the brake (docs/leveling-and-ranks.md). */
 function trainingPointsFor(nodeType: EncounterMapNodeType): number {
+  if (nodeType === 'finale') return 0;
   // The opener is the lightest fight on the map and pays the least; `battle` is the full Monsters rate.
   if (nodeType === 'fight') return 2;
   if (nodeType === 'battle') return 3;
@@ -221,6 +237,7 @@ const EQUIPMENT_DROP_CHANCE: Record<EncounterMapNodeType, number> = {
   skirmish: 0.25,
   elite: 0.55,
   boss: 0.7,
+  finale: 0,
 };
 
 const LOOT_SOURCE: Record<EncounterMapNodeType, LootSource> = {
@@ -229,6 +246,7 @@ const LOOT_SOURCE: Record<EncounterMapNodeType, LootSource> = {
   skirmish: 'standard',
   elite: 'elite',
   boss: 'elite',
+  finale: 'elite',
 };
 
 function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): EquipmentDefinition | null {
@@ -379,7 +397,22 @@ export function App() {
   function handleSelectNode(nodeId: string) {
     const node = playerRun.map!.nodes[nodeId];
     const location = locationForAct(playerRun.locationIds, playerRun.actNumber);
-    if (
+    if (node.type === 'finale') {
+      // Nothing is rolled here: the five broken seals in the order they were broken, at the
+      // power they were beaten at, then the Endbringer (docs/lore.md §6).
+      const encounter = generateFinaleEncounter(
+        playerRun.brokenSeals,
+        location.guardianFinalEnemyId ?? ENDBRINGER_ID,
+        finaleEnemies,
+        // Authored FOR act 6, so it takes no act steps — only the level, as its tier label.
+        actScaling('monsters', FINALE_ACT, FINALE_ACT)
+      );
+      if (playerRun.roster.length <= 2) {
+        handleSquadConfirmed(pickSquad(playerRun.roster, playerRun.roster.map((r) => r.rosterId), ROSTER_CAP), nodeId, 'boss', encounter);
+      } else {
+        setScreen({ kind: 'squadSelect', nodeId, nodeType: 'boss', encounter, squadSize: ROSTER_CAP });
+      }
+    } else if (
       node.type === 'fight' ||
       node.type === 'skirmish' ||
       node.type === 'battle' ||
@@ -434,9 +467,9 @@ export function App() {
         const squad = pickSquad(playerRun.roster, playerRun.roster.map((r) => r.rosterId));
         handleSquadConfirmed(squad, nodeId, encounterKind, encounter);
       } else {
-        setScreen({ kind: 'squadSelect', nodeId, nodeType: encounterKind, encounter });
+        setScreen({ kind: 'squadSelect', nodeId, nodeType: encounterKind, encounter, squadSize: STANDARD_SQUAD_SIZE });
       }
-    } else if (node.type === 'shop') {
+    } else if (node.type === 'shop' || node.type === 'muster') {
       setScreen({
         kind: 'shop',
         nodeId,
@@ -494,9 +527,12 @@ export function App() {
       setScreen({ kind: 'runFailed' });
       return;
     }
-    const isBossNode = nodeId === playerRun.map!.bossNodeId;
-    // No Banner on the final act's Guardian: nothing left to spend it on. Read before advanceToNextAct bumps actNumber.
-    const banner = isBossNode && playerRun.actNumber < TOTAL_ACTS;
+    const mapNodeType = playerRun.map!.nodes[nodeId].type;
+    const isGuardian = mapNodeType === 'boss';
+    const isFinale = mapNodeType === 'finale';
+    // EVERY Guardian pays a Banner now that the finale act follows act 5 — the reason act 5's
+    // used to pay none (nothing left to spend it on) is void (docs/run-loop.md §4).
+    const banner = isGuardian;
 
     let next = grantCurrencyReward(playerRun, goldReward);
     next = grantUpgradeReward(next, trainingPointsReward);
@@ -505,8 +541,24 @@ export function App() {
     next = { ...next, encountersWon: next.encountersWon + 1 };
 
     let afterScreen: Screen;
-    if (isBossNode) {
+    if (isFinale) {
+      afterScreen = { kind: 'runComplete' };
+    } else if (isGuardian) {
       next = grantContractReward(next, 1);
+      // The seal, snapshotted at the power it was beaten at, so the finale can field it
+      // again (docs/lore.md §6). The champion rides the Guardian's bench, so it is in the
+      // defeated roster under its own id.
+      const location = locationForAct(playerRun.locationIds, playerRun.actNumber);
+      const champion = defeatedRoster.find((entry) => entry.rosterId === location.guardianFinalEnemyId);
+      if (champion) {
+        next = recordBrokenSeal(next, {
+          actNumber: playerRun.actNumber,
+          locationId: location.id,
+          championId: champion.heroId,
+          level: champion.level,
+          statGrants: champion.evolutionStatGrants,
+        });
+      }
       if (next.actNumber < TOTAL_ACTS) {
         next = advanceToNextAct(next, randomSeed());
         afterScreen = { kind: 'actIntro' };
@@ -717,6 +769,7 @@ export function App() {
         <SquadSelectScreen
           run={playerRun}
           encounter={screen.encounter}
+          squadSize={screen.squadSize}
           onRunChange={setPlayerRun}
           onConfirm={(squad) => handleSquadConfirmed(squad, screen.nodeId, screen.nodeType, screen.encounter)}
         />

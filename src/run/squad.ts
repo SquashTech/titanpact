@@ -10,14 +10,21 @@ export interface Squad {
 
 export class SquadSelectionError extends Error {}
 
-/** Exactly 4 once the roster reaches 4, the whole roster below that — a hero can never be benched by omission. */
-export function requiredSquadSize(rosterSize: number): number {
-  return Math.min(4, rosterSize);
+/** Bring-6-pick-4 everywhere except the finale, which fields the whole roster (docs/run-loop.md §4). */
+export const STANDARD_SQUAD_SIZE = 4;
+
+/** Exactly `maxSize` once the roster reaches it, the whole roster below that — a hero can never be benched by omission. */
+export function requiredSquadSize(rosterSize: number, maxSize: number = STANDARD_SQUAD_SIZE): number {
+  return Math.min(maxSize, rosterSize);
 }
 
 /** The first two picks become the active pair; the rest start benched. */
-export function pickSquad(roster: readonly RosterEntry[], pickedRosterIds: readonly string[]): Squad {
-  const required = requiredSquadSize(roster.length);
+export function pickSquad(
+  roster: readonly RosterEntry[],
+  pickedRosterIds: readonly string[],
+  maxSize: number = STANDARD_SQUAD_SIZE
+): Squad {
+  const required = requiredSquadSize(roster.length, maxSize);
   if (pickedRosterIds.length !== required) {
     throw new SquadSelectionError(`Pick exactly ${required} heroes for this fight, got ${pickedRosterIds.length}`);
   }

@@ -3,6 +3,8 @@
 // `skirmish`/`elite`/`boss` the recruitable one; all are 4-hero encounters.
 
 import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
+// Value import, but state.ts only takes `RunMap` back as a type — no runtime cycle.
+import { FINALE_ACT } from './state';
 
 /** Listed as a value, not just a union, so a loaded save can check a node type it read back (save.ts). */
 export const MAP_NODE_TYPES = [
@@ -24,6 +26,9 @@ export const MAP_NODE_TYPES = [
   'manaRegenBoostReward',
   'classReward',
   'event',
+  // Act 6 only (docs/run-loop.md §4). `muster` is the Vigil, `finale` the Endbringer.
+  'muster',
+  'finale',
 ] as const;
 
 export type MapNodeType = (typeof MAP_NODE_TYPES)[number];
@@ -108,11 +113,31 @@ function nodeId(row: number, col: number): string {
 }
 
 /**
+ * Act 6 is a corridor, not a map (docs/run-loop.md §4): the Vigil, then the Endbringer.
+ * No branch and no RNG — the seed is kept only so a RunMap stays reproducible from it.
+ */
+function finaleMap(seed: number): RunMap {
+  const musterId = nodeId(0, 0);
+  const finaleId = nodeId(1, 0);
+  return {
+    seed,
+    nodes: {
+      [musterId]: { id: musterId, type: 'muster', row: 0, col: 0, nextIds: [finaleId] },
+      [finaleId]: { id: finaleId, type: 'finale', row: 1, col: 0, nextIds: [] },
+    },
+    rows: [[musterId], [finaleId]],
+    startNodeIds: [musterId],
+    bossNodeId: finaleId,
+  };
+}
+
+/**
  * Rows top-down (types first), forward edges within a column window, then a
  * repair pass so every node has an incoming edge. eliteRow/funnelRow/bossRow
  * are derived from the shape's length so Act 1's extra row lands correctly.
  */
 export function generateMap(seed: number, actNumber: number = 1): RunMap {
+  if (actNumber >= FINALE_ACT) return finaleMap(seed);
   const rowWidths = rowWidthsFor(actNumber);
   const bossRow = rowWidths.length - 1;
   const funnelRow = bossRow - 1;

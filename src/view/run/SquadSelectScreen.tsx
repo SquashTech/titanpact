@@ -6,7 +6,7 @@ import type { HeroDefinition } from '../../engine/content';
 import type { RunState, RosterEntry } from '../../run/state';
 import { reorderRoster } from '../../run/state';
 import type { Squad } from '../../run/squad';
-import { pickSquad, requiredSquadSize } from '../../run/squad';
+import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE } from '../../run/squad';
 import { rosterEntryTypes } from '../../run/progression';
 import type { Encounter } from '../../run/enemyGen';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
@@ -25,15 +25,20 @@ interface Props {
   encounter: Encounter;
   onRunChange: (next: RunState) => void;
   onConfirm: (squad: Squad) => void;
+  /** 4 everywhere but the finale, which fields the whole roster (docs/run-loop.md 4). */
+  squadSize?: number;
 }
 
 /** 2-wide/3-tall grid: active, bench, reserve. Always 6 cells (the roster cap); cells past the roster render empty. */
 const SLOT_COUNT = 6;
-const SLOT_ROWS: readonly { key: string; label: string; indices: readonly [number, number] }[] = [
-  { key: 'active', label: 'Active', indices: [0, 1] },
-  { key: 'bench', label: 'Bench', indices: [2, 3] },
-  { key: 'reserve', label: 'Reserve', indices: [4, 5] },
-];
+function slotRows(squadSize: number): readonly { key: string; label: string; indices: readonly [number, number] }[] {
+  return [
+    { key: 'active', label: 'Active', indices: [0, 1] },
+    { key: 'bench', label: 'Bench', indices: [2, 3] },
+    // The finale fields six, so the third row stops being a sideboard and becomes bench.
+    { key: 'reserve', label: squadSize > 4 ? 'Bench' : 'Reserve', indices: [4, 5] },
+  ];
+}
 
 const DRAG_KEY = 'text/titanpact-squad-slot';
 
@@ -47,7 +52,7 @@ function shuffled<T>(items: readonly T[]): T[] {
 }
 
 /** Bring-6-pick-4 squad selection before every fight node (docs/combat.md "Bring-6-pick-4 sideboard"). Drag, or tap-then-tap, swaps two cells. */
-export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Props) {
+export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm, squadSize = STANDARD_SQUAD_SIZE }: Props) {
   const [slots, setSlots] = useState<(string | null)[]>(() => {
     const ids = run.roster.map((r) => r.rosterId);
     return Array.from({ length: SLOT_COUNT }, (_, i) => ids[i] ?? null);
@@ -61,12 +66,12 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry; enemy: boolean } | null>(null);
   const [showReference, setShowReference] = useState(false);
   const [showRoster, setShowRoster] = useState(false);
-  const required = requiredSquadSize(run.roster.length);
+  const required = requiredSquadSize(run.roster.length, squadSize);
   const location = useAmbientLocation();
   const rosterById = new Map(run.roster.map((r) => [r.rosterId, r]));
 
   const activeIds = [slots[0], slots[1]] as const;
-  const benchIds = [slots[2], slots[3]].filter((id): id is string => id !== null);
+  const benchIds = slots.slice(2, squadSize).filter((id): id is string => id !== null);
   const pickedIds = activeIds.filter((id): id is string => id !== null).concat(benchIds);
   const canStart = activeIds[0] !== null && activeIds[1] !== null && pickedIds.length === required;
 
@@ -92,7 +97,7 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
   // Writes the arrangement back to the roster so it seeds the next fight's grid (and pickSquad
   // on sub-4 rosters). Nulls are dropped so the grid repacks from index 0 next time.
   function handleConfirm() {
-    const squad = pickSquad(run.roster, pickedIds);
+    const squad = pickSquad(run.roster, pickedIds, squadSize);
     onRunChange(reorderRoster(run, slots.filter((id): id is string => id !== null)));
     onConfirm(squad);
   }
@@ -172,7 +177,7 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm }: Pr
         <div className="squad-section squad-section-player">
           <h2 className="squad-section-title">🛡️ Arrange Your Squad ({pickedIds.length}/{required})</h2>
           <div className="squad-grid">
-            {SLOT_ROWS.map((row) => (
+            {slotRows(squadSize).map((row) => (
               <div key={row.key} className={`squad-grid-row squad-grid-row-${row.key}`}>
                 <div className="squad-grid-row-label">{row.label}</div>
                 <div className="squad-grid-row-cells">

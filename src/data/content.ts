@@ -3,6 +3,8 @@
 
 import type { HeroDefinition } from '../engine/content';
 import { heroes } from './heroes';
-import { enemies } from './enemies';
+import { enemies, unsealedChampions } from './enemies';
 
-export const allCombatants: Record<string, HeroDefinition> = { ...heroes, ...enemies };
+// The unsealed champions are battlefield-only content (docs/lore.md §6) — they belong
+// here, where rendering and resolution look ids up, and nowhere the run pools draw from.
+export const allCombatants: Record<string, HeroDefinition> = { ...heroes, ...enemies, ...unsealedChampions };

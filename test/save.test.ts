@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { classes } from '../src/data/classes';
+import { CHAMPION_IDS } from '../src/data/enemies';
 import { equipment } from '../src/data/equipment';
 import { heroes } from '../src/data/heroes';
 import { locations } from '../src/data/locations';
@@ -22,6 +23,7 @@ const index = buildContentIndex({
   passives,
   classes,
   locations,
+  championIds: CHAMPION_IDS,
   types: TYPES,
   progression: progressionTable,
 });
