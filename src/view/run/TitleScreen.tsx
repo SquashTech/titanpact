@@ -2,10 +2,17 @@ import { useState, type CSSProperties } from 'react';
 import { CompendiumScreen } from './CompendiumScreen';
 import { LocationSelectOverlay } from './LocationSelectOverlay';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
+import { RecordsScreen } from './RecordsScreen';
 import { locations } from '../../data/locations';
 import type { SaveSummary } from '../../run/save';
+import type { Profile } from '../../run/profile';
 
 interface Props {
+  /** Lifetime figures and hero stars. Re-read by App whenever this screen is entered. */
+  profile: Profile;
+  /** Pulls a fresh profile before Records opens, so playtime is not as of screen entry. */
+  onRefreshProfile: () => void;
+  onEraseAllData: () => void;
   /** The parked run a Continue would resume, or null when there is none. */
   parkedRun: SaveSummary | null;
   /** Set when a stored run was refused on load — shown once so a vanished Continue is explained, not just missing. */
@@ -62,6 +69,9 @@ function parkedRunLabel(parked: SaveSummary): string {
 }
 
 export function TitleScreen({
+  profile,
+  onRefreshProfile,
+  onEraseAllData,
   parkedRun,
   staleSaveReason,
   onContinueRun,
@@ -73,6 +83,7 @@ export function TitleScreen({
   onStartStatusTestFight,
 }: Props) {
   const [showCompendium, setShowCompendium] = useState(false);
+  const [showRecords, setShowRecords] = useState(false);
   const [showReference, setShowReference] = useState(false);
   const [showLocations, setShowLocations] = useState(false);
   const [showDev, setShowDev] = useState(false);
@@ -202,6 +213,17 @@ export function TitleScreen({
         <button className="title-icon-button" onClick={() => setShowReference(true)} aria-label="Reference" title="Reference">
           📜
         </button>
+        <button
+          className="title-icon-button"
+          onClick={() => {
+            onRefreshProfile();
+            setShowRecords(true);
+          }}
+          aria-label="Records"
+          title="Records"
+        >
+          🏆
+        </button>
       </div>
 
       {/* ⚠️ TEMPORARY DEV/TEST — the whole corner. Quick/Sandbox Battle and Visit
@@ -236,7 +258,10 @@ export function TitleScreen({
       {showDev && <div className="title-dev-backdrop" onClick={() => setShowDev(false)} />}
 
       {showLocations && <LocationSelectOverlay onPick={onVisitLocation} onClose={() => setShowLocations(false)} />}
-      {showCompendium && <CompendiumScreen onClose={() => setShowCompendium(false)} />}
+      {showCompendium && <CompendiumScreen heroStars={profile.heroStars} onClose={() => setShowCompendium(false)} />}
+      {showRecords && (
+        <RecordsScreen profile={profile} onEraseAllData={onEraseAllData} onClose={() => setShowRecords(false)} />
+      )}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
     </div>
   );

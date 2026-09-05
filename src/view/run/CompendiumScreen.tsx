@@ -15,6 +15,8 @@ import { EQUIP_SLOT_LABELS, EQUIP_SLOT_ORDER, EquipmentEffectList, EquipmentIcon
 import { HeroDossierOverlay } from './HeroDossierOverlay';
 
 interface Props {
+  /** heroId -> runs cleared with that hero (src/run/profile.ts). Empty is normal, not a missing prop. */
+  heroStars: Readonly<Record<string, number>>;
   onClose: () => void;
 }
 
@@ -34,18 +36,24 @@ const EQUIPMENT_LIST = Object.values(equipment).sort(
  * HeroDossierOverlay. Wears `.pick-card`'s clothes (the shared "pick a hero" card) minus the
  * level mark and CTA line, which need a RosterEntry the compendium deliberately does not have.
  */
-function CompendiumHeroTile({ hero, onOpen }: { hero: HeroDefinition; onOpen: () => void }) {
+function CompendiumHeroTile({ hero, stars, onOpen }: { hero: HeroDefinition; stars: number; onOpen: () => void }) {
   return (
     <button
       type="button"
       className="pick-card compendium-tile"
       style={{ '--type-rgb': getTypeColorRgb(hero.types[0]) } as CSSProperties}
       onClick={onOpen}
-      aria-label={`${hero.name} — view details`}
+      aria-label={stars > 0 ? `${hero.name} — view details, ${stars} cleared` : `${hero.name} — view details`}
     >
       <div className="pick-figure">
         <span className="pick-ground" aria-hidden="true" />
         <HeroPortrait heroId={hero.id} className="pick-portrait" />
+        {/* One star and a count rather than a row of them: the tally has no ceiling. */}
+        {stars > 0 && (
+          <span className="compendium-star" title={`${stars} ${stars === 1 ? 'run' : 'runs'} cleared`}>
+            ★{stars > 1 && <span className="compendium-star-count">{stars}</span>}
+          </span>
+        )}
       </div>
       <span className="pick-name">{hero.name}</span>
       <span className="pick-types">
@@ -104,7 +112,7 @@ function CompendiumEquipmentCard({ item, onInspect }: CompendiumEquipmentCardPro
 
 type CompendiumTab = 'starters' | 'recruitable' | 'equipment';
 
-export function CompendiumScreen({ onClose }: Props) {
+export function CompendiumScreen({ heroStars, onClose }: Props) {
   const [tab, setTab] = useState<CompendiumTab>('starters');
   const [inspectItemId, setInspectItemId] = useState<string | null>(null);
   const [dossierHeroId, setDossierHeroId] = useState<string | null>(null);
@@ -142,7 +150,7 @@ export function CompendiumScreen({ onClose }: Props) {
           ) : (
             <div className="pick-grid pick-cols-3 compendium-grid">
               {heroList.map((hero) => (
-                <CompendiumHeroTile key={hero.id} hero={hero} onOpen={() => setDossierHeroId(hero.id)} />
+                <CompendiumHeroTile key={hero.id} hero={hero} stars={heroStars[hero.id] ?? 0} onOpen={() => setDossierHeroId(hero.id)} />
               ))}
             </div>
           )}

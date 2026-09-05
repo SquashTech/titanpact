@@ -42,6 +42,7 @@ import './raiders.test';
 import './events.test';
 import './ai.test';
 import './save.test';
+import './profile.test';
 import { run } from './harness';
 
 run();

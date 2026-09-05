@@ -6615,6 +6615,65 @@ textarea,
   gap: 6px;
 }
 
+/* --- Records (RecordsScreen.tsx) ---------------------------------------- */
+
+.records-panel {
+  max-height: 86%;
+  border-radius: 12px;
+  gap: 6px;
+}
+
+/* Two columns: every figure here is short, and a single column would make six
+   lifetime numbers read as a settings list rather than as a scoreboard. */
+.records-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 2px 2px 6px;
+}
+
+.records-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(146, 182, 196, 0.16);
+  background: var(--well);
+}
+
+.records-stat-value {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.1;
+}
+
+.records-stat-label {
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.records-section-title {
+  padding: 8px 2px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.records-note {
+  margin: 6px 2px 2px;
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
 .roster-mgmt-list {
   display: flex;
   flex-direction: column;
@@ -6648,6 +6707,31 @@ textarea,
 .compendium-tile {
   width: 100%;
   font: inherit;
+}
+
+/* Earned mark, top-right of the sprite (.pick-figure is the positioned parent).
+   Sits over the art rather than under the name so a scan of the grid reads
+   "which of these have I cleared with" without reading any words. */
+.compendium-star {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 1px 4px;
+  border-radius: var(--radius-pill);
+  background: rgba(10, 14, 18, 0.78);
+  border: 1px solid rgba(224, 166, 60, 0.45);
+  color: var(--accent);
+  font-size: 10px;
+  line-height: 1.2;
+  text-shadow: 0 0 6px rgba(224, 166, 60, 0.5);
+}
+
+.compendium-star-count {
+  font-size: 9px;
+  font-weight: 700;
 }
 
 .dossier-badge {

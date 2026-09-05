@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { initUiScale } from './uiScale';
 import { useReloadOnNewBuild } from './useReloadOnNewBuild';
 import { clearSave, readSave, writeSave } from './saveStorage';
+import { eraseAllData, readProfile, updateProfile } from './profileStorage';
+import { usePlaytime } from './usePlaytime';
 import { saveSummary, type SavedRun } from '../run/save';
+import { recordActReached, recordRunCompleted, recordRunFailed, recordRunStarted, type Profile } from '../run/profile';
 import { FightScreen } from '../view/combat/FightScreen';
 import { TitleScreen } from '../view/run/TitleScreen';
 import { DraftScreen } from '../view/run/DraftScreen';
@@ -261,6 +264,11 @@ export function App() {
     return { save: null, staleReason: result.reason };
   });
 
+  // Held only so the title and its Records screen can render it. Everything that WRITES the
+  // profile goes straight to storage (profileStorage.updateProfile) — playtime flushes on a
+  // timer, and putting that in React state would re-render the tree for a number nothing shows.
+  const [profile, setProfile] = useState<Profile>(() => readProfile());
+
   // Owned here rather than in SandboxBattleScreen, which unmounts during a sandbox fight.
   const [sandboxSideA, setSandboxSideA] = useState<SandboxSideConfig>(() => createEmptySandboxSide());
   const [sandboxSideB, setSandboxSideB] = useState<SandboxSideConfig>(() => createEmptySandboxSide());
@@ -283,13 +291,41 @@ export function App() {
     setSaveSlot({ save, staleReason: null });
   }, [playerRun, screen]);
 
+  usePlaytime();
+
+  // Re-read on the way back to the title so Records and the Compendium show what the run
+  // just banked. Nothing else in the app renders the profile, so nothing else needs this.
+  useEffect(() => {
+    if (screen.kind === 'title') setProfile(readProfile());
+  }, [screen.kind]);
+
+  // Monotonic in the profile, so an act reached and then abandoned still counts. Keyed on the
+  // act alone, not the screen: this must not re-write storage at every screen change. A null
+  // map is a run that never started (the title's placeholder, a Quick Battle's throwaway).
+  useEffect(() => {
+    if (!playerRun.map) return;
+    updateProfile((current) => recordActReached(current, playerRun.actNumber));
+  }, [playerRun.actNumber, playerRun.map]);
+
   // A finished run has nothing left to resume; the save would otherwise re-offer the map
-  // of a run the player already lost or cleared.
+  // of a run the player already lost or cleared. `playerRun` is final here: the handler that
+  // set this screen committed the run in the same batch, so this render already has it.
   useEffect(() => {
     if (screen.kind !== 'runFailed' && screen.kind !== 'runComplete') return;
     clearSave();
     setSaveSlot({ save: null, staleReason: null });
+    const now = Date.now();
+    const finalHeroIds = playerRun.roster.map((entry) => entry.heroId);
+    updateProfile((current) =>
+      screen.kind === 'runComplete' ? recordRunCompleted(current, finalHeroIds, now) : recordRunFailed(current, now)
+    );
   }, [screen.kind]);
+
+  function handleEraseAllData() {
+    eraseAllData();
+    setProfile(readProfile());
+    setSaveSlot({ save: null, staleReason: null });
+  }
 
   /** Abandon: the parked run is discarded, not just left behind. */
   function handleAbandonRun() {
@@ -519,6 +555,9 @@ export function App() {
   function handleDraftConfirm(chosenIds: string[]) {
     setPlayerRun(createStartingRun(chosenIds));
     setScreen({ kind: 'actIntro' });
+    // Sealing the pact is the start, not pressing the title button: a draft backed out of
+    // is not a run. An abandoned run still counts here — it was played.
+    updateProfile((current) => recordRunStarted(current, Date.now()));
   }
 
   /** TEMPORARY DEV/TEST — see createLevel4TestRun. */
@@ -586,6 +625,9 @@ export function App() {
     <div className="app-shell" ref={shellRef}>
       {screen.kind === 'title' && (
         <TitleScreen
+          profile={profile}
+          onRefreshProfile={() => setProfile(readProfile())}
+          onEraseAllData={handleEraseAllData}
           parkedRun={saveSlot.save ? saveSummary(saveSlot.save) : null}
           staleSaveReason={saveSlot.staleReason}
           onContinueRun={handleContinueRun}
