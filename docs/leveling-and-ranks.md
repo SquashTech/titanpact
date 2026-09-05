@@ -26,8 +26,7 @@ level-up currency" referenced in `progression.md`.)
 **A level-up costs as many Training Points as the hero's current level, flattening at
 `MAX_LEVEL_UP_COST` = 5.** Level 1 → 2 costs 1, level 4 → 5 costs 4, and every level from
 5 → 6 upward costs 5 (`levelUpCost`, `costToReachLevel`, `src/run/progression.ts`;
-`test/levelCost.test.ts`). The ceiling was added 2026-09-05 — see "The tail needed a cap
- after all" below.
+`test/levelCost.test.ts`). The ceiling was added 2026-09-05 — see "The mastery treadmill needed a cap after all" below.
 
 ### Why it is a curve
 
