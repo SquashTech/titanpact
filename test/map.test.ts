@@ -99,7 +99,7 @@ test('map: the boss node has no outgoing edges; every other node has at least on
   }
 });
 
-test('map: Act 1 inserts a standalone single-node Mentor (classReward) row right after the Skirmish row', () => {
+test('map: Act 1 inserts a standalone single-node Mentor (classReward) row right BEFORE the Skirmish row', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
     const map = generateMap(seed, 1);
     const rows = map.rows;
@@ -108,9 +108,11 @@ test('map: Act 1 inserts a standalone single-node Mentor (classReward) row right
     assert.strictEqual(rows.length, 8, `Act 1 should have one extra row over the base shape (seed ${seed})`);
     assert.deepStrictEqual(rowTypes(0), ['fight']);
     assert.strictEqual(rows[1].length, 3);
-    assert.deepStrictEqual(rowTypes(2), ['skirmish']);
-    assert.strictEqual(rows[3].length, 1, `Mentor row (seed ${seed}) should be a single node`);
-    assert.deepStrictEqual(rowTypes(3), ['classReward']);
+    // The Mentor OWNS the base Skirmish row and the Skirmish moves down one, so the Class is
+    // in hand for the run's first recruitable fight instead of arriving just after it.
+    assert.strictEqual(rows[2].length, 1, `Mentor row (seed ${seed}) should be a single node`);
+    assert.deepStrictEqual(rowTypes(2), ['classReward']);
+    assert.deepStrictEqual(rowTypes(3), ['skirmish']);
     // classReward is excluded from REWARD_WEIGHTS, so the Mentor row is the only place it can appear.
     assert.ok(rowTypes(4).every((t) => REWARD_TYPES.has(t)), `row 4 (seed ${seed}) has a non-reward type: ${rowTypes(4)}`);
     assert.ok(!rowTypes(4).includes('classReward'), `row 4 (seed ${seed}) rerolled classReward — it should only ever appear in the forced Mentor row`);
@@ -120,11 +122,16 @@ test('map: Act 1 inserts a standalone single-node Mentor (classReward) row right
   }
 });
 
-test('map: Act 1 — Skirmish connects into the Mentor row, and the Mentor row connects into the following pick-3 reward row', () => {
+test('map: Act 1 — the Mentor row connects into the Skirmish, and the Skirmish into the following pick-3 reward row', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
     const map = generateMap(seed, 1);
+    // Both are single-node rows, so each has exactly one outgoing edge and no path can skip either.
     assert.deepStrictEqual([...map.nodes[map.rows[2][0]].nextIds].sort(), [...map.rows[3]].sort());
     assert.deepStrictEqual([...map.nodes[map.rows[3][0]].nextIds].sort(), [...map.rows[4]].sort());
+    // And every path out of the opening reward row funnels through the Mentor.
+    for (const nodeId of map.rows[1]) {
+      assert.deepStrictEqual([...map.nodes[nodeId].nextIds], [map.rows[2][0]], `seed ${seed} can bypass the Mentor`);
+    }
   }
 });
 
@@ -154,7 +161,8 @@ test('map: classReward never rerolls into a pick-1-of-3 reward row — the force
 test('map: omitting actNumber defaults to Act 1 (the standalone Mentor row still applies)', () => {
   const map = generateMap(1);
   assert.strictEqual(map.rows.length, 8);
-  assert.strictEqual(map.nodes[map.rows[3][0]].type, 'classReward');
+  assert.strictEqual(map.nodes[map.rows[2][0]].type, 'classReward');
+  assert.strictEqual(map.nodes[map.rows[3][0]].type, 'skirmish');
 });
 
 test('map: every node past row 0 has at least one incoming edge (no orphans)', () => {

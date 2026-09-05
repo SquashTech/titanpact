@@ -56,8 +56,18 @@ export interface RunMap {
 const BASE_ROW_WIDTHS = [1, 3, 1, 3, 2, 1, 1] as const;
 const SKIRMISH_ROW = 2;
 
-/** Act-1-only forced single classReward row after the Skirmish — the ONLY place a Class offer appears in any act. */
-const MENTOR_ROW = SKIRMISH_ROW + 1;
+/**
+ * Act-1-only forced single classReward row, spliced in immediately BEFORE the Skirmish —
+ * the ONLY place a Class offer appears in any act. It sits ahead of the Skirmish so the
+ * Class is in hand for the run's first recruitable fight rather than arriving after it.
+ * Act 1's Skirmish therefore lands one row later than every other act's.
+ */
+const MENTOR_ROW = SKIRMISH_ROW;
+
+/** Act 1's Mentor row pushes the Skirmish down one; every other act is the base shape. */
+function skirmishRowFor(actNumber: number): number {
+  return actNumber === 1 ? SKIRMISH_ROW + 1 : SKIRMISH_ROW;
+}
 
 function rowWidthsFor(actNumber: number): number[] {
   if (actNumber !== 1) return [...BASE_ROW_WIDTHS];
@@ -143,15 +153,17 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
   const funnelRow = bossRow - 1;
   const eliteRow = funnelRow - 1;
   const mentorRow = actNumber === 1 ? MENTOR_ROW : -1;
+  const skirmishRow = skirmishRowFor(actNumber);
 
   function isRewardRow(row: number): boolean {
-    return row !== 0 && row !== SKIRMISH_ROW && row !== mentorRow && row !== eliteRow && row !== funnelRow && row !== bossRow;
+    return row !== 0 && row !== skirmishRow && row !== mentorRow && row !== eliteRow && row !== funnelRow && row !== bossRow;
   }
 
   function fixedNodeType(row: number, col: number): MapNodeType {
     if (row === 0) return 'fight';
-    if (row === SKIRMISH_ROW) return 'skirmish';
+    // Mentor first: in Act 1 it OWNS SKIRMISH_ROW and the Skirmish has moved down to skirmishRow.
     if (row === mentorRow) return 'classReward';
+    if (row === skirmishRow) return 'skirmish';
     if (row === eliteRow) return col === 0 ? 'elite' : 'battle';
     if (row === funnelRow) return 'shop';
     return 'boss';

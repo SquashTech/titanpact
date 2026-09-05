@@ -40,6 +40,15 @@ between; per user direction, the shape is now forced and uniform):
   the Mentor row note below), never a random pick-1-of-3 option.
 - **Row 2: a single forced `skirmish` node.**
 - **Row 3: 3 nodes, pick 1 of 3 — reward types only**, same pool as row 1.
+
+**The Mentor row (Act 1 only).** Act 1 splices one extra forced single-node `classReward`
+row into the shape above, giving it 8 rows where every other act has 7. It sits
+**immediately before the Skirmish** (2026-09-05, per user direction — it was immediately
+*after* until then), so the Class is in hand for the run's first recruitable fight rather
+than arriving just after it. Act 1's row order is therefore `fight` → reward → **Mentor**
+→ `skirmish` → reward → `elite`/`battle` → `shop` → `boss`, and Act 1's Skirmish lands one
+row later than every other act's (`MENTOR_ROW`, `skirmishRowFor`, `src/run/map.ts`). Both
+rows are single nodes, so no path can bypass either.
 - **Row 4: 2 nodes, pick 1 of 2 — `elite` or `battle`** (2026-08-17, per user direction:
   "give the player the option to fight the Elite OR a regular Battle"). `elite` is the
   act's difficulty spike (+10 to 2 stats on all 4 AI heroes); `battle` is a plain,
