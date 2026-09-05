@@ -14,7 +14,7 @@ interface Props {
   onEnter: () => void;
 }
 
-const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI'];
 
 /** Falls back to a bare number past the authored numerals. */
 function actLabel(actNumber: number): string {
@@ -72,7 +72,8 @@ export function ActIntroScreen({ run, location, onEnter }: Props) {
       <div className="node-spacer" />
 
       <button className="resolve-button" onClick={onEnter}>
-        Enter {location.name}
+        {/* Lower-cased article so a name that carries one does not read "Enter The Threshold". */}
+        Enter {location.name.replace(/^The /, 'the ')}
       </button>
     </div>
   );

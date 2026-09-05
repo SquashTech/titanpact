@@ -115,15 +115,16 @@ export const locations: Record<string, LocationDefinition> = {
   },
 
   // Act 6 only, and never drawn (docs/run-loop.md §4). No Skirmish, `fight` or `battle`
-  // node exists here, so `affinity` and `factionId` are never read — the two fields are
-  // filled with the neutral and the default rather than made nullable for one location.
+  // node exists here, so `factionId` is never read and `affinity` never biases anything —
+  // it is Ancient purely so the arrival screen names the one domain standing here rather
+  // than falling through to Wild's Edge's "every domain walks here".
   // `guardianFinalEnemyId` IS read: it is what the finale's bench ends on.
   theThreshold: {
     id: 'theThreshold',
     name: 'The Threshold',
-    faction: 'The Endbringer',
+    faction: 'Endbringer',
     flavor: 'Six wardens stood here once. You are the reason five of them do not.',
-    affinity: null,
+    affinity: ['Ancient'],
     exclusiveHeroIds: [],
     factionId: DEFAULT_FACTION_ID,
     guardianFinalEnemyId: ENDBRINGER_ID,

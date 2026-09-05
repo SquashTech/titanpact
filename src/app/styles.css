@@ -11914,6 +11914,13 @@ textarea,
   --map-row-h: 74px;
 }
 
+/* Act 6's corridor (docs/run-loop.md §4): two nodes in a well built for eight.
+   The height goes to the rows instead of to dead space below them, so the last
+   walk of the run reads as a walk rather than as a map that failed to generate. */
+.map-grid.is-corridor {
+  --map-row-h: 220px;
+}
+
 .map-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -17510,5 +17517,115 @@ textarea,
   .pact-warning-mark {
     animation: none;
     opacity: 1;
+  }
+}
+
+/* --- The Pact Seal (docs/run-loop.md §4) -----------------------------------
+   The between-acts beat: five sockets, one per Guardian, in the same
+   fixed-denominator idiom as the draft's pact sockets and the Field Effect
+   plaque's 5-pip clock. A ring rather than a row, because the object being
+   counted out here is a seal — and because the fifth socket closing it is the
+   whole payoff. Positioned by rotate/translate/counter-rotate off one radius
+   so the pentagon is a single number to change. */
+.pact-seal-ring {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  width: 272px;
+  height: 272px;
+  --seal-radius: 104px;
+}
+
+/* Inset off the radius, not a magic number: the sockets sit ON the guide ring
+   rather than near it, which is what makes five circles read as one seal. */
+.pact-seal-core {
+  position: absolute;
+  inset: calc(50% - var(--seal-radius));
+  border-radius: 50%;
+  border: 1px dashed rgba(var(--node-rgb), 0.22);
+  background: radial-gradient(circle, rgba(var(--node-rgb), 0.1), transparent 70%);
+}
+
+/* The ring gives way once every warden is down: the dashed guide goes solid
+   and red, the one place in the run that colour appears outside the map's
+   finale node. */
+.pact-seal-screen.is-broken .pact-seal-core {
+  border-style: solid;
+  border-color: rgba(var(--tier-mythic-rgb), 0.55);
+  background: radial-gradient(circle, rgba(var(--tier-mythic-rgb), 0.18), transparent 72%);
+  animation: pact-seal-break 1.1s var(--ease-spring) 0.55s both;
+}
+
+@keyframes pact-seal-break {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1.16);
+    opacity: 0.25;
+  }
+}
+
+.pact-seal-socket {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin: -26px 0 0 -26px;
+  border-radius: 50%;
+  border: 1px dashed rgba(var(--type-rgb), 0.3);
+  background: rgba(var(--type-rgb), 0.05);
+  /* Counter-rotated so a filled socket's portrait stays upright on the ring. */
+  transform: rotate(var(--seal-angle)) translate(var(--seal-radius)) rotate(calc(-1 * var(--seal-angle)));
+}
+
+.pact-seal-mark {
+  font-size: 11px;
+  color: rgba(var(--type-rgb), 0.38);
+}
+
+.pact-seal-socket.filled {
+  border-style: solid;
+  border-color: rgba(var(--type-rgb), 0.78);
+  background: radial-gradient(circle, rgba(var(--type-rgb), 0.32), rgba(var(--type-rgb), 0.06) 72%);
+  box-shadow: 0 0 16px rgba(var(--type-rgb), 0.42);
+  animation: pact-seal-seat 0.5s var(--ease-spring) var(--seal-delay) both;
+}
+
+/* Scale has to compose with the ring placement, so the transform is written
+   out in full at every stop rather than layered on top of it. */
+@keyframes pact-seal-seat {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--seal-angle)) translate(var(--seal-radius)) rotate(calc(-1 * var(--seal-angle))) scale(0.5);
+  }
+  55% {
+    opacity: 1;
+    transform: rotate(var(--seal-angle)) translate(var(--seal-radius)) rotate(calc(-1 * var(--seal-angle))) scale(1.14);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(var(--seal-angle)) translate(var(--seal-radius)) rotate(calc(-1 * var(--seal-angle))) scale(1);
+  }
+}
+
+.pact-seal-portrait {
+  display: block;
+  width: 40px;
+  height: 40px;
+  image-rendering: pixelated;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pact-seal-socket.filled,
+  .pact-seal-screen.is-broken .pact-seal-core {
+    animation: none;
   }
 }

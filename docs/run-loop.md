@@ -664,7 +664,11 @@ Small list, and that is the finding — most of the engine does not care how dee
 | `isLockedIn` (`engine/state.ts`) | `koCount >= 2` | **3** |
 | Enemy bench order | generated | authored (table above) |
 | Squad select | pick 4 of 6 | order 6 of 6 |
-| Bench rails (`FightScreen`) | 2 slots | 4 slots |
+
+`SwitchInPanel`'s bench list is **not** on that list, which was the surprise: it was
+already a list rather than a pair of rails, and four options fit a portrait screen without
+scrolling. Squad select was the same shape of luck — its grid has always been six cells
+(the roster cap), so the finale only had to stop calling the bottom row "Reserve".
 
 The lock-in threshold is the one with teeth. Two of four is half a side; two of six is a
 third, which would take voluntary switching away while two thirds of the fight is still

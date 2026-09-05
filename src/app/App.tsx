@@ -29,6 +29,7 @@ import { RunSummaryScreen } from '../view/run/RunSummaryScreen';
 import { heroes } from '../data/heroes';
 import { enemies, factions, basicEnemiesOf, finaleEnemies, ENDBRINGER_ID } from '../data/enemies';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
+import { PactSealScreen } from '../view/run/PactSealScreen';
 import { equipment } from '../data/equipment';
 import {
   equipItem,
@@ -89,6 +90,8 @@ import type { Squad } from '../run/squad';
 type Screen =
   | { kind: 'title' }
   | { kind: 'draft'; optionIds: string[] }
+  /** The act-boundary beat: five sockets, one per Guardian (docs/run-loop.md §4). */
+  | { kind: 'pactSeal' }
   /** Per-act arrival beat; reads its location off the run's itinerary. */
   | { kind: 'actIntro' }
   | { kind: 'map' }
@@ -134,6 +137,8 @@ type Screen =
 const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'title',
   'draft',
+  // Between two acts, and the property of neither.
+  'pactSeal',
   'quickBattle',
   'sandboxBattle',
   'sandboxFight',
@@ -561,7 +566,9 @@ export function App() {
       }
       if (next.actNumber < TOTAL_ACTS) {
         next = advanceToNextAct(next, randomSeed());
-        afterScreen = { kind: 'actIntro' };
+        // The seal grants nothing, so it goes last in the chain — the socket fills, then
+        // you arrive somewhere new. The opposite of the Banner's placement, for the same reason.
+        afterScreen = { kind: 'pactSeal' };
       } else {
         afterScreen = { kind: 'runComplete' };
       }
@@ -748,6 +755,8 @@ export function App() {
       )}
 
       {screen.kind === 'draft' && <DraftScreen optionIds={screen.optionIds} onConfirm={handleDraftConfirm} />}
+
+      {screen.kind === 'pactSeal' && <PactSealScreen run={playerRun} onContinue={() => setScreen({ kind: 'actIntro' })} />}
 
       {screen.kind === 'actIntro' && (
         <ActIntroScreen

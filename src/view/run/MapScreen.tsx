@@ -480,7 +480,12 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
         <MapPlacard location={location} />
 
         <div className="map-scroll screen-scroll">
-          <div className="map-grid" ref={gridRef} style={{ '--map-rows': rowsTopDown.length } as CSSProperties}>
+          {/* Act 6 is two nodes, so it gets the well's height rather than huddling at the top of one built for eight. */}
+          <div
+            className={`map-grid${rowsTopDown.length <= 2 ? ' is-corridor' : ''}`}
+            ref={gridRef}
+            style={{ '--map-rows': rowsTopDown.length } as CSSProperties}
+          >
             {/* viewBox = measured size, so 1 user unit = 1 CSS px. All casings
                 are laid before any core so a casing never cuts a crossing line. */}
             {geometry && (

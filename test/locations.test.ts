@@ -45,6 +45,8 @@ test('locations: every affinity location matches more heroes than a Skirmish fie
   // An affinity matching exactly 4 heroes would make every Skirmish there the identical four (docs/locations.md §2).
   for (const location of Object.values(locations)) {
     if (!location.affinity) continue;
+    // The Threshold has no Skirmish to field — its Ancient affinity is a label, not a bias.
+    if (location.id === FINALE_LOCATION_ID) continue;
     const matches = affinityHeroIds(location, heroes);
     assert.ok(matches.length > 4, `${location.name} matches only ${matches.length} heroes — too thin to vary`);
   }
