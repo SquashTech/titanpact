@@ -83,6 +83,13 @@ export interface Encounter {
 }
 
 export interface EncounterOptions {
+  /**
+   * Names the enemy roster outright instead of drawing one — the scripted first act
+   * (src/data/tutorial.ts). Sets the encounter size too, so `heroCount` is not also needed.
+   * Ids in `excludeHeroIds` are dropped and the gap refilled from the pool, so a scripted
+   * escort the player has since recruited can never be fielded against them.
+   */
+  forcedHeroIds?: readonly string[];
   /** Overrides the node kind's default roster size (the run's 2nd-fight 2v2 breather, the row-0 opener). */
   heroCount?: number;
   /** heroId -> full movepool; swaps the starting kit for MOVE_CAP random moves (Quick Battle). Missing heroes keep their kit. */
@@ -159,12 +166,23 @@ export function generateEncounter(
   heroPool: HeroLookup,
   options: EncounterOptions = {}
 ): Encounter {
-  const { heroCount: heroCountOverride, movepools, bias, excludeHeroIds, scaling = NO_SCALING, progression } = options;
+  const { forcedHeroIds, heroCount: heroCountOverride, movepools, bias, excludeHeroIds, scaling = NO_SCALING, progression } = options;
   let rng = createRng(seed);
-  const heroCount = heroCountOverride ?? (nodeType === 'boss' ? 2 : 4);
+  const excluded = new Set(excludeHeroIds ?? []);
+  const scripted = forcedHeroIds?.filter((id) => id in heroPool && !excluded.has(id)) ?? [];
+  const heroCount = forcedHeroIds?.length ?? heroCountOverride ?? (nodeType === 'boss' ? 2 : 4);
   const [statCount, amountEach] = nodeType === 'boss' ? [3, 20] : nodeType === 'elite' ? [2, 10] : [0, 0];
 
-  const { picked: heroIds, nextState: afterPick } = biasedPick(rng, heroPool, heroCount, bias, new Set(excludeHeroIds ?? []));
+  // A scripted roster short of its authored size (an id the player recruited) tops up from the
+  // pool, so the fight is never smaller than the one the script was written against.
+  const { picked: drawn, nextState: afterPick } = biasedPick(
+    rng,
+    heroPool,
+    heroCount - scripted.length,
+    bias,
+    new Set([...excluded, ...scripted])
+  );
+  const heroIds = [...scripted, ...drawn];
   rng = afterPick;
 
   let run = createRunState(0);

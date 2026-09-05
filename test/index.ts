@@ -49,6 +49,7 @@ import './events.test';
 import './ai.test';
 import './save.test';
 import './profile.test';
+import './tutorial.test';
 import { run } from './harness';
 
 run();

@@ -95,6 +95,14 @@ export interface RunState {
   locationIds: readonly string[];
   /** Appended on each Guardian win, in act order — the Pact Seal's filled sockets and the finale's enemy side. */
   brokenSeals: readonly BrokenSeal[];
+  /**
+   * The scripted first run (docs/tutorial.md). Pins the drafted pair, Act 1's map and Act 1's
+   * encounters and payouts; acts 2-6 are an ordinary run, so everything keyed on it also checks
+   * the act (`isTutorialAct`).
+   */
+  tutorial: boolean;
+  /** Tutorial beats already played, so neither a re-render nor a reload repeats one. */
+  tutorialSeenBeatIds: readonly string[];
 }
 
 export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1): RunState {
@@ -113,6 +121,8 @@ export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1):
     actNumber: 1,
     locationIds: [],
     brokenSeals: [],
+    tutorial: false,
+    tutorialSeenBeatIds: [],
   };
 }
 

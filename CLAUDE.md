@@ -231,6 +231,12 @@ what's still unimplemented:
   after first playtest showed a KO'd hero simply stayed dead-weight into the next
   fight with no way to recover it (`docs/run-loop.md`). Relics are **minimal and
   stat-only** until the trigger-hook contract exists.
+- The first run on an account (2026-09-05 sign-off): **scripted through Act 1**, narrated by
+  **Valor**, with Valor + Fang forced as the pact and the act's map narrowed to **one node
+  per row**. Every line and every curated encounter is content (`src/data/tutorial.ts`);
+  mechanism is `src/run/tutorial.ts`. Gated on `Profile.tutorialDone`, set when Act 1's
+  Guardian falls — so a wiped tutorial is offered again. Act 2 onward is an ordinary run
+  (`docs/tutorial.md`).
 - Field Effects (2026-08-21 sign-off): resolves the former "weather subsystem" open
   question — Field Effects **is** that subsystem, generalized. A single global
   battlefield state (only one active at a time), settable by a move or a passive
@@ -275,7 +281,7 @@ authored roster.
 - `CLAUDE.md` — this file. Keep it lean (<200 lines); adherence drops past that.
 - `/docs/` — the deeper design modules (generate next): `combat.md`, `types-and-heroes.md`,
   `progression.md`, `mana.md`, `architecture.md`, `field-effects.md`, `run-loop.md`,
-  `locations.md`, `events.md`, `lore.md`, `visual-language.md` (presentation only). Reference from here; don't inline them.
+  `locations.md`, `events.md`, `lore.md`, `tutorial.md`, `visual-language.md` (presentation only). Reference from here; don't inline them.
   **`authoring-moves.md` is a runbook, not a design module** — read it before implementing
   a designed slate of moves for a type (1 type still to go — Ancient; Fire
   and Water are the worked examples, and §10 carries all fourteen hand-offs).

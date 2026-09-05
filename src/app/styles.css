@@ -17691,3 +17691,198 @@ textarea,
     animation: none;
   }
 }
+
+/* --- The scripted first run (docs/tutorial.md) -------------------------------
+   Valor talking the player through Act 1. Docked at the bottom rather than
+   centred, and the scrim dims WITHOUT the blur every modal panel uses: she is
+   naming things that are on screen behind her, so the screen has to stay
+   readable. It still swallows input — a line explaining a button must land
+   before the button is pressable. */
+
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 12px;
+  /* Above the fight console and every node screen, below nothing. */
+  z-index: 60;
+  background: linear-gradient(to bottom, rgba(8, 9, 13, 0.12) 0%, rgba(8, 9, 13, 0.34) 45%, rgba(8, 9, 13, 0.76) 100%);
+  animation: tutorial-scrim-in 220ms ease-out both;
+}
+
+@keyframes tutorial-scrim-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.tutorial-box {
+  width: 100%;
+  max-width: 460px;
+  display: grid;
+  /* Portrait column is fixed so the text block never reflows between a Valor
+     line and a Fang line. */
+  grid-template-columns: 76px 1fr;
+  gap: 10px;
+  padding: 10px 12px 10px 10px;
+  background: var(--surface-raised, var(--panel));
+  border: 1px solid rgba(var(--speaker-rgb), 0.5);
+  border-radius: var(--radius-lg);
+  /* The speaker's domain colour as a rim light, not a fill: the box has to
+     stay a UI surface, and two heroes swapping lines should read as a change
+     of light rather than a change of panel. */
+  box-shadow:
+    0 0 0 1px rgba(8, 9, 13, 0.6),
+    0 -2px 26px rgba(var(--speaker-rgb), 0.18),
+    0 12px 30px rgba(0, 0, 0, 0.5);
+  animation: tutorial-box-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes tutorial-box-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+.tutorial-portrait {
+  position: relative;
+  align-self: end;
+  width: 76px;
+  height: 76px;
+  border-radius: var(--radius-md);
+  background: radial-gradient(circle at 50% 70%, rgba(var(--speaker-rgb), 0.28), transparent 72%);
+  overflow: hidden;
+}
+
+.tutorial-portrait-art {
+  /* An absolutely positioned replaced element needs BOTH sizes stated: `inset`
+     alone sizes it correctly in Chrome and wrongly on iOS. */
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+  image-rendering: pixelated;
+  animation: tutorial-portrait-in 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes tutorial-portrait-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.94);
+  }
+}
+
+.tutorial-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 6px;
+}
+
+.tutorial-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tutorial-name {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgb(var(--speaker-rgb));
+}
+
+.tutorial-topic {
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tutorial-line {
+  margin: 0;
+  /* A fixed floor rather than a fixed height: three lines is the common case,
+     and letting the box jump between one-liners and long ones is what makes a
+     dialogue box read as cheap. */
+  min-height: 3.6em;
+  font-size: 13px;
+  line-height: 1.42;
+  color: var(--text);
+  animation: tutorial-line-in 180ms ease-out both;
+}
+
+@keyframes tutorial-line-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+.tutorial-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tutorial-pips {
+  display: flex;
+  gap: 4px;
+}
+
+.tutorial-pip {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 140ms ease, transform 140ms ease;
+}
+
+.tutorial-pip.is-done {
+  background: rgba(var(--speaker-rgb), 0.45);
+}
+
+.tutorial-pip.is-current {
+  background: rgb(var(--speaker-rgb));
+  transform: scale(1.35);
+}
+
+.tutorial-advance {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  animation: tutorial-advance-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tutorial-advance-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-overlay,
+  .tutorial-box,
+  .tutorial-portrait-art,
+  .tutorial-line,
+  .tutorial-advance {
+    animation: none;
+  }
+}

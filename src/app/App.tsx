@@ -5,7 +5,15 @@ import { clearSave, readSave, writeSave } from './saveStorage';
 import { eraseAllData, readProfile, updateProfile } from './profileStorage';
 import { usePlaytime } from './usePlaytime';
 import { saveSummary, type SavedRun } from '../run/save';
-import { recordActReached, recordRunCompleted, recordRunFailed, recordRunStarted, type Profile } from '../run/profile';
+import {
+  recordActReached,
+  recordRunCompleted,
+  recordRunFailed,
+  recordRunStarted,
+  recordTutorialDone,
+  shouldPlayTutorial,
+  type Profile,
+} from '../run/profile';
 import { FightScreen } from '../view/combat/FightScreen';
 import { TitleScreen } from '../view/run/TitleScreen';
 import { DraftScreen } from '../view/run/DraftScreen';
@@ -58,6 +66,20 @@ import { guildHallOffers } from '../data/recruitment';
 import { gemForStat } from '../data/relics';
 import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } from '../run/shop';
 import { generateMap, type MapNodeType } from '../run/map';
+import {
+  generateTutorialMap,
+  isTutorialAct,
+  mapBeatKey,
+  markTutorialBeatSeen,
+  rewardBeatKey,
+  tutorialBeat,
+  tutorialEncounterFor,
+  tutorialPayoutFor,
+  TUTORIAL_STARTER_IDS,
+  type TutorialBeatKey,
+} from '../run/tutorial';
+import { TUTORIAL_ENCOUNTERS, TUTORIAL_PAYOUTS, TUTORIAL_SCRIPT } from '../data/tutorial';
+import { TutorialOverlay } from '../view/run/TutorialOverlay';
 import { pickGemOffers, rollGemOffers } from '../run/gems';
 import { generateStarterOptions } from '../run/draft';
 import {
@@ -77,6 +99,7 @@ import { prefetchTrack, setTrack } from '../audio/music';
 import { hasTrack } from '../audio/tracks';
 import { pickSquad, STANDARD_SQUAD_SIZE } from '../run/squad';
 import {
+  reachableNodeIds,
   advanceToNode,
   advanceToNextAct,
   grantCurrencyReward,
@@ -86,7 +109,7 @@ import {
 } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { createStatusTestSides } from '../run/statusTestFight';
-import { fullMovepool, canAffordAnyLevelUp } from '../run/progression';
+import { availableEvolution, fullMovepool, canAffordAnyLevelUp } from '../run/progression';
 import { progressionTable } from '../data/progression';
 import type { RunState, RosterEntry } from '../run/state';
 import type { Squad } from '../run/squad';
@@ -168,12 +191,19 @@ function addHeroes(run: RunState, heroIds: readonly string[], level?: number): R
   return run;
 }
 
-/** A fresh run from the drafted pair; map and itinerary drawn once for the whole run. */
-function createStartingRun(heroIds: readonly string[]): RunState {
+/**
+ * A fresh run from the drafted pair; map and itinerary drawn once for the whole run. A tutorial
+ * run differs only in Act 1's map — its itinerary is drawn normally (Act 1 is always Wild's Edge
+ * anyway) and `advanceToNextAct` generates Act 2 the ordinary way.
+ */
+function createStartingRun(heroIds: readonly string[], tutorial: boolean, seenBeatIds: readonly string[]): RunState {
   return {
     ...addHeroes(createRunState(0, 40), heroIds),
-    map: generateMap(randomSeed()),
+    map: tutorial ? generateTutorialMap(randomSeed()) : generateMap(randomSeed()),
     locationIds: generateItinerary(randomSeed()),
+    tutorial,
+    // Carried across the draft: the intro beat plays on the draft screen, before this run exists.
+    tutorialSeenBeatIds: [...seenBeatIds],
   };
 }
 
@@ -274,6 +304,53 @@ function levelUpPending(run: RunState): boolean {
 
 function mapAfterLevelUp(run: RunState): Screen {
   return levelUpPending(run) ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' };
+}
+
+/**
+ * Which of Valor's beats the current screen is the moment for (docs/tutorial.md). Returns a key
+ * whether or not the script has a beat for it; `tutorialBeat` resolves that and the seen-list.
+ *
+ * `fight` is deliberately absent — mid-fight cues are FightScreen's, and a beat here would stack
+ * a second dialogue box on top of one of them. Gated on `run.tutorial` rather than the act, so a
+ * lesson Act 1 never reached (an Evolution nobody could afford) still lands the first time it
+ * applies; every id is one-shot, so nothing repeats.
+ */
+function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | null {
+  switch (screen.kind) {
+    case 'draft':
+      return 'intro';
+    case 'actIntro':
+      return run.actNumber === 1 ? 'arrival' : null;
+    case 'map': {
+      // The scripted act is a corridor, so "the node ahead" is a single node. A branching act
+      // has nothing to name and returns null rather than picking one arbitrarily.
+      const ahead = reachableNodeIds(run);
+      const node = ahead.length === 1 ? run.map?.nodes[ahead[0]] : undefined;
+      return node ? mapBeatKey(node.type) : null;
+    }
+    case 'gemChoice':
+      return 'gem';
+    case 'forceEquip':
+      return 'equip';
+    case 'levelUp':
+      // The Evolution beat outranks the plain one: reaching a fork is the bigger lesson, and the
+      // level-up basics have long since been spoken by the time one is affordable.
+      return run.roster.some((entry) => availableEvolution(progressionTable, entry)) ? 'evolution' : 'levelUp';
+    case 'reward':
+      return rewardBeatKey(screen.nodeType);
+    case 'classNode':
+      return 'classNode';
+    case 'recruit':
+      return 'recruit';
+    case 'shop':
+      return 'shop';
+    // The act has already ticked over to 2 by the time this screen shows, which is exactly the
+    // beat the outro wants: the seal is filled and the scripted stretch is behind the player.
+    case 'pactSeal':
+      return 'outro';
+    default:
+      return null;
+  }
 }
 
 export function App() {
@@ -441,11 +518,16 @@ export function App() {
       const isSecondFight = encounterKind === 'fight' && playerRun.fightsStarted === 1;
       const track: ScalingTrack = isMobFight ? 'monsters' : 'skirmish';
       const scaling = actScaling(track, playerRun.actNumber, isMobFight ? faction.baselineAct : undefined);
+      // The scripted first act names its own enemies (docs/tutorial.md), so the fight is the one
+      // Valor has just talked the player through. Null in every normal run and every later act.
+      const scripted = tutorialEncounterFor(TUTORIAL_ENCOUNTERS, playerRun, node.type);
       let encounter: Encounter;
-      if (node.type === 'battle') {
+      if (node.type === 'battle' && !scripted) {
         encounter = generateLeaderEncounter(randomSeed(), faction.basicIds, faction.leaderId, enemies, scaling);
       } else {
-        const encounterPool = node.type === 'fight' ? basicEnemiesOf(faction) : heroes;
+        // A scripted monster fight draws from the whole faction table, not the basics: its roster
+        // is named outright and may include a leader the basics list deliberately omits.
+        const encounterPool = !isMobFight ? heroes : scripted ? enemies : basicEnemiesOf(faction);
         // A hero already on the roster is barred from the recruitable SPAWN, so two copies can never
         // reach one roster via a contract claim (mirrors rollGuildHallOffers).
         const excludeHeroIds = encounterPool === heroes ? playerRun.roster.map((r) => r.heroId) : undefined;
@@ -454,6 +536,7 @@ export function App() {
         // Location affinity bias applies to the recruitable pool only (docs/locations.md §2).
         const bias = encounterPool === heroes ? locationBias(location, heroes, heroCount) : undefined;
         encounter = generateEncounter(encounterKind, randomSeed(), encounterPool, {
+          forcedHeroIds: scripted?.heroIds,
           heroCount: heroCountOverride,
           bias,
           excludeHeroIds,
@@ -520,14 +603,17 @@ export function App() {
   function handleSquadConfirmed(squad: Squad, nodeId: string, nodeType: EncounterNodeType, encounter: Encounter) {
     const mapNodeType = playerRun.map!.nodes[nodeId].type as EncounterMapNodeType;
     const equipmentReward = equipmentDropFor(mapNodeType, playerRun.actNumber);
+    // The scripted act pays fixed figures instead of rolling: the tutorial has to arrive at its
+    // Guardian with a specific amount of power, not a distribution of it (docs/tutorial.md).
+    const payout = tutorialPayoutFor(TUTORIAL_PAYOUTS, playerRun, mapNodeType);
     setScreen({
       kind: 'fight',
       nodeId,
       nodeType,
       squad,
       encounter,
-      goldReward: goldRewardFor(mapNodeType),
-      trainingPointsReward: trainingPointsFor(mapNodeType, playerRun.actNumber),
+      goldReward: payout?.gold ?? goldRewardFor(mapNodeType),
+      trainingPointsReward: payout?.xp ?? trainingPointsFor(mapNodeType, playerRun.actNumber),
       equipmentReward,
     });
   }
@@ -562,6 +648,9 @@ export function App() {
     if (isFinale) {
       afterScreen = { kind: 'runComplete' };
     } else if (isGuardian) {
+      // Recorded on the Guardian falling, not on the run starting: a tutorial the player wiped
+      // in is offered again (docs/tutorial.md). The rest of the run is a normal run either way.
+      if (isTutorialAct(playerRun)) updateProfile(recordTutorialDone);
       next = grantContractReward(next, 1);
       // The seal, snapshotted at the power it was beaten at, so the finale can field it
       // again (docs/lore.md §6). The champion rides the Guardian's bench, so it is in the
@@ -643,16 +732,29 @@ export function App() {
     setScreen({ kind: 'forceEquip', queue: [itemId], next: backToShop });
   }
 
+  /** The title's replay entry (docs/tutorial.md); the profile is bypassed, not rewritten. */
+  function handleReplayTutorial() {
+    beginRun(true);
+  }
+
   function handleStartNewRun() {
+    beginRun(shouldPlayTutorial(profile));
+  }
+
+  function beginRun(tutorial: boolean) {
     const starterHeroIds = Object.values(heroes)
       .filter((hero) => hero.starter)
       .map((hero) => hero.id);
-    const optionIds = generateStarterOptions(randomSeed(), starterHeroIds);
+    // The scripted run draws no candidates: Valor and Fang are the pact, and the draft screen
+    // is where Valor says so. The run itself is only built on confirm, so the flag has to be
+    // parked on `playerRun` here for the intro beat to know it is a tutorial.
+    const optionIds = tutorial ? [...TUTORIAL_STARTER_IDS] : generateStarterOptions(randomSeed(), starterHeroIds);
+    setPlayerRun((run) => ({ ...run, tutorial, tutorialSeenBeatIds: [] }));
     setScreen({ kind: 'draft', optionIds });
   }
 
   function handleDraftConfirm(chosenIds: string[]) {
-    setPlayerRun(createStartingRun(chosenIds));
+    setPlayerRun((run) => createStartingRun(chosenIds, run.tutorial, run.tutorialSeenBeatIds));
     setScreen({ kind: 'actIntro' });
     // Sealing the pact is the start, not pressing the title button: a draft backed out of
     // is not a run. An abandoned run still counts here — it was played.
@@ -731,6 +833,7 @@ export function App() {
           staleSaveReason={saveSlot.staleReason}
           onContinueRun={handleContinueRun}
           onStartRun={handleStartNewRun}
+          onReplayTutorial={handleReplayTutorial}
           onQuickBattle={handleQuickBattle}
           onOpenSandbox={handleOpenSandbox}
           onVisitLocation={handleVisitLocation}
@@ -832,6 +935,7 @@ export function App() {
           }
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
           onAbandonRun={handleAbandonRun}
+          tutorialNodeType={isTutorialAct(playerRun) ? playerRun.map!.nodes[screen.nodeId].type : undefined}
         />
       )}
 
@@ -975,6 +1079,20 @@ export function App() {
           onReturnToTitle={() => setScreen({ kind: 'title' })}
         />
       )}
+
+      {/* Valor, over whatever screen she is explaining. Last in the tree so it paints above
+          everything; FightScreen mounts its own for the mid-fight cues. */}
+      {(() => {
+        const beat = tutorialBeat(TUTORIAL_SCRIPT, playerRun, tutorialBeatKeyFor(screen, playerRun));
+        if (!beat) return null;
+        return (
+          <TutorialOverlay
+            key={beat.id}
+            beat={beat}
+            onDone={() => setPlayerRun((run) => markTutorialBeatSeen(run, beat.id))}
+          />
+        );
+      })()}
     </div>
     </LocationProvider>
   );

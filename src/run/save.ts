@@ -28,8 +28,10 @@ import { ROSTER_CAP, TOTAL_ACTS } from './state';
  * v3 (2026-09-05): the finale act — RunState gained `brokenSeals`, TOTAL_ACTS went 5 -> 6,
  * and an itinerary gained its sixth entry. A v2 run would arrive at Act 6 with no ledger
  * to field and no location to stand in.
+ * v4 (2026-09-05): the scripted first run — RunState gained `tutorial` and
+ * `tutorialSeenBeatIds`. A v3 file has no way to say which half of Act 1 it is in.
  */
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the
@@ -327,6 +329,11 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   if (!isStringArray(value.visitedNodeIds)) reject('run.visitedNodeIds is not a list of ids');
   for (const id of value.visitedNodeIds) if (!map.nodes[id]) reject(`run.visitedNodeIds names missing node "${id}"`);
 
+  if (typeof value.tutorial !== 'boolean') reject('run.tutorial is not a flag');
+  // Beat ids are validated only as strings: the script is presentation, so a line renamed
+  // between builds should cost one repeated speech, never the whole run.
+  if (!isStringArray(value.tutorialSeenBeatIds)) reject('run.tutorialSeenBeatIds is not a list of ids');
+
   return {
     roster,
     levelUpPool: value.levelUpPool,
@@ -342,6 +349,8 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     actNumber: value.actNumber,
     locationIds: requireIds(value.locationIds, index.locationIds, 'run.locationIds'),
     brokenSeals: decodeBrokenSeals(value.brokenSeals, index),
+    tutorial: value.tutorial,
+    tutorialSeenBeatIds: [...value.tutorialSeenBeatIds],
   };
 }
 

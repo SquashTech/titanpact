@@ -19,6 +19,8 @@ interface Props {
   staleSaveReason: string | null;
   onContinueRun: () => void;
   onStartRun: () => void;
+  /** Replays the scripted first run whatever the profile says (docs/tutorial.md). */
+  onReplayTutorial: () => void;
   onQuickBattle: () => void;
   onOpenSandbox: () => void;
   /** Opens the chosen Location directly with a random party — App.tsx createLocationVisitRun. */
@@ -76,6 +78,7 @@ export function TitleScreen({
   staleSaveReason,
   onContinueRun,
   onStartRun,
+  onReplayTutorial,
   onQuickBattle,
   onOpenSandbox,
   onVisitLocation,
@@ -243,6 +246,9 @@ export function TitleScreen({
             </button>
             <button className="title-dev-item" onClick={() => runDev(() => setShowLocations(true))}>
               Visit Location
+            </button>
+            <button className="title-dev-item" onClick={() => runDev(onReplayTutorial)}>
+              Replay Tutorial
             </button>
             <button className="title-dev-item" onClick={() => runDev(onStartLevel4TestRun)}>
               🧪 Test: Lv4 Squad

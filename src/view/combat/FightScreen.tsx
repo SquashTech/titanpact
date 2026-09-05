@@ -35,6 +35,10 @@ import type { MoveDefinition, StatKey, TargetMode } from '../../engine/content';
 import { resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
 import { resolveElementalForceBonus } from '../../engine/damage/damagePipeline';
 import type { RunState, RosterEntry } from '../../run/state';
+import type { MapNodeType } from '../../run/map';
+import { matchTutorialCue, type TutorialFightContext } from '../../run/tutorial';
+import { TUTORIAL_FIGHT_CUES } from '../../data/tutorial';
+import { TutorialOverlay } from '../run/TutorialOverlay';
 import type { Squad } from '../../run/squad';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { buildCombatState } from '../../run/buildCombatState';
@@ -512,6 +516,12 @@ interface Props {
   onAbandonRun?: () => void;
   /** Plain one-tap exit for fights outside a run (Quick Battle). A caller passes this or the run pair, never both. */
   onExitToTitle?: () => void;
+  /**
+   * The scripted first run (docs/tutorial.md): which curated fight this is, by its map node
+   * type. Omitted everywhere else, which is what keeps every normal fight free of the check.
+   * Cue progress is deliberately screen-local — a fight is atomic, and a reload replays it.
+   */
+  tutorialNodeType?: MapNodeType;
 }
 
 export function FightScreen({
@@ -527,6 +537,7 @@ export function FightScreen({
   onSaveAndQuit,
   onAbandonRun,
   onExitToTitle,
+  tutorialNodeType,
 }: Props) {
   /** null outside an act (sandbox, quick battle): the arena keeps its placeless neutral scene. */
   const location = useAmbientLocation();
@@ -592,6 +603,8 @@ export function FightScreen({
   const [popups, setPopups] = useState<Record<string, Popup>>({});
   /** The move dossier, opened by holding a move row. Carries the holder: every number on the card is relative to the commanding hero. */
   const [movePopup, setMovePopup] = useState<{ combatantId: string; move: MoveDefinition } | null>(null);
+  /** Tutorial cues already spoken in THIS fight. Screen-local: a fight is atomic and a reload replays it. */
+  const [cuesSeen, setCuesSeen] = useState<ReadonlySet<string>>(() => new Set());
   const popupSeq = useRef(0);
   const beatQueue = useRef<Beat[]>([]);
   const displayState = useRef<CombatState | null>(null);
@@ -642,6 +655,29 @@ export function FightScreen({
 
   /** Drives the target panel and the Back button (exit targeting rather than step to the previous hero). */
   const showingTargetPanel = selecting !== null && selecting.combatantId === actingId;
+
+  /**
+   * The scripted run's mid-fight coaching (docs/tutorial.md). Evaluated only at the TOP of a
+   * command phase — nothing declared yet — so a lesson never lands between two orders the
+   * player is halfway through giving.
+   */
+  const tutorialCue = (() => {
+    if (!tutorialNodeType || !canAct || actionStep !== 0 || Object.keys(pending).length > 0) return null;
+    const hpFractions = playerActiveAlive.map((id) => {
+      const combatant = combat.combatants[id];
+      return combatant.currentHp / getMaxHp(allCombatants[combatant.heroId], combatant);
+    });
+    const ctx: TutorialFightContext = {
+      round: combat.round,
+      anyOutOfMana: playerActiveAlive.some(
+        (id) => !hasAffordableMoveInFight(combat, id, entryFor(playerRun.roster, id).unlockedMoveIds, moves, allCombatants)
+      ),
+      lockedIn: playerLockedIn,
+      lowestPlayerHpFraction: hpFractions.length > 0 ? Math.min(...hpFractions) : 1,
+      enemyHeroIds: enemyActiveAlive.map((id) => combat.combatants[id].heroId),
+    };
+    return matchTutorialCue(TUTORIAL_FIGHT_CUES, tutorialNodeType, ctx, cuesSeen);
+  })();
 
   /**
    * Rest is a recovery, not a pass: the key stays dark while the hero has nothing to recover, so
@@ -1641,6 +1677,14 @@ export function FightScreen({
             </div>
           );
         })()}
+
+      {tutorialCue && (
+        <TutorialOverlay
+          key={tutorialCue.id}
+          beat={tutorialCue}
+          onDone={() => setCuesSeen((seen) => new Set(seen).add(tutorialCue.id))}
+        />
+      )}
     </>
   );
 }

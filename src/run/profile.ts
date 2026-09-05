@@ -30,6 +30,12 @@ export interface Profile {
   /** 0 until the first run is sealed. */
   firstPlayedAt: number;
   lastPlayedAt: number;
+  /**
+   * The scripted first run has been finished (docs/tutorial.md) — set when its Act 1 Guardian
+   * falls, not when the run is started. So a tutorial the player wiped in is offered again,
+   * which is the whole reason this is not just `runsStarted === 0`.
+   */
+  tutorialDone: boolean;
 }
 
 export function createProfile(): Profile {
@@ -43,6 +49,7 @@ export function createProfile(): Profile {
     heroStars: {},
     firstPlayedAt: 0,
     lastPlayedAt: 0,
+    tutorialDone: false,
   };
 }
 
@@ -77,6 +84,16 @@ export function recordRunCompleted(profile: Profile, finalHeroIds: readonly stri
 
 export function recordRunFailed(profile: Profile, now: number): Profile {
   return { ...profile, runsFailed: profile.runsFailed + 1, lastPlayedAt: now };
+}
+
+/** One-way: a later normal run never un-teaches the tutorial. */
+export function recordTutorialDone(profile: Profile): Profile {
+  return profile.tutorialDone ? profile : { ...profile, tutorialDone: true };
+}
+
+/** Whether a fresh run should be the scripted one (docs/tutorial.md). */
+export function shouldPlayTutorial(profile: Profile): boolean {
+  return !profile.tutorialDone;
 }
 
 /** Monotonic: reaching Act 2 after a run that reached Act 4 does not walk the record back. */
@@ -141,5 +158,9 @@ export function decodeProfile(raw: unknown, knownHeroIds?: ReadonlySet<string>):
     heroStars,
     firstPlayedAt: count(value.firstPlayedAt),
     lastPlayedAt: count(value.lastPlayedAt),
+    // The field is ABSENT on every profile written before the tutorial existed, and inferring it
+    // only in that case is what keeps a round trip lossless. A veteran's file — one recording a
+    // cleared run — is read as having done the tutorial rather than being handed one.
+    tutorialDone: typeof value.tutorialDone === 'boolean' ? value.tutorialDone : count(value.runsCompleted) > 0,
   };
 }
