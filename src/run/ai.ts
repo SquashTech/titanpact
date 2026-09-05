@@ -80,12 +80,33 @@ function candidateTargets(state: CombatState, casterId: string, move: MoveDefini
   return selectableTargets(state, mode, move.kind, statusGatedTargets(state, move, pool), ctx.statuses);
 }
 
-/** A status-gated move with nobody marked resolves into an ActionBlocked and eats the turn. */
+/** A status-gated SPREAD move with nobody marked resolves into an ActionBlocked and eats the turn. */
 function hasLegalTarget(state: CombatState, casterId: string, move: MoveDefinition, ctx: AiContext): boolean {
   if (!move.requiresTargetStatus) return true;
   const mode = resolveTargetMode(state, move);
   const side = state.combatants[casterId].side;
   return statusGatedTargets(state, move, targetPool(state, casterId, mode, side)).length > 0;
+}
+
+/** Only these two modes need an id on the Action; every other mode resolves its own targets. */
+function needsDeclaredTarget(state: CombatState, move: MoveDefinition): boolean {
+  const mode = resolveTargetMode(state, move);
+  return mode === 'singleEnemy' || mode === 'singleAlly';
+}
+
+/**
+ * Whether an action for this move could be RESOLVED at all — a hard legality rule, unlike
+ * the preferences below it. A single-target move whose candidate pool is empty (today:
+ * `requiresTargetStatus` with nobody marked) has no id to put on the Action, and
+ * targeting.ts throws a BARE Error for a missing declared target rather than the
+ * TargetNoLongerValidError that resolveRound catches — so it takes the whole fight down.
+ * resolveTargets never sees the move and cannot tell that case from a caller bug, and the
+ * status gate is deliberately applied last in resolveRound (a redirect onto an ungated hero
+ * must fizzle), so this has to be caught here at declaration.
+ */
+function isDeclarable(state: CombatState, casterId: string, move: MoveDefinition, ctx: AiContext): boolean {
+  if (!needsDeclaredTarget(state, move)) return true;
+  return candidateTargets(state, casterId, move, ctx, resolveTargetMode(state, move)).length > 0;
 }
 
 function isHurt(state: CombatState, ctx: AiContext, combatantId: string): boolean {
@@ -276,8 +297,12 @@ export function pickAiAction(state: CombatState, combatantId: string, ctx: AiCon
   }
 
   const affordable = moveIds.filter((id) => combatant.currentMana >= resolveManaCost(state, combatantId, ctx.moves[id], ctx.heroes));
-  const legal = affordable.filter((id) => hasLegalTarget(state, combatantId, ctx.moves[id], ctx));
-  const withTargets = legal.length > 0 ? legal : affordable;
+  // The one HARD filter in the cascade — every narrowing below it falls back, this one cannot.
+  const declarable = affordable.filter((id) => isDeclarable(state, combatantId, ctx.moves[id], ctx));
+  if (declarable.length === 0) return { kind: 'rest', combatantId };
+
+  const legal = declarable.filter((id) => hasLegalTarget(state, combatantId, ctx.moves[id], ctx));
+  const withTargets = legal.length > 0 ? legal : declarable;
   const useful = withTargets.filter((id) => !isInertOnBoard(state, combatantId, ctx.moves[id], ctx));
   const pickable = useful.length > 0 ? useful : withTargets;
 

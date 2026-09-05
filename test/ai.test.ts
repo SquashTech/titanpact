@@ -146,3 +146,100 @@ test('ai falls back to Rest only when nothing at all is affordable', () => {
   const action = pickAiAction(state, AI, contextFor(['arcaneBolt'], () => 0.5));
   assert.strictEqual(action.kind, 'rest');
 });
+
+// --- Declarability: the crash the batch simulator found (seed 39462) ---
+
+test('ai never declares a single-target move it has no target for — it Rests instead', () => {
+  // `glaciate` needs a Frozen target. With nobody Frozen the candidate pool is EMPTY, so
+  // there is no id to declare; targeting.ts throws a bare Error for a missing declared
+  // target, which resolveRound does not catch, and the whole fight goes down.
+  const gated: MoveDefinition = {
+    ...base,
+    id: 'glaciate',
+    name: 'Glaciate',
+    type: 'Frost',
+    kind: 'damage',
+    basePower: 60,
+    target: 'singleEnemy',
+    requiresTargetStatus: 'Freeze',
+  };
+  const ctx: AiContext = {
+    heroes,
+    moves: { ...testMoves, glaciate: gated },
+    statuses,
+    typeChart,
+    moveIdsFor: () => ['glaciate'],
+    random: () => 0.5,
+  };
+  const state = board('crimson', 'tempest', 'rime');
+
+  const action = pickAiAction(state, AI, ctx);
+  assert.strictEqual(action.kind, 'rest', 'the only affordable move cannot be declared, so the turn is a Rest');
+});
+
+test('ai still reaches for a gated move once something is marked', () => {
+  const gated: MoveDefinition = {
+    ...base,
+    id: 'glaciate',
+    name: 'Glaciate',
+    type: 'Frost',
+    kind: 'damage',
+    basePower: 60,
+    target: 'singleEnemy',
+    requiresTargetStatus: 'Freeze',
+  };
+  const ctx: AiContext = {
+    heroes,
+    moves: { ...testMoves, glaciate: gated },
+    statuses,
+    typeChart,
+    moveIdsFor: () => ['glaciate'],
+    random: () => 0.5,
+  };
+  const base_ = board('crimson', 'tempest', 'rime');
+  const frozen: CombatState = {
+    ...base_,
+    combatants: {
+      ...base_.combatants,
+      [RIGHT]: { ...base_.combatants[RIGHT], statuses: { Freeze: { statusId: 'Freeze' } } },
+    },
+  };
+
+  const action = pickAiAction(frozen, AI, ctx);
+  assert.strictEqual(action.kind, 'move');
+  if (action.kind !== 'move') return;
+  assert.strictEqual(action.moveId, 'glaciate');
+  assert.strictEqual(action.declaredTarget, RIGHT, 'and it aims at the one marked hero');
+});
+
+test('ai prefers a declarable move over a gated one rather than Resting', () => {
+  const gated: MoveDefinition = {
+    ...base,
+    id: 'glaciate',
+    name: 'Glaciate',
+    type: 'Frost',
+    kind: 'damage',
+    basePower: 200,
+    target: 'singleEnemy',
+    requiresTargetStatus: 'Freeze',
+  };
+  const ctx: AiContext = {
+    heroes,
+    moves: { ...testMoves, glaciate: gated },
+    statuses,
+    typeChart,
+    moveIdsFor: () => ['glaciate', 'fireBolt'],
+    random: () => 0.5,
+  };
+  const state = board('crimson', 'tempest', 'rime');
+
+  // Sweeping the whole roll space: the gated move must never be picked, however good it looks.
+  for (let i = 0; i < 200; i++) {
+    const roll = (i + 0.5) / 200;
+    const action = pickAiAction(state, AI, { ...ctx, random: () => roll });
+    assert.strictEqual(action.kind, 'move');
+    if (action.kind !== 'move') continue;
+    assert.strictEqual(action.moveId, 'fireBolt');
+    assert.ok(action.declaredTarget !== null, 'a declared single-target action always carries an id');
+  }
+});
