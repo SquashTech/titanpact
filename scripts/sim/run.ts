@@ -552,7 +552,10 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
     }
     case 'classReward': {
       const offered = sample(rng, Object.values(classes), 3);
-      const target = policy.passiveTarget(run.roster);
+      // ClassNodeScreen offers only heroes with no Class yet, and an offer with nobody
+      // eligible is simply wasted. Matters now that acts 1-4 each field a Mentor: picking
+      // the strongest hero every time would overwrite one hero four times and measure nothing.
+      const target = policy.passiveTarget(run.roster.filter((entry) => entry.classId === null));
       if (offered.length === 0 || !target) return run;
       const picked = pick(rng, offered);
       record.choices.push({

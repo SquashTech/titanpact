@@ -52,25 +52,36 @@ export interface RunMap {
 }
 
 // row 0 fight, 1/3 pick-1-of-3 rewards, 2 skirmish, 4 elite-or-battle,
-// 5 Guild Hall funnel, 6 boss. Act 1 splices in the Mentor row (below).
+// 5 Guild Hall funnel, 6 boss. Acts 1-4 splice in the Mentor row (below).
 const BASE_ROW_WIDTHS = [1, 3, 1, 3, 2, 1, 1] as const;
 const SKIRMISH_ROW = 2;
 
 /**
- * Act-1-only forced single classReward row, spliced in immediately BEFORE the Skirmish —
- * the ONLY place a Class offer appears in any act. It sits ahead of the Skirmish so the
- * Class is in hand for the run's first recruitable fight rather than arriving after it.
- * Act 1's Skirmish therefore lands one row later than every other act's.
+ * Forced single classReward row, spliced in immediately BEFORE the Skirmish — the ONLY
+ * place a Class offer appears in any act. It sits ahead of the Skirmish so the Class is in
+ * hand for the act's first recruitable fight rather than arriving after it, which pushes
+ * the Skirmish down one row in every act that has one.
  */
 const MENTOR_ROW = SKIRMISH_ROW;
 
-/** Act 1's Mentor row pushes the Skirmish down one; every other act is the base shape. */
+/**
+ * Acts 1-4 each guarantee a Mentor (2026-09-05, per user direction — it was Act 1 only).
+ * Act 5 deliberately has none: a different beat is being designed for it. Act 6 never
+ * reaches here at all, being the finale corridor.
+ */
+const LAST_MENTOR_ACT = 4;
+
+function hasMentorRow(actNumber: number): boolean {
+  return actNumber >= 1 && actNumber <= LAST_MENTOR_ACT;
+}
+
+/** The Mentor row pushes the Skirmish down one wherever it appears. */
 function skirmishRowFor(actNumber: number): number {
-  return actNumber === 1 ? SKIRMISH_ROW + 1 : SKIRMISH_ROW;
+  return hasMentorRow(actNumber) ? SKIRMISH_ROW + 1 : SKIRMISH_ROW;
 }
 
 function rowWidthsFor(actNumber: number): number[] {
-  if (actNumber !== 1) return [...BASE_ROW_WIDTHS];
+  if (!hasMentorRow(actNumber)) return [...BASE_ROW_WIDTHS];
   return [...BASE_ROW_WIDTHS.slice(0, MENTOR_ROW), 1, ...BASE_ROW_WIDTHS.slice(MENTOR_ROW)];
 }
 
@@ -144,7 +155,7 @@ function finaleMap(seed: number): RunMap {
 /**
  * Rows top-down (types first), forward edges within a column window, then a
  * repair pass so every node has an incoming edge. eliteRow/funnelRow/bossRow
- * are derived from the shape's length so Act 1's extra row lands correctly.
+ * are derived from the shape's length so the Mentor acts' extra row lands correctly.
  */
 export function generateMap(seed: number, actNumber: number = 1): RunMap {
   if (actNumber >= FINALE_ACT) return finaleMap(seed);
@@ -152,7 +163,7 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
   const bossRow = rowWidths.length - 1;
   const funnelRow = bossRow - 1;
   const eliteRow = funnelRow - 1;
-  const mentorRow = actNumber === 1 ? MENTOR_ROW : -1;
+  const mentorRow = hasMentorRow(actNumber) ? MENTOR_ROW : -1;
   const skirmishRow = skirmishRowFor(actNumber);
 
   function isRewardRow(row: number): boolean {
@@ -161,7 +172,7 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
 
   function fixedNodeType(row: number, col: number): MapNodeType {
     if (row === 0) return 'fight';
-    // Mentor first: in Act 1 it OWNS SKIRMISH_ROW and the Skirmish has moved down to skirmishRow.
+    // Mentor first: where it exists it OWNS SKIRMISH_ROW, and the Skirmish has moved down to skirmishRow.
     if (row === mentorRow) return 'classReward';
     if (row === skirmishRow) return 'skirmish';
     if (row === eliteRow) return col === 0 ? 'elite' : 'battle';

@@ -36,8 +36,8 @@ between; per user direction, the shape is now forced and uniform):
   `hpBoostReward`/`manaBoostReward`/`manaRegenBoostReward`/`event`, weighted). No
   `fight`/`shop`/`elite`/`classReward` mixed in — every reward row is a genuine reward
   choice, not a chance to draw another fight or dodge one, and `classReward` is reserved
-  for its own forced Act-1 Mentor row (2026-08-22 revision, per user direction — see
-  the Mentor row note below), never a random pick-1-of-3 option.
+  for its own forced Mentor row (2026-08-22 revision, per user direction — see the Mentor
+  row note below), never a random pick-1-of-3 option.
 - **Row 2: a single forced `skirmish` node.**
 - **Row 3: 3 nodes, pick 1 of 3 — reward types only**, same pool as row 1.
 - **Row 4: 2 nodes, pick 1 of 2 — `elite` or `battle`** (2026-08-17, per user direction:
@@ -53,14 +53,26 @@ between; per user direction, the shape is now forced and uniform):
 The upshot: every act is exactly **Fight → pick 1 of 3 → Skirmish → pick 1 of 3 →
 (Elite or Battle) → Guild Hall → Guardian** — no path through an act ever skips a fight.
 
-**The Mentor row (Act 1 only).** Act 1 splices one extra forced single-node `classReward`
-row into the shape above, giving it 8 rows where every other act has 7. It sits
+**The Mentor row (acts 1-4).** Acts 1 through 4 each splice one extra forced single-node
+`classReward` row into the shape above, giving them 8 rows against Act 5's 7. It sits
 **immediately before the Skirmish** (2026-09-05, per user direction — it was immediately
-*after* until then), so the Class is in hand for the run's first recruitable fight rather
-than arriving just after it. Act 1 therefore reads **Fight → pick 1 of 3 → Mentor →
-Skirmish → pick 1 of 3 → (Elite or Battle) → Guild Hall → Guardian**, and its Skirmish
-lands one row later than every other act's (`MENTOR_ROW`, `skirmishRowFor`,
-`src/run/map.ts`). Both are single-node rows, so no path can bypass either.
+*after*, and Act 1 only, until then), so the Class is in hand for the act's first
+recruitable fight rather than arriving just after it. A Mentor act therefore reads
+**Fight → pick 1 of 3 → Mentor → Skirmish → pick 1 of 3 → (Elite or Battle) → Guild Hall
+→ Guardian**, and its Skirmish lands one row later than Act 5's (`MENTOR_ROW`,
+`LAST_MENTOR_ACT`, `skirmishRowFor`, `src/run/map.ts`). Both are single-node rows, so no
+path can bypass either.
+
+**Act 5 deliberately has none** — a different beat is being designed for it (2026-09-05,
+per user direction). It is currently the only act on the bare 7-row shape, which is why
+`test/map.test.ts` uses Act 5, not Act 2, wherever it indexes rows by hand.
+
+Four Mentors means a run can Class up to four heroes rather than one, since the offer
+filters to heroes with no Class yet. Measured (`scripts/sim`, 40,000 runs at 3× XP), that
+took the Classes from statistically inert — every one of the sixteen inside ±0.03 lift —
+to a real spread: Berserker +0.20 (z 2.4) and Warden +0.17 (z 2.1) at the top, Warrior
+−0.19 (z −2.4) at the bottom. Whether that spread wants flattening is now a live question
+where it previously could not even be asked.
 
 Edges connect each node to 1-2 nodes in the next row within a small column window, with
 a repair pass guaranteeing every node (row 1+) has at least one incoming edge — no
@@ -125,7 +137,7 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `upgradeReward` | `NodeRewardScreen` — an instant flat grant to the pooled level-up currency (2-3 points), on top of the per-fight-win grant (see below). |
 | `weaponReward` / `armorReward` / `accessoryReward` | Rolls a single rarity-weighted item of that fixed slot (`equipment.ts` `pickWeightedEquipmentBySlot`) and hands off straight to `ForceEquipScreen` — no 3-choice picker, unlike `equipmentReward`'s mixed-slot pick. |
 | `hpBoostReward` / `manaBoostReward` / `manaRegenBoostReward` | `StatBoostScreen` — pick one roster hero to receive a flat, permanent-for-the-run stat grant (+20 HP / +10 Mana / +5 MP Regen, `runProgress.ts` `grantStatBonus`), stored on `RosterEntry.bonusStatGrants`. `manaRegenBoostReward` added 2026-08-22, per user direction. |
-| `classReward` ("Mentor's Hall") | `ClassNodeScreen` — pick 1 of 3 Classes (`src/data/classes.ts`), then pick which roster hero learns it, filtered to heroes with no Class yet (`src/run/classes.ts` `grantClass`, stored on `RosterEntry.classId` — a hero can hold at most one Class per run, so `grantClass` REPLACES rather than stacks). If every roster hero already has a Class, the offer is simply wasted. **Not in `REWARD_WEIGHTS`** (2026-08-22 revision, per user direction) — the only way to encounter this node type is the forced Act-1 Mentor row (§1), never a random pick-1-of-3 option in any act. |
+| `classReward` ("Mentor's Hall") | `ClassNodeScreen` — pick 1 of 3 Classes (`src/data/classes.ts`), then pick which roster hero learns it, filtered to heroes with no Class yet (`src/run/classes.ts` `grantClass`, stored on `RosterEntry.classId` — a hero can hold at most one Class per run, so `grantClass` REPLACES rather than stacks). If every roster hero already has a Class, the offer is simply wasted. **Not in `REWARD_WEIGHTS`** (2026-08-22 revision, per user direction) — the only way to encounter this node type is a forced Mentor row (§1), never a random pick-1-of-3 option in any act. Acts 1-4 each guarantee one, so a run can Class up to four heroes; the offer filters to heroes with no Class yet and is wasted only once every hero has one. |
 | `event` | `EventNodeScreen` — rolls one of the authored map events (`src/data/events.ts`, `src/run/events.ts`) and resolves it: a move taught to a chosen hero, a Passive taught to a chosen hero, a flat stat trade, or a pile of act-curve loot handed to `ForceEquipScreen`. Which event a node turns out to be is rolled once at node-select time and gated by act and Location. See **docs/events.md**. |
 
 The stat bonuses above are the **node-kind** axis only — what `elite` costs relative to
