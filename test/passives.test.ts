@@ -981,3 +981,100 @@ test('passives: Enthrall reads the move TYPE — a non-Water hit from the same h
 
   assert.ok(!hasStatus(next.combatants.b1, 'Haunt'));
 });
+
+// --- The recruit-only slate's four NEW shapes (2026-09-05) ---
+// The other new passives are transpositions of shapes already pinned above. These four are not:
+// a status aimed at a GROUP, a source-role StatusApplied landing on triggerTarget, a source-role
+// DamageDealt paying a STAT to the defender, and an arrival applying a duration-shape status.
+
+/** Deep HP and mana so a reaction is never swallowed by a KO — a fainted target is skipped. */
+function deepFixture(seed: number, sideA: readonly string[], sideB: readonly string[]): CombatState {
+  const base = createFightState(
+    seed,
+    sideA.map((heroId, i) => ({ combatantId: `a${i + 1}`, heroId, side: 'A' as const })),
+    sideB.map((heroId, i) => ({ combatantId: `b${i + 1}`, heroId, side: 'B' as const }))
+  );
+  return {
+    ...base,
+    combatants: Object.fromEntries(
+      Object.entries(base.combatants).map(([id, c]) => [
+        id,
+        { ...c, currentMana: 999, currentHp: 1200, statModifiers: { ...c.statModifiers, manaPool: 999, hp: 1200 } },
+      ])
+    ),
+  } as CombatState;
+}
+
+test('passives: Cinderguard answers a hit on BOTH active enemies — a status effect aimed at a group', () => {
+  // There is no 'triggerSource' target, so a retaliation passive cannot reach its attacker alone.
+  const state = withPassive(deepFixture(800, ['cinderKnight', 'aegis'], ['crag', 'sentinel']), 'a1', 'cinderguard');
+  const { state: next } = resolveRound(
+    state,
+    [{ kind: 'move', combatantId: 'b1', moveId: 'rockToss', declaredTarget: 'a1' } as Action],
+    config
+  );
+
+  assert.ok(hasStatus(next.combatants.b1, 'Burn'), 'the attacker catches it');
+  assert.ok(hasStatus(next.combatants.b2, 'Burn'), 'and so does its partner — the group is the target');
+  assert.ok(!hasStatus(next.combatants.a2, 'Burn'), 'never the owner\'s own side');
+});
+
+test("passives: Widow's Kiss reads a Bleed IT applied and Poisons the same target", () => {
+  const state = withPassive(deepFixture(801, ['widow', 'aegis'], ['crag', 'sentinel']), 'a1', 'widowsKiss');
+  const { state: next } = resolveRound(
+    state,
+    [{ kind: 'move', combatantId: 'a1', moveId: 'lacerate', declaredTarget: 'b1' } as Action],
+    config
+  );
+
+  // Source-role, so 'triggerSubject' is Widow itself — triggerTarget is the only route to the victim.
+  assert.ok(hasStatus(next.combatants.b1, 'Bleed'));
+  assert.ok(!hasStatus(next.combatants.a1, 'Poison'), 'the rider lands on the bleeder, not the biter');
+  assert.ok(!hasStatus(next.combatants.b2, 'Poison'));
+
+  // Poison's 3-round timer is authored per APPLICATION, not defaulted by the catalog. Omit it and
+  // the timer starts at 0, so the payload fires at the end of the round it landed in — which is a
+  // burst, not a clock. It survived this round, which is the assertion that catches that.
+  assert.strictEqual(next.combatants.b1.statuses.Poison?.duration, 2, 'one round off a 3-round timer');
+  assert.strictEqual(next.combatants.b1.statuses.Poison?.magnitude, 10);
+});
+
+test('passives: Constrict pays a STAT to the hero its magical hit landed on, and reads the category', () => {
+  const magical = withPassive(deepFixture(802, ['coil', 'aegis'], ['crag', 'sentinel']), 'a1', 'constrict');
+  const { state: slowed } = resolveRound(
+    magical,
+    [{ kind: 'move', combatantId: 'a1', moveId: 'psiBolt', declaredTarget: 'b1' } as Action],
+    config
+  );
+  assert.strictEqual(slowed.combatants.b1.statModifiers.speed, -10);
+  assert.strictEqual(slowed.combatants.b2.statModifiers.speed ?? 0, 0);
+
+  const physical = withPassive(deepFixture(803, ['coil', 'aegis'], ['crag', 'sentinel']), 'a1', 'constrict');
+  const { state: untouched } = resolveRound(
+    physical,
+    [{ kind: 'move', combatantId: 'a1', moveId: 'rally' } as Action],
+    config
+  );
+  assert.strictEqual(untouched.combatants.b1.statModifiers.speed ?? 0, 0, 'a non-damaging Beast buff plants nothing');
+});
+
+test('passives: Sentry Provokes Warden on arrival, and the redirect covers the round it arrived in', () => {
+  const state = withPassive(deepFixture(804, ['aegis', 'crag', 'ironWarden'], ['crag', 'sentinel']), 'a3', 'sentry');
+  // Switches resolve before moves, so the arrival lands the mark in time for the same round — and
+  // Provoke ticks at END of round, so it is gone again by the time the round returns. Assert the
+  // REDIRECT, not the leftover status: the enemy declares on the partner and hits Warden instead.
+  const { events } = resolveRound(
+    state,
+    [
+      { kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' } as Action,
+      { kind: 'move', combatantId: 'b1', moveId: 'rockToss', declaredTarget: 'a2' } as Action,
+    ],
+    config
+  );
+
+  const applied = events.filter((e) => e.type === 'StatusApplied' && e.statusId === 'Provoke');
+  assert.deepStrictEqual(applied.map((e) => (e.type === 'StatusApplied' ? e.combatantId : '')), ['a3']);
+  const hit = events.find((e) => e.type === 'DamageDealt');
+  assert.ok(hit && hit.type === 'DamageDealt');
+  assert.strictEqual(hit.targetCombatantId, 'a3', 'the swing aimed at the partner arrived on Warden');
+});

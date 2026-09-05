@@ -264,7 +264,9 @@ test('progression: Evolution unlocks only at EVOLUTION_LEVEL, offers exactly thr
   assert.strictEqual(node!.paths.length, 3, 'CLAUDE.md: a choice of three options');
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-offensive');
-  assert.strictEqual(next.roster[0].evolutionStatGrants.attack, 10);
+  // Explosive is a REFOCUS: it SPENDS the Attack a physical Cinder lived on to buy Intelligence.
+  assert.strictEqual(next.roster[0].evolutionStatGrants.attack, -40);
+  assert.strictEqual(next.roster[0].evolutionStatGrants.intelligence, 60);
   assert.ok(next.roster[0].chosenPathIds.includes('cinderKnight-offensive'));
 
   // one-shot: no second node authored for cinderKnight, so nothing further is offered

@@ -320,6 +320,265 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
       statGrants: { attack: 20, speed: 20 },
     },
   },
+  // --- The recruit-only slate (2026-09-05) ---
+  cinderguard: {
+    id: 'cinderguard',
+    name: 'Cinderguard',
+    description: 'Whenever this hero takes damage, both active enemies gain Burn 5.',
+    // Target-role DamageDealt: "I was hit". There is no 'triggerSource' target — a passive cannot
+    // reach the attacker — so the answer goes to activeEnemies, which in doubles is the attacker
+    // plus its partner. Small per firing, stacking additively, and Immolate is what cashes it.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 5 },
+    },
+  },
+  forgeHeat: {
+    id: 'forgeHeat',
+    name: 'Forge Heat',
+    description: 'Whenever this hero lands a Fire-type attack, it gains 10 Speed.',
+    // Static Tide's source-role shape pointed inward instead of at the defender. Cinder's Fire
+    // column is its cheap one, so the ramp is paid for in singeing rather than in setup turns.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { moveType: 'Fire' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'speed', amount: 10 },
+    },
+  },
+  ashfeast: {
+    id: 'ashfeast',
+    name: 'Ashfeast',
+    description: 'Whenever an enemy takes Burn damage, this hero heals for the same amount.',
+    // Sanguine's exact shape moved off Bleed onto Burn — and Burn is a magnitude status Brimstone
+    // stacks itself, so unlike Sanguine this one does not need a partner to arm it.
+    reactive: {
+      hook: 'StatusTicked',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Burn', kind: 'damage' } },
+      effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount' } },
+    },
+  },
+  hexfume: {
+    id: 'hexfume',
+    name: 'Hexfume',
+    description: 'When this hero enters the battlefield, both active enemies gain Poison 10.',
+    // Imposing Presence's arrival shape carrying a status instead of a stat. Poison only counts
+    // down while its holder is ACTIVE, so a foe that pivots out banks the timer rather than
+    // clearing it — arriving repeatedly raises the percentage without ever resetting the clock.
+    // The 3-round timer is authored per APPLICATION, the way every Poison move authors it; omit it
+    // and the timer starts at 0 and the payload fires at the end of the round it landed in.
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Poison', magnitude: 10, duration: 3 },
+    },
+  },
+  killingFrost: {
+    id: 'killingFrost',
+    name: 'Killing Frost',
+    description: 'Whenever this hero Freezes an enemy, it gains 10 Intelligence.',
+    // Feedback Loop's shape on Freeze. Freeze is stacking 'none', so re-freezing an already
+    // frozen foe emits nothing and pays nothing; the ramp costs fresh targets, and Permafrost
+    // and Avalanche reaching both foes at once is the two-for-one that makes it worth a path.
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Freeze' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
+    },
+  },
+  coldForge: {
+    id: 'coldForge',
+    name: 'Cold Forge',
+    description: "Whenever this hero's Defense rises, it gains 10 Attack.",
+    // Frozen Stone's trigger with an inward payout: eventFieldPositive is what makes this "rises"
+    // and not "changes". Cube's own Frost Armor and a partner's Bastion or Frost Wall all arm it,
+    // which is the whole build — the wall it puts up is the weapon it swings.
+    reactive: {
+      hook: 'StatChanged',
+      condition: { relativeTo: 'self', eventFieldEquals: { stat: 'defense' }, eventFieldPositive: 'delta' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
+    },
+  },
+  squallLine: {
+    id: 'squallLine',
+    name: 'Squall Line',
+    description: 'Whenever this hero lands an attack, it gains 5 Attack and 5 Speed.',
+    // Unconditional and per HIT, so a spread cast pays twice — the smallest per-firing figure of
+    // any evolution passive for that reason. Speed on the roster's fastest hero compounds: the
+    // ramp buys the turn order it needs to keep ramping.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], amount: 5 },
+    },
+  },
+  plunder: {
+    id: 'plunder',
+    name: 'Plunder',
+    description: 'Whenever this hero lands an attack, it gains 10 mana.',
+    // Overspill's uncapped grant metered out a hit at a time instead of an arrival at a time
+    // (docs/mana.md "Overflow"). Scallywag's late column is expensive and its Attack is not, so
+    // the aggression funds itself — and the overflow is what reaches Overcharge without a Rest.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 10 } },
+    },
+  },
+  thornrot: {
+    id: 'thornrot',
+    name: 'Thornrot',
+    description: 'Whenever this hero applies Poison, it gains 10 Attack and 10 Speed.',
+    // Restorative Toxin's trigger paying a stat line instead of a HoT — Sylva turns Poison into
+    // sustain, Mordrax turns it into pressure. Poison stacks, so every re-application pays again.
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Poison' } },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'speed'], amount: 10 },
+    },
+  },
+  heartwood: {
+    id: 'heartwood',
+    name: 'Heartwood',
+    description: "Whenever this hero's Renew heals it, it gains 10 Attack and 10 Defense.",
+    // Read off the TICK, not the Healed hook: a HoT tick emits StatusTicked (kind 'heal'), never
+    // Healed, so Communion's shape would never fire here. Renew halves each tick but the stat
+    // line does not, which is what turns Hollowbark's own Second Wind into a three-round ramp.
+    reactive: {
+      hook: 'StatusTicked',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Renew', kind: 'heal' } },
+      effect: { kind: 'statDelta', target: 'self', stat: ['attack', 'defense'], amount: 10 },
+    },
+  },
+  shieldbearer: {
+    id: 'shieldbearer',
+    name: 'Shieldbearer',
+    description: 'When this hero enters the battlefield, its partner gains 20 Defense and 20 Wisdom.',
+    // Nature's Purification's arrival shape paying a stat line sideways. BOTH defensive stats
+    // because Aegis does not pick its partner: the grant has to be worth the same to a Crag as
+    // to a Glyph. Alone on the field it resolves to nobody and is silent.
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'ally', stat: ['defense', 'wisdom'], amount: 20 },
+    },
+  },
+  puppetStrings: {
+    id: 'puppetStrings',
+    name: 'Puppet Strings',
+    description: "Whenever an enemy's Intelligence drops, this hero gains 10 Intelligence.",
+    // Entanglement's trigger on the other magical stat, paying the owner rather than marking the
+    // foe. Trance's slate is an Intelligence shredder (Lull, Disorient, Break Will), and Disorient
+    // reaching both foes is two firings. ATTRIBUTION: StatChanged carries no source, so a Mind
+    // PARTNER's debuff arms it too — the same deliberate looseness Entanglement has.
+    reactive: {
+      hook: 'StatChanged',
+      condition: { relativeTo: 'enemy', eventFieldEquals: { stat: 'intelligence' }, eventFieldNegative: 'delta' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 10 },
+    },
+  },
+  grief: {
+    id: 'grief',
+    name: 'Grief',
+    description: 'Whenever this hero takes damage, it gains Renew 10.',
+    // Tempering's trigger paying a HoT instead of Defense, which is the only way a 45-Defense
+    // body gets to be the one that stays. Renew is additive and survives switching, so a pivot
+    // out to the bench carries the stack with it.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 10 },
+    },
+  },
+  sentry: {
+    id: 'sentry',
+    name: 'Sentry',
+    description: 'When this hero enters the battlefield, it is Provoked — single-target enemy moves aimed at either ally are redirected onto it this round.',
+    // The doubles anchor made passive: the Stone move Provoke, on arrival, without Warden having
+    // to be Stone or spend the turn. Duration 1 ticking at END of round means exactly the round
+    // it arrived in, so the redirect is a pivot's payload and not a standing tax.
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Provoke', duration: 1 },
+    },
+  },
+  cavalryCharge: {
+    id: 'cavalryCharge',
+    name: 'Cavalry Charge',
+    description: 'When this hero enters the battlefield, it gains 30 Attack.',
+    // The charge, literally: the arrival IS the payload, so the bench-cycling engine becomes
+    // Gallant's damage curve. Unbounded within a fight, and priced in the turn each pivot costs.
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 30 },
+    },
+  },
+  runawayPressure: {
+    id: 'runawayPressure',
+    name: 'Runaway Pressure',
+    description: 'Whenever this hero lands an attack, it gains 10 Attack.',
+    // Squall Line's shape at double the figure on one axis, because Bellows at 5 Speed acts last
+    // in nearly every exchange — the ramp is what it is paid for never getting to go first.
+    // Unbounded within a fight on purpose; the Pact Clock is what brackets it.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 10 },
+    },
+  },
+  superheat: {
+    id: 'superheat',
+    name: 'Superheat',
+    description: 'Whenever this hero is Burned, it gains 20 Intelligence.',
+    // Combustion aimed at the other offensive stat, which is what makes it a REFOCUS payoff
+    // rather than a copy: Overpressure SPENDS Bellows' Attack, and Mech's magical column
+    // (Backfire, Overheat, Meltdown) burns its own caster, so the drawback funds the new stat.
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Burn' } },
+      effect: { kind: 'statDelta', target: 'self', stat: 'intelligence', amount: 20 },
+    },
+  },
+  widowsKiss: {
+    id: 'widowsKiss',
+    name: "Widow's Kiss",
+    description: 'Whenever this hero applies Bleed, that target also gains Poison 10.',
+    // Source-role StatusApplied landing on triggerTarget — the hero that RECEIVED the Bleed,
+    // which is the only way a source-role passive reaches it. Widow's two damage-over-time
+    // columns collapse into one: every Bleed is also a Poison, and Toxic Fangs is both twice.
+    reactive: {
+      hook: 'StatusApplied',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { statusId: 'Bleed' } },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Poison', magnitude: 10, duration: 3 },
+    },
+  },
+  snare: {
+    id: 'snare',
+    name: 'Snare',
+    description: 'When this hero enters the battlefield, both active enemies lose 20 Speed.',
+    // Imposing Presence pointed at Speed instead of Attack. On the joint-fastest hero in the
+    // roster this is not a defensive read — it buys the turn order outright, and holds it
+    // through the pivot back in.
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'activeEnemies', stat: 'speed', amount: -20 },
+    },
+  },
+  constrict: {
+    id: 'constrict',
+    name: 'Constrict',
+    description: 'Whenever this hero lands a magical attack, its target loses 10 Speed.',
+    // Enthrall's source-role shape paying a stat debuff instead of a mark. Coil's slate is
+    // magical end to end, so every cast tightens; Psionic Wave reaching both foes slows both.
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source', eventFieldEquals: { category: 'magical' } },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'speed', amount: -10 },
+    },
+  },
 };
 
 export const passives: Record<string, PassiveDefinition> = { ...fixturePassives, ...equipmentPassives, ...eventPassives, ...evolutionPassives, ...classes };

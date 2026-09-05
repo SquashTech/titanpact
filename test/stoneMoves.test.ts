@@ -437,16 +437,11 @@ test('stone: no move is unreachable that was not already known to be', () => {
 
   const unreachable = Object.keys(moves).filter((id) => !reachable.has(id)).sort();
   // Runic Blast and Forgotten Curse left this list when Yugzulach was authored (src/data/enemies.ts).
-  assert.deepStrictEqual(unreachable, [
-    'cerebralShock',
-    'landslide',
-    'rockfall',
-    // RESERVED (2026-09-02), not an accident: Shock Bubble is the Water move that plants Conduct,
-    // and it was reachable only through Riptide's Storm graft, which became Water/Mind. Held with
-    // the Static Tide passive for a future recruit-only Water hero that grafts Storm.
-    'shockBubble',
-    'tremor',
-  ]);
+  // The last five left it in the recruit-only pass (2026-09-05): Shock Bubble went to Pincer, whose
+  // Storm graft is the pairing it was reserved for; Stone's magical column (Tremor, Rockfall,
+  // Landslide) went to Flurry's Glacier, the first hero with the Intelligence to read it; and
+  // Cerebral Shock went to Lucius, now mono-Mind. Nothing is orphaned — keep it that way.
+  assert.deepStrictEqual(unreachable, []);
 });
 
 // --- statDeltaTarget 'self' on a damage move (Spire Claw) ---

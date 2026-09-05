@@ -32,6 +32,10 @@ don't silently override it.
   move's category), **never with the target's max HP**, and carries **no variance**. A HoT
   snapshots it at application time. Reasoning + open questions: `docs/combat.md`.
 - **Stat line:** HP, Attack/Defense, Intelligence/Wisdom, Speed, Mana, MP Regen.
+- **Every hero spends exactly 450 stat points** across HP/Attack/Defense/Intelligence/
+  Wisdom/Speed/Mana (2026-09-05); **MP Regen sits outside the budget at a flat 10**.
+  A specialist is signalled by spiking one stat past anything else in the roster, never
+  by coming in under budget (`test/roster.test.ts`, `docs/types-and-heroes.md`).
 - **Stat modifiers are flat additive integers, multiples of 5 or 10.** No % stat mods.
   There is **no automatic stat growth** from leveling. One documented exemption
   (2026-08-30): a **derived** grant, whose amount is read off live state rather than
@@ -89,6 +93,8 @@ don't silently override it.
   a dead level-up is the worse outcome.
 - **Evolutions are authored branch points**, each option carrying a **single
   identifiable name** (e.g. Cinder's Explosive / Ironclad / Thunderblaze).
+  **All 36 heroes are on the five-clause Evolution framework** as of 2026-09-05 — no
+  path is ever a bare stat line (`docs/leveling-and-ranks.md`).
   Options differ *in kind* (defensive / offensive / utility), are **permanent within a
   run**, and gate the movepool.
 - **Starters vs. recruit-only:** every hero is flagged `starter: true/false`

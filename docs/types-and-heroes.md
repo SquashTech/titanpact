@@ -189,6 +189,34 @@ is Valor instead. Expect the recruit-only list to grow as more of the authored
   content** (movepools, abilities, equipment, relics), not be pre-specified. Don't
   bake archetype assumptions into type or hero definitions.
 
+### The stat budget (LOCKED 2026-09-05)
+
+Every hero's authored line spends **exactly 450 points** across seven stats — HP,
+Attack, Defense, Intelligence, Wisdom, Speed, Mana. **MP Regen sits outside the
+budget at a flat 10** for everyone; it is a tempo dial the equipment layer moves
+(`STAT_POINT_VALUE` prices it at 3×), not a place to hide a hero's power level.
+`test/roster.test.ts` pins both halves.
+
+The budget is a *shape* rule, not a power rule. What it buys is that two heroes are
+never separated by raw total — only by where they put it — so "which hero is
+stronger" is always a question about the matchup and never about the sheet. A hero
+that wants to be enormous somewhere has to be small somewhere else, and the roster's
+extremes are authored that way on purpose: Bellows at **105 Attack / 5 Speed**, Cube
+at **115 Defense / 10 Speed**, Squall and Widow at **100+ Speed** off 45-Defense
+bodies. Coming in under 450 is not the way to signal a specialist — spiking one stat
+past anything else in the roster is.
+
+Before 2026-09-05 only the 14 starters were on budget and the 22 recruit-only heroes
+ran 390–480. That gap read as "recruits are the weaker pool", which is exactly what
+`starter: false` is *not* supposed to mean (see "Starters vs. recruit-only heroes").
+
+**Lucius is mono-Mind** as of the same pass — a deliberate retype, not a graft.
+Shadow/Mind was a dual typing doing the work an Evolution branch should do, and it
+cost him every graft path (`chooseEvolutionPath` refuses a graft on a dual-typed
+hero). Mono-Mind Lucius gets three branches back and **Voidcaller grafts Shadow**, so
+the old pairing is now something the player chooses rather than something he is born
+into. His pool follows the primary type; Weaken stays as the one Shadow keepsake.
+
 ### The authored roster
 
 Eight authored heroes exist in the prototype with full type coverage. Their concrete

@@ -18,13 +18,13 @@ import type { CombatState } from '../src/engine/state';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
-/** Revenant (Int 77) attacks alongside Lucius; Warden and Sentinel defend. */
+/** Revenant (Int 77) attacks alongside Marrow; Warden and Sentinel defend. */
 function spiritFixture(seed: number) {
   return createFightState(
     seed,
     [
       { combatantId: 'a1', heroId: 'revenant', side: 'A' },
-      { combatantId: 'a2', heroId: 'lucius', side: 'A' },
+      { combatantId: 'a2', heroId: 'marrow', side: 'A' },
     ],
     [
       { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },

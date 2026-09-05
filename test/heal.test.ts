@@ -109,7 +109,7 @@ test('heal: the Healed event carries the formula terms, the way DamageDealt does
   assert.strictEqual(healed.stab, 1.25);
 });
 
-test('heal: NO max-HP term — one caster restores the same amount to a 135 HP wall and an 80 HP caster', () => {
+test('heal: NO max-HP term — one caster restores the same amount to a wall and to a glass caster', () => {
   // Revenant (Spirit, 46 Wisdom) casting Light's Mend: 45 x 0.96 = 43, no STAB.
   const onWall = resolveRound(
     hurt(fixture(202, 'revenant', 'ironWarden'), ['a2'], 10),
@@ -122,8 +122,8 @@ test('heal: NO max-HP term — one caster restores the same amount to a 135 HP w
     config
   );
 
-  assert.strictEqual(heroes.ironWarden.baseStats.hp, 135);
-  assert.strictEqual(heroes.wildOracle.baseStats.hp, 80);
+  // Read off the data, not pinned: the point is that the two differ, not what they are.
+  assert.ok(heroes.ironWarden.baseStats.hp > heroes.wildOracle.baseStats.hp + 40, `${heroes.ironWarden.baseStats.hp} vs ${heroes.wildOracle.baseStats.hp} is not a wide enough gap to prove anything`);
   assert.deepStrictEqual(healedAmounts(onWall.events), [43]);
   assert.deepStrictEqual(healedAmounts(onGlass.events), [43]);
 });

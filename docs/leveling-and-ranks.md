@@ -288,10 +288,22 @@ identity.
 
 > ### The Evolution framework (2026-09-01 designer call)
 >
-> The shape every hero's node is being re-authored to. Crimson, Fang, Riptide, Rime,
-> Crag and the rest (`src/data/progression.ts`) are the worked examples: all
-> FOURTEEN starters are now on the framework, one per type. The 22 recruit-only heroes
-> are still on the old two-stats shape and are the backlog.
+> The shape every hero's node is authored to. **All 36 heroes are on it** as of
+> 2026-09-05 — the 14 starters landed 2026-09-02, the 22 recruit-only heroes in the
+> baseline pass that followed. `test/roster.test.ts` pins the parts of it that are
+> checkable: three kinds per node, at least one mono path, no path that is a bare
+> stat line, and a gross stat line inside the Rare-to-Mythic band.
+>
+> The recruit-only pass also took the five DUAL-typed recruits — Cinder, Brimstone,
+> Bellows, Widow and Coil — somewhere the starters never had to go. A dual hero is
+> offered no graft at all (`chooseEvolutionPath` throws), so its three paths compete
+> with each other rather than with a second column of the type chart, and every one of
+> them has to carry a passive or a granted move. What pays for them is
+> `learnableMoveIds` **without** a `typeGraft`: the field is only type-checked when a
+> graft is present, so a dual hero's path can still hand over a LINE — Cinder's
+> Explosive opens Fire's whole magical column, which its physical body could never
+> read. Lucius went the other way and was retyped mono-Mind (`types-and-heroes.md`
+> "The stat budget"), trading an inherent second type for three real branches.
 >
 > Tempest was authored from nothing (2026-09-02) rather than re-authored: it was the
 > one hero of 36 with no `evolutions` entry at all, and nothing failed — the lookup is

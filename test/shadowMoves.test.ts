@@ -17,13 +17,13 @@ import type { CombatState } from '../src/engine/state';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
-/** Nightshade (Atk 80 / Spd 85) and Lucius (Int 75) attack; Warden and Sentinel defend. */
+/** Nightshade (Atk 80 / Spd 85) and Marrow (Int 95) attack; Warden and Sentinel defend. */
 function shadowFixture(seed: number) {
   return createFightState(
     seed,
     [
       { combatantId: 'a1', heroId: 'nightshade', side: 'A' },
-      { combatantId: 'a2', heroId: 'lucius', side: 'A' },
+      { combatantId: 'a2', heroId: 'marrow', side: 'A' },
     ],
     [
       { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
@@ -324,6 +324,15 @@ test('shadow: every authored Shadow move has a holder', () => {
   const reachable = new Set<string>();
   for (const hero of Object.values({ ...heroes, ...enemies })) for (const id of hero.moveIds) reachable.add(id);
   for (const pool of Object.values(progressionTable.moveTiers)) for (const id of pool) reachable.add(id);
+  // An Evolution path reaches moves two ways: granted outright, or added to the level-up pool.
+  for (const nodes of Object.values(progressionTable.evolutions)) {
+    for (const node of nodes) {
+      for (const path of node.paths) {
+        for (const id of path.unlocksMoveIds) reachable.add(id);
+        for (const id of path.learnableMoveIds ?? []) reachable.add(id);
+      }
+    }
+  }
 
   const orphans = Object.values(moves)
     .filter((m) => m.type === 'Shadow' && !reachable.has(m.id))

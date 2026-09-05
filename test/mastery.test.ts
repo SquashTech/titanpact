@@ -70,12 +70,14 @@ test('mastery: a level-up pays out a move through MASTERY_LEVEL and a stat past 
 test('mastery: an empty pool below the cap falls back to a stat rather than to nothing', () => {
   // Unreachable in a real run while the pool floor holds (test/moveTiers.test.ts); hand-built here.
   let run = createRunState(0);
-  const pool = progressionTable.moveTiers.cinderKnight ?? [];
+  const chosen = progressionTable.evolutions.cinderKnight[0].paths[0];
+  // The chosen path's learnableMoveIds JOIN the pool, so draining it means draining those too.
+  const pool = [...(progressionTable.moveTiers.cinderKnight ?? []), ...(chosen.learnableMoveIds ?? [])];
   run = addRosterEntry(run, {
     ...createRosterEntry('cinderKnight', 'cinderKnight', [...heroes.cinderKnight.moveIds, ...pool]),
     level: 4,
     // Past the Evolution, so 'evolution' does not win the precedence check.
-    chosenPathIds: [progressionTable.evolutions.cinderKnight[0].paths[0].id],
+    chosenPathIds: [chosen.id],
   });
   assert.strictEqual(levelUpPayout(progressionTable, moves, run.roster[0]), 'mastery');
 });
