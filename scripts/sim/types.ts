@@ -68,6 +68,9 @@ export interface FightKindAgg {
   pactFights: number;
   /** Fights that hit the hard round cap without a winner. */
   stalemates: number;
+  /** Fielded stat totals, summed — divide by n for the mean. */
+  playerStatsSum: number;
+  enemyStatsSum: number;
 }
 
 export interface Aggregate {
@@ -179,7 +182,7 @@ export function emptyEnemy(): EnemyAgg {
 }
 
 export function emptyFightKind(): FightKindAgg {
-  return { n: 0, wins: 0, roundsSum: 0, playerHpFracSum: 0, pactFights: 0, stalemates: 0 };
+  return { n: 0, wins: 0, roundsSum: 0, playerHpFracSum: 0, pactFights: 0, stalemates: 0, playerStatsSum: 0, enemyStatsSum: 0 };
 }
 
 /** Every leaf on these records is a number, so merging is a field-wise add — asserted once here rather than typed per shape. */

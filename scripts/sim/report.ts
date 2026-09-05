@@ -137,7 +137,10 @@ export function formatReport(
 
   // --- Fight difficulty ---
   out.push(heading('2. FIGHT DIFFICULTY BY ACT AND NODE'));
-  out.push(`  ${pad('act:node', 16)}${padStart('n', 8)}${padStart('win%', 8)}${padStart('rounds', 8)}${padStart('endHP%', 8)}${padStart('pact%', 8)}${padStart('stale', 7)}`);
+  out.push('  player/enemy = fielded stat totals, six combat stats. It is the RATIO that says who is out-scaling whom.');
+  out.push(
+    `  ${pad('act:node', 16)}${padStart('n', 8)}${padStart('win%', 8)}${padStart('rounds', 8)}${padStart('endHP%', 8)}${padStart('player', 8)}${padStart('enemy', 8)}${padStart('ratio', 7)}`
+  );
   const kindKeys = Object.keys(agg.fightKinds).sort((a, b) => {
     const [actA, typeA] = a.split(':');
     const [actB, typeB] = b.split(':');
@@ -146,8 +149,10 @@ export function formatReport(
   for (const key of kindKeys) {
     const k = agg.fightKinds[key];
     if (k.n < 5) continue;
+    const player = k.playerStatsSum / k.n;
+    const enemy = k.enemyStatsSum / k.n;
     out.push(
-      `  ${pad(key, 16)}${padStart(String(k.n), 8)}${padStart(pct(k.wins, k.n), 8)}${padStart(num(k.roundsSum / k.n, 1), 8)}${padStart(num((100 * k.playerHpFracSum) / k.n, 1), 8)}${padStart(pct(k.pactFights, k.n), 8)}${padStart(String(k.stalemates), 7)}`
+      `  ${pad(key, 16)}${padStart(String(k.n), 8)}${padStart(pct(k.wins, k.n), 8)}${padStart(num(k.roundsSum / k.n, 1), 8)}${padStart(num((100 * k.playerHpFracSum) / k.n, 1), 8)}${padStart(num(player, 0), 8)}${padStart(num(enemy, 0), 8)}${padStart(num(enemy > 0 ? player / enemy : 0, 2), 7)}`
     );
   }
 

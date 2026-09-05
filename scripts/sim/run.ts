@@ -122,6 +122,8 @@ export interface FightRecord {
   playerRests: number;
   playerSwitches: number;
   lockedIn: boolean;
+  playerSquadStats: number;
+  enemySquadStats: number;
   castsByTier: Record<string, number>;
   castsByManaBand: Record<string, number>;
   /** heroId -> per-fight telemetry, player side. */
@@ -468,6 +470,8 @@ function resolveEncounterNode(
     playerRests: fight.playerRests,
     playerSwitches: fight.playerSwitches,
     lockedIn: fight.lockedIn,
+    playerSquadStats: fight.playerSquadStats,
+    enemySquadStats: fight.enemySquadStats,
     castsByTier: fight.castsByTier,
     castsByManaBand: fight.castsByManaBand,
     playerHeroes,

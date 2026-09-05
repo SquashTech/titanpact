@@ -11,7 +11,7 @@ import { fieldEffects } from '../../src/data/fieldEffects';
 import { equipment } from '../../src/data/equipment';
 import { relics } from '../../src/data/relics';
 import type { CombatState, Side } from '../../src/engine/state';
-import { getMaxHp } from '../../src/engine/state';
+import { getMaxHp, getEffectiveStat } from '../../src/engine/state';
 import type { CombatEvent } from '../../src/engine/events';
 import type { Action } from '../../src/engine/combat/actions';
 import { resolveRound } from '../../src/engine/combat/resolveRound';
@@ -68,10 +68,26 @@ export interface FightOutcome {
   castsByTier: Record<string, number>;
   /** Player-side casts by mana actually spent, in 20-point bands. */
   castsByManaBand: Record<string, number>;
+  /** Total effective stats (the six combat stats) each side FIELDED — who is out-scaling whom. */
+  playerSquadStats: number;
+  enemySquadStats: number;
   /** Player squad's surviving HP over its max, at the final state. */
   playerHpFrac: number;
   telemetry: Record<string, CombatantTelemetry>;
   final: CombatState;
+}
+
+const STAT_TOTAL_KEYS = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed'] as const;
+
+/** Sum of the six combat stats across everything a side fielded, bench included. HP_SCALE is deliberately NOT in this — it applies to both sides equally and would just inflate the axis. */
+function squadStatTotal(state: CombatState, side: Side): number {
+  let total = 0;
+  for (const combatant of Object.values(state.combatants)) {
+    if (combatant.side !== side) continue;
+    const hero = allCombatants[combatant.heroId];
+    for (const stat of STAT_TOTAL_KEYS) total += getEffectiveStat(hero, combatant, stat);
+  }
+  return total;
 }
 
 function aliveActiveIdsOn(state: CombatState, side: Side): string[] {
@@ -324,6 +340,8 @@ export function simulateFight(input: FightInput): FightOutcome {
     playerRests,
     playerSwitches,
     lockedIn: state.koCount[PLAYER_SIDE] >= 2,
+    playerSquadStats: squadStatTotal(opening.state, PLAYER_SIDE),
+    enemySquadStats: squadStatTotal(opening.state, AI_SIDE),
     castsByTier: casts.byTier,
     castsByManaBand: casts.byManaBand,
     playerHpFrac: maxHp > 0 ? hp / maxHp : 0,

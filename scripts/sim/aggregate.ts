@@ -55,6 +55,8 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
     kind.playerHpFracSum += fight.playerHpFrac;
     if (fight.pactTicked) kind.pactFights += 1;
     if (fight.stalemate) kind.stalemates += 1;
+    kind.playerStatsSum += fight.playerSquadStats;
+    kind.enemyStatsSum += fight.enemySquadStats;
 
     if (fight.mapNodeType === 'boss' || fight.mapNodeType === 'finale') {
       const guardianKey = fight.mapNodeType === 'finale' ? 'FINALE' : `${fight.locationId}@act${fight.act}`;
@@ -65,6 +67,8 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
       g.playerHpFracSum += fight.playerHpFrac;
       if (fight.pactTicked) g.pactFights += 1;
       if (fight.stalemate) g.stalemates += 1;
+      g.playerStatsSum += fight.playerSquadStats;
+      g.enemyStatsSum += fight.enemySquadStats;
     }
 
     agg.roundHistogram[fight.rounds] = (agg.roundHistogram[fight.rounds] ?? 0) + 1;
