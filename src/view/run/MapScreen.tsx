@@ -21,8 +21,10 @@ interface Props {
   onSelectNode: (nodeId: string) => void;
   /** Re-opens the Level Up screen for a pool the player banked rather than spent. */
   onOpenLevelUp: () => void;
-  /** Omit and the pause menu drops its quit entry. */
-  onQuitToTitle?: () => void;
+  /** Leave to the title with the run saved here. Omit and the pause menu drops both quit entries. */
+  onSaveAndQuit?: () => void;
+  /** Discard the run and its save (two-tap armed). */
+  onAbandonRun?: () => void;
 }
 
 /**
@@ -406,12 +408,12 @@ function MapPlacard({ location }: { location: LocationDefinition }) {
 
 // The run's hub (docs/run-loop.md). Training Points are spent on LevelUpScreen,
 // not here; a banked remainder on the map is normal.
-export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onQuitToTitle }: Props) {
+export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSaveAndQuit, onAbandonRun }: Props) {
   const [showRoster, setShowRoster] = useState(false);
   const [showReference, setShowReference] = useState(false);
   const [showRelics, setShowRelics] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  // Two taps to abandon: there is no save file.
+  // Two taps to abandon: quitting is reversible now, but abandoning deletes the save.
   const [confirmingQuit, setConfirmingQuit] = useState(false);
   const [previewNode, setPreviewNode] = useState<MapNode | null>(null);
   // Called unconditionally — hooks can't sit behind the `if (!map)` bail.
@@ -564,18 +566,33 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onQui
                 </span>
                 Back to Map
               </button>
-              {onQuitToTitle && (
+              {onSaveAndQuit && (
+                <button className="options-item" onClick={onSaveAndQuit}>
+                  <span className="options-item-glyph" aria-hidden="true">
+                    🚪
+                  </span>
+                  Save &amp; Quit to Title
+                </button>
+              )}
+              {onAbandonRun && (
                 <button
                   className={`options-item options-item-danger${confirmingQuit ? ' armed' : ''}`}
-                  onClick={() => (confirmingQuit ? onQuitToTitle() : setConfirmingQuit(true))}
+                  onClick={() => (confirmingQuit ? onAbandonRun() : setConfirmingQuit(true))}
                 >
                   <span className="options-item-glyph" aria-hidden="true">
-                    {confirmingQuit ? '⚠' : '🚪'}
+                    {confirmingQuit ? '⚠' : '🗑'}
                   </span>
-                  {confirmingQuit ? 'Tap again to abandon' : 'Quit Run — Return to Title'}
+                  {confirmingQuit ? 'Tap again to abandon' : 'Abandon Run'}
                 </button>
               )}
             </div>
+            {onAbandonRun && (
+              <p className="options-note">
+                {confirmingQuit
+                  ? 'This run ends now. Roster, relics and map progress are lost.'
+                  : 'The run is saved here. Quitting keeps it — Continue picks it back up.'}
+              </p>
+            )}
           </div>
         </div>
       )}

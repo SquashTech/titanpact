@@ -4,25 +4,29 @@
 
 import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
 
-export type MapNodeType =
-  | 'fight'
-  | 'skirmish'
-  | 'battle'
-  | 'elite'
-  | 'boss'
-  | 'shop'
-  | 'equipmentReward'
-  | 'relicReward'
-  | 'currencyReward'
-  | 'upgradeReward'
-  | 'weaponReward'
-  | 'armorReward'
-  | 'accessoryReward'
-  | 'hpBoostReward'
-  | 'manaBoostReward'
-  | 'manaRegenBoostReward'
-  | 'classReward'
-  | 'event';
+/** Listed as a value, not just a union, so a loaded save can check a node type it read back (save.ts). */
+export const MAP_NODE_TYPES = [
+  'fight',
+  'skirmish',
+  'battle',
+  'elite',
+  'boss',
+  'shop',
+  'equipmentReward',
+  'relicReward',
+  'currencyReward',
+  'upgradeReward',
+  'weaponReward',
+  'armorReward',
+  'accessoryReward',
+  'hpBoostReward',
+  'manaBoostReward',
+  'manaRegenBoostReward',
+  'classReward',
+  'event',
+] as const;
+
+export type MapNodeType = (typeof MAP_NODE_TYPES)[number];
 
 export interface MapNode {
   id: string;

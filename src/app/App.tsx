@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { initUiScale } from './uiScale';
 import { useReloadOnNewBuild } from './useReloadOnNewBuild';
+import { clearSave, readSave, writeSave } from './saveStorage';
+import { saveSummary, type SavedRun } from '../run/save';
 import { FightScreen } from '../view/combat/FightScreen';
 import { TitleScreen } from '../view/run/TitleScreen';
 import { DraftScreen } from '../view/run/DraftScreen';
@@ -245,6 +247,20 @@ export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
   const shellRef = useRef<HTMLDivElement>(null);
 
+  // Read once at boot. A save this build refuses (older version, content since removed) is
+  // dropped rather than left to fail again, but the reason is kept so the title can say why
+  // the run the player left is gone instead of silently not offering it. One state, not two,
+  // so the read happens in a single lazy initializer.
+  const [saveSlot, setSaveSlot] = useState<{ save: SavedRun | null; staleReason: string | null }>(() => {
+    const result = readSave();
+    if (!result) return { save: null, staleReason: null };
+    if (result.ok) return { save: result.save, staleReason: null };
+    clearSave();
+    // The title says only that a save was cleared; the reason is for whoever is debugging it.
+    console.warn(`Titanpact: refused a stored run — ${result.reason}`);
+    return { save: null, staleReason: result.reason };
+  });
+
   // Owned here rather than in SandboxBattleScreen, which unmounts during a sandbox fight.
   const [sandboxSideA, setSandboxSideA] = useState<SandboxSideConfig>(() => createEmptySandboxSide());
   const [sandboxSideB, setSandboxSideB] = useState<SandboxSideConfig>(() => createEmptySandboxSide());
@@ -253,8 +269,41 @@ export function App() {
     if (shellRef.current) return initUiScale(shellRef.current);
   }, []);
 
-  // Title screen only — a run lives in React state alone, so a reload anywhere else destroys one.
+  // Title screen only. A checkpointed run now survives a reload, but everything between two
+  // checkpoints does not, so a mid-fight reload would still cost the fight.
   useReloadOnNewBuild(screen.kind === 'title');
+
+  // Autosave. An effect rather than a call inside each transition handler for two reasons:
+  // it sees state that has actually committed (several handlers still read the pre-setState
+  // `playerRun`), and one place cannot forget a path. Checkpoints only — see SaveCheckpoint.
+  useEffect(() => {
+    if (screen.kind !== 'map' && screen.kind !== 'actIntro') return;
+    if (!playerRun.map) return;
+    const save = writeSave(playerRun, screen.kind);
+    setSaveSlot({ save, staleReason: null });
+  }, [playerRun, screen]);
+
+  // A finished run has nothing left to resume; the save would otherwise re-offer the map
+  // of a run the player already lost or cleared.
+  useEffect(() => {
+    if (screen.kind !== 'runFailed' && screen.kind !== 'runComplete') return;
+    clearSave();
+    setSaveSlot({ save: null, staleReason: null });
+  }, [screen.kind]);
+
+  /** Abandon: the parked run is discarded, not just left behind. */
+  function handleAbandonRun() {
+    clearSave();
+    setSaveSlot({ save: null, staleReason: null });
+    setScreen({ kind: 'title' });
+  }
+
+  function handleContinueRun() {
+    const parked = saveSlot.save;
+    if (!parked) return;
+    setPlayerRun(parked.run);
+    setScreen({ kind: parked.checkpoint });
+  }
 
   function handleClaimContract(defeated: RosterEntry): boolean {
     if (!isRecruitable(defeated.heroId, heroes)) return false;
@@ -537,6 +586,9 @@ export function App() {
     <div className="app-shell" ref={shellRef}>
       {screen.kind === 'title' && (
         <TitleScreen
+          parkedRun={saveSlot.save ? saveSummary(saveSlot.save) : null}
+          staleSaveReason={saveSlot.staleReason}
+          onContinueRun={handleContinueRun}
           onStartRun={handleStartNewRun}
           onQuickBattle={handleQuickBattle}
           onOpenSandbox={handleOpenSandbox}
@@ -600,7 +652,8 @@ export function App() {
           onRunChange={setPlayerRun}
           onSelectNode={handleSelectNode}
           onOpenLevelUp={() => setScreen({ kind: 'levelUp', next: { kind: 'map' } })}
-          onQuitToTitle={() => setScreen({ kind: 'title' })}
+          onSaveAndQuit={() => setScreen({ kind: 'title' })}
+          onAbandonRun={handleAbandonRun}
         />
       )}
 
@@ -633,7 +686,8 @@ export function App() {
               outcome
             )
           }
-          onQuitToTitle={() => setScreen({ kind: 'title' })}
+          onSaveAndQuit={() => setScreen({ kind: 'title' })}
+          onAbandonRun={handleAbandonRun}
         />
       )}
 

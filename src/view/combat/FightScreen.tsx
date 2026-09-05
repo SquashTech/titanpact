@@ -506,9 +506,11 @@ interface Props {
   equipmentReward: EquipmentDefinition | null;
   /** Fired when the player dismisses the result overlay — the caller owns what a win/loss means for the run. */
   onResolved: (outcome: 'win' | 'loss', finalState: CombatState) => void;
-  /** Abandon the run (two-tap armed). Omit for fights outside a run. */
-  onQuitToTitle?: () => void;
-  /** Plain one-tap exit for fights outside a run (Quick Battle). A caller passes one or the other, never both. */
+  /** Leave to the title with the run left parked at its map checkpoint — this fight replays. Omit for fights outside a run. */
+  onSaveAndQuit?: () => void;
+  /** Discard the run and its save (two-tap armed). Omit for fights outside a run. */
+  onAbandonRun?: () => void;
+  /** Plain one-tap exit for fights outside a run (Quick Battle). A caller passes this or the run pair, never both. */
   onExitToTitle?: () => void;
 }
 
@@ -522,7 +524,8 @@ export function FightScreen({
   trainingPointsReward,
   equipmentReward,
   onResolved,
-  onQuitToTitle,
+  onSaveAndQuit,
+  onAbandonRun,
   onExitToTitle,
 }: Props) {
   /** null outside an act (sandbox, quick battle): the arena keeps its placeless neutral scene. */
@@ -1383,7 +1386,7 @@ export function FightScreen({
         )}
       </div>
 
-      {/* Options. Quitting is destructive (no save file), so it is a two-tap arm/confirm. */}
+      {/* Options. Quitting parks the run at its map checkpoint; only abandoning destroys it, so only that one is a two-tap arm/confirm. */}
       {menuOpen && (
         <div className="log-overlay" onClick={() => setMenuOpen(false)}>
           <div className="log-panel options-panel" onClick={(e) => e.stopPropagation()}>
@@ -1434,23 +1437,31 @@ export function FightScreen({
                   Back to Title Screen
                 </button>
               )}
-              {onQuitToTitle && (
+              {onSaveAndQuit && (
+                <button className="options-item" onClick={onSaveAndQuit}>
+                  <span className="options-item-glyph" aria-hidden="true">
+                    🚪
+                  </span>
+                  Quit to Title
+                </button>
+              )}
+              {onAbandonRun && (
                 <button
                   className={`options-item options-item-danger${confirmingQuit ? ' armed' : ''}`}
-                  onClick={() => (confirmingQuit ? onQuitToTitle() : setConfirmingQuit(true))}
+                  onClick={() => (confirmingQuit ? onAbandonRun() : setConfirmingQuit(true))}
                 >
                   <span className="options-item-glyph" aria-hidden="true">
-                    {confirmingQuit ? '⚠' : '🚪'}
+                    {confirmingQuit ? '⚠' : '🗑'}
                   </span>
-                  {confirmingQuit ? 'Tap again to abandon' : 'Quit Run — Return to Title'}
+                  {confirmingQuit ? 'Tap again to abandon' : 'Abandon Run'}
                 </button>
               )}
             </div>
-            {onQuitToTitle && (
+            {onAbandonRun && (
               <p className="options-note">
                 {confirmingQuit
                   ? 'This run ends now. Roster, relics and map progress are lost.'
-                  : 'Runs are not saved. Quitting discards this one.'}
+                  : 'The run is saved on the map. Quitting mid-fight replays this fight from the start.'}
               </p>
             )}
           </div>

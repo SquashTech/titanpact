@@ -41,6 +41,7 @@ import './cultists.test';
 import './raiders.test';
 import './events.test';
 import './ai.test';
+import './save.test';
 import { run } from './harness';
 
 run();

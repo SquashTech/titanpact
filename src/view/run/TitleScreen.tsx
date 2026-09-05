@@ -2,8 +2,15 @@ import { useState, type CSSProperties } from 'react';
 import { CompendiumScreen } from './CompendiumScreen';
 import { LocationSelectOverlay } from './LocationSelectOverlay';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
+import { locations } from '../../data/locations';
+import type { SaveSummary } from '../../run/save';
 
 interface Props {
+  /** The parked run a Continue would resume, or null when there is none. */
+  parkedRun: SaveSummary | null;
+  /** Set when a stored run was refused on load — shown once so a vanished Continue is explained, not just missing. */
+  staleSaveReason: string | null;
+  onContinueRun: () => void;
   onStartRun: () => void;
   onQuickBattle: () => void;
   onOpenSandbox: () => void;
@@ -34,7 +41,30 @@ const MOTES = Array.from({ length: MOTE_COUNT }, (_, i) => {
   };
 });
 
+const ACT_ROMAN = ['I', 'II', 'III', 'IV', 'V'];
+
+/** Coarse on purpose: the point is "is this the run I remember", not a timestamp. */
+function savedAgo(savedAt: number, now = Date.now()): string {
+  const minutes = Math.floor((now - savedAt) / 60_000);
+  if (!Number.isFinite(minutes) || minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? 'yesterday' : `${days}d ago`;
+}
+
+function parkedRunLabel(parked: SaveSummary): string {
+  const act = `Act ${ACT_ROMAN[parked.actNumber - 1] ?? parked.actNumber}`;
+  const place = parked.locationId ? locations[parked.locationId]?.name : undefined;
+  const heroes = `${parked.rosterSize} ${parked.rosterSize === 1 ? 'hero' : 'heroes'}`;
+  return [act, place, heroes].filter(Boolean).join(' · ');
+}
+
 export function TitleScreen({
+  parkedRun,
+  staleSaveReason,
+  onContinueRun,
   onStartRun,
   onQuickBattle,
   onOpenSandbox,
@@ -47,12 +77,23 @@ export function TitleScreen({
   const [showLocations, setShowLocations] = useState(false);
   const [showDev, setShowDev] = useState(false);
   const [launching, setLaunching] = useState(false);
+  const [confirmingNewRun, setConfirmingNewRun] = useState(false);
+  const [staleNoteDismissed, setStaleNoteDismissed] = useState(false);
 
   // The sound already plays from the delegated pointerdown listener (audio/uiSfx.ts).
-  function handleStart() {
+  function launch(action: () => void) {
     if (launching) return;
     setLaunching(true);
-    window.setTimeout(onStartRun, LAUNCH_ANIM_MS);
+    window.setTimeout(action, LAUNCH_ANIM_MS);
+  }
+
+  /** With a run parked, starting over deletes it — so it arms first, like the in-run Abandon. */
+  function handleStart() {
+    if (parkedRun && !confirmingNewRun) {
+      setConfirmingNewRun(true);
+      return;
+    }
+    launch(onStartRun);
   }
 
   /** Every Dev row leaves the title, so none of them needs the menu left standing. */
@@ -115,11 +156,37 @@ export function TitleScreen({
 
       {/* Two entries only. Everything else on this screen is either a lookup
           tool (Reference) or scaffolding (Dev), and both are pushed to a corner
-          so the choice here reads as "play" or "read". */}
+          so the choice here reads as "play" or "read". A parked run takes the
+          primary slot: coming back to a run in progress is the likelier intent. */}
       <div className="title-buttons">
-        <button className="resolve-button title-cta" onClick={handleStart} disabled={launching}>
-          Start a Run
+        {parkedRun && (
+          <button className="resolve-button title-cta" onClick={() => launch(onContinueRun)} disabled={launching}>
+            <span className="title-cta-label">Continue Run</span>
+            {/* Two lines, not one wrapping one: where it breaks is then the same at every act and place. */}
+            <span className="title-cta-sub">{parkedRunLabel(parkedRun)}</span>
+            <span className="title-cta-sub">saved {savedAgo(parkedRun.savedAt)}</span>
+          </button>
+        )}
+        <button
+          className={
+            parkedRun ? `title-newrun-button${confirmingNewRun ? ' armed' : ''}` : 'resolve-button title-cta'
+          }
+          onClick={handleStart}
+          disabled={launching}
+        >
+          {parkedRun
+            ? confirmingNewRun
+              ? 'Tap again — this discards the parked run'
+              : 'Start a New Run'
+            : 'Start a Run'}
         </button>
+        {/* The reason itself is developer-shaped ("roster[0].unlockedMoveIds references..."), so it
+            goes to the console (App.tsx) and the player gets the one fact they can act on. */}
+        {staleSaveReason && !staleNoteDismissed && (
+          <button className="title-stale-note" onClick={() => setStaleNoteDismissed(true)}>
+            A run saved by an earlier version of the game could not be loaded, and has been cleared. Tap to dismiss.
+          </button>
+        )}
         <button className="title-compendium-button" onClick={() => setShowCompendium(true)}>
           <span className="title-compendium-icon" aria-hidden="true">
             📖
