@@ -352,6 +352,113 @@ export const enemies: Record<string, HeroDefinition> = {
     starter: false,
   },
 
+  // --- Undead (Necropolis) — authored for Act 2, scaled up from there ---
+  // Spirit-primary on four of the six, the Cultists' shared-spine shape, and the tightest
+  // answer any faction has: only Arcane and Mind read 2x off Spirit. The Dread Raven is
+  // deliberately outside that spine — see its own note.
+  //
+  // The tell is HAUNT, and it is the first faction engine that changes WHO gets hit rather
+  // than how hard. A Haunted hero takes every Spirit or Mind attack aimed at its PARTNER
+  // (`spreadTriggerTypes`, statusEngine.ts) — which is most of this roster's damage — so one
+  // Torment turns four single-target casts into eight hits. In a game whose locked invariants
+  // include "no spread damage reduction", that is the largest multiplier a status can buy.
+  //
+  // The second half is what makes the first half a trap rather than a grind. Spite doubles
+  // below 50% of the user's HP and Vengeance TRIPLES below 25%, so an Undead gets stronger
+  // the closer it is to dead. The two interlock: Haunt spreads the player's incoming damage
+  // across both enemies, which walks BOTH of them into Spite range together instead of
+  // letting either be removed cleanly. Chipping the Necropolis arms it. The counterplay is
+  // to burst one target through the spread, or to switch — Haunt `clearsOnSwitch`, and it is
+  // the switch-out that clears it, not the switch-in.
+  skullShambler: {
+    id: 'skullShambler',
+    name: 'Skull Shambler',
+    types: ['Spirit'],
+    baseStats: { hp: 70, attack: 25, defense: 60, intelligence: 90, wisdom: 65, speed: 90, manaPool: 55, mpRegen: 12 },
+    moveIds: ['torment', 'spite', 'drain'],
+    starter: false,
+  },
+  // Plants the mark and carries the low-HP payoff on one body, the Pixie's shape. 70 HP is
+  // the lowest of any 400-band basic on purpose (an Act 1 Goblin is lower, and is fodder): it
+  // is the one that reaches Spite's 50% window on the player's FIRST hit, so the engine's
+  // second half shows up before the fight is decided.
+  // Torment is unconditional and costs 25, which is the whole reason the mark is reliable.
+  //
+  // Skeletons in mail. Phantom Strike and Spooky Slice are physical SPIRIT, which is what
+  // lets the faction's one bruiser spread through Haunt like the casters do — the Iron half
+  // is its bulk and its coverage, not its job.
+  skeletonKnight: {
+    id: 'skeletonKnight',
+    name: 'Skeleton Knight',
+    types: ['Spirit', 'Iron'],
+    baseStats: { hp: 110, attack: 100, defense: 95, intelligence: 20, wisdom: 35, speed: 40, manaPool: 55, mpRegen: 12 },
+    moveIds: ['ironFist', 'phantomStrike', 'spookySlice'],
+    starter: false,
+  },
+  // The attrition body, and the mirror of the Shambler: 145 HP — the bulkiest basic in the
+  // game — and Speed 15, the slowest thing anywhere. It is built to still be standing when
+  // its own payoff arms, and Vengeance at triple power below 25% is a 145 HP hero's reward
+  // for having taken a long time to kill. Poison is what it does while it waits.
+  shamblingHusk: {
+    id: 'shamblingHusk',
+    name: 'Shambling Husk',
+    types: ['Spirit', 'Nature'],
+    baseStats: { hp: 145, attack: 30, defense: 85, intelligence: 70, wisdom: 55, speed: 15, manaPool: 65, mpRegen: 12 },
+    moveIds: ['toxicSpores', 'blight', 'vengeance'],
+    starter: false,
+  },
+  // The reason Mind is in this faction at all: Haunt triggers off Spirit AND Mind, and this
+  // is the only member that swings the second one. Two mark sources in one kit — Wisp at a
+  // 20% roll for 20 mana, Wicked Fear unconditionally for 45 — so the Conjurer is the enemy
+  // that has to die if the player wants the spread to stop.
+  boneConjurer: {
+    id: 'boneConjurer',
+    name: 'Bone Conjurer',
+    types: ['Spirit', 'Mind'],
+    baseStats: { hp: 95, attack: 20, defense: 65, intelligence: 100, wisdom: 75, speed: 45, manaPool: 65, mpRegen: 12 },
+    moveIds: ['wisp', 'psiBolt', 'wickedFear'],
+    starter: false,
+  },
+  // Fields the "Monsters" battle node alongside 3 random basic Undead; never randomly drawn.
+  // The first LEADER authored outside its faction's spine — Beast/Shadow against four Spirits
+  // — and the consequence is exact and intended: Haunt does not trigger on Beast or Shadow,
+  // so the Raven is the one Undead whose blows do not carry. It is the beatstick while the
+  // basics do the spreading, and a `battle` node becomes a real fork: kill the Raven, which
+  // is fast and hits hardest, or kill the Conjurer, which is what makes everything else hurt
+  // twice.
+  //
+  // Rend is how it joins the engine anyway without a Spirit move: double damage against a
+  // target under half HP, on a board where Haunt has just put BOTH heroes there at once.
+  // 70 Defense on 140 HP is the softest leader in the game, which is the other half of the
+  // fork — this one can actually be removed in the turns the player spends on it.
+  dreadRaven: {
+    id: 'dreadRaven',
+    name: 'Dread Raven',
+    types: ['Beast', 'Shadow'],
+    baseStats: { hp: 140, attack: 110, defense: 70, intelligence: 25, wisdom: 60, speed: 95, manaPool: 100, mpRegen: 16 },
+    moveIds: ['claw', 'rend', 'lacerate', 'shadowSlice'],
+    starter: false,
+  },
+  // The Necropolis's Guardian reinforcement, and the apex of both halves: it Haunts with
+  // Poltergeist so the player's damage stops being aimed, and then Vengeance triples once it
+  // drops under 25%. 210 HP is the LOWEST of the five champions on purpose — the window is
+  // ~52 HP wide, roughly one player turn, and the whole fight is the question of whether that
+  // turn kills it or hands it a 180-power swing. The stats that would have been HP are in
+  // Attack and Intelligence instead.
+  //
+  // It does not carry Last Rites, for the reason the Lava Beast does not carry Volcanic
+  // Surge: bp120 that drops the user to 1 HP is a self-destruct dressed as a finisher, and a
+  // boss that ends itself makes turtling the answer. Vengeance is the opposite trade — it
+  // punishes a sloppy finish instead of performing one.
+  skeletonKing: {
+    id: 'skeletonKing',
+    name: 'Skeleton King',
+    types: ['Spirit', 'Ancient'],
+    baseStats: { hp: 210, attack: 110, defense: 105, intelligence: 125, wisdom: 95, speed: 55, manaPool: 150, mpRegen: 20 },
+    moveIds: ['runicBlast', 'poltergeist', 'wailingFlight', 'vengeance'],
+    starter: false,
+  },
+
   // --- Raiders (Storm Coast) — authored for Act 2, scaled up from there ---
   // Every one is Iron-primary: a warband in mail, not five unrelated coastal things.
   // The price of that spine is Fire, Storm and Mech, which all read 2x off Iron.
@@ -485,9 +592,21 @@ export const factions: Record<string, FactionRoster> = {
     basicIds: ['flameSprite', 'steamSpirit', 'emberLizard', 'automaton'],
     leaderId: 'vulcadozer',
   },
+  undead: {
+    id: 'undead',
+    name: 'Undead',
+    baselineAct: 2,
+    basicIds: ['skullShambler', 'skeletonKnight', 'shamblingHusk', 'boneConjurer'],
+    leaderId: 'dreadRaven',
+  },
 };
 
-/** The faction every location without an authored one still fields (docs/locations.md "The faction bill"). */
+/**
+ * Act 1's faction, and the fallback for a Location that ever ships without one. Every
+ * Location has an authored roster as of 2026-09-05, so nothing falls back today — only
+ * Wild's Edge names this, and it names it because Act 1 IS the Goblins
+ * (docs/locations.md "The faction bill").
+ */
 export const DEFAULT_FACTION_ID = 'goblins';
 
 /** Pointed at by `LocationDefinition.guardianFinalEnemyId`. */
@@ -496,6 +615,7 @@ export const YUGZULACH_ID = 'yugzulach';
 export const LEVIATHAN_ID = 'leviathan';
 export const ELDER_BOUGH_ID = 'elderBough';
 export const LAVA_BEAST_ID = 'lavaBeast';
+export const SKELETON_KING_ID = 'skeletonKing';
 
 /** `enemies` narrowed to one faction's basics, for the generators that must never draw its leader. */
 export function basicEnemiesOf(faction: FactionRoster): HeroLookup {

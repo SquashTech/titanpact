@@ -2,7 +2,7 @@
 // feeds src/run/locations.ts's PoolBias; the presentation fields feed locationArt/ActIntroScreen.
 
 import type { TypeId } from '../engine/content';
-import { DEFAULT_FACTION_ID, ELDER_BOUGH_ID, GOBLIN_LORD_ID, LAVA_BEAST_ID, LEVIATHAN_ID, YUGZULACH_ID } from './enemies';
+import { DEFAULT_FACTION_ID, ELDER_BOUGH_ID, GOBLIN_LORD_ID, LAVA_BEAST_ID, LEVIATHAN_ID, SKELETON_KING_ID, YUGZULACH_ID } from './enemies';
 
 /** Particle-field motion (docs/locations.md §4). */
 export type AmbienceKind = 'fireflies' | 'embers' | 'snow' | 'rain' | 'spores' | 'sigils';
@@ -97,7 +97,6 @@ export const locations: Record<string, LocationDefinition> = {
     ambience: 'rain',
   },
 
-  // The Necropolis still fields Goblins: its roster is unauthored (docs/locations.md §5.2).
   necropolis: {
     id: 'necropolis',
     name: 'Necropolis',
@@ -106,8 +105,8 @@ export const locations: Record<string, LocationDefinition> = {
     // Shadow is here so the affinity matches more than one Skirmish's worth of heroes (§2).
     affinity: ['Spirit', 'Frost', 'Shadow'],
     exclusiveHeroIds: [],
-    factionId: DEFAULT_FACTION_ID,
-    guardianFinalEnemyId: null,
+    factionId: 'undead',
+    guardianFinalEnemyId: SKELETON_KING_ID,
     tintRgb: '132, 198, 208',
     ambience: 'snow',
   },

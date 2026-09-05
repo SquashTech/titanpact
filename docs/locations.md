@@ -118,20 +118,22 @@ work is data entry rather than plumbing.
 `LocationDefinition.factionId`. `fight` and `battle` are the two node types that read as
 *faction*; `skirmish` reads as *region*.
 
-Five are paid: **Goblins** (5 basics + the Chief, Wild's Edge), **Cultists** (4 basics +
-the Cult Mystic, Blighted Shrine) and **Raiders** (4 basics + the Champion Raider, Storm
-Coast) since 2026-09-02, and **Fae** (4 basics + the Pixie Queen, Forbidden Forest) and
-**Vulcans** (4 basics + the Vulcadozer, Molten Foundry) since 2026-09-05. Only the Undead
-roster is still unwritten, so **the Necropolis alone names a faction on the arrival screen
-while still fielding Goblins.**
+**The bill is paid (2026-09-05).** All six: **Goblins** (5 basics + the Chief, Wild's Edge),
+**Cultists** (4 + the Cult Mystic, Blighted Shrine) and **Raiders** (4 + the Champion Raider,
+Storm Coast) since 2026-09-02, then **Fae** (4 + the Pixie Queen, Forbidden Forest),
+**Vulcans** (4 + the Vulcadozer, Molten Foundry) and **Undead** (4 + the Dread Raven,
+Necropolis). Every Location fields its own roster and its own Guardian champion; nothing
+falls back to `DEFAULT_FACTION_ID` any more, and Wild's Edge names it only because Act 1 *is*
+the Goblins.
 
 The Molten Foundry's faction was called **Automatons** until 2026-09-05 and is now the
 **Vulcans**, because four of its six are not Mechs at all — the name is the place's, not
 either half's. `LocationDefinition.faction` is the only place the old name lived.
 
-This is a known and accepted intermediate state, not an oversight. The affinity layer (§2)
-costs zero new content and works today; faction rosters land one at a time, and each one is
-a block of data in `enemies.ts` plus one field on its Location. Scoped in §5.2.
+Each one was a block of data in `enemies.ts` plus one field on its Location, exactly as this
+section predicted — no engine change was needed for any of the five, which is the pure-data
+architecture doing its job. The five tells below are built entirely out of status and field
+effect vocabulary that already existed.
 
 The upside buried in it: `run-loop.md` §4 still lists "a real Guardian boss hero" as
 unbuilt, and locations supply the reason to author six of them rather than one. Each
@@ -189,7 +191,7 @@ is the pattern to reuse: not a faction with a hole in its counter, a faction who
 the hole. It costs nothing to author (every champion is already Ancient-second) and it makes
 the type-answer decision a real one instead of a solved one.
 
-**What a faction's tell is (2026-09-05, the Fae and the Vulcans).** A roster at the same 400/500/700 band as
+**What a faction's tell is (2026-09-05, the Fae, the Vulcans and the Undead).** A roster at the same 400/500/700 band as
 the last two has to be a different *fight*, not a different colour, and the lever is a status
 the whole kit is built around. The Raiders' is Conduct — a mark that pays out on the next hit.
 The Fae's is **Renew**, which pays out three ways off one turn: the end-of-round heal, the
@@ -217,24 +219,64 @@ decay still on; with it suppressed the fight becomes "outlast its suicide". The 
 belongs on the Automaton, where 110 HP and a one-cast pool make Overheat a cost rather than
 an exit. `test/vulcans.test.ts` guards the Guardian against any self-targeted status.
 
+The Undead's is **Haunt**, and it is the first tell that changes *who gets hit* rather than
+how hard. A Haunted hero takes every Spirit or Mind attack aimed at its **partner**
+(`spreadTriggerTypes`, `statusEngine.ts`) — which is most of this roster's damage — so one
+25-mana Torment turns each of the faction's single-target casts into two hits, with nothing
+scaling the second one down, because "no spread damage reduction" is a locked invariant.
+Measured across the roster: 10 of its 17 single-target attacks spread, and the seven that do
+not are the Knight's Iron half, the King's Ancient half, and all four of the Raven's.
+
+The second half is what makes the first half a trap rather than a grind. **Spite** doubles
+below 50% of the *user's* HP and **Vengeance** triples below 25%, so an Undead gets stronger
+the closer it is to dead — and the two interlock, because spreading the player's damage
+across both enemies walks *both* into Spite range together instead of letting either be
+removed cleanly. Chipping the Necropolis arms it. The counterplay is to burst one target
+through the spread, or to switch: Haunt `clearsOnSwitch`, and it is the switch-*out* that
+clears it.
+
+The Skeleton King is that at apex, and its stat line is the argument: 210 HP, the **lowest**
+of the five champions, with the points that would have been HP in Attack and Intelligence.
+The Vengeance window is ~52 HP wide — roughly one player turn — so the whole fight is whether
+that turn kills it or hands it a 180-power swing. It does **not** carry Last Rites (bp120,
+user drops to 1 HP) for the same reason the Lava Beast lost Volcanic Surge: a boss that ends
+itself makes turtling the answer. Vengeance punishes a sloppy finish instead of performing
+one, which is the opposite trade.
+
 ### `guardianFinalEnemyId` — the faction champion
 
 One enemy id per location, held on the **bench** of that location's Guardian fight so it
 is the last combatant to reach the field (`run-loop.md` "The Guardian's champion" for the
-mechanism and the balance questions). Five locations have one today: Wild's Edge's **Goblin
-Lord** (600 stat total, Beast/Ancient, physical), the Blighted Shrine's **Yugzulach**
-(700, Shadow/Ancient, magical — the same silhouette one act later and down the other damage
-pipeline), the Storm Coast's **Leviathan** (700, Water/Ancient), the Forbidden Forest's
-**Elder Bough** (700, Nature/Ancient) and the Molten Foundry's **Lava Beast** (700,
-Fire/Ancient). Only the Necropolis is still `null`, for the same reason its `factionId`
-points at the Goblins: there is no authored Undead champion to point at yet.
+mechanism and the balance questions). **All six have one**, as of 2026-09-05: Wild's Edge's
+**Goblin Lord** (600 stat total, Beast/Ancient, physical), the Blighted Shrine's
+**Yugzulach** (700, Shadow/Ancient, magical — the same silhouette one act later and down the
+other damage pipeline), the Storm Coast's **Leviathan** (700, Water/Ancient), the Forbidden
+Forest's **Elder Bough** (700, Nature/Ancient), the Molten Foundry's **Lava Beast** (700,
+Fire/Ancient) and the Necropolis's **Skeleton King** (700, Spirit/Ancient). No location
+carries `null` any more.
 
-Whether the champion sits inside its faction's type spine is a per-location call, and both
-answers are in the game. Yugzulach and the Elder Bough do, so the answer that beat the basics
-still beats the boss — the readable version. The Leviathan does not, because the Storm
-Coast's apex is a thing that lives in the water rather than a bigger Raider. The Lava Beast
-is the third reading: inside the spine, but its Ancient half is what takes the faction's one
-answer away exactly when the player reaches for it (see the Vulcans note above).
+All six are **Ancient-second**, which is a convention worth naming now that the set is
+closed: Ancient's attacker row is empty and every other row resists it, so a champion is a
+type-chart *wall* — nothing on the board is super-effective against one. That is the
+silhouette the fight is meant to have, and it is also the lever the Vulcans use (below).
+
+Whether the champion sits inside its faction's type spine is a per-location call, and all
+three readings are now in the game. Yugzulach, the Elder Bough and the Skeleton King **do**,
+so the answer that beat the basics still beats the boss — the readable version. The Leviathan
+does **not**, because the Storm Coast's apex is a thing that lives in the water rather than a
+bigger Raider. The Lava Beast is the third: inside the spine, but its Ancient half is what
+takes the faction's one answer away exactly when the player reaches for it (see the Vulcans
+note above).
+
+**The leader is a separate question, and the Undead answered it differently (2026-09-05).**
+Every other faction's `leaderId` shares its basics' primary type. The **Dread Raven** is
+Beast/Shadow against four Spirits, and the consequence is mechanical rather than cosmetic:
+Haunt triggers off Spirit and Mind, so the Raven is the one Undead whose blows do not carry.
+That turns a `battle` node into a real fork — kill the Raven, which is the fastest and
+hardest-hitting thing on the board and the softest leader in the game at 70 Defense, or kill
+the Bone Conjurer, which is what makes everything *else* hurt twice. A leader outside the
+spine is worth reaching for exactly when the faction's tell has trigger types to sit outside
+*of*; it would have bought the Cultists or the Vulcans nothing.
 
 A **location** property rather than a faction or boss-node one, and that placement is the
 decision worth recording. What comes out of the treeline at Wild's Edge is a Goblin Lord
@@ -246,8 +288,8 @@ placeholder Goblin locations a Goblin Lord they were never meant to field. This 
 ground you are standing on* — the same thing `faction`, `factionId` and `affinity` say, and
 so it belongs beside them.
 
-It is also the half of the faction bill above that has actually been paid five times, which
-is the authoring prompt that section asks for. One to go.
+It is also the half of the faction bill above, and it is now paid in full — six locations,
+six factions, six champions.
 
 ## 4. The arrival screen
 
@@ -314,8 +356,9 @@ Nothing about a Goblin is hardcoded in the app layer any more; the old
 `generateGoblinChiefEncounter` is the same function under a name that no longer
 names a faction.
 
-Five rosters exist. **One does not:** the Necropolis alone still points at `'goblins'`
-(`DEFAULT_FACTION_ID`) and fields Goblins while the arrival screen names Undead.
+All six rosters exist as of 2026-09-05. Nothing points at `DEFAULT_FACTION_ID` as a
+*fallback* any more — Wild's Edge names it because Act 1 is the Goblins, and the constant is
+kept only for a Location that ever ships without a faction.
 
 Roughly 4-5 basics + 1 leader per faction, `HeroDefinition`s in the shape
 `enemies.ts` already uses (a Goblin does not need a different schema, it needs
@@ -603,13 +646,20 @@ enough that half of it clears whatever button the screen ends in.
   a Foundry that re-lights itself, is the natural marriage of this system and
   `field-effects.md`. Deliberately not attempted — Field Effects has exactly one authored
   effect today, and the second one should not be a location's ambient passive.
-- **May a faction share one type spine?** The Cultists all lead on Shadow, so Light and
-  Spirit answer the entire Blighted Shrine, basics and Guardian alike; the Goblins' five
-  basics are five different types and answer to nothing in particular. Both readings are
-  defensible — a cult *should* look like a cult, and a location the right hero trivialises
-  is a legitimate reason to have drafted that hero — but which one is the house style is
-  not decided, and the four unwritten factions will each restate the question. Measure it
-  before generalising the Cultists' shape.
+- **May a faction share one type spine?** Still open, but no longer abstract — all six
+  factions are authored now and four answers are on the table. The Cultists (Shadow),
+  Raiders (Iron), Fae (Nature) and Undead (Spirit) each share a spine, and what that costs
+  varies more than expected: Spirit and Shadow give up two attacking types, Iron three,
+  Nature four. The Goblins share none. The **Vulcans** are the interesting case, because
+  they show a mixed faction is not automatically the safer choice — Fire and Mech happen to
+  share Water as an answer, so the Foundry is *tighter* to counter than the Cultists despite
+  having no spine at all.
+
+  What the set suggests, and what a playtest should check: the spine is not the lever that
+  matters. The **exception** is. A faction whose Guardian sits outside its own answer (the
+  Lava Beast) or whose leader sits outside its own tell (the Dread Raven) stays interesting
+  at every stat band, spine or no spine. Measure whether that holds before writing it down
+  as house style.
 - **Where does the mob curve sit against the player curve?** `FactionRoster.baselineAct`
   makes "which act is this roster for" authorable, but the Cultists' 400 stat total at
   Act 2 and the +30/act above it are figures chosen against the hero roster as written,

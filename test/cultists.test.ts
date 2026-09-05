@@ -165,12 +165,13 @@ test('cultists: the Blighted Shrine is the location that fields them', () => {
   assert.strictEqual(shrine.factionId, 'cultists');
   assert.strictEqual(shrine.faction, 'Cultists');
   assert.strictEqual(shrine.guardianFinalEnemyId, YUGZULACH_ID);
-  // Every location without an authored roster still points at the Goblin default (docs/locations.md §5.2).
-  const authored = new Set(['blightedShrine', 'stormCoast', 'forbiddenForest', 'moltenFoundry']);
+  // Every Location has an authored roster as of 2026-09-05, so nothing falls back to the
+  // Goblin default any more — Wild's Edge names it because Act 1 IS the Goblins.
   for (const location of Object.values(locations)) {
     assert.ok(factions[location.factionId], `${location.id} points at unknown faction ${location.factionId}`);
-    if (!authored.has(location.id)) assert.strictEqual(location.factionId, 'goblins');
   }
+  assert.strictEqual(locations.wildsEdge.factionId, 'goblins');
+  assert.strictEqual(new Set(Object.values(locations).map((l) => l.factionId)).size, Object.keys(locations).length);
 });
 
 test('cultists: the fight node draws basics only, and the battle node always fields the Mystic', () => {

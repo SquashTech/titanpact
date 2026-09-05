@@ -63,6 +63,13 @@ import automatonArt from '../../../art/enemies/vulcans/automaton.png';
 import vulcadozerArt from '../../../art/enemies/vulcans/vulcadozer.png';
 import lavaBeastArt from '../../../art/enemies/vulcans/lavabeast.png';
 
+import skullShamblerArt from '../../../art/enemies/necropolis/skullshambler.png';
+import skeletonKnightArt from '../../../art/enemies/necropolis/skeletonknight.png';
+import shamblingHuskArt from '../../../art/enemies/necropolis/shamblinghusk.png';
+import boneConjurerArt from '../../../art/enemies/necropolis/boneconjurer.png';
+import dreadRavenArt from '../../../art/enemies/necropolis/dreadraven.png';
+import skeletonKingArt from '../../../art/enemies/necropolis/skeletonking.png';
+
 import raiderArt from '../../../art/enemies/raiders/raider.png';
 import stormRaiderArt from '../../../art/enemies/raiders/stormraider.png';
 import surfRaiderArt from '../../../art/enemies/raiders/surfraider.png';
@@ -151,6 +158,13 @@ export const heroArt: Partial<Record<string, string>> = {
   automaton: automatonArt,
   vulcadozer: vulcadozerArt,
   lavaBeast: lavaBeastArt,
+  // --- Enemies: Undead ---
+  skullShambler: skullShamblerArt,
+  skeletonKnight: skeletonKnightArt,
+  shamblingHusk: shamblingHuskArt,
+  boneConjurer: boneConjurerArt,
+  dreadRaven: dreadRavenArt,
+  skeletonKing: skeletonKingArt,
   // --- Enemies: Raiders ---
   raider: raiderArt,
   stormRaider: stormRaiderArt,

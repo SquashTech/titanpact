@@ -591,9 +591,9 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   faction, type affinity and arrival screen (`locations.md`, 2026-08-28), but the
   itinerary is currently drawn *for* the player. The decided design — **each act
   offers 2 named locations and the player picks one** — is not built yet, and the
-  five non-Act-1 factions, only the Undead still have no enemy content — the Cultists,
-  Raiders, Fae and Vulcans are authored, so only the Necropolis's `fight`/`battle`
-  nodes still field Goblins. Both are tracked in `locations.md` §5, not here.
+  five non-Act-1 factions all have their own enemy content as of 2026-09-05 (Cultists,
+  Raiders, Fae, Vulcans, Undead), so no location falls back to Goblins any more. The
+  1-of-2 location choice is tracked in `locations.md` §5, not here.
 - **Visual path rendering.** `MapScreen` renders nodes grouped by row with
   reachable/visited/current/locked states, but does not draw connecting lines between
   them — a cosmetic gap, same "lowest priority, purely cosmetic" bucket as the
