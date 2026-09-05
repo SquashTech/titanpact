@@ -3,3 +3,4 @@ dist/
 dist-view/
 *.log
 .node-runtime/
+sim-out/
