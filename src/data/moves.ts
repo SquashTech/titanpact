@@ -3219,7 +3219,9 @@ export const moves: Record<string, MoveDefinition> = {
     type: 'Ancient',
     category: 'magical',
     kind: 'damage',
-    basePower: 75,
+    // Ancient is neutral into every hero and nothing resists it, so an Ancient STAB move
+    // is worth more than its Base Power reads. 55, not 75, for that reason alone.
+    basePower: 55,
     statDeltas: [{ stat: 'wisdom', amount: 20 }],
     statDeltaTarget: 'self',
     manaCost: 50,

@@ -73,8 +73,12 @@ export const enemies: Record<string, HeroDefinition> = {
     id: 'goblinLord',
     name: 'Goblin Lord',
     types: ['Beast', 'Ancient'],
-    baseStats: { hp: 215, attack: 90, defense: 85, intelligence: 70, wisdom: 65, speed: 75, manaPool: 120, mpRegen: 20 },
-    moveIds: ['thrash', 'momentumSwing', 'enfeeble', 'archonBlast'],
+    // Act 1's Guardian meets the weakest roster in the run, so it is tuned below the
+    // other champions on both axes: 653 stat points against their 840-850, and a Beast
+    // kit that has to set Bleed up with Claw before Maul pays out, rather than the
+    // spread damage that was killing a hero per round (docs/run-loop.md).
+    baseStats: { hp: 215, attack: 65, defense: 75, intelligence: 60, wisdom: 60, speed: 75, manaPool: 105, mpRegen: 20 },
+    moveIds: ['claw', 'maul', 'enfeeble', 'archonBlast'],
     starter: false,
   },
 

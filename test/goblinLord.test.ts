@@ -6,17 +6,21 @@ import { test } from './harness';
 import { moves } from '../src/data/moves';
 import { enemies, ENDBRINGER_ID, GOBLIN_LORD_ID } from '../src/data/enemies';
 import { locations, ACT_ONE_LOCATION_ID } from '../src/data/locations';
-import type { StatKey } from '../src/engine/content';
+import { statusApplicationsOf, type StatKey } from '../src/engine/content';
 
 /** The game's stat-total convention (docs/run-loop.md "Measured baseline") — six combat stats, not mana or MP Regen. */
 const COMBAT_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed'];
 
-test('goblinLord: the authored stat total is 600, on the same six stats the difficulty curve measures', () => {
+test('goblinLord: the authored stat total is 550, on the same six stats the difficulty curve measures', () => {
   const lord = enemies[GOBLIN_LORD_ID];
   const total = COMBAT_STATS.reduce((sum, stat) => sum + lord.baseStats[stat], 0);
-  assert.strictEqual(total, 600);
+  // Was 600. Batch simulation put the Act 1 Guardian at a 4.6% player win rate — the run's
+  // single choke point — so the champion came down 50 points, almost all of it off Attack.
+  assert.strictEqual(total, 550);
   // Mean Act 1 Guardian sits at 432, the Goblin Chief at 218.
   assert.ok(total > 432, 'the champion should out-stat the boss he reinforces');
+  // Attack is the term Enfeeble multiplies, so it carries the cut: 90 -> 65.
+  assert.strictEqual(lord.baseStats.attack, 65);
 });
 
 test('goblinLord: every stat is a multiple of 5 — the locked authoring rule, not a coincidence', () => {
@@ -45,7 +49,10 @@ test('goblinLord: 20 MP Regen is the ceiling, and it is what makes the kit casta
 
 test('goblinLord: the kit is four moves — the MOVE_CAP — spanning both damage pipelines', () => {
   const lord = enemies[GOBLIN_LORD_ID];
-  assert.deepStrictEqual([...lord.moveIds], ['thrash', 'momentumSwing', 'enfeeble', 'archonBlast']);
+  // Claw sets Bleed (20%), Maul doubles into it — a setup the player can outpace, where the
+  // Thrash/Momentum Swing kit it replaced simply killed a hero per round from turn one.
+  assert.deepStrictEqual([...lord.moveIds], ['claw', 'maul', 'enfeeble', 'archonBlast']);
+  assert.strictEqual(moves.maul.conditionalPower!.requiresTargetStatus, statusApplicationsOf(moves.claw)[0].statusId);
   const categories = new Set(lord.moveIds.map((id) => moves[id].category));
   assert.ok(categories.has('physical') && categories.has('magical'));
   const kitTypes = new Set(lord.moveIds.map((id) => moves[id].type));
@@ -69,12 +76,15 @@ test('goblinLord: only the locations with an authored faction field a Guardian c
   for (const location of withChampions) assert.ok(location.guardianFinalEnemyId! in enemies);
 });
 
-test('archonBlast: 75 base power for 50 mana, magical, and the +20 Wisdom lands on the CASTER', () => {
+test('archonBlast: 55 base power for 50 mana, magical, and the +20 Wisdom lands on the CASTER', () => {
   const move = moves.archonBlast;
   assert.strictEqual(move.type, 'Ancient');
   assert.strictEqual(move.category, 'magical');
   assert.strictEqual(move.kind, 'damage');
-  assert.strictEqual(move.basePower, 75);
+  // Was 75. Ancient is neutral into every hero and nothing resists it, so an Ancient STAB
+  // move is worth more than its Base Power reads — it is priced under the catalog median
+  // for a single-target attack on purpose. Shared with the Leviathan and the Endbringer.
+  assert.strictEqual(move.basePower, 55);
   assert.strictEqual(move.manaCost, 50);
   assert.deepStrictEqual(move.statDeltas, [{ stat: 'wisdom', amount: 20 }]);
   // Without statDeltaTarget the deltas follow the move's targets and hand the ENEMY the Wisdom.

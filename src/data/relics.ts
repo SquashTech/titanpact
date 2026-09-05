@@ -228,7 +228,8 @@ const elementalForceNames: Partial<Record<(typeof TYPES)[number], { id: string; 
   Iron: { id: 'forgeStandard', name: 'Forge Standard' },
   Mech: { id: 'cogStandard', name: 'Cog Standard' },
   Beast: { id: 'feralStandard', name: 'Feral Standard' },
-  Ancient: { id: 'ruinStandard', name: 'Ruin Standard' },
+  // Ancient deliberately has no Standard: no hero is Ancient-typed and no hero can reach
+  // an Ancient move, so the relic was a null grant occupying a live offer slot.
 };
 
 const elementalForceRelics: Record<string, RelicDefinition> = Object.fromEntries(
@@ -304,8 +305,12 @@ const guardianBanners: Record<string, RelicDefinition> = {
   bannerOfTheWellspring: {
     id: 'bannerOfTheWellspring',
     name: 'Banner of the Wellspring',
-    description: 'Team-wide +20 Mana pool.',
-    statGrants: { manaPool: 20 },
+    // Mana pool alone cannot carry this Banner: batch simulation shows the grant SATURATES —
+    // +50, +150 and +300 all measure the same, because a fight ends long before a deeper
+    // reserve is ever reached. The Wisdom is what makes it a Banner rather than a dead pick,
+    // and it keeps the identity: a wellspring is what a caster draws on, defensively and to heal.
+    description: 'Team-wide +40 Mana pool, +20 Wisdom.',
+    statGrants: { manaPool: 40, wisdom: 20 },
     guardianBanner: true,
   },
   bannerOfTheEverflow: {

@@ -63,9 +63,19 @@ test('relics: a Banner taken four times stacks to four times its grant', () => {
   assert.deepStrictEqual(mods, { hp: 120 });
 });
 
-test('relics: the three Banners cover three different resources', () => {
-  const grantedStats = guardianBannerRelics.map((r) => Object.keys(r.statGrants).join(),);
-  assert.deepStrictEqual(grantedStats, ['hp', 'manaPool', 'mpRegen']);
+test('relics: the three Banners lead on three different resources', () => {
+  // Each Banner still owns one resource, and they are still distinct.
+  const leadStats = guardianBannerRelics.map((r) => Object.keys(r.statGrants)[0]);
+  assert.deepStrictEqual(leadStats, ['hp', 'manaPool', 'mpRegen']);
+
+  // One documented exception to "one stat each": the Wellspring carries Wisdom alongside its
+  // Mana. Batch simulation showed a pure mana-pool grant SATURATES — +50, +150 and +300 all
+  // measure identically, because a fight ends long before a deeper reserve is reached — so at
+  // +20 it was the worst of the three by a wide margin and no number could fix it. The Wisdom
+  // is what makes it a live pick. If a third Banner ever wants a second stat, that is a
+  // conversation, not a precedent.
+  assert.deepStrictEqual(guardianBannerRelics.map((r) => Object.keys(r.statGrants).length), [1, 2, 1]);
+  assert.deepStrictEqual(relics.bannerOfTheWellspring.statGrants, { manaPool: 40, wisdom: 20 });
 });
 
 // --- Out-of-combat sheet parity: the sheet and buildCombatState both go through entryStats.ts ---
