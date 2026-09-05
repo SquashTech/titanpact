@@ -40,15 +40,6 @@ between; per user direction, the shape is now forced and uniform):
   the Mentor row note below), never a random pick-1-of-3 option.
 - **Row 2: a single forced `skirmish` node.**
 - **Row 3: 3 nodes, pick 1 of 3 — reward types only**, same pool as row 1.
-
-**The Mentor row (Act 1 only).** Act 1 splices one extra forced single-node `classReward`
-row into the shape above, giving it 8 rows where every other act has 7. It sits
-**immediately before the Skirmish** (2026-09-05, per user direction — it was immediately
-*after* until then), so the Class is in hand for the run's first recruitable fight rather
-than arriving just after it. Act 1's row order is therefore `fight` → reward → **Mentor**
-→ `skirmish` → reward → `elite`/`battle` → `shop` → `boss`, and Act 1's Skirmish lands one
-row later than every other act's (`MENTOR_ROW`, `skirmishRowFor`, `src/run/map.ts`). Both
-rows are single nodes, so no path can bypass either.
 - **Row 4: 2 nodes, pick 1 of 2 — `elite` or `battle`** (2026-08-17, per user direction:
   "give the player the option to fight the Elite OR a regular Battle"). `elite` is the
   act's difficulty spike (+10 to 2 stats on all 4 AI heroes); `battle` is a plain,
@@ -61,6 +52,15 @@ rows are single nodes, so no path can bypass either.
 
 The upshot: every act is exactly **Fight → pick 1 of 3 → Skirmish → pick 1 of 3 →
 (Elite or Battle) → Guild Hall → Guardian** — no path through an act ever skips a fight.
+
+**The Mentor row (Act 1 only).** Act 1 splices one extra forced single-node `classReward`
+row into the shape above, giving it 8 rows where every other act has 7. It sits
+**immediately before the Skirmish** (2026-09-05, per user direction — it was immediately
+*after* until then), so the Class is in hand for the run's first recruitable fight rather
+than arriving just after it. Act 1 therefore reads **Fight → pick 1 of 3 → Mentor →
+Skirmish → pick 1 of 3 → (Elite or Battle) → Guild Hall → Guardian**, and its Skirmish
+lands one row later than every other act's (`MENTOR_ROW`, `skirmishRowFor`,
+`src/run/map.ts`). Both are single-node rows, so no path can bypass either.
 
 Edges connect each node to 1-2 nodes in the next row within a small column window, with
 a repair pass guaranteeing every node (row 1+) has at least one incoming edge — no
@@ -130,7 +130,7 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 
 The stat bonuses above are the **node-kind** axis only — what `elite` costs relative to
 `battle` *within one act*. Every encounter node also carries the **per-act** axis on top
-(§3 "Per-act difficulty scaling"), so an Act 4 `elite` fields its +10×2 plus three
+(§3 "Per-act difficulty scaling"), so an Act 4 `elite` fields its +10×2 plus six
 act-steps, and its heroes arrive at level 7 already evolved.
 
 ### The two reward lanes (2026-09-01, per user direction)
@@ -261,10 +261,39 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   **One act-step = +30 to an enemy's stat total** — 3 distinct growth stats at +10 each
   (both figures satisfy CLAUDE.md's multiples-of-5/10 rule; +10×3 over +5×6 so a step is
   felt where it lands rather than smeared). Each step rolls its **own** 3 stats and the
-  steps merge, so a 4-step Act 5 enemy has a broad line rather than +40 in one stat.
+  steps merge, so a deep-act enemy has a broad line rather than +40 in one stat.
   This is a **second, independent axis** on top of the node-kind bonuses in §2 — kind
-  says how hard a fight is *for its act*, the curve says how deep the act is. An Act 4
-  `elite` therefore carries its +10×2 **plus** 3 act-steps.
+  says how hard a fight is *for its act*, the curve says how deep the act is.
+
+  **How many steps: `ACT_STEP_CURVE`, and it ACCELERATES (2026-09-05).** The number of
+  steps is a cumulative table indexed by how many acts past the track's baseline —
+  `[0, 1, 3, 6, 10]` — not the linear `act − baselineAct` it started as. So a Skirmish-track
+  Act 5 enemy takes 10 steps (+300), and an Act 4 `elite` carries its +10×2 **plus** 6
+  act-steps.
+
+  It has to accelerate because the player's power curve does. Measured over 40,000
+  simulated runs (`scripts/sim`), under the linear curve the enemy's fielded stat total grew
+  by **+239, +161, +90, +87** across the run while the player's grew by **+254, +192, +364,
+  +399**. The two cross at Act 4 — exactly where Guardian win rates ran away (57% → 89% →
+  99%). The player accelerates because Banners stack one per act and the gear-rarity window
+  opens late (Act 5 drops 34% legendary / 27% mythic; Act 1 drops neither). The enemy
+  decelerated for two reasons, and the second is the sharp one:
+
+  - the step was flat, so it never compounded; and
+  - **`ENEMY_LEVEL_BY_ACT` is inert for a Guardian's champion.** Every champion ships a
+    full 4-move kit, so `MOVE_CAP` leaves no room for level-up moves, and `appendFinalEnemy`
+    never calls level progression at all. A champion's `level` is a label; levels 7 and 10
+    buy it nothing. The stat curve is the *only* live lever on it.
+
+  Index 1 is deliberately left at 1 step: Act 2 is already the hardest Guardian in the run
+  and needed no help. After the change the player/enemy stat ratio at the Guardian is flat
+  across the run (1.13 / 1.10 / 1.16 / 1.16 / 1.15) where it used to diverge to 1.44.
+
+  > **A flat ratio does not produce a flat win rate, and should not be tuned until it does.**
+  > Guardian win rates still rise late (Act 5 ≈ 81%) because the population reaching Act 5 is
+  > self-selected — only strong runs get there. Scaling hard enough to force a flat win rate
+  > would mean the enemy *out*-growing the player, which is a different design statement.
+  > The ratio is the thing this curve is tuned against.
 
   **Enemy level by act: 1 / 3 / 5 / 7 / 10.** Level is not a stat multiplier (CLAUDE.md:
   no automatic stat growth), so it buys exactly two things, both intended: it gates

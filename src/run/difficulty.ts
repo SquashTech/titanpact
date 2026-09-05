@@ -37,11 +37,33 @@ function clampAct(actNumber: number): number {
   return Math.floor(actNumber);
 }
 
+/**
+ * Cumulative act-steps, indexed by how many acts past the track's baseline. This replaces a
+ * linear `act - baselineAct`, and it ACCELERATES on purpose.
+ *
+ * Measured (`scripts/sim`): under the linear curve the enemy's fielded stat total grew by
+ * +239, +161, +90, +87 across the run while the player's grew by +254, +192, +364, +399.
+ * The two cross at act 4, which is exactly where Guardian win rates ran away (57% -> 89% ->
+ * 99%). Two things caused the enemy side to decelerate:
+ *
+ *  - the step was a flat +30 an act, so it never compounded the way the player's stacking
+ *    Banners and opening gear-rarity window do; and
+ *  - `ENEMY_LEVEL_BY_ACT` is INERT for a Guardian's champion — every champion ships a full
+ *    4-move kit, so `MOVE_CAP` leaves no room for level-up moves, and `appendFinalEnemy`
+ *    never runs level progression at all. Levels 7 and 10 buy a champion nothing.
+ *
+ * So the stat curve is the only live lever on a champion, and it has to bend rather than
+ * climb. Index 1 is left at 1 step deliberately: act 2 is already the hardest Guardian in
+ * the run and does not need help.
+ */
+export const ACT_STEP_CURVE: readonly number[] = [0, 1, 3, 6, 10];
+
 /** Acts past the level table hold at its last entry. `baselineAct` overrides the track default — a faction authored for a later act. */
 export function actScaling(track: ScalingTrack, actNumber: number, baselineAct: number = BASELINE_ACT[track]): ActScaling {
   const act = clampAct(actNumber);
+  const stepsPastBaseline = Math.max(0, act - baselineAct);
   return {
-    statSteps: Math.max(0, act - baselineAct),
+    statSteps: ACT_STEP_CURVE[Math.min(stepsPastBaseline, ACT_STEP_CURVE.length - 1)],
     level: ENEMY_LEVEL_BY_ACT[Math.min(act, ENEMY_LEVEL_BY_ACT.length) - 1],
   };
 }

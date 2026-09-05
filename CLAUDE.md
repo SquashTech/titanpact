@@ -211,11 +211,16 @@ what's still unimplemented:
   are an open balance question (`docs/run-loop.md`). **Encounters scale by act**
   (2026-08-30) on two tracks (`src/run/difficulty.ts`): **Monsters** baselines at Act 2
   (placeholder — per-act monster content isn't authored yet), **Skirmish/Guardian** at
-  Act 1, and each act past a track's baseline adds **+30 enemy stat total** on top of
-  the node-kind bonus. Enemy level runs **1 / 3 / 5 / 7 / 10** by act, so from Act 3 on
-  every hero-pool enemy arrives already **evolved**, and a Recruit Contract claims it at
-  that level. Every number here is a first-pass figure for playtest; only the shape is
-  decided. HP/mana **fully restore
+  Act 1, and acts past a track's baseline walk an **accelerating** `ACT_STEP_CURVE`
+  (`[0, 1, 3, 6, 10]` cumulative steps of +30 stat total each) on top of the node-kind
+  bonus. It accelerates because it has to track a player whose growth does: measured, a
+  linear curve had enemy stats growing +239/+161/+90/+87 an act against the player's
+  +254/+192/+364/+399 (2026-09-05, `scripts/sim`). Enemy level runs **1 / 3 / 5 / 7 / 10**
+  by act, so from Act 3 on every hero-pool enemy arrives already **evolved**, and a Recruit
+  Contract claims it at that level — but note that **level is inert for a Guardian's
+  champion**: every champion ships a full 4-move kit and `appendFinalEnemy` runs no level
+  progression, so the stat curve is the only lever that touches it. Every number here is a
+  first-pass figure for playtest; only the shape is decided. HP/mana **fully restore
   between map nodes** — reversed same-day from an initial persist-across-nodes design
   after first playtest showed a KO'd hero simply stayed dead-weight into the next
   fight with no way to recover it (`docs/run-loop.md`). Relics are **minimal and

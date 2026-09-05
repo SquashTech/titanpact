@@ -3,6 +3,7 @@ import { test } from './harness';
 import {
   actScaling,
   trainingPointsFor,
+  ACT_STEP_CURVE,
   ACT_XP_STEP,
   ACT_STEP_STAT_TOTAL,
   BASELINE_ACT,
@@ -22,19 +23,40 @@ function statTotal(grants: Partial<Record<string, number>>): number {
   return Object.values(grants).reduce<number>((sum, v) => sum + (v ?? 0), 0);
 }
 
-test('difficulty: the skirmish track baselines at Act 1 and adds one step per act after', () => {
+test('difficulty: the skirmish track baselines at Act 1 and walks up the acceleration curve', () => {
   assert.strictEqual(BASELINE_ACT.skirmish, 1);
-  assert.strictEqual(actScaling('skirmish', 1).statSteps, 0);
-  assert.strictEqual(actScaling('skirmish', 2).statSteps, 1);
-  assert.strictEqual(actScaling('skirmish', 5).statSteps, 4);
+  assert.strictEqual(actScaling('skirmish', 1).statSteps, ACT_STEP_CURVE[0]);
+  assert.strictEqual(actScaling('skirmish', 2).statSteps, ACT_STEP_CURVE[1]);
+  assert.strictEqual(actScaling('skirmish', 5).statSteps, ACT_STEP_CURVE[4]);
 });
 
 test('difficulty: the monsters track baselines at Act 2 and never goes negative in Act 1', () => {
   assert.strictEqual(BASELINE_ACT.monsters, 2);
   assert.strictEqual(actScaling('monsters', 1).statSteps, 0);
-  assert.strictEqual(actScaling('monsters', 2).statSteps, 0);
-  assert.strictEqual(actScaling('monsters', 3).statSteps, 1);
-  assert.strictEqual(actScaling('monsters', 5).statSteps, 3);
+  assert.strictEqual(actScaling('monsters', 2).statSteps, ACT_STEP_CURVE[0]);
+  assert.strictEqual(actScaling('monsters', 3).statSteps, ACT_STEP_CURVE[1]);
+  // One act behind the skirmish track throughout, by construction.
+  assert.strictEqual(actScaling('monsters', 5).statSteps, ACT_STEP_CURVE[3]);
+});
+
+test('difficulty: the act-step curve ACCELERATES — that is the whole point of it being a table', () => {
+  // A linear curve let the enemy fall behind: measured, its fielded stats grew +239/+161/+90/+87
+  // an act while the player's grew +254/+192/+364/+399, crossing at act 4.
+  assert.strictEqual(ACT_STEP_CURVE[0], 0, 'a track at its own baseline takes no steps');
+  for (let i = 1; i < ACT_STEP_CURVE.length; i++) {
+    assert.ok(ACT_STEP_CURVE[i] > ACT_STEP_CURVE[i - 1], `step ${i} does not grow`);
+  }
+  const gaps = ACT_STEP_CURVE.slice(1).map((n, i) => n - ACT_STEP_CURVE[i]);
+  for (let i = 1; i < gaps.length; i++) {
+    assert.ok(gaps[i] >= gaps[i - 1], `gap ${i} shrinks — the curve must never decelerate`);
+  }
+  assert.ok(gaps[gaps.length - 1] > gaps[0], 'the last act must step harder than the first');
+});
+
+test('difficulty: acts past the curve hold at its last entry rather than running off the end', () => {
+  const last = ACT_STEP_CURVE[ACT_STEP_CURVE.length - 1];
+  assert.strictEqual(actScaling('skirmish', TOTAL_ACTS).statSteps, last);
+  assert.strictEqual(actScaling('skirmish', 99).statSteps, last);
 });
 
 test('difficulty: enemy levels follow the authored act table and hold past its end', () => {

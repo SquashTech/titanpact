@@ -13,7 +13,7 @@ import { enemies, factions, basicEnemiesOf, LAVA_BEAST_ID } from '../src/data/en
 import { locations } from '../src/data/locations';
 import { typeChart } from '../src/data/typechart';
 import { resolveTypeMult } from '../src/engine/damage/typeMult';
-import { actScaling, ACT_STEP_STAT_TOTAL } from '../src/run/difficulty';
+import { actScaling, ACT_STEP_CURVE, ACT_STEP_STAT_TOTAL } from '../src/run/difficulty';
 import { generateEncounter, generateLeaderEncounter } from '../src/run/enemyGen';
 import type { HeroDefinition, StatKey } from '../src/engine/content';
 
@@ -103,8 +103,9 @@ test('vulcans: mana is still the brake on hero-sized stat lines', () => {
 
 test('vulcans: the faction baselines at Act 2, so it scales across acts 3-5 and never below zero', () => {
   assert.strictEqual(VULCANS.baselineAct, 2);
-  for (const [act, steps] of [[1, 0], [2, 0], [3, 1], [4, 2], [5, 3]] as const) {
-    assert.strictEqual(actScaling('monsters', act, VULCANS.baselineAct).statSteps, steps, `act ${act}`);
+  // Indexed off the shared acceleration curve, one act behind the skirmish track.
+  for (const [act, index] of [[1, 0], [2, 0], [3, 1], [4, 2], [5, 3]] as const) {
+    assert.strictEqual(actScaling('monsters', act, VULCANS.baselineAct).statSteps, ACT_STEP_CURVE[index], `act ${act}`);
   }
 });
 
@@ -271,11 +272,11 @@ test('vulcans: the fight node draws basics only, and the battle node always fiel
   }
 });
 
-test('vulcans: an Act 5 Molten Foundry fields the same roster carrying three act-steps of stats', () => {
+test('vulcans: an Act 5 Molten Foundry fields the same roster carrying the full act curve of stats', () => {
   const scaling = actScaling('monsters', 5, VULCANS.baselineAct);
   const { run } = generateLeaderEncounter(7, VULCANS.basicIds, VULCANS.leaderId, enemies, scaling);
   for (const entry of run.roster) {
     const granted = COMBAT_STATS.reduce((sum, stat) => sum + (entry.evolutionStatGrants[stat] ?? 0), 0);
-    assert.strictEqual(granted, 3 * ACT_STEP_STAT_TOTAL, `${entry.heroId} did not take the full act curve`);
+    assert.strictEqual(granted, scaling.statSteps * ACT_STEP_STAT_TOTAL, `${entry.heroId} did not take the full act curve`);
   }
 });
