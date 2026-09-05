@@ -2,6 +2,8 @@ import * as assert from 'assert';
 import { test } from './harness';
 import {
   actScaling,
+  trainingPointsFor,
+  ACT_XP_STEP,
   ACT_STEP_STAT_TOTAL,
   BASELINE_ACT,
   ENEMY_LEVEL_BY_ACT,
@@ -139,4 +141,43 @@ test('difficulty: scaling stays deterministic per seed', () => {
   const a = generateEncounter('elite', 77, heroes, opts);
   const b = generateEncounter('elite', 77, heroes, opts);
   assert.deepStrictEqual(a.run.roster, b.run.roster);
+});
+
+// --- Training Point income (act-scaled since 2026-09-05) ---
+
+test('difficulty: Training Points scale with the act, and the finale still pays nothing', () => {
+  // Act 1 is the authored base: 2 the opener, 3 Monsters, 4 Skirmish and Guardian.
+  assert.strictEqual(trainingPointsFor('fight', 1), 2);
+  assert.strictEqual(trainingPointsFor('battle', 1), 3);
+  assert.strictEqual(trainingPointsFor('skirmish', 1), 4);
+  assert.strictEqual(trainingPointsFor('boss', 1), 4);
+
+  // Every act past the first adds ACT_XP_STEP to every payout.
+  assert.strictEqual(trainingPointsFor('fight', 5), 2 + 4 * ACT_XP_STEP);
+  assert.strictEqual(trainingPointsFor('skirmish', 5), 4 + 4 * ACT_XP_STEP);
+
+  // The run ends on the finale, so it pays nothing in any act — the step must not lift it off zero.
+  assert.strictEqual(trainingPointsFor('finale', 1), 0);
+  assert.strictEqual(trainingPointsFor('finale', TOTAL_ACTS), 0);
+});
+
+test('difficulty: income is monotonic in the act and clamps below act 1', () => {
+  let previous = 0;
+  for (let act = 1; act <= TOTAL_ACTS; act++) {
+    const paid = trainingPointsFor('skirmish', act);
+    assert.ok(paid >= previous, `act ${act} pays less than act ${act - 1}`);
+    previous = paid;
+  }
+  // A junk act must not refund points or divide by a negative step.
+  assert.strictEqual(trainingPointsFor('skirmish', 0), trainingPointsFor('skirmish', 1));
+  assert.strictEqual(trainingPointsFor('skirmish', -3), trainingPointsFor('skirmish', 1));
+});
+
+test('difficulty: the step is what puts the late-tier movepool inside a run', () => {
+  // Reaching MOVE_TIER_LEVEL.late (7) costs 20 pooled points under the capped curve.
+  // A five-act run's Skirmish/Guardian lane alone now clears that for more than one hero,
+  // where flat income across five acts paid roughly 70 for the WHOLE roster.
+  const flatRun = 5 * trainingPointsFor('skirmish', 1);
+  const scaledRun = [1, 2, 3, 4, 5].reduce((sum, act) => sum + trainingPointsFor('skirmish', act), 0);
+  assert.ok(scaledRun > flatRun * 1.5, `${scaledRun} is not a meaningful lift over ${flatRun}`);
 });

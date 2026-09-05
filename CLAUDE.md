@@ -74,9 +74,12 @@ don't silently override it.
   `levelUpPool > 0`. **Spending is optional** (2026-09-03): the player may bank a
   spendable pool and walk on (`RunState.levelUpDeferred`), which suppresses the gate
   until the next XP grant clears it; the map's status bar carries the banked figure and
-  re-opens the screen. Per-fight income was rescaled with it and is **flat across acts**
-  so the curve is not inflated away (`trainingPointsFor`, `src/app/App.tsx`). Rationale,
-  figures and the open tuning questions: `docs/leveling-and-ranks.md`.
+  re-opens the screen. **The price flattens at `MAX_LEVEL_UP_COST` = 5** (2026-09-05) and
+  **per-fight income now scales by act**, `+ACT_XP_STEP` per act past the first
+  (`trainingPointsFor`, `ACT_XP_STEP`, `src/run/difficulty.ts`) — both reversing the
+  earlier flat-income decision, because batch simulation showed **0.0% of heroes ever
+  reached level 7**, where every move costing 70+ mana unlocks. Rationale, figures and the
+  open tuning questions: `docs/leveling-and-ranks.md`.
 - **Level-ups are a pooled currency** distributed freely after each battle (benched heroes
   included). Below the Evolution level, a level-up **unlocks a move** from the current
   tier; the level-up that reaches the Evolution level instead **surfaces the Evolution

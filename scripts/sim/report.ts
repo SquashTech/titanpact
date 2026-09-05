@@ -281,10 +281,19 @@ export function formatReport(
     ['LATE tier (lvl 7)', 7],
     ['mastery (lvl 11)', 11],
   ];
+  // Split, because the whole-batch column is dominated by heroes that died in Act 1 and
+  // never saw the later acts' income at all. The DEEP column is the one that answers
+  // "does a player who gets there actually reach the late-tier movepool".
+  const deep = agg.heroLevelHistogramDeep;
+  const deepRuns = deep.reduce((sum, n) => sum + (n ?? 0), 0);
+  const atLeastDeep = (level: number) => deep.slice(level).reduce((sum, n) => sum + (n ?? 0), 0);
   out.push('');
-  out.push(`  the movepool gate — best level reached, over ${heroRuns} (hero, run) pairs:`);
+  out.push(`  the movepool gate — best level reached, all ${heroRuns} (hero, run) pairs vs. the ${deepRuns} that reached act 4+:`);
+  out.push(`    ${pad('', 20)}${padStart('all', 10)}${padStart('act 4+', 10)}`);
   for (const [label, level] of gates) {
-    out.push(`    reached ${pad(label, 20)}${padStart(pct(atLeast(level), heroRuns), 8)}`);
+    out.push(
+      `    ${pad(label, 20)}${padStart(pct(atLeast(level), heroRuns), 10)}${padStart(pct(atLeastDeep(level), deepRuns), 10)}`
+    );
   }
 
   const totalCasts = Object.values(agg.castsByTier).reduce((sum, n) => sum + n, 0);

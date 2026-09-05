@@ -65,7 +65,7 @@ import {
   type EncounterNodeType,
   type Encounter,
 } from '../run/enemyGen';
-import { actScaling, type ScalingTrack } from '../run/difficulty';
+import { actScaling, trainingPointsFor, type ScalingTrack } from '../run/difficulty';
 import { generateItinerary, locationBias, locationForAct } from '../run/locations';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
@@ -224,15 +224,6 @@ function goldRewardFor(nodeType: EncounterMapNodeType): number {
   // The row-0 opener stays on the thin band: it is the lightest fight and already ships a drop.
   if (nodeType === 'battle') return 30 + Math.floor(Math.random() * 16); // 30-45
   return 15 + Math.floor(Math.random() * 11); // 15-25
-}
-
-/** Training Points per win: 2 the act opener / 3 Monsters / 4 Skirmish and Guardian. Deliberately FLAT across acts — the level-price curve is the brake (docs/leveling-and-ranks.md). */
-function trainingPointsFor(nodeType: EncounterMapNodeType): number {
-  if (nodeType === 'finale') return 0;
-  // The opener is the lightest fight on the map and pays the least; `battle` is the full Monsters rate.
-  if (nodeType === 'fight') return 2;
-  if (nodeType === 'battle') return 3;
-  return 4;
 }
 
 /** Monsters always drop; Skirmish rolls for it, with elite/boss also one loot tier ahead (LOOT_SOURCE). */
@@ -514,7 +505,7 @@ export function App() {
       squad,
       encounter,
       goldReward: goldRewardFor(mapNodeType),
-      trainingPointsReward: trainingPointsFor(mapNodeType),
+      trainingPointsReward: trainingPointsFor(mapNodeType, playerRun.actNumber),
       equipmentReward,
     });
   }

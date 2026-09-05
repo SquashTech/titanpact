@@ -23,9 +23,11 @@ level-up currency" referenced in `progression.md`.)
 
 ## What a level-up COSTS (LOCKED, 2026-09-01)
 
-**A level-up costs as many Training Points as the hero's current level.** Level 1 → 2
-costs 1, level 4 → 5 costs 4, level 10 → 11 costs 10 (`levelUpCost`,
-`costToReachLevel`, `src/run/progression.ts`; `test/levelCost.test.ts`).
+**A level-up costs as many Training Points as the hero's current level, flattening at
+`MAX_LEVEL_UP_COST` = 5.** Level 1 → 2 costs 1, level 4 → 5 costs 4, and every level from
+5 → 6 upward costs 5 (`levelUpCost`, `costToReachLevel`, `src/run/progression.ts`;
+`test/levelCost.test.ts`). The ceiling was added 2026-09-05 — see "The tail needed a cap
+ after all" below.
 
 ### Why it is a curve
 
@@ -62,8 +64,12 @@ The concrete shape of the choice, which is the whole design claim:
 
 ### Three consequences, all load-bearing
 
-- **The mastery treadmill self-limits.** Level 11 costs 10, level 12 costs 11. The
-  unbounded +10 tail needs no cap; it prices itself out.
+- **The mastery treadmill needed a cap after all.** The claim here was that the unbounded
+  +10 tail prices itself out: level 11 costs 10, level 12 costs 11. It priced out far more
+  than the tail — reaching MASTERY_LEVEL on one hero cost 45 of the ~70 points a whole run
+  paid, and level 7, where every 70+ mana move unlocks, cost 21. The price now flattens at
+  `MAX_LEVEL_UP_COST` = 5, which takes mastery to 35 and level 7 to 20. Depth is still
+  charged for; it is no longer charged an amount no run can pay.
 - **A leftover pool that buys nobody is NORMAL, and it banks.** Every gate that used to
   read `levelUpPool > 0` now reads `canAffordAnyLevelUp` (`src/app/App.tsx`,
   `LevelUpScreen`) — otherwise the level-up screen reopens at every map node holding 2
@@ -77,7 +83,7 @@ The concrete shape of the choice, which is the whole design claim:
 ### Income was rescaled with it
 
 The curve is meaningless without the income it is denominated in, so per-fight payouts
-moved in the same pass (`trainingPointsFor`, `src/app/App.tsx`): **2** for the act's
+moved in the same pass (`trainingPointsFor`, `src/run/difficulty.ts`): at ACT 1, **2** for the act's
 row-0 opener (`fight`), **3** for Monsters (`battle`), **4** for Skirmish (`skirmish`,
 `elite`) and **4** for the Guardian — an act's four fights pay **13–14**, and the
 reward-row XP option is a flat **2** (`UPGRADE_REWARD_XP`, `NodeRewardScreen`).
@@ -87,11 +93,35 @@ fight on the map, the one every path takes, and the one a player meets before ow
 anything. The XP cache is priced *below one fight* for the same reason it exists — a
 top-up the player can take instead of gold or a relic, not a substitute for fighting.
 
-Income is deliberately **flat across acts**. Scaling it by act would inflate the price
-curve away, and the resulting deceleration — the same income buying fewer levels every act
-— *is* the brake. Over five acts a run pays ~65–70 from fights, which lands a four-hero core
-a level or so behind Act 5 enemies at level 10 (`ENEMY_LEVEL_BY_ACT`,
-`src/run/difficulty.ts`): the player is meant to be behind on level and ahead on gear.
+### Income scales by act (2026-09-05) — reversing the flat rule
+
+Income *was* deliberately flat across acts, on the reasoning that scaling it would inflate
+the price curve away and that the resulting deceleration *was* the brake. Batch simulation
+retired that (`scripts/sim`, 100,000 runs):
+
+- Late-tier moves unlock at level 7, and **every one of the 42 moves costing 70+ mana is
+  late tier**.
+- Under flat income, **0.0%** of heroes ever reached level 7 and **99.2% of all casts were
+  early-tier**. Among runs that got as far as act 4, only 16.8% reached it.
+- Reaching level 7 costs **20** pooled points under the capped curve. Flat income paid
+  ~65–70 across a whole five-act run **for the entire roster**, so a squad of four (80
+  points) could not get there on a perfect run. Total income, not the price curve, was the
+  binding constraint.
+
+So `trainingPointsFor(nodeType, actNumber)` now adds **`ACT_XP_STEP` = 2** per act past the
+first: an Act 5 Skirmish pays 12 where an Act 1 Skirmish pays 4. The function moved from
+`src/app/App.tsx` to `src/run/difficulty.ts` with that change — it is an act rule, and it
+now lives beside the other act rules instead of in the view.
+
+Measured at +2, among runs reaching act 4: heroes reaching **level 7 went 16.8% → 54.1%**,
+Evolution 69.6% → 75.5%, and mastery stayed rare at 3.6% — which is the intent, since
+mastery is the sink *past* the movepool. The step was chosen as the smallest that clears
+the late-tier gate for a majority; +3 and above make mastery routine (36%+).
+
+> 🔒 **OPEN — the cost this bought.** Scaling income is exactly what the flat rule was
+> guarding against, and it shows: Act 3's clear rate went 26% → 41% and Act 5's 78% → 97%.
+> The back half of the run is now easier than it was. Whether that is the right trade for
+> a reachable movepool is a playtest question, and `ACT_XP_STEP` is the one number to turn.
 
 > 🔒 **OPEN — flag before hardening.** Every number above is a first-pass playtest figure;
 > only the shape is decided. Three specific questions the curve creates:
@@ -102,9 +132,10 @@ a level or so behind Act 5 enemies at level 10 (`ENEMY_LEVEL_BY_ACT`,
 >   level-5, already-evolved hero, i.e. 10 points of curve nobody paid. Contracts were a
 >   modest bonus under flat pricing and are noticeably stronger under the curve. That may
 >   be correct (contracts are documented as flat-value), but it is a change in their power.
-> - **Does income ever scale by act?** The answer above is "no, on purpose". If playtest
->   says the player falls too far behind the enemy level curve, the fix to reach for first
->   is the enemy curve or the gear curve — not income, which un-does the brake.
+> - ~~**Does income ever scale by act?**~~ **ANSWERED 2026-09-05: yes, +2 per act.** The
+>   original answer here was "no, on purpose" — that it un-does the brake. It does, and the
+>   section above prices what that cost. It was taken anyway, because the alternative was a
+>   movepool half the catalog deep that no run ever opened.
 
 ## Spending is optional — the pool banks on the map
 

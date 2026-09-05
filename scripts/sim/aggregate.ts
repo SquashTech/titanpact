@@ -106,6 +106,7 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
     hero.finalLevelSum += record.heroLevels[heroId];
     const best = record.heroLevels[heroId];
     agg.heroLevelHistogram[best] = (agg.heroLevelHistogram[best] ?? 0) + 1;
+    if (record.actReached >= 4) agg.heroLevelHistogramDeep[best] = (agg.heroLevelHistogramDeep[best] ?? 0) + 1;
     if (record.won) hero.runsWon += 1;
   }
 

@@ -17,7 +17,7 @@ import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry
 import { generateMap, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
 import { generateItinerary, locationBias, locationForAct } from '../../src/run/locations';
-import { actScaling, type ScalingTrack } from '../../src/run/difficulty';
+import { actScaling, trainingPointsFor, type ScalingTrack } from '../../src/run/difficulty';
 import { generateEncounter, generateLeaderEncounter, generateFinaleEncounter, appendFinalEnemy, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
 import {
@@ -86,13 +86,6 @@ function goldRewardFor(nodeType: EncounterMapNodeType, rng: Rng): number {
   if (nodeType === 'boss' || nodeType === 'finale') return 0;
   if (nodeType === 'battle') return 30 + Math.floor(rng() * 16);
   return 15 + Math.floor(rng() * 11);
-}
-
-function trainingPointsFor(nodeType: EncounterMapNodeType): number {
-  if (nodeType === 'finale') return 0;
-  if (nodeType === 'fight') return 2;
-  if (nodeType === 'battle') return 3;
-  return 4;
 }
 
 /** NodeRewardScreen's flat XP cache. */
@@ -484,7 +477,7 @@ function resolveEncounterNode(
   if (!fight.won) return { run: workingRun, won: false, defeatedRoster: encounter.run.roster, drop: null };
 
   workingRun = grantCurrencyReward(workingRun, goldRewardFor(kindKey, rng));
-  workingRun = grantUpgradeReward(workingRun, trainingPointsFor(kindKey) * options.xpMult);
+  workingRun = grantUpgradeReward(workingRun, trainingPointsFor(kindKey, workingRun.actNumber) * options.xpMult);
   return { run: workingRun, won: true, defeatedRoster: encounter.run.roster, drop };
 }
 
