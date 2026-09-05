@@ -239,6 +239,119 @@ export const enemies: Record<string, HeroDefinition> = {
     starter: false,
   },
 
+  // --- Vulcans (Molten Foundry) — authored for Act 2, scaled up from there ---
+  // The first faction since the Goblins with NO single type spine, and that is the point of
+  // the name: they are the Foundry's inhabitants, not one species. Fire runs through four of
+  // the six and Mech through the other two, so the roster reads as a place rather than a
+  // cult or a warband. The open question §6 of docs/locations.md asks — should a faction be
+  // counterable as a unit — gets its second answer here, and the answer is that a MIXED
+  // faction can still be counterable as a unit, because the two halves happen to share an
+  // answer: Water is 2x into Fire and 2x into Mech, so it is super-effective on all five of
+  // the fightable roster. Tighter than the Cultists' Light/Spirit, not looser.
+  //
+  // What redeems it is where the exception sits. The ONE Vulcan Water does not beat is the
+  // Lava Beast, whose Ancient half drags it back to 1x — so a squad that brought Water cuts
+  // through the whole Foundry and then meets the Guardian with its answer gone. That is the
+  // pattern worth keeping: not a faction with a hole in its counter, a faction whose BOSS is
+  // the hole.
+  //
+  // The tell is Burn that does not go out. Spreading Blaze sets **Scorched Land**, whose
+  // whole text is "Burn no longer decays", and Burn stacks ADDITIVELY — so every plant after
+  // the first climbs a ladder that never comes back down, and Immolate triples off it. The
+  // counterplay is authored into the status rather than into the kits: Burn `clearsOnSwitch`,
+  // so a switch wipes the stack clean. Which means the engine sharpens exactly as the fight
+  // grinds down, because the lock-in rule takes switching away at 2 KO'd heroes.
+  //
+  // The Mech half pays the same fire it deals: Overheat and Meltdown Burn their own user, and
+  // under the Vulcans' own Scorched Land that self-Burn never decays either. They are cooking
+  // themselves on their own ground, which is the Foundry in one sentence.
+  flameSprite: {
+    id: 'flameSprite',
+    name: 'Flame Sprite',
+    types: ['Fire'],
+    baseStats: { hp: 80, attack: 20, defense: 50, intelligence: 90, wisdom: 60, speed: 100, manaPool: 65, mpRegen: 12 },
+    moveIds: ['spreadingBlaze', 'immolate', 'ember'],
+    starter: false,
+  },
+  // Sets the ground and cashes it on one body, the Pixie's shape. Fastest thing in the enemy
+  // pool at 100, because a field effect planted after the round it was meant to pay for is a
+  // wasted turn — and the 65 pool is sized to cast Spreading Blaze AND Immolate in one opening.
+  //
+  // Its Water half is the coverage the Fire spine does not have (2x into Fire, Stone and
+  // Mech) and its sustain both — Siphon returns half of what it takes, on a side that spends
+  // the fight burning itself. It does NOT dodge the faction's own answer: Water still reads
+  // 2x here, because Water does not resist itself on this chart.
+  steamSpirit: {
+    id: 'steamSpirit',
+    name: 'Steam Spirit',
+    types: ['Fire', 'Water'],
+    baseStats: { hp: 105, attack: 20, defense: 70, intelligence: 85, wisdom: 75, speed: 45, manaPool: 65, mpRegen: 12 },
+    moveIds: ['setAlight', 'siphon', 'torrent'],
+    starter: false,
+  },
+  // The physical plant. Molten Lash is the only Burn in the faction that runs off Attack, so
+  // this is the one member that feeds the engine without being a caster — and the -10 Defense
+  // rider is what makes a stacked Burn worth stacking further.
+  emberLizard: {
+    id: 'emberLizard',
+    name: 'Ember Lizard',
+    types: ['Fire', 'Beast'],
+    baseStats: { hp: 115, attack: 100, defense: 80, intelligence: 20, wisdom: 35, speed: 50, manaPool: 55, mpRegen: 12 },
+    moveIds: ['kindle', 'moltenLash', 'claw'],
+    starter: false,
+  },
+  // The bridge between the two halves, and the member that pays for the faction's own engine.
+  // Overheat Burns the target for 20 and the USER for 20, which under the Vulcans' own
+  // Scorched Land never decays — 50 mana on a 60 pool, so it vents once and then clanks.
+  // Malfunction is the Mech texture: a rider rolled from Burn / Poison / Conduct, one of
+  // which this faction has no way at all to cash. Rolling it is a real cost, not a flourish.
+  automaton: {
+    id: 'automaton',
+    name: 'Automaton',
+    types: ['Mech'],
+    baseStats: { hp: 110, attack: 30, defense: 90, intelligence: 85, wisdom: 45, speed: 40, manaPool: 60, mpRegen: 12 },
+    moveIds: ['overclock', 'malfunction', 'overheat'],
+    starter: false,
+  },
+  // Fields the "Monsters" battle node alongside 3 random basic Vulcans; never randomly drawn.
+  // 500, the fourth leader at that figure, and spent like the Champion Raider — a physical
+  // line, not a caster. It deliberately touches no Burn at all: the Foundry's leader is the
+  // MACHINE answer to a fire faction, and what it contributes is Jury-Rig, which hands both
+  // allies +20 on two rolled stats. Two of its four moves roll their own priority bracket on
+  // top of that, so a Vulcadozer round is the one place in the game where nothing is known
+  // before it resolves.
+  vulcadozer: {
+    id: 'vulcadozer',
+    name: 'Vulcadozer',
+    types: ['Mech'],
+    baseStats: { hp: 165, attack: 110, defense: 100, intelligence: 25, wisdom: 45, speed: 55, manaPool: 100, mpRegen: 16 },
+    moveIds: ['cogBop', 'cogSlam', 'whirlingBlades', 'juryRig'],
+    starter: false,
+  },
+  // The Molten Foundry's Guardian reinforcement, and the apex of the engine rather than a
+  // bigger Vulcadozer: it lights its own Scorched Land and then feeds a Burn stack that
+  // cannot fall off, 10 a cast on both heroes, while Immolate triples off the stack it just
+  // built. Every move is cheap on a 150 pool, so it acts every round and never Rests — a
+  // Guardian that grinds rather than one that lands one enormous turn.
+  //
+  // It deliberately does NOT carry Volcanic Surge, and that is a finding rather than a taste
+  // call: the self-inflicted Burn 30 does not decay on the boss's own field either, so a
+  // second cast puts 60 a round on a 265 HP body and the fight becomes "outlast its suicide".
+  // Measured at 265 -> 190 in two rounds WITH the decay still on. The self-cooking joke lives
+  // on the Automaton, where 110 HP and a one-cast pool make it a cost instead of an exit.
+  //
+  // Ancient is doing double duty: it is the champion silhouette the other three share, and it
+  // is the entire reason this faction is not solved by one type. Water is 2x on every other
+  // Vulcan and 1x on this one, so the answer that carried the act runs out at the Guardian.
+  lavaBeast: {
+    id: 'lavaBeast',
+    name: 'Lava Beast',
+    types: ['Fire', 'Ancient'],
+    baseStats: { hp: 265, attack: 110, defense: 95, intelligence: 115, wisdom: 75, speed: 40, manaPool: 150, mpRegen: 20 },
+    moveIds: ['runicBlast', 'spreadingBlaze', 'immolate', 'firebrand'],
+    starter: false,
+  },
+
   // --- Raiders (Storm Coast) — authored for Act 2, scaled up from there ---
   // Every one is Iron-primary: a warband in mail, not five unrelated coastal things.
   // The price of that spine is Fire, Storm and Mech, which all read 2x off Iron.
@@ -365,6 +478,13 @@ export const factions: Record<string, FactionRoster> = {
     basicIds: ['pixie', 'faeWarrior', 'lightFairy', 'mechaFairy'],
     leaderId: 'pixieQueen',
   },
+  vulcans: {
+    id: 'vulcans',
+    name: 'Vulcans',
+    baselineAct: 2,
+    basicIds: ['flameSprite', 'steamSpirit', 'emberLizard', 'automaton'],
+    leaderId: 'vulcadozer',
+  },
 };
 
 /** The faction every location without an authored one still fields (docs/locations.md "The faction bill"). */
@@ -375,6 +495,7 @@ export const GOBLIN_LORD_ID = 'goblinLord';
 export const YUGZULACH_ID = 'yugzulach';
 export const LEVIATHAN_ID = 'leviathan';
 export const ELDER_BOUGH_ID = 'elderBough';
+export const LAVA_BEAST_ID = 'lavaBeast';
 
 /** `enemies` narrowed to one faction's basics, for the generators that must never draw its leader. */
 export function basicEnemiesOf(faction: FactionRoster): HeroLookup {

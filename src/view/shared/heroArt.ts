@@ -56,6 +56,13 @@ import mechaFairyArt from '../../../art/enemies/fae/mechafairy.png';
 import pixieQueenArt from '../../../art/enemies/fae/pixiequeen.png';
 import elderBoughArt from '../../../art/enemies/fae/elderbough.png';
 
+import flameSpriteArt from '../../../art/enemies/vulcans/flamesprite.png';
+import steamSpiritArt from '../../../art/enemies/vulcans/steamspirit.png';
+import emberLizardArt from '../../../art/enemies/vulcans/emberlizard.png';
+import automatonArt from '../../../art/enemies/vulcans/automaton.png';
+import vulcadozerArt from '../../../art/enemies/vulcans/vulcadozer.png';
+import lavaBeastArt from '../../../art/enemies/vulcans/lavabeast.png';
+
 import raiderArt from '../../../art/enemies/raiders/raider.png';
 import stormRaiderArt from '../../../art/enemies/raiders/stormraider.png';
 import surfRaiderArt from '../../../art/enemies/raiders/surfraider.png';
@@ -137,6 +144,13 @@ export const heroArt: Partial<Record<string, string>> = {
   mechaFairy: mechaFairyArt,
   pixieQueen: pixieQueenArt,
   elderBough: elderBoughArt,
+  // --- Enemies: Vulcans ---
+  flameSprite: flameSpriteArt,
+  steamSpirit: steamSpiritArt,
+  emberLizard: emberLizardArt,
+  automaton: automatonArt,
+  vulcadozer: vulcadozerArt,
+  lavaBeast: lavaBeastArt,
   // --- Enemies: Raiders ---
   raider: raiderArt,
   stormRaider: stormRaiderArt,

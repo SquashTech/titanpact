@@ -166,7 +166,7 @@ test('cultists: the Blighted Shrine is the location that fields them', () => {
   assert.strictEqual(shrine.faction, 'Cultists');
   assert.strictEqual(shrine.guardianFinalEnemyId, YUGZULACH_ID);
   // Every location without an authored roster still points at the Goblin default (docs/locations.md §5.2).
-  const authored = new Set(['blightedShrine', 'stormCoast', 'forbiddenForest']);
+  const authored = new Set(['blightedShrine', 'stormCoast', 'forbiddenForest', 'moltenFoundry']);
   for (const location of Object.values(locations)) {
     assert.ok(factions[location.factionId], `${location.id} points at unknown faction ${location.factionId}`);
     if (!authored.has(location.id)) assert.strictEqual(location.factionId, 'goblins');

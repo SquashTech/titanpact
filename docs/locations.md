@@ -118,11 +118,16 @@ work is data entry rather than plumbing.
 `LocationDefinition.factionId`. `fight` and `battle` are the two node types that read as
 *faction*; `skirmish` reads as *region*.
 
-Four are paid: **Goblins** (5 basics + the Chief, Wild's Edge), **Cultists** (4 basics +
+Five are paid: **Goblins** (5 basics + the Chief, Wild's Edge), **Cultists** (4 basics +
 the Cult Mystic, Blighted Shrine) and **Raiders** (4 basics + the Champion Raider, Storm
-Coast) since 2026-09-02, and **Fae** (4 basics + the Pixie Queen, Forbidden Forest) since
-2026-09-05. Automaton and Undead rosters are still unwritten, so **the Molten Foundry and
-the Necropolis name their faction on the arrival screen while still fielding Goblins.**
+Coast) since 2026-09-02, and **Fae** (4 basics + the Pixie Queen, Forbidden Forest) and
+**Vulcans** (4 basics + the Vulcadozer, Molten Foundry) since 2026-09-05. Only the Undead
+roster is still unwritten, so **the Necropolis alone names a faction on the arrival screen
+while still fielding Goblins.**
+
+The Molten Foundry's faction was called **Automatons** until 2026-09-05 and is now the
+**Vulcans**, because four of its six are not Mechs at all — the name is the place's, not
+either half's. `LocationDefinition.faction` is the only place the old name lived.
 
 This is a known and accepted intermediate state, not an oversight. The affinity layer (§2)
 costs zero new content and works today; faction rosters land one at a time, and each one is
@@ -171,7 +176,20 @@ up two attacking types (Light, Spirit), Iron three (Fire, Storm, Mech), and Natu
 (Fire, Frost, Shadow, Beast). The Fae are therefore the most counterable faction in the game
 on purpose, and the Renew engine below is what they are paid for it.
 
-**What a faction's tell is (2026-09-05, the Fae).** A roster at the same 400/500/700 band as
+**The counter-example, and the better answer (2026-09-05, the Vulcans).** The Molten Foundry
+has **no single spine** — Fire leads four of its six and Mech the other two, which is what
+the rename is for. It did not escape the §6 problem: Water is 2x into Fire *and* 2x into
+Mech, so it is super-effective on the entire fightable roster, tighter than the Cultists'
+Light/Spirit rather than looser. A mixed faction is not automatically an uncounterable one.
+
+What makes it work anyway is **where the exception sits**. The one Vulcan Water does not
+beat is the **Lava Beast**, whose Ancient half drags it back to 1x — so a squad that brought
+Water cuts through the whole Foundry and then meets the Guardian with its answer gone. That
+is the pattern to reuse: not a faction with a hole in its counter, a faction whose *boss* is
+the hole. It costs nothing to author (every champion is already Ancient-second) and it makes
+the type-answer decision a real one instead of a solved one.
+
+**What a faction's tell is (2026-09-05, the Fae and the Vulcans).** A roster at the same 400/500/700 band as
 the last two has to be a different *fight*, not a different colour, and the lever is a status
 the whole kit is built around. The Raiders' is Conduct — a mark that pays out on the next hit.
 The Fae's is **Renew**, which pays out three ways off one turn: the end-of-round heal, the
@@ -184,22 +202,39 @@ Overgrowth is Renew 100 on itself, three payouts from one action — and Speed 3
 champion by 20, is what it pays. Whether that self-plant is too much on top of 260 HP is a
 first-pass number for playtest, not a decision.
 
+The Vulcans' is **Burn that does not go out**. Spreading Blaze sets **Scorched Land**, whose
+whole text is "Burn no longer decays", and Burn stacks *additively* — so once the ground is
+lit the stack only ever climbs, and Immolate triples against a Burned target. The
+counterplay is authored into the status rather than into the kits: Burn `clearsOnSwitch`, so
+one switch wipes it clean. Which means this engine **sharpens as the fight grinds**, because
+the lock-in rule takes voluntary switching away at 2 KO'd heroes — the mirror image of the
+Fae's Renew, which decays on its own whether you engage with it or not.
+
+One thing the same field effect ruled out, worth recording so it is not re-added: the
+Guardian originally carried **Volcanic Surge**, whose self-inflicted Burn 30 *also* stops
+decaying on the boss's own Scorched Land. Measured at 265 -> 190 HP in two rounds with the
+decay still on; with it suppressed the fight becomes "outlast its suicide". The self-cooking
+belongs on the Automaton, where 110 HP and a one-cast pool make Overheat a cost rather than
+an exit. `test/vulcans.test.ts` guards the Guardian against any self-targeted status.
+
 ### `guardianFinalEnemyId` — the faction champion
 
 One enemy id per location, held on the **bench** of that location's Guardian fight so it
 is the last combatant to reach the field (`run-loop.md` "The Guardian's champion" for the
-mechanism and the balance questions). Four locations have one today: Wild's Edge's **Goblin
+mechanism and the balance questions). Five locations have one today: Wild's Edge's **Goblin
 Lord** (600 stat total, Beast/Ancient, physical), the Blighted Shrine's **Yugzulach**
 (700, Shadow/Ancient, magical — the same silhouette one act later and down the other damage
-pipeline), the Storm Coast's **Leviathan** (700, Water/Ancient) and the Forbidden Forest's
-**Elder Bough** (700, Nature/Ancient). The remaining two are `null`, for the same reason
-their `factionId` still points at the Goblins: there is no authored Automaton or Undead
-champion to point at yet.
+pipeline), the Storm Coast's **Leviathan** (700, Water/Ancient), the Forbidden Forest's
+**Elder Bough** (700, Nature/Ancient) and the Molten Foundry's **Lava Beast** (700,
+Fire/Ancient). Only the Necropolis is still `null`, for the same reason its `factionId`
+points at the Goblins: there is no authored Undead champion to point at yet.
 
 Whether the champion sits inside its faction's type spine is a per-location call, and both
 answers are in the game. Yugzulach and the Elder Bough do, so the answer that beat the basics
 still beats the boss — the readable version. The Leviathan does not, because the Storm
-Coast's apex is a thing that lives in the water rather than a bigger Raider.
+Coast's apex is a thing that lives in the water rather than a bigger Raider. The Lava Beast
+is the third reading: inside the spine, but its Ancient half is what takes the faction's one
+answer away exactly when the player reaches for it (see the Vulcans note above).
 
 A **location** property rather than a faction or boss-node one, and that placement is the
 decision worth recording. What comes out of the treeline at Wild's Edge is a Goblin Lord
@@ -211,8 +246,8 @@ placeholder Goblin locations a Goblin Lord they were never meant to field. This 
 ground you are standing on* — the same thing `faction`, `factionId` and `affinity` say, and
 so it belongs beside them.
 
-It is also the half of the faction bill above that has actually been paid four times, which
-is the authoring prompt that section asks for. Two to go.
+It is also the half of the faction bill above that has actually been paid five times, which
+is the authoring prompt that section asks for. One to go.
 
 ## 4. The arrival screen
 
@@ -279,9 +314,8 @@ Nothing about a Goblin is hardcoded in the app layer any more; the old
 `generateGoblinChiefEncounter` is the same function under a name that no longer
 names a faction.
 
-Three rosters exist. **Three do not:** the Forbidden Forest, Molten Foundry and
-Necropolis all point at `'goblins'` (`DEFAULT_FACTION_ID`) and field Goblins while
-the arrival screen names Fae, Automatons or Undead.
+Five rosters exist. **One does not:** the Necropolis alone still points at `'goblins'`
+(`DEFAULT_FACTION_ID`) and fields Goblins while the arrival screen names Undead.
 
 Roughly 4-5 basics + 1 leader per faction, `HeroDefinition`s in the shape
 `enemies.ts` already uses (a Goblin does not need a different schema, it needs

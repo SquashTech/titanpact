@@ -2,7 +2,7 @@
 // feeds src/run/locations.ts's PoolBias; the presentation fields feed locationArt/ActIntroScreen.
 
 import type { TypeId } from '../engine/content';
-import { DEFAULT_FACTION_ID, ELDER_BOUGH_ID, GOBLIN_LORD_ID, LEVIATHAN_ID, YUGZULACH_ID } from './enemies';
+import { DEFAULT_FACTION_ID, ELDER_BOUGH_ID, GOBLIN_LORD_ID, LAVA_BEAST_ID, LEVIATHAN_ID, YUGZULACH_ID } from './enemies';
 
 /** Particle-field motion (docs/locations.md §4). */
 export type AmbienceKind = 'fireflies' | 'embers' | 'snow' | 'rain' | 'spores' | 'sigils';
@@ -71,16 +71,15 @@ export const locations: Record<string, LocationDefinition> = {
     ambience: 'spores',
   },
 
-  // These two still field Goblins: their own rosters are unauthored (docs/locations.md §5.2).
   moltenFoundry: {
     id: 'moltenFoundry',
     name: 'Molten Foundry',
-    faction: 'Automatons',
+    faction: 'Vulcans',
     flavor: 'Nobody has fed these furnaces in an age. They are still running.',
     affinity: ['Fire', 'Mech', 'Iron'],
     exclusiveHeroIds: [],
-    factionId: DEFAULT_FACTION_ID,
-    guardianFinalEnemyId: null,
+    factionId: 'vulcans',
+    guardianFinalEnemyId: LAVA_BEAST_ID,
     tintRgb: '226, 104, 60',
     ambience: 'embers',
   },
@@ -98,6 +97,7 @@ export const locations: Record<string, LocationDefinition> = {
     ambience: 'rain',
   },
 
+  // The Necropolis still fields Goblins: its roster is unauthored (docs/locations.md §5.2).
   necropolis: {
     id: 'necropolis',
     name: 'Necropolis',

@@ -40,6 +40,7 @@ import './goblinLord.test';
 import './cultists.test';
 import './raiders.test';
 import './fae.test';
+import './vulcans.test';
 import './events.test';
 import './ai.test';
 import './save.test';
