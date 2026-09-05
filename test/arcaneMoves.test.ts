@@ -3,7 +3,7 @@
 import { statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState } from './fixtures';
+import { createFightState, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
@@ -39,7 +39,7 @@ function survivable(state: CombatState): CombatState {
   const combatants = Object.fromEntries(
     Object.entries(state.combatants).map(([id, c]) => [
       id,
-      { ...c, currentHp: 1200, statModifiers: { ...c.statModifiers, hp: 1200 } },
+      withFullPools({ ...c, statModifiers: { ...c.statModifiers, hp: 1200 } }),
     ])
   );
   return { ...state, combatants } as CombatState;

@@ -310,8 +310,28 @@ export function getCombatStatDelta(hero: HeroDefinition, combatant: Combatant, s
   return getEffectiveStat(hero, combatant, stat, fieldEffectCtx) - baseline;
 }
 
+/**
+ * Global pacing knob, applied to max HP only and to BOTH sides. Fights were ending in a
+ * median of 4 rounds, which is short enough that the mana economy — Rest, bench regen,
+ * switching, the pool size itself — almost never got to matter: a hero ran out of HP far
+ * sooner than it ran out of mana. Batch simulation puts this at difficulty-NEUTRAL (the
+ * Act 1 Guardian moves 21.8% -> 21.1% at 2x) because it scales both sides equally; what it
+ * buys is rounds. 1 disables it.
+ *
+ * It lives here rather than in the authored stat lines so the locked 450-point hero budget
+ * (CLAUDE.md) stays exactly as written, and so one number reverts the whole thing.
+ *
+ * NOTE: healing is flat (`Heal = HealPower x WisdomMult x STAB`, never a share of max HP), so
+ * every individual heal is proportionally smaller against a doubled pool. Measured, the healers
+ * still came out ahead — a longer fight buys more casts than the dilution costs (Solace's healing
+ * per round rose 8.7 -> 10.9 and its death rate fell) — but that balance is worth re-checking
+ * if this number moves again.
+ */
+export const HP_SCALE = 2;
+
 export function getMaxHp(hero: HeroDefinition, combatant: Combatant): number {
-  return getEffectiveStat(hero, combatant, 'hp');
+  // Floor of 1 for the same reason getEffectiveStat has one: 0 max HP is not a combatant.
+  return Math.max(1, Math.round(getEffectiveStat(hero, combatant, 'hp') * HP_SCALE));
 }
 
 export function getMaxMana(hero: HeroDefinition, combatant: Combatant): number {

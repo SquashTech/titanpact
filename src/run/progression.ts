@@ -10,9 +10,20 @@ import { mergeStatMods } from './statMods';
 /** Past the cap, growth is substitution, never expansion. */
 export const MOVE_CAP = 4;
 
-/** A level-up costs as many points as the level being LEFT (CLAUDE.md), so a hero's first level-up costs 1. */
+/**
+ * Ceiling on the level-up price. The raw triangular curve made deep levels unaffordable:
+ * a full five-act run pays roughly 70 pooled points, and reaching MASTERY_LEVEL on ONE
+ * hero cost 55 of them, so the late-tier movepool — every move costing 70+ mana — was
+ * priced out of a real run.
+ */
+export const MAX_LEVEL_UP_COST = 5;
+
+/**
+ * A level-up costs as many points as the level being LEFT (CLAUDE.md), so a hero's first
+ * level-up costs 1 — flattening at MAX_LEVEL_UP_COST rather than rising forever.
+ */
 export function levelUpCost(level: number): number {
-  return Math.max(1, level);
+  return Math.min(MAX_LEVEL_UP_COST, Math.max(1, level));
 }
 
 /** Triangular sum of levelUpCost over [fromLevel, toLevel). */

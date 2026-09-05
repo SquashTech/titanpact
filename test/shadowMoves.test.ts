@@ -3,7 +3,7 @@
 import { firstStatusApplication, statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState } from './fixtures';
+import { createFightState, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
@@ -37,7 +37,7 @@ function withDeepPools(state: CombatState): CombatState {
   const combatants = Object.fromEntries(
     Object.entries(state.combatants).map(([id, c]) => [
       id,
-      { ...c, currentMana: 999, currentHp: 1200, statModifiers: { ...c.statModifiers, manaPool: 999, hp: 1200 } },
+      withFullPools({ ...c, statModifiers: { ...c.statModifiers, manaPool: 999, hp: 1200 } }),
     ])
   );
   return { ...state, combatants } as CombatState;

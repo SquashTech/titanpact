@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState } from './fixtures';
+import { createFightState, fixtureMaxHp } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
@@ -33,7 +33,7 @@ function fixture(seed: number): CombatState {
   );
 }
 
-const maxHpOf = (state: CombatState) => (id: string) => heroes[state.combatants[id].heroId].baseStats.hp;
+const maxHpOf = (state: CombatState) => (id: string) => fixtureMaxHp(state.combatants[id].heroId);
 
 // --- The curve ---
 
@@ -74,7 +74,7 @@ test('pact: the tick hits every living combatant on BOTH sides, bench included',
   assert.deepStrictEqual([...hit].sort(), ['a1', 'a2', 'a3', 'b1', 'b2']);
 
   for (const id of hit) {
-    const expected = Math.ceil(heroes[state.combatants[id].heroId].baseStats.hp * SHORT_CLOCK.baseFraction);
+    const expected = Math.ceil(fixtureMaxHp(state.combatants[id].heroId) * SHORT_CLOCK.baseFraction);
     assert.strictEqual(state.combatants[id].currentHp - result.state.combatants[id].currentHp, expected, id);
   }
 });
@@ -131,7 +131,7 @@ test('pact: resolveRound ticks it at the round boundary, after the status ticks'
   assert.ok(pactIndex > -1, 'expected the pact to tick');
   assert.ok(pactIndex < endIndex, 'the pact ticks inside the round it belongs to');
 
-  const expected = Math.ceil(heroes[state.combatants.a1.heroId].baseStats.hp * SHORT_CLOCK.baseFraction);
+  const expected = Math.ceil(fixtureMaxHp(state.combatants.a1.heroId) * SHORT_CLOCK.baseFraction);
   assert.strictEqual(state.combatants.a1.currentHp - result.state.combatants.a1.currentHp, expected);
 });
 

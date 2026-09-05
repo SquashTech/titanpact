@@ -4,7 +4,7 @@
 
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState } from './fixtures';
+import { createFightState, fixtureMaxHp } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
@@ -110,7 +110,7 @@ test('elementalForce: Fire Force 20 raises rolled damage on a Fire move end to e
   const plain = resolveRound(state, actions, config);
   const boosted = resolveRound(withForce, actions, config);
 
-  const maxHp = heroes.ironWarden.baseStats.hp;
+  const maxHp = fixtureMaxHp('ironWarden');
   const plainDamage = maxHp - plain.state.combatants.b1.currentHp;
   const boostedDamage = maxHp - boosted.state.combatants.b1.currentHp;
   assert.ok(boostedDamage > plainDamage, `expected boosted damage (${boostedDamage}) > plain damage (${plainDamage})`);
@@ -124,7 +124,7 @@ test('elementalForce: Fire Force does not affect a non-Fire move', () => {
   const plain = resolveRound(state, actions, config);
   const stillPlain = resolveRound(withForce, actions, config);
 
-  const maxHp = heroes.ironWarden.baseStats.hp;
+  const maxHp = fixtureMaxHp('ironWarden');
   const plainDamage = maxHp - plain.state.combatants.b1.currentHp;
   const otherDamage = maxHp - stillPlain.state.combatants.b1.currentHp;
   assert.strictEqual(otherDamage, plainDamage);

@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState } from './fixtures';
+import { createFightState, fixtureMaxHp } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
@@ -161,7 +161,7 @@ test('round: a resolved move spends mana and deals damage', () => {
   const spent = heroes.cinderKnight.baseStats.manaPool - moves.singe.manaCost;
   const afterRegen = Math.min(heroes.cinderKnight.baseStats.manaPool, spent + heroes.cinderKnight.baseStats.mpRegen);
   assert.strictEqual(next.combatants.a1.currentMana, afterRegen);
-  assert.ok(next.combatants.b1.currentHp < heroes.ironWarden.baseStats.hp);
+  assert.ok(next.combatants.b1.currentHp < fixtureMaxHp('ironWarden'));
   assert.ok(events.some((e) => e.type === 'DamageDealt'));
   assert.ok(events.some((e) => e.type === 'HpChanged'));
   assert.ok(events.some((e) => e.type === 'ManaRegenTicked'));
@@ -184,7 +184,7 @@ test('round: an unaffordable move is a legality no-op (engine-level guard)', () 
   const actions: Action[] = [{ kind: 'move', combatantId: 'b2', moveId: UNAFFORDABLE_MOVE_ID, declaredTarget: 'a1' }];
   const { state: next, events } = resolveRound(state, actions, config);
   assert.strictEqual(events.some((e) => e.type === 'MoveUsed'), false);
-  assert.strictEqual(next.combatants.a1.currentHp, heroes.cinderKnight.baseStats.hp);
+  assert.strictEqual(next.combatants.a1.currentHp, fixtureMaxHp('cinderKnight'));
 });
 
 test('hasAffordableMove: true iff at least one candidate move is within current mana', () => {
@@ -290,14 +290,14 @@ test('round: a move targeting a slot the enemy switched out of hits the replacem
   assert.ok(events.some((e) => e.type === 'MoveUsed' && (e as any).combatantId === 'a1'));
   assert.ok(events.some((e) => e.type === 'DamageDealt' && (e as any).targetCombatantId === 'b3'));
   assert.strictEqual(events.some((e) => e.type === 'ActionBlocked'), false);
-  assert.strictEqual(next.combatants.b1.currentHp, heroes.ironWarden.baseStats.hp);
+  assert.strictEqual(next.combatants.b1.currentHp, fixtureMaxHp('ironWarden'));
   assert.ok(next.combatants.b3.currentHp < 1000);
   assert.strictEqual(next.active.B[0], 'b3');
 });
 
 test('round: bench regen ticks for a damaged benched combatant, clamped at max HP', () => {
   const state = twoVTwoFixture(15);
-  const maxHp = heroes.wildOracle.baseStats.hp;
+  const maxHp = fixtureMaxHp('wildOracle');
   const withBench = {
     ...state,
     active: { ...state.active, B: ['b1', null] as [string | null, string | null] },

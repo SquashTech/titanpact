@@ -2,7 +2,7 @@
 
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState } from './fixtures';
+import { createFightState, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { enemies } from '../src/data/enemies';
 import { moves, RANDOM_STAT_POOL } from '../src/data/moves';
@@ -39,7 +39,7 @@ function withDeepPools(state: CombatState): CombatState {
   const combatants = Object.fromEntries(
     Object.entries(state.combatants).map(([id, c]) => [
       id,
-      { ...c, currentMana: 999, currentHp: 1200, statModifiers: { ...c.statModifiers, manaPool: 999, hp: 1200 } },
+      withFullPools({ ...c, statModifiers: { ...c.statModifiers, manaPool: 999, hp: 1200 } }),
     ])
   );
   return { ...state, combatants } as CombatState;

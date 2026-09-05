@@ -3,7 +3,7 @@
 import { firstStatusApplication } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState } from './fixtures';
+import { createFightState, fixtureMaxHp, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
@@ -11,7 +11,7 @@ import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { resolveRound } from '../src/engine/combat/resolveRound';
-import { resolveManaCost, effectiveManaCost, hasStatus } from '../src/engine/state';
+import { resolveManaCost, effectiveManaCost, hasStatus, getMaxHp } from '../src/engine/state';
 import type { CombatState } from '../src/engine/state';
 import type { Action } from '../src/engine/combat/actions';
 
@@ -37,7 +37,7 @@ function withDeepPools(state: CombatState): CombatState {
   const combatants = Object.fromEntries(
     Object.entries(state.combatants).map(([id, c]) => [
       id,
-      { ...c, currentMana: 999, currentHp: 1200, statModifiers: { ...c.statModifiers, manaPool: 999, hp: 1200 } },
+      withFullPools({ ...c, statModifiers: { ...c.statModifiers, manaPool: 999, hp: 1200 } }),
     ])
   );
   return { ...state, combatants } as CombatState;
@@ -237,7 +237,7 @@ test('iron: an Iron hit on a marked foe is worth 10% max HP more than the same h
   const plain = resolveRound(state, actions, config);
   const cashed = resolveRound(marked, actions, config);
 
-  const maxHp = heroes.ironWarden.baseStats.hp + 1200;
+  const maxHp = getMaxHp(heroes[state.combatants.b1.heroId], state.combatants.b1);
   const expectedBonus = Math.ceil(maxHp * 0.1);
   const plainDamage = state.combatants.b1.currentHp - plain.state.combatants.b1.currentHp;
   const cashedDamage = marked.combatants.b1.currentHp - cashed.state.combatants.b1.currentHp;

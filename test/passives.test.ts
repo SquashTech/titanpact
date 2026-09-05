@@ -3,7 +3,7 @@
 
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState } from './fixtures';
+import { createFightState, fixtureMaxHp, withFullPools } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
@@ -116,7 +116,7 @@ test('passives: Sanguine heals its owner by the enemy Bleed tick amount', () => 
   const withGrant = withPassive(hurt, 'a1', 'sanguine');
   const bleeding = withStatus(withGrant, 'b1', 'Bleed', {});
 
-  const maxHp = heroes.ironWarden.baseStats.hp;
+  const maxHp = fixtureMaxHp('ironWarden');
   const expectedTick = Math.ceil(maxHp * 0.05);
 
   const { state: next, events } = resolveRound(bleeding, [], config);
@@ -142,7 +142,7 @@ test('passives: two stacks of Sanguine heal twice per enemy Bleed tick', () => {
   const withGrant = withPassive(hurt, 'a1', 'sanguine', 2);
   const bleeding = withStatus(withGrant, 'b1', 'Bleed', {});
 
-  const maxHp = heroes.ironWarden.baseStats.hp;
+  const maxHp = fixtureMaxHp('ironWarden');
   const expectedTick = Math.ceil(maxHp * 0.05);
 
   const { state: next } = resolveRound(bleeding, [], config);
@@ -179,7 +179,7 @@ test('passives: Emberheart actually raises rolled damage on a Fire move end to e
   const plain = resolveRound(state, actions, config);
   const boosted = resolveRound(withGrant, actions, config);
 
-  const maxHp = heroes.ironWarden.baseStats.hp;
+  const maxHp = fixtureMaxHp('ironWarden');
   const plainDamage = maxHp - plain.state.combatants.b1.currentHp;
   const boostedDamage = maxHp - boosted.state.combatants.b1.currentHp;
   assert.ok(boostedDamage > plainDamage, `expected boosted damage (${boostedDamage}) > plain damage (${plainDamage})`);
@@ -409,7 +409,7 @@ test('passives: Bloodthirsty moves the damage roll and the turn order, not just 
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }];
 
   // b2 Bleeds, b1 is hit, so the Bleed tick does not fold into the HP comparison.
-  const maxHp = heroes.ironWarden.baseStats.hp;
+  const maxHp = fixtureMaxHp('ironWarden');
   const plain = maxHp - resolveRound(base, actions, config).state.combatants.b1.currentHp;
   const armed = maxHp - resolveRound(bleeding, actions, config).state.combatants.b1.currentHp;
   assert.ok(armed > plain, `expected the armed roll (${armed}) to beat the plain one (${plain})`);
@@ -809,12 +809,12 @@ test('passives: Afterglow pays at FULL HP — the heal is wasted and the buff is
   const full = {
     ...base,
     combatants: Object.fromEntries(
-      Object.entries(base.combatants).map(([id, c]) => [id, { ...c, currentHp: heroes[c.heroId].baseStats.hp }])
+      Object.entries(base.combatants).map(([id, c]) => [id, { ...c, currentHp: fixtureMaxHp(c.heroId) }])
     ),
   } as CombatState;
   const { state: next } = resolveRound(withPassive(full, 'a1', 'afterglow'), [mends], config);
 
-  assert.strictEqual(next.combatants.a2.currentHp, heroes.crag.baseStats.hp, 'no HP to give back');
+  assert.strictEqual(next.combatants.a2.currentHp, fixtureMaxHp('crag'), 'no HP to give back');
   assert.strictEqual(next.combatants.a2.statModifiers.attack, 20, 'the turn still bought something');
 });
 
@@ -887,7 +887,7 @@ test('passives: Tempering hardens Valor every time it is hit', () => {
   // Full HP: at half, Heavy Blow twice kills Valor before the second stack can land.
   const base = pairFixture(604, 'valor', 'crag');
   const state = withPassive(
-    { ...base, combatants: Object.fromEntries(Object.entries(base.combatants).map(([id, c]) => [id, { ...c, currentHp: heroes[c.heroId].baseStats.hp }])) } as CombatState,
+    { ...base, combatants: Object.fromEntries(Object.entries(base.combatants).map(([id, c]) => [id, { ...c, currentHp: fixtureMaxHp(c.heroId) }])) } as CombatState,
     'a1',
     'tempering'
   );
@@ -999,7 +999,7 @@ function deepFixture(seed: number, sideA: readonly string[], sideB: readonly str
     combatants: Object.fromEntries(
       Object.entries(base.combatants).map(([id, c]) => [
         id,
-        { ...c, currentMana: 999, currentHp: 1200, statModifiers: { ...c.statModifiers, manaPool: 999, hp: 1200 } },
+        withFullPools({ ...c, statModifiers: { ...c.statModifiers, manaPool: 999, hp: 1200 } }),
       ])
     ),
   } as CombatState;

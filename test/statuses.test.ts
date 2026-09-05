@@ -2,7 +2,7 @@
 
 import * as assert from 'assert';
 import { test } from './harness';
-import { createFightState } from './fixtures';
+import { createFightState, fixtureMaxHp } from './fixtures';
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import { typeChart } from '../src/data/typechart';
@@ -56,7 +56,7 @@ test('status: Daze blocks a move action — no MoveUsed, mana untouched, ActionB
   assert.strictEqual(events.some((e) => e.type === 'MoveUsed'), false);
   assert.strictEqual(events.some((e) => e.type === 'ActionBlocked' && e.combatantId === 'a1' && e.reason === 'dazed'), true);
   assert.strictEqual(next.combatants.a1.currentMana, heroes.cinderKnight.baseStats.manaPool);
-  assert.strictEqual(next.combatants.b1.currentHp, heroes.ironWarden.baseStats.hp);
+  assert.strictEqual(next.combatants.b1.currentHp, fixtureMaxHp('ironWarden'));
 });
 
 test('status: Daze is gone by the end of the round it was applied in — nobody ever starts a round Dazed', () => {
@@ -203,7 +203,7 @@ test('status: Conduct detonates on the next Storm/Iron hit — bonus damage, the
   const plainResult = resolveRound(state, actions, config);
   const markedResult = resolveRound(marked, actions, config);
 
-  const maxHp = heroes.ironWarden.baseStats.hp;
+  const maxHp = fixtureMaxHp('ironWarden');
   const plainDamage = maxHp - plainResult.state.combatants.b1.currentHp;
   const markedDamage = maxHp - markedResult.state.combatants.b1.currentHp;
   const expectedBonus = Math.ceil(maxHp * 0.1);
@@ -218,7 +218,7 @@ test('status: Conduct detonates on the next Storm/Iron hit — bonus damage, the
 test('status: Poison counts down while active without dealing damage until the timer hits zero', () => {
   const state = twoVTwoFixture(210);
   const poisoned = withStatus(state, 'b1', 'Poison', { magnitude: 20, duration: 2 });
-  const maxHp = heroes.ironWarden.baseStats.hp;
+  const maxHp = fixtureMaxHp('ironWarden');
 
   const { state: afterRound1 } = resolveRound(poisoned, [], config);
   assert.strictEqual(afterRound1.combatants.b1.statuses.Poison.duration, 1);
@@ -267,7 +267,7 @@ test('status: Haunt turns a singleEnemy Spirit/Mind attack into a spread hit on 
 
   assert.ok(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1' && !e.viaStatusId));
   assert.ok(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b2' && e.viaStatusId === 'Haunt'));
-  assert.ok(next.combatants.b2.currentHp < heroes.wildOracle.baseStats.hp);
+  assert.ok(next.combatants.b2.currentHp < fixtureMaxHp('wildOracle'));
 });
 
 test('status: a non-Spirit/Mind attack does not trigger Haunt spread', () => {
@@ -276,7 +276,7 @@ test('status: a non-Spirit/Mind attack does not trigger Haunt spread', () => {
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' }]; // Fire-typed
 
   const { state: next } = resolveRound(haunted, actions, config);
-  assert.strictEqual(next.combatants.b2.currentHp, heroes.wildOracle.baseStats.hp);
+  assert.strictEqual(next.combatants.b2.currentHp, fixtureMaxHp('wildOracle'));
 });
 
 // --- Stealth: speed-dependent redirect ---
@@ -292,7 +292,7 @@ test('status: a faster Stealth redirects an already-declared attack onto the oth
 
   assert.ok(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1'));
   assert.strictEqual(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b2'), false);
-  assert.strictEqual(next.combatants.b2.currentHp, heroes.wildOracle.baseStats.hp);
+  assert.strictEqual(next.combatants.b2.currentHp, fixtureMaxHp('wildOracle'));
 });
 
 test('status: a slower Stealth does not save its caster from an attack that resolves first', () => {
@@ -305,7 +305,7 @@ test('status: a slower Stealth does not save its caster from an attack that reso
   const { state: next, events } = resolveRound(state, actions, config);
 
   assert.ok(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1'));
-  assert.ok(next.combatants.b1.currentHp < heroes.ironWarden.baseStats.hp);
+  assert.ok(next.combatants.b1.currentHp < fixtureMaxHp('ironWarden'));
 });
 
 test('status: Stealth ticks at the start of a round, so it still protects the round after it lands', () => {
