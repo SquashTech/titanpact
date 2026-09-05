@@ -269,5 +269,36 @@ export function formatReport(
   out.push(`    spent cycling out        ${pct(agg.playerSwitches, agg.playerTurns)}`);
   out.push(`    fights reaching lock-in  ${pct(agg.lockInFights, totalFights)}  (player side lost 2+ heroes)`);
 
+  // The movepool gate. MOVE_TIER_LEVEL is early 1 / mid 4 / late 7, and EVERY move costing
+  // 70+ mana is late-tier — so this table says whether the expensive half of the catalog is
+  // reachable at all, which is what makes a big Mana pool worth anything.
+  const levels = agg.heroLevelHistogram;
+  const heroRuns = levels.reduce((sum, n) => sum + (n ?? 0), 0);
+  const atLeast = (level: number) => levels.slice(level).reduce((sum, n) => sum + (n ?? 0), 0);
+  const gates: readonly (readonly [string, number])[] = [
+    ['mid tier (lvl 4)', 4],
+    ['Evolution (lvl 5)', 5],
+    ['LATE tier (lvl 7)', 7],
+    ['mastery (lvl 11)', 11],
+  ];
+  out.push('');
+  out.push(`  the movepool gate — best level reached, over ${heroRuns} (hero, run) pairs:`);
+  for (const [label, level] of gates) {
+    out.push(`    reached ${pad(label, 20)}${padStart(pct(atLeast(level), heroRuns), 8)}`);
+  }
+
+  const totalCasts = Object.values(agg.castsByTier).reduce((sum, n) => sum + n, 0);
+  out.push('');
+  out.push('  player casts by move tier:');
+  for (const tier of ['early', 'mid', 'late']) {
+    const n = agg.castsByTier[tier] ?? 0;
+    out.push(`    ${pad(tier, 20)}${padStart(String(n), 11)}${padStart(pct(n, totalCasts), 9)}`);
+  }
+  out.push('  player casts by mana spent:');
+  for (const band of ['0-19', '20-39', '40-59', '60-79', '80+']) {
+    const n = agg.castsByManaBand[band] ?? 0;
+    out.push(`    ${pad(band, 20)}${padStart(String(n), 11)}${padStart(pct(n, totalCasts), 9)}`);
+  }
+
   return out.join('\n') + '\n';
 }

@@ -64,6 +64,10 @@ export interface FightOutcome {
   playerSwitches: number;
   /** The player side lost 2+ heroes, so voluntary switching was locked out. */
   lockedIn: boolean;
+  /** Player-side casts by the move's authored tier — is the late-tier movepool ever reached? */
+  castsByTier: Record<string, number>;
+  /** Player-side casts by mana actually spent, in 20-point bands. */
+  castsByManaBand: Record<string, number>;
   /** Player squad's surviving HP over its max, at the final state. */
   playerHpFrac: number;
   telemetry: Record<string, CombatantTelemetry>;
@@ -111,8 +115,25 @@ function fillOpenSlots(state: CombatState, side: Side, events: CombatEvent[]): C
   return working;
 }
 
-function recordEvents(events: readonly CombatEvent[], telemetry: Record<string, CombatantTelemetry>): void {
+/** 0-19, 20-39, 40-59, 60-79, 80+ — the bands that separate an Early kit from a late-tier one. */
+function manaBand(spent: number): string {
+  if (spent >= 80) return '80+';
+  const lo = Math.floor(spent / 20) * 20;
+  return `${lo}-${lo + 19}`;
+}
+
+function recordEvents(
+  events: readonly CombatEvent[],
+  telemetry: Record<string, CombatantTelemetry>,
+  casts?: { byTier: Record<string, number>; byManaBand: Record<string, number> }
+): void {
   for (const event of events) {
+    if (event.type === 'MoveUsed' && casts && telemetry[event.combatantId]?.side === PLAYER_SIDE) {
+      const tier = moves[event.moveId]?.tier ?? 'early';
+      casts.byTier[tier] = (casts.byTier[tier] ?? 0) + 1;
+      const band = manaBand(event.manaSpent);
+      casts.byManaBand[band] = (casts.byManaBand[band] ?? 0) + 1;
+    }
     switch (event.type) {
       case 'DamageDealt': {
         const source = telemetry[event.sourceCombatantId];
@@ -239,6 +260,7 @@ export function simulateFight(input: FightInput): FightOutcome {
   let playerTurns = 0;
   let playerRests = 0;
   let playerSwitches = 0;
+  const casts = { byTier: {} as Record<string, number>, byManaBand: {} as Record<string, number> };
 
   while (rounds < MAX_ROUNDS && !sideDefeated(state, PLAYER_SIDE) && !sideDefeated(state, AI_SIDE)) {
     const events: CombatEvent[] = [];
@@ -277,7 +299,7 @@ export function simulateFight(input: FightInput): FightOutcome {
     state = fillOpenSlots(state, AI_SIDE, replacementEvents);
     roundEvents.push(...replacementEvents);
 
-    recordEvents(roundEvents, telemetry);
+    recordEvents(roundEvents, telemetry, casts);
     creditKos(roundEvents, telemetry);
   }
 
@@ -302,6 +324,8 @@ export function simulateFight(input: FightInput): FightOutcome {
     playerRests,
     playerSwitches,
     lockedIn: state.koCount[PLAYER_SIDE] >= 2,
+    castsByTier: casts.byTier,
+    castsByManaBand: casts.byManaBand,
     playerHpFrac: maxHp > 0 ? hp / maxHp : 0,
     telemetry,
     final: state,

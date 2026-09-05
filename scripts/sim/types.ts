@@ -101,6 +101,12 @@ export interface Aggregate {
   equipRarityByAct: Record<string, number>;
   /** Round-count histogram across every fight, bucketed by round. */
   roundHistogram: number[];
+  /** Best level each roster hero reached, histogram over (hero, run) pairs — index = level. */
+  heroLevelHistogram: number[];
+  /** Player-side move casts, by the move's authored tier. Every 70+ mana move is `late`. */
+  castsByTier: Record<string, number>;
+  /** Player-side move casts, by mana actually spent. */
+  castsByManaBand: Record<string, number>;
   /** Player-side turns, Rests and voluntary switches — is the mana economy live? */
   playerTurns: number;
   playerRests: number;
@@ -134,6 +140,9 @@ export function emptyAggregate(): Aggregate {
     draftChoices: {},
     equipRarityByAct: {},
     roundHistogram: [],
+    heroLevelHistogram: [],
+    castsByTier: {},
+    castsByManaBand: {},
     playerTurns: 0,
     playerRests: 0,
     playerSwitches: 0,
@@ -202,6 +211,9 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   mergeArray(into.actCleared, from.actCleared);
   mergeArray(into.deathAct, from.deathAct);
   mergeArray(into.roundHistogram, from.roundHistogram);
+  mergeArray(into.heroLevelHistogram, from.heroLevelHistogram);
+  for (const key of Object.keys(from.castsByTier)) into.castsByTier[key] = (into.castsByTier[key] ?? 0) + from.castsByTier[key];
+  for (const key of Object.keys(from.castsByManaBand)) into.castsByManaBand[key] = (into.castsByManaBand[key] ?? 0) + from.castsByManaBand[key];
   for (const key of Object.keys(from.deathByNodeType)) {
     into.deathByNodeType[key] = (into.deathByNodeType[key] ?? 0) + from.deathByNodeType[key];
   }

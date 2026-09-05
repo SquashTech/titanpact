@@ -129,6 +129,8 @@ export interface FightRecord {
   playerRests: number;
   playerSwitches: number;
   lockedIn: boolean;
+  castsByTier: Record<string, number>;
+  castsByManaBand: Record<string, number>;
   /** heroId -> per-fight telemetry, player side. */
   playerHeroes: Record<string, { rounds: number; dealt: number; taken: number; healed: number; kos: number; died: boolean }>;
   enemyHeroes: Record<string, { rounds: number; dealt: number; taken: number; kos: number; died: boolean }>;
@@ -473,6 +475,8 @@ function resolveEncounterNode(
     playerRests: fight.playerRests,
     playerSwitches: fight.playerSwitches,
     lockedIn: fight.lockedIn,
+    castsByTier: fight.castsByTier,
+    castsByManaBand: fight.castsByManaBand,
     playerHeroes,
     enemyHeroes,
   });
