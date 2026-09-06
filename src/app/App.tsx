@@ -364,6 +364,11 @@ export function App() {
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
   const shellRef = useRef<HTMLDivElement>(null);
 
+  // A Guardian's fall bumps `actNumber` before its spoils are handed out, so between that win
+  // and the arrival screen the run is standing in a place it has not travelled to yet. Only the
+  // music reads this (see `trackId`) — the reward screens keep the new act's tint.
+  const [actBreak, setActBreak] = useState(false);
+
   // Read once at boot. A save this build refuses (older version, content since removed) is
   // dropped rather than left to fail again, but the reason is kept so the title can say why
   // the run the player left is gone instead of silently not offering it. One state, not two,
@@ -683,6 +688,7 @@ export function App() {
       }
       if (next.actNumber < TOTAL_ACTS) {
         next = advanceToNextAct(next, randomSeed());
+        setActBreak(true);
         // The seal grants nothing, so it goes last in the chain — the socket fills, then
         // you arrive somewhere new. The opposite of the Banner's placement, for the same reason.
         afterScreen = { kind: 'pactSeal' };
@@ -776,7 +782,7 @@ export function App() {
 
   function handleDraftConfirm(chosenIds: string[]) {
     setPlayerRun((run) => createStartingRun(chosenIds, run.tutorial, run.tutorialSeenBeatIds));
-    setScreen({ kind: 'actIntro' });
+    enterAct();
     // Sealing the pact is the start, not pressing the title button: a draft backed out of
     // is not a run. An abandoned run still counts here — it was played.
     updateProfile((current) => recordRunStarted(current, Date.now()));
@@ -802,6 +808,12 @@ export function App() {
 
   function handleVisitLocation(locationId: string) {
     setPlayerRun(createLocationVisitRun(locationId));
+    enterAct();
+  }
+
+  /** The arrival screen — and the moment the act's music is allowed to start (see `trackId`). */
+  function enterAct() {
+    setActBreak(false);
     setScreen({ kind: 'actIntro' });
   }
 
@@ -829,7 +841,12 @@ export function App() {
   // The act's location IS the track; computed above the screen switch so music survives map <-> fight.
   // A location with no authored track fades to silence rather than carrying the previous act's music.
   // The title is the exception — it is placeless, so it names its own track (audio/tracks.ts).
-  const trackId = screen.kind === 'title' ? 'titleScreen' : hasTrack(ambientLocation?.id) ? ambientLocation.id : null;
+  // Except across an act break, where it stays with the act just cleared: the Banner, the
+  // contract and the spoils belong to the fight that paid them, and the next act's music is
+  // the arrival screen's to start (`enterAct`).
+  const musicLocation =
+    actBreak && ambientLocation ? locationForAct(playerRun.locationIds, playerRun.actNumber - 1) : ambientLocation;
+  const trackId = screen.kind === 'title' ? 'titleScreen' : hasTrack(musicLocation?.id) ? musicLocation.id : null;
   useEffect(() => {
     setTrack(trackId);
   }, [trackId]);
@@ -903,7 +920,7 @@ export function App() {
 
       {screen.kind === 'draft' && <DraftScreen optionIds={screen.optionIds} onConfirm={handleDraftConfirm} />}
 
-      {screen.kind === 'pactSeal' && <PactSealScreen run={playerRun} onContinue={() => setScreen({ kind: 'actIntro' })} />}
+      {screen.kind === 'pactSeal' && <PactSealScreen run={playerRun} onContinue={enterAct} />}
 
       {screen.kind === 'actIntro' && (
         <ActIntroScreen
