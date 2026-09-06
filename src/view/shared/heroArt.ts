@@ -28,14 +28,10 @@ import revenantArt from '../../../art/heroes/starters/revenant.png';
 import sorrowArt from '../../../art/heroes/sorrow.png';
 import ironWardenArt from '../../../art/heroes/ironwarden.png';
 import valorArt from '../../../art/heroes/starters/valor.png';
-import valorAttackArt from '../../../art/heroes/starters/valorattack.png';
-import valorHurtArt from '../../../art/heroes/starters/valordamaged.png';
 import gallantArt from '../../../art/heroes/gallant.png';
 import clockworkArt from '../../../art/heroes/starters/clockwork.png';
 import steamColossusArt from '../../../art/heroes/steamcolossus.png';
 import fangArt from '../../../art/heroes/starters/fang.png';
-import fangAttackArt from '../../../art/heroes/starters/fangattacking.png';
-import fangHurtArt from '../../../art/heroes/starters/fangdamaged.png';
 import widowArt from '../../../art/heroes/Widow.png';
 import coilArt from '../../../art/heroes/coil.png';
 import goblinGruntArt from '../../../art/enemies/goblingrunt.png';
@@ -197,25 +193,89 @@ export interface HeroPoses {
   hurt?: string;
 }
 
+/** The suffix each pose's file carries, appended to the idle sprite's own filename. */
+const POSE_SUFFIX: Record<keyof HeroPoses, string> = { attack: 'attack', hurt: 'damaged' };
+
+/**
+ * Every sprite in the figure directories, source path → URL. Scoped to those
+ * three on purpose: `art/` also holds ~2,200 icons that nothing here wants, and
+ * an eager glob over all of it would bundle every one. These three hold 82 files
+ * and 80 of them are imported above already, so the glob costs essentially
+ * nothing on top of what the page loads anyway.
+ */
+const spriteFiles = import.meta.glob<string>(['../../../art/heroes/**/*.png', '../../../art/enemies/**/*.png'], {
+  eager: true,
+  query: '?url',
+  import: 'default',
+});
+
 /**
  * ── TO GIVE A HERO ITS FRAMES ────────────────────────────────────────────
- * Drop the art beside the hero's idle sprite, import it above next to that
- * hero's idle import, and add ONE line to the table below. That is the whole
- * job: everything downstream — the poses, the lean, the wound on a Burn tick,
- * the flash over each frame cut — is keyed off the hero id and already works
- * for every hero in the game the moment its art lands here.
+ * Drop `<name>attack.png` and `<name>damaged.png` beside the hero's idle
+ * `<name>.png`. That is the whole job — no import, no table, no code at all.
+ * Everything downstream (the held pose, the lean, the wound on a Burn tick, the
+ * flash over each frame cut) is keyed off the hero id and has worked for the
+ * whole roster since the frames existed; the only thing any hero is waiting on
+ * is the art.
  *
- * Filenames are not a convention and are not scanned for; they are imported by
- * hand, so a hero's frames can be called whatever the artist called them
- * (`valorattack.png` and `fangattacking.png` are both fine) and a typo is a
- * build error rather than a frame that silently never shows up.
- *
- * Either frame may be omitted. A hero with no entry at all, or with only one of
- * the two, simply keeps its idle sprite for whatever is missing and loses
- * nothing else — so the roster can grow frames one hero, and one pose, at a
- * time.
+ * The name follows the hero's own SPRITE file, not its id: the two differ across
+ * most of the roster, and whoever is drawing the art is thinking of the
+ * character (`fang.png` → `fangattack.png`, even though the hero id is
+ * `packAlpha`). Both frames are independent and both are optional; whatever is
+ * missing falls back to the idle sprite, so the roster can grow one hero, and
+ * one pose, at a time.
  */
-export const heroPoses: Partial<Record<string, HeroPoses>> = {
-  valor: { attack: valorAttackArt, hurt: valorHurtArt },
-  packAlpha: { attack: fangAttackArt, hurt: fangHurtArt },
-};
+export const heroPoses: Partial<Record<string, HeroPoses>> = {};
+
+// The glob is keyed by path and heroArt holds URLs, so the idle sprite is what
+// ties a hero id to a filename — there is no second table listing them.
+const pathByUrl = new Map(Object.entries(spriteFiles).map(([path, url]) => [url, path]));
+
+for (const [heroId, idleUrl] of Object.entries(heroArt)) {
+  const idlePath = idleUrl && pathByUrl.get(idleUrl);
+  if (!idlePath) continue;
+  const stem = idlePath.slice(0, -'.png'.length);
+  const poses: HeroPoses = {};
+  for (const pose of Object.keys(POSE_SUFFIX) as (keyof HeroPoses)[]) {
+    const found = spriteFiles[`${stem}${POSE_SUFFIX[pose]}.png`];
+    if (found) poses[pose] = found;
+  }
+  if (poses.attack || poses.hurt) heroPoses[heroId] = poses;
+}
+
+// Dead art, in the two shapes it comes in. This is the whole price of naming by
+// convention instead of importing by hand — a misnamed frame is not a build
+// error any more, so it has to be found here or it is found in a playtest weeks
+// later, by noticing that a hero never once changed pose.
+//
+// The two shapes are graded differently on purpose. A correctly-suffixed file
+// that no hero claims is unambiguously a mistake, and throws. Any OTHER sprite
+// nothing draws is only *probably* one — `glyph_2.png` is a deliberate
+// alternate, and work-in-progress art has to be allowed to sit in the folder —
+// so that warns, and names the rename it most likely wants. That second half is
+// what would have caught `fangattacking.png`.
+if (import.meta.env.DEV) {
+  const naming = `<idle sprite name>{${POSE_SUFFIX.attack},${POSE_SUFFIX.hurt}}.png, beside that idle sprite`;
+  const drawnUrls = new Set([
+    ...Object.values(heroArt),
+    ...Object.values(heroPoses).flatMap((p) => [p?.attack, p?.hurt]),
+  ]);
+  const undrawn = Object.keys(spriteFiles).filter((path) => !drawnUrls.has(spriteFiles[path]));
+  const suffixed = new RegExp(`(${Object.values(POSE_SUFFIX).join('|')})\\.png$`);
+
+  const orphanPoses = undrawn.filter((path) => suffixed.test(path));
+  if (orphanPoses.length > 0) {
+    throw new Error(
+      `Pose art belongs to no hero, so it can never be drawn:\n  ${orphanPoses.join('\n  ')}\n` +
+        `A pose frame is named ${naming}. If the hero itself is new, it needs an entry in heroArt first.`
+    );
+  }
+
+  const strays = undrawn.filter((path) => !suffixed.test(path));
+  if (strays.length > 0) {
+    console.warn(
+      `[heroArt] Sprites nothing draws:\n  ${strays.join('\n  ')}\n` +
+        `If one is meant to be a pose frame, rename it to ${naming} and it is picked up with no code change.`
+    );
+  }
+}

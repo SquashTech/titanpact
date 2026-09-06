@@ -1943,14 +1943,33 @@ The reaction is graded by what caused it, which is where the vocabulary earns it
   effect: an effect lands it one frame after the swap it exists to hide, and one unmasked frame
   is the whole artifact.
 
-**To give a hero its frames:** drop the art beside its idle sprite, import it, and add one line
-to `heroPoses` (`src/view/shared/heroArt.ts`). Nothing else changes — every behaviour above is
-keyed on hero id and already works for the whole roster the moment art lands. Filenames are
-imported by hand rather than scanned for, so the art can be called whatever the artist called it
-(`valorattack.png` and `fangattacking.png` are both in use) and a typo is a build error instead
-of a frame that silently never appears. Either frame may be omitted; a hero keeps its idle sprite
-for whatever is missing. Valor and Fang have both frames; nobody else has either yet, and the
-only thing between the rest of the roster and the same treatment is the art.
+**To give a hero its frames: drop `<name>attack.png` and `<name>damaged.png` beside its idle
+`<name>.png`.** That is the whole job — no import, no table, no code. `heroPoses`
+(`src/view/shared/heroArt.ts`) is discovered from an `import.meta.glob` over the figure
+directories, and every behaviour above is keyed on hero id and has worked for the whole roster
+since the frames existed. Either frame may be omitted; a hero keeps its idle sprite for whatever
+is missing.
+
+Three details are load-bearing:
+
+- **The convention follows the SPRITE filename, not the hero id.** Those differ across most of
+  the roster (`fang.png` is `packAlpha`, `solace.png` is `dawnwarden`), and whoever is drawing
+  the art is thinking of the character. The idle sprite is what ties a hero id to a filename, so
+  there is no second table to keep in sync.
+- **The glob is scoped to `art/heroes` and `art/enemies`.** `art/` also holds ~2,200 icons; an
+  eager glob over all of it would bundle every one. Those two directories hold 82 files of which
+  80 were already imported, so the discovery costs nothing on top of what the page loads anyway.
+- **Dead art is caught in dev, in two grades.** Naming by convention gives up the build error a
+  hand-written import got, and the failure it gives up is the worst kind — a frame that never
+  appears and nobody notices for weeks. So a correctly-suffixed file no hero claims *throws*, and
+  any other undrawn sprite *warns* and names the rename it probably wants. The second grade is
+  the one that would have caught `fangattacking.png`; the first is deliberately not fatal for
+  work-in-progress art, which has to be allowed to sit in the folder.
+
+Which heroes have frames is not recorded anywhere but the art folder, deliberately — the list
+would be stale by the next commit. `heroArt.ts` warns in dev about any sprite nothing draws,
+which is the closest thing to a roll-call worth keeping. The only thing between the rest of the
+roster and the same treatment is the art.
 
 ## Open / future improvements
 
