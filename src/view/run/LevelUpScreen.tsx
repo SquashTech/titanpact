@@ -43,6 +43,12 @@ interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
   onDone: () => void;
+  /**
+   * The scripted first run (docs/tutorial.md): the only roster id that can be spent on. Every
+   * point lands on one hero, so the Evolution is reached on a schedule instead of being averaged
+   * away across the roster. Null everywhere else, and the lock lifts the moment it has evolved.
+   */
+  focusRosterId?: string | null;
 }
 
 interface MoveOffer {
@@ -84,6 +90,8 @@ interface GrowthCardProps {
   node: EvolutionNode | null;
   /** The pool cannot cover this hero's next level — the card says why it is disabled. */
   unaffordable: boolean;
+  /** Shut by the scripted run's focus lock, not by price (docs/tutorial.md). Reads differently on purpose. */
+  lockedOut?: boolean;
   canAct: boolean;
   isAnimating: boolean;
   onActivate: () => void;
@@ -91,7 +99,7 @@ interface GrowthCardProps {
 }
 
 // Tap levels up (or opens Evolution); hold opens the full hero sheet.
-function GrowthCard({ hero, entry, node, unaffordable, canAct, isAnimating, onActivate, onPreview }: GrowthCardProps) {
+function GrowthCard({ hero, entry, node, unaffordable, lockedOut = false, canAct, isAnimating, onActivate, onPreview }: GrowthCardProps) {
   const payoff = payoffFor(entry);
   // An earned Evolution was paid for by the level-up that reached it.
   const cost = node ? null : levelUpCost(entry.level);
@@ -104,16 +112,31 @@ function GrowthCard({ hero, entry, node, unaffordable, canAct, isAnimating, onAc
     <HeroPickCard
       hero={hero}
       entry={entry}
-      className={['growth-card', node ? 'is-evolving' : '', payoff === 'brink' && canAct ? 'is-brink' : '', isAnimating ? 'is-leveling' : '']
+      className={[
+        'growth-card',
+        node ? 'is-evolving' : '',
+        payoff === 'brink' && canAct ? 'is-brink' : '',
+        isAnimating ? 'is-leveling' : '',
+        lockedOut ? 'is-locked-out' : '',
+      ]
         .filter(Boolean)
         .join(' ')}
       disabled={!canAct}
       onActivate={onActivate}
       onPreview={onPreview}
-      ariaLabel={`${hero.name}, level ${entry.level} — ${PAYOFF_LABEL[payoff]}${cost === null ? '' : `, costs ${cost} XP`}`}
+      ariaLabel={
+        lockedOut
+          ? `${hero.name}, level ${entry.level} — not yet`
+          : `${hero.name}, level ${entry.level} — ${PAYOFF_LABEL[payoff]}${cost === null ? '' : `, costs ${cost} XP`}`
+      }
       overlay={
         <>
-          {cost !== null && (
+          {lockedOut && (
+            <span className="growth-locked-mark" aria-hidden="true">
+              🔒
+            </span>
+          )}
+          {cost !== null && !lockedOut && (
             <span className={`growth-cost${unaffordable ? ' is-unaffordable' : ''}`} aria-hidden="true">
               {cost}
             </span>
@@ -194,7 +217,7 @@ const GRID_WAKE_MS = 700;
 
 // Forced post-battle spend screen. Each hero card is itself the level-up
 // button; RosterManagementScreen never spends the pool.
-export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
+export function LevelUpScreen({ run, onRunChange, onDone, focusRosterId = null }: Props) {
   const [offer, setOffer] = useState<MoveOffer | null>(null);
   /** Only an Evolution can grant more than one move at once; each waits its turn behind `offer`. */
   const [offerQueue, setOfferQueue] = useState<string[]>([]);
@@ -356,11 +379,19 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
   // Affordability, not emptiness: a leftover that buys nobody banks (CLAUDE.md).
   const canAffordAny = canAffordAnyLevelUp(run);
 
+  /**
+   * What is still spendable *here*. Identical to `canAffordAny` unless a focus lock is on, in
+   * which case a pool that only the locked-out heroes could buy is a pool with nothing to do —
+   * so the screen has to be leavable on it, and `leave` banks it on the way out.
+   */
+  const focusEntry = focusRosterId ? (run.roster.find((r) => r.rosterId === focusRosterId) ?? null) : null;
+  const spendable = focusEntry ? run.levelUpPool >= levelUpCost(focusEntry.level) : canAffordAny;
+
   // The overlay checks matter: a player holding a card to read a sheet must
   // not have the screen pulled out from under them.
   const done =
     introDone &&
-    !canAffordAny &&
+    !spendable &&
     pendingEvolutions === 0 &&
     !offer &&
     !masteryOffer &&
@@ -372,24 +403,27 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
   // The out: a pool that buys nobody leaves on its own, and this is for one the player
   // wants to keep. Evolutions are excluded — those are already paid for, not a spend.
   const canBank =
-    introDone && canAffordAny && pendingEvolutions === 0 && !offer && !masteryOffer && !animatingRosterId && !evolvingRosterId;
+    introDone && spendable && pendingEvolutions === 0 && !offer && !masteryOffer && !animatingRosterId && !evolvingRosterId;
 
-  function handleBank() {
+  /**
+   * The one way off this screen, both for the Bank button and the auto-continue. Banks whenever
+   * a spendable pool survives — without a focus lock that is never true here (the auto-continue
+   * only fires on an empty pool), but under one the screen closes on a pool the locked-out heroes
+   * could still buy, and App's gate would re-open it forever if it were not deferred.
+   */
+  function leave() {
     playSfx('ui.page');
-    onRunChange(deferLevelUp(run));
+    if (canAffordAnyLevelUp(run)) onRunChange(deferLevelUp(run));
     onDone();
   }
 
   // Ref, so the effect depends on `done` alone — App.tsx passes an inline arrow.
-  const onDoneRef = useRef(onDone);
-  onDoneRef.current = onDone;
+  const leaveRef = useRef(leave);
+  leaveRef.current = leave;
 
   useEffect(() => {
     if (!done) return;
-    const timer = window.setTimeout(() => {
-      playSfx('ui.page');
-      onDoneRef.current();
-    }, AUTO_CONTINUE_MS);
+    const timer = window.setTimeout(() => leaveRef.current(), AUTO_CONTINUE_MS);
     return () => window.clearTimeout(timer);
   }, [done]);
 
@@ -545,15 +579,19 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
             const isAnimating = animatingRosterId === entry.rosterId;
             // `introDone` is a real lock, not just pointer-events: the cards are keyboard-reachable.
             const blockedByOtherAnim = !!animatingRosterId && !isAnimating;
+            // A focus lock closes every other card, an Evolution included: nobody else has one
+            // yet, and the point is that the pool cannot be spread.
+            const lockedOut = focusRosterId !== null && entry.rosterId !== focusRosterId;
             const affordable = run.levelUpPool >= levelUpCost(entry.level);
-            const canLevelUp = introDone && affordable && !node && !blockedByOtherAnim;
-            const canAct = introDone && (canLevelUp || !!node) && !blockedByOtherAnim;
+            const canLevelUp = introDone && affordable && !node && !blockedByOtherAnim && !lockedOut;
+            const canAct = introDone && (canLevelUp || (!!node && !lockedOut)) && !blockedByOtherAnim;
             return (
               <GrowthCard
                 key={entry.rosterId}
                 hero={hero}
                 entry={entry}
                 node={node}
+                lockedOut={lockedOut}
                 unaffordable={!node && !affordable}
                 canAct={canAct}
                 isAnimating={isAnimating}
@@ -575,7 +613,7 @@ export function LevelUpScreen({ run, onRunChange, onDone }: Props) {
       {!offer && !masteryOffer && (
         <button
           className={`secondary-button levelup-bank-button${canBank ? '' : ' is-inert'}`}
-          onClick={handleBank}
+          onClick={leave}
           disabled={!canBank}
         >
           Bank {run.levelUpPool} XP for later

@@ -27,6 +27,12 @@ interface Props {
   onConfirm: (squad: Squad) => void;
   /** 4 everywhere but the finale, which fields the whole roster (docs/run-loop.md 4). */
   squadSize?: number;
+  /**
+   * The scripted first run (docs/tutorial.md): roster ids pinned to an ACTIVE slot. They seed
+   * slots 0-1 and no swap can move them out of the active row — owning the hero that teaches a
+   * lesson is not the same as flying them. Empty everywhere else.
+   */
+  lockedActiveRosterIds?: readonly string[];
 }
 
 /** 2-wide/3-tall grid: active, bench, reserve. Always 6 cells (the roster cap); cells past the roster render empty. */
@@ -52,9 +58,18 @@ function shuffled<T>(items: readonly T[]): T[] {
 }
 
 /** Bring-6-pick-4 squad selection before every fight node (docs/combat.md "Bring-6-pick-4 sideboard"). Drag, or tap-then-tap, swaps two cells. */
-export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm, squadSize = STANDARD_SQUAD_SIZE }: Props) {
+export function SquadSelectScreen({
+  run,
+  encounter,
+  onRunChange,
+  onConfirm,
+  squadSize = STANDARD_SQUAD_SIZE,
+  lockedActiveRosterIds = [],
+}: Props) {
+  const locked = new Set(lockedActiveRosterIds.filter((id) => run.roster.some((r) => r.rosterId === id)));
   const [slots, setSlots] = useState<(string | null)[]>(() => {
-    const ids = run.roster.map((r) => r.rosterId);
+    // Locked heroes first, so they land in the two active slots before anyone else is placed.
+    const ids = run.roster.map((r) => r.rosterId).sort((a, b) => Number(locked.has(b)) - Number(locked.has(a)));
     return Array.from({ length: SLOT_COUNT }, (_, i) => ids[i] ?? null);
   });
   // Scrambled once into state: `encounter.run.roster` is generated active-first, and a fixed
@@ -73,10 +88,23 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm, squa
   const activeIds = [slots[0], slots[1]] as const;
   const benchIds = slots.slice(2, squadSize).filter((id): id is string => id !== null);
   const pickedIds = activeIds.filter((id): id is string => id !== null).concat(benchIds);
-  const canStart = activeIds[0] !== null && activeIds[1] !== null && pickedIds.length === required;
+  const lockedHeld = [...locked].every((id) => slots[0] === id || slots[1] === id);
+  const canStart = activeIds[0] !== null && activeIds[1] !== null && pickedIds.length === required && lockedHeld;
+
+  function isLockedSlot(index: number): boolean {
+    const id = slots[index];
+    return id !== null && locked.has(id);
+  }
+
+  /** A pinned hero may be reordered WITHIN the active row — lead order is still the player's — but never out of it. */
+  function canSwap(a: number, b: number): boolean {
+    if (a === b) return false;
+    const wouldEvict = (from: number, to: number) => isLockedSlot(from) && to > 1;
+    return !wouldEvict(a, b) && !wouldEvict(b, a);
+  }
 
   function swapSlots(a: number, b: number) {
-    if (a === b) return;
+    if (!canSwap(a, b)) return;
     setSlots((prev) => {
       const next = [...prev];
       [next[a], next[b]] = [next[b], next[a]];
@@ -186,14 +214,15 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm, squa
                     const entry = rosterId ? rosterById.get(rosterId) : undefined;
                     const hero = entry ? heroes[entry.heroId] : undefined;
                     const isSelected = selectedSlot === index;
-                    const isDropTarget = selectedSlot !== null && selectedSlot !== index;
+                    const isDropTarget = selectedSlot !== null && canSwap(selectedSlot, index);
                     const isDragOver = dragOverSlot === index;
+                    const isLocked = isLockedSlot(index);
                     return (
                       <div
                         key={index}
                         className={`squad-slot${hero ? ' filled' : ' empty'}${isSelected ? ' selected' : ''}${
                           isDropTarget ? ' drop-target' : ''
-                        }${isDragOver ? ' drag-over' : ''}`}
+                        }${isDragOver ? ' drag-over' : ''}${isLocked ? ' is-pinned' : ''}`}
                         style={hero ? { borderLeftColor: getTypeColor(hero.types[0]) } : undefined}
                         role="button"
                         tabIndex={0}
@@ -222,6 +251,11 @@ export function SquadSelectScreen({ run, encounter, onRunChange, onConfirm, squa
                       >
                         {hero && entry ? (
                           <>
+                            {isLocked && (
+                              <span className="squad-slot-pin" aria-label={`${hero.name} must start this fight`} title="Locked into the fight">
+                                🔒
+                              </span>
+                            )}
                             <button
                               className="info-button"
                               onClick={(e) => {

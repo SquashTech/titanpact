@@ -7,7 +7,7 @@
 // way, so nothing here survives the first Guardian except the flag that says it happened.
 
 import type { MapNode, MapNodeType, RunMap } from './map';
-import type { RunState } from './state';
+import type { RosterEntry, RunState } from './state';
 
 /** Forced starters: Valor and Fang are partners, and the run is their pact (docs/lore.md). */
 export const TUTORIAL_STARTER_IDS: readonly string[] = ['valor', 'packAlpha'];
@@ -235,4 +235,69 @@ export function tutorialPayoutFor(
  */
 export function isTutorialAct(run: RunState): boolean {
   return run.tutorial && run.actNumber === 1;
+}
+
+// --- Locks: the choices the scripted act takes away ---
+
+/**
+ * A lesson the player is allowed to decline is a lesson some players never see, so the scripted
+ * act removes the option rather than recommending against it (2026-09-06, per user direction).
+ * Three locks, each lifting the moment its lesson has landed — none of them survives Act 1.
+ *
+ * The Evolution needs no lock of its own: `LevelUpScreen` already refuses to bank or auto-close
+ * while one is pending. What it needed was a guarantee the player *reaches* one, which is what
+ * `focusHeroId` is — with every point going to one hero, the fork arrives on schedule.
+ */
+export interface TutorialLocks {
+  /**
+   * The only hero the Level Up screen will spend on, until that hero has taken an Evolution.
+   * Every point lands on one hero, so the Evolution arrives instead of being averaged away.
+   */
+  focusHeroId: string;
+  /**
+   * The one Recruit Contract the Skirmish offers, and it cannot be walked past. Chosen to be a
+   * MAGICAL specialist: the physical/magical split is invisible until the player owns one of
+   * each, and the run cannot rely on them happening to draft it.
+   */
+  recruitHeroId: string;
+  /** The hero that must stand in the ACTIVE pair — owning the lesson is not the same as flying it. */
+  fieldHeroId: string;
+  /** Map nodes `fieldHeroId` is locked into. */
+  fieldAtNodes: readonly MapNodeType[];
+}
+
+/** The roster id the Level Up screen is restricted to, or null when nothing is restricted. */
+export function tutorialFocusRosterId(locks: TutorialLocks, run: RunState): string | null {
+  if (!isTutorialAct(run)) return null;
+  const entry = run.roster.find((r) => r.heroId === locks.focusHeroId);
+  // The lock exists to reach an Evolution; once one is taken it has nothing left to do.
+  if (!entry || entry.chosenPathIds.length > 0) return null;
+  return entry.rosterId;
+}
+
+/** Roster ids that must occupy an active slot at `nodeType`. Empty when the hero is not owned. */
+export function tutorialLockedActiveRosterIds(
+  locks: TutorialLocks,
+  run: RunState,
+  nodeType: MapNodeType
+): readonly string[] {
+  if (!isTutorialAct(run) || !locks.fieldAtNodes.includes(nodeType)) return [];
+  const entry = run.roster.find((r) => r.heroId === locks.fieldHeroId);
+  return entry ? [entry.rosterId] : [];
+}
+
+/**
+ * The forced contract offer, or null to let the normal sample run. Non-null also means the
+ * Recruit screen has no way out but signing — App passes the same answer to both.
+ */
+export function tutorialContractOffers(
+  locks: TutorialLocks,
+  run: RunState,
+  defeated: readonly RosterEntry[]
+): RosterEntry[] | null {
+  if (!isTutorialAct(run)) return null;
+  // Already claimed (a replayed node, or the Guild Hall got there first) — nothing left to force.
+  if (run.roster.some((r) => r.heroId === locks.recruitHeroId)) return null;
+  const forced = defeated.find((entry) => entry.heroId === locks.recruitHeroId);
+  return forced ? [forced] : null;
 }

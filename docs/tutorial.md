@@ -41,12 +41,12 @@ a reward node are untouched — the choosing is the lesson; the routing is not.
 | — | *post-fight gates* | Gems and relics · equipment and the no-stash rule · XP as a pot |
 | 1 | Equipment | comparing three pieces; rarity as a budget |
 | 2 | Mentor | Classes: permanent, one per hero, four on the road |
-| 3 | Skirmish | type advantage both ways, focus fire, the Recruit Contract |
+| 3 | Skirmish | type advantage both ways, **physical vs magical**, the forced Recruit Contract |
 | 4 | Relic | team-wide vs. per-hero |
-| 5 | Monsters | the bench, switching, the lock-in rule |
-| — | *post-fight gate* | Evolution |
+| — | *post-fight gate* | **Evolution** (the focus lock puts Valor at level 5 here) |
+| 5 | Monsters | the bench, switching, the lock-in rule, flying the caster |
 | 6 | Guild Hall | gold: a hero, gear, or a contract |
-| 7 | Guardian | the escorts, the Ancient wall, the Pact Clock |
+| 7 | Guardian | the escorts, **armour vs the magical pipeline**, the Ancient wall, the Pact Clock |
 
 Every node type appears **exactly once**, which is what lets a beat be addressed by node type
 alone (`map:<type>`); a test pins that.
@@ -71,7 +71,53 @@ the bench — which is where the Ancient wall gets explained, with the wall in f
 Two tests pin this: the Skirmish pair must threaten a starter *and* not be resisted by the
 Guardian, and each starter must have an escort its own domain is strong against.
 
-## 4. Payouts
+## 4. What the act refuses to let you skip
+
+A lesson the player is allowed to decline is a lesson some players never see, so Act 1 removes
+the option rather than advising against it (2026-09-06, per user direction). Three locks, all in
+`TUTORIAL_LOCKS`, each lifting the moment its lesson lands, none surviving Act 1.
+
+| Lock | What it closes | Lifts when |
+| --- | --- | --- |
+| `focusHeroId` | Every Level Up card but Valor | Valor takes an Evolution |
+| `recruitHeroId` | The Skirmish contract is one offer, and the screen has no leave button | It is signed |
+| `fieldHeroId` / `fieldAtNodes` | Flurry is pinned to an ACTIVE slot at the warband and the Guardian | Act 1 ends |
+
+**The Evolution needed no lock of its own.** `LevelUpScreen` already refuses to bank or
+auto-close while one is pending, and `EvolutionScreen` has no decline. What was missing was a
+guarantee the player *reaches* one — which is what the focus lock is. With every point landing
+on one hero the fork arrives on a schedule: 4 XP takes Valor to level 3, the Skirmish's 8 takes
+her to 5, so the Evolution surfaces on the same level-up screen that hands over Flurry. A test
+walks that arithmetic against the payout table and asserts *which node* it lands on, so retuning
+either table fails loudly rather than quietly moving the beat.
+
+The focus lock has one consequence worth knowing: the screen now closes on a pool the
+locked-out heroes could still buy. `LevelUpScreen.leave()` therefore banks any spendable
+remainder on the way out — without that, App's `levelUpPending` gate re-opens the screen
+forever. Outside a lock the auto-continue only ever fires on an empty pool, so the bank is inert.
+
+## 5. Physical vs magical, and why the caster is not optional
+
+The damage formula has two pipelines — Attack against Defense, Intelligence against Wisdom —
+and the split is **invisible until the player owns one of each**. A draft cannot be relied on to
+hand them a caster, so the tutorial hands them one and does not ask.
+
+**Flurry** is the roster's least ambiguous magical specialist: **25 Attack against 80
+Intelligence**, and her only damage move is magical. She is also Frost, so she is still the
+Guardian answer §3 is built on — one recruit, two lessons.
+
+The proof is **Sentinel**, standing as a Guardian escort with **110 Defense against 50 Wisdom**:
+
+- Valor's Iron Fist is *super-effective* into Stone and still reads 60/110 in the stat pipeline.
+- Flurry's Rime Wind is *neutral* and reads 80/50.
+
+So the fight where the chart says Valor is favoured is the fight where the caster out-damages
+her — which is the point: **type advantage is one term in the sum, not the sum.** The
+`boss:escorts` cue tells the player to read Valor's number, and `boss:armour` fires the round
+after to explain why it disappointed them. A test pins the escort's Defense-minus-Wisdom gap, so
+swapping that escort out fails rather than leaving the cue talking about nobody.
+
+## 6. Payouts
 
 `TUTORIAL_PAYOUTS` replaces the roll for Act 1's four fights — the tutorial has to arrive at its
 Guardian with a specific amount of power, not a distribution of it.
@@ -84,15 +130,14 @@ Guardian with a specific amount of power, not a distribution of it.
 | Guardian | 4 | — |
 
 **22 XP before the Guardian** against the **10** it costs to take one hero from level 1 to the
-Evolution at 5, so following Valor's advice (pour it into one hero) reaches the fork with room
-to spare, and spreading it evenly still gets somebody there. A test asserts the floor, because
-Evolution is the one lesson that cannot be scripted into a screen — the player has to be able to
-afford it.
+Evolution at 5. The focus lock (§4) makes that a schedule rather than a hope: every point lands
+on Valor, so 4 puts her at level 3 and the Skirmish's 8 puts her at 5. Two tests hold it — one on
+the floor, one on which node the fork actually lands after.
 
 **160 gold at the Guild Hall** (40 starting + 125) against a 50-gold hero, a 30-gold Rare and a
 20-gold contract. Valor tells them to buy the body.
 
-## 5. How the script is wired
+## 7. How the script is wired
 
 Content is `src/data/tutorial.ts` — dialogue, encounters, payouts, mid-fight cues. Mechanism is
 `src/run/tutorial.ts`, which imports none of it (the same arrangement `events.ts` uses). This is
@@ -115,7 +160,7 @@ state: a fight is atomic and a reload replays it.
 so a lesson Act 1 never reached (an Evolution nobody could afford) still lands the first time it
 applies. Every id is one-shot, so nothing repeats either way.
 
-## 6. Open questions
+## 8. Open questions
 
 - **No skip.** The dialogue cannot be dismissed wholesale; the Title's Replay entry is the only
   control over it. If playtesting says the second read is a wall, a Skip that keeps the curated
@@ -125,7 +170,10 @@ applies. Every id is one-shot, so nothing repeats either way.
   escorts"). No Goblin typing is weak to both Iron and Beast, so the "one is mine, one is
   yours" lesson below cannot be taught out of the Wild's Edge roster; a scripted encounter
   therefore draws from `allCombatants` and names its own. Whether the arriving power
-  level actually clears him reliably is a playtest question, and the two tables in §4 are the
+  level actually clears him reliably is a playtest question, and the two tables in §6 are the
   knobs.
+- **Three locks may be two too many.** The forced recruit and the pinned slot both survive into
+  fights the player might reasonably want to arrange themselves, and a second-time player will
+  feel every one of them. `TUTORIAL_LOCKS` is one object; dropping a lock is deleting a field.
 - **Fang barely speaks.** Four lines in the whole run. Whether the partnership reads as a
   partnership on that budget is a writing question, not a systems one.

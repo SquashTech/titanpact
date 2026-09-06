@@ -9,14 +9,15 @@ import { progressionTable } from '../src/data/progression';
 import {
   TUTORIAL_ENCOUNTERS,
   TUTORIAL_FIGHT_CUES,
+  TUTORIAL_LOCKS,
   TUTORIAL_PAYOUTS,
   TUTORIAL_SCRIPT,
 } from '../src/data/tutorial';
 import { MAP_NODE_TYPES } from '../src/run/map';
 import { generateEncounter } from '../src/run/enemyGen';
-import { costToReachLevel } from '../src/run/progression';
+import { costToReachLevel, levelUpCost } from '../src/run/progression';
 import { EVOLUTION_LEVEL } from '../src/run/progression';
-import { createRunState } from '../src/run/state';
+import { createRosterEntry, createRunState } from '../src/run/state';
 import { resolveTypeMult } from '../src/engine/damage/typeMult';
 import {
   generateTutorialMap,
@@ -27,7 +28,10 @@ import {
   normalizeLine,
   rewardBeatKey,
   tutorialBeat,
+  tutorialContractOffers,
   tutorialEncounterFor,
+  tutorialFocusRosterId,
+  tutorialLockedActiveRosterIds,
   tutorialPayoutFor,
   TUTORIAL_ROW_TYPES,
   TUTORIAL_SCREEN_BEAT_KEYS,
@@ -319,4 +323,111 @@ test('tutorial: every move on a scripted enemy exists', () => {
       for (const moveId of pool[id].moveIds) assert.ok(moves[moveId], `${id} carries unknown move ${moveId}`);
     }
   }
+});
+
+// --- Locks: the choices the scripted act takes away ---
+
+/** A tutorial run holding `heroIds`, each as a fresh level-1 entry. */
+function lockRun(heroIds: readonly string[]) {
+  const run = tutorialRun();
+  return { ...run, roster: heroIds.map((id) => createRosterEntry(id, id, heroes[id].moveIds)) };
+}
+
+test('tutorial: the forced recruit is a MAGICAL specialist that actually shows up to be claimed', () => {
+  const hero = heroes[TUTORIAL_LOCKS.recruitHeroId];
+  assert.ok(hero, 'the forced recruit must be a real hero');
+  assert.ok(
+    TUTORIAL_ENCOUNTERS.skirmish!.heroIds.includes(TUTORIAL_LOCKS.recruitHeroId),
+    'the forced recruit must be on the Skirmish it is claimed from'
+  );
+
+  // The whole reason this lock exists: the two damage pipelines are invisible until the player
+  // owns one of each, and a magical hero has to read as unambiguously magical to teach it.
+  const { attack, intelligence } = hero.baseStats;
+  assert.ok(intelligence > attack, `${hero.name} must lead on Intelligence to teach the magical pipeline`);
+  const damage = hero.moveIds.map((id) => moves[id]).filter((m) => m.kind === 'damage');
+  assert.ok(damage.length > 0 && damage.every((m) => m.category === 'magical'), `${hero.name} must swing magical, not physical`);
+});
+
+test('tutorial: the fielding lock names a fight where being magical is the point', () => {
+  // Sentinel is the proof: a physical wall with an open flank. If the escort changes, the
+  // boss:armour cue is talking about a hero that is no longer there.
+  const escorts = TUTORIAL_ENCOUNTERS.boss!.heroIds.map((id) => heroes[id]);
+  const wall = escorts.find((hero) => hero.baseStats.defense >= 100);
+  assert.ok(wall, 'the Guardian escort must include a physically tanky body for the lesson to land');
+  assert.ok(
+    wall!.baseStats.defense - wall!.baseStats.wisdom >= 40,
+    `${wall!.name} must be far tankier physically than magically — that gap IS the lesson`
+  );
+  assert.ok(TUTORIAL_LOCKS.fieldAtNodes.includes('boss'), 'the caster must be on the field for the fight that proves it');
+  for (const node of TUTORIAL_LOCKS.fieldAtNodes) {
+    assert.ok(TUTORIAL_ROW_TYPES.includes(node), `${node} is not on the tutorial map`);
+  }
+});
+
+test('tutorial: the contract offer is forced once, and only while it is claimable', () => {
+  const run = lockRun([...TUTORIAL_STARTER_IDS]);
+  const beaten = TUTORIAL_ENCOUNTERS.skirmish!.heroIds.map((id) => createRosterEntry(id, id, heroes[id].moveIds));
+
+  const forced = tutorialContractOffers(TUTORIAL_LOCKS, run, beaten);
+  assert.ok(forced, 'the Skirmish must force its contract');
+  assert.deepStrictEqual(forced!.map((e) => e.heroId), [TUTORIAL_LOCKS.recruitHeroId], 'exactly one offer, and it is the caster');
+
+  // Already owned — nothing left to force, so the screen goes back to being skippable.
+  const owned = lockRun([...TUTORIAL_STARTER_IDS, TUTORIAL_LOCKS.recruitHeroId]);
+  assert.strictEqual(tutorialContractOffers(TUTORIAL_LOCKS, owned, beaten), null);
+
+  // Not among the beaten (any other fight), and outside the scripted act.
+  assert.strictEqual(tutorialContractOffers(TUTORIAL_LOCKS, run, []), null);
+  assert.strictEqual(tutorialContractOffers(TUTORIAL_LOCKS, { ...run, actNumber: 2 }, beaten), null);
+  assert.strictEqual(tutorialContractOffers(TUTORIAL_LOCKS, { ...run, tutorial: false }, beaten), null);
+});
+
+test('tutorial: the Level Up focus lock holds until the focus hero evolves, then lifts', () => {
+  const run = lockRun([...TUTORIAL_STARTER_IDS]);
+  const focusEntry = run.roster.find((r) => r.heroId === TUTORIAL_LOCKS.focusHeroId)!;
+  assert.strictEqual(tutorialFocusRosterId(TUTORIAL_LOCKS, run), focusEntry.rosterId);
+
+  const evolved = {
+    ...run,
+    roster: run.roster.map((r) => (r.rosterId === focusEntry.rosterId ? { ...r, chosenPathIds: ['whatever'] } : r)),
+  };
+  assert.strictEqual(tutorialFocusRosterId(TUTORIAL_LOCKS, evolved), null, 'the lock exists to reach an Evolution, so taking one ends it');
+
+  assert.strictEqual(tutorialFocusRosterId(TUTORIAL_LOCKS, { ...run, actNumber: 2 }), null);
+  assert.strictEqual(tutorialFocusRosterId(TUTORIAL_LOCKS, { ...run, tutorial: false }), null);
+  assert.strictEqual(tutorialFocusRosterId(TUTORIAL_LOCKS, lockRun(['packAlpha'])), null, 'no focus hero, no lock');
+});
+
+test('tutorial: the focus lock reaches the Evolution on the payouts as written', () => {
+  // The lock only guarantees the fork if the schedule pays for it. Walk Act 1's income against
+  // the level price with every point going to the focus hero, and check where level 5 lands.
+  let pool = 0;
+  let level = 1;
+  const reachedAfter: string[] = [];
+  for (const node of ['fight', 'skirmish', 'battle'] as const) {
+    pool += TUTORIAL_PAYOUTS[node]?.xp ?? 0;
+    while (level < EVOLUTION_LEVEL && pool >= levelUpCost(level)) {
+      pool -= levelUpCost(level);
+      level++;
+    }
+    if (level >= EVOLUTION_LEVEL) reachedAfter.push(node);
+  }
+  assert.ok(reachedAfter.length > 0, 'Act 1 never reaches the Evolution even with every point on one hero');
+  assert.strictEqual(reachedAfter[0], 'skirmish', 'the Evolution should land on the Skirmish level-up, beside the forced recruit');
+});
+
+test('tutorial: the field lock pins the caster at its nodes and nowhere else', () => {
+  const run = lockRun([...TUTORIAL_STARTER_IDS, TUTORIAL_LOCKS.recruitHeroId]);
+  const pinned = run.roster.find((r) => r.heroId === TUTORIAL_LOCKS.fieldHeroId)!;
+
+  for (const node of TUTORIAL_LOCKS.fieldAtNodes) {
+    assert.deepStrictEqual([...tutorialLockedActiveRosterIds(TUTORIAL_LOCKS, run, node)], [pinned.rosterId]);
+  }
+  assert.deepStrictEqual([...tutorialLockedActiveRosterIds(TUTORIAL_LOCKS, run, 'skirmish')], []);
+  assert.deepStrictEqual([...tutorialLockedActiveRosterIds(TUTORIAL_LOCKS, { ...run, actNumber: 2 }, 'boss')], []);
+
+  // Never strands the screen: a hero the player does not have cannot be required to stand.
+  const without = lockRun([...TUTORIAL_STARTER_IDS]);
+  assert.deepStrictEqual([...tutorialLockedActiveRosterIds(TUTORIAL_LOCKS, without, 'boss')], []);
 });

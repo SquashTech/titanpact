@@ -11,9 +11,30 @@
 //   - `TUTORIAL_FIGHT_CUES` are the mid-fight lines, checked at the start of every command
 //     phase. Order is priority order — the first unseen cue whose `when` holds is the one shown.
 //   - `TUTORIAL_ENCOUNTERS` is who you actually fight; `TUTORIAL_PAYOUTS` is what a win pays.
+//   - `TUTORIAL_LOCKS` is what the act refuses to let the player skip.
 
 import type { MapNodeType } from '../run/map';
-import type { TutorialBeat, TutorialEncounter, TutorialFightCue, TutorialPayout } from '../run/tutorial';
+import type { TutorialBeat, TutorialEncounter, TutorialFightCue, TutorialLocks, TutorialPayout } from '../run/tutorial';
+
+// --- Locks ---
+
+/**
+ * The three choices Act 1 takes away, so the lessons behind them cannot be walked past
+ * (2026-09-06, per user direction). Each lifts the moment its lesson lands; none survives Act 1.
+ *
+ * Flurry is the forced recruit because she is the roster's least ambiguous MAGICAL specialist —
+ * 25 Attack against 80 Intelligence, and a damage move that is magical. The split between the
+ * two pipelines is invisible until the player holds one of each, and no draft can be relied on
+ * to hand them one. She is then locked onto the field for the warband and the Guardian, because
+ * Sentinel stands there with 110 Defense and 50 Wisdom: Valor's fist reads 60/110, Flurry's wind
+ * reads 80/50, and that one screen is the whole lesson.
+ */
+export const TUTORIAL_LOCKS: TutorialLocks = {
+  focusHeroId: 'valor',
+  recruitHeroId: 'glacialWarden',
+  fieldHeroId: 'glacialWarden',
+  fieldAtNodes: ['battle', 'boss'],
+};
 
 // --- Curated encounters ---
 
@@ -24,11 +45,15 @@ import type { TutorialBeat, TutorialEncounter, TutorialFightCue, TutorialPayout 
  *    exists here on purpose: the opener teaches the loop, not the chart.
  *  - `skirmish` — two Frost heroes. Frost doubles into Fang's Beast and halves into Valor's
  *    Iron, so the same move reads two ways on one screen. It is also the recruit the Guardian
- *    is weak to, which is the whole shape of the act: what beats you beats what is ahead.
+ *    is weak to, which is the whole shape of the act: what beats you beats what is ahead. Rime
+ *    swings physical and Flurry casts, so the pair is also the first place the two damage
+ *    pipelines stand side by side (`TUTORIAL_LOCKS` forces Flurry onto the roster).
  *  - `battle` — the Chief as a body to grind, two basics as the bench lesson.
- *  - `boss` — one escort each: Stone for Valor's Iron, Nature for Fang's Beast. The Goblin Lord
- *    rides the bench as he always does (locations.ts `guardianFinalEnemyId`) and walks on after
- *    the first KO, which is when the Ancient wall gets explained.
+ *  - `boss` — one escort each: Stone for Valor's Iron, Nature for Fang's Beast. Sentinel is
+ *    also the physical/magical proof — 110 Defense against 50 Wisdom, so the fist that is
+ *    super-effective still reads worse than the spell that is not. The Goblin Lord rides the
+ *    bench as he always does (locations.ts `guardianFinalEnemyId`) and walks on after the first
+ *    KO, which is when the Ancient wall gets explained.
  */
 export const TUTORIAL_ENCOUNTERS: Partial<Record<MapNodeType, TutorialEncounter>> = {
   fight: { heroIds: ['goblinGrunt', 'goblinSkulker'] },
@@ -38,10 +63,14 @@ export const TUTORIAL_ENCOUNTERS: Partial<Record<MapNodeType, TutorialEncounter>
 };
 
 /**
- * What a scripted win pays, replacing the normal roll. Tuned so that following Valor's advice
- * (pour it into one hero) puts Valor at the Evolution level on the Level Up screen after the
- * `battle`, and spreading it evenly still gets somebody there. 22 XP before the Guardian
- * against a 10-point cost to reach level 5; 160 gold at the Guild Hall against a 50-gold hero.
+ * What a scripted win pays, replacing the normal roll. `TUTORIAL_LOCKS.focusHeroId` sends every
+ * point to Valor until she evolves, so these figures are a schedule rather than a hope: 4 takes
+ * her to level 3, the Skirmish's 8 takes her to 5, and the Evolution therefore lands on the
+ * level-up screen straight after the Skirmish — the same beat that hands over Flurry. The
+ * warband's 10 then arrives with the lock already lifted and the whole roster spendable.
+ *
+ * 22 XP before the Guardian against a 10-point cost to reach level 5; 160 gold at the Guild
+ * Hall against a 50-gold hero.
  */
 export const TUTORIAL_PAYOUTS: Partial<Record<MapNodeType, TutorialPayout>> = {
   fight: { xp: 4, gold: 25 },
@@ -57,10 +86,10 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'intro',
     topic: 'The Pact',
     lines: [
-      'Fang and I have been walking toward this valley for a year. You are the last piece of it.',
-      'A Titan cannot be killed. It can only be bound — and binding runs both ways. Something has to hold the other end of the leash.',
-      'That is you. We are the hands. You are the will.',
-      { speaker: 'fang', text: 'Less talking. Treeline.' },
+      'Fang and I have been walking toward this valley for a year. The journey truly begins now.',
+      'A Titan cannot be killed. It can only be bound. It is up to us to appease it.',
+      'Five Guardians stand between us and the Pact.',
+      { speaker: 'fang', text: 'Woof.' },
       'Seal the pact and we go.',
     ],
   },
@@ -79,36 +108,36 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:fight',
     topic: 'Monsters',
     lines: [
-      'Goblins. Two of them, two of us — every fight in this world is two against two.',
+      'Goblins. Two of them, two of us. Every fight in this world is two against two.',
       'Fang and I are both on the field at once. Each round you give us an order apiece: a move, and who it lands on. Nothing happens until we have both been told.',
-      'Monsters, this one. Nothing here is worth recruiting — you just take what falls off them.',
+      'Monsters, this one. They tend to hold valuable loot that will aid us on this journey.',
     ],
   },
   {
     id: 'gem',
     topic: 'Gems',
     lines: [
-      'A Gem. That is a relic, and a relic is team-wide — the same bonus on me, on Fang, and on anyone we pick up later.',
+      'A Gem. That is a relic, and a relic benefits us all. The same bonus on me, on Fang, and on anyone we pick up later.',
       'They stack, forever. Two Sapphires is ten more Mana on everybody.',
-      'Pick the one you want carried for the rest of the run.',
+      'Pick the one you want carried for the rest of the journey.',
     ],
   },
   {
     id: 'equip',
     topic: 'Equipment',
     lines: [
-      'Gear. Three slots each — weapon, armour, accessory — and it belongs to one hero, not the team. That is the whole difference between this and the Gem.',
-      'There is no bag to put it in. Equip it on one of us or throw it away. Those are the two doors.',
+      'Gear. Each of us can hold one weapon, one armor, and one accessory.',
+      'Equip it on one of us or throw it away.',
     ],
   },
   {
     id: 'levelUp',
     topic: 'Experience',
     lines: [
-      'Experience is a pot, not a bar. You spend it on whichever of us you like — and a hero who sat out the fight can still be raised.',
-      'A level does not raise my numbers. It teaches me a move. That is what growth is, here.',
-      'The first level costs one point, the next two, the next three. Spreading it thin is cheap; going deep on one of us is not. Both are real plans.',
-      'Mine, if you are asking. I want to show you something later.',
+      'Experience teaches us new ways to fell our foes. Give it to any of us, even heroes who did not participate in the battle.',
+      'A level does not raise my numbers. It teaches me a new move, or progresses me toward evolution.',
+      'The first level costs one point, the next two, the next three.',
+      'For now it all comes to me. There is something I need to show you, and I have to get far enough along to show it.',
     ],
   },
 
@@ -151,14 +180,18 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
       'You are carrying a Recruit Contract. One beaten hero, straight onto our roster, at whatever strength they were beaten at. Six is the cap and we are two, so there is room.',
       'Frost, both of them. Cold eats a Beast, Fang — that will hurt. It runs off me.',
       { speaker: 'fang', text: 'Then stand in front.' },
+      'And look at how differently the two of them fight. One swings. One never touches you at all.',
     ],
   },
   {
     id: 'recruit',
     topic: 'Recruit Contract',
     lines: [
-      'Take one of them. I will tell you why at the end of this valley.',
-      'A contract keeps everything they had when they fell — their level, their moves, their growth. Not their gear. Gear stays on the corpse.',
+      'The caster. Take the caster — I am not asking.',
+      'Fang and I both hit with our hands. Everything we do is measured against what the enemy is wearing.',
+      'She is not. What she throws is measured against what the enemy KNOWS. Armour does nothing about it.',
+      'You need one of each, and there is something at the end of this valley you will not get through without her.',
+      'A contract keeps everything she had when she fell — her level, her moves, her growth. Not her gear. Gear stays on the corpse.',
     ],
   },
 
@@ -184,6 +217,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
       'A chief and his warband. More of them than of us, which means somebody watches from the bench.',
       'The bench is not a punishment. Whoever sits there regenerates Mana every round, and you can bring them in whenever you like. Switching costs a turn and nothing else.',
       'One warning. Once a side has lost two heroes, that side can no longer switch at all — the doors close and it becomes a straight grind. Do your cycling early.',
+      'The caster starts on the field. I want you flying her before it matters.',
     ],
   },
   {
@@ -218,8 +252,9 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
       'The Goblin Lord. He is not a goblin the way the others are goblins. He is a warden, and half of what he is is the seal itself.',
       'Ancient. Everything is resisted by it. Nothing you own is strong against him and nothing ever will be — that is what a seal is.',
       'So you do not out-type him. You out-last him.',
-      "Two escorts stand in front of him. The stone one is mine; the green one is Fang's. Take them in that order.",
-      'And keep the Frost one you claimed swinging. Cold is what a Beast fears, and under all that Ancient he is still a Beast.',
+      "Two escorts stand in front of him. The green one is Fang's — Nature never survives a Beast.",
+      'The stone one is mine by the chart, and the chart is going to lie to you. Watch what happens when I hit it.',
+      'And keep the caster on the field the whole way. Cold is what a Beast fears, and under all that Ancient he is still a Beast.',
     ],
   },
   {
@@ -296,9 +331,20 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     ],
   },
   {
+    id: 'skirmish:pipelines',
+    node: 'skirmish',
+    when: { round: 2 },
+    topic: 'Two Kinds of Hit',
+    lines: [
+      'Watch them. The one with the shard throws it — that is a PHYSICAL move, and it is weighed against my Defense.',
+      'The other one never moves. Hers is MAGICAL, and my Defense has nothing to say about it. It goes against my Wisdom instead.',
+      'Every move in the game is one or the other. Hold a move to see which.',
+    ],
+  },
+  {
     id: 'skirmish:focus',
     node: 'skirmish',
-    when: { minRound: 2 },
+    when: { minRound: 3 },
     topic: 'Focus',
     lines: [
       'Put both of us on the same one. Two enemies standing at half health hit you twice as hard as one at full.',
@@ -326,6 +372,17 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     ],
   },
   {
+    id: 'battle:magic',
+    node: 'battle',
+    when: { round: 2 },
+    topic: 'The Caster',
+    lines: [
+      'Look at her sheet sometime. Twenty-five Attack. She could not punch through a wet curtain.',
+      'Eighty Intelligence, though. That is what her wind is measured with, and it is measured against their Wisdom — which nothing out here bothers to have.',
+      'Two of us who hit armour, one of us who goes around it. That is why I made you take her.',
+    ],
+  },
+  {
     id: 'battle:locked',
     node: 'battle',
     when: { lockedIn: true },
@@ -343,8 +400,19 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     when: { round: 1 },
     topic: 'The Escorts',
     lines: [
-      'Stone in front of me, Nature in front of Fang. Both of those are double damage for the right one of us.',
-      'Clear them and the field is ours before he is even out.',
+      'Nature in front of Fang. Send him at it and it will not be there next round.',
+      'Now hold my Iron Fist over the stone one and read the number. Double damage, the chart says. Read it anyway.',
+    ],
+  },
+  {
+    id: 'boss:armour',
+    node: 'boss',
+    when: { round: 2 },
+    topic: 'Armour',
+    lines: [
+      'Underwhelming, was it. That thing is a hundred and ten Defense — my fist is being divided by a wall before the chart ever gets a turn.',
+      'Now put the caster on it. Fifty Wisdom. Her wind does not care what it is wearing.',
+      'Type advantage is one term in the sum. It is not the sum. This is the fight that teaches you that.',
     ],
   },
   {

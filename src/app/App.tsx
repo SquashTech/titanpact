@@ -75,12 +75,15 @@ import {
   markTutorialBeatSeen,
   rewardBeatKey,
   tutorialBeat,
+  tutorialContractOffers,
   tutorialEncounterFor,
+  tutorialFocusRosterId,
+  tutorialLockedActiveRosterIds,
   tutorialPayoutFor,
   TUTORIAL_STARTER_IDS,
   type TutorialBeatKey,
 } from '../run/tutorial';
-import { TUTORIAL_ENCOUNTERS, TUTORIAL_PAYOUTS, TUTORIAL_SCRIPT } from '../data/tutorial';
+import { TUTORIAL_ENCOUNTERS, TUTORIAL_LOCKS, TUTORIAL_PAYOUTS, TUTORIAL_SCRIPT } from '../data/tutorial';
 import { TutorialOverlay } from '../view/run/TutorialOverlay';
 import { pickGemOffers, rollGemOffers } from '../run/gems';
 import { generateStarterOptions } from '../run/draft';
@@ -160,7 +163,8 @@ type Screen =
   /** Roster-full replacement, Guild Hall path only; the contract path resolves in RecruitScreen. */
   | { kind: 'rosterReplace'; candidate: RosterReplaceCandidate; next: Screen }
   /** Offers sampled once in handleFightResolved; only pushed when the player holds a contract. */
-  | { kind: 'recruit'; offers: RosterEntry[]; next: Screen }
+  /** `required`: the scripted run's forced contract — the screen has no way out but signing (docs/tutorial.md). */
+  | { kind: 'recruit'; offers: RosterEntry[]; next: Screen; required?: boolean }
   | { kind: 'runComplete' }
   | { kind: 'runFailed' };
 
@@ -695,9 +699,15 @@ export function App() {
     // recruited this beat already stands under both team-wide grants and can receive this win's
     // gear and points.
     // `next`, not `playerRun`: a boss node has just granted the contract that is spendable here.
-    const contractOffers =
-      next.recruitContracts > 0 ? pickContractOffers(defeatedRoster.filter((entry) => isRecruitable(entry.heroId, heroes))) : [];
-    const afterRecruit: Screen = contractOffers.length > 0 ? { kind: 'recruit', offers: contractOffers, next: afterEquip } : afterEquip;
+    const recruitable = defeatedRoster.filter((entry) => isRecruitable(entry.heroId, heroes));
+    // The scripted act names its one contract and refuses to let it be walked past; a non-null
+    // answer is both the offer list and the reason the screen has no leave button.
+    const forcedOffers = tutorialContractOffers(TUTORIAL_LOCKS, next, recruitable);
+    const contractOffers = next.recruitContracts > 0 ? (forcedOffers ?? pickContractOffers(recruitable)) : [];
+    const afterRecruit: Screen =
+      contractOffers.length > 0
+        ? { kind: 'recruit', offers: contractOffers, next: afterEquip, required: forcedOffers !== null }
+        : afterEquip;
     const afterBanner: Screen = banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit;
 
     // The run's very first fight always pays a Gem; every other fight rolls for one (run/gems.ts).
@@ -919,6 +929,7 @@ export function App() {
           squadSize={screen.squadSize}
           onRunChange={setPlayerRun}
           onConfirm={(squad) => handleSquadConfirmed(squad, screen.nodeId, screen.nodeType, screen.encounter)}
+          lockedActiveRosterIds={tutorialLockedActiveRosterIds(TUTORIAL_LOCKS, playerRun, playerRun.map!.nodes[screen.nodeId].type)}
         />
       )}
 
@@ -983,6 +994,7 @@ export function App() {
           onClaim={handleClaimContract}
           onClaimReplace={handleClaimContractReplace}
           onDone={() => setScreen(screen.next)}
+          required={screen.required}
         />
       )}
 
@@ -1073,7 +1085,12 @@ export function App() {
       )}
 
       {screen.kind === 'levelUp' && (
-        <LevelUpScreen run={playerRun} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />
+        <LevelUpScreen
+          run={playerRun}
+          onRunChange={setPlayerRun}
+          onDone={() => setScreen(screen.next)}
+          focusRosterId={tutorialFocusRosterId(TUTORIAL_LOCKS, playerRun)}
+        />
       )}
 
       {screen.kind === 'forceEquip' && (
