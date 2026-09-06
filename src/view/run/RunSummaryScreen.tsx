@@ -10,7 +10,7 @@ import { locationForAct } from '../../run/locations';
 import type { Profile } from '../../run/profile';
 import type { RelicDefinition } from '../../run/relics';
 import type { HeroDefinition } from '../../engine/content';
-import { TOTAL_ACTS, type RosterEntry, type RunState } from '../../run/state';
+import { SEAL_ACTS, type RosterEntry, type RunState } from '../../run/state';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { RelicIcon } from '../shared/EquipmentBox';
 import { stackedGrantSummary, stackedRelicName } from '../shared/relicStacks';
@@ -31,6 +31,11 @@ const ACT_ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 
 function actLabel(actNumber: number): string {
   return ACT_ROMAN[actNumber - 1] ?? String(actNumber);
+}
+
+/** How far a run got. The finale is past the fifth seal, not a sixth act, so it is named instead of counted. */
+function reachedLabel(actNumber: number): string {
+  return actNumber > SEAL_ACTS ? 'Finale' : `${actLabel(actNumber)} / ${SEAL_ACTS}`;
 }
 
 /** The name of the last Evolution taken — the one word that says what this hero became. */
@@ -86,12 +91,17 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
         <h2>{won ? 'Run Cleared' : 'Run Failed'}</h2>
         <p className="run-summary-where">
           {won
-            ? `All ${TOTAL_ACTS} Guardians have fallen.`
-            : `Your squad fell in Act ${actLabel(run.actNumber)}${place ? ` · ${place.name}` : ''}.`}
+            ? `All ${SEAL_ACTS} Guardians have fallen, and the Endbringer with them.`
+            : run.actNumber > SEAL_ACTS
+              ? `Your squad fell at the last pact${place ? ` · ${place.name}` : ''}.`
+              : `Your squad fell in Act ${actLabel(run.actNumber)}${place ? ` · ${place.name}` : ''}.`}
         </p>
 
         <div className="run-summary-stats">
-          <Stat label="Act reached" value={`${actLabel(run.actNumber)} / ${TOTAL_ACTS}`} />
+          <Stat
+            label="Act reached"
+            value={reachedLabel(run.actNumber)}
+          />
           <Stat label="Encounters won" value={String(run.encountersWon)} />
           <Stat label="Gold" value={String(run.gold)} />
           <Stat label="Relics" value={String(run.relics.length)} />
@@ -157,7 +167,9 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
                 </span>
               ))}
               {newFurthestAct && (
-                <span className="run-summary-record-chip">Furthest act — {actLabel(profileAfter.furthestAct)}</span>
+                <span className="run-summary-record-chip">
+                  Furthest act — {profileAfter.furthestAct > SEAL_ACTS ? 'Finale' : actLabel(profileAfter.furthestAct)}
+                </span>
               )}
             </div>
           </>

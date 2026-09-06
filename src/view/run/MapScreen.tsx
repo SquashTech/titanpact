@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
-import { TOTAL_ACTS } from '../../run/state';
+import { SEAL_ACTS } from '../../run/state';
 import { reachableNodeIds } from '../../run/runProgress';
 import type { MapNode, MapNodeType } from '../../run/map';
 import { useLongPress } from '../shared/MoveTile';
@@ -458,13 +458,21 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
     <div className="map-screen" data-location={location.id} style={{ '--node-rgb': location.tintRgb } as CSSProperties}>
       {/* Act on the left is a position, not a thing you hold; the purse on the right is. */}
       <div className="map-header">
-        <span className="map-act" aria-label={`Act ${run.actNumber} of ${TOTAL_ACTS}`}>
-          <span className="map-act-label">Act</span>
-          <span className="map-act-count">
-            {run.actNumber}
-            <span className="map-act-total">/{TOTAL_ACTS}</span>
+        {run.actNumber > SEAL_ACTS ? (
+          // The finale is the corridor past the fifth seal, not a sixth act, so it counts nothing.
+          <span className="map-act" aria-label="The final pact">
+            <span className="map-act-label">Final</span>
+            <span className="map-act-count">Pact</span>
           </span>
-        </span>
+        ) : (
+          <span className="map-act" aria-label={`Act ${run.actNumber} of ${SEAL_ACTS}`}>
+            <span className="map-act-label">Act</span>
+            <span className="map-act-count">
+              {run.actNumber}
+              <span className="map-act-total">/{SEAL_ACTS}</span>
+            </span>
+          </span>
+        )}
         <div className="map-purse">
           <ResourceStat kind="gold" label="Gold" value={run.gold} />
           <ResourceStat

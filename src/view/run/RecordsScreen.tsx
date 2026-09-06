@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { heroes } from '../../data/heroes';
 import { formatPlaytime, starredHeroCount, totalStars, type Profile } from '../../run/profile';
-import { TOTAL_ACTS } from '../../run/state';
+import { SEAL_ACTS } from '../../run/state';
 
 interface Props {
   profile: Profile;
@@ -55,7 +55,11 @@ export function RecordsScreen({ profile, onEraseAllData, onClose }: Props) {
             <Stat label="Clear rate" value={winRate} />
             <Stat
               label="Furthest act"
-              value={`${ACT_ROMAN[profile.furthestAct - 1] ?? profile.furthestAct} / ${TOTAL_ACTS}`}
+              value={
+                profile.furthestAct > SEAL_ACTS
+                  ? 'Finale'
+                  : `${ACT_ROMAN[profile.furthestAct - 1] ?? profile.furthestAct} / ${SEAL_ACTS}`
+              }
             />
           </div>
 
