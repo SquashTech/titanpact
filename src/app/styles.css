@@ -9601,6 +9601,74 @@ textarea,
   color: var(--enemy);
 }
 
+/* Corner badge, not a row: the level is half of what the gold buys, and the
+   Hall is tuned to fit a phone without scrolling. */
+.guild-hall-hero-level {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+/* Slot holdings under an inspected item (EquipChoiceCard SlotOwners) — who
+   already has what, so the buy decision doesn't need the equip screen first. */
+.equip-owners {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 148px;
+  overflow-y: auto;
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-sunken);
+  border-radius: var(--radius-sm);
+}
+
+.equip-owners-head {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+
+.equip-owners-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.equip-owners-portrait {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--border);
+  flex: none;
+}
+
+.equip-owners-name {
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Pushed right so the held column lines up down the list. */
+.equip-owners-item {
+  margin-left: auto;
+  text-align: right;
+  font-weight: 600;
+}
+
+.equip-owners-row.is-empty .equip-owners-item {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
 /* Both of these are written as `.equip-cache-* .guild-hall-*` (0,2,0) rather
    than as the bare `.guild-hall-*` class they used to be. The base
    `.equip-cache-list` / `.equip-cache-card` rules are defined LATER in this

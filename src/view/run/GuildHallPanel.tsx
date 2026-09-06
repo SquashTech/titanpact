@@ -4,7 +4,9 @@ import { equipment } from '../../data/equipment';
 import { guildHallOffers, CONTRACT_PURCHASE_COST } from '../../data/recruitment';
 import type { HeroDefinition } from '../../engine/content';
 import type { RunState } from '../../run/state';
-import { ROSTER_CAP, RosterFullError, createRosterEntry } from '../../run/state';
+import { ROSTER_CAP, RosterFullError } from '../../run/state';
+import { guildHallEntry } from '../../run/guildRecruit';
+import { guildHallLevel } from '../../run/difficulty';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { recruitFromGuildHall, buyContract, RecruitmentError, type GuildHallOffer } from '../../run/recruitment';
 import { EQUIPMENT_PRICE_BY_RARITY, type GuildHallOffers } from '../../run/shop';
@@ -37,18 +39,21 @@ interface Props {
 interface HeroCardProps {
   hero: HeroDefinition;
   offer: GuildHallOffer;
+  /** The act's hire level (difficulty.ts guildHallLevel) — on the card because it is half of what 50g buys. */
+  level: number;
   affordable: boolean;
   onInspect: () => void;
 }
 
 // A tap opens the sheet; the sheet is where gold is spent. Unaffordable offers still open.
-function GuildHallHeroCard({ hero, offer, affordable, onInspect }: HeroCardProps) {
+function GuildHallHeroCard({ hero, offer, level, affordable, onInspect }: HeroCardProps) {
   return (
     <button
       className={`guild-hall-hero-card${affordable ? '' : ' unaffordable'}`}
       style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
       onClick={onInspect}
     >
+      <span className="guild-hall-hero-level">Lv{level}</span>
       <HeroPortrait heroId={hero.id} className="guild-hall-hero-portrait" />
       <div className="guild-hall-hero-name">{hero.name}</div>
       <div className="roster-card-types">
@@ -173,6 +178,7 @@ export function GuildHallPanel({
                   key={offer.id}
                   hero={hero}
                   offer={offer}
+                  level={guildHallLevel(run.actNumber)}
                   affordable={run.gold >= offer.cost}
                   onInspect={() => setPreviewOfferId(offer.id)}
                 />
@@ -230,9 +236,10 @@ export function GuildHallPanel({
           return (
             <HeroPreviewOverlay
               hero={heroes[previewOffer.heroId]}
-              entry={createRosterEntry('preview', previewOffer.heroId, previewOffer.startingMoveIds)}
+              entry={guildHallEntry(run, previewOffer, 'preview')}
               equipmentLookup={equipment}
               relicIds={run.relics}
+              unowned
               action={{
                 label:
                   previewOffer.cost === 0
@@ -261,6 +268,7 @@ export function GuildHallPanel({
           return (
             <EquipInspectOverlay
               item={previewEquip}
+              roster={run.roster}
               action={{
                 label: `Buy ${previewEquip.name} — ${cost}g`,
                 disabled: !affordable,

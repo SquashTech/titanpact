@@ -65,6 +65,7 @@ import {
 import { guildHallOffers } from '../data/recruitment';
 import { gemForStat } from '../data/relics';
 import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } from '../run/shop';
+import { guildHallEntry } from '../run/guildRecruit';
 import { generateMap, type MapNodeType } from '../run/map';
 import {
   generateTutorialMap,
@@ -981,6 +982,9 @@ export function App() {
         <RosterReplaceScreen
           roster={playerRun.roster}
           candidate={screen.candidate}
+          incomingEntry={
+            screen.candidate.source === 'guildHall' ? guildHallEntry(playerRun, screen.candidate.offer, 'preview') : undefined
+          }
           relicIds={playerRun.relics}
           onConfirm={(terminatedRosterId) => {
             const { candidate } = screen;

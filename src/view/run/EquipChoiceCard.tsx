@@ -1,8 +1,12 @@
 import { type CSSProperties } from 'react';
+import { equipment } from '../../data/equipment';
+import { heroes } from '../../data/heroes';
 import { passives } from '../../data/passives';
 import { statuses } from '../../data/statuses';
 import type { StatKey } from '../../engine/content';
-import type { EquipmentDefinition } from '../../run/equipment';
+import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
+import type { RosterEntry } from '../../run/state';
+import { HeroPortrait } from '../shared/HeroPortrait';
 import {
   EQUIP_SLOT_LABELS,
   EquipmentEffectList,
@@ -62,8 +66,39 @@ export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs
   );
 }
 
+/**
+ * Who already holds what in one slot — the half of the buy decision the item's own card can't
+ * answer ("do I have anywhere to put this?"). Read-only: the Guild Hall still routes the purchase
+ * through ForceEquipScreen, which is where a hero is actually chosen.
+ */
+function SlotOwners({ roster, slot }: { roster: readonly RosterEntry[]; slot: EquipmentSlot }) {
+  return (
+    <div className="equip-owners">
+      <div className="equip-owners-head">Roster — {EQUIP_SLOT_LABELS[slot]} slot</div>
+      {roster.map((entry) => {
+        const heldId = entry.equipment[slot];
+        const held = heldId ? equipment[heldId] : null;
+        return (
+          <div key={entry.rosterId} className={`equip-owners-row${held ? '' : ' is-empty'}`}>
+            <HeroPortrait heroId={entry.heroId} className="equip-owners-portrait" />
+            <span className="equip-owners-name">{heroes[entry.heroId]?.name ?? entry.heroId}</span>
+            <span
+              className="equip-owners-item"
+              style={held ? ({ color: RARITY_COLOR_VARS[held.rarity] } as CSSProperties) : undefined}
+            >
+              {held ? held.name : 'Empty'}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 interface EquipInspectOverlayProps {
   item: EquipmentDefinition;
+  /** Adds the roster's holdings in this item's slot. Omit where the item isn't a purchase (the Loot Pile). */
+  roster?: readonly RosterEntry[];
   /** Turns the sheet into a decision (the Guild Hall shelf): a confirm button plus Cancel. Omit for read-only inspects. */
   action?: {
     label: string;
@@ -75,7 +110,7 @@ interface EquipInspectOverlayProps {
   onClose: () => void;
 }
 
-export function EquipInspectOverlay({ item, action, onClose }: EquipInspectOverlayProps) {
+export function EquipInspectOverlay({ item, roster, action, onClose }: EquipInspectOverlayProps) {
   const grants = Object.entries(item.statGrants).filter(([, amount]) => amount) as [StatKey, number][];
   const hasEffects = grants.length > 0 || (item.grantsPassiveIds?.length ?? 0) > 0 || (item.grantsStatusIds?.length ?? 0) > 0;
   return (
@@ -100,6 +135,7 @@ export function EquipInspectOverlay({ item, action, onClose }: EquipInspectOverl
           <EquipmentEffectList item={item} />
           {!hasEffects && <div className="move-info-placeholder">No effects.</div>}
         </div>
+        {roster && roster.length > 0 && <SlotOwners roster={roster} slot={item.slot} />}
         {action ? (
           <div className="detail-action">
             {action.note && <div className="detail-action-note">{action.note}</div>}

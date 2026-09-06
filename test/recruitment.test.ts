@@ -3,6 +3,8 @@ import { test } from './harness';
 import { heroes } from '../src/data/heroes';
 import { enemies } from '../src/data/enemies';
 import { guildHallOffers } from '../src/data/recruitment';
+import { ENEMY_LEVEL_BY_ACT, GUILD_HALL_LEVEL_BY_ACT, guildHallLevel } from '../src/run/difficulty';
+import { guildHallEntry } from '../src/run/guildRecruit';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP } from '../src/run/state';
 import { equipItem } from '../src/run/equipment';
 import { equipment } from '../src/data/equipment';
@@ -53,6 +55,37 @@ test('recruitment: Guild Hall recruit still enforces the roster cap', () => {
   const run = seedRoster(allSix, 1000);
   const offer = guildHallOffers.find((o) => o.heroId === 'ironWarden')!;
   assert.throws(() => recruitFromGuildHall(run, offer, 'extra-ironWarden'));
+});
+
+test('recruitment: a Guild Hall hire is always underleveled against the act it is bought in', () => {
+  for (let act = 1; act <= ENEMY_LEVEL_BY_ACT.length; act++) {
+    assert.ok(
+      guildHallLevel(act) < ENEMY_LEVEL_BY_ACT[act - 1] || act === 1,
+      `act ${act}: hire level ${guildHallLevel(act)} must sit under the enemy's ${ENEMY_LEVEL_BY_ACT[act - 1]}`
+    );
+  }
+  assert.strictEqual(guildHallLevel(1), 1);
+  // Later acts hold at the last authored entry rather than falling off the table.
+  assert.strictEqual(guildHallLevel(99), GUILD_HALL_LEVEL_BY_ACT[GUILD_HALL_LEVEL_BY_ACT.length - 1]);
+});
+
+test('recruitment: a late-act hire arrives raised — level, moves and an Evolution already spent', () => {
+  const run = { ...seedRoster(['cinderKnight'], 100), actNumber: 4 };
+  const offer = guildHallOffers.find((o) => o.heroId === 'ironWarden')!;
+
+  const entry = recruitFromGuildHall(run, offer, 'ironWarden').roster.find((r) => r.rosterId === 'ironWarden')!;
+  assert.strictEqual(entry.level, guildHallLevel(4));
+  assert.strictEqual(entry.chosenPathIds.length, 1, 'act 4 is past EVOLUTION_LEVEL, so a path is chosen');
+  assert.ok(entry.unlockedMoveIds.length > offer.startingMoveIds.length, 'the spare level-ups bought moves');
+});
+
+test('recruitment: the previewed hire is the hire that is bought', () => {
+  const run = { ...seedRoster(['cinderKnight'], 100), actNumber: 5 };
+  const offer = guildHallOffers.find((o) => o.heroId === 'ironWarden')!;
+
+  const previewed = guildHallEntry(run, offer, 'preview');
+  const bought = recruitFromGuildHall(run, offer, 'ironWarden').roster.find((r) => r.rosterId === 'ironWarden')!;
+  assert.deepStrictEqual({ ...bought, rosterId: 'preview' }, previewed);
 });
 
 // --- Recruit Contracts (recruit) ---

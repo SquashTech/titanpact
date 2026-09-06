@@ -19,6 +19,8 @@ export type { RosterReplaceCandidate };
 interface Props {
   roster: RosterEntry[];
   candidate: RosterReplaceCandidate;
+  /** The entry a `guildHall` candidate would join as (run/guildRecruit.ts) — a hire arrives raised. */
+  incomingEntry?: RosterEntry;
   /** The team's relics (RunState.relics), passed through to the hero sheets opened from here. */
   relicIds?: readonly string[];
   /** Attempts the swap; false only if the offer was invalidated while this screen was open. */
@@ -63,7 +65,7 @@ function ReplaceHeroCard({ hero, entry, selected, onSelect, onPreview }: Replace
  * Rendered as an App Screen from the Guild Hall but as an in-place modal from RecruitScreen (a
  * remount there would lose which offers were already signed); this component doesn't care which.
  */
-export function RosterReplaceScreen({ roster, candidate, relicIds = [], onConfirm, onCancel }: Props) {
+export function RosterReplaceScreen({ roster, candidate, incomingEntry, relicIds = [], onConfirm, onCancel }: Props) {
   const [selectedRosterId, setSelectedRosterId] = useState<string | null>(null);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
 
@@ -71,7 +73,7 @@ export function RosterReplaceScreen({ roster, candidate, relicIds = [], onConfir
   const hero = heroes[heroId];
   const previewNewEntry: RosterEntry =
     candidate.source === 'guildHall'
-      ? createRosterEntry('preview', heroId, candidate.offer.startingMoveIds)
+      ? (incomingEntry ?? createRosterEntry('preview', heroId, candidate.offer.startingMoveIds))
       : { ...candidate.offer, rosterId: 'preview', equipment: createEmptyLoadout() };
 
   const selectedEntry = selectedRosterId ? (roster.find((r) => r.rosterId === selectedRosterId) ?? null) : null;

@@ -4,8 +4,9 @@
 // Costs and the offer pool are content (src/data/recruitment.ts).
 
 import type { RosterEntry, RunState } from './state';
-import { createRosterEntry, addRosterEntry, replaceRosterEntry } from './state';
+import { addRosterEntry, replaceRosterEntry } from './state';
 import { createEmptyLoadout } from './equipment';
+import { guildHallEntry } from './guildRecruit';
 
 export class RecruitmentError extends Error {}
 
@@ -37,7 +38,7 @@ export function recruitFromGuildHall(run: RunState, offer: GuildHallOffer, roste
     throw new RecruitmentError(`Guild Hall recruit costs ${offer.cost} gold, only ${run.gold} available`);
   }
   const withGoldSpent: RunState = { ...run, gold: run.gold - offer.cost };
-  return addRosterEntry(withGoldSpent, createRosterEntry(rosterId, offer.heroId, offer.startingMoveIds));
+  return addRosterEntry(withGoldSpent, guildHallEntry(run, offer, rosterId));
 }
 
 /** Carries level, moves, paths, grants and type-graft — the "partially locked" veteran build — but not equipment or rosterId. */
@@ -80,7 +81,7 @@ export function recruitFromGuildHallReplacing(
   if (!terminated) {
     throw new RecruitmentError(`No roster entry ${terminatedRosterId} to terminate`);
   }
-  const entry: RosterEntry = { ...createRosterEntry(rosterId, offer.heroId, offer.startingMoveIds), equipment: terminated.equipment };
+  const entry: RosterEntry = { ...guildHallEntry(run, offer, rosterId), equipment: terminated.equipment };
   return replaceRosterEntry({ ...run, gold: run.gold - offer.cost }, terminatedRosterId, entry);
 }
 

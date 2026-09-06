@@ -288,8 +288,8 @@ emerge, that's a tuning signal on the curves (bench XP rate, grant sizes, run le
 not a reason to script the AI or nudge the player.
 
 **IMPLEMENTED (the generic mechanism):** `src/run/recruitment.ts`. Guild Hall spends
-`RunState.gold` on a fresh, 0-progress, ungeared `RosterEntry` from a data-driven offer
-pool (`src/data/recruitment.ts`, provisional flat costs). Recruit Contracts derive a
+`RunState.gold` on an ungeared `RosterEntry`, raised to the act's hire level, from a
+data-driven offer pool (`src/data/recruitment.ts`, provisional flat costs). Recruit Contracts derive a
 claimable offer from a defeated enemy's `RosterEntry` — carrying its level, chosen
 Evolution paths, stat grants, and type-graft, but not its equipment (an assumption,
 not a cited rule — equipment is roster-slot-attached, not hero-bound, and neither this
@@ -355,6 +355,31 @@ alongside the 2026-08-18 overhaul) — deliberately cheaper than a direct 50g he
 recruit, since a contract still requires beating something specific to cash in.
 **NOT YET IMPLEMENTED:** the decaying Guild Hall runway value curve (offers are flat
 gold costs, not a value that decays as the run progresses).
+
+### A hire arrives raised (2026-09-06, per user direction)
+
+A Guild Hall hire used to arrive at level 1 in every act, which by Act 4 bought the player
+a hero too far behind to field — the runway was not decaying, it was gone. A hire now
+arrives at `GUILD_HALL_LEVEL_BY_ACT` = **1 / 2 / 4 / 5 / 7** (`guildHallLevel`,
+`src/run/difficulty.ts`; later acts hold at the last entry, so Act 6's Vigil musters at 7),
+with those level-ups **already spent** — Evolution path first, then pool moves up to
+`MOVE_CAP`, rolled by the same `rollLevelProgression` an enemy's build comes from
+(`src/run/guildRecruit.ts`). It never carries the act's enemy stat scaling; that axis stays
+enemy-side.
+
+Every entry sits **below `ENEMY_LEVEL_BY_ACT`** (1 / 3 / 5 / 7 / 10) for the same act, which
+is what keeps the raise-vs-recruit axis honest: a hire is still behind the fights it is bought
+for, so pouring points into it is still an investment — it is no longer an investment starting
+from nothing. Gold cost is untouched at a flat 50g, so what the same 50g buys now grows with
+the act; whether that is the right price for an Act 5 level-7 hire is open.
+
+The roll is deterministic in the offer, the act and the act's location, so the sheet the
+player inspects is exactly the hero they pay for (`test/recruitment.test.ts`). The sheet
+itself drops the equip grid and the relic breakdown for a hero not owned yet
+(`HeroPreviewOverlay`'s `unowned`): the grid is always empty and the relics are a given.
+Inspecting an item on the shelf now lists what every hero on the roster holds **in that item's
+slot** (`SlotOwners`, `EquipChoiceCard.tsx`) — the buy decision without a trip through the
+roster screen first.
 
 ---
 

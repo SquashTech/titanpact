@@ -28,6 +28,11 @@ interface Props {
   equipmentLookup: Record<string, EquipmentDefinition>;
   /** The owning team's relics (RunState.relics). Omit for a hero not on this team — a scouted enemy, or the pre-run draft. */
   relicIds?: readonly string[];
+  /**
+   * A hero not on the roster yet (the Guild Hall shelf): hides the equip grid, which is always
+   * empty, and the relic breakdown, which is a given. Relic bonuses stay in the stat bars.
+   */
+  unowned?: boolean;
   /** Turns the sheet into a decision: a confirm button under the loadout, plus Cancel. Omit for read-only previews. */
   action?: {
     label: string;
@@ -43,7 +48,7 @@ interface Props {
  * Out-of-combat stat/loadout sheet. Stats come from entryStats.ts — the same function
  * buildCombatState.ts uses for a Combatant's baseline — so this sheet cannot drift from the fight.
  */
-export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = [], action, onClose }: Props) {
+export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = [], unowned = false, action, onClose }: Props) {
   const heroClass = chosenClass(classes, entry);
   const teamStatModifiers = relicTeamStatModifiers(relicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);
@@ -115,7 +120,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
 
         <div className="detail-section-title"><SectionGlyph name="stats" /> Stats</div>
         <StatBars baseStats={hero.baseStats} deltas={grants} />
-        {relicGrants.length > 0 && (
+        {!unowned && relicGrants.length > 0 && (
           <div className="relic-contrib-row">
             <span className="relic-contrib-label">🏺 From relics</span>
             {relicGrants.map(([stat, amount]) => (
@@ -143,8 +148,12 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
           <div className="detail-empty">No moves.</div>
         )}
 
-        <div className="detail-section-title"><SectionGlyph name="equipment" /> Equipment</div>
-        <EquipmentSlotGrid loadout={entry.equipment} equipmentLookup={equipmentLookup} onInspect={(id) => openPopup({ kind: 'equipment', id })} />
+        {!unowned && (
+          <>
+            <div className="detail-section-title"><SectionGlyph name="equipment" /> Equipment</div>
+            <EquipmentSlotGrid loadout={entry.equipment} equipmentLookup={equipmentLookup} onInspect={(id) => openPopup({ kind: 'equipment', id })} />
+          </>
+        )}
 
         {/* stopPropagation: closeAndStop treats any tap in the panel as dismiss, which would fire before the confirm. */}
         {action && (
@@ -160,7 +169,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
         )}
 
         <div className="detail-close-hint">
-          {action ? 'Hold a move, item, or Class to inspect it' : 'Hold a move, item, or Class to inspect it — tap elsewhere to close'}
+          {`Hold a move${unowned ? '' : ', item'}, or Class to inspect it${action ? '' : ' — tap elsewhere to close'}`}
         </div>
       </div>
 

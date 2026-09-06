@@ -26,6 +26,19 @@ export const ACT_STEP_STAT_TOTAL = ACT_STEP_STAT_COUNT * ACT_STEP_AMOUNT;
 /** Enemy hero level by act (1-indexed). Both tracks; from Act 3 hero-pool enemies arrive evolved. */
 export const ENEMY_LEVEL_BY_ACT: readonly number[] = [1, 3, 5, 7, 10];
 
+/**
+ * Level a Guild Hall hire arrives at, by act (1-indexed; later acts hold at the last entry).
+ * Below `ENEMY_LEVEL_BY_ACT` at every act on purpose: a hire is still underleveled against the
+ * act it is bought in, so raising it stays a real investment (the raise-vs-recruit axis,
+ * `docs/progression.md`). A flat 1 made a late-act hire unplayable rather than merely behind.
+ */
+export const GUILD_HALL_LEVEL_BY_ACT: readonly number[] = [1, 2, 4, 5, 7];
+
+export function guildHallLevel(actNumber: number): number {
+  const act = clampAct(actNumber);
+  return GUILD_HALL_LEVEL_BY_ACT[Math.min(act, GUILD_HALL_LEVEL_BY_ACT.length) - 1];
+}
+
 export interface ActScaling {
   /** Act-steps of stats on top of the node kind's own bonus — two independent axes. */
   statSteps: number;

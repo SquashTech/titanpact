@@ -104,8 +104,12 @@ export interface EncounterOptions {
   progression?: ProgressionTable;
 }
 
-/** Evolutions first (that level-up rolls no move), then remaining level-ups spent on random pool moves up to MOVE_CAP. Path choice is unweighted. */
-function applyLevelProgression(
+/**
+ * Evolutions first (that level-up rolls no move), then remaining level-ups spent on random pool
+ * moves up to MOVE_CAP. Path choice is unweighted. Exported because a Guild Hall hire arrives
+ * pre-raised the same way an enemy does (`run/guildRecruit.ts`).
+ */
+export function rollLevelProgression(
   run: RunState,
   rosterId: string,
   table: ProgressionTable,
@@ -214,7 +218,7 @@ export function generateEncounter(
 
   if (progression && scaling.level > 1) {
     for (const heroId of heroIds) {
-      const { run: next, nextState } = applyLevelProgression(run, heroId, progression, heroPool, scaling.level, rng);
+      const { run: next, nextState } = rollLevelProgression(run, heroId, progression, heroPool, scaling.level, rng);
       run = next;
       rng = nextState;
     }
