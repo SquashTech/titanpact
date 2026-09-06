@@ -170,6 +170,14 @@ screen to a key; `tutorialBeat` answers with a beat or nothing. Progress lives i
 the drift: every key App can raise has a beat, and every beat names a key something raises — a
 beat addressed to a moment nothing produces would otherwise just silently never play.
 
+**Any line can print an icon.** `[physical]`, `[magical]`, `[heal]`, `[buff]` and `[debuff]`
+in a line render the same badge the move buttons wear (`MoveKindGlyph`, the same
+`category-physical` / `category-magical` colours), so the mark in the sentence is the mark the
+player is being sent to look for. `parseTutorialText` splits a line into text and icon runs, and
+the token names are opaque strings in the run tier — the view maps them onto glyphs, so the
+dialogue can show a badge without `src/run` importing `src/view`. A misspelt token renders as
+literal prose rather than vanishing, and a test fails on one.
+
 **Mid-fight cues** are `TutorialFightCue`s, matched at the top of every command phase against a
 small live context (round, out-of-mana, locked in, lowest HP fraction, who is on the enemy
 field), and never once a fight is decided. Order in the array is priority order. `node` may name

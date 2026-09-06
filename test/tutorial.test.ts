@@ -29,6 +29,7 @@ import {
   markTutorialBeatSeen,
   matchTutorialCue,
   normalizeLine,
+  parseTutorialText,
   rewardBeatKey,
   tutorialBeat,
   tutorialContractOffers,
@@ -38,7 +39,9 @@ import {
   tutorialPayoutFor,
   TUTORIAL_ROW_TYPES,
   TUTORIAL_SCREEN_BEAT_KEYS,
+  TUTORIAL_ICON_TOKENS,
   TUTORIAL_STARTER_IDS,
+  unknownIconTokens,
   type TutorialFightContext,
 } from '../src/run/tutorial';
 
@@ -516,4 +519,44 @@ test('tutorial: a cue may span several fights, and every node it names is on the
   }
   // Still one-shot across the whole span, not once per fight.
   assert.strictEqual(matchTutorialCue(TUTORIAL_FIGHT_CUES, 'boss', ctx, new Set([...seen, rest.id])), null);
+});
+
+// --- Inline icons ---
+
+test('tutorial: every bracketed token in the script names a real icon', () => {
+  // An unknown token renders as literal prose — visible, but only if someone happens to replay
+  // that beat. Cheaper to fail here.
+  const lines = [
+    ...TUTORIAL_SCRIPT.flatMap((beat) => beat.lines),
+    ...TUTORIAL_FIGHT_CUES.flatMap((cue) => cue.lines),
+  ].map((line) => normalizeLine(line).text);
+
+  for (const text of lines) {
+    const unknown = unknownIconTokens(text);
+    assert.deepStrictEqual(
+      unknown,
+      [],
+      `"${text.slice(0, 60)}…" uses ${unknown.map((t) => `[${t}]`).join(', ')} — not an icon token (${TUTORIAL_ICON_TOKENS.join(', ')})`
+    );
+  }
+});
+
+test('tutorial: a line splits into the text and icons it names, in order', () => {
+  assert.deepStrictEqual(parseTutorialText('a [physical] b [magical]'), [
+    { text: 'a ' },
+    { icon: 'physical' },
+    { text: ' b ' },
+    { icon: 'magical' },
+  ]);
+  // Untokenised prose is one run, and an unknown token stays inside it rather than disappearing.
+  assert.deepStrictEqual(parseTutorialText('plain text'), [{ text: 'plain text' }]);
+  assert.deepStrictEqual(parseTutorialText('a [nonsense] b'), [{ text: 'a [nonsense] b' }]);
+});
+
+test('tutorial: the pipelines cue shows both marks, since showing them is the point', () => {
+  const cue = TUTORIAL_FIGHT_CUES.find((c) => c.id === 'skirmish:pipelines')!;
+  const icons = cue.lines
+    .flatMap((line) => parseTutorialText(normalizeLine(line).text))
+    .flatMap((segment) => ('icon' in segment ? [segment.icon] : []));
+  assert.deepStrictEqual(icons, ['physical', 'magical'], 'the cue that names the two pipelines must print both badges');
 });

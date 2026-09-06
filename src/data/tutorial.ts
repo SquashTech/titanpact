@@ -8,6 +8,10 @@
 //   - A beat's `id` is the moment it fires at. `map:<nodeType>` fires on the map with that node
 //     ahead; `reward:<nodeType>` on that reward node's own screen; the rest name a screen.
 //     Deleting a beat silently removes it; nothing else has to change.
+//   - Any line may print an icon inline by naming it in brackets: `[physical]`, `[magical]`,
+//     `[heal]`, `[buff]`, `[debuff]`. It renders the same badge the move buttons wear, so the
+//     mark in the sentence is the mark the player is being sent to look for. A misspelt token
+//     prints literally and fails `test/tutorial.test.ts`.
 //   - `TUTORIAL_FIGHT_CUES` are the mid-fight lines, checked at the start of every command
 //     phase. Order is priority order — the first unseen cue whose `when` holds is the one shown.
 //   - `TUTORIAL_ENCOUNTERS` is who you actually fight; `TUTORIAL_PAYOUTS` is what a win pays.
@@ -187,11 +191,11 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:skirmish',
     topic: 'Skirmish',
     lines: [
-      'Not goblins. Pactbearers, same as us. When they go down, we can recruit one.',
+      'A Skirmish. These are always against other Pactbearers, just like us. When they go down, we can recruit one.',
       'You are carrying a Recruit Contract. One beaten hero, straight onto our roster, at whatever strength they were beaten at. Six is the cap and we are two, so there is room.',
-      'Frost, both of them. Cold eats a Beast such as Fang. We must deal with them quickly.',
+      'Both of them are of the Frost element. Cold eats a Beast such as Fang. We must deal with them quickly.',
       { speaker: 'fang', text: 'Woof.' },
-      'Watch how differently they fight. One strikes with her hands. The other never touches us at all.',
+      'Watch how differently they fight. One strikes with their hands. The other with magic.',
     ],
   },
   {
@@ -328,8 +332,9 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     when: { round: 1 },
     topic: 'Type Advantage',
     lines: [
-      'Frost into Iron is half. Frost into Beast is double. Same move, two very different outcomes.',
-      'Hold a move button to see exactly what it does to each of them before you commit.',
+      'Note the numbers on the move buttons. My Iron strikes for double against Frost foes.',
+      'Fang, on the other hand, struggles in this matchup. It may be worth using his turn to bolster our Attack.',
+      'At any time, you may hold a move button to see exactly what it does before you commit.',
     ],
   },
   {
@@ -338,9 +343,9 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     when: { round: 2 },
     topic: 'Two Kinds of Hit',
     lines: [
-      'Watch them closely. The one throwing shards is using a PHYSICAL move, and it is weighed against my Defense.',
-      'The other one never moves. Hers is MAGICAL, and my Defense has nothing to say about it. It goes against my Wisdom instead.',
-      'Every move in the game is one or the other. Hold a move to see which.',
+      'Watch them closely. The one throwing shards is using a PHYSICAL [physical] move, and it is weighed against my Defense.',
+      'The other one is MAGICAL [magical], and my Defense is irrelevant. It goes against my Wisdom instead.',
+      'Every move in the game wears one mark or the other. Look for it before you commit.',
     ],
   },
   {

@@ -39,6 +39,54 @@ export function normalizeLine(line: TutorialScriptLine): Required<TutorialLine> 
   return typeof line === 'string' ? { speaker: 'valor', text: line } : { speaker: line.speaker ?? 'valor', text: line.text };
 }
 
+// --- Inline icons ---
+
+/**
+ * Icon tokens a line may carry, written `[physical]` in the script. Naming a mechanic is weaker
+ * than showing the mark the player is about to go looking for, so the dialogue can print the same
+ * glyph the move buttons wear.
+ *
+ * Deliberately the move-kind vocabulary and nothing else: these are opaque token NAMES here, and
+ * the view maps them onto glyphs (`MoveKindGlyphKind`). The run tier stays free of the view tier,
+ * and this list is what a test checks the script against.
+ */
+export const TUTORIAL_ICON_TOKENS = ['physical', 'magical', 'heal', 'buff', 'debuff'] as const;
+
+export type TutorialIconToken = (typeof TUTORIAL_ICON_TOKENS)[number];
+
+export type TutorialSegment = { text: string } | { icon: TutorialIconToken };
+
+/** Any `[word]`, so an unknown token can be reported rather than silently printed as prose. */
+const TOKEN_PATTERN = /\[([a-zA-Z]+)\]/g;
+
+export function isTutorialIconToken(value: string): value is TutorialIconToken {
+  return (TUTORIAL_ICON_TOKENS as readonly string[]).includes(value);
+}
+
+/**
+ * Splits a line into text and icon runs. An unrecognised `[word]` is left as literal text — a
+ * typo should look wrong on screen rather than vanish, and `test/tutorial.test.ts` fails on one.
+ */
+export function parseTutorialText(text: string): TutorialSegment[] {
+  const segments: TutorialSegment[] = [];
+  let cursor = 0;
+  for (const match of text.matchAll(TOKEN_PATTERN)) {
+    const token = match[1];
+    if (!isTutorialIconToken(token)) continue;
+    const at = match.index ?? 0;
+    if (at > cursor) segments.push({ text: text.slice(cursor, at) });
+    segments.push({ icon: token });
+    cursor = at + match[0].length;
+  }
+  if (cursor < text.length) segments.push({ text: text.slice(cursor) });
+  return segments;
+}
+
+/** Every `[word]` in a line that is NOT a known token — a typo, or prose that needs its brackets dropped. */
+export function unknownIconTokens(text: string): string[] {
+  return [...text.matchAll(TOKEN_PATTERN)].map((m) => m[1]).filter((token) => !isTutorialIconToken(token));
+}
+
 // --- Out-of-fight beats ---
 
 /**

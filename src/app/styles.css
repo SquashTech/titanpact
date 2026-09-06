@@ -18009,3 +18009,15 @@ textarea,
   text-transform: uppercase;
   color: var(--text-dim);
 }
+
+/* An inline `[physical]` token in Valor's dialogue (docs/tutorial.md). Wears the
+   same badge classes as the move grid on purpose — the mark in the sentence has
+   to be the mark on the button she is sending the player to look at. Only the
+   metrics differ: this one sits in running prose rather than a tile. */
+.tutorial-inline-icon {
+  /* Nudged up off the baseline; a bordered box aligned to text sits low. */
+  vertical-align: -2px;
+  margin: 0 1px;
+  font-size: 11px;
+  padding: 0 3px;
+}

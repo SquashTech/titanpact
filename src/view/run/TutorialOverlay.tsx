@@ -2,9 +2,16 @@ import { useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { playSfx } from '../../audio/sfx';
 import { heroes } from '../../data/heroes';
-import { normalizeLine, type TutorialBeat, type TutorialSpeaker } from '../../run/tutorial';
+import {
+  normalizeLine,
+  parseTutorialText,
+  type TutorialBeat,
+  type TutorialIconToken,
+  type TutorialSpeaker,
+} from '../../run/tutorial';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { MoveKindGlyph } from '../shared/statIcons';
 import { overlayHost } from '../shared/overlayHost';
 
 /** Who each speaker is on the roster. The pair is forced for the scripted run (run/tutorial.ts). */
@@ -12,6 +19,35 @@ const SPEAKER_HERO_ID: Record<TutorialSpeaker, string> = {
   valor: 'valor',
   fang: 'packAlpha',
 };
+
+/**
+ * Which badge class an inline token wears — the same ones the move grid uses (`MoveKindBadge`),
+ * so the mark in the dialogue is literally the mark on the button the player is being sent to.
+ */
+const TOKEN_BADGE_CLASS: Record<TutorialIconToken, string> = {
+  physical: 'category-physical',
+  magical: 'category-magical',
+  heal: 'kind-heal',
+  buff: 'kind-buff',
+  debuff: 'kind-debuff',
+};
+
+/** One line, with `[physical]`-style tokens swapped for the glyph they name. */
+function TutorialText({ text }: { text: string }) {
+  return (
+    <>
+      {parseTutorialText(text).map((segment, i) =>
+        'icon' in segment ? (
+          <span key={i} className={`category-badge move-kind-badge tutorial-inline-icon ${TOKEN_BADGE_CLASS[segment.icon]}`}>
+            <MoveKindGlyph kind={segment.icon} className="move-kind-glyph" />
+          </span>
+        ) : (
+          <span key={i}>{segment.text}</span>
+        )
+      )}
+    </>
+  );
+}
 
 interface Props {
   beat: TutorialBeat;
@@ -67,7 +103,7 @@ export function TutorialOverlay({ beat, onDone }: Props) {
 
           {/* Keyed on the line index so each line re-runs its own type-in. */}
           <p className="tutorial-line" key={index}>
-            {line.text}
+            <TutorialText text={line.text} />
           </p>
 
           <div className="tutorial-foot">
