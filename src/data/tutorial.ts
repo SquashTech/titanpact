@@ -56,7 +56,12 @@ export const TUTORIAL_LOCKS: TutorialLocks = {
  *    KO, which is when the Ancient wall gets explained.
  */
 export const TUTORIAL_ENCOUNTERS: Partial<Record<MapNodeType, TutorialEncounter>> = {
-  fight: { heroIds: ['goblinGrunt', 'goblinSkulker'] },
+  // The opener is the ONLY scripted fight that needed propping up. Two authored-as-fodder
+  // Goblins died to one round of Valor and Fang — Iron Fist reads 40 x (60/25) x 1.25 = ~120
+  // into a 100 HP Grunt — which took every round-2 lesson with them. Defense is most of the
+  // grant because the ratio, not the HP, is what was ending it: +35 takes Valor's read from
+  // 2.4x down to ~1.0x, and the fight from one round to three or four.
+  fight: { heroIds: ['goblinGrunt', 'goblinSkulker'], statGrants: { hp: 25, defense: 35 } },
   skirmish: { heroIds: ['rime', 'glacialWarden'] },
   battle: { heroIds: ['goblinChief', 'goblinGrunt', 'goblinSkulker'] },
   boss: { heroIds: ['sentinel', 'wildOracle'] },
@@ -292,7 +297,7 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
   {
     id: 'fight:types',
     node: 'fight',
-    when: { round: 2 },
+    when: { minRound: 2 },
     topic: 'Damage',
     lines: [
       'Watch the numbers on the move buttons. Shadow runs off Fang at half strength — the chart is doing that, not luck.',
@@ -302,7 +307,7 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
   {
     id: 'fight:mana',
     node: 'fight',
-    when: { minRound: 2 },
+    when: { minRound: 3 },
     topic: 'Mana',
     lines: [
       'Every move costs Mana, and only a trickle comes back each round.',
@@ -311,7 +316,7 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
   },
   {
     id: 'fight:rest',
-    node: 'fight',
+    node: ['fight', 'skirmish', 'battle', 'boss'],
     when: { outOfMana: true },
     topic: 'Rest',
     lines: [

@@ -98,6 +98,12 @@ export interface EncounterOptions {
   bias?: PoolBias;
   /** Hard filter both pick stages obey — the player's roster, so a beaten enemy can never be a duplicate contract. */
   excludeHeroIds?: readonly string[];
+  /**
+   * A flat grant merged onto every enemy in this encounter, on top of the node kind's bonus and
+   * the act curve — the scripted first act's lever for making a fight last (src/data/tutorial.ts).
+   * The Goblin pool is authored as fodder, and fodder dies before a tutorial can say anything.
+   */
+  statGrants?: Partial<Record<StatKey, number>>;
   /** Omitted = NO_SCALING. */
   scaling?: ActScaling;
   /** Needed only to cash `scaling.level` in for Evolutions and move unlocks; the monster pool has none by design. */
@@ -170,7 +176,16 @@ export function generateEncounter(
   heroPool: HeroLookup,
   options: EncounterOptions = {}
 ): Encounter {
-  const { forcedHeroIds, heroCount: heroCountOverride, movepools, bias, excludeHeroIds, scaling = NO_SCALING, progression } = options;
+  const {
+    forcedHeroIds,
+    heroCount: heroCountOverride,
+    movepools,
+    bias,
+    excludeHeroIds,
+    statGrants: flatGrants,
+    scaling = NO_SCALING,
+    progression,
+  } = options;
   let rng = createRng(seed);
   const excluded = new Set(excludeHeroIds ?? []);
   const scripted = forcedHeroIds?.filter((id) => id in heroPool && !excluded.has(id)) ?? [];
@@ -200,11 +215,11 @@ export function generateEncounter(
     }
     let entry: RosterEntry = createRosterEntry(heroId, heroId, startingMoveIds);
 
-    let statGrants: Partial<Record<StatKey, number>> = {};
+    let statGrants: Partial<Record<StatKey, number>> = flatGrants ? { ...flatGrants } : {};
     if (statCount > 0) {
       const { bonus, nextState } = randomStatBonus(rng, statCount, amountEach);
       rng = nextState;
-      statGrants = bonus;
+      statGrants = mergeStatMods(statGrants, bonus);
     }
     if (scaling.statSteps > 0) {
       const { bonus, nextState } = actStatBonus(rng, scaling.statSteps);

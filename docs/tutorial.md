@@ -152,8 +152,19 @@ beat addressed to a moment nothing produces would otherwise just silently never 
 
 **Mid-fight cues** are `TutorialFightCue`s, matched at the top of every command phase against a
 small live context (round, out-of-mana, locked in, lowest HP fraction, who is on the enemy
-field). Order in the array is priority order. Cue progress is **FightScreen-local**, not run
-state: a fight is atomic and a reload replays it.
+field), and never once a fight is decided. Order in the array is priority order. `node` may name
+several fights, for a lesson that turns on a condition rather than a moment — Rest cannot be
+promised to any one fight. Cue progress is **FightScreen-local**, not run state: a fight is
+atomic and a reload replays it.
+
+**A scripted fight has to survive its own dialogue.** The Goblins are authored as fodder, and
+the opener was ending in round 1 — Iron Fist reads `40 x (60 Atk / 25 Def) x 1.25` = ~120 into a
+100 HP Grunt — which took every round-2 lesson with it, and (before the guard above) left a cue
+landing on top of the victory panel. `TutorialEncounter.statGrants` is the lever: the opener
+carries **+25 HP and +35 Defense**, most of it Defense because the *ratio* was what ended the
+fight, not the HP. That takes Valor from 2.4x down to ~1.0x and the fight from one round to
+three or four. A test recomputes it through the real damage pipeline at maximum variance and
+fails if any starter can one-shot an opener enemy.
 
 **Gating.** The scripted *mechanics* (map, encounters, payouts) check `isTutorialAct` — the flag
 **and** Act 1 — so Act 2 onward carries no extra branch. The *dialogue* checks the flag alone,

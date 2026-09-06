@@ -6,6 +6,7 @@
 // what Act 1's encounters and payouts are. `advanceToNextAct` regenerates Act 2 the ordinary
 // way, so nothing here survives the first Guardian except the flag that says it happened.
 
+import type { StatKey } from '../engine/content';
 import type { MapNode, MapNodeType, RunMap } from './map';
 import type { RosterEntry, RunState } from './state';
 
@@ -122,9 +123,22 @@ export interface TutorialCueCondition {
 }
 
 export interface TutorialFightCue extends TutorialBeat {
-  /** Which tutorial fight this belongs to, by its map node type. */
-  node: MapNodeType;
+  /**
+   * Which tutorial fight this belongs to, by map node type. A list means "whichever of these
+   * comes first" — for a lesson that depends on a condition rather than a moment (running out
+   * of mana), and so cannot be promised to any one fight.
+   */
+  node: MapNodeType | readonly MapNodeType[];
   when: TutorialCueCondition;
+}
+
+function cueCoversNode(cue: TutorialFightCue, node: MapNodeType): boolean {
+  return Array.isArray(cue.node) ? cue.node.includes(node) : cue.node === node;
+}
+
+/** Every node a cue can fire at — one entry for a single node, the list for a spanning one. */
+export function cueNodes(cue: TutorialFightCue): readonly MapNodeType[] {
+  return Array.isArray(cue.node) ? cue.node : [cue.node as MapNodeType];
 }
 
 /** What a cue is tested against. FightScreen derives this from live combat state. */
@@ -157,7 +171,7 @@ export function matchTutorialCue(
   ctx: TutorialFightContext,
   seenIds: ReadonlySet<string>
 ): TutorialFightCue | null {
-  return cues.find((cue) => cue.node === node && !seenIds.has(cue.id) && cueMatches(cue.when, ctx)) ?? null;
+  return cues.find((cue) => cueCoversNode(cue, node) && !seenIds.has(cue.id) && cueMatches(cue.when, ctx)) ?? null;
 }
 
 // --- The curated map ---
@@ -203,6 +217,12 @@ export interface TutorialEncounter {
    * random draw entirely, so the fight is the one the script talks about.
    */
   heroIds: readonly string[];
+  /**
+   * Flat stats on every enemy here, so a scripted fight lasts long enough to be talked through.
+   * A scripted fight has to survive its own dialogue: the Goblins are authored as fodder, and a
+   * mob that dies in round 1 takes every round-2 lesson with it.
+   */
+  statGrants?: Partial<Record<StatKey, number>>;
 }
 
 /** Total payout for winning a scripted node — replaces `trainingPointsFor` / `goldRewardFor`, not added to them. */

@@ -19,7 +19,10 @@ import { costToReachLevel, levelUpCost } from '../src/run/progression';
 import { EVOLUTION_LEVEL } from '../src/run/progression';
 import { createRosterEntry, createRunState } from '../src/run/state';
 import { resolveTypeMult } from '../src/engine/damage/typeMult';
+import { calcDamage, VARIANCE_MAX, statKeysForMove } from '../src/engine/damage/damagePipeline';
+import { HP_SCALE } from '../src/engine/state';
 import {
+  cueNodes,
   generateTutorialMap,
   isTutorialAct,
   mapBeatKey,
@@ -249,7 +252,9 @@ test('tutorial: every fight cue belongs to a fight the corridor actually has', (
   for (const cue of TUTORIAL_FIGHT_CUES) {
     assert.ok(!seen.has(cue.id), `duplicate cue id "${cue.id}"`);
     seen.add(cue.id);
-    assert.ok(TUTORIAL_ROW_TYPES.includes(cue.node), `${cue.id} is authored for a ${cue.node} node that is not on the map`);
+    for (const node of cueNodes(cue)) {
+      assert.ok(TUTORIAL_ROW_TYPES.includes(node), `${cue.id} is authored for a ${node} node that is not on the map`);
+    }
     assert.ok(Object.keys(cue.when).length > 0, `${cue.id} has no condition and would fire on round 1 forever`);
     assert.ok(cue.lines.length > 0, `${cue.id} has no lines`);
   }
@@ -430,4 +435,58 @@ test('tutorial: the field lock pins the caster at its nodes and nowhere else', (
   // Never strands the screen: a hero the player does not have cannot be required to stand.
   const without = lockRun([...TUTORIAL_STARTER_IDS]);
   assert.deepStrictEqual([...tutorialLockedActiveRosterIds(TUTORIAL_LOCKS, without, 'boss')], []);
+});
+
+// --- The opener has to survive its own dialogue ---
+
+test('tutorial: no starter can one-shot an opener enemy, so a round-2 cue has somewhere to land', () => {
+  // The bug this pins: the Goblins are authored as fodder, and fodder dies in round 1 — which
+  // took every round-2 lesson with it. Computed through the real damage pipeline at MAXIMUM
+  // variance (the fastest possible kill) and against the grants the scripted opener carries.
+  const opener = TUTORIAL_ENCOUNTERS.fight!;
+  const grants = opener.statGrants ?? {};
+
+  for (const enemyId of opener.heroIds) {
+    const enemy = enemies[enemyId];
+    const effectiveHp = (enemy.baseStats.hp + (grants.hp ?? 0)) * HP_SCALE;
+
+    for (const starterId of TUTORIAL_STARTER_IDS) {
+      const hero = heroes[starterId];
+      for (const moveId of hero.moveIds) {
+        const move = moves[moveId];
+        if (move.kind !== 'damage') continue;
+        const [offStat, defStat] = statKeysForMove(move);
+        const ratio = hero.baseStats[offStat] / (enemy.baseStats[defStat] + (grants[defStat] ?? 0));
+        const { damage } = calcDamage(move, ratio, hero.types, enemy.types, typeChart, VARIANCE_MAX, false);
+
+        assert.ok(
+          damage < effectiveHp,
+          `${hero.name}'s ${move.name} deals ${Math.round(damage)} to ${enemy.name} (${effectiveHp} HP) — a one-shot ends the fight before round 2`
+        );
+      }
+    }
+  }
+});
+
+test('tutorial: the opener cues are gated on a floor, not an exact round', () => {
+  // An exact `round` on a fight whose length is being tuned is a cue that silently stops firing.
+  // Anything that must be SEEN uses minRound; a conditional cue (Rest) is exempt.
+  for (const cue of TUTORIAL_FIGHT_CUES) {
+    if (!cueNodes(cue).includes('fight')) continue;
+    if (cue.when.round === undefined) continue;
+    assert.strictEqual(cue.when.round, 1, `${cue.id} is pinned to round ${cue.when.round}; use minRound so a shorter fight cannot skip it`);
+  }
+});
+
+test('tutorial: a cue may span several fights, and every node it names is on the map', () => {
+  const rest = TUTORIAL_FIGHT_CUES.find((cue) => cue.id === 'fight:rest')!;
+  assert.ok(cueNodes(rest).length > 1, 'Rest depends on the player spending, not on a round — it cannot be promised to one fight');
+
+  const ctx: TutorialFightContext = { ...quietFight, round: 4, anyOutOfMana: true };
+  const seen = new Set(TUTORIAL_FIGHT_CUES.filter((c) => c.id !== rest.id).map((c) => c.id));
+  for (const node of cueNodes(rest)) {
+    assert.strictEqual(matchTutorialCue(TUTORIAL_FIGHT_CUES, node, ctx, seen), rest, `the Rest cue should be reachable at the ${node} node`);
+  }
+  // Still one-shot across the whole span, not once per fight.
+  assert.strictEqual(matchTutorialCue(TUTORIAL_FIGHT_CUES, 'boss', ctx, new Set([...seen, rest.id])), null);
 });

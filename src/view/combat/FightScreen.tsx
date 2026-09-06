@@ -662,6 +662,9 @@ export function FightScreen({
    * player is halfway through giving.
    */
   const tutorialCue = (() => {
+    // `winner` first: a wiped enemy side leaves the player with living heroes, so `canAct` goes
+    // true again the moment playback ends and a cue would land on top of the victory panel.
+    if (winner !== null) return null;
     if (!tutorialNodeType || !canAct || actionStep !== 0 || Object.keys(pending).length > 0) return null;
     const hpFractions = playerActiveAlive.map((id) => {
       const combatant = combat.combatants[id];

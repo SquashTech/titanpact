@@ -550,6 +550,7 @@ export function App() {
         const bias = encounterPool === heroes ? locationBias(location, heroes, heroCount) : undefined;
         encounter = generateEncounter(encounterKind, randomSeed(), encounterPool, {
           forcedHeroIds: scripted?.heroIds,
+          statGrants: scripted?.statGrants,
           heroCount: heroCountOverride,
           bias,
           excludeHeroIds,
