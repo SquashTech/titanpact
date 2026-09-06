@@ -202,46 +202,111 @@ every authored item spends its tier's budget **exactly** (`RARITY_BUDGET`,
 `equipmentBudgetProblems`, `src/run/equipment.ts`; asserted over the whole catalog by
 `test/equipment.test.ts`):
 
+**Budgets were rebased 2026-09-06** (per user direction), from 10/20/30/40/50, alongside the
+drop from three item slots to one. A hero holding a third as many items needs each of them to
+carry about three times as much, or "one uncategorised slot" reads as a nerf rather than a
+focus. Two things about the new row are deliberate:
+
+- **The steps are a uniform +20**, and every budget halves onto a multiple of 5 — which the
+  generated per-type gear needs to split a tier cleanly.
+- **The tier RATIO compressed**, from Mythic being 5x a Common to 3.7x. An Act-1 Common is a
+  hero's entire item for a long stretch of the run now, so it cannot read as a rounding error
+  next to what Act 4 hands out.
+
 | Tier | Budget | Worked example |
 | --- | --- | --- |
-| Common | 10 | Torch — 5 Attack, 5 Fire Force |
-| Rare | 20 | Ember Band — 10 Attack, 10 Fire Force |
-| Epic | 30 | Bloodletter Fang — 10 Attack + Bloodthirst |
-| Legendary | 40 | Ring of Vitality — 20 HP, 10 MP Regen |
-| Mythic | 50 | Crown of the Ancients — 20 HP + 10 each of Atk/Def/Int/Wis |
+| Common | 30 | Torch — 10 Attack, 10 Fire Force |
+| Rare | 50 | Ember Band — 20 Attack, 15 Fire Force |
+| Epic | 70 | Bloodletter Fang — 30 Attack + Bloodthirst |
+| Legendary | 90 | Ring of Vitality — 60 HP, 10 MP Regen + Quickening |
+| Mythic | 110 | Crown of the Ancients — 20 HP, 15 each of Atk/Def/Int/Wis + Rallying Standard |
 
 Three things convert into those points:
 
 - **Stats**, via `STAT_POINT_VALUE`. Attack/Defense/Intelligence/Wisdom/Speed cost 1
   per unit, which is the user's "roughly 10 total stats" read literally. Two stats are
   **deliberately not 1:1** — the one judgment call layered on the spec, and the first
-  knob to turn if tiers feel wrong. **HP and Mana cost ½** (heroes sit at 80-110 HP,
-  and neither stat enters the locked damage ratio at all, so at 1:1 every HP item
-  would be a trap pick — which the north star forbids). **MP Regen costs 3×** (every
-  hero's base is exactly 10, so +10 is a 100% swing in the resource-cycling engine the
-  whole switching game runs on). Setting every entry to 1 and re-budgeting the catalog
-  is a one-file change if the designer would rather have a flat count.
-- **Elemental Force magnitude**, at 1 point per magnitude (`FORCE_POINT_VALUE`).
-  Pinned by the user's own worked example: Torch is 5 Attack + 5 Fire Force at Common.
+  knob to turn if tiers feel wrong. **HP costs ½** (heroes sit at 80-150 HP,
+  and it never enters the locked damage ratio at all, so at 1:1 every HP item would be a
+  trap pick — which the north star forbids). **MP Regen costs 3×** (every hero's base is
+  exactly 10, so +10 is a 100% swing in the resource-cycling engine the whole switching
+  game runs on).
+
+  **Mana Pool went ½ → 1 with the 2026-09-06 rebase.** At half price the tripled budgets
+  bought +60 to +80 Mana on a single item, against a roster whose pools are 50-65 — an item
+  that more than doubles a pool prices every move's mana cost out of meaning, and mana cost
+  is the primary balance lever on reliable moves (CLAUDE.md). HP has no equivalent problem:
+  it is not a resource that gates what a hero may cast, so it stayed at ½.
+- **Elemental Force magnitude**, at 2 points per magnitude (`FORCE_POINT_VALUE`), raised
+  from 1 in the same pass so magnitudes only doubled where budgets tripled. Force is authored
+  as flat Base Power, but Base Power is multiplied by the off/def ratio — so what it actually
+  contributes is percentage-shaped and grows with the hero, exactly like a type-locked damage
+  passive. Left at 1 it would have tripled into +45 Base Power on a Mythic, against a median
+  move's 50.
 - **Granted passives**, priced in `PASSIVE_ITEM_COST` (`src/data/passives.ts`) — the
   "OR equivalent in terms of powerful passives or other effects" half of the brief.
-  The anchor is **20 points = a 20% type-locked damage multiplier**. The table lives in
+  The anchor is **40 points = a 20% type-locked damage multiplier**, doubled from 20 in
+  the 2026-09-06 rebase. That is not just tracking inflation: almost every priced passive is
+  percentage-shaped or unbounded — a multiplier, a share of damage healed, a stack that grows
+  all fight — so what it is worth rises with the stat line around it, and the stat lines
+  tripled. Left at the old figures a Mythic would clear the effect floor for 18% of its budget
+  and still be a stat stick. The table lives in
   the data layer, not on `PassiveDefinition`: what a passive is worth *in an item* is an
   equipment-economy question the engine has no opinion about, and relics grant passives
   on a different axis (team-wide, no slot competition) that shouldn't be forced through
   an equipment-shaped price. An item granting an unpriced passive **fails validation**
   rather than getting it free.
 
+### The effect floor (2026-09-06, per user direction)
+
+**From Epic up, an item must spend at least a third of its budget on effects** — granted
+passives plus Elemental Force magnitude (`EFFECT_FLOOR_MIN_RARITY`, `EFFECT_FLOOR_SHARE`,
+enforced by `equipmentBudgetProblems`). Epic owes 24 points, Legendary 30, Mythic 37.
+
+It exists because the complaint the budget pass answers — items feel imperceptible — is only
+half about size. A +110 Attack Mythic is bigger than what came before and still nothing to
+think about. The floor is a **share**, not a boolean, precisely so a token +5 Force cannot
+launder a stat stick past it.
+
+Below Epic there is no floor at all. A plain, legible Common is what an Act-1 item should be,
+and the twelve designer-authored Commons are exactly that.
+
+Two consequences worth knowing:
+
+- **Thirteen hand-authored Epic+ items were pure stats** and needed effects. Six new equipment
+  passives were authored for them (Sunder, Second Skin, Arcane Reservoir, Rallying Standard,
+  Purifying Ward, Quickening) — all ordinary data over existing hooks, no engine change, and
+  `passiveIcons.tsx` derives their glyphs so none needed a table entry. Four of the eight
+  passives that already existed are the same 20% multiplier pointed at four types, which is
+  fine as a set but could not have covered thirteen items on its own.
+- **The generated per-type gear clears the floor with Elemental Force**, not passives — which
+  is why its shape moved from a halve-the-budget formula to the explicit `TYPE_GEAR_SHAPE`
+  table. With Force at 2 points and three different flavour-stat prices, no single divisor
+  lands every piece on a multiple of 5 *and* clears the floor. The Rare armour is the one
+  generated piece with no effect, and it is allowed to be plain.
+
+> **Open question — items and Evolutions now trade differently.** The rebase tripled item
+> budgets without touching a single Evolution path, so a path's stat line, measured in the
+> same currency, went from "about two Mythics" to "about one" (`test/roster.test.ts`). That
+> is a real shift in what a level-up is worth against a drop, and it has not been playtested.
+>
+> **Open question — Guild Hall gold prices were not retuned.** `EQUIPMENT_PRICE_BY_RARITY`
+> is still 15/30/55/90/150, a 10x spread across a tier range that now spans 3.7x, so a Common
+> is the most gold-efficient thing on the shelf by some distance. The prices are flagged
+> "untuned" in `src/run/shop.ts` and were left alone deliberately — the shop economy is its
+> own decision, not part of the budget pass.
+
 Stats now **cover more possibilities** at every tier (the brief's other ask): a Common
-weapon is no longer "10 Attack" but any 10 points — 5 Attack + 5 Speed, 5 Attack +
-5 Fire Force, 5 Intelligence + 5 Defense. The twelve authored Common weapons in
+weapon is no longer "30 Attack" but any 30 points — 15 Attack + 15 Speed, 10 Attack +
+10 Fire Force, 15 Intelligence + 15 Defense. The twelve authored Common weapons in
 `src/data/equipment.ts` are the worked example the rest of the catalog follows, and
 `test/equipment.test.ts` pins them verbatim so a rebalance can't silently rewrite the
-reference.
+reference. The 2026-09-06 rebase kept every one of their SHAPES exactly: a stat-only item
+tripled, and a Force item doubled both halves, because Force's own price doubled with it.
 
 > **Open question — nothing caps how much of a tier a drawback may buy.** A negative
 > stat grant refunds its full point value, which is what lets Berserker's Cleaver carry
-> a Legendary Attack line (40) at Epic by taking −10 Defense. That is a good item; a
+> a Legendary-sized Attack line (50) *and* Sunder at Epic by taking −20 Defense. That is a good item; a
 > hypothetical −40 Defense / 70 Attack Epic is not. A cap (say, 25% of the tier budget)
 > is the obvious answer but has not been decided — flag before authoring a second
 > drawback item.

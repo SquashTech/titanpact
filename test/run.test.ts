@@ -181,7 +181,7 @@ test('buildCombatState: equipped item stat grants raise the combatant\'s effecti
   const combatant = state.combatants['A:cinderKnight'];
   assert.ok(combatant, 'expected a combatant keyed A:cinderKnight');
   const effectiveAttack = getEffectiveStat(heroes.cinderKnight, combatant, 'attack');
-  assert.strictEqual(effectiveAttack, heroes.cinderKnight.baseStats.attack + 10);
+  assert.strictEqual(effectiveAttack, heroes.cinderKnight.baseStats.attack + equipment.ironBlade.statGrants.attack!);
 });
 
 test('buildCombatState: same rosterId on both sides does not collide (side-prefixed combatant ids)', () => {

@@ -150,7 +150,7 @@ const emberBandLookup: Record<string, EquipmentDefinition> = { emberBand: equipm
 
 test('elementalForce: equipmentStatusGrants tallies magnitude across held items, ignoring stat-only gear', () => {
   const loadout = equipItem(equipItem(createEmptyLoadout(), equipment.emberBand.id), equipment.dagger.id);
-  assert.deepStrictEqual(equipmentStatusGrants(loadout, emberBandLookup), { FireForce: 10 });
+  assert.deepStrictEqual(equipmentStatusGrants(loadout, emberBandLookup), { FireForce: 15 });
 });
 
 test('elementalForce: relicTeamStatusGrants sums a duplicate relic id, matching relicTeamPassiveGrants', () => {

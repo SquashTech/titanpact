@@ -165,10 +165,15 @@ test('roster: every passive in the catalog has a granter — a passive nobody gr
   assert.deepStrictEqual(orphans, [], 'these passives exist but nothing hands them out');
 });
 test('roster: an Evolution stat line is Rare-to-Epic in equipment currency, spent or refunded', () => {
-  // src/run/equipment.ts RARITY_BUDGET: Rare 20, Epic 30, Legendary 40, Mythic 50. Read GROSS —
-  // a refocus path's negative half is spent, not discounted — so Warhowl's -30/+60 reads 105, and
-  // that ceiling is what stops a path buying a whole second hero. The floor is 0 because a path
-  // may pay entirely in a passive and a graft instead (Riptide's Siren grants no stats at all).
+  // Read GROSS — a refocus path's negative half is spent, not discounted — so Warhowl's -30/+60
+  // reads 105, and that ceiling is what stops a path buying a whole second hero. The floor is 0
+  // because a path may pay entirely in a passive and a graft instead (Riptide's Siren grants no
+  // stats at all).
+  //
+  // The CEILING is absolute, not a tier name: the 2026-09-06 budget pass rebased item currency
+  // (Mythic 50 -> 110) without touching a single Evolution path, so the same numbers that used to
+  // read "about two Mythics" now read "about one". That is a real shift in how items and
+  // Evolutions trade against each other, and it is deliberate — see docs/progression.md.
   for (const [heroId, nodes] of Object.entries(progressionTable.evolutions)) {
     for (const node of nodes) {
       for (const path of node.paths) {
@@ -176,7 +181,7 @@ test('roster: an Evolution stat line is Rare-to-Epic in equipment currency, spen
           (sum, [stat, amount]) => sum + Math.abs(amount ?? 0) * STAT_POINT_VALUE[stat],
           0
         );
-        assert.ok(gross <= 110, `${path.id} spends ${gross} points — past anything authored so far`);
+        assert.ok(gross <= 120, `${path.id} spends ${gross} points — past anything authored so far`);
       }
     }
   }

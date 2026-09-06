@@ -74,6 +74,84 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
     description: 'Deals 20% bonus damage with Shadow-type moves.',
     damageModifier: { eventFieldEquals: { moveType: 'Shadow' }, amount: 0.2 },
   },
+
+  // --- 2026-09-06: six more, for the Epic+ effect floor (docs/progression.md "The effect
+  // floor"). Four of the six above are the same effect pointed at four types, which is fine
+  // as a set but cannot cover thirteen items on its own. All six are ordinary data over the
+  // existing hooks — no engine change — and passiveIcons.tsx derives their glyphs, so none
+  // needs a table entry to look like itself.
+
+  sunder: {
+    id: 'sunder',
+    name: 'Sunder',
+    // subjectRole 'source' + relativeTo 'self' = "this hero dealt it"; 'triggerTarget' is then
+    // the defender, which is the only way a source-role passive reaches who it just hit.
+    description: 'Whenever this hero lands an attack, its target loses 10 Defense.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'statDelta', target: 'triggerTarget', stat: 'defense', amount: -10 },
+    },
+  },
+  secondSkin: {
+    id: 'secondSkin',
+    name: 'Second Skin',
+    // Vengeful Emblem's shape turned inward — that one pays an attacker for being hit, this
+    // one pays a wall for holding. One statDelta per stat, sharing the amount.
+    description: 'Whenever this hero takes damage, it gains 5 Defense and 5 Wisdom.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: ['defense', 'wisdom'], amount: 5 },
+    },
+  },
+  arcaneReservoir: {
+    id: 'arcaneReservoir',
+    name: 'Arcane Reservoir',
+    // manaGrant is UNCAPPED (docs/mana.md "Overflow"), so this is the bench-cycling engine
+    // paying out in the one currency that can exceed its pool. Every arrival, the opening
+    // lead included — a pivot out and back re-seeds it.
+    description: 'When this hero enters the battlefield, it gains 30 Mana, past its pool.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 30 } },
+    },
+  },
+  rallyingStandard: {
+    id: 'rallyingStandard',
+    name: 'Rallying Standard',
+    // 'ally' is the ACTIVE partner and never the owner, so this grants nothing while the
+    // hero stands alone — the one entry passive that wants a full field.
+    description: "When this hero enters the battlefield, its partner gains 10 Attack and 10 Intelligence.",
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'ally', stat: ['attack', 'intelligence'], amount: 10 },
+    },
+  },
+  purifyingWard: {
+    id: 'purifyingWard',
+    name: 'Purifying Ward',
+    // `cleanse` with no count strips every non-positive status, same rules as a move's.
+    // Pivoting out of a Burn and back in to shed it is the intended play.
+    description: 'When this hero enters the battlefield, it sheds every negative status.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'cleanse', target: 'self' },
+    },
+  },
+  quickening: {
+    id: 'quickening',
+    name: 'Quickening',
+    description: 'When this hero enters the battlefield, it gains 10 Speed.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'statDelta', target: 'self', stat: 'speed', amount: 10 },
+    },
+  },
 };
 
 // --- Event-granted (events.ts grantPassive) ---
@@ -574,15 +652,30 @@ export const passives: Record<string, PassiveDefinition> = { ...fixturePassives,
 /**
  * What a passive costs when an ITEM grants it, in RARITY_BUDGET points (multiples of 5).
  * equipmentBudgetProblems fails on any equipment-granted passive missing here. Relics are
- * not priced through this. Anchor: 20 = a 20% type-locked damage multiplier.
+ * not priced through this. Anchor: 40 = a 20% type-locked damage multiplier.
+ *
+ * Roughly DOUBLED with the 2026-09-06 budget pass, and that is not just tracking inflation:
+ * almost everything here is percentage-shaped or unbounded — a 20% multiplier, a share of
+ * damage healed, a stack that grows all fight — so what it is worth rises with the stat line
+ * around it, and the stat lines tripled. Left at the old figures a Mythic would clear the
+ * effect floor for 18% of its budget and still be a stat stick.
  */
 export const PASSIVE_ITEM_COST: Readonly<Record<string, number>> = {
-  emberheart: 20,
-  stormcallersFocus: 20,
-  frostbrand: 20,
-  shadowfang: 20,
-  bloodthirst: 20,
-  wardensVigil: 15,
-  vengefulEmblem: 25,
-  sanguine: 20,
+  emberheart: 40,
+  stormcallersFocus: 40,
+  frostbrand: 40,
+  shadowfang: 40,
+  bloodthirst: 40,
+  wardensVigil: 30,
+  // The one flat effect here, and the priciest: +5 Attack per hit taken has no ceiling in a
+  // long fight, which the Pact Clock bounds but does not cheapen.
+  vengefulEmblem: 50,
+  sanguine: 40,
+  sunder: 40,
+  secondSkin: 40,
+  arcaneReservoir: 40,
+  rallyingStandard: 40,
+  // The two entry passives that fire once per arrival and grant no damage sit a tier below.
+  purifyingWard: 30,
+  quickening: 30,
 };

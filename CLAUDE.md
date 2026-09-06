@@ -139,10 +139,13 @@ don't silently override it.
   them. Excluded from every random relic offer (`RelicDefinition.gem`, `src/run/gems.ts`).
   They are the drip-feed that smooths the curve between the sparse Banner and Shrine grants
   — a deliberate difficulty softener. Odds and the un-priced flat +5: `docs/run-loop.md`.
-- **Equipment rarity is a point budget, spent exactly** (2026-08-30): Common 10 / Rare 20 /
-  Epic 30 / Legendary 40 / Mythic 50, paid in stats, Elemental Force magnitude, or granted
-  passives (`RARITY_BUDGET`, `src/run/equipment.ts`; enforced by `test/equipment.test.ts`).
-  Not every stat costs 1 — HP and Mana are ½, MP Regen is 3× (`STAT_POINT_VALUE`).
+- **Item rarity is a point budget, spent exactly** (2026-08-30; rebased 2026-09-06): Common 30 /
+  Rare 50 / Epic 70 / Legendary 90 / Mythic 110, paid in stats, Elemental Force magnitude, or
+  granted passives (`RARITY_BUDGET`, `src/run/equipment.ts`; enforced by `test/equipment.test.ts`).
+  Not every stat costs 1 — HP is ½, MP Regen is 3× (`STAT_POINT_VALUE`); Force is 2 a magnitude.
+  **From Epic up an item must spend ≥⅓ of its budget on effects** — a passive or a Force, never
+  stats alone (`EFFECT_FLOOR_SHARE`). Budgets tripled when heroes went from three slots to one,
+  so the floor is what keeps a bigger item from being merely a bigger number.
   **Drop odds scale by act**: Legendary/Mythic cannot appear in Act 1, Common cannot appear
   in Act 5, elites roll one tier ahead (`rarityWeightsFor`, `docs/progression.md`).
 

@@ -31,19 +31,37 @@ export const MAX_ITEM_SLOTS = 5;
 
 // --- The rarity budget ---
 
-/** Points each tier is worth; every catalog item spends it EXACTLY (equipmentBudgetProblems, test/equipment.test.ts). */
+/**
+ * Points each tier is worth; every catalog item spends it EXACTLY (equipmentBudgetProblems,
+ * test/equipment.test.ts).
+ *
+ * Raised 2026-09-06 from 10/20/30/40/50, alongside the drop from three slots to one: a hero
+ * that holds a THIRD as many items needs each of them to carry roughly three times as much,
+ * or the rework makes gear weaker rather than more decisive. The steps are a uniform +20 and
+ * every budget halves onto a multiple of 5, which the generated type gear needs.
+ *
+ * Note the tier RATIO compressed on purpose — Mythic was 5x Common and is now 3.7x. An Act-1
+ * Common is a hero's whole item for a while, so it cannot read as a rounding error next to
+ * what Act 4 hands out.
+ */
 export const RARITY_BUDGET: Record<EquipmentRarity, number> = {
-  common: 10,
-  rare: 20,
-  epic: 30,
-  legendary: 40,
-  mythic: 50,
+  common: 30,
+  rare: 50,
+  epic: 70,
+  legendary: 90,
+  mythic: 110,
 };
 
 /**
- * Points one unit of each stat costs. HP/Mana are half (never in the damage
- * ratio); MP Regen is triple (every hero's base is 10, so +10 doubles it).
- * The first knob to turn if tiers feel wrong; nothing else reads this table.
+ * Points one unit of each stat costs. HP is half (never in the damage ratio); MP Regen is
+ * triple (every hero's base is 10, so +10 doubles it). The first knob to turn if tiers feel
+ * wrong; nothing else reads this table.
+ *
+ * Mana Pool went 0.5 -> 1 with the 2026-09-06 budget pass. At half price the tripled budgets
+ * bought +60 to +80 Mana on a single item against a roster whose pools are 50-65 — an item
+ * that more than doubles a pool prices every move's mana cost out of meaning, and mana cost
+ * is the primary balance lever on reliable moves (CLAUDE.md). HP has no equivalent problem:
+ * it is not a resource that gates what a hero may cast.
  */
 export const STAT_POINT_VALUE: Record<StatKey, number> = {
   hp: 0.5,
@@ -52,12 +70,28 @@ export const STAT_POINT_VALUE: Record<StatKey, number> = {
   intelligence: 1,
   wisdom: 1,
   speed: 1,
-  manaPool: 0.5,
+  manaPool: 1,
   mpRegen: 3,
 };
 
-/** Points one magnitude of Elemental Force costs — pinned by the "Torch: 5 Attack, 5 Fire Force = Common" example. */
-export const FORCE_POINT_VALUE = 1;
+/**
+ * Points one magnitude of Elemental Force costs. Raised from 1 with the 2026-09-06 budget pass,
+ * so magnitudes roughly DOUBLE where the budgets tripled. Force is authored as flat Base Power,
+ * but Base Power is multiplied by the off/def ratio — so what it contributes is percentage-shaped
+ * and grows with the hero, exactly like the type-locked damage passives. Left at 1 it would have
+ * tripled into +45 Base Power on a Mythic, against a median move's 50.
+ */
+export const FORCE_POINT_VALUE = 2;
+
+/**
+ * From this tier up, an item must carry a granted passive or an Elemental Force worth at least
+ * `EFFECT_FLOOR_SHARE` of its budget (2026-09-06, per user direction). The complaint the budget
+ * pass answers is that items feel imperceptible, and a bigger number alone does not fix that —
+ * a +110 Attack Mythic is still a stat stick. Below Epic there is no floor: a plain, legible
+ * Common is what an Act-1 item should be.
+ */
+export const EFFECT_FLOOR_MIN_RARITY: EquipmentRarity = 'epic';
+export const EFFECT_FLOOR_SHARE = 1 / 3;
 
 /** A negative grant refunds its full value — a downside can fund a spike. Nothing caps how much of a tier drawbacks may pay for (open question, docs/progression.md). */
 function statGrantCost(stat: StatKey, amount: number): number {
@@ -81,7 +115,23 @@ export function equipmentBudgetCost(item: EquipmentDefinition, passiveCosts: Rea
   return cost;
 }
 
-/** [] for a valid item: flat grants are multiples of 5, and the tier's budget is spent exactly. */
+/** The part of an item's spend that is NOT stats — what the effect floor measures. NaN for an unpriced passive, same as the total. */
+export function equipmentEffectSpend(item: EquipmentDefinition, passiveCosts: Readonly<Record<string, number>>): number {
+  let cost = 0;
+  for (const grant of item.grantsStatusIds ?? []) cost += (grant.magnitude ?? 0) * FORCE_POINT_VALUE;
+  for (const passiveId of item.grantsPassiveIds ?? []) {
+    const priced = passiveCosts[passiveId];
+    cost += priced === undefined ? NaN : priced;
+  }
+  return cost;
+}
+
+/** Epic and above owe an effect; everything below is free to be plain. */
+function owesAnEffect(rarity: EquipmentRarity): boolean {
+  return RARITY_ORDER.indexOf(rarity) >= RARITY_ORDER.indexOf(EFFECT_FLOOR_MIN_RARITY);
+}
+
+/** [] for a valid item: flat grants are multiples of 5, the tier's budget is spent exactly, and Epic+ clears the effect floor. */
 export function equipmentBudgetProblems(
   item: EquipmentDefinition,
   passiveCosts: Readonly<Record<string, number>>
@@ -99,6 +149,16 @@ export function equipmentBudgetProblems(
   const budget = RARITY_BUDGET[item.rarity];
   if (Number.isFinite(cost) && cost !== budget) {
     problems.push(`spends ${cost} of its ${item.rarity} budget of ${budget}`);
+  }
+
+  if (owesAnEffect(item.rarity)) {
+    const effects = equipmentEffectSpend(item, passiveCosts);
+    const floor = budget * EFFECT_FLOOR_SHARE;
+    if (Number.isFinite(effects) && effects < floor) {
+      problems.push(
+        `spends ${effects} on effects, under the ${item.rarity} floor of ${Math.ceil(floor)} — an ${item.rarity} may not be stats alone`
+      );
+    }
   }
   return problems;
 }

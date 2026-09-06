@@ -11,8 +11,11 @@ import {
   RARITY_BUDGET,
   RARITY_ORDER,
   RARITY_WEIGHTS_BY_TIER,
+  EFFECT_FLOOR_MIN_RARITY,
+  EFFECT_FLOOR_SHARE,
   equipmentBudgetCost,
   equipmentBudgetProblems,
+  equipmentEffectSpend,
   lootTierFor,
   pickWeightedEquipment,
   rarityWeightsFor,
@@ -34,20 +37,22 @@ test('equipment: every authored item spends its rarity budget exactly', () => {
 
 test('equipment: the designer-authored common weapons are transcribed as specified', () => {
   // The 12 designer-specified commons the whole common tier is derived from; a change is a design
-  // decision. They are no longer a SLOT — items are uncategorised — but the ids and grants are pinned.
-  assert.deepStrictEqual(equipment.ironBlade.statGrants, { attack: 10 });
-  assert.deepStrictEqual(equipment.dagger.statGrants, { attack: 5, speed: 5 });
-  assert.deepStrictEqual(equipment.torch.statGrants, { attack: 5 });
-  assert.deepStrictEqual(equipment.torch.grantsStatusIds, [{ statusId: 'FireForce', magnitude: 5 }]);
-  assert.deepStrictEqual(equipment.huntersBow.statGrants, { attack: 5, wisdom: 5 });
-  assert.deepStrictEqual(equipment.pummelGloves.grantsStatusIds, [{ statusId: 'IronForce', magnitude: 5 }]);
-  assert.deepStrictEqual(equipment.battleAxe.statGrants, { attack: 5, defense: 5 });
-  assert.deepStrictEqual(equipment.apprenticeWand.statGrants, { intelligence: 10 });
-  assert.deepStrictEqual(equipment.magicBook.statGrants, { intelligence: 5, wisdom: 5 });
-  assert.deepStrictEqual(equipment.mysticOrb.grantsStatusIds, [{ statusId: 'ArcaneForce', magnitude: 5 }]);
-  assert.deepStrictEqual(equipment.memento.grantsStatusIds, [{ statusId: 'SpiritForce', magnitude: 5 }]);
-  assert.deepStrictEqual(equipment.oakStaff.statGrants, { intelligence: 5, defense: 5 });
-  assert.deepStrictEqual(equipment.windGem.statGrants, { intelligence: 5, speed: 5 });
+  // decision. They are no longer a SLOT — items are uncategorised — and the 2026-09-06 budget pass
+  // rescaled them onto Common 30, but each one's SHAPE is exactly what was authored: a stat-only
+  // item tripled, and a Force item doubled both halves because Force's own price doubled with it.
+  assert.deepStrictEqual(equipment.ironBlade.statGrants, { attack: 30 });
+  assert.deepStrictEqual(equipment.dagger.statGrants, { attack: 15, speed: 15 });
+  assert.deepStrictEqual(equipment.torch.statGrants, { attack: 10 });
+  assert.deepStrictEqual(equipment.torch.grantsStatusIds, [{ statusId: 'FireForce', magnitude: 10 }]);
+  assert.deepStrictEqual(equipment.huntersBow.statGrants, { attack: 15, wisdom: 15 });
+  assert.deepStrictEqual(equipment.pummelGloves.grantsStatusIds, [{ statusId: 'IronForce', magnitude: 10 }]);
+  assert.deepStrictEqual(equipment.battleAxe.statGrants, { attack: 15, defense: 15 });
+  assert.deepStrictEqual(equipment.apprenticeWand.statGrants, { intelligence: 30 });
+  assert.deepStrictEqual(equipment.magicBook.statGrants, { intelligence: 15, wisdom: 15 });
+  assert.deepStrictEqual(equipment.mysticOrb.grantsStatusIds, [{ statusId: 'ArcaneForce', magnitude: 10 }]);
+  assert.deepStrictEqual(equipment.memento.grantsStatusIds, [{ statusId: 'SpiritForce', magnitude: 10 }]);
+  assert.deepStrictEqual(equipment.oakStaff.statGrants, { intelligence: 15, defense: 15 });
+  assert.deepStrictEqual(equipment.windGem.statGrants, { intelligence: 15, speed: 15 });
   for (const id of ['ironBlade', 'dagger', 'torch', 'huntersBow', 'pummelGloves', 'battleAxe', 'apprenticeWand', 'magicBook', 'mysticOrb', 'memento', 'oakStaff', 'windGem']) {
     assert.strictEqual(equipment[id].rarity, 'common', `${id} must stay Common`);
   }
@@ -63,11 +68,39 @@ test('equipment: an unpriced granted passive is a budget failure, not free value
 });
 
 test('equipment: a negative grant refunds budget, funding an above-curve stat line', () => {
-  // Berserker's Cleaver: a Legendary 40 Attack paid for at Epic by -10 Defense.
+  // Berserker's Cleaver: a Legendary-sized 50 Attack AND Sunder, paid for at Epic by -20 Defense.
   const cleaver = equipment.berserkersCleaver;
-  assert.strictEqual(cleaver.statGrants.attack, 40);
-  assert.strictEqual(cleaver.statGrants.defense, -10);
+  assert.strictEqual(cleaver.statGrants.attack, 50);
+  assert.strictEqual(cleaver.statGrants.defense, -20);
   assert.strictEqual(equipmentBudgetCost(cleaver, PASSIVE_ITEM_COST), RARITY_BUDGET.epic);
+});
+
+test('equipment: an Epic or better may not be stats alone', () => {
+  // The effect floor (2026-09-06). A big number is not the same as an interesting item, and the
+  // budget pass would otherwise have produced +110 Attack Mythics.
+  const plainMythic = { id: 'x', name: 'X', rarity: 'mythic' as const, statGrants: { attack: 110 } };
+  const problems = equipmentBudgetProblems(plainMythic, PASSIVE_ITEM_COST);
+  assert.ok(problems.some((p) => p.includes('effects')), problems.join('; '));
+  // ...and the floor is a SHARE, so a token effect does not clear it either.
+  const tokenEffect = {
+    id: 'y',
+    name: 'Y',
+    rarity: 'mythic' as const,
+    statGrants: { attack: 100 },
+    grantsStatusIds: [{ statusId: 'FireForce', magnitude: 5 }],
+  };
+  assert.ok(equipmentBudgetProblems(tokenEffect, PASSIVE_ITEM_COST).some((p) => p.includes('effects')));
+  // Below Epic there is no floor at all: a plain Common is what an Act-1 item should be.
+  assert.deepStrictEqual(equipmentBudgetProblems(equipment.ironBlade, PASSIVE_ITEM_COST), []);
+});
+
+test('equipment: every Epic and better in the catalog clears the effect floor', () => {
+  for (const item of catalog) {
+    if (RARITY_ORDER.indexOf(item.rarity) < RARITY_ORDER.indexOf(EFFECT_FLOOR_MIN_RARITY)) continue;
+    const spend = equipmentEffectSpend(item, PASSIVE_ITEM_COST);
+    const floor = RARITY_BUDGET[item.rarity] * EFFECT_FLOOR_SHARE;
+    assert.ok(spend >= floor, `${item.id} (${item.rarity}) spends ${spend} on effects, under ${floor}`);
+  }
 });
 
 test('equipment: every passive an item grants has a price, and every price names a real passive', () => {
