@@ -591,19 +591,29 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
 
   **The champion nerf that came with it (2026-09-06, per user direction).** The five
   non-Goblin champions were **700 → 550**, the Goblin Lord's already-tuned figure, cut out of
-  HP and the offensive stats with Speed left alone. The reason is structural: a champion is a
-  **flat** number (no level progression, only the act curve) meeting a player who grows every
-  act, so one authored for "Act 2 or later" is a wall in Act 2 and a speed bump in Act 5. The
-  simulator had the Act 2 Guardian at **3-10%** against the same locations' Act 3 Guardian at
-  **30-67%**, and human playtest agreed that Act 2 was where runs ended.
+  HP and the offensive stats with Speed left alone. The simulator had the Act 2 Guardian at
+  **3-10%** against the same locations' Act 3 Guardian at **30-67%**, and human playtest agreed
+  that Act 2 was where runs ended.
+
+  **Where the Act 2 cliff actually comes from**, since the first write-up of this pass got it
+  wrong and blamed the champion. A champion DOES take the act curve — `appendFinalEnemy` applies
+  `actStatBonus(rng, scaling.statSteps)` — so a 550 champion is fielded at 550 / 580 / 640 / 730 /
+  850 across acts 1-5. What is flat is its **base**, and its **level**, which is inert. Between
+  Act 1 and Act 2 the champion moves +30. The **escorts move 235 → 490**, because the Goblins are
+  the one faction authored as fodder (~180 a body) and every other faction is a flat 400, while
+  the player's own fielded total grows about 13% over the same act. The step is at the faction
+  boundary, not on the Guardian curve; the champion cut absorbed it at the boss.
+
+  So the levers still open are the faction line (a Goblins-to-400 step with nothing between it,
+  or an Act 2 faction authored nearer 300) and `ACT_STEP_CURVE` index 1, still held at 1 step
+  under a comment saying Act 2 needs no help. Not "make champions scale" — they already do.
 
   After both changes, over 20k runs: Act 2 Guardians **18-41%** (from 1.4-9.2%), Act 2's clear
   rate **3.0% → 20.1%**, Act 3 **57.7%**, Act 5 **77.2%**, full clears **0.1% → 1.6%**. The
   Guardian is now the second-easiest node kind in the run after the row-0 opener, and `elite`
   is the hardest fight in every act — a finding to sit with rather than act on immediately.
-  What is still open: the back half is easier than it was, because a flat 550 that fits Act 2
-  is generous by Act 5. The principled fix is **scaling the champion by act** rather than
-  authoring one number for all five acts; that is a bigger change than this pass and is not made.
+  What is still open: the back half is easier than it was, because a base that fits Act 2 is
+  generous by Act 5 even with the curve on top.
 
   **He cannot be skipped.** `sideDefeated` (FightScreen) tests every combatant on the
   side, bench included — not just the two active slots — so a round that KOs the whole
