@@ -107,19 +107,18 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'intro',
     topic: 'The Pact',
     lines: [
-      'Fang and I have been walking toward this valley for a year. The journey truly begins now.',
-      'A Titan cannot be killed. It can only be bound. It is up to us to appease it.',
-      'Five Guardians stand between us and the Pact.',
+      "We're finally here, Fang.",
+      'Five Guardians stand between us and the Titan.',
       { speaker: 'fang', text: 'Woof.' },
-      'Seal the pact and we go.',
+      'Many others will try, but we must succeed. If we do not complete the Pact with the Titan, we will all be met with the end of times.',
+      'Seal the Pact and we go.',
     ],
   },
   {
     id: 'arrival',
     topic: 'The Map',
     lines: [
-      "Wild's Edge. Everything lives out here, and most of it would rather we did not.",
-      'Normally, this map branches and you choose your own road. Not today. Today there is one way through, and I will tell you what every stop on it is for.',
+      "Wild's Edge. Land of the Goblins, and many others attempting to complete the Pact.",
       'Venture forth when you are ready.',
     ],
   },
@@ -129,16 +128,14 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:fight',
     topic: 'Monsters',
     lines: [
-      'Goblins. Two of them, two of us. Every fight in this world is two against two.',
-      'Monsters tend to hold valuable loot that will aid us on this journey.',
+      'A couple of Goblins. They surely have some valuable loot that will aid us on the journey. We will take them on together.',
     ],
   },
   {
     id: 'gem',
     topic: 'Gems',
     lines: [
-      'A Gem. That is a relic, and a relic benefits us all. The same bonus on me, Fang, and anyone we pick up later.',
-      'They stack, forever. We will collect many across these lands.',
+      'A Gem. These will benefit all of us. They stack forever and we will collect many across these lands.',
       'Pick the one you want carried for the rest of the journey.',
     ],
   },
@@ -146,18 +143,18 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'equip',
     topic: 'Equipment',
     lines: [
-      'Gear. Each of us can hold one weapon, one armor, and one accessory.',
-      'Equip it on one of us or throw it away.',
+      'Some equipment. This will make us more powerful. Each of us can currently hold one, but if we find a Forge, our capacity will expand.',
+      'Equip it on one of us.',
     ],
   },
   {
     id: 'levelUp',
     topic: 'Experience',
     lines: [
-      'Experience teaches us new ways to fell our foes. Give it to any of us, even heroes who did not participate in the battle.',
-      'A level does not raise my numbers. It teaches me a new move, or progresses me toward evolution.',
-      'The first level costs one point, the next two, the next three.',
-      'For now, give it all to me. There is something I need to reach, and I will show you when I get there.',
+      'Experience teaches us new ways to fell our foes. It can be granted to any of us, even heroes who did not participate in the battle.',
+      'A level does not raise my statistics. It teaches me a new move, and progresses me toward evolution at level 5.',
+      'The first level costs one point, the next two, the next three, until a max of 5 per level.',
+      'For now, give it all to me.',
     ],
   },
 
@@ -166,14 +163,14 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:equipmentReward',
     topic: 'Choosing',
     lines: [
-      'A cache. Three pieces, you take one.',
-      'Some of us may want different specialties than others. Observe what the equipment does before choosing.',
+      'A cache. We get one of three items.',
+      'Some of us may want to focus on different stats than others. Observe what the equipment does before choosing.',
     ],
   },
   {
     id: 'reward:equipmentReward',
     lines: [
-      'Equipment comes in various rarities, but sometimes rare does not mean better.',
+      'Equipment comes in various rarities, but rare does not always mean better.',
     ],
   },
 
@@ -182,13 +179,13 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:classReward',
     topic: 'Mentor',
     lines: [
-      'Someone up there teaches. Each of us may learn one class. The decision is permanent.',
+      'A Mentor that can teach us a class. Each of us may learn one. The decision is permanent.',
       'We will find more of these Mentors on the road ahead.',
     ],
   },
   {
     id: 'classNode',
-    lines: ['Three on offer. Choose one, then who will learn it.'],
+    lines: ['Choose one, then which of us that will learn it.'],
   },
 
   // --- Row 3: the Skirmish ---
@@ -196,11 +193,10 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:skirmish',
     topic: 'Skirmish',
     lines: [
-      'A Skirmish. These are always against other Pactbearers, just like us. When they go down, we can recruit one.',
-      'You are carrying a Recruit Contract. One beaten hero, straight onto our roster, at whatever strength they were beaten at. Six is the cap and we are two, so there is room.',
-      'Both of them are of the Frost element. Cold eats a Beast such as Fang. We must deal with them quickly.',
+      'A Skirmish. These are always against other Pactbearers, just like us. When they go down, we can recruit one among their ranks as long as we have a Recruit Contract.',
+      'There can only be a maximum of six of us on a team. Recruits beyond that point will force one out. Their items will stay with us.',
+      'Both of these enemies are of the Frost element. Cold eats a Beast such as Fang. We must deal with them quickly.',
       { speaker: 'fang', text: 'Woof.' },
-      'Watch how differently they fight. One strikes with their hands. The other with magic.',
     ],
   },
   {
@@ -208,9 +204,9 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     topic: 'Recruit Contract',
     lines: [
       'Take the caster. They provide something that we lack.',
-      'Fang and I strike with our Attack. We struggle against enemies with high Defense.',
+      'Fang and I strike with our Attack. Therefore, we struggle against enemies with high Defense.',
       'Flurry does not. They cast with Intelligence, which is measured against Wisdom instead.',
-      'A healthy balance is pivotal to success. There is something at the end of this valley we do not pass without it.',
+      'A healthy balance is pivotal to success.',
     ],
   },
 
@@ -219,12 +215,12 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:relicReward',
     topic: 'Relics',
     lines: [
-      'A relic. It affects us all, like the Gem.',
+      'A relic. It benefits us all, like the Gem.',
     ],
   },
   {
     id: 'reward:relicReward',
-    lines: ['Three. One comes with us for the rest of the run.'],
+    lines: ['Choose which one to bring with us for the rest of the journey.'],
   },
 
   // --- Row 5: the warband ---
@@ -233,7 +229,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     topic: 'The Bench',
     lines: [
       'A chief and his warband.',
-      'We are a team of three now, meaning one must sit on the bench. Whoever sits there regenerates Mana every round, and you can bring them in whenever you like. Switching costs a turn and nothing else.',
+      'We are a team of three now, meaning one must sit on the bench. Whoever sits there regenerates Mana every round, and you can bring them in whenever you like. Switching costs only a turn.',
       "Let's bring the caster to the field for this one. Their abilities may come in handy.",
     ],
   },
@@ -241,7 +237,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'evolution',
     topic: 'Evolution',
     lines: [
-      'There. Five levels in and the road forks.',
+      'There. Level five, and now my path can go many directions.',
       'The choice is permanent for the rest of the journey. My potential varies wildly, and it is up to you to choose my fate.',
       'Press and hold any of the buttons for a detailed description of what each path entails.',
     ],
@@ -257,7 +253,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
   },
   {
     id: 'shop',
-    lines: ['A fourth body is worth more than anything else, if the coin is there.'],
+    lines: ['A fourth hero is worth more than anything else.'],
   },
 
   // --- Row 7: the Guardian ---
@@ -265,7 +261,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:boss',
     topic: 'The Guardian',
     lines: [
-      'The Goblin Lord. He is not a goblin the way the others are goblins. He is a Guardian, and he holds one of the five seals.',
+      'The Goblin Lord. He is no mere typical Goblin. He is a Guardian, and he holds one of the five seals.',
       'He is known as an Ancient. Nothing we own is strong against him, and nothing ever will be.',
       'Two of his warband stand in front. Clear one of them and he comes out, so be sure that we are well-prepared.',
     ],
@@ -274,7 +270,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'outro',
     topic: 'One Seal Down',
     lines: [
-      'The lock is broken and the valley is quiet. Four more of those, and the Titanpact will be forged.',
+      'The first lock is broken. Four more of those, and the Titanpact will be forged.',
       'From here the map branches, the choices are yours, and you are on your own.',
       { speaker: 'fang', text: 'Woof.' },
     ],
@@ -296,21 +292,12 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     when: { round: 1 },
     topic: 'Command',
     lines: [
-      'Fang and I are both on the field at once. Each round, you give us both an order: a move, and the target.',
+      'All battles in this world are 2v2. Each round, you give us both an order: a move, and the target.',
       'Pick one of my moves, then do the same for Fang.',
       'The blue gem shows the MP cost to cast the move. At the end of each round, everyone recovers a little bit of MP.',
       'Resting is always an option, and it fully recovers your MP. Sometimes, Rest is the only available choice.',
-      'Speed decides who actually swings first, and you will not always be the one who does.',
+      'Speed decides the order that we strike. Fang is quicker than anyone else on the field, so act accordingly.',
       'At any time, you can tap on a hero or an enemy to view their capabilities.',
-    ],
-  },
-  {
-    id: 'fight:types',
-    node: 'fight',
-    when: { minRound: 2 },
-    topic: 'Damage',
-    lines: [
-      'Watch the numbers on the move buttons. Type advantages are key, and resistances sometimes even moreso.',
     ],
   },
   {
@@ -330,7 +317,7 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     when: { round: 1 },
     topic: 'Type Advantage',
     lines: [
-      'Note the numbers on the move buttons. My Iron strikes for double against Frost foes.',
+      'Note the effectiveness numbers on the move buttons. My Iron strikes for 2x against Frost foes.',
       'Fang, on the other hand, struggles in this matchup. It may be worth using his turn to bolster our Attack.',
       'At any time, you may hold a move button to see exactly what it does before you commit.',
     ],
@@ -341,33 +328,21 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     when: { round: 2 },
     topic: 'Two Kinds of Hit',
     lines: [
-      'Watch them closely. The one throwing shards is using a PHYSICAL [physical] move, and it is weighed against my Defense.',
-      'The other one is MAGICAL [magical], and my Defense is irrelevant. It goes against my Wisdom instead.',
-      'Every move in the game wears one mark or the other. Look for it before you commit.',
+      'Watch them closely. The one throwing shards is using a PHYSICAL [physical] moves, and it is weighed against my Defense.',
+      'The snowman is MAGICAL [magical], so my Defense is irrelevant. It goes against my Wisdom instead.',
+      'Every attack in the game uses one or the other. Look for it before you commit.',
     ],
   },
 
   // --- The warband ---
   {
-    id: 'battle:switch',
-    node: 'battle',
-    when: { round: 1 },
-    topic: 'Switching',
-    lines: [
-      'Anyone on the bench is filling their Mana back up while they wait.',
-      'Careful maneuvering of the squad is essential to success.',
-    ],
-  },
-  {
     id: 'battle:magic',
     node: 'battle',
-    when: { round: 2 },
+    when: { round: 1 },
     topic: 'The Caster',
     lines: [
-      "Look at Flurry's stat sheet. 25 Attack. Barely enough to scratch them.",
-      '80 Intelligence, though. That is what her magic is measured with, and it goes against their Wisdom, which nothing out here bothers to have.',
-      'And Rime Wind does not pick a target, but rather, it lands on everything across from us at once.',
-      'Look for the ⇉ Spread mark on a move. Sometimes striking both is better than striking one.',
+      "Flurry's stat sheet shows a pitiful Attack stat. However, their Intelligence is impressive. Their Rime Wind will be effective here.",
+      'Rime Wind does not pick a target. It is a ⇉ Spread move, meaning it strikes both of the enemies.',
     ],
   },
 
