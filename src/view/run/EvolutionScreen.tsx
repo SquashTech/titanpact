@@ -129,7 +129,6 @@ function PathButton({
     <button className={`evolution-path-button evolution-${path.kind}${selected ? ' picked' : ''}`} {...longPress}>
       <div className="evolution-path-head">
         <span className="evolution-path-name">{path.name}</span>
-        <span className="evolution-path-kind">{path.kind}</span>
       </div>
       <div className="evolution-path-grants">
         {/* Signed, not always "+": a refocus path spends a stat to buy another. */}
@@ -211,14 +210,10 @@ function PathDossier({
         ✕
       </button>
       <div className="detail-panel evolution-dossier" onClick={(e) => e.stopPropagation()}>
-        <div className="evolution-path-head">
-          <span className="evolution-path-name">{path.name}</span>
-          <span className="evolution-path-kind">{path.kind}</span>
-        </div>
-        {path.description && <p className="evolution-dossier-desc">{path.description}</p>}
+        <div className="evolution-dossier-title">{path.name}</div>
 
         {path.typeGraft && (
-          <>
+          <section className="evolution-dossier-section">
             <div className="evo-path-label">Becomes</div>
             <div className="evo-path-types">
               {types.map((t) => (
@@ -226,28 +221,33 @@ function PathDossier({
               ))}
             </div>
             <TypeMatchups types={types} />
-          </>
+          </section>
         )}
 
         {grantedMoves.length > 0 && (
-          <>
+          <section className="evolution-dossier-section">
             <div className="evo-path-label">Granted on choosing</div>
             {grantedMoves.map((id) => (
               <MoveDetailCard key={id} move={moves[id]} caster={caster} />
             ))}
-          </>
+          </section>
         )}
 
         {grantedPassives.length > 0 && (
-          <>
+          <section className="evolution-dossier-section">
             <div className="evo-path-label">Passive</div>
             {grantedPassives.map((id) => (
               <PassiveInfoPanel key={id} passive={passives[id]} />
             ))}
-          </>
+          </section>
         )}
 
-        {promise && <p className="evolution-dossier-pool">{promise} They are offered on level-up, not now.</p>}
+        {promise && (
+          <section className="evolution-dossier-section">
+            <div className="evo-path-label">Level-up pool</div>
+            <p className="evolution-dossier-pool">{promise} They are offered on level-up, not now.</p>
+          </section>
+        )}
 
         <button
           className="resolve-button evolution-dossier-confirm"

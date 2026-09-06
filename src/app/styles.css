@@ -15719,14 +15719,6 @@ textarea,
   font-size: 13px;
 }
 
-.evolution-path-kind {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-dim);
-  white-space: nowrap;
-}
-
 .evolution-path-grants {
   display: flex;
   flex-wrap: wrap;
@@ -15926,11 +15918,32 @@ textarea,
   gap: 8px;
 }
 
-.evolution-dossier-desc {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--text-dim);
+/* The path's name carries the header alone, so it takes the size the card's
+   name has and a rule to close the block off from the sections under it. */
+.evolution-dossier-title {
+  font-size: 15px;
+  font-weight: 700;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* One block per thing the path hands over. A path grants three or four
+   unrelated claims — a typing, a move, a passive, a pool — and stacked flat
+   under bare captions they ran together into one wall. Sunken because they
+   are set into the sheet rather than raised above it, the same treatment
+   .evo-path-card gets in the hero dossier. */
+.evolution-dossier-section {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.evolution-dossier-section > .evo-path-label {
+  margin-top: 0;
 }
 
 .evolution-dossier-pool {
