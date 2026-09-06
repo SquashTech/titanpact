@@ -28,14 +28,27 @@ export interface Popup {
 // is describing. The recoil is the one-shot, and it fires on the beat the
 // damage is announced, which is the beat where the attacker's pose is already
 // up — so the two read as one exchange with nothing to time against.
+//
+// Every swap between frames is covered by a flash, because a pixel-art cut
+// between two poses with nothing over it reads as a glitch rather than as
+// motion: the entry flash is the opening frame of each pose's own animation,
+// and the exit gets `.releasing` below, which is the only transition that had
+// no animation of its own to hide it.
 const HIT_REACT_MS = 460;
+const POSE_RELEASE_MS = 240;
 
-/** Sprite-level reaction per popup class. Only what an attack does — DoT ticks keep their card flash alone. */
+/**
+ * Sprite-level reaction per popup class. A blow knocks the figure back; a DoT
+ * tick only makes it sag, since nothing hit it — but both show the wound,
+ * because the frame is chosen off this map being hit at all.
+ */
 const POPUP_HIT_CLASS: Record<string, string> = {
   'popup-damage': 'hit-struck',
   'popup-haunt': 'hit-struck',
   'popup-conduct': 'hit-struck',
   'popup-crit': 'hit-crit',
+  'popup-burn': 'hit-wince',
+  'popup-bleed': 'hit-wince',
 };
 
 /** True for `ms` after `key` changes to a new non-null value; false again in time for the next one to replay. */
@@ -125,6 +138,34 @@ function activeStatMods(hero: HeroDefinition, combatant: Combatant, statCtx: Sta
   });
 }
 
+type Pose = 'idle' | 'attack' | 'hurt';
+
+/**
+ * The pose the figure just left, for as long as the flash covering that swap
+ * runs. Entering a pose is masked by the opening frame of the pose's own
+ * animation; LEAVING one had nothing, so the frame cut and the drop out of the
+ * strike lean both happened raw, on a beat change, with nothing over them.
+ *
+ * Set during render rather than from an effect on purpose: an effect lands the
+ * class one frame after the `src` swap it is there to hide, and one unmasked
+ * frame is the entire artifact. React supports this shape for exactly this —
+ * the extra render is thrown away before anything is committed.
+ */
+function usePoseRelease(pose: Pose): Pose | null {
+  const [released, setReleased] = useState<Pose | null>(null);
+  const [shown, setShown] = useState<Pose>(pose);
+  if (shown !== pose) {
+    setShown(pose);
+    if (pose === 'idle' && shown !== 'idle' && released !== shown) setReleased(shown);
+  }
+  useEffect(() => {
+    if (!released) return;
+    const timer = window.setTimeout(() => setReleased(null), POSE_RELEASE_MS);
+    return () => window.clearTimeout(timer);
+  }, [released]);
+  return released;
+}
+
 function StatModBadge({ stat, mod }: { stat: StatKey; mod: number }) {
   return (
     <span className={`stat-mod-badge ${mod > 0 ? 'stat-buff' : 'stat-debuff'}`} title={`${stat} ${mod > 0 ? '+' : ''}${mod}`}>
@@ -152,6 +193,9 @@ export function CombatantCard({
   const hitClass = popup ? POPUP_HIT_CLASS[popup.className] : undefined;
   // Keyed on the popup, not on the class: the same figure taking the same kind of hit twice running must replay.
   const struck = useOneShot(hitClass ? popup!.key : null, HIT_REACT_MS);
+  // Taking a hit wins over landing one, so a hero that swung and got answered reads as the one who came off worse.
+  const pose: Pose = hitClass ? 'hurt' : striking ? 'attack' : 'idle';
+  const released = usePoseRelease(pose);
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = Math.max(0, combatant.currentHp / maxHp);
@@ -173,6 +217,7 @@ export function CombatantCard({
   if (popup && POPUP_FLASH_CLASS[popup.className]) classes.push(POPUP_FLASH_CLASS[popup.className]);
   if (striking) classes.push('striking');
   if (struck && hitClass) classes.push(hitClass);
+  if (released) classes.push('releasing', `releasing-${released}`);
 
   // effectiveTypes, not hero.types — a type-graft Evolution should retint the card too.
   const types = effectiveTypes(hero, combatant);
@@ -216,10 +261,7 @@ export function CombatantCard({
           heroId={hero.id}
           seed={combatant.combatantId}
           className="combatant-portrait"
-          // Held the same way the pose is, and for the same reason: the frame stays up for as
-          // long as the console is still on the line that put it there. Taking a hit wins over
-          // landing one, so a hero that swung and got answered reads as the one who came off worse.
-          pose={hitClass ? 'hurt' : striking ? 'attack' : 'idle'}
+          pose={pose}
         />
       </div>
       {/* Always rendered so the row reserves its height whether or not this card has a badge. */}

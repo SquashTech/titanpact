@@ -3469,30 +3469,70 @@ textarea,
                  the time they read the damage line it belongs to.
      .hit-struck the one-shot half — the figure it lands on snaps back,
      .hit-crit   whitening on the frame of contact and settling through a short
-                 shake. It fires on the beat its damage is announced, which is
+     .hit-wince  shake. It fires on the beat its damage is announced, which is
                  a beat where the attacker's pose is already up, so the two
                  read as one exchange without needing to be timed against
-                 each other. CombatantCard times it out in JS so the class
-                 comes back off — a class that never toggles never restarts
-                 its animation, and the next hit would play nothing.
+                 each other. `.hit-wince` is the same beat for damage nobody
+                 threw — a Burn or Bleed tick — so it sags instead of being
+                 knocked anywhere. CombatantCard times all three out in JS so
+                 the class comes back off: a class that never toggles never
+                 restarts its animation, and the next hit would play nothing.
+     .releasing  covers the swap OUT of a pose. Every other frame change is
+                 hidden by the opening frame of the animation that comes with
+                 it; leaving a pose had none, so the sprite cut and the drop
+                 out of the lean happened raw. This is that missing flash.
 
-   All three replace the idle breath while they run rather than layering over
+   All of them replace the idle breath while they run rather than layering over
    it: two animations writing `transform` on one element just fight. */
 .team-row .combatant-card.striking .combatant-portrait {
-  animation: hero-strike-set 200ms cubic-bezier(0.2, 0, 0.1, 1) forwards;
+  animation: hero-strike-set 220ms cubic-bezier(0.2, 0, 0.1, 1) forwards;
 }
 
-/* Eases from rest to the lean and holds there (`forwards`) — the return is the
-   class coming off, at a beat change the eye is already following. */
+/* Blows out on the frame the sprite changes — that flash is what makes a
+   two-frame pixel cut read as a movement rather than as a glitch — then eases
+   into the lean and holds there (`forwards`). */
 @keyframes hero-strike-set {
   0% {
     transform: translateY(0) scale(1, 1);
+    filter: var(--figure-shadow) brightness(3.2) saturate(0.15);
   }
-  35% {
+  22% {
     transform: translateY(2px) scale(1.05, 0.95);
+    filter: var(--figure-shadow) brightness(1.7) saturate(0.6);
+  }
+  55% {
+    filter: var(--figure-shadow) brightness(1);
   }
   100% {
     transform: translateY(var(--strike-reach, -7px)) scale(0.98, 1.03);
+    filter: var(--figure-shadow) brightness(1);
+  }
+}
+
+/* The mirror of it. `--release-lift` is where the figure was standing when the
+   class came off, so leaving the strike lean eases back down through the flash
+   instead of teleporting; leaving the hurt frame has nowhere to travel from and
+   is the flash alone. */
+.team-row .combatant-card.releasing .combatant-portrait {
+  animation: hero-pose-release 240ms ease-out;
+}
+
+.team-row .combatant-card.releasing-attack {
+  --release-lift: var(--strike-reach, -7px);
+}
+
+@keyframes hero-pose-release {
+  0% {
+    transform: translateY(var(--release-lift, 0px)) scale(0.99, 1.02);
+    filter: var(--figure-shadow) brightness(3.2) saturate(0.15);
+  }
+  30% {
+    transform: translateY(calc(var(--release-lift, 0px) * 0.4)) scale(1.02, 0.98);
+    filter: var(--figure-shadow) brightness(1.7) saturate(0.6);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
+    filter: var(--figure-shadow) brightness(1);
   }
 }
 
@@ -3561,6 +3601,34 @@ textarea,
   }
   100% {
     transform: translate(0, 0) scale(1, 1);
+    filter: var(--figure-shadow) brightness(1);
+  }
+}
+
+/* A Burn or Bleed tick. The wound frame shows the same way it does for a blow,
+   but nothing threw this — so the figure sags under its own weight instead of
+   being knocked in a direction, over a longer, slacker curve than a hit gets,
+   and never blows out to white. The colour of the moment is already on the card
+   (burn-flash / bleed-flash); this is only the body reacting to it. */
+.team-row .combatant-card.hit-wince .combatant-portrait {
+  animation: hero-hit-wince 420ms ease-in-out;
+}
+
+@keyframes hero-hit-wince {
+  0% {
+    transform: translateY(0) scale(1, 1);
+    filter: var(--figure-shadow) brightness(1);
+  }
+  22% {
+    transform: translateY(3px) scale(1.05, 0.93);
+    filter: var(--figure-shadow) brightness(1.4) saturate(0.6);
+  }
+  55% {
+    transform: translateY(1px) scale(1.01, 0.985);
+    filter: var(--figure-shadow) brightness(1.12) saturate(0.85);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
     filter: var(--figure-shadow) brightness(1);
   }
 }
