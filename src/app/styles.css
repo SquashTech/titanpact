@@ -3460,7 +3460,7 @@ textarea,
    background), so the only thing that can carry an attack is the sprite.
 
      .striking   a STATE, not a one-shot: the actor cuts to its action frame
-                 (HeroPortrait's `pose`, heroArt.ts `heroAttackArt`) and leans
+                 (HeroPortrait's `pose`, heroArt.ts `heroPoses`) and leans
                  at the other row, and stays there for every beat the console
                  spends on that move — the declaration, the damage it dealt,
                  the KO. It drops on the first beat that isn't about it. Held

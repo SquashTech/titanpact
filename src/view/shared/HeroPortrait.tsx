@@ -1,8 +1,5 @@
 import type { CSSProperties } from 'react';
-import { heroArt, heroAttackArt, heroHurtArt } from './heroArt';
-
-/** Each pose's frame table. A hero missing from one falls back to its idle frame, so a pose can be authored per hero. */
-const POSE_ART = { attack: heroAttackArt, hurt: heroHurtArt } as const;
+import { heroArt, heroPoses } from './heroArt';
 
 interface Props {
   heroId: string;
@@ -25,7 +22,7 @@ function hashSeed(key: string): number {
 
 /** Renders nothing for heroes without art, so callers can place it unconditionally. */
 export function HeroPortrait({ heroId, className, seed, pose = 'idle' }: Props) {
-  const src = (pose !== 'idle' ? POSE_ART[pose][heroId] : undefined) ?? heroArt[heroId];
+  const src = (pose !== 'idle' ? heroPoses[heroId]?.[pose] : undefined) ?? heroArt[heroId];
   if (!src) return null;
   const h = hashSeed(seed ?? heroId);
   const idleStyle = {

@@ -34,6 +34,8 @@ import gallantArt from '../../../art/heroes/gallant.png';
 import clockworkArt from '../../../art/heroes/starters/clockwork.png';
 import steamColossusArt from '../../../art/heroes/steamcolossus.png';
 import fangArt from '../../../art/heroes/starters/fang.png';
+import fangAttackArt from '../../../art/heroes/starters/fangattacking.png';
+import fangHurtArt from '../../../art/heroes/starters/fangdamaged.png';
 import widowArt from '../../../art/heroes/Widow.png';
 import coilArt from '../../../art/heroes/coil.png';
 import goblinGruntArt from '../../../art/enemies/goblingrunt.png';
@@ -187,17 +189,33 @@ for (const championId of CHAMPION_IDS) {
   heroArt[unsealedIdFor(championId)] = heroArt[championId];
 }
 
-/**
- * The pose a figure cuts to for the length of one strike, then back
- * (styles.css, `.striking`). Keyed like `heroArt` and just as optional — a
- * hero with no entry keeps its idle sprite while it acts, so the roster can
- * grow a second frame one hero at a time.
- */
-export const heroAttackArt: Partial<Record<string, string>> = {
-  valor: valorAttackArt,
-};
+/** The frames a hero has beyond its idle one. Both optional and independent. */
+export interface HeroPoses {
+  /** Held for as long as the console is narrating this hero's move (styles.css `.striking`). */
+  attack?: string;
+  /** Held for as long as the console is narrating a hit landing on it (`.hit-struck` / `.hit-crit` / `.hit-wince`). */
+  hurt?: string;
+}
 
-/** The frame a figure holds while the console is narrating a hit landing on it. Optional the same way. */
-export const heroHurtArt: Partial<Record<string, string>> = {
-  valor: valorHurtArt,
+/**
+ * ── TO GIVE A HERO ITS FRAMES ────────────────────────────────────────────
+ * Drop the art beside the hero's idle sprite, import it above next to that
+ * hero's idle import, and add ONE line to the table below. That is the whole
+ * job: everything downstream — the poses, the lean, the wound on a Burn tick,
+ * the flash over each frame cut — is keyed off the hero id and already works
+ * for every hero in the game the moment its art lands here.
+ *
+ * Filenames are not a convention and are not scanned for; they are imported by
+ * hand, so a hero's frames can be called whatever the artist called them
+ * (`valorattack.png` and `fangattacking.png` are both fine) and a typo is a
+ * build error rather than a frame that silently never shows up.
+ *
+ * Either frame may be omitted. A hero with no entry at all, or with only one of
+ * the two, simply keeps its idle sprite for whatever is missing and loses
+ * nothing else — so the roster can grow frames one hero, and one pose, at a
+ * time.
+ */
+export const heroPoses: Partial<Record<string, HeroPoses>> = {
+  valor: { attack: valorAttackArt, hurt: valorHurtArt },
+  packAlpha: { attack: fangAttackArt, hurt: fangHurtArt },
 };

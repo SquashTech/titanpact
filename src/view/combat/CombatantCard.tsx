@@ -40,12 +40,16 @@ const POSE_RELEASE_MS = 240;
 /**
  * Sprite-level reaction per popup class. A blow knocks the figure back; a DoT
  * tick only makes it sag, since nothing hit it — but both show the wound,
- * because the frame is chosen off this map being hit at all.
+ * because the frame is chosen off this map being hit at all. Poison sits with
+ * the blows rather than with the other two statuses: it does not tick down, it
+ * bursts once for everything at the end, and buildBeats says so ("Poison bursts
+ * for N damage!").
  */
 const POPUP_HIT_CLASS: Record<string, string> = {
   'popup-damage': 'hit-struck',
   'popup-haunt': 'hit-struck',
   'popup-conduct': 'hit-struck',
+  'popup-poison': 'hit-struck',
   'popup-crit': 'hit-crit',
   'popup-burn': 'hit-wince',
   'popup-bleed': 'hit-wince',

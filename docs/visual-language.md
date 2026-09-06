@@ -1904,6 +1904,54 @@ is the trade the density buys. If it bites in playtest, the fix is more forms, n
 Measured on the Manage Roster screen: six heroes went from filling the panel and scrolling to
 fitting with room to spare.
 
+## Seventeenth pass — the figure carries the fight (2026-09-06)
+
+Every combat animation up to here was on the CARD. On the battlefield there is no card: the
+fourth pass stripped the box, the border and the background off `.team-row .combatant-card` and
+moved every signal onto the figure. So an attack landing was a rectangle glowing behind a hero
+who never moved, and the hero who threw it did nothing at all.
+
+Three things now happen to the sprite. **The actor cuts to an action frame and leans at the
+other row. Whoever it hits cuts to a wound frame and reacts. Every swap between two frames is
+covered by a flash.**
+
+The load-bearing decision is that **a pose is a STATE, not a one-shot.** It is up for exactly as
+long as the console is narrating the line that put it there — the declaration, the damage, the
+rider, the KO — and drops on the first beat that isn't about it. A beat lasts as long as the
+player takes to tap, so a pose on a timer is gone by the time they read the damage line it
+belongs to. Which figure is mid-move comes from `buildBeats` (`strikeCombatantId`), stamped at
+the declaration and carried until an event arrives that cannot belong to that action — a round
+boundary, a DoT tick, a switch, the Pact.
+
+That also settles the timing, which is otherwise the hard part. The recoil is the only one-shot,
+and it fires on the beat its damage is announced, which is a beat where the attacker's pose is
+already up. The two halves read as one exchange **without being timed against each other at
+all** — nothing to tune, and nothing that can drift when the player reads at their own pace.
+
+The reaction is graded by what caused it, which is where the vocabulary earns its keep:
+
+- `.hit-struck` / `.hit-crit` — a blow, or a Poison burst. Knocked away from the attacker,
+  blown out to near-white on the frame of contact, settling through a shake. Direction is read
+  off which row the figure stands in (`--hit-knock`), so it works for either side unchanged.
+- `.hit-wince` — a Burn or Bleed tick. Same wound frame, but the figure **sags under its own
+  weight** rather than being knocked anywhere, on a slacker curve, never blowing out. Nothing
+  threw this and it must not read like something did. Poison sits with the blows instead,
+  because it does not tick down — it bursts once for everything at the end.
+- `.releasing` — the flash over the swap OUT of a pose. Entering one is masked by the opening
+  frame of its own animation; leaving one had nothing, so the sprite cut and the drop out of the
+  lean happened raw. `usePoseRelease` sets that class **during render** rather than from an
+  effect: an effect lands it one frame after the swap it exists to hide, and one unmasked frame
+  is the whole artifact.
+
+**To give a hero its frames:** drop the art beside its idle sprite, import it, and add one line
+to `heroPoses` (`src/view/shared/heroArt.ts`). Nothing else changes — every behaviour above is
+keyed on hero id and already works for the whole roster the moment art lands. Filenames are
+imported by hand rather than scanned for, so the art can be called whatever the artist called it
+(`valorattack.png` and `fangattacking.png` are both in use) and a typo is a build error instead
+of a frame that silently never appears. Either frame may be omitted; a hero keeps its idle sprite
+for whatever is missing. Valor and Fang have both frames; nobody else has either yet, and the
+only thing between the rest of the roster and the same treatment is the art.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.
