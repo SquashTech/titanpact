@@ -295,6 +295,8 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     topic: 'Command',
     lines: [
       'Pick one of my moves, then pick who it lands on. Then do the same for Fang.',
+      'The blue gem shows the MP cost to cast the move. At the end of each round, everyone recovers a little bit of MP.',
+      'Resting is always an option, and it fully recovers your MP. Sometimes, Rest is the only available choice.',
       'Speed decides who actually swings first, and you will not always be the one who does.',
       'At any time, you can tap on a hero or an enemy to view their capabilities.',
     ],
@@ -305,18 +307,7 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     when: { minRound: 2 },
     topic: 'Damage',
     lines: [
-      'Watch the numbers on the move buttons. Shadow runs off Fang at half strength — the chart is doing that, not luck.',
-      'Every move also rolls a little high or low each time. Plan for the low roll.',
-    ],
-  },
-  {
-    id: 'fight:mana',
-    node: 'fight',
-    when: { minRound: 3 },
-    topic: 'Mana',
-    lines: [
-      'Every move costs Mana, and only a trickle comes back each round.',
-      'The expensive ones are expensive because they are good. That is the whole balance of this game in one sentence.',
+      'Watch the numbers on the move buttons. Type advantages are key, and resistances sometimes even moreso.',
     ],
   },
   {
