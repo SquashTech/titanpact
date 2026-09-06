@@ -65,7 +65,7 @@ import { AudioSettings } from '../shared/AudioSettings';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
-import { EquipmentEffectList, EquipmentIcon, EQUIP_SLOT_LABELS, RARITY_COLOR_VARS, RARITY_LABELS, fmtGrant } from '../shared/EquipmentBox';
+import { EquipmentEffectList, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS, fmtGrant } from '../shared/EquipmentBox';
 import { useAmbientLocation } from '../shared/LocationContext';
 import { LocationAmbience } from '../shared/LocationSky';
 import type { LocationDefinition } from '../../data/locations';
@@ -1650,11 +1650,11 @@ export function FightScreen({
                     style={{ '--rarity-color': RARITY_COLOR_VARS[equipmentReward.rarity] } as CSSProperties}
                   >
                     <div className="equip-spotlight-header">
-                      <EquipmentIcon item={equipmentReward} slot={equipmentReward.slot} className="equip-spotlight-icon" />
+                      <EquipmentIcon item={equipmentReward} className="equip-spotlight-icon" />
                       <div>
                         <div className="equip-spotlight-name">{equipmentReward.name}</div>
                         <div className="equip-spotlight-rarity">
-                          {RARITY_LABELS[equipmentReward.rarity]} · {EQUIP_SLOT_LABELS[equipmentReward.slot]}
+                          {RARITY_LABELS[equipmentReward.rarity]}
                         </div>
                       </div>
                     </div>

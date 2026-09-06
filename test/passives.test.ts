@@ -420,12 +420,12 @@ test('passives: Bloodthirsty moves the damage roll and the turn order, not just 
 
 // --- Run-tier grant aggregation (src/run/passives.ts) ---
 
-const fireCharm: EquipmentDefinition = { id: 'fireCharm', name: 'Fire Charm', slot: 'accessory', rarity: 'rare', statGrants: {}, grantsPassiveIds: ['emberheart'] };
-const plainSword: EquipmentDefinition = { id: 'plainSword', name: 'Plain Sword', slot: 'weapon', rarity: 'common', statGrants: { attack: 5 } };
+const fireCharm: EquipmentDefinition = { id: 'fireCharm', name: 'Fire Charm', rarity: 'rare', statGrants: {}, grantsPassiveIds: ['emberheart'] };
+const plainSword: EquipmentDefinition = { id: 'plainSword', name: 'Plain Sword', rarity: 'common', statGrants: { attack: 5 } };
 const equipmentLookup: Record<string, EquipmentDefinition> = { fireCharm, plainSword };
 
-test('passives: equipmentPassiveGrants tallies grants across equipped slots, ignoring stat-only gear', () => {
-  const loadout = equipItem(equipItem(createEmptyLoadout(), fireCharm), plainSword);
+test('passives: equipmentPassiveGrants tallies grants across held items, ignoring stat-only gear', () => {
+  const loadout = equipItem(equipItem(createEmptyLoadout(), fireCharm.id), plainSword.id);
   assert.deepStrictEqual(equipmentPassiveGrants(loadout, equipmentLookup), { emberheart: 1 });
 });
 

@@ -403,4 +403,10 @@ export interface HeroDefinition {
   moveIds: readonly string[];
   /** Offered in the start-of-run draft; false = recruit-only (Guild Hall / Recruit Contract). Single source of truth for the split. */
   starter: boolean;
+  /**
+   * Item slots this hero starts with. Omitted = BASE_ITEM_SLOTS (1); a slow, heavy
+   * hero that carries on gear rather than tempo is authored at 2. A per-hero balance
+   * dial, not a tier — the Forge raises everyone from wherever they began.
+   */
+  itemSlots?: number;
 }

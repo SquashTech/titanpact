@@ -1,13 +1,11 @@
-// Equipment: 3 slots per hero, attached to the roster slot (not the hero) so
-// termination strips it. Owns the rarity budget and the act-scaled drop curve
-// (docs/progression.md).
+// Items: an uncategorised list of slots per hero, attached to the roster slot (not
+// the hero) so termination strips it. Owns the rarity budget and the act-scaled drop
+// curve (docs/progression.md).
 
 import type { PassiveId, StatKey, StatusGrant } from '../engine/content';
 import { isValidFlatStatGrant } from '../engine/content';
 import type { StatModifiers } from '../engine/state';
 import { mergeStatMods } from './statMods';
-
-export type EquipmentSlot = 'weapon' | 'armor' | 'accessory';
 
 export type EquipmentRarity = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
 
@@ -16,13 +14,20 @@ export const RARITY_ORDER: readonly EquipmentRarity[] = ['common', 'rare', 'epic
 export interface EquipmentDefinition {
   id: string;
   name: string;
-  slot: EquipmentSlot;
   rarity: EquipmentRarity;
   statGrants: Partial<Record<StatKey, number>>;
   grantsPassiveIds?: readonly PassiveId[];
   /** Magnitude-shape statuses (Elemental Force) granted for the whole fight, applied at build time (statusGrants.ts). */
   grantsStatusIds?: readonly StatusGrant[];
 }
+
+// --- Item slots ---
+
+/** What a hero holds unless `HeroDefinition.itemSlots` says otherwise — the per-hero balance dial. */
+export const BASE_ITEM_SLOTS = 1;
+
+/** Ceiling on base + Forge grants. Every slot past this is refused, so a Forge can go dead on one hero. */
+export const MAX_ITEM_SLOTS = 5;
 
 // --- The rarity budget ---
 
@@ -176,23 +181,20 @@ export function pickWeightedEquipment(
   return picked;
 }
 
-/** One item of a fixed slot (the weapon/armor/accessoryReward nodes). */
-export function pickWeightedEquipmentBySlot(
-  pool: readonly EquipmentDefinition[],
-  slot: EquipmentSlot,
-  weights: Record<EquipmentRarity, number> = RARITY_DROP_WEIGHTS
-): EquipmentDefinition | undefined {
-  return pickWeightedEquipment(
-    pool.filter((item) => item.slot === slot),
-    1,
-    weights
-  )[0];
-}
-
-export type EquipmentLoadout = Record<EquipmentSlot, string | null>;
+/**
+ * Held item ids in the order they were equipped. Compact — index N IS the Nth slot and a
+ * hero never holds a hole, so the list's length is what fills the slot boxes. Capacity is
+ * not stored here: it comes from the hero plus the entry's Forge grants (itemSlotsFor).
+ */
+export type EquipmentLoadout = readonly string[];
 
 export function createEmptyLoadout(): EquipmentLoadout {
-  return { weapon: null, armor: null, accessory: null };
+  return [];
+}
+
+/** A hero never holds two of the same item — the passive/Force grants count-stack, and one legible copy is the point. */
+export function holdsItem(loadout: EquipmentLoadout, itemId: string): boolean {
+  return loadout.includes(itemId);
 }
 
 export function isValidEquipmentDefinition(item: EquipmentDefinition): boolean {
@@ -204,9 +206,7 @@ export function equipmentStatModifiers(
   equipmentLookup: Record<string, EquipmentDefinition>
 ): StatModifiers {
   const grants: StatModifiers[] = [];
-  for (const slot of Object.keys(loadout) as EquipmentSlot[]) {
-    const id = loadout[slot];
-    if (!id) continue;
+  for (const id of loadout) {
     const item = equipmentLookup[id];
     if (!item) continue;
     grants.push(item.statGrants);
@@ -214,11 +214,13 @@ export function equipmentStatModifiers(
   return mergeStatMods(...grants);
 }
 
-/** Replaces whatever was in the slot; there is no stash, so callers that care read the slot first (runProgress.ts equipToRoster). */
-export function equipItem(loadout: EquipmentLoadout, item: EquipmentDefinition): EquipmentLoadout {
-  return { ...loadout, [item.slot]: item.id };
+/** Appends into the next free slot, or overwrites `replaceIndex` when the hero is full. There is no stash, so callers that care read the displaced id first (runProgress.ts equipToRoster). */
+export function equipItem(loadout: EquipmentLoadout, itemId: string, replaceIndex?: number): EquipmentLoadout {
+  if (replaceIndex === undefined) return [...loadout, itemId];
+  return loadout.map((held, i) => (i === replaceIndex ? itemId : held));
 }
 
-export function unequipSlot(loadout: EquipmentLoadout, slot: EquipmentSlot): EquipmentLoadout {
-  return { ...loadout, [slot]: null };
+/** Drops the item in `index`; the slots above it shift down, since the list stays compact. */
+export function unequipSlot(loadout: EquipmentLoadout, index: number): EquipmentLoadout {
+  return loadout.filter((_, i) => i !== index);
 }

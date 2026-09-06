@@ -148,8 +148,8 @@ test('elementalForce: DamageDealt event carries elementalForceBonus separately f
 
 const emberBandLookup: Record<string, EquipmentDefinition> = { emberBand: equipment.emberBand, dagger: equipment.dagger };
 
-test('elementalForce: equipmentStatusGrants tallies magnitude across equipped slots, ignoring stat-only gear', () => {
-  const loadout = equipItem(equipItem(createEmptyLoadout(), equipment.emberBand), equipment.dagger);
+test('elementalForce: equipmentStatusGrants tallies magnitude across held items, ignoring stat-only gear', () => {
+  const loadout = equipItem(equipItem(createEmptyLoadout(), equipment.emberBand.id), equipment.dagger.id);
   assert.deepStrictEqual(equipmentStatusGrants(loadout, emberBandLookup), { FireForce: 10 });
 });
 

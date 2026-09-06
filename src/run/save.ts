@@ -13,8 +13,8 @@
 
 import type { PassiveId, StatKey, TypeId } from '../engine/content';
 import { STAT_ORDER } from '../engine/content';
-import type { EquipmentLoadout, EquipmentSlot } from './equipment';
-import { createEmptyLoadout } from './equipment';
+import type { EquipmentLoadout } from './equipment';
+import { MAX_ITEM_SLOTS } from './equipment';
 import type { MapNode, MapNodeType, RunMap } from './map';
 import { MAP_NODE_TYPES } from './map';
 import type { ProgressionTable } from './progression';
@@ -30,8 +30,11 @@ import { ROSTER_CAP, TOTAL_ACTS } from './state';
  * to field and no location to stand in.
  * v4 (2026-09-05): the scripted first run — RunState gained `tutorial` and
  * `tutorialSeenBeatIds`. A v3 file has no way to say which half of Act 1 it is in.
+ * v5 (2026-09-06): the item rework — equipment went from a weapon/armor/accessory
+ * record to a flat held-item list, entries gained `bonusItemSlots`, and the three
+ * slot-cache node types became `forgeReward`. Nothing in a v4 file survives that.
  */
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the
@@ -166,7 +169,6 @@ function requireIds(value: unknown, known: ReadonlySet<string>, label: string): 
 }
 
 const STAT_KEYS: ReadonlySet<string> = new Set<string>(STAT_ORDER);
-const SLOTS: readonly EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 const NODE_TYPES: ReadonlySet<string> = new Set<string>(MAP_NODE_TYPES);
 
 function decodeStatGrants(value: unknown, label: string): Partial<Record<StatKey, number>> {
@@ -181,17 +183,17 @@ function decodeStatGrants(value: unknown, label: string): Partial<Record<StatKey
   return out;
 }
 
+/** The held-item list. Length is checked against the hard cap, not the hero's own capacity — a hero can legitimately be over its count after a build lowered `itemSlots`, and the UI shows the overflow rather than deleting it. */
 function decodeLoadout(value: unknown, index: SaveContentIndex, label: string): EquipmentLoadout {
-  if (!isObject(value)) reject(`${label} is not an equipment loadout`);
-  const out = createEmptyLoadout();
-  for (const slot of SLOTS) {
-    const id = value[slot];
-    if (id === null || id === undefined) continue;
-    if (typeof id !== 'string') reject(`${label}.${slot} is not an item id`);
-    if (!index.equipmentIds.has(id)) reject(`${label}.${slot} references unknown equipment "${id}"`);
-    out[slot] = id;
+  if (!isStringArray(value)) reject(`${label} is not a list of item ids`);
+  if (value.length > MAX_ITEM_SLOTS) reject(`${label} holds ${value.length} items, past the ${MAX_ITEM_SLOTS}-slot cap`);
+  const seen = new Set<string>();
+  for (const id of value) {
+    if (!index.equipmentIds.has(id)) reject(`${label} references unknown equipment "${id}"`);
+    if (seen.has(id)) reject(`${label} holds two copies of "${id}"`);
+    seen.add(id);
   }
-  return out;
+  return [...value];
 }
 
 function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number): RosterEntry {
@@ -207,6 +209,8 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     if (typeof classId !== 'string') reject(`${label}.classId is not an id`);
     if (!index.classIds.has(classId)) reject(`${label} references unknown class "${classId}"`);
   }
+
+  if (!isInt(value.bonusItemSlots, 0, MAX_ITEM_SLOTS)) reject(`${label}.bonusItemSlots is not a slot count`);
 
   const graft = value.evolutionTypeGraft ?? null;
   if (graft !== null) {
@@ -226,6 +230,7 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     bonusPassiveGrants: requireIds(value.bonusPassiveGrants, index.passiveIds, `${label}.bonusPassiveGrants`),
     bonusStatGrants: decodeStatGrants(value.bonusStatGrants, `${label}.bonusStatGrants`),
     masteryStatGrants: decodeStatGrants(value.masteryStatGrants, `${label}.masteryStatGrants`),
+    bonusItemSlots: value.bonusItemSlots,
     evolutionTypeGraft: graft as TypeId | null,
     classId: classId as PassiveId | null,
   };

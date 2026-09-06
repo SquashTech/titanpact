@@ -19,9 +19,7 @@ export const MAP_NODE_TYPES = [
   'gemReward',
   'currencyReward',
   'upgradeReward',
-  'weaponReward',
-  'armorReward',
-  'accessoryReward',
+  'forgeReward',
   'hpBoostReward',
   'manaBoostReward',
   'manaRegenBoostReward',
@@ -88,14 +86,15 @@ function rowWidthsFor(actNumber: number): number[] {
 
 /** Reward-row pool. `classReward` is deliberately absent (Mentor row only). Weights are a first-pass balance. */
 const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
-  ['equipmentReward', 20],
+  // equipmentReward absorbs most of the frequency the three slot caches used to carry.
+  ['equipmentReward', 40],
   ['relicReward', 18],
   ['gemReward', 16],
   ['currencyReward', 16],
   ['upgradeReward', 14],
-  ['weaponReward', 12],
-  ['armorReward', 12],
-  ['accessoryReward', 12],
+  // The Forge (+1 item slot) is the scarcest reward on the row on purpose: it is permanent, it
+  // compounds with every later drop, and it is the only thing here a hero can be at the cap for.
+  ['forgeReward', 8],
   ['hpBoostReward', 10],
   ['manaBoostReward', 10],
   ['manaRegenBoostReward', 10],

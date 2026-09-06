@@ -4,11 +4,11 @@ import { heroes } from '../../data/heroes';
 import { passives } from '../../data/passives';
 import { statuses } from '../../data/statuses';
 import type { StatKey } from '../../engine/content';
-import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
+import type { EquipmentDefinition } from '../../run/equipment';
+import { itemSlotsFor } from '../../run/progression';
 import type { RosterEntry } from '../../run/state';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import {
-  EQUIP_SLOT_LABELS,
   EquipmentEffectList,
   EquipmentIcon,
   fmtGrant,
@@ -52,13 +52,12 @@ export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs
       {...longPress}
     >
       <div className="equip-cache-card-icon-badge">
-        <EquipmentIcon item={item} slot={item.slot} className="equip-cache-card-icon" />
+        <EquipmentIcon item={item} className="equip-cache-card-icon" />
       </div>
       <div className="equip-cache-card-body">
         <div className="equip-cache-card-name">{item.name}</div>
         <div className="equip-cache-card-meta">
           <span className="equip-cache-card-rarity">{RARITY_LABELS[item.rarity]}</span>
-          <span className="equip-cache-card-slot">{EQUIP_SLOT_LABELS[item.slot]}</span>
         </div>
         <div className="equip-cache-card-stats">{highlights.length > 0 ? highlights.join(' · ') : 'No effect'}</div>
       </div>
@@ -67,26 +66,31 @@ export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs
 }
 
 /**
- * Who already holds what in one slot — the half of the buy decision the item's own card can't
- * answer ("do I have anywhere to put this?"). Read-only: the Guild Hall still routes the purchase
- * through ForceEquipScreen, which is where a hero is actually chosen.
+ * Who has room and who is full — the half of the buy decision the item's own card can't answer
+ * ("is there anywhere to put this that doesn't cost me something?"). Read-only: the Guild Hall
+ * still routes the purchase through ForceEquipScreen, which is where a hero is actually chosen.
  */
-function SlotOwners({ roster, slot }: { roster: readonly RosterEntry[]; slot: EquipmentSlot }) {
+function SlotOwners({ roster }: { roster: readonly RosterEntry[] }) {
   return (
     <div className="equip-owners">
-      <div className="equip-owners-head">Roster — {EQUIP_SLOT_LABELS[slot]} slot</div>
+      <div className="equip-owners-head">Roster — item slots</div>
       {roster.map((entry) => {
-        const heldId = entry.equipment[slot];
-        const held = heldId ? equipment[heldId] : null;
+        const hero = heroes[entry.heroId];
+        const capacity = hero ? itemSlotsFor(hero, entry) : entry.equipment.length;
+        const free = capacity - entry.equipment.length;
+        const held = entry.equipment.flatMap((id) => (equipment[id] ? [equipment[id]] : []));
         return (
-          <div key={entry.rosterId} className={`equip-owners-row${held ? '' : ' is-empty'}`}>
+          <div key={entry.rosterId} className={`equip-owners-row${free > 0 ? ' is-empty' : ''}`}>
             <HeroPortrait heroId={entry.heroId} className="equip-owners-portrait" />
-            <span className="equip-owners-name">{heroes[entry.heroId]?.name ?? entry.heroId}</span>
-            <span
-              className="equip-owners-item"
-              style={held ? ({ color: RARITY_COLOR_VARS[held.rarity] } as CSSProperties) : undefined}
-            >
-              {held ? held.name : 'Empty'}
+            <span className="equip-owners-name">{hero?.name ?? entry.heroId}</span>
+            <span className="equip-owners-item">
+              {held.map((h, i) => (
+                <span key={h.id} style={{ color: RARITY_COLOR_VARS[h.rarity] } as CSSProperties}>
+                  {i > 0 ? ', ' : ''}
+                  {h.name}
+                </span>
+              ))}
+              {free > 0 && <span className="equip-owners-free">{held.length > 0 ? ` · ${free} free` : `${free} free`}</span>}
             </span>
           </div>
         );
@@ -97,7 +101,7 @@ function SlotOwners({ roster, slot }: { roster: readonly RosterEntry[]; slot: Eq
 
 interface EquipInspectOverlayProps {
   item: EquipmentDefinition;
-  /** Adds the roster's holdings in this item's slot. Omit where the item isn't a purchase (the Loot Pile). */
+  /** Adds the roster's item-slot holdings. Omit where the item isn't a purchase (the Loot Pile). */
   roster?: readonly RosterEntry[];
   /** Turns the sheet into a decision (the Guild Hall shelf): a confirm button plus Cancel. Omit for read-only inspects. */
   action?: {
@@ -120,7 +124,7 @@ export function EquipInspectOverlay({ item, roster, action, onClose }: EquipInsp
           <div className="move-info-head">
             <span className="move-info-name">{item.name}</span>
             <span className="move-info-kind">
-              {RARITY_LABELS[item.rarity]} · {EQUIP_SLOT_LABELS[item.slot]}
+              {RARITY_LABELS[item.rarity]}
             </span>
           </div>
           {grants.length > 0 && (
@@ -135,7 +139,7 @@ export function EquipInspectOverlay({ item, roster, action, onClose }: EquipInsp
           <EquipmentEffectList item={item} />
           {!hasEffects && <div className="move-info-placeholder">No effects.</div>}
         </div>
-        {roster && roster.length > 0 && <SlotOwners roster={roster} slot={item.slot} />}
+        {roster && roster.length > 0 && <SlotOwners roster={roster} />}
         {action ? (
           <div className="detail-action">
             {action.note && <div className="detail-action-note">{action.note}</div>}

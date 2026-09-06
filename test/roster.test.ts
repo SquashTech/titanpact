@@ -10,7 +10,7 @@ import { moves } from '../src/data/moves';
 import { passives } from '../src/data/passives';
 import { statuses } from '../src/data/statuses';
 import { progressionTable } from '../src/data/progression';
-import { STAT_POINT_VALUE } from '../src/run/equipment';
+import { BASE_ITEM_SLOTS, MAX_ITEM_SLOTS, STAT_POINT_VALUE } from '../src/run/equipment';
 import type { StatKey } from '../src/engine/content';
 
 /** HP + Mana + the five battle stats. MP Regen is a flat 10 outside the budget. */
@@ -178,6 +178,22 @@ test('roster: an Evolution stat line is Rare-to-Epic in equipment currency, spen
         );
         assert.ok(gross <= 110, `${path.id} spends ${gross} points — past anything authored so far`);
       }
+    }
+  }
+});
+
+test('roster: a hero holds two items only if it is one of the Speed <= 40 heroes', () => {
+  // The item-slot dial (src/data/heroes.ts): gear rather than tempo is what scales a hero that
+  // never wins a priority tiebreak. Two-way, so a hero drifting across 40 Speed cannot silently
+  // gain or lose a slot — moving one in or out of the band is a balance decision, not a side effect.
+  const SLOW_SPEED = 40;
+  for (const hero of Object.values(heroes)) {
+    const slots = hero.itemSlots ?? BASE_ITEM_SLOTS;
+    assert.ok(slots >= 1 && slots <= MAX_ITEM_SLOTS, hero.id + ' authors ' + slots + ' item slots');
+    if (hero.baseStats.speed <= SLOW_SPEED) {
+      assert.strictEqual(slots, 2, hero.id + ' is slow (' + hero.baseStats.speed + ' Speed) and should hold 2 items');
+    } else {
+      assert.strictEqual(slots, BASE_ITEM_SLOTS, hero.id + ' is fast (' + hero.baseStats.speed + ' Speed) and should hold the base 1');
     }
   }
 });

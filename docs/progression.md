@@ -127,10 +127,61 @@ an opaque level curve.
 
 ---
 
-## Equipment (per-hero)
+## Items (per-hero)
 
-- **3 slots per hero: weapon, armor, accessory.**
-- Equipment contributes through the **stat pipeline** (stat-shaped effects) or the
+### Uncategorised slots (2026-09-06, per user direction, replacing weapon/armor/accessory)
+
+The three fixed categories are gone. They read as **"finnicky, unintuitive, and cumbersome"**
+in playtest: three separate columns to keep filled meant most drops were the wrong *kind*
+rather than the wrong *item*, and the interesting question ("is this better than what I've
+got?") was buried under a bookkeeping one ("does this even go anywhere?"). Every item is now
+just an item, and a hero has a list of slots that anything can fill.
+
+What that bought, and the shape of the replacement:
+
+- **`EquipmentDefinition` has no `slot` field.** The catalog's weapon/armor/trinket groupings
+  in `src/data/equipment.ts` are authoring flavour, nothing more — names still describe
+  swords and plate, but nothing checks them.
+- **`RosterEntry.equipment` is a compact `readonly string[]`**, not a keyed record. Index N
+  *is* the Nth slot and there are never holes, so the list's length is what fills the slot
+  boxes. Capacity is stored nowhere on the entry: it is derived.
+- **Slot capacity comes from `itemSlotsFor(hero, entry)` and nowhere else** — the hero's
+  authored count plus its Forge grants, clamped to `MAX_ITEM_SLOTS`. UI, save validation and
+  `runProgress` all read that one function.
+- **`BASE_ITEM_SLOTS` = 1.** A hero that holds one item is the norm; the item it holds is
+  therefore a real part of its identity rather than a third of a rounding error. This is the
+  half of the change that makes an individual item *matter* — the complaint that items "feel
+  imperceptible" is as much about how many are diluting each other as about their size.
+- **`HeroDefinition.itemSlots` = 2 is the per-hero balance dial**, authored on exactly the
+  nine heroes at **Speed ≤ 40** (Bellows, Cube, Sentinel, Aegis, Warden, Hollowbark, Pincer,
+  Crag, Flurry). They never win a priority tiebreak, so gear rather than tempo is what scales
+  them. `test/roster.test.ts` pins the band **both ways**, so a hero drifting across 40 Speed
+  cannot silently gain or lose a slot. Crag is the only starter among them.
+- **`MAX_ITEM_SLOTS` = 5**, and the Forge (below) is the only way up. A hero at the cap is not
+  a legal Forge target — the reward can go dead on one hero, which is what makes spending it
+  a choice.
+- **A hero never holds two copies of one item.** The passive and Elemental Force grants
+  count-stack, so duplicates would quietly double an effect the card shows once; one legible
+  copy is the point. `holdsItem` guards every equip and every hand-off.
+- **The Forge node** (`forgeReward`, `ForgeScreen`) grants +1 slot to one chosen hero for the
+  rest of the run. It replaced the three slot-specific cache nodes, which had no meaning left.
+  It is deliberately the scarcest thing on the reward row (weight 8 against `equipmentReward`'s
+  40): it is permanent, and it compounds with every drop after it.
+
+Two knock-on decisions the UI had to make, both in `EquipCompareRow`:
+
+- **What a tap MEANS now depends on the hero.** A free slot takes the item outright; one held
+  item is a straight swap; a full hero holding two or more has to be asked which one goes, and
+  that case *alone* expands into a per-item picker with its own diffs. Making every hero use
+  the picker would have added a tap to the common case, which is the friction this rework
+  exists to remove.
+- **Manage Roster hands over rather than swapping a matching slot.** With no categories there
+  is no matching slot to trade into, so `moveEquipment` appends when the destination has room
+  and trades items when it does not.
+
+### Everything else
+
+- Items contribute through the **stat pipeline** (stat-shaped effects) or the
   **damage multiplier term** (damage-shaped effects) per the pipeline rules in
   `architecture.md` — same discipline as everywhere: stat effects go in stats, damage
   modifiers go in the multiplier term.

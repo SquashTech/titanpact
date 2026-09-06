@@ -4,6 +4,7 @@
 import type { HeroDefinition, MoveDefinition, MoveTier, PassiveId, StatKey, TypeId } from '../engine/content';
 import { isValidFlatStatGrant } from '../engine/content';
 import type { HeroLookup } from '../engine/state';
+import { BASE_ITEM_SLOTS, MAX_ITEM_SLOTS } from './equipment';
 import type { RosterEntry, RunState } from './state';
 import { mergeStatMods } from './statMods';
 
@@ -243,6 +244,11 @@ export function availableEvolution(table: ProgressionTable, entry: RosterEntry):
 /** The primary plus the current graft — the out-of-combat mirror of engine/state.ts effectiveTypes, and it must stay identical to it. UI must read this, not `hero.types`. */
 export function rosterEntryTypes(hero: HeroDefinition, entry: RosterEntry): readonly TypeId[] {
   return entry.evolutionTypeGraft ? [hero.types[0], entry.evolutionTypeGraft] : hero.types;
+}
+
+/** The hero's authored slot count plus its Forge grants, capped. The ONE place slot capacity is decided — UI, save and runProgress all read this. */
+export function itemSlotsFor(hero: HeroDefinition, entry: RosterEntry): number {
+  return Math.min(MAX_ITEM_SLOTS, (hero.itemSlots ?? BASE_ITEM_SLOTS) + entry.bonusItemSlots);
 }
 
 export function chosenEvolutionPaths(table: ProgressionTable, entry: RosterEntry): EvolutionPath[] {

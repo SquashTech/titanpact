@@ -11,7 +11,7 @@ import type { EquipmentDefinition } from '../../run/equipment';
 import { recruitFromGuildHall, buyContract, RecruitmentError, type GuildHallOffer } from '../../run/recruitment';
 import { EQUIPMENT_PRICE_BY_RARITY, type GuildHallOffers } from '../../run/shop';
 import { getTypeColor } from '../combat/typeColors';
-import { EQUIP_SLOT_LABELS, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
@@ -86,13 +86,12 @@ function GuildHallEquipCard({ item, cost, affordable, soldOut, onInspect }: Equi
       onClick={onInspect}
     >
       <div className="equip-cache-card-icon-badge">
-        <EquipmentIcon item={item} slot={item.slot} className="equip-cache-card-icon" />
+        <EquipmentIcon item={item} className="equip-cache-card-icon" />
       </div>
       <div className="equip-cache-card-body">
         <div className="equip-cache-card-name">{item.name}</div>
         <div className="equip-cache-card-meta">
           <span className="equip-cache-card-rarity">{RARITY_LABELS[item.rarity]}</span>
-          <span className="equip-cache-card-slot">{EQUIP_SLOT_LABELS[item.slot]}</span>
         </div>
         <div className="equip-cache-card-stats">{highlights.length > 0 ? highlights.join(' · ') : 'No effect'}</div>
       </div>

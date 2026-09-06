@@ -5,7 +5,7 @@ import type { Combatant, StatContext } from '../../engine/state';
 import { effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
-import { chosenEvolutionPaths } from '../../run/progression';
+import { chosenEvolutionPaths, itemSlotsFor } from '../../run/progression';
 import { progressionTable } from '../../data/progression';
 import { StatGlyph, STAT_LABELS, STAT_ORDER, StatBars, hpTier } from '../shared/StatBars';
 import { SectionGlyph } from '../shared/sectionIcons';
@@ -219,15 +219,16 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
           <div className="detail-empty">No moves.</div>
         )}
 
-        <div className="detail-section-title"><SectionGlyph name="equipment" /> Equipment</div>
+        <div className="detail-section-title"><SectionGlyph name="equipment" /> Items</div>
         {rosterEntry ? (
           <EquipmentSlotGrid
             loadout={rosterEntry.equipment}
+            capacity={itemSlotsFor(hero, rosterEntry)}
             equipmentLookup={equipmentLookup}
             onInspect={(id) => openPopup({ kind: 'equipment', id })}
           />
         ) : (
-          <div className="detail-empty">No loadout data.</div>
+          <div className="detail-empty">No item data.</div>
         )}
 
         <div className="detail-close-hint">Hold a move or item, or tap a passive, to inspect it — tap elsewhere to close</div>

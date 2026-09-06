@@ -38,7 +38,7 @@ function sampleRun(): RunState {
   const geared = {
     ...run.roster[0],
     level: 6,
-    equipment: equipItem(run.roster[0].equipment, equipment.dagger),
+    equipment: equipItem(run.roster[0].equipment, equipment.dagger.id),
     bonusStatGrants: { attack: 10, speed: 5 },
     masteryStatGrants: { hp: 10 },
   };
@@ -109,7 +109,7 @@ test('save: a file from another save version is refused', () => {
 test('save: content the build no longer ships is refused, never silently dropped', () => {
   assert.ok(rejectionOf((raw) => raw.run.roster[0].unlockedMoveIds.push('moveThatWasCut')).includes('moveThatWasCut'));
   assert.ok(rejectionOf((raw) => (raw.run.roster[0].heroId = 'heroThatWasCut')).includes('heroThatWasCut'));
-  assert.ok(rejectionOf((raw) => (raw.run.roster[0].equipment.weapon = 'itemThatWasCut')).includes('itemThatWasCut'));
+  assert.ok(rejectionOf((raw) => raw.run.roster[0].equipment.push('itemThatWasCut')).includes('itemThatWasCut'));
   assert.ok(rejectionOf((raw) => raw.run.relics.push('relicThatWasCut')).includes('relicThatWasCut'));
   assert.ok(rejectionOf((raw) => raw.run.roster[0].bonusPassiveGrants.push('passiveThatWasCut')).includes('passiveThatWasCut'));
   assert.ok(rejectionOf((raw) => raw.run.roster[0].chosenPathIds.push('pathThatWasCut')).includes('pathThatWasCut'));

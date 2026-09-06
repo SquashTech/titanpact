@@ -9,15 +9,15 @@ import { relicTeamPassiveGrants } from '../../run/passives';
 import { relicStatContribution } from '../../run/entryStats';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import type { RunState, RosterEntry } from '../../run/state';
-import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
-import { swapEquipment, RunProgressError } from '../../run/runProgress';
-import { rosterEntryTypes } from '../../run/progression';
+import type { EquipmentDefinition } from '../../run/equipment';
+import { moveEquipment, RunProgressError } from '../../run/runProgress';
+import { itemSlotsFor, rosterEntryTypes } from '../../run/progression';
 import { getTypeColor } from '../combat/typeColors';
 import { useLongPress } from '../shared/MoveTile';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { EQUIP_SLOT_ORDER, EQUIP_SLOT_LABELS, EquipmentIcon, EquipmentInfoPanel } from '../shared/EquipmentBox';
+import { EquipmentIcon, EquipmentInfoPanel, slotBoxes } from '../shared/EquipmentBox';
 
 const DRAG_KEY = 'text/titanpact-equip-move';
 
@@ -27,9 +27,15 @@ interface Props {
   onClose: () => void;
 }
 
+/** A hero's slot, addressed the way every handler here needs it. */
+interface SlotRef {
+  rosterId: string;
+  index: number;
+}
+
 interface EquipSlotButtonProps {
   item: EquipmentDefinition | null;
-  slot: EquipmentSlot;
+  index: number;
   isSelectedSource: boolean;
   isDropTarget: boolean;
   isDragOver: boolean;
@@ -69,7 +75,7 @@ function RosterMgmtHead({ hero, entry, onInspect }: RosterMgmtHeadProps) {
 /** Own component because useLongPress is a hook. Tap selects/moves (caller); hold shows the item's description. */
 function EquipSlotButton({
   item,
-  slot,
+  index,
   isSelectedSource,
   isDropTarget,
   isDragOver,
@@ -91,10 +97,10 @@ function EquipSlotButton({
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      aria-label={item ? `${EQUIP_SLOT_LABELS[slot]}: ${item.name}` : `${EQUIP_SLOT_LABELS[slot]} slot, empty`}
+      aria-label={item ? `Item slot ${index + 1}: ${item.name}` : `Item slot ${index + 1}, empty`}
       {...longPress}
     >
-      <EquipmentIcon item={item} slot={slot} className="equip-slot-icon" />
+      <EquipmentIcon item={item} className="equip-slot-icon" />
       <span className="equip-slot-item">{item ? item.name : 'Empty'}</span>
     </button>
   );
@@ -102,11 +108,12 @@ function EquipSlotButton({
 
 /**
  * Manage Roster: reassigns gear that is already equipped somewhere (there is no unequipped stash —
- * ForceEquipScreen resolves every new item on the spot). Tap a filled slot then the matching slot
- * on another hero to swap, or drag.
+ * ForceEquipScreen resolves every new item on the spot). Tap a filled slot then any slot on another
+ * hero, or drag. Slots are uncategorised, so anything can go anywhere: an empty slot just takes the
+ * item, and a filled one trades — the two items change places.
  */
 export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
-  const [selected, setSelected] = useState<{ rosterId: string; slot: EquipmentSlot } | null>(null);
+  const [selected, setSelected] = useState<SlotRef | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   const [viewedItemId, setViewedItemId] = useState<string | null>(null);
@@ -119,41 +126,30 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
     [run.relics]
   );
 
-  function selectSlot(rosterId: string, slot: EquipmentSlot) {
-    setSelected((prev) => (prev && prev.rosterId === rosterId && prev.slot === slot ? null : { rosterId, slot }));
+  function applyMove(from: SlotRef, to: SlotRef) {
+    if (from.rosterId === to.rosterId) return;
+    try {
+      // `toIndex` only matters when the destination is full; moveEquipment ignores it otherwise,
+      // so an empty box and a filled one on the same hero can share this one call.
+      onRunChange(moveEquipment(run, from.rosterId, from.index, to.rosterId, heroes, to.index).run);
+    } catch (err) {
+      if (!(err instanceof RunProgressError)) throw err;
+    }
   }
 
-  function moveSelectedTo(toRosterId: string, slot: EquipmentSlot) {
-    if (!selected || selected.slot !== slot) return;
-    if (selected.rosterId === toRosterId) {
+  function handleSlotClick(ref: SlotRef, filled: boolean) {
+    if (selected) {
+      if (selected.rosterId !== ref.rosterId) applyMove(selected, ref);
       setSelected(null);
       return;
     }
-    try {
-      onRunChange(swapEquipment(run, selected.rosterId, toRosterId, slot));
-    } catch (err) {
-      if (!(err instanceof RunProgressError)) throw err;
-    }
-    setSelected(null);
-  }
-
-  function handleSlotClick(rosterId: string, slot: EquipmentSlot, filled: boolean) {
-    if (selected) {
-      moveSelectedTo(rosterId, slot);
-      return;
-    }
     if (!filled) return;
-    selectSlot(rosterId, slot);
+    setSelected(ref);
   }
 
-  function handleDrop(toRosterId: string, slot: EquipmentSlot, fromRosterId: string, fromSlot: EquipmentSlot) {
+  function handleDrop(to: SlotRef, from: SlotRef) {
     setDragOverKey(null);
-    if (fromSlot !== slot || fromRosterId === toRosterId) return;
-    try {
-      onRunChange(swapEquipment(run, fromRosterId, toRosterId, slot));
-    } catch (err) {
-      if (!(err instanceof RunProgressError)) throw err;
-    }
+    applyMove(from, to);
     setSelected(null);
   }
 
@@ -193,27 +189,31 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
           <div className="roster-mgmt-list">
             {run.roster.map((entry) => {
               const hero = heroes[entry.heroId];
+              const selectedItemId = selected
+                ? (run.roster.find((r) => r.rosterId === selected.rosterId)?.equipment[selected.index] ?? null)
+                : null;
               return (
                 <div key={entry.rosterId} className="roster-mgmt-card" style={{ borderLeftColor: getTypeColor(hero.types[0]) }}>
                   <RosterMgmtHead hero={hero} entry={entry} onInspect={() => setInspecting({ hero, entry })} />
 
                   <div className="equip-slot-row">
-                    {EQUIP_SLOT_ORDER.map((slot) => {
-                      const itemId = entry.equipment[slot];
-                      const item = itemId ? equipment[itemId] : null;
-                      const dragKey = `${entry.rosterId}:${slot}`;
-                      const isSelectedSource = selected?.rosterId === entry.rosterId && selected.slot === slot;
-                      const isDropTarget = selected ? selected.slot === slot && selected.rosterId !== entry.rosterId : false;
-                      const isDragOver = dragOverKey === dragKey;
+                    {slotBoxes(entry.equipment, itemSlotsFor(hero, entry)).map((itemId, index) => {
+                      const item = itemId ? (equipment[itemId] ?? null) : null;
+                      const dragKey = `${entry.rosterId}:${index}`;
+                      const ref: SlotRef = { rosterId: entry.rosterId, index };
+                      const isSelectedSource = selected?.rosterId === entry.rosterId && selected.index === index;
+                      // Every slot on another hero is a target — but not one already holding the
+                      // moving item, since a hero never holds two copies.
+                      const isDropTarget = !!selected && selected.rosterId !== entry.rosterId && itemId !== selectedItemId;
                       return (
                         <EquipSlotButton
-                          key={slot}
+                          key={index}
                           item={item}
-                          slot={slot}
+                          index={index}
                           isSelectedSource={isSelectedSource}
                           isDropTarget={isDropTarget}
-                          isDragOver={isDragOver}
-                          onClick={() => handleSlotClick(entry.rosterId, slot, !!item)}
+                          isDragOver={dragOverKey === dragKey}
+                          onClick={() => handleSlotClick(ref, !!item)}
                           onLongPress={() => item && setViewedItemId(item.id)}
                           onDragStart={(e) => {
                             if (!item) return;
@@ -231,8 +231,8 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
                             e.preventDefault();
                             const raw = e.dataTransfer.getData(DRAG_KEY);
                             if (!raw) return;
-                            const [fromRosterId, fromSlot] = raw.split(':');
-                            handleDrop(entry.rosterId, slot, fromRosterId, fromSlot as EquipmentSlot);
+                            const [fromRosterId, fromIndex] = raw.split(':');
+                            handleDrop(ref, { rosterId: fromRosterId, index: Number(fromIndex) });
                           }}
                         />
                       );

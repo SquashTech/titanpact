@@ -39,6 +39,8 @@ export interface RosterEntry {
   bonusStatGrants: Partial<Record<StatKey, number>>;
   /** Permanent grants from mastery level-ups (progression.ts grantMasteryStat). */
   masteryStatGrants: Partial<Record<StatKey, number>>;
+  /** Item slots granted on top of the hero's authored count (the Forge). Never negative; itemSlotsFor caps the sum. */
+  bonusItemSlots: number;
   /** Current secondary-type grant from the latest type-graft path; a later graft overwrites. Innate primary never changes. */
   evolutionTypeGraft: TypeId | null;
   /** One Class per run holds structurally — a single slot, and classes.ts grantClass replaces. */
@@ -139,6 +141,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     bonusPassiveGrants: [],
     bonusStatGrants: {},
     masteryStatGrants: {},
+    bonusItemSlots: 0,
     evolutionTypeGraft: null,
     classId: null,
   };

@@ -10,7 +10,7 @@ import type { EquipmentDefinition } from '../../run/equipment';
 import { relicTeamStatModifiers } from '../../run/relics';
 import { relicTeamPassiveGrants } from '../../run/passives';
 import { entryPassiveCounts, entryStatModifiers, relicStatContribution } from '../../run/entryStats';
-import { chosenEvolutionPaths, rosterEntryTypes } from '../../run/progression';
+import { chosenEvolutionPaths, itemSlotsFor, rosterEntryTypes } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
 import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { SectionGlyph } from '../shared/sectionIcons';
@@ -150,8 +150,13 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
 
         {!unowned && (
           <>
-            <div className="detail-section-title"><SectionGlyph name="equipment" /> Equipment</div>
-            <EquipmentSlotGrid loadout={entry.equipment} equipmentLookup={equipmentLookup} onInspect={(id) => openPopup({ kind: 'equipment', id })} />
+            <div className="detail-section-title"><SectionGlyph name="equipment" /> Items</div>
+            <EquipmentSlotGrid
+              loadout={entry.equipment}
+              capacity={itemSlotsFor(hero, entry)}
+              equipmentLookup={equipmentLookup}
+              onInspect={(id) => openPopup({ kind: 'equipment', id })}
+            />
           </>
         )}
 

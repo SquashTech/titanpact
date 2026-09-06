@@ -2,8 +2,10 @@ import * as assert from 'assert';
 import { test } from './harness';
 import { heroes } from '../src/data/heroes';
 import { equipment } from '../src/data/equipment';
-import { createRunState, createRosterEntry, addRosterEntry } from '../src/run/state';
+import { createRunState, createRosterEntry, addRosterEntry, type RunState } from '../src/run/state';
 import { generateMap } from '../src/run/map';
+import { MAX_ITEM_SLOTS } from '../src/run/equipment';
+import { itemSlotsFor } from '../src/run/progression';
 import {
   reachableNodeIds,
   advanceToNode,
@@ -12,7 +14,8 @@ import {
   deferLevelUp,
   grantRelicReward,
   equipToRoster,
-  swapEquipment,
+  grantItemSlot,
+  moveEquipment,
   trashEquipment,
   RunProgressError,
 } from '../src/run/runProgress';
@@ -23,6 +26,13 @@ function seedRoster(heroIds: string[]) {
     run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   }
   return run;
+}
+
+/** Roster of one or two heroes, each already holding the listed item ids. rosterId === heroId. */
+function gearedRun(heroA: string, itemsA: string[], heroB?: string, itemsB: string[] = []): RunState {
+  const run = seedRoster(heroB ? [heroA, heroB] : [heroA]);
+  const held: Record<string, string[]> = { [heroA]: itemsA, ...(heroB ? { [heroB]: itemsB } : {}) };
+  return { ...run, roster: run.roster.map((r) => ({ ...r, equipment: held[r.rosterId] ?? [] })) };
 }
 
 // --- Reachability / advancing ---
@@ -89,71 +99,84 @@ test('runProgress: grantRelicReward appends a relic id, duplicates allowed', () 
   assert.deepStrictEqual(next.relics, ['ironStandard', 'ironStandard']);
 });
 
-test('runProgress: equipToRoster equips onto an empty slot with no bump', () => {
+test('runProgress: equipToRoster fills a free slot with no bump', () => {
   const run = seedRoster(['cinderKnight']);
-  const { run: next, bumpedItemId } = equipToRoster(run, 'cinderKnight', 'ironBlade', equipment);
-  assert.strictEqual(next.roster[0].equipment.weapon, 'ironBlade');
+  const { run: next, bumpedItemId } = equipToRoster(run, 'cinderKnight', 'ironBlade', equipment, heroes);
+  assert.deepStrictEqual(next.roster[0].equipment, ['ironBlade']);
   assert.strictEqual(bumpedItemId, null);
 });
 
-test('runProgress: equipToRoster returns the previously equipped item as bumpedItemId', () => {
-  const run = {
-    ...seedRoster(['cinderKnight']),
-    roster: [{ ...seedRoster(['cinderKnight']).roster[0], equipment: { weapon: 'ironBlade', armor: null, accessory: null } }],
-  };
-  const { run: next, bumpedItemId } = equipToRoster(run, 'cinderKnight', 'dagger', equipment);
-  assert.strictEqual(next.roster[0].equipment.weapon, 'dagger');
+test('runProgress: equipToRoster on a full hero needs a replaceIndex, and returns what it displaced', () => {
+  const run = gearedRun('cinderKnight', ['ironBlade']);
+  // cinderKnight authors no `itemSlots`, so BASE_ITEM_SLOTS applies and one item fills it.
+  assert.throws(() => equipToRoster(run, 'cinderKnight', 'dagger', equipment, heroes), RunProgressError);
+
+  const { run: next, bumpedItemId } = equipToRoster(run, 'cinderKnight', 'dagger', equipment, heroes, 0);
+  assert.deepStrictEqual(next.roster[0].equipment, ['dagger']);
   assert.strictEqual(bumpedItemId, 'ironBlade');
 });
 
-test('runProgress: equipToRoster rejects an unknown rosterId and an unknown item', () => {
-  const run = seedRoster(['cinderKnight']);
-  assert.throws(() => equipToRoster(run, 'nonexistent', 'ironBlade', equipment), RunProgressError);
-  assert.throws(() => equipToRoster(run, 'cinderKnight', 'notAnItem', equipment), RunProgressError);
+test('runProgress: a Forge grant opens a slot, and the next item lands in it without displacing anything', () => {
+  let run = gearedRun('cinderKnight', ['ironBlade']);
+  run = grantItemSlot(run, 'cinderKnight', heroes);
+  assert.strictEqual(run.roster[0].bonusItemSlots, 1);
+
+  const { run: next, bumpedItemId } = equipToRoster(run, 'cinderKnight', 'dagger', equipment, heroes);
+  assert.deepStrictEqual(next.roster[0].equipment, ['ironBlade', 'dagger']);
+  assert.strictEqual(bumpedItemId, null);
 });
 
-test("runProgress: swapEquipment moves an item onto another hero's empty slot", () => {
-  const run = {
-    ...seedRoster(['cinderKnight', 'tidecaller']),
-    roster: [
-      { ...seedRoster(['cinderKnight']).roster[0], equipment: { weapon: 'ironBlade', armor: null, accessory: null } },
-      seedRoster(['tidecaller']).roster[0],
-    ],
-  };
-  const next = swapEquipment(run, 'cinderKnight', 'tidecaller', 'weapon');
-  assert.strictEqual(next.roster[0].equipment.weapon, null);
-  assert.strictEqual(next.roster[1].equipment.weapon, 'ironBlade');
+test('runProgress: grantItemSlot refuses a hero already at the cap', () => {
+  let run = seedRoster(['cinderKnight']);
+  for (let i = itemSlotsFor(heroes.cinderKnight, run.roster[0]); i < MAX_ITEM_SLOTS; i++) {
+    run = grantItemSlot(run, 'cinderKnight', heroes);
+  }
+  assert.strictEqual(itemSlotsFor(heroes.cinderKnight, run.roster[0]), MAX_ITEM_SLOTS);
+  assert.throws(() => grantItemSlot(run, 'cinderKnight', heroes), RunProgressError);
 });
 
-test("runProgress: swapEquipment swaps two heroes' items when the destination slot is filled", () => {
-  const run = {
-    ...seedRoster(['cinderKnight', 'tidecaller']),
-    roster: [
-      { ...seedRoster(['cinderKnight']).roster[0], equipment: { weapon: 'ironBlade', armor: null, accessory: null } },
-      { ...seedRoster(['tidecaller']).roster[0], equipment: { weapon: 'dagger', armor: null, accessory: null } },
-    ],
-  };
-  const next = swapEquipment(run, 'cinderKnight', 'tidecaller', 'weapon');
-  assert.strictEqual(next.roster[0].equipment.weapon, 'dagger');
-  assert.strictEqual(next.roster[1].equipment.weapon, 'ironBlade');
+test('runProgress: equipToRoster rejects an unknown rosterId, an unknown item, and a duplicate', () => {
+  const run = gearedRun('cinderKnight', ['ironBlade']);
+  assert.throws(() => equipToRoster(run, 'nonexistent', 'ironBlade', equipment, heroes), RunProgressError);
+  assert.throws(() => equipToRoster(run, 'cinderKnight', 'notAnItem', equipment, heroes), RunProgressError);
+  // A hero never holds two copies, even over a slot it would otherwise be free to fill.
+  assert.throws(() => equipToRoster(run, 'cinderKnight', 'ironBlade', equipment, heroes, 0), RunProgressError);
 });
 
-test('runProgress: swapEquipment rejects an unknown roster id and an empty source slot', () => {
-  const run = seedRoster(['cinderKnight', 'tidecaller']);
-  assert.throws(() => swapEquipment(run, 'cinderKnight', 'nonexistent', 'weapon'), RunProgressError);
-  assert.throws(() => swapEquipment(run, 'cinderKnight', 'tidecaller', 'weapon'), RunProgressError);
+test("runProgress: moveEquipment hands an item to a hero with a free slot, displacing nothing", () => {
+  let run = gearedRun('cinderKnight', ['ironBlade'], 'tidecaller');
+  run = grantItemSlot(run, 'tidecaller', heroes);
+
+  const { run: next, displacedItemId } = moveEquipment(run, 'cinderKnight', 0, 'tidecaller', heroes);
+  assert.deepStrictEqual(next.roster[0].equipment, []);
+  assert.deepStrictEqual(next.roster[1].equipment, ['ironBlade']);
+  assert.strictEqual(displacedItemId, null);
+});
+
+test('runProgress: moveEquipment trades when the destination is full — the two items change places', () => {
+  const run = gearedRun('cinderKnight', ['ironBlade'], 'tidecaller', ['dagger']);
+  const { run: next, displacedItemId } = moveEquipment(run, 'cinderKnight', 0, 'tidecaller', heroes, 0);
+  assert.deepStrictEqual(next.roster[0].equipment, ['dagger']);
+  assert.deepStrictEqual(next.roster[1].equipment, ['ironBlade']);
+  assert.strictEqual(displacedItemId, 'dagger');
+});
+
+test('runProgress: moveEquipment rejects an unknown roster id, an empty source slot, and a duplicate destination', () => {
+  const empty = seedRoster(['cinderKnight', 'tidecaller']);
+  assert.throws(() => moveEquipment(empty, 'cinderKnight', 0, 'nonexistent', heroes), RunProgressError);
+  assert.throws(() => moveEquipment(empty, 'cinderKnight', 0, 'tidecaller', heroes), RunProgressError);
+
+  const both = gearedRun('cinderKnight', ['ironBlade'], 'tidecaller', ['ironBlade']);
+  assert.throws(() => moveEquipment(both, 'cinderKnight', 0, 'tidecaller', heroes, 0), RunProgressError);
 });
 
 test('runProgress: trashEquipment clears the slot for good', () => {
-  const run = {
-    ...seedRoster(['cinderKnight']),
-    roster: [{ ...seedRoster(['cinderKnight']).roster[0], equipment: { weapon: 'ironBlade', armor: null, accessory: null } }],
-  };
-  const next = trashEquipment(run, 'cinderKnight', 'weapon');
-  assert.strictEqual(next.roster[0].equipment.weapon, null);
+  const run = gearedRun('cinderKnight', ['ironBlade']);
+  const next = trashEquipment(run, 'cinderKnight', 0);
+  assert.deepStrictEqual(next.roster[0].equipment, []);
 });
 
 test('runProgress: trashEquipment rejects an empty slot', () => {
   const run = seedRoster(['cinderKnight']);
-  assert.throws(() => trashEquipment(run, 'cinderKnight', 'weapon'), RunProgressError);
+  assert.throws(() => trashEquipment(run, 'cinderKnight', 0), RunProgressError);
 });

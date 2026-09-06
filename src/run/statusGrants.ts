@@ -13,8 +13,7 @@ function addGrants(magnitudes: Record<StatusId, number>, grants: readonly Status
 
 export function equipmentStatusGrants(loadout: EquipmentLoadout, equipmentLookup: Record<string, EquipmentDefinition>): Record<StatusId, number> {
   const magnitudes: Record<StatusId, number> = {};
-  for (const itemId of Object.values(loadout)) {
-    if (!itemId) continue;
+  for (const itemId of loadout) {
     addGrants(magnitudes, equipmentLookup[itemId]?.grantsStatusIds);
   }
   return magnitudes;

@@ -1,4 +1,4 @@
-// Equipment invariants: every item spends its rarity budget exactly, and the act curve makes
+// Item invariants: every item spends its rarity budget exactly, and the act curve makes
 // Legendary/Mythic IMPOSSIBLE in Act 1 and Common IMPOSSIBLE in Act 5 (zero weight AND never sampled).
 
 import assert from 'assert';
@@ -15,14 +15,11 @@ import {
   equipmentBudgetProblems,
   lootTierFor,
   pickWeightedEquipment,
-  pickWeightedEquipmentBySlot,
   rarityWeightsFor,
   type EquipmentRarity,
-  type EquipmentSlot,
 } from '../src/run/equipment';
 
 const catalog = Object.values(equipment);
-const SLOTS: readonly EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
 const ACTS = [1, 2, 3, 4, 5];
 
 // --- The rarity budget ---
@@ -36,7 +33,8 @@ test('equipment: every authored item spends its rarity budget exactly', () => {
 });
 
 test('equipment: the designer-authored common weapons are transcribed as specified', () => {
-  // The 12 designer-specified common weapons the whole common tier is derived from; a change is a design decision.
+  // The 12 designer-specified commons the whole common tier is derived from; a change is a design
+  // decision. They are no longer a SLOT — items are uncategorised — but the ids and grants are pinned.
   assert.deepStrictEqual(equipment.ironBlade.statGrants, { attack: 10 });
   assert.deepStrictEqual(equipment.dagger.statGrants, { attack: 5, speed: 5 });
   assert.deepStrictEqual(equipment.torch.statGrants, { attack: 5 });
@@ -52,17 +50,16 @@ test('equipment: the designer-authored common weapons are transcribed as specifi
   assert.deepStrictEqual(equipment.windGem.statGrants, { intelligence: 5, speed: 5 });
   for (const id of ['ironBlade', 'dagger', 'torch', 'huntersBow', 'pummelGloves', 'battleAxe', 'apprenticeWand', 'magicBook', 'mysticOrb', 'memento', 'oakStaff', 'windGem']) {
     assert.strictEqual(equipment[id].rarity, 'common', `${id} must stay Common`);
-    assert.strictEqual(equipment[id].slot, 'weapon', `${id} must stay a weapon`);
   }
 });
 
 test('equipment: an unpriced granted passive is a budget failure, not free value', () => {
   const problems = equipmentBudgetProblems(
-    { id: 'x', name: 'X', slot: 'weapon', rarity: 'epic', statGrants: { attack: 30 }, grantsPassiveIds: ['notAPassive'] },
+    { id: 'x', name: 'X', rarity: 'epic', statGrants: { attack: 30 }, grantsPassiveIds: ['notAPassive'] },
     PASSIVE_ITEM_COST
   );
   assert.ok(problems.some((p) => p.includes('PASSIVE_ITEM_COST')), problems.join('; '));
-  assert.ok(Number.isNaN(equipmentBudgetCost({ id: 'x', name: 'X', slot: 'weapon', rarity: 'epic', statGrants: {}, grantsPassiveIds: ['notAPassive'] }, PASSIVE_ITEM_COST)));
+  assert.ok(Number.isNaN(equipmentBudgetCost({ id: 'x', name: 'X', rarity: 'epic', statGrants: {}, grantsPassiveIds: ['notAPassive'] }, PASSIVE_ITEM_COST)));
 });
 
 test('equipment: a negative grant refunds budget, funding an above-curve stat line', () => {
@@ -131,39 +128,29 @@ test('equipment: the sampler never returns a rarity the act forbids', () => {
         for (const item of pickWeightedEquipment(catalog, 3, weights)) {
           assert.ok(!banned.has(item.rarity), `act ${act} ${source} cache rolled a ${item.rarity}: ${item.id}`);
         }
-        for (const slot of SLOTS) {
-          const rolled = pickWeightedEquipmentBySlot(catalog, slot, weights);
-          assert.ok(rolled, `act ${act} ${source} ${slot} reward rolled nothing`);
-          assert.ok(!banned.has(rolled!.rarity), `act ${act} ${source} ${slot} reward rolled a ${rolled!.rarity}: ${rolled!.id}`);
-        }
       }
     }
   }
 });
 
-test('equipment: the catalog can actually fill every act/slot the curve asks for', () => {
+test('equipment: the catalog can actually fill every act window the curve asks for', () => {
   // The sampler falls back to the unfiltered pool when a filter empties it; that fallback must never fire.
   for (const act of ACTS) {
     const [minRarity, maxRarity] = ACT_RARITY_WINDOW[act];
     const min = RARITY_ORDER.indexOf(minRarity);
     const max = RARITY_ORDER.indexOf(maxRarity);
-    const allowed = (rarity: EquipmentRarity) => {
-      const i = RARITY_ORDER.indexOf(rarity);
+    const available = catalog.filter((item) => {
+      const i = RARITY_ORDER.indexOf(item.rarity);
       return i >= min && i <= max;
-    };
-    for (const slot of SLOTS) {
-      const available = catalog.filter((item) => item.slot === slot && allowed(item.rarity));
-      // 3 so an equipment cache can offer three DISTINCT items of one slot.
-      assert.ok(available.length >= 3, `act ${act} has only ${available.length} ${slot} items in window`);
-    }
+    });
+    // 3 so an item cache can offer three DISTINCT items.
+    assert.ok(available.length >= 3, `act ${act} has only ${available.length} items in window`);
   }
 });
 
-test('equipment: every rarity exists in every slot, so no tier is a dead branch of the curve', () => {
-  for (const slot of SLOTS) {
-    for (const rarity of RARITY_ORDER) {
-      const count = catalog.filter((item) => item.slot === slot && item.rarity === rarity).length;
-      assert.ok(count > 0, `no ${rarity} ${slot} exists`);
-    }
+test('equipment: every rarity exists in the catalog, so no tier is a dead branch of the curve', () => {
+  for (const rarity of RARITY_ORDER) {
+    const count = catalog.filter((item) => item.rarity === rarity).length;
+    assert.ok(count > 0, `no ${rarity} item exists`);
   }
 });

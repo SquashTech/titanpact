@@ -11,7 +11,7 @@ import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { EQUIP_SLOT_LABELS, EQUIP_SLOT_ORDER, EquipmentEffectList, EquipmentIcon, fmtGrant, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { EquipmentEffectList, EquipmentIcon, fmtGrant, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
 
 interface Props {
@@ -26,10 +26,8 @@ function byPrimaryType(a: HeroDefinition, b: HeroDefinition): number {
 }
 const STARTER_HEROES = Object.values(heroes).filter((hero) => hero.starter).sort(byPrimaryType);
 const RECRUIT_HEROES = Object.values(heroes).filter((hero) => !hero.starter).sort(byPrimaryType);
-// Slot order, then rarity; stable, so same-slot-same-rarity items keep authoring order.
-const EQUIPMENT_LIST = Object.values(equipment).sort(
-  (a, b) => EQUIP_SLOT_ORDER.indexOf(a.slot) - EQUIP_SLOT_ORDER.indexOf(b.slot) || RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity)
-);
+// Rarity, then authoring order — items are uncategorised, so the tier is the only grouping left.
+const EQUIPMENT_LIST = Object.values(equipment).sort((a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity));
 
 /**
  * Roster tile: sprite, name, types, nothing else — the whole hero is one tap away in
@@ -96,13 +94,12 @@ function CompendiumEquipmentCard({ item, onInspect }: CompendiumEquipmentCardPro
       onClick={onInspect}
     >
       <div className="equip-cache-card-icon-badge">
-        <EquipmentIcon item={item} slot={item.slot} className="equip-cache-card-icon" />
+        <EquipmentIcon item={item} className="equip-cache-card-icon" />
       </div>
       <div className="equip-cache-card-body">
         <div className="equip-cache-card-name">{item.name}</div>
         <div className="equip-cache-card-meta">
           <span className="equip-cache-card-rarity">{RARITY_LABELS[item.rarity]}</span>
-          <span className="equip-cache-card-slot">{EQUIP_SLOT_LABELS[item.slot]}</span>
         </div>
         <div className="equip-cache-card-stats">{highlights.length > 0 ? highlights.join(' · ') : 'No effect'}</div>
       </div>
@@ -172,7 +169,7 @@ export function CompendiumScreen({ heroStars, onClose }: Props) {
                   <div className="move-info-head">
                     <span className="move-info-name">{inspectItem.name}</span>
                     <span className="move-info-kind">
-                      {RARITY_LABELS[inspectItem.rarity]} · {EQUIP_SLOT_LABELS[inspectItem.slot]}
+                      {RARITY_LABELS[inspectItem.rarity]}
                     </span>
                   </div>
                   {grants.length > 0 && (

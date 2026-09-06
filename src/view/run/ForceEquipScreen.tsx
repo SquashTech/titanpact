@@ -5,9 +5,10 @@ import { equipment } from '../../data/equipment';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import { equipToRoster, RunProgressError } from '../../run/runProgress';
+import { itemSlotsFor } from '../../run/progression';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
-import { EQUIP_SLOT_LABELS, EquipmentEffectList, EquipmentIcon, fmtGrant, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
+import { EquipmentEffectList, EquipmentIcon, fmtGrant, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
 import { EquipCompareRow } from './EquipCompareRow';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
@@ -57,19 +58,19 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
   }
 
   // The sound is the press's own feedback, so it fires now rather than after the seat.
-  function handleEquip(rosterId: string) {
+  function handleEquip(rosterId: string, replaceIndex?: number) {
     if (seatingRosterId) return;
     playSfx('equip');
     setSeatingRosterId(rosterId);
     window.setTimeout(() => {
       setSeatingRosterId(null);
-      applyEquip(rosterId);
+      applyEquip(rosterId, replaceIndex);
     }, EQUIP_ANIM_MS);
   }
 
-  function applyEquip(rosterId: string) {
+  function applyEquip(rosterId: string, replaceIndex?: number) {
     try {
-      const { run: nextRun, bumpedItemId } = equipToRoster(run, rosterId, item.id, equipment);
+      const { run: nextRun, bumpedItemId } = equipToRoster(run, rosterId, item.id, equipment, heroes, replaceIndex);
       onRunChange(nextRun);
       const rest = queue.slice(1);
       advance(bumpedItemId ? [...rest, { itemId: bumpedItemId, bumped: true }] : rest);
@@ -96,10 +97,10 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
       {/* The absolute reading of the item; the table below is the relative one. */}
       <NodeHeader
         compact
-        eyebrow={current.bumped ? 'Needs a New Home' : 'New Equipment'}
-        glyph={<EquipmentIcon item={item} slot={item.slot} className="equip-spotlight-icon" />}
+        eyebrow={current.bumped ? 'Needs a New Home' : 'New Item'}
+        glyph={<EquipmentIcon item={item} className="equip-spotlight-icon" />}
         title={item.name}
-        readout={`${RARITY_LABELS[item.rarity]} · ${EQUIP_SLOT_LABELS[item.slot]}${
+        readout={`${RARITY_LABELS[item.rarity]}${
           current.bumped ? ' — unequipped; give it to another hero, or trash it' : ' — tap a hero to hand it over'
         }`}
       >
@@ -122,19 +123,19 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
       <div className={`equip-compare-table screen-scroll${run.roster.length > 4 ? '' : ' is-roomy'}`}>
         {run.roster.map((entry) => {
           const hero = heroes[entry.heroId];
-          const currentId = entry.equipment[item.slot];
-          const currentItem = currentId ? equipment[currentId] : null;
+          const held = entry.equipment.flatMap((id) => (equipment[id] ? [equipment[id]] : []));
           return (
             <EquipCompareRow
               key={entry.rosterId}
               hero={hero}
               entry={entry}
-              slot={item.slot}
-              currentItem={currentItem}
+              held={held}
+              capacity={itemSlotsFor(hero, entry)}
               offered={item}
               isEquipping={seatingRosterId === entry.rosterId}
               locked={!!seatingRosterId && seatingRosterId !== entry.rosterId}
-              onEquip={() => handleEquip(entry.rosterId)}
+              alreadyHeld={entry.equipment.includes(item.id)}
+              onEquip={(replaceIndex) => handleEquip(entry.rosterId, replaceIndex)}
               onPreview={() => setPreviewEntry({ hero, entry })}
             />
           );

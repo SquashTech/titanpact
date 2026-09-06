@@ -105,7 +105,7 @@ test('recruitment: a contract offer carries over Evolution state but not equipme
   const run = seedRoster(['ironWarden']);
   const defeated = {
     ...run.roster[0],
-    equipment: equipItem(run.roster[0].equipment, equipment.ironBlade),
+    equipment: equipItem(run.roster[0].equipment, equipment.ironBlade.id),
     level: 5,
     chosenPathIds: ['ironWarden-veteran'],
     evolutionStatGrants: { defense: 10 },
@@ -125,7 +125,7 @@ test('recruitment: claiming a contract is free in gold and adds the offer ungear
   const defeated = {
     ...run.roster[0],
     heroId: 'ironWarden',
-    equipment: equipItem(run.roster[0].equipment, equipment.ironBlade),
+    equipment: equipItem(run.roster[0].equipment, equipment.ironBlade.id),
     level: 5,
   };
   const offer = deriveContractOffer(defeated);
@@ -137,7 +137,7 @@ test('recruitment: claiming a contract is free in gold and adds the offer ungear
   assert.ok(entry);
   assert.strictEqual(entry!.heroId, 'ironWarden');
   assert.strictEqual(entry!.level, 5);
-  assert.deepStrictEqual(entry!.equipment, { weapon: null, armor: null, accessory: null });
+  assert.deepStrictEqual(entry!.equipment, []);
 });
 
 test('recruitment: claiming a contract still enforces the roster cap', () => {
@@ -169,7 +169,7 @@ test('recruitment: recruitFromGuildHallReplacing swaps the terminated hero for a
   let run = seedRoster(allSix, 1000);
   run = {
     ...run,
-    roster: run.roster.map((r) => (r.rosterId === 'tidecaller' ? { ...r, equipment: equipItem(r.equipment, equipment.ironBlade), level: 4 } : r)),
+    roster: run.roster.map((r) => (r.rosterId === 'tidecaller' ? { ...r, equipment: equipItem(r.equipment, equipment.ironBlade.id), level: 4 } : r)),
   };
   const incomingOffer = guildHallOffers.find((o) => !allSix.includes(o.heroId))!;
   assert.ok(incomingOffer, 'expected a Guild Hall offer for a hero not already on the fixture roster');
@@ -182,7 +182,7 @@ test('recruitment: recruitFromGuildHallReplacing swaps the terminated hero for a
   assert.ok(entry);
   assert.strictEqual(entry!.heroId, incomingOffer.heroId);
   assert.strictEqual(entry!.level, guildHallLevel(run.actNumber)); // the act's hire, not the terminated hero's level
-  assert.strictEqual(entry!.equipment.weapon, 'ironBlade'); // inherited from the terminated hero
+  assert.strictEqual(entry!.equipment[0], 'ironBlade'); // inherited from the terminated hero
 });
 
 test('recruitment: recruitFromGuildHallReplacing rejects insufficient gold and an unknown terminated rosterId', () => {
@@ -200,7 +200,7 @@ test('recruitment: claimContractReplacing swaps the terminated hero for the clai
   let run = seedRoster(allSix, 0);
   run = {
     ...run,
-    roster: run.roster.map((r) => (r.rosterId === 'ironWarden' ? { ...r, equipment: equipItem(r.equipment, equipment.ironBlade) } : r)),
+    roster: run.roster.map((r) => (r.rosterId === 'ironWarden' ? { ...r, equipment: equipItem(r.equipment, equipment.ironBlade.id) } : r)),
   };
   const defeated = { ...run.roster.find((r) => r.rosterId === 'cinderKnight')!, heroId: 'shadowMonk', level: 5 };
   const offer = deriveContractOffer(defeated); // shadowMonk is already on this roster, but rosterId is derived fresh below
@@ -215,7 +215,7 @@ test('recruitment: claimContractReplacing swaps the terminated hero for the clai
   assert.ok(entry);
   assert.strictEqual(entry!.heroId, 'shadowMonk');
   assert.strictEqual(entry!.level, 5); // veteran progress carried over
-  assert.strictEqual(entry!.equipment.weapon, 'ironBlade'); // inherited from the terminated hero, not the veteran's own (offer is ungeared)
+  assert.strictEqual(entry!.equipment[0], 'ironBlade'); // inherited from the terminated hero, not the veteran's own (offer is ungeared)
 });
 
 test('recruitment: claimContractReplacing rejects no contracts available and an unknown terminated rosterId', () => {

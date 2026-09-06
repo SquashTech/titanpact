@@ -11,7 +11,6 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
-import { EQUIP_SLOT_ORDER } from '../shared/EquipmentBox';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 
 export type { RosterReplaceCandidate };
@@ -38,7 +37,7 @@ interface ReplaceHeroCardProps {
 
 /** Tap selects rather than acts — termination is permanent; the confirm button commits. The detail row shows the gear that strips off. */
 function ReplaceHeroCard({ hero, entry, selected, onSelect, onPreview }: ReplaceHeroCardProps) {
-  const equippedCount = EQUIP_SLOT_ORDER.filter((slot) => entry.equipment[slot]).length;
+  const equippedCount = entry.equipment.length;
   return (
     <HeroPickCard
       hero={hero}

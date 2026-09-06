@@ -69,9 +69,9 @@ test('run: terminating a roster entry strips its equipment (the entry, and its l
   let run = seedRoster(['cinderKnight']);
   run = {
     ...run,
-    roster: run.roster.map((r) => (r.rosterId === 'cinderKnight' ? { ...r, equipment: equipItem(r.equipment, equipment.ironBlade) } : r)),
+    roster: run.roster.map((r) => (r.rosterId === 'cinderKnight' ? { ...r, equipment: equipItem(r.equipment, equipment.ironBlade.id) } : r)),
   };
-  assert.strictEqual(run.roster[0].equipment.weapon, 'ironBlade');
+  assert.strictEqual(run.roster[0].equipment[0], 'ironBlade');
 
   const afterTermination = terminateRosterEntry(run, 'cinderKnight');
   assert.strictEqual(afterTermination.roster.length, 0);
@@ -167,7 +167,7 @@ test('buildCombatState: equipped item stat grants raise the combatant\'s effecti
   let run = seedRoster(['cinderKnight', 'tidecaller']);
   run = {
     ...run,
-    roster: run.roster.map((r) => (r.rosterId === 'cinderKnight' ? { ...r, equipment: equipItem(r.equipment, equipment.ironBlade) } : r)),
+    roster: run.roster.map((r) => (r.rosterId === 'cinderKnight' ? { ...r, equipment: equipItem(r.equipment, equipment.ironBlade.id) } : r)),
   };
   const squad = pickSquad(run.roster, ['cinderKnight', 'tidecaller']);
   const aiRun = seedRoster(['ironWarden', 'wildOracle']);

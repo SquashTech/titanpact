@@ -26,6 +26,7 @@ import {
   equipToRoster,
   grantContractReward,
   grantCurrencyReward,
+  grantItemSlot,
   grantRelicReward,
   grantStatBonus,
   grantUpgradeReward,
@@ -39,6 +40,7 @@ import {
   drawMasteryStats,
   grantLevelUpMove,
   grantMasteryStat,
+  itemSlotsFor,
   levelUpCost,
   levelUpHero,
   levelUpMovePool,
@@ -49,7 +51,7 @@ import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitab
 import { rollGuildHallOffers, buyEquipment, EQUIPMENT_PRICE_BY_RARITY } from '../../src/run/shop';
 import { grantClass } from '../../src/run/classes';
 import { applyStatShift, grantEventPassive, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
-import { pickWeightedEquipment, pickWeightedEquipmentBySlot, rarityWeightsFor, type EquipmentDefinition, type EquipmentSlot, type LootSource } from '../../src/run/equipment';
+import { MAX_ITEM_SLOTS, pickWeightedEquipment, rarityWeightsFor, type EquipmentDefinition, type LootSource } from '../../src/run/equipment';
 import { passives } from '../../src/data/passives';
 import { getMaxHp } from '../../src/engine/state';
 import { createCombatant } from '../../src/engine/state';
@@ -212,8 +214,8 @@ function spendLevelUps(run: RunState, rng: Rng, opts: policy.PolicyOptions, choi
       const drawn = drawMasteryStats(rng);
       // The reel is the balance question; which of the three to take is a play. Take the one worth most to this hero.
       const chosen = drawn.reduce((best, stat) =>
-        policy.itemValueFor(entryOf(next, target.rosterId), { id: '', name: '', slot: 'weapon', rarity: 'common', statGrants: { [stat]: 10 } }) >
-        policy.itemValueFor(entryOf(next, target.rosterId), { id: '', name: '', slot: 'weapon', rarity: 'common', statGrants: { [best]: 10 } })
+        policy.itemValueFor(entryOf(next, target.rosterId), { id: '', name: '', rarity: 'common', statGrants: { [stat]: 10 } }) >
+        policy.itemValueFor(entryOf(next, target.rosterId), { id: '', name: '', rarity: 'common', statGrants: { [best]: 10 } })
           ? stat
           : best
       );
@@ -230,7 +232,7 @@ function forceEquip(run: RunState, itemId: string, equipped: string[], actNumber
   const target = policy.bestWearer(run.roster, item);
   if (!target || target.gain <= 0) return run;
   equipped.push(`${actNumber}:${item.rarity}`);
-  return equipToRoster(run, target.rosterId, itemId, equipment).run;
+  return equipToRoster(run, target.rosterId, itemId, equipment, heroes, target.replaceIndex).run;
 }
 
 function rosterSquad(run: RunState, size: number): Squad {
@@ -538,12 +540,12 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       });
       return grantRelicReward(run, picked.id);
     }
-    case 'weaponReward':
-    case 'armorReward':
-    case 'accessoryReward': {
-      const slot: EquipmentSlot = nodeType === 'weaponReward' ? 'weapon' : nodeType === 'armorReward' ? 'armor' : 'accessory';
-      const item = pickWeightedEquipmentBySlot(EQUIPMENT_POOL, slot, rarityWeightsFor(run.actNumber, 'standard'));
-      return item ? forceEquip(run, item.id, record.equipped, run.actNumber) : run;
+    case 'forgeReward': {
+      // Whoever is holding the most already: an extra slot is worth most where the gear is.
+      const target = [...run.roster]
+        .filter((entry) => itemSlotsFor(heroes[entry.heroId], entry) < MAX_ITEM_SLOTS)
+        .sort((a, b) => policy.powerScore(b) - policy.powerScore(a))[0];
+      return target ? grantItemSlot(run, target.rosterId, heroes) : run;
     }
     case 'hpBoostReward':
     case 'manaBoostReward':

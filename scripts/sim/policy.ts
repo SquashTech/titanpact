@@ -15,7 +15,7 @@ import { equipment } from '../../src/data/equipment';
 import { passives } from '../../src/data/passives';
 import type { EquipmentDefinition } from '../../src/run/equipment';
 import type { RosterEntry } from '../../src/run/state';
-import { rosterEntryTypes } from '../../src/run/progression';
+import { itemSlotsFor, rosterEntryTypes } from '../../src/run/progression';
 import { mergeStatMods } from '../../src/run/statMods';
 import type { Rng } from './rng';
 
@@ -37,9 +37,8 @@ export function effectiveStats(entry: RosterEntry): Record<StatKey, number> {
   const base = { ...heroes[entry.heroId].baseStats } as Record<StatKey, number>;
   let grants = mergeStatMods(entry.evolutionStatGrants, entry.bonusStatGrants);
   grants = mergeStatMods(grants, entry.masteryStatGrants);
-  for (const slot of ['weapon', 'armor', 'accessory'] as const) {
-    const itemId = entry.equipment[slot];
-    if (itemId && equipment[itemId]) grants = mergeStatMods(grants, equipment[itemId].statGrants);
+  for (const itemId of entry.equipment) {
+    if (equipment[itemId]) grants = mergeStatMods(grants, equipment[itemId].statGrants);
   }
   const out = {} as Record<StatKey, number>;
   for (const stat of ALL_STATS) out[stat] = (base[stat] ?? 0) + (grants[stat] ?? 0);
@@ -118,13 +117,38 @@ export function itemValueFor(entry: RosterEntry, item: EquipmentDefinition | nul
   return value;
 }
 
-/** Who should wear `item`: the biggest gain over whatever they already hold. Ties break toward the stronger hero. */
-export function bestWearer(roster: readonly RosterEntry[], item: EquipmentDefinition): { rosterId: string; gain: number } | null {
-  let best: { rosterId: string; gain: number } | null = null;
+/**
+ * Who should wear `item`, and what it costs them: a hero with a free slot compares against
+ * nothing, a full one against its WEAKEST held item — that is the one a player would give up, so
+ * it is the one the sim gives up. `replaceIndex` is undefined when the slot was free.
+ */
+export function bestWearer(
+  roster: readonly RosterEntry[],
+  item: EquipmentDefinition
+): { rosterId: string; gain: number; replaceIndex?: number } | null {
+  let best: { rosterId: string; gain: number; replaceIndex?: number } | null = null;
   for (const entry of roster) {
-    const held = entry.equipment[item.slot];
-    const gain = itemValueFor(entry, item) - itemValueFor(entry, held ? equipment[held] ?? null : null);
-    if (!best || gain > best.gain + 1e-9) best = { rosterId: entry.rosterId, gain };
+    // A hero never holds two copies, so an owner is not a candidate.
+    if (entry.equipment.includes(item.id)) continue;
+    const offered = itemValueFor(entry, item);
+
+    if (entry.equipment.length < itemSlotsFor(heroes[entry.heroId], entry)) {
+      if (!best || offered > best.gain + 1e-9) best = { rosterId: entry.rosterId, gain: offered };
+      continue;
+    }
+
+    let weakestIndex = -1;
+    let weakestValue = Infinity;
+    entry.equipment.forEach((heldId, index) => {
+      const value = itemValueFor(entry, equipment[heldId] ?? null);
+      if (value < weakestValue) {
+        weakestValue = value;
+        weakestIndex = index;
+      }
+    });
+    if (weakestIndex < 0) continue;
+    const gain = offered - weakestValue;
+    if (!best || gain > best.gain + 1e-9) best = { rosterId: entry.rosterId, gain, replaceIndex: weakestIndex };
   }
   return best;
 }

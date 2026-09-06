@@ -8,7 +8,7 @@ import { compareEquipment } from '../src/run/equipCompare';
 import type { EquipmentDefinition } from '../src/run/equipment';
 
 function item(over: Partial<EquipmentDefinition>): EquipmentDefinition {
-  return { id: 'x', name: 'X', slot: 'weapon', rarity: 'common', statGrants: {}, ...over };
+  return { id: 'x', name: 'X', rarity: 'common', statGrants: {}, ...over };
 }
 
 test('equipCompare: an empty slot makes every effect a pure gain', () => {

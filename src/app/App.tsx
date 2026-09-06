@@ -21,7 +21,7 @@ import { SquadSelectScreen } from '../view/run/SquadSelectScreen';
 import { MapScreen } from '../view/run/MapScreen';
 import { ShopNodeScreen } from '../view/run/ShopNodeScreen';
 import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScreen';
-import { CacheOpenScreen } from '../view/run/CacheOpenScreen';
+import { ForgeScreen } from '../view/run/ForgeScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { ForceEquipScreen } from '../view/run/ForceEquipScreen';
@@ -44,10 +44,8 @@ import { equipment } from '../data/equipment';
 import {
   equipItem,
   pickWeightedEquipment,
-  pickWeightedEquipmentBySlot,
   rarityWeightsFor,
   type EquipmentDefinition,
-  type EquipmentSlot,
   type LootSource,
 } from '../run/equipment';
 import { createRunState, createRosterEntry, addRosterEntry, FINALE_ACT, ROSTER_CAP, TOTAL_ACTS } from '../run/state';
@@ -147,8 +145,8 @@ type Screen =
   /** `offers` and `soldOutEquipmentIds` live on the screen, not in the shop component: a purchase unmounts the shop through the equip gate, and component-local state would reroll / forget. */
   | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; soldOutEquipmentIds: string[] }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
-  /** Cache-opening beat; the node is already resolved and the item rolled. `next` is the equip gate. */
-  | { kind: 'cacheOpen'; slot: EquipmentSlot; next: Screen }
+  /** The Forge: +1 item slot to one hero. */
+  | { kind: 'forge'; nodeId: string }
   | { kind: 'statBoost'; nodeId: string; nodeType: StatBoostNodeType }
   /** A Gem offer — the gemReward node, the two stat shrines, and a fight that rolled one. Already-resolved, so no nodeId. */
   | { kind: 'gemChoice'; gemIds: string[]; eyebrow: string; title: string; tint?: string; next: Screen }
@@ -249,7 +247,7 @@ function createLevel4TestRun(): RunState {
 /** TEST FIXTURE — arms the opener's Goblin Skulker with a Dagger so the equip-inspect UI has an item from turn one. */
 function equipTestDagger(encounter: Encounter): Encounter {
   const roster = encounter.run.roster.map((entry) =>
-    entry.heroId === 'goblinSkulker' ? { ...entry, equipment: equipItem(entry.equipment, equipment.dagger) } : entry
+    entry.heroId === 'goblinSkulker' ? { ...entry, equipment: equipItem(entry.equipment, equipment.dagger.id) } : entry
   );
   return { ...encounter, run: { ...encounter.run, roster } };
 }
@@ -591,15 +589,8 @@ export function App() {
         offers: rollGuildHallOffers(playerRun, guildHallOffers, EQUIPMENT_POOL, node.type === 'muster'),
         soldOutEquipmentIds: [],
       });
-    } else if (node.type === 'weaponReward' || node.type === 'armorReward' || node.type === 'accessoryReward') {
-      // One guaranteed item of a fixed slot, through the cache-opening beat into the equip gate.
-      const slot: EquipmentSlot = node.type === 'weaponReward' ? 'weapon' : node.type === 'armorReward' ? 'armor' : 'accessory';
-      const item = pickWeightedEquipmentBySlot(EQUIPMENT_POOL, slot, rarityWeightsFor(playerRun.actNumber, 'standard'));
-      setPlayerRun((run) => advanceToNode(run, nodeId));
-      const afterScreen = mapAfterLevelUp(playerRun);
-      setScreen(
-        item ? { kind: 'cacheOpen', slot, next: { kind: 'forceEquip', queue: [item.id], next: afterScreen } } : afterScreen
-      );
+    } else if (node.type === 'forgeReward') {
+      setScreen({ kind: 'forge', nodeId });
     } else if (node.type === 'hpBoostReward') {
       setScreen({ kind: 'statBoost', nodeId, nodeType: node.type });
     } else if (node.type === 'gemReward' || node.type === 'manaBoostReward' || node.type === 'manaRegenBoostReward') {
@@ -1055,8 +1046,8 @@ export function App() {
         />
       )}
 
-      {screen.kind === 'cacheOpen' && (
-        <CacheOpenScreen slot={screen.slot} onDone={() => setScreen(screen.next)} />
+      {screen.kind === 'forge' && (
+        <ForgeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'statBoost' && (

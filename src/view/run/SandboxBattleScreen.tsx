@@ -5,7 +5,7 @@ import { equipment } from '../../data/equipment';
 import { relics } from '../../data/relics';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition, StatKey } from '../../engine/content';
-import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
+import { MAX_ITEM_SLOTS, type EquipmentDefinition, type EquipmentLoadout } from '../../run/equipment';
 import type { EvolutionNode, ProgressionTable } from '../../run/progression';
 import { MOVE_CAP } from '../../run/progression';
 import { ROSTER_CAP } from '../../run/state';
@@ -23,15 +23,27 @@ import { getTypeColor } from '../combat/typeColors';
 import { MoveTile } from '../shared/MoveTile';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { EQUIP_SLOT_ORDER, EQUIP_SLOT_LABELS } from '../shared/EquipmentBox';
 import { STAT_ORDER, StatGlyph } from '../shared/StatBars';
 
 type SideKey = 'A' | 'B';
 
 const HERO_LIST = Object.values(heroes).sort((a, b) => a.name.localeCompare(b.name));
 
-const EQUIPMENT_BY_SLOT: Record<EquipmentSlot, EquipmentDefinition[]> = { weapon: [], armor: [], accessory: [] };
-for (const item of Object.values(equipment)) EQUIPMENT_BY_SLOT[item.slot].push(item);
+// Uncategorised, so every slot picker offers the whole catalog.
+const EQUIPMENT_LIST: EquipmentDefinition[] = Object.values(equipment);
+
+/**
+ * Sets slot `index` of a sandbox loadout. The list is compact, so a select on an empty slot
+ * appends and clearing one closes the gap — the pickers below it shift up, which is what the
+ * dev tool wants over a sparse list full of holes.
+ */
+function setSandboxItem(loadout: EquipmentLoadout, index: number, itemId: string | null): EquipmentLoadout {
+  const next = [...loadout];
+  if (itemId === null) next.splice(index, 1);
+  else if (index >= next.length) next.push(itemId);
+  else next[index] = itemId;
+  return next.filter((id, i) => next.indexOf(id) === i);
+}
 
 function displayTypesFor(hero: HeroDefinition, config: SandboxHeroConfig, table: ProgressionTable): readonly string[] {
   if (!config.pathId) return hero.types;
@@ -50,7 +62,7 @@ interface HeroConfigCardProps {
   onToggleActive: () => void;
   onRemove: () => void;
   onToggleMove: (moveId: string) => void;
-  onEquipChange: (slot: EquipmentSlot, itemId: string | null) => void;
+  onEquipChange: (index: number, itemId: string | null) => void;
   onPathChange: (pathId: string | null) => void;
   onBonusStatChange: (stat: StatKey, amount: number) => void;
 }
@@ -112,14 +124,16 @@ function HeroConfigCard({
         )}
       </div>
 
-      <div className="sandbox-section-label">Equipment</div>
+      {/* The sandbox ignores the hero's own slot count and offers all MAX_ITEM_SLOTS: it exists to
+          test builds the run cannot hand you yet. */}
+      <div className="sandbox-section-label">Items</div>
       <div className="sandbox-equip-row">
-        {EQUIP_SLOT_ORDER.map((slot) => (
-          <label key={slot} className="sandbox-equip-select">
-            <span>{EQUIP_SLOT_LABELS[slot]}</span>
-            <select value={config.equipment[slot] ?? ''} onChange={(e) => onEquipChange(slot, e.target.value || null)}>
+        {Array.from({ length: MAX_ITEM_SLOTS }, (_, index) => (
+          <label key={index} className="sandbox-equip-select">
+            <span>Slot {index + 1}</span>
+            <select value={config.equipment[index] ?? ''} onChange={(e) => onEquipChange(index, e.target.value || null)}>
               <option value="">— empty —</option>
-              {EQUIPMENT_BY_SLOT[slot].map((item) => (
+              {EQUIPMENT_LIST.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
                 </option>
@@ -324,8 +338,8 @@ export function SandboxBattleScreen({ sideA, sideB, onChangeSideA, onChangeSideB
                 onToggleActive={() => toggleActive(tab, config.rosterId)}
                 onRemove={() => removeHero(tab, config.rosterId)}
                 onToggleMove={(moveId) => toggleMove(tab, config.rosterId, moveId)}
-                onEquipChange={(slot, itemId) =>
-                  updateHero(tab, config.rosterId, (h) => ({ ...h, equipment: { ...h.equipment, [slot]: itemId } }))
+                onEquipChange={(index, itemId) =>
+                  updateHero(tab, config.rosterId, (h) => ({ ...h, equipment: setSandboxItem(h.equipment, index, itemId) }))
                 }
                 onPathChange={(pathId) => updateHero(tab, config.rosterId, (h) => ({ ...h, pathId }))}
                 onBonusStatChange={(stat, amount) =>

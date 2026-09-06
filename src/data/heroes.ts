@@ -4,6 +4,11 @@
 // Every line is tuned to a 450 stat-total budget (HP + Mana + the five battle stats; MP Regen
 // is a flat 10 outside it). A line may come in under budget only by spiking one stat past
 // anything else in the roster — Bellows' 105 Attack against its 5 Speed is the shape.
+//
+// `itemSlots: 2` is authored on exactly the nine heroes at Speed <= 40 — the ones that never win
+// a priority tiebreak and win instead by outlasting, so gear rather than tempo is what scales
+// them. Every other hero starts at BASE_ITEM_SLOTS and reaches 2 through the Forge. Pinned by
+// test/roster.test.ts; a hero joining or leaving that band is a balance decision.
 
 import type { HeroDefinition } from '../engine/content';
 
@@ -50,6 +55,7 @@ export const heroes: Record<string, HeroDefinition> = {
     baseStats: { hp: 130, attack: 80, defense: 90, intelligence: 20, wisdom: 45, speed: 35, manaPool: 50, mpRegen: 10 },
     moveIds: ['undertow', 'tideGuard', 'openingStrike'],
     starter: false,
+    itemSlots: 2,
   },
 
   // --- Frost ---
@@ -60,6 +66,7 @@ export const heroes: Record<string, HeroDefinition> = {
     baseStats: { hp: 125, attack: 25, defense: 60, intelligence: 80, wisdom: 55, speed: 40, manaPool: 65, mpRegen: 10 },
     moveIds: ['rimeWind', 'frostArmor', 'deepChill'],
     starter: false,
+    itemSlots: 2,
   },
   rime: {
     id: 'rime',
@@ -76,6 +83,7 @@ export const heroes: Record<string, HeroDefinition> = {
     baseStats: { hp: 145, attack: 60, defense: 115, intelligence: 25, wisdom: 45, speed: 10, manaPool: 50, mpRegen: 10 },
     moveIds: ['iceShard', 'frostArmor', 'pinDown'],
     starter: false,
+    itemSlots: 2,
   },
 
   // --- Storm ---
@@ -112,6 +120,7 @@ export const heroes: Record<string, HeroDefinition> = {
     baseStats: { hp: 140, attack: 90, defense: 75, intelligence: 20, wisdom: 35, speed: 40, manaPool: 50, mpRegen: 10 },
     moveIds: ['rockToss', 'toughenUp', 'secondWind'],
     starter: true,
+    itemSlots: 2,
   },
   sentinel: {
     id: 'sentinel',
@@ -120,6 +129,7 @@ export const heroes: Record<string, HeroDefinition> = {
     baseStats: { hp: 150, attack: 50, defense: 110, intelligence: 20, wisdom: 50, speed: 20, manaPool: 50, mpRegen: 10 },
     moveIds: ['mudBall', 'provoke', 'fortify'],
     starter: false,
+    itemSlots: 2,
   },
 
   // --- Nature ---
@@ -146,6 +156,7 @@ export const heroes: Record<string, HeroDefinition> = {
     baseStats: { hp: 140, attack: 80, defense: 90, intelligence: 20, wisdom: 40, speed: 30, manaPool: 50, mpRegen: 10 },
     moveIds: ['ivySpike', 'fortify', 'secondWind'],
     starter: false,
+    itemSlots: 2,
   },
 
   // --- Light ---
@@ -164,6 +175,7 @@ export const heroes: Record<string, HeroDefinition> = {
     baseStats: { hp: 125, attack: 45, defense: 90, intelligence: 35, wisdom: 80, speed: 25, manaPool: 50, mpRegen: 10 },
     moveIds: ['holyStrike', 'mend', 'secondWind'],
     starter: false,
+    itemSlots: 2,
   },
 
   // --- Shadow ---
@@ -262,6 +274,7 @@ export const heroes: Record<string, HeroDefinition> = {
     baseStats: { hp: 140, attack: 60, defense: 100, intelligence: 20, wisdom: 50, speed: 30, manaPool: 50, mpRegen: 10 },
     moveIds: ['swiftBlow', 'openingStrike', 'fortify'],
     starter: false,
+    itemSlots: 2,
   },
   valor: {
     id: 'valor',
@@ -296,6 +309,7 @@ export const heroes: Record<string, HeroDefinition> = {
     baseStats: { hp: 150, attack: 105, defense: 90, intelligence: 15, wisdom: 35, speed: 5, manaPool: 50, mpRegen: 10 },
     moveIds: ['cogBop', 'ironFist', 'sharpen'],
     starter: false,
+    itemSlots: 2,
   },
 
   // --- Beast ---

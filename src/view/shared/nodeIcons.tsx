@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import type { MapNodeType } from '../../run/map';
 import { STAT_PATHS } from './statIcons';
 import { SECTION_PATHS } from './sectionIcons';
-import { EQUIP_FORM_PATHS } from './equipmentIcons';
 import { GEM } from './relicIcons';
 
 // One glyph per map node type, 24x24, `currentColor` only. The grouping is the information:
@@ -90,9 +89,13 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
       <path d="M6.4 19.4h11.2v2.6H6.4Z" />
     </>
   ),
-  weaponReward: STAT_PATHS.attack,
-  armorReward: STAT_PATHS.defense,
-  accessoryReward: EQUIP_FORM_PATHS.ring,
+  // Anvil on its stump: the Forge adds a slot, so it draws the place gear is made, not gear.
+  forgeReward: (
+    <>
+      <path d="M2 6.6h9.6c1.6 2.6 4 4.2 7.2 4.8l3.2-3.4v4.4c0 2.4-1.6 4-4.4 4.6H8.2C4.8 16.4 2.6 14 2 10.6Z" />
+      <path d="M9.4 18h6.2l2.2 4H7.2Z" />
+    </>
+  ),
   hpBoostReward: STAT_PATHS.hp,
   manaBoostReward: STAT_PATHS.manaPool,
   manaRegenBoostReward: STAT_PATHS.mpRegen,

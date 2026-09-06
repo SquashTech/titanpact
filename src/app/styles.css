@@ -7030,6 +7030,9 @@ textarea,
   right: 8px;
 }
 
+/* Three columns whatever the slot count: a hero holds 1 to MAX_ITEM_SLOTS, and a
+   fixed track keeps every box the same size down the roster rather than letting a
+   1-slot hero's box stretch to the full card. Five boxes wrap to a second row. */
 .equip-slot-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -7040,9 +7043,9 @@ textarea,
  * Empty state: a sunken dashed cavity. Filled state (below) swaps to a
  * raised, solid, rarity-edged tile. Keeping those two as genuinely opposite
  * treatments — hole vs. object — rather than "same box, different border
- * color" is what makes a hero's three slots scannable at a glance for what's
- * still missing, which is the question the player is actually asking on the
- * roster and force-equip screens.
+ * color" is what makes a hero's slots scannable at a glance for what's still
+ * missing, which is the question the player is actually asking on the roster
+ * and force-equip screens.
  */
 .equip-slot-box {
   display: flex;
@@ -9664,7 +9667,9 @@ textarea,
   font-weight: 600;
 }
 
-.equip-owners-row.is-empty .equip-owners-item {
+/* `.is-empty` now means "has room", not "holds nothing" — the held names keep
+   their own rarity colours, and only the free-slot tail is dimmed. */
+.equip-owners-free {
   color: var(--text-dim);
   font-style: italic;
 }
@@ -14422,17 +14427,27 @@ textarea,
   vertical-align: 0;
 }
 
-/* What the hero is holding in the matching slot right now — the fact that
-   used to cost an overlay each. The name takes its own rarity colour, so the
-   tier of what is about to be bumped reads before the name is even parsed. */
+/* Everything the hero is holding, plus its free slots — the fact that used to
+   cost an overlay each. A name takes its own rarity colour, so the tier of what
+   is about to be bumped reads before the name is even parsed. Wraps rather than
+   truncating: at five slots a single line would hide the very item the player
+   is being asked to give up. */
 .equip-row-held {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  gap: 2px 8px;
   min-width: 0;
   font-size: var(--row-held);
   font-weight: 700;
   line-height: 1.2;
+}
+
+.equip-row-held-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
 }
 
 .equip-row-held-icon {
@@ -14447,13 +14462,72 @@ textarea,
   white-space: nowrap;
 }
 
-.equip-row-held.is-empty {
+.equip-row-held.is-empty,
+.equip-row-held-item.is-free {
   opacity: 0.5;
 }
 
-.equip-row-held.is-empty .equip-row-held-name {
+.equip-row-held.is-empty .equip-row-held-name,
+.equip-row-held-item.is-free .equip-row-held-name {
   font-weight: 600;
   font-style: italic;
+}
+
+/* The "which one goes?" list, open only on a FULL hero holding two or more —
+   every other case resolves on the first tap and never renders this. Indented
+   under the held line so the options read as belonging to that hero, not as
+   six more rows in the table. */
+.equip-row-replace-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+  padding-left: 8px;
+  border-left: 2px solid rgba(var(--type-rgb), 0.35);
+}
+
+.equip-replace-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 2px 6px;
+  width: 100%;
+  padding: 3px 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
+  border-radius: 4px;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.equip-replace-option:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.equip-replace-icon {
+  flex: none;
+  font-size: calc(var(--row-held) * 1.3);
+  opacity: 0.9;
+}
+
+.equip-replace-name {
+  font-size: var(--row-held);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Second grid row, under the icon column too — the chips get the full width. */
+.equip-replace-changes {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px 6px;
+  min-width: 0;
 }
 
 /* The diff. Wraps rather than truncating: a row that grows a line is honest,

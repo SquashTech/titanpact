@@ -14,8 +14,7 @@ function addGrants(counts: Record<PassiveId, number>, ids: readonly PassiveId[] 
 
 export function equipmentPassiveGrants(loadout: EquipmentLoadout, equipmentLookup: Record<string, EquipmentDefinition>): Record<PassiveId, number> {
   const counts: Record<PassiveId, number> = {};
-  for (const itemId of Object.values(loadout)) {
-    if (!itemId) continue;
+  for (const itemId of loadout) {
     addGrants(counts, equipmentLookup[itemId]?.grantsPassiveIds);
   }
   return counts;

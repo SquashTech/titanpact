@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
+import type { EquipmentDefinition } from '../../run/equipment';
 import { STAT_PATHS } from './statIcons';
 
 // What an item IS, as a shape: 24x24, `currentColor` only, nothing finer than ~2 units. There are
@@ -151,7 +151,6 @@ export const EQUIP_FORM_PATHS = {
   shield: STAT_PATHS.defense,
 
   // --- Accessories ---
-  // Shared with the map's Accessory Cache (nodeIcons.tsx).
   ring: (
     <>
       <path d="M12 1.4 15.6 5.6 12 9.8 8.4 5.6Z" />
@@ -219,16 +218,20 @@ export const EQUIP_FORM_PATHS = {
       <rect x="3.8" y="20" width="16.4" height="3" rx="1" />
     </>
   ),
+  // An open socket: what a slot with nothing in it draws, and the last resort for an
+  // unrecognised name. Deliberately not a weapon — a slot no longer implies a kind.
+  socket: (
+    <path
+      fillRule="evenodd"
+      d="M12 1.8 21.6 7v10L12 22.2 2.4 17V7Zm0 4.4L6.2 9.4v5.2L12 17.8l5.8-3.2V9.4Z"
+    />
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type EquipmentFormName = keyof typeof EQUIP_FORM_PATHS;
 
 /** What an empty slot draws, and the last resort for an item whose name matches nothing. */
-const SLOT_FALLBACK_FORM: Record<EquipmentSlot, EquipmentFormName> = {
-  weapon: 'sword',
-  armor: 'plate',
-  accessory: 'ring',
-};
+const FALLBACK_FORM: EquipmentFormName = 'socket';
 
 // Noun -> form. Unordered on purpose: the resolver reads a name LAST WORD FIRST (English puts the
 // head noun last — "Thornbriar Bow", "Alpha Fang Necklace"), so no entry can shadow another.
@@ -381,7 +384,7 @@ const ID_FORMS: Partial<Record<string, EquipmentFormName>> = {
   arcaneFocus: 'orb',
 };
 
-/** Id override, then the name read last word first, then the slot's generic shape. */
+/** Id override, then the name read last word first, then the empty-socket shape. */
 export function equipmentForm(item: EquipmentDefinition): EquipmentFormName {
   const override = ID_FORMS[item.id];
   if (override) return override;
@@ -391,20 +394,12 @@ export function equipmentForm(item: EquipmentDefinition): EquipmentFormName {
     const form = wordForm(words[i]);
     if (form) return form;
   }
-  return SLOT_FALLBACK_FORM[item.slot];
+  return FALLBACK_FORM;
 }
 
-/** The one place a piece of gear is drawn. `aria-hidden`: the item's name sits beside it. */
-export function EquipmentFormGlyph({
-  item,
-  slot,
-  className,
-}: {
-  item: EquipmentDefinition | null;
-  slot: EquipmentSlot;
-  className?: string;
-}) {
-  const form = item ? equipmentForm(item) : SLOT_FALLBACK_FORM[slot];
+/** The one place an item is drawn. `aria-hidden`: the item's name sits beside it. */
+export function EquipmentFormGlyph({ item, className }: { item: EquipmentDefinition | null; className?: string }) {
+  const form = item ? equipmentForm(item) : FALLBACK_FORM;
   return (
     <svg
       className={`equip-glyph${className ? ` ${className}` : ''}`}

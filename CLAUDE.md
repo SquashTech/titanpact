@@ -126,8 +126,13 @@ don't silently override it.
   customizable). Guild heroes have decaying runway value; contract heroes have flat value.
 - **Roster hard cap = 6**, doubling as the bring-6-pick-4 battle sideboard. Gaining a hero
   requires **terminating** an existing one. Equipment strips on termination; no gold refund.
-- **3 equipment slots** per hero: weapon, armor, accessory. **Relics are team-wide passives**
-  — a separate axis, not equipment.
+- **Items are uncategorised, and the SLOT is the scarce thing** (2026-09-06, replacing the
+  weapon/armor/accessory split, which playtested as fiddly and unintuitive). Any item goes in
+  any slot; a hero holds `BASE_ITEM_SLOTS` = 1, or the authored `HeroDefinition.itemSlots` = 2
+  the nine heroes at **Speed ≤ 40** carry — gear rather than tempo is what scales a hero that
+  never wins a tiebreak. The **Forge** node grants +1 slot to one hero, to `MAX_ITEM_SLOTS` = 5.
+  **No hero holds two copies of one item**, and capacity is decided in one place, `itemSlotsFor`
+  (`docs/progression.md`). **Relics are team-wide passives** — a separate axis, not items.
 - **Gems are relics, handed out commonly** (2026-09-05): eight stones, one per stat, each a
   flat team-wide **+5**, stacking without limit. The run's first fight always pays one, every
   later fight rolls for one, and the `gemReward` node plus the Mana Well / Regen Spring grant

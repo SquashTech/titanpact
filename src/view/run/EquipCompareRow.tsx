@@ -1,7 +1,7 @@
-import type { CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { RosterEntry } from '../../run/state';
-import type { EquipmentDefinition, EquipmentSlot } from '../../run/equipment';
+import type { EquipmentDefinition } from '../../run/equipment';
 import type { EquipChange } from '../../run/equipCompare';
 import { compareEquipment } from '../../run/equipCompare';
 import { rosterEntryTypes } from '../../run/progression';
@@ -12,26 +12,34 @@ import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { useLongPress } from '../shared/MoveTile';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
-import { EQUIP_SLOT_LABELS, EquipmentIcon, RARITY_COLOR_VARS } from '../shared/EquipmentBox';
+import { EquipmentIcon, RARITY_COLOR_VARS } from '../shared/EquipmentBox';
 import { PassiveGlyph } from '../shared/passiveIcons';
 
 /**
- * One hero as a row of the forced-equip comparison table: who, what they hold in the slot, and
- * the diff (src/run/equipCompare.ts). Chips are transitions — `ATK 5→15`, a bare `+15` / `−5` when
- * one side is zero, and no chip at all when an effect is unchanged. Tap equips; hold or `i` opens the sheet.
+ * One hero as a row of the forced-equip comparison table: who, what they hold, and the diff
+ * (src/run/equipCompare.ts). Chips are transitions — `ATK 5→15`, a bare `+15` / `−5` when one
+ * side is zero, and no chip at all when an effect is unchanged. Tap equips; hold or `i` opens the sheet.
+ *
+ * Slots are uncategorised, so what a tap MEANS depends on the hero: a free slot takes the item
+ * outright, one held item is a straight swap, and a hero holding two or more with no room has to
+ * be asked which one goes — that case, and only that case, expands into a per-item picker.
  */
 interface EquipCompareRowProps {
   hero: HeroDefinition;
   entry: RosterEntry;
-  slot: EquipmentSlot;
-  /** What is in this hero's matching slot now — compared against, and bumped back onto the queue on tap. */
-  currentItem: EquipmentDefinition | null;
+  /** Every item this hero holds, in slot order. */
+  held: readonly EquipmentDefinition[];
+  /** The hero's slot count (itemSlotsFor) — `held.length` short of it means a free slot. */
+  capacity: number;
   offered: EquipmentDefinition;
+  /** Undefined lands the item in the free slot; a number replaces the item in that slot. */
+  onEquip: (replaceIndex?: number) => void;
   /** True from the tap until the item is applied — see EQUIP_ANIM_MS. */
   isEquipping: boolean;
   /** True while another row is mid-animation. */
   locked: boolean;
-  onEquip: () => void;
+  /** This hero already holds the offered item. A hero never holds two copies, so the row is inert. */
+  alreadyHeld?: boolean;
   onPreview: () => void;
 }
 
@@ -103,43 +111,127 @@ function ChipValue({ change }: { change: EquipChange }) {
   );
 }
 
-export function EquipCompareRow({
-  hero,
-  entry,
-  slot,
-  currentItem,
-  offered,
-  isEquipping,
-  locked,
-  onEquip,
-  onPreview,
-}: EquipCompareRowProps) {
-  const longPress = useLongPress(onPreview, locked ? undefined : onEquip);
-  const changes = compareEquipment(currentItem, offered);
+function ChangeChips({ changes }: { changes: readonly EquipChange[] }) {
+  if (changes.length === 0) return <span className="equip-chip is-neutral">No change</span>;
+  return (
+    <>
+      {changes.map((change) => (
+        <ChangeChip key={`${change.kind}:${change.key}`} change={change} />
+      ))}
+    </>
+  );
+}
 
-  const summary = currentItem ? `replace ${currentItem.name}` : `equip into the empty ${slot} slot`;
-  const spoken = changes
+function spokenChanges(changes: readonly EquipChange[]): string {
+  return changes
     .map((c) => {
-      const label = c.kind === 'stat' ? STAT_LABELS[c.key as StatKey] : c.kind === 'status' ? (statuses[c.key]?.name ?? c.key) : (passives[c.key]?.name ?? c.key);
+      const label =
+        c.kind === 'stat'
+          ? STAT_LABELS[c.key as StatKey]
+          : c.kind === 'status'
+            ? (statuses[c.key]?.name ?? c.key)
+            : (passives[c.key]?.name ?? c.key);
       if (c.kind === 'passive') return `${c.delta > 0 ? 'gains' : 'loses'} ${label}`;
       return `${label} ${c.from} to ${c.to}`;
     })
     .join(', ');
+}
+
+/** One held item inside an expanded row: what giving it up costs, and the button that does it. */
+function ReplaceOption({
+  current,
+  offered,
+  onPick,
+}: {
+  current: EquipmentDefinition;
+  offered: EquipmentDefinition;
+  onPick: () => void;
+}) {
+  const changes = compareEquipment(current, offered);
+  return (
+    <button
+      type="button"
+      className="equip-replace-option"
+      aria-label={`Replace ${current.name}. ${spokenChanges(changes) || 'No change'}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onPick();
+      }}
+    >
+      <EquipmentIcon item={current} className="equip-replace-icon" />
+      <span className="equip-replace-name" style={{ color: RARITY_COLOR_VARS[current.rarity] } as CSSProperties}>
+        {current.name}
+      </span>
+      <span className="equip-replace-changes">
+        <ChangeChips changes={changes} />
+      </span>
+    </button>
+  );
+}
+
+export function EquipCompareRow({
+  hero,
+  entry,
+  held,
+  capacity,
+  offered,
+  onEquip,
+  isEquipping,
+  locked: lockedProp,
+  alreadyHeld,
+  onPreview,
+}: EquipCompareRowProps) {
+  /** Only ever true for a full hero holding two or more — every other case resolves on the first tap. */
+  const [expanded, setExpanded] = useState(false);
+
+  const locked = lockedProp || !!alreadyHeld;
+  const freeSlots = capacity - held.length;
+  const mustChoose = freeSlots <= 0 && held.length > 1;
+  const replaced = freeSlots > 0 ? null : (held[0] ?? null);
+
+  function act() {
+    if (locked) return;
+    if (mustChoose) {
+      setExpanded((v) => !v);
+      return;
+    }
+    onEquip(freeSlots > 0 ? undefined : 0);
+  }
+
+  const longPress = useLongPress(onPreview, act);
+  // Against the one item that would go, or against nothing when a slot is free. An expanded row
+  // has no single answer, so it shows the offer's own grants and each option carries its own diff.
+  const changes = compareEquipment(mustChoose ? null : replaced, offered);
+
+  const summary = alreadyHeld
+    ? `already holds `
+    : mustChoose
+    ? `full — choose which of ${held.length} items to replace`
+    : replaced
+      ? `replace ${replaced.name}`
+      : `equip into a free slot, ${freeSlots} of ${capacity} open`;
 
   return (
     <div
-      className={['equip-row', isEquipping ? 'is-equipping' : '', locked ? 'is-locked' : '', currentItem ? 'is-filled' : 'is-empty']
+      className={[
+        'equip-row',
+        isEquipping ? 'is-equipping' : '',
+        locked ? 'is-locked' : '',
+        expanded ? 'is-expanded' : '',
+        held.length > 0 ? 'is-filled' : 'is-empty',
+      ]
         .filter(Boolean)
         .join(' ')}
       style={{ '--type-rgb': getTypeColorRgb(hero.types[0]) } as CSSProperties}
       role="button"
       tabIndex={locked ? -1 : 0}
       aria-disabled={locked}
-      aria-label={`${hero.name}, level ${entry.level} — ${summary}. ${spoken || 'No change'}`}
+      aria-expanded={mustChoose ? expanded : undefined}
+      aria-label={`${hero.name}, level ${entry.level} — ${summary}. ${spokenChanges(changes) || 'No change'}`}
       onKeyDown={(e) => {
-        if ((e.key === 'Enter' || e.key === ' ') && !locked) {
+        if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          onEquip();
+          act();
         }
       }}
       {...longPress}
@@ -164,27 +256,40 @@ export function EquipCompareRow({
           ))}
         </div>
 
-        <div className={`equip-row-held${currentItem ? ' is-filled' : ' is-empty'}`}>
-          <EquipmentIcon item={currentItem} slot={slot} className="equip-row-held-icon" />
-          <span
-            className="equip-row-held-name"
-            style={currentItem ? ({ color: RARITY_COLOR_VARS[currentItem.rarity] } as CSSProperties) : undefined}
-          >
-            {currentItem ? currentItem.name : `${EQUIP_SLOT_LABELS[slot]} slot empty`}
-          </span>
-        </div>
-
-        <div className="equip-row-changes">
-          {changes.length > 0 ? (
-            changes.map((change) => <ChangeChip key={`${change.kind}:${change.key}`} change={change} />)
-          ) : (
-            <span className="equip-chip is-neutral">No change</span>
+        <div className={`equip-row-held${held.length > 0 ? ' is-filled' : ' is-empty'}`}>
+          {held.map((item) => (
+            <span key={item.id} className="equip-row-held-item">
+              <EquipmentIcon item={item} className="equip-row-held-icon" />
+              <span className="equip-row-held-name" style={{ color: RARITY_COLOR_VARS[item.rarity] } as CSSProperties}>
+                {item.name}
+              </span>
+            </span>
+          ))}
+          {freeSlots > 0 && (
+            <span className="equip-row-held-item is-free">
+              <EquipmentIcon item={null} className="equip-row-held-icon" />
+              <span className="equip-row-held-name">
+                {freeSlots} free {freeSlots === 1 ? 'slot' : 'slots'}
+              </span>
+            </span>
           )}
         </div>
+
+        {expanded ? (
+          <div className="equip-row-replace-list">
+            {held.map((item, index) => (
+              <ReplaceOption key={item.id} current={item} offered={offered} onPick={() => onEquip(index)} />
+            ))}
+          </div>
+        ) : (
+          <div className="equip-row-changes">
+            <ChangeChips changes={changes} />
+          </div>
+        )}
       </div>
 
       <div className="equip-row-act">
-        <span className="equip-row-cta">{currentItem ? 'Replace' : 'Equip'}</span>
+        <span className="equip-row-cta">{alreadyHeld ? 'Held' : freeSlots > 0 ? 'Equip' : mustChoose ? (expanded ? 'Close' : 'Replace…') : 'Replace'}</span>
         <button
           type="button"
           className="equip-row-info"

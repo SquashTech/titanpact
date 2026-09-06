@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { StatKey } from '../../engine/content';
-import type { EquipmentDefinition, EquipmentLoadout, EquipmentRarity, EquipmentSlot } from '../../run/equipment';
+import type { EquipmentDefinition, EquipmentLoadout, EquipmentRarity } from '../../run/equipment';
 import { StatGlyph, STAT_LABELS } from './StatBars';
 import { RelicGlyph } from './relicIcons';
 import { EquipmentFormGlyph } from './equipmentIcons';
@@ -9,17 +9,14 @@ import { passives } from '../../data/passives';
 import { PassiveGlyph } from './passiveIcons';
 import { statuses } from '../../data/statuses';
 
-export const EQUIP_SLOT_ORDER: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
-
 interface EquipmentIconProps {
   item: EquipmentDefinition | null;
-  slot: EquipmentSlot;
   className?: string;
 }
 
 /** The item's silhouette, derived from its name (equipmentIcons.tsx) rather than an id table. */
-export function EquipmentIcon({ item, slot, className }: EquipmentIconProps) {
-  return <EquipmentFormGlyph item={item} slot={slot} className={className} />;
+export function EquipmentIcon({ item, className }: EquipmentIconProps) {
+  return <EquipmentFormGlyph item={item} className={className} />;
 }
 
 interface RelicIconProps {
@@ -31,12 +28,6 @@ interface RelicIconProps {
 export function RelicIcon({ relicId, className }: RelicIconProps) {
   return <RelicGlyph relicId={relicId} className={className} />;
 }
-
-export const EQUIP_SLOT_LABELS: Record<EquipmentSlot, string> = {
-  weapon: 'Weapon',
-  armor: 'Armor',
-  accessory: 'Accessory',
-};
 
 /** Tier palette as CSS vars (styles.css :root --tier-*). */
 export const RARITY_COLOR_VARS: Record<EquipmentRarity, string> = {
@@ -68,48 +59,60 @@ export function fmtGrant(amount: number): string {
   return amount > 0 ? `+${amount}` : `${amount}`;
 }
 
+/** The held list padded out to `capacity` with nulls — the shape every slot row renders. A hero over capacity (a save from a build that gave it more) keeps showing every item it holds. */
+export function slotBoxes(loadout: EquipmentLoadout, capacity: number): (string | null)[] {
+  const boxes: (string | null)[] = [...loadout];
+  while (boxes.length < capacity) boxes.push(null);
+  return boxes;
+}
+
 interface EquipmentSlotGridProps {
   loadout: EquipmentLoadout;
+  capacity: number;
   equipmentLookup: Record<string, EquipmentDefinition>;
   /** Long-press on a filled slot. Omit for an inert grid. */
   onInspect?: (itemId: string) => void;
-  /** Slot to mark with the .target outline — where an incoming item would land. */
-  highlightSlot?: EquipmentSlot | null;
+  /** Slot index to mark with the .target outline — where an incoming item would land. */
+  highlightIndex?: number | null;
 }
 
 interface EquipSlotBoxProps {
-  slot: EquipmentSlot;
+  index: number;
   item: EquipmentDefinition | null;
   onInspect?: (itemId: string) => void;
   highlighted?: boolean;
 }
 
 // Its own component because useLongPress is a hook. Tap does nothing; hold inspects.
-function EquipSlotBox({ slot, item, onInspect, highlighted }: EquipSlotBoxProps) {
+function EquipSlotBox({ index, item, onInspect, highlighted }: EquipSlotBoxProps) {
   const longPress = useLongPress(item && onInspect ? () => onInspect(item.id) : undefined);
   return (
     <button
       type="button"
       className={`equip-slot-box${item ? ' filled' : ' empty'}${highlighted ? ' target' : ''}`}
       style={item ? ({ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties) : undefined}
-      aria-label={item ? `${EQUIP_SLOT_LABELS[slot]}: ${item.name}` : `${EQUIP_SLOT_LABELS[slot]} slot, empty`}
+      aria-label={item ? `Item slot ${index + 1}: ${item.name}` : `Item slot ${index + 1}, empty`}
       {...longPress}
     >
-      <EquipmentIcon item={item} slot={slot} className="equip-slot-icon" />
+      <EquipmentIcon item={item} className="equip-slot-icon" />
       <span className="equip-slot-item">{item ? item.name : 'Empty'}</span>
     </button>
   );
 }
 
-/** Read-only equip-slot boxes; a filled box's only interaction is a long-press to inspect. */
-export function EquipmentSlotGrid({ loadout, equipmentLookup, onInspect, highlightSlot }: EquipmentSlotGridProps) {
+/** Read-only item-slot boxes, one per slot the hero has; a filled box's only interaction is a long-press to inspect. */
+export function EquipmentSlotGrid({ loadout, capacity, equipmentLookup, onInspect, highlightIndex }: EquipmentSlotGridProps) {
   return (
     <div className="equip-slot-row">
-      {EQUIP_SLOT_ORDER.map((slot) => {
-        const itemId = loadout[slot];
-        const item = itemId ? equipmentLookup[itemId] : null;
-        return <EquipSlotBox key={slot} slot={slot} item={item} onInspect={onInspect} highlighted={slot === highlightSlot} />;
-      })}
+      {slotBoxes(loadout, capacity).map((itemId, index) => (
+        <EquipSlotBox
+          key={index}
+          index={index}
+          item={itemId ? (equipmentLookup[itemId] ?? null) : null}
+          onInspect={onInspect}
+          highlighted={index === highlightIndex}
+        />
+      ))}
     </div>
   );
 }
@@ -156,7 +159,7 @@ interface EquipmentInfoPanelProps {
 }
 
 /** Fixed-size detail readout, same `.move-info-panel` box as MoveInfoPanel. */
-export function EquipmentInfoPanel({ item, placeholder = 'Tap an equipped item to see what it does.' }: EquipmentInfoPanelProps) {
+export function EquipmentInfoPanel({ item, placeholder = 'Tap a held item to see what it does.' }: EquipmentInfoPanelProps) {
   const grants = item ? (Object.entries(item.statGrants) as [StatKey, number][]) : [];
   const grantedPassives = item?.grantsPassiveIds ?? [];
   const grantedStatuses = item?.grantsStatusIds ?? [];
@@ -166,7 +169,7 @@ export function EquipmentInfoPanel({ item, placeholder = 'Tap an equipped item t
         <>
           <div className="move-info-head">
             <span className="move-info-name">{item.name}</span>
-            <span className="move-info-kind">{EQUIP_SLOT_LABELS[item.slot]}</span>
+            <span className="move-info-kind">{RARITY_LABELS[item.rarity]}</span>
           </div>
           {grants.length > 0 && (
             <div className="detail-modifier-list">
