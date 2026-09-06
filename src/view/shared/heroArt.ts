@@ -28,6 +28,8 @@ import revenantArt from '../../../art/heroes/starters/revenant.png';
 import sorrowArt from '../../../art/heroes/sorrow.png';
 import ironWardenArt from '../../../art/heroes/ironwarden.png';
 import valorArt from '../../../art/heroes/starters/valor.png';
+import valorAttackArt from '../../../art/heroes/starters/valorattack.png';
+import valorHurtArt from '../../../art/heroes/starters/valordamaged.png';
 import gallantArt from '../../../art/heroes/gallant.png';
 import clockworkArt from '../../../art/heroes/starters/clockwork.png';
 import steamColossusArt from '../../../art/heroes/steamcolossus.png';
@@ -184,3 +186,18 @@ export const heroArt: Partial<Record<string, string>> = {
 for (const championId of CHAMPION_IDS) {
   heroArt[unsealedIdFor(championId)] = heroArt[championId];
 }
+
+/**
+ * The pose a figure cuts to for the length of one strike, then back
+ * (styles.css, `.striking`). Keyed like `heroArt` and just as optional — a
+ * hero with no entry keeps its idle sprite while it acts, so the roster can
+ * grow a second frame one hero at a time.
+ */
+export const heroAttackArt: Partial<Record<string, string>> = {
+  valor: valorAttackArt,
+};
+
+/** The frame a figure holds while the console is narrating a hit landing on it. Optional the same way. */
+export const heroHurtArt: Partial<Record<string, string>> = {
+  valor: valorHurtArt,
+};

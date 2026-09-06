@@ -89,6 +89,14 @@ export interface BeatFlavor {
   dramaticEntrance?: true;
   /** The fight's opening beat (openingBeats.ts). Carries no events, so beatSfx has to be told what it is. */
   engagement?: true;
+  /**
+   * Whoever is mid-action on this beat — the figure holds its action frame
+   * (styles.css `.striking`). Stamped from the declaration through every beat
+   * the action goes on to produce: the damage, what it afflicted, the KO. So
+   * the pose is up for exactly as long as the console is still talking about
+   * that move, and drops on the first beat that isn't about it.
+   */
+  strikeCombatantId?: string;
 }
 
 export interface Beat extends BeatFlavor {
@@ -97,6 +105,29 @@ export interface Beat extends BeatFlavor {
   banner: string;
   popups: BeatPopup[];
 }
+
+/**
+ * Everything a declared move can go on to emit. While the stream stays inside
+ * this set the actor is still mid-move, so its figure keeps its action frame;
+ * the first event outside it (a round boundary, a DoT tick, a switch, the Pact)
+ * ends the action and puts the figure back at rest.
+ */
+const ACTION_EVENTS: ReadonlySet<CombatEvent['type']> = new Set([
+  'MoveDeclared',
+  'MoveUsed',
+  'ManaChanged',
+  'ManaGranted',
+  'DamageDealt',
+  'HpChanged',
+  'Healed',
+  'Fainted',
+  'StatChanged',
+  'StatusApplied',
+  'StatusRemoved',
+  'StatusDetonated',
+  'PassiveTriggered',
+  'ActionBlocked',
+]);
 
 /** The card vocabulary (ATK, WIS), not the engine's field name — StatChangedEvent.stat is a bare string. */
 function statLabel(stat: string): string {
@@ -124,14 +155,18 @@ export function buildBeats(
   // Events with no beat of their own ride along on the next beat that has one.
   let carry: CombatEvent[] = [];
   let i = 0;
+  // Who declared the move currently being narrated, held until an event that
+  // can't belong to it comes through (ACTION_EVENTS below).
+  let striker: string | undefined;
 
   function push(applied: CombatEvent[], banner: string, popups: BeatPopup[] = [], flavor: BeatFlavor = {}) {
-    beats.push({ events: [...carry, ...applied], banner, popups, ...flavor });
+    beats.push({ events: [...carry, ...applied], banner, popups, strikeCombatantId: striker, ...flavor });
     carry = [];
   }
 
   while (i < events.length) {
     const e = events[i];
+    if (!ACTION_EVENTS.has(e.type)) striker = undefined;
 
     switch (e.type) {
       case 'RoundStarted':
@@ -142,6 +177,7 @@ export function buildBeats(
         break;
 
       case 'MoveDeclared': {
+        striker = e.combatantId;
         const applied: CombatEvent[] = [e];
         i++;
         let manaSpent: number | undefined;

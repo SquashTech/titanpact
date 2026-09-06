@@ -996,6 +996,7 @@ export function FightScreen({
           onInspect={() => setInspecting(id)}
           popup={popups[id]}
           statCtx={statCtx}
+          striking={beat?.strikeCombatantId === id}
         />
       );
     }

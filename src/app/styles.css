@@ -2130,6 +2130,19 @@ textarea,
   height: 28px;
 }
 
+/* Which way is "at the enemy". The strike lean goes toward the other row and
+   the hit recoil away from it, so both are read off the row the figure is
+   standing in rather than being authored twice. */
+.team-row.ally {
+  --strike-reach: -7px;
+  --hit-knock: 7px;
+}
+
+.team-row.enemy {
+  --strike-reach: 7px;
+  --hit-knock: -7px;
+}
+
 /* 96px is exactly 2x the 48px source (art/heroes/*.png). The old 56px was
    1.167x — uneven pixel doubling, visible as inconsistent pixel widths
    across every portrait in the game. The drop-shadow (not box-shadow)
@@ -2144,7 +2157,11 @@ textarea,
      the stage upward (it's flex-end aligned), which pushes it off the
      platform and out of alignment with its opposite number across the row. */
   margin: 0 0 8px;
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.65));
+  /* Tokenised because the strike/hit keyframes below replace `filter` wholesale
+     to brighten the sprite, and would drop the figure's shadow for the length of
+     the animation if they had to restate it by hand. */
+  --figure-shadow: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.65));
+  filter: var(--figure-shadow);
 }
 
 /* Name + types, one pill instead of a bare row inside a bordered card. The
@@ -3434,6 +3451,117 @@ textarea,
     box-shadow: 0 0 0 rgba(217, 83, 79, 0);
     filter: brightness(1);
     transform: translateX(0);
+  }
+}
+
+/* ── The figure's own animation ──────────────────────────────────────────
+   Everything above this block animates the CARD. On the battlefield there is
+   no card left to animate (see .team-row, far above: no box, no border, no
+   background), so the only thing that can carry an attack is the sprite.
+
+     .striking   a STATE, not a one-shot: the actor cuts to its action frame
+                 (HeroPortrait's `pose`, heroArt.ts `heroAttackArt`) and leans
+                 at the other row, and stays there for every beat the console
+                 spends on that move — the declaration, the damage it dealt,
+                 the KO. It drops on the first beat that isn't about it. Held
+                 rather than flashed because a beat lasts as long as the player
+                 takes to tap: a pose that expires on a timer would be gone by
+                 the time they read the damage line it belongs to.
+     .hit-struck the one-shot half — the figure it lands on snaps back,
+     .hit-crit   whitening on the frame of contact and settling through a short
+                 shake. It fires on the beat its damage is announced, which is
+                 a beat where the attacker's pose is already up, so the two
+                 read as one exchange without needing to be timed against
+                 each other. CombatantCard times it out in JS so the class
+                 comes back off — a class that never toggles never restarts
+                 its animation, and the next hit would play nothing.
+
+   All three replace the idle breath while they run rather than layering over
+   it: two animations writing `transform` on one element just fight. */
+.team-row .combatant-card.striking .combatant-portrait {
+  animation: hero-strike-set 200ms cubic-bezier(0.2, 0, 0.1, 1) forwards;
+}
+
+/* Eases from rest to the lean and holds there (`forwards`) — the return is the
+   class coming off, at a beat change the eye is already following. */
+@keyframes hero-strike-set {
+  0% {
+    transform: translateY(0) scale(1, 1);
+  }
+  35% {
+    transform: translateY(2px) scale(1.05, 0.95);
+  }
+  100% {
+    transform: translateY(var(--strike-reach, -7px)) scale(0.98, 1.03);
+  }
+}
+
+.team-row .combatant-card.hit-struck .combatant-portrait {
+  animation: hero-hit-struck 320ms ease-out;
+}
+
+/* Knocked back, blown out to near-white for a frame, then a two-beat shake as
+   it recovers. The white flash is doing most of the work — at 96px the
+   knockback alone is easy to miss on a busy board. */
+@keyframes hero-hit-struck {
+  0% {
+    transform: translate(0, 0) scale(1, 1);
+    filter: var(--figure-shadow) brightness(1);
+  }
+  7% {
+    transform: translate(0, var(--hit-knock, 7px)) scale(0.9, 1.07);
+    filter: var(--figure-shadow) brightness(2.4) saturate(0.2);
+  }
+  28% {
+    transform: translate(2px, calc(var(--hit-knock, 7px) * 0.45)) scale(1.06, 0.95);
+    filter: var(--figure-shadow) brightness(1.3) saturate(0.75);
+  }
+  54% {
+    transform: translate(-2px, 0) scale(1, 1);
+    filter: var(--figure-shadow) brightness(1);
+  }
+  76% {
+    transform: translate(1px, 0) scale(1, 1);
+  }
+  100% {
+    transform: translate(0, 0) scale(1, 1);
+    filter: var(--figure-shadow) brightness(1);
+  }
+}
+
+/* Same shape, further and longer, with the flash going all the way to white —
+   the sprite-level half of what crit-flash already says on the card. */
+.team-row .combatant-card.hit-crit .combatant-portrait {
+  animation: hero-hit-crit 380ms ease-out;
+}
+
+@keyframes hero-hit-crit {
+  0% {
+    transform: translate(0, 0) scale(1, 1);
+    filter: var(--figure-shadow) brightness(1);
+  }
+  6% {
+    transform: translate(0, calc(var(--hit-knock, 7px) * 1.7)) scale(0.84, 1.14);
+    filter: var(--figure-shadow) brightness(3.4) saturate(0);
+  }
+  24% {
+    transform: translate(4px, var(--hit-knock, 7px)) scale(1.09, 0.93);
+    filter: var(--figure-shadow) brightness(1.6) saturate(0.6);
+  }
+  46% {
+    transform: translate(-4px, calc(var(--hit-knock, 7px) * 0.3)) scale(1, 1);
+    filter: var(--figure-shadow) brightness(1.15);
+  }
+  68% {
+    transform: translate(3px, 0) scale(1, 1);
+    filter: var(--figure-shadow) brightness(1);
+  }
+  86% {
+    transform: translate(-1.5px, 0) scale(1, 1);
+  }
+  100% {
+    transform: translate(0, 0) scale(1, 1);
+    filter: var(--figure-shadow) brightness(1);
   }
 }
 

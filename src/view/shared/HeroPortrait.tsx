@@ -1,11 +1,16 @@
 import type { CSSProperties } from 'react';
-import { heroArt } from './heroArt';
+import { heroArt, heroAttackArt, heroHurtArt } from './heroArt';
+
+/** Each pose's frame table. A hero missing from one falls back to its idle frame, so a pose can be authored per hero. */
+const POSE_ART = { attack: heroAttackArt, hurt: heroHurtArt } as const;
 
 interface Props {
   heroId: string;
   className: string;
   /** Idle-breath seed; combat passes `combatantId` so two identical goblins don't breathe in lockstep. */
   seed?: string;
+  /** Which frame to draw. Falls back to the idle frame for a hero that has no art for the pose asked for. */
+  pose?: 'idle' | 'attack' | 'hurt';
 }
 
 /** FNV-1a; only feeds cosmetic jitter. */
@@ -19,8 +24,8 @@ function hashSeed(key: string): number {
 }
 
 /** Renders nothing for heroes without art, so callers can place it unconditionally. */
-export function HeroPortrait({ heroId, className, seed }: Props) {
-  const src = heroArt[heroId];
+export function HeroPortrait({ heroId, className, seed, pose = 'idle' }: Props) {
+  const src = (pose !== 'idle' ? POSE_ART[pose][heroId] : undefined) ?? heroArt[heroId];
   if (!src) return null;
   const h = hashSeed(seed ?? heroId);
   const idleStyle = {

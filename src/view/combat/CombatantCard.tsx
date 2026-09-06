@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { Combatant, StatContext, StatusInstance } from '../../engine/state';
 import { effectiveTypes, getCombatStatDelta, getMaxHp, getMaxMana } from '../../engine/state';
@@ -15,6 +15,49 @@ export interface Popup {
   key: number;
   text: string;
   className: string;
+}
+
+// ── Figure animation ────────────────────────────────────────────────────
+// Two things happen to the sprite itself, above the card flashes below: the
+// actor holds its action frame, and whoever it hits recoils.
+//
+// Both frames are a STATE, not a one-shot — each is up for as long as the
+// console is narrating the line that put it there (the attacker's, from
+// buildBeats' `strikeCombatantId`; the target's, from its own damage popup), so
+// a player reading at their own pace is still looking at the exchange the text
+// is describing. The recoil is the one-shot, and it fires on the beat the
+// damage is announced, which is the beat where the attacker's pose is already
+// up — so the two read as one exchange with nothing to time against.
+const HIT_REACT_MS = 460;
+
+/** Sprite-level reaction per popup class. Only what an attack does — DoT ticks keep their card flash alone. */
+const POPUP_HIT_CLASS: Record<string, string> = {
+  'popup-damage': 'hit-struck',
+  'popup-haunt': 'hit-struck',
+  'popup-conduct': 'hit-struck',
+  'popup-crit': 'hit-crit',
+};
+
+/** True for `ms` after `key` changes to a new non-null value; false again in time for the next one to replay. */
+function useOneShot(key: number | null | undefined, ms: number): boolean {
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    if (key === null || key === undefined) {
+      setLive(false);
+      return;
+    }
+    // Off for one frame first. A CSS animation restarts only when its class is
+    // removed and re-added, so a second strike arriving while the first is still
+    // running would otherwise play nothing at all.
+    setLive(false);
+    const frame = requestAnimationFrame(() => setLive(true));
+    const timer = window.setTimeout(() => setLive(false), ms);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
+  }, [key, ms]);
+  return live;
 }
 
 /** Card-level flash class per popup class (styles.css). */
@@ -46,6 +89,8 @@ interface Props {
   effBadge?: { text: string; className: string } | null;
   /** Portrait + name + type + effBadge only (targeting panel). */
   compact?: boolean;
+  /** This figure is the one mid-move — it holds its action frame until the console moves on (buildBeats' `strikeCombatantId`). */
+  striking?: boolean;
   /** Field Effect plus the board a conditional passive reads (state.ts StatContext). Omitted, neither hook applies. */
   statCtx?: StatContext;
 }
@@ -101,8 +146,12 @@ export function CombatantCard({
   effBadge,
   compact,
   statCtx,
+  striking,
 }: Props) {
   const [inspectingStatus, setInspectingStatus] = useState<string | null>(null);
+  const hitClass = popup ? POPUP_HIT_CLASS[popup.className] : undefined;
+  // Keyed on the popup, not on the class: the same figure taking the same kind of hit twice running must replay.
+  const struck = useOneShot(hitClass ? popup!.key : null, HIT_REACT_MS);
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = Math.max(0, combatant.currentHp / maxHp);
@@ -122,6 +171,8 @@ export function CombatantCard({
   if (acting) classes.push('acting');
   if (effBadge) classes.push(effBadge.className);
   if (popup && POPUP_FLASH_CLASS[popup.className]) classes.push(POPUP_FLASH_CLASS[popup.className]);
+  if (striking) classes.push('striking');
+  if (struck && hitClass) classes.push(hitClass);
 
   // effectiveTypes, not hero.types — a type-graft Evolution should retint the card too.
   const types = effectiveTypes(hero, combatant);
@@ -161,7 +212,15 @@ export function CombatantCard({
       )}
       <div className="combatant-stage">
         <span className="combatant-platform" aria-hidden="true" />
-        <HeroPortrait heroId={hero.id} seed={combatant.combatantId} className="combatant-portrait" />
+        <HeroPortrait
+          heroId={hero.id}
+          seed={combatant.combatantId}
+          className="combatant-portrait"
+          // Held the same way the pose is, and for the same reason: the frame stays up for as
+          // long as the console is still on the line that put it there. Taking a hit wins over
+          // landing one, so a hero that swung and got answered reads as the one who came off worse.
+          pose={hitClass ? 'hurt' : striking ? 'attack' : 'idle'}
+        />
       </div>
       {/* Always rendered so the row reserves its height whether or not this card has a badge. */}
       <div className="eff-badge-row">
