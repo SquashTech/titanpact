@@ -93,10 +93,10 @@ the option rather than advising against it (2026-09-06, per user direction). Thr
 **The Evolution needed no lock of its own.** `LevelUpScreen` already refuses to bank or
 auto-close while one is pending, and `EvolutionScreen` has no decline. What was missing was a
 guarantee the player *reaches* one — which is what the focus lock is. With every point landing
-on one hero the fork arrives on a schedule: 4 XP takes Valor to level 3, the Skirmish's 8 takes
-her to 5, so the Evolution surfaces on the same level-up screen that hands over Flurry. A test
-walks that arithmetic against the payout table and asserts *which node* it lands on, so retuning
-either table fails loudly rather than quietly moving the beat.
+on one hero the fork arrives on a schedule: level 2 after the opener, 4 after the Skirmish, 5
+after the warband — the level-up screen immediately before the Guild Hall and the Guardian (§6).
+A test walks that arithmetic against the payout table and asserts *which node* it lands on, so
+retuning either table fails loudly rather than quietly moving the beat.
 
 The focus lock has one consequence worth knowing: the screen now closes on a pool the
 locked-out heroes could still buy. `LevelUpScreen.leave()` therefore banks any spendable
@@ -139,23 +139,31 @@ is the player's choice and Storm Lash would otherwise beat her.
 
 ## 6. Payouts
 
-`TUTORIAL_PAYOUTS` replaces the roll for Act 1's four fights — the tutorial has to arrive at its
-Guardian with a specific amount of power, not a distribution of it.
+`TUTORIAL_PAYOUTS` replaces the roll for Act 1's four fights, and its totals are **a normal Act
+1's**. A tutorial that pays better than the game would make erasing your profile the strongest
+opening move in the run, which is nonsense.
 
-| Node | XP | Gold |
-| --- | --- | --- |
-| Monsters (opener) | 4 | 25 |
-| Skirmish | 8 | 30 |
-| Monsters (warband) | 10 | 65 |
-| Guardian | 4 | — |
+| Node | Tutorial XP | Normal XP | Tutorial gold | Normal gold (mean) |
+| --- | --- | --- | --- | --- |
+| Monsters (opener) | 2 | 2 | 20 | 20 |
+| Skirmish | 4 | 4 | 20 | 20 |
+| Monsters (warband) | **4** | 3 | 37 | 37.5 |
+| Guardian | **3** | 4 | 0 | 0 |
+| **Total** | **13** | **13** | **77** | **~77.5** |
 
-**22 XP before the Guardian** against the **10** it costs to take one hero from level 1 to the
-Evolution at 5. The focus lock (§4) makes that a schedule rather than a hope: every point lands
-on Valor, so 4 puts her at level 3 and the Skirmish's 8 puts her at 5. Two tests hold it — one on
-the floor, one on which node the fork actually lands after.
+**One point is moved, not added.** Normal income is **9 XP before the Guardian** and reaching the
+Evolution costs **10**, so on the true table Valor evolves one fight too late — after the act's
+apex fight rather than before it, which is the one place that lesson has to land. Shifting a point
+from the Guardian to the warband buys that without buying any power.
 
-**160 gold at the Guild Hall** (40 starting + 125) against a 50-gold hero, a 30-gold Rare and a
-20-gold contract. Valor tells them to buy the body.
+**The focus lock (§4) is what makes 10 enough rather than lucky.** Every point goes to Valor, so
+the schedule is exact: level 2 after the opener, 4 after the Skirmish, **5 after the warband** —
+the Level Up screen immediately before the Guild Hall and the Guardian. There is no slack in it at
+all, which is why two tests hold both ends: a floor (the fork must be reachable before the boss,
+and on that node) and a ceiling (neither XP nor gold may exceed a normal act's).
+
+Everything else the act pays is already the normal roll — the equipment drop table, the opener's
+guaranteed Gem, the act-end Recruit Contract. Only these two columns were ever scripted.
 
 ## 7. How the script is wired
 

@@ -78,20 +78,26 @@ export const TUTORIAL_ENCOUNTERS: Partial<Record<MapNodeType, TutorialEncounter>
 };
 
 /**
- * What a scripted win pays, replacing the normal roll. `TUTORIAL_LOCKS.focusHeroId` sends every
- * point to Valor until she evolves, so these figures are a schedule rather than a hope: 4 takes
- * her to level 3, the Skirmish's 8 takes her to 5, and the Evolution therefore lands on the
- * level-up screen straight after the Skirmish — the same beat that hands over Flurry. The
- * warband's 10 then arrives with the lock already lifted and the whole roster spendable.
+ * What a scripted win pays, replacing the roll. The totals are a NORMAL Act 1's, deliberately:
+ * a tutorial that pays better than the game would make erasing your profile the strongest opening
+ * move, which is nonsense. Against `trainingPointsFor` at act 1 this is 13 XP for 13, and against
+ * `goldRewardFor`'s bands it is 77 gold against a ~77.5 average.
  *
- * 22 XP before the Guardian against a 10-point cost to reach level 5; 160 gold at the Guild
- * Hall against a 50-gold hero.
+ * One point is MOVED, not added: the warband pays 4 where a normal battle pays 3, and the
+ * Guardian pays 3 where a normal one pays 4. Normal income is 9 before the Guardian and reaching
+ * the Evolution costs 10, so on the true table Valor would evolve one fight too late — after the
+ * act's apex fight rather than before it, which is the one place the lesson has to land. Moving a
+ * point earlier buys that without buying any power.
+ *
+ * `TUTORIAL_LOCKS.focusHeroId` is what makes 10 enough rather than lucky: every point goes to
+ * Valor, so 2 puts her at level 2, the Skirmish's 4 at level 4, and the warband's 4 at 5. There is
+ * no slack in that — `test/tutorial.test.ts` holds both ends, the floor and the ceiling.
  */
 export const TUTORIAL_PAYOUTS: Partial<Record<MapNodeType, TutorialPayout>> = {
-  fight: { xp: 4, gold: 25 },
-  skirmish: { xp: 8, gold: 30 },
-  battle: { xp: 10, gold: 65 },
-  boss: { xp: 4, gold: 0 },
+  fight: { xp: 2, gold: 20 },
+  skirmish: { xp: 4, gold: 20 },
+  battle: { xp: 4, gold: 37 },
+  boss: { xp: 3, gold: 0 },
 };
 
 // --- Dialogue ---

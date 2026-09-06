@@ -6,6 +6,7 @@ import { moves } from '../src/data/moves';
 import { locations } from '../src/data/locations';
 import { typeChart } from '../src/data/typechart';
 import { progressionTable } from '../src/data/progression';
+import { trainingPointsFor, type XpNodeType } from '../src/run/difficulty';
 import {
   TUTORIAL_ENCOUNTERS,
   TUTORIAL_FIGHT_CUES,
@@ -449,7 +450,10 @@ test('tutorial: the focus lock reaches the Evolution on the payouts as written',
     if (level >= EVOLUTION_LEVEL) reachedAfter.push(node);
   }
   assert.ok(reachedAfter.length > 0, 'Act 1 never reaches the Evolution even with every point on one hero');
-  assert.strictEqual(reachedAfter[0], 'skirmish', 'the Evolution should land on the Skirmish level-up, beside the forced recruit');
+  // The warband, not the Guardian. The payouts are a normal act's total (see the ceiling test
+  // below), and on a normal act's ORDER the fork would land one fight too late — after the apex
+  // fight instead of before it. Landing it here is the entire reason a point sits where it does.
+  assert.strictEqual(reachedAfter[0], 'battle', 'the Evolution must be taken BEFORE the Guardian, not after');
 });
 
 test('tutorial: the field lock pins the caster at its nodes and nowhere else', () => {
@@ -578,4 +582,29 @@ test('tutorial: the spread cue is talking about a move the forced recruit actual
   }
   // The "no penalty for the second one" claim is CLAUDE.md's locked no-spread-reduction rule.
   assert.ok(cue.lines.length > 0);
+});
+
+test('tutorial: the scripted act never pays better than a normal one', () => {
+  // The point of the ceiling: if the tutorial out-pays the game, erasing your profile becomes the
+  // strongest opening move in the run. It is allowed to REARRANGE income — a point sits one fight
+  // earlier so the Evolution lands before the Guardian — but never to add any.
+  const fights = TUTORIAL_ROW_TYPES.filter((type) => TUTORIAL_PAYOUTS[type]);
+
+  const tutorialXp = fights.reduce((sum, type) => sum + (TUTORIAL_PAYOUTS[type]?.xp ?? 0), 0);
+  const normalXp = fights.reduce((sum, type) => sum + trainingPointsFor(type as XpNodeType, 1), 0);
+  assert.ok(
+    tutorialXp <= normalXp,
+    `the scripted act pays ${tutorialXp} XP where a normal Act 1 pays ${normalXp} — a tutorial must not be the best way to win`
+  );
+
+  // Gold has no importable table: `goldRewardFor` lives in src/app, which the node build excludes.
+  // These are its Act 1 bands (30-45 for a battle, 15-25 otherwise, nothing for a boss) as means.
+  // If that function changes, change these with it.
+  const normalGoldMean: Partial<Record<string, number>> = { fight: 20, skirmish: 20, battle: 37.5, boss: 0 };
+  const tutorialGold = fights.reduce((sum, type) => sum + (TUTORIAL_PAYOUTS[type]?.gold ?? 0), 0);
+  const normalGold = fights.reduce((sum, type) => sum + (normalGoldMean[type] ?? 0), 0);
+  assert.ok(
+    tutorialGold <= normalGold,
+    `the scripted act pays ${tutorialGold} gold where a normal Act 1 averages ${normalGold}`
+  );
 });
