@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useState, type CSSProperties, type DragEvent } from 'react';
 import type { StatKey } from '../../engine/content';
 import type { EquipmentDefinition, EquipmentLoadout, EquipmentRarity } from '../../run/equipment';
 import { StatGlyph, STAT_LABELS } from './StatBars';
@@ -8,6 +8,8 @@ import { useLongPress } from './MoveTile';
 import { passives } from '../../data/passives';
 import { PassiveGlyph } from './passiveIcons';
 import { statuses } from '../../data/statuses';
+import { ElementGlyph } from './elementIcons';
+import { getTypeColor } from '../combat/typeColors';
 
 interface EquipmentIconProps {
   item: EquipmentDefinition | null;
@@ -66,53 +68,187 @@ export function slotBoxes(loadout: EquipmentLoadout, capacity: number): (string 
   return boxes;
 }
 
+/** One line naming what an item does, for a tooltip or an aria-label — the text the box itself no longer prints. */
+export function itemSummaryLine(item: EquipmentDefinition): string {
+  const stats = (Object.entries(item.statGrants) as [StatKey, number][])
+    .filter(([, amount]) => amount)
+    .map(([stat, amount]) => `${STAT_LABELS[stat]} ${fmtGrant(amount)}`);
+  const granted = (item.grantsPassiveIds ?? []).flatMap((id) => (passives[id] ? [passives[id].name] : []));
+  const forces = (item.grantsStatusIds ?? []).flatMap(({ statusId, magnitude }) =>
+    statuses[statusId] ? [`${statuses[statusId].name} +${magnitude}`] : []
+  );
+  const parts = [...stats, ...granted, ...forces];
+  return `${item.name} — ${RARITY_LABELS[item.rarity]}${parts.length > 0 ? `, ${parts.join(', ')}` : ''}`;
+}
+
+interface ItemBoxProps {
+  item: EquipmentDefinition | null;
+  /** Dense variant for a row inside another row (the equip compare table). */
+  compact?: boolean;
+  /** Tap. Where a surface has no other verb this is "show me what this is". */
+  onTap?: () => void;
+  /** Hold. Used where tap already means something else (Manage Roster's move). */
+  onLongPress?: () => void;
+  /** Extra state classes: selected / drop-target / drag-over / target. */
+  className?: string;
+  draggable?: boolean;
+  onDragStart?: (e: DragEvent) => void;
+  onDragOver?: (e: DragEvent) => void;
+  onDragLeave?: () => void;
+  onDrop?: (e: DragEvent) => void;
+}
+
+/**
+ * How an item appears everywhere it is part of a HERO'S KIT: the icon, in a rarity-edged box,
+ * and nothing written out (2026-09-06, per user direction). A hero can hold five now, and the
+ * compare table shows six heroes at once, so printing a name per box cost more room than the
+ * names were worth. The name and the full effect list are one tap away, and they stay in the
+ * `aria-label` and the `title` so nothing is actually lost — only unprinted.
+ *
+ * Not used for an item that is the SUBJECT of a screen (the forced-equip spotlight) or the face
+ * of a one-item choice (a reward card, the Guild Hall shelf) — those are read, not scanned.
+ */
+export function ItemBox({
+  item,
+  compact,
+  onTap,
+  onLongPress,
+  className,
+  draggable,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+}: ItemBoxProps) {
+  const longPress = useLongPress(onLongPress, onTap);
+  return (
+    <button
+      type="button"
+      className={`item-box${compact ? ' is-compact' : ''}${item ? ' filled' : ' empty'}${className ? ` ${className}` : ''}`}
+      style={item ? ({ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties) : undefined}
+      aria-label={item ? itemSummaryLine(item) : 'Empty item slot'}
+      title={item ? itemSummaryLine(item) : undefined}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      {...longPress}
+    >
+      <EquipmentIcon item={item} className="item-box-icon" />
+    </button>
+  );
+}
+
+/**
+ * What an item does, as marks rather than words: a stat glyph and its number, an element glyph
+ * for an Elemental Force, a passive's own glyph. The card face for an item that is being CHOSEN
+ * (a reward pick, the Guild Hall shelf) — those cards can't drop to a bare box, because picking
+ * one of three by silhouette is not a choice, but they don't need "+50 Attack · Sunder" spelled
+ * out either. The full sentence is still one tap away.
+ */
+export function ItemEffectChips({ item }: { item: EquipmentDefinition }) {
+  const stats = (Object.entries(item.statGrants) as [StatKey, number][]).filter(([, amount]) => amount);
+  const forces = item.grantsStatusIds ?? [];
+  const granted = item.grantsPassiveIds ?? [];
+  if (stats.length === 0 && forces.length === 0 && granted.length === 0) {
+    return <span className="item-chip is-neutral">No effect</span>;
+  }
+  return (
+    <>
+      {stats.map(([stat, amount]) => (
+        <span key={stat} className={`item-chip ${amount > 0 ? 'is-gain' : 'is-loss'}`} title={`${STAT_LABELS[stat]} ${fmtGrant(amount)}`}>
+          <StatGlyph stat={stat} className="item-chip-glyph" tone="inherit" />
+          {fmtGrant(amount)}
+        </span>
+      ))}
+      {forces.map(({ statusId, magnitude }) => {
+        const def = statuses[statusId];
+        if (!def) return null;
+        // Force is worth its magnitude only to a hero of that type, so it wears the type's colour.
+        return (
+          <span
+            key={statusId}
+            className="item-chip is-gain"
+            style={def.forceType ? ({ '--chip-tint': getTypeColor(def.forceType) } as CSSProperties) : undefined}
+            title={`${def.name} +${magnitude}`}
+          >
+            {def.forceType ? <ElementGlyph type={def.forceType} className="item-chip-glyph" /> : null}+{magnitude}
+          </span>
+        );
+      })}
+      {granted.map((passiveId) => {
+        const def = passives[passiveId];
+        if (!def) return null;
+        // A passive carries no number, and its glyph is derived from what it DOES — so an
+        // Arcane Reservoir draws the same mana drop a +20 Mana grant would. The leading mark
+        // is what separates "grants an effect" from "grants a stat" at a glance.
+        return (
+          <span key={passiveId} className="item-chip is-effect" title={`${def.name} — ${def.description}`}>
+            <span className="item-chip-mark" aria-hidden="true">
+              +
+            </span>
+            <PassiveGlyph passiveId={passiveId} className="item-chip-glyph" />
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
+/**
+ * The tap target's payload: the full readout, dismissed by tapping anywhere. Every surface that
+ * shows an ItemBox wires this, so "tap an item to see what it does" is one behaviour and not six.
+ */
+export function ItemSummaryPopup({ item, onClose }: { item: EquipmentDefinition | null; onClose: () => void }) {
+  if (!item) return null;
+  return (
+    <div
+      className="log-overlay"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClose();
+      }}
+    >
+      <div className="log-panel move-popup-panel">
+        <EquipmentInfoPanel item={item} />
+        <div className="move-popup-hint">Tap anywhere to close</div>
+      </div>
+    </div>
+  );
+}
+
 interface EquipmentSlotGridProps {
   loadout: EquipmentLoadout;
   capacity: number;
   equipmentLookup: Record<string, EquipmentDefinition>;
-  /** Long-press on a filled slot. Omit for an inert grid. */
+  /** Tap on a filled slot. Omit and the grid summarises the item itself; pass it to route the tap somewhere else. */
   onInspect?: (itemId: string) => void;
   /** Slot index to mark with the .target outline — where an incoming item would land. */
   highlightIndex?: number | null;
 }
 
-interface EquipSlotBoxProps {
-  index: number;
-  item: EquipmentDefinition | null;
-  onInspect?: (itemId: string) => void;
-  highlighted?: boolean;
-}
-
-// Its own component because useLongPress is a hook. Tap does nothing; hold inspects.
-function EquipSlotBox({ index, item, onInspect, highlighted }: EquipSlotBoxProps) {
-  const longPress = useLongPress(item && onInspect ? () => onInspect(item.id) : undefined);
-  return (
-    <button
-      type="button"
-      className={`equip-slot-box${item ? ' filled' : ' empty'}${highlighted ? ' target' : ''}`}
-      style={item ? ({ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties) : undefined}
-      aria-label={item ? `Item slot ${index + 1}: ${item.name}` : `Item slot ${index + 1}, empty`}
-      {...longPress}
-    >
-      <EquipmentIcon item={item} className="equip-slot-icon" />
-      <span className="equip-slot-item">{item ? item.name : 'Empty'}</span>
-    </button>
-  );
-}
-
-/** Read-only item-slot boxes, one per slot the hero has; a filled box's only interaction is a long-press to inspect. */
+/**
+ * A hero's slots as icon boxes, one per slot it has. Read-only: the only interaction is a tap,
+ * which shows what the item does — handled here unless `onInspect` routes it to the caller's own
+ * popup (HeroPreviewOverlay already owns one for moves and relics).
+ */
 export function EquipmentSlotGrid({ loadout, capacity, equipmentLookup, onInspect, highlightIndex }: EquipmentSlotGridProps) {
+  const [summaryId, setSummaryId] = useState<string | null>(null);
   return (
     <div className="equip-slot-row">
-      {slotBoxes(loadout, capacity).map((itemId, index) => (
-        <EquipSlotBox
-          key={index}
-          index={index}
-          item={itemId ? (equipmentLookup[itemId] ?? null) : null}
-          onInspect={onInspect}
-          highlighted={index === highlightIndex}
-        />
-      ))}
+      {slotBoxes(loadout, capacity).map((itemId, index) => {
+        const item = itemId ? (equipmentLookup[itemId] ?? null) : null;
+        return (
+          <ItemBox
+            key={index}
+            item={item}
+            className={index === highlightIndex ? 'target' : undefined}
+            onTap={item ? () => (onInspect ? onInspect(item.id) : setSummaryId(item.id)) : undefined}
+          />
+        );
+      })}
+      {!onInspect && <ItemSummaryPopup item={summaryId ? (equipmentLookup[summaryId] ?? null) : null} onClose={() => setSummaryId(null)} />}
     </div>
   );
 }

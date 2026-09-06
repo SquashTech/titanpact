@@ -3,12 +3,13 @@ import { playSfx } from '../../audio/sfx';
 import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition, StatKey } from '../../engine/content';
+import type { EquipmentDefinition } from '../../run/equipment';
 import type { RosterEntry, RunState } from '../../run/state';
 import { equipToRoster, RunProgressError } from '../../run/runProgress';
 import { itemSlotsFor } from '../../run/progression';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
-import { EquipmentEffectList, EquipmentIcon, fmtGrant, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
+import { EquipmentEffectList, EquipmentIcon, ItemSummaryPopup, fmtGrant, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
 import { EquipCompareRow } from './EquipCompareRow';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterPeek } from './RosterPeek';
@@ -40,6 +41,8 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   /** Roster id whose card is mid seating animation; every other card is inert until it finishes. */
   const [seatingRosterId, setSeatingRosterId] = useState<string | null>(null);
+  /** A held item's readout, opened by holding one of a row's item boxes. */
+  const [summaryItem, setSummaryItem] = useState<EquipmentDefinition | null>(null);
 
   const current = queue[0];
   const itemLookup = current ? equipment[current.itemId] : undefined;
@@ -137,6 +140,7 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
               alreadyHeld={entry.equipment.includes(item.id)}
               onEquip={(replaceIndex) => handleEquip(entry.rosterId, replaceIndex)}
               onPreview={() => setPreviewEntry({ hero, entry })}
+              onInspectItem={setSummaryItem}
             />
           );
         })}
@@ -166,6 +170,8 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
           </div>
         </div>
       )}
+
+      <ItemSummaryPopup item={summaryItem} onClose={() => setSummaryItem(null)} />
 
       {previewEntry && (
         <HeroPreviewOverlay

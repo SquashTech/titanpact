@@ -11,7 +11,7 @@ import { getTypeAbbr, getTypeColor, getTypeColorRgb } from '../combat/typeColors
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { EquipmentEffectList, EquipmentIcon, fmtGrant, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
+import { EquipmentEffectList, EquipmentIcon, ItemEffectChips, fmtGrant, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
 import { HeroDossierOverlay } from './HeroDossierOverlay';
 
 interface Props {
@@ -66,18 +66,6 @@ function CompendiumHeroTile({ hero, stars, onOpen }: { hero: HeroDefinition; sta
   );
 }
 
-/** Card-face summary, folding passive/status grants in so a stat-less item never reads as blank. Uses the short STAT_LABELS, unlike EquipChoiceCard's full-word `itemHighlights` — not interchangeable. */
-function itemHighlights(item: EquipmentDefinition): string[] {
-  const statParts = Object.entries(item.statGrants)
-    .filter(([, amount]) => amount)
-    .map(([stat, amount]) => `${(amount as number) > 0 ? '+' : ''}${amount} ${STAT_LABELS[stat as StatKey] ?? stat}`);
-  const passiveParts = (item.grantsPassiveIds ?? []).flatMap((id) => (passives[id] ? [passives[id].name] : []));
-  const statusParts = (item.grantsStatusIds ?? []).flatMap(({ statusId, magnitude }) =>
-    statuses[statusId] ? [`${statuses[statusId].name} +${magnitude}`] : []
-  );
-  return [...statParts, ...passiveParts, ...statusParts];
-}
-
 interface CompendiumEquipmentCardProps {
   item: EquipmentDefinition;
   onInspect: () => void;
@@ -85,7 +73,6 @@ interface CompendiumEquipmentCardProps {
 
 /** Read-only EquipChoiceCard: tap opens the detail popup, no select-then-claim. */
 function CompendiumEquipmentCard({ item, onInspect }: CompendiumEquipmentCardProps) {
-  const highlights = itemHighlights(item);
   return (
     <button
       type="button"
@@ -101,7 +88,9 @@ function CompendiumEquipmentCard({ item, onInspect }: CompendiumEquipmentCardPro
         <div className="equip-cache-card-meta">
           <span className="equip-cache-card-rarity">{RARITY_LABELS[item.rarity]}</span>
         </div>
-        <div className="equip-cache-card-stats">{highlights.length > 0 ? highlights.join(' · ') : 'No effect'}</div>
+        <div className="equip-cache-card-stats">
+          <ItemEffectChips item={item} />
+        </div>
       </div>
     </button>
   );

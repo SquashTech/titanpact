@@ -17,7 +17,7 @@ import { useLongPress } from '../shared/MoveTile';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { EquipmentIcon, EquipmentInfoPanel, slotBoxes } from '../shared/EquipmentBox';
+import { ItemBox, ItemSummaryPopup, slotBoxes } from '../shared/EquipmentBox';
 
 const DRAG_KEY = 'text/titanpact-equip-move';
 
@@ -31,20 +31,6 @@ interface Props {
 interface SlotRef {
   rosterId: string;
   index: number;
-}
-
-interface EquipSlotButtonProps {
-  item: EquipmentDefinition | null;
-  index: number;
-  isSelectedSource: boolean;
-  isDropTarget: boolean;
-  isDragOver: boolean;
-  onClick: () => void;
-  onLongPress: () => void;
-  onDragStart: (e: DragEvent) => void;
-  onDragOver: (e: DragEvent) => void;
-  onDragLeave: () => void;
-  onDrop: (e: DragEvent) => void;
 }
 
 interface RosterMgmtHeadProps {
@@ -69,40 +55,6 @@ function RosterMgmtHead({ hero, entry, onInspect }: RosterMgmtHeadProps) {
         i
       </button>
     </div>
-  );
-}
-
-/** Own component because useLongPress is a hook. Tap selects/moves (caller); hold shows the item's description. */
-function EquipSlotButton({
-  item,
-  index,
-  isSelectedSource,
-  isDropTarget,
-  isDragOver,
-  onClick,
-  onLongPress,
-  onDragStart,
-  onDragOver,
-  onDragLeave,
-  onDrop,
-}: EquipSlotButtonProps) {
-  const longPress = useLongPress(item ? onLongPress : undefined, onClick);
-  return (
-    <button
-      className={`equip-slot-box${item ? ' filled' : ' empty'}${isSelectedSource ? ' selected' : ''}${
-        isDropTarget ? ' drop-target' : ''
-      }${isDragOver ? ' drag-over' : ''}`}
-      draggable={!!item}
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
-      aria-label={item ? `Item slot ${index + 1}: ${item.name}` : `Item slot ${index + 1}, empty`}
-      {...longPress}
-    >
-      <EquipmentIcon item={item} className="equip-slot-icon" />
-      <span className="equip-slot-item">{item ? item.name : 'Empty'}</span>
-    </button>
   );
 }
 
@@ -206,15 +158,17 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
                       // moving item, since a hero never holds two copies.
                       const isDropTarget = !!selected && selected.rosterId !== entry.rosterId && itemId !== selectedItemId;
                       return (
-                        <EquipSlotButton
+                        <ItemBox
                           key={index}
                           item={item}
-                          index={index}
-                          isSelectedSource={isSelectedSource}
-                          isDropTarget={isDropTarget}
-                          isDragOver={dragOverKey === dragKey}
-                          onClick={() => handleSlotClick(ref, !!item)}
-                          onLongPress={() => item && setViewedItemId(item.id)}
+                          className={[isSelectedSource ? 'selected' : '', isDropTarget ? 'drop-target' : '', dragOverKey === dragKey ? 'drag-over' : '']
+                            .filter(Boolean)
+                            .join(' ')}
+                          // Tap is taken here — it selects and moves gear, which is this screen's
+                          // whole job — so holding is what reads an item out.
+                          onTap={() => handleSlotClick(ref, !!item)}
+                          onLongPress={item ? () => setViewedItemId(item.id) : undefined}
+                          draggable={!!item}
                           onDragStart={(e) => {
                             if (!item) return;
                             e.dataTransfer.setData(DRAG_KEY, dragKey);
@@ -255,20 +209,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
         />
       )}
 
-      {viewedItemId && (
-        <div
-          className="log-overlay"
-          onClick={(e) => {
-            e.stopPropagation();
-            setViewedItemId(null);
-          }}
-        >
-          <div className="log-panel move-popup-panel">
-            <EquipmentInfoPanel item={equipment[viewedItemId]} />
-            <div className="move-popup-hint">Tap anywhere to close</div>
-          </div>
-        </div>
-      )}
+      <ItemSummaryPopup item={viewedItemId ? (equipment[viewedItemId] ?? null) : null} onClose={() => setViewedItemId(null)} />
     </div>
   );
 }

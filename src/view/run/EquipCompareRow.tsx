@@ -12,7 +12,7 @@ import { ElementGlyph } from '../shared/elementIcons';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { useLongPress } from '../shared/MoveTile';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
-import { EquipmentIcon, RARITY_COLOR_VARS } from '../shared/EquipmentBox';
+import { ItemBox, RARITY_COLOR_VARS } from '../shared/EquipmentBox';
 import { PassiveGlyph } from '../shared/passiveIcons';
 
 /**
@@ -41,6 +41,8 @@ interface EquipCompareRowProps {
   /** This hero already holds the offered item. A hero never holds two copies, so the row is inert. */
   alreadyHeld?: boolean;
   onPreview: () => void;
+  /** Hold on one of this hero's item boxes — the screen owns the summary popup, so one is open at a time. */
+  onInspectItem: (item: EquipmentDefinition) => void;
 }
 
 /** `−` is U+2212, not a hyphen: at 9px a hyphen-minus next to a digit reads as a word break. */
@@ -158,7 +160,9 @@ function ReplaceOption({
         onPick();
       }}
     >
-      <EquipmentIcon item={current} className="equip-replace-icon" />
+      {/* The one place a held item keeps its name printed: this list IS the "which of these goes"
+          decision, and telling two boxes apart by silhouette alone is not a fair thing to ask. */}
+      <ItemBox item={current} compact />
       <span className="equip-replace-name" style={{ color: RARITY_COLOR_VARS[current.rarity] } as CSSProperties}>
         {current.name}
       </span>
@@ -180,6 +184,7 @@ export function EquipCompareRow({
   locked: lockedProp,
   alreadyHeld,
   onPreview,
+  onInspectItem,
 }: EquipCompareRowProps) {
   /** Only ever true for a full hero holding two or more — every other case resolves on the first tap. */
   const [expanded, setExpanded] = useState(false);
@@ -256,23 +261,16 @@ export function EquipCompareRow({
           ))}
         </div>
 
+        {/* What the hero holds, as boxes rather than names: six rows x up to five items is
+            thirty item names on one screen if these are spelled out, and the diff below is the
+            part that decides the tap. Hold a box to read what it is. */}
         <div className={`equip-row-held${held.length > 0 ? ' is-filled' : ' is-empty'}`}>
           {held.map((item) => (
-            <span key={item.id} className="equip-row-held-item">
-              <EquipmentIcon item={item} className="equip-row-held-icon" />
-              <span className="equip-row-held-name" style={{ color: RARITY_COLOR_VARS[item.rarity] } as CSSProperties}>
-                {item.name}
-              </span>
-            </span>
+            <ItemBox key={item.id} item={item} compact onLongPress={() => onInspectItem(item)} />
           ))}
-          {freeSlots > 0 && (
-            <span className="equip-row-held-item is-free">
-              <EquipmentIcon item={null} className="equip-row-held-icon" />
-              <span className="equip-row-held-name">
-                {freeSlots} free {freeSlots === 1 ? 'slot' : 'slots'}
-              </span>
-            </span>
-          )}
+          {Array.from({ length: Math.max(0, freeSlots) }, (_, i) => (
+            <ItemBox key={`free-${i}`} item={null} compact />
+          ))}
         </div>
 
         {expanded ? (

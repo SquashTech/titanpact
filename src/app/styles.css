@@ -7030,80 +7030,137 @@ textarea,
   right: 8px;
 }
 
-/* Three columns whatever the slot count: a hero holds 1 to MAX_ITEM_SLOTS, and a
-   fixed track keeps every box the same size down the roster rather than letting a
-   1-slot hero's box stretch to the full card. Five boxes wrap to a second row. */
+/* Icon boxes, not a column grid: an item is drawn and no longer written out, so a box
+   is square and only as wide as it needs to be, and a hero's slots read as a row of
+   objects rather than a table. Wraps past five. */
 .equip-slot-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
 /*
- * Empty state: a sunken dashed cavity. Filled state (below) swaps to a
- * raised, solid, rarity-edged tile. Keeping those two as genuinely opposite
- * treatments — hole vs. object — rather than "same box, different border
- * color" is what makes a hero's slots scannable at a glance for what's still
- * missing, which is the question the player is actually asking on the roster
- * and force-equip screens.
+ * THE item representation, wherever an item is part of a hero's kit (EquipmentBox.tsx
+ * ItemBox). Empty is a sunken dashed cavity, filled is a raised solid tile edged in the
+ * rarity colour — genuinely opposite treatments, hole vs. object, which is what makes
+ * "what am I still missing" answerable across a six-hero roster at a glance.
+ *
+ * Square and label-free on purpose: at five slots a hero, printing a name per box cost
+ * more room than the names were worth, and the name is one tap away.
  */
-.equip-slot-box {
+.item-box {
+  --item-box-size: 38px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 1px;
+  justify-content: center;
+  flex: none;
+  width: var(--item-box-size);
+  height: var(--item-box-size);
+  padding: 0;
   background: var(--surface-sunken);
   border: 1px dashed var(--border);
   border-radius: var(--radius-xs);
-  padding: 6px 3px;
   color: var(--text-dim);
   cursor: pointer;
-  min-width: 0;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
   transition: border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
-.equip-slot-box.filled {
+/* Inside another row (the equip compare table), where the row's own height is the budget:
+   sized to the text line it replaced so a row does not grow taller than it used to be. */
+.item-box.is-compact {
+  --item-box-size: 22px;
+  border-left-width: 2px;
+}
+
+.item-box.filled {
   border-style: solid;
   border-color: var(--border);
   border-left: 3px solid var(--rarity-color, var(--border));
   color: var(--text);
   background: var(--surface-raised);
-  /* Faint rarity bloom, so a legendary/mythic piece is spottable across a
-     six-hero roster without having to read three tiny slot labels per card.
-     Deliberately weak — rarity is a nice-to-know, not the primary signal. */
+  /* Faint rarity bloom, so a legendary/mythic piece is spottable across a six-hero
+     roster. Deliberately weak — rarity is a nice-to-know, not the primary signal. */
   box-shadow: var(--hairline), var(--elev-1), 0 0 10px -4px var(--rarity-color, transparent);
 }
 
-.equip-slot-box.drop-target {
-  border-color: var(--accent);
+.item-box-icon {
+  font-size: calc(var(--item-box-size) * 0.52);
+  line-height: 1;
 }
 
-.equip-slot-box.drag-over {
-  border-color: var(--accent);
-  background: var(--selected-fill);
+.item-box.empty .item-box-icon {
+  opacity: 0.45;
 }
 
-/* RosterManagementScreen's own equip/unequip grid — a filled box picked as
-   the swap source, same treatment as .inventory-box.selected. (Not used by
-   EquipmentSlotGrid, src/view/shared/EquipmentBox.tsx — that grid is
-   inspection-only, via .equip-slot-box's long-press.) */
-.equip-slot-box.selected {
+/* Manage Roster: the box picked as the move source. */
+.item-box.selected {
   border-color: var(--accent);
   background: var(--selected-fill);
 }
 
-/* ForceEquipScreen's per-hero grid (EquipmentSlotGrid highlightSlot prop) —
-   marks the slot an incoming item would land in, since equipping there is now
-   a single un-confirmed tap. */
-.equip-slot-box.target {
+/* Every slot a selected item could be sent to. */
+.item-box.drop-target {
+  border-color: var(--accent);
+}
+
+.item-box.drag-over {
+  border-color: var(--accent);
+  background: var(--selected-fill);
+}
+
+/* Where an incoming item would land (EquipmentSlotGrid highlightIndex). */
+.item-box.target {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent);
 }
 
-.equip-slot-icon {
-  font-size: 13px;
-  line-height: 1;
+/* What an item DOES, as marks (ItemEffectChips) — the card face for an item being
+   chosen, where a bare box would make the choice blind but "+50 Attack · Sunder"
+   spelled out is three lines of prose on a card that has one. Chromeless, same rule
+   as .equip-chip: a grid of small boxes is the clutter the no-boxes rule exists to
+   stop, so colour and the glyph carry the grouping. */
+.item-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--chip-tint, var(--text));
+}
+
+.item-chip.is-gain {
+  color: var(--chip-tint, var(--hp-high));
+}
+
+.item-chip.is-loss {
+  color: var(--chip-tint, var(--enemy));
+}
+
+.item-chip.is-effect {
+  color: var(--buff);
+}
+
+/* A passive has no number and its glyph is derived from its EFFECT, so a mana-granting
+   passive draws the same drop a +20 Mana grant does. This mark is the whole difference. */
+.item-chip-mark {
+  font-weight: 900;
+  opacity: 0.85;
+}
+
+.item-chip.is-neutral {
+  color: var(--text-dim);
+  font-weight: 600;
+  font-style: italic;
+}
+
+.item-chip-glyph {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  vertical-align: 0;
 }
 
 /* Per-relic icon art (RelicIcon, the 2500+ iconset): sized in em so it matches
@@ -7147,16 +7204,6 @@ textarea,
   height: 1em;
   flex-shrink: 0;
   vertical-align: -0.14em;
-}
-
-.equip-slot-item {
-  font-size: 10px;
-  font-weight: 600;
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  width: 100%;
 }
 
 /* --- Hero detail overlay (CombatantCard info button) -------------------- */
@@ -9274,7 +9321,7 @@ textarea,
 
 /* An empty slot is a hole in the layout, not an object in it — so it drops
    the raised treatment entirely and becomes a sunken dashed outline. Same
-   figure/ground logic as .equip-slot-box's empty state. */
+   figure/ground logic as .item-box's empty state. */
 .squad-slot.empty {
   display: flex;
   align-items: center;
@@ -10276,14 +10323,18 @@ textarea,
   color: var(--text-dim);
 }
 
+/* Holds ItemEffectChips: marks, not prose, so it wraps as a chip row. */
 .equip-cache-card-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
   font-size: 12px;
   color: var(--text-dim);
 }
 
 /* --- A cache opening (CacheReveal.tsx) ------------------------------------
-   The beat in front of the Equipment Cache's three offers and in front of the
-   Weapon/Armor/Accessory caches' guaranteed drop. What was here — the block
+   The beat in front of the Item Cache's three offers. What was here — the block
    this replaces — was `.equip-cache-chest-*`, and it was wrong in three ways
    that CacheReveal.tsx's own header sets out in full. The two that are this
    file's fault:
@@ -14140,7 +14191,7 @@ textarea,
 /* A pick card's detail row, saying what is in a slot. Written for
    ForceEquipScreen, which has since moved to a comparison table
    (`.equip-row`); RosterReplaceScreen is what still uses it.
-   Chromeless — `.equip-slot-box`, which this replaces on these cards, is a
+   Chromeless — `.item-box`, which this replaces on these cards, is a
    dashed sunken box, and a box inside a card inside a grid is exactly the
    nesting docs/visual-language.md exists to stop. The icon is set in px
    because equipment glyphs are em-sized off their call site (.equip-icon-img)
@@ -14427,50 +14478,15 @@ textarea,
   vertical-align: 0;
 }
 
-/* Everything the hero is holding, plus its free slots — the fact that used to
-   cost an overlay each. A name takes its own rarity colour, so the tier of what
-   is about to be bumped reads before the name is even parsed. Wraps rather than
-   truncating: at five slots a single line would hide the very item the player
-   is being asked to give up. */
+/* Everything the hero is holding, plus its free slots, as a strip of boxes. Six rows
+   x up to five items is thirty item names on one screen if these are spelled out, and
+   the diff underneath is the part that decides the tap. */
 .equip-row-held {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 2px 8px;
-  min-width: 0;
-  font-size: var(--row-held);
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.equip-row-held-item {
-  display: flex;
-  align-items: center;
   gap: 4px;
   min-width: 0;
-}
-
-.equip-row-held-icon {
-  flex: none;
-  font-size: calc(var(--row-held) * 1.3);
-  opacity: 0.9;
-}
-
-.equip-row-held-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.equip-row-held.is-empty,
-.equip-row-held-item.is-free {
-  opacity: 0.5;
-}
-
-.equip-row-held.is-empty .equip-row-held-name,
-.equip-row-held-item.is-free .equip-row-held-name {
-  font-weight: 600;
-  font-style: italic;
 }
 
 /* The "which one goes?" list, open only on a FULL hero holding two or more —
@@ -14504,12 +14520,6 @@ textarea,
 
 .equip-replace-option:active {
   background: rgba(255, 255, 255, 0.08);
-}
-
-.equip-replace-icon {
-  flex: none;
-  font-size: calc(var(--row-held) * 1.3);
-  opacity: 0.9;
 }
 
 .equip-replace-name {
@@ -15383,7 +15393,7 @@ textarea,
    bigger tap targets read better one-handed than long thin rows, and a 3x2
    grid puts the whole roster on screen at once without scrolling past it.
    Each screen supplies its own content for the bottom of the card (an
-   equip-slot-box, a stat-grant CTA, or a level-up CTA) below the shared
+   item-box, a stat-grant CTA, or a level-up CTA) below the shared
    portrait/name/level/types head. */
 .hero-grid {
   display: grid;
@@ -15485,14 +15495,6 @@ textarea,
 
 .hero-grid-card:disabled .hero-grid-cta {
   color: var(--text-dim);
-}
-
-/* The equip-slot-box reused inside a hero-grid-card (ForceEquipScreen) fills
-   the card's remaining width instead of the fixed 60px column it used in the
-   old row layout. */
-.hero-grid-card .equip-slot-box {
-  width: 100%;
-  margin-top: 2px;
 }
 
 .hero-grid-info-button {

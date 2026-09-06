@@ -11,6 +11,7 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import {
   EquipmentEffectList,
   EquipmentIcon,
+  ItemEffectChips,
   fmtGrant,
   RARITY_COLOR_VARS,
   RARITY_LABELS,
@@ -18,18 +19,6 @@ import {
 import { StatGlyph } from '../shared/StatBars';
 import { STAT_FULL_LABELS } from '../shared/relicStacks';
 import { useLongPress } from '../shared/MoveTile';
-
-/** Card-face summary ("+10 Attack · Ember Ward"), folding passive/status grants in so a stat-less item never reads as blank. */
-export function itemHighlights(item: EquipmentDefinition): string[] {
-  const statParts = Object.entries(item.statGrants)
-    .filter(([, amount]) => amount)
-    .map(([stat, amount]) => `${(amount as number) > 0 ? '+' : ''}${amount} ${STAT_FULL_LABELS[stat as StatKey] ?? stat}`);
-  const passiveParts = (item.grantsPassiveIds ?? []).flatMap((id) => (passives[id] ? [passives[id].name] : []));
-  const statusParts = (item.grantsStatusIds ?? []).flatMap(({ statusId, magnitude }) =>
-    statuses[statusId] ? [`${statuses[statusId].name} +${magnitude}`] : []
-  );
-  return [...statParts, ...passiveParts, ...statusParts];
-}
 
 interface EquipChoiceCardProps {
   item: EquipmentDefinition;
@@ -43,7 +32,6 @@ interface EquipChoiceCardProps {
 
 export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs }: EquipChoiceCardProps) {
   const longPress = useLongPress(onInspect, onPick);
-  const highlights = itemHighlights(item);
   return (
     <button
       type="button"
@@ -59,7 +47,9 @@ export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs
         <div className="equip-cache-card-meta">
           <span className="equip-cache-card-rarity">{RARITY_LABELS[item.rarity]}</span>
         </div>
-        <div className="equip-cache-card-stats">{highlights.length > 0 ? highlights.join(' · ') : 'No effect'}</div>
+        <div className="equip-cache-card-stats">
+          <ItemEffectChips item={item} />
+        </div>
       </div>
     </button>
   );

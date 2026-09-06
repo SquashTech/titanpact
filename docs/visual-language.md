@@ -1869,6 +1869,41 @@ the headline replaying its arrival animation (`beatSeq` remounts it). That is
 pre-existing `buildBeats` behaviour for any repeated passive and reads the same
 mid-fight, so it is left alone rather than special-cased here.
 
+## Sixteenth pass — an item is a picture, not a sentence (2026-09-06)
+
+Per user direction, alongside the item rework: **wherever an item is part of a hero's KIT it is
+drawn, not written.** `ItemBox` (`src/view/shared/EquipmentBox.tsx`) is the one representation —
+the item's silhouette in a square, rarity-edged box, no label. The name and the full effect list
+are one tap away (`ItemSummaryPopup`), and both stay in the `aria-label` and the `title`, so the
+text is unprinted rather than lost.
+
+What forced it: a hero holds up to five items now, and the forced-equip table shows six heroes at
+once. Printing a name per slot was thirty item names on one screen, and the names were never the
+thing being decided — the diff underneath was.
+
+Three rules came out of the pass, and the boundaries are the interesting part:
+
+- **A box replaces a name only where items are SCANNED.** The forced-equip spotlight (the item
+  the screen is about) keeps its name, rarity and full effect list. So does the "which of these
+  goes?" replace picker — that list *is* a choice between two held items, and telling them apart
+  by silhouette alone is not a fair thing to ask.
+- **Where items are CHOSEN, the words become marks instead of vanishing.** Reward cards, the Guild
+  Hall shelf and the Compendium dropped `"+50 Attack · Sunder"` for `ItemEffectChips`: a stat glyph
+  and its number, an element glyph for an Elemental Force, a passive's own glyph. Picking one of
+  three by silhouette would be picking blind; the chips keep the comparison possible at a third of
+  the width.
+- **Tap means "what is this", except where tap already means something.** Read-only grids (hero
+  sheets, previews) summarise on tap. Manage Roster's tap selects and moves gear — that screen's
+  entire job — so there it is a hold. One behaviour, two gestures, and the gesture is decided by
+  what else the surface has to do.
+
+The cost, stated plainly: the icon is derived from an item's NAME (`equipmentForm`), and ~30 forms
+cover 106 items, so two items can share a silhouette and be told apart only by rarity colour. That
+is the trade the density buys. If it bites in playtest, the fix is more forms, not more labels.
+
+Measured on the Manage Roster screen: six heroes went from filling the panel and scrolling to
+fitting with room to spare.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.
