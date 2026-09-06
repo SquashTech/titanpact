@@ -17771,12 +17771,19 @@ textarea,
   position: fixed;
   inset: 0;
   display: flex;
-  align-items: flex-end;
+  /* Centred, not floor-docked (2026-09-06, per user direction): the middle of the
+     screen is where the eye already rests, so a line lands there without being
+     looked for. */
+  align-items: center;
   justify-content: center;
   padding: 12px;
   /* Above the fight console and every node screen, below nothing. */
   z-index: 60;
-  background: linear-gradient(to bottom, rgba(8, 9, 13, 0.12) 0%, rgba(8, 9, 13, 0.34) 45%, rgba(8, 9, 13, 0.76) 100%);
+  /* Flat, where a bottom-docked box wanted a bottom-heavy gradient. A centred box
+     sits across the middle of the ramp, so a gradient would light its top half and
+     its bottom half differently and the panel would read as tilted. Still no blur:
+     she is naming things that are on screen behind her. */
+  background: rgba(8, 9, 13, 0.55);
   animation: tutorial-scrim-in 220ms ease-out both;
 }
 
@@ -17801,10 +17808,12 @@ textarea,
   /* The speaker's domain colour as a rim light, not a fill: the box has to
      stay a UI surface, and two heroes swapping lines should read as a change
      of light rather than a change of panel. */
+  /* The domain glow is symmetric now the box floats: `0 -2px` threw its light
+     upward, which reads as a panel resting on the floor. */
   box-shadow:
     0 0 0 1px rgba(8, 9, 13, 0.6),
-    0 -2px 26px rgba(var(--speaker-rgb), 0.18),
-    0 12px 30px rgba(0, 0, 0, 0.5);
+    0 0 30px rgba(var(--speaker-rgb), 0.2),
+    0 14px 34px rgba(0, 0, 0, 0.55);
   animation: tutorial-box-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 

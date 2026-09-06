@@ -124,7 +124,6 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     topic: 'Monsters',
     lines: [
       'Goblins. Two of them, two of us. Every fight in this world is two against two.',
-      'Fang and I are both on the field at once. Each round you give us an order apiece: a move, and who it lands on. Nothing happens until we have both been told.',
       'Monsters tend to hold valuable loot that will aid us on this journey.',
     ],
   },
@@ -132,7 +131,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'gem',
     topic: 'Gems',
     lines: [
-      'A Gem. That is a relic, and a relic benefits us all. The same bonus on me, on Fang, and on anyone we pick up later.',
+      'A Gem. That is a relic, and a relic benefits us all. The same bonus on me, Fang, and anyone we pick up later.',
       'They stack, forever. We will collect many across these lands.',
       'Pick the one you want carried for the rest of the journey.',
     ],
@@ -178,7 +177,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     topic: 'Mentor',
     lines: [
       'Someone up there teaches. Each of us may learn one class. The decision is permanent.',
-      'We will find more of these on the road ahead.',
+      'We will find more of these Mentors on the road ahead.',
     ],
   },
   {
@@ -203,9 +202,9 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     topic: 'Recruit Contract',
     lines: [
       'Take the caster. They provide something that we lack.',
-      'Fang and I strike with our bodies. We struggle against enemies with high Defense.',
-      'Flurry does not. What they cast is measured against Wisdom instead, and armor does nothing to stop it.',
-      'A healthy balance is pivotal to success. There is something at the end of this valley we do not pass without her.',
+      'Fang and I strike with our Attack. We struggle against enemies with high Defense.',
+      'Flurry does not. They cast with Intelligence, which is measured against Wisdom instead.',
+      'A healthy balance is pivotal to success. There is something at the end of this valley we do not pass without it.',
     ],
   },
 
@@ -248,7 +247,6 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     topic: 'Guild Hall',
     lines: [
       'Last stop before the Guardian. Gold buys three things here: a hero outright, a piece of gear, or another recruit contract.',
-      'Spend it. There is nothing on the far side of this that takes coin.',
     ],
   },
   {
@@ -292,7 +290,8 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     when: { round: 1 },
     topic: 'Command',
     lines: [
-      'Pick one of my moves, then pick who it lands on. Then do the same for Fang.',
+      'Fang and I are both on the field at once. Each round, you give us both an order: a move, and the target.',
+      'Pick one of my moves, then do the same for Fang.',
       'The blue gem shows the MP cost to cast the move. At the end of each round, everyone recovers a little bit of MP.',
       'Resting is always an option, and it fully recovers your MP. Sometimes, Rest is the only available choice.',
       'Speed decides who actually swings first, and you will not always be the one who does.',
@@ -359,8 +358,8 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     when: { round: 2 },
     topic: 'The Caster',
     lines: [
-      "Look at Flurry's stat sheet. Twenty-five Attack. She could not break a branch with her hands.",
-      'Eighty Intelligence, though. That is what her magic is measured with, and it goes against their Wisdom, which nothing out here bothers to have.',
+      "Look at Flurry's stat sheet. 25 Attack. Barely enough to scratch them.",
+      '80 Intelligence, though. That is what her magic is measured with, and it goes against their Wisdom, which nothing out here bothers to have.',
     ],
   },
   {
@@ -369,9 +368,8 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     when: { round: 3 },
     topic: 'Spread',
     lines: [
-      'One more thing about her. Rime Wind does not pick a target — it lands on everything across from us at once.',
-      'Look for the ⇉ Spread mark on a move. Its number looks small next to mine until there are two of them standing, and then it is not.',
-      'No penalty for the second one either. Whatever it reads, it reads twice.',
+      'One more thing about Flurry. Rime Wind does not pick a target, but rather, it lands on everything across from us at once.',
+      'Look for the ⇉ Spread mark on a move. Sometimes striking both is better than striking one.',
     ],
   },
 
@@ -382,8 +380,7 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     when: { round: 1 },
     topic: 'The Escorts',
     lines: [
-      'His warband, not him. The green one is a Beast, and cold doubles into a Beast — send the caster at it.',
-      'The other is Iron. Claws and teeth barely mark it, so do not waste a Beast on that one.',
+      'His warband. Far less threatening than what awaits us.',
       'Kill one and the Lord takes its place. Be ready.',
     ],
   },
@@ -394,10 +391,9 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     topic: 'Ancient',
     lines: [
       'There he is.',
-      'Everything reads half against that second color. There is no answer to it, and there never will be.',
-      'So stop reading colors and read the numbers. Hold each of our moves over him before you commit.',
-      'A fist is weighed against his Defense. Her wind is weighed against his Wisdom. He is not equally armored against both, and almost nothing ever is.',
-      'That is the half of the formula most people never look at. Look at it.',
+      'Everything deals half against an Ancient. Type advantages alone will not win us this battle.',
+      'Choose your moves carefully. Remember that you can hold down a move button to examine it before you commit.',
+      'You can also click on him to see what he specializes in. Strategize accordingly.',
     ],
   },
   {
