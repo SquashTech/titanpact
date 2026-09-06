@@ -366,15 +366,7 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     lines: [
       "Look at Flurry's stat sheet. 25 Attack. Barely enough to scratch them.",
       '80 Intelligence, though. That is what her magic is measured with, and it goes against their Wisdom, which nothing out here bothers to have.',
-    ],
-  },
-  {
-    id: 'battle:spread',
-    node: 'battle',
-    when: { round: 3 },
-    topic: 'Spread',
-    lines: [
-      'One more thing about Flurry. Rime Wind does not pick a target, but rather, it lands on everything across from us at once.',
+      'And Rime Wind does not pick a target, but rather, it lands on everything across from us at once.',
       'Look for the ⇉ Spread mark on a move. Sometimes striking both is better than striking one.',
     ],
   },

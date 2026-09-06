@@ -570,23 +570,24 @@ test('tutorial: the pipelines cue shows both marks, since showing them is the po
   assert.deepStrictEqual(icons, ['physical', 'magical'], 'the cue that names the two pipelines must print both badges');
 });
 
-test('tutorial: the spread cue is talking about a move the forced recruit actually has', () => {
-  // `battle:spread` names Rime Wind by name and claims it lands on both enemies at once. If the
-  // forced recruit or her kit ever changes, the cue is a lie told to a first-time player.
+test('tutorial: the caster cue is talking about a move the forced recruit actually has', () => {
+  // `battle:magic` names Rime Wind and claims it lands on both enemies at once. If the forced
+  // recruit or her kit ever changes, that is a lie told to a first-time player.
   const caster = heroes[TUTORIAL_LOCKS.recruitHeroId];
   const spread = caster.moveIds
     .map((id) => moves[id])
     .filter((move) => move.kind === 'damage' && move.target === 'bothEnemies');
 
-  assert.ok(spread.length > 0, `${caster.name} has no spread damage move — battle:spread has nothing to point at`);
+  assert.ok(spread.length > 0, `${caster.name} has no spread damage move — the caster cue has nothing to point at`);
 
-  const cue = TUTORIAL_FIGHT_CUES.find((c) => c.id === 'battle:spread')!;
+  const cue = TUTORIAL_FIGHT_CUES.find((c) => c.id === 'battle:magic')!;
   const text = cue.lines.map((line) => normalizeLine(line).text).join(' ');
   for (const move of spread) {
     assert.ok(text.includes(move.name), `the cue should name ${move.name}, the move it is about`);
   }
-  // The "no penalty for the second one" claim is CLAUDE.md's locked no-spread-reduction rule.
-  assert.ok(cue.lines.length > 0);
+  // It also quotes the marker verbatim from MoveTraitChips, so the mark in the sentence is the
+  // mark on the move row.
+  assert.ok(text.includes('⇉ Spread'), 'the cue should quote the spread marker the move rows wear');
 });
 
 test('tutorial: the scripted act never pays better than a normal one', () => {
