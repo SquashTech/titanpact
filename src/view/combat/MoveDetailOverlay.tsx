@@ -11,6 +11,7 @@ import { fieldEffects } from '../../data/fieldEffects';
 import { typeChart } from '../../data/typechart';
 import { resolveStab, resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
 import { resolveHealFor, type HealCaster } from '../../engine/heal/healPipeline';
+import { scaleStatusMagnitude } from '../../engine/status/statusMagnitude';
 import {
   calcDamage,
   resolveConditionalPowerMultiplier,
@@ -476,6 +477,12 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
           )}
           {statusRiders.map(({ app, def }) => {
             const where = riderTargetLabel(app);
+            // The number the caster would actually land, the way liveBasePower and liveCost read.
+            // Off a hero sheet there is no caster, so the authored base stands.
+            const liveMagnitude =
+              attacker && attackerHero
+                ? scaleStatusMagnitude(app.magnitude, def, app, move, attackerHero, attacker, statCtx)
+                : app.magnitude;
             return (
               <EffectRow
                 key={app.statusId}
@@ -484,7 +491,7 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
                 text={`${app.chance != null ? `${Math.round(app.chance * 100)}% ` : ''}${
                   grantsRatherThanInflicts(app) ? 'Grants' : 'Applies'
                 } ${def.name}${
-                  app.magnitude != null ? ` ${app.magnitude}` : app.duration != null ? ` ${app.duration}` : ''
+                  liveMagnitude != null ? ` ${liveMagnitude}` : app.duration != null ? ` ${app.duration}` : ''
                 }${where ? ` — ${where}` : ''}`}
                 note={def.description}
               />

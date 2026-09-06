@@ -251,8 +251,10 @@ test("mech: Poison from a reel carries the catalog's duration, like every other 
 
 // --- The two-status rows ---
 
-test('mech: Backfire and Overheat Burn the target AND the caster', () => {
-  for (const [id, magnitude] of [['backfire', 10], ['overheat', 20]] as const) {
+test('mech: Backfire and Overheat Burn the target AND the caster — the target scaled, the caster flat', () => {
+  // Forgewright (Mech, Int 45) scales the rider it aims OUTWARD by 0.95 x 1.25 STAB. The self-Burn
+  // is a cost, so it lands at exactly the authored number (engine/status/statusMagnitude.ts).
+  for (const [id, onTarget, onCaster] of [['backfire', 18, 20], ['overheat', 36, 40]] as const) {
     const state = withDeepPools(mechFixture(805));
     const { state: after } = resolveRound(
       state,
@@ -260,8 +262,8 @@ test('mech: Backfire and Overheat Burn the target AND the caster', () => {
       config
     );
     // Burn ticks and halves at end of the round it was applied, so a fresh Burn N reads N/2.
-    assert.strictEqual(after.combatants.b1.statuses.Burn?.magnitude, magnitude / 2, `${id}: target not Burned`);
-    assert.strictEqual(after.combatants.a1.statuses.Burn?.magnitude, magnitude / 2, `${id}: caster not Burned`);
+    assert.strictEqual(after.combatants.b1.statuses.Burn?.magnitude, onTarget / 2, `${id}: target not Burned`);
+    assert.strictEqual(after.combatants.a1.statuses.Burn?.magnitude, onCaster / 2, `${id}: caster not Burned`);
   }
 });
 
@@ -270,7 +272,7 @@ test('mech: Meltdown burns only the CASTER, and hits both enemies', () => {
   const { state: after } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'meltdown' }], config);
   assert.ok(after.combatants.b1.currentHp < state.combatants.b1.currentHp);
   assert.ok(after.combatants.b2.currentHp < state.combatants.b2.currentHp);
-  assert.strictEqual(after.combatants.a1.statuses.Burn?.magnitude, 15, 'caster not Burned 30');
+  assert.strictEqual(after.combatants.a1.statuses.Burn?.magnitude, 30, 'caster not Burned the flat 60 it costs');
   assert.strictEqual(after.combatants.b1.statuses.Burn, undefined, 'Meltdown burned its targets');
 });
 
@@ -283,7 +285,7 @@ test('mech: Perfect Creation applies all six of its riders in one cast', () => {
   );
   // Daze clears at end of round, so five of six survive; that is the sixth working.
   assert.deepStrictEqual(statusesOn(after, 'b1'), ['Bleed', 'Burn', 'Conduct', 'Haunt', 'Poison']);
-  assert.strictEqual(after.combatants.b1.statuses.Burn?.magnitude, 25, 'Burn 50 should read 25 post-tick');
+  assert.strictEqual(after.combatants.b1.statuses.Burn?.magnitude, 44, 'Burn 75 scales to 89, then reads 44 post-tick');
   assert.strictEqual(after.combatants.b1.statuses.Poison?.duration, 2, 'Poison should have ticked once');
 });
 

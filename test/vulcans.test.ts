@@ -135,13 +135,14 @@ test('vulcans: none of them arrives and immediately has to Rest', () => {
 
 // --- The Burn engine: the faction's tell ---
 
-test('vulcans: Scorched Land is the tell — Burn stacks additively and then stops decaying', () => {
-  // Burn halves every round on its own. Scorched Land suppresses exactly that, and because
-  // the status stacks ADDITIVELY the stack only ever climbs once the ground is lit. That
+test('vulcans: Scorched Land is the tell — Burn stacks additively and then barely decays', () => {
+  // Burn halves every round on its own. Scorched Land slows exactly that to a quarter, and
+  // because the status stacks ADDITIVELY the stack climbs fast once the ground is lit. That
   // pairing is the faction; neither half is interesting alone.
   assert.strictEqual(statuses.Burn.decay, 'halve');
   assert.strictEqual(statuses.Burn.stacking, 'additive');
-  assert.deepStrictEqual([...fieldEffects.scorchedLand.suppressesStatusDecay!], ['Burn']);
+  assert.deepStrictEqual([...fieldEffects.scorchedLand.slowsStatusDecay!.statusIds], ['Burn']);
+  assert.strictEqual(fieldEffects.scorchedLand.slowsStatusDecay!.retain, 0.75);
   assert.strictEqual(moves.spreadingBlaze.fieldEffectApplication, 'scorchedLand');
   // The setter also plants, on BOTH foes, so the turn spent on the ground is never a blank.
   assert.strictEqual(moves.spreadingBlaze.target, 'bothEnemies');

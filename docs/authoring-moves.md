@@ -445,6 +445,13 @@ statusApplication: { statusId: 'Burn', magnitude: 10, target: 'moveTarget' }
   how one move hits an enemy and mends its own side in the same cast. Only the
   random pair draws RNG; `'bothAllies'` costs the same rolls as no rider at all.
 - `magnitude` for magnitude/timer statuses; `duration` for duration statuses.
+  **You author a base, not the landed number** (2026-09-05): a `dot` or `hot`
+  magnitude is multiplied at resolve time by the caster's stat term and STAB
+  (`docs/combat.md` "Scaled status magnitudes"), so a Fire specialist's Burn 30
+  lands near 50 and an off-type applier's lands near 32. Author against the
+  reference hero — stat 50, no STAB — and the roster spread takes care of itself.
+  The one exception is a `dot` aimed at `self`: that is a COST, and it lands
+  exactly as authored.
 - `chance: 0.1` gates the rider on a roll. **It gates the rider, never the move** —
   the damage still lands (`CLAUDE.md`: no accuracy stat). Rolls once per target.
 - **A move can carry ONE rider or a LIST of them** (2026-08-30, Beast's Toxic
@@ -460,8 +467,8 @@ The catalog (`src/data/statuses.ts`, `docs/conditions new.md`):
 
 | Status | Shape | Behaviour | Cleared by switching? |
 |---|---|---|---|
-| `Burn` | magnitude | End of round: deal X, then **halve** X | Yes |
-| `Renew` | magnitude, positive | End of round: heal X, then halve X. Cleanse never strips it | No |
+| `Burn` | magnitude | End of round: deal X, then **halve** X. X scales off the caster (§3) | Yes |
+| `Renew` | magnitude, positive | End of round: heal X, then halve X. X scales off the caster. Cleanse never strips it | No |
 | `Bleed` | boolean | End of round: 5% of max HP, flat | No |
 | `Freeze` | boolean | Halves Speed | Yes |
 | `Daze` | boolean | Cannot use a move for the REST OF THE ROUND, then gone. Flinch: worth nothing if its applier acted second | Yes (moot) |
@@ -904,7 +911,9 @@ extensions; some are design decisions above your pay grade. Either way, name it.
   `recoilPercent` (§3), a fraction of the damage dealt, and `selfHpCost` (§3),
   a share of the caster's own max HP or a floor it drops to. Between them they
   cover every self-harm row authored so far except a flat authored number,
-  which still has no field; Fire's self-Burn remains the better shape for that.
+  which still has no field; Fire's self-Burn remains the better shape for that —
+  and is now the only status magnitude the caster's stats never touch, precisely
+  so that its price stays knowable (`docs/combat.md`).
 - **Two-turn / charge / recharge moves.** Nothing in the round model supports a move
   that spans rounds. (A move that sends its user OUT now exists —
   `switchesUserOut` — but that resolves entirely within its own round.)

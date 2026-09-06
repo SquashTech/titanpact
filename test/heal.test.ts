@@ -16,7 +16,7 @@ import type { CombatState } from '../src/engine/state';
 import {
   calcHeal,
   resolveHealFor,
-  wisdomMultFromStat,
+  magnitudeMultFromStat,
   HEAL_MULT_MAX,
   HEAL_MULT_MIN,
   HEAL_WISDOM_REFERENCE,
@@ -52,19 +52,19 @@ function healedAmounts(events: readonly { type: string }[]): number[] {
 // --- The Wisdom term ---
 
 test('heal: Wisdom at the reference heals exactly the authored HealPower', () => {
-  assert.strictEqual(wisdomMultFromStat(HEAL_WISDOM_REFERENCE), 1);
+  assert.strictEqual(magnitudeMultFromStat(HEAL_WISDOM_REFERENCE), 1);
   assert.strictEqual(calcHeal(40, 1, 1).heal, 40);
 });
 
 test('heal: every point of Wisdom off the reference is 1% — so +10 Wisdom is +10% healing', () => {
-  assert.strictEqual(wisdomMultFromStat(60), 1.1);
-  assert.strictEqual(wisdomMultFromStat(40), 0.9);
-  assert.strictEqual(calcHeal(40, wisdomMultFromStat(60), 1).heal, 44);
+  assert.strictEqual(magnitudeMultFromStat(60), 1.1);
+  assert.strictEqual(magnitudeMultFromStat(40), 0.9);
+  assert.strictEqual(calcHeal(40, magnitudeMultFromStat(60), 1).heal, 44);
 });
 
 test('heal: the Wisdom term clamps at both ends, so an unopposed stat can not run away', () => {
-  assert.strictEqual(wisdomMultFromStat(500), HEAL_MULT_MAX);
-  assert.strictEqual(wisdomMultFromStat(-100), HEAL_MULT_MIN);
+  assert.strictEqual(magnitudeMultFromStat(500), HEAL_MULT_MAX);
+  assert.strictEqual(magnitudeMultFromStat(-100), HEAL_MULT_MIN);
 });
 
 // --- STAB ---
@@ -154,7 +154,7 @@ test('heal: no variance — the same heal on two different seeds lands on the sa
 // --- Renew: the snapshot ---
 
 test('heal: a HoT snapshots the caster Wisdom and STAB at application time', () => {
-  // Second Wind grants Renew 30 (Spirit). Read off the end-of-round tick: Renew halves the moment it
+  // Second Wind grants Renew 45 (Spirit). Read off the end-of-round tick: Renew halves the moment it
   // ticks, so the stored magnitude is already half the snapshot by the time the round returns.
   const firstTick = (heroId: string) => {
     const { events } = resolveRound(
@@ -166,12 +166,13 @@ test('heal: a HoT snapshots the caster Wisdom and STAB at application time', () 
     return tick && tick.type === 'StatusTicked' ? tick.amount : null;
   };
 
-  assert.strictEqual(firstTick('revenant'), 36); // 30 x 0.96 x 1.25
-  assert.strictEqual(firstTick('wildOracle'), 33); // 30 x 1.10, no STAB
+  assert.strictEqual(firstTick('revenant'), 54); // 45 x 0.96 x 1.25
+  assert.strictEqual(firstTick('wildOracle'), 50); // 45 x 1.10, no STAB
 });
 
-test('heal: the snapshot is gated on the HoT pipeline — a DoT rider is not scaled by the caster Wisdom', () => {
-  // scaleHotMagnitude is gated on the status's pipeline, not the move's kind; Poison's is 'timer'.
+test('heal: the snapshot is gated on the pipeline — a TIMER rider is scaled by nothing at all', () => {
+  // scaleStatusMagnitude is gated on the status's pipeline, not the move's kind. Only 'hot' and
+  // 'dot' scale; Poison's is 'timer', and its magnitude is a percentage that already tracks HP.
   const { state } = resolveRound(
     fixture(205, 'wildOracle', 'ironWarden'),
     [{ kind: 'move', combatantId: 'a1', moveId: 'toxicSpores', declaredTarget: 'b1' }] as Action[],

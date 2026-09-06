@@ -218,10 +218,10 @@ test('fae: the Elder Bough is one turn paying out three times, and Speed 30 is t
   assert.strictEqual(guardian.baseStats.mpRegen, 20);
   assert.strictEqual(guardian.baseStats.mpRegen, enemies.leviathan.baseStats.mpRegen);
 
-  // Overgrowth is the three-payout turn: ~200 HP healed over the following rounds, +100
+  // Overgrowth is the three-payout turn: ~300 HP healed over the following rounds, +150 or more
   // Attack under Verdant Earth, and the switch that doubles Branch Slam's 80 base power.
   const selfPlant = statusApplicationsOf(moves.overgrowth).find((app) => app.statusId === 'Renew')!.magnitude!;
-  assert.strictEqual(selfPlant, 100);
+  assert.strictEqual(selfPlant, 150);
   assert.strictEqual(moves.branchSlam.conditionalPower!.requiresUserStatus, 'Renew');
   assert.strictEqual(moves.forceOfNature.fieldEffectApplication, 'verdantEarth');
   // It can afford the setup turn and the payoff back to back.

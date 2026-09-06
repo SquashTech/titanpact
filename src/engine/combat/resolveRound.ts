@@ -22,7 +22,8 @@ import {
   type DamageModifier,
 } from '../damage/damagePipeline';
 import type { TypeChart } from '../damage/typeMult';
-import { resolveHeal, scaleHotMagnitude } from '../heal/healPipeline';
+import { resolveHeal } from '../heal/healPipeline';
+import { scaleStatusMagnitude } from '../status/statusMagnitude';
 import { applyHpDelta } from './faintHandling';
 import {
   detonateTriggeredStatuses,
@@ -659,8 +660,8 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         } else {
           applyTargets = targetIds;
         }
-        // HoT magnitude snapshots the CASTER's Wisdom/STAB once here (healPipeline.ts scaleHotMagnitude).
-        const magnitude = scaleHotMagnitude(app.magnitude, def, move, attackerHero, working.combatants[action.combatantId], {
+        // DoT/HoT magnitude snapshots the CASTER's stat + STAB once here (status/statusMagnitude.ts).
+        const magnitude = scaleStatusMagnitude(app.magnitude, def, app, move, attackerHero, working.combatants[action.combatantId], {
           active: working.activeFieldEffect,
           defs: fieldEffects,
         });

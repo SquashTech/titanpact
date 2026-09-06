@@ -40,7 +40,7 @@ interface FieldEffectDefinition {
   description: string;
   flavorType?: TypeId; // presentational only — the view's badge/glow color
   mpRegenMultiplier?: number; // e.g. 2 = doubled
-  suppressesStatusDecay?: readonly StatusId[]; // e.g. ['Burn']
+  slowsStatusDecay?: { statusIds: readonly StatusId[]; retain: number }; // e.g. Burn kept at 0.75/round
   reversesSpeedOrder?: boolean;
   healPriorityBonus?: number; // added to a heal-kind move's priority bracket
   statBonusEqualToStatusMagnitude?: { statusId: StatusId; stats: readonly StatKey[] };
@@ -57,10 +57,19 @@ actually applies it:
   combatant's MP Regen, applied in the regen pipeline itself — never folded into the
   `mpRegen` stat, the same discipline that keeps damage modifiers out of the stat
   pipeline (CLAUDE.md "Two-pipeline separation"), generalized to the regen pipeline.
-- **`suppressesStatusDecay`** — `engine/combat/statusEngine.ts` `tickEndOfRound`. Lists
-  status ids whose end-of-round decay (`StatusDefinition.decay`) is skipped while the
-  effect is active; the DoT/HoT tick itself still fires, only the post-tick halving is
-  suppressed.
+- **`slowsStatusDecay`** — `engine/combat/statusEngine.ts` `tickEndOfRound`. Lists
+  status ids whose end-of-round decay (`StatusDefinition.decay`) is slowed while the
+  effect is active, and the share of the magnitude `retain`ed per tick: 0.5 is the
+  ordinary halving, 1 would be no decay at all. The DoT/HoT tick itself still fires
+  untouched — the field moves the decay, never the damage.
+
+  It **replaced a boolean `suppressesStatusDecay`** (2026-09-05). Scorched Land stopping
+  Burn outright was survivable while a Burn was a flat authored number; once the
+  magnitude formula (`docs/combat.md` "Scaled status magnitudes") put a Fire
+  specialist's Burn near 50 a tick, five undecayed rounds was 250 damage from one Early
+  move and one passive, which killed a full-HP hero through no decision. Field duration
+  is locked at 5 rounds, so the rate is the only lever — Scorched Land now retains 0.75,
+  and its whole window pays about 150.
 - **`reversesSpeedOrder`** — `engine/combat/priority.ts` `orderActions`. Flips the
   Speed tiebreaker to ascending (slowest-first) *within* a shared priority bracket.
   Priority BRACKETS themselves are untouched — still sorted descending — so a move
@@ -112,7 +121,7 @@ unchanged, so nothing else moved.
 | Field Effect | flavorType | Effect | Move (starter) |
 | --- | --- | --- | --- |
 | Magical Surge | Arcane | Doubles MP Regen | `manaFont`, `magicCloak` (Glyph) |
-| Scorched Land | Fire | Burn no longer decays | `spreadingBlaze` (Brimstone) |
+| Scorched Land | Fire | Burn keeps 3/4 of its value a round instead of half | `spreadingBlaze` (Brimstone) |
 | Stasis Field | Mind | Reverses same-bracket Speed order | `stasis` (Cortex) |
 | Sanctuary | Light | Heal-kind moves get +1 priority | `consecrate` (Solace) |
 | Verdant Earth | Nature | +Attack/+Intelligence equal to your own Renew | `magicGrowth`, `forceOfNature` (Sylva) |

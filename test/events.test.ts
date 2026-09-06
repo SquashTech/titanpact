@@ -321,12 +321,12 @@ function renewGrants(events: readonly CombatEvent[], id: string): number[] {
     .map((e) => e.magnitude ?? 0);
 }
 
-test('unstoppableGrowth: arriving grants the hero itself Renew 20, and nobody else', () => {
+test('unstoppableGrowth: arriving grants the hero itself Renew 40, and nobody else', () => {
   const state = withPassive(fixture(20), 'a3', 'unstoppableGrowth');
   const result = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config);
 
-  assert.deepStrictEqual(renewGrants(result.events, 'a3'), [20]);
-  assert.strictEqual(renewOf(result.state, 'a3'), 10, 'and the round boundary has already healed it once and halved it');
+  assert.deepStrictEqual(renewGrants(result.events, 'a3'), [40]);
+  assert.strictEqual(renewOf(result.state, 'a3'), 20, 'and the round boundary has already healed it once and halved it');
   assert.strictEqual(renewOf(result.state, 'a2'), 0, 'the partner is not part of this');
   assert.strictEqual(renewOf(result.state, 'b1'), 0);
 });
@@ -334,24 +334,24 @@ test('unstoppableGrowth: arriving grants the hero itself Renew 20, and nobody el
 test('unstoppableGrowth: the opening lead counts as arriving', () => {
   const state = withPassive(fixture(21), 'a1', 'unstoppableGrowth');
   const opened = resolveBattleStartEntries(state, 1, heroes, statuses, passives, fieldEffects);
-  assert.strictEqual(renewOf(opened.state, 'a1'), 20);
+  assert.strictEqual(renewOf(opened.state, 'a1'), 40);
 });
 
 test('unstoppableGrowth: a pivot out and back re-seeds it, stacking onto what survived the tick', () => {
   let state = withPassive(fixture(22), 'a3', 'unstoppableGrowth');
   state = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config).state;
-  assert.strictEqual(renewOf(state, 'a3'), 10, '20 granted, ticked, halved');
+  assert.strictEqual(renewOf(state, 'a3'), 20, '40 granted, ticked, halved');
 
   state = resolveRound(state, [{ kind: 'switch', combatantId: 'a3', benchedCombatantId: 'a1' }], config).state;
   const back = resolveRound(state, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config);
 
-  // Renew survives switching and stacks additively, so the second grant lands ON the remainder (5 + 20).
-  assert.deepStrictEqual(renewGrants(back.events, 'a3'), [25]);
-  assert.ok(renewOf(back.state, 'a3') > 10, 'the second arrival adds to what was left, it does not replace it');
+  // Renew survives switching and stacks additively, so the second grant lands ON the remainder (10 + 40).
+  assert.deepStrictEqual(renewGrants(back.events, 'a3'), [50]);
+  assert.ok(renewOf(back.state, 'a3') > 20, 'the second arrival adds to what was left, it does not replace it');
 });
 
 test('unstoppableGrowth: a passive-applied HoT is FLAT — it is not run through the healing formula', () => {
-  // cinderKnight and sentinel hold different Wisdom and must both read the authored 20.
+  // cinderKnight and sentinel hold different Wisdom and must both read the authored 40.
   assert.notStrictEqual(
     heroes.cinderKnight.baseStats.wisdom,
     heroes.sentinel.baseStats.wisdom,
@@ -364,6 +364,6 @@ test('unstoppableGrowth: a passive-applied HoT is FLAT — it is not run through
     config
   );
 
-  assert.strictEqual(renewOf(lead.state, 'a1'), 20);
-  assert.deepStrictEqual(renewGrants(arrival.events, 'a3'), [20]);
+  assert.strictEqual(renewOf(lead.state, 'a1'), 40);
+  assert.deepStrictEqual(renewGrants(arrival.events, 'a3'), [40]);
 });

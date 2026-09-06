@@ -228,13 +228,69 @@ magnitude; re-reading the holder's Wisdom every round would make the same
 Second Wind worth more on a bulkier ally who had nothing to do with casting it.
 Decay-by-halving operates on whatever magnitude the snapshot produced.
 
-The scaling is gated on `StatusDefinition.pipeline === 'hot'`, not on the
-move's kind, so a damage move that grants Renew scales its Renew and a heal
-move that inflicts Burn does not scale the Burn.
+The scaling is gated on `StatusDefinition.pipeline`, not on the move's kind, so
+a damage move that grants Renew scales its Renew and a heal move that inflicts
+Burn scales its Burn. See "Scaled status magnitudes" below for the DoT half.
 
 **Passive heals are not scaled.** `PassiveEffect { kind: 'heal' }` — Sanguine's
 "heal for the amount that Bleed tick dealt" — is already derived from another
 number; running it through the formula as well would compound two multipliers.
+
+## Scaled status magnitudes (2026-09-05)
+
+```
+magnitude = authored × StatMult × STAB
+StatMult  = 1 + (stat − 50)/100, clamped [0.5, 2.0]
+```
+
+`engine/status/statusMagnitude.ts`. One shape for both signs, sharing the
+healing formula's constants, so the player reads a single rule: **50 is par,
+every point is 1%**. Which stat is read is the only thing that differs — a
+`hot` takes the caster's Wisdom, a `dot` takes the offensive stat its move
+already swings with (`statKeysForMove`: Attack on a physical move, Intelligence
+on a magical one, honouring `offStatOverride`). Snapshotted at application, the
+same as a HoT and for the same reason.
+
+**Why it exists.** `HP_SCALE = 2` is difficulty-neutral for anything that
+repeats and not for anything that decays. An attacker's lifetime output rose
+with the round count the change bought (median fight 4 → 6); Burn's is capped
+at ≈2× its magnitude by `decay: 'halve'` no matter how long the fight runs, so
+it ate the full dilution with no compensation. A Burn 20 fell from 32% of a
+target's bar to 16%, while Bleed — the one DoT authored as a percentage — did
+not move at all and became the better one.
+
+**Why the move's own category, not one stat.** Fire's slate is split (Kindle
+and Molten Lash physical, Ember and Set Alight magical). Pinning Burn to
+Intelligence would make every physical Fire hero a trap pick. This is the
+opposite call from healing above, and deliberately so: a heal is its own build
+axis, a DoT is the move it rode in on.
+
+**Why no defender term.** Same asymmetry #3 as healing, plus the applier
+already paid a defended hit to land the rider.
+
+**Why STAB, even on a rider attached to a damage body.** It is a second helping
+on a move like Scorch, and that is a real cost — but dropping it would leave
+Set Alight, whose whole payload is the rider, taking nothing from being Fire.
+Consistency wins.
+
+### A `dot` on `self` is a cost, and costs are flat
+
+Fire's and Mech's self-Burn (Volcanic Surge, Backfire, Overheat, Meltdown) is
+billed by `authoring-moves.md` as the self-harm shape "whose price is knowable
+before the button is pressed". Scaling it would break that promise, and would
+make Meltdown's price grow with the Intelligence Meltdown exists to convert. So
+a `dot` aimed at `self` lands at exactly the authored number. A `hot` on self
+is a benefit rather than a cost and scales like any other.
+
+That split is what the 2026-09-05 rebase followed: **payoffs ×1.5** (the formula
+supplies the rest of the correction) and **costs ×2** (nothing else lifts them).
+Passive-applied magnitudes are unscaled by the same precedent — a passive has no
+move to take STAB from — so they took the ×2 too.
+
+**Open: the `[0.5, 2.0]` clamp.** Inherited from healing, where nothing on the
+roster reaches either end. Combustion and Superheat each grant +20 to an
+offensive stat *per Burn taken*, so a Mech hero can pass 150 inside a fight and
+stop scaling. The cap is the number most likely to need raising once measured.
 
 ### Settled alongside the formula (2026-08-28 designer sign-off)
 

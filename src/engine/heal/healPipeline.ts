@@ -2,7 +2,7 @@
 //   Heal = HealPower × WisdomMult × STAB, WisdomMult = 1 + (Wisdom − 50)/100 clamped to [0.5, 2.0]
 // No target max-HP term, no variance, no defender-side term — each a decision (see the doc).
 
-import type { HeroDefinition, MoveDefinition, StatusDefinition, TypeId } from '../content';
+import type { HeroDefinition, MoveDefinition, TypeId } from '../content';
 import type { Combatant, FieldEffectContext } from '../state';
 import { getEffectiveStat, effectiveTypes } from '../state';
 import { resolveStab } from '../damage/typeMult';
@@ -17,10 +17,14 @@ export const HEAL_WISDOM_PER_POINT = 0.01;
 export const HEAL_MULT_MIN = 0.5;
 export const HEAL_MULT_MAX = 2.0;
 
-/** The Wisdom term from a raw stat, so the view can run it off a hero sheet. */
-export function wisdomMultFromStat(wisdom: number): number {
+/**
+ * The stat term from a raw stat, so the view can run it off a hero sheet. Named for the
+ * formula rather than for Wisdom because `status/statusMagnitude.ts` runs the same term
+ * off Attack or Intelligence for a DoT — one rule, one clamp, one set of constants.
+ */
+export function magnitudeMultFromStat(stat: number): number {
   // Locked: Heal = HealPower × WisdomMult × STAB, WisdomMult = 1 + (Wisdom − 50)/100 (CLAUDE.md)
-  const raw = 1 + (wisdom - HEAL_WISDOM_REFERENCE) * HEAL_WISDOM_PER_POINT;
+  const raw = 1 + (stat - HEAL_WISDOM_REFERENCE) * HEAL_WISDOM_PER_POINT;
   return Math.min(HEAL_MULT_MAX, Math.max(HEAL_MULT_MIN, raw));
 }
 
@@ -30,7 +34,7 @@ export function resolveWisdomMult(
   caster: Combatant,
   fieldEffectCtx?: FieldEffectContext
 ): number {
-  return wisdomMultFromStat(getEffectiveStat(casterHero, caster, 'wisdom', fieldEffectCtx));
+  return magnitudeMultFromStat(getEffectiveStat(casterHero, caster, 'wisdom', fieldEffectCtx));
 }
 
 /** The only two caster inputs the formula has — lets out-of-combat screens show a true number without a Combatant. */
@@ -54,7 +58,7 @@ export function calcHeal(healPower: number, wisdomMult: number, stab: number): H
 
 /** The formula from a plain stat + type pair. */
 export function resolveHealFor(move: MoveDefinition, caster: HealCaster): HealCalcResult {
-  return calcHeal(move.healPower ?? 0, wisdomMultFromStat(caster.wisdom), resolveStab(move.type, caster.types));
+  return calcHeal(move.healPower ?? 0, magnitudeMultFromStat(caster.wisdom), resolveStab(move.type, caster.types));
 }
 
 /** The whole formula for one caster + one heal move. Target-independent, so a bothAllies heal resolves once. */
@@ -68,23 +72,4 @@ export function resolveHeal(
     wisdom: getEffectiveStat(casterHero, caster, 'wisdom', fieldEffectCtx),
     types: effectiveTypes(casterHero, caster),
   });
-}
-
-/**
- * A HoT is healing, so the CASTER's Wisdom and STAB scale it — snapshotted at
- * application, never re-read per tick off the holder. Gated on `pipeline === 'hot'`,
- * not on move kind; non-HoT magnitudes pass through untouched.
- */
-export function scaleHotMagnitude(
-  magnitude: number | undefined,
-  def: StatusDefinition,
-  move: MoveDefinition,
-  casterHero: HeroDefinition,
-  caster: Combatant,
-  fieldEffectCtx?: FieldEffectContext
-): number | undefined {
-  if (magnitude === undefined || def.pipeline !== 'hot') return magnitude;
-  const wisdomMult = resolveWisdomMult(casterHero, caster, fieldEffectCtx);
-  const stab = resolveStab(move.type, effectiveTypes(casterHero, caster));
-  return Math.round(magnitude * wisdomMult * stab);
 }

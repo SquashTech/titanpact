@@ -1,5 +1,6 @@
 // Status conditions (docs/conditions.md).
 
+import { statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
 import { createFightState, fixtureMaxHp } from './fixtures';
@@ -28,6 +29,14 @@ function twoVTwoFixture(seed: number) {
       { combatantId: 'b2', heroId: 'wildOracle', side: 'B' },
     ]
   );
+}
+
+/** Enough mana for any single cast, so a fixture never Rests instead of casting. */
+function deepMana<T extends { combatants: Record<string, any> }>(state: T): T {
+  const combatants = Object.fromEntries(
+    Object.entries(state.combatants).map(([id, c]) => [id, { ...c, currentMana: 999, statModifiers: { ...c.statModifiers, manaPool: 999 } }])
+  );
+  return { ...state, combatants };
 }
 
 function withStatus(
@@ -360,4 +369,106 @@ test('status: a Stealthed hero is not a selectable target for a single-target at
   assert.deepStrictEqual(selectableTargets(stealthed, 'singleEnemy', 'heal', enemies), enemies);
   // Last hero standing is offered rather than an empty picker (mirrors applyStealthRedirect).
   assert.deepStrictEqual(selectableTargets(stealthed, 'singleEnemy', 'damage', ['b2']), ['b2']);
+});
+
+// --- The magnitude formula (docs/combat.md "Scaled status magnitudes") ---
+
+test('status: a DoT rider scales off the caster stat its own move swings with, and takes STAB', () => {
+  // Crimson (Fire, Int 80) casting the MAGICAL Set Alight: 30 x 1.30 x 1.25 = 49.
+  // Cinder Knight (Fire/Iron, Attack 85) casting the PHYSICAL Molten Lash: 15 x 1.35 x 1.25 = 25.
+  const cast = (heroId: string, moveId: string) => {
+    const state = deepMana(
+      createFightState(
+        700,
+        [{ combatantId: 'a1', heroId, side: 'A' }],
+        [{ combatantId: 'b1', heroId: 'ironWarden', side: 'B' }]
+      )
+    );
+    const applied = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId, declaredTarget: 'b1' }] as Action[], config);
+    const event = applied.events.find((e) => e.type === 'StatusApplied' && e.statusId === 'Burn');
+    return event && event.type === 'StatusApplied' ? event.magnitude : null;
+  };
+
+  assert.strictEqual(cast('crimson', 'setAlight'), 49);
+  assert.strictEqual(cast('cinderKnight', 'moltenLash'), 25);
+});
+
+test('status: the same Burn move is worth more in a specialist hand than in an incidental one', () => {
+  // The whole point of the formula: identity, not a uniform buff. Read off the data, not
+  // pinned — what matters is the ORDER, and that the off-type applier lands under the base.
+  const cast = (heroId: string) => {
+    const state = deepMana(
+      createFightState(
+        701,
+        [{ combatantId: 'a1', heroId, side: 'A' }],
+        [{ combatantId: 'b1', heroId: 'ironWarden', side: 'B' }]
+      )
+    );
+    const applied = resolveRound(
+      state,
+      [{ kind: 'move', combatantId: 'a1', moveId: 'setAlight', declaredTarget: 'b1' }] as Action[],
+      config
+    );
+    const event = applied.events.find((e) => e.type === 'StatusApplied' && e.statusId === 'Burn');
+    return (event && event.type === 'StatusApplied' ? event.magnitude : 0) ?? 0;
+  };
+
+  const authored = statusApplicationsOf(moves.setAlight).find((app) => app.statusId === 'Burn')!.magnitude!;
+  const specialist = cast('crimson'); // Fire, Int 80 — the stat term AND STAB
+  const incidental = cast('wildOracle'); // Nature, Int 60 — the stat term alone, no STAB
+
+  assert.strictEqual(specialist, 49); // 30 x 1.30 x 1.25
+  assert.strictEqual(incidental, 33); // 30 x 1.10, and nothing else
+  assert.ok(specialist > authored, `the Fire specialist must beat the authored ${authored}, got ${specialist}`);
+  // STAB is the bulk of the gap, which is why the type a hero draws power from is the read.
+  assert.ok(specialist > incidental * 1.4, `the spread is too narrow to be an identity: ${specialist} vs ${incidental}`);
+});
+
+test('status: a DoT aimed at SELF is a cost — it lands at exactly the authored number', () => {
+  // Volcanic Surge's self-Burn must stay knowable before the button is pressed, so the
+  // formula never touches it, even though Cinder Knight would otherwise scale it by 1.69.
+  const authored = statusApplicationsOf(moves.volcanicSurge).find((app) => app.statusId === 'Burn')!;
+  assert.strictEqual(authored.target, 'self');
+
+  const state = deepMana(
+    createFightState(
+      702,
+      [{ combatantId: 'a1', heroId: 'cinderKnight', side: 'A' }],
+      [{ combatantId: 'b1', heroId: 'ironWarden', side: 'B' }]
+    )
+  );
+  const { events } = resolveRound(
+    state,
+    [{ kind: 'move', combatantId: 'a1', moveId: 'volcanicSurge', declaredTarget: 'b1' }] as Action[],
+    config
+  );
+  const applied = events.find((e) => e.type === 'StatusApplied' && e.statusId === 'Burn');
+  assert.ok(applied && applied.type === 'StatusApplied');
+  assert.strictEqual(applied.type === 'StatusApplied' ? applied.magnitude : null, authored.magnitude);
+});
+
+test('status: a HoT aimed at SELF is a benefit, so it still scales', () => {
+  // The self exemption is about SIGN, not about the target: Second Wind is the mirror of
+  // Volcanic Surge and must go through the formula (45 x Revenant's 0.96 x 1.25 Spirit = 54).
+  const state = deepMana(
+    createFightState(
+      703,
+      [{ combatantId: 'a1', heroId: 'revenant', side: 'A' }],
+      [{ combatantId: 'b1', heroId: 'ironWarden', side: 'B' }]
+    )
+  );
+  const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'secondWind' }] as Action[], config);
+  const applied = events.find((e) => e.type === 'StatusApplied' && e.statusId === 'Renew');
+  assert.ok(applied && applied.type === 'StatusApplied');
+  assert.strictEqual(applied.type === 'StatusApplied' ? applied.magnitude : null, 54);
+});
+
+test('status: the formula is gated on the pipeline — a timer status is scaled by nothing', () => {
+  for (const def of Object.values(statuses)) {
+    if (def.pipeline === 'hot' || def.pipeline === 'dot') continue;
+    assert.notStrictEqual(def.pipeline, undefined, `${def.id} has no pipeline to gate on`);
+  }
+  // Poison is the one magnitude-carrying status outside both, and its magnitude is a
+  // PERCENTAGE of max HP — it already tracks the HP pool and must not be scaled again.
+  assert.strictEqual(statuses.Poison.pipeline, 'timer');
 });

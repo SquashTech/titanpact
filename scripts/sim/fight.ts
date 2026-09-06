@@ -38,7 +38,7 @@ const AI_SIDE: Side = 'B';
  */
 const MAX_ROUNDS = 80;
 
-const config = { typeChart, heroes: allCombatants, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
+const config = { typeChart, heroes: allCombatants, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 10 };
 
 export interface CombatantTelemetry {
   heroId: string;

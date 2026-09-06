@@ -111,7 +111,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   unstoppableGrowth: {
     id: 'unstoppableGrowth',
     name: 'Unstoppable Growth',
-    description: 'When this hero enters the battlefield, it gains Renew 20.',
+    description: 'When this hero enters the battlefield, it gains Renew 40.',
     // Same arrival shape as Imposing Presence, pointed inward: every arrival including the
     // opening lead, so a pivot out and back re-seeds it. Renew stacks additively, which is
     // the intended payoff. A passive-applied HoT is FLAT — the healing formula's Wisdom
@@ -119,7 +119,7 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
     reactive: {
       hook: 'SwitchedIn',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 20 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 40 },
     },
   },
   frozenStone: {
@@ -324,14 +324,14 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   cinderguard: {
     id: 'cinderguard',
     name: 'Cinderguard',
-    description: 'Whenever this hero takes damage, both active enemies gain Burn 5.',
+    description: 'Whenever this hero takes damage, both active enemies gain Burn 10.',
     // Target-role DamageDealt: "I was hit". There is no 'triggerSource' target — a passive cannot
     // reach the attacker — so the answer goes to activeEnemies, which in doubles is the attacker
     // plus its partner. Small per firing, stacking additively, and Immolate is what cashes it.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 5 },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Burn', magnitude: 10 },
     },
   },
   ashfeast: {
@@ -468,14 +468,14 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   grief: {
     id: 'grief',
     name: 'Grief',
-    description: 'Whenever this hero takes damage, it gains Renew 10.',
+    description: 'Whenever this hero takes damage, it gains Renew 20.',
     // Tempering's trigger paying a HoT instead of Defense, which is the only way a 45-Defense
     // body gets to be the one that stays. Renew is additive and survives switching, so a pivot
     // out to the bench carries the stack with it.
     reactive: {
       hook: 'DamageDealt',
       condition: { relativeTo: 'self' },
-      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 10 },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Renew', magnitude: 20 },
     },
   },
   sentry: {

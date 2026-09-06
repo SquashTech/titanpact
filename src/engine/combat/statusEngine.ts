@@ -11,6 +11,9 @@ import { nextInt } from '../rng/seededRng';
 
 type StatusResult = { state: CombatState; events: CombatEvent[] };
 
+/** `decay: 'halve'` spelled as a retained share, so a field effect can move it without a second code path. */
+const DEFAULT_DECAY_RETAIN = 0.5;
+
 function setStatus(state: CombatState, combatantId: string, statusId: StatusId, instance: StatusInstance): CombatState {
   const combatant = state.combatants[combatantId];
   return {
@@ -163,10 +166,11 @@ export function tickEndOfRound(
         const maxHp = maxHpOf(combatantId);
         const magnitude = instance.magnitude ?? (def.flatPercentOfMaxHp ? Math.ceil(maxHp * def.flatPercentOfMaxHp) : 0);
         const delta = def.pipeline === 'dot' ? -magnitude : magnitude;
-        // Scorched Land suppresses decay only; the tick itself is untouched.
-        const decaySuppressed = activeFieldEffectDef?.suppressesStatusDecay?.includes(statusId) ?? false;
+        // Scorched Land slows decay only; the tick itself is untouched.
+        const slowed = activeFieldEffectDef?.slowsStatusDecay;
+        const retain = slowed?.statusIds.includes(statusId) ? slowed.retain : DEFAULT_DECAY_RETAIN;
         // undefined (not 0) for a non-decaying status, so the view never renders "Bleed 0".
-        const decayedMagnitude = def.decay === 'halve' && !decaySuppressed ? Math.floor((instance.magnitude ?? 0) / 2) : undefined;
+        const decayedMagnitude = def.decay === 'halve' ? Math.floor((instance.magnitude ?? 0) * retain) : undefined;
 
         events.push({
           type: 'StatusTicked',
@@ -181,7 +185,7 @@ export function tickEndOfRound(
         working = hpResult.state;
         events.push(...hpResult.events);
 
-        if (def.decay === 'halve' && !decaySuppressed) {
+        if (def.decay === 'halve' && retain < 1) {
           if ((decayedMagnitude ?? 0) <= 0) {
             const rm = removeStatus(working, round, combatantId, statusId, 'decay');
             working = rm.state;

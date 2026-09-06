@@ -228,8 +228,8 @@ export interface FieldEffectDefinition {
   flavorType?: TypeId;
   /** Multiplies every combatant's MP Regen (2 = doubled). Applied in manaRegen.ts, never folded into the mpRegen stat. */
   mpRegenMultiplier?: number;
-  /** Statuses whose post-tick decay is skipped while active (Scorched Land holding Burn). The tick itself still happens. */
-  suppressesStatusDecay?: readonly StatusId[];
+  /** Statuses whose post-tick decay is slowed while active (Scorched Land holding Burn). `retain` is the share kept per tick — 0.5 is the ordinary halving, 1 is no decay at all. The tick itself is untouched. */
+  slowsStatusDecay?: { statusIds: readonly StatusId[]; retain: number };
   /** Within a priority bracket, resolve slowest-first (Stasis Bubble). Bracket separation untouched. priority.ts orderActions. */
   reversesSpeedOrder?: boolean;
   /** Added to heal-kind moves' priority bracket (Sanctuary +1). priority.ts orderActions. */

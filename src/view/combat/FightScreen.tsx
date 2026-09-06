@@ -354,7 +354,7 @@ const CONSOLE_EMBERS = Array.from({ length: 9 }, (_, i) => {
     size: 2 + ((seed * 0.17) % 2),
   };
 });
-const config = { typeChart, heroes: allCombatants, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
+const config = { typeChart, heroes: allCombatants, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 10 };
 
 // Hold-to-auto-play: hold length before auto-play engages, and the pause between auto-advanced beats.
 const AUTO_ADVANCE_HOLD_MS = 350;

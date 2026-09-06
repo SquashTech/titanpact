@@ -31,6 +31,17 @@ don't silently override it.
   `WisdomMult = 1 + (Wisdom − 50)/100`. Scales with the **caster's Wisdom** (whatever the
   move's category), **never with the target's max HP**, and carries **no variance**. A HoT
   snapshots it at application time. Reasoning + open questions: `docs/combat.md`.
+- **Status magnitude formula (2026-09-05):** a DoT or HoT rider's authored magnitude is a
+  BASE — `magnitude = authored × StatMult × STAB`, `StatMult = 1 + (stat − 50)/100` clamped
+  `[0.5, 2.0]`, snapshotted at application. Same shape and same constants as the heal
+  formula; only the stat differs — a `hot` reads the caster's **Wisdom**, a `dot` the
+  **offensive stat its own move swings with** (Attack if physical, Intelligence if magical),
+  so a split slate like Fire has no trap-pick half. **A `dot` aimed at `self` is a COST and
+  is never scaled** (Fire's and Mech's self-Burn, whose price must stay knowable before the
+  button is pressed); a `hot` on self is a benefit and scales. Passive-applied magnitudes
+  are flat — a passive has no move to take STAB from. It exists because `HP_SCALE` is
+  neutral for what repeats and not for what decays: `decay: 'halve'` caps a Burn's lifetime
+  output at ≈2× its magnitude however long the fight runs. `docs/combat.md`.
 - **Stat line:** HP, Attack/Defense, Intelligence/Wisdom, Speed, Mana, MP Regen.
 - **Every hero spends exactly 450 stat points** across HP/Attack/Defense/Intelligence/
   Wisdom/Speed/Mana (2026-09-05); **MP Regen sits outside the budget at a flat 10**.

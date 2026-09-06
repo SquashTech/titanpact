@@ -47,7 +47,7 @@ let state: CombatState = {
   activeFieldEffect: null,
 };
 
-const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
+const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 10 };
 
 function firstActiveOn(s: CombatState, side: Side): string | null {
   return s.active[side].find((id) => id && !s.combatants[id].fainted) ?? null;

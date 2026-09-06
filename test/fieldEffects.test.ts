@@ -176,9 +176,9 @@ test('fieldEffects: casting magicCloak again while it is already active does not
   assert.strictEqual(next.activeFieldEffect?.roundsRemaining, 2); // ticked down again this round (3 -> 2), not reset to 5
 });
 
-// --- Scorched Land: Burn no longer decays ---
+// --- Scorched Land: Burn decays a quarter as fast ---
 
-test('fieldEffects: Scorched Land suppresses Burn\'s end-of-round decay; normally it halves', () => {
+test('fieldEffects: Scorched Land slows Burn\'s end-of-round decay to a quarter; normally it halves', () => {
   const built = twoVTwoFixture(410);
   const burned = applyStatus(built, 1, 'a1', statuses.Burn, { magnitude: 20 }).state;
   const maxHpOf = (id: string) => getMaxHp(heroes[burned.combatants[id].heroId], burned.combatants[id]);
@@ -189,25 +189,28 @@ test('fieldEffects: Scorched Land suppresses Burn\'s end-of-round decay; normall
 
   const scorched = { ...burned, activeFieldEffect: { fieldEffectId: 'scorchedLand', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
   const scorchedTick = tickEndOfRound(scorched, 1, statuses, fieldEffects, maxHpOf);
-  assert.strictEqual(scorchedTick.state.combatants.a1.statuses.Burn?.magnitude, 20); // decay suppressed
+  assert.strictEqual(scorchedTick.state.combatants.a1.statuses.Burn?.magnitude, 15); // three quarters kept, not half
   const tickEvent = scorchedTick.events.find((e) => e.type === 'StatusTicked' && e.statusId === 'Burn');
-  assert.ok(tickEvent && tickEvent.type === 'StatusTicked' && tickEvent.kind === 'damage' && tickEvent.amount === 20 && tickEvent.newMagnitude === undefined);
+  // The tick itself is untouched — the field moves the decay, never the damage.
+  assert.ok(tickEvent && tickEvent.type === 'StatusTicked' && tickEvent.kind === 'damage' && tickEvent.amount === 20 && tickEvent.newMagnitude === 15);
 });
 
-test('fieldEffects: Scorched Land keeps Burn at full magnitude across several rounds, then decay resumes once it expires', () => {
+test('fieldEffects: Scorched Land holds Burn near its magnitude for five rounds, then halving resumes', () => {
   const built = twoVTwoFixture(411);
-  // ironWarden (135 HP) has to survive 5 rounds of an un-decayed 20 Burn plus one past expiry.
+  // A Burn 20 that barely fades: 20 -> 15 -> 11 -> 8 -> 6 -> 4 across the field's whole window.
+  const scorchedCurve = [15, 11, 8, 6, 4];
   let state = applyStatus(built, 1, 'b1', statuses.Burn, { magnitude: 20 }).state;
   state = { ...state, activeFieldEffect: { fieldEffectId: 'scorchedLand', roundsRemaining: FIELD_EFFECT_DURATION_ROUNDS } };
 
+  assert.strictEqual(scorchedCurve.length, FIELD_EFFECT_DURATION_ROUNDS);
   for (let i = 0; i < FIELD_EFFECT_DURATION_ROUNDS; i++) {
     state = resolveRound(state, [], config).state;
-    assert.strictEqual(state.combatants.b1.statuses.Burn?.magnitude, 20, `still full magnitude after round ${i + 1}`);
+    assert.strictEqual(state.combatants.b1.statuses.Burn?.magnitude, scorchedCurve[i], `quartered decay after round ${i + 1}`);
   }
   assert.strictEqual(state.activeFieldEffect, null); // expired exactly on schedule
 
   state = resolveRound(state, [], config).state;
-  assert.strictEqual(state.combatants.b1.statuses.Burn?.magnitude, 10);
+  assert.strictEqual(state.combatants.b1.statuses.Burn?.magnitude, 2); // halving again
 });
 
 // --- Stasis Bubble: reverse Speed order within a shared priority bracket ---
