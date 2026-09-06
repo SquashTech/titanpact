@@ -98,8 +98,8 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     topic: 'The Map',
     lines: [
       "Wild's Edge. Everything lives out here, and most of it would rather we did not.",
-      'Normally this map branches and you choose your own road. Not today. Today there is one way through, and I will tell you what every stop on it is for.',
-      'Tap the node above us when you are ready.',
+      'Normally, this map branches and you choose your own road. Not today. Today there is one way through, and I will tell you what every stop on it is for.',
+      'Venture forth when you are ready.',
     ],
   },
 
@@ -110,7 +110,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     lines: [
       'Goblins. Two of them, two of us. Every fight in this world is two against two.',
       'Fang and I are both on the field at once. Each round you give us an order apiece: a move, and who it lands on. Nothing happens until we have both been told.',
-      'Monsters, this one. They tend to hold valuable loot that will aid us on this journey.',
+      'Monsters tend to hold valuable loot that will aid us on this journey.',
     ],
   },
   {
@@ -118,7 +118,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     topic: 'Gems',
     lines: [
       'A Gem. That is a relic, and a relic benefits us all. The same bonus on me, on Fang, and on anyone we pick up later.',
-      'They stack, forever. Two Sapphires is ten more Mana on everybody.',
+      'They stack, forever. We will collect many across these lands.',
       'Pick the one you want carried for the rest of the journey.',
     ],
   },
@@ -137,7 +137,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
       'Experience teaches us new ways to fell our foes. Give it to any of us, even heroes who did not participate in the battle.',
       'A level does not raise my numbers. It teaches me a new move, or progresses me toward evolution.',
       'The first level costs one point, the next two, the next three.',
-      'For now it all comes to me. There is something I need to show you, and I have to get far enough along to show it.',
+      'For now, give it all to me. There is something I need to reach, and I will show you when I get there.',
     ],
   },
 
@@ -147,13 +147,13 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     topic: 'Choosing',
     lines: [
       'A cache. Three pieces, you take one.',
-      'Read what the numbers actually do before you touch it. A big number on the wrong hero is a small number.',
+      'Some of us may want different specialties than others. Observe what the equipment does before choosing.',
     ],
   },
   {
     id: 'reward:equipmentReward',
     lines: [
-      'Rarity is a budget, not a promise. A Common on the right shoulders beats an Epic on the wrong ones.',
+      'Equipment comes in various rarities, but sometimes rare does not mean better.',
     ],
   },
 
@@ -162,13 +162,13 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:classReward',
     topic: 'Mentor',
     lines: [
-      'Someone up there teaches. A Class is a permanent shape — one per hero, one per run, and it does not come off.',
-      'There are four of these on the road ahead, so you need not spend it on me. Spend it on whoever you have decided this run is about.',
+      'Someone up there teaches. Each of us may learn one class. The decision is permanent.',
+      'We will find more of these on the road ahead.',
     ],
   },
   {
     id: 'classNode',
-    lines: ['Three on offer. Read them against who we already are, not against which one sounds best.'],
+    lines: ['Three on offer. Choose one, then who will learn it.'],
   },
 
   // --- Row 3: the Skirmish ---
@@ -176,22 +176,22 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:skirmish',
     topic: 'Skirmish',
     lines: [
-      'Not goblins. Pactbearers, same as us — which means when they go down, you can claim one.',
+      'Not goblins. Pactbearers, same as us. When they go down, we can recruit one.',
       'You are carrying a Recruit Contract. One beaten hero, straight onto our roster, at whatever strength they were beaten at. Six is the cap and we are two, so there is room.',
-      'Frost, both of them. Cold eats a Beast, Fang — that will hurt. It runs off me.',
-      { speaker: 'fang', text: 'Then stand in front.' },
-      'And look at how differently the two of them fight. One swings. One never touches you at all.',
+      'Frost, both of them. Cold eats a Beast such as Fang. We must deal with them quickly.',
+      { speaker: 'fang', text: 'Woof.' },
+      'Watch how differently they fight. One strikes with her hands. The other never touches us at all.',
     ],
   },
   {
     id: 'recruit',
     topic: 'Recruit Contract',
     lines: [
-      'The caster. Take the caster — I am not asking.',
-      'Fang and I both hit with our hands. Everything we do is measured against what the enemy is wearing.',
-      'She is not. What she throws is measured against what the enemy KNOWS. Armour does nothing about it.',
-      'You need one of each, and there is something at the end of this valley you will not get through without her.',
-      'A contract keeps everything she had when she fell — her level, her moves, her growth. Not her gear. Gear stays on the corpse.',
+      'Take the caster. This one is not a choice.',
+      'Fang and I strike with our bodies. What we do is measured against what the enemy is wearing.',
+      'She does not. What she casts is measured against their mind instead, and armor does nothing to stop it.',
+      'We will need one of each. There is something at the end of this valley we do not pass without her.',
+      'A contract keeps everything they had when they fell — their level, their moves, their growth. Not their gear. Gear stays on the corpse.',
     ],
   },
 
@@ -252,8 +252,8 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
       'The Goblin Lord. He is not a goblin the way the others are goblins. He is a warden, and half of what he is is the seal itself.',
       'Ancient. Everything is resisted by it. Nothing you own is strong against him and nothing ever will be — that is what a seal is.',
       'So you do not out-type him. You out-last him.',
-      "Two escorts stand in front of him. The green one is Fang's — Nature never survives a Beast.",
-      'The stone one is mine by the chart, and the chart is going to lie to you. Watch what happens when I hit it.',
+      "Two escorts stand in front of him. The green one is Fang's. Nature never survives a Beast.",
+      'The stone one should be mine, by the chart. Watch what actually happens when I hit it.',
       'And keep the caster on the field the whole way. Cold is what a Beast fears, and under all that Ancient he is still a Beast.',
     ],
   },
@@ -286,6 +286,7 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     lines: [
       'Pick one of my moves, then pick who it lands on. Then do the same for Fang.',
       'Speed decides who actually swings first, and you will not always be the one who does.',
+      'At any time, you can tap on a hero or an enemy to view their capabilities.',
     ],
   },
   {
@@ -326,7 +327,7 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     when: { round: 1 },
     topic: 'Type Advantage',
     lines: [
-      'Frost into Iron is half. Frost into Beast is double. Same move, two very different afternoons.',
+      'Frost into Iron is half. Frost into Beast is double. Same move, two very different outcomes.',
       'Hold a move button to see exactly what it does to each of them before you commit.',
     ],
   },
@@ -336,7 +337,7 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     when: { round: 2 },
     topic: 'Two Kinds of Hit',
     lines: [
-      'Watch them. The one with the shard throws it — that is a PHYSICAL move, and it is weighed against my Defense.',
+      'Watch them closely. The one throwing shards is using a PHYSICAL move, and it is weighed against my Defense.',
       'The other one never moves. Hers is MAGICAL, and my Defense has nothing to say about it. It goes against my Wisdom instead.',
       'Every move in the game is one or the other. Hold a move to see which.',
     ],
@@ -377,9 +378,9 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     when: { round: 2 },
     topic: 'The Caster',
     lines: [
-      'Look at her sheet sometime. Twenty-five Attack. She could not punch through a wet curtain.',
-      'Eighty Intelligence, though. That is what her wind is measured with, and it is measured against their Wisdom — which nothing out here bothers to have.',
-      'Two of us who hit armour, one of us who goes around it. That is why I made you take her.',
+      'Look at her sheet. Twenty-five Attack. She could not break a branch with her hands.',
+      'Eighty Intelligence, though. That is what her wind is measured with, and it goes against their Wisdom, which nothing out here bothers to have.',
+      'Two of us who hit armor, one of us who goes around it. That is why I made you take her.',
     ],
   },
   {
@@ -408,9 +409,9 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     id: 'boss:armour',
     node: 'boss',
     when: { round: 2 },
-    topic: 'Armour',
+    topic: 'Armor',
     lines: [
-      'Underwhelming, was it. That thing is a hundred and ten Defense — my fist is being divided by a wall before the chart ever gets a turn.',
+      'Underwhelming, was it. That thing has a hundred and ten Defense. My fist is divided by a wall before the chart ever gets a turn.',
       'Now put the caster on it. Fifty Wisdom. Her wind does not care what it is wearing.',
       'Type advantage is one term in the sum. It is not the sum. This is the fight that teaches you that.',
     ],
