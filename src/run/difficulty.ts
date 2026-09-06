@@ -28,11 +28,19 @@ export const ENEMY_LEVEL_BY_ACT: readonly number[] = [1, 3, 5, 7, 10];
 
 /**
  * Level a Guild Hall hire arrives at, by act (1-indexed; later acts hold at the last entry).
- * Below `ENEMY_LEVEL_BY_ACT` at every act on purpose: a hire is still underleveled against the
- * act it is bought in, so raising it stays a real investment (the raise-vs-recruit axis,
- * `docs/progression.md`). A flat 1 made a late-act hire unplayable rather than merely behind.
+ * The reference is the PLAYER's roster at that point in the run, not `ENEMY_LEVEL_BY_ACT` —
+ * enemies are scaled on stats as much as on levels, so pinning a hire under their level table
+ * priced the early halls at nothing. The early acts carry the biggest bump because that is
+ * where the run is hardest (2026-09-06 playtest: Act 2 is the wall).
+ *
+ * Two lines the curve is drawn against, both load-bearing:
+ *  - Acts 1-2 stay under `EVOLUTION_LEVEL`, so an early hire's Evolution is still the
+ *    PLAYER's choice on the next level-up screen rather than the roll's.
+ *  - Every act stays well under `MASTERY_LEVEL`, so there is always runway left to buy —
+ *    a hire is a head start, never a finished hero (the raise-vs-recruit axis,
+ *    `docs/progression.md`).
  */
-export const GUILD_HALL_LEVEL_BY_ACT: readonly number[] = [1, 2, 4, 5, 7];
+export const GUILD_HALL_LEVEL_BY_ACT: readonly number[] = [2, 4, 5, 6, 7];
 
 export function guildHallLevel(actNumber: number): number {
   const act = clampAct(actNumber);

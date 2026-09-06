@@ -3,7 +3,8 @@ import { test } from './harness';
 import { heroes } from '../src/data/heroes';
 import { enemies } from '../src/data/enemies';
 import { guildHallOffers } from '../src/data/recruitment';
-import { ENEMY_LEVEL_BY_ACT, GUILD_HALL_LEVEL_BY_ACT, guildHallLevel } from '../src/run/difficulty';
+import { GUILD_HALL_LEVEL_BY_ACT, guildHallLevel } from '../src/run/difficulty';
+import { EVOLUTION_LEVEL, MASTERY_LEVEL } from '../src/run/progression';
 import { guildHallEntry } from '../src/run/guildRecruit';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP } from '../src/run/state';
 import { equipItem } from '../src/run/equipment';
@@ -30,7 +31,7 @@ function seedRoster(heroIds: string[], gold = 0) {
 
 // --- Guild Hall (raise) ---
 
-test('recruitment: Guild Hall recruit spends gold and adds a fresh 0-progress entry', () => {
+test('recruitment: Guild Hall recruit spends gold and adds an entry at the act hire level', () => {
   const run = seedRoster(['cinderKnight'], 100);
   const offer = guildHallOffers.find((o) => o.heroId === 'ironWarden')!;
 
@@ -39,7 +40,7 @@ test('recruitment: Guild Hall recruit spends gold and adds a fresh 0-progress en
   const entry = next.roster.find((r) => r.rosterId === 'ironWarden');
   assert.ok(entry);
   assert.strictEqual(entry!.heroId, 'ironWarden');
-  assert.strictEqual(entry!.level, 1);
+  assert.strictEqual(entry!.level, guildHallLevel(1));
   assert.deepStrictEqual(entry!.chosenPathIds, []);
 });
 
@@ -57,26 +58,36 @@ test('recruitment: Guild Hall recruit still enforces the roster cap', () => {
   assert.throws(() => recruitFromGuildHall(run, offer, 'extra-ironWarden'));
 });
 
-test('recruitment: a Guild Hall hire is always underleveled against the act it is bought in', () => {
-  for (let act = 1; act <= ENEMY_LEVEL_BY_ACT.length; act++) {
-    assert.ok(
-      guildHallLevel(act) < ENEMY_LEVEL_BY_ACT[act - 1] || act === 1,
-      `act ${act}: hire level ${guildHallLevel(act)} must sit under the enemy's ${ENEMY_LEVEL_BY_ACT[act - 1]}`
-    );
+test('recruitment: the Guild Hall hire curve climbs, and always leaves runway to buy', () => {
+  for (let act = 1; act <= GUILD_HALL_LEVEL_BY_ACT.length; act++) {
+    const level = guildHallLevel(act);
+    assert.ok(level >= guildHallLevel(act - 1), `act ${act}: the hire curve must not go backwards`);
+    assert.ok(level < MASTERY_LEVEL, `act ${act}: a hire at ${level} has no movepool left to raise`);
   }
-  assert.strictEqual(guildHallLevel(1), 1);
+  // The early halls stop short of the fork, so an early hire's Evolution is the player's pick.
+  assert.ok(guildHallLevel(1) < EVOLUTION_LEVEL);
+  assert.ok(guildHallLevel(2) < EVOLUTION_LEVEL);
   // Later acts hold at the last authored entry rather than falling off the table.
   assert.strictEqual(guildHallLevel(99), GUILD_HALL_LEVEL_BY_ACT[GUILD_HALL_LEVEL_BY_ACT.length - 1]);
 });
 
 test('recruitment: a late-act hire arrives raised — level, moves and an Evolution already spent', () => {
-  const run = { ...seedRoster(['cinderKnight'], 100), actNumber: 4 };
+  const run = { ...seedRoster(['cinderKnight'], 100), actNumber: 3 };
   const offer = guildHallOffers.find((o) => o.heroId === 'ironWarden')!;
 
   const entry = recruitFromGuildHall(run, offer, 'ironWarden').roster.find((r) => r.rosterId === 'ironWarden')!;
-  assert.strictEqual(entry.level, guildHallLevel(4));
-  assert.strictEqual(entry.chosenPathIds.length, 1, 'act 4 is past EVOLUTION_LEVEL, so a path is chosen');
+  assert.strictEqual(entry.level, guildHallLevel(3));
+  assert.strictEqual(entry.chosenPathIds.length, 1, 'act 3 reaches EVOLUTION_LEVEL, so a path is chosen');
   assert.ok(entry.unlockedMoveIds.length > offer.startingMoveIds.length, 'the spare level-ups bought moves');
+});
+
+test('recruitment: an early hire keeps its Evolution unspent, for the player to choose', () => {
+  const run = { ...seedRoster(['cinderKnight'], 100), actNumber: 2 };
+  const offer = guildHallOffers.find((o) => o.heroId === 'ironWarden')!;
+
+  const entry = recruitFromGuildHall(run, offer, 'ironWarden').roster.find((r) => r.rosterId === 'ironWarden')!;
+  assert.strictEqual(entry.level, guildHallLevel(2));
+  assert.deepStrictEqual(entry.chosenPathIds, [], 'act 2 stops short of the fork');
 });
 
 test('recruitment: the previewed hire is the hire that is bought', () => {
@@ -170,7 +181,7 @@ test('recruitment: recruitFromGuildHallReplacing swaps the terminated hero for a
   const entry = next.roster.find((r) => r.rosterId === incomingOffer.heroId);
   assert.ok(entry);
   assert.strictEqual(entry!.heroId, incomingOffer.heroId);
-  assert.strictEqual(entry!.level, 1); // fresh, no progress carried over
+  assert.strictEqual(entry!.level, guildHallLevel(run.actNumber)); // the act's hire, not the terminated hero's level
   assert.strictEqual(entry!.equipment.weapon, 'ironBlade'); // inherited from the terminated hero
 });
 

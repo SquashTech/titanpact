@@ -360,18 +360,30 @@ gold costs, not a value that decays as the run progresses).
 
 A Guild Hall hire used to arrive at level 1 in every act, which by Act 4 bought the player
 a hero too far behind to field — the runway was not decaying, it was gone. A hire now
-arrives at `GUILD_HALL_LEVEL_BY_ACT` = **1 / 2 / 4 / 5 / 7** (`guildHallLevel`,
+arrives at `GUILD_HALL_LEVEL_BY_ACT` = **2 / 4 / 5 / 6 / 7** (`guildHallLevel`,
 `src/run/difficulty.ts`; later acts hold at the last entry, so Act 6's Vigil musters at 7),
 with those level-ups **already spent** — Evolution path first, then pool moves up to
 `MOVE_CAP`, rolled by the same `rollLevelProgression` an enemy's build comes from
 (`src/run/guildRecruit.ts`). It never carries the act's enemy stat scaling; that axis stays
 enemy-side.
 
-Every entry sits **below `ENEMY_LEVEL_BY_ACT`** (1 / 3 / 5 / 7 / 10) for the same act, which
-is what keeps the raise-vs-recruit axis honest: a hire is still behind the fights it is bought
-for, so pouring points into it is still an investment — it is no longer an investment starting
-from nothing. Gold cost is untouched at a flat 50g, so what the same 50g buys now grows with
-the act; whether that is the right price for an Act 5 level-7 hire is open.
+**The curve is drawn against the player's own roster, not `ENEMY_LEVEL_BY_ACT`** (1 / 3 / 5 /
+7 / 10). The first pass pinned it under that table and the early halls came out worth nothing —
+which is backwards, because the early acts are where the run is hardest (2026-09-06 playtest:
+Act 2 is the wall, matching the sim's 57% Act-2 Guardian win rate). So the bump is
+front-loaded: **+1 / +2 / +1 / +1 / +0** over that first pass, and acts 1-2 now sit *above* the
+enemy level table, which is fine — enemies are scaled on stats at least as much as on levels.
+
+Two lines the curve is drawn against instead:
+
+- **Acts 1-2 stop short of `EVOLUTION_LEVEL`.** An early hire arrives one affordable level-up
+  from its fork, and that fork is the *player's* pick on the next level-up screen rather than
+  the roll's. From Act 3 the hire arrives already evolved, path rolled.
+- **Every act stays well under `MASTERY_LEVEL`.** There is always movepool left to buy, so a
+  hire is a head start and never a finished hero — which is the whole raise-vs-recruit axis.
+
+Gold cost is untouched at a flat 50g, so what the same 50g buys now grows with the act; whether
+that is the right price for an Act 5 level-7 hire is open.
 
 The roll is deterministic in the offer, the act and the act's location, so the sheet the
 player inspects is exactly the hero they pay for (`test/recruitment.test.ts`). The sheet
