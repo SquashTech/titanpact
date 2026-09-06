@@ -14,6 +14,7 @@ import forbiddenForestUrl from '../../music/forbidden forest.flac?url';
 import blightedShrineUrl from '../../music/blighted shrine.flac?url';
 import moltenFoundryUrl from '../../music/molten foundry.flac?url';
 import stormCoastUrl from '../../music/stormcoast.flac?url';
+import necropolisUrl from '../../music/necropolis.flac?url';
 import titleScreenUrl from '../../music/titlescreen.flac?url';
 
 export interface TrackDefinition {
@@ -49,6 +50,10 @@ const trackTable = {
   },
   stormCoast: {
     url: stormCoastUrl,
+    gain: 0.85,
+  },
+  necropolis: {
+    url: necropolisUrl,
     gain: 0.85,
   },
   titleScreen: {
