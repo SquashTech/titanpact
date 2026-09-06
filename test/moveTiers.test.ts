@@ -106,14 +106,12 @@ test('move tiers: every level-up pool holds something a level-1 hero can be offe
 test('move tiers: a pool can still empty out as a MECHANISM, which now pays a mastery stat', () => {
   // Unreachable from real play since the FLOOR landed (test below); levelUpPayout turns an empty
   // pool into a mastery stat. This still pins the GATE.
-  const drained = levelUpMovePool(
-    progressionTable,
-    moves,
-    entryAt('ironWarden', 3, ['ironFist', 'pinDown', 'rockToss', 'bodyBlow'])
-  );
+  // Derived, not listed: the whole Early half of Warden's pool, so widening it does not rot this fixture.
+  const warden = (progressionTable.moveTiers.ironWarden ?? []).filter((id) => (moves[id].tier ?? 'early') === 'early');
+  const drained = levelUpMovePool(progressionTable, moves, entryAt('ironWarden', 3, warden));
   assert.deepStrictEqual(drained, [], 'the gate is allowed to leave nothing to offer');
   assert.ok(
-    levelUpMovePool(progressionTable, moves, entryAt('ironWarden', 4, ['ironFist', 'pinDown', 'rockToss', 'bodyBlow']))
+    levelUpMovePool(progressionTable, moves, entryAt('ironWarden', 4, warden))
       .length > 0,
     'and the very next level pays it back — Mid opens at 4'
   );

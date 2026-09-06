@@ -1053,6 +1053,24 @@ of the slate. Two rules:
 
 **Dual-typed heroes** keep their other type's moves in the pool alongside yours.
 
+**Off-type Early entries are policy, not leakage** (2026-09-05). Every pool carries a few, drawn
+from the *commodity layer* — each slate has the same Early shape (a bp40/mp20 single-target attack
+with a small chanced rider, plus mp15-25 buffs), and those rows carry no engine role, so any hero
+can hold them. They exist because ten heroes had Early pools with no damage move at all, which is
+three level-ups paying out nothing the player can press. Three rules:
+
+- **Pick on the stat the hero attacks with.** Magical: Magic Bolt, Psi Bolt, Wisp, Umbra Bolt,
+  Glimmer, Jolt, Ember, Backfire. Physical: Claw, Iron Fist, Rock Toss, Ice Shard, Holy Strike,
+  Vine Lash, Cog Bop, Fade Strike, Phantom Strike, Thunderclap, Heavy Blow, Opening Strike.
+- **Never pick the move an Evolution path already hands over** (`test/roster.test.ts`). A type has
+  exactly one Early attack per category, so "give the hero a taste of the type it may graft" and
+  "the graft delivers that type's line" collide by default. Telegraph a graft with a DIFFERENT move
+  of that type where one exists, and where none does, do not telegraph it — a base pool carrying the
+  branch's own move spoils the branch instead of foreshadowing it.
+- **Commodity means no engine role.** Seed Shot looks like one and is not: its `conditionalPower`
+  keys off Renew, so a hero with no Renew source gets a dead conditional
+  (`test/natureMoves.test.ts`). Read the riders before you share a move out.
+
 **Enemies** (`enemies.ts`) get two moves and have tiny mana pools — check §8.
 
 ---

@@ -231,6 +231,7 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
       'ironFist',
       'openingStrike',
       'serratedSlice',
+      'holyStrike',
     ]
   );
 
