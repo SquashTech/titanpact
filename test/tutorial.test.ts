@@ -153,17 +153,22 @@ test('tutorial: a scripted encounter is fielded verbatim when nothing is exclude
 
 // --- Payouts ---
 
-test('tutorial: Act 1 pays enough to reach an Evolution before the Guardian', () => {
-  const beforeGuardian = (['fight', 'skirmish', 'battle'] as const).reduce(
-    (total, node) => total + (TUTORIAL_PAYOUTS[node]?.xp ?? 0),
-    0
-  );
-  // The Evolution beat is the one lesson that cannot be scripted into a screen — the player has
-  // to be able to afford it. Following Valor (pour it into one hero) must reach the fork.
-  assert.ok(
-    beforeGuardian >= costToReachLevel(1, EVOLUTION_LEVEL),
-    `Act 1 pays ${beforeGuardian} XP but reaching level ${EVOLUTION_LEVEL} costs ${costToReachLevel(1, EVOLUTION_LEVEL)}`
-  );
+test('an act can afford an Evolution before its own Guardian, on either route', () => {
+  // Not a tutorial property — a property of the game's income, which is why the tutorial no
+  // longer overrides XP at all. Pouring an act into one hero is meant to be a real plan with a
+  // real cost (the rest of the roster stays behind), so the map must not decide two rows early
+  // whether it is possible. Both routes through an act have to clear the fork.
+  const cost = costToReachLevel(1, EVOLUTION_LEVEL);
+  for (const middle of ['battle', 'elite'] as const) {
+    const beforeGuardian = (['fight', 'skirmish', middle] as const).reduce(
+      (total, node) => total + trainingPointsFor(node, 1),
+      0
+    );
+    assert.ok(
+      beforeGuardian >= cost,
+      `the ${middle} route pays ${beforeGuardian} XP before its Guardian, and the Evolution costs ${cost}`
+    );
+  }
 });
 
 test('tutorial: payouts and encounters apply in Act 1 only', () => {
@@ -442,7 +447,7 @@ test('tutorial: the focus lock reaches the Evolution on the payouts as written',
   let level = 1;
   const reachedAfter: string[] = [];
   for (const node of ['fight', 'skirmish', 'battle'] as const) {
-    pool += TUTORIAL_PAYOUTS[node]?.xp ?? 0;
+    pool += TUTORIAL_PAYOUTS[node]?.xp ?? trainingPointsFor(node, 1);
     while (level < EVOLUTION_LEVEL && pool >= levelUpCost(level)) {
       pool -= levelUpCost(level);
       level++;
@@ -590,7 +595,12 @@ test('tutorial: the scripted act never pays better than a normal one', () => {
   // earlier so the Evolution lands before the Guardian — but never to add any.
   const fights = TUTORIAL_ROW_TYPES.filter((type) => TUTORIAL_PAYOUTS[type]);
 
-  const tutorialXp = fights.reduce((sum, type) => sum + (TUTORIAL_PAYOUTS[type]?.xp ?? 0), 0);
+  // Effective, not authored: an omitted `xp` takes the normal roll, and measuring the authored
+  // figure would score an absent override as zero and pass anything.
+  const tutorialXp = fights.reduce(
+    (sum, type) => sum + (TUTORIAL_PAYOUTS[type]?.xp ?? trainingPointsFor(type as XpNodeType, 1)),
+    0
+  );
   const normalXp = fights.reduce((sum, type) => sum + trainingPointsFor(type as XpNodeType, 1), 0);
   assert.ok(
     tutorialXp <= normalXp,
@@ -601,7 +611,10 @@ test('tutorial: the scripted act never pays better than a normal one', () => {
   // These are its Act 1 bands (30-45 for a battle, 15-25 otherwise, nothing for a boss) as means.
   // If that function changes, change these with it.
   const normalGoldMean: Partial<Record<string, number>> = { fight: 20, skirmish: 20, battle: 37.5, boss: 0 };
-  const tutorialGold = fights.reduce((sum, type) => sum + (TUTORIAL_PAYOUTS[type]?.gold ?? 0), 0);
+  const tutorialGold = fights.reduce(
+    (sum, type) => sum + (TUTORIAL_PAYOUTS[type]?.gold ?? normalGoldMean[type] ?? 0),
+    0
+  );
   const normalGold = fights.reduce((sum, type) => sum + (normalGoldMean[type] ?? 0), 0);
   assert.ok(
     tutorialGold <= normalGold,

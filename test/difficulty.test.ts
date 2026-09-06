@@ -168,14 +168,14 @@ test('difficulty: scaling stays deterministic per seed', () => {
 // --- Training Point income (act-scaled since 2026-09-05) ---
 
 test('difficulty: Training Points scale with the act, and the finale still pays nothing', () => {
-  // Act 1 is the authored base: 2 the opener, 3 Monsters, 4 Skirmish and Guardian.
-  assert.strictEqual(trainingPointsFor('fight', 1), 2);
+  // Act 1 is the authored base: 3 the opener, 3 Monsters, 4 Skirmish and Guardian.
+  assert.strictEqual(trainingPointsFor('fight', 1), 3);
   assert.strictEqual(trainingPointsFor('battle', 1), 3);
   assert.strictEqual(trainingPointsFor('skirmish', 1), 4);
   assert.strictEqual(trainingPointsFor('boss', 1), 4);
 
   // Every act past the first adds ACT_XP_STEP to every payout.
-  assert.strictEqual(trainingPointsFor('fight', 5), 2 + 4 * ACT_XP_STEP);
+  assert.strictEqual(trainingPointsFor('fight', 5), 3 + 4 * ACT_XP_STEP);
   assert.strictEqual(trainingPointsFor('skirmish', 5), 4 + 4 * ACT_XP_STEP);
 
   // The run ends on the finale, so it pays nothing in any act — the step must not lift it off zero.

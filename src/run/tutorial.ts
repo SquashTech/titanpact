@@ -273,10 +273,14 @@ export interface TutorialEncounter {
   statGrants?: Partial<Record<StatKey, number>>;
 }
 
-/** Total payout for winning a scripted node — replaces `trainingPointsFor` / `goldRewardFor`, not added to them. */
+/**
+ * What a scripted node pays. Each field REPLACES its normal roll (`trainingPointsFor`,
+ * `goldRewardFor`) rather than adding to it, and each is optional: an omitted field takes the
+ * normal one, which is how the scripted act says "this is not a thing I need to pin".
+ */
 export interface TutorialPayout {
-  xp: number;
-  gold: number;
+  xp?: number;
+  gold?: number;
 }
 
 export function tutorialEncounterFor(

@@ -98,12 +98,26 @@ export const NO_SCALING: ActScaling = { statSteps: 0, level: 1 };
 export type XpNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';
 
 /**
- * Per win, before the act step: 2 the act opener (the lightest fight on the map, and it
- * already ships a guaranteed drop), 3 Monsters, 4 Skirmish and Guardian. The finale pays
- * nothing — the run ends on it.
+ * Per win, before the act step: 3 the act opener, 3 Monsters, 4 Skirmish and Guardian. The
+ * finale pays nothing — the run ends on it.
+ *
+ * The opener was 2 until 2026-09-06 (per user direction), and the point it gained buys one
+ * specific thing: **an act's fights can now pay for an Evolution before that act's Guardian.**
+ * Reaching level 5 costs 10 pooled points, and Act 1 paid 9 on the Battle route and 10 on the
+ * Elite one — so whether an all-in on one hero could evolve in time came down to a routing
+ * choice made two rows earlier, for reasons a player could not see. Now both routes clear it.
+ *
+ * That an all-in is *affordable* is the intent, not a side effect: pouring an act into one hero
+ * is a real strategy with a real cost — the rest of the roster stays at level 1 and has to catch
+ * up — and it should be a plan the player can choose rather than one the map grants or denies.
+ *
+ * It went on the opener because row 0 is forced in every act, so the point lands on every route.
+ * Putting it on `battle` would have reached only the route that was short, and at the price of
+ * flattening the Elite's XP premium — which is the whole of the two-reward-lanes split
+ * (docs/run-loop.md): Monsters pays gold and loot, Skirmish pays experience.
  */
 const BASE_TRAINING_POINTS: Record<XpNodeType, number> = {
-  fight: 2,
+  fight: 3,
   battle: 3,
   skirmish: 4,
   elite: 4,

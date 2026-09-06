@@ -103,7 +103,7 @@ retired that (`scripts/sim`, 100,000 runs):
 - Under flat income, **0.0%** of heroes ever reached level 7 and **99.2% of all casts were
   early-tier**. Among runs that got as far as act 4, only 16.8% reached it.
 - Reaching level 7 costs **20** pooled points under the capped curve. Flat income paid
-  ~65–70 across a whole five-act run **for the entire roster**, so a squad of four (80
+  ~70–75 across a whole five-act run **for the entire roster**, so a squad of four (80
   points) could not get there on a perfect run. Total income, not the price curve, was the
   binding constraint.
 

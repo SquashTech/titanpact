@@ -159,11 +159,25 @@ node type, since `skirmish` and `battle` are indistinguishable once collapsed to
 
 | Node | Lane | Training Points | Gold | Equipment drop |
 |---|---|---|---|---|
-| `fight` (row 0 opener) | Monsters | 1 | 15-25 | **always**, act's standard curve |
-| `battle` (row 4) | Monsters | 1 | **30-45** | **always**, act's standard curve |
-| `skirmish` (row 2) | Skirmish | **2** | 15-25 | 25%, act's standard curve |
-| `elite` (row 4) | Skirmish | **2** | 15-25 | 55%, **one tier ahead** (`rarityWeightsFor(act, 'elite')`) |
-| `boss` | Guardian | **2** | 0 | 70%, one tier ahead |
+| `fight` (row 0 opener) | Monsters | 3 | 15-25 | **always**, act's standard curve |
+| `battle` (row 4) | Monsters | 3 | **30-45** | **always**, act's standard curve |
+| `skirmish` (row 2) | Skirmish | **4** | 15-25 | 25%, act's standard curve |
+| `elite` (row 4) | Skirmish | **4** | 15-25 | 55%, **one tier ahead** (`rarityWeightsFor(act, 'elite')`) |
+| `boss` | Guardian | **4** | 0 | 70%, one tier ahead |
+
+Training Points are the **Act 1** figures; every act past the first adds `ACT_XP_STEP` to each
+(§3). The table above sat at 1/1/2/2/2 until 2026-09-06, which was two income passes out of date —
+it is read off `BASE_TRAINING_POINTS` now.
+
+**The opener pays 3, not 2 (2026-09-06, per user direction).** Reaching the Evolution costs 10
+pooled points, and an act paid 9 on its Battle route against 10 on its Elite one — so whether a
+player who poured an act into one hero could evolve before that act's Guardian came down to a
+routing choice made two rows earlier, for reasons they could not see. Both routes clear it now
+(10 and 11). Making the all-in *affordable* is the intent: it is a real plan with a real cost, the
+rest of the roster sitting at level 1 with catching up to do, and it should be the player's
+decision rather than the map's. The point went on the opener because row 0 is forced in every act,
+so it lands on every route — putting it on `battle` would have reached only the short route and
+flattened the Elite's XP premium, which is this whole split. Run income goes 145 → 150.
 
 - **Monsters is the loot-and-gold lane.** The guaranteed drop was previously a hard-coded
   special case for the row-0 opener; it is now the lane's rule. `battle` additionally

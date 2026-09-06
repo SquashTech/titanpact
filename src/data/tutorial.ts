@@ -78,26 +78,26 @@ export const TUTORIAL_ENCOUNTERS: Partial<Record<MapNodeType, TutorialEncounter>
 };
 
 /**
- * What a scripted win pays, replacing the roll. The totals are a NORMAL Act 1's, deliberately:
- * a tutorial that pays better than the game would make erasing your profile the strongest opening
- * move, which is nonsense. Against `trainingPointsFor` at act 1 this is 13 XP for 13, and against
- * `goldRewardFor`'s bands it is 77 gold against a ~77.5 average.
+ * What a scripted win pays. XP is DELIBERATELY ABSENT: the scripted act takes the same
+ * experience a normal one does, so that erasing a profile to replay the tutorial is never the
+ * strongest opening move in the run. It used to pay double.
  *
- * One point is MOVED, not added: the warband pays 4 where a normal battle pays 3, and the
- * Guardian pays 3 where a normal one pays 4. Normal income is 9 before the Guardian and reaching
- * the Evolution costs 10, so on the true table Valor would evolve one fight too late — after the
- * act's apex fight rather than before it, which is the one place the lesson has to land. Moving a
- * point earlier buys that without buying any power.
+ * Reaching the Evolution before the Guardian is what an override used to buy, and it is now
+ * bought properly — the row-0 opener pays 3 rather than 2 (BASE_TRAINING_POINTS), so EVERY act
+ * on EVERY route can afford an all-in on one hero. Act 1 therefore pays 10 before its Guardian
+ * against a 10-point cost, and with TUTORIAL_LOCKS.focusHeroId funnelling all of it to Valor the
+ * schedule is exact: level 3 after the opener, 4 after the Skirmish, 5 after the warband.
  *
- * `TUTORIAL_LOCKS.focusHeroId` is what makes 10 enough rather than lucky: every point goes to
- * Valor, so 2 puts her at level 2, the Skirmish's 4 at level 4, and the warband's 4 at 5. There is
- * no slack in that — `test/tutorial.test.ts` holds both ends, the floor and the ceiling.
+ * Gold IS pinned, and only to its own average (goldRewardFor rolls 30-45 for a battle and 15-25
+ * otherwise). Not for power — 77 against a ~77.5 mean — but for determinism: Valor tells the
+ * player what to spend at the Guild Hall, so what they are holding when they get there cannot be
+ * a coin flip.
  */
 export const TUTORIAL_PAYOUTS: Partial<Record<MapNodeType, TutorialPayout>> = {
-  fight: { xp: 2, gold: 20 },
-  skirmish: { xp: 4, gold: 20 },
-  battle: { xp: 4, gold: 37 },
-  boss: { xp: 3, gold: 0 },
+  fight: { gold: 20 },
+  skirmish: { gold: 20 },
+  battle: { gold: 37 },
+  boss: { gold: 0 },
 };
 
 // --- Dialogue ---

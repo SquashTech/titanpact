@@ -93,7 +93,7 @@ the option rather than advising against it (2026-09-06, per user direction). Thr
 **The Evolution needed no lock of its own.** `LevelUpScreen` already refuses to bank or
 auto-close while one is pending, and `EvolutionScreen` has no decline. What was missing was a
 guarantee the player *reaches* one — which is what the focus lock is. With every point landing
-on one hero the fork arrives on a schedule: level 2 after the opener, 4 after the Skirmish, 5
+on one hero the fork arrives on a schedule: level 3 after the opener, 4 after the Skirmish, 5
 after the warband — the level-up screen immediately before the Guild Hall and the Guardian (§6).
 A test walks that arithmetic against the payout table and asserts *which node* it lands on, so
 retuning either table fails loudly rather than quietly moving the beat.
@@ -139,31 +139,35 @@ is the player's choice and Storm Lash would otherwise beat her.
 
 ## 6. Payouts
 
-`TUTORIAL_PAYOUTS` replaces the roll for Act 1's four fights, and its totals are **a normal Act
-1's**. A tutorial that pays better than the game would make erasing your profile the strongest
-opening move in the run, which is nonsense.
+**The scripted act does not touch XP at all.** It takes the same experience a normal act pays,
+because a tutorial that pays better would make erasing your profile the strongest opening move in
+the run. It briefly paid double (26 against 13) before this was measured.
 
-| Node | Tutorial XP | Normal XP | Tutorial gold | Normal gold (mean) |
-| --- | --- | --- | --- | --- |
-| Monsters (opener) | 2 | 2 | 20 | 20 |
-| Skirmish | 4 | 4 | 20 | 20 |
-| Monsters (warband) | **4** | 3 | 37 | 37.5 |
-| Guardian | **3** | 4 | 0 | 0 |
-| **Total** | **13** | **13** | **77** | **~77.5** |
+| Node | XP | Tutorial gold | Normal gold (mean) |
+| --- | --- | --- | --- |
+| Monsters (opener) | 3 | 20 | 20 |
+| Skirmish | 4 | 20 | 20 |
+| Monsters (warband) | 3 | 37 | 37.5 |
+| Guardian | 4 | 0 | 0 |
+| **Total** | **14** | **77** | **~77.5** |
 
-**One point is moved, not added.** Normal income is **9 XP before the Guardian** and reaching the
-Evolution costs **10**, so on the true table Valor evolves one fight too late — after the act's
-apex fight rather than before it, which is the one place that lesson has to land. Shifting a point
-from the Guardian to the warband buys that without buying any power.
+Reaching the Evolution before the Guardian is what an override used to buy, and it is bought
+properly now: the row-0 opener pays **3 rather than 2** across the whole game
+(`BASE_TRAINING_POINTS`, `run-loop.md` §2), so every act on every route can afford an all-in on
+one hero. Act 1 pays 10 before its Guardian against a 10-point cost.
 
 **The focus lock (§4) is what makes 10 enough rather than lucky.** Every point goes to Valor, so
-the schedule is exact: level 2 after the opener, 4 after the Skirmish, **5 after the warband** —
-the Level Up screen immediately before the Guild Hall and the Guardian. There is no slack in it at
-all, which is why two tests hold both ends: a floor (the fork must be reachable before the boss,
-and on that node) and a ceiling (neither XP nor gold may exceed a normal act's).
+the schedule is exact: level 3 after the opener, 4 after the Skirmish, **5 after the warband** —
+the Level Up screen immediately before the Guild Hall and the Guardian. Two tests hold it: a floor
+(*a normal act*, on either route, must afford the fork before its own Guardian) and a ceiling
+(neither the tutorial's effective XP nor its gold may exceed a normal act's).
 
-Everything else the act pays is already the normal roll — the equipment drop table, the opener's
-guaranteed Gem, the act-end Recruit Contract. Only these two columns were ever scripted.
+**Gold is pinned, and only to its own average** — `goldRewardFor` rolls 30-45 for a battle and
+15-25 otherwise. Not for power, but for determinism: Valor tells the player what to spend at the
+Guild Hall, so what they are holding when they arrive cannot be a coin flip.
+
+Everything else is already the normal roll — the equipment drop table, the opener's guaranteed
+Gem, the act-end Recruit Contract.
 
 ## 7. How the script is wired
 
