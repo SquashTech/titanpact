@@ -202,11 +202,10 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'recruit',
     topic: 'Recruit Contract',
     lines: [
-      'Take the caster. This one is not a choice.',
-      'Fang and I strike with our bodies. What we do is measured against what the enemy is wearing.',
-      'She does not. What she casts is measured against their mind instead, and armor does nothing to stop it.',
-      'We will need one of each. There is something at the end of this valley we do not pass without her.',
-      'A contract keeps everything they had when they fell — their level, their moves, their growth. Not their gear. Gear stays on the corpse.',
+      'Take the caster. They provide something that we lack.',
+      'Fang and I strike with our bodies. We struggle against enemies with high Defense.',
+      'Flurry does not. What they cast is measured against Wisdom instead, and armor does nothing to stop it.',
+      'A healthy balance is pivotal to success. There is something at the end of this valley we do not pass without her.',
     ],
   },
 
@@ -215,8 +214,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:relicReward',
     topic: 'Relics',
     lines: [
-      'A relic. Team-wide, like the Gem, but a relic carries more than a flat number — it changes how the team works.',
-      'Everyone gets it. Everyone we ever recruit gets it. That is why they are worth walking toward.',
+      'A relic. It affects us all, like the Gem.',
     ],
   },
   {
@@ -229,10 +227,9 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:battle',
     topic: 'The Bench',
     lines: [
-      'A chief and his warband. More of them than of us, which means somebody watches from the bench.',
-      'The bench is not a punishment. Whoever sits there regenerates Mana every round, and you can bring them in whenever you like. Switching costs a turn and nothing else.',
-      'One warning. Once a side has lost two heroes, that side can no longer switch at all — the doors close and it becomes a straight grind. Do your cycling early.',
-      'The caster starts on the field. I want you flying her before it matters.',
+      'A chief and his warband.',
+      'We are a team of three now, meaning one must sit on the bench. Whoever sits there regenerates Mana every round, and you can bring them in whenever you like. Switching costs a turn and nothing else.',
+      "Let's bring the caster to the field for this one. Their abilities may come in handy.",
     ],
   },
   {
@@ -240,8 +237,8 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     topic: 'Evolution',
     lines: [
       'There. Five levels in and the road forks.',
-      'This is not a bigger number. It is a different hero, and it is permanent for the rest of the run.',
-      'Defensive, offensive, or something stranger. Read all three. You are choosing what I am for.',
+      'The choice is permanent for the rest of the journey. My potential varies wildly, and it is up to you to choose my fate.',
+      'Press and hold any of the buttons for a detailed description of what each path entails.',
     ],
   },
 
@@ -250,13 +247,13 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:shop',
     topic: 'Guild Hall',
     lines: [
-      'Last stop before the Guardian. Gold buys three things here: a hero outright, a piece of gear, or another blank contract.',
+      'Last stop before the Guardian. Gold buys three things here: a hero outright, a piece of gear, or another recruit contract.',
       'Spend it. There is nothing on the far side of this that takes coin.',
     ],
   },
   {
     id: 'shop',
-    lines: ['A fourth body is worth more than a fourth trinket, if the coin is there.'],
+    lines: ['A fourth body is worth more than anything else, if the coin is there.'],
   },
 
   // --- Row 7: the Guardian ---
@@ -264,21 +261,18 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'map:boss',
     topic: 'The Guardian',
     lines: [
-      'The Goblin Lord. He is not a goblin the way the others are goblins. He is a warden, and half of what he is is the seal itself.',
-      'Ancient. Everything is resisted by it. Nothing we own is strong against him, and nothing ever will be. That is what a seal is.',
-      'So we do not out-type him. We out-last him.',
-      'Two of his warband stand in front. Clear them and he comes out — that is how every Guardian we meet will be arranged.',
-      'Keep the caster on the field the whole way. When he arrives, do not just look at the colors. Look at the numbers.',
+      'The Goblin Lord. He is not a goblin the way the others are goblins. He is a Guardian, and he holds one of the five seals.',
+      'He is known as an Ancient. Nothing we own is strong against him, and nothing ever will be.',
+      'Two of his warband stand in front. Clear one of them and he comes out, so be sure that we are well-prepared.',
     ],
   },
   {
     id: 'outro',
     topic: 'One Seal Down',
     lines: [
-      'The lock is broken and the valley is quiet. Five more of those, and then the thing they were holding.',
-      'From here the map branches, the choices are yours, and I stop telling you which way to walk.',
-      'You know the shape of it now. Doubles, Mana, types, the two kinds of damage, gear, relics, levels, contracts. Everything after this is those eight things pointed at harder problems.',
-      { speaker: 'fang', text: 'Good. Walk.' },
+      'The lock is broken and the valley is quiet. Four more of those, and the Titanpact will be forged.',
+      'From here the map branches, the choices are yours, and you are on your own.',
+      { speaker: 'fang', text: 'Woof.' },
     ],
   },
 ];
@@ -320,8 +314,7 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     when: { outOfMana: true },
     topic: 'Rest',
     lines: [
-      'I have nothing left to cast. Rest — it hands the whole pool back and costs me the turn.',
-      'Better than swinging at air. Sometimes it is the right play even when I could still afford something.',
+      'I have nothing left to cast. I must Rest. It costs me the turn, but I will regain all of my Mana.',
     ],
   },
 
@@ -346,24 +339,6 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
       'Watch them closely. The one throwing shards is using a PHYSICAL [physical] move, and it is weighed against my Defense.',
       'The other one is MAGICAL [magical], and my Defense is irrelevant. It goes against my Wisdom instead.',
       'Every move in the game wears one mark or the other. Look for it before you commit.',
-    ],
-  },
-  {
-    id: 'skirmish:focus',
-    node: 'skirmish',
-    when: { minRound: 3 },
-    topic: 'Focus',
-    lines: [
-      'Put both of us on the same one. Two enemies standing at half health hit you twice as hard as one at full.',
-    ],
-  },
-  {
-    id: 'skirmish:hurt',
-    node: 'skirmish',
-    when: { playerHpBelow: 0.4 },
-    topic: 'Pressure',
-    lines: [
-      'This is where a bench would have been useful. We do not have one yet — which is exactly what the contract at the end of this is for.',
     ],
   },
 
