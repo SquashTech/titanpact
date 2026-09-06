@@ -536,9 +536,10 @@ export function App() {
       if (node.type === 'battle' && !scripted) {
         encounter = generateLeaderEncounter(randomSeed(), faction.basicIds, faction.leaderId, enemies, scaling);
       } else {
-        // A scripted roster names its own combatants and may mix pools — the tutorial Guardian's
-        // escorts are heroes, chosen so Act 1 can teach the super-effective read, which no Goblin
-        // typing can (docs/tutorial.md). It is the one authored exception to the faction rule.
+        // A scripted roster names its own combatants, so it draws from the WHOLE table rather
+        // than the basics: the tutorial's warband names the Goblin Chief, whom `basicIds`
+        // deliberately omits. Pool membership still follows the faction rule either way — the
+        // scripted Guardian fields Goblin basics like every other one (docs/tutorial.md).
         const encounterPool = scripted ? allCombatants : isFactionFight ? basicEnemiesOf(faction) : heroes;
         // A hero already on the roster is barred from the recruitable SPAWN, so two copies can never
         // reach one roster via a contract claim (mirrors rollGuildHallOffers). Passed unconditionally:

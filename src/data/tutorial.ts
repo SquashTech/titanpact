@@ -26,8 +26,10 @@ import type { TutorialBeat, TutorialEncounter, TutorialFightCue, TutorialLocks, 
  * 25 Attack against 80 Intelligence, and a damage move that is magical. The split between the
  * two pipelines is invisible until the player holds one of each, and no draft can be relied on
  * to hand them one. She is then locked onto the field for the warband and the Guardian, because
- * Sentinel stands there with 110 Defense and 50 Wisdom: Valor's fist reads 60/110, Flurry's wind
- * reads 80/50, and that one screen is the whole lesson.
+ * the Goblin Lord is authored at 75 Defense against 60 Wisdom: her Rime Wind reads 42 on him
+ * where Valor's Iron Fist reads 20 and Fang's Claw reads 30 — and she is not even strong against
+ * him, since the Ancient half halves her Frost right back. That one screen is the whole lesson,
+ * and nothing had to be staged for it.
  */
 export const TUTORIAL_LOCKS: TutorialLocks = {
   focusHeroId: 'valor',
@@ -49,11 +51,15 @@ export const TUTORIAL_LOCKS: TutorialLocks = {
  *    swings physical and Flurry casts, so the pair is also the first place the two damage
  *    pipelines stand side by side (`TUTORIAL_LOCKS` forces Flurry onto the roster).
  *  - `battle` — the Chief as a body to grind, two basics as the bench lesson.
- *  - `boss` — one escort each: Stone for Valor's Iron, Nature for Fang's Beast. Sentinel is
- *    also the physical/magical proof — 110 Defense against 50 Wisdom, so the fist that is
- *    super-effective still reads worse than the spell that is not. The Goblin Lord rides the
- *    bench as he always does (locations.ts `guardianFinalEnemyId`) and walks on after the first
- *    KO, which is when the Ancient wall gets explained.
+ *  - `boss` — two of the faction's own basics, because that is what a Guardian is everywhere
+ *    else (run-loop.md "The Guardian's escorts"): the Grunt is a Beast for the caster to double
+ *    into, the Warrior is Iron so teeth do little to it. The Goblin Lord rides the bench as he
+ *    always does (locations.ts `guardianFinalEnemyId`) and walks on after the first KO.
+ *
+ *    He is also the physical/magical proof, and it needed no staging: 75 Defense against 60
+ *    Wisdom, so Flurry's Rime Wind reads 42 where Valor's Iron Fist reads 20 and Fang's Claw
+ *    reads 30 — and she is not even strong against him, the seal halves her too. Two pipelines,
+ *    one enemy, and the enemy is the one the whole act has been walking toward.
  */
 export const TUTORIAL_ENCOUNTERS: Partial<Record<MapNodeType, TutorialEncounter>> = {
   // The opener is the ONLY scripted fight that needed propping up. Two authored-as-fodder
@@ -64,7 +70,7 @@ export const TUTORIAL_ENCOUNTERS: Partial<Record<MapNodeType, TutorialEncounter>
   fight: { heroIds: ['goblinGrunt', 'goblinSkulker'], statGrants: { hp: 25, defense: 35 } },
   skirmish: { heroIds: ['rime', 'glacialWarden'] },
   battle: { heroIds: ['goblinChief', 'goblinGrunt', 'goblinSkulker'] },
-  boss: { heroIds: ['sentinel', 'wildOracle'] },
+  boss: { heroIds: ['goblinGrunt', 'goblinWarrior'] },
 };
 
 /**
@@ -255,11 +261,10 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     topic: 'The Guardian',
     lines: [
       'The Goblin Lord. He is not a goblin the way the others are goblins. He is a warden, and half of what he is is the seal itself.',
-      'Ancient. Everything is resisted by it. Nothing you own is strong against him and nothing ever will be — that is what a seal is.',
-      'So you do not out-type him. You out-last him.',
-      "Two escorts stand in front of him. The green one is Fang's. Nature never survives a Beast.",
-      'The stone one should be mine, by the chart. Watch what actually happens when I hit it.',
-      'And keep the caster on the field the whole way. Cold is what a Beast fears, and under all that Ancient he is still a Beast.',
+      'Ancient. Everything is resisted by it. Nothing we own is strong against him, and nothing ever will be. That is what a seal is.',
+      'So we do not out-type him. We out-last him.',
+      'Two of his warband stand in front. Clear them and he comes out — that is how every Guardian we meet will be arranged.',
+      'Keep the caster on the field the whole way. When he arrives, do not just look at the colors. Look at the numbers.',
     ],
   },
   {
@@ -268,7 +273,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     lines: [
       'The lock is broken and the valley is quiet. Five more of those, and then the thing they were holding.',
       'From here the map branches, the choices are yours, and I stop telling you which way to walk.',
-      'You know the shape of it now. Doubles, Mana, types, gear, relics, levels, contracts. Everything after this is those seven things pointed at harder problems.',
+      'You know the shape of it now. Doubles, Mana, types, the two kinds of damage, gear, relics, levels, contracts. Everything after this is those eight things pointed at harder problems.',
       { speaker: 'fang', text: 'Good. Walk.' },
     ],
   },
@@ -406,19 +411,9 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     when: { round: 1 },
     topic: 'The Escorts',
     lines: [
-      'Nature in front of Fang. Send him at it and it will not be there next round.',
-      'Now hold my Iron Fist over the stone one and read the number. Double damage, the chart says. Read it anyway.',
-    ],
-  },
-  {
-    id: 'boss:armour',
-    node: 'boss',
-    when: { round: 2 },
-    topic: 'Armor',
-    lines: [
-      'Underwhelming, was it. That thing has a hundred and ten Defense. My fist is divided by a wall before the chart ever gets a turn.',
-      'Now put the caster on it. Fifty Wisdom. Her wind does not care what it is wearing.',
-      'Type advantage is one term in the sum. It is not the sum. This is the fight that teaches you that.',
+      'His warband, not him. The green one is a Beast, and cold doubles into a Beast — send the caster at it.',
+      'The other is Iron. Claws and teeth barely mark it, so do not waste a Beast on that one.',
+      'Kill one and the Lord takes its place. Be ready.',
     ],
   },
   {
@@ -428,8 +423,10 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     topic: 'Ancient',
     lines: [
       'There he is.',
-      'Everything reads half against that second colour. There is no answer to it — you just keep hitting and you do not die first.',
-      'Cold first. Keep me between him and the rest.',
+      'Everything reads half against that second color. There is no answer to it, and there never will be.',
+      'So stop reading colors and read the numbers. Hold each of our moves over him before you commit.',
+      'A fist is weighed against his Defense. Her wind is weighed against his Wisdom. He is not equally armored against both, and almost nothing ever is.',
+      'That is the half of the formula most people never look at. Look at it.',
     ],
   },
   {

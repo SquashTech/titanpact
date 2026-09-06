@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { heroes } from '../src/data/heroes';
-import { enemies } from '../src/data/enemies';
+import { enemies, factions } from '../src/data/enemies';
 import { moves } from '../src/data/moves';
 import { locations } from '../src/data/locations';
 import { typeChart } from '../src/data/typechart';
@@ -88,8 +88,8 @@ test('tutorial: the forced starters are Valor and Fang, and both are draftable s
 test('tutorial: every scripted encounter names real content from the pool its node draws', () => {
   for (const [nodeType, encounter] of Object.entries(TUTORIAL_ENCOUNTERS)) {
     assert.ok(encounter && encounter.heroIds.length > 0, `${nodeType} scripts at least one enemy`);
-    // fight/battle draw the monster table; skirmish/boss the recruitable hero pool.
-    const pool = nodeType === 'fight' || nodeType === 'battle' ? enemies : heroes;
+    // Only the Skirmish draws the recruitable hero pool; fight/battle/boss are all faction content.
+    const pool = nodeType === 'skirmish' ? heroes : enemies;
     for (const id of encounter.heroIds) {
       assert.ok(pool[id], `${nodeType} names ${id}, which is not in the pool that node draws from`);
     }
@@ -111,18 +111,25 @@ test('tutorial: the scripted Skirmish is recruitable and answers the Guardian', 
   }
 });
 
-test('tutorial: the Guardian escorts are one super-effective target each for Valor and Fang', () => {
-  const escorts = TUTORIAL_ENCOUNTERS.boss!.heroIds;
-  for (const starterId of TUTORIAL_STARTER_IDS) {
-    const attacker = heroes[starterId].types[0];
-    const best = Math.max(...escorts.map((id) => resolveTypeMult(typeChart, attacker, heroes[id].types)));
-    assert.ok(best > 1, `${starterId} needs an escort its own domain is strong against — "one is mine, one is yours"`);
+test('tutorial: the scripted Guardian is shaped like every other Guardian', () => {
+  // The tutorial must not teach a fight the rest of the run never presents. Since 2026-09-06 a
+  // `boss` fields two of the Location faction's own BASICS with its champion on the bench
+  // (run-loop.md "The Guardian's escorts"), so the scripted one has to draw from that same list.
+  const faction = factions[locations.wildsEdge.factionId];
+  for (const id of TUTORIAL_ENCOUNTERS.boss!.heroIds) {
+    assert.ok(
+      faction.basicIds.includes(id),
+      `${id} is not a Wild's Edge basic — a scripted Guardian must field what a real one fields`
+    );
   }
+  assert.strictEqual(TUTORIAL_ENCOUNTERS.boss!.heroIds.length, 2, 'a Guardian fields two escorts');
+  // And the champion behind them is the Location's, not something the script invented.
+  assert.ok(enemies[locations.wildsEdge.guardianFinalEnemyId!], 'the Location must name a champion for the bench');
 });
 
 test('tutorial: a scripted enemy the player already recruited is dropped and the fight refilled', () => {
-  const scripted = TUTORIAL_ENCOUNTERS.boss!.heroIds;
-  const encounter = generateEncounter('boss', 99, heroes, {
+  const scripted = TUTORIAL_ENCOUNTERS.skirmish!.heroIds;
+  const encounter = generateEncounter('fight', 99, heroes, {
     forcedHeroIds: scripted,
     excludeHeroIds: [scripted[0]],
     progression: progressionTable,
@@ -135,8 +142,8 @@ test('tutorial: a scripted enemy the player already recruited is dropped and the
 });
 
 test('tutorial: a scripted encounter is fielded verbatim when nothing is excluded', () => {
-  const scripted = TUTORIAL_ENCOUNTERS.skirmish!.heroIds;
-  const encounter = generateEncounter('fight', 5, heroes, { forcedHeroIds: scripted });
+  const scripted = TUTORIAL_ENCOUNTERS.boss!.heroIds;
+  const encounter = generateEncounter('boss', 5, enemies, { forcedHeroIds: scripted });
   assert.deepStrictEqual(encounter.run.roster.map((e) => e.heroId), [...scripted]);
 });
 
@@ -323,7 +330,7 @@ test('tutorial: the opener still ships the Skulker the equip-inspect fixture arm
 
 test('tutorial: every move on a scripted enemy exists', () => {
   for (const [nodeType, encounter] of Object.entries(TUTORIAL_ENCOUNTERS)) {
-    const pool = nodeType === 'fight' || nodeType === 'battle' ? enemies : heroes;
+    const pool = nodeType === 'skirmish' ? heroes : enemies;
     for (const id of encounter!.heroIds) {
       for (const moveId of pool[id].moveIds) assert.ok(moves[moveId], `${id} carries unknown move ${moveId}`);
     }
@@ -354,16 +361,36 @@ test('tutorial: the forced recruit is a MAGICAL specialist that actually shows u
   assert.ok(damage.length > 0 && damage.every((m) => m.category === 'magical'), `${hero.name} must swing magical, not physical`);
 });
 
-test('tutorial: the fielding lock names a fight where being magical is the point', () => {
-  // Sentinel is the proof: a physical wall with an open flank. If the escort changes, the
-  // boss:armour cue is talking about a hero that is no longer there.
-  const escorts = TUTORIAL_ENCOUNTERS.boss!.heroIds.map((id) => heroes[id]);
-  const wall = escorts.find((hero) => hero.baseStats.defense >= 100);
-  assert.ok(wall, 'the Guardian escort must include a physically tanky body for the lesson to land');
-  assert.ok(
-    wall!.baseStats.defense - wall!.baseStats.wisdom >= 40,
-    `${wall!.name} must be far tankier physically than magically — that gap IS the lesson`
-  );
+test('tutorial: the forced caster out-damages both starters against the Guardian she is pinned to', () => {
+  // The whole reason the recruit and the fielding lock exist. Nothing is staged for it: the
+  // Goblin Lord is authored at 75 Defense against 60 Wisdom, so the two pipelines read
+  // differently on him, and the caster wins WITHOUT being strong against him — the seal halves
+  // her too. Computed on base kits, because the player's Evolution is their own choice.
+  const lord = enemies[locations.wildsEdge.guardianFinalEnemyId!];
+
+  const bestAgainstLord = (heroId: string) => {
+    const hero = heroes[heroId];
+    return Math.max(
+      0,
+      ...hero.moveIds
+        .map((id) => moves[id])
+        .filter((move) => move.kind === 'damage')
+        .map((move) => {
+          const [offStat, defStat] = statKeysForMove(move);
+          const ratio = hero.baseStats[offStat] / lord.baseStats[defStat];
+          return calcDamage(move, ratio, hero.types, lord.types, typeChart, VARIANCE_MAX, false).damage;
+        })
+    );
+  };
+
+  const caster = bestAgainstLord(TUTORIAL_LOCKS.recruitHeroId);
+  for (const starterId of TUTORIAL_STARTER_IDS) {
+    assert.ok(
+      caster > bestAgainstLord(starterId),
+      `${heroes[TUTORIAL_LOCKS.recruitHeroId].name} reads ${Math.round(caster)} against the Lord and ` +
+        `${heroes[starterId].name} reads ${Math.round(bestAgainstLord(starterId))} — the lock has nothing to prove`
+    );
+  }
   assert.ok(TUTORIAL_LOCKS.fieldAtNodes.includes('boss'), 'the caster must be on the field for the fight that proves it');
   for (const node of TUTORIAL_LOCKS.fieldAtNodes) {
     assert.ok(TUTORIAL_ROW_TYPES.includes(node), `${node} is not on the tutorial map`);

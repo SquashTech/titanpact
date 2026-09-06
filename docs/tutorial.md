@@ -46,7 +46,7 @@ a reward node are untouched — the choosing is the lesson; the routing is not.
 | — | *post-fight gate* | **Evolution** (the focus lock puts Valor at level 5 here) |
 | 5 | Monsters | the bench, switching, the lock-in rule, flying the caster |
 | 6 | Guild Hall | gold: a hero, gear, or a contract |
-| 7 | Guardian | the escorts, **armour vs the magical pipeline**, the Ancient wall, the Pact Clock |
+| 7 | Guardian | the faction-escort shape, the Ancient wall, **reading the number not the colour**, the Pact Clock |
 
 Every node type appears **exactly once**, which is what lets a beat be addressed by node type
 alone (`map:<type>`); a test pins that.
@@ -63,13 +63,20 @@ Contract can claim — because it is what the thing at the end of the valley fea
 you is what beats what is ahead* is the whole act in one sentence, and the player is made to
 feel it before they are told it.
 
-The Guardian's two escorts are then one each: **Stone** for Valor's Iron and **Nature** for
-Fang's Beast. "The stone one is mine; the green one is yours." Both are super-effective reads
-the player has by then been taught to look for, and clearing them is what brings the Lord off
-the bench — which is where the Ancient wall gets explained, with the wall in front of them.
+**The Guardian is shaped like every other Guardian.** It fields two of Wild's Edge's own
+**Goblin basics** with the Lord on the bench, because that is what a `boss` node is everywhere
+since 2026-09-06 (`run-loop.md` "The Guardian's escorts"). The tutorial only names *which* two,
+so Valor can be specific: the **Grunt** is a Beast for the caster to double into, the **Warrior**
+is Iron so claws barely mark it. Killing one brings the Lord out, which is where the Ancient
+wall gets explained with the wall in front of them.
 
-Two tests pin this: the Skirmish pair must threaten a starter *and* not be resisted by the
-Guardian, and each starter must have an escort its own domain is strong against.
+An earlier pass scripted hero escorts — Stone for Valor, Nature for Fang — to stage a
+super-effective read for each starter. That is gone: no Goblin typing is weak to both Iron and
+Beast, and a tutorial must not teach a fight the rest of the run never presents. The lesson it
+was staging turned out not to need staging (§5).
+
+Two tests pin what is left: the Skirmish pair must threaten a starter *and* not be resisted by
+the Guardian, and every scripted Guardian escort must be in the Location faction's `basicIds`.
 
 ## 4. What the act refuses to let you skip
 
@@ -106,16 +113,29 @@ hand them a caster, so the tutorial hands them one and does not ask.
 Intelligence**, and her only damage move is magical. She is also Frost, so she is still the
 Guardian answer §3 is built on — one recruit, two lessons.
 
-The proof is **Sentinel**, standing as a Guardian escort with **110 Defense against 50 Wisdom**:
+**The proof is the Goblin Lord himself, and it needed no staging.** He is authored at
+**75 Defense against 60 Wisdom**, so the two pipelines already read differently on him. Through
+the real damage pipeline, on base kits:
 
-- Valor's Iron Fist is *super-effective* into Stone and still reads 60/110 in the stat pipeline.
-- Flurry's Rime Wind is *neutral* and reads 80/50.
+| | Move | Pipeline | Damage |
+| --- | --- | --- | --- |
+| Valor | Iron Fist | physical, 60/75, ×0.5 | **20** |
+| Fang | Claw | physical, 90/75, ×0.5 | **30** |
+| Flurry | Rime Wind | magical, 80/60, ×1.0 | **42** |
 
-So the fight where the chart says Valor is favoured is the fight where the caster out-damages
-her — which is the point: **type advantage is one term in the sum, not the sum.** The
-`boss:escorts` cue tells the player to read Valor's number, and `boss:armour` fires the round
-after to explain why it disappointed them. A test pins the escort's Defense-minus-Wisdom gap, so
-swapping that escort out fails rather than leaving the cue talking about nobody.
+The caster wins **without being strong against him** — Frost doubles into Beast and the Ancient
+half halves it straight back, so her type multiplier is a flat 1. She is ahead purely on the
+stat ratio. That is the cleanest possible statement of the lesson: *type advantage is one term
+in the sum, not the sum.*
+
+So the cues stopped naming a staged wall. `boss:escorts` sets up the warband, and `boss:ancient`
+fires when the Lord walks on and tells the player to hold each move over him and read the number
+rather than the colour. Neither line names which of our heroes is holding it, because Flurry
+holds one active slot and the player picks the other — Fang may be on the bench.
+
+A test recomputes the table above through `calcDamage` and fails if the caster ever stops
+out-damaging both starters against the champion. It runs on base kits, because Valor's Evolution
+is the player's choice and Storm Lash would otherwise beat her.
 
 ## 6. Payouts
 
@@ -176,13 +196,11 @@ applies. Every id is one-shot, so nothing repeats either way.
 - **No skip.** The dialogue cannot be dismissed wholesale; the Title's Replay entry is the only
   control over it. If playtesting says the second read is a wall, a Skip that keeps the curated
   map and drops the lines is a small addition to `TutorialOverlay`.
-- **Act 1's Guardian is unmodified.** Only the escorts are scripted — and they are the one
-  place a Guardian still fields heroes rather than its faction (`run-loop.md` "The Guardian's
-  escorts"). No Goblin typing is weak to both Iron and Beast, so the "one is mine, one is
-  yours" lesson below cannot be taught out of the Wild's Edge roster; a scripted encounter
-  therefore draws from `allCombatants` and names its own. Whether the arriving power
-  level actually clears him reliably is a playtest question, and the two tables in §6 are the
-  knobs.
+- **Act 1's Guardian is unmodified**, escorts included — the script names two of the faction's
+  basics rather than inventing any, so the fight is the one every other act presents. Measured
+  over 20k simulated runs the Wild's Edge Guardian sits at 75.5% (`run-loop.md`), which is a
+  comfortable place for a tutorial to end. Whether the arriving power level clears him reliably
+  for a first-time player is still a playtest question, and the two tables in §6 are the knobs.
 - **Three locks may be two too many.** The forced recruit and the pinned slot both survive into
   fights the player might reasonably want to arrange themselves, and a second-time player will
   feel every one of them. `TUTORIAL_LOCKS` is one object; dropping a lock is deleting a field.
