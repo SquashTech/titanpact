@@ -36,6 +36,7 @@ import { rollRunEvent } from '../run/events';
 import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
 import { RunSummaryScreen } from '../view/run/RunSummaryScreen';
 import { heroes } from '../data/heroes';
+import { allCombatants } from '../data/content';
 import { enemies, factions, basicEnemiesOf, finaleEnemies, ENDBRINGER_ID } from '../data/enemies';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
 import { PactSealScreen } from '../view/run/PactSealScreen';
@@ -510,8 +511,13 @@ export function App() {
       node.type === 'boss'
     ) {
       // Generated at node-select time so SquadSelectScreen can scout the enemy squad.
-      // `fight`/`battle` draw from the Location's faction; `skirmish`/`elite`/`boss` from the recruitable hero pool.
+      // `fight`/`battle`/`boss` draw from the Location's faction; `skirmish`/`elite` from the recruitable hero pool.
       const isMobFight = node.type === 'fight' || node.type === 'battle';
+      // The Guardian's escorts are its own faction (2026-09-06, per user direction). Two recruitable
+      // heroes read as a Skirmish with a boss stapled on; a champion is the apex of the warband the
+      // act has been fighting. Only the POOL moves — the Guardian keeps the `skirmish` scaling track
+      // below, so its escorts ride the boss curve rather than the mob one (docs/run-loop.md).
+      const isFactionFight = isMobFight || node.type === 'boss';
       const faction = factions[location.factionId];
       // `skirmish` and `battle` are mechanically plain `fight` encounters.
       const encounterKind: EncounterNodeType = node.type === 'skirmish' || node.type === 'battle' ? 'fight' : node.type;
@@ -526,12 +532,14 @@ export function App() {
       if (node.type === 'battle' && !scripted) {
         encounter = generateLeaderEncounter(randomSeed(), faction.basicIds, faction.leaderId, enemies, scaling);
       } else {
-        // A scripted monster fight draws from the whole faction table, not the basics: its roster
-        // is named outright and may include a leader the basics list deliberately omits.
-        const encounterPool = !isMobFight ? heroes : scripted ? enemies : basicEnemiesOf(faction);
+        // A scripted roster names its own combatants and may mix pools — the tutorial Guardian's
+        // escorts are heroes, chosen so Act 1 can teach the super-effective read, which no Goblin
+        // typing can (docs/tutorial.md). It is the one authored exception to the faction rule.
+        const encounterPool = scripted ? allCombatants : isFactionFight ? basicEnemiesOf(faction) : heroes;
         // A hero already on the roster is barred from the recruitable SPAWN, so two copies can never
-        // reach one roster via a contract claim (mirrors rollGuildHallOffers).
-        const excludeHeroIds = encounterPool === heroes ? playerRun.roster.map((r) => r.heroId) : undefined;
+        // reach one roster via a contract claim (mirrors rollGuildHallOffers). Passed unconditionally:
+        // enemy and hero ids never collide (test/recruitment.test.ts), so it is inert on a mob pool.
+        const excludeHeroIds = playerRun.roster.map((r) => r.heroId);
         const heroCountOverride = node.type === 'fight' ? 2 : isSecondFight ? 2 : undefined;
         const heroCount = heroCountOverride ?? (encounterKind === 'boss' ? 2 : 4);
         // Location affinity bias applies to the recruitable pool only (docs/locations.md §2).
@@ -542,7 +550,7 @@ export function App() {
           bias,
           excludeHeroIds,
           scaling,
-          // No-op for the Goblin pool, which has no progression data.
+          // No-op for a faction pool, which has no progression data.
           progression: progressionTable,
         });
         // The Location's held-back champion arrives benched, so the first enemy KO brings him in.

@@ -94,8 +94,8 @@ wilderness.
 
 | Surface | Location-aware? |
 |---|---|
-| `skirmish` / `elite` / `boss` encounter pool | **Yes** — affinity-biased (§2). |
-| `fight` / `battle` encounter pool | Not yet — see "The faction bill" below. |
+| `skirmish` / `elite` encounter pool | **Yes** — affinity-biased (§2). |
+| `fight` / `battle` / `boss` encounter pool | **Yes** — the faction's `basicIds`, exactly. The Guardian's escorts joined this row on 2026-09-06 (`run-loop.md` "The Guardian's escorts"); affinity never applies here, because the faction *is* the filter. |
 | Recruit Contract offers | **Yes, transitively** — contracts are claimed off beaten Skirmish heroes, so biasing Skirmishes is what makes a hero "findable here". |
 | Guild Hall recruit pool | **No, deliberately** — see below. |
 | Map shape, node types, rewards | No. `run-loop.md` §1 is unchanged. |
@@ -123,8 +123,8 @@ work is data entry rather than plumbing.
 
 `enemies.ts` groups its content by **faction** (`FactionRoster`: a `baselineAct`, a list of
 `basicIds`, and one `leaderId`), and a Location names the one it fields through
-`LocationDefinition.factionId`. `fight` and `battle` are the two node types that read as
-*faction*; `skirmish` reads as *region*.
+`LocationDefinition.factionId`. `fight`, `battle` and (since 2026-09-06) `boss` are the node
+types that read as *faction*; `skirmish` reads as *region*.
 
 **The bill is paid (2026-09-05).** All six: **Goblins** (5 basics + the Chief, Wild's Edge),
 **Cultists** (4 + the Cult Mystic, Blighted Shrine) and **Raiders** (4 + the Champion Raider,

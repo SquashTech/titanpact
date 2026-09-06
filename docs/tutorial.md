@@ -120,7 +120,11 @@ applies. Every id is one-shot, so nothing repeats either way.
 - **No skip.** The dialogue cannot be dismissed wholesale; the Title's Replay entry is the only
   control over it. If playtesting says the second read is a wall, a Skip that keeps the curated
   map and drops the lines is a small addition to `TutorialOverlay`.
-- **Act 1's Guardian is unmodified.** Only the escorts are scripted. Whether the arriving power
+- **Act 1's Guardian is unmodified.** Only the escorts are scripted — and they are the one
+  place a Guardian still fields heroes rather than its faction (`run-loop.md` "The Guardian's
+  escorts"). No Goblin typing is weak to both Iron and Beast, so the "one is mine, one is
+  yours" lesson below cannot be taught out of the Wild's Edge roster; a scripted encounter
+  therefore draws from `allCombatants` and names its own. Whether the arriving power
   level actually clears him reliably is a playtest question, and the two tables in §4 are the
   knobs.
 - **Fang barely speaks.** Four lines in the whole run. Whether the partnership reads as a

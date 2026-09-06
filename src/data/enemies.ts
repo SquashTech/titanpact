@@ -73,9 +73,9 @@ export const enemies: Record<string, HeroDefinition> = {
     id: 'goblinLord',
     name: 'Goblin Lord',
     types: ['Beast', 'Ancient'],
-    // Act 1's Guardian meets the weakest roster in the run, so it is tuned below the
-    // other champions on both axes: 653 stat points against their 840-850, and a Beast
-    // kit that has to set Bleed up with Claw before Maul pays out, rather than the
+    // 550, the figure the other five were brought down TO on 2026-09-06. What still makes this
+    // the run's lightest Guardian is the escorts (Goblins at ~180 against the other factions' 400)
+    // and a Beast kit that has to set Bleed up with Claw before Maul pays out, rather than the
     // spread damage that was killing a hero per round (docs/run-loop.md).
     baseStats: { hp: 215, attack: 65, defense: 75, intelligence: 60, wisdom: 60, speed: 75, manaPool: 105, mpRegen: 20 },
     moveIds: ['claw', 'maul', 'enfeeble', 'archonBlast'],
@@ -138,13 +138,19 @@ export const enemies: Record<string, HeroDefinition> = {
     moveIds: ['magicBolt', 'umbralBeam', 'enfeeble', 'empower'],
     starter: false,
   },
-  // The Blighted Shrine's Guardian reinforcement, the Goblin Lord's opposite number one
-  // act later: 700 to his 600, and a magical line where his is physical.
+  // The Blighted Shrine's Guardian reinforcement, and the Goblin Lord's opposite number: the
+  // same 550 total, a magical line where his is physical.
+  //
+  // EVERY champion is 550 as of 2026-09-06 (was 700 for these five). They are flat numbers meeting
+  // a player who grows all run, so a champion authored for "Act 2 or later" is a wall in Act 2 and
+  // a speed bump in Act 5 — measured, the Act 2 Guardian won 3-10% of the time against the Act 3
+  // one's 30-67%. What separates one act's Guardian from another's is now the escorts beside it
+  // (its own faction, docs/run-loop.md "The Guardian's escorts") and the act curve on top.
   yugzulach: {
     id: 'yugzulach',
     name: 'Yugzulach',
     types: ['Shadow', 'Ancient'],
-    baseStats: { hp: 220, attack: 90, defense: 100, intelligence: 120, wisdom: 95, speed: 75, manaPool: 140, mpRegen: 20 },
+    baseStats: { hp: 165, attack: 70, defense: 85, intelligence: 85, wisdom: 75, speed: 70, manaPool: 140, mpRegen: 20 },
     moveIds: ['runicBlast', 'forgottenCurse', 'duskBlade', 'eclipse'],
     starter: false,
   },
@@ -232,13 +238,13 @@ export const enemies: Record<string, HeroDefinition> = {
   //
   // Unlike the Goblin Lord and the Leviathan it sits INSIDE its faction's spine (Yugzulach's
   // shape), so the Fire/Frost/Shadow/Beast answer that beat the basics still beats the boss.
-  // Renew 100 stacking on top of 260 HP is the figure in here most likely to move in a
+  // Renew 100 stacking on top of 205 HP is the figure in here most likely to move in a
   // balance pass — it is a first-pass number, not a decision.
   elderBough: {
     id: 'elderBough',
     name: 'Elder Bough',
     types: ['Nature', 'Ancient'],
-    baseStats: { hp: 260, attack: 105, defense: 110, intelligence: 105, wisdom: 90, speed: 30, manaPool: 150, mpRegen: 20 },
+    baseStats: { hp: 205, attack: 85, defense: 90, intelligence: 75, wisdom: 65, speed: 30, manaPool: 150, mpRegen: 20 },
     moveIds: ['runicBlast', 'overgrowth', 'branchSlam', 'forceOfNature'],
     starter: false,
   },
@@ -340,8 +346,8 @@ export const enemies: Record<string, HeroDefinition> = {
   //
   // It deliberately does NOT carry Volcanic Surge, and that is a finding rather than a taste
   // call: the self-inflicted Burn 30 does not decay on the boss's own field either, so a
-  // second cast puts 60 a round on a 265 HP body and the fight becomes "outlast its suicide".
-  // Measured at 265 -> 190 in two rounds WITH the decay still on. The self-cooking joke lives
+  // second cast puts 60 a round on a 210 HP body and the fight becomes "outlast its suicide".
+  // Measured at 265 -> 190 in two rounds WITH the decay still on, before the 550 pass. The self-cooking joke lives
   // on the Automaton, where 110 HP and a one-cast pool make it a cost instead of an exit.
   //
   // Ancient is doing double duty: it is the champion silhouette the other three share, and it
@@ -351,7 +357,7 @@ export const enemies: Record<string, HeroDefinition> = {
     id: 'lavaBeast',
     name: 'Lava Beast',
     types: ['Fire', 'Ancient'],
-    baseStats: { hp: 265, attack: 110, defense: 95, intelligence: 115, wisdom: 75, speed: 40, manaPool: 150, mpRegen: 20 },
+    baseStats: { hp: 210, attack: 85, defense: 80, intelligence: 80, wisdom: 60, speed: 35, manaPool: 150, mpRegen: 20 },
     moveIds: ['runicBlast', 'spreadingBlaze', 'immolate', 'firebrand'],
     starter: false,
   },
@@ -445,8 +451,8 @@ export const enemies: Record<string, HeroDefinition> = {
   },
   // The Necropolis's Guardian reinforcement, and the apex of both halves: it Haunts with
   // Poltergeist so the player's damage stops being aimed, and then Vengeance triples once it
-  // drops under 25%. 210 HP is the LOWEST of the five champions on purpose — the window is
-  // ~52 HP wide, roughly one player turn, and the whole fight is the question of whether that
+  // drops under 25%. 155 HP is the LOWEST of the five champions on purpose — the window is
+  // ~39 HP wide, roughly one player turn, and the whole fight is the question of whether that
   // turn kills it or hands it a 180-power swing. The stats that would have been HP are in
   // Attack and Intelligence instead.
   //
@@ -458,7 +464,7 @@ export const enemies: Record<string, HeroDefinition> = {
     id: 'skeletonKing',
     name: 'Skeleton King',
     types: ['Spirit', 'Ancient'],
-    baseStats: { hp: 210, attack: 110, defense: 105, intelligence: 125, wisdom: 95, speed: 55, manaPool: 150, mpRegen: 20 },
+    baseStats: { hp: 155, attack: 85, defense: 90, intelligence: 90, wisdom: 80, speed: 50, manaPool: 150, mpRegen: 20 },
     moveIds: ['runicBlast', 'poltergeist', 'wailingFlight', 'vengeance'],
     starter: false,
   },
@@ -531,14 +537,14 @@ export const enemies: Record<string, HeroDefinition> = {
   },
   // The Storm Coast's Guardian reinforcement, and the one thing on this coast that is
   // not a Raider — which is the point: the champion hangs off the Location, not the
-  // faction. 700, matching Yugzulach, and Water/Ancient rather than the warband's Iron.
+  // faction. 550, matching every other champion, and Water/Ancient rather than the warband's Iron.
   // Archon Blast is the Goblin Lord's move because the Ancient slate is three moves
   // long and unauthored (CLAUDE.md "Repo map"); it should be revisited when Ancient lands.
   leviathan: {
     id: 'leviathan',
     name: 'Leviathan',
     types: ['Water', 'Ancient'],
-    baseStats: { hp: 230, attack: 95, defense: 95, intelligence: 130, wisdom: 100, speed: 50, manaPool: 150, mpRegen: 20 },
+    baseStats: { hp: 175, attack: 75, defense: 80, intelligence: 95, wisdom: 80, speed: 45, manaPool: 150, mpRegen: 20 },
     moveIds: ['aquaSlice', 'maelstrom', 'archonBlast', 'tsunami'],
     starter: false,
   },

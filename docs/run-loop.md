@@ -129,7 +129,7 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `skirmish` | Mechanically identical to `fight` (same 4-hero, no-bonus `generateEncounter` call — App.tsx collapses it to `EncounterNodeType: 'fight'`), but draws from the **recruitable hero pool** and is named differently on the map (2026-08-17, per user direction) so the player can see, before committing a squad, that beating this one is a shot at a Recruit Contract claim. Always row 2. |
 | `battle` (map-facing name "Monsters", 2026-08-22 revision) | Also mechanically identical to `fight`/`skirmish` (collapses to `EncounterNodeType: 'fight'`), but draws from the **non-recruitable enemy pool**, same as `fight` — not `skirmish`'s recruitable pool. Row 4's non-Elite alternative to `elite`. **2026-08-23 revision, per user direction:** no longer a plain `generateEncounter` call over the whole enemy pool — `App.tsx`'s `handleSelectNode` calls the dedicated `generateLeaderEncounter` (`enemyGen.ts`) instead, which always fields the Location faction's leader plus 3 random draws from its basics. This is what makes `battle` a real, considerably-tougher alternative to `elite` rather than a same-difficulty reskin of the opener — see "Goblin roster" and "Factions, and the Cultists" below for the content this draws on. |
 | `elite` | The AI's 4 heroes each carry a flat +10 bonus to 2 random growth stats. Draws from the recruitable pool, same as `skirmish`/`battle`. Row 4's difficulty-spike alternative to `battle` — the player picks one or the other, never both. |
-| `boss` | `FightScreen` vs. 2 AI heroes (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Winning grants 1 Recruit Contract, the Guardian's Banner in acts 1-4, and ends the act (§3). **2026-09-01 exception:** a location may hold a **faction champion** on the boss's bench — see "The Guardian's champion" below. |
+| `boss` | `FightScreen` vs. **2 of the Location faction's basics** (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Hero-pool escorts until 2026-09-06 — see "The Guardian's escorts" below. Winning grants 1 Recruit Contract, the Guardian's Banner in acts 1-4, and ends the act (§3). **2026-09-01 exception:** a location may hold a **faction champion** on the boss's bench — see "The Guardian's champion" below. |
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. Overhauled 2026-08-18: offers 2-3 curated hero recruits (50g each, `GUILD_HALL_RECRUIT_COST`) rather than the full catalog, plus a rarity-priced equipment shelf, rolled once per visit (`src/run/shop.ts` `rollGuildHallOffers`). Second pass 2026-08-31: relics are no longer sold anywhere, the shelf is 4 wide and readable on its face, sold stock greys out, and Recruit Contracts confirm before buying (`docs/progression.md` "Second pass"). |
 | `equipmentReward` | `NodeRewardScreen` — pick 1 of 3 equipment items, rarity-weighted (`equipment.ts` `pickWeightedEquipment`); claiming hands off to the forced equip-or-trash gate (`ForceEquipScreen`) rather than a stash — see "The unequipped-item inventory was removed" below. |
 | `relicReward` | `NodeRewardScreen` — pick 1 of 3 relics not already owned. |
@@ -321,7 +321,7 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   | Track | Node types | Baseline act | Why |
   | --- | --- | --- | --- |
   | `monsters` | `fight`, `battle` | **2** | ⚠️ Placeholder. Per-act monster content does not exist — every act still fields Goblins (`locations.md` §5). Declaring today's Goblin roster the *Act 2* baseline lets the curve be written now and the content authored later: whatever monster roster ships is tuned to feel right in Act 2 and the curve carries it forward. Act 1 clamps to zero steps rather than going negative (the row-0 opener is meant to be the run's weakest fight, not a debuffed one), so **Acts 1 and 2 currently field identically-scaled monsters** — a known consequence of the placeholder, not a curve decision. |
-  | `skirmish` | `skirmish`, `elite`, `boss` | **1** | The hero roster is authored and already sits at the power level a run starts at, so it starts scaling right away — every act past the first adds a step. Guardians ride this track: they are hero-pool content. |
+  | `skirmish` | `skirmish`, `elite`, `boss` | **1** | The hero roster is authored and already sits at the power level a run starts at, so it starts scaling right away — every act past the first adds a step. Guardians stay on this track even though their escorts are faction content since 2026-09-06: the track is what makes the act's apex fight scale like an apex fight, and moving it to `monsters` would have cut the champion's own curve by 4 steps in Act 5, at the end of the run that measures easiest. |
 
   **One act-step = +30 to an enemy's stat total** — 3 distinct growth stats at +10 each
   (both figures satisfy CLAUDE.md's multiples-of-5/10 rule; +10×3 over +5×6 so a step is
@@ -460,10 +460,11 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   "on faint, heal the team") wait for the trigger-hook engine contract (CLAUDE.md
   "Architecture", README "Next steps" #3), which isn't built. Do not add a
   trigger/hook field to `RelicDefinition` speculatively before that contract lands.
-- **Boss = existing fixture heroes, scaled up, not new Guardian content.** No
-  hand-authored Guardian hero yet — `enemyGen.ts`'s boss encounter is 2 fixture heroes
-  with a bigger stat bonus. Authoring a real Guardian is future work, once this loop is
-  validated and real content authoring begins (README "Next steps" #5). Note this is
+- ~~**Boss = existing fixture heroes, scaled up, not new Guardian content.**~~ **CLOSED
+  (2026-09-01 / 2026-09-06).** Every Location now names an authored champion, and since
+  2026-09-06 the escorts beside it are that Location faction's own basics rather than
+  fixture heroes — the boss encounter is authored content on both halves ("The Guardian's
+  champion" and "The Guardian's escorts" below). Note this is
   also where a real **Ancient** would land, if the reserved name becomes its own
   late-run encounter rather than a rename of this one.
 - **Non-recruitable enemy content (2026-08-16, second playtest).** The opening row's
@@ -559,13 +560,50 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   heroes, no bench" above, and it is deliberately not a general widening of it: every
   other location's field is `null`.
 
-  Wild's Edge's is the **Goblin Lord** (`enemies.ts`) — Beast/Ancient, 600 stat total,
-  20 MP Regen, four moves across four types (Thrash, Momentum Swing, Enfeeble, and the
+  Wild's Edge's is the **Goblin Lord** (`enemies.ts`) — Beast/Ancient, 550 stat total,
+  20 MP Regen, four moves across four types (Claw, Maul, Enfeeble, and the
   Ancient row authored for him, Archon Blast). He is enemy-pool content, so
   `isRecruitable` excludes him by pool membership exactly as it does every Goblin: a
-  beaten Goblin Lord produces no contract offer. He carries **no node-kind or act stat
-  bonus** — the 600 is the authored number, and a generated bonus on top of it would
-  make it something else.
+  beaten Goblin Lord produces no contract offer. He carries **no node-kind stat bonus** —
+  the 550 is the authored number and the escorts' +20×3 is not applied to it — but he does
+  take the **act curve**, which is the only thing that ever moves a champion (`ENEMY_LEVEL_BY_ACT`
+  is inert for one; see §3).
+
+- **The Guardian's escorts are its own faction (2026-09-06, per user direction).** A `boss`
+  node now draws its two active enemies from `basicEnemiesOf(factions[location.factionId])`,
+  the same pool `fight` uses, instead of from the recruitable hero pool. Flavour first —
+  a champion is the apex of the warband the act has been fighting, not a pair of wandering
+  adventurers — and it makes the Guardian the one fight where the act's faction shows up
+  in full: two basics in front, its champion behind.
+
+  Three consequences, all deliberate:
+
+  - **A Guardian no longer offers a Recruit Contract.** Its enemies are enemy-pool content,
+    so `isRecruitable` rejects them by pool membership. Contracts now come only from
+    Skirmish/Elite claims, the per-act grant, and the Guild Hall — the boss pays a Banner.
+  - **The pool moves; the scaling does not.** The escorts still ride the `skirmish` track
+    and still take the boss's +20×3 node bonus, so they are faction bodies on the Guardian
+    curve rather than a mob fight with a boss stapled on.
+  - **Act 1's Guardian got much lighter**, because the Goblins are the one faction authored
+    as fodder (~180 a body against every other faction's 400). Measured over 20k simulated
+    runs: the Wild's Edge Guardian went **31.7% → 75.5%** and Act 1's clear rate 13.4% → 32.0%.
+    Acts 2-5 barely moved on this change alone — a 400-stat basic is a hero-sized body.
+
+  **The champion nerf that came with it (2026-09-06, per user direction).** The five
+  non-Goblin champions were **700 → 550**, the Goblin Lord's already-tuned figure, cut out of
+  HP and the offensive stats with Speed left alone. The reason is structural: a champion is a
+  **flat** number (no level progression, only the act curve) meeting a player who grows every
+  act, so one authored for "Act 2 or later" is a wall in Act 2 and a speed bump in Act 5. The
+  simulator had the Act 2 Guardian at **3-10%** against the same locations' Act 3 Guardian at
+  **30-67%**, and human playtest agreed that Act 2 was where runs ended.
+
+  After both changes, over 20k runs: Act 2 Guardians **18-41%** (from 1.4-9.2%), Act 2's clear
+  rate **3.0% → 20.1%**, Act 3 **57.7%**, Act 5 **77.2%**, full clears **0.1% → 1.6%**. The
+  Guardian is now the second-easiest node kind in the run after the row-0 opener, and `elite`
+  is the hardest fight in every act — a finding to sit with rather than act on immediately.
+  What is still open: the back half is easier than it was, because a flat 550 that fits Act 2
+  is generous by Act 5. The principled fix is **scaling the champion by act** rather than
+  authoring one number for all five acts; that is a bigger change than this pass and is not made.
 
   **He cannot be skipped.** `sideDefeated` (FightScreen) tests every combatant on the
   side, bench included — not just the two active slots — so a round that KOs the whole

@@ -391,6 +391,8 @@ function resolveEncounterNode(
     squadSize = ROSTER_CAP;
   } else {
     const isMobFight = mapNodeType === 'fight' || mapNodeType === 'battle';
+    // Guardians field their own faction (App.tsx handleSelectNode). Pool only — the track below is unchanged.
+    const isFactionFight = isMobFight || mapNodeType === 'boss';
     const faction = factions[location.factionId];
     const encounterKind: EncounterNodeType =
       mapNodeType === 'skirmish' || mapNodeType === 'battle' ? 'fight' : (mapNodeType as EncounterNodeType);
@@ -401,7 +403,7 @@ function resolveEncounterNode(
     if (mapNodeType === 'battle') {
       encounter = generateLeaderEncounter(randomSeed(rng), faction.basicIds, faction.leaderId, enemies, scaling);
     } else {
-      const encounterPool = mapNodeType === 'fight' ? basicEnemiesOf(faction) : heroes;
+      const encounterPool = isFactionFight ? basicEnemiesOf(faction) : heroes;
       const excludeHeroIds = encounterPool === heroes ? run.roster.map((r) => r.heroId) : undefined;
       const heroCountOverride = mapNodeType === 'fight' ? 2 : isSecondFight ? 2 : undefined;
       const heroCount = heroCountOverride ?? (encounterKind === 'boss' ? 2 : 4);

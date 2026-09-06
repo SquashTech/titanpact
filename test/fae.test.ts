@@ -80,12 +80,15 @@ test('fae: every stat but MP Regen is a multiple of 5 — the locked authoring r
 
 // --- The curve ---
 
-test('fae: the same 400/500/700 band the Cultists set, because they occupy the same acts', () => {
+test('fae: the same 400/500/550 band the Cultists set, because they occupy the same acts', () => {
   for (const id of FAE.basicIds) {
     assert.strictEqual(statTotal(enemies[id]), 400, `${id} is off the faction's flat line`);
   }
   assert.strictEqual(statTotal(enemies[FAE.leaderId]), statTotal(enemies[CULTISTS.leaderId]));
-  assert.strictEqual(statTotal(enemies[ELDER_BOUGH_ID]), 700);
+  // 550, the Goblin Lord's figure: every champion shares it, and the act a Guardian is met in
+  // is carried by its escorts and the act curve instead (docs/run-loop.md "The Guardian's escorts").
+  assert.strictEqual(statTotal(enemies[ELDER_BOUGH_ID]), 550);
+  assert.strictEqual(statTotal(enemies[ELDER_BOUGH_ID]), statTotal(enemies.goblinLord));
   const gap = meanTotal(FAE.basicIds) - meanTotal(GOBLINS.basicIds);
   assert.ok(gap > ACT_STEP_STAT_TOTAL * 4, `only ${gap} points clear of the Goblins`);
 });

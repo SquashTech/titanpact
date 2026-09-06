@@ -91,10 +91,12 @@ test('cultists: the Mystic leads on its kit, and Yugzulach out-stats them both',
   assert.ok(overSupport > 1, 'the leader does not out-stat its own support');
   assert.ok(overSupport < statTotal(enemies[GOBLINS.leaderId]) / meanTotal(GOBLINS.basicIds));
 
-  assert.strictEqual(statTotal(enemies[YUGZULACH_ID]), 700);
+  assert.strictEqual(statTotal(enemies[YUGZULACH_ID]), 550);
   assert.ok(statTotal(enemies[YUGZULACH_ID]) > mystic);
-  // One act later than the Goblin Lord's 600, and authored for it.
-  assert.ok(statTotal(enemies[YUGZULACH_ID]) > statTotal(enemies.goblinLord));
+  // Level with the Goblin Lord since the 2026-09-06 pass, not above him: a champion's stat line is
+  // the same everywhere, and what separates an Act 2 Guardian from Act 1's is the escorts beside it
+  // and the act curve on top (docs/run-loop.md "The Guardian's escorts").
+  assert.strictEqual(statTotal(enemies[YUGZULACH_ID]), statTotal(enemies.goblinLord));
 });
 
 test('cultists: the faction baselines at Act 2, so it scales across acts 3-5 and never below zero', () => {
