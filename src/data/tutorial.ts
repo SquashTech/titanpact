@@ -350,7 +350,7 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     topic: 'Switching',
     lines: [
       'Anyone on the bench is filling their Mana back up while they wait.',
-      'Pull whoever is hurting out, send them back in later. It costs the turn, not the round.',
+      'Careful maneuvering of the squad is essential to success.',
     ],
   },
   {
@@ -359,19 +359,19 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
     when: { round: 2 },
     topic: 'The Caster',
     lines: [
-      'Look at her sheet. Twenty-five Attack. She could not break a branch with her hands.',
-      'Eighty Intelligence, though. That is what her wind is measured with, and it goes against their Wisdom, which nothing out here bothers to have.',
-      'Two of us who hit armor, one of us who goes around it. That is why I made you take her.',
+      "Look at Flurry's stat sheet. Twenty-five Attack. She could not break a branch with her hands.",
+      'Eighty Intelligence, though. That is what her magic is measured with, and it goes against their Wisdom, which nothing out here bothers to have.',
     ],
   },
   {
-    id: 'battle:locked',
+    id: 'battle:spread',
     node: 'battle',
-    when: { lockedIn: true },
-    topic: 'Locked In',
+    when: { round: 3 },
+    topic: 'Spread',
     lines: [
-      'Two of us down. The doors are shut — no more switching for either side.',
-      'This is the other half of the fight, and it is a grind. Nothing clever left. Just be the one still standing.',
+      'One more thing about her. Rime Wind does not pick a target — it lands on everything across from us at once.',
+      'Look for the ⇉ Spread mark on a move. Its number looks small next to mine until there are two of them standing, and then it is not.',
+      'No penalty for the second one either. Whatever it reads, it reads twice.',
     ],
   },
 
@@ -403,12 +403,12 @@ export const TUTORIAL_FIGHT_CUES: readonly TutorialFightCue[] = [
   {
     id: 'boss:clock',
     node: 'boss',
-    when: { minRound: 8 },
+    when: { minRound: 5 },
     topic: 'The Pact Clock',
     lines: [
       'One more thing, and I hope you never need it.',
-      'No fight is allowed to last forever. Far enough in, the failing seal starts taking its weight out of everyone on the field — both sides, bench included, and nothing stops it.',
-      'A stall does not win here. It just kills everybody.',
+      'No fight is allowed to last forever. Far enough in, the Titan grows restless, and will begin to tear apart the fabric of reality.',
+      'Everybody will die. We must end the battle before that happens.',
     ],
   },
 ];
