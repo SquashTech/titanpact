@@ -20,6 +20,7 @@ import { DraftScreen } from '../view/run/DraftScreen';
 import { SquadSelectScreen } from '../view/run/SquadSelectScreen';
 import { MapScreen } from '../view/run/MapScreen';
 import { ShopNodeScreen } from '../view/run/ShopNodeScreen';
+import { BoonNodeScreen } from '../view/run/BoonNodeScreen';
 import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScreen';
 import { ForgeScreen } from '../view/run/ForgeScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
@@ -153,6 +154,7 @@ type Screen =
   /** A Gem offer — the gemReward node, the two stat shrines, and a fight that rolled one. Already-resolved, so no nodeId. */
   | { kind: 'gemChoice'; gemIds: string[]; eyebrow: string; title: string; tint?: string; next: Screen }
   | { kind: 'classNode'; nodeId: string }
+  | { kind: 'boonNode'; nodeId: string }
   /** Which event this node is gets rolled ONCE at node-select time — the screen re-renders on every onRunChange. */
   | { kind: 'event'; nodeId: string; eventId: string }
   /** Guardian's Banner after a Guardian win in acts 1-4. Not a map node, so no nodeId. */
@@ -617,6 +619,8 @@ export function App() {
       setScreen({ kind: 'gemChoice', gemIds, ...preset, next: mapAfterLevelUp(playerRun) });
     } else if (node.type === 'classReward') {
       setScreen({ kind: 'classNode', nodeId });
+    } else if (node.type === 'passiveReward') {
+      setScreen({ kind: 'boonNode', nodeId });
     } else if (node.type === 'event') {
       const rolled = rollRunEvent(runEvents, playerRun.actNumber, location.id);
       // Nothing eligible skips the node rather than stranding the player on an empty screen.
@@ -1094,6 +1098,10 @@ export function App() {
 
       {screen.kind === 'classNode' && (
         <ClassNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+      )}
+
+      {screen.kind === 'boonNode' && (
+        <BoonNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'event' &&

@@ -149,8 +149,12 @@ test('roster: every passive in the catalog has a granter — a passive nobody gr
   const { relics } = require('../src/data/relics') as typeof import('../src/data/relics');
   const { runEvents } = require('../src/data/events') as typeof import('../src/data/events');
   const { classes } = require('../src/data/classes') as typeof import('../src/data/classes');
+  const { boonPassives, typeDamagePassiveFor } = require('../src/data/passives') as typeof import('../src/data/passives');
 
   const granted = new Set<string>(Object.keys(classes));
+  // The Boon node (src/run/boons.ts) hands out both halves of its pool.
+  for (const id of Object.keys(boonPassives)) granted.add(id);
+  for (const id of Object.values(typeDamagePassiveFor)) granted.add(id);
   for (const nodes of Object.values(progressionTable.evolutions)) {
     for (const node of nodes) for (const path of node.paths) for (const id of path.grantsPassiveIds ?? []) granted.add(id);
   }

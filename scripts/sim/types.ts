@@ -96,6 +96,7 @@ export interface Aggregate {
   heroes: Record<string, HeroAgg>;
   enemies: Record<string, EnemyAgg>;
   gemChoices: Record<string, ChoiceAgg>;
+  boonChoices: Record<string, ChoiceAgg>;
   bannerChoices: Record<string, ChoiceAgg>;
   evolutionChoices: Record<string, ChoiceAgg>;
   classChoices: Record<string, ChoiceAgg>;
@@ -139,6 +140,7 @@ export function emptyAggregate(): Aggregate {
     heroes: {},
     enemies: {},
     gemChoices: {},
+    boonChoices: {},
     bannerChoices: {},
     evolutionChoices: {},
     classChoices: {},
@@ -232,6 +234,7 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   mergeCounts(into.heroes, from.heroes, emptyHero);
   mergeCounts(into.enemies, from.enemies, emptyEnemy);
   mergeCounts(into.gemChoices, from.gemChoices, emptyChoice);
+  mergeCounts(into.boonChoices, from.boonChoices, emptyChoice);
   mergeCounts(into.bannerChoices, from.bannerChoices, emptyChoice);
   mergeCounts(into.evolutionChoices, from.evolutionChoices, emptyChoice);
   mergeCounts(into.classChoices, from.classChoices, emptyChoice);

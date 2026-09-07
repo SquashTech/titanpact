@@ -73,6 +73,8 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   equipmentReward: SECTION_PATHS.equipment,
   // The Gem's own cut (relicIcons.tsx) — one picture per concept, the same rule gold and XP follow.
   gemReward: GEM,
+  // The Passives section mark, for the node that hands one over — same rule.
+  passiveReward: SECTION_PATHS.passives,
   // Money bag.
   currencyReward: (
     <>

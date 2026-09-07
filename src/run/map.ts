@@ -16,6 +16,7 @@ export const MAP_NODE_TYPES = [
   'shop',
   'equipmentReward',
   'gemReward',
+  'passiveReward',
   'currencyReward',
   'upgradeReward',
   'forgeReward',
@@ -86,19 +87,21 @@ function rowWidthsFor(actNumber: number): number[] {
 const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // equipmentReward absorbs most of the frequency the three slot caches used to carry.
   ['equipmentReward', 40],
-  // The Relic Shrine's 18 and the Regen Spring's 10 came here when both were removed
-  // (2026-09-07), most of it to the Gem Cache: the reward row should lean on the grants the
-  // player actually enjoys choosing between.
-  ['gemReward', 32],
-  ['currencyReward', 20],
-  ['upgradeReward', 16],
+  ['gemReward', 20],
+  // The Boon: the part of the deleted relic pool that was actually worth having, handed to ONE
+  // hero instead of all four. Weighted just under the Gem Cache — it is a rarer and much larger
+  // grant, and it is the only reward row node that changes how a hero plays rather than how big
+  // its numbers are.
+  ['passiveReward', 18],
+  ['currencyReward', 18],
+  ['upgradeReward', 14],
   // The Forge (+1 item slot) is the scarcest reward on the row on purpose: it is permanent, it
   // compounds with every later drop, and it is the only thing here a hero can be at the cap for.
   ['forgeReward', 10],
   ['hpBoostReward', 10],
   ['manaBoostReward', 10],
-  // FLAGGED FOR THE DESIGNER: 18 is an inference, not a decision — how often a run meets an event is a real tuning question.
-  ['event', 18],
+  // FLAGGED FOR THE DESIGNER: 16 is an inference, not a decision — how often a run meets an event is a real tuning question.
+  ['event', 16],
 ];
 
 /** Weighted sample WITHOUT replacement — a reward row never repeats a type. REWARD_WEIGHTS is wider than any row, so `count` is always satisfiable. */

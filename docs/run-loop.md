@@ -31,7 +31,7 @@ between; per user direction, the shape is now forced and uniform):
 - **Row 0: a single forced `fight` node.** Slay the Spire convention — the act always
   opens on an easy, unambiguous fight, no early reward-node luck and no meaningless
   first choice among identical-weight openers.
-- **Row 1: 3 nodes, pick 1 of 3 — reward types only** (`equipmentReward`/
+- **Row 1: 3 nodes, pick 1 of 3 — reward types only** (`equipmentReward`/`passiveReward`/
   `gemReward`/`currencyReward`/`upgradeReward`/`forgeReward`/`hpBoostReward`/
   `manaBoostReward`/`event`, weighted). No
   `fight`/`shop`/`elite`/`classReward` mixed in — every reward row is a genuine reward
@@ -135,7 +135,8 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30, more for nothing having been spent yet). |
 | `upgradeReward` | `NodeRewardScreen` — an instant flat grant to the pooled level-up currency (2-3 points), on top of the per-fight-win grant (see below). |
 | `forgeReward` ("The Forge") | `ForgeScreen` — pick one roster hero to gain **+1 item slot** for the rest of the run (`runProgress.ts` `grantItemSlot`, stored on `RosterEntry.bonusItemSlots`, capped at `MAX_ITEM_SLOTS` = 3). **2026-09-06**, replacing the three slot-specific cache nodes (`weaponReward`/`armorReward`/`accessoryReward`), which lost their meaning when items stopped having categories — most of their frequency went to `equipmentReward`, whose weight went 20 → 40. The scarcest thing on the reward row (weight 8) on purpose: it is permanent, it compounds with every drop after it, and it is the only reward here a hero can be at the cap for — a roster entirely at 3 slots makes the node a dead draw, which is what makes spending it a choice — and at the 2026-09-07 cap of 3 that arrives materially sooner. |
-| `gemReward` ("Gem Cache") | `GemChoiceScreen` — pick 1 of 3 Gems, drawn from all seven without filtering what is already held. Weight 32, the row's second-largest, having absorbed most of the deleted Relic Shrine's 18 and Regen Spring's 10 (2026-09-07). See "Gems" below. |
+| `gemReward` ("Gem Cache") | `GemChoiceScreen` — pick 1 of 3 Gems, drawn from all seven without filtering what is already held. See "Gems" below. |
+| `passiveReward` ("Boon") | `BoonNodeScreen` — pick 1 of 3 passives, then the hero it settles on (`grantEventPassive`, stored on `RosterEntry.bonusPassiveGrants`). See "Boons" below. |
 | `hpBoostReward` | `StatBoostScreen` — pick one roster hero to receive a flat, permanent-for-the-run +20 max HP (`runProgress.ts` `grantStatBonus`), stored on `RosterEntry.bonusStatGrants`. The **last** hero-targeted stat node: HP is the one grant worth concentrating, because a single hero surviving is what a shrine can actually change. |
 | `manaBoostReward` ("Mana Well") | **2026-09-05, per user direction:** this no longer makes the player pick a hero. It hands over Sapphire (+5 Mana Pool) through `GemChoiceScreen` with the offer fixed to one. Its name, tint and place-flavour are unchanged; only the grant is. Its twin, the Regen Spring (`manaRegenBoostReward`), was deleted with Peridot on 2026-09-07. |
 | `classReward` ("Mentor's Hall") | `ClassNodeScreen` — pick 1 of 3 Classes (`src/data/classes.ts`), then pick which roster hero learns it, filtered to heroes with no Class yet (`src/run/classes.ts` `grantClass`, stored on `RosterEntry.classId` — a hero can hold at most one Class per run, so `grantClass` REPLACES rather than stacks). If every roster hero already has a Class, the offer is simply wasted. **Not in `REWARD_WEIGHTS`** (2026-08-22 revision, per user direction) — the only way to encounter this node type is a forced Mentor row (§1), never a random pick-1-of-3 option in any act. Acts 1-4 each guarantee one, so a run can Class up to four heroes; the offer filters to heroes with no Class yet and is wasted only once every hero has one. |
@@ -217,6 +218,55 @@ way of gaining power, and two of those get sharper:
   That spread is the node doing its job — it is the strategic pull toward Evolution
   the node was kept for (§4), and the XP cut is what gives it teeth.
 
+### Boons (2026-09-07, per user direction)
+
+The **Boon** node hands one hero a **passive**, permanently, for the rest of the run. It is the
+salvage of the deleted relic pool: the passive Idols were the only relics that felt like anything,
+and what made them unusable was not the effects but the *scope* — applied to all four heroes at
+once, a passive is either a bigger Gem or an unanswerable one. Given to a hero the player chooses,
+the same effect is a build decision.
+
+Same three-phase shape as the Mentor, because it is the same kind of decision: select a Boon,
+confirm, then tap the hero, then a reveal. Mechanically it is `grantEventPassive` — the verb the
+run events already use — so a Boon is an ordinary entry in `RosterEntry.bonusPassiveGrants` and
+nothing in the engine learns the word.
+
+**The pool has two halves** (`src/run/boons.ts` `boonPool`):
+
+- **The roster-agnostic half** — every equipment and event passive (`boonPassives`, ~17). All of
+  them are live on any hero, so they are always eligible.
+- **The type-locked half** — one per type, +20% damage with that type's moves
+  (`typeDamagePassiveFor`, `TYPE_DAMAGE_BONUS`). Four of these existed as passive relics; the
+  other ten are new, generated from a name table rather than authored one by one. **Ancient has
+  none**, the same call the Ancient Force relic made: nothing can reach an Ancient move.
+
+**Excluded on purpose:** Evolution passives (a path's passive IS that path's identity, and handing
+Firestarter to anyone would dilute every Evolution) and Classes (their own node).
+
+**The type filter is what makes the type-locked half possible.** A type Boon is offered only when
+some roster hero actually fields that type, type-grafts included. Unfiltered it would be fourteen
+entries against seventeen, so a typical 1-of-3 would show two grants nobody could use and the node
+would read as "did I roll my type" rather than as a choice. Filtered, a type Boon is never dead
+and is usually the strongest card on offer — which is what makes passing it up for a generic one
+a real decision.
+
+**The filter stops at the offer, and the hero-pick phase says so.** It guarantees *somebody* on
+the roster fields the type; it cannot stop the player putting the Iron Boon on the Water hero. So
+the second phase prints how many of each hero's unlocked moves the Boon would fire on
+(`boonMoveCount`), reddened at zero. It is not a block: heroes carry a few off-type moves by
+design (`docs/types-and-heroes.md`), and a hero can unlock more of a type later, so a thin pick is
+the player's to make.
+
+**A Boon stacks.** `bonusPassiveGrants` appends, so a second Bloodthirst on the same hero is a
+build rather than a wasted pick, and every hero stays eligible however many they hold. The card
+says what they already carry.
+
+**Open — the weight is a first pass.** 18 in `REWARD_WEIGHTS`, just under the Gem Cache's 20 and
+taken from the same pot the deleted Relic Shrine freed. It is the only reward-row node that
+changes how a hero *plays* rather than how big its numbers are, which argues for scarcer; it is
+also the node most likely to be the reason a run comes together, which argues for commoner.
+Playtest.
+
 ### Gems (2026-09-05, per user direction)
 
 A **Gem** is an ordinary team-wide relic with a deliberately small, deliberately uniform
@@ -256,7 +306,7 @@ which rail a relic belongs on.
   `elite` 50%. **All first-pass placeholders for playtest; only the shape is decided.** The
   Guardian pays none — it already pays a Banner, and a Gem stacked on top would blur which
   grant the act-boundary spike came from. The finale pays none: the run ends on it.
-- **The `gemReward` map node** — a 1-of-3 of any Gem, weight 32 in `REWARD_WEIGHTS`.
+- **The `gemReward` map node** — a 1-of-3 of any Gem, weight 20 in `REWARD_WEIGHTS`.
 - **The Mana Well**, which hands over Sapphire outright.
 
 A fight's Gem offer is the **first** post-fight gate, ahead of the Banner, so a hero recruited

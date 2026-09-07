@@ -11357,6 +11357,91 @@ textarea,
   opacity: 0.45;
 }
 
+/* --- The Boon shrine (BoonNodeScreen's passiveReward) ---------------------
+   The Banner screen's row, wearing the PASSIVE's own colour instead of the
+   shrine's fixed violet: `passiveIcons.tsx` derives a colour per passive (an
+   element for a type-locked Boon, a status or stat for a reaction), and a row
+   that borrowed the screen tint would throw that away — twelve Boons that all
+   look the same is the thing the derived-art vocabulary exists to prevent. */
+
+.boon-shrine-card {
+  align-items: flex-start;
+  border-left: 3px solid var(--boon-color);
+  gap: 10px;
+}
+
+.boon-card-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.boon-card-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.boon-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: left;
+}
+
+/* "Reactive", "Damage pipeline", "Always on" — how the Boon reaches the board,
+   the same line the passive dossier prints. It is the difference between two
+   Boons whose descriptions both read as "more damage". */
+.boon-card-kind {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--boon-color);
+  opacity: 0.85;
+}
+
+.boon-shrine-card.picked {
+  border-color: var(--boon-color);
+  border-left-color: var(--boon-color);
+  box-shadow: 0 0 0 1px var(--boon-color), 0 4px 18px rgba(139, 127, 224, 0.3);
+}
+
+/* A hero already carrying this Boon: an invitation, not a block — a second copy
+   stacks (src/run/boons.ts), so the count is information rather than a warning. */
+.boon-held-note {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+/* How many of this hero's moves a type-locked Boon would fire on. Dimmed at zero
+   rather than disabled: a hero may pick up moves of the type later, and off-type
+   coverage is authored policy, so this states the cost and leaves the call. */
+.boon-fit-note {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.boon-fit-note.is-dead {
+  color: var(--enemy);
+}
+
+/* Stands where the Mentor's portrait stands on the Class reveal — the Boon has
+   no NPC, so the mark that will follow the hero around is what hands it over. */
+.boon-reveal-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+}
+
+.boon-reveal-icon {
+  width: 40px;
+  height: 40px;
+}
+
 /* --- Relic reveal (NodeRewardScreen, once a relic is claimed) -------------
    Same "this is a big deal" beat as ClassNodeScreen's class-learn-reveal
    below, retinted --magical: a flash-burst behind a single glowing icon

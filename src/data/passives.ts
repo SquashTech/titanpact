@@ -3,6 +3,7 @@
 
 import type { PassiveDefinition } from '../engine/content';
 import { classes } from './classes';
+import { TYPES, type TitanpactType } from './typechart';
 
 // --- Evolution-granted, outside the per-hero tables ---
 const fixturePassives: Record<string, PassiveDefinition> = {
@@ -220,6 +221,56 @@ const eventPassives: Record<string, PassiveDefinition> = {
     },
   },
 };
+
+// --- Boon-granted, type-locked (the `passiveReward` node, src/run/boons.ts) ---
+//
+// One per type, +20% damage with that type's moves — the shape four of the deleted passive relics
+// carried, restored 2026-09-07 now that a passive lands on ONE hero the player chooses rather
+// than on all four at once. Generated from a name table rather than authored one by one: the
+// effect is identical across the fourteen and only the type differs, so a hand-written block
+// would be fourteen chances to typo a moveType. `passiveIcons.tsx` derives the glyph from
+// `damageModifier.eventFieldEquals.moveType`, so each wears its own element with no table entry.
+//
+// **Ancient deliberately has none**, the same call the Ancient Force relic made: no hero is
+// Ancient-typed and no hero can reach an Ancient move, so it would be a grant nobody can use.
+export const TYPE_DAMAGE_BONUS = 0.2;
+
+const TYPE_PASSIVE_NAMES: Partial<Record<TitanpactType, { id: string; name: string }>> = {
+  Fire: { id: 'emberheart', name: 'Emberheart' },
+  Water: { id: 'deepcurrent', name: 'Deepcurrent' },
+  Frost: { id: 'frostbrand', name: 'Frostbrand' },
+  Storm: { id: 'stormcallersFocus', name: "Stormcaller's Focus" },
+  Stone: { id: 'stonebreaker', name: 'Stonebreaker' },
+  Nature: { id: 'greenwrath', name: 'Greenwrath' },
+  Light: { id: 'radiantZeal', name: 'Radiant Zeal' },
+  Shadow: { id: 'shadowfang', name: 'Shadowfang' },
+  Arcane: { id: 'runebrand', name: 'Runebrand' },
+  Mind: { id: 'psionicEdge', name: 'Psionic Edge' },
+  Spirit: { id: 'soulbrand', name: 'Soulbrand' },
+  Iron: { id: 'forgebrand', name: 'Forgebrand' },
+  Mech: { id: 'overdrive', name: 'Overdrive' },
+  Beast: { id: 'feralInstinct', name: 'Feral Instinct' },
+};
+
+const typeDamagePassives: Record<string, PassiveDefinition> = Object.fromEntries(
+  Object.entries(TYPE_PASSIVE_NAMES).map(([type, { id, name }]) => [
+    id,
+    {
+      id,
+      name,
+      description: `Deals ${Math.round(TYPE_DAMAGE_BONUS * 100)}% bonus damage with ${type}-type moves.`,
+      damageModifier: { eventFieldEquals: { moveType: type }, amount: TYPE_DAMAGE_BONUS },
+    } satisfies PassiveDefinition,
+  ])
+);
+
+/** Type -> the one Boon that rewards it, for the roster filter in `src/run/boons.ts`. */
+export const typeDamagePassiveFor: Partial<Record<TitanpactType, string>> = Object.fromEntries(
+  Object.entries(TYPE_PASSIVE_NAMES).map(([type, { id }]) => [type, id])
+);
+
+/** Every type that has one, in TYPES order — the order any surface listing them uses. */
+export const TYPE_DAMAGE_PASSIVE_TYPES: readonly TitanpactType[] = TYPES.filter((type) => !!typeDamagePassiveFor[type]);
 
 // --- Evolution-granted (progression.ts grantsPassiveIds) ---
 const evolutionPassives: Record<string, PassiveDefinition> = {
@@ -698,7 +749,22 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   },
 };
 
-export const passives: Record<string, PassiveDefinition> = { ...fixturePassives, ...equipmentPassives, ...eventPassives, ...evolutionPassives, ...classes };
+export const passives: Record<string, PassiveDefinition> = {
+  ...fixturePassives,
+  ...equipmentPassives,
+  ...eventPassives,
+  ...typeDamagePassives,
+  ...evolutionPassives,
+  ...classes,
+};
+
+/**
+ * The Boon node's pool (`src/run/boons.ts`). Equipment and event passives are the roster-agnostic
+ * half — every one is live on any hero — and the type-locked half joins per run, filtered to the
+ * types the roster actually fields. Evolution passives and Classes are deliberately absent: an
+ * Evolution path's passive IS that path's identity, and a Class has its own node.
+ */
+export const boonPassives: Record<string, PassiveDefinition> = { ...equipmentPassives, ...eventPassives };
 
 /**
  * What a passive costs when an ITEM grants it, in RARITY_BUDGET points (multiples of 5).
@@ -721,9 +787,9 @@ export const passives: Record<string, PassiveDefinition> = { ...fixturePassives,
  * Purifying Ward at 30, and they now cost the same — so they owe a balance sweep before playtest
  * (docs/equipment.md §2 "The inherited magnitudes owe a balance pass").
  *
- * Only ITEM-granted passives appear here. The four type-locked damage passives left the item
- * catalog with the generated type gear (element is the enchantment axis now) but keep their homes
- * on relics, which carry no budget.
+ * Only ITEM-granted passives appear here. The type-locked damage passives left the item catalog
+ * with the generated type gear (element is the enchantment axis now) and live on the Boon node,
+ * which is a reward rather than a priced component.
  */
 export const AWAKENING_COST = 20;
 

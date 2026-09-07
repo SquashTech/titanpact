@@ -4,6 +4,7 @@
 import { heroes } from '../../src/data/heroes';
 import { allCombatants } from '../../src/data/content';
 import { relics } from '../../src/data/relics';
+import { passives } from '../../src/data/passives';
 import { classes } from '../../src/data/classes';
 import { locations } from '../../src/data/locations';
 import { progressionTable } from '../../src/data/progression';
@@ -231,6 +232,9 @@ export function formatReport(
   out.push(liftTable('', agg.gemChoices, (id) => relics[id]?.name ?? id, 15));
   out.push('  GUARDIAN BANNERS (fixed 1-of-5, so every offer count is identical):');
   out.push(liftTable('', agg.bannerChoices, (id) => relics[id]?.name ?? id, 15));
+  out.push('  BOONS — the type-locked ones are only OFFERED to a roster that fields the type,');
+  out.push('  so a low offer count there is the filter working, not a rare roll.');
+  out.push(liftTable('', agg.boonChoices, (id) => passives[id]?.name ?? id, 15));
 
   // --- Classes ---
   out.push(heading('7. CLASSES'));

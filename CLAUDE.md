@@ -136,8 +136,15 @@ don't silently override it.
 - **The relic catalog is two closed families, both flat stats: Gems and Banners** (2026-09-07,
   replacing a ~50-relic random pool and the `relicReward` Shrine node, both deleted). Playtest
   found the pool collapsed into two buckets — a bigger Gem, or a passive that was unanswerable
-  applied to all four heroes at once — so the interesting grants now live per-hero on equipment,
-  where a slot prices them. Nothing team-wide grants a passive or an Elemental Force any more.
+  applied to all four heroes at once — so the interesting grants now live per-hero, on equipment
+  and on the Boon node. Nothing team-wide grants a passive or an Elemental Force any more.
+- **Boons: the `passiveReward` node grants ONE hero a passive** (2026-09-07), the salvage of the
+  passive relics — same effects, hero-scoped, so the scope that broke them is gone. 1-of-3 then
+  pick a hero, via `grantEventPassive`; it stacks. The pool is every equipment/event passive plus
+  **one type-locked +20% damage passive per type** (Ancient excluded), and a type one is offered
+  **only when a roster hero fields that type** — the filter is what keeps it from ever being a
+  dead card. Evolution passives and Classes are excluded: both are somebody's identity already.
+  `src/run/boons.ts`, `docs/run-loop.md` "Boons".
 - **Gems, handed out commonly**: **seven** stones, one per stat **except MP Regen**, each a flat
   team-wide **+5**, stacking without limit. The run's first fight always pays one, every later
   fight rolls for one, and the `gemReward` node plus the Mana Well grant them

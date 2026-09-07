@@ -19,22 +19,9 @@ import type { CombatState, PassiveInstance } from '../src/engine/state';
 import { equipmentPassiveGrants, relicTeamPassiveGrants, mergePassiveGrants, toPassiveInstances } from '../src/run/passives';
 import { createEmptyLoadout, equipItem, type EquipmentDefinition } from '../src/run/equipment';
 import type { RelicDefinition } from '../src/run/relics';
-import { isValidPassiveDefinition, type PassiveDefinition } from '../src/engine/content';
+import { isValidPassiveDefinition } from '../src/engine/content';
 
-/**
- * The damage-pipeline fixture. Test-only: no shipped relic or item grants a type-damage passive
- * (the Elemental Force enchantment covers that shape per-hero), so this one is authored here
- * rather than left orphaned in the catalog the Reference screen lists.
- */
-const emberheart: PassiveDefinition = {
-  id: 'emberheart',
-  name: 'Emberheart',
-  description: 'Deals 20% bonus damage with Fire-type moves.',
-  damageModifier: { eventFieldEquals: { moveType: 'Fire' }, amount: 0.2 },
-};
-const passiveLookup = { ...passives, emberheart };
-
-const config = { typeChart, heroes, moves, statuses, passives: passiveLookup, fieldEffects, benchHpRegenFlat: 5 };
+const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
 function twoVTwoFixture(seed: number) {
   return createFightState(
@@ -75,8 +62,8 @@ function withPassive(state: CombatState, combatantId: string, passiveId: string,
 
 // --- isValidPassiveDefinition ---
 
-test('passives: the catalog (equipment passives, sanguine, and the merged-in Class catalog) is all valid content', () => {
-  for (const passive of Object.values(passiveLookup)) {
+test('passives: the catalog (equipment, type, event, Evolution and Class passives) is all valid content', () => {
+  for (const passive of Object.values(passives)) {
     assert.ok(isValidPassiveDefinition(passive), `${passive.id} is not a valid PassiveDefinition`);
   }
 });
@@ -168,10 +155,10 @@ test('passives: collectPassiveDamageModifiers only matches the conditioned move 
   const state = twoVTwoFixture(310);
   const withGrant = withPassive(state, 'a1', 'emberheart');
 
-  const fireMods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.singe, passiveLookup);
+  const fireMods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.singe, passives);
   assert.deepStrictEqual(fireMods, [{ source: 'emberheart', amount: 0.2 }]);
 
-  const waterMods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.splash, passiveLookup);
+  const waterMods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.splash, passives);
   assert.deepStrictEqual(waterMods, []);
 });
 
@@ -179,7 +166,7 @@ test('passives: two stacks of Emberheart push two modifier entries, stacking mul
   const state = twoVTwoFixture(311);
   const withGrant = withPassive(state, 'a1', 'emberheart', 2);
 
-  const mods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.singe, passiveLookup);
+  const mods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.singe, passives);
   assert.strictEqual(mods.length, 2);
   assert.strictEqual(resolveMultiplierTerm(mods), 1.2 * 1.2);
 });

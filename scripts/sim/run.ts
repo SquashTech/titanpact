@@ -52,6 +52,7 @@ import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitab
 import { rollGuildHallOffers, buyEquipment, sellValueFor, EQUIPMENT_PRICE_BY_RARITY } from '../../src/run/shop';
 import { grantClass } from '../../src/run/classes';
 import { GEM_OFFER_COUNT, pickGemOffers, rollGemOffers } from '../../src/run/gems';
+import { boonMoveCount, pickBoonOffers } from '../../src/run/boons';
 import { applyStatShift, grantEventPassive, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
 import { MAX_ITEM_SLOTS, pickWeightedEquipment, rarityWeightsFor, type EquipmentDefinition, type LootSource } from '../../src/run/equipment';
 import { passives } from '../../src/data/passives';
@@ -103,7 +104,7 @@ const STAT_BOOST: Record<string, { stat: StatKey; amount: number }> = {
 // --- Records the aggregator consumes ---
 
 export interface ChoiceEvent {
-  bucket: 'gem' | 'banner' | 'evolution' | 'class' | 'draft';
+  bucket: 'gem' | 'banner' | 'boon' | 'evolution' | 'class' | 'draft';
   offered: string[];
   /** Usually one; the draft takes two of its four. */
   picked: string[];
@@ -547,6 +548,22 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
     }
     case 'gemReward':
       return claimGem(run, pickGemOffers(GEM_OFFER_COUNT, rng), rng, record);
+    case 'passiveReward': {
+      // Offered 3 and taken at random — the pool is under test, not the policy. The TARGET is not
+      // random though: a type-locked Boon goes to whoever has the most moves of its type, which
+      // is what a player does, and measuring it on the strongest hero regardless would score the
+      // type half of the pool as weaker than it is. Generic Boons ride the strongest hero.
+      const offered = pickBoonOffers(run.roster, heroes, undefined, rng);
+      if (offered.length === 0) return run;
+      const picked = pick(rng, offered);
+      const byFit = [...run.roster].sort(
+        (a, b) => (boonMoveCount(passives[picked], b, moves) ?? 0) - (boonMoveCount(passives[picked], a, moves) ?? 0)
+      );
+      const target = boonMoveCount(passives[picked], run.roster[0], moves) === null ? policy.passiveTarget(run.roster) : byFit[0];
+      if (!target) return run;
+      record.choices.push({ bucket: 'boon', offered, picked: [picked], encountersWonAtChoice: run.encountersWon });
+      return grantEventPassive(run, target.rosterId, picked, passives);
+    }
     // The Mana Well hands over its stat's Gem outright — no choice, so nothing to record.
     case 'manaBoostReward':
       return grantRelicReward(run, gemForStat.manaPool!.id);

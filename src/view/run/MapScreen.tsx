@@ -62,6 +62,7 @@ const NODE_NAMES: Record<MapNodeType, string> = {
   shop: 'Guild Hall',
   equipmentReward: 'Item',
   gemReward: 'Gem',
+  passiveReward: 'Boon',
   currencyReward: 'Gold',
   upgradeReward: 'XP',
   forgeReward: 'Forge',
@@ -85,6 +86,8 @@ const NODE_COLORS: Record<MapNodeType, string> = {
   equipmentReward: 'var(--physical)',
   // A rose nothing else on the map wears: a Gem can be any stat, so it cannot borrow one stat's colour.
   gemReward: '#d9569b',
+  // Arcane violet, the hue the whole passive vocabulary already sits on (passiveIcons' fallback).
+  passiveReward: 'var(--magical)',
   currencyReward: 'var(--accent)',
   upgradeReward: 'var(--hp-high)',
   // Forge orange: the only node that hands out a permanent SLOT rather than a thing to put in one.
@@ -109,6 +112,7 @@ const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
   shop: 'Spend gold on heroes and items',
   equipmentReward: '1 of 3 items',
   gemReward: '1 of 3 Gems — each a team-wide +5 to one stat',
+  passiveReward: '1 of 3 Boons, granted to one hero for the rest of the run',
   currencyReward: '15–30g',
   upgradeReward: '2 XP',
   forgeReward: '+1 item slot to one hero, for the rest of the run',
@@ -139,6 +143,7 @@ const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   shop: 'landmark',
   equipmentReward: 'reward',
   gemReward: 'reward',
+  passiveReward: 'reward',
   currencyReward: 'reward',
   upgradeReward: 'reward',
   forgeReward: 'reward',
