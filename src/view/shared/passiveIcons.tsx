@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import type { PassiveDefinition, PassiveEffect, StatKey } from '../../engine/content';
 import { STAT_ORDER } from '../../engine/content';
 import { passives } from '../../data/passives';
@@ -203,6 +203,42 @@ export function PassiveInfoPanel({ passive }: { passive: PassiveDefinition | nul
       <div className="passive-info-desc">{passive.description}</div>
       <PassiveStatChips def={passive} />
       {summary && <div className="passive-info-meta">{summary}</div>}
+    </div>
+  );
+}
+
+/**
+ * The same readout as `PassiveInfoPanel`, laid out as a full-width card in a list rather than as a
+ * fixed-size popup box. `source` says where the passive came from, and `count` its stack — the two
+ * things a player asks about a passive they did not choose. Used by the hero sheet's Passives page,
+ * which spells every passive out instead of making each one a button to be discovered.
+ */
+export function PassiveReadout({
+  passive,
+  source,
+  count = 1,
+}: {
+  passive: PassiveDefinition;
+  /** Where it came from, in the player's words — an item's name, "Evolution", "Class", "Boon". */
+  source?: string;
+  count?: number;
+}) {
+  const color = passiveColor(passive.id);
+  const summary = passiveEffectSummary(passive);
+  return (
+    <div className="passive-readout" style={{ '--passive-color': color, '--passive-tint': passiveTint(passive.id, 0.12) } as CSSProperties}>
+      <div className="passive-readout-head">
+        <span className="passive-readout-icon">
+          <PassiveGlyph passiveId={passive.id} />
+        </span>
+        <span className="passive-readout-name">{passive.name}</span>
+        {count > 1 && <span className="passive-readout-stack">×{count}</span>}
+        <span className="passive-readout-kind">{passiveKindLabel(passive)}</span>
+      </div>
+      {source && <div className="passive-readout-source">{source}</div>}
+      <div className="passive-readout-desc">{passive.description}</div>
+      <PassiveStatChips def={passive} />
+      {summary && <div className="passive-readout-meta">{summary}</div>}
     </div>
   );
 }

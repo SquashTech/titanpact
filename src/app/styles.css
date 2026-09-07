@@ -6933,13 +6933,17 @@ textarea,
    flex-end — "Manage Roster" used to open flush to the bottom half of the
    screen; pinning it near the top instead makes it read as its own page
    rather than a bottom-sheet nudged out of the way. */
+/* Full-bleed (2026-09-07, per user direction): this is a page, not a bottom sheet, and
+   at 86% it left ~110px of scrim doing nothing under the bag. The scrim stays as a thin
+   frame so the panel still reads as a layer over the map rather than as the map. */
 .roster-mgmt-overlay {
-  align-items: flex-start;
-  padding-top: 14px;
+  align-items: stretch;
+  padding: 8px;
 }
 
 .roster-panel {
-  max-height: 86%;
+  height: 100%;
+  max-height: 100%;
   border-radius: 12px;
   gap: 6px;
 }
@@ -7010,7 +7014,7 @@ textarea,
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 /* --- The bag ------------------------------------------------------------
@@ -7020,7 +7024,6 @@ textarea,
    heroes use, because "tap a thing, tap where it goes" only reads as one
    gesture if both ends look like the same kind of place. */
 .stash-panel {
-  margin-bottom: 8px;
   padding: 8px;
   background: var(--surface-sunken);
   border: 1px solid var(--border);
@@ -7038,7 +7041,7 @@ textarea,
   display: flex;
   align-items: baseline;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .stash-label {
@@ -7068,34 +7071,52 @@ textarea,
   color: rgb(224, 166, 60);
 }
 
-/* Wraps rather than scrolls: eight boxes is two comfortable rows in portrait,
-   and a bag you have to scroll to see all of is the thing this replaced. */
+/* One row that scrolls sideways when it has to (2026-09-07, per user direction),
+   rather than wrapping to a second. A wrapped row costs the roster above it 54px the
+   moment a seventh item lands, and the roster is the half of this sheet you act on;
+   the bag is a tray you draw from. Six or so boxes fit a portrait line, so under that
+   there is nothing to scroll and this reads exactly as the wrapped row did.
+
+   Vertical padding, not none: the selected box's ring and the tier bloom sit outside
+   the box's own edge, and an overflow container clips both axes once it clips one. */
 .stash-grid {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
+  padding: 3px 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
-.stash-hint {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 26px;
-  margin-top: 6px;
+/* --- The bottom Close ----------------------------------------------------
+   Outside .screen-scroll, so a full-height panel pins it at the bottom edge and
+   it never scrolls away. Written against .resolve-button rather than alone:
+   both are (0,1,0) and .resolve-button is declared later, so a bare class here
+   loses the min-height it is trying to set.
+
+   Shorter than the standard 68px CTA on purpose. This closes a sheet rather
+   than committing a run decision, and the roster above it needs the 14px more
+   than the button does. */
+.resolve-button.roster-close-button {
+  min-height: 54px;
+  padding: 14px;
+  font-size: 16px;
 }
 
-/* Reserves its line whether or not something is selected, so selecting an
-   item never reflows the roster below. */
+/* Still used by the merge prompt, which is the one thing in the bag that has to
+   ask a question rather than draw the answer. */
 .stash-hint-text {
   font-size: 10px;
   line-height: 1.4;
   color: var(--text-dim);
 }
 
+/* On the bag's header line, immediately after the gold it pays into. */
 .stash-sell-button {
   flex: none;
-  margin-left: auto;
-  padding: 5px 12px;
+  align-self: center;
+  padding: 4px 10px;
   font-size: 11px;
   font-weight: 600;
   background: var(--surface-raised);
@@ -7214,23 +7235,6 @@ textarea,
   color: var(--text-dim);
 }
 
-/* .move-tile-row is nowrap by contract — a loadout is always one row of four.
-   A movepool is 8-12 and has to wrap, and once it wraps the tiles size to
-   their names rather than stretching to share a line. */
-.dossier-move-row {
-  flex-wrap: wrap;
-}
-
-.dossier-move-row > .move-tile {
-  flex: 0 1 auto;
-}
-
-.dossier-note {
-  margin: 6px 0 2px;
-  font-size: 10px;
-  line-height: 1.45;
-  color: var(--text-dim);
-}
 
 /* Caption above a run of tiles or chips (a tier gate, what a path grants).
    Quieter than .detail-section-title's gold eyebrow and with no rule of its
@@ -7298,37 +7302,6 @@ textarea,
   display: flex;
   gap: 4px;
   margin-bottom: 4px;
-}
-
-/* A .detail-modifier-chip that is a button, because a passive has a
-   description worth opening. Wears the passive's own identity colour
-   (--passive-color / --passive-tint, passiveIcons.tsx) rather than the
-   generic gold, so the chip on a path card, the chip in a fight, and the
-   panel it opens are all the same colour — that colour is the only thing
-   telling a player these three surfaces are showing one passive. */
-.evo-passive-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: var(--radius-pill);
-  background: var(--passive-tint, var(--well));
-  border: 1px solid var(--passive-color, var(--border));
-  color: var(--passive-color, var(--text));
-  cursor: pointer;
-  transition: filter var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
-}
-
-.evo-passive-chip:hover {
-  filter: brightness(1.25);
-  box-shadow: 0 0 8px -2px currentColor;
-}
-
-.evo-passive-chip:active {
-  filter: brightness(1.1);
 }
 
 .roster-mgmt-card {
@@ -7407,10 +7380,14 @@ textarea,
   gap: 4px;
 }
 
+/* Wide as the column, but capped short of square (2026-09-07). Three card rows of
+   square boxes was the single largest block on the sheet, and the sheet now has to
+   land on one screen with the Close button pinned under it. 46px is still over the
+   48px touch minimum once the card's own padding is counted as slop. */
 .roster-mgmt-card .equip-slot-row .item-box {
   width: auto;
-  height: auto;
-  aspect-ratio: 1;
+  height: 46px;
+  aspect-ratio: auto;
 }
 
 .roster-mgmt-card .equip-slot-row .item-box-icon {
@@ -7822,6 +7799,353 @@ textarea,
   background: linear-gradient(90deg, rgba(224, 166, 60, 0.35), transparent);
 }
 
+/* --- Tabbed hero sheet -------------------------------------------------
+ *
+ * The hero sheet is PAGED, not scrolled (2026-09-07): Stats / Moves / Gear /
+ * Passives on the run sheet, Stats / Moves / Evolution in the Compendium. What
+ * the split buys is room — a move can be a full-width card carrying its own
+ * effect line, and an item or a passive can state itself outright instead of
+ * being a button that has to be tapped before it says anything.
+ *
+ * The section eyebrows (.detail-section-title) are what the tab strip
+ * replaced: on one scroll they were the only structure, and there were six of
+ * them. They still serve every UNtabbed sheet.
+ */
+
+.detail-panel.is-tabbed {
+  /* Fixed height, not max-height: the strip has to sit in the same place on
+     every page. A panel sized to its content moves the control the player is
+     aiming at out from under the thumb between one page and the next. */
+  height: 85%;
+  overflow: hidden;
+  gap: 0;
+  padding: 12px 12px 10px;
+}
+
+/* Portrait beside the titles rather than centred above them. A tabbed panel
+   spends its vertical budget on the body, and the centred 72px block plus its
+   own name line was ~40px of chrome the split cannot afford. */
+.detail-header.is-hero {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  /* .detail-header base is space-between, for its wrapping two-column form. With a portrait
+     and one titles column that would pin the name to the right edge. */
+  justify-content: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+}
+
+.detail-portrait.is-inline {
+  width: 52px;
+  height: 52px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.detail-header-titles {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* flex-basis:100% is for the header's wrapping two-column form; inside the
+   titles column the badge row is just the next line. */
+.detail-header.is-hero .detail-evolution-row {
+  flex-basis: auto;
+  margin-top: 0;
+}
+
+/* --- The strip --- */
+
+.tab-strip {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+  padding: 2px;
+  border-radius: var(--radius-md);
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+}
+
+.tab-button {
+  flex: 1 1 0;
+  min-width: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 5px 2px 4px;
+  border: 0;
+  border-radius: calc(var(--radius-md) - 3px);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out);
+}
+
+.tab-button .section-glyph {
+  width: 15px;
+  height: 15px;
+  margin-right: 0;
+}
+
+.tab-button-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* The active tab is a raised, lit surface in the same gold the section
+   eyebrows used, so the sheet keeps one accent language. */
+.tab-button.is-active {
+  background: var(--surface-raised);
+  color: var(--accent);
+  box-shadow: var(--hairline), var(--elev-1);
+}
+
+.tab-button:hover:not(.is-active) {
+  color: var(--text);
+}
+
+/* An empty page stays reachable — the count is information, not a lock. */
+.tab-button.is-empty:not(.is-active) {
+  opacity: 0.5;
+}
+
+/* Corner-set rather than inline with the label: it is a quantity, and it must
+   not push a four-tab strip past 380px on the narrowest phone. */
+.tab-button-count {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 8.5px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-dim);
+}
+
+.tab-button.is-active .tab-button-count {
+  color: var(--accent);
+}
+
+/* --- The page --- */
+
+/* The panel's only scroller. min-height:0 is what actually lets a flex child
+   shrink below its content and scroll — same containment pattern as
+   .screen-scroll. */
+.detail-tab-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Quieter than .detail-section-title's gold eyebrow: inside a page the tab has
+   already named, a subhead separates two blocks rather than announcing one. */
+.tab-subhead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 2px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.tab-subhead::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border), transparent);
+}
+
+.detail-tab-body > .tab-subhead:first-child {
+  margin-top: 0;
+}
+
+.tab-move-list,
+.tab-readout-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* --- The stat ledger (Stats page) ---
+ *
+ * "+40 Speed" and "where did the 40 come from" are two questions, and the
+ * sheet used to answer only the first (plus a single from-relics line).
+ * RosterEntry keeps its grant sources separate on purpose (run/state.ts);
+ * this readout is what spends that. Every grant appears on exactly one line,
+ * so the lines sum to the bars' deltas.
+ */
+.grant-source-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.grant-source-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+}
+
+/* Fixed basis, so the chips of every line start at the same x and the column
+   of numbers can be read down rather than hunted for. */
+.grant-source-label {
+  flex: 0 0 58px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.grant-source-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  min-width: 0;
+}
+
+.grant-source-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* --- Full readouts (Gear, Passives, and an Evolution path's passive) ---
+ *
+ * The point of the split. Both cards carry a 3px left edge in the object's own
+ * colour — an item's rarity, a passive's derived tint — the same cue its box
+ * and its chip carry, so a readout is recognisably the same object written out.
+ */
+.item-readout,
+.passive-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 9px;
+  border-radius: var(--radius-md);
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  box-shadow: var(--hairline);
+}
+
+.item-readout {
+  border-left: 3px solid var(--rarity-color);
+}
+
+.passive-readout {
+  border-left: 3px solid var(--passive-color);
+}
+
+.item-readout-head,
+.passive-readout-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.item-readout-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--rarity-color);
+}
+
+.passive-readout-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  color: var(--passive-color);
+  background: var(--passive-tint);
+}
+
+.passive-readout-icon .status-glyph {
+  width: 14px;
+  height: 14px;
+}
+
+.item-readout-name,
+.passive-readout-name {
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.passive-readout-name {
+  color: var(--passive-color);
+}
+
+.passive-readout-stack {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.item-readout-rarity,
+.passive-readout-kind {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.item-readout-rarity {
+  color: var(--rarity-color);
+}
+
+.passive-readout-source {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.passive-readout-desc {
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.passive-readout-meta {
+  font-size: 10px;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
 .detail-stat-grid {
   display: grid;
   grid-template-columns: 1.4fr 0.8fr 0.8fr 0.8fr;
@@ -7883,9 +8207,13 @@ textarea,
 
 .stat-bar-row {
   display: grid;
-  grid-template-columns: 72px 1fr 44px;
+  /* The value column is sized for a stat plus its grant ("195 +110"), not for a bare number:
+     at 44px a well-equipped hero overflowed the row and put a horizontal scrollbar on the
+     whole sheet. Fixed rather than auto because each row is its own grid — an auto track
+     would give every bar a different length. */
+  grid-template-columns: 68px minmax(0, 1fr) 58px;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .stat-bar-label {
@@ -7967,7 +8295,6 @@ textarea,
    own font rather than a constant so the three chip scales stay in step. */
 .detail-modifier-chip .status-glyph,
 .detail-passive-chip .status-glyph,
-.evo-passive-chip .status-glyph,
 .evolution-path-passive .status-glyph {
   display: inline-block;
   width: 1.2em;
@@ -9794,8 +10121,8 @@ textarea,
 .run-relics-panel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 /* Each family is its OWN section, label above its chips (2026-09-07, per user
@@ -9816,13 +10143,32 @@ textarea,
   font-weight: 700;
 }
 
-/* Four across, and the wrap row centres — Banners come 5 and Gems 7, so the
-   short row reads as deliberate rather than as a chip left hanging. */
+/* The wrap row centres, so a short one reads as deliberate rather than as a chip
+   left hanging. Column counts differ per family (2026-09-07, per user direction):
+   the five Banners fit one line, the seven Gems take two, and the Gems are the pair
+   that yields height — the whole sheet has to land on one screen with no scroll, and
+   two Gem rows is where that budget is won or lost. */
 .relic-rail {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 6px;
+}
+
+/* Five across, exactly the family's size — one line, never a lone sixth. */
+.relic-rail.is-banners .relic-pill {
+  flex-basis: calc(20% - 4.8px);
+}
+
+/* Shorter, not narrower: four across leaves 4 + 3 centred, and the height is what the
+   roster below actually needs back. */
+.relic-rail.is-gems .relic-pill {
+  min-height: 44px;
+  padding: 4px;
+}
+
+.relic-rail.is-gems .relic-pill-icon {
+  font-size: 21px;
 }
 
 .relic-pill {
@@ -16546,49 +16892,6 @@ textarea,
   color: var(--text);
   padding: 8px;
   font-size: 12px;
-}
-
-/* ── Relic contribution readouts ─────────────────────────────────────────
-   Relics are team-wide (CLAUDE.md "Relics are team-wide passives"), so their
-   grants land on every hero's stat block with nothing on-screen tying the
-   number back to the relic that caused it — a player who claims "+20 Speed,
-   team-wide" sees the same bars and reasonably concludes it did nothing.
-   These two surfaces close that loop: a per-hero "From relics" line under
-   the stat bars (HeroPreviewOverlay) and an at-a-glance active-bonuses
-   banner on the roster screen (RosterManagementScreen). Both are pure
-   readouts of relicStatContribution (src/run/entryStats.ts) — the stats are
-   already applied, this only makes them legible. */
-.relic-contrib-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 7px 9px;
-  border-radius: var(--radius-md);
-  background: var(--well);
-  border: 1px solid var(--border);
-}
-
-.relic-contrib-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
-.relic-contrib-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: var(--radius-pill);
-  background: var(--panel-alt);
-  border: 1px solid var(--accent);
-  color: var(--accent);
 }
 
 /* --- The move dossier (MoveDetailOverlay.tsx) --------------------------- */

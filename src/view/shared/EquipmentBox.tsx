@@ -395,3 +395,32 @@ export function EquipmentInfoPanel({ item, placeholder = 'Tap a held item to see
     </div>
   );
 }
+
+/**
+ * One held item spelled out in full: its icon and tier, every stat it grants, and the whole
+ * description of every passive and Elemental Force it carries. The list form of
+ * `EquipmentInfoPanel` — the hero sheet's Gear page shows these outright rather than making each
+ * held item a button that has to be tapped before it says anything.
+ */
+export function ItemReadout({ item }: { item: EquipmentDefinition }) {
+  const grants = (Object.entries(item.statGrants) as [StatKey, number][]).filter(([, amount]) => amount);
+  return (
+    <div className="item-readout" style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}>
+      <div className="item-readout-head">
+        <EquipmentIcon item={item} className="item-readout-icon" />
+        <span className="item-readout-name">{item.name}</span>
+        <span className="item-readout-rarity">{RARITY_LABELS[item.rarity]}</span>
+      </div>
+      {grants.length > 0 && (
+        <div className="detail-modifier-list">
+          {grants.map(([stat, amount]) => (
+            <span key={stat} className={`detail-modifier-chip ${amount > 0 ? 'stat-buff' : 'stat-debuff'}`}>
+              <StatGlyph stat={stat} tone="inherit" /> {STAT_LABELS[stat]} {fmtGrant(amount)}
+            </span>
+          ))}
+        </div>
+      )}
+      <EquipmentEffectList item={item} />
+    </div>
+  );
+}

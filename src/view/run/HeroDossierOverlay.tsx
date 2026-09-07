@@ -1,16 +1,16 @@
-import { useState, type CSSProperties } from 'react';
+import { useState } from 'react';
 import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition, MoveTier, StatKey, TypeId } from '../../engine/content';
 import type { EvolutionPath } from '../../run/progression';
-import { MASTERY_LEVEL, MASTERY_STAT_AMOUNT, MOVE_TIER_LEVEL } from '../../run/progression';
+import { MOVE_TIER_LEVEL } from '../../run/progression';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { MoveTile } from '../shared/MoveTile';
-import { PassiveInfoPanel, PassiveGlyph, passiveColor, passiveTint } from '../shared/passiveIcons';
-import { SectionGlyph } from '../shared/sectionIcons';
+import { MoveButtonReplica } from '../shared/MoveTile';
+import { PassiveReadout } from '../shared/passiveIcons';
 import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
+import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { TypeBadge } from '../shared/TypeBadge';
 import { TypeMatchups } from '../shared/TypeMatchups';
 
@@ -18,6 +18,8 @@ interface Props {
   hero: HeroDefinition;
   onClose: () => void;
 }
+
+type TabId = 'stats' | 'moves' | 'evolution';
 
 const TIER_ORDER: readonly MoveTier[] = ['early', 'mid', 'late'];
 const TIER_LABELS: Record<MoveTier, string> = { early: 'Early', mid: 'Mid', late: 'Late' };
@@ -36,15 +38,24 @@ function pathTypes(hero: HeroDefinition, path: EvolutionPath): TypeId[] {
   return path.typeGraft ? [hero.types[0], path.typeGraft] : [...hero.types];
 }
 
-type Popup = { kind: 'move' | 'passive'; id: string };
-
-/** Tap-to-inspect row; `MoveTile`'s onClick, not its long-press — this is a reference screen, not a loadout. */
-function MoveRow({ moveIds, onInspect }: { moveIds: readonly string[]; onInspect: (id: string) => void }) {
+/**
+ * A list of moves as full-width cards, each already carrying its mana, power and effect line.
+ * Tapping one opens the full dossier; nothing has to be tapped to find out what a move does.
+ */
+function MoveList({
+  moveIds,
+  caster,
+  onInspect,
+}: {
+  moveIds: readonly string[];
+  caster: { wisdom: number; types: readonly TypeId[] };
+  onInspect: (id: string) => void;
+}) {
   return (
-    <div className="move-tile-row dossier-move-row">
+    <div className="tab-move-list">
       {moveIds.map((id) =>
         moves[id] ? (
-          <MoveTile key={id} move={moves[id]} onClick={() => onInspect(id)} />
+          <MoveButtonReplica key={id} move={moves[id]} caster={caster} onClick={() => onInspect(id)} />
         ) : (
           <span key={id} className="detail-status-chip">
             {id}
@@ -72,16 +83,20 @@ function StatGrantChips({ grants }: { grants: Partial<Record<StatKey, number>> }
 function EvolutionPathCard({
   hero,
   path,
+  caster,
   onInspect,
 }: {
   hero: HeroDefinition;
   path: EvolutionPath;
-  onInspect: (popup: Popup) => void;
+  caster: { wisdom: number; types: readonly TypeId[] };
+  onInspect: (id: string) => void;
 }) {
   const granted = path.unlocksMoveIds ?? [];
   const learnable = path.learnableMoveIds ?? [];
   const grantedPassives = (path.grantsPassiveIds ?? []).filter((id) => passives[id]);
   const types = pathTypes(hero, path);
+  // A graft path's own types, so its moves read with the STAB the path would actually give them.
+  const pathCaster = path.typeGraft ? { wisdom: caster.wisdom, types } : caster;
 
   return (
     <div className={`evo-path-card evo-${path.kind}`}>
@@ -108,18 +123,9 @@ function EvolutionPathCard({
       {grantedPassives.length > 0 && (
         <>
           <div className="evo-path-label">Passive</div>
-          <div className="detail-modifier-list">
+          <div className="tab-readout-list">
             {grantedPassives.map((id) => (
-              <button
-                key={id}
-                type="button"
-                className="evo-passive-chip"
-                style={{ '--passive-color': passiveColor(id), '--passive-tint': passiveTint(id, 0.14) } as CSSProperties}
-                onClick={() => onInspect({ kind: 'passive', id })}
-              >
-                <PassiveGlyph passiveId={id} />
-                {passives[id].name}
-              </button>
+              <PassiveReadout key={id} passive={passives[id]} />
             ))}
           </div>
         </>
@@ -128,14 +134,14 @@ function EvolutionPathCard({
       {granted.length > 0 && (
         <>
           <div className="evo-path-label">Granted on choosing</div>
-          <MoveRow moveIds={granted} onInspect={(id) => onInspect({ kind: 'move', id })} />
+          <MoveList moveIds={granted} caster={pathCaster} onInspect={onInspect} />
         </>
       )}
 
       {learnable.length > 0 && (
         <>
           <div className="evo-path-label">Joins the level-up pool</div>
-          <MoveRow moveIds={learnable} onInspect={(id) => onInspect({ kind: 'move', id })} />
+          <MoveList moveIds={learnable} caster={pathCaster} onInspect={onInspect} />
         </>
       )}
 
@@ -147,24 +153,27 @@ function EvolutionPathCard({
 }
 
 /**
- * The whole authored hero: base stats, the starting kit, every move the level-up pool can
- * ever offer, and all three Evolution paths with what each one unlocks. Read-only and
- * run-independent — it reads `heroes`/`progressionTable` directly, never a RosterEntry, so
- * it shows the hero as designed rather than as levelled.
+ * The whole authored hero, in three pages: Stats, Moves, Evolution (2026-09-07, per user
+ * direction). Read-only and run-independent — it reads `heroes`/`progressionTable` directly, never
+ * a RosterEntry, so it shows the hero as designed rather than as levelled.
  */
 export function HeroDossierOverlay({ hero, onClose }: Props) {
-  const [popup, setPopup] = useState<Popup | null>(null);
+  const [tab, setTab] = useState<TabId>('stats');
+  const [popupMoveId, setPopupMoveId] = useState<string | null>(null);
 
   const startingKit = hero.moveIds;
   // The starting kit is filtered out of the pool by levelUpMovePool, so it is filtered out here too.
   const pool = (progressionTable.moveTiers[hero.id] ?? []).filter((id) => !startingKit.includes(id));
   const byTier = TIER_ORDER.map((tier) => ({ tier, moveIds: pool.filter((id) => tierOf(id) === tier) }));
   const nodes = progressionTable.evolutions[hero.id] ?? [];
-  const graftedMoveCount = nodes
-    .flatMap((node) => node.paths)
-    .flatMap((path) => [...(path.unlocksMoveIds ?? []), ...(path.learnableMoveIds ?? [])]).length;
   // Base stats, so every move card reads the hero as authored (a graft path's STAB is shown on its own card).
   const caster = { wisdom: hero.baseStats.wisdom, types: hero.types };
+
+  const tabs: TabSpec<TabId>[] = [
+    { id: 'stats', label: 'Stats', glyph: 'stats' },
+    { id: 'moves', label: 'Moves', glyph: 'moves', count: startingKit.length + pool.length },
+    { id: 'evolution', label: 'Evolution', glyph: 'buffs' },
+  ];
 
   // stopPropagation on every dismiss: this overlay is a DOM child of the Compendium's own
   // backdrop, whose onClick closes the whole screen — closing the sheet must not close that too.
@@ -178,86 +187,75 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
       <button className="detail-close-button" onClick={close} aria-label="Close">
         ✕
       </button>
-      <div className="detail-panel" onClick={(e) => e.stopPropagation()}>
-        <HeroPortrait heroId={hero.id} className="detail-portrait" />
-        <div className="detail-header">
-          <div className="detail-name">{hero.name}</div>
-          <span className={`dossier-badge ${hero.starter ? 'badge-ally' : 'badge-recruit'}`}>
-            {hero.starter ? 'Starter' : 'Recruit only'}
-          </span>
-          <div className="detail-evolution-row">
-            {hero.types.map((t) => (
-              <TypeBadge key={t} type={t} />
-            ))}
+      <div className="detail-panel is-tabbed" onClick={(e) => e.stopPropagation()}>
+        <div className="detail-header is-hero">
+          <HeroPortrait heroId={hero.id} className="detail-portrait is-inline" />
+          <div className="detail-header-titles">
+            <div className="detail-name">{hero.name}</div>
+            <div className="combatant-types">
+              {hero.types.map((t) => (
+                <TypeBadge key={t} type={t} />
+              ))}
+            </div>
+            <div className="detail-evolution-row">
+              <span className={`dossier-badge ${hero.starter ? 'badge-ally' : 'badge-recruit'}`}>
+                {hero.starter ? 'Starter' : 'Recruit only'}
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="detail-section-title">
-          <SectionGlyph name="matchups" /> Matchups
-        </div>
-        <TypeMatchups types={hero.types} />
+        <TabStrip tabs={tabs} active={tab} onSelect={setTab} />
 
-        <div className="detail-section-title">
-          <SectionGlyph name="stats" /> Base stats
-        </div>
-        <StatBars baseStats={hero.baseStats} />
+        <div className="detail-tab-body" role="tabpanel">
+          {tab === 'stats' && (
+            <>
+              {/* Matchups lead the page — see HeroPreviewOverlay. */}
+              <TypeMatchups types={hero.types} />
+              <StatBars baseStats={hero.baseStats} />
+            </>
+          )}
 
-        <div className="detail-section-title">
-          <SectionGlyph name="moves" /> Starting kit
-        </div>
-        <MoveRow moveIds={startingKit} onInspect={(id) => setPopup({ kind: 'move', id })} />
+          {tab === 'moves' && (
+            <>
+              <div className="tab-subhead">Starting kit</div>
+              <MoveList moveIds={startingKit} caster={caster} onInspect={setPopupMoveId} />
+              <div className="tab-subhead">Level-up pool</div>
+              {byTier.map(({ tier, moveIds }) =>
+                moveIds.length > 0 ? (
+                  <div key={tier}>
+                    <div className="evo-path-label">
+                      {TIER_LABELS[tier]} — Lv {MOVE_TIER_LEVEL[tier]}+
+                    </div>
+                    <MoveList moveIds={moveIds} caster={caster} onInspect={setPopupMoveId} />
+                  </div>
+                ) : null
+              )}
+            </>
+          )}
 
-        <div className="detail-section-title">
-          <SectionGlyph name="moves" /> Level-up pool
-        </div>
-        {pool.length > 0 ? (
-          byTier.map(({ tier, moveIds }) =>
-            moveIds.length > 0 ? (
-              <div key={tier}>
-                <div className="evo-path-label">
-                  {TIER_LABELS[tier]} — Lv {MOVE_TIER_LEVEL[tier]}+
-                </div>
-                <MoveRow moveIds={moveIds} onInspect={(id) => setPopup({ kind: 'move', id })} />
+          {tab === 'evolution' &&
+            nodes.map((node) => (
+              <div key={node.level}>
+                <div className="tab-subhead">Level {node.level}</div>
+                {node.paths.map((path) => (
+                  <EvolutionPathCard key={path.id} hero={hero} path={path} caster={caster} onInspect={setPopupMoveId} />
+                ))}
               </div>
-            ) : null
-          )
-        ) : (
-          <div className="detail-empty">No pool moves.</div>
-        )}
-        <div className="dossier-note">
-          {pool.length} in the pool
-          {graftedMoveCount > 0 && `, plus ${graftedMoveCount} behind Evolution paths`}. A level-up offers a random
-          draw from whichever tiers are unlocked; past Lv {MASTERY_LEVEL} it instead grants +{MASTERY_STAT_AMOUNT} to one
-          of three drawn combat stats.
+            ))}
         </div>
-
-        <div className="detail-section-title">
-          <SectionGlyph name="buffs" /> Evolution
-        </div>
-        {nodes.length > 0 ? (
-          nodes.map((node) => (
-            <div key={node.level}>
-              <div className="evo-path-label">Level {node.level} — pick one, permanent for the run</div>
-              {node.paths.map((path) => (
-                <EvolutionPathCard key={path.id} hero={hero} path={path} onInspect={setPopup} />
-              ))}
-            </div>
-          ))
-        ) : (
-          <div className="detail-empty">No Evolution authored.</div>
-        )}
-
-        <div className="detail-close-hint">Tap a move or passive to inspect it</div>
       </div>
 
-      {popup && (
-        <div className="log-overlay" onClick={(e) => { e.stopPropagation(); setPopup(null); }}>
+      {popupMoveId && moves[popupMoveId] && (
+        <div
+          className="log-overlay"
+          onClick={(e) => {
+            e.stopPropagation();
+            setPopupMoveId(null);
+          }}
+        >
           <div className="log-panel move-popup-panel">
-            {popup.kind === 'move' ? (
-              moves[popup.id] ? <MoveDetailCard move={moves[popup.id]} caster={caster} /> : null
-            ) : (
-              <PassiveInfoPanel passive={passives[popup.id] ?? null} />
-            )}
+            <MoveDetailCard move={moves[popupMoveId]} caster={caster} />
             <div className="move-popup-hint">Tap anywhere to close</div>
           </div>
         </div>
