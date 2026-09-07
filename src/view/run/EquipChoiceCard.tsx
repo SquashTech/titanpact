@@ -1,4 +1,4 @@
-import { type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { equipment } from '../../data/equipment';
 import { heroes } from '../../data/heroes';
 import { passives } from '../../data/passives';
@@ -7,15 +7,16 @@ import type { StatKey } from '../../engine/content';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { itemSlotsFor } from '../../run/progression';
 import type { RosterEntry } from '../../run/state';
-import { HeroPortrait } from '../shared/HeroPortrait';
 import {
   EquipmentEffectList,
   EquipmentIcon,
   ItemEffectChips,
+  ItemSummaryPopup,
   fmtGrant,
   RARITY_COLOR_VARS,
   RARITY_LABELS,
 } from '../shared/EquipmentBox';
+import { HeroSlotCard, HeroSlotGrid } from '../shared/HeroSlotCard';
 import { StatGlyph } from '../shared/StatBars';
 import { STAT_FULL_LABELS } from '../shared/relicStacks';
 import { useLongPress } from '../shared/MoveTile';
@@ -57,34 +58,37 @@ export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs
 
 /**
  * Who has room and who is full — the half of the buy decision the item's own card can't answer
- * ("is there anywhere to put this that doesn't cost me something?"). Read-only: the Guild Hall
- * still routes the purchase through ItemFoundScreen, which is where a hero — or the bag — is actually chosen.
+ * ("is there anywhere to put this that doesn't cost me something?"). The same squad grid Manage
+ * Roster and the found-item gate use (2026-09-07, per user direction): item names are icons here
+ * too, so the shelf, the bag and the buy sheet are one picture rather than three notations.
+ *
+ * Read-only. The Guild Hall still routes the purchase through ItemFoundScreen, which is where a
+ * hero — or the bag — is actually chosen.
  */
 function SlotOwners({ roster }: { roster: readonly RosterEntry[] }) {
+  const [summaryItem, setSummaryItem] = useState<EquipmentDefinition | null>(null);
   return (
     <div className="equip-owners">
       <div className="equip-owners-head">Roster — item slots</div>
-      {roster.map((entry) => {
-        const hero = heroes[entry.heroId];
-        const capacity = hero ? itemSlotsFor(hero, entry) : entry.equipment.length;
-        const free = capacity - entry.equipment.length;
-        const held = entry.equipment.flatMap((id) => (equipment[id] ? [equipment[id]] : []));
-        return (
-          <div key={entry.rosterId} className={`equip-owners-row${free > 0 ? ' is-empty' : ''}`}>
-            <HeroPortrait heroId={entry.heroId} className="equip-owners-portrait" />
-            <span className="equip-owners-name">{hero?.name ?? entry.heroId}</span>
-            <span className="equip-owners-item">
-              {held.map((h, i) => (
-                <span key={h.id} style={{ color: RARITY_COLOR_VARS[h.rarity] } as CSSProperties}>
-                  {i > 0 ? ', ' : ''}
-                  {h.name}
-                </span>
-              ))}
-              {free > 0 && <span className="equip-owners-free">{held.length > 0 ? ` · ${free} free` : `${free} free`}</span>}
-            </span>
-          </div>
-        );
-      })}
+      <HeroSlotGrid className="is-compact">
+        {roster.map((entry) => {
+          const hero = heroes[entry.heroId];
+          if (!hero) return null;
+          const free = itemSlotsFor(hero, entry) - entry.equipment.length;
+          return (
+            <HeroSlotCard
+              key={entry.rosterId}
+              hero={hero}
+              entry={entry}
+              equipmentLookup={equipment}
+              className={free > 0 ? 'can-take' : ''}
+              badge={<span className="equip-card-verdict">{free > 0 ? `${free} free` : 'Full'}</span>}
+              slotProps={(_, item) => ({ onTap: item ? () => setSummaryItem(item) : undefined })}
+            />
+          );
+        })}
+      </HeroSlotGrid>
+      <ItemSummaryPopup item={summaryItem} onClose={() => setSummaryItem(null)} />
     </div>
   );
 }

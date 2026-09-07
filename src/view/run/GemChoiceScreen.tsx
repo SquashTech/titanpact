@@ -22,9 +22,8 @@ interface Props {
   onContinue: () => void;
 }
 
-// A Gem offer (docs/run-loop.md "Gems"). The same beat as the Guardian's Banner and for the same
-// reason — a Gem is designed to stack, so the card says what a repeat pick totals to rather than
-// filtering out what is already held.
+// A Gem offer (docs/run-loop.md "Gems"). The same beat as the Guardian's Banner: a Gem is designed
+// to stack, so the whole family is always offered rather than filtered down to what is unheld.
 export function GemChoiceScreen({ gemIds, eyebrow, title, tint, run, onRunChange, onContinue }: Props) {
   const offers = gemIds.map((id) => relics[id]).filter(Boolean);
   const fixed = offers.length === 1;
@@ -70,23 +69,15 @@ export function GemChoiceScreen({ gemIds, eyebrow, title, tint, run, onRunChange
         {!claimed && (
           <div className="stage-centered">
             <div className="relic-shrine-list">
-              {offers.map((gem, i) => {
-                const held = run.relics.filter((id) => id === gem.id).length;
-                return (
-                  <RelicChoiceCard
-                    key={gem.id}
-                    relic={gem}
-                    picked={pickedGemId === gem.id}
-                    onPick={() => setPickedGemId(!fixed && pickedGemId === gem.id ? null : gem.id)}
-                    revealDelayMs={80 + i * 90}
-                    note={
-                      held > 0
-                        ? `Already set ×${held} — taking it again makes ${stackedRelicName(gem, held + 1)}, ${stackedGrantSummary(gem, held + 1)} in total.`
-                        : undefined
-                    }
-                  />
-                );
-              })}
+              {offers.map((gem, i) => (
+                <RelicChoiceCard
+                  key={gem.id}
+                  relic={gem}
+                  picked={pickedGemId === gem.id}
+                  onPick={() => setPickedGemId(!fixed && pickedGemId === gem.id ? null : gem.id)}
+                  revealDelayMs={80 + i * 90}
+                />
+              ))}
             </div>
           </div>
         )}

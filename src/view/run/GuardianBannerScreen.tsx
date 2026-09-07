@@ -49,23 +49,15 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
         {!claimed && (
           <div className="stage-centered">
             <div className="relic-shrine-list">
-              {guardianBannerRelics.map((relic, i) => {
-                const held = run.relics.filter((id) => id === relic.id).length;
-                return (
-                  <RelicChoiceCard
-                    key={relic.id}
-                    relic={relic}
-                    picked={pickedRelicId === relic.id}
-                    onPick={() => setPickedRelicId(pickedRelicId === relic.id ? null : relic.id)}
-                    revealDelayMs={80 + i * 90}
-                    note={
-                      held > 0
-                        ? `Already raised ×${held} — taking it again makes ${stackedRelicName(relic, held + 1)}, ${stackedGrantSummary(relic, held + 1)} in total.`
-                        : undefined
-                    }
-                  />
-                );
-              })}
+              {guardianBannerRelics.map((relic, i) => (
+                <RelicChoiceCard
+                  key={relic.id}
+                  relic={relic}
+                  picked={pickedRelicId === relic.id}
+                  onPick={() => setPickedRelicId(pickedRelicId === relic.id ? null : relic.id)}
+                  revealDelayMs={80 + i * 90}
+                />
+              ))}
             </div>
           </div>
         )}

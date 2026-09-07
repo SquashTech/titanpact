@@ -1,7 +1,7 @@
 import { useState, type CSSProperties, type DragEvent } from 'react';
 import type { StatKey } from '../../engine/content';
 import type { EquipmentDefinition, EquipmentLoadout, EquipmentRarity } from '../../run/equipment';
-import { RARITY_ORDER } from '../../run/equipment';
+import { ENCHANTMENTS, RARITY_ORDER, parseEquipmentId } from '../../run/equipment';
 import { StatGlyph, STAT_LABELS } from './StatBars';
 import { RelicGlyph } from './relicIcons';
 import { EquipmentFormGlyph } from './equipmentIcons';
@@ -69,6 +69,17 @@ export function slotBoxes(loadout: EquipmentLoadout, capacity: number): (string 
   return boxes;
 }
 
+/**
+ * The element an enchant feeds, or null for a plain item. Read off the id rather than off the
+ * granted Force status: an enchant IS the third segment of the id (`sword.epic.blazing`), while a
+ * Unique may grant a Force without being enchanted.
+ */
+function enchantTypeOf(item: EquipmentDefinition | null): string | null {
+  if (!item) return null;
+  const { enchantId } = parseEquipmentId(item.id);
+  return enchantId ? (ENCHANTMENTS[enchantId] ?? null) : null;
+}
+
 /** One line naming what an item does, for a tooltip or an aria-label — the text the box itself no longer prints. */
 export function itemSummaryLine(item: EquipmentDefinition): string {
   const stats = (Object.entries(item.statGrants) as [StatKey, number][])
@@ -84,8 +95,6 @@ export function itemSummaryLine(item: EquipmentDefinition): string {
 
 interface ItemBoxProps {
   item: EquipmentDefinition | null;
-  /** Dense variant for a row inside another row (the equip compare table). */
-  compact?: boolean;
   /** Tap. Where a surface has no other verb this is "show me what this is". */
   onTap?: () => void;
   /** Hold. Used where tap already means something else (Manage Roster's move). */
@@ -117,7 +126,6 @@ interface ItemBoxProps {
  */
 export function ItemBox({
   item,
-  compact,
   onTap,
   onLongPress,
   className,
@@ -129,10 +137,11 @@ export function ItemBox({
   onDrop,
 }: ItemBoxProps) {
   const longPress = useLongPress(onLongPress, onTap);
+  const enchantType = enchantTypeOf(item);
   return (
     <button
       type="button"
-      className={`item-box${compact ? ' is-compact' : ''}${item ? ' filled' : ' empty'}${className ? ` ${className}` : ''}`}
+      className={`item-box${item ? ' filled' : ' empty'}${className ? ` ${className}` : ''}`}
       style={item ? ({ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties) : undefined}
       aria-label={item ? itemSummaryLine(item) : 'Empty item slot'}
       data-sfx={sfx}
@@ -145,6 +154,13 @@ export function ItemBox({
       {...longPress}
     >
       <EquipmentIcon item={item} className="item-box-icon" />
+      {/* Which element the enchant feeds. The name says it ("Blazing Sword") and the box prints
+          no name, so without this an enchanted item and a plain one are the same silhouette. */}
+      {enchantType && (
+        <span className="item-box-enchant" style={{ color: getTypeColor(enchantType) }}>
+          <ElementGlyph type={enchantType} />
+        </span>
+      )}
       {item && <TierPips rarity={item.rarity} />}
     </button>
   );

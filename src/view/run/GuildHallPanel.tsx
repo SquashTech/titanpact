@@ -16,6 +16,7 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { EquipInspectOverlay } from './EquipChoiceCard';
+import { rosterHasFreeSlot } from './ItemFoundScreen';
 import { ItemServicesSection } from './ItemServicesSection';
 
 interface Props {
@@ -275,9 +276,11 @@ export function GuildHallPanel({
               action={{
                 label: `Buy ${previewEquip.name} — ${cost}g`,
                 disabled: !affordable,
-                note: affordable
-                  ? 'You will equip it, or trash it, before leaving the Hall.'
-                  : `Not enough gold — ${cost}g needed, you have ${run.gold}g.`,
+                note: !affordable
+                  ? `Not enough gold — ${cost}g needed, you have ${run.gold}g.`
+                  : rosterHasFreeSlot(run)
+                    ? 'You will choose who carries it before leaving the Hall.'
+                    : 'Every slot is full — it goes to your bag.',
                 onConfirm: () => {
                   setPreviewEquipId(null);
                   onBuyEquipment(previewEquip.id);

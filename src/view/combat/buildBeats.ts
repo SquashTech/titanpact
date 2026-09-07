@@ -143,6 +143,51 @@ function targetClause(targetIds: readonly string[], actorId: string, name: (id: 
   return ` on ${joined}`;
 }
 
+/** "A", "A and B", "A, B and C". */
+function joinNames(names: readonly string[]): string {
+  if (names.length <= 1) return names[0] ?? '';
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
+/** Consecutive StatChanged events, folded per target, first-seen order kept. */
+function groupByCombatant(changes: readonly StatChangedEvent[]): { combatantId: string; changes: StatChangedEvent[] }[] {
+  const groups: { combatantId: string; changes: StatChangedEvent[] }[] = [];
+  for (const change of changes) {
+    const group = groups.find((g) => g.combatantId === change.combatantId);
+    if (group) group.changes.push(change);
+    else groups.push({ combatantId: change.combatantId, changes: [change] });
+  }
+  return groups;
+}
+
+/** "falls" for one stat on one hero, "fall" once the subject is plural. */
+function statVerb(changes: readonly StatChangedEvent[], plural: boolean): string {
+  const rising = changes.every((c) => c.delta > 0);
+  const falling = changes.every((c) => c.delta < 0);
+  const verb = rising ? 'rise' : falling ? 'fall' : 'shift';
+  return plural || changes.length > 1 ? verb : `${verb}s`;
+}
+
+/** What two targets have to match on for the beat to read as one sentence about both. */
+function signatureOf(changes: readonly StatChangedEvent[]): string {
+  return changes.map((c) => `${c.stat}:${c.delta}`).join(',');
+}
+
+/** The console's big line: "-10 DEF/WIS" when one number covers them all, else "+10 ATK -5 DEF". */
+function deltaSummary(changes: readonly StatChangedEvent[]): string {
+  const sign = (d: number) => (d > 0 ? '+' : '');
+  const first = changes[0].delta;
+  if (changes.every((c) => c.delta === first)) {
+    return `${sign(first)}${first} ${changes.map((c) => statLabel(c.stat)).join('/')}`;
+  }
+  return changes.map((c) => `${sign(c.delta)}${c.delta} ${statLabel(c.stat)}`).join(' ');
+}
+
+/** One target's clause, for the case where the targets took different payloads. */
+function statClause(targetName: string, changes: readonly StatChangedEvent[]): string {
+  return `${targetName}'s ${joinNames(changes.map((c) => c.stat))} ${statVerb(changes, false)} (${deltaSummary(changes)})`;
+}
+
 export function buildBeats(
   events: readonly CombatEvent[],
   heroes: Record<string, HeroDefinition>,
@@ -309,21 +354,20 @@ export function buildBeats(
             changes.push(changed);
             applied.push(changed);
           }
-          const head = changes[0];
-          const sign = head.delta > 0 ? '+' : '';
-          const who = changes.map((c) => name(c.combatantId)).join(' and ');
+          const groups = groupByCombatant(changes);
+          const who = joinNames(groups.map((g) => name(g.combatantId)));
           push(
             applied,
-            `${label} shifts ${who}'s ${statLabel(head.stat)} (${sign}${head.delta})`,
-            changes.map((c) => ({
-              combatantId: c.combatantId,
-              text: `${c.delta > 0 ? '+' : ''}${c.delta} ${statLabel(c.stat)}`,
-              className: c.delta > 0 ? 'popup-buff' : 'popup-debuff',
+            `${label} shifts ${who}'s ${joinNames(groups[0].changes.map((c) => c.stat))} (${deltaSummary(groups[0].changes)})`,
+            groups.map((g) => ({
+              combatantId: g.combatantId,
+              text: deltaSummary(g.changes),
+              className: g.changes.every((c) => c.delta > 0) ? 'popup-buff' : 'popup-debuff',
             })),
             {
               bannerLead: `${label} · ${who}`,
-              bannerFocus: `${statLabel(head.stat)} ${sign}${head.delta}`,
-              bannerFocusKind: head.delta > 0 ? 'buff' : 'debuff',
+              bannerFocus: deltaSummary(groups[0].changes),
+              bannerFocusKind: changes.every((c) => c.delta < 0) ? 'debuff' : 'buff',
             }
           );
         } else {
@@ -390,20 +434,35 @@ export function buildBeats(
         break;
       }
 
+      // EVERY consecutive StatChanged, as one beat: a move that swings two stats (Weaken's DEF
+      // and WIS) or hits both foes is one payload, so it costs one tap rather than four.
       case 'StatChanged': {
-        const targetName = name(e.combatantId);
-        const sign = e.delta > 0 ? '+' : '';
+        const changes: StatChangedEvent[] = [];
+        while (events[i]?.type === 'StatChanged') changes.push(events[i++] as StatChangedEvent);
+        const groups = groupByCombatant(changes);
+        const falling = changes.every((c) => c.delta < 0);
+        // Identical payloads across targets read as one sentence about both, not as a list.
+        const uniform = groups.every((g) => signatureOf(g.changes) === signatureOf(groups[0].changes));
+        const lead = uniform
+          ? `${joinNames(groups.map((g) => name(g.combatantId)))}'s ${joinNames(groups[0].changes.map((c) => c.stat))} ${statVerb(
+              groups[0].changes,
+              groups.length > 1
+            )}`
+          : groups.map((g) => statClause(name(g.combatantId), g.changes)).join('; ');
         push(
-          [e],
-          `${targetName}'s ${e.stat} ${e.delta > 0 ? 'rises' : 'falls'} (${sign}${e.delta})`,
-          [{ combatantId: e.combatantId, text: `${sign}${e.delta} ${e.stat}`, className: e.delta > 0 ? 'popup-buff' : 'popup-debuff' }],
+          changes,
+          uniform ? `${lead} (${deltaSummary(groups[0].changes)})` : lead,
+          groups.map((g) => ({
+            combatantId: g.combatantId,
+            text: deltaSummary(g.changes),
+            className: g.changes.every((c) => c.delta > 0) ? 'popup-buff' : 'popup-debuff',
+          })),
           {
-            bannerLead: `${targetName}'s ${e.stat} ${e.delta > 0 ? 'rises' : 'falls'}`,
-            bannerFocus: `${sign}${e.delta} ${e.stat}`,
-            bannerFocusKind: e.delta > 0 ? 'buff' : 'debuff',
+            bannerLead: lead,
+            bannerFocus: deltaSummary(groups[0].changes),
+            bannerFocusKind: falling ? 'debuff' : 'buff',
           }
         );
-        i++;
         break;
       }
 

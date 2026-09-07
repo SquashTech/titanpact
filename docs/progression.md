@@ -214,6 +214,36 @@ ever *trade* two occupied slots. It was a shell game.
   the old model had nowhere to put an unequipped item, so "missing" and "empty" say the same
   thing (`decodeStash`).
 
+### The item gate, and the swap window (2026-09-07, per user direction)
+
+Three changes, all downstream of the bag above: once an unwanted item can simply be carried,
+the gate stops being a decision the run has to force, and the one decision that *does* cost
+something gets room to be made properly.
+
+- **The gate only opens when somebody has a free slot.** With every slot on the roster full,
+  `ItemFoundScreen`'s only honest answer was "keep it in the bag" — so the item goes there and
+  the screen never appears (`rosterHasFreeSlot`, committed in a `useLayoutEffect` so a banked
+  item never flashes a screen). The exception is a **full bag**, which still has to be equipped
+  past, sold past, or made room in before the run moves on; that is the one state with no
+  default. The Guild Hall's buy sheet says which of the two a purchase is heading for.
+- **The gate draws the same squad Manage Roster does.** The six comparison ROWS it used to draw
+  were the same six heroes in a second notation — item silhouettes on one screen, item names on
+  the other. They are now the same six CARDS (`HeroSlotCard.tsx`, shared by Manage Roster, the
+  gate, and the Guild Hall's buy sheet), and every card's slot row is three columns wide —
+  `MAX_ITEM_SLOTS` — whatever the hero's own capacity is. Slots past capacity draw as locked
+  cavities, so six cards line their boxes up instead of ragging, and a hero at one slot can see
+  the two the Forge would open.
+- **A full hero opens `EquipSwapScreen`.** Handing gear to a hero with no room is the only equip
+  that costs something, and it was the one being decided on the least information — an inline
+  list of names, or nothing at all (Manage Roster's card tap was a no-op). It now gets the whole
+  screen: the incoming item read out once, then every item already on the hero read out against
+  it, with each side's passives as buttons that print their own rule. The ledger is
+  `compareEquipment`'s diff arranged as **You gain / You lose** and nothing more — two columns
+  rather than one merged list, so a loss cannot hide among gains. It stays deliberately not a
+  verdict (`src/run/equipCompare.ts`): Attack on an Int hero is not worth what it is on a
+  physical one. Tapping one of a hero's boxes directly still swaps outright — that gesture
+  already names the slot.
+
 ### Everything else
 
 - Items contribute through the **stat pipeline** (stat-shaped effects) or the

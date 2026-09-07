@@ -8,12 +8,11 @@ import type { EnchantmentId } from '../../run/equipment';
 import { actAllowsRarity, canMergeItems, enchantLabel, mergeEnchantChoices, nextRarity, STASH_CAPACITY, stashIsFull } from '../../run/equipment';
 import { equipFromStash, mergeFromStash, moveEquipment, sellFromStash, unequipToStash, RunProgressError } from '../../run/runProgress';
 import { sellValueFor } from '../../run/shop';
-import { itemSlotsFor, rosterEntryTypes } from '../../run/progression';
-import { getTypeColor } from '../combat/typeColors';
+import { itemSlotsFor } from '../../run/progression';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
-import { TypeBadge } from '../shared/TypeBadge';
-import { HeroPortrait } from '../shared/HeroPortrait';
 import { ItemBox, ItemSummaryPopup, slotBoxes } from '../shared/EquipmentBox';
+import { HeroSlotCard, HeroSlotGrid } from '../shared/HeroSlotCard';
+import { EquipSwapScreen } from './EquipSwapScreen';
 import { RunRelicsPanel } from './RunRelicsPanel';
 import { playSfx } from '../../audio/sfx';
 
@@ -39,36 +38,6 @@ function parseRefKey(raw: string): SlotRef | null {
   return null;
 }
 
-interface RosterMgmtHeadProps {
-  hero: HeroDefinition;
-  entry: RosterEntry;
-  /** What a tap means: opens the sheet, or seats the item the player is carrying. */
-  onTap: () => void;
-  label: string;
-}
-
-/**
- * The hero half of a card: a button, so a plain tap opens the sheet (2026-09-07, per user
- * direction) and the delegated UI sfx picks it up with no audio code here. The "i" affordance is
- * gone — the whole identity block is the target now, which is a great deal easier to hit than a
- * 16px corner glyph on a phone.
- */
-function RosterMgmtHead({ hero, entry, onTap, label }: RosterMgmtHeadProps) {
-  return (
-    <button type="button" className="roster-mgmt-head" data-sfx="none" onClick={onTap} aria-label={label}>
-      <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
-      <span className="roster-mgmt-ident">
-        <span className="roster-mgmt-name">{hero.name}</span>
-        <span className="roster-card-types">
-          {rosterEntryTypes(hero, entry).map((t) => (
-            <TypeBadge key={t} type={t} />
-          ))}
-        </span>
-      </span>
-    </button>
-  );
-}
-
 /**
  * Manage Roster: where gear moves. Every slot — a hero's or one of the bag's — is both a source
  * and a destination, so one tap-then-tap (or one drag) covers equipping, unequipping, handing an
@@ -83,6 +52,8 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
   const [viewedItemId, setViewedItemId] = useState<string | null>(null);
   /** Raised only when BOTH halves of a merge carry an enchant and one has to be dropped. */
   const [pendingMerge, setPendingMerge] = useState<{ a: number; b: number; choices: EnchantmentId[] } | null>(null);
+  /** A full hero the carried item was offered to — EquipSwapScreen owns the "which one goes" decision. */
+  const [swappingRosterId, setSwappingRosterId] = useState<string | null>(null);
 
   function itemAt(ref: SlotRef): string | null {
     if (ref.kind === 'stash') return run.stash[ref.index] ?? null;
@@ -100,6 +71,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
 
   const selectedItemId = selected ? itemAt(selected) : null;
   const selectedItem = selectedItemId ? (equipment[selectedItemId] ?? null) : null;
+  const swapTarget = swappingRosterId ? run.roster.find((r) => r.rosterId === swappingRosterId) : undefined;
 
   /**
    * The four directions a move can run. A refusal is a no-op — the UI marks illegal targets
@@ -145,9 +117,12 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
 
   /**
    * What tapping a hero means. With nothing in hand it opens the sheet; carrying an item it seats
-   * it in the first free slot. Routing the tap through the whole card rather than the 42px box is
-   * what makes the carry-and-place gesture usable on a phone — a full hero still needs the player
-   * to name a slot, since only they know which item to give up.
+   * it in the first free slot. Routing the tap through the whole card rather than the 48px box is
+   * what makes the carry-and-place gesture usable on a phone.
+   *
+   * A FULL hero opens the swap window (2026-09-07, per user direction) rather than doing nothing:
+   * only the player knows which item to give up, and that is a decision worth a screen. Tapping
+   * one of the hero's boxes directly still swaps outright — that gesture already names the slot.
    */
   function handleHeroTap(entry: RosterEntry, hero: HeroDefinition) {
     if (!selected) {
@@ -155,9 +130,18 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
       setInspecting({ hero, entry });
       return;
     }
-    const free = entry.equipment.length < itemSlotsFor(hero, entry);
-    if (free) applyMove(selected, { kind: 'hero', rosterId: entry.rosterId, index: entry.equipment.length });
-    setSelected(null);
+    if (entry.equipment.length < itemSlotsFor(hero, entry)) {
+      applyMove(selected, { kind: 'hero', rosterId: entry.rosterId, index: entry.equipment.length });
+      setSelected(null);
+      return;
+    }
+    // A hero never holds two copies, and moving an item onto its own hero is not a swap.
+    if (entry.equipment.includes(selectedItemId ?? '') || (selected.kind === 'hero' && selected.rosterId === entry.rosterId)) {
+      setSelected(null);
+      return;
+    }
+    playSfx('ui.select');
+    setSwappingRosterId(entry.rosterId);
   }
 
   function handleSlotClick(ref: SlotRef) {
@@ -324,50 +308,50 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
 
           {/* Two across, three down: the roster reads as a squad at a glance rather than as a
               list to scroll, and each card gets a full card-width row underneath it for slots. */}
-          <div className="roster-mgmt-grid">
+          <HeroSlotGrid>
             {run.roster.map((entry) => {
               const hero = heroes[entry.heroId];
               const capacity = itemSlotsFor(hero, entry);
-              const canTake =
+              const takeable =
                 !!selected &&
-                entry.equipment.length < capacity &&
                 !entry.equipment.includes(selectedItemId ?? '') &&
                 (selected.kind === 'stash' || selected.rosterId !== entry.rosterId);
               return (
-                <div
+                <HeroSlotCard
                   key={entry.rosterId}
-                  className={`roster-mgmt-card${canTake ? ' can-take' : ''}`}
-                  style={{ borderTopColor: getTypeColor(hero.types[0]) }}
-                >
-                  <RosterMgmtHead
-                    hero={hero}
-                    entry={entry}
-                    onTap={() => handleHeroTap(entry, hero)}
-                    label={selected ? `Give ${selectedItem?.name ?? 'item'} to ${hero.name}` : `View ${hero.name} details`}
-                  />
-
-                  <div className="equip-slot-row">
-                    {slotBoxes(entry.equipment, capacity).map((itemId, index) => {
-                      const item = itemId ? (equipment[itemId] ?? null) : null;
-                      const ref: SlotRef = { kind: 'hero', rosterId: entry.rosterId, index };
-                      // A hero never holds two copies, so a slot already holding the moving item
-                      // is not a target — nor is any slot on the hero the item is coming from.
-                      const isDropTarget =
-                        !!selected &&
-                        itemId !== selectedItemId &&
-                        (selected.kind === 'stash' || selected.rosterId !== entry.rosterId) &&
-                        !entry.equipment.includes(selectedItemId ?? '');
-                      return <ItemBox key={index} item={item} {...slotProps(ref, item, isDropTarget)} />;
-                    })}
-                  </div>
-                </div>
+                  hero={hero}
+                  entry={entry}
+                  equipmentLookup={equipment}
+                  className={takeable && entry.equipment.length < capacity ? 'can-take' : ''}
+                  onHeadTap={() => handleHeroTap(entry, hero)}
+                  headLabel={selected ? `Give ${selectedItem?.name ?? 'item'} to ${hero.name}` : `View ${hero.name} details`}
+                  slotProps={(index, item) => {
+                    const ref: SlotRef = { kind: 'hero', rosterId: entry.rosterId, index };
+                    return slotProps(ref, item, takeable && item?.id !== selectedItemId);
+                  }}
+                />
               );
             })}
-          </div>
+          </HeroSlotGrid>
 
           {bagPanel}
         </div>
       </div>
+
+      {swapTarget && selected && selectedItem && (
+        <EquipSwapScreen
+          hero={heroes[swapTarget.heroId]}
+          entry={swapTarget}
+          held={swapTarget.equipment.flatMap((id) => (equipment[id] ? [equipment[id]] : []))}
+          offered={selectedItem}
+          onReplace={(index) => {
+            setSwappingRosterId(null);
+            applyMove(selected, { kind: 'hero', rosterId: swapTarget.rosterId, index });
+            setSelected(null);
+          }}
+          onCancel={() => setSwappingRosterId(null)}
+        />
+      )}
 
       {inspecting && (
         <HeroPreviewOverlay
