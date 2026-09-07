@@ -92,7 +92,8 @@ export function drawMasteryStats(random: () => number, count: number = MASTERY_C
 /**
  * What a level-up pays out, read off the POST-level-up entry. Precedence:
  * evolution > move > mastery. `mastery` below MASTERY_LEVEL means the move pool
- * came up empty — a data bug (the FLOOR should prevent it), not the gate working.
+ * came up empty — either the FLOOR is short (a data bug) or the hero has been offered
+ * everything it can still learn, which is an ordinary end state on a long run.
  */
 export type LevelUpPayout = 'evolution' | 'move' | 'mastery';
 
@@ -174,15 +175,19 @@ function replaceEntry(run: RunState, rosterId: string, next: RosterEntry, spend:
   };
 }
 
+function withOffers(entry: RosterEntry, moveIds: readonly string[]): readonly string[] {
+  return [...new Set([...entry.offeredMoveIds, ...moveIds])];
+}
+
 /** Starting kit plus everything the table can ever offer, deduped and NOT tier-gated — Quick Battle's random-loadout surface. */
 export function fullMovepool(table: ProgressionTable, hero: HeroDefinition): string[] {
   return [...new Set([...hero.moveIds, ...(table.moveTiers[hero.id] ?? [])])];
 }
 
 /**
- * Table pool plus chosen paths' learnableMoveIds, minus unlocked, minus tiers
- * above `entry.level`. Pass the POST-level-up entry, or the level-up that
- * reaches 4 is still offered an Early-only pool.
+ * Table pool plus chosen paths' learnableMoveIds, minus unlocked, minus already
+ * offered, minus tiers above `entry.level`. Pass the POST-level-up entry, or the
+ * level-up that reaches 4 is still offered an Early-only pool.
  */
 export function levelUpMovePool(
   table: ProgressionTable,
@@ -191,7 +196,12 @@ export function levelUpMovePool(
 ): string[] {
   const grafted = chosenEvolutionPaths(table, entry).flatMap((path) => path.learnableMoveIds ?? []);
   const pool = [...new Set([...(table.moveTiers[entry.heroId] ?? []), ...grafted])];
-  return pool.filter((id) => !entry.unlockedMoveIds.includes(id) && isMoveTierUnlocked(moves[id], entry.level));
+  return pool.filter(
+    (id) =>
+      !entry.unlockedMoveIds.includes(id) &&
+      !entry.offeredMoveIds.includes(id) &&
+      isMoveTierUnlocked(moves[id], entry.level)
+  );
 }
 
 /** Spends levelUpCost(entry.level) and increments level. The move/Evolution payout is resolved separately by the caller. */
@@ -203,7 +213,7 @@ export function levelUpHero(run: RunState, rosterId: string): RunState {
   return replaceEntry(run, rosterId, { ...entry, level: entry.level + 1 }, cost);
 }
 
-/** Free — the point was spent by levelUpHero. Adds `moveId`, or swaps it in for `replaceMoveId` at the cap. */
+/** Free — the point was spent by levelUpHero. Adds `moveId`, or swaps it in for `replaceMoveId` at the cap. Spends the offer, so swapping the move away later does not put it back in the pool. */
 export function grantLevelUpMove(run: RunState, rosterId: string, moveId: string, replaceMoveId?: string): RunState {
   const entry = requireEntry(run, rosterId);
   if (replaceMoveId && !entry.unlockedMoveIds.includes(replaceMoveId)) {
@@ -212,7 +222,18 @@ export function grantLevelUpMove(run: RunState, rosterId: string, moveId: string
   const unlockedMoveIds = replaceMoveId
     ? entry.unlockedMoveIds.map((id) => (id === replaceMoveId ? moveId : id))
     : [...entry.unlockedMoveIds, moveId];
-  return replaceEntry(run, rosterId, { ...entry, unlockedMoveIds }, 0);
+  const nextEntry: RosterEntry = { ...entry, unlockedMoveIds, offeredMoveIds: withOffers(entry, [moveId]) };
+  return replaceEntry(run, rosterId, nextEntry, 0);
+}
+
+/**
+ * Burns a move out of the hero's offer pool without granting it — the decline half of a
+ * replace-or-decline. An offer is spent by being MADE, so the screen calls this the moment
+ * it puts a move in front of the player, not when the player answers.
+ */
+export function recordMoveOffer(run: RunState, rosterId: string, moveIds: readonly string[]): RunState {
+  const entry = requireEntry(run, rosterId);
+  return replaceEntry(run, rosterId, { ...entry, offeredMoveIds: withOffers(entry, moveIds) }, 0);
 }
 
 /** Free, like grantLevelUpMove. The roll is the caller's; the reel restriction is enforced here so a caller can't reintroduce +10 MP Regen. */
@@ -294,6 +315,8 @@ export function chooseEvolutionPath(
     ...entry,
     chosenPathIds: [...entry.chosenPathIds, path.id],
     unlockedMoveIds: applyEvolutionMoves(entry.unlockedMoveIds, path.unlocksMoveIds).unlockedMoveIds,
+    // Both halves are spent: what the cap took, and the overflow the caller is about to offer.
+    offeredMoveIds: withOffers(entry, path.unlocksMoveIds),
     evolutionStatGrants: mergeStatMods(entry.evolutionStatGrants, path.statGrants),
     evolutionPassiveGrants: [...new Set([...entry.evolutionPassiveGrants, ...(path.grantsPassiveIds ?? [])])],
     evolutionTypeGraft,

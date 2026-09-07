@@ -22,6 +22,7 @@ import {
   levelUpHero,
   levelUpMovePool,
   grantLevelUpMove,
+  recordMoveOffer,
   availableEvolution,
   chooseEvolutionPath,
   applyEvolutionMoves,
@@ -247,6 +248,27 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
   assert.throws(() => grantLevelUpMove(withMove, 'cinderKnight', 'heavyBlow', 'notUnlocked'), ProgressionError);
 });
 
+test('progression: an offer is spent by being MADE — declined or swapped away, it never comes back', () => {
+  const run = seedRoster(['cinderKnight']);
+  const atCap = (entry: import('../src/run/state').RosterEntry) => ({ ...entry, level: 99 });
+
+  // Declined: recordMoveOffer grants nothing and still burns the move out of the pool.
+  const declined = recordMoveOffer(run, 'cinderKnight', ['moltenLash']);
+  assert.ok(!declined.roster[0].unlockedMoveIds.includes('moltenLash'));
+  assert.ok(!levelUpMovePool(progressionTable, moves, atCap(declined.roster[0])).includes('moltenLash'));
+
+  // Taught, then swapped away for something else: still gone.
+  const taught = grantLevelUpMove(declined, 'cinderKnight', 'firebrand');
+  const dropped = grantLevelUpMove(taught, 'cinderKnight', 'heavyBlow', 'firebrand');
+  assert.ok(!dropped.roster[0].unlockedMoveIds.includes('firebrand'));
+  assert.ok(!levelUpMovePool(progressionTable, moves, atCap(dropped.roster[0])).includes('firebrand'));
+
+  // Re-offering an already-spent move is a no-op, not a duplicate entry.
+  const again = recordMoveOffer(dropped, 'cinderKnight', ['moltenLash']);
+  assert.deepStrictEqual(again.roster[0].offeredMoveIds, ['moltenLash', 'firebrand', 'heavyBlow']);
+  assert.throws(() => recordMoveOffer(run, 'nobody', ['moltenLash']), ProgressionError);
+});
+
 test('progression: Evolution unlocks only at EVOLUTION_LEVEL, offers exactly three paths, grants stats, and is one-shot', () => {
   let run = seedRoster(['cinderKnight']);
   run = { ...run, levelUpPool: costToReachLevel(1, EVOLUTION_LEVEL) };
@@ -391,6 +413,10 @@ test('progression: choosing Stonehide at the move cap leaves the loadout untouch
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'packAlpha', 'packAlpha-defensive');
   assert.deepStrictEqual(next.roster[0].unlockedMoveIds, run.roster[0].unlockedMoveIds);
   assert.strictEqual(next.roster[0].evolutionTypeGraft, 'Stone');
+
+  // The overflow the caller is about to offer is spent here, so declining it does not requeue the move.
+  const path = progressionTable.evolutions.packAlpha[0].paths.find((p) => p.id === 'packAlpha-defensive')!;
+  for (const moveId of path.unlocksMoveIds) assert.ok(next.roster[0].offeredMoveIds.includes(moveId));
 });
 
 // --- Type-graft Evolution paths (docs/progression.md "Type-graft paths") ---

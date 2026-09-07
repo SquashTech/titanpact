@@ -45,6 +45,7 @@ import {
   levelUpCost,
   levelUpHero,
   levelUpMovePool,
+  recordMoveOffer,
   levelUpPayout,
   pendingEvolution,
 } from '../../src/run/progression';
@@ -209,7 +210,11 @@ function spendLevelUps(run: RunState, rng: Rng, opts: policy.PolicyOptions, choi
         next = grantLevelUpMove(next, target.rosterId, moveId);
       } else {
         const replaceId = policy.replacementTarget(current, moveId);
-        if (replaceId) next = grantLevelUpMove(next, target.rosterId, moveId, replaceId);
+        // One move leaves the pool per level-up either way — the game offers one, and the
+        // best-of-three above is a model of play quality, not of a wider offer.
+        next = replaceId
+          ? grantLevelUpMove(next, target.rosterId, moveId, replaceId)
+          : recordMoveOffer(next, target.rosterId, [moveId]);
       }
     } else {
       const drawn = drawMasteryStats(rng);

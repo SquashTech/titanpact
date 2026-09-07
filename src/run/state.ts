@@ -23,6 +23,11 @@ export interface RosterEntry {
   equipment: EquipmentLoadout;
   /** Starts as a copy of HeroDefinition.moveIds; grows via progression.ts. */
   unlockedMoveIds: string[];
+  /**
+   * Every move already offered to this hero — taught, declined, or taught and later swapped
+   * away. levelUpMovePool filters these out: an offer is spent by being made, not by being taken.
+   */
+  offeredMoveIds: readonly string[];
   /** A plain count of level-ups taken this run, starting at 1 — not an XP bar. Sole gate on Evolution. */
   level: number;
   /** Evolution path ids chosen so far, in order. */
@@ -137,6 +142,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     heroId,
     equipment: createEmptyLoadout(),
     unlockedMoveIds: [...startingMoveIds],
+    offeredMoveIds: [],
     level: 1,
     chosenPathIds: [],
     evolutionStatGrants: {},

@@ -10,6 +10,7 @@ import {
   canAffordAnyLevelUp,
   levelUpMovePool,
   grantLevelUpMove,
+  recordMoveOffer,
   availableEvolution,
   pendingEvolution,
   chosenEvolutionPaths,
@@ -311,7 +312,8 @@ export function LevelUpScreen({ run, onRunChange, onDone, focusRosterId = null }
       onRunChange(grantLevelUpMove(next, rosterId, moveId));
       setFeedback(`${heroName} reached Lv ${nextEntry.level} and learned ${moves[moveId].name}!`);
     } else {
-      onRunChange(next);
+      // The offer is spent by being made — decline it and it still never comes back.
+      onRunChange(recordMoveOffer(next, rosterId, [moveId]));
       setFeedback(null);
       setOffer({ rosterId, moveId });
       setSelectedReplaceId(null);

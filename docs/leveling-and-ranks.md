@@ -180,6 +180,24 @@ all; it triggers Evolution instead (Part 2). Below that level, a level-up either
 The player may **decline** a replacement and keep the current four — a level-up at cap
 is an *offer*, not a forced overwrite.
 
+### An offer is spent by being MADE (2026-09-07)
+
+A move leaves a hero's pool the moment it is **offered**, whether or not it is taken
+(`RosterEntry.offeredMoveIds`, filtered by `levelUpMovePool`). Three cases, one rule:
+
+- **Declined** at the cap — gone. The decline is a decision, so re-rolling the same move
+  next level is the screen wasting the player's point on a question already answered.
+- **Taught, then swapped away** for something later — gone. Otherwise the discarded move
+  drops straight back into the pool it came from and crowds out everything unseen.
+- **Granted by an Evolution path**, both the moves the cap took and the overflow it
+  refused (`chooseEvolutionPath`) — the overflow IS a level-up offer, so it prices like one.
+
+The pool therefore drains monotonically, which makes an empty pool below `MASTERY_LEVEL`
+an ordinary late-run state rather than the data bug it used to indicate; it falls through
+to the mastery stat by the same route as the tier gate's empty pool below. Scoped per
+hero and per run — nothing persists past the run, and a second copy of the hero recruited
+later starts with its own empty list.
+
 ### Which move is offered: the tier gate (2026-08-31)
 
 The move is drawn at random from the hero's pool (`progressionTable.moveTiers`), but

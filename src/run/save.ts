@@ -241,6 +241,8 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     heroId: value.heroId,
     equipment: decodeLoadout(value.equipment, index, `${label}.equipment`),
     unlockedMoveIds: requireIds(value.unlockedMoveIds, index.moveIds, `${label}.unlockedMoveIds`),
+    // Absent on saves written before the offer pool existed; an empty list is the honest default.
+    offeredMoveIds: requireIds(value.offeredMoveIds ?? [], index.moveIds, `${label}.offeredMoveIds`),
     level: value.level,
     chosenPathIds: requireIds(value.chosenPathIds, index.evolutionPathIds, `${label}.chosenPathIds`),
     evolutionStatGrants: decodeStatGrants(value.evolutionStatGrants, `${label}.evolutionStatGrants`),
