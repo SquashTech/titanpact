@@ -4,9 +4,10 @@
 import type { HeroDefinition, StatKey } from '../engine/content';
 import type { BrokenSeal, RunState, RosterEntry } from './state';
 import type { EquipmentDefinition } from './equipment';
-import { equipItem, holdsItem, MAX_ITEM_SLOTS, unequipSlot } from './equipment';
+import { addToStash, equipItem, holdsItem, MAX_ITEM_SLOTS, removeFromStash, stashIsFull, unequipSlot } from './equipment';
 import { generateMap } from './map';
 import { itemSlotsFor } from './progression';
+import { sellValueFor } from './shop';
 import { mergeStatMods } from './statMods';
 
 export class RunProgressError extends Error {}
@@ -98,15 +99,61 @@ export function grantItemSlot(run: RunState, rosterId: string, heroLookup: Recor
   return { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)) };
 }
 
-export interface EquipOutcome {
-  run: RunState;
-  /** Whatever `replaceIndex` held, now unequipped. There is no stash: the caller (ForceEquipScreen) must send it somewhere. Null when the item went into a free slot. */
-  bumpedItemId: string | null;
+// --- The stash (docs/progression.md) ---
+
+/** Picking an item up. Refused when the bag is full; the caller offers a sale instead. */
+export function stashItem(run: RunState, itemId: string, equipmentLookup: Record<string, EquipmentDefinition>): RunState {
+  if (!equipmentLookup[itemId]) throw new RunProgressError(`Unknown equipment ${itemId}`);
+  if (stashIsFull(run.stash)) throw new RunProgressError(`The bag is full`);
+  return { ...run, stash: addToStash(run.stash, itemId) };
+}
+
+/** Taking gear off. Refused when the bag is full — the only way a hero is stuck holding something. */
+export function unequipToStash(run: RunState, rosterId: string, index: number): RunState {
+  const entry = run.roster.find((r) => r.rosterId === rosterId);
+  if (!entry) throw new RunProgressError(`${rosterId} is not on the roster`);
+  const itemId = entry.equipment[index];
+  if (!itemId) throw new RunProgressError(`${rosterId} has nothing in item slot ${index}`);
+  if (stashIsFull(run.stash)) throw new RunProgressError(`The bag is full`);
+
+  const nextEntry: RosterEntry = { ...entry, equipment: unequipSlot(entry.equipment, index) };
+  return {
+    ...run,
+    roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)),
+    stash: addToStash(run.stash, itemId),
+  };
+}
+
+/** Sells one carried item at `sellValueFor`. The bag is the only place gear is sold from — equipped gear comes off first. */
+export function sellFromStash(run: RunState, index: number, equipmentLookup: Record<string, EquipmentDefinition>): RunState {
+  const itemId = run.stash[index];
+  if (!itemId) throw new RunProgressError(`The bag has nothing in slot ${index}`);
+  const item = equipmentLookup[itemId];
+  if (!item) throw new RunProgressError(`Unknown equipment ${itemId}`);
+  return { ...run, gold: run.gold + sellValueFor(item), stash: removeFromStash(run.stash, index) };
 }
 
 /**
- * Every obtained item is resolved on the spot — equipped or trashed — since there is no
- * inventory. `replaceIndex` is required once the hero is full, and is what the item lands on.
+ * Seats a carried item on a hero. `replaceIndex` is required once the hero is full, and what
+ * it displaces goes back into the bag — a net-zero trade, so this can never overflow.
+ */
+export function equipFromStash(
+  run: RunState,
+  stashIndex: number,
+  rosterId: string,
+  equipmentLookup: Record<string, EquipmentDefinition>,
+  heroLookup: Record<string, HeroDefinition>,
+  replaceIndex?: number
+): RunState {
+  const itemId = run.stash[stashIndex];
+  if (!itemId) throw new RunProgressError(`The bag has nothing in slot ${stashIndex}`);
+  return equipToRoster({ ...run, stash: removeFromStash(run.stash, stashIndex) }, rosterId, itemId, equipmentLookup, heroLookup, replaceIndex);
+}
+
+/**
+ * Seats a loose item — one just found, bought or claimed — straight onto a hero, skipping the
+ * bag. `replaceIndex` is required once the hero is full; what it displaces lands in the bag,
+ * so a full bag is the one thing that can refuse the swap.
  */
 export function equipToRoster(
   run: RunState,
@@ -115,7 +162,7 @@ export function equipToRoster(
   equipmentLookup: Record<string, EquipmentDefinition>,
   heroLookup: Record<string, HeroDefinition>,
   replaceIndex?: number
-): EquipOutcome {
+): RunState {
   const entry = run.roster.find((r) => r.rosterId === rosterId);
   if (!entry) throw new RunProgressError(`${rosterId} is not on the roster`);
   if (!equipmentLookup[itemId]) throw new RunProgressError(`Unknown equipment ${itemId}`);
@@ -132,10 +179,12 @@ export function equipToRoster(
   }
 
   const bumpedItemId = target === undefined ? null : entry.equipment[target];
+  if (bumpedItemId && stashIsFull(run.stash)) throw new RunProgressError(`The bag is full`);
   const nextEntry: RosterEntry = { ...entry, equipment: equipItem(entry.equipment, itemId, target) };
   return {
-    run: { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)) },
-    bumpedItemId,
+    ...run,
+    roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)),
+    stash: bumpedItemId ? addToStash(run.stash, bumpedItemId) : run.stash,
   };
 }
 
@@ -195,7 +244,7 @@ export function moveEquipment(
   };
 }
 
-/** Permanently destroys the item in slot `index` — the only way to shed gear. */
+/** Permanently destroys the item in slot `index`, bag or no bag. Shedding gear normally goes through `unequipToStash`. */
 export function trashEquipment(run: RunState, rosterId: string, index: number): RunState {
   const entry = run.roster.find((r) => r.rosterId === rosterId);
   if (!entry) throw new RunProgressError(`${rosterId} is not on the roster`);

@@ -1,7 +1,7 @@
 // Guild Hall commerce beyond recruitment: the one-time offer set a `shop` node
 // presents, and equipment purchases. Offers are rolled ONCE at node-select
 // time and carried on the Screen — a component-local roll would reroll on
-// every forceEquip remount. Relics are reward-only, never sold.
+// every ItemFoundScreen remount. Relics are reward-only, never sold.
 
 import { ROSTER_CAP, type RunState } from './state';
 import { pickWeightedEquipment, rarityWeightsFor, type EquipmentDefinition, type EquipmentRarity } from './equipment';
@@ -17,6 +17,18 @@ export const EQUIPMENT_PRICE_BY_RARITY: Record<EquipmentRarity, number> = {
   legendary: 90,
   mythic: 150,
 };
+
+/**
+ * Share of the buy price an unwanted item sells back for, anywhere (docs/progression.md
+ * "The stash"). Half is the first-pass figure; the shape is what matters — a full bag is a
+ * choice between two items rather than a flat loss, and gold gets a second faucet that
+ * scales with how picky the player is.
+ */
+export const EQUIPMENT_SELL_SHARE = 0.5;
+
+export function sellValueFor(item: EquipmentDefinition): number {
+  return Math.floor(EQUIPMENT_PRICE_BY_RARITY[item.rarity] * EQUIPMENT_SELL_SHARE);
+}
 
 export const GUILD_HALL_EQUIPMENT_OFFER_COUNT = 4;
 
@@ -64,7 +76,7 @@ function spendGold(run: RunState, cost: number, what: string): RunState {
   return { ...run, gold: run.gold - cost };
 }
 
-/** Gold spend only; the caller still routes the item through ForceEquipScreen. */
+/** Gold spend only; the caller still routes the item through ItemFoundScreen, where it is seated or bagged. */
 export function buyEquipment(run: RunState, item: EquipmentDefinition): RunState {
   return spendGold(run, EQUIPMENT_PRICE_BY_RARITY[item.rarity], item.name);
 }

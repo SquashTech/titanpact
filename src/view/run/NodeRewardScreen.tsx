@@ -32,7 +32,7 @@ interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
   onContinue: () => void;
-  /** equipmentReward only: a claim hands straight off to the forced-equip gate (App.tsx) — there is no unequipped stash. */
+  /** equipmentReward only: a claim hands straight off to the item gate (App.tsx), which seats or bags it. */
   onClaimEquipment: (itemId: string) => void;
 }
 

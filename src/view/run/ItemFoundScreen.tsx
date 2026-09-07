@@ -4,60 +4,70 @@ import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { EquipmentDefinition } from '../../run/equipment';
+import { STASH_CAPACITY, stashIsFull } from '../../run/equipment';
 import type { RosterEntry, RunState } from '../../run/state';
-import { equipToRoster, RunProgressError } from '../../run/runProgress';
+import { equipToRoster, grantCurrencyReward, stashItem, RunProgressError } from '../../run/runProgress';
+import { sellValueFor } from '../../run/shop';
 import { itemSlotsFor } from '../../run/progression';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { EquipmentEffectList, EquipmentIcon, ItemSummaryPopup, fmtGrant, RARITY_COLOR_VARS, RARITY_LABELS, RARITY_RGB_VARS } from '../shared/EquipmentBox';
 import { EquipCompareRow } from './EquipCompareRow';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
+import { RosterManagementScreen } from './RosterManagementScreen';
 import { RosterPeek } from './RosterPeek';
 
 interface Props {
   run: RunState;
-  /** Item ids awaiting a decision, in order. Seeded by App.tsx with what was just granted; bumped items get appended. */
+  /** Item ids awaiting a decision, in order. The Loot Pile hands over three at once. */
   queue: string[];
   onRunChange: (next: RunState) => void;
   onDone: () => void;
-}
-
-interface QueueEntry {
-  itemId: string;
-  /** Displaced from a hero by a prior choice on this screen — changes the headline copy. */
-  bumped: boolean;
 }
 
 /** Seating animation length (styles.css equip-seat-*); the equip is applied after it, as LevelUpScreen defers on LEVEL_UP_ANIM_MS. */
 const EQUIP_ANIM_MS = 420;
 
 /**
- * Forced resolution gate: every obtained item is equipped or trashed before the run advances (no
- * stash). Equipping over an occupied slot bumps the old item back onto this queue.
+ * What a found item opens: seat it now, or drop it in the bag and decide when the matchup is
+ * known. Nothing here is forced — the one exception is a bag already at STASH_CAPACITY, which
+ * has to be equipped past, sold past, or made room in before the run moves on.
  */
-export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone }: Props) {
-  const [queue, setQueue] = useState<QueueEntry[]>(() => initialQueue.map((itemId) => ({ itemId, bumped: false })));
-  const [confirmTrash, setConfirmTrash] = useState(false);
+export function ItemFoundScreen({ run, queue: initialQueue, onRunChange, onDone }: Props) {
+  const [queue, setQueue] = useState<string[]>(initialQueue);
   const [previewEntry, setPreviewEntry] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
   /** Roster id whose card is mid seating animation; every other card is inert until it finishes. */
   const [seatingRosterId, setSeatingRosterId] = useState<string | null>(null);
   /** A held item's readout, opened by holding one of a row's item boxes. */
   const [summaryItem, setSummaryItem] = useState<EquipmentDefinition | null>(null);
+  /** The bag, opened over this screen so a full one can be emptied without leaving the item behind. */
+  const [managing, setManaging] = useState(false);
 
-  const current = queue[0];
-  const itemLookup = current ? equipment[current.itemId] : undefined;
+  const itemId = queue[0];
+  const itemLookup = itemId ? equipment[itemId] : undefined;
 
-  if (!current || !itemLookup) {
+  if (!itemId || !itemLookup) {
     onDone();
     return null;
   }
   // Re-bound so the closures below see a narrowed EquipmentDefinition.
   const item = itemLookup;
+  const bagFull = stashIsFull(run.stash);
 
-  function advance(nextQueue: QueueEntry[]) {
-    setQueue(nextQueue);
-    setConfirmTrash(false);
-    if (nextQueue.length === 0) onDone();
+  function advance(next: RunState) {
+    onRunChange(next);
+    const rest = queue.slice(1);
+    setQueue(rest);
+    if (rest.length === 0) onDone();
+  }
+
+  /** Every action here is legal-or-inert: the button that would throw is disabled, so a refusal is a no-op. */
+  function attempt(change: () => RunState) {
+    try {
+      advance(change());
+    } catch (err) {
+      if (!(err instanceof RunProgressError)) throw err;
+    }
   }
 
   // The sound is the press's own feedback, so it fires now rather than after the seat.
@@ -67,23 +77,8 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
     setSeatingRosterId(rosterId);
     window.setTimeout(() => {
       setSeatingRosterId(null);
-      applyEquip(rosterId, replaceIndex);
+      attempt(() => equipToRoster(run, rosterId, item.id, equipment, heroes, replaceIndex));
     }, EQUIP_ANIM_MS);
-  }
-
-  function applyEquip(rosterId: string, replaceIndex?: number) {
-    try {
-      const { run: nextRun, bumpedItemId } = equipToRoster(run, rosterId, item.id, equipment, heroes, replaceIndex);
-      onRunChange(nextRun);
-      const rest = queue.slice(1);
-      advance(bumpedItemId ? [...rest, { itemId: bumpedItemId, bumped: true }] : rest);
-    } catch (err) {
-      if (!(err instanceof RunProgressError)) throw err;
-    }
-  }
-
-  function handleTrash() {
-    advance(queue.slice(1));
   }
 
   const grants = (Object.entries(item.statGrants) as [StatKey, number][]).filter(([, amount]) => amount);
@@ -100,12 +95,10 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
       {/* The absolute reading of the item; the table below is the relative one. */}
       <NodeHeader
         compact
-        eyebrow={current.bumped ? 'Needs a New Home' : 'New Item'}
+        eyebrow="New Item"
         glyph={<EquipmentIcon item={item} className="equip-spotlight-icon" />}
         title={item.name}
-        readout={`${RARITY_LABELS[item.rarity]}${
-          current.bumped ? ' — unequipped; give it to another hero, or trash it' : ' — tap a hero to hand it over'
-        }`}
+        readout={`${RARITY_LABELS[item.rarity]} — ${bagFull ? 'your bag is full; equip it, sell it, or make room' : 'tap a hero, or keep it in your bag'}`}
       >
         {/* Capped and internally scrolling so the table below sits at the same height for every item. */}
         <div className="node-item-effects">
@@ -136,7 +129,9 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
               capacity={itemSlotsFor(hero, entry)}
               offered={item}
               isEquipping={seatingRosterId === entry.rosterId}
-              locked={!!seatingRosterId && seatingRosterId !== entry.rosterId}
+              // A swap has to put the displaced item somewhere, so a full bag locks every row
+              // that has no free slot to seat into.
+              locked={(!!seatingRosterId && seatingRosterId !== entry.rosterId) || (bagFull && held.length >= itemSlotsFor(hero, entry))}
               alreadyHeld={entry.equipment.includes(item.id)}
               onEquip={(replaceIndex) => handleEquip(entry.rosterId, replaceIndex)}
               onPreview={() => setPreviewEntry({ hero, entry })}
@@ -146,32 +141,32 @@ export function ForceEquipScreen({ run, queue: initialQueue, onRunChange, onDone
         })}
       </div>
 
-      {/* Inert while seating: the deferred equip holds a snapshot of this queue, and trashing its
-          head mid-animation would resolve the same item twice. */}
-      <button className="secondary-button trash-button" disabled={!!seatingRosterId} onClick={() => setConfirmTrash(true)}>
-        🗑️ Trash {item.name}
-      </button>
-
-      {confirmTrash && (
-        <div className="log-overlay" onClick={() => setConfirmTrash(false)}>
-          <div className="log-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="log-panel-header">
-              <span>Confirm Trash</span>
-            </div>
-            <p className="hint">{`Trash ${item.name}? This cannot be undone — it's gone for good.`}</p>
-            <div className="reward-panel-actions">
-              <button className="secondary-button" onClick={() => setConfirmTrash(false)}>
-                Cancel
-              </button>
-              <button className="resolve-button" onClick={handleTrash}>
-                Trash It
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Inert while seating: the deferred equip holds a snapshot of this queue, and resolving
+          its head mid-animation would resolve the same item twice. */}
+      <div className="item-found-actions">
+        {bagFull ? (
+          <>
+            <button className="secondary-button" disabled={!!seatingRosterId} onClick={() => setManaging(true)}>
+              🎒 Bag Full — Make Room
+            </button>
+            <button
+              className="secondary-button"
+              disabled={!!seatingRosterId}
+              onClick={() => attempt(() => grantCurrencyReward(run, sellValueFor(item)))}
+            >
+              Sell for {sellValueFor(item)}g
+            </button>
+          </>
+        ) : (
+          <button className="resolve-button" disabled={!!seatingRosterId} onClick={() => attempt(() => stashItem(run, item.id, equipment))}>
+            🎒 Keep in Bag ({run.stash.length}/{STASH_CAPACITY})
+          </button>
+        )}
+      </div>
 
       <ItemSummaryPopup item={summaryItem} onClose={() => setSummaryItem(null)} />
+
+      {managing && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setManaging(false)} />}
 
       {previewEntry && (
         <HeroPreviewOverlay

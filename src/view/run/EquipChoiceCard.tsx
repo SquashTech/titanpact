@@ -58,7 +58,7 @@ export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs
 /**
  * Who has room and who is full — the half of the buy decision the item's own card can't answer
  * ("is there anywhere to put this that doesn't cost me something?"). Read-only: the Guild Hall
- * still routes the purchase through ForceEquipScreen, which is where a hero is actually chosen.
+ * still routes the purchase through ItemFoundScreen, which is where a hero — or the bag — is actually chosen.
  */
 function SlotOwners({ roster }: { roster: readonly RosterEntry[] }) {
   return (

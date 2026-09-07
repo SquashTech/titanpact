@@ -274,7 +274,7 @@ export function equipmentStatModifiers(
   return mergeStatMods(...grants);
 }
 
-/** Appends into the next free slot, or overwrites `replaceIndex` when the hero is full. There is no stash, so callers that care read the displaced id first (runProgress.ts equipToRoster). */
+/** Appends into the next free slot, or overwrites `replaceIndex` when the hero is full. Whatever it overwrites goes to the stash — callers read the displaced id first (runProgress.ts equipToRoster). */
 export function equipItem(loadout: EquipmentLoadout, itemId: string, replaceIndex?: number): EquipmentLoadout {
   if (replaceIndex === undefined) return [...loadout, itemId];
   return loadout.map((held, i) => (i === replaceIndex ? itemId : held));
@@ -283,4 +283,33 @@ export function equipItem(loadout: EquipmentLoadout, itemId: string, replaceInde
 /** Drops the item in `index`; the slots above it shift down, since the list stays compact. */
 export function unequipSlot(loadout: EquipmentLoadout, index: number): EquipmentLoadout {
   return loadout.filter((_, i) => i !== index);
+}
+
+// --- The stash ---
+
+/**
+ * Unequipped items the player is carrying (docs/progression.md "The stash"). Unlike a loadout
+ * it MAY hold two of the same item — one copy per hero is the rule, and two heroes may want it.
+ */
+export type Stash = readonly string[];
+
+/**
+ * How many items the bag carries. First-pass figure for playtest. Capped rather than
+ * unbounded on purpose: with room for everything the player always has the right item on
+ * hand and the SLOT stops being the scarce thing (CLAUDE.md). A cap keeps the discard
+ * decision alive but moves it to a moment when the matchup is known.
+ */
+export const STASH_CAPACITY = 8;
+
+export function stashIsFull(stash: Stash): boolean {
+  return stash.length >= STASH_CAPACITY;
+}
+
+/** Appends; the caller checks `stashIsFull` first, since refusing is a UI state and not an error. */
+export function addToStash(stash: Stash, itemId: string): Stash {
+  return [...stash, itemId];
+}
+
+export function removeFromStash(stash: Stash, index: number): Stash {
+  return stash.filter((_, i) => i !== index);
 }

@@ -382,7 +382,7 @@ Details worth keeping:
 ### Scoping discipline
 
 Every rule is scoped under `.levelup-*` or `.growth-*`. **`.hero-grid` is untouched** —
-`ForceEquipScreen`, `StatBoostScreen`, `ClassNodeScreen` and `RosterReplaceScreen` still
+`ItemFoundScreen`, `StatBoostScreen`, `ClassNodeScreen` and `RosterReplaceScreen` still
 use it, and `.hero-grid-portrait` **still carries the 30px 0.625× defect there**, the same
 way `.roster-card-portrait` was left carrying 0.833× after the draft pass. Both are real,
 known bugs on screens the player sees, and both belong in their own pass with their own
@@ -1216,7 +1216,7 @@ this doc, three months of passes later, on the half of the app combat isn't.
 
 **The hero grid was the known defect, still open.** `.hero-grid-portrait` drew
 the 48×48 sources at **30px** — 0.625×, the fractional downscale this doc opens
-with — on `ForceEquipScreen`, `StatBoostScreen` and `ClassNodeScreen`. It is
+with — on `ItemFoundScreen`, `StatBoostScreen` and `ClassNodeScreen`. It is
 listed under open item 6 as "the first thing to fix when those screens come up."
 They came up.
 
@@ -1224,7 +1224,7 @@ They came up.
 procedure says to ask after "what does the box contain?", now 5 for 5. A
 `.hero-grid-card` carried a name, a level and two type chips. On the Vitality
 Shrine that is a picker for a *permanent* +20 HP grant with nothing on it about
-the hero receiving it; on ForceEquipScreen it did carry the target slot, in a
+the hero receiving it; on ItemFoundScreen it did carry the target slot, in a
 dashed sunken sub-box.
 
 **Two primaries, one of them inert.** Mentor's Hall, the Gold and XP caches and
@@ -1287,7 +1287,7 @@ numeral inheritance bug and both ring placements; none of the three would have
 shown up in computed style.
 
 Shot and checked: Vitality Shrine, Mana Well, Gold Cache, XP Cache, Equipment
-Cache, Relic Shrine, Mentor's Hall, the Event placeholder, ForceEquipScreen,
+Cache, Relic Shrine, Mentor's Hall, the Event placeholder, ItemFoundScreen,
 EvolutionScreen, and the Level Up screen itself (unchanged in appearance after
 its card and header were replaced by the shared ones — which is the point of
 the refactor). `npm test` (203 engine tests), `npm run typecheck:view` and the
@@ -1322,7 +1322,7 @@ same **screen**.
 `NodeHeader` over a `HeroPickGrid`, but three of them wrapped the grid in
 `.screen-scroll > .bottom-pinned` while `LevelUpScreen` and `StatBoostScreen`
 gave it `is-filling` and let it own the space. So the row of figures landed at a
-different y on `ForceEquipScreen` (where its height moved with how much the
+different y on `ItemFoundScreen` (where its height moved with how much the
 dropped item had to say about itself), on `ClassNodeScreen`, and on Level Up —
 three variants of a screen the player is meant to learn once.
 
@@ -1484,7 +1484,7 @@ does.
 ### What was wrong
 
 **The screen asked a numeric question in a shape built for an identity
-question.** `ForceEquipScreen` drew six `HeroPickCard`s — the shared
+question.** `ItemFoundScreen` drew six `HeroPickCard`s — the shared
 figure-on-type-tinted-ground card the tenth pass generalised — each with one
 detail line reading `⚔ Torch`. That card is exactly right when the question is
 *which of these heroes*; it says who they are and what the tap buys. But the
@@ -1563,7 +1563,7 @@ Details worth keeping:
 
 Same method as the ninth through eleventh passes: a throwaway harness (root
 `equipcheck.html` + `src/app/equipcheck.tsx` mounting the real
-`ForceEquipScreen` from a synthetic mid-run `RunState`, both deleted before
+`ItemFoundScreen` from a synthetic mid-run `RunState`, both deleted before
 committing) served by vite, driven and shot in the Browser pane. Shot and
 looked at: a legendary weapon against six heroes (five filled slots and one
 empty), the same screen after equipping — which proves the bump path, since

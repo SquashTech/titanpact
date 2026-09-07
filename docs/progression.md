@@ -179,6 +179,39 @@ Two knock-on decisions the UI had to make, both in `EquipCompareRow`:
   is no matching slot to trade into, so `moveEquipment` appends when the destination has room
   and trades items when it does not.
 
+### The stash (2026-09-07, per user direction: "nobody likes finnicky, awkward systems")
+
+Until now every obtained item was **resolved on the spot** — equipped or trashed before the run
+advanced — and a swap *cascaded*, pushing the displaced item back onto the same queue to be
+resolved in turn. Three costs came out of that in playtest: the player committed an item's
+permanent fate knowing nothing about the fights ahead, one drop could turn into a chain of
+forced decisions, and — because nothing could be carried unequipped — Manage Roster could only
+ever *trade* two occupied slots. It was a shell game.
+
+`RunState.stash` is the missing concept. It dissolves all three at once.
+
+- **`STASH_CAPACITY` = 8, and the cap is the design.** An uncapped bag never forces a decision,
+  but it also means the player always has the right item on hand for the matchup, and the SLOT
+  quietly stops being the scarce thing (`CLAUDE.md`). A cap keeps the discard decision alive and
+  moves it to a moment when the matchup is *known*. The figure is a first-pass one.
+- **The bag only fills with things that came off.** A found item is loose until the player says
+  otherwise: equip it (`equipToRoster`), keep it (`stashItem`), or sell it. The one refusal in
+  the system is a swap against a full bag — the displaced item has nowhere to go — which the
+  reveal screen answers by offering the bag itself rather than a dead end.
+- **A swap out of the bag is net-zero** (`equipFromStash`): one item leaves, one returns, so it
+  can never overflow however full the bag is.
+- **Unwanted gear is sold, not destroyed** — `EQUIPMENT_SELL_SHARE` = 0.5 of the buy price
+  (`sellValueFor`, `src/run/shop.ts`). A full bag becomes a choice between two items instead of
+  a flat loss, and gold gains a second faucet that scales with how picky the player is. Selling
+  is **bag-only**: equipped gear comes off first, which keeps the irreversible verb one step
+  away from a mis-tap. The share is untuned.
+- **Every slot is both a source and a destination.** A hero's boxes and the bag's are the same
+  `ItemBox`, and one tap-then-tap covers equipping, unequipping, handing gear to another hero
+  and swapping two. `trashEquipment` survives as a legal transform but no longer has a UI.
+- **A save written before the bag decodes to an empty one** and no `SAVE_VERSION` bump is owed:
+  the old model had nowhere to put an unequipped item, so "missing" and "empty" say the same
+  thing (`decodeStash`).
+
 ### Everything else
 
 - Items contribute through the **stat pipeline** (stat-shaped effects) or the
@@ -310,12 +343,13 @@ tripled, and a Force item doubled both halves, because Force's own price doubled
 > hypothetical −40 Defense / 70 Attack Epic is not. A cap (say, 25% of the tier budget)
 > is the obvious answer but has not been decided — flag before authoring a second
 > drawback item.
-- **No unequipped-item stash (2026-08-17, reversing the 2026-08-16 third-playtest
-  design — per user direction, "adds unnecessary player busywork").** Every item
-  obtained, from a battle win or an `equipmentReward` node alike, must be equipped to
-  a hero or trashed for good before the run continues (`ForceEquipScreen`,
-  `docs/run-loop.md` "The unequipped-item inventory was removed"). `RunState` no
-  longer has an `inventory` field.
+- **A capped stash (2026-09-07, per user direction — reversing 2026-08-17's "no
+  unequipped-item stash", which itself reversed 2026-08-16).** `RunState.stash` carries
+  up to `STASH_CAPACITY` = 8 unequipped items; a found item is seated, bagged or sold.
+  The middle position is the point: the 2026-08-17 removal was right that an *uncapped*
+  inventory is busywork, but resolving every drop on the spot — with a swap cascading
+  into the next forced decision — turned out to be the worse half of the trade. Full
+  reasoning, and what a full bag does, in "The stash" above.
 
 ### The act-scaled drop curve (2026-08-30, per user direction)
 
@@ -421,7 +455,7 @@ panel component) rather than presenting the entire non-starter hero catalog at o
 same visit also offers a rotating shelf of **equipment** (priced by rarity tier,
 `EQUIPMENT_PRICE_BY_RARITY`, `src/run/shop.ts` — common 15g through mythic 150g) for
 direct gold purchase — a new axis alongside hero recruitment. A bought equipment item
-still resolves through the same forced equip-or-trash gate (`ForceEquipScreen`) every
+still resolves through the same item gate (`ItemFoundScreen`) every
 other equipment grant uses. Tapping a hero offer opens its full stat/move sheet, which
 is where the gold is actually spent (2026-08-28 — `HeroPreviewOverlay`'s `action`).
 

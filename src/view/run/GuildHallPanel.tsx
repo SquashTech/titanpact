@@ -24,7 +24,7 @@ interface Props {
   /** Bought on this visit; carried by App.tsx because a purchase unmounts this panel through the equip gate. */
   soldOutEquipmentIds: readonly string[];
   onRunChange: (next: RunState) => void;
-  /** Hands off to App.tsx's forced equip-or-trash gate — this panel can't transition screens. */
+  /** Hands off to App.tsx's item gate — this panel can't transition screens. */
   onBuyEquipment: (itemId: string) => void;
   /** Recruiting at a full roster hands off to App.tsx's RosterReplaceScreen gate. */
   onRequestRosterReplace: (offer: GuildHallOffer) => void;

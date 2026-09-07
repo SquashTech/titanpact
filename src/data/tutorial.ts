@@ -144,7 +144,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     topic: 'Equipment',
     lines: [
       'Some equipment. This will make us more powerful. Each of us can currently hold one, but if we find a Forge, our capacity will expand.',
-      'Equip it on one of us.',
+      'Give it to one of us now, or keep it in the bag — you can move our gear around between battles, and sell what we do not want.',
     ],
   },
   {

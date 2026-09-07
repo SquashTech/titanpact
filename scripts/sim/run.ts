@@ -32,6 +32,7 @@ import {
   grantUpgradeReward,
   reachableNodeIds,
   recordBrokenSeal,
+  sellFromStash,
 } from '../../src/run/runProgress';
 import {
   MOVE_CAP,
@@ -48,7 +49,7 @@ import {
   pendingEvolution,
 } from '../../src/run/progression';
 import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
-import { rollGuildHallOffers, buyEquipment, EQUIPMENT_PRICE_BY_RARITY } from '../../src/run/shop';
+import { rollGuildHallOffers, buyEquipment, sellValueFor, EQUIPMENT_PRICE_BY_RARITY } from '../../src/run/shop';
 import { grantClass } from '../../src/run/classes';
 import { applyStatShift, grantEventPassive, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
 import { MAX_ITEM_SLOTS, pickWeightedEquipment, rarityWeightsFor, type EquipmentDefinition, type LootSource } from '../../src/run/equipment';
@@ -225,14 +226,20 @@ function spendLevelUps(run: RunState, rng: Rng, opts: policy.PolicyOptions, choi
   return next;
 }
 
-/** ForceEquipScreen: every drop is resolved on the spot — worn by whoever gains most, or trashed. */
-function forceEquip(run: RunState, itemId: string, equipped: string[], actNumber: number): RunState {
+/**
+ * The item policy: worn by whoever gains most, and everything else sold. The greedy wearer
+ * never wants what it just displaced, so draining the bag each time also keeps it from filling
+ * and refusing the next swap — this sim models the floor of the stash, not its use.
+ */
+function resolveDrop(run: RunState, itemId: string, equipped: string[], actNumber: number): RunState {
   const item = equipment[itemId];
   if (!item || run.roster.length === 0) return run;
   const target = policy.bestWearer(run.roster, item);
-  if (!target || target.gain <= 0) return run;
+  if (!target || target.gain <= 0) return grantCurrencyReward(run, sellValueFor(item));
   equipped.push(`${actNumber}:${item.rarity}`);
-  return equipToRoster(run, target.rosterId, itemId, equipment, heroes, target.replaceIndex).run;
+  let next = equipToRoster(run, target.rosterId, itemId, equipment, heroes, target.replaceIndex);
+  while (next.stash.length > 0) next = sellFromStash(next, 0, equipment);
+  return next;
 }
 
 function rosterSquad(run: RunState, size: number): Squad {
@@ -338,7 +345,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
       }
 
       run = tryRecruitContracts(run, outcome.defeatedRoster, rng);
-      if (outcome.drop) run = forceEquip(run, outcome.drop.id, record.equipped, run.actNumber);
+      if (outcome.drop) run = resolveDrop(run, outcome.drop.id, record.equipped, run.actNumber);
       run = spendLevelUps(run, rng, options, record.choices, run.encountersWon);
       continue;
     }
@@ -525,7 +532,7 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       const choices = pickWeightedEquipment(EQUIPMENT_POOL, 3, rarityWeightsFor(run.actNumber, 'standard'));
       if (choices.length === 0) return run;
       const best = choices.reduce((a, b) => ((policy.bestWearer(run.roster, b)?.gain ?? 0) > (policy.bestWearer(run.roster, a)?.gain ?? 0) ? b : a));
-      return forceEquip(run, best.id, record.equipped, run.actNumber);
+      return resolveDrop(run, best.id, record.equipped, run.actNumber);
     }
     case 'relicReward': {
       const pool = drawableRelics.filter((r) => !run.relics.includes(r.id));
@@ -619,7 +626,7 @@ function resolveEvent(run: RunState, locationId: string, rng: Rng, record: RunRe
   // loot
   let next = run;
   const drops = pickWeightedEquipment(EQUIPMENT_POOL, outcome.count, rarityWeightsFor(run.actNumber, 'standard'));
-  for (const item of drops) next = forceEquip(next, item.id, record.equipped, run.actNumber);
+  for (const item of drops) next = resolveDrop(next, item.id, record.equipped, run.actNumber);
   return next;
 }
 
@@ -652,7 +659,7 @@ function resolveShop(run: RunState, muster: boolean, rng: Rng, record: RunRecord
     // Buy only a meaningful upgrade — hoarding gold for a later, better shelf is the alternative.
     if (!wearer || wearer.gain < price * 0.25) continue;
     next = buyEquipment(next, item);
-    next = forceEquip(next, itemId, record.equipped, next.actNumber);
+    next = resolveDrop(next, itemId, record.equipped, next.actNumber);
   }
 
   // Spare gold at the last shop before a Guardian buys a contract rather than rusting.

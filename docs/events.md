@@ -30,7 +30,7 @@ same rule CLAUDE.md states for every other content type.
 | `learnMove` | Rolls ONE move from a declarative `MovePoolFilter` and lets the player teach it to any roster hero — swapping one out if that hero is at `MOVE_CAP`. | Fruit Slicer, Wildcard |
 | `statShift` | Flat additive stat deltas, some possibly negative, permanently-for-the-run on one chosen hero (`RosterEntry.bonusStatGrants`). | Soul Transfer |
 | `grantPassive` | Teaches a Passive to one chosen hero (`RosterEntry.bonusPassiveGrants`). | Assertiveness Training |
-| `loot` | N pieces of equipment on the act's own drop curve, handed to `ForceEquipScreen`. | Loot Pile |
+| `loot` | N pieces of equipment on the act's own drop curve, handed to `ItemFoundScreen`. | Loot Pile |
 
 **What is deliberately NOT in the vocabulary:** gold, Training Points, Recruit Contracts.
 Each is already a whole map-node type or a per-act grant, and an event that duplicated one

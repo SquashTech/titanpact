@@ -24,7 +24,7 @@ import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScr
 import { ForgeScreen } from '../view/run/ForgeScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
-import { ForceEquipScreen } from '../view/run/ForceEquipScreen';
+import { ItemFoundScreen } from '../view/run/ItemFoundScreen';
 import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
 import { RecruitScreen } from '../view/run/RecruitScreen';
 import { StatBoostScreen, type StatBoostNodeType } from '../view/run/StatBoostScreen';
@@ -158,8 +158,8 @@ type Screen =
   /** Guardian's Banner after a Guardian win in acts 1-4. Not a map node, so no nodeId. */
   | { kind: 'guardianBanner'; next: Screen }
   | { kind: 'levelUp'; next: Screen }
-  /** Forced equip-or-trash gate; there is no unequipped stash. */
-  | { kind: 'forceEquip'; queue: string[]; next: Screen }
+  /** A found item: seat it now, or drop it in the bag. */
+  | { kind: 'itemFound'; queue: string[]; next: Screen }
   /** Roster-full replacement, Guild Hall path only; the contract path resolves in RecruitScreen. */
   | { kind: 'rosterReplace'; candidate: RosterReplaceCandidate; next: Screen }
   /** Offers sampled once in handleFightResolved; only pushed when the player holds a contract. */
@@ -242,8 +242,13 @@ function shuffled<T>(items: readonly T[]): T[] {
 
 /** TEMPORARY DEV/TEST — a full roster one level under Evolution with one point to spend. Remove with its TitleScreen button. */
 function createLevel4TestRun(): RunState {
+  const base = addHeroes(createRunState(1, 999), Object.keys(heroes).slice(0, ROSTER_CAP), 4);
+  // Some worn, some carried: Manage Roster's gear half is only exercisable with both.
+  const worn = ['ironBlade', 'apprenticeWand', 'torch'];
   return {
-    ...addHeroes(createRunState(1, 999), Object.keys(heroes).slice(0, ROSTER_CAP), 4),
+    ...base,
+    roster: base.roster.map((entry, i) => (worn[i] ? { ...entry, equipment: equipItem(entry.equipment, worn[i]) } : entry)),
+    stash: ['dagger', 'huntersBow', 'magicBook'],
     map: generateMap(randomSeed()),
     locationIds: generateItinerary(randomSeed()),
   };
@@ -339,7 +344,7 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
     }
     case 'gemChoice':
       return 'gem';
-    case 'forceEquip':
+    case 'itemFound':
       return 'equip';
     case 'levelUp':
       // The Evolution beat outranks the plain one: reaching a fork is the bigger lesson, and the
@@ -697,7 +702,7 @@ export function App() {
 
     setPlayerRun(next);
     const afterLevelUp: Screen = levelUpPending(next) ? { kind: 'levelUp', next: afterScreen } : afterScreen;
-    const afterEquip: Screen = equipmentReward ? { kind: 'forceEquip', queue: [equipmentReward.id], next: afterLevelUp } : afterLevelUp;
+    const afterEquip: Screen = equipmentReward ? { kind: 'itemFound', queue: [equipmentReward.id], next: afterLevelUp } : afterLevelUp;
 
     // Gate order is deliberate: gem, banner, then recruit, then equip, then level-up — so a hero
     // recruited this beat already stands under both team-wide grants and can receive this win's
@@ -735,7 +740,7 @@ export function App() {
   /** Claiming an item advances the node and hands off to the equip gate. A queue, because the Loot Pile event hands over three at once. */
   function handleClaimEquipment(nodeId: string, itemIds: string | string[]) {
     setPlayerRun((run) => advanceToNode(run, nodeId));
-    setScreen({ kind: 'forceEquip', queue: Array.isArray(itemIds) ? itemIds : [itemIds], next: mapAfterLevelUp(playerRun) });
+    setScreen({ kind: 'itemFound', queue: Array.isArray(itemIds) ? itemIds : [itemIds], next: mapAfterLevelUp(playerRun) });
   }
 
   /** Guild Hall purchase: validate-before-commit, then the equip gate returns to the same shop with the item greyed out. */
@@ -752,7 +757,7 @@ export function App() {
     setPlayerRun(next);
     const backToShop: Screen =
       screen.kind === 'shop' ? { ...screen, soldOutEquipmentIds: [...screen.soldOutEquipmentIds, itemId] } : screen;
-    setScreen({ kind: 'forceEquip', queue: [itemId], next: backToShop });
+    setScreen({ kind: 'itemFound', queue: [itemId], next: backToShop });
   }
 
   /** The title's replay entry (docs/tutorial.md); the profile is bypassed, not rewritten. */
@@ -1113,8 +1118,8 @@ export function App() {
         />
       )}
 
-      {screen.kind === 'forceEquip' && (
-        <ForceEquipScreen run={playerRun} queue={screen.queue} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />
+      {screen.kind === 'itemFound' && (
+        <ItemFoundScreen run={playerRun} queue={screen.queue} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />
       )}
 
       {/* `runOutcome` is set in the layout effect above, so it is already there on the first paint. */}

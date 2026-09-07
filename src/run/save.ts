@@ -13,8 +13,8 @@
 
 import type { PassiveId, StatKey, TypeId } from '../engine/content';
 import { STAT_ORDER } from '../engine/content';
-import type { EquipmentLoadout } from './equipment';
-import { MAX_ITEM_SLOTS } from './equipment';
+import type { EquipmentLoadout, Stash } from './equipment';
+import { MAX_ITEM_SLOTS, STASH_CAPACITY } from './equipment';
 import type { MapNode, MapNodeType, RunMap } from './map';
 import { MAP_NODE_TYPES } from './map';
 import type { ProgressionTable } from './progression';
@@ -196,6 +196,21 @@ function decodeLoadout(value: unknown, index: SaveContentIndex, label: string): 
   return [...value];
 }
 
+/**
+ * The bag. Absent in files written before it existed, which decode to an empty one — the
+ * old model had nowhere to put an unequipped item, so "missing" and "empty" say the same
+ * thing and no version bump is owed. Duplicates are legal here, unlike a loadout.
+ */
+function decodeStash(value: unknown, index: SaveContentIndex): Stash {
+  if (value === undefined || value === null) return [];
+  if (!isStringArray(value)) reject('run.stash is not a list of item ids');
+  if (value.length > STASH_CAPACITY) reject(`run.stash holds ${value.length} items, past the ${STASH_CAPACITY}-item cap`);
+  for (const id of value) {
+    if (!index.equipmentIds.has(id)) reject(`run.stash references unknown equipment "${id}"`);
+  }
+  return [...value];
+}
+
 function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number): RosterEntry {
   const label = `roster[${at}]`;
   if (!isObject(value)) reject(`${label} is not an object`);
@@ -344,6 +359,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     levelUpPool: value.levelUpPool,
     levelUpDeferred: value.levelUpDeferred,
     gold: value.gold,
+    stash: decodeStash(value.stash, index),
     relics: requireIds(value.relics, index.relicIds, 'run.relics'),
     recruitContracts: value.recruitContracts,
     map,

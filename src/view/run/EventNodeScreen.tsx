@@ -37,7 +37,7 @@ interface Props {
   event: RunEventDefinition;
   run: RunState;
   onRunChange: (next: RunState) => void;
-  /** Loot hand-off to App.tsx's forced equip-or-trash gate. Advances the node itself — an alternative to onContinue. */
+  /** Loot hand-off to App.tsx's item gate. Advances the node itself — an alternative to onContinue. */
   onGrantEquipment: (itemIds: string[]) => void;
   onContinue: () => void;
 }

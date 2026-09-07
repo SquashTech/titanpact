@@ -222,7 +222,7 @@ export const sounds: Record<SfxId, SoundSpec> = {
     ],
   },
 
-  /** Equipment seating (ForceEquipScreen): purely mechanical — buckle crack, a second crack at 60ms (the latch seating), metal ring-off. */
+  /** Equipment seating (ItemFoundScreen): purely mechanical — buckle crack, a second crack at 60ms (the latch seating), metal ring-off. */
   equip: {
     gain: 0.46,
     jitter: 0.05,
