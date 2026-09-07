@@ -25,7 +25,7 @@ const CLASS_SFX: readonly (readonly [string, SfxId])[] = [
   ['replacement-confirm-button', 'ui.confirm'],
   ['relic-shrine-claim-button', 'ui.confirm'],
   ['moveoffer-button', 'ui.confirm'],
-  ['move-button', 'ui.select'],
+  ['move-button', 'ui.move'],
   ['map-node', 'ui.confirm'],
 ];
 

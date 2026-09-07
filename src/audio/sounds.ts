@@ -1,6 +1,8 @@
 // The sound table — pure data over the voice vocabulary in synth.ts; adding a sound is adding a row.
 // Timing lives in the view layer (beatSfx.ts), never here.
-// UI sounds stay quiet and under ~120ms: they fire hundreds of times a run and anything with presence fatigues.
+// UI sounds stay quiet and short: they fire hundreds of times a run and anything with presence fatigues.
+// Quiet is not weightless. A press reads as firm because it has a BODY — a low-mid layer dropping in pitch
+// under the transient — not because it is loud or long. Tones with no body read as limp however loud they get.
 // Impacts are noise-led: the filtered noise burst is the weight; the oscillator under it only supplies pitch, which is what lets beatSfx.ts re-pitch one hit for chip vs heavy.
 
 import type { SoundSpec } from './synth';
@@ -11,6 +13,8 @@ export type SfxId =
   | 'ui.confirm'
   | 'ui.back'
   | 'ui.select'
+  | 'ui.move'
+  | 'ui.target'
   | 'ui.denied'
   | 'ui.page'
   | 'ui.commit'
@@ -48,49 +52,96 @@ export type SfxId =
   | 'entrance.dread';
 
 export const sounds: Record<SfxId, SoundSpec> = {
-  /** The default for every tappable surface: a soft wooden click, gone in 45ms. */
+  /** The default for every tappable surface: a struck wooden key, gone in 80ms. */
   'ui.tap': {
-    gain: 0.34,
-    jitter: 0.04,
+    gain: 0.38,
+    jitter: 0.045,
     voices: [
-      { wave: 'triangle', freq: 420, freqEnd: 300, gain: 0.5, attack: 0.001, decay: 0.045 },
-      // Noise band-limited hard so it reads as a click ("tk"), not a hiss.
-      { wave: 'noise', gain: 0.28, attack: 0.001, decay: 0.02, filter: { type: 'bandpass', freq: 1900, q: 1.2 } },
+      // Noise band-limited so it reads as a click ("tk"), not a hiss; wider than a pure tick so it carries.
+      { wave: 'noise', gain: 0.32, attack: 0.001, decay: 0.024, filter: { type: 'bandpass', freq: 2300, q: 0.9 } },
+      { wave: 'triangle', freq: 330, freqEnd: 170, gain: 0.44, attack: 0.001, decay: 0.07 },
+      // The body. A press with nothing under 200Hz is the whole "limp" problem — and triangle over sine
+      // so the weight survives a phone speaker that reproduces none of the fundamental.
+      { wave: 'triangle', freq: 128, freqEnd: 84, gain: 0.3, attack: 0.001, decay: 0.06 },
     ],
   },
 
-  /** Committing (lock a move, confirm a choice). Rises. */
+  /** Committing (Resolve the round, claim, buy). Rises — but off a struck onset, not out of silence. */
   'ui.confirm': {
-    gain: 0.36,
+    gain: 0.38,
     jitter: 0.02,
     voices: [
-      { wave: 'triangle', freq: 520, freqEnd: 790, gain: 0.5, attack: 0.004, decay: 0.11 },
-      { wave: 'sine', freq: 1040, freqEnd: 1580, gain: 0.16, attack: 0.004, decay: 0.09, delay: 0.01 },
+      { wave: 'noise', gain: 0.28, attack: 0.001, decay: 0.03, filter: { type: 'bandpass', freq: 2500, q: 1.1 } },
+      // The rise alone is a chirp; this is what it rises OFF.
+      { wave: 'triangle', freq: 138, freqEnd: 92, gain: 0.4, attack: 0.002, decay: 0.16 },
+      { wave: 'triangle', freq: 520, freqEnd: 790, detune: 6, gain: 0.44, attack: 0.004, decay: 0.13 },
+      { wave: 'sine', freq: 1040, freqEnd: 1580, gain: 0.14, attack: 0.004, decay: 0.1, delay: 0.01 },
     ],
   },
 
-  /** Cancel — the inverse contour of confirm. */
+  /** Cancel — the inverse contour of confirm, on the same onset so both read as the same hand. */
   'ui.back': {
-    gain: 0.3,
+    gain: 0.34,
     jitter: 0.02,
-    voices: [{ wave: 'triangle', freq: 500, freqEnd: 300, gain: 0.5, attack: 0.004, decay: 0.1 }],
+    voices: [
+      { wave: 'noise', gain: 0.2, attack: 0.001, decay: 0.022, filter: { type: 'bandpass', freq: 1700, q: 1.2 } },
+      { wave: 'triangle', freq: 500, freqEnd: 300, gain: 0.44, attack: 0.003, decay: 0.11 },
+      { wave: 'triangle', freq: 124, freqEnd: 88, gain: 0.26, attack: 0.002, decay: 0.09 },
+    ],
   },
 
-  /** Highlighting without committing. */
+  /** Highlighting without committing — a slider notch, a row lighting up. The one UI sound that stays small: it can fire on every frame of a drag. */
   'ui.select': {
-    gain: 0.75,
+    gain: 0.72,
     jitter: 0.05,
     voices: [
       { wave: 'square', freq: 880, gain: 0.16, attack: 0.001, decay: 0.03, filter: { type: 'lowpass', freq: 2600, q: 0.7 } },
       { wave: 'noise', gain: 0.14, attack: 0.001, decay: 0.014, filter: { type: 'bandpass', freq: 3200, q: 2 } },
+      // Just enough floor to stop it reading as a beep off the top of the mix.
+      { wave: 'triangle', freq: 196, freqEnd: 156, gain: 0.16, attack: 0.001, decay: 0.034 },
     ],
   },
 
-  /** Refusal — low and buzzing, deliberately not loud. */
-  'ui.denied': {
-    gain: 0.3,
+  /**
+   * A move taken off the combat grid (and off a hero's move list). The press that opens targeting, so it is a
+   * LATCH, not a beep — catch, body, and a faint plate ring, in that order.
+   */
+  'ui.move': {
+    gain: 0.38,
+    jitter: 0.03,
     voices: [
+      { wave: 'noise', gain: 0.36, attack: 0.001, decay: 0.034, filter: { type: 'bandpass', freq: 2100, q: 1.1 } },
+      { wave: 'triangle', freq: 262, freqEnd: 175, gain: 0.4, attack: 0.001, hold: 0.008, decay: 0.1 },
+      { wave: 'triangle', freq: 118, freqEnd: 78, gain: 0.34, attack: 0.002, decay: 0.09 },
+      // Reads as a struck plate rather than a closed box. Quiet enough not to become the sound.
+      { wave: 'sine', freq: 1046, detune: 12, gain: 0.07, attack: 0.004, decay: 0.17, delay: 0.02 },
+    ],
+  },
+
+  /**
+   * A target locked in combat — the heaviest press in the table below `ui.commit`. Two stages: the reticle catching,
+   * then the lock seating 45ms behind it over a dropping sub. The rising fifth on top is what keeps it an ACQUISITION
+   * rather than a hit; without it the pair of impacts reads as damage landing on the wrong beat.
+   */
+  'ui.target': {
+    gain: 0.42,
+    jitter: 0.02,
+    voices: [
+      { wave: 'noise', gain: 0.4, attack: 0.001, decay: 0.045, filter: { type: 'bandpass', freq: 3000, q: 1.4 } },
+      { wave: 'sine', freq: 150, freqEnd: 62, gain: 0.5, attack: 0.002, hold: 0.02, decay: 0.22 },
+      { wave: 'noise', gain: 0.3, attack: 0.001, decay: 0.09, delay: 0.045, filter: { type: 'lowpass', freq: 1500, freqEnd: 300, q: 1.2 } },
+      { wave: 'triangle', freq: 294, freqEnd: 392, detune: 8, gain: 0.2, attack: 0.006, hold: 0.03, decay: 0.26, delay: 0.05 },
+      { wave: 'sine', freq: 1568, detune: 20, gain: 0.07, attack: 0.004, decay: 0.3, delay: 0.06 },
+    ],
+  },
+
+  /** Refusal — low and buzzing, deliberately not loud, but struck: the control moved and then declined, which is not the same as nothing happening. */
+  'ui.denied': {
+    gain: 0.32,
+    voices: [
+      { wave: 'noise', gain: 0.22, attack: 0.001, decay: 0.028, filter: { type: 'lowpass', freq: 1200, q: 1 } },
       { wave: 'square', freq: 165, freqEnd: 128, gain: 0.32, attack: 0.003, hold: 0.03, decay: 0.09, filter: { type: 'lowpass', freq: 900, q: 1 } },
+      { wave: 'triangle', freq: 82, gain: 0.26, attack: 0.004, decay: 0.13 },
     ],
   },
 

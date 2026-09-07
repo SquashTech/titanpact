@@ -1240,6 +1240,7 @@ export function FightScreen({
                     className={`target-row${spread ? ' target-row-spread' : ''}${spread && targetableIds.length >= 3 ? ' target-row-compact' : ''}`}
                     onClick={spread ? handleConfirmSpread : undefined}
                     role={spread ? 'button' : undefined}
+                    data-sfx={spread ? 'ui.target' : undefined}
                     aria-label={spread ? `Confirm — hits ${spreadTargetLabel(move.target)}` : undefined}
                   >
                     {targetableIds.map((tid) => {

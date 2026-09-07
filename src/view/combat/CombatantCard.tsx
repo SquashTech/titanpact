@@ -238,6 +238,7 @@ export function CombatantCard({
       style={typeStyle}
       onClick={handleCardClick}
       role={canTarget || onInspect ? 'button' : undefined}
+      data-sfx={canTarget ? 'ui.target' : undefined}
     >
       {leftMods.length > 0 && (
         <div className="stat-mod-corner stat-mod-corner-left">
