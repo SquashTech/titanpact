@@ -157,7 +157,9 @@ What that bought, and the shape of the replacement:
   Crag, Flurry). They never win a priority tiebreak, so gear rather than tempo is what scales
   them. `test/roster.test.ts` pins the band **both ways**, so a hero drifting across 40 Speed
   cannot silently gain or lose a slot. Crag is the only starter among them.
-- **`MAX_ITEM_SLOTS` = 5**, and the Forge (below) is the only way up. A hero at the cap is not
+- **`MAX_ITEM_SLOTS` = 3** (2026-09-07, down from 5), and the Forge (below) is the only way up.
+  Three is what a half-width squad card seats on a phone (docs/equipment.md §8); the nine heroes
+  authored at 2 are therefore one Forge from the cap. A hero at the cap is not
   a legal Forge target — the reward can go dead on one hero, which is what makes spending it
   a choice.
 - **A hero never holds two copies of one item.** The passive and Elemental Force grants

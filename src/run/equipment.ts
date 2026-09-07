@@ -19,6 +19,119 @@ export interface EquipmentDefinition {
   grantsPassiveIds?: readonly PassiveId[];
   /** Magnitude-shape statuses (Elemental Force) granted for the whole fight, applied at build time (statusGrants.ts). */
   grantsStatusIds?: readonly StatusGrant[];
+  /** The family this item belongs to; absent on a Unique, which sits outside the ladder (docs/equipment.md §6). */
+  familyId?: EquipmentFamilyId;
+  /** The bound element, if any. Uniques carry this too — they are enchantable, just not upgradeable. */
+  enchantId?: EnchantmentId;
+}
+
+// --- Families, tiers and enchantments (docs/equipment.md) ---
+
+/**
+ * The 16 item families. An item's family decides its stat shape and its Awakening; its rarity
+ * decides how much stat; its enchantment decides which element it feeds. Three axes, and the
+ * player reads all three off three words: "Blazing Steel Spear".
+ */
+export const EQUIPMENT_FAMILIES = [
+  'sword', 'dagger', 'greataxe', 'spear', 'bow',
+  'staff', 'wand', 'tome', 'orb',
+  'plate', 'shield', 'leathers', 'robe',
+  'boots', 'ring', 'crest',
+] as const;
+
+export type EquipmentFamilyId = (typeof EQUIPMENT_FAMILIES)[number];
+
+/**
+ * An item's NAME is its family noun, and an enchanted one takes the enchant as a prefix:
+ * "Sword", "Blazing Sword". Nothing in the name says which tier it is.
+ *
+ * A tier adjective (Iron/Steel/Etched/...) was tried first and dropped 2026-09-07, per user
+ * direction — it overcomplicated the read for a distinction the UI already carries twice, in
+ * the rarity colour every item box is bordered with and in the rarity label on every card. A
+ * five-word item name is a worse answer to "which Sword is this?" than a purple border.
+ */
+
+/**
+ * One per type EXCEPT Ancient (per user direction), matching the precedent the retired generated
+ * type gear already set. The value is the `${type}Force` status the enchant grants.
+ */
+export const ENCHANTMENTS = {
+  blazing: 'Fire',
+  tidal: 'Water',
+  rimed: 'Frost',
+  thundering: 'Storm',
+  granite: 'Stone',
+  verdant: 'Nature',
+  radiant: 'Light',
+  umbral: 'Shadow',
+  runed: 'Arcane',
+  psionic: 'Mind',
+  haunted: 'Spirit',
+  tempered: 'Iron',
+  geared: 'Mech',
+  feral: 'Beast',
+} as const;
+
+export type EnchantmentId = keyof typeof ENCHANTMENTS;
+
+export const ENCHANTMENT_IDS = Object.keys(ENCHANTMENTS) as readonly EnchantmentId[];
+
+/** Display form of an enchant id — the adjective an item's name is built from ("blazing" -> "Blazing"). */
+export function enchantLabel(enchantId: EnchantmentId): string {
+  return enchantId.charAt(0).toUpperCase() + enchantId.slice(1);
+}
+
+/**
+ * Elemental Force an enchant grants, by the item's tier. The ONE thing besides stats that still
+ * scales with rarity — Awakenings are flat (§3) — which is what makes enchanting a Mythic worth
+ * more than enchanting a Common, and what the Enchanter's tier-priced fee is charging for.
+ *
+ * Budgeted SEPARATELY from RARITY_BUDGET: an enchanted item is a base item plus a bolt-on, so
+ * `equipmentBudgetProblems` still audits the base exactly as it always did.
+ */
+export const ENCHANT_FORCE_BY_RARITY: Record<EquipmentRarity, number> = {
+  common: 5,
+  rare: 10,
+  epic: 15,
+  legendary: 20,
+  mythic: 25,
+};
+
+const ID_SEPARATOR = '.';
+
+/** `sword.epic` or `sword.epic.blazing`; a Unique is `worldbreaker` or `worldbreaker.blazing`. */
+export function equipmentIdFor(base: string, rarity: EquipmentRarity | null, enchantId?: EnchantmentId): string {
+  return [base, rarity, enchantId].filter((part): part is string => Boolean(part)).join(ID_SEPARATOR);
+}
+
+export interface ParsedEquipmentId {
+  /** The family id, or the Unique's own id. */
+  base: string;
+  /** null for a Unique, whose rarity is authored rather than encoded. */
+  rarity: EquipmentRarity | null;
+  enchantId?: EnchantmentId;
+}
+
+const FAMILY_SET: ReadonlySet<string> = new Set(EQUIPMENT_FAMILIES);
+
+/** Splits a composite id back into its axes. Tolerates a Unique, whose middle segment is absent. */
+export function parseEquipmentId(id: string): ParsedEquipmentId {
+  const parts = id.split(ID_SEPARATOR);
+  const base = parts[0];
+  if (FAMILY_SET.has(base)) {
+    return {
+      base,
+      rarity: (parts[1] as EquipmentRarity) ?? null,
+      ...(parts[2] ? { enchantId: parts[2] as EnchantmentId } : {}),
+    };
+  }
+  return { base, rarity: null, ...(parts[1] ? { enchantId: parts[1] as EnchantmentId } : {}) };
+}
+
+/** The same item without its enchant — the identity a merge and an Anvil upgrade are measured on. */
+export function unenchantedIdOf(id: string): string {
+  const parsed = parseEquipmentId(id);
+  return equipmentIdFor(parsed.base, parsed.rarity);
 }
 
 // --- Item slots ---
@@ -26,8 +139,17 @@ export interface EquipmentDefinition {
 /** What a hero holds unless `HeroDefinition.itemSlots` says otherwise — the per-hero balance dial. */
 export const BASE_ITEM_SLOTS = 1;
 
-/** Ceiling on base + Forge grants. Every slot past this is refused, so a Forge can go dead on one hero. */
-export const MAX_ITEM_SLOTS = 5;
+/**
+ * Ceiling on base + Forge grants. Every slot past this is refused, so a Forge can go dead on one
+ * hero — which is what makes spending it a choice.
+ *
+ * 5 -> 3 (2026-09-07, per user direction). Manage Roster lays the squad out two cards across with
+ * a slot row under each hero, and three is what a half-width card seats on a phone; five wrapped
+ * to a second row that was empty on almost every hero. The knock-on is real and intended: the
+ * nine heroes authored at `itemSlots` 2 are now **one Forge from the cap** rather than three, so
+ * the node goes dead across a roster far sooner and lands harder while it still bites.
+ */
+export const MAX_ITEM_SLOTS = 3;
 
 // --- The rarity budget ---
 
@@ -85,30 +207,57 @@ export const FORCE_POINT_VALUE = 2;
 
 /**
  * From this tier up, an item must carry a granted passive or an Elemental Force worth at least
- * `EFFECT_FLOOR_SHARE` of its budget (2026-09-06, per user direction). The complaint the budget
- * pass answers is that items feel imperceptible, and a bigger number alone does not fix that —
- * a +110 Attack Mythic is still a stat stick. Below Epic there is no floor: a plain, legible
- * Common is what an Act-1 item should be.
+ * `EFFECT_FLOOR` points (2026-09-06, per user direction). The complaint the budget pass answers
+ * is that items feel imperceptible, and a bigger number alone does not fix that — a +110 Attack
+ * Mythic is still a stat stick. Below Epic there is no floor: a plain, legible Common is what an
+ * Act-1 item should be.
+ *
+ * FLAT rather than a share of the budget (2026-09-07, per user direction). A share requires the
+ * effect column to grow every tier, and an Awakening is flat by design — the tier buys stats,
+ * the family buys the effect (docs/equipment.md §3). 20 is exactly one Awakening, so the floor
+ * reads as "an Epic or better owes at least one effect" rather than as an arithmetic hurdle.
  */
 export const EFFECT_FLOOR_MIN_RARITY: EquipmentRarity = 'epic';
-export const EFFECT_FLOOR_SHARE = 1 / 3;
+export const EFFECT_FLOOR = 20;
 
 /** A negative grant refunds its full value — a downside can fund a spike. Nothing caps how much of a tier drawbacks may pay for (open question, docs/progression.md). */
 function statGrantCost(stat: StatKey, amount: number): number {
   return amount * STAT_POINT_VALUE[stat];
 }
 
+/**
+ * The item with its enchant stripped — what the rarity budget is measured against, since an
+ * enchant is a bolt-on with its own separate budget (ENCHANT_FORCE_BY_RARITY). Removes exactly
+ * one matching Force grant, so a Unique that already grants Force of the same type keeps its own.
+ */
+export function baseItemOf(item: EquipmentDefinition): EquipmentDefinition {
+  if (!item.enchantId) return item;
+  const forceStatusId = `${ENCHANTMENTS[item.enchantId]}Force`;
+  const magnitude = ENCHANT_FORCE_BY_RARITY[item.rarity];
+  let stripped = false;
+  const grantsStatusIds = (item.grantsStatusIds ?? []).filter((grant) => {
+    if (!stripped && grant.statusId === forceStatusId && grant.magnitude === magnitude) {
+      stripped = true;
+      return false;
+    }
+    return true;
+  });
+  const { enchantId, ...rest } = item;
+  return { ...rest, grantsStatusIds };
+}
+
 /** `passiveCosts` is src/data/passives.ts PASSIVE_ITEM_COST. Returns NaN for an unpriced passive so it fails validation rather than being silently free. */
 export function equipmentBudgetCost(item: EquipmentDefinition, passiveCosts: Readonly<Record<string, number>>): number {
+  const base = baseItemOf(item);
   let cost = 0;
-  for (const [stat, amount] of Object.entries(item.statGrants) as [StatKey, number | undefined][]) {
+  for (const [stat, amount] of Object.entries(base.statGrants) as [StatKey, number | undefined][]) {
     if (amount === undefined) continue;
     cost += statGrantCost(stat, amount);
   }
-  for (const grant of item.grantsStatusIds ?? []) {
+  for (const grant of base.grantsStatusIds ?? []) {
     cost += (grant.magnitude ?? 0) * FORCE_POINT_VALUE;
   }
-  for (const passiveId of item.grantsPassiveIds ?? []) {
+  for (const passiveId of base.grantsPassiveIds ?? []) {
     const priced = passiveCosts[passiveId];
     cost += priced === undefined ? NaN : priced;
   }
@@ -117,9 +266,10 @@ export function equipmentBudgetCost(item: EquipmentDefinition, passiveCosts: Rea
 
 /** The part of an item's spend that is NOT stats — what the effect floor measures. NaN for an unpriced passive, same as the total. */
 export function equipmentEffectSpend(item: EquipmentDefinition, passiveCosts: Readonly<Record<string, number>>): number {
+  const base = baseItemOf(item);
   let cost = 0;
-  for (const grant of item.grantsStatusIds ?? []) cost += (grant.magnitude ?? 0) * FORCE_POINT_VALUE;
-  for (const passiveId of item.grantsPassiveIds ?? []) {
+  for (const grant of base.grantsStatusIds ?? []) cost += (grant.magnitude ?? 0) * FORCE_POINT_VALUE;
+  for (const passiveId of base.grantsPassiveIds ?? []) {
     const priced = passiveCosts[passiveId];
     cost += priced === undefined ? NaN : priced;
   }
@@ -153,10 +303,9 @@ export function equipmentBudgetProblems(
 
   if (owesAnEffect(item.rarity)) {
     const effects = equipmentEffectSpend(item, passiveCosts);
-    const floor = budget * EFFECT_FLOOR_SHARE;
-    if (Number.isFinite(effects) && effects < floor) {
+    if (Number.isFinite(effects) && effects < EFFECT_FLOOR) {
       problems.push(
-        `spends ${effects} on effects, under the ${item.rarity} floor of ${Math.ceil(floor)} — an ${item.rarity} may not be stats alone`
+        `spends ${effects} on effects, under the floor of ${EFFECT_FLOOR} — an ${item.rarity} may not be stats alone`
       );
     }
   }
@@ -190,6 +339,22 @@ export const ACT_RARITY_WINDOW: readonly (readonly [EquipmentRarity, EquipmentRa
 
 /** `elite` covers Elite nodes and the act's Guardian — both roll one loot tier ahead. */
 export type LootSource = 'standard' | 'elite';
+
+/**
+ * The best tier an act allows, whatever the path. `ACT_RARITY_WINDOW` began life capping DROPS
+ * only; with a purchasable Anvil and a free merge, a rich or lucky player would simply buy or
+ * merge past it, so every path is measured against this one rule instead of three new ones
+ * (docs/equipment.md §5). Holding a pair of Legendaries through Act 2 waiting for the window to
+ * open is anticipation, not a bug.
+ */
+export function maxRarityForAct(actNumber: number): EquipmentRarity {
+  return ACT_RARITY_WINDOW[clamp(actNumber, 1, ACT_RARITY_WINDOW.length - 1)][1];
+}
+
+/** Whether an act permits an item to reach `rarity` at all — the gate on the Anvil and on a merge. */
+export function actAllowsRarity(actNumber: number, rarity: EquipmentRarity): boolean {
+  return RARITY_ORDER.indexOf(rarity) <= RARITY_ORDER.indexOf(maxRarityForAct(actNumber));
+}
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -242,6 +407,28 @@ export function pickWeightedEquipment(
 }
 
 /**
+ * How often a dropped item arrives already enchanted — "sometimes a player may find an enchanted
+ * Spear that replaces their normal Spear". This is the ONLY way an enchanted item reaches the
+ * drop table: the pool itself holds bases only, since leaving all 14 variants in would make an
+ * enchanted item 14x commoner than a plain one rather than a quarter as common.
+ *
+ * Untuned first-pass figure.
+ */
+export const ENCHANT_DROP_CHANCE = 0.25;
+
+/** Rolls an enchant onto a freshly dropped item. Already-enchanted items and unknown variants pass through unchanged. */
+export function maybeEnchantDrop(
+  item: EquipmentDefinition,
+  equipmentLookup: Record<string, EquipmentDefinition>,
+  chance: number = ENCHANT_DROP_CHANCE
+): EquipmentDefinition {
+  if (item.enchantId !== undefined || Math.random() >= chance) return item;
+  const enchantId = ENCHANTMENT_IDS[Math.floor(Math.random() * ENCHANTMENT_IDS.length)];
+  const id = equipmentIdFor(item.familyId ?? item.id, item.familyId ? item.rarity : null, enchantId);
+  return equipmentLookup[id] ?? item;
+}
+
+/**
  * Held item ids in the order they were equipped. Compact — index N IS the Nth slot and a
  * hero never holds a hole, so the list's length is what fills the slot boxes. Capacity is
  * not stored here: it comes from the hero plus the entry's Forge grants (itemSlotsFor).
@@ -252,9 +439,48 @@ export function createEmptyLoadout(): EquipmentLoadout {
   return [];
 }
 
-/** A hero never holds two of the same item — the passive/Force grants count-stack, and one legible copy is the point. */
+/**
+ * A hero never holds two items of the same FAMILY — not merely two of the same id. Every tier of
+ * a family grants the same Awakening, so an Etched Sword beside a Godforged one would count-stack
+ * Sunder while both cards show it once. Comparing the id's BASE covers a Unique too, which has no
+ * family: Worldbreaker and Blazing Worldbreaker are still one item.
+ */
 export function holdsItem(loadout: EquipmentLoadout, itemId: string): boolean {
-  return loadout.includes(itemId);
+  const base = parseEquipmentId(itemId).base;
+  return loadout.some((held) => parseEquipmentId(held).base === base);
+}
+
+// --- Merging ---
+
+/**
+ * Two items of the same family and tier combine into one of the next tier, free (docs/equipment.md
+ * §5). Enchantments are ignored for eligibility — if either input carries one the player picks
+ * which survives — so an enchanted duplicate is always good news rather than a blocker.
+ *
+ * A Mythic has nothing above it, and a Unique has no ladder to climb.
+ */
+export function canMergeItems(a: EquipmentDefinition, b: EquipmentDefinition): boolean {
+  if (a.familyId === undefined || b.familyId === undefined) return false;
+  if (a.familyId !== b.familyId) return false;
+  if (a.rarity !== b.rarity) return false;
+  return nextRarity(a.rarity) !== null;
+}
+
+export function nextRarity(rarity: EquipmentRarity): EquipmentRarity | null {
+  return RARITY_ORDER[RARITY_ORDER.indexOf(rarity) + 1] ?? null;
+}
+
+/** The id a merge produces. `keepEnchantId` is the player's pick between the two inputs' enchants. */
+export function mergeResultId(item: EquipmentDefinition, keepEnchantId?: EnchantmentId): string | null {
+  const up = nextRarity(item.rarity);
+  if (up === null || item.familyId === undefined) return null;
+  return equipmentIdFor(item.familyId, up, keepEnchantId);
+}
+
+/** The enchants a merge may keep — at most one, so two enchanted inputs pose a choice and two plain ones pose none. */
+export function mergeEnchantChoices(a: EquipmentDefinition, b: EquipmentDefinition): EnchantmentId[] {
+  const choices = [a.enchantId, b.enchantId].filter((id): id is EnchantmentId => id !== undefined);
+  return [...new Set(choices)];
 }
 
 export function isValidEquipmentDefinition(item: EquipmentDefinition): boolean {
@@ -298,8 +524,12 @@ export type Stash = readonly string[];
  * unbounded on purpose: with room for everything the player always has the right item on
  * hand and the SLOT stops being the scarce thing (CLAUDE.md). A cap keeps the discard
  * decision alive but moves it to a moment when the matchup is known.
+ *
+ * 8 -> 10 with the family rework (2026-09-07, per user direction): the bag now does double duty,
+ * carrying options for an unknown matchup AND holding duplicates long enough to merge them.
+ * A small bump on purpose — merging partly self-solves, since two slots become one.
  */
-export const STASH_CAPACITY = 8;
+export const STASH_CAPACITY = 10;
 
 export function stashIsFull(stash: Stash): boolean {
   return stash.length >= STASH_CAPACITY;

@@ -33,8 +33,11 @@ import { ROSTER_CAP, TOTAL_ACTS } from './state';
  * v5 (2026-09-06): the item rework — equipment went from a weapon/armor/accessory
  * record to a flat held-item list, entries gained `bonusItemSlots`, and the three
  * slot-cache node types became `forgeReward`. Nothing in a v4 file survives that.
+ * v6 (2026-09-07): the family rework — all 106 hand-authored item ids were replaced by
+ * composite `family.tier[.enchant]` ids (docs/equipment.md). Every id in a v5 file names
+ * an item this build no longer ships, so a v5 run cannot be repaired, only refused.
  */
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the

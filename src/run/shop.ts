@@ -30,6 +30,35 @@ export function sellValueFor(item: EquipmentDefinition): number {
   return Math.floor(EQUIPMENT_PRICE_BY_RARITY[item.rarity] * EQUIPMENT_SELL_SHARE);
 }
 
+/**
+ * The Anvil: gold to lift an item to the keyed tier, repeatable and unbounded (docs/equipment.md
+ * §5). Keyed by TARGET, so `ANVIL_PRICE_BY_TARGET.epic` is what Rare -> Epic costs; `common` is
+ * unreachable and priced at 0 only so the record is total.
+ *
+ * Deliberately dearer than buying that tier outright — 275 lifts a Common to Mythic against 150
+ * to buy one off the shelf. You are paying to keep THIS item, its family, its Awakening and its
+ * enchant. Merging is the efficient route to power, and it is free.
+ *
+ * Both tables are untuned. What is NOT free to retune is the pair of inequalities in
+ * test/shop.test.ts: no path from gold back to gold may profit.
+ */
+export const ANVIL_PRICE_BY_TARGET: Record<EquipmentRarity, number> = {
+  common: 0,
+  rare: 25,
+  epic: 45,
+  legendary: 75,
+  mythic: 130,
+};
+
+/** The Enchanter, priced by the item's own tier — a Mythic's enchant is worth more Force, so it costs more. Re-enchanting costs the same, and overwrites. */
+export const ENCHANT_PRICE_BY_RARITY: Record<EquipmentRarity, number> = {
+  common: 20,
+  rare: 35,
+  epic: 55,
+  legendary: 80,
+  mythic: 120,
+};
+
 export const GUILD_HALL_EQUIPMENT_OFFER_COUNT = 4;
 
 export interface GuildHallOffers {

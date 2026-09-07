@@ -130,7 +130,7 @@ don't silently override it.
   weapon/armor/accessory split, which playtested as fiddly and unintuitive). Any item goes in
   any slot; a hero holds `BASE_ITEM_SLOTS` = 1, or the authored `HeroDefinition.itemSlots` = 2
   the nine heroes at **Speed ≤ 40** carry — gear rather than tempo is what scales a hero that
-  never wins a tiebreak. The **Forge** node grants +1 slot to one hero, to `MAX_ITEM_SLOTS` = 5.
+  never wins a tiebreak. The **Forge** node grants +1 slot to one hero, to `MAX_ITEM_SLOTS` = 3.
   **No hero holds two copies of one item**, and capacity is decided in one place, `itemSlotsFor`
   (`docs/progression.md`). **Relics are team-wide passives** — a separate axis, not items.
 - **Gems are relics, handed out commonly** (2026-09-05): eight stones, one per stat, each a

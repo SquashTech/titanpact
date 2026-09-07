@@ -38,7 +38,7 @@ function sampleRun(): RunState {
   const geared = {
     ...run.roster[0],
     level: 6,
-    equipment: equipItem(run.roster[0].equipment, equipment.dagger.id),
+    equipment: equipItem(run.roster[0].equipment, equipment['dagger.common'].id),
     bonusStatGrants: { attack: 10, speed: 5 },
     masteryStatGrants: { hp: 10 },
   };

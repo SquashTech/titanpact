@@ -146,11 +146,16 @@ test('elementalForce: DamageDealt event carries elementalForceBonus separately f
 
 // --- Run-tier grant aggregation (src/run/statusGrants.ts) ---
 
-const emberBandLookup: Record<string, EquipmentDefinition> = { emberBand: equipment.emberBand, dagger: equipment.dagger };
+// An enchanted Sword carries the Force; the plain Dagger beside it carries none. Epic's enchant
+// magnitude is 15 (ENCHANT_FORCE_BY_RARITY), which is what the tally must come to.
+const enchantLookup: Record<string, EquipmentDefinition> = {
+  'sword.epic.blazing': equipment['sword.epic.blazing'],
+  'dagger.common': equipment['dagger.common'],
+};
 
 test('elementalForce: equipmentStatusGrants tallies magnitude across held items, ignoring stat-only gear', () => {
-  const loadout = equipItem(equipItem(createEmptyLoadout(), equipment.emberBand.id), equipment.dagger.id);
-  assert.deepStrictEqual(equipmentStatusGrants(loadout, emberBandLookup), { FireForce: 15 });
+  const loadout = equipItem(equipItem(createEmptyLoadout(), 'sword.epic.blazing'), 'dagger.common');
+  assert.deepStrictEqual(equipmentStatusGrants(loadout, enchantLookup), { FireForce: 15 });
 });
 
 test('elementalForce: relicTeamStatusGrants sums a duplicate relic id, matching relicTeamPassiveGrants', () => {

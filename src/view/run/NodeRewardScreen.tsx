@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from 'react';
-import { equipment } from '../../data/equipment';
+import { equipment, rollEquipmentDrops } from '../../data/equipment';
 import { drawableRelics } from '../../data/relics';
 import type { RunState } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
@@ -50,7 +50,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
   const [currencyAmount] = useState(() => 15 + Math.floor(Math.random() * 16)); // 15-30
   const [equipmentChoices] = useState<EquipmentDefinition[]>(() =>
     nodeType === 'equipmentReward'
-      ? pickWeightedEquipment(Object.values(equipment), 3, rarityWeightsFor(run.actNumber, 'standard'))
+      ? rollEquipmentDrops(3, rarityWeightsFor(run.actNumber, 'standard'))
       : []
   );
   const [relicChoices] = useState(() =>

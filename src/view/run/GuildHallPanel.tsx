@@ -16,6 +16,7 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { EquipInspectOverlay } from './EquipChoiceCard';
+import { ItemServicesSection } from './ItemServicesSection';
 
 interface Props {
   run: RunState;
@@ -229,6 +230,8 @@ export function GuildHallPanel({
           <p className="hint">No gear on offer this visit.</p>
         )}
       </div>
+
+      <ItemServicesSection run={run} onRunChange={onRunChange} />
 
       {previewOffer &&
         (() => {

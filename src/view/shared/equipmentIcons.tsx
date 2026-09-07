@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { EquipmentDefinition } from '../../run/equipment';
+import type { EquipmentDefinition, EquipmentFamilyId } from '../../run/equipment';
 import { STAT_PATHS } from './statIcons';
 
 // What an item IS, as a shape: 24x24, `currentColor` only, nothing finer than ~2 units. There are
@@ -98,6 +98,15 @@ export const EQUIP_FORM_PATHS = {
     <>
       <path d="M8.4 21.8 16.4 8.2l2.6 1.5-8 13.6Z" />
       <path d="M2.4 3.4c8.2-.6 14.6 2.4 18.4 8.6-4.6-3.4-9.6-4.6-15-3.4l1.6 3.2C4.6 10.2 2.8 7.2 2.4 3.4Z" />
+    </>
+  ),
+  // Same haft as the scythe, ending in a leaf head instead of a curve — the two pole weapons
+  // differ only at the top, which is the whole point of sharing the shaft.
+  spear: (
+    <>
+      <path d="M8.4 21.8 15.2 10.2l2.6 1.5-6.8 11.6Z" />
+      <path d="M16.4 8.8 14.2 3.2l7 2.2 1.2 6.2-4.4-3.4Z" />
+      <path d="M12.4 12.4l6.2-3.6 1.2 2-6.2 3.6Z" />
     </>
   ),
   // Closed book (the map's open tome means "a Class is taught here").
@@ -380,12 +389,40 @@ function wordForm(word: string): EquipmentFormName | undefined {
 // Per-id overrides for items whose name does not contain the noun. Prefer renaming the item.
 const ID_FORMS: Partial<Record<string, EquipmentFormName>> = {
   worldbreaker: 'greatsword',
-  // Would hit the `focus` row anyway; pinned so a rename can't silently move it.
-  arcaneFocus: 'orb',
+  archonsStaff: 'staff',
+  duskreaverScythe: 'scythe',
+  guardianPlate: 'plate',
+  aegisEternal: 'shield',
+  crownOfTheAncients: 'crown',
 };
 
-/** Id override, then the name read last word first, then the empty-socket shape. */
+/**
+ * A family's form, read BEFORE the name. With families the noun is known rather than guessed, so
+ * no tier material ("Etched") or enchant ("Granite") can shadow it — `Granite Iron Crest` would
+ * otherwise have to survive three words of adjective before reaching the one that matters.
+ */
+const FAMILY_FORMS: Record<EquipmentFamilyId, EquipmentFormName> = {
+  sword: 'sword',
+  dagger: 'dagger',
+  greataxe: 'cleaver',
+  spear: 'spear',
+  bow: 'bow',
+  staff: 'staff',
+  wand: 'wand',
+  tome: 'tome',
+  orb: 'orb',
+  plate: 'plate',
+  shield: 'shield',
+  leathers: 'hide',
+  robe: 'robe',
+  boots: 'boots',
+  ring: 'ring',
+  crest: 'sigil',
+};
+
+/** Family, then id override, then the name read last word first, then the empty-socket shape. */
 export function equipmentForm(item: EquipmentDefinition): EquipmentFormName {
+  if (item.familyId) return FAMILY_FORMS[item.familyId];
   const override = ID_FORMS[item.id];
   if (override) return override;
   // Possessives are stripped so "Sage's" reduces to a word that simply fails to match.

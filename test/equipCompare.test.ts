@@ -31,8 +31,8 @@ test('equipCompare: an effect both items carry equally is omitted entirely', () 
 });
 
 test('equipCompare: two items with identical grants compare to nothing at all', () => {
-  const torch = equipment.torch;
-  assert.deepStrictEqual(compareEquipment(torch, torch), []);
+  const blazingSword = equipment['sword.common.blazing'];
+  assert.deepStrictEqual(compareEquipment(blazingSword, blazingSword), []);
 });
 
 test('equipCompare: stats are listed in the canonical STAT_ORDER, not authoring order', () => {

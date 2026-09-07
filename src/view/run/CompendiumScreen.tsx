@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import { heroes } from '../../data/heroes';
 import { TYPES } from '../../data/typechart';
-import { equipment } from '../../data/equipment';
+import { equipment, EQUIPMENT_DROP_POOL, UNIQUE_EQUIPMENT } from '../../data/equipment';
 import { passives } from '../../data/passives';
 import { statuses } from '../../data/statuses';
 import type { HeroDefinition, StatKey } from '../../engine/content';
@@ -27,7 +27,7 @@ function byPrimaryType(a: HeroDefinition, b: HeroDefinition): number {
 const STARTER_HEROES = Object.values(heroes).filter((hero) => hero.starter).sort(byPrimaryType);
 const RECRUIT_HEROES = Object.values(heroes).filter((hero) => !hero.starter).sort(byPrimaryType);
 // Rarity, then authoring order — items are uncategorised, so the tier is the only grouping left.
-const EQUIPMENT_LIST = Object.values(equipment).sort((a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity));
+const EQUIPMENT_LIST = [...EQUIPMENT_DROP_POOL, ...UNIQUE_EQUIPMENT].sort((a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity));
 
 /**
  * Roster tile: sprite, name, types, nothing else — the whole hero is one tap away in

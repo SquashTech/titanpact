@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { playSfx } from '../../audio/sfx';
 import { prefersReducedMotion } from '../shared/reducedMotion';
-import { equipment } from '../../data/equipment';
+import { equipment, rollEquipmentDrops } from '../../data/equipment';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
@@ -90,7 +90,7 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onC
   );
   const [lootItems] = useState<EquipmentDefinition[]>(() =>
     outcome.kind === 'loot'
-      ? pickWeightedEquipment(Object.values(equipment), outcome.count, rarityWeightsFor(run.actNumber, 'standard'))
+      ? rollEquipmentDrops(outcome.count, rarityWeightsFor(run.actNumber, 'standard'))
       : []
   );
 

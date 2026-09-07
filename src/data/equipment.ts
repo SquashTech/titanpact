@@ -1,366 +1,137 @@
-// Item catalog. Items are uncategorised — any item goes in any of a hero's slots, and the
-// weapon/armor/trinket groupings below are authoring flavour only. Every item spends its
-// rarity's point budget exactly (RARITY_BUDGET, STAT_POINT_VALUE, PASSIVE_ITEM_COST —
-// enforced by test/equipment.test.ts). Three layers: hand-authored Act-1 commons,
-// generated per-type gear (rare+), hand-authored signatures.
-// Ids pinned by tests/App.tsx: ironBlade (common), guardianPlate (mythic), dagger,
-// emberBand (FireForce 15), arcaneFocus, oakenArmor, swiftBoots, vitalCharm.
+// Item catalog (docs/equipment.md). An item is a FAMILY (stat shape + Awakening), a TIER (how
+// much stat), and optionally an ENCHANTMENT (which element it feeds). Nothing is hand-authored
+// per tier: the 16 families generate 80 base items, each of which generates 14 enchanted
+// variants, and a handful of Uniques sit outside the ladder.
+//
+// Every base item spends its rarity's budget exactly (RARITY_BUDGET, equipmentBudgetProblems —
+// enforced by test/equipment.test.ts). An enchant is budgeted separately (ENCHANT_FORCE_BY_RARITY),
+// so it never counts against the base.
 
-import type { EquipmentDefinition } from '../run/equipment';
-import { STAT_POINT_VALUE, type EquipmentRarity } from '../run/equipment';
-import { TYPES, type TitanpactType } from './typechart';
+import type { StatKey } from '../engine/content';
+import type { EquipmentDefinition, EquipmentFamilyId, EnchantmentId } from '../run/equipment';
+import {
+  ENCHANTMENTS,
+  ENCHANTMENT_IDS,
+  ENCHANT_FORCE_BY_RARITY,
+  EQUIPMENT_FAMILIES,
+  RARITY_ORDER,
+  STAT_POINT_VALUE,
+  enchantLabel,
+  equipmentIdFor,
+  maybeEnchantDrop,
+  pickWeightedEquipment,
+  type EquipmentRarity,
+} from '../run/equipment';
 
-// --- 1. Act-1 commons — 30 points each ---
-
-const commonWeapons: Record<string, EquipmentDefinition> = {
-  ironBlade: {
-    id: 'ironBlade',
-    name: 'Iron Blade',
-    rarity: 'common',
-    statGrants: { attack: 30 },
-  },
-  dagger: {
-    id: 'dagger',
-    name: 'Dagger',
-    rarity: 'common',
-    statGrants: { attack: 15, speed: 15 },
-  },
-  torch: {
-    id: 'torch',
-    name: 'Torch',
-    rarity: 'common',
-    statGrants: { attack: 10 },
-    grantsStatusIds: [{ statusId: 'FireForce', magnitude: 10 }],
-  },
-  huntersBow: {
-    id: 'huntersBow',
-    name: "Hunter's Bow",
-    rarity: 'common',
-    statGrants: { attack: 15, wisdom: 15 },
-  },
-  pummelGloves: {
-    id: 'pummelGloves',
-    name: 'Pummel Gloves',
-    rarity: 'common',
-    statGrants: { attack: 10 },
-    grantsStatusIds: [{ statusId: 'IronForce', magnitude: 10 }],
-  },
-  battleAxe: {
-    id: 'battleAxe',
-    name: 'Battle Axe',
-    rarity: 'common',
-    statGrants: { attack: 15, defense: 15 },
-  },
-  apprenticeWand: {
-    id: 'apprenticeWand',
-    name: 'Apprentice Wand',
-    rarity: 'common',
-    statGrants: { intelligence: 30 },
-  },
-  magicBook: {
-    id: 'magicBook',
-    name: 'Magic Book',
-    rarity: 'common',
-    statGrants: { intelligence: 15, wisdom: 15 },
-  },
-  mysticOrb: {
-    id: 'mysticOrb',
-    name: 'Mystic Orb',
-    rarity: 'common',
-    statGrants: { intelligence: 10 },
-    grantsStatusIds: [{ statusId: 'ArcaneForce', magnitude: 10 }],
-  },
-  memento: {
-    id: 'memento',
-    name: 'Memento',
-    rarity: 'common',
-    statGrants: { intelligence: 10 },
-    grantsStatusIds: [{ statusId: 'SpiritForce', magnitude: 10 }],
-  },
-  oakStaff: {
-    id: 'oakStaff',
-    name: 'Oak Staff',
-    rarity: 'common',
-    statGrants: { intelligence: 15, defense: 15 },
-  },
-  windGem: {
-    id: 'windGem',
-    name: 'Wind Gem',
-    rarity: 'common',
-    statGrants: { intelligence: 15, speed: 15 },
-  },
-};
-
-// HP appears at double amounts because it is priced at half (STAT_POINT_VALUE); Mana is not,
-// since the budget pass moved it to full price.
-const commonArmor: Record<string, EquipmentDefinition> = {
-  leatherJerkin: {
-    id: 'leatherJerkin',
-    name: 'Leather Jerkin',
-    rarity: 'common',
-    statGrants: { defense: 30 },
-  },
-  paddedGambeson: {
-    id: 'paddedGambeson',
-    name: 'Padded Gambeson',
-    rarity: 'common',
-    statGrants: { hp: 60 },
-  },
-  scoutsLeather: {
-    id: 'scoutsLeather',
-    name: "Scout's Leather",
-    rarity: 'common',
-    statGrants: { defense: 15, speed: 15 },
-  },
-  travelersGarb: {
-    id: 'travelersGarb',
-    name: "Traveler's Garb",
-    rarity: 'common',
-    statGrants: { hp: 30, defense: 15 },
-  },
-  acolytesRobe: {
-    id: 'acolytesRobe',
-    name: "Acolyte's Robe",
-    rarity: 'common',
-    statGrants: { wisdom: 30 },
-  },
-  linenWrap: {
-    id: 'linenWrap',
-    name: 'Linen Wrap',
-    rarity: 'common',
-    statGrants: { hp: 30, wisdom: 15 },
-  },
-  kiteShield: {
-    id: 'kiteShield',
-    name: 'Kite Shield',
-    rarity: 'common',
-    statGrants: { defense: 10 },
-    grantsStatusIds: [{ statusId: 'IronForce', magnitude: 10 }],
-  },
-  mossweaveShawl: {
-    id: 'mossweaveShawl',
-    name: 'Mossweave Shawl',
-    rarity: 'common',
-    statGrants: { wisdom: 10 },
-    grantsStatusIds: [{ statusId: 'NatureForce', magnitude: 10 }],
-  },
-};
-
-const commonAccessories: Record<string, EquipmentDefinition> = {
-  travelersCharm: {
-    id: 'travelersCharm',
-    name: "Traveler's Charm",
-    rarity: 'common',
-    statGrants: { speed: 30 },
-  },
-  apprenticeBand: {
-    id: 'apprenticeBand',
-    name: "Apprentice's Band",
-    rarity: 'common',
-    statGrants: { manaPool: 20, wisdom: 10 },
-  },
-  copperRing: {
-    id: 'copperRing',
-    name: 'Copper Ring',
-    rarity: 'common',
-    statGrants: { attack: 15, manaPool: 15 },
-  },
-  smoothstoneCharm: {
-    id: 'smoothstoneCharm',
-    name: 'Smoothstone Charm',
-    rarity: 'common',
-    statGrants: { hp: 60 },
-  },
-  wardingCharm: {
-    id: 'wardingCharm',
-    name: 'Warding Charm',
-    rarity: 'common',
-    statGrants: { defense: 15, wisdom: 15 },
-  },
-  runedSigil: {
-    id: 'runedSigil',
-    name: 'Runed Sigil',
-    rarity: 'common',
-    statGrants: { intelligence: 15, manaPool: 15 },
-  },
-  boneTotem: {
-    id: 'boneTotem',
-    name: 'Bone Totem',
-    rarity: 'common',
-    statGrants: { attack: 10 },
-    grantsStatusIds: [{ statusId: 'BeastForce', magnitude: 10 }],
-  },
-  wornBoots: {
-    id: 'wornBoots',
-    name: 'Worn Boots',
-    rarity: 'common',
-    statGrants: { hp: 20, speed: 20 },
-  },
-};
-
-// --- 2. Generated per-type gear — 14 non-Ancient types x 3 pieces, rare and up ---
-
-const GENERATED_TIERS: readonly EquipmentRarity[] = ['rare', 'epic', 'legendary', 'mythic'];
-
-interface TypeGearFlavor {
-  /** 'attack' grants Attack/Defense on weapon/armor; 'intelligence' grants Intelligence/Wisdom. */
-  kind: 'attack' | 'intelligence';
-  /** The non-Force half of the accessory. No `mpRegen`: at triple price it cannot split a budget evenly. */
-  accessoryStat: 'speed' | 'manaPool' | 'hp';
-  weaponName: string;
-  armorName: string;
-  accessoryName: string;
-}
-
-const TYPE_GEAR: Record<TitanpactType, TypeGearFlavor> = {
-  Fire: { kind: 'attack', accessoryStat: 'speed', weaponName: 'Cinderfang Blade', armorName: 'Emberplate Mail', accessoryName: 'Ashcinder Talisman' },
-  Water: { kind: 'intelligence', accessoryStat: 'manaPool', weaponName: 'Tidecaller Staff', armorName: 'Depthguard Scale', accessoryName: 'Riptide Charm' },
-  Frost: { kind: 'intelligence', accessoryStat: 'hp', weaponName: 'Glacial Wand', armorName: 'Permafrost Bulwark', accessoryName: 'Rimefrost Pendant' },
-  Storm: { kind: 'intelligence', accessoryStat: 'speed', weaponName: 'Thunderclap Rod', armorName: 'Stormward Plate', accessoryName: 'Galebound Ring' },
-  Stone: { kind: 'attack', accessoryStat: 'hp', weaponName: 'Quarrybreaker Maul', armorName: 'Bedrock Aegis', accessoryName: 'Cairnstone Amulet' },
-  Nature: { kind: 'attack', accessoryStat: 'hp', weaponName: 'Thornbriar Bow', armorName: 'Wildroot Hide', accessoryName: 'Verdant Seed Locket' },
-  Light: { kind: 'intelligence', accessoryStat: 'manaPool', weaponName: 'Sunray Sceptre', armorName: 'Radiant Aegis', accessoryName: 'Dawnlight Halo' },
-  Shadow: { kind: 'attack', accessoryStat: 'speed', weaponName: 'Nightfall Fang', armorName: 'Umbral Cloak', accessoryName: 'Duskbound Sigil' },
-  Arcane: { kind: 'intelligence', accessoryStat: 'manaPool', weaponName: 'Runic Stave', armorName: 'Warded Mantle', accessoryName: 'Prismatic Lens' },
-  Mind: { kind: 'intelligence', accessoryStat: 'manaPool', weaponName: 'Psionic Edge', armorName: 'Cognizant Veil', accessoryName: "Seer's Circlet" },
-  Spirit: { kind: 'intelligence', accessoryStat: 'hp', weaponName: 'Wraithglass Scythe', armorName: 'Hollowed Vestment', accessoryName: 'Ancestral Beads' },
-  Iron: { kind: 'attack', accessoryStat: 'hp', weaponName: 'Forgehammer', armorName: 'Ironclad Bulwark', accessoryName: 'Riveted Band' },
-  Mech: { kind: 'attack', accessoryStat: 'speed', weaponName: 'Piston Cleaver', armorName: 'Plated Chassis', accessoryName: 'Servo Core' },
-  Beast: { kind: 'attack', accessoryStat: 'speed', weaponName: 'Feral Claws', armorName: 'Beastskin Hide', accessoryName: 'Alpha Fang Necklace' },
-  Ancient: { kind: 'attack', accessoryStat: 'hp', weaponName: 'Relic Blade', armorName: 'Timeworn Plate', accessoryName: 'Sunken Idol' },
-};
-
-function lowerFirst(value: string): string {
-  return value.charAt(0).toLowerCase() + value.slice(1);
-}
+// --- 1. The families ---
 
 /**
- * The three pieces' shapes, per tier, in authored amounts — a table rather than the halve-the-
- * budget formula it replaced (2026-09-06). With Elemental Force at 2 points a magnitude and
- * three different flavour-stat prices, no single divisor lands every piece on a multiple of 5,
- * and the Epic+ effect floor has to be cleared piece by piece besides. Every row is checked
- * against RARITY_BUDGET by test/equipment.test.ts, so a wrong number here fails loudly.
- *
- * `flavorPoints` is spent, not granted: the accessory's stat amount is those points divided by
- * its own STAT_POINT_VALUE, and Force takes whatever the budget has left.
+ * Stat points a tier spends, leaving room for the flat 20-point Awakening from Epic up
+ * (docs/equipment.md §3). Monotone by construction, so an Anvil upgrade never lowers a number.
  */
-const TYPE_GEAR_SHAPE: Record<EquipmentRarity, { weapon: { stat: number; force: number }; armor: { hp: number; stat: number; force: number }; accessory: { flavorPoints: number; force: number } }> = {
-  // Common never appears here — GENERATED_TIERS starts at rare — but the record must be total.
-  common: { weapon: { stat: 10, force: 10 }, armor: { hp: 20, stat: 10, force: 5 }, accessory: { flavorPoints: 10, force: 10 } },
-  rare: { weapon: { stat: 30, force: 10 }, armor: { hp: 40, stat: 30, force: 0 }, accessory: { flavorPoints: 20, force: 15 } },
-  epic: { weapon: { stat: 30, force: 20 }, armor: { hp: 40, stat: 20, force: 15 }, accessory: { flavorPoints: 20, force: 25 } },
-  legendary: { weapon: { stat: 40, force: 25 }, armor: { hp: 60, stat: 20, force: 20 }, accessory: { flavorPoints: 30, force: 30 } },
-  mythic: { weapon: { stat: 50, force: 30 }, armor: { hp: 60, stat: 40, force: 20 }, accessory: { flavorPoints: 40, force: 35 } },
+const STAT_POINTS_BY_RARITY: Record<EquipmentRarity, number> = {
+  common: 30,
+  rare: 50,
+  epic: 50,
+  legendary: 70,
+  mythic: 90,
 };
 
-// Rarity is staggered so one type's three pieces never share a tier: weapon = stat + Force,
-// armor = HP + defensive stat (+ Force from Epic up, which is what clears its effect floor),
-// accessory = flavour stat + Force.
-const generatedTypeEquipment: Record<string, EquipmentDefinition> = {};
-TYPES.filter((type) => type !== 'Ancient').forEach((type, i) => {
-  const gear = TYPE_GEAR[type];
-  const idPrefix = lowerFirst(type);
-  const weaponRarity = GENERATED_TIERS[i % GENERATED_TIERS.length];
-  const armorRarity = GENERATED_TIERS[(i + 1) % GENERATED_TIERS.length];
-  const accessoryRarity = GENERATED_TIERS[(i + 2) % GENERATED_TIERS.length];
+/** From this tier up a family grants its Awakening — the moment the item becomes what it is named for. */
+const AWAKENING_RARITY: EquipmentRarity = 'epic';
 
-  const weaponId = `${idPrefix}Weapon`;
-  const weapon = TYPE_GEAR_SHAPE[weaponRarity].weapon;
-  generatedTypeEquipment[weaponId] = {
-    id: weaponId,
-    name: gear.weaponName,
-    rarity: weaponRarity,
-    statGrants: { [gear.kind]: weapon.stat },
-    grantsStatusIds: [{ statusId: `${type}Force`, magnitude: weapon.force }],
-  };
+interface FamilyDefinition {
+  /** The item's whole name. An enchanted variant prefixes the enchant; nothing names the tier. */
+  noun: string;
+  /** Stats the family grants, splitting STAT_POINTS_BY_RARITY evenly. Overridden below where an even split cannot land on multiples of 5. */
+  stats: readonly StatKey[];
+  /** Granted from AWAKENING_RARITY up. Flat — the same magnitude at Epic, Legendary and Mythic. */
+  awakening: string;
+}
 
-  const armorId = `${idPrefix}Armor`;
-  const armor = TYPE_GEAR_SHAPE[armorRarity].armor;
-  generatedTypeEquipment[armorId] = {
-    id: armorId,
-    name: gear.armorName,
-    rarity: armorRarity,
-    statGrants: { hp: armor.hp, [gear.kind === 'attack' ? 'defense' : 'wisdom']: armor.stat },
-    // The Rare armor is the one generated piece with no effect, and it is allowed to be plain.
-    ...(armor.force > 0 ? { grantsStatusIds: [{ statusId: `${type}Force`, magnitude: armor.force }] } : {}),
-  };
+const FAMILIES: Record<EquipmentFamilyId, FamilyDefinition> = {
+  sword: { noun: 'Sword', stats: ['attack'], awakening: 'sunder' },
+  dagger: { noun: 'Dagger', stats: ['attack', 'speed'], awakening: 'bloodthirst' },
+  greataxe: { noun: 'Greataxe', stats: ['attack', 'hp'], awakening: 'vengefulEmblem' },
+  spear: { noun: 'Spear', stats: ['attack', 'defense'], awakening: 'impale' },
+  bow: { noun: 'Bow', stats: ['attack', 'wisdom'], awakening: 'marksman' },
+  staff: { noun: 'Staff', stats: ['intelligence'], awakening: 'overchannel' },
+  wand: { noun: 'Wand', stats: ['intelligence', 'speed'], awakening: 'quickening' },
+  tome: { noun: 'Tome', stats: ['intelligence', 'wisdom'], awakening: 'purifyingWard' },
+  orb: { noun: 'Orb', stats: ['intelligence', 'manaPool'], awakening: 'arcaneReservoir' },
+  plate: { noun: 'Plate', stats: ['defense', 'hp'], awakening: 'wardensVigil' },
+  shield: { noun: 'Shield', stats: ['defense'], awakening: 'secondSkin' },
+  leathers: { noun: 'Leathers', stats: ['defense', 'speed'], awakening: 'barbs' },
+  robe: { noun: 'Robe', stats: ['wisdom', 'manaPool'], awakening: 'manaWard' },
+  boots: { noun: 'Boots', stats: ['speed'], awakening: 'quickening' },
+  ring: { noun: 'Ring', stats: ['manaPool', 'mpRegen'], awakening: 'attunement' },
+  crest: { noun: 'Crest', stats: ['attack', 'defense', 'intelligence', 'wisdom', 'speed'], awakening: 'rallyingStandard' },
+};
 
-  const accessoryId = `${idPrefix}Charm`;
-  const accessory = TYPE_GEAR_SHAPE[accessoryRarity].accessory;
-  generatedTypeEquipment[accessoryId] = {
-    id: accessoryId,
-    name: gear.accessoryName,
-    rarity: accessoryRarity,
-    statGrants: { [gear.accessoryStat]: accessory.flavorPoints / STAT_POINT_VALUE[gear.accessoryStat] },
-    grantsStatusIds: [{ statusId: `${type}Force`, magnitude: accessory.force }],
-  };
-});
+/**
+ * The two families an even split cannot serve, hand-tabled instead.
+ *
+ * Ring holds MP Regen, which costs 3 points a unit — only point totals divisible by 15 land on a
+ * multiple of 5, which an even split never does. Crest holds five stats, and a fifth of 30 is 6.
+ * Both spend their tier exactly; test/equipment.test.ts checks that rather than trusting it.
+ */
+const STAT_OVERRIDES: Partial<Record<EquipmentFamilyId, Record<EquipmentRarity, Partial<Record<StatKey, number>>>>> = {
+  ring: {
+    common: { manaPool: 15, mpRegen: 5 },
+    rare: { manaPool: 35, mpRegen: 5 },
+    epic: { manaPool: 35, mpRegen: 5 },
+    legendary: { manaPool: 40, mpRegen: 10 },
+    mythic: { manaPool: 60, mpRegen: 10 },
+  },
+  crest: {
+    common: { attack: 5, defense: 5, intelligence: 5, wisdom: 5, speed: 5, hp: 10 },
+    rare: { attack: 10, defense: 10, intelligence: 10, wisdom: 10, speed: 10 },
+    epic: { attack: 10, defense: 10, intelligence: 10, wisdom: 10, speed: 10 },
+    legendary: { attack: 10, defense: 10, intelligence: 10, wisdom: 10, speed: 10, hp: 40 },
+    mythic: { attack: 15, defense: 15, intelligence: 15, wisdom: 15, speed: 15, hp: 30 },
+  },
+};
 
-// --- 3. Signature items — rare through mythic ---
+/** An even split of the tier's stat points, converted to amounts through each stat's own price. */
+function evenSplit(stats: readonly StatKey[], points: number): Partial<Record<StatKey, number>> {
+  const each = points / stats.length;
+  const grants: Partial<Record<StatKey, number>> = {};
+  for (const stat of stats) grants[stat] = each / STAT_POINT_VALUE[stat];
+  return grants;
+}
 
-const signatureEquipment: Record<string, EquipmentDefinition> = {
-  // --- Weapons ---
-  battlewornGreatsword: {
-    id: 'battlewornGreatsword',
-    name: 'Battleworn Greatsword',
-    rarity: 'rare',
-    statGrants: { attack: 50 },
-  },
-  duelistsRapier: {
-    id: 'duelistsRapier',
-    name: "Duelist's Rapier",
-    rarity: 'rare',
-    statGrants: { attack: 25, speed: 25 },
-  },
-  sagesTome: {
-    id: 'sagesTome',
-    name: "Sage's Tome",
-    rarity: 'rare',
-    statGrants: { intelligence: 35, wisdom: 15 },
-  },
-  arcaneFocus: {
-    id: 'arcaneFocus',
-    name: 'Arcane Focus',
-    rarity: 'epic',
-    statGrants: { intelligence: 30 },
-    grantsStatusIds: [{ statusId: 'ArcaneForce', magnitude: 20 }],
-  },
-  // -10 Defense refunds 10 points; how much a downside may buy is an open question (docs/progression.md).
-  berserkersCleaver: {
-    id: 'berserkersCleaver',
-    name: "Berserker's Cleaver",
-    rarity: 'epic',
-    statGrants: { attack: 50, defense: -20 },
-    grantsPassiveIds: ['sunder'],
-  },
-  bloodletterFang: {
-    id: 'bloodletterFang',
-    name: 'Bloodletter Fang',
-    rarity: 'epic',
-    statGrants: { attack: 30 },
-    grantsPassiveIds: ['bloodthirst'],
-  },
-  vengeanceBlade: {
-    id: 'vengeanceBlade',
-    name: 'Vengeance Blade',
-    rarity: 'legendary',
-    statGrants: { attack: 40 },
-    grantsPassiveIds: ['vengefulEmblem'],
-  },
-  tempestRod: {
-    id: 'tempestRod',
-    name: 'Tempest Rod',
-    rarity: 'legendary',
-    statGrants: { intelligence: 50 },
-    grantsPassiveIds: ['stormcallersFocus'],
-  },
-  rimeCleaver: {
-    id: 'rimeCleaver',
-    name: 'Rime Cleaver',
-    rarity: 'legendary',
-    statGrants: { attack: 50 },
-    grantsPassiveIds: ['frostbrand'],
-  },
+function awakeningFor(family: FamilyDefinition, rarity: EquipmentRarity): readonly string[] | undefined {
+  if (RARITY_ORDER.indexOf(rarity) < RARITY_ORDER.indexOf(AWAKENING_RARITY)) return undefined;
+  return [family.awakening];
+}
+
+const baseEquipment: Record<string, EquipmentDefinition> = {};
+for (const familyId of EQUIPMENT_FAMILIES) {
+  const family = FAMILIES[familyId];
+  for (const rarity of RARITY_ORDER) {
+    const id = equipmentIdFor(familyId, rarity);
+    const grantsPassiveIds = awakeningFor(family, rarity);
+    baseEquipment[id] = {
+      id,
+      name: family.noun,
+      rarity,
+      statGrants: STAT_OVERRIDES[familyId]?.[rarity] ?? evenSplit(family.stats, STAT_POINTS_BY_RARITY[rarity]),
+      familyId,
+      ...(grantsPassiveIds ? { grantsPassiveIds } : {}),
+    };
+  }
+}
+
+// --- 2. Uniques ---
+
+/**
+ * Outside the family system: Mythic only, no family, no Awakening ladder, dropped by Guardians.
+ * Not upgradeable or mergeable — being Mythic already, both are moot rather than forbidden — but
+ * enchantable like anything else (docs/equipment.md §6).
+ *
+ * Each spends the Mythic 110 as 90 stats + one 20-point passive, or 70 + two.
+ */
+const uniqueEquipment: Record<string, EquipmentDefinition> = {
   worldbreaker: {
     id: 'worldbreaker',
     name: 'Worldbreaker',
@@ -368,194 +139,104 @@ const signatureEquipment: Record<string, EquipmentDefinition> = {
     statGrants: { attack: 50, hp: 40 },
     grantsStatusIds: [{ statusId: 'IronForce', magnitude: 20 }],
   },
-  archonsStaff: {
-    id: 'archonsStaff',
-    name: "Archon's Staff",
-    rarity: 'mythic',
-    statGrants: { intelligence: 50, manaPool: 20 },
-    grantsPassiveIds: ['arcaneReservoir'],
-  },
-  duskreaverScythe: {
-    id: 'duskreaverScythe',
-    name: 'Duskreaver Scythe',
-    rarity: 'mythic',
-    statGrants: { attack: 55, speed: 15 },
-    grantsPassiveIds: ['shadowfang'],
-  },
-
-  // --- Armor ---
-  oakenArmor: {
-    id: 'oakenArmor',
-    name: 'Oaken Armor',
-    rarity: 'rare',
-    statGrants: { hp: 60, defense: 20 },
-  },
-  templarsBreastplate: {
-    id: 'templarsBreastplate',
-    name: "Templar's Breastplate",
-    rarity: 'rare',
-    statGrants: { hp: 40, defense: 30 },
-  },
-  mysticsRobe: {
-    id: 'mysticsRobe',
-    name: "Mystic's Robe",
-    rarity: 'rare',
-    statGrants: { wisdom: 30, manaPool: 20 },
-  },
-  bulwarkOfTheVanguard: {
-    id: 'bulwarkOfTheVanguard',
-    name: 'Bulwark of the Vanguard',
-    rarity: 'epic',
-    statGrants: { hp: 40, defense: 10 },
-    grantsPassiveIds: ['secondSkin'],
-  },
-  runewardCuirass: {
-    id: 'runewardCuirass',
-    name: 'Runeward Cuirass',
-    rarity: 'epic',
-    statGrants: { wisdom: 20, manaPool: 20 },
-    grantsPassiveIds: ['purifyingWard'],
-  },
-  phoenixMail: {
-    id: 'phoenixMail',
-    name: 'Phoenix Mail',
-    rarity: 'legendary',
-    statGrants: { hp: 100, defense: 10 },
-    grantsPassiveIds: ['wardensVigil'],
-  },
-  dreadnoughtChassis: {
-    id: 'dreadnoughtChassis',
-    name: 'Dreadnought Chassis',
-    rarity: 'legendary',
-    statGrants: { hp: 60, defense: 30 },
-    grantsStatusIds: [{ statusId: 'IronForce', magnitude: 15 }],
-  },
   guardianPlate: {
     id: 'guardianPlate',
     name: 'Guardian Plate',
     rarity: 'mythic',
-    statGrants: { hp: 70, defense: 35 },
+    statGrants: { hp: 70, defense: 55 },
     grantsPassiveIds: ['secondSkin'],
   },
   aegisEternal: {
     id: 'aegisEternal',
     name: 'Aegis Eternal',
     rarity: 'mythic',
-    statGrants: { hp: 60, defense: 20 },
+    statGrants: { hp: 60, defense: 40 },
     grantsPassiveIds: ['wardensVigil', 'purifyingWard'],
   },
-  mantleOfTheArchmage: {
-    id: 'mantleOfTheArchmage',
-    name: 'Mantle of the Archmage',
+  archonsStaff: {
+    id: 'archonsStaff',
+    name: "Archon's Staff",
     rarity: 'mythic',
-    statGrants: { wisdom: 30, intelligence: 20, manaPool: 20 },
-    grantsStatusIds: [{ statusId: 'ArcaneForce', magnitude: 20 }],
-  },
-
-  // --- Accessories ---
-  swiftBoots: {
-    id: 'swiftBoots',
-    name: 'Swift Boots',
-    rarity: 'rare',
-    statGrants: { speed: 50 },
-  },
-  // FireForce magnitude 10 is pinned by test/elementalForce.test.ts.
-  emberBand: {
-    id: 'emberBand',
-    name: 'Ember Band',
-    rarity: 'rare',
-    statGrants: { attack: 20 },
-    grantsStatusIds: [{ statusId: 'FireForce', magnitude: 15 }],
-  },
-  huntersInsignia: {
-    id: 'huntersInsignia',
-    name: "Hunter's Insignia",
-    rarity: 'rare',
-    statGrants: { attack: 25, speed: 25 },
-  },
-  focusingLens: {
-    id: 'focusingLens',
-    name: 'Focusing Lens',
-    rarity: 'rare',
-    statGrants: { intelligence: 25, wisdom: 25 },
-  },
-  stormcallersSigil: {
-    id: 'stormcallersSigil',
-    name: "Stormcaller's Sigil",
-    rarity: 'epic',
-    statGrants: { speed: 30 },
-    grantsPassiveIds: ['stormcallersFocus'],
-  },
-  frostboundLocket: {
-    id: 'frostboundLocket',
-    name: 'Frostbound Locket',
-    rarity: 'epic',
-    statGrants: { wisdom: 30 },
-    grantsPassiveIds: ['frostbrand'],
-  },
-  shroudOfShadows: {
-    id: 'shroudOfShadows',
-    name: 'Shroud of Shadows',
-    rarity: 'epic',
-    statGrants: { speed: 30 },
-    grantsPassiveIds: ['shadowfang'],
-  },
-  sanguineTorc: {
-    id: 'sanguineTorc',
-    name: 'Sanguine Torc',
-    rarity: 'epic',
-    statGrants: { attack: 30 },
-    grantsPassiveIds: ['sanguine'],
-  },
-  emberheartIdol: {
-    id: 'emberheartIdol',
-    name: 'Emberheart Idol',
-    rarity: 'epic',
-    statGrants: { hp: 60 },
-    grantsPassiveIds: ['emberheart'],
-  },
-  // MP Regen is triple price, so +10 alone is 30 points — it cannot appear below legendary.
-  vitalCharm: {
-    id: 'vitalCharm',
-    name: 'Vital Charm',
-    rarity: 'legendary',
-    statGrants: { manaPool: 20, mpRegen: 10 },
+    statGrants: { intelligence: 70, manaPool: 20 },
     grantsPassiveIds: ['arcaneReservoir'],
   },
-  ringOfVitality: {
-    id: 'ringOfVitality',
-    name: 'Ring of Vitality',
-    rarity: 'legendary',
-    statGrants: { hp: 60, mpRegen: 10 },
-    grantsPassiveIds: ['quickening'],
-  },
-  wellspringDiadem: {
-    id: 'wellspringDiadem',
-    name: 'Wellspring Diadem',
-    rarity: 'legendary',
-    statGrants: { manaPool: 30, mpRegen: 10 },
-    grantsPassiveIds: ['purifyingWard'],
+  duskreaverScythe: {
+    id: 'duskreaverScythe',
+    name: 'Duskreaver Scythe',
+    rarity: 'mythic',
+    statGrants: { attack: 55, speed: 35 },
+    grantsPassiveIds: ['bloodthirst'],
   },
   crownOfTheAncients: {
     id: 'crownOfTheAncients',
     name: 'Crown of the Ancients',
     rarity: 'mythic',
-    statGrants: { hp: 20, attack: 15, defense: 15, intelligence: 15, wisdom: 15 },
+    statGrants: { hp: 60, attack: 15, defense: 15, intelligence: 15, wisdom: 15 },
     grantsPassiveIds: ['rallyingStandard'],
-  },
-  titansTotem: {
-    id: 'titansTotem',
-    name: "Titan's Totem",
-    rarity: 'mythic',
-    statGrants: { hp: 100, defense: 20 },
-    grantsStatusIds: [{ statusId: 'StoneForce', magnitude: 20 }],
   },
 };
 
+// --- 3. Enchanted variants ---
+
+/** Every base item crossed with every enchant. Lookup only — drops roll a base and enchant it (rollEnchantment). */
+function enchantedVariants(item: EquipmentDefinition): Record<string, EquipmentDefinition> {
+  const out: Record<string, EquipmentDefinition> = {};
+  for (const enchantId of ENCHANTMENT_IDS) {
+    const parsed = item.familyId ? item.familyId : item.id;
+    const id = equipmentIdFor(parsed, item.familyId ? item.rarity : null, enchantId);
+    out[id] = {
+      ...item,
+      id,
+      name: `${enchantLabel(enchantId)} ${item.name}`,
+      enchantId,
+      grantsStatusIds: [
+        ...(item.grantsStatusIds ?? []),
+        { statusId: `${ENCHANTMENTS[enchantId]}Force`, magnitude: ENCHANT_FORCE_BY_RARITY[item.rarity] },
+      ],
+    };
+  }
+  return out;
+}
+
+const enchanted: Record<string, EquipmentDefinition> = {};
+for (const item of [...Object.values(baseEquipment), ...Object.values(uniqueEquipment)]) {
+  Object.assign(enchanted, enchantedVariants(item));
+}
+
+// --- Exports ---
+
+/** Every item that exists, keyed by id — the lookup, not the drop table. */
 export const equipment: Record<string, EquipmentDefinition> = {
-  ...commonWeapons,
-  ...commonArmor,
-  ...commonAccessories,
-  ...generatedTypeEquipment,
-  ...signatureEquipment,
+  ...baseEquipment,
+  ...uniqueEquipment,
+  ...enchanted,
 };
+
+/**
+ * What a drop may roll: the 80 unenchanted family items. Uniques are Guardian-only and enchanted
+ * variants are reached by rolling an enchant ON a drop, not by sitting in the pool — leaving them
+ * in would make an enchanted item 14x commoner than a plain one.
+ */
+export const EQUIPMENT_DROP_POOL: readonly EquipmentDefinition[] = Object.values(baseEquipment);
+
+/** Guardian rewards, one per act (docs/equipment.md §6). */
+export const UNIQUE_EQUIPMENT: readonly EquipmentDefinition[] = Object.values(uniqueEquipment);
+
+export const EQUIPMENT_FAMILY_NOUNS: Readonly<Record<EquipmentFamilyId, string>> = Object.fromEntries(
+  EQUIPMENT_FAMILIES.map((id) => [id, FAMILIES[id].noun])
+) as Record<EquipmentFamilyId, string>;
+
+/**
+ * What every drop site rolls: `count` distinct family items on the act's curve, each with a
+ * chance of arriving already enchanted. The one place the pool and the enchant roll are composed,
+ * so no call site can accidentally sample the 1,200-entry lookup.
+ */
+export function rollEquipmentDrops(
+  count: number,
+  weights: Record<EquipmentRarity, number>,
+  enchantChance?: number
+): EquipmentDefinition[] {
+  return pickWeightedEquipment(EQUIPMENT_DROP_POOL, count, weights).map((item) =>
+    maybeEnchantDrop(item, equipment, enchantChance)
+  );
+}

@@ -11,19 +11,38 @@ import {
   RARITY_BUDGET,
   RARITY_ORDER,
   RARITY_WEIGHTS_BY_TIER,
+  STAT_POINT_VALUE,
   EFFECT_FLOOR_MIN_RARITY,
-  EFFECT_FLOOR_SHARE,
+  EFFECT_FLOOR,
+  ENCHANTMENTS,
+  ENCHANTMENT_IDS,
+  ENCHANT_FORCE_BY_RARITY,
+  EQUIPMENT_FAMILIES,
+  canMergeItems,
   equipmentBudgetCost,
   equipmentBudgetProblems,
   equipmentEffectSpend,
+  equipmentIdFor,
+  holdsItem,
   lootTierFor,
+  mergeEnchantChoices,
+  mergeResultId,
+  parseEquipmentId,
   pickWeightedEquipment,
   rarityWeightsFor,
+  unenchantedIdOf,
   type EquipmentRarity,
 } from '../src/run/equipment';
+import { EQUIPMENT_DROP_POOL, UNIQUE_EQUIPMENT } from '../src/data/equipment';
 
 const catalog = Object.values(equipment);
 const ACTS = [1, 2, 3, 4, 5];
+const STAT_KEYS = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool', 'mpRegen'] as const;
+
+/** Total stat POINTS an item spends, which is what must never drop as a family climbs its ladder. */
+function statPoints(item: { statGrants: Partial<Record<string, number>> }): number {
+  return STAT_KEYS.reduce((sum, stat) => sum + (item.statGrants[stat] ?? 0) * STAT_POINT_VALUE[stat], 0);
+}
 
 // --- The rarity budget ---
 
@@ -35,27 +54,54 @@ test('equipment: every authored item spends its rarity budget exactly', () => {
   assert.deepStrictEqual(offenders, []);
 });
 
-test('equipment: the designer-authored common weapons are transcribed as specified', () => {
-  // The 12 designer-specified commons the whole common tier is derived from; a change is a design
-  // decision. They are no longer a SLOT — items are uncategorised — and the 2026-09-06 budget pass
-  // rescaled them onto Common 30, but each one's SHAPE is exactly what was authored: a stat-only
-  // item tripled, and a Force item doubled both halves because Force's own price doubled with it.
-  assert.deepStrictEqual(equipment.ironBlade.statGrants, { attack: 30 });
-  assert.deepStrictEqual(equipment.dagger.statGrants, { attack: 15, speed: 15 });
-  assert.deepStrictEqual(equipment.torch.statGrants, { attack: 10 });
-  assert.deepStrictEqual(equipment.torch.grantsStatusIds, [{ statusId: 'FireForce', magnitude: 10 }]);
-  assert.deepStrictEqual(equipment.huntersBow.statGrants, { attack: 15, wisdom: 15 });
-  assert.deepStrictEqual(equipment.pummelGloves.grantsStatusIds, [{ statusId: 'IronForce', magnitude: 10 }]);
-  assert.deepStrictEqual(equipment.battleAxe.statGrants, { attack: 15, defense: 15 });
-  assert.deepStrictEqual(equipment.apprenticeWand.statGrants, { intelligence: 30 });
-  assert.deepStrictEqual(equipment.magicBook.statGrants, { intelligence: 15, wisdom: 15 });
-  assert.deepStrictEqual(equipment.mysticOrb.grantsStatusIds, [{ statusId: 'ArcaneForce', magnitude: 10 }]);
-  assert.deepStrictEqual(equipment.memento.grantsStatusIds, [{ statusId: 'SpiritForce', magnitude: 10 }]);
-  assert.deepStrictEqual(equipment.oakStaff.statGrants, { intelligence: 15, defense: 15 });
-  assert.deepStrictEqual(equipment.windGem.statGrants, { intelligence: 15, speed: 15 });
-  for (const id of ['ironBlade', 'dagger', 'torch', 'huntersBow', 'pummelGloves', 'battleAxe', 'apprenticeWand', 'magicBook', 'mysticOrb', 'memento', 'oakStaff', 'windGem']) {
-    assert.strictEqual(equipment[id].rarity, 'common', `${id} must stay Common`);
+test('equipment: every family exists at every tier, and nothing else does', () => {
+  for (const familyId of EQUIPMENT_FAMILIES) {
+    for (const rarity of RARITY_ORDER) {
+      const item = equipment[equipmentIdFor(familyId, rarity)];
+      assert.ok(item, `${familyId} has no ${rarity}`);
+      assert.strictEqual(item.familyId, familyId);
+      assert.strictEqual(item.rarity, rarity);
+    }
   }
+  assert.strictEqual(EQUIPMENT_DROP_POOL.length, EQUIPMENT_FAMILIES.length * RARITY_ORDER.length);
+});
+
+test('equipment: a tier upgrade never lowers a number — the monotonicity rule', () => {
+  // The load-bearing rule of the rework (docs/equipment.md §3). The Anvil, the merge and the drop
+  // curve all exist to move an item UP, so if the tier that gains the Awakening funded it by
+  // shedding stats, every upgrade reward would read as a bait-and-switch.
+  for (const familyId of EQUIPMENT_FAMILIES) {
+    let previous = -Infinity;
+    for (const rarity of RARITY_ORDER) {
+      const points = statPoints(equipment[equipmentIdFor(familyId, rarity)]);
+      assert.ok(points >= previous, `${familyId} drops from ${previous} to ${points} stat points at ${rarity}`);
+      previous = points;
+    }
+  }
+});
+
+test('equipment: a family Awakens at Epic and the Awakening is flat from there up', () => {
+  for (const familyId of EQUIPMENT_FAMILIES) {
+    const byRarity = RARITY_ORDER.map((rarity) => equipment[equipmentIdFor(familyId, rarity)]);
+    assert.strictEqual(byRarity[0].grantsPassiveIds, undefined, `${familyId} Common should be stats alone`);
+    assert.strictEqual(byRarity[1].grantsPassiveIds, undefined, `${familyId} Rare should be stats alone`);
+    const awakening = byRarity[2].grantsPassiveIds;
+    assert.ok(awakening && awakening.length === 1, `${familyId} Epic should grant exactly one Awakening`);
+    // Flat: the tier buys stats, the family buys the effect. Identical at Epic, Legendary, Mythic.
+    assert.deepStrictEqual(byRarity[3].grantsPassiveIds, awakening);
+    assert.deepStrictEqual(byRarity[4].grantsPassiveIds, awakening);
+  }
+});
+
+test('equipment: every family and tier is reachable from its id, and back', () => {
+  for (const familyId of EQUIPMENT_FAMILIES) {
+    const id = equipmentIdFor(familyId, 'epic', 'blazing');
+    assert.deepStrictEqual(parseEquipmentId(id), { base: familyId, rarity: 'epic', enchantId: 'blazing' });
+    assert.strictEqual(unenchantedIdOf(id), equipmentIdFor(familyId, 'epic'));
+  }
+  // A Unique encodes no rarity — it has no ladder — but still parses, enchanted or not.
+  assert.deepStrictEqual(parseEquipmentId('worldbreaker'), { base: 'worldbreaker', rarity: null });
+  assert.deepStrictEqual(parseEquipmentId('worldbreaker.feral'), { base: 'worldbreaker', rarity: null, enchantId: 'feral' });
 });
 
 test('equipment: an unpriced granted passive is a budget failure, not free value', () => {
@@ -68,11 +114,17 @@ test('equipment: an unpriced granted passive is a budget failure, not free value
 });
 
 test('equipment: a negative grant refunds budget, funding an above-curve stat line', () => {
-  // Berserker's Cleaver: a Legendary-sized 50 Attack AND Sunder, paid for at Epic by -20 Defense.
-  const cleaver = equipment.berserkersCleaver;
-  assert.strictEqual(cleaver.statGrants.attack, 50);
-  assert.strictEqual(cleaver.statGrants.defense, -20);
+  // No catalog item spends a drawback today — the generated families are all upside — but the
+  // refund is still how a hand-authored Unique could buy a spike, so the accounting must hold.
+  const cleaver = {
+    id: 'x',
+    name: 'X',
+    rarity: 'epic' as const,
+    statGrants: { attack: 70, defense: -20 },
+    grantsPassiveIds: ['sunder'],
+  };
   assert.strictEqual(equipmentBudgetCost(cleaver, PASSIVE_ITEM_COST), RARITY_BUDGET.epic);
+  assert.deepStrictEqual(equipmentBudgetProblems(cleaver, PASSIVE_ITEM_COST), []);
 });
 
 test('equipment: an Epic or better may not be stats alone', () => {
@@ -81,7 +133,7 @@ test('equipment: an Epic or better may not be stats alone', () => {
   const plainMythic = { id: 'x', name: 'X', rarity: 'mythic' as const, statGrants: { attack: 110 } };
   const problems = equipmentBudgetProblems(plainMythic, PASSIVE_ITEM_COST);
   assert.ok(problems.some((p) => p.includes('effects')), problems.join('; '));
-  // ...and the floor is a SHARE, so a token effect does not clear it either.
+  // ...and a token effect does not clear it either: the floor is one whole Awakening's worth.
   const tokenEffect = {
     id: 'y',
     name: 'Y',
@@ -91,16 +143,104 @@ test('equipment: an Epic or better may not be stats alone', () => {
   };
   assert.ok(equipmentBudgetProblems(tokenEffect, PASSIVE_ITEM_COST).some((p) => p.includes('effects')));
   // Below Epic there is no floor at all: a plain Common is what an Act-1 item should be.
-  assert.deepStrictEqual(equipmentBudgetProblems(equipment.ironBlade, PASSIVE_ITEM_COST), []);
+  assert.deepStrictEqual(equipmentBudgetProblems(equipment['sword.common'], PASSIVE_ITEM_COST), []);
 });
 
 test('equipment: every Epic and better in the catalog clears the effect floor', () => {
   for (const item of catalog) {
     if (RARITY_ORDER.indexOf(item.rarity) < RARITY_ORDER.indexOf(EFFECT_FLOOR_MIN_RARITY)) continue;
     const spend = equipmentEffectSpend(item, PASSIVE_ITEM_COST);
-    const floor = RARITY_BUDGET[item.rarity] * EFFECT_FLOOR_SHARE;
-    assert.ok(spend >= floor, `${item.id} (${item.rarity}) spends ${spend} on effects, under ${floor}`);
+    assert.ok(spend >= EFFECT_FLOOR, `${item.id} (${item.rarity}) spends ${spend} on effects, under ${EFFECT_FLOOR}`);
   }
+});
+
+// --- Enchantments ---
+
+test('equipment: an enchant is a bolt-on — it adds Force and never touches the base budget', () => {
+  for (const rarity of RARITY_ORDER) {
+    const base = equipment[equipmentIdFor('spear', rarity)];
+    for (const enchantId of ENCHANTMENT_IDS) {
+      const enchanted = equipment[equipmentIdFor('spear', rarity, enchantId)];
+      assert.ok(enchanted, `spear ${rarity} ${enchantId} missing`);
+      assert.strictEqual(enchanted.enchantId, enchantId);
+      // Same stats, same Awakening, same tier — the enchant is a third axis, not a fourth tier.
+      assert.deepStrictEqual(enchanted.statGrants, base.statGrants);
+      assert.deepStrictEqual(enchanted.grantsPassiveIds, base.grantsPassiveIds);
+      assert.deepStrictEqual(enchanted.grantsStatusIds, [
+        { statusId: `${ENCHANTMENTS[enchantId]}Force`, magnitude: ENCHANT_FORCE_BY_RARITY[rarity] },
+      ]);
+      // ...and the base budget still balances, because baseItemOf strips the enchant first.
+      assert.deepStrictEqual(equipmentBudgetProblems(enchanted, PASSIVE_ITEM_COST), []);
+    }
+  }
+});
+
+test('equipment: no enchant binds Ancient, and every other type has exactly one', () => {
+  const types = ENCHANTMENT_IDS.map((id) => ENCHANTMENTS[id]);
+  assert.ok(!types.includes('Ancient' as never), 'Ancient must have no enchant (per user direction)');
+  assert.strictEqual(new Set(types).size, types.length, 'two enchants bind the same type');
+  assert.strictEqual(types.length, 14);
+});
+
+test('equipment: a Unique is enchantable but has no ladder', () => {
+  for (const unique of UNIQUE_EQUIPMENT) {
+    assert.strictEqual(unique.rarity, 'mythic', `${unique.id} must be Mythic`);
+    assert.strictEqual(unique.familyId, undefined, `${unique.id} must sit outside the family system`);
+    const enchanted = equipment[`${unique.id}.feral`];
+    assert.ok(enchanted, `${unique.id} has no enchanted variant`);
+    assert.deepStrictEqual(equipmentBudgetProblems(enchanted, PASSIVE_ITEM_COST), []);
+    // No ladder to climb: nothing merges it and the Anvil has nothing above Mythic to sell.
+    assert.strictEqual(canMergeItems(unique, unique), false);
+    assert.strictEqual(mergeResultId(unique), null);
+  }
+});
+
+test('equipment: the drop pool is unenchanted bases only', () => {
+  // Leaving the variants in would make an enchanted item 14x commoner than a plain one.
+  for (const item of EQUIPMENT_DROP_POOL) {
+    assert.strictEqual(item.enchantId, undefined, `${item.id} is enchanted and must not be in the drop pool`);
+    assert.ok(item.familyId, `${item.id} has no family and must not be in the drop pool`);
+  }
+});
+
+// --- Merging ---
+
+test('equipment: two of a family and tier merge up, ignoring enchants', () => {
+  const plain = equipment['spear.rare'];
+  const blazing = equipment['spear.rare.blazing'];
+  const tidal = equipment['spear.rare.tidal'];
+
+  assert.ok(canMergeItems(plain, plain));
+  assert.ok(canMergeItems(plain, blazing), 'an enchanted duplicate must still merge');
+  assert.ok(canMergeItems(blazing, tidal), 'two differently enchanted duplicates must still merge');
+
+  assert.strictEqual(mergeResultId(plain), 'spear.epic');
+  assert.strictEqual(mergeResultId(plain, 'blazing'), 'spear.epic.blazing');
+
+  // The choice the player is offered: at most one enchant survives, so two plain inputs pose none.
+  assert.deepStrictEqual(mergeEnchantChoices(plain, plain), []);
+  assert.deepStrictEqual(mergeEnchantChoices(plain, blazing), ['blazing']);
+  assert.deepStrictEqual(mergeEnchantChoices(blazing, tidal), ['blazing', 'tidal']);
+});
+
+test('equipment: a merge needs a matching family AND tier, and Mythic has nowhere to go', () => {
+  assert.strictEqual(canMergeItems(equipment['spear.rare'], equipment['sword.rare']), false, 'different families');
+  assert.strictEqual(canMergeItems(equipment['spear.rare'], equipment['spear.epic']), false, 'different tiers');
+  assert.strictEqual(canMergeItems(equipment['spear.mythic'], equipment['spear.mythic']), false, 'nothing above Mythic');
+  assert.strictEqual(mergeResultId(equipment['spear.mythic']), null);
+});
+
+test('equipment: a hero holds one item per FAMILY, not one per id', () => {
+  // Every tier of a family grants the same Awakening, so two Swords would count-stack Sunder
+  // while both cards show it once.
+  const loadout = ['sword.epic'];
+  assert.ok(holdsItem(loadout, 'sword.epic'));
+  assert.ok(holdsItem(loadout, 'sword.mythic'), 'a different tier of the same family is still a Sword');
+  assert.ok(holdsItem(loadout, 'sword.epic.blazing'), 'an enchanted Sword is still a Sword');
+  assert.ok(!holdsItem(loadout, 'spear.epic'));
+  // A Unique has no family, so its own id is the identity.
+  assert.ok(holdsItem(['worldbreaker'], 'worldbreaker.feral'));
+  assert.ok(!holdsItem(['worldbreaker'], 'guardianPlate'));
 });
 
 test('equipment: every passive an item grants has a price, and every price names a real passive', () => {

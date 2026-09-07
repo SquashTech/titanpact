@@ -8,9 +8,12 @@ import {
   buyEquipment,
   rollGuildHallOffers,
   ShopError,
+  ANVIL_PRICE_BY_TARGET,
   EQUIPMENT_PRICE_BY_RARITY,
+  EQUIPMENT_SELL_SHARE,
   GUILD_HALL_EQUIPMENT_OFFER_COUNT,
 } from '../src/run/shop';
+import { RARITY_ORDER } from '../src/run/equipment';
 
 function seedRoster(heroIds: string[], gold = 0) {
   let run = createRunState(0, gold);
@@ -24,7 +27,7 @@ function seedRoster(heroIds: string[], gold = 0) {
 
 test('shop: buyEquipment spends gold priced by rarity', () => {
   const run = seedRoster([], 100);
-  const next = buyEquipment(run, equipment.ironBlade); // common
+  const next = buyEquipment(run, equipment['sword.common']); // common
   assert.strictEqual(next.gold, 100 - EQUIPMENT_PRICE_BY_RARITY.common);
 });
 
@@ -62,4 +65,40 @@ test('shop: rollGuildHallOffers never offers duplicate ids within one category',
   const offers = rollGuildHallOffers(run, guildHallOffers, Object.values(equipment));
   assert.strictEqual(new Set(offers.heroOfferIds).size, offers.heroOfferIds.length);
   assert.strictEqual(new Set(offers.equipmentOfferIds).size, offers.equipmentOfferIds.length);
+});
+
+// --- No gold printer (docs/equipment.md §5) ---
+//
+// The Anvil is repeatable and unbounded, so no path from gold back to gold may profit. Both
+// price tables are untuned and will move; these two inequalities are what may not.
+
+test('shop: buy -> Anvil -> sell never profits, at any tier', () => {
+  for (let i = 0; i + 1 < RARITY_ORDER.length; i++) {
+    const from = RARITY_ORDER[i];
+    const to = RARITY_ORDER[i + 1];
+    const outlay = EQUIPMENT_PRICE_BY_RARITY[from] + ANVIL_PRICE_BY_TARGET[to];
+    const proceeds = Math.floor(EQUIPMENT_PRICE_BY_RARITY[to] * EQUIPMENT_SELL_SHARE);
+    assert.ok(outlay > proceeds, `buying a ${from} (${EQUIPMENT_PRICE_BY_RARITY[from]}), upgrading to ${to} (${ANVIL_PRICE_BY_TARGET[to]}) and selling (${proceeds}) profits`);
+  }
+});
+
+test('shop: buy two -> merge -> sell never profits, which constrains the shelf curve alone', () => {
+  // Merging is FREE, so this loop is governed entirely by EQUIPMENT_PRICE_BY_RARITY. It is the
+  // non-obvious one: a future pass that steepens the shelf past 4x a tier opens a printer with
+  // the Anvil untouched.
+  for (let i = 0; i + 1 < RARITY_ORDER.length; i++) {
+    const from = RARITY_ORDER[i];
+    const to = RARITY_ORDER[i + 1];
+    const outlay = 2 * EQUIPMENT_PRICE_BY_RARITY[from];
+    const proceeds = Math.floor(EQUIPMENT_PRICE_BY_RARITY[to] * EQUIPMENT_SELL_SHARE);
+    assert.ok(outlay > proceeds, `buying two ${from}s (${outlay}) and selling the merged ${to} (${proceeds}) profits`);
+    assert.ok(EQUIPMENT_PRICE_BY_RARITY[to] < 4 * EQUIPMENT_PRICE_BY_RARITY[from], `${to} costs 4x or more than ${from}`);
+  }
+});
+
+test('shop: the full Common -> Mythic Anvil run costs far more than buying a Mythic outright', () => {
+  // The intended relationship: the Anvil is a luxury for an item you are attached to, never the
+  // efficient route to power. Merging is the efficient route, and it is free.
+  const ladder = RARITY_ORDER.slice(1).reduce((sum, rarity) => sum + ANVIL_PRICE_BY_TARGET[rarity], 0);
+  assert.ok(ladder > EQUIPMENT_PRICE_BY_RARITY.mythic, `lifting a Common to Mythic (${ladder}) should cost more than buying one (${EQUIPMENT_PRICE_BY_RARITY.mythic})`);
 });

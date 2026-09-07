@@ -7003,11 +7003,14 @@ textarea,
   color: var(--text-dim);
 }
 
-.roster-mgmt-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 14px;
+/* Two across, three down (2026-09-07, per user direction): the roster reads as a squad at a
+   glance rather than a list to scroll, and each card gets its full width back for a slot row
+   underneath the hero. */
+.roster-mgmt-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
 /* --- The bag ------------------------------------------------------------
@@ -7017,8 +7020,8 @@ textarea,
    heroes use, because "tap a thing, tap where it goes" only reads as one
    gesture if both ends look like the same kind of place. */
 .stash-panel {
-  margin-bottom: 12px;
-  padding: 10px;
+  margin-bottom: 8px;
+  padding: 8px;
   background: var(--surface-sunken);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -7078,7 +7081,7 @@ textarea,
   align-items: center;
   gap: 8px;
   min-height: 26px;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 /* Reserves its line whether or not something is selected, so selecting an
@@ -7104,6 +7107,41 @@ textarea,
 
 .stash-sell-button:hover {
   border-color: rgb(224, 166, 60);
+}
+
+/* Merge: raised only when both halves of a pair carry an enchantment and one has
+   to be dropped. Sits above the hint so it never displaces the sell affordance. */
+.stash-merge-choice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 7px 8px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+}
+
+.stash-merge-button {
+  flex: none;
+  padding: 5px 11px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--accent, var(--border));
+  border-radius: var(--radius-xs);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.stash-merge-button.is-plain {
+  border-color: var(--border);
+  color: var(--text-dim);
+}
+
+.stash-merge-button:hover {
+  background: var(--surface-raised);
 }
 
 /* Look lives in the shared segmented-control block above; this is only the
@@ -7294,32 +7332,60 @@ textarea,
 }
 
 .roster-mgmt-card {
+  /* Slots sit UNDER the hero, so the card is a column again and the type stripe moves to the
+     top edge — a 3px left stripe on a 145px card reads as a crop mark, not an accent. */
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
   background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-left: 3px solid var(--border);
+  border-top: 3px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 8px 10px;
+  padding: 6px;
   box-shadow: var(--hairline), var(--elev-1);
 }
 
+/* Somewhere the carried item could actually land. Marked on the CARD, not just the slot,
+   because tapping the hero is the primary way to place one. */
+.roster-mgmt-card.can-take {
+  border-color: var(--accent);
+  border-top-color: var(--accent);
+}
+
+/* Identity beside the slots, not above them (2026-09-07). At 38px boxes a stacked card was
+   30px of head over a 38px row; at 48px the row alone is taller than the head, so stacking
+   spent ~36px a card on nothing. Six heroes and the bag no longer fit a phone otherwise. */
+/* A button now: a plain tap opens the hero sheet. Full card width, left-aligned, so the
+   target is the whole identity block rather than a corner glyph. */
 .roster-mgmt-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-  padding-right: 22px;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.roster-mgmt-ident {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .roster-mgmt-name {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-}
-
-.roster-mgmt-info-button {
-  position: absolute;
-  top: 8px;
-  right: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Icon boxes, not a column grid: an item is drawn and no longer written out, so a box
@@ -7329,6 +7395,26 @@ textarea,
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+/* Inside a squad card the row must seat three across in half a panel's width, which 48px boxes
+   cannot do on a 375px phone. A grid of three equal columns lets the boxes size themselves to
+   whatever the card has, and a Forge'd 4th/5th slot wraps to a second row of the same columns.
+   The bag keeps the full 48px — that is where items are read and dragged from. */
+.roster-mgmt-card .equip-slot-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.roster-mgmt-card .equip-slot-row .item-box {
+  width: auto;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.roster-mgmt-card .equip-slot-row .item-box-icon {
+  font-size: 20px;
 }
 
 /*
@@ -7341,7 +7427,11 @@ textarea,
  * more room than the names were worth, and the name is one tap away.
  */
 .item-box {
-  --item-box-size: 38px;
+  /* 38 -> 48px (2026-09-07, per user direction). 48 is the standard minimum touch target, and
+     the box now has to carry a tier pip band under the glyph as well as the glyph. */
+  --item-box-size: 48px;
+  --item-box-pip: 3px;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -7362,7 +7452,17 @@ textarea,
    sized to the text line it replaced so a row does not grow taller than it used to be. */
 .item-box.is-compact {
   --item-box-size: 22px;
+  --item-box-pip: 2px;
   border-left-width: 2px;
+}
+
+/* No room for a pip band at 22px, and the compare row prints the tier in words anyway. */
+.item-box.is-compact .item-box-pips {
+  display: none;
+}
+
+.item-box.is-compact .item-box-icon {
+  transform: none;
 }
 
 .item-box.filled {
@@ -7377,8 +7477,32 @@ textarea,
 }
 
 .item-box-icon {
-  font-size: calc(var(--item-box-size) * 0.52);
+  font-size: calc(var(--item-box-size) * 0.5);
   line-height: 1;
+  /* Lifted by half the pip band so the glyph stays optically centred in what is left. */
+  transform: translateY(calc(var(--item-box-pip) * -1));
+}
+
+/* Tier as a count of marks along the bottom edge: 1 for Common, 5 for Mythic. Colour says
+   two items differ; the COUNT says which is better, which is what an item name stopped
+   saying when the tier adjective was dropped. */
+.item-box-pips {
+  position: absolute;
+  right: 0;
+  bottom: 3px;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.item-box-pips i {
+  width: var(--item-box-pip);
+  height: var(--item-box-pip);
+  border-radius: 50%;
+  background: var(--rarity-color, var(--border));
+  box-shadow: 0 0 3px -1px var(--rarity-color, transparent);
 }
 
 .item-box.empty .item-box-icon {
@@ -18946,4 +19070,131 @@ textarea,
   100% {
     opacity: 1;
   }
+}
+
+
+/* --- Guild Hall: the Anvil and the Enchanter (docs/equipment.md §5) ------
+   Both are repeatable shop services, so this is a WORKING list of everything
+   owned rather than a shelf of offers: the player picks an item, not a slot. */
+
+.item-service-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.item-service-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-left-color: var(--tier-common);
+  border-radius: var(--radius-xs);
+}
+
+.item-service-row.tier-rare { border-left-color: var(--tier-rare); }
+.item-service-row.tier-epic { border-left-color: var(--tier-epic); }
+.item-service-row.tier-legendary { border-left-color: var(--tier-legendary); }
+.item-service-row.tier-mythic { border-left-color: var(--tier-mythic); }
+
+.item-service-glyph {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--text-dim);
+}
+
+.item-service-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  margin-right: auto;
+}
+
+.item-service-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-service-holder {
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+.item-service-button {
+  flex: none;
+  min-width: 48px;
+  padding: 5px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  color: rgb(224, 166, 60);
+  cursor: pointer;
+}
+
+.item-service-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.item-service-button:not(:disabled):hover {
+  border-color: rgb(224, 166, 60);
+}
+
+/* Fourteen enchants, one per type but Ancient — a grid so the whole set is one glance. */
+.enchant-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 5px;
+}
+
+.enchant-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+}
+
+.enchant-option:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.enchant-option.is-held {
+  border-color: var(--accent, var(--border));
+  opacity: 1;
+}
+
+.enchant-option-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.guild-hall-service-cancel {
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  color: var(--text-dim);
+  cursor: pointer;
 }

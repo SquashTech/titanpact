@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type DragEvent } from 'react';
 import type { StatKey } from '../../engine/content';
 import type { EquipmentDefinition, EquipmentLoadout, EquipmentRarity } from '../../run/equipment';
+import { RARITY_ORDER } from '../../run/equipment';
 import { StatGlyph, STAT_LABELS } from './StatBars';
 import { RelicGlyph } from './relicIcons';
 import { EquipmentFormGlyph } from './equipmentIcons';
@@ -91,6 +92,12 @@ interface ItemBoxProps {
   onLongPress?: () => void;
   /** Extra state classes: selected / drop-target / drag-over / target. */
   className?: string;
+  /**
+   * Overrides the delegated click sound (audio/uiSfx.ts). Pass "none" where the caller plays its
+   * own cue for what the tap DID — otherwise a move fires the default tap under the equip sound
+   * and the two smear together.
+   */
+  sfx?: string;
   draggable?: boolean;
   onDragStart?: (e: DragEvent) => void;
   onDragOver?: (e: DragEvent) => void;
@@ -114,6 +121,7 @@ export function ItemBox({
   onTap,
   onLongPress,
   className,
+  sfx,
   draggable,
   onDragStart,
   onDragOver,
@@ -127,6 +135,7 @@ export function ItemBox({
       className={`item-box${compact ? ' is-compact' : ''}${item ? ' filled' : ' empty'}${className ? ` ${className}` : ''}`}
       style={item ? ({ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties) : undefined}
       aria-label={item ? itemSummaryLine(item) : 'Empty item slot'}
+      data-sfx={sfx}
       title={item ? itemSummaryLine(item) : undefined}
       draggable={draggable}
       onDragStart={onDragStart}
@@ -136,7 +145,28 @@ export function ItemBox({
       {...longPress}
     >
       <EquipmentIcon item={item} className="item-box-icon" />
+      {item && <TierPips rarity={item.rarity} />}
     </button>
+  );
+}
+
+/**
+ * The item's tier as a count of marks, 1 for Common through 5 for Mythic (2026-09-07, per user
+ * direction). Rarity colour alone says "these two differ"; it does not say WHICH is better, and
+ * since item names dropped their tier adjective two Swords of different tiers are otherwise
+ * identical in a bag grid — which reads as a bug when they refuse to merge.
+ *
+ * Counted rather than coloured because a count is orderable without a legend. Derived from
+ * RARITY_ORDER so a sixth tier would need no second table.
+ */
+function TierPips({ rarity }: { rarity: EquipmentRarity }) {
+  const filled = RARITY_ORDER.indexOf(rarity) + 1;
+  return (
+    <span className="item-box-pips" aria-hidden="true">
+      {Array.from({ length: filled }, (_, i) => (
+        <i key={i} />
+      ))}
+    </span>
   );
 }
 

@@ -3,11 +3,26 @@
 
 import type { HeroDefinition, StatKey } from '../engine/content';
 import type { BrokenSeal, RunState, RosterEntry } from './state';
-import type { EquipmentDefinition } from './equipment';
-import { addToStash, equipItem, holdsItem, MAX_ITEM_SLOTS, removeFromStash, stashIsFull, unequipSlot } from './equipment';
+import type { EnchantmentId, EquipmentDefinition, EquipmentRarity } from './equipment';
+import {
+  actAllowsRarity,
+  addToStash,
+  canMergeItems,
+  equipItem,
+  equipmentIdFor,
+  holdsItem,
+  MAX_ITEM_SLOTS,
+  mergeEnchantChoices,
+  mergeResultId,
+  nextRarity,
+  parseEquipmentId,
+  removeFromStash,
+  stashIsFull,
+  unequipSlot,
+} from './equipment';
 import { generateMap } from './map';
 import { itemSlotsFor } from './progression';
-import { sellValueFor } from './shop';
+import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY, sellValueFor } from './shop';
 import { mergeStatMods } from './statMods';
 
 export class RunProgressError extends Error {}
@@ -124,6 +139,123 @@ export function unequipToStash(run: RunState, rosterId: string, index: number): 
   };
 }
 
+// --- The Anvil, the Enchanter and merging (docs/equipment.md §5) ---
+
+/**
+ * Where an item the player owns is sitting. Both services take one: requiring gear to come off
+ * before it could be upgraded would reintroduce exactly the friction this rework removes.
+ */
+export type ItemRef = { kind: 'stash'; index: number } | { kind: 'hero'; rosterId: string; index: number };
+
+function readItemRef(run: RunState, ref: ItemRef): string {
+  if (ref.kind === 'stash') {
+    const itemId = run.stash[ref.index];
+    if (!itemId) throw new RunProgressError(`The bag has nothing in slot ${ref.index}`);
+    return itemId;
+  }
+  const entry = run.roster.find((r) => r.rosterId === ref.rosterId);
+  if (!entry) throw new RunProgressError(`${ref.rosterId} is not on the roster`);
+  const itemId = entry.equipment[ref.index];
+  if (!itemId) throw new RunProgressError(`${ref.rosterId} has nothing in item slot ${ref.index}`);
+  return itemId;
+}
+
+/** Swaps one item for another in place. Never changes how many items exist, so no capacity check is owed. */
+function writeItemRef(run: RunState, ref: ItemRef, itemId: string): RunState {
+  if (ref.kind === 'stash') {
+    return { ...run, stash: run.stash.map((held, i) => (i === ref.index ? itemId : held)) };
+  }
+  return {
+    ...run,
+    roster: run.roster.map((r) =>
+      r.rosterId === ref.rosterId ? { ...r, equipment: r.equipment.map((held, i) => (i === ref.index ? itemId : held)) } : r
+    ),
+  };
+}
+
+function spend(run: RunState, cost: number, what: string): RunState {
+  if (run.gold < cost) throw new RunProgressError(`${what} costs ${cost} gold, only ${run.gold} available`);
+  return { ...run, gold: run.gold - cost };
+}
+
+/** What the Anvil would charge, or null if this item cannot be lifted right now. */
+export function anvilQuote(
+  run: RunState,
+  itemId: string,
+  equipmentLookup: Record<string, EquipmentDefinition>
+): { targetId: string; targetRarity: EquipmentRarity; cost: number } | null {
+  const item = equipmentLookup[itemId];
+  if (!item || item.familyId === undefined) return null; // a Unique has no ladder
+  const target = nextRarity(item.rarity);
+  if (target === null || !actAllowsRarity(run.actNumber, target)) return null;
+  return {
+    targetId: equipmentIdFor(item.familyId, target, item.enchantId),
+    targetRarity: target,
+    cost: ANVIL_PRICE_BY_TARGET[target],
+  };
+}
+
+/** Lifts one owned item a tier for gold, keeping its family and its enchant. */
+export function anvilUpgrade(
+  run: RunState,
+  ref: ItemRef,
+  equipmentLookup: Record<string, EquipmentDefinition>
+): RunState {
+  const itemId = readItemRef(run, ref);
+  const quote = anvilQuote(run, itemId, equipmentLookup);
+  if (!quote) throw new RunProgressError(`${itemId} cannot be upgraded here`);
+  if (!equipmentLookup[quote.targetId]) throw new RunProgressError(`Unknown equipment ${quote.targetId}`);
+  return writeItemRef(spend(run, quote.cost, 'That upgrade'), ref, quote.targetId);
+}
+
+/** Binds an element to one owned item, overwriting any enchant already on it. One enchant per item, always. */
+export function enchantItem(
+  run: RunState,
+  ref: ItemRef,
+  enchantId: EnchantmentId,
+  equipmentLookup: Record<string, EquipmentDefinition>
+): RunState {
+  const itemId = readItemRef(run, ref);
+  const item = equipmentLookup[itemId];
+  if (!item) throw new RunProgressError(`Unknown equipment ${itemId}`);
+  if (item.enchantId === enchantId) throw new RunProgressError(`${item.name} already carries that enchantment`);
+  const parsed = parseEquipmentId(itemId);
+  const targetId = equipmentIdFor(parsed.base, parsed.rarity, enchantId);
+  if (!equipmentLookup[targetId]) throw new RunProgressError(`Unknown equipment ${targetId}`);
+  return writeItemRef(spend(run, ENCHANT_PRICE_BY_RARITY[item.rarity], 'That enchantment'), ref, targetId);
+}
+
+/**
+ * Two carried items of the same family and tier become one of the next tier, free. Bag-only: the
+ * pair has to be loose for the player to have chosen it, and a merge is net -1 so it can never
+ * overflow. `keepEnchantId` is the player's pick among `mergeEnchantChoices`.
+ */
+export function mergeFromStash(
+  run: RunState,
+  indexA: number,
+  indexB: number,
+  equipmentLookup: Record<string, EquipmentDefinition>,
+  keepEnchantId?: EnchantmentId
+): RunState {
+  if (indexA === indexB) throw new RunProgressError('A merge needs two different items');
+  const a = equipmentLookup[readItemRef(run, { kind: 'stash', index: indexA })];
+  const b = equipmentLookup[readItemRef(run, { kind: 'stash', index: indexB })];
+  if (!a || !b) throw new RunProgressError('Unknown equipment');
+  if (!canMergeItems(a, b)) throw new RunProgressError(`${a.name} and ${b.name} do not merge`);
+
+  const up = nextRarity(a.rarity)!;
+  if (!actAllowsRarity(run.actNumber, up)) throw new RunProgressError(`${up} is beyond this act`);
+  if (keepEnchantId !== undefined && !mergeEnchantChoices(a, b).includes(keepEnchantId)) {
+    throw new RunProgressError(`Neither item carries that enchantment`);
+  }
+  const resultId = mergeResultId(a, keepEnchantId);
+  if (!resultId || !equipmentLookup[resultId]) throw new RunProgressError('That merge has no result');
+
+  // Drop both inputs, then add the result — never the other way round, or a full bag would refuse it.
+  const remaining = run.stash.filter((_, i) => i !== indexA && i !== indexB);
+  return { ...run, stash: [...remaining, resultId] };
+}
+
 /** Sells one carried item at `sellValueFor`. The bag is the only place gear is sold from — equipped gear comes off first. */
 export function sellFromStash(run: RunState, index: number, equipmentLookup: Record<string, EquipmentDefinition>): RunState {
   const itemId = run.stash[index];
@@ -168,8 +300,6 @@ export function equipToRoster(
   if (!equipmentLookup[itemId]) throw new RunProgressError(`Unknown equipment ${itemId}`);
   const hero = heroLookup[entry.heroId];
   if (!hero) throw new RunProgressError(`Unknown hero ${entry.heroId}`);
-  if (holdsItem(entry.equipment, itemId)) throw new RunProgressError(`${rosterId} already holds ${itemId}`);
-
   const capacity = itemSlotsFor(hero, entry);
   const full = entry.equipment.length >= capacity;
   if (full && replaceIndex === undefined) throw new RunProgressError(`${rosterId} has no free item slot`);
@@ -177,6 +307,12 @@ export function equipToRoster(
   if (target !== undefined && (target < 0 || target >= entry.equipment.length)) {
     throw new RunProgressError(`${rosterId} has no item slot ${target}`);
   }
+
+  // The one-per-family rule is measured against what the hero will STILL be holding, so a swap is
+  // never blocked by the item it replaces. Upgrading an Iron Sword to an Etched one — what the
+  // Anvil, the Enchanter and a merge all produce — is a same-family replacement every time.
+  const keeping = target === undefined ? entry.equipment : entry.equipment.filter((_, i) => i !== target);
+  if (holdsItem(keeping, itemId)) throw new RunProgressError(`${rosterId} already holds ${itemId}`);
 
   const bumpedItemId = target === undefined ? null : entry.equipment[target];
   if (bumpedItemId && stashIsFull(run.stash)) throw new RunProgressError(`The bag is full`);

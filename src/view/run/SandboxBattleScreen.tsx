@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
-import { equipment } from '../../data/equipment';
+import { equipment, EQUIPMENT_DROP_POOL, UNIQUE_EQUIPMENT } from '../../data/equipment';
 import { relics } from '../../data/relics';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition, StatKey } from '../../engine/content';
@@ -30,7 +30,7 @@ type SideKey = 'A' | 'B';
 const HERO_LIST = Object.values(heroes).sort((a, b) => a.name.localeCompare(b.name));
 
 // Uncategorised, so every slot picker offers the whole catalog.
-const EQUIPMENT_LIST: EquipmentDefinition[] = Object.values(equipment);
+const EQUIPMENT_LIST: EquipmentDefinition[] = [...EQUIPMENT_DROP_POOL, ...UNIQUE_EQUIPMENT];
 
 /**
  * Sets slot `index` of a sandbox loadout. The list is compact, so a select on an empty slot

@@ -6,8 +6,12 @@ import { createRunState, createRosterEntry, addRosterEntry, type RunState } from
 import { generateMap } from '../src/run/map';
 import { MAX_ITEM_SLOTS, STASH_CAPACITY } from '../src/run/equipment';
 import { itemSlotsFor } from '../src/run/progression';
-import { sellValueFor } from '../src/run/shop';
+import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY, sellValueFor } from '../src/run/shop';
 import {
+  anvilQuote,
+  anvilUpgrade,
+  enchantItem,
+  mergeFromStash,
   reachableNodeIds,
   advanceToNode,
   grantCurrencyReward,
@@ -106,38 +110,38 @@ test('runProgress: grantRelicReward appends a relic id, duplicates allowed', () 
 
 test('runProgress: equipToRoster fills a free slot, and nothing reaches the bag', () => {
   const run = seedRoster(['cinderKnight']);
-  const next = equipToRoster(run, 'cinderKnight', 'ironBlade', equipment, heroes);
-  assert.deepStrictEqual(next.roster[0].equipment, ['ironBlade']);
+  const next = equipToRoster(run, 'cinderKnight', 'sword.common', equipment, heroes);
+  assert.deepStrictEqual(next.roster[0].equipment, ['sword.common']);
   assert.deepStrictEqual(next.stash, []);
 });
 
 test('runProgress: equipToRoster on a full hero needs a replaceIndex, and what it displaces lands in the bag', () => {
-  const run = gearedRun('cinderKnight', ['ironBlade']);
+  const run = gearedRun('cinderKnight', ['sword.common']);
   // cinderKnight authors no `itemSlots`, so BASE_ITEM_SLOTS applies and one item fills it.
-  assert.throws(() => equipToRoster(run, 'cinderKnight', 'dagger', equipment, heroes), RunProgressError);
+  assert.throws(() => equipToRoster(run, 'cinderKnight', 'dagger.common', equipment, heroes), RunProgressError);
 
-  const next = equipToRoster(run, 'cinderKnight', 'dagger', equipment, heroes, 0);
-  assert.deepStrictEqual(next.roster[0].equipment, ['dagger']);
-  assert.deepStrictEqual(next.stash, ['ironBlade']);
+  const next = equipToRoster(run, 'cinderKnight', 'dagger.common', equipment, heroes, 0);
+  assert.deepStrictEqual(next.roster[0].equipment, ['dagger.common']);
+  assert.deepStrictEqual(next.stash, ['sword.common']);
 });
 
 test('runProgress: a full bag refuses the swap, but not an equip into a free slot', () => {
-  const full = Array.from({ length: STASH_CAPACITY }, () => 'dagger');
-  const swap = { ...gearedRun('cinderKnight', ['ironBlade']), stash: full };
-  assert.throws(() => equipToRoster(swap, 'cinderKnight', 'torch', equipment, heroes, 0), RunProgressError);
+  const full = Array.from({ length: STASH_CAPACITY }, () => 'dagger.common');
+  const swap = { ...gearedRun('cinderKnight', ['sword.common']), stash: full };
+  assert.throws(() => equipToRoster(swap, 'cinderKnight', 'sword.common.blazing', equipment, heroes, 0), RunProgressError);
 
   // Nothing is displaced here, so the bag's state is none of this equip's business.
   const free = { ...seedRoster(['cinderKnight']), stash: full };
-  assert.deepStrictEqual(equipToRoster(free, 'cinderKnight', 'ironBlade', equipment, heroes).roster[0].equipment, ['ironBlade']);
+  assert.deepStrictEqual(equipToRoster(free, 'cinderKnight', 'sword.common', equipment, heroes).roster[0].equipment, ['sword.common']);
 });
 
 test('runProgress: a Forge grant opens a slot, and the next item lands in it without displacing anything', () => {
-  let run = gearedRun('cinderKnight', ['ironBlade']);
+  let run = gearedRun('cinderKnight', ['sword.common']);
   run = grantItemSlot(run, 'cinderKnight', heroes);
   assert.strictEqual(run.roster[0].bonusItemSlots, 1);
 
-  const next = equipToRoster(run, 'cinderKnight', 'dagger', equipment, heroes);
-  assert.deepStrictEqual(next.roster[0].equipment, ['ironBlade', 'dagger']);
+  const next = equipToRoster(run, 'cinderKnight', 'dagger.common', equipment, heroes);
+  assert.deepStrictEqual(next.roster[0].equipment, ['sword.common', 'dagger.common']);
   assert.deepStrictEqual(next.stash, []);
 });
 
@@ -150,30 +154,48 @@ test('runProgress: grantItemSlot refuses a hero already at the cap', () => {
   assert.throws(() => grantItemSlot(run, 'cinderKnight', heroes), RunProgressError);
 });
 
-test('runProgress: equipToRoster rejects an unknown rosterId, an unknown item, and a duplicate', () => {
-  const run = gearedRun('cinderKnight', ['ironBlade']);
-  assert.throws(() => equipToRoster(run, 'nonexistent', 'ironBlade', equipment, heroes), RunProgressError);
+test('runProgress: equipToRoster rejects an unknown rosterId and an unknown item', () => {
+  const run = gearedRun('cinderKnight', ['sword.common']);
+  assert.throws(() => equipToRoster(run, 'nonexistent', 'sword.common', equipment, heroes), RunProgressError);
   assert.throws(() => equipToRoster(run, 'cinderKnight', 'notAnItem', equipment, heroes), RunProgressError);
-  // A hero never holds two copies, even over a slot it would otherwise be free to fill.
-  assert.throws(() => equipToRoster(run, 'cinderKnight', 'ironBlade', equipment, heroes, 0), RunProgressError);
+});
+
+test('runProgress: one item per family — but a swap is never blocked by what it replaces', () => {
+  // Two slots, so a same-family item has a free slot to be refused from.
+  const base = gearedRun('cinderKnight', ['sword.common']);
+  const roomy = { ...base, roster: base.roster.map((r) => ({ ...r, bonusItemSlots: r.bonusItemSlots + 1 })) };
+
+  // Every tier of a family grants the same Awakening, so a second Sword would count-stack it.
+  assert.throws(() => equipToRoster(roomy, 'cinderKnight', 'sword.mythic', equipment, heroes), RunProgressError);
+  assert.throws(() => equipToRoster(roomy, 'cinderKnight', 'sword.common.blazing', equipment, heroes), RunProgressError);
+  // A different family is fine.
+  assert.deepStrictEqual(
+    equipToRoster(roomy, 'cinderKnight', 'spear.common', equipment, heroes).roster[0].equipment,
+    ['sword.common', 'spear.common']
+  );
+
+  // ...and replacing the Sword with a better Sword is the Anvil/Enchanter/merge case, always legal.
+  const upgraded = equipToRoster(base, 'cinderKnight', 'sword.epic', equipment, heroes, 0);
+  assert.deepStrictEqual(upgraded.roster[0].equipment, ['sword.epic']);
+  assert.deepStrictEqual(upgraded.stash, ['sword.common']);
 });
 
 test("runProgress: moveEquipment hands an item to a hero with a free slot, displacing nothing", () => {
-  let run = gearedRun('cinderKnight', ['ironBlade'], 'tidecaller');
+  let run = gearedRun('cinderKnight', ['sword.common'], 'tidecaller');
   run = grantItemSlot(run, 'tidecaller', heroes);
 
   const { run: next, displacedItemId } = moveEquipment(run, 'cinderKnight', 0, 'tidecaller', heroes);
   assert.deepStrictEqual(next.roster[0].equipment, []);
-  assert.deepStrictEqual(next.roster[1].equipment, ['ironBlade']);
+  assert.deepStrictEqual(next.roster[1].equipment, ['sword.common']);
   assert.strictEqual(displacedItemId, null);
 });
 
 test('runProgress: moveEquipment trades when the destination is full — the two items change places', () => {
-  const run = gearedRun('cinderKnight', ['ironBlade'], 'tidecaller', ['dagger']);
+  const run = gearedRun('cinderKnight', ['sword.common'], 'tidecaller', ['dagger.common']);
   const { run: next, displacedItemId } = moveEquipment(run, 'cinderKnight', 0, 'tidecaller', heroes, 0);
-  assert.deepStrictEqual(next.roster[0].equipment, ['dagger']);
-  assert.deepStrictEqual(next.roster[1].equipment, ['ironBlade']);
-  assert.strictEqual(displacedItemId, 'dagger');
+  assert.deepStrictEqual(next.roster[0].equipment, ['dagger.common']);
+  assert.deepStrictEqual(next.roster[1].equipment, ['sword.common']);
+  assert.strictEqual(displacedItemId, 'dagger.common');
 });
 
 test('runProgress: moveEquipment rejects an unknown roster id, an empty source slot, and a duplicate destination', () => {
@@ -181,12 +203,12 @@ test('runProgress: moveEquipment rejects an unknown roster id, an empty source s
   assert.throws(() => moveEquipment(empty, 'cinderKnight', 0, 'nonexistent', heroes), RunProgressError);
   assert.throws(() => moveEquipment(empty, 'cinderKnight', 0, 'tidecaller', heroes), RunProgressError);
 
-  const both = gearedRun('cinderKnight', ['ironBlade'], 'tidecaller', ['ironBlade']);
+  const both = gearedRun('cinderKnight', ['sword.common'], 'tidecaller', ['sword.common']);
   assert.throws(() => moveEquipment(both, 'cinderKnight', 0, 'tidecaller', heroes, 0), RunProgressError);
 });
 
 test('runProgress: trashEquipment clears the slot for good', () => {
-  const run = gearedRun('cinderKnight', ['ironBlade']);
+  const run = gearedRun('cinderKnight', ['sword.common']);
   const next = trashEquipment(run, 'cinderKnight', 0);
   assert.deepStrictEqual(next.roster[0].equipment, []);
 });
@@ -200,48 +222,140 @@ test('runProgress: trashEquipment rejects an empty slot', () => {
 
 test('runProgress: stashItem carries an item, and a full bag refuses the next one', () => {
   const run = seedRoster(['cinderKnight']);
-  const one = stashItem(run, 'ironBlade', equipment);
-  assert.deepStrictEqual(one.stash, ['ironBlade']);
+  const one = stashItem(run, 'sword.common', equipment);
+  assert.deepStrictEqual(one.stash, ['sword.common']);
   // Two copies of one item is legal in the bag — one copy per HERO is the rule.
-  assert.deepStrictEqual(stashItem(one, 'ironBlade', equipment).stash, ['ironBlade', 'ironBlade']);
+  assert.deepStrictEqual(stashItem(one, 'sword.common', equipment).stash, ['sword.common', 'sword.common']);
   assert.throws(() => stashItem(one, 'notAnItem', equipment), RunProgressError);
 
-  const full = { ...run, stash: Array.from({ length: STASH_CAPACITY }, () => 'dagger') };
-  assert.throws(() => stashItem(full, 'ironBlade', equipment), RunProgressError);
+  const full = { ...run, stash: Array.from({ length: STASH_CAPACITY }, () => 'dagger.common') };
+  assert.throws(() => stashItem(full, 'sword.common', equipment), RunProgressError);
 });
 
 test('runProgress: unequipToStash takes gear off, and a full bag is the one thing that refuses it', () => {
-  const run = gearedRun('cinderKnight', ['ironBlade']);
+  const run = gearedRun('cinderKnight', ['sword.common']);
   const next = unequipToStash(run, 'cinderKnight', 0);
   assert.deepStrictEqual(next.roster[0].equipment, []);
-  assert.deepStrictEqual(next.stash, ['ironBlade']);
+  assert.deepStrictEqual(next.stash, ['sword.common']);
 
   assert.throws(() => unequipToStash(run, 'cinderKnight', 1), RunProgressError);
-  const full = { ...run, stash: Array.from({ length: STASH_CAPACITY }, () => 'dagger') };
+  const full = { ...run, stash: Array.from({ length: STASH_CAPACITY }, () => 'dagger.common') };
   assert.throws(() => unequipToStash(full, 'cinderKnight', 0), RunProgressError);
 });
 
 test('runProgress: equipFromStash seats a carried item, and a swap trades net-zero against the bag', () => {
-  const free = { ...seedRoster(['cinderKnight']), stash: ['ironBlade'] };
+  const free = { ...seedRoster(['cinderKnight']), stash: ['sword.common'] };
   const seated = equipFromStash(free, 0, 'cinderKnight', equipment, heroes);
-  assert.deepStrictEqual(seated.roster[0].equipment, ['ironBlade']);
+  assert.deepStrictEqual(seated.roster[0].equipment, ['sword.common']);
   assert.deepStrictEqual(seated.stash, []);
 
   // A swap cannot overflow the bag however full it is: one item out, one back in.
-  const brimming = { ...gearedRun('cinderKnight', ['ironBlade']), stash: [...Array.from({ length: STASH_CAPACITY - 1 }, () => 'dagger'), 'torch'] };
+  const brimming = { ...gearedRun('cinderKnight', ['sword.common']), stash: [...Array.from({ length: STASH_CAPACITY - 1 }, () => 'dagger.common'), 'sword.common.blazing'] };
   const swapped = equipFromStash(brimming, STASH_CAPACITY - 1, 'cinderKnight', equipment, heroes, 0);
-  assert.deepStrictEqual(swapped.roster[0].equipment, ['torch']);
+  assert.deepStrictEqual(swapped.roster[0].equipment, ['sword.common.blazing']);
   assert.strictEqual(swapped.stash.length, STASH_CAPACITY);
-  assert.ok(swapped.stash.includes('ironBlade'));
+  assert.ok(swapped.stash.includes('sword.common'));
 
   assert.throws(() => equipFromStash(free, 3, 'cinderKnight', equipment, heroes), RunProgressError);
 });
 
 test('runProgress: sellFromStash pays out and drops the item', () => {
-  const run = { ...seedRoster(['cinderKnight']), stash: ['ironBlade', 'dagger'] };
+  const run = { ...seedRoster(['cinderKnight']), stash: ['sword.common', 'dagger.common'] };
   const next = sellFromStash(run, 0, equipment);
-  assert.deepStrictEqual(next.stash, ['dagger']);
-  assert.strictEqual(next.gold, sellValueFor(equipment.ironBlade));
+  assert.deepStrictEqual(next.stash, ['dagger.common']);
+  assert.strictEqual(next.gold, sellValueFor(equipment['sword.common']));
 
   assert.throws(() => sellFromStash(run, 7, equipment), RunProgressError);
+});
+
+// --- The Anvil, the Enchanter and merging (docs/equipment.md §5) ---
+
+/** A run in `actNumber` with `gold`, carrying `stash`. Act matters: the window caps every path. */
+function shopRun(gold: number, stash: string[], actNumber = 3): RunState {
+  return { ...seedRoster(['cinderKnight']), gold, stash, actNumber };
+}
+
+test('runProgress: the Anvil lifts an item a tier for gold, keeping its family and its enchant', () => {
+  const run = shopRun(200, ['spear.rare.blazing']);
+  const quote = anvilQuote(run, 'spear.rare.blazing', equipment)!;
+  assert.strictEqual(quote.targetId, 'spear.epic.blazing');
+  assert.strictEqual(quote.cost, ANVIL_PRICE_BY_TARGET.epic);
+
+  const next = anvilUpgrade(run, { kind: 'stash', index: 0 }, equipment);
+  assert.deepStrictEqual(next.stash, ['spear.epic.blazing']);
+  assert.strictEqual(next.gold, 200 - ANVIL_PRICE_BY_TARGET.epic);
+});
+
+test('runProgress: the Anvil works on equipped gear too, without taking it off first', () => {
+  // Requiring an unequip would reintroduce exactly the friction the rework removes — and the
+  // swap is same-family, which equipToRoster's duplicate rule has to permit.
+  const base = gearedRun('cinderKnight', ['sword.rare']);
+  const run = { ...base, gold: 200, actNumber: 3 };
+  const next = anvilUpgrade(run, { kind: 'hero', rosterId: 'cinderKnight', index: 0 }, equipment);
+  assert.deepStrictEqual(next.roster[0].equipment, ['sword.epic']);
+  assert.deepStrictEqual(next.stash, [], 'an in-place upgrade displaces nothing');
+});
+
+test('runProgress: the Anvil is refused without the gold, above Mythic, and on a Unique', () => {
+  assert.throws(() => anvilUpgrade(shopRun(1, ['spear.rare']), { kind: 'stash', index: 0 }, equipment), RunProgressError);
+  assert.strictEqual(anvilQuote(shopRun(999, []), 'spear.mythic', equipment), null, 'nothing above Mythic');
+  assert.strictEqual(anvilQuote(shopRun(999, []), 'worldbreaker', equipment), null, 'a Unique has no ladder');
+});
+
+test("runProgress: the act window caps the Anvil, not just drops", () => {
+  // With a purchasable Anvil a rich Act-1 player would otherwise simply buy past the window.
+  const act1 = shopRun(999, ['spear.epic'], 1);
+  assert.strictEqual(anvilQuote(act1, 'spear.epic', equipment), null, 'Act 1 reaches Epic and no further');
+  assert.throws(() => anvilUpgrade(act1, { kind: 'stash', index: 0 }, equipment), RunProgressError);
+  // Act 3 opens Mythic, so the same item is liftable there.
+  assert.ok(anvilQuote(shopRun(999, ['spear.epic'], 3), 'spear.epic', equipment));
+});
+
+test('runProgress: the Enchanter binds an element, and overwrites rather than stacking', () => {
+  const run = shopRun(300, ['spear.epic']);
+  const enchanted = enchantItem(run, { kind: 'stash', index: 0 }, 'blazing', equipment);
+  assert.deepStrictEqual(enchanted.stash, ['spear.epic.blazing']);
+  assert.strictEqual(enchanted.gold, 300 - ENCHANT_PRICE_BY_RARITY.epic);
+
+  // One enchant per item, always: re-enchanting replaces the one it carries.
+  const rebound = enchantItem(enchanted, { kind: 'stash', index: 0 }, 'tidal', equipment);
+  assert.deepStrictEqual(rebound.stash, ['spear.epic.tidal']);
+  assert.throws(() => enchantItem(rebound, { kind: 'stash', index: 0 }, 'tidal', equipment), RunProgressError);
+});
+
+test('runProgress: a Unique is enchantable even though it cannot be upgraded', () => {
+  const run = shopRun(300, ['worldbreaker']);
+  assert.deepStrictEqual(enchantItem(run, { kind: 'stash', index: 0 }, 'feral', equipment).stash, ['worldbreaker.feral']);
+});
+
+test('runProgress: two carried duplicates merge up for free, and the bag shrinks by one', () => {
+  const run = shopRun(0, ['spear.rare', 'sword.common', 'spear.rare']);
+  const merged = mergeFromStash(run, 0, 2, equipment);
+  assert.deepStrictEqual(merged.stash, ['sword.common', 'spear.epic']);
+  assert.strictEqual(merged.gold, 0, 'a merge is free — that is what makes it the efficient route');
+});
+
+test('runProgress: a merge ignores enchants for eligibility and lets the player keep one', () => {
+  const run = shopRun(0, ['spear.rare.blazing', 'spear.rare.tidal']);
+  assert.deepStrictEqual(mergeFromStash(run, 0, 1, equipment, 'tidal').stash, ['spear.epic.tidal']);
+  assert.deepStrictEqual(mergeFromStash(run, 0, 1, equipment).stash, ['spear.epic'], 'declining both is legal');
+  // ...but only from what the two inputs actually carried.
+  assert.throws(() => mergeFromStash(run, 0, 1, equipment, 'feral'), RunProgressError);
+});
+
+test('runProgress: a merge needs two distinct matching items, and obeys the act window', () => {
+  const mixed = shopRun(0, ['spear.rare', 'sword.rare']);
+  assert.throws(() => mergeFromStash(mixed, 0, 1, equipment), RunProgressError, 'different families');
+  assert.throws(() => mergeFromStash(mixed, 0, 0, equipment), RunProgressError, 'one item is not a pair');
+
+  const act1 = shopRun(0, ['spear.epic', 'spear.epic'], 1);
+  assert.throws(() => mergeFromStash(act1, 0, 1, equipment), RunProgressError, 'Act 1 stops at Epic');
+  assert.deepStrictEqual(mergeFromStash({ ...act1, actNumber: 2 }, 0, 1, equipment).stash, ['spear.legendary']);
+});
+
+test('runProgress: a merge can never overflow the bag, even at capacity', () => {
+  // Net -1: both inputs leave before the result arrives.
+  const full = shopRun(0, ['spear.rare', 'spear.rare', ...Array.from({ length: STASH_CAPACITY - 2 }, () => 'sword.common')]);
+  assert.strictEqual(full.stash.length, STASH_CAPACITY);
+  assert.strictEqual(mergeFromStash(full, 0, 1, equipment).stash.length, STASH_CAPACITY - 1);
 });

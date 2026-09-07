@@ -69,9 +69,9 @@ test('run: terminating a roster entry strips its equipment (the entry, and its l
   let run = seedRoster(['cinderKnight']);
   run = {
     ...run,
-    roster: run.roster.map((r) => (r.rosterId === 'cinderKnight' ? { ...r, equipment: equipItem(r.equipment, equipment.ironBlade.id) } : r)),
+    roster: run.roster.map((r) => (r.rosterId === 'cinderKnight' ? { ...r, equipment: equipItem(r.equipment, equipment['sword.common'].id) } : r)),
   };
-  assert.strictEqual(run.roster[0].equipment[0], 'ironBlade');
+  assert.strictEqual(run.roster[0].equipment[0], 'sword.common');
 
   const afterTermination = terminateRosterEntry(run, 'cinderKnight');
   assert.strictEqual(afterTermination.roster.length, 0);
@@ -167,7 +167,7 @@ test('buildCombatState: equipped item stat grants raise the combatant\'s effecti
   let run = seedRoster(['cinderKnight', 'tidecaller']);
   run = {
     ...run,
-    roster: run.roster.map((r) => (r.rosterId === 'cinderKnight' ? { ...r, equipment: equipItem(r.equipment, equipment.ironBlade.id) } : r)),
+    roster: run.roster.map((r) => (r.rosterId === 'cinderKnight' ? { ...r, equipment: equipItem(r.equipment, equipment['sword.common'].id) } : r)),
   };
   const squad = pickSquad(run.roster, ['cinderKnight', 'tidecaller']);
   const aiRun = seedRoster(['ironWarden', 'wildOracle']);
@@ -181,7 +181,7 @@ test('buildCombatState: equipped item stat grants raise the combatant\'s effecti
   const combatant = state.combatants['A:cinderKnight'];
   assert.ok(combatant, 'expected a combatant keyed A:cinderKnight');
   const effectiveAttack = getEffectiveStat(heroes.cinderKnight, combatant, 'attack');
-  assert.strictEqual(effectiveAttack, heroes.cinderKnight.baseStats.attack + equipment.ironBlade.statGrants.attack!);
+  assert.strictEqual(effectiveAttack, heroes.cinderKnight.baseStats.attack + equipment['sword.common'].statGrants.attack!);
 });
 
 test('buildCombatState: same rosterId on both sides does not collide (side-prefixed combatant ids)', () => {

@@ -41,7 +41,7 @@ import { enemies, factions, basicEnemiesOf, finaleEnemies, ENDBRINGER_ID } from 
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
 import { PactSealScreen } from '../view/run/PactSealScreen';
 import { TitanWakeScreen } from '../view/run/TitanWakeScreen';
-import { equipment } from '../data/equipment';
+import { equipment, EQUIPMENT_DROP_POOL, rollEquipmentDrops } from '../data/equipment';
 import {
   equipItem,
   pickWeightedEquipment,
@@ -185,7 +185,9 @@ const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'runFailed',
 ]);
 
-const EQUIPMENT_POOL = Object.values(equipment);
+// The Guild Hall shelf and every drop roll the BASE pool; enchanted items are reached by
+// rolling an enchant onto a drop, never by sitting in the pool (rollEquipmentDrops).
+const EQUIPMENT_POOL = EQUIPMENT_DROP_POOL;
 
 /** Throwaway (unseeded) seed for the entry-point rolls in this file. */
 function randomSeed(): number {
@@ -244,11 +246,13 @@ function shuffled<T>(items: readonly T[]): T[] {
 function createLevel4TestRun(): RunState {
   const base = addHeroes(createRunState(1, 999), Object.keys(heroes).slice(0, ROSTER_CAP), 4);
   // Some worn, some carried: Manage Roster's gear half is only exercisable with both.
-  const worn = ['ironBlade', 'apprenticeWand', 'torch'];
+  const worn = ['sword.common', 'staff.common', 'sword.common.blazing'];
   return {
     ...base,
     roster: base.roster.map((entry, i) => (worn[i] ? { ...entry, equipment: equipItem(entry.equipment, worn[i]) } : entry)),
-    stash: ['dagger', 'huntersBow', 'magicBook'],
+    // Two mergeable pairs: a plain one, and one where both halves are enchanted so the
+    // keep-which-enchant choice has somewhere to fire.
+    stash: ['dagger.common', 'dagger.common', 'bow.common', 'spear.rare.blazing', 'spear.rare.tidal'],
     map: generateMap(randomSeed()),
     locationIds: generateItinerary(randomSeed()),
   };
@@ -257,7 +261,7 @@ function createLevel4TestRun(): RunState {
 /** TEST FIXTURE — arms the opener's Goblin Skulker with a Dagger so the equip-inspect UI has an item from turn one. */
 function equipTestDagger(encounter: Encounter): Encounter {
   const roster = encounter.run.roster.map((entry) =>
-    entry.heroId === 'goblinSkulker' ? { ...entry, equipment: equipItem(entry.equipment, equipment.dagger.id) } : entry
+    entry.heroId === 'goblinSkulker' ? { ...entry, equipment: equipItem(entry.equipment, equipment['dagger.common'].id) } : entry
   );
   return { ...encounter, run: { ...encounter.run, roster } };
 }
@@ -298,7 +302,7 @@ const LOOT_SOURCE: Record<EncounterMapNodeType, LootSource> = {
 function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): EquipmentDefinition | null {
   if (Math.random() >= EQUIPMENT_DROP_CHANCE[nodeType]) return null;
   const weights = rarityWeightsFor(actNumber, LOOT_SOURCE[nodeType]);
-  return pickWeightedEquipment(EQUIPMENT_POOL, 1, weights)[0] ?? null;
+  return rollEquipmentDrops(1, weights)[0] ?? null;
 }
 
 /**

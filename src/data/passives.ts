@@ -152,6 +152,83 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: 'speed', amount: 10 },
     },
   },
+
+  // --- 2026-09-07: the six family Awakenings the item rework needed (docs/equipment.md §2).
+  // All flat — the tier buys stats, the family buys the effect — so none of them needs the
+  // per-item passive magnitude an earlier draft proposed, and grantsPassiveIds stays a plain
+  // string array. Poison rather than Bleed in both DoT entries because Bleed is `shape:
+  // 'boolean'` and carries no magnitude to author.
+
+  impale: {
+    id: 'impale',
+    name: 'Impale',
+    // The Spear's Awakening. Sunder's trigger with a DoT payload instead of a debuff, so the two
+    // Attack families that both fire on landing a hit still read differently.
+    description: "Whenever this hero lands an attack, its target suffers Poison 5.",
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'applyStatus', target: 'triggerTarget', statusId: 'Poison', magnitude: 5, duration: 3 },
+    },
+  },
+  marksman: {
+    id: 'marksman',
+    name: 'Marksman',
+    // The Bow's. Unconditional because PassiveDamageModifier is evaluated against { moveType }
+    // alone — there is no damage-CATEGORY condition, so "bonus with physical moves" is unsayable.
+    // 10% is half the typed passives' 20%, which is what buys the loss of the type restriction.
+    description: 'Deals 10% bonus damage.',
+    damageModifier: { amount: 0.1 },
+  },
+  overchannel: {
+    id: 'overchannel',
+    name: 'Overchannel',
+    // The Staff's. manaGrant is UNCAPPED (docs/mana.md "Overflow"), so a hero that keeps swinging
+    // banks past its pool — the Int family's answer to mana being the primary balance lever.
+    description: 'Whenever this hero lands an attack, it gains 10 Mana, past its pool.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self', subjectRole: 'source' },
+      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'flat', value: 10 } },
+    },
+  },
+  barbs: {
+    id: 'barbs',
+    name: 'Barbs',
+    // The Leathers'. A true counter-attack is not expressible — there is no `damage` effect, and a
+    // target-role DamageDealt cannot reach its attacker (triggerTarget is the DEFENDER whatever the
+    // condition read) — so this hits activeEnemies instead. Lower than Impale's 5: it lands on both.
+    description: 'Whenever this hero takes damage, enemies suffer Poison 3.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'activeEnemies', statusId: 'Poison', magnitude: 3, duration: 3 },
+    },
+  },
+  manaWard: {
+    id: 'manaWard',
+    name: 'Mana Ward',
+    // The Robe's. Warden's Vigil's shape paid in mana instead of HP, which is why the Robe and the
+    // Plate can share a trigger without sharing an identity.
+    description: 'Whenever this hero takes damage, it gains Mana equal to 15% of it, past its pool.',
+    reactive: {
+      hook: 'DamageDealt',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'manaGrant', target: 'self', amount: { kind: 'matchTriggerAmount', multiplier: 0.15 } },
+    },
+  },
+  attunement: {
+    id: 'attunement',
+    name: 'Attunement',
+    // The Ring's. Arcane Reservoir pointed at the partner instead of the owner — 'ally' is the
+    // ACTIVE partner and never the owner, so this grants nothing while the hero stands alone.
+    description: 'When this hero enters the battlefield, its partner gains 20 Mana, past its pool.',
+    reactive: {
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'manaGrant', target: 'ally', amount: { kind: 'flat', value: 20 } },
+    },
+  },
 };
 
 // --- Event-granted (events.ts grantPassive) ---
@@ -660,22 +737,38 @@ export const passives: Record<string, PassiveDefinition> = { ...fixturePassives,
  * around it, and the stat lines tripled. Left at the old figures a Mythic would clear the
  * effect floor for 18% of its budget and still be a stat stick.
  */
-export const PASSIVE_ITEM_COST: Readonly<Record<string, number>> = {
-  emberheart: 40,
-  stormcallersFocus: 40,
-  frostbrand: 40,
-  shadowfang: 40,
-  bloodthirst: 40,
-  wardensVigil: 30,
-  // The one flat effect here, and the priciest: +5 Attack per hit taken has no ceiling in a
-  // long fight, which the Pact Clock bounds but does not cheapen.
-  vengefulEmblem: 50,
-  sanguine: 40,
-  sunder: 40,
-  secondSkin: 40,
-  arcaneReservoir: 40,
-  rallyingStandard: 40,
-  // The two entry passives that fire once per arrival and grant no damage sit a tier below.
-  purifyingWard: 30,
-  quickening: 30,
-};
+/**
+ * What a granted passive costs an item's rarity budget. FLAT at AWAKENING_COST for every entry
+ * (2026-09-07, per user direction): a family's Awakening is the same at Epic, Legendary and
+ * Mythic, so there is no per-tier magnitude to price and no reason for one passive to cost more
+ * than another *as an item component*. It replaced a 30/50 spread.
+ *
+ * The magnitudes themselves were set under that old spread — Vengeful Emblem was priced at 50 and
+ * Purifying Ward at 30, and they now cost the same — so they owe a balance sweep before playtest
+ * (docs/equipment.md §2 "The inherited magnitudes owe a balance pass").
+ *
+ * Only ITEM-granted passives appear here. The four type-locked damage passives left the item
+ * catalog with the generated type gear (element is the enchantment axis now) but keep their homes
+ * on relics, which carry no budget.
+ */
+export const AWAKENING_COST = 20;
+
+export const PASSIVE_ITEM_COST: Readonly<Record<string, number>> = Object.fromEntries(
+  [
+    'sunder',
+    'bloodthirst',
+    'vengefulEmblem',
+    'impale',
+    'marksman',
+    'overchannel',
+    'quickening',
+    'purifyingWard',
+    'arcaneReservoir',
+    'wardensVigil',
+    'secondSkin',
+    'barbs',
+    'manaWard',
+    'attunement',
+    'rallyingStandard',
+  ].map((id) => [id, AWAKENING_COST])
+);
