@@ -344,10 +344,16 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
 
       <div className="move-detail-stats">
         {move.kind === 'damage' && move.basePower != null && (
-          <span className="move-detail-stat">
+          <span
+            className="move-detail-stat"
+            // The Base Power shown is PER HIT, so a multi-hit move has to say so here — the
+            // number alone reads as the whole swing and would understate it threefold.
+            title={move.hitCount ? `${move.basePower + forceBonus} Base Power on each of ${move.hitCount} hits` : undefined}
+          >
             <MoveKindGlyph kind={kindGlyph} />
             <strong>{move.basePower + forceBonus}</strong>
             <span className="move-detail-unit">BP</span>
+            {move.hitCount ? <span className="move-detail-unit">×{move.hitCount}</span> : null}
             {forceBonus > 0 && <span className="move-detail-boost">▲{forceBonus}</span>}
           </span>
         )}

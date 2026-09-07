@@ -29,14 +29,12 @@ import {
   detonateTriggeredStatuses,
   detonateStatusNow,
   applyStatus,
-  applyStealthRedirect,
   applyProvokeRedirect,
   cleanseStatuses,
   consumeStatus,
   statusGatedTargets,
   expandSpreadTargets,
   tickEndOfRound,
-  tickStartOfRound,
 } from './statusEngine';
 import { collectPassiveDamageModifiers, resolvePassiveReactions } from './passiveEngine';
 import { nextFloat, nextInt } from '../rng/seededRng';
@@ -77,10 +75,6 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
   const events: CombatEvent[] = [{ type: 'RoundStarted', round }];
 
   let working: CombatState = state;
-
-  const startTicks = tickStartOfRound(working, round, statuses);
-  working = startTicks.state;
-  events.push(...startTicks.events);
 
   const maxHpOf = (id: string) => getMaxHp(heroes[working.combatants[id].heroId], working.combatants[id]);
   const maxManaOf = (id: string) => getMaxMana(heroes[working.combatants[id].heroId], working.combatants[id]);
@@ -170,11 +164,8 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
 
     let spreadVia: Record<string, string> = {};
 
-    // Retargeting layers in fixed order: Stealth (push away, damage only) →
-    // Provoke (pull toward, every kind) → Haunt (spread, damage only).
-    if (move.kind === 'damage') {
-      targetIds = applyStealthRedirect(working, targetMode, move.kind, targetIds);
-    }
+    // Retargeting layers in fixed order: Provoke (pull toward, every kind) →
+    // Haunt (spread, damage only).
     targetIds = applyProvokeRedirect(working, action.combatantId, targetMode, targetIds, statuses);
     if (move.kind === 'damage') {
       const spread = expandSpreadTargets(working, move.type, targetMode, targetIds, statuses);
@@ -246,6 +237,9 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         // Recoil is summed and paid once after the loop (it can faint the user).
         let recoilBase = 0;
 
+        // A move that reaches nobody spends no Ambush.
+        let hitsResolved = 0;
+
         // Rolled BasePower is derived, not drawn — costs no RNG (state.ts resolveRandomBasePower).
         // A ramping move substitutes its own figure through the same override slot; `actor` is the
         // pre-cast snapshot, so this hit lands at the power the button showed.
@@ -256,150 +250,172 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
         const attackerHpAtCast = { currentHp: attackerAtCast.currentHp, maxHp: getMaxHp(attackerHero, attackerAtCast) };
 
         for (const targetId of targetIds) {
-          const target = working.combatants[targetId];
-          if (!target || target.fainted) continue;
-          const defenderHero = heroes[target.heroId];
-          const maxHp = getMaxHp(defenderHero, target);
+          const initialTarget = working.combatants[targetId];
+          if (!initialTarget || initialTarget.fainted) continue;
+          const defenderHero = heroes[initialTarget.heroId];
 
-          // Read fresh per hit: a field effect / conditional passive a faster action changed this round must count.
-          const attackerNow = working.combatants[action.combatantId];
-          const fieldEffectCtx = { active: working.activeFieldEffect, defs: fieldEffects, board: { state: working, passives } };
-          // offStatOverride changes WHICH stat is read — pipeline 1, not a multiplier.
-          const ratio = resolveStatRatio(move.category, attackerHero, attackerNow, defenderHero, target, fieldEffectCtx, move.offStatOverride);
+          // hitCount (Thousand Cuts): the WHOLE per-target body repeats, so every hit rolls its own
+          // variance and crit and re-reads every flat BasePower bonus — which is what makes a
+          // multi-hit move multiply an Ambush rather than merely spend it. Stops on a mid-sequence KO.
+          const hitCount = move.hitCount ?? 1;
+          for (let hit = 0; hit < hitCount; hit++) {
+            const target = working.combatants[targetId];
+            if (!target || target.fainted) break;
+            hitsResolved += 1;
+            const maxHp = getMaxHp(defenderHero, target);
 
-          const modifiers: DamageModifier[] = collectPassiveDamageModifiers(attackerNow, move, passives);
-          const elementalForceBonus = resolveElementalForceBonus(attackerNow, move.type, statuses);
-          // maxHp read here, BEFORE applyHpDelta, so an execute never doubles against HP this hit removes.
-          const basePowerMultiplier = resolveConditionalPowerMultiplier(
-            move,
-            target,
-            attackerNow,
-            fieldEffectCtx,
-            maxHp,
-            attackerHpAtCast,
-            partnerTypes
-          );
+            // Read fresh per hit: a field effect / conditional passive a faster action changed this round must count.
+            const attackerNow = working.combatants[action.combatantId];
+            const fieldEffectCtx = { active: working.activeFieldEffect, defs: fieldEffects, board: { state: working, passives } };
+            // offStatOverride changes WHICH stat is read — pipeline 1, not a multiplier.
+            const ratio = resolveStatRatio(move.category, attackerHero, attackerNow, defenderHero, target, fieldEffectCtx, move.offStatOverride);
 
-          const rolled = retribution
-            ? {
-                damage: retribution.damageTaken * retribution.percent,
-                ratio: 1,
-                stab: 1,
-                typeMult: 1,
-                variance: 1,
-                isCrit: false,
-                critMultiplier: 1,
-                multiplierTerm: 1,
-                basePowerBonus: 0,
-                basePowerMultiplier: 1,
-                nextRngState: working.rngState,
+            const modifiers: DamageModifier[] = collectPassiveDamageModifiers(attackerNow, move, passives);
+            const elementalForceBonus = resolveElementalForceBonus(attackerNow, move.type, statuses);
+            // maxHp read here, BEFORE applyHpDelta, so an execute never doubles against HP this hit removes.
+            const basePowerMultiplier = resolveConditionalPowerMultiplier(
+              move,
+              target,
+              attackerNow,
+              fieldEffectCtx,
+              maxHp,
+              attackerHpAtCast,
+              partnerTypes
+            );
+
+            const rolled = retribution
+              ? {
+                  damage: retribution.damageTaken * retribution.percent,
+                  ratio: 1,
+                  stab: 1,
+                  typeMult: 1,
+                  variance: 1,
+                  isCrit: false,
+                  critMultiplier: 1,
+                  multiplierTerm: 1,
+                  basePowerBonus: 0,
+                  basePowerMultiplier: 1,
+                  nextRngState: working.rngState,
+                }
+              : rollDamage(
+                  move,
+                  ratio,
+                  attackerTypes,
+                  effectiveTypes(defenderHero, target),
+                  typeChart,
+                  working.rngState,
+                  modifiers,
+                  move.critChance,
+                  elementalForceBonus,
+                  basePowerMultiplier,
+                  rolledBasePower
+                );
+            working = { ...working, rngState: rolled.nextRngState };
+
+            const amount = Math.round(rolled.damage);
+
+            const [offKey, defKey] = statKeysForMove(move);
+            const damageDealtEvent: CombatEvent = {
+              type: 'DamageDealt',
+              round,
+              sourceCombatantId: action.combatantId,
+              targetCombatantId: targetId,
+              moveId: move.id,
+              amount,
+              category: move.category,
+              moveType: move.type,
+              typeMult: rolled.typeMult,
+              isCrit: rolled.isCrit,
+              variance: rolled.variance,
+              basePower: rolledBasePower ?? move.basePower ?? 0,
+              elementalForceBonus: rolled.basePowerBonus,
+              basePowerMultiplier: rolled.basePowerMultiplier,
+              offStat: getEffectiveStat(attackerHero, attackerNow, offKey, fieldEffectCtx),
+              defStat: getEffectiveStat(defenderHero, target, defKey, fieldEffectCtx),
+              ratio: rolled.ratio,
+              stab: rolled.stab,
+              critMultiplier: rolled.critMultiplier,
+              multiplierTerm: rolled.multiplierTerm,
+              modifiers: retribution ? [] : modifiers,
+              ...(spreadVia[targetId] ? { viaStatusId: spreadVia[targetId] } : {}),
+              ...(retribution ? { retribution } : {}),
+            };
+            events.push(damageDealtEvent);
+
+            const hpBefore = working.combatants[targetId].currentHp;
+            const hpResult = applyHpDelta(working, round, targetId, -amount, maxHp);
+            working = hpResult.state;
+            events.push(...hpResult.events);
+
+            // consumesStatus keyed off the multiplier ACTUALLY applied, so on a spread only the doubled target pays.
+            if (move.conditionalPower?.consumesStatus && basePowerMultiplier !== 1) {
+              const cond = move.conditionalPower;
+              const holderId = cond.requiresTargetStatus ? targetId : action.combatantId;
+              const heldStatus = cond.requiresTargetStatus ?? cond.requiresUserStatus;
+              if (heldStatus && !working.combatants[holderId]?.fainted) {
+                const spent = consumeStatus(working, round, holderId, heldStatus);
+                working = spent.state;
+                events.push(...spent.events);
               }
-            : rollDamage(
-                move,
-                ratio,
-                attackerTypes,
-                effectiveTypes(defenderHero, target),
-                typeChart,
-                working.rngState,
-                modifiers,
-                move.critChance,
-                elementalForceBonus,
-                basePowerMultiplier,
-                rolledBasePower
-              );
-          working = { ...working, rngState: rolled.nextRngState };
+            }
 
-          const amount = Math.round(rolled.damage);
+            // HP ACTUALLY removed (not the rolled amount) — what drain and recoil scale, read before Conduct's detonation.
+            const removed = hpBefore - working.combatants[targetId].currentHp;
+            recoilBase += removed;
 
-          const [offKey, defKey] = statKeysForMove(move);
-          const damageDealtEvent: CombatEvent = {
-            type: 'DamageDealt',
-            round,
-            sourceCombatantId: action.combatantId,
-            targetCombatantId: targetId,
-            moveId: move.id,
-            amount,
-            category: move.category,
-            moveType: move.type,
-            typeMult: rolled.typeMult,
-            isCrit: rolled.isCrit,
-            variance: rolled.variance,
-            basePower: rolledBasePower ?? move.basePower ?? 0,
-            elementalForceBonus: rolled.basePowerBonus,
-            basePowerMultiplier: rolled.basePowerMultiplier,
-            offStat: getEffectiveStat(attackerHero, attackerNow, offKey, fieldEffectCtx),
-            defStat: getEffectiveStat(defenderHero, target, defKey, fieldEffectCtx),
-            ratio: rolled.ratio,
-            stab: rolled.stab,
-            critMultiplier: rolled.critMultiplier,
-            multiplierTerm: rolled.multiplierTerm,
-            modifiers: retribution ? [] : modifiers,
-            ...(spreadVia[targetId] ? { viaStatusId: spreadVia[targetId] } : {}),
-            ...(retribution ? { retribution } : {}),
-          };
-          events.push(damageDealtEvent);
+            if (move.drainPercent) {
+              const drained = Math.round(removed * move.drainPercent);
+              const drainer = working.combatants[action.combatantId];
+              if (drained > 0 && drainer && !drainer.fainted) {
+                const drainerMaxHp = getMaxHp(attackerHero, drainer);
+                const drainHealed: CombatEvent = {
+                  type: 'Healed',
+                  round,
+                  sourceCombatantId: action.combatantId,
+                  targetCombatantId: action.combatantId,
+                  moveId: move.id,
+                  amount: drained,
+                  drain: { fromCombatantId: targetId, damageDealt: removed, percent: move.drainPercent },
+                };
+                events.push(drainHealed);
+                const drainResult = applyHpDelta(working, round, action.combatantId, drained, drainerMaxHp);
+                working = drainResult.state;
+                events.push(...drainResult.events);
 
-          const hpBefore = working.combatants[targetId].currentHp;
-          const hpResult = applyHpDelta(working, round, targetId, -amount, maxHp);
-          working = hpResult.state;
-          events.push(...hpResult.events);
+                // A drain IS a heal, so it feeds the Healed hook like any other — without this the
+                // hook would silently cover only heal-kind moves.
+                const drainReactions = resolvePassiveReactions(working, round, [drainHealed], heroes, statuses, passives, fieldEffects);
+                working = drainReactions.state;
+                events.push(...drainReactions.events);
+              }
+            }
 
-          // consumesStatus keyed off the multiplier ACTUALLY applied, so on a spread only the doubled target pays.
-          if (move.conditionalPower?.consumesStatus && basePowerMultiplier !== 1) {
-            const cond = move.conditionalPower;
-            const holderId = cond.requiresTargetStatus ? targetId : action.combatantId;
-            const heldStatus = cond.requiresTargetStatus ?? cond.requiresUserStatus;
-            if (heldStatus && !working.combatants[holderId]?.fainted) {
-              const spent = consumeStatus(working, round, holderId, heldStatus);
-              working = spent.state;
-              events.push(...spent.events);
+            const damageReactions = resolvePassiveReactions(working, round, [damageDealtEvent], heroes, statuses, passives, fieldEffects);
+            working = damageReactions.state;
+            events.push(...damageReactions.events);
+
+            // Conduct detonation: its own beat after the base hit, never folded into DamageDealt.
+            const triggered = detonateTriggeredStatuses(working, round, targetId, move.type, maxHp, statuses);
+            working = triggered.state;
+            events.push(...triggered.events);
+
+            if (triggered.bonusDamage > 0) {
+              const bonusHpResult = applyHpDelta(working, round, targetId, -triggered.bonusDamage, maxHp);
+              working = bonusHpResult.state;
+              events.push(...bonusHpResult.events);
             }
           }
+        }
 
-          // HP ACTUALLY removed (not the rolled amount) — what drain and recoil scale, read before Conduct's detonation.
-          const removed = hpBefore - working.combatants[targetId].currentHp;
-          recoilBase += removed;
-
-          if (move.drainPercent) {
-            const drained = Math.round(removed * move.drainPercent);
-            const drainer = working.combatants[action.combatantId];
-            if (drained > 0 && drainer && !drainer.fainted) {
-              const drainerMaxHp = getMaxHp(attackerHero, drainer);
-              const drainHealed: CombatEvent = {
-                type: 'Healed',
-                round,
-                sourceCombatantId: action.combatantId,
-                targetCombatantId: action.combatantId,
-                moveId: move.id,
-                amount: drained,
-                drain: { fromCombatantId: targetId, damageDealt: removed, percent: move.drainPercent },
-              };
-              events.push(drainHealed);
-              const drainResult = applyHpDelta(working, round, action.combatantId, drained, drainerMaxHp);
-              working = drainResult.state;
-              events.push(...drainResult.events);
-
-              // A drain IS a heal, so it feeds the Healed hook like any other — without this the
-              // hook would silently cover only heal-kind moves.
-              const drainReactions = resolvePassiveReactions(working, round, [drainHealed], heroes, statuses, passives, fieldEffects);
-              working = drainReactions.state;
-              events.push(...drainReactions.events);
-            }
-          }
-
-          const damageReactions = resolvePassiveReactions(working, round, [damageDealtEvent], heroes, statuses, passives, fieldEffects);
-          working = damageReactions.state;
-          events.push(...damageReactions.events);
-
-          // Conduct detonation: its own beat after the base hit, never folded into DamageDealt.
-          const triggered = detonateTriggeredStatuses(working, round, targetId, move.type, maxHp, statuses);
-          working = triggered.state;
-          events.push(...triggered.events);
-
-          if (triggered.bonusDamage > 0) {
-            const bonusHpResult = applyHpDelta(working, round, targetId, -triggered.bonusDamage, maxHp);
-            working = bonusHpResult.state;
-            events.push(...bonusHpResult.events);
+        // Ambush (consumedOnDamage): spent AFTER the loop, so a spread reads it on every
+        // target and still pays once. Retribution never runs the formula, so it reads no
+        // BasePower and owes nothing.
+        if (!retribution && hitsResolved > 0) {
+          for (const def of Object.values(statuses)) {
+            if (!def.consumedOnDamage || !hasStatus(working.combatants[action.combatantId], def.id)) continue;
+            const spent = consumeStatus(working, round, action.combatantId, def.id);
+            working = spent.state;
+            events.push(...spent.events);
           }
         }
 

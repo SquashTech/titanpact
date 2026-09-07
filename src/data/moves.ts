@@ -1602,19 +1602,21 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'A dart of congealed dark that sometimes leaves rot behind (20% chance of Poison 5).',
   },
-  vanish: {
-    id: 'vanish',
-    name: 'Vanish',
+  lieInWait: {
+    id: 'lieInWait',
+    name: 'Lie in Wait',
     tier: 'early',
     type: 'Shadow',
     category: 'physical',
     kind: 'buff',
     statDeltas: [],
-    statusApplication: { statusId: 'Stealth', duration: 1, target: 'self' },
-    manaCost: 15,
+    // The one granter that buys nothing else, so it has to clear the bar a turn costs: 45 is
+    // roughly two Fade Strikes' worth of Base Power concentrated into one hit.
+    statusApplication: { statusId: 'Ambush', magnitude: 45, target: 'self' },
+    manaCost: 20,
     priority: 0,
     target: 'self',
-    description: 'Steps out of sight for this round and the next (grants Stealth).',
+    description: 'Picks the moment instead of the fight (grants Ambush 45).',
   },
   fadeStrike: {
     id: 'fadeStrike',
@@ -1674,19 +1676,22 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'A long cut that opens as it lands (30% chance of Bleed).',
   },
-  ambush: {
-    id: 'ambush',
-    name: 'Ambush',
+  cutthroat: {
+    id: 'cutthroat',
+    name: 'Cutthroat',
     tier: 'mid',
     type: 'Shadow',
     category: 'physical',
     kind: 'damage',
-    basePower: 50,
-    conditionalPower: { requiresUserStatus: 'Stealth', multiplier: 2, consumesStatus: true },
-    manaCost: 35,
+    basePower: 40,
+    // Riders resolve after the damage case, so this cashes an Ambush it was already holding and
+    // then plants a fresh one. Chained, that is 60 Base Power a turn for 30 mana — deliberately
+    // level with Shadow Slice (60 for 40, plus a Bleed roll) rather than ahead of it.
+    statusApplication: { statusId: 'Ambush', magnitude: 20, target: 'self' },
+    manaCost: 30,
     priority: 0,
     target: 'singleEnemy',
-    description: 'Breaks cover to strike (double power from Stealth, which it spends).',
+    description: 'Strikes and slips back out of reach (grants Ambush 20).',
   },
   rend: {
     id: 'rend',
@@ -1787,6 +1792,24 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleEnemy',
     description: 'A cut that will not close (inflicts Bleed).',
   },
+  thousandCuts: {
+    id: 'thousandCuts',
+    name: 'Thousand Cuts',
+    tier: 'late',
+    type: 'Shadow',
+    category: 'physical',
+    kind: 'damage',
+    basePower: 20,
+    hitCount: 3,
+    // 60 Base Power for 50 mana is unremarkable bare, and that is the authored shape: every flat
+    // bonus is re-read per hit, so an Ambush 45 lands three times (195) rather than once. Lie in
+    // Wait plus this is 70 mana across two rounds — a 60-pool Shadow hero's ENTIRE budget, one
+    // regen tick included, which is the lever holding the combo down.
+    manaCost: 50,
+    priority: 0,
+    target: 'singleEnemy',
+    description: 'Three cuts too fast to count — every bonus lands on each (hits 3 times).',
+  },
   shadowForm: {
     id: 'shadowForm',
     name: 'Shadow Form',
@@ -1795,11 +1818,11 @@ export const moves: Record<string, MoveDefinition> = {
     category: 'physical',
     kind: 'buff',
     statDeltas: [{ stat: 'attack', amount: 75 }],
-    statusApplication: { statusId: 'Stealth', duration: 1, target: 'self' },
+    statusApplication: { statusId: 'Ambush', magnitude: 40, target: 'self' },
     manaCost: 60,
     priority: 0,
     target: 'self',
-    description: 'Becomes the dark itself (grants Stealth and +75 Attack).',
+    description: 'Becomes the dark itself (grants Ambush 40 and +75 Attack).',
   },
 
   // --- Arcane ---
@@ -1947,11 +1970,11 @@ export const moves: Record<string, MoveDefinition> = {
     kind: 'buff',
     statDeltas: [],
     fieldEffectApplication: 'surgingMagic',
-    statusApplication: { statusId: 'Stealth', duration: 1, target: 'self' },
+    statusApplication: { statusId: 'Ambush', magnitude: 30, target: 'self' },
     manaCost: 40,
     priority: 0,
     target: 'self',
-    description: 'Wraps the caster in live mana (grants Stealth and sets Magical Surge).',
+    description: 'Wraps the caster in live mana (grants Ambush 30 and sets Magical Surge).',
   },
   conduit: {
     id: 'conduit',
@@ -2061,10 +2084,14 @@ export const moves: Record<string, MoveDefinition> = {
     category: 'magical',
     kind: 'buff',
     statDeltas: [{ stat: 'wisdom', amount: -30 }],
-    manaCost: 25,
+    // Mind spends whole turns lowering an enemy and gets nothing offensive back. The Ambush is
+    // what closes that loop, and it double-dips on purpose: the Wisdom it just stripped is the
+    // defStat the loaded magical hit divides by.
+    statusApplication: { statusId: 'Ambush', magnitude: 25, target: 'self' },
+    manaCost: 30,
     priority: 0,
     target: 'singleEnemy',
-    description: "Drains a foe's guard — -30 Wisdom.",
+    description: "Drains a foe's guard and finds the opening (-30 Wisdom, grants Ambush 25).",
   },
   lull: {
     id: 'lull',
@@ -2553,10 +2580,13 @@ export const moves: Record<string, MoveDefinition> = {
     category: 'physical',
     kind: 'buff',
     statDeltas: [{ stat: 'defense', amount: 15 }],
-    manaCost: 15,
+    // Iron's answer to "why turtle": the guard turn now loads the swing after it, which is the
+    // counter-attacker payoff the type had no way to express.
+    statusApplication: { statusId: 'Ambush', magnitude: 20, target: 'self' },
+    manaCost: 20,
     priority: 0,
     target: 'self',
-    description: "Hardens the caster's guard (+15 Defense).",
+    description: "Hardens the caster's guard and picks the moment (+15 Defense, grants Ambush 20).",
   },
   openingStrike: {
     id: 'openingStrike',
@@ -3020,7 +3050,10 @@ export const moves: Record<string, MoveDefinition> = {
     ],
     statDeltaTarget: 'self',
     conditionalStatDeltas: { requiresPartnerType: 'Beast', multiplier: 2 },
-    manaCost: 15,
+    // The stat half doubles beside a Beast; the Ambush does not. One scaling clause per move is
+    // enough, and Pounce — priority 1, "springs first, from cover" — is what this is circling for.
+    statusApplication: { statusId: 'Ambush', magnitude: 20, target: 'self' },
+    manaCost: 25,
     priority: 0,
     target: 'self',
     description: 'Circles for an opening (+10 Attack, +10 Speed — doubled beside a Beast).',

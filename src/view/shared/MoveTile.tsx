@@ -150,7 +150,8 @@ export function MoveTraitChips({
   const target = liveTargetMode ?? move.target;
   // A randomPriority move's authored `priority` is dead; the row already carries a chip saying so.
   const bracket = move.randomPriority?.length ? 0 : move.priority;
-  if (!bracket && !isSpreadTarget(target)) return null;
+  const hits = move.hitCount ?? 1;
+  if (!bracket && !isSpreadTarget(target) && hits === 1) return null;
   return (
     <>
       {bracket !== 0 && (
@@ -169,6 +170,14 @@ export function MoveTraitChips({
       {isSpreadTarget(target) && (
         <span className="move-eff-trait" title={`Spread — hits ${TARGET_MODE_LABELS[target]}, at no damage penalty`}>
           ⇉ Spread
+        </span>
+      )}
+      {hits > 1 && (
+        <span
+          className="move-eff-trait"
+          title={`Hits ${hits} times — the shown Base Power is per hit, and every flat bonus (Ambush, Elemental Force) is counted on each`}
+        >
+          ×{hits} hits
         </span>
       )}
     </>

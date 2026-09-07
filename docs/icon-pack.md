@@ -92,7 +92,7 @@ Plain, un-modified glyphs, so statuses read as the *base* family.
 | Conduct | 11 | water drops between two bolts. Uncannily exact — Conduct *is* water + electricity |
 | Poison | 2 | purple bubbles |
 | Haunt | 10 | skull in a purple swirl — **needs ≥ 32px**, becomes a blob when halved |
-| Stealth | 4 | white shrouded form |
+| Ambush | 4 | white double chevron, loaded and unspent |
 
 ### `art/icons/field-effect/` — matrix column 6 (cycle arrows) × the effect's `flavorType`
 

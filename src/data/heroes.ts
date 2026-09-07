@@ -184,7 +184,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Vesper',
     types: ['Shadow'],
     baseStats: { hp: 100, attack: 95, defense: 55, intelligence: 30, wisdom: 45, speed: 75, manaPool: 50, mpRegen: 10 },
-    moveIds: ['fadeStrike', 'vanish', 'secondWind'],
+    moveIds: ['fadeStrike', 'lieInWait', 'secondWind'],
     starter: false,
   },
   marrow: {
@@ -200,7 +200,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Nightshade',
     types: ['Shadow'],
     baseStats: { hp: 90, attack: 80, defense: 30, intelligence: 65, wisdom: 40, speed: 85, manaPool: 60, mpRegen: 10 },
-    moveIds: ['backstab', 'vanish', 'weaken'],
+    moveIds: ['backstab', 'lieInWait', 'weaken'],
     starter: true,
   },
 
@@ -326,7 +326,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Widow',
     types: ['Beast', 'Shadow'],
     baseStats: { hp: 90, attack: 100, defense: 45, intelligence: 20, wisdom: 45, speed: 100, manaPool: 50, mpRegen: 10 },
-    moveIds: ['venomBite', 'vanish', 'prowl'],
+    moveIds: ['venomBite', 'lieInWait', 'prowl'],
     starter: false,
   },
   coil: {

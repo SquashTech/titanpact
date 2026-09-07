@@ -126,26 +126,26 @@ export const statuses: Record<string, StatusDefinition> = {
     pipeline: 'target',
     description: "While active, a Spirit or Mind attack aimed at this hero's partner also strikes this hero. Cleared by switching.",
   },
-  Stealth: {
-    id: 'Stealth',
-    name: 'Stealth',
-    shape: 'duration',
+  Ambush: {
+    id: 'Ambush',
+    name: 'Ambush',
+    shape: 'magnitude',
     ticksAtEndOfRound: false,
-    ticksAtStartOfRound: true,
     decay: 'none',
-    stacking: 'none',
-    clearsOnSwitch: false,
+    stacking: 'additive',
+    clearsOnSwitch: true,
     positive: true,
-    pipeline: 'target',
+    forceAllTypes: true,
+    consumedOnDamage: true,
+    pipeline: 'basePower',
     description:
-      "Hero cannot be the target of an attack. If Stealth is applied mid-round, attacks targeting this are redirected to this hero's partner. Spread moves still land. Both active heroes can never be Stealthed at the same time — a second Stealth fizzles while the other is still active and Stealthed.",
+      'Adds its magnitude as flat Base Power to the next attack this hero lands, whatever the move type, then is spent. No clock — it waits until it is cashed. Cleared by switching, so it cannot be banked on the bench.',
   },
   Provoke: {
     id: 'Provoke',
     name: 'Provoke',
     shape: 'duration',
-    // Duration 1 ticking at END of round = exactly the round it was cast in. Deliberately not
-    // Stealth's start-of-round tick, which would give it a full extra round.
+    // Duration 1 ticking at END of round = exactly the round it was cast in.
     ticksAtEndOfRound: true,
     decay: 'none',
     stacking: 'none',

@@ -1,4 +1,4 @@
-// Shadow slate: conditionalPower.requiresTargetHpBelow (the first numeric damage condition), Stealth into Ambush with consumesStatus. Hand-off findings: docs/authoring-moves.md §10.
+// Shadow slate: conditionalPower.requiresTargetHpBelow (the first numeric damage condition), and Ambush — the typeless Force the type is built around. Hand-off findings: docs/authoring-moves.md §10.
 
 import { firstStatusApplication, statusApplicationsOf } from '../src/engine/content';
 import * as assert from 'assert';
@@ -154,65 +154,118 @@ test('shadow: consumesStatus is inert on the HP form — there is nothing to str
   assert.ok(!events.some((e) => e.type === 'StatusRemoved' && (e as { reason?: string }).reason === 'consumed'));
 });
 
-// --- Stealth into Ambush ---
+// --- Ambush, the type's keyword ---
 
-test('shadow: Ambush doubles off the USER Stealth and spends it', () => {
-  const hidden = withStatus(withDeepPools(shadowFixture(17)), 'a1', 'Stealth', { duration: 1 });
-  assert.strictEqual(
-    resolveConditionalPowerMultiplier(moves.ambush, hidden.combatants.b1, hidden.combatants.a1),
-    2
-  );
+test('shadow: Lie in Wait loads the next attack with 45 Base Power, whatever that attack is', () => {
+  const state = withDeepPools(shadowFixture(17));
+  const loaded = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'lieInWait' }], config).state;
+  assert.strictEqual(loaded.combatants.a1.statuses.Ambush?.magnitude, 45);
 
   const { state: after, events } = resolveRound(
-    hidden,
-    [{ kind: 'move', combatantId: 'a1', moveId: 'ambush', declaredTarget: 'b1' }],
+    loaded,
+    [{ kind: 'move', combatantId: 'a1', moveId: 'backstab', declaredTarget: 'b1' }],
     config
   );
-  assert.ok(!hasStatus(after.combatants.a1, 'Stealth'), 'Ambush spends the cover it cashed in');
-  assert.ok(
-    events.some((e) => e.type === 'StatusRemoved' && e.combatantId === 'a1' && (e as { reason?: string }).reason === 'consumed')
-  );
+  const hit = events.find((e) => e.type === 'DamageDealt') as { basePower: number; elementalForceBonus: number };
+  assert.strictEqual(hit.basePower, 30);
+  assert.strictEqual(hit.elementalForceBonus, 45, 'a 30 Base Power poke lands at 75 — the flat bonus favours the cheap move');
+  assert.ok(!hasStatus(after.combatants.a1, 'Ambush'), 'and is spent');
 });
 
-test('shadow: an Ambush thrown without Stealth costs the same mana and lands at single power', () => {
-  const plain = withDeepPools(shadowFixture(18));
-  assert.strictEqual(resolveConditionalPowerMultiplier(moves.ambush, plain.combatants.b1, plain.combatants.a1), 1);
-  const { events } = resolveRound(
-    plain,
-    [{ kind: 'move', combatantId: 'a1', moveId: 'ambush', declaredTarget: 'b1' }],
+test('shadow: Cutthroat cashes the Ambush it was holding, then plants a fresh one', () => {
+  // Riders resolve after the damage case, so the order is cash-then-plant rather than self-eating.
+  const loaded = withStatus(withDeepPools(shadowFixture(18)), 'a1', 'Ambush', { magnitude: 20 });
+  const { state: after, events } = resolveRound(
+    loaded,
+    [{ kind: 'move', combatantId: 'a1', moveId: 'cutthroat', declaredTarget: 'b1' }],
     config
   );
-  const used = events.find((e) => e.type === 'MoveUsed') as { manaSpent: number };
-  assert.strictEqual(used.manaSpent, moves.ambush.manaCost);
+
+  const hit = events.find((e) => e.type === 'DamageDealt') as { elementalForceBonus: number };
+  assert.strictEqual(hit.elementalForceBonus, 20, 'this swing was the one it had been holding');
+  assert.strictEqual(after.combatants.a1.statuses.Ambush?.magnitude, 20, 'and it walks away loaded again');
 });
 
-test('shadow: every Stealth grant in the game is duration 1 and self-targeted', () => {
-  // Pinned list: a new Stealth grant (any type) must be added here consciously.
-  const grants = Object.values(moves).filter((m) => firstStatusApplication(m)?.statusId === 'Stealth');
-  assert.deepStrictEqual(grants.map((m) => m.id).sort(), ['magicCloak', 'shadowForm', 'vanish']);
-  for (const move of grants) {
-    assert.strictEqual(firstStatusApplication(move)!.duration, 1, `${move.id} authors a non-standard Stealth length`);
-    assert.strictEqual(firstStatusApplication(move)!.target, 'self', `${move.id} grants Stealth to someone else`);
+// --- hitCount: the move that multiplies an Ambush rather than spending it ---
+
+test('shadow: Thousand Cuts resolves three separate hits against one target', () => {
+  const state = withDeepPools(shadowFixture(19));
+  const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'thousandCuts', declaredTarget: 'b1' }], config);
+
+  const hits = events.filter((e) => e.type === 'DamageDealt') as unknown as { targetCombatantId: string; variance: number }[];
+  assert.strictEqual(hits.length, 3);
+  assert.ok(hits.every((h) => h.targetCombatantId === 'b1'));
+  // Each hit rolls its own variance, so three identical rolls would mean the loop is not really looping.
+  assert.ok(new Set(hits.map((h) => h.variance)).size > 1, 'variance is rolled per hit');
+});
+
+test('shadow: an Ambush is counted on EVERY hit and still spent once — the payoff the move exists for', () => {
+  const loaded = withStatus(withDeepPools(shadowFixture(20)), 'a1', 'Ambush', { magnitude: 45 });
+  const { state: after, events } = resolveRound(
+    loaded,
+    [{ kind: 'move', combatantId: 'a1', moveId: 'thousandCuts', declaredTarget: 'b1' }],
+    config
+  );
+
+  const hits = events.filter((e) => e.type === 'DamageDealt') as unknown as { basePower: number; elementalForceBonus: number }[];
+  assert.strictEqual(hits.length, 3);
+  for (const hit of hits) {
+    assert.strictEqual(hit.basePower, 20);
+    assert.strictEqual(hit.elementalForceBonus, 45, '20 + 45 on each hit — 195 Base Power, not 65');
+  }
+  assert.ok(!hasStatus(after.combatants.a1, 'Ambush'));
+  assert.strictEqual(events.filter((e) => e.type === 'StatusRemoved' && e.statusId === 'Ambush').length, 1);
+});
+
+test('shadow: a multi-hit stops on a mid-sequence KO rather than swinging at a corpse', () => {
+  const state = wounded(withDeepPools(shadowFixture(21)), 'b1', 0.005);
+  const { events } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'thousandCuts', declaredTarget: 'b1' }], config);
+
+  assert.ok(events.some((e) => e.type === 'Fainted' && e.combatantId === 'b1'));
+  assert.strictEqual(events.filter((e) => e.type === 'DamageDealt').length, 1);
+});
+
+test('shadow: hitCount is authored only where it makes sense — never with fixed-damage Retribution', () => {
+  // Retribution bypasses the formula entirely, so a hitCount on one would silently pay N times.
+  for (const move of Object.values(moves)) {
+    if (move.hitCount == null) continue;
+    assert.strictEqual(move.kind, 'damage', `${move.id} authors hitCount on a non-damage move`);
+    assert.ok(move.hitCount > 1, `${move.id} authors a pointless hitCount`);
+    assert.strictEqual(move.retributionPercent, undefined, `${move.id} pairs hitCount with Retribution`);
   }
 });
 
-test('shadow: every hero that can be offered Ambush can also reach a Stealth grant', () => {
-  const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
-  for (const [heroId, hero] of Object.entries(heroes)) {
-    const reachable = [...hero.moveIds, ...(progressionTable.moveTiers[heroId] ?? [])];
-    if (!reachable.includes('ambush')) continue;
-    assert.ok(
-      reachable.some((id) => firstStatusApplication(moves[id])?.statusId === 'Stealth'),
-      `${heroId} can be offered Ambush but has no way to enter Stealth`
-    );
+test('shadow: no move in the game gates power on Stealth any more — the keyword is gone', () => {
+  const gated = Object.values(moves).filter((m) => m.conditionalPower?.requiresUserStatus === 'Stealth');
+  assert.deepStrictEqual(gated, []);
+  assert.strictEqual(statuses.Stealth, undefined);
+});
+
+test('shadow: every Ambush grant in the game is self-targeted and carries a magnitude', () => {
+  // Pinned list: a new Ambush grant (any type) must be added here consciously.
+  const grants = Object.values(moves).filter((m) => firstStatusApplication(m)?.statusId === 'Ambush');
+  assert.deepStrictEqual(grants.map((m) => m.id).sort(), [
+    'cutthroat',
+    'enervate',
+    'fortify',
+    'lieInWait',
+    'magicCloak',
+    'prowl',
+    'shadowForm',
+  ]);
+  for (const move of grants) {
+    const app = firstStatusApplication(move)!;
+    assert.strictEqual(app.target, 'self', `${move.id} grants Ambush to someone else`);
+    assert.ok((app.magnitude ?? 0) > 0, `${move.id} grants an Ambush worth nothing`);
+    assert.strictEqual(app.duration, undefined, `${move.id} puts a clock on Ambush — it has none by design`);
   }
 });
 
 // --- The slate's own shape ---
 
-test('shadow: the slate is fifteen moves, and every status and condition it names exists', () => {
+test('shadow: the slate is sixteen moves, and every status and condition it names exists', () => {
   const shadow = Object.values(moves).filter((m) => m.type === 'Shadow');
-  assert.strictEqual(shadow.length, 15);
+  assert.strictEqual(shadow.length, 16);
   for (const move of shadow) {
     for (const app of statusApplicationsOf(move)) {
       assert.ok(statuses[app.statusId], `${move.id} applies unknown status ${app.statusId}`);

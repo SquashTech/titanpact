@@ -69,14 +69,11 @@ export const STATUS_PATHS: Record<string, ReactNode> = {
       d="M12 1.8c4.5 0 7.9 3.4 7.9 8v11c0 1.1-1.2 1.7-2 1l-2-1.8-2.1 1.9a1.3 1.3 0 0 1-1.7 0L10 20l-2 1.8c-.8.7-2 .1-2-1v-11c0-4.6 3.5-8 8-8ZM9.2 9.4a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm5.6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"
     />
   ),
-  // Closed eye.
-  Stealth: (
-    <g fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
-      <path d="M2.6 9.6c2.6 3.6 5.8 5.4 9.4 5.4s6.8-1.8 9.4-5.4" />
-      <path d="M3.6 16.6 5.8 13.4" />
-      <path d="M8.6 19.2 9.8 15.4" />
-      <path d="M15.4 19.2 14.2 15.4" />
-      <path d="M20.4 16.6 18.2 13.4" />
+  // Double chevron — the Force family's up-arrow said twice, for a hit that is loaded but unspent.
+  Ambush: (
+    <g fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3.4 12.4 12 3.8l8.6 8.6" />
+      <path d="M3.4 20.2 12 11.6l8.6 8.6" />
     </g>
   ),
 };
@@ -130,7 +127,7 @@ const STATUS_COLOR: Record<string, string> = {
   Conduct: '#f5d90a',
   Poison: '#8bc34a',
   Haunt: '#7a5fc4',
-  Stealth: '#6b7a99',
+  Ambush: '#a8577a',
 };
 
 export function statusColor(statusId: string): string {
@@ -164,7 +161,8 @@ const PIPELINE_LABELS: Record<StatusDefinition['pipeline'], string> = {
   timer: 'Delayed detonation',
   trigger: 'Trigger / mark',
   target: 'Targeting effect',
-  basePower: 'Elemental Force',
+  // Covers both members of the family: the fifteen type-locked Forces and Ambush, the typeless one.
+  basePower: 'Base Power bonus',
   none: 'Effect',
 };
 

@@ -87,7 +87,7 @@ interface MoveRowProps {
   /** Live cost (state.ts resolveManaCost), not `move.manaCost`. */
   cost: number;
   selected: boolean;
-  /** Elemental Force's contribution to BasePower right now. */
+  /** Elemental Force plus Ambush — everything adding flat Base Power right now. */
   forceBonus: number;
   /** damageTakenSinceLastTurn — what a retributionPercent move deals a share of. */
   banked: number;
@@ -143,11 +143,11 @@ function MoveRow({ move, affordable, gateUnmet, cost, selected, forceBonus, bank
             className={`move-power${boosted ? ' move-boosted' : ''}`}
             title={
               rolledBasePower != null && move.randomBasePower != null
-                ? `Rolled this round: ${rolledBasePower} of ${move.randomBasePower.min}-${move.randomBasePower.max}${forceBonus > 0 ? ` · Elemental Force: +${forceBonus}` : ''}`
+                ? `Rolled this round: ${rolledBasePower} of ${move.randomBasePower.min}-${move.randomBasePower.max}${forceBonus > 0 ? ` · Base Power bonus: +${forceBonus}` : ''}`
                 : move.basePowerGainOnUse != null
-                ? `Stacked to ${rolledBasePower ?? move.basePower} of ${move.basePowerGainOnUse.max} this fight${forceBonus > 0 ? ` · Elemental Force: +${forceBonus}` : ''}`
+                ? `Stacked to ${rolledBasePower ?? move.basePower} of ${move.basePowerGainOnUse.max} this fight${forceBonus > 0 ? ` · Base Power bonus: +${forceBonus}` : ''}`
                 : forceBonus > 0
-                  ? `Elemental Force: +${forceBonus} Base Power`
+                  ? `Base Power bonus: +${forceBonus}`
                   : undefined
             }
           >
@@ -707,9 +707,9 @@ export function FightScreen({
   })();
   const consoleStyle = { '--console-rgb': consoleRgb, '--console-origin': consoleOrigin } as CSSProperties;
 
-  // Gate first, Stealth second, matching resolveRound's order. `statuses` lets a Provoke narrow the picker.
+  // Gate first, Provoke second, matching resolveRound's order.
   function visibleTargets(move: MoveDefinition, ids: string[]): string[] {
-    return selectableTargets(combat, move.target, move.kind, statusGatedTargets(combat, move, ids), statuses);
+    return selectableTargets(combat, move.target, statusGatedTargets(combat, move, ids), statuses);
   }
 
   /** Whether a requiresTargetStatus move has anyone to hit — drives the dead row so the player is refused at the button, not in an empty panel. */

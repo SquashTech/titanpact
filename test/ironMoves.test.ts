@@ -262,11 +262,14 @@ test('iron: the slate authors exactly one priority row, and no heal, cleanse or 
     assert.ok(!move.cleanses, `${move.id} cleanses`);
     assert.ok(!move.fieldEffectApplication, `${move.id} sets a field effect`);
   }
+  // Two riders in sixteen rows, both named: the type still does not scatter statuses.
   const riders = ironMoves.filter((m) => firstStatusApplication(m));
-  assert.strictEqual(riders.length, 1, 'exactly one status rider in sixteen rows');
-  assert.strictEqual(riders[0].id, 'serratedSlice');
-  assert.strictEqual(firstStatusApplication(riders[0])?.statusId, 'Bleed');
-  assert.strictEqual(firstStatusApplication(riders[0])?.chance, 0.3);
+  assert.deepStrictEqual(riders.map((m) => m.id).sort(), ['fortify', 'serratedSlice']);
+  assert.strictEqual(firstStatusApplication(moves.serratedSlice)?.statusId, 'Bleed');
+  assert.strictEqual(firstStatusApplication(moves.serratedSlice)?.chance, 0.3);
+  // Fortify's is the Ambush the guard turn now pays (docs/conditions.md "Ambush").
+  assert.strictEqual(firstStatusApplication(moves.fortify)?.statusId, 'Ambush');
+  assert.strictEqual(firstStatusApplication(moves.fortify)?.target, 'self');
 });
 
 test('iron: the re-authored Fortify is a guard buff only, and Wisdom is grantable off-Mind only by Overdrive', () => {

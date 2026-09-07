@@ -240,11 +240,11 @@ export const progressionTable: ProgressionTable = {
     ],
     aegis: ['holySlice', 'blind', 'purify', 'bless', 'exalt', 'consecrate', 'divineGrace', 'reinforce', 'pistonPunch', 'vineLash', 'toughenUp', 'rockToss'],
     // --- Shadow ---
-    shadowMonk: ['backstab', 'weaken', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'claw', 'shadowstrike', 'phantomStrike', 'ironFist', 'thunderclap'],
-    marrow: ['vanish', 'umbralBeam', 'umbralWave', 'poltergeist', 'enfeeble', 'drain', 'torment', 'soulRend', 'wisp', 'jolt', 'siphon', 'deepChill'],
+    shadowMonk: ['backstab', 'weaken', 'cutthroat', 'shadowSlice', 'rend', 'duskBlade', 'thousandCuts', 'claw', 'shadowstrike', 'phantomStrike', 'ironFist', 'thunderclap'],
+    marrow: ['lieInWait', 'umbralBeam', 'umbralWave', 'poltergeist', 'enfeeble', 'drain', 'torment', 'soulRend', 'wisp', 'jolt', 'siphon', 'deepChill'],
     // Claw is long-standing off-type coverage; Umbra Bolt is the in-type fix — Shadow has a whole
     // magical column and Nightshade's 65 Intelligence could reach none of it.
-    nightshade: ['fadeStrike', 'shadowstrike', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm', 'claw', 'umbraBolt', 'vineLash', 'ivySpike', 'iceShard'],
+    nightshade: ['fadeStrike', 'shadowstrike', 'cutthroat', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm', 'thousandCuts', 'claw', 'umbraBolt', 'vineLash', 'ivySpike', 'iceShard'],
     // --- Arcane ---
     runescribe: [
       'manaFont',
@@ -336,7 +336,7 @@ export const progressionTable: ProgressionTable = {
       'siphon',
       'deepChill',
     ],
-    sorrow: ['vanish', 'backstab', 'fadeStrike', 'spookySlice', 'ambush', 'rend', 'soulOffering', 'wailingFlight', 'duskBlade', 'iceShard', 'undertow', 'frostArmor'],
+    sorrow: ['lieInWait', 'backstab', 'fadeStrike', 'spookySlice', 'cutthroat', 'rend', 'soulOffering', 'wailingFlight', 'duskBlade', 'thousandCuts', 'iceShard', 'undertow', 'frostArmor'],
     // --- Iron ---
     ironWarden: ['ironFist', 'pinDown', 'rendArmor', 'juggernaut', 'rockToss', 'bodyBlow', 'reinforce', 'bastion', 'holyStrike', 'claw', 'metallicBlade', 'heavyBlow'],
     valor: [
@@ -405,13 +405,14 @@ export const progressionTable: ProgressionTable = {
       'claw',
       'backstab',
       'lacerate',
-      'ambush',
+      'cutthroat',
       'fadeStrike',
       'maul',
       'packHunt',
       'toxicFangs',
       'shadowSlice',
       'duskBlade',
+      'thousandCuts',
       'eviscerate',
       'apexPredator',
       'phantomStrike',
@@ -938,7 +939,7 @@ export const progressionTable: ProgressionTable = {
             name: 'Gloomwatch',
             description: 'Keeps the vigil after dark, and stops being visible while it does.',
             statGrants: { speed: 10, wisdom: 20, manaPool: 20 },
-            unlocksMoveIds: ['vanish'],
+            unlocksMoveIds: ['lieInWait'],
             typeGraft: 'Shadow',
             learnableMoveIds: ['weaken', 'backstab', 'shadowSlice', 'shadowstrike', 'shadowForm'],
           },
@@ -1360,7 +1361,7 @@ export const progressionTable: ProgressionTable = {
             name: 'Blindspot',
             description: 'Sits in the gap where they forget to look.',
             statGrants: { defense: 20, hp: 20, wisdom: 10 },
-            unlocksMoveIds: ['vanish'],
+            unlocksMoveIds: ['lieInWait'],
             typeGraft: 'Shadow',
             learnableMoveIds: ['weaken', 'umbraBolt', 'enfeeble', 'shadowForm', 'umbralWave'],
           },
@@ -1390,7 +1391,7 @@ export const progressionTable: ProgressionTable = {
             statGrants: { intelligence: 30, speed: 10 },
             unlocksMoveIds: ['eclipse'],
             typeGraft: 'Shadow',
-            learnableMoveIds: ['umbraBolt', 'umbralBeam', 'enfeeble', 'umbralWave', 'vanish'],
+            learnableMoveIds: ['umbraBolt', 'umbralBeam', 'enfeeble', 'umbralWave', 'lieInWait'],
           },
           {
             id: 'lucius-defensive',

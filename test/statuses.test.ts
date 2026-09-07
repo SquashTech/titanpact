@@ -288,87 +288,73 @@ test('status: a non-Spirit/Mind attack does not trigger Haunt spread', () => {
   assert.strictEqual(next.combatants.b2.currentHp, fixtureMaxHp('wildOracle'));
 });
 
-// --- Stealth: speed-dependent redirect ---
+// --- Ambush: a typeless Force, spent on the next attack ---
 
-test('status: a faster Stealth redirects an already-declared attack onto the other active hero', () => {
-  const state = twoVTwoFixture(230);
-  // b2 (speed 65) out-paces a1 (50), so Vanish resolves before the attack.
-  const actions: Action[] = [
-    { kind: 'move', combatantId: 'b2', moveId: 'vanish' },
-    { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b2' },
-  ];
-  const { state: next, events } = resolveRound(state, actions, config);
-
-  assert.ok(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1'));
-  assert.strictEqual(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b2'), false);
-  assert.strictEqual(next.combatants.b2.currentHp, fixtureMaxHp('wildOracle'));
-});
-
-test('status: a slower Stealth does not save its caster from an attack that resolves first', () => {
-  const state = twoVTwoFixture(231);
-  // a2 (speed 55) out-paces b1 (30), so the attack resolves before Vanish lands.
-  const actions: Action[] = [
-    { kind: 'move', combatantId: 'b1', moveId: 'vanish' },
-    { kind: 'move', combatantId: 'a2', moveId: 'splash', declaredTarget: 'b1' },
-  ];
-  const { state: next, events } = resolveRound(state, actions, config);
-
-  assert.ok(events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1'));
-  assert.ok(next.combatants.b1.currentHp < fixtureMaxHp('ironWarden'));
-});
-
-test('status: Stealth ticks at the start of a round, so it still protects the round after it lands', () => {
-  const state = twoVTwoFixture(230);
-
-  const round1 = resolveRound(state, [{ kind: 'move', combatantId: 'b2', moveId: 'vanish' }], config);
-  assert.ok(hasStatus(round1.state.combatants.b2, 'Stealth'));
-
-  // Round 2: the start-of-round tick took duration 1 -> 0 but kept it present.
-  const round2 = resolveRound(
-    round1.state,
-    [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b2' }],
-    config
+/** Side A carries a bench hero so the switch-clearing test has somewhere to go. */
+function ambushFixture(seed: number) {
+  return deepMana(
+    createFightState(
+      seed,
+      [
+        { combatantId: 'a1', heroId: 'cinderKnight', side: 'A' },
+        { combatantId: 'a2', heroId: 'tidecaller', side: 'A' },
+        { combatantId: 'a3', heroId: 'nightshade', side: 'A' },
+      ],
+      [
+        { combatantId: 'b1', heroId: 'ironWarden', side: 'B' },
+        { combatantId: 'b2', heroId: 'wildOracle', side: 'B' },
+      ]
+    )
   );
-  assert.ok(round2.events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b1'));
-  assert.strictEqual(round2.events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b2'), false);
-  assert.ok(hasStatus(round2.state.combatants.b2, 'Stealth'));
+}
 
-  // Round 3: the start-of-round tick removes it before actions run.
-  const round3 = resolveRound(
-    round2.state,
-    [{ kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b2' }],
-    config
-  );
-  assert.ok(round3.events.some((e) => e.type === 'DamageDealt' && e.targetCombatantId === 'b2'));
+const forceBonusOn = (events: readonly any[], targetId: string) =>
+  events.find((e) => e.type === 'DamageDealt' && e.targetCombatantId === targetId)?.elementalForceBonus;
+
+test('status: Ambush adds its magnitude to Base Power and is spent by the attack that reads it', () => {
+  const loaded = withStatus(ambushFixture(240), 'a1', 'Ambush', { magnitude: 45 });
+  const action: Action = { kind: 'move', combatantId: 'a1', moveId: 'singe', declaredTarget: 'b1' };
+  const { state: next, events } = resolveRound(loaded, [action], config);
+
+  assert.strictEqual(forceBonusOn(events, 'b1'), 45);
+  assert.strictEqual(hasStatus(next.combatants.a1, 'Ambush'), false);
+  assert.ok(events.some((e) => e.type === 'StatusRemoved' && e.combatantId === 'a1' && e.statusId === 'Ambush' && e.reason === 'consumed'));
 });
 
-test('status: both active heroes can never be Stealthed at once — the slower Vanish fizzles', () => {
-  const state = twoVTwoFixture(230);
-  // a2 (speed 55) out-paces a1 (50), so its Vanish resolves first.
-  const actions: Action[] = [
-    { kind: 'move', combatantId: 'a1', moveId: 'vanish' },
-    { kind: 'move', combatantId: 'a2', moveId: 'vanish' },
-  ];
-  const { state: next, events } = resolveRound(state, actions, config);
+test('status: Ambush is TYPELESS — it pays on a move that shares nothing with the caster', () => {
+  // Cinder Knight is Fire/Iron; Splash is Water, so an Elemental Force would contribute nothing here.
+  const loaded = withStatus(ambushFixture(241), 'a1', 'Ambush', { magnitude: 30 });
+  const { events } = resolveRound(loaded, [{ kind: 'move', combatantId: 'a1', moveId: 'splash', declaredTarget: 'b1' }], config);
 
-  assert.ok(hasStatus(next.combatants.a2, 'Stealth'));
-  assert.strictEqual(hasStatus(next.combatants.a1, 'Stealth'), false);
-  assert.ok(events.some((e) => e.type === 'StatusApplied' && e.combatantId === 'a2' && e.statusId === 'Stealth'));
-  assert.strictEqual(events.some((e) => e.type === 'StatusApplied' && e.combatantId === 'a1' && e.statusId === 'Stealth'), false);
-  assert.ok(events.some((e) => e.type === 'MoveUsed' && e.combatantId === 'a1' && e.manaSpent === moves.vanish.manaCost)); // move went off, only the status fizzled
+  assert.strictEqual(forceBonusOn(events, 'b1'), 30);
 });
 
-test('status: a Stealthed hero is not a selectable target for a single-target attack, but is for a spread one', () => {
-  const state = twoVTwoFixture(230);
-  const { state: stealthed } = resolveRound(state, [{ kind: 'move', combatantId: 'b2', moveId: 'vanish' }], config);
-  assert.ok(hasStatus(stealthed.combatants.b2, 'Stealth'));
+test('status: a spread cashes Ambush on BOTH targets and still spends it once', () => {
+  const loaded = withStatus(ambushFixture(242), 'a1', 'Ambush', { magnitude: 25 });
+  const { state: next, events } = resolveRound(loaded, [{ kind: 'move', combatantId: 'a1', moveId: 'umbralWave' }], config);
 
-  const enemies = ['b1', 'b2'];
-  assert.deepStrictEqual(selectableTargets(stealthed, 'singleEnemy', 'damage', enemies), ['b1']);
-  assert.deepStrictEqual(selectableTargets(stealthed, 'bothEnemies', 'damage', enemies), enemies);
-  assert.deepStrictEqual(selectableTargets(stealthed, 'singleEnemy', 'heal', enemies), enemies);
-  // Last hero standing is offered rather than an empty picker (mirrors applyStealthRedirect).
-  assert.deepStrictEqual(selectableTargets(stealthed, 'singleEnemy', 'damage', ['b2']), ['b2']);
+  assert.strictEqual(forceBonusOn(events, 'b1'), 25);
+  assert.strictEqual(forceBonusOn(events, 'b2'), 25, 'read per hit, so the second target is not shortchanged');
+  assert.strictEqual(hasStatus(next.combatants.a1, 'Ambush'), false);
+  assert.strictEqual(events.filter((e) => e.type === 'StatusRemoved' && e.statusId === 'Ambush').length, 1);
+});
+
+test('status: a buff move never spends Ambush — only an attack cashes it', () => {
+  const loaded = withStatus(ambushFixture(243), 'a1', 'Ambush', { magnitude: 25 });
+  const { state: next } = resolveRound(loaded, [{ kind: 'move', combatantId: 'a1', moveId: 'weaken', declaredTarget: 'b1' }], config);
+
+  assert.strictEqual(next.combatants.a1.statuses.Ambush?.magnitude, 25);
+});
+
+test('status: Ambush stacks additively, and switching to the bench clears it rather than banking it', () => {
+  const state = ambushFixture(244);
+  const twice = applyStatus(applyStatus(state, 1, 'a1', statuses.Ambush, { magnitude: 20 }).state, 1, 'a1', statuses.Ambush, {
+    magnitude: 45,
+  }).state;
+  assert.strictEqual(twice.combatants.a1.statuses.Ambush?.magnitude, 65);
+
+  const { state: next } = resolveRound(twice, [{ kind: 'switch', combatantId: 'a1', benchedCombatantId: 'a3' }], config);
+  assert.strictEqual(hasStatus(next.combatants.a1, 'Ambush'), false, 'no banking a loaded hit on the bench');
 });
 
 // --- The magnitude formula (docs/combat.md "Scaled status magnitudes") ---

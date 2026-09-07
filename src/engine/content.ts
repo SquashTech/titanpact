@@ -62,8 +62,6 @@ export interface StatusDefinition {
   shape: StatusShape;
   /** DoT/HoT/countdown tick point — locked to end of round (docs/conditions.md §7). */
   ticksAtEndOfRound: boolean;
-  /** Duration-shape only (Stealth): counts down at round START; a tick finding 0 removes it before that round's actions. Exclusive with ticksAtEndOfRound. */
-  ticksAtStartOfRound?: boolean;
   /** Post-tick decay for magnitude statuses: 'halve' toward 0, or 'none' (Poison builds until it detonates). */
   decay: 'halve' | 'none';
   stacking: StatusStacking;
@@ -73,7 +71,7 @@ export interface StatusDefinition {
   clearsAtEndOfRound?: boolean;
   /** The end-of-round tick is skipped while benched (Poison's timer stalls rather than clears). */
   activeOnly?: boolean;
-  /** Never stripped by Cleanse (Renew, Stealth). */
+  /** Never stripped by Cleanse (Renew, Ambush). */
   positive?: boolean;
   /** Boolean-shape DoT (Bleed): a fixed fraction of max HP per tick instead of a magnitude. */
   flatPercentOfMaxHp?: number;
@@ -87,6 +85,10 @@ export interface StatusDefinition {
   redirectsSingleTargetEnemyMoves?: boolean;
   /** Elemental Force: magnitude added to the BasePower of moves of this type BEFORE the multiplier chain — not a DamageModifier (damagePipeline.ts resolveElementalForceBonus). One status per type. */
   forceType?: TypeId;
+  /** Ambush: a typeless Force — magnitude added to the BasePower of EVERY move the holder uses. Exclusive with forceType. */
+  forceAllTypes?: boolean;
+  /** Ambush: spent once the damage move that read it has resolved all of its hits, so a spread pays on every target and still costs one. */
+  consumedOnDamage?: boolean;
   /** Where the effect is wired in. Engine-read only for 'timer' (MoveDefinition.detonatesStatus). */
   pipeline: 'dot' | 'hot' | 'control' | 'timer' | 'trigger' | 'target' | 'basePower' | 'none';
   description?: string;
@@ -260,6 +262,10 @@ export interface MoveDefinition {
   /** damage-kind only. Per-move crit rate in [0, 1], replacing damagePipeline.ts PROVISIONAL_CRIT_CHANCE. Not a crit stat; composition with equipment crit is open (docs/combat.md). */
   critChance?: number;
   /** damage-kind only. Multiplies the BasePower INPUT (authored x multiplier, THEN + Elemental Force) while the condition holds — two-pipeline separation. Author exactly one `requires*`; none = a silent dud. */
+  /** damage-kind: resolve the damage this many times against EACH target (default 1). Every hit rolls
+   * its own variance and crit and re-reads the flat BasePower bonuses, so a multi-hit move multiplies
+   * an Ambush. Riders still fire once, after the whole move. */
+  hitCount?: number;
   conditionalPower?: {
     /** The hit's target carries this status. Re-read per hit, so a spread cast can double against one foe only. */
     requiresTargetStatus?: StatusId;
@@ -315,7 +321,7 @@ export interface MoveDefinition {
   };
   /** Any kind. Flat mana to each resolved target; may exceed the pool — uncapped, sticky overflow (docs/mana.md "Overflow"). Ally modes include the caster. Emits ManaGranted. */
   manaGrant?: number;
-  /** Any kind. Replaces `target` while the field effect is active, read at RESOLUTION (a same-round setter counts). Declared against the authored `target`; applied before Stealth/Provoke/Haunt. */
+  /** Any kind. Replaces `target` while the field effect is active, read at RESOLUTION (a same-round setter counts). Declared against the authored `target`; applied before Provoke/Haunt. */
   conditionalTarget?: {
     requiresFieldEffect: FieldEffectId;
     target: TargetMode;

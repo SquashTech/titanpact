@@ -54,9 +54,9 @@ function afflict(state: CombatState, combatantId: string, statusId: string, magn
   return applyStatus(state, 1, combatantId, statuses[statusId], magnitude !== undefined ? { magnitude } : {}).state;
 }
 
-/** Stealth ticks at the START of a round, so it needs a duration to survive until actions resolve. */
-function stealth(state: CombatState, combatantId: string): CombatState {
-  return applyStatus(state, 1, combatantId, statuses.Stealth, { duration: 2 }).state;
+/** Provoke lasts the round it lands in, which is all a same-round redirect needs. */
+function provoke(state: CombatState, combatantId: string): CombatState {
+  return applyStatus(state, 1, combatantId, statuses.Provoke, { duration: 1 }).state;
 }
 
 /** Forces `combatantId` to act first within its bracket. */
@@ -175,9 +175,10 @@ test('frost: the gate reads the mark LIVE, so a Freeze applied earlier in the sa
   assert.ok(hit, 'Glaciate should have landed');
 });
 
-test('frost: Stealth redirecting a gated strike onto an unmarked partner fizzles it rather than letting it land', () => {
-  const stealthed = stealth(afflict(withDeepPools(frostFixture(404)), 'b1', 'Freeze'), 'b1');
-  const result = resolveRound(stealthed, [{ kind: 'move', combatantId: 'a1', moveId: 'glaciate', declaredTarget: 'b1' }], config);
+test('frost: a redirect pulling a gated strike onto an unmarked hero fizzles it rather than letting it land', () => {
+  // Frozen b1 is the legal target; b2 taunts, so the move is pulled onto a hero the gate refuses.
+  const pulled = provoke(afflict(withDeepPools(frostFixture(404)), 'b1', 'Freeze'), 'b2');
+  const result = resolveRound(pulled, [{ kind: 'move', combatantId: 'a1', moveId: 'glaciate', declaredTarget: 'b1' }], config);
 
   assert.ok(result.events.some((e) => e.type === 'ActionBlocked' && e.reason === 'targetStatusMissing'));
   assert.strictEqual(

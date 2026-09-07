@@ -60,7 +60,7 @@ Design constraints on every event type:
 > `src/data/statuses.ts` encodes them as data and
 > `src/engine/combat/statusEngine.ts` is the generic runtime, with a small
 > number of documented, narrowly-scoped exceptions for statuses that hook
-> target resolution (Haunt, Stealth) or a move's type (Conduct) rather than
+> target resolution (Haunt) or a move's type (Conduct) rather than
 > the plain tick loop. Several of `conditions.md` §7's open questions were
 > resolved by adopting the 2026 status-system design review's stated answers
 > (Cleanse always spares positive statuses — no more debuffs-vs-all split,

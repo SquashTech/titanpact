@@ -112,7 +112,7 @@ export interface StatusTickedEvent extends BaseEvent {
   type: 'StatusTicked';
   combatantId: string;
   statusId: StatusId;
-  /** 'duration' = a countdown tick (Poison/Stealth), no HP change. Daze never ticks — it is cleared wholesale at end of round. */
+  /** 'duration' = a countdown tick (Poison/Provoke), no HP change. Daze never ticks — it is cleared wholesale at end of round. */
   kind: 'damage' | 'heal' | 'duration';
   /** HP applied by this tick (pre-decay magnitude, or Bleed's flat %). 0 for 'duration'. */
   amount: number;

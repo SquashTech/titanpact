@@ -378,9 +378,9 @@ a restriction. Three rules:
   `noValidTarget` race — it is not a damage penalty, and there is no weaker
   version of the move that lands anyway. Its own `ActionBlocked` reason
   (`targetStatusMissing`), so the Battle Log says *why*.
-- **It is read LAST**, after Stealth's redirect and Haunt's spread, because both
+- **It is read LAST**, after Provoke's redirect and Haunt's spread, because both
   of those move a hit onto a hero the gate never approved. A Frozen-only strike
-  bounced by Stealth onto an unmarked partner fizzles rather than landing.
+  pulled by a taunt onto an unmarked hero fizzles rather than landing.
 - **One function, both ends** (`statusEngine.ts statusGatedTargets`): the target
   picker refuses to offer an unsatisfiable move and the engine refuses to
   resolve it, off the same code, so declaration-time and resolve-time cannot
@@ -1203,9 +1203,9 @@ Three consequences worth knowing:
   `singleEnemy`, so the target panel opens as normal and the second target is simply
   added on the way in. The move button carries a chip saying whether the swap is
   currently on, so it is never a surprise.
-- **Everything downstream reads the EFFECTIVE mode.** Stealth's redirect, Provoke's
-  redirect and Haunt's expansion all treat a conditionally-spread move exactly as they
-  treat an authored `bothEnemies` one.
+- **Everything downstream reads the EFFECTIVE mode.** Provoke's redirect and Haunt's
+  expansion both treat a conditionally-spread move exactly as they treat an authored
+  `bothEnemies` one.
 - **The enabler is global and has no owner**, like every field-effect condition
   (`docs/field-effects.md`): an enemy's Magical Surge spreads your Overload, and any
   other field effect displaces it and switches the spread back off.

@@ -154,50 +154,83 @@ rather than slipping it in.
 - Unmistakably Spirit/Mind. Novel verb (retarget/multiply), not a DoT.
 - ⚠️ Native-spread interaction and burst-ceiling check pending. See open questions.
 
-### Stealth — 1-turn self-buff
-- For 1 turn the hero **cannot be targeted by attacks**; **spread moves still land.**
-- **Outspeeding + applying Stealth redirects the incoming attack to the other active
-  hero** (the Speed-matters hook).
-- **Declaration time (2026-08-28): an already-Stealthed hero is not offered as a target
-  at all** — the target picker omits it for single-target attacks, so "cannot be
-  targeted" is literal rather than something the player discovers via the redirect.
-  The redirect above still covers the mid-round case, where Stealth lands *after* the
-  attack was declared. Same narrow shape both sides (`selectableTargets` /
-  `applyStealthRedirect`, statusEngine.ts): damage-kind, singleEnemy/singleAlly only,
-  so spread moves keep listing and hitting a Stealthed hero. If the Stealthed hero is
-  the only one left to aim at, it is offered anyway rather than presenting an empty
-  picker — mirroring the redirect's own "no alternate, the attack goes through" branch.
-- Positive / self-buff → subject to the Cleanse-strips-positives question, alongside
-  Renew.
-- ⚠️ Command-then-resolve timing needs an explicit rule. See open questions.
-- **Exclusivity rule (2026-08-19, resolved): a side's two active heroes can never both
-  be Stealthed at the same time.** Without this, simultaneously Stealthing both
-  actives makes an entire enemy turn whiff for free — a stall tactic with no
-  counterplay, not an interesting use of the Speed-matters redirect. If an
-  application would create double-active-Stealth, it fizzles (no status, no event —
-  same as any other blocked reapply); the move itself still resolves and still costs
-  its mana. Enforced at the point of application (statusEngine.ts `applyStatus`), not
-  as a switch-time guard — Stealth's own duration (protects the casting round plus
-  the one after) makes a benched Stealth surviving long enough to re-enter as active
-  alongside an independently-Stealthed partner structurally unreachable today, given
-  one action per hero per round.
-- **Length is 1, and that is now a decision rather than a default (2026-08-30,
-  Shadow).** The Shadow design table asks for Stealth twice — Vanish (15 mana) and
-  Shadow Form (60, Stealth + 75 Attack) — and gives a duration for neither. Designer
-  call: *"Stealth is only ever 1 turn."* So both authored grants carry
-  `duration: 1`, and `test/shadowMoves.test.ts` pins that every Stealth grant in the
-  game is Shadow-typed, self-targeted and duration 1, so a later slate cannot quietly
-  introduce a second length. Because Stealth ticks at the **start** of a round, 1
-  means the rest of the round it was cast in plus the whole of the next.
-- **It now has a payoff move (2026-08-30, Shadow).** Ambush doubles its base power
-  while the user is Stealthed (`conditionalPower.requiresUserStatus`) and **spends
-  the Stealth** (`consumesStatus`) — the first content to author the consume on the
-  user-side half of the conditional. Nothing about the status changed: attacking has
-  never broken Stealth and still does not. What Ambush costs is the remainder of that
-  round's protection, which is the whole reason Vanish is a choice (hide, or set up a
-  hit) rather than a strictly-correct opener. This also makes the exclusivity rule
-  above load-bearing for a second reason: a double-Shadow side gets **one** armed
-  Ambush per round, not two.
+### Ambush — a typeless Force, spent on the next attack (2026-09-07)
+- Magnitude-shape, `positive`. Its magnitude is added as **flat Base Power** to the
+  next attack the holder lands — **whatever type that attack is** — and is then spent.
+- **It replaced Stealth**, which was deleted the same day. Stealth's problem was never
+  its effect; it was that a whole turn bought nothing but the absence of one attack, in
+  a doubles game where the opponent simply hits the partner instead. `authoring-moves.md`
+  §10 had already recorded the symptom from the other end — Vesper's starting kit was
+  two off-type supports and a Stealth grant, the trap pick the north star forbids.
+- **It is the Elemental Force family with the type taken off.** `forceAllTypes` matches
+  any move where `forceType` matches one, so the whole implementation is a wildcard in
+  `resolveElementalForceBonus` plus `consumedOnDamage` in `resolveRound` — no new
+  subsystem, and no bespoke logic in a content file. That inheritance decides three
+  things for free: it is a **BasePower-stage** input, so the two-pipeline separation
+  holds; it lands **before** `conditionalPower`'s multiplier is applied, so an execute
+  never doubles the Ambush along with the move; and it is read **per hit**, so a spread
+  pays on both targets.
+- **Flat Base Power rather than a percentage — deliberate.** A percentage in pipeline 2
+  would compound multiplicatively with crit, STAB, type advantage, a Force *and* a ×2
+  execute, and Ambush-on-a-crit-execute is a six-times turn. Flat Base Power also gives
+  the status a *niche*: it is proportionally larger on a cheap fast move than on a nuke
+  (Ambush 45 turns Backstab's 30 into 75, but Dusk Blade's 80 into 125), which is both
+  the ambusher's fantasy and something no flat Attack buff does. It pays a magical move
+  and a physical one identically, so a mixed attacker gets full value from one buff.
+- **Scalable, not boolean (2026-09-07 designer call).** A fixed constant would make a
+  15-mana granter and a 60-mana one worth exactly the same, which fights the locked
+  "mana cost is the primary balance lever". Per-source magnitudes are what let Lie in
+  Wait (45), Shadow Form (40) and Cutthroat (20) price differently.
+- **Spent after the move's hits, not during them** (`resolveRound`, after the per-target
+  loop). Consequences worth knowing: a **spread** reads it on every target and still pays
+  once; a **buff or heal** never spends it; a move that reaches nobody spends nothing;
+  and **Retribution** owes nothing, since it is fixed damage that never runs the formula.
+  Riders resolve after the damage case, so a damage move that *grants* Ambush cashes the
+  one it was holding and then plants a fresh one — Cutthroat's whole design.
+- **No clock, `clearsOnSwitch: true`.** The clock was dropped on purpose: a rider that
+  expires is only usable by a hero who gets to act next round, which is what makes a
+  status feel bad to hold, and a rider that waits is safe to hand out across many types.
+  Clearing on switch is what stops the real abuse — grant, pivot out to regenerate on the
+  bench, pivot back loaded. `test/statuses.test.ts` pins both halves.
+- **`stacking: 'additive'`, uncapped.** The brake is the opportunity cost: every point of
+  ramp is a turn not spent attacking. Whether that brake is enough is an open tuning
+  question rather than a settled one.
+- **The design rule the rework turns on, and the reason Stealth failed:** a granter that
+  costs a whole turn has to pay back **more than one attack's damage** or pressing it is
+  never correct. So Ambush should mostly ride on turns the player was already spending —
+  a brace, a switch-in, a debuff, a field set — and a bare "spend a turn to gain it"
+  button needs a magnitude that genuinely clears that bar. Lie in Wait at 45 is the one
+  granter that buys nothing else, and it is priced accordingly.
+- **Multi-hit is the authored payoff (2026-09-07, `MoveDefinition.hitCount`).** Because
+  the bonus is flat BasePower re-read per hit, a move that hits three times counts the
+  Ambush three times: Thousand Cuts (Shadow, late, 20 BP × 3, 50 mana) turns an Ambush 45
+  into +135 rather than +45. Bare it is an unremarkable 60 BasePower, and that is the
+  authored shape — it is a payoff, not a staple. The brake is mana: Lie in Wait plus
+  Thousand Cuts is 70 across two rounds, which is a 60-pool Shadow hero's entire budget
+  with its one regen tick included, and leaves them Resting after. Whether that is brake
+  enough is the open tuning question on this whole rework.
+- **The five homes, and what Ambush means in each (2026-09-07).** The rule they were
+  chosen by is the one above: a granter should ride on a turn that was already worth
+  taking, because a turn that buys *only* Ambush has to beat an attack to be correct.
+  - **Shadow** — the type that owns it. Lie in Wait (20 mana, Ambush 45) is the one
+    exception to that rule, the dedicated setup turn, and is priced to clear the bar.
+    Cutthroat (30, 40 BP + Ambush 20) cashes what it holds and plants a fresh one, since
+    riders resolve after the damage case. Shadow Form (60) adds Ambush 40 to its +75
+    Attack. Thousand Cuts is the payoff.
+  - **Iron** — Fortify (20 mana, +15 Defense + Ambush 20). Iron's answer to *why turtle*:
+    the guard turn now loads the swing after it, which is the counter-attacker payoff the
+    type had no way to express.
+  - **Beast** — Prowl (25 mana, +10 Attack/+10 Speed doubled beside a Beast, + Ambush 20).
+    The stat half keeps the partner conditional; the Ambush does not, since one scaling
+    clause per move is enough. What it is circling for is Pounce, priority 1.
+  - **Mind** — Enervate (30 mana, -30 Wisdom on a foe + Ambush 25). Mind spends whole
+    turns lowering an enemy and gets nothing offensive back; this closes that loop, and
+    double-dips on purpose — the Wisdom it strips is the defStat the loaded magical hit
+    divides by.
+  - **Arcane** — Magic Cloak (40 mana, Magical Surge + Ambush 30), which was already
+    paying for itself with the field.
+  - Plus the **Afterimage** passive: Ambush 20 on arrival, which makes a pivot an
+    offensive move rather than only a mana-recovery one.
 
 ---
 
@@ -205,39 +238,32 @@ rather than slipping it in.
 - While active, **every single-target move the enemy side aims at this side is
   redirected onto the holder.** Spread moves are unaffected. Stone's Provoke
   (25 mana, Priority +1) is the only carrier.
-- **The inverse of Stealth.** Stealth pushes an attack off its holder; Provoke
-  pulls every attack on the side onto it. Same hook point in `resolveRound`, same
-  narrow single-target shape, and the same two halves — a resolve-time redirect
-  (`applyProvokeRedirect`) and a declaration-time narrowing of the target picker
-  (`selectableTargets`), so the player is never offered a target the redirect
-  would silently move the move off. Where Stealth *hides* its holder from the
-  picker, Provoke narrows the picker **to** it.
+- **It is the only retargeting layer left that moves a move toward somebody**, and
+  since Stealth's deletion (2026-09-07) the only one a player can cast. Two halves:
+  a resolve-time redirect (`applyProvokeRedirect`) and a declaration-time narrowing
+  of the target picker (`selectableTargets`), so the player is never offered a
+  target the redirect would silently move the move off.
 - **Every move kind, not just damage** (2026-08-30 designer call). A debuff or a
   status rider the enemy aims at your fragile partner is exactly what a taunt is
   for; limiting it to attacks would make Provoke an attack-soak rather than a
-  body-block. This is the one axis where it deliberately departs from Stealth's
-  precedent.
+  body-block.
 - **Enemy side only.** A move resolved against its own caster's side
   (`singleAlly` — a heal, a Toughen Up) is untouched: dragging an ally's buff
   onto the opposing taunt would be nonsense, and "enemy attacks" is what the
   design row says.
 - **Duration 1, ticking at end of round**, which is exactly "this turn": the tick
-  that closes the round it was cast in takes it to 0 and removes it.
-  Deliberately **not** Stealth's `ticksAtStartOfRound` — that flag exists to give
-  Stealth a full round *after* the one it was cast in, and Provoke is priced as a
-  single round of soak. **Priority +1 is load-bearing rather than flavour**: the
+  that closes the round it was cast in takes it to 0 and removes it. Provoke is
+  priced as a single round of soak, and it is now the only duration-shape status in
+  the catalog. **Priority +1 is load-bearing rather than flavour**: the
   taunt has to be standing before the enemy's attacks resolve or it protects
   nothing.
-- **It resolves after Stealth and before Haunt.** On the pathological board where
-  one hero holds both Stealth and Provoke, Provoke wins — a 25-mana action taken
-  this round to eat a hit should be the last word over a passive avoidance
-  effect. Haunt then spreads from wherever the hit actually landed.
+- **It resolves before Haunt**, which then spreads from wherever the hit actually
+  landed.
 - Read generically off `StatusDefinition.redirectsSingleTargetEnemyMoves` rather
   than as a literal `'Provoke'` id check, so the next type that wants a taunt
   authors it as data — same discipline as `triggerTypes` / `spreadTriggerTypes`.
-  This is the first status-redirect hook to be data-driven; Stealth's is still a
-  literal id check, which is now the odd one out and worth folding in the next
-  time that code is touched.
+  It was the first status-redirect hook to be data-driven, and since Stealth's
+  deletion it is the only one — no literal-id retargeting is left in the engine.
 
 ---
 
@@ -322,7 +348,7 @@ status, not Freeze checks:
 
 - **Gate** — `requiresTargetStatus`: the move may only resolve against a
   carrier. Unmet, the action fizzles for no mana with its own `ActionBlocked`
-  reason. Applied after Stealth/Haunt retargeting, so a redirect cannot smuggle
+  reason. Applied after Provoke/Haunt retargeting, so a redirect cannot smuggle
   a gated hit onto an unmarked hero. See docs/combat.md.
 - **Consume** — `conditionalPower.consumesStatus`: the hit that got the
   conditional multiplier spends the status it read, as a `StatusRemoved` with
@@ -359,11 +385,11 @@ cleanly:
 - Magnitude: Burn, Renew
 - Boolean: Bleed, Freeze, Conduct, **Daze** (2026-08-30: was Duration, now flinch —
   boolean plus `clearsAtEndOfRound`)
-- Duration: **nothing, now.** Stealth is the only duration-shape status left and
-  it ticks at the START of a round, which is its own special case.
+- Magnitude, second flavour: **Ambush** and the fifteen Elemental Forces — magnitude
+  read as flat Base Power rather than as HP a tick moves. Same shape, different reader.
+- Duration: Provoke, and nothing else.
 - Poison: timer / delayed-detonation — its own shape
 - Haunt: target modifier — its own shape
-- Stealth: 1-turn self-buff — boolean-ish
 
 Either accept that the taxonomy is now "core shapes plus a few distinct specials," or
 re-derive the shapes to match reality. Keep the docs honest either way. Flagged, not
@@ -378,9 +404,9 @@ status to call its own? (Roguelike structure keeps per-run status load low, so r
 count is not the constraint — legibility and non-overlap are.)
 
 - **Covered:** Fire (Burn), Frost (Freeze), Storm + Iron (Conduct), Spirit/Mind (Haunt)
-- **Agnostic-served:** Bleed, Renew, Stealth (place Stealth deliberately — reads
-  Shadow, but Beast/predator-ambush or fully agnostic avoids double-signaturing one
-  element)
+- **Agnostic-served:** Bleed, Renew, Ambush (Ambush reads Shadow and is authored there
+  first, but it is deliberately typeless and Iron/Beast are the planned next homes —
+  see its section above)
 - **Status-poor (holes):** Water, Stone, Mech, Beast, Nature, Light, Arcane
 - **Cleanest next fill:** Arcane mana-**regen** denial (hits the regen stat, not the
   pool — surgical, distinct from the cut Sap). Unbuilt; bench interaction is the
@@ -402,12 +428,10 @@ percentage goes up
 5. **Haunt + native spread.** Does Haunt double-hit on already-spread moves, or is it
    strictly single→spread with no effect on native spread? Plus a burst-ceiling check
    (no spread-damage reduction in combat math means Haunt ~doubles output).
-6. **Cleanse strips positives?** Resolve for Renew AND Stealth together — an enemy
-   peeling Stealth/Renew is either healthy counterplay or feels awful. Answer: do not strip positives
-7. **Stealth command-then-resolve timing.** If an enemy commanded an attack at a hero
-   who then goes Stealth this same turn, who resolves first decides whether it
-   protects. Write the rule (faster-Stealth dodges; slower-Stealth eats it, safe next
-   turn). Answer: A fast stealth can redirect an attack directed at that hero
+6. **Cleanse strips positives?** Answer: do not strip positives. Carried forward to
+   Ambush, which is `positive` for the same reason.
+7. ~~**Stealth command-then-resolve timing.**~~ Moot — Stealth was deleted 2026-09-07
+   and replaced by Ambush, which has no targeting behaviour to time.
 
 ---
 

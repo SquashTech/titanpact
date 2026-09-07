@@ -338,14 +338,9 @@ test('stone: the target picker narrows to the taunt, so the player never aims wh
   const taunted = applyStatus(state, 1, 'b2', statuses.Provoke, { duration: 1 }).state;
   const enemies = ['b1', 'b2'];
 
-  assert.deepStrictEqual(selectableTargets(taunted, 'singleEnemy', 'damage', enemies, statuses), ['b2']);
-  assert.deepStrictEqual(selectableTargets(taunted, 'singleEnemy', 'buff', enemies, statuses), ['b2'], 'every kind, matching the redirect');
-  assert.deepStrictEqual(selectableTargets(taunted, 'bothEnemies', 'damage', enemies, statuses), enemies, 'spread is untouched');
-  assert.deepStrictEqual(
-    selectableTargets(taunted, 'singleEnemy', 'damage', enemies),
-    enemies,
-    'omitting the catalog keeps the exact pre-Provoke behaviour'
-  );
+  assert.deepStrictEqual(selectableTargets(taunted, 'singleEnemy', enemies, statuses), ['b2']);
+  assert.deepStrictEqual(selectableTargets(taunted, 'bothEnemies', enemies, statuses), enemies, 'spread is untouched');
+  assert.deepStrictEqual(selectableTargets(taunted, 'singleEnemy', enemies), enemies, 'omitting the catalog narrows nothing');
 });
 
 // --- Slate-wide ---

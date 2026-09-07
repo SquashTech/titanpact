@@ -1,6 +1,6 @@
 // The status engine (docs/conditions.md). Reads StatusDefinition flags
-// generically; the only literal-id checks are the catalog's documented
-// exceptions (Stealth here, Freeze's Speed hook in state.ts).
+// generically; the catalog's one remaining literal-id check is Freeze's Speed
+// hook in state.ts.
 
 import type { FieldEffectDefinition, MoveDefinition, StatusDefinition, StatusId, StatusRemovalReason, TargetMode, TypeId } from '../content';
 import type { CombatState, Combatant, StatusInstance } from '../state';
@@ -85,14 +85,6 @@ export interface StatusApplyParams {
 export function applyStatus(state: CombatState, round: number, combatantId: string, def: StatusDefinition, params: StatusApplyParams): StatusResult {
   const combatant = state.combatants[combatantId];
   if (!combatant || combatant.fainted) return { state, events: [] };
-
-  // A side's two actives can never both be Stealthed (docs/conditions.md). Fizzles silently, no event.
-  if (def.id === 'Stealth' && state.active[combatant.side].includes(combatantId)) {
-    const partnerId = state.active[combatant.side].find((id): id is string => id !== null && id !== combatantId);
-    if (partnerId && hasStatus(state.combatants[partnerId], 'Stealth')) {
-      return { state, events: [] };
-    }
-  }
 
   const existing = combatant.statuses[def.id];
   let magnitude = params.magnitude;
@@ -215,36 +207,6 @@ export function tickEndOfRound(
     const rm = removeStatusesWhere(working, round, combatantId, statusDefs, (def) => def.clearsAtEndOfRound, 'expired');
     working = rm.state;
     events.push(...rm.events);
-  }
-
-  return { state: working, events };
-}
-
-/** Start-of-round tick (ticksAtStartOfRound — Stealth): a duration already at 0 expires; otherwise it decrements and stays. */
-export function tickStartOfRound(state: CombatState, round: number, statusDefs: Record<string, StatusDefinition>): StatusResult {
-  let working = state;
-  const events: CombatEvent[] = [];
-
-  for (const combatantId of Object.keys(working.combatants)) {
-    const combatant = working.combatants[combatantId];
-    if (!combatant || combatant.fainted) continue;
-
-    for (const statusId of Object.keys(combatant.statuses)) {
-      const instance = combatant.statuses[statusId];
-      const def = statusDefs[statusId];
-      if (!def || !instance || !def.ticksAtStartOfRound) continue;
-
-      if ((instance.duration ?? 0) <= 0) {
-        const rm = removeStatus(working, round, combatantId, statusId, 'expired');
-        working = rm.state;
-        events.push(...rm.events);
-        continue;
-      }
-
-      const newDuration = (instance.duration ?? 0) - 1;
-      events.push({ type: 'StatusTicked', round, combatantId, statusId, kind: 'duration', amount: 0, newDuration });
-      working = setStatus(working, combatantId, statusId, { ...instance, duration: newDuration });
-    }
   }
 
   return { state: working, events };
@@ -391,31 +353,9 @@ export function expandSpreadTargets(
 }
 
 /**
- * Stealth's redirect (docs/conditions.md §7 Q7): a damage move resolved to exactly one
- * target that is Stealthed lands on its active partner instead. Literal-id check by design.
- */
-export function applyStealthRedirect(
-  state: CombatState,
-  targetMode: TargetMode,
-  moveKind: 'damage' | 'heal' | 'buff',
-  targetIds: readonly string[]
-): string[] {
-  if (moveKind !== 'damage' || (targetMode !== 'singleEnemy' && targetMode !== 'singleAlly') || targetIds.length !== 1) {
-    return [...targetIds];
-  }
-
-  const [id] = targetIds;
-  const target = state.combatants[id];
-  if (!target || !hasStatus(target, 'Stealth')) return [...targetIds];
-
-  const alternate = state.active[target.side].find((cid): cid is string => cid !== null && cid !== id && !state.combatants[cid]?.fainted);
-  return alternate ? [alternate] : [...targetIds];
-}
-
-/**
  * Provoke's redirect (redirectsSingleTargetEnemyMoves): every singleEnemy move of ANY
- * kind is pulled onto the taunter on the caster's enemy side. Runs after Stealth in
- * resolveRound so Provoke wins when a hero holds both.
+ * kind is pulled onto the taunter on the caster's enemy side. The only retargeting layer
+ * that pulls toward its holder; Haunt's spread runs after it.
  */
 export function applyProvokeRedirect(
   state: CombatState,
@@ -455,16 +395,14 @@ export function statusGatedTargets(state: CombatState, move: MoveDefinition, tar
 }
 
 /**
- * Declaration-time counterpart to the redirects: a taunter narrows a singleEnemy
- * picker to itself; a Stealthed hero is hidden from a single-target damage picker
- * (falling back to the full list if hiding would leave nothing).
+ * Declaration-time counterpart to applyProvokeRedirect: a taunter narrows a singleEnemy
+ * picker to itself, so the button shows where the move will actually land.
  */
 export function selectableTargets(
   state: CombatState,
   targetMode: TargetMode,
-  moveKind: 'damage' | 'heal' | 'buff',
   candidateIds: readonly string[],
-  /** Omitted keeps the pre-Provoke behaviour exactly. */
+  /** Omitted narrows nothing. */
   statusDefs?: Record<string, StatusDefinition>
 ): string[] {
   if (statusDefs && targetMode === 'singleEnemy') {
@@ -476,12 +414,5 @@ export function selectableTargets(
     if (taunter) return [taunter];
   }
 
-  if (moveKind !== 'damage') return [...candidateIds];
-  if (targetMode !== 'singleEnemy' && targetMode !== 'singleAlly') return [...candidateIds];
-
-  const visible = candidateIds.filter((id) => {
-    const combatant = state.combatants[id];
-    return !combatant || !hasStatus(combatant, 'Stealth');
-  });
-  return visible.length > 0 ? visible : [...candidateIds];
+  return [...candidateIds];
 }

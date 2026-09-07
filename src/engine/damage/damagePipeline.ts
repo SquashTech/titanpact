@@ -39,7 +39,11 @@ export function resolveMultiplierTerm(
   return modifiers.reduce((product, m) => product * (1 + m.amount), 1);
 }
 
-/** Elemental Force: summed magnitude of held statuses whose forceType matches the move's type — a BasePower input, not a stat. */
+/**
+ * Elemental Force: summed magnitude of held statuses whose forceType matches the move's
+ * type — a BasePower input, not a stat. `forceAllTypes` (Ambush) is the typeless member of
+ * the same family and matches whatever the move is.
+ */
 export function resolveElementalForceBonus(
   attacker: Combatant,
   moveType: string,
@@ -47,7 +51,9 @@ export function resolveElementalForceBonus(
 ): number {
   let bonus = 0;
   for (const [statusId, instance] of Object.entries(attacker.statuses)) {
-    if (statusDefs[statusId]?.forceType === moveType) bonus += instance.magnitude ?? 0;
+    const def = statusDefs[statusId];
+    if (!def) continue;
+    if (def.forceAllTypes || def.forceType === moveType) bonus += instance.magnitude ?? 0;
   }
   return bonus;
 }

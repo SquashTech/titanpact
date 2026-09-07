@@ -6,6 +6,7 @@ import type { HeroDefinition, MoveDefinition } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
 import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
+import { statuses } from '../../data/statuses';
 
 export interface LogLine {
   key: string;
@@ -105,12 +106,13 @@ export function formatEvents(
           e.modifiers.length > 0
             ? `, Mods ${fmt(e.multiplierTerm)}× (${e.modifiers.map((m) => `${m.source} ${m.amount >= 0 ? '+' : ''}${Math.round(m.amount * 100)}%`).join(', ')})`
             : '';
-        // Stage-1 terms in pipeline order: authored BP × conditional multiplier, then + Elemental Force.
+        // Stage-1 terms in pipeline order: authored BP × conditional multiplier, then + the flat
+        // Base Power bonus (Elemental Force and Ambush both land here).
         const conditionalMult = e.basePowerMultiplier ?? 1;
         const scaledBp = e.basePower * conditionalMult;
         const bpParts: string[] = [];
         if (conditionalMult !== 1) bpParts.push(`${e.basePower} × ${fmt(conditionalMult)}`);
-        if (e.elementalForceBonus > 0) bpParts.push(`${bpParts.length ? '' : `${e.basePower} `}+ ${e.elementalForceBonus} Force`);
+        if (e.elementalForceBonus > 0) bpParts.push(`${bpParts.length ? '' : `${e.basePower} `}+ ${e.elementalForceBonus} bonus`);
         const bpText = bpParts.length
           ? `${scaledBp + e.elementalForceBonus} BP (${bpParts.join(' ')})`
           : `${e.basePower} BP`;
@@ -163,7 +165,8 @@ export function formatEvents(
       }
       case 'StatusApplied': {
         const detail = e.magnitude !== undefined ? ` (${e.magnitude})` : e.duration !== undefined ? ` (${e.duration})` : '';
-        lines.push({ key, text: `${name(e.combatantId)} afflicted with ${e.statusId}${detail}`, className: 'log-status' });
+        const gained = statuses[e.statusId]?.positive ? 'gains' : 'afflicted with';
+        lines.push({ key, text: `${name(e.combatantId)} ${gained} ${e.statusId}${detail}`, className: 'log-status' });
         break;
       }
       case 'StatusTicked': {

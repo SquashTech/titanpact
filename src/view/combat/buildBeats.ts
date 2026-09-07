@@ -410,11 +410,13 @@ export function buildBeats(
       case 'StatusApplied': {
         const targetName = name(e.combatantId);
         const detail = e.magnitude !== undefined ? ` (${e.magnitude})` : e.duration !== undefined ? ` (${e.duration})` : '';
+        // Renew and Ambush are things a hero GAINS; only the rest are afflictions.
+        const verb = statuses[e.statusId]?.positive ? 'gains' : 'is afflicted with';
         push(
           [e],
-          `${targetName} is afflicted with ${e.statusId}${detail}`,
+          `${targetName} ${verb} ${e.statusId}${detail}`,
           [{ combatantId: e.combatantId, text: e.statusId, className: 'popup-status' }],
-          { bannerLead: `${targetName} is afflicted with`, bannerFocus: `${e.statusId}${detail}`, bannerFocusKind: 'status' }
+          { bannerLead: `${targetName} ${verb}`, bannerFocus: `${e.statusId}${detail}`, bannerFocusKind: 'status' }
         );
         i++;
         break;

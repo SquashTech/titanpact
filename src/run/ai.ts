@@ -73,11 +73,11 @@ function targetPool(state: CombatState, casterId: string, mode: TargetMode, side
   }
 }
 
-/** Same two narrowings in the same order as FightScreen's visibleTargets: hard status gate, then Provoke/Stealth. */
+/** Same two narrowings in the same order as FightScreen's visibleTargets: hard status gate, then Provoke. */
 function candidateTargets(state: CombatState, casterId: string, move: MoveDefinition, ctx: AiContext, mode: TargetMode): string[] {
   const side = state.combatants[casterId].side;
   const pool = targetPool(state, casterId, mode, side);
-  return selectableTargets(state, mode, move.kind, statusGatedTargets(state, move, pool), ctx.statuses);
+  return selectableTargets(state, mode, statusGatedTargets(state, move, pool), ctx.statuses);
 }
 
 /** A status-gated SPREAD move with nobody marked resolves into an ActionBlocked and eats the turn. */
@@ -115,7 +115,7 @@ function isHurt(state: CombatState, ctx: AiContext, combatantId: string): boolea
   return combatant.currentHp < getMaxHp(ctx.heroes[combatant.heroId], combatant);
 }
 
-/** Negative statuses only — Cleanse never touches Renew or Stealth. */
+/** Negative statuses only — Cleanse never touches Renew or Ambush. */
 function hasCleansableStatus(state: CombatState, ctx: AiContext, combatantId: string): boolean {
   const combatant = state.combatants[combatantId];
   if (!combatant) return false;

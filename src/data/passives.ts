@@ -415,16 +415,14 @@ const evolutionPassives: Record<string, PassiveDefinition> = {
   afterimage: {
     id: 'afterimage',
     name: 'Afterimage',
-    description: 'Whenever this hero gains Stealth, it gains 20 Attack.',
-    // Target-role StatusApplied: the subject is whoever RECEIVED the status, so this reads
-    // "I became hidden". Nightshade's own Vanish (15 mana) and Shadow Form are the sources, which
-    // makes the ramp a turn spent rather than a rider on attacking. Stealth is stacking 'none',
-    // so re-applying while already hidden emits no event and pays nothing — the ramp costs a
-    // fresh Stealth every time, and Stealth's start-of-round tick is what frees one up.
+    description: 'When this hero enters the battlefield, it gains Ambush 20.',
+    // Ambush clears on switch, so this cannot be banked by cycling — every arrival buys exactly
+    // one loaded attack, the opening lead included. It is what makes a pivot an offensive move
+    // rather than only a mana-recovery one, which is the whole reason the bench regenerates.
     reactive: {
-      hook: 'StatusApplied',
-      condition: { relativeTo: 'self', eventFieldEquals: { statusId: 'Stealth' } },
-      effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 20 },
+      hook: 'SwitchedIn',
+      condition: { relativeTo: 'self' },
+      effect: { kind: 'applyStatus', target: 'self', statusId: 'Ambush', magnitude: 20 },
     },
   },
   entanglement: {

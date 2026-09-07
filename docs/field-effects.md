@@ -108,7 +108,7 @@ Each is flavored around one type (`flavorType`, presentational only) but — lik
 Magical Surge — mechanically **global**, affecting both sides. The original setting
 moves all mirrored `arcaneSurge`'s shape (`kind: 'buff'`, `target: 'self'`, 20 mana,
 sets its field effect), the same "small dedicated buff move" pattern `moves.ts`'s file
-header documents for status-granting moves like `vanish` (Stealth) and `secondWind`
+header documents for status-granting moves like `lieInWait` (Ambush) and `secondWind`
 (Renew). **Every one of those bare setters is now gone**, folded by the authored slates
 into a move that also *does* something — Nature's Magic Growth and Force of Nature,
 Light's Consecrate (a 45-mana `bothAllies` heal that turns the ground on the way past)

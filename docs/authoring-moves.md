@@ -85,7 +85,10 @@ should just check during the move selection phase"*, which is a statement about
 how the mechanic should READ to a player, not about the engine. It turned into
 `consumesStatus` plus a check that the FightScreen chip lights up before the
 player commits — and the chip was then confirmed in the app, unlit and lit, one
-round apart. **When the designer answers a mechanical fork with a sentence about
+round apart. (**Superseded 2026-09-07**: Stealth was deleted and Ambush replaced
+it, so that particular pairing is gone — but the reading it produced, that a
+conditional has to be legible *before* the button is pressed, outlived it.)
+**When the designer answers a mechanical fork with a sentence about
 legibility, the deliverable includes the surface, not just the field.**
 
 Arcane needed **three**, the second-most of any slate, and it is the first one
@@ -369,6 +372,26 @@ Number for damage moves; **omit the field entirely** when the table says `N`.
 `healPower` is the heal-kind equivalent, and it is *not* flat HP — it is the figure the
 healing formula scales, so a Wisdom-80 caster restores more than the number written.
 
+### `hitCount` (2026-09-07)
+
+Damage-kind only; omit for the ordinary single hit. The move resolves its **whole
+per-target body** this many times, so `basePower` is read **per hit** — Thousand Cuts
+is authored at 20 and lands 60. Everything downstream repeats with it: each hit rolls
+its own variance and crit, re-reads the type chart and the live off/def ratio, fires its
+own `DamageDealt` (and therefore its own passive reactions), and re-reads every flat
+BasePower bonus.
+
+**That last clause is the whole reason the field exists.** Ambush is flat BasePower, so
+a 3-hit move counts it three times — an Ambush 45 is +135 across the move rather than
++45. Multi-hit is Shadow's authored payoff for the keyword, and pricing one anywhere
+else should start from that multiplication, not from the bare total.
+
+Three things it does NOT repeat: **riders** fire once, after the whole move; a
+**consumed** status (Ambush, a `consumesStatus` conditional) is spent once; and a
+target that **faints mid-sequence** ends the sequence rather than being swung at again.
+Never pair it with `retributionPercent`, which bypasses the formula and would pay N
+times for nothing — `test/shadowMoves.test.ts` pins that.
+
 ### `Mana Cost` → `manaCost`
 
 Mana is the primary balance lever (`CLAUDE.md`) — there is no accuracy stat, so cost is
@@ -475,7 +498,8 @@ The catalog (`src/data/statuses.ts`, `docs/conditions new.md`):
 | `Poison` | timer | Magnitude builds, duration only ticks while active, detonates at 0 | No (stalls on the bench) |
 | `Conduct` | boolean | A Storm/Iron/Mech damage move detonates it for bonus %maxHP | No |
 | `Haunt` | boolean | A Spirit/Mind single-target hit on the partner also strikes the holder | Yes |
-| `Stealth` | duration, positive | Cannot be targeted; a single-target attack already aimed here is redirected to the partner. Spread moves still land | No |
+| `Ambush` | magnitude, positive | Adds its magnitude as flat Base Power to the next attack the holder lands, whatever the move type, then is spent. No clock | Yes |
+| `Provoke` | duration | Every single-target move the enemy side aims at this side is redirected onto the holder. Spread moves are unaffected | Yes |
 
 Two of these have **type-keyed hooks** that fire automatically off any damage move of
 the right type (`StatusDefinition.triggerTypes` for Conduct, `spreadTriggerTypes` for
@@ -647,7 +671,7 @@ be). So a partner's setter earlier in the same round already counts.
 
 The player still declares against the AUTHORED mode — Overload opens a normal
 single-target panel and the second target is added on the way in — and every
-downstream retargeting layer (Stealth, Provoke, Haunt) reads the effective
+downstream retargeting layer (Provoke, Haunt) reads the effective
 mode, so a conditionally-spread move behaves exactly as an authored spread one.
 
 ### `derivedStatDeltas`
@@ -1480,8 +1504,10 @@ already held the type** rather than about the moves:
   fifteen never appear on the side of the field the player is fighting. Less
   acute than Nature's version of this finding — Shadow's mechanics are read
   off the player's own board, not off a clock the defender has to answer —
-  but Stealth in particular is a status a player will never learn to play
-  around until something casts it at them.
+  but Stealth in particular was a status a player would never learn to play
+  around until something cast it at them. (**2026-09-07**: this one was answered
+  by deletion — Stealth is gone and Ambush replaced it, which is read off the
+  player's own board and needs no enemy to teach it.)
 
 Arcane's, as a ninth — the slate that changed a state invariant rather than
 adding a field, and the first whose engine work was mostly in code nobody
