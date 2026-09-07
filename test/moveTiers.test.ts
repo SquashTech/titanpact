@@ -20,8 +20,10 @@ import {
   costToReachLevel,
   moveOfferLevels,
   movePoolFloor,
+  grantMove,
   MOVE_TIER_LEVEL,
   MOVE_POOL_MARGIN,
+  MOVE_CAP,
   EVOLUTION_LEVEL,
   MASTERY_LEVEL,
 } from '../src/run/progression';
@@ -141,7 +143,9 @@ test('move tiers: the floor is DERIVED from the curve, not written down beside i
   assert.deepStrictEqual(levels, [2, 3, 4, 6, 7, 8, 9, 10]);
 
   const floor = movePoolFloor();
-  // Two offers land before Mid opens, four before Late does, eight in all — plus the margin.
+  // Two offers land before Mid opens, four before Late does, eight in all — plus the margin,
+  // which is MOVE_CAP because that is the most a hero can be holding from outside the pool.
+  assert.strictEqual(MOVE_POOL_MARGIN, MOVE_CAP);
   assert.deepStrictEqual(floor, {
     early: 2 + MOVE_POOL_MARGIN,
     mid: 4 + MOVE_POOL_MARGIN,
@@ -186,6 +190,14 @@ test('move tiers: every hero climbs 1 to MASTERY_LEVEL without a level-up ever p
         createRunState(costToReachLevel(1, MASTERY_LEVEL)),
         createRosterEntry(hero.id, hero.id, hero.moveIds)
       );
+      // Worst case, not the tidy one: before a single level-up, events fill the whole loadout
+      // with moves out of this hero's own pool. They spend no offer (grantMove) but they are
+      // held, so levelUpMovePool filters them all the same.
+      for (let slot = 0; slot < MOVE_CAP; slot++) {
+        // Drawn at level 1, so the gifts are Early ones — the shallowest band, drained first.
+        const gift = levelUpMovePool(progressionTable, moves, { ...run.roster[0], level: 1 })[slot];
+        run = grantMove(run, hero.id, gift, run.roster[0].unlockedMoveIds[0]);
+      }
       let decline = false;
       for (const level of moveOfferLevels()) {
         // Buy the level the offer hangs off, plus the Evolution level this loop skips.

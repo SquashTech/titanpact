@@ -235,6 +235,7 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
       'holyStrike',
       'pinDown',
       'rendArmor',
+      'swiftBlow',
     ]
   );
 

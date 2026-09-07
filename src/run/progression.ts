@@ -101,12 +101,13 @@ export function moveOfferLevels(): number[] {
 }
 
 /**
- * Spare offers every pool carries beyond that curve's own demand. The curve is not the only
- * faucet: an event can teach from the whole catalog, and a move swapped away is spent for good
- * (offeredMoveIds), so a pool sized to the curve exactly would be one unlucky run from paying a
- * mastery stat at level 6. FLAGGED FOR THE DESIGNER: 3 is a first-pass figure, not a decision.
+ * Spare offers every pool carries beyond that curve's own demand — derived, not chosen. The
+ * curve is not the only thing that takes a move off the table: levelUpMovePool also filters
+ * what the hero is currently HOLDING, and a loadout slot can be filled from outside the pool
+ * (an event's gift). MOVE_CAP of those is the most that can ever be held at once, so a pool
+ * deeper than curve + MOVE_CAP cannot be emptied — by any run, not merely by a likely one.
  */
-export const MOVE_POOL_MARGIN = 3;
+export const MOVE_POOL_MARGIN = MOVE_CAP;
 
 /**
  * Floor on a hero's level-up pool, by CUMULATIVE tier band: `early` is Early alone, `mid` is
@@ -248,8 +249,12 @@ export function levelUpHero(run: RunState, rosterId: string): RunState {
   return replaceEntry(run, rosterId, { ...entry, level: entry.level + 1 }, cost);
 }
 
-/** Free — the point was spent by levelUpHero. Adds `moveId`, or swaps it in for `replaceMoveId` at the cap. Spends the offer, so swapping the move away later does not put it back in the pool. */
-export function grantLevelUpMove(run: RunState, rosterId: string, moveId: string, replaceMoveId?: string): RunState {
+/**
+ * Free. Adds `moveId`, or swaps it in for `replaceMoveId` at the cap. Does NOT spend a
+ * level-up offer: this is the faucet for moves that arrive from outside the pool — an event's
+ * gift, a scripted grant — which the player was never asked to choose against.
+ */
+export function grantMove(run: RunState, rosterId: string, moveId: string, replaceMoveId?: string): RunState {
   const entry = requireEntry(run, rosterId);
   if (replaceMoveId && !entry.unlockedMoveIds.includes(replaceMoveId)) {
     throw new ProgressionError(`${replaceMoveId} is not currently unlocked on ${rosterId}`);
@@ -257,8 +262,12 @@ export function grantLevelUpMove(run: RunState, rosterId: string, moveId: string
   const unlockedMoveIds = replaceMoveId
     ? entry.unlockedMoveIds.map((id) => (id === replaceMoveId ? moveId : id))
     : [...entry.unlockedMoveIds, moveId];
-  const nextEntry: RosterEntry = { ...entry, unlockedMoveIds, offeredMoveIds: withOffers(entry, [moveId]) };
-  return replaceEntry(run, rosterId, nextEntry, 0);
+  return replaceEntry(run, rosterId, { ...entry, unlockedMoveIds }, 0);
+}
+
+/** The point was spent by levelUpHero. Grants, and spends the offer — swapping the move away later does not put it back in the pool. */
+export function grantLevelUpMove(run: RunState, rosterId: string, moveId: string, replaceMoveId?: string): RunState {
+  return recordMoveOffer(grantMove(run, rosterId, moveId, replaceMoveId), rosterId, [moveId]);
 }
 
 /**

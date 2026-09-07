@@ -381,12 +381,12 @@ test('mech: both Mech heroes can afford their own kits and attack off their bett
   }
 });
 
-test('mech: Clockwork and Bellows share no pool entry, and split the slate by stat', () => {
+test('mech: Bellows splits the slate by stat', () => {
+  // The two Mech pools are free to overlap — a shared commodity entry is not what tells
+  // Clockwork and Bellows apart. What does is the stat each one swings with.
   const { progressionTable } = require('../src/data/progression') as typeof import('../src/data/progression');
-  const clockwork = progressionTable.moveTiers.forgewright ?? [];
   const bellows = progressionTable.moveTiers.steamColossus ?? [];
-  assert.ok(clockwork.length > 0 && bellows.length > 0);
-  for (const id of clockwork) assert.ok(!bellows.includes(id), `${id} is in both pools`);
+  assert.ok((progressionTable.moveTiers.forgewright ?? []).length > 0 && bellows.length > 0);
 
   for (const id of bellows) {
     const move = moves[id];

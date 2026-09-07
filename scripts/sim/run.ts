@@ -45,6 +45,7 @@ import {
   levelUpCost,
   levelUpHero,
   levelUpMovePool,
+  grantMove,
   recordMoveOffer,
   levelUpPayout,
   pendingEvolution,
@@ -621,9 +622,10 @@ function resolveEvent(run: RunState, locationId: string, rng: Rng, record: RunRe
     if (!moveId || !target) return run;
     const entry = entryOf(run, target.rosterId);
     if (entry.unlockedMoveIds.includes(moveId)) return run;
-    if (entry.unlockedMoveIds.length < MOVE_CAP) return grantLevelUpMove(run, target.rosterId, moveId);
+    // An event's gift never spends a level-up offer (grantMove).
+    if (entry.unlockedMoveIds.length < MOVE_CAP) return grantMove(run, target.rosterId, moveId);
     const replaceId = policy.replacementTarget(entry, moveId);
-    return replaceId ? grantLevelUpMove(run, target.rosterId, moveId, replaceId) : run;
+    return replaceId ? grantMove(run, target.rosterId, moveId, replaceId) : run;
   }
 
   if (outcome.kind === 'statShift') {

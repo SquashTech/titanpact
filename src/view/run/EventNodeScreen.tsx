@@ -10,7 +10,7 @@ import type { HeroDefinition, StatKey } from '../../engine/content';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { pickWeightedEquipment, rarityWeightsFor } from '../../run/equipment';
 import { applyStatShift, grantEventPassive, rollEventMove, statShiftAllowed } from '../../run/events';
-import { grantLevelUpMove, MOVE_CAP } from '../../run/progression';
+import { grantMove, MOVE_CAP } from '../../run/progression';
 import type { RosterEntry, RunState } from '../../run/state';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { entryStatTotals } from '../shared/entryStatTotals';
@@ -123,7 +123,9 @@ export function EventNodeScreen({ event, run, onRunChange, onGrantEquipment, onC
 
   function teach(rosterId: string, replaceMoveId?: string) {
     if (!offeredMoveId) return;
-    onRunChange(grantLevelUpMove(run, rosterId, offeredMoveId, replaceMoveId));
+    // grantMove, not grantLevelUpMove: an event's gift is not an offer out of the level-up
+    // pool, so it must not spend one — swap it away later and it can still be offered.
+    onRunChange(grantMove(run, rosterId, offeredMoveId, replaceMoveId));
     setResolvedTo(rosterId);
     setSwapping(null);
     setSelectedReplaceId(null);

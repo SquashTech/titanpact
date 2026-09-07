@@ -192,6 +192,11 @@ A move leaves a hero's pool the moment it is **offered**, whether or not it is t
 - **Granted by an Evolution path**, both the moves the cap took and the overflow it
   refused (`chooseEvolutionPath`) — the overflow IS a level-up offer, so it prices like one.
 
+An **event's gift does not** (`grantMove`, not `grantLevelUpMove`). A `learnMove` event draws
+from the whole catalog and hands the move over; the player was never asked to choose it against
+anything, so swapping it away later leaves it offerable. The rule is about questions already put
+to the player, and an event never put one.
+
 Scoped per hero and per run — nothing persists past the run, and a second copy of the
 hero recruited later starts with its own empty list.
 
@@ -207,18 +212,22 @@ the floor is derived from the curve rather than written down beside it
 | Whole pool | levels 2, 3, 4, 6, 7, 8, 9, 10 | 8 + margin |
 
 Eight offers, not nine: the level-up that reaches `EVOLUTION_LEVEL` surfaces the Evolution
-instead, and `MASTERY_LEVEL` itself still pays a move. `MOVE_POOL_MARGIN` = **3** is the
-room the *other* faucets need — a `learnMove` event draws from the whole catalog and can
-land on the hero's own pool, and a move swapped away is spent for good. It is a first-pass
-figure: the level-up curve alone is satisfied at margin 0, so the number is a bet on how
-often everything else draws from the same well, and it is FLAGGED FOR THE DESIGNER.
+instead, and `MASTERY_LEVEL` itself still pays a move.
 
-Bringing all 36 pools up to that floor on 2026-09-07 took **32 added entries across 30
-heroes**, mostly a single Early move each; the authoring rules they had to satisfy are in
-the FLOOR comment in `src/data/progression.ts`. Two tests hold it: one checks the arithmetic
-against every pool, the other **walks** each hero from 1 to `MASTERY_LEVEL` down all three
-Evolution paths, alternating taking and declining, and asserts no level-up ever falls
-through to a mastery stat (`test/moveTiers.test.ts`).
+`MOVE_POOL_MARGIN` is **`MOVE_CAP`**, and it is derived rather than picked. The curve is not
+the only thing that takes a move off the table: `levelUpMovePool` also filters what the hero is
+currently **holding**, and a loadout slot can be filled from outside the pool by an event's gift.
+`MOVE_CAP` of those is the most that can ever be held at once, so a pool deeper than
+curve + `MOVE_CAP` **cannot** be emptied — by any run, not merely by a likely one. An earlier
+pass used a guessed margin of 3 and called it a bet; there was no need to bet.
+
+Bringing all 36 pools to that floor on 2026-09-07 took **67 added entries**, roughly two per
+hero; the authoring rules they had to satisfy are in the FLOOR comment in
+`src/data/progression.ts`. Two tests hold it: one checks the arithmetic against every pool, the
+other **walks** each hero from 1 to `MASTERY_LEVEL` down all three Evolution paths — filling the
+whole loadout with event gifts out of its own Early pool first, then alternating taking and
+declining every offer — and asserts no level-up ever falls through to a mastery stat
+(`test/moveTiers.test.ts`).
 
 ### Which move is offered: the tier gate (2026-08-31)
 
