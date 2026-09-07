@@ -1,13 +1,7 @@
-import { useMemo } from 'react';
+import { useState } from 'react';
 import { gemRelics, guardianBannerRelics, relics } from '../../data/relics';
-import { passives } from '../../data/passives';
-import type { StatKey } from '../../engine/content';
 import type { RelicDefinition } from '../../run/relics';
-import { relicTeamStatModifiers } from '../../run/relics';
-import { relicTeamPassiveGrants } from '../../run/passives';
-import { relicStatContribution } from '../../run/entryStats';
 import { RelicIcon } from '../shared/EquipmentBox';
-import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { stackedGrantSummary } from '../shared/relicStacks';
 
 /** Duplicates fold into one chip carrying the count. */
@@ -18,15 +12,28 @@ function countRelics(ownedRelicIds: readonly string[]): Map<string, number> {
 }
 
 /**
- * One relic family's chips. Held or not: a run collects Gems steadily and meets the same five
- * Banners every act, so an unheld one is a slot to fill rather than an absence — and the Banners
- * being FIXED only becomes a spread-or-commit decision if all five are visible from act 1.
+ * One relic family's chips: icon and count, nothing else. Held or not — a run collects Gems
+ * steadily and meets the same five Banners every act, so an unheld one is a slot to fill rather
+ * than an absence, and the Banners being FIXED only becomes a spread-or-commit decision if all
+ * five are visible from act 1.
  *
- * Name and count only. What each one grants is stated where it is offered (GemChoiceScreen,
- * GuardianBannerScreen) and again, summed and applied, in the totals row below — a per-chip
- * grant line is the third telling, and it pushed the roster this panel sits above off-screen.
+ * Names and grants are one tap away rather than spelled out (2026-09-07, per user direction).
+ * Twelve of these live above the roster on one scroll; written out in full they were the whole
+ * first screen, and the roster — the half of this sheet you can actually act on — was below the
+ * fold. An icon and a number is the reading a player wants at a glance; the detail is for the one
+ * they are actually deciding about.
  */
-function RelicRail({ label, family, counts }: { label: string; family: readonly RelicDefinition[]; counts: Map<string, number> }) {
+function RelicRail({
+  label,
+  family,
+  counts,
+  onInspect,
+}: {
+  label: string;
+  family: readonly RelicDefinition[];
+  counts: Map<string, number>;
+  onInspect: (relicId: string) => void;
+}) {
   return (
     <div className="relic-rail-row">
       <span className="relic-rail-label">{label}</span>
@@ -34,17 +41,46 @@ function RelicRail({ label, family, counts }: { label: string; family: readonly 
         {family.map((relic) => {
           const count = counts.get(relic.id) ?? 0;
           return (
-            <span
+            <button
               key={relic.id}
+              type="button"
               className={`relic-pill${count > 0 ? '' : ' is-empty'}`}
-              title={`${relic.name} — team-wide ${stackedGrantSummary(relic, Math.max(count, 1))}${count > 1 ? ` (×${count})` : ''}`}
+              onClick={() => onInspect(relic.id)}
+              aria-label={`${relic.name}, held ${count} — tap for details`}
             >
               <RelicIcon relicId={relic.id} className="relic-pill-icon" />
-              {relic.name}
-              <span className="relic-pill-count">×{count}</span>
-            </span>
+              <span className="relic-pill-count">{count}</span>
+            </button>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+/** What a chip's tap opens: which relic it is, how many are held, and what that adds up to. */
+function RelicSummaryPopup({ relicId, count, onClose }: { relicId: string | null; count: number; onClose: () => void }) {
+  const relic = relicId ? relics[relicId] : null;
+  if (!relic) return null;
+  return (
+    <div
+      className="log-overlay"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClose();
+      }}
+    >
+      <div className="log-panel move-popup-panel">
+        <div className="relic-summary-head">
+          <RelicIcon relicId={relic.id} className="relic-summary-icon" />
+          {/* The plain name, not `stackedRelicName`: the "+1" suffix and the Held line below say
+              the same thing in two notations. The suffix is for chips with no room for a count. */}
+          <span className="relic-summary-name">{relic.name}</span>
+        </div>
+        {/* A held stack states its summed total; an unheld one states what a single copy would pay. */}
+        <div className="relic-summary-grant">Team-wide {stackedGrantSummary(relic, Math.max(count, 1))}.</div>
+        <div className="relic-summary-count">{count > 0 ? `Held ×${count}` : 'Not held yet'}</div>
+        <div className="move-popup-hint">Tap anywhere to close</div>
       </div>
     </div>
   );
@@ -56,31 +92,18 @@ function RelicRail({ label, family, counts }: { label: string; family: readonly 
  * — the Banners, the Gems and the gear they stack with are one question, so they are one screen.
  */
 export function RunRelicsPanel({ ownedRelicIds }: { ownedRelicIds: readonly string[] }) {
+  const [inspectingId, setInspectingId] = useState<string | null>(null);
   const counts = countRelics(ownedRelicIds);
-  const totals = useMemo(
-    () =>
-      Object.entries(
-        relicStatContribution(relicTeamStatModifiers(ownedRelicIds, relics), relicTeamPassiveGrants(ownedRelicIds, relics), passives)
-      ) as [StatKey, number][],
-    [ownedRelicIds]
-  );
 
   return (
     <section className="run-relics-panel">
-      <RelicRail label="Banners" family={guardianBannerRelics} counts={counts} />
-      <RelicRail label="Gems" family={gemRelics} counts={counts} />
-      <div className="relic-active-banner">
-        <span className="relic-active-banner-label">Every hero carries</span>
-        {totals.length > 0 ? (
-          totals.map(([stat, amount]) => (
-            <span key={stat} className="relic-contrib-chip">
-              <StatGlyph stat={stat} /> {STAT_LABELS[stat]} {amount > 0 ? `+${amount}` : amount}
-            </span>
-          ))
-        ) : (
-          <span className="relic-active-banner-note">Nothing yet — Gems drop from fights, Banners from Guardians.</span>
-        )}
-      </div>
+      <RelicRail label="Banners" family={guardianBannerRelics} counts={counts} onInspect={setInspectingId} />
+      <RelicRail label="Gems" family={gemRelics} counts={counts} onInspect={setInspectingId} />
+      <RelicSummaryPopup
+        relicId={inspectingId}
+        count={inspectingId ? counts.get(inspectingId) ?? 0 : 0}
+        onClose={() => setInspectingId(null)}
+      />
     </section>
   );
 }
