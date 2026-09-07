@@ -24,6 +24,8 @@ const UI_IDS: SfxId[] = [
   'shrine',
   'blessing',
   'class.learn',
+  'seal.strike',
+  'seal.shatter',
 ];
 
 const NOTES: Partial<Record<SfxId, string>> = {
@@ -38,6 +40,8 @@ const NOTES: Partial<Record<SfxId, string>> = {
   shrine: 'arriving at a blessing shrine — re-pitched per shrine',
   blessing: 'a shrine grant landing on a hero',
   'class.learn': 'a Class conferred on a hero',
+  'seal.strike': 'a warden struck off the Pact Seal',
+  'seal.shatter': 'the fifth socket — the seal itself giving way',
   'ui.back': 'close, cancel, exit',
   'ui.select': 'highlight without committing',
   'ui.denied': 'unaffordable move, unreachable node',

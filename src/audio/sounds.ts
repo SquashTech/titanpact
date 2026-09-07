@@ -26,6 +26,8 @@ export type SfxId =
   | 'cache.open'
   | 'xp.orb'
   | 'discovery'
+  | 'seal.strike'
+  | 'seal.shatter'
   // Combat
   | 'cast'
   | 'hit.physical'
@@ -278,6 +280,32 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'sine', freq: 466, detune: 14, gain: 0.15, attack: 0.24, decay: 1.1, delay: 0.24 },
       { wave: 'sine', freq: 932, detune: 20, gain: 0.06, attack: 0.28, decay: 0.9, delay: 0.34 },
       { wave: 'noise', gain: 0.1, attack: 0.45, decay: 0.85, filter: { type: 'bandpass', freq: 420, freqEnd: 2400, q: 0.7 } },
+    ],
+  },
+
+  /** A warden's socket struck through (PactSealScreen). Two impacts inside 60ms — the cut, then the stone taking it — over a rising fifth, so it reads as a lock giving rather than a hit landing. */
+  'seal.strike': {
+    gain: 0.5,
+    jitter: 0.01,
+    voices: [
+      { wave: 'noise', gain: 0.34, attack: 0.001, decay: 0.09, filter: { type: 'bandpass', freq: 3200, freqEnd: 900, q: 1.1 } },
+      { wave: 'noise', gain: 0.4, attack: 0.001, decay: 0.28, delay: 0.055, filter: { type: 'lowpass', freq: 1400, freqEnd: 180, q: 1.2 } },
+      { wave: 'sine', freq: 140, freqEnd: 52, gain: 0.42, attack: 0.002, decay: 0.36, delay: 0.055 },
+      { wave: 'triangle', freq: 330, freqEnd: 494, detune: 7, gain: 0.22, attack: 0.01, hold: 0.04, decay: 0.5, delay: 0.09 },
+      { wave: 'sine', freq: 988, gain: 0.12, attack: 0.008, decay: 0.6, delay: 0.16 },
+    ],
+  },
+
+  /** The fifth socket closing — the ring itself letting go. `seal.strike`'s weight with the tail opened out, and the only sound in the table that ends lower than it starts. */
+  'seal.shatter': {
+    gain: 0.56,
+    jitter: 0.008,
+    voices: [
+      { wave: 'noise', gain: 0.46, attack: 0.002, decay: 0.7, filter: { type: 'lowpass', freq: 2600, freqEnd: 140, q: 0.9 } },
+      { wave: 'sine', freq: 110, freqEnd: 41, gain: 0.5, attack: 0.003, decay: 0.9 },
+      { wave: 'triangle', freq: 220, freqEnd: 147, detune: 12, gain: 0.26, attack: 0.02, hold: 0.08, decay: 0.85, delay: 0.06 },
+      { wave: 'noise', gain: 0.14, attack: 0.001, decay: 0.14, delay: 0.19, filter: { type: 'highpass', freq: 3400 } },
+      { wave: 'sine', freq: 659, detune: 16, gain: 0.1, attack: 0.03, decay: 1.1, delay: 0.24 },
     ],
   },
 
