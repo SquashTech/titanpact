@@ -192,11 +192,33 @@ A move leaves a hero's pool the moment it is **offered**, whether or not it is t
 - **Granted by an Evolution path**, both the moves the cap took and the overflow it
   refused (`chooseEvolutionPath`) — the overflow IS a level-up offer, so it prices like one.
 
-The pool therefore drains monotonically, which makes an empty pool below `MASTERY_LEVEL`
-an ordinary late-run state rather than the data bug it used to indicate; it falls through
-to the mastery stat by the same route as the tier gate's empty pool below. Scoped per
-hero and per run — nothing persists past the run, and a second copy of the hero recruited
-later starts with its own empty list.
+Scoped per hero and per run — nothing persists past the run, and a second copy of the
+hero recruited later starts with its own empty list.
+
+The pool therefore drains monotonically, which is what makes the depth of it load-bearing.
+**An empty pool below `MASTERY_LEVEL` is a data bug, not a state the game may reach**, so
+the floor is derived from the curve rather than written down beside it
+(`movePoolFloor`, `src/run/progression.ts`):
+
+| Band | Offers that land before the next tier opens | Floor |
+| --- | --- | --- |
+| Early alone | levels 2, 3 | 2 + margin |
+| Early + Mid | levels 2, 3, 4, 6 | 4 + margin |
+| Whole pool | levels 2, 3, 4, 6, 7, 8, 9, 10 | 8 + margin |
+
+Eight offers, not nine: the level-up that reaches `EVOLUTION_LEVEL` surfaces the Evolution
+instead, and `MASTERY_LEVEL` itself still pays a move. `MOVE_POOL_MARGIN` = **3** is the
+room the *other* faucets need — a `learnMove` event draws from the whole catalog and can
+land on the hero's own pool, and a move swapped away is spent for good. It is a first-pass
+figure: the level-up curve alone is satisfied at margin 0, so the number is a bet on how
+often everything else draws from the same well, and it is FLAGGED FOR THE DESIGNER.
+
+Bringing all 36 pools up to that floor on 2026-09-07 took **32 added entries across 30
+heroes**, mostly a single Early move each; the authoring rules they had to satisfy are in
+the FLOOR comment in `src/data/progression.ts`. Two tests hold it: one checks the arithmetic
+against every pool, the other **walks** each hero from 1 to `MASTERY_LEVEL` down all three
+Evolution paths, alternating taking and declining, and asserts no level-up ever falls
+through to a mastery stat (`test/moveTiers.test.ts`).
 
 ### Which move is offered: the tier gate (2026-08-31)
 

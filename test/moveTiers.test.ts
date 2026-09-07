@@ -8,7 +8,23 @@ import { test } from './harness';
 import { moves } from '../src/data/moves';
 import { progressionTable } from '../src/data/progression';
 import { createRunState, createRosterEntry, addRosterEntry } from '../src/run/state';
-import { levelUpMovePool, isMoveTierUnlocked, MOVE_TIER_LEVEL, EVOLUTION_LEVEL } from '../src/run/progression';
+import {
+  levelUpMovePool,
+  isMoveTierUnlocked,
+  levelUpHero,
+  levelUpPayout,
+  grantLevelUpMove,
+  recordMoveOffer,
+  chooseEvolutionPath,
+  availableEvolution,
+  costToReachLevel,
+  moveOfferLevels,
+  movePoolFloor,
+  MOVE_TIER_LEVEL,
+  MOVE_POOL_MARGIN,
+  EVOLUTION_LEVEL,
+  MASTERY_LEVEL,
+} from '../src/run/progression';
 import { heroes as heroesById } from '../src/data/heroes';
 import type { MoveTier, TypeId } from '../src/engine/content';
 
@@ -117,23 +133,75 @@ test('move tiers: a pool can still empty out as a MECHANISM, which now pays a ma
   );
 });
 
+test('move tiers: the floor is DERIVED from the curve, not written down beside it', () => {
+  const levels = moveOfferLevels();
+  // The level-up that reaches EVOLUTION_LEVEL surfaces the Evolution instead of a move.
+  assert.ok(!levels.includes(EVOLUTION_LEVEL), 'the Evolution level pays no move');
+  assert.strictEqual(levels[levels.length - 1], MASTERY_LEVEL, 'MASTERY_LEVEL itself still pays a move');
+  assert.deepStrictEqual(levels, [2, 3, 4, 6, 7, 8, 9, 10]);
+
+  const floor = movePoolFloor();
+  // Two offers land before Mid opens, four before Late does, eight in all — plus the margin.
+  assert.deepStrictEqual(floor, {
+    early: 2 + MOVE_POOL_MARGIN,
+    mid: 4 + MOVE_POOL_MARGIN,
+    late: 8 + MOVE_POOL_MARGIN,
+  });
+});
+
 test('move tiers: no hero can reach level 10 on a level-up that offers nothing', () => {
   // Exact, not sampled: the gate is cumulative, so the count still on the table at the nth offer is
-  // |moves tier-unlocked at this level| - (n - 1) whichever ones were handed out. That collapses to
-  // the FLOOR in CLAUDE.md (>=2 Early, >=4 Early+Mid, >=8 total, starting kit filtered out).
+  // |moves tier-unlocked at this level| - (n - 1), whichever ones were handed out — and an offer is
+  // spent whether it is taken or declined, so the count falls either way. Holding MOVE_POOL_MARGIN
+  // above that at every step IS the per-band FLOOR, since both sides only grow with the level.
+  const floor = movePoolFloor();
   for (const hero of Object.values(heroesById)) {
     const pool = (progressionTable.moveTiers[hero.id] ?? []).filter((id) => !hero.moveIds.includes(id));
     let offers = 0;
-    for (let level = 2; level <= 10; level++) {
-      // The level-up that reaches EVOLUTION_LEVEL surfaces the Evolution instead of a move.
-      if (level === EVOLUTION_LEVEL) continue;
+    for (const level of moveOfferLevels()) {
       offers++;
       const reachable = pool.filter((id) => isMoveTierUnlocked(moves[id], level)).length;
       assert.ok(
-        reachable >= offers,
-        `${hero.id} has nothing to offer at level ${level}: ${reachable} move(s) tier-unlocked, ` +
-          `${offers} level-up offer(s) made by then`
+        reachable >= offers + MOVE_POOL_MARGIN,
+        `${hero.id} is thin at level ${level}: ${reachable} move(s) tier-unlocked, ` +
+          `${offers} offer(s) made by then, margin ${MOVE_POOL_MARGIN}`
       );
+    }
+    const early = pool.filter((id) => (moves[id].tier ?? 'early') === 'early').length;
+    const earlyMid = pool.filter((id) => (moves[id].tier ?? 'early') !== 'late').length;
+    assert.ok(early >= floor.early, `${hero.id} holds ${early} Early, floor is ${floor.early}`);
+    assert.ok(earlyMid >= floor.mid, `${hero.id} holds ${earlyMid} Early+Mid, floor is ${floor.mid}`);
+    assert.ok(pool.length >= floor.late, `${hero.id} holds ${pool.length}, floor is ${floor.late}`);
+  }
+});
+
+test('move tiers: every hero climbs 1 to MASTERY_LEVEL without a level-up ever paying nothing', () => {
+  // The arithmetic above models the drain; this WALKS it, through the real calls, so the
+  // offeredMoveIds bookkeeping is in the loop. Both answers to an offer are exercised because both
+  // spend it: declining burns the move exactly as taking it does.
+  for (const hero of Object.values(heroesById)) {
+    const paths = (progressionTable.evolutions[hero.id] ?? []).flatMap((node) => node.paths);
+    for (const path of paths) {
+      let run = addRosterEntry(
+        createRunState(costToReachLevel(1, MASTERY_LEVEL)),
+        createRosterEntry(hero.id, hero.id, hero.moveIds)
+      );
+      let decline = false;
+      for (const level of moveOfferLevels()) {
+        // Buy the level the offer hangs off, plus the Evolution level this loop skips.
+        while (run.roster[0].level < level) run = levelUpHero(run, hero.id);
+        const entry = run.roster[0];
+        if (availableEvolution(progressionTable, entry)) {
+          run = chooseEvolutionPath(run, progressionTable, heroesById, hero.id, path.id);
+        }
+        const payout = levelUpPayout(progressionTable, moves, run.roster[0]);
+        assert.strictEqual(payout, 'move', `${hero.id} via ${path.id}: level ${level} paid ${payout}`);
+        const moveId = levelUpMovePool(progressionTable, moves, run.roster[0])[0];
+        run = decline
+          ? recordMoveOffer(run, hero.id, [moveId])
+          : grantLevelUpMove(run, hero.id, moveId, run.roster[0].unlockedMoveIds[0]);
+        decline = !decline;
+      }
     }
   }
 });

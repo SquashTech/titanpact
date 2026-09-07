@@ -90,10 +90,45 @@ export function drawMasteryStats(random: () => number, count: number = MASTERY_C
 }
 
 /**
+ * The levels a climb from 1 to MASTERY_LEVEL pays a MOVE for — every level bar the one that
+ * surfaces the Evolution instead. Derived rather than written down, so retuning EVOLUTION_LEVEL
+ * or MASTERY_LEVEL retunes what the pools have to hold with it.
+ */
+export function moveOfferLevels(): number[] {
+  const levels: number[] = [];
+  for (let level = 2; level <= MASTERY_LEVEL; level++) if (level !== EVOLUTION_LEVEL) levels.push(level);
+  return levels;
+}
+
+/**
+ * Spare offers every pool carries beyond that curve's own demand. The curve is not the only
+ * faucet: an event can teach from the whole catalog, and a move swapped away is spent for good
+ * (offeredMoveIds), so a pool sized to the curve exactly would be one unlucky run from paying a
+ * mastery stat at level 6. FLAGGED FOR THE DESIGNER: 3 is a first-pass figure, not a decision.
+ */
+export const MOVE_POOL_MARGIN = 3;
+
+/**
+ * Floor on a hero's level-up pool, by CUMULATIVE tier band: `early` is Early alone, `mid` is
+ * Early+Mid, `late` is the whole pool. Each band must outlast every offer made before the next
+ * tier opens — two before Mid, four before Late, eight in all — plus the margin.
+ * Enforced against the authored pools by test/moveTiers.test.ts.
+ */
+export function movePoolFloor(): Record<MoveTier, number> {
+  const levels = moveOfferLevels();
+  const offersBefore = (gateLevel: number) => levels.filter((level) => level < gateLevel).length;
+  return {
+    early: offersBefore(MOVE_TIER_LEVEL.mid) + MOVE_POOL_MARGIN,
+    mid: offersBefore(MOVE_TIER_LEVEL.late) + MOVE_POOL_MARGIN,
+    late: levels.length + MOVE_POOL_MARGIN,
+  };
+}
+
+/**
  * What a level-up pays out, read off the POST-level-up entry. Precedence:
- * evolution > move > mastery. `mastery` below MASTERY_LEVEL means the move pool
- * came up empty — either the FLOOR is short (a data bug) or the hero has been offered
- * everything it can still learn, which is an ordinary end state on a long run.
+ * evolution > move > mastery. `mastery` below MASTERY_LEVEL means the move pool came up
+ * empty, which movePoolFloor exists to make unreachable — it is a data bug, not the gate
+ * working. The fallback stays because a payout of nothing would be the worse failure.
  */
 export type LevelUpPayout = 'evolution' | 'move' | 'mastery';
 

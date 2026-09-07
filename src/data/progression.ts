@@ -12,8 +12,11 @@ import { EVOLUTION_LEVEL } from '../run/progression';
 
 export const progressionTable: ProgressionTable = {
   moveTiers: {
-    // FLOOR (test/moveTiers.test.ts): after the starting kit is filtered out, every
-    // pool holds >=2 Early, >=4 Early+Mid and >=8 total, so no level-up pays nothing.
+    // FLOOR (test/moveTiers.test.ts, movePoolFloor): after the starting kit is filtered out,
+    // every pool holds MOVE_POOL_MARGIN more than the level curve can draw — the curve pays 8
+    // move offers below MASTERY_LEVEL, 2 of them before Mid opens and 4 before Late does, and an
+    // offer is spent whether it is taken or declined. The margin is the room the OTHER faucets
+    // need: an event that teaches from the catalog, a swapped-away move that never returns.
     // Every pool also carries OFF-TYPE Early entries, drawn from the commodity layer — the bp25-45
     // single-target attacks and the mp15-25 buffs that carry no engine role. Two rules: pick on the
     // stat the hero actually attacks with, and never pick the move an Evolution path already hands
@@ -29,6 +32,8 @@ export const progressionTable: ProgressionTable = {
       'openingStrike',
       'serratedSlice',
       'holyStrike',
+      'pinDown',
+      'rendArmor',
     ],
     crimson: [
       'setAlight',
@@ -54,9 +59,10 @@ export const progressionTable: ProgressionTable = {
       'enfeeble',
       'wisp',
       'magicBolt',
+      'stokeTheFlames',
     ],
     // --- Water ---
-    tidecaller: ['siphon', 'torrent', 'engulf', 'deluge', 'oasis', 'maelstrom', 'tsunami', 'highTide', 'undertow', 'iceShard', 'psiBolt'],
+    tidecaller: ['siphon', 'torrent', 'engulf', 'deluge', 'oasis', 'maelstrom', 'tsunami', 'highTide', 'undertow', 'iceShard', 'psiBolt', 'glimmer'],
     // Shock Bubble plants Conduct and the Iron column detonates it — the mark and the payoff are
     // both already in the pool, which is what Tideclaw's Static Tide then makes free.
     pincer: [
@@ -84,9 +90,10 @@ export const progressionTable: ProgressionTable = {
       'purify',
       'siphon',
       'magicBolt',
+      'jolt',
     ],
-    rime: ['icicleThrust', 'coldSnap', 'iceShatter', 'frostWall', 'permafrost', 'claw', 'frostArmor', 'snowBlast', 'siphon', 'rockToss'],
-    cube: ['icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'rockToss', 'openingStrike', 'ironFist', 'frostWall', 'cogBop'],
+    rime: ['icicleThrust', 'coldSnap', 'iceShatter', 'frostWall', 'permafrost', 'claw', 'frostArmor', 'snowBlast', 'siphon', 'rockToss', 'undertow'],
+    cube: ['icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'rockToss', 'openingStrike', 'ironFist', 'frostWall', 'cogBop', 'snowball', 'heavyBlow'],
     // --- Storm ---
     stormRanger: [
       'stormLash',
@@ -99,6 +106,7 @@ export const progressionTable: ProgressionTable = {
       'ionize',
       'fadeStrike',
       'iceShard',
+      'stormSurge',
     ],
     // The mixed pool: Storm's physical column (Thunderclap 45 -> Storm Lash 55 + Conduct ->
     // Overcharge 80, free once both foes are marked) alongside the magical one, because 70/70
@@ -129,6 +137,7 @@ export const progressionTable: ProgressionTable = {
       'swingingChain',
       'claw',
       'backstab',
+      'fadeStrike',
     ],
     // --- Stone ---
     crag: [
@@ -155,6 +164,7 @@ export const progressionTable: ProgressionTable = {
       'faultLine',
       'openingStrike',
       'holyStrike',
+      'rockToss',
     ],
     // --- Nature ---
     wildOracle: [
@@ -169,6 +179,7 @@ export const progressionTable: ProgressionTable = {
       'drain',
       'glimmer',
       'jolt',
+      'siphon',
     ],
     mordax: [
       'ivySpike',
@@ -181,6 +192,7 @@ export const progressionTable: ProgressionTable = {
       'lacerate',
       'ironFist',
       'venomBite',
+      'mudBall',
     ],
     hollowbark: [
       'vineLash',
@@ -193,6 +205,7 @@ export const progressionTable: ProgressionTable = {
       'stoneheart',
       'rockToss',
       'phantomStrike',
+      'mudBall',
     ],
     // --- Light ---
     dawnwarden: [
@@ -209,14 +222,15 @@ export const progressionTable: ProgressionTable = {
       'exalt',
       'psiBolt',
       'magicBolt',
+      'regrowth',
     ],
-    aegis: ['holySlice', 'blind', 'purify', 'bless', 'exalt', 'consecrate', 'divineGrace', 'reinforce', 'pistonPunch', 'vineLash'],
+    aegis: ['holySlice', 'blind', 'purify', 'bless', 'exalt', 'consecrate', 'divineGrace', 'reinforce', 'pistonPunch', 'vineLash', 'toughenUp'],
     // --- Shadow ---
-    shadowMonk: ['backstab', 'weaken', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'claw', 'shadowstrike', 'phantomStrike', 'ironFist'],
-    marrow: ['vanish', 'umbralBeam', 'umbralWave', 'poltergeist', 'enfeeble', 'drain', 'torment', 'soulRend', 'wisp', 'jolt'],
+    shadowMonk: ['backstab', 'weaken', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'claw', 'shadowstrike', 'phantomStrike', 'ironFist', 'thunderclap'],
+    marrow: ['vanish', 'umbralBeam', 'umbralWave', 'poltergeist', 'enfeeble', 'drain', 'torment', 'soulRend', 'wisp', 'jolt', 'siphon'],
     // Claw is long-standing off-type coverage; Umbra Bolt is the in-type fix — Shadow has a whole
     // magical column and Nightshade's 65 Intelligence could reach none of it.
-    nightshade: ['fadeStrike', 'shadowstrike', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm', 'claw', 'umbraBolt', 'vineLash'],
+    nightshade: ['fadeStrike', 'shadowstrike', 'ambush', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm', 'claw', 'umbraBolt', 'vineLash', 'ivySpike'],
     // --- Arcane ---
     runescribe: [
       'manaFont',
@@ -231,8 +245,9 @@ export const progressionTable: ProgressionTable = {
       'manaTap',
       'backfire',
       'psiBolt',
+      'jolt',
     ],
-    zenith: ['conduit', 'fontOfPower', 'arcaneOverflow', 'magicBolt', 'cataclysm', 'focus', 'arcPulse', 'magicCloak', 'glimmer', 'psiBolt'],
+    zenith: ['conduit', 'fontOfPower', 'arcaneOverflow', 'magicBolt', 'cataclysm', 'focus', 'arcPulse', 'magicCloak', 'glimmer', 'psiBolt', 'manaFont'],
     // --- Mind ---
     // Psyshock and Psionic Wave are the mid/late damage the pool had none of, and both shred
     // Wisdom, so they double as Entanglement fuel. Phantom Strike and Cog Bop are deliberate
@@ -284,6 +299,7 @@ export const progressionTable: ProgressionTable = {
       'dopamine',
       'magicBolt',
       'wisp',
+      'deepChill',
     ],
     // --- Spirit ---
     revenant: [
@@ -299,10 +315,11 @@ export const progressionTable: ProgressionTable = {
       'lastRites',
       'ascendant',
       'psiBolt',
+      'siphon',
     ],
-    sorrow: ['vanish', 'backstab', 'fadeStrike', 'spookySlice', 'ambush', 'rend', 'soulOffering', 'wailingFlight', 'duskBlade', 'iceShard'],
+    sorrow: ['vanish', 'backstab', 'fadeStrike', 'spookySlice', 'ambush', 'rend', 'soulOffering', 'wailingFlight', 'duskBlade', 'iceShard', 'undertow'],
     // --- Iron ---
-    ironWarden: ['ironFist', 'pinDown', 'rendArmor', 'juggernaut', 'rockToss', 'bodyBlow', 'reinforce', 'bastion', 'holyStrike', 'claw'],
+    ironWarden: ['ironFist', 'pinDown', 'rendArmor', 'juggernaut', 'rockToss', 'bodyBlow', 'reinforce', 'bastion', 'holyStrike', 'claw', 'metallicBlade'],
     valor: [
       'openingStrike',
       'heavyBlow',
@@ -314,6 +331,7 @@ export const progressionTable: ProgressionTable = {
       'juggernaut',
       'undertow',
       'rockToss',
+      'pinDown',
     ],
     gallant: [
       'swiftBlow',
@@ -326,9 +344,10 @@ export const progressionTable: ProgressionTable = {
       'swingingChain',
       'holyStrike',
       'thunderclap',
+      'sharpen',
     ],
     // --- Mech ---
-    forgewright: ['backfire', 'overheat', 'malfunction', 'meltdown', 'salvage', 'juryRig', 'cogBop', 'reinforce', 'undertow', 'singe'],
+    forgewright: ['backfire', 'overheat', 'malfunction', 'meltdown', 'salvage', 'juryRig', 'cogBop', 'reinforce', 'undertow', 'singe', 'ironFist'],
     steamColossus: [
       'swiftBlow',
       'pistonPunch',
@@ -340,6 +359,7 @@ export const progressionTable: ProgressionTable = {
       'onslaught',
       'thunderclap',
       'rockToss',
+      'overclock',
     ],
     // --- Beast ---
     packAlpha: [
@@ -356,6 +376,7 @@ export const progressionTable: ProgressionTable = {
       'packLeader',
       'fadeStrike',
       'singe',
+      'provoke',
     ],
     widow: [
       'claw',
@@ -371,6 +392,7 @@ export const progressionTable: ProgressionTable = {
       'eviscerate',
       'apexPredator',
       'phantomStrike',
+      'pounce',
     ],
     coil: [
       'animalSpirit',
@@ -384,6 +406,7 @@ export const progressionTable: ProgressionTable = {
       'packLeader',
       'umbraBolt',
       'wisp',
+      'brainWard',
     ],
   },
   evolutions: {

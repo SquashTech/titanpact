@@ -233,6 +233,8 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
       'openingStrike',
       'serratedSlice',
       'holyStrike',
+      'pinDown',
+      'rendArmor',
     ]
   );
 
