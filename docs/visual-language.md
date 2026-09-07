@@ -1595,12 +1595,17 @@ fight's reinforcement would have walked on looking like a routine pivot.
 
 A **dramatic entrance**: one flag, five answers.
 
-- `view/shared/entrances.ts` — a set of hero ids, keyed exactly like
-  `heroArt.ts`. Presentation data in the presentation layer; the engine never
+- `view/shared/entrances.ts` — a table of hero ids to arrival copy, keyed exactly
+  like `heroArt.ts`. Presentation data in the presentation layer; the engine never
   learns this exists, which is what CLAUDE.md's "never bake timing, animation, or
   sound into the engine" requires and also what makes an entrance addable or
   removable without a number in a fight changing.
-- `SquadSelectScreen.tsx` — the same set conceals the chip on the battle
+  The table is **every Guardian champion plus the Endbringer** (2026-09-07) and
+  nothing else, so a run meets exactly one an act and the treatment never becomes
+  the house style for arriving. The finale's *unsealed* champions are deliberately
+  out: the player has already fought all six, so there is nothing left to conceal
+  and the act's one hidden card stays the thing at the end of it.
+- `SquadSelectScreen.tsx` — the same table conceals the chip on the battle
   preview: a **silhouette and its typing**, no name, no portrait, no stat sheet.
   The two halves are one flag on purpose, because either alone is worse than
   neither — concealing something that then walks on like an ordinary bench pivot
@@ -1614,7 +1619,10 @@ A **dramatic entrance**: one flag, five answers.
 - `buildBeats.ts` — a `SwitchedIn` for one of those ids gets its own sentence
   ("Something comes out of the treeline" / **Goblin Lord** / "The ground goes
   quiet."), the `ko` headline red rather than the switch-in `buff` green, and a
-  `dramaticEntrance: true` flag on the beat.
+  `dramaticEntrance: true` flag on the beat. The lead and the meta are authored
+  **per champion** rather than shared: the Goblin Lord's treeline is Wild's Edge,
+  and reusing it under the Molten Foundry would read as a bug in the copy, not as
+  a house line.
 - `styles.css` — a veil clipped to `.battlefield`: a red bloom on the enemy row,
   dusk closing from the top, an expanding ring, and a four-step lurch on
   `.team-row.enemy`. **Not** a full-screen overlay, and **not** a transform on

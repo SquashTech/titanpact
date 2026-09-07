@@ -40,6 +40,7 @@ import './runProgress.test';
 import './classes.test';
 import './locations.test';
 import './goblinLord.test';
+import './entrances.test';
 import './cultists.test';
 import './raiders.test';
 import './fae.test';

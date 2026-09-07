@@ -18,7 +18,7 @@ import { passives } from '../../data/passives';
 import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
 import { getTypeColor } from './typeColors';
-import { hasDramaticEntrance } from '../shared/entrances';
+import { dramaticEntranceFor } from '../shared/entrances';
 
 export interface BeatPopup {
   combatantId: string;
@@ -379,12 +379,13 @@ export function buildBeats(
 
       case 'SwitchedIn': {
         const inName = name(e.inCombatantId);
-        if (hasDramaticEntrance(combatants[e.inCombatantId]?.heroId)) {
+        const entrance = dramaticEntranceFor(combatants[e.inCombatantId]?.heroId);
+        if (entrance) {
           push([e], `${inName} takes the field!`, [], {
-            bannerLead: 'Something comes out of the treeline',
+            bannerLead: entrance.lead,
             bannerFocus: inName,
             bannerFocusKind: 'ko',
-            bannerMeta: 'The ground goes quiet.',
+            bannerMeta: entrance.meta,
             bannerMetaClass: 'banner-meta-rules',
             dramaticEntrance: true,
           });
