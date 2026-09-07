@@ -28,16 +28,19 @@ function RelicRail({
   family,
   counts,
   onInspect,
+  variant,
 }: {
   label: string;
   family: readonly RelicDefinition[];
   counts: Map<string, number>;
   onInspect: (relicId: string) => void;
+  /** Which family's sizing the rail takes — five Banners across one line, seven Gems across two. */
+  variant: 'banners' | 'gems';
 }) {
   return (
     <div className="relic-rail-row">
       <span className="relic-rail-label">{label}</span>
-      <div className="relic-rail">
+      <div className={`relic-rail is-${variant}`}>
         {family.map((relic) => {
           const count = counts.get(relic.id) ?? 0;
           return (
@@ -97,8 +100,8 @@ export function RunRelicsPanel({ ownedRelicIds }: { ownedRelicIds: readonly stri
 
   return (
     <section className="run-relics-panel">
-      <RelicRail label="Banners" family={guardianBannerRelics} counts={counts} onInspect={setInspectingId} />
-      <RelicRail label="Gems" family={gemRelics} counts={counts} onInspect={setInspectingId} />
+      <RelicRail label="Banners" family={guardianBannerRelics} counts={counts} onInspect={setInspectingId} variant="banners" />
+      <RelicRail label="Gems" family={gemRelics} counts={counts} onInspect={setInspectingId} variant="gems" />
       <RelicSummaryPopup
         relicId={inspectingId}
         count={inspectingId ? counts.get(inspectingId) ?? 0 : 0}

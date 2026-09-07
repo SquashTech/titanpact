@@ -209,6 +209,25 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
           {run.stash.length}/{STASH_CAPACITY}
         </span>
         <span className="stash-gold">{run.gold}g</span>
+        {/* Sell lives on the header line (2026-09-07): as its own row under the boxes it grew the
+            sheet by 32px the moment an item was picked up, which on a full-height panel pushed
+            the button itself below the fold. Here it costs nothing and sits on the gold it pays. */}
+        {selectedItem && selected?.kind === 'stash' && (
+          <button
+            className="stash-sell-button"
+            onClick={() => {
+              const at = selected.index;
+              setSelected(null);
+              try {
+                onRunChange(sellFromStash(run, at, equipment));
+              } catch (err) {
+                if (!(err instanceof RunProgressError)) throw err;
+              }
+            }}
+          >
+            Sell {sellValueFor(selectedItem)}g
+          </button>
+        )}
       </div>
       <div className="stash-grid">
         {/* What it holds plus ONE empty landing box, not all ten. An always-full-capacity grid
@@ -249,35 +268,10 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
           </button>
         </div>
       )}
-      <div className="stash-hint">
-        {selectedItem && selected?.kind === 'stash' ? (
-          <>
-            <span className="stash-hint-text">
-              {run.stash.some((_, i) => mergeableInBag(selected.index, i))
-                ? `Tap a hero to give them ${selectedItem.name}, or its match in the bag to merge.`
-                : `Tap a hero to give them ${selectedItem.name}.`}
-            </span>
-            <button
-              className="stash-sell-button"
-              onClick={() => {
-                const at = selected.index;
-                setSelected(null);
-                try {
-                  onRunChange(sellFromStash(run, at, equipment));
-                } catch (err) {
-                  if (!(err instanceof RunProgressError)) throw err;
-                }
-              }}
-            >
-              Sell {sellValueFor(selectedItem)}g
-            </button>
-          </>
-        ) : (
-          <span className="stash-hint-text">
-            {selectedItem ? `Tap a bag slot to take ${selectedItem.name} off.` : 'Tap an item, then tap where it goes. Hold one to read it.'}
-          </span>
-        )}
-      </div>
+      {/* No hint row (2026-09-07, per user direction). "Tap an item, then tap where it goes" is a
+          sentence a player reads once, and every state it described is already drawn: the held
+          item glows, every slot that can take it outlines, and a mergeable match in the bag
+          outlines with them. The room it held every visit now carries the Close button. */}
     </div>
   );
 
@@ -336,6 +330,13 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
 
           {bagPanel}
         </div>
+
+        {/* Outside the scroll, so it is pinned to the bottom of a full-height panel and always
+            in thumb reach. The header ✕ stays — it is where every other overlay puts it — but
+            on a 780px page it is the corner furthest from the hand doing the work. */}
+        <button className="resolve-button roster-close-button" onClick={onClose}>
+          Close
+        </button>
       </div>
 
       {swapTarget && selected && selectedItem && (
