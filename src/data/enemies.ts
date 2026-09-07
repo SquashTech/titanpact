@@ -474,11 +474,11 @@ export const enemies: Record<string, HeroDefinition> = {
   // The price of that spine is Fire, Storm and Mech, which all read 2x off Iron.
   //
   // What makes them a different fight from the Cultists at the same stat band is
-  // Conduct. The status is authored to detonate off `triggerTypes: ['Storm', 'Iron']`
+  // Conduct. The status is authored to detonate off `triggerTypes: ['Storm', 'Iron', 'Mech']`
   // — which is this faction's entire damage output — and two of their moves go FREE
   // against a marked field (metallicBlade on any mark, overcharge on both). So the
   // Stormraider's Ionize is worth a whole turn: it buys the warband a round where the
-  // mana brake is off and every hit carries +10% max HP on top. The counterplay is
+  // mana brake is off and every hit carries +15% max HP on top. The counterplay is
   // that detonating consumes the mark, so the discount and the damage compete.
   raider: {
     id: 'raider',
@@ -500,7 +500,7 @@ export const enemies: Record<string, HeroDefinition> = {
     starter: false,
   },
   // The fastest Raider, and Swift Blow is why: priority +1 on 15 base power is nothing on
-  // its own, but it cashes a Conduct mark for 10% of the target's max HP before the round
+  // its own, but it cashes a Conduct mark for 15% of the target's max HP before the round
   // properly starts. Its Water half opens the holes the rest of the line swings into.
   surfRaider: {
     id: 'surfRaider',

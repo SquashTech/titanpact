@@ -184,9 +184,9 @@ test('status: cleanseStatuses strips every non-positive status, leaving Renew (p
   assert.strictEqual(hasStatus(cleansed.combatants.a1, 'Renew'), true);
 });
 
-// --- Conduct: apply-vs-detonate split off Storm/Iron hits ---
+// --- Conduct: apply-vs-detonate split off Storm/Iron/Mech hits ---
 
-test('status: Conduct is only applied by its dedicated move, not any Storm/Iron hit', () => {
+test('status: Conduct is only applied by its dedicated move, not any Storm/Iron/Mech hit', () => {
   const state = twoVTwoFixture(200);
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'ironFist', declaredTarget: 'b1' }]; // Iron-typed, no statusApplication
   const { state: next, events } = resolveRound(state, actions, config);
@@ -204,7 +204,7 @@ test('status: Conduct applies via a move that names it (stormLash) — no bonus 
   assert.ok(events.some((e) => e.type === 'StatusApplied' && e.statusId === 'Conduct' && e.combatantId === 'b1'));
 });
 
-test('status: Conduct detonates on the next Storm/Iron hit — bonus damage, then consumed', () => {
+test('status: Conduct detonates on the next Storm/Iron/Mech hit — bonus damage, then consumed', () => {
   const state = twoVTwoFixture(201);
   const marked = withStatus(state, 'b1', 'Conduct', {});
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'ironFist', declaredTarget: 'b1' }];
@@ -215,7 +215,7 @@ test('status: Conduct detonates on the next Storm/Iron hit — bonus damage, the
   const maxHp = fixtureMaxHp('ironWarden');
   const plainDamage = maxHp - plainResult.state.combatants.b1.currentHp;
   const markedDamage = maxHp - markedResult.state.combatants.b1.currentHp;
-  const expectedBonus = Math.ceil(maxHp * 0.1);
+  const expectedBonus = Math.ceil(maxHp * 0.15);
 
   assert.strictEqual(markedDamage - plainDamage, expectedBonus);
   assert.strictEqual(hasStatus(markedResult.state.combatants.b1, 'Conduct'), false);

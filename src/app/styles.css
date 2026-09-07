@@ -3358,7 +3358,7 @@ textarea,
 }
 
 /* Conduct is "primed" while this badge shows — a slow pulse (on top of its
-   own yellow statusColor) cues that the next Storm/Iron hit detonates it. */
+   own yellow statusColor) cues that the next Storm/Iron/Mech hit detonates it. */
 .status-badge-conduct {
   animation: conduct-badge-pulse 1.4s ease-in-out infinite;
 }

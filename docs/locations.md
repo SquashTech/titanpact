@@ -389,11 +389,11 @@ rather than one: an Iron warband answers to Fire, Storm and Mech as a unit the s
 way a Shadow cult answers to Light and Spirit.
 
 What makes it a *different fight* at the same numbers is **Conduct**. The status
-detonates off `triggerTypes: ['Storm', 'Iron']` (`statuses.ts`) — which is what this
+detonates off `triggerTypes: ['Storm', 'Iron', 'Mech']` (`statuses.ts`) — which is what this
 faction is made of — and two of their moves go free against a marked field:
 `metallicBlade` on any mark, `overcharge` on both. The Stormraider's Ionize is
 therefore worth a whole turn: it buys the warband a round where the mana brake is off
-*and* every hit carries an extra 10% of max HP. The counterplay is built in, because
+*and* every hit carries an extra 15% of max HP. The counterplay is built in, because
 detonating consumes the mark — the discount and the damage compete for it.
 
 Two things that fell out of authoring it, both worth knowing before the next faction:

@@ -280,9 +280,9 @@ live in different places. Mech has both, four rows apart in the same table.
 
 Mech's other lesson is Iron's inverted and is a roster fact rather than an
 engine one. Iron cashes Conduct eleven times and plants it zero; Mech plants
-Conduct twice and Haunt once and **cashes neither** — it is in no status's
-`triggerTypes` or `spreadTriggerTypes`. Asked up front rather than assumed,
-and confirmed as intended: Mech builds, a partner fires. Worth asking on every
+Conduct twice and Haunt once, cashing its own Conduct but not its Haunt — it is
+in `Conduct.triggerTypes` and in no `spreadTriggerTypes`. Asked up front rather
+than assumed: Mech fires its own mark, a partner fires the Haunt. Worth asking on every
 remaining slate, because "does this type interact with the marks it applies"
 is invisible in a design table and is a whole doubles axis.
 
@@ -473,7 +473,7 @@ The catalog (`src/data/statuses.ts`, `docs/conditions new.md`):
 | `Freeze` | boolean | Halves Speed | Yes |
 | `Daze` | boolean | Cannot use a move for the REST OF THE ROUND, then gone. Flinch: worth nothing if its applier acted second | Yes (moot) |
 | `Poison` | timer | Magnitude builds, duration only ticks while active, detonates at 0 | No (stalls on the bench) |
-| `Conduct` | boolean | A Storm/Iron damage move detonates it for bonus %maxHP | No |
+| `Conduct` | boolean | A Storm/Iron/Mech damage move detonates it for bonus %maxHP | No |
 | `Haunt` | boolean | A Spirit/Mind single-target hit on the partner also strikes the holder | Yes |
 | `Stealth` | duration, positive | Cannot be targeted; a single-target attack already aimed here is redirected to the partner. Spread moves still land | No |
 
@@ -1586,7 +1586,7 @@ invariant, and whose findings are all about a **roster of two**:
      whether Cortex should become a proper caster (the Marrow treatment) or keep the
      flat line as a type-graft hook is a roster decision, not a movepool one.
   2. **Cerebral Shock has no holder, by design.** It applies Conduct, whose
-     `triggerTypes` are `['Storm', 'Iron']`, so no Mind move can detonate its own
+     `triggerTypes` are `['Storm', 'Iron', 'Mech']`, so no Mind move can detonate its own
      mark — confirmed as intended (Mind sets up, a partner cashes in). It is
      therefore the most partner-dependent move in the roster, and it is in the
      `test/stoneMoves.test.ts` orphan list rather than stuffed into a pool where it
@@ -2031,11 +2031,11 @@ non-empty: it says nothing about whether an orphan is acceptable, only that a
 NEW one has to be looked at and consciously added. Update the list when a slate
 legitimately adds to it; never delete the assertion.
 
-If the type you are authoring has a type-keyed status hook (Conduct on Storm/Iron, Haunt
+If the type you are authoring has a type-keyed status hook (Conduct on Storm/Iron/Mech, Haunt
 on Spirit/Mind), the equivalent question is almost certainly: *is the slate priced
 knowing every one of its damage moves carries that hook for free?* Storm answered
 it by counting: **ten of its fifteen moves are damage moves, and every one of
-them detonates Conduct for 10% max HP with no field authored**, while five plant
+them detonates Conduct for 15% max HP with no field authored**, while five plant
 the mark. **Iron's count is ten of fourteen and zero** — every damage row cashes,
 nothing plants — which is the same hook arranged as a doubles dependency rather
 than as a self-contained engine, and it is a designer call rather than a gap. That is the type's whole engine and it is invisible in the design

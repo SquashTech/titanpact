@@ -229,7 +229,7 @@ test('iron: every damage row detonates Conduct for free, and the slate plants it
   assert.ok(statuses.Conduct.triggerTypes?.includes('Iron'));
 });
 
-test('iron: an Iron hit on a marked foe is worth 10% max HP more than the same hit unmarked', () => {
+test('iron: an Iron hit on a marked foe is worth 15% max HP more than the same hit unmarked', () => {
   const state = withDeepPools(ironFixture(620));
   const marked = withStatus(state, 'b1', 'Conduct');
   const actions: Action[] = [{ kind: 'move', combatantId: 'a1', moveId: 'heavyBlow', declaredTarget: 'b1' }];
@@ -238,7 +238,7 @@ test('iron: an Iron hit on a marked foe is worth 10% max HP more than the same h
   const cashed = resolveRound(marked, actions, config);
 
   const maxHp = getMaxHp(heroes[state.combatants.b1.heroId], state.combatants.b1);
-  const expectedBonus = Math.ceil(maxHp * 0.1);
+  const expectedBonus = Math.ceil(maxHp * 0.15);
   const plainDamage = state.combatants.b1.currentHp - plain.state.combatants.b1.currentHp;
   const cashedDamage = marked.combatants.b1.currentHp - cashed.state.combatants.b1.currentHp;
 

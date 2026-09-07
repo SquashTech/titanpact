@@ -246,9 +246,9 @@ test('mind: every single-target Mind damage move carries the Haunt spread for fr
 });
 
 test('mind: Cerebral Shock plants a mark no Mind move can cash in', () => {
-  // Intended: Mind sets Conduct, a Storm or Iron partner detonates it.
+  // Intended: Mind sets Conduct, a Storm, Iron or Mech partner detonates it.
   assert.strictEqual(firstStatusApplication(moves.cerebralShock)?.statusId, 'Conduct');
-  assert.deepStrictEqual(statuses.Conduct.triggerTypes, ['Storm', 'Iron']);
+  assert.deepStrictEqual(statuses.Conduct.triggerTypes, ['Storm', 'Iron', 'Mech']);
   assert.strictEqual((statuses.Conduct.triggerTypes as readonly string[]).includes('Mind'), false);
 });
 

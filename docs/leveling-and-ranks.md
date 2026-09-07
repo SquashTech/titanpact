@@ -356,7 +356,7 @@ identity.
 >
 > | Hero | Path | Trade | What it buys |
 > | --- | --- | --- | --- |
-> | Cinder | Thunderblaze | Iron → **Storm** | The name always wanted it. The Iron it *keeps* still detonates Conduct — `Conduct.triggerTypes` is Storm and Iron, and detonation never asked for STAB. |
+> | Cinder | Thunderblaze | Iron → **Storm** | The name always wanted it. The Iron it *keeps* still detonates Conduct — `Conduct.triggerTypes` is Storm, Iron and Mech, and detonation never asked for STAB. |
 > | Brimstone | Hexfume | Shadow → **Nature** | The smoke was always the poison. Its Hexfume passive (arrival Poisons both foes) and Nature's Poison line are the same idea twice. |
 > | Bellows | Overpressure | Iron → **Fire** | It is a boiler. Mech is the PRIMARY, so the self-burning Mech column stays learnable alongside the Fire one — which is what keeps Superheat fuelled. |
 > | Widow | Silkbinder | Shadow → **Nature** | The trapper rather than the assassin. Nature has a physical column, which a 20-Intelligence spider needs. |

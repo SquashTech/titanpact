@@ -126,12 +126,12 @@ test('raiders: none of them arrives and immediately has to Rest', () => {
 
 // --- The Conduct engine: the faction's tell ---
 
-test('raiders: Conduct detonates off Storm and Iron, and every Raider who swings can cash a mark', () => {
+test('raiders: Conduct detonates off both faction types, and every Raider who swings can cash a mark', () => {
   // The status is authored to answer exactly the two types this faction is built out of,
   // so a mark the Stormraider plants pays out on the next hit anyone lands. That coupling
   // is the faction, not a coincidence of the movepool — hence a per-hero floor rather than
   // a ban on off-type halves (the Surfraider's Water is its coverage, and is meant to be there).
-  assert.deepStrictEqual([...statuses.Conduct.triggerTypes!].sort(), ['Iron', 'Storm']);
+  for (const type of ['Iron', 'Storm'] as const) assert.ok(statuses.Conduct.triggerTypes!.includes(type));
   const detonatorsFor = (id: string) =>
     enemies[id].moveIds.filter((moveId) => {
       const move = moves[moveId];

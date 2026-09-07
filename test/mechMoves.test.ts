@@ -311,9 +311,9 @@ test('mech: Perfect Creation is single-target and reads as a Debuff', () => {
 
 // --- The type's shape ---
 
-test('mech: the slate plants two marks it can never cash itself', () => {
-  // Iron's arrangement inverted: Mech plants Conduct/Haunt and cashes neither.
-  assert.ok(!statuses.Conduct.triggerTypes?.includes('Mech'), 'Mech can now detonate Conduct');
+test('mech: the slate cashes the Conduct it plants and plants a Haunt it cannot spread', () => {
+  // Iron's arrangement half-inverted: Mech plants Conduct and Haunt, and cashes only Conduct.
+  assert.ok(statuses.Conduct.triggerTypes?.includes('Mech'), 'Mech can no longer detonate Conduct');
   assert.ok(!statuses.Haunt.spreadTriggerTypes?.includes('Mech'), 'Mech can now spread Haunt');
 
   const mechMoves = Object.values(moves).filter((m) => m.type === 'Mech');

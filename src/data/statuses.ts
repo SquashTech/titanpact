@@ -95,11 +95,11 @@ export const statuses: Record<string, StatusDefinition> = {
     // Detonate-only: `triggerTypes` never auto-applies Conduct. It is planted by a move's own
     // statusApplication, or by a passive that plants it (Static Tide) — never by the detonation
     // pass itself (statusEngine.ts detonateTriggeredStatuses).
-    triggerTypes: ['Storm', 'Iron'],
-    detonateBonusPercentMaxHp: 0.1,
+    triggerTypes: ['Storm', 'Iron', 'Mech'],
+    detonateBonusPercentMaxHp: 0.15,
     pipeline: 'trigger',
     description:
-      "The next Storm or Iron hit on this target deals an extra 10% of the target's max HP and consumes the mark.",
+      "The next Storm, Iron or Mech hit on this target deals an extra 15% of the target's max HP and consumes the mark.",
   },
   Poison: {
     id: 'Poison',

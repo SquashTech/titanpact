@@ -2138,7 +2138,7 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'self',
     description: 'Stasis Field for 5 rounds: the slowest in a bracket acts first. +20 Int, +20 Wis.',
   },
-  // Plants Conduct that only a Storm/Iron partner can detonate — intended.
+  // Plants Conduct that only a Storm/Iron/Mech partner can detonate — intended.
   cerebralShock: {
     id: 'cerebralShock',
     name: 'Cerebral Shock',
@@ -2949,7 +2949,7 @@ export const moves: Record<string, MoveDefinition> = {
     type: 'Mech',
     category: 'magical',
     kind: 'buff',
-    // Conduct and Haunt here are marks for a Storm/Iron or Spirit/Mind partner to fire — intended.
+    // Haunt here is a mark for a Spirit/Mind partner to fire; Mech cashes its own Conduct.
     statusApplication: [
       { statusId: 'Burn', magnitude: 75, target: 'moveTarget' },
       { statusId: 'Poison', magnitude: 20, duration: 3, target: 'moveTarget' },

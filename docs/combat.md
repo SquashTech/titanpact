@@ -498,7 +498,7 @@ something other than the caster's own history (`manaDiscountOnUse`, above).
 
 **Why "any" is a different mechanic and not a looser "all".** Iron is one of
 Conduct's `triggerTypes`, so an Iron damage move *detonates* the mark it reads.
-Swing Metallic Blade at the marked foe and it cashes the mark for 10% max HP and
+Swing Metallic Blade at the marked foe and it cashes the mark for 15% max HP and
 ends its own discount; swing it at the *unmarked* foe and the mark survives, so
 the next cast is free too. **Spend it or bank it** is a decision only the "any"
 side can pose — a board satisfying "both marked" cannot survive the cast that
@@ -1290,7 +1290,7 @@ fight). Grow it when content needs a second condition, the same discipline
 `PassiveEffectTarget` gained **`'triggerTarget'`**. Content: **Static Tide** (Riptide's
 Maelstrom Evolution) — *every Water attack this hero lands leaves its target
 Conducting* — which then feeds its own grafted Storm moves, since Conduct detonates off
-any Storm or Iron hit.
+any Storm, Iron or Mech hit.
 
 The existing `'triggerSubject'` could not express it. A condition reading "**I** dealt
 this hit" is `subjectRole: 'source'`, and `'triggerSubject'` follows that role — so the
