@@ -28,6 +28,8 @@ export type SfxId =
   | 'discovery'
   | 'seal.strike'
   | 'seal.shatter'
+  | 'titan.stir'
+  | 'titan.gaze'
   // Combat
   | 'cast'
   | 'hit.physical'
@@ -306,6 +308,36 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'triangle', freq: 220, freqEnd: 147, detune: 12, gain: 0.26, attack: 0.02, hold: 0.08, decay: 0.85, delay: 0.06 },
       { wave: 'noise', gain: 0.14, attack: 0.001, decay: 0.14, delay: 0.19, filter: { type: 'highpass', freq: 3400 } },
       { wave: 'sine', freq: 659, detune: 16, gain: 0.1, attack: 0.03, decay: 1.1, delay: 0.24 },
+    ],
+  },
+
+  /**
+   * The run's cold open (TitanWakeScreen), under the black. Deliberately NOT loud — `entrance.dread` keeps the "biggest sound
+   * in the table" licence and this takes a different axis instead: the LOWEST. A 29Hz fundamental most phones cannot reproduce
+   * at all, with a 58Hz octave over it doing the actual work on a small speaker, so the beat degrades to a hum rather than to
+   * nothing. Every attack is slow: nothing here is an impact.
+   */
+  'titan.stir': {
+    gain: 0.4,
+    jitter: 0,
+    voices: [
+      { wave: 'sine', freq: 29, freqEnd: 24, gain: 0.6, attack: 0.9, hold: 1.4, decay: 2.2 },
+      { wave: 'sine', freq: 58, freqEnd: 48, gain: 0.3, attack: 1.1, hold: 1.2, decay: 2.0 },
+      // The rumble. Noise closing to sub over four seconds is the room, not the thing in it.
+      { wave: 'noise', gain: 0.34, attack: 0.75, decay: 3.0, filter: { type: 'lowpass', freq: 240, freqEnd: 55, q: 0.8 } },
+      // Enters late and beats against itself — the one voice that is the Titan rather than the ground.
+      { wave: 'sawtooth', freq: 41, freqEnd: 39, detune: 22, gain: 0.22, attack: 1.2, hold: 0.9, decay: 1.6, delay: 1.0, filter: { type: 'lowpass', freq: 180, freqEnd: 420, q: 3.2 } },
+    ],
+  },
+
+  /** The eyes reaching open. A dry grind off the top of `titan.stir`'s bed, and the only fast attack in the beat. */
+  'titan.gaze': {
+    gain: 0.44,
+    jitter: 0,
+    voices: [
+      { wave: 'noise', gain: 0.3, attack: 0.006, decay: 0.42, filter: { type: 'bandpass', freq: 1600, freqEnd: 320, q: 0.9 } },
+      { wave: 'sine', freq: 78, freqEnd: 34, gain: 0.44, attack: 0.008, decay: 0.8 },
+      { wave: 'triangle', freq: 117, freqEnd: 98, detune: 14, gain: 0.16, attack: 0.05, hold: 0.2, decay: 0.9, delay: 0.04, filter: { type: 'lowpass', freq: 520, q: 2.2 } },
     ],
   },
 

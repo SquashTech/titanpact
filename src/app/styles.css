@@ -4032,7 +4032,7 @@ textarea,
   }
   100% {
     opacity: 0;
-    transform: translateY(-24px) scale(1);
+    transform: translateY(-19px) scale(1);
   }
 }
 
@@ -18506,4 +18506,349 @@ textarea,
   margin: 0 1px;
   font-size: 11px;
   padding: 0 3px;
+}
+
+/* --- The cold open (docs/lore.md §1, TitanWakeScreen) -----------------------
+   Two eyes, a rumble, and nothing else. It sits between the draft's confirm and
+   Act I's arrival, so it has no stage, no header and no control: everything
+   below is full-bleed and inert, and the only input is a tap anywhere to skip.
+   The palette is the finale's pale gold burning through the run's mythic red —
+   the two colours the seal already spends — because the thing behind the seal
+   should not be a new colour, it should be both of theirs. */
+.titan-wake {
+  position: absolute;
+  inset: calc(var(--shell-pad) * -1);
+  z-index: 40;
+  overflow: hidden;
+  background: #040407;
+}
+
+/* One wrapper for the shake so nothing inside has to compose with it. The
+   amplitude tracks the beat rather than running flat: ground first, then the
+   thing standing up out of it. */
+.titan-wake-shake {
+  position: absolute;
+  inset: 0;
+}
+
+.titan-wake.is-stir .titan-wake-shake {
+  animation: titan-rumble-low 0.42s linear infinite;
+}
+
+.titan-wake.is-crack .titan-wake-shake {
+  animation: titan-rumble-mid 0.26s linear infinite;
+}
+
+.titan-wake.is-open .titan-wake-shake {
+  animation: titan-rumble-hit 1.75s cubic-bezier(0.2, 0, 0.3, 1) both;
+}
+
+@keyframes titan-rumble-low {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  25% {
+    transform: translate3d(0.6px, -0.5px, 0);
+  }
+  50% {
+    transform: translate3d(-0.5px, 0.6px, 0);
+  }
+  75% {
+    transform: translate3d(0.4px, 0.5px, 0);
+  }
+}
+
+@keyframes titan-rumble-mid {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  25% {
+    transform: translate3d(-1.6px, 1.2px, 0);
+  }
+  50% {
+    transform: translate3d(1.4px, -1.5px, 0);
+  }
+  75% {
+    transform: translate3d(-1.1px, -1.3px, 0);
+  }
+}
+
+/* The one that is an event: a hard jolt on the open, decaying to still. Written
+   as a single finite animation rather than a third infinite one so the screen
+   comes to rest under the gaze — a Titan that keeps vibrating is a machine. */
+@keyframes titan-rumble-hit {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  3% {
+    transform: translate3d(5px, -6px, 0);
+  }
+  7% {
+    transform: translate3d(-6px, 4px, 0);
+  }
+  12% {
+    transform: translate3d(4px, 5px, 0);
+  }
+  18% {
+    transform: translate3d(-3px, -3px, 0);
+  }
+  26% {
+    transform: translate3d(2px, 2px, 0);
+  }
+  36% {
+    transform: translate3d(-1.4px, 1px, 0);
+  }
+  50% {
+    transform: translate3d(0.8px, -0.7px, 0);
+  }
+  70%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Grit going UP, because the light is below it. Cheap, but it is the only thing
+   on screen that gives the black a scale. */
+.titan-dust {
+  position: absolute;
+  inset: 0;
+}
+
+.titan-mote {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(var(--tier-mythic-rgb), 0.5);
+  animation-name: titan-mote-rise;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes titan-mote-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  20% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-190px);
+  }
+}
+
+/* Set wide and low: the eyes are further apart than a face fits on this screen,
+   and below centre, so the head reads as continuing past every edge. */
+.titan-face {
+  position: absolute;
+  top: 46%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  /* Clears the shell padding the wake bleeds past, so neither eye is cut by an
+     edge — being clipped would read as a layout accident, not as scale. */
+  padding: 0 calc(var(--shell-pad) + 10px);
+}
+
+.titan-eye {
+  position: relative;
+  width: 132px;
+  height: 132px;
+}
+
+/* Outside the clip on purpose — the glow has to bleed past the lids, which is
+   what sells light coming from behind them rather than painted on them. */
+.titan-eye-halo {
+  position: absolute;
+  inset: -70px;
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(circle, rgba(var(--tier-mythic-rgb), 0.34), rgba(var(--tier-mythic-rgb), 0.08) 42%, transparent 70%);
+}
+
+.titan-wake.is-stir .titan-eye-halo {
+  animation: titan-halo-swell 0.95s ease-in both;
+}
+
+.titan-wake.is-crack .titan-eye-halo {
+  animation: titan-halo-breathe 0.62s ease-in-out both;
+}
+
+.titan-wake.is-open .titan-eye-halo,
+.titan-wake.is-fade .titan-eye-halo {
+  animation: titan-halo-open 1.75s ease-out both;
+}
+
+@keyframes titan-halo-swell {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes titan-halo-breathe {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+
+@keyframes titan-halo-open {
+  0% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  /* One slow breath while it holds, so the screen is never actually static. */
+  65% {
+    opacity: 0.82;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* The aperture IS the eye — there are no eyelids as objects. An ellipse whose
+   HEIGHT is the only thing that animates opens from a hairline to a lens and
+   tapers to points at both corners on its own; the earlier version clipped a
+   circle with two arc-shaped lids and read as a disc with bites out of it,
+   because a lid wide enough to span the eye is necessarily flatter than the eye
+   and so never closes the corners. Height rather than scaleY: scaling would
+   squash the iris and the pupil with it. */
+.titan-eye-clip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 4px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  overflow: hidden;
+  /* The lid's own shadow falling on the eye. Reads as depth at every aperture. */
+  box-shadow: inset 0 6px 10px -4px rgba(0, 0, 0, 0.85), inset 0 -6px 10px -4px rgba(0, 0, 0, 0.85);
+}
+
+.titan-wake.is-crack .titan-eye-clip {
+  animation: titan-aperture-crack 0.62s cubic-bezier(0.3, 0, 0.4, 1) both;
+}
+
+.titan-wake.is-open .titan-eye-clip,
+.titan-wake.is-fade .titan-eye-clip {
+  animation: titan-aperture-open 1.75s cubic-bezier(0.14, 0.9, 0.25, 1) both;
+}
+
+@keyframes titan-aperture-crack {
+  0% {
+    height: 4px;
+  }
+  100% {
+    height: 20px;
+  }
+}
+
+/* Overshoots and relaxes — a lid pulling wide and then settling, rather than
+   sliding to a stop. */
+@keyframes titan-aperture-open {
+  0% {
+    height: 20px;
+  }
+  26% {
+    height: 74px;
+  }
+  100% {
+    height: 62px;
+  }
+}
+
+/* Always full height and cropped by the aperture, so the iris does not stretch
+   as the eye opens: what changes is how much of it you can see. */
+.titan-eye-globe {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 132px;
+  margin-top: -66px;
+  border-radius: 50%;
+  /* Pale gold at the centre burning out to the run's mythic red and then to almost
+     nothing at the rim, so the light reads as coming from inside the eye rather
+     than the eye being a painted disc. */
+  background: radial-gradient(
+    circle at 50% 50%,
+    #fff3d2,
+    rgba(240, 176, 96, 0.95) 18%,
+    rgba(var(--tier-mythic-rgb), 0.85) 42%,
+    rgba(96, 16, 24, 0.95) 70%,
+    rgba(30, 6, 10, 0.98)
+  );
+}
+
+/* Vertical, and it CONTRACTS on the open — the eye adjusting to what it is
+   looking at is the beat, not the eye simply being open. Overruns the aperture
+   top and bottom so its rounded ends are never inside the opening. */
+.titan-eye-pupil {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 30px;
+  height: 132px;
+  margin: -66px 0 0 -15px;
+  border-radius: 50%;
+  background: #07050a;
+  box-shadow: 0 0 16px 5px rgba(9, 4, 8, 0.92);
+}
+
+.titan-wake.is-open .titan-eye-pupil,
+.titan-wake.is-fade .titan-eye-pupil {
+  animation: titan-pupil-contract 1.75s cubic-bezier(0.16, 0.9, 0.3, 1) both;
+}
+
+@keyframes titan-pupil-contract {
+  0% {
+    transform: scaleX(1.6);
+  }
+  22% {
+    transform: scaleX(0.3);
+  }
+  /* Widens again as it settles: it has finished deciding what it is looking at. */
+  100% {
+    transform: scaleX(0.52);
+  }
+}
+
+/* Down to black before the arrival screen, so Act I cuts in from nothing rather
+   than cross-fading out of a pair of eyes. */
+.titan-wake-blackout {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: #040407;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.titan-wake.is-fade .titan-wake-blackout {
+  animation: titan-blackout 0.56s ease-in both;
+}
+
+@keyframes titan-blackout {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }

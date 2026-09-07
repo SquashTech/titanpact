@@ -26,6 +26,8 @@ const UI_IDS: SfxId[] = [
   'class.learn',
   'seal.strike',
   'seal.shatter',
+  'titan.stir',
+  'titan.gaze',
 ];
 
 const NOTES: Partial<Record<SfxId, string>> = {
@@ -42,6 +44,8 @@ const NOTES: Partial<Record<SfxId, string>> = {
   'class.learn': 'a Class conferred on a hero',
   'seal.strike': 'a warden struck off the Pact Seal',
   'seal.shatter': 'the fifth socket — the seal itself giving way',
+  'titan.stir': 'the cold open at the top of a run, under the black',
+  'titan.gaze': 'the eyes reaching open',
   'ui.back': 'close, cancel, exit',
   'ui.select': 'highlight without committing',
   'ui.denied': 'unaffordable move, unreachable node',

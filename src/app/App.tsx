@@ -40,6 +40,7 @@ import { allCombatants } from '../data/content';
 import { enemies, factions, basicEnemiesOf, finaleEnemies, ENDBRINGER_ID } from '../data/enemies';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
 import { PactSealScreen } from '../view/run/PactSealScreen';
+import { TitanWakeScreen } from '../view/run/TitanWakeScreen';
 import { equipment } from '../data/equipment';
 import {
   equipItem,
@@ -123,6 +124,7 @@ type Screen =
   /** The act-boundary beat: five sockets, one per Guardian (docs/run-loop.md §4). */
   | { kind: 'pactSeal' }
   /** Per-act arrival beat; reads its location off the run's itinerary. */
+  | { kind: 'titanWake' }
   | { kind: 'actIntro' }
   | { kind: 'map' }
   | { kind: 'squadSelect'; nodeId: string; nodeType: EncounterNodeType; encounter: Encounter; squadSize: number }
@@ -170,6 +172,9 @@ type Screen =
 const PLACELESS_SCREENS: ReadonlySet<Screen['kind']> = new Set([
   'title',
   'draft',
+  // Placeless is the point: it drops the title's track and leaves the cold open in silence,
+  // and Act I's music then starts where it always does, on the arrival screen.
+  'titanWake',
   // Between two acts, and the property of neither.
   'pactSeal',
   'quickBattle',
@@ -773,7 +778,10 @@ export function App() {
 
   function handleDraftConfirm(chosenIds: string[]) {
     setPlayerRun((run) => createStartingRun(chosenIds, run.tutorial, run.tutorialSeenBeatIds));
-    enterAct();
+    // The cold open goes here and not on the title's press for the same reason the run itself
+    // is built here: binding is mutual (docs/lore.md §1), so the thing on the far end of the
+    // leash notices when the pact is sealed, not when a menu is browsed.
+    setScreen({ kind: 'titanWake' });
     // Sealing the pact is the start, not pressing the title button: a draft backed out of
     // is not a run. An abandoned run still counts here — it was played.
     updateProfile((current) => recordRunStarted(current, Date.now()));
@@ -912,6 +920,8 @@ export function App() {
       {screen.kind === 'draft' && <DraftScreen optionIds={screen.optionIds} onConfirm={handleDraftConfirm} />}
 
       {screen.kind === 'pactSeal' && <PactSealScreen run={playerRun} onContinue={enterAct} />}
+
+      {screen.kind === 'titanWake' && <TitanWakeScreen onDone={enterAct} />}
 
       {screen.kind === 'actIntro' && (
         <ActIntroScreen
