@@ -18,10 +18,23 @@ import { resolveMultiplierTerm } from '../src/engine/damage/damagePipeline';
 import type { CombatState, PassiveInstance } from '../src/engine/state';
 import { equipmentPassiveGrants, relicTeamPassiveGrants, mergePassiveGrants, toPassiveInstances } from '../src/run/passives';
 import { createEmptyLoadout, equipItem, type EquipmentDefinition } from '../src/run/equipment';
-import { relics } from '../src/data/relics';
-import { isValidPassiveDefinition } from '../src/engine/content';
+import type { RelicDefinition } from '../src/run/relics';
+import { isValidPassiveDefinition, type PassiveDefinition } from '../src/engine/content';
 
-const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
+/**
+ * The damage-pipeline fixture. Test-only: no shipped relic or item grants a type-damage passive
+ * (the Elemental Force enchantment covers that shape per-hero), so this one is authored here
+ * rather than left orphaned in the catalog the Reference screen lists.
+ */
+const emberheart: PassiveDefinition = {
+  id: 'emberheart',
+  name: 'Emberheart',
+  description: 'Deals 20% bonus damage with Fire-type moves.',
+  damageModifier: { eventFieldEquals: { moveType: 'Fire' }, amount: 0.2 },
+};
+const passiveLookup = { ...passives, emberheart };
+
+const config = { typeChart, heroes, moves, statuses, passives: passiveLookup, fieldEffects, benchHpRegenFlat: 5 };
 
 function twoVTwoFixture(seed: number) {
   return createFightState(
@@ -62,8 +75,8 @@ function withPassive(state: CombatState, combatantId: string, passiveId: string,
 
 // --- isValidPassiveDefinition ---
 
-test('passives: fixture catalog (sanguine, emberheart, and the merged-in Class catalog) is all valid content', () => {
-  for (const passive of Object.values(passives)) {
+test('passives: the catalog (equipment passives, sanguine, and the merged-in Class catalog) is all valid content', () => {
+  for (const passive of Object.values(passiveLookup)) {
     assert.ok(isValidPassiveDefinition(passive), `${passive.id} is not a valid PassiveDefinition`);
   }
 });
@@ -155,10 +168,10 @@ test('passives: collectPassiveDamageModifiers only matches the conditioned move 
   const state = twoVTwoFixture(310);
   const withGrant = withPassive(state, 'a1', 'emberheart');
 
-  const fireMods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.singe, passives);
+  const fireMods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.singe, passiveLookup);
   assert.deepStrictEqual(fireMods, [{ source: 'emberheart', amount: 0.2 }]);
 
-  const waterMods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.splash, passives);
+  const waterMods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.splash, passiveLookup);
   assert.deepStrictEqual(waterMods, []);
 });
 
@@ -166,7 +179,7 @@ test('passives: two stacks of Emberheart push two modifier entries, stacking mul
   const state = twoVTwoFixture(311);
   const withGrant = withPassive(state, 'a1', 'emberheart', 2);
 
-  const mods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.singe, passives);
+  const mods = collectPassiveDamageModifiers(withGrant.combatants.a1, moves.singe, passiveLookup);
   assert.strictEqual(mods.length, 2);
   assert.strictEqual(resolveMultiplierTerm(mods), 1.2 * 1.2);
 });
@@ -430,7 +443,13 @@ test('passives: equipmentPassiveGrants tallies grants across held items, ignorin
 });
 
 test('passives: relicTeamPassiveGrants stacks a duplicate relic id, matching relicTeamStatModifiers', () => {
-  assert.deepStrictEqual(relicTeamPassiveGrants(['emberheart', 'emberheart', 'ironStandard'], relics), { emberheart: 2 });
+  // Fixtures, not catalog ids: the shipped relics are all flat stats now (Gems and Banners), so
+  // the passive-granting shape is exercised on relics authored here.
+  const fixtures = {
+    emberIdol: { id: 'emberIdol', name: 'Ember Idol', statGrants: {}, grantsPassiveIds: ['emberheart'] },
+    plainIdol: { id: 'plainIdol', name: 'Plain Idol', statGrants: { defense: 10 } },
+  } satisfies Record<string, RelicDefinition>;
+  assert.deepStrictEqual(relicTeamPassiveGrants(['emberIdol', 'emberIdol', 'plainIdol'], fixtures), { emberheart: 2 });
 });
 
 test('passives: mergePassiveGrants sums equipment + relic + Evolution sources additively', () => {

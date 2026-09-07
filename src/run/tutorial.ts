@@ -235,7 +235,7 @@ export const TUTORIAL_ROW_TYPES: readonly MapNodeType[] = [
   'equipmentReward',
   'classReward',
   'skirmish',
-  'relicReward',
+  'forgeReward',
   'battle',
   'shop',
   'boss',

@@ -210,17 +210,14 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     ],
   },
 
-  // --- Row 4: the relic ---
+  // --- Row 4: the forge ---
   {
-    id: 'map:relicReward',
-    topic: 'Relics',
+    id: 'map:forgeReward',
+    topic: 'The Forge',
     lines: [
-      'A relic. It benefits us all, like the Gem.',
+      'A forge. I told you our capacity could expand — this is how.',
+      'One of us walks away able to carry a second piece of equipment, for the rest of the journey. Choose whoever you mean to lean on.',
     ],
-  },
-  {
-    id: 'reward:relicReward',
-    lines: ['Choose which one to bring with us for the rest of the journey.'],
   },
 
   // --- Row 5: the warband ---

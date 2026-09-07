@@ -71,8 +71,6 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
     </>
   ),
   equipmentReward: SECTION_PATHS.equipment,
-  // Cut gem.
-  relicReward: <path d="M7.4 3.2h9.2l4.8 5.8L12 21.2 2.6 9Z" />,
   // The Gem's own cut (relicIcons.tsx) — one picture per concept, the same rule gold and XP follow.
   gemReward: GEM,
   // Money bag.
@@ -98,7 +96,6 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   ),
   hpBoostReward: STAT_PATHS.hp,
   manaBoostReward: STAT_PATHS.manaPool,
-  manaRegenBoostReward: STAT_PATHS.mpRegen,
   // Open tome: the Mentor teaches.
   classReward: OPEN_BOOK,
   // Question mark, drawn rather than typed.
@@ -127,9 +124,8 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   ),
 };
 
-// The map footer signpost (Relics / Roster / Reference / Menu).
+// The map's own controls: the footer's one Roster button, plus Reference and Menu in the header corners.
 const HUB_PATHS = {
-  relics: NODE_PATHS.relicReward,
   // Two figures. Not the Skirmish helm: that means "a squad you fight" on the same screen.
   roster: (
     <>

@@ -93,7 +93,7 @@ export function grantRelicReward(run: RunState, relicId: string): RunState {
   return { ...run, relics: [...run.relics, relicId] };
 }
 
-/** hpBoost/manaBoost/manaRegenBoost node resolution, folded into `bonusStatGrants`. */
+/** hpBoostReward node resolution, folded into `bonusStatGrants`. */
 export function grantStatBonus(run: RunState, rosterId: string, stat: StatKey, amount: number): RunState {
   const entry = run.roster.find((r) => r.rosterId === rosterId);
   if (!entry) throw new RunProgressError(`${rosterId} is not on the roster`);

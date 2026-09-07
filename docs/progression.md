@@ -465,9 +465,9 @@ is where the gold is actually spent (2026-08-28 — `HeroPreviewOverlay`'s `acti
 Hall asking before it takes:
 
 - **Relics are no longer sold at all.** `RELIC_PURCHASE_COST`, `buyRelic` and
-  `GuildHallOffers.relicOfferIds` are gone; relics stay a reward-only axis (the
-  `relicReward` node and the Guardian's Banner). A shop that sells one of everything
-  makes gold the only decision on the screen.
+  `GuildHallOffers.relicOfferIds` are gone; relics stay a reward-only axis (Gems from fights
+  and the Gem Cache, Banners from Guardians — the `relicReward` Shrine node was itself deleted
+  on 2026-09-07). A shop that sells one of everything makes gold the only decision on the screen.
 - **The equipment shelf is 4 wide** (`GUILD_HALL_EQUIPMENT_OFFER_COUNT`, up from 3,
   absorbing the freed room) and each card now carries the same benefit line every other
   gear card in the run does (`itemHighlights`, `EquipChoiceCard.tsx`) instead of hiding

@@ -6,7 +6,7 @@ import type { StatKey } from '../../src/engine/content';
 import { heroes } from '../../src/data/heroes';
 import { moves } from '../../src/data/moves';
 import { equipment } from '../../src/data/equipment';
-import { relics, drawableRelics, guardianBannerRelics } from '../../src/data/relics';
+import { relics, gemForStat, guardianBannerRelics } from '../../src/data/relics';
 import { classes } from '../../src/data/classes';
 import { runEvents } from '../../src/data/events';
 import { progressionTable } from '../../src/data/progression';
@@ -51,6 +51,7 @@ import {
 import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
 import { rollGuildHallOffers, buyEquipment, sellValueFor, EQUIPMENT_PRICE_BY_RARITY } from '../../src/run/shop';
 import { grantClass } from '../../src/run/classes';
+import { GEM_OFFER_COUNT, pickGemOffers, rollGemOffers } from '../../src/run/gems';
 import { applyStatShift, grantEventPassive, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
 import { MAX_ITEM_SLOTS, pickWeightedEquipment, rarityWeightsFor, type EquipmentDefinition, type LootSource } from '../../src/run/equipment';
 import { passives } from '../../src/data/passives';
@@ -94,17 +95,15 @@ function goldRewardFor(nodeType: EncounterMapNodeType, rng: Rng): number {
 /** NodeRewardScreen's flat XP cache. */
 const UPGRADE_REWARD_XP = 2;
 
-/** StatBoostScreen's three node kinds. */
+/** StatBoostScreen's one remaining node kind. */
 const STAT_BOOST: Record<string, { stat: StatKey; amount: number }> = {
   hpBoostReward: { stat: 'hp', amount: 20 },
-  manaBoostReward: { stat: 'manaPool', amount: 10 },
-  manaRegenBoostReward: { stat: 'mpRegen', amount: 5 },
 };
 
 // --- Records the aggregator consumes ---
 
 export interface ChoiceEvent {
-  bucket: 'relic' | 'banner' | 'evolution' | 'class' | 'draft';
+  bucket: 'gem' | 'banner' | 'evolution' | 'class' | 'draft';
   offered: string[];
   /** Usually one; the draft takes two of its four. */
   picked: string[];
@@ -386,6 +385,8 @@ function resolveEncounterNode(
 ): EncounterOutcome {
   const location = locationForAct(run.locationIds, run.actNumber);
   const kindKey = mapNodeType as EncounterMapNodeType;
+  // Act 1's row-0 fight is the run's first encounter, and the only one that always pays a Gem.
+  const isRunOpener = run.actNumber === 1 && run.encountersWon === 0;
   let encounter: Encounter;
   let squadSize = STANDARD_SQUAD_SIZE;
   let workingRun = run;
@@ -493,10 +494,20 @@ function resolveEncounterNode(
 
   workingRun = grantCurrencyReward(workingRun, goldRewardFor(kindKey, rng));
   workingRun = grantUpgradeReward(workingRun, trainingPointsFor(kindKey, workingRun.actNumber) * options.xpMult);
+  // The Gem drip (src/run/gems.ts): a won fight rolls for a 1-of-3, and the run's opener always pays.
+  const gemOffer = rollGemOffers(kindKey, isRunOpener, rng);
+  if (gemOffer.length > 0) workingRun = claimGem(workingRun, gemOffer, rng, record);
   return { run: workingRun, won: true, defeatedRoster: encounter.run.roster, drop };
 }
 
-/** The Guardian's Banner: a fixed 1-of-3, taken at random. */
+/** A Gem offer, taken at random so lift is a matched comparison. */
+function claimGem(run: RunState, offered: readonly string[], rng: Rng, record: RunRecord): RunState {
+  const picked = pick(rng, [...offered]);
+  record.choices.push({ bucket: 'gem', offered: [...offered], picked: [picked], encountersWonAtChoice: run.encountersWon });
+  return grantRelicReward(run, picked);
+}
+
+/** The Guardian's Banner: a fixed 1-of-5, taken at random. */
 function claimBanner(run: RunState, rng: Rng, record: RunRecord): RunState {
   const offered = guardianBannerRelics.map((r) => r.id);
   const picked = pick(rng, offered);
@@ -534,19 +545,11 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       const best = choices.reduce((a, b) => ((policy.bestWearer(run.roster, b)?.gain ?? 0) > (policy.bestWearer(run.roster, a)?.gain ?? 0) ? b : a));
       return resolveDrop(run, best.id, record.equipped, run.actNumber);
     }
-    case 'relicReward': {
-      const pool = drawableRelics.filter((r) => !run.relics.includes(r.id));
-      const offered = sample(rng, pool, 3);
-      if (offered.length === 0) return run;
-      const picked = pick(rng, offered);
-      record.choices.push({
-        bucket: 'relic',
-        offered: offered.map((r) => r.id),
-        picked: [picked.id],
-        encountersWonAtChoice: run.encountersWon,
-      });
-      return grantRelicReward(run, picked.id);
-    }
+    case 'gemReward':
+      return claimGem(run, pickGemOffers(GEM_OFFER_COUNT, rng), rng, record);
+    // The Mana Well hands over its stat's Gem outright — no choice, so nothing to record.
+    case 'manaBoostReward':
+      return grantRelicReward(run, gemForStat.manaPool!.id);
     case 'forgeReward': {
       // Whoever is holding the most already: an extra slot is worth most where the gear is.
       const target = [...run.roster]
@@ -554,9 +557,7 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
         .sort((a, b) => policy.powerScore(b) - policy.powerScore(a))[0];
       return target ? grantItemSlot(run, target.rosterId, heroes) : run;
     }
-    case 'hpBoostReward':
-    case 'manaBoostReward':
-    case 'manaRegenBoostReward': {
+    case 'hpBoostReward': {
       const boost = STAT_BOOST[nodeType];
       const target = policy.statBoostTarget(run.roster, boost.stat);
       return target ? grantStatBonus(run, target.rosterId, boost.stat, boost.amount) : run;

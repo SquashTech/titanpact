@@ -65,11 +65,11 @@ test('equipCompare: losing one Force and gaining another is two entries, loss fi
 test('equipCompare: a granted passive is present-or-absent, magnitude 1', () => {
   const changes = compareEquipment(
     item({ grantsPassiveIds: ['bloodthirst'] }),
-    item({ grantsPassiveIds: ['frostbrand'] })
+    item({ grantsPassiveIds: ['secondSkin'] })
   );
   assert.deepStrictEqual(changes, [
     { kind: 'passive', key: 'bloodthirst', from: 1, to: 0, delta: -1 },
-    { kind: 'passive', key: 'frostbrand', from: 0, to: 1, delta: 1 },
+    { kind: 'passive', key: 'secondSkin', from: 0, to: 1, delta: 1 },
   ]);
 });
 

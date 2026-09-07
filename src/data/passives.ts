@@ -4,7 +4,7 @@
 import type { PassiveDefinition } from '../engine/content';
 import { classes } from './classes';
 
-// --- Fixture passives (sanguine: Lucius's Evolution; emberheart: relic) ---
+// --- Evolution-granted, outside the per-hero tables ---
 const fixturePassives: Record<string, PassiveDefinition> = {
   sanguine: {
     id: 'sanguine',
@@ -15,12 +15,6 @@ const fixturePassives: Record<string, PassiveDefinition> = {
       condition: { relativeTo: 'enemy', eventFieldEquals: { statusId: 'Bleed', kind: 'damage' } },
       effect: { kind: 'heal', target: 'self', amount: { kind: 'matchTriggerAmount' } },
     },
-  },
-  emberheart: {
-    id: 'emberheart',
-    name: 'Emberheart',
-    description: 'Deals 20% bonus damage with Fire-type moves.',
-    damageModifier: { eventFieldEquals: { moveType: 'Fire' }, amount: 0.2 },
   },
 };
 
@@ -56,30 +50,10 @@ const equipmentPassives: Record<string, PassiveDefinition> = {
       effect: { kind: 'statDelta', target: 'self', stat: 'attack', amount: 5 },
     },
   },
-  stormcallersFocus: {
-    id: 'stormcallersFocus',
-    name: "Stormcaller's Focus",
-    description: 'Deals 20% bonus damage with Storm-type moves.',
-    damageModifier: { eventFieldEquals: { moveType: 'Storm' }, amount: 0.2 },
-  },
-  frostbrand: {
-    id: 'frostbrand',
-    name: 'Frostbrand',
-    description: 'Deals 20% bonus damage with Frost-type moves.',
-    damageModifier: { eventFieldEquals: { moveType: 'Frost' }, amount: 0.2 },
-  },
-  shadowfang: {
-    id: 'shadowfang',
-    name: 'Shadowfang',
-    description: 'Deals 20% bonus damage with Shadow-type moves.',
-    damageModifier: { eventFieldEquals: { moveType: 'Shadow' }, amount: 0.2 },
-  },
 
   // --- 2026-09-06: six more, for the Epic+ effect floor (docs/progression.md "The effect
-  // floor"). Four of the six above are the same effect pointed at four types, which is fine
-  // as a set but cannot cover thirteen items on its own. All six are ordinary data over the
-  // existing hooks — no engine change — and passiveIcons.tsx derives their glyphs, so none
-  // needs a table entry to look like itself.
+  // floor"). All six are ordinary data over the existing hooks — no engine change — and
+  // passiveIcons.tsx derives their glyphs, so none needs a table entry to look like itself.
 
   sunder: {
     id: 'sunder',

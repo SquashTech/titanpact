@@ -1,21 +1,17 @@
 import { useState, type CSSProperties } from 'react';
 import { equipment, rollEquipmentDrops } from '../../data/equipment';
-import { drawableRelics } from '../../data/relics';
 import type { RunState } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
-import { pickWeightedEquipment, rarityWeightsFor } from '../../run/equipment';
-import { grantCurrencyReward, grantUpgradeReward, grantRelicReward } from '../../run/runProgress';
-import { RelicIcon } from '../shared/EquipmentBox';
+import { rarityWeightsFor } from '../../run/equipment';
+import { grantCurrencyReward, grantUpgradeReward } from '../../run/runProgress';
 import { ResourceGlyph } from '../shared/RunGlyph';
-import { RelicKindGlyph } from '../shared/relicIcons';
 import { SectionGlyph } from '../shared/sectionIcons';
-import { NodeHeader, NodeSky, NODE_TINT_ARCANE, NODE_TINT_GOLD, NODE_TINT_VITAL } from '../shared/NodeStage';
+import { NodeHeader, NodeSky, NODE_TINT_GOLD, NODE_TINT_VITAL } from '../shared/NodeStage';
 import { CacheOpening, useCacheOpening } from './CacheReveal';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
-import { RelicChoiceCard } from './RelicChoiceCard';
 import { RosterPeek } from './RosterPeek';
 
-export type RewardNodeType = 'currencyReward' | 'upgradeReward' | 'equipmentReward' | 'relicReward';
+export type RewardNodeType = 'currencyReward' | 'upgradeReward' | 'equipmentReward';
 
 /** Flat, and deliberately under one fight's pay: the XP cache is a top-up, not a substitute for fighting. */
 const UPGRADE_REWARD_XP = 2;
@@ -24,7 +20,6 @@ const NODE_TINT: Record<RewardNodeType, string> = {
   currencyReward: NODE_TINT_GOLD,
   upgradeReward: NODE_TINT_VITAL,
   equipmentReward: NODE_TINT_GOLD,
-  relicReward: NODE_TINT_ARCANE,
 };
 
 interface Props {
@@ -36,16 +31,7 @@ interface Props {
   onClaimEquipment: (itemId: string) => void;
 }
 
-function pickRandom<T>(pool: readonly T[], count: number): T[] {
-  const remaining = [...pool];
-  const picked: T[] = [];
-  while (picked.length < Math.min(count, remaining.length)) {
-    picked.push(remaining.splice(Math.floor(Math.random() * remaining.length), 1)[0]);
-  }
-  return picked;
-}
-
-/** The four instant reward nodes (docs/run-loop.md): gold, XP and equipment grant on one tap; the relic shrine offers 3. */
+/** The three instant reward nodes (docs/run-loop.md): gold and XP grant on one tap, the Equipment Cache offers 3. */
 export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onClaimEquipment }: Props) {
   const [currencyAmount] = useState(() => 15 + Math.floor(Math.random() * 16)); // 15-30
   const [equipmentChoices] = useState<EquipmentDefinition[]>(() =>
@@ -53,16 +39,9 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
       ? rollEquipmentDrops(3, rarityWeightsFor(run.actNumber, 'standard'))
       : []
   );
-  const [relicChoices] = useState(() =>
-    nodeType === 'relicReward' ? pickRandom(drawableRelics.filter((r) => !run.relics.includes(r.id)), 3) : []
-  );
-
   const [pickedItemId, setPickedItemId] = useState<string | null>(null);
   const [inspectItemId, setInspectItemId] = useState<string | null>(null);
-  const [pickedRelicId, setPickedRelicId] = useState<string | null>(null);
   const [claimed, setClaimed] = useState(false);
-
-  const claimedRelic = claimed && pickedRelicId ? relicChoices.find((r) => r.id === pickedRelicId) ?? null : null;
 
   /** Equipment Cache only (CacheReveal.tsx); the other node types pass false and start `open`. */
   const chestPhase = useCacheOpening(nodeType === 'equipmentReward');
@@ -72,20 +51,8 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
     setClaimed(true);
   }
 
-  function handleClaimRelic(relicId: string) {
-    onRunChange(grantRelicReward(run, relicId));
-    setClaimed(true);
-  }
-
-  const canContinue = claimed || (nodeType === 'relicReward' && relicChoices.length === 0);
-
   /** True while the one bottom button is still a Claim rather than a Continue. */
-  const showClaimButton =
-    nodeType === 'currencyReward' || nodeType === 'upgradeReward'
-      ? !claimed
-      : nodeType === 'relicReward'
-        ? !claimed && relicChoices.length > 0
-        : false;
+  const showClaimButton = (nodeType === 'currencyReward' || nodeType === 'upgradeReward') && !claimed;
 
   return (
     <div className="node-screen node-reward-screen" style={{ '--node-rgb': NODE_TINT[nodeType] } as CSSProperties}>
@@ -123,16 +90,6 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
         />
       )}
 
-      {nodeType === 'relicReward' && !claimed && (
-        <NodeHeader
-          compact
-          eyebrow="A Pact Awaits"
-          title="Relic Shrine"
-          glyph={<RelicKindGlyph form="crystal" />}
-          readout={relicChoices.length > 0 ? 'Tap a relic to select it, then claim it.' : 'Every relic here is already yours.'}
-        />
-      )}
-
       <div className="screen-scroll">
         {(nodeType === 'currencyReward' || nodeType === 'upgradeReward') && (
           <div className={`node-hoard${claimed ? ' is-claimed' : ''}`}>
@@ -163,34 +120,6 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
             </div>
           </div>
         )}
-
-        {nodeType === 'relicReward' && !claimed && relicChoices.length > 0 && (
-          <div className="stage-centered">
-            <div className="relic-shrine-list">
-              {relicChoices.map((relic, i) => (
-                <RelicChoiceCard
-                  key={relic.id}
-                  relic={relic}
-                  picked={pickedRelicId === relic.id}
-                  onPick={() => setPickedRelicId(pickedRelicId === relic.id ? null : relic.id)}
-                  revealDelayMs={80 + i * 90}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {nodeType === 'relicReward' && claimedRelic && (
-          <div className="relic-reveal">
-            <div className="relic-reveal-flash" aria-hidden="true" />
-            <div className="relic-reveal-icon-badge">
-              <RelicIcon relicId={claimedRelic.id} className="relic-reveal-icon" />
-            </div>
-            <div className="relic-reveal-eyebrow">Relic Claimed</div>
-            <h2 className="relic-reveal-name">{claimedRelic.name}</h2>
-            {claimedRelic.description && <p className="relic-reveal-desc">{claimedRelic.description}</p>}
-          </div>
-        )}
       </div>
 
       {(nodeType === 'currencyReward' || nodeType === 'upgradeReward') && !claimed && (
@@ -217,18 +146,8 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
         </button>
       )}
 
-      {nodeType === 'relicReward' && !claimed && relicChoices.length > 0 && (
-        <button
-          className="resolve-button relic-shrine-claim-button"
-          disabled={!pickedRelicId}
-          onClick={() => pickedRelicId && handleClaimRelic(pickedRelicId)}
-        >
-          {pickedRelicId ? `Claim ${relicChoices.find((r) => r.id === pickedRelicId)?.name}` : 'Select a relic'}
-        </button>
-      )}
-
       {nodeType !== 'equipmentReward' && !showClaimButton && (
-        <button className="resolve-button" disabled={!canContinue} onClick={onContinue}>
+        <button className="resolve-button" disabled={!claimed} onClick={onContinue}>
           Continue
         </button>
       )}

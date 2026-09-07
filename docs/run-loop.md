@@ -31,9 +31,9 @@ between; per user direction, the shape is now forced and uniform):
 - **Row 0: a single forced `fight` node.** Slay the Spire convention — the act always
   opens on an easy, unambiguous fight, no early reward-node luck and no meaningless
   first choice among identical-weight openers.
-- **Row 1: 3 nodes, pick 1 of 3 — reward types only** (`equipmentReward`/`relicReward`/
+- **Row 1: 3 nodes, pick 1 of 3 — reward types only** (`equipmentReward`/
   `gemReward`/`currencyReward`/`upgradeReward`/`forgeReward`/`hpBoostReward`/
-  `manaBoostReward`/`manaRegenBoostReward`/`event`, weighted). No
+  `manaBoostReward`/`event`, weighted). No
   `fight`/`shop`/`elite`/`classReward` mixed in — every reward row is a genuine reward
   choice, not a chance to draw another fight or dodge one, and `classReward` is reserved
   for its own forced Mentor row (2026-08-22 revision, per user direction — see the Mentor
@@ -132,13 +132,12 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `boss` | `FightScreen` vs. **2 of the Location faction's basics** (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Hero-pool escorts until 2026-09-06 — see "The Guardian's escorts" below. Winning grants 1 Recruit Contract, the Guardian's Banner in acts 1-4, and ends the act (§3). **2026-09-01 exception:** a location may hold a **faction champion** on the boss's bench — see "The Guardian's champion" below. |
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. Overhauled 2026-08-18: offers 2-3 curated hero recruits (50g each, `GUILD_HALL_RECRUIT_COST`) rather than the full catalog, plus a rarity-priced equipment shelf, rolled once per visit (`src/run/shop.ts` `rollGuildHallOffers`). Second pass 2026-08-31: relics are no longer sold anywhere, the shelf is 4 wide and readable on its face, sold stock greys out, and Recruit Contracts confirm before buying (`docs/progression.md` "Second pass"). |
 | `equipmentReward` ("Item") | `NodeRewardScreen` — pick 1 of 3 items, rarity-weighted (`equipment.ts` `pickWeightedEquipment`); claiming hands off to the item gate (`ItemFoundScreen`), which seats it, bags it or sells it — see "The stash" in `docs/progression.md`. Items are uncategorised as of 2026-09-06, so the three on offer are simply the three rolled (`docs/progression.md` "Uncategorised slots"). |
-| `relicReward` | `NodeRewardScreen` — pick 1 of 3 relics not already owned. |
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30, more for nothing having been spent yet). |
 | `upgradeReward` | `NodeRewardScreen` — an instant flat grant to the pooled level-up currency (2-3 points), on top of the per-fight-win grant (see below). |
 | `forgeReward` ("The Forge") | `ForgeScreen` — pick one roster hero to gain **+1 item slot** for the rest of the run (`runProgress.ts` `grantItemSlot`, stored on `RosterEntry.bonusItemSlots`, capped at `MAX_ITEM_SLOTS` = 3). **2026-09-06**, replacing the three slot-specific cache nodes (`weaponReward`/`armorReward`/`accessoryReward`), which lost their meaning when items stopped having categories — most of their frequency went to `equipmentReward`, whose weight went 20 → 40. The scarcest thing on the reward row (weight 8) on purpose: it is permanent, it compounds with every drop after it, and it is the only reward here a hero can be at the cap for — a roster entirely at 3 slots makes the node a dead draw, which is what makes spending it a choice — and at the 2026-09-07 cap of 3 that arrives materially sooner. |
-| `gemReward` ("Gem Cache") | `GemChoiceScreen` — pick 1 of 3 Gems, drawn from all eight without filtering what is already held. See "Gems" below. |
+| `gemReward` ("Gem Cache") | `GemChoiceScreen` — pick 1 of 3 Gems, drawn from all seven without filtering what is already held. Weight 32, the row's second-largest, having absorbed most of the deleted Relic Shrine's 18 and Regen Spring's 10 (2026-09-07). See "Gems" below. |
 | `hpBoostReward` | `StatBoostScreen` — pick one roster hero to receive a flat, permanent-for-the-run +20 max HP (`runProgress.ts` `grantStatBonus`), stored on `RosterEntry.bonusStatGrants`. The **last** hero-targeted stat node: HP is the one grant worth concentrating, because a single hero surviving is what a shrine can actually change. |
-| `manaBoostReward` / `manaRegenBoostReward` | **2026-09-05, per user direction:** these no longer make the player pick a hero. Each hands over the one Gem that carries its stat — Sapphire (+5 Mana Pool) at the Mana Well, Peridot (+5 MP Regen) at the Regen Spring — through `GemChoiceScreen` with the offer fixed to one. Their names, tints and place-flavour are unchanged; only the grant is. |
+| `manaBoostReward` ("Mana Well") | **2026-09-05, per user direction:** this no longer makes the player pick a hero. It hands over Sapphire (+5 Mana Pool) through `GemChoiceScreen` with the offer fixed to one. Its name, tint and place-flavour are unchanged; only the grant is. Its twin, the Regen Spring (`manaRegenBoostReward`), was deleted with Peridot on 2026-09-07. |
 | `classReward` ("Mentor's Hall") | `ClassNodeScreen` — pick 1 of 3 Classes (`src/data/classes.ts`), then pick which roster hero learns it, filtered to heroes with no Class yet (`src/run/classes.ts` `grantClass`, stored on `RosterEntry.classId` — a hero can hold at most one Class per run, so `grantClass` REPLACES rather than stacks). If every roster hero already has a Class, the offer is simply wasted. **Not in `REWARD_WEIGHTS`** (2026-08-22 revision, per user direction) — the only way to encounter this node type is a forced Mentor row (§1), never a random pick-1-of-3 option in any act. Acts 1-4 each guarantee one, so a run can Class up to four heroes; the offer filters to heroes with no Class yet and is wasted only once every hero has one. |
 | `event` | `EventNodeScreen` — rolls one of the authored map events (`src/data/events.ts`, `src/run/events.ts`) and resolves it: a move taught to a chosen hero, a Passive taught to a chosen hero, a flat stat trade, or a pile of act-curve loot handed to `ItemFoundScreen`. Which event a node turns out to be is rolled once at node-select time and gated by act and Location. See **docs/events.md**. |
 
@@ -221,27 +220,33 @@ way of gaining power, and two of those get sharper:
 ### Gems (2026-09-05, per user direction)
 
 A **Gem** is an ordinary team-wide relic with a deliberately small, deliberately uniform
-grant: **+5 to one stat, for every hero**. There are exactly eight, one per stat, named for
-the stone whose colour the stat already wears (`src/data/relics.ts` `GEM_TABLE`):
+grant: **+5 to one stat, for every hero**. There are **seven** — one per stat except MP Regen —
+named for the stone whose colour the stat already wears (`src/data/relics.ts` `GEM_TABLE`):
 
 | Stat | Gem | Stat | Gem |
 |---|---|---|---|
 | HP | Emerald | Speed | Citrine |
 | Attack | Ruby | Intelligence | Amethyst |
 | Defense | Onyx | Mana Pool | Sapphire |
-| Wisdom | Aquamarine | MP Regen | Peridot |
+| Wisdom | Aquamarine | | |
 
-They exist to **smooth the power curve**. The Banner and the Relic Shrine are both sparse and
-both large; between them a run's team-wide power moved in a few big steps, and the measured
-problem was that the run was simply too hard between them. Gems are the drip-feed: small enough
-that one is never the answer to a fight, common enough that a run holds several by Act 3, and
-stackable without limit, so a player who keeps taking Rubies is building something.
+**Peridot is gone (2026-09-07, per user direction).** MP Regen is a flat 10 on every hero in the
+roster, so +5 was +50% of a *throughput* stat, and throughput compounds over a fight in a way a
+buffer does not. It read as the correct pick from every offer it appeared in, which is the
+opposite of what a 1-of-3 is for — a Gem offer should be a question about the squad you actually
+fielded. MP Regen is still reachable, on the Wellspring Banner, where it is priced against four
+rivals rather than two. The Regen Spring node went with it.
+
+They exist to **smooth the power curve**. The Banner is sparse and large; between two of them a
+run's team-wide power moved in one big step, and the measured problem was that the run was simply
+too hard in between. Gems are the drip-feed: small enough that one is never the answer to a
+fight, common enough that a run holds several by Act 3, and stackable without limit, so a player
+who keeps taking Rubies is building something.
 
 They stack through the ordinary relic pipeline — `relicTeamStatModifiers` already sums duplicate
 ids — and display folded, exactly as a Banner does ("Ruby +2", `stackedRelicName`). Nothing in
-the engine knows the word "Gem": `RelicDefinition.gem` exists only to keep them out of
-`drawableRelics`, because a Gem in the Relic Shrine's pool would be the smallest grant in the
-game occupying a slot meant for the largest.
+the engine knows the word "Gem": `RelicDefinition.gem` is display grouping, telling the run sheet
+which rail a relic belongs on.
 
 **Where they come from** (`src/run/gems.ts`):
 
@@ -251,21 +256,21 @@ game occupying a slot meant for the largest.
   `elite` 50%. **All first-pass placeholders for playtest; only the shape is decided.** The
   Guardian pays none — it already pays a Banner, and a Gem stacked on top would blur which
   grant the act-boundary spike came from. The finale pays none: the run ends on it.
-- **The `gemReward` map node** — a 1-of-3 of any Gem, weight 16 in `REWARD_WEIGHTS`.
-- **The Mana Well and the Regen Spring**, which now hand over their stat's Gem outright.
+- **The `gemReward` map node** — a 1-of-3 of any Gem, weight 32 in `REWARD_WEIGHTS`.
+- **The Mana Well**, which hands over Sapphire outright.
 
 A fight's Gem offer is the **first** post-fight gate, ahead of the Banner, so a hero recruited
 two gates later already stands under it.
 
-**Always listed, held or not.** The Relics screen shows all eight Gems from the first node of a
-run, dimmed at ×0 (`RelicsOverlay`, `.gem-rail`). An unheld Gem is a slot to fill rather than an
+**Always listed, held or not.** The run sheet shows all seven Gems from the first node of a run,
+dimmed at ×0 (`RunRelicsPanel`, `.relic-rail`). An unheld Gem is a slot to fill rather than an
 absence — the player is expected to collect most of them, so the empty ones are a plan.
 
 **Open — the flat +5 is not priced by stat.** `STAT_POINT_VALUE` (`src/run/equipment.ts`) holds
-HP and Mana Pool at half a point and MP Regen at three, and the Gems ignore that on purpose:
-eight identically-shaped stones is the legible version, and one Peridot is a sixth of a Banner
-of the Everflow. Whether Peridot needs to be rarer, or Emerald bigger, is a playtest question,
-not a decision.
+HP and Mana Pool at half a point, and the Gems ignore that on purpose: seven identically-shaped
+stones is the legible version. Whether Emerald needs to be bigger is a playtest question, not a
+decision. Removing Peridot took the *worst* case of the mismatch off the table (MP Regen at three
+points a unit), which is most of why the remaining spread is tolerable.
 
 ### Winning a fight: the post-fight gates
 
@@ -427,8 +432,9 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   - **Authored encounters are the intended successor,** not a rewrite of this. The
     generator takes an `ActScaling` rather than deriving one, so a hand-built encounter
     can hand over its own numbers — or ignore the table entirely — through the same seam.
-- **The Guardian's Banner (2026-08-30, per user direction).** Beating an act's Guardian
-  grants a second reward on top of the Recruit Contract: a **fixed 1-of-3 relic choice**
+- **The Guardian's Banner (2026-08-30, per user direction; widened to five 2026-09-07).**
+  Beating an act's Guardian
+  grants a second reward on top of the Recruit Contract: a **fixed 1-of-5 relic choice**
   (`GuardianBannerScreen`), shown after the wins that end **acts 1-4** and not after act
   5's, whose Guardian ends the run — a team-wide permanent handed to a finished run is a
   choice with nothing to spend it on. Not a map node; it hangs off the boss win itself
@@ -436,44 +442,62 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   in the post-fight chain, ahead of the recruit/equip/level-up gates, so a hero recruited
   in that same beat already arrives under the banner.
 
-  The three options never change and never roll:
+  The five options never change and never roll — **one per axis**, so a run's five picks are a
+  spread-or-commit decision across the whole stat line rather than across HP and mana:
 
   | Banner | Grant |
   |---|---|
   | Banner of Vitality | Team-wide +30 HP |
-  | Banner of the Wellspring | Team-wide +20 Mana pool |
-  | Banner of the Everflow | Team-wide +10 MP Regen |
+  | Banner of the Warcry | Team-wide +20 Attack, +20 Intelligence |
+  | Banner of the Bulwark | Team-wide +15 Defense, +15 Wisdom |
+  | Banner of Swiftness | Team-wide +20 Speed |
+  | Banner of the Wellspring | Team-wide +40 Mana Pool, +10 MP Regen |
 
-  Being **fixed** is the design, not a placeholder. Because the same three come back four
-  times, the real decision is *spread them or commit to one axis*, and that only becomes a
-  decision if the player can see all four offers coming from act 1. `RelicDefinition
-  .guardianBanner` keeps all three out of `drawableRelics` (`src/data/relics.ts`), which is
-  what both random sources — the Relic Shrine's 1-of-3 and the Guild Hall's stock — draw
-  from, so a banner is never a random offer and the fixed choice is never pre-empted.
+  **The two-stat Banners are not the same shape.** A hero swings with Attack *or* with
+  Intelligence, never both, so the Warcry's two stats are worth *one* stat to any given hero and
+  are priced at full value — it is one offensive Banner that refuses to be a trap for either half
+  of the roster. Defense and Wisdom are both live on every hero, because everyone is hit by both
+  pipelines, so the Bulwark's two are worth two and are priced at +15 each. The Wellspring pairs
+  both halves of the mana axis because neither carries a pick alone: pool saturates (below), and
+  MP Regen alone was the auto-take that got Peridot deleted.
+
+  Being **fixed** is the design, not a placeholder. Because the same five come back every act,
+  the real decision is *spread them or commit to one axis*, and that only becomes a decision if
+  the player can see all five offers coming from act 1. There is no random relic pool for one to
+  leak into any more (2026-09-07); `RelicDefinition.guardianBanner` is now display grouping only.
 
   **Stacking** needs no new mechanism: duplicate relic ids already sum in
   `relicTeamStatModifiers`. What is new is how a stack is *written* — one card named
   `Banner of Vitality +2` carrying the summed `+90 HP`, rather than three identical cards
-  (`src/view/shared/relicStacks.ts`, used by `RelicsOverlay` and `RosterPeek`). The suffix
+  (`src/view/shared/relicStacks.ts`, used by `RunRelicsPanel` and `RosterPeek`). The suffix
   counts copies **beyond the first**, the upgrade-pip convention: 3 copies reads "+2". Like
   every relic, a banner applies to heroes obtained before *and* after it — the grant is
   broadcast to the side at fight-build time (`entryStats.ts`), never written onto a hero.
 
-  **Open balance question — the three are not equal, and the MP Regen one is the outlier.**
-  Against the roster's averages (~105 HP, ~58 Mana pool, a flat **10** MP Regen on every
-  hero), +30 HP is about +29%, +20 Mana about +34%, and +10 MP Regen is **+100%** — and
-  regen is throughput, not a one-time buffer, so over a six-round fight it is worth ~60
-  mana against the Wellspring's 20. At four stacks it is 50 MP Regen, 5× base, which is
-  also the side of the ledger CLAUDE.md's mana-tuning invariant ("mana investment must pay
-  out later than the point at which a weak team dies") is most sensitive to. The authored
-  values are the ones asked for and are what ships; the balance-pass alternative on record
-  is **+5 MP Regen**, or holding +10 and raising the Wellspring to +40. Flag before
-  hardening either way.
-- **Relics: minimal, stat-only.** `src/run/relics.ts` mirrors `equipment.ts`'s own
-  scope note exactly — team-wide flat stat grants only. Hook-triggered relics (e.g.
-  "on faint, heal the team") wait for the trigger-hook engine contract (CLAUDE.md
-  "Architecture", README "Next steps" #3), which isn't built. Do not add a
-  trigger/hook field to `RelicDefinition` speculatively before that contract lands.
+  **Open balance question — the five are not equal, and the Wellspring is still the one to
+  watch.** Against the roster's averages (~105 HP, ~58 Mana pool, a flat **10** MP Regen on
+  every hero, ~55 in each combat stat), +30 HP is about +29%, +20 Attack about +36%, +15 Defense
+  about +27%, +20 Speed about +36% — and the Wellspring's +10 MP Regen alone is **+100%**, with
+  +40 Mana Pool on top of it. Regen is throughput, not a one-time buffer, so over a six-round
+  fight it is worth ~60 mana; that is also the side of the ledger CLAUDE.md's mana-tuning
+  invariant ("mana investment must pay out later than the point at which a weak team dies") is
+  most sensitive to. Mana pool is the counterweight and it **saturates** — batch simulation
+  measures +50, +150 and +300 identically, a fight ending long before a deeper reserve is
+  reached — so most of the Wellspring's measured value is the regen half. The balance-pass
+  alternative on record is dropping it to **+5 MP Regen**. Flag before hardening either way.
+
+  **Also open: five Banners against five Guardians means a run can now take one of each.** With
+  three options and four picks, spreading was forced to double up somewhere. It no longer is,
+  which makes "one of each" the obvious default line and commit the deliberate deviation from
+  it. Whether that reads as a real decision or as a flat menu is exactly what the next playtest
+  should answer; the knob if it does not is offering **3 of the 5** per Guardian.
+- **Relics: stat-only, by design.** `src/run/relics.ts` still carries `grantsPassiveIds` and
+  `grantsStatusIds` — the team-wide grant shapes the pipeline supports — but as of 2026-09-07 no
+  shipped relic uses either, and the ~50-relic random pool that did is deleted. Playtest found
+  those relics collapsed into two buckets: a bigger Gem, or a passive that was unanswerable
+  applied to all four heroes at once. Interesting effects live per-hero on equipment now, where
+  an item slot prices them. Reaching for a team-wide passive again should be a decision, not a
+  refill of the old pool.
 - ~~**Boss = existing fixture heroes, scaled up, not new Guardian content.**~~ **CLOSED
   (2026-09-01 / 2026-09-06).** Every Location now names an authored champion, and since
   2026-09-06 the escorts beside it are that Location faction's own basics rather than
@@ -860,8 +884,9 @@ Endbringer already out is exactly what it is for.
 > - **Act 5's Guardian now pays a Banner.** The Banner was acts 1-4 only because act 5's
 >   win ended the run and a team-wide permanent handed to a finished run buys nothing.
 >   That reasoning is void: there is a fight after it. Five stacks instead of four also
->   moves the spread-or-commit decision the fixed 1-of-3 exists to create, and the MP
->   Regen banner's open balance question (§3) gets one act sharper.
+>   moves the spread-or-commit decision the fixed offer exists to create, and the MP
+>   Regen question (§3) gets one act sharper. **2026-09-07:** the offer is 1-of-5 now, so
+>   five Guardians against five Banners is exactly one of each — see §3's second open question.
 > - **The win condition is reduction to 0 HP**, and `lore.md` §7 records the alternative
 >   (survival) and why it is better fiction and a new engine primitive.
 

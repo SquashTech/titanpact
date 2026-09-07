@@ -6,9 +6,8 @@ import type { MapNode, MapNodeType } from '../../run/map';
 import { useLongPress } from '../shared/MoveTile';
 import { RosterManagementScreen } from './RosterManagementScreen';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
-import { RelicsOverlay } from './RelicsOverlay';
 import { ResourceGlyph, type ResourceKind } from '../shared/RunGlyph';
-import { HubGlyph, NodeGlyph, type HubGlyphName } from '../shared/nodeIcons';
+import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { canAffordAnyLevelUp } from '../../run/progression';
 import { locationForAct } from '../../run/locations';
 import type { LocationDefinition } from '../../data/locations';
@@ -62,14 +61,12 @@ const NODE_NAMES: Record<MapNodeType, string> = {
   boss: 'Guardian',
   shop: 'Guild Hall',
   equipmentReward: 'Item',
-  relicReward: 'Relic',
   gemReward: 'Gem',
   currencyReward: 'Gold',
   upgradeReward: 'XP',
   forgeReward: 'Forge',
   hpBoostReward: 'Vitality',
   manaBoostReward: 'Mana',
-  manaRegenBoostReward: 'Regen',
   classReward: 'Mentor',
   event: 'Event',
   muster: 'The Vigil',
@@ -86,7 +83,6 @@ const NODE_COLORS: Record<MapNodeType, string> = {
   boss: 'var(--accent)',
   shop: 'var(--mana)',
   equipmentReward: 'var(--physical)',
-  relicReward: 'var(--magical)',
   // A rose nothing else on the map wears: a Gem can be any stat, so it cannot borrow one stat's colour.
   gemReward: '#d9569b',
   currencyReward: 'var(--accent)',
@@ -95,7 +91,6 @@ const NODE_COLORS: Record<MapNodeType, string> = {
   forgeReward: '#f0913c',
   hpBoostReward: 'var(--hp-high)',
   manaBoostReward: 'var(--mana)',
-  manaRegenBoostReward: '#4cd9a0',
   classReward: 'var(--buff)',
   event: 'var(--tier-common)',
   muster: 'var(--accent)',
@@ -111,16 +106,14 @@ const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
   battle: '30–45g · 3 XP · item',
   elite: '15–25g · 4 XP · 55% elite item · recruitable — enemies carry +10 to 2 stats',
   boss: '4 XP · 70% elite item · 1 Recruit Contract',
-  shop: 'Spend gold on heroes, items and relics',
+  shop: 'Spend gold on heroes and items',
   equipmentReward: '1 of 3 items',
-  relicReward: '1 of 3 team-wide relics',
   gemReward: '1 of 3 Gems — each a team-wide +5 to one stat',
   currencyReward: '15–30g',
   upgradeReward: '2 XP',
   forgeReward: '+1 item slot to one hero, for the rest of the run',
   hpBoostReward: '+20 max HP to one hero',
   manaBoostReward: 'Sapphire — team-wide +5 Mana Pool',
-  manaRegenBoostReward: 'Peridot — team-wide +5 MP Regen',
   classReward: '1 of 3 Classes, taught to one hero',
   event: 'Hidden until you arrive: a move, a passive, gear or a trade',
   muster: 'Fill the roster to six, then spend everything left',
@@ -145,14 +138,12 @@ const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   boss: 'ancient',
   shop: 'landmark',
   equipmentReward: 'reward',
-  relicReward: 'reward',
   gemReward: 'reward',
   currencyReward: 'reward',
   upgradeReward: 'reward',
   forgeReward: 'reward',
   hpBoostReward: 'reward',
   manaBoostReward: 'reward',
-  manaRegenBoostReward: 'reward',
   classReward: 'reward',
   event: 'reward',
   muster: 'landmark',
@@ -390,14 +381,6 @@ function MapNodePreviewPopup({ node, onClose }: { node: MapNode; onClose: () => 
   );
 }
 
-const FOOTER_BUTTONS: readonly { key: HubGlyphName; label: string; color: string; iconOnly?: true }[] = [
-  { key: 'relics', label: 'Relics', color: 'var(--magical)' },
-  { key: 'roster', label: 'Roster', color: 'var(--ally)' },
-  // Icon-only to fit four buttons in the row; still labelled for screen readers.
-  { key: 'reference', label: 'Reference', color: 'var(--accent)', iconOnly: true },
-  { key: 'menu', label: 'Menu', color: 'var(--text-dim)' },
-];
-
 // docs/locations.md §4 — the well carries the act's Location at a fraction of
 // the arrival screen's strength.
 const MAP_MOTE_DENSITY = 0.5;
@@ -418,7 +401,6 @@ function MapPlacard({ location }: { location: LocationDefinition }) {
 export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSaveAndQuit, onAbandonRun }: Props) {
   const [showRoster, setShowRoster] = useState(false);
   const [showReference, setShowReference] = useState(false);
-  const [showRelics, setShowRelics] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   // Two taps to abandon: quitting is reversible now, but abandoning deletes the save.
   const [confirmingQuit, setConfirmingQuit] = useState(false);
@@ -437,20 +419,20 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
   const rowsTopDown = [...map.rows].reverse();
   const edges = geometry ? buildEdges(rowsTopDown, map.nodes, geometry, run.currentNodeId, reachable, visited) : [];
 
-  const openFooterOverlay: Record<(typeof FOOTER_BUTTONS)[number]['key'], () => void> = {
-    relics: () => setShowRelics(true),
-    roster: () => setShowRoster(true),
-    reference: () => setShowReference(true),
-    menu: () => {
-      setConfirmingQuit(false);
-      setShowMenu(true);
-    },
-  };
-
   return (
     <div className="map-screen" data-location={location.id} style={{ '--node-rgb': location.tintRgb } as CSSProperties}>
-      {/* Act on the left is a position, not a thing you hold; the purse on the right is. */}
+      {/* Act on the left is a position, not a thing you hold; the purse on the right is. The two
+          corners hold the screen's non-run controls, out of the way of the one that matters. */}
       <div className="map-header">
+        <button
+          type="button"
+          className="map-header-button"
+          onClick={() => setShowReference(true)}
+          aria-label="Reference"
+          title="Reference"
+        >
+          <HubGlyph name="reference" />
+        </button>
         {run.actNumber > SEAL_ACTS ? (
           // The finale is the corridor past the fifth seal, not a sixth act, so it counts nothing.
           <span className="map-act" aria-label="The final pact">
@@ -476,6 +458,18 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
           />
           <ResourceStat kind="contract" label="Recruit Contracts" value={run.recruitContracts} />
         </div>
+        <button
+          type="button"
+          className="map-header-button"
+          onClick={() => {
+            setConfirmingQuit(false);
+            setShowMenu(true);
+          }}
+          aria-label="Options"
+          title="Options"
+        >
+          <HubGlyph name="menu" />
+        </button>
       </div>
 
       {/* The well is a frame with a scroller inside it: atmosphere and placard
@@ -551,21 +545,17 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
         </div>
       </div>
 
+      {/* One button, because there is one thing down here worth opening: the run's own sheet —
+          Banners, Gems, every hero and every item on them (2026-09-07, per user direction). */}
       <div className="map-footer">
-        {FOOTER_BUTTONS.map(({ key, label, color, iconOnly }) => (
-          <button
-            key={key}
-            className={`map-footer-button${iconOnly ? ' is-icon-only' : ''}`}
-            style={{ '--btn-color': color } as CSSProperties}
-            onClick={openFooterOverlay[key]}
-            aria-label={iconOnly ? label : undefined}
-            title={iconOnly ? label : undefined}
-          >
-            <span className="map-footer-icon"><HubGlyph name={key} /></span>
-            {!iconOnly && <span className="map-footer-label">{label}</span>}
-            {key === 'relics' && run.relics.length > 0 && <span className="map-footer-badge">{run.relics.length}</span>}
-          </button>
-        ))}
+        <button
+          className="map-footer-button"
+          style={{ '--btn-color': 'var(--ally)' } as CSSProperties}
+          onClick={() => setShowRoster(true)}
+        >
+          <span className="map-footer-icon"><HubGlyph name="roster" /></span>
+          <span className="map-footer-label">Roster</span>
+        </button>
       </div>
 
       {/* Same markup as FightScreen's Options panel. */}
@@ -609,7 +599,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
             {onAbandonRun && (
               <p className="options-note">
                 {confirmingQuit
-                  ? 'This run ends now. Roster, relics and map progress are lost.'
+                  ? 'This run ends now. Roster, Banners, Gems and map progress are lost.'
                   : 'The run is saved here. Quitting keeps it — Continue picks it back up.'}
               </p>
             )}
@@ -619,7 +609,6 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
 
       {showRoster && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setShowRoster(false)} />}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
-      {showRelics && <RelicsOverlay ownedRelicIds={run.relics} onClose={() => setShowRelics(false)} />}
       {previewNode && <MapNodePreviewPopup node={previewNode} onClose={() => setPreviewNode(null)} />}
     </div>
   );

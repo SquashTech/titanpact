@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { isValidRelicDefinition, relicTeamStatModifiers } from '../src/run/relics';
-import { relics, drawableRelics, gemRelics, guardianBannerRelics } from '../src/data/relics';
+import { relics, gemRelics, guardianBannerRelics } from '../src/data/relics';
 import { heroes } from '../src/data/heroes';
 import { equipment } from '../src/data/equipment';
 import { passives } from '../src/data/passives';
@@ -23,14 +23,25 @@ test('relics: isValidRelicDefinition rejects a non-multiple-of-5 grant', () => {
   assert.strictEqual(isValidRelicDefinition({ id: 'bad', name: 'Bad', statGrants: { attack: 7 } }), false);
 });
 
+// The catalog is two closed families now (2026-09-07): the random relic pool is gone, because a
+// team-wide passive applied to all four heroes at once was either a bigger Gem or unanswerable.
+test('relics: the catalog is exactly the Banners plus the Gems', () => {
+  assert.strictEqual(Object.values(relics).length, guardianBannerRelics.length + gemRelics.length);
+  for (const relic of Object.values(relics)) {
+    assert.ok(relic.guardianBanner || relic.gem, `${relic.id} belongs to neither family`);
+    assert.ok(!relic.grantsPassiveIds?.length, `${relic.id} grants a team-wide passive`);
+    assert.ok(!relic.grantsStatusIds?.length, `${relic.id} grants a team-wide status`);
+  }
+});
+
 test('relics: relicTeamStatModifiers merges owned relics additively and ignores unknown ids', () => {
-  const mods = relicTeamStatModifiers(['ironStandard', 'warHorn', 'unknown-relic'], relics);
-  assert.deepStrictEqual(mods, { defense: 10, attack: 10 });
+  const mods = relicTeamStatModifiers(['bannerOfSwiftness', 'onyxGem', 'unknown-relic'], relics);
+  assert.deepStrictEqual(mods, { speed: 20, defense: 5 });
 });
 
 test('relics: relicTeamStatModifiers stacks a duplicate relic id', () => {
-  const mods = relicTeamStatModifiers(['ironStandard', 'ironStandard'], relics);
-  assert.strictEqual(mods.defense, 20);
+  const mods = relicTeamStatModifiers(['onyxGem', 'onyxGem'], relics);
+  assert.strictEqual(mods.defense, 10);
 });
 
 test('relics: no owned relics yields no modifiers', () => {
@@ -39,10 +50,10 @@ test('relics: no owned relics yields no modifiers', () => {
 
 // --- The Guardian's Banner (docs/run-loop.md): never randomly offered, designed to stack ---
 
-test('relics: the three Guardian Banners are catalogued, in offer order', () => {
+test('relics: the five Guardian Banners are catalogued, in offer order', () => {
   assert.deepStrictEqual(
     guardianBannerRelics.map((r) => r.id),
-    ['bannerOfVitality', 'bannerOfTheWellspring', 'bannerOfTheEverflow']
+    ['bannerOfVitality', 'bannerOfTheWarcry', 'bannerOfTheBulwark', 'bannerOfSwiftness', 'bannerOfTheWellspring']
   );
   for (const banner of guardianBannerRelics) {
     assert.strictEqual(relics[banner.id], banner, `${banner.id} is missing from the relic catalog`);
@@ -50,38 +61,28 @@ test('relics: the three Guardian Banners are catalogued, in offer order', () => 
   }
 });
 
-test('relics: no Guardian Banner is drawable by a random offer', () => {
-  const drawableIds = new Set(drawableRelics.map((r) => r.id));
-  for (const banner of guardianBannerRelics) {
-    assert.ok(!drawableIds.has(banner.id), `${banner.id} leaked into the random relic pool`);
-  }
-  assert.strictEqual(drawableRelics.length, Object.values(relics).length - guardianBannerRelics.length - gemRelics.length);
-});
-
 test('relics: a Banner taken four times stacks to four times its grant', () => {
   const mods = relicTeamStatModifiers(['bannerOfVitality', 'bannerOfVitality', 'bannerOfVitality', 'bannerOfVitality'], relics);
   assert.deepStrictEqual(mods, { hp: 120 });
 });
 
-test('relics: the three Banners lead on three different resources', () => {
-  // Each Banner still owns one resource, and they are still distinct.
-  const leadStats = guardianBannerRelics.map((r) => Object.keys(r.statGrants)[0]);
-  assert.deepStrictEqual(leadStats, ['hp', 'manaPool', 'mpRegen']);
+test('relics: the five Banners cover five different axes, and no axis twice', () => {
+  // One Banner per axis is what makes five acts of fixed offers a spread-or-commit decision.
+  assert.deepStrictEqual(relics.bannerOfVitality.statGrants, { hp: 30 });
+  assert.deepStrictEqual(relics.bannerOfTheWarcry.statGrants, { attack: 20, intelligence: 20 });
+  assert.deepStrictEqual(relics.bannerOfTheBulwark.statGrants, { defense: 15, wisdom: 15 });
+  assert.deepStrictEqual(relics.bannerOfSwiftness.statGrants, { speed: 20 });
+  assert.deepStrictEqual(relics.bannerOfTheWellspring.statGrants, { manaPool: 40, mpRegen: 10 });
 
-  // One documented exception to "one stat each": the Wellspring carries Wisdom alongside its
-  // Mana. Batch simulation showed a pure mana-pool grant SATURATES — +50, +150 and +300 all
-  // measure identically, because a fight ends long before a deeper reserve is reached — so at
-  // +20 it was the worst of the three by a wide margin and no number could fix it. The Wisdom
-  // is what makes it a live pick. If a third Banner ever wants a second stat, that is a
-  // conversation, not a precedent.
-  assert.deepStrictEqual(guardianBannerRelics.map((r) => Object.keys(r.statGrants).length), [1, 2, 1]);
-  assert.deepStrictEqual(relics.bannerOfTheWellspring.statGrants, { manaPool: 40, wisdom: 20 });
+  // No stat is carried by two Banners — an axis reachable two ways is one the player cannot price.
+  const carried = guardianBannerRelics.flatMap((r) => Object.keys(r.statGrants));
+  assert.strictEqual(new Set(carried).size, carried.length, 'two Banners carry the same stat');
 });
 
 // --- Out-of-combat sheet parity: the sheet and buildCombatState both go through entryStats.ts ---
 
 test('entryStats: the out-of-combat sheet math equals the combatant a fight actually builds', () => {
-  const relicIds = ['windcallersBanner', 'ironStandard'];
+  const relicIds = ['bannerOfSwiftness', 'onyxGem', 'onyxGem'];
   let run = createRunState(10);
   run = addRosterEntry(run, createRosterEntry('cinderKnight', 'cinderKnight', heroes.cinderKnight.moveIds));
   run = grantClass(run, classes, 'cinderKnight', 'warrior');
@@ -101,17 +102,17 @@ test('entryStats: the out-of-combat sheet math equals the combatant a fight actu
   );
 
   assert.deepStrictEqual(sheetMods, state.combatants['A:cinderKnight'].baselineStatModifiers);
-  assert.strictEqual(sheetMods.speed, 10);
+  assert.strictEqual(sheetMods.speed, 20);
   assert.strictEqual(sheetMods.defense, 10 + (classes.warrior.statGrants?.defense ?? 0));
 });
 
-test('entryStats: relicStatContribution isolates the relic-sourced slice, including relic-granted passives', () => {
-  const relicIds = ['windcallersBanner'];
+test('entryStats: relicStatContribution isolates the relic-sourced slice', () => {
+  const relicIds = ['bannerOfSwiftness'];
   const contribution = relicStatContribution(
     relicTeamStatModifiers(relicIds, relics),
     relicTeamPassiveGrants(relicIds, relics),
     passives
   );
-  assert.deepStrictEqual(contribution, { speed: 10 });
+  assert.deepStrictEqual(contribution, { speed: 20 });
   assert.deepStrictEqual(relicStatContribution({}, {}, passives), {});
 });

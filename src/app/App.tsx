@@ -306,14 +306,16 @@ function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): Eq
 }
 
 /**
- * How each Gem-granting node dresses the one GemChoiceScreen. The Mana Well and Regen Spring keep
- * the names, tints and place-flavour they had as hero-targeted shrines — only the grant changed.
+ * How each Gem-granting node dresses the one GemChoiceScreen. The Mana Well keeps the name, tint
+ * and place-flavour it had as a hero-targeted shrine — only the grant changed.
  */
-const GEM_NODE_PRESENTATION: Record<'gemReward' | 'manaBoostReward' | 'manaRegenBoostReward', { eyebrow: string; title: string; tint?: string }> = {
+const GEM_NODE_PRESENTATION: Record<'gemReward' | 'manaBoostReward', { eyebrow: string; title: string; tint?: string }> = {
   gemReward: { eyebrow: 'A Seam Opens', title: 'Gem Cache' },
   manaBoostReward: { eyebrow: 'A Blessing', title: 'Mana Well', tint: NODE_TINT_MANA },
-  manaRegenBoostReward: { eyebrow: 'A Blessing', title: 'Regen Spring', tint: NODE_TINT_MANA },
 };
+
+/** The Mana Well hands over the one Gem carrying its stat rather than offering a choice. */
+const MANA_WELL_GEM_ID = gemForStat.manaPool!.id;
 
 /** The map, behind the level-up gate if anyone can afford one and the player has not banked the pool. */
 function levelUpPending(run: RunState): boolean {
@@ -607,10 +609,10 @@ export function App() {
       setScreen({ kind: 'forge', nodeId });
     } else if (node.type === 'hpBoostReward') {
       setScreen({ kind: 'statBoost', nodeId, nodeType: node.type });
-    } else if (node.type === 'gemReward' || node.type === 'manaBoostReward' || node.type === 'manaRegenBoostReward') {
-      // The Gem Cache offers 1 of 3; the two stat shrines hand over the one Gem that carries their stat.
+    } else if (node.type === 'gemReward' || node.type === 'manaBoostReward') {
+      // The Gem Cache offers 1 of 3; the Mana Well hands over the one Gem that carries its stat.
       const preset = GEM_NODE_PRESENTATION[node.type];
-      const gemIds = node.type === 'gemReward' ? pickGemOffers() : [gemForStat[node.type === 'manaBoostReward' ? 'manaPool' : 'mpRegen'].id];
+      const gemIds = node.type === 'gemReward' ? pickGemOffers() : [MANA_WELL_GEM_ID];
       setPlayerRun((run) => advanceToNode(run, nodeId));
       setScreen({ kind: 'gemChoice', gemIds, ...preset, next: mapAfterLevelUp(playerRun) });
     } else if (node.type === 'classReward') {

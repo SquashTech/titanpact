@@ -12,7 +12,7 @@ import { statuses } from '../src/data/statuses';
 import { passives } from '../src/data/passives';
 import { fieldEffects } from '../src/data/fieldEffects';
 import { equipment } from '../src/data/equipment';
-import { relics } from '../src/data/relics';
+import type { RelicDefinition } from '../src/run/relics';
 import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import { calcDamage, resolveElementalForceBonus } from '../src/engine/damage/damagePipeline';
@@ -159,7 +159,13 @@ test('elementalForce: equipmentStatusGrants tallies magnitude across held items,
 });
 
 test('elementalForce: relicTeamStatusGrants sums a duplicate relic id, matching relicTeamPassiveGrants', () => {
-  assert.deepStrictEqual(relicTeamStatusGrants(['cinderStandard', 'cinderStandard', 'ironStandard'], relics), { FireForce: 20 });
+  // Fixtures, not catalog ids: the shipped relics are all flat stats now (Gems and Banners), so
+  // the Force-granting shape is exercised on relics authored here.
+  const fixtures = {
+    cinderStandard: { id: 'cinderStandard', name: 'Cinder Standard', statGrants: {}, grantsStatusIds: [{ statusId: 'FireForce', magnitude: 10 }] },
+    plainStandard: { id: 'plainStandard', name: 'Plain Standard', statGrants: { defense: 10 } },
+  } satisfies Record<string, RelicDefinition>;
+  assert.deepStrictEqual(relicTeamStatusGrants(['cinderStandard', 'cinderStandard', 'plainStandard'], fixtures), { FireForce: 20 });
 });
 
 test('elementalForce: mergeStatusGrants sums equipment + relic sources additively', () => {

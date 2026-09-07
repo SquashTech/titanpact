@@ -132,13 +132,19 @@ don't silently override it.
   the nine heroes at **Speed ≤ 40** carry — gear rather than tempo is what scales a hero that
   never wins a tiebreak. The **Forge** node grants +1 slot to one hero, to `MAX_ITEM_SLOTS` = 3.
   **No hero holds two copies of one item**, and capacity is decided in one place, `itemSlotsFor`
-  (`docs/progression.md`). **Relics are team-wide passives** — a separate axis, not items.
-- **Gems are relics, handed out commonly** (2026-09-05): eight stones, one per stat, each a
-  flat team-wide **+5**, stacking without limit. The run's first fight always pays one, every
-  later fight rolls for one, and the `gemReward` node plus the Mana Well / Regen Spring grant
-  them. Excluded from every random relic offer (`RelicDefinition.gem`, `src/run/gems.ts`).
-  They are the drip-feed that smooths the curve between the sparse Banner and Shrine grants
-  — a deliberate difficulty softener. Odds and the un-priced flat +5: `docs/run-loop.md`.
+  (`docs/progression.md`). **Relics are the team-wide axis** — a separate axis, not items.
+- **The relic catalog is two closed families, both flat stats: Gems and Banners** (2026-09-07,
+  replacing a ~50-relic random pool and the `relicReward` Shrine node, both deleted). Playtest
+  found the pool collapsed into two buckets — a bigger Gem, or a passive that was unanswerable
+  applied to all four heroes at once — so the interesting grants now live per-hero on equipment,
+  where a slot prices them. Nothing team-wide grants a passive or an Elemental Force any more.
+- **Gems, handed out commonly**: **seven** stones, one per stat **except MP Regen**, each a flat
+  team-wide **+5**, stacking without limit. The run's first fight always pays one, every later
+  fight rolls for one, and the `gemReward` node plus the Mana Well grant them
+  (`RelicDefinition.gem`, `src/run/gems.ts`). They are the drip-feed that smooths the curve
+  between Banners — a deliberate difficulty softener. MP Regen has no Gem and the Regen Spring
+  node is gone: at a flat base 10 across the roster, +5 was +50% of a throughput stat and read as
+  the correct pick from every offer. Odds and the un-priced flat +5: `docs/run-loop.md`.
 - **Item rarity is a point budget, spent exactly** (2026-08-30; rebased 2026-09-06): Common 30 /
   Rare 50 / Epic 70 / Legendary 90 / Mythic 110, paid in stats, Elemental Force magnitude, or
   granted passives (`RARITY_BUDGET`, `src/run/equipment.ts`; enforced by `test/equipment.test.ts`).
@@ -230,9 +236,12 @@ what's still unimplemented:
   every act (replacing the removed `contractReward` map-node type — Recruit Contracts
   now come only from that per-act grant, a beaten enemy's contract claim, or a Guild
   Hall purchase). Beating an act's Guardian also grants **the Guardian's
-  Banner** (2026-08-30): a fixed, never-rolled 1-of-3 team-wide relic — Vitality
-  (+30 HP), Wellspring (+20 Mana), Everflow (+10 MP Regen) — stackable across the
-  five acts and displayed folded ("Banner of Vitality +2"). Their relative values
+  Banner** (2026-08-30; reshaped 2026-09-07): a fixed, never-rolled **1-of-5** team-wide relic,
+  one per axis — Vitality (+30 HP), Warcry (+20 Atk, +20 Int), Bulwark (+15 Def, +15 Wis),
+  Swiftness (+20 Speed), Wellspring (+40 Mana, +10 MP Regen) — stackable across the
+  five acts and displayed folded ("Banner of Vitality +2"). The Warcry carries two stats at
+  full value because a hero swings with one or the other; the Bulwark's two are both live on
+  every hero, so they are priced at +15. Their relative values
   are an open balance question (`docs/run-loop.md`). **Encounters scale by act**
   (2026-08-30) on two tracks (`src/run/difficulty.ts`): **Monsters** baselines at Act 2
   (placeholder — per-act monster content isn't authored yet), **Skirmish/Guardian** at
@@ -248,8 +257,8 @@ what's still unimplemented:
   first-pass figure for playtest; only the shape is decided. HP/mana **fully restore
   between map nodes** — reversed same-day from an initial persist-across-nodes design
   after first playtest showed a KO'd hero simply stayed dead-weight into the next
-  fight with no way to recover it (`docs/run-loop.md`). Relics are **minimal and
-  stat-only** until the trigger-hook contract exists.
+  fight with no way to recover it (`docs/run-loop.md`). Relics are **stat-only**, by design
+  rather than by deferral (see the relic-catalog invariant above).
 - The first run on an account (2026-09-05 sign-off): **scripted through Act 1**, narrated by
   **Valor**, with Valor + Fang forced as the pact and the act's map narrowed to **one node
   per row**. Every line and every curated encounter is content (`src/data/tutorial.ts`);

@@ -1,16 +1,22 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { STAT_ORDER } from '../src/engine/content';
-import { GEM_STAT_GRANT, drawableRelics, gemForStat, gemRelics, relics } from '../src/data/relics';
+import { GEM_STAT_GRANT, gemForStat, gemRelics, relics } from '../src/data/relics';
 import { GEM_DROP_CHANCE, GEM_OFFER_COUNT, gemDropChanceFor, pickGemOffers, rollGemOffers } from '../src/run/gems';
 import { relicTeamStatModifiers } from '../src/run/relics';
 import { MAP_NODE_TYPES } from '../src/run/map';
 
 // --- The catalog (docs/run-loop.md "Gems") ---
 
-test('gems: exactly one Gem per stat, in STAT_ORDER, each a flat +GEM_STAT_GRANT to that one stat', () => {
-  assert.strictEqual(gemRelics.length, STAT_ORDER.length);
-  STAT_ORDER.forEach((stat, i) => {
+// MP Regen has no Gem (2026-09-07): at a flat base 10 across the roster, +5 was +50% of a
+// throughput stat and read as the correct pick from every offer. It lives on the Wellspring
+// Banner instead. Every OTHER stat keeps its Gem, in STAT_ORDER.
+const GEM_STATS = STAT_ORDER.filter((stat) => stat !== 'mpRegen');
+
+test('gems: one Gem per stat but MP Regen, in STAT_ORDER, each a flat +GEM_STAT_GRANT to that one stat', () => {
+  assert.strictEqual(gemRelics.length, GEM_STATS.length);
+  assert.strictEqual(gemForStat.mpRegen, undefined, 'MP Regen still has a Gem');
+  GEM_STATS.forEach((stat, i) => {
     const gem = gemRelics[i];
     assert.strictEqual(gemForStat[stat], gem, `${stat} maps to the wrong Gem`);
     assert.deepStrictEqual(gem.statGrants, { [stat]: GEM_STAT_GRANT }, `${gem.id} grants more than its own stat`);
@@ -19,20 +25,16 @@ test('gems: exactly one Gem per stat, in STAT_ORDER, each a flat +GEM_STAT_GRANT
   });
 });
 
-test('gems: no Gem is drawable by a random relic offer', () => {
-  const drawableIds = new Set(drawableRelics.map((r) => r.id));
-  for (const gem of gemRelics) assert.ok(!drawableIds.has(gem.id), `${gem.id} leaked into the random relic pool`);
-});
-
 test('gems: Gems stack through the ordinary relic stat pipeline', () => {
-  const ruby = gemForStat.attack.id;
+  const ruby = gemForStat.attack!.id;
   assert.deepStrictEqual(relicTeamStatModifiers([ruby, ruby, ruby], relics), { attack: GEM_STAT_GRANT * 3 });
 });
 
 // --- Handing them out (src/run/gems.ts) ---
 
-test('gems: the map carries a Gem Cache node', () => {
+test('gems: the map carries a Gem Cache node, and no Regen Spring', () => {
   assert.ok((MAP_NODE_TYPES as readonly string[]).includes('gemReward'));
+  assert.ok(!(MAP_NODE_TYPES as readonly string[]).includes('manaRegenBoostReward'));
 });
 
 test('gems: every drop chance is a probability, and the Guardian and finale pay none', () => {

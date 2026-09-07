@@ -6606,7 +6606,7 @@ textarea,
 }
 
 /* Ambient glow behind the "Victory!"/"Defeat" headline — same
-   evolution-glow-pulse animation the Equipment Cache/Relic Shrine banners
+   evolution-glow-pulse animation the Equipment Cache and Banner screens
    use, retinted per outcome so a win reads warm-green and a loss reads red,
    matching .result-overlay's own win/loss radial tint. */
 .result-glow {
@@ -9767,21 +9767,76 @@ textarea,
   background: var(--selected-fill);
 }
 
-/* --- Relics overlay ------------------------------------------------------- */
+/* --- The team-wide panel (RunRelicsPanel.tsx) -----------------------------
+   Banners and Gems, at the top of the Roster sheet's one scroll rather than
+   behind a map button of their own (2026-09-07). Both families list in full,
+   held or not — an unheld one is a slot to fill, not an absence.
 
-.relics-panel {
-  max-width: 420px;
-}
+   Name-and-count chips, NOT cards: twelve cards carrying their own grant lines
+   filled the whole first screen and pushed the roster — the interactive half of
+   this sheet — below the fold. The numbers live in the totals row underneath,
+   summed and already applied, which is the reading that actually matters here. */
 
-.relics-grid {
+.run-relics-panel {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  overflow-y: auto;
-  /* Without this the list refuses to shrink under .log-panel's cap and
-     pushes the panel past it — see that rule. */
-  flex: 1 1 auto;
-  min-height: 0;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+/* Label in its own column so both rails start at the same x and the two
+   families read as one block rather than two stacked lists. */
+.relic-rail-row {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  align-items: start;
+  gap: 6px;
+}
+
+.relic-rail-label {
+  padding-top: 3px;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-weight: 700;
+}
+
+.relic-rail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.relic-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--hairline);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.relic-pill.is-empty {
+  opacity: 0.35;
+}
+
+.relic-pill-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.relic-pill-count {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
 }
 
 .relic-card {
@@ -9815,68 +9870,6 @@ textarea,
   font-size: 11px;
   color: var(--text-dim);
   font-weight: 700;
-}
-
-/* --- Gems (docs/run-loop.md) ---------------------------------------------
-   All eight are always listed, held or not, because a run collects them
-   steadily — an unheld one is a slot to fill, not an absence. Two columns of
-   chips rather than the .relic-card list: eight full cards would bury the
-   handful of real relics under them. */
-
-.relics-section-label {
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  font-weight: 700;
-  margin-top: 2px;
-}
-
-.gem-rail {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px 6px;
-}
-
-/* Two lines, not one: "Aquamarine ×0" and "+0 Wisdom" side by side overflow a half-width
-   chip, and the full stat names are what make the totals readable. */
-.gem-chip {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  column-gap: 6px;
-  padding: 4px 7px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--hairline);
-}
-
-.gem-chip.is-empty {
-  opacity: 0.42;
-}
-
-.gem-chip-icon {
-  grid-row: 1 / span 2;
-  font-size: 15px;
-  line-height: 1;
-}
-
-.gem-chip-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.gem-chip-count {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-dim);
-}
-
-.gem-chip-grant {
-  font-size: 10px;
-  color: var(--text-dim);
 }
 
 .relic-card-desc {
@@ -10451,7 +10444,7 @@ textarea,
 
 /* Shared "stand in the middle of the scroll area" wrapper — the offer lists
    every pick-a-reward screen puts between its header and its CTA (the
-   Equipment Cache's three items, the Relic Shrine's three relics, the
+   Equipment Cache's three items, the Guardian's five Banners, the
    Mentor's three disciplines, the move-replace offer).
    ┄
    This was `.bottom-pinned`, and it did what it said: `justify-content:
@@ -11241,7 +11234,7 @@ textarea,
   }
 }
 
-/* --- Relic Shrine (NodeRewardScreen's relicReward) ------------------------
+/* --- The relic offer list (GuardianBannerScreen, GemChoiceScreen) ---------
    Overhauled (2026-08-23, per user direction) from a 2x2 grid of icon-only
    tiles — which read oddly with only 3 offers, always leaving one tile
    orphaned in the second row — into a vertical stack of full-width rows,
@@ -12118,20 +12111,57 @@ textarea,
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 4px 4px 4px 10px;
+  padding: 4px;
   background: var(--surface-sunken);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
-/* Bare on the track, not a chip — a chip would make it a fourth resource. */
+/* Bare on the track, not a chip — a chip would make it a fourth resource.
+   `margin-right: auto` keeps the original left/right split now that the two
+   corner buttons flank the row: the act still hugs the left, the purse the right. */
 .map-act {
   display: flex;
   align-items: baseline;
   gap: 5px;
   min-width: 0;
+  margin-right: auto;
   white-space: nowrap;
+}
+
+/* Reference and Options, one in each header corner. Ghosted rather than raised:
+   the pressable language on this screen belongs to .map-footer-button and the map
+   nodes, and these two are the controls a player reaches for least. */
+.map-header-button {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--surface-raised);
+  color: var(--text-dim);
+  cursor: pointer;
+  box-shadow: var(--hairline);
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.map-header-button:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.map-header-button:active {
+  transform: translateY(1px);
+}
+
+.map-header-button .node-glyph {
+  width: 15px;
+  height: 15px;
 }
 
 .map-act-label {
@@ -12872,9 +12902,10 @@ textarea,
 
 /* Hub signpost: Relics/Roster/Reference, relocated out of the header
    (2026-08-17) to leave the header to pure run stats. Each button carries
-   its own accent (--btn-color, set inline per FOOTER_BUTTONS) so the row
-   reads as a small signpost rather than three identical pills — same spirit
-   as .map-node's --node-color. */
+   its own accent (--btn-color), same spirit as .map-node's --node-color. The
+   row is down to ONE key (2026-09-07): Reference and Menu moved to the header
+   corners, and Relics folded into the Roster sheet, so the shelf under the
+   map is a single unambiguous destination rather than a signpost of four. */
 .map-footer {
   flex: 0 0 auto;
   display: flex;
@@ -12942,40 +12973,6 @@ textarea,
 
 .map-footer-label {
   color: inherit;
-}
-
-/* Reference, reduced to its scroll so a fourth key (Menu) fits the row
-   without four labels fighting for a ~394px width.
-
-   `flex: 0 0 auto` rather than staying in the 1fr share: an icon-only button
-   that kept an equal quarter would be a wide empty plate with a small mark
-   floating in it, which reads as a broken label rather than a deliberate
-   icon. Taking only what it needs also hands the width back to the three
-   buttons that still carry words.
-
-   The extra bottom padding replaces the label's own line box, so the glyph
-   stays optically centred and the row keeps one flat baseline. */
-.map-footer-button.is-icon-only {
-  flex: 0 0 auto;
-  padding: 6px 12px 5px;
-}
-
-.map-footer-badge {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  background: var(--btn-color);
-  color: var(--bg);
-  border-radius: 999px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  font-size: 9px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 0 2px var(--panel);
 }
 
 /* --- Title screen --------------------------------------------------------- */
@@ -13861,8 +13858,8 @@ textarea,
 
    Now they share that stage. `.node-sky` is the place, `.node-header` is its
    voice, and both take their hue from one custom property, `--node-rgb`, so a
-   node keeps the colour it already had — gold for a cache, violet for the
-   Relic Shrine, teal for the Mentor, the dropped item's own rarity colour on
+   node keeps the colour it already had — gold for a cache, teal for the
+   Mentor, the dropped item's own rarity colour on
    a forced equip — without this stylesheet naming any of them. See
    src/view/shared/NodeStage.tsx. */
 
@@ -16797,16 +16794,15 @@ textarea,
   color: var(--accent);
 }
 
-/* Roster-screen banner: the same contribution list, once for the whole team
-   rather than per hero, so "my relics are working" is answerable without
-   opening a single hero sheet. */
+/* Roster-screen totals: the same contribution list, once for the whole team
+   rather than per hero, so "my Banners and Gems are working" is answerable
+   without opening a single hero sheet. */
 .relic-active-banner {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  margin-bottom: 10px;
-  padding: 8px 10px;
+  padding: 7px 10px;
   border-radius: var(--radius-md);
   background: var(--panel-alt);
   border: 1px solid var(--border);

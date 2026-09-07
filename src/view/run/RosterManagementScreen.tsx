@@ -1,13 +1,7 @@
-import { useMemo, useState, type DragEvent } from 'react';
+import { useState, type DragEvent } from 'react';
 import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
-import { relics } from '../../data/relics';
-import { passives } from '../../data/passives';
-import type { HeroDefinition, StatKey } from '../../engine/content';
-import { relicTeamStatModifiers } from '../../run/relics';
-import { relicTeamPassiveGrants } from '../../run/passives';
-import { relicStatContribution } from '../../run/entryStats';
-import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
+import type { HeroDefinition } from '../../engine/content';
 import type { RunState, RosterEntry } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import type { EnchantmentId } from '../../run/equipment';
@@ -20,6 +14,7 @@ import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { ItemBox, ItemSummaryPopup, slotBoxes } from '../shared/EquipmentBox';
+import { RunRelicsPanel } from './RunRelicsPanel';
 import { playSfx } from '../../audio/sfx';
 
 const DRAG_KEY = 'text/titanpact-equip-move';
@@ -88,14 +83,6 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
   const [viewedItemId, setViewedItemId] = useState<string | null>(null);
   /** Raised only when BOTH halves of a merge carry an enchant and one has to be dropped. */
   const [pendingMerge, setPendingMerge] = useState<{ a: number; b: number; choices: EnchantmentId[] } | null>(null);
-  /** Banner-only: the relic grants are already applied wherever stats are read. */
-  const relicGrants = useMemo(
-    () =>
-      Object.entries(
-        relicStatContribution(relicTeamStatModifiers(run.relics, relics), relicTeamPassiveGrants(run.relics, relics), passives)
-      ) as [StatKey, number][],
-    [run.relics]
-  );
 
   function itemAt(ref: SlotRef): string | null {
     if (ref.kind === 'stash') return run.stash[ref.index] ?? null;
@@ -327,23 +314,13 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
     >
       <div className="log-panel roster-panel" onClick={(e) => e.stopPropagation()}>
         <div className="log-panel-header">
-          <span>Manage Roster</span>
+          <span>Roster</span>
           <button className="log-close-button" onClick={onClose}>
             ✕
           </button>
         </div>
         <div className="screen-scroll">
-          {relicGrants.length > 0 && (
-            <div className="relic-active-banner">
-              <span className="relic-active-banner-label">🏺 Relics active</span>
-              {relicGrants.map(([stat, amount]) => (
-                <span key={stat} className="relic-contrib-chip">
-                  <StatGlyph stat={stat} /> {STAT_LABELS[stat]} {amount > 0 ? `+${amount}` : amount}
-                </span>
-              ))}
-              <span className="relic-active-banner-note">Already included in every hero's stats below.</span>
-            </div>
-          )}
+          <RunRelicsPanel ownedRelicIds={run.relics} />
 
           {/* Two across, three down: the roster reads as a squad at a glance rather than as a
               list to scroll, and each card gets a full card-width row underneath it for slots. */}

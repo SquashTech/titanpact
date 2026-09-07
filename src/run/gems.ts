@@ -5,7 +5,7 @@
 import { gemRelics } from '../data/relics';
 import type { XpNodeType } from './difficulty';
 
-/** A Gem offer is a 1-of-3, the same shape as the Relic Shrine and the Guardian's Banner. */
+/** A Gem offer is a 1-of-3; the Guardian's Banner is the same shape at 1-of-5. */
 export const GEM_OFFER_COUNT = 3;
 
 /**

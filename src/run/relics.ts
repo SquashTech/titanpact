@@ -1,4 +1,6 @@
-// Relics: team-wide passives, a separate axis from per-hero equipment.
+// Relics: team-wide grants, a separate axis from per-hero equipment. The shipped catalog is
+// Gems and Banners, both flat stats (src/data/relics.ts). grantsPassiveIds/grantsStatusIds are
+// the other two team-wide grant shapes the pipeline carries, kept for whatever wants them next.
 
 import type { PassiveId, StatKey, StatusGrant } from '../engine/content';
 import { isValidFlatStatGrant } from '../engine/content';
@@ -14,9 +16,9 @@ export interface RelicDefinition {
   grantsPassiveIds?: readonly PassiveId[];
   /** Magnitude-shape statuses (Elemental Force) granted team-wide for the whole fight. */
   grantsStatusIds?: readonly StatusGrant[];
-  /** One of the three fixed post-Guardian Banners — EXCLUDED from every random offer pool (src/data/relics.ts drawableRelics). Nothing in the engine reads it. */
+  /** One of the five fixed post-Guardian Banners. Display grouping only — nothing in the engine reads it. */
   guardianBanner?: true;
-  /** One of the eight Gems — likewise kept out of every random relic offer, because Gems have their own channels (src/run/gems.ts). Nothing in the engine reads it. */
+  /** One of the seven Gems. Display grouping only — nothing in the engine reads it. */
   gem?: true;
 }
 
