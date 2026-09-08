@@ -6,8 +6,7 @@ import type { RunState, RosterEntry } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import type { EnchantmentId } from '../../run/equipment';
 import { actAllowsRarity, canMergeItems, enchantLabel, mergeEnchantChoices, nextRarity, STASH_CAPACITY, stashIsFull } from '../../run/equipment';
-import { equipFromStash, mergeFromStash, moveEquipment, sellFromStash, unequipToStash, RunProgressError } from '../../run/runProgress';
-import { sellValueFor } from '../../run/shop';
+import { equipFromStash, mergeFromStash, moveEquipment, unequipToStash, RunProgressError } from '../../run/runProgress';
 import { itemSlotsFor } from '../../run/progression';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { ItemBox, ItemReadout, ItemSummaryPopup, slotBoxes } from '../shared/EquipmentBox';
@@ -43,8 +42,11 @@ function parseRefKey(raw: string): SlotRef | null {
  * Manage Roster: where gear moves. Every slot — a hero's or one of the bag's — is both a source
  * and a destination, so one tap-then-tap (or one drag) covers equipping, unequipping, handing an
  * item to another hero, and swapping two. Slots are uncategorised, so anything goes anywhere: an
- * empty slot just takes the item, a filled one trades. Selling is bag-only; equipped gear comes
- * off first, which keeps the irreversible verb one step away from a mis-tap.
+ * empty slot just takes the item, a filled one trades.
+ *
+ * Nothing here SPENDS anything (2026-09-07, per user direction). Selling used to live on the bag
+ * and no longer does: this is the screen the player opens between every node, and the one
+ * irreversible verb on it was one mis-tap from the gesture everything else uses.
  */
 export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
   const [selected, setSelected] = useState<SlotRef | null>(null);
@@ -262,33 +264,18 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
 
   /**
    * What the screen becomes while an item is in hand (2026-09-07, per user direction): the item
-   * read out in full, and everything that is not about placing it recedes — the relic rails go,
-   * the bag's header dims, and a hero that cannot take it fades most of the way out. Pinned
-   * outside the scroll so the readout is still there once the player has scrolled to the hero
-   * they want. Sell lives here too, on the item it spends: on the bag's header line it grew that
-   * line the moment anything was picked up, which is the shift this arrangement removes.
+   * read out in full, and everything that is not about placing it recedes — the relic rails fade
+   * under it, the bag's header dims, and a hero that cannot take it fades most of the way out.
+   *
+   * It is laid OVER the relic rails, in their exact footprint, rather than replacing them in the
+   * flow: nothing on the screen may move when an item is picked up or when a different one is,
+   * so the block that holds it has one height and the card fills it whatever the item carries.
    */
   const focusBar = selectedItem && (
     <div className="equip-focus-bar">
       <ItemReadout item={selectedItem} />
       <div className="equip-focus-actions">
         <span className="equip-focus-hint">Tap a hero, or a slot, to place it.</span>
-        {selected?.kind === 'stash' && (
-          <button
-            className="stash-sell-button"
-            onClick={() => {
-              const at = selected.index;
-              setSelected(null);
-              try {
-                onRunChange(sellFromStash(run, at, equipment));
-              } catch (err) {
-                if (!(err instanceof RunProgressError)) throw err;
-              }
-            }}
-          >
-            Sell <ResourceGlyph kind="gold" /> {sellValueFor(selectedItem)}
-          </button>
-        )}
         <button
           className="equip-focus-cancel"
           onClick={() => {
@@ -323,9 +310,11 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
             ✕
           </button>
         </div>
-        {focusBar}
         <div className="screen-scroll">
-          <RunRelicsPanel ownedRelicIds={run.relics} />
+          <div className="roster-top-block">
+            <RunRelicsPanel ownedRelicIds={run.relics} />
+            {focusBar}
+          </div>
 
           {/* Two across, three down: the roster reads as a squad at a glance rather than as a
               list to scroll, and each card gets a full card-width row underneath it for slots. */}

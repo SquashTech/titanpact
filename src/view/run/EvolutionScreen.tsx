@@ -5,13 +5,14 @@ import { MOVE_CAP, type EvolutionNode, type EvolutionPath } from '../../run/prog
 import { passives } from '../../data/passives';
 import { PassiveGlyph, PassiveInfoPanel, passiveColor, passiveTint } from '../shared/passiveIcons';
 import { moves } from '../../data/moves';
-import { MoveDetailCard } from '../combat/MoveDetailOverlay';
+import { MoveDetailCard, MoveDetailOverlay } from '../combat/MoveDetailOverlay';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { TypeBadge } from '../shared/TypeBadge';
 import { TypeMatchups } from '../shared/TypeMatchups';
 import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { useLongPress } from '../shared/MoveTile';
 import { healCasterForEntry } from '../shared/healCaster';
 import { entryStatTotals } from '../shared/entryStatTotals';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
@@ -26,15 +27,36 @@ interface Props {
   onChoose: (pathId: string) => void;
 }
 
-const KIND_LABELS: Record<EvolutionPath['kind'], string> = {
-  offensive: 'Offensive',
-  defensive: 'Defensive',
-  utility: 'Utility',
-};
-
 /** The types a hero ends up with down a path — a graft replaces the secondary, never the innate primary. */
 function pathTypes(hero: HeroDefinition, path: EvolutionPath): TypeId[] {
   return path.typeGraft ? [hero.types[0], path.typeGraft] : [...hero.types];
+}
+
+/** The type a graft COSTS — only a hero born dual has one to give up. */
+function tradedType(hero: HeroDefinition, path: EvolutionPath): TypeId | null {
+  return path.typeGraft ? hero.types[1] ?? null : null;
+}
+
+/**
+ * The two type colours a path's card is washed in (2026-09-07, per user direction): the choice
+ * is a type choice, so the card should look like the hero it produces rather than like a
+ * category. `lead` is what the path is ABOUT — the type of the move it grants, or the type it
+ * grafts — and `trail` is the half of the resulting typing that comes along.
+ *
+ * A path that grants nothing typed leads on the hero's SECONDARY instead: on a dual hero it is
+ * the half that path isn't already defined by, which is what keeps two same-typed siblings
+ * (Cinder's Explosive and Ironclad) from washing up identical.
+ */
+function pathPalette(hero: HeroDefinition, path: EvolutionPath): { lead: TypeId; trail: TypeId } {
+  const types = pathTypes(hero, path);
+  const granted = path.unlocksMoveIds.map((id) => moves[id]?.type).find(Boolean) ?? path.typeGraft ?? null;
+  const lead = granted && types.includes(granted) ? granted : types[types.length - 1] ?? types[0];
+  return { lead, trail: types.find((t) => t !== lead) ?? lead };
+}
+
+function paletteStyle(hero: HeroDefinition, path: EvolutionPath): CSSProperties {
+  const { lead, trail } = pathPalette(hero, path);
+  return { '--path-lead': getTypeColor(lead), '--path-trail': getTypeColor(trail) } as CSSProperties;
 }
 
 /** What `learnableMoveIds` buys, as a promise. The names themselves are for the dossier. */
@@ -43,11 +65,6 @@ function poolPromise(path: EvolutionPath): string | null {
   return path.typeGraft
     ? `New ${path.typeGraft} moves are added to the level-up pool.`
     : 'New moves are added to the level-up pool.';
-}
-
-/** The type a graft COSTS — only a hero born dual has one to give up. */
-function tradedType(hero: HeroDefinition, path: EvolutionPath): TypeId | null {
-  return path.typeGraft ? hero.types[1] ?? null : null;
 }
 
 function statEntriesOf(path: EvolutionPath): [StatKey, number][] {
@@ -124,11 +141,10 @@ function PathButton({ hero, path, onInspect }: { hero: HeroDefinition; path: Evo
   const traded = tradedType(hero, path);
 
   return (
-    <button className={`evolution-path-button evolution-${path.kind}`} data-sfx="ui.select" onClick={onInspect}>
+    <button className="evolution-path-button" style={paletteStyle(hero, path)} data-sfx="ui.select" onClick={onInspect}>
       <span className="evolution-path-sheen" aria-hidden="true" />
       <div className="evolution-path-head">
         <span className="evolution-path-name">{path.name}</span>
-        <span className="evolution-path-kind">{KIND_LABELS[path.kind]}</span>
         <span className="evolution-path-chevron" aria-hidden="true">
           ›
         </span>
@@ -197,11 +213,31 @@ function PathButton({ hero, path, onInspect }: { hero: HeroDefinition; path: Evo
   );
 }
 
+/** A pool move as a chip that opens its own dossier. Tap or hold — nothing else here wants the tap. */
+function PoolMoveChip({ moveId, onRead }: { moveId: string; onRead: () => void }) {
+  const press = useLongPress(onRead, onRead);
+  const move = moves[moveId];
+  return (
+    <button
+      type="button"
+      className="evolution-path-grant-chip evolution-path-move is-readable"
+      style={{ '--move-color': getTypeColor(move.type) } as CSSProperties}
+      data-sfx="none"
+      {...press}
+    >
+      <ElementGlyph type={move.type} /> {move.name}
+    </button>
+  );
+}
+
 /**
  * Everything a path hands over, at full detail: the stat line it lands the hero on, the move it
  * grants read against the hero's post-graft types (so STAB is the number it will actually be),
  * the passive's own panel, the pool it opens by name, and the matchups the graft signs the rest
  * of the run up for. This is where the choice is spent — the cards behind it only headline it.
+ *
+ * Full-bleed, with the actions pinned under a scrolling body: a permanent choice should not have
+ * its Confirm below a fold, and the flavour line the card carries is not worth the room here.
  */
 function PathDossier({
   hero,
@@ -218,6 +254,7 @@ function PathDossier({
   onChoose: () => void;
   onClose: () => void;
 }) {
+  const [readingMoveId, setReadingMoveId] = useState<string | null>(null);
   const types = pathTypes(hero, path);
   // Post-graft types, not the entry's current ones: the granted move is usually the graft's own type.
   const caster = { ...healCasterForEntry(hero, entry, run.relics), types };
@@ -233,109 +270,102 @@ function PathDossier({
   const kitFull = grantedMoves.length > 0 && entry.unlockedMoveIds.length >= MOVE_CAP;
 
   return (
-    <div className="detail-overlay" onClick={onClose}>
-      <button className="detail-close-button" onClick={onClose} aria-label="Close">
-        ✕
-      </button>
-      <div className={`detail-panel evolution-dossier evolution-${path.kind}`} onClick={(e) => e.stopPropagation()}>
+    <div className="detail-overlay evolution-dossier-overlay" onClick={onClose}>
+      <div className="detail-panel evolution-dossier" style={paletteStyle(hero, path)} onClick={(e) => e.stopPropagation()}>
         <div className="evolution-dossier-head">
           <span className="evolution-dossier-title">{path.name}</span>
-          <span className="evolution-path-kind">{KIND_LABELS[path.kind]}</span>
+          <button className="evolution-dossier-close" onClick={onClose} aria-label="Close">
+            ✕
+          </button>
         </div>
-        {path.description && <p className="evolution-dossier-desc">{path.description}</p>}
 
-        <section className="evolution-dossier-section">
-          <div className="evo-path-label">Typing</div>
-          <div className="evo-path-types">
-            {types.map((t) => (
-              <TypeBadge key={t} type={t} />
-            ))}
-            {!path.typeGraft && <span className="evolution-dossier-note">unchanged</span>}
-            {traded && (
-              <span className="evolution-dossier-note">
-                trades {traded} for {path.typeGraft}
-              </span>
-            )}
-          </div>
-          <TypeMatchups types={types} />
-        </section>
-
-        {statEntries.length > 0 && (
+        <div className="evolution-dossier-body">
           <section className="evolution-dossier-section">
-            <div className="evo-path-label">Stats</div>
-            <div className="evolution-stat-table">
-              {statEntries.map(([stat, amount]) => (
-                <div key={stat} className={`evolution-stat-row${amount < 0 ? ' is-loss' : ''}`}>
-                  <span className="evolution-stat-name">
-                    <StatGlyph stat={stat} /> {STAT_LABELS[stat]}
-                  </span>
-                  <span className="evolution-stat-now">{current[stat]}</span>
-                  <span className="evolution-stat-arrow" aria-hidden="true">
-                    →
-                  </span>
-                  <span className="evolution-stat-next">{current[stat] + amount}</span>
-                  <span className="evolution-stat-delta">
-                    {amount > 0 ? '+' : ''}
-                    {amount}
-                  </span>
-                </div>
+            <div className="evo-path-label">Typing</div>
+            <div className="evo-path-types">
+              {types.map((t) => (
+                <TypeBadge key={t} type={t} />
               ))}
+              {!path.typeGraft && <span className="evolution-dossier-note">unchanged</span>}
+              {traded && (
+                <span className="evolution-dossier-note">
+                  trades {traded} for {path.typeGraft}
+                </span>
+              )}
             </div>
+            <TypeMatchups types={types} />
           </section>
-        )}
 
-        {grantedMoves.length > 0 && (
-          <section className="evolution-dossier-section">
-            <div className="evo-path-label">Granted on choosing</div>
-            {grantedMoves.map((id) => (
-              <MoveDetailCard key={id} move={moves[id]} caster={caster} />
-            ))}
-            {kitFull && (
-              <p className="evolution-dossier-note-line">
-                {hero.name} already knows {MOVE_CAP} moves — you'll choose one to replace, or decline.
-              </p>
-            )}
-          </section>
-        )}
-
-        {grantedPassives.length > 0 && (
-          <section className="evolution-dossier-section">
-            <div className="evo-path-label">Passive</div>
-            {grantedPassives.map((id) => (
-              <PassiveInfoPanel key={id} passive={passives[id]} />
-            ))}
-          </section>
-        )}
-
-        {promise && (
-          <section className="evolution-dossier-section">
-            <div className="evo-path-label">Level-up pool</div>
-            <p className="evolution-dossier-pool">{promise}</p>
-            {poolMoves.length > 0 && (
-              <div className="evolution-pool-chips">
-                {poolMoves.map((id) => (
-                  <span
-                    key={id}
-                    className="evolution-path-grant-chip evolution-path-move"
-                    style={{ '--move-color': getTypeColor(moves[id].type) } as CSSProperties}
-                  >
-                    <ElementGlyph type={moves[id].type} /> {moves[id].name}
-                  </span>
+          {statEntries.length > 0 && (
+            <section className="evolution-dossier-section">
+              <div className="evo-path-label">Stats</div>
+              <div className="evolution-stat-table">
+                {statEntries.map(([stat, amount]) => (
+                  <div key={stat} className={`evolution-stat-row${amount < 0 ? ' is-loss' : ''}`}>
+                    <span className="evolution-stat-name">
+                      <StatGlyph stat={stat} /> {STAT_LABELS[stat]}
+                    </span>
+                    <span className="evolution-stat-now">{current[stat]}</span>
+                    <span className="evolution-stat-arrow" aria-hidden="true">
+                      →
+                    </span>
+                    <span className="evolution-stat-next">{current[stat] + amount}</span>
+                    <span className="evolution-stat-delta">
+                      {amount > 0 ? '+' : ''}
+                      {amount}
+                    </span>
+                  </div>
                 ))}
               </div>
-            )}
-          </section>
-        )}
+            </section>
+          )}
 
-        <div className="evolution-dossier-actions">
-          <button className="resolve-button evolution-dossier-confirm" data-sfx="ui.commit" onClick={onChoose}>
-            Evolve into {path.name}
-          </button>
-          <button className="evolution-dossier-back" data-sfx="ui.back" onClick={onClose}>
-            Back to paths
-          </button>
+          {grantedMoves.length > 0 && (
+            <section className="evolution-dossier-section">
+              <div className="evo-path-label">Granted on choosing</div>
+              {grantedMoves.map((id) => (
+                <MoveDetailCard key={id} move={moves[id]} caster={caster} />
+              ))}
+              {kitFull && (
+                <p className="evolution-dossier-note-line">
+                  {hero.name} already knows {MOVE_CAP} moves — you'll choose one to replace, or decline.
+                </p>
+              )}
+            </section>
+          )}
+
+          {grantedPassives.length > 0 && (
+            <section className="evolution-dossier-section">
+              <div className="evo-path-label">Passive</div>
+              {grantedPassives.map((id) => (
+                <PassiveInfoPanel key={id} passive={passives[id]} />
+              ))}
+            </section>
+          )}
+
+          {promise && (
+            <section className="evolution-dossier-section">
+              <div className="evo-path-label">Level-up pool</div>
+              <p className="evolution-dossier-pool">{promise}</p>
+              {poolMoves.length > 0 && (
+                <div className="evolution-pool-chips">
+                  {poolMoves.map((id) => (
+                    <PoolMoveChip key={id} moveId={id} onRead={() => setReadingMoveId(id)} />
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
         </div>
+
+        <button className="resolve-button evolution-dossier-confirm" data-sfx="ui.commit" onClick={onChoose}>
+          Evolve into {path.name}
+        </button>
       </div>
+
+      {readingMoveId && (
+        <MoveDetailOverlay move={moves[readingMoveId]} caster={caster} onClose={() => setReadingMoveId(null)} />
+      )}
     </div>
   );
 }

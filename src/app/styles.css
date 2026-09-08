@@ -7112,25 +7112,8 @@ textarea,
   color: var(--text-dim);
 }
 
-/* On the focus bar, beside the item it would spend. */
-.stash-sell-button {
-  flex: none;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 600;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
-  color: rgb(224, 166, 60);
-  cursor: pointer;
-}
-
-.stash-sell-button:hover {
-  border-color: rgb(224, 166, 60);
-}
-
 /* Merge: raised only when both halves of a pair carry an enchantment and one has
-   to be dropped. Sits above the hint so it never displaces the sell affordance. */
+   to be dropped. */
 .stash-merge-choice {
   display: flex;
   align-items: center;
@@ -7328,19 +7311,34 @@ textarea,
 
 /* --- Equipment focus mode (2026-09-07, per user direction) ----------------
    Picking an item up turns Manage Roster into one question — where does this
-   go — and everything that is not an answer recedes: the relic rails are
-   replaced by the item itself, the bag's header dims, and a hero that cannot
+   go — and everything that is not an answer recedes: the relic rails fade out
+   under the item's own readout, the bag's header dims, and a hero that cannot
    take it fades most of the way out. What stays lit is the readout at the top
    and the slots the item can land in.
 
-   Fading rather than unmounting, for everything that stays: the roster must
-   not move under a thumb that is mid-gesture. */
+   NOTHING MOVES. The readout is laid over the rails in their exact footprint
+   rather than swapped into the flow, so picking an item up does not shift the
+   roster under a thumb that is mid-gesture, and picking a two-passive Mythic
+   up shifts it no differently from a bare Common. That is what the fixed
+   block and the card's `overflow: hidden` are for; the descriptions inside it
+   clamp rather than push. */
+.roster-top-block {
+  position: relative;
+  flex: none;
+}
+
+.run-relics-panel,
 .roster-mgmt-card,
 .roster-mgmt-head,
 .stash-label,
 .stash-count,
 .stash-gold {
   transition: opacity var(--dur-mid) var(--ease-out);
+}
+
+.roster-panel.is-focused .run-relics-panel {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Held down even on a card that CAN take the item: the identity still has to be
@@ -7355,13 +7353,6 @@ textarea,
    dim enough that it is never mistaken for a target. */
 .roster-panel.is-focused .roster-mgmt-card.is-inert {
   opacity: 0.26;
-}
-
-/* The one thing on the sheet with nothing to do with equipment. Unmounted
-   rather than faded: it is 250px of the scroll, and the roster wants that room
-   more than the rails want a transition. */
-.roster-panel.is-focused .run-relics-panel {
-  display: none;
 }
 
 .roster-panel.is-focused .stash-label,
@@ -7384,13 +7375,15 @@ textarea,
   box-shadow: 0 0 0 1px var(--accent), 0 0 12px rgba(224, 166, 60, 0.35);
 }
 
-/* The held item, read out in full, in the place the relic rails had. */
+/* The held item, over the rails it hides. */
 .equip-focus-bar {
-  flex: none;
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   padding: 8px;
+  overflow: hidden;
   background: var(--surface-raised);
   border: 1px solid var(--accent);
   border-radius: var(--radius-md);
@@ -7398,7 +7391,43 @@ textarea,
   animation: equip-cache-fade-up 0.2s var(--ease-out);
 }
 
+/* Takes whatever the block has and gives the overflow to the effect list,
+   which is the only part that can run long. */
+.equip-focus-bar .item-readout {
+  flex: 1;
+  min-height: 0;
+  gap: 5px;
+  /* Centred, because the block's height is fixed and most items do not fill it:
+     a Common's two chip rows pinned to the top of a 214px card read as a form
+     that failed to load. */
+  justify-content: center;
+}
+
+.equip-focus-bar .equip-spotlight-passives {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Tightened, and two lines of prose each — never three. The card has one
+   height whatever it holds, so a Mythic's SECOND effect has to fit beside the
+   first rather than push it out; the whole text is a hold away on the item
+   itself. This is the glance, not the manual. */
+.equip-focus-bar .equip-spotlight-passive {
+  padding: 5px 8px;
+}
+
+.equip-focus-bar .equip-spotlight-passive-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
 .equip-focus-actions {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -16461,17 +16490,24 @@ textarea,
 /* --- Evolution path card ------------------------------------------------
    An Evolution is permanent for the run and gates the whole movepool — the
    single most consequential press in the game — so the card is built as an
-   object rather than a list row: a kind-coloured rail down the leading edge,
-   a wash of that colour fading out across the face, and a sheen that sweeps
-   on press. Every card reads its colour from one `--path-color`, set by the
-   three kind modifiers below.
+   object rather than a list row: a rail down the leading edge, a wash fading
+   across the face, and a sheen that sweeps on press.
+
+   The two colours are the TYPES the path produces, not its offensive/
+   defensive/utility kind (2026-09-07, per user direction): the card should
+   look like the hero it makes. `--path-lead` is what the path is about — the
+   type of the move it grants, or the type it grafts — and `--path-trail` is
+   the half of the resulting typing that comes along, so a graft path reads as
+   two elements meeting and a mono path reads as one deepening. Both are set
+   inline by `paletteStyle` (EvolutionScreen.tsx pathPalette).
 
    What it grants is banded into labelled ZONES — typing, stats, move,
-   passive, pool — rather than run together in one chip row: a path makes
-   four unrelated claims, and undivided they were a paragraph to parse at the
+   passive, pool — rather than run together in one chip row: a path makes four
+   unrelated claims, and undivided they were a paragraph to parse at the
    moment the player is trying to compare three of them. */
 .evolution-path-button {
-  --path-color: var(--accent);
+  --path-lead: var(--accent);
+  --path-trail: var(--accent);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -16479,9 +16515,10 @@ textarea,
   overflow: hidden;
   isolation: isolate;
   background:
-    radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--path-color) 16%, transparent), transparent 62%),
+    radial-gradient(135% 105% at 0% 0%, color-mix(in srgb, var(--path-lead) 26%, transparent), transparent 58%),
+    radial-gradient(120% 100% at 100% 100%, color-mix(in srgb, var(--path-trail) 18%, transparent), transparent 62%),
     var(--surface-raised);
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--path-lead) 28%, var(--border));
   border-radius: var(--radius-md);
   color: var(--text);
   padding: 0;
@@ -16492,15 +16529,16 @@ textarea,
   transition: border-color var(--dur-mid) var(--ease-out), transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
-/* The rail: the kind's colour as a lit edge rather than a 3px border, so it
-   glows into the card's own tint instead of stopping against it. */
+/* The rail: the two types as a lit edge rather than a 3px border, so it glows
+   into the card's own wash instead of stopping against it. On a graft path
+   the gradient IS the trade, read top to bottom. */
 .evolution-path-button::before {
   content: '';
   position: absolute;
   inset: 0 auto 0 0;
   width: 3px;
-  background: linear-gradient(180deg, var(--path-color), color-mix(in srgb, var(--path-color) 25%, transparent));
-  box-shadow: 0 0 10px color-mix(in srgb, var(--path-color) 55%, transparent);
+  background: linear-gradient(180deg, var(--path-lead), var(--path-trail));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--path-lead) 55%, transparent);
 }
 
 /* Swept on press, not on a timer: it is the card acknowledging the tap that
@@ -16523,9 +16561,9 @@ textarea,
 /* The hover lift is a touch stronger than the app's usual 1px so the branch
    cards feel weighty to handle. */
 .evolution-path-button:hover {
-  border-color: color-mix(in srgb, var(--path-color) 70%, var(--border));
+  border-color: color-mix(in srgb, var(--path-lead) 70%, var(--border));
   transform: translateY(-2px);
-  box-shadow: var(--hairline-strong), var(--elev-2), 0 0 18px color-mix(in srgb, var(--path-color) 22%, transparent);
+  box-shadow: var(--hairline-strong), var(--elev-2), 0 0 18px color-mix(in srgb, var(--path-lead) 22%, transparent);
 }
 
 .evolution-path-button:active {
@@ -16537,7 +16575,12 @@ textarea,
   align-items: center;
   gap: 8px;
   padding: 10px 12px 9px 14px;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--path-color) 13%, transparent), transparent);
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--path-lead) 22%, transparent),
+    color-mix(in srgb, var(--path-trail) 12%, transparent) 72%,
+    transparent
+  );
   border-bottom: 1px solid var(--border-sunken);
 }
 
@@ -16548,21 +16591,6 @@ textarea,
   font-size: 15px;
   letter-spacing: 0.01em;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-/* Names the axis the path moves the hero along — the "differ in kind"
-   contract, printed rather than left to be inferred from the rail colour. */
-.evolution-path-kind {
-  flex: none;
-  padding: 2px 8px;
-  border: 1px solid color-mix(in srgb, var(--path-color) 55%, transparent);
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--path-color) 14%, transparent);
-  color: var(--path-color);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
 }
 
 /* The card opens a dossier rather than spending the choice, and this is what
@@ -16577,7 +16605,7 @@ textarea,
 
 .evolution-path-button:hover .evolution-path-chevron {
   transform: translateX(3px);
-  color: var(--path-color);
+  color: var(--path-lead);
 }
 
 /* One band per claim. The label column is fixed so five zones line their
@@ -16613,11 +16641,6 @@ textarea,
   min-width: 0;
 }
 
-.evolution-zone-arrow {
-  color: var(--text-dim);
-  font-weight: 700;
-}
-
 /* The pool line is prose, not a chip: it promises futures rather than naming
    a grant, so it takes the description's size and dimness. */
 .evolution-zone.is-pool .evolution-zone-body {
@@ -16634,6 +16657,7 @@ textarea,
   padding: 2px 7px;
   font-size: 10px;
   font-weight: 600;
+  color: var(--text);
 }
 
 .evolution-path-mono {
@@ -16646,9 +16670,9 @@ textarea,
   font-size: 11px;
 }
 
-/* A granted Passive is the loudest thing on a mono path, so its chip is the
-   only one filled — it has to win the glance against a graft's type badge on
-   the card beside it. The colour is the passive's own identity
+/* A granted Passive is the loudest thing on a path with no graft, so its chip
+   is the only one filled — it has to win the glance against a graft's type
+   badge on the card beside it. The colour is the passive's own identity
    (--passive-color), which is what it wears on every other screen. */
 .evolution-path-passive {
   display: inline-flex;
@@ -16666,31 +16690,30 @@ textarea,
   color: var(--enemy);
 }
 
-/* The move the path hands over on the spot, in the move's own type colour —
-   on a graft path that is the grafted type, so the chip and the type badge
-   above it read as one claim, and neither can be mistaken for the passive
-   chip, which wears the passive's identity colour instead. */
+/* A move, in its own type colour — which on a graft path is the grafted type,
+   so the chip and the type badge above it read as one claim, and neither can
+   be mistaken for the passive chip, which wears the passive's colour. */
 .evolution-path-move {
   border-color: var(--move-color, var(--accent));
   color: var(--move-color, var(--accent));
+}
+
+/* A pool chip that opens the move (the dossier's). Same face as the static
+   chip; the fill on press is what says the tap did something. */
+.evolution-path-grant-chip.is-readable {
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.evolution-path-grant-chip.is-readable:hover,
+.evolution-path-grant-chip.is-readable:active {
+  background: color-mix(in srgb, var(--move-color, var(--accent)) 18%, var(--panel));
 }
 
 .evolution-path-learnable {
   font-size: 10px;
   line-height: 1.4;
   color: var(--text-dim);
-}
-
-.evolution-offensive {
-  --path-color: var(--enemy);
-}
-
-.evolution-defensive {
-  --path-color: var(--ally);
-}
-
-.evolution-utility {
-  --path-color: var(--hp-high);
 }
 
 /* --- Evolution screen (full-screen takeover) -----------------------------
@@ -16763,17 +16786,36 @@ textarea,
    Where the choice is actually spent (2026-09-07, per user direction). The
    cards behind it headline three paths; this reads ONE of them out in full —
    the stat line it lands on, the move against post-graft STAB, the passive,
-   the pool by name — and carries the Confirm. Replaces a bottom Confirm bar
-   under the cards, which spent the most consequential press in the game from
-   a surface that only printed chips. */
-.evolution-dossier {
-  display: flex;
-  flex-direction: column;
+   the pool by name — and carries the Confirm.
+
+   Full-bleed, and the Confirm is pinned under a body that scrolls on its own:
+   a permanent choice must never have its commit below a fold, and the card's
+   flavour line is not worth the room a full-screen sheet is trying to save. */
+.evolution-dossier-overlay {
+  padding: 0;
+}
+
+.detail-panel.evolution-dossier {
+  --path-lead: var(--accent);
+  --path-trail: var(--accent);
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  overflow: hidden;
   gap: 8px;
-  border-top: 2px solid var(--path-color, var(--accent));
+  padding: 12px;
+  border: 0;
+  border-top: 2px solid var(--path-lead);
+  border-radius: 0;
+  background:
+    radial-gradient(90% 34% at 0% 0%, color-mix(in srgb, var(--path-lead) 15%, transparent), transparent 70%),
+    radial-gradient(80% 30% at 100% 0%, color-mix(in srgb, var(--path-trail) 12%, transparent), transparent 70%),
+    var(--surface-raised);
 }
 
 .evolution-dossier-head {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -16784,15 +16826,42 @@ textarea,
 .evolution-dossier-title {
   flex: 1;
   min-width: 0;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
 }
 
-.evolution-dossier-desc {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.45;
+/* In the header row rather than floating in the corner: on a full-bleed sheet
+   the corner is where the title is, and the two would collide. */
+.evolution-dossier-close {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 50%;
   color: var(--text-dim);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.evolution-dossier-close:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* The only thing that scrolls. Everything a path grants normally fits a
+   full-height sheet; a Mythic-length passive plus a granted move is what this
+   is here for. */
+.evolution-dossier-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
 }
 
 /* One block per thing the path hands over. A path grants four or five
@@ -16801,6 +16870,7 @@ textarea,
    because they are set into the sheet rather than raised above it, the same
    treatment .evo-path-card gets in the hero dossier. */
 .evolution-dossier-section {
+  flex: none;
   display: flex;
   flex-direction: column;
   padding: 8px 10px;
@@ -16854,10 +16924,7 @@ textarea,
   color: var(--text-dim);
 }
 
-.evolution-stat-now {
-  color: var(--text-dim);
-}
-
+.evolution-stat-now,
 .evolution-stat-arrow {
   color: var(--text-dim);
 }
@@ -16886,8 +16953,9 @@ textarea,
   color: var(--text-dim);
 }
 
-/* Named, not just promised. The dossier is the one surface where the list is
-   worth its room: the player is deciding about THIS path, not scanning three. */
+/* Named, not just promised, and each one opens (2026-09-07, per user
+   direction). The dossier is the one surface where the list is worth its
+   room: the player is deciding about THIS path, not scanning three. */
 .evolution-pool-chips {
   display: flex;
   flex-wrap: wrap;
@@ -16895,34 +16963,9 @@ textarea,
   margin-top: 6px;
 }
 
-.evolution-dossier-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 2px;
-}
-
-.evolution-dossier-confirm {
-  margin-top: 2px;
-}
-
-/* The way back out, spelled out beside the ✕ — this overlay is the only thing
-   between the player and a permanent choice, so leaving it must be as plain
-   as taking it. */
-.evolution-dossier-back {
-  padding: 10px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
-  color: var(--text-dim);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.evolution-dossier-back:hover {
-  border-color: var(--border-strong);
-  color: var(--text);
+.resolve-button.evolution-dossier-confirm {
+  flex: none;
+  margin-top: 0;
 }
 
 /* --- Sandbox Battle (team-builder tool — App.tsx 'sandboxBattle'/'sandboxFight',
