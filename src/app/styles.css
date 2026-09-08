@@ -13285,28 +13285,37 @@ textarea,
    What replaced it: a rail across the top saying how far is left, and the two or three cards
    underneath saying where you may go. */
 
-/* How far to the Guardian. Sits above the choices rather than under them: it is context for the
-   decision, and the decision is what the thumb reaches for. */
+/* How far to the Guardian, and what stands between. Sits above the choices rather than under them:
+   it is context for the decision, and the decision is what the thumb reaches for.
+
+   Every row is marked by the hardest thing it offers (MapScreen's `railTypeFor`). A row that only
+   pays out is a bare dot; a row that makes you do something wears that thing's own glyph, so the
+   act's forced fights, their kind and their difficulty are all readable before it starts
+   (2026-09-08, per user direction). */
 .map-rail {
   flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 14px 16px 4px;
+  gap: 8px;
+  padding: 12px 16px 4px;
 }
 
 .map-rail-pip {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.14);
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.5);
   transition: background var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
+/* Behind you, on both mark kinds: the strip is an itinerary now, not a progress bar, so what is
+   SPENT fades and what is ahead keeps its colour. A done pip used to light up instead, which put
+   the brightest thing on the rail behind the player. */
 .map-rail-pip.is-done {
-  background: rgba(var(--node-rgb), 0.75);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: none;
 }
 
 /* The one the player is standing on: bigger, lit, and ringed so it is findable without counting. */
@@ -13317,28 +13326,56 @@ textarea,
   box-shadow: 0 0 0 3px rgba(var(--node-rgb), 0.3), 0 0 10px rgba(255, 255, 255, 0.45);
 }
 
-/* The last pip is drawn rather than dotted: "how many more" and "what is at the end" are the
-   same question, and answering both in one mark is why the rail is worth its room. */
-.map-rail-boss {
+/* A row that is not just a payout. Drawn in the node's own colour, which is what makes the strip
+   scannable at a glance: the claws and helms are the rows that cost something. */
+.map-rail-mark {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  margin-left: 3px;
   color: var(--node-color);
-  opacity: 0.55;
   transition: opacity var(--dur-mid) var(--ease-out), filter var(--dur-mid) var(--ease-out);
 }
 
-.map-rail-boss.is-here {
-  opacity: 1;
-  filter: drop-shadow(0 0 7px var(--node-color));
+.map-rail-glyph {
+  width: 100%;
+  height: 100%;
 }
 
-.map-rail-boss-glyph {
-  width: 20px;
-  height: 20px;
+/* A shop is worth planning gold for, but it is not a threat — held back so the fights stay the
+   thing the eye finds first. */
+.map-rail-mark.tier-landmark {
+  width: 13px;
+  height: 13px;
+  opacity: 0.42;
+}
+
+.map-rail-mark.tier-encounter {
+  width: 16px;
+  height: 16px;
+  opacity: 0.78;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--node-color) 60%, transparent));
+}
+
+/* The last mark is the Guardian, drawn biggest: "how many more" and "what is at the end" are the
+   same question, and there is only one answer to the second. */
+.map-rail-mark.tier-ancient {
+  width: 24px;
+  height: 24px;
+  margin-left: 3px;
+  opacity: 0.62;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--node-color) 55%, transparent));
+}
+
+/* Walked past. Colour is what says "ahead", so spending it is what says "behind". */
+.map-rail-mark.is-done {
+  opacity: 0.26;
+  filter: grayscale(1);
+}
+
+.map-rail-mark.is-here {
+  opacity: 1;
+  filter: drop-shadow(0 0 8px var(--node-color)) drop-shadow(0 0 3px rgba(255, 255, 255, 0.6));
 }
 
 /* --- The route, and walking it (2026-09-08, per user direction) -------------
@@ -13466,39 +13503,81 @@ textarea,
 }
 
 /* The act's first row has nothing behind it, so the band holds who is already here instead
-   (LocationDefinition.omen). Lit in the location's own colour like the placard, but centred and a
-   size up: the placard is a signpost you can ignore, and this is the one line the act says out
-   loud. Fades in a beat late so it reads as spoken rather than as part of the furniture. */
-/* Lifted clear of the placard, which sits at the same corner of the same band: the two are both
-   location text, and at the same height they read as one run-on caption. */
+   (LocationDefinition.omen).
+
+   Written ON the place rather than under it (2026-09-08, second pass, per user direction). It was
+   a caption first — small, italic, tucked at the foot of the well — which read as UI chrome sitting
+   over a scene. It is now the size of something the location is saying: tracked out, unhurried, in
+   the location's own light, over a haze of that light that breathes on its own. The only text on
+   this screen that is neither a control nor a readout, and the only one that gets to be big.
+
+   Sentence case, not caps: these are sentences, and a title card would be the arrival screen's job
+   twice. Lifted well clear of the placard, which is the same colour in the same corner of the same
+   band — at one height they read as one run-on caption. */
+/* High enough to clear the horizon silhouette. On the treeline the words landed half on black
+   land and half on lit sky and read as neither. */
 .map-origin.is-omen {
-  padding-bottom: 56px;
+  padding-bottom: 132px;
 }
 
 .map-omen {
+  position: relative;
   margin: 0;
-  max-width: 74%;
+  max-width: 78%;
   text-align: center;
   text-wrap: balance;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 600;
-  font-style: italic;
-  line-height: 1.35;
-  letter-spacing: 0.02em;
-  color: rgba(var(--node-rgb), 0.86);
-  text-shadow: 0 0 12px rgba(var(--node-rgb), 0.35), 0 1px 3px rgba(0, 0, 0, 0.95);
-  animation: map-omen-in 900ms var(--ease-out) 260ms both;
+  line-height: 1.5;
+  letter-spacing: 0.055em;
+  color: rgba(var(--node-rgb), 0.88);
+  /* Two shadows doing different jobs: the wide one is the light the words are made of, the tight
+     dark one is what keeps them legible when that light lands on a bright patch of horizon. */
+  text-shadow: 0 0 22px rgba(var(--node-rgb), 0.55), 0 0 6px rgba(0, 0, 0, 0.9), 0 2px 5px rgba(0, 0, 0, 0.95);
+  animation: map-omen-in 1400ms var(--ease-out) 320ms both;
 }
 
+/* The air it is written on. Behind the text but inside .map-origin's own stacking context, so it
+   can never sink below the well's weather. */
+.map-omen::before {
+  content: '';
+  position: absolute;
+  inset: -30px -44px;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(var(--node-rgb), 0.15), transparent 68%);
+  animation: map-omen-haze 7s ease-in-out 1.4s infinite;
+}
+
+/* Condensing out of the air rather than sliding in: the blur is what stops it reading as a toast. */
 @keyframes map-omen-in {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(12px);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes map-omen-haze {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .map-omen {
+  .map-omen,
+  .map-omen::before {
     animation: none;
   }
 }
@@ -13771,29 +13850,57 @@ textarea,
   color: inherit;
 }
 
-/* The bag's unopened count, on the one control that opens it. Items no longer stop the run
-   to be handed out (docs/progression.md "The bag notification"), so this is the entire cue
-   that something arrived — hence the accent fill and the pulse rather than a quiet dot.
-   Anchored to the button's own corner; .map-footer-button is already positioned. */
+/* Gear waiting in the bag, said by the whole button (2026-09-08, second pass, per user direction).
+
+   A corner badge was the entire cue, and a corner badge is exactly the kind of mark an eye learns
+   to stop seeing after the first act — while the thing it points at is a hero fighting a whole act
+   without the item that was sitting in the bag the whole time. So the button stops being the Roster
+   and becomes the notification: the item colour replaces its accent on the rule, the icon and the
+   glow, its label says what is waiting rather than where it goes, and the whole tile breathes.
+   Nothing modal, nothing to dismiss — it simply cannot be read as the same button. */
+.map-footer-button.has-unopened {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--btn-color) 42%, var(--border));
+  border-top-width: 3px;
+  background: linear-gradient(165deg, var(--surface-raised), color-mix(in srgb, var(--btn-color) 15%, transparent));
+  animation: map-footer-alert 2.2s ease-in-out infinite;
+}
+
+@keyframes map-footer-alert {
+  0%,
+  100% {
+    box-shadow: 0 0 12px -6px var(--btn-color), var(--elev-1);
+  }
+  50% {
+    box-shadow: 0 0 26px -3px var(--btn-color), var(--elev-1);
+  }
+}
+
+.map-footer-button.has-unopened .node-glyph {
+  filter: drop-shadow(0 0 6px var(--btn-color));
+}
+
+/* The count, in the same colour as everything else the state changed — the badge is now the
+   smallest part of the cue rather than all of it, so it stops carrying the alarm on its own. */
 .map-footer-badge {
   position: absolute;
   top: 6px;
   right: 10px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: var(--accent);
+  background: var(--btn-color, var(--accent));
   color: var(--surface);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
-  box-shadow: 0 0 10px -2px var(--accent);
-  animation: map-footer-badge-pulse 2.4s var(--ease-out) infinite;
+  box-shadow: 0 0 12px -2px var(--btn-color, var(--accent)), 0 0 0 2px rgba(0, 0, 0, 0.45);
+  animation: map-footer-badge-pulse 2.2s var(--ease-out) infinite;
 }
 
 @keyframes map-footer-badge-pulse {
@@ -13808,7 +13915,8 @@ textarea,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .map-footer-badge {
+  .map-footer-badge,
+  .map-footer-button.has-unopened {
     animation: none;
   }
 }

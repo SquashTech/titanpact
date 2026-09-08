@@ -282,6 +282,19 @@ What replaces it:
   is dropped rather than refused (`decodeUnseen`). No `SAVE_VERSION` bump is owed — an unmarked
   bag is a quiet badge, not a broken run.
 
+**The badge became the whole button (2026-09-08, second pass, per user direction).** A corner
+badge was the entire cue, and a corner badge is the kind of mark an eye learns to stop seeing
+after one act — while what it points at is a hero fighting a whole act without the item that was
+in the bag the entire time. Removing the gate moved the cost of missing a drop onto the cue, so
+the cue has to carry it.
+
+The map's Roster button now *stops being the Roster* while anything is unchecked
+(`.has-unopened`, `MapScreen`): the item colour replaces its accent on the top rule, the icon and
+the glow; its label says what is waiting rather than where it goes ("2 New Items"); and the tile
+breathes. The badge stays, bigger and carrying the count, but it is now the smallest part of the
+cue rather than all of it. Nothing modal and nothing to dismiss — the button simply cannot be
+read as the one that was there a node ago, which is the property a badge never had.
+
 ### The uncapped bag (2026-09-08, per user direction: the cap "doesn't add anything")
 
 `STASH_CAPACITY` and `stashIsFull` are **deleted**, not raised. The bag holds whatever it holds.

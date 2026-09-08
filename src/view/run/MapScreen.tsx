@@ -3,13 +3,13 @@ import type { RunState } from '../../run/state';
 import { SEAL_ACTS } from '../../run/state';
 import { reachableNodeIds } from '../../run/runProgress';
 import { unseenCount } from '../../run/equipment';
-import type { MapNode, RunMap } from '../../run/map';
+import type { MapNode, MapNodeType, RunMap } from '../../run/map';
 import { RosterManagementScreen } from './RosterManagementScreen';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { ResourceGlyph, type ResourceKind } from '../shared/RunGlyph';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { MapRoute } from './MapRoute';
-import { NODE_COLORS, NODE_NAMES, nodeRewardText } from './mapNodes';
+import { NODE_COLORS, NODE_NAMES, NODE_TIERS, nodeRewardText, type NodeTier } from './mapNodes';
 import { canAffordAnyLevelUp } from '../../run/progression';
 import { locationForAct } from '../../run/locations';
 import type { LocationDefinition } from '../../data/locations';
@@ -53,26 +53,50 @@ function ResourceStat({ kind, label, value, onSpend }: { kind: ResourceKind; lab
   );
 }
 
+/** Worst case first: a row you may take an Elite on is a row to plan for an Elite on. */
+const RAIL_TIER_RANK: Record<NodeTier, number> = { ancient: 0, encounter: 1, landmark: 2, reward: 3 };
+
+/** The one node kind a row is worth being warned about, out of the two or three it offers. */
+function railTypeFor(map: RunMap, row: number): MapNodeType {
+  return map.rows[row]
+    .map((id) => map.nodes[id].type)
+    .reduce((best, type) => (RAIL_TIER_RANK[NODE_TIERS[type]] < RAIL_TIER_RANK[NODE_TIERS[best]] ? type : best));
+}
+
 /**
- * How far to the Guardian, one pip per row. It replaces the thing the whole-map view gave away
- * for free and the only thing worth keeping from it — an act's LENGTH. The last pip is the
- * Guardian itself, drawn rather than dotted, because "how many more" and "what is at the end"
- * are the same question.
+ * The act ahead, one mark per row. It replaces the thing the whole-map view gave away for free and
+ * the only thing worth keeping from it — an act's SHAPE.
+ *
+ * It counted rows and nothing else until 2026-09-08 (per user direction), which answered "how far"
+ * and left "how hard" to be discovered a row at a time. Every row is now marked by what it makes
+ * you do: a bare dot for a row that only pays out, and the node's own glyph for one that does not —
+ * every forced fight in the act, its kind and its difficulty, readable before the act starts. That
+ * is the whole planning surface a scene-map can afford, and it costs no room the pips did not
+ * already have.
+ *
+ * A row offering more than one thing is marked by the HARDEST of them, so the rail never
+ * under-promises: the Elite-or-Battle row wears the Elite.
  */
 function ProgressRail({ map, currentRow }: { map: RunMap; currentRow: number }) {
-  const bossRow = map.rows.length - 1;
   return (
     <div className="map-rail" aria-label={`Row ${currentRow + 1} of ${map.rows.length}`}>
       {map.rows.map((_, row) => {
+        const type = railTypeFor(map, row);
+        const tier = NODE_TIERS[type];
         const state = row < currentRow ? 'is-done' : row === currentRow ? 'is-here' : '';
-        if (row === bossRow) {
-          return (
-            <span key={row} className={`map-rail-boss ${state}`} style={{ '--node-color': NODE_COLORS.boss } as CSSProperties}>
-              <NodeGlyph type="boss" className="map-rail-boss-glyph" />
-            </span>
-          );
+        if (tier === 'reward') {
+          return <span key={row} className={`map-rail-pip ${state}`} aria-hidden="true" />;
         }
-        return <span key={row} className={`map-rail-pip ${state}`} aria-hidden="true" />;
+        return (
+          <span
+            key={row}
+            className={`map-rail-mark tier-${tier} ${state}`}
+            style={{ '--node-color': NODE_COLORS[type] } as CSSProperties}
+            title={NODE_NAMES[type]}
+          >
+            <NodeGlyph type={type} className="map-rail-glyph" />
+          </span>
+        );
       })}
     </div>
   );
@@ -210,15 +234,22 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
           is the only place the run says one is waiting (docs/progression.md). */}
       <div className="map-footer">
         <button
-          className="map-footer-button"
-          style={{ '--btn-color': 'var(--ally)' } as CSSProperties}
+          className={`map-footer-button${unopened > 0 ? ' has-unopened' : ''}`}
+          // Inline, so it has to carry the alert colour too: a custom property set here outranks
+          // anything .has-unopened could say about it from the stylesheet.
+          style={{ '--btn-color': unopened > 0 ? 'var(--physical)' : 'var(--ally)' } as CSSProperties}
           onClick={() => setShowRoster(true)}
         >
           <span className="map-footer-icon"><HubGlyph name="roster" /></span>
-          <span className="map-footer-label">Roster</span>
+          {/* The label says what is waiting, not where you are going. A badge alone is a mark the
+              eye can learn to skip; a button that has changed its mind about what it is called
+              cannot be skipped, and gear left in the bag is a hero fighting an act without it. */}
+          <span className="map-footer-label">
+            {unopened > 0 ? `${unopened} New ${unopened === 1 ? 'Item' : 'Items'}` : 'Roster'}
+          </span>
           {unopened > 0 && (
             <span className="map-footer-badge" aria-label={`${unopened} unopened ${unopened === 1 ? 'item' : 'items'} in your bag`}>
-              {unopened === 1 ? '!' : unopened}
+              {unopened}
             </span>
           )}
         </button>

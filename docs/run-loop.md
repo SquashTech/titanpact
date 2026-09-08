@@ -122,9 +122,19 @@ what taking it leads to, drawn only when the options on the row differ (`leadOnT
 and is not drawn. It is derived from `nextIds`, never authored, so a change to the generator
 shows up in the UI for free.
 
-What the whole-act view gave away for free and was worth keeping is an act's LENGTH, and the
-**progress rail** replaces it: one pip per row, the current one lit, and the last pip drawn as
-the Guardian rather than dotted — "how many more" and "what is at the end" are the same question.
+What the whole-act view gave away for free and was worth keeping is an act's SHAPE, and the
+**progress rail** replaces it. It was one pip per row at first — an act's length, the current one
+lit, the last drawn as the Guardian rather than dotted, because "how many more" and "what is at
+the end" are the same question.
+
+That answered *how far* and left *how hard* to be discovered a row at a time, so since
+**2026-09-08** (per user direction) every row is marked by what it makes you do (`railTypeFor`,
+MapScreen.tsx): a bare dot for a row that only pays out, and the node's own glyph, in its own
+colour, for one that does not. Every forced fight in the act, its kind and its difficulty, are
+readable before the act starts — the whole planning surface a scene-map can afford, in the room
+the pips already had. A row offering more than one thing wears the **hardest** of them, so the
+rail never under-promises: Elite-or-Battle shows the Elite. What is behind the player fades on
+both mark kinds; colour means ahead.
 
 Note what did NOT change: `RunMap`, `generateMap`, `reachableNodeIds`, `advanceToNode` and the save
 format are all untouched, and every map test still passes without edit. The act still HAS its

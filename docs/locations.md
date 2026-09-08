@@ -500,6 +500,13 @@ every other row fills with the greyed node just resolved — would otherwise be 
 strip under a single lonely sigil. The omen takes the band instead, which is why it costs
 the screen no room at all.
 
+It is written **on** the place rather than under it: tracked out at the size of something the
+location is saying, in the location’s own light, over a haze of that light that breathes on its
+own, and lifted clear of both the horizon silhouette and the placard — it was a small italic
+caption at the foot of the well first, which read as UI chrome laid over a scene rather than as
+part of one. It is the only text on the map that is neither a control nor a readout, and the only
+one that gets to be big.
+
 It is deliberately about the **faction**, not the place: `flavor` already answers *where
 you are* on the arrival screen a moment earlier, so a second line about the terrain would
 be the same beat twice. This answers *who is already here*, and it answers it standing in
