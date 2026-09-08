@@ -225,10 +225,15 @@ export function matchTutorialCue(
 // --- The curated map ---
 
 /**
- * Act 1, one node per row (per user direction): the standard eight-row Mentor-act shape with
+ * Act 1, one node per row (per user direction): the standard nine-row Mentor-act shape with
  * every choice row narrowed to a single node, so Valor can walk the player through each one and
  * nothing is missed to routing luck. The 1-of-3 choices *inside* a reward node are untouched —
  * the choosing is the lesson, the routing is not.
+ *
+ * This list mirrors `BASE_ROW_WIDTHS` (map.ts) by hand and cannot be derived from it — the
+ * tutorial picks WHICH reward each row offers, which a width says nothing about. When the real
+ * shape gains a row, this has to gain one too, or the act the player is taught on is not the
+ * shape of the act they play next (the third reward row was missed exactly that way, 2026-09-08).
  */
 export const TUTORIAL_ROW_TYPES: readonly MapNodeType[] = [
   'fight',
@@ -237,6 +242,10 @@ export const TUTORIAL_ROW_TYPES: readonly MapNodeType[] = [
   'skirmish',
   'forgeReward',
   'battle',
+  // The act's third reward row. A Gem, because it is the reward a run meets most and the only
+  // one the player has already been handed unexplained — the first fight always pays one — so
+  // this seat is where the automatic grant becomes a choice between three.
+  'gemReward',
   'shop',
   'boss',
 ];

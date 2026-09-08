@@ -31,7 +31,7 @@ teach what the game is, and "losing is free" is the one thing that would be a li
 
 ## 2. The corridor
 
-`TUTORIAL_ROW_TYPES` (`src/run/tutorial.ts`) is the standard eight-row Mentor-act shape from
+`TUTORIAL_ROW_TYPES` (`src/run/tutorial.ts`) is the standard nine-row Mentor-act shape from
 `run-loop.md` §1 with **every choice row narrowed to a single node**. The 1-of-3 choices *inside*
 a reward node are untouched — the choosing is the lesson; the routing is not.
 

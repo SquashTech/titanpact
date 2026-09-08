@@ -236,11 +236,21 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     lines: [
       'There. Level five, and now my path can go many directions.',
       'The choice is permanent for the rest of the journey. My potential varies wildly, and it is up to you to choose my fate.',
-      'Press and hold any of the buttons for a detailed description of what each path entails.',
+      'Tap any of the paths and I will lay out everything it grants, before you commit to it.',
     ],
   },
 
-  // --- Row 6: the Guild Hall ---
+  // --- Row 6: the Gem ---
+  {
+    id: 'map:gemReward',
+    topic: 'Gems',
+    lines: [
+      'A seam of them, and this time we choose which.',
+      'One stat, five points, every one of us — and they stack for the rest of the journey. Take the one our whole pact wants, not the one that suits me.',
+    ],
+  },
+
+  // --- Row 7: the Guild Hall ---
   {
     id: 'map:shop',
     topic: 'Guild Hall',
@@ -253,7 +263,7 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     lines: ['A fourth hero is worth more than anything else.'],
   },
 
-  // --- Row 7: the Guardian ---
+  // --- Row 8: the Guardian ---
   {
     id: 'map:boss',
     topic: 'The Guardian',
