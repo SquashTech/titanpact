@@ -83,8 +83,8 @@ element at the Enchanter. One verb family each, so neither node needs explaining
 Acts 1-2 keep the single Guild Hall. The early roster is still forming, and the Guild Hall is
 the only shelf of heroes in the run — a fork that can cost a player their recruit shelf wants
 an act with some gold already in it. The reward row feeding the funnel **fully connects** to
-both, unlike the steered Elite/Battle row: the fork is the point, and a seed must never decide
-it (`generateMap`, `src/run/map.ts`).
+both: the fork is the point, and a seed must never decide it. Since 2026-09-08 the Elite/Battle
+row is wired the same way and by the same rule (§1) (`generateMap`, `src/run/map.ts`).
 
 The Blacksmith's slot is the dearest thing in the run — `SLOT_PRICE_BY_TARGET` charges 120 for a
 hero's second and 200 for its third, against an act income of roughly 50-120g. It has to be:
@@ -164,29 +164,27 @@ to all 3 of them (nothing else exists to claim the "leftover" reward nodes), so 
 feeding into the Elite-or-Battle row is a special case on top of that. Its source row is
 3-wide and its target row 2-wide, so the generic windowed-edge algorithm would present
 both options only sometimes, depending on which reward node was picked. That row
-transition is therefore overridden — originally to **fully connect** every row-3 node to
-both row-4 nodes, and since **2026-08-26** (per user direction) to **steer**:
+transition is therefore overridden to **fully connect** every row-3 node to both row-4
+nodes, exactly like the funnel row below it.
 
-| Row-3 node | Leads to |
-| --- | --- |
-| left | Elite only |
-| middle | Elite *or* Battle |
-| right | Battle only |
+Between **2026-08-26** and **2026-09-08** it instead **steered** — left → Elite only,
+middle → both, right → Battle only. The guarantee was intact but narrowed: the middle
+node always kept both open, so no path ever lost the choice; what the player could not do
+was take a specific *side* reward and keep it. The motivation was visual as much as
+mechanical, full-connect being the only place the map drew crossing edges.
 
-The guarantee the full-connect rule existed to provide is intact, just narrowed: the
-middle node always keeps both open, so **no path ever loses the Elite/Battle choice**.
-What the player can no longer do is take a specific *side* reward and keep the choice —
-a tradeoff they can see and price from the start of the act, since the whole map is
-visible, rather than luck imposed on them. Two tests pin both halves down (`test/map.test.ts`:
-"the Elite/Battle choice stays reachable…" and "…steers left->Elite, right->Battle,
-middle->both").
+It was **reverted on 2026-09-08** (per user direction), and by the thing that motivated
+it. Steering only works as pricing if the price is *visible when it is paid*, which the
+whole-act graph made true for free. With the map now a scene showing one row at a time
+(`MapRoute`), a reward two rows back quietly closing an encounter is a rule the player has
+to hold in their head rather than see — and the crossing edges it was drawn to avoid no
+longer exist either, because a single row of two options cannot cross. Both consequences
+are pinned by tests (`test/map.test.ts`: "every node in the reward row above Elite-or-Battle
+keeps both options open", and "…has nothing left to signpost", which asserts the lead-on
+markers derive themselves off that row).
 
-The motivation was visual as much as mechanical: full-connect was the only place the map
-drew crossing edges, running the left reward all the way across to the Battle and the
-right one back to the Elite. Once `MapScreen` started drawing real parent→child lines
-(2026-08-26), that row read as noise rather than structure. This is still simpler than
-Slay the Spire's real path-weaving generator, but it's now enough to prove branching
-*choice* within a row without the visual tangle.
+This is still simpler than Slay the Spire's real path-weaving generator, but it is enough
+to prove branching *choice* within a row.
 
 ## 2. Node types
 

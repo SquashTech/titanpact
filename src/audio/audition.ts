@@ -31,6 +31,7 @@ const UI_IDS: SfxId[] = [
   'titan.stir',
   'titan.gaze',
   'map.path',
+  'map.select',
   'map.boon',
   'map.threat',
 ];
@@ -52,6 +53,7 @@ const NOTES: Partial<Record<SfxId, string>> = {
   'titan.stir': 'the cold open at the top of a run, under the black',
   'titan.gaze': 'the eyes reaching open',
   'map.path': 'the route drawing forward out of the node just finished',
+  'map.select': 'setting off down one of them',
   'map.boon': 'a path reaching a reward — a landmark is this at 0.75 pitch',
   'map.threat': 'a path reaching monsters — a Guardian is this at 0.66 pitch',
   'ui.back': 'close, cancel, exit',

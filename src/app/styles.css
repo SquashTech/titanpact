@@ -13465,6 +13465,44 @@ textarea,
   height: 24px;
 }
 
+/* The act's first row has nothing behind it, so the band holds who is already here instead
+   (LocationDefinition.omen). Lit in the location's own colour like the placard, but centred and a
+   size up: the placard is a signpost you can ignore, and this is the one line the act says out
+   loud. Fades in a beat late so it reads as spoken rather than as part of the furniture. */
+/* Lifted clear of the placard, which sits at the same corner of the same band: the two are both
+   location text, and at the same height they read as one run-on caption. */
+.map-origin.is-omen {
+  padding-bottom: 56px;
+}
+
+.map-omen {
+  margin: 0;
+  max-width: 74%;
+  text-align: center;
+  text-wrap: balance;
+  font-size: 12px;
+  font-weight: 600;
+  font-style: italic;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: rgba(var(--node-rgb), 0.86);
+  text-shadow: 0 0 12px rgba(var(--node-rgb), 0.35), 0 1px 3px rgba(0, 0, 0, 0.95);
+  animation: map-omen-in 900ms var(--ease-out) 260ms both;
+}
+
+@keyframes map-omen-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-omen {
+    animation: none;
+  }
+}
+
 /* Nothing is tappable while the route is still arriving — a medallion at 30% scale is not a target
    anyone means to hit. The catcher over the top lands the whole thing at once instead, because a
    flourish seen forty times an act must always be skippable. */

@@ -43,9 +43,9 @@ picks 1 of 2 drawn from 5, Act 3 from the remaining 4, Act 4 from 3, and Act 5 h
 
 What that buys over a roll is a **sequencing** decision layered on top of the pick. The
 player is not choosing *whether* to visit Necropolis so much as *when* — "take it now
-while I still have Fire coverage, because I will have to eat it eventually." That is the
-same texture as the reward-row steering locked on 2026-08-26 (`run-loop.md` §1): the
-choice is never removed, it is priced.
+while I still have Fire coverage, because I will have to eat it eventually." The choice is
+never removed, it is priced — the same texture the reward-row steering carried until it was
+reverted on 2026-09-08 (`run-loop.md` §1), and this is now where that texture lives.
 
 It also puts the location decision on the same footing as everything else in the run. The
 map is fully visible and priceable from the start of an act; a random location would be
@@ -487,6 +487,24 @@ their strength (`MapScreen`, styles.css "The map well's Location"):
 
 The direction cue the old gold well carried survives the recolour — lit ground
 at the bottom, a crown at the top — it is simply the location's colour now.
+
+#### The omen
+
+**Added 2026-09-08, per user direction.** `LocationDefinition.omen` is one line naming
+whose land this is — "Goblins roam these lands.", "The Fae are watching, and have not
+decided about you." It is shown **once per act**, on the map screen at the act's first
+Monsters node, and nowhere else.
+
+That node is the only row with nothing behind it, so `MapRoute`'s bottom band — which
+every other row fills with the greyed node just resolved — would otherwise be an empty
+strip under a single lonely sigil. The omen takes the band instead, which is why it costs
+the screen no room at all.
+
+It is deliberately about the **faction**, not the place: `flavor` already answers *where
+you are* on the arrival screen a moment earlier, so a second line about the terrain would
+be the same beat twice. This answers *who is already here*, and it answers it standing in
+front of the fight that proves it. Gated on the node kind rather than on being row 0, so
+act 6's Vigil never gets a line naming enemies that are not there.
 
 #### The name
 

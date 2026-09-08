@@ -35,6 +35,7 @@ export type SfxId =
   | 'titan.stir'
   | 'titan.gaze'
   | 'map.path'
+  | 'map.select'
   | 'map.boon'
   | 'map.threat'
   // Combat
@@ -409,6 +410,24 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'triangle', freq: 147, freqEnd: 294, gain: 0.2, attack: 0.05, decay: 0.4 },
       // Enough floor that it reads as ground being crossed rather than as a hiss off the top of the mix.
       { wave: 'sine', freq: 74, freqEnd: 96, gain: 0.22, attack: 0.03, hold: 0.1, decay: 0.34 },
+    ],
+  },
+
+  /**
+   * Setting off down one of them. The one sound on the map screen that is a COMMIT rather than a
+   * report, so it is the only one that rises the whole way: a struck onset, then a perfect fifth
+   * climbing in three octaves at once, over a body that lifts instead of settling. The plate ring
+   * on the tail is what says the choice is spent — every other UI press in the table closes.
+   */
+  'map.select': {
+    gain: 0.42,
+    jitter: 0.015,
+    voices: [
+      { wave: 'noise', gain: 0.3, attack: 0.001, decay: 0.034, filter: { type: 'bandpass', freq: 1900, q: 1 } },
+      { wave: 'triangle', freq: 110, freqEnd: 165, gain: 0.44, attack: 0.002, hold: 0.02, decay: 0.2 },
+      { wave: 'triangle', freq: 392, freqEnd: 587, detune: 7, gain: 0.4, attack: 0.003, decay: 0.18 },
+      { wave: 'sine', freq: 784, freqEnd: 1175, gain: 0.16, attack: 0.006, decay: 0.26, delay: 0.02 },
+      { wave: 'sine', freq: 1568, gain: 0.07, attack: 0.012, decay: 0.44, delay: 0.06 },
     ],
   },
 

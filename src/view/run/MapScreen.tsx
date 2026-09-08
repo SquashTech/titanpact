@@ -197,6 +197,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
         <MapRoute
           map={map}
           originNode={originNode}
+          omen={location.omen}
           choiceIds={choiceIds}
           onSelectNode={onSelectNode}
           onPreviewNode={setPreviewNode}

@@ -271,26 +271,19 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
     const from = rows[row];
     const to = rows[row + 1];
 
-    // The row feeding eliteRow STEERS: left -> Elite, right -> Battle, middle
-    // keeps both — so no path ever loses the choice, only prices it.
-    // Into the funnel: full connection, never steered. From act 3 that row is a Guild
-    // Hall/Blacksmith fork, and it is the act's ONLY guaranteed spend — every path has to
-    // arrive holding both options, or the fork is decided by the map instead of the player.
-    if (row + 1 === funnelRow && to.length > 1) {
+    // The two forks every path arrives at holding BOTH options.
+    //
+    // The funnel has always been one: from act 3 it is a Guild Hall/Blacksmith choice, and it is
+    // the act's ONLY guaranteed spend, so a map that decided it would be deciding the run.
+    //
+    // Elite-or-Battle joined it on 2026-09-08 (per user direction). It used to STEER — the reward
+    // row above it sent left to the Elite, right to the Battle and middle to both — which priced
+    // the choice rather than removing it, and read correctly while the whole act was on screen to
+    // be read. It does not survive the map becoming a scene: with only the row in front of you
+    // visible, a reward two steps back quietly closing an encounter is a rule the player is asked
+    // to hold in their head rather than see. The choice is now simply always there.
+    if ((row + 1 === funnelRow || row + 1 === eliteRow) && to.length > 1) {
       for (const fromId of from) nodes[fromId].nextIds = [...to];
-      continue;
-    }
-
-    if (row + 1 === eliteRow) {
-      const eliteId = to[0];
-      const battleId = to[to.length - 1];
-      from.forEach((fromId, col) => {
-        // A width-1 feeding row has nothing to steer with; keep the full connection.
-        if (from.length === 1) nodes[fromId].nextIds = [...to];
-        else if (col === 0) nodes[fromId].nextIds = [eliteId];
-        else if (col === from.length - 1) nodes[fromId].nextIds = [battleId];
-        else nodes[fromId].nextIds = [...to];
-      });
       continue;
     }
 

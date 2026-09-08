@@ -248,9 +248,12 @@ what's still unimplemented:
   now a two-word vocabulary — **Monsters** (not recruitable: `fight`, `battle`) and
   **Skirmish** (recruitable: `skirmish`, `elite`) — with difficulty carried by colour and
   glyph instead of by a third and fourth word. Node type *ids* are unchanged.
-  **2026-08-26:** the reward row
-  feeding that choice **steers** — left→Elite, right→Battle, middle→both — so the choice
-  is never removed, only priced against taking a side reward. **5 acts of that shape,
+  **2026-09-08:** the reward row feeding Elite-or-Battle **fully connects** again,
+  reverting the 2026-08-26 steering (left→Elite, right→Battle, middle→both). Steering
+  priced the choice rather than removing it, and read correctly while the whole act was
+  on screen to be read; it does not survive the map becoming a scene, where a reward two
+  rows back quietly closing an encounter is a rule held in the head rather than seen. The
+  lead-on markers came off that row with it, being derived. **5 acts of that shape,
   then a finale act** (2026-09-05, `docs/lore.md` + `run-loop.md` §4), are
   chained per run (`RunState.actNumber`, `TOTAL_ACTS`), each with a fresh map generated
   once the previous act's Guardian falls; 1 Recruit Contract is granted at the end of

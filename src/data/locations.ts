@@ -15,6 +15,12 @@ export interface LocationDefinition {
   faction: string;
   /** One line, spoken on arrival. */
   flavor: string;
+  /**
+   * Whose land this is, said once — on the map screen at the act's first Monsters node, which is
+   * the only row with nothing behind it (MapRoute's omen). Present tense, and about the FACTION
+   * rather than the place: `flavor` already answers where you are, this answers who is already here.
+   */
+  omen: string;
   /** Types the skirmish/elite/boss encounters lean on — a weighting, not a filter (docs/locations.md §2). `null` = every type. */
   affinity: readonly TypeId[] | null;
   /** Hero ids obtainable only here. Empty on every location today (docs/locations.md §3). */
@@ -40,6 +46,7 @@ export const locations: Record<string, LocationDefinition> = {
     name: "Wild's Edge",
     faction: 'Goblins',
     flavor: 'The last tilled field behind you, the treeline ahead. Everything lives out here.',
+    omen: 'Goblins roam these lands.',
     affinity: null,
     exclusiveHeroIds: [],
     factionId: DEFAULT_FACTION_ID,
@@ -53,6 +60,7 @@ export const locations: Record<string, LocationDefinition> = {
     name: 'Blighted Shrine',
     faction: 'Cultists',
     flavor: 'Someone still tends these altars. That is the worrying part.',
+    omen: 'The cultists have been expecting someone.',
     affinity: ['Shadow', 'Arcane', 'Mind'],
     exclusiveHeroIds: [],
     factionId: 'cultists',
@@ -66,6 +74,7 @@ export const locations: Record<string, LocationDefinition> = {
     name: 'Forbidden Forest',
     faction: 'Fae',
     flavor: 'The path closes behind you. It was never a path.',
+    omen: 'The Fae are watching, and have not decided about you.',
     affinity: ['Nature', 'Stone', 'Light'],
     exclusiveHeroIds: [],
     factionId: 'fae',
@@ -79,6 +88,7 @@ export const locations: Record<string, LocationDefinition> = {
     name: 'Molten Foundry',
     faction: 'Vulcans',
     flavor: 'Nobody has fed these furnaces in an age. They are still running.',
+    omen: 'The Vulcans never stopped working.',
     affinity: ['Fire', 'Mech', 'Iron'],
     exclusiveHeroIds: [],
     factionId: 'vulcans',
@@ -92,6 +102,7 @@ export const locations: Record<string, LocationDefinition> = {
     name: 'Storm Coast',
     faction: 'Raiders',
     flavor: 'Longships in the shallows, and the weather is on their side.',
+    omen: 'Raiders hold this shore, and the weather agrees with them.',
     affinity: ['Storm', 'Iron', 'Water'],
     exclusiveHeroIds: [],
     factionId: 'raiders',
@@ -105,6 +116,7 @@ export const locations: Record<string, LocationDefinition> = {
     name: 'Necropolis',
     faction: 'Undead',
     flavor: 'A city that kept its citizens. None of them left.',
+    omen: 'The dead keep this city, and they keep it well.',
     // Shadow is here so the affinity matches more than one Skirmish's worth of heroes (§2).
     affinity: ['Spirit', 'Frost', 'Shadow'],
     exclusiveHeroIds: [],
@@ -124,6 +136,7 @@ export const locations: Record<string, LocationDefinition> = {
     name: 'The Threshold',
     faction: 'Endbringer',
     flavor: 'Six wardens stood here once. You are the reason five of them do not.',
+    omen: 'Nothing roams here. One thing waits.',
     affinity: ['Ancient'],
     exclusiveHeroIds: [],
     factionId: DEFAULT_FACTION_ID,

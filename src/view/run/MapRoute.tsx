@@ -52,16 +52,14 @@ function prefersReducedMotion(): boolean {
 }
 
 /**
- * What a choice leads ON to (2026-09-08, per user direction). Two of the seven branch points in an
- * act actually route — measured, the rest reach the same places whichever option is picked — and
- * both of those price the choice in front of you against the one behind it: the reward row STEERS
- * into Elite-or-Battle, and which of those you take limits which of the next row's rewards you
- * reach.
+ * What a choice leads ON to (2026-09-08, per user direction). One branch point in an act actually
+ * routes — Elite-or-Battle, where which encounter you take limits which of the next row's rewards
+ * you reach — and this is what prices it: the option carries what it opens, so the price is visible
+ * before it is paid, which the whole map used to do by being whole.
  *
- * Pricing only works if the price is visible before it is paid, which the whole map used to do by
- * being whole. This is what does it instead: each option carries what it opens, and only when the
- * options differ — if every choice on the row leads to the same places, the marker is noise and is
- * not drawn. Derived, never authored, so a change to the generator shows up here for free.
+ * Drawn only when the options DIFFER. If every choice on the row leads to the same places the
+ * marker is noise, which is also what silently took it off the row above Elite-or-Battle when that
+ * row stopped steering. Derived, never authored, so a change to the generator shows up here free.
  */
 function leadOnTypes(map: RunMap, nodeId: string): MapNodeType[] {
   const seen: MapNodeType[] = [];
@@ -77,6 +75,30 @@ function leadOnsDiffer(map: RunMap, nodeIds: readonly string[]): boolean {
   const signature = (id: string) => leadOnTypes(map, id).join('+');
   const first = signature(nodeIds[0]);
   return nodeIds.some((id) => signature(id) !== first);
+}
+
+/**
+ * Where `el` sits inside `root`, in `root`'s own layout px.
+ *
+ * Offsets rather than `getBoundingClientRect`, and that is the whole point: a client rect includes
+ * every transform on the element, and these elements are mid-animation when the ResizeObserver's
+ * initial observation fires. Measured that way a reward medallion came back at its `scale(0.3)`
+ * opening frame and its line ran INSIDE the finished circle; an encounter came back at `scale(1.5)`
+ * and its line stopped short of one. `offsetLeft`/`offsetTop`/`offsetWidth` are pure layout, so the
+ * path always ends on the disc's real edge whatever frame the animation is on — and being layout px
+ * already, they also need no correction for the shell's own `transform: scale` (uiScale).
+ *
+ * The walk needs every element between `el` and `root` that is positioned to be one the chain
+ * passes through, which `.map-choices` / `.map-origin` are.
+ */
+function localBox(el: HTMLElement, root: HTMLElement): { cx: number; top: number; bottom: number } {
+  let x = 0;
+  let y = 0;
+  for (let node: HTMLElement | null = el; node && node !== root; node = node.offsetParent as HTMLElement | null) {
+    x += node.offsetLeft;
+    y += node.offsetTop;
+  }
+  return { cx: x + el.offsetWidth / 2, top: y, bottom: y + el.offsetHeight };
 }
 
 /** One drawn path, in the route box's own layout px. */
@@ -146,6 +168,7 @@ function ChoiceMedallion({
 export function MapRoute({
   map,
   originNode,
+  omen,
   choiceIds,
   onSelectNode,
   onPreviewNode,
@@ -153,6 +176,8 @@ export function MapRoute({
   map: RunMap;
   /** The node just resolved, or null on an act's first row — there is nothing behind you yet. */
   originNode: MapNode | null;
+  /** The Location's faction line, shown in the origin's place at the act's first Monsters node. */
+  omen: string;
   choiceIds: readonly string[];
   onSelectNode: (nodeId: string) => void;
   onPreviewNode: (node: MapNode) => void;
@@ -160,7 +185,7 @@ export function MapRoute({
   const [segments, setSegments] = useState<RouteSegment[]>([]);
   const [revealing, setRevealing] = useState(false);
   const routeRef = useRef<HTMLDivElement>(null);
-  const originRef = useRef<HTMLDivElement>(null);
+  const originRef = useRef<HTMLSpanElement>(null);
   const medallionRefs = useRef(new Map<string, HTMLButtonElement>());
   const timers = useRef<number[]>([]);
   const finished = useRef(false);
@@ -168,6 +193,9 @@ export function MapRoute({
   const choiceKey = choiceIds.join(',');
   const revealKey = originNode ? `${map.seed}:${originNode.id}` : null;
   const showLeadOn = leadOnsDiffer(map, choiceIds);
+  // Gated on the node kind, not just on being row 0: act 6 opens on the Vigil, and a faction line
+  // over a muster would be naming enemies that are not there.
+  const showOmen = !originNode && map.nodes[choiceIds[0]]?.type === 'fight';
 
   /**
    * Where each path runs. Measured rather than laid out, because a medallion's size comes from its
@@ -180,25 +208,13 @@ export function MapRoute({
       setSegments([]);
       return;
     }
-    const box = route.getBoundingClientRect();
-    // The whole shell is transform-scaled (uiScale), so client rects come back in device px while
-    // the SVG's user units are layout px. One divisor reconciles them.
-    const scale = route.offsetWidth > 0 ? box.width / route.offsetWidth : 1;
-    const local = (el: Element) => {
-      const r = el.getBoundingClientRect();
-      return {
-        cx: (r.left + r.width / 2 - box.left) / (scale || 1),
-        top: (r.top - box.top) / (scale || 1),
-        bottom: (r.bottom - box.top) / (scale || 1),
-      };
-    };
-    const from = local(origin);
+    const from = localBox(origin, route);
     const next: RouteSegment[] = [];
     for (const id of choiceIds) {
       const el = medallionRefs.current.get(id);
       const type = map.nodes[id]?.type;
       if (!el || !type) continue;
-      const to = local(el);
+      const to = localBox(el, route);
       // Vertical control handles, so every path leaves the origin and meets its destination
       // head-on however far sideways it has to travel.
       const bend = Math.max(20, (from.top - to.bottom) * 0.52);
@@ -292,7 +308,13 @@ export function MapRoute({
             node={map.nodes[nodeId]}
             showLeadOn={showLeadOn}
             landDelayMs={i * PATH_STAGGER_MS + PATH_DRAW_MS}
-            onSelect={() => onSelectNode(nodeId)}
+            onSelect={() => {
+              // Played here rather than via data-sfx, which fires on POINTERDOWN — the same press that
+              // starts a long-press preview. Committing to a path should not sound when you are only
+              // asking what it is.
+              playSfx('map.select');
+              onSelectNode(nodeId);
+            }}
             onPreview={() => onPreviewNode(map.nodes[nodeId])}
             measureRef={(el) => {
               if (el) medallionRefs.current.set(nodeId, el);
@@ -303,13 +325,25 @@ export function MapRoute({
       </div>
 
       {/* Behind you. Unlit and colourless — it is where the paths come FROM, and the only thing on
-          the screen that is not a decision. */}
-      {originNode && (
-        <div className="map-origin" ref={originRef}>
-          <span className="map-origin-mark" aria-hidden="true">
+          the screen that is not a decision.
+
+          On the act's first row there is nothing behind you, and the band would otherwise be an
+          empty strip under a single lonely Monsters sigil. It carries the Location's faction line
+          instead (2026-09-08, per user direction): the act has already said WHERE you are on the
+          arrival screen, and this is the one moment worth saying who is already here. Once — the
+          band goes back to being the route's origin at the very next node. */}
+      {originNode ? (
+        <div className="map-origin">
+          <span className="map-origin-mark" ref={originRef} aria-hidden="true">
             <NodeGlyph type={originNode.type} className="map-origin-glyph" />
           </span>
         </div>
+      ) : (
+        showOmen && (
+          <div className="map-origin is-omen">
+            <p className="map-omen">{omen}</p>
+          </div>
+        )
       )}
 
       {/* Plain div, so uiSfx's delegated listener leaves it alone (it only catches real controls). */}

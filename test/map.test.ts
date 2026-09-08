@@ -125,7 +125,6 @@ test('map: the single-node rows before a pick-3 reward row connect to all 3 of t
   }
 });
 
-// The reward row steers (see the steering test below), so this asserts reachability, not full connection.
 test('map: the Elite/Battle choice stays reachable from the reward row on every seed (Act 5)', () => {
   for (const seed of [1, 2, 3, 4, 5]) {
     const map = generateMap(seed, 5);
@@ -241,8 +240,10 @@ test('map: every node past row 0 has at least one incoming edge (no orphans)', (
   }
 });
 
-// The middle node is load-bearing: it is what keeps the Elite/Battle choice reachable on every seed.
-test('map: the reward row before Elite-or-Battle steers left->Elite, right->Battle, middle->both', () => {
+// Every path arrives at the fork holding both options (2026-09-08). The reward row above used to
+// steer left->Elite / right->Battle; with only one row on screen at a time that priced a choice
+// against a row the player can no longer see, so it was removed.
+test('map: every node in the reward row above Elite-or-Battle keeps both options open', () => {
   for (const act of [1, 2, 3]) {
     for (const seed of [1, 7, 42, 99, 2024]) {
       const map = generateMap(seed, act);
@@ -253,20 +254,27 @@ test('map: the reward row before Elite-or-Battle steers left->Elite, right->Batt
       assert.strictEqual(map.nodes[battleId].type, 'battle');
       assert.strictEqual(feeding.length, 3, `act ${act} seed ${seed}: expected a 3-wide feeding row`);
 
-      assert.deepStrictEqual(map.nodes[feeding[0]].nextIds, [eliteId], `act ${act} seed ${seed}: left should commit to the Elite`);
-      assert.deepStrictEqual(map.nodes[feeding[1]].nextIds, [eliteId, battleId], `act ${act} seed ${seed}: middle should keep both open`);
-      assert.deepStrictEqual(map.nodes[feeding[2]].nextIds, [battleId], `act ${act} seed ${seed}: right should commit to the Battle`);
+      for (const fromId of feeding) {
+        assert.deepStrictEqual(
+          [...map.nodes[fromId].nextIds].sort(),
+          [eliteId, battleId].sort(),
+          `act ${act} seed ${seed}: ${fromId} must reach both the Elite and the Battle`,
+        );
+      }
     }
   }
 });
 
-test('map: no edge into the Elite-or-Battle row ever crosses another (the fix that motivated steering)', () => {
-  for (const seed of [3, 11, 500]) {
-    const map = generateMap(seed, 2);
-    const eliteRow = map.rows.length - 4;
-    const feeding = map.rows[eliteRow - 1];
-    const [eliteId, battleId] = map.rows[eliteRow];
-    assert.ok(!map.nodes[feeding[0]].nextIds.includes(battleId), `seed ${seed}: left still reaches across to the Battle`);
-    assert.ok(!map.nodes[feeding[2]].nextIds.includes(eliteId), `seed ${seed}: right still reaches across to the Elite`);
+// The lead-on markers on a choice card are derived from where its options actually go
+// (MapRoute's leadOnsDiffer), so an unsteered row is also what takes them off it.
+test('map: the reward row above Elite-or-Battle has nothing left to signpost', () => {
+  for (const act of [1, 2, 3, 4, 5]) {
+    for (const seed of [1, 7, 42, 99, 2024]) {
+      const map = generateMap(seed, act);
+      const feeding = map.rows[map.rows.length - 5];
+      const signatures = new Set(feeding.map((id) => [...map.nodes[id].nextIds].sort().join('+')));
+      assert.strictEqual(signatures.size, 1, `act ${act} seed ${seed}: options still lead somewhere different`);
+    }
   }
 });
+
