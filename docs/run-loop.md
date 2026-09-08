@@ -37,7 +37,9 @@ between; per user direction, the shape is now forced and uniform):
   `fight`/`shop`/`elite`/`classReward` mixed in — every reward row is a genuine reward
   choice, not a chance to draw another fight or dodge one, and `classReward` is reserved
   for its own forced Mentor row (2026-08-22 revision, per user direction — see the Mentor
-  row note below), never a random pick-1-of-3 option.
+  row note below), never a random pick-1-of-3 option. In acts 4 and 5 one seat on one of
+  the act's two pick-3 rows is taken by a forced `tutorReward` (see "The Tutor" below); the
+  other two seats roll normally, so the row still offers three distinct things.
 - **Row 2: a single forced `skirmish` node.**
 - **Row 3: 3 nodes, pick 1 of 3 — reward types only**, same pool as row 1.
 - **Row 4: 2 nodes, pick 1 of 2 — `elite` or `battle`** (2026-08-17, per user direction:
@@ -73,6 +75,24 @@ took the Classes from statistically inert — every one of the sixteen inside ±
 to a real spread: Berserker +0.20 (z 2.4) and Warden +0.17 (z 2.1) at the top, Warrior
 −0.19 (z −2.4) at the bottom. Whether that spread wants flattening is now a live question
 where it previously could not even be asked.
+
+**The Tutor seat (acts 4-5).** Acts 4 and 5 each guarantee exactly one `tutorReward`
+(2026-09-07, per user direction). Unlike the Mentor it gets **no row of its own**: it is
+spliced into one of the act's two pick-1-of-3 reward rows, row and column both rolled off
+the map seed (`TUTOR_ACTS`, `TUTOR_ROW_WIDTH`, `src/run/map.ts`). That placement is the
+whole balance argument. The Tutor is the strongest single reward in the run — an exact
+move, chosen rather than rolled — and giving it a forced row would have handed it out
+free; sitting it inside a reward row prices it against the Forge, the Boon, the Gem and
+the item cache it displaces, which is the only price a reward row can charge. It rolls one
+fewer weighted reward and takes the freed seat rather than overwriting a rolled one.
+
+It is deliberately lategame-only: before act 4 a hero's own pool is still mostly ahead of
+it and the level-up curve is handing out moves anyway, so the node's answer to "what would
+you rather have" would be "a move I was going to get". By act 4 the roster is at or near
+`MOVE_CAP` with an Evolution behind it, and what the player actually lacks is a *specific*
+move — usually one a level-up offered once and they declined, or one gated behind a tier
+they will not reach. The Tutor is absent from `REWARD_WEIGHTS`, so those two seats are its
+only source in a run.
 
 Edges connect each node to 1-2 nodes in the next row within a small column window, with
 a repair pass guaranteeing every node (row 1+) has at least one incoming edge — no
@@ -140,6 +160,7 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `hpBoostReward` | `StatBoostScreen` — pick one roster hero to receive a flat, permanent-for-the-run +20 max HP (`runProgress.ts` `grantStatBonus`), stored on `RosterEntry.bonusStatGrants`. The **last** hero-targeted stat node: HP is the one grant worth concentrating, because a single hero surviving is what a shrine can actually change. |
 | `manaBoostReward` ("Mana Well") | **2026-09-05, per user direction:** this no longer makes the player pick a hero. It hands over Sapphire (+5 Mana Pool) through `GemChoiceScreen` with the offer fixed to one. Its name, tint and place-flavour are unchanged; only the grant is. Its twin, the Regen Spring (`manaRegenBoostReward`), was deleted with Peridot on 2026-09-07. |
 | `classReward` ("Mentor's Hall") | `ClassNodeScreen` — pick 1 of 3 Classes (`src/data/classes.ts`), then pick which roster hero learns it, filtered to heroes with no Class yet (`src/run/classes.ts` `grantClass`, stored on `RosterEntry.classId` — a hero can hold at most one Class per run, so `grantClass` REPLACES rather than stacks). If every roster hero already has a Class, the offer is simply wasted. **Not in `REWARD_WEIGHTS`** (2026-08-22 revision, per user direction) — the only way to encounter this node type is a forced Mentor row (§1), never a random pick-1-of-3 option in any act. Acts 1-4 each guarantee one, so a run can Class up to four heroes; the offer filters to heroes with no Class yet and is wasted only once every hero has one. |
+| `tutorReward` ("Tutor") | `TutorNodeScreen` — pick one roster hero, then **any** move from that hero's level-up pool. See "The Tutor" below. Acts 4-5 only. |
 | `event` | `EventNodeScreen` — rolls one of the authored map events (`src/data/events.ts`, `src/run/events.ts`) and resolves it: a move taught to a chosen hero, a Passive taught to a chosen hero, a flat stat trade, or a pile of act-curve loot handed to `ItemFoundScreen`. Which event a node turns out to be is rolled once at node-select time and gated by act and Location. See **docs/events.md**. |
 
 The stat bonuses above are the **node-kind** axis only — what `elite` costs relative to
@@ -217,6 +238,45 @@ way of gaining power, and two of those get sharper:
   near-decisive to one holding a hero two levels short of an Evolution branch point.
   That spread is the node doing its job — it is the strategic pull toward Evolution
   the node was kept for (§4), and the XP cut is what gives it teeth.
+
+### The Tutor
+
+**2026-09-07, per user direction.** `tutorReward` → `TutorNodeScreen`. Pick a roster hero,
+then pick **any one move** off that hero's own level-up pool and it is taught outright. The
+node grants through `grantMove` — the same free faucet an event's gift uses, not
+`grantLevelUpMove` — so teaching a move does **not** spend a level-up offer, and the pool
+the hero's remaining levels draw from is untouched.
+
+What "its own level-up pool" means is `tutorMovePool` (`src/run/tutor.ts`), and it is
+deliberately wider than the pool a level-up draws from:
+
+- **The authored pool**, `progressionTable.moveTiers[heroId]`, entire.
+- **Plus everything the Evolution paths the hero actually took brought with them** — both
+  the moves a path JOINS to the pool (`learnableMoveIds`) and the ones it GRANTED outright
+  (`unlocksMoveIds`). The second half is the interesting one: an Evolution grant refused at
+  `MOVE_CAP` is otherwise gone for the rest of the run, and the Tutor is the only thing in
+  the game that can hand it back.
+- **Not tier-gated.** A level-3 hero may be taught a Late move. "Any of them" is the node;
+  the mana cost is what stops a level-3 hero casting it.
+- **Not filtered by `offeredMoveIds`.** A move offered once and declined is still on the
+  shelf — that hole is most of what the node exists to fill.
+- **Not filtered by what the hero currently holds.** Known moves are listed and greyed in
+  place rather than hidden, so the list reads as the hero's whole repertoire rather than as
+  a leftovers bin.
+- **The starting kit is absent**, because it was never learned from a level-up. A starting
+  move swapped away is still gone for good; whether the Tutor should also recover those is
+  open (below).
+
+At `MOVE_CAP` — which by act 4 is the normal case — the pick hands off to the same
+replace-or-decline panel a level-up move offer uses, so nothing about the swap is new to
+the player. Every hero on the roster is eligible however many Tutors they have already
+used; a hero whose pool is exhausted is shown greyed with "pool exhausted", and a roster
+where every hero is exhausted lets the player walk on rather than stranding them.
+
+**Open (flagged, not decided).** Three calls above are inferences from "the player can
+choose ANY of them" rather than designer decisions: (1) that a chosen Evolution path's
+`unlocksMoveIds` join the shelf; (2) that the shelf is not tier-gated; (3) that the
+starting kit stays off it. Each is a one-line change in `tutorMovePool`.
 
 ### Boons (2026-09-07, per user direction)
 

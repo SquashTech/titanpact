@@ -138,6 +138,13 @@ don't silently override it.
   found the pool collapsed into two buckets — a bigger Gem, or a passive that was unanswerable
   applied to all four heroes at once — so the interesting grants now live per-hero, on equipment
   and on the Boon node. Nothing team-wide grants a passive or an Elemental Force any more.
+- **The Tutor: one guaranteed seat in each of acts 4 and 5** (2026-09-07). `tutorReward` lets
+  the player pick a hero and teach it **any** move from that hero's own level-up pool — un-rolled,
+  un-tier-gated, and including moves a level-up already offered and had declined. It takes a seat
+  **inside** a pick-1-of-3 reward row rather than a forced row of its own: that displacement (a
+  Forge, a Boon, a Gem) is the only price a reward row can charge, and it is why the strongest
+  reward in the run is not free. Lategame-only because earlier the level curve is handing out
+  moves anyway. `tutorMovePool`, `src/run/tutor.ts`; `docs/run-loop.md` "The Tutor".
 - **Boons: the `passiveReward` node grants ONE hero a passive** (2026-09-07), the salvage of the
   passive relics — same effects, hero-scoped, so the scope that broke them is gone. 1-of-3 then
   pick a hero, via `grantEventPassive`; it stacks. The pool is every equipment/event passive plus

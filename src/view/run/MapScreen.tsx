@@ -69,6 +69,7 @@ const NODE_NAMES: Record<MapNodeType, string> = {
   hpBoostReward: 'Vitality',
   manaBoostReward: 'Mana',
   classReward: 'Mentor',
+  tutorReward: 'Tutor',
   event: 'Event',
   muster: 'The Vigil',
   finale: 'Endbringer',
@@ -95,6 +96,9 @@ const NODE_COLORS: Record<MapNodeType, string> = {
   hpBoostReward: 'var(--hp-high)',
   manaBoostReward: 'var(--mana)',
   classReward: 'var(--buff)',
+  // The only cyan on the map — the Tutor is rare enough that it should never be mistaken at a
+  // glance for the Mana Well beside it.
+  tutorReward: '#48c9e8',
   event: 'var(--tier-common)',
   muster: 'var(--accent)',
   // The only node in a run that wears the mythic red, because there is only one of it.
@@ -119,6 +123,7 @@ const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
   hpBoostReward: '+20 max HP to one hero',
   manaBoostReward: 'Sapphire — team-wide +5 Mana Pool',
   classReward: '1 of 3 Classes, taught to one hero',
+  tutorReward: 'One hero learns ANY move from its level-up pool — acts 4 and 5 only',
   event: 'Hidden until you arrive: a move, a passive, gear or a trade',
   muster: 'Fill the roster to six, then spend everything left',
   finale: 'The five seals you broke — then the thing they were holding',
@@ -150,6 +155,7 @@ const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   hpBoostReward: 'reward',
   manaBoostReward: 'reward',
   classReward: 'reward',
+  tutorReward: 'reward',
   event: 'reward',
   muster: 'landmark',
   finale: 'ancient',

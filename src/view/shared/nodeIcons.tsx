@@ -100,6 +100,19 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
   manaBoostReward: STAT_PATHS.manaPool,
   // Open tome: the Mentor teaches.
   classReward: OPEN_BOOK,
+  // A branching skill tree, not a second book: the Mentor hands over something new, the Tutor
+  // opens a door the hero was already standing in front of.
+  tutorReward: (
+    <>
+      <path d="M10.9 12.2h2.2v6.4h-2.2Z" />
+      <path d="M5.6 11.2h12.8v2.2H5.6Z" />
+      <path d="M5.6 7.4h2.2v5.6H5.6Z" />
+      <path d="M16.2 7.4h2.2v5.6h-2.2Z" />
+      <circle cx="12" cy="20.4" r="2.9" />
+      <circle cx="6.7" cy="5.4" r="2.9" />
+      <circle cx="17.3" cy="5.4" r="2.9" />
+    </>
+  ),
   // Question mark, drawn rather than typed.
   event: (
     <>

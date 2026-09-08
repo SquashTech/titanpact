@@ -23,6 +23,7 @@ export const MAP_NODE_TYPES = [
   'hpBoostReward',
   'manaBoostReward',
   'classReward',
+  'tutorReward',
   'event',
   // Act 6 only (docs/run-loop.md §4). `muster` is the Vigil, `finale` the Endbringer.
   'muster',
@@ -69,6 +70,19 @@ const MENTOR_ROW = SKIRMISH_ROW;
  */
 const LAST_MENTOR_ACT = 4;
 
+/**
+ * The Tutor (2026-09-07, per user direction): one guaranteed seat in each of acts 4 and 5,
+ * taken INSIDE a pick-1-of-3 reward row rather than given a forced row of its own. It is a
+ * lategame build node — by act 4 a hero has a deep pool and four slots it is stuck with — so
+ * it is priced the only way a reward row can price anything: against the two rolled rewards
+ * beside it. Absent from REWARD_WEIGHTS, so those two seats are its only source.
+ */
+const TUTOR_ACTS: readonly number[] = [4, 5];
+
+function hasTutor(actNumber: number): boolean {
+  return TUTOR_ACTS.includes(actNumber);
+}
+
 function hasMentorRow(actNumber: number): boolean {
   return actNumber >= 1 && actNumber <= LAST_MENTOR_ACT;
 }
@@ -83,7 +97,10 @@ function rowWidthsFor(actNumber: number): number[] {
   return [...BASE_ROW_WIDTHS.slice(0, MENTOR_ROW), 1, ...BASE_ROW_WIDTHS.slice(MENTOR_ROW)];
 }
 
-/** Reward-row pool. `classReward` is deliberately absent (Mentor row only). Weights are a first-pass balance. */
+/** The pick-1-of-3 width. The Tutor only ever seats in a reward row this wide. */
+const TUTOR_ROW_WIDTH = 3;
+
+/** Reward-row pool. `classReward` and `tutorReward` are deliberately absent — each has its own forced seat. Weights are a first-pass balance. */
 const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // equipmentReward absorbs most of the frequency the three slot caches used to carry.
   ['equipmentReward', 40],
@@ -184,6 +201,26 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
   }
 
   let rng = createRng(seed);
+
+  // The Tutor's seat is rolled BEFORE any row is generated, so its two draws sit at a fixed
+  // point in the seeded stream — a map has to stay reproducible from its seed alone.
+  let tutorRow = -1;
+  let tutorCol = -1;
+  if (hasTutor(actNumber)) {
+    const seats: number[] = [];
+    for (let row = 0; row < rowWidths.length; row++) {
+      if (isRewardRow(row) && rowWidths[row] === TUTOR_ROW_WIDTH) seats.push(row);
+    }
+    if (seats.length > 0) {
+      const { value: rowRoll, nextState: s1 } = nextFloat(rng);
+      rng = s1;
+      const { value: colRoll, nextState: s2 } = nextFloat(rng);
+      rng = s2;
+      tutorRow = seats[Math.floor(rowRoll * seats.length)];
+      tutorCol = Math.floor(colRoll * rowWidths[tutorRow]);
+    }
+  }
+
   const nodes: Record<string, MapNode> = {};
   const rows: string[][] = [];
 
@@ -193,9 +230,13 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
     const rewardRow = isRewardRow(row);
     let rewardTypes: MapNodeType[] = [];
     if (rewardRow) {
-      const picked = pickWeightedDistinct(rng, REWARD_WEIGHTS, rowWidths[row]);
+      // A Tutor row rolls one fewer reward and the Tutor takes the freed seat rather than
+      // overwriting a rolled one — the row still offers three distinct things.
+      const forced = row === tutorRow ? 1 : 0;
+      const picked = pickWeightedDistinct(rng, REWARD_WEIGHTS, rowWidths[row] - forced);
       rewardTypes = picked.values;
       rng = picked.nextState;
+      if (forced) rewardTypes.splice(tutorCol, 0, 'tutorReward');
     }
     for (let col = 0; col < rowWidths[row]; col++) {
       const type = rewardRow ? rewardTypes[col] : fixedNodeType(row, col);

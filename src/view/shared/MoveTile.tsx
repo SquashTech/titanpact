@@ -1,4 +1,4 @@
-import { useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent } from 'react';
+import { useRef, useState, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
 import type { MoveDefinition, StatusApplication } from '../../engine/content';
 import { statusApplicationsOf } from '../../engine/content';
 import { resolveHealFor, type HealCaster } from '../../engine/heal/healPipeline';
@@ -447,12 +447,18 @@ export function MoveTile({
 export function MoveButtonReplica({
   move,
   selected,
+  unusable,
+  tag,
   caster,
   onClick,
   onLongPress,
 }: {
   move: MoveDefinition;
   selected?: boolean;
+  /** Dimmed and un-raised — the row is here to be read, not pressed. The hold gesture still works. */
+  unusable?: boolean;
+  /** Short chip in the top row, right of the name (the Tutor's "Known"). */
+  tag?: ReactNode;
   /** So a heal shows what THIS hero restores — see healReadout. */
   caster?: HealCaster;
   onClick?: () => void;
@@ -463,7 +469,7 @@ export function MoveButtonReplica({
   return (
     <button
       type="button"
-      className={`move-button${selected ? ' selected' : ''}`}
+      className={`move-button${selected ? ' selected' : ''}${unusable ? ' is-unusable' : ''}`}
       style={{ '--move-type-rgb': getTypeColorRgb(move.type) } as CSSProperties}
       {...longPress}
     >
@@ -485,6 +491,7 @@ export function MoveButtonReplica({
         )}
         {/* Holds the power column open so the badges don't rag between rows. */}
         {move.kind === 'buff' && <span className="move-power move-power-empty" aria-hidden="true" />}
+        {tag}
         <MoveKindBadge move={move} />
       </div>
       <div className="move-row-effect">

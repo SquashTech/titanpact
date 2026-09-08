@@ -34,6 +34,7 @@ import './map.test';
 import './relics.test';
 import './gems.test';
 import './boons.test';
+import './tutor.test';
 import './enemyGen.test';
 import './difficulty.test';
 import './runProgress.test';

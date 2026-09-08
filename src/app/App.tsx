@@ -21,6 +21,7 @@ import { SquadSelectScreen } from '../view/run/SquadSelectScreen';
 import { MapScreen } from '../view/run/MapScreen';
 import { ShopNodeScreen } from '../view/run/ShopNodeScreen';
 import { BoonNodeScreen } from '../view/run/BoonNodeScreen';
+import { TutorNodeScreen } from '../view/run/TutorNodeScreen';
 import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScreen';
 import { ForgeScreen } from '../view/run/ForgeScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
@@ -155,6 +156,8 @@ type Screen =
   | { kind: 'gemChoice'; gemIds: string[]; eyebrow: string; title: string; tint?: string; next: Screen }
   | { kind: 'classNode'; nodeId: string }
   | { kind: 'boonNode'; nodeId: string }
+  /** The Tutor: one hero learns any move off its own level-up pool. Acts 4-5 only (run/map.ts). */
+  | { kind: 'tutorNode'; nodeId: string }
   /** Which event this node is gets rolled ONCE at node-select time — the screen re-renders on every onRunChange. */
   | { kind: 'event'; nodeId: string; eventId: string }
   /** Guardian's Banner after a Guardian win in acts 1-4. Not a map node, so no nodeId. */
@@ -621,6 +624,8 @@ export function App() {
       setScreen({ kind: 'classNode', nodeId });
     } else if (node.type === 'passiveReward') {
       setScreen({ kind: 'boonNode', nodeId });
+    } else if (node.type === 'tutorReward') {
+      setScreen({ kind: 'tutorNode', nodeId });
     } else if (node.type === 'event') {
       const rolled = rollRunEvent(runEvents, playerRun.actNumber, location.id);
       // Nothing eligible skips the node rather than stranding the player on an empty screen.
@@ -1102,6 +1107,10 @@ export function App() {
 
       {screen.kind === 'boonNode' && (
         <BoonNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+      )}
+
+      {screen.kind === 'tutorNode' && (
+        <TutorNodeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'event' &&

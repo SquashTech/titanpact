@@ -17,6 +17,8 @@ export const NODE_TINT_TEAL = '63, 184, 175';
 export const NODE_TINT_VITAL = '76, 175, 106';
 /** var(--mana) — mana pool and regen grants. */
 export const NODE_TINT_MANA = '74, 144, 217';
+/** #48c9e8 — the Tutor. The only cyan in the run loop; nothing else it can be confused with. */
+export const NODE_TINT_INSIGHT = '72, 201, 232';
 
 const MOTE_COUNT = 12;
 
