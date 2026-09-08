@@ -7646,7 +7646,8 @@ textarea,
   box-shadow: var(--hairline), var(--elev-3);
 }
 
-/* Explicit dismiss target (HeroPreviewOverlay, HeroDetailOverlay) — a
+/* Explicit dismiss target (HeroDetailOverlay, EvolutionScreen; the two tabbed
+   hero sheets use the footer Close instead — see "The bottom row") — a
    sibling of .detail-panel, positioned against the fixed, non-scrolling
    .detail-overlay backdrop rather than inside the panel itself, so it
    stays put in the same spot regardless of how far the (often tall,
@@ -7815,11 +7816,55 @@ textarea,
 .detail-panel.is-tabbed {
   /* Fixed height, not max-height: the strip has to sit in the same place on
      every page. A panel sized to its content moves the control the player is
-     aiming at out from under the thumb between one page and the next. */
+     aiming at out from under the thumb between one page and the next.
+     Inside .is-sheet the flex row below takes this over — same guarantee,
+     measured against the footer instead of the viewport. */
   height: 85%;
   overflow: hidden;
   gap: 0;
   padding: 12px 12px 10px;
+}
+
+/* --- The bottom row (2026-09-07, per user direction) ---------------------
+ *
+ * The strip moved from the top of the panel to its bottom, and the corner ✕
+ * became a full-width Close slab under the panel. Both are the same argument:
+ * this is a portrait phone game held one-handed, and the two controls the
+ * player reaches for constantly — switch page, get out — belong in the thumb's
+ * arc rather than at the top edge and the far corner.
+ *
+ * The panel is a flex child rather than a percentage so the footer's height is
+ * subtracted from it, not overlapped by it; min-height:0 is what lets it
+ * shrink below its content so .detail-tab-body stays the only scroller.
+ */
+.detail-overlay.is-sheet {
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px 16px 14px;
+}
+
+.detail-overlay.is-sheet .detail-panel.is-tabbed {
+  height: auto;
+  max-height: none;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.sheet-footer {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Written against .resolve-button, not alone: both are (0,1,0) and
+   .resolve-button is declared later, so a bare class loses this min-height. */
+.resolve-button.sheet-close-button {
+  min-height: 56px;
+  padding: 16px 14px;
+  font-size: 17px;
 }
 
 /* Portrait beside the titles rather than centred above them. A tabbed panel
@@ -7866,6 +7911,8 @@ textarea,
   display: flex;
   gap: 2px;
   flex-shrink: 0;
+  /* It is the panel's last row now, so the gap it needs is above it. */
+  margin-top: 8px;
   padding: 2px;
   border-radius: var(--radius-md);
   background: var(--panel-alt);
@@ -7949,7 +7996,6 @@ textarea,
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding-top: 8px;
   -webkit-overflow-scrolling: touch;
 }
 

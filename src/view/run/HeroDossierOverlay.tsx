@@ -183,10 +183,7 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
   }
 
   return (
-    <div className="detail-overlay" onClick={close}>
-      <button className="detail-close-button" onClick={close} aria-label="Close">
-        ✕
-      </button>
+    <div className="detail-overlay is-sheet" onClick={close}>
       <div className="detail-panel is-tabbed" onClick={(e) => e.stopPropagation()}>
         <div className="detail-header is-hero">
           <HeroPortrait heroId={hero.id} className="detail-portrait is-inline" />
@@ -204,8 +201,6 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
             </div>
           </div>
         </div>
-
-        <TabStrip tabs={tabs} active={tab} onSelect={setTab} />
 
         <div className="detail-tab-body" role="tabpanel">
           {tab === 'stats' && (
@@ -244,6 +239,14 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
               </div>
             ))}
         </div>
+
+        <TabStrip tabs={tabs} active={tab} onSelect={setTab} />
+      </div>
+
+      <div className="sheet-footer" onClick={(e) => e.stopPropagation()}>
+        <button className="resolve-button sheet-close-button" onClick={close}>
+          Close
+        </button>
       </div>
 
       {popupMoveId && moves[popupMoveId] && (

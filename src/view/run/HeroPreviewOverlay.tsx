@@ -170,13 +170,10 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
   }
 
   return (
-    <div className="detail-overlay" onClick={closeFromBackdrop}>
-      <button className="detail-close-button" onClick={onClose} aria-label="Close">
-        ✕
-      </button>
+    <div className="detail-overlay is-sheet" onClick={closeFromBackdrop}>
       {/* A tabbed panel does NOT dismiss on an inner tap the way the one-scroll sheet did: this is a
           surface the player reads and switches pages in, and losing it to a stray tap while
-          scrolling a move list is the wrong trade. The backdrop and the ✕ still close it. */}
+          scrolling a move list is the wrong trade. The backdrop and the footer Close still close it. */}
       <div className="detail-panel is-tabbed" onClick={(e) => e.stopPropagation()}>
         <div className="detail-header is-hero">
           <HeroPortrait heroId={hero.id} className="detail-portrait is-inline" />
@@ -205,8 +202,6 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
             )}
           </div>
         </div>
-
-        <TabStrip tabs={tabs} active={tab} onSelect={setTab} />
 
         <div className="detail-tab-body" role="tabpanel">
           {tab === 'stats' && (
@@ -272,17 +267,22 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
           )}
         </div>
 
+        <TabStrip tabs={tabs} active={tab} onSelect={setTab} />
+      </div>
+
+      {/* Below the panel, at the very bottom of the screen. Where the sheet is asking a question
+          rather than answering one, the confirm takes the gold slab and Close steps down to the
+          secondary treatment — two accent slabs stacked would leave no "this is the press". */}
+      <div className="sheet-footer" onClick={(e) => e.stopPropagation()}>
+        {action?.note && <div className="detail-action-note">{action.note}</div>}
         {action && (
-          <div className="detail-action">
-            {action.note && <div className="detail-action-note">{action.note}</div>}
-            <button className="resolve-button" disabled={action.disabled} onClick={action.onConfirm}>
-              {action.label}
-            </button>
-            <button className="detail-action-cancel" onClick={onClose}>
-              Cancel
-            </button>
-          </div>
+          <button className="resolve-button sheet-close-button" disabled={action.disabled} onClick={action.onConfirm}>
+            {action.label}
+          </button>
         )}
+        <button className={action ? 'secondary-button' : 'resolve-button sheet-close-button'} onClick={onClose}>
+          Close
+        </button>
       </div>
 
       {popup && (
