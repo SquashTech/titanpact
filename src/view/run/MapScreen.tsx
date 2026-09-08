@@ -60,6 +60,7 @@ const NODE_NAMES: Record<MapNodeType, string> = {
   elite: 'Skirmish',
   boss: 'Guardian',
   shop: 'Guild Hall',
+  blacksmith: 'Blacksmith',
   equipmentReward: 'Item',
   gemReward: 'Gem',
   passiveReward: 'Boon',
@@ -84,6 +85,9 @@ const NODE_COLORS: Record<MapNodeType, string> = {
   elite: 'var(--crit)',
   boss: 'var(--accent)',
   shop: 'var(--mana)',
+  // A burnt copper beside the Forge's orange: same family (both are about what a hero can
+  // carry), different silhouette tier, so they read as related rather than as each other.
+  blacksmith: '#c67a4c',
   equipmentReward: 'var(--physical)',
   // A rose nothing else on the map wears: a Gem can be any stat, so it cannot borrow one stat's colour.
   gemReward: '#d9569b',
@@ -113,7 +117,8 @@ const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
   battle: '30–45g · 3 XP · item',
   elite: '15–25g · 4 XP · 55% elite item · recruitable — enemies carry +10 to 2 stats',
   boss: '4 XP · 70% elite item · 1 Recruit Contract',
-  shop: 'Spend gold on heroes and items',
+  shop: 'Buy heroes, contracts and gear — and sell what you are not carrying',
+  blacksmith: 'Buy an item slot, a tier at the Anvil, or an element at the Enchanter — acts 3+',
   equipmentReward: '1 of 3 items',
   gemReward: '1 of 3 Gems — each a team-wide +5 to one stat',
   passiveReward: '1 of 3 Boons, granted to one hero for the rest of the run',
@@ -146,6 +151,7 @@ const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   elite: 'encounter',
   boss: 'ancient',
   shop: 'landmark',
+  blacksmith: 'landmark',
   equipmentReward: 'reward',
   gemReward: 'reward',
   passiveReward: 'reward',
@@ -160,6 +166,9 @@ const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   muster: 'landmark',
   finale: 'ancient',
 };
+
+/** Where the anchor node sits in the scroller, top to bottom. Lower third, so the rows the player is choosing between are the ones on screen. */
+const ANCHOR_VIEWPORT_FRACTION = 0.72;
 
 // Fixed 3-column geometry shared by .map-row and the edge overlay; a 2-node
 // row spreads to the outer columns so a fork reads as a fork.
@@ -419,6 +428,30 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
   // Called unconditionally — hooks can't sit behind the `if (!map)` bail.
   const nodeRefs = useRef<Map<string, HTMLElement>>(new Map());
   const [gridRef, geometry] = useMapGeometry(nodeRefs, run.map ? `${run.actNumber}:${run.map.seed}` : 'none');
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const anchorId = run.currentNodeId ?? run.map?.startNodeIds[0] ?? null;
+
+  /**
+   * The map is taller than its well now that an act carries three reward rows (map.ts
+   * BASE_ROW_WIDTHS), so it scrolls — and a scrolling map has to place itself. Where the player
+   * IS goes in the lower third, which puts the two or three rows they are choosing between above
+   * it and, at the end of an act, lands the Guardian mid-screen instead of jammed against the top
+   * edge, which is what the whole-map fit used to cost.
+   *
+   * Measured off rects rather than offsetTop: the tiles' offsetParent is the grid, not the
+   * scroller, and the grid carries the scroller's padding between them.
+   *
+   * Runs only when the anchor moves, so a player who scrolls to read ahead keeps their position
+   * until they actually take a node.
+   */
+  useLayoutEffect(() => {
+    const scroller = scrollRef.current;
+    const el = anchorId ? nodeRefs.current.get(anchorId) : null;
+    if (!scroller || !el) return;
+    const scRect = scroller.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    scroller.scrollTop += elRect.top + elRect.height / 2 - (scRect.top + scRect.height * ANCHOR_VIEWPORT_FRACTION);
+  }, [anchorId, geometry]);
 
   const map = run.map;
   if (!map) return null;
@@ -490,7 +523,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
         <LocationAmbience location={location} density={MAP_MOTE_DENSITY} className="map-atmosphere" />
         <MapPlacard location={location} />
 
-        <div className="map-scroll screen-scroll">
+        <div className="map-scroll screen-scroll" ref={scrollRef}>
           {/* Act 6 is two nodes, so it gets the well's height rather than huddling at the top of one built for eight. */}
           <div
             className={`map-grid${rowsTopDown.length <= 2 ? ' is-corridor' : ''}`}

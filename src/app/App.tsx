@@ -24,6 +24,7 @@ import { BoonNodeScreen } from '../view/run/BoonNodeScreen';
 import { TutorNodeScreen } from '../view/run/TutorNodeScreen';
 import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScreen';
 import { ForgeScreen } from '../view/run/ForgeScreen';
+import { BlacksmithScreen } from '../view/run/BlacksmithScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { ItemFoundScreen } from '../view/run/ItemFoundScreen';
@@ -151,6 +152,7 @@ type Screen =
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
   /** The Forge: +1 item slot to one hero. */
   | { kind: 'forge'; nodeId: string }
+  | { kind: 'blacksmith'; nodeId: string }
   | { kind: 'statBoost'; nodeId: string; nodeType: StatBoostNodeType }
   /** A Gem offer — the gemReward node, the two stat shrines, and a fight that rolled one. Already-resolved, so no nodeId. */
   | { kind: 'gemChoice'; gemIds: string[]; eyebrow: string; title: string; tint?: string; next: Screen }
@@ -612,6 +614,8 @@ export function App() {
       });
     } else if (node.type === 'forgeReward') {
       setScreen({ kind: 'forge', nodeId });
+    } else if (node.type === 'blacksmith') {
+      setScreen({ kind: 'blacksmith', nodeId });
     } else if (node.type === 'hpBoostReward') {
       setScreen({ kind: 'statBoost', nodeId, nodeType: node.type });
     } else if (node.type === 'gemReward' || node.type === 'manaBoostReward') {
@@ -1078,6 +1082,10 @@ export function App() {
 
       {screen.kind === 'forge' && (
         <ForgeScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
+      )}
+
+      {screen.kind === 'blacksmith' && (
+        <BlacksmithScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
       )}
 
       {screen.kind === 'statBoost' && (

@@ -17,7 +17,7 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { EquipInspectOverlay } from './EquipChoiceCard';
 import { rosterHasFreeSlot } from './ItemFoundScreen';
-import { ItemServicesSection } from './ItemServicesSection';
+import { SellSection } from './SellSection';
 
 interface Props {
   run: RunState;
@@ -232,7 +232,9 @@ export function GuildHallPanel({
         )}
       </div>
 
-      <ItemServicesSection run={run} onRunChange={onRunChange} />
+      {/* The Anvil and the Enchanter moved to the Blacksmith (2026-09-08, per user direction):
+          the Guild Hall trades in heroes and gear, the Blacksmith works on gear you already own. */}
+      <SellSection run={run} onRunChange={onRunChange} />
 
       {previewOffer &&
         (() => {

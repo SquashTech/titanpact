@@ -44,9 +44,10 @@ function ownedItems(run: RunState): OwnedItem[] {
 }
 
 /**
- * The Anvil and the Enchanter (docs/equipment.md §5). Both are shop services rather than one-shot
- * rewards: repeatable and unbounded so long as the player can pay. The map's Anvil and Enchanter
- * nodes are the free single-use version of the same two verbs.
+ * The Anvil and the Enchanter (docs/equipment.md §5). Both are Blacksmith services rather than
+ * one-shot rewards: repeatable and unbounded so long as the player can pay. There is no free
+ * map-node version of either — the reward row's spike in this space is the Forge, which grants
+ * a slot rather than improving an item.
  *
  * The Anvil is deliberately dearer than buying that tier outright — you are paying to keep THIS
  * item, its family, its Awakening and its enchant. Merging is the efficient route, and it is free.

@@ -22,7 +22,7 @@ import {
 } from './equipment';
 import { generateMap } from './map';
 import { itemSlotsFor } from './progression';
-import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY, sellValueFor } from './shop';
+import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY, SLOT_PRICE_BY_TARGET, sellValueFor } from './shop';
 import { mergeStatMods } from './statMods';
 
 export class RunProgressError extends Error {}
@@ -112,6 +112,34 @@ export function grantItemSlot(run: RunState, rosterId: string, heroLookup: Recor
   }
   const nextEntry: RosterEntry = { ...entry, bonusItemSlots: entry.bonusItemSlots + 1 };
   return { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)) };
+}
+
+/** What the Blacksmith charges this hero for its next slot, or null at the cap. */
+export function slotQuote(
+  run: RunState,
+  rosterId: string,
+  heroLookup: Record<string, HeroDefinition>
+): { target: number; cost: number } | null {
+  const entry = run.roster.find((r) => r.rosterId === rosterId);
+  const hero = entry ? heroLookup[entry.heroId] : undefined;
+  if (!entry || !hero) return null;
+  const target = itemSlotsFor(hero, entry) + 1;
+  const cost = SLOT_PRICE_BY_TARGET[target];
+  return target > MAX_ITEM_SLOTS || cost == null ? null : { target, cost };
+}
+
+/** The paid Forge. Same grant, charged; the map's forgeReward node is the free one. */
+export function buyItemSlot(
+  run: RunState,
+  rosterId: string,
+  heroLookup: Record<string, HeroDefinition>
+): RunState {
+  const quote = slotQuote(run, rosterId, heroLookup);
+  if (!quote) throw new RunProgressError(`${rosterId} cannot take another item slot`);
+  if (run.gold < quote.cost) {
+    throw new RunProgressError(`An item slot costs ${quote.cost} gold, only ${run.gold} available`);
+  }
+  return grantItemSlot({ ...run, gold: run.gold - quote.cost }, rosterId, heroLookup);
 }
 
 // --- The stash (docs/progression.md) ---

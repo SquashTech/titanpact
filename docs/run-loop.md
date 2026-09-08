@@ -47,27 +47,58 @@ between; per user direction, the shape is now forced and uniform):
   act's difficulty spike (+10 to 2 stats on all 4 AI heroes); `battle` is a plain,
   no-bonus alternative — same risk profile as `skirmish`, just later in the act. Always
   presented as a real choice (see edges, below), not one that depends on luck.
-- **Row 5 (funnel): a single `shop` node** every path converges on — a guaranteed last
-  chance to spend gold before the boss, also the standard Slay the Spire "everything
-  narrows before the boss" beat.
-- **Row 6: the single `boss` node** — the act's Guardian.
+- **Row 5: 3 nodes, pick 1 of 3 — reward types only** (2026-09-08, per user direction), same
+  pool as rows 1 and 3. A third reward row, affordable once the map stopped having to fit its
+  well ("A map that scrolls", below): the act had two reward seats to spend across a
+  nine-type pool, so its rarest cards were being drawn about once a run.
+- **Row 6 (funnel): the act's one guaranteed spend.** A single `shop` node in acts 1-2, and a
+  `shop` + `blacksmith` **pick 1 of 2** from act 3 on ("The Blacksmith", below). Every
+  path converges here — the standard Slay the Spire "everything narrows before the boss" beat.
+- **Row 7: the single `boss` node** — the act's Guardian.
 
 The upshot: every act is exactly **Fight → pick 1 of 3 → Skirmish → pick 1 of 3 →
-(Elite or Battle) → Guild Hall → Guardian** — no path through an act ever skips a fight.
+(Elite or Battle) → pick 1 of 3 → (Guild Hall or Blacksmith) → Guardian** — no path through
+an act ever skips a fight, and none arrives at the funnel holding only half the fork.
 
 **The Mentor row (acts 1-4).** Acts 1 through 4 each splice one extra forced single-node
-`classReward` row into the shape above, giving them 8 rows against Act 5's 7. It sits
+`classReward` row into the shape above, giving them 9 rows against Act 5's 8. It sits
 **immediately before the Skirmish** (2026-09-05, per user direction — it was immediately
 *after*, and Act 1 only, until then), so the Class is in hand for the act's first
 recruitable fight rather than arriving just after it. A Mentor act therefore reads
-**Fight → pick 1 of 3 → Mentor → Skirmish → pick 1 of 3 → (Elite or Battle) → Guild Hall
-→ Guardian**, and its Skirmish lands one row later than Act 5's (`MENTOR_ROW`,
+**Fight → pick 1 of 3 → Mentor → Skirmish → pick 1 of 3 → (Elite or Battle) → pick 1 of 3
+→ (Guild Hall or Blacksmith) → Guardian**, and its Skirmish lands one row later than Act 5's (`MENTOR_ROW`,
 `LAST_MENTOR_ACT`, `skirmishRowFor`, `src/run/map.ts`). Both are single-node rows, so no
 path can bypass either.
 
 **Act 5 deliberately has none** — a different beat is being designed for it (2026-09-05,
-per user direction). It is currently the only act on the bare 7-row shape, which is why
+per user direction). It is currently the only act on the bare 8-row shape, which is why
 `test/map.test.ts` uses Act 5, not Act 2, wherever it indexes rows by hand.
+
+**The Blacksmith (act 3 on).** From act 3 the funnel widens to two and the act's guaranteed
+spend becomes a fork: the **Guild Hall** trades in people and new gear — recruits, Recruit
+Contracts, a 4-item shelf, and (2026-09-08, per user direction) **selling** from the bag —
+while the **Blacksmith** works on gear already owned: an item slot, a tier at the Anvil, an
+element at the Enchanter. One verb family each, so neither node needs explaining twice.
+
+Acts 1-2 keep the single Guild Hall. The early roster is still forming, and the Guild Hall is
+the only shelf of heroes in the run — a fork that can cost a player their recruit shelf wants
+an act with some gold already in it. The reward row feeding the funnel **fully connects** to
+both, unlike the steered Elite/Battle row: the fork is the point, and a seed must never decide
+it (`generateMap`, `src/run/map.ts`).
+
+The Blacksmith's slot is the dearest thing in the run — `SLOT_PRICE_BY_TARGET` charges 120 for a
+hero's second and 200 for its third, against an act income of roughly 50-120g. It has to be:
+the same grant is what the free `forgeReward` node hands out, and that node sits at the lowest
+weight on the reward row precisely to keep slots scarce. Gold buys a way to *pay* for that
+scarcity, never a way around it — the relationship the Anvil already has to buying a tier
+outright (`docs/equipment.md` §5).
+
+**A map that scrolls (2026-09-08, per user direction).** Nine rows no longer fit the well, and
+`.map-scroll` was always a scroller that had nothing to scroll. Two consequences worth keeping
+straight: `MapScreen`'s `ANCHOR_VIEWPORT_FRACTION` parks the player's current node in the lower
+third whenever it moves, so the rows being chosen between are the ones on screen; and the
+scroller carries ~96px of TOP padding, because the Guardian is the last row and no amount of
+scrolling can bring the last row down off the rim — only room above it can.
 
 Four Mentors means a run can Class up to four heroes rather than one, since the offer
 filters to heroes with no Class yet. Measured (`scripts/sim`, 40,000 runs at 3× XP), that

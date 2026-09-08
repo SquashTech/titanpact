@@ -13074,8 +13074,13 @@ textarea,
    a well — background, border, radius, recess — moved up to .map-well; what is
    left is the padding the route sits in and the internal scroll that keeps a
    map taller than its canvas reachable without the page itself growing. */
+/* The top padding is the point (2026-09-08, per user direction). The Guardian is the LAST row,
+   so no amount of scrolling can bring it down off the top edge — only room above it can, and
+   this is that room. Scrolled fully up, the boss now sits ~100px into the well instead of
+   against its rim, which is the reach the whole change was asked for. Reads as sky over the
+   summit rather than as dead space, because the well is already painting weather up there. */
 .map-scroll {
-  padding: 14px 12px;
+  padding: 96px 12px 24px;
 }
 
 /* The place's name, etched into the well's top-left corner (MapScreen's
@@ -13172,11 +13177,12 @@ textarea,
   position: relative;
   display: grid;
   grid-template-rows: repeat(var(--map-rows), var(--map-row-h));
-  /* Unchanged by the node glyphs: an act's map has to fit the canvas without
-     scrolling (8 rows in Act 1 x 74 + 28 padding = 620, against ~627 of room),
-     so the glyphs were paid for out of the tiles' own padding and leading
-     rather than out of the row — see .map-node-name and the tier paddings. */
-  --map-row-h: 74px;
+  /* The map SCROLLS as of 2026-09-08 (per user direction) — an act carries a third reward row
+     and a two-wide funnel now, and 9 rows x 74 will not fit the ~627px well. `.map-scroll`
+     was always a scroller; it simply never had anything to scroll. MapScreen's
+     ANCHOR_VIEWPORT_FRACTION is what keeps the player's own node on screen, and it is also
+     what finally pulls the Guardian out of the top edge at the end of an act. */
+  --map-row-h: 84px;
 }
 
 /* Act 6's corridor (docs/run-loop.md §4): two nodes in a well built for eight.
@@ -19586,6 +19592,64 @@ textarea,
 .item-service-button:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* The Guild Hall's sell row (SellSection). Wider than the Anvil/Enchant pair beside it in the
+   Blacksmith, because it is the only button on its row and the number is what the player is
+   reading. */
+.item-service-button.is-sell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 62px;
+}
+
+/* --- The Blacksmith's slot purchase ---------------------------------------
+   Sits in a HeroSlotCard's footer, under the slots it is buying another of, so the price is
+   read against the row it changes. The dearest thing in the run (shop.ts SLOT_PRICE_BY_TARGET),
+   so it states the gain and the cost on one line rather than making either one hunt for the
+   other. */
+.blacksmith-slot-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px 8px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.blacksmith-slot-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.blacksmith-slot-button:not(:disabled):hover {
+  border-color: var(--accent);
+}
+
+.blacksmith-slot-gain {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.blacksmith-slot-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+  color: rgb(224, 166, 60);
+  font-variant-numeric: tabular-nums;
 }
 
 .item-service-button:not(:disabled):hover {

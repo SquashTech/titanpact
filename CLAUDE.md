@@ -233,9 +233,14 @@ what's still unimplemented:
   inherent duals. Which specific type each hero starts mono as is still open (below).
 - Run structure (2026-08-16 sign-off, multi-act extension 2026-08-17): **a Slay the
   Spire-style branching map** — a uniform per-act shape of forced Fight → pick 1 of 3
-  reward → Skirmish → pick 1 of 3 reward → pick 1 of 2 (Elite or Battle) → Guild Hall →
-  an end-of-act **Guardian** boss fight, no path ever skipping a fight, and no path ever
-  losing the Elite/Battle choice (`docs/run-loop.md`). **2026-08-29:** the boss was
+  reward → Skirmish → pick 1 of 3 reward → pick 1 of 2 (Elite or Battle) → pick 1 of 3
+  reward → the funnel → an end-of-act **Guardian** boss fight, no path ever skipping a
+  fight, and no path ever losing a choice (`docs/run-loop.md`). **2026-09-08:** a third
+  reward row was added and the funnel became a **pick 1 of 2 from act 3** — Guild Hall
+  (people and new gear, and the run's only place to SELL) or **Blacksmith** (item slots,
+  the Anvil, the Enchanter, all for gold). One verb family per node; the Anvil and
+  Enchanter left the Guild Hall, and the free `forgeReward` Forge is unchanged. The map
+  now **scrolls**, which is what paid for the extra row. **2026-08-29:** the boss was
   renamed Ancient → **Guardian**; "Ancient" is reserved for something later in a run and
   is otherwise only the locked TYPE, which is untouched. The map's encounter labels are
   now a two-word vocabulary — **Monsters** (not recruitable: `fight`, `battle`) and

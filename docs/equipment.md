@@ -212,14 +212,17 @@ Four paths, each with a distinct role. This is what keeps gold, luck and patienc
 |---|---|---|
 | **Drop** | nothing | a random item |
 | **Shelf** (Guild Hall) | gold | one of 4 offered items |
-| **Anvil** (shop service) | gold | +1 tier on an item you already own |
+| **Anvil** (Blacksmith service) | gold | +1 tier on an item you already own |
 | **Merge** | a duplicate | +1 tier, free |
 
-### The Anvil and the Enchanter are shop services
+### The Anvil and the Enchanter are Blacksmith services
 
-Both live in the Guild Hall shop, repeatable, **unlimited so long as the player can pay**. The
-dedicated map nodes survive as the *free* single-use version — one Anvil node, one Enchanter
-node — so the reward row still has a spike in it, but gold is the reliable route.
+Both live at the **Blacksmith** node (2026-09-08, per user direction — they were at the Guild
+Hall until then), repeatable and **unlimited so long as the player can pay**. The split is one
+verb family per node: the Guild Hall trades in people and new gear, the Blacksmith works on
+gear you already own, and it sells item slots alongside these two
+(`docs/run-loop.md` "The Blacksmith"). There are no free Anvil or Enchanter map nodes — the
+reward row's spike in this space is the `forgeReward` Forge, which grants a slot.
 
 Prices, first-pass and untuned. The Anvil is deliberately **more expensive than buying that
 tier outright** (150 gold buys a Mythic off the shelf; 275 lifts a Common to one). You are

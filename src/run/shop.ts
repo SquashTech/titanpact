@@ -59,6 +59,22 @@ export const ENCHANT_PRICE_BY_RARITY: Record<EquipmentRarity, number> = {
   mythic: 120,
 };
 
+/**
+ * The Blacksmith's item slot, keyed by the slot being bought — 2 is a hero's second, 3 its third
+ * (MAX_ITEM_SLOTS). Deliberately the dearest thing in the run (2026-09-08, per user direction):
+ * an act pays roughly 50-120g, so the second slot is most of an act's income and the third most
+ * of two, and the Blacksmith is only on the map from act 3.
+ *
+ * It has to be. A slot is permanent and compounds with every drop after it, and the reward row
+ * keeps forgeReward at the lowest weight it carries precisely to keep slots scarce. Gold must be
+ * a way to PAY for that scarcity, never a way around it — the same relationship the Anvil above
+ * has to buying a tier outright.
+ */
+export const SLOT_PRICE_BY_TARGET: Record<number, number> = {
+  2: 120,
+  3: 200,
+};
+
 export const GUILD_HALL_EQUIPMENT_OFFER_COUNT = 4;
 
 export interface GuildHallOffers {

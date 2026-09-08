@@ -65,7 +65,9 @@ export function ForgeScreen({ run, onRunChange, onContinue }: Props) {
             ? `${grantedHero.name} can carry one more item.`
             : anyEligible
               ? 'Choose a hero to gain an item slot for the rest of the run. Hold to review a sheet.'
-              : `Every hero is already at the ${MAX_ITEM_SLOTS}-slot cap — there is nothing the smith can add.`
+              : // No "smith" here: the Blacksmith is its own node now, and the free Forge must not
+                // read as the paid one (2026-09-08, per user direction).
+                `Every hero is already at the ${MAX_ITEM_SLOTS}-slot cap — there is nothing left to add.`
         }
       />
 

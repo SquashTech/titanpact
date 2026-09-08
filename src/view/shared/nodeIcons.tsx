@@ -70,6 +70,14 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
       <path fillRule="evenodd" d="M3.4 11.2h17.2v10.6H3.4Zm8.6 2.8a3.2 3.2 0 0 0-3.2 3.2v4.6h6.4v-4.6a3.2 3.2 0 0 0-3.2-3.2Z" />
     </>
   ),
+  // The smith's HAMMER against the Forge's anvil below: the Forge is a place you find, the
+  // Blacksmith is someone you pay, and the two must never be read for each other at 20px.
+  blacksmith: (
+    <>
+      <path d="M4.4 3.4h9.4l2.6 1.9v4.2l-2.6 1.9H4.4a1.4 1.4 0 0 1-1.4-1.4V4.8a1.4 1.4 0 0 1 1.4-1.4Z" />
+      <path d="M8.2 11.4h3.4v9.2a1.7 1.7 0 0 1-3.4 0Z" />
+    </>
+  ),
   equipmentReward: SECTION_PATHS.equipment,
   // The Gem's own cut (relicIcons.tsx) — one picture per concept, the same rule gold and XP follow.
   gemReward: GEM,

@@ -14,6 +14,7 @@ export const MAP_NODE_TYPES = [
   'elite',
   'boss',
   'shop',
+  'blacksmith',
   'equipmentReward',
   'gemReward',
   'passiveReward',
@@ -50,9 +51,9 @@ export interface RunMap {
   bossNodeId: string;
 }
 
-// row 0 fight, 1/3 pick-1-of-3 rewards, 2 skirmish, 4 elite-or-battle,
-// 5 Guild Hall funnel, 6 boss. Acts 1-4 splice in the Mentor row (below).
-const BASE_ROW_WIDTHS = [1, 3, 1, 3, 2, 1, 1] as const;
+// row 0 fight, 1/3/5 pick-1-of-3 rewards, 2 skirmish, 4 elite-or-battle,
+// 6 the shop funnel, 7 boss. Acts 1-4 splice in the Mentor row (below).
+const BASE_ROW_WIDTHS = [1, 3, 1, 3, 2, 3, 1, 1] as const;
 const SKIRMISH_ROW = 2;
 
 /**
@@ -92,9 +93,26 @@ function skirmishRowFor(actNumber: number): number {
   return hasMentorRow(actNumber) ? SKIRMISH_ROW + 1 : SKIRMISH_ROW;
 }
 
+/**
+ * The Blacksmith (2026-09-08, per user direction): from act 3 the funnel row widens to TWO, and
+ * the act's one guaranteed spend becomes a fork — heroes and gear at the Guild Hall, or slots,
+ * tiers and enchants at the Blacksmith. Acts 1-2 keep the single Guild Hall: the early roster is
+ * still forming, and a fork that can cost a player their only recruit shelf wants a run with
+ * some gold in it.
+ */
+const BLACKSMITH_FIRST_ACT = 3;
+
+function hasBlacksmith(actNumber: number): boolean {
+  return actNumber >= BLACKSMITH_FIRST_ACT;
+}
+
 function rowWidthsFor(actNumber: number): number[] {
-  if (!hasMentorRow(actNumber)) return [...BASE_ROW_WIDTHS];
-  return [...BASE_ROW_WIDTHS.slice(0, MENTOR_ROW), 1, ...BASE_ROW_WIDTHS.slice(MENTOR_ROW)];
+  const widths = hasMentorRow(actNumber)
+    ? [...BASE_ROW_WIDTHS.slice(0, MENTOR_ROW), 1, ...BASE_ROW_WIDTHS.slice(MENTOR_ROW)]
+    : [...BASE_ROW_WIDTHS];
+  // The funnel is always the row under the boss, wherever the Mentor splice left it.
+  if (hasBlacksmith(actNumber)) widths[widths.length - 2] = 2;
+  return widths;
 }
 
 /** The pick-1-of-3 width. The Tutor only ever seats in a reward row this wide. */
@@ -182,7 +200,9 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
   const rowWidths = rowWidthsFor(actNumber);
   const bossRow = rowWidths.length - 1;
   const funnelRow = bossRow - 1;
-  const eliteRow = funnelRow - 1;
+  // A pick-1-of-3 reward row sits between the Elite/Battle choice and the funnel, so the Elite
+  // row is two up from the funnel rather than one.
+  const eliteRow = funnelRow - 2;
   const mentorRow = hasMentorRow(actNumber) ? MENTOR_ROW : -1;
   const skirmishRow = skirmishRowFor(actNumber);
 
@@ -196,7 +216,7 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
     if (row === mentorRow) return 'classReward';
     if (row === skirmishRow) return 'skirmish';
     if (row === eliteRow) return col === 0 ? 'elite' : 'battle';
-    if (row === funnelRow) return 'shop';
+    if (row === funnelRow) return col === 0 ? 'shop' : 'blacksmith';
     return 'boss';
   }
 
@@ -253,6 +273,14 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
 
     // The row feeding eliteRow STEERS: left -> Elite, right -> Battle, middle
     // keeps both — so no path ever loses the choice, only prices it.
+    // Into the funnel: full connection, never steered. From act 3 that row is a Guild
+    // Hall/Blacksmith fork, and it is the act's ONLY guaranteed spend — every path has to
+    // arrive holding both options, or the fork is decided by the map instead of the player.
+    if (row + 1 === funnelRow && to.length > 1) {
+      for (const fromId of from) nodes[fromId].nextIds = [...to];
+      continue;
+    }
+
     if (row + 1 === eliteRow) {
       const eliteId = to[0];
       const battleId = to[to.length - 1];
