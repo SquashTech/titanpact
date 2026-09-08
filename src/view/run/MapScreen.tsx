@@ -1,9 +1,8 @@
-import React, { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
 import { SEAL_ACTS } from '../../run/state';
 import { reachableNodeIds } from '../../run/runProgress';
-import type { MapNode, MapNodeType } from '../../run/map';
-import { useLongPress } from '../shared/MoveTile';
+import type { MapNode, MapNodeType, RunMap } from '../../run/map';
 import { RosterManagementScreen } from './RosterManagementScreen';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { ResourceGlyph, type ResourceKind } from '../shared/RunGlyph';
@@ -109,7 +108,7 @@ const NODE_COLORS: Record<MapNodeType, string> = {
   finale: 'var(--tier-mythic)',
 };
 
-// Long-press preview text: what the node pays out, and nothing else. Difficulty
+// The line under a choice card's name: what the node pays out, and nothing else. Difficulty
 // rides on NODE_COLORS, recruitability on NODE_NAMES.
 const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
   fight: '15–25g · 2 XP · item',
@@ -140,8 +139,7 @@ function nodeRewardText(type: MapNodeType): string {
   return type === 'boss' ? `${base} · Guardian’s Banner` : base;
 }
 
-// Silhouette tier, done with border-radius rather than clip-path so the
-// reachable/current box-shadow glows are never cropped.
+// How much weight a choice card carries — the Guardian is not a Gem.
 type NodeTier = 'reward' | 'encounter' | 'landmark' | 'ancient';
 
 const NODE_TIERS: Record<MapNodeType, NodeTier> = {
@@ -167,242 +165,104 @@ const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   finale: 'ancient',
 };
 
-/** Where the anchor node sits in the scroller, top to bottom. Lower third, so the rows the player is choosing between are the ones on screen. */
-const ANCHOR_VIEWPORT_FRACTION = 0.72;
-
-// Fixed 3-column geometry shared by .map-row and the edge overlay; a 2-node
-// row spreads to the outer columns so a fork reads as a fork.
-const MAP_COLUMNS = 3;
-const ROW_COLUMNS: Record<number, readonly number[]> = {
-  1: [2],
-  2: [1, 3],
-  3: [1, 2, 3],
-};
-
-function columnOf(indexInRow: number, rowLength: number): number {
-  return (ROW_COLUMNS[rowLength] ?? ROW_COLUMNS[MAP_COLUMNS])[indexInRow] ?? 2;
-}
-
-/** A measured node tile in .map-grid layout px (offsetLeft/Top — unaffected by .app-shell's transform scale). */
-interface NodeBox {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-interface MapGeometry {
-  width: number;
-  height: number;
-  boxes: Record<string, NodeBox>;
-}
-
-const DOCK_GAP = 3;
-/** Sibling-edge fan spread as a fraction of tile width, and its cap. */
-const FAN_SPREAD = 0.24;
-const FAN_SPREAD_MAX = 13;
-
-interface MapEdge {
-  key: string;
-  /** Cubic path, parent tile's top edge -> child tile's bottom edge. */
-  d: string;
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  /** The destination's accent. */
-  color: string;
-  /** Both ends already walked. */
-  traveled: boolean;
-  /** Leaves the current node and lands on a reachable one. */
-  open: boolean;
-}
-
-function fanOffset(index: number, count: number, width: number): number {
-  if (count < 2) return 0;
-  const spread = Math.min(width * FAN_SPREAD, FAN_SPREAD_MAX);
-  return (index - (count - 1) / 2) * spread;
-}
-
-// Edges dock to measured boxes (tiles differ in size by tier), leave the parent
-// heading straight up and arrive at the child still heading straight up, so
-// the end tangents are always vertical and caps/arrows never need rotating.
-// `map.rows` is bottom-up; a node's `nextIds` sit one row ABOVE it on screen.
-function buildEdges(
-  rowsTopDown: readonly (readonly string[])[],
-  nodes: Record<string, MapNode>,
-  geometry: MapGeometry,
-  currentNodeId: string | null,
-  reachable: ReadonlySet<string>,
-  visited: ReadonlySet<string>,
-): MapEdge[] {
-  const { boxes } = geometry;
-
-  // Both fans are sorted by measured x: `nextIds` is in generation order, and
-  // handing out fan slots in that order crossed lines at the tile edge.
-  const parentsOf = new Map<string, string[]>();
-  for (const rowIds of rowsTopDown) {
-    for (const id of rowIds) {
-      for (const childId of nodes[id]?.nextIds ?? []) {
-        const list = parentsOf.get(childId);
-        if (list) list.push(id);
-        else parentsOf.set(childId, [id]);
-      }
-    }
+/**
+ * What a choice leads ON to (2026-09-08, per user direction). The map no longer shows the act;
+ * it shows where you are and what you may take next. Two of the seven branch points in an act
+ * actually route — measured, the rest reach the same places whichever option you pick — and both
+ * of those price the choice in front of you against the one behind it: the reward row STEERS into
+ * Elite-or-Battle, and which of those you take limits which of the next row's rewards you reach.
+ *
+ * Pricing only works if the price is visible before it is paid, which the whole map used to do
+ * by being whole. This is what does it instead: each option carries what it opens, and only when
+ * the options differ — if every choice on the row leads to the same places, the marker is noise
+ * and is not drawn. Derived, never authored, so a change to the generator shows up here for free.
+ */
+function leadOnTypes(map: RunMap, nodeId: string): MapNodeType[] {
+  const seen: MapNodeType[] = [];
+  for (const nextId of map.nodes[nodeId]?.nextIds ?? []) {
+    const type = map.nodes[nextId]?.type;
+    if (type && !seen.includes(type)) seen.push(type);
   }
-  const byX = (a: string, b: string) => (boxes[a]?.x ?? 0) - (boxes[b]?.x ?? 0);
-  for (const list of parentsOf.values()) list.sort(byX);
+  return seen;
+}
 
-  const edges = rowsTopDown.flatMap((rowIds) =>
-    rowIds.flatMap((id) => {
-      const from = boxes[id];
-      const childIds = [...(nodes[id]?.nextIds ?? [])].sort(byX);
-      return childIds.flatMap((childId, childIndex) => {
-        const to = boxes[childId];
-        if (!from || !to) return [];
+function leadOnsDiffer(map: RunMap, nodeIds: readonly string[]): boolean {
+  if (nodeIds.length < 2) return false;
+  const signature = (id: string) => leadOnTypes(map, id).join('+');
+  const first = signature(nodeIds[0]);
+  return nodeIds.some((id) => signature(id) !== first);
+}
 
-        const parents = parentsOf.get(childId) ?? [];
-        const x1 = from.x + from.w / 2 + fanOffset(childIndex, childIds.length, from.w);
-        const y1 = from.y - DOCK_GAP;
-        const x2 = to.x + to.w / 2 + fanOffset(parents.indexOf(id), parents.length, to.w);
-        const y2 = to.y + to.h + DOCK_GAP;
-        // Handle floored for a curve on near-touching rows, capped at half the
-        // run so the two handles can never cross (a ~16px gap otherwise doubles back).
-        const run = y1 - y2;
-        const handle = Math.min(Math.max(12, run * 0.48), run / 2);
-
-        return [{
-          key: id + '->' + childId,
-          d: `M ${x1} ${y1} C ${x1} ${y1 - handle}, ${x2} ${y2 + handle}, ${x2} ${y2}`,
-          x1,
-          y1,
-          x2,
-          y2,
-          color: NODE_COLORS[nodes[childId]?.type ?? 'event'],
-          traveled: visited.has(id) && visited.has(childId),
-          open: currentNodeId === id && reachable.has(childId),
-        }];
-      });
-    }),
+/**
+ * How far to the Guardian, one pip per row. It replaces the thing the whole-map view gave away
+ * for free and the only thing worth keeping from it — an act's LENGTH. The last pip is the
+ * Guardian itself, drawn rather than dotted, because "how many more" and "what is at the end"
+ * are the same question.
+ */
+function ProgressRail({ map, currentRow }: { map: RunMap; currentRow: number }) {
+  const bossRow = map.rows.length - 1;
+  return (
+    <div className="map-rail" aria-label={`Row ${currentRow + 1} of ${map.rows.length}`}>
+      {map.rows.map((_, row) => {
+        const state = row < currentRow ? 'is-done' : row === currentRow ? 'is-here' : '';
+        if (row === bossRow) {
+          return (
+            <span key={row} className={`map-rail-boss ${state}`} style={{ '--node-color': NODE_COLORS.boss } as CSSProperties}>
+              <NodeGlyph type="boss" className="map-rail-boss-glyph" />
+            </span>
+          );
+        }
+        return <span key={row} className={`map-rail-pip ${state}`} aria-hidden="true" />;
+      })}
+    </div>
   );
-
-  // Paint order: structure, then history, then the live choice on top.
-  const rank = (e: MapEdge) => (e.open ? 2 : e.traveled ? 1 : 0);
-  return edges.sort((a, b) => rank(a) - rank(b));
 }
 
-function sameGeometry(a: MapGeometry, b: MapGeometry): boolean {
-  if (a.width !== b.width || a.height !== b.height) return false;
-  const aIds = Object.keys(a.boxes);
-  if (aIds.length !== Object.keys(b.boxes).length) return false;
-  return aIds.every((id) => {
-    const prev = a.boxes[id];
-    const next = b.boxes[id];
-    return !!next && prev.x === next.x && prev.y === next.y && prev.w === next.w && prev.h === next.h;
-  });
-}
-
-// offsetLeft/Top, not getBoundingClientRect: .app-shell is transform-scaled
-// (src/app/uiScale.ts) and offsets are pre-transform px — the SVG's viewBox space.
-function useMapGeometry(
-  nodeRefs: React.RefObject<Map<string, HTMLElement>>,
-  mapKey: string,
-): [React.RefObject<HTMLDivElement | null>, MapGeometry | null] {
-  const gridRef = useRef<HTMLDivElement | null>(null);
-  const [geometry, setGeometry] = useState<MapGeometry | null>(null);
-
-  useLayoutEffect(() => {
-    const grid = gridRef.current;
-    if (!grid) return;
-
-    const measure = () => {
-      const boxes: Record<string, NodeBox> = {};
-      for (const [id, el] of nodeRefs.current) {
-        boxes[id] = { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight };
-      }
-      const next = { width: grid.offsetWidth, height: grid.offsetHeight, boxes };
-      // Bail when nothing moved — a ResizeObserver that setStates unconditionally loops.
-      setGeometry((prev) => (prev && sameGeometry(prev, next) ? prev : next));
-    };
-
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(grid);
-    return () => observer.disconnect();
-  }, [nodeRefs, mapKey]);
-
-  return [gridRef, geometry];
-}
-
-// Not `disabled`: disabled controls suppress pointer events, which would kill
-// long-press on locked nodes. Reachability is enforced in the tap handler.
-function MapNodeButton({
+/**
+ * One thing the player may go and do. Big, named and spelled out — the tiles dropped their
+ * labels because twenty-five of them had to fit a well, and two or three do not.
+ */
+function ChoiceCard({
+  map,
   node,
-  column,
-  isCurrent,
-  isReachable,
-  isVisited,
+  showLeadOn,
   onSelect,
-  onPreview,
-  registerRef,
 }: {
+  map: RunMap;
   node: MapNode;
-  /** 1-based grid column (columnOf). */
-  column: number;
-  isCurrent: boolean;
-  isReachable: boolean;
-  isVisited: boolean;
+  showLeadOn: boolean;
   onSelect: () => void;
-  onPreview: () => void;
-  registerRef: (el: HTMLElement | null) => void;
 }) {
-  const classes = [
-    'map-node',
-    `tier-${NODE_TIERS[node.type]}`,
-    isCurrent ? 'current' : '',
-    isReachable ? 'reachable' : '',
-    isVisited ? 'visited' : '',
-    !isReachable && !isVisited && !isCurrent ? 'locked' : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
-  const longPress = useLongPress(onPreview, () => {
-    if (isReachable) onSelect();
-  });
-
+  const leadOns = showLeadOn ? leadOnTypes(map, node.id) : [];
   return (
     <button
-      ref={registerRef}
       type="button"
-      className={classes}
-      style={{ '--node-color': NODE_COLORS[node.type], gridColumn: column } as CSSProperties}
-      aria-disabled={!isReachable}
-      /* The tile prints no name (2026-09-08, per user direction), so the label is the whole
-         readout rather than the one word the span used to carry — and it is what a screen
-         reader gets in place of a silhouette. */
-      aria-label={`${NODE_NAMES[node.type]} — ${nodeRewardText(node.type)}`}
-      {...longPress}
+      className={`map-choice tier-${NODE_TIERS[node.type]}`}
+      style={{ '--node-color': NODE_COLORS[node.type] } as CSSProperties}
+      onClick={onSelect}
     >
-      <NodeGlyph type={node.type} className="map-node-glyph" />
+      <span className="map-choice-glyph">
+        <NodeGlyph type={node.type} />
+      </span>
+      <span className="map-choice-body">
+        <span className="map-choice-name">{NODE_NAMES[node.type]}</span>
+        <span className="map-choice-reward">{nodeRewardText(node.type)}</span>
+      </span>
+      {leadOns.length > 0 && (
+        <span className="map-choice-leadon">
+          <span className="map-choice-leadon-label">Opens</span>
+          {leadOns.map((type) => (
+            <span key={type} className="map-choice-leadon-chip" style={{ '--node-color': NODE_COLORS[type] } as CSSProperties}>
+              <NodeGlyph type={type} className="map-choice-leadon-glyph" />
+              {NODE_NAMES[type]}
+            </span>
+          ))}
+        </span>
+      )}
     </button>
   );
 }
 
-function MapNodePreviewPopup({ node, onClose }: { node: MapNode; onClose: () => void }) {
-  return (
-    <div className="log-overlay" onClick={onClose}>
-      <div className="log-panel move-popup-panel" style={{ '--node-color': NODE_COLORS[node.type] } as CSSProperties}>
-        <div className="log-panel-header">
-          <span>
-            <NodeGlyph type={node.type} className="map-popup-glyph" /> {NODE_NAMES[node.type]}
-          </span>
-        </div>
-        <div className="move-popup-description">{nodeRewardText(node.type)}</div>
-        <div className="move-popup-hint">Tap anywhere to close</div>
-      </div>
-    </div>
-  );
-}
 
 // docs/locations.md §4 — the well carries the act's Location at a fraction of
 // the arrival screen's strength.
@@ -427,44 +287,15 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
   const [showMenu, setShowMenu] = useState(false);
   // Two taps to abandon: quitting is reversible now, but abandoning deletes the save.
   const [confirmingQuit, setConfirmingQuit] = useState(false);
-  const [previewNode, setPreviewNode] = useState<MapNode | null>(null);
-  // Called unconditionally — hooks can't sit behind the `if (!map)` bail.
-  const nodeRefs = useRef<Map<string, HTMLElement>>(new Map());
-  const [gridRef, geometry] = useMapGeometry(nodeRefs, run.map ? `${run.actNumber}:${run.map.seed}` : 'none');
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const anchorId = run.currentNodeId ?? run.map?.startNodeIds[0] ?? null;
-
-  /**
-   * The map is taller than its well now that an act carries three reward rows (map.ts
-   * BASE_ROW_WIDTHS), so it scrolls — and a scrolling map has to place itself. Where the player
-   * IS goes in the lower third, which puts the two or three rows they are choosing between above
-   * it and, at the end of an act, lands the Guardian mid-screen instead of jammed against the top
-   * edge, which is what the whole-map fit used to cost.
-   *
-   * Measured off rects rather than offsetTop: the tiles' offsetParent is the grid, not the
-   * scroller, and the grid carries the scroller's padding between them.
-   *
-   * Runs only when the anchor moves, so a player who scrolls to read ahead keeps their position
-   * until they actually take a node.
-   */
-  useLayoutEffect(() => {
-    const scroller = scrollRef.current;
-    const el = anchorId ? nodeRefs.current.get(anchorId) : null;
-    if (!scroller || !el) return;
-    const scRect = scroller.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
-    scroller.scrollTop += elRect.top + elRect.height / 2 - (scRect.top + scRect.height * ANCHOR_VIEWPORT_FRACTION);
-  }, [anchorId, geometry]);
-
   const map = run.map;
   if (!map) return null;
 
   const location = locationForAct(run.locationIds, run.actNumber);
 
-  const reachable = new Set(reachableNodeIds(run));
-  const visited = new Set(run.visitedNodeIds);
-  const rowsTopDown = [...map.rows].reverse();
-  const edges = geometry ? buildEdges(rowsTopDown, map.nodes, geometry, run.currentNodeId, reachable, visited) : [];
+  // The whole view: where the player stands, and what they may take from here.
+  const choiceIds = reachableNodeIds(run);
+  const currentRow = run.currentNodeId != null ? map.nodes[run.currentNodeId]?.row ?? 0 : -1;
+  const showLeadOn = leadOnsDiffer(map, choiceIds);
 
   return (
     <div className="map-screen" data-location={location.id} style={{ '--node-rgb': location.tintRgb } as CSSProperties}>
@@ -519,76 +350,26 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
         </button>
       </div>
 
-      {/* The well is a frame with a scroller inside it: atmosphere and placard
-          overhang the padding, and negative insets inside a scroll container
-          become scrollable overflow. */}
+      {/* The well is a scene now, not a diagram (2026-09-08, per user direction): the act's
+          Location, the rail saying how far is left, and the two or three places the player may
+          go from here. The whole-act graph — grid, measured edge overlay, scroll anchoring — is
+          gone; `RunMap` and every rule that reads it are untouched, this was only ever the view. */}
       <div className="map-well">
         <LocationAmbience location={location} density={MAP_MOTE_DENSITY} className="map-atmosphere" />
         <MapPlacard location={location} />
 
-        <div className="map-scroll screen-scroll" ref={scrollRef}>
-          {/* Act 6 is two nodes, so it gets the well's height rather than huddling at the top of one built for eight. */}
-          <div
-            className={`map-grid${rowsTopDown.length <= 2 ? ' is-corridor' : ''}`}
-            ref={gridRef}
-            style={{ '--map-rows': rowsTopDown.length } as CSSProperties}
-          >
-            {/* viewBox = measured size, so 1 user unit = 1 CSS px. All casings
-                are laid before any core so a casing never cuts a crossing line. */}
-            {geometry && (
-              <svg
-                className="map-edges"
-                viewBox={`0 0 ${geometry.width} ${geometry.height}`}
-                width={geometry.width}
-                height={geometry.height}
-                aria-hidden="true"
-              >
-                {edges.map((edge) => (
-                  <path key={`casing:${edge.key}`} className="map-edge-casing" d={edge.d} />
-                ))}
-                {edges.map((edge) => (
-                  <g
-                    key={edge.key}
-                    className={['map-edge-group', edge.traveled ? 'traveled' : '', edge.open ? 'open' : ''].filter(Boolean).join(' ')}
-                    style={{ '--edge-color': edge.color } as CSSProperties}
-                  >
-                    <path className="map-edge" d={edge.d} />
-                    <circle className="map-edge-cap" cx={edge.x1} cy={edge.y1} r={2.2} />
-                    {edge.open ? (
-                      // Always drawn straight up: the path's end tangent is always vertical.
-                      <path className="map-edge-arrow" d={`M ${edge.x2 - 4.2} ${edge.y2 + 5} L ${edge.x2} ${edge.y2} L ${edge.x2 + 4.2} ${edge.y2 + 5}`} />
-                    ) : (
-                      <circle className="map-edge-cap" cx={edge.x2} cy={edge.y2} r={2.2} />
-                    )}
-                  </g>
-                ))}
-              </svg>
-            )}
+        <ProgressRail map={map} currentRow={currentRow} />
 
-            {rowsTopDown.map((rowIds, rowIndex) => (
-              <div className="map-row" key={rowIndex}>
-                {rowIds.map((nodeId, indexInRow) => {
-                  const node = map.nodes[nodeId];
-                  return (
-                    <MapNodeButton
-                      key={nodeId}
-                      node={node}
-                      column={columnOf(indexInRow, rowIds.length)}
-                      isCurrent={run.currentNodeId === nodeId}
-                      isReachable={reachable.has(nodeId)}
-                      isVisited={visited.has(nodeId)}
-                      onSelect={() => onSelectNode(nodeId)}
-                      onPreview={() => setPreviewNode(node)}
-                      registerRef={(el) => {
-                        if (el) nodeRefs.current.set(nodeId, el);
-                        else nodeRefs.current.delete(nodeId);
-                      }}
-                    />
-                  );
-                })}
-              </div>
-            ))}
-        </div>
+        <div className="map-choices">
+          {choiceIds.map((nodeId) => (
+            <ChoiceCard
+              key={nodeId}
+              map={map}
+              node={map.nodes[nodeId]}
+              showLeadOn={showLeadOn}
+              onSelect={() => onSelectNode(nodeId)}
+            />
+          ))}
         </div>
       </div>
 
@@ -656,7 +437,6 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
 
       {showRoster && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setShowRoster(false)} />}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
-      {previewNode && <MapNodePreviewPopup node={previewNode} onClose={() => setPreviewNode(null)} />}
     </div>
   );
 }

@@ -13075,15 +13075,6 @@ textarea,
    a well — background, border, radius, recess — moved up to .map-well; what is
    left is the padding the route sits in and the internal scroll that keeps a
    map taller than its canvas reachable without the page itself growing. */
-/* The top padding is the point (2026-09-08, per user direction). The Guardian is the LAST row,
-   so no amount of scrolling can bring it down off the top edge — only room above it can, and
-   this is that room. Scrolled fully up, the boss now sits ~100px into the well instead of
-   against its rim, which is the reach the whole change was asked for. Reads as sky over the
-   summit rather than as dead space, because the well is already painting weather up there. */
-.map-scroll {
-  padding: 68px 12px 20px;
-}
-
 /* The place's name, etched into the well's top-left corner (MapScreen's
    `MapPlacard`). Unboxed, because the only rectangles on a screen are the
    things you can act on, and `pointer-events: none` so it can never eat a tap
@@ -13169,379 +13160,251 @@ textarea,
   animation: none;
 }
 
-/* The route's coordinate space. Rows are a fixed height and nodes are pinned
-   to one of three columns (MapScreen's ROW_COLUMNS) precisely so the edge
-   overlay can be drawn from arithmetic — see the SVG comment there. The row
-   height is what gives the lines enough run to read as travel rather than as
-   a seam between two tiles. */
-.map-grid {
-  position: relative;
-  display: grid;
-  grid-template-rows: repeat(var(--map-rows), var(--map-row-h));
-  /* The map SCROLLS as of 2026-09-08 (per user direction) — an act carries a third reward row
-     and a two-wide funnel now, and 9 rows x 74 will not fit the ~627px well. `.map-scroll`
-     was always a scroller; it simply never had anything to scroll. MapScreen's
-     ANCHOR_VIEWPORT_FRACTION is what keeps the player's own node on screen, and it is also
-     what finally pulls the Guardian out of the top edge at the end of an act. */
-  --map-row-h: 60px;
-}
+/* --- The act as a scene, not a diagram (2026-09-08, per user direction) ------
+   The map used to draw the whole act: a fixed-row grid, a measured SVG edge overlay and a
+   scroller anchored to the player's node. Measured, only two of an act's seven branch points
+   actually routed anywhere — the rest reached the same places whichever option was taken — so
+   the graph was spending the entire well to price two decisions. Those two are priced by the
+   cards' own "Opens" chips instead, and the well is free to be the place the player is standing
+   in. \`RunMap\` and every rule that reads it are untouched; this was only ever the view.
 
-/* Act 6's corridor (docs/run-loop.md §4): two nodes in a well built for eight.
-   The height goes to the rows instead of to dead space below them, so the last
-   walk of the run reads as a walk rather than as a map that failed to generate. */
-.map-grid.is-corridor {
-  --map-row-h: 220px;
-}
+   What replaced it: a rail across the top saying how far is left, and the two or three cards
+   underneath saying where you may go. */
 
-.map-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+/* How far to the Guardian. Sits above the choices rather than under them: it is context for the
+   decision, and the decision is what the thumb reaches for. */
+.map-rail {
+  flex: none;
+  display: flex;
   align-items: center;
-  justify-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 14px 16px 4px;
 }
 
-/* Pinned to the grid's origin and sized in JS to the measured grid box
-   (MapScreen's useMapGeometry), so one SVG user unit is one CSS px — the
-   overlay is never stretched, which is what lets curves, caps and dash
-   patterns keep their authored proportions at every viewport width. */
-.map-edges {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  overflow: visible;
+.map-rail-pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.5);
+  transition: background var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
 }
 
-/* Dark casing under every core stroke, laid down in its own pass before any
-   core is drawn (see MapScreen's two `edges.map` calls). Without it the route
-   dissolves wherever it crosses the well's warm pool or a tile's glow; with
-   it, every line is a lit cord on a dark ground no matter what it runs over. */
-.map-edge-casing {
-  fill: none;
-  stroke: #05070b;
-  stroke-width: 5.5;
-  stroke-linecap: round;
-  opacity: 0.8;
+.map-rail-pip.is-done {
+  background: rgba(var(--node-rgb), 0.75);
 }
 
-/*
- * Three states, in ascending order of "does this matter to me right now":
- * an unlit edge is structure (this is where the map goes), a traveled edge is
- * history, an open edge is the live choice leaving the node you're standing
- * on. The open one animates — it's the only moving thing on the screen, which
- * is what makes "these are your options" register without a label.
- */
-.map-edge {
-  fill: none;
-  stroke: var(--border-strong);
-  stroke-width: 2;
-  stroke-linecap: round;
-  opacity: 0.75;
+/* The one the player is standing on: bigger, lit, and ringed so it is findable without counting. */
+.map-rail-pip.is-here {
+  width: 11px;
+  height: 11px;
+  background: var(--text);
+  box-shadow: 0 0 0 3px rgba(var(--node-rgb), 0.3), 0 0 10px rgba(255, 255, 255, 0.45);
 }
 
-/* The socket where a line meets a tile. Same color as its own stroke, so the
-   two read as one object rather than as a line plus a bead. */
-.map-edge-cap {
-  fill: var(--border-strong);
-  opacity: 0.75;
+/* The last pip is drawn rather than dotted: "how many more" and "what is at the end" are the
+   same question, and answering both in one mark is why the rail is worth its room. */
+.map-rail-boss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-left: 3px;
+  color: var(--node-color);
+  opacity: 0.55;
+  transition: opacity var(--dur-mid) var(--ease-out), filter var(--dur-mid) var(--ease-out);
 }
 
-.map-edge-group.traveled .map-edge {
-  stroke: var(--accent);
-  stroke-width: 2;
-  opacity: 0.42;
-}
-
-.map-edge-group.traveled .map-edge-cap {
-  fill: var(--accent);
-  opacity: 0.42;
-}
-
-/* The live choice, drawn in the DESTINATION's own accent (--edge-color, set
-   per edge in MapScreen from NODE_COLORS) rather than a uniform gold: with
-   two or three options leaving the same tile, the line itself previews what
-   each one leads to before the player has read a single label. */
-.map-edge-group.open .map-edge {
-  stroke: var(--edge-color);
-  stroke-width: 2.5;
+.map-rail-boss.is-here {
   opacity: 1;
-  stroke-dasharray: 8 7;
-  filter: drop-shadow(0 0 4px var(--edge-color));
-  animation: map-edge-crawl 900ms linear infinite;
+  filter: drop-shadow(0 0 7px var(--node-color));
 }
 
-.map-edge-group.open .map-edge-cap {
-  fill: var(--edge-color);
-  opacity: 1;
+.map-rail-boss-glyph {
+  width: 20px;
+  height: 20px;
 }
 
-/* Arrowhead at the destination end of a live edge. Stroked rather than
-   filled so it keeps the same weight as the line it terminates. */
-.map-edge-arrow {
-  fill: none;
-  stroke: var(--edge-color);
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 0 4px var(--edge-color));
-}
-
-/* Negative offset only: the dashes crawl in the direction the path was
-   authored in (parent -> child), which on this map is always upward, toward
-   the destination. Flipping the sign would make the route appear to flow
-   back down into the node the player is standing on. */
-@keyframes map-edge-crawl {
-  to {
-    stroke-dashoffset: -15;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .map-edge-group.open .map-edge {
-    animation: none;
-  }
-}
-
-/* Long-pressable (useLongPress, opens MapNodePreviewPopup). */
-.map-node {
-  position: relative;
+/* The choices. Centred in what the rail leaves, so one card sits where three would — the act's
+   forced single-node rows must not read as a screen that failed to load. */
+.map-choices {
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 14px 18px;
+}
+
+/* Named and spelled out. The tiles gave up their labels because twenty-five of them had to fit
+   one well; two or three have room to say what they are and what they pay. */
+.map-choice {
+  position: relative;
+  display: flex;
   align-items: center;
-  gap: 4px;
-  /* A lit stone, not a form control (2026-09-08, per user direction). The plate used to be the
-     app's generic --surface-raised behind a gray --border, with the node's colour reaching it
-     only through the ::before wash and the glyph — nine of those in a column read as a stack of
-     UI buttons sitting on a map rather than as places on it. Now the colour is IN the material:
-     a little of it in the fill, more of it in the edge, and the wash on top of both. */
+  gap: 12px;
+  width: 100%;
+  overflow: hidden;
+  padding: 14px 14px;
   background: linear-gradient(
-    165deg,
-    color-mix(in srgb, var(--node-color) 13%, var(--panel-alt)),
-    color-mix(in srgb, var(--node-color) 5%, var(--panel)) 78%
+    120deg,
+    color-mix(in srgb, var(--node-color) 20%, var(--panel-alt)),
+    color-mix(in srgb, var(--node-color) 7%, var(--panel)) 72%
   );
-  border: 1px solid color-mix(in srgb, var(--node-color) 26%, var(--border));
+  border: 1px solid color-mix(in srgb, var(--node-color) 40%, var(--border));
   border-radius: var(--radius-md);
-  color: var(--text-dim);
-  padding: 13px 14px 12px;
-  font-size: 11px;
-  font-weight: 700;
-  text-align: center;
-  white-space: nowrap;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  opacity: 1;
-  cursor: default;
-  min-width: 76px;
-  box-shadow: var(--hairline);
-  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out),
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--hairline), var(--elev-1);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out),
     border-color var(--dur-fast) var(--ease-out);
 }
 
-/*
- * The --node-color wash: a soft pool of the node's own accent gathering at
- * the top of the tile, behind the glyph. This is what lets a node's type read
- * from across the screen at map scale — the 10px uppercase label underneath
- * is confirmation, not the primary signal.
- *
- * Done as a low-opacity pseudo-element rather than a `rgb(from …)` /
- * `color-mix()` tint in the background stack because --node-color arrives as
- * an arbitrary author string (MapScreen's NODE_COLORS mixes `var(--enemy)`
- * with raw hex like `#8a94a8`), and the relative-color functions that could
- * alpha-adjust it in place are still too new to rely on for a phone-first
- * target. `opacity` on a solid fill does the same job everywhere.
- *
- * z-index/isolation are not needed: an ::before with no `position` context
- * of its own that is painted first still sits under the in-flow spans.
- */
-.map-node::before {
+/* The rail down the leading edge is the tier, and it is the only thing left carrying it now that
+   every card is the same width — an act's Guardian must not present as one more errand. */
+.map-choice::before {
   content: '';
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(ellipse 90% 62% at 50% 0%, var(--node-color), transparent 72%);
-  opacity: 0.22;
-  pointer-events: none;
-  transition: opacity var(--dur-fast) var(--ease-out);
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--node-color);
+  box-shadow: 0 0 12px var(--node-color);
 }
 
-/*
- * The node's own glyph (src/view/shared/nodeIcons.tsx). `position: relative`
- * for the same reason .map-node-name has it: .map-node::before is absolutely
- * positioned, and an absolutely positioned box paints above static in-flow
- * content no matter what order it is written in.
- *
- * Drawn in --node-color, not the tile's text color. The wash behind it is the
- * same hue at 0.22, so glyph and wash read as one lit object and the label
- * stays the single neutral thing on the tile — the reverse (a neutral glyph on
- * a colored wash) puts the least informative element in the brightest ink.
- *
- * Nothing here filters. The sprites this replaces (commit 9688834) carried a
- * grayscale(0.6) on locked nodes and were unreadable exactly where the map
- * most needs to be read — the route ahead. Every state on this tile is a
- * change in LIGHT (the parent's opacity, the glow below), never in color.
- */
-.map-node-glyph {
-  position: relative;
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  color: var(--node-color);
-  transition: filter var(--dur-fast) var(--ease-out);
-}
-
-/* The glyph picks up the same bloom the tile's border does, so a lit node is
-   lit all the way through rather than being a glowing frame around a flat
-   drawing. Locked and visited nodes get none — that difference IS the state. */
-.map-node.reachable .map-node-glyph,
-.map-node.current .map-node-glyph {
-  filter: drop-shadow(0 0 5px var(--node-color));
-}
-
-/* `line-height: 1.1` is load-bearing, not typographic taste: a single-line
-   label at the default leading reserves ~21px of box for ~12px of type, and
-   eight rows of that is more than the glyph above it costs. Tightened, the
-   label sits directly under its glyph as one object and the map still fits the
-   canvas — see .map-grid. */
-/* The tiles print no names (2026-09-08, per user direction). The glyph, the silhouette tier and
-   the colour already carry what the word did — recruitability included, since fight/battle draw
-   a CLAW and skirmish/elite a HELM (nodeIcons.tsx) — and a long press still reads the node out
-   in full. Dropping the labels is what let the row height fall from 84px to 60px, which is what
-   put a nine-row act back inside its well with no scroll AND kept the Guardian off the top rim.
-   The name lives on in each tile's aria-label. */
-
-.map-node.visited {
-  opacity: 0.5;
-  border-color: var(--node-color);
-}
-
-/* "You are here." The one node on the map that should be unmistakable, so it
-   gets the strongest treatment available: full accent border, a hard 1px ring
-   outside it, an ambient bloom, and a lit top edge. */
-.map-node.current {
-  opacity: 1;
-  border-color: var(--node-color);
-  color: var(--text);
-  box-shadow: var(--hairline-strong), 0 0 0 1px var(--node-color), 0 0 16px -2px var(--node-color), var(--elev-1);
-}
-
-.map-node.current::before {
-  opacity: 0.34;
-}
-
-.map-node.reachable {
-  opacity: 1;
-  border-color: var(--node-color);
-  color: var(--text);
-  cursor: pointer;
-  box-shadow: var(--hairline), 0 0 10px -4px var(--node-color), var(--elev-1);
-}
-
-.map-node.reachable:hover {
+.map-choice:hover {
   transform: translateY(-2px);
-  box-shadow: var(--hairline-strong), 0 0 18px -2px var(--node-color), var(--elev-2);
+  border-color: var(--node-color);
+  box-shadow: var(--hairline-strong), 0 0 20px -4px var(--node-color), var(--elev-2);
 }
 
-.map-node.reachable:hover::before {
-  opacity: 0.32;
-}
-
-.map-node.reachable:active {
+.map-choice:active {
   transform: translateY(0);
 }
 
-/* Spent nodes keep their color identity (so the path already walked stays
-   legible as a route) but drop the wash to near-nothing — a visited node
-   should read as history, never compete with the live choices ahead. */
-.map-node.visited::before {
-  opacity: 0.1;
+.map-choice-glyph {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--node-color) 30%, transparent), transparent 70%);
+  color: var(--node-color);
 }
 
-/*
- * Silhouette tiers (MapScreen's NODE_TIERS). The map has no icons, so the
- * only thing distinguishing a Guardian from a gold pickup at a glance is how
- * the tile is SHAPED — and shape survives being small in a way a drawing
- * doesn't. Pill = optional candy you pick up in passing. Plate = something
- * that stands in the route and has to be fought through. The two read apart
- * instantly in peripheral vision, which is the whole job.
- *
- * Sizing here fully replaces .map-node's own padding/font-size/min-width —
- * the base rule only carries what every tier shares.
- */
-/* Widths are the tier hierarchy now that no tile carries text, so they still step — 46 / 58 /
-   66 / 84 — but each is sized to its own glyph plus air rather than to the longest word that
-   used to sit under it. A 106px plate with a 21px hammer centred in it read as an empty box. */
-.map-node.tier-reward {
-  border-radius: 999px;
-  padding: 7px 12px;
-  min-width: 46px;
+.map-choice-glyph .node-glyph {
+  width: 26px;
+  height: 26px;
+  filter: drop-shadow(0 0 6px var(--node-color));
 }
 
-.map-node.tier-reward .map-node-glyph {
-  width: 15px;
-  height: 15px;
+.map-choice-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
 }
 
-.map-node.tier-encounter {
-  border-radius: 12px;
-  padding: 9px 14px;
-  min-width: 58px;
+.map-choice-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-.map-node.tier-landmark {
-  border-radius: 12px;
-  padding: 9px 16px;
-  min-width: 66px;
+.map-choice-reward {
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--text-dim);
 }
 
-.map-node.tier-landmark .map-node-glyph {
+/* The price of the choice — what taking this one opens, drawn only when the options on the row
+   differ (MapScreen leadOnsDiffer). Below the body rather than beside it: it is a consequence,
+   and consequences read after the thing that causes them. */
+.map-choice-leadon {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.map-choice-leadon-label {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.map-choice-leadon-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border: 1px solid color-mix(in srgb, var(--node-color) 55%, transparent);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--node-color) 14%, transparent);
+  color: var(--node-color);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.map-choice-leadon-glyph {
+  width: 11px;
+  height: 11px;
+}
+
+/* A lead-on chip pushes the reward line out of its own way. */
+.map-choice:has(.map-choice-leadon) {
+  padding-bottom: 30px;
+}
+
+/* Weight by tier. Every card is full width, so size and glow are what say a Guardian is not
+   an errand. */
+.map-choice.tier-ancient {
+  padding-top: 20px;
+  padding-bottom: 20px;
+  box-shadow: var(--hairline), 0 0 24px -6px var(--node-color), var(--elev-2);
+}
+
+.map-choice.tier-ancient .map-choice-glyph {
+  width: 54px;
+  height: 54px;
+}
+
+.map-choice.tier-ancient .map-choice-glyph .node-glyph {
+  width: 32px;
+  height: 32px;
+}
+
+.map-choice.tier-ancient .map-choice-name {
+  font-size: 18px;
+  letter-spacing: 0.09em;
+}
+
+.map-choice.tier-reward .map-choice-glyph {
+  width: 38px;
+  height: 38px;
+}
+
+.map-choice.tier-reward .map-choice-glyph .node-glyph {
   width: 21px;
   height: 21px;
 }
 
-/* The act's terminus. Widest tile on the map, and the only one carrying a
-   second ring — it should read as a wall across the top of the route rather
-   than one more stop on it. */
-.map-node.tier-ancient {
-  border-radius: 14px;
-  padding: 10px 20px;
-  min-width: 84px;
-  outline: 1px solid color-mix(in srgb, var(--node-color) 30%, var(--border));
-  outline-offset: 3px;
-}
-
-/* The largest glyph on the map, on the largest tile — and the only one whose
-   drawing has knocked-out holes (the skull's sockets and nose), which is
-   affordable precisely because it never renders anywhere smaller. */
-.map-node.tier-ancient .map-node-glyph {
-  width: 24px;
-  height: 24px;
-}
-
-.map-node.tier-ancient.reachable,
-.map-node.tier-ancient.current {
-  outline-color: var(--node-color);
-}
-
-/*
- * Locked = the route ahead, and the route ahead is the whole point of having
- * a map. This deliberately REVERSES the earlier treatment (opacity 0.25, wash
- * killed entirely, on the reasoning that a locked node "carries no
- * information beyond 'not yet'"): at that strength most of the screen was an
- * unreadable smear and a player could not plan more than one step. A locked
- * node keeps its type color and stays readable; what it loses is the lit
- * border and the glow. Reachability is a LIGHTING difference here, never a
- * visibility one — which is also why a visited node sits dimmer (0.5) than a
- * locked one: the past is finished, the future is still being planned.
- */
-.map-node.locked {
-  opacity: 0.62;
-}
-
-/* Kept, not zeroed — see .map-node.locked above. The wash and the glyph
-   together are the type signal, so erasing it would leave every unreachable
-   node an identical gray pill. */
-.map-node.locked::before {
-  opacity: 0.2;
+.map-choice.tier-reward .map-choice-name {
+  font-size: 13.5px;
 }
 
 /* Hub signpost: Relics/Roster/Reference, relocated out of the header

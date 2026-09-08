@@ -105,12 +105,30 @@ This supersedes the two-word Monsters/Skirmish label vocabulary of 2026-08-29 (C
 had already moved difficulty onto colour and glyph; the names now live only in each tile's
 `aria-label` and in its long-press card.
 
-Two things survive from the scrolling pass and should stay. The scroller is still a scroller —
-content that fits does not scroll, so it costs nothing and it is what keeps a tenth row from
-being a redesign — and `MapScreen`'s `ANCHOR_VIEWPORT_FRACTION` still parks the current node in
-the lower third whenever it moves. The ~96px of TOP padding stays too, and is now doing its job
-without any scrolling at all: the Guardian is the last row, nothing can bring the last row down
-off the rim except room above it, and that padding is the room.
+**The map does not show the act (2026-09-08, per user direction).** It shows where the player is
+standing and the two or three places they may go from there. The whole-act graph — the fixed-row
+grid, the measured SVG edge overlay, the scroll anchoring — is gone.
+
+The measurement that made this safe: across 40 seeds of an act, only **two of seven branch
+points actually route anywhere**. A reward row feeding the Mentor, a reward row feeding the
+funnel, and the funnel feeding the Guardian all reach the same places whichever option is taken.
+The two that matter are the reward row that STEERS into Elite-or-Battle, and the Elite/Battle row
+itself, whose two options open different rewards on the row above. So the graph was spending the
+entire well to price two decisions.
+
+Those two are priced by the choice cards instead. Each card carries an **"Opens" chip** naming
+what taking it leads to, drawn only when the options on the row differ (`leadOnTypes`,
+`leadOnsDiffer`, MapScreen.tsx) — if every option reaches the same places the marker is noise
+and is not drawn. It is derived from `nextIds`, never authored, so a change to the generator
+shows up in the UI for free.
+
+What the whole-act view gave away for free and was worth keeping is an act's LENGTH, and the
+**progress rail** replaces it: one pip per row, the current one lit, and the last pip drawn as
+the Guardian rather than dotted — "how many more" and "what is at the end" are the same question.
+
+Note what did NOT change: `RunMap`, `generateMap`, `reachableNodeIds`, `advanceToNode` and the save
+format are all untouched, and every map test still passes without edit. The act still HAS its
+shape; the player is simply walked through it rather than shown it.
 
 Four Mentors means a run can Class up to four heroes rather than one, since the offer
 filters to heroes with no Class yet. Measured (`scripts/sim`, 40,000 runs at 3× XP), that
