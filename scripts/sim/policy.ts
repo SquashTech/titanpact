@@ -14,6 +14,7 @@ import { moves } from '../../src/data/moves';
 import { equipment } from '../../src/data/equipment';
 import { passives } from '../../src/data/passives';
 import type { EquipmentDefinition } from '../../src/run/equipment';
+import { holdsItem } from '../../src/run/equipment';
 import type { RosterEntry } from '../../src/run/state';
 import { itemSlotsFor, rosterEntryTypes } from '../../src/run/progression';
 import { mergeStatMods } from '../../src/run/statMods';
@@ -128,8 +129,11 @@ export function bestWearer(
 ): { rosterId: string; gain: number; replaceIndex?: number } | null {
   let best: { rosterId: string; gain: number; replaceIndex?: number } | null = null;
   for (const entry of roster) {
-    // A hero never holds two copies, so an owner is not a candidate.
-    if (entry.equipment.includes(item.id)) continue;
+    // A hero never holds two copies, so an owner is not a candidate. Through holdsItem, not an id
+    // comparison: the rule is measured on the FAMILY, so a hero carrying an enchanted sibling of
+    // this item already holds it. Comparing ids let the sim pick that hero and then throw inside
+    // equipToRoster, which cost it 15% of every batch — silently, since a crashed run is dropped.
+    if (holdsItem(entry.equipment, item.id)) continue;
     const offered = itemValueFor(entry, item);
 
     if (entry.equipment.length < itemSlotsFor(heroes[entry.heroId], entry)) {

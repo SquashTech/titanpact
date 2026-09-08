@@ -551,20 +551,45 @@ every budget figure in the game (the roster's 450, a faction's flat 400, a champ
 the Endbringer's 900) is measured through `statBudget.ts`, so changing the rate changes every
 budget test at once rather than silently re-ranking the roster.
 
-**Why it matters.** The 450 budget charges one point per authored HP point. Before the
-doubling that was one point per *real* HP; after it, one point per two real HP. So the
-doubling silently halved what the roster charges for HP, and whether that was a correction or
-a gift depends entirely on the true rate:
+**What it is worth, measured** (`scripts/statprice.ts`, 2026-09-08). Mirror matches: identical
+squads at level 5, one stat grant differing, sides swapped, 2400 fights a cell. Both sides cost
+the same 40 budget points, so the win rate IS the relative price.
 
-- If 1 real HP ≈ 1 Attack point, the tanks got 70 free budget points (Sentinel and Bellows
-  bank 600 against Glyph's and Sorrow's 530) and the roster needs a rebase.
-- If 1 real HP ≈ 0.5 Attack points, the doubling *fixed* a long-standing over-charge on HP
-  and every line is already square at 450.
+| HP granted per point | vs +40 Atk/+40 Int | vs +20 Def/+20 Wis |
+|---|---|---|
+| 1 (what the roster charged BEFORE the doubling) | 28.7% | 29.7% |
+| 2 (what it charges now) | 37.3% | 39.6% |
+| 3 | 49.6% | 49.5% |
+| 4 (what equipment charges) | 59.3% | 59.4% |
 
-This is measurable — the indifference point between +X HP and +Y Attack on one hero, over
-enough batches — and it should be measured before anybody retunes 36 stat lines. Note that
-`scripts/sim` is wall-clock bounded and NOT deterministic run-to-run (the same tree and seed
-gave 2488 and 2518 runs), so any single comparison at a few thousand runs is noise.
+**Break-even is 3.0 HP per budget point on both challengers** — `HP_BUDGET_VALUE` ≈ 0.33. So
+neither existing figure is right: the roster (0.5) over-charges HP by half, equipment (0.25)
+under-charges by a quarter, and the truth sits between them, nearer equipment's.
+
+This settles the direction. The doubling halved what the roster charges for HP, which moved it
+from badly over-charged toward fair and **stopped short** — it did not overshoot into a gift.
+The tanks were being short-changed before and are still slightly short-changed now.
+
+**But the price is not linear, and that is the real finding.** Re-spending a hero's OWN budget
+— 30 points out of HP into offense at the current rate — wins only **52.5% ±0.76**, and helps
+exactly 18 of 36 heroes. Adding HP on top of a full pool is weak (37%); taking it off a thin one
+is dangerous. A flat rate is a compromise that is roughly right in the middle of the roster and
+wrong at both ends, so a rebase to a single number would be trading one approximation for
+another. Leave 0.5 until something else forces the question.
+
+**Where the tanks' real advantage comes from.** A round robin (every hero vs every other, four
+copies a side, no gear) puts correlation between authored HP and win rate at **0.110** — HP
+explains about 1% of the variance, and Bellows and Sentinel both field 300 HP at 76.7% and 31.4%.
+Movepools dominate. What does not show up there is `itemSlots: 2`, authored on the nine heroes at
+**Speed ≤ 40** — and in this roster Speed is anti-correlated with HP, so those nine are precisely
+the nine highest-HP heroes (250–300). The same squad holding two items beats itself holding one
+**79.3% ±0.76**, a bigger edge than any stat grant measured here. The tanks are strong, and the
+slot is why; nothing prices it against the stat line. That is the open balance question worth
+having, not the HP rate.
+
+`scripts/sim` IS deterministic by seed. Until 2026-09-08 it silently dropped ~15% of every batch:
+`bestWearer` compared item ids where the game's rule (`holdsItem`) compares FAMILIES, so the sim
+kept picking a hero already holding an enchanted sibling and throwing inside `equipToRoster`.
 
 ---
 
