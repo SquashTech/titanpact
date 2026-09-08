@@ -173,7 +173,7 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
   const byTier = TIER_ORDER.map((tier) => ({ tier, moveIds: pool.filter((id) => tierOf(id) === tier) }));
   const nodes = progressionTable.evolutions[hero.id] ?? [];
   // Base stats, so every move card reads the hero as authored (a graft path's STAB is shown on its own card).
-  const caster = { wisdom: hero.baseStats.wisdom, types: hero.types };
+  const caster = { wisdom: hero.baseStats.wisdom, types: hero.types, stats: hero.baseStats };
 
   const tabs: TabSpec<TabId>[] = [
     { id: 'stats', label: 'Stats', glyph: 'stats' },

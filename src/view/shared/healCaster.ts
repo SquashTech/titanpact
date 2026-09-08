@@ -1,7 +1,9 @@
-// Heal inputs (caster Wisdom + types) for a RosterEntry outside combat, built through the same
-// helpers buildCombatState.ts uses so the previewed heal equals the one the fight pays out.
+// Caster inputs (Wisdom, the rest of the line, and types) for a RosterEntry outside combat, built
+// through the same helpers buildCombatState.ts uses, so a previewed heal or status rider equals
+// the one the fight pays out.
 
-import type { HeroDefinition } from '../../engine/content';
+import type { HeroDefinition, StatKey } from '../../engine/content';
+import { STAT_ORDER } from '../../engine/content';
 import type { HealCaster } from '../../engine/heal/healPipeline';
 import type { RosterEntry } from '../../run/state';
 import { entryStatModifiers, entryPassiveCounts } from '../../run/entryStats';
@@ -18,8 +20,8 @@ export function healCasterForEntry(hero: HeroDefinition, entry: RosterEntry, rel
   const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);
   const passiveCounts = entryPassiveCounts(entry, equipment, teamPassiveGrants);
   const grants = entryStatModifiers(entry, equipment, passives, passiveCounts, teamStatModifiers);
-  return {
-    wisdom: hero.baseStats.wisdom + (grants.wisdom ?? 0),
-    types: rosterEntryTypes(hero, entry),
-  };
+  const stats = Object.fromEntries(
+    STAT_ORDER.map((stat) => [stat, hero.baseStats[stat] + (grants[stat] ?? 0)])
+  ) as Record<StatKey, number>;
+  return { wisdom: stats.wisdom, types: rosterEntryTypes(hero, entry), stats };
 }

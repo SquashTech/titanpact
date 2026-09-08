@@ -154,7 +154,7 @@ export function DraftScreen({ optionIds, onConfirm }: Props) {
       {popupMove && (
         <StageMovePopup
           move={popupMove}
-          caster={{ wisdom: featured.baseStats.wisdom, types: featured.types }}
+          caster={{ wisdom: featured.baseStats.wisdom, types: featured.types, stats: featured.baseStats }}
           onClose={() => setPopupMove(null)}
         />
       )}

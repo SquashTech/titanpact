@@ -1,6 +1,7 @@
 // Status conditions (docs/conditions.md).
 
-import { statusApplicationsOf } from '../src/engine/content';
+import { statusApplicationsOf, STAT_ORDER } from '../src/engine/content';
+import type { StatKey } from '../src/engine/content';
 import * as assert from 'assert';
 import { test } from './harness';
 import { createFightState, fixtureMaxHp } from './fixtures';
@@ -14,6 +15,7 @@ import { resolveRound } from '../src/engine/combat/resolveRound';
 import type { Action } from '../src/engine/combat/actions';
 import { getEffectiveStat, hasStatus } from '../src/engine/state';
 import { applyStatus, cleanseStatuses, selectableTargets } from '../src/engine/combat/statusEngine';
+import { resolveStatusMagnitudeFor, scaleStatusMagnitude } from '../src/engine/status/statusMagnitude';
 
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
@@ -457,4 +459,61 @@ test('status: the formula is gated on the pipeline — a timer status is scaled 
   // Poison is the one magnitude-carrying status outside both, and its magnitude is a
   // PERCENTAGE of max HP — it already tracks the HP pool and must not be scaled again.
   assert.strictEqual(statuses.Poison.pipeline, 'timer');
+});
+
+// The out-of-combat entry point exists so a level-up screen or a hero sheet can print the figure
+// a rider will land instead of the authored base. It must never disagree with the fight's answer.
+test('status: the sheet formula and the fight formula are the same formula', () => {
+  const state = createFightState(
+    911,
+    [{ combatantId: 'a1', heroId: 'crimson', side: 'A' }],
+    [{ combatantId: 'b1', heroId: 'ironWarden', side: 'B' }]
+  );
+  const caster = state.combatants.a1;
+  const casterHero = heroes[caster.heroId];
+  const sheetCaster = {
+    stats: Object.fromEntries(STAT_ORDER.map((stat) => [stat, getEffectiveStat(casterHero, caster, stat)])) as Record<
+      StatKey,
+      number
+    >,
+    types: casterHero.types,
+  };
+
+  let compared = 0;
+  for (const move of Object.values(moves)) {
+    for (const app of statusApplicationsOf(move)) {
+      const def = statuses[app.statusId];
+      if (!def || app.magnitude == null) continue;
+      assert.strictEqual(
+        resolveStatusMagnitudeFor(app.magnitude, def, app, move, sheetCaster),
+        scaleStatusMagnitude(app.magnitude, def, app, move, casterHero, caster),
+        `${move.id} / ${def.id} reads differently off a sheet than in a fight`
+      );
+      compared += 1;
+    }
+  }
+  assert.ok(compared > 40, `only ${compared} riders compared — the sweep found nothing`);
+});
+
+test('status: a scaled rider is a BASE, so a low-stat caster lands LESS than the card authored', () => {
+  const burn = statuses.Burn;
+  const ember = moves.ember;
+  const app = statusApplicationsOf(ember).find((a) => a.statusId === 'Burn');
+  assert.ok(app?.magnitude != null, 'Ember no longer carries a Burn magnitude');
+
+  // Same move, same card, two Fire heroes: the authored 10 is neither a floor nor a ceiling.
+  const hot = { stats: heroes.crimson.baseStats, types: heroes.crimson.types };
+  const cold = { stats: heroes.cinderKnight.baseStats, types: heroes.cinderKnight.types };
+  const hotMagnitude = resolveStatusMagnitudeFor(app!.magnitude, burn, app!, ember, hot)!;
+  const coldMagnitude = resolveStatusMagnitudeFor(app!.magnitude, burn, app!, ember, cold)!;
+  assert.ok(hotMagnitude > app!.magnitude!, 'a high-Intelligence caster does not exceed the base');
+  assert.ok(coldMagnitude < app!.magnitude!, 'a low-Intelligence caster does not fall under the base');
+});
+
+test('status: a caster carrying no stats reads the authored base, never a scaled guess', () => {
+  const setAlight = moves.setAlight;
+  const app = statusApplicationsOf(setAlight).find((a) => a.statusId === 'Burn');
+  assert.ok(app?.magnitude != null);
+  // Types still count — STAB is knowable without a stat line — so this probes a non-Fire caster.
+  assert.strictEqual(resolveStatusMagnitudeFor(app!.magnitude, statuses.Burn, app!, setAlight, { stats: {}, types: ['Stone'] }), app!.magnitude);
 });

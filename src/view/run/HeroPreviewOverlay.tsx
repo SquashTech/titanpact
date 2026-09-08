@@ -133,7 +133,8 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
   const evolved = chosenEvolutionPaths(progressionTable, entry);
   const types = rosterEntryTypes(hero, entry);
   // Not healCasterForEntry: that reads the global equipment table, and this sheet must honour `equipmentLookup`.
-  const healCaster = { wisdom: hero.baseStats.wisdom + (grants.wisdom ?? 0), types };
+  const previewStats = Object.fromEntries(STAT_ORDER.map((stat) => [stat, hero.baseStats[stat] + (grants[stat] ?? 0)])) as Record<StatKey, number>;
+  const healCaster = { wisdom: previewStats.wisdom, types, stats: previewStats };
 
   const heldItems = entry.equipment.flatMap((id) => (equipmentLookup[id] ? [equipmentLookup[id]] : []));
   const rows = passiveRows(entry, equipmentLookup, teamPassiveGrants);

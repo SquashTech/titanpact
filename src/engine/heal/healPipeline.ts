@@ -2,7 +2,7 @@
 //   Heal = HealPower × WisdomMult × STAB, WisdomMult = 1 + (Wisdom − 50)/100 clamped to [0.5, 2.0]
 // No target max-HP term, no variance, no defender-side term — each a decision (see the doc).
 
-import type { HeroDefinition, MoveDefinition, TypeId } from '../content';
+import type { HeroDefinition, MoveDefinition, StatKey, TypeId } from '../content';
 import type { Combatant, FieldEffectContext } from '../state';
 import { getEffectiveStat, effectiveTypes } from '../state';
 import { resolveStab } from '../damage/typeMult';
@@ -37,10 +37,16 @@ export function resolveWisdomMult(
   return magnitudeMultFromStat(getEffectiveStat(casterHero, caster, 'wisdom', fieldEffectCtx));
 }
 
-/** The only two caster inputs the formula has — lets out-of-combat screens show a true number without a Combatant. */
+/**
+ * The only two caster inputs the formula has — lets out-of-combat screens show a true number
+ * without a Combatant. `stats` carries the rest of the line for the same reason a heal needs
+ * Wisdom: a move's status riders scale off the caster too (`MagnitudeCaster`), and a screen
+ * that omits it prints the authored base instead of the figure the move lands.
+ */
 export interface HealCaster {
   wisdom: number;
   types: readonly TypeId[];
+  stats?: Partial<Record<StatKey, number>>;
 }
 
 export interface HealCalcResult {

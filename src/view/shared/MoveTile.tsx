@@ -2,6 +2,7 @@ import { useRef, useState, type CSSProperties, type MouseEvent, type PointerEven
 import type { MoveDefinition, StatusApplication } from '../../engine/content';
 import { statusApplicationsOf } from '../../engine/content';
 import { resolveHealFor, type HealCaster } from '../../engine/heal/healPipeline';
+import { resolveStatusMagnitudeFor } from '../../engine/status/statusMagnitude';
 import { getTypeColor, getTypeColorRgb } from '../combat/typeColors';
 import { fieldEffects } from '../../data/fieldEffects';
 import { statuses } from '../../data/statuses';
@@ -192,6 +193,18 @@ export function riderTargetLabel(app: StatusApplication): string | null {
 }
 
 /**
+ * What a rider's magnitude comes to for this caster (docs/combat.md "Scaled status magnitudes").
+ * A DoT or HoT's authored figure is a BASE — printing it beside a heal that already resolves is
+ * how a Burn 15 becomes a Burn 19 the moment the button is pressed. Without a caster the base
+ * stands, which is the honest answer when there is nobody to scale it by.
+ */
+function riderMagnitude(move: MoveDefinition, app: StatusApplication, caster?: HealCaster): number | undefined {
+  const def = statuses[app.statusId];
+  if (!def || !caster) return app.magnitude;
+  return resolveStatusMagnitudeFor(app.magnitude, def, app, move, { stats: caster.stats ?? {}, types: caster.types });
+}
+
+/**
  * What a heal restores for this caster (docs/combat.md). Without a caster falls back to the
  * authored HealPower, flagged `resolved: false` so the caller can drop the "HP" unit.
  */
@@ -322,8 +335,8 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
 
   // One clause per rider; the verb (Grants/Applies) is what separates a boon from a wound.
   for (const app of statusApplicationsOf(move)) {
-    const { statusId, magnitude, duration, chance } = app;
-    const amount = magnitude ?? duration;
+    const { statusId, duration, chance } = app;
+    const amount = riderMagnitude(move, app, caster) ?? duration;
     const odds = chance != null ? `${Math.round(chance * 100)}% ` : '';
     const verb = grantsRatherThanInflicts(app) ? 'Grants' : 'Applies';
     const statusName = statuses[statusId]?.name ?? statusId;
@@ -335,7 +348,7 @@ export function moveEffectSummary(move: MoveDefinition, caster?: HealCaster): st
     const faces = move.randomStatusApplication
       .map((app) => {
         const name = statuses[app.statusId]?.name ?? app.statusId;
-        const amount = app.magnitude ?? app.duration;
+        const amount = riderMagnitude(move, app, caster) ?? app.duration;
         return amount != null ? `${name} ${amount}` : name;
       })
       .join(', ');

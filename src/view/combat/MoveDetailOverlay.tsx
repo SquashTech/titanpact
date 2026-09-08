@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom';
 import type { CSSProperties, ReactNode } from 'react';
-import type { MoveDefinition } from '../../engine/content';
-import { statusApplicationsOf } from '../../engine/content';
+import type { MoveDefinition, StatKey } from '../../engine/content';
+import { statusApplicationsOf, STAT_ORDER } from '../../engine/content';
 import type { CombatState } from '../../engine/state';
 import { activePartnerTypes, effectiveManaCost, effectiveTypes, getEffectiveStat, getMaxHp, getMaxMana, effectiveBasePower, hasStatus, resolveCastBasePower, resolveManaCost } from '../../engine/state';
 import { allCombatants } from '../../data/content';
@@ -11,7 +11,7 @@ import { fieldEffects } from '../../data/fieldEffects';
 import { typeChart } from '../../data/typechart';
 import { resolveStab, resolveTypeMult, TYPE_MULT_FLOOR } from '../../engine/damage/typeMult';
 import { resolveHealFor, type HealCaster } from '../../engine/heal/healPipeline';
-import { scaleStatusMagnitude } from '../../engine/status/statusMagnitude';
+import { resolveStatusMagnitudeFor, scaleStatusMagnitude } from '../../engine/status/statusMagnitude';
 import {
   calcDamage,
   resolveConditionalPowerMultiplier,
@@ -224,6 +224,9 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
       ? {
           wisdom: getEffectiveStat(attackerHero, attacker, 'wisdom', statCtx),
           types: effectiveTypes(attackerHero, attacker),
+          stats: Object.fromEntries(
+            STAT_ORDER.map((stat) => [stat, getEffectiveStat(attackerHero, attacker, stat, statCtx)])
+          ) as Record<StatKey, number>,
         }
       : caster;
   const heal = move.kind === 'heal' ? healReadout(move, healCaster) : null;
@@ -484,11 +487,13 @@ export function MoveDetailCard({ move, label, context, caster }: CardProps) {
           {statusRiders.map(({ app, def }) => {
             const where = riderTargetLabel(app);
             // The number the caster would actually land, the way liveBasePower and liveCost read.
-            // Off a hero sheet there is no caster, so the authored base stands.
+            // A hero sheet has no Combatant but does have the same two inputs the formula wants.
             const liveMagnitude =
               attacker && attackerHero
                 ? scaleStatusMagnitude(app.magnitude, def, app, move, attackerHero, attacker, statCtx)
-                : app.magnitude;
+                : healCaster
+                  ? resolveStatusMagnitudeFor(app.magnitude, def, app, move, { stats: healCaster.stats ?? {}, types: healCaster.types })
+                  : app.magnitude;
             return (
               <EffectRow
                 key={app.statusId}

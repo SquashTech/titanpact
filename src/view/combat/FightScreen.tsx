@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { statusApplicationsOf } from '../../engine/content';
+import { statusApplicationsOf, STAT_ORDER } from '../../engine/content';
 import { allCombatants } from '../../data/content';
 import { moves } from '../../data/moves';
 import { typeChart } from '../../data/typechart';
@@ -1267,9 +1267,13 @@ export function FightScreen({
             const canAffordAnyMove = hasAffordableMoveInFight(combat, id, entry.unlockedMoveIds, moves, allCombatants);
             const maxHp = getMaxHp(hero, combatant);
             const partnerTypes = activePartnerTypes(combat, id, allCombatants) ?? [];
+            const casterStats = Object.fromEntries(
+              STAT_ORDER.map((stat) => [stat, getEffectiveStat(hero, combatant, stat, statCtx)])
+            ) as Record<StatKey, number>;
             const caster: HealCaster = {
-              wisdom: getEffectiveStat(hero, combatant, 'wisdom', statCtx),
+              wisdom: casterStats.wisdom,
               types: effectiveTypes(hero, combatant),
+              stats: casterStats,
             };
             const bankedReductions = enemyActiveAlive.reduce(
               (sum, eid) =>

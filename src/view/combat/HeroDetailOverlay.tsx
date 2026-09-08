@@ -56,7 +56,7 @@ export function HeroDetailOverlay({ hero, combatant, rosterEntry, equipmentLooku
   const evolved = rosterEntry ? chosenEvolutionPaths(progressionTable, rosterEntry) : [];
   const types = effectiveTypes(hero, combatant);
   // Effective Wisdom (mid-fight buffs and field effect included), not the loadout baseline.
-  const healCaster = { wisdom: effectiveTotals.wisdom, types };
+  const healCaster = { wisdom: effectiveTotals.wisdom, types, stats: effectiveTotals };
   const maxHp = getMaxHp(hero, combatant);
   const maxMana = getMaxMana(hero, combatant);
   const hpFraction = maxHp > 0 ? Math.max(0, combatant.currentHp) / maxHp : 0;
