@@ -46,16 +46,42 @@ export function canAffordAnyLevelUp(run: RunState): boolean {
 /** Uniform Evolution trigger level for every hero (per-hero depth is deferred). */
 export const EVOLUTION_LEVEL = 5;
 
-/** Level at which each move tier becomes offerable. Cumulative: reaching a tier adds it, never closes the tier below. Placeholder curve. */
+/** Level at which each move tier becomes offerable. Placeholder curve. */
 export const MOVE_TIER_LEVEL: Record<MoveTier, number> = {
   early: 1,
   mid: 4,
   late: 7,
 };
 
-/** A move with no authored `tier` counts as Early (ungated). */
-export function isMoveTierUnlocked(move: MoveDefinition | undefined, level: number): boolean {
+/**
+ * Level at which a tier stops being offerable. Early EXPIRES the moment Mid opens (2026-09-07):
+ * a level-4 hero handed a starter-tier move was the curve paying out backwards, and Early
+ * outnumbering everything else is what buried the Late band under a single random draw. Mid and
+ * Late accumulate instead — the Late slates hold 4-5 moves a type, far too few to carry four
+ * offers on their own.
+ */
+export const MOVE_TIER_EXPIRY: Record<MoveTier, number> = {
+  early: MOVE_TIER_LEVEL.mid,
+  mid: Infinity,
+  late: Infinity,
+};
+
+/** Whether `level` has REACHED a tier at all. A move with no authored `tier` is ungated — Ancient has no slate yet. */
+export function isMoveTierReached(move: MoveDefinition | undefined, level: number): boolean {
   return level >= MOVE_TIER_LEVEL[move?.tier ?? 'early'];
+}
+
+/**
+ * Reached AND not expired — the gate on the base pool. A graft's line is gated on
+ * isMoveTierReached instead: a graft lands at EVOLUTION_LEVEL, by which point Early has already
+ * expired, so applying the expiry to it would make every Early move in a grafted type's line
+ * permanently unreachable. The expiry stops the BASE pool paying starter moves late; a grafted
+ * type is new to this hero, and its Early moves are the way into it.
+ */
+export function isMoveTierOfferable(move: MoveDefinition | undefined, level: number): boolean {
+  const tier = move?.tier;
+  if (!tier) return true;
+  return isMoveTierReached(move, level) && level < MOVE_TIER_EXPIRY[tier];
 }
 
 /** Last level whose level-up pays out a move; past it a level-up buys a stat (CLAUDE.md exemption). Same decision as data/progression.ts FLOOR — move one, move both. */
@@ -110,18 +136,27 @@ export function moveOfferLevels(): number[] {
 export const MOVE_POOL_MARGIN = MOVE_CAP;
 
 /**
- * Floor on a hero's level-up pool, by CUMULATIVE tier band: `early` is Early alone, `mid` is
- * Early+Mid, `late` is the whole pool. Each band must outlast every offer made before the next
- * tier opens — two before Mid, four before Late, eight in all — plus the margin.
- * Enforced against the authored pools by test/moveTiers.test.ts.
+ * Floor on a hero's level-up pool, by OFFERABLE SET rather than by cumulative band — Early
+ * expiring at Mid means the three sets are Early alone, Mid alone, and Mid+Late. Each must
+ * outlast every offer drawn from it (two, two, six) plus the margin. Enforced against the
+ * authored pools by test/moveTiers.test.ts.
  */
-export function movePoolFloor(): Record<MoveTier, number> {
+export interface MovePoolFloor {
+  /** Early alone: every offer below MOVE_TIER_LEVEL.mid. */
+  early: number;
+  /** Mid alone: the window where Mid has opened, Early has expired and Late is not yet in. */
+  mid: number;
+  /** Mid and Late together: every offer from MOVE_TIER_LEVEL.mid on, since a Mid taken at 4 is gone at 9. */
+  midLate: number;
+}
+
+export function movePoolFloor(): MovePoolFloor {
   const levels = moveOfferLevels();
-  const offersBefore = (gateLevel: number) => levels.filter((level) => level < gateLevel).length;
+  const offersIn = (from: number, to: number) => levels.filter((level) => level >= from && level < to).length;
   return {
-    early: offersBefore(MOVE_TIER_LEVEL.mid) + MOVE_POOL_MARGIN,
-    mid: offersBefore(MOVE_TIER_LEVEL.late) + MOVE_POOL_MARGIN,
-    late: levels.length + MOVE_POOL_MARGIN,
+    early: offersIn(0, MOVE_TIER_LEVEL.mid) + MOVE_POOL_MARGIN,
+    mid: offersIn(MOVE_TIER_LEVEL.mid, MOVE_TIER_LEVEL.late) + MOVE_POOL_MARGIN,
+    midLate: offersIn(MOVE_TIER_LEVEL.mid, Infinity) + MOVE_POOL_MARGIN,
   };
 }
 
@@ -230,13 +265,13 @@ export function levelUpMovePool(
   moves: Record<string, MoveDefinition>,
   entry: RosterEntry
 ): string[] {
-  const grafted = chosenEvolutionPaths(table, entry).flatMap((path) => path.learnableMoveIds ?? []);
+  const grafted = new Set(chosenEvolutionPaths(table, entry).flatMap((path) => path.learnableMoveIds ?? []));
   const pool = [...new Set([...(table.moveTiers[entry.heroId] ?? []), ...grafted])];
   return pool.filter(
     (id) =>
       !entry.unlockedMoveIds.includes(id) &&
       !entry.offeredMoveIds.includes(id) &&
-      isMoveTierUnlocked(moves[id], entry.level)
+      (grafted.has(id) ? isMoveTierReached(moves[id], entry.level) : isMoveTierOfferable(moves[id], entry.level))
   );
 }
 

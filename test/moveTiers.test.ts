@@ -10,7 +10,7 @@ import { progressionTable } from '../src/data/progression';
 import { createRunState, createRosterEntry, addRosterEntry } from '../src/run/state';
 import {
   levelUpMovePool,
-  isMoveTierUnlocked,
+  isMoveTierOfferable,
   levelUpHero,
   levelUpPayout,
   grantLevelUpMove,
@@ -22,6 +22,7 @@ import {
   movePoolFloor,
   grantMove,
   MOVE_TIER_LEVEL,
+  MOVE_TIER_EXPIRY,
   MOVE_POOL_MARGIN,
   MOVE_CAP,
   EVOLUTION_LEVEL,
@@ -75,23 +76,25 @@ test('move tiers: every move of a tiered slate carries a tier, and no other type
   }
 });
 
-test('move tiers: MOVE_TIER_LEVEL gates cumulatively, and an untiered move is ungated', () => {
+test('move tiers: Early EXPIRES when Mid opens, Mid and Late accumulate, and an untiered move is ungated', () => {
   const early = moves.swiftBlow; // Iron, Early
   const mid = moves.momentumSwing; // Iron, Mid
   const late = moves.juggernaut; // Iron, Late
   assert.deepStrictEqual([early.tier, mid.tier, late.tier], ['early', 'mid', 'late']);
 
   assert.deepStrictEqual(
-    [1, 3, 4, 6, 7].map((lv) => [early, mid, late].filter((m) => isMoveTierUnlocked(m, lv)).length),
-    [1, 1, 2, 2, 3],
-    'each tier unlocks at its level and STAYS unlocked — cumulative, not a window'
+    [1, 3, 4, 6, 7, 10].map((lv) => [early, mid, late].filter((m) => isMoveTierOfferable(m, lv)).map((m) => m.tier)),
+    [['early'], ['early'], ['mid'], ['mid'], ['mid', 'late'], ['mid', 'late']],
+    'Early is off the table from MOVE_TIER_LEVEL.mid; nothing else ever closes'
   );
 
   assert.strictEqual(moves.runicBlast.tier, undefined);
-  assert.ok(isMoveTierUnlocked(moves.runicBlast, 1));
-  assert.ok(isMoveTierUnlocked(undefined, 1), 'a missing move must not gate — it is a content bug, not a lock');
+  assert.ok(isMoveTierOfferable(moves.runicBlast, 1));
+  assert.ok(isMoveTierOfferable(moves.runicBlast, 10), 'and an untiered move never expires either');
+  assert.ok(isMoveTierOfferable(undefined, 1), 'a missing move must not gate — it is a content bug, not a lock');
 
   assert.deepStrictEqual(MOVE_TIER_LEVEL, { early: 1, mid: 4, late: 7 });
+  assert.deepStrictEqual(MOVE_TIER_EXPIRY, { early: MOVE_TIER_LEVEL.mid, mid: Infinity, late: Infinity });
 });
 
 test('move tiers: levelUpMovePool only offers what the hero\'s level has reached', () => {
@@ -105,12 +108,43 @@ test('move tiers: levelUpMovePool only offers what the hero\'s level has reached
   assert.ok(atFour.includes('rendArmor'), 'Mid unlocks at MOVE_TIER_LEVEL.mid');
   assert.ok(!atFour.includes('juggernaut'));
 
+  assert.ok(!atFour.includes('ironFist'), 'and Early has EXPIRED — level 4 never pays a starter-tier move');
+
   const atSeven = levelUpMovePool(progressionTable, moves, entryAt('ironWarden', MOVE_TIER_LEVEL.late));
   assert.ok(atSeven.includes('juggernaut'), 'Late unlocks at MOVE_TIER_LEVEL.late');
-  assert.ok(atSeven.includes('ironFist'), 'and Early is still on the table — the tiers accumulate');
+  assert.ok(atSeven.includes('rendArmor'), 'and Mid is still on the table — only Early ever closes');
+  assert.ok(!atSeven.includes('ironFist'));
 
   const held = levelUpMovePool(progressionTable, moves, entryAt('ironWarden', 9, ['juggernaut']));
   assert.ok(!held.includes('juggernaut'));
+});
+
+test("move tiers: a graft's line is gated on REACHING a tier, so its Early moves survive the expiry", () => {
+  // A graft lands at EVOLUTION_LEVEL, by which point Early has expired. Gating learnableMoveIds the
+  // way the base pool is gated would make every Early move in a grafted type's line dead on arrival —
+  // and the Early moves are the way INTO a type the hero has only just acquired.
+  const early = Object.values(heroesById).flatMap((hero) =>
+    (progressionTable.evolutions[hero.id] ?? [])
+      .flatMap((node) => node.paths)
+      .filter((path) => path.typeGraft)
+      .flatMap((path) => (path.learnableMoveIds ?? []).filter((id) => (moves[id].tier ?? 'early') === 'early'))
+  );
+  assert.ok(early.length > 0, 'if no graft line carries an Early move, this exemption is dead code — delete it');
+
+  // Cinderveil grafts Spirit and its line opens with Drain, an Early Spirit move.
+  const path = progressionTable.evolutions.crimson[0].paths.find((p) => p.typeGraft === 'Spirit')!;
+  assert.strictEqual(moves.drain.tier, 'early');
+  assert.ok(path.learnableMoveIds?.includes('drain'));
+  assert.ok(!isMoveTierOfferable(moves.drain, EVOLUTION_LEVEL), 'Early is expired by the Evolution level');
+
+  const grafted = entryAt('crimson', EVOLUTION_LEVEL);
+  const pool = levelUpMovePool(progressionTable, moves, { ...grafted, chosenPathIds: [path.id] });
+  assert.ok(pool.includes('drain'), 'the graft carries its own Early moves past the expiry');
+  assert.ok(
+    !levelUpMovePool(progressionTable, moves, grafted).includes('drain'),
+    'and only for a hero that actually took the path'
+  );
+  assert.ok(!pool.includes('setAlight'), "the BASE pool's Early half is still expired");
 });
 
 test('move tiers: every level-up pool holds something a level-1 hero can be offered', () => {
@@ -143,39 +177,43 @@ test('move tiers: the floor is DERIVED from the curve, not written down beside i
   assert.deepStrictEqual(levels, [2, 3, 4, 6, 7, 8, 9, 10]);
 
   const floor = movePoolFloor();
-  // Two offers land before Mid opens, four before Late does, eight in all — plus the margin,
-  // which is MOVE_CAP because that is the most a hero can be holding from outside the pool.
+  // Two offers draw from Early before it expires, two from Mid alone before Late opens, six from
+  // Mid+Late in all — plus the margin, which is MOVE_CAP because that is the most a hero can be
+  // holding from outside the pool.
   assert.strictEqual(MOVE_POOL_MARGIN, MOVE_CAP);
   assert.deepStrictEqual(floor, {
     early: 2 + MOVE_POOL_MARGIN,
-    mid: 4 + MOVE_POOL_MARGIN,
-    late: 8 + MOVE_POOL_MARGIN,
+    mid: 2 + MOVE_POOL_MARGIN,
+    midLate: 6 + MOVE_POOL_MARGIN,
   });
 });
 
 test('move tiers: no hero can reach level 10 on a level-up that offers nothing', () => {
-  // Exact, not sampled: the gate is cumulative, so the count still on the table at the nth offer is
-  // |moves tier-unlocked at this level| - (n - 1), whichever ones were handed out — and an offer is
-  // spent whether it is taken or declined, so the count falls either way. Holding MOVE_POOL_MARGIN
-  // above that at every step IS the per-band FLOOR, since both sides only grow with the level.
+  // Exact, not sampled: the count still on the table at the nth offer is |moves offerable at this
+  // level| - (n - 1), whichever ones were handed out — and an offer is spent whether it is taken or
+  // declined, so the count falls either way. The tally RESETS when Early expires: the offers it ate
+  // came out of a set that is no longer on the table, so they cannot drain Mid.
   const floor = movePoolFloor();
   for (const hero of Object.values(heroesById)) {
     const pool = (progressionTable.moveTiers[hero.id] ?? []).filter((id) => !hero.moveIds.includes(id));
     let offers = 0;
     for (const level of moveOfferLevels()) {
+      if (level === MOVE_TIER_LEVEL.mid) offers = 0;
       offers++;
-      const reachable = pool.filter((id) => isMoveTierUnlocked(moves[id], level)).length;
+      const reachable = pool.filter((id) => isMoveTierOfferable(moves[id], level)).length;
       assert.ok(
         reachable >= offers + MOVE_POOL_MARGIN,
-        `${hero.id} is thin at level ${level}: ${reachable} move(s) tier-unlocked, ` +
-          `${offers} offer(s) made by then, margin ${MOVE_POOL_MARGIN}`
+        `${hero.id} is thin at level ${level}: ${reachable} move(s) offerable, ` +
+          `${offers} offer(s) drawn from that set by then, margin ${MOVE_POOL_MARGIN}`
       );
     }
-    const early = pool.filter((id) => (moves[id].tier ?? 'early') === 'early').length;
-    const earlyMid = pool.filter((id) => (moves[id].tier ?? 'early') !== 'late').length;
+    const tierOf = (id: string) => moves[id].tier ?? 'early';
+    const early = pool.filter((id) => tierOf(id) === 'early').length;
+    const mid = pool.filter((id) => tierOf(id) === 'mid').length;
+    const midLate = pool.filter((id) => tierOf(id) !== 'early').length;
     assert.ok(early >= floor.early, `${hero.id} holds ${early} Early, floor is ${floor.early}`);
-    assert.ok(earlyMid >= floor.mid, `${hero.id} holds ${earlyMid} Early+Mid, floor is ${floor.mid}`);
-    assert.ok(pool.length >= floor.late, `${hero.id} holds ${pool.length}, floor is ${floor.late}`);
+    assert.ok(mid >= floor.mid, `${hero.id} holds ${mid} Mid, floor is ${floor.mid}`);
+    assert.ok(midLate >= floor.midLate, `${hero.id} holds ${midLate} Mid+Late, floor is ${floor.midLate}`);
   }
 });
 

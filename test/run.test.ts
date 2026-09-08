@@ -220,24 +220,28 @@ test('progression: levelUpHero spends levelUpCost and bumps level; insufficient 
 test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move offer', () => {
   let run = seedRoster(['cinderKnight']);
   const entry = run.roster[0];
-  assert.deepStrictEqual(
-    // Read at a level past every tier gate, so this pins the authored POOL, not the level curve.
-    levelUpMovePool(progressionTable, moves, { ...entry, level: 99 }),
-    [
-      'moltenLash',
-      'firebrand',
-      'volcanicSurge',
-      'heavyBlow',
-      'momentumSwing',
-      'ironFist',
-      'openingStrike',
-      'serratedSlice',
-      'holyStrike',
-      'pinDown',
-      'rendArmor',
-      'swiftBlow',
-    ]
-  );
+  // Read at the two ends of the curve rather than at one level: Early EXPIRES when Mid opens, so
+  // no single level sees the whole authored pool. Together these two pin all of it.
+  assert.deepStrictEqual(levelUpMovePool(progressionTable, moves, { ...entry, level: 1 }), [
+    'heavyBlow',
+    'ironFist',
+    'openingStrike',
+    'holyStrike',
+    'pinDown',
+    'swiftBlow',
+  ]);
+  assert.deepStrictEqual(levelUpMovePool(progressionTable, moves, { ...entry, level: 99 }), [
+    'moltenLash',
+    'firebrand',
+    'volcanicSurge',
+    'momentumSwing',
+    'serratedSlice',
+    'rendArmor',
+    'metallicBlade',
+    'onslaught',
+    'swingingChain',
+    'juggernaut',
+  ]);
 
   const withMove = grantLevelUpMove(run, 'cinderKnight', 'firebrand');
   assert.ok(withMove.roster[0].unlockedMoveIds.includes('firebrand'));

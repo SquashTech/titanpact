@@ -205,14 +205,18 @@ The pool therefore drains monotonically, which is what makes the depth of it loa
 the floor is derived from the curve rather than written down beside it
 (`movePoolFloor`, `src/run/progression.ts`):
 
-| Band | Offers that land before the next tier opens | Floor |
+The bands are the three **offerable sets**, not cumulative slices of the pool: Early expires
+when Mid opens (below), so a move offer only ever draws from one of these three.
+
+| Band | Offers drawn from it | Floor |
 | --- | --- | --- |
 | Early alone | levels 2, 3 | 2 + margin |
-| Early + Mid | levels 2, 3, 4, 6 | 4 + margin |
-| Whole pool | levels 2, 3, 4, 6, 7, 8, 9, 10 | 8 + margin |
+| Mid alone | levels 4, 6 | 2 + margin |
+| Mid + Late | levels 4, 6, 7, 8, 9, 10 | 6 + margin |
 
-Eight offers, not nine: the level-up that reaches `EVOLUTION_LEVEL` surfaces the Evolution
-instead, and `MASTERY_LEVEL` itself still pays a move.
+The Mid+Late row counts the offers at 4 and 6 as well: a Mid taken at level 4 is gone from
+the set at level 9. Eight offers in all, not nine — the level-up that reaches
+`EVOLUTION_LEVEL` surfaces the Evolution instead, and `MASTERY_LEVEL` itself still pays a move.
 
 `MOVE_POOL_MARGIN` is **`MOVE_CAP`**, and it is derived rather than picked. The curve is not
 the only thing that takes a move off the table: `levelUpMovePool` also filters what the hero is
@@ -222,7 +226,9 @@ curve + `MOVE_CAP` **cannot** be emptied — by any run, not merely by a likely 
 pass used a guessed margin of 3 and called it a bet; there was no need to bet.
 
 Bringing all 36 pools to that floor on 2026-09-07 took **67 added entries**, roughly two per
-hero; the authoring rules they had to satisfy are in the FLOOR comment in
+hero; closing Early at Mid later the same day raised the Mid and Late floors and took **125
+more**, leaving every hero on **6 Early / 6 Mid / 4 Late** at minimum. The authoring rules they
+had to satisfy are in the FLOOR comment in
 `src/data/progression.ts`. Two tests hold it: one checks the arithmetic against every pool, the
 other **walks** each hero from 1 to `MASTERY_LEVEL` down all three Evolution paths — filling the
 whole loadout with event gifts out of its own Early pool first, then alternating taking and
@@ -237,14 +243,23 @@ column as `MoveDefinition.tier`, and `MOVE_TIER_LEVEL` (`src/run/progression.ts`
 each tier behind a hero level: **Early from 1, Mid from 4, Late from 7.** A hero is
 never offered a capstone at level 2.
 
-Three properties, all deliberate:
+Four properties, all deliberate:
 
-- **Cumulative, not windows.** Reaching a tier's level adds it; it never closes the tier
-  below. Exclusive windows would make a move the hero simply never rolled permanently
-  unreachable, and could leave the pool empty at exactly the level the player is feeding
-  it points.
+- **Early EXPIRES at Mid; Mid and Late accumulate** (2026-09-07, `MOVE_TIER_EXPIRY`,
+  replacing a fully cumulative gate). A level-4 hero handed a starter-tier move was the curve
+  paying out backwards, and because a pool's Early half outnumbered everything else, a single
+  random draw against the whole cumulative pool is what buried the Late band — five heroes
+  carried exactly **one** Late move and it was almost never the one rolled. Late does *not*
+  close Mid: the Late slates hold 4-5 moves a type, far too few to carry four offers alone.
+  The cost of an expiry is that a move the hero never rolled becomes unreachable — which is
+  what the per-band floors are now sized to make survivable rather than fatal.
 - **Read at the level just reached.** The level-up that takes a hero to 4 can draw a Mid
   move — the point pays out on the level it buys, not the one before it.
+- **A graft's line is gated on REACHING a tier, not on the expiry** (`isMoveTierReached` vs
+  `isMoveTierOfferable`). A graft lands at `EVOLUTION_LEVEL`, by which point Early has already
+  expired; applying the expiry to its `learnableMoveIds` would make every Early move in a
+  grafted type's line permanently unreachable, and the Early moves *are* the way into a type
+  the hero has only just acquired.
 - **An empty pool is legal.** A hero whose Early moves are exhausted at level 3 gets a
   level and nothing else; the level-up screen labels that card "Level only" *before* the
   point is spent, so it is a visible signal to feed someone else, not a silent dud.
@@ -265,9 +280,10 @@ was documentation only, and nothing ever asked them to hold one. All six were gi
 one; `test/moveTiers.test.ts` now asserts that **every pool holds something a level-1
 hero can be offered**, which is the invariant the gate creates.
 
-Fourteen pools hold exactly one Early move. That is thin but not broken: a 3-move
-starting kit against a 4-move cap leaves room for exactly one outright gain anyway, and
-every offer after that is a replacement offer the player may decline.
+That thinness is gone: since the floors landed, no pool holds fewer than **6 Early, 6 Mid
+and 4 Late** offerable entries, and no band can be drained inside the level curve. Depth is
+also what buys **run diversity** — a level-up draws ONE move at random, so the eight offers a
+full climb pays now sample 16-odd entries rather than exhausting a pool of 12.
 
 ### The four-move cap (LOCKED)
 
