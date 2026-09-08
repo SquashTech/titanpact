@@ -1058,6 +1058,39 @@ status card 76% (its own 300px cap, correct for a three-line readout).
 **The rule: never `createPortal(…, document.body)` in this app.** Use
 `overlayHost()`.
 
+### Portrait only, whichever way the phone is held
+
+The manifest has said `orientation: portrait` since it was written, and that covers
+exactly one case: an installed Android PWA. A browser tab obeys the device, and iOS
+ignores the manifest for orientation entirely — so a turned phone handed the canvas an
+844×390 viewport, where `MIN_SCALE` pinned the scale at 1 and the shell became a 430×390
+box with a 700px-tall design canvas inside it. Everything below the fold simply left.
+
+Two moves, in `uiScale.ts` (2026-09-08, per user direction). First ask:
+`screen.orientation.lock('portrait')`, which the platform grants inside an installed app
+and rejects everywhere else — the rejection is swallowed, because the second move is the
+real fix. Where the lock does not take, the canvas is laid out against the screen's SHORT
+edge and given a **quarter turn** into the landscape viewport. The game never renders
+landscape; a turned phone shows the same portrait game, sideways, which reads as "turn it
+back" rather than as a broken layout.
+
+Three things it has to get right:
+
+- **Which way to turn.** A quarter turn is upright for one of the two landscape
+  orientations and upside-down for the other, so it is read off
+  `screen.orientation.angle` rather than assumed: at angle 90 the top of the phone points
+  left, so the canvas leans `-90deg` — the same direction the player would turn the phone
+  to get back to portrait.
+- **Where it lands.** `transform-origin` is `top left`, so the turn sweeps the element
+  clean off one edge; it is translated a whole viewport back onto the screen and centred
+  along the short edge.
+- **Who is asked.** Only `(hover: none) and (pointer: coarse)` viewports shorter than
+  `REFERENCE_HEIGHT`. A landscape tablet still fits the portrait canvas upright, and
+  turning a screen the player did not turn would be the bug rather than the fix.
+
+Overlays come along for free: `overlayHost()` portals into `.app-shell`, so they are
+inside the rotation like everything else.
+
 ### Nothing in this app is selectable
 
 Reported off the same device and on the same overlays: press and hold on a move

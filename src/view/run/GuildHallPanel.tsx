@@ -118,6 +118,7 @@ export function GuildHallPanel({
   const [previewOfferId, setPreviewOfferId] = useState<string | null>(null);
   const [previewEquipId, setPreviewEquipId] = useState<string | null>(null);
   const [confirmingContract, setConfirmingContract] = useState(false);
+  const [sellOpen, setSellOpen] = useState(false);
 
   const heroOffers = offers.heroOfferIds
     .map((id) => guildHallOffers.find((o) => o.id === id))
@@ -132,7 +133,7 @@ export function GuildHallPanel({
   const canBuyContract = run.gold >= CONTRACT_PURCHASE_COST;
 
   // Derived from state rather than pushed from each setter, so a later modal can't forget to report.
-  const overlayOpen = !!previewOffer || !!previewEquip || confirmingContract;
+  const overlayOpen = !!previewOffer || !!previewEquip || confirmingContract || sellOpen;
   useEffect(() => {
     onOverlayChange?.(overlayOpen);
   }, [overlayOpen, onOverlayChange]);
@@ -233,7 +234,7 @@ export function GuildHallPanel({
 
       {/* The Anvil and the Enchanter moved to the Blacksmith (2026-09-08, per user direction):
           the Guild Hall trades in heroes and gear, the Blacksmith works on gear you already own. */}
-      <SellSection run={run} onRunChange={onRunChange} />
+      <SellSection run={run} onRunChange={onRunChange} open={sellOpen} onOpenChange={setSellOpen} />
 
       {previewOffer &&
         (() => {

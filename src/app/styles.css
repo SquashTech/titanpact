@@ -12309,6 +12309,58 @@ textarea,
   opacity: 0.45;
 }
 
+/* Who is still untaught, shown while the disciplines are being read rather than
+   behind the roster glyph. Sized at 1x of the 48px source; the row wraps rather
+   than scrolls, since six is the roster cap and three fit a line. */
+.class-shrine-students {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.class-shrine-students-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--buff);
+}
+
+.class-shrine-students-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.class-shrine-student {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  width: 54px;
+}
+
+.class-shrine-student-art {
+  display: block;
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 8px rgba(63, 184, 175, 0.4));
+}
+
+.class-shrine-student-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
 .class-shrine-list {
   display: flex;
   flex-direction: column;
@@ -15461,10 +15513,17 @@ textarea,
    screen: one numeral at display size lit by the node's hue, where there used
    to be a line of 11px hint text inside a bordered banner. The unit rides
    smaller alongside it, the same label/value split .pick-level makes. */
+/* The numeral is the player's OWN total, climbing (NodeRewardScreen's Hoard) —
+   not the size of the drop, which is the small chip above it. A cache that
+   states its own payout tells you nothing you can act on; a purse you watch
+   fill is the only reason the number was worth stopping for. */
 .node-hoard {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   /* Centred in the room rather than pinned above the CTA: there is nothing to
      pick here, so the amount is the whole screen and belongs at its optical
      centre — the thumb-reach argument that puts pickers low doesn't apply to
@@ -15482,6 +15541,15 @@ textarea,
   letter-spacing: -0.03em;
   color: var(--text);
   text-shadow: 0 0 26px rgba(var(--node-rgb, 224, 166, 60), 0.55);
+  /* Tabular so a purse crossing 99 → 100 doesn't shove the glyph sideways. */
+  font-variant-numeric: tabular-nums;
+}
+
+.node-hoard-glyph {
+  align-self: center;
+  width: 34px;
+  height: 34px;
+  margin-right: 8px;
 }
 
 .node-hoard-unit {
@@ -15491,10 +15559,87 @@ textarea,
   color: rgb(var(--node-rgb, 224, 166, 60));
 }
 
-/* Claiming is the payoff, so the numeral takes the hit rather than a label
+/* What this node added, over the total it added to. Rises off the numeral once,
+   then stays put as the receipt. */
+.node-hoard-delta {
+  padding: 3px 10px;
+  border: 1px solid rgba(var(--node-rgb, 224, 166, 60), 0.5);
+  border-radius: 999px;
+  background: rgba(var(--node-rgb, 224, 166, 60), 0.14);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: rgb(var(--node-rgb, 224, 166, 60));
+  animation: hoard-delta-rise 0.6s var(--ease-spring) 0.32s both;
+}
+
+@keyframes hoard-delta-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.node-hoard-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* The count landing, once — the numeral takes the hit rather than a label
    changing underneath it. */
-.node-hoard.is-claimed .node-hoard-amount {
+.node-hoard.is-settled .node-hoard-amount {
   animation: growth-pip-seal 0.45s var(--ease-spring);
+}
+
+/* Coins thrown out of the numeral and falling past it. Purely decorative: the
+   layer is inert and the count reads correctly with every coin suppressed. */
+.node-hoard-coins {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.node-coin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #ffeab0, #e0a63c 58%, #9c6a17);
+  box-shadow: 0 0 8px rgba(224, 166, 60, 0.6);
+  animation: hoard-coin-arc 1.1s cubic-bezier(0.35, 0, 0.65, 1) both;
+}
+
+/* rotateY, not rotate: a disc seen edge-on is what makes it read as a coin
+   rather than a dot. */
+@keyframes hoard-coin-arc {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4) rotateY(0deg);
+  }
+  12% {
+    opacity: 1;
+  }
+  45% {
+    transform: translate(calc(var(--coin-x) * 0.55), calc(var(--coin-rise) * -1)) scale(1) rotateY(540deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--coin-x), 130px) scale(0.85) rotateY(1080deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .node-hoard-coins {
+    display: none;
+  }
 }
 
 /* An obtained item's stat chips and full passive text — the contents of the `.equip-spotlight`

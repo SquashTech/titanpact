@@ -28,6 +28,8 @@ export type SfxId =
   | 'blessing'
   | 'class.learn'
   | 'cache.open'
+  | 'gold.coin'
+  | 'gold.purse'
   | 'xp.orb'
   | 'discovery'
   | 'seal.strike'
@@ -313,6 +315,33 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'triangle', freq: 262, gain: 0.22, attack: 0.01, decay: 0.55, delay: 0.13 },
       { wave: 'sine', freq: 1047, gain: 0.16, attack: 0.008, decay: 0.6, delay: 0.13 },
       { wave: 'sine', freq: 1319, detune: 9, gain: 0.13, attack: 0.01, decay: 0.7, delay: 0.19 },
+    ],
+  },
+
+  /**
+   * One coin onto the pile (NodeRewardScreen's count-up), ~70ms apart with the caller raising `pitch`.
+   * Metal, so it is noise-led and bright where `xp.orb` is a tone; heavy jitter because a dozen
+   * identical strikes in under a second read as a machine, not as coins.
+   */
+  'gold.coin': {
+    gain: 0.24,
+    jitter: 0.05,
+    voices: [
+      { wave: 'noise', gain: 0.16, attack: 0.001, decay: 0.04, filter: { type: 'bandpass', freq: 5200, q: 2.2 } },
+      { wave: 'triangle', freq: 1760, gain: 0.16, attack: 0.001, hold: 0.008, decay: 0.09 },
+      { wave: 'sine', freq: 2640, detune: 12, gain: 0.09, attack: 0.002, decay: 0.13, delay: 0.004 },
+    ],
+  },
+
+  /** The pile settling once the count-up lands: the same metal, dropped an octave and given a body. */
+  'gold.purse': {
+    gain: 0.4,
+    jitter: 0.01,
+    voices: [
+      { wave: 'noise', gain: 0.22, attack: 0.004, decay: 0.16, filter: { type: 'bandpass', freq: 2600, freqEnd: 900, q: 1.2 } },
+      { wave: 'triangle', freq: 196, freqEnd: 147, gain: 0.34, attack: 0.003, decay: 0.3 },
+      { wave: 'triangle', freq: 880, gain: 0.2, attack: 0.002, hold: 0.02, decay: 0.35 },
+      { wave: 'sine', freq: 1320, detune: 9, gain: 0.12, attack: 0.004, decay: 0.5, delay: 0.03 },
     ],
   },
 

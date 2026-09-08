@@ -134,9 +134,26 @@ export function ClassNodeScreen({ run, onRunChange, onContinue }: Props) {
               ? eligibleRoster.length === 0
                 ? 'Every hero has already learned a Class — this teaching goes to waste.'
                 : 'Hold a hero to review its sheet before committing.'
-              : "Tap a discipline to select it, then confirm — you'll choose who studies it next."
+              : 'Heroes may learn one, and only one.'
           }
         >
+          {/* Who the offer is actually for, before it is made: the roster minus everyone already
+              taught. It is the whole reason to take or leave a discipline, and it used to be a
+              screen away behind the roster glyph. */}
+          {!confirmedClass && eligibleRoster.length > 0 && (
+            <div className="class-shrine-students">
+              <span className="class-shrine-students-label">Can Learn</span>
+              <div className="class-shrine-students-row">
+                {eligibleRoster.map((entry) => (
+                  <span key={entry.rosterId} className="class-shrine-student">
+                    <HeroPortrait heroId={entry.heroId} className="class-shrine-student-art" />
+                    <span className="class-shrine-student-name">{heroes[entry.heroId].name}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {confirmedClass && (
             <div className="node-item-effects">
               <div className="detail-modifier-list">

@@ -468,7 +468,9 @@ export function LevelUpScreen({ run, onRunChange, onDone, focusRosterId = null }
                 (pendingEvolutions > 0
                   ? `${pendingEvolutions === 1 ? 'A hero is' : `${pendingEvolutions} heroes are`} ready to evolve — tap to choose a path.`
                   : canAffordAny
-                    ? 'Tap a hero to spend. A level costs as much as the hero has — hold to review its sheet.'
+                    ? /* The orb track above already says how much there is to spend, and the cards
+                         below already carry their own prices. Nothing left to explain. */
+                      ''
                     : run.levelUpPool >= 1
                       ? `${run.levelUpPool} XP banked — not enough for anyone yet. Moving on.`
                       : 'Every point is spent — moving on.')
