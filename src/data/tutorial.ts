@@ -236,7 +236,6 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     lines: [
       'There. Level five, and now my path can go many directions.',
       'The choice is permanent for the rest of the journey. My potential varies wildly, and it is up to you to choose my fate.',
-      'Tap any of the paths and I will lay out everything it grants, before you commit to it.',
     ],
   },
 
