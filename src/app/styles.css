@@ -13081,7 +13081,7 @@ textarea,
    against its rim, which is the reach the whole change was asked for. Reads as sky over the
    summit rather than as dead space, because the well is already painting weather up there. */
 .map-scroll {
-  padding: 96px 12px 24px;
+  padding: 68px 12px 20px;
 }
 
 /* The place's name, etched into the well's top-left corner (MapScreen's
@@ -13183,7 +13183,7 @@ textarea,
      was always a scroller; it simply never had anything to scroll. MapScreen's
      ANCHOR_VIEWPORT_FRACTION is what keeps the player's own node on screen, and it is also
      what finally pulls the Guardian out of the top edge at the end of an act. */
-  --map-row-h: 56px;
+  --map-row-h: 60px;
 }
 
 /* Act 6's corridor (docs/run-loop.md §4): two nodes in a well built for eight.
@@ -13309,8 +13309,17 @@ textarea,
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
+  /* A lit stone, not a form control (2026-09-08, per user direction). The plate used to be the
+     app's generic --surface-raised behind a gray --border, with the node's colour reaching it
+     only through the ::before wash and the glyph — nine of those in a column read as a stack of
+     UI buttons sitting on a map rather than as places on it. Now the colour is IN the material:
+     a little of it in the fill, more of it in the edge, and the wash on top of both. */
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--node-color) 13%, var(--panel-alt)),
+    color-mix(in srgb, var(--node-color) 5%, var(--panel)) 78%
+  );
+  border: 1px solid color-mix(in srgb, var(--node-color) 26%, var(--border));
   border-radius: var(--radius-md);
   color: var(--text-dim);
   padding: 13px 14px 12px;
@@ -13396,7 +13405,7 @@ textarea,
 /* The tiles print no names (2026-09-08, per user direction). The glyph, the silhouette tier and
    the colour already carry what the word did — recruitability included, since fight/battle draw
    a CLAW and skirmish/elite a HELM (nodeIcons.tsx) — and a long press still reads the node out
-   in full. Dropping the labels is what let the row height fall from 84px to 56px, which is what
+   in full. Dropping the labels is what let the row height fall from 84px to 60px, which is what
    put a nine-row act back inside its well with no scroll AND kept the Guardian off the top rim.
    The name lives on in each tile's aria-label. */
 
@@ -13473,13 +13482,13 @@ textarea,
 }
 
 .map-node.tier-encounter {
-  border-radius: 5px;
+  border-radius: 12px;
   padding: 9px 14px;
   min-width: 58px;
 }
 
 .map-node.tier-landmark {
-  border-radius: 5px;
+  border-radius: 12px;
   padding: 9px 16px;
   min-width: 66px;
 }
@@ -13493,10 +13502,10 @@ textarea,
    second ring — it should read as a wall across the top of the route rather
    than one more stop on it. */
 .map-node.tier-ancient {
-  border-radius: 5px;
+  border-radius: 14px;
   padding: 10px 20px;
   min-width: 84px;
-  outline: 1px solid var(--border);
+  outline: 1px solid color-mix(in srgb, var(--node-color) 30%, var(--border));
   outline-offset: 3px;
 }
 
