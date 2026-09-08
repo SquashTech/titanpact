@@ -377,10 +377,13 @@ function MapNodeButton({
       className={classes}
       style={{ '--node-color': NODE_COLORS[node.type], gridColumn: column } as CSSProperties}
       aria-disabled={!isReachable}
+      /* The tile prints no name (2026-09-08, per user direction), so the label is the whole
+         readout rather than the one word the span used to carry — and it is what a screen
+         reader gets in place of a silhouette. */
+      aria-label={`${NODE_NAMES[node.type]} — ${nodeRewardText(node.type)}`}
       {...longPress}
     >
       <NodeGlyph type={node.type} className="map-node-glyph" />
-      <span className="map-node-name">{NODE_NAMES[node.type]}</span>
     </button>
   );
 }

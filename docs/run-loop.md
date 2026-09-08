@@ -93,12 +93,24 @@ weight on the reward row precisely to keep slots scarce. Gold buys a way to *pay
 scarcity, never a way around it — the relationship the Anvil already has to buying a tier
 outright (`docs/equipment.md` §5).
 
-**A map that scrolls (2026-09-08, per user direction).** Nine rows no longer fit the well, and
-`.map-scroll` was always a scroller that had nothing to scroll. Two consequences worth keeping
-straight: `MapScreen`'s `ANCHOR_VIEWPORT_FRACTION` parks the player's current node in the lower
-third whenever it moves, so the rows being chosen between are the ones on screen; and the
-scroller carries ~96px of TOP padding, because the Guardian is the last row and no amount of
-scrolling can bring the last row down off the rim — only room above it can.
+**Tiles with no names (2026-09-08, per user direction).** A nine-row act did not fit the well at
+the old 84px rows. Rather than pay for the extra row in scrolling, the tiles dropped their
+LABELS: the glyph, the silhouette tier and the colour already carry what the word did —
+recruitability included, since `fight`/`battle` draw a claw and `skirmish`/`elite` a helm
+(`nodeIcons.tsx`) — and a long press still reads any node out in full. That took rows to 56px and
+the tier min-widths from 74/92/106/124 to 46/58/66/84, which fits nine rows inside the well with
+room to spare.
+
+This supersedes the two-word Monsters/Skirmish label vocabulary of 2026-08-29 (CLAUDE.md), which
+had already moved difficulty onto colour and glyph; the names now live only in each tile's
+`aria-label` and in its long-press card.
+
+Two things survive from the scrolling pass and should stay. The scroller is still a scroller —
+content that fits does not scroll, so it costs nothing and it is what keeps a tenth row from
+being a redesign — and `MapScreen`'s `ANCHOR_VIEWPORT_FRACTION` still parks the current node in
+the lower third whenever it moves. The ~96px of TOP padding stays too, and is now doing its job
+without any scrolling at all: the Guardian is the last row, nothing can bring the last row down
+off the rim except room above it, and that padding is the room.
 
 Four Mentors means a run can Class up to four heroes rather than one, since the offer
 filters to heroes with no Class yet. Measured (`scripts/sim`, 40,000 runs at 3× XP), that

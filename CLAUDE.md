@@ -239,8 +239,10 @@ what's still unimplemented:
   reward row was added and the funnel became a **pick 1 of 2 from act 3** — Guild Hall
   (people and new gear, and the run's only place to SELL) or **Blacksmith** (item slots,
   the Anvil, the Enchanter, all for gold). One verb family per node; the Anvil and
-  Enchanter left the Guild Hall, and the free `forgeReward` Forge is unchanged. The map
-  now **scrolls**, which is what paid for the extra row. **2026-08-29:** the boss was
+  Enchanter left the Guild Hall, and the free `forgeReward` Forge is unchanged. Map tiles
+  **dropped their labels** to pay for the extra row — glyph, silhouette and colour carry
+  what the words did, a long press still reads any node out, and this supersedes the
+  two-word Monsters/Skirmish vocabulary below. **2026-08-29:** the boss was
   renamed Ancient → **Guardian**; "Ancient" is reserved for something later in a run and
   is otherwise only the locked TYPE, which is untouched. The map's encounter labels are
   now a two-word vocabulary — **Monsters** (not recruitable: `fight`, `battle`) and
