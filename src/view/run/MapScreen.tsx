@@ -3,12 +3,13 @@ import type { RunState } from '../../run/state';
 import { SEAL_ACTS } from '../../run/state';
 import { reachableNodeIds } from '../../run/runProgress';
 import { unseenCount } from '../../run/equipment';
-import type { MapNode, MapNodeType, RunMap } from '../../run/map';
+import type { MapNode, RunMap } from '../../run/map';
 import { RosterManagementScreen } from './RosterManagementScreen';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { ResourceGlyph, type ResourceKind } from '../shared/RunGlyph';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
-import { useLongPress } from '../shared/MoveTile';
+import { MapRoute } from './MapRoute';
+import { NODE_COLORS, NODE_NAMES, nodeRewardText } from './mapNodes';
 import { canAffordAnyLevelUp } from '../../run/progression';
 import { locationForAct } from '../../run/locations';
 import type { LocationDefinition } from '../../data/locations';
@@ -52,149 +53,6 @@ function ResourceStat({ kind, label, value, onSpend }: { kind: ResourceKind; lab
   );
 }
 
-// Name carries recruitability (Monsters vs Skirmish); NODE_COLORS carries
-// difficulty. The two channels are deliberately not redundant.
-const NODE_NAMES: Record<MapNodeType, string> = {
-  fight: 'Monsters',
-  skirmish: 'Skirmish',
-  battle: 'Monsters',
-  elite: 'Skirmish',
-  boss: 'Guardian',
-  shop: 'Guild Hall',
-  blacksmith: 'Blacksmith',
-  equipmentReward: 'Item',
-  gemReward: 'Gem',
-  passiveReward: 'Boon',
-  currencyReward: 'Gold',
-  upgradeReward: 'XP',
-  forgeReward: 'Forge',
-  hpBoostReward: 'Vitality',
-  manaBoostReward: 'Mana',
-  classReward: 'Mentor',
-  tutorReward: 'Tutor',
-  event: 'Event',
-  muster: 'The Vigil',
-  finale: 'Endbringer',
-};
-
-// Stat-reward colours match StatBars' STAT_COLORS. `battle` stays `--ally`,
-// not `--enemy`: two reds a shade apart on the Elite-or-Battle row was illegible.
-const NODE_COLORS: Record<MapNodeType, string> = {
-  fight: 'var(--enemy)',
-  skirmish: 'var(--ally)',
-  battle: 'var(--ally)',
-  elite: 'var(--crit)',
-  boss: 'var(--accent)',
-  shop: 'var(--mana)',
-  // A burnt copper beside the Forge's orange: same family (both are about what a hero can
-  // carry), different silhouette tier, so they read as related rather than as each other.
-  blacksmith: '#c67a4c',
-  equipmentReward: 'var(--physical)',
-  // A rose nothing else on the map wears: a Gem can be any stat, so it cannot borrow one stat's colour.
-  gemReward: '#d9569b',
-  // Arcane violet, the hue the whole passive vocabulary already sits on (passiveIcons' fallback).
-  passiveReward: 'var(--magical)',
-  currencyReward: 'var(--accent)',
-  upgradeReward: 'var(--hp-high)',
-  // Forge orange: the only node that hands out a permanent SLOT rather than a thing to put in one.
-  forgeReward: '#f0913c',
-  hpBoostReward: 'var(--hp-high)',
-  manaBoostReward: 'var(--mana)',
-  classReward: 'var(--buff)',
-  // The only cyan on the map — the Tutor is rare enough that it should never be mistaken at a
-  // glance for the Mana Well beside it.
-  tutorReward: '#48c9e8',
-  event: 'var(--tier-common)',
-  muster: 'var(--accent)',
-  // The only node in a run that wears the mythic red, because there is only one of it.
-  finale: 'var(--tier-mythic)',
-};
-
-// The line under a choice card's name: what the node pays out, and nothing else. Difficulty
-// rides on NODE_COLORS, recruitability on NODE_NAMES.
-const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
-  fight: '15–25g · 2 XP · item',
-  skirmish: '15–25g · 4 XP · 25% item · recruitable',
-  battle: '30–45g · 3 XP · item',
-  elite: '15–25g · 4 XP · 55% elite item · recruitable — enemies carry +10 to 2 stats',
-  boss: '4 XP · 70% elite item · 1 Recruit Contract',
-  shop: 'Buy heroes, contracts and gear — and sell what you are not carrying',
-  blacksmith: 'Buy an item slot, a tier at the Anvil, or an element at the Enchanter — acts 3+',
-  equipmentReward: '1 of 3 items',
-  gemReward: '1 of 3 Gems — each a team-wide +5 to one stat',
-  passiveReward: '1 of 3 Boons, granted to one hero for the rest of the run',
-  currencyReward: '15–30g',
-  upgradeReward: '2 XP',
-  forgeReward: '+1 item slot to one hero, for the rest of the run',
-  hpBoostReward: '+20 max HP to one hero',
-  manaBoostReward: 'Sapphire — team-wide +5 Mana Pool',
-  classReward: '1 of 3 Classes, taught to one hero',
-  tutorReward: 'One hero learns ANY move from its level-up pool — acts 4 and 5 only',
-  event: 'Hidden until you arrive: a move, a passive, gear or a trade',
-  muster: 'Fill the roster to six, then spend everything left',
-  finale: 'The five seals you broke — then the thing they were holding',
-};
-
-// Every Guardian pays a Banner now that the finale act follows act 5 (App.tsx).
-function nodeRewardText(type: MapNodeType): string {
-  const base = NODE_DESCRIPTIONS[type];
-  return type === 'boss' ? `${base} · Guardian’s Banner` : base;
-}
-
-// How much weight a choice card carries — the Guardian is not a Gem.
-type NodeTier = 'reward' | 'encounter' | 'landmark' | 'ancient';
-
-const NODE_TIERS: Record<MapNodeType, NodeTier> = {
-  fight: 'encounter',
-  skirmish: 'encounter',
-  battle: 'encounter',
-  elite: 'encounter',
-  boss: 'ancient',
-  shop: 'landmark',
-  blacksmith: 'landmark',
-  equipmentReward: 'reward',
-  gemReward: 'reward',
-  passiveReward: 'reward',
-  currencyReward: 'reward',
-  upgradeReward: 'reward',
-  forgeReward: 'reward',
-  hpBoostReward: 'reward',
-  manaBoostReward: 'reward',
-  classReward: 'reward',
-  tutorReward: 'reward',
-  event: 'reward',
-  muster: 'landmark',
-  finale: 'ancient',
-};
-
-/**
- * What a choice leads ON to (2026-09-08, per user direction). The map no longer shows the act;
- * it shows where you are and what you may take next. Two of the seven branch points in an act
- * actually route — measured, the rest reach the same places whichever option you pick — and both
- * of those price the choice in front of you against the one behind it: the reward row STEERS into
- * Elite-or-Battle, and which of those you take limits which of the next row's rewards you reach.
- *
- * Pricing only works if the price is visible before it is paid, which the whole map used to do
- * by being whole. This is what does it instead: each option carries what it opens, and only when
- * the options differ — if every choice on the row leads to the same places, the marker is noise
- * and is not drawn. Derived, never authored, so a change to the generator shows up here for free.
- */
-function leadOnTypes(map: RunMap, nodeId: string): MapNodeType[] {
-  const seen: MapNodeType[] = [];
-  for (const nextId of map.nodes[nodeId]?.nextIds ?? []) {
-    const type = map.nodes[nextId]?.type;
-    if (type && !seen.includes(type)) seen.push(type);
-  }
-  return seen;
-}
-
-function leadOnsDiffer(map: RunMap, nodeIds: readonly string[]): boolean {
-  if (nodeIds.length < 2) return false;
-  const signature = (id: string) => leadOnTypes(map, id).join('+');
-  const first = signature(nodeIds[0]);
-  return nodeIds.some((id) => signature(id) !== first);
-}
-
 /**
  * How far to the Guardian, one pip per row. It replaces the thing the whole-map view gave away
  * for free and the only thing worth keeping from it — an act's LENGTH. The last pip is the
@@ -216,55 +74,6 @@ function ProgressRail({ map, currentRow }: { map: RunMap; currentRow: number }) 
         }
         return <span key={row} className={`map-rail-pip ${state}`} aria-hidden="true" />;
       })}
-    </div>
-  );
-}
-
-/**
- * One place the player may go, as a lit sigil rather than a row of text (2026-09-08, per user
- * direction). The well is the act's Location and these are the ways out of it, so a choice is a
- * thing you look at and not a line you read: the glyph, the colour and the size are the whole
- * card, and holding one names it and says what it pays.
- *
- * What lies BEYOND it — the "Opens" chips, on the two rows where the options differ — sits above
- * the sigil in the destination's own colour, small and unlit. Above, because the map has always
- * run bottom-up toward the Guardian: further along the path is higher up the screen.
- */
-function ChoiceMedallion({
-  map,
-  node,
-  showLeadOn,
-  onSelect,
-  onPreview,
-}: {
-  map: RunMap;
-  node: MapNode;
-  showLeadOn: boolean;
-  onSelect: () => void;
-  onPreview: () => void;
-}) {
-  const leadOns = showLeadOn ? leadOnTypes(map, node.id) : [];
-  const press = useLongPress(onPreview, onSelect);
-  return (
-    <div className={`map-choice tier-${NODE_TIERS[node.type]}`}>
-      <span className="map-choice-ahead" aria-hidden="true">
-        {leadOns.map((type) => (
-          <span key={type} className="map-choice-ahead-mark" style={{ '--node-color': NODE_COLORS[type] } as CSSProperties}>
-            <NodeGlyph type={type} />
-          </span>
-        ))}
-      </span>
-      <button
-        type="button"
-        className="map-medallion"
-        style={{ '--node-color': NODE_COLORS[node.type] } as CSSProperties}
-        aria-label={`${NODE_NAMES[node.type]} — ${nodeRewardText(node.type)}`}
-        data-sfx="none"
-        {...press}
-      >
-        <span className="map-medallion-glow" aria-hidden="true" />
-        <NodeGlyph type={node.type} className="map-medallion-glyph" />
-      </button>
     </div>
   );
 }
@@ -320,7 +129,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
   // The whole view: where the player stands, and what they may take from here.
   const choiceIds = reachableNodeIds(run);
   const currentRow = run.currentNodeId != null ? map.nodes[run.currentNodeId]?.row ?? 0 : -1;
-  const showLeadOn = leadOnsDiffer(map, choiceIds);
+  const originNode = run.currentNodeId != null ? map.nodes[run.currentNodeId] ?? null : null;
 
   return (
     <div className="map-screen" data-location={location.id} style={{ '--node-rgb': location.tintRgb } as CSSProperties}>
@@ -385,18 +194,13 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
 
         <ProgressRail map={map} currentRow={currentRow} />
 
-        <div className="map-choices">
-          {choiceIds.map((nodeId) => (
-            <ChoiceMedallion
-              key={nodeId}
-              map={map}
-              node={map.nodes[nodeId]}
-              showLeadOn={showLeadOn}
-              onSelect={() => onSelectNode(nodeId)}
-              onPreview={() => setPreviewNode(map.nodes[nodeId])}
-            />
-          ))}
-        </div>
+        <MapRoute
+          map={map}
+          originNode={originNode}
+          choiceIds={choiceIds}
+          onSelectNode={onSelectNode}
+          onPreviewNode={setPreviewNode}
+        />
       </div>
 
       {/* One button, because there is one thing down here worth opening: the run's own sheet —

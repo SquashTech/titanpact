@@ -34,6 +34,9 @@ export type SfxId =
   | 'seal.shatter'
   | 'titan.stir'
   | 'titan.gaze'
+  | 'map.path'
+  | 'map.boon'
+  | 'map.threat'
   // Combat
   | 'cast'
   | 'hit.physical'
@@ -389,6 +392,55 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'noise', gain: 0.3, attack: 0.006, decay: 0.42, filter: { type: 'bandpass', freq: 1600, freqEnd: 320, q: 0.9 } },
       { wave: 'sine', freq: 78, freqEnd: 34, gain: 0.44, attack: 0.008, decay: 0.8 },
       { wave: 'triangle', freq: 117, freqEnd: 98, detune: 14, gain: 0.16, attack: 0.05, hold: 0.2, decay: 0.9, delay: 0.04, filter: { type: 'lowpass', freq: 520, q: 2.2 } },
+    ],
+  },
+
+  /**
+   * The route drawing forward out of the node just finished (MapRoute). One rising sweep under the
+   * whole fan of paths rather than a tick per path: what is happening is a single gesture, and the
+   * three sounds that follow it are the ones carrying information.
+   */
+  'map.path': {
+    gain: 0.3,
+    jitter: 0.03,
+    voices: [
+      // The line itself: a band of noise climbing, so the sound has the same direction the stroke does.
+      { wave: 'noise', gain: 0.26, attack: 0.06, decay: 0.42, filter: { type: 'bandpass', freq: 420, freqEnd: 2400, q: 1.1 } },
+      { wave: 'triangle', freq: 147, freqEnd: 294, gain: 0.2, attack: 0.05, decay: 0.4 },
+      // Enough floor that it reads as ground being crossed rather than as a hiss off the top of the mix.
+      { wave: 'sine', freq: 74, freqEnd: 96, gain: 0.22, attack: 0.03, hold: 0.1, decay: 0.34 },
+    ],
+  },
+
+  /**
+   * A path reaching something worth having — a reward, or (pitched down) a landmark. A struck bell:
+   * consonant, open, and gone in a third of a second, because up to three land in under a second.
+   */
+  'map.boon': {
+    gain: 0.34,
+    jitter: 0.015,
+    voices: [
+      { wave: 'noise', gain: 0.18, attack: 0.001, decay: 0.02, filter: { type: 'bandpass', freq: 3400, q: 1.6 } },
+      { wave: 'triangle', freq: 196, freqEnd: 165, gain: 0.24, attack: 0.002, decay: 0.14 },
+      { wave: 'sine', freq: 784, gain: 0.3, attack: 0.004, decay: 0.34 },
+      // The fifth above, a beat late and quieter — the interval is what makes it read as good news.
+      { wave: 'sine', freq: 1175, detune: 8, gain: 0.16, attack: 0.006, decay: 0.4, delay: 0.035 },
+    ],
+  },
+
+  /**
+   * A path reaching something that fights back. Same length as the chime and the exact inverse of it:
+   * noise-led, falling, and a minor second under the body so the pair grinds instead of ringing. The
+   * Guardian is this one at 0.66 pitch (MapRoute), which is the whole reason it is authored low and
+   * left room to drop.
+   */
+  'map.threat': {
+    gain: 0.42,
+    jitter: 0.02,
+    voices: [
+      { wave: 'noise', gain: 0.36, attack: 0.002, decay: 0.3, filter: { type: 'lowpass', freq: 1100, freqEnd: 200, q: 1.1 } },
+      { wave: 'sine', freq: 128, freqEnd: 58, gain: 0.44, attack: 0.003, decay: 0.42 },
+      { wave: 'sawtooth', freq: 172, freqEnd: 152, detune: 16, gain: 0.14, attack: 0.02, hold: 0.06, decay: 0.34, delay: 0.02, filter: { type: 'lowpass', freq: 640, q: 2.4 } },
     ],
   },
 

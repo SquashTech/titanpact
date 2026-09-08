@@ -5555,6 +5555,123 @@ textarea,
 /* The long-pressed node's own glyph, at the head of its preview popup — the
    same shape the player is still holding down, in the same color, so the
    popup reads as that tile opening rather than as a new panel about it. */
+/* --- Arriving -------------------------------------------------------------
+   What a path reaches, at the moment it reaches it. Three layers on one clock (`--land-delay`,
+   set per choice by MapRoute so it is exactly when that path finishes): the card fades up, the
+   sigil snaps in past its own size, and a ring leaves the disc.
+
+   The ring is where the two flavours part, and they part because the information does. A Gem
+   arriving and a Guardian arriving are not the same news, and the screen has no words left to say
+   which — so a reward blooms open and an encounter SLAMS: faster, harder-edged, and with a kick on
+   the sigil itself. Paired with `map.boon` / `map.threat` (MapRoute's ARRIVAL_SFX), which split the
+   same way for the same reason. */
+.map-route.is-revealing .map-choice {
+  animation: map-choice-land var(--land-dur) var(--ease-out) var(--land-delay) both;
+}
+
+.map-route.is-revealing .map-medallion {
+  animation: map-medallion-land var(--land-dur) cubic-bezier(0.2, 1.5, 0.4, 1) var(--land-delay) both;
+}
+
+@keyframes map-choice-land {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes map-medallion-land {
+  from {
+    transform: scale(0.3);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* The ring. Sized off the medallion so every tier throws one in proportion, and inert outside the
+   reveal — this is an event, not decoration. */
+.map-choice-burst {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid var(--node-color);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.map-route.is-revealing .map-choice-burst {
+  animation: map-burst-bloom 620ms var(--ease-out) var(--land-delay) both;
+}
+
+@keyframes map-burst-bloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  18% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.75);
+  }
+}
+
+/* An encounter: out fast and gone, with the disc taking the hit. */
+.map-route.is-revealing .map-choice.tier-encounter .map-choice-burst,
+.map-route.is-revealing .map-choice.tier-ancient .map-choice-burst {
+  border-width: 3px;
+  animation: map-burst-slam 460ms cubic-bezier(0.1, 0.9, 0.2, 1) var(--land-delay) both;
+}
+
+@keyframes map-burst-slam {
+  0% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+  22% {
+    opacity: 1;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.28);
+  }
+}
+
+.map-route.is-revealing .map-choice.tier-encounter .map-medallion,
+.map-route.is-revealing .map-choice.tier-ancient .map-medallion {
+  animation: map-medallion-slam var(--land-dur) cubic-bezier(0.15, 1.2, 0.3, 1) var(--land-delay) both;
+}
+
+/* Overshoots the other way — in from too big rather than up from too small — so it reads as
+   something landing on the map instead of something growing out of it. */
+@keyframes map-medallion-slam {
+  0% {
+    transform: scale(1.5);
+    filter: brightness(2.4);
+  }
+  46% {
+    transform: scale(0.94);
+    filter: brightness(1.15);
+  }
+  70% {
+    transform: translateX(2px) scale(1.02);
+  }
+  84% {
+    transform: translateX(-2px);
+  }
+  100% {
+    transform: none;
+    filter: none;
+  }
+}
+
 .map-popup-glyph {
   width: 17px;
   height: 17px;
@@ -13224,19 +13341,158 @@ textarea,
   height: 20px;
 }
 
+/* --- The route, and walking it (2026-09-08, per user direction) -------------
+   Losing the whole-act graph cost the map the one thing a graph gives away for free: the sense of
+   MOVING along it. This is what gives that back, and it gives it back as an event rather than as a
+   diagram — the node just finished sits greyed at the foot of the well, and the paths out of it are
+   DRAWN, each destination arriving when its own path gets there (MapRoute).
+
+   The structure is permanent; only the drawing is animated. `.is-revealing` is on for a beat under
+   a second after each arrival and then comes off, so every base rule below is also the final frame.
+   Nothing here runs on the act's first row — there is nothing behind you to leave yet. */
+.map-route {
+  /* Paired with MapRoute’s PATH_DRAW_MS / LAND_MS. The stagger between paths is JS-side only —
+     it is a per-path delay, and the SFX have to land on the same beat the sigil does. */
+  --path-draw: 420ms;
+  --land-dur: 340ms;
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Under the medallions and over the well's weather. `overflow: visible` because a stroke's glow
+   reaches past the box it is measured in. */
+.map-paths {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* The path itself, in the colour of what it reaches — so the fan says what it is a fan OF before a
+   single sigil has landed. Held well under the medallion's own light: this is the ground between
+   two decisions, not a third one. */
+.map-path-line {
+  fill: none;
+  stroke: var(--node-color);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  opacity: 0.32;
+  filter: drop-shadow(0 0 4px var(--node-color));
+}
+
+/* The head of the stroke: a short bright dash travelling the path and leaving nothing behind, so
+   the line reads as being drawn by something rather than as a line growing. Invisible unless the
+   reveal is running — there is no spark on a path already walked. */
+.map-path-spark {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.95);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 0.045 1;
+  stroke-dashoffset: 0;
+  opacity: 0;
+}
+
+.map-route.is-revealing .map-path-line {
+  animation: map-path-draw var(--path-draw) var(--ease-out) var(--path-delay) both;
+}
+
+.map-route.is-revealing .map-path-spark {
+  animation: map-path-spark var(--path-draw) var(--ease-out) var(--path-delay) both;
+}
+
+@keyframes map-path-draw {
+  from {
+    stroke-dashoffset: 1;
+    opacity: 0.5;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 0.32;
+  }
+}
+
+@keyframes map-path-spark {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.9;
+  }
+}
+
+/* Where the paths come from: the node just resolved, unlit and colourless. The only thing on the
+   screen that is not a decision, so it is the only thing drawn without its own colour — grey is
+   what says "spent", and a smaller disc is what says "behind you". */
+.map-origin {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0 20px;
+}
+
+.map-origin-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+  background: rgba(4, 5, 8, 0.5);
+  color: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 0 14px -6px rgba(255, 255, 255, 0.35);
+}
+
+.map-origin-glyph {
+  width: 24px;
+  height: 24px;
+}
+
+/* Nothing is tappable while the route is still arriving — a medallion at 30% scale is not a target
+   anyone means to hit. The catcher over the top lands the whole thing at once instead, because a
+   flourish seen forty times an act must always be skippable. */
+.map-route.is-revealing .map-choices {
+  pointer-events: none;
+}
+
+.map-reveal-skip {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+}
+
 /* The ways out of this place. Sigils, not rows (2026-09-08, per user direction): the well is the
    act's Location and a choice is something you look at, so a medallion carries the glyph, the
    colour and the size and nothing else. Holding one names it and says what it pays — the only
    words the screen has, and only when asked for. Laid across the width so two or three read as a
    fork in the road rather than as a list. */
 .map-choices {
+  position: relative;
+  z-index: 1;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 18px;
-  padding: 8px 14px 26px;
+  padding: 8px 14px 12px;
 }
 
 .map-choice {
