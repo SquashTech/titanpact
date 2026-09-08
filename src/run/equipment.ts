@@ -175,18 +175,22 @@ export const RARITY_BUDGET: Record<EquipmentRarity, number> = {
 };
 
 /**
- * Points one unit of each stat costs. HP is half (never in the damage ratio); MP Regen is
- * triple (every hero's base is 10, so +10 doubles it). The first knob to turn if tiers feel
- * wrong; nothing else reads this table.
+ * Points one unit of each stat costs. HP is a quarter (never in the damage ratio, and authored
+ * in the doubled units the HP bar draws); MP Regen is triple (every hero's base is 10, so +10
+ * doubles it). The first knob to turn if tiers feel wrong; nothing else reads this table.
  *
  * Mana Pool went 0.5 -> 1 with the 2026-09-06 budget pass. At half price the tripled budgets
  * bought +60 to +80 Mana on a single item against a roster whose pools are 50-65 — an item
  * that more than doubles a pool prices every move's mana cost out of meaning, and mana cost
  * is the primary balance lever on reliable moves (CLAUDE.md). HP has no equivalent problem:
  * it is not a resource that gates what a hero may cast.
+ *
+ * HP went 0.5 -> 0.25 when the HP x2 was baked into the authored lines: the same item, the same
+ * budget, twice the printed figure. Whether a quarter is the RIGHT price is a separate and older
+ * question — the 450 hero budget has always priced HP at half this rate.
  */
 export const STAT_POINT_VALUE: Record<StatKey, number> = {
-  hp: 0.5,
+  hp: 0.25,
   attack: 1,
   defense: 1,
   intelligence: 1,

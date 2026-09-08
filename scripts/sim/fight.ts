@@ -79,7 +79,7 @@ export interface FightOutcome {
 
 const STAT_TOTAL_KEYS = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed'] as const;
 
-/** Sum of the six combat stats across everything a side fielded, bench included. HP_SCALE is deliberately NOT in this — it applies to both sides equally and would just inflate the axis. */
+/** Sum of the six combat stats across everything a side fielded, bench included. HP is counted at its authored figure, which is twice the weight of any other stat — it applies to both sides equally, so the axis is comparable even though it is not budget-priced. */
 function squadStatTotal(state: CombatState, side: Side): number {
   let total = 0;
   for (const combatant of Object.values(state.combatants)) {

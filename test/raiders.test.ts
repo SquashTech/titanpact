@@ -14,16 +14,17 @@ import { typeChart } from '../src/data/typechart';
 import { actScaling, ACT_STEP_CURVE, ACT_STEP_STAT_TOTAL } from '../src/run/difficulty';
 import { generateEncounter, generateLeaderEncounter } from '../src/run/enemyGen';
 import type { HeroDefinition, StatKey } from '../src/engine/content';
+import { COMBAT_BUDGET_STATS, statBudgetTotal, grantBudgetTotal } from '../src/run/statBudget';
 
 const RAIDERS = factions.raiders;
 const CULTISTS = factions.cultists;
 const GOBLINS = factions.goblins;
 
 /** The game's stat-total convention (docs/run-loop.md "Measured baseline") — six combat stats, not mana or MP Regen. */
-const COMBAT_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed'];
+const COMBAT_STATS = COMBAT_BUDGET_STATS;
 
 function statTotal(hero: HeroDefinition): number {
-  return COMBAT_STATS.reduce((sum, stat) => sum + hero.baseStats[stat], 0);
+  return statBudgetTotal(hero.baseStats, COMBAT_STATS);
 }
 
 function meanTotal(ids: readonly string[]): number {
@@ -259,7 +260,7 @@ test('raiders: an Act 5 Storm Coast fields the same roster carrying the full act
   const scaling = actScaling('monsters', 5, RAIDERS.baselineAct);
   const { run } = generateLeaderEncounter(7, RAIDERS.basicIds, RAIDERS.leaderId, enemies, scaling);
   for (const entry of run.roster) {
-    const granted = COMBAT_STATS.reduce((sum, stat) => sum + (entry.evolutionStatGrants[stat] ?? 0), 0);
+    const granted = statBudgetTotal(entry.evolutionStatGrants, COMBAT_STATS);
     assert.strictEqual(granted, scaling.statSteps * ACT_STEP_STAT_TOTAL, `${entry.heroId} did not take the full act curve`);
   }
 });

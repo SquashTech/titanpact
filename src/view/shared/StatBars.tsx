@@ -20,7 +20,7 @@ export const STAT_LABELS: Record<StatKey, string> = {
 
 // Fixed reference ceilings, not per-hero maxes, so bar length is comparable across heroes.
 const STAT_SCALE_MAX: Record<StatKey, number> = {
-  hp: 170,
+  hp: 340,
   attack: 110,
   defense: 120,
   intelligence: 110,

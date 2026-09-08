@@ -1,6 +1,8 @@
 // Per-act encounter scaling (docs/run-loop.md "Per-act difficulty scaling").
 // Pure act -> numbers; enemyGen.ts applies the result. All figures placeholder.
 
+import type { StatKey } from '../engine/content';
+
 /** `monsters` = non-recruitable pool (fight/battle); `skirmish` = hero pool (skirmish/elite/boss). Same rate, different baseline act. */
 export type ScalingTrack = 'monsters' | 'skirmish';
 
@@ -16,10 +18,29 @@ export const BASELINE_ACT: Record<ScalingTrack, number> = {
   skirmish: 1,
 };
 
-// One act-step: +10 to 3 distinct growth stats. Drawn uniformly, so an HP-heavy
-// roll is a softer fight; weighting by STAT_POINT_VALUE is the knob if needed.
+// One act-step: +10 to 3 distinct growth stats, drawn uniformly. An HP-heavy roll is still the
+// softer fight — HP is not in the damage ratio — but it is no longer softer by an accident of
+// units: HP is authored in doubled points, so a step pays it double to move the bar as far as
+// +10 moves any other stat.
 export const ACT_STEP_STAT_COUNT = 3;
 export const ACT_STEP_AMOUNT = 10;
+
+/** Multiplier on ACT_STEP_AMOUNT per growth stat. 1 everywhere but HP, which is authored in doubled points. */
+export const ACT_STEP_STAT_WEIGHT: Record<StatKey, number> = {
+  hp: 2,
+  attack: 1,
+  defense: 1,
+  intelligence: 1,
+  wisdom: 1,
+  speed: 1,
+  manaPool: 1,
+  mpRegen: 1,
+};
+
+/** A step's total in AUTHORED points, which is what a stat-line sum measures — an HP roll lands 40, not 30. */
+export function actStepStatTotal(bonus: Partial<Record<StatKey, number>>): number {
+  return Object.values(bonus).reduce((sum, amount) => sum + (amount ?? 0), 0);
+}
 
 export const ACT_STEP_STAT_TOTAL = ACT_STEP_STAT_COUNT * ACT_STEP_AMOUNT;
 

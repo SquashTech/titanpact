@@ -47,6 +47,12 @@ don't silently override it.
   Wisdom/Speed/Mana (2026-09-05); **MP Regen sits outside the budget at a flat 10**.
   A specialist is signalled by spiking one stat past anything else in the roster, never
   by coming in under budget (`test/roster.test.ts`, `docs/types-and-heroes.md`).
+  **What a line reads is not what it costs** (2026-09-08): HP is authored in the units
+  the HP bar draws — twice every other stat — and priced at `HP_BUDGET_VALUE` = 0.5.
+  Every budget figure in the game goes through `src/run/statBudget.ts`. It replaced a
+  hidden `HP_SCALE = 2` inside `getMaxHp`, which halved every HP number the player was
+  shown. **The rate itself is an OPEN question** — equipment prices the same HP at 0.25
+  and neither figure was ever measured (`docs/progression.md` "Pricing HP").
 - **Stat modifiers are flat additive integers, multiples of 5 or 10.** No % stat mods.
   There is **no automatic stat growth** from leveling. One documented exemption
   (2026-08-30): a **derived** grant, whose amount is read off live state rather than

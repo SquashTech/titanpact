@@ -71,7 +71,7 @@ export const TUTORIAL_ENCOUNTERS: Partial<Record<MapNodeType, TutorialEncounter>
   // into a 100 HP Grunt — which took every round-2 lesson with them. Defense is most of the
   // grant because the ratio, not the HP, is what was ending it: +35 takes Valor's read from
   // 2.4x down to ~1.0x, and the fight from one round to three or four.
-  fight: { heroIds: ['goblinGrunt', 'goblinSkulker'], statGrants: { hp: 25, defense: 35 } },
+  fight: { heroIds: ['goblinGrunt', 'goblinSkulker'], statGrants: { hp: 50, defense: 35 } },
   skirmish: { heroIds: ['rime', 'glacialWarden'] },
   battle: { heroIds: ['goblinChief', 'goblinGrunt', 'goblinSkulker'] },
   boss: { heroIds: ['goblinGrunt', 'goblinWarrior'] },

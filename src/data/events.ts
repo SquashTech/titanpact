@@ -73,7 +73,7 @@ export const runEvents: Record<string, RunEventDefinition> = {
     eyebrow: 'An Even Trade',
     flavor: 'A still pool that takes something of the body and gives back something of the mind.',
     tone: 'mana',
-    outcome: { kind: 'statShift', deltas: { hp: -20, manaPool: 20 } },
+    outcome: { kind: 'statShift', deltas: { hp: -40, manaPool: 20 } },
   },
 
   assertivenessTraining: {

@@ -18,9 +18,11 @@ import { enemies, factions, basicEnemiesOf } from '../src/data/enemies';
 const GOBLINS = factions.goblins;
 import { progressionTable } from '../src/data/progression';
 import { SEAL_ACTS, TOTAL_ACTS } from '../src/run/state';
+import { grantBudgetTotal } from '../src/run/statBudget';
+import type { StatKey } from '../src/engine/content';
 
 function statTotal(grants: Partial<Record<string, number>>): number {
-  return Object.values(grants).reduce<number>((sum, v) => sum + (v ?? 0), 0);
+  return grantBudgetTotal(grants as Partial<Record<StatKey, number>>);
 }
 
 test('difficulty: the skirmish track baselines at Act 1 and walks up the acceleration curve', () => {

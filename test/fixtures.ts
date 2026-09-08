@@ -12,8 +12,8 @@ export interface FixtureCombatant {
 
 /**
  * The HP a fixture combatant starts and caps at. Use this, never
- * `heroes[id].baseStats.hp` — max HP goes through getMaxHp, which applies HP_SCALE, so a
- * test written against the raw stat line breaks the moment that knob moves.
+ * `heroes[id].baseStats.hp` — max HP goes through getMaxHp, which is where grants and
+ * modifiers land, so a test written against the raw stat line reads a hero nobody fields.
  */
 export function fixtureMaxHp(heroId: string): number {
   const blank = createCombatant('probe', heroId, 'A', 0, 0);
@@ -38,7 +38,7 @@ export function createFightState(seed: number, sideA: FixtureCombatant[], sideB:
     for (const c of list) {
       const hero = heroes[c.heroId];
       // Through getMaxHp/getMaxMana, not the raw stat line, so the fixture starts at FULL —
-      // the same way buildCombatState does. HP_SCALE lives inside getMaxHp.
+      // the same way buildCombatState does.
       const blank = createCombatant(c.combatantId, c.heroId, c.side, 0, 0);
       combatants[c.combatantId] = { ...blank, currentHp: getMaxHp(hero, blank), currentMana: getMaxMana(hero, blank) };
     }

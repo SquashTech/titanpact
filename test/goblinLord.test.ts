@@ -7,13 +7,14 @@ import { moves } from '../src/data/moves';
 import { enemies, ENDBRINGER_ID, GOBLIN_LORD_ID } from '../src/data/enemies';
 import { locations, ACT_ONE_LOCATION_ID } from '../src/data/locations';
 import { statusApplicationsOf, type StatKey } from '../src/engine/content';
+import { COMBAT_BUDGET_STATS, statBudgetTotal, grantBudgetTotal } from '../src/run/statBudget';
 
 /** The game's stat-total convention (docs/run-loop.md "Measured baseline") — six combat stats, not mana or MP Regen. */
-const COMBAT_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed'];
+const COMBAT_STATS = COMBAT_BUDGET_STATS;
 
 test('goblinLord: the authored stat total is 550, on the same six stats the difficulty curve measures', () => {
   const lord = enemies[GOBLIN_LORD_ID];
-  const total = COMBAT_STATS.reduce((sum, stat) => sum + lord.baseStats[stat], 0);
+  const total = statBudgetTotal(lord.baseStats, COMBAT_STATS);
   // Was 600. Batch simulation put the Act 1 Guardian at a 4.6% player win rate — the run's
   // single choke point — so the champion came down 50 points, almost all of it off Attack.
   assert.strictEqual(total, 550);

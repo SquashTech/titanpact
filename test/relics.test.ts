@@ -63,12 +63,12 @@ test('relics: the five Guardian Banners are catalogued, in offer order', () => {
 
 test('relics: a Banner taken four times stacks to four times its grant', () => {
   const mods = relicTeamStatModifiers(['bannerOfVitality', 'bannerOfVitality', 'bannerOfVitality', 'bannerOfVitality'], relics);
-  assert.deepStrictEqual(mods, { hp: 120 });
+  assert.deepStrictEqual(mods, { hp: 240 });
 });
 
 test('relics: the five Banners cover five different axes, and no axis twice', () => {
   // One Banner per axis is what makes five acts of fixed offers a spread-or-commit decision.
-  assert.deepStrictEqual(relics.bannerOfVitality.statGrants, { hp: 30 });
+  assert.deepStrictEqual(relics.bannerOfVitality.statGrants, { hp: 60 });
   assert.deepStrictEqual(relics.bannerOfTheWarcry.statGrants, { attack: 20, intelligence: 20 });
   assert.deepStrictEqual(relics.bannerOfTheBulwark.statGrants, { defense: 15, wisdom: 15 });
   assert.deepStrictEqual(relics.bannerOfSwiftness.statGrants, { speed: 20 });

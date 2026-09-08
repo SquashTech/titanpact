@@ -21,7 +21,7 @@ import { EVOLUTION_LEVEL } from '../src/run/progression';
 import { createRosterEntry, createRunState } from '../src/run/state';
 import { resolveTypeMult } from '../src/engine/damage/typeMult';
 import { calcDamage, VARIANCE_MAX, statKeysForMove } from '../src/engine/damage/damagePipeline';
-import { HP_SCALE } from '../src/engine/state';
+
 import {
   cueNodes,
   generateTutorialMap,
@@ -487,7 +487,7 @@ test('tutorial: no starter can one-shot an opener enemy, so a round-2 cue has so
 
   for (const enemyId of opener.heroIds) {
     const enemy = enemies[enemyId];
-    const effectiveHp = (enemy.baseStats.hp + (grants.hp ?? 0)) * HP_SCALE;
+    const effectiveHp = enemy.baseStats.hp + (grants.hp ?? 0);
 
     for (const starterId of TUTORIAL_STARTER_IDS) {
       const hero = heroes[starterId];

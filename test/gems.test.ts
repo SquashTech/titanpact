@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { STAT_ORDER } from '../src/engine/content';
-import { GEM_STAT_GRANT, gemForStat, gemRelics, relics } from '../src/data/relics';
+import { GEM_HP_GRANT, GEM_STAT_GRANT, gemForStat, gemRelics, relics } from '../src/data/relics';
 import { GEM_DROP_CHANCE, GEM_OFFER_COUNT, gemDropChanceFor, pickGemOffers, rollGemOffers } from '../src/run/gems';
 import { relicTeamStatModifiers } from '../src/run/relics';
 import { MAP_NODE_TYPES } from '../src/run/map';
@@ -13,13 +13,15 @@ import { MAP_NODE_TYPES } from '../src/run/map';
 // Banner instead. Every OTHER stat keeps its Gem, in STAT_ORDER.
 const GEM_STATS = STAT_ORDER.filter((stat) => stat !== 'mpRegen');
 
-test('gems: one Gem per stat but MP Regen, in STAT_ORDER, each a flat +GEM_STAT_GRANT to that one stat', () => {
+// The Emerald carries twice the figure for the same worth: HP is authored in the units the bar draws.
+test('gems: one Gem per stat but MP Regen, in STAT_ORDER, each a flat grant to that one stat', () => {
   assert.strictEqual(gemRelics.length, GEM_STATS.length);
   assert.strictEqual(gemForStat.mpRegen, undefined, 'MP Regen still has a Gem');
   GEM_STATS.forEach((stat, i) => {
     const gem = gemRelics[i];
     assert.strictEqual(gemForStat[stat], gem, `${stat} maps to the wrong Gem`);
-    assert.deepStrictEqual(gem.statGrants, { [stat]: GEM_STAT_GRANT }, `${gem.id} grants more than its own stat`);
+    const grant = stat === 'hp' ? GEM_HP_GRANT : GEM_STAT_GRANT;
+    assert.deepStrictEqual(gem.statGrants, { [stat]: grant }, `${gem.id} grants more than its own stat`);
     assert.strictEqual(gem.gem, true, `${gem.id} is not flagged as a Gem`);
     assert.strictEqual(relics[gem.id], gem, `${gem.id} is missing from the relic catalog`);
   });

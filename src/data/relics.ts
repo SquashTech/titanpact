@@ -20,7 +20,7 @@ const guardianBanners: Record<string, RelicDefinition> = {
     id: 'bannerOfVitality',
     name: 'Banner of Vitality',
     description: 'Team-wide +30 HP.',
-    statGrants: { hp: 30 },
+    statGrants: { hp: 60 },
     guardianBanner: true,
   },
   bannerOfTheWarcry: {
@@ -58,12 +58,19 @@ const guardianBanners: Record<string, RelicDefinition> = {
 };
 
 // --- Gems: the common, stacking drip-feed (docs/run-loop.md "Gems"). One per COMBAT stat plus
-// Mana Pool, each a flat +5, handed out often enough that a run holds several by Act 3.
+// Mana Pool, handed out often enough that a run holds several by Act 3.
 //
 // MP Regen has no Gem (2026-09-07): at a flat base 10 across the whole roster, +5 was +50% of
 // a throughput stat and read as the correct pick from every offer, which is the opposite of
 // what a 1-of-3 is for. It lives on the Wellspring Banner instead, priced against four rivals.
 export const GEM_STAT_GRANT = 5;
+
+/** The Emerald carries HP, which is authored in the same units the HP bar draws — twice the other Gems' figure for the same worth. */
+export const GEM_HP_GRANT = GEM_STAT_GRANT * 2;
+
+function gemGrant(stat: StatKey): number {
+  return stat === 'hp' ? GEM_HP_GRANT : GEM_STAT_GRANT;
+}
 
 /** Stat -> the one Gem that carries it, in STAT_ORDER — the order every Gem surface lists them in. */
 const GEM_TABLE: readonly { stat: StatKey; id: string; name: string; label: string }[] = [
@@ -82,8 +89,8 @@ const gems: Record<string, RelicDefinition> = Object.fromEntries(
     {
       id,
       name,
-      description: `Team-wide +${GEM_STAT_GRANT} ${label}.`,
-      statGrants: { [stat]: GEM_STAT_GRANT },
+      description: `Team-wide +${gemGrant(stat)} ${label}.`,
+      statGrants: { [stat]: gemGrant(stat) },
       gem: true,
     } satisfies RelicDefinition,
   ])

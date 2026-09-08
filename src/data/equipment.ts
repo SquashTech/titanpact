@@ -84,11 +84,11 @@ const STAT_OVERRIDES: Partial<Record<EquipmentFamilyId, Record<EquipmentRarity, 
     mythic: { manaPool: 60, mpRegen: 10 },
   },
   crest: {
-    common: { attack: 5, defense: 5, intelligence: 5, wisdom: 5, speed: 5, hp: 10 },
+    common: { attack: 5, defense: 5, intelligence: 5, wisdom: 5, speed: 5, hp: 20 },
     rare: { attack: 10, defense: 10, intelligence: 10, wisdom: 10, speed: 10 },
     epic: { attack: 10, defense: 10, intelligence: 10, wisdom: 10, speed: 10 },
-    legendary: { attack: 10, defense: 10, intelligence: 10, wisdom: 10, speed: 10, hp: 40 },
-    mythic: { attack: 15, defense: 15, intelligence: 15, wisdom: 15, speed: 15, hp: 30 },
+    legendary: { attack: 10, defense: 10, intelligence: 10, wisdom: 10, speed: 10, hp: 80 },
+    mythic: { attack: 15, defense: 15, intelligence: 15, wisdom: 15, speed: 15, hp: 60 },
   },
 };
 
@@ -136,21 +136,21 @@ const uniqueEquipment: Record<string, EquipmentDefinition> = {
     id: 'worldbreaker',
     name: 'Worldbreaker',
     rarity: 'mythic',
-    statGrants: { attack: 50, hp: 40 },
+    statGrants: { attack: 50, hp: 80 },
     grantsStatusIds: [{ statusId: 'IronForce', magnitude: 20 }],
   },
   guardianPlate: {
     id: 'guardianPlate',
     name: 'Guardian Plate',
     rarity: 'mythic',
-    statGrants: { hp: 70, defense: 55 },
+    statGrants: { hp: 140, defense: 55 },
     grantsPassiveIds: ['secondSkin'],
   },
   aegisEternal: {
     id: 'aegisEternal',
     name: 'Aegis Eternal',
     rarity: 'mythic',
-    statGrants: { hp: 60, defense: 40 },
+    statGrants: { hp: 120, defense: 40 },
     grantsPassiveIds: ['wardensVigil', 'purifyingWard'],
   },
   archonsStaff: {
@@ -171,7 +171,7 @@ const uniqueEquipment: Record<string, EquipmentDefinition> = {
     id: 'crownOfTheAncients',
     name: 'Crown of the Ancients',
     rarity: 'mythic',
-    statGrants: { hp: 60, attack: 15, defense: 15, intelligence: 15, wisdom: 15 },
+    statGrants: { hp: 120, attack: 15, defense: 15, intelligence: 15, wisdom: 15 },
     grantsPassiveIds: ['rallyingStandard'],
   },
 };

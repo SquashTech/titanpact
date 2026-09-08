@@ -34,11 +34,12 @@ import {
   type BrokenSeal,
 } from '../src/run/state';
 import type { StatKey } from '../src/engine/content';
+import { COMBAT_BUDGET_STATS, statBudgetTotal, grantBudgetTotal } from '../src/run/statBudget';
 
-const COMBAT_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed'];
+const COMBAT_STATS = COMBAT_BUDGET_STATS;
 
 function statTotal(id: string): number {
-  return COMBAT_STATS.reduce((sum, stat) => sum + enemies[id].baseStats[stat], 0);
+  return statBudgetTotal(enemies[id].baseStats, COMBAT_STATS);
 }
 
 function seal(actNumber: number, championId: string, level = 1, statGrants: Partial<Record<StatKey, number>> = {}): BrokenSeal {

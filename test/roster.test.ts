@@ -12,14 +12,15 @@ import { statuses } from '../src/data/statuses';
 import { progressionTable } from '../src/data/progression';
 import { BASE_ITEM_SLOTS, MAX_ITEM_SLOTS, STAT_POINT_VALUE } from '../src/run/equipment';
 import type { StatKey } from '../src/engine/content';
+import { HERO_BUDGET_STATS, statBudgetTotal } from '../src/run/statBudget';
 
-/** HP + Mana + the five battle stats. MP Regen is a flat 10 outside the budget. */
+/** HP + Mana + the five battle stats, HP priced through statBudget.ts. MP Regen is a flat 10 outside the budget. */
 const BUDGET = 450;
-const BUDGETED: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool'];
+const BUDGETED = HERO_BUDGET_STATS;
 
 test('roster: every hero spends the same 450-point stat budget, and MP Regen is flat 10 outside it', () => {
   const offBudget = Object.values(heroes)
-    .map((hero) => ({ id: hero.id, total: BUDGETED.reduce((sum, key) => sum + hero.baseStats[key], 0) }))
+    .map((hero) => ({ id: hero.id, total: statBudgetTotal(hero.baseStats, BUDGETED) }))
     .filter((row) => row.total !== BUDGET)
     .map((row) => `${row.id}=${row.total}`);
   assert.deepStrictEqual(offBudget, [], 'these lines do not spend exactly 450');

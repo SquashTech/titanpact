@@ -16,13 +16,13 @@ export const classes: Record<string, PassiveDefinition> = {
     id: 'guardian',
     name: 'Class - Guardian',
     description: 'Built to outlast: +10 HP, +10 Defense.',
-    statGrants: { hp: 10, defense: 10 },
+    statGrants: { hp: 20, defense: 10 },
   },
   berserker: {
     id: 'berserker',
     name: 'Class - Berserker',
     description: 'Hits hard and shrugs it off: +10 Attack, +10 HP.',
-    statGrants: { attack: 10, hp: 10 },
+    statGrants: { attack: 10, hp: 20 },
   },
   duelist: {
     id: 'duelist',
@@ -70,13 +70,13 @@ export const classes: Record<string, PassiveDefinition> = {
     id: 'sage',
     name: 'Class - Sage',
     description: 'A defensive caster built to stick around: +10 HP, +10 Wisdom.',
-    statGrants: { hp: 10, wisdom: 10 },
+    statGrants: { hp: 20, wisdom: 10 },
   },
   champion: {
     id: 'champion',
     name: 'Class - Champion',
     description: 'A generalist, a little better at everything: +5 to every stat.',
-    statGrants: { hp: 5, attack: 5, defense: 5, intelligence: 5, wisdom: 5, speed: 5 },
+    statGrants: { hp: 10, attack: 5, defense: 5, intelligence: 5, wisdom: 5, speed: 5 },
   },
   battlemage: {
     id: 'battlemage',
@@ -94,12 +94,12 @@ export const classes: Record<string, PassiveDefinition> = {
     id: 'shaman',
     name: 'Class - Shaman',
     description: 'A bulky caster who sticks around long enough to cast: +10 HP, +10 Intelligence.',
-    statGrants: { hp: 10, intelligence: 10 },
+    statGrants: { hp: 20, intelligence: 10 },
   },
   outrider: {
     id: 'outrider',
     name: 'Class - Outrider',
     description: 'Hard to pin down and hard to kill: +10 HP, +10 Speed.',
-    statGrants: { hp: 10, speed: 10 },
+    statGrants: { hp: 20, speed: 10 },
   },
 };

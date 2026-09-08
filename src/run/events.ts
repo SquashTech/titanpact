@@ -58,7 +58,7 @@ export function rollEventMove(filter: MovePoolFilter | undefined, moves: Record<
 // --- Resolution ---
 
 /** Floor on max HP after a `statShift` — a zero-HP entry faints the instant a fight is built. Not a balance knob. */
-export const MIN_HP_AFTER_SHIFT = 10;
+export const MIN_HP_AFTER_SHIFT = 20;
 
 /** Only HP is floored — it is the only stat whose reaching zero ends the hero. */
 export function statShiftAllowed(deltas: Partial<Record<StatKey, number>>, currentMaxHp: number): boolean {

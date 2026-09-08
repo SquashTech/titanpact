@@ -251,13 +251,15 @@ already swings with (`statKeysForMove`: Attack on a physical move, Intelligence
 on a magical one, honouring `offStatOverride`). Snapshotted at application, the
 same as a HoT and for the same reason.
 
-**Why it exists.** `HP_SCALE = 2` is difficulty-neutral for anything that
-repeats and not for anything that decays. An attacker's lifetime output rose
-with the round count the change bought (median fight 4 → 6); Burn's is capped
-at ≈2× its magnitude by `decay: 'halve'` no matter how long the fight runs, so
-it ate the full dilution with no compensation. A Burn 20 fell from 32% of a
-target's bar to 16%, while Bleed — the one DoT authored as a percentage — did
-not move at all and became the better one.
+**Why it exists.** The HP doubling (then a hidden `HP_SCALE = 2`, since baked
+into the authored lines — see "Pricing HP" in `progression.md`) is
+difficulty-neutral for anything that repeats and not for anything that decays.
+An attacker's lifetime output rose with the round count the change bought
+(median fight 4 → 6); Burn's is capped at ≈2× its magnitude by `decay: 'halve'`
+no matter how long the fight runs, so it ate the full dilution with no
+compensation. A Burn 20 fell from 32% of a target's bar to 16%, while Bleed —
+the one DoT authored as a percentage — did not move at all and became the
+better one.
 
 **Why the move's own category, not one stat.** Fire's slate is split (Kindle
 and Molten Lash physical, Ember and Set Alight magical). Pinning Burn to

@@ -531,6 +531,43 @@ anyway; by Act 5 there are no Commons left to hand out.
 
 ---
 
+## Pricing HP (2026-09-08 — the bake-in is done, the price is OPEN)
+
+HP used to be authored at half its real size and doubled at read time by an `HP_SCALE = 2`
+inside `getMaxHp`. That knob is gone: every authored HP figure was doubled in place, so a
+hero's `hp: 240` is a 240-point bar and a Banner that says +60 moves it by 60. Verified
+exactly neutral — 263 authored figures doubled, every combatant's max HP unchanged.
+
+What the bake-in did NOT decide is what a point of HP is worth, and the codebase holds two
+answers that disagree by 2×:
+
+| | Budget points per 1 real HP | Where |
+|---|---|---|
+| Hero/enemy stat lines | 0.5 | `HP_BUDGET_VALUE`, `src/run/statBudget.ts` |
+| Equipment rarity tiers | 0.25 | `STAT_POINT_VALUE.hp`, `src/run/equipment.ts` |
+
+Both predate the doubling and neither was ever measured. They are now at least *explicit* —
+every budget figure in the game (the roster's 450, a faction's flat 400, a champion's 550,
+the Endbringer's 900) is measured through `statBudget.ts`, so changing the rate changes every
+budget test at once rather than silently re-ranking the roster.
+
+**Why it matters.** The 450 budget charges one point per authored HP point. Before the
+doubling that was one point per *real* HP; after it, one point per two real HP. So the
+doubling silently halved what the roster charges for HP, and whether that was a correction or
+a gift depends entirely on the true rate:
+
+- If 1 real HP ≈ 1 Attack point, the tanks got 70 free budget points (Sentinel and Bellows
+  bank 600 against Glyph's and Sorrow's 530) and the roster needs a rebase.
+- If 1 real HP ≈ 0.5 Attack points, the doubling *fixed* a long-standing over-charge on HP
+  and every line is already square at 450.
+
+This is measurable — the indifference point between +X HP and +Y Attack on one hero, over
+enough batches — and it should be measured before anybody retunes 36 stat lines. Note that
+`scripts/sim` is wall-clock bounded and NOT deterministic run-to-run (the same tree and seed
+gave 2488 and 2518 runs), so any single comparison at a few thousand runs is noise.
+
+---
+
 ## Relics (team-wide)
 
 - Relics are **team-wide passives** and a **separate progression axis** from per-hero

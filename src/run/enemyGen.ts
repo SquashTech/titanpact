@@ -13,7 +13,7 @@ import { MOVE_CAP, availableEvolution, chooseEvolutionPath, levelUpMovePool, typ
 // The one content import: there is exactly one move table, and tier gating needs it.
 import { moves } from '../data/moves';
 import { mergeStatMods } from './statMods';
-import { NO_SCALING, ACT_STEP_STAT_COUNT, ACT_STEP_AMOUNT, type ActScaling } from './difficulty';
+import { NO_SCALING, ACT_STEP_STAT_COUNT, ACT_STEP_AMOUNT, ACT_STEP_STAT_WEIGHT, type ActScaling } from './difficulty';
 import type { Squad } from './squad';
 import { pickSquad } from './squad';
 
@@ -37,7 +37,7 @@ function shuffledPick<T>(rng: RngState, pool: readonly T[], count: number): { pi
 function randomStatBonus(rng: RngState, statCount: number, amountEach: number): { bonus: Partial<Record<StatKey, number>>; nextState: RngState } {
   const { picked, nextState } = shuffledPick(rng, GROWTH_STATS, statCount);
   const bonus: Partial<Record<StatKey, number>> = {};
-  for (const stat of picked) bonus[stat] = amountEach;
+  for (const stat of picked) bonus[stat] = amountEach * ACT_STEP_STAT_WEIGHT[stat];
   return { bonus, nextState };
 }
 
