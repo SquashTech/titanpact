@@ -7031,12 +7031,6 @@ textarea,
   box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.4);
 }
 
-/* A full bag is a soft warning, not an error: the run still moves, it just
-   costs a decision now. Amber edge, no fill — the boxes stay readable. */
-.stash-panel.is-full {
-  border-color: rgba(224, 166, 60, 0.55);
-}
-
 .stash-header {
   display: flex;
   align-items: baseline;
@@ -7058,8 +7052,18 @@ textarea,
   font-variant-numeric: tabular-nums;
 }
 
-.stash-panel.is-full .stash-count {
-  color: rgb(224, 166, 60);
+/* How many bag items have never been opened. Beside the label rather than in the
+   corner: it is a count of what the panel holds, not a state of the panel. */
+.stash-unseen {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--surface);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Pushed right: gold is what the Sell button below pays into, so the two
@@ -7079,14 +7083,16 @@ textarea,
 
    Vertical padding, not none: the selected box's ring and the tier bloom sit outside
    the box's own edge, and an overflow container clips both axes once it clips one. */
+/* WRAPS, as of the uncapped bag (2026-09-08). It was a one-row horizontal scroller, which
+   worked while the cap was 10 and about seven boxes fit: past that the bag grows without
+   bound, and a sideways strip hides most of it. Merging is the reason that matters — pairing
+   duplicates means seeing the whole bag at once, not swiping a tray. It wraps downward into
+   room the Roster screen already has, and the panel's own vertical scroll takes the rest. */
 .stash-grid {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 6px;
   padding: 3px 0;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  -webkit-overflow-scrolling: touch;
 }
 
 /* --- The bottom Close ----------------------------------------------------
@@ -7648,6 +7654,24 @@ textarea,
 .item-box.drag-over {
   border-color: var(--accent);
   background: var(--selected-fill);
+}
+
+/* Never opened. The corner dot is the whole mark — a box already carries rarity in its
+   border and tier in its pips, and a fourth colour on the frame would fight both. It clears
+   on the first tap or hold, which is also the gesture that would have opened it anyway.
+   TOP-LEFT, because top-right is the enchant element's corner and the two would collide
+   on exactly the items worth looking at twice. */
+.item-box.is-new::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--surface), 0 0 6px -1px var(--accent);
+  pointer-events: none;
 }
 
 /* Where an incoming item would land (EquipmentSlotGrid highlightIndex). */
@@ -12581,33 +12605,6 @@ textarea,
   color: var(--accent);
 }
 
-/* The item gate hands straight off to Level Up, so its bottom control is
-   compared against that screen's Continue a fifth of a second later. At
-   .secondary-button's 50px it was 18px shorter, and since both screens centre
-   their hero grid in whatever is left between the header and the CTA, that
-   difference alone slid the whole roster (2026-08-29, per user report: "the
-   whole screen jumps up and it's awkward"). The row takes .resolve-button's
-   box — height, padding, radius — whether it holds one button or the two a
-   full bag splits it into. */
-.force-equip-screen .item-found-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.force-equip-screen .item-found-actions > button {
-  flex: 1;
-  min-height: 68px;
-  padding: 20px 14px;
-  border-radius: var(--radius-lg);
-}
-
-/* Matches .levelup-screen's, for the same reason the buttons above do: the
-   grid's resting height is the sum of every gap over it, and a 2px-per-gap
-   drift across four bands is visible when the two screens trade places. */
-.force-equip-screen {
-  gap: 8px;
-}
-
 /* The move-replace offer as a whole-screen prompt (2026-08-30, per user
    direction: "let the entire screen just be the move replacement prompt …
    prevent screen scroll here and have all info always be present").
@@ -13227,184 +13224,178 @@ textarea,
   height: 20px;
 }
 
-/* The choices. Centred in what the rail leaves, so one card sits where three would — the act's
-   forced single-node rows must not read as a screen that failed to load. */
+/* The ways out of this place. Sigils, not rows (2026-09-08, per user direction): the well is the
+   act's Location and a choice is something you look at, so a medallion carries the glyph, the
+   colour and the size and nothing else. Holding one names it and says what it pays — the only
+   words the screen has, and only when asked for. Laid across the width so two or three read as a
+   fork in the road rather than as a list. */
 .map-choices {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 8px 14px 18px;
+  gap: 18px;
+  padding: 8px 14px 26px;
 }
 
-/* Named and spelled out. The tiles gave up their labels because twenty-five of them had to fit
-   one well; two or three have room to say what they are and what they pay. */
 .map-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+/* What lies beyond this one, on the two rows where the options differ. ABOVE the sigil, because
+   the act has always run bottom-up toward the Guardian: further along the path is further up the
+   screen. Unlit and small — a hint of what is coming, not a second thing to choose. */
+.map-choice-ahead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 15px;
+}
+
+.map-choice-ahead-mark {
+  display: flex;
+  color: var(--node-color);
+  opacity: 0.62;
+  filter: drop-shadow(0 0 4px var(--node-color));
+}
+
+.map-choice-ahead-mark .node-glyph {
+  width: 16px;
+  height: 16px;
+}
+
+/* The sigil. A dark disc cut into the ground with its own light coming up out of it — the ring
+   and the glyph are the only lit things, so the well's weather reads THROUGH the choice rather
+   than behind a plate. */
+.map-medallion {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  width: 100%;
-  overflow: hidden;
-  padding: 14px 14px;
-  background: linear-gradient(
-    120deg,
-    color-mix(in srgb, var(--node-color) 20%, var(--panel-alt)),
-    color-mix(in srgb, var(--node-color) 7%, var(--panel)) 72%
-  );
-  border: 1px solid color-mix(in srgb, var(--node-color) 40%, var(--border));
-  border-radius: var(--radius-md);
-  color: var(--text);
-  text-align: left;
-  cursor: pointer;
-  box-shadow: var(--hairline), var(--elev-1);
-  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out),
-    border-color var(--dur-fast) var(--ease-out);
-}
-
-/* The rail down the leading edge is the tier, and it is the only thing left carrying it now that
-   every card is the same width — an act's Guardian must not present as one more errand. */
-.map-choice::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: var(--node-color);
-  box-shadow: 0 0 12px var(--node-color);
-}
-
-.map-choice:hover {
-  transform: translateY(-2px);
-  border-color: var(--node-color);
-  box-shadow: var(--hairline-strong), 0 0 20px -4px var(--node-color), var(--elev-2);
-}
-
-.map-choice:active {
-  transform: translateY(0);
-}
-
-.map-choice-glyph {
-  flex: none;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--node-color) 30%, transparent), transparent 70%);
-  color: var(--node-color);
-}
-
-.map-choice-glyph .node-glyph {
-  width: 26px;
-  height: 26px;
-  filter: drop-shadow(0 0 6px var(--node-color));
-}
-
-.map-choice-body {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  flex: 1;
-  min-width: 0;
-}
-
-.map-choice-name {
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.map-choice-reward {
-  font-size: 10.5px;
-  line-height: 1.4;
-  color: var(--text-dim);
-}
-
-/* The price of the choice — what taking this one opens, drawn only when the options on the row
-   differ (MapScreen leadOnsDiffer). Below the body rather than beside it: it is a consequence,
-   and consequences read after the thing that causes them. */
-.map-choice-leadon {
-  position: absolute;
-  right: 12px;
-  bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.map-choice-leadon-label {
-  font-size: 8.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.map-choice-leadon-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 2px 7px;
+  width: 88px;
+  height: 88px;
+  padding: 0;
   border: 1px solid color-mix(in srgb, var(--node-color) 55%, transparent);
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--node-color) 14%, transparent);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 62%, color-mix(in srgb, var(--node-color) 26%, transparent), transparent 68%),
+    radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.05), transparent 60%),
+    rgba(6, 8, 12, 0.55);
   color: var(--node-color);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: inset 0 0 22px -6px var(--node-color), 0 0 20px -8px var(--node-color);
+  transition: transform var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out),
+    border-color var(--dur-mid) var(--ease-out);
 }
 
-.map-choice-leadon-glyph {
-  width: 11px;
-  height: 11px;
+/* The breath. Slow and shallow — this is a place waiting to be walked into, not a button asking
+   to be pressed, and anything faster turns the screen into an arcade cabinet. */
+.map-medallion-glow {
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, color-mix(in srgb, var(--node-color) 30%, transparent), transparent 66%);
+  animation: map-medallion-breathe 3.6s ease-in-out infinite;
 }
 
-/* A lead-on chip pushes the reward line out of its own way. */
-.map-choice:has(.map-choice-leadon) {
-  padding-bottom: 30px;
+@keyframes map-medallion-breathe {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 0.78;
+    transform: scale(1.06);
+  }
 }
 
-/* Weight by tier. Every card is full width, so size and glow are what say a Guardian is not
-   an errand. */
-.map-choice.tier-ancient {
-  padding-top: 20px;
-  padding-bottom: 20px;
-  box-shadow: var(--hairline), 0 0 24px -6px var(--node-color), var(--elev-2);
+@media (prefers-reduced-motion: reduce) {
+  .map-medallion-glow {
+    animation: none;
+    opacity: 0.55;
+  }
 }
 
-.map-choice.tier-ancient .map-choice-glyph {
+.map-medallion-glyph {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  filter: drop-shadow(0 0 8px var(--node-color));
+}
+
+.map-medallion:hover {
+  transform: translateY(-3px);
+  border-color: var(--node-color);
+  box-shadow: inset 0 0 26px -4px var(--node-color), 0 0 30px -6px var(--node-color);
+}
+
+.map-medallion:active {
+  transform: translateY(-1px) scale(0.97);
+}
+
+/* Weight by tier — a Guardian is not a Gem, and with no words left the size is what says so. */
+.map-choice.tier-reward .map-medallion {
+  width: 84px;
+  height: 84px;
+}
+
+.map-choice.tier-reward .map-medallion-glyph {
+  width: 36px;
+  height: 36px;
+}
+
+.map-choice.tier-landmark .map-medallion {
+  width: 96px;
+  height: 96px;
+}
+
+.map-choice.tier-landmark .map-medallion-glyph {
+  width: 42px;
+  height: 42px;
+}
+
+/* Alone on its row and the last thing in the act, so it takes the room the other tiers share. */
+.map-choice.tier-ancient .map-medallion {
+  width: 150px;
+  height: 150px;
+  border-width: 2px;
+}
+
+.map-choice.tier-ancient .map-medallion-glyph {
+  width: 68px;
+  height: 68px;
+}
+
+.map-choice.tier-ancient .map-medallion-glow {
+  inset: -24px;
+}
+
+/* A row of one gets the same treatment: an act's forced single nodes are a place you walk to,
+   not a screen that failed to offer a choice. */
+.map-choices:has(.map-choice:only-child) .map-choice.tier-encounter .map-medallion,
+.map-choices:has(.map-choice:only-child) .map-choice.tier-landmark .map-medallion {
+  width: 120px;
+  height: 120px;
+}
+
+.map-choices:has(.map-choice:only-child) .map-choice.tier-encounter .map-medallion-glyph,
+.map-choices:has(.map-choice:only-child) .map-choice.tier-landmark .map-medallion-glyph {
   width: 54px;
   height: 54px;
 }
 
-.map-choice.tier-ancient .map-choice-glyph .node-glyph {
-  width: 32px;
-  height: 32px;
-}
-
-.map-choice.tier-ancient .map-choice-name {
-  font-size: 18px;
-  letter-spacing: 0.09em;
-}
-
-.map-choice.tier-reward .map-choice-glyph {
-  width: 38px;
-  height: 38px;
-}
-
-.map-choice.tier-reward .map-choice-glyph .node-glyph {
-  width: 21px;
-  height: 21px;
-}
-
-.map-choice.tier-reward .map-choice-name {
-  font-size: 13.5px;
+.map-popup-glyph {
+  width: 16px;
+  height: 16px;
+  vertical-align: -0.2em;
+  color: var(--node-color);
 }
 
 /* Hub signpost: Relics/Roster/Reference, relocated out of the header
@@ -13484,6 +13475,48 @@ textarea,
 
 .map-footer-label {
   color: inherit;
+}
+
+/* The bag's unopened count, on the one control that opens it. Items no longer stop the run
+   to be handed out (docs/progression.md "The bag notification"), so this is the entire cue
+   that something arrived — hence the accent fill and the pulse rather than a quiet dot.
+   Anchored to the button's own corner; .map-footer-button is already positioned. */
+.map-footer-badge {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--surface);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 10px -2px var(--accent);
+  animation: map-footer-badge-pulse 2.4s var(--ease-out) infinite;
+}
+
+@keyframes map-footer-badge-pulse {
+  0%,
+  70%,
+  100% {
+    transform: scale(1);
+  }
+  80% {
+    transform: scale(1.16);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-footer-badge {
+    animation: none;
+  }
 }
 
 /* --- Title screen --------------------------------------------------------- */
@@ -15062,8 +15095,9 @@ textarea,
   animation: growth-pip-seal 0.45s var(--ease-spring);
 }
 
-/* The dropped item's stat chips and full passive text on ItemFoundScreen —
-   the contents of the `.equip-spotlight` box, now standing on their own.
+/* An obtained item's stat chips and full passive text — the contents of the `.equip-spotlight`
+   box, now standing on their own. Written for the deleted item gate; still used by the Mentor
+   and Event node screens.
    ┄
    Inside the header now, in the slot Level Up fills with its XP orb track
    (2026-08-29) — it was a band of its own between the header and the grid,
@@ -15157,9 +15191,9 @@ textarea,
   opacity: 0.55;
 }
 
-/* --- The found-item gate's squad (ItemFoundScreen) -----------------------
+/* --- The shared squad grid (HeroSlotCard) --------------------------------
 
-   2026-09-07, per user direction. The six comparison ROWS this screen used to
+   2026-09-07, per user direction. The six comparison ROWS the item gate used to
    draw were the same six heroes Manage Roster lays out as cards, in a second
    notation — item silhouettes in one place, item names in the other. They are
    now the same six CARDS, shared from HeroSlotCard.tsx: one picture of "where
@@ -15169,29 +15203,6 @@ textarea,
    shrink, it moved. A hero with a free slot has no diff to show — the item is
    pure gain — and a FULL hero opens EquipSwapScreen, a whole screen for the
    one decision that actually costs something. */
-
-/* The corner glyph (RosterPeek) is absolutely positioned over the header's
-   top-right, which every other node screen gets away with because a node's
-   name is two short words. An item's name is not: "Mantle of the Archmage"
-   reached the button and disappeared under it. Symmetric, so the title stays
-   optically centred, and wrapping rather than clipping if a longer name ever
-   arrives. */
-.force-equip-screen .node-title {
-  padding: 0 38px;
-  text-wrap: balance;
-}
-
-.equip-squad-scroll {
-  display: flex;
-  flex-direction: column;
-  /* Centred between the header and the bag button, as .pick-grid is: an early
-     roster of two heroes should not leave 300px of floor under it. `safe` is
-     what makes that legal inside a scroll container — without it an
-     overflowing roster is centred by clipping its first row off the top,
-     where no scrolling can reach it. */
-  justify-content: safe center;
-  padding-right: 2px;
-}
 
 /* An empty slot is a pure gain — nothing is displaced, nothing rejoins the bag
    — and it is the one verdict this screen can state without knowing what the
@@ -15297,19 +15308,18 @@ textarea,
   pointer-events: none;
 }
 
-/* --- The seating (ItemFoundScreen, `.is-equipping` + `.equip-seat-flare`)
+/* --- The seating (Manage Roster, `.is-equipping`) ------------------------
    Handing a hero a piece of gear was the one grant in the run loop that
-   happened with no acknowledgement at all: the tap and the screen change
-   were the same frame, so the card the player chose never got to be the
-   subject of anything. A level-up charges the card for 550ms; a Class is
-   conferred in a two-portrait reveal; this just cut.
+   happened with no acknowledgement at all: the tap and the result were the
+   same frame, so the card the player chose never got to be the subject of
+   anything. A level-up charges the card for 550ms; a Class is conferred in a
+   two-portrait reveal; this just cut.
    ┄
-   Everything here is keyed to `--rarity-color`, which the screen root already
-   carries (ItemFoundScreen sets it from the item's tier) — so a mythic
-   seats in mythic colour and a common in grey, and the stylesheet never
-   names a rarity. Duration must stay in step with EQUIP_ANIM_MS: the equip
-   is applied by a JS timeout, not an animationend listener, so the two only
-   have to agree on how long tap-to-payoff feels. */
+   It lived on the item gate until that screen was deleted (2026-09-08) and
+   moved here, which is now the only place gear is handed out. `--rarity-color`
+   is unset on this screen and the fallback carries it — the gate could tint
+   the jolt by tier because it was showing one item; a roster screen is not.
+   Duration must stay in step with EQUIP_SEAT_MS. */
 .roster-mgmt-card.is-equipping {
   cursor: default;
   border-color: var(--rarity-color, var(--accent));
@@ -15333,40 +15343,6 @@ textarea,
   }
   100% {
     transform: translateY(0) scale(1);
-  }
-}
-
-/* A band of the rarity's own light sweeping down the card and closing on
-   it — the item arriving from the header above and settling onto the hero.
-   Downward, because that is the direction it travelled on screen. */
-.equip-seat-flare {
-  position: absolute;
-  z-index: 2;
-  inset: 0;
-  border-radius: inherit;
-  background:
-    linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.5) 44%, var(--rarity-color, var(--accent)) 50%, rgba(255, 255, 255, 0.5) 56%, transparent 100%);
-  opacity: 0;
-  mix-blend-mode: screen;
-  pointer-events: none;
-  animation: equip-seat-sweep 420ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
-}
-
-@keyframes equip-seat-sweep {
-  0% {
-    opacity: 0;
-    transform: translateY(-104%) scaleY(1);
-  }
-  18% {
-    opacity: 0.95;
-  }
-  70% {
-    opacity: 0.8;
-    transform: translateY(0) scaleY(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(0) scaleY(0.18);
   }
 }
 
@@ -15428,8 +15404,8 @@ textarea,
   box-shadow: 0 0 0 1px rgba(var(--node-rgb), 0.7), 0 0 26px rgba(var(--node-rgb), 0.35), var(--elev-2);
 }
 
-/* Light welling UP through the hero, against `.equip-seat-flare` sweeping
-   DOWN. That opposition is the whole idea: gear is strapped on from outside
+/* Light welling UP through the hero, against Manage Roster's seating jolt
+   (above). That opposition is the whole idea: gear is strapped on from outside
    and a blessing rises through the one it lands on, and two grants that felt
    identical would make the screens interchangeable. It also holds at the top
    for a beat before fading, so the light reads as being absorbed rather than

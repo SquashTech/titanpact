@@ -38,7 +38,7 @@ a reward node are untouched — the choosing is the lesson; the routing is not.
 | Row | Node | What Valor teaches |
 | --- | --- | --- |
 | 0 | Monsters | doubles, targeting, Speed, Mana, Rest, reading a resist |
-| — | *post-fight gates* | Gems and relics · equipment and the no-stash rule · XP as a pot |
+| — | *post-fight gates* | Gems and relics · XP as a pot · the bag badge, on the map that follows |
 | 1 | Equipment | comparing three pieces; rarity as a budget |
 | 2 | Mentor | Classes: permanent, one per hero, four on the road |
 | 3 | Skirmish | type advantage both ways, **physical vs magical**, the forced Recruit Contract |

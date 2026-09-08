@@ -4,13 +4,14 @@ import { heroes } from '../src/data/heroes';
 import { equipment } from '../src/data/equipment';
 import { createRunState, createRosterEntry, addRosterEntry, type RunState } from '../src/run/state';
 import { generateMap } from '../src/run/map';
-import { MAX_ITEM_SLOTS, STASH_CAPACITY } from '../src/run/equipment';
+import { MAX_ITEM_SLOTS, unseenCount } from '../src/run/equipment';
 import { itemSlotsFor } from '../src/run/progression';
 import { ANVIL_PRICE_BY_TARGET, ENCHANT_PRICE_BY_RARITY, sellValueFor } from '../src/run/shop';
 import {
   anvilQuote,
   anvilUpgrade,
   enchantItem,
+  markStashItemSeen,
   mergeFromStash,
   reachableNodeIds,
   advanceToNode,
@@ -125,14 +126,18 @@ test('runProgress: equipToRoster on a full hero needs a replaceIndex, and what i
   assert.deepStrictEqual(next.stash, ['sword.common']);
 });
 
-test('runProgress: a full bag refuses the swap, but not an equip into a free slot', () => {
-  const full = Array.from({ length: STASH_CAPACITY }, () => 'dagger.common');
-  const swap = { ...gearedRun('cinderKnight', ['sword.common']), stash: full };
-  assert.throws(() => equipToRoster(swap, 'cinderKnight', 'sword.common.blazing', equipment, heroes, 0), RunProgressError);
+test('runProgress: the bag is uncapped, so nothing that reaches it can be refused', () => {
+  // The figure is arbitrary on purpose — there is no cap left for it to be measured against.
+  const loaded = Array.from({ length: 40 }, () => 'dagger.common');
 
-  // Nothing is displaced here, so the bag's state is none of this equip's business.
-  const free = { ...seedRoster(['cinderKnight']), stash: full };
-  assert.deepStrictEqual(equipToRoster(free, 'cinderKnight', 'sword.common', equipment, heroes).roster[0].equipment, ['sword.common']);
+  const swap = { ...gearedRun('cinderKnight', ['sword.common']), stash: loaded };
+  const swapped = equipToRoster(swap, 'cinderKnight', 'sword.common.blazing', equipment, heroes, 0);
+  assert.deepStrictEqual(swapped.roster[0].equipment, ['sword.common.blazing']);
+  assert.strictEqual(swapped.stash.length, loaded.length + 1);
+
+  const held = { ...gearedRun('cinderKnight', ['sword.common']), stash: loaded };
+  assert.strictEqual(unequipToStash(held, 'cinderKnight', 0).stash.length, loaded.length + 1);
+  assert.strictEqual(stashItem(held, 'spear.rare', equipment).stash.length, loaded.length + 1);
 });
 
 test('runProgress: a Forge grant opens a slot, and the next item lands in it without displacing anything', () => {
@@ -226,21 +231,47 @@ test('runProgress: stashItem carries an item, and a full bag refuses the next on
   assert.deepStrictEqual(one.stash, ['sword.common']);
   // Two copies of one item is legal in the bag — one copy per HERO is the rule.
   assert.deepStrictEqual(stashItem(one, 'sword.common', equipment).stash, ['sword.common', 'sword.common']);
+  // An id naming nothing is the only refusal left — the bag itself never says no.
   assert.throws(() => stashItem(one, 'notAnItem', equipment), RunProgressError);
-
-  const full = { ...run, stash: Array.from({ length: STASH_CAPACITY }, () => 'dagger.common') };
-  assert.throws(() => stashItem(full, 'sword.common', equipment), RunProgressError);
 });
 
-test('runProgress: unequipToStash takes gear off, and a full bag is the one thing that refuses it', () => {
+test('runProgress: an arriving item is marked unopened, and tapping it clears the mark', () => {
+  const run = seedRoster(['cinderKnight']);
+  const one = stashItem(run, 'sword.common', equipment);
+  assert.deepStrictEqual(one.unseenItemIds, ['sword.common']);
+  assert.strictEqual(unseenCount(one.unseenItemIds, one.stash), 1);
+
+  // Two copies share one mark: what is unopened is the ITEM, not the slot it sits in.
+  const two = stashItem(one, 'sword.common', equipment);
+  assert.deepStrictEqual(two.unseenItemIds, ['sword.common']);
+  assert.strictEqual(unseenCount(two.unseenItemIds, two.stash), 1);
+
+  const seen = markStashItemSeen(two, 'sword.common');
+  assert.deepStrictEqual(seen.unseenItemIds, []);
+  // Gear the player took off is not "new" — only an arrival marks.
+  assert.deepStrictEqual(unequipToStash(gearedRun('cinderKnight', ['sword.common']), 'cinderKnight', 0).unseenItemIds, []);
+});
+
+test('runProgress: a mark never outlives the item it points at', () => {
+  const run = seedRoster(['cinderKnight']);
+  const carried = stashItem(stashItem(run, 'sword.common', equipment), 'dagger.common', equipment);
+  assert.strictEqual(unseenCount(carried.unseenItemIds, carried.stash), 2);
+
+  // Every way an item can leave the bag: seated, sold, merged away.
+  assert.deepStrictEqual(equipFromStash(carried, 0, 'cinderKnight', equipment, heroes).unseenItemIds, ['dagger.common']);
+  assert.deepStrictEqual(sellFromStash(carried, 0, equipment).unseenItemIds, ['dagger.common']);
+
+  const pair = stashItem(stashItem(run, 'sword.common', equipment), 'sword.common', equipment);
+  assert.deepStrictEqual(mergeFromStash(pair, 0, 1, equipment).unseenItemIds, []);
+});
+
+test('runProgress: unequipToStash takes gear off, and only an empty slot refuses', () => {
   const run = gearedRun('cinderKnight', ['sword.common']);
   const next = unequipToStash(run, 'cinderKnight', 0);
   assert.deepStrictEqual(next.roster[0].equipment, []);
   assert.deepStrictEqual(next.stash, ['sword.common']);
 
   assert.throws(() => unequipToStash(run, 'cinderKnight', 1), RunProgressError);
-  const full = { ...run, stash: Array.from({ length: STASH_CAPACITY }, () => 'dagger.common') };
-  assert.throws(() => unequipToStash(full, 'cinderKnight', 0), RunProgressError);
 });
 
 test('runProgress: equipFromStash seats a carried item, and a swap trades net-zero against the bag', () => {
@@ -249,11 +280,12 @@ test('runProgress: equipFromStash seats a carried item, and a swap trades net-ze
   assert.deepStrictEqual(seated.roster[0].equipment, ['sword.common']);
   assert.deepStrictEqual(seated.stash, []);
 
-  // A swap cannot overflow the bag however full it is: one item out, one back in.
-  const brimming = { ...gearedRun('cinderKnight', ['sword.common']), stash: [...Array.from({ length: STASH_CAPACITY - 1 }, () => 'dagger.common'), 'sword.common.blazing'] };
-  const swapped = equipFromStash(brimming, STASH_CAPACITY - 1, 'cinderKnight', equipment, heroes, 0);
+  // A swap is net-zero against the bag: one item out, one back in.
+  const loaded = [...Array.from({ length: 9 }, () => 'dagger.common'), 'sword.common.blazing'];
+  const brimming = { ...gearedRun('cinderKnight', ['sword.common']), stash: loaded };
+  const swapped = equipFromStash(brimming, loaded.length - 1, 'cinderKnight', equipment, heroes, 0);
   assert.deepStrictEqual(swapped.roster[0].equipment, ['sword.common.blazing']);
-  assert.strictEqual(swapped.stash.length, STASH_CAPACITY);
+  assert.strictEqual(swapped.stash.length, loaded.length);
   assert.ok(swapped.stash.includes('sword.common'));
 
   assert.throws(() => equipFromStash(free, 3, 'cinderKnight', equipment, heroes), RunProgressError);
@@ -353,9 +385,8 @@ test('runProgress: a merge needs two distinct matching items, and obeys the act 
   assert.deepStrictEqual(mergeFromStash({ ...act1, actNumber: 2 }, 0, 1, equipment).stash, ['spear.legendary']);
 });
 
-test('runProgress: a merge can never overflow the bag, even at capacity', () => {
-  // Net -1: both inputs leave before the result arrives.
-  const full = shopRun(0, ['spear.rare', 'spear.rare', ...Array.from({ length: STASH_CAPACITY - 2 }, () => 'sword.common')]);
-  assert.strictEqual(full.stash.length, STASH_CAPACITY);
-  assert.strictEqual(mergeFromStash(full, 0, 1, equipment).stash.length, STASH_CAPACITY - 1);
+test('runProgress: a merge is net -1 on the bag — two inputs leave, one result arrives', () => {
+  const loaded = shopRun(0, ['spear.rare', 'spear.rare', ...Array.from({ length: 8 }, () => 'sword.common')]);
+  assert.strictEqual(loaded.stash.length, 10);
+  assert.strictEqual(mergeFromStash(loaded, 0, 1, equipment).stash.length, 9);
 });

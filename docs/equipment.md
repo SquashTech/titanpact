@@ -248,10 +248,11 @@ downside into its main upside.
   therefore always good news, never a blocker.
 - **The bag is where duplicates live.** `RunState.stash` already permits them; the one-copy rule
   is and remains **per hero**, not per run (`state.ts:77`). No rule changes.
-- **Merging is free and needs no venue.** It should be available anywhere the bag is visible
-  (Roster Management), and offered as a third verb on `ItemFoundScreen` — Equip / Keep / **Merge**
-  / Sell — whenever the found item completes a pair. Gating a free, obvious action behind a node
-  would reintroduce exactly the friction this rework removes.
+- **Merging is free and needs no venue.** It lives anywhere the bag is visible (Roster
+  Management). Gating a free, obvious action behind a node would reintroduce exactly the
+  friction this rework removes. It was also to be a third verb on `ItemFoundScreen` — Equip /
+  Keep / **Merge** / Sell — which 2026-09-08 made moot: found items go straight to the bag, so
+  a pair is completed *in* the place merging already happens.
 - **Mythics cannot merge.** Two of them are dead weight and should be sold.
 - **Drops are NOT weighted toward families the player already holds** (2026-09-07, per user
   direction). Weighting would make merging a reliable engine at the price of variety, and the
@@ -314,10 +315,10 @@ one item per run the player tells a story about.
 
 ## 7. Knock-on effects and open questions
 
-- **`STASH_CAPACITY` 8 -> 10** (2026-09-07, per user direction). The bag does double duty now:
+- **`STASH_CAPACITY` 8 -> 10** (2026-09-07, per user direction), then **gone** (2026-09-08 —
+  `docs/progression.md` "The uncapped bag"). The bump was because the bag does double duty:
   carrying options for an unknown matchup *and* holding duplicates long enough to pair them.
-  Merging partly self-solves — two slots become one — but the pair has to fit first. Ten is a
-  small bump on purpose; the cap is still meant to force a discard decision.
+  Removing the cap outright settles the second job for good — a pair never fails to fit.
 - **Six passives to author** (§2 italics), each one flat, plus the two unset magnitudes.
 - **Migration.** The catalog becomes generated the way the type gear already is; ids go
   composite (`sword.epic.blazing`); `SAVE_VERSION` bumps because every old id dies. Eight ids

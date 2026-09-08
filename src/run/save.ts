@@ -13,8 +13,8 @@
 
 import type { PassiveId, StatKey, TypeId } from '../engine/content';
 import { STAT_ORDER } from '../engine/content';
-import type { EquipmentLoadout, Stash } from './equipment';
-import { MAX_ITEM_SLOTS, STASH_CAPACITY } from './equipment';
+import type { EquipmentLoadout, Stash, UnseenItems } from './equipment';
+import { MAX_ITEM_SLOTS, pruneUnseen } from './equipment';
 import type { MapNode, MapNodeType, RunMap } from './map';
 import { MAP_NODE_TYPES } from './map';
 import type { ProgressionTable } from './progression';
@@ -207,11 +207,22 @@ function decodeLoadout(value: unknown, index: SaveContentIndex, label: string): 
 function decodeStash(value: unknown, index: SaveContentIndex): Stash {
   if (value === undefined || value === null) return [];
   if (!isStringArray(value)) reject('run.stash is not a list of item ids');
-  if (value.length > STASH_CAPACITY) reject(`run.stash holds ${value.length} items, past the ${STASH_CAPACITY}-item cap`);
   for (const id of value) {
     if (!index.equipmentIds.has(id)) reject(`run.stash references unknown equipment "${id}"`);
   }
   return [...value];
+}
+
+/**
+ * The bag's unopened marks. Absent on a file written before them, and an unmarked bag is a
+ * quiet badge rather than a broken run, so "missing" decodes to "all seen" and no version bump
+ * is owed. Pruned against the decoded bag, since a mark pointing at nothing would light the
+ * badge with nothing behind it.
+ */
+function decodeUnseen(value: unknown, stash: Stash): UnseenItems {
+  if (value === undefined || value === null) return [];
+  if (!isStringArray(value)) reject('run.unseenItemIds is not a list of item ids');
+  return pruneUnseen([...new Set(value)], stash);
 }
 
 function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number): RosterEntry {
@@ -359,12 +370,15 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   // between builds should cost one repeated speech, never the whole run.
   if (!isStringArray(value.tutorialSeenBeatIds)) reject('run.tutorialSeenBeatIds is not a list of ids');
 
+  const stash = decodeStash(value.stash, index);
+
   return {
     roster,
     levelUpPool: value.levelUpPool,
     levelUpDeferred: value.levelUpDeferred,
     gold: value.gold,
-    stash: decodeStash(value.stash, index),
+    stash,
+    unseenItemIds: decodeUnseen(value.unseenItemIds, stash),
     relics: requireIds(value.relics, index.relicIds, 'run.relics'),
     recruitContracts: value.recruitContracts,
     map,

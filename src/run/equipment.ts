@@ -520,26 +520,40 @@ export function unequipSlot(loadout: EquipmentLoadout, index: number): Equipment
 export type Stash = readonly string[];
 
 /**
- * How many items the bag carries. First-pass figure for playtest. Capped rather than
- * unbounded on purpose: with room for everything the player always has the right item on
- * hand and the SLOT stops being the scarce thing (CLAUDE.md). A cap keeps the discard
- * decision alive but moves it to a moment when the matchup is known.
- *
- * 8 -> 10 with the family rework (2026-09-07, per user direction): the bag now does double duty,
- * carrying options for an unknown matchup AND holding duplicates long enough to merge them.
- * A small bump on purpose — merging partly self-solves, since two slots become one.
+ * The bag is UNCAPPED (2026-09-08, per user direction), so this never refuses. `STASH_CAPACITY`
+ * and `stashIsFull` are gone with the cap — see docs/progression.md "The uncapped bag".
  */
-export const STASH_CAPACITY = 10;
-
-export function stashIsFull(stash: Stash): boolean {
-  return stash.length >= STASH_CAPACITY;
-}
-
-/** Appends; the caller checks `stashIsFull` first, since refusing is a UI state and not an error. */
 export function addToStash(stash: Stash, itemId: string): Stash {
   return [...stash, itemId];
 }
 
 export function removeFromStash(stash: Stash, index: number): Stash {
   return stash.filter((_, i) => i !== index);
+}
+
+/**
+ * Bag items the player has not looked at yet (docs/progression.md "The bag notification").
+ * Held as item IDS, not bag indices: merging, selling and equipping all reshuffle indices, and
+ * a parallel array would have to be rewritten by each of them to stay aligned. Two copies of one
+ * id share one mark, which is the honest reading anyway — what is unchecked is the ITEM, not the
+ * slot it happens to be sitting in.
+ */
+export type UnseenItems = readonly string[];
+
+export function markItemUnseen(unseen: UnseenItems, itemId: string): UnseenItems {
+  return unseen.includes(itemId) ? unseen : [...unseen, itemId];
+}
+
+export function markItemSeen(unseen: UnseenItems, itemId: string): UnseenItems {
+  return unseen.includes(itemId) ? unseen.filter((id) => id !== itemId) : unseen;
+}
+
+/** Drops marks whose item has left the bag, so a mark never outlives what it points at. */
+export function pruneUnseen(unseen: UnseenItems, stash: Stash): UnseenItems {
+  return unseen.length === 0 ? unseen : unseen.filter((id) => stash.includes(id));
+}
+
+/** What the badge prints. Pruned rather than trusted, so a stale mark can never light it. */
+export function unseenCount(unseen: UnseenItems, stash: Stash): number {
+  return pruneUnseen(unseen, stash).length;
 }

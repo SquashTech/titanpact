@@ -16,17 +16,16 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { EquipInspectOverlay } from './EquipChoiceCard';
-import { rosterHasFreeSlot } from './ItemFoundScreen';
 import { SellSection } from './SellSection';
 
 interface Props {
   run: RunState;
   /** Rolled once at node-select time (App.tsx, run/shop.ts rollGuildHallOffers). */
   offers: GuildHallOffers;
-  /** Bought on this visit; carried by App.tsx because a purchase unmounts this panel through the equip gate. */
+  /** Bought on this visit; carried by App.tsx so a re-render of this panel cannot forget it. */
   soldOutEquipmentIds: readonly string[];
   onRunChange: (next: RunState) => void;
-  /** Hands off to App.tsx's item gate — this panel can't transition screens. */
+  /** Hands off to App.tsx, which charges the gold and drops the item in the bag. */
   onBuyEquipment: (itemId: string) => void;
   /** Recruiting at a full roster hands off to App.tsx's RosterReplaceScreen gate. */
   onRequestRosterReplace: (offer: GuildHallOffer) => void;
@@ -280,9 +279,7 @@ export function GuildHallPanel({
                 disabled: !affordable,
                 note: !affordable
                   ? `Not enough gold — ${cost}g needed, you have ${run.gold}g.`
-                  : rosterHasFreeSlot(run)
-                    ? 'You will choose who carries it before leaving the Hall.'
-                    : 'Every slot is full — it goes to your bag.',
+                  : 'It goes to your bag. Hand it out from the Roster whenever you like.',
                 onConfirm: () => {
                   setPreviewEquipId(null);
                   onBuyEquipment(previewEquip.id);

@@ -1,7 +1,7 @@
 // Guild Hall commerce beyond recruitment: the one-time offer set a `shop` node
 // presents, and equipment purchases. Offers are rolled ONCE at node-select
 // time and carried on the Screen — a component-local roll would reroll on
-// every ItemFoundScreen remount. Relics are reward-only, never sold.
+// re-render of the shop. Relics are reward-only, never sold.
 
 import { ROSTER_CAP, type RunState } from './state';
 import { pickWeightedEquipment, rarityWeightsFor, type EquipmentDefinition, type EquipmentRarity } from './equipment';
@@ -121,7 +121,7 @@ function spendGold(run: RunState, cost: number, what: string): RunState {
   return { ...run, gold: run.gold - cost };
 }
 
-/** Gold spend only; the caller still routes the item through ItemFoundScreen, where it is seated or bagged. */
+/** Gold spend only; the caller drops the bought item into the bag (App.tsx `stashItem`). */
 export function buyEquipment(run: RunState, item: EquipmentDefinition): RunState {
   return spendGold(run, EQUIPMENT_PRICE_BY_RARITY[item.rarity], item.name);
 }

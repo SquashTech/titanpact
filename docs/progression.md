@@ -192,19 +192,17 @@ ever *trade* two occupied slots. It was a shell game.
 
 `RunState.stash` is the missing concept. It dissolves all three at once.
 
-- **`STASH_CAPACITY` = 8, and the cap is the design.** An uncapped bag never forces a decision,
-  but it also means the player always has the right item on hand for the matchup, and the SLOT
-  quietly stops being the scarce thing (`CLAUDE.md`). A cap keeps the discard decision alive and
-  moves it to a moment when the matchup is *known*. The figure is a first-pass one.
-- **The bag only fills with things that came off.** A found item is loose until the player says
-  otherwise: equip it (`equipToRoster`), keep it (`stashItem`), or sell it. The one refusal in
-  the system is a swap against a full bag — the displaced item has nowhere to go — which the
-  reveal screen answers by offering the bag itself rather than a dead end.
-- **A swap out of the bag is net-zero** (`equipFromStash`): one item leaves, one returns, so it
-  can never overflow however full the bag is.
+- **`STASH_CAPACITY` = 8, and the cap is the design.** Superseded 2026-09-08 — see "The uncapped
+  bag" below. The argument was that an uncapped bag never forces a decision, so the cap kept the
+  discard alive and moved it to a moment when the matchup is *known*.
+- **The bag is where everything lands.** Superseded 2026-09-08 — see "The bag notification"
+  below. Originally the bag filled only with gear that came *off* a hero, and a found item was
+  loose until the player seated, bagged or sold it on the spot.
+- **A swap out of the bag is net-zero** (`equipFromStash`): one item leaves, one returns.
 - **Unwanted gear is sold, not destroyed** — `EQUIPMENT_SELL_SHARE` = 0.5 of the buy price
-  (`sellValueFor`, `src/run/shop.ts`). A full bag becomes a choice between two items instead of
-  a flat loss, and gold gains a second faucet that scales with how picky the player is. Selling
+  (`sellValueFor`, `src/run/shop.ts`). Gold gains a second faucet that scales with how picky the
+  player is, and with the cap gone (below) the Hall's counter is where discard pressure now
+  lives at all — a choice the player walks into rather than one a full tray forces. Selling
   is **bag-only**: equipped gear comes off first, which keeps the irreversible verb one step
   away from a mis-tap. The share is untuned.
 - **Every slot is both a source and a destination.** A hero's boxes and the bag's are the same
@@ -220,12 +218,10 @@ Three changes, all downstream of the bag above: once an unwanted item can simply
 the gate stops being a decision the run has to force, and the one decision that *does* cost
 something gets room to be made properly.
 
-- **The gate only opens when somebody has a free slot.** With every slot on the roster full,
-  `ItemFoundScreen`'s only honest answer was "keep it in the bag" — so the item goes there and
-  the screen never appears (`rosterHasFreeSlot`, committed in a `useLayoutEffect` so a banked
-  item never flashes a screen). The exception is a **full bag**, which still has to be equipped
-  past, sold past, or made room in before the run moves on; that is the one state with no
-  default. The Guild Hall's buy sheet says which of the two a purchase is heading for.
+- **The gate only opens when somebody has a free slot.** Superseded 2026-09-08 by "The bag
+  notification" below, which closed it in every case but the full bag. It opened whenever
+  anyone could take the item; with the whole roster full its one honest answer was "keep it in
+  the bag", so the item went there and the screen never appeared.
 - **The gate draws the same squad Manage Roster does.** The six comparison ROWS it used to draw
   were the same six heroes in a second notation — item silhouettes on one screen, item names on
   the other. They are now the same six CARDS (`HeroSlotCard.tsx`, shared by Manage Roster, the
@@ -243,6 +239,91 @@ something gets room to be made properly.
   verdict (`src/run/equipCompare.ts`): Attack on an Int hero is not worth what it is on a
   physical one. Tapping one of a hero's boxes directly still swaps outright — that gesture
   already names the slot.
+
+### The bag notification (2026-09-08, per user direction)
+
+Every item now goes **straight to the bag**, and a badge on the map's Roster button says one is
+waiting. Nothing is auto-equipped, and nothing is asked. The gate above closed to the one state
+it still answers a question in — a full bag.
+
+The reason is that the gate had stopped being a decision and become a toll. Its cost was one
+mandatory screen per drop, and it was buying nothing:
+
+- **The reveal was already spent.** An `equipmentReward` node reveals the item on
+  `NodeRewardScreen` — the player *picks* it out of three — and a fight's drop is read out in
+  full on the victory overlay, name, rarity, stats and effects. The gate was the second or third
+  time the same item was shown.
+- **The decision was being made at the worst moment.** Who carries a piece of gear depends on the
+  matchup, and the matchup is not known at the moment it drops. The bag already existed to move
+  that decision to when it *is* known; the gate was asking for it early anyway.
+- **The default answer was almost always the same.** With an unwanted item now carryable, "keep
+  it in the bag" was the honest answer to most drops, which makes a screen asking the question a
+  screen with one real button on it.
+
+What replaces it:
+
+- **`stashItem` is the arrival verb, and it is what sets the mark.** Every route in — a fight
+  drop, an Item node claim, a Loot Pile's three, a Guild Hall purchase — lands there.
+- **The mark is held as ITEM IDS** (`RunState.unseenItemIds`), not bag indices. Merging, selling
+  and equipping all reshuffle indices, and a parallel array would have to be rewritten by each
+  of them to stay aligned. Two copies of one item share one mark, which is also the honest
+  reading: what is unchecked is the item, not the slot it happens to be sitting in.
+- **A mark cannot outlive the item it points at.** Every write to the bag goes through one
+  helper (`withStash`, `runProgress.ts`) which prunes against the resulting bag, so the only
+  gestures needing an explicit clear are the two that *leave* the item in the bag — picking it
+  up, and holding it to read it out. Both are the gesture the player would use to check it
+  anyway, which is why "tap it once" is the whole dismissal rule.
+- **`ItemFoundScreen` is gone entirely** — see "The uncapped bag" below. It survived this pass
+  for one state, a full bag, and the cap it depended on was removed the same day.
+- **The tutorial teaches gear on the map, not on a gate.** Valor's `equip` beat now fires the
+  first time the badge is lit (`tutorialBeatKeyFor`, App.tsx), ahead of the beat for the node
+  ahead: it explains what just happened, and the node beat explains what is next.
+- **A save with no marks decodes to none**, and a mark naming something the bag no longer holds
+  is dropped rather than refused (`decodeUnseen`). No `SAVE_VERSION` bump is owed — an unmarked
+  bag is a quiet badge, not a broken run.
+
+### The uncapped bag (2026-09-08, per user direction: the cap "doesn't add anything")
+
+`STASH_CAPACITY` and `stashIsFull` are **deleted**, not raised. The bag holds whatever it holds.
+
+The cap was defended above on the grounds that an uncapped bag never forces a decision. What
+the same day's change made visible is that the decision it forced was not the interesting one:
+by the time the bag is full the player is choosing between two items *neither of which they
+wanted enough to equip*, at a moment chosen by the drop table rather than by them. Scarcity of
+gear was never the axis — the **SLOT** is (`CLAUDE.md`), and a hero still holds one to three of
+them. A bigger bag does not widen that; it only stops the run interrupting to say the tray is
+full. The real discard pressure is the Guild Hall's sell counter, which is a *choice* the player
+walks into.
+
+What falls out of it:
+
+- **Nothing that reaches the bag can be refused.** `stashItem`, `unequipToStash` and the
+  displaced item from an `equipToRoster` swap all used to throw on a full bag; none of them can
+  now. The only refusal left in `stashItem` is an id naming nothing.
+- **`ItemFoundScreen` is deleted**, and with it the `itemFound` screen kind, its queue, and its
+  place in the post-fight gate chain. It existed to answer "where does this go", and every
+  answer it had is now either automatic (the bag) or available whenever the player wants it
+  (the Roster). A fight drop folds into the same `RunState` transform as the gold and the XP;
+  an Item-node claim and a Guild Hall purchase call `stashItem` and stay where they are — the
+  shop no longer unmounts and remounts around a purchase.
+- **The bag prints a count, not a fraction**, and draws what it holds plus one empty landing
+  box. The trailing box is now the only thing saying "there is room for more"; it is not a
+  count of anything.
+- **The bag grid WRAPS.** It was a one-row horizontal scroller, which worked while the cap was
+  10 and about seven boxes fit; uncapped, a sideways strip hides most of the bag. Merging is
+  why that matters — pairing duplicates means seeing the whole bag at once, not swiping a tray
+  — so it now wraps downward into room the Roster screen already had, and the panel's own
+  vertical scroll takes the rest.
+- **The save's stash length check is gone.** Ids are still validated against the catalog, so a
+  hand-edited file cannot smuggle in content this build does not ship — it can only carry a lot
+  of legitimate items.
+- **The seating jolt moved rather than died.** `.roster-mgmt-card.is-equipping` was played only
+  by the deleted gate; handing a hero gear is the one grant in the run loop that otherwise lands
+  with no acknowledgement at all, so Manage Roster — now the only place gear is handed out —
+  plays it instead. It fires *after* the equip there, so nothing waits on it.
+- **What to watch instead:** a late-run bag of thirty items is a lot of identical silhouettes to
+  read. If that becomes the annoyance the cap used to be, the answer is sorting or grouping the
+  grid — not a cap coming back.
 
 ### Everything else
 
@@ -375,13 +456,14 @@ tripled, and a Force item doubled both halves, because Force's own price doubled
 > hypothetical −40 Defense / 70 Attack Epic is not. A cap (say, 25% of the tier budget)
 > is the obvious answer but has not been decided — flag before authoring a second
 > drawback item.
-- **A capped stash (2026-09-07, per user direction — reversing 2026-08-17's "no
-  unequipped-item stash", which itself reversed 2026-08-16).** `RunState.stash` carries
-  up to `STASH_CAPACITY` = 8 unequipped items; a found item is seated, bagged or sold.
-  The middle position is the point: the 2026-08-17 removal was right that an *uncapped*
-  inventory is busywork, but resolving every drop on the spot — with a swap cascading
-  into the next forced decision — turned out to be the worse half of the trade. Full
-  reasoning, and what a full bag does, in "The stash" above.
+- **An uncapped stash (2026-09-08, per user direction — reversing 2026-09-07's cap, which
+  reversed 2026-08-17's "no unequipped-item stash", which reversed 2026-08-16).**
+  `RunState.stash` carries any number of unequipped items; every drop goes there unasked,
+  marked unopened until the player looks at it. What survives three reversals is the thing
+  none of them disputed: resolving a drop on the spot — with a swap cascading into the next
+  forced decision — was the worst of the options. What did not survive is the cap, whose only
+  decision was a forced discard between two items the player had already declined. Full
+  reasoning in "The stash", "The bag notification" and "The uncapped bag" above.
 
 ### The act-scaled drop curve (2026-08-30, per user direction)
 
@@ -486,9 +568,8 @@ panel component) rather than presenting the entire non-starter hero catalog at o
 **2-3 heroes**, at a flat **50g** each (`GUILD_HALL_RECRUIT_COST`, up from 20g). The
 same visit also offers a rotating shelf of **equipment** (priced by rarity tier,
 `EQUIPMENT_PRICE_BY_RARITY`, `src/run/shop.ts` — common 15g through mythic 150g) for
-direct gold purchase — a new axis alongside hero recruitment. A bought equipment item
-still resolves through the same item gate (`ItemFoundScreen`) every
-other equipment grant uses. Tapping a hero offer opens its full stat/move sheet, which
+direct gold purchase — a new axis alongside hero recruitment. A bought equipment item goes
+to the bag like every other equipment grant, and the Hall stays open around the purchase. Tapping a hero offer opens its full stat/move sheet, which
 is where the gold is actually spent (2026-08-28 — `HeroPreviewOverlay`'s `action`).
 
 **Second pass (2026-08-31, per user direction).** Four changes, all of them about the

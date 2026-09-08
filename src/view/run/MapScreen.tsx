@@ -2,11 +2,13 @@ import { useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
 import { SEAL_ACTS } from '../../run/state';
 import { reachableNodeIds } from '../../run/runProgress';
+import { unseenCount } from '../../run/equipment';
 import type { MapNode, MapNodeType, RunMap } from '../../run/map';
 import { RosterManagementScreen } from './RosterManagementScreen';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { ResourceGlyph, type ResourceKind } from '../shared/RunGlyph';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
+import { useLongPress } from '../shared/MoveTile';
 import { canAffordAnyLevelUp } from '../../run/progression';
 import { locationForAct } from '../../run/locations';
 import type { LocationDefinition } from '../../data/locations';
@@ -219,47 +221,68 @@ function ProgressRail({ map, currentRow }: { map: RunMap; currentRow: number }) 
 }
 
 /**
- * One thing the player may go and do. Big, named and spelled out — the tiles dropped their
- * labels because twenty-five of them had to fit a well, and two or three do not.
+ * One place the player may go, as a lit sigil rather than a row of text (2026-09-08, per user
+ * direction). The well is the act's Location and these are the ways out of it, so a choice is a
+ * thing you look at and not a line you read: the glyph, the colour and the size are the whole
+ * card, and holding one names it and says what it pays.
+ *
+ * What lies BEYOND it — the "Opens" chips, on the two rows where the options differ — sits above
+ * the sigil in the destination's own colour, small and unlit. Above, because the map has always
+ * run bottom-up toward the Guardian: further along the path is higher up the screen.
  */
-function ChoiceCard({
+function ChoiceMedallion({
   map,
   node,
   showLeadOn,
   onSelect,
+  onPreview,
 }: {
   map: RunMap;
   node: MapNode;
   showLeadOn: boolean;
   onSelect: () => void;
+  onPreview: () => void;
 }) {
   const leadOns = showLeadOn ? leadOnTypes(map, node.id) : [];
+  const press = useLongPress(onPreview, onSelect);
   return (
-    <button
-      type="button"
-      className={`map-choice tier-${NODE_TIERS[node.type]}`}
-      style={{ '--node-color': NODE_COLORS[node.type] } as CSSProperties}
-      onClick={onSelect}
-    >
-      <span className="map-choice-glyph">
-        <NodeGlyph type={node.type} />
+    <div className={`map-choice tier-${NODE_TIERS[node.type]}`}>
+      <span className="map-choice-ahead" aria-hidden="true">
+        {leadOns.map((type) => (
+          <span key={type} className="map-choice-ahead-mark" style={{ '--node-color': NODE_COLORS[type] } as CSSProperties}>
+            <NodeGlyph type={type} />
+          </span>
+        ))}
       </span>
-      <span className="map-choice-body">
-        <span className="map-choice-name">{NODE_NAMES[node.type]}</span>
-        <span className="map-choice-reward">{nodeRewardText(node.type)}</span>
-      </span>
-      {leadOns.length > 0 && (
-        <span className="map-choice-leadon">
-          <span className="map-choice-leadon-label">Opens</span>
-          {leadOns.map((type) => (
-            <span key={type} className="map-choice-leadon-chip" style={{ '--node-color': NODE_COLORS[type] } as CSSProperties}>
-              <NodeGlyph type={type} className="map-choice-leadon-glyph" />
-              {NODE_NAMES[type]}
-            </span>
-          ))}
-        </span>
-      )}
-    </button>
+      <button
+        type="button"
+        className="map-medallion"
+        style={{ '--node-color': NODE_COLORS[node.type] } as CSSProperties}
+        aria-label={`${NODE_NAMES[node.type]} — ${nodeRewardText(node.type)}`}
+        data-sfx="none"
+        {...press}
+      >
+        <span className="map-medallion-glow" aria-hidden="true" />
+        <NodeGlyph type={node.type} className="map-medallion-glyph" />
+      </button>
+    </div>
+  );
+}
+
+/** What a hold says: which place this is, and what it pays. The only words on the screen. */
+function MapNodePreviewPopup({ node, onClose }: { node: MapNode; onClose: () => void }) {
+  return (
+    <div className="log-overlay" onClick={onClose}>
+      <div className="log-panel move-popup-panel" style={{ '--node-color': NODE_COLORS[node.type] } as CSSProperties}>
+        <div className="log-panel-header">
+          <span>
+            <NodeGlyph type={node.type} className="map-popup-glyph" /> {NODE_NAMES[node.type]}
+          </span>
+        </div>
+        <div className="move-popup-description">{nodeRewardText(node.type)}</div>
+        <div className="move-popup-hint">Tap anywhere to close</div>
+      </div>
+    </div>
   );
 }
 
@@ -287,10 +310,12 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
   const [showMenu, setShowMenu] = useState(false);
   // Two taps to abandon: quitting is reversible now, but abandoning deletes the save.
   const [confirmingQuit, setConfirmingQuit] = useState(false);
+  const [previewNode, setPreviewNode] = useState<MapNode | null>(null);
   const map = run.map;
   if (!map) return null;
 
   const location = locationForAct(run.locationIds, run.actNumber);
+  const unopened = unseenCount(run.unseenItemIds, run.stash);
 
   // The whole view: where the player stands, and what they may take from here.
   const choiceIds = reachableNodeIds(run);
@@ -362,19 +387,22 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
 
         <div className="map-choices">
           {choiceIds.map((nodeId) => (
-            <ChoiceCard
+            <ChoiceMedallion
               key={nodeId}
               map={map}
               node={map.nodes[nodeId]}
               showLeadOn={showLeadOn}
               onSelect={() => onSelectNode(nodeId)}
+              onPreview={() => setPreviewNode(map.nodes[nodeId])}
             />
           ))}
         </div>
       </div>
 
       {/* One button, because there is one thing down here worth opening: the run's own sheet —
-          Banners, Gems, every hero and every item on them (2026-09-07, per user direction). */}
+          Banners, Gems, every hero and every item on them (2026-09-07, per user direction).
+          It also carries the bag's badge: gear no longer stops the run to be handed out, so this
+          is the only place the run says one is waiting (docs/progression.md). */}
       <div className="map-footer">
         <button
           className="map-footer-button"
@@ -383,6 +411,11 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
         >
           <span className="map-footer-icon"><HubGlyph name="roster" /></span>
           <span className="map-footer-label">Roster</span>
+          {unopened > 0 && (
+            <span className="map-footer-badge" aria-label={`${unopened} unopened ${unopened === 1 ? 'item' : 'items'} in your bag`}>
+              {unopened === 1 ? '!' : unopened}
+            </span>
+          )}
         </button>
       </div>
 
@@ -437,6 +470,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
 
       {showRoster && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setShowRoster(false)} />}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
+      {previewNode && <MapNodePreviewPopup node={previewNode} onClose={() => setPreviewNode(null)} />}
     </div>
   );
 }

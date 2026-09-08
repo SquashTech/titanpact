@@ -143,8 +143,8 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'equip',
     topic: 'Equipment',
     lines: [
-      'Some equipment. This will make us more powerful. Each of us can currently hold one, but if we find a Forge, our capacity will expand.',
-      'Give it to one of us now, or keep it in the bag — you can move our gear around between battles, and sell what we do not want.',
+      'Everything we find goes into the bag, and the bag will tell you when something in it is new.',
+      'Open the Roster and tap it to see what it does. Give it to one of us whenever you like — each of us can hold one for now, and a Forge would widen that.',
     ],
   },
   {

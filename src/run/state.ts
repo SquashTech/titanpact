@@ -2,7 +2,7 @@
 // state is built FROM this (buildCombatState.ts) and never writes back.
 
 import type { PassiveId, StatKey, TypeId } from '../engine/content';
-import type { EquipmentLoadout, Stash } from './equipment';
+import type { EquipmentLoadout, Stash, UnseenItems } from './equipment';
 import { createEmptyLoadout } from './equipment';
 import type { RunMap } from './map';
 
@@ -79,8 +79,10 @@ export interface RunState {
   levelUpDeferred: boolean;
   /** Spent at a Guild Hall; contracts are claimed, not bought with this. */
   gold: number;
-  /** Items carried but not equipped, capped at STASH_CAPACITY. Duplicates allowed — one copy per HERO is the rule. */
+  /** Items carried but not equipped. Uncapped. Duplicates allowed — one copy per HERO is the rule. */
   stash: Stash;
+  /** Bag items the player has not opened yet — the map's Roster badge. Ids, not indices; see equipment.ts. */
+  unseenItemIds: UnseenItems;
   /** Owned relic ids — duplicates stack. */
   relics: string[];
   /** Starts at 1; +1 at the end of every act; purchasable at a shop. */
@@ -121,6 +123,7 @@ export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1):
     levelUpDeferred: false,
     gold,
     stash: [],
+    unseenItemIds: [],
     relics: [],
     recruitContracts,
     map: null,

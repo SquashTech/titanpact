@@ -59,11 +59,11 @@ export function EquipChoiceCard({ item, picked, onPick, onInspect, revealDelayMs
 /**
  * Who has room and who is full — the half of the buy decision the item's own card can't answer
  * ("is there anywhere to put this that doesn't cost me something?"). The same squad grid Manage
- * Roster and the found-item gate use (2026-09-07, per user direction): item names are icons here
- * too, so the shelf, the bag and the buy sheet are one picture rather than three notations.
+ * Roster uses (2026-09-07, per user direction): item names are icons here too, so the shelf, the
+ * bag and the buy sheet are one picture rather than three notations.
  *
- * Read-only. The Guild Hall still routes the purchase through ItemFoundScreen, which is where a
- * hero — or the bag — is actually chosen.
+ * Read-only, and now purely informational: a purchase goes to the bag, and who carries it is
+ * decided in the Roster whenever the player likes.
  */
 function SlotOwners({ roster }: { roster: readonly RosterEntry[] }) {
   const [summaryItem, setSummaryItem] = useState<EquipmentDefinition | null>(null);

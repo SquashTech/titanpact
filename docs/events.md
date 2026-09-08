@@ -30,7 +30,7 @@ same rule CLAUDE.md states for every other content type.
 | `learnMove` | Rolls ONE move from a declarative `MovePoolFilter` and lets the player teach it to any roster hero — swapping one out if that hero is at `MOVE_CAP`. | Fruit Slicer, Wildcard |
 | `statShift` | Flat additive stat deltas, some possibly negative, permanently-for-the-run on one chosen hero (`RosterEntry.bonusStatGrants`). | Soul Transfer |
 | `grantPassive` | Teaches a Passive to one chosen hero (`RosterEntry.bonusPassiveGrants`). | Assertiveness Training |
-| `loot` | N pieces of equipment on the act's own drop curve, handed to `ItemFoundScreen`. | Loot Pile |
+| `loot` | N pieces of equipment on the act’s own drop curve, dropped straight into the bag. | Loot Pile |
 
 **What is deliberately NOT in the vocabulary:** gold, Training Points, Recruit Contracts.
 Each is already a whole map-node type or a per-act grant, and an event that duplicated one
@@ -73,7 +73,7 @@ node-select time and rides on the `Screen` variant, exactly as the shop's offers
 screen re-renders on every `onRunChange`, and a roll made inside it would produce a
 different event each time the run state moved. The event's *own contents* (which move,
 which loot) roll inside the screen, which is safe because the screen is never unmounted
-mid-event: its one hand-off, loot → the equip gate, is terminal.
+mid-event: its one hand-off, loot → the bag, is terminal.
 
 **Weighting:** none. `event` has a single weight in `map.ts` `REWARD_WEIGHTS` (raised
 8 → 14 when the node stopped being empty — **flagged as an inference, not a decision**),

@@ -1,12 +1,12 @@
-import { useState, type DragEvent } from 'react';
+import { useEffect, useState, type DragEvent } from 'react';
 import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
 import type { HeroDefinition } from '../../engine/content';
 import type { RunState, RosterEntry } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import type { EnchantmentId } from '../../run/equipment';
-import { actAllowsRarity, canMergeItems, enchantLabel, mergeEnchantChoices, nextRarity, STASH_CAPACITY, stashIsFull } from '../../run/equipment';
-import { equipFromStash, mergeFromStash, moveEquipment, unequipToStash, RunProgressError } from '../../run/runProgress';
+import { actAllowsRarity, canMergeItems, enchantLabel, mergeEnchantChoices, nextRarity, unseenCount } from '../../run/equipment';
+import { equipFromStash, markStashItemSeen, mergeFromStash, moveEquipment, unequipToStash, RunProgressError } from '../../run/runProgress';
 import { itemSlotsFor } from '../../run/progression';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { ItemBox, ItemReadout, ItemSummaryPopup, slotBoxes } from '../shared/EquipmentBox';
@@ -17,6 +17,9 @@ import { ResourceGlyph } from '../shared/RunGlyph';
 import { playSfx } from '../../audio/sfx';
 
 const DRAG_KEY = 'text/titanpact-equip-move';
+
+/** Seating jolt length (styles.css `equip-seat-jolt`). Cosmetic only — the equip has already landed. */
+const EQUIP_SEAT_MS = 420;
 
 interface Props {
   run: RunState;
@@ -57,6 +60,19 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
   const [pendingMerge, setPendingMerge] = useState<{ a: number; b: number; choices: EnchantmentId[] } | null>(null);
   /** A full hero the carried item was offered to — EquipSwapScreen owns the "which one goes" decision. */
   const [swappingRosterId, setSwappingRosterId] = useState<string | null>(null);
+  /**
+   * The card mid seating jolt. Inherited from the deleted item gate (2026-09-08), which was the
+   * only screen that ever played it: handing a hero gear is the one grant in the run loop that
+   * otherwise lands with no acknowledgement, the tap and the result being the same frame. Purely
+   * cosmetic — unlike the gate's, this fires AFTER the equip, so nothing waits on it.
+   */
+  const [seatingRosterId, setSeatingRosterId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!seatingRosterId) return;
+    const timer = window.setTimeout(() => setSeatingRosterId(null), EQUIP_SEAT_MS);
+    return () => window.clearTimeout(timer);
+  }, [seatingRosterId]);
 
   function itemAt(ref: SlotRef): string | null {
     if (ref.kind === 'stash') return run.stash[ref.index] ?? null;
@@ -90,6 +106,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
         // so an empty box and a filled one on the same hero can share this one call.
         onRunChange(moveEquipment(run, from.rosterId, from.index, to.rosterId, heroes, to.index).run);
         playSfx('equip');
+        setSeatingRosterId(to.rosterId);
       } else if (from.kind === 'hero' && to.kind === 'stash') {
         onRunChange(unequipToStash(run, from.rosterId, from.index));
         playSfx('ui.move');
@@ -101,6 +118,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
         const full = entry.equipment.length >= itemSlotsFor(hero, entry);
         onRunChange(equipFromStash(run, from.index, to.rosterId, equipment, heroes, full ? to.index : undefined));
         playSfx('equip');
+        setSeatingRosterId(to.rosterId);
       } else if (from.kind === 'stash' && to.kind === 'stash') {
         // Bag-to-bag used to mean nothing; it now means MERGE (docs/equipment.md §5). Two enchanted
         // inputs are the one case that has to ask, so the choice is raised rather than resolved.
@@ -147,6 +165,17 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
     setSwappingRosterId(entry.rosterId);
   }
 
+  /**
+   * Clears a bag item's unopened mark. Only the two gestures that LEAVE it in the bag need this
+   * — picking it up and reading it out. Anything that moves it out drops the mark on its own,
+   * since a mark cannot outlive the item it points at (`withStash`, runProgress.ts).
+   */
+  function seeStashItem(ref: SlotRef) {
+    if (ref.kind !== 'stash') return;
+    const itemId = run.stash[ref.index];
+    if (itemId && run.unseenItemIds.includes(itemId)) onRunChange(markStashItemSeen(run, itemId));
+  }
+
   function handleSlotClick(ref: SlotRef) {
     if (selected) {
       if (refKey(selected) !== refKey(ref)) applyMove(selected, ref);
@@ -156,6 +185,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
     }
     if (!itemAt(ref)) return;
     playSfx('ui.select');
+    seeStashItem(ref);
     setSelected(ref);
   }
 
@@ -177,7 +207,12 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
       // holding is what reads an item out.
       sfx: 'none',
       onTap: () => handleSlotClick(ref),
-      onLongPress: item ? () => setViewedItemId(item.id) : undefined,
+      onLongPress: item
+        ? () => {
+            seeStashItem(ref);
+            setViewedItemId(item.id);
+          }
+        : undefined,
       draggable: !!item,
       onDragStart: (e: DragEvent) => {
         if (!item) return;
@@ -204,28 +239,38 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
    * squad now rather than above it. The roster is what the screen is about; the bag is the tray
    * you draw from, and a tray belongs at the bottom of the reach.
    */
+  const unopened = unseenCount(run.unseenItemIds, run.stash);
   const bagPanel = (
-    <div className={`stash-panel${stashIsFull(run.stash) ? ' is-full' : ''}`}>
+    <div className="stash-panel">
       <div className="stash-header">
         <span className="stash-label">🎒 Bag</span>
-        <span className="stash-count">
-          {run.stash.length}/{STASH_CAPACITY}
-        </span>
+        {unopened > 0 && (
+          <span className="stash-unseen" aria-label={`${unopened} unopened`}>
+            {unopened} new
+          </span>
+        )}
+        <span className="stash-count">{run.stash.length}</span>
         <span className="stash-gold">
           <ResourceGlyph kind="gold" /> {run.gold}
         </span>
       </div>
       <div className="stash-grid">
-        {/* What it holds plus ONE empty landing box, not all ten. An always-full-capacity grid
-            reserved a row the player was not using, and the header already prints the capacity. */}
-        {slotBoxes(run.stash, Math.min(STASH_CAPACITY, run.stash.length + 1)).map((stashItemId, index) => {
+        {/* What it holds plus ONE empty landing box. The bag is uncapped, so the trailing box is
+            the only thing saying "and there is room for more" — it is never a count of anything. */}
+        {slotBoxes(run.stash, run.stash.length + 1).map((stashItemId, index) => {
           const item = stashItemId ? (equipment[stashItemId] ?? null) : null;
           const ref: SlotRef = { kind: 'stash', index };
           // An empty bag box takes anything a hero is holding. A filled one is a target for gear
           // coming off a hero, and for another bag item it MERGES with — the only meaning
           // bag-to-bag has (docs/equipment.md §5).
           const isDropTarget = !!selected && (selected.kind === 'hero' ? !item : mergeableInBag(selected.index, index));
-          return <ItemBox key={index} item={item} {...slotProps(ref, item, isDropTarget)} />;
+          const props = slotProps(ref, item, isDropTarget);
+          // The mark rides the box, not the slot: which ITEM is unopened is the question, and the
+          // bag reshuffles indices every time something leaves it.
+          const unseen = !!item && run.unseenItemIds.includes(item.id);
+          return (
+            <ItemBox key={index} item={item} {...props} className={`${props.className}${unseen ? ' is-new' : ''}`} />
+          );
         })}
       </div>
       {pendingMerge && (
@@ -335,9 +380,12 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
                   // In focus mode a hero that cannot take the held item recedes entirely: the
                   // screen is down to "where does this go", and a card that is not an answer to
                   // that is noise.
-                  className={
-                    takeable ? (entry.equipment.length < capacity ? 'can-take' : 'can-swap') : selected ? 'is-inert' : ''
-                  }
+                  className={[
+                    takeable ? (entry.equipment.length < capacity ? 'can-take' : 'can-swap') : selected ? 'is-inert' : '',
+                    seatingRosterId === entry.rosterId ? 'is-equipping' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
                   onHeadTap={() => handleHeroTap(entry, hero)}
                   headLabel={selected ? `Give ${selectedItem?.name ?? 'item'} to ${hero.name}` : `View ${hero.name} details`}
                   slotProps={(index, item) => {

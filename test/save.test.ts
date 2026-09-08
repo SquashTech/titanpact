@@ -50,6 +50,8 @@ function sampleRun(): RunState {
     visitedNodeIds: [walked],
     fightsStarted: 2,
     encountersWon: 5,
+    stash: ['sword.common', 'dagger.common'],
+    unseenItemIds: ['sword.common'],
     locationIds: Object.keys(locations).slice(0, 5),
   };
 }
@@ -141,6 +143,21 @@ test('save: an over-cap or duplicated roster is refused', () => {
   });
   assert.ok(reason.includes('cap'));
   assert.ok(rejectionOf((raw) => raw.run.roster.push({ ...raw.run.roster[0] })).includes('repeats'));
+});
+
+test('save: a file with no unopened marks decodes to none, and a mark with nothing behind it is dropped', () => {
+  const raw = JSON.parse(JSON.stringify(encodeSave(sampleRun(), 'map')));
+  delete raw.run.unseenItemIds;
+  const older = decodeSave(raw, index);
+  assert.ok(older.ok, older.ok ? '' : older.reason);
+  assert.deepStrictEqual(older.save.run.unseenItemIds, []);
+
+  // A mark naming something the bag no longer holds would light the badge with nothing behind it.
+  const stale = JSON.parse(JSON.stringify(encodeSave(sampleRun(), 'map')));
+  stale.run.unseenItemIds = ['sword.common', 'dagger.common.blazing'];
+  const pruned = decodeSave(stale, index);
+  assert.ok(pruned.ok, pruned.ok ? '' : pruned.reason);
+  assert.deepStrictEqual(pruned.save.run.unseenItemIds, ['sword.common']);
 });
 
 test('save: a run field this version added is required, so a v1 file cannot slip through', () => {

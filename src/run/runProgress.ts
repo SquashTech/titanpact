@@ -3,7 +3,7 @@
 
 import type { HeroDefinition, StatKey } from '../engine/content';
 import type { BrokenSeal, RunState, RosterEntry } from './state';
-import type { EnchantmentId, EquipmentDefinition, EquipmentRarity } from './equipment';
+import type { EnchantmentId, EquipmentDefinition, EquipmentRarity, Stash } from './equipment';
 import {
   actAllowsRarity,
   addToStash,
@@ -13,11 +13,13 @@ import {
   holdsItem,
   MAX_ITEM_SLOTS,
   mergeEnchantChoices,
+  markItemSeen,
+  markItemUnseen,
   mergeResultId,
   nextRarity,
   parseEquipmentId,
+  pruneUnseen,
   removeFromStash,
-  stashIsFull,
   unequipSlot,
 } from './equipment';
 import { generateMap } from './map';
@@ -144,27 +146,43 @@ export function buyItemSlot(
 
 // --- The stash (docs/progression.md) ---
 
-/** Picking an item up. Refused when the bag is full; the caller offers a sale instead. */
-export function stashItem(run: RunState, itemId: string, equipmentLookup: Record<string, EquipmentDefinition>): RunState {
-  if (!equipmentLookup[itemId]) throw new RunProgressError(`Unknown equipment ${itemId}`);
-  if (stashIsFull(run.stash)) throw new RunProgressError(`The bag is full`);
-  return { ...run, stash: addToStash(run.stash, itemId) };
+/**
+ * Every write to the bag goes through here, so an unopened mark can never outlive the item it
+ * points at — sold, merged away or seated on a hero, the mark goes with it.
+ */
+function withStash(run: RunState, stash: Stash): RunState {
+  return { ...run, stash, unseenItemIds: pruneUnseen(run.unseenItemIds, stash) };
 }
 
-/** Taking gear off. Refused when the bag is full — the only way a hero is stuck holding something. */
+/**
+ * An item ARRIVING — found, claimed or bought. Every drop lands here now (docs/progression.md
+ * "The bag notification"), so this is also where the unopened mark is set: the run does not stop
+ * to ask who carries it, and the badge is what says one is waiting. The bag is uncapped, so the
+ * only thing that can refuse is an id naming nothing.
+ */
+export function stashItem(run: RunState, itemId: string, equipmentLookup: Record<string, EquipmentDefinition>): RunState {
+  if (!equipmentLookup[itemId]) throw new RunProgressError(`Unknown equipment ${itemId}`);
+  const next = withStash(run, addToStash(run.stash, itemId));
+  return { ...next, unseenItemIds: markItemUnseen(next.unseenItemIds, itemId) };
+}
+
+/** The player has looked at it. Tapping a bag item — for any reason — is what calls this. */
+export function markStashItemSeen(run: RunState, itemId: string): RunState {
+  return { ...run, unseenItemIds: markItemSeen(run.unseenItemIds, itemId) };
+}
+
+/** Taking gear off. The bag always has room for it, so this cannot leave a hero stuck holding something. */
 export function unequipToStash(run: RunState, rosterId: string, index: number): RunState {
   const entry = run.roster.find((r) => r.rosterId === rosterId);
   if (!entry) throw new RunProgressError(`${rosterId} is not on the roster`);
   const itemId = entry.equipment[index];
   if (!itemId) throw new RunProgressError(`${rosterId} has nothing in item slot ${index}`);
-  if (stashIsFull(run.stash)) throw new RunProgressError(`The bag is full`);
 
   const nextEntry: RosterEntry = { ...entry, equipment: unequipSlot(entry.equipment, index) };
-  return {
-    ...run,
-    roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)),
-    stash: addToStash(run.stash, itemId),
-  };
+  return withStash(
+    { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)) },
+    addToStash(run.stash, itemId)
+  );
 }
 
 // --- The Anvil, the Enchanter and merging (docs/equipment.md §5) ---
@@ -191,7 +209,7 @@ function readItemRef(run: RunState, ref: ItemRef): string {
 /** Swaps one item for another in place. Never changes how many items exist, so no capacity check is owed. */
 function writeItemRef(run: RunState, ref: ItemRef, itemId: string): RunState {
   if (ref.kind === 'stash') {
-    return { ...run, stash: run.stash.map((held, i) => (i === ref.index ? itemId : held)) };
+    return withStash(run, run.stash.map((held, i) => (i === ref.index ? itemId : held)));
   }
   return {
     ...run,
@@ -281,7 +299,7 @@ export function mergeFromStash(
 
   // Drop both inputs, then add the result — never the other way round, or a full bag would refuse it.
   const remaining = run.stash.filter((_, i) => i !== indexA && i !== indexB);
-  return { ...run, stash: [...remaining, resultId] };
+  return withStash(run, [...remaining, resultId]);
 }
 
 /** Sells one carried item at `sellValueFor`. The bag is the only place gear is sold from — equipped gear comes off first. */
@@ -290,7 +308,7 @@ export function sellFromStash(run: RunState, index: number, equipmentLookup: Rec
   if (!itemId) throw new RunProgressError(`The bag has nothing in slot ${index}`);
   const item = equipmentLookup[itemId];
   if (!item) throw new RunProgressError(`Unknown equipment ${itemId}`);
-  return { ...run, gold: run.gold + sellValueFor(item), stash: removeFromStash(run.stash, index) };
+  return withStash({ ...run, gold: run.gold + sellValueFor(item) }, removeFromStash(run.stash, index));
 }
 
 /**
@@ -307,13 +325,12 @@ export function equipFromStash(
 ): RunState {
   const itemId = run.stash[stashIndex];
   if (!itemId) throw new RunProgressError(`The bag has nothing in slot ${stashIndex}`);
-  return equipToRoster({ ...run, stash: removeFromStash(run.stash, stashIndex) }, rosterId, itemId, equipmentLookup, heroLookup, replaceIndex);
+  return equipToRoster(withStash(run, removeFromStash(run.stash, stashIndex)), rosterId, itemId, equipmentLookup, heroLookup, replaceIndex);
 }
 
 /**
- * Seats a loose item — one just found, bought or claimed — straight onto a hero, skipping the
- * bag. `replaceIndex` is required once the hero is full; what it displaces lands in the bag,
- * so a full bag is the one thing that can refuse the swap.
+ * Seats a loose item straight onto a hero, skipping the bag. `replaceIndex` is required once
+ * the hero is full; what it displaces lands in the bag, which always has room for it.
  */
 export function equipToRoster(
   run: RunState,
@@ -343,13 +360,11 @@ export function equipToRoster(
   if (holdsItem(keeping, itemId)) throw new RunProgressError(`${rosterId} already holds ${itemId}`);
 
   const bumpedItemId = target === undefined ? null : entry.equipment[target];
-  if (bumpedItemId && stashIsFull(run.stash)) throw new RunProgressError(`The bag is full`);
   const nextEntry: RosterEntry = { ...entry, equipment: equipItem(entry.equipment, itemId, target) };
-  return {
-    ...run,
-    roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)),
-    stash: bumpedItemId ? addToStash(run.stash, bumpedItemId) : run.stash,
-  };
+  return withStash(
+    { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)) },
+    bumpedItemId ? addToStash(run.stash, bumpedItemId) : run.stash
+  );
 }
 
 export interface MoveItemOutcome {

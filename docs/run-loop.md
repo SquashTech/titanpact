@@ -212,7 +212,7 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `elite` | The AI's 4 heroes each carry a flat +10 bonus to 2 random growth stats. Draws from the recruitable pool, same as `skirmish`/`battle`. Row 4's difficulty-spike alternative to `battle` — the player picks one or the other, never both. |
 | `boss` | `FightScreen` vs. **2 of the Location faction's basics** (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Hero-pool escorts until 2026-09-06 — see "The Guardian's escorts" below. Winning grants 1 Recruit Contract, the Guardian's Banner in acts 1-4, and ends the act (§3). **2026-09-01 exception:** a location may hold a **faction champion** on the boss's bench — see "The Guardian's champion" below. |
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. Overhauled 2026-08-18: offers 2-3 curated hero recruits (50g each, `GUILD_HALL_RECRUIT_COST`) rather than the full catalog, plus a rarity-priced equipment shelf, rolled once per visit (`src/run/shop.ts` `rollGuildHallOffers`). Second pass 2026-08-31: relics are no longer sold anywhere, the shelf is 4 wide and readable on its face, sold stock greys out, and Recruit Contracts confirm before buying (`docs/progression.md` "Second pass"). |
-| `equipmentReward` ("Item") | `NodeRewardScreen` — pick 1 of 3 items, rarity-weighted (`equipment.ts` `pickWeightedEquipment`); claiming hands off to the item gate (`ItemFoundScreen`), which seats it, bags it or sells it — see "The stash" in `docs/progression.md`. Items are uncategorised as of 2026-09-06, so the three on offer are simply the three rolled (`docs/progression.md` "Uncategorised slots"). |
+| `equipmentReward` ("Item") | `NodeRewardScreen` — pick 1 of 3 items, rarity-weighted (`equipment.ts` `pickWeightedEquipment`); claiming bags it and lights the Roster badge — see "The bag notification" in `docs/progression.md`. Items are uncategorised as of 2026-09-06, so the three on offer are simply the three rolled (`docs/progression.md` "Uncategorised slots"). |
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30, more for nothing having been spent yet). |
 | `upgradeReward` | `NodeRewardScreen` — an instant flat grant to the pooled level-up currency (2-3 points), on top of the per-fight-win grant (see below). |
 | `forgeReward` ("The Forge") | `ForgeScreen` — pick one roster hero to gain **+1 item slot** for the rest of the run (`runProgress.ts` `grantItemSlot`, stored on `RosterEntry.bonusItemSlots`, capped at `MAX_ITEM_SLOTS` = 3). **2026-09-06**, replacing the three slot-specific cache nodes (`weaponReward`/`armorReward`/`accessoryReward`), which lost their meaning when items stopped having categories — most of their frequency went to `equipmentReward`, whose weight went 20 → 40. The scarcest thing on the reward row (weight 8) on purpose: it is permanent, it compounds with every drop after it, and it is the only reward here a hero can be at the cap for — a roster entirely at 3 slots makes the node a dead draw, which is what makes spending it a choice — and at the 2026-09-07 cap of 3 that arrives materially sooner. |
@@ -222,7 +222,7 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `manaBoostReward` ("Mana Well") | **2026-09-05, per user direction:** this no longer makes the player pick a hero. It hands over Sapphire (+5 Mana Pool) through `GemChoiceScreen` with the offer fixed to one. Its name, tint and place-flavour are unchanged; only the grant is. Its twin, the Regen Spring (`manaRegenBoostReward`), was deleted with Peridot on 2026-09-07. |
 | `classReward` ("Mentor's Hall") | `ClassNodeScreen` — pick 1 of 3 Classes (`src/data/classes.ts`), then pick which roster hero learns it, filtered to heroes with no Class yet (`src/run/classes.ts` `grantClass`, stored on `RosterEntry.classId` — a hero can hold at most one Class per run, so `grantClass` REPLACES rather than stacks). If every roster hero already has a Class, the offer is simply wasted. **Not in `REWARD_WEIGHTS`** (2026-08-22 revision, per user direction) — the only way to encounter this node type is a forced Mentor row (§1), never a random pick-1-of-3 option in any act. Acts 1-4 each guarantee one, so a run can Class up to four heroes; the offer filters to heroes with no Class yet and is wasted only once every hero has one. |
 | `tutorReward` ("Tutor") | `TutorNodeScreen` — pick one roster hero, then **any** move from that hero's level-up pool. See "The Tutor" below. Acts 4-5 only. |
-| `event` | `EventNodeScreen` — rolls one of the authored map events (`src/data/events.ts`, `src/run/events.ts`) and resolves it: a move taught to a chosen hero, a Passive taught to a chosen hero, a flat stat trade, or a pile of act-curve loot handed to `ItemFoundScreen`. Which event a node turns out to be is rolled once at node-select time and gated by act and Location. See **docs/events.md**. |
+| `event` | `EventNodeScreen` — rolls one of the authored map events (`src/data/events.ts`, `src/run/events.ts`) and resolves it: a move taught to a chosen hero, a Passive taught to a chosen hero, a flat stat trade, or a pile of act-curve loot dropped straight into the bag. Which event a node turns out to be is rolled once at node-select time and gated by act and Location. See **docs/events.md**. |
 
 The stat bonuses above are the **node-kind** axis only — what `elite` costs relative to
 `battle` *within one act*. Every encounter node also carries the **per-act** axis on top
@@ -459,8 +459,11 @@ A won encounter resolves through up to five gates before the map comes back
    recruitable: the run goes straight on rather than opening a screen whose offer cannot
    be taken. On a boss node the act-end contract (§3) is granted *before* this check, so
    it is spendable on the heroes that boss fight just beat.
-2. **The item gate** (`ItemFoundScreen`) for this node's item drop, if any.
-3. **Training Point allocation** (`LevelUpScreen`), if the pool is non-empty.
+2. **Training Point allocation** (`LevelUpScreen`), if the pool is non-empty.
+
+The item drop is no longer a step here: it is banked into the bag as part of the same
+`RunState` transform as the gold and the XP, and the map's Roster badge is what says so
+(`docs/progression.md` "The bag notification" and "The uncapped bag").
 
 Recruiting comes first on purpose: the gear and the Training Points this same win paid
 out can then go to the hero who just joined, instead of arriving one node too late for
@@ -928,14 +931,16 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   opener and row 4's `battle`) also always grants one random act-curve item on top of its
   gold/training-point rewards — see "The two reward lanes" above — so the player exercises
   this loop from turn one rather than waiting on `equipmentReward` node luck.
-- **…and a capped one came back (2026-09-07, per user direction: "nobody likes
-  finnicky, awkward systems").** The bullet above is superseded: `RunState.stash` holds
-  up to 8 unequipped items, `ForceEquipScreen` is `ItemFoundScreen` and forces nothing,
-  and the bumped-item cascade is gone — a displaced item falls into the bag instead of
-  back onto the queue. What survives from 2026-08-17 is its actual finding: an
-  *uncapped* inventory is busywork. A cap keeps the discard decision, and moves it to a
-  point where the player knows the matchup. Full write-up: `docs/progression.md`
-  "The stash".
+- **…and a capped one came back (2026-09-07), then lost its cap (2026-09-08), then lost
+  its screen with it.** The bullet above is superseded twice over. `RunState.stash` now
+  holds any number of unequipped items; the bumped-item cascade is gone — a displaced
+  item falls into the bag instead of back onto the queue — and `ItemFoundScreen`
+  (formerly `ForceEquipScreen`) is **deleted**: every drop goes to the bag unasked and
+  the map's Roster button carries the badge that says one is waiting. What survives from
+  2026-08-17 is only half of its finding — resolving a drop on the spot was worse than
+  carrying it, and the cap that was supposed to be the other half turned out to force a
+  discard between two items the player had already declined. Full write-up:
+  `docs/progression.md` "The stash", "The bag notification", "The uncapped bag".
 
 ## 4. Act 6 — the Pact (2026-09-05, per user direction)
 
@@ -1074,7 +1079,7 @@ Endbringer already out is exactly what it is for.
   for the full stat-bar readout) plus reassigning already-equipped gear between heroes
   and, since 2026-09-07, in and out of the bag that backs them (`moveEquipment` /
   `equipFromStash` / `unequipToStash` / `sellFromStash` — see "…and a capped one came
-  back" above). Still not a level-up spend surface.
+  back" above, and its two successors). Still not a level-up spend surface.
 - **Per-act difficulty scaling — the curve is built (§3), the numbers are not settled.**
   `src/run/difficulty.ts` gives every act a baseline; what remains open is the tuning
   (all figures are first-pass), the uniform stat draw ignoring that HP is worth less

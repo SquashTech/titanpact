@@ -27,7 +27,6 @@ import { ForgeScreen } from '../view/run/ForgeScreen';
 import { BlacksmithScreen } from '../view/run/BlacksmithScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
-import { ItemFoundScreen } from '../view/run/ItemFoundScreen';
 import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
 import { RecruitScreen } from '../view/run/RecruitScreen';
 import { StatBoostScreen, type StatBoostNodeType } from '../view/run/StatBoostScreen';
@@ -49,6 +48,7 @@ import {
   equipItem,
   pickWeightedEquipment,
   rarityWeightsFor,
+  unseenCount,
   type EquipmentDefinition,
   type LootSource,
 } from '../run/equipment';
@@ -112,6 +112,7 @@ import {
   grantCurrencyReward,
   grantUpgradeReward,
   grantContractReward,
+  stashItem,
   recordBrokenSeal,
 } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
@@ -147,7 +148,7 @@ type Screen =
   | { kind: 'sandboxFight'; player: Encounter; ai: Encounter; playerRelics: string[] }
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. Own kind so leaving returns to the title. */
   | { kind: 'statusTestFight'; player: Encounter; ai: Encounter }
-  /** `offers` and `soldOutEquipmentIds` live on the screen, not in the shop component: a purchase unmounts the shop through the equip gate, and component-local state would reroll / forget. */
+  /** `offers` and `soldOutEquipmentIds` live on the screen, not in the shop component: a purchase re-renders the shop and component-local state would reroll / forget. */
   | { kind: 'shop'; nodeId: string; offers: GuildHallOffers; soldOutEquipmentIds: string[] }
   | { kind: 'reward'; nodeId: string; nodeType: RewardNodeType }
   /** The Forge: +1 item slot to one hero. */
@@ -165,8 +166,6 @@ type Screen =
   /** Guardian's Banner after a Guardian win in acts 1-4. Not a map node, so no nodeId. */
   | { kind: 'guardianBanner'; next: Screen }
   | { kind: 'levelUp'; next: Screen }
-  /** A found item: seat it now, or drop it in the bag. */
-  | { kind: 'itemFound'; queue: string[]; next: Screen }
   /** Roster-full replacement, Guild Hall path only; the contract path resolves in RecruitScreen. */
   | { kind: 'rosterReplace'; candidate: RosterReplaceCandidate; next: Screen }
   /** Offers sampled once in handleFightResolved; only pushed when the player holds a contract. */
@@ -349,6 +348,10 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
     case 'actIntro':
       return run.actNumber === 1 ? 'arrival' : null;
     case 'map': {
+      // Gear teaches itself here now that nothing stops the run to hand it over: the badge is
+      // lit, and this is the screen carrying it. Ahead of the node beat on purpose — it explains
+      // what just happened, and the node beat explains what is next.
+      if (unseenCount(run.unseenItemIds, run.stash) > 0) return 'equip';
       // The scripted act is a corridor, so "the node ahead" is a single node. A branching act
       // has nothing to name and returns null rather than picking one arbitrarily.
       const ahead = reachableNodeIds(run);
@@ -357,8 +360,6 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
     }
     case 'gemChoice':
       return 'gem';
-    case 'itemFound':
-      return 'equip';
     case 'levelUp':
       // The Evolution beat outranks the plain one: reaching a fork is the bigger lesson, and the
       // level-up basics have long since been spoken by the time one is affordable.
@@ -719,13 +720,15 @@ export function App() {
       afterScreen = { kind: 'map' };
     }
 
+    // The drop is banked, not gated: it goes to the bag and the map's Roster badge says so
+    // (docs/progression.md "The bag notification"). The victory overlay has already shown it.
+    if (equipmentReward) next = stashItem(next, equipmentReward.id, equipment);
+
     setPlayerRun(next);
     const afterLevelUp: Screen = levelUpPending(next) ? { kind: 'levelUp', next: afterScreen } : afterScreen;
-    const afterEquip: Screen = equipmentReward ? { kind: 'itemFound', queue: [equipmentReward.id], next: afterLevelUp } : afterLevelUp;
 
-    // Gate order is deliberate: gem, banner, then recruit, then equip, then level-up — so a hero
-    // recruited this beat already stands under both team-wide grants and can receive this win's
-    // gear and points.
+    // Gate order is deliberate: gem, banner, then recruit, then level-up — so a hero recruited
+    // this beat already stands under both team-wide grants and can receive this win's points.
     // `next`, not `playerRun`: a boss node has just granted the contract that is spendable here.
     const recruitable = defeatedRoster.filter((entry) => isRecruitable(entry.heroId, heroes));
     // The scripted act names its one contract and refuses to let it be walked past; a non-null
@@ -734,8 +737,8 @@ export function App() {
     const contractOffers = next.recruitContracts > 0 ? (forcedOffers ?? pickContractOffers(recruitable)) : [];
     const afterRecruit: Screen =
       contractOffers.length > 0
-        ? { kind: 'recruit', offers: contractOffers, next: afterEquip, required: forcedOffers !== null }
-        : afterEquip;
+        ? { kind: 'recruit', offers: contractOffers, next: afterLevelUp, required: forcedOffers !== null }
+        : afterLevelUp;
     const afterBanner: Screen = banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit;
 
     // The run's very first fight always pays a Gem; every other fight rolls for one (run/gems.ts).
@@ -756,13 +759,17 @@ export function App() {
     setScreen(mapAfterLevelUp(unbank ? { ...playerRun, levelUpDeferred: false } : playerRun));
   }
 
-  /** Claiming an item advances the node and hands off to the equip gate. A queue, because the Loot Pile event hands over three at once. */
+  /**
+   * Claiming an item advances the node and banks the item. A list, because the Loot Pile event
+   * hands over three at once — they all go to the bag, so there is nothing to queue a screen for.
+   */
   function handleClaimEquipment(nodeId: string, itemIds: string | string[]) {
-    setPlayerRun((run) => advanceToNode(run, nodeId));
-    setScreen({ kind: 'itemFound', queue: Array.isArray(itemIds) ? itemIds : [itemIds], next: mapAfterLevelUp(playerRun) });
+    const ids = (Array.isArray(itemIds) ? itemIds : [itemIds]).filter((id) => equipment[id]);
+    setPlayerRun((run) => ids.reduce((acc, id) => stashItem(acc, id, equipment), advanceToNode(run, nodeId)));
+    setScreen(mapAfterLevelUp(playerRun));
   }
 
-  /** Guild Hall purchase: validate-before-commit, then the equip gate returns to the same shop with the item greyed out. */
+  /** Guild Hall purchase: validate-before-commit, then the item drops in the bag and the shop stays open. */
   function handleBuyGuildEquipment(itemId: string) {
     const item = equipment[itemId];
     if (!item) return;
@@ -773,10 +780,8 @@ export function App() {
       if (!(err instanceof ShopError)) throw err;
       return;
     }
-    setPlayerRun(next);
-    const backToShop: Screen =
-      screen.kind === 'shop' ? { ...screen, soldOutEquipmentIds: [...screen.soldOutEquipmentIds, itemId] } : screen;
-    setScreen({ kind: 'itemFound', queue: [itemId], next: backToShop });
+    setPlayerRun(stashItem(next, itemId, equipment));
+    if (screen.kind === 'shop') setScreen({ ...screen, soldOutEquipmentIds: [...screen.soldOutEquipmentIds, itemId] });
   }
 
   /** The title's replay entry (docs/tutorial.md); the profile is bypassed, not rewritten. */
@@ -1147,10 +1152,6 @@ export function App() {
           onDone={() => setScreen(screen.next)}
           focusRosterId={tutorialFocusRosterId(TUTORIAL_LOCKS, playerRun)}
         />
-      )}
-
-      {screen.kind === 'itemFound' && (
-        <ItemFoundScreen run={playerRun} queue={screen.queue} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />
       )}
 
       {/* `runOutcome` is set in the layout effect above, so it is already there on the first paint. */}
