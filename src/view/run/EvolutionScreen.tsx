@@ -1,7 +1,7 @@
-import { useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import type { HeroDefinition, StatKey, TypeId } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
-import type { EvolutionNode, EvolutionPath } from '../../run/progression';
+import { MOVE_CAP, type EvolutionNode, type EvolutionPath } from '../../run/progression';
 import { passives } from '../../data/passives';
 import { PassiveGlyph, PassiveInfoPanel, passiveColor, passiveTint } from '../shared/passiveIcons';
 import { moves } from '../../data/moves';
@@ -12,8 +12,8 @@ import { TypeMatchups } from '../shared/TypeMatchups';
 import { ElementGlyph } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { useLongPress } from '../shared/MoveTile';
 import { healCasterForEntry } from '../shared/healCaster';
+import { entryStatTotals } from '../shared/entryStatTotals';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { RosterPeek } from './RosterPeek';
 
@@ -26,28 +26,41 @@ interface Props {
   onChoose: (pathId: string) => void;
 }
 
+const KIND_LABELS: Record<EvolutionPath['kind'], string> = {
+  offensive: 'Offensive',
+  defensive: 'Defensive',
+  utility: 'Utility',
+};
+
 /** The types a hero ends up with down a path — a graft replaces the secondary, never the innate primary. */
 function pathTypes(hero: HeroDefinition, path: EvolutionPath): TypeId[] {
   return path.typeGraft ? [hero.types[0], path.typeGraft] : [...hero.types];
 }
 
-/**
- * What `learnableMoveIds` buys, as a promise rather than a roster. The list itself is unreadable
- * at the moment of choosing — five names the player has never seen, none of which they get now —
- * and it crowded out the two things that ARE immediate: the granted move and the passive.
- */
+/** What `learnableMoveIds` buys, as a promise. The names themselves are for the dossier. */
 function poolPromise(path: EvolutionPath): string | null {
   if (!path.learnableMoveIds?.length) return null;
   return path.typeGraft
-    ? `New ${path.typeGraft} moves join its level-up pool.`
-    : 'New moves join its level-up pool.';
+    ? `New ${path.typeGraft} moves are added to the level-up pool.`
+    : 'New moves are added to the level-up pool.';
 }
 
-/** Full-screen Evolution choice. Select-then-confirm: the choice is permanent for the run, so a stray tap must not lock it in. */
+/** The type a graft COSTS — only a hero born dual has one to give up. */
+function tradedType(hero: HeroDefinition, path: EvolutionPath): TypeId | null {
+  return path.typeGraft ? hero.types[1] ?? null : null;
+}
+
+function statEntriesOf(path: EvolutionPath): [StatKey, number][] {
+  return Object.entries(path.statGrants).filter(([, amount]) => !!amount) as [StatKey, number][];
+}
+
+/**
+ * Full-screen Evolution choice. Tap a path and the whole thing opens as a dossier — the choice is
+ * permanent for the run, so the confirm lives in there, on the screen that actually explains it,
+ * rather than on a bar under three cards that only print headlines.
+ */
 export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
-  const [selectedPathId, setSelectedPathId] = useState<string | null>(null);
   const [inspectedPathId, setInspectedPathId] = useState<string | null>(null);
-  const selectedPath = node.paths.find((p) => p.id === selectedPathId) ?? null;
   const inspectedPath = node.paths.find((p) => p.id === inspectedPathId) ?? null;
 
   return (
@@ -71,26 +84,11 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
         <div className="stage-centered">
           <div className="evolution-path-list evolution-path-list-big">
             {node.paths.map((path) => (
-              <PathButton
-                key={path.id}
-                hero={hero}
-                path={path}
-                selected={selectedPathId === path.id}
-                onSelect={() => setSelectedPathId(path.id)}
-                onInspect={() => setInspectedPathId(path.id)}
-              />
+              <PathButton key={path.id} hero={hero} path={path} onInspect={() => setInspectedPathId(path.id)} />
             ))}
           </div>
-          <p className="evolution-inspect-hint">Tap a path to select it, hold to read what it grants.</p>
+          <p className="evolution-inspect-hint">Tap a path to read everything it grants.</p>
         </div>
-      </div>
-      {/* The slot stays mounted at full height so the path cards don't shift when the button arrives. */}
-      <div className="evolution-cta-slot">
-        {selectedPath && (
-          <button className="resolve-button" data-sfx="ui.commit" onClick={() => onChoose(selectedPath.id)}>
-            Confirm — Evolve into {selectedPath.name}
-          </button>
-        )}
       </div>
 
       {inspectedPath && (
@@ -107,80 +105,103 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
   );
 }
 
-/** Tap picks, hold inspects — the same gesture the move rows and the equipment caches use. */
-function PathButton({
-  hero,
-  path,
-  selected,
-  onSelect,
-  onInspect,
-}: {
-  hero: HeroDefinition;
-  path: EvolutionPath;
-  selected: boolean;
-  onSelect: () => void;
-  onInspect: () => void;
-}) {
-  const longPress = useLongPress(onInspect, onSelect);
-  const statEntries = Object.entries(path.statGrants).filter(([, amount]) => !!amount) as [StatKey, number][];
+/** One labelled band inside a path card. Rendered only when the path actually grants that kind of thing. */
+function PathZone({ label, className, children }: { label: string; className?: string; children: ReactNode }) {
+  return (
+    <div className={`evolution-zone${className ? ` ${className}` : ''}`}>
+      <span className="evolution-zone-label">{label}</span>
+      <div className="evolution-zone-body">{children}</div>
+    </div>
+  );
+}
+
+/** Tap opens the dossier — the card is a headline, not the decision. */
+function PathButton({ hero, path, onInspect }: { hero: HeroDefinition; path: EvolutionPath; onInspect: () => void }) {
+  const statEntries = statEntriesOf(path);
+  const grantedPassives = (path.grantsPassiveIds ?? []).filter((id) => passives[id]);
+  const grantedMoves = path.unlocksMoveIds.filter((id) => moves[id]);
   const promise = poolPromise(path);
+  const traded = tradedType(hero, path);
 
   return (
-    <button className={`evolution-path-button evolution-${path.kind}${selected ? ' picked' : ''}`} {...longPress}>
+    <button className={`evolution-path-button evolution-${path.kind}`} data-sfx="ui.select" onClick={onInspect}>
+      <span className="evolution-path-sheen" aria-hidden="true" />
       <div className="evolution-path-head">
         <span className="evolution-path-name">{path.name}</span>
+        <span className="evolution-path-kind">{KIND_LABELS[path.kind]}</span>
+        <span className="evolution-path-chevron" aria-hidden="true">
+          ›
+        </span>
       </div>
-      <div className="evolution-path-grants">
-        {/* Signed, not always "+": a refocus path spends a stat to buy another. */}
-        {statEntries.map(([stat, amount]) => (
-          <span key={stat} className={`evolution-path-grant-chip${amount < 0 ? ' evolution-path-grant-loss' : ''}`}>
-            <StatGlyph stat={stat} /> {STAT_LABELS[stat]} {amount > 0 ? '+' : ''}
-            {amount}
-          </span>
+
+      {/* Where the hero LANDS, not what is added — and on a dual hero a graft is a trade, so the
+          type it costs is printed beside the one it buys (docs/leveling-and-ranks.md "The RETYPE"). */}
+      <PathZone label="Typing" className="is-typing">
+        {pathTypes(hero, path).map((t) => (
+          <TypeBadge key={t} type={t} />
         ))}
-        {path.typeGraft && (
-          <span className="evolution-path-grant-chip evolution-path-typegraft">
-            <TypeBadge type={path.typeGraft} /> secondary type
+        {traded && (
+          <span className="evolution-path-grant-chip evolution-path-grant-loss">
+            <ElementGlyph type={traded} /> trades {traded}
           </span>
         )}
-        {!path.typeGraft && (
-          <span className="evolution-path-grant-chip evolution-path-mono">
-            stays mono <ElementGlyph type={hero.types[0]} /> {hero.types[0]}
-          </span>
-        )}
-        {(path.grantsPassiveIds ?? []).map((id) => passives[id] && (
-          <span
-            key={id}
-            className="evolution-path-grant-chip evolution-path-passive"
-            style={{ '--passive-color': passiveColor(id), '--passive-tint': passiveTint(id, 0.16) } as CSSProperties}
-          >
-            <PassiveGlyph passiveId={id} /> {passives[id].name}
-          </span>
-        ))}
-        {path.unlocksMoveIds.map((id) => moves[id] && (
-          <span
-            key={id}
-            className="evolution-path-grant-chip evolution-path-move"
-            style={{ '--move-color': getTypeColor(moves[id].type) } as CSSProperties}
-          >
-            <ElementGlyph type={moves[id].type} /> {moves[id].name}
-          </span>
-        ))}
-      </div>
-      {promise && <p className="evolution-path-learnable">{promise}</p>}
-      {(path.grantsPassiveIds ?? []).map((id) => passives[id] && (
-        <p key={id} className="evolution-path-passive-text">
-          {passives[id].description}
-        </p>
-      ))}
+        {!path.typeGraft && <span className="evolution-path-mono">unchanged</span>}
+      </PathZone>
+
+      {statEntries.length > 0 && (
+        <PathZone label="Stats" className="is-stats">
+          {/* Signed, not always "+": a refocus path spends a stat to buy another. */}
+          {statEntries.map(([stat, amount]) => (
+            <span key={stat} className={`evolution-path-grant-chip${amount < 0 ? ' evolution-path-grant-loss' : ''}`}>
+              <StatGlyph stat={stat} /> {STAT_LABELS[stat]} {amount > 0 ? '+' : ''}
+              {amount}
+            </span>
+          ))}
+        </PathZone>
+      )}
+
+      {grantedMoves.length > 0 && (
+        <PathZone label="Move" className="is-moves">
+          {grantedMoves.map((id) => (
+            <span
+              key={id}
+              className="evolution-path-grant-chip evolution-path-move"
+              style={{ '--move-color': getTypeColor(moves[id].type) } as CSSProperties}
+            >
+              <ElementGlyph type={moves[id].type} /> {moves[id].name}
+            </span>
+          ))}
+        </PathZone>
+      )}
+
+      {grantedPassives.length > 0 && (
+        <PathZone label="Passive" className="is-passive">
+          {grantedPassives.map((id) => (
+            <span
+              key={id}
+              className="evolution-path-grant-chip evolution-path-passive"
+              style={{ '--passive-color': passiveColor(id), '--passive-tint': passiveTint(id, 0.16) } as CSSProperties}
+            >
+              <PassiveGlyph passiveId={id} /> {passives[id].name}
+            </span>
+          ))}
+        </PathZone>
+      )}
+
+      {promise && (
+        <PathZone label="Pool" className="is-pool">
+          <span className="evolution-path-learnable">{promise}</span>
+        </PathZone>
+      )}
     </button>
   );
 }
 
 /**
- * Everything a path hands over, at full detail: the move it grants read against the hero's
- * post-graft types (so STAB is the number it will actually be), the passive's own panel, and
- * the matchups the graft signs the rest of the run up for.
+ * Everything a path hands over, at full detail: the stat line it lands the hero on, the move it
+ * grants read against the hero's post-graft types (so STAB is the number it will actually be),
+ * the passive's own panel, the pool it opens by name, and the matchups the graft signs the rest
+ * of the run up for. This is where the choice is spent — the cards behind it only headline it.
  */
 function PathDossier({
   hero,
@@ -200,27 +221,66 @@ function PathDossier({
   const types = pathTypes(hero, path);
   // Post-graft types, not the entry's current ones: the granted move is usually the graft's own type.
   const caster = { ...healCasterForEntry(hero, entry, run.relics), types };
+  const current = entryStatTotals(hero, entry, run.relics);
+  const statEntries = statEntriesOf(path);
   const grantedPassives = (path.grantsPassiveIds ?? []).filter((id) => passives[id]);
   const grantedMoves = path.unlocksMoveIds.filter((id) => moves[id]);
+  const poolMoves = (path.learnableMoveIds ?? []).filter((id) => moves[id]);
+  const traded = tradedType(hero, path);
   const promise = poolPromise(path);
+  // At the cap the grant becomes a replace-or-decline offer, which by the Evolution level is the
+  // usual case rather than the edge one (applyEvolutionMoves).
+  const kitFull = grantedMoves.length > 0 && entry.unlockedMoveIds.length >= MOVE_CAP;
 
   return (
     <div className="detail-overlay" onClick={onClose}>
       <button className="detail-close-button" onClick={onClose} aria-label="Close">
         ✕
       </button>
-      <div className="detail-panel evolution-dossier" onClick={(e) => e.stopPropagation()}>
-        <div className="evolution-dossier-title">{path.name}</div>
+      <div className={`detail-panel evolution-dossier evolution-${path.kind}`} onClick={(e) => e.stopPropagation()}>
+        <div className="evolution-dossier-head">
+          <span className="evolution-dossier-title">{path.name}</span>
+          <span className="evolution-path-kind">{KIND_LABELS[path.kind]}</span>
+        </div>
+        {path.description && <p className="evolution-dossier-desc">{path.description}</p>}
 
-        {path.typeGraft && (
+        <section className="evolution-dossier-section">
+          <div className="evo-path-label">Typing</div>
+          <div className="evo-path-types">
+            {types.map((t) => (
+              <TypeBadge key={t} type={t} />
+            ))}
+            {!path.typeGraft && <span className="evolution-dossier-note">unchanged</span>}
+            {traded && (
+              <span className="evolution-dossier-note">
+                trades {traded} for {path.typeGraft}
+              </span>
+            )}
+          </div>
+          <TypeMatchups types={types} />
+        </section>
+
+        {statEntries.length > 0 && (
           <section className="evolution-dossier-section">
-            <div className="evo-path-label">Becomes</div>
-            <div className="evo-path-types">
-              {types.map((t) => (
-                <TypeBadge key={t} type={t} />
+            <div className="evo-path-label">Stats</div>
+            <div className="evolution-stat-table">
+              {statEntries.map(([stat, amount]) => (
+                <div key={stat} className={`evolution-stat-row${amount < 0 ? ' is-loss' : ''}`}>
+                  <span className="evolution-stat-name">
+                    <StatGlyph stat={stat} /> {STAT_LABELS[stat]}
+                  </span>
+                  <span className="evolution-stat-now">{current[stat]}</span>
+                  <span className="evolution-stat-arrow" aria-hidden="true">
+                    →
+                  </span>
+                  <span className="evolution-stat-next">{current[stat] + amount}</span>
+                  <span className="evolution-stat-delta">
+                    {amount > 0 ? '+' : ''}
+                    {amount}
+                  </span>
+                </div>
               ))}
             </div>
-            <TypeMatchups types={types} />
           </section>
         )}
 
@@ -230,6 +290,11 @@ function PathDossier({
             {grantedMoves.map((id) => (
               <MoveDetailCard key={id} move={moves[id]} caster={caster} />
             ))}
+            {kitFull && (
+              <p className="evolution-dossier-note-line">
+                {hero.name} already knows {MOVE_CAP} moves — you'll choose one to replace, or decline.
+              </p>
+            )}
           </section>
         )}
 
@@ -245,17 +310,31 @@ function PathDossier({
         {promise && (
           <section className="evolution-dossier-section">
             <div className="evo-path-label">Level-up pool</div>
-            <p className="evolution-dossier-pool">{promise} They are offered on level-up, not now.</p>
+            <p className="evolution-dossier-pool">{promise}</p>
+            {poolMoves.length > 0 && (
+              <div className="evolution-pool-chips">
+                {poolMoves.map((id) => (
+                  <span
+                    key={id}
+                    className="evolution-path-grant-chip evolution-path-move"
+                    style={{ '--move-color': getTypeColor(moves[id].type) } as CSSProperties}
+                  >
+                    <ElementGlyph type={moves[id].type} /> {moves[id].name}
+                  </span>
+                ))}
+              </div>
+            )}
           </section>
         )}
 
-        <button
-          className="resolve-button evolution-dossier-confirm"
-          data-sfx="ui.commit"
-          onClick={onChoose}
-        >
-          Confirm — Evolve into {path.name}
-        </button>
+        <div className="evolution-dossier-actions">
+          <button className="resolve-button evolution-dossier-confirm" data-sfx="ui.commit" onClick={onChoose}>
+            Evolve into {path.name}
+          </button>
+          <button className="evolution-dossier-back" data-sfx="ui.back" onClick={onClose}>
+            Back to paths
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -10,10 +10,11 @@ import { equipFromStash, mergeFromStash, moveEquipment, sellFromStash, unequipTo
 import { sellValueFor } from '../../run/shop';
 import { itemSlotsFor } from '../../run/progression';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
-import { ItemBox, ItemSummaryPopup, slotBoxes } from '../shared/EquipmentBox';
+import { ItemBox, ItemReadout, ItemSummaryPopup, slotBoxes } from '../shared/EquipmentBox';
 import { HeroSlotCard, HeroSlotGrid } from '../shared/HeroSlotCard';
 import { EquipSwapScreen } from './EquipSwapScreen';
 import { RunRelicsPanel } from './RunRelicsPanel';
+import { ResourceGlyph } from '../shared/RunGlyph';
 import { playSfx } from '../../audio/sfx';
 
 const DRAG_KEY = 'text/titanpact-equip-move';
@@ -208,26 +209,9 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
         <span className="stash-count">
           {run.stash.length}/{STASH_CAPACITY}
         </span>
-        <span className="stash-gold">{run.gold}g</span>
-        {/* Sell lives on the header line (2026-09-07): as its own row under the boxes it grew the
-            sheet by 32px the moment an item was picked up, which on a full-height panel pushed
-            the button itself below the fold. Here it costs nothing and sits on the gold it pays. */}
-        {selectedItem && selected?.kind === 'stash' && (
-          <button
-            className="stash-sell-button"
-            onClick={() => {
-              const at = selected.index;
-              setSelected(null);
-              try {
-                onRunChange(sellFromStash(run, at, equipment));
-              } catch (err) {
-                if (!(err instanceof RunProgressError)) throw err;
-              }
-            }}
-          >
-            Sell {sellValueFor(selectedItem)}g
-          </button>
-        )}
+        <span className="stash-gold">
+          <ResourceGlyph kind="gold" /> {run.gold}
+        </span>
       </div>
       <div className="stash-grid">
         {/* What it holds plus ONE empty landing box, not all ten. An always-full-capacity grid
@@ -276,6 +260,48 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
   );
 
 
+  /**
+   * What the screen becomes while an item is in hand (2026-09-07, per user direction): the item
+   * read out in full, and everything that is not about placing it recedes — the relic rails go,
+   * the bag's header dims, and a hero that cannot take it fades most of the way out. Pinned
+   * outside the scroll so the readout is still there once the player has scrolled to the hero
+   * they want. Sell lives here too, on the item it spends: on the bag's header line it grew that
+   * line the moment anything was picked up, which is the shift this arrangement removes.
+   */
+  const focusBar = selectedItem && (
+    <div className="equip-focus-bar">
+      <ItemReadout item={selectedItem} />
+      <div className="equip-focus-actions">
+        <span className="equip-focus-hint">Tap a hero, or a slot, to place it.</span>
+        {selected?.kind === 'stash' && (
+          <button
+            className="stash-sell-button"
+            onClick={() => {
+              const at = selected.index;
+              setSelected(null);
+              try {
+                onRunChange(sellFromStash(run, at, equipment));
+              } catch (err) {
+                if (!(err instanceof RunProgressError)) throw err;
+              }
+            }}
+          >
+            Sell <ResourceGlyph kind="gold" /> {sellValueFor(selectedItem)}
+          </button>
+        )}
+        <button
+          className="equip-focus-cancel"
+          onClick={() => {
+            playSfx('ui.back');
+            setSelected(null);
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div
       className="log-overlay roster-mgmt-overlay"
@@ -290,13 +316,14 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
         onClose();
       }}
     >
-      <div className="log-panel roster-panel" onClick={(e) => e.stopPropagation()}>
+      <div className={`log-panel roster-panel${selected ? ' is-focused' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="log-panel-header">
           <span>Roster</span>
           <button className="log-close-button" onClick={onClose}>
             ✕
           </button>
         </div>
+        {focusBar}
         <div className="screen-scroll">
           <RunRelicsPanel ownedRelicIds={run.relics} />
 
@@ -316,7 +343,12 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
                   hero={hero}
                   entry={entry}
                   equipmentLookup={equipment}
-                  className={takeable && entry.equipment.length < capacity ? 'can-take' : ''}
+                  // In focus mode a hero that cannot take the held item recedes entirely: the
+                  // screen is down to "where does this go", and a card that is not an answer to
+                  // that is noise.
+                  className={
+                    takeable ? (entry.equipment.length < capacity ? 'can-take' : 'can-swap') : selected ? 'is-inert' : ''
+                  }
                   onHeadTap={() => handleHeroTap(entry, hero)}
                   headLabel={selected ? `Give ${selectedItem?.name ?? 'item'} to ${hero.name}` : `View ${hero.name} details`}
                   slotProps={(index, item) => {
