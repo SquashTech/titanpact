@@ -14366,8 +14366,7 @@ textarea,
   height: 24px;
 }
 
-/* The act's first row has nothing behind it, so the band holds who is already here instead
-   (LocationDefinition.omen).
+/* Who is already here, on the act's first row (LocationDefinition.omen).
 
    Written ON the place rather than under it (2026-09-08, second pass, per user direction). It was
    a caption first — small, italic, tucked at the foot of the well — which read as UI chrome sitting
@@ -14376,12 +14375,21 @@ textarea,
    this screen that is neither a control nor a readout, and the only one that gets to be big.
 
    Sentence case, not caps: these are sentences, and a title card would be the arrival screen's job
-   twice. Lifted well clear of the placard, which is the same colour in the same corner of the same
-   band — at one height they read as one run-on caption. */
-/* High enough to clear the horizon silhouette. On the treeline the words landed half on black
-   land and half on lit sky and read as neither. */
-.map-origin.is-omen {
-  padding-bottom: 132px;
+   twice.
+
+   ABOVE the sigil (third pass, same day, per user direction), which is the direction the act runs
+   in — the place speaks, and the fight is what answers it. That also puts the line in open sky by
+   construction: at the foot of the well it had the horizon silhouette under half of it and lit
+   ground under the other half, and read as neither. Positioned, so the haze below has a stacking
+   context of its own to sit inside. */
+.map-omen-band {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 26px 0 6px;
 }
 
 .map-omen {

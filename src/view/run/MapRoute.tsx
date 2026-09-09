@@ -300,6 +300,17 @@ export function MapRoute({
         </svg>
       )}
 
+      {/* Whose land this is, on the one row that has nothing behind it (2026-09-08, per user
+          direction). ABOVE the sigil, which is the direction the act runs in: the line is the
+          place speaking first and the fight is what answers it. The arrival screen has already
+          said WHERE you are, so this says who is already here, once — the next node replaces it
+          with the route's own origin. */}
+      {showOmen && (
+        <div className="map-omen-band">
+          <p className="map-omen">{omen}</p>
+        </div>
+      )}
+
       <div className="map-choices">
         {choiceIds.map((nodeId, i) => (
           <ChoiceMedallion
@@ -325,25 +336,13 @@ export function MapRoute({
       </div>
 
       {/* Behind you. Unlit and colourless — it is where the paths come FROM, and the only thing on
-          the screen that is not a decision.
-
-          On the act's first row there is nothing behind you, and the band would otherwise be an
-          empty strip under a single lonely Monsters sigil. It carries the Location's faction line
-          instead (2026-09-08, per user direction): the act has already said WHERE you are on the
-          arrival screen, and this is the one moment worth saying who is already here. Once — the
-          band goes back to being the route's origin at the very next node. */}
-      {originNode ? (
+          the screen that is not a decision. */}
+      {originNode && (
         <div className="map-origin">
           <span className="map-origin-mark" ref={originRef} aria-hidden="true">
             <NodeGlyph type={originNode.type} className="map-origin-glyph" />
           </span>
         </div>
-      ) : (
-        showOmen && (
-          <div className="map-origin is-omen">
-            <p className="map-omen">{omen}</p>
-          </div>
-        )
       )}
 
       {/* Plain div, so uiSfx's delegated listener leaves it alone (it only catches real controls). */}

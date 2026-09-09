@@ -495,17 +495,20 @@ whose land this is — "Goblins roam these lands.", "The Fae are watching, and h
 decided about you." It is shown **once per act**, on the map screen at the act's first
 Monsters node, and nowhere else.
 
-That node is the only row with nothing behind it, so `MapRoute`'s bottom band — which
-every other row fills with the greyed node just resolved — would otherwise be an empty
-strip under a single lonely sigil. The omen takes the band instead, which is why it costs
-the screen no room at all.
+That node is the only row with nothing behind it — every other row fills `MapRoute`'s
+bottom band with the greyed node just resolved — so the act's opening screen is a single
+lonely sigil with room to spare, and the omen costs it nothing.
+
+It sits **above** the sigil, which is the direction an act runs in: the place speaks, and
+the fight is what answers it. That also puts the line in open sky by construction. It was
+in the bottom band first, where it had the horizon silhouette under half of it and lit
+ground under the other half, and read as neither.
 
 It is written **on** the place rather than under it: tracked out at the size of something the
 location is saying, in the location’s own light, over a haze of that light that breathes on its
-own, and lifted clear of both the horizon silhouette and the placard — it was a small italic
-caption at the foot of the well first, which read as UI chrome laid over a scene rather than as
-part of one. It is the only text on the map that is neither a control nor a readout, and the only
-one that gets to be big.
+own — it was a small italic caption at the foot of the well first, which read as UI chrome laid
+over a scene rather than as part of one. It is the only text on the map that is neither a control
+nor a readout, and the only one that gets to be big.
 
 It is deliberately about the **faction**, not the place: `flavor` already answers *where
 you are* on the arrival screen a moment earlier, so a second line about the terrain would
