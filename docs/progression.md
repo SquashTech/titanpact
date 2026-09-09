@@ -252,6 +252,23 @@ Every item now goes **straight to the bag**, and a badge on the map's Roster but
 waiting. Nothing is auto-equipped, and nothing is asked. The gate above closed to the one state
 it still answers a question in — a full bag.
 
+**Gems ride the same button (2026-09-09, per user direction).** It stays ONE door rather than
+splitting into Gear and Gems: the screen behind it is also where a hero is read and where one is
+terminated, so either half of that pair would be lying about what it opens. What the split was
+for — knowing which kind is waiting — the LABEL carries instead, renaming itself through
+`Roster` / `2 New Items` / `6 New Gems` / `2 Items · 6 Gems` (`mapFooter.ts footerWaiting`). It
+opens on whichever board is flagged, and **Gear when both are**: a door that opens somewhere
+different each visit is one no muscle memory can form against, and the tab strip inside carries
+both counts, so landing on the other costs one visible tap. It self-sequences — clear the gear,
+come back, and only Gems is flagged. The purse's Gem chip is the direct link to the Gems board.
+
+**Both marks are INBOXES, not stock figures.** `unseenItemIds` empties per item as each is
+handled; `RunState.gemsUnseen` counts stones granted since the Gems board was last opened and
+zeroes on opening it (`markGemsSeen`) — showing seven counters at once IS looking at them. It is
+deliberately **not** the unspent pool: a run holds leftover stones as a matter of course (a stat
+whose heroes are at cap, one being banked for a recruit), so a mark wired to the pool would be
+lit most of the run, which is the definition of a mark the eye learns to skip.
+
 The reason is that the gate had stopped being a decision and become a toll. Its cost was one
 mandatory screen per drop, and it was buying nothing:
 

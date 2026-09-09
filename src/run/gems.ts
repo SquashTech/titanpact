@@ -152,7 +152,11 @@ function withEntry(run: RunState, rosterId: string, next: (entry: RosterEntry) =
 export function grantGems(run: RunState, stat: StatKey, count: number = 1): RunState {
   requireGemStat(stat);
   requireCount(count);
-  return { ...run, gemsEarned: { ...run.gemsEarned, [stat]: (run.gemsEarned[stat] ?? 0) + count } };
+  return {
+    ...run,
+    gemsEarned: { ...run.gemsEarned, [stat]: (run.gemsEarned[stat] ?? 0) + count },
+    gemsUnseen: run.gemsUnseen + count,
+  };
 }
 
 export function socketGems(run: RunState, rosterId: string, stat: StatKey, count: number = 1): RunState {
@@ -175,6 +179,11 @@ export function unsocketGems(run: RunState, rosterId: string, stat: StatKey, cou
     if (count > held) throw new GemError(`${entry.rosterId} holds ${held} ${stat} Gems, not ${count}`);
     return { ...entry, gemAllocation: { ...entry.gemAllocation, [stat]: held - count } };
   });
+}
+
+/** Opening the Gems board is looking at all of them; there is nothing finer to mark. */
+export function markGemsSeen(run: RunState): RunState {
+  return run.gemsUnseen === 0 ? run : { ...run, gemsUnseen: 0 };
 }
 
 /** Every Gem off one hero in a single call — what makes swapping a hero out cheap enough to actually do. */

@@ -14,7 +14,7 @@ import { HeroSlotCard, HeroSlotGrid } from '../shared/HeroSlotCard';
 import { EquipSwapScreen } from './EquipSwapScreen';
 import { RunRelicsPanel } from './RunRelicsPanel';
 import { GemBoard } from './GemBoard';
-import { gemPoolTotal } from '../../run/gems';
+import { gemPoolTotal, markGemsSeen } from '../../run/gems';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { playSfx } from '../../audio/sfx';
@@ -27,6 +27,8 @@ const EQUIP_SEAT_MS = 420;
 interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
+  /** Which board to land on. The map sends whichever has something waiting; Gear when both do. */
+  initialBoard?: 'gear' | 'gems';
   onClose: () => void;
 }
 
@@ -54,14 +56,20 @@ function parseRefKey(raw: string): SlotRef | null {
  * and no longer does: this is the screen the player opens between every node, and the one
  * irreversible verb on it was one mis-tap from the gesture everything else uses.
  */
-export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
+export function RosterManagementScreen({ run, onRunChange, initialBoard = 'gear', onClose }: Props) {
   /**
    * Gear and Gems are two boards over one roster (2026-09-09, per user direction). Both are
    * "hand this out before the next node", and Gems used to mean opening a hero sheet, setting
    * stones, closing it, and repeating per hero — a depth of four for a job the Gear board does
    * at a depth of one.
    */
-  const [board, setBoard] = useState<'gear' | 'gems'>('gear');
+  const [board, setBoard] = useState<'gear' | 'gems'>(initialBoard);
+  // Showing the tray IS looking at it, so the mark clears on arrival rather than per stone.
+  useEffect(() => {
+    if (board === 'gems' && run.gemsUnseen > 0) onRunChange(markGemsSeen(run));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [board, run.gemsUnseen]);
+
   const [selected, setSelected] = useState<SlotRef | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);

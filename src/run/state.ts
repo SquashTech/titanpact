@@ -97,6 +97,16 @@ export interface RunState {
    * duplicated or lost and terminating a hero returns its Gems by construction.
    */
   gemsEarned: Partial<Record<StatKey, number>>;
+  /**
+   * Gems granted since the Gems board was last opened — what the map footer counts. Reset by
+   * LOOKING rather than per-stone as the bag is: an item is one object among others and can be
+   * missed, where the tray is seven counters taken in at a glance.
+   *
+   * NOT the unspent pool. A run holds leftover stones as a matter of course — a stat whose
+   * heroes are at cap, or one being banked for a recruit — so a mark wired to the pool would
+   * be lit most of the run, which is the definition of a mark the eye learns to skip.
+   */
+  gemsUnseen: number;
   /** Starts at 1; +1 at the end of every act; purchasable at a shop. */
   recruitContracts: number;
   /** Null for a RunState that never gets a map (enemyGen.ts throwaway rosters). */
@@ -138,6 +148,7 @@ export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1):
     unseenItemIds: [],
     relics: [],
     gemsEarned: {},
+    gemsUnseen: 0,
     recruitContracts,
     map: null,
     currentNodeId: null,

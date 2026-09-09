@@ -19,12 +19,14 @@ import {
   gemsHeldBy,
   grantGems,
   isGemStat,
+  markGemsSeen,
   pickGemOffers,
   pullGems,
   socketGems,
   unsocketGems,
 } from '../src/run/gems';
 import { entryStatModifiers } from '../src/run/entryStats';
+import { footerWaiting } from '../src/view/run/mapFooter';
 import { relics } from '../src/data/relics';
 import type { RunState } from '../src/run/state';
 import { addRosterEntry, createRosterEntry, createRunState, terminateRosterEntry } from '../src/run/state';
@@ -194,4 +196,44 @@ test('gems: an unsocket past what a hero holds is refused, and a count must be a
   assert.throws(() => socketGems(run, 'a', 'defense', 0), GemError);
   assert.throws(() => socketGems(run, 'a', 'defense', 1.5), GemError);
   assert.throws(() => socketGems(run, 'nobody', 'defense'), GemError);
+});
+
+// --- The map footer's label, and the mark behind it ---
+
+test('gems: a grant marks Gems unseen, and looking clears the whole mark at once', () => {
+  let run = createRunState();
+  assert.strictEqual(run.gemsUnseen, 0);
+  run = grantGems(run, 'attack', 3);
+  run = grantGems(run, 'speed', 2);
+  assert.strictEqual(run.gemsUnseen, 5, 'the mark counts stones, not grants');
+  assert.strictEqual(markGemsSeen(run).gemsUnseen, 0);
+  // Idempotent, and returns the same object so a render loop cannot start on it.
+  const seen = markGemsSeen(run);
+  assert.strictEqual(markGemsSeen(seen), seen);
+});
+
+// The mark is an INBOX, not the pool: setting stones must not re-light it, and holding leftovers
+// must not keep it lit, or the footer never goes back to saying "Roster".
+test('gems: the unseen mark is untouched by socketing, and independent of the leftover pool', () => {
+  let run = createRunState();
+  run = addRosterEntry(run, hero('a'));
+  run = grantGems(run, 'attack', 4);
+  run = markGemsSeen(run);
+  run = socketGems(run, 'a', 'attack', 2);
+  assert.strictEqual(run.gemsUnseen, 0, 'spending re-lit the mark');
+  assert.strictEqual(gemPoolTotal(run), 2, 'the leftover pool is a stock figure, and stays one');
+  assert.strictEqual(footerWaiting(0, run.gemsUnseen).label, 'Roster');
+});
+
+test('gems: the footer names whichever kinds are waiting, and both when both are', () => {
+  assert.strictEqual(footerWaiting(0, 0).label, 'Roster');
+  assert.strictEqual(footerWaiting(0, 0).total, 0);
+  assert.strictEqual(footerWaiting(1, 0).label, '1 New Item');
+  assert.strictEqual(footerWaiting(2, 0).label, '2 New Items');
+  assert.strictEqual(footerWaiting(0, 1).label, '1 New Gem');
+  assert.strictEqual(footerWaiting(0, 6).label, '6 New Gems');
+  assert.strictEqual(footerWaiting(2, 6).label, '2 Items · 6 Gems');
+  assert.strictEqual(footerWaiting(2, 6).total, 8);
+  assert.ok(footerWaiting(2, 6).aria.includes('bag'));
+  assert.ok(footerWaiting(2, 6).aria.includes('Gems'));
 });

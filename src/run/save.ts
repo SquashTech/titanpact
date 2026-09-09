@@ -413,6 +413,8 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     unseenItemIds: decodeUnseen(value.unseenItemIds, stash),
     relics: requireIds(value.relics, index.relicIds, 'run.relics'),
     gemsEarned,
+    // Absent on saves written before the mark existed; nothing is 'new' to a run being resumed.
+    gemsUnseen: isInt(value.gemsUnseen, 0) ? value.gemsUnseen : 0,
     recruitContracts: value.recruitContracts,
     map,
     currentNodeId,
