@@ -382,7 +382,7 @@ export function RosterManagementScreen({ run, onRunChange, initialBoard = 'gear'
           {board === 'gems' ? (
             <GemBoard run={run} onRunChange={onRunChange} onInspect={(entry, hero) => setInspecting({ hero, entry })} />
           ) : (
-            <>
+            <div className="gear-board">
           <div className="roster-top-block">
             <RunRelicsPanel run={run} />
             {focusBar}
@@ -425,11 +425,11 @@ export function RosterManagementScreen({ run, onRunChange, initialBoard = 'gear'
           </HeroSlotGrid>
 
           {bagPanel}
-            </>
+            </div>
           )}
         </div>
 
-        <TabStrip tabs={boards} active={board} onSelect={setBoard} />
+        <TabStrip tabs={boards} active={board} onSelect={setBoard} className="is-boards" />
 
         {/* Outside the scroll, so it is pinned to the bottom of a full-height panel and always
             in thumb reach. The header ✕ stays — it is where every other overlay puts it — but

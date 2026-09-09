@@ -45,8 +45,6 @@ interface HeroSlotCardProps {
   headLabel?: string;
   /** Per-slot wiring, index-addressed. Omit and the boxes are inert. */
   slotProps?: (index: number, item: EquipmentDefinition | null) => SlotBoxProps;
-  /** Replaces the item-slot row entirely — the Gems board shows what a hero is carrying instead. */
-  body?: ReactNode;
   /** Corner mark — the found-item gate's "Equip" / "Full" verdict. */
   badge?: ReactNode;
   /** Anything below the slot row. */
@@ -62,7 +60,6 @@ export function HeroSlotCard({
   onHeadLongPress,
   headLabel,
   slotProps,
-  body,
   badge,
   footer,
 }: HeroSlotCardProps) {
@@ -100,18 +97,16 @@ export function HeroSlotCard({
         <div className="roster-mgmt-head is-static">{head}</div>
       )}
 
-      {body ?? (
-        <div className="equip-slot-row">
-          {boxes.map((itemId, index) => {
-            const item = itemId ? (equipmentLookup[itemId] ?? null) : null;
-            return <ItemBox key={index} item={item} {...(slotProps ? slotProps(index, item) : {})} />;
-          })}
-          {/* Not a slot yet — the Forge is what turns one of these into a box. */}
-          {Array.from({ length: locked }, (_, i) => (
-            <span key={`locked-${i}`} className="item-box is-locked" aria-hidden="true" />
-          ))}
-        </div>
-      )}
+      <div className="equip-slot-row">
+        {boxes.map((itemId, index) => {
+          const item = itemId ? (equipmentLookup[itemId] ?? null) : null;
+          return <ItemBox key={index} item={item} {...(slotProps ? slotProps(index, item) : {})} />;
+        })}
+        {/* Not a slot yet — the Forge is what turns one of these into a box. */}
+        {Array.from({ length: locked }, (_, i) => (
+          <span key={`locked-${i}`} className="item-box is-locked" aria-hidden="true" />
+        ))}
+      </div>
 
       {footer}
     </div>

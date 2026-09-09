@@ -449,7 +449,11 @@ patches were both trying to buy exactly this.
 
 **Where it happens: the Gems board, Manage Roster's second tab** (2026-09-09, per user
 direction, after playtest). `GemBoard` is the Gear board's twin — a tray of the unspent pool
-along the bottom, the same six `HeroSlotCard`s above it, and one tap-then-tap to move a stone.
+pinned along the bottom, the roster above it, and one tap-then-tap to move a stone. Heroes are
+full-width ROWS here rather than the Gear board's 2x3 cards: seven stat cells only fit across a
+full width, and showing all seven — dim where a hero carries none — is what makes a spread
+readable down a column rather than hero by hero. Six rows and the tray clear a 780px page with
+no scroll.
 It replaced setting Gems on the hero sheet, which cost four steps a hero (roster → sheet → Gems
 page → back out) for a job the Gear board does in one. Two departures from the Gear board, both
 because Gems arrive four and five at a time: a held stone **stays held** after it lands, so a

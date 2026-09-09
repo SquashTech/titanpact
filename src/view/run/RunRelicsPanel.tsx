@@ -1,27 +1,15 @@
 import { useState, type CSSProperties } from 'react';
-import { gemList, gemStatGrants, gems } from '../../data/gems';
 import { guardianBannerRelics, relics } from '../../data/relics';
 import type { RunState } from '../../run/state';
 import { RelicArt } from '../shared/relicArt';
 import { relicColor } from '../shared/relicIcons';
-import { stackedGrantSummary, type StackableGrant } from '../shared/relicStacks';
+import { stackedGrantSummary } from '../shared/relicStacks';
 
-/**
- * One chip per Banner and per Gem, carrying its count. Banners are owned copies; a Gem's count
- * is what the RUN has collected, wherever those stones currently sit on the roster.
- */
+/** Duplicates fold into one chip carrying the count. */
 function countHoldings(run: RunState): Map<string, number> {
   const counts = new Map<string, number>();
   for (const id of run.relics) counts.set(id, (counts.get(id) ?? 0) + 1);
-  for (const gem of gemList) counts.set(gem.id, run.gemsEarned[gem.stat] ?? 0);
   return counts;
-}
-
-/** Whichever catalog the id belongs to, in the one shape the chips and the popup read. */
-function holdingFor(id: string): StackableGrant | null {
-  const gem = gems[id];
-  if (gem) return { name: gem.name, statGrants: gemStatGrants(gem) };
-  return relics[id] ?? null;
 }
 
 /**
@@ -77,10 +65,8 @@ function RelicRail({
 
 /** What a chip's tap opens: which relic it is, how many are held, and what that adds up to. */
 function RelicSummaryPopup({ relicId, count, onClose }: { relicId: string | null; count: number; onClose: () => void }) {
-  const relic = relicId ? holdingFor(relicId) : null;
+  const relic = relicId ? relics[relicId] : null;
   if (!relicId || !relic) return null;
-  // A Gem is poured into one hero; a Banner stands over the whole team. The line has to say which.
-  const scope = gems[relicId] ? 'Per hero' : 'Team-wide';
   return (
     <div
       className="log-overlay"
@@ -97,9 +83,7 @@ function RelicSummaryPopup({ relicId, count, onClose }: { relicId: string | null
           <span className="relic-summary-name">{relic.name}</span>
         </div>
         {/* A held stack states its summed total; an unheld one states what a single copy would pay. */}
-        <div className="relic-summary-grant">
-          {scope} {stackedGrantSummary(relic, Math.max(count, 1))}.
-        </div>
+        <div className="relic-summary-grant">Team-wide {stackedGrantSummary(relic, Math.max(count, 1))}.</div>
         <div className="relic-summary-count">{count > 0 ? `Held ×${count}` : 'Not held yet'}</div>
         <div className="move-popup-hint">Tap anywhere to close</div>
       </div>
@@ -119,7 +103,6 @@ export function RunRelicsPanel({ run }: { run: RunState }) {
   return (
     <section className="run-relics-panel">
       <RelicRail label="Banners" family={guardianBannerRelics} counts={counts} onInspect={setInspectingId} variant="banners" />
-      <RelicRail label="Gems" family={gemList} counts={counts} onInspect={setInspectingId} variant="gems" />
       <RelicSummaryPopup
         relicId={inspectingId}
         count={inspectingId ? counts.get(inspectingId) ?? 0 : 0}

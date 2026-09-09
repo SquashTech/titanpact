@@ -11042,16 +11042,6 @@ textarea,
   flex-basis: calc(20% - 4.8px);
 }
 
-/* Shorter, not narrower: four across leaves 4 + 3 centred, and the height is what the
-   roster below actually needs back. */
-.relic-rail.is-gems .relic-pill {
-  min-height: 44px;
-  padding: 3px 4px;
-}
-
-.relic-rail.is-gems .relic-pill-art {
-  font-size: 22px;
-}
 
 /* Each tile is CUT IN THE RELIC'S OWN COLOUR rather than in the panel gray it
    used to wear (2026-09-08, per user direction). Twelve identical gray boxes
@@ -22648,58 +22638,235 @@ textarea,
   text-align: left;
 }
 
-/* --- Manage Roster's Gems board (GemBoard) -------------------------------------------------
-   The Gear board's twin: a tray at the bottom of the reach, the same six cards above it. Sized
-   against those, not invented fresh — the two boards swap under one tab strip and anything that
-   moved between them would read as the screen jumping. */
+/* --- Manage Roster's two boards -------------------------------------------------------------
+   Gear and Gems swap under one strip, so anything that moved between them would read as the
+   screen jumping. Both are a list that grows downward with the tray of what you are spending
+   pinned to the bottom of the reach — `margin-top: auto` inside a full-height column, so a short
+   roster leaves its slack in the MIDDLE rather than under the thing being tapped. */
 
-/* Stands in the relic panel's place, and holds one height whether a stone is in hand or not:
-   nothing above the cards may move when one is picked up. */
-.gem-focus-bar {
+.gem-board,
+.gear-board {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.gem-board .gem-tray,
+.gear-board .stash-panel {
+  margin-top: auto;
+}
+
+/* The board switcher, sized apart from the sheets' tab strips (2026-09-09, per user direction):
+   it is one of two things the screen is FOR, not a page selector inside one. Held to 46px so six
+   hero rows and a tray still clear it on a 780px page. */
+.tab-strip.is-boards {
+  gap: 8px;
+  padding: 4px;
+  margin-top: 2px;
+}
+
+.tab-strip.is-boards .tab-button {
+  flex-direction: row;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  border-radius: var(--radius-md);
+  letter-spacing: 0.06em;
+}
+
+.tab-strip.is-boards .tab-button-label {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.tab-strip.is-boards .section-glyph {
+  width: 19px;
+  height: 19px;
+}
+
+.tab-strip.is-boards .tab-button-count {
+  font-size: 10px;
+  font-weight: 800;
+}
+
+/* --- The Gems board's hero rows ---
+   Full width, because seven stat cells do not fit beside a portrait in a half-width card and the
+   point of showing all seven is reading a spread DOWN the column. */
+
+.gem-hero-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.gem-hero-row {
   display: flex;
   align-items: center;
-  gap: 9px;
-  min-height: 46px;
-  padding: 6px 10px;
-  margin-bottom: 8px;
-  border-radius: var(--radius-md);
-  background: var(--panel-alt);
+  gap: 7px;
+  padding: 5px 7px 5px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
   border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-left-style: solid;
 }
 
-.gem-focus-art {
-  font-size: 24px;
+.gem-hero-row.can-take {
+  border-color: var(--accent);
 }
 
-.gem-focus-text {
+.gem-hero-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 106px;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  text-align: left;
+}
+
+.gem-hero-portrait {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+}
+
+.gem-hero-ident {
   display: flex;
   flex-direction: column;
   gap: 1px;
   min-width: 0;
 }
 
-.gem-focus-name {
+.gem-hero-name {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Under the name, where a subtitle goes — not floated beside the stones, which read as a group
+   and stop reading as one the moment a bare number is set inside them. */
+.gem-hero-total {
+  font-size: 9px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+.gem-hero-total.is-full {
+  color: var(--accent);
+}
+
+.gem-hero-cap {
+  opacity: 0.65;
+}
+
+.gem-hero-cells {
+  display: flex;
+  gap: 3px;
+  flex: 1 1 auto;
+}
+
+/* All seven, always, dim where a hero carries none: a column the eye can run down only exists if
+   every row has the same seven positions in the same order. */
+.gem-cell {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 2px 0 1px;
+  border-radius: var(--radius-xs);
+  background: var(--panel-alt);
+  border: 1px solid transparent;
+  opacity: 0.32;
+}
+
+.gem-cell.is-set {
+  opacity: 1;
+  background: color-mix(in srgb, var(--relic-color) 15%, var(--panel-alt));
+  border-color: color-mix(in srgb, var(--relic-color) 42%, transparent);
+}
+
+.gem-cell-art {
+  font-size: 15px;
+}
+
+.gem-cell-count {
+  min-height: 10px;
+  font-size: 9px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 10px;
+  color: var(--text);
+}
+
+/* --- The tray ---
+   One bar that changes what it says: the pool at rest, the stone in hand while one is lifted.
+   Nothing above it moves when a stone is picked up, and there is no standing instruction line —
+   the tray IS the instruction once a stone lights up in it. */
+
+.gem-tray {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 7px 8px 8px;
+  border-radius: var(--radius-md);
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+}
+
+.gem-tray-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.gem-tray-label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.gem-tray-total {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.gem-tray-held {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.gem-tray-held-name {
   font-size: 12px;
   font-weight: 800;
   color: var(--text);
 }
 
-.gem-focus-grant {
+.gem-tray-held-grant {
   font-size: 10px;
   font-weight: 600;
   color: var(--text-dim);
 }
 
-.gem-focus-idle {
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--text-dim);
-}
-
-.gem-focus-cancel {
+.gem-tray-done {
   margin-left: auto;
-  padding: 5px 12px;
+  padding: 5px 13px;
   font-size: 11px;
   font-weight: 700;
   color: var(--text);
@@ -22708,84 +22875,32 @@ textarea,
   border-radius: var(--radius-sm);
 }
 
-/* Under each hero, where the item boxes sit on the other board. */
-.gem-held-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
-  min-height: 30px;
-  padding: 3px 2px 0;
-}
-
-.gem-held-total {
-  font-size: 11px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-dim);
-}
-
-.gem-held-total.is-full {
-  color: var(--accent);
-}
-
-.gem-held-cap {
-  font-size: 9px;
-  font-weight: 700;
-  opacity: 0.7;
-}
-
-.gem-held-chip {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px 5px 2px 3px;
-  border-radius: var(--radius-xs);
-  background: color-mix(in srgb, var(--relic-color) 16%, var(--panel-alt));
-  border: 1px solid color-mix(in srgb, var(--relic-color) 45%, var(--border));
-}
-
-.gem-held-art {
-  font-size: 15px;
-}
-
-.gem-held-count {
-  font-size: 10px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-}
-
-/* The tray sits in the bag's frame — same panel, same header — so the two boards read as one
-   screen with its bottom shelf restocked. */
 .gem-tray-grid {
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
+  min-height: 46px;
+  align-items: center;
 }
 
+/* Sized so all SEVEN fit one line at 394px: a stone wrapping to a second row costs the board a
+   whole tray-height for one chip, and the tray is the part that has to stay short. */
 .gem-tray-stone {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1px;
-  min-width: 44px;
-  padding: 5px 6px;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 4px 2px;
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--relic-color) 12%, var(--panel-alt));
-  border: 1px solid color-mix(in srgb, var(--relic-color) 38%, var(--border));
+  background: color-mix(in srgb, var(--relic-color) 13%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--relic-color) 40%, var(--border));
 }
 
-.gem-tray-stone.is-empty {
-  opacity: 0.3;
-  background: var(--panel-alt);
-  border-color: var(--border);
-}
-
-/* In hand: the one stone the rest of the screen is now about. */
+/* In hand: the one stone the rest of the board is now about. */
 .gem-tray-stone.is-held {
-  background: color-mix(in srgb, var(--relic-color) 32%, var(--panel-alt));
+  background: color-mix(in srgb, var(--relic-color) 34%, var(--panel));
   border-color: var(--relic-color);
   box-shadow: 0 0 0 1px var(--relic-color), 0 0 14px -2px var(--relic-color);
 }
@@ -22801,17 +22916,14 @@ textarea,
   color: var(--text);
 }
 
-/* Holding a stone turns the board into one question, the same way picking up an item turns the
-   Gear board into one: a hero who cannot take THIS stone — at the stat cap, or at their own —
-   recedes, and the tray keeps the stone that is in hand lit. */
-.gem-board.is-focused .roster-mgmt-card.is-inert {
+.gem-tray-none {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+/* Holding a stone turns the board into one question, as picking up an item does on the Gear
+   board: a hero who cannot take THIS stone — at its stat's cap, or at their own — recedes. */
+.gem-board.is-focused .gem-hero-row.is-inert {
   opacity: 0.26;
-}
-
-.gem-board.is-focused .roster-mgmt-head {
-  opacity: 0.62;
-}
-
-.gem-board.is-focused .roster-mgmt-card.can-take .roster-mgmt-head {
-  opacity: 1;
 }

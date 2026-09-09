@@ -88,7 +88,7 @@ import {
 } from '../run/tutorial';
 import { TUTORIAL_ENCOUNTERS, TUTORIAL_LOCKS, TUTORIAL_PAYOUTS, TUTORIAL_SCRIPT } from '../data/tutorial';
 import { TutorialOverlay } from '../view/run/TutorialOverlay';
-import { GEM_NODE_STACK, gemStackFor, pickGemOffers } from '../run/gems';
+import { GEM_CAP_PER_HERO, GEM_NODE_STACK, GEM_STATS, gemStackFor, grantGems, pickGemOffers } from '../run/gems';
 import { generateStarterOptions } from '../run/draft';
 import {
   generateEncounter,
@@ -262,6 +262,17 @@ function createLevel4TestRun(): RunState {
     map: generateMap(randomSeed()),
     locationIds: generateItinerary(randomSeed()),
   };
+}
+
+/**
+ * TEMPORARY DEV/TEST — a full roster and a deep pool, for working on the Gems board. 20 of
+ * every stone is 140 against a roster capacity of 120, so the caps bind while the tray still
+ * has something left in it — which is the state the board is hardest to lay out for.
+ */
+function createGemTestRun(): RunState {
+  let run = addHeroes(createRunState(1, 999), Object.keys(heroes).slice(0, ROSTER_CAP), 4);
+  for (const stat of GEM_STATS) run = grantGems(run, stat, GEM_CAP_PER_HERO);
+  return { ...run, map: generateMap(randomSeed()), locationIds: generateItinerary(randomSeed()) };
 }
 
 /** TEST FIXTURE — arms the opener's Goblin Skulker with a Dagger so the equip-inspect UI has an item from turn one. */
@@ -822,6 +833,12 @@ export function App() {
     setScreen({ kind: 'levelUp', next: { kind: 'map' } });
   }
 
+  /** TEMPORARY DEV/TEST — see createGemTestRun. Straight to the map; the Gems board is one tap on. */
+  function handleStartGemTestRun() {
+    setPlayerRun(createGemTestRun());
+    setScreen({ kind: 'map' });
+  }
+
   /** Random 4v4 straight into FightScreen. Every hero rolls MOVE_CAP moves from its FULL movepool — a throwaway fight is the place to spend on coverage. */
   function handleQuickBattle() {
     const movepools = Object.fromEntries(Object.values(heroes).map((hero) => [hero.id, fullMovepool(progressionTable, hero)]));
@@ -904,6 +921,7 @@ export function App() {
           onOpenSandbox={handleOpenSandbox}
           onVisitLocation={handleVisitLocation}
           onStartLevel4TestRun={handleStartLevel4TestRun}
+          onStartGemTestRun={handleStartGemTestRun}
           onStartStatusTestFight={handleStatusTestFight}
         />
       )}

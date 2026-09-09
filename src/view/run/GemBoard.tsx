@@ -2,7 +2,6 @@ import { useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
 import type { HeroDefinition, StatKey } from '../../engine/content';
 import { heroes } from '../../data/heroes';
-import { equipment } from '../../data/equipment';
 import { gemForStat, gemList } from '../../data/gems';
 import {
   gemCapacityFor,
@@ -15,7 +14,8 @@ import {
   unsocketGems,
 } from '../../run/gems';
 import type { RosterEntry, RunState } from '../../run/state';
-import { HeroSlotCard, HeroSlotGrid } from '../shared/HeroSlotCard';
+import { getTypeColor } from '../combat/typeColors';
+import { HeroPortrait } from '../shared/HeroPortrait';
 import { useLongPress } from '../shared/MoveTile';
 import { RelicArt } from '../shared/relicArt';
 import { relicColor } from '../shared/relicIcons';
@@ -28,40 +28,25 @@ interface Props {
   onInspect: (entry: RosterEntry, hero: HeroDefinition) => void;
 }
 
-/** One stone a hero is carrying. Tap returns one, hold returns the lot. */
-function HeroGemChip({ stat, count, onTake, onTakeAll }: { stat: StatKey; count: number; onTake: () => void; onTakeAll: () => void }) {
-  const gem = gemForStat[stat]!;
-  const press = useLongPress(onTakeAll, onTake);
-  return (
-    <button
-      type="button"
-      className="gem-held-chip"
-      data-sfx="none"
-      style={{ '--relic-color': relicColor(gem.id) } as CSSProperties}
-      aria-label={`${gem.name} ×${count} — tap to take one back, hold to take all`}
-      {...press}
-    >
-      <RelicArt relicId={gem.id} className="gem-held-art" />
-      <span className="gem-held-count">{count}</span>
-    </button>
-  );
-}
-
 /**
- * The Gems half of Manage Roster (2026-09-09, per user direction). Built as the Gear board's
- * twin — a tray of what the run is carrying along the bottom, the same six cards above it, and
- * one tap-then-tap to move a stone — because the alternative it replaced made the player walk
- * into a hero sheet and back out for every hero they wanted to touch.
+ * The Gems half of Manage Roster. The Gear board's twin — the tray of what the run is carrying
+ * pinned along the bottom, the roster above it, one tap-then-tap to move a stone.
  *
  * A held stone STAYS held after it lands, which the Gear board's items do not: Gems arrive four
- * and five at a time and the whole point is pouring several. Holding a hero is the bulk gesture
- * in both directions — pour everything that fits, or, with an empty hand, take everything back.
+ * and five at a time and the whole point is pouring several. Holding a hero is the bulk gesture in
+ * both directions — pour everything that fits, or, with an empty hand, take everything back.
+ *
+ * Heroes are ROWS here rather than the 2x3 cards the Gear board uses (2026-09-09, per user
+ * direction). Seven stat cells only fit across a full width, and showing all seven — dim where a
+ * hero carries none — is what makes a spread readable down a column rather than hero by hero.
  */
 export function GemBoard({ run, onRunChange, onInspect }: Props) {
   const [held, setHeld] = useState<StatKey | null>(null);
   const pool = gemPool(run);
   const heldGem = held ? gemForStat[held] ?? null : null;
   const heldSpare = held ? pool[held] ?? 0 : 0;
+  /** Only what the run actually holds: the tray FILLS as stones arrive rather than sitting as seven zeroes. */
+  const carried = gemList.filter((gem) => (pool[gem.stat] ?? 0) > 0);
 
   // Picking a stone up is idempotent from the tray's side: tapping the one in hand puts it down.
   function take(stat: StatKey) {
@@ -100,101 +85,160 @@ export function GemBoard({ run, onRunChange, onInspect }: Props) {
 
   return (
     <div className={`gem-board${held ? ' is-focused' : ''}`}>
-      <div className="gem-focus-bar">
-        {heldGem ? (
-          <>
-            <RelicArt relicId={heldGem.id} className="gem-focus-art" />
-            <span className="gem-focus-text">
-              <span className="gem-focus-name">{heldGem.name}</span>
-              <span className="gem-focus-grant">
-                +{heldGem.grant} {STAT_FULL_LABELS[heldGem.stat]} each · {heldSpare} left
-              </span>
-            </span>
-            <button
-              className="gem-focus-cancel"
-              onClick={() => {
-                playSfx('ui.back');
-                setHeld(null);
-              }}
-            >
-              Done
-            </button>
-          </>
-        ) : (
-          <span className="gem-focus-idle">Tap a stone below, then tap who gets it. Hold to pour.</span>
-        )}
+      <div className="gem-hero-list">
+        {run.roster.map((entry) => (
+          <GemHeroRow
+            key={entry.rosterId}
+            entry={entry}
+            hero={heroes[entry.heroId]}
+            held={held}
+            heldName={heldGem?.name ?? null}
+            onPour={(all) => pour(entry, all)}
+            onStrip={() => strip(entry)}
+            onTakeBack={(stat, all) => takeBack(entry, stat, all)}
+            onInspect={() => onInspect(entry, heroes[entry.heroId])}
+          />
+        ))}
       </div>
 
-      <HeroSlotGrid>
-        {run.roster.map((entry) => {
-          const hero = heroes[entry.heroId];
-          const on = gemsHeldBy(entry);
-          const capacity = gemCapacityFor(entry);
-          const headroom = held ? gemHeadroom(entry, held) : 0;
-          const worn = gemList.filter((gem) => gemsOn(entry, gem.stat) > 0);
-          return (
-            <HeroSlotCard
-              key={entry.rosterId}
-              hero={hero}
-              entry={entry}
-              equipmentLookup={equipment}
-              className={held ? (headroom > 0 ? 'can-take' : 'is-inert') : ''}
-              onHeadTap={() => (held ? pour(entry, false) : onInspect(entry, hero))}
-              onHeadLongPress={held ? () => pour(entry, true) : () => strip(entry)}
-              headLabel={
-                held
-                  ? `Set a ${heldGem?.name ?? 'Gem'} on ${hero.name}, or hold to pour`
-                  : `View ${hero.name} details, or hold to take their Gems back`
-              }
-              body={
-                <div className="gem-held-row">
-                  <span className={`gem-held-total${on >= capacity ? ' is-full' : ''}`}>
-                    {on}
-                    <span className="gem-held-cap">/{capacity}</span>
-                  </span>
-                  {worn.map((gem) => (
-                    <HeroGemChip
-                      key={gem.id}
-                      stat={gem.stat}
-                      count={gemsOn(entry, gem.stat)}
-                      onTake={() => takeBack(entry, gem.stat, false)}
-                      onTakeAll={() => takeBack(entry, gem.stat, true)}
-                    />
-                  ))}
-                </div>
-              }
-            />
-          );
-        })}
-      </HeroSlotGrid>
-
-      {/* The tray, in the bag's place and drawn from the same way: the bottom of the reach is
-          where the thing you are spending lives. */}
-      <div className="stash-panel gem-tray">
-        <div className="stash-header">
-          <span className="stash-label">Gems</span>
-          <span className="stash-count">{gemList.reduce((total, gem) => total + (pool[gem.stat] ?? 0), 0)}</span>
+      {/* The tray reads out the stone in hand in its own header rather than under a banner of its
+          own: one bar that changes what it says, so nothing above it moves when a stone is lifted. */}
+      <div className="gem-tray">
+        <div className="gem-tray-head">
+          {heldGem ? (
+            <>
+              <span className="gem-tray-held">
+                <span className="gem-tray-held-name">{heldGem.name}</span>
+                <span className="gem-tray-held-grant">
+                  +{heldGem.grant} {STAT_FULL_LABELS[heldGem.stat]} each · {heldSpare} left
+                </span>
+              </span>
+              <button
+                className="gem-tray-done"
+                onClick={() => {
+                  playSfx('ui.back');
+                  setHeld(null);
+                }}
+              >
+                Done
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="gem-tray-label">Gems</span>
+              <span className="gem-tray-total">{carried.reduce((n, gem) => n + (pool[gem.stat] ?? 0), 0)}</span>
+            </>
+          )}
         </div>
         <div className="gem-tray-grid">
-          {gemList.map((gem) => {
-            const spare = pool[gem.stat] ?? 0;
-            return (
-              <button
-                key={gem.id}
-                type="button"
-                className={`gem-tray-stone${held === gem.stat ? ' is-held' : ''}${spare === 0 ? ' is-empty' : ''}`}
-                style={{ '--relic-color': relicColor(gem.id) } as CSSProperties}
-                disabled={spare === 0}
-                onClick={() => take(gem.stat)}
-                aria-label={`${gem.name}, ${spare} unset — +${gem.grant} ${STAT_FULL_LABELS[gem.stat]} each`}
-              >
-                <RelicArt relicId={gem.id} className="gem-tray-art" />
-                <span className="gem-tray-count">{spare}</span>
-              </button>
-            );
-          })}
+          {carried.map((gem) => (
+            <button
+              key={gem.id}
+              type="button"
+              className={`gem-tray-stone${held === gem.stat ? ' is-held' : ''}`}
+              style={{ '--relic-color': relicColor(gem.id) } as CSSProperties}
+              onClick={() => take(gem.stat)}
+              aria-label={`${gem.name}, ${pool[gem.stat]} unset — +${gem.grant} ${STAT_FULL_LABELS[gem.stat]} each`}
+            >
+              <RelicArt relicId={gem.id} className="gem-tray-art" />
+              <span className="gem-tray-count">{pool[gem.stat]}</span>
+            </button>
+          ))}
+          {carried.length === 0 && <span className="gem-tray-none">Every Gem is set.</span>}
         </div>
       </div>
     </div>
+  );
+}
+
+interface RowProps {
+  entry: RosterEntry;
+  hero: HeroDefinition;
+  held: StatKey | null;
+  heldName: string | null;
+  onPour: (all: boolean) => void;
+  onStrip: () => void;
+  onTakeBack: (stat: StatKey, all: boolean) => void;
+  onInspect: () => void;
+}
+
+/** One hero, full width: who they are, then a cell per Gem type — all seven, dim where empty. */
+function GemHeroRow({ entry, hero, held, heldName, onPour, onStrip, onTakeBack, onInspect }: RowProps) {
+  const on = gemsHeldBy(entry);
+  const capacity = gemCapacityFor(entry);
+  const headroom = held ? gemHeadroom(entry, held) : 0;
+  const state = held ? (headroom > 0 ? ' can-take' : ' is-inert') : '';
+  const headPress = useLongPress(held ? () => onPour(true) : onStrip, held ? () => onPour(false) : onInspect);
+
+  return (
+    <div className={`gem-hero-row${state}`} style={{ borderLeftColor: getTypeColor(hero.types[0]) } as CSSProperties}>
+      <button
+        type="button"
+        className="gem-hero-head"
+        data-sfx="none"
+        aria-label={
+          held
+            ? `Set a ${heldName ?? 'Gem'} on ${hero.name}, or hold to pour`
+            : `View ${hero.name}, or hold to take their Gems back`
+        }
+        {...headPress}
+      >
+        <HeroPortrait heroId={hero.id} className="gem-hero-portrait" />
+        <span className="gem-hero-ident">
+          <span className="gem-hero-name">{hero.name}</span>
+          <span className={`gem-hero-total${on >= capacity ? ' is-full' : ''}`}>
+            {on}
+            <span className="gem-hero-cap">/{capacity}</span>
+          </span>
+        </span>
+      </button>
+
+      <div className="gem-hero-cells">
+        {gemList.map((gem) => (
+          <GemCell
+            key={gem.id}
+            gemId={gem.id}
+            name={gem.name}
+            heroName={hero.name}
+            count={gemsOn(entry, gem.stat)}
+            // With a stone in hand every cell is the same target as the hero: the row is ONE
+            // destination, and aiming at a particular column would be a rule with no purpose.
+            onTap={() => (held ? onPour(false) : onTakeBack(gem.stat, false))}
+            onHold={() => (held ? onPour(true) : onTakeBack(gem.stat, true))}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GemCell({
+  gemId,
+  name,
+  heroName,
+  count,
+  onTap,
+  onHold,
+}: {
+  gemId: string;
+  name: string;
+  heroName: string;
+  count: number;
+  onTap: () => void;
+  onHold: () => void;
+}) {
+  const press = useLongPress(onHold, onTap);
+  return (
+    <button
+      type="button"
+      className={`gem-cell${count > 0 ? ' is-set' : ''}`}
+      data-sfx="none"
+      style={{ '--relic-color': relicColor(gemId) } as CSSProperties}
+      aria-label={count > 0 ? `${heroName}: ${name} ×${count}` : `${heroName}: no ${name}`}
+      {...press}
+    >
+      <RelicArt relicId={gemId} className="gem-cell-art" />
+      <span className="gem-cell-count">{count > 0 ? count : ''}</span>
+    </button>
   );
 }

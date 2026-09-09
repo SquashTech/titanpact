@@ -21,13 +21,16 @@ export function TabStrip<Id extends string>({
   tabs,
   active,
   onSelect,
+  className,
 }: {
   tabs: readonly TabSpec<Id>[];
   active: Id;
   onSelect: (id: Id) => void;
+  /** A variant class on the strip — Manage Roster’s board switcher is sized apart from the sheets’ tabs. */
+  className?: string;
 }) {
   return (
-    <div className="tab-strip" role="tablist" onClick={(e) => e.stopPropagation()}>
+    <div className={`tab-strip${className ? ` ${className}` : ''}`} role="tablist" onClick={(e) => e.stopPropagation()}>
       {tabs.map((tab) => {
         const isActive = tab.id === active;
         return (
