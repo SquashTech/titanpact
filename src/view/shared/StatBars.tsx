@@ -47,7 +47,8 @@ export function hpTier(fraction: number): 'hp-high' | 'hp-mid' | 'hp-low' {
   return 'hp-low';
 }
 
-// Stat Total counts Mana Pool (the 450 starter budget includes it) and excludes MP Regen (flat 10 on every hero).
+// Stat Total counts Mana Pool (the 550 roster total includes it) and excludes MP Regen (flat 10 on every hero).
+// This sum IS the roster rule — heroStatTotal in statBudget.ts pins every authored line to 550.
 const TOTAL_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool'];
 
 /** Sums whatever stat values it is handed — effective ones wherever the caller has them, not the authored base. */

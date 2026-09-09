@@ -1,7 +1,8 @@
 // What is a point of HP worth, and are the tanks actually winning?
 //
-// The 450 hero budget and the equipment tiers have always disagreed by 2x on HP's price, and the
-// HP doubling moved both without answering it (docs/progression.md "Pricing HP"). These two
+// The hero roster (HP at 1:1 since 2026-09-09), enemy lines (0.5) and the equipment tiers (0.25)
+// disagree by 4x on HP's price, and none of the three is the measured figure — break-even is
+// nearer 0.33 (docs/progression.md "Pricing HP"). These two
 // experiments measure it instead of arguing it. Both are MIRROR-CONTROLLED: everything a per-hero
 // win-rate table confounds — draft order, level, who got the gear, which types the run offered —
 // is identical on both sides and cancels.
@@ -240,13 +241,13 @@ function rosterExperiment(repeats: number, partnerId?: string, level: number = L
     console.log(`  ${row.name.padEnd(13)}${String(row.hp).padStart(5)}${pct(row.rate * row.n, row.n).padStart(8)}${se(row.rate * row.n, row.n).toFixed(1).padStart(7)}`);
   }
 
-  // Which authored stats actually pay. Every hero spends the same 450, so a stat that correlates
+  // Which authored stats actually pay. Every hero sums to the same 550, so a stat that correlates
   // POSITIVELY is one the roster under-buys and a negative one is a stat heroes are wasting points
   // on — the whole "which lines are badly spent" question, one column at a time.
   const STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool'];
   const my = rows.reduce((s, r) => s + r.rate, 0) / rows.length;
   console.log(`\n  Correlation of each authored stat with measured win rate, across all ${rows.length} heroes.`);
-  console.log(`  Every line spends the same 450, so this reads as: which stats is it worth spending on?\n`);
+  console.log(`  Every line sums to the same 550, so this reads as: which stats is it worth spending on?\n`);
   console.log(`  ${'stat'.padEnd(14)}${'corr'.padStart(8)}${'per +10'.padStart(10)}`);
   for (const stat of STATS) {
     const xs = rows.map((r) => heroes[r.id].baseStats[stat]);

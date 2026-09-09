@@ -188,7 +188,9 @@ export const RARITY_BUDGET: Record<EquipmentRarity, number> = {
  *
  * HP went 0.5 -> 0.25 when the HP x2 was baked into the authored lines: the same item, the same
  * budget, twice the printed figure. Whether a quarter is the RIGHT price is a separate and older
- * question — the 450 hero budget has always priced HP at half this rate.
+ * question — the hero roster charges 1.0 since 2026-09-09 and enemy lines 0.5, so the three
+ * disagree by 4x and the measured break-even (~0.33) is nearest this one. Deliberate, not drift:
+ * docs/progression.md "Pricing HP".
  */
 export const STAT_POINT_VALUE: Record<StatKey, number> = {
   hp: 0.25,

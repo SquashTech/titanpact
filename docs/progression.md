@@ -537,25 +537,48 @@ anyway; by Act 5 there are no Commons left to hand out.
 
 ---
 
-## Pricing HP (2026-09-08 — the bake-in is done, the price is OPEN)
+## Pricing HP (2026-09-09 — the roster charges 1:1; enemies and equipment do not)
 
-HP used to be authored at half its real size and doubled at read time by an `HP_SCALE = 2`
-inside `getMaxHp`. That knob is gone: every authored HP figure was doubled in place, so a
-hero's `hp: 240` is a 240-point bar and a Banner that says +60 moves it by 60. Verified
-exactly neutral — 263 authored figures doubled, every combatant's max HP unchanged.
+### The roster re-base (2026-09-09)
 
-What the bake-in did NOT decide is what a point of HP is worth, and the codebase holds two
-answers that disagree by 2×:
+**Every hero's seven stats now sum to 550 at face value, HP included at 1:1.** This replaces
+the 450 budget, which charged 0.5 a point of HP. Per user direction; `heroStatTotal` and
+`HERO_STAT_TOTAL` in `src/run/statBudget.ts`, pinned by `test/roster.test.ts`.
+
+The case for it is legibility, not balance. 550 is the number the **Stat Total** row already
+prints on the hero sheet (`computeStatTotal`, `StatBars.tsx`), so "is this line on budget" stops
+being a question only the repo can answer. Under the old rule two on-budget heroes could read
+530 and 590 to the player, and the difference was invisible discount rather than design.
+
+**It over-charges HP roughly 3×** against the break-even measured below, and that is a known,
+accepted cost — a call to be judged in playtest, per the standing rule that sim numbers are
+directional and balance is decided by playing. Two consequences to watch:
+
+- The re-base took its points **out of HP** and out of nothing else wherever the delta allowed
+  (32 of 36 lines moved HP alone; five needed a ±5 on Wisdom, Defense or Mana to land on a
+  multiple of ten). **Speed was held fixed on every hero**, so priority order is untouched.
+- The roster's HP range **compressed from 160–300 to 180–250**. The extremes went first, which
+  is what tripling HP's price is supposed to do — but Sentinel and Bellows are 50 HP lighter and
+  Cube 40, and the walls are the lines most likely to want a second look.
+
+Enemies were **not** re-based. Faction lines (flat 400), champions (550) and the Endbringer (900)
+carry no Mana and are authored against a measured baseline that assumes the discount, so they
+still price HP at `HP_BUDGET_VALUE` = 0.5.
+
+### What a point of HP is worth (measured 2026-09-08)
+
+The codebase now holds three answers, which disagree by 4×:
 
 | | Budget points per 1 real HP | Where |
 |---|---|---|
-| Hero/enemy stat lines | 0.5 | `HP_BUDGET_VALUE`, `src/run/statBudget.ts` |
+| Hero stat lines | **1.0** | `heroStatTotal`, `src/run/statBudget.ts` |
+| Enemy stat lines | 0.5 | `HP_BUDGET_VALUE`, `src/run/statBudget.ts` |
 | Equipment rarity tiers | 0.25 | `STAT_POINT_VALUE.hp`, `src/run/equipment.ts` |
 
-Both predate the doubling and neither was ever measured. They are now at least *explicit* —
-every budget figure in the game (the roster's 450, a faction's flat 400, a champion's 550,
-the Endbringer's 900) is measured through `statBudget.ts`, so changing the rate changes every
-budget test at once rather than silently re-ranking the roster.
+The lower two predate the doubling and neither was ever measured. Every budget figure in the
+game (the roster's 550, a faction's flat 400, a champion's 550, the Endbringer's 900) still goes
+through `statBudget.ts`, so changing a rate changes every budget test at once rather than
+silently re-ranking the roster.
 
 **What it is worth, measured** (`scripts/statprice.ts`, 2026-09-08). Mirror matches: identical
 squads at level 5, one stat grant differing, sides swapped, 2400 fights a cell. Both sides cost
@@ -568,13 +591,15 @@ the same 40 budget points, so the win rate IS the relative price.
 | 3 | 49.6% | 49.5% |
 | 4 (what equipment charges) | 59.3% | 59.4% |
 
-**Break-even is 3.0 HP per budget point on both challengers** — `HP_BUDGET_VALUE` ≈ 0.33. So
-neither existing figure is right: the roster (0.5) over-charges HP by half, equipment (0.25)
-under-charges by a quarter, and the truth sits between them, nearer equipment's.
+**Break-even is 3.0 HP per budget point on both challengers** — an HP rate of ≈0.33. So no
+figure in the table above is the measured one: the roster (now 1.0) over-charges HP three-fold,
+enemies (0.5) by half, equipment (0.25) under-charges by a quarter, and the truth sits nearest
+equipment's.
 
-This settles the direction. The doubling halved what the roster charges for HP, which moved it
-from badly over-charged toward fair and **stopped short** — it did not overshoot into a gift.
-The tanks were being short-changed before and are still slightly short-changed now.
+This settles the direction, and the roster re-base above knowingly went the other way. The
+doubling had halved what the roster charged for HP, moving it from badly over-charged toward
+fair without overshooting into a gift; 550-at-face-value gives that back and more. If the walls
+read as weak in playtest, this measurement is why, and the fix is the rate — not their lines.
 
 **But the price is not linear, and that is the real finding.** Re-spending a hero's OWN budget
 — 30 points out of HP into offense at the current rate — wins only **52.5% ±0.76**, and helps
@@ -619,8 +644,8 @@ it measures the one thing it cannot do. Rerun with each side carrying a fixed ne
 it still lands at 13.9%, so the kit is thin even when the support has somewhere to go — but the
 fix is a move, not a stat.
 
-**Two redistribution routes were measured and both are dead ends**, which is why the 450 lines
-were left alone:
+**Two redistribution routes were measured and both are dead ends**, which is why the lines were
+left alone until the 2026-09-09 re-base:
 
 - **HP → offense** (30 points, `budget` mode): shifted line wins **52.5% ±0.76**, helping exactly
   18 of 36 heroes. Near-neutral, so the current HP pricing is close to right at the actual lines.

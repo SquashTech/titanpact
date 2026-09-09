@@ -43,16 +43,18 @@ don't silently override it.
   neutral for what repeats and not for what decays: `decay: 'halve'` caps a Burn's lifetime
   output at ≈2× its magnitude however long the fight runs. `docs/combat.md`.
 - **Stat line:** HP, Attack/Defense, Intelligence/Wisdom, Speed, Mana, MP Regen.
-- **Every hero spends exactly 450 stat points** across HP/Attack/Defense/Intelligence/
-  Wisdom/Speed/Mana (2026-09-05); **MP Regen sits outside the budget at a flat 10**.
-  A specialist is signalled by spiking one stat past anything else in the roster, never
-  by coming in under budget (`test/roster.test.ts`, `docs/types-and-heroes.md`).
-  **What a line reads is not what it costs** (2026-09-08): HP is authored in the units
-  the HP bar draws — twice every other stat — and priced at `HP_BUDGET_VALUE` = 0.5.
-  Every budget figure in the game goes through `src/run/statBudget.ts`. It replaced a
-  hidden `HP_SCALE = 2` inside `getMaxHp`, which halved every HP number the player was
-  shown. **The rate itself is an OPEN question** — equipment prices the same HP at 0.25
-  and neither figure was ever measured (`docs/progression.md` "Pricing HP").
+- **Every hero's seven stats sum to exactly 550** — HP/Attack/Defense/Intelligence/
+  Wisdom/Speed/Mana at FACE VALUE, HP counted at 1:1 (2026-09-09, replacing the 450
+  budget that priced HP at half); **MP Regen sits outside it at a flat 10**. The rule is
+  the number the hero sheet's Stat Total row already prints, so a line being on budget is
+  checkable by the player and not only by the repo (`heroStatTotal`,
+  `src/run/statBudget.ts`; `test/roster.test.ts`; `docs/types-and-heroes.md`). A
+  specialist is signalled by spiking one stat past anything else in the roster, never by
+  coming in under the total. The re-base took its points out of **HP** and held **Speed**
+  fixed on every hero, compressing the roster's HP range from 160–300 to 180–250.
+  **It deliberately over-charges HP** — measured break-even is ≈0.33 a point, enemy lines
+  still pay `HP_BUDGET_VALUE` = 0.5 and equipment 0.25 — so it is a legibility call to be
+  judged in playtest, and the walls are what to watch (`docs/progression.md` "Pricing HP").
 - **Stat modifiers are flat additive integers, multiples of 5 or 10.** No % stat mods.
   There is **no automatic stat growth** from leveling. One documented exemption
   (2026-08-30): a **derived** grant, whose amount is read off live state rather than

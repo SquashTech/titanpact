@@ -1,6 +1,6 @@
 // The roster baseline: what every authored hero owes, and what every Evolution node owes.
 // The move-tier gate and the FLOOR live in moveTiers.test.ts; this file pins the two things
-// that pass established as content policy — the 450 stat budget and the Evolution framework's
+// that pass established as content policy — the 550 stat total and the Evolution framework's
 // "no path is bare stats" (docs/leveling-and-ranks.md "The Evolution framework").
 
 import * as assert from 'assert';
@@ -12,23 +12,20 @@ import { statuses } from '../src/data/statuses';
 import { progressionTable } from '../src/data/progression';
 import { BASE_ITEM_SLOTS, MAX_ITEM_SLOTS, STAT_POINT_VALUE } from '../src/run/equipment';
 import type { StatKey } from '../src/engine/content';
-import { HERO_BUDGET_STATS, statBudgetTotal } from '../src/run/statBudget';
+import { HERO_STAT_TOTAL, heroStatTotal } from '../src/run/statBudget';
 import { itemSlotsFor } from '../src/run/progression';
 import { createRosterEntry } from '../src/run/state';
 
-/** HP + Mana + the five battle stats, HP priced through statBudget.ts. MP Regen is a flat 10 outside the budget. */
-const BUDGET = 450;
-const BUDGETED = HERO_BUDGET_STATS;
-
-test('roster: every hero spends the same 450-point stat budget, and MP Regen is flat 10 outside it', () => {
+/** HP + Mana + the five battle stats at face value. MP Regen is a flat 10 outside the total. */
+test('roster: every seven-stat line sums to 550, and MP Regen is flat 10 outside it', () => {
   const offBudget = Object.values(heroes)
-    .map((hero) => ({ id: hero.id, total: statBudgetTotal(hero.baseStats, BUDGETED) }))
-    .filter((row) => row.total !== BUDGET)
+    .map((hero) => ({ id: hero.id, total: heroStatTotal(hero.baseStats) }))
+    .filter((row) => row.total !== HERO_STAT_TOTAL)
     .map((row) => `${row.id}=${row.total}`);
-  assert.deepStrictEqual(offBudget, [], 'these lines do not spend exactly 450');
+  assert.deepStrictEqual(offBudget, [], 'these lines do not sum to 550');
 
   const offRegen = Object.values(heroes).filter((hero) => hero.baseStats.mpRegen !== 10).map((hero) => hero.id);
-  assert.deepStrictEqual(offRegen, [], 'MP Regen is not a budget axis — every hero carries 10');
+  assert.deepStrictEqual(offRegen, [], 'MP Regen is not a stat-total axis — every hero carries 10');
 });
 
 test('roster: no hero starts with a move it cannot pay for', () => {

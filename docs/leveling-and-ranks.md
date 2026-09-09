@@ -428,7 +428,7 @@ identity.
 > | Coil | Hooded | Mind → **Stone** | A basilisk's gaze. The riskiest of the five: Coil's pool is almost all Mind, so this spends nearly every STAB it has. Stone's magical column is exactly three moves, which is just enough to refill a loadout — watch it in playtest. |
 >
 > Lucius is the counter-example that still stands. He was retyped **mono-Mind** in the same
-> pass (`types-and-heroes.md` "The stat budget"), and the retype rule does not undo that: a
+> pass (`types-and-heroes.md` "The stat total"), and the retype rule does not undo that: a
 > mono hero gets two graft paths plus a mono one, where a dual gets one retype. Being born
 > dual is no longer a tax, but it is still less branching than being born mono.
 >

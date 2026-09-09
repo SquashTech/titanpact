@@ -189,22 +189,34 @@ is Valor instead. Expect the recruit-only list to grow as more of the authored
   content** (movepools, abilities, equipment, relics), not be pre-specified. Don't
   bake archetype assumptions into type or hero definitions.
 
-### The stat budget (LOCKED 2026-09-05)
+### The stat total (LOCKED 2026-09-09)
 
-Every hero's authored line spends **exactly 450 points** across seven stats — HP,
-Attack, Defense, Intelligence, Wisdom, Speed, Mana. **MP Regen sits outside the
-budget at a flat 10** for everyone; it is a tempo dial the equipment layer moves
-(`STAT_POINT_VALUE` prices it at 3×), not a place to hide a hero's power level.
-`test/roster.test.ts` pins both halves.
+Every hero's authored line sums to **exactly 550 at face value** across seven stats —
+HP, Attack, Defense, Intelligence, Wisdom, Speed, Mana — with **HP counted at 1:1**
+like everything else. **MP Regen sits outside the total at a flat 10** for everyone;
+it is a tempo dial the equipment layer moves (`STAT_POINT_VALUE` prices it at 3×), not
+a place to hide a hero's power level. `heroStatTotal` in `src/run/statBudget.ts` is the
+one definition; `test/roster.test.ts` pins both halves.
 
-The budget is a *shape* rule, not a power rule. What it buys is that two heroes are
+**550 is the number the hero sheet already shows.** The Stat Total row on `StatBars`
+sums exactly these seven, so the rule is checkable by the player and not just by the
+repo — which is the whole reason it is face value. It replaced a 450 budget that
+priced HP at 0.5, under which two on-budget heroes could read 530 and 590 on screen
+with nothing to explain the gap.
+
+The total is a *shape* rule, not a power rule. What it buys is that two heroes are
 never separated by raw total — only by where they put it — so "which hero is
 stronger" is always a question about the matchup and never about the sheet. A hero
 that wants to be enormous somewhere has to be small somewhere else, and the roster's
 extremes are authored that way on purpose: Bellows at **105 Attack / 5 Speed**, Cube
 at **115 Defense / 10 Speed**, Squall and Widow at **100+ Speed** off 45-Defense
-bodies. Coming in under 450 is not the way to signal a specialist — spiking one stat
+bodies. Coming in under 550 is not the way to signal a specialist — spiking one stat
 past anything else in the roster is.
+
+The 2026-09-09 re-base paid its bill **out of HP** and left **Speed untouched on every
+hero**, so no priority order moved. HP now costs three times what it costs an enemy
+line, and the roster's HP range compressed from 160–300 to **180–250** in consequence
+— an accepted, measured cost, not an oversight (`docs/progression.md` "Pricing HP").
 
 Before 2026-09-05 only the 14 starters were on budget and the 22 recruit-only heroes
 ran 390–480. That gap read as "recruits are the weaker pool", which is exactly what
