@@ -15349,9 +15349,12 @@ textarea,
     inset 0 0 300px 100px rgba(2, 4, 5, 0.5);
 }
 
-/* The light the Titan is a hole in. Two sources and no third: a cold shaft
-   behind the head, and the sick green of the seal's own ground low in the
-   frame, which is what the four figures on the ridge are silhouetted against.
+/* The light the Titan is a hole in. Two sources and no third: the cold open's
+   own ember behind the head (`--tier-mythic-rgb`, the colour TitanWakeScreen
+   burns in), and the sick green of the seal's ground low in the frame, which
+   is what the four figures on the ridge are silhouetted against. The upper
+   source was cold cyan to begin with, and it fought the eyes in front of it —
+   a warm light in a cold frame has to come from the thing that is warm.
    ┄
    Order matters more than anything in this block — this layer is emitted
    BEFORE `.title-titan` and both sit at z-index 0, so the figure is drawn on
@@ -15363,7 +15366,8 @@ textarea,
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 62% 30% at 50% 11%, rgba(150, 200, 224, 0.46), transparent 76%),
+    radial-gradient(ellipse 62% 30% at 50% 11%, rgba(var(--tier-mythic-rgb), 0.3), transparent 76%),
+    radial-gradient(ellipse 40% 15% at 50% 12%, rgba(240, 176, 96, 0.16), transparent 72%),
     radial-gradient(ellipse 100% 26% at 50% 94%, rgba(96, 190, 162, 0.36), transparent 74%);
   animation: title-backlight-swell 17s ease-in-out infinite;
 }
@@ -15477,16 +15481,34 @@ textarea,
   }
 }
 
-/* Not a colour the rest of the game uses. Every friendly light on this screen
-   is the cold blue-green of the ground or the gold of the pact; the eyes are
-   the one warm-hostile note, and they are the first thing found in the frame
-   because of it. The flicker stops are uneven for the same reason the
-   wordmark's gutter is — an even pulse reads as a machine. */
+/* The cold open's eye, shrunk (see `.titan-eye-globe`, TitanWakeScreen). This is
+   the throughline between the two screens and the reason it is worth carrying
+   the wake's palette onto a screen that is otherwise cold: the thing the title
+   is a picture OF is the thing the run opens on, and it should be lit the same
+   way in both. Every other light here is the blue-green of the ground or the
+   gold of the pact; the eyes are the one hostile note, and they are the first
+   thing found in the frame because of it.
+   ┄
+   The flicker stops are uneven for the same reason the wordmark's gutter is —
+   an even pulse reads as a machine. */
 .title-titan .titan-eyes {
-  fill: #ffd9a6;
-  filter: drop-shadow(0 0 5px rgba(255, 176, 96, 0.9)) drop-shadow(0 0 18px rgba(255, 132, 48, 0.55))
-    drop-shadow(0 0 44px rgba(214, 96, 36, 0.3));
+  filter: drop-shadow(0 0 5px rgba(255, 200, 140, 0.75)) drop-shadow(0 0 16px rgba(var(--tier-mythic-rgb), 0.6))
+    drop-shadow(0 0 42px rgba(var(--tier-mythic-rgb), 0.3));
   animation: titan-eye-burn 8.3s ease-in-out infinite;
+}
+
+.title-titan .titan-eye-halo {
+  fill: url(#titan-glare);
+}
+
+.title-titan .titan-eye-lens {
+  fill: url(#titan-iris);
+}
+
+/* Contracted, not open. The cold open ends on a pupil that has finished
+   deciding what it is looking at, and this is that eye holding there. */
+.title-titan .titan-eye-pupil {
+  fill: #07050a;
 }
 
 @keyframes titan-eye-burn {

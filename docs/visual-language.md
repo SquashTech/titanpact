@@ -2245,12 +2245,19 @@ out of things to say a third of the way down.
   the whole trick: everything in `titanArt.tsx` is a hole cut in this light rather than a shape
   drawn on top of the dark. The moment the figure is lighter than what is behind it, it stops
   being a thing in the distance and becomes a decal on the glass.
-- **`TitanColossus`** — a crowned, horned, chained figure whose horns run off the top edge,
-  because a colossus that fits in frame is not one. One flat near-black fill for every plate;
-  the structure is carried entirely by open rim polylines along the edges the sky can actually
-  reach. It breathes on an 11-second cycle, the rim swells on 13, the eyes gutter on 8.3 and a
-  broken length of chain swings on 7.4 — four periods that never divide into each other, so the
-  figure never returns to a pose it has held.
+- **`TitanColossus`** — a chained figure with no top of head at all: the skull dissolves upward
+  out of the frame, because a colossus that fits in frame is not one. One flat near-black fill
+  for every plate; the structure is carried entirely by open rim polylines along the edges the
+  sky can actually reach. It breathes on an 11-second cycle, the rim swells on 13, the eyes
+  gutter on 8.3 and a broken length of chain swings on 7.4 — four periods that never divide into
+  each other, so the figure never returns to a pose it has held.
+- **The eyes are `TitanWakeScreen`'s eyes**, at a hundredth the size and lifted stop for stop:
+  the same lens tapering to points at both corners, the same globe ramp (pale gold core out
+  through `--tier-mythic-rgb` to almost nothing at the rim), the same vertical slit held
+  contracted, the same halo bleeding past the lids. The backlight behind the head went from cold
+  cyan to that same ember for the same reason. **This is the throughline, and it is worth the
+  one warm exception on a screen that is otherwise deliberately cold:** the thing the title is a
+  picture *of* is the thing the run opens on, and it should be lit the same way in both.
 - **The pact seal** — three counter-rotating rings on the Titan's chest with the wordmark
   struck across them. That is the composition the whole screen is arranged around: TITANPACT is
   not a caption on the picture, it is the mark burned into the thing in it. Five sigils ride the
@@ -2299,10 +2306,19 @@ button spends most of its life still and the sweep is an event rather than a shi
 Three things were only visible in a screenshot, and all three were the same mistake — a shape
 that is correct in outline and wrong in *contrast*:
 
-- **The horns were built tip-first.** They were authored blunt at the tip and narrow at the
-  base, which is backwards, and against a black sky the fill was invisible so only the two rim
-  curves showed — reading as a pair of wireframe hoops around the head. Tapered base-thick and
-  widening the backlight to reach them fixed both at once.
+- **Four attempts at a top-of-head, and the fourth was not drawing one.** The head was authored
+  with a crown and horns, and every version read as something else: horns leaving the temples
+  and sweeping outward put a horizontal line at the widest part of the skull with a dome above
+  it, which is a **cowboy hat** (the user's word, and unmistakable once seen); moving them to
+  the crown and steepening them made **rabbit ears**; thickening them against a flat crown made
+  a **chimney**. The diagnosis was the same every time and it was not the shape — it was that
+  the top of the frame is the one place with no backlight to silhouette against *and* the
+  vignette crushing it on top of that, so a horn's fill was invisible and only its two rim
+  curves showed, i.e. a wireframe. `TitanWakeScreen` never draws a top of head either. The skull
+  now dissolves upward through the same mask that dissolves its feet into the fog, and what is
+  left — a mass, a brow, a jaw and two lights — reads as a head too big for the frame, which is
+  what all four attempts were reaching for. **When a shape keeps reading as the wrong object,
+  suspect the light before the outline.**
 - **A shoulder that curves away from the throat in one arc is a hood.** The first figure read as
   a bowling pin. The trapezius now runs almost flat out of the neck before it turns down, and
   that shelf is the single line doing the most work in the whole figure.

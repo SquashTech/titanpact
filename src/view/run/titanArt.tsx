@@ -52,10 +52,10 @@ function chain(
 }
 
 /**
- * The Titan: crowned, bowed, and chained, with the horns running off the top edge because
- * a colossus that fits in frame is not one. The face is three bands and two slits — a brow
- * heavy enough to throw the eyes into shadow, a jaw, and a throat. Any more detail and it
- * starts reading as a character portrait, which is the wrong scale entirely.
+ * The Titan: bowed, chained, and with no top of head — the skull dissolves upward out of
+ * the frame, because a colossus that fits in frame is not one. The face is three bands and
+ * two lights: a brow heavy enough to throw the eyes into shadow, a jaw, and a throat. Any
+ * more detail and it starts reading as a character portrait, which is the wrong scale.
  */
 export function TitanColossus() {
   return (
@@ -67,16 +67,33 @@ export function TitanColossus() {
       aria-hidden="true"
     >
       <defs>
-        {/* The figure dissolves into the fog well before the floor, so the ridge in front of
-            it reads as far away rather than as leaning against it. */}
+        {/* The figure dissolves at BOTH ends: into the dark above, so the skull has no top
+            edge and reads as continuing past the frame, and into the fog well before the floor,
+            so the ridge in front of it is far away rather than leaning against it. */}
         <linearGradient id="titan-dissolve" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#fff" stopOpacity="1" />
+          <stop offset="0%" stopColor="#fff" stopOpacity="0" />
+          <stop offset="13%" stopColor="#fff" stopOpacity="1" />
           <stop offset="72%" stopColor="#fff" stopOpacity="1" />
           <stop offset="94%" stopColor="#fff" stopOpacity="0" />
         </linearGradient>
         <mask id="titan-fade">
           <rect x="0" y="0" width={VIEW_W} height={VIEW_H} fill="url(#titan-dissolve)" />
         </mask>
+        {/* Lifted stop for stop from `.titan-eye-globe` (TitanWakeScreen): pale gold at the
+            centre out through the mythic red to almost nothing at the rim, so the light reads
+            as coming from inside the eye rather than the eye being a painted disc. */}
+        <radialGradient id="titan-iris" cx="50%" cy="50%" r="52%">
+          <stop offset="0%" stopColor="#fff3d2" />
+          <stop offset="20%" stopColor="#f0b060" />
+          <stop offset="46%" stopColor="#e0393f" />
+          <stop offset="76%" stopColor="#601018" />
+          <stop offset="100%" stopColor="#1e060a" />
+        </radialGradient>
+        <radialGradient id="titan-glare" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#e0393f" stopOpacity="0.34" />
+          <stop offset="42%" stopColor="#e0393f" stopOpacity="0.09" />
+          <stop offset="100%" stopColor="#e0393f" stopOpacity="0" />
+        </radialGradient>
       </defs>
 
       <g className="titan-figure" mask="url(#titan-fade)">
@@ -88,15 +105,18 @@ export function TitanColossus() {
           className="titan-mass"
           d="M-30 754 L-30 470 C -28 400 -18 332 6 300 C 24 278 76 258 122 250 C 140 246 146 238 146 218 L 220 218 C 220 238 226 246 244 250 C 290 258 342 278 360 300 C 384 332 394 400 396 470 L 396 754 Z"
         />
-        <path className="titan-mass" d="M140 128 C 104 112 76 62 58 -26 L 72 -30 C 96 40 130 82 172 96 Z" />
-        <path className="titan-mass" d="M226 128 C 262 112 290 62 308 -26 L 294 -30 C 270 40 236 82 194 96 Z" />
-        <path className="titan-mass" d="M158 46 L163 18 L172 44 Z" />
-        <path className="titan-mass" d="M177 38 L183 6 L189 38 Z" />
-        <path className="titan-mass" d="M194 44 L203 18 L208 46 Z" />
-        <path className="titan-mass" d="M132 162 L126 96 Q129 58 158 44 L183 34 L208 44 Q237 58 240 96 L234 162 Z" />
-        <path className="titan-mass" d="M126 100 L240 100 L234 128 L132 128 Z" />
-        <path className="titan-mass" d="M133 162 L233 162 L226 190 Q183 208 140 190 Z" />
-        <path className="titan-mass" d="M150 190 L216 190 L220 224 L146 224 Z" />
+        {/* NO crown and no horns, and the skull dissolves upward out of the frame rather than
+            closing over. Three attempts at a top-of-head all failed the same way — a wide brim
+            under a dome read as a cowboy hat, thin horns off a dome read as ears, a flat crown
+            between two horns read as a chimney — and they failed because the top of the frame
+            is the one place with no backlight to silhouette against and a hard vignette on top
+            of that. TitanWakeScreen never draws a top of head either: it sets the eyes wide and
+            low and lets the skull continue past every edge, which is both the fix and the
+            throughline. What is left is a mass, a brow, a jaw, and two lights. */}
+        <path className="titan-mass" d="M112 176 L106 104 C 108 30 130 -20 183 -20 C 236 -20 258 30 260 104 L254 176 Z" />
+        <path className="titan-mass" d="M106 100 L260 100 L256 130 L110 130 Z" />
+        <path className="titan-mass" d="M112 176 L254 176 L246 202 Q183 224 120 202 Z" />
+        <path className="titan-mass" d="M142 200 L224 200 L226 224 L140 224 Z" />
 
         {/* The pauldrons rise ABOVE the shoulder line they sit on. Tucked under it they
             track the body's own edge a few pixels inside it, and two near-parallel rims
@@ -110,13 +130,10 @@ export function TitanColossus() {
             silhouette lit from below is a lamp, not a shape in the dark. Both edges of each
             horn are drawn — one edge alone reads as a hoop rather than as a taper. */}
         <g className="titan-rim" fill="none" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M72 -30 C 96 40 130 82 172 96" />
-          <path d="M58 -26 C 76 62 104 112 140 128" />
-          <path d="M294 -30 C 270 40 236 82 194 96" />
-          <path d="M308 -26 C 290 62 262 112 226 128" />
-          <path d="M126 96 Q129 58 158 44 L183 34 L208 44 Q237 58 240 96" />
-          <path d="M132 128 L234 128" />
-          <path d="M140 190 Q183 208 226 190" />
+          <path d="M106 104 C 108 30 130 -20 183 -20" />
+          <path d="M260 104 C 258 30 236 -20 183 -20" />
+          <path d="M110 130 L256 130" />
+          <path d="M120 202 Q183 224 246 202" />
           <path d="M146 218 C 146 238 140 246 122 250 C 76 258 24 278 6 300 C -18 332 -28 400 -30 470" />
           <path d="M220 218 C 220 238 226 246 244 250 C 290 258 342 278 360 300 C 384 332 394 400 396 470" />
           <path d="M4 338 C 8 288 46 246 108 232 C 128 228 142 238 145 254" />
@@ -145,11 +162,26 @@ export function TitanColossus() {
           </g>
         </g>
 
-        {/* Slanted DOWN toward the middle. The same two slits with the tilt reversed read as
-            startled; this way round they read as looking at you, which is the point. */}
+        {/* The same eye TitanWakeScreen opens on, at a hundredth the size: a lens that tapers
+            to points at both corners, lit from inside by pale gold burning out through the
+            run's mythic red, with a vertical slit contracted to a hairline and a halo that
+            bleeds past the lids. Set wide on the skull for the reason the cold open sets them
+            wide on the screen — eyes further apart than a face has room for read as a head
+            continuing past what you can see of it.
+            ┄
+            Slanted DOWN toward the middle: the same pair with the tilt reversed reads as
+            startled, and this way round they read as looking at you. */}
         <g className="titan-eyes">
-          <path d="M143 132 L167 141 L166 146 L142 138 Z" />
-          <path d="M223 132 L199 141 L200 146 L224 138 Z" />
+          <circle className="titan-eye-halo" cx="140" cy="152" r="54" />
+          <circle className="titan-eye-halo" cx="226" cy="152" r="54" />
+          <g className="titan-eye-lens">
+            <path d="M110 152 Q140 138 170 152 Q140 166 110 152 Z" transform="rotate(8 140 152)" />
+            <path d="M256 152 Q226 138 196 152 Q226 166 256 152 Z" transform="rotate(-8 226 152)" />
+          </g>
+          <g className="titan-eye-pupil">
+            <ellipse cx="140" cy="152" rx="4.2" ry="9" transform="rotate(8 140 152)" />
+            <ellipse cx="226" cy="152" rx="4.2" ry="9" transform="rotate(-8 226 152)" />
+          </g>
         </g>
       </g>
     </svg>
