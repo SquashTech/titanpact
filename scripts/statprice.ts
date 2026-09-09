@@ -15,9 +15,21 @@
 import { heroes } from '../src/data/heroes';
 import { moves } from '../src/data/moves';
 import type { StatKey } from '../src/engine/content';
-import { createRosterEntry } from '../src/run/state';
+import { createRosterEntry, createRunState, addRosterEntry } from '../src/run/state';
 import type { RosterEntry } from '../src/run/state';
 import { pickSquad } from '../src/run/squad';
+import { progressionTable } from '../src/data/progression';
+import {
+  MOVE_CAP,
+  chooseEvolutionPath,
+  grantLevelUpMove,
+  levelUpHero,
+  levelUpMovePool,
+  levelUpPayout,
+  pendingEvolution,
+  recordMoveOffer,
+} from '../src/run/progression';
+import { moveValue as policyMoveValue, replacementTarget } from './sim/policy';
 import { simulateFight } from './sim/fight';
 import { makeRng, withRandom } from './sim/rng';
 
@@ -25,10 +37,54 @@ const ALL = Object.values(heroes);
 const STARTERS = ALL.filter((h) => h.starter);
 const LEVEL = 5;
 
-function rosterOf(heroIds: readonly string[], grant: Partial<Record<StatKey, number>>): RosterEntry[] {
+/**
+ * A hero as a real run would have it at `level`: every level-up spent, each one taking the best
+ * move `levelUpMovePool` offers (policy.moveValue, replacing the weakest at MOVE_CAP), and the
+ * Evolution taken at EVOLUTION_LEVEL. Built through the run's OWN progression functions, so the
+ * tier gates are the ones the game applies.
+ *
+ * This matters more than it looks. Before 2026-09-08 this harness handed every hero its three-move
+ * STARTING KIT at whatever level was asked for, so raising the level changed stats and nothing
+ * else — which made a hero designed to be weak early and strong late unmeasurable by construction.
+ */
+const kitCache = new Map<string, RosterEntry>();
+
+function entryAtLevel(heroId: string, level: number): RosterEntry {
+  const key = `${heroId}@${level}`;
+  const cached = kitCache.get(key);
+  if (cached) return cached;
+
+  let run = addRosterEntry(createRunState(10_000), createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
+  for (let next = 2; next <= level; next++) {
+    run = levelUpHero(run, heroId);
+    const entry = run.roster[0];
+    const payout = levelUpPayout(progressionTable, moves, entry);
+    if (payout === 'evolution') {
+      const node = pendingEvolution(progressionTable, entry);
+      if (node && node.paths.length > 0) {
+        run = chooseEvolutionPath(run, progressionTable, heroes, heroId, node.paths[0].id);
+      }
+      continue;
+    }
+    if (payout !== 'move') continue;
+    const pool = levelUpMovePool(progressionTable, moves, entry);
+    if (pool.length === 0) continue;
+    const best = pool.reduce((a, b) => (policyMoveValue(b) > policyMoveValue(a) ? b : a));
+    const replace = entry.unlockedMoveIds.length >= MOVE_CAP ? replacementTarget(entry, best) : undefined;
+    if (entry.unlockedMoveIds.length >= MOVE_CAP && !replace) {
+      run = recordMoveOffer(run, heroId, [best]);
+      continue;
+    }
+    run = grantLevelUpMove(run, heroId, best, replace ?? undefined);
+  }
+  kitCache.set(key, run.roster[0]);
+  return run.roster[0];
+}
+
+function rosterOf(heroIds: readonly string[], grant: Partial<Record<StatKey, number>>, level: number = LEVEL): RosterEntry[] {
   return heroIds.map((heroId, i) => ({
-    ...createRosterEntry(`r${i}`, heroId, heroes[heroId].moveIds),
-    level: LEVEL,
+    ...entryAtLevel(heroId, level),
+    rosterId: `r${i}`,
     bonusStatGrants: { ...grant },
   }));
 }
@@ -39,10 +95,11 @@ function fight(
   aHeroes: readonly string[],
   aGrant: Partial<Record<StatKey, number>>,
   bHeroes: readonly string[],
-  bGrant: Partial<Record<StatKey, number>>
+  bGrant: Partial<Record<StatKey, number>>,
+  level: number = LEVEL
 ): boolean {
-  const a = rosterOf(aHeroes, aGrant);
-  const b = rosterOf(bHeroes, bGrant);
+  const a = rosterOf(aHeroes, aGrant, level);
+  const b = rosterOf(bHeroes, bGrant, level);
   const rng = makeRng(seed);
   return withRandom(rng, () =>
     simulateFight({
@@ -133,7 +190,7 @@ function priceExperiment(fights: number, points: number, pool: readonly { id: st
  * only variable left is the authored stat line, so a hero's win rate IS its line's worth — the
  * number the run-level per-hero table cannot give, because there level and draft order dominate.
  */
-function rosterExperiment(repeats: number, partnerId?: string) {
+function rosterExperiment(repeats: number, partnerId?: string, level: number = LEVEL) {
   const ids = ALL.map((h) => h.id);
   // Four copies of one hero is unfair to a SUPPORT: Zenith's whole kit hands mana to a partner,
   // and against itself it is a Base Power 20 attack. With `partnerId` each side fields two copies
@@ -155,9 +212,9 @@ function rosterExperiment(repeats: number, partnerId?: string) {
       for (let r = 0; r < repeats; r++) {
         const seed = 900_000 + (i * 100 + j) * 1000 + r;
         // Swapped sides, so the engine's own side ordering never counts as a hero's strength.
-        if (fight(seed, a, {}, b, {})) wins[ids[i]] += 1;
+        if (fight(seed, a, {}, b, {}, level)) wins[ids[i]] += 1;
         else wins[ids[j]] += 1;
-        if (fight(seed + 500, b, {}, a, {})) wins[ids[j]] += 1;
+        if (fight(seed + 500, b, {}, a, {}, level)) wins[ids[j]] += 1;
         else wins[ids[i]] += 1;
         played[ids[i]] += 2;
         played[ids[j]] += 2;
@@ -353,7 +410,12 @@ function main() {
   const fights = Number(argv[argv.indexOf('--fights') + 1]) || (mode === 'price' ? 1500 : 20);
   const points = Number(argv[argv.indexOf('--points') + 1]) || 40;
 
-  if (mode === 'roster') rosterExperiment(fights, argv.includes('--partner') ? argv[argv.indexOf('--partner') + 1] : undefined);
+  if (mode === 'roster')
+    rosterExperiment(
+      fights,
+      argv.includes('--partner') ? argv[argv.indexOf('--partner') + 1] : undefined,
+      Number(argv[argv.indexOf('--level') + 1]) || LEVEL
+    );
   else if (mode === 'budget') budgetExperiment(fights, points, Number(argv[argv.indexOf('--hprate') + 1]) || 2);
   else if (mode === 'mana') manaExperiment(fights, points);
   else if (mode === 'slot') slotExperiment(fights, argv[argv.indexOf('--a') + 1] ?? 'sword.rare', argv[argv.indexOf('--b') + 1] ?? 'plate.rare');

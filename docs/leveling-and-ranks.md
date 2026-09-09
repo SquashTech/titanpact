@@ -608,3 +608,57 @@ This module specifies **rules**. The following are **data** (`/data`), not doc c
   resolution).
 - `mana.md` — the weather subsystem the Snowman's Snow ability depends on (🔒 OPEN).
 - `architecture.md` — Evolution/level-ups mutate **run state**, not combat state.
+
+---
+
+## How heroes actually scale with level (measured 2026-09-08)
+
+`scripts/statprice.ts roster --level N` runs a round robin at a given level: every hero against
+every other, four copies a side, no gear, no relics, each side levelled through the run's OWN
+progression functions — so raising the level really does unlock moves. (Until this pass the
+harness handed out the three-move starting kit at every level, which made a hero designed to be
+weak early and strong late unmeasurable by construction.)
+
+Mean win rate by primary type, sorted by how much the type gains across the climb:
+
+| type | n | L1 | L3 | L5 | L7 | L10 | swing |
+|---|---|---|---|---|---|---|---|
+| **Arcane** | 2 | 29.5% | 39.3% | 50.8% | 58.9% | **68.8%** | **+39.2** |
+| Stone | 2 | 43.5% | 51.9% | 58.3% | 57.5% | 56.5% | +12.9 |
+| Storm | 3 | 41.1% | 44.3% | 55.3% | 57.3% | 52.0% | +10.9 |
+| Frost | 3 | 46.3% | 47.5% | 52.3% | 51.4% | 52.6% | +6.3 |
+| Beast | 3 | 46.3% | 47.2% | 50.4% | 49.2% | 51.8% | +5.5 |
+| Shadow | 3 | 46.3% | 47.9% | 52.4% | 46.5% | 47.1% | +0.9 |
+| Nature | 3 | 46.4% | 34.3% | 35.9% | 41.5% | 45.3% | −1.0 |
+| Iron | 3 | 58.1% | 57.2% | 60.4% | 65.1% | 56.8% | −1.3 |
+| Mind | 3 | 61.6% | 57.7% | 46.4% | 40.6% | 53.2% | −8.4 |
+| Fire | 3 | 62.2% | 60.4% | 46.6% | 53.3% | 53.4% | −8.7 |
+| Water | 2 | 49.1% | 46.5% | 45.7% | 35.3% | 38.4% | −10.7 |
+| Mech | 2 | 58.8% | 59.6% | 52.0% | 56.3% | 45.3% | −13.5 |
+| Spirit | 2 | 57.3% | 58.3% | 44.1% | 42.6% | 42.3% | −15.0 |
+| **Light** | 2 | 49.3% | 49.7% | 49.8% | 42.2% | **30.5%** | **−18.8** |
+
+**Arcane is the intended late-scaling type and it works.** It is the worst type in the game at
+level 1 and the best by level 10. **Zenith is the sharpest case in the roster** — 13.7% → 70.9%,
+a +57.2 swing, more than twice the next hero (Sentinel, +27.5). Its level-1 kit is a Base Power
+20 attack and two moves that hand mana to a partner; that is the price of the payoff, and the
+payoff arrives. A hero reading as weak at level 5 is not on its own evidence of anything.
+
+**The unflagged problem is the mirror image: types that start strong and decay.** Light −18.8,
+Spirit −15.0, Mech −13.5, Water −10.7. Arcane's early weakness buys something; a Light hero's
+late weakness buys nothing, and Aegis is the extreme — **62.0% at level 1 down to 24.3% at level
+10, a −37.7 swing**, almost exactly Zenith inverted. That is the shape worth authoring against.
+
+**Two caveats on the numbers past level 5.** The harness always takes the FIRST Evolution path,
+so a hero whose `paths[0]` is weak — or is a retype that spends its innate STAB — reads worse
+than a played hero would; the decays above are a place to look, not a verdict. And a round robin
+fields four copies of one hero, which flatters nothing and punishes a SUPPORT: `--partner <id>`
+gives each side two copies plus a fixed neutral so a support has someone to support.
+
+**One real bug fell out of building this.** `policy.replacementTarget` (the simulated player's
+"which move do I drop at MOVE_CAP") priced moves on power minus a fraction of cost, with no
+affordability check, so a greedy climb traded every cheap move away: Brimstone reached level 10
+holding four moves priced 75–80 against a 65 mana pool, could cast nothing, and won 0 of 350
+fights. It now never gives up the last castable move. `scripts/sim` shares that policy, so the
+main simulator had the same hole — measured at 11.2% full-clear against 11.1% before, it changes
+little there only because few heroes reach level 10 inside a run.

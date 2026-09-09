@@ -170,12 +170,27 @@ export function moveValue(moveId: string): number {
   return power + heal * 1.2 + utility - (move.manaCost ?? 0) * 0.4;
 }
 
-/** At MOVE_CAP: the currently-held move worth replacing, or null to decline the offer. */
+/**
+ * At MOVE_CAP: the currently-held move worth replacing, or null to decline the offer.
+ *
+ * A swap must leave the hero able to CAST something. `moveValue` prices a move on power minus a
+ * fraction of its cost, so a greedy climb happily trades every cheap move away for a big one and
+ * strands the hero on Rest for the rest of the run — measured, Brimstone reached level 10 holding
+ * four moves priced 75-80 against a 65 pool and won 0 of 350 fights. No player does that, so the
+ * simulated one does not either: the last affordable move is never the one given up, and an
+ * unaffordable offer is declined unless something affordable survives it.
+ */
 export function replacementTarget(entry: RosterEntry, incomingMoveId: string): string | null {
+  const pool = effectiveStats(entry).manaPool;
+  const affordable = (id: string) => (moves[id]?.manaCost ?? 0) <= pool;
   const incoming = moveValue(incomingMoveId);
+
   let worstId: string | null = null;
   let worst = Infinity;
   for (const id of entry.unlockedMoveIds) {
+    // Keep the last castable move, whatever it scores.
+    const keepsOneCastable = affordable(incomingMoveId) || entry.unlockedMoveIds.some((other) => other !== id && affordable(other));
+    if (!keepsOneCastable) continue;
     const value = moveValue(id);
     if (value < worst) {
       worst = value;
