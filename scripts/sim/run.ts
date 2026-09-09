@@ -6,7 +6,7 @@ import type { StatKey } from '../../src/engine/content';
 import { heroes } from '../../src/data/heroes';
 import { moves } from '../../src/data/moves';
 import { equipment } from '../../src/data/equipment';
-import { relics, gemForStat, guardianBannerRelics } from '../../src/data/relics';
+import { relics, guardianBannerRelics } from '../../src/data/relics';
 import { classes } from '../../src/data/classes';
 import { runEvents } from '../../src/data/events';
 import { progressionTable } from '../../src/data/progression';
@@ -58,7 +58,7 @@ import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitab
 import { rollGuildHallOffers, buyEquipment, sellValueFor, EQUIPMENT_PRICE_BY_RARITY } from '../../src/run/shop';
 import { tutorMovePool } from '../../src/run/tutor';
 import { grantClass } from '../../src/run/classes';
-import { GEM_OFFER_COUNT, pickGemOffers, rollGemOffers } from '../../src/run/gems';
+import { GEM_NODE_STACK, GEM_OFFER_COUNT, gemStackFor, grantGems, pickGemOffers } from '../../src/run/gems';
 import { boonMoveCount, pickBoonOffers } from '../../src/run/boons';
 import { applyStatShift, grantEventPassive, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
 import { MAX_ITEM_SLOTS, pickWeightedEquipment, rarityWeightsFor, EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, type EquipmentDefinition } from '../../src/run/equipment';
@@ -442,6 +442,7 @@ function resolveEncounterNode(
     ? pickWeightedEquipment(EQUIPMENT_POOL, 1, rarityWeightsFor(workingRun.actNumber, LOOT_SOURCE[kindKey]))[0] ?? null
     : null;
 
+  workingRun = policy.pourGems(workingRun);
   const playerSquad = rosterSquad(workingRun, squadSize);
   const fight = simulateFight({
     seed: randomSeed(rng),
@@ -501,17 +502,17 @@ function resolveEncounterNode(
 
   workingRun = grantCurrencyReward(workingRun, goldRewardFor(kindKey, rng));
   workingRun = grantUpgradeReward(workingRun, trainingPointsFor(kindKey, workingRun.actNumber) * options.xpMult);
-  // The Gem drip (src/run/gems.ts): a won fight rolls for a 1-of-3, and the run's opener always pays.
-  const gemOffer = rollGemOffers(kindKey, isRunOpener, rng);
-  if (gemOffer.length > 0) workingRun = claimGem(workingRun, gemOffer, rng, record);
+  // The Gem drip (src/run/gems.ts): every won fight pays a stack, sized by what it was.
+  const gemStack = gemStackFor(kindKey);
+  if (gemStack > 0) workingRun = claimGem(workingRun, pickGemOffers(GEM_OFFER_COUNT, rng), gemStack, rng, record);
   return { run: workingRun, won: true, defeatedRoster: encounter.run.roster, drop };
 }
 
-/** A Gem offer, taken at random so lift is a matched comparison. */
-function claimGem(run: RunState, offered: readonly string[], rng: Rng, record: RunRecord): RunState {
+/** A Gem offer, taken at random so lift is a matched comparison. The stack lands unplaced; pourGems spends it. */
+function claimGem(run: RunState, offered: readonly StatKey[], count: number, rng: Rng, record: RunRecord): RunState {
   const picked = pick(rng, [...offered]);
   record.choices.push({ bucket: 'gem', offered: [...offered], picked: [picked], encountersWonAtChoice: run.encountersWon });
-  return grantRelicReward(run, picked);
+  return grantGems(run, picked, count);
 }
 
 /** The Guardian's Banner: a fixed 1-of-5, taken at random. */
@@ -553,7 +554,7 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       return resolveDrop(run, best.id, record.equipped, run.actNumber);
     }
     case 'gemReward':
-      return claimGem(run, pickGemOffers(GEM_OFFER_COUNT, rng), rng, record);
+      return claimGem(run, pickGemOffers(GEM_OFFER_COUNT, rng), GEM_NODE_STACK, rng, record);
     case 'passiveReward': {
       // Offered 3 and taken at random — the pool is under test, not the policy. The TARGET is not
       // random though: a type-locked Boon goes to whoever has the most moves of its type, which
@@ -570,9 +571,9 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       record.choices.push({ bucket: 'boon', offered, picked: [picked], encountersWonAtChoice: run.encountersWon });
       return grantEventPassive(run, target.rosterId, picked, passives);
     }
-    // The Mana Well hands over its stat's Gem outright — no choice, so nothing to record.
+    // The Mana Well hands over its stat's stones outright — no choice, so nothing to record.
     case 'manaBoostReward':
-      return grantRelicReward(run, gemForStat.manaPool!.id);
+      return grantGems(run, 'manaPool', GEM_NODE_STACK);
     case 'forgeReward': {
       // Whoever is holding the most already: an extra slot is worth most where the gear is.
       const target = [...run.roster]

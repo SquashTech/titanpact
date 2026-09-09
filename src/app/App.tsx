@@ -4,6 +4,7 @@ import { useReloadOnNewBuild } from './useReloadOnNewBuild';
 import { clearSave, readSave, writeSave } from './saveStorage';
 import { eraseAllData, readProfile, updateProfile } from './profileStorage';
 import { usePlaytime } from './usePlaytime';
+import type { StatKey } from '../engine/content';
 import { saveSummary, type SavedRun } from '../run/save';
 import {
   recordActReached,
@@ -68,7 +69,6 @@ import {
   type RosterReplaceCandidate,
 } from '../run/recruitment';
 import { guildHallOffers } from '../data/recruitment';
-import { gemForStat } from '../data/relics';
 import { rollGuildHallOffers, buyEquipment, ShopError, type GuildHallOffers } from '../run/shop';
 import { guildHallEntry } from '../run/guildRecruit';
 import { generateMap, type MapNodeType } from '../run/map';
@@ -89,7 +89,7 @@ import {
 } from '../run/tutorial';
 import { TUTORIAL_ENCOUNTERS, TUTORIAL_LOCKS, TUTORIAL_PAYOUTS, TUTORIAL_SCRIPT } from '../data/tutorial';
 import { TutorialOverlay } from '../view/run/TutorialOverlay';
-import { pickGemOffers, rollGemOffers } from '../run/gems';
+import { GEM_NODE_STACK, gemStackFor, pickGemOffers } from '../run/gems';
 import { generateStarterOptions } from '../run/draft';
 import {
   generateEncounter,
@@ -157,8 +157,8 @@ type Screen =
   | { kind: 'forge'; nodeId: string }
   | { kind: 'blacksmith'; nodeId: string }
   | { kind: 'statBoost'; nodeId: string; nodeType: StatBoostNodeType }
-  /** A Gem offer — the gemReward node, the two stat shrines, and a fight that rolled one. Already-resolved, so no nodeId. */
-  | { kind: 'gemChoice'; gemIds: string[]; eyebrow: string; title: string; tint?: string; next: Screen }
+  /** A Gem offer — the gemReward node, the Mana Well, and every won fight. Already-resolved, so no nodeId. */
+  | { kind: 'gemChoice'; stats: StatKey[]; count: number; eyebrow: string; title: string; tint?: string; next: Screen }
   | { kind: 'classNode'; nodeId: string }
   | { kind: 'boonNode'; nodeId: string }
   /** The Tutor: one hero learns any move off its own level-up pool. Acts 4-5 only (run/map.ts). */
@@ -303,8 +303,8 @@ const GEM_NODE_PRESENTATION: Record<'gemReward' | 'manaBoostReward', { eyebrow: 
   manaBoostReward: { eyebrow: 'A Blessing', title: 'Mana Well', tint: NODE_TINT_MANA },
 };
 
-/** The Mana Well hands over the one Gem carrying its stat rather than offering a choice. */
-const MANA_WELL_GEM_ID = gemForStat.manaPool!.id;
+/** The Mana Well hands over the stone carrying its own stat rather than offering a choice. */
+const MANA_WELL_GEM_STATS: StatKey[] = ['manaPool'];
 
 /** The map, behind the level-up gate if anyone can afford one and the player has not banked the pool. */
 function levelUpPending(run: RunState): boolean {
@@ -609,9 +609,9 @@ export function App() {
     } else if (node.type === 'gemReward' || node.type === 'manaBoostReward') {
       // The Gem Cache offers 1 of 3; the Mana Well hands over the one Gem that carries its stat.
       const preset = GEM_NODE_PRESENTATION[node.type];
-      const gemIds = node.type === 'gemReward' ? pickGemOffers() : [MANA_WELL_GEM_ID];
+      const stats = node.type === 'gemReward' ? pickGemOffers() : MANA_WELL_GEM_STATS;
       setPlayerRun((run) => advanceToNode(run, nodeId));
-      setScreen({ kind: 'gemChoice', gemIds, ...preset, next: mapAfterLevelUp(playerRun) });
+      setScreen({ kind: 'gemChoice', stats, count: GEM_NODE_STACK, ...preset, next: mapAfterLevelUp(playerRun) });
     } else if (node.type === 'classReward') {
       setScreen({ kind: 'classNode', nodeId });
     } else if (node.type === 'passiveReward') {
@@ -728,12 +728,19 @@ export function App() {
         : afterLevelUp;
     const afterBanner: Screen = banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit;
 
-    // The run's very first fight always pays a Gem; every other fight rolls for one (run/gems.ts).
-    const isRunOpener = playerRun.actNumber === 1 && playerRun.map!.nodes[nodeId].row === 0;
-    const gemIds = isFinale ? [] : rollGemOffers(mapNodeType as EncounterMapNodeType, isRunOpener);
+    // Every won fight pays a stack, sized by what it was (run/gems.ts). The Guardian pays none:
+    // it is already paying a Banner.
+    const gemCount = isFinale ? 0 : gemStackFor(mapNodeType as EncounterMapNodeType);
     setScreen(
-      gemIds.length > 0
-        ? { kind: 'gemChoice', gemIds, eyebrow: 'Spoils', title: 'Gem Recovered', next: afterBanner }
+      gemCount > 0
+        ? {
+            kind: 'gemChoice',
+            stats: pickGemOffers(),
+            count: gemCount,
+            eyebrow: 'Spoils',
+            title: 'Gems Recovered',
+            next: afterBanner,
+          }
         : afterBanner
     );
   }
@@ -1095,7 +1102,8 @@ export function App() {
 
       {screen.kind === 'gemChoice' && (
         <GemChoiceScreen
-          gemIds={screen.gemIds}
+          stats={screen.stats}
+          count={screen.count}
           eyebrow={screen.eyebrow}
           title={screen.title}
           tint={screen.tint}

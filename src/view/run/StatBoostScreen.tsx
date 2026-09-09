@@ -12,9 +12,9 @@ import { RosterPeek } from './RosterPeek';
 
 /**
  * The Vitality Shrine is the LAST hero-targeted stat node (2026-09-05, per user direction). The
- * Mana Well and Regen Spring now hand out a Gem for their stat instead — a team-wide grant that
- * does not make the player pick a favourite. HP stays here on purpose: it is the one grant worth
- * concentrating, since a single hero's survival is what a shrine can actually change.
+ * Mana Well hands out Gems for its stat instead. Gems went per-hero themselves in 2026-09-09, so
+ * this node and the Emerald now do the same job by different means — the Shrine lands its HP on
+ * the spot, where a Gem waits for the player to place it.
  */
 export type StatBoostNodeType = 'hpBoostReward';
 

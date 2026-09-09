@@ -1,8 +1,7 @@
 import { useId, type CSSProperties } from 'react';
 import { STAT_ORDER } from '../../engine/content';
-import { relics } from '../../data/relics';
 import { StatGlyph } from './statIcons';
-import { relicColor } from './relicIcons';
+import { grantsFor, isGemId, relicColor } from './relicIcons';
 
 // The two relic families drawn as OBJECTS rather than as the 24x24 currentColor marks in
 // relicIcons.tsx (2026-09-08, per user direction). A Gem offer used to be three rectangles of
@@ -25,7 +24,7 @@ function relicStyle(relicId: string): CSSProperties {
  * a single glyph could not tell apart — and the glyphs are the only thing these screens print.
  */
 function RelicCharge({ relicId, className }: { relicId: string; className?: string }) {
-  const grants = relics[relicId]?.statGrants ?? {};
+  const grants = grantsFor(relicId);
   const stats = STAT_ORDER.filter((stat) => !!grants[stat]);
   if (stats.length === 0) return null;
   return (
@@ -112,7 +111,7 @@ export function BannerStandard({ relicId, className }: { relicId: string; classN
 
 /** Whichever form the relic's family calls for — the one place a caller need not know which it is. */
 export function RelicArt({ relicId, className }: { relicId: string; className?: string }) {
-  return relics[relicId]?.gem ? (
+  return isGemId(relicId) ? (
     <GemJewel relicId={relicId} className={className} />
   ) : (
     <BannerStandard relicId={relicId} className={className} />

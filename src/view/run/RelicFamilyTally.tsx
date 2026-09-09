@@ -1,15 +1,18 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import type { RelicDefinition } from '../../run/relics';
 import { RelicArt } from '../shared/relicArt';
 import { relicColor } from '../shared/relicIcons';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 
 interface Props {
   /** The whole family, held or not — the collection is the point, not the one just gained. */
-  family: readonly RelicDefinition[];
-  /** Counts AFTER the grant lands; the gained one counts itself down one and ticks back up. */
+  family: readonly { id: string }[];
+  /** Which family is on the shelf: seven Gems lay out differently from five Banners. */
+  variant: 'gems' | 'banners';
+  /** Counts AFTER the grant lands; the gained one counts itself back down and ticks up. */
   counts: Map<string, number>;
   gainedRelicId: string;
+  /** How many landed — a Gem arrives in stacks, a Banner one at a time. */
+  gainedCount?: number;
 }
 
 /** How long the tally sits at its old figure before the gained one ticks over. */
@@ -21,7 +24,7 @@ const TICK_DELAY_MS = 460;
  * "this is my fourth Ruby", which a single reveal card cannot say. So the claim reveals the SHELF,
  * with the new one flaring and counting up on it.
  */
-export function RelicFamilyTally({ family, counts, gainedRelicId }: Props) {
+export function RelicFamilyTally({ family, variant, counts, gainedRelicId, gainedCount = 1 }: Props) {
   const [ticked, setTicked] = useState(prefersReducedMotion());
 
   useEffect(() => {
@@ -32,11 +35,11 @@ export function RelicFamilyTally({ family, counts, gainedRelicId }: Props) {
   }, []);
 
   return (
-    <div className={`relic-tally is-${family[0]?.gem ? 'gems' : 'banners'}`}>
+    <div className={`relic-tally is-${variant}`}>
       {family.map((relic, i) => {
         const held = counts.get(relic.id) ?? 0;
         const gained = relic.id === gainedRelicId;
-        const shown = gained && !ticked ? held - 1 : held;
+        const shown = gained && !ticked ? held - gainedCount : held;
         return (
           <div
             key={relic.id}

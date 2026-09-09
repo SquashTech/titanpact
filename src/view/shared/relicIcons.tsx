@@ -1,14 +1,14 @@
 import type { CSSProperties, ReactNode } from 'react';
 import type { StatKey } from '../../engine/content';
 import { STAT_ORDER } from '../../engine/content';
+import { gemStatGrants, gems } from '../../data/gems';
 import { relics } from '../../data/relics';
 import { STAT_COLORS } from './statIcons';
 
 // A relic drawn the way every other content type is: 24x24, `currentColor` only, nothing finer
 // than ~2 units. Two halves — the FORM says which family it belongs to, the COLOUR says what it
-// grants. The catalog is two closed families now (Gems and Banners, src/data/relics.ts), so the
-// form comes straight off the definition's own flag; it used to be resolved from the relic's
-// name, which was the machinery a wide random catalog needed and this one does not.
+// grants. Two closed families, and a Gem left the relic catalog for its own (src/data/gems.ts)
+// when it went per-hero, so the id is what says which family a mark belongs to.
 
 /**
  * The Gem: one unbroken brilliant — flat table, girdle at the shoulders, a point — with the table
@@ -28,6 +28,17 @@ type RelicFormName = 'gem' | 'banner';
 
 const RELIC_FORM_PATHS: Record<RelicFormName, ReactNode> = { gem: GEM, banner: BANNER };
 
+/** Whether this id names a Gem rather than a Banner. The two are drawn by the same machinery. */
+export function isGemId(id: string): boolean {
+  return id in gems;
+}
+
+/** What the id grants, from whichever catalog it belongs to. */
+export function grantsFor(id: string): Partial<Record<StatKey, number>> {
+  const gem = gems[id];
+  return gem ? gemStatGrants(gem) : relics[id]?.statGrants ?? {};
+}
+
 /** The stat a relic leads with — highest grant, ties broken by STAT_ORDER. */
 function dominantStat(grants: Partial<Record<StatKey, number>>): StatKey | undefined {
   let best: StatKey | undefined;
@@ -40,14 +51,14 @@ function dominantStat(grants: Partial<Record<StatKey, number>>): StatKey | undef
 
 /** The stat a relic reads as — its own lead grant. Undefined only for a relic that grants no stats. */
 export function relicLeadStat(relicId: string): StatKey | undefined {
-  return dominantStat(relics[relicId]?.statGrants ?? {});
+  return dominantStat(grantsFor(relicId));
 }
 
 const FALLBACK_COLOR = '#8b7fe0';
 
 /** What the relic DOES, in one colour: its lead stat's. */
 export function relicColor(relicId: string): string {
-  const stat = dominantStat(relics[relicId]?.statGrants ?? {});
+  const stat = dominantStat(grantsFor(relicId));
   return stat ? STAT_COLORS[stat] : FALLBACK_COLOR;
 }
 
@@ -75,7 +86,7 @@ export function RelicGlyph({ relicId, className }: { relicId: string; className?
       focusable="false"
       style={{ color: relicColor(relicId) } as CSSProperties}
     >
-      {RELIC_FORM_PATHS[relics[relicId]?.gem ? 'gem' : 'banner']}
+      {RELIC_FORM_PATHS[isGemId(relicId) ? 'gem' : 'banner']}
     </svg>
   );
 }

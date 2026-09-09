@@ -1,62 +1,17 @@
-// Gems (docs/run-loop.md "Gems"). Two halves: the income above — when a Gem is handed out and
-// which ones an offer holds — and the per-hero allocation model below, which owns the caps and
-// is the only thing that may write gemsEarned or gemAllocation.
+// Gems (docs/run-loop.md "Gems"). Per-hero stat investment: a run pays them out UNPLACED, and
+// the player pours them into whichever heroes they want, against two caps. This file owns the
+// income and the caps; the catalog — names, colours, what one is worth — is src/data/gems.ts.
 
 import type { StatKey } from '../engine/content';
 import type { StatModifiers } from '../engine/state';
-import { GEM_HP_GRANT, GEM_STAT_GRANT, gemRelics } from '../data/relics';
+import { gemForStat, gemList } from '../data/gems';
 import type { XpNodeType } from './difficulty';
 import type { RosterEntry, RunState } from './state';
 
-/** A Gem offer is a 1-of-3; the Guardian's Banner is the same shape at 1-of-5. */
-export const GEM_OFFER_COUNT = 3;
+// --- The catalog, as the run layer reads it ---
 
-/**
- * Chance a won fight ALSO pays a Gem offer, by map node type. Every figure is a first-pass
- * placeholder for playtest; only the shape is decided — a Gem is the drip-feed that smooths the
- * player's power curve between the sparse Banner and Shrine grants, so a fight pays one often
- * enough to plan around and rarely enough that a run's Gem spread still differs.
- *
- * The Guardian pays none: it already pays a Banner, and stacking a Gem on top would blur which
- * grant the act-boundary spike came from. The finale ends the run.
- */
-export const GEM_DROP_CHANCE: Record<XpNodeType, number> = {
-  fight: 0.3,
-  battle: 0.35,
-  skirmish: 0.35,
-  elite: 0.5,
-  boss: 0,
-  finale: 0,
-};
-
-/** The Act 1 opener always pays: the run's first Gem teaches the system rather than rolling for it. */
-export function gemDropChanceFor(nodeType: XpNodeType, isRunOpener: boolean): number {
-  return isRunOpener ? 1 : GEM_DROP_CHANCE[nodeType];
-}
-
-/** `count` distinct Gems, in random order. Ownership is never filtered — Gems are designed to stack. */
-export function pickGemOffers(count: number = GEM_OFFER_COUNT, random: () => number = Math.random): string[] {
-  const remaining = gemRelics.map((gem) => gem.id);
-  const picked: string[] = [];
-  while (picked.length < Math.min(count, remaining.length)) {
-    picked.push(remaining.splice(Math.floor(random() * remaining.length), 1)[0]);
-  }
-  return picked;
-}
-
-/** `[]` when the roll fails; otherwise the ids the post-fight Gem screen offers. */
-export function rollGemOffers(nodeType: XpNodeType, isRunOpener: boolean, random: () => number = Math.random): string[] {
-  return random() < gemDropChanceFor(nodeType, isRunOpener) ? pickGemOffers(GEM_OFFER_COUNT, random) : [];
-}
-
-// --- The per-hero allocation model (docs/run-loop.md "Gems") ---
-
-/**
- * The stats a Gem exists for: every stat but MP Regen. The exclusion is inherited from the
- * team-wide era and is worth re-asking now that a Gem is per-hero and competes against a cap
- * (docs/run-loop.md "Gems") — this list is the whole change if it comes back.
- */
-export const GEM_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool'];
+/** The stats a Gem exists for, in STAT_ORDER: every stat but MP Regen (src/data/gems.ts). */
+export const GEM_STATS: readonly StatKey[] = gemList.map((gem) => gem.stat);
 
 const GEM_STAT_SET: ReadonlySet<StatKey> = new Set(GEM_STATS);
 
@@ -64,10 +19,57 @@ export function isGemStat(stat: StatKey): boolean {
   return GEM_STAT_SET.has(stat);
 }
 
-/** One Gem's grant. HP is twice the figure because it is authored in the units the HP bar draws. */
+/** What one Gem of `stat` is worth, socketed. */
 export function gemGrant(stat: StatKey): number {
-  return stat === 'hp' ? GEM_HP_GRANT : GEM_STAT_GRANT;
+  return gemForStat[stat]?.grant ?? 0;
 }
+
+// --- Income ---
+
+/** An offer is a 1-of-3, whatever its size. The Guardian's Banner is the same beat at 1-of-5. */
+export const GEM_OFFER_COUNT = 3;
+
+/**
+ * Gems a won encounter pays, by map node type. Every figure is a first-pass placeholder for
+ * playtest; only the shape is decided.
+ *
+ * Every win pays, where the team-wide era rolled a 30-50% chance. The roll was there to keep two
+ * runs from holding the same Gems, and the player choosing the stat does that job better — so a
+ * fight paying nothing would now just be a fight that skipped its reward.
+ *
+ * The Guardian pays none: it already pays a Banner, and a Gem on top would blur which grant the
+ * act-boundary spike came from. The finale pays none because the run ends on it.
+ */
+export const GEM_FIGHT_STACK: Record<XpNodeType, number> = {
+  fight: 2,
+  battle: 2,
+  skirmish: 2,
+  elite: 3,
+  boss: 0,
+  finale: 0,
+};
+
+/**
+ * What the Gem Cache and the Mana Well hand over. Bigger than a fight's stack because a whole map
+ * node bought it — the node is where a run commits to a stat rather than collects one.
+ */
+export const GEM_NODE_STACK = 4;
+
+export function gemStackFor(nodeType: XpNodeType): number {
+  return GEM_FIGHT_STACK[nodeType] ?? 0;
+}
+
+/** `count` distinct stats, in random order — what an offer puts in front of the player. */
+export function pickGemOffers(count: number = GEM_OFFER_COUNT, random: () => number = Math.random): StatKey[] {
+  const remaining = [...GEM_STATS];
+  const picked: StatKey[] = [];
+  while (picked.length < Math.min(count, remaining.length)) {
+    picked.push(remaining.splice(Math.floor(random() * remaining.length), 1)[0]);
+  }
+  return picked;
+}
+
+// --- The per-hero allocation model ---
 
 /** Gems one hero can hold across every stat at once. */
 export const GEM_CAP_PER_HERO = 20;
@@ -100,7 +102,7 @@ export function gemHeadroom(entry: RosterEntry, stat: StatKey): number {
   return Math.max(0, Math.min(GEM_CAP_PER_STAT - gemsOn(entry, stat), gemCapacityFor(entry) - gemsHeldBy(entry)));
 }
 
-/** The hero's socketed Gems as stat deltas — the shape entryStatModifiers folds in. */
+/** The hero's socketed Gems as flat stats — the shape entryStatModifiers folds in. */
 export function gemStatModifiers(entry: RosterEntry): StatModifiers {
   const out: StatModifiers = {};
   for (const stat of GEM_STATS) {

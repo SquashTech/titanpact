@@ -1,53 +1,60 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { STAT_ORDER } from '../src/engine/content';
-import { GEM_HP_GRANT, GEM_STAT_GRANT, gemForStat, gemRelics, relics } from '../src/data/relics';
+import { GEM_HP_GRANT, GEM_STAT_GRANT, gemForStat, gemList, gems } from '../src/data/gems';
 import {
   GEM_CAP_PER_HERO,
   GEM_CAP_PER_STAT,
-  GEM_DROP_CHANCE,
+  GEM_FIGHT_STACK,
+  GEM_NODE_STACK,
   GEM_OFFER_COUNT,
   GEM_STATS,
   GemError,
-  gemDropChanceFor,
+  gemGrant,
   gemHeadroom,
   gemPool,
   gemPoolTotal,
+  gemStackFor,
   gemStatModifiers,
   gemsHeldBy,
   grantGems,
   isGemStat,
   pickGemOffers,
   pullGems,
-  rollGemOffers,
   socketGems,
   unsocketGems,
 } from '../src/run/gems';
 import { entryStatModifiers } from '../src/run/entryStats';
-import { relicTeamStatModifiers } from '../src/run/relics';
+import { relics } from '../src/data/relics';
 import type { RunState } from '../src/run/state';
 import { addRosterEntry, createRosterEntry, createRunState, terminateRosterEntry } from '../src/run/state';
 import { MAP_NODE_TYPES } from '../src/run/map';
 
-// --- The catalog (docs/run-loop.md "Gems") ---
+// --- The catalog (src/data/gems.ts) ---
 
-// The Emerald carries twice the figure for the same worth: HP is authored in the units the bar draws.
-test('gems: one Gem per stat but MP Regen, in STAT_ORDER, each a flat grant to that one stat', () => {
-  assert.strictEqual(gemRelics.length, GEM_STATS.length);
+test('gems: one Gem per stat but MP Regen, in STAT_ORDER, each carrying its own stat', () => {
+  assert.deepStrictEqual([...GEM_STATS], STAT_ORDER.filter((stat) => stat !== 'mpRegen'));
   assert.strictEqual(gemForStat.mpRegen, undefined, 'MP Regen still has a Gem');
-  GEM_STATS.forEach((stat, i) => {
-    const gem = gemRelics[i];
-    assert.strictEqual(gemForStat[stat], gem, `${stat} maps to the wrong Gem`);
-    const grant = stat === 'hp' ? GEM_HP_GRANT : GEM_STAT_GRANT;
-    assert.deepStrictEqual(gem.statGrants, { [stat]: grant }, `${gem.id} grants more than its own stat`);
-    assert.strictEqual(gem.gem, true, `${gem.id} is not flagged as a Gem`);
-    assert.strictEqual(relics[gem.id], gem, `${gem.id} is missing from the relic catalog`);
+  gemList.forEach((gem, i) => {
+    assert.strictEqual(gem.stat, GEM_STATS[i], `${gem.id} is out of STAT_ORDER`);
+    assert.strictEqual(gemForStat[gem.stat], gem, `${gem.stat} maps to the wrong Gem`);
+    assert.strictEqual(gems[gem.id], gem, `${gem.id} is missing from the catalog`);
   });
 });
 
-test('gems: Gems stack through the ordinary relic stat pipeline', () => {
-  const ruby = gemForStat.attack!.id;
-  assert.deepStrictEqual(relicTeamStatModifiers([ruby, ruby, ruby], relics), { attack: GEM_STAT_GRANT * 3 });
+// The Emerald carries twice the figure for the same worth: HP is authored in the units the bar draws.
+test('gems: every Gem is worth GEM_STAT_GRANT but the Emerald, which is worth twice', () => {
+  for (const gem of gemList) {
+    assert.strictEqual(gem.grant, gem.stat === 'hp' ? GEM_HP_GRANT : GEM_STAT_GRANT, `${gem.id} is priced oddly`);
+    assert.strictEqual(gemGrant(gem.stat), gem.grant, `gemGrant disagrees with the catalog about ${gem.stat}`);
+  }
+  assert.strictEqual(GEM_HP_GRANT, GEM_STAT_GRANT * 2);
+});
+
+// A Gem is per-hero now, so it is not in the team-wide catalog at all.
+test('gems: no Gem is a relic, and the relic catalog is Banners only', () => {
+  for (const gem of gemList) assert.strictEqual(relics[gem.id], undefined, `${gem.id} is still a relic`);
+  for (const relic of Object.values(relics)) assert.ok(relic.guardianBanner, `${relic.id} is not a Banner`);
 });
 
 // --- Handing them out (src/run/gems.ts) ---
@@ -57,28 +64,30 @@ test('gems: the map carries a Gem Cache node, and no Regen Spring', () => {
   assert.ok(!(MAP_NODE_TYPES as readonly string[]).includes('manaRegenBoostReward'));
 });
 
-test('gems: every drop chance is a probability, and the Guardian and finale pay none', () => {
-  for (const [nodeType, chance] of Object.entries(GEM_DROP_CHANCE)) {
-    assert.ok(chance >= 0 && chance <= 1, `${nodeType} chance ${chance} is not a probability`);
+// Every win pays: the roll the team-wide era used is gone, because the player choosing the stat
+// is what keeps two runs from holding the same Gems.
+test('gems: every won fight pays a stack, and the Guardian and finale pay none', () => {
+  for (const [nodeType, stack] of Object.entries(GEM_FIGHT_STACK)) {
+    assert.ok(Number.isInteger(stack) && stack >= 0, `${nodeType} pays ${stack}, which is not a stack`);
   }
-  assert.strictEqual(GEM_DROP_CHANCE.boss, 0);
-  assert.strictEqual(GEM_DROP_CHANCE.finale, 0);
+  for (const nodeType of ['fight', 'battle', 'skirmish', 'elite'] as const) {
+    assert.ok(gemStackFor(nodeType) > 0, `${nodeType} pays no Gems`);
+  }
+  assert.strictEqual(gemStackFor('boss'), 0, 'the Guardian pays a Gem on top of its Banner');
+  assert.strictEqual(gemStackFor('finale'), 0);
 });
 
-test('gems: the run opener always pays, whatever its node type would otherwise roll', () => {
-  assert.strictEqual(gemDropChanceFor('fight', true), 1);
-  assert.strictEqual(gemDropChanceFor('fight', false), GEM_DROP_CHANCE.fight);
-  // A roll of 0.999 fails every ordinary fight and still pays on the opener.
-  assert.strictEqual(rollGemOffers('fight', true, () => 0.999).length, GEM_OFFER_COUNT);
-  assert.deepStrictEqual(rollGemOffers('fight', false, () => 0.999), []);
+test('gems: an Elite pays more than an ordinary fight, and a node more than any fight', () => {
+  assert.ok(gemStackFor('elite') > gemStackFor('fight'));
+  assert.ok(GEM_NODE_STACK > Math.max(...Object.values(GEM_FIGHT_STACK)));
 });
 
-test('gems: an offer is GEM_OFFER_COUNT distinct Gems', () => {
+test('gems: an offer is GEM_OFFER_COUNT distinct stats, all of them Gem stats', () => {
   for (let i = 0; i < 50; i++) {
     const offer = pickGemOffers();
     assert.strictEqual(offer.length, GEM_OFFER_COUNT);
-    assert.strictEqual(new Set(offer).size, GEM_OFFER_COUNT, `offer repeated a Gem: ${offer}`);
-    for (const id of offer) assert.ok(relics[id]?.gem, `${id} is not a Gem`);
+    assert.strictEqual(new Set(offer).size, GEM_OFFER_COUNT, `offer repeated a stat: ${offer}`);
+    for (const stat of offer) assert.ok(isGemStat(stat), `${stat} carries no Gem`);
   }
 });
 

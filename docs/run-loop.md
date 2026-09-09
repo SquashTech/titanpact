@@ -226,7 +226,7 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30, more for nothing having been spent yet). **2026-09-08, per user direction:** it pays out on arrival and the screen counts the PURSE up to its new total, coin by coin, over a Claim button that was never a decision — the drop size is a chip beside a number the player can act on, rather than a number they cannot. `upgradeReward` shares the beat, counting the level-up pool. |
 | `upgradeReward` | `NodeRewardScreen` — an instant flat grant to the pooled level-up currency (2-3 points), on top of the per-fight-win grant (see below). |
 | `forgeReward` ("The Forge") | `ForgeScreen` — pick one roster hero to gain **+1 item slot** for the rest of the run (`runProgress.ts` `grantItemSlot`, stored on `RosterEntry.bonusItemSlots`, capped at `MAX_ITEM_SLOTS` = 3). **2026-09-06**, replacing the three slot-specific cache nodes (`weaponReward`/`armorReward`/`accessoryReward`), which lost their meaning when items stopped having categories — most of their frequency went to `equipmentReward`, whose weight went 20 → 40. The scarcest thing on the reward row (weight 8) on purpose: it is permanent, it compounds with every drop after it, and it is the only reward here a hero can be at the cap for — a roster entirely at 3 slots makes the node a dead draw, which is what makes spending it a choice — and at the 2026-09-07 cap of 3 that arrives materially sooner. |
-| `gemReward` ("Gem Cache") | `GemChoiceScreen` — pick 1 of 3 Gems, drawn from all seven without filtering what is already held. See "Gems" below. |
+| `gemReward` ("Gem Cache") | `GemChoiceScreen` — pick 1 of 3 stones and take `GEM_NODE_STACK` = 4 of it. See "Gems" below. |
 | `passiveReward` ("Boon") | `BoonNodeScreen` — pick 1 of 3 passives, then the hero it settles on (`grantEventPassive`, stored on `RosterEntry.bonusPassiveGrants`). See "Boons" below. |
 | `hpBoostReward` | `StatBoostScreen` — pick one roster hero to receive a flat, permanent-for-the-run +20 max HP (`runProgress.ts` `grantStatBonus`), stored on `RosterEntry.bonusStatGrants`. The **last** hero-targeted stat node: HP is the one grant worth concentrating, because a single hero surviving is what a shrine can actually change. |
 | `manaBoostReward` ("Mana Well") | **2026-09-05, per user direction:** this no longer makes the player pick a hero. It hands over Sapphire (+5 Mana Pool) through `GemChoiceScreen` with the offer fixed to one. Its name, tint and place-flavour are unchanged; only the grant is. Its twin, the Regen Spring (`manaRegenBoostReward`), was deleted with Peridot on 2026-09-07. |
@@ -398,11 +398,11 @@ changes how a hero *plays* rather than how big its numbers are, which argues for
 also the node most likely to be the reason a run comes together, which argues for commoner.
 Playtest.
 
-### Gems (2026-09-05, per user direction)
+### Gems (2026-09-05; rebuilt per-hero 2026-09-09, both per user direction)
 
-A **Gem** is an ordinary team-wide relic with a deliberately small, deliberately uniform
-grant: **+5 to one stat, for every hero**. There are **seven** — one per stat except MP Regen —
-named for the stone whose colour the stat already wears (`src/data/relics.ts` `GEM_TABLE`):
+A **Gem** is **per-hero stat investment**: a flat **+5** to one stat (**+10** for HP), socketed
+into ONE hero rather than granted to the team. There are **seven**, one per stat except MP Regen,
+each named for the stone whose colour the stat already wears (`src/data/gems.ts` `gemList`):
 
 | Stat | Gem | Stat | Gem |
 |---|---|---|---|
@@ -411,55 +411,108 @@ named for the stone whose colour the stat already wears (`src/data/relics.ts` `G
 | Defense | Onyx | Mana Pool | Sapphire |
 | Wisdom | Aquamarine | | |
 
-**Peridot is gone (2026-09-07, per user direction).** MP Regen is a flat 10 on every hero in the
-roster, so +5 was +50% of a *throughput* stat, and throughput compounds over a fight in a way a
-buffer does not. It read as the correct pick from every offer it appeared in, which is the
-opposite of what a 1-of-3 is for — a Gem offer should be a question about the squad you actually
-fielded. MP Regen is still reachable, on the Wellspring Banner, where it is priced against four
-rivals rather than two. The Regen Spring node went with it.
+**Why they left the relic axis.** As a team-wide +5 they were satisfying to collect and carried
+no decision — the offer asked which stat, never which hero, and the game had no way at all to
+express "I want to build THIS one". The per-hero version is the EV analogue: the player pours
+stones into the heroes they are actually building, and the pouring is the fun.
 
-They exist to **smooth the power curve**. The Banner is sparse and large; between two of them a
-run's team-wide power moved in one big step, and the measured problem was that the run was simply
-too hard in between. Gems are the drip-feed: small enough that one is never the answer to a
-fight, common enough that a run holds several by Act 3, and stackable without limit, so a player
-who keeps taking Rubies is building something.
+**Peridot is gone (2026-09-07).** MP Regen is a flat 10 on every hero, so +5 was +50% of a
+*throughput* stat, and throughput compounds over a fight in a way a buffer does not. It read as
+the correct pick from every offer it appeared in, which is the opposite of what a 1-of-3 is for.
+It lives on the Wellspring Banner instead. **Worth re-asking** now that a Gem is per-hero and
+priced against a cap rather than free — restoring it is one entry in `GEM_TABLE`.
 
-They stack through the ordinary relic pipeline — `relicTeamStatModifiers` already sums duplicate
-ids — and display folded, exactly as a Banner does ("Ruby +2", `stackedRelicName`). Nothing in
-the engine knows the word "Gem": `RelicDefinition.gem` is display grouping, telling the run sheet
-which rail a relic belongs on.
+#### The two caps
 
-**Where they come from** (`src/run/gems.ts`):
+`GEM_CAP_PER_HERO` = **20**, `GEM_CAP_PER_STAT` = **8** (`src/run/gems.ts`). They do different
+jobs, and the pair is load-bearing:
 
-- **The run's first fight always pays one.** Act 1, row 0, 100%, no roll — the first Gem
-  teaches the system rather than rolling for it.
-- **Every other won fight rolls for one**, by node type: `fight` 30%, `battle`/`skirmish` 35%,
-  `elite` 50%. **All first-pass placeholders for playtest; only the shape is decided.** The
-  Guardian pays none — it already pays a Banner, and a Gem stacked on top would blur which
-  grant the act-boundary spike came from. The finale pays none: the run ends on it.
-- **The `gemReward` map node** — a 1-of-3 of any Gem, weight 20 in `REWARD_WEIGHTS`.
-- **The Mana Well**, which hands over Sapphire outright.
+- The **per-hero** cap is the anti-funnel lever. Pokémon has no equivalent — every Pokémon can
+  max its own 510 — but here the pool is shared across a roster, so without it a run is one
+  runaway carry and three passengers.
+- The **per-stat** cap forces spread *within* a hero. 20/8 means at least three stats to fill
+  one, the same "two maxed and change" shape as 510/252.
 
-A fight's Gem offer is the **first** post-fight gate, ahead of the Banner, so a hero recruited
-two gates later already stands under it.
+The cap is **flat**, not scaled by level or act. Tying capacity to level would make Gem
+investment and Training Point investment pull the same direction — a stronger carry fantasy, but
+a cap whose job is limiting concentration cannot grow with the thing players concentrate.
+
+`gemCapacityFor` is the one place capacity is decided, the same rule `itemSlotsFor` follows.
+
+#### Re-allocation is free, and freezes at node-select
+
+Gems move between heroes and between stats **freely and unlimitedly, at no cost**, from the map.
+This is what makes the rework safe for roster churn: a hero terminated in Act 4 is not a hero's
+worth of Gems lost, and a late recruit is one tap from wearing the run's whole pile. It replaced
+an earlier permanent-allocation design whose refund-on-termination and catch-up-grant-on-recruit
+patches were both trying to buy exactly this.
+
+It **freezes from node-select onward**. `SquadSelectScreen` generates the encounter at
+node-select time specifically so the enemy squad can be scouted before the player commits — so a
+Gem spread still fluid after the scout means the optimal play is counter-tuning every single
+fight. Two reasons that is the wrong game:
+
+1. **The counter-pick layer already exists and is better.** Bring-6-pick-4 against a scout is a
+   real decision; if Gems can also answer a bad matchup, the player tunes around it instead of
+   bringing a different hero, and the sideboard gets *less* interesting.
+2. It is the whole tedium defence. Re-tuning happens when the player decides to, not under
+   optimization pressure at all ~25 encounters.
+
+Gems answer "who is my team", not "who am I fighting". Node commit is already final (there is no
+back affordance on `SquadSelectScreen`), so the freeze lands on a boundary the player already
+understands.
+
+#### The pool is derived, never stored
+
+`RunState.gemsEarned` is every Gem the run has paid out, per stat. `RosterEntry.gemAllocation` is
+where they currently sit. The spendable pool is **the difference** (`gemPool`), never a third
+stored number. That is what makes free re-allocation safe rather than merely convenient:
+
+- A Gem cannot be duplicated or lost by any code path.
+- Terminating a hero returns its Gems **by construction**, not by a rule somebody has to
+  remember to write.
+- A save whose roster holds more than the run earned is *refused* (`save.ts`), because that is
+corruption rather than a negative pool.
+
+#### Where they come from (`src/run/gems.ts`)
+
+- **Every won fight pays a stack**, sized by node type: `fight`/`battle`/`skirmish` **2**,
+  `elite` **3** (`GEM_FIGHT_STACK`). The Guardian pays none — it already pays a Banner, and a
+  Gem on top would blur which grant the act-boundary spike came from. The finale pays none: the
+  run ends on it.
+- **The `gemReward` node and the Mana Well** pay `GEM_NODE_STACK` = **4**. Bigger than a fight's,
+  because a whole map node bought it.
+- **Every payout is a choice.** A fight offers a 1-of-3 of stats and a node offers the same at
+  four times the size; the Mana Well is the one fixed grant. The old 30-50% drop ROLL is gone —
+  it existed to keep two runs from holding the same Gems, and the player picking the stat does
+  that job better. A fight that paid nothing would now just be a fight that skipped its reward.
+
+**All first-pass placeholders for playtest; only the shape is decided.** Income rose roughly 4x
+with the rework and that is deliberate in two ways. Power parity alone would have argued for
+less — concentrated stats are worth more than spread ones, so 40 points aimed at two stats on
+two heroes beats 40 spread over seven stats and four heroes. But **a cap only does anti-funnel
+work when income runs well past ONE hero's worth**: at 28 a run against a cap of 20 the player
+fills one hero and the cap never binds, which IS the funnel. Somewhere near 2 to 2.5 hero-loads
+by the end of a run is the interesting zone, and that is what the current figures aim at.
 
 **Always listed, held or not.** The run sheet shows all seven Gems from the first node of a run,
-dimmed at ×0 (`RunRelicsPanel`, `.relic-rail`). An unheld Gem is a slot to fill rather than an
-absence — the player is expected to collect most of them, so the empty ones are a plan.
+dimmed at ×0 (`RunRelicsPanel`, `.relic-rail`), counting what the RUN has collected wherever
+those stones currently sit. An unheld Gem is a slot to fill rather than an absence.
 
-**Open — the flat +5 is not priced by stat.** `STAT_POINT_VALUE` (`src/run/equipment.ts`) holds
-HP and Mana Pool at half a point, and the Gems ignore that on purpose: seven identically-shaped
-stones is the legible version. Whether Emerald needs to be bigger is a playtest question, not a
-decision. Removing Peridot took the *worst* case of the mismatch off the table (MP Regen at three
-points a unit), which is most of why the remaining spread is tolerable.
+**Open — the flat +5 is not priced by stat, and there are three HP prices in the repo.** The
+roster stat budget charges HP 1:1 (2026-09-09), equipment's `STAT_POINT_VALUE` charges ½, and the
+Emerald grants 2×. Team-wide Gems hid the mismatch because everyone got everything; per-hero and
+capped, "Emerald or Ruby?" is an explicit player question at every allocation, so whichever stone
+is mispriced becomes the auto-pick — exactly the failure mode that killed Peridot. **This wants a
+decision before the numbers are tuned.**
 
 ### Winning a fight: the post-fight gates
 
 A won encounter resolves through up to five gates before the map comes back
 (`App.tsx handleFightResolved`), in this order:
 
-0. **The Gem offer** (`GemChoiceScreen`) — guaranteed on the run's first fight, rolled on
-   every other one. See "Gems" above.
+0. **The Gem offer** (`GemChoiceScreen`) — every won fight but the Guardian and the finale,
+   a 1-of-3 of stats paid as a stack. See "Gems" above.
 0. **The Guardian's Banner** (`GuardianBannerScreen`) — boss nodes only; a fixed 1-of-3
    team-wide relic, ahead of everything else remaining so a hero recruited at gate 1
    arrives under it. See §3.

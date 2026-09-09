@@ -1,10 +1,11 @@
-// Relics: the team-wide axis (docs/progression.md "Relics (team-wide)"). Two families, both
-// fixed and both stacking — the common Gem and the per-act Guardian's Banner. There is no
-// random relic pool: a team-wide passive applied to all four heroes at once was either a
-// bigger Gem or an unanswerable one, so the axis is flat stats now and the interesting
-// grants live per-hero on equipment (2026-09-07).
+// Relics: the team-wide axis (docs/progression.md "Relics (team-wide)"). One family — the
+// per-act Guardian's Banner, fixed and stacking. There is no random relic pool: a team-wide
+// passive applied to all four heroes at once was either a bigger Gem or an unanswerable one,
+// so the axis is flat stats and the interesting grants live per-hero on equipment (2026-09-07).
+//
+// Gems left this file for src/data/gems.ts (2026-09-09): a Gem is poured into ONE hero now, so
+// it is not a team-wide grant any more.
 
-import type { StatKey } from '../engine/content';
 import type { RelicDefinition } from '../run/relics';
 
 // --- Guardian's Banner: the fixed, stackable pick after every Guardian (docs/run-loop.md).
@@ -57,57 +58,7 @@ const guardianBanners: Record<string, RelicDefinition> = {
   },
 };
 
-// --- Gems: the common, stacking drip-feed (docs/run-loop.md "Gems"). One per COMBAT stat plus
-// Mana Pool, handed out often enough that a run holds several by Act 3.
-//
-// MP Regen has no Gem (2026-09-07): at a flat base 10 across the whole roster, +5 was +50% of
-// a throughput stat and read as the correct pick from every offer, which is the opposite of
-// what a 1-of-3 is for. It lives on the Wellspring Banner instead, priced against four rivals.
-export const GEM_STAT_GRANT = 5;
-
-/** The Emerald carries HP, which is authored in the same units the HP bar draws — twice the other Gems' figure for the same worth. */
-export const GEM_HP_GRANT = GEM_STAT_GRANT * 2;
-
-function gemGrant(stat: StatKey): number {
-  return stat === 'hp' ? GEM_HP_GRANT : GEM_STAT_GRANT;
-}
-
-/** Stat -> the one Gem that carries it, in STAT_ORDER — the order every Gem surface lists them in. */
-const GEM_TABLE: readonly { stat: StatKey; id: string; name: string; label: string }[] = [
-  { stat: 'hp', id: 'emeraldGem', name: 'Emerald', label: 'HP' },
-  { stat: 'attack', id: 'rubyGem', name: 'Ruby', label: 'Attack' },
-  { stat: 'defense', id: 'onyxGem', name: 'Onyx', label: 'Defense' },
-  { stat: 'intelligence', id: 'amethystGem', name: 'Amethyst', label: 'Intelligence' },
-  { stat: 'wisdom', id: 'aquamarineGem', name: 'Aquamarine', label: 'Wisdom' },
-  { stat: 'speed', id: 'citrineGem', name: 'Citrine', label: 'Speed' },
-  { stat: 'manaPool', id: 'sapphireGem', name: 'Sapphire', label: 'Mana Pool' },
-];
-
-const gems: Record<string, RelicDefinition> = Object.fromEntries(
-  GEM_TABLE.map(({ stat, id, name, label }) => [
-    id,
-    {
-      id,
-      name,
-      description: `Team-wide +${gemGrant(stat)} ${label}.`,
-      statGrants: { [stat]: gemGrant(stat) },
-      gem: true,
-    } satisfies RelicDefinition,
-  ])
-);
-
-export const relics: Record<string, RelicDefinition> = {
-  ...guardianBanners,
-  ...gems,
-};
-
-/** The seven Gems in STAT_ORDER — the order every Gem surface lists them in. */
-export const gemRelics: RelicDefinition[] = GEM_TABLE.map(({ id }) => gems[id]);
-
-/** The Gem that carries each stat. Partial: MP Regen has none (see above). */
-export const gemForStat: Partial<Record<StatKey, RelicDefinition>> = Object.fromEntries(
-  GEM_TABLE.map(({ stat, id }) => [stat, gems[id]])
-);
+export const relics: Record<string, RelicDefinition> = { ...guardianBanners };
 
 /** The five fixed Banners, in the order the post-Guardian screen offers them. */
 export const guardianBannerRelics: RelicDefinition[] = Object.values(guardianBanners);

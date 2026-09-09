@@ -357,7 +357,7 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
         </div>
         <div className="screen-scroll">
           <div className="roster-top-block">
-            <RunRelicsPanel ownedRelicIds={run.relics} />
+            <RunRelicsPanel run={run} />
             {focusBar}
           </div>
 

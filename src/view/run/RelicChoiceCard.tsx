@@ -1,10 +1,16 @@
 import type { CSSProperties } from 'react';
-import type { RelicDefinition } from '../../run/relics';
 import { RelicArt } from '../shared/relicArt';
 import { relicColor } from '../shared/relicIcons';
 
+/** A Banner or a Gem — the card only ever needed this much of either. */
+interface Offer {
+  id: string;
+  name: string;
+  description?: string;
+}
+
 interface Props {
-  relic: RelicDefinition;
+  relic: Offer;
   picked: boolean;
   onPick: () => void;
   revealDelayMs: number;
@@ -13,7 +19,7 @@ interface Props {
 }
 
 /** Just the part that tells five Banners apart. The claim button states the full name. */
-function shortName(relic: RelicDefinition): string {
+function shortName(relic: Offer): string {
   return relic.name.replace(/^Banner of (the )?/, '');
 }
 

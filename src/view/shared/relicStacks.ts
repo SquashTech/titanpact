@@ -3,7 +3,12 @@
 // (3 copies => "+2"), the upgrade-pip convention.
 
 import type { StatKey } from '../../engine/content';
-import type { RelicDefinition } from '../../run/relics';
+
+/** A Banner or a Gem: everything these helpers need to write one down. */
+export interface StackableGrant {
+  name: string;
+  statGrants: Partial<Record<StatKey, number>>;
+}
 
 /** Full-word stat names for surfaces with room (reward cards, relic descriptions); StatBars has the 3-letter forms. */
 export const STAT_FULL_LABELS: Record<StatKey, string> = {
@@ -17,7 +22,7 @@ export const STAT_FULL_LABELS: Record<StatKey, string> = {
   mpRegen: 'MP Regen',
 };
 
-export function stackedRelicName(relic: RelicDefinition, count: number): string {
+export function stackedRelicName(relic: StackableGrant, count: number): string {
   return count > 1 ? `${relic.name} +${count - 1}` : relic.name;
 }
 
@@ -26,7 +31,7 @@ export function stackedRelicName(relic: RelicDefinition, count: number): string 
  * relics. A count of 0 is a real case — the Relics screen lists every Gem, held or not — and
  * reads "+0 HP" rather than "0 HP", so a column of totals stays uniform.
  */
-export function stackedGrantSummary(relic: RelicDefinition, count: number): string {
+export function stackedGrantSummary(relic: StackableGrant, count: number): string {
   return Object.entries(relic.statGrants)
     .filter(([, amount]) => amount)
     .map(([stat, amount]) => {

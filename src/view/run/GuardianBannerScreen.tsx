@@ -81,7 +81,7 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
             claimedRelic && (
               <>
                 <div className="relic-tally-label">Your banners</div>
-                <RelicFamilyTally family={guardianBannerRelics} counts={counts} gainedRelicId={claimedRelic.id} />
+                <RelicFamilyTally family={guardianBannerRelics} variant="banners" counts={counts} gainedRelicId={claimedRelic.id} />
               </>
             )
           )}

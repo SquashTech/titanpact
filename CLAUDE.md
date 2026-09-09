@@ -143,11 +143,12 @@ don't silently override it.
   paying for. The **Forge** node grants +1 slot to one hero, to `MAX_ITEM_SLOTS` = 3.
   **No hero holds two copies of one item**, and capacity is decided in one place, `itemSlotsFor`
   (`docs/progression.md`). **Relics are the team-wide axis** — a separate axis, not items.
-- **The relic catalog is two closed families, both flat stats: Gems and Banners** (2026-09-07,
-  replacing a ~50-relic random pool and the `relicReward` Shrine node, both deleted). Playtest
-  found the pool collapsed into two buckets — a bigger Gem, or a passive that was unanswerable
-  applied to all four heroes at once — so the interesting grants now live per-hero, on equipment
-  and on the Boon node. Nothing team-wide grants a passive or an Elemental Force any more.
+- **The relic catalog is ONE closed family of flat stats: the Guardian's Banners** (2026-09-07,
+  replacing a ~50-relic random pool and the `relicReward` Shrine node, both deleted; Gems left the
+  axis 2026-09-09 when they went per-hero). Playtest found the pool collapsed into two buckets — a
+  bigger Gem, or a passive that was unanswerable applied to all four heroes at once — so the
+  interesting grants live per-hero: on equipment, the Boon node and Gems. Nothing team-wide grants
+  a passive or an Elemental Force, and a Banner is now the ONLY team-wide grant of any kind.
 - **The Tutor: one guaranteed seat in each of acts 4 and 5** (2026-09-07). `tutorReward` lets
   the player pick a hero and teach it **any** move from that hero's own level-up pool — un-rolled,
   un-tier-gated, and including moves a level-up already offered and had declined. It takes a seat
@@ -162,13 +163,23 @@ don't silently override it.
   **only when a roster hero fields that type** — the filter is what keeps it from ever being a
   dead card. Evolution passives and Classes are excluded: both are somebody's identity already.
   `src/run/boons.ts`, `docs/run-loop.md` "Boons".
-- **Gems, handed out commonly**: **seven** stones, one per stat **except MP Regen**, each a flat
-  team-wide **+5**, stacking without limit. The run's first fight always pays one, every later
-  fight rolls for one, and the `gemReward` node plus the Mana Well grant them
-  (`RelicDefinition.gem`, `src/run/gems.ts`). They are the drip-feed that smooths the curve
-  between Banners — a deliberate difficulty softener. MP Regen has no Gem and the Regen Spring
-  node is gone: at a flat base 10 across the roster, +5 was +50% of a throughput stat and read as
-  the correct pick from every offer. Odds and the un-priced flat +5: `docs/run-loop.md`.
+- **Gems are PER-HERO stat investment, poured and re-poured freely** (2026-09-09, replacing the
+  team-wide +5 relic). **Seven** stones, one per stat **except MP Regen**, each a flat **+5**
+  (**+10** HP) socketed into ONE hero, capped at **`GEM_CAP_PER_HERO` = 20 a hero and
+  `GEM_CAP_PER_STAT` = 8 a stat** — 20/8 forces at least three stats to fill a hero, and the pair
+  is the whole anti-funnel lever. The cap is **flat**, never scaling with level: a cap whose job
+  is limiting concentration cannot grow with the thing players concentrate.
+  **Re-allocation is free and unlimited on the map**, which is what keeps a late recruit and a
+  roster swap viable — a hero cut is not a hero's worth of Gems lost. It **freezes at
+  node-select**: the encounter is scouted before the player commits, and re-tuning after the scout
+  would duplicate the bring-6-pick-4 counter-pick the sideboard already is. Gems answer "who is my
+  team", not "who am I fighting".
+  **The pool is DERIVED, never stored** — `RunState.gemsEarned` minus what the roster holds
+  (`gemPool`) — so a Gem cannot be duplicated or lost, and terminating a hero refunds by
+  construction. Every won fight pays a stack (2/2/2/3 by node kind; the Guardian and finale none)
+  and the `gemReward` node and Mana Well pay `GEM_NODE_STACK` = 4. Income rose ~4x with the
+  rework, because a cap only does anti-funnel work when income runs well past ONE hero's worth.
+  All first-pass figures for playtest (`src/data/gems.ts`, `src/run/gems.ts`; `docs/run-loop.md`).
 - **Item rarity is a point budget, spent exactly** (2026-08-30; rebased 2026-09-06): Common 30 /
   Rare 50 / Epic 70 / Legendary 90 / Mythic 110, paid in stats, Elemental Force magnitude, or
   granted passives (`RARITY_BUDGET`, `src/run/equipment.ts`; enforced by `test/equipment.test.ts`).

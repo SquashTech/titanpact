@@ -1,5 +1,5 @@
-// Relics: team-wide grants, a separate axis from per-hero equipment. The shipped catalog is
-// Gems and Banners, both flat stats (src/data/relics.ts). grantsPassiveIds/grantsStatusIds are
+// Relics: team-wide grants, a separate axis from per-hero equipment. The shipped catalog is the
+// Guardian's Banners, flat stats (src/data/relics.ts). grantsPassiveIds/grantsStatusIds are
 // the other two team-wide grant shapes the pipeline carries, kept for whatever wants them next.
 
 import type { PassiveId, StatKey, StatusGrant } from '../engine/content';
@@ -18,8 +18,6 @@ export interface RelicDefinition {
   grantsStatusIds?: readonly StatusGrant[];
   /** One of the five fixed post-Guardian Banners. Display grouping only — nothing in the engine reads it. */
   guardianBanner?: true;
-  /** One of the seven Gems. Display grouping only — nothing in the engine reads it. */
-  gem?: true;
 }
 
 export function isValidRelicDefinition(relic: RelicDefinition): boolean {

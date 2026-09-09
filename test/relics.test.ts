@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { test } from './harness';
 import { isValidRelicDefinition, relicTeamStatModifiers } from '../src/run/relics';
-import { relics, gemRelics, guardianBannerRelics } from '../src/data/relics';
+import { relics, guardianBannerRelics } from '../src/data/relics';
 import { heroes } from '../src/data/heroes';
 import { equipment } from '../src/data/equipment';
 import { passives } from '../src/data/passives';
@@ -10,6 +10,7 @@ import { createRunState, createRosterEntry, addRosterEntry } from '../src/run/st
 import { pickSquad } from '../src/run/squad';
 import { buildCombatState } from '../src/run/buildCombatState';
 import { grantClass } from '../src/run/classes';
+import { grantGems, socketGems } from '../src/run/gems';
 import { relicTeamPassiveGrants } from '../src/run/passives';
 import { entryPassiveCounts, entryStatModifiers, relicStatContribution } from '../src/run/entryStats';
 
@@ -23,25 +24,26 @@ test('relics: isValidRelicDefinition rejects a non-multiple-of-5 grant', () => {
   assert.strictEqual(isValidRelicDefinition({ id: 'bad', name: 'Bad', statGrants: { attack: 7 } }), false);
 });
 
-// The catalog is two closed families now (2026-09-07): the random relic pool is gone, because a
-// team-wide passive applied to all four heroes at once was either a bigger Gem or unanswerable.
-test('relics: the catalog is exactly the Banners plus the Gems', () => {
-  assert.strictEqual(Object.values(relics).length, guardianBannerRelics.length + gemRelics.length);
+// One closed family (2026-09-09): the random relic pool went in 2026-09-07, because a team-wide
+// passive applied to all four heroes at once was either a bigger Gem or unanswerable — and the
+// Gems themselves left for src/data/gems.ts when they went per-hero.
+test('relics: the catalog is exactly the Banners', () => {
+  assert.strictEqual(Object.values(relics).length, guardianBannerRelics.length);
   for (const relic of Object.values(relics)) {
-    assert.ok(relic.guardianBanner || relic.gem, `${relic.id} belongs to neither family`);
+    assert.ok(relic.guardianBanner, `${relic.id} is not a Banner`);
     assert.ok(!relic.grantsPassiveIds?.length, `${relic.id} grants a team-wide passive`);
     assert.ok(!relic.grantsStatusIds?.length, `${relic.id} grants a team-wide status`);
   }
 });
 
 test('relics: relicTeamStatModifiers merges owned relics additively and ignores unknown ids', () => {
-  const mods = relicTeamStatModifiers(['bannerOfSwiftness', 'onyxGem', 'unknown-relic'], relics);
-  assert.deepStrictEqual(mods, { speed: 20, defense: 5 });
+  const mods = relicTeamStatModifiers(['bannerOfSwiftness', 'bannerOfTheBulwark', 'unknown-relic'], relics);
+  assert.deepStrictEqual(mods, { speed: 20, defense: 15, wisdom: 15 });
 });
 
 test('relics: relicTeamStatModifiers stacks a duplicate relic id', () => {
-  const mods = relicTeamStatModifiers(['onyxGem', 'onyxGem'], relics);
-  assert.strictEqual(mods.defense, 10);
+  const mods = relicTeamStatModifiers(['bannerOfTheBulwark', 'bannerOfTheBulwark'], relics);
+  assert.strictEqual(mods.defense, 30);
 });
 
 test('relics: no owned relics yields no modifiers', () => {
@@ -82,10 +84,13 @@ test('relics: the five Banners cover five different axes, and no axis twice', ()
 // --- Out-of-combat sheet parity: the sheet and buildCombatState both go through entryStats.ts ---
 
 test('entryStats: the out-of-combat sheet math equals the combatant a fight actually builds', () => {
-  const relicIds = ['bannerOfSwiftness', 'onyxGem', 'onyxGem'];
+  const relicIds = ['bannerOfSwiftness', 'bannerOfTheBulwark', 'bannerOfTheBulwark'];
   let run = createRunState(10);
   run = addRosterEntry(run, createRosterEntry('cinderKnight', 'cinderKnight', heroes.cinderKnight.moveIds));
   run = grantClass(run, classes, 'cinderKnight', 'warrior');
+  // Socketed Gems are a grant source like any other, so the parity has to cover them too.
+  run = grantGems(run, 'attack', 3);
+  run = socketGems(run, 'cinderKnight', 'attack', 3);
 
   const teamStatModifiers = relicTeamStatModifiers(relicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);
@@ -103,7 +108,7 @@ test('entryStats: the out-of-combat sheet math equals the combatant a fight actu
 
   assert.deepStrictEqual(sheetMods, state.combatants['A:cinderKnight'].baselineStatModifiers);
   assert.strictEqual(sheetMods.speed, 20);
-  assert.strictEqual(sheetMods.defense, 10 + (classes.warrior.statGrants?.defense ?? 0));
+  assert.strictEqual(sheetMods.defense, 30 + (classes.warrior.statGrants?.defense ?? 0));
 });
 
 test('entryStats: relicStatContribution isolates the relic-sourced slice', () => {
