@@ -16026,7 +16026,7 @@ textarea,
 /* Gold is a pact being struck: hot rim, saturated body, and a bottom third
    dropping to the same bronze the wordmark ends on, so the button and the
    logo are lit by one source. */
-.title-cta-socket.is-gold {
+.title-screen.is-gold {
   --plate-rgb: 224, 166, 60;
   --plate-face: linear-gradient(178deg, #fff0cc 0%, #f6c96f 12%, #e0a63c 46%, #b57c26 78%, #7d5417 100%);
   --plate-bezel: linear-gradient(160deg, rgba(255, 226, 164, 0.7), rgba(224, 166, 60, 0.45) 40%, rgba(96, 62, 18, 0.6));
@@ -16035,6 +16035,9 @@ textarea,
   --plate-etch: rgba(112, 74, 20, 0.35);
   --plate-focus: rgba(26, 16, 0, 0.85);
   --plate-sheen: rgba(255, 252, 236, 0.72);
+  --plate-flare: #fff6e0;
+  --plate-bloom-rgb: 240, 188, 95;
+  --plate-dusk: 18, 15, 12;
 }
 
 /* Verdigris is a pact struck a while ago: the same metal, weathered. It is
@@ -16042,7 +16045,7 @@ textarea,
    beginning one are not the same act — a gold plate on both said they were.
    Green rather than any other second colour because the screen already owns
    it: the horizon the pactbearers stand against is this hue. */
-.title-cta-socket.is-verdigris {
+.title-screen.is-verdigris {
   --plate-rgb: 61, 157, 125;
   /* Oxidised copper, not mint. The first pass lifted the top two stops nearly
      to white and the plate came out pale and sugary — brighter than the gold
@@ -16055,6 +16058,9 @@ textarea,
   --plate-etch: rgba(8, 54, 42, 0.42);
   --plate-focus: rgba(2, 22, 15, 0.85);
   --plate-sheen: rgba(224, 252, 240, 0.5);
+  --plate-flare: #eafff4;
+  --plate-bloom-rgb: 116, 214, 178;
+  --plate-dusk: 8, 17, 14;
 }
 
 .title-cta-frame {
@@ -16268,8 +16274,8 @@ textarea,
   height: 40px;
   margin: -20px 0 0 -20px;
   border-radius: 50%;
-  border: 6px solid rgba(255, 236, 194, 0.9);
-  box-shadow: 0 0 34px rgba(224, 166, 60, 0.7), inset 0 0 24px rgba(224, 166, 60, 0.5);
+  border: 6px solid var(--plate-flare);
+  box-shadow: 0 0 34px rgba(var(--plate-rgb), 0.7), inset 0 0 24px rgba(var(--plate-rgb), 0.5);
   opacity: 0;
   pointer-events: none;
   animation: title-launch-ring-out 620ms cubic-bezier(0.12, 0.75, 0.3, 1) forwards;
@@ -16300,7 +16306,14 @@ textarea,
   position: absolute;
   z-index: 6;
   inset: 0;
-  background: radial-gradient(circle at 50% 50%, #fff6e0, rgba(240, 188, 95, 0.85) 40%, rgba(18, 15, 12, 0.92) 100%);
+  /* The metal of the button that set it off — this is that plate's light filling the frame,
+     so a Continue blooms verdigris and a Start blooms gold. */
+  background: radial-gradient(
+    circle at 50% 50%,
+    var(--plate-flare),
+    rgba(var(--plate-bloom-rgb), 0.85) 40%,
+    rgba(var(--plate-dusk), 0.92) 100%
+  );
   opacity: 0;
   animation: title-launch-bloom 620ms ease-in forwards;
 }

@@ -1069,27 +1069,34 @@ box with a 700px-tall design canvas inside it. Everything below the fold simply 
 Two moves, in `uiScale.ts` (2026-09-08, per user direction). First ask:
 `screen.orientation.lock('portrait')`, which the platform grants inside an installed app
 and rejects everywhere else — the rejection is swallowed, because the second move is the
-real fix. Where the lock does not take, the canvas is laid out against the screen's SHORT
-edge and given a **quarter turn** into the landscape viewport. The game never renders
-landscape; a turned phone shows the same portrait game, sideways, which reads as "turn it
-back" rather than as a broken layout.
+real fix. Where the lock does not take, the canvas was laid out against the screen's SHORT
+edge and given a **quarter turn** into the landscape viewport, so a turned phone showed the
+same portrait game sideways.
 
-Three things it has to get right:
+**The quarter turn was removed on 2026-09-09** (per user direction: *"if I try to turn to
+landscape, the app does this weird rotating attempt thing"*), and it is worth writing down
+why a correct fix was the wrong one. It only ever ran where the lock had been *refused* —
+so the browser turns the page, and then the canvas visibly turns back. On a still
+screenshot that is a portrait game held sideways; in the hand it is two rotations
+disagreeing, with a stretch of layout in between that belongs to neither. **A fix that
+works in the end state and not in the transition is not a fix on a device the player is
+physically moving.**
 
-- **Which way to turn.** A quarter turn is upright for one of the two landscape
-  orientations and upside-down for the other, so it is read off
-  `screen.orientation.angle` rather than assumed: at angle 90 the top of the phone points
-  left, so the canvas leans `-90deg` — the same direction the player would turn the phone
-  to get back to portrait.
-- **Where it lands.** `transform-origin` is `top left`, so the turn sweeps the element
-  clean off one edge; it is translated a whole viewport back onto the screen and centred
-  along the short edge.
-- **Who is asked.** Only `(hover: none) and (pointer: coarse)` viewports shorter than
-  `REFERENCE_HEIGHT`. A landscape tablet still fits the portrait canvas upright, and
-  turning a screen the player did not turn would be the bug rather than the fix.
+What replaced it is one layout in every orientation, plus a floor:
 
-Overlays come along for free: `overlayHost()` portals into `.app-shell`, so they are
-inside the rotation like everything else.
+- **`MIN_CANVAS_HEIGHT` = 600.** `MIN_SCALE = 1` says "don't shrink the UI on a short
+  viewport, let the screens compress into it", which is right until there is nothing left
+  to compress. Measured, a fight at a 390px canvas loses the whole command console off the
+  bottom — the screens stop compressing and start clipping. Under the floor the scale drops
+  instead, so a viewport too short for the game renders it **small rather than broken**.
+  Nothing reaches the floor in portrait; a turned phone reaches it every time.
+- **The width is capped in canvas units too** (`Math.min(footprintWidth / scale, MAX_WIDTH)`).
+  Without that, scaling down buys the shell a proportionally *wider* canvas out of the same
+  footprint, and landscape came out as a 660px-wide design canvas.
+
+A turned phone now shows the portrait game upright, complete, and centred in a narrow strip
+— and, above all, still. Overlays come along for free either way: `overlayHost()` portals
+into `.app-shell`, so they are inside the transform like everything else.
 
 ### Nothing in this app is selectable
 
@@ -2293,13 +2300,16 @@ any other second colour because the screen already owns it: the horizon the pact
 against is this hue, so the button belongs to the picture rather than arriving from outside it.
 Two notes on doing this without a parallel copy of the CSS:
 
-- **A tone is a list of custom properties on the socket** (`--plate-face`, `--plate-bezel`,
-  `--plate-ink`, `--plate-etch`, `--plate-sheen`, `--plate-rgb`), and every layer under it reads
-  them — including the pulse keyframe and the launch bloom, which take `--plate-rgb` at
-  several alphas. The launch state is `filter: brightness()` on the plate rather than a second
-  gradient, so an overdriven plate is the same plate in either metal. The eighteenth pass's
-  warning still applies: these have to be declared on the socket, not on `:root`, because a
-  `var()` inside a custom property resolves where the property is *declared*.
+- **A tone is a list of custom properties, declared on `.title-screen`** (`--plate-face`,
+  `--plate-bezel`, `--plate-ink`, `--plate-etch`, `--plate-sheen`, `--plate-flare`,
+  `--plate-rgb`, `--plate-bloom-rgb`, `--plate-dusk`), and every layer under it reads them. On
+  the *screen* rather than on the button because the launch shockwave and white-out are
+  siblings of the button, not children of it — they can only inherit a palette from an ancestor
+  they share, and the whole point is that pressing Continue blooms verdigris while pressing
+  Start blooms gold. The launch state is `filter: brightness()` on the plate rather than a
+  second gradient, so an overdriven plate is the same plate in either metal. The eighteenth
+  pass's warning still applies: these cannot live on `:root`, because a `var()` inside a custom
+  property resolves where the property is *declared*.
 - **The first verdigris was mint candy.** Lifting the top two stops nearly to white made the
   plate paler and sweeter than the gold it is supposed to defer to — a secondary action reading
   louder than the primary. Every stop now sits a shade under its gold counterpart, which is what

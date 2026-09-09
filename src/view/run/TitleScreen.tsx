@@ -63,24 +63,20 @@ const SEAL_SIGILS = [0, 1, 2, 3, 4].map((i) => ({ angle: i * 72, broken: i === 3
  * `clip-path`, and a clip-path takes the box-shadow with it — so the glow lives on the
  * socket outside the clip and the sweep lives inside it.
  *
- * `tone` is the same plate in a different metal: gold is a pact being struck, verdigris is
- * one struck already and since weathered. Every tone is a set of custom properties on the
- * socket, so the frame, the face, the etch, the glow and the launch bloom all take their
- * colour from one place rather than each carrying its own copy of the palette.
+ * It carries no colour of its own: the metal is a set of custom properties declared on
+ * `.title-screen` and inherited down (see `tone` in TitleScreen below).
  */
 function PactButton({
   label,
-  tone = 'gold',
   disabled,
   onClick,
 }: {
   label: string;
-  tone?: 'gold' | 'verdigris';
   disabled: boolean;
   onClick: () => void;
 }) {
   return (
-    <div className={`title-cta-socket is-${tone}`}>
+    <div className="title-cta-socket">
       <span className="title-cta-frame" aria-hidden="true" />
       <button className="resolve-button title-cta" onClick={onClick} disabled={disabled}>
         <span className="title-cta-sheen" aria-hidden="true" />
@@ -136,8 +132,14 @@ export function TitleScreen({
     action();
   }
 
+  // Which metal the whole screen is lit in: gold for a pact about to be struck, verdigris for
+  // one already struck and being picked back up. It lives on the SCREEN rather than on the
+  // button because the launch shockwave and white-out are siblings of the button, not children
+  // of it — they can only inherit the palette from an ancestor both of them share.
+  const tone = parkedRun ? 'verdigris' : 'gold';
+
   return (
-    <div className={`title-screen${launching ? ' is-launching' : ''}`}>
+    <div className={`title-screen is-${tone}${launching ? ' is-launching' : ''}`}>
       {/* Before the Titan, not after: the figure is a hole cut in this light. */}
       <span className="title-backlight" aria-hidden="true" />
       <TitanColossus />
@@ -219,12 +221,7 @@ export function TitleScreen({
       <div className="title-buttons">
         {parkedRun ? (
           <>
-            <PactButton
-              label="Continue Run"
-              tone="verdigris"
-              disabled={launching}
-              onClick={() => launch(onContinueRun)}
-            />
+            <PactButton label="Continue Run" disabled={launching} onClick={() => launch(onContinueRun)} />
             <button
               className={`title-newrun-button${confirmingNewRun ? ' armed' : ''}`}
               onClick={handleStart}
