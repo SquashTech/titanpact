@@ -134,9 +134,11 @@ don't silently override it.
   requires **terminating** an existing one. Equipment strips on termination; no gold refund.
 - **Items are uncategorised, and the SLOT is the scarce thing** (2026-09-06, replacing the
   weapon/armor/accessory split, which playtested as fiddly and unintuitive). Any item goes in
-  any slot; a hero holds `BASE_ITEM_SLOTS` = 1, or the authored `HeroDefinition.itemSlots` = 2
-  the nine heroes at **Speed ≤ 40** carry — gear rather than tempo is what scales a hero that
-  never wins a tiebreak. The **Forge** node grants +1 slot to one hero, to `MAX_ITEM_SLOTS` = 3.
+  any slot; **every hero starts on `BASE_ITEM_SLOTS` = 1** and there is no per-hero dial
+  (2026-09-08). Nine heroes at **Speed ≤ 40** used to author 2, but Speed and HP are
+  anti-correlated across the roster, so the rule read as a Speed rule and landed as an HP rule —
+  and a measured 79.3% mirror-match edge for a second item dwarfed the tiebreak loss it was
+  paying for. The **Forge** node grants +1 slot to one hero, to `MAX_ITEM_SLOTS` = 3.
   **No hero holds two copies of one item**, and capacity is decided in one place, `itemSlotsFor`
   (`docs/progression.md`). **Relics are the team-wide axis** — a separate axis, not items.
 - **The relic catalog is two closed families, both flat stats: Gems and Banners** (2026-09-07,

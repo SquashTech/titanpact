@@ -145,23 +145,29 @@ What that bought, and the shape of the replacement:
 - **`RosterEntry.equipment` is a compact `readonly string[]`**, not a keyed record. Index N
   *is* the Nth slot and there are never holes, so the list's length is what fills the slot
   boxes. Capacity is stored nowhere on the entry: it is derived.
-- **Slot capacity comes from `itemSlotsFor(hero, entry)` and nowhere else** — the hero's
-  authored count plus its Forge grants, clamped to `MAX_ITEM_SLOTS`. UI, save validation and
-  `runProgress` all read that one function.
+- **Slot capacity comes from `itemSlotsFor(hero, entry)` and nowhere else** — the base count
+  plus its Forge grants, clamped to `MAX_ITEM_SLOTS`. UI, save validation and `runProgress`
+  all read that one function.
 - **`BASE_ITEM_SLOTS` = 1.** A hero that holds one item is the norm; the item it holds is
   therefore a real part of its identity rather than a third of a rounding error. This is the
   half of the change that makes an individual item *matter* — the complaint that items "feel
   imperceptible" is as much about how many are diluting each other as about their size.
-- **`HeroDefinition.itemSlots` = 2 is the per-hero balance dial**, authored on exactly the
-  nine heroes at **Speed ≤ 40** (Bellows, Cube, Sentinel, Aegis, Warden, Hollowbark, Pincer,
-  Crag, Flurry). They never win a priority tiebreak, so gear rather than tempo is what scales
-  them. `test/roster.test.ts` pins the band **both ways**, so a hero drifting across 40 Speed
-  cannot silently gain or lose a slot. Crag is the only starter among them.
+- **There is no per-hero slot dial** (2026-09-08). `HeroDefinition.itemSlots` used to be one,
+  authored at 2 on exactly the nine heroes at **Speed ≤ 40** (Bellows, Cube, Sentinel, Aegis,
+  Warden, Hollowbark, Pincer, Crag, Flurry), on the reasoning that a hero who never wins a
+  priority tiebreak scales on gear instead of tempo. Two measurements retired it ("Pricing HP"
+  below): Speed and HP are anti-correlated across this roster, so those nine were *also* the
+  nine bulkiest (250–300 HP) and the rule landed on an axis it never named; and a second item
+  is worth **79.3%** in a mirror match, several times the largest stat grant measured, so the
+  compensation was far larger than the disadvantage and nothing priced it against the 450
+  budget. The field is gone from the schema, not merely unused, so it cannot come back by
+  accident. **The tiebreak problem it was paying for is still real and is now unanswered** —
+  if slow heroes need compensating, it should be something priced, on an axis that says what
+  it is.
 - **`MAX_ITEM_SLOTS` = 3** (2026-09-07, down from 5), and the Forge (below) is the only way up.
-  Three is what a half-width squad card seats on a phone (docs/equipment.md §8); the nine heroes
-  authored at 2 are therefore one Forge from the cap. A hero at the cap is not
-  a legal Forge target — the reward can go dead on one hero, which is what makes spending it
-  a choice.
+  Three is what a half-width squad card seats on a phone (docs/equipment.md §8), so every hero
+  is two Forges from the cap. A hero at the cap is not a legal Forge target — the reward can go
+  dead on one hero, which is what makes spending it a choice.
 - **A hero never holds two copies of one item.** The passive and Elemental Force grants
   count-stack, so duplicates would quietly double an effect the card shows once; one legible
   copy is the point. `holdsItem` guards every equip and every hand-off.
@@ -580,12 +586,12 @@ another. Leave 0.5 until something else forces the question.
 **Where the tanks' real advantage comes from.** A round robin (every hero vs every other, four
 copies a side, no gear) puts correlation between authored HP and win rate at **0.110** — HP
 explains about 1% of the variance, and Bellows and Sentinel both field 300 HP at 76.7% and 31.4%.
-Movepools dominate. What does not show up there is `itemSlots: 2`, authored on the nine heroes at
-**Speed ≤ 40** — and in this roster Speed is anti-correlated with HP, so those nine are precisely
-the nine highest-HP heroes (250–300). The same squad holding two items beats itself holding one
-**79.3% ±0.76**, a bigger edge than any stat grant measured here. The tanks are strong, and the
-slot is why; nothing prices it against the stat line. That is the open balance question worth
-having, not the HP rate.
+Movepools dominate. What did not show up there was `itemSlots: 2`, then authored on the nine
+heroes at **Speed ≤ 40** — and in this roster Speed is anti-correlated with HP, so those nine were
+precisely the nine highest-HP heroes (250–300). The same squad holding two items beats itself
+holding one **79.3% ±0.76**, a bigger edge than any stat grant measured here. The tanks were
+strong, and the slot was why. **Resolved 2026-09-08: the dial is gone and every hero starts on
+one slot** (per user direction — see "Items (per-hero)" above). The HP rate was left at 0.5.
 
 `scripts/sim` IS deterministic by seed. Until 2026-09-08 it silently dropped ~15% of every batch:
 `bestWearer` compared item ids where the game's rule (`holdsItem`) compares FAMILIES, so the sim

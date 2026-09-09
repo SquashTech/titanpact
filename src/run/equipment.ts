@@ -136,7 +136,7 @@ export function unenchantedIdOf(id: string): string {
 
 // --- Item slots ---
 
-/** What a hero holds unless `HeroDefinition.itemSlots` says otherwise — the per-hero balance dial. */
+/** What every hero holds at the start of a run. There is no per-hero override; the Forge is the only way up (itemSlotsFor). */
 export const BASE_ITEM_SLOTS = 1;
 
 /**
@@ -147,7 +147,7 @@ export const BASE_ITEM_SLOTS = 1;
  * a slot row under each hero, and three is what a half-width card seats on a phone; five wrapped
  * to a second row that was empty on almost every hero. The knock-on is real and intended: the
  * nine heroes authored at `itemSlots` 2 are now **one Forge from the cap** rather than three, so
- * the node goes dead across a roster far sooner and lands harder while it still bites.
+ * the node goes dead across a roster sooner and lands harder while it still bites.
  */
 export const MAX_ITEM_SLOTS = 3;
 

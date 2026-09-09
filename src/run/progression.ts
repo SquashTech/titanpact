@@ -346,9 +346,22 @@ export function rosterEntryTypes(hero: HeroDefinition, entry: RosterEntry): read
   return entry.evolutionTypeGraft ? [hero.types[0], entry.evolutionTypeGraft] : hero.types;
 }
 
-/** The hero's authored slot count plus its Forge grants, capped. The ONE place slot capacity is decided — UI, save and runProgress all read this. */
+/**
+ * BASE_ITEM_SLOTS plus the entry's Forge grants, capped. The ONE place slot capacity is decided —
+ * UI, save and runProgress all read this.
+ *
+ * There is deliberately no per-hero dial (2026-09-08). Nine heroes used to author `itemSlots: 2`
+ * for being at Speed <= 40, but Speed and HP are anti-correlated across this roster, so the rule
+ * read as a Speed rule and landed as an HP rule: those nine were also the nine bulkiest. Measured,
+ * a second item is worth 79.3% in a mirror match — several times the largest stat grant tested —
+ * so the compensation dwarfed the disadvantage it was paying for, and nothing priced it against
+ * the stat budget (`scripts/statprice.ts`, docs/progression.md "Pricing HP"). `hero` stays in the
+ * signature because capacity is a per-hero question even when every hero currently answers it the
+ * same way.
+ */
 export function itemSlotsFor(hero: HeroDefinition, entry: RosterEntry): number {
-  return Math.min(MAX_ITEM_SLOTS, (hero.itemSlots ?? BASE_ITEM_SLOTS) + entry.bonusItemSlots);
+  void hero;
+  return Math.min(MAX_ITEM_SLOTS, BASE_ITEM_SLOTS + entry.bonusItemSlots);
 }
 
 export function chosenEvolutionPaths(table: ProgressionTable, entry: RosterEntry): EvolutionPath[] {

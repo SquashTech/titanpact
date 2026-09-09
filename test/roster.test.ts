@@ -13,6 +13,8 @@ import { progressionTable } from '../src/data/progression';
 import { BASE_ITEM_SLOTS, MAX_ITEM_SLOTS, STAT_POINT_VALUE } from '../src/run/equipment';
 import type { StatKey } from '../src/engine/content';
 import { HERO_BUDGET_STATS, statBudgetTotal } from '../src/run/statBudget';
+import { itemSlotsFor } from '../src/run/progression';
+import { createRosterEntry } from '../src/run/state';
 
 /** HP + Mana + the five battle stats, HP priced through statBudget.ts. MP Regen is a flat 10 outside the budget. */
 const BUDGET = 450;
@@ -192,18 +194,21 @@ test('roster: an Evolution stat line is Rare-to-Epic in equipment currency, spen
   }
 });
 
-test('roster: a hero holds two items only if it is one of the Speed <= 40 heroes', () => {
-  // The item-slot dial (src/data/heroes.ts): gear rather than tempo is what scales a hero that
-  // never wins a priority tiebreak. Two-way, so a hero drifting across 40 Speed cannot silently
-  // gain or lose a slot — moving one in or out of the band is a balance decision, not a side effect.
-  const SLOW_SPEED = 40;
+test('roster: every hero starts on the same one item slot, whatever its Speed', () => {
+  // Nine heroes used to author `itemSlots: 2` for being at Speed <= 40. Speed and HP are
+  // anti-correlated here, so that rule read as a Speed rule and landed as an HP rule, handing the
+  // bulkiest nine a second item measured at 79.3% in a mirror match (docs/progression.md
+  // "Pricing HP"). The dial is gone; the Forge is the only way to a second slot.
+  const entry = createRosterEntry('probe', 'valor', []);
   for (const hero of Object.values(heroes)) {
-    const slots = hero.itemSlots ?? BASE_ITEM_SLOTS;
-    assert.ok(slots >= 1 && slots <= MAX_ITEM_SLOTS, hero.id + ' authors ' + slots + ' item slots');
-    if (hero.baseStats.speed <= SLOW_SPEED) {
-      assert.strictEqual(slots, 2, hero.id + ' is slow (' + hero.baseStats.speed + ' Speed) and should hold 2 items');
-    } else {
-      assert.strictEqual(slots, BASE_ITEM_SLOTS, hero.id + ' is fast (' + hero.baseStats.speed + ' Speed) and should hold the base 1');
-    }
+    assert.strictEqual(
+      itemSlotsFor(hero, entry),
+      BASE_ITEM_SLOTS,
+      hero.id + ' (' + hero.baseStats.speed + ' Speed) does not start on the base slot'
+    );
   }
+
+  // The Forge still walks anyone to the cap, and never past it.
+  const forged = { ...entry, bonusItemSlots: MAX_ITEM_SLOTS + 5 };
+  assert.strictEqual(itemSlotsFor(heroes.valor, forged), MAX_ITEM_SLOTS);
 });
