@@ -22811,3 +22811,171 @@ textarea,
   background: color-mix(in srgb, var(--relic-color) 30%, var(--panel-alt));
   border-color: var(--relic-color);
 }
+
+/* --- Manage Roster's Gems board (GemBoard) -------------------------------------------------
+   The Gear board's twin: a tray at the bottom of the reach, the same six cards above it. Sized
+   against those, not invented fresh — the two boards swap under one tab strip and anything that
+   moved between them would read as the screen jumping. */
+
+/* Stands in the relic panel's place, and holds one height whether a stone is in hand or not:
+   nothing above the cards may move when one is picked up. */
+.gem-focus-bar {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 46px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  border-radius: var(--radius-md);
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+}
+
+.gem-focus-art {
+  font-size: 24px;
+}
+
+.gem-focus-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.gem-focus-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.gem-focus-grant {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.gem-focus-idle {
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+.gem-focus-cancel {
+  margin-left: auto;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+/* Under each hero, where the item boxes sit on the other board. */
+.gem-held-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 30px;
+  padding: 3px 2px 0;
+}
+
+.gem-held-total {
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+.gem-held-total.is-full {
+  color: var(--accent);
+}
+
+.gem-held-cap {
+  font-size: 9px;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.gem-held-chip {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 5px 2px 3px;
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--relic-color) 16%, var(--panel-alt));
+  border: 1px solid color-mix(in srgb, var(--relic-color) 45%, var(--border));
+}
+
+.gem-held-art {
+  font-size: 15px;
+}
+
+.gem-held-count {
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+/* The tray sits in the bag's frame — same panel, same header — so the two boards read as one
+   screen with its bottom shelf restocked. */
+.gem-tray-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.gem-tray-stone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 44px;
+  padding: 5px 6px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--relic-color) 12%, var(--panel-alt));
+  border: 1px solid color-mix(in srgb, var(--relic-color) 38%, var(--border));
+}
+
+.gem-tray-stone.is-empty {
+  opacity: 0.3;
+  background: var(--panel-alt);
+  border-color: var(--border);
+}
+
+/* In hand: the one stone the rest of the screen is now about. */
+.gem-tray-stone.is-held {
+  background: color-mix(in srgb, var(--relic-color) 32%, var(--panel-alt));
+  border-color: var(--relic-color);
+  box-shadow: 0 0 0 1px var(--relic-color), 0 0 14px -2px var(--relic-color);
+}
+
+.gem-tray-art {
+  font-size: 22px;
+}
+
+.gem-tray-count {
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+/* Holding a stone turns the board into one question, the same way picking up an item turns the
+   Gear board into one: a hero who cannot take THIS stone — at the stat cap, or at their own —
+   recedes, and the tray keeps the stone that is in hand lit. */
+.gem-board.is-focused .roster-mgmt-card.is-inert {
+  opacity: 0.26;
+}
+
+.gem-board.is-focused .roster-mgmt-head {
+  opacity: 0.62;
+}
+
+.gem-board.is-focused .roster-mgmt-card.can-take .roster-mgmt-head {
+  opacity: 1;
+}

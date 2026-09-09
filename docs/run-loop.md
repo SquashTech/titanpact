@@ -447,6 +447,17 @@ worth of Gems lost, and a late recruit is one tap from wearing the run's whole p
 an earlier permanent-allocation design whose refund-on-termination and catch-up-grant-on-recruit
 patches were both trying to buy exactly this.
 
+**Where it happens: the Gems board, Manage Roster's second tab** (2026-09-09, per user
+direction, after playtest). `GemBoard` is the Gear board's twin — a tray of the unspent pool
+along the bottom, the same six `HeroSlotCard`s above it, and one tap-then-tap to move a stone.
+It replaced setting Gems on the hero sheet, which cost four steps a hero (roster → sheet → Gems
+page → back out) for a job the Gear board does in one. Two departures from the Gear board, both
+because Gems arrive four and five at a time: a held stone **stays held** after it lands, so a
+stack is poured with repeated taps, and **holding a hero pours every one that fits**. Taking
+them back is the same gesture inverted — tap a hero's stone chip for one, hold it for all of
+that stat. The hero sheet keeps its Gems page as the detail view (per-stat pips, Pull all), one
+tap away from the board.
+
 It **freezes from node-select onward**. `SquadSelectScreen` generates the encounter at
 node-select time specifically so the enemy squad can be scouted before the player commits — so a
 Gem spread still fluid after the scout means the optimal play is counter-tuning every single
@@ -460,7 +471,9 @@ fight. Two reasons that is the wrong game:
 
 Gems answer "who is my team", not "who am I fighting". Node commit is already final (there is no
 back affordance on `SquadSelectScreen`), so the freeze lands on a boundary the player already
-understands.
+understands. The freeze is enforced by ENTRY POINT rather than by a flag: the Gems board lives on
+Manage Roster, which only the map opens, and `HeroPreviewOverlay` shows its Gems page only when
+handed the run. A sheet opened from anywhere else simply has no dial.
 
 #### The pool is derived, never stored
 
