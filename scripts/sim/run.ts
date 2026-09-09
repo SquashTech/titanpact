@@ -30,6 +30,10 @@ import {
   grantRelicReward,
   grantStatBonus,
   grantUpgradeReward,
+  anvilQuote,
+  anvilUpgrade,
+  buyItemSlot,
+  slotQuote,
   reachableNodeIds,
   recordBrokenSeal,
   sellFromStash,
@@ -52,6 +56,7 @@ import {
 } from '../../src/run/progression';
 import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
 import { rollGuildHallOffers, buyEquipment, sellValueFor, EQUIPMENT_PRICE_BY_RARITY } from '../../src/run/shop';
+import { tutorMovePool } from '../../src/run/tutor';
 import { grantClass } from '../../src/run/classes';
 import { GEM_OFFER_COUNT, pickGemOffers, rollGemOffers } from '../../src/run/gems';
 import { boonMoveCount, pickBoonOffers } from '../../src/run/boons';
@@ -595,6 +600,10 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       });
       return grantClass(run, classes, target.rosterId, picked.id);
     }
+    case 'tutorReward':
+      return resolveTutor(run);
+    case 'blacksmith':
+      return resolveBlacksmith(run);
     case 'event':
       return resolveEvent(run, locationId, rng, record);
     case 'shop':
@@ -603,6 +612,67 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
     default:
       return run;
   }
+}
+
+/**
+ * The Tutor: one hero, then any move off its own level-up pool, un-rolled and un-gated. Not a
+ * randomized experiment — WHICH move to teach is a play, and rolling it would measure the pool
+ * rather than the node. The hero is the one the pool is worth most to (most moves it does not
+ * already hold, strongest as the tiebreak), and the move is the best of them.
+ */
+function resolveTutor(run: RunState): RunState {
+  let best: { rosterId: string; moveId: string; value: number } | null = null;
+  for (const entry of run.roster) {
+    for (const moveId of tutorMovePool(progressionTable, moves, entry)) {
+      if (entry.unlockedMoveIds.includes(moveId)) continue;
+      const value = policy.moveValue(moveId) + policy.powerScore(entry) * 0.01;
+      if (!best || value > best.value) best = { rosterId: entry.rosterId, moveId, value };
+    }
+  }
+  if (!best) return run;
+  const entry = entryOf(run, best.rosterId);
+  if (entry.unlockedMoveIds.length < MOVE_CAP) return grantMove(run, best.rosterId, best.moveId);
+  const replaceId = policy.replacementTarget(entry, best.moveId);
+  return replaceId ? grantMove(run, best.rosterId, best.moveId, replaceId) : run;
+}
+
+/**
+ * The Blacksmith: slots, the Anvil, the Enchanter, all for gold. The sim buys the slot first
+ * (the one grant nothing else on the map sells) and then lifts its best-placed item a tier
+ * while the gold lasts. The Enchanter is left alone — picking an element is a team-composition
+ * read this policy has no model of, and buying one at random would price the node below what a
+ * player gets from it.
+ */
+function resolveBlacksmith(run: RunState): RunState {
+  let next = run;
+
+  const slotTarget = [...next.roster]
+    .filter((entry) => {
+      const quote = slotQuote(next, entry.rosterId, heroes);
+      return quote != null && quote.cost <= next.gold;
+    })
+    .sort((a, b) => policy.powerScore(b) - policy.powerScore(a))[0];
+  if (slotTarget) next = buyItemSlot(next, slotTarget.rosterId, heroes);
+
+  // One lift per visit: the most valuable item on the strongest hero that can afford it.
+  for (const entry of policy.byPower(next.roster)) {
+    let bestIndex = -1;
+    let bestValue = -Infinity;
+    entry.equipment.forEach((itemId, index) => {
+      const quote = anvilQuote(next, itemId, equipment);
+      if (!quote || quote.cost > next.gold) return;
+      const value = policy.itemValueFor(entry, equipment[itemId] ?? null);
+      if (value > bestValue) {
+        bestValue = value;
+        bestIndex = index;
+      }
+    });
+    if (bestIndex >= 0) {
+      next = anvilUpgrade(next, { kind: 'hero', rosterId: entry.rosterId, index: bestIndex }, equipment);
+      break;
+    }
+  }
+  return next;
 }
 
 function resolveEvent(run: RunState, locationId: string, rng: Rng, record: RunRecord): RunState {
