@@ -2103,9 +2103,17 @@ soft scrim, not a panel: it was built once as a proper instrument, filled and ha
 type-tinted edge, and four of those is four boxes again. The scrim also does the contrast job
 the name pill's own scrim used to, which is why that pill could go.
 
-**FORMATION.** The far line is padded 26px narrower than the near one — perspective by
-arrangement, since the art is 48px pixel art and any non-integer scale breaks it — and it stands
-on smaller, dimmer ground with a `brightness(0.93) saturate(0.9)` haze on its sprites. The haze
+**FORMATION.** The far line stands 26px narrower than the near one — perspective by arrangement,
+since the art is 48px pixel art and any non-integer scale breaks it — and it stands on smaller,
+dimmer ground with a `brightness(0.93) saturate(0.9)` haze on its sprites.
+
+That inset is on the **stage**, not the row. It was `padding` on the row for a day, which insets
+the whole card, and a card is not only a figure: it carried the far type chips 13px right of the
+near ones directly below them and the far nameplate 13px off the plate below it, so the two lines
+no longer shared a column and the whole far row read as nudged — reported from a phone, and
+obvious once seen. It also narrowed the far status band by 26px, which was enough to push a third
+chip onto a second line there and nowhere else. The rule is the one the plate already follows:
+**perspective is about the figures; the instruments stay on their column.** The haze
 is folded into `--figure-shadow`, because the strike and hit keyframes replace `filter` wholesale
 and anything declared beside the token vanishes for the length of every animation. Each side also
 gets a pool of light both its figures stand in, so a pair shares a piece of ground rather than
@@ -2169,6 +2177,27 @@ heat and reads as plating better than the squares did.
 Strike reach and hit knockback went 7px → 11/10px in the same pass. They were sized when a lean
 could only ever be a twitch in place; across 50px of horizon a lean is a step toward somebody,
 and the room it travels into is the empty divider band.
+
+**A wrapped status band moves nothing.** The band is the one part of a figure whose height is not
+knowable in advance — four chips fit on a line, five do not — and it used to be free to shove its
+own figure, nameplate and HP bar 28px down the screen, out of line with a partner carrying fewer.
+Three rules together make it inert:
+
+- `.team-row` has a **fixed** height, not a min-height, so a wrap cannot push the horizon, the
+  other row or the console.
+- The cards pack at **`flex-start`** — which `column-reverse` puts at the far card's bottom and
+  `column` at the near card's top, i.e. the divider in both cases. Everything a player reads is
+  therefore anchored to the horizon, and the band grows outward toward the screen edge.
+- The band is **`flex-shrink: 0`**. Without it, it is the item that gives when the card's height
+  is pinned: the second line got squeezed back into one line's worth of box and its chips spilled
+  downward across the hero's own name.
+
+The arena's outer padding is then sized to hold exactly one wrapped row
+(`--figure-status-h + --figure-status-gap`), paid for by dropping the battlefield's 8px row gaps —
+those dated from when the divider was a rule between two panels rather than a horizon with a band
+of its own. Net cost 12px of console. A *third* row still clips at the screen edge; that is seven
+or more simultaneous statuses on one hero, and clipping the outermost chips is a much better
+failure than moving the HP bars.
 
 HP and MP did not move off the screen, get smaller, or become a hover. They are the two numbers a
 player reads every single turn. What changed is that they stopped being the widest thing on the

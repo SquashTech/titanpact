@@ -486,7 +486,12 @@ textarea,
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  /* No gap. It was 8px between each row and the divider, from when the divider
+     was a rule between two panels and needed air. It is a horizon now with a
+     20px band of its own, and the 16px was buying nothing but distance between
+     two lines that are supposed to be facing each other — which is also most of
+     what the taller padding below costs. */
+  gap: 0;
   position: relative;
   /* Full-bleed: cancel .app-shell's padding on the three edges this touches,
      then put the spacing back as padding so nothing inside moves. */
@@ -495,8 +500,14 @@ textarea,
      side's outermost band is now its status band, which reserves its own 24px
      of clearance against the screen edge whether or not it holds anything. The
      two being equal is also what puts the horizon at a flat 50% below, instead
-     of the measured 50.7% the asymmetric padding used to force. */
-  padding: 14px var(--shell-pad);
+     of the measured 50.7% the asymmetric padding used to force.
+     ┄
+     Sized to hold one wrapped status row, which is what the rows now overflow
+     into rather than growing (see `.team-row`): --figure-status-h plus its gap,
+     so a fourth or fifth chip lands fully on screen instead of half-clipped by
+     the `overflow: hidden` above. This is the whole price of the fix, and it is
+     paid once whether or not anybody is poisoned. */
+  padding: calc(var(--figure-status-h) + var(--figure-status-gap)) var(--shell-pad);
   /* Retained solely to contain the Field Effect shimmer sweep below. */
   overflow: hidden;
   /* Scene, read back-to-front: the two zone tints pulled to the top and
@@ -2163,6 +2174,13 @@ textarea,
   gap: 8px;
   position: relative;
   z-index: 1;
+  /* FIXED, not min-height. The cards pack at the divider (see
+     `.team-row .combatant-card`), so the only thing left that a wrapped status
+     band could move is the row box itself — and growing that pushes the
+     horizon, the other row and the console down the screen. Pinning it makes
+     the extra rows overflow outward instead, into the arena padding sized for
+     them below. */
+  height: var(--figure-h);
 }
 
 /* ===========================================================================
@@ -2200,7 +2218,18 @@ textarea,
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
+  /* Packed at the DIVIDER end — main-start, which the enemy card's
+     `column-reverse` puts at its bottom and the ally card's `column` at its
+     top, i.e. the horizon in both cases (2026-09-09).
+     ┄
+     It was flex-end, packed at the screen edge, and that is what made a hero
+     carrying enough statuses to wrap its band onto a second line push its own
+     figure, nameplate and HP bar 28px down the screen — out of line with its
+     partner, who was carrying two. The band is the one part of a figure whose
+     height is not knowable in advance, so it has to be the part that absorbs
+     its own growth: anchored here, extra rows grow OUTWARD into the arena's
+     padding and everything a player reads stays exactly where it was. */
+  justify-content: flex-start;
   padding: 0 2px;
   background: none;
   border: none;
@@ -2405,6 +2434,12 @@ textarea,
   z-index: 2;
   width: 100%;
   min-height: var(--figure-status-h);
+  /* Without this the row is the flex item that gives, since `.team-row` pins
+     the card's height: a wrapped second line got shrunk back to one line's
+     worth of box and its chips spilled DOWNWARD across the hero's own name.
+     Held at its content height instead, the overflow happens at the card's
+     outer edge, which is where the padding for it is. */
+  flex-shrink: 0;
   /* Gap moved above it: the band is the OUTERMOST of a figure's four now (see
      "THE LINE OF BATTLE"), so what it has to hold off is the plate on its
      inner side, not empty air on its outer one. */
@@ -2600,6 +2635,7 @@ textarea,
    anywhere on the field. It doubles as the contrast guarantee the name pill's
    own scrim used to provide, which is why that pill could go. */
 .team-row .combatant-plate {
+  flex-shrink: 0;
   width: var(--figure-plate-w);
   max-width: 100%;
   margin: 0 auto;
@@ -2668,9 +2704,26 @@ textarea,
 
 /* Perspective by formation, not by scale. The far line stands closer together
    and the near line spreads to the full width — the only honest depth cue
-   available when both rows have to render at a clean 2x. */
-.team-row.enemy {
-  padding: 0 26px;
+   available when both rows have to render at a clean 2x.
+
+   ON THE STAGE, NOT THE ROW (2026-09-09, reported from a phone). This was
+   `padding: 0 26px` on the row, which insets the whole card — and a card is not
+   only a figure. It carried the type chips 13px right of the ally chips
+   directly below them, and the nameplate 13px off the plate below it, so the
+   two lines no longer shared a column and the whole far row read as nudged. It
+   also narrowed the far status band by 26px, which is what pushed a third chip
+   onto a second line there and nowhere else.
+
+   The rule is the same one the plate already follows: perspective is about the
+   FIGURES. The instruments are instruments and stay on their column. So the
+   inset moves onto the stage, where `position: relative` means it costs no
+   layout, and the card keeps the full width its readouts are measured in. */
+.team-row.enemy .combatant-card:nth-child(1) .combatant-stage {
+  left: 13px;
+}
+
+.team-row.enemy .combatant-card:nth-child(2) .combatant-stage {
+  left: -13px;
 }
 
 /* A pool of light each side's pair stands in. Soft and tall rather than a
