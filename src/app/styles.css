@@ -6839,16 +6839,15 @@ textarea,
    Scoped to .result-buttons, not every button in the panel (2026-09-04): the
    run summary puts hero cards in this panel, and each card carries its own
    little `i` button, which this rule was inflating into a second gold CTA. */
+/* Wears .resolve-button's plate (2026-09-08) rather than a gold fill — this is
+   the most-pressed button in the game and it sits over the battlefield, where a
+   solid slab was the one flat web-shaped rectangle in the frame. --cta-rgb is
+   the Location's tint, inherited from FightScreen's root. */
 .result-panel .result-buttons button {
   min-height: 56px;
-  background: var(--accent);
-  color: #1a1300;
-  border: none;
   border-radius: var(--radius-md);
   padding: 16px 24px;
   font-size: 16px;
-  font-weight: 800;
-  cursor: pointer;
 }
 
 .result-buttons {
@@ -6865,10 +6864,13 @@ textarea,
   flex: 1 1 0;
 }
 
-.result-buttons button:last-child {
+/* Quit. Scoped through .result-panel so it outranks the shared CTA plate rule,
+   which is declared further down the file and would otherwise win the tie. */
+.result-panel .result-buttons button:last-child {
   background: var(--surface-raised);
-  color: var(--text);
+  color: var(--text-dim);
   border: 1px solid var(--border);
+  text-shadow: none;
   box-shadow: var(--hairline), var(--elev-1);
 }
 
@@ -10067,6 +10069,7 @@ textarea,
   background: linear-gradient(135deg, #f3c877, var(--accent) 55%, #b9822a);
   border-color: transparent;
   color: #1a1300;
+  text-shadow: none;
   font-weight: 800;
   box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.5), 0 6px 18px rgba(224, 166, 60, 0.22), 0 0 18px rgba(224, 166, 60, 0.16);
   animation: title-cta-pulse 2.4s ease-in-out infinite;
@@ -11232,66 +11235,92 @@ textarea,
   color: var(--accent);
 }
 
-/* Primary bottom-docked CTA, shared by SquadSelectScreen ("Start Fight"),
-   ShopNodeScreen and NodeRewardScreen ("Continue") — the map-loop screens'
-   equivalent of .result-overlay button, but inline rather than an overlay. */
-/*
- * The app's primary CTA, shared by every "commit this choice and move on"
- * button. Upgraded from a flat gold slab: a top-lit gradient plus a warm
- * ambient glow makes it read as the one lit, raised, pressable thing on the
- * screen, which is exactly the job of a single-primary-action layout. The
- * darker bottom stop is doing real work — a fill that's uniformly bright
- * reads as a highlighted *label*, while one that falls off downward reads as
- * a physical key.
- */
+/* Primary bottom-docked CTA, shared by every "commit this choice and move on"
+   button in the run loop. A dark forged plate lit by the room's own hue rather
+   than a gold slab: it inherits `--node-rgb` from the screen root, so the same
+   control is warm on a Banner, violet on a Boon, teal at the Class node and the
+   drop's own rarity on a forced equip. Solid gold is now reserved for the run's
+   three terminal presses — .title-cta, .draft-cta, .recruit-leave.is-only-option.
+   docs/visual-language.md, eighteenth pass. */
 /*
  * Chunky on purpose (2026-08-28, per user direction: "avoid vertically skinny
  * Continue buttons at the bottom — these should be chunkier and easier for
- * players to press"). It was 12px of padding around 14px type — a ~42px slab
- * pinned to the very bottom edge of a portrait phone, i.e. under the thumb's
- * least accurate travel and inside the home-indicator's own gesture zone.
- *
- * Taken further the same day on a second look: 68px minimum around 18px/800
- * type, and — the part that mattered more than the size — **lifted off the
- * bottom edge** by .screen-cta-lift below. A 56px bar flush to the edge is
- * still a bar flush to the edge; the gap is what turns it from the screen's
- * border into an object sitting on the screen, and it moves the whole target
- * out of the home-indicator's swipe zone rather than merely making it taller
- * upward. The radius steps up with the height (--radius-sm on a 68px slab
- * looks sharp — see the radius scale's own note).
+ * players to press"). 68px minimum around 18px/800 type, and — the part that
+ * mattered more than the size — **lifted off the bottom edge** by
+ * .screen-cta-lift below, which moves the target out of the home-indicator's
+ * swipe zone and turns the bar into an object sitting on the screen.
  */
+/* The plate itself, shared with the post-fight Continue (.result-buttons, whose
+   own rule keeps only its sizing). One rule rather than a :root token because a
+   var() inside a custom property is substituted where the property is DECLARED —
+   a `--cta-plate` on :root bakes in :root's --cta-rgb and every button comes out
+   the same gold, which is the bug this replaces. */
+.resolve-button,
+.result-panel .result-buttons button {
+  --cta-rgb: var(--node-rgb, 224, 166, 60);
+  background:
+    linear-gradient(104deg, transparent 26%, rgba(255, 255, 255, 0.05) 47%, transparent 68%),
+    linear-gradient(180deg, rgba(var(--cta-rgb), 0.2), rgba(var(--cta-rgb), 0.05) 46%, rgba(var(--cta-rgb), 0.12)),
+    linear-gradient(180deg, #272c3a, #191d27 64%, #12151d);
+  color: color-mix(in srgb, rgb(var(--cta-rgb)) 62%, #ffffff);
+  border: 1px solid rgba(var(--cta-rgb), 0.52);
+  border-top-color: rgba(var(--cta-rgb), 0.85);
+  font-weight: 800;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(var(--cta-rgb), 0.42), inset 0 -12px 20px -16px rgba(var(--cta-rgb), 0.9),
+    0 2px 8px rgba(0, 0, 0, 0.5), 0 0 18px -9px rgba(var(--cta-rgb), 0.6);
+  transition: box-shadow var(--dur-mid) var(--ease-out), border-color var(--dur-mid) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out);
+}
+
+.resolve-button:hover:not(:disabled),
+/* :not(:last-child) keeps Quit out of it — that button is the gray one, and its
+   own rule is a specificity tie this hover would otherwise win on order. */
+.result-panel .result-buttons button:hover:not(:last-child) {
+  border-color: rgba(var(--cta-rgb), 0.72);
+  border-top-color: rgba(var(--cta-rgb), 1);
+  box-shadow: inset 0 1px 0 rgba(var(--cta-rgb), 0.6), inset 0 -14px 24px -16px rgba(var(--cta-rgb), 1),
+    0 3px 10px rgba(0, 0, 0, 0.55), 0 0 28px -5px rgba(var(--cta-rgb), 0.7);
+}
+
 .resolve-button {
   flex-shrink: 0;
   width: 100%;
   min-height: 68px;
-  background: linear-gradient(180deg, #eab654, var(--accent) 45%, #c98f2c);
-  color: #1a1300;
-  border: none;
   border-radius: var(--radius-lg);
   padding: 20px 14px;
   font-size: 18px;
-  font-weight: 800;
   letter-spacing: 0.02em;
-  cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 2px 6px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(224, 166, 60, 0.16);
-  transition: box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out);
-}
-
-.resolve-button:hover:not(:disabled) {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 3px 8px rgba(0, 0, 0, 0.32), 0 8px 26px rgba(224, 166, 60, 0.26);
 }
 
 .resolve-button:not(:disabled):active {
   transform: translateY(1px);
 }
 
-/* Disabled loses the glow entirely, not just opacity: a dimmed-but-still-
-   glowing button still reads as "the thing to press", which is the wrong
-   signal when the screen is waiting on the player to pick something first. */
+/* Disabled loses the hue entirely, not just opacity: a dimmed-but-still-lit
+   button still reads as "the thing to press", which is the wrong signal when
+   the screen is waiting on the player to pick something first. It stays a
+   legible dark plate rather than a ghost — at 0.32 opacity a dark button on a
+   dark screen is gone, where the gold slab it replaced was merely quiet. */
 .resolve-button:disabled {
-  opacity: 0.32;
+  background: var(--surface-raised);
+  border-color: var(--border-sunken);
+  color: var(--text-dim);
+  opacity: 0.55;
+  text-shadow: none;
   box-shadow: none;
   cursor: not-allowed;
+}
+
+/* Dismissing a sheet is not advancing the run, so these two take the plate with
+   the room's light switched off: one neutral --cta-rgb and the whole treatment
+   follows — gray rim, gray label, no hue glow. Same material, so it still reads
+   as the sheet's one control; no hue, so it never competes with a CTA that is
+   actually spending something. */
+.resolve-button.roster-close-button,
+.resolve-button.sheet-close-button {
+  --cta-rgb: 150, 160, 180;
 }
 
 /* The lift. Only ever applied to a CTA that is a *direct child of a screen
@@ -11340,6 +11369,9 @@ textarea,
    feels like the payoff moment it is rather than just un-graying a button. */
 .draft-cta:not(:disabled) {
   background: linear-gradient(135deg, #f3c877, var(--accent) 55%, #b9822a);
+  color: #1a1300;
+  border-color: transparent;
+  text-shadow: none;
   box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.5), 0 6px 18px rgba(224, 166, 60, 0.22), 0 0 18px rgba(224, 166, 60, 0.16);
   animation: title-cta-pulse 2.4s ease-in-out infinite;
 }
@@ -12259,6 +12291,7 @@ textarea,
   background: linear-gradient(165deg, #a89ae8, #6a5cc4);
   border: 1px solid var(--magical);
   color: #17122c;
+  text-shadow: none;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 0 1px rgba(139, 127, 224, 0.35), 0 4px 16px rgba(139, 127, 224, 0.35);
   transition: opacity var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
@@ -12684,6 +12717,7 @@ textarea,
   background: linear-gradient(165deg, #f0cf8a, #c08f2c);
   border: 1px solid var(--accent);
   color: #211705;
+  text-shadow: none;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 0 1px rgba(224, 166, 60, 0.35), 0 4px 16px rgba(224, 166, 60, 0.35);
   transition: opacity var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
@@ -13063,6 +13097,7 @@ textarea,
   background: linear-gradient(165deg, #5fd6ce, #278f86);
   border: 1px solid #3fb8af;
   color: #06211e;
+  text-shadow: none;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 0 1px rgba(63, 184, 175, 0.35), 0 4px 16px rgba(63, 184, 175, 0.35);
   transition: opacity var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
@@ -15202,6 +15237,9 @@ textarea,
   letter-spacing: 0.06em;
   padding: 15px;
   background: linear-gradient(135deg, #f3c877, var(--accent) 55%, #b9822a);
+  color: #1a1300;
+  border-color: transparent;
+  text-shadow: none;
   box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.5), 0 6px 18px rgba(224, 166, 60, 0.22), 0 0 18px rgba(224, 166, 60, 0.16);
   transition: transform 0.15s ease;
   /* Slower than the 2.4s it was: on a cold, near-still screen the one warm
@@ -15306,7 +15344,14 @@ textarea,
    gone — so the control the player just pressed would grey out under the
    shockwave it set off. Hold it lit and blow the glow out instead: it is
    still inert, it just doesn't look retracted. */
+/* The launch disables the button to swallow a second press, so it has to hold
+   the gold explicitly — .resolve-button:disabled would otherwise flatten it to
+   the inert gray plate on the exact frame it is supposed to bloom. */
 .title-screen.is-launching .title-cta:disabled {
+  background: linear-gradient(135deg, #f3c877, var(--accent) 55%, #b9822a);
+  color: #1a1300;
+  border-color: transparent;
+  text-shadow: none;
   opacity: 1;
   cursor: default;
   box-shadow: 0 0 0 1px rgba(255, 236, 194, 0.9), 0 0 34px rgba(224, 166, 60, 0.6), 0 0 60px rgba(224, 166, 60, 0.35);

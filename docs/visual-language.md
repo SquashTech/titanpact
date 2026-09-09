@@ -2012,6 +2012,62 @@ would be stale by the next commit. `heroArt.ts` warns in dev about any sprite no
 which is the closest thing to a roll-call worth keeping. The only thing between the rest of the
 roster and the same treatment is the art.
 
+## Eighteenth pass — the CTA plate (2026-09-08)
+
+*Per user direction: "in general I don't like how many buttons in the game are just a solid
+yellow button — it doesn't feel like part of an atmospheric, immersive video game, it feels
+like web UI vibe coding stuff."*
+
+`.resolve-button` was a flat gold slab on roughly thirty screens — every Continue, every
+Confirm, every Start Fight — plus the post-fight Continue, which is the most-pressed button in
+the game. The ninth pass had already made it big and lifted it off the bottom edge; what it
+never questioned was the fill. A saturated rectangle of one hardcoded hue, repeated on every
+screen, is the one element in the app that belongs to no place in particular. The rooms around
+it had meanwhile become places: `--node-rgb` is set on every node screen root and on the map,
+and the sky, the header eyebrow, the title bloom and the readout all take their light from it.
+The button sat in that light wearing gold.
+
+**It is now a dark forged plate lit by the room's own hue.** A near-black metal face with a
+diagonal sheen, a wash of `--node-rgb` pooling at the top and bottom edges, a rim in the same
+hue with a brighter top edge, and an outer glow that comes up on hover. The label is the hue
+mixed toward white, not black ink on a fill. Nothing about it is hardcoded: the same control is
+green at Wild's Edge, violet at a Boon, teal at the Class node, gold at a Banner, and the drop's
+own rarity on a forced equip — because `.node-screen` already carried that information and the
+button now simply reads it.
+
+Three consequences worth stating:
+
+- **Gold now means something.** It survives on exactly three presses — `.title-cta`,
+  `.draft-cta` and `.recruit-leave.is-only-option` — the run's terminal commitments, which
+  already shared a gold gradient and a pulse and were previously indistinguishable from the
+  Continue button directly beneath them. A treatment that appears three times a run reads as
+  ceremony; the same treatment thirty times an act reads as a default.
+- **Dismissing is not advancing, and now looks like it.** `.roster-close-button` and
+  `.sheet-close-button` were initially left on the gold slab — they live on full-screen sheets
+  with no other control on them, so the loud fill cost nothing there. Once everything around them
+  went dark that stopped being true: Close became the loudest control in the app, on a sheet that
+  already carries an ✕ in its corner doing the same job. They now take the plate with the room's
+  light switched off — a single neutral `--cta-rgb`, and the gray rim, gray label and absent glow
+  all follow from it. Same material as a CTA, so it still reads as the sheet's one control; no
+  hue, so it never competes with a button that is actually spending something.
+- **Disabled stopped being an opacity.** At `opacity: 0.32` a dark plate on a dark screen is
+  gone, where the gold slab it replaced was merely quiet. It now drops the hue entirely and
+  becomes an inert gray plate at 0.55 — legible as a control, unmistakably not the one to press.
+
+Two mechanical notes, both of which cost a round of screenshots:
+
+- **The plate cannot live in a `:root` token.** A `var()` inside a custom property is
+  substituted where that property is *declared*, not where it is used, so a `--cta-plate` on
+  `:root` bakes in `:root`'s `--cta-rgb`. With `--cta-rgb` undefined there the whole token goes
+  guaranteed-invalid, and the button rendered fully transparent — the treeline showed through
+  it. The plate is one rule with two selectors instead (`.resolve-button, .result-panel
+  .result-buttons button`), and the post-fight Quit button had to be re-scoped through
+  `.result-panel` to keep outranking it.
+- **Dark does not mean darker than the sky.** The first correction over-shot to a `#191d27`
+  face, which read as a wireframe outline. The plate has to be a *lighter* dark than the room it
+  stands in — in the same family as `--panel-alt` — which is what makes it an object sitting in
+  the scene rather than a hole cut in it.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.
