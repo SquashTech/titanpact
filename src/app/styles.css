@@ -154,14 +154,21 @@
      too. */
   --figure-stage-h: 104px;
   --figure-name-h: 19px;
-  --figure-name-gap: 5px;
+  --figure-name-gap: 2px;
   --figure-status-h: 24px;
   --figure-status-gap: 4px;
   --figure-bar-h: 13px;
   --figure-bar-gap: 3px;
+  /* The readout plate (see "THE LINE OF BATTLE"): the name and both bars, as
+     one object. Narrower than the cell it sits in on purpose — a full-cell bar
+     is what made four figures read as four boxes. `--figure-plate-pad` is the
+     sum of its own two vertical paddings, so the reservation below stays a sum
+     of declared tokens rather than picking up a literal again. */
+  --figure-plate-w: 146px;
+  --figure-plate-pad: 7px;
   --figure-h: calc(
-    var(--figure-stage-h) + var(--figure-name-h) + var(--figure-name-gap) + var(--figure-status-h) +
-      var(--figure-status-gap) + var(--figure-bar-h) * 2 + var(--figure-bar-gap)
+    var(--figure-stage-h) + var(--figure-plate-pad) + var(--figure-name-h) + var(--figure-name-gap) +
+      var(--figure-bar-h) * 2 + var(--figure-bar-gap) + var(--figure-status-gap) + var(--figure-status-h)
   );
 
   /* Motion. --ease-out for state changes (hover, color, width), --ease-spring
@@ -484,23 +491,27 @@ textarea,
   /* Full-bleed: cancel .app-shell's padding on the three edges this touches,
      then put the spacing back as padding so nothing inside moves. */
   margin: calc(var(--shell-pad) * -1) calc(var(--shell-pad) * -1) 0;
-  padding: calc(var(--shell-pad) + 2px) var(--shell-pad) 20px;
+  /* Equal top and bottom since the mirror (see "THE LINE OF BATTLE"): each
+     side's outermost band is now its status band, which reserves its own 24px
+     of clearance against the screen edge whether or not it holds anything. The
+     two being equal is also what puts the horizon at a flat 50% below, instead
+     of the measured 50.7% the asymmetric padding used to force. */
+  padding: 14px var(--shell-pad);
   /* Retained solely to contain the Field Effect shimmer sweep below. */
   overflow: hidden;
-  /* Two-zone arena floor (enemy red top, ally blue bottom) plus a faint
-     tactical grid for texture — replaces the old flat panel-gray box so the
-     playing field itself reads as a place, not just a container for cards.
-     The grid sits under everything via background-position layering; kept
-     low-opacity so it never competes with card content or the HP/MP bars. */
-  /* Scene, read back-to-front: the tactical grid (kept, but dimmer now that
-     it's floor rather than panel texture), the two zone tints pulled to the
-     top and bottom edges where the figures actually stand, a horizontal
-     light band at the horizon, and a vignetted floor underneath it all. The
-     vignette is what makes a full-bleed dark field read as a lit place
-     instead of an absence of UI. */
+  /* Scene, read back-to-front: the two zone tints pulled to the top and
+     bottom edges where the figures actually stand, a horizontal light band at
+     the horizon, and a vignetted floor underneath it all. The vignette is what
+     makes a full-bleed dark field read as a lit place instead of an absence of
+     UI.
+     ┄
+     There used to be a faint tactical grid of 26px squares under all of it,
+     here and in each of the six recipes below. It went in the nineteenth pass:
+     axis-aligned squares are the one texture that cannot help but draw a
+     lattice, which is the thing that pass exists to undo, and
+     `.battlefield-floor`'s perspective fan now carries the ground texture with
+     a vanishing point instead. */
   background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0px, rgba(255, 255, 255, 0.018) 1px, transparent 1px, transparent 26px),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0px, rgba(255, 255, 255, 0.018) 1px, transparent 1px, transparent 26px),
     radial-gradient(ellipse 110% 46% at 50% -4%, rgba(217, 83, 79, 0.2), transparent 62%),
     radial-gradient(ellipse 110% 46% at 50% 104%, rgba(74, 144, 217, 0.2), transparent 62%),
     linear-gradient(180deg, transparent 42%, rgba(140, 160, 200, 0.07) 50%, transparent 58%),
@@ -543,6 +554,50 @@ textarea,
  * the neutral scene above, unchanged.
  */
 
+/* The floor, in perspective.
+ *
+ * The arena's own background carries a tactical grid of 26px squares, and it
+ * was the last thing on this screen literally drawing a grid: uniform squares,
+ * axis-aligned, edge to edge. Graph paper reads as a diagram of a place, not a
+ * place, and a diagram is what "2x2 boxes" means.
+ *
+ * So the squares get a second layer that has a vanishing point. A conic
+ * gradient centred on the horizon is a fan of lines radiating from it, which
+ * is exactly what a floor's edges do; masked to nothing AT the horizon (where
+ * a fan converges into moire) and up to full at the two screen edges (where
+ * the ground is nearest and its lines widest). One element for both halves,
+ * because both halves share the vanishing point — that is what makes the enemy
+ * ground and the ally ground read as one continuous field with a line drawn
+ * across it, rather than as two panels stacked.
+ *
+ * Location-independent, and deliberately so: all six recipes replace the
+ * background stack wholesale, and the floor's geometry is not a mood. */
+.battlefield-floor {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    rgba(190, 208, 245, 0.05) 0deg 0.32deg,
+    transparent 0.32deg 6deg
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.5) 0%,
+    transparent 42%,
+    transparent 58%,
+    rgba(0, 0, 0, 0.85) 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.5) 0%,
+    transparent 42%,
+    transparent 58%,
+    rgba(0, 0, 0, 0.85) 100%
+  );
+}
+
 /* Weather and silhouette, over the ground and under the figures. `.team-row`
    already carries `z-index: 1` and `.battlefield-divider` is positioned later
    in the DOM, so both paint above this without needing a stack of their own. */
@@ -554,10 +609,9 @@ textarea,
   pointer-events: none;
 }
 
-/* Anchored at the divider, not the bottom edge. The percentage is measured
-   rather than reasoned (49.3% measured, so 50.7% from the bottom): the two
-   team rows are equal, but the arena's padding is not — top is --shell-pad + 2,
-   bottom is 20px — so the horizon line sits just above the box's midpoint.
+/* Anchored at the divider, not the bottom edge — and at a flat 50% since the
+   arena's padding was evened up ("THE LINE OF BATTLE"), where it used to be a
+   measured 50.7% to compensate for a taller bottom pad.
 
    TALL, not short, which is the opposite of what it looks like it wants. A
    band sized to sit under the enemy row lands entirely behind that row's HP
@@ -565,8 +619,8 @@ textarea,
    up past those pills to the portraits before any of it is visible. No settle
    animation — a band that re-enters on every fight reads as a transition. */
 .battlefield-location .location-horizon {
-  bottom: 50.7%;
-  height: 28%;
+  bottom: 50%;
+  height: 26%;
   color: rgba(5, 7, 12, 0.92);
   opacity: 0.5;
   /* Half a pixel of blur is doing depth-of-field, not softening: the skyline
@@ -584,6 +638,60 @@ textarea,
 /* The quietest weather in the game. */
 .battlefield-location .location-motes {
   opacity: 0.34;
+}
+
+/* --- The place is on both sides of the line ------------------------------
+ * The skyline above is the FAR one, behind the enemy row, and for a while it
+ * was the only one — which put every scrap of a Location's terrain in the half
+ * of the screen the player looks at least. The half they read every turn, the
+ * one their own two heroes stand in, had nothing but light in it.
+ *
+ * So it renders twice. The far band is small and hazed at the divider; this
+ * one is bigger, darker and sharper at the near edge, and the player's figures
+ * stand in front of it. Two bands at two scales is also just what a landscape
+ * does — the same trees are large here and small over there — and it is what
+ * makes the arena read as one continuous place rather than as a backdrop hung
+ * behind the enemy.
+ *
+ * Sharper on purpose: the far band carries half a pixel of blur as
+ * depth-of-field, and repeating that here would put the near terrain in the
+ * same focal plane as the thing it is supposed to be nearer than.
+ */
+.battlefield-nearground {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.battlefield-nearground .location-horizon {
+  position: absolute;
+  /* MAGNIFIED AND OFFSET, and flipped. There is only one skyline drawing per
+     Location (locationArt.tsx), so drawn at the same size in the same place it
+     is visibly the same picture twice — on the Storm Coast that is two
+     identical shipwrecks, one behind each team, which is worse than having no
+     near band at all. At 2x and shifted the window falls on a different part
+     of the art, and 2x is what the near band wanted anyway: the same trees are
+     larger when you are standing among them. The flip is belt and braces for
+     the Locations whose skyline has one centred landmark that survives the
+     crop. */
+  left: -66%;
+  bottom: 0;
+  width: 208%;
+  height: 46%;
+  transform: scaleX(-1);
+  color: rgba(4, 6, 10, 0.95);
+  opacity: 0.62;
+  filter: drop-shadow(0 -1px 0 rgba(var(--node-rgb), 0.26));
+  /* Fades UPWARD, the opposite of the far band's. That band had to dissolve
+     its own ground slab downward into the horizon glow; this one meets the
+     screen's bottom edge, where a solid base is correct, and has to dissolve
+     the tops of its shapes instead — those are what cross the ally nameplates,
+     and HP is not negotiable against scenery. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 46%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 46%);
+  animation: none;
 }
 
 /* The horizon line and its haze take the location's colour — the same 1px
@@ -610,9 +718,9 @@ textarea,
  * because a place is one lighting idea and half of these want a layer the
  * base scene does not have.
  *
- * The tactical grid is inside each stack rather than in a shared rule, which
- * makes its weight part of the recipe: a foundry has a plated deck, a forest
- * has none.
+ * Each stack used to open with a tactical grid of its own weight — a foundry
+ * had a plated deck, a forest nearly none. All seven went in the nineteenth
+ * pass; see the base rule above for why.
  */
 
 /* Open country at dusk. The widest, softest field in the set and the only one
@@ -621,8 +729,6 @@ textarea,
    read as distance rather than enclosure. */
 .battlefield[data-location='wildsEdge'] {
   background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.014) 0px, rgba(255, 255, 255, 0.014) 1px, transparent 1px, transparent 26px),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.014) 0px, rgba(255, 255, 255, 0.014) 1px, transparent 1px, transparent 26px),
     radial-gradient(ellipse 110% 46% at 50% -4%, rgba(217, 83, 79, 0.18), transparent 62%),
     radial-gradient(ellipse 110% 46% at 50% 104%, rgba(74, 144, 217, 0.18), transparent 62%),
     radial-gradient(ellipse 88% 22% at 50% 52%, rgba(232, 174, 92, 0.22), transparent 74%),
@@ -637,8 +743,6 @@ textarea,
    out here to draw. */
 .battlefield[data-location='forbiddenForest'] {
   background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.008) 0px, rgba(255, 255, 255, 0.008) 1px, transparent 1px, transparent 26px),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.008) 0px, rgba(255, 255, 255, 0.008) 1px, transparent 1px, transparent 26px),
     linear-gradient(90deg, rgba(0, 0, 0, 0.5), transparent 26%, transparent 74%, rgba(0, 0, 0, 0.5)),
     radial-gradient(ellipse 110% 46% at 50% -4%, rgba(217, 83, 79, 0.18), transparent 62%),
     radial-gradient(ellipse 110% 46% at 50% 104%, rgba(74, 144, 217, 0.18), transparent 62%),
@@ -649,12 +753,9 @@ textarea,
 
 /* A furnace floor. The ground light is the tightest and hottest in the set —
    a hard inner edge rather than a fade — under a near-black ceiling, with a
-   thin heat shimmer sitting on the horizon itself. The grid is at its
-   heaviest here and means something for once: plating. */
+   thin heat shimmer sitting on the horizon itself. */
 .battlefield[data-location='moltenFoundry'] {
   background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0px, rgba(255, 255, 255, 0.03) 1px, transparent 1px, transparent 26px),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0px, rgba(255, 255, 255, 0.03) 1px, transparent 1px, transparent 26px),
     radial-gradient(ellipse 110% 46% at 50% -4%, rgba(217, 83, 79, 0.18), transparent 62%),
     radial-gradient(ellipse 110% 46% at 50% 104%, rgba(74, 144, 217, 0.18), transparent 62%),
     linear-gradient(180deg, transparent 44%, rgba(var(--node-rgb), 0.16) 51%, transparent 60%),
@@ -668,8 +769,6 @@ textarea,
    ground below the horizon is wet enough to give some of it back. */
 .battlefield[data-location='stormCoast'] {
   background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.014) 0px, rgba(255, 255, 255, 0.014) 1px, transparent 1px, transparent 26px),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.014) 0px, rgba(255, 255, 255, 0.014) 1px, transparent 1px, transparent 26px),
     linear-gradient(104deg, transparent 14%, rgba(var(--node-rgb), 0.12) 46%, transparent 74%),
     radial-gradient(ellipse 110% 46% at 50% -4%, rgba(217, 83, 79, 0.18), transparent 62%),
     radial-gradient(ellipse 110% 46% at 50% 104%, rgba(74, 144, 217, 0.18), transparent 62%),
@@ -683,8 +782,6 @@ textarea,
    second band of haze out at the horizon. The darkest ceiling in the set. */
 .battlefield[data-location='necropolis'] {
   background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.012) 0px, rgba(255, 255, 255, 0.012) 1px, transparent 1px, transparent 26px),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.012) 0px, rgba(255, 255, 255, 0.012) 1px, transparent 1px, transparent 26px),
     radial-gradient(ellipse 110% 46% at 50% -4%, rgba(217, 83, 79, 0.18), transparent 62%),
     radial-gradient(ellipse 110% 46% at 50% 104%, rgba(74, 144, 217, 0.18), transparent 62%),
     linear-gradient(0deg, rgba(var(--node-rgb), 0.26) 0%, rgba(var(--node-rgb), 0.13) 13%, rgba(var(--node-rgb), 0.04) 28%, transparent 44%),
@@ -698,8 +795,6 @@ textarea,
    the darkest mid-field in the set between them. */
 .battlefield[data-location='blightedShrine'] {
   background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.014) 0px, rgba(255, 255, 255, 0.014) 1px, transparent 1px, transparent 26px),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.014) 0px, rgba(255, 255, 255, 0.014) 1px, transparent 1px, transparent 26px),
     radial-gradient(ellipse 110% 46% at 50% -4%, rgba(217, 83, 79, 0.18), transparent 62%),
     radial-gradient(ellipse 110% 46% at 50% 104%, rgba(74, 144, 217, 0.18), transparent 62%),
     radial-gradient(ellipse 90% 22% at 50% -8%, rgba(var(--node-rgb), 0.24), transparent 72%),
@@ -2133,14 +2228,20 @@ textarea,
 /* Which way is "at the enemy". The strike lean goes toward the other row and
    the hit recoil away from it, so both are read off the row the figure is
    standing in rather than being authored twice. */
+/* Both were 7px when the two lines were 340px apart with a wall of readouts
+   between them, where a lean could only ever be a twitch in place. Since the
+   mirror ("THE LINE OF BATTLE") the figures face each other across ~50px of
+   horizon and a lean is a step toward somebody, so it is worth the pixels —
+   and it has them, because the direction it travels in is the divider band,
+   which is empty. */
 .team-row.ally {
-  --strike-reach: -7px;
-  --hit-knock: 7px;
+  --strike-reach: -11px;
+  --hit-knock: 10px;
 }
 
 .team-row.enemy {
-  --strike-reach: 7px;
-  --hit-knock: -7px;
+  --strike-reach: 11px;
+  --hit-knock: -10px;
 }
 
 /* 96px is exactly 2x the 48px source (art/heroes/*.png). The old 56px was
@@ -2164,17 +2265,17 @@ textarea,
   filter: var(--figure-shadow);
 }
 
-/* Name + types, one pill instead of a bare row inside a bordered card. The
-   scrim is what replaces the card background's job of guaranteeing contrast
-   — sized to the text rather than to a container, so it costs a fraction of
-   the ink the box did. */
+/* The nameplate's top line. It spent one revision as a pill with a scrim of
+   its own, standing in for the card background's job of guaranteeing
+   contrast; the plate ("THE LINE OF BATTLE") does that job now, and a pill
+   inside a plate is the nested box this whole conversion exists to undo. */
 .team-row .combatant-name {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
   flex: none;
-  max-width: 100%;
+  width: 100%;
   /* Pinned rather than left to its own text metrics. It was the last band of
      the figure whose height nothing declared — it happened to come out at
      19px from an 11px line plus 4px of padding, and the reservation that
@@ -2183,10 +2284,10 @@ textarea,
      grow the figure and shove the console down. */
   height: var(--figure-name-h);
   margin: 0 0 var(--figure-name-gap);
-  padding: 2px 8px;
-  border-radius: var(--radius-pill);
-  background: rgba(8, 10, 14, 0.62);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  padding: 0 4px;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
   font-size: 11px;
   font-weight: 700;
 }
@@ -2269,7 +2370,10 @@ textarea,
   z-index: 2;
   width: 100%;
   min-height: var(--figure-status-h);
-  margin: 0 0 var(--figure-status-gap);
+  /* Gap moved above it: the band is the OUTERMOST of a figure's four now (see
+     "THE LINE OF BATTLE"), so what it has to hold off is the plate on its
+     inner side, not empty air on its outer one. */
+  margin: var(--figure-status-gap) 0 0;
   gap: 4px;
   align-items: center;
   align-content: flex-start;
@@ -2293,15 +2397,15 @@ textarea,
 
 /* Rim ticks flanking the figure's feet, where they read as markings on the
    ground rather than badges pinned to a card corner. Anchored from the
-   BOTTOM (80px = bars 27 + status band 26 + name pill 24, i.e. exactly the
-   platform's own line) rather than the top: a hero can carry enough
+   platform's own line rather than the top: a hero can carry enough
    simultaneous mods to wrap onto two or three rows, and a top-anchored
    cluster grows downward into the name pill. Bottom-anchored, the overflow
    goes up across the platform and the portrait's feet, which is both
-   harmless and the correct read. */
+   harmless and the correct read. The far side's line is elsewhere — see
+   "THE LINE OF BATTLE", which also derives this offset from the band tokens
+   instead of the hand-summed 80px it used to be. */
 .team-row .stat-mod-corner {
   top: auto;
-  bottom: 80px;
   max-width: 46px;
   align-content: flex-end;
 }
@@ -2381,6 +2485,194 @@ textarea,
 
 .team-row.enemy {
   flex-direction: row;
+}
+
+/* ===========================================================================
+ * THE LINE OF BATTLE
+ * ---------------------------------------------------------------------------
+ * The block above turned four cards into four figures. This one turns four
+ * figures into two lines facing each other, which is a different problem: the
+ * figures were free of their boxes and still sat on a 2x2 lattice, because
+ * three things kept drawing that lattice for them.
+ *
+ *   1. Both sides read top-down — portrait, then 81px of readout under it.
+ *      So the screen ran figures / readouts / horizon / figures / readouts,
+ *      and each side's own scoreboard stood between it and the enemy. The two
+ *      teams were 340px apart with a wall of UI in the gap; nothing about that
+ *      is a confrontation.
+ *   2. The readout was 177px wide against a 74-104px platform — the loudest,
+ *      widest, flattest object on the screen, in four identical copies at four
+ *      identical offsets. The bars WERE the grid lines. The figures were what
+ *      sat inside them.
+ *   3. Four cells, one figure dead-centre in each, both rows level and at the
+ *      same width. No stagger, no overlap, no perspective.
+ *
+ * The three answers, in order:
+ *
+ *   MIRROR    the far side reverses (`column-reverse`), so a side's readouts
+ *             sit at the edge of the screen it belongs to and its figures at
+ *             the horizon. Both teams now stand ON the line, ~36px apart,
+ *             with the instruments framing them top and bottom. This is
+ *             Pokemon's own arrangement and it is the whole change: the
+ *             treeline silhouette, anchored at the divider, stops sitting
+ *             behind the enemy's HP bars and starts sitting behind the enemy.
+ *   PLATE     the readout narrows to --figure-plate-w and closes up against
+ *             the name, so name + HP + MP is one nameplate roughly the width
+ *             of the ground the hero stands on, instead of a slab filling a
+ *             cell. Statuses move outboard of it — they are the band that
+ *             grows, so they belong at the edge where growing is free.
+ *   FORMATION the far line is narrower than the near one (rows are padded,
+ *             not scaled — the art is 48px pixel art and any non-integer
+ *             scale breaks it), it stands on smaller, dimmer ground, and its
+ *             sprites are hazed. Plus a pool of light per side that both of
+ *             its figures stand in, so a pair shares a piece of ground rather
+ *             than each having a private ellipse in the dark.
+ *
+ *             Depth WITHIN a line was tried and removed (2026-09-09, user
+ *             direction): one figure per row pushed 10px toward the divider,
+ *             with the platform sizes following. Four distinct depths, but
+ *             ten pixels is too little to read as perspective and just enough
+ *             to read as misalignment — which is what it was reported as,
+ *             twice, before it was reported as depth even once. The lattice
+ *             was already broken by the mirror and by the two rows being
+ *             different widths; this was paying a real cost for a margin that
+ *             was not needed. Between the lines is where depth belongs here.
+ *
+ * What did NOT change: HP and MP are still both permanently on screen, still
+ * both numerals-in-track, still green/amber/red and blue. They are the two
+ * things a player reads every single turn and no amount of scene-building is
+ * worth making them a hover.
+ * ======================================================================== */
+
+/* The near side keeps reading downward (figure, plate, statuses); the far side
+   reverses, so one DOM order produces a mirrored screen and the markup
+   sequence stays the reading sequence for a screen reader on both sides.
+   `.combatant-plate` is a column of its own, which is why the name still sits
+   above its own bars up here where everything around it is upside down. */
+.team-row.enemy .combatant-card {
+  flex-direction: column-reverse;
+}
+
+/* The nameplate. Sized to the ground the hero stands on rather than to the
+   cell it was allotted — 146px against the ally platform's 104px reads as
+   "this hero's readout"; the 177px full-cell slab it replaces read as "this
+   hero's cell", four times, which was most of the lattice.
+
+   A scrim, not a panel. It was drawn once as a proper instrument — filled,
+   hairlined, type-tinted edge — and four of those is four boxes again, which
+   is the thing being fixed; the name and the two bars only need to read as one
+   object, and a soft pool of shade under them does that without an edge
+   anywhere on the field. It doubles as the contrast guarantee the name pill's
+   own scrim used to provide, which is why that pill could go. */
+.team-row .combatant-plate {
+  width: var(--figure-plate-w);
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 3px 4px 4px; /* 3 + 4 == --figure-plate-pad */
+  background: radial-gradient(ellipse 86% 116% at 50% 50%, rgba(5, 7, 11, 0.74), rgba(5, 7, 11, 0) 70%);
+}
+
+.team-row .resource-row {
+  width: 100%;
+}
+
+/* Type chips hang at the sprite's shoulder and the KO tag at its other
+   shoulder, and on the far side the sprite is at the bottom of the card.
+   Both measured off the stage rather than the card so they travel with the
+   figure whichever way round it is. */
+.team-row.enemy .combatant-types {
+  top: calc(100% - var(--figure-stage-h) + 3px);
+}
+
+.team-row.enemy .fainted-tag {
+  top: calc(100% - var(--figure-stage-h) + 6px);
+}
+
+/* Same correction for the floating number — off the chest of the figure that
+   took the hit, which on the far side is 100% - stage down the card, not 26px
+   down it. Getting this wrong puts a damage numeral on the attacker's own
+   nameplate. */
+.team-row.enemy .dmg-popup {
+  top: calc(100% - var(--figure-stage-h) + 26px);
+}
+
+/* The placeholder has no figure and so no plate to sit on; it keeps the scrim
+   pill the name used to carry everywhere, since it still needs contrast
+   against bare ground. */
+.team-row .empty-slot .combatant-name {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(8, 10, 14, 0.62);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Rim ticks sit on the platform line, which the mirror moves: on the far side
+   the stage is the last band, so that line IS the card's bottom edge. The near
+   side's is still the sum of the bands under it — derived now rather than the
+   literal 80px it used to be, since this block just changed two of them. */
+.team-row .stat-mod-corner {
+  bottom: calc(
+    var(--figure-plate-pad) + var(--figure-name-h) + var(--figure-name-gap) + var(--figure-bar-h) * 2 +
+      var(--figure-bar-gap) + var(--figure-status-gap) + var(--figure-status-h)
+  );
+}
+
+.team-row.enemy .stat-mod-corner {
+  bottom: 2px;
+  align-content: flex-start;
+}
+
+/* The targeting wash runs from the figure end of the frame toward the plate,
+   which on the far side is the other way up. */
+.team-row.enemy .combatant-card.targetable {
+  background: linear-gradient(0deg, rgba(224, 166, 60, 0.13), rgba(224, 166, 60, 0.02) 62%, transparent);
+}
+
+/* Perspective by formation, not by scale. The far line stands closer together
+   and the near line spreads to the full width — the only honest depth cue
+   available when both rows have to render at a clean 2x. */
+.team-row.enemy {
+  padding: 0 26px;
+}
+
+/* A pool of light each side's pair stands in. Soft and tall rather than a
+   crisp ellipse, so the per-figure depth offsets below can move a platform
+   9px through it without tearing it. Painted before the cards (::before, in
+   flow order) and the figures carry their own shadows, so nothing needs a
+   stacking context of its own. */
+.team-row::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.team-row.enemy::before {
+  top: calc(100% - 8px);
+  width: 268px;
+  height: 62px;
+  background: radial-gradient(ellipse at 50% 50%, rgba(196, 210, 240, 0.07), transparent 68%);
+}
+
+.team-row.ally::before {
+  top: calc(var(--figure-stage-h) - 6px);
+  width: 366px;
+  height: 78px;
+  background: radial-gradient(ellipse at 50% 50%, rgba(200, 216, 246, 0.1), transparent 68%);
+}
+
+/* Aerial perspective. Folded INTO --figure-shadow rather than set as its own
+   `filter`, because the strike and hit keyframes replace `filter` wholesale
+   with `var(--figure-shadow) brightness(...)` — anything declared beside the
+   token vanishes for the length of every animation, which is the one moment
+   the figure is being looked at. */
+.team-row.enemy .combatant-portrait {
+  --figure-shadow: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.7)) brightness(0.93) saturate(0.9);
 }
 
 /* Per-hero type identity (CombatantCard sets --type-color/--type-rgb inline

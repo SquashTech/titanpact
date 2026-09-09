@@ -273,13 +273,39 @@ export function CombatantCard({
       <div className="eff-badge-row">
         {effBadge && <span className={`eff-chip ${effBadge.className}`}>{effBadge.text}</span>}
       </div>
-      <div className="combatant-name">
-        <span className="hero-name-text">{hero.name}</span>
-        <span className="combatant-types">
-          {types.map((t) => (
-            <TypeBadge key={t} type={t} iconOnly />
-          ))}
-        </span>
+      {/* Name and the two bars are one object — the nameplate. Grouped in the markup
+          rather than by CSS `order` so the DOM sequence stays the reading sequence on
+          both sides of the field, where the battlefield mirrors the far side's card. */}
+      <div className="combatant-plate">
+        <div className="combatant-name">
+          <span className="hero-name-text">{hero.name}</span>
+          <span className="combatant-types">
+            {types.map((t) => (
+              <TypeBadge key={t} type={t} iconOnly />
+            ))}
+          </span>
+        </div>
+        {!compact && (
+          <div className="resource-row">
+            <div className="resource">
+              <div className="bar-track">
+                <div className={`bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
+              </div>
+              <div className="bar-label">
+                HP {Math.max(0, combatant.currentHp)}/{maxHp}
+              </div>
+            </div>
+            <div className="resource">
+              <div className="bar-track">
+                <div className="bar-fill mana" style={{ width: `${manaFraction * 100}%` }} />
+                {manaOverFraction > 0 && <div className="bar-fill mana-over" style={{ width: `${manaOverFraction * 100}%` }} />}
+              </div>
+              <div className={`bar-label${manaOverFraction > 0 ? ' is-overcharged' : ''}`}>
+                MP {combatant.currentMana}/{maxMana}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       {/* Always rendered (outside compact) so a status landing mid-fight doesn't grow the card. */}
       {!compact && (
@@ -299,27 +325,6 @@ export function CombatantCard({
       )}
       {inspectingStatus && combatant.statuses[inspectingStatus] && (
         <StatusDetailOverlay instance={combatant.statuses[inspectingStatus]} onClose={() => setInspectingStatus(null)} />
-      )}
-      {!compact && (
-        <div className="resource-row">
-          <div className="resource">
-            <div className="bar-track">
-              <div className={`bar-fill ${hpTier(hpFraction)}`} style={{ width: `${hpFraction * 100}%` }} />
-            </div>
-            <div className="bar-label">
-              HP {Math.max(0, combatant.currentHp)}/{maxHp}
-            </div>
-          </div>
-          <div className="resource">
-            <div className="bar-track">
-              <div className="bar-fill mana" style={{ width: `${manaFraction * 100}%` }} />
-              {manaOverFraction > 0 && <div className="bar-fill mana-over" style={{ width: `${manaOverFraction * 100}%` }} />}
-            </div>
-            <div className={`bar-label${manaOverFraction > 0 ? ' is-overcharged' : ''}`}>
-              MP {combatant.currentMana}/{maxMana}
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

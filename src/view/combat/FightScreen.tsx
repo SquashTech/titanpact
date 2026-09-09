@@ -68,6 +68,7 @@ import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { EquipmentEffectList, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS, fmtGrant } from '../shared/EquipmentBox';
 import { useAmbientLocation } from '../shared/LocationContext';
 import { LocationAmbience } from '../shared/LocationSky';
+import { LocationHorizon } from '../shared/locationArt';
 import type { LocationDefinition } from '../../data/locations';
 
 /** One enemy's live matchup for a move row, precomputed by FightScreen so MoveRow needs no combat state of its own. */
@@ -341,7 +342,17 @@ const ARENA_MOTE_DENSITY = 0.45;
  * arena re-renders on every beat and the particle field has nothing to say about any of them.
  */
 const ArenaLocation = memo(function ArenaLocation({ location }: { location: LocationDefinition }) {
-  return <LocationAmbience location={location} density={ARENA_MOTE_DENSITY} className="battlefield-location" />;
+  return (
+    <>
+      <LocationAmbience location={location} density={ARENA_MOTE_DENSITY} className="battlefield-location" />
+      {/* The same skyline a second time, down at the near edge — see styles.css
+          "the place is on both sides of the line". Its own wrapper so the tint
+          variable and the near-band rules have something to hang off. */}
+      <div className="battlefield-nearground" style={{ '--node-rgb': location.tintRgb } as CSSProperties} aria-hidden="true">
+        <LocationHorizon locationId={location.id} />
+      </div>
+    </>
+  );
 });
 
 // Same golden-angle scatter as the title's useEmbers / draft's useMotes; stable across renders.
@@ -1045,6 +1056,10 @@ export function FightScreen({
           } as CSSProperties
         }
       >
+        {/* The ground's own perspective, under the Location and over its lighting.
+            An element rather than a ::before — .battlefield's two pseudo-elements
+            are already spoken for by the Field Effect sweep. */}
+        <div className="battlefield-floor" aria-hidden="true" />
         {location && <ArenaLocation location={location} />}
         {/* Keyed on beatSeq so the one-shot animation replays per reveal. */}
         {resolving && beat?.dramaticEntrance && <div key={beatSeq} className="dramatic-entrance-veil" aria-hidden="true" />}

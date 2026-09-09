@@ -2068,6 +2068,126 @@ Two mechanical notes, both of which cost a round of screenshots:
   stands in — in the same family as `--panel-alt` — which is what makes it an object sitting in
   the scene rather than a hole cut in it.
 
+## Nineteenth pass — the line of battle (2026-09-08)
+
+The fourth pass took the boxes off the battlefield figures and the seventeenth gave them poses.
+The arrangement they stood in never changed, and it was still a 2x2 lattice: four figures dead
+centre in four identical 181x185 cells, both rows level, both at the same width. A hero with no
+box around it, standing in a cell, still reads as a hero in a box.
+
+Three things were drawing that lattice.
+
+- **Both sides read top-down.** Portrait, then 81px of readout under it — on both rows. So the
+  screen ran figures / readouts / horizon / figures / readouts, and each side's own scoreboard
+  stood between it and the enemy. The two teams were ~340px apart with a wall of UI in the gap.
+  Nothing about that is a confrontation.
+- **The readout was 177px wide against a 74–104px platform.** The loudest, widest, flattest
+  object on the screen, in four identical copies at four identical offsets. The bars *were* the
+  grid lines; the figures were what sat inside them.
+- **No depth anywhere.** No stagger, no overlap, no perspective, and a floor textured with
+  uniform 26px squares — literal graph paper, which is a diagram of a place rather than a place.
+
+### What replaced it
+
+**MIRROR.** `.team-row.enemy .combatant-card` is `column-reverse`, so a side's readouts sit at
+the edge of the screen it belongs to and its figures at the horizon. Both teams now stand *on*
+the line, ~50px apart, with the instruments framing them top and bottom — Pokémon's own
+arrangement, and the single change that does most of the work. It also finally pays off the
+fourteenth pass: the Location's treeline, anchored at the divider, stopped sitting behind the
+enemy's HP bars and started sitting behind the enemy.
+
+**PLATE.** Name and both bars are one object now (`.combatant-plate`, grouped in the markup so
+the DOM sequence stays the reading sequence on both sides), `--figure-plate-w` = 146px wide —
+sized to the ground the hero stands on rather than to the cell it was allotted. It is drawn as a
+soft scrim, not a panel: it was built once as a proper instrument, filled and hairlined with a
+type-tinted edge, and four of those is four boxes again. The scrim also does the contrast job
+the name pill's own scrim used to, which is why that pill could go.
+
+**FORMATION.** The far line is padded 26px narrower than the near one — perspective by
+arrangement, since the art is 48px pixel art and any non-integer scale breaks it — and it stands
+on smaller, dimmer ground with a `brightness(0.93) saturate(0.9)` haze on its sprites. The haze
+is folded into `--figure-shadow`, because the strike and hit keyframes replace `filter` wholesale
+and anything declared beside the token vanishes for the length of every animation. Each side also
+gets a pool of light both its figures stand in, so a pair shares a piece of ground rather than
+each having a private ellipse in the dark.
+
+**Depth *within* a line was tried twice and removed.** One figure per row pushed 10px toward the
+divider (the only direction either side has slack in — the other way is 10px into its own MP
+bar), platform sizes following. The first arrangement pushed opposite columns, which gives four
+distinct depths and still leaves both lines tilted the *same* way, right-hand figure higher on
+each. That was reported from a single screenshot as *"are the heroes on the right raised slightly
+higher, why is that."* Pushing the same column instead makes the two lines lean against each
+other, which is geometrically the better answer and was still not worth it: ten pixels is too
+little to read as perspective and just enough to read as misalignment. It was reported as wonky
+twice before it was read as depth once.
+
+The lesson generalises past this screen. The lattice was already broken by the mirror and by the
+two rows being different widths; the stagger was buying a margin that was not needed, at a cost
+that was. **Between the lines is where depth belongs here** — that difference is 140px and reads
+instantly. Within a line there is no room to make an offset large enough to mean something, and
+anything smaller reads as a bug.
+
+**FLOOR.** `.battlefield-floor` — a `repeating-conic-gradient` fan centred on the horizon, masked
+to nothing at the horizon (where a fan converges into moiré) and up to full at the two screen
+edges. One element for both halves, because sharing the vanishing point is what makes the enemy
+ground and the ally ground read as one field with a line across it rather than two stacked
+panels. Location-independent on purpose: all six recipes replace the background stack wholesale,
+and a floor's geometry is not a mood.
+
+**THE PLACE ON BOTH SIDES OF THE LINE.** The Location's skyline band was anchored at the divider,
+behind the enemy row — correct when it was written, since that is where "over there" is, and it is
+what the fourteenth pass built the divider into a horizon for. But it left every scrap of a
+Location's terrain in the half of the screen the player looks at least, and the half they read
+every turn, with their own two heroes in it, had nothing but light. So the skyline renders
+**twice**: the far band small and hazed at the divider, a near band at the bottom edge that the
+player's figures stand in front of. Two bands at two scales is what a landscape does anyway — the
+same trees are large here and small over there — and it is what makes the arena read as one
+continuous place rather than a backdrop hung behind the enemy.
+
+Three details, each found by looking:
+
+- **The near band is magnified 2x and offset, and flipped.** There is one skyline drawing per
+  Location, so drawn at the same size in the same place it is visibly the same picture twice. On
+  the Storm Coast that is two identical shipwrecks, one behind each team, which is worse than
+  having no near band at all. Cropping a magnified window off-centre lands on different shapes —
+  and 2x is what a foreground wanted regardless.
+- **Its mask fades upward, the opposite of the far band's.** The far band has to dissolve its own
+  ground slab *downward* into the horizon glow. This one meets the screen's bottom edge, where a
+  solid base is correct, and has to dissolve the *tops* of its shapes instead — those are what
+  cross the ally nameplates, and HP is not negotiable against scenery.
+- **No blur on it.** The far band carries half a pixel as depth-of-field; repeating that here
+  would put the near terrain in the same focal plane as the thing it is meant to be nearer than.
+
+The perspective fan **replaces** the tactical grid rather than layering over it. Seven pairs of
+`repeating-linear-gradient` — the placeless stack plus all six recipes, weighted per location so
+that the foundry had a plated deck and the forest nearly none — came out in this pass. Axis-aligned
+26px squares are the one texture that cannot help but draw a lattice, which is the thing the pass
+exists to undo, and once the figures were staggered the grid was the last object on screen still
+insisting they were not. Nothing was lost by it: on the Foundry the fan picks up the floor's own
+heat and reads as plating better than the squares did.
+
+Strike reach and hit knockback went 7px → 11/10px in the same pass. They were sized when a lean
+could only ever be a twitch in place; across 50px of horizon a lean is a step toward somebody,
+and the room it travels into is the empty divider band.
+
+HP and MP did not move off the screen, get smaller, or become a hover. They are the two numbers a
+player reads every single turn. What changed is that they stopped being the widest thing on the
+field.
+
+### Verification
+
+Harness (`fight-harness.html` + `src/app/fightHarness.tsx`, both throwaway) mounting `FightScreen`
+from a quick-battle encounter, driven headless over CDP — the standard method from the ninth pass
+on. Checked: command phase placeless and in four Locations, targeting, a resolving strike pose, a
+damage popup's landing point, a KO'd slot's replacement placeholder, and the bench/switch panel.
+
+Four absolutely-positioned things measure from the card and so had to learn where the stage went
+on the mirrored side — the type chips, the KO tag, the floating damage number, and the stat-mod
+rim ticks. The damage number is the one that matters: unfixed, a hit landing on the far row puts
+its numeral on the attacker's own nameplate. The empty-slot placeholder is the other correction —
+it has no figure and so no plate to sit on, and keeps the scrim pill the name gave up everywhere
+else.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.
