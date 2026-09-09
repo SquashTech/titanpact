@@ -177,7 +177,7 @@ don't silently override it.
   **The pool is DERIVED, never stored** — `RunState.gemsEarned` minus what the roster holds
   (`gemPool`) — so a Gem cannot be duplicated or lost, and terminating a hero refunds by
   construction. Every won fight pays a stack (2/2/2/3 by node kind; the Guardian and finale none)
-  and the `gemReward` node and Mana Well pay `GEM_NODE_STACK` = 4. Income rose ~4x with the
+  and the `gemReward` node and the two shrines (Vitality, Mana Well) pay `GEM_NODE_STACK` = 4. Income rose ~4x with the
   rework, because a cap only does anti-funnel work when income runs well past ONE hero's worth.
   All first-pass figures for playtest (`src/data/gems.ts`, `src/run/gems.ts`; `docs/run-loop.md`).
 - **Item rarity is a point budget, spent exactly** (2026-08-30; rebased 2026-09-06): Common 30 /

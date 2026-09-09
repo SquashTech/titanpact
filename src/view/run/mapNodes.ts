@@ -77,7 +77,7 @@ const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
   currencyReward: '15–30g',
   upgradeReward: '2 XP',
   forgeReward: '+1 item slot to one hero, for the rest of the run',
-  hpBoostReward: '+20 max HP to one hero',
+  hpBoostReward: 'Emerald ×4 — +10 HP apiece, on whoever you pour them into',
   manaBoostReward: 'Sapphire ×4 — +5 Mana Pool apiece, on whoever you pour them into',
   classReward: '1 of 3 Classes, taught to one hero',
   tutorReward: 'One hero learns ANY move from its level-up pool — acts 4 and 5 only',

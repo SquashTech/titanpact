@@ -95,13 +95,6 @@ export function grantRelicReward(run: RunState, relicId: string): RunState {
   return { ...run, relics: [...run.relics, relicId] };
 }
 
-/** hpBoostReward node resolution, folded into `bonusStatGrants`. */
-export function grantStatBonus(run: RunState, rosterId: string, stat: StatKey, amount: number): RunState {
-  const entry = run.roster.find((r) => r.rosterId === rosterId);
-  if (!entry) throw new RunProgressError(`${rosterId} is not on the roster`);
-  const nextEntry: RosterEntry = { ...entry, bonusStatGrants: mergeStatMods(entry.bonusStatGrants, { [stat]: amount }) };
-  return { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? nextEntry : r)) };
-}
 
 /** The Forge node: one more item slot for one hero, permanently. Refused at MAX_ITEM_SLOTS — a hero already there is not a legal target. */
 export function grantItemSlot(run: RunState, rosterId: string, heroLookup: Record<string, HeroDefinition>): RunState {

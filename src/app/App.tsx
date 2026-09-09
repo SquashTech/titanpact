@@ -31,7 +31,6 @@ import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
 import { RecruitScreen } from '../view/run/RecruitScreen';
 import { RecruitFanfare } from '../view/run/RecruitFanfare';
-import { StatBoostScreen, type StatBoostNodeType } from '../view/run/StatBoostScreen';
 import { GemChoiceScreen } from '../view/run/GemChoiceScreen';
 import { ClassNodeScreen } from '../view/run/ClassNodeScreen';
 import { EventNodeScreen } from '../view/run/EventNodeScreen';
@@ -103,7 +102,7 @@ import { actScaling, encounterHeroCountOverride, trainingPointsFor, type Scaling
 import { generateItinerary, locationBias, locationForAct } from '../run/locations';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
-import { NODE_TINT_MANA } from '../view/shared/NodeStage';
+import { NODE_TINT_MANA, NODE_TINT_VITAL } from '../view/shared/NodeStage';
 import { prefetchTrack, setTrack } from '../audio/music';
 import { hasTrack } from '../audio/tracks';
 import { pickSquad, STANDARD_SQUAD_SIZE } from '../run/squad';
@@ -156,7 +155,6 @@ type Screen =
   /** The Forge: +1 item slot to one hero. */
   | { kind: 'forge'; nodeId: string }
   | { kind: 'blacksmith'; nodeId: string }
-  | { kind: 'statBoost'; nodeId: string; nodeType: StatBoostNodeType }
   /** A Gem offer — the gemReward node, the Mana Well, and every won fight. Already-resolved, so no nodeId. */
   | { kind: 'gemChoice'; stats: StatKey[]; count: number; eyebrow: string; title: string; tint?: string; next: Screen }
   | { kind: 'classNode'; nodeId: string }
@@ -298,13 +296,23 @@ function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): Eq
  * How each Gem-granting node dresses the one GemChoiceScreen. The Mana Well keeps the name, tint
  * and place-flavour it had as a hero-targeted shrine — only the grant changed.
  */
-const GEM_NODE_PRESENTATION: Record<'gemReward' | 'manaBoostReward', { eyebrow: string; title: string; tint?: string }> = {
+type GemNodeType = 'gemReward' | 'manaBoostReward' | 'hpBoostReward';
+
+const GEM_NODE_PRESENTATION: Record<GemNodeType, { eyebrow: string; title: string; tint?: string }> = {
   gemReward: { eyebrow: 'A Seam Opens', title: 'Gem Cache' },
   manaBoostReward: { eyebrow: 'A Blessing', title: 'Mana Well', tint: NODE_TINT_MANA },
+  hpBoostReward: { eyebrow: 'A Blessing', title: 'Vitality Shrine', tint: NODE_TINT_VITAL },
 };
 
-/** The Mana Well hands over the stone carrying its own stat rather than offering a choice. */
-const MANA_WELL_GEM_STATS: StatKey[] = ['manaPool'];
+/**
+ * The two shrines hand over the stone carrying their own stat rather than offering a choice.
+ * That fixed stat IS what tells them apart from the Gem Cache, which is the same grant as a
+ * 1-of-3 — a shrine is a place that gives one thing, and the player walks to it knowing what.
+ */
+const SHRINE_GEM_STATS: Record<'manaBoostReward' | 'hpBoostReward', StatKey[]> = {
+  manaBoostReward: ['manaPool'],
+  hpBoostReward: ['hp'],
+};
 
 /** The map, behind the level-up gate if anyone can afford one and the player has not banked the pool. */
 function levelUpPending(run: RunState): boolean {
@@ -604,12 +612,10 @@ export function App() {
       setScreen({ kind: 'forge', nodeId });
     } else if (node.type === 'blacksmith') {
       setScreen({ kind: 'blacksmith', nodeId });
-    } else if (node.type === 'hpBoostReward') {
-      setScreen({ kind: 'statBoost', nodeId, nodeType: node.type });
-    } else if (node.type === 'gemReward' || node.type === 'manaBoostReward') {
-      // The Gem Cache offers 1 of 3; the Mana Well hands over the one Gem that carries its stat.
+    } else if (node.type === 'gemReward' || node.type === 'manaBoostReward' || node.type === 'hpBoostReward') {
+      // The Gem Cache offers 1 of 3; the two shrines hand over the one Gem that carries their stat.
       const preset = GEM_NODE_PRESENTATION[node.type];
-      const stats = node.type === 'gemReward' ? pickGemOffers() : MANA_WELL_GEM_STATS;
+      const stats = node.type === 'gemReward' ? pickGemOffers() : SHRINE_GEM_STATS[node.type];
       setPlayerRun((run) => advanceToNode(run, nodeId));
       setScreen({ kind: 'gemChoice', stats, count: GEM_NODE_STACK, ...preset, next: mapAfterLevelUp(playerRun) });
     } else if (node.type === 'classReward') {
@@ -1089,15 +1095,6 @@ export function App() {
 
       {screen.kind === 'blacksmith' && (
         <BlacksmithScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
-      )}
-
-      {screen.kind === 'statBoost' && (
-        <StatBoostScreen
-          nodeType={screen.nodeType}
-          run={playerRun}
-          onRunChange={setPlayerRun}
-          onContinue={() => handleNodeContinue(screen.nodeId)}
-        />
       )}
 
       {screen.kind === 'gemChoice' && (

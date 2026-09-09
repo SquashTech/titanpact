@@ -28,7 +28,6 @@ import {
   grantCurrencyReward,
   grantItemSlot,
   grantRelicReward,
-  grantStatBonus,
   grantUpgradeReward,
   anvilQuote,
   anvilUpgrade,
@@ -86,11 +85,6 @@ function goldRewardFor(nodeType: EncounterMapNodeType, rng: Rng): number {
 
 /** NodeRewardScreen's flat XP cache. */
 const UPGRADE_REWARD_XP = 2;
-
-/** StatBoostScreen's one remaining node kind. */
-const STAT_BOOST: Record<string, { stat: StatKey; amount: number }> = {
-  hpBoostReward: { stat: 'hp', amount: 20 },
-};
 
 // --- Records the aggregator consumes ---
 
@@ -581,11 +575,8 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
         .sort((a, b) => policy.powerScore(b) - policy.powerScore(a))[0];
       return target ? grantItemSlot(run, target.rosterId, heroes) : run;
     }
-    case 'hpBoostReward': {
-      const boost = STAT_BOOST[nodeType];
-      const target = policy.statBoostTarget(run.roster, boost.stat);
-      return target ? grantStatBonus(run, target.rosterId, boost.stat, boost.amount) : run;
-    }
+    case 'hpBoostReward':
+      return grantGems(run, 'hp', GEM_NODE_STACK);
     case 'classReward': {
       const offered = sample(rng, Object.values(classes), 3);
       // ClassNodeScreen offers only heroes with no Class yet, and an offer with nobody
