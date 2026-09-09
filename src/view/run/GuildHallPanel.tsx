@@ -16,6 +16,7 @@ import { TypeBadge } from '../shared/TypeBadge';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { EquipInspectOverlay } from './EquipChoiceCard';
+import { RecruitFanfare } from './RecruitFanfare';
 import { SellSection } from './SellSection';
 
 interface Props {
@@ -119,6 +120,8 @@ export function GuildHallPanel({
   const [previewEquipId, setPreviewEquipId] = useState<string | null>(null);
   const [confirmingContract, setConfirmingContract] = useState(false);
   const [sellOpen, setSellOpen] = useState(false);
+  /** The hero the joining cinematic is running for. The roster-full path fires it from App instead. */
+  const [fanfareHeroId, setFanfareHeroId] = useState<string | null>(null);
 
   const heroOffers = offers.heroOfferIds
     .map((id) => guildHallOffers.find((o) => o.id === id))
@@ -133,7 +136,7 @@ export function GuildHallPanel({
   const canBuyContract = run.gold >= CONTRACT_PURCHASE_COST;
 
   // Derived from state rather than pushed from each setter, so a later modal can't forget to report.
-  const overlayOpen = !!previewOffer || !!previewEquip || confirmingContract || sellOpen;
+  const overlayOpen = !!previewOffer || !!previewEquip || confirmingContract || sellOpen || !!fanfareHeroId;
   useEffect(() => {
     onOverlayChange?.(overlayOpen);
   }, [overlayOpen, onOverlayChange]);
@@ -145,6 +148,7 @@ export function GuildHallPanel({
     }
     try {
       onRunChange(recruitFromGuildHall(run, offer, offer.heroId));
+      setFanfareHeroId(offer.heroId);
     } catch (err) {
       if (!(err instanceof RecruitmentError) && !(err instanceof RosterFullError)) throw err;
     }
@@ -235,6 +239,10 @@ export function GuildHallPanel({
       {/* The Anvil and the Enchanter moved to the Blacksmith (2026-09-08, per user direction):
           the Guild Hall trades in heroes and gear, the Blacksmith works on gear you already own. */}
       <SellSection run={run} onRunChange={onRunChange} open={sellOpen} onOpenChange={setSellOpen} />
+
+      {fanfareHeroId && (
+        <RecruitFanfare heroId={fanfareHeroId} source="guild" onDone={() => setFanfareHeroId(null)} />
+      )}
 
       {previewOffer &&
         (() => {

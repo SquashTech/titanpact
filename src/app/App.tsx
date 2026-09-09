@@ -29,6 +29,7 @@ import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
 import { RecruitScreen } from '../view/run/RecruitScreen';
+import { RecruitFanfare } from '../view/run/RecruitFanfare';
 import { StatBoostScreen, type StatBoostNodeType } from '../view/run/StatBoostScreen';
 import { GemChoiceScreen } from '../view/run/GemChoiceScreen';
 import { ClassNodeScreen } from '../view/run/ClassNodeScreen';
@@ -394,6 +395,9 @@ export function App() {
 
   /** The profile either side of the finished run, so the summary can show what the run added. */
   const [runOutcome, setRunOutcome] = useState<{ before: Profile; after: Profile } | null>(null);
+
+  /** The joining cinematic for the one recruit path that resolves here: terminating a hero to make room. */
+  const [recruitFanfare, setRecruitFanfare] = useState<{ heroId: string; source: 'contract' | 'guild' } | null>(null);
 
   // Owned here rather than in SandboxBattleScreen, which unmounts during a sandbox fight.
   const [sandboxSideA, setSandboxSideA] = useState<SandboxSideConfig>(() => createEmptySandboxSide());
@@ -1047,6 +1051,10 @@ export function App() {
                   : claimContractReplacing(playerRun, candidate.offer, rosterId, terminatedRosterId);
               setPlayerRun(nextRun);
               setScreen(screen.next);
+              setRecruitFanfare({
+                heroId: candidate.offer.heroId,
+                source: candidate.source === 'guildHall' ? 'guild' : 'contract',
+              });
               return true;
             } catch (err) {
               if (!(err instanceof RecruitmentError)) throw err;
@@ -1145,6 +1153,14 @@ export function App() {
           profileAfter={runOutcome.after}
           onNewRun={handleStartNewRun}
           onReturnToTitle={() => setScreen({ kind: 'title' })}
+        />
+      )}
+
+      {recruitFanfare && (
+        <RecruitFanfare
+          heroId={recruitFanfare.heroId}
+          source={recruitFanfare.source}
+          onDone={() => setRecruitFanfare(null)}
         />
       )}
 

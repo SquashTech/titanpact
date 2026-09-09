@@ -1,30 +1,47 @@
 import type { CSSProperties } from 'react';
 import type { RelicDefinition } from '../../run/relics';
-import { RelicIcon } from '../shared/EquipmentBox';
+import { RelicArt } from '../shared/relicArt';
+import { relicColor } from '../shared/relicIcons';
 
 interface Props {
   relic: RelicDefinition;
   picked: boolean;
   onPick: () => void;
   revealDelayMs: number;
+  /** Banners carry their name — a run plans four acts around "Banner of Vitality +2". Gems don't. */
+  named?: boolean;
 }
 
-// Tap selects; the claim is the screen's own bottom button. No inspect step —
-// the description is on the card.
-export function RelicChoiceCard({ relic, picked, onPick, revealDelayMs }: Props) {
+/** Just the part that tells five Banners apart. The claim button states the full name. */
+function shortName(relic: RelicDefinition): string {
+  return relic.name.replace(/^Banner of (the )?/, '');
+}
+
+/**
+ * One offer, as the object itself (2026-09-08, per user direction). This was a full-width row of
+ * name-plus-description prose; the relic axis is flat stats, so every row read as the same
+ * sentence with one number changed and the choice looked like paperwork.
+ *
+ * What survives is the stone (or the standard) at display size, standing on its own light, with
+ * the stat glyphs it grants as its charge. Tap selects; the claim is the screen's bottom button.
+ */
+export function RelicChoiceCard({ relic, picked, onPick, revealDelayMs, named = false }: Props) {
   return (
     <button
-      className={`relic-card relic-shrine-card${picked ? ' picked' : ''}`}
-      style={{ animationDelay: `${revealDelayMs}ms` } as CSSProperties}
+      className={`relic-pick${picked ? ' picked' : ''}`}
+      style={{ animationDelay: `${revealDelayMs}ms`, '--relic-color': relicColor(relic.id) } as CSSProperties}
+      aria-label={`${relic.name} — ${relic.description ?? ''}`}
+      aria-pressed={picked}
       onClick={onPick}
     >
-      <div className="relic-shrine-card-icon-badge">
-        <RelicIcon relicId={relic.id} className="relic-card-icon" />
-      </div>
-      <div className="relic-shrine-card-body">
-        <span className="relic-card-name">{relic.name}</span>
-        <p className="relic-shrine-card-desc">{relic.description ?? 'No effect described.'}</p>
-      </div>
+      {/* The frame is what the light and the selection wash are anchored to — the button itself
+          grows a line taller when a name wraps, and the glow would follow it under the text. */}
+      <span className="relic-pick-frame">
+        <span className="relic-pick-glow" aria-hidden="true" />
+        <span className="relic-pick-plinth" aria-hidden="true" />
+        <RelicArt relicId={relic.id} className="relic-pick-art" />
+      </span>
+      {named && <span className="relic-pick-name">{shortName(relic)}</span>}
     </button>
   );
 }

@@ -1,5 +1,4 @@
 import { useState, type CSSProperties } from 'react';
-import { playSfx } from '../../audio/sfx';
 import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
 import { passives } from '../../data/passives';
@@ -26,6 +25,7 @@ import {
   StageTypes,
 } from '../shared/HeroStage';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
+import { RecruitFanfare } from './RecruitFanfare';
 import { RosterPeek } from './RosterPeek';
 import { RosterReplaceScreen } from './RosterReplaceScreen';
 
@@ -65,6 +65,8 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
   const [signed, setSigned] = useState<string | null>(null);
   /** React key for the seal stamp: a rising counter, so remounting replays the mount-once animation. */
   const [stampTick, setStampTick] = useState(0);
+  /** The hero the joining cinematic is currently running for; both sign paths end here. */
+  const [fanfare, setFanfare] = useState<RosterEntry | null>(null);
 
   const featured = offers.find((entry) => entry.rosterId === featuredRosterId) ?? offers[0];
   const arriving: RosterEntry = { ...featured, equipment: createEmptyLoadout() };
@@ -93,8 +95,8 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
   // The stamp lands here, not in handleSign: the roster-full path detours through
   // RosterReplaceScreen first, and both paths reach here only once the hero is on the roster.
   function markSigned(entry: RosterEntry) {
-    playSfx('contract.sign');
     setStampTick((n) => n + 1);
+    setFanfare(entry);
     const nextClaimed = [...claimedRosterIds, entry.rosterId];
     setClaimedRosterIds(nextClaimed);
     setSigned(heroes[entry.heroId].name);
@@ -240,6 +242,15 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
           equipmentLookup={equipment}
           relicIds={run.relics}
           onClose={() => setInspecting(false)}
+        />
+      )}
+
+      {fanfare && (
+        <RecruitFanfare
+          heroId={fanfare.heroId}
+          source="contract"
+          types={rosterEntryTypes(heroes[fanfare.heroId], fanfare)}
+          onDone={() => setFanfare(null)}
         />
       )}
 

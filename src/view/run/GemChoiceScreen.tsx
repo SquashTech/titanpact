@@ -1,13 +1,13 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { playSfx } from '../../audio/sfx';
-import { relics } from '../../data/relics';
+import { gemRelics, relics } from '../../data/relics';
 import type { RunState } from '../../run/state';
 import { grantRelicReward } from '../../run/runProgress';
-import { RelicIcon } from '../shared/EquipmentBox';
 import { NodeHeader, NodeSky, NODE_TINT_ARCANE } from '../shared/NodeStage';
 import { RelicKindGlyph } from '../shared/relicIcons';
 import { stackedGrantSummary, stackedRelicName } from '../shared/relicStacks';
 import { RelicChoiceCard } from './RelicChoiceCard';
+import { RelicFamilyTally } from './RelicFamilyTally';
 import { RosterPeek } from './RosterPeek';
 
 interface Props {
@@ -23,7 +23,8 @@ interface Props {
 }
 
 // A Gem offer (docs/run-loop.md "Gems"). The same beat as the Guardian's Banner: a Gem is designed
-// to stack, so the whole family is always offered rather than filtered down to what is unheld.
+// to stack, so the whole family is always offered rather than filtered down to what is unheld —
+// and the claim reveals the whole SHELF, with the new stone counting up on it.
 export function GemChoiceScreen({ gemIds, eyebrow, title, tint, run, onRunChange, onContinue }: Props) {
   const offers = gemIds.map((id) => relics[id]).filter(Boolean);
   const fixed = offers.length === 1;
@@ -38,10 +39,14 @@ export function GemChoiceScreen({ gemIds, eyebrow, title, tint, run, onRunChange
 
   const pickedGem = pickedGemId ? offers.find((gem) => gem.id === pickedGemId) ?? null : null;
   const claimedGem = claimed ? pickedGem : null;
-  const claimedCount = claimedGem ? run.relics.filter((id) => id === claimedGem.id).length : 0;
+  // Counts AFTER the grant — the tally counts the gained one back down itself for the tick.
+  const counts = new Map<string, number>();
+  for (const id of run.relics) counts.set(id, (counts.get(id) ?? 0) + 1);
+  const claimedCount = claimedGem ? counts.get(claimedGem.id) ?? 0 : 0;
 
   function handleClaim(gemId: string) {
     playSfx('blessing', { pitch: 1.24 });
+    playSfx('discovery', { delay: 0.18 });
     onRunChange(grantRelicReward(run, gemId));
     setClaimed(true);
   }
@@ -51,24 +56,26 @@ export function GemChoiceScreen({ gemIds, eyebrow, title, tint, run, onRunChange
       <NodeSky />
       <RosterPeek run={run} />
 
-      {!claimed && (
-        <NodeHeader
-          compact
-          eyebrow={eyebrow}
-          title={title}
-          glyph={<RelicKindGlyph form="gem" />}
-          readout={
-            fixed
+      <NodeHeader
+        compact
+        eyebrow={claimedGem ? 'Gem Set' : eyebrow}
+        title={claimedGem ? stackedRelicName(claimedGem, claimedCount) : title}
+        glyph={claimedGem ? undefined : <RelicKindGlyph form="gem" />}
+        readoutKey={claimedGem ? 'set' : 'offer'}
+        readoutLive={!!claimedGem}
+        readout={
+          claimedGem
+            ? `Team-wide ${stackedGrantSummary(claimedGem, claimedCount)}.`
+            : fixed
               ? 'A cut stone, and every hero carries what it gives.'
-              : 'One stone, set for the whole team. Tap a gem to select it, then claim it.'
-          }
-        />
-      )}
+              : 'One stone, set for the whole team.'
+        }
+      />
 
       <div className="screen-scroll">
-        {!claimed && (
-          <div className="stage-centered">
-            <div className="relic-shrine-list">
+        <div className="stage-centered">
+          {!claimed ? (
+            <div className={`relic-pick-row${fixed ? ' is-single' : ''}`}>
               {offers.map((gem, i) => (
                 <RelicChoiceCard
                   key={gem.id}
@@ -79,20 +86,15 @@ export function GemChoiceScreen({ gemIds, eyebrow, title, tint, run, onRunChange
                 />
               ))}
             </div>
-          </div>
-        )}
-
-        {claimedGem && (
-          <div className="relic-reveal">
-            <div className="relic-reveal-flash" aria-hidden="true" />
-            <div className="relic-reveal-icon-badge">
-              <RelicIcon relicId={claimedGem.id} className="relic-reveal-icon" />
-            </div>
-            <div className="relic-reveal-eyebrow">Gem Set</div>
-            <h2 className="relic-reveal-name">{stackedRelicName(claimedGem, claimedCount)}</h2>
-            <p className="relic-reveal-desc">Team-wide {stackedGrantSummary(claimedGem, claimedCount)}.</p>
-          </div>
-        )}
+          ) : (
+            claimedGem && (
+              <>
+                <div className="relic-tally-label">Your gems</div>
+                <RelicFamilyTally family={gemRelics} counts={counts} gainedRelicId={claimedGem.id} />
+              </>
+            )
+          )}
+        </div>
       </div>
 
       {!claimed ? (
@@ -101,7 +103,7 @@ export function GemChoiceScreen({ gemIds, eyebrow, title, tint, run, onRunChange
           disabled={!pickedGemId}
           onClick={() => pickedGemId && handleClaim(pickedGemId)}
         >
-          {pickedGem ? `Claim ${pickedGem.name}` : 'Choose a gem'}
+          {pickedGem ? `Claim the ${pickedGem.name}` : 'Choose a gem'}
         </button>
       ) : (
         <button className="resolve-button" onClick={onContinue}>

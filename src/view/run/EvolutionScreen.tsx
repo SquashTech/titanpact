@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { HeroDefinition, StatKey, TypeId } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import { MOVE_CAP, type EvolutionNode, type EvolutionPath } from '../../run/progression';
@@ -16,6 +16,8 @@ import { useLongPress } from '../shared/MoveTile';
 import { healCasterForEntry } from '../shared/healCaster';
 import { entryStatTotals } from '../shared/entryStatTotals';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
+import { prefersReducedMotion } from '../shared/reducedMotion';
+import { playSfx } from '../../audio/sfx';
 import { RosterPeek } from './RosterPeek';
 
 interface Props {
@@ -78,7 +80,10 @@ function statEntriesOf(path: EvolutionPath): [StatKey, number][] {
  */
 export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
   const [inspectedPathId, setInspectedPathId] = useState<string | null>(null);
+  /** Set once the choice is spent: the cinematic runs over the screen and calls `onChoose` at the end. */
+  const [sealingPathId, setSealingPathId] = useState<string | null>(null);
   const inspectedPath = node.paths.find((p) => p.id === inspectedPathId) ?? null;
+  const sealingPath = node.paths.find((p) => p.id === sealingPathId) ?? null;
 
   return (
     <div className="node-screen evolution-screen">
@@ -94,7 +99,7 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
         }
         eyebrow="Evolution"
         title={`${hero.name} is ready to evolve!`}
-        readout={`Level ${entry.level} — choose a path. This choice is permanent for the rest of the run.`}
+        readout="The choice is permanent."
       />
 
       <div className="screen-scroll">
@@ -114,8 +119,16 @@ export function EvolutionScreen({ hero, entry, node, run, onChoose }: Props) {
           entry={entry}
           run={run}
           path={inspectedPath}
-          onChoose={() => onChoose(inspectedPath.id)}
+          onChoose={() => setSealingPathId(inspectedPath.id)}
           onClose={() => setInspectedPathId(null)}
+        />
+      )}
+
+      {sealingPath && (
+        <EvolutionCinematic
+          hero={hero}
+          path={sealingPath}
+          onDone={() => onChoose(sealingPath.id)}
         />
       )}
     </div>
@@ -358,14 +371,87 @@ function PathDossier({
           )}
         </div>
 
-        <button className="resolve-button evolution-dossier-confirm" data-sfx="ui.commit" onClick={onChoose}>
-          Evolve into {path.name}
+        {/* Not `.resolve-button`: this is the one press in the run that spends something
+            permanent, and it should not look like Continue. */}
+        <button className="evolve-button" data-sfx="none" onClick={onChoose}>
+          <span className="evolve-button-sheen" aria-hidden="true" />
+          <span className="evolve-button-rays" aria-hidden="true" />
+          <span className="evolve-button-label">
+            <span className="evolve-button-kicker">Evolve into</span>
+            <span className="evolve-button-name">{path.name}</span>
+          </span>
         </button>
       </div>
 
       {readingMoveId && (
         <MoveDetailOverlay move={moves[readingMoveId]} caster={caster} onClose={() => setReadingMoveId(null)} />
       )}
+    </div>
+  );
+}
+
+
+/** Beat boundaries for the evolution cinematic, in ms from the press. */
+const EVOLVE_BEATS = { burst: 1150, reveal: 1520, done: 4100 } as const;
+
+/**
+ * What the choice looks like when it lands (2026-09-08, per user direction). An Evolution is the
+ * most permanent thing a run does to a hero and it used to resolve as a screen swap — the dossier
+ * closed and the level-up list came back one line different.
+ *
+ * Three beats, and they are the shape of the moment rather than decoration: the hero CHARGES
+ * (rings closing in, the figure lit from inside and shaking), the charge BURSTS (a white-out that
+ * hides the swap, which is the whole trick), and the new form is REVEALED under the path's name
+ * and the typing it lands on. A tap skips to the end; nothing here is load-bearing, so a player
+ * who has seen it twenty times never has to sit through it.
+ */
+function EvolutionCinematic({ hero, path, onDone }: { hero: HeroDefinition; path: EvolutionPath; onDone: () => void }) {
+  const [beat, setBeat] = useState<'charge' | 'burst' | 'reveal'>('charge');
+  const types = pathTypes(hero, path);
+
+  useEffect(() => {
+    if (prefersReducedMotion()) {
+      onDone();
+      return;
+    }
+    playSfx('titan.stir');
+    const timers = [
+      window.setTimeout(() => {
+        setBeat('burst');
+        playSfx('seal.shatter');
+      }, EVOLVE_BEATS.burst),
+      window.setTimeout(() => {
+        setBeat('reveal');
+        playSfx('levelUp');
+      }, EVOLVE_BEATS.reveal),
+      window.setTimeout(onDone, EVOLVE_BEATS.done),
+    ];
+    return () => timers.forEach(window.clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div className={`evolve-cinematic is-${beat}`} style={paletteStyle(hero, path)} onClick={onDone}>
+      <span className="evolve-cinematic-veil" aria-hidden="true" />
+      <span className="evolve-cinematic-rays" aria-hidden="true" />
+
+      <div className="evolve-cinematic-stage">
+        <span className="evolve-ring is-outer" aria-hidden="true" />
+        <span className="evolve-ring is-inner" aria-hidden="true" />
+        <span className="evolve-column" aria-hidden="true" />
+        <HeroPortrait heroId={hero.id} className="evolve-figure" />
+        <span className="evolve-flash" aria-hidden="true" />
+      </div>
+
+      <div className="evolve-cinematic-plate">
+        <div className="evolve-cinematic-eyebrow">{hero.name} evolved</div>
+        <h2 className="evolve-cinematic-name">{path.name}</h2>
+        <div className="evolve-cinematic-types">
+          {types.map((t) => (
+            <TypeBadge key={t} type={t} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

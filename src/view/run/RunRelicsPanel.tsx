@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { gemRelics, guardianBannerRelics, relics } from '../../data/relics';
 import type { RelicDefinition } from '../../run/relics';
-import { RelicIcon } from '../shared/EquipmentBox';
+import { RelicArt } from '../shared/relicArt';
+import { relicColor } from '../shared/relicIcons';
 import { stackedGrantSummary } from '../shared/relicStacks';
 
 /** Duplicates fold into one chip carrying the count. */
@@ -48,10 +49,11 @@ function RelicRail({
               key={relic.id}
               type="button"
               className={`relic-pill${count > 0 ? '' : ' is-empty'}`}
+              style={{ '--relic-color': relicColor(relic.id) } as CSSProperties}
               onClick={() => onInspect(relic.id)}
               aria-label={`${relic.name}, held ${count} — tap for details`}
             >
-              <RelicIcon relicId={relic.id} className="relic-pill-icon" />
+              <RelicArt relicId={relic.id} className="relic-pill-art" />
               <span className="relic-pill-count">{count}</span>
             </button>
           );
@@ -75,7 +77,7 @@ function RelicSummaryPopup({ relicId, count, onClose }: { relicId: string | null
     >
       <div className="log-panel move-popup-panel">
         <div className="relic-summary-head">
-          <RelicIcon relicId={relic.id} className="relic-summary-icon" />
+          <RelicArt relicId={relic.id} className="relic-summary-art" />
           {/* The plain name, not `stackedRelicName`: the "+1" suffix and the Held line below say
               the same thing in two notations. The suffix is for chips with no room for a count. */}
           <span className="relic-summary-name">{relic.name}</span>

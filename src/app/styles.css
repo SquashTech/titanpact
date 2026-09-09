@@ -10429,6 +10429,185 @@ textarea,
   background: var(--selected-fill);
 }
 
+/* --- A hero joining the pact (RecruitFanfare.tsx) -------------------------
+   Both ways in used to resolve silently — the contract stamped a mark in the
+   corner and a Guild Hall hire simply closed its sheet — which is a strange
+   amount of nothing for the run's second-scarcest resource (2026-09-08, per
+   user direction).
+
+   One beat, in the hero's own primary type colour: the seal closes on them
+   (rings drawing in, the figure rising out of the dark), the oath lands, and
+   the name and typing print under it. Tap skips — four hires in one Guild
+   Hall visit must not be four times this. */
+.recruit-fanfare {
+  position: fixed;
+  inset: 0;
+  z-index: 42;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.recruit-fanfare-veil {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 44%, color-mix(in srgb, rgb(var(--pact-rgb)) 14%, #0d0f16), #05060a 64%);
+  animation: evolve-veil-in 0.28s ease-out backwards;
+}
+
+.recruit-fanfare-rays {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  width: 720px;
+  height: 720px;
+  margin: -360px 0 0 -360px;
+  opacity: 0;
+  background: repeating-conic-gradient(from 0deg, transparent 0deg 11deg, rgba(var(--pact-rgb), 0.45) 11deg 14deg);
+  -webkit-mask-image: radial-gradient(circle, #000 8%, transparent 44%);
+  mask-image: radial-gradient(circle, #000 8%, transparent 44%);
+  pointer-events: none;
+}
+
+.recruit-fanfare.is-sworn .recruit-fanfare-rays {
+  animation: evolve-rays-in 0.8s ease-out forwards, evolve-rays-spin 34s linear infinite;
+}
+
+.recruit-fanfare-stage {
+  position: relative;
+  width: 230px;
+  height: 230px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Rings CLOSING rather than expanding: an oath is something binding onto the
+   hero, and a ring travelling outward is the vocabulary this UI already uses
+   for a burst (.relic-reveal-flash, .recruit-stamp-wax). */
+.recruit-fanfare-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  opacity: 0;
+  animation: recruit-fanfare-seal 0.72s cubic-bezier(0.3, 0.85, 0.25, 1) both;
+  pointer-events: none;
+}
+
+.recruit-fanfare-ring.is-outer {
+  width: 240px;
+  height: 240px;
+  margin: -120px 0 0 -120px;
+  border: 2px solid rgba(var(--pact-rgb), 0.75);
+}
+
+.recruit-fanfare-ring.is-inner {
+  width: 180px;
+  height: 180px;
+  margin: -90px 0 0 -90px;
+  border: 2px dashed rgba(var(--pact-rgb), 0.6);
+  animation-delay: 0.14s;
+}
+
+@keyframes recruit-fanfare-seal {
+  0% {
+    opacity: 0;
+    transform: scale(1.9) rotate(-40deg);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.72) rotate(0deg);
+  }
+}
+
+.recruit-fanfare-figure {
+  position: relative;
+  width: 138px;
+  height: 138px;
+  image-rendering: pixelated;
+  animation: recruit-fanfare-rise 0.7s cubic-bezier(0.2, 1, 0.3, 1) both;
+}
+
+@keyframes recruit-fanfare-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(26px) scale(0.86);
+    filter: brightness(0.2);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 0 20px rgba(var(--pact-rgb), 0.7));
+  }
+}
+
+.recruit-fanfare-flash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  margin: -30px 0 0 -30px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(var(--pact-rgb), 0.6) 50%, transparent 72%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.recruit-fanfare.is-sworn .recruit-fanfare-flash {
+  animation: class-learn-flash-burst 0.7s ease-out forwards;
+}
+
+.recruit-fanfare-plate {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  opacity: 0;
+}
+
+.recruit-fanfare.is-sworn .recruit-fanfare-plate {
+  animation: evolve-plate-in 0.55s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+
+.recruit-fanfare-kicker {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(var(--pact-rgb), 1);
+}
+
+.recruit-fanfare-name {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.05;
+  text-shadow: 0 0 26px rgba(var(--pact-rgb), 0.7);
+}
+
+.recruit-fanfare-oath {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-dim);
+}
+
+.recruit-fanfare-types {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
 /* --- The team-wide panel (RunRelicsPanel.tsx) -----------------------------
    Banners and Gems, at the top of the Roster sheet's one scroll rather than
    behind a map button of their own (2026-09-07). Both families list in full,
@@ -10485,49 +10664,93 @@ textarea,
    roster below actually needs back. */
 .relic-rail.is-gems .relic-pill {
   min-height: 44px;
-  padding: 4px;
+  padding: 3px 4px;
 }
 
-.relic-rail.is-gems .relic-pill-icon {
-  font-size: 21px;
+.relic-rail.is-gems .relic-pill-art {
+  font-size: 22px;
 }
 
+/* Each tile is CUT IN THE RELIC'S OWN COLOUR rather than in the panel gray it
+   used to wear (2026-09-08, per user direction). Twelve identical gray boxes
+   with twelve different marks in them made the mark do all the work; carrying
+   the hue into the fill, the border and the underglow means the rail can be
+   read at a glance as "three reds and a green", which is what a player is
+   actually asking it. */
 .relic-pill {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
   flex: 0 0 calc(25% - 4.5px);
   min-height: 56px;
-  padding: 8px 4px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
+  padding: 5px 4px 3px;
+  overflow: hidden;
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--relic-color, var(--magical)) 22%, var(--panel-alt)),
+    var(--panel) 78%
+  );
+  border: 1px solid color-mix(in srgb, var(--relic-color, var(--magical)) 32%, var(--border));
   border-radius: var(--radius-sm);
-  box-shadow: var(--hairline);
+  box-shadow:
+    var(--hairline),
+    var(--elev-1),
+    inset 0 -14px 20px -14px color-mix(in srgb, var(--relic-color, var(--magical)) 75%, transparent);
   color: var(--text);
   cursor: pointer;
-  transition: border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  transition: border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+/* The lit top edge, in the relic's colour — the one detail that separates a
+   tinted rectangle from something with a light on it. */
+.relic-pill::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 14%;
+  right: 14%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--relic-color, var(--magical)) 85%, #ffffff), transparent);
+  pointer-events: none;
 }
 
 .relic-pill:hover {
-  border-color: var(--accent);
+  border-color: color-mix(in srgb, var(--relic-color, var(--magical)) 70%, #ffffff);
   transform: translateY(-1px);
+  box-shadow:
+    var(--hairline-strong),
+    var(--elev-2),
+    inset 0 -14px 20px -14px color-mix(in srgb, var(--relic-color, var(--magical)) 85%, transparent);
 }
 
 .relic-pill:active {
   transform: translateY(0);
 }
 
-/* Dimmed, not hidden — an unheld one is a slot to fill. Still tappable, so a
-   player can read what a Banner they have not raised would actually pay. */
+/* Unheld: the colour drains out and the tile sinks, so a held one reads as lit
+   from across the screen. Still tappable — a player can read what a Banner they
+   have not raised would pay. */
 .relic-pill.is-empty {
-  opacity: 0.38;
+  background: var(--surface-sunken);
+  border-color: var(--border-sunken);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+  opacity: 0.5;
 }
 
-.relic-pill-icon {
-  font-size: 26px;
-  line-height: 1;
+.relic-pill.is-empty::before {
+  display: none;
+}
+
+.relic-pill-art {
+  font-size: 27px;
+}
+
+.relic-pill.is-empty .relic-pill-art {
+  filter: grayscale(0.75);
 }
 
 .relic-pill-count {
@@ -10536,6 +10759,13 @@ textarea,
   font-variant-numeric: tabular-nums;
   min-width: 1ch;
   text-align: center;
+  color: color-mix(in srgb, var(--relic-color, var(--magical)) 45%, #ffffff);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.relic-pill.is-empty .relic-pill-count {
+  color: var(--text-dim);
+  text-shadow: none;
 }
 
 /* --- What a chip's tap opens. Same .move-popup-panel box every other tap-to-read
@@ -10547,9 +10777,8 @@ textarea,
   gap: 8px;
 }
 
-.relic-summary-icon {
-  font-size: 22px;
-  line-height: 1;
+.relic-summary-art {
+  font-size: 30px;
 }
 
 .relic-summary-name {
@@ -12045,6 +12274,548 @@ textarea,
   color: var(--text-dim);
   box-shadow: none;
   opacity: 0.45;
+}
+
+/* --- Relics as objects (relicArt.tsx) -------------------------------------
+   The Gem and the Banner drawn at display size (2026-09-08, per user
+   direction). The flat 24x24 marks in relicIcons.tsx still serve every chip
+   inside a sentence; these are for the surfaces where the relic IS the
+   subject — the two choice screens, the claim tally, and the run sheet's
+   rails.
+
+   Everything is cut from ONE hue, `--relic-color`, which the relic's own lead
+   stat supplies. That is what makes the family read as seven different stones
+   rather than seven copies of one: the facets are all `color-mix` steps off
+   currentColor toward white or black, so an Emerald and a Ruby are the same
+   geometry lit the same way in two materials. */
+
+.gem-jewel,
+.banner-standard {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: var(--relic-color, var(--magical));
+}
+
+.gem-jewel {
+  width: 1em;
+  height: 1em;
+}
+
+.gem-jewel-cut {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Light from the upper left. The crown takes it, the pavilion falls away —
+   and the middle pavilion facet comes back bright because that is where a
+   real brilliant returns light through the table. Six planes; five all read
+   as one flat pentagon and seven is past what 26px can hold. */
+.gem-facet.is-table {
+  fill: color-mix(in srgb, currentColor 38%, #ffffff);
+}
+
+.gem-facet.is-crown-left {
+  fill: color-mix(in srgb, currentColor 68%, #ffffff);
+}
+
+.gem-facet.is-crown-right {
+  fill: currentColor;
+}
+
+.gem-facet.is-pavilion-left {
+  fill: color-mix(in srgb, currentColor 60%, #05070c);
+}
+
+.gem-facet.is-pavilion-mid {
+  fill: color-mix(in srgb, currentColor 84%, #ffffff);
+}
+
+.gem-facet.is-pavilion-right {
+  fill: color-mix(in srgb, currentColor 42%, #05070c);
+}
+
+.gem-girdle {
+  fill: none;
+  stroke: color-mix(in srgb, currentColor 25%, #ffffff);
+  stroke-width: 1.3;
+  opacity: 0.65;
+}
+
+.gem-outline {
+  fill: none;
+  stroke: color-mix(in srgb, currentColor 50%, #ffffff);
+  stroke-width: 1.7;
+  stroke-linejoin: round;
+  opacity: 0.9;
+}
+
+/* The glisten: one soft bar of light dragged across the whole stone on a
+   loop, clipped to the silhouette. This is the difference between a coloured
+   shape and something the player reads as CUT — a static gem looks like an
+   icon no matter how many facets it has. */
+.gem-glisten {
+  fill: rgba(255, 255, 255, 0.85);
+  filter: blur(2.5px);
+  opacity: 0;
+  animation: gem-glisten 4.2s ease-in-out infinite;
+}
+
+@keyframes gem-glisten {
+  0%,
+  58% {
+    transform: translateX(0) skewX(-18deg);
+    opacity: 0;
+  }
+  63% {
+    opacity: 0.55;
+  }
+  84% {
+    transform: translateX(112px) skewX(-18deg);
+    opacity: 0.5;
+  }
+  90%,
+  100% {
+    transform: translateX(132px) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
+/* Four-point stars at the corners the facets meet, each on its own beat so
+   the stone never twinkles in time with itself. */
+.gem-sparkle {
+  position: absolute;
+  background: #ffffff;
+  clip-path: polygon(50% 0%, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0% 50%, 42% 42%);
+  opacity: 0;
+  filter: drop-shadow(0 0 4px currentColor);
+  animation: gem-sparkle 3.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.gem-sparkle.is-a {
+  top: 4%;
+  left: 16%;
+  width: 26%;
+  height: 26%;
+  animation-delay: 0.3s;
+}
+
+.gem-sparkle.is-b {
+  top: 34%;
+  right: 2%;
+  width: 18%;
+  height: 18%;
+  animation-delay: 1.6s;
+}
+
+.gem-sparkle.is-c {
+  bottom: 12%;
+  left: 34%;
+  width: 15%;
+  height: 15%;
+  animation-delay: 2.6s;
+}
+
+@keyframes gem-sparkle {
+  0%,
+  76%,
+  100% {
+    opacity: 0;
+    transform: scale(0.25) rotate(0deg);
+  }
+  86% {
+    opacity: 1;
+    transform: scale(1) rotate(45deg);
+  }
+}
+
+/* The charge: the stat glyphs the relic grants, sitting on the stone's widest
+   band. White with a hard shadow rather than the stat's own colour — the
+   stone is already that colour, and a glyph in it would vanish. */
+.gem-jewel-charge {
+  position: absolute;
+  top: 41%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 0.06em;
+  transform: translate(-50%, -50%);
+  font-size: 0.32em;
+  color: #ffffff;
+  opacity: 0.94;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+  pointer-events: none;
+}
+
+/* --- The Banner ----------------------------------------------------------
+   Taller than wide, because it hangs. The bar is fixed and the cloth swings
+   under it — swaying the whole thing reads as a flag being waved, which is a
+   different object. */
+
+.banner-standard {
+  width: 0.86em;
+  height: 1em;
+}
+
+.banner-standard-cloth {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.banner-field {
+  fill: color-mix(in srgb, currentColor 80%, #05070c);
+}
+
+.banner-fold.is-left {
+  fill: color-mix(in srgb, currentColor 62%, #ffffff);
+}
+
+.banner-fold.is-right {
+  fill: color-mix(in srgb, currentColor 52%, #05070c);
+}
+
+.banner-sheen {
+  fill: rgba(255, 255, 255, 0.5);
+  filter: blur(3px);
+  opacity: 0;
+  animation: banner-sheen 5.4s ease-in-out infinite;
+}
+
+@keyframes banner-sheen {
+  0%,
+  62% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  68% {
+    opacity: 0.45;
+  }
+  88% {
+    transform: translateX(30px);
+    opacity: 0.4;
+  }
+  94%,
+  100% {
+    transform: translateX(38px);
+    opacity: 0;
+  }
+}
+
+/* Gold on every Banner regardless of what it grants: the hardware is what
+   says "this came off a Guardian", the cloth says which one. */
+.banner-bar {
+  fill: #c9ae69;
+}
+
+.banner-finial {
+  fill: #efdca6;
+}
+
+.banner-sway {
+  transform-origin: 32px 10px;
+  animation: banner-sway 5.2s ease-in-out infinite;
+}
+
+@keyframes banner-sway {
+  0%,
+  100% {
+    transform: rotate(-2.2deg);
+  }
+  50% {
+    transform: rotate(2.2deg);
+  }
+}
+
+.banner-standard-charge {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 0.06em;
+  transform: translate(-50%, -50%);
+  font-size: 0.3em;
+  color: #ffffff;
+  opacity: 0.95;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.75));
+  pointer-events: none;
+}
+
+/* --- Picking one (RelicChoiceCard.tsx, the Gem and Banner screens) --------
+   This replaced three full-width rows of name-and-description prose
+   (2026-09-08, per user direction). Both families grant flat stats, so every
+   row was the same sentence with one number changed and the choice read as
+   paperwork rather than as treasure.
+
+   What is left is the object on its own light, with the stat glyphs it grants
+   as its charge. That is the whole of the information; the claim button names
+   what is picked. */
+
+.relic-pick-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.relic-pick {
+  position: relative;
+  flex: 0 0 calc(33.333% - 3px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 4px 16px;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  animation: equip-cache-fade-up 0.34s ease-out backwards;
+}
+
+/* Everything lit is anchored HERE, not to the button: a wrapped two-line name
+   makes the button a line taller, and a glow measured off its bottom edge ends
+   up behind the text instead of under the object. */
+.relic-pick-frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The selection wash is behind the object, not a box around it: a border here
+   would put the rectangles straight back. */
+.relic-pick-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--relic-color) 34%, transparent), transparent 62%);
+  opacity: 0;
+  transition: opacity var(--dur-mid) var(--ease-out);
+  pointer-events: none;
+}
+
+.relic-pick.picked .relic-pick-glow {
+  opacity: 1;
+}
+
+/* The light the object stands on. Present always, brighter when picked —
+   without it a gem floats in the middle of nothing. */
+.relic-pick-plinth {
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  width: 82%;
+  height: 18px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--relic-color) 60%, transparent), transparent 72%);
+  opacity: 0.45;
+  transition: opacity var(--dur-mid) var(--ease-out);
+  pointer-events: none;
+}
+
+.relic-pick.picked .relic-pick-plinth {
+  opacity: 1;
+}
+
+.relic-pick-art {
+  position: relative;
+  font-size: 92px;
+  transition: transform var(--dur-mid) var(--ease-out), opacity var(--dur-mid) var(--ease-out);
+}
+
+.relic-pick.picked .relic-pick-art {
+  transform: translateY(-5px) scale(1.06);
+}
+
+/* Once something is picked the rest step back — on a screen with no text, the
+   contrast between chosen and not-chosen is the only feedback there is. */
+.relic-pick-row:has(.picked) .relic-pick:not(.picked) .relic-pick-art {
+  opacity: 0.4;
+}
+
+/* A fixed grant (the Mana Well) has nothing to compare against, so it gets the
+   room the comparison would have taken. */
+.relic-pick-row.is-single .relic-pick {
+  flex: 0 0 100%;
+}
+
+.relic-pick-row.is-single .relic-pick-art {
+  font-size: 150px;
+}
+
+/* Banners are named and Gems are not: a run plans four acts around
+   "Banner of Vitality +2", while a Gem is only ever the stat it carries. */
+.relic-pick-row.is-banners .relic-pick-art {
+  font-size: 86px;
+}
+
+.relic-pick-name {
+  position: relative;
+  max-width: 100%;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+  line-height: 1.25;
+  color: var(--text-dim);
+  transition: color var(--dur-mid) var(--ease-out);
+}
+
+.relic-pick.picked .relic-pick-name {
+  color: var(--text);
+}
+
+/* Gold rather than the Gem screen's violet: a Banner comes off a Guardian. */
+.relic-banner-claim-button {
+  background: linear-gradient(165deg, #f0cf8a, #c08f2c);
+  border: 1px solid var(--accent);
+  color: #211705;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 0 1px rgba(224, 166, 60, 0.35), 0 4px 16px rgba(224, 166, 60, 0.35);
+  transition: opacity var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.relic-banner-claim-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px rgba(224, 166, 60, 0.5), 0 6px 20px rgba(224, 166, 60, 0.45);
+}
+
+.relic-banner-claim-button:disabled {
+  background: var(--panel-alt);
+  border-color: var(--border);
+  color: var(--text-dim);
+  box-shadow: none;
+  opacity: 0.45;
+}
+
+/* --- The claim tally (RelicFamilyTally.tsx) -------------------------------
+   What a claim actually changed, against everything the run already holds.
+   A Gem's worth is entirely "this is my fourth Ruby", which the single reveal
+   card it replaced could not say — so the claim reveals the SHELF, and the new
+   one flares and counts up on it. */
+
+.relic-tally-label {
+  margin-bottom: 12px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.relic-tally {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.relic-tally-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 calc(25% - 6px);
+  padding: 10px 2px 6px;
+  border-radius: var(--radius-sm);
+  animation: equip-cache-fade-up 0.3s ease-out backwards;
+}
+
+/* Five Banners want 3 + 2, not 4 + 1. */
+.relic-tally.is-banners .relic-tally-cell {
+  flex: 0 0 calc(33.333% - 6px);
+}
+
+.relic-tally-art {
+  font-size: 46px;
+}
+
+.relic-tally.is-banners .relic-tally-art {
+  font-size: 54px;
+}
+
+/* Never held: dimmed, not hidden — the shelf is the point, and an empty slot
+   is the thing the next Gem could fill. */
+.relic-tally-cell.is-empty {
+  opacity: 0.26;
+  filter: grayscale(0.7);
+}
+
+.relic-tally-count {
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+.relic-tally-cell.is-gained {
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--relic-color, var(--accent)) 20%, transparent), transparent 72%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--relic-color, var(--accent)) 32%, transparent);
+}
+
+.relic-tally-cell.is-gained .relic-tally-art {
+  animation: relic-tally-land 0.7s cubic-bezier(0.2, 1.3, 0.35, 1) both;
+}
+
+@keyframes relic-tally-land {
+  0% {
+    transform: translateY(-26px) scale(1.5);
+    opacity: 0;
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.relic-tally-burst {
+  position: absolute;
+  top: 34%;
+  left: 50%;
+  width: 130px;
+  height: 130px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--relic-color, var(--accent)) 70%, transparent), transparent 66%);
+  animation: class-learn-flash-burst 0.8s ease-out 0.34s backwards;
+  pointer-events: none;
+}
+
+.relic-tally-count.is-ticked {
+  color: var(--accent);
+  animation: relic-tally-tick 0.55s cubic-bezier(0.2, 1.4, 0.3, 1);
+}
+
+@keyframes relic-tally-tick {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.75);
+    text-shadow: 0 0 14px var(--accent);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* --- The Boon shrine (BoonNodeScreen's passiveReward) ---------------------
@@ -15046,12 +15817,17 @@ textarea,
    z-index 1 with everything else would put the shrine's falling light over
    the header and the hero cards instead of behind them. */
 /* `.pact-seal-flash` is the opposite case to `.shrine-descent`: an ambient
-   layer that has to paint ABOVE the content, at the z-index it names itself. */
+   layer that has to paint ABOVE the content, at the z-index it names itself —
+   and so are the two full-screen cinematics, which are `position: fixed` and
+   would be flattened back into the column by this rule. */
 .node-screen
   > *:not(.node-sky):not(.shrine-descent):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button):not(.is-floating):not(
     .pact-seal-flash
+  ):not(.evolve-cinematic):not(.recruit-fanfare),
+.levelup-screen
+  > *:not(.node-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button):not(.evolve-cinematic):not(
+    .recruit-fanfare
   ),
-.levelup-screen > *:not(.node-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button),
 /* .squad-select joined the stage in 2026-08-29 so it could carry the act's
    Location (docs/locations.md §5.5). Its root rule was already this stage's,
    copied verbatim; this is the one line it was missing. */
@@ -17191,8 +17967,12 @@ textarea,
    Full-bleed, and the Confirm is pinned under a body that scrolls on its own:
    a permanent choice must never have its commit below a fold, and the card's
    flavour line is not worth the room a full-screen sheet is trying to save. */
+/* A gutter, not full-bleed (2026-09-08, per user direction). The backdrop has
+   always closed this sheet, but at 100% x 100% there was no backdrop left to
+   tap — the only way back to the three cards was the corner ✕. A band of scrim
+   top and bottom restores the dismissal every other overlay in the app has. */
 .evolution-dossier-overlay {
-  padding: 0;
+  padding: 30px 8px 34px;
 }
 
 .detail-panel.evolution-dossier {
@@ -17205,9 +17985,9 @@ textarea,
   overflow: hidden;
   gap: 8px;
   padding: 12px;
-  border: 0;
+  border: 1px solid var(--border);
   border-top: 2px solid var(--path-lead);
-  border-radius: 0;
+  border-radius: var(--radius-lg);
   background:
     radial-gradient(90% 34% at 0% 0%, color-mix(in srgb, var(--path-lead) 15%, transparent), transparent 70%),
     radial-gradient(80% 30% at 100% 0%, color-mix(in srgb, var(--path-trail) 12%, transparent), transparent 70%),
@@ -17363,9 +18143,437 @@ textarea,
   margin-top: 6px;
 }
 
-.resolve-button.evolution-dossier-confirm {
+/* The commit, as a forged slab rather than as Continue in another colour
+   (2026-09-08, per user direction). This is the only press in a run that
+   spends something permanent, and it was wearing `.resolve-button` — the same
+   control that dismisses a reward screen.
+
+   It is cut from the PATH's own two type colours, so the button the player
+   presses is already the colour of the hero it produces. The sheen and the
+   slow breathe are what stop it reading as an ordinary block of colour: it
+   should look like it is waiting to be pressed. */
+.evolve-button {
+  position: relative;
   flex: none;
-  margin-top: 0;
+  overflow: hidden;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 11px 16px;
+  border: 1px solid color-mix(in srgb, var(--path-lead) 60%, #ffffff);
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(120% 140% at 50% 130%, rgba(0, 0, 0, 0.45), transparent 60%),
+    linear-gradient(150deg, color-mix(in srgb, var(--path-lead) 74%, #ffffff), var(--path-lead) 42%, color-mix(in srgb, var(--path-trail) 78%, #05070c));
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -14px 22px -14px rgba(0, 0, 0, 0.7),
+    0 0 0 1px color-mix(in srgb, var(--path-lead) 40%, transparent),
+    0 6px 26px color-mix(in srgb, var(--path-lead) 42%, transparent);
+  animation: evolve-button-breathe 2.8s ease-in-out infinite;
+}
+
+@keyframes evolve-button-breathe {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      inset 0 -14px 22px -14px rgba(0, 0, 0, 0.7),
+      0 0 0 1px color-mix(in srgb, var(--path-lead) 40%, transparent),
+      0 6px 26px color-mix(in srgb, var(--path-lead) 42%, transparent);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -14px 22px -14px rgba(0, 0, 0, 0.7),
+      0 0 0 1px color-mix(in srgb, var(--path-lead) 60%, transparent),
+      0 8px 38px color-mix(in srgb, var(--path-lead) 65%, transparent);
+  }
+}
+
+.evolve-button:active {
+  transform: translateY(1px);
+}
+
+.evolve-button-sheen {
+  position: absolute;
+  top: -20%;
+  left: -40%;
+  width: 26%;
+  height: 140%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: skewX(-18deg);
+  animation: evolve-button-sheen 3.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes evolve-button-sheen {
+  0%,
+  55% {
+    transform: translateX(0) skewX(-18deg);
+  }
+  85%,
+  100% {
+    transform: translateX(560px) skewX(-18deg);
+  }
+}
+
+/* Rays behind the label, not behind the whole slab: the centre is where the
+   eye lands, and a spinning field across a full-width button reads as a
+   loading state. */
+.evolve-button-rays {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 240px;
+  height: 240px;
+  margin: -120px 0 0 -120px;
+  background: repeating-conic-gradient(from 0deg, transparent 0deg 10deg, rgba(255, 255, 255, 0.2) 10deg 13deg);
+  -webkit-mask-image: radial-gradient(circle, #000 5%, transparent 55%);
+  mask-image: radial-gradient(circle, #000 5%, transparent 55%);
+  animation: evolve-rays-spin 26s linear infinite;
+  pointer-events: none;
+}
+
+.evolve-button-label {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+}
+
+.evolve-button-kicker {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.evolve-button-name {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+}
+
+/* --- The evolution cinematic (EvolutionScreen.tsx EvolutionCinematic) -----
+   The choice used to resolve as a screen swap: the dossier closed and the
+   level-up list came back one line different. Three beats now, and they are
+   the shape of the moment rather than decoration — the hero CHARGES, the
+   charge BURSTS into a white-out (which is what hides the swap), and the new
+   form is REVEALED under the path's name and the typing it lands on.
+
+   Tinted from the path's own colours, same as the button that started it, so
+   the press and what it produces are visibly the same event. A tap anywhere
+   skips to the end. */
+.evolve-cinematic {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.evolve-cinematic-veil {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 42%, #0d0f16, #04050a 68%);
+  animation: evolve-veil-in 0.3s ease-out backwards;
+}
+
+@keyframes evolve-veil-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.evolve-cinematic-rays {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  width: 780px;
+  height: 780px;
+  margin: -390px 0 0 -390px;
+  opacity: 0;
+  background: repeating-conic-gradient(
+    from 0deg,
+    transparent 0deg 11deg,
+    color-mix(in srgb, var(--path-lead) 55%, transparent) 11deg 14deg
+  );
+  -webkit-mask-image: radial-gradient(circle, #000 8%, transparent 44%);
+  mask-image: radial-gradient(circle, #000 8%, transparent 44%);
+  pointer-events: none;
+}
+
+.evolve-cinematic.is-reveal .evolve-cinematic-rays {
+  animation: evolve-rays-in 0.8s ease-out forwards, evolve-rays-spin 30s linear infinite;
+}
+
+@keyframes evolve-rays-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.55;
+  }
+}
+
+@keyframes evolve-rays-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.evolve-cinematic-stage {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.evolve-figure {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  image-rendering: pixelated;
+}
+
+.evolve-cinematic.is-charge .evolve-figure {
+  animation: evolve-shake 0.09s linear infinite, evolve-whiten 1.15s ease-in forwards;
+}
+
+@keyframes evolve-shake {
+  0%,
+  100% {
+    transform: translateX(-2.5px);
+  }
+  50% {
+    transform: translateX(2.5px);
+  }
+}
+
+/* `brightness(0) invert(1)` keeps the alpha and drives every pixel to white —
+   the silhouette is what lets the sprite swap happen unseen. */
+@keyframes evolve-whiten {
+  0% {
+    filter: none;
+  }
+  55% {
+    filter: brightness(2.2) saturate(0.6) drop-shadow(0 0 12px var(--path-lead));
+  }
+  100% {
+    filter: brightness(0) invert(1) drop-shadow(0 0 26px #ffffff);
+  }
+}
+
+.evolve-cinematic.is-burst .evolve-figure {
+  filter: brightness(0) invert(1) drop-shadow(0 0 32px #ffffff);
+  transform: scale(1.14);
+}
+
+.evolve-cinematic.is-reveal .evolve-figure {
+  animation: evolve-emerge 0.7s cubic-bezier(0.2, 1.2, 0.3, 1) both;
+}
+
+@keyframes evolve-emerge {
+  0% {
+    filter: brightness(0) invert(1);
+    transform: scale(1.4);
+  }
+  100% {
+    filter: drop-shadow(0 0 20px color-mix(in srgb, var(--path-lead) 75%, transparent));
+    transform: scale(1);
+  }
+}
+
+.evolve-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.evolve-ring.is-outer {
+  width: 260px;
+  height: 260px;
+  margin: -130px 0 0 -130px;
+  border: 2px solid color-mix(in srgb, var(--path-lead) 70%, transparent);
+}
+
+.evolve-ring.is-inner {
+  width: 190px;
+  height: 190px;
+  margin: -95px 0 0 -95px;
+  border: 2px dashed color-mix(in srgb, var(--path-trail) 70%, transparent);
+}
+
+.evolve-cinematic.is-charge .evolve-ring {
+  animation: evolve-ring-close 1.15s ease-in both;
+}
+
+.evolve-cinematic.is-charge .evolve-ring.is-inner {
+  animation-delay: 0.3s;
+  animation-duration: 0.85s;
+}
+
+@keyframes evolve-ring-close {
+  0% {
+    opacity: 0;
+    transform: scale(1.8) rotate(0deg);
+  }
+  30% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.3) rotate(200deg);
+  }
+}
+
+.evolve-column {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 96px;
+  height: 460px;
+  margin: -230px 0 0 -48px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--path-lead) 34%, transparent) 30%,
+    color-mix(in srgb, var(--path-lead) 55%, transparent) 52%,
+    transparent
+  );
+  filter: blur(7px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.evolve-cinematic.is-charge .evolve-column {
+  animation: evolve-column-rise 1.15s ease-in both;
+}
+
+@keyframes evolve-column-rise {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.2) scaleX(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1) scaleX(1.15);
+  }
+}
+
+.evolve-flash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff, rgba(255, 255, 255, 0.9) 55%, transparent 72%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.evolve-cinematic.is-burst .evolve-flash {
+  animation: evolve-flash-out 0.37s ease-out forwards;
+}
+
+@keyframes evolve-flash-out {
+  0% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(30);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(40);
+  }
+}
+
+.evolve-cinematic.is-reveal .evolve-flash {
+  animation: evolve-flash-fade 0.6s ease-out forwards;
+}
+
+@keyframes evolve-flash-fade {
+  0% {
+    opacity: 1;
+    transform: scale(40);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(48);
+  }
+}
+
+.evolve-cinematic-plate {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  opacity: 0;
+}
+
+.evolve-cinematic.is-reveal .evolve-cinematic-plate {
+  animation: evolve-plate-in 0.6s cubic-bezier(0.2, 0.9, 0.25, 1) 0.14s both;
+}
+
+@keyframes evolve-plate-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.evolve-cinematic-eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--path-lead) 60%, #ffffff);
+}
+
+.evolve-cinematic-name {
+  margin: 0;
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-shadow: 0 0 26px color-mix(in srgb, var(--path-lead) 75%, transparent);
+}
+
+.evolve-cinematic-types {
+  display: flex;
+  gap: 6px;
 }
 
 /* --- Sandbox Battle (team-builder tool — App.tsx 'sandboxBattle'/'sandboxFight',

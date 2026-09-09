@@ -38,6 +38,11 @@ function dominantStat(grants: Partial<Record<StatKey, number>>): StatKey | undef
   return best;
 }
 
+/** The stat a relic reads as — its own lead grant. Undefined only for a relic that grants no stats. */
+export function relicLeadStat(relicId: string): StatKey | undefined {
+  return dominantStat(relics[relicId]?.statGrants ?? {});
+}
+
 const FALLBACK_COLOR = '#8b7fe0';
 
 /** What the relic DOES, in one colour: its lead stat's. */

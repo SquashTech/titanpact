@@ -1,12 +1,13 @@
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
+import { playSfx } from '../../audio/sfx';
 import { guardianBannerRelics } from '../../data/relics';
 import type { RunState } from '../../run/state';
 import { grantRelicReward } from '../../run/runProgress';
-import { RelicIcon } from '../shared/EquipmentBox';
 import { NodeHeader, NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
 import { RelicKindGlyph } from '../shared/relicIcons';
 import { stackedGrantSummary, stackedRelicName } from '../shared/relicStacks';
 import { RelicChoiceCard } from './RelicChoiceCard';
+import { RelicFamilyTally } from './RelicFamilyTally';
 import { RosterPeek } from './RosterPeek';
 
 interface Props {
@@ -15,17 +16,27 @@ interface Props {
   onContinue: () => void;
 }
 
-// The Guardian's Banner (docs/run-loop.md): a fixed, never-rolled 1-of-3 after
-// acts 1-4, so the player can plan four acts of stacking ahead.
+// The Guardian's Banner (docs/run-loop.md): a fixed, never-rolled 1-of-5 after each Guardian, so
+// the player can plan four acts of stacking ahead. Five standards on their bars, swaying; the
+// charges on the cloth are the grant, and the claim reveals the whole hall with the new one raised.
 export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
   const [pickedRelicId, setPickedRelicId] = useState<string | null>(null);
   const [claimed, setClaimed] = useState(false);
 
+  useEffect(() => {
+    playSfx('shrine', { pitch: 0.86, delay: 0.12 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const pickedRelic = pickedRelicId ? guardianBannerRelics.find((r) => r.id === pickedRelicId) ?? null : null;
   const claimedRelic = claimed ? pickedRelic : null;
-  const claimedCount = claimedRelic ? run.relics.filter((id) => id === claimedRelic.id).length : 0;
+  const counts = new Map<string, number>();
+  for (const id of run.relics) counts.set(id, (counts.get(id) ?? 0) + 1);
+  const claimedCount = claimedRelic ? counts.get(claimedRelic.id) ?? 0 : 0;
 
   function handleClaim(relicId: string) {
+    playSfx('seal.strike');
+    playSfx('blessing', { pitch: 0.86, delay: 0.14 });
     onRunChange(grantRelicReward(run, relicId));
     setClaimed(true);
   }
@@ -35,53 +46,53 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
       <NodeSky />
       <RosterPeek run={run} />
 
-      {!claimed && (
-        <NodeHeader
-          compact
-          eyebrow="The Guardian Falls"
-          title="Raise a Banner"
-          glyph={<RelicKindGlyph form="banner" />}
-          readout="One standard for the acts ahead. Every hero carries it — the ones you have and the ones you haven't met."
-        />
-      )}
+      <NodeHeader
+        compact
+        eyebrow={claimedRelic ? 'Banner Raised' : 'The Guardian Falls'}
+        title={claimedRelic ? stackedRelicName(claimedRelic, claimedCount) : 'Raise a Banner'}
+        glyph={claimedRelic ? undefined : <RelicKindGlyph form="banner" />}
+        readoutKey={claimedRelic ? 'raised' : 'offer'}
+        readoutLive={!!claimedRelic}
+        readout={
+          claimedRelic
+            ? `Team-wide ${stackedGrantSummary(claimedRelic, claimedCount)}.`
+            : 'One standard for the acts ahead. Every hero carries it — the ones you have and the ones you have not met.'
+        }
+      />
 
       <div className="screen-scroll">
-        {!claimed && (
-          <div className="stage-centered">
-            <div className="relic-shrine-list">
+        <div className="stage-centered">
+          {!claimed ? (
+            <div className="relic-pick-row is-banners">
               {guardianBannerRelics.map((relic, i) => (
                 <RelicChoiceCard
                   key={relic.id}
                   relic={relic}
+                  named
                   picked={pickedRelicId === relic.id}
                   onPick={() => setPickedRelicId(pickedRelicId === relic.id ? null : relic.id)}
                   revealDelayMs={80 + i * 90}
                 />
               ))}
             </div>
-          </div>
-        )}
-
-        {claimedRelic && (
-          <div className="relic-reveal">
-            <div className="relic-reveal-flash" aria-hidden="true" />
-            <div className="relic-reveal-icon-badge">
-              <RelicIcon relicId={claimedRelic.id} className="relic-reveal-icon" />
-            </div>
-            <div className="relic-reveal-eyebrow">Banner Raised</div>
-            <h2 className="relic-reveal-name">{stackedRelicName(claimedRelic, claimedCount)}</h2>
-            <p className="relic-reveal-desc">Team-wide {stackedGrantSummary(claimedRelic, claimedCount)}.</p>
-          </div>
-        )}
+          ) : (
+            claimedRelic && (
+              <>
+                <div className="relic-tally-label">Your banners</div>
+                <RelicFamilyTally family={guardianBannerRelics} counts={counts} gainedRelicId={claimedRelic.id} />
+              </>
+            )
+          )}
+        </div>
       </div>
 
       {!claimed ? (
         <button
-          className="resolve-button relic-shrine-claim-button"
+          className="resolve-button relic-banner-claim-button"
           disabled={!pickedRelicId}
           onClick={() => pickedRelicId && handleClaim(pickedRelicId)}
         >
-          {pickedRelicId ? `Raise ${pickedRelic?.name}` : 'Choose a banner'}
+          {pickedRelic ? `Raise the ${pickedRelic.name}` : 'Choose a banner'}
         </button>
       ) : (
         <button className="resolve-button" onClick={onContinue}>
