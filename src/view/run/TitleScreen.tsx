@@ -3,7 +3,6 @@ import { CompendiumScreen } from './CompendiumScreen';
 import { LocationSelectOverlay } from './LocationSelectOverlay';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { RecordsScreen } from './RecordsScreen';
-import { locations } from '../../data/locations';
 import { TitanColossus, TitanRidge } from './titanArt';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
@@ -51,8 +50,6 @@ const MOTES = Array.from({ length: MOTE_COUNT }, (_, i) => {
   };
 });
 
-const ACT_ROMAN = ['I', 'II', 'III', 'IV', 'V'];
-
 // The five seals, in the order PactSealScreen shows them (docs/lore.md §5). The fourth is
 // the one that has gone out: the binding is failing at the moment the player picks it up,
 // which is the entire premise, and it is cheaper to say once in a dead sigil than in copy.
@@ -60,53 +57,34 @@ const ACT_ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 // `rotate(a) translateY(-r)`, so the angle is measured off the vertical.
 const SEAL_SIGILS = [0, 1, 2, 3, 4].map((i) => ({ angle: i * 72, broken: i === 3 }));
 
-/** Coarse on purpose: the point is "is this the run I remember", not a timestamp. */
-function savedAgo(savedAt: number, now = Date.now()): string {
-  const minutes = Math.floor((now - savedAt) / 60_000);
-  if (!Number.isFinite(minutes) || minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return days === 1 ? 'yesterday' : `${days}d ago`;
-}
-
-function parkedRunLabel(parked: SaveSummary): string {
-  const act = `Act ${ACT_ROMAN[parked.actNumber - 1] ?? parked.actNumber}`;
-  const place = parked.locationId ? locations[parked.locationId]?.name : undefined;
-  const heroes = `${parked.rosterSize} ${parked.rosterSize === 1 ? 'hero' : 'heroes'}`;
-  return [act, place, heroes].filter(Boolean).join(' · ');
-}
-
 /**
  * The one press this screen is built around. The bezel and the specular sweep are separate
  * elements rather than shadows on the button because the plate is chamfered by a
  * `clip-path`, and a clip-path takes the box-shadow with it — so the glow lives on the
  * socket outside the clip and the sweep lives inside it.
+ *
+ * `tone` is the same plate in a different metal: gold is a pact being struck, verdigris is
+ * one struck already and since weathered. Every tone is a set of custom properties on the
+ * socket, so the frame, the face, the etch, the glow and the launch bloom all take their
+ * colour from one place rather than each carrying its own copy of the palette.
  */
 function PactButton({
   label,
-  subs,
+  tone = 'gold',
   disabled,
   onClick,
 }: {
   label: string;
-  subs?: readonly string[];
+  tone?: 'gold' | 'verdigris';
   disabled: boolean;
   onClick: () => void;
 }) {
   return (
-    <div className="title-cta-socket">
+    <div className={`title-cta-socket is-${tone}`}>
       <span className="title-cta-frame" aria-hidden="true" />
       <button className="resolve-button title-cta" onClick={onClick} disabled={disabled}>
         <span className="title-cta-sheen" aria-hidden="true" />
         <span className="title-cta-label">{label}</span>
-        {/* Two lines, not one wrapping one: where it breaks is then the same at every act and place. */}
-        {subs?.map((sub) => (
-          <span key={sub} className="title-cta-sub">
-            {sub}
-          </span>
-        ))}
       </button>
     </div>
   );
@@ -243,7 +221,7 @@ export function TitleScreen({
           <>
             <PactButton
               label="Continue Run"
-              subs={[parkedRunLabel(parkedRun), `saved ${savedAgo(parkedRun.savedAt)}`]}
+              tone="verdigris"
               disabled={launching}
               onClick={() => launch(onContinueRun)}
             />

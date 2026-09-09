@@ -16007,7 +16007,15 @@ textarea,
    the sweep is a child inside the clip where it belongs.
    ┄
    The chamfer runs top-left to bottom-right rather than on all four corners:
-   two cut corners read as a struck plate, four read as a ticket stub. */
+   two cut corners read as a struck plate, four read as a ticket stub.
+   ┄
+   TONES. The plate comes in two metals and nothing below this block knows
+   which: every layer reads the custom properties the socket declares, so a
+   tone is one list of colours rather than a parallel copy of six rules.
+   `--plate-rgb` is a bare triple because the glow and the launch bloom need
+   it at several alphas. Note the eighteenth pass's warning applies — these
+   have to be declared on the socket, not on `:root`, because a `var()` inside
+   a custom property resolves where the property is DECLARED. */
 .title-cta-socket {
   position: relative;
   width: 100%;
@@ -16015,11 +16023,45 @@ textarea,
   animation: title-cta-pulse 4.6s ease-in-out infinite;
 }
 
+/* Gold is a pact being struck: hot rim, saturated body, and a bottom third
+   dropping to the same bronze the wordmark ends on, so the button and the
+   logo are lit by one source. */
+.title-cta-socket.is-gold {
+  --plate-rgb: 224, 166, 60;
+  --plate-face: linear-gradient(178deg, #fff0cc 0%, #f6c96f 12%, #e0a63c 46%, #b57c26 78%, #7d5417 100%);
+  --plate-bezel: linear-gradient(160deg, rgba(255, 226, 164, 0.7), rgba(224, 166, 60, 0.45) 40%, rgba(96, 62, 18, 0.6));
+  --plate-ink: #170f00;
+  --plate-lip: rgba(255, 236, 194, 0.45);
+  --plate-etch: rgba(112, 74, 20, 0.35);
+  --plate-focus: rgba(26, 16, 0, 0.85);
+  --plate-sheen: rgba(255, 252, 236, 0.72);
+}
+
+/* Verdigris is a pact struck a while ago: the same metal, weathered. It is
+   the Continue button, and the point of the split is that resuming a run and
+   beginning one are not the same act — a gold plate on both said they were.
+   Green rather than any other second colour because the screen already owns
+   it: the horizon the pactbearers stand against is this hue. */
+.title-cta-socket.is-verdigris {
+  --plate-rgb: 61, 157, 125;
+  /* Oxidised copper, not mint. The first pass lifted the top two stops nearly
+     to white and the plate came out pale and sugary — brighter than the gold
+     it is supposed to defer to. Every stop here sits a shade under its gold
+     counterpart, which is what makes it read as the older of the two metals. */
+  --plate-face: linear-gradient(178deg, #d9f3e4 0%, #7cc9a8 12%, #3d9d7d 46%, #226351 78%, #0e382c 100%);
+  --plate-bezel: linear-gradient(160deg, rgba(170, 228, 204, 0.65), rgba(61, 157, 125, 0.45) 40%, rgba(10, 56, 44, 0.62));
+  --plate-ink: #04140e;
+  --plate-lip: rgba(198, 244, 224, 0.35);
+  --plate-etch: rgba(8, 54, 42, 0.42);
+  --plate-focus: rgba(2, 22, 15, 0.85);
+  --plate-sheen: rgba(224, 252, 240, 0.5);
+}
+
 .title-cta-frame {
   position: absolute;
   inset: -5px;
   clip-path: polygon(19px 0, 100% 0, 100% calc(100% - 19px), calc(100% - 19px) 100%, 0 100%, 0 19px);
-  background: linear-gradient(160deg, rgba(255, 226, 164, 0.7), rgba(224, 166, 60, 0.45) 40%, rgba(96, 62, 18, 0.6));
+  background: var(--plate-bezel);
   pointer-events: none;
 }
 
@@ -16032,12 +16074,9 @@ textarea,
   border: 0;
   border-radius: 0;
   clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
-  /* Struck metal, not a swatch: a hot rim along the top edge, the body in
-     saturated gold, and the bottom third dropping to the bronze the wordmark
-     ends on — so the button and the logo are lit by the same source. */
-  background: linear-gradient(178deg, #fff0cc 0%, #f6c96f 12%, #e0a63c 46%, #b57c26 78%, #7d5417 100%);
-  color: #170f00;
-  text-shadow: 0 1px 0 rgba(255, 236, 194, 0.45);
+  background: var(--plate-face);
+  color: var(--plate-ink);
+  text-shadow: 0 1px 0 var(--plate-lip);
   box-shadow: none;
   transition: transform 0.15s ease;
   display: flex;
@@ -16058,12 +16097,12 @@ textarea,
   content: '';
   position: absolute;
   inset: 5px;
-  border: 1px solid rgba(112, 74, 20, 0.35);
+  border: 1px solid var(--plate-etch);
   pointer-events: none;
 }
 
 .title-cta:focus-visible::after {
-  border: 2px solid rgba(26, 16, 0, 0.85);
+  border: 2px solid var(--plate-focus);
 }
 
 /* A specular travelling across the plate, not a shimmer sitting on it: it is
@@ -16076,7 +16115,7 @@ textarea,
   left: -60%;
   width: 45%;
   height: 180%;
-  background: linear-gradient(90deg, transparent, rgba(255, 252, 236, 0.72), transparent);
+  background: linear-gradient(90deg, transparent, var(--plate-sheen), transparent);
   transform: skewX(-22deg);
   pointer-events: none;
   animation: title-cta-sweep 5.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
@@ -16103,21 +16142,6 @@ textarea,
 
 .title-cta-label {
   line-height: 1.1;
-}
-
-/* Reads against the CTA's warm fill, not the page — hence a darkened ink
-   rather than --text-dim. */
-.title-cta-sub {
-  font-size: 10px;
-  line-height: 1.25;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(28, 18, 4, 0.6);
-}
-
-/* The timestamp is the weaker of the two lines — it says "is this the run I remember", not what the run is. */
-.title-cta-sub + .title-cta-sub {
-  color: rgba(28, 18, 4, 0.5);
 }
 
 /* Secondary to Continue: starting over is the rarer intent once a run is parked. */
@@ -16159,10 +16183,10 @@ textarea,
 @keyframes title-cta-pulse {
   0%,
   100% {
-    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 14px rgba(224, 166, 60, 0.24));
+    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 14px rgba(var(--plate-rgb), 0.24));
   }
   50% {
-    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 26px rgba(224, 166, 60, 0.48));
+    filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 26px rgba(var(--plate-rgb), 0.48));
   }
 }
 
@@ -16191,12 +16215,15 @@ textarea,
 /* The launch disables the button to swallow a second press, so it has to hold
    the gold explicitly — .resolve-button:disabled would otherwise flatten it to
    the inert gray plate on the exact frame it is supposed to bloom. */
+/* Brightened rather than repainted, so the hold works in either metal without
+   a second palette: a launching plate is the same plate overdriven. */
 .title-screen.is-launching .title-cta:disabled {
-  background: linear-gradient(178deg, #fffaea 0%, #ffdb9a 18%, #f0bc5f 52%, #c8912f 82%, #8a5f1b 100%);
-  color: #170f00;
+  background: var(--plate-face);
+  color: var(--plate-ink);
   border-color: transparent;
   opacity: 1;
   cursor: default;
+  filter: brightness(1.28) saturate(0.86);
   animation: none;
 }
 
@@ -16204,12 +16231,12 @@ textarea,
    brightness for the whole hold rather than continuing to breathe under the
    shockwave it just set off. */
 .title-screen.is-launching .title-cta-socket {
-  filter: drop-shadow(0 0 30px rgba(255, 226, 170, 0.7)) drop-shadow(0 0 60px rgba(224, 166, 60, 0.45));
+  filter: drop-shadow(0 0 30px rgba(var(--plate-rgb), 0.75)) drop-shadow(0 0 60px rgba(var(--plate-rgb), 0.45));
   animation: none;
 }
 
 .title-screen.is-launching .title-cta-frame {
-  background: linear-gradient(160deg, rgba(255, 246, 224, 0.95), rgba(240, 196, 108, 0.8) 45%, rgba(150, 104, 34, 0.75));
+  filter: brightness(1.4);
 }
 
 @keyframes title-launch-slam {

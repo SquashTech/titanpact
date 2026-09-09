@@ -2285,6 +2285,30 @@ as. It is now a chamfered struck plate: two cut corners (four would read as a ti
 specular that crosses it every 5.2 seconds and is off-screen for the rest of the cycle — so the
 button spends most of its life still and the sweep is an event rather than a shimmer.
 
+**And it comes in two metals.** Continue and Start were the same gold plate, which said they
+were the same act, and they are not: one strikes a pact and the other picks one back up.
+Continue is now **verdigris** — the identical plate in oxidised copper, a metal struck a while
+ago and since weathered — while gold stays with the run that has yet to begin. Green rather than
+any other second colour because the screen already owns it: the horizon the pactbearers stand
+against is this hue, so the button belongs to the picture rather than arriving from outside it.
+Two notes on doing this without a parallel copy of the CSS:
+
+- **A tone is a list of custom properties on the socket** (`--plate-face`, `--plate-bezel`,
+  `--plate-ink`, `--plate-etch`, `--plate-sheen`, `--plate-rgb`), and every layer under it reads
+  them — including the pulse keyframe and the launch bloom, which take `--plate-rgb` at
+  several alphas. The launch state is `filter: brightness()` on the plate rather than a second
+  gradient, so an overdriven plate is the same plate in either metal. The eighteenth pass's
+  warning still applies: these have to be declared on the socket, not on `:root`, because a
+  `var()` inside a custom property resolves where the property is *declared*.
+- **The first verdigris was mint candy.** Lifting the top two stops nearly to white made the
+  plate paler and sweeter than the gold it is supposed to defer to — a secondary action reading
+  louder than the primary. Every stop now sits a shade under its gold counterpart, which is what
+  makes it read as the older of the two metals rather than the brighter.
+
+Continue also lost its two sub-lines (the act/place/roster line and `saved 2h ago`). They were
+answering "is this the run I remember" on a screen that only ever holds one save, so the
+question could not arise; `savedAgo` and `parkedRunLabel` went with them.
+
 ### Three mechanical notes
 
 - **A `clip-path` takes the box-shadow with it.** Chamfering the plate deleted its glow, which
