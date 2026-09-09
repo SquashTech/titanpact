@@ -15702,6 +15702,13 @@ textarea,
 .title-heading {
   position: relative;
   z-index: 2;
+  /* Pushes the whole in-flow stack off the Titan's face. The seal's top sigil
+     was landing between the eyes and the jaw, which is where a mouth goes, and
+     it read as one. It is DOUBLE the shift it buys: .title-screen centres its
+     flex line, so a margin here is split between the space above and below it.
+     Only the heading and the buttons move — every other child of the screen is
+     absolutely positioned, the icon row and Dev corner included. */
+  margin-top: 110px;
   /* The gap down to the CTA. It used to be the tagline's bottom margin; with
      the tagline gone it lives here, minus .title-screen's own 6px flex gap. */
   margin-bottom: 28px;
