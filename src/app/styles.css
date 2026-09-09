@@ -12596,6 +12596,10 @@ textarea,
   justify-content: center;
   gap: 4px;
   width: 100%;
+  /* The selection glow is wider than the object it is behind, and a gem's
+     outline stroke sits on the edge of its own box. Clipped rather than
+     hidden: `hidden` on one axis makes the other a scroll container. */
+  overflow-x: clip;
 }
 
 .relic-pick {
@@ -12630,7 +12634,10 @@ textarea,
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 150%;
+  /* Wide enough to read as light around the object, narrow enough to stay inside
+     the button: the row clips its horizontal overflow, and a glow that reached
+     past the button was getting a hard edge cut down one side of the end ones. */
+  width: 128%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
   border-radius: 50%;
@@ -12798,11 +12805,6 @@ textarea,
   color: var(--text-dim);
 }
 
-.relic-tally-cell.is-gained {
-  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--relic-color, var(--accent)) 20%, transparent), transparent 72%);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--relic-color, var(--accent)) 32%, transparent);
-}
-
 .relic-tally-cell.is-gained .relic-tally-art {
   animation: relic-tally-land 0.7s cubic-bezier(0.2, 1.3, 0.35, 1) both;
 }
@@ -12830,6 +12832,10 @@ textarea,
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: radial-gradient(circle, color-mix(in srgb, var(--relic-color, var(--accent)) 70%, transparent), transparent 66%);
+  /* Invisible except while it is playing. The keyframes end at 0 but do not hold,
+     so without this the flash blinks once and then the untouched base fill comes
+     back up and stays — a second state change the player has no reason for. */
+  opacity: 0;
   animation: class-learn-flash-burst 0.8s ease-out 0.34s backwards;
   pointer-events: none;
 }
@@ -15862,17 +15868,12 @@ textarea,
    z-index 1 with everything else would put the shrine's falling light over
    the header and the hero cards instead of behind them. */
 /* `.pact-seal-flash` is the opposite case to `.shrine-descent`: an ambient
-   layer that has to paint ABOVE the content, at the z-index it names itself —
-   and so are the two full-screen cinematics, which are `position: fixed` and
-   would be flattened back into the column by this rule. */
+   layer that has to paint ABOVE the content, at the z-index it names itself. */
 .node-screen
   > *:not(.node-sky):not(.shrine-descent):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button):not(.is-floating):not(
     .pact-seal-flash
-  ):not(.evolve-cinematic):not(.recruit-fanfare),
-.levelup-screen
-  > *:not(.node-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button):not(.evolve-cinematic):not(
-    .recruit-fanfare
   ),
+.levelup-screen > *:not(.node-sky):not(.log-overlay):not(.detail-overlay):not(.corner-glyph-button),
 /* .squad-select joined the stage in 2026-08-29 so it could carry the act's
    Location (docs/locations.md §5.5). Its root rule was already this stage's,
    copied verbatim; this is the one line it was missing. */
@@ -18197,6 +18198,35 @@ textarea,
    presses is already the colour of the hero it produces. The sheen and the
    slow breathe are what stop it reading as an ordinary block of colour: it
    should look like it is waiting to be pressed. */
+/* The pinned bottom of the sheet: the commit, and under it the way back. */
+.evolution-dossier-actions {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Deliberately quiet and deliberately wide. It has to be findable without
+   competing with the slab above it — the corner ✕ was findable and nothing
+   else, which is the opposite failure. */
+.evolution-dossier-back {
+  width: 100%;
+  padding: 9px 12px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color var(--dur-mid) var(--ease-out), color var(--dur-mid) var(--ease-out);
+}
+
+.evolution-dossier-back:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
 .evolve-button {
   position: relative;
   flex: none;

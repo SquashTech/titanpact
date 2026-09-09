@@ -51,12 +51,14 @@ export function GuardianBannerScreen({ run, onRunChange, onContinue }: Props) {
         eyebrow={claimedRelic ? 'Banner Raised' : 'The Guardian Falls'}
         title={claimedRelic ? stackedRelicName(claimedRelic, claimedCount) : 'Raise a Banner'}
         glyph={claimedRelic ? undefined : <RelicKindGlyph form="banner" />}
-        readoutKey={claimedRelic ? 'raised' : 'offer'}
-        readoutLive={!!claimedRelic}
+        readoutKey={claimedRelic ? 'raised' : pickedRelic?.id ?? 'offer'}
+        readoutLive={!!claimedRelic || !!pickedRelic}
         readout={
           claimedRelic
             ? `Team-wide ${stackedGrantSummary(claimedRelic, claimedCount)}.`
-            : 'One standard for the acts ahead. Every hero carries it — the ones you have and the ones you have not met.'
+            : pickedRelic
+              ? `Team-wide ${stackedGrantSummary(pickedRelic, 1)}.`
+              : 'One standard for the acts ahead. Every hero carries it — the ones you have and the ones you have not met.'
         }
       />
 

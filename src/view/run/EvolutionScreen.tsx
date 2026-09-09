@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import type { HeroDefinition, StatKey, TypeId } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
 import { MOVE_CAP, type EvolutionNode, type EvolutionPath } from '../../run/progression';
@@ -16,6 +17,7 @@ import { useLongPress } from '../shared/MoveTile';
 import { healCasterForEntry } from '../shared/healCaster';
 import { entryStatTotals } from '../shared/entryStatTotals';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
+import { overlayHost } from '../shared/overlayHost';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { playSfx } from '../../audio/sfx';
 import { RosterPeek } from './RosterPeek';
@@ -372,15 +374,22 @@ function PathDossier({
         </div>
 
         {/* Not `.resolve-button`: this is the one press in the run that spends something
-            permanent, and it should not look like Continue. */}
-        <button className="evolve-button" data-sfx="none" onClick={onChoose}>
-          <span className="evolve-button-sheen" aria-hidden="true" />
-          <span className="evolve-button-rays" aria-hidden="true" />
-          <span className="evolve-button-label">
-            <span className="evolve-button-kicker">Evolve into</span>
-            <span className="evolve-button-name">{path.name}</span>
-          </span>
-        </button>
+            permanent, and it should not look like Continue. The way back sits under it rather
+            than only in the corner ✕ — on a full-height sheet that corner is the far end of a
+            thumb's reach, and backing out of a decision should not be the hardest press on it. */}
+        <div className="evolution-dossier-actions">
+          <button className="evolve-button" data-sfx="none" onClick={onChoose}>
+            <span className="evolve-button-sheen" aria-hidden="true" />
+            <span className="evolve-button-rays" aria-hidden="true" />
+            <span className="evolve-button-label">
+              <span className="evolve-button-kicker">Evolve into</span>
+              <span className="evolve-button-name">{path.name}</span>
+            </span>
+          </button>
+          <button className="evolution-dossier-back" data-sfx="ui.back" onClick={onClose}>
+            Back to paths
+          </button>
+        </div>
       </div>
 
       {readingMoveId && (
@@ -430,7 +439,9 @@ function EvolutionCinematic({ hero, path, onDone }: { hero: HeroDefinition; path
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
+  // Portalled into overlayHost(), never body (overlayHost.ts): the stage rules pin a screen's
+  // children to `position: relative`, which would flatten this into the bottom of the column.
+  return createPortal(
     <div className={`evolve-cinematic is-${beat}`} style={paletteStyle(hero, path)} onClick={onDone}>
       <span className="evolve-cinematic-veil" aria-hidden="true" />
       <span className="evolve-cinematic-rays" aria-hidden="true" />
@@ -452,6 +463,7 @@ function EvolutionCinematic({ hero, path, onDone }: { hero: HeroDefinition; path
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    overlayHost()
   );
 }

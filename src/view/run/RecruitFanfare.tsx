@@ -1,10 +1,12 @@
 import { useEffect, useState, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import type { TypeId } from '../../engine/content';
 import { playSfx } from '../../audio/sfx';
 import { heroes } from '../../data/heroes';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { TypeBadge } from '../shared/TypeBadge';
+import { overlayHost } from '../shared/overlayHost';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 
 interface Props {
@@ -56,7 +58,10 @@ export function RecruitFanfare({ heroId, source, types, onDone }: Props) {
 
   if (!hero) return null;
 
-  return (
+  // Portalled into overlayHost(), never body (overlayHost.ts). A host screen is a flex column
+  // whose children the stage rules pin to `position: relative`, which flattened this into the
+  // bottom of the page instead of covering it.
+  return createPortal(
     <div
       className={`recruit-fanfare${sworn ? ' is-sworn' : ''}`}
       style={{ '--pact-rgb': getTypeColorRgb(hero.types[0]) } as CSSProperties}
@@ -82,6 +87,7 @@ export function RecruitFanfare({ heroId, source, types, onDone }: Props) {
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    overlayHost()
   );
 }

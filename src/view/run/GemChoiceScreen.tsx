@@ -61,14 +61,18 @@ export function GemChoiceScreen({ gemIds, eyebrow, title, tint, run, onRunChange
         eyebrow={claimedGem ? 'Gem Set' : eyebrow}
         title={claimedGem ? stackedRelicName(claimedGem, claimedCount) : title}
         glyph={claimedGem ? undefined : <RelicKindGlyph form="gem" />}
-        readoutKey={claimedGem ? 'set' : 'offer'}
-        readoutLive={!!claimedGem}
+        readoutLive={!!claimedGem || !!pickedGem}
+        // A picked stone states its own grant: the cards carry no words at all now, so this
+        // line is the only place the number a player is choosing between can be read.
+        readoutKey={claimedGem ? 'set' : pickedGem?.id ?? 'offer'}
         readout={
           claimedGem
             ? `Team-wide ${stackedGrantSummary(claimedGem, claimedCount)}.`
-            : fixed
-              ? 'A cut stone, and every hero carries what it gives.'
-              : 'One stone, set for the whole team.'
+            : pickedGem
+              ? `${pickedGem.name} — team-wide ${stackedGrantSummary(pickedGem, 1)}.`
+              : fixed
+                ? 'A cut stone, and every hero carries what it gives.'
+                : 'One stone, set for the whole team.'
         }
       />
 
