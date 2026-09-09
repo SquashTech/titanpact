@@ -2217,6 +2217,106 @@ its numeral on the attacker's own nameplate. The empty-slot placeholder is the o
 it has no figure and so no plate to sit on, and keeps the scrim pill the name gave up everywhere
 else.
 
+## Twentieth pass — the Titan gets a body (2026-09-09)
+
+*Per user direction: "currently it's just some words, some faint ambiance, and some rectangles.
+I want the title screen to sell the Titan and/or PACT part of the game better."*
+
+### What was wrong
+
+The title screen had had an atmosphere pass — fog bands, a mote field, grain, a vignette, a
+godray burst behind the wordmark — and it worked, but it was atmosphere around *nothing*. The
+subject of the screen was a word. Both halves of the name were unrepresented: there was no
+Titan anywhere in the frame, and the pact was a noun in the logo rather than a thing the
+picture was about. A player who had never heard of the game learned, from the whole first
+screen, that it was called Titanpact and that somewhere it was foggy.
+
+The second problem was arithmetic. The content stack is vertically centred, and on a 754px-tall
+box a wordmark, a tagline and two buttons leave roughly 230px of unbroken black under the last
+button. Empty space at the bottom of a title screen is not restraint; it is the screen running
+out of things to say a third of the way down.
+
+### What replaced it
+
+**A bound colossus, and the run's premise, in one image.** Back to front:
+
+- **`.title-backlight`** — a cold shaft behind the head and the sick green of the seal's ground
+  low in the frame. It is emitted *before* the figure and both sit at `z-index: 0`, which is
+  the whole trick: everything in `titanArt.tsx` is a hole cut in this light rather than a shape
+  drawn on top of the dark. The moment the figure is lighter than what is behind it, it stops
+  being a thing in the distance and becomes a decal on the glass.
+- **`TitanColossus`** — a crowned, horned, chained figure whose horns run off the top edge,
+  because a colossus that fits in frame is not one. One flat near-black fill for every plate;
+  the structure is carried entirely by open rim polylines along the edges the sky can actually
+  reach. It breathes on an 11-second cycle, the rim swells on 13, the eyes gutter on 8.3 and a
+  broken length of chain swings on 7.4 — four periods that never divide into each other, so the
+  figure never returns to a pose it has held.
+- **The pact seal** — three counter-rotating rings on the Titan's chest with the wordmark
+  struck across them. That is the composition the whole screen is arranged around: TITANPACT is
+  not a caption on the picture, it is the mark burned into the thing in it. Five sigils ride the
+  middle ring, one per Guardian, and **the fourth one has gone out** — the binding is failing at
+  the moment the player picks it up (`docs/lore.md` §1), said once in a dead mark instead of in
+  copy.
+- **`TitanRidge`** — the only layer in front of the fog, and the one that earns the bottom third
+  back. Four pactbearer figures ~15px tall stand on a near crest against the horizon glow, with
+  a further crest and three broken warden towers behind them. A silhouette the size of the frame
+  is only big if something known-small stands in front of it; the ratio here is about forty to
+  one, and it is the entire reason the figure reads as a Titan rather than as a statue.
+- **An eyebrow line** above the wordmark — *the last binding is failing* — which is the one line
+  on the screen that says what the run is for.
+
+**The pact button.** The gold CTA was still the rounded rectangle the eighteenth pass left it
+as. It is now a chamfered struck plate: two cut corners (four would read as a ticket stub), a
+5px bezel, a hot rim along the top edge falling to the same bronze the wordmark ends on, and a
+specular that crosses it every 5.2 seconds and is off-screen for the rest of the cycle — so the
+button spends most of its life still and the sweep is an event rather than a shimmer.
+
+### Three mechanical notes
+
+- **A `clip-path` takes the box-shadow with it.** Chamfering the plate deleted its glow, which
+  is why the button is three nested elements: the socket carries the outer light on a `filter:
+  drop-shadow` the clip never touches, the frame under it is a slightly larger chamfered plate
+  showing through as the bezel, and the sweep is a child inside the clip where it belongs. The
+  idle pulse had to move from `box-shadow` to `filter` for the same reason.
+- **The chamfer ate the keyboard focus ring too.** The global `:focus-visible` rule sets
+  `outline: none` and delivers the ring as a box-shadow — which this button clips away — so the
+  one control the whole screen is built around would have focused invisibly. The hairline etch
+  inside the plate is a `::after`, and it thickens on `:focus-visible` to serve as the ring.
+- **`radial-gradient(circle, …)` sizes to farthest-CORNER.** The seal's tick ring is a masked
+  `repeating-conic-gradient`, and a bare `circle` put the annulus at radius ~100 on a 300px box
+  instead of ~150, floating the ticks well inside the ring they graduate. `closest-side` is
+  load-bearing.
+
+### What looking at it changed
+
+Three things were only visible in a screenshot, and all three were the same mistake — a shape
+that is correct in outline and wrong in *contrast*:
+
+- **The horns were built tip-first.** They were authored blunt at the tip and narrow at the
+  base, which is backwards, and against a black sky the fill was invisible so only the two rim
+  curves showed — reading as a pair of wireframe hoops around the head. Tapered base-thick and
+  widening the backlight to reach them fixed both at once.
+- **A shoulder that curves away from the throat in one arc is a hood.** The first figure read as
+  a bowling pin. The trapezius now runs almost flat out of the neck before it turns down, and
+  that shelf is the single line doing the most work in the whole figure.
+- **The pauldrons were tucked under the shoulder line**, tracking the body's own edge a few
+  pixels inside it, so two near-parallel rims read as one thick line. They now rise *above* the
+  shoulder they sit on, which is what makes them plates rather than thickness.
+
+The chains were relocated twice for the same reason and are worth stating as a rule: the
+wordmark is nearly the full width of the canvas, so **nothing decorative can share its band**.
+The binding is now kept to the collar above it, the two flanks outside the buttons, and one
+heavy span across the waist in the band the layout leaves empty — which is the one place where
+the atmosphere and the dead space solved each other.
+
+### Verification
+
+Screenshotted through the harness in `reference-screenshot-harness` at 394x780: the idle screen,
+the launch beat mid-bloom, the parked-run variant (Continue over Start a New Run, which shifts
+the whole stack up and still composes), `prefers-reduced-motion: reduce` (the global collapse
+holds a legible final state on every new layer — the sweep parks off-plate, the dead sigil stays
+dead), and the CTA under `:focus-visible`.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.

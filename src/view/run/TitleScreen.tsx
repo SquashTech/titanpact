@@ -4,6 +4,7 @@ import { LocationSelectOverlay } from './LocationSelectOverlay';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { RecordsScreen } from './RecordsScreen';
 import { locations } from '../../data/locations';
+import { TitanColossus, TitanRidge } from './titanArt';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
 
@@ -52,6 +53,13 @@ const MOTES = Array.from({ length: MOTE_COUNT }, (_, i) => {
 
 const ACT_ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 
+// The five seals, in the order PactSealScreen shows them (docs/lore.md §5). The fourth is
+// the one that has gone out: the binding is failing at the moment the player picks it up,
+// which is the entire premise, and it is cheaper to say once in a dead sigil than in copy.
+// 0deg is straight UP, not along the x-axis — the CSS places a sigil with
+// `rotate(a) translateY(-r)`, so the angle is measured off the vertical.
+const SEAL_SIGILS = [0, 1, 2, 3, 4].map((i) => ({ angle: i * 72, broken: i === 3 }));
+
 /** Coarse on purpose: the point is "is this the run I remember", not a timestamp. */
 function savedAgo(savedAt: number, now = Date.now()): string {
   const minutes = Math.floor((now - savedAt) / 60_000);
@@ -68,6 +76,40 @@ function parkedRunLabel(parked: SaveSummary): string {
   const place = parked.locationId ? locations[parked.locationId]?.name : undefined;
   const heroes = `${parked.rosterSize} ${parked.rosterSize === 1 ? 'hero' : 'heroes'}`;
   return [act, place, heroes].filter(Boolean).join(' · ');
+}
+
+/**
+ * The one press this screen is built around. The bezel and the specular sweep are separate
+ * elements rather than shadows on the button because the plate is chamfered by a
+ * `clip-path`, and a clip-path takes the box-shadow with it — so the glow lives on the
+ * socket outside the clip and the sweep lives inside it.
+ */
+function PactButton({
+  label,
+  subs,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  subs?: readonly string[];
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <div className="title-cta-socket">
+      <span className="title-cta-frame" aria-hidden="true" />
+      <button className="resolve-button title-cta" onClick={onClick} disabled={disabled}>
+        <span className="title-cta-sheen" aria-hidden="true" />
+        <span className="title-cta-label">{label}</span>
+        {/* Two lines, not one wrapping one: where it breaks is then the same at every act and place. */}
+        {subs?.map((sub) => (
+          <span key={sub} className="title-cta-sub">
+            {sub}
+          </span>
+        ))}
+      </button>
+    </div>
+  );
 }
 
 export function TitleScreen({
@@ -118,6 +160,10 @@ export function TitleScreen({
 
   return (
     <div className={`title-screen${launching ? ' is-launching' : ''}`}>
+      {/* Before the Titan, not after: the figure is a hole cut in this light. */}
+      <span className="title-backlight" aria-hidden="true" />
+      <TitanColossus />
+
       <div className="title-fog" aria-hidden="true">
         <span className="title-fog-band title-fog-a" />
         <span className="title-fog-band title-fog-b" />
@@ -144,18 +190,42 @@ export function TitleScreen({
         ))}
       </div>
 
+      <TitanRidge />
+
       <span className="title-grain" aria-hidden="true" />
       <span className="title-vignette" aria-hidden="true" />
 
       <div className="title-heading">
-        <div className="title-logo">
+        <div className="title-eyebrow">The last binding is failing</div>
+
+        {/* The seal, the godrays and the bloom all hang off this wrapper rather than off
+            the screen, so they track the wordmark's actual position instead of drifting
+            into empty space whenever the stack below it changes. */}
+        <div className="title-mark">
+          <span className="title-seal" aria-hidden="true">
+            <span className="title-seal-ring is-outer" />
+            <span className="title-seal-ring is-mid" />
+            <span className="title-seal-ring is-inner" />
+            <span className="title-seal-sigils">
+              {SEAL_SIGILS.map((s) => (
+                <span
+                  key={s.angle}
+                  className={`title-seal-sigil${s.broken ? ' is-broken' : ''}`}
+                  style={{ '--a': `${s.angle}deg` } as CSSProperties}
+                />
+              ))}
+            </span>
+          </span>
           <span className="title-ray-burst" aria-hidden="true" />
           <span className="title-core-glow" aria-hidden="true" />
-          <span className="title-logo-glow" aria-hidden="true">
+          <div className="title-logo">
+            <span className="title-logo-glow" aria-hidden="true">
+              TITANPACT
+            </span>
             TITANPACT
-          </span>
-          TITANPACT
+          </div>
         </div>
+
         <div className="title-tagline">Draft. Battle. Ascend.</div>
       </div>
 
@@ -173,27 +243,25 @@ export function TitleScreen({
           so the choice here reads as "play" or "read". A parked run takes the
           primary slot: coming back to a run in progress is the likelier intent. */}
       <div className="title-buttons">
-        {parkedRun && (
-          <button className="resolve-button title-cta" onClick={() => launch(onContinueRun)} disabled={launching}>
-            <span className="title-cta-label">Continue Run</span>
-            {/* Two lines, not one wrapping one: where it breaks is then the same at every act and place. */}
-            <span className="title-cta-sub">{parkedRunLabel(parkedRun)}</span>
-            <span className="title-cta-sub">saved {savedAgo(parkedRun.savedAt)}</span>
-          </button>
+        {parkedRun ? (
+          <>
+            <PactButton
+              label="Continue Run"
+              subs={[parkedRunLabel(parkedRun), `saved ${savedAgo(parkedRun.savedAt)}`]}
+              disabled={launching}
+              onClick={() => launch(onContinueRun)}
+            />
+            <button
+              className={`title-newrun-button${confirmingNewRun ? ' armed' : ''}`}
+              onClick={handleStart}
+              disabled={launching}
+            >
+              {confirmingNewRun ? 'Tap again — this discards the parked run' : 'Start a New Run'}
+            </button>
+          </>
+        ) : (
+          <PactButton label="Start a Run" subs={['Seal the pact']} disabled={launching} onClick={handleStart} />
         )}
-        <button
-          className={
-            parkedRun ? `title-newrun-button${confirmingNewRun ? ' armed' : ''}` : 'resolve-button title-cta'
-          }
-          onClick={handleStart}
-          disabled={launching}
-        >
-          {parkedRun
-            ? confirmingNewRun
-              ? 'Tap again — this discards the parked run'
-              : 'Start a New Run'
-            : 'Start a Run'}
-        </button>
         {/* The reason itself is developer-shaped ("roster[0].unlockedMoveIds references..."), so it
             goes to the console (App.tsx) and the player gets the one fact they can act on. */}
         {staleSaveReason && !staleNoteDismissed && (
