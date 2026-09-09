@@ -11,6 +11,7 @@ import { formatReport } from './report';
 import { emptyAggregate, mergeAggregate, type Aggregate } from './types';
 import { runShard, type WorkerJob } from './worker';
 import type { LevelPolicy } from './policy';
+import type { PilotKind } from './fight';
 
 interface Args {
   runs: number;
@@ -19,6 +20,7 @@ interface Args {
   workers: number;
   xpMult: number;
   switching: boolean;
+  pilot: PilotKind;
   out: string | null;
   json: string | null;
 }
@@ -31,6 +33,7 @@ function parseArgs(argv: readonly string[]): Args {
     workers: Math.max(1, cpus().length - 1),
     xpMult: 1,
     switching: true,
+    pilot: 'greedy',
     out: null,
     json: null,
   };
@@ -54,6 +57,9 @@ function parseArgs(argv: readonly string[]): Args {
         break;
       case '--switching':
         args.switching = value !== 'off';
+        break;
+      case '--pilot':
+        args.pilot = value === 'chart' ? 'chart' : 'greedy';
         break;
       case '--out':
         args.out = value;
@@ -86,7 +92,7 @@ async function main(): Promise<void> {
   const total = emptyAggregate();
 
   if (args.workers === 1) {
-    mergeAggregate(total, runShard({ firstSeed: args.seed, runs: args.runs, levelPolicy: args.policy, xpMult: args.xpMult, playerSwitching: args.switching }));
+    mergeAggregate(total, runShard({ firstSeed: args.seed, runs: args.runs, levelPolicy: args.policy, xpMult: args.xpMult, playerSwitching: args.switching, pilot: args.pilot }));
   } else {
     // Contiguous seed blocks, so any single run stays reproducible by seed alone.
     const perWorker = Math.ceil(args.runs / args.workers);
@@ -94,7 +100,7 @@ async function main(): Promise<void> {
     for (let i = 0; i < args.workers; i++) {
       const first = args.seed + i * perWorker;
       const runs = Math.min(perWorker, args.seed + args.runs - first);
-      if (runs > 0) jobs.push({ firstSeed: first, runs, levelPolicy: args.policy, xpMult: args.xpMult, playerSwitching: args.switching });
+      if (runs > 0) jobs.push({ firstSeed: first, runs, levelPolicy: args.policy, xpMult: args.xpMult, playerSwitching: args.switching, pilot: args.pilot });
     }
     process.stderr.write(`simulating ${args.runs} runs across ${jobs.length} workers...\n`);
     const results = await Promise.all(jobs.map(shard));
@@ -107,6 +113,7 @@ async function main(): Promise<void> {
     seed: args.seed,
     xpMult: args.xpMult,
     switching: args.switching,
+    pilot: args.pilot,
     wallMs: Date.now() - started,
   });
   process.stdout.write(report);

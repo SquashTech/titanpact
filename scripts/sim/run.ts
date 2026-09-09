@@ -61,7 +61,7 @@ import { passives } from '../../src/data/passives';
 import { getMaxHp } from '../../src/engine/state';
 import { createCombatant } from '../../src/engine/state';
 
-import { simulateFight, PLAYER_SIDE } from './fight';
+import { simulateFight, PLAYER_SIDE, type PilotKind } from './fight';
 import * as policy from './policy';
 import { makeRng, pick, randomSeed, sample, withRandom, type Rng } from './rng';
 
@@ -90,7 +90,7 @@ const STAT_BOOST: Record<string, { stat: StatKey; amount: number }> = {
 // --- Records the aggregator consumes ---
 
 export interface ChoiceEvent {
-  bucket: 'gem' | 'banner' | 'boon' | 'evolution' | 'class' | 'draft';
+  bucket: 'gem' | 'banner' | 'boon' | 'evolution' | 'class' | 'draft' | 'node';
   offered: string[];
   /** Usually one; the draft takes two of its four. */
   picked: string[];
@@ -245,6 +245,8 @@ export interface RunOptions extends policy.PolicyOptions {
   xpMult: number;
   /** Player-side mana cycling (fight.ts manaCycleSwitches). */
   playerSwitching: boolean;
+  /** Who pilots the player side in every fight (fight.ts PilotKind). */
+  pilot: PilotKind;
 }
 
 export function simulateRun(options: RunOptions): RunRecord {
@@ -290,6 +292,13 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     if (reachable.length === 0) break;
     const nodeId = pick(rng, reachable);
     const node = run.map!.nodes[nodeId];
+    // The walk takes a reachable node UNIFORMLY AT RANDOM, so the row is already the
+    // randomized experiment every other lift table reads — recording it costs nothing and
+    // is the only measurement of a reward NODE as against the option it displaced.
+    const offeredTypes = [...new Set(reachable.map((id) => run.map!.nodes[id].type as string))];
+    if (offeredTypes.length > 1) {
+      record.choices.push({ bucket: 'node', offered: offeredTypes, picked: [node.type], encountersWonAtChoice: run.encountersWon });
+    }
     const location = locationForAct(run.locationIds, run.actNumber);
 
     for (const entry of run.roster) {
@@ -437,6 +446,7 @@ function resolveEncounterNode(
     aiSquad: encounter.squad,
     rng,
     playerSwitching: options.playerSwitching,
+    pilot: options.pilot,
   });
 
   const playerHeroes: FightRecord['playerHeroes'] = {};

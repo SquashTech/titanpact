@@ -26,6 +26,7 @@ import { relicTeamPassiveGrants } from '../../src/run/passives';
 import { relicTeamStatusGrants } from '../../src/run/statusGrants';
 import type { RosterEntry } from '../../src/run/state';
 import type { Squad } from '../../src/run/squad';
+import { pilotActions, type PilotOptions } from './pilot';
 import type { Rng } from './rng';
 
 const PLAYER_SIDE: Side = 'A';
@@ -217,6 +218,9 @@ function manaCycleSwitches(state: CombatState, side: Side, ctx: AiContext, actin
   return out;
 }
 
+/** Who pilots the PLAYER side. The enemy is always run/ai.ts — that is what the game ships. */
+export type PilotKind = 'chart' | 'greedy';
+
 export interface FightInput {
   seed: number;
   playerRoster: readonly RosterEntry[];
@@ -227,6 +231,16 @@ export interface FightInput {
   rng: Rng;
   /** Off reproduces a player who only ever Rests. */
   playerSwitching?: boolean;
+  /** 'greedy' pilots the player side with scripts/sim/pilot.ts; 'chart' leaves it on run/ai.ts. */
+  pilot?: PilotKind;
+}
+
+/** The original player side: run/ai.ts plus the reactive mana cycle. */
+function chartPilotActions(state: CombatState, playerCtx: AiContext, playerActive: readonly string[], switching: boolean): Action[] {
+  const switches = switching ? manaCycleSwitches(state, PLAYER_SIDE, playerCtx, playerActive) : {};
+  return playerActive.map((id): Action =>
+    switches[id] ? { kind: 'switch', combatantId: id, benchedCombatantId: switches[id] } : pickAiAction(state, id, playerCtx)
+  );
 }
 
 export function simulateFight(input: FightInput): FightOutcome {
@@ -290,13 +304,11 @@ export function simulateFight(input: FightInput): FightOutcome {
     if (playerActive.length === 0 || aiActive.length === 0) break;
     for (const id of [...playerActive, ...aiActive]) telemetry[id].roundsActive += 1;
 
-    const switches = input.playerSwitching === false ? {} : manaCycleSwitches(state, PLAYER_SIDE, playerCtx, playerActive);
-    const actions: Action[] = [
-      ...playerActive.map((id): Action =>
-        switches[id] ? { kind: 'switch', combatantId: id, benchedCombatantId: switches[id] } : pickAiAction(state, id, playerCtx)
-      ),
-      ...aiActive.map((id) => pickAiAction(state, id, aiCtx)),
-    ];
+    const playerActions: Action[] =
+      input.pilot === 'greedy'
+        ? pilotActions(state, PLAYER_SIDE, playerCtx, { switching: input.playerSwitching !== false } as PilotOptions)
+        : chartPilotActions(state, playerCtx, playerActive, input.playerSwitching !== false);
+    const actions: Action[] = [...playerActions, ...aiActive.map((id) => pickAiAction(state, id, aiCtx))];
 
     for (const action of actions) {
       if (state.combatants[action.combatantId].side !== PLAYER_SIDE) continue;

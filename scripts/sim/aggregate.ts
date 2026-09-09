@@ -24,6 +24,8 @@ function choiceBucket(agg: Aggregate, bucket: string): Record<string, ChoiceAgg>
       return agg.evolutionChoices;
     case 'class':
       return agg.classChoices;
+    case 'node':
+      return agg.nodeChoices;
     default:
       return agg.draftChoices;
   }

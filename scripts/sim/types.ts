@@ -101,6 +101,8 @@ export interface Aggregate {
   evolutionChoices: Record<string, ChoiceAgg>;
   classChoices: Record<string, ChoiceAgg>;
   draftChoices: Record<string, ChoiceAgg>;
+  /** Map-node types: which kind of node a row offered, and which one the walk took. */
+  nodeChoices: Record<string, ChoiceAgg>;
   /** Equipment rarity actually equipped, by act. */
   equipRarityByAct: Record<string, number>;
   /** Round-count histogram across every fight, bucketed by round. */
@@ -145,6 +147,7 @@ export function emptyAggregate(): Aggregate {
     evolutionChoices: {},
     classChoices: {},
     draftChoices: {},
+    nodeChoices: {},
     equipRarityByAct: {},
     roundHistogram: [],
     heroLevelHistogram: [],
@@ -239,4 +242,5 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   mergeCounts(into.evolutionChoices, from.evolutionChoices, emptyChoice);
   mergeCounts(into.classChoices, from.classChoices, emptyChoice);
   mergeCounts(into.draftChoices, from.draftChoices, emptyChoice);
+  mergeCounts(into.nodeChoices, from.nodeChoices, emptyChoice);
 }

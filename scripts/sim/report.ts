@@ -100,21 +100,27 @@ for (const heroId of Object.keys(progressionTable.evolutions)) {
 
 export function formatReport(
   agg: Aggregate,
-  meta: { runs: number; levelPolicy: string; seed: number; xpMult: number; switching: boolean; wallMs: number }
+  meta: { runs: number; levelPolicy: string; seed: number; xpMult: number; switching: boolean; pilot: string; wallMs: number }
 ): string {
   const out: string[] = [];
   const R = agg.runs || 1;
 
   out.push('TITANPACT — BATCH RUN SIMULATION');
   out.push(
-    `runs=${agg.runs}  levelPolicy=${meta.levelPolicy}  xpMult=${meta.xpMult}  playerSwitching=${meta.switching ? 'on' : 'off'}` +
+    `runs=${agg.runs}  pilot=${meta.pilot}  levelPolicy=${meta.levelPolicy}  xpMult=${meta.xpMult}  playerSwitching=${meta.switching ? 'on' : 'off'}` +
       `  baseSeed=${meta.seed}  wall=${(meta.wallMs / 1000).toFixed(1)}s  cpu=${(agg.elapsedMs / 1000).toFixed(0)}s`
   );
-  out.push('Both sides are piloted by src/run/ai.ts, which aims at type matchups but never plans.');
-  out.push('Player skill is therefore a CONSTANT here, not a variable: absolute win rates are a');
-  out.push('FLOOR, and the comparisons between options are the part that transfers. The player');
-  out.push('side additionally cycles a hero out rather than Resting; the enemy AI never switches,');
-  out.push('in the simulator or in the real game.');
+  if (meta.pilot === 'greedy') {
+    out.push('The player side is piloted by scripts/sim/pilot.ts: it scores every option in HP off the');
+    out.push('real damage, heal and status pipelines, finishes what it can kill, and cycles for a');
+    out.push('better matchup. One ply deep — a better floor, not a ceiling.');
+  } else {
+    out.push('The player side is piloted by src/run/ai.ts, which aims at type matchups but never');
+    out.push('plans, and cycles a hero out rather than Resting.');
+  }
+  out.push('The ENEMY is always src/run/ai.ts — what the game ships — and never switches. Player');
+  out.push('skill is a CONSTANT within a batch, not a variable: absolute win rates are a floor,');
+  out.push('and the comparisons between options are the part that transfers.');
 
   // --- Run outcomes ---
   out.push(heading('1. RUN OUTCOMES'));
@@ -202,6 +208,13 @@ export function formatReport(
     (id) => allCombatants[id]?.name ?? id,
     30
   ));
+
+  out.push('  NODE LIFT — a map row offers several node types and the walk takes one at random, so');
+  out.push('  this is the same matched comparison the tables above are: what taking THIS kind of node');
+  out.push('  was worth against whatever else its row could have given. A row whose options were all');
+  out.push('  one type contributes nothing.');
+  out.push(liftTable('', agg.nodeChoices, (id) => id, 30));
+  out.push('');
 
   // --- Enemies ---
   out.push(heading('5. ENEMIES'));

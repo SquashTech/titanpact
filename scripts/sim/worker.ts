@@ -5,6 +5,7 @@ import { foldRun } from './aggregate';
 import { simulateRun } from './run';
 import { emptyAggregate, type Aggregate } from './types';
 import type { LevelPolicy } from './policy';
+import type { PilotKind } from './fight';
 
 export interface WorkerJob {
   firstSeed: number;
@@ -12,6 +13,7 @@ export interface WorkerJob {
   levelPolicy: LevelPolicy;
   xpMult: number;
   playerSwitching: boolean;
+  pilot: PilotKind;
 }
 
 export function runShard(job: WorkerJob): Aggregate {
@@ -26,6 +28,7 @@ export function runShard(job: WorkerJob): Aggregate {
           levelPolicy: job.levelPolicy,
           xpMult: job.xpMult,
           playerSwitching: job.playerSwitching,
+          pilot: job.pilot,
         })
       );
     } catch (err) {
