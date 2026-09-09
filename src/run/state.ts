@@ -44,6 +44,12 @@ export interface RosterEntry {
   bonusStatGrants: Partial<Record<StatKey, number>>;
   /** Permanent grants from mastery level-ups (progression.ts grantMasteryStat). */
   masteryStatGrants: Partial<Record<StatKey, number>>;
+  /**
+   * Gems socketed into this hero, as a COUNT per stat — not an amount (gems.ts gemStatModifiers
+   * converts). Re-allocated freely on the map, so this is a placement and never a spend:
+   * RunState.gemsEarned minus the sum of these across the roster IS the unspent pool.
+   */
+  gemAllocation: Partial<Record<StatKey, number>>;
   /** Item slots granted on top of the hero's authored count (the Forge). Never negative; itemSlotsFor caps the sum. */
   bonusItemSlots: number;
   /** Current secondary-type grant from the latest type-graft path; a later graft overwrites. Innate primary never changes. */
@@ -85,6 +91,12 @@ export interface RunState {
   unseenItemIds: UnseenItems;
   /** Owned relic ids — duplicates stack. */
   relics: string[];
+  /**
+   * Every Gem the run has paid out, as a count per stat. The single source of truth: the
+   * spendable pool is this minus what the roster holds (gems.ts gemPool), so a Gem can never be
+   * duplicated or lost and terminating a hero returns its Gems by construction.
+   */
+  gemsEarned: Partial<Record<StatKey, number>>;
   /** Starts at 1; +1 at the end of every act; purchasable at a shop. */
   recruitContracts: number;
   /** Null for a RunState that never gets a map (enemyGen.ts throwaway rosters). */
@@ -125,6 +137,7 @@ export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1):
     stash: [],
     unseenItemIds: [],
     relics: [],
+    gemsEarned: {},
     recruitContracts,
     map: null,
     currentNodeId: null,
@@ -153,6 +166,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     bonusPassiveGrants: [],
     bonusStatGrants: {},
     masteryStatGrants: {},
+    gemAllocation: {},
     bonusItemSlots: 0,
     evolutionTypeGraft: null,
     classId: null,

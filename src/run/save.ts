@@ -15,6 +15,7 @@ import type { PassiveId, StatKey, TypeId } from '../engine/content';
 import { STAT_ORDER } from '../engine/content';
 import type { EquipmentLoadout, Stash, UnseenItems } from './equipment';
 import { MAX_ITEM_SLOTS, pruneUnseen } from './equipment';
+import { GEM_CAP_PER_HERO, GEM_CAP_PER_STAT, GEM_STATS, isGemStat } from './gems';
 import type { MapNode, MapNodeType, RunMap } from './map';
 import { MAP_NODE_TYPES } from './map';
 import type { ProgressionTable } from './progression';
@@ -36,8 +37,10 @@ import { ROSTER_CAP, TOTAL_ACTS } from './state';
  * v6 (2026-09-07): the family rework — all 106 hand-authored item ids were replaced by
  * composite `family.tier[.enchant]` ids (docs/equipment.md). Every id in a v5 file names
  * an item this build no longer ships, so a v5 run cannot be repaired, only refused.
+ * v7 (2026-09-09): Gems went per-hero — RunState gained `gemsEarned` and entries gained
+ * `gemAllocation`. A v6 file's Gems are relic ids in `run.relics` this build no longer ships.
  */
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the
@@ -186,6 +189,26 @@ function decodeStatGrants(value: unknown, label: string): Partial<Record<StatKey
   return out;
 }
 
+/**
+ * A Gem count per stat. Both caps are enforced here, not clamped: a file over one was
+ * hand-edited, and the all-or-nothing stance above says refuse rather than repair.
+ */
+function decodeGemCounts(value: unknown, label: string, cap: number): Partial<Record<StatKey, number>> {
+  if (value === undefined || value === null) return {};
+  if (!isObject(value)) reject(`${label} is not a stat map`);
+  const out: Partial<Record<StatKey, number>> = {};
+  let total = 0;
+  for (const [key, count] of Object.entries(value)) {
+    if (!STAT_KEYS.has(key)) reject(`${label} names unknown stat "${key}"`);
+    if (!isGemStat(key as StatKey)) reject(`${label} names ${key}, which carries no Gem`);
+    if (!isInt(count, 0, cap)) reject(`${label}.${key} is not a Gem count in 0-${cap}`);
+    out[key as StatKey] = count;
+    total += count;
+  }
+  if (total > GEM_CAP_PER_HERO && cap === GEM_CAP_PER_STAT) reject(`${label} holds ${total} Gems, over the ${GEM_CAP_PER_HERO} cap`);
+  return out;
+}
+
 /** The held-item list. Length is checked against the hard cap, not the hero's own capacity — a hero can legitimately be over its count after a build lowered `itemSlots`, and the UI shows the overflow rather than deleting it. */
 function decodeLoadout(value: unknown, index: SaveContentIndex, label: string): EquipmentLoadout {
   if (!isStringArray(value)) reject(`${label} is not a list of item ids`);
@@ -261,6 +284,7 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     bonusPassiveGrants: requireIds(value.bonusPassiveGrants, index.passiveIds, `${label}.bonusPassiveGrants`),
     bonusStatGrants: decodeStatGrants(value.bonusStatGrants, `${label}.bonusStatGrants`),
     masteryStatGrants: decodeStatGrants(value.masteryStatGrants, `${label}.masteryStatGrants`),
+    gemAllocation: decodeGemCounts(value.gemAllocation, `${label}.gemAllocation`, GEM_CAP_PER_STAT),
     bonusItemSlots: value.bonusItemSlots,
     evolutionTypeGraft: graft as TypeId | null,
     classId: classId as PassiveId | null,
@@ -372,6 +396,14 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
 
   const stash = decodeStash(value.stash, index);
 
+  // Conservation: the pool is derived (gems.ts gemPool), so an earned figure under what the
+  // roster already holds would read as a negative pool rather than as the corruption it is.
+  const gemsEarned = decodeGemCounts(value.gemsEarned, 'run.gemsEarned', Number.MAX_SAFE_INTEGER);
+  for (const stat of GEM_STATS) {
+    const held = roster.reduce((total, entry) => total + (entry.gemAllocation[stat] ?? 0), 0);
+    if (held > (gemsEarned[stat] ?? 0)) reject(`run.gemsEarned.${stat} is under the ${held} the roster holds`);
+  }
+
   return {
     roster,
     levelUpPool: value.levelUpPool,
@@ -380,6 +412,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     stash,
     unseenItemIds: decodeUnseen(value.unseenItemIds, stash),
     relics: requireIds(value.relics, index.relicIds, 'run.relics'),
+    gemsEarned,
     recruitContracts: value.recruitContracts,
     map,
     currentNodeId,
