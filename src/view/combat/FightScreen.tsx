@@ -55,6 +55,7 @@ import { formatEvents, type LogLine } from './formatEvent';
 import { applyEventToState } from './applyEventToState';
 import { buildBeats, type Beat } from './buildBeats';
 import { openingBeat } from './openingBeats';
+import { AUTO_PLAY_STEP_MS, readAutoPlayMode, writeAutoPlayMode, type AutoPlayMode } from './autoPlay';
 import { playBeatSfx } from '../../audio/beatSfx';
 import { setMusicRate } from '../../audio/music';
 import { getTypeColorRgb } from './typeColors';
@@ -367,9 +368,9 @@ const CONSOLE_EMBERS = Array.from({ length: 9 }, (_, i) => {
 });
 const config = { typeChart, heroes: allCombatants, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 10 };
 
-// Hold-to-auto-play: hold length before auto-play engages, and the pause between auto-advanced beats.
+// Hold-to-auto-play: hold length before auto-play engages. The hold is transient — it plays
+// while the finger is down. The console's two Auto keys latch instead; their pauses are in autoPlay.ts.
 const AUTO_ADVANCE_HOLD_MS = 350;
-const AUTO_ADVANCE_STEP_MS = 450;
 
 // EXPERIMENTAL: music rate once a named enemy takes the field (also drops pitch — no time-stretch in Web Audio). 1 disables it.
 const DREAD_MUSIC_RATE = 0.8;
@@ -624,6 +625,10 @@ export function FightScreen({
   const holdTimer = useRef<number | null>(null);
   const autoPlayInterval = useRef<number | null>(null);
   const autoEngaged = useRef(false);
+  // The latched Auto keys. Mirrored in a ref because the interval callback and startBeatPlayback
+  // both run from closures older than the press that changed it.
+  const [autoMode, setAutoMode] = useState<AutoPlayMode>(readAutoPlayMode);
+  const autoModeRef = useRef(autoMode);
 
   useEffect(() => {
     return () => {
@@ -922,7 +927,9 @@ export function FightScreen({
     finalState.current = nextFinalState;
     beatQueue.current = beats;
     setResolving(true);
-    handleAdvance();
+    // A latched Auto key survives the round that engaged it, so every later round — and the
+    // next fight — opens already playing.
+    if (handleAdvance() && autoModeRef.current !== 'off') startAutoPlay(autoModeRef.current);
   }
 
   /** Reveals the next beat, or finalizes the round once the queue is empty. Returns whether a beat was shown, so the auto-play loop knows when to stop. */
@@ -968,13 +975,29 @@ export function FightScreen({
     }
   }
 
+  /** Runs the queue down on a timer at the mode's pace, and stops itself when the round ends. */
+  function startAutoPlay(mode: Exclude<AutoPlayMode, 'off'>) {
+    if (autoPlayInterval.current !== null) clearInterval(autoPlayInterval.current);
+    autoPlayInterval.current = window.setInterval(() => {
+      if (!handleAdvance()) stopAutoAdvance();
+    }, AUTO_PLAY_STEP_MS[mode]);
+  }
+
   function engageAutoPlay() {
     holdTimer.current = null;
     autoEngaged.current = true;
     if (!handleAdvance()) return;
-    autoPlayInterval.current = window.setInterval(() => {
-      if (!handleAdvance()) stopAutoAdvance();
-    }, AUTO_ADVANCE_STEP_MS);
+    startAutoPlay('auto');
+  }
+
+  /** The Auto keys latch: pressing the engaged one releases it, pressing the other changes pace mid-round. */
+  function toggleAutoMode(mode: Exclude<AutoPlayMode, 'off'>) {
+    const next: AutoPlayMode = autoModeRef.current === mode ? 'off' : mode;
+    autoModeRef.current = next;
+    setAutoMode(next);
+    writeAutoPlayMode(next);
+    stopAutoAdvance();
+    if (next !== 'off' && resolving) startAutoPlay(next);
   }
 
   function handleAdvancePointerDown() {
@@ -1029,15 +1052,17 @@ export function FightScreen({
 
   return (
     <>
-      {/* Full-screen tap-to-advance catcher; sits below the log overlay's z-index. */}
+      {/* Full-screen tap-to-advance catcher; sits below the log overlay's z-index.
+          Inert while an Auto key is latched — it still gates the screen, but a stray
+          tap must not step an extra beat and a pointerup must not kill the timer. */}
       {resolving && (
         <div
           className="advance-overlay"
-          onClick={handleAdvanceClick}
-          onPointerDown={handleAdvancePointerDown}
-          onPointerUp={stopAutoAdvance}
-          onPointerLeave={stopAutoAdvance}
-          onPointerCancel={stopAutoAdvance}
+          onClick={autoMode === 'off' ? handleAdvanceClick : undefined}
+          onPointerDown={autoMode === 'off' ? handleAdvancePointerDown : undefined}
+          onPointerUp={autoMode === 'off' ? stopAutoAdvance : undefined}
+          onPointerLeave={autoMode === 'off' ? stopAutoAdvance : undefined}
+          onPointerCancel={autoMode === 'off' ? stopAutoAdvance : undefined}
         />
       )}
 
@@ -1180,7 +1205,9 @@ export function FightScreen({
                 <span className={`combat-banner-meta${beat.bannerMetaClass ? ` ${beat.bannerMetaClass}` : ''}`}>{beat.bannerMeta}</span>
               )}
             </div>
-            <span className="combat-banner-hint">tap ▸ or hold to auto-play ⏵⏵</span>
+            <span className="combat-banner-hint">
+              {autoMode === 'off' ? 'tap ▸ or hold to auto-play ⏵⏵' : 'auto-playing — press the lit key to stop'}
+            </span>
           </div>
         )}
         {/* Forced replacement: select-then-Confirm, since it cannot be undone once committed. */}
@@ -1390,58 +1417,90 @@ export function FightScreen({
 
       {/* Fixed bottom row; buttons stay mounted and disable rather than hide, so the row's height never changes.
           While a target is being chosen it collapses to a single full-width Back — that state has one legal exit. */}
-      <div className={`bottom-bar${showingTargetPanel ? ' bottom-bar-solo' : ''}`} style={consoleStyle}>
-        <button
-          className="bottom-action bottom-action-primary bottom-action-back"
-          disabled={!(actingId !== null && (showingTargetPanel || stepIndex > 0))}
-          onClick={() => (showingTargetPanel ? setSelecting(null) : setActionStep(stepIndex - 1))}
-        >
-          <span className="bottom-action-glyph" aria-hidden="true">
-            ←
-          </span>
-          Back
-        </button>
-        {!showingTargetPanel && (
+      <div
+        className={`bottom-bar${showingTargetPanel && !resolving ? ' bottom-bar-solo' : ''}${resolving ? ' bottom-bar-playback' : ''}`}
+        style={consoleStyle}
+      >
+        {/* While the round plays out there is nothing to command, so the row carries the
+            playback speed instead: two latching keys, remembered across fights. */}
+        {resolving ? (
           <>
             <button
-              className="bottom-action bottom-action-primary bottom-action-switch"
-              disabled={!(actingId !== null && playerBench.length > 0 && !playerLockedIn)}
-              onClick={() => setSwitchOpen(true)}
-            >
-              {/* ⇄, not an emoji: an emoji cannot take the key's own color. */}
-              <span className="bottom-action-glyph" aria-hidden="true">
-                ⇄
-              </span>
-              Switch
-            </button>
-            {/* A one-tap commit, like the out-of-mana Rest row it duplicates. Deliberately not
-                adjacent to Back: the keys either side of it only open panels, so the row's one
-                irreversible key never sits under the thumb that is reaching for undo. Dark at
-                full mana — see actingCanRest. */}
-            <button
-              className={`bottom-action bottom-action-primary bottom-action-rest${
-                actingId !== null && pending[actingId]?.kind === 'rest' ? ' selected' : ''
-              }`}
-              disabled={!actingCanRest}
-              onClick={() => actingId !== null && handleRestClick(actingId)}
+              className={`bottom-action bottom-action-primary bottom-action-auto${autoMode === 'auto' ? ' engaged' : ''}`}
+              aria-pressed={autoMode === 'auto'}
+              onClick={() => toggleAutoMode('auto')}
             >
               <span className="bottom-action-glyph" aria-hidden="true">
-                ☾
+                ⏵
               </span>
-              Rest
+              Auto
             </button>
             <button
-              className="bottom-action bottom-action-utility"
-              onClick={() => {
-                setConfirmingQuit(false);
-                setMenuOpen(true);
-              }}
+              className={`bottom-action bottom-action-primary bottom-action-auto${autoMode === 'fast' ? ' engaged' : ''}`}
+              aria-pressed={autoMode === 'fast'}
+              onClick={() => toggleAutoMode('fast')}
             >
               <span className="bottom-action-glyph" aria-hidden="true">
-                ☰
+                ⏵⏵
               </span>
-              <span className="bottom-action-label">Menu</span>
+              Fast
             </button>
+          </>
+        ) : (
+          <>
+          <button
+            className="bottom-action bottom-action-primary bottom-action-back"
+            disabled={!(actingId !== null && (showingTargetPanel || stepIndex > 0))}
+            onClick={() => (showingTargetPanel ? setSelecting(null) : setActionStep(stepIndex - 1))}
+          >
+            <span className="bottom-action-glyph" aria-hidden="true">
+              ←
+            </span>
+            Back
+          </button>
+          {!showingTargetPanel && (
+            <>
+              <button
+                className="bottom-action bottom-action-primary bottom-action-switch"
+                disabled={!(actingId !== null && playerBench.length > 0 && !playerLockedIn)}
+                onClick={() => setSwitchOpen(true)}
+              >
+                {/* ⇄, not an emoji: an emoji cannot take the key's own color. */}
+                <span className="bottom-action-glyph" aria-hidden="true">
+                  ⇄
+                </span>
+                Switch
+              </button>
+              {/* A one-tap commit, like the out-of-mana Rest row it duplicates. Deliberately not
+                  adjacent to Back: the keys either side of it only open panels, so the row's one
+                  irreversible key never sits under the thumb that is reaching for undo. Dark at
+                  full mana — see actingCanRest. */}
+              <button
+                className={`bottom-action bottom-action-primary bottom-action-rest${
+                  actingId !== null && pending[actingId]?.kind === 'rest' ? ' selected' : ''
+                }`}
+                disabled={!actingCanRest}
+                onClick={() => actingId !== null && handleRestClick(actingId)}
+              >
+                <span className="bottom-action-glyph" aria-hidden="true">
+                  ☾
+                </span>
+                Rest
+              </button>
+              <button
+                className="bottom-action bottom-action-utility"
+                onClick={() => {
+                  setConfirmingQuit(false);
+                  setMenuOpen(true);
+                }}
+              >
+                <span className="bottom-action-glyph" aria-hidden="true">
+                  ☰
+                </span>
+                <span className="bottom-action-label">Menu</span>
+              </button>
+            </>
+          )}
           </>
         )}
       </div>

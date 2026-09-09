@@ -2115,6 +2115,41 @@ textarea,
     inset 0 -1px 0 rgba(255, 214, 140, 0.2), inset 0 0 26px -8px rgba(224, 166, 60, 0.55);
 }
 
+/* Round playback. The row's other keys command a hero and there is no hero to
+   command while a round resolves, so the same strip carries the two Auto keys
+   instead — see FightScreen. They must sit ABOVE .advance-overlay (fixed, 15),
+   which otherwise eats every tap on the screen: these two are the one thing
+   during playback that is pressed rather than tapped-to-advance. */
+.bottom-bar-playback {
+  z-index: 16;
+}
+
+/* Released: the same neutral key face the row uses for a control that is
+   available but not doing anything. */
+.bottom-action-auto {
+  flex: 1 1 0;
+  letter-spacing: 0.04em;
+}
+
+.bottom-action-auto .bottom-action-glyph {
+  color: rgba(224, 166, 60, 0.55);
+}
+
+/* Latched. A press here holds until it is pressed again — across rounds and
+   across fights — so it is drawn like the Rest key's `.selected`: lit rim,
+   filled face, and a glyph at full strength. Nothing else on the console stays
+   on after the screen it was pressed on is gone, and it has to look like it. */
+.bottom-action-auto.engaged {
+  color: #fff4dd;
+  background: linear-gradient(180deg, rgba(224, 166, 60, 0.3), rgba(224, 166, 60, 0.08));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 214, 140, 0.85),
+    inset 0 -1px 0 rgba(255, 230, 180, 0.26), inset 0 0 24px -7px rgba(255, 214, 140, 0.7);
+}
+
+.bottom-action-auto.engaged .bottom-action-glyph {
+  color: #ffd98c;
+}
+
 .bottom-action-label {
   font-size: 8px;
   font-weight: 800;
