@@ -593,6 +593,45 @@ holding one **79.3% ±0.76**, a bigger edge than any stat grant measured here. T
 strong, and the slot was why. **Resolved 2026-09-08: the dial is gone and every hero starts on
 one slot** (per user direction — see "Items (per-hero)" above). The HP rate was left at 0.5.
 
+## Are the squishy casters weak? (measured 2026-09-08 — NO, not as a class)
+
+Asked directly, because it is the obvious next suspicion after the item-slot pass. Round robin,
+every hero vs every other, four copies a side, level 5, no gear:
+
+| group | mean win rate |
+|---|---|
+| magical (Int > Atk) | 49.0% (n=14) |
+| physical | 50.6% (n=22) |
+| HP ≤ 200 | 49.2% (n=18) |
+| HP > 200 | 50.8% (n=18) |
+| **squishy casters** (magical AND HP ≤ 200) | **51.6%** (n=11) |
+
+The archetype is fine — slightly above the roster mean. What is not fine is the **spread inside
+it**: Lucius 78%, Brimstone 75%, Trance 68% and Crimson 66% sit in the roster's top four, while
+Zenith 14%, Coil 34% and Cortex 38% sit at the bottom. A class-wide buff to squishy casters would
+mostly inflate the four heroes who least need it. **The variance is per hero, not per archetype**,
+so this is movepool work on named heroes, not a stat-total pass.
+
+**Zenith is the one large outlier and its line is not the cause.** 190 HP / 85 Int is a normal
+caster spread; its starting kit is Mana Tap (Base Power **20**), Infuse and Empower. It is an
+Arcane mana battery whose kit is built to feed a partner, so a round robin fielding four copies of
+it measures the one thing it cannot do. Rerun with each side carrying a fixed neutral partner and
+it still lands at 13.9%, so the kit is thin even when the support has somewhere to go — but the
+fix is a move, not a stat.
+
+**Two redistribution routes were measured and both are dead ends**, which is why the 450 lines
+were left alone:
+
+- **HP → offense** (30 points, `budget` mode): shifted line wins **52.5% ±0.76**, helping exactly
+  18 of 36 heroes. Near-neutral, so the current HP pricing is close to right at the actual lines.
+- **Mana Pool → HP** (20 points, `mana` mode): shifted line wins **43.4%** overall — 38.3% on
+  physical heroes, 51.2% on magical. Mana Pool correlates at −0.34 with win rate across the
+  roster, the strongest single-stat signal there is, and cutting it still makes heroes **worse**.
+  That correlation is confounded: casters carry big pools (mean 71.8 against physical 53.0) and
+  are weaker for reasons of their own. A stat that saturates is not a stat you can sell.
+
+---
+
 `scripts/sim` IS deterministic by seed. Until 2026-09-08 it silently dropped ~15% of every batch:
 `bestWearer` compared item ids where the game's rule (`holdsItem`) compares FAMILIES, so the sim
 kept picking a hero already holding an enchanted sibling and throwing inside `equipToRoster`.

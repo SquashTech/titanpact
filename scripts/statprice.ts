@@ -6,10 +6,14 @@
 // win-rate table confounds — draft order, level, who got the gear, which types the run offered —
 // is identical on both sides and cancels.
 //
-//   node dist/scripts/statprice.js price  --fights 2000
-//   node dist/scripts/statprice.js roster --fights 60
+//   node dist/scripts/statprice.js price   --fights 2000        what a point of HP is worth
+//   node dist/scripts/statprice.js roster  --partner valor    which heroes lines are weak
+//   node dist/scripts/statprice.js budget  --points 30        re-spending a hero own budget
+//   node dist/scripts/statprice.js mana    --points 20        is Mana Pool worth buying
+//   node dist/scripts/statprice.js slot                       what a second item slot is worth
 
 import { heroes } from '../src/data/heroes';
+import { moves } from '../src/data/moves';
 import type { StatKey } from '../src/engine/content';
 import { createRosterEntry } from '../src/run/state';
 import type { RosterEntry } from '../src/run/state';
@@ -129,8 +133,14 @@ function priceExperiment(fights: number, points: number, pool: readonly { id: st
  * only variable left is the authored stat line, so a hero's win rate IS its line's worth — the
  * number the run-level per-hero table cannot give, because there level and draft order dominate.
  */
-function rosterExperiment(repeats: number) {
+function rosterExperiment(repeats: number, partnerId?: string) {
   const ids = ALL.map((h) => h.id);
+  // Four copies of one hero is unfair to a SUPPORT: Zenith's whole kit hands mana to a partner,
+  // and against itself it is a Base Power 20 attack. With `partnerId` each side fields two copies
+  // of the hero under test plus two of a fixed neutral, so a support has someone to support and
+  // both sides carry the same passenger.
+  const squadFor = (id: string): string[] =>
+    partnerId && id !== partnerId ? [id, id, partnerId, partnerId] : [id, id, id, id];
   const wins: Record<string, number> = {};
   const played: Record<string, number> = {};
   for (const id of ids) {
@@ -140,8 +150,8 @@ function rosterExperiment(repeats: number) {
 
   for (let i = 0; i < ids.length; i++) {
     for (let j = i + 1; j < ids.length; j++) {
-      const a = [ids[i], ids[i], ids[i], ids[i]];
-      const b = [ids[j], ids[j], ids[j], ids[j]];
+      const a = squadFor(ids[i]);
+      const b = squadFor(ids[j]);
       for (let r = 0; r < repeats; r++) {
         const seed = 900_000 + (i * 100 + j) * 1000 + r;
         // Swapped sides, so the engine's own side ordering never counts as a hero's strength.
@@ -173,22 +183,28 @@ function rosterExperiment(repeats: number) {
     console.log(`  ${row.name.padEnd(13)}${String(row.hp).padStart(5)}${pct(row.rate * row.n, row.n).padStart(8)}${se(row.rate * row.n, row.n).toFixed(1).padStart(7)}`);
   }
 
-  // Correlation between authored HP and measured win rate — the whole question in one number.
-  const n = rows.length;
-  const mx = rows.reduce((s, r) => s + r.hp, 0) / n;
-  const my = rows.reduce((s, r) => s + r.rate, 0) / n;
-  let sxy = 0;
-  let sxx = 0;
-  let syy = 0;
-  for (const r of rows) {
-    sxy += (r.hp - mx) * (r.rate - my);
-    sxx += (r.hp - mx) ** 2;
-    syy += (r.rate - my) ** 2;
+  // Which authored stats actually pay. Every hero spends the same 450, so a stat that correlates
+  // POSITIVELY is one the roster under-buys and a negative one is a stat heroes are wasting points
+  // on — the whole "which lines are badly spent" question, one column at a time.
+  const STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool'];
+  const my = rows.reduce((s, r) => s + r.rate, 0) / rows.length;
+  console.log(`\n  Correlation of each authored stat with measured win rate, across all ${rows.length} heroes.`);
+  console.log(`  Every line spends the same 450, so this reads as: which stats is it worth spending on?\n`);
+  console.log(`  ${'stat'.padEnd(14)}${'corr'.padStart(8)}${'per +10'.padStart(10)}`);
+  for (const stat of STATS) {
+    const xs = rows.map((r) => heroes[r.id].baseStats[stat]);
+    const mx = xs.reduce((s, x) => s + x, 0) / xs.length;
+    let sxy = 0;
+    let sxx = 0;
+    let syy = 0;
+    rows.forEach((r, i) => {
+      sxy += (xs[i] - mx) * (r.rate - my);
+      sxx += (xs[i] - mx) ** 2;
+      syy += (r.rate - my) ** 2;
+    });
+    const corr = sxy / Math.sqrt(sxx * syy);
+    console.log(`  ${stat.padEnd(14)}${corr.toFixed(3).padStart(8)}${((sxy / sxx) * 10 * 100).toFixed(2).padStart(9)}pp`);
   }
-  const corr = sxy / Math.sqrt(sxx * syy);
-  const slope = sxy / sxx;
-  console.log(`\n  correlation(authored HP, win rate) = ${corr.toFixed(3)}`);
-  console.log(`  slope: +10 HP is worth ${(slope * 10 * 100).toFixed(2)} percentage points of win rate`);
 
   const sorted = [...rows].sort((a, b) => b.hp - a.hp);
   const topTen = sorted.slice(0, 10);
@@ -209,6 +225,48 @@ function rosterExperiment(repeats: number) {
  * If the shifted variant wins, the roster is charging too MUCH for HP and its tanks are
  * short-changed. If the original wins, HP is underpriced and the tanks are getting it free.
  */
+function manaExperiment(repeats: number, points: number) {
+  console.log('EXPERIMENT 5 — is Mana Pool a stat worth buying?');
+  console.log(`Each hero fights itself with ${points} budget points moved out of Mana Pool and into HP`);
+  console.log(`at HP_BUDGET_VALUE: -${points} Mana for +${points * 2} HP. Above 50% means the pool was overbought.\n`);
+
+  const shift: Partial<Record<StatKey, number>> = { manaPool: -points, hp: points * 2 };
+  const rows: { name: string; mana: number; magical: boolean; rate: number; n: number }[] = [];
+  for (const hero of ALL) {
+    // Never below what the STARTING kit must cast — a hero that cannot open is not a data point.
+    const need = Math.max(0, ...hero.moveIds.map((id) => moves[id]?.manaCost ?? 0));
+    if (hero.baseStats.manaPool - points < need) continue;
+    const squad = [hero.id, hero.id, hero.id, hero.id];
+    let wins = 0;
+    let n = 0;
+    for (let r = 0; r < repeats; r++) {
+      const seed = 600_000 + r * 23;
+      if (fight(seed, squad, shift, squad, {})) wins += 1;
+      if (!fight(seed + 11, squad, {}, squad, shift)) wins += 1;
+      n += 2;
+    }
+    rows.push({
+      name: hero.name,
+      mana: hero.baseStats.manaPool,
+      magical: hero.baseStats.intelligence > hero.baseStats.attack,
+      rate: wins / n,
+      n,
+    });
+  }
+
+  rows.sort((a, b) => b.rate - a.rate);
+  console.log(`  ${'hero'.padEnd(13)}${'pool'.padStart(6)}${'kind'.padStart(6)}${'shifted win%'.padStart(14)}`);
+  for (const r of rows) {
+    console.log(`  ${r.name.padEnd(13)}${String(r.mana).padStart(6)}${(r.magical ? 'MAG' : 'phy').padStart(6)}${pct(r.rate * r.n, r.n).padStart(14)}`);
+  }
+  const mean = (list: typeof rows) => (list.reduce((s, r) => s + r.rate * r.n, 0) / list.reduce((s, r) => s + r.n, 0)) * 100;
+  const mag = rows.filter((r) => r.magical);
+  const phy = rows.filter((r) => !r.magical);
+  console.log(`\n  ALL      ${mean(rows).toFixed(1)}%  (${rows.length} heroes could spare the points)`);
+  console.log(`  magical  ${mean(mag).toFixed(1)}%  (n=${mag.length})`);
+  console.log(`  physical ${mean(phy).toFixed(1)}%  (n=${phy.length})`);
+}
+
 function budgetExperiment(repeats: number, points: number, hpPerPoint: number) {
   console.log('EXPERIMENT 3 — re-spending a hero’s own budget');
   console.log(`Each hero fights itself with ${points} budget points moved out of HP and into offense,`);
@@ -291,12 +349,13 @@ function slotExperiment(repeats: number, itemA: string, itemB: string) {
 function main() {
   const argv = process.argv.slice(2);
   const mode =
-    argv[0] === 'roster' ? 'roster' : argv[0] === 'budget' ? 'budget' : argv[0] === 'slot' ? 'slot' : 'price';
+    argv[0] === 'roster' ? 'roster' : argv[0] === 'budget' ? 'budget' : argv[0] === 'slot' ? 'slot' : argv[0] === 'mana' ? 'mana' : 'price';
   const fights = Number(argv[argv.indexOf('--fights') + 1]) || (mode === 'price' ? 1500 : 20);
   const points = Number(argv[argv.indexOf('--points') + 1]) || 40;
 
-  if (mode === 'roster') rosterExperiment(fights);
+  if (mode === 'roster') rosterExperiment(fights, argv.includes('--partner') ? argv[argv.indexOf('--partner') + 1] : undefined);
   else if (mode === 'budget') budgetExperiment(fights, points, Number(argv[argv.indexOf('--hprate') + 1]) || 2);
+  else if (mode === 'mana') manaExperiment(fights, points);
   else if (mode === 'slot') slotExperiment(fights, argv[argv.indexOf('--a') + 1] ?? 'sword.rare', argv[argv.indexOf('--b') + 1] ?? 'plate.rare');
   else priceExperiment(fights, points, argv.includes('--starters') ? STARTERS : ALL);
 }
