@@ -15,6 +15,9 @@ import { relicTeamPassiveGrants, passiveStatModifiers } from '../../run/passives
 import { entryPassiveCounts, entryStatModifiers, relicStatContribution } from '../../run/entryStats';
 import { chosenEvolutionPaths, itemSlotsFor, rosterEntryTypes } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
+import { gemStatModifiers, gemsHeldBy } from '../../run/gems';
+import type { RunState } from '../../run/state';
+import { GemAllocationPanel } from './GemAllocationPanel';
 import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { MoveButtonReplica, swallowGhostClick, useLongPress } from '../shared/MoveTile';
@@ -36,6 +39,12 @@ interface Props {
    * empty. Everything else — relic grants included — is what the hero would arrive with.
    */
   unowned?: boolean;
+  /**
+   * Gem allocation, editable. Present ONLY where Gems may be moved — the map-side roster sheet.
+   * Its absence is the node-select freeze (docs/run-loop.md "Gems"), and it is also what keeps a
+   * scouted enemy and the Guild Hall shelf from offering a dial over somebody else’s stones.
+   */
+  gems?: { run: RunState; onRunChange: (next: RunState) => void };
   /** Turns the sheet into a decision: a confirm button under the tabs, plus Cancel. Omit for read-only previews. */
   action?: {
     label: string;
@@ -47,7 +56,7 @@ interface Props {
   onClose: () => void;
 }
 
-type TabId = 'stats' | 'moves' | 'gear' | 'passives';
+type TabId = 'stats' | 'moves' | 'gear' | 'gems' | 'passives';
 
 /** One passive on this hero, with everything the Passives page prints about it. */
 interface PassiveRow {
@@ -124,7 +133,7 @@ function GrantSourceRow({ label, mods }: { label: string; mods: StatModifiers })
  * Stats come from entryStats.ts — the same function buildCombatState.ts uses for a Combatant's
  * baseline — so this sheet cannot drift from the fight.
  */
-export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = [], unowned = false, action, onClose }: Props) {
+export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = [], unowned = false, gems, action, onClose }: Props) {
   const heroClass = chosenClass(classes, entry);
   const teamStatModifiers = relicTeamStatModifiers(relicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);
@@ -147,6 +156,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
     { id: 'stats', label: 'Stats', glyph: 'stats' },
     { id: 'moves', label: 'Moves', glyph: 'moves', count: entry.unlockedMoveIds.length },
     ...(unowned ? [] : [{ id: 'gear' as const, label: 'Gear', glyph: 'equipment' as const, count: heldItems.length }]),
+    ...(gems ? [{ id: 'gems' as const, label: 'Gems', glyph: 'gems' as const, count: gemsHeldBy(entry) }] : []),
     { id: 'passives', label: 'Passives', glyph: 'passives', count: rows.length },
   ];
 
@@ -220,6 +230,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
                 <GrantSourceRow label="Evolution" mods={entry.evolutionStatGrants} />
                 <GrantSourceRow label="Boons" mods={entry.bonusStatGrants} />
                 <GrantSourceRow label="Mastery" mods={entry.masteryStatGrants} />
+                <GrantSourceRow label="Gems" mods={gemStatModifiers(entry)} />
                 {/* Hero-scoped passives only — relic-granted ones are already inside the Relics
                     line, and every grant has to appear exactly once for the ledger to add up. */}
                 <GrantSourceRow label="Passives" mods={passiveStatModifiers(entryPassiveCounts(entry, equipmentLookup), passives)} />
@@ -258,6 +269,8 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
               </div>
             </>
           )}
+
+          {tab === 'gems' && gems && <GemAllocationPanel entry={entry} run={gems.run} onRunChange={gems.onRunChange} />}
 
           {tab === 'passives' && (
             <div className="tab-readout-list">

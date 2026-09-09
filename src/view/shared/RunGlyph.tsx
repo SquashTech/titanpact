@@ -44,6 +44,8 @@ const RESOURCE_PATHS = {
       <path d="M7.9 15.1 3.1 20.8l2 1.7 4.5-5.8Z" />
     </>
   ),
+  // The map node that pays them out, same as gold and XP.
+  gem: NODE_PATHS.gemReward,
 } satisfies Record<string, ReactNode>;
 
 export type ResourceKind = keyof typeof RESOURCE_PATHS;
@@ -53,6 +55,7 @@ export const RESOURCE_COLORS: Record<ResourceKind, string> = {
   gold: 'var(--accent)',
   xp: 'var(--hp-high)',
   contract: '#9bc9ff',
+  gem: '#d9569b',
 };
 
 /** The one place a run resource is drawn. `aria-hidden`: it always sits beside its own count or label. */

@@ -22647,3 +22647,167 @@ textarea,
   border-radius: var(--radius-lg);
   text-align: left;
 }
+
+/* --- The hero sheet's Gems page (GemAllocationPanel) ---------------------------------------
+   Re-allocation is free, so this is a dial and not a commitment: the controls are sized to be
+   pressed repeatedly and held, and nothing here asks for a confirmation. */
+
+.gem-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gem-panel-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0 2px;
+}
+
+.gem-panel-label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-weight: 700;
+}
+
+/* The hero cap, stated once at the top rather than repeated down every row. */
+.gem-panel-count {
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.gem-panel-cap {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+/* The button that makes swapping a hero out cheap enough to actually do. */
+.gem-pull-button {
+  margin-left: auto;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.gem-pull-button:disabled {
+  opacity: 0.35;
+}
+
+.gem-row-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* Cut in the stone's own colour, the same rule the relic rail follows — a row of seven
+   identical gray boxes is a list, and a row of seven colours is a shelf. */
+.gem-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+}
+
+.gem-row.is-set {
+  border-color: color-mix(in srgb, var(--relic-color) 45%, var(--border));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--relic-color) 12%, var(--panel-alt)), var(--panel-alt) 60%);
+}
+
+.gem-row-art {
+  flex: 0 0 auto;
+  font-size: 20px;
+}
+
+.gem-row-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gem-row-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.gem-row-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.gem-row-grant {
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--relic-color);
+}
+
+/* What is left in the pool, said only where there is something to pour. */
+.gem-row-spare {
+  margin-left: auto;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+/* The per-stat cap made visible: the track IS the number, so the row needs no second one. */
+.gem-pips {
+  display: flex;
+  gap: 3px;
+}
+
+.gem-pip {
+  flex: 1 1 0;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--border);
+}
+
+.gem-pip.is-filled {
+  background: var(--relic-color);
+}
+
+.gem-row-controls {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 4px;
+}
+
+/* Square and finger-sized: these are pressed in runs, and held. */
+.gem-pour-button {
+  width: 30px;
+  height: 30px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.gem-pour-button:disabled {
+  opacity: 0.28;
+}
+
+.gem-pour-button:active:not(:disabled) {
+  background: color-mix(in srgb, var(--relic-color) 30%, var(--panel-alt));
+  border-color: var(--relic-color);
+}

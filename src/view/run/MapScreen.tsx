@@ -11,6 +11,7 @@ import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { MapRoute } from './MapRoute';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, nodeRewardText, type NodeTier } from './mapNodes';
 import { canAffordAnyLevelUp } from '../../run/progression';
+import { gemPoolTotal } from '../../run/gems';
 import { locationForAct } from '../../run/locations';
 import type { LocationDefinition } from '../../data/locations';
 import { LocationAmbience } from '../shared/LocationSky';
@@ -193,6 +194,14 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
             onSpend={canAffordAnyLevelUp(run) ? onOpenLevelUp : undefined}
           />
           <ResourceStat kind="contract" label="Recruit Contracts" value={run.recruitContracts} />
+          {/* Unspent Gems, not collected ones: the figure is only worth carrying while it is
+              something the player can still act on, and the Roster button below is where. */}
+          <ResourceStat
+            kind="gem"
+            label="Unset Gems"
+            value={gemPoolTotal(run)}
+            onSpend={gemPoolTotal(run) > 0 ? () => setShowRoster(true) : undefined}
+          />
         </div>
         <button
           type="button"
