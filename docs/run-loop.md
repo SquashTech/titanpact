@@ -453,10 +453,15 @@ along the bottom, the same six `HeroSlotCard`s above it, and one tap-then-tap to
 It replaced setting Gems on the hero sheet, which cost four steps a hero (roster → sheet → Gems
 page → back out) for a job the Gear board does in one. Two departures from the Gear board, both
 because Gems arrive four and five at a time: a held stone **stays held** after it lands, so a
-stack is poured with repeated taps, and **holding a hero pours every one that fits**. Taking
-them back is the same gesture inverted — tap a hero's stone chip for one, hold it for all of
-that stat. The hero sheet keeps its Gems page as the detail view (per-stat pips, Pull all), one
-tap away from the board.
+stack is poured with repeated taps, and **holding a hero** is the bulk gesture in both directions
+— pour everything that fits, or, with an empty hand, take everything back. One stone at a time
+comes off by tapping a hero's chip, or all of that stat by holding it.
+
+The board is the ONLY place Gems are set. The hero sheet had a Gems page of its own for a day and
+lost it (2026-09-09, per user direction): two dials over one number is a question about which one
+is authoritative, and the sheet's was the slow one. What the sheet keeps is the **ledger** — a
+Gems line in the Stats page's grant-source list, beside Relics, Items, Evolution, Boons and
+Mastery, because every grant has to appear exactly once for the stat bars to add up.
 
 It **freezes from node-select onward**. `SquadSelectScreen` generates the encounter at
 node-select time specifically so the enemy squad can be scouted before the player commits — so a
@@ -472,8 +477,8 @@ fight. Two reasons that is the wrong game:
 Gems answer "who is my team", not "who am I fighting". Node commit is already final (there is no
 back affordance on `SquadSelectScreen`), so the freeze lands on a boundary the player already
 understands. The freeze is enforced by ENTRY POINT rather than by a flag: the Gems board lives on
-Manage Roster, which only the map opens, and `HeroPreviewOverlay` shows its Gems page only when
-handed the run. A sheet opened from anywhere else simply has no dial.
+Manage Roster, and only the map opens that. There is no disabled state anywhere, because there is
+nowhere else the dial exists.
 
 #### The pool is derived, never stored
 

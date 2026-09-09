@@ -449,12 +449,9 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
       {inspecting && (
         <HeroPreviewOverlay
           hero={inspecting.hero}
-          // Re-read from the run rather than the snapshot the sheet opened with: setting a Gem
-          // changes the entry under it, and a stale copy would show the pips never moving.
-          entry={run.roster.find((e) => e.rosterId === inspecting.entry.rosterId) ?? inspecting.entry}
+          entry={inspecting.entry}
           equipmentLookup={equipment}
           relicIds={run.relics}
-          gems={{ run, onRunChange }}
           onClose={() => setInspecting(null)}
         />
       )}

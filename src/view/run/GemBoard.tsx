@@ -10,6 +10,7 @@ import {
   gemPool,
   gemsHeldBy,
   gemsOn,
+  pullGems,
   socketGems,
   unsocketGems,
 } from '../../run/gems';
@@ -53,8 +54,8 @@ function HeroGemChip({ stat, count, onTake, onTakeAll }: { stat: StatKey; count:
  * into a hero sheet and back out for every hero they wanted to touch.
  *
  * A held stone STAYS held after it lands, which the Gear board's items do not: Gems arrive four
- * and five at a time and the whole point is pouring several. Hold a hero to pour every one that
- * fits at once.
+ * and five at a time and the whole point is pouring several. Holding a hero is the bulk gesture
+ * in both directions — pour everything that fits, or, with an empty hand, take everything back.
  */
 export function GemBoard({ run, onRunChange, onInspect }: Props) {
   const [held, setHeld] = useState<StatKey | null>(null);
@@ -81,6 +82,13 @@ export function GemBoard({ run, onRunChange, onInspect }: Props) {
     onRunChange(next);
     // Nothing left of this stone is nothing left to pour: drop it rather than leave a dead hand.
     if ((gemPool(next)[held] ?? 0) < 1) setHeld(null);
+  }
+
+  /** Holding a hero with an empty hand strips them — the one gesture a roster swap actually needs. */
+  function strip(entry: RosterEntry) {
+    if (gemsHeldBy(entry) < 1) return;
+    playSfx('ui.tap', { pitch: 0.72 });
+    onRunChange(pullGems(run, entry.rosterId));
   }
 
   function takeBack(entry: RosterEntry, stat: StatKey, all: boolean) {
@@ -132,9 +140,11 @@ export function GemBoard({ run, onRunChange, onInspect }: Props) {
               equipmentLookup={equipment}
               className={held ? (headroom > 0 ? 'can-take' : 'is-inert') : ''}
               onHeadTap={() => (held ? pour(entry, false) : onInspect(entry, hero))}
-              onHeadLongPress={held ? () => pour(entry, true) : undefined}
+              onHeadLongPress={held ? () => pour(entry, true) : () => strip(entry)}
               headLabel={
-                held ? `Set a ${heldGem?.name ?? 'Gem'} on ${hero.name}` : `View ${hero.name} details`
+                held
+                  ? `Set a ${heldGem?.name ?? 'Gem'} on ${hero.name}, or hold to pour`
+                  : `View ${hero.name} details, or hold to take their Gems back`
               }
               body={
                 <div className="gem-held-row">
