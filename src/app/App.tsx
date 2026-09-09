@@ -49,8 +49,9 @@ import {
   pickWeightedEquipment,
   rarityWeightsFor,
   unseenCount,
+  EQUIPMENT_DROP_CHANCE,
+  LOOT_SOURCE,
   type EquipmentDefinition,
-  type LootSource,
 } from '../run/equipment';
 import { createRunState, createRosterEntry, addRosterEntry, FINALE_ACT, ROSTER_CAP, TOTAL_ACTS } from '../run/state';
 import {
@@ -285,25 +286,6 @@ function goldRewardFor(nodeType: EncounterMapNodeType): number {
   if (nodeType === 'battle') return 30 + Math.floor(Math.random() * 16); // 30-45
   return 15 + Math.floor(Math.random() * 11); // 15-25
 }
-
-/** Monsters always drop; Skirmish rolls for it, with elite/boss also one loot tier ahead (LOOT_SOURCE). */
-const EQUIPMENT_DROP_CHANCE: Record<EncounterMapNodeType, number> = {
-  fight: 1,
-  battle: 1,
-  skirmish: 0.25,
-  elite: 0.55,
-  boss: 0.7,
-  finale: 0,
-};
-
-const LOOT_SOURCE: Record<EncounterMapNodeType, LootSource> = {
-  fight: 'standard',
-  battle: 'standard',
-  skirmish: 'standard',
-  elite: 'elite',
-  boss: 'elite',
-  finale: 'elite',
-};
 
 function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): EquipmentDefinition | null {
   if (Math.random() >= EQUIPMENT_DROP_CHANCE[nodeType]) return null;

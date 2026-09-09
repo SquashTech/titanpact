@@ -6,6 +6,7 @@ import type { PassiveId, StatKey, StatusGrant } from '../engine/content';
 import { isValidFlatStatGrant } from '../engine/content';
 import type { StatModifiers } from '../engine/state';
 import { mergeStatMods } from './statMods';
+import type { XpNodeType } from './difficulty';
 
 export type EquipmentRarity = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
 
@@ -367,6 +368,37 @@ function clamp(value: number, min: number, max: number): number {
 export function lootTierFor(actNumber: number, source: LootSource = 'standard'): number {
   return clamp(actNumber + (source === 'elite' ? 1 : 0), 1, MAX_LOOT_TIER);
 }
+
+/**
+ * Chance a won encounter pays an item, by map node type. Monsters always drop; Skirmish rolls.
+ *
+ * Raised 2026-09-08 (skirmish 0.25 -> 0.60, elite 0.55 -> 0.80, boss 0.70 -> 0.95) to pay back the
+ * difficulty the universal one-slot change cost: removing the nine heroes' second slot took the
+ * measured full-clear rate from 11.4% to 7.5%. `fight` and `battle` were already at 1 and had no
+ * headroom, so the whole correction lands on the three that did.
+ *
+ * This table and LOOT_SOURCE lived in BOTH App.tsx and scripts/sim/run.ts until this pass, hand-
+ * synced. They are here now because a simulator measuring different drop odds than the game ships
+ * is worse than no simulator.
+ */
+export const EQUIPMENT_DROP_CHANCE: Record<XpNodeType, number> = {
+  fight: 1,
+  battle: 1,
+  skirmish: 0.6,
+  elite: 0.8,
+  boss: 0.95,
+  finale: 0,
+};
+
+/** Elite and Guardian roll one loot tier ahead (lootTierFor). */
+export const LOOT_SOURCE: Record<XpNodeType, LootSource> = {
+  fight: 'standard',
+  battle: 'standard',
+  skirmish: 'standard',
+  elite: 'elite',
+  boss: 'elite',
+  finale: 'elite',
+};
 
 /** The tier row intersected with the act's hard window. Every roll site in the game goes through this — one curve, not four. */
 export function rarityWeightsFor(actNumber: number, source: LootSource = 'standard'): Record<EquipmentRarity, number> {

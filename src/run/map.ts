@@ -130,9 +130,15 @@ const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   ['passiveReward', 18],
   ['currencyReward', 18],
   ['upgradeReward', 14],
-  // The Forge (+1 item slot) is the scarcest reward on the row on purpose: it is permanent, it
-  // compounds with every later drop, and it is the only thing here a hero can be at the cap for.
-  ['forgeReward', 10],
+  // The Forge (+1 item slot) is permanent, compounds with every later drop, and is the only thing
+  // here a hero can be at the cap for, so it stays the scarcest of the grants.
+  //
+  // 10 -> 38 (2026-09-08). When the nine heroes' authored second slot was removed, the roster lost
+  // capacity rather than items, and measurement said so: paying the difficulty back through drop
+  // odds alone recovered 0.8pp of the 3.9pp it cost, because a hero holding one item turns every
+  // further drop into a sell. Slots are what was taken and slots are what is handed back. The node
+  // is also no longer half-dead on arrival — nobody starts one Forge from the cap any more.
+  ['forgeReward', 38],
   ['hpBoostReward', 10],
   ['manaBoostReward', 10],
   // FLAGGED FOR THE DESIGNER: 16 is an inference, not a decision — how often a run meets an event is a real tuning question.

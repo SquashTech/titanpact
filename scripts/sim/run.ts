@@ -56,7 +56,7 @@ import { grantClass } from '../../src/run/classes';
 import { GEM_OFFER_COUNT, pickGemOffers, rollGemOffers } from '../../src/run/gems';
 import { boonMoveCount, pickBoonOffers } from '../../src/run/boons';
 import { applyStatShift, grantEventPassive, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
-import { MAX_ITEM_SLOTS, pickWeightedEquipment, rarityWeightsFor, type EquipmentDefinition, type LootSource } from '../../src/run/equipment';
+import { MAX_ITEM_SLOTS, pickWeightedEquipment, rarityWeightsFor, EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, type EquipmentDefinition } from '../../src/run/equipment';
 import { passives } from '../../src/data/passives';
 import { getMaxHp } from '../../src/engine/state';
 import { createCombatant } from '../../src/engine/state';
@@ -71,23 +71,7 @@ const STARTER_IDS = Object.values(heroes).filter((h) => h.starter).map((h) => h.
 /** App.tsx `EncounterMapNodeType` — the reward lane keys off the MAP node, not the flattened encounter kind. */
 type EncounterMapNodeType = 'fight' | 'skirmish' | 'battle' | 'elite' | 'boss' | 'finale';
 
-const EQUIPMENT_DROP_CHANCE: Record<EncounterMapNodeType, number> = {
-  fight: 1,
-  battle: 1,
-  skirmish: 0.25,
-  elite: 0.55,
-  boss: 0.7,
-  finale: 0,
-};
-
-const LOOT_SOURCE: Record<EncounterMapNodeType, LootSource> = {
-  fight: 'standard',
-  battle: 'standard',
-  skirmish: 'standard',
-  elite: 'elite',
-  boss: 'elite',
-  finale: 'elite',
-};
+// EQUIPMENT_DROP_CHANCE and LOOT_SOURCE come from run/equipment.ts, so the sim rolls the odds the game ships.
 
 function goldRewardFor(nodeType: EncounterMapNodeType, rng: Rng): number {
   if (nodeType === 'boss' || nodeType === 'finale') return 0;
