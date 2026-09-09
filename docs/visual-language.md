@@ -2262,8 +2262,15 @@ out of things to say a third of the way down.
   a further crest and three broken warden towers behind them. A silhouette the size of the frame
   is only big if something known-small stands in front of it; the ratio here is about forty to
   one, and it is the entire reason the figure reads as a Titan rather than as a statue.
-- **An eyebrow line** above the wordmark — *the last binding is failing* — which is the one line
-  on the screen that says what the run is for.
+**And then no words at all.** The first version of this pass added copy to carry the premise —
+an eyebrow line above the wordmark (*the last binding is failing*) and a "Seal the pact" whisper
+under the CTA — on top of the tagline that was already there. Per user direction all three came
+off, and the screen is better for it: the title now runs wordmark, button, Compendium, and the
+picture does the rest. **The lesson is worth keeping.** Every one of those lines was written to
+say something the image had *already been built to say* — the dead sigil says the binding is
+failing, the seal under the wordmark says the run is a pact — so each was a caption on a picture
+that did not need one. A screen that has just learned to speak visually is exactly the screen
+where the old copy has to be re-read as redundant rather than kept as belt-and-braces.
 
 **The pact button.** The gold CTA was still the rounded rectangle the eighteenth pass left it
 as. It is now a chamfered struck plate: two cut corners (four would read as a ticket stub), a

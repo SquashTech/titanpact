@@ -15680,6 +15680,9 @@ textarea,
 .title-heading {
   position: relative;
   z-index: 2;
+  /* The gap down to the CTA. It used to be the tagline's bottom margin; with
+     the tagline gone it lives here, minus .title-screen's own 6px flex gap. */
+  margin-bottom: 28px;
   animation: title-heading-drop 0.7s var(--ease-spring) both;
 }
 
@@ -15692,21 +15695,6 @@ textarea,
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* The premise, in six words, above the wordmark (docs/lore.md §1). It is the
-   one line on the screen that says what the run is FOR, so it arrives first
-   and then gets out of the way — dim, wide-tracked, and half the tagline's
-   weight. */
-.title-eyebrow {
-  margin-bottom: 10px;
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.3em;
-  text-indent: 0.3em;
-  text-transform: uppercase;
-  color: rgba(224, 166, 60, 0.52);
-  animation: title-tagline-fade 1.6s ease 0.2s both;
 }
 
 /* Holds the wordmark and everything lit behind it. A stacking context of its
@@ -15945,17 +15933,6 @@ textarea,
   50% {
     transform: scale(1.012);
   }
-}
-
-.title-tagline {
-  margin-bottom: 34px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.34em;
-  text-indent: 0.34em;
-  text-transform: uppercase;
-  color: rgba(158, 182, 194, 0.6);
-  animation: title-tagline-fade 1.6s ease 0.5s both;
 }
 
 @keyframes title-tagline-fade {

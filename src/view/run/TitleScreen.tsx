@@ -196,8 +196,6 @@ export function TitleScreen({
       <span className="title-vignette" aria-hidden="true" />
 
       <div className="title-heading">
-        <div className="title-eyebrow">The last binding is failing</div>
-
         {/* The seal, the godrays and the bloom all hang off this wrapper rather than off
             the screen, so they track the wordmark's actual position instead of drifting
             into empty space whenever the stack below it changes. */}
@@ -225,8 +223,6 @@ export function TitleScreen({
             TITANPACT
           </div>
         </div>
-
-        <div className="title-tagline">Draft. Battle. Ascend.</div>
       </div>
 
       {/* Mounted only while launching, so mounting starts them. The flash
@@ -260,7 +256,7 @@ export function TitleScreen({
             </button>
           </>
         ) : (
-          <PactButton label="Start a Run" subs={['Seal the pact']} disabled={launching} onClick={handleStart} />
+          <PactButton label="Start a Run" disabled={launching} onClick={handleStart} />
         )}
         {/* The reason itself is developer-shaped ("roster[0].unlockedMoveIds references..."), so it
             goes to the console (App.tsx) and the player gets the one fact they can act on. */}
