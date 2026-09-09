@@ -77,7 +77,7 @@ export const runEvents: Record<string, RunEventDefinition> = {
     // doubles the cost in play while a deeper pool SATURATES (docs/run-loop.md), so the sim took it
     // every time and lost ground. Intelligence and Wisdom both stay live for the whole fight, and
     // the Wisdom half gives back some of what the HP took — against magic, at least.
-    outcome: { kind: 'statShift', deltas: { hp: -30, intelligence: 15, wisdom: 15 } },
+    outcome: { kind: 'statShift', deltas: { hp: -30, intelligence: 15, wisdom: 15, manaPool: 15 } },
   },
 
   assertivenessTraining: {

@@ -313,7 +313,7 @@ export const progressionTable: ProgressionTable = {
     nightshade: ['fadeStrike', 'shadowstrike', 'cutthroat', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm', 'thousandCuts', 'claw', 'umbraBolt', 'vineLash', 'ivySpike', 'iceShard', 'enfeeble', 'leafSlice', 'iceShatter'],
     // --- Arcane ---
     runescribe: [
-      'barrier',
+      'infuse',
       'manaFont',
       'study',
       'arcaneBlast',
@@ -331,14 +331,15 @@ export const progressionTable: ProgressionTable = {
       'empower',
       'conduit',
     ],
-    zenith: ['conduit', 'fontOfPower', 'arcaneOverflow', 'magicBolt', 'cataclysm', 'focus', 'arcPulse', 'magicCloak', 'glimmer', 'psiBolt', 'manaFont', 'splash', 'arcaneBlast', 'overload', 'study', 'wickedFear'],
+    zenith: [
+      'infuse','conduit', 'fontOfPower', 'arcaneOverflow', 'magicBolt', 'cataclysm', 'focus', 'arcPulse', 'magicCloak', 'glimmer', 'psiBolt', 'manaFont', 'splash', 'arcaneBlast', 'overload', 'study', 'wickedFear'],
     // --- Mind ---
     // Psyshock and Psionic Wave are the mid/late damage the pool had none of, and both shred
     // Wisdom, so they double as Entanglement fuel. Phantom Strike and Cog Bop are deliberate
     // OFF-TYPE coverage: no STAB, no Evolution needed, and the only two things a base Cortex
     // can point its 53 Attack at. Lull leaves — the one debuff that feeds nothing.
     mindweaver: [
-      'barrier',
+      'brainWard',
       'psychicBlow',
       'enervate',
       'psyshock',

@@ -207,7 +207,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Glyph',
     types: ['Arcane'],
     baseStats: { hp: 180, attack: 25, defense: 32, intelligence: 90, wisdom: 80, speed: 58, manaPool: 85, mpRegen: 10 },
-    moveIds: ['magicBolt', 'focus', 'infuse'],
+    moveIds: ['magicBolt', 'focus', 'barrier'],
     starter: true,
   },
   zenith: {
@@ -215,7 +215,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Zenith',
     types: ['Arcane'],
     baseStats: { hp: 190, attack: 20, defense: 45, intelligence: 85, wisdom: 65, speed: 50, manaPool: 95, mpRegen: 10 },
-    moveIds: ['manaTap', 'infuse', 'empower'],
+    moveIds: ['manaTap', 'barrier', 'empower'],
     starter: false,
   },
 
@@ -225,7 +225,7 @@ export const heroes: Record<string, HeroDefinition> = {
     name: 'Cortex',
     types: ['Mind'],
     baseStats: { hp: 200, attack: 53, defense: 45, intelligence: 55, wisdom: 55, speed: 67, manaPool: 75, mpRegen: 10 },
-    moveIds: ['psiBolt', 'brainWard', 'dopamine'],
+    moveIds: ['psiBolt', 'barrier', 'dopamine'],
     starter: true,
   },
   lucius: {
