@@ -186,6 +186,27 @@ export function resolveTargetMode(state: CombatState, move: MoveDefinition): Tar
   return state.activeFieldEffect?.fieldEffectId === conditional.requiresFieldEffect ? conditional.target : move.target;
 }
 
+/** The two modes that need an id on the Action; every other mode resolves its own targets and ignores one. */
+export function isSingleTargetMode(mode: TargetMode): boolean {
+  return mode === 'singleEnemy' || mode === 'singleAlly';
+}
+
+/**
+ * The single-target mode a DECLARATION must aim for, or null. `resolveTargetMode` is read
+ * twice — once at declaration against the pre-round snapshot, again at resolution against
+ * mid-round state — so a conditionalTarget move declared as a spread while its Field Effect
+ * was up resolves single-target once an earlier action that round overrides the field. A
+ * declared target is inert for every spread mode, so carrying one whenever EITHER the
+ * authored target or the conditional one is single costs nothing and closes that race.
+ */
+export function declarationTargetMode(state: CombatState, move: MoveDefinition): TargetMode | null {
+  const live = resolveTargetMode(state, move);
+  if (isSingleTargetMode(live)) return live;
+  if (isSingleTargetMode(move.target)) return move.target;
+  const conditional = move.conditionalTarget?.target;
+  return conditional && isSingleTargetMode(conditional) ? conditional : null;
+}
+
 /** FNV-1a mix of a string into a 32-bit seed — spreads ids across the seed space, not a randomness source. */
 function mixString(seed: number, text: string): number {
   let h = seed >>> 0;

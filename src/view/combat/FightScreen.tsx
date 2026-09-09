@@ -17,6 +17,7 @@ import {
   hasAffordableMoveInFight,
   resolveManaCost,
   resolveCastBasePower,
+  declarationTargetMode,
   resolveTargetMode,
   getEffectiveStat,
   getMaxHp,
@@ -724,39 +725,52 @@ export function FightScreen({
   const consoleStyle = { '--console-rgb': consoleRgb, '--console-origin': consoleOrigin } as CSSProperties;
 
   // Gate first, Provoke second, matching resolveRound's order.
-  function visibleTargets(move: MoveDefinition, ids: string[]): string[] {
-    return selectableTargets(combat, move.target, statusGatedTargets(combat, move, ids), statuses);
+  function visibleTargets(move: MoveDefinition, mode: TargetMode, ids: string[]): string[] {
+    return selectableTargets(combat, mode, statusGatedTargets(combat, move, ids), statuses);
+  }
+
+  /**
+   * The mode the player declares against: the live one, unless a conditionalTarget move could
+   * still resolve single-target this round (state.ts declarationTargetMode), in which case the
+   * player picks one and the id rides along inert if it resolves as the spread after all.
+   */
+  function declarationMode(move: MoveDefinition): TargetMode {
+    return declarationTargetMode(combat, move) ?? resolveTargetMode(combat, move);
   }
 
   /** Whether a requiresTargetStatus move has anyone to hit — drives the dead row so the player is refused at the button, not in an empty panel. */
   function hasLegalTarget(move: MoveDefinition, casterId: string): boolean {
     if (!move.requiresTargetStatus) return true;
+    const mode = resolveTargetMode(combat, move);
     const pool =
-      move.target === 'singleAlly' || move.target === 'bothAllies'
+      mode === 'singleAlly' || mode === 'bothAllies'
         ? playerActiveAlive
-        : move.target === 'self'
+        : mode === 'self'
           ? [casterId]
-          : move.target === 'allOthers'
+          : mode === 'allOthers'
             ? [...enemyActiveAlive, ...playerActiveAlive].filter((cid) => cid !== casterId)
             : enemyActiveAlive;
     return statusGatedTargets(combat, move, pool).length > 0;
   }
 
+  const selectingMode: TargetMode | null = selecting ? declarationMode(selecting.move) : null;
+
   const targetableIds: string[] = !selecting
     ? []
-    : selecting.move.target === 'singleEnemy'
-      ? visibleTargets(selecting.move, enemyActiveAlive)
-      : selecting.move.target === 'singleAlly'
-        ? visibleTargets(selecting.move, playerActiveAlive)
-        : selecting.move.target === 'self'
+    : selectingMode === 'singleEnemy'
+      ? visibleTargets(selecting.move, selectingMode, enemyActiveAlive)
+      : selectingMode === 'singleAlly'
+        ? visibleTargets(selecting.move, selectingMode, playerActiveAlive)
+        : selectingMode === 'self'
           ? [selecting.combatantId]
-          : selecting.move.target === 'bothEnemies' || selecting.move.target === 'randomEnemy'
-            ? visibleTargets(selecting.move, enemyActiveAlive)
-            : selecting.move.target === 'bothAllies' || selecting.move.target === 'randomAlly'
-              ? visibleTargets(selecting.move, playerActiveAlive)
-              : selecting.move.target === 'allOthers'
+          : selectingMode === 'bothEnemies' || selectingMode === 'randomEnemy'
+            ? visibleTargets(selecting.move, selectingMode, enemyActiveAlive)
+            : selectingMode === 'bothAllies' || selectingMode === 'randomAlly'
+              ? visibleTargets(selecting.move, selectingMode, playerActiveAlive)
+              : selectingMode === 'allOthers'
                 ? visibleTargets(
                     selecting.move,
+                    selectingMode,
                     [...enemyActiveAlive, ...playerActiveAlive].filter((cid) => cid !== selecting.combatantId)
                   )
                 : [];
@@ -766,7 +780,7 @@ export function FightScreen({
     if (p.kind === 'switch') return !!p.benchedCombatantId;
     if (p.kind === 'rest') return true;
     const move = moves[p.moveId!];
-    if ((move.target === 'singleEnemy' || move.target === 'singleAlly') && !p.declaredTarget) return false;
+    if (declarationTargetMode(combat, move) && !p.declaredTarget) return false;
     return true;
   }
 
@@ -1264,7 +1278,7 @@ export function FightScreen({
             // move grid. The gold `.targetable` glow on the battlefield cards still applies in parallel.
             if (selecting && selecting.combatantId === id) {
               const { move } = selecting;
-              const spread = isSpreadTarget(move.target);
+              const spread = isSpreadTarget(selectingMode!);
               return (
                 <div className="action-panel target-panel" key={`${id}-targeting`}>
                   <ConsoleCrest
@@ -1283,7 +1297,7 @@ export function FightScreen({
                     onClick={spread ? handleConfirmSpread : undefined}
                     role={spread ? 'button' : undefined}
                     data-sfx={spread ? 'ui.target' : undefined}
-                    aria-label={spread ? `Confirm — hits ${spreadTargetLabel(move.target)}` : undefined}
+                    aria-label={spread ? `Confirm — hits ${spreadTargetLabel(selectingMode!)}` : undefined}
                   >
                     {targetableIds.map((tid) => {
                       const tCombatant = combat.combatants[tid];

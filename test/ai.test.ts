@@ -7,6 +7,7 @@ import { statuses } from '../src/data/statuses';
 import type { MoveDefinition } from '../src/engine/content';
 import type { CombatState } from '../src/engine/state';
 import { pickAiAction, type AiContext } from '../src/run/ai';
+import { setFieldEffect } from '../src/engine/combat/fieldEffectEngine';
 
 /** Test-local movepool: the AI's rules are about SHAPES of move, so authored content would make this fail on every slate retune. */
 const base = {
@@ -38,6 +39,27 @@ const testMoves: Record<string, MoveDefinition> = {
     statusApplication: { statusId: 'Freeze', target: 'moveTarget' },
   },
   surger: { ...base, id: 'surger', name: 'Surger', type: 'Mind', kind: 'buff', target: 'self', fieldEffectApplication: 'surgingMagic' },
+  // Both authorings of conditionalTarget: single-by-default (Arcane's Overload) and spread-by-default.
+  spreadUnderSurge: {
+    ...base,
+    id: 'spreadUnderSurge',
+    name: 'Spread Under Surge',
+    type: 'Arcane',
+    kind: 'damage',
+    basePower: 40,
+    target: 'singleEnemy',
+    conditionalTarget: { requiresFieldEffect: 'surgingMagic', target: 'bothEnemies' },
+  },
+  singleUnderSurge: {
+    ...base,
+    id: 'singleUnderSurge',
+    name: 'Single Under Surge',
+    type: 'Arcane',
+    kind: 'damage',
+    basePower: 40,
+    target: 'bothEnemies',
+    conditionalTarget: { requiresFieldEffect: 'surgingMagic', target: 'singleEnemy' },
+  },
 };
 
 const AI = 'ai:caster';
@@ -241,5 +263,28 @@ test('ai prefers a declarable move over a gated one rather than Resting', () => 
     if (action.kind !== 'move') continue;
     assert.strictEqual(action.moveId, 'fireBolt');
     assert.ok(action.declaredTarget !== null, 'a declared single-target action always carries an id');
+  }
+});
+
+/**
+ * A conditionalTarget move is declared against the pre-round snapshot and resolved against
+ * mid-round state, so an id has to ride along whenever EITHER mode is single-target. The
+ * spread modes ignore it; the single one would otherwise fizzle the turn away when an earlier
+ * action that round moves the field out from under it.
+ */
+test('ai carries a declared target for a conditionalTarget move however the field is standing', () => {
+  const plain = board('crimson', 'tempest', 'stormRanger');
+  const surging = setFieldEffect(plain, 1, 'surgingMagic').state;
+
+  for (const [label, state] of [['no field', plain], ['Magical Surge', surging]] as const) {
+    for (const moveId of ['spreadUnderSurge', 'singleUnderSurge']) {
+      for (let i = 0; i < 50; i++) {
+        const roll = (i + 0.5) / 50;
+        const action = pickAiAction(state, AI, contextFor([moveId], () => roll));
+        assert.strictEqual(action.kind, 'move');
+        if (action.kind !== 'move') continue;
+        assert.ok(action.declaredTarget, `${moveId} declared with no target under ${label}`);
+      }
+    }
   }
 });

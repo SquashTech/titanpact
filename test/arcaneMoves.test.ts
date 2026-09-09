@@ -191,6 +191,35 @@ test('arcane: Overload is single-target with no field up and spread under Magica
   assert.strictEqual(resolveTargetMode(displaced, moves.overload), 'singleEnemy');
 });
 
+test('arcane: an Overload declared under Magical Surge survives the field being replaced mid-round', () => {
+  // The race: the mode is read at DECLARATION (spread, so a caller could omit the target) and
+  // again at RESOLUTION, by which point a faster action has taken Magical Surge down and the
+  // move is single-target again. It must fizzle like any other mid-round targeting race.
+  const built = withMana(survivable(arcaneFixture(11)), 'a1', 400);
+  const fast = { ...built, combatants: { ...built.combatants } } as CombatState;
+  fast.combatants.a2 = { ...fast.combatants.a2, statModifiers: { ...fast.combatants.a2.statModifiers, speed: 300 } };
+  const surging = setFieldEffect(fast, 1, 'surgingMagic').state;
+
+  const { events } = resolveRound(
+    surging,
+    [
+      { kind: 'move', combatantId: 'a2', moveId: 'spreadingBlaze', declaredTarget: null },
+      { kind: 'move', combatantId: 'a1', moveId: 'overload', declaredTarget: null },
+    ],
+    config
+  );
+
+  assert.ok(
+    events.some((e) => e.type === 'FieldEffectSet' && e.fieldEffectId === 'scorchedLand'),
+    'the faster action has to actually replace the field, or the race never happens'
+  );
+  assert.ok(
+    events.some((e) => e.type === 'ActionBlocked' && e.combatantId === 'a1' && e.reason === 'noValidTarget'),
+    'the cast fizzles into a blocked action rather than taking the fight down'
+  );
+  assert.ok(!events.some((e) => e.type === 'MoveUsed' && e.moveId === 'overload'), 'and it never lands');
+});
+
 test('arcane: an Overload cast under Magical Surge actually hits both enemies', () => {
   const built = withMana(survivable(arcaneFixture(10)), 'a1', 400);
   const surging = setFieldEffect(built, 1, 'surgingMagic').state;

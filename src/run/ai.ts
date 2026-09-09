@@ -17,6 +17,7 @@ import {
   hasAffordableMoveInFight,
   hasStatus,
   resolveManaCost,
+  declarationTargetMode,
   resolveTargetMode,
 } from '../engine/state';
 import { selectableTargets, statusGatedTargets } from '../engine/combat/statusEngine';
@@ -88,25 +89,19 @@ function hasLegalTarget(state: CombatState, casterId: string, move: MoveDefiniti
   return statusGatedTargets(state, move, targetPool(state, casterId, mode, side)).length > 0;
 }
 
-/** Only these two modes need an id on the Action; every other mode resolves its own targets. */
-function needsDeclaredTarget(state: CombatState, move: MoveDefinition): boolean {
-  const mode = resolveTargetMode(state, move);
-  return mode === 'singleEnemy' || mode === 'singleAlly';
-}
-
 /**
  * Whether an action for this move could be RESOLVED at all — a hard legality rule, unlike
  * the preferences below it. A single-target move whose candidate pool is empty (today:
- * `requiresTargetStatus` with nobody marked) has no id to put on the Action, and
- * targeting.ts throws a BARE Error for a missing declared target rather than the
- * TargetNoLongerValidError that resolveRound catches — so it takes the whole fight down.
+ * `requiresTargetStatus` with nobody marked) has no id to put on the Action, and a cast that
+ * reaches resolution with nothing to land on fizzles into a blocked action that eats the turn.
  * resolveTargets never sees the move and cannot tell that case from a caller bug, and the
  * status gate is deliberately applied last in resolveRound (a redirect onto an ungated hero
  * must fizzle), so this has to be caught here at declaration.
  */
 function isDeclarable(state: CombatState, casterId: string, move: MoveDefinition, ctx: AiContext): boolean {
-  if (!needsDeclaredTarget(state, move)) return true;
-  return candidateTargets(state, casterId, move, ctx, resolveTargetMode(state, move)).length > 0;
+  const mode = declarationTargetMode(state, move);
+  if (!mode) return true;
+  return candidateTargets(state, casterId, move, ctx, mode).length > 0;
 }
 
 function isHurt(state: CombatState, ctx: AiContext, combatantId: string): boolean {
@@ -249,13 +244,14 @@ function mostWounded(state: CombatState, ctx: AiContext, candidates: readonly st
 }
 
 /**
- * Null for every mode that resolves its own targets. An attack aims at its
- * best matchup (ties coin-flipped); a heal goes to the most wounded; anything
- * else coin-flips after preferring a target its rider is not already on.
+ * Null for every mode that resolves its own targets — and an id for a conditionalTarget move
+ * that only MIGHT resolve as one, since the mode is read again mid-round. An attack aims at
+ * its best matchup (ties coin-flipped); a heal goes to the most wounded; anything else
+ * coin-flips after preferring a target its rider is not already on.
  */
 function pickTarget(state: CombatState, casterId: string, move: MoveDefinition, ctx: AiContext, random: () => number): string | null {
-  const mode = resolveTargetMode(state, move);
-  if (mode !== 'singleEnemy' && mode !== 'singleAlly') return null;
+  const mode = declarationTargetMode(state, move);
+  if (!mode) return null;
   const candidates = candidateTargets(state, casterId, move, ctx, mode);
   if (candidates.length === 0) return null;
 

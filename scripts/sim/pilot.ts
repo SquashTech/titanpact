@@ -30,6 +30,7 @@ import {
   resolveCastBasePower,
   resolveManaCost,
   resolveTargetMode,
+  declarationTargetMode,
 } from '../../src/engine/state';
 import { selectableTargets, statusGatedTargets } from '../../src/engine/combat/statusEngine';
 import { collectPassiveDamageModifiers } from '../../src/engine/combat/passiveEngine';
@@ -127,18 +128,6 @@ function candidateTargets(state: CombatState, casterId: string, move: MoveDefini
   const side = state.combatants[casterId].side;
   const pool = targetPool(state, casterId, mode, side);
   return selectableTargets(state, mode, statusGatedTargets(state, move, pool), ctx.statuses);
-}
-
-/**
- * Both modes, not just the live one. `resolveTargetMode` is read again at RESOLUTION, and a
- * conditionalTarget move (Arcane's Mana Burst) declared as a spread while its Field Effect was
- * up resolves as a single target if an earlier action that round overrode the field — and
- * targeting.ts throws a bare Error, not the caught TargetNoLongerValidError, so the fight dies.
- * A declared target is inert for every spread mode, so carrying one always is free.
- */
-function needsDeclaredTarget(state: CombatState, move: MoveDefinition): boolean {
-  const modes = [resolveTargetMode(state, move), move.target, move.conditionalTarget?.target];
-  return modes.some((mode) => mode === 'singleEnemy' || mode === 'singleAlly');
 }
 
 /**
@@ -594,9 +583,10 @@ function scoreOptions(state: CombatState, casterId: string, ctx: AiContext, cach
     const mode = resolveTargetMode(state, move);
     const cost = resolveManaCost(state, casterId, move, allCombatants);
 
-    // The one hard legality rule, as in ai.ts: a declared-target move with no candidate crashes targeting.
-    if (needsDeclaredTarget(state, move)) {
-      for (const targetId of candidateTargets(state, casterId, move, ctx, mode)) {
+    // The one hard legality rule, as in ai.ts: a declared-target move with no candidate eats its turn.
+    const declaredMode = declarationTargetMode(state, move);
+    if (declaredMode) {
+      for (const targetId of candidateTargets(state, casterId, move, ctx, declaredMode)) {
         const gross = scoreCast(state, casterId, move, ctx, targetId, cache, bestAttack);
         options.push({ moveId, declaredTarget: targetId, gross, cost, score: gross });
       }

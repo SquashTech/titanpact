@@ -29,9 +29,10 @@ export function slotOfActiveCombatant(state: CombatState, combatantId: string): 
 }
 
 /**
- * A declared single target is gone and nothing on that side remains to redirect
- * onto — a normal mid-round race, which resolveRound treats as a blocked action.
- * Distinct from the plain Error thrown when no target was declared at all.
+ * A single-target cast has nobody to land on: the declared target is gone with nothing on
+ * that side to redirect onto, or nothing was declared at all because the mode flipped between
+ * declaration and resolution (state.ts declarationTargetMode keeps callers off that second
+ * one). Both are mid-round races, which resolveRound treats as a blocked action.
  */
 export class TargetNoLongerValidError extends Error {}
 
@@ -52,7 +53,7 @@ export function resolveTargets(
   const enemySide = oppositeSide(side);
 
   function resolveSingle(expectedSide: Side, label: string): string[] {
-    if (!declaredTarget) throw new Error(`${label} move requires a declared target`);
+    if (!declaredTarget) throw new TargetNoLongerValidError(`${label} move has no declared target`);
     const active = activeOf(state, expectedSide);
     if (active.includes(declaredTarget)) {
       return [declaredTarget];
