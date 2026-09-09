@@ -263,6 +263,18 @@ function riderValue(
     scaleStatusMagnitude(app.magnitude, def, app, move, allCombatants[caster.heroId], caster, fieldCtx(state)) ?? app.magnitude ?? 0;
   const duration = app.duration ?? 1;
 
+  // A guard is priced before the pipeline switch because it has no pipeline: what it is worth is
+  // what the far side would otherwise have landed on the holder this round. Halved because a guard
+  // covers one body of two and the enemy is free to hit the other, and capped at the holder's own
+  // HP — a guard cannot save more than there is to lose.
+  if (def.blocksIncomingMoves) {
+    const incoming = aliveActiveIdsOn(state, otherSide(holder.side)).reduce(
+      (sum, foeId) => sum + threatOf(state, ctx, foeId, cache),
+      0
+    );
+    return Math.min(incoming * 0.5, holder.currentHp);
+  }
+
   switch (def.pipeline) {
     case 'dot': {
       // decay 'halve' caps lifetime output at ~2x the magnitude (CLAUDE.md); 'none' builds instead.

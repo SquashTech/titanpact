@@ -71,6 +71,22 @@ export const statuses: Record<string, StatusDefinition> = {
     pipeline: 'control',
     description: "Can't attack for the rest of the round, but can still switch or Rest. Gone when the round ends.",
   },
+  Barrier: {
+    id: 'Barrier',
+    name: 'Barrier',
+    shape: 'boolean',
+    ticksAtEndOfRound: false,
+    decay: 'none',
+    stacking: 'none',
+    // Cannot be banked on the bench, and gone when the round ends — a guard is one round's
+    // decision, never a wall the holder walks around behind.
+    clearsOnSwitch: true,
+    clearsAtEndOfRound: true,
+    positive: true,
+    blocksIncomingMoves: true,
+    pipeline: 'none',
+    description: 'Every move the far side aims at this hero turns away for the rest of the round. An ally can still reach them.',
+  },
   Renew: {
     id: 'Renew',
     name: 'Renew',

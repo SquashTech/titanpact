@@ -1840,6 +1840,28 @@ export const moves: Record<string, MoveDefinition> = {
     target: 'singleAlly',
     description: 'Pours 40 mana into an ally — past their pool if it will not fit.',
   },
+  // The roster's only guard, and deliberately a thin slice of it: Glyph and Cortex, both frail
+  // casters whose problem is being the weakest body on the field rather than a weak one. Priority 2
+  // is a bracket of its own above every other move, so the guard is always up before what it stops.
+  // Not spam-proofed by a consecutive-use rule — mana is the balance lever on reliable moves
+  // (CLAUDE.md), and 25 a round against a 75-85 pool is what limits it. The counterplay is the
+  // partner: a guard protects one body of two, and the far side simply hits the other one.
+  barrier: {
+    id: 'barrier',
+    name: 'Barrier',
+    // Early, not Mid. Dispersal is meant to be narrow across HEROES, not across the level curve:
+    // buried at Mid in a seventeen-move pool a given Glyph was measured never to reach it at all,
+    // which is a different thing from the move being rare.
+    tier: 'early',
+    type: 'Arcane',
+    category: 'magical',
+    kind: 'buff',
+    statusApplication: { statusId: 'Barrier', target: 'self' },
+    manaCost: 25,
+    priority: 2,
+    target: 'self',
+    description: 'Shapes mana into a wall for one round — the far side cannot reach them at all.',
+  },
   magicBolt: {
     id: 'magicBolt',
     name: 'Magic Bolt',

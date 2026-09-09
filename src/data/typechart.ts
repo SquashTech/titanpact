@@ -36,7 +36,7 @@ function buildChart(overrides: Partial<Record<TitanpactType, Partial<Record<Tita
 // Ancient is a pure defensive wall: it resists every type via each attacker row's
 // `Ancient: 0.5`, and its own attacker row is deliberately empty. Keep it that way.
 export const typeChart: TypeChart = buildChart({
-  Fire: { Nature: 2, Frost: 2, Iron: 2, Water: 0.5, Stone: 0.5, Light: 0.5, Ancient: 0.5 },
+  Fire: { Nature: 2, Frost: 2, Water: 0.5, Stone: 0.5, Light: 0.5, Ancient: 0.5 },
   Water: { Fire: 2, Stone: 2, Mech: 2, Storm: 0.5, Nature: 0.5, Ancient: 0.5 },
   Frost: { Water: 2, Nature: 2, Beast: 2, Fire: 0.5, Iron: 0.5, Ancient: 0.5 },
   Storm: { Water: 2, Iron: 2, Beast: 2, Stone: 0.5, Nature: 0.5, Mech: 0.5, Ancient: 0.5 },

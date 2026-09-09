@@ -8,11 +8,13 @@
 // 2. Everything else plays like a competent-but-unimaginative player: field your
 //    strongest four, put gear on whoever it helps, spend points.
 
-import type { StatKey } from '../../src/engine/content';
+import type { MoveDefinition, StatKey } from '../../src/engine/content';
+import { statusApplicationsOf } from '../../src/engine/content';
 import { heroes } from '../../src/data/heroes';
 import { moves } from '../../src/data/moves';
 import { equipment } from '../../src/data/equipment';
 import { passives } from '../../src/data/passives';
+import { statuses } from '../../src/data/statuses';
 import type { EquipmentDefinition } from '../../src/run/equipment';
 import { holdsItem } from '../../src/run/equipment';
 import type { RosterEntry } from '../../src/run/state';
@@ -159,13 +161,25 @@ export function bestWearer(
 
 // --- Moves ---
 
+/**
+ * A guard (Barrier) negates a whole round of what the far side aims at the holder, which is
+ * worth about a mid-tier attack — not the flat 15 a rider scores. Without this the pool's
+ * crude scorer buried it second-from-bottom and no simulated hero ever took it, so the move
+ * could not be measured at all.
+ */
+const GUARD_SLOT_VALUE = 50;
+
+function guardValue(move: MoveDefinition): number {
+  return statusApplicationsOf(move).some((app) => statuses[app.statusId]?.blocksIncomingMoves) ? GUARD_SLOT_VALUE : 0;
+}
+
 /** Crude "is this move worth a slot" score, for the replace-at-cap decision only. */
 export function moveValue(moveId: string): number {
   const move = moves[moveId];
   if (!move) return 0;
   const power = move.basePower ?? move.randomBasePower?.max ?? 0;
   const heal = move.healPower ?? 0;
-  const utility = (move.statDeltas ? 15 : 0) + (move.statusApplication ? 15 : 0);
+  const utility = (move.statDeltas ? 15 : 0) + (move.statusApplication ? 15 : 0) + guardValue(move);
   // Mana is the balance lever on reliable moves, so a cheap move of equal power is a better slot.
   return power + heal * 1.2 + utility - (move.manaCost ?? 0) * 0.4;
 }

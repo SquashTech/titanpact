@@ -120,7 +120,16 @@ export const progressionTable: ProgressionTable = {
       'frostWall',
       'solarFlare',
     ],
-    rime: ['icicleThrust', 'coldSnap', 'iceShatter', 'frostWall', 'permafrost', 'claw', 'frostArmor', 'snowBlast', 'siphon', 'rockToss', 'undertow', 'thunderclap', 'glaciate', 'quickFreeze', 'frigidAir', 'avalanche', 'absoluteZero'],
+    // Physical Frost plus physical off-type coverage. The magical half of the slate (Snow Blast,
+    // Glaciate, Frigid Air, Quick Freeze, Avalanche, Absolute Zero) belongs to Flurry, who swings
+    // with Intelligence; Permafrost stays because a Freeze rider costs nothing off a 40 Int. Frost
+    // authors only two physical Mid and two physical Late, so the rest is deliberately off-type —
+    // the FLOOR is worth more than tidiness, and Stone/Iron reach what Frost is resisted by.
+    rime: [
+      'icicleThrust', 'coldSnap', 'permafrost', 'rubbleRush', 'serratedSlice', 'spireClaw',
+      'iceShatter', 'frostWall', 'titanicCrush', 'swingingChain',
+      'claw', 'frostArmor', 'rockToss', 'undertow', 'thunderclap', 'heavyBlow',
+    ],
     cube: ['icicleThrust', 'coldSnap', 'deepChill', 'permafrost', 'rockToss', 'openingStrike', 'ironFist', 'frostWall', 'cogBop', 'snowball', 'heavyBlow', 'iceShatter', 'rubbleRush', 'momentumSwing', 'serratedSlice', 'titanicCrush'],
     // --- Storm ---
     stormRanger: [
@@ -304,6 +313,7 @@ export const progressionTable: ProgressionTable = {
     nightshade: ['fadeStrike', 'shadowstrike', 'cutthroat', 'shadowSlice', 'rend', 'duskBlade', 'shadowForm', 'thousandCuts', 'claw', 'umbraBolt', 'vineLash', 'ivySpike', 'iceShard', 'enfeeble', 'leafSlice', 'iceShatter'],
     // --- Arcane ---
     runescribe: [
+      'barrier',
       'manaFont',
       'study',
       'arcaneBlast',
@@ -328,6 +338,7 @@ export const progressionTable: ProgressionTable = {
     // OFF-TYPE coverage: no STAB, no Evolution needed, and the only two things a base Cortex
     // can point its 53 Attack at. Lull leaves — the one debuff that feeds nothing.
     mindweaver: [
+      'barrier',
       'psychicBlow',
       'enervate',
       'psyshock',
@@ -786,10 +797,10 @@ export const progressionTable: ProgressionTable = {
             kind: 'utility',
             name: 'Hydrofreeze',
             description: 'Lets the ice run again — casts on the water it came from.',
-            statGrants: { intelligence: 10, wisdom: 10, manaPool: 10 },
-            unlocksMoveIds: ['deluge'],
+            statGrants: { attack: 10, wisdom: 10, manaPool: 10 },
+            unlocksMoveIds: ['aquaSlice'],
             typeGraft: 'Water',
-            learnableMoveIds: ['splash', 'torrent', 'engulf', 'tsunami'],
+            learnableMoveIds: ['tideGuard', 'waveShred', 'lizardRush'],
           },
         ],
       },

@@ -127,6 +127,7 @@ const ACTION_EVENTS: ReadonlySet<CombatEvent['type']> = new Set([
   'StatusDetonated',
   'PassiveTriggered',
   'ActionBlocked',
+  'MoveGuarded',
 ]);
 
 /** The card vocabulary (ATK, WIS), not the engine's field name — StatChangedEvent.stat is a bare string. */
@@ -536,6 +537,14 @@ export function buildBeats(
         const targetName = name(e.combatantId);
         const text = e.reason === 'dazed' ? `${targetName} is Dazed and can't move!` : `${targetName}'s target is already down!`;
         push([e], text, [], { bannerFocusKind: 'debuff' });
+        i++;
+        break;
+      }
+
+      // The turn-away reads on the DEFENDER, so it is a buff beat on them rather than a
+      // failure beat on the caster — the guard is the thing that happened.
+      case 'MoveGuarded': {
+        push([e], `${name(e.combatantId)} turns it away!`, [], { bannerFocusKind: 'buff' });
         i++;
         break;
       }

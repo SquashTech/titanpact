@@ -73,6 +73,13 @@ export interface StatusDefinition {
   activeOnly?: boolean;
   /** Never stripped by Cleanse (Renew, Ambush). */
   positive?: boolean;
+  /**
+   * The holder is skipped as a target of any move declared by the OPPOSING side — the whole
+   * payload, damage and riders alike, resolves against everyone else instead (Barrier). An ally's
+   * move still lands, which is what keeps a guard a defensive turn rather than an isolating one.
+   * Applied after every redirect, so a Provoke pull onto a guarded hero fizzles too.
+   */
+  blocksIncomingMoves?: boolean;
   /** Boolean-shape DoT (Bleed): a fixed fraction of max HP per tick instead of a magnitude. */
   flatPercentOfMaxHp?: number;
   /** Conduct: a damage move of one of these types detonates this status on the target for detonateBonusPercentMaxHp of its max HP, then consumes it. Detonate-only — planting it is an ordinary rider (statusEngine.ts detonateTriggeredStatuses). */

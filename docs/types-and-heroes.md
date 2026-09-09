@@ -97,6 +97,36 @@ justify drafting. Fixed from opposite directions:
   rot). Now 4 vs. 4: not softened, but given more action in both directions, which
   was the point of the pass.
 
+### Resolved: Fire's early-game sweep (2026-09-09)
+
+`Fire → Iron` dropped **2× → 1×**. Fire keeps Nature and Frost, so it now carries
+two super-effective targets, the same as Stone, Iron, Spirit, Light and Nature.
+
+The cell was not over-tuned in the abstract — Fire's chart profile was net +1,
+tied with Water, Arcane, Spirit and Mech. It was over-tuned against the *factions*.
+Every early faction is a mono-type family with a second type stapled on, and those
+secondaries are overwhelmingly Nature, Iron and Frost — all three Fire-weak, and
+dual types stack multiplicatively. Measured across the six early factions, Fire
+answered **five of six** at a mean 1.55× where no other type cleared 1.35×, and
+Crimson (the only mono-Fire starter) measured a **+3.90 encounter draft lift**
+against a next-best of +1.33. Ablating Crimson's whole support kit moved that to
++4.30 — it was never the kit.
+
+Of the four candidate cells measured, this is the only one that moved the number:
+Crimson's offensive coverage 1.54 → 1.20, which puts Storm (1.35) and Mech (1.28)
+ahead of it. Adding a new weakness to Fire, or a new resistance against it, both
+measured as near-no-ops, because the problem was never what Fire *takes*.
+
+It is also the cell the type filter argues for. "Fire melts iron" is a reading of
+what a body is *made of*; Iron as a **domain** is armament and discipline, which
+fire has no particular claim on. See the banner at the top of this file.
+
+**What it costs, explicitly:** the Raiders are a mono-Iron warband whose design
+prices that spine at being weak to Fire, Storm and Mech. That price is now paid by
+two types rather than three (`test/raiders.test.ts`). Storm Coast has the highest
+act-2 Guardian clear rate of the five, so it has the room — but this is the thing
+to watch if act 2 gets harder.
+
 ### Resolved: Light/Shadow over-resist
 
 Light and Shadow used to resist each other (a mutual 0.5×), flagged as over-tuned

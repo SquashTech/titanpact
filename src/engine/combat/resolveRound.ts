@@ -33,6 +33,7 @@ import {
   cleanseStatuses,
   consumeStatus,
   statusGatedTargets,
+  blockingStatusId,
   expandSpreadTargets,
   tickEndOfRound,
 } from './statusEngine';
@@ -174,6 +175,21 @@ export function resolveRound(state: CombatState, actions: readonly Action[], con
     }
 
     // Status gate applied LAST (a redirect onto an ungated hero must fizzle) and BEFORE the mana spend.
+    // A guard is read AFTER every redirect, so a move pulled onto a guarded hero by Provoke fizzles
+    // against it — the same ordering reason the status gate below is applied last. Only the opposing
+    // side is stopped: a partner heals through it, which is what keeps a guard defensive rather than
+    // isolating. A move whose every target guarded still spends its mana and simply reaches nobody.
+    for (const targetId of targetIds) {
+      if (working.combatants[targetId]?.side === actor.side) continue;
+      const statusId = blockingStatusId(working, targetId, statuses);
+      if (statusId) {
+        events.push({ type: 'MoveGuarded', round, combatantId: targetId, sourceCombatantId: action.combatantId, moveId: move.id, statusId });
+      }
+    }
+    targetIds = targetIds.filter(
+      (id) => working.combatants[id]?.side === actor.side || blockingStatusId(working, id, statuses) === null
+    );
+
     targetIds = statusGatedTargets(working, move, targetIds);
     if (move.requiresTargetStatus && targetIds.length === 0) {
       events.push({ type: 'ActionBlocked', round, combatantId: action.combatantId, reason: 'targetStatusMissing' });

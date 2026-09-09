@@ -517,3 +517,55 @@ test('status: a caster carrying no stats reads the authored base, never a scaled
   // Types still count — STAB is knowable without a stat line — so this probes a non-Fire caster.
   assert.strictEqual(resolveStatusMagnitudeFor(app!.magnitude, statuses.Burn, app!, setAlight, { stats: {}, types: ['Stone'] }), app!.magnitude);
 });
+
+// --- Barrier, the guard (StatusDefinition.blocksIncomingMoves) ---
+
+test('barrier: the far side cannot reach the holder, and the partner beside them still can', () => {
+  const state = deepMana(twoVTwoFixture(41));
+  const actions: Action[] = [
+    // Priority 2 puts the guard in its own bracket above everything, so it is up before the hits land.
+    { kind: 'move', combatantId: 'a1', moveId: 'barrier' },
+    { kind: 'move', combatantId: 'b1', moveId: 'ironFist', declaredTarget: 'a1' },
+    { kind: 'move', combatantId: 'b2', moveId: 'seedShot', declaredTarget: 'a2' },
+  ];
+  const { state: after, events } = resolveRound(state, actions, config);
+
+  const guarded = events.filter((e) => e.type === 'MoveGuarded');
+  assert.strictEqual(guarded.length, 1, 'exactly the one move aimed at the guarded hero turned away');
+  assert.strictEqual(guarded[0].type === 'MoveGuarded' && guarded[0].combatantId, 'a1');
+
+  const hits = events.filter((e) => e.type === 'DamageDealt');
+  assert.deepStrictEqual(
+    hits.map((e) => (e.type === 'DamageDealt' ? e.targetCombatantId : '')),
+    ['a2'],
+    'the unguarded partner is still a legal target — that is the counterplay'
+  );
+  assert.strictEqual(after.combatants.a1.currentHp, fixtureMaxHp('cinderKnight'), 'the guarded hero took nothing');
+});
+
+test('barrier: an ally reaches through it, so a guard is a defensive turn and not an isolating one', () => {
+  let state = deepMana(twoVTwoFixture(42));
+  state = { ...state, combatants: { ...state.combatants, a1: { ...state.combatants.a1, currentHp: 40 } } };
+  const { state: after, events } = resolveRound(
+    state,
+    [
+      { kind: 'move', combatantId: 'a1', moveId: 'barrier' },
+      { kind: 'move', combatantId: 'a2', moveId: 'refresh', declaredTarget: 'a1' },
+    ],
+    config
+  );
+  assert.strictEqual(events.filter((e) => e.type === 'MoveGuarded').length, 0, 'an ally is never turned away');
+  assert.ok(after.combatants.a1.currentHp > 40, 'the heal landed on the guarded hero');
+});
+
+test('barrier: it is gone when the round ends, so it can never be a wall the holder stands behind', () => {
+  const state = deepMana(twoVTwoFixture(43));
+  const { state: after } = resolveRound(state, [{ kind: 'move', combatantId: 'a1', moveId: 'barrier' }], config);
+  assert.ok(!hasStatus(after.combatants.a1, 'Barrier'), 'clearsAtEndOfRound took it off');
+
+  const guard = statuses.Barrier;
+  assert.ok(guard.blocksIncomingMoves, 'the flag is what the engine reads — never the id');
+  assert.ok(guard.clearsOnSwitch, 'a guard cannot be banked on the bench');
+  assert.ok(guard.positive, 'Cleanse does not strip it');
+  assert.strictEqual(moves.barrier.priority, 2, 'the guard outranks every other bracket in the game');
+});

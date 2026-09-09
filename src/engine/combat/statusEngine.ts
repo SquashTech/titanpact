@@ -385,6 +385,23 @@ export function applyProvokeRedirect(
  * Deliberately NO fallback — an empty result means the move has no legal target, and
  * both the view (FightScreen) and resolveRound read that off this one function.
  */
+/**
+ * The blocking status this combatant is holding, or null — read off the flag, not off an id, so a
+ * second guard status needs no second code path. First match wins; nothing today stacks two.
+ */
+export function blockingStatusId(
+  state: CombatState,
+  combatantId: string,
+  statusDefs: Record<string, StatusDefinition>
+): StatusId | null {
+  const combatant = state.combatants[combatantId];
+  if (!combatant) return null;
+  for (const statusId of Object.keys(combatant.statuses)) {
+    if (statusDefs[statusId]?.blocksIncomingMoves) return statusId;
+  }
+  return null;
+}
+
 export function statusGatedTargets(state: CombatState, move: MoveDefinition, targetIds: readonly string[]): string[] {
   const required = move.requiresTargetStatus;
   if (!required) return [...targetIds];

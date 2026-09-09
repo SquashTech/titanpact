@@ -73,7 +73,11 @@ export const runEvents: Record<string, RunEventDefinition> = {
     eyebrow: 'An Even Trade',
     flavor: 'A still pool that takes something of the body and gives back something of the mind.',
     tone: 'mana',
-    outcome: { kind: 'statShift', deltas: { hp: -40, manaPool: 20 } },
+    // Body for mind, literally. The -40 HP / +20 Mana it replaced was a trap twice over: HP_SCALE
+    // doubles the cost in play while a deeper pool SATURATES (docs/run-loop.md), so the sim took it
+    // every time and lost ground. Intelligence and Wisdom both stay live for the whole fight, and
+    // the Wisdom half gives back some of what the HP took — against magic, at least.
+    outcome: { kind: 'statShift', deltas: { hp: -30, intelligence: 15, wisdom: 15 } },
   },
 
   assertivenessTraining: {

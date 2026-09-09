@@ -265,6 +265,37 @@ rather than slipping it in.
   It was the first status-redirect hook to be data-driven, and since Stealth's
   deletion it is the only one — no literal-id retargeting is left in the engine.
 
+### Barrier — *boolean · guard* (2026-09-09, Arcane)
+- While active, **every move the OPPOSING side resolves against the holder turns
+  away entirely** — the whole payload, damage and riders alike. The move still
+  resolves against anyone else it reached, and its mana is still spent.
+- **Ally moves reach through it.** A partner's heal, buff or cleanse is untouched.
+  This is the difference between a guard and an isolation effect, and it is what
+  makes Barrier a defensive turn rather than a turn that also refuses help.
+- **Priority +2, a bracket of its own** above every other move in the game (the
+  next-highest is +1, eleven moves). Load-bearing for the same reason Provoke's +1
+  is: a guard that resolves after the attack it was meant to stop protects nothing.
+  Unlike Provoke, +2 makes it *unconditional* — no Speed roll decides it.
+- **Applied after every redirect**, so a move pulled onto the holder by Provoke
+  fizzles too. Same ordering argument as the `requiresTargetStatus` gate below it:
+  a redirect must not smuggle a move past a check the target was owed.
+- **`clearsAtEndOfRound`, `clearsOnSwitch`, `positive`.** One round's decision,
+  never bankable on the bench, and Cleanse does not strip it.
+- **Deliberately NOT spam-proofed by a consecutive-use rule.** VGC's diminishing
+  success chance is the mechanism Protect is famous for and it does not stop
+  Protect being omnipresent there. Two things limit it here instead: **mana** (25 a
+  round against Glyph's 85 pool and Cortex's 75 — the locked lever on reliable
+  moves), and **doubles** (a guard covers one body of two, and the far side simply
+  attacks the other). If it still reads as too available, the cost is the dial.
+- **Dispersal is the other half of the design.** Two heroes hold it — Glyph and
+  Cortex, both frail casters whose problem was being the *weakest* body on the
+  field rather than a weak one. Zenith is the obvious third (38% per-fight death
+  rate, the roster's highest) and is deliberately left out for now.
+- Read generically off `StatusDefinition.blocksIncomingMoves` (`statusEngine.ts`
+  `blockingStatusId`), never as a literal `'Barrier'` id — same discipline as
+  `redirectsSingleTargetEnemyMoves`. Emits `MoveGuarded` per turned-away target so
+  the view can read it on the DEFENDER, which is where the event actually happened.
+
 ---
 
 ## Chanced applications (2026-08-29)

@@ -144,6 +144,16 @@ export interface PassiveTriggeredEvent extends BaseEvent {
   passiveId: PassiveId;
 }
 
+/** One target turned a move away (StatusDefinition.blocksIncomingMoves). The move still resolves against anyone else it reached. */
+export interface MoveGuardedEvent extends BaseEvent {
+  type: 'MoveGuarded';
+  /** The protected combatant. */
+  combatantId: string;
+  sourceCombatantId: string;
+  moveId: string;
+  statusId: StatusId;
+}
+
 export interface ActionBlockedEvent extends BaseEvent {
   type: 'ActionBlocked';
   combatantId: string;
@@ -263,6 +273,7 @@ export type CombatEvent =
   | StatusDetonatedEvent
   | PassiveTriggeredEvent
   | ActionBlockedEvent
+  | MoveGuardedEvent
   | FaintedEvent
   | SwitchedInEvent
   | BenchRegenTickedEvent

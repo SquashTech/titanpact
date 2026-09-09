@@ -44,7 +44,7 @@ test('raiders: the faction is 4 basics plus a leader, none of them recruitable',
   }
 });
 
-test('raiders: every Raider is Iron-primary — one warband, and Fire/Storm/Mech is what it costs', () => {
+test('raiders: every Raider is Iron-primary — one warband, and Storm/Mech is what it costs', () => {
   for (const id of EVERY_RAIDER) {
     assert.strictEqual(enemies[id].types[0], 'Iron', `${id} does not lead on Iron`);
   }
@@ -53,10 +53,14 @@ test('raiders: every Raider is Iron-primary — one warband, and Fire/Storm/Mech
     RAIDERS.basicIds.map((id) => enemies[id].types[1] ?? null),
     [null, 'Storm', 'Water', 'Arcane']
   );
-  // The shared spine is a shared answer: these three read 2x off the primary, every time.
-  for (const attacker of ['Fire', 'Storm', 'Mech'] as const) {
+  // The shared spine is a shared answer: these two read 2x off the primary, every time.
+  // Fire was the third until 2026-09-09, when it was cut for sweeping the early game — it answered
+  // five of the six factions at once (docs/types-and-heroes.md "Fire's early-game sweep"). Two
+  // answers is still a shared answer, and it is the point of a mono-type warband that it has one.
+  for (const attacker of ['Storm', 'Mech'] as const) {
     assert.strictEqual(typeChart[attacker].Iron, 2, `${attacker} is no longer the price of the Iron spine`);
   }
+  assert.strictEqual(typeChart.Fire.Iron, 1, 'Fire reads neutral off Iron — it is no longer a price of the spine');
   // The Leviathan is deliberately outside it — the champion hangs off the Location, not the faction.
   assert.deepStrictEqual([...enemies[LEVIATHAN_ID].types], ['Water', 'Ancient']);
 });

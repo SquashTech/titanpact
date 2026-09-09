@@ -188,6 +188,13 @@ export function formatEvents(
       case 'Rested':
         lines.push({ key, text: `${name(e.combatantId)} rests, restoring Mana to full`, className: 'log-mana' });
         break;
+      case 'MoveGuarded':
+        lines.push({
+          key,
+          text: `${name(e.combatantId)}'s ${e.statusId} turns away ${moves[e.moveId]?.name ?? e.moveId}`,
+          className: 'log-heal',
+        });
+        break;
       case 'ActionBlocked': {
         const reasonText =
           e.reason === 'dazed'

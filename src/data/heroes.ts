@@ -71,7 +71,10 @@ export const heroes: Record<string, HeroDefinition> = {
     id: 'rime',
     name: 'Rime',
     types: ['Frost'],
-    baseStats: { hp: 210, attack: 65, defense: 55, intelligence: 65, wisdom: 53, speed: 42, manaPool: 60, mpRegen: 10 },
+    // 90/40 rather than the 65/65 it shipped with: Frost authors a split slate and Flurry already
+    // owns the magical half, so a hedged Rime had no spike and half its level-ups paid in a stat it
+    // was not swinging with. Same 550.
+    baseStats: { hp: 210, attack: 90, defense: 55, intelligence: 40, wisdom: 53, speed: 42, manaPool: 60, mpRegen: 10 },
     moveIds: ['iceShard', 'deepChill', 'secondWind'],
     starter: true,
   },
