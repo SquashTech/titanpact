@@ -2702,29 +2702,28 @@ textarea,
   background: linear-gradient(0deg, rgba(224, 166, 60, 0.13), rgba(224, 166, 60, 0.02) 62%, transparent);
 }
 
-/* Perspective by formation, not by scale. The far line stands closer together
-   and the near line spreads to the full width — the only honest depth cue
-   available when both rows have to render at a clean 2x.
-
-   ON THE STAGE, NOT THE ROW (2026-09-09, reported from a phone). This was
-   `padding: 0 26px` on the row, which insets the whole card — and a card is not
-   only a figure. It carried the type chips 13px right of the ally chips
-   directly below them, and the nameplate 13px off the plate below it, so the
-   two lines no longer shared a column and the whole far row read as nudged. It
-   also narrowed the far status band by 26px, which is what pushed a third chip
-   onto a second line there and nowhere else.
-
-   The rule is the same one the plate already follows: perspective is about the
-   FIGURES. The instruments are instruments and stay on their column. So the
-   inset moves onto the stage, where `position: relative` means it costs no
-   layout, and the card keeps the full width its readouts are measured in. */
-.team-row.enemy .combatant-card:nth-child(1) .combatant-stage {
-  left: 13px;
-}
-
-.team-row.enemy .combatant-card:nth-child(2) .combatant-stage {
-  left: -13px;
-}
+/* Horizontal perspective — the far pair standing closer together than the near
+ * one — was tried twice and is GONE (2026-09-09, both reported from a phone).
+ *
+ * As `padding: 0 26px` on the row it insets the whole card, and a card is not
+ * only a figure: it carried the far type chips 13px right of the near ones
+ * directly below them and the far nameplate 13px off the plate below it, so the
+ * two lines stopped sharing a column. As `left: ±13px` on the stage it insets
+ * only the figure, which is worse in a quieter way — the sprite slides off the
+ * centre of its own HP bar, and on the right-hand slot it slides straight into
+ * the type chips pinned at the card's left edge, closing a 12px gap to nothing.
+ *
+ * There is no third place to put it. A figure's nameplate and its type chips
+ * are positioned against the card, so either they move with the figure (fault
+ * one) or they do not (fault two). The inset is worth neither: 13px is the same
+ * order as the within-line stagger removed above, and it fails the same way —
+ * too small to read as distance, large enough to read as misaligned.
+ *
+ * Depth between the lines is carried by everything else, and carried well: the
+ * far platforms are 74px against the near 104px and dimmer, the far sprites are
+ * hazed, the far row sits beyond the horizon, and the Location's own skyline is
+ * small behind them and large down here.
+ */
 
 /* A pool of light each side's pair stands in. Soft and tall rather than a
    crisp ellipse, so the per-figure depth offsets below can move a platform

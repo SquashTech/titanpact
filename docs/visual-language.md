@@ -2110,17 +2110,25 @@ soft scrim, not a panel: it was built once as a proper instrument, filled and ha
 type-tinted edge, and four of those is four boxes again. The scrim also does the contrast job
 the name pill's own scrim used to, which is why that pill could go.
 
-**FORMATION.** The far line stands 26px narrower than the near one — perspective by arrangement,
-since the art is 48px pixel art and any non-integer scale breaks it — and it stands on smaller,
-dimmer ground with a `brightness(0.93) saturate(0.9)` haze on its sprites.
+**FORMATION.** The far line stands on smaller, dimmer ground — 74px platforms against the near
+row's 104px — with a `brightness(0.93) saturate(0.9)` haze on its sprites, folded into
+`--figure-shadow` because the strike and hit keyframes replace `filter` wholesale and anything
+declared beside the token vanishes for the length of every animation. No scale: the art is 48px
+pixel art and any non-integer factor makes some source pixels 1px wide and others 2px.
 
-That inset is on the **stage**, not the row. It was `padding` on the row for a day, which insets
-the whole card, and a card is not only a figure: it carried the far type chips 13px right of the
-near ones directly below them and the far nameplate 13px off the plate below it, so the two lines
-no longer shared a column and the whole far row read as nudged — reported from a phone, and
-obvious once seen. It also narrowed the far status band by 26px, which was enough to push a third
-chip onto a second line there and nowhere else. The rule is the one the plate already follows:
-**perspective is about the figures; the instruments stay on their column.** The haze
+**Horizontal perspective — the far pair standing closer together — was tried twice and removed,
+both times reported from a phone.** As `padding` on the row it insets the whole card, and a card
+is not only a figure: it carried the far type chips 13px right of the near ones directly below
+them and the far nameplate 13px off the plate below it, so the two lines stopped sharing a column.
+Moved onto the stage it insets only the figure, which is worse in a quieter way — the sprite
+slides off the centre of its own HP bar, and in the right-hand slot it slides straight into the
+type chips pinned at the card's left edge, closing a 12px gap to nothing.
+
+There is no third place to put it. A figure's nameplate and its type chips are positioned against
+the card, so either they travel with the figure or they do not, and those are the two faults. This
+is the same 13px order as the within-line stagger, and it failed the same way: **too small to read
+as distance, large enough to read as misaligned.** Twice now on this screen, a horizontal offset
+under ~15px has been reported as a bug before it was ever read as depth. The haze
 is folded into `--figure-shadow`, because the strike and hit keyframes replace `filter` wholesale
 and anything declared beside the token vanishes for the length of every animation. Each side also
 gets a pool of light both its figures stand in, so a pair shares a piece of ground rather than
