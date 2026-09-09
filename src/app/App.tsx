@@ -99,7 +99,7 @@ import {
   type EncounterNodeType,
   type Encounter,
 } from '../run/enemyGen';
-import { actScaling, trainingPointsFor, type ScalingTrack } from '../run/difficulty';
+import { actScaling, encounterHeroCountOverride, trainingPointsFor, type ScalingTrack } from '../run/difficulty';
 import { generateItinerary, locationBias, locationForAct } from '../run/locations';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
@@ -558,7 +558,8 @@ export function App() {
         // reach one roster via a contract claim (mirrors rollGuildHallOffers). Passed unconditionally:
         // enemy and hero ids never collide (test/recruitment.test.ts), so it is inert on a mob pool.
         const excludeHeroIds = playerRun.roster.map((r) => r.heroId);
-        const heroCountOverride = node.type === 'fight' ? 2 : isSecondFight ? 2 : undefined;
+        const heroCountOverride =
+          node.type === 'fight' ? 2 : isSecondFight ? 2 : encounterHeroCountOverride(node.type, playerRun.actNumber);
         const heroCount = heroCountOverride ?? (encounterKind === 'boss' ? 2 : 4);
         // Location affinity bias applies to the recruitable pool only (docs/locations.md §2).
         const bias = encounterPool === heroes ? locationBias(location, heroes, heroCount) : undefined;

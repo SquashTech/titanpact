@@ -17,7 +17,7 @@ import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry
 import { generateMap, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
 import { generateItinerary, locationBias, locationForAct } from '../../src/run/locations';
-import { actScaling, trainingPointsFor, type ScalingTrack } from '../../src/run/difficulty';
+import { actScaling, encounterHeroCountOverride, trainingPointsFor, type ScalingTrack } from '../../src/run/difficulty';
 import { generateEncounter, generateLeaderEncounter, generateFinaleEncounter, appendFinalEnemy, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
 import {
@@ -420,7 +420,8 @@ function resolveEncounterNode(
     } else {
       const encounterPool = isFactionFight ? basicEnemiesOf(faction) : heroes;
       const excludeHeroIds = encounterPool === heroes ? run.roster.map((r) => r.heroId) : undefined;
-      const heroCountOverride = mapNodeType === 'fight' ? 2 : isSecondFight ? 2 : undefined;
+      const heroCountOverride =
+        mapNodeType === 'fight' ? 2 : isSecondFight ? 2 : encounterHeroCountOverride(mapNodeType, workingRun.actNumber);
       const heroCount = heroCountOverride ?? (encounterKind === 'boss' ? 2 : 4);
       const bias = encounterPool === heroes ? locationBias(location, heroes, heroCount) : undefined;
       encounter = generateEncounter(encounterKind, randomSeed(rng), encounterPool, {

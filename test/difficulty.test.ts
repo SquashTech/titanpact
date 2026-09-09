@@ -9,6 +9,8 @@ import {
   BASELINE_ACT,
   ENEMY_LEVEL_BY_ACT,
   NO_SCALING,
+  ACT_ONE_ELITE_HERO_COUNT,
+  encounterHeroCountOverride,
 } from '../src/run/difficulty';
 import { generateEncounter, generateLeaderEncounter } from '../src/run/enemyGen';
 import { EVOLUTION_LEVEL, MOVE_CAP } from '../src/run/progression';
@@ -204,4 +206,17 @@ test('difficulty: the step is what puts the late-tier movepool inside a run', ()
   const flatRun = 5 * trainingPointsFor('skirmish', 1);
   const scaledRun = [1, 2, 3, 4, 5].reduce((sum, act) => sum + trainingPointsFor('skirmish', act), 0);
   assert.ok(scaledRun > flatRun * 1.5, `${scaledRun} is not a meaningful lift over ${flatRun}`);
+});
+
+test('difficulty: Act 1 fields a three-body Elite, and every later act the usual four', () => {
+  // The player's roster ramps 2 -> 3 -> 4 across Act 1 while the encounter size never did, so
+  // Act 1's Elite was the one fight in the run entered outnumbered (docs/run-loop.md).
+  assert.strictEqual(encounterHeroCountOverride('elite', 1), ACT_ONE_ELITE_HERO_COUNT);
+  for (const act of [2, 3, 4, 5, 6]) {
+    assert.strictEqual(encounterHeroCountOverride('elite', act), undefined, `act ${act} elite should take the default 4`);
+  }
+  // Nothing else is touched — undefined means generateEncounter's own default stands.
+  for (const nodeType of ['fight', 'skirmish', 'battle', 'boss', 'finale']) {
+    assert.strictEqual(encounterHeroCountOverride(nodeType, 1), undefined, `${nodeType} is not resized`);
+  }
 });

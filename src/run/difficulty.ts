@@ -68,6 +68,26 @@ export function guildHallLevel(actNumber: number): number {
   return GUILD_HALL_LEVEL_BY_ACT[Math.min(act, GUILD_HALL_LEVEL_BY_ACT.length) - 1];
 }
 
+/**
+ * Bodies Act 1's Elite fields, against the flat 4 every other non-boss encounter brings.
+ *
+ * The player's roster RAMPS — two drafted starters, a third off the act's first Recruit
+ * Contract, a fourth later — while the encounter size never did, so Act 1's Elite was the one
+ * fight in the run entered outnumbered. Measured: 2.9 player bodies against 3.7, a 0.78 fielded
+ * stat ratio and an 81.8% win rate, where Act 2's identical node kind sits at 99.6%. It was the
+ * third-largest killer of runs and the only ratio under 1.00 anywhere on the map.
+ */
+export const ACT_ONE_ELITE_HERO_COUNT = 3;
+
+/**
+ * Encounter size where it differs from generateEncounter's own default (boss 2, else 4), or
+ * undefined where that default is right. Shared so App.tsx and scripts/sim/run.ts cannot drift
+ * — they already each carried their own copy of the fight-is-2 rule.
+ */
+export function encounterHeroCountOverride(mapNodeType: string, actNumber: number): number | undefined {
+  return mapNodeType === 'elite' && clampAct(actNumber) === 1 ? ACT_ONE_ELITE_HERO_COUNT : undefined;
+}
+
 export interface ActScaling {
   /** Act-steps of stats on top of the node kind's own bonus — two independent axes. */
   statSteps: number;
