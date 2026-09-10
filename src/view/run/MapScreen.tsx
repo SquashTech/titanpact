@@ -163,6 +163,11 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
 
   return (
     <div className="map-screen" data-location={location.id} style={{ '--node-rgb': location.tintRgb } as CSSProperties}>
+      {/* The act's weather and ground, at SCREEN level rather than inside the well (2026-09-10).
+          It used to be the well's first child, so the place stopped at a frame two-thirds of the
+          way up the phone and the header sat outside the weather — which is what made the map read
+          as a picture of a place rather than as one. */}
+      <LocationAmbience location={location} density={MAP_MOTE_DENSITY} className="map-atmosphere" />
       {/* Act on the left is a position, not a thing you hold; the purse on the right is. The two
           corners hold the screen's non-run controls, out of the way of the one that matters. */}
       <div className="map-header">
@@ -223,7 +228,9 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
           go from here. The whole-act graph — grid, measured edge overlay, scroll anchoring — is
           gone; `RunMap` and every rule that reads it are untouched, this was only ever the view. */}
       <div className="map-well">
-        <LocationAmbience location={location} density={MAP_MOTE_DENSITY} className="map-atmosphere" />
+        {/* Stays in the well, unlike the weather: the well's bottom edge IS the top of the footer
+            button, so anchoring here is what keeps the place's name clear of it however many
+            lines the name takes. */}
         <MapPlacard location={location} />
         <BannerShelf run={run} />
 

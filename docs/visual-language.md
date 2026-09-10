@@ -2492,7 +2492,7 @@ The five other idioms the audit named, in the order they are worth doing:
 2. ~~**The Guild Hall and the Blacksmith**~~ — done in the twenty-third pass below. Was: — shopping-cart line items, a form-validation sentence in
    orange, a right-aligned italic hint in a table-header row, and (the Blacksmith) a screen that
    titles itself twice. Open item 6 below has exempted the Guild Hall since the ninth pass.
-3. **The map is inside a card** — a header rect, a body rect and a footer rect, each with a 1px
+3. ~~**The map is inside a card**~~ — done in the twenty-fourth pass below. Was: — a header rect, a body rect and a footer rect, each with a 1px
    border and a radius, around a scene. The fight screen's own rule ("a place, not a container") has
    never reached it.
 4. **The hero sheet** — an iOS-style bottom tab bar with superscript count badges, a three-sentence
@@ -2677,6 +2677,81 @@ disabled CTA cropped against the parallax it used to show through.
   colour says — but removing it is a content call, not a styling one.
 - **The Anvil & Enchanter rows** keep two square action buttons at the right end. They are two
   genuine actions, so the shape is honest; they just have not been given the shelf's treatment.
+
+## Twenty-fourth pass — the map is a place (2026-09-10)
+
+*Fourth item from the audit, and the open item this file has carried since the first pass: "Apply
+the rule outside combat… still outstanding: the **map**."*
+
+### What was wrong
+
+The first pass wrote the rule — *a rectangle means "you can act on this"; nothing else gets a box* —
+and spent itself proving it on the arena, which lost its border, radius and shadow and bled to
+three screen edges. **The map is the same kind of object and never got the same treatment.** It was
+three stacked rounded rectangles:
+
+- `.map-header` — a sunken bar with an inset shadow, holding act, level, purse and two bordered
+  glyph buttons. A toolbar.
+- `.map-well` — a bordered, rounded, recessed frame holding the scene.
+- `.map-footer` — a drawer, square-topped and pulled up 10px so it met the well's outline.
+
+The 2026-09-08 pass had already turned the well's *contents* into a scene ("the well is a scene
+now, not a diagram"), which is exactly what made the frame indefensible: an authored place, with
+weather and a horizon and a treeline, **stopping at a 1px border two-thirds of the way up the
+phone**, with a toolbar above it and a drawer below.
+
+### What replaced it
+
+**The scene is the screen.** `.map-screen` takes the full-bleed treatment `.battlefield` uses —
+negative margins on all four edges, the spacing put back as padding so nothing inside moves — and
+paints what the well used to paint. The header and the footer now sit **on** the place rather than
+beside it.
+
+Three things had to move with it, and the third was the one that mattered:
+
+- **The six per-location scenes.** `docs/locations.md`'s light — Wild's Edge's soft dusk, the
+  Forbidden Forest's single canopy shaft and heavy flanks, and four more — were authored as
+  `.map-screen[data-location="…"] .map-well` and had to be re-targeted to the screen. They are
+  (0,2,0) against the base rule's (0,1,0), so they still win the background; nothing else changed.
+- **`LocationAmbience` left the well** and became a screen-level layer at `z-index: 0`. This is
+  what actually finished the job: the background bled first, but the *weather and the ground* were
+  still boxed, so the trees stopped in mid-air at the old frame line. Weather does not stop at a
+  panel edge.
+- **`MapPlacard` stayed in the well**, deliberately, and is the one thing that should. The well's
+  bottom edge is now exactly the top of the footer button, so anchoring the place's name there is
+  what keeps it clear of that button however many lines the name takes — pinning it to the screen
+  instead clipped "Forbidden Forest / Fae" behind the drawer, which is how this was found.
+
+**The header buttons go chromeless.** A bordered square around a glyph is a toolbar button, and two
+of them bracketing a row of readouts is a toolbar — the same call the first pass made on the
+battlefield figure's info button ("bordered circle button → chromeless glyph; the figure is the
+tap target"). The act, level and purse chips keep their own hairline plates, because they *are*
+readouts and have to hold against a lit scene; the tray they sat in is what had to go.
+
+**The footer keeps its box, and should.** It is the one control on the screen, so by the rule it
+gets a rectangle. It only lost the square top corners, which existed to seam it against a frame
+that no longer exists.
+
+### Verification
+
+Screenshotted at 394x780 at Wild's Edge and the Forbidden Forest — two locations chosen because
+their authored light is opposite (widest/softest versus heaviest vignette with a single central
+shaft), so a location rule that failed to re-target would be obvious rather than subtle.
+
+**The test suite was not clean on this commit and that is not this change**: another session was
+authoring the Iron and Beast move slates in the same tree at the time (`src/data/moves.ts` and
+`src/data/heroes.ts` modified mid-run), and its three failures are content assertions with nothing
+to do with the view layer. Only `styles.css` and `MapScreen.tsx` were committed here.
+
+### What this leaves
+
+- **The hamburger.** `HUB_PATHS.menu` is still three stacked bars, and so is FightScreen's `☰`
+  Menu key. It is a web idiom, and it is also the single most universally-understood control on the
+  screen; the audit named it and this pass deliberately did not take it, because the fix is a new
+  object rather than a restyle and the container was the real problem. Revisit it alongside the
+  fight screen's bottom bar.
+- **The route still only draws the current row.** Nothing here changed what the map shows — the
+  2026-09-08 pass owns that — only what it is set in.
 
 ## Open / future improvements
 

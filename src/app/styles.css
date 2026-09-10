@@ -14171,12 +14171,39 @@ textarea,
 
 /* --- Map screen ----------------------------------------------------------- */
 
+/*
+ * THE MAP IS A PLACE (2026-09-10).
+ *
+ * It used to be three stacked rounded rectangles — a sunken header bar, a
+ * bordered well holding the scene, and a footer drawer — which is the shape
+ * this file's own rule forbids: "A rectangle means you can act on this.
+ * Nothing else gets a box." The first pass applied that to the arena and made
+ * it a full-bleed scene; the map is the same kind of object and never got it.
+ *
+ * The scene is now THE SCREEN. Everything the well used to paint — the node
+ * tint above and below, the vignette, the floor — is painted here and bleeds
+ * to all four edges, and the header and the footer sit ON it rather than
+ * beside it. `.map-well` survives only as the layout box the rail and the
+ * route are laid out in.
+ */
 .map-screen {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  /* Full-bleed on all four edges, then the spacing back as padding so nothing
+     inside moves. Same trick as `.battlefield`. */
+  margin: calc(var(--shell-pad) * -1);
+  padding: var(--shell-pad);
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 84% 18% at 50% 0%, rgba(var(--node-rgb), 0.2), transparent 74%),
+    radial-gradient(ellipse 96% 78% at 50% 50%, transparent 52%, rgba(0, 0, 0, 0.42) 100%),
+    radial-gradient(ellipse 128% 40% at 50% 102%, rgba(var(--node-rgb), 0.4), transparent 72%),
+    linear-gradient(180deg, rgba(var(--node-rgb), 0.05), rgba(var(--node-rgb), 0.13)),
+    var(--well);
 }
 
 /*
@@ -14195,17 +14222,18 @@ textarea,
  * and right is what lets the purse read as one group of three rather than as
  * a list the act happens to head, and it is the room the XP chip needed.
  */
+/* Readouts standing on the scene, not a toolbar sunk into a bar above it. The
+   chips keep their own hairline plates — they ARE readouts — but the tray they
+   used to sit in is what made the top of the map read as browser chrome. */
 .map-header {
+  position: relative;
+  z-index: 2;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 4px;
-  background: var(--surface-sunken);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
+  padding: 0;
 }
 
 /* Bare on the track, not a chip — a chip would make it a fourth resource.
@@ -14223,21 +14251,30 @@ textarea,
 /* Reference and Options, one in each header corner. Ghosted rather than raised:
    the pressable language on this screen belongs to .map-footer-button and the map
    nodes, and these two are the controls a player reaches for least. */
+/* Chromeless, the same call the first pass made on the battlefield figure's
+   info button: a bordered square around a glyph is a toolbar button, and two of
+   them bracketing a row of readouts is a toolbar. The glyph is the target. */
 .map-header-button {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border: 1px solid var(--border);
+  width: 30px;
+  height: 30px;
+  padding: 5px;
+  border: 0;
   border-radius: var(--radius-xs);
-  background: var(--surface-raised);
+  background: none;
   color: var(--text-dim);
+  opacity: 0.72;
   cursor: pointer;
-  box-shadow: var(--hairline);
-  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+  box-shadow: none;
+  transition: color var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
+}
+
+.map-header-button > svg {
+  width: 100%;
+  height: 100%;
 }
 
 .map-header-button:hover {
@@ -14374,25 +14411,16 @@ textarea,
    horizontally, on a map deliberately sized to fit its canvas exactly. Split,
    the overhang lands on a frame that clips it, and the scroller's content is
    only ever the route. */
+/* What is left of the well: the box the rail and the route are laid out in.
+   The scene it used to paint moved up to `.map-screen`, and the clipping moved
+   with it — so the weather now reaches the screen edges instead of stopping at
+   a frame two-thirds of the way up. */
 .map-well {
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  /* Clips the atmosphere's overhang to the rounded frame. Doing that job here
-     is also what lets .map-atmosphere drop its own radius and overflow. */
-  overflow: hidden;
-  background:
-    radial-gradient(ellipse 84% 22% at 50% 0%, rgba(var(--node-rgb), 0.2), transparent 74%),
-    radial-gradient(ellipse 96% 78% at 50% 50%, transparent 52%, rgba(0, 0, 0, 0.42) 100%),
-    radial-gradient(ellipse 128% 44% at 50% 102%, rgba(var(--node-rgb), 0.4), transparent 72%),
-    linear-gradient(180deg, rgba(var(--node-rgb), 0.05), rgba(var(--node-rgb), 0.13)),
-    var(--well);
-  border: 1px solid rgba(var(--node-rgb), 0.26);
-  /* Bottom corners square so the footer drawer meets the frame as one outline. */
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 /*
@@ -14409,7 +14437,7 @@ textarea,
 /* Open country at dusk: the widest, softest ground light in the set, a warm
    sky that still has some day left in it, and the lightest vignette — this is
    the one location that should feel like distance rather than enclosure. */
-.map-screen[data-location="wildsEdge"] .map-well {
+.map-screen[data-location="wildsEdge"] {
   background:
     radial-gradient(ellipse 120% 30% at 50% 0%, rgba(var(--node-rgb), 0.2), transparent 78%),
     radial-gradient(ellipse 108% 88% at 50% 50%, transparent 62%, rgba(0, 0, 0, 0.34) 100%),
@@ -14423,7 +14451,7 @@ textarea,
    the only light is a narrow shaft down the centre — a canopy gap, not a
    horizon. The route therefore climbs through the one lit corridor on the
    screen, which is exactly what the Forbidden Forest should feel like. */
-.map-screen[data-location="forbiddenForest"] .map-well {
+.map-screen[data-location="forbiddenForest"] {
   background:
     linear-gradient(90deg, rgba(0, 0, 0, 0.55), transparent 28%, transparent 72%, rgba(0, 0, 0, 0.55)),
     radial-gradient(ellipse 38% 100% at 50% 6%, rgba(var(--node-rgb), 0.24), transparent 72%),
@@ -14436,7 +14464,7 @@ textarea,
 /* A furnace floor. The ground light is the tightest and hottest here — a hard
    inner edge rather than a fade — with a second thin heat band above it, and
    a near-black ceiling: the only light in a foundry comes off the metal. */
-.map-screen[data-location="moltenFoundry"] .map-well {
+.map-screen[data-location="moltenFoundry"] {
   background:
     radial-gradient(ellipse 64% 14% at 50% 0%, rgba(var(--node-rgb), 0.14), transparent 76%),
     radial-gradient(ellipse 100% 74% at 50% 40%, transparent 40%, rgba(0, 0, 0, 0.52) 100%),
@@ -14450,7 +14478,7 @@ textarea,
    The light is up top (an overcast sky, not a ground glow), and a wide
    diagonal sheen crosses the whole well — the squall the rain is falling out
    of, said in one soft band rather than in the particles alone. */
-.map-screen[data-location="stormCoast"] .map-well {
+.map-screen[data-location="stormCoast"] {
   background:
     linear-gradient(104deg, transparent 16%, rgba(var(--node-rgb), 0.16) 44%, transparent 72%),
     radial-gradient(ellipse 140% 44% at 50% -6%, rgba(var(--node-rgb), 0.3), transparent 74%),
@@ -14464,7 +14492,7 @@ textarea,
    even, cold haze lying ON the ground rather than rising off it, and the
    crown at the top is nearly gone. The only location whose well has a hard
    horizontal band in it: fog has a top edge, firelight does not. */
-.map-screen[data-location="necropolis"] .map-well {
+.map-screen[data-location="necropolis"] {
   background:
     radial-gradient(ellipse 80% 18% at 50% 0%, rgba(var(--node-rgb), 0.14), transparent 76%),
     radial-gradient(ellipse 104% 88% at 50% 50%, transparent 60%, rgba(0, 0, 0, 0.34) 100%),
@@ -14477,7 +14505,7 @@ textarea,
    centre — much narrower than any other location's ground light, so it reads
    as a single burning point rather than as terrain — under a cold violet
    crown, with the darkest mid-field in the set between the two. */
-.map-screen[data-location="blightedShrine"] .map-well {
+.map-screen[data-location="blightedShrine"] {
   background:
     radial-gradient(ellipse 90% 28% at 50% -4%, rgba(var(--node-rgb), 0.32), transparent 74%),
     radial-gradient(ellipse 100% 80% at 50% 46%, transparent 42%, rgba(0, 0, 0, 0.44) 100%),
@@ -14500,9 +14528,12 @@ textarea,
 
    Painted before .map-scroll in the DOM and pointer-events: none, so it can
    never take a tap meant for a node. */
+/* Screen-level: it is the act's weather, and weather does not stop at a panel
+   edge. `z-index: 0` keeps it under the header and the footer, which claim 2. */
 .map-atmosphere {
   position: absolute;
   inset: 0;
+  z-index: 0;
   pointer-events: none;
 }
 
@@ -14540,8 +14571,8 @@ textarea,
    the scroller's own padding. */
 .map-placard {
   position: absolute;
-  bottom: 20px;
-  left: 20px;
+  bottom: 6px;
+  left: 8px;
   z-index: 1;
   max-width: 26%;
   display: flex;
@@ -15112,10 +15143,11 @@ textarea,
    margin and a border of its own, which read as a mistake rather than as a shelf. The negative
    margin cancels exactly the flex gap; the well squares its bottom corners to meet it. */
 .map-footer {
+  position: relative;
+  z-index: 2;
   flex: 0 0 auto;
   display: flex;
   gap: 6px;
-  margin-top: -10px;
 }
 
 .map-footer-button {
@@ -15129,7 +15161,9 @@ textarea,
   background: var(--surface-raised);
   border: 1px solid var(--border);
   border-top: 2px solid var(--btn-color);
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  /* Rounded on all four corners now. The square top was the seam where this met
+     the well's frame, and there is no frame left to meet. */
+  border-radius: var(--radius-md);
   /* Chunky on purpose: it is the only control under the map and the one the thumb rests on. */
   padding: 13px 4px 14px;
   color: var(--text-dim);
