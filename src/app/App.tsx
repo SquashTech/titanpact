@@ -27,7 +27,7 @@ import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScr
 import { ForgeScreen } from '../view/run/ForgeScreen';
 import { BlacksmithScreen } from '../view/run/BlacksmithScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
-import { EvolutionGateScreen } from '../view/run/EvolutionGateScreen';
+import { CrucibleScreen } from '../view/run/CrucibleScreen';
 import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
 import { RecruitScreen } from '../view/run/RecruitScreen';
 import { RecruitFanfare } from '../view/run/RecruitFanfare';
@@ -116,6 +116,7 @@ import {
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { createStatusTestSides } from '../run/statusTestFight';
 import {
+  anyEvolutionAvailable,
   availableEvolution,
   fullMovepool,
   grantMasteryScrolls,
@@ -165,8 +166,8 @@ type Screen =
   | { kind: 'event'; nodeId: string; eventId: string }
   /** Guardian's Banner after a Guardian win in acts 1-4. Not a map node, so no nodeId. */
   | { kind: 'guardianBanner'; next: Screen }
-  /** One or more heroes standing at an unresolved Evolution. Phase 4 moves this to the Crucible. */
-  | { kind: 'evolution'; next: Screen }
+  /** The Crucible: pick one hero, and that hero evolves. A `nodeId` means it came off a map node. */
+  | { kind: 'crucible'; nodeId?: string; next: Screen }
   /** Roster-full replacement, Guild Hall path only; the contract path resolves in RecruitScreen. */
   | { kind: 'rosterReplace'; candidate: RosterReplaceCandidate; next: Screen }
   /** Offers sampled once in handleFightResolved; only pushed when the player holds a contract. */
@@ -296,14 +297,7 @@ function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): Eq
 }
 
 /** The map, behind the level-up gate if anyone can afford one and the player has not banked the pool. */
-function evolutionPending(run: RunState): boolean {
-  return run.roster.some((entry) => !!availableEvolution(progressionTable, entry));
-}
 
-/** The map, behind the Evolution gate if anyone is standing at one. */
-function mapAfterEvolution(run: RunState): Screen {
-  return evolutionPending(run) ? { kind: 'evolution', next: { kind: 'map' } } : { kind: 'map' };
-}
 
 /**
  * Which of Valor's beats the current screen is the moment for (docs/tutorial.md). Returns a key
@@ -334,7 +328,7 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
       const node = ahead.length === 1 ? run.map?.nodes[ahead[0]] : undefined;
       return node ? mapBeatKey(node.type) : null;
     }
-    case 'evolution':
+    case 'crucible':
       return 'evolution';
     case 'reward':
       return rewardBeatKey(screen.nodeType);
@@ -593,6 +587,16 @@ export function App() {
       setScreen({ kind: 'forge', nodeId });
     } else if (node.type === 'blacksmith') {
       setScreen({ kind: 'blacksmith', nodeId });
+    } else if (node.type === 'crucibleReward') {
+      // Nothing left to evolve skips the node rather than opening a screen with no move in it —
+      // the same rule the event node follows. The map roll already filters for this an act
+      // ahead (map.ts rewardPoolFor); this catches a roster that evolved since.
+      if (anyEvolutionAvailable(progressionTable, playerRun.roster)) {
+        setPlayerRun((run) => advanceToNode(run, nodeId));
+        setScreen({ kind: 'crucible', next: { kind: 'map' } });
+      } else {
+        handleNodeContinue(nodeId);
+      }
     } else if (node.type === 'classReward') {
       setScreen({ kind: 'classNode', nodeId });
     } else if (node.type === 'passiveReward') {
@@ -682,7 +686,7 @@ export function App() {
         });
       }
       if (next.actNumber < TOTAL_ACTS) {
-        next = advanceToNextAct(next, randomSeed());
+        next = advanceToNextAct(next, randomSeed(), anyEvolutionAvailable(progressionTable, next.roster));
         setActBreak(true);
         // The seal grants nothing, so it goes last in the chain — the socket fills, then
         // you arrive somewhere new. The opposite of the Banner's placement, for the same reason.
@@ -699,10 +703,15 @@ export function App() {
     if (equipmentReward) next = stashItem(next, equipmentReward.id, equipment);
 
     setPlayerRun(next);
-    const afterEvolution: Screen = evolutionPending(next) ? { kind: 'evolution', next: afterScreen } : afterScreen;
 
-    // Gate order is deliberate: banner, then recruit, then Evolution — so a hero recruited
-    // this beat already stands under the Banner.
+    // The Crucible is the GUARDIAN's beat, not every fight's (docs/growth-overhaul.md §5): five
+    // forced a run, one per act, in the chain Guardian → Banner → Crucible → Pact Seal → act
+    // intro. Team, hero, run — three scales ascending. Skipped when nothing is left to evolve.
+    const crucible = isGuardian && anyEvolutionAvailable(progressionTable, next.roster);
+    const afterCrucible: Screen = crucible ? { kind: 'crucible', next: afterScreen } : afterScreen;
+
+    // Gate order is deliberate: banner, then recruit, then the Crucible — so a hero recruited
+    // this beat already stands under the Banner, and can walk into the Crucible itself.
     // `next`, not `playerRun`: a boss node has just granted the contract that is spendable here.
     const recruitable = defeatedRoster.filter((entry) => isRecruitable(entry.heroId, heroes));
     // The scripted act names its one contract and refuses to let it be walked past; a non-null
@@ -711,14 +720,14 @@ export function App() {
     const contractOffers = next.recruitContracts > 0 ? (forcedOffers ?? pickContractOffers(recruitable)) : [];
     const afterRecruit: Screen =
       contractOffers.length > 0
-        ? { kind: 'recruit', offers: contractOffers, next: afterEvolution, required: forcedOffers !== null }
-        : afterEvolution;
+        ? { kind: 'recruit', offers: contractOffers, next: afterCrucible, required: forcedOffers !== null }
+        : afterCrucible;
     setScreen(banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit);
   }
 
   function handleNodeContinue(nodeId: string) {
     setPlayerRun((run) => advanceToNode(run, nodeId));
-    setScreen(mapAfterEvolution(playerRun));
+    setScreen({ kind: 'map' });
   }
 
   /**
@@ -728,7 +737,7 @@ export function App() {
   function handleClaimEquipment(nodeId: string, itemIds: string | string[]) {
     const ids = (Array.isArray(itemIds) ? itemIds : [itemIds]).filter((id) => equipment[id]);
     setPlayerRun((run) => ids.reduce((acc, id) => stashItem(acc, id, equipment), advanceToNode(run, nodeId)));
-    setScreen(mapAfterEvolution(playerRun));
+    setScreen({ kind: 'map' });
   }
 
   /** Guild Hall purchase: validate-before-commit, then the item drops in the bag and the shop stays open. */
@@ -776,6 +785,12 @@ export function App() {
     // Sealing the pact is the start, not pressing the title button: a draft backed out of
     // is not a run. An abandoned run still counts here — it was played.
     updateProfile((current) => recordRunStarted(current, Date.now()));
+  }
+
+  /** TEMPORARY DEV/TEST — the Crucible sits behind a Guardian, which is four fights away. */
+  function handleStartCrucibleTestRun() {
+    setPlayerRun(createLevel4TestRun());
+    setScreen({ kind: 'crucible', next: { kind: 'map' } });
   }
 
   /** TEMPORARY DEV/TEST — see createLevel4TestRun. */
@@ -866,6 +881,7 @@ export function App() {
           onOpenSandbox={handleOpenSandbox}
           onVisitLocation={handleVisitLocation}
           onStartLevel4TestRun={handleStartLevel4TestRun}
+          onStartCrucibleTestRun={handleStartCrucibleTestRun}
           onStartStatusTestFight={handleStatusTestFight}
         />
       )}
@@ -1088,8 +1104,8 @@ export function App() {
         <GuardianBannerScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />
       )}
 
-      {screen.kind === 'evolution' && (
-        <EvolutionGateScreen run={playerRun} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />
+      {screen.kind === 'crucible' && (
+        <CrucibleScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />
       )}
 
       {/* `runOutcome` is set in the layout effect above, so it is already there on the first paint. */}

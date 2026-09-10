@@ -104,6 +104,16 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
       <path d="M9.4 18h6.2l2.2 4H7.2Z" />
     </>
   ),
+  // A crucible: a vessel over flame, the thing that changes what is put in it. Two tongues of
+  // fire under a bowl on legs — the silhouette has to read at 14px against the Forge's anvil,
+  // which is the other squat object on the map.
+  crucibleReward: (
+    <>
+      <path d="M3.4 2.6h17.2v3.2a8.6 8.6 0 0 1-8.6 8.6 8.6 8.6 0 0 1-8.6-8.6Z" />
+      <path d="M10.8 15.4h2.4v3.6h-2.4Z" />
+      <path d="M6.2 21.6c1-2.2 2.6-3.2 5.8-3.2s4.8 1 5.8 3.2Z" />
+    </>
+  ),
   // Open tome: the Mentor teaches.
   classReward: OPEN_BOOK,
   // A branching skill tree, not a second book: the Mentor hands over something new, the Tutor

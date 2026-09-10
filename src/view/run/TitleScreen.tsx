@@ -27,6 +27,8 @@ interface Props {
   onVisitLocation: (locationId: string) => void;
   /** TEMPORARY DEV/TEST — App.tsx createLevel4TestRun. Remove with its Dev-menu row. */
   onStartLevel4TestRun: () => void;
+  /** TEMPORARY DEV/TEST — App.tsx handleStartCrucibleTestRun. Remove with its Dev-menu row. */
+  onStartCrucibleTestRun: () => void;
   /** TEMPORARY DEV/TEST — src/run/statusTestFight.ts. */
   onStartStatusTestFight: () => void;
 }
@@ -99,6 +101,7 @@ export function TitleScreen({
   onOpenSandbox,
   onVisitLocation,
   onStartLevel4TestRun,
+  onStartCrucibleTestRun,
   onStartStatusTestFight,
 }: Props) {
   const [showCompendium, setShowCompendium] = useState(false);
@@ -294,6 +297,9 @@ export function TitleScreen({
             </button>
             <button className="title-dev-item" onClick={() => runDev(onStartStatusTestFight)}>
               🧪 Test: Status FX
+            </button>
+            <button className="title-dev-item" onClick={() => runDev(onStartCrucibleTestRun)}>
+              🧪 Test: Crucible
             </button>
           </div>
         )}

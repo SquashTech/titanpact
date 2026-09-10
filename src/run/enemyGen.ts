@@ -147,6 +147,10 @@ export function rollLevelProgression(
     if (!entry) break;
     const node = availableEvolution(table, entry);
     if (!node || node.paths.length === 0) break;
+    // A generated hero holds no Crucible, so its Evolution is read off LEVEL — the same
+    // equivalence enemyScrollsForLevel uses for Mastery Rank, and the gate the player side lost
+    // on 2026-09-10. Without it a level-1 enemy would arrive evolved.
+    if (level < node.level) break;
     const { picked, nextState } = shuffledPick(state, node.paths, 1);
     state = nextState;
     try {

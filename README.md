@@ -157,10 +157,9 @@ KO shake, HP/mana bar shine and a low-HP pulse, and an opaque `result-panel` win
 for the victory/defeat screen instead of the outcome text sitting directly against the
 dimmed battlefield.
 
-Training Points are forced-allocated immediately: `LevelUpScreen` blocks the run from
-continuing until every point earned (from a fight win or an `upgradeReward` node) is
-spent on a hero — replacing the earlier `TrainingPanel`, a deferred "spend whenever"
-panel. `MapScreen`'s "Manage Roster" button now opens `RosterManagementScreen` instead:
+Levels are automatic and roster-wide (`growth.ts`): every hero levels every won encounter,
+fielded or benched, and nothing is allocated or spent. `MapScreen`'s "Manage Roster" button
+opens `RosterManagementScreen`:
 read-only full stat spreads and equipment status per hero, plus moving an equipped item
 from one hero to another.
 

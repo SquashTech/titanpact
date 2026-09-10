@@ -42,6 +42,7 @@ const REWARD_TYPES = new Set([
   'currencyReward',
   'loneScrollReward',
   'forgeReward',
+  'crucibleReward',
   'event',
 ]);
 
@@ -276,3 +277,44 @@ test('map: the reward row above Elite-or-Battle has nothing left to signpost', (
   }
 });
 
+
+// --- The Crucible node (docs/growth-overhaul.md §5) -------------------------------------------
+
+/** Every node type on a map, across enough seeds that a rare weight still shows up. */
+function typesAcrossSeeds(actNumber: number, options?: { evolutionsLeft?: boolean }): Set<string> {
+  const seen = new Set<string>();
+  for (let seed = 0; seed < 300; seed++) {
+    const map = generateMap(seed, actNumber, options);
+    for (const node of Object.values(map.nodes)) seen.add(node.type);
+  }
+  return seen;
+}
+
+test('map: a Crucible cannot appear before act 3, and can from act 3 on', () => {
+  // Acts 1-2 already get one apiece off their own Guardian, and a roster still forming is not
+  // where a SECOND Evolution is the interesting pick.
+  for (const act of [1, 2]) {
+    assert.ok(!typesAcrossSeeds(act).has('crucibleReward'), `act ${act} seated a Crucible`);
+  }
+  for (const act of [3, 4, 5]) {
+    assert.ok(typesAcrossSeeds(act).has('crucibleReward'), `act ${act} never seated a Crucible in 300 maps`);
+  }
+});
+
+test('map: a Crucible is never seated when the roster has nothing left to evolve', () => {
+  // It has to be filtered at GENERATION, an act ahead, because a reward row is a pick of three
+  // and a card nobody can spend is a third of the choice gone. A Boon can filter itself at the
+  // node because it rolls its offers on arrival; a map cannot.
+  for (const act of [3, 4, 5]) {
+    const types = typesAcrossSeeds(act, { evolutionsLeft: false });
+    assert.ok(!types.has('crucibleReward'), `act ${act} seated a Crucible with nobody able to take it`);
+    // The rest of the pool is untouched — only the one type drops out.
+    assert.ok(types.has('equipmentReward') && types.has('scrollReward'));
+  }
+});
+
+test('map: omitting the option leaves the full pool, so a fixture or a test is not silently thinned', () => {
+  assert.ok(typesAcrossSeeds(3).has('crucibleReward'));
+  assert.ok(typesAcrossSeeds(3, {}).has('crucibleReward'));
+  assert.ok(typesAcrossSeeds(3, { evolutionsLeft: true }).has('crucibleReward'));
+});

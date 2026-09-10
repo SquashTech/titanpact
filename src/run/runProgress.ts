@@ -69,11 +69,19 @@ export function recordBrokenSeal(run: RunState, seal: BrokenSeal): RunState {
   return { ...run, brokenSeals: [...run.brokenSeals, seal] };
 }
 
-/** Fresh map for the next act, per-act position fields reset. Roster/gold/relics/contracts untouched; callers own the TOTAL_ACTS check. */
-export function advanceToNextAct(run: RunState, seed: number): RunState {
+/**
+ * Fresh map for the next act, per-act position fields reset. Roster/gold/relics/contracts
+ * untouched; callers own the TOTAL_ACTS check.
+ *
+ * `evolutionsLeft` is passed IN rather than derived here — answering it needs the progression
+ * table, and this module is mechanism only (the run layer's one content import is enemyGen's).
+ * Every caller already holds the table.
+ */
+export function advanceToNextAct(run: RunState, seed: number, evolutionsLeft = true): RunState {
   return {
     ...run,
-    map: generateMap(seed, run.actNumber + 1),
+    // The next act's reward rows may seat a Crucible only while someone can still take one.
+    map: generateMap(seed, run.actNumber + 1, { evolutionsLeft }),
     currentNodeId: null,
     visitedNodeIds: [],
     actNumber: run.actNumber + 1,

@@ -1,10 +1,11 @@
 # growth-overhaul.md — The Growth Overhaul
 
-> **STATUS: DECIDED (2026-09-10, per user direction). PHASES 1-3 OF §8 ARE BUILT; 4-7 ARE NOT.**
-> Gems are gone, moves come only from Mastery Scrolls, and levels are automatic, roster-wide and
-> cap 30. Still to come: the Crucible, finished-vs-raw recruits, the difficulty re-fit and the
-> 36-hero grade pass — until then Evolutions still fire off the level track and every hero runs
-> the all-B placeholder. `CLAUDE.md`'s remaining invariants still describe *that* game and are
+> **STATUS: DECIDED (2026-09-10, per user direction). PHASES 1-4 OF §8 ARE BUILT; 5-7 ARE NOT.**
+> Gems are gone, moves come only from Mastery Scrolls, levels are automatic and cap 30, and
+> Evolutions come from the Crucible. Still to come: finished-vs-raw recruits, the difficulty
+> re-fit and the 36-hero grade pass — until then a Guild hire still arrives pre-evolved off its
+> level and every hero runs the all-B placeholder. `CLAUDE.md`'s remaining invariants still
+> describe *that* game and are
 > still the rules in force until the phase that replaces each one lands. This module is the
 > destination, and §8 is the route — **check its Status column before assuming anything here
 > runs.** Where it disagrees with `leveling-and-ranks.md`, `progression.md` or `run-loop.md`,
@@ -242,10 +243,20 @@ the Pact Seal is earned **one per act**, so a second per-act "Seal" currency bes
 actively confusing. "The Crucible" sits in the existing node vocabulary (Mentor's Hall, The Forge,
 The Vigil, Guild Hall) without explanation.
 
-**Economy: 5 forced (acts 1–5), 6+ reachable.** The sixth comes from a reward-row node or a Guild
-Hall purchase, and the **Vigil sells them** as the safety net — which uses an existing sink, since
-gold is otherwise dead the moment Act 5's Guardian falls and spending it is already the Vigil's
-job #2. A purchased Crucible resolves on the spot, since nothing banks.
+**Economy: 5 forced (acts 1–5), 6+ reachable. BUILT 2026-09-10 as a map node only** (per user
+direction), not a Guild Hall purchase: the `crucibleReward` reward-row node, **acts 3+**, weight
+12. Acts 1-2 already get one apiece off their own Guardian, and a roster still forming is not
+where a second Evolution is the interesting pick.
+
+The dead-card problem a reward node has and a Boon does not: a Boon rolls its offers when the
+player arrives, so it can filter itself; a map rolls its nodes an act ahead. So the filter lives
+at **generation** — `rewardPoolFor` drops the Crucible from the pool entirely when no roster hero
+has an Evolution left, and `advanceToNextAct` passes that in. The node also skips itself on
+arrival if the roster evolved in between. A reward row is a pick of THREE; a card nobody can
+spend is a third of the choice gone.
+
+The drafted Guild Hall purchase was **not** built. Gold stays off the Evolution axis: an
+Evolution is identity, not something bought.
 
 This resolves the scarce-vs-universal question that ran through the design: **it is scarce when it
 matters and universal by the end.** You choose who evolves first — in Act 2 that is a real
@@ -316,7 +327,7 @@ them, so in-flight runs invalidate cleanly and no migration code is owed at any 
 | 1 | **Excise Gems.** Isolated and well-bounded; it shrinks the surface everything else moves through. Delete the owned files, strip the state fields, pull `gemReward`, remove the sim's gem handling from `policy.ts` / `run.ts`. The two stat shrines were **removed outright** rather than given a placeholder payload (2026-09-10, per user direction): they are §1's rule stated as a node, so a stand-in screen would have been built only to be deleted in phase 3. Their 20 weight and the Gem Cache's 20 went to the Boon (18 → 30) and the purse (18 → 26) until phase 2 seats the Scroll node. | No gem references, suite green, a run completable end to end. | **DONE** 2026-09-10. 985 tests green; 200 batch runs complete end to end. Cost, measured: full-clear 45.5% → 33.0%, encounters won 12.11 → 10.70 — the ~200 stat points a run Gems carried, handed back by phase 3 and re-fitted in phase 6. |
 | 2 | **Mastery Scrolls and Rank.** Add the currency, `RosterEntry.masteryRank`, and the spend flow on the Roster screen. Re-point `levelUpMovePool`'s tier gate from level to rank and cut the level-up's move grant in the same change — they are one edge. Add the pool-exhaustion guard. | Scrolls are the only move faucet; level-ups fall through to the stat reel. `test/moveTiers.test.ts` rewritten against rank. | **DONE** 2026-09-10. 989 tests green. Measured against phase 1: full-clear 33.0% → 18.0%, encounters won 10.70 → 8.55, and of heroes reaching act 4+ only 38.0% reach rank 2 and 23.1% rank 3 (against 97.9%/54.9% on the old level gate). Income is on §4's spec (~16 a run, ~2 heroes maxed); the gap is the difficulty curve, which phase 6 re-fits. |
 | 3 | **Flip the levelling model.** The destructive one, landing after its replacements exist. XP becomes automatic and roster-wide; pool, deferral, cost curve and stat reel all go; cap 30; each level rolls the seven stats. Ship with a uniform all-B grade set so the engine runs before the content pass does. | No allocation screen anywhere. Level moves to the map header. Tutorial script re-checked — `src/data/tutorial.ts` narrates the old beats. | **DONE** 2026-09-10. 979 tests green. Measured against phase 2: full-clear 18.0% → **51.5%**, encounters won 8.55 → 12.71, mean end level 16.4. That is above even the pre-overhaul 45.5% — the ~264 points a hero of automatic growth more than replaced what Gems and the level curve were paying. Phase 6 re-fits it. The `upgradeReward` XP Cache became `loneScrollReward`, a 1-Scroll node (per user direction), rather than being deleted like the shrines. |
-| 4 | **The Crucible.** Small: `chooseEvolutionPath` and the path data are untouched, only the invocation point moves. Insert into the act-boundary chain ahead of `PactSealScreen`; add the purchasable spend at the Guild Hall and the Vigil. | Five forced Crucibles a run, a sixth reachable. No evolution reachable from a level-up. | not started |
+| 4 | **The Crucible.** Small: `chooseEvolutionPath` and the path data are untouched, only the invocation point moves. Insert into the act-boundary chain ahead of `PactSealScreen`; add the purchasable spend at the Guild Hall and the Vigil. | Five forced Crucibles a run, a sixth reachable. No evolution reachable from a level-up. | **DONE** 2026-09-10. 982 tests green. Map node only, acts 3+, filtered out of the roll when nobody can take one (per user direction) — no Guild Hall purchase. Measured against phase 3: full-clear 51.5% → **38.5%** (1000 runs), encounters won 12.71 → 11.07. Evolutions went from every hero automatically in act 1 to one a Guardian, which is the whole point; phase 6 re-fits. |
 | 5 | **Finished and raw recruits.** Contract heroes arrive levelled, ranked, evolved, kit game-chosen; guild heroes raw. Gold on both purchased routes. | The flat-value / decaying-runway line true on three axes instead of one. `test/recruitment.test.ts` extended. | not started |
 | 6 | **Re-fit the difficulty curve.** The real work, and it cannot start earlier: `ENEMY_LEVEL_BY_ACT`, `ACT_STEP_CURVE`, Guardian champions, reward weights and Banner values all re-derived. Drive with `scripts/sim` and the skilled pilot. | Batch runs show no mechanical fault — walls, dead nodes, unreachable ranks. Win-rate targets are a playtest question, not a batch one. | not started |
 | 7 | **Growth grades for 36 heroes.** Parallelisable from phase 3 onward; it needs the schema, not the tuning. The interesting authoring is the mismatches — a low base with S grades is a late bloomer worth recruiting underlevelled, and that archetype only exists once this pass does. | Grade budget enforced by test, beside the 550 check in `test/roster.test.ts`. No hero left on the all-B placeholder. | not started |

@@ -263,19 +263,18 @@ test('progression: an offer is spent by being MADE — declined or swapped away,
   assert.throws(() => recordMoveOffer(run, 'nobody', ['moltenLash']), ProgressionError);
 });
 
-test('progression: Evolution unlocks only at EVOLUTION_LEVEL, offers exactly three paths, grants stats, and is one-shot', () => {
+test('progression: an Evolution is UNGATED by level, offers exactly three paths, grants stats, and is one-shot', () => {
+  // The Crucible replaced the level trigger on 2026-09-10 (docs/growth-overhaul.md §5): under
+  // automatic roster-wide levelling every hero crosses any threshold on the same fight, so a
+  // level gate IS a six-decision wall. A level-1 hero is a legal Crucible target.
   let run = seedRoster(['cinderKnight']);
+  const atOne = availableEvolution(progressionTable, run.roster[0]);
+  assert.ok(atOne, 'a level-1 hero can walk into the Crucible');
+  assert.strictEqual(run.roster[0].level, 1);
 
-  assert.strictEqual(availableEvolution(progressionTable, run.roster[0]), null);
-
-  run = levelUpTimes(run, 'cinderKnight', EVOLUTION_LEVEL - 2);
-  assert.strictEqual(run.roster[0].level, EVOLUTION_LEVEL - 1);
-  assert.strictEqual(availableEvolution(progressionTable, run.roster[0]), null); // level EVOLUTION_LEVEL - 1 hasn't crossed yet
-
-  run = levelUpTimes(run, 'cinderKnight', 1);
-  assert.strictEqual(run.roster[0].level, EVOLUTION_LEVEL);
+  run = levelUpTimes(run, 'cinderKnight', EVOLUTION_LEVEL - 1);
   const node = availableEvolution(progressionTable, run.roster[0]);
-  assert.ok(node, 'expected an Evolution node to be available at EVOLUTION_LEVEL');
+  assert.ok(node, 'and the offer is unchanged at any level');
   assert.strictEqual(node!.paths.length, 3, 'CLAUDE.md: a choice of three options');
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'cinderKnight', 'cinderKnight-offensive');

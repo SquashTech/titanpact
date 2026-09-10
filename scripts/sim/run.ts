@@ -42,6 +42,7 @@ import {
   SCROLLS_PER_ACT,
   SCROLL_REWARD_COUNT,
   LONE_SCROLL_COUNT,
+  anyEvolutionAvailable,
   availableEvolution,
   chooseEvolutionPath,
   grantMasteryScrolls,
@@ -146,33 +147,37 @@ function entryOf(run: RunState, rosterId: string): RosterEntry {
 }
 
 /**
- * Every hero standing at an unresolved Evolution takes a path. Levels themselves are automatic
- * (src/run/growth.ts) and there is nothing to spend, so this is only the Evolution gate.
+ * ONE Crucible: the strongest hero that still has an Evolution takes a path
+ * (docs/growth-overhaul.md §5). Five arrive free off the Guardians and a sixth off a map node.
+ *
+ * BOTH halves are uniformly random, which is policy.ts rule 1 and it costs almost nothing here.
+ * A hero has exactly ONE Evolution node, so a greedy pick cannot compound — it only reorders who
+ * gets the five, and every eligible hero ends up taking one anyway. What it DOES do is starve the
+ * data: always taking the strongest means the same handful of heroes absorb every Evolution
+ * across a batch, and the path lift table goes dark for everyone else. That table is the reason
+ * this measurement exists.
  */
-function resolveEvolutions(run: RunState, rng: Rng, choices: ChoiceEvent[], encountersWon: number): RunState {
-  let next = run;
-  let guard = 0;
-  while (guard++ < 200) {
-    const entry = next.roster.find((r) => !!availableEvolution(progressionTable, r));
-    if (!entry) break;
-    const node = availableEvolution(progressionTable, entry);
-    if (!node || node.paths.length === 0) break;
-    // Uniformly random: this is the experiment (see policy.ts).
-    const path = pick(rng, node.paths);
-    choices.push({
-      bucket: 'evolution',
-      offered: node.paths.map((p) => p.id),
-      picked: [path.id],
-      encountersWonAtChoice: encountersWon,
-    });
-    next = chooseEvolutionPath(next, progressionTable, heroes, entry.rosterId, path.id);
-    // Overflow: a path's granted move that would exceed MOVE_CAP is offered as replace-or-decline.
-    const after = entryOf(next, entry.rosterId);
-    const granted = path.unlocksMoveIds.filter((id) => !after.unlockedMoveIds.includes(id));
-    for (const moveId of granted) {
-      const replaceId = policy.replacementTarget(entryOf(next, entry.rosterId), moveId);
-      if (replaceId) next = grantOfferedMove(next, entry.rosterId, moveId, replaceId);
-    }
+function resolveCrucible(run: RunState, rng: Rng, choices: ChoiceEvent[], encountersWon: number): RunState {
+  const eligible = run.roster.filter((r) => !!availableEvolution(progressionTable, r));
+  if (eligible.length === 0) return run;
+  const entry = pick(rng, eligible);
+  const node = availableEvolution(progressionTable, entry);
+  if (!node || node.paths.length === 0) return run;
+
+  const path = pick(rng, node.paths);
+  choices.push({
+    bucket: 'evolution',
+    offered: node.paths.map((p) => p.id),
+    picked: [path.id],
+    encountersWonAtChoice: encountersWon,
+  });
+  let next = chooseEvolutionPath(run, progressionTable, heroes, entry.rosterId, path.id);
+  // Overflow: a path's granted move that would exceed MOVE_CAP is offered as replace-or-decline.
+  const after = entryOf(next, entry.rosterId);
+  const granted = path.unlocksMoveIds.filter((id) => !after.unlockedMoveIds.includes(id));
+  for (const moveId of granted) {
+    const replaceId = policy.replacementTarget(entryOf(next, entry.rosterId), moveId);
+    if (replaceId) next = grantOfferedMove(next, entry.rosterId, moveId, replaceId);
   }
   return next;
 }
@@ -300,7 +305,13 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
             statGrants: champion.evolutionStatGrants,
           });
         }
-        if (run.actNumber < TOTAL_ACTS) run = advanceToNextAct(run, randomSeed(rng));
+        // Guardian → Banner → Crucible → Pact Seal. The Crucible resolves BEFORE the next
+        // act's map is rolled, which is what lets that roll know whether a Crucible node is
+        // still worth seating (map.ts rewardPoolFor).
+        run = resolveCrucible(run, rng, record.choices, run.encountersWon);
+        if (run.actNumber < TOTAL_ACTS) {
+          run = advanceToNextAct(run, randomSeed(rng), anyEvolutionAvailable(progressionTable, run.roster));
+        }
         else {
           record.won = true;
           break;
@@ -309,13 +320,11 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
 
       run = tryRecruitContracts(run, outcome.defeatedRoster, rng);
       if (outcome.drop) run = resolveDrop(run, outcome.drop.id, record.equipped, run.actNumber);
-      run = resolveEvolutions(run, rng, record.choices, run.encountersWon);
       continue;
     }
 
     run = resolveRewardNode(run, node.type, location.id, rng, record, options);
     run = advanceToNode(run, nodeId);
-    run = resolveEvolutions(run, rng, record.choices, run.encountersWon);
   }
 
   record.goldEnd = run.gold;
@@ -498,6 +507,10 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       return grantCurrencyReward(run, 15 + Math.floor(rng() * 16));
     case 'loneScrollReward':
       return grantMasteryScrolls(run, LONE_SCROLL_COUNT);
+    // The extra Crucible, acts 3+. A node with nobody left to evolve is skipped by the map roll
+    // an act ahead, and by resolveCrucible itself if the roster evolved since.
+    case 'crucibleReward':
+      return resolveCrucible(run, rng, record.choices, run.encountersWon);
     case 'equipmentReward': {
       // Three offered; the policy takes the one worth most to somebody. Equipment is a
       // power question, not a design experiment — the rarity curve is what's under test.

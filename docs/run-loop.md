@@ -7,12 +7,12 @@
 > demo fight into the roguelike run CLAUDE.md's north star describes: draft →
 > escalating fights → relics.
 
-> **Partly superseded by `growth-overhaul.md` (2026-09-10).** Its **phases 1-3 have LANDED**
+> **Partly superseded by `growth-overhaul.md` (2026-09-10).** Its **phases 1-4 have LANDED**
 > and this file is updated for them: Gems and the two stat shrines are deleted, the reward-row
-> pool is re-weighted around two Scroll nodes, and the post-fight gates lose both the Gem offer
-> and the Level Up screen — an **Evolution** gate stands where the latter did. Still **pending**:
-> **the Crucible** takes that Evolution gate's place in the act-boundary chain, between the
-> Banner and the Pact Seal. **Everything not called pending describes what the code does.**
+> pool is re-weighted around two Scroll nodes and a `crucibleReward`, and the post-fight gates
+> lose both the Gem offer and the Level Up screen — **the Crucible** stands where the latter did,
+> on Guardian nodes only. Still **pending**: what a recruit arrives as (phase 5) and the
+> difficulty re-fit (phase 6). **Everything not called pending describes what the code does.**
 
 Slay the Spire is the direct reference (per user direction, 2026-08-16): a branching
 map of nodes, most of which reward something (a Guild Hall shop, equipment, a relic,
@@ -431,13 +431,10 @@ A won encounter resolves through up to five gates before the map comes back
    recruitable: the run goes straight on rather than opening a screen whose offer cannot
    be taken. On a boss node the act-end contract (§3) is granted *before* this check, so
    it is spendable on the heroes that boss fight just beat.
-2. **Evolution** (`EvolutionGateScreen`), for every hero standing at an unresolved one — in
-   roster order, one at a time, with no picker: a pending Evolution is not optional, so which to
-   resolve first is a decision with no content in it. This is where `LevelUpScreen` used to be.
-   **Under automatic levelling the whole roster crosses `EVOLUTION_LEVEL` on the same fight**,
-   so this gate is a wall of choices by construction — which is exactly what the Crucible exists
-   to remove (`docs/growth-overhaul.md` §5). It stands in until phase 4 moves the invocation
-   point; when that lands, only the caller changes.
+2. **The Crucible** (`CrucibleScreen`) — **boss nodes only**: pick ONE roster hero, and that
+   hero evolves. Five a run, one per act. Skipped when no hero has an Evolution left. See
+   `docs/leveling-and-ranks.md` Part 2 for the trigger and the economy, including the acts-3+
+   `crucibleReward` node that pays a sixth.
 
 **The levels themselves are not a gate.** They are granted in the same `RunState` transform as
 the gold, before any screen opens (`grantEncounterLevels`), and reported on the victory overlay

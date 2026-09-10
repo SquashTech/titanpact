@@ -134,8 +134,8 @@ function MapPlacard({ location }: { location: LocationDefinition }) {
   );
 }
 
-// The run's hub (docs/run-loop.md). Training Points are spent on LevelUpScreen,
-// not here; a banked remainder on the map is normal.
+// The run's hub (docs/run-loop.md). Levels are automatic (run/growth.ts) and nothing is spent
+// here — the header states where the run stands, the purse states what is still to hand out.
 export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAbandonRun }: Props) {
   /** Null while closed; otherwise the board Manage Roster opens on. */
   const [rosterBoard, setRosterBoard] = useState<'gear' | 'mastery' | null>(null);

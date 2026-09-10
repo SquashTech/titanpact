@@ -15,7 +15,15 @@ import { mergeStatMods } from './statMods';
 /** Past the cap, growth is substitution, never expansion. */
 export const MOVE_CAP = 4;
 
-/** Uniform Evolution trigger level for every hero (per-hero depth is deferred). */
+/**
+ * The level an Evolution node is authored at. **Nothing gates on it any more** (2026-09-10,
+ * Growth Overhaul phase 4): Evolutions left the level track for the Crucible, a beat at the act
+ * boundary. Under automatic roster-wide levelling every hero crosses any threshold on the same
+ * fight, so a level trigger IS a six-decision wall — the move was a consequence, not a taste.
+ *
+ * Kept because `EvolutionNode.level` is still authored data and per-hero depth is still deferred;
+ * the tutorial and the docs also date the fork by it. Do not re-attach a gate to it.
+ */
 export const EVOLUTION_LEVEL = 5;
 
 // --- Mastery Rank: the gate on the movepool (docs/growth-overhaul.md §4) ---
@@ -312,11 +320,18 @@ export function pendingEvolution(table: ProgressionTable, entry: RosterEntry): E
   return nodes[entry.chosenPathIds.length] ?? null;
 }
 
-/** The gate: the pending node only once its level is reached. */
+/**
+ * The node a Crucible would resolve for this hero, or null when the hero has no Evolution left.
+ * Ungated since 2026-09-10 — identical to `pendingEvolution`, and kept as its own name because
+ * every caller means "can this hero take one NOW", which is the question the Crucible asks.
+ */
 export function availableEvolution(table: ProgressionTable, entry: RosterEntry): EvolutionNode | null {
-  const node = pendingEvolution(table, entry);
-  if (!node) return null;
-  return entry.level >= node.level ? node : null;
+  return pendingEvolution(table, entry);
+}
+
+/** Whether any roster hero still has an Evolution to take — what a Crucible needs to be worth opening. */
+export function anyEvolutionAvailable(table: ProgressionTable, roster: readonly RosterEntry[]): boolean {
+  return roster.some((entry) => !!availableEvolution(table, entry));
 }
 
 /** The primary plus the current graft — the out-of-combat mirror of engine/state.ts effectiveTypes, and it must stay identical to it. UI must read this, not `hero.types`. */

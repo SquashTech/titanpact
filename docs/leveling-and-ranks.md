@@ -7,14 +7,15 @@
 > disagree, this file wins, and `progression.md` should be updated to defer here.
 > Rules only; thresholds, move data, and per-hero Evolution paths are **data** (`/data`).
 
-> **PARTLY SUPERSEDED by `growth-overhaul.md` (2026-09-10). Its phases 2 and 3 have LANDED**
+> **PARTLY SUPERSEDED by `growth-overhaul.md` (2026-09-10). Its phases 2, 3 and 4 have LANDED**
 > and this file is updated for them: moves left the level track entirely (a Scroll is the only
 > faucet, and **Mastery Rank**, not level, gates the tiers), and levels went automatic,
 > roster-wide and cap 30, paying stats through growth grades. The pooled currency, its cost
-> curve and the mastery stat reel are all deleted. Still **pending**: level-triggered Evolutions
-> move to **the Crucible** (phase 4), and the 36-hero grade authoring pass (phase 7) — until
-> then every hero runs the all-B placeholder. **Everything not called pending describes what
-> the code does.** Read both before changing anything here.
+> curve and the mastery stat reel are all deleted, and Evolutions come from **the Crucible** at
+> the act boundary rather than from a level. Still **pending**: what a recruit arrives as
+> (phase 5) and the 36-hero grade authoring pass (phase 7) — until then a Guild hire arrives
+> pre-evolved off its level and every hero runs the all-B placeholder. **Everything not called
+> pending describes what the code does.** Read both before changing anything here.
 
 ---
 
@@ -114,7 +115,7 @@ report, not a screen, and nothing is spent on it.
 ## A level never touches the movepool (2026-09-10, phase 2)
 
 Moves come from **Mastery Scrolls**, gated by **Mastery Rank** — Part 1b below. A level pays
-stats and nothing else; the level that reaches `EVOLUTION_LEVEL` surfaces the Evolution as well.
+stats and nothing else. Evolutions come from the Crucible (Part 2), never from a level.
 
 ### An offer is spent by being MADE (2026-09-07)
 
@@ -290,11 +291,44 @@ design detail to specify in `/data`; the invariant is that offerings are
 
 # Part 2 — The Evolution system
 
-## Trigger (current scope: a single flat level, uniform across the roster)
+## Trigger: the CRUCIBLE (2026-09-10, Growth Overhaul phase 4)
 
-**Every hero Evolves at the same fixed level — `EVOLUTION_LEVEL` (currently 5,
-`src/run/progression.ts`) — for the entire roster.** At that moment the player is
-presented with a **choice of three paths**, each with different pros and cons.
+**An Evolution is not triggered by anything a hero does. It is spent on a hero.** The Crucible
+picks **ONE** hero from the roster, and that hero is presented with its **choice of three paths**.
+`src/view/run/CrucibleScreen.tsx`.
+
+**Where it fires.** A beat in the act-boundary chain, not a map row:
+
+> **Guardian falls → Banner → Crucible → Pact Seal → act intro**
+
+The Banner grants to everyone, the Crucible transforms one, the Seal counts the run — team, hero,
+run, three scales ascending. It costs zero map rows, which matters because acts 1-4 already run
+nine and a tenth is not affordable. **Non-bankable**: a turning point is decided now, which is
+also why it is a beat rather than an item.
+
+**Economy: five forced, a sixth reachable.** One per act's Guardian, plus the `crucibleReward`
+reward-row node — **acts 3+ only**, and dropped from the map roll entirely when no roster hero has
+an Evolution left (`CRUCIBLE_FIRST_ACT`, `rewardPoolFor`, `src/run/map.ts`). It has to be filtered
+at generation rather than on arrival, because a map rolls its nodes an act ahead where a Boon
+rolls its offers when the player walks in; a reward row is a pick of three, and a card nobody can
+spend is a third of the choice gone. There is deliberately **no Guild Hall purchase**: gold stays
+off the Evolution axis, because an Evolution is identity rather than something bought.
+
+This is scarce when it matters and universal by the end. You choose who evolves first — in Act 2
+that is a real commitment on a team still forming — and by the finale everyone can be there. An
+unevolved sideboard hero is not unfinished, on the same reasoning that makes mono typing a valid
+terminal state.
+
+**`EVOLUTION_LEVEL` gates nothing** (`availableEvolution` is now identical to `pendingEvolution`).
+It survives as authored data on `EvolutionNode.level`, and the docs still date the fork by it. Do
+not re-attach a gate to it — the move off the level track was **forced, not preferred**: under
+automatic roster-wide levelling every hero crosses any threshold on the same fight, so a level
+trigger IS a six-decision wall.
+
+**A GENERATED hero is the exception.** An enemy or a Guild Hall hire holds no Crucible, so its
+Evolution is still read off level (`rollLevelProgression`, `src/run/enemyGen.ts`) — the same
+equivalence `enemyScrollsForLevel` uses for Mastery Rank. Without it a level-1 enemy would arrive
+evolved. Phase 5 revisits what a hire arrives as.
 
 > **Scope note, not a contradiction of `CLAUDE.md`.** `CLAUDE.md` describes evolution
 > depth as varying by design — *Capstone = 0 Evolutions, Single = 1, Deep line = 2+*
@@ -307,19 +341,6 @@ presented with a **choice of three paths**, each with different pros and cons.
 > hero, ordered) already supports more than one node whenever that authoring work
 > happens; only the "every hero's first node sits at the same flat level" constraint
 > is the temporary part.
-
-## The level-up that reaches EVOLUTION_LEVEL does not offer a move (LOCKED)
-
-This is new behavior, not just a rename: **the level-up that brings a hero to
-`EVOLUTION_LEVEL` replaces that level-up's move offer with the Evolution choice.** No
-move is rolled or gained that level-up — the player picks a path instead. Below
-`EVOLUTION_LEVEL`, level-ups behave exactly as Part 1 describes. Once evolved, level-ups
-resume granting moves normally (or, if a later Evolution node exists for a Deep-line
-hero, the same suppression applies again at that node's level).
-
-> **Implemented (2026-08-16):** `src/run/progression.ts` `availableEvolution()` — the
-> caller (`LevelUpScreen.tsx`) checks it immediately after every `levelUpHero()` call
-> and skips the move roll entirely whenever it returns non-null.
 
 ## The three paths differ in kind, not degree (LOCKED)
 

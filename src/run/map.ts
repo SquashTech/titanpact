@@ -21,6 +21,7 @@ export const MAP_NODE_TYPES = [
   'passiveReward',
   'currencyReward',
   'forgeReward',
+  'crucibleReward',
   'classReward',
   'tutorReward',
   'event',
@@ -116,6 +117,13 @@ function rowWidthsFor(actNumber: number): number[] {
 /** The pick-1-of-3 width. The Tutor only ever seats in a reward row this wide. */
 const TUTOR_ROW_WIDTH = 3;
 
+/**
+ * The act from which a Crucible can appear on a reward row (2026-09-10, per user direction).
+ * Acts 1-2 already get one apiece off their own Guardian, and a roster still forming is not
+ * where a SECOND Evolution is the interesting pick.
+ */
+const CRUCIBLE_FIRST_ACT = 3;
+
 /** Reward-row pool. `classReward` and `tutorReward` are deliberately absent — each has its own forced seat. Weights are a first-pass balance. */
 const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // equipmentReward absorbs most of the frequency the three slot caches used to carry.
@@ -140,9 +148,34 @@ const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // further drop into a sell. Slots are what was taken and slots are what is handed back. The node
   // is also no longer half-dead on arrival — nobody starts one Forge from the cap any more.
   ['forgeReward', 38],
+  // The extra Crucible (docs/growth-overhaul.md §5). Scarce on purpose: five arrive free off the
+  // Guardians, and this is the sixth — the one that finishes a roster rather than starting it.
+  ['crucibleReward', 12],
   // FLAGGED FOR THE DESIGNER: 16 is an inference, not a decision — how often a run meets an event is a real tuning question.
   ['event', 16],
 ];
+
+/**
+ * The pool this act's reward rows actually roll from. The Crucible drops out below
+ * `CRUCIBLE_FIRST_ACT`, and out entirely when no hero has an Evolution left to take — a reward
+ * row is a pick of THREE, so a card nobody can spend is a third of the choice gone.
+ *
+ * It has to be filtered here rather than at the node, the way a type-locked Boon filters itself
+ * (`src/run/boons.ts`): a Boon rolls its offers when the player arrives, where a map rolls its
+ * nodes an act ahead. So the caller passes what it knows, and `generateMap` cannot answer it.
+ */
+function rewardPoolFor(actNumber: number, options: MapOptions): readonly [MapNodeType, number][] {
+  const crucible = actNumber >= CRUCIBLE_FIRST_ACT && options.evolutionsLeft !== false;
+  return crucible ? REWARD_WEIGHTS : REWARD_WEIGHTS.filter(([type]) => type !== 'crucibleReward');
+}
+
+export interface MapOptions {
+  /**
+   * Whether any roster hero still has an Evolution to take (`anyEvolutionAvailable`). Defaults to
+   * true, so a caller with no roster to consult — a test, a fixture — gets the full pool.
+   */
+  evolutionsLeft?: boolean;
+}
 
 /** Weighted sample WITHOUT replacement — a reward row never repeats a type. REWARD_WEIGHTS is wider than any row, so `count` is always satisfiable. */
 function pickWeightedDistinct(
@@ -200,7 +233,7 @@ function finaleMap(seed: number): RunMap {
  * repair pass so every node has an incoming edge. eliteRow/funnelRow/bossRow
  * are derived from the shape's length so the Mentor acts' extra row lands correctly.
  */
-export function generateMap(seed: number, actNumber: number = 1): RunMap {
+export function generateMap(seed: number, actNumber: number = 1, options: MapOptions = {}): RunMap {
   if (actNumber >= FINALE_ACT) return finaleMap(seed);
   const rowWidths = rowWidthsFor(actNumber);
   const bossRow = rowWidths.length - 1;
@@ -225,6 +258,7 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
     return 'boss';
   }
 
+  const rewardPool = rewardPoolFor(actNumber, options);
   let rng = createRng(seed);
 
   // The Tutor's seat is rolled BEFORE any row is generated, so its two draws sit at a fixed
@@ -258,7 +292,7 @@ export function generateMap(seed: number, actNumber: number = 1): RunMap {
       // A Tutor row rolls one fewer reward and the Tutor takes the freed seat rather than
       // overwriting a rolled one — the row still offers three distinct things.
       const forced = row === tutorRow ? 1 : 0;
-      const picked = pickWeightedDistinct(rng, REWARD_WEIGHTS, rowWidths[row] - forced);
+      const picked = pickWeightedDistinct(rng, rewardPool, rowWidths[row] - forced);
       rewardTypes = picked.values;
       rng = picked.nextState;
       if (forced) rewardTypes.splice(tutorCol, 0, 'tutorReward');

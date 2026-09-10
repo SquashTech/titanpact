@@ -15,10 +15,10 @@ don't silently override it.
 > cap 30), moves onto a **Mastery Scroll / Mastery Rank** currency, Evolutions onto **the
 > Crucible** at the act boundary, and **Gems are deleted**. That doc's §9 lists the invariants
 > scheduled for reversal; its §8 is the phase order and says which have landed.
-> **Phases 1-3 are DONE (2026-09-10): Gems are gone, moves come only from Mastery Scrolls,
-> and levels are automatic, roster-wide and cap 30.** Everything else below is still the rule in
-> force and the code still implements it. Read it before touching levelling, movepools,
-> Evolutions or reward nodes.
+> **Phases 1-4 are DONE (2026-09-10): Gems are gone, moves come only from Mastery Scrolls,
+> levels are automatic and cap 30, and Evolutions come from the Crucible.** Everything else
+> below is still the rule in force and the code still implements it. Read it before touching
+> levelling, movepools, Evolutions or reward nodes.
 
 ---
 
@@ -141,6 +141,21 @@ don't silently override it.
   The move-pool floor is now **`SCROLLS_PER_RANK` per offerable set** (`movePoolFloor`,
   `test/moveTiers.test.ts`): Scrolls make offers-per-hero player-controlled, so no depth can
   promise a pool "cannot be emptied" the way the old curve-derived margin did.
+- **Evolutions come from the CRUCIBLE, never from a level** (2026-09-10, Growth Overhaul
+  phase 4). The Crucible picks **ONE** hero, and that hero evolves. It is a **beat in the
+  act-boundary chain** — *Guardian falls → Banner → Crucible → Pact Seal → act intro* — not a map
+  row: acts 1-4 already run nine rows and a tenth is not affordable. Team, hero, run: three
+  scales ascending. **Non-bankable**, because a turning point is decided now.
+  **Five forced a run** (one per act's Guardian) plus the `crucibleReward` node, which appears
+  **from act 3 only** and is filtered out of the map roll entirely when no roster hero has an
+  Evolution left (`CRUCIBLE_FIRST_ACT`, `rewardPoolFor`, `src/run/map.ts`) — a reward row is a
+  pick of three, so a card nobody can spend is a third of the choice gone.
+  `EVOLUTION_LEVEL` **gates nothing**; it survives only as authored data. The move was forced,
+  not preferred: under automatic roster-wide levelling every hero crosses any threshold on the
+  same fight, so a level trigger IS a six-decision wall. A generated hero — an enemy, a Guild
+  Hall hire — holds no Crucible, so ITS Evolution is still read off level (`rollLevelProgression`),
+  the same equivalence Mastery Rank uses. `src/view/run/CrucibleScreen.tsx`,
+  `docs/growth-overhaul.md` §5.
 - **Evolutions are authored branch points**, each option carrying a **single
   identifiable name** (e.g. Cinder's Explosive / Ironclad / Thunderblaze).
   **All 36 heroes are on the five-clause Evolution framework** as of 2026-09-05 — no
@@ -375,7 +390,7 @@ authored roster.
   **`authoring-moves.md` is a runbook, not a design module** — read it before implementing
   a designed slate of moves for a type (1 type still to go — Ancient; Fire
   and Water are the worked examples, and §10 carries all fourteen hand-offs).
-  **`growth-overhaul.md` is a destination plus a route, and only phases 1-3 of §8 are built** —
+  **`growth-overhaul.md` is a destination plus a route, and only phases 1-4 of §8 are built** —
   the replacement for levelling, movepool gating and Evolutions. Check §8 before assuming.
 - `/prototypes/` — the two slices above, as behavioral reference.
 - `/src/engine/` — the pure resolution engine + the six contracts.
