@@ -515,6 +515,36 @@ export function mergeResultId(item: EquipmentDefinition, keepEnchantId?: Enchant
   return equipmentIdFor(item.familyId, up, keepEnchantId);
 }
 
+/**
+ * Which bag slots have a partner sitting in the bag with them (2026-09-10, per user direction).
+ * Lives here rather than on the Roster screen because the MAP asks the same question — its one
+ * footer button says what is waiting behind it, and a free tier is as much "waiting" as an
+ * unopened item is (view/run/mapFooter.ts).
+ *
+ * The act window is part of the answer, not a filter on it: a pair that cannot reach its next tier
+ * in this act is not a merge yet, and must not be announced as one.
+ */
+export function mergeablePairIndices(
+  stash: Stash,
+  lookup: Record<string, EquipmentDefinition>,
+  actNumber: number
+): Set<number> {
+  const marked = new Set<number>();
+  for (let a = 0; a < stash.length; a++) {
+    const left = lookup[stash[a]];
+    if (!left) continue;
+    const up = nextRarity(left.rarity);
+    if (!up || !actAllowsRarity(actNumber, up)) continue;
+    for (let b = a + 1; b < stash.length; b++) {
+      const right = lookup[stash[b]];
+      if (!right || !canMergeItems(left, right)) continue;
+      marked.add(a);
+      marked.add(b);
+    }
+  }
+  return marked;
+}
+
 /** The enchants a merge may keep — at most one, so two enchanted inputs pose a choice and two plain ones pose none. */
 export function mergeEnchantChoices(a: EquipmentDefinition, b: EquipmentDefinition): EnchantmentId[] {
   const choices = [a.enchantId, b.enchantId].filter((id): id is EnchantmentId => id !== undefined);

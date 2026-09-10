@@ -174,6 +174,21 @@ const HUB_PATHS = {
       <rect x="3.4" y="18.2" width="17.2" height="3.4" rx="1.7" />
     </>
   ),
+  // The bag, on the Roster sheet's tray (2026-09-10, per user direction — it was a 🎒 emoji, the
+  // last one left on the screen and the only mark on it drawn in a different hand from everything
+  // else). A bevelled PIECE sitting on a tray, not a satchel: three satchels were drawn first and
+  // every one of them read as an anvil or a padlock at 16px, where a 24-unit grid gives 0.67px a
+  // unit and a flap seam is under a pixel. This says what the panel holds rather than what it is,
+  // in the exact silhouette the pieces below it are cut to (styles.css .item-piece).
+  bag: (
+    <>
+      <path
+        fillRule="evenodd"
+        d="M8.4 1.8h7.6l3 3v7.6l-3 3H8.4l-3-3V4.8Zm1 2.4-1.6 1.6v5.6l1.6 1.6h5.6l1.6-1.6V5.8l-1.6-1.6Z"
+      />
+      <path d="M4.6 16.4h14.8l2.6 5.8H2Z" />
+    </>
+  ),
   // Same hamburger as FightScreen's `☰` Menu key.
   menu: (
     <>

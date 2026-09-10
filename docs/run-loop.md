@@ -650,8 +650,16 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   **Stacking** needs no new mechanism: duplicate relic ids already sum in
   `relicTeamStatModifiers`. What is new is how a stack is *written* — one card named
   `Banner of Vitality +2` carrying the summed `+90 HP`, rather than three identical cards
-  (`src/view/shared/relicStacks.ts`, used by `RunRelicsPanel` and `RosterPeek`). The suffix
-  counts copies **beyond the first**, the upgrade-pip convention: 3 copies reads "+2". Like
+  (`src/view/shared/relicStacks.ts`, used by `RosterPeek` and the map's Banner shelf). The suffix
+  counts copies **beyond the first**, the upgrade-pip convention: 3 copies reads "+2".
+
+  **Where a raised Banner lives (2026-09-10, per user direction):** the bottom-right of the map
+  well, flying opposite the location placard (`BannerShelf.tsx`). It was a rail across the top of
+  the Roster sheet listing all five held or not, which was there so spread-vs-commit would be
+  visible from act 1 — but that decision is taken on this screen, which shows all five anyway, so
+  the rail was charging the gear board its whole first fold to restate a choice already made. The
+  shelf shows only what is HELD, with a count past one; an act-1 run flies nothing, which is
+  correct. See `docs/equipment.md` §9.3 for what the freed room went to. Like
   every relic, a banner applies to heroes obtained before *and* after it — the grant is
   broadcast to the side at fight-build time (`entryStats.ts`), never written onto a hero.
 

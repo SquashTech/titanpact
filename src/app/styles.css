@@ -7540,11 +7540,24 @@ textarea,
 }
 
 .stash-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-dim);
+}
+
+/* The satchel (nodeIcons.tsx HUB_PATHS.bag). It was a 🎒 emoji until 2026-09-10 — the last one
+   on the screen, drawn by a font in a different hand from every other mark in the run, and at a
+   size where the platform's own colour version fought the panel it sat on. */
+.stash-label-glyph {
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
+  opacity: 0.85;
 }
 
 .stash-count {
@@ -7816,25 +7829,22 @@ textarea,
   border-top-color: var(--accent);
 }
 
-/* --- Equipment focus mode (2026-09-07, per user direction) ----------------
-   Picking an item up turns Manage Roster into one question — where does this
-   go — and everything that is not an answer recedes: the relic rails fade out
-   under the item's own readout, the bag's header dims, and a hero that cannot
-   take it fades most of the way out. What stays lit is the readout at the top
-   and the slots the item can land in.
-
-   NOTHING MOVES. The readout is laid over the rails in their exact footprint
-   rather than swapped into the flow, so picking an item up does not shift the
-   roster under a thumb that is mid-gesture, and picking a two-passive Mythic
-   up shifts it no differently from a bare Common. That is what the fixed
-   block and the card's `overflow: hidden` are for; the descriptions inside it
-   clamp rather than push. */
-.roster-top-block {
-  position: relative;
-  flex: none;
+/* A full hero the item can still go to — the tap opens the swap window rather
+   than seating it, so the edge is stated more quietly than a free seat's. */
+.roster-mgmt-card.can-swap {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  border-top-color: color-mix(in srgb, var(--accent) 45%, var(--border));
 }
 
-.run-relics-panel,
+/* --- Carry mode ----------------------------------------------------------
+   A piece in hand turns Manage Roster into one question — where does this go —
+   and everything that is not an answer recedes: the bag's header dims, and a
+   hero that cannot take it fades most of the way out. What stays lit is the
+   piece under the finger and the sockets it can land in.
+
+   NOTHING MOVES when a piece is lifted. The readout it used to raise is now the
+   panel HEADER's own text (.roster-held), which is a swap in place rather than a
+   block appearing — so a thumb mid-gesture never has the board shift under it. */
 .roster-mgmt-card,
 .roster-mgmt-head,
 .stash-label,
@@ -7843,21 +7853,16 @@ textarea,
   transition: opacity var(--dur-mid) var(--ease-out);
 }
 
-.roster-panel.is-focused .run-relics-panel {
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* Held down even on a card that CAN take the item: the identity still has to be
-   readable — it is how the player picks — but the slots are what the screen is
+/* Held down even on a card that CAN take the piece: the identity still has to be
+   readable — it is how the player picks — but the sockets are what the screen is
    asking about, and they only read as the lit thing if the head is not. */
 .roster-panel.is-focused .roster-mgmt-head {
   opacity: 0.5;
 }
 
-/* Not a destination for THIS item — it already holds a copy, or it is where
-   the item came from. Left visible enough to keep the squad's shape readable,
-   dim enough that it is never mistaken for a target. */
+/* Not a destination for THIS piece — it already holds a copy, or it is where the
+   piece came from. Left visible enough to keep the squad's shape readable, dim
+   enough that it is never mistaken for a target. */
 .roster-panel.is-focused .roster-mgmt-card.is-inert {
   opacity: 0.26;
 }
@@ -7868,104 +7873,20 @@ textarea,
   opacity: 0.4;
 }
 
-/* A full hero the item can still go to — the tap opens the swap window rather
-   than seating it, so the edge is stated more quietly than a free seat's. */
-.roster-mgmt-card.can-swap {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
-  border-top-color: color-mix(in srgb, var(--accent) 45%, var(--border));
-}
-
-/* Every landing spot, lit. The plain `.item-box.drop-target` border is enough
-   on a full screen; against a faded one the ring is what makes the slots read
-   as the only live thing left. */
+/* Every landing spot, lit. The plain `.item-box.drop-target` border is enough on a
+   full screen; against a faded one the ring is what makes the sockets read as the
+   only live thing left. */
 .roster-panel.is-focused .item-box.drop-target {
   box-shadow: 0 0 0 1px var(--accent), 0 0 12px rgba(224, 166, 60, 0.35);
 }
 
-/* The held item, over the rails it hides. */
-.equip-focus-bar {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px;
-  overflow: hidden;
-  background: var(--surface-raised);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius-md);
-  box-shadow: var(--hairline), var(--elev-2), 0 0 20px rgba(224, 166, 60, 0.16);
-  animation: equip-cache-fade-up 0.2s var(--ease-out);
-}
-
-/* Takes whatever the block has and gives the overflow to the effect list,
-   which is the only part that can run long. */
-.equip-focus-bar .item-readout {
-  flex: 1;
-  min-height: 0;
-  gap: 5px;
-  /* Centred, because the block's height is fixed and most items do not fill it:
-     a Common's two chip rows pinned to the top of a 214px card read as a form
-     that failed to load. */
-  justify-content: center;
-}
-
-.equip-focus-bar .equip-spotlight-passives {
-  min-height: 0;
-  overflow: hidden;
-}
-
-/* Tightened, and two lines of prose each — never three. The card has one
-   height whatever it holds, so a Mythic's SECOND effect has to fit beside the
-   first rather than push it out; the whole text is a hold away on the item
-   itself. This is the glance, not the manual. */
-.equip-focus-bar .equip-spotlight-passive {
-  padding: 5px 8px;
-}
-
-.equip-focus-bar .equip-spotlight-passive-desc {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
-  font-size: 10px;
-  line-height: 1.35;
-}
-
-.equip-focus-actions {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.equip-focus-hint {
-  flex: 1;
-  min-width: 0;
-  font-size: 10px;
-  font-style: italic;
-  line-height: 1.35;
-  color: var(--text-dim);
-}
-
-/* Putting the item back down. Plain-edged beside the gold Sell: one of these
-   spends the item and the other does nothing, and they sit side by side. */
-.equip-focus-cancel {
-  flex: none;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 600;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
-  color: var(--text-dim);
-  cursor: pointer;
-}
-
-.equip-focus-cancel:hover {
-  border-color: var(--border-strong);
-  color: var(--text);
+/* The card the piece is actually over. A whole card lighting up is the confirmation
+   a 46px socket cannot give under a thumb that is covering it. */
+.roster-mgmt-card.is-over {
+  border-color: var(--accent);
+  border-top-color: var(--accent);
+  background: linear-gradient(165deg, color-mix(in srgb, var(--accent) 16%, var(--panel-alt)), var(--panel) 78%);
+  box-shadow: var(--hairline), var(--elev-2), 0 0 18px -4px var(--accent);
 }
 
 /* Identity beside the slots, not above them (2026-09-07). At 38px boxes a stacked card was
@@ -8021,18 +7942,17 @@ textarea,
   gap: 4px;
 }
 
-/* Wide as the column, but capped short of square (2026-09-07). Three card rows of
-   square boxes was the single largest block on the sheet, and the sheet now has to
-   land on one screen with the Close button pinned under it. 46px is still over the
-   48px touch minimum once the card's own padding is counted as slop. */
+/* Square, at whatever width the column gives it (2026-09-10). It was capped at 46px tall while
+   this sheet had a Banner rail on top of it and had to land on one screen; the rail is on the map
+   now, so the sockets take the column back and a piece is an object rather than a chip. */
 .roster-mgmt-card .equip-slot-row .item-box {
   width: auto;
-  height: 46px;
-  aspect-ratio: auto;
+  height: auto;
+  aspect-ratio: 1;
 }
 
 .roster-mgmt-card .equip-slot-row .item-box-icon {
-  font-size: 20px;
+  font-size: 23px;
 }
 
 /*
@@ -8048,7 +7968,7 @@ textarea,
   /* 38 -> 48px (2026-09-07, per user direction). 48 is the standard minimum touch target, and
      the box now has to carry a tier pip band under the glyph as well as the glyph. */
   --item-box-size: 48px;
-  --item-box-pip: 3px;
+  --item-box-pip: 3.5px;
   position: relative;
   display: flex;
   align-items: center;
@@ -8056,25 +7976,101 @@ textarea,
   flex: none;
   width: var(--item-box-size);
   height: var(--item-box-size);
-  padding: 0;
+  padding: 3px;
   background: var(--surface-sunken);
-  border: 1px dashed var(--border);
+  border: 1px solid var(--border-sunken, var(--border));
   border-radius: var(--radius-xs);
   color: var(--text-dim);
   cursor: pointer;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.45);
-  transition: border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out);
+  /* Deep, because the socket is a HOLE — the piece that lands in it is the thing with a
+     top-light on it, and the depth is the whole of what makes the two read as different
+     kinds of object rather than as filled and empty states of one box. */
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+  transition: border-color var(--dur-mid) var(--ease-out), background var(--dur-mid) var(--ease-out),
+    box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
+/* An empty socket's mount marks: two short brackets on the inner corners, so a hole looks
+   MACHINED rather than merely absent. Replaces the dashed border, which was reading as a
+   disabled form field on a screen that is otherwise all hardware. */
+.item-box.empty::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  opacity: 0.55;
+  /* Only the four corners survive, so the mark is four L-cuts — a fitting — rather than the
+     dashed rectangle this used to be, which read as a disabled form field. */
+  -webkit-mask: radial-gradient(circle 9px at 0 0, #000 99%, transparent), radial-gradient(circle 9px at 100% 0, #000 99%, transparent),
+    radial-gradient(circle 9px at 0 100%, #000 99%, transparent), radial-gradient(circle 9px at 100% 100%, #000 99%, transparent);
+  mask: radial-gradient(circle 9px at 0 0, #000 99%, transparent), radial-gradient(circle 9px at 100% 0, #000 99%, transparent),
+    radial-gradient(circle 9px at 0 100%, #000 99%, transparent), radial-gradient(circle 9px at 100% 100%, #000 99%, transparent);
+  pointer-events: none;
+}
+
+/* A filled socket adds only a whisper of its piece's colour to the WELL. Everything else a
+   held item says, it says with the piece. */
 .item-box.filled {
-  border-style: solid;
-  border-color: var(--border);
-  border-left: 3px solid var(--rarity-color, var(--border));
+  border-color: color-mix(in srgb, var(--rarity-color, var(--border)) 24%, var(--border));
   color: var(--text);
-  background: var(--surface-raised);
-  /* Faint rarity bloom, so a legendary/mythic piece is spottable across a six-hero
-     roster. Deliberately weak — rarity is a nice-to-know, not the primary signal. */
-  box-shadow: var(--hairline), var(--elev-1), 0 0 10px -4px var(--rarity-color, transparent);
+}
+
+/* --- The piece (EquipmentBox.tsx ItemPiece) -------------------------------
+   A cut chit that SITS IN the socket: corners bevelled off, a facet running down from the
+   top-left, a lit top edge, and its own cast shadow. It exists apart from the socket because
+   the identical element is what flies under the finger during a carry (.gear-carry) — one
+   object, picked up and put down, rather than a cell whose contents change.
+
+   `filter: drop-shadow` rather than box-shadow: the bevel is a clip-path, and a box-shadow is
+   drawn on the unclipped box. */
+.item-piece {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  /* The bevel. 7px off each corner is what makes the chit read as CUT at 46px rather than as a
+     rounded rectangle — under that it disappears, over it the silhouette starts losing area. */
+  clip-path: polygon(7px 0, calc(100% - 7px) 0, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0 calc(100% - 7px), 0 7px);
+  /* Colour tokens only, never `var(--surface-raised)`: that token is itself a gradient, so a
+     color-mix() against it is invalid and takes the whole `background` down with it — silently,
+     leaving a transparent piece that looks merely dark. */
+  background: linear-gradient(
+    152deg,
+    color-mix(in srgb, var(--rarity-color, var(--border)) 52%, #cdd5e2),
+    color-mix(in srgb, var(--rarity-color, var(--border)) 40%, #39404f) 44%,
+    color-mix(in srgb, var(--rarity-color, var(--border)) 26%, var(--panel)) 100%
+  );
+  /* Two shadows: the cast one puts the piece ABOVE the socket, the coloured one is the tier's own
+     heat. Drop-shadow rather than box-shadow — the bevel is a clip-path, and box-shadow is drawn
+     on the unclipped box. */
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.75))
+    drop-shadow(0 0 7px color-mix(in srgb, var(--rarity-color, transparent) 45%, transparent));
+}
+
+/* The lit top-left facet — one triangle of brighter cloth. Without it the chit is a tinted
+   rectangle; with it the bevel has a direction the light comes from. */
+.item-piece-facet {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(146deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.07) 38%, transparent 52%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.32), transparent 42%);
+  pointer-events: none;
+}
+
+/* The rim: bright along the top and the tier's colour along the foot, so a Mythic's edge is
+   visibly hotter than a Common's at a glance across a full bag. */
+.item-piece::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid color-mix(in srgb, var(--rarity-color, var(--border)) 75%, #ffffff);
+  border-bottom-width: 3px;
+  border-bottom-color: color-mix(in srgb, var(--rarity-color, var(--border)) 80%, #000000);
+  clip-path: inherit;
+  pointer-events: none;
 }
 
 .item-box-icon {
@@ -8082,6 +8078,15 @@ textarea,
   line-height: 1;
   /* Lifted by half the pip band so the glyph stays optically centred in what is left. */
   transform: translateY(calc(var(--item-box-pip) * -1));
+}
+
+/* On a piece the silhouette is STAMPED, not printed: dark ink with a one-pixel light edge under
+   it, which is what an emblem struck into metal does. It also fixes the one case a light-on-light
+   glyph could not survive — a Common, whose body is the palest in the set. */
+.item-piece .item-box-icon {
+  position: relative;
+  color: rgba(10, 12, 17, 0.86);
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.26));
 }
 
 /* Which element an enchant feeds, in the box's top-right corner. An enchanted item
@@ -8129,12 +8134,15 @@ textarea,
   pointer-events: none;
 }
 
+/* The piece's foot is its darkest band (the facet's lower wash), so the pips there run LIGHT —
+   the reverse of the silhouette above them, which is stamped dark into the pale top. A pip in the
+   bare tier colour was tried and disappeared into a body carrying that same hue. */
 .item-box-pips i {
   width: var(--item-box-pip);
   height: var(--item-box-pip);
   border-radius: 50%;
-  background: var(--rarity-color, var(--border));
-  box-shadow: 0 0 3px -1px var(--rarity-color, transparent);
+  background: color-mix(in srgb, var(--rarity-color, var(--border)) 45%, #ffffff);
+  box-shadow: 0 0 3px -1px rgba(0, 0, 0, 0.9);
 }
 
 .item-box.empty .item-box-icon {
@@ -8147,14 +8155,153 @@ textarea,
   background: var(--selected-fill);
 }
 
+.item-box.selected .item-piece {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 9px var(--accent));
+}
+
 /* Every slot a selected item could be sent to. */
 .item-box.drop-target {
   border-color: var(--accent);
 }
 
-.item-box.drag-over {
+/* --- Carrying ------------------------------------------------------------
+   The socket a piece was lifted OUT of stands open: the piece is gone from it (it is under
+   the finger), and what is left is the hole plus a faint outline of what belongs there. */
+.item-box.is-lifted .item-piece {
+  opacity: 0.14;
+  filter: none;
+}
+
+.item-box.is-lifted {
+  border-color: var(--accent);
+  border-style: dashed;
+}
+
+/* The socket the piece is over. It OPENS to take it: the well brightens, the ring fires, and
+   the whole box swells a touch — at 46px under a thumb, scale is the only cue that survives
+   being covered. */
+.item-box.is-over {
   border-color: var(--accent);
   background: var(--selected-fill);
+  transform: scale(1.09);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5), 0 0 0 2px var(--accent), 0 0 18px -2px var(--accent);
+}
+
+/* The piece in the air. Portalled to the shell (overlayHost) and positioned at the pointer, so
+   it is over every panel on the screen and clipped by none of them.
+
+   Bigger and tilted: a piece that has been picked up should not look like the piece still in
+   its socket at a different position. The tilt is what sells "held" over "moved". */
+.gear-carry {
+  position: fixed;
+  /* The piece is drawn outside any .item-box here, and the glyph and pip sizes are read off that
+     box (--item-box-size). Undeclared they are INVALID rather than absent, which silently drops the
+     silhouette to inherited font-size and the pips to zero width. */
+  --item-box-size: 46px;
+  --item-box-pip: 3.5px;
+  z-index: 90;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(1.34) rotate(-7deg);
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.7));
+  animation: gear-carry-lift 0.16s var(--ease-out);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+/* Over somewhere it can land, the piece squares up and settles — the same body language as a
+   part lining up with its slot. */
+.gear-carry.is-landing {
+  transform: translate(-50%, -50%) scale(1.14) rotate(0deg);
+}
+
+.gear-carry .item-piece {
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--rarity-color, transparent) 70%, transparent));
+}
+
+@keyframes gear-carry-lift {
+  from {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+}
+
+/* --- Merging (docs/equipment.md §5) --------------------------------------
+   A pair sitting in the bag is the one free upgrade in the run, and until now it announced
+   itself only once one half was already in hand. Two states, one mark: `can-merge` is the pair
+   waiting at rest, `merge-target` is the same pair with the other half in the player's hand —
+   so the second is the first turned up, not a different language. Both are cut in the tier the
+   merge would REACH, because that is the thing being offered. */
+.item-box.can-merge {
+  border-color: color-mix(in srgb, var(--merge-color, var(--accent)) 46%, var(--border));
+}
+
+.item-box-merge {
+  position: absolute;
+  color: var(--merge-color, var(--accent));
+  right: -3px;
+  bottom: -3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--panel);
+  box-shadow: 0 0 0 1.5px currentColor, 0 0 9px -2px currentColor;
+  pointer-events: none;
+}
+
+.item-box-merge .merge-mark {
+  width: 10px;
+  height: 10px;
+}
+
+.item-box.merge-target {
+  border-color: var(--merge-color, var(--accent));
+  transform: scale(1.05);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5), 0 0 0 2px var(--merge-color, var(--accent)),
+    0 0 20px -2px var(--merge-color, var(--accent));
+}
+
+.item-box.merge-target .item-box-merge {
+  animation: merge-mark-beat 0.9s var(--ease-out) infinite;
+}
+
+.item-box.merge-target .item-piece {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 11px var(--merge-color, var(--accent)));
+}
+
+@keyframes merge-mark-beat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.28);
+  }
+}
+
+/* The bag's own count of what is pairable, beside what it holds. */
+.stash-merge-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px 1px 5px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.stash-merge-flag .merge-mark {
+  width: 11px;
+  height: 11px;
+}
+
+/* The bag as a whole, when there is something free sitting in it. Faint — the per-box marks
+   are the instruction; this is only what makes the panel worth a second look. */
+.stash-panel.has-merge {
+  border-color: color-mix(in srgb, var(--accent) 26%, var(--border));
 }
 
 /* Never opened. The corner dot is the whole mark — a box already carries rarity in its
@@ -10991,155 +11138,6 @@ textarea,
   display: flex;
   gap: 6px;
   margin-top: 4px;
-}
-
-/* --- The team-wide panel (RunRelicsPanel.tsx) -----------------------------
-   The Banners, at the top of the Roster sheet's one scroll rather than behind
-   a map button of their own (2026-09-07). The family lists in full, held or
-   not — an unheld one is a slot to fill, not an absence.
-
-   Icon-and-count chips, NOT cards or even names: twelve of anything wordier
-   filled the whole first screen and pushed the roster — the interactive half of
-   this sheet — below the fold. A tap opens the one the player is deciding
-   about (.relic-summary-*). */
-
-.run-relics-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-/* Each family is its OWN section, label above its chips (2026-09-07, per user
-   direction): the two words were columned beside the rails, which squeezed
-   twelve of the sheet's smallest tap targets into two thin lines. The roster
-   screen has vertical room to spare, so it goes into the buttons. */
-.relic-rail-row {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.relic-rail-label {
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  font-weight: 700;
-}
-
-/* The wrap row centres, so a short one reads as deliberate rather than as a chip
-   left hanging. The five Banners fit one line; the whole sheet has to land on one
-   screen with no scroll, so a second family added here is where that budget would
-   be won or lost. */
-.relic-rail {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-}
-
-/* Five across, exactly the family's size — one line, never a lone sixth. */
-.relic-rail.is-banners .relic-pill {
-  flex-basis: calc(20% - 4.8px);
-}
-
-
-/* Each tile is CUT IN THE RELIC'S OWN COLOUR rather than in the panel gray it
-   used to wear (2026-09-08, per user direction). Twelve identical gray boxes
-   with twelve different marks in them made the mark do all the work; carrying
-   the hue into the fill, the border and the underglow means the rail can be
-   read at a glance as "three reds and a green", which is what a player is
-   actually asking it. */
-.relic-pill {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  flex: 0 0 calc(25% - 4.5px);
-  min-height: 56px;
-  padding: 5px 4px 3px;
-  overflow: hidden;
-  background: linear-gradient(
-    165deg,
-    color-mix(in srgb, var(--relic-color, var(--magical)) 22%, var(--panel-alt)),
-    var(--panel) 78%
-  );
-  border: 1px solid color-mix(in srgb, var(--relic-color, var(--magical)) 32%, var(--border));
-  border-radius: var(--radius-sm);
-  box-shadow:
-    var(--hairline),
-    var(--elev-1),
-    inset 0 -14px 20px -14px color-mix(in srgb, var(--relic-color, var(--magical)) 75%, transparent);
-  color: var(--text);
-  cursor: pointer;
-  transition: border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out),
-    box-shadow var(--dur-fast) var(--ease-out);
-}
-
-/* The lit top edge, in the relic's colour — the one detail that separates a
-   tinted rectangle from something with a light on it. */
-.relic-pill::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 14%;
-  right: 14%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--relic-color, var(--magical)) 85%, #ffffff), transparent);
-  pointer-events: none;
-}
-
-.relic-pill:hover {
-  border-color: color-mix(in srgb, var(--relic-color, var(--magical)) 70%, #ffffff);
-  transform: translateY(-1px);
-  box-shadow:
-    var(--hairline-strong),
-    var(--elev-2),
-    inset 0 -14px 20px -14px color-mix(in srgb, var(--relic-color, var(--magical)) 85%, transparent);
-}
-
-.relic-pill:active {
-  transform: translateY(0);
-}
-
-/* Unheld: the colour drains out and the tile sinks, so a held one reads as lit
-   from across the screen. Still tappable — a player can read what a Banner they
-   have not raised would pay. */
-.relic-pill.is-empty {
-  background: var(--surface-sunken);
-  border-color: var(--border-sunken);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
-  opacity: 0.5;
-}
-
-.relic-pill.is-empty::before {
-  display: none;
-}
-
-.relic-pill-art {
-  font-size: 27px;
-}
-
-.relic-pill.is-empty .relic-pill-art {
-  filter: grayscale(0.75);
-}
-
-.relic-pill-count {
-  font-size: 13px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  min-width: 1ch;
-  text-align: center;
-  color: color-mix(in srgb, var(--relic-color, var(--magical)) 45%, #ffffff);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
-}
-
-.relic-pill.is-empty .relic-pill-count {
-  color: var(--text-dim);
-  text-shadow: none;
 }
 
 /* --- What a chip's tap opens. Same .move-popup-panel box every other tap-to-read
@@ -22143,6 +22141,12 @@ textarea,
   bottom: 2px;
 }
 
+/* The bevel is authored in px against a ~46px socket; on a 30px one the same 7px takes a quarter
+   of each edge and the piece stops reading as a square with its corners off. */
+.roster-mgmt-grid.is-compact .item-piece {
+  clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
+}
+
 /* --- The swap window (EquipSwapScreen) -----------------------------------
    2026-09-07, per user direction. Handing an item to a hero whose slots are
    all full is the only equip decision that COSTS something, and it was the
@@ -22469,14 +22473,17 @@ textarea,
    inside a full-height column, so a short roster leaves its slack in the MIDDLE rather than under
    the thing being tapped. */
 
+/* The board CENTRES in whatever it is given (2026-09-10, per user direction). The Banners left
+   this screen and their ~130px became a dead band between the squad and the bag, because the bag
+   was pinned to the foot and the squad to the head. Stretching the cards into it was tried and
+   is worse — six cards with a hole in the middle of each. Split evenly, the slack reads as margin
+   rather than as a gap, and a bag long enough to overflow still scrolls as it always did. */
 .gear-board {
   display: flex;
   flex-direction: column;
+  justify-content: safe center;
+  gap: 10px;
   min-height: 100%;
-}
-
-.gear-board .stash-panel {
-  margin-top: auto;
 }
 
 /* --- The Mastery board (MasteryBoard.tsx) ----------------------------------------------------
@@ -22906,5 +22913,384 @@ textarea,
 
   .level-up-row.is-capped.is-shown {
     opacity: 0.5;
+  }
+}
+
+/* --- The gear board, second pass (2026-09-10, per user direction) ---------------------------
+   Everything below is the redesign that turned Manage Roster's boxes into PIECES and its rows
+   into hardware: the mount a hero's sockets are set into, the panel header that reads out
+   whatever is in hand, and the shelf the Banners moved to on the map. The socket and the piece
+   themselves live up with .item-box, beside the states they share with every other screen. */
+
+/* The rig a hero's sockets are set into. Three boxes loose on a card read as table cells; the
+   same three inside one recessed strip with corner brackets read as a hero's kit — and the strip
+   is also what makes an EMPTY socket look like a fitting waiting on a part rather than a gap in
+   a layout. */
+.equip-mount {
+  position: relative;
+  padding: 4px;
+  border-radius: var(--radius-xs);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.16));
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5), inset 0 -1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Corner brackets, in the hero's own type colour. Four L-cuts made from one masked border —
+   the same trick the empty socket's mount marks use, one size up. */
+.equip-mount::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border: 1.5px solid var(--hero-color, var(--border));
+  border-radius: 3px;
+  opacity: 0.5;
+  /* One mask, not two intersected: only the four CORNERS survive, so what is left is four L-cuts
+     rather than a thin rectangle with gaps in it. The radial stops are the corner radius. */
+  -webkit-mask: radial-gradient(circle 11px at 0 0, #000 99%, transparent), radial-gradient(circle 11px at 100% 0, #000 99%, transparent),
+    radial-gradient(circle 11px at 0 100%, #000 99%, transparent), radial-gradient(circle 11px at 100% 100%, #000 99%, transparent);
+  mask: radial-gradient(circle 11px at 0 0, #000 99%, transparent), radial-gradient(circle 11px at 100% 0, #000 99%, transparent),
+    radial-gradient(circle 11px at 0 100%, #000 99%, transparent), radial-gradient(circle 11px at 100% 100%, #000 99%, transparent);
+  pointer-events: none;
+}
+
+/* The mount lights when its hero is a live destination — the rig is what the piece is going
+   INTO, so it is the thing that should look ready to receive. */
+.roster-mgmt-card.can-take .equip-mount::before,
+.roster-mgmt-card.is-over .equip-mount::before {
+  opacity: 0.85;
+  border-color: var(--accent);
+}
+
+/* --- What is in hand, in the panel header ---------------------------------------------------
+   The carried item's readout used to be a card laid over the Banner rails. The Banners are on
+   the map now, so there is no block to lay it over — and reserving one would spend the room they
+   freed on an empty rectangle that is only ever filled mid-gesture. The header's title is simply
+   replaced by what is in hand, at the same height, which moves nothing and is also where the eye
+   already is. The full effect list stays a hold away on the piece itself. */
+.roster-panel-header {
+  min-height: 30px;
+}
+
+.roster-held {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  animation: roster-held-in 0.18s var(--ease-out);
+}
+
+.roster-held-piece {
+  flex: none;
+  --item-box-size: 26px;
+  --item-box-pip: 2.5px;
+  width: 26px;
+  height: 26px;
+}
+
+.roster-held-name {
+  flex: none;
+  font-size: 13px;
+  font-weight: 800;
+  color: color-mix(in srgb, var(--rarity-color, var(--text)) 55%, #ffffff);
+  white-space: nowrap;
+}
+
+/* What it grants, as marks. Scrolls rather than wraps: the header has one line, and a Mythic
+   carrying two passives and a Force is exactly the item worth reading here. */
+.roster-held-chips {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.roster-held-chips::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes roster-held-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+}
+
+/* --- The Banner shelf (BannerShelf.tsx) ------------------------------------------------------
+   The Banners left the Roster sheet on 2026-09-10 (per user direction) and fly here instead:
+   along the bottom-right of the map well, opposite the location placard. They only ever showed
+   what a Guardian had already handed over, and the sheet was charging its whole first fold for
+   that — while the map's bottom-right corner is scenery, and a Banner is a standard, which is a
+   thing you plant in a place.
+
+   Only what is HELD, folded with its count. An act-1 run flies nothing, which is correct. */
+.banner-shelf {
+  position: absolute;
+  right: 14px;
+  /* Level with the placard opposite it: the two are one caption line across the foot of the well,
+     what the place is on the left and what the run has taken on the right. */
+  bottom: 18px;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.banner-shelf-pole {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  /* No entrance animation, for the same reason .map-atmosphere .location-horizon has none: the map
+     is re-entered after every single node, and a standard that unfurls each time reads as a
+     transition rather than as something already planted. The cloth's own sway (relicArt.tsx) still
+     runs, staggered by --sway-delay so the row moves in one wind rather than in five. */
+  animation: none;
+}
+
+.banner-shelf-art {
+  font-size: 30px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.75));
+}
+
+.banner-shelf-pole:active .banner-shelf-art {
+  transform: translateY(1px);
+}
+
+/* The stagger the sway takes its beat from. */
+.banner-shelf-pole .banner-sway {
+  animation-delay: var(--sway-delay, 0ms);
+}
+
+/* Only past one — a lone standard's "1" is a number saying nothing. */
+/* Off the cloth's bottom-right corner rather than over it: the charge is what says WHICH Banner
+   this is, and a badge big enough to read is big enough to cover it on a 30px standard. */
+.banner-shelf-count {
+  position: absolute;
+  right: -2px;
+  bottom: 0;
+  min-width: 12px;
+  padding: 0 2px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid color-mix(in srgb, var(--relic-color, var(--accent)) 65%, transparent);
+  color: color-mix(in srgb, var(--relic-color, var(--accent)) 35%, #ffffff);
+  font-size: 8.5px;
+  font-weight: 800;
+  line-height: 11px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+/* --- What a merge MADE (MergeBurst.tsx) ------------------------------------------------------
+   Two pieces go in and one comes out, and the whole event used to be the bag quietly reshuffling
+   by one box — the strongest thing a player can do to an item, and the least legible. So the
+   result gets a beat: the inputs fly together, the new piece is struck out of them, and it states
+   the tier it climbed to and everything it grants. Nothing waits on it; it clears itself, and a
+   tap skips it. */
+.merge-burst {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  /* Nearly opaque. The result and its caption are the only things on the screen for a second and
+     a half, and a bag grid legible behind the words is a bag grid the eye reads instead of them. */
+  background: radial-gradient(ellipse 80% 45% at 50% 44%, color-mix(in srgb, var(--rarity-color) 14%, #0a0c12), #04050a 96%);
+  animation: merge-burst-fade 0.18s var(--ease-out);
+}
+
+.merge-burst-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 116px;
+  height: 116px;
+}
+
+/* The two inputs, thrown in from either side. They are the same piece drawn twice, because a
+   merge takes two of one thing — and drawing both is what makes the flash read as a collision
+   rather than as a reveal. */
+.merge-burst-input {
+  position: absolute;
+  --item-box-size: 46px;
+  --item-box-pip: 3.5px;
+  width: 46px;
+  height: 46px;
+  animation: merge-burst-close 0.42s cubic-bezier(0.55, 0, 0.85, 0.4) forwards;
+}
+
+.merge-burst-input.is-left {
+  --from-x: -74px;
+}
+
+.merge-burst-input.is-right {
+  --from-x: 74px;
+}
+
+/* The struck piece. Nothing until the inputs land on it, then it is hammered out at size. */
+.merge-burst-piece {
+  position: relative;
+  --item-box-size: 76px;
+  --item-box-pip: 5px;
+  width: 72px;
+  height: 72px;
+  opacity: 0;
+  animation: merge-burst-strike 0.6s var(--ease-out) 0.4s forwards;
+}
+
+.merge-burst-flash {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  opacity: 0;
+  animation: merge-burst-flash 0.34s var(--ease-out) 0.38s forwards;
+}
+
+/* Two rings off the strike point, the second late, so the shock reads as having a front. */
+.merge-burst-ring {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--rarity-color, var(--accent));
+  opacity: 0;
+  animation: merge-burst-ring 0.7s var(--ease-out) 0.4s forwards;
+}
+
+.merge-burst-ring.is-late {
+  animation-delay: 0.54s;
+}
+
+.merge-burst-caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  opacity: 0;
+  animation: merge-burst-caption 0.34s var(--ease-out) 0.62s forwards;
+}
+
+.merge-burst-name {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--rarity-color, var(--text)) 45%, #ffffff);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--rarity-color, transparent) 55%, transparent);
+}
+
+.merge-burst-rarity {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--rarity-color, var(--text-dim));
+}
+
+.merge-burst-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 9px;
+  max-width: 250px;
+  margin-top: 3px;
+}
+
+@keyframes merge-burst-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes merge-burst-close {
+  from {
+    transform: translateX(var(--from-x)) scale(1);
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  to {
+    transform: translateX(0) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes merge-burst-strike {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  38% {
+    opacity: 1;
+    transform: scale(1.22);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes merge-burst-flash {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(11);
+  }
+}
+
+@keyframes merge-burst-ring {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.35);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.5);
+  }
+}
+
+@keyframes merge-burst-caption {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* The whole beat is decoration over a change that has already landed, so a reduced-motion
+   reader gets the readout and none of the flight. */
+@media (prefers-reduced-motion: reduce) {
+  .merge-burst-input,
+  .merge-burst-flash,
+  .merge-burst-ring {
+    display: none;
+  }
+
+  .merge-burst-piece,
+  .merge-burst-caption {
+    opacity: 1;
+    animation: none;
+  }
+
+  .gear-carry {
+    animation: none;
   }
 }

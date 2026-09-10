@@ -9,6 +9,7 @@ import { HeroPortrait } from './HeroPortrait';
 import { TypeBadge } from './TypeBadge';
 import { ItemBox, slotBoxes } from './EquipmentBox';
 import { useLongPress } from './MoveTile';
+import { GEAR_SLOT_ATTR } from './useGearDrag';
 
 /**
  * One hero as a squad card: who they are, then their item slots as icon boxes underneath.
@@ -25,11 +26,8 @@ export interface SlotBoxProps {
   sfx?: string;
   onTap?: () => void;
   onLongPress?: () => void;
-  draggable?: boolean;
-  onDragStart?: (e: React.DragEvent) => void;
-  onDragOver?: (e: React.DragEvent) => void;
-  onDragLeave?: () => void;
-  onDrop?: (e: React.DragEvent) => void;
+  slotKey?: string;
+  onPointerDown?: (e: React.PointerEvent) => void;
 }
 
 interface HeroSlotCardProps {
@@ -45,6 +43,8 @@ interface HeroSlotCardProps {
   headLabel?: string;
   /** Per-slot wiring, index-addressed. Omit and the boxes are inert. */
   slotProps?: (index: number, item: EquipmentDefinition | null) => SlotBoxProps;
+  /** Stamps the whole CARD as a landing pad for a carried piece (useGearDrag). Omit and only its sockets are. */
+  dropKey?: string;
   /** Corner mark — the found-item gate's "Equip" / "Full" verdict. */
   badge?: ReactNode;
   /** Anything below the slot row. */
@@ -60,6 +60,7 @@ export function HeroSlotCard({
   onHeadLongPress,
   headLabel,
   slotProps,
+  dropKey,
   badge,
   footer,
 }: HeroSlotCardProps) {
@@ -86,7 +87,8 @@ export function HeroSlotCard({
   return (
     <div
       className={`roster-mgmt-card${className ? ` ${className}` : ''}`}
-      style={{ borderTopColor: getTypeColor(hero.types[0]) } as CSSProperties}
+      {...{ [GEAR_SLOT_ATTR]: dropKey }}
+      style={{ '--hero-color': getTypeColor(hero.types[0]), borderTopColor: getTypeColor(hero.types[0]) } as CSSProperties}
     >
       {badge}
       {onHeadTap || onHeadLongPress ? (
@@ -97,15 +99,21 @@ export function HeroSlotCard({
         <div className="roster-mgmt-head is-static">{head}</div>
       )}
 
-      <div className="equip-slot-row">
-        {boxes.map((itemId, index) => {
-          const item = itemId ? (equipmentLookup[itemId] ?? null) : null;
-          return <ItemBox key={index} item={item} {...(slotProps ? slotProps(index, item) : {})} />;
-        })}
-        {/* Not a slot yet — the Forge is what turns one of these into a box. */}
-        {Array.from({ length: locked }, (_, i) => (
-          <span key={`locked-${i}`} className="item-box is-locked" aria-hidden="true" />
-        ))}
+      {/* The sockets sit in a MOUNT — a recessed strip with corner brackets — rather than loose on
+          the card (2026-09-10, per user direction). Three boxes floating on a panel read as table
+          cells; the same three set into one piece of hardware read as a hero's rig, and the
+          hardware is also what makes an empty socket look like a hole worth filling. */}
+      <div className="equip-mount">
+        <div className="equip-slot-row">
+          {boxes.map((itemId, index) => {
+            const item = itemId ? (equipmentLookup[itemId] ?? null) : null;
+            return <ItemBox key={index} item={item} {...(slotProps ? slotProps(index, item) : {})} />;
+          })}
+          {/* Not a slot yet — the Forge is what turns one of these into a box. */}
+          {Array.from({ length: locked }, (_, i) => (
+            <span key={`locked-${i}`} className="item-box is-locked" aria-hidden="true" />
+          ))}
+        </div>
       </div>
 
       {footer}

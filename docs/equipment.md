@@ -365,3 +365,118 @@ The screen where gear moves, reworked alongside the family system.
   count says which is better, and two same-family Swords that refuse to merge read as a bug
   otherwise. Hidden on the 22px compact variant in the equip-compare row, which prints the tier
   in words anyway.
+
+## 9. The gear board as pieces (2026-09-10, per user direction)
+
+The second pass over Manage Roster. §8 made it *legible*; this makes it a thing you handle. Four
+changes, and the fourth is the one the other three were clearing room for.
+
+### 9.1 The carry is pointer-driven, and therefore exists
+
+The board was on HTML5 drag-and-drop — `draggable`, `dragstart`, `dataTransfer`. **None of that
+fires from a finger.** On the device this game is played on, "or drag it" had never worked; gear
+could only ever be tapped from box to box, and the drag half of the affordance was a desktop
+convenience nobody would see.
+
+`useGearDrag` (`src/view/shared/useGearDrag.tsx`) replaces it with pointer events, one gesture on
+both. Three readings share one `pointerdown`, separated by what happens next:
+
+| What follows | What it was |
+|---|---|
+| release without moving | a TAP — select, or place what is held |
+| ~500ms without moving | the long-press readout (`useLongPress` still owns it) |
+| movement past 7px | a CARRY, and the other two are cancelled |
+
+7px is deliberately under `useLongPress`'s 12px cancel, so a carry never also fires a hold.
+
+Two mechanics worth knowing before touching it:
+
+- **Hit-testing is `elementFromPoint` against a `data-gear-slot` attribute**, not per-slot pointer
+  events. The carried piece sits under the finger and would eat every one of them.
+- **The listeners are on `window`**, not the box. A real carry leaves the 46px box within its first
+  few pixels, and a captured pointer on the box still could not say what is *underneath* it.
+
+The whole hero CARD is a landing pad (`HeroSlotCard`'s `dropKey`, the slot ref `hero:<id>:-1`), not
+only its sockets — a 46px socket under a moving thumb is a smaller target than the thing it sits on.
+Dropping on a full hero raises the swap window exactly as tapping one does.
+
+### 9.2 A piece and a socket, not a filled box and an empty box
+
+`ItemPiece` splits out of `ItemBox`. That split is what lets the *same object* be drawn under the
+finger while it is carried, which is the whole of "gear is a game piece rather than a table cell".
+
+- **The piece** is a cut chit: a 7px corner bevel (`clip-path`), a body gradient mixing the tier
+  colour into a light slate, a lit top-left facet, a rim that is bright above and tier-dark below,
+  and its own cast shadow. Its silhouette is **stamped** — dark ink with a 1px light edge under it —
+  and its tier pips run **light**, because they sit on the piece's darkest band. Reversing either
+  makes a Common illegible, that being the palest body in the set.
+- **The socket** is a hole: sunken, with four corner L-cuts (a masked border) instead of the dashed
+  rectangle it used to wear, which read as a disabled form field.
+- **The mount** (`.equip-mount`) is the rig those sockets are set into — a recessed strip with
+  bracket corners in the hero's type colour, which lights when the hero is a live destination.
+
+> **Trap, and it costs an hour if you hit it.** `--surface` is not a defined token and
+> `--surface-raised` / `--surface-sunken` / `--selected-fill` are **gradients**. A `color-mix()`
+> against any of them is invalid, which invalidates the whole `background` declaration *silently* —
+> the element renders transparent and merely looks dark. Mix against `--panel`, `--panel-alt`,
+> `--well` or a literal.
+>
+> **Second trap.** `--item-box-size` and `--item-box-pip` are declared on `.item-box`. Anywhere a
+> piece is drawn loose — the carry overlay, the merge burst, the header readout — they must be
+> re-declared, or the silhouette silently drops to inherited font-size and the pips to zero width.
+
+### 9.3 The Banners left this screen for the map
+
+They were a rail across the top of the Roster sheet, showing all five held or not. That was so
+spread-vs-commit would be visible from act 1 — but the decision is taken on the Guardian's own
+1-of-5 screen, which shows all five anyway, so the rail was charging the gear screen its entire
+first fold to restate a choice already made.
+
+They now fly along the **bottom-right of the map well** (`BannerShelf.tsx`), opposite the location
+placard and level with it: what the place is on the left, what the run has taken on the right. The
+reading inverts with the move — only what is HELD, folded with its count, in the order the run won
+it. An act-1 run flies nothing, which is correct.
+
+No entrance animation, for the same reason `.map-atmosphere .location-horizon` has none: the map is
+re-entered after every single node, and a standard that unfurls each time reads as a transition
+rather than as something already planted. The cloth's own sway still runs, staggered per pole.
+
+The ~130px that freed does **not** go to the carried item's readout. That readout is now the panel
+HEADER's own text (`.roster-held` — piece, name, effect chips), a swap in place rather than a block
+appearing, so nothing moves when a piece is lifted. The board centres in what is left; stretching
+the cards into it was tried and is worse, being six cards with a hole in the middle of each.
+
+### 9.4 Merging says so before, during and after
+
+Three states, one mark (`MergeMark` — two solid heads closing on a spark; chevrons were tried and a
+pair of them at 9px is an ✗, which is the one thing the mark must never say on a screen whose other
+corner badge means "unopened").
+
+1. **At rest.** `mergeablePairIndices` (`run/equipment.ts`) marks every bag slot with a partner, and
+   each wears the badge in the tier the merge would REACH. The bag header carries the pair count.
+   Merging used to announce itself only once an item was already in hand — so a bag holding a free
+   Epic looked exactly like a bag that did not.
+2. **On the map, before the screen is opened.** The footer button is an inbox and already changes
+   its name for unopened gear; it now does the same for a waiting merge, in the tier palette's gold
+   against gear's red. Gear ranks first: an unopened item may be the best thing in the run and has
+   to be read, while a merge is a free tier that will still be free next node. One label, in that
+   order — a button saying two things at once is a button saying neither.
+3. **After.** `MergeBurst` gives the result a beat: the two inputs fly together, the new piece is
+   struck out of them, and it states the tier it climbed to and everything it grants. Two pieces
+   went in and one came out, and the whole event used to be the bag quietly reshuffling by one box —
+   the strongest thing a player can do to an item, and the least legible. Nothing waits on it: it
+   clears itself after `MERGE_BURST_MS`, and a tap skips it.
+
+**The number to watch is `MERGE_BURST_MS` (1900).** It is a full-screen beat on an action a player
+may take several times at one bag, and the first thing to cut if merges turn out to cluster.
+
+### 9.5 The 🎒 went, and what replaced it is not a satchel
+
+It was the last emoji on the screen — drawn by a font in a different hand from every other mark in
+the run. Three satchels were drawn to replace it and every one read as an **anvil or a padlock** at
+16px, where a 24-unit grid gives 0.67px a unit and a flap seam is under a pixel. (The Forge node is
+already an anvil, which is what made the near-miss so easy to see.) A drawstring pouch was ruled out
+separately: the gold glyph in the same header row is one.
+
+What shipped is a bevelled **piece on a tray** — what the panel holds rather than what it is, in the
+exact silhouette the pieces below it are cut to. `HUB_PATHS.bag`.

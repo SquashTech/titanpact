@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type DragEvent } from 'react';
+import { useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
 import type { StatKey } from '../../engine/content';
 import type { EquipmentDefinition, EquipmentLoadout, EquipmentRarity } from '../../run/equipment';
 import { ENCHANTMENTS, RARITY_ORDER, parseEquipmentId } from '../../run/equipment';
@@ -6,6 +6,7 @@ import { StatGlyph, STAT_LABELS } from './StatBars';
 import { RelicGlyph } from './relicIcons';
 import { EquipmentFormGlyph } from './equipmentIcons';
 import { useLongPress } from './MoveTile';
+import { GEAR_SLOT_ATTR } from './useGearDrag';
 import { passives } from '../../data/passives';
 import { PassiveGlyph } from './passiveIcons';
 import { statuses } from '../../data/statuses';
@@ -107,11 +108,19 @@ interface ItemBoxProps {
    * and the two smear together.
    */
   sfx?: string;
-  draggable?: boolean;
-  onDragStart?: (e: DragEvent) => void;
-  onDragOver?: (e: DragEvent) => void;
-  onDragLeave?: () => void;
-  onDrop?: (e: DragEvent) => void;
+  /**
+   * The board's key for this slot, stamped as `data-gear-slot`. It is what a carried piece
+   * hit-tests against (useGearDrag) — pass it and the box is a drop target; omit it and the box
+   * is inert scenery. NOT the same thing as being draggable FROM: an empty socket takes a piece
+   * and cannot give one.
+   */
+  slotKey?: string;
+  /** Starts the carry gesture (useGearDrag `handleProps`). */
+  onPointerDown?: (e: PointerEvent) => void;
+  /** Marks laid over the socket that belong to the BOARD rather than to the item — the merge pair flag. */
+  children?: ReactNode;
+  /** Merged over the rarity var, so a caller can hand the socket a colour of its own (the merge pair's up-tier). */
+  style?: CSSProperties;
 }
 
 /**
@@ -130,29 +139,47 @@ export function ItemBox({
   onLongPress,
   className,
   sfx,
-  draggable,
-  onDragStart,
-  onDragOver,
-  onDragLeave,
-  onDrop,
+  slotKey,
+  onPointerDown,
+  children,
+  style,
 }: ItemBoxProps) {
   const longPress = useLongPress(onLongPress, onTap);
-  const enchantType = enchantTypeOf(item);
   return (
     <button
       type="button"
       className={`item-box${item ? ' filled' : ' empty'}${className ? ` ${className}` : ''}`}
-      style={item ? ({ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties) : undefined}
+      style={{ ...(item ? ({ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties) : null), ...style }}
       aria-label={item ? itemSummaryLine(item) : 'Empty item slot'}
       data-sfx={sfx}
       title={item ? itemSummaryLine(item) : undefined}
-      draggable={draggable}
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
+      {...{ [GEAR_SLOT_ATTR]: slotKey }}
       {...longPress}
+      onPointerDown={(e) => {
+        onPointerDown?.(e);
+        longPress.onPointerDown(e);
+      }}
     >
+      <ItemPiece item={item} />
+      {children}
+    </button>
+  );
+}
+
+/**
+ * The piece itself, apart from the socket it sits in (2026-09-10, per user direction). It was the
+ * button's own face; splitting it out is what lets the SAME object be drawn under the finger while
+ * it is carried, which is the whole of "gear is a game piece rather than a table cell".
+ *
+ * A filled piece is a cut chit — bevel, facet sheen, tier pips along its foot; an empty one draws
+ * nothing at all, because an empty socket is a hole and the socket's own styling is the hole.
+ */
+export function ItemPiece({ item }: { item: EquipmentDefinition | null }) {
+  const enchantType = enchantTypeOf(item);
+  if (!item) return <EquipmentIcon item={null} className="item-box-icon" />;
+  return (
+    <span className="item-piece" style={{ '--rarity-color': RARITY_COLOR_VARS[item.rarity] } as CSSProperties}>
+      <span className="item-piece-facet" aria-hidden="true" />
       <EquipmentIcon item={item} className="item-box-icon" />
       {/* Which element the enchant feeds. The name says it ("Blazing Sword") and the box prints
           no name, so without this an enchanted item and a plain one are the same silhouette. */}
@@ -161,8 +188,8 @@ export function ItemBox({
           <ElementGlyph type={enchantType} />
         </span>
       )}
-      {item && <TierPips rarity={item.rarity} />}
-    </button>
+      <TierPips rarity={item.rarity} />
+    </span>
   );
 }
 

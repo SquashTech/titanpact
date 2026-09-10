@@ -2,13 +2,15 @@ import { useState, type CSSProperties } from 'react';
 import type { RunState } from '../../run/state';
 import { SEAL_ACTS } from '../../run/state';
 import { reachableNodeIds } from '../../run/runProgress';
-import { unseenCount } from '../../run/equipment';
+import { mergeablePairIndices, unseenCount } from '../../run/equipment';
+import { equipment } from '../../data/equipment';
 import type { MapNode, MapNodeType, RunMap } from '../../run/map';
 import { RosterManagementScreen } from './RosterManagementScreen';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { ResourceGlyph, type ResourceKind } from '../shared/RunGlyph';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { MapRoute } from './MapRoute';
+import { BannerShelf } from './BannerShelf';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, nodeRewardText, type NodeTier } from './mapNodes';
 import { levelAfterEncounters } from '../../run/growth';
 import { footerWaiting } from './mapFooter';
@@ -111,6 +113,18 @@ function MapNodePreviewPopup({ node, onClose }: { node: MapNode; onClose: () => 
 // the arrival screen's strength.
 const MAP_MOTE_DENSITY = 0.5;
 
+/**
+ * What the footer button is lit in, per inbox (mapFooter.ts). Unread gear keeps the alarm red it
+ * has always had; a merge waiting is the tier palette's own gold, because what it is announcing is
+ * a tier — and the two must not be the same colour, or the button changing its mind about what it
+ * is called is the only thing separating them.
+ */
+const FOOTER_COLORS = {
+  rest: 'var(--ally)',
+  items: 'var(--physical)',
+  merges: 'var(--tier-legendary)',
+} as const;
+
 // Bottom-left: the bottom row is a width-1 encounter tile that fits its column;
 // the top row's Guardian tile spills into both neighbours.
 function MapPlacard({ location }: { location: LocationDefinition }) {
@@ -140,7 +154,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
   // roster rather than off the curve so it is right for a hero the curve does not describe — a
   // contract recruit arriving at act level, or a fixture. Falls back to the curve for an empty one.
   const rosterLevel = run.roster.reduce((best, entry) => Math.max(best, entry.level), levelAfterEncounters(run.encountersWon));
-  const waiting = footerWaiting(unopened);
+  const waiting = footerWaiting(unopened, mergeablePairIndices(run.stash, equipment, run.actNumber).size / 2);
 
   // The whole view: where the player stands, and what they may take from here.
   const choiceIds = reachableNodeIds(run);
@@ -211,6 +225,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
       <div className="map-well">
         <LocationAmbience location={location} density={MAP_MOTE_DENSITY} className="map-atmosphere" />
         <MapPlacard location={location} />
+        <BannerShelf run={run} />
 
         <ProgressRail map={map} currentRow={currentRow} />
 
@@ -233,7 +248,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
           className={`map-footer-button${waiting.total > 0 ? ' has-unopened' : ''}`}
           // Inline, so it has to carry the alert colour too: a custom property set here outranks
           // anything .has-unopened could say about it from the stylesheet.
-          style={{ '--btn-color': waiting.total > 0 ? 'var(--physical)' : 'var(--ally)' } as CSSProperties}
+          style={{ '--btn-color': FOOTER_COLORS[waiting.kind] } as CSSProperties}
           onClick={() => setRosterOpen(true)}
         >
           <span className="map-footer-icon"><HubGlyph name="roster" /></span>
