@@ -326,10 +326,15 @@ not re-attach a gate to it — the move off the level track was **forced, not pr
 automatic roster-wide levelling every hero crosses any threshold on the same fight, so a level
 trigger IS a six-decision wall.
 
-**A GENERATED hero is the exception.** An enemy or a Guild Hall hire holds no Crucible, so its
-Evolution is still read off level (`rollLevelProgression`, `src/run/enemyGen.ts`) — the same
-equivalence `enemyScrollsForLevel` uses for Mastery Rank. Without it a level-1 enemy would arrive
-evolved.
+**A GENERATED hero is the exception.** An enemy holds no Crucible, so its Evolution is read off
+level (`rollLevelProgression`, `src/run/enemyGen.ts`) — the same equivalence
+`enemyScrollsForLevel` uses for Mastery Rank.
+
+The threshold is **`ENEMY_EVOLUTION_LEVEL` = 16, not `EVOLUTION_LEVEL`** (2026-09-10, phase 6). It
+has to track how many of the PLAYER's heroes a Crucible has reached by that act — one an act, so
+1-of-4 entering Act 2 — rather than when a level-up used to fire. Gating enemies on 5 evolved every
+one of them from Act 2 and made that act's Guardian the run's only remaining difficulty spike. 16
+is Act 3's enemy level, so Acts 1-2 field unevolved enemies and Acts 3+ evolved ones.
 
 A **Guild Hall hire is no longer one of those** (2026-09-10, phase 5): it arrives RAW — unevolved,
 rank 1, its own three moves — against a CONTRACT hero, which is the beaten enemy entire and so

@@ -496,7 +496,11 @@ export function App() {
         location.guardianFinalEnemyId ?? ENDBRINGER_ID,
         finaleEnemies,
         // Authored FOR act 6, so it takes no act steps — only the level, as its tier label.
-        actScaling('monsters', FINALE_ACT, FINALE_ACT)
+        // The SKIRMISH track, not a self-baselined monsters one (2026-09-10, Growth Overhaul
+        // phase 6). `actScaling('monsters', FINALE_ACT, FINALE_ACT)` baselined the Endbringer
+        // against its own act and so paid it ZERO steps — the run's final fight was the one
+        // piece of content on the map that never scaled at all, and it measured 98% won.
+        actScaling('skirmish', FINALE_ACT)
       );
       if (playerRun.roster.length <= 2) {
         handleSquadConfirmed(pickSquad(playerRun.roster, playerRun.roster.map((r) => r.rosterId), ROSTER_CAP), nodeId, 'boss', encounter);
@@ -541,9 +545,12 @@ export function App() {
         // reach one roster via a contract claim (mirrors rollGuildHallOffers). Passed unconditionally:
         // enemy and hero ids never collide (test/recruitment.test.ts), so it is inert on a mob pool.
         const excludeHeroIds = playerRun.roster.map((r) => r.heroId);
+        const standardCount = encounterKind === 'boss' ? 2 : 4;
         const heroCountOverride =
-          node.type === 'fight' ? 2 : isSecondFight ? 2 : encounterHeroCountOverride(node.type, playerRun.actNumber);
-        const heroCount = heroCountOverride ?? (encounterKind === 'boss' ? 2 : 4);
+          node.type === 'fight' || isSecondFight
+            ? 2
+            : encounterHeroCountOverride(node.type, playerRun.actNumber, playerRun.roster.length, standardCount);
+        const heroCount = heroCountOverride ?? standardCount;
         // Location affinity bias applies to the recruitable pool only (docs/locations.md §2).
         const bias = encounterPool === heroes ? locationBias(location, heroes, heroCount) : undefined;
         encounter = generateEncounter(encounterKind, randomSeed(), encounterPool, {

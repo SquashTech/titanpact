@@ -1,11 +1,13 @@
 import * as assert from 'assert';
 import { test } from './harness';
+import { ENCOUNTERS_PER_ACT, levelAfterEncounters } from '../src/run/growth';
 import {
   actScaling,
   ACT_STEP_CURVE,
   ACT_STEP_STAT_TOTAL,
   BASELINE_ACT,
   ENEMY_LEVEL_BY_ACT,
+  ENEMY_LEVEL_LAG,
   NO_SCALING,
   ACT_ONE_ELITE_HERO_COUNT,
   encounterHeroCountOverride,
@@ -45,8 +47,11 @@ test('difficulty: the act-step curve ACCELERATES — that is the whole point of 
   // A linear curve let the enemy fall behind: measured, its fielded stats grew +239/+161/+90/+87
   // an act while the player's grew +254/+192/+364/+399, crossing at act 4.
   assert.strictEqual(ACT_STEP_CURVE[0], 0, 'a track at its own baseline takes no steps');
+  // Never DECREASES; a repeat is legal, and index 1 is deliberately a repeat of 0 — Act 2 is
+  // where the run meets a real faction for the first time after Act 1's soft Goblins, and it
+  // measured as the run's wall for as long as it carried a step (2026-09-10, phase 6).
   for (let i = 1; i < ACT_STEP_CURVE.length; i++) {
-    assert.ok(ACT_STEP_CURVE[i] > ACT_STEP_CURVE[i - 1], `step ${i} does not grow`);
+    assert.ok(ACT_STEP_CURVE[i] >= ACT_STEP_CURVE[i - 1], `step ${i} goes backwards`);
   }
   const gaps = ACT_STEP_CURVE.slice(1).map((n, i) => n - ACT_STEP_CURVE[i]);
   for (let i = 1; i < gaps.length; i++) {
@@ -61,17 +66,27 @@ test('difficulty: acts past the curve hold at its last entry rather than running
   assert.strictEqual(actScaling('skirmish', 99).statSteps, last);
 });
 
-test('difficulty: enemy levels follow the authored act table and hold past its end', () => {
-  assert.deepStrictEqual([...ENEMY_LEVEL_BY_ACT], [1, 3, 5, 7, 10]);
-  // The table covers the five seal acts; the finale act reuses its last entry.
+test('difficulty: enemy levels TRACK the player curve at a fixed lag, and hold past the table', () => {
+  // Derived from LEVEL_AFTER_ENCOUNTER since 2026-09-10 (Growth Overhaul phase 6) rather than
+  // authored beside it. The old [1, 3, 5, 7, 10] was fitted to a 10-level cap and left an Act 5
+  // enemy at 10 against a roster at 28.
   for (let act = 1; act <= SEAL_ACTS; act++) {
+    const playerAtActEnd = levelAfterEncounters(act * ENCOUNTERS_PER_ACT);
+    assert.strictEqual(
+      ENEMY_LEVEL_BY_ACT[act - 1],
+      Math.max(1, playerAtActEnd - ENEMY_LEVEL_LAG),
+      `act ${act}: the enemy table must read off the player curve, not a table beside it`
+    );
     assert.strictEqual(actScaling('skirmish', act).level, ENEMY_LEVEL_BY_ACT[act - 1]);
+    // The player runs AHEAD all run — that is what keeps the fights winnable while the enemy tracks.
+    assert.ok(ENEMY_LEVEL_BY_ACT[act - 1] < playerAtActEnd, `act ${act}: an enemy must not out-level the roster`);
   }
-  assert.strictEqual(actScaling('skirmish', TOTAL_ACTS).level, 10);
-  // A TOTAL_ACTS bump must not produce an undefined level.
-  assert.strictEqual(actScaling('skirmish', TOTAL_ACTS + 3).level, ENEMY_LEVEL_BY_ACT[ENEMY_LEVEL_BY_ACT.length - 1]);
-  // Nor may a nonsense act number.
-  assert.strictEqual(actScaling('skirmish', 0).level, 1);
+  // The table covers the five seal acts; the finale act reuses its last entry.
+  const last = ENEMY_LEVEL_BY_ACT[ENEMY_LEVEL_BY_ACT.length - 1];
+  assert.strictEqual(actScaling('skirmish', TOTAL_ACTS).level, last);
+  // A TOTAL_ACTS bump must not produce an undefined level, nor may a nonsense act number.
+  assert.strictEqual(actScaling('skirmish', TOTAL_ACTS + 3).level, last);
+  assert.strictEqual(actScaling('skirmish', 0).level, ENEMY_LEVEL_BY_ACT[0]);
 });
 
 test('difficulty: each act-step adds exactly ACT_STEP_STAT_TOTAL to a scaled enemy stat total, on top of the node-kind bonus', () => {
@@ -100,17 +115,22 @@ test('difficulty: every act-step grant stays a multiple of 5 or 10 (CLAUDE.md "S
   }
 });
 
-test('difficulty: scaled enemies arrive at the act level, and from Act 3 on they are already evolved', () => {
+test('difficulty: scaled enemies arrive at the act level, and evolve on the CRUCIBLE schedule', () => {
+  // Not `EVOLUTION_LEVEL` (2026-09-10, phase 6): the player's Evolutions come one an act from the
+  // Crucible, so a roster is 1-of-4 evolved entering Act 2 and 2-of-4 entering Act 3. Gating
+  // enemies on 5 evolved every one of them from Act 2 and made that act's Guardian the run's only
+  // remaining spike. `ENEMY_EVOLUTION_LEVEL` is Act 3's enemy level instead.
   for (const act of [1, 2, 3, 4, 5]) {
     const scaling = actScaling('skirmish', act);
     const { run } = generateEncounter('elite', 12, heroes, { scaling, progression: progressionTable });
+    const evolved = act >= 3;
     for (const entry of run.roster) {
       assert.strictEqual(entry.level, scaling.level, `act ${act} level`);
-      if (scaling.level >= EVOLUTION_LEVEL) {
-        assert.strictEqual(entry.chosenPathIds.length, 1, `act ${act} ${entry.heroId} should have evolved`);
-      } else {
-        assert.strictEqual(entry.chosenPathIds.length, 0, `act ${act} ${entry.heroId} should not have evolved`);
-      }
+      assert.strictEqual(
+        entry.chosenPathIds.length,
+        evolved ? 1 : 0,
+        `act ${act} ${entry.heroId} should ${evolved ? '' : 'not '}have evolved`
+      );
     }
   }
 });
@@ -148,15 +168,16 @@ test('difficulty: the Goblin Chief encounter takes the monsters curve, and its p
     assert.deepStrictEqual(entry.unlockedMoveIds, [...enemies[entry.heroId].moveIds]);
   }
 
-  // The row-0 opener is on the same track: untouched in Act 1.
+  // The row-0 opener is on the same track: unSCALED in Act 1, though no longer level 1 —
+  // enemy level tracks the player curve now, and the two axes are independent.
   const { run: opener } = generateEncounter('fight', 7, basicEnemiesOf(GOBLINS), {
     heroCount: 2,
     scaling: actScaling('monsters', 1),
     progression: progressionTable,
   });
   for (const entry of opener.roster) {
-    assert.deepStrictEqual(entry.evolutionStatGrants, {});
-    assert.strictEqual(entry.level, 1);
+    assert.deepStrictEqual(entry.evolutionStatGrants, {}, 'act 1 monsters take no stat steps');
+    assert.strictEqual(entry.level, ENEMY_LEVEL_BY_ACT[0]);
   }
 });
 
@@ -167,15 +188,26 @@ test('difficulty: scaling stays deterministic per seed', () => {
   assert.deepStrictEqual(a.run.roster, b.run.roster);
 });
 
-test('difficulty: Act 1 fields a three-body Elite, and every later act the usual four', () => {
-  // The player's roster ramps 2 -> 3 -> 4 across Act 1 while the encounter size never did, so
-  // Act 1's Elite was the one fight in the run entered outnumbered (docs/run-loop.md).
-  assert.strictEqual(encounterHeroCountOverride('elite', 1), ACT_ONE_ELITE_HERO_COUNT);
+test('difficulty: Act 1 never fields more bodies than the player holds', () => {
+  // The player's roster ramps 2 -> 3 -> 4 across Act 1 while the encounter size never did. That
+  // was patched for the Elite alone with a hand-tuned 3; the rule replaces the constant, and
+  // reproduces it exactly at the roster size that node is actually met with.
+  assert.strictEqual(encounterHeroCountOverride('elite', 1, ACT_ONE_ELITE_HERO_COUNT, 4), ACT_ONE_ELITE_HERO_COUNT);
+
+  // The Skirmish is the node this fixes: it is met with TWO heroes and fielded four.
+  assert.strictEqual(encounterHeroCountOverride('skirmish', 1, 2, 4), 2);
+
+  // A full roster takes the standard count — the cap only ever shrinks a fight.
+  for (const nodeType of ['skirmish', 'elite', 'battle']) {
+    assert.strictEqual(encounterHeroCountOverride(nodeType, 1, 4, 4), undefined, `${nodeType} at a full roster`);
+    assert.strictEqual(encounterHeroCountOverride(nodeType, 1, 6, 4), undefined, `${nodeType} above the standard count`);
+  }
+
+  // Acts 2+ are untouched: the roster is full by then, and being outnumbered is the Elite's job.
   for (const act of [2, 3, 4, 5, 6]) {
-    assert.strictEqual(encounterHeroCountOverride('elite', act), undefined, `act ${act} elite should take the default 4`);
+    assert.strictEqual(encounterHeroCountOverride('elite', act, 2, 4), undefined, `act ${act} must not be resized`);
   }
-  // Nothing else is touched — undefined means generateEncounter's own default stands.
-  for (const nodeType of ['fight', 'skirmish', 'battle', 'boss', 'finale']) {
-    assert.strictEqual(encounterHeroCountOverride(nodeType, 1), undefined, `${nodeType} is not resized`);
-  }
+
+  // An empty roster is a fixture, not a fight — it must not produce a zero-body encounter.
+  assert.strictEqual(encounterHeroCountOverride('skirmish', 1, 0, 4), undefined);
 });

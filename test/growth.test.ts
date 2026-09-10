@@ -120,9 +120,13 @@ test('growth: levelling accumulates onto growthStatGrants and stops at MAX_LEVEL
 
 test('growth: the curve hits the authored act-end levels, and reaches MAX_LEVEL on the finale', () => {
   // Four encounters an act for acts 1-5, then the finale (docs/growth-overhaul.md §3).
+  // FRONT-LOADED 2026-09-10 (phase 6) from 6/12/18/23/28: acts 1-2 measured as the run's wall
+  // and their enemy stat steps were already zero, so the only lever left was the player's own
+  // curve. Enemy levels are derived from this table, so they moved with it — but their rank and
+  // Evolution thresholds are absolute, so the lift lands on the player alone.
   assert.deepStrictEqual(
     [4, 8, 12, 16, 20, 21].map(levelAfterEncounters),
-    [6, 12, 18, 23, 28, 30],
+    [8, 14, 19, 24, 28, 30],
     'the act-end figures are the decided shape'
   );
   assert.strictEqual(levelAfterEncounters(0), 1, 'a run starts at 1');
@@ -134,8 +138,14 @@ test('growth: the curve never goes backwards, and level 5 lands inside act 1', (
   for (let n = 1; n < LEVEL_AFTER_ENCOUNTER.length; n++) {
     assert.ok(levelsForEncounter(n) >= 0, `encounter ${n} pays a negative level`);
   }
-  const evolveAt = LEVEL_AFTER_ENCOUNTER.findIndex((level) => level >= EVOLUTION_LEVEL);
-  assert.ok(evolveAt > 0 && evolveAt <= 4, `the Evolution should land in act 1, not at encounter ${evolveAt}`);
+  // The curve still DECELERATES: a run's early acts pay more levels than its late ones.
+  const perAct = [1, 2, 3, 4, 5].map(
+    (act) => levelAfterEncounters(act * 4) - levelAfterEncounters((act - 1) * 4)
+  );
+  for (let i = 1; i < perAct.length; i++) {
+    assert.ok(perAct[i] <= perAct[i - 1], `act ${i + 1} pays ${perAct[i]} levels against act ${i}'s ${perAct[i - 1]}`);
+  }
+  assert.ok(perAct[0] > perAct[perAct.length - 1], 'the first act must pay more than the last');
 });
 
 test('growth: a won encounter levels the WHOLE roster, benched heroes included', () => {

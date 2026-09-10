@@ -1,11 +1,11 @@
 # growth-overhaul.md — The Growth Overhaul
 
-> **STATUS: DECIDED (2026-09-10, per user direction). PHASES 1-5 OF §8 ARE BUILT; 6-7 ARE NOT.**
+> **STATUS: DECIDED (2026-09-10, per user direction). PHASES 1-6 OF §8 ARE BUILT; ONLY 7 IS NOT.**
 > Gems are gone, moves come only from Mastery Scrolls, levels are automatic and cap 30,
-> Evolutions come from the Crucible, and a Guild hire arrives raw. Still to come: **the
-> difficulty re-fit (phase 6 — the actual project) and the 36-hero grade pass (phase 7)**; until
-> then every hero runs the all-B placeholder and the curve is fitted to a game that no longer
-> exists. `CLAUDE.md`'s remaining invariants still describe *that* game and are
+> Evolutions come from the Crucible, a Guild hire arrives raw, and the difficulty curve has been
+> re-fitted against all of it. Still to come: **the 36-hero grade authoring pass (phase 7)** —
+> until then every hero runs the all-B placeholder. `CLAUDE.md`'s remaining invariants still
+> describe *that* game and are
 > still the rules in force until the phase that replaces each one lands. This module is the
 > destination, and §8 is the route — **check its Status column before assuming anything here
 > runs.** Where it disagrees with `leveling-and-ranks.md`, `progression.md` or `run-loop.md`,
@@ -121,15 +121,22 @@ Give that archetype S-grades and arriving underlevelled *is* the build.
 
 | Act | Fights | Level at act end | Scrolls granted | Crucible |
 |---|---|---|---|---|
-| 1 | 4 | 6 | 2 | 1, at the Guardian |
-| 2 | 4 | 12 | 2 | 1, at the Guardian |
-| 3 | 4 | 18 | 2 | 1, at the Guardian |
-| 4 | 4 | 23 | 2 | 1, at the Guardian |
+| 1 | 4 | 8 | 2 | 1, at the Guardian |
+| 2 | 4 | 14 | 2 | 1, at the Guardian |
+| 3 | 4 | 19 | 2 | 1, at the Guardian |
+| 4 | 4 | 24 | 2 | 1, at the Guardian |
 | 5 | 4 | 28 | 2 | 1, at the Guardian |
-| 6 | 1 | 30 | — | purchasable at the Vigil |
+| 6 | 1 | 30 | — | (no Vigil purchase — the extra Crucible is a map node) |
 
 ~1.5 levels a fight, decelerating. **Every figure here is a first-pass placeholder for playtest;
 only the shape is decided.**
+
+**FRONT-LOADED in phase 6** from 6 / 12 / 18 / 23 / 28. Acts 1-2 measured as the run's wall and
+their enemy stat steps were already zero, so the only lever left was the player's own curve — and
+front-loading is *more* decelerating, so it is within the shape this section decided. The
+per-act payout is now 7 / 6 / 5 / 5 / 4. It lands on the player alone: the enemy level table is
+derived from this one and moved with it, but the thresholds that turn enemy level into rank and
+Evolutions are absolute, so nothing on the enemy side crossed one.
 
 ---
 
@@ -351,20 +358,58 @@ them, so in-flight runs invalidate cleanly and no migration code is owed at any 
 | 3 | **Flip the levelling model.** The destructive one, landing after its replacements exist. XP becomes automatic and roster-wide; pool, deferral, cost curve and stat reel all go; cap 30; each level rolls the seven stats. Ship with a uniform all-B grade set so the engine runs before the content pass does. | No allocation screen anywhere. Level moves to the map header. Tutorial script re-checked — `src/data/tutorial.ts` narrates the old beats. | **DONE** 2026-09-10. 979 tests green. Measured against phase 2: full-clear 18.0% → **51.5%**, encounters won 8.55 → 12.71, mean end level 16.4. That is above even the pre-overhaul 45.5% — the ~264 points a hero of automatic growth more than replaced what Gems and the level curve were paying. Phase 6 re-fits it. The `upgradeReward` XP Cache became `loneScrollReward`, a 1-Scroll node (per user direction), rather than being deleted like the shrines. |
 | 4 | **The Crucible.** Small: `chooseEvolutionPath` and the path data are untouched, only the invocation point moves. Insert into the act-boundary chain ahead of `PactSealScreen`; add the purchasable spend at the Guild Hall and the Vigil. | Five forced Crucibles a run, a sixth reachable. No evolution reachable from a level-up. | **DONE** 2026-09-10. 982 tests green. Map node only, acts 3+, filtered out of the roll when nobody can take one (per user direction) — no Guild Hall purchase. Measured against phase 3: full-clear 51.5% → **38.5%** (1000 runs), encounters won 12.71 → 11.07. Evolutions went from every hero automatically in act 1 to one a Guardian, which is the whole point; phase 6 re-fits. |
 | 5 | **Finished and raw recruits.** Contract heroes arrive levelled, ranked, evolved, kit game-chosen; guild heroes raw. Gold on both purchased routes. | The flat-value / decaying-runway line true on three axes instead of one. `test/recruitment.test.ts` extended. | **DONE** 2026-09-10. 985 tests green. True on Rank, Evolution and Kit; the LEVEL axis is inverted by `ENEMY_LEVEL_BY_ACT` and left for phase 6 (per user direction), with a test pinning the inversion. Measured against phase 4: full-clear 38.5% → 36.0% (400 runs) — a hire losing its Evolution and rank. |
-| 6 | **Re-fit the difficulty curve.** The real work, and it cannot start earlier: `ENEMY_LEVEL_BY_ACT`, `ACT_STEP_CURVE`, Guardian champions, reward weights and Banner values all re-derived. Drive with `scripts/sim` and the skilled pilot. | Batch runs show no mechanical fault — walls, dead nodes, unreachable ranks. Win-rate targets are a playtest question, not a batch one. | not started |
+| 6 | **Re-fit the difficulty curve.** The real work, and it cannot start earlier: `ENEMY_LEVEL_BY_ACT`, `ACT_STEP_CURVE`, Guardian champions, reward weights and Banner values all re-derived. Drive with `scripts/sim` and the skilled pilot. | Batch runs show no mechanical fault — walls, dead nodes, unreachable ranks. Win-rate targets are a playtest question, not a batch one. | **DONE** 2026-09-10. 985 tests green. Act clear `72/63/87/98/96/96` → `72/75/85/85/82/93` over 1000 runs; full-clear 36% → 29.6%. No dead node (every lift inside noise but the Tutor's), no unreachable rank (53% reach rank 2 by act 4+, 24% rank 3). The equipment and Banner open questions were both settled as LEAVE (per user direction), so this was purely the enemy side. |
 | 7 | **Growth grades for 36 heroes.** Parallelisable from phase 3 onward; it needs the schema, not the tuning. The interesting authoring is the mismatches — a low base with S grades is a late bloomer worth recruiting underlevelled, and that archetype only exists once this pass does. | Grade budget enforced by test, beside the 550 check in `test/roster.test.ts`. No hero left on the all-B placeholder. | not started |
 
-### Phase 6 is the actual project
+### Phase 6 is the actual project — BUILT 2026-09-10
 
-Phases 1–5 are mostly deletion and re-pointing. Re-fitting the curve against a player who grows from
-somewhere entirely new is the part with real risk. Two specifics:
+The diagnosis was not what §8 expected. Enemy LEVEL turned out to buy almost nothing — an enemy
+ships three of its four move slots filled, so a level pays it at most one extra move — and moving
+the table alone shifted the full-clear rate by 1.3pp. What level really controls is the two
+**thresholds** read off it, and both were still set to a game that no longer existed:
 
-- `ENEMY_LEVEL_BY_ACT` `[1, 3, 5, 7, 10]` is meaningless against a 30-level player — roughly
-  `4 / 10 / 16 / 22 / 28`, with the player running ~2 ahead.
-- **Guardian champions currently ignore level entirely** (`appendFinalEnemy` runs no level
-  progression, and `MOVE_CAP` leaves a full 4-move kit no room). Under the new scale level is the
-  main axis and champions are the one thing it does not touch — they need their own handling or they
-  fall off the curve hard.
+- **Rank.** `ENEMY_RANK_LEVELS` was `[4, 7]` — the OLD movepool gate's level thresholds, carried
+  over unchanged in phase 2. Against the re-derived level table that put Act 1 enemies at rank 2
+  and everything from Act 2 at rank 3, while the player — whose rank comes from a Scroll economy
+  paying two a Guardian — measured 38% at rank 2 by Act 4. Enemies out-kitted the player for the
+  whole run. Re-banded to `[10, 21]`, which tracks the player's actual Scroll economy.
+- **Evolution.** Gated on `EVOLUTION_LEVEL` = 5, so every enemy from Act 2 arrived evolved — while
+  the player's roster, since the Crucible, is 1-of-4 evolved entering Act 2 where it used to be
+  4-of-4. `ENEMY_EVOLUTION_LEVEL` = 16 (Act 3's enemy level) instead.
+
+The two §8 named:
+
+- **`ENEMY_LEVEL_BY_ACT` is now DERIVED** from the player curve — its act-end level less
+  `ENEMY_LEVEL_LAG` = 2, giving 6 / 12 / 17 / 22 / 26. That also restores §6's fourth axis: a
+  contract hero out-levels a Guild hire again.
+- **Guardian champions got their own multiplier**, `CHAMPION_STEP_MULTIPLIER` = 1.3. Level and kit
+  depth are both closed to a champion — a full four-move kit leaves `MOVE_CAP` no room, and an
+  enemy definition carries no Evolution nodes — so stats are the only axis it has, and it now takes
+  more of them than its escort. **The Endbringer was worse than flagged**: it was scaled with
+  `actScaling('monsters', FINALE_ACT, FINALE_ACT)`, baselining it against its own act, which paid
+  it ZERO steps. The run's final fight was the one piece of content on the map that never scaled
+  at all. It takes the skirmish track now.
+
+`ACT_STEP_CURVE` re-derived to `[0, 0, 4, 9, 15]`. Index 1 is deliberately a repeat, not a step:
+Act 2 is where the run first meets a real faction after Act 1's soft Goblins, and it measured as
+the wall for as long as it carried one.
+
+**Measured, 1000 runs.** Act clear went `72 / 63 / 87 / 98 / 96 / 96` to
+`72 / 75 / 85 / 85 / 82 / 93`; full-clear 36% → 29.6%. The Act 2 wall is gone and so is the
+late-game victory lap — every act now costs something, and the six Guardians are the run.
+
+**Two findings left for playtest, both structural rather than tunable:**
+
+- **Every non-boss node is a ~99% win from Act 2 on**, so the run's whole tension sits in its six
+  Guardians. That follows from HP and mana fully restoring between map nodes: a fight you win
+  costs nothing, so only a fight you can LOSE matters. Changing it means attrition, which is a
+  design decision and not a constant.
+- **The Monsters track (`fight`/`battle`) never threatens** — ratios around 2.1-2.9 all run. Mob
+  stat lines are authored small and the track baselines at Act 2, both flagged in the code as
+  placeholders awaiting per-act monster content.
+- Minor: `tutorReward` measures a **negative** node lift (z = -2.7 over n=253). One free move now
+  competes against a Forge or two Scrolls on the same row, and it may simply be worth less than
+  what it displaces.
 
 ### `CLAUDE.md` ships with each phase, not at the end
 
@@ -395,16 +440,21 @@ them. **None of these has changed yet** — they are in force until the phase th
 
 ## 10. Open questions — DO NOT silently resolve
 
-- **Equipment: two base slots, halved budgets.** Proposed and never confirmed. One slot means every
+- ~~**Equipment: two base slots, halved budgets.**~~ **CLOSED 2026-09-10, per user direction:
+  LEAVE IT AT ONE SLOT.** The 79.3% mirror-match edge that drove the move to one slot is real
+  evidence, and phase 6 measured the curve against one slot. Re-opening it means a second full
+  re-fit. Original proposal, for the record: One slot means every
   drop is replace-or-sell, and builds are combinations — `BASE_ITEM_SLOTS` at 2 with `RARITY_BUDGET`
   roughly halved keeps stat throughput flat while doubling the decision, and extending
   `EFFECT_FLOOR_SHARE` down to Rare is what makes an item memorable rather than merely bigger.
   Budgets tripled when heroes went 3 slots → 1, so this is partly untripling. **Blocks nothing, but
   settle it before phase 6** — re-measuring the curve twice is the one genuinely wasted pass
   available.
-- **Do Banners shrink?** They are the last team-wide flat-stat axis, carrying roughly 175 points a
-  run where Gems carried 50. With levels carrying ~264 per hero, a Banner may now read as arithmetic
-  rather than as a trophy. Resolve inside phase 6.
+- ~~**Do Banners shrink?**~~ **CLOSED 2026-09-10, per user direction: LEAVE THEM.** They carry
+  roughly 175-200 points a run team-wide against ~264 per hero from levelling — about 17% of what
+  growth pays a fielded squad. The judgement was that a Banner's job is the collection ratchet
+  ("Banner of Vitality +2") rather than the raw number, and that phase 6's enemy-side re-fit
+  absorbs whatever they are worth. Phase 6 was measured with them unchanged.
 - **Max Rank 3, or 4?** Three maps exactly onto the authored tiers and needs no re-authoring. A
   fourth needs a fourth tier — a content pass across 36 heroes, worth it only if a maxed carry reads
   as finished too early.

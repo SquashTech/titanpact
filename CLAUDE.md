@@ -101,7 +101,8 @@ don't silently override it.
 - **Levels are AUTOMATIC and ROSTER-WIDE** (2026-09-10, `src/run/growth.ts`). Every roster hero
   levels every won encounter, fielded or benched. **No pool, no allocation, no screen** —
   `MAX_LEVEL` = 30, and the curve is authored outright as `LEVEL_AFTER_ENCOUNTER` (act ends
-  6/12/18/23/28/30, four encounters an act). It is a **DELTA, never a target**: a hero that
+  **8/14/19/24/28/30**, four encounters an act; front-loaded in phase 6 because acts 1-2 measured
+  as the run's wall and their enemy stat steps were already zero). It is a **DELTA, never a target**: a hero that
   joins late has missed the grants before it and stays behind permanently, which is what keeps
   "arrives underlevelled" a real archetype rather than a rounding error.
   Participation-based XP was considered and **rejected** — it produces the runaway where your
@@ -341,7 +342,7 @@ what's still unimplemented:
   (`[0, 1, 3, 6, 10]` cumulative steps of +30 stat total each) on top of the node-kind
   bonus. It accelerates because it has to track a player whose growth does: measured, a
   linear curve had enemy stats growing +239/+161/+90/+87 an act against the player's
-  +254/+192/+364/+399 (2026-09-05, `scripts/sim`). Enemy level runs **1 / 3 / 5 / 7 / 10**
+  +254/+192/+364/+399 (2026-09-05, `scripts/sim`). Enemy level runs **6 / 12 / 17 / 22 / 26**
   by act, so from Act 3 on every hero-pool enemy arrives already **evolved**, and a Recruit
   Contract claims it at that level — but note that **level is inert for a Guardian's
   champion**: every champion ships a full 4-move kit and `appendFinalEnemy` runs no level

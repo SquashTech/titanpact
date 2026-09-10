@@ -368,7 +368,8 @@ function resolveEncounterNode(
       run.brokenSeals,
       location.guardianFinalEnemyId ?? ENDBRINGER_ID,
       finaleEnemies,
-      actScaling('monsters', TOTAL_ACTS, TOTAL_ACTS)
+      // The skirmish track, matching App.tsx: baselining the Endbringer against its own act paid it zero steps.
+      actScaling('skirmish', TOTAL_ACTS)
     );
     squadSize = ROSTER_CAP;
   } else {
@@ -387,9 +388,12 @@ function resolveEncounterNode(
     } else {
       const encounterPool = isFactionFight ? basicEnemiesOf(faction) : heroes;
       const excludeHeroIds = encounterPool === heroes ? run.roster.map((r) => r.heroId) : undefined;
+      const standardCount = encounterKind === 'boss' ? 2 : 4;
       const heroCountOverride =
-        mapNodeType === 'fight' ? 2 : isSecondFight ? 2 : encounterHeroCountOverride(mapNodeType, workingRun.actNumber);
-      const heroCount = heroCountOverride ?? (encounterKind === 'boss' ? 2 : 4);
+        mapNodeType === 'fight' || isSecondFight
+          ? 2
+          : encounterHeroCountOverride(mapNodeType, workingRun.actNumber, workingRun.roster.length, standardCount);
+      const heroCount = heroCountOverride ?? standardCount;
       const bias = encounterPool === heroes ? locationBias(location, heroes, heroCount) : undefined;
       encounter = generateEncounter(encounterKind, randomSeed(rng), encounterPool, {
         heroCount: heroCountOverride,

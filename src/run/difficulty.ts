@@ -45,8 +45,27 @@ export function actStepStatTotal(bonus: Partial<Record<StatKey, number>>): numbe
 
 export const ACT_STEP_STAT_TOTAL = ACT_STEP_STAT_COUNT * ACT_STEP_AMOUNT;
 
-/** Enemy hero level by act (1-indexed). Both tracks; from Act 3 hero-pool enemies arrive evolved. */
-export const ENEMY_LEVEL_BY_ACT: readonly number[] = [1, 3, 5, 7, 10];
+/**
+ * Enemy hero level by act (1-indexed). Both tracks.
+ *
+ * Re-derived 2026-09-10 (Growth Overhaul phase 6) against a 30-level player. The old
+ * [1, 3, 5, 7, 10] was fitted to a 10-level cap and became meaningless the moment levelling went
+ * automatic: it left an Act 5 enemy at level 10 against a roster at 28, and — because a Recruit
+ * Contract claims the beaten build entire — a contract hero arriving 14 levels below a hero the
+ * Guild Hall would sell you.
+ *
+ * The rule is **the player's act-end level, less `ENEMY_LEVEL_LAG`**: the player runs a little
+ * ahead all run, which is what makes the fights winnable while the enemy still tracks.
+ *
+ * Level buys an enemy less than it buys the player — no growth rolls, so it is kit depth only:
+ * the Evolution at `EVOLUTION_LEVEL`, and the Mastery Rank band its level falls in
+ * (`enemyScrollsForLevel`). Raw stats come from `ACT_STEP_CURVE` instead.
+ */
+export const ENEMY_LEVEL_LAG = 2;
+
+export const ENEMY_LEVEL_BY_ACT: readonly number[] = [1, 2, 3, 4, 5].map((act) =>
+  Math.max(1, levelAfterEncounters(act * ENCOUNTERS_PER_ACT) - ENEMY_LEVEL_LAG)
+);
 
 /**
  * Level a Guild Hall hire arrives at, by act (1-indexed; later acts hold at the last entry).
@@ -75,13 +94,12 @@ export function guildHallLevel(actNumber: number): number {
 }
 
 /**
- * Bodies Act 1's Elite fields, against the flat 4 every other non-boss encounter brings.
+ * What Act 1's Elite fielded before `encounterHeroCountOverride` became a rule rather than a
+ * special case (2026-09-10). Kept as the documented figure the rule has to keep reproducing:
+ * three bodies against the roster of three the player holds at that node.
  *
- * The player's roster RAMPS — two drafted starters, a third off the act's first Recruit
- * Contract, a fourth later — while the encounter size never did, so Act 1's Elite was the one
- * fight in the run entered outnumbered. Measured: 2.9 player bodies against 3.7, a 0.78 fielded
- * stat ratio and an 81.8% win rate, where Act 2's identical node kind sits at 99.6%. It was the
- * third-largest killer of runs and the only ratio under 1.00 anywhere on the map.
+ * Measured when it was introduced (2026-09-06): 2.9 player bodies against 3.7, a 0.78 fielded
+ * stat ratio and an 81.8% win rate, where Act 2's identical node kind sat at 99.6%.
  */
 export const ACT_ONE_ELITE_HERO_COUNT = 3;
 
@@ -90,8 +108,29 @@ export const ACT_ONE_ELITE_HERO_COUNT = 3;
  * undefined where that default is right. Shared so App.tsx and scripts/sim/run.ts cannot drift
  * — they already each carried their own copy of the fight-is-2 rule.
  */
-export function encounterHeroCountOverride(mapNodeType: string, actNumber: number): number | undefined {
-  return mapNodeType === 'elite' && clampAct(actNumber) === 1 ? ACT_ONE_ELITE_HERO_COUNT : undefined;
+/**
+ * Act 1 never fields more bodies than the player has (2026-09-10, Growth Overhaul phase 6).
+ *
+ * The player's roster RAMPS across Act 1 — two drafted starters, a third off the Skirmish's
+ * Recruit Contract, a fourth later — while the encounter size never did. That was patched for the
+ * Elite alone in 2026-09-06 with a hand-tuned `ACT_ONE_ELITE_HERO_COUNT` = 3, which is exactly the
+ * roster size at that node; the SKIRMISH, one row earlier, kept fielding four against a roster of
+ * **two** and was measurably the act's biggest killer (80.5% win, the lowest non-boss figure
+ * anywhere on the map).
+ *
+ * So the rule replaces the constant: cap at the roster. It reproduces the Elite's 3 exactly, and
+ * it cannot go stale the way a hand-tuned number does if the draft size or the contract schedule
+ * moves. Acts 2+ are untouched — the roster is full by then, and being outnumbered is the Elite's
+ * job from there on.
+ */
+export function encounterHeroCountOverride(
+  mapNodeType: string,
+  actNumber: number,
+  rosterSize: number,
+  standardCount: number
+): number | undefined {
+  if (clampAct(actNumber) !== 1) return undefined;
+  return rosterSize > 0 && rosterSize < standardCount ? rosterSize : undefined;
 }
 
 export interface ActScaling {
@@ -124,7 +163,25 @@ function clampAct(actNumber: number): number {
  * climb. Index 1 is left at 1 step deliberately: act 2 is already the hardest Guardian in
  * the run and does not need help.
  */
-export const ACT_STEP_CURVE: readonly number[] = [0, 1, 3, 6, 10];
+export const ACT_STEP_CURVE: readonly number[] = [0, 0, 4, 9, 15];
+
+/**
+ * Extra act-steps a Guardian's held-back champion takes on top of its escort's
+ * (2026-09-10, Growth Overhaul phase 6). It is the ONE lever a champion has.
+ *
+ * Level buys a champion nothing: it ships a full four-move kit, so `MOVE_CAP` leaves no room for
+ * the move a level would pay, and its Evolution never fires because an enemy definition carries no
+ * progression nodes. Every other enemy on the map gained depth as the run went on — deeper move
+ * bands with rank, an Evolution from Act 3 — and the champion, which is meant to be the act's
+ * apex, gained only what its escort did.
+ *
+ * A multiplier rather than a flat add, so it stays proportional when the curve is retuned.
+ */
+export const CHAMPION_STEP_MULTIPLIER = 1.3;
+
+export function championSteps(statSteps: number): number {
+  return Math.round(statSteps * CHAMPION_STEP_MULTIPLIER);
+}
 
 /** Acts past the level table hold at its last entry. `baselineAct` overrides the track default — a faction authored for a later act. */
 export function actScaling(track: ScalingTrack, actNumber: number, baselineAct: number = BASELINE_ACT[track]): ActScaling {

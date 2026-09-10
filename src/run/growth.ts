@@ -96,10 +96,10 @@ export const ENCOUNTERS_PER_ACT = 4;
  */
 export const LEVEL_AFTER_ENCOUNTER: readonly number[] = [
   1, // nothing won yet
-  3, 4, 5, 6, // act 1
-  8, 9, 11, 12, // act 2
-  14, 15, 17, 18, // act 3
-  20, 21, 22, 23, // act 4
+  3, 5, 7, 8, // act 1
+  10, 11, 13, 14, // act 2
+  16, 17, 18, 19, // act 3
+  21, 22, 23, 24, // act 4
   25, 26, 27, 28, // act 5
   30, // the finale
 ];

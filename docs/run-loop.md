@@ -498,11 +498,17 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   This is a **second, independent axis** on top of the node-kind bonuses in §2 — kind
   says how hard a fight is *for its act*, the curve says how deep the act is.
 
-  **How many steps: `ACT_STEP_CURVE`, and it ACCELERATES (2026-09-05).** The number of
-  steps is a cumulative table indexed by how many acts past the track's baseline —
-  `[0, 1, 3, 6, 10]` — not the linear `act − baselineAct` it started as. So a Skirmish-track
-  Act 5 enemy takes 10 steps (+300), and an Act 4 `elite` carries its +10×2 **plus** 6
-  act-steps.
+  **How many steps: `ACT_STEP_CURVE`, and it ACCELERATES (2026-09-05; re-derived 2026-09-10).**
+  The number of steps is a cumulative table indexed by how many acts past the track's baseline —
+  `[0, 0, 4, 9, 15]` — not the linear `act − baselineAct` it started as. So a Skirmish-track
+  Act 5 enemy takes 15 steps (+450), and an Act 4 `elite` carries its +10×2 **plus** 9 act-steps.
+
+  **Index 1 is deliberately a repeat, not a step** (2026-09-10, Growth Overhaul phase 6). Act 2 is
+  where a run first meets a real faction after Act 1's deliberately soft Goblins, and it measured
+  as the run's wall for as long as it carried one — 63% cleared against Act 1's 72% and Act 3's
+  87%. That cliff is CONTENT, not curve, so the curve stops adding to it. The other end of the
+  same re-derivation is steeper: the late acts were a victory lap (98% / 96% / 96% cleared) and
+  now cost something (85% / 82% / 93%).
 
   It has to accelerate because the player's power curve does. Measured over 40,000
   simulated runs (`scripts/sim`), under the linear curve the enemy's fielded stat total grew
@@ -513,7 +519,9 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   decelerated for two reasons, and the second is the sharp one:
 
   - the step was flat, so it never compounded; and
-  - **`ENEMY_LEVEL_BY_ACT` is inert for a Guardian's champion.** Every champion ships a
+  - **`ENEMY_LEVEL_BY_ACT` is inert for a Guardian's champion** — fixed 2026-09-10 by giving the
+    champion its own `CHAMPION_STEP_MULTIPLIER` = 1.3 on the act steps, since stats are the only
+    axis left open to it. Every champion ships a
     full 4-move kit, so `MOVE_CAP` leaves no room for level-up moves, and `appendFinalEnemy`
     never calls level progression at all. A champion's `level` is a label; levels 7 and 10
     buy it nothing. The stat curve is the *only* live lever on it.
@@ -528,18 +536,41 @@ need the mechanical shape (heroCount/stat bonus), not which map node it came fro
   > would mean the enemy *out*-growing the player, which is a different design statement.
   > The ratio is the thing this curve is tuned against.
 
-  **Enemy level by act: 1 / 3 / 5 / 7 / 10.** Level is not a stat multiplier (CLAUDE.md:
-  no automatic stat growth), so it buys exactly two things, both intended: it gates
-  Evolution at `EVOLUTION_LEVEL = 5` — which is why the table jumps 3 → 5 at Act 3, so
-  **from Act 3 on every hero-pool enemy arrives already evolved** — and it is how many
-  move unlocks a hero has had, so a scaled enemy fills toward the 4-move cap instead of
-  fighting on its 3-move starting kit. Both are cashed in by `enemyGen.ts` in the same
-  order a player's hero earns them (Evolution first, remaining level-ups on moves). The
-  Evolution path is picked at random with no weighting — choosing the path that best
-  suits a hero is authored design, deliberately not guessed at by the generator, and is
-  the natural seam for hand-authored encounters to take over. On the `monsters` track
-  level is currently cosmetic (the Goblin pool has no progression data), but it is the
-  honest tier label and starts working the moment monster content gets a table.
+  **Enemy level by act: 6 / 12 / 17 / 22 / 26**, DERIVED since 2026-09-10 (Growth Overhaul
+  phase 6) as the player's act-end level less `ENEMY_LEVEL_LAG` = 2. The old 1 / 3 / 5 / 7 / 10
+  was fitted to a 10-level cap; against a 30-level player it left an Act 5 enemy — and so, via a
+  Recruit Contract, a claimable hero — 18 levels behind the roster fighting it.
+
+  Level is not a stat multiplier (CLAUDE.md: growth comes from the player's own level rolls, which
+  an enemy never gets), so it buys a generated hero **three** things, and phase 6 found all three
+  mis-set:
+
+  - **Move unlocks**, toward the 4-move cap. An enemy ships three of four slots filled, so this is
+    at most ONE move — which is why moving the level table alone shifted the measured full-clear
+    rate by 1.3pp. Level is a threshold carrier far more than a payout.
+  - **Mastery Rank**, banded by `ENEMY_RANK_LEVELS` = [10, 21] — rank 1 through Act 1, 2 through
+    Acts 2-3, 3 from Act 4. These were [4, 7], the OLD movepool gate's thresholds carried over
+    unchanged, which against the new table gave Act 1 enemies rank 2 and everything from Act 2
+    rank 3 while the player measured 38% at rank 2 by Act 4. The bands track the player's Scroll
+    economy now, not a dead gate.
+  - **Evolution**, at `ENEMY_EVOLUTION_LEVEL` = 16 rather than `EVOLUTION_LEVEL` = 5 — so
+    **from Act 3 on every hero-pool enemy arrives already evolved**. It has to track the player's
+    CRUCIBLE economy (one hero an act) rather than a level-up that no longer exists; gating on 5
+    evolved every enemy from Act 2 against a roster that is 1-of-4 evolved there.
+
+  All three are cashed in by `enemyGen.ts` in the same order a player earns them. The Evolution
+  path is picked at random with no weighting — choosing the path that best suits a hero is authored
+  design, deliberately not guessed at by the generator, and is the natural seam for hand-authored
+  encounters to take over. On the `monsters` track level is still largely cosmetic (the Goblin pool
+  has no progression data), but it is the honest tier label and starts working the moment monster
+  content gets a table.
+
+  **A Guardian's champion takes `CHAMPION_STEP_MULTIPLIER` = 1.3 of its escort's stat steps.**
+  Level and kit depth are both closed to it — a full four-move kit leaves `MOVE_CAP` no room, and
+  an enemy definition carries no Evolution nodes — so stats are the only axis it has, and without
+  its own multiplier the act's apex scaled slower than everything around it. The **Endbringer** was
+  worse: it was baselined against its own act and so took ZERO steps, making the run's final fight
+  the one piece of content on the map that never scaled at all. It takes the skirmish track now.
 
   **Measured baseline** — mean enemy stat total (HP+Atk+Def+Int+Wis+Spd through
   `getEffectiveStat`, 40 seeds per act), for reading playtest against:

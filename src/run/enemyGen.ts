@@ -20,7 +20,14 @@ import {
 // The one content import: there is exactly one move table, and tier gating needs it.
 import { moves } from '../data/moves';
 import { mergeStatMods } from './statMods';
-import { NO_SCALING, ACT_STEP_STAT_COUNT, ACT_STEP_AMOUNT, ACT_STEP_STAT_WEIGHT, type ActScaling } from './difficulty';
+import {
+  NO_SCALING,
+  ACT_STEP_STAT_COUNT,
+  ACT_STEP_AMOUNT,
+  ACT_STEP_STAT_WEIGHT,
+  championSteps,
+  type ActScaling,
+} from './difficulty';
 import type { Squad } from './squad';
 import { pickSquad } from './squad';
 
@@ -28,8 +35,37 @@ export type EncounterNodeType = 'fight' | 'elite' | 'boss';
 
 const GROWTH_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed'];
 
-/** The level bands the movepool gate used before Mastery Rank replaced it, as a Scroll count. */
-const ENEMY_RANK_LEVELS: readonly number[] = [4, 7];
+/**
+ * The levels at which a generated hero's Mastery Rank ticks up. A hero it is generating holds no
+ * Scrolls, so its rank has to be read off something — and level is the only thing it has.
+ *
+ * Re-banded 2026-09-10 (Growth Overhaul phase 6). These were [4, 7], the OLD movepool gate's level
+ * thresholds, carried over unchanged when rank replaced level in phase 2. Against the re-derived
+ * `ENEMY_LEVEL_BY_ACT` that put Act 1 enemies at rank 2 and everything from Act 2 at rank 3 — while
+ * the PLAYER, whose rank comes from a Scroll economy paying two a Guardian, measured 38% at rank 2
+ * and 23% at rank 3 by Act 4. Enemies were out-kitting the player for the whole run, worst at the
+ * start, and Act 1's Skirmish went from 83% to 80% because of it.
+ *
+ * So the bands track the PLAYER'S rank, not the old gate's: rank 1 through Act 1, rank 2 through
+ * Acts 2-3, rank 3 from Act 4 — read off the enemy level table those acts produce.
+ */
+const ENEMY_RANK_LEVELS: readonly number[] = [10, 21];
+
+/**
+ * The level from which a generated hero arrives EVOLVED. Deliberately not `EVOLUTION_LEVEL`.
+ *
+ * The player's Evolutions come from the Crucible now — one per act's Guardian
+ * (docs/growth-overhaul.md §5) — so a roster is 1-of-4 evolved entering Act 2 and 2-of-4 entering
+ * Act 3, where under the old level trigger it was 4-of-4 by the end of Act 1. Gating enemies on
+ * `EVOLUTION_LEVEL` = 5 against the re-derived level table evolved EVERY enemy from Act 2, which
+ * measured as the run's only remaining spike: the Act 2 Guardian at 70% where its neighbours sat
+ * at 95% and 94%.
+ *
+ * 16 is Act 3's enemy level, so Acts 1-2 field unevolved enemies and Acts 3+ evolved ones —
+ * the player is 2-of-4 evolved entering Act 3, which is the closest a single threshold gets to a
+ * schedule that is really one hero an act.
+ */
+const ENEMY_EVOLUTION_LEVEL = 16;
 
 function enemyScrollsForLevel(level: number): number {
   return ENEMY_RANK_LEVELS.filter((at) => level >= at).length * SCROLLS_PER_RANK;
@@ -148,9 +184,10 @@ export function rollLevelProgression(
     const node = availableEvolution(table, entry);
     if (!node || node.paths.length === 0) break;
     // A generated hero holds no Crucible, so its Evolution is read off LEVEL — the same
-    // equivalence enemyScrollsForLevel uses for Mastery Rank, and the gate the player side lost
-    // on 2026-09-10. Without it a level-1 enemy would arrive evolved.
-    if (level < node.level) break;
+    // equivalence enemyScrollsForLevel uses for Mastery Rank. The threshold is the ENEMY one,
+    // not `node.level`: it has to track how many of the player's heroes a Crucible has reached
+    // by that act, not when a level-up used to fire.
+    if (level < ENEMY_EVOLUTION_LEVEL) break;
     const { picked, nextState } = shuffledPick(state, node.paths, 1);
     state = nextState;
     try {
@@ -286,7 +323,9 @@ export function appendFinalEnemy(
   // rosterId === enemyId; a collision would mean the two pools share an id.
   if (encounter.run.roster.some((r) => r.rosterId === enemyId)) return encounter;
 
-  const { bonus } = actStatBonus(createRng(seed), scaling.statSteps);
+  // The champion's own step count: level and kit depth are both closed to it, so stats are the
+  // only axis it has (difficulty.ts CHAMPION_STEP_MULTIPLIER).
+  const { bonus } = actStatBonus(createRng(seed), championSteps(scaling.statSteps));
   const entry = createRosterEntry(enemyId, enemyId, definition.moveIds);
   const run = addRosterEntry(encounter.run, { ...entry, level: scaling.level, evolutionStatGrants: bonus });
   return { run, squad: { ...encounter.squad, benchIds: [...encounter.squad.benchIds, enemyId] } };

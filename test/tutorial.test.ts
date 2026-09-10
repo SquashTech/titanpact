@@ -16,9 +16,8 @@ import {
 } from '../src/data/tutorial';
 import { MAP_NODE_TYPES } from '../src/run/map';
 import { generateEncounter } from '../src/run/enemyGen';
-import { EVOLUTION_LEVEL as EVOLUTION_LEVEL_ } from '../src/run/progression';
-import { EVOLUTION_LEVEL } from '../src/run/progression';
-import { createRosterEntry, createRunState } from '../src/run/state';
+import { EVOLUTION_LEVEL, availableEvolution } from '../src/run/progression';
+import { addRosterEntry, createRosterEntry, createRunState } from '../src/run/state';
 import { resolveTypeMult } from '../src/engine/damage/typeMult';
 import { calcDamage, VARIANCE_MAX, statKeysForMove } from '../src/engine/damage/damagePipeline';
 
@@ -152,18 +151,19 @@ test('tutorial: a scripted encounter is fielded verbatim when nothing is exclude
 
 // --- Payouts ---
 
-test('an act reaches the Evolution before its own Guardian, on every route', () => {
-  // Not a tutorial property — a property of the level curve, which is why the tutorial pins no
-  // XP at all any more. Act 1 runs four encounters (fight, Skirmish, Elite-or-Battle, Guardian)
-  // and every route is the same length, so the fork lands on the third whichever middle node the
-  // player takes (docs/growth-overhaul.md §3).
+test('every act reaches an Evolution, on every route, because the Crucible is the Guardian', () => {
+  // Not a tutorial property, and since phase 4 not a LEVEL property either: the Crucible fires on
+  // the act's Guardian, so the fork lands once an act whatever route the player walked and
+  // whatever level they are (docs/growth-overhaul.md §5). This test used to pin a level threshold
+  // — it survives as the thing that fails if anyone re-attaches Evolution to the level track.
+  const solo = addRosterEntry(createRunState(0), createRosterEntry('valor', 'valor', heroes.valor.moveIds));
   assert.ok(
-    levelAfterEncounters(3) >= EVOLUTION_LEVEL,
-    `three encounters reach level ${levelAfterEncounters(3)}, and the Evolution wants ${EVOLUTION_LEVEL}`
+    availableEvolution(progressionTable, solo.roster[0]),
+    'a level-1 hero must be a legal Crucible target — nothing gates on EVOLUTION_LEVEL any more'
   );
   assert.ok(
-    levelAfterEncounters(2) < EVOLUTION_LEVEL,
-    'and not before the third — the fork should not land on the Skirmish'
+    availableEvolution(progressionTable, { ...solo.roster[0], level: EVOLUTION_LEVEL - 1 }),
+    'and so must one below the old threshold'
   );
 });
 

@@ -311,20 +311,21 @@ test('recruitment: a contract hero arrives FINISHED where a hire arrives RAW —
   assert.deepStrictEqual([...hired.unlockedMoveIds], [...offer.startingMoveIds]);
 });
 
-test('recruitment: OPEN — the LEVEL axis is inverted, and phase 6 owns it', () => {
-  // §6's table has a contract hero at "act level" and a hire "underlevelled". Measured, it is
-  // backwards: ENEMY_LEVEL_BY_ACT is [1, 3, 5, 7, 10] against a roster that now ends acts at
-  // 6/12/18/23/28, so an act-5 contract hero arrives at 10 where a hire arrives at 24.
-  //
-  // This test PINS THE BUG rather than the intent, deliberately (2026-09-10, per user direction).
-  // Fixing it means re-deriving ENEMY_LEVEL_BY_ACT, which docs/growth-overhaul.md §8 assigns to
-  // phase 6 and says cannot start earlier — enemy level also drives their Evolutions and Mastery
-  // Rank, so moving it is a difficulty swing that has to be measured, not guessed. When phase 6
-  // lands, THIS TEST SHOULD FAIL, and the assertion below flips to the other comparison.
-  for (const act of [3, 4, 5]) {
+test('recruitment: the LEVEL axis points the right way — a contract hero outranks a hire', () => {
+  // §6's fourth axis, restored by phase 6's re-derivation of ENEMY_LEVEL_BY_ACT. It ran BACKWARDS
+  // between phases 3 and 6 — an act-5 contract hero arrived at level 10 where a hire arrived at
+  // 24 — because the enemy table was still fitted to a 10-level cap. Both tables read off the
+  // same curve now, at different lags: the enemy trails the player's act-end level by
+  // ENEMY_LEVEL_LAG, a hire by a whole act.
+  for (let act = 1; act <= 5; act++) {
     assert.ok(
-      ENEMY_LEVEL_BY_ACT[act - 1] < guildHallLevel(act),
-      `act ${act}: enemy level has caught up with the hire curve — phase 6 has landed, flip this test`
+      ENEMY_LEVEL_BY_ACT[act - 1] > guildHallLevel(act),
+      `act ${act}: a contract hero at ${ENEMY_LEVEL_BY_ACT[act - 1]} must outrank a hire at ${guildHallLevel(act)}`
+    );
+    // And still under the player, or claiming one would be an upgrade with no cost at all.
+    assert.ok(
+      ENEMY_LEVEL_BY_ACT[act - 1] <= levelAfterEncounters(act * ENCOUNTERS_PER_ACT),
+      `act ${act}: an enemy must not out-level the roster it is fought by`
     );
   }
 });
