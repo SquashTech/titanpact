@@ -453,7 +453,18 @@ pinned along the bottom, the roster above it, and one tap-then-tap to move a sto
 full-width ROWS here rather than the Gear board's 2x3 cards: seven stat cells only fit across a
 full width, and showing all seven — dim where a hero carries none — is what makes a spread
 readable down a column rather than hero by hero. Six rows and the tray clear a 780px page with
-no scroll.
+no scroll, and that budget is what sets every figure in the row rather than taste.
+
+Each row states what its stones are BUYING under the hero name, in each stone's own colour
+(`+40 HP +40 ATK +25 SPD`). The cells are the input and the stat line is the output, and the
+output is the half a player actually wants — it is also what filled the board, which was mostly
+empty space when the rows carried counts alone.
+
+**Setting one is the loudest feedback on the screen**, because a Gem is +5 to a number and there
+is nothing to look at otherwise. Three parts: the cell blooms in its own colour, the amount rides
+up off the stat line it just moved, and `gem.set` fires **pitched by how full the hero now is**,
+so pouring a stack climbs instead of repeating. One stone is a click; eight are an arpeggio, and
+the arpeggio is what says a hero is being filled rather than merely edited.
 It replaced setting Gems on the hero sheet, which cost four steps a hero (roster → sheet → Gems
 page → back out) for a job the Gear board does in one. Two departures from the Gear board, both
 because Gems arrive four and five at a time: a held stone **stays held** after it lands, so a

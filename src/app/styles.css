@@ -7508,11 +7508,14 @@ textarea,
 /* Two across, three down (2026-09-07, per user direction): the roster reads as a squad at a
    glance rather than a list to scroll, and each card gets its full width back for a slot row
    underneath the hero. */
+/* The board pins its bag to the bottom, so what is left over sits BETWEEN the cards rather than
+   under them — which is room the cards may as well have. The item boxes stay at 48px: that is the
+   touch minimum, not a size with slack in it. */
 .roster-mgmt-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-  margin-bottom: 4px;
+  gap: 9px;
+  margin-bottom: 6px;
 }
 
 /* --- The bag ------------------------------------------------------------
@@ -7796,7 +7799,7 @@ textarea,
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 7px;
   min-width: 0;
   background: var(--surface-raised);
   border: 1px solid var(--border);
@@ -22696,15 +22699,16 @@ textarea,
 .gem-hero-list {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
 }
 
 .gem-hero-row {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 5px 7px 5px 6px;
-  border-radius: var(--radius-sm);
+  flex-direction: column;
+  gap: 4px;
+  padding: 5px 6px 4px;
+  border-radius: var(--radius-md);
   background: var(--surface-raised);
   border: 1px solid var(--border);
   border-left-width: 3px;
@@ -22718,8 +22722,8 @@ textarea,
 .gem-hero-head {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex: 0 0 106px;
+  gap: 8px;
+  width: 100%;
   min-width: 0;
   padding: 0;
   background: none;
@@ -22736,12 +22740,13 @@ textarea,
 .gem-hero-ident {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .gem-hero-name {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   color: var(--text);
   white-space: nowrap;
@@ -22749,11 +22754,12 @@ textarea,
   text-overflow: ellipsis;
 }
 
-/* Under the name, where a subtitle goes — not floated beside the stones, which read as a group
-   and stop reading as one the moment a bare number is set inside them. */
+/* The one number the row keeps, on the right edge where a capacity belongs. Beside the name it
+   read as part of the name; inside the stones it broke them up as a group. */
 .gem-hero-total {
-  font-size: 9px;
-  font-weight: 700;
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: var(--text-dim);
 }
@@ -22766,15 +22772,38 @@ textarea,
   opacity: 0.65;
 }
 
+.gem-hero-grants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 7px;
+  min-height: 11px;
+  overflow: hidden;
+}
+
+.gem-hero-grant {
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--relic-color);
+}
+
+.gem-hero-none {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  opacity: 0.7;
+}
+
+/* Full width now, so a cell is a real target rather than a seventh of the space left over. */
 .gem-hero-cells {
   display: flex;
-  gap: 3px;
-  flex: 1 1 auto;
+  gap: 4px;
 }
 
 /* All seven, always, dim where a hero carries none: a column the eye can run down only exists if
    every row has the same seven positions in the same order. */
 .gem-cell {
+  position: relative;
   flex: 1 1 0;
   min-width: 0;
   display: flex;
@@ -22782,10 +22811,10 @@ textarea,
   align-items: center;
   gap: 0;
   padding: 2px 0 1px;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-sm);
   background: var(--panel-alt);
   border: 1px solid transparent;
-  opacity: 0.32;
+  opacity: 0.34;
 }
 
 .gem-cell.is-set {
@@ -22795,12 +22824,12 @@ textarea,
 }
 
 .gem-cell-art {
-  font-size: 15px;
+  font-size: 17px;
 }
 
 .gem-cell-count {
-  min-height: 10px;
-  font-size: 9px;
+  min-height: 11px;
+  font-size: 10px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 10px;
@@ -22815,8 +22844,8 @@ textarea,
 .gem-tray {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 7px 8px 8px;
+  gap: 5px;
+  padding: 6px 8px 7px;
   border-radius: var(--radius-md);
   background: var(--panel-alt);
   border: 1px solid var(--border);
@@ -22826,7 +22855,7 @@ textarea,
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 24px;
+  min-height: 22px;
 }
 
 .gem-tray-label {
@@ -22879,7 +22908,7 @@ textarea,
   display: flex;
   justify-content: center;
   gap: 5px;
-  min-height: 46px;
+  min-height: 38px;
   align-items: center;
 }
 
@@ -22926,4 +22955,105 @@ textarea,
    board: a hero who cannot take THIS stone — at its stat's cap, or at their own — recedes. */
 .gem-board.is-focused .gem-hero-row.is-inert {
   opacity: 0.26;
+}
+
+/* --- Setting a Gem: the bloom and the numeral ------------------------------------------------
+   A Gem is +5 to a number, which is nothing to look at, so the feedback has to carry the whole
+   sense of the hero getting bigger. Two parts, both cheap: the cell it landed in blooms in its own
+   colour, and the amount rides up off the row in that colour. The stat line under the name has
+   already changed by then, so the numeral is flying off the number it just moved. */
+
+.gem-cell-bloom {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 45%, var(--relic-color), transparent 70%);
+  opacity: 0;
+  animation: gem-cell-bloom 460ms ease-out;
+}
+
+@keyframes gem-cell-bloom {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+/* The count lands rather than fades in — a stone seating, not a label updating. */
+.gem-cell.is-set .gem-cell-count {
+  animation: gem-count-land 300ms cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+
+@keyframes gem-count-land {
+  0% {
+    transform: scale(1.9);
+    color: var(--relic-color);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Rides the row, not the cell: a poured stack is several of these stacking up the same column,
+   and off a 50px cell they would fly off the edge of the panel.
+
+   Anchored over the STAT LINE rather than the right edge, for two reasons: the number it names
+   is the one that just moved there, and the row's capacity count lives on the right, where a
+   numeral flying past it reads as the capacity changing. */
+.gem-flare-layer {
+  position: absolute;
+  left: 44px;
+  top: 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+.gem-flare {
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--relic-color);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--relic-color) 60%, transparent);
+  animation: gem-flare-rise 720ms ease-out forwards;
+}
+
+@keyframes gem-flare-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.8);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-26px) scale(1);
+  }
+}
+
+/* The row itself takes the hit, briefly — the same trick the combat layer uses to say a thing
+   happened TO somebody rather than merely near them. */
+.gem-hero-row.can-take:active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-raised));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gem-cell-bloom,
+  .gem-cell.is-set .gem-cell-count,
+  .gem-flare {
+    animation: none;
+  }
+
+  .gem-cell-bloom {
+    opacity: 0;
+  }
 }

@@ -26,6 +26,8 @@ export type SfxId =
   | 'contract.sign'
   | 'shrine'
   | 'blessing'
+  | 'gem.set'
+  | 'gem.pull'
   | 'class.learn'
   | 'cache.open'
   | 'gold.coin'
@@ -269,6 +271,38 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'sine', freq: 784, detune: 12, gain: 0.13, attack: 0.18, decay: 1.2, delay: 0.26 },
       { wave: 'sine', freq: 1568, detune: 18, gain: 0.05, attack: 0.2, decay: 1.0, delay: 0.3 },
       { wave: 'noise', gain: 0.12, attack: 0.4, decay: 0.9, filter: { type: 'bandpass', freq: 500, freqEnd: 3000, q: 0.7 } },
+    ],
+  },
+
+  /**
+   * A Gem seated on a hero (GemBoard). A struck facet: no body at all, just a hard transient and
+   * three high partials ringing off it — the shortest sound in the run set, because it fires
+   * once per TAP and a stack of eight is eight of them inside two seconds.
+   *
+   * The caller pitches it by how many of that stone the hero now holds, so pouring a stack
+   * climbs. That is the whole trick: one of these is a click, eight of them is an arpeggio, and
+   * the arpeggio is what says the hero is being filled rather than merely edited.
+   */
+  'gem.set': {
+    gain: 0.3,
+    jitter: 0.006,
+    voices: [
+      // The strike. Triangle, not sine: the odd harmonics are what make it read as struck stone.
+      { wave: 'triangle', freq: 1047, gain: 0.24, attack: 0.002, hold: 0.01, decay: 0.11 },
+      { wave: 'sine', freq: 1568, gain: 0.16, attack: 0.002, decay: 0.16 },
+      { wave: 'sine', freq: 2093, detune: 9, gain: 0.1, attack: 0.003, decay: 0.2, delay: 0.012 },
+      // A breath of air off the facet, gone before the partials are.
+      { wave: 'noise', gain: 0.06, attack: 0.002, decay: 0.07, filter: { type: 'bandpass', freq: 3200, freqEnd: 6400, q: 1.6 } },
+    ],
+  },
+
+  /** The same stone lifted back off. `gem.set` inverted — the sweep falls, and the partials go first. */
+  'gem.pull': {
+    gain: 0.24,
+    jitter: 0.006,
+    voices: [
+      { wave: 'triangle', freq: 784, freqEnd: 523, gain: 0.2, attack: 0.003, decay: 0.13 },
+      { wave: 'sine', freq: 1175, gain: 0.1, attack: 0.003, decay: 0.1 },
     ],
   },
 
