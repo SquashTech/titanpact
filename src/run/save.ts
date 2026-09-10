@@ -41,8 +41,11 @@ import { ROSTER_CAP, TOTAL_ACTS } from './state';
  * v8 (2026-09-10): the Growth Overhaul's first phase — Gems are gone entirely, and with them
  * both those fields and the two stat-shrine node types a v7 map may hold
  * (docs/growth-overhaul.md §7).
+ * v9 (2026-09-10): its second — Mastery Scrolls. RunState gained `masteryScrolls` and entries
+ * gained `masteryScrollsSpent`, which is the whole of a hero's Mastery Rank. A v8 file's moves
+ * were gated on level, so its heroes would all read rank 1 and lose their ceiling.
  */
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the
@@ -245,6 +248,8 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
   }
 
   if (!isInt(value.bonusItemSlots, 0, MAX_ITEM_SLOTS)) reject(`${label}.bonusItemSlots is not a slot count`);
+  // Uncapped: it keeps climbing past MAX_MASTERY_RANK, which masteryRank clamps on read.
+  if (!isInt(value.masteryScrollsSpent, 0)) reject(`${label}.masteryScrollsSpent is not a count`);
 
   const graft = value.evolutionTypeGraft ?? null;
   if (graft !== null) {
@@ -266,6 +271,7 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     bonusPassiveGrants: requireIds(value.bonusPassiveGrants, index.passiveIds, `${label}.bonusPassiveGrants`),
     bonusStatGrants: decodeStatGrants(value.bonusStatGrants, `${label}.bonusStatGrants`),
     masteryStatGrants: decodeStatGrants(value.masteryStatGrants, `${label}.masteryStatGrants`),
+    masteryScrollsSpent: value.masteryScrollsSpent,
     bonusItemSlots: value.bonusItemSlots,
     evolutionTypeGraft: graft as TypeId | null,
     classId: classId as PassiveId | null,
@@ -353,6 +359,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
   if (typeof value.levelUpDeferred !== 'boolean') reject('run.levelUpDeferred is not a flag');
   if (!isInt(value.gold, 0)) reject('run.gold is not a count');
   if (!isInt(value.recruitContracts, 0)) reject('run.recruitContracts is not a count');
+  if (!isInt(value.masteryScrolls, 0)) reject('run.masteryScrolls is not a count');
   if (!isInt(value.fightsStarted, 0)) reject('run.fightsStarted is not a count');
   if (!isInt(value.encountersWon, 0)) reject('run.encountersWon is not a count');
   if (!isInt(value.actNumber, 1, TOTAL_ACTS)) reject(`run.actNumber is not an act in 1-${TOTAL_ACTS}`);
@@ -385,6 +392,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     stash,
     unseenItemIds: decodeUnseen(value.unseenItemIds, stash),
     relics: requireIds(value.relics, index.relicIds, 'run.relics'),
+    masteryScrolls: value.masteryScrolls,
     recruitContracts: value.recruitContracts,
     map,
     currentNodeId,

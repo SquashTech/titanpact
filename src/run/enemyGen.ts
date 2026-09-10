@@ -9,7 +9,14 @@ import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
 import type { BrokenSeal, RunState, RosterEntry } from './state';
 import { createRunState, createRosterEntry, addRosterEntry } from './state';
 import { unsealedIdFor } from '../data/enemies';
-import { MOVE_CAP, availableEvolution, chooseEvolutionPath, levelUpMovePool, type ProgressionTable } from './progression';
+import {
+  MOVE_CAP,
+  SCROLLS_PER_RANK,
+  availableEvolution,
+  chooseEvolutionPath,
+  masteryMovePool,
+  type ProgressionTable,
+} from './progression';
 // The one content import: there is exactly one move table, and tier gating needs it.
 import { moves } from '../data/moves';
 import { mergeStatMods } from './statMods';
@@ -20,6 +27,13 @@ import { pickSquad } from './squad';
 export type EncounterNodeType = 'fight' | 'elite' | 'boss';
 
 const GROWTH_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed'];
+
+/** The level bands the movepool gate used before Mastery Rank replaced it, as a Scroll count. */
+const ENEMY_RANK_LEVELS: readonly number[] = [4, 7];
+
+function enemyScrollsForLevel(level: number): number {
+  return ENEMY_RANK_LEVELS.filter((at) => level >= at).length * SCROLLS_PER_RANK;
+}
 
 function shuffledPick<T>(rng: RngState, pool: readonly T[], count: number): { picked: T[]; nextState: RngState } {
   const remaining = [...pool];
@@ -147,20 +161,27 @@ export function rollLevelProgression(
   const entry = next.roster.find((r) => r.rosterId === rosterId);
   if (!entry) return { run: next, nextState: state };
 
+  // An enemy has no Scrolls to spend, so its Mastery Rank is read off its LEVEL — the same
+  // three bands the level gate drew before Scrolls replaced it (Early under 4, Mid at 4, Late
+  // at 7), so enemy kits keep the shape the curve was tuned against. Revisit in phase 6, where
+  // enemy level is re-derived against a 30-level player (docs/growth-overhaul.md §8).
+  const ranked: RosterEntry = { ...entry, masteryScrollsSpent: enemyScrollsForLevel(level) };
   const moveLevelUps = Math.max(0, level - 1 - levelUpsSpent);
   const room = Math.max(0, MOVE_CAP - entry.unlockedMoveIds.length);
   const { picked: learned, nextState: afterMoves } = shuffledPick(
     state,
-    levelUpMovePool(table, moves, entry),
+    masteryMovePool(table, moves, ranked),
     Math.min(moveLevelUps, room)
   );
   state = afterMoves;
-  if (learned.length > 0) {
-    next = {
-      ...next,
-      roster: next.roster.map((r) => (r.rosterId === rosterId ? { ...r, unlockedMoveIds: [...r.unlockedMoveIds, ...learned] } : r)),
-    };
-  }
+  next = {
+    ...next,
+    roster: next.roster.map((r) =>
+      r.rosterId === rosterId
+        ? { ...r, masteryScrollsSpent: ranked.masteryScrollsSpent, unlockedMoveIds: [...r.unlockedMoveIds, ...learned] }
+        : r
+    ),
+  };
   return { run: next, nextState: state };
 }
 

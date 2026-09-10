@@ -139,7 +139,8 @@ function MapPlacard({ location }: { location: LocationDefinition }) {
 // The run's hub (docs/run-loop.md). Training Points are spent on LevelUpScreen,
 // not here; a banked remainder on the map is normal.
 export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSaveAndQuit, onAbandonRun }: Props) {
-  const [rosterOpen, setRosterOpen] = useState(false);
+  /** Null while closed; otherwise the board Manage Roster opens on. */
+  const [rosterBoard, setRosterBoard] = useState<'gear' | 'mastery' | null>(null);
   const [showReference, setShowReference] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   // Two taps to abandon: quitting is reversible now, but abandoning deletes the save.
@@ -195,6 +196,15 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
             onSpend={canAffordAnyLevelUp(run) ? onOpenLevelUp : undefined}
           />
           <ResourceStat kind="contract" label="Recruit Contracts" value={run.recruitContracts} />
+          {/* A stock, not an inbox — banking a Scroll is a legitimate play, so the count is
+              stated and nothing is ever flagged as waiting (docs/growth-overhaul.md §10). The
+              chip is a shortcut to the board, which is the only place one can be spent. */}
+          <ResourceStat
+            kind="scroll"
+            label="Mastery Scrolls"
+            value={run.masteryScrolls}
+            onSpend={run.masteryScrolls > 0 ? () => setRosterBoard('mastery') : undefined}
+          />
         </div>
         <button
           type="button"
@@ -240,7 +250,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
           // Inline, so it has to carry the alert colour too: a custom property set here outranks
           // anything .has-unopened could say about it from the stylesheet.
           style={{ '--btn-color': waiting.total > 0 ? 'var(--physical)' : 'var(--ally)' } as CSSProperties}
-          onClick={() => setRosterOpen(true)}
+          onClick={() => setRosterBoard('gear')}
         >
           <span className="map-footer-icon"><HubGlyph name="roster" /></span>
           {/* The label says what is waiting, not where you are going. A badge alone is a mark the
@@ -304,7 +314,14 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
         </div>
       )}
 
-      {rosterOpen && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setRosterOpen(false)} />}
+      {rosterBoard && (
+        <RosterManagementScreen
+          run={run}
+          onRunChange={onRunChange}
+          initialBoard={rosterBoard}
+          onClose={() => setRosterBoard(null)}
+        />
+      )}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
       {previewNode && <MapNodePreviewPopup node={previewNode} onClose={() => setPreviewNode(null)} />}
     </div>

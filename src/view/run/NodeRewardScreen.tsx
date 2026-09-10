@@ -1,19 +1,20 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { playSfx } from '../../audio/sfx';
+import { playSfx, type SfxId } from '../../audio/sfx';
 import { equipment, rollEquipmentDrops } from '../../data/equipment';
 import type { RunState } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { rarityWeightsFor } from '../../run/equipment';
 import { grantCurrencyReward, grantUpgradeReward } from '../../run/runProgress';
+import { grantMasteryScrolls, SCROLL_REWARD_COUNT } from '../../run/progression';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { SectionGlyph } from '../shared/sectionIcons';
-import { NodeHeader, NodeSky, NODE_TINT_GOLD, NODE_TINT_VITAL } from '../shared/NodeStage';
+import { NodeHeader, NodeSky, NODE_TINT_ARCANE, NODE_TINT_GOLD, NODE_TINT_VITAL } from '../shared/NodeStage';
 import { prefersReducedMotion } from '../shared/reducedMotion';
 import { CacheOpening, useCacheOpening } from './CacheReveal';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
 import { RosterPeek } from './RosterPeek';
 
-export type RewardNodeType = 'currencyReward' | 'upgradeReward' | 'equipmentReward';
+export type RewardNodeType = 'currencyReward' | 'upgradeReward' | 'equipmentReward' | 'scrollReward';
 
 /** Flat, and deliberately under one fight's pay: the XP cache is a top-up, not a substitute for fighting. */
 const UPGRADE_REWARD_XP = 2;
@@ -22,6 +23,7 @@ const NODE_TINT: Record<RewardNodeType, string> = {
   currencyReward: NODE_TINT_GOLD,
   upgradeReward: NODE_TINT_VITAL,
   equipmentReward: NODE_TINT_GOLD,
+  scrollReward: NODE_TINT_ARCANE,
 };
 
 /** Beat before the count starts, so the room is read before it moves. */
@@ -46,7 +48,7 @@ const COINS = Array.from({ length: 14 }, (_, i) => {
  * in run state by the time this counts — the animation reports it, it never withholds it, so a
  * player who taps straight past keeps every point.
  */
-function useCountUp(from: number, amount: number, tick: 'gold.coin' | 'xp.orb'): { shown: number; done: boolean } {
+function useCountUp(from: number, amount: number, tick: SfxId): { shown: number; done: boolean } {
   const [shown, setShown] = useState(from);
   const [done, setDone] = useState(false);
 
@@ -83,20 +85,40 @@ function useCountUp(from: number, amount: number, tick: 'gold.coin' | 'xp.orb'):
   return { shown, done };
 }
 
+/**
+ * The three instant kinds, as a table rather than as ternaries at every use — a fourth is one row.
+ * `unit` is the suffix on the numeral; `delta` writes the +N line, which is not always the same
+ * shape (gold suffixes, the others prefix a word).
+ */
+const HOARD_KINDS = {
+  gold: { tick: 'gold.coin', unit: 'g', label: 'Purse', delta: (n: number) => `+${n}g`, coins: true },
+  xp: { tick: 'xp.orb', unit: 'XP', label: 'Level-up pool', delta: (n: number) => `+${n} XP`, coins: false },
+  scroll: {
+    tick: 'scroll.spend',
+    unit: '',
+    label: 'Mastery Scrolls',
+    delta: (n: number) => `+${n} ${n === 1 ? 'Scroll' : 'Scrolls'}`,
+    coins: false,
+  },
+} as const satisfies Record<string, { tick: SfxId; unit: string; label: string; delta: (n: number) => string; coins: boolean }>;
+
+type HoardKind = keyof typeof HOARD_KINDS;
+
 interface HoardProps {
-  kind: 'gold' | 'xp';
+  kind: HoardKind;
   amount: number;
   /** The purse (or pool) as it stood before this node paid out. */
   from: number;
 }
 
-/** The whole of a gold/XP cache: the pile, and the player's own total climbing through it. */
+/** The whole of an instant cache: the pile, and the player's own total climbing through it. */
 function Hoard({ kind, amount, from }: HoardProps) {
-  const { shown, done } = useCountUp(from, amount, kind === 'gold' ? 'gold.coin' : 'xp.orb');
+  const spec = HOARD_KINDS[kind];
+  const { shown, done } = useCountUp(from, amount, spec.tick);
 
   return (
     <div className={`node-hoard${done ? ' is-settled' : ''}`}>
-      {kind === 'gold' && (
+      {spec.coins && (
         <div className="node-hoard-coins" aria-hidden="true">
           {COINS.map((c, i) => (
             <span
@@ -118,15 +140,15 @@ function Hoard({ kind, amount, from }: HoardProps) {
         </div>
       )}
 
-      <span className="node-hoard-delta">+{kind === 'gold' ? `${amount}g` : `${amount} XP`}</span>
+      <span className="node-hoard-delta">{spec.delta(amount)}</span>
 
       <span className="node-hoard-amount">
         <ResourceGlyph kind={kind} className="node-hoard-glyph" />
         {shown}
-        <span className="node-hoard-unit">{kind === 'gold' ? 'g' : 'XP'}</span>
+        {spec.unit && <span className="node-hoard-unit">{spec.unit}</span>}
       </span>
 
-      <span className="node-hoard-label">{kind === 'gold' ? 'Purse' : 'Level-up pool'}</span>
+      <span className="node-hoard-label">{spec.label}</span>
     </div>
   );
 }
@@ -140,10 +162,18 @@ interface Props {
   onClaimEquipment: (itemId: string) => void;
 }
 
+/** Which resource each instant node pays, and how it pays it. Absent means the node is not instant. */
+const INSTANT_KIND: Partial<Record<RewardNodeType, HoardKind>> = {
+  currencyReward: 'gold',
+  upgradeReward: 'xp',
+  scrollReward: 'scroll',
+};
+
 /**
- * The three instant reward nodes (docs/run-loop.md): the Equipment Cache offers 3, and gold and XP
- * pay out on arrival — there was never a decision behind their Claim button, only a tap between the
- * player and the same Continue every other node ends on (2026-09-08, per user direction).
+ * The instant reward nodes and the Equipment Cache (docs/run-loop.md): the Cache offers 3, and gold,
+ * XP and Scrolls pay out on arrival — there was never a decision behind their Claim button, only a
+ * tap between the player and the same Continue every other node ends on (2026-09-08, per user
+ * direction). Which hero a Scroll goes to IS a decision, but it is the Roster screen's, made later.
  */
 export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onClaimEquipment }: Props) {
   const [currencyAmount] = useState(() => 15 + Math.floor(Math.random() * 16)); // 15-30
@@ -158,24 +188,30 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
   /** Equipment Cache only (CacheReveal.tsx); the other node types pass false and start `open`. */
   const chestPhase = useCacheOpening(nodeType === 'equipmentReward');
 
-  const isInstant = nodeType === 'currencyReward' || nodeType === 'upgradeReward';
+  const instant = INSTANT_KIND[nodeType];
+  const amount =
+    nodeType === 'currencyReward' ? currencyAmount : nodeType === 'scrollReward' ? SCROLL_REWARD_COUNT : UPGRADE_REWARD_XP;
   // Read before the grant lands, so the count-up has somewhere to start from.
-  const [startFrom] = useState(() => (nodeType === 'currencyReward' ? run.gold : run.levelUpPool));
+  const [startFrom] = useState(() =>
+    nodeType === 'currencyReward' ? run.gold : nodeType === 'scrollReward' ? run.masteryScrolls : run.levelUpPool
+  );
 
   // Ref-guarded rather than deps-guarded: StrictMode mounts the effect twice, and the second pass
   // must not pay the player again.
   const granted = useRef(false);
   useEffect(() => {
-    if (!isInstant || granted.current) return;
+    if (!instant || granted.current) return;
     granted.current = true;
     onRunChange(
       nodeType === 'currencyReward'
         ? grantCurrencyReward(run, currencyAmount)
-        : grantUpgradeReward(run, UPGRADE_REWARD_XP)
+        : nodeType === 'scrollReward'
+          ? grantMasteryScrolls(run, SCROLL_REWARD_COUNT)
+          : grantUpgradeReward(run, UPGRADE_REWARD_XP)
     );
     // `run` is deliberately absent: this fires once, on arrival, against the state it arrived with.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInstant, nodeType, currencyAmount]);
+  }, [instant, nodeType, currencyAmount]);
 
   return (
     <div className="node-screen node-reward-screen" style={{ '--node-rgb': NODE_TINT[nodeType] } as CSSProperties}>
@@ -201,6 +237,15 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
         />
       )}
 
+      {nodeType === 'scrollReward' && (
+        <NodeHeader
+          eyebrow="A Cache Opens"
+          title="Scroll Cache"
+          glyph={<ResourceGlyph kind="scroll" className="node-header-resource" />}
+          readout="Mastery Scrolls. Pour them into a hero from the Roster."
+        />
+      )}
+
       {nodeType === 'equipmentReward' && chestPhase === 'open' && (
         <NodeHeader
           compact
@@ -212,13 +257,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
       )}
 
       <div className="screen-scroll">
-        {isInstant && (
-          <Hoard
-            kind={nodeType === 'currencyReward' ? 'gold' : 'xp'}
-            amount={nodeType === 'currencyReward' ? currencyAmount : UPGRADE_REWARD_XP}
-            from={startFrom}
-          />
-        )}
+        {instant && <Hoard kind={instant} amount={amount} from={startFrom} />}
 
         {nodeType === 'equipmentReward' && chestPhase !== 'open' && (
           <CacheOpening phase={chestPhase} caption="Three ways this could go." />

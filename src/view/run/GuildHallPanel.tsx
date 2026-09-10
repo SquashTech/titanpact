@@ -1,14 +1,22 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { heroes } from '../../data/heroes';
 import { equipment } from '../../data/equipment';
-import { guildHallOffers, CONTRACT_PURCHASE_COST } from '../../data/recruitment';
+import { guildHallOffers, CONTRACT_PURCHASE_COST, SCROLL_PURCHASE_COST } from '../../data/recruitment';
+import { playSfx } from '../../audio/sfx';
+import { ResourceGlyph } from '../shared/RunGlyph';
 import type { HeroDefinition } from '../../engine/content';
 import type { RunState } from '../../run/state';
 import { ROSTER_CAP, RosterFullError } from '../../run/state';
 import { guildHallEntry } from '../../run/guildRecruit';
 import { guildHallLevel } from '../../run/difficulty';
 import type { EquipmentDefinition } from '../../run/equipment';
-import { recruitFromGuildHall, buyContract, RecruitmentError, type GuildHallOffer } from '../../run/recruitment';
+import {
+  recruitFromGuildHall,
+  buyContract,
+  buyMasteryScroll,
+  RecruitmentError,
+  type GuildHallOffer,
+} from '../../run/recruitment';
 import { EQUIPMENT_PRICE_BY_RARITY, type GuildHallOffers } from '../../run/shop';
 import { getTypeColor } from '../combat/typeColors';
 import { EquipmentIcon, ItemEffectChips, RARITY_COLOR_VARS, RARITY_LABELS } from '../shared/EquipmentBox';
@@ -134,6 +142,7 @@ export function GuildHallPanel({
   const previewOffer = previewOfferId ? heroOffers.find((o) => o.id === previewOfferId) : undefined;
   const previewEquip = previewEquipId ? equipmentOffers.find((i) => i.id === previewEquipId) : undefined;
   const canBuyContract = run.gold >= CONTRACT_PURCHASE_COST;
+  const canBuyScroll = run.gold >= SCROLL_PURCHASE_COST;
 
   // Derived from state rather than pushed from each setter, so a later modal can't forget to report.
   const overlayOpen = !!previewOffer || !!previewEquip || confirmingContract || sellOpen || !!fanfareHeroId;
@@ -151,6 +160,15 @@ export function GuildHallPanel({
       setFanfareHeroId(offer.heroId);
     } catch (err) {
       if (!(err instanceof RecruitmentError) && !(err instanceof RosterFullError)) throw err;
+    }
+  }
+
+  function handleBuyScroll() {
+    try {
+      onRunChange(buyMasteryScroll(run, SCROLL_PURCHASE_COST));
+      playSfx('scroll.spend');
+    } catch (err) {
+      if (!(err instanceof RecruitmentError)) throw err;
     }
   }
 
@@ -207,6 +225,19 @@ export function GuildHallPanel({
           </span>
           <span className="guild-hall-contract-held">{run.recruitContracts} held</span>
           <span className="guild-hall-contract-price">{CONTRACT_PURCHASE_COST}g</span>
+        </button>
+        {/* No confirm, unlike the Contract: a Scroll is spent later and on whoever you like, so
+            there is nothing here to get wrong. Buying is the reversible half of the decision. */}
+        <button className="guild-hall-contract-row" disabled={!canBuyScroll} onClick={handleBuyScroll}>
+          <span className="guild-hall-contract-icon is-scroll">
+            <ResourceGlyph kind="scroll" />
+          </span>
+          <span className="guild-hall-contract-body">
+            <span className="guild-hall-contract-name">Mastery Scroll</span>
+            <span className="guild-hall-contract-desc">Teach one hero a new move, from the Roster.</span>
+          </span>
+          <span className="guild-hall-contract-held">{run.masteryScrolls} held</span>
+          <span className="guild-hall-contract-price">{SCROLL_PURCHASE_COST}g</span>
         </button>
       </div>
 

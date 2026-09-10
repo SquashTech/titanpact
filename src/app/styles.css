@@ -22499,3 +22499,247 @@ textarea,
 .gear-board .stash-panel {
   margin-top: auto;
 }
+
+/* --- The Mastery board (MasteryBoard.tsx) ----------------------------------------------------
+   Full-width rows, not the Gear board's 2x3 cards: a row has to carry the four moves the hero
+   already holds, because "is there room, and for what" is half of what a Scroll asks. Same
+   column shape as the Gear board — the list grows down, the tray pins to the bottom of the
+   reach — so switching tabs never moves the ground. */
+
+.mastery-board {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  gap: 10px;
+}
+
+.mastery-hero-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* The type stripe is on the LEFT here, not the top: these rows stack, and a top border between
+   two of them reads as a divider rather than as an identity. */
+.mastery-hero-row {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 9px 11px 8px;
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  transition: border-color 140ms ease, background 140ms ease, opacity 140ms ease;
+}
+
+.mastery-hero-row.can-take {
+  cursor: pointer;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+.mastery-hero-row.can-take:active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-raised));
+}
+
+/* Nothing left to teach. Dimmed rather than hidden — the hero is still on the roster, and the
+   note under it says why the row will not take a Scroll. */
+.mastery-hero-row.is-inert {
+  opacity: 0.42;
+}
+
+.mastery-hero-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.mastery-hero-portrait {
+  width: 34px;
+  height: 34px;
+  flex: none;
+}
+
+.mastery-hero-ident {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.mastery-hero-name {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+.mastery-hero-rank {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex: none;
+}
+
+.mastery-rank-num {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.mastery-hero-rank.is-max .mastery-rank-num {
+  color: var(--scroll-color, #c9a2ff);
+}
+
+/* Six pips: the bar IS the readout, and the two wider gaps are the rank thresholds — so "one
+   more to go" is a thing you see rather than a sentence you read. */
+.mastery-pips {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.mastery-pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text-dim) 30%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-dim) 26%, transparent);
+}
+
+.mastery-pip.is-filled {
+  background: #c9a2ff;
+  box-shadow: 0 0 6px color-mix(in srgb, #c9a2ff 55%, transparent);
+}
+
+.mastery-pip.is-threshold {
+  margin-right: 6px;
+}
+
+/* Four slots always, filled or not: an empty one is the room a Scroll would land in, and the
+   difference between "learns it" and "replaces something" is the whole of the second question. */
+.mastery-move-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.mastery-move-chip {
+  min-width: 0;
+  padding: 4px 5px;
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--chip-color, var(--border)) 50%, transparent);
+  background: color-mix(in srgb, var(--chip-color, var(--border)) 15%, transparent);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mastery-move-chip.is-empty {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--text-dim) 34%, transparent);
+  background: transparent;
+  min-height: 20px;
+}
+
+.mastery-hero-note {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-dim);
+}
+
+/* --- The tray -------------------------------------------------------------------------------
+   What is left to spend, at the top: unlike the Gear board's bag nothing is dragged out of it,
+   so it is a readout and an instruction rather than a target, and both are wanted on arrival. */
+
+.mastery-tray {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, #c9a2ff 34%, var(--border));
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, #c9a2ff 9%, var(--surface-raised));
+}
+
+.mastery-tray-glyph {
+  display: inline-flex;
+  color: #c9a2ff;
+  font-size: 22px;
+}
+
+.mastery-tray-glyph .resource-glyph {
+  width: 22px;
+  height: 22px;
+}
+
+.mastery-tray-count {
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #c9a2ff;
+  min-width: 20px;
+}
+
+.mastery-tray-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: var(--text);
+}
+
+.mastery-tray-sub {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-dim);
+}
+
+/* --- The Scroll's move offer (MoveOfferOverlay.tsx) ------------------------------------------
+   Portalled over whichever board raised it, so the roster stays behind it and the answer lands
+   back on the row that asked. Below the cap it is one question and the replace list is absent —
+   the panel is deliberately allowed to be short. */
+
+.moveoffer-panel {
+  width: min(420px, 92vw);
+  max-height: 88%;
+  overflow-y: auto;
+}
+
+.offer-hero-eyebrow {
+  margin: -2px 0 8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+  color: #c9a2ff;
+}
+
+/* The Guild Hall's Scroll row wears the vector mark, where the Contract row wears an emoji. */
+.guild-hall-contract-icon.is-scroll {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #c9a2ff;
+}
+
+.guild-hall-contract-icon.is-scroll .resource-glyph {
+  width: 20px;
+  height: 20px;
+}

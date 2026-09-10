@@ -56,6 +56,18 @@ export const SECTION_PATHS = {
       <rect x="10.4" y="9.6" width="3.2" height="6.2" rx="0.9" />
     </>
   ),
+  /**
+   * The Mastery Scroll: sealed proclamation — sheet, wax seal, rolled at the FOOT only.
+   * Deliberately not the Reference scroll in nodeIcons, which is ruled lines between two bars;
+   * the tells here are the seal and the single roll. The map node and the run resource wear it
+   * too — one picture per concept.
+   */
+  mastery: (
+    <>
+      <path fillRule="evenodd" d="M5.6 2.4h12.8v16H5.6Zm6.4 5.2a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6Z" />
+      <path d="M4 17.4h16a2.6 2.6 0 0 1 0 5.2H4a2.6 2.6 0 0 1 0-5.2Z" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type SectionGlyphName = keyof typeof SECTION_PATHS;

@@ -5,10 +5,11 @@
 > equipment/relic content are **data** (`/data`). Combat effects of these systems
 > resolve through the stat and damage pipelines in `architecture.md`.
 
-> **Partly superseded by `growth-overhaul.md` (2026-09-10).** Its **phase 1 has LANDED** and
-> this file is updated for it: Gems are deleted. Still **pending**: the level-up currency and
-> the raise-vs-recruit axis change, and equipment picks up an open question (2 base slots,
-> halved budgets). **Everything not called pending describes what the code does.**
+> **Partly superseded by `growth-overhaul.md` (2026-09-10).** Its **phases 1-2 have LANDED**
+> and this file is updated for them: Gems are deleted, and moves come only from Mastery Scrolls.
+> Still **pending**: the level-up currency and the raise-vs-recruit axis change, and equipment
+> picks up an open question (2 base slots, halved budgets). **Everything not called pending
+> describes what the code does.**
 
 ## Progression philosophy: level-ups unlock, they don't inflate
 
@@ -261,12 +262,24 @@ it still answers a question in — a full bag.
 read and where one is terminated, so a button naming only the gear would be lying about what it
 opens. Instead the label renames itself — `Roster` / `2 New Items` (`mapFooter.ts
 footerWaiting`). A badge alone is a mark the eye learns to skip; a button that has changed its
-mind about what it is called cannot be. Phase 2's Mastery Scrolls are the second kind that
-label was written to carry (`docs/growth-overhaul.md` §10 — a count, never an alert badge).
+mind about what it is called cannot be.
 
 **The mark is an INBOX, not a stock figure.** `unseenItemIds` empties per item as each is
 handled. A figure wired to a stock the player routinely sits on would be lit most of the run,
 which is the definition of a mark the eye learns to skip.
+
+**Mastery Scrolls deliberately do NOT ride that label** (2026-09-10). They are a stock — banking
+one until there is a hero worth pouring it into is a real play — so the count is stated on the
+map's purse chip and on the Mastery tab inside, and nothing flags them as waiting
+(`docs/growth-overhaul.md` §10: show a count, never an alert badge). The purse chip is also a
+shortcut straight to the board, the same affordance the XP chip has.
+
+**Two boards, one roster** (2026-09-10). Gear and Mastery share the screen under a tab strip:
+both answer "hand this out before the next node", and both want the same six heroes in front of
+them. Gear is 2x3 cards because an item slot is a drop target; Mastery is full-width rows because
+a row has to carry the four moves the hero already holds — "is there room, and for what" is half
+of what a Scroll asks, and that is unreadable at half width. §10 flags the split as a watch item:
+if the screen reads as a chore hub once both are on it, that is the signal to separate them.
 
 The reason is that the gate had stopped being a decision and become a toll. Its cost was one
 mandatory screen per drop, and it was buying nothing:

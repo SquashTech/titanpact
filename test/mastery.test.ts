@@ -13,8 +13,8 @@ import { entryPassiveCounts, entryStatModifiers } from '../src/run/entryStats';
 import {
   levelUpHero,
   levelUpPayout,
-  levelUpMovePool,
-  grantLevelUpMove,
+  masteryMovePool,
+  grantOfferedMove,
   availableEvolution,
   chooseEvolutionPath,
   EVOLUTION_LEVEL,
@@ -37,49 +37,42 @@ function seed(heroId: string, level: number) {
   return { ...run, levelUpPool: costToReachLevel(1, MASTERY_LEVEL + 6) };
 }
 
-test('mastery: a level-up pays out a move through MASTERY_LEVEL and a stat past it', () => {
-  // Walked on a real hero so this also exercises the authored pool floor across the whole curve.
+test('mastery: a level pays a STAT at every level — moves left the level track entirely', () => {
+  // Growth Overhaul phase 2 (docs/growth-overhaul.md §4): a Mastery Scroll is the only faucet for
+  // moves, so a level either reaches an Evolution or falls through to the reel. Walked on a real
+  // hero, past MASTERY_LEVEL, because the old cap no longer gates anything.
   let run = seed('cinderKnight', 1);
-  for (let level = 2; level <= MASTERY_LEVEL; level++) {
+  let takenPath: string[] = [];
+  for (let level = 2; level <= MASTERY_LEVEL + 2; level++) {
     run = levelUpHero(run, 'cinderKnight');
     const payout = levelUpPayout(progressionTable, moves, run.roster[0]);
-    assert.strictEqual(payout, level === EVOLUTION_LEVEL ? 'evolution' : 'move', `level ${level} paid out ${payout}`);
-    assert.notStrictEqual(payout, 'mastery', `level ${level} is below the cap and must not grant a stat`);
-
+    assert.strictEqual(
+      payout,
+      level === EVOLUTION_LEVEL ? 'evolution' : 'mastery',
+      `level ${level} paid out ${payout}`
+    );
     if (payout === 'evolution') {
       // The offer stands until a path is taken, so the walk has to resolve it.
       const node = availableEvolution(progressionTable, run.roster[0])!;
+      takenPath = [...node.paths[0].unlocksMoveIds];
       run = chooseEvolutionPath(run, progressionTable, heroes, 'cinderKnight', node.paths[0].id);
-    } else {
-      const offered = levelUpMovePool(progressionTable, moves, run.roster[0]);
-      const held = run.roster[0].unlockedMoveIds;
-      run = grantLevelUpMove(
-        run,
-        'cinderKnight',
-        offered[0],
-        held.length >= MOVE_CAP ? held[held.length - 1] : undefined
-      );
     }
   }
-
-  run = levelUpHero(run, 'cinderKnight');
-  assert.strictEqual(run.roster[0].level, MASTERY_LEVEL + 1);
-  assert.strictEqual(levelUpPayout(progressionTable, moves, run.roster[0]), 'mastery');
+  // Nine levels taught this hero nothing the LEVEL track chose. The Evolution still grants its
+  // own moves — that is the path's payload, not the curve's — so those are the only additions.
+  const allowed = new Set([...heroes.cinderKnight.moveIds, ...takenPath]);
+  const unexplained = run.roster[0].unlockedMoveIds.filter((id) => !allowed.has(id));
+  assert.deepStrictEqual(unexplained, [], 'a level handed over a move it had no business granting');
 });
 
-test('mastery: an empty pool below the cap falls back to a stat rather than to nothing', () => {
-  // Unreachable in a real run while the pool floor holds (test/moveTiers.test.ts); hand-built here.
-  let run = createRunState(0);
-  const chosen = progressionTable.evolutions.cinderKnight[0].paths[0];
-  // The chosen path's learnableMoveIds JOIN the pool, so draining it means draining those too.
-  const pool = [...(progressionTable.moveTiers.cinderKnight ?? []), ...(chosen.learnableMoveIds ?? [])];
-  run = addRosterEntry(run, {
-    ...createRosterEntry('cinderKnight', 'cinderKnight', [...heroes.cinderKnight.moveIds, ...pool]),
-    level: 4,
-    // Past the Evolution, so 'evolution' does not win the precedence check.
-    chosenPathIds: [chosen.id],
-  });
-  assert.strictEqual(levelUpPayout(progressionTable, moves, run.roster[0]), 'mastery');
+test('mastery: an Evolution still outranks the stat reel, and only on the level that reaches it', () => {
+  let run = seed('cinderKnight', EVOLUTION_LEVEL - 1);
+  run = levelUpHero(run, 'cinderKnight');
+  assert.strictEqual(levelUpPayout(progressionTable, moves, run.roster[0]), 'evolution');
+
+  const node = availableEvolution(progressionTable, run.roster[0])!;
+  run = chooseEvolutionPath(run, progressionTable, heroes, 'cinderKnight', node.paths[0].id);
+  assert.strictEqual(levelUpPayout(progressionTable, moves, run.roster[0]), 'mastery', 'and once taken it is a stat again');
 });
 
 test('mastery: the grant is +10 on a combat stat, accumulates, and is free', () => {

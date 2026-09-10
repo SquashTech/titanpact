@@ -29,9 +29,10 @@ export function RunGlyph({ kind, className, title }: { kind: RunGlyphKind; class
   return <IconsetGlyph index={ICON_INDEX[kind]} className={`run-glyph${className ? ` ${className}` : ''}`} title={title} />;
 }
 
-// The three run resources as vector, 24x24, `currentColor` — the sizes these are drawn at
+// The run resources as vector, 24x24, `currentColor` — the sizes these are drawn at
 // (11-14px) are the ones docs/icon-pack.md measures the pixel sheet as being destroyed by.
-// Gold and XP deliberately reuse the map node that pays them out: one picture per concept.
+// Gold, XP and the Scroll deliberately reuse the map node that pays them out: one picture per
+// concept.
 const RESOURCE_PATHS = {
   gold: NODE_PATHS.currencyReward,
   xp: NODE_PATHS.upgradeReward,
@@ -44,6 +45,7 @@ const RESOURCE_PATHS = {
       <path d="M7.9 15.1 3.1 20.8l2 1.7 4.5-5.8Z" />
     </>
   ),
+  scroll: NODE_PATHS.scrollReward,
 } satisfies Record<string, ReactNode>;
 
 export type ResourceKind = keyof typeof RESOURCE_PATHS;
@@ -53,6 +55,9 @@ export const RESOURCE_COLORS: Record<ResourceKind, string> = {
   gold: 'var(--accent)',
   xp: 'var(--hp-high)',
   contract: '#9bc9ff',
+  // Violet, the run's "this changes how a hero plays" colour — apart from gold, XP-green and the
+  // Contract's blue, and it is the only resource that buys a MOVE.
+  scroll: '#c9a2ff',
 };
 
 /** The one place a run resource is drawn. `aria-hidden`: it always sits beside its own count or label. */

@@ -21,14 +21,18 @@ import type { RosterEntry } from '../src/run/state';
 import { pickSquad } from '../src/run/squad';
 import { progressionTable } from '../src/data/progression';
 import {
+  MAX_MASTERY_RANK,
   MOVE_CAP,
+  SCROLLS_PER_RANK,
   chooseEvolutionPath,
-  grantLevelUpMove,
+  grantMasteryScrolls,
+  grantOfferedMove,
   levelUpHero,
-  levelUpMovePool,
   levelUpPayout,
   pendingEvolution,
   recordMoveOffer,
+  scrollMovePool,
+  spendMasteryScroll,
 } from '../src/run/progression';
 import { moveValue as policyMoveValue, replacementTarget } from './sim/policy';
 import { simulateFight } from './sim/fight';
@@ -39,14 +43,17 @@ const STARTERS = ALL.filter((h) => h.starter);
 const LEVEL = 5;
 
 /**
- * A hero as a real run would have it at `level`: every level-up spent, each one taking the best
- * move `levelUpMovePool` offers (policy.moveValue, replacing the weakest at MOVE_CAP), and the
- * Evolution taken at EVOLUTION_LEVEL. Built through the run's OWN progression functions, so the
- * tier gates are the ones the game applies.
+ * A hero as a real run would have it at `level`: the Evolution taken at EVOLUTION_LEVEL, and a
+ * kit built by pouring Mastery Scrolls, one per level climbed, up to the six that max a hero.
+ * Built through the run's OWN progression functions, so the tier gates are the ones the game
+ * applies.
  *
- * This matters more than it looks. Before 2026-09-08 this harness handed every hero its three-move
- * STARTING KIT at whatever level was asked for, so raising the level changed stats and nothing
- * else — which made a hero designed to be weak early and strong late unmeasurable by construction.
+ * One Scroll a level is a MODEL, not the run's economy — Scrolls come per act and per node, and
+ * who they go to is the player's. It is the same equivalence enemyGen uses, and it is here for
+ * the same reason: this harness prices stats, so what it needs is a kit that deepens with level
+ * rather than the exact kit any one run would hold. Before 2026-09-08 it handed every hero its
+ * three-move STARTING KIT at whatever level was asked for, which made a hero designed to be weak
+ * early and strong late unmeasurable by construction.
  */
 const kitCache = new Map<string, RosterEntry>();
 
@@ -55,28 +62,33 @@ function entryAtLevel(heroId: string, level: number): RosterEntry {
   const cached = kitCache.get(key);
   if (cached) return cached;
 
-  let run = addRosterEntry(createRunState(10_000), createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
+  const maxScrolls = (MAX_MASTERY_RANK - 1) * SCROLLS_PER_RANK;
+  let run = grantMasteryScrolls(
+    addRosterEntry(createRunState(10_000), createRosterEntry(heroId, heroId, heroes[heroId].moveIds)),
+    Math.max(1, maxScrolls)
+  );
   for (let next = 2; next <= level; next++) {
     run = levelUpHero(run, heroId);
-    const entry = run.roster[0];
-    const payout = levelUpPayout(progressionTable, moves, entry);
-    if (payout === 'evolution') {
-      const node = pendingEvolution(progressionTable, entry);
+    if (levelUpPayout(progressionTable, moves, run.roster[0]) === 'evolution') {
+      const node = pendingEvolution(progressionTable, run.roster[0]);
       if (node && node.paths.length > 0) {
         run = chooseEvolutionPath(run, progressionTable, heroes, heroId, node.paths[0].id);
       }
       continue;
     }
-    if (payout !== 'move') continue;
-    const pool = levelUpMovePool(progressionTable, moves, entry);
+    if (run.roster[0].masteryScrollsSpent >= maxScrolls) continue;
+    // Rank ticks first, so the pool is the band the Scroll just opened.
+    const pool = scrollMovePool(progressionTable, moves, run.roster[0]);
+    run = spendMasteryScroll(run, heroId);
     if (pool.length === 0) continue;
     const best = pool.reduce((a, b) => (policyMoveValue(b) > policyMoveValue(a) ? b : a));
+    const entry = run.roster[0];
     const replace = entry.unlockedMoveIds.length >= MOVE_CAP ? replacementTarget(entry, best) : undefined;
     if (entry.unlockedMoveIds.length >= MOVE_CAP && !replace) {
       run = recordMoveOffer(run, heroId, [best]);
       continue;
     }
-    run = grantLevelUpMove(run, heroId, best, replace ?? undefined);
+    run = grantOfferedMove(run, heroId, best, replace ?? undefined);
   }
   kitCache.set(key, run.roster[0]);
   return run.roster[0];

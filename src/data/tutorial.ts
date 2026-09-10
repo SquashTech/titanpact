@@ -143,8 +143,8 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     id: 'levelUp',
     topic: 'Experience',
     lines: [
-      'Experience teaches us new ways to fell our foes. It can be granted to any of us, even heroes who did not participate in the battle.',
-      'A level does not raise my statistics. It teaches me a new move, and progresses me toward evolution at level 5.',
+      'Experience hardens us. It can be granted to any of us, even heroes who did not participate in the battle.',
+      'A level raises one of my statistics, and carries me toward evolution at level 5. It teaches me nothing — new moves come from Mastery Scrolls, on the Roster.',
       'The first level costs one point, the next two, the next three, until a max of 5 per level.',
       'For now, give it all to me.',
     ],
@@ -231,13 +231,22 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     ],
   },
 
-  // --- Row 6: the Boon ---
   {
-    id: 'map:passiveReward',
-    topic: 'Boons',
+    id: 'scroll',
+    topic: 'Mastery Scrolls',
     lines: [
-      'Something older than the Goblins is buried here, and it is still willing to bargain.',
-      'Three offers, and only one of us may take it. A Boon does not make a hero bigger — it changes what that hero does, for the rest of the journey. Choose the pairing, not the prize.',
+      'A Mastery Scroll. Pour one into any of us from the Roster and it teaches a move — the only way any of us learns one.',
+      'Three into the same hero and that hero ranks up, and deeper moves come within reach. Spread them thin and nobody gets there. Choose.',
+    ],
+  },
+
+  // --- Row 6: the Scrolls ---
+  {
+    id: 'map:scrollReward',
+    topic: 'Mastery Scrolls',
+    lines: [
+      'Someone came this way before us, and did not leave with what they were carrying.',
+      'Scrolls. Nothing on this road teaches us a move but these — a level only hardens what we already are.',
     ],
   },
 

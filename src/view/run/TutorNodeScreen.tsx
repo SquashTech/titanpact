@@ -6,7 +6,7 @@ import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition, MoveTier } from '../../engine/content';
 import type { RosterEntry, RunState } from '../../run/state';
-import { grantMove, MOVE_CAP, MOVE_TIER_LEVEL } from '../../run/progression';
+import { grantMove, MOVE_CAP, MOVE_TIER_RANK } from '../../run/progression';
 import { tutorMovePool, tutorTeachableCount } from '../../run/tutor';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -186,7 +186,7 @@ export function TutorNodeScreen({ run, onRunChange, onContinue }: Props) {
           {byTier.map(({ tier, moveIds }) => (
             <div key={tier}>
               <div className="tab-subhead">
-                {TIER_LABELS[tier]} — Lv {MOVE_TIER_LEVEL[tier]}+
+                {TIER_LABELS[tier]} — Rank {MOVE_TIER_RANK[tier]}+
               </div>
               <div className="tab-move-list">
                 {moveIds.map((moveId) => {

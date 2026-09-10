@@ -8,9 +8,7 @@ import {
   levelUpHero,
   levelUpCost,
   canAffordAnyLevelUp,
-  levelUpMovePool,
-  grantLevelUpMove,
-  recordMoveOffer,
+  grantOfferedMove,
   availableEvolution,
   pendingEvolution,
   chosenEvolutionPaths,
@@ -63,15 +61,17 @@ interface MasteryOffer {
   stats: StatKey[];
 }
 
-/** What one Training Point buys this hero, in display-priority order. */
-type Payoff = 'evolve' | 'brink' | 'move' | 'swap' | 'mastery';
+/**
+ * What one Training Point buys this hero, in display-priority order. Moves left this screen on
+ * 2026-09-10 — a Mastery Scroll is the only faucet now (docs/growth-overhaul.md §4) — so a level
+ * either reaches an Evolution or pays a stat.
+ */
+type Payoff = 'evolve' | 'brink' | 'mastery';
 
 /** Short on purpose: 9px uppercase in a ~100px card. */
 const PAYOFF_LABEL: Record<Payoff, string> = {
   evolve: 'Evolve!',
   brink: 'Evolve next',
-  move: 'New move',
-  swap: 'Move swap',
   mastery: '+10 stat',
 };
 
@@ -79,10 +79,7 @@ function payoffFor(entry: RosterEntry): Payoff {
   if (availableEvolution(progressionTable, entry)) return 'evolve';
   const pending = pendingEvolution(progressionTable, entry);
   if (pending && entry.level + 1 >= pending.level) return 'brink';
-  // Asked of the level the point WOULD reach — move tiers and mastery are both level-gated.
-  const payout = levelUpPayout(progressionTable, moves, { ...entry, level: entry.level + 1 });
-  if (payout === 'mastery') return 'mastery';
-  return entry.unlockedMoveIds.length >= MOVE_CAP ? 'swap' : 'move';
+  return 'mastery';
 }
 
 interface GrowthCardProps {
@@ -297,27 +294,10 @@ export function LevelUpScreen({ run, onRunChange, onDone, focusRosterId = null }
       return;
     }
 
-    // Level banked now, grant waits on the pick — same split as the move offer.
-    if (levelUpPayout(progressionTable, moves, nextEntry) === 'mastery') {
-      onRunChange(next);
-      setFeedback(null);
-      setMasteryOffer({ rosterId, stats: drawMasteryStats(Math.random) });
-      return;
-    }
-
-    // Rolled off the post-level-up entry: the new level decides which tiers are open.
-    const pool = levelUpMovePool(progressionTable, moves, nextEntry);
-    const moveId = pool[Math.floor(Math.random() * pool.length)];
-    if (!wasAtCap) {
-      onRunChange(grantLevelUpMove(next, rosterId, moveId));
-      setFeedback(`${heroName} reached Lv ${nextEntry.level} and learned ${moves[moveId].name}!`);
-    } else {
-      // The offer is spent by being made — decline it and it still never comes back.
-      onRunChange(recordMoveOffer(next, rosterId, [moveId]));
-      setFeedback(null);
-      setOffer({ rosterId, moveId });
-      setSelectedReplaceId(null);
-    }
+    // Level banked now, grant waits on the pick.
+    onRunChange(next);
+    setFeedback(null);
+    setMasteryOffer({ rosterId, stats: drawMasteryStats(Math.random) });
   }
 
   function handleCardClick(rosterId: string) {
@@ -340,7 +320,7 @@ export function LevelUpScreen({ run, onRunChange, onDone, focusRosterId = null }
   function resolveOffer(replaceMoveId: string | null) {
     if (!offer) return;
     if (replaceMoveId) {
-      onRunChange(grantLevelUpMove(run, offer.rosterId, offer.moveId, replaceMoveId));
+      onRunChange(grantOfferedMove(run, offer.rosterId, offer.moveId, replaceMoveId));
     }
     setOffer(offerQueue.length > 0 ? { rosterId: offer.rosterId, moveId: offerQueue[0] } : null);
     setOfferQueue(offerQueue.slice(1));

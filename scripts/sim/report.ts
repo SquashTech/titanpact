@@ -289,32 +289,37 @@ export function formatReport(
   out.push(`    spent cycling out        ${pct(agg.playerSwitches, agg.playerTurns)}`);
   out.push(`    fights reaching lock-in  ${pct(agg.lockInFights, totalFights)}  (player side lost 2+ heroes)`);
 
-  // The movepool gate. MOVE_TIER_LEVEL is early 1 / mid 4 / late 7, and EVERY move costing
-  // 70+ mana is late-tier — so this table says whether the expensive half of the catalog is
-  // reachable at all, which is what makes a big Mana pool worth anything.
-  const levels = agg.heroLevelHistogram;
-  const heroRuns = levels.reduce((sum, n) => sum + (n ?? 0), 0);
-  const atLeast = (level: number) => levels.slice(level).reduce((sum, n) => sum + (n ?? 0), 0);
+  // The movepool gate is MASTERY RANK, not level (docs/growth-overhaul.md §4): rank 1 offers
+  // Early, 2 Mid, 3 Mid+Late, and EVERY move costing 70+ mana is late-tier — so this table says
+  // whether the expensive half of the catalog is reachable at all, which is what makes a big
+  // Mana pool worth anything. Three Scrolls a rank; six max a hero.
+  const ranks = agg.heroRankHistogram;
+  const heroRuns = ranks.reduce((sum, n) => sum + (n ?? 0), 0);
+  const atLeast = (rank: number) => ranks.slice(rank).reduce((sum, n) => sum + (n ?? 0), 0);
   const gates: readonly (readonly [string, number])[] = [
-    ['mid tier (lvl 4)', 4],
-    ['Evolution (lvl 5)', 5],
-    ['LATE tier (lvl 7)', 7],
-    ['mastery (lvl 11)', 11],
+    ['Mid tier (rank 2)', 2],
+    ['LATE tier (rank 3)', 3],
   ];
   // Split, because the whole-batch column is dominated by heroes that died in Act 1 and
   // never saw the later acts' income at all. The DEEP column is the one that answers
   // "does a player who gets there actually reach the late-tier movepool".
-  const deep = agg.heroLevelHistogramDeep;
+  const deep = agg.heroRankHistogramDeep;
   const deepRuns = deep.reduce((sum, n) => sum + (n ?? 0), 0);
-  const atLeastDeep = (level: number) => deep.slice(level).reduce((sum, n) => sum + (n ?? 0), 0);
+  const atLeastDeep = (rank: number) => deep.slice(rank).reduce((sum, n) => sum + (n ?? 0), 0);
   out.push('');
-  out.push(`  the movepool gate — best level reached, all ${heroRuns} (hero, run) pairs vs. the ${deepRuns} that reached act 4+:`);
+  out.push(`  the movepool gate — best Mastery Rank reached, all ${heroRuns} (hero, run) pairs vs. the ${deepRuns} that reached act 4+:`);
   out.push(`    ${pad('', 20)}${padStart('all', 10)}${padStart('act 4+', 10)}`);
-  for (const [label, level] of gates) {
+  for (const [label, rank] of gates) {
     out.push(
-      `    ${pad(label, 20)}${padStart(pct(atLeast(level), heroRuns), 10)}${padStart(pct(atLeastDeep(level), deepRuns), 10)}`
+      `    ${pad(label, 20)}${padStart(pct(atLeast(rank), heroRuns), 10)}${padStart(pct(atLeastDeep(rank), deepRuns), 10)}`
     );
   }
+
+  // Level still matters — it is what pays stats — so it keeps a line, just not the gate table.
+  const levels = agg.heroLevelHistogram;
+  const levelRuns = levels.reduce((sum, n) => sum + (n ?? 0), 0);
+  const atLeastLevel = (level: number) => levels.slice(level).reduce((sum, n) => sum + (n ?? 0), 0);
+  out.push(`    ${pad('Evolution (lvl 5)', 20)}${padStart(pct(atLeastLevel(5), levelRuns), 10)}${padStart(pct(agg.heroLevelHistogramDeep.slice(5).reduce((s, n) => s + (n ?? 0), 0), agg.heroLevelHistogramDeep.reduce((s, n) => s + (n ?? 0), 0)), 10)}`);
 
   const totalCasts = Object.values(agg.castsByTier).reduce((sum, n) => sum + n, 0);
   out.push('');

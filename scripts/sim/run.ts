@@ -42,14 +42,16 @@ import {
   canAffordAnyLevelUp,
   chooseEvolutionPath,
   drawMasteryStats,
-  grantLevelUpMove,
+  SCROLLS_PER_ACT,
+  SCROLL_REWARD_COUNT,
+  grantMasteryScrolls,
+  masteryRank,
   grantMasteryStat,
+  grantOfferedMove,
   itemSlotsFor,
   levelUpCost,
   levelUpHero,
-  levelUpMovePool,
   grantMove,
-  recordMoveOffer,
   levelUpPayout,
   pendingEvolution,
 } from '../../src/run/progression';
@@ -133,6 +135,8 @@ export interface RunRecord {
   rosterLevelEnd: number;
   /** heroId -> best level reached this run, for every hero that was ever on the roster. */
   heroLevels: Record<string, number>;
+  /** Best Mastery Rank each hero reached — the movepool gate now that level does not gate it. */
+  heroRanks: Record<string, number>;
   fights: FightRecord[];
   choices: ChoiceEvent[];
   /** Rarity of every item actually equipped, keyed `act:rarity`. */
@@ -179,25 +183,8 @@ function spendLevelUps(run: RunState, rng: Rng, opts: policy.PolicyOptions, choi
       if (before + granted.length > 0 && granted.length > 0) {
         for (const moveId of granted) {
           const replaceId = policy.replacementTarget(entryOf(next, target.rosterId), moveId);
-          if (replaceId) next = grantLevelUpMove(next, target.rosterId, moveId, replaceId);
+          if (replaceId) next = grantOfferedMove(next, target.rosterId, moveId, replaceId);
         }
-      }
-    } else if (payout === 'move') {
-      const pool = levelUpMovePool(progressionTable, moves, entryOf(next, target.rosterId));
-      if (pool.length === 0) continue;
-      // Best-of-three offered, so the pick is a play rather than a coin flip; the pool itself is unbiased.
-      const offered = sample(rng, pool, Math.min(3, pool.length));
-      const moveId = offered.reduce((best, id) => (policy.moveValue(id) > policy.moveValue(best) ? id : best));
-      const current = entryOf(next, target.rosterId);
-      if (current.unlockedMoveIds.length < MOVE_CAP) {
-        next = grantLevelUpMove(next, target.rosterId, moveId);
-      } else {
-        const replaceId = policy.replacementTarget(current, moveId);
-        // One move leaves the pool per level-up either way — the game offers one, and the
-        // best-of-three above is a model of play quality, not of a wider offer.
-        next = replaceId
-          ? grantLevelUpMove(next, target.rosterId, moveId, replaceId)
-          : recordMoveOffer(next, target.rosterId, [moveId]);
       }
     } else {
       const drawn = drawMasteryStats(rng);
@@ -265,6 +252,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     levelUpPoolEnd: 0,
     rosterLevelEnd: 0,
     heroLevels: {},
+    heroRanks: {},
     fights: [],
     choices: [],
     equipped: [],
@@ -301,6 +289,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
 
     for (const entry of run.roster) {
       record.heroLevels[entry.heroId] = Math.max(record.heroLevels[entry.heroId] ?? 0, entry.level);
+      record.heroRanks[entry.heroId] = Math.max(record.heroRanks[entry.heroId] ?? 0, masteryRank(entry));
     }
 
     if (isEncounterNode(node.type)) {
@@ -358,6 +347,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     run.roster.length > 0 ? run.roster.reduce((sum, r) => sum + r.level, 0) / run.roster.length : 0;
   for (const entry of run.roster) {
     record.heroLevels[entry.heroId] = Math.max(record.heroLevels[entry.heroId] ?? 0, entry.level);
+    record.heroRanks[entry.heroId] = Math.max(record.heroRanks[entry.heroId] ?? 0, masteryRank(entry));
   }
   return record;
 }
@@ -434,6 +424,9 @@ function resolveEncounterNode(
     ? pickWeightedEquipment(EQUIPMENT_POOL, 1, rarityWeightsFor(workingRun.actNumber, LOOT_SOURCE[kindKey]))[0] ?? null
     : null;
 
+  // Scrolls are spent before the fight, not at the grant: the player holds them until there is
+  // a hero worth pouring them into, and a recruit arriving mid-act changes who that is.
+  workingRun = policy.pourScrolls(workingRun, rng);
   const playerSquad = rosterSquad(workingRun, squadSize);
   const fight = simulateFight({
     seed: randomSeed(rng),
@@ -522,6 +515,10 @@ function tryRecruitContracts(run: RunState, defeatedRoster: readonly RosterEntry
 
 function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: string, rng: Rng, record: RunRecord, options: RunOptions): RunState {
   switch (nodeType) {
+    // The Scroll Cache. The GRANT is what is under test; who it goes to is policy.pourScrolls,
+    // which runs before every fight.
+    case 'scrollReward':
+      return grantMasteryScrolls(run, SCROLL_REWARD_COUNT);
     case 'currencyReward':
       return grantCurrencyReward(run, 15 + Math.floor(rng() * 16));
     case 'upgradeReward':

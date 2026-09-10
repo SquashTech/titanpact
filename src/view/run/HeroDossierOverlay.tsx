@@ -4,7 +4,7 @@ import { passives } from '../../data/passives';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition, MoveTier, StatKey, TypeId } from '../../engine/content';
 import type { EvolutionPath } from '../../run/progression';
-import { MOVE_TIER_LEVEL, MOVE_TIER_EXPIRY } from '../../run/progression';
+import { MOVE_TIER_RANK, MOVE_TIER_RANK_EXPIRY } from '../../run/progression';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { MoveButtonReplica } from '../shared/MoveTile';
@@ -29,10 +29,10 @@ function tierOf(moveId: string): MoveTier {
   return moves[moveId]?.tier ?? 'early';
 }
 
-/** The levels a tier can actually be OFFERED at — a closed range for Early, which expires when Mid opens. */
-function tierLevels(tier: MoveTier): string {
-  const expiry = MOVE_TIER_EXPIRY[tier];
-  return expiry === Infinity ? `${MOVE_TIER_LEVEL[tier]}+` : `${MOVE_TIER_LEVEL[tier]}–${expiry - 1}`;
+/** The ranks a tier can actually be OFFERED at — a closed range for Early, which expires when Mid opens. */
+function tierRanks(tier: MoveTier): string {
+  const expiry = MOVE_TIER_RANK_EXPIRY[tier];
+  return expiry === Infinity ? `${MOVE_TIER_RANK[tier]}+` : `${MOVE_TIER_RANK[tier]}`;
 }
 
 function fmtGrant(amount: number): string {
@@ -226,7 +226,7 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
                 moveIds.length > 0 ? (
                   <div key={tier}>
                     <div className="evo-path-label">
-                      {TIER_LABELS[tier]} — Lv {tierLevels(tier)}
+                      {TIER_LABELS[tier]} — Rank {tierRanks(tier)}
                     </div>
                     <MoveList moveIds={moveIds} caster={caster} onInspect={setPopupMoveId} />
                   </div>

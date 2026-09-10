@@ -16,6 +16,7 @@ export const MAP_NODE_TYPES = [
   'shop',
   'blacksmith',
   'equipmentReward',
+  'scrollReward',
   'passiveReward',
   'currencyReward',
   'upgradeReward',
@@ -119,15 +120,15 @@ const TUTOR_ROW_WIDTH = 3;
 const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // equipmentReward absorbs most of the frequency the three slot caches used to carry.
   ['equipmentReward', 40],
+  // The Scroll cache. Weighted level with equipment: they are the run's two growth axes now,
+  // one per hero's numbers and one per hero's kit, and neither should be the one you plan
+  // around. On top of the 2 an act every Guardian pays (docs/growth-overhaul.md §4).
+  ['scrollReward', 34],
   // The Boon: the part of the deleted relic pool that was actually worth having, handed to ONE
   // hero instead of all four. It is the only reward row node that changes how a hero plays
   // rather than how big its numbers are.
-  //
-  // 18 -> 30 (2026-09-10). The Gem Cache and the two stat shrines were deleted, and their
-  // 40 weight goes to the two grants that were never a bare number. Phase 2's Mastery Scroll
-  // node takes a real share back (docs/growth-overhaul.md §8).
-  ['passiveReward', 30],
-  ['currencyReward', 26],
+  ['passiveReward', 22],
+  ['currencyReward', 20],
   ['upgradeReward', 14],
   // The Forge (+1 item slot) is permanent, compounds with every later drop, and is the only thing
   // here a hero can be at the cap for, so it stays the scarcest of the grants.

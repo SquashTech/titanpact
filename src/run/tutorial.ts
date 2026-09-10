@@ -112,6 +112,7 @@ export const TUTORIAL_SCREEN_BEAT_KEYS = [
   'intro',
   'arrival',
   'equip',
+  'scroll',
   'levelUp',
   'evolution',
   'classNode',
@@ -241,10 +242,11 @@ export const TUTORIAL_ROW_TYPES: readonly MapNodeType[] = [
   'skirmish',
   'forgeReward',
   'battle',
-  // The act's third reward row. A Boon: it is the one reward that changes how a hero PLAYS
-  // rather than how big its numbers are, and it teaches the pick-1-of-3-then-pick-a-hero
-  // grammar the rest of the run's grants are built on.
-  'passiveReward',
+  // The act's third reward row. Scrolls, because they are the run's ONLY faucet for moves and
+  // the Guardian's own pay arrives after the scripted stretch is over — so without this seat the
+  // player finishes the tutorial never having spent one. It displaces the Boon, whose
+  // pick-a-hero grammar the Scroll teaches anyway.
+  'scrollReward',
   'shop',
   'boss',
 ];

@@ -411,11 +411,12 @@ move can carry all of them at once.
 
 ### `Early / Mid / Late` → `MoveDefinition.tier`
 
-**Author it.** As of 2026-08-31 the tier column is real data and it is gated by level:
-`tier: 'early' | 'mid' | 'late'` on the move, and `MOVE_TIER_LEVEL`
-(`src/run/progression.ts`) maps each tier to the hero level that unlocks it — **1 / 4 /
-7**. `levelUpMovePool` filters a hero's pool by it, so a Late move cannot be offered to
-a level-3 hero. Still not an *engine* field: nothing in combat reads it.
+**Author it.** As of 2026-08-31 the tier column is real data, and since 2026-09-10 it is gated
+by **Mastery Rank**, not level: `tier: 'early' | 'mid' | 'late'` on the move, and
+`MOVE_TIER_RANK` (`src/run/progression.ts`) maps each tier to the rank that unlocks it —
+**1 / 2 / 3**, three Mastery Scrolls apiece. `masteryMovePool` filters a hero's pool by it, so a
+Late move cannot be offered to a rank-1 hero. Still not an *engine* field: nothing in combat
+reads it.
 
 Three things to know before you author a slate's column:
 
@@ -1069,7 +1070,7 @@ compare `attack` against `intelligence` in its `baseStats` and give it a `physic
 same physical/magical read so each hero gets a coherent line rather than a random ninth
 of the slate. Two rules:
 
-- **Never list a hero's own starting move in its pool.** `levelUpMovePool` filters out
+- **Never list a hero's own starting move in its pool.** `masteryMovePool` filters out
   anything already unlocked, so it is dead weight that can never be offered.
 - Keep the pool a *line*, not a sample. Fire went: Cinder (Atk 70) took the physical
   line, Crimson (Int 80) the magical burst line, Brimstone (Fire/Shadow) the
@@ -1161,7 +1162,7 @@ Then, beyond green tests:
   `test/waterMoves.test.ts` ends with two that are worth copying verbatim into every
   slate: one walks `heroes` + `enemies` + `progressionTable.moveTiers` asserting every
   move id resolves, the other asserts no hero lists its own starting move in its
-  level-up pool (dead weight `levelUpMovePool` can never offer).
+  level-up pool (dead weight `masteryMovePool` can never offer).
 - **Test the mechanic, not the balance.** `test/fireMoves.test.ts` and
   `test/waterMoves.test.ts` are the model: assert
   that a chanced rider rolls, that a conditional multiplier lands on BasePower and not
@@ -1718,7 +1719,7 @@ hero and no heal**:
 - **A fifth, small, and it came out of §7 for the fourth slate running.**
   Widening the "no starter in its own pool" assertion past the type being
   authored found `ironWarden` carrying `fortify` in BOTH its kit and its
-  level-up pool — dead weight `levelUpMovePool` could never offer, which made
+  level-up pool — dead weight `masteryMovePool` could never offer, which made
   its pool read as five picks when it was four. Predates this slate and
   nothing else would have found it. **Distribution keeps being a roster audit
   wearing a movepool hat** — that is four for four, and the lesson has

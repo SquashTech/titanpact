@@ -116,7 +116,13 @@ import {
 } from '../run/runProgress';
 import { buildSandboxSide, createEmptySandboxSide, type SandboxSideConfig } from '../run/sandbox';
 import { createStatusTestSides } from '../run/statusTestFight';
-import { availableEvolution, fullMovepool, canAffordAnyLevelUp } from '../run/progression';
+import {
+  availableEvolution,
+  fullMovepool,
+  canAffordAnyLevelUp,
+  grantMasteryScrolls,
+  SCROLLS_PER_ACT,
+} from '../run/progression';
 import { progressionTable } from '../data/progression';
 import type { RunState, RosterEntry } from '../run/state';
 import type { Squad } from '../run/squad';
@@ -255,6 +261,8 @@ function createLevel4TestRun(): RunState {
     // Two mergeable pairs: a plain one, and one where both halves are enchanted so the
     // keep-which-enchant choice has somewhere to fire.
     stash: ['dagger.common', 'dagger.common', 'bow.common', 'spear.rare.blazing', 'spear.rare.tidal'],
+    // Enough to rank one hero to the top and still have a spread to weigh against it.
+    masteryScrolls: 9,
     map: generateMap(randomSeed()),
     locationIds: generateItinerary(randomSeed()),
   };
@@ -317,6 +325,9 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
       // lit, and this is the screen carrying it. Ahead of the node beat on purpose — it explains
       // what just happened, and the node beat explains what is next.
       if (unseenCount(run.unseenItemIds, run.stash) > 0) return 'equip';
+      // Same rule as gear, one beat behind it: the Scrolls are held, the Roster is where they
+      // are spent, and this is the screen carrying the count that says so.
+      if (run.masteryScrolls > 0) return 'scroll';
       // The scripted act is a corridor, so "the node ahead" is a single node. A branching act
       // has nothing to name and returns null rather than picking one arbitrarily.
       const ahead = reachableNodeIds(run);
@@ -652,6 +663,9 @@ export function App() {
       // in is offered again (docs/tutorial.md). The rest of the run is a normal run either way.
       if (isTutorialAct(playerRun)) updateProfile(recordTutorialDone);
       next = grantContractReward(next, 1);
+      // The guaranteed Scroll income: 2 an act, 10 over a run, against the 6 that max one hero
+      // (docs/growth-overhaul.md §4). Everything past this is the Scroll Cache and the Guild Hall.
+      next = grantMasteryScrolls(next, SCROLLS_PER_ACT);
       // The seal, snapshotted at the power it was beaten at, so the finale can field it
       // again (docs/lore.md §6). The champion rides the Guardian's bench, so it is in the
       // defeated roster under its own id.

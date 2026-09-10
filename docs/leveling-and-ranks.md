@@ -6,10 +6,11 @@
 > disagree, this file wins, and `progression.md` should be updated to defer here.
 > Rules only; thresholds, move data, and per-hero Evolution paths are **data** (`/data`).
 
-> **SUPERSEDED-PENDING by `growth-overhaul.md` (2026-09-10, decided, unbuilt).** Almost all
-> of this module is scheduled for replacement: the pooled currency, the level-up cost curve,
-> the mastery stat reel, level-gated move tiers and level-triggered Evolutions. **This file
-> still describes what the code does** and stays authoritative until each phase of that doc's
+> **PARTLY SUPERSEDED by `growth-overhaul.md` (2026-09-10). Its phase 2 has LANDED and this
+> file is updated for it: moves left the level track entirely — a Scroll is the only faucet, and
+> **Mastery Rank**, not level, gates the tiers. Still **pending**: the pooled currency, the
+> level-up cost curve, the mastery stat reel and level-triggered Evolutions. **Everything not
+> called pending describes what the code does**, and stays authoritative until each phase of that doc's
 > §8 lands. Read both before changing anything here.
 
 ---
@@ -173,32 +174,29 @@ spread them, or bank them into a hero you plan to field later.
 > Decide: is bench-XP-rate removed, or does it survive as a modifier on how pooled
 > level-ups apply to benched heroes? Flag until signed off.
 
-## What a level-up does (LOCKED)
+## What a level-up does (2026-09-10, Growth Overhaul phase 2)
 
-A level-up affects **only the hero's movepool** — with one exception carved out below:
-the level-up that takes a hero to **`EVOLUTION_LEVEL`** does not touch the movepool at
-all; it triggers Evolution instead (Part 2). Below that level, a level-up either:
+A level-up **never touches the movepool.** It either surfaces the Evolution — the level-up that
+takes a hero to `EVOLUTION_LEVEL` — or it pays a **stat**: three distinct combat stats rolled,
+the player picks one, flat +10 (`levelUpPayout`, `drawMasteryStats`, `grantMasteryStat`). The old
+`MASTERY_LEVEL` = 10 threshold is inert; the reel fires from the first level.
 
-- **Gains a new move**, if they have fewer than four; or
-- Is offered the **option to replace one of their four existing moves** with a newly
-  offered move, if they are already at the cap.
-
-The player may **decline** a replacement and keep the current four — a level-up at cap
-is an *offer*, not a forced overwrite.
+Moves come from **Mastery Scrolls** instead, gated by **Mastery Rank** — Part 1b below.
 
 ### An offer is spent by being MADE (2026-09-07)
 
 A move leaves a hero's pool the moment it is **offered**, whether or not it is taken
-(`RosterEntry.offeredMoveIds`, filtered by `levelUpMovePool`). Three cases, one rule:
+(`RosterEntry.offeredMoveIds`, filtered by `masteryMovePool`). The rule outlived the level curve
+it was written for and applies unchanged to a Scroll's offer. Three cases, one rule:
 
 - **Declined** at the cap — gone. The decline is a decision, so re-rolling the same move
-  next level is the screen wasting the player's point on a question already answered.
+  on the next Scroll is the screen wasting the player's spend on a question already answered.
 - **Taught, then swapped away** for something later — gone. Otherwise the discarded move
   drops straight back into the pool it came from and crowds out everything unseen.
 - **Granted by an Evolution path**, both the moves the cap took and the overflow it
-  refused (`chooseEvolutionPath`) — the overflow IS a level-up offer, so it prices like one.
+  refused (`chooseEvolutionPath`) — the overflow IS an offer, so it prices like one.
 
-An **event's gift does not** (`grantMove`, not `grantLevelUpMove`). A `learnMove` event draws
+An **event's gift does not** (`grantMove`, not `grantOfferedMove`). A `learnMove` event draws
 from the whole catalog and hands the move over; the player was never asked to choose it against
 anything, so swapping it away later leaves it offerable. The rule is about questions already put
 to the player, and an event never put one.
@@ -241,38 +239,59 @@ whole loadout with event gifts out of its own Early pool first, then alternating
 declining every offer — and asserts no level-up ever falls through to a mastery stat
 (`test/moveTiers.test.ts`).
 
-### Which move is offered: the tier gate (2026-08-31)
+# Part 1b — Mastery Scrolls and Mastery Rank (2026-09-10)
+
+**Moves come from ONE faucet: a Mastery Scroll, poured into one hero on the Roster's Mastery
+board.** Full rationale in `docs/growth-overhaul.md` §4; this section is the spec.
+
+- **A Scroll offers ONE move** from the hero's eligible pool — take it or decline, and the move
+  is burned either way (the offer-spent-by-being-made rule above, unchanged).
+- **Every Scroll also ticks the rank bar.** `SCROLLS_PER_RANK` = 3, `MAX_MASTERY_RANK` = 3, so
+  **six max a hero**. Rank is DERIVED from `RosterEntry.masteryScrollsSpent` (`masteryRank`),
+  never stored — two figures for one fact drift, and the board's pips need the count anyway.
+- **The tick lands BEFORE the roll.** The third Scroll into a hero offers from the band it just
+  opened, which is what makes every third spend the bigger moment rather than a silent deposit.
+- **Income:** `SCROLLS_PER_ACT` = 2 at every Guardian (10 guaranteed), the `scrollReward` Scroll
+  Cache (`SCROLL_REWARD_COUNT` = 2, weight 34), and the Guild Hall at `SCROLL_PURCHASE_COST` =
+  35g. ~15-18 reachable. All first-pass figures for playtest.
+- **A Scroll is refused only when it would buy literally nothing** — max rank AND nothing left to
+  teach (`canSpendScroll`). A dry band below the cap still takes one: the rank tick is the only
+  thing that opens the next band, so refusing there would strand the hero at that rank forever.
+  The board says "Band is dry — a Scroll buys the rank only" rather than greying the row out.
+
+### Which move is offered: the tier gate (2026-08-31; re-pointed to RANK 2026-09-10)
 
 The move is drawn at random from the hero's pool (`progressionTable.moveTiers`), but
 **not from all of it.** Every move carries the designer table's `Early / Mid / Late`
-column as `MoveDefinition.tier`, and `MOVE_TIER_LEVEL` (`src/run/progression.ts`) gates
-each tier behind a hero level: **Early from 1, Mid from 4, Late from 7.** A hero is
-never offered a capstone at level 2.
+column as `MoveDefinition.tier`, and `MOVE_TIER_RANK` (`src/run/progression.ts`) gates
+each tier behind a hero's **Mastery Rank**: **Early at 1, Mid at 2, Late at 3.** That maps 1:1
+onto the authored 6 Early / 6 Mid / 4 Late pools, so the re-point cost no re-authoring.
+
+It gates on rank rather than on the act because the ceiling has to sit **behind the spend**. Act-
+gating makes holding a Scroll always better than spending one, and a currency whose optimal play
+is *don't spend it* can never feel good to receive.
 
 Four properties, all deliberate:
 
-- **Early EXPIRES at Mid; Mid and Late accumulate** (2026-09-07, `MOVE_TIER_EXPIRY`,
-  replacing a fully cumulative gate). A level-4 hero handed a starter-tier move was the curve
+- **Early EXPIRES at Mid; Mid and Late accumulate** (2026-09-07, `MOVE_TIER_RANK_EXPIRY`,
+  replacing a fully cumulative gate). A ranked-up hero handed a starter-tier move was the ladder
   paying out backwards, and because a pool's Early half outnumbered everything else, a single
   random draw against the whole cumulative pool is what buried the Late band — five heroes
   carried exactly **one** Late move and it was almost never the one rolled. Late does *not*
-  close Mid: the Late slates hold 4-5 moves a type, far too few to carry four offers alone.
+  close Mid: the Late slates hold 4-5 moves a type, far too few to carry a band alone.
   The cost of an expiry is that a move the hero never rolled becomes unreachable — which is
-  what the per-band floors are now sized to make survivable rather than fatal.
-- **Read at the level just reached.** The level-up that takes a hero to 4 can draw a Mid
-  move — the point pays out on the level it buys, not the one before it.
+  what the per-band floors are sized to make survivable rather than fatal.
+- **Read at the rank just reached** (see the tick-before-roll rule above).
 - **A graft's line is gated on REACHING a tier, not on the expiry** (`isMoveTierReached` vs
-  `isMoveTierOfferable`). A graft lands at `EVOLUTION_LEVEL`, by which point Early has already
-  expired; applying the expiry to its `learnableMoveIds` would make every Early move in a
-  grafted type's line permanently unreachable, and the Early moves *are* the way into a type
-  the hero has only just acquired.
-- **An empty pool is legal.** A hero whose Early moves are exhausted at level 3 gets a
-  level and nothing else; the level-up screen labels that card "Level only" *before* the
-  point is spent, so it is a visible signal to feed someone else, not a silent dud.
+  `isMoveTierOfferable`). A graft can land on a hero already past rank 1; applying the expiry to
+  its `learnableMoveIds` would make every Early move in a grafted type's line permanently
+  unreachable, and the Early moves *are* the way into a type the hero has only just acquired.
+- **An empty band is legal**, and the Scroll still buys the rank tick out of it.
 
-The gate applies to generated enemies through the same function
-(`src/run/enemyGen.ts`), so an Act 1 enemy at level 1 fields only Early moves and the
-Act 5 level-10 enemies field the capstones — the act curve buys movepool depth for free.
+Generated enemies hold no Scrolls, so **their rank is read off their LEVEL** — the same three
+bands the level gate drew before (`enemyScrollsForLevel`, `src/run/enemyGen.ts`: Early under 4,
+Mid at 4, Late at 7), so enemy kits keep the shape the difficulty curve was tuned against.
+Revisit in the overhaul's phase 6, where enemy level is re-derived from scratch.
 
 **All fourteen authored slates carry the designer's tier column**, checked against the
 source table on 2026-08-31. Ancient is untiered because it has no authored slate yet,
@@ -286,10 +305,12 @@ was documentation only, and nothing ever asked them to hold one. All six were gi
 one; `test/moveTiers.test.ts` now asserts that **every pool holds something a level-1
 hero can be offered**, which is the invariant the gate creates.
 
-That thinness is gone: since the floors landed, no pool holds fewer than **6 Early, 6 Mid
-and 4 Late** offerable entries, and no band can be drained inside the level curve. Depth is
-also what buys **run diversity** — a level-up draws ONE move at random, so the eight offers a
-full climb pays now sample 16-odd entries rather than exhausting a pool of 12.
+That thinness is gone: no pool holds fewer than **6 Early, 6 Mid and 4 Late** offerable entries.
+The floor is now `SCROLLS_PER_RANK` per band — what a band must survive to get the hero out of
+it — rather than a margin derived from a fixed curve, because Scrolls make offers-per-hero
+player-controlled and unbounded (`movePoolFloor`). Depth is also what buys **run diversity**: a
+Scroll draws ONE move at random, so the six a maxed hero spends sample 16-odd entries rather
+than exhausting a pool of 12.
 
 ### The four-move cap (LOCKED)
 
@@ -312,12 +333,16 @@ the movepool is strictly *substitution*, never expansion.
 > (Part 2, below) now cover all 12 fixture heroes too — a separate axis from the
 > move pool, see README "Known gaps."
 
-### Level-ups never change stats (LOCKED)
+### Level-ups pay STATS, and only stats (2026-09-10)
 
-**Leveling up does not increase any stat.** No HP, no Attack, no Speed — nothing. A
-level-up is a movepool event and only a movepool event. All stat growth happens at
-**Evolution** (Part 2). This separation is what keeps a hero's raw power explained by
-visible choices rather than an opaque level curve.
+Reversed by the Growth Overhaul's phase 2. A level-up is no longer a movepool event at all:
+it rolls three combat stats and the player takes one, +10, or it surfaces the Evolution. The
+movepool moved wholesale onto Mastery Scrolls (Part 1b).
+
+The separation the old rule was protecting — raw power explained by visible choices rather than
+an opaque curve — survives, because the pick is still a choice. Phase 3 replaces the reel with
+automatic per-level growth-grade rolls, at which point the stat half stops being a decision
+entirely and the Scroll is the only place growth is chosen (`docs/growth-overhaul.md` §2).
 
 ### Which moves are offered
 

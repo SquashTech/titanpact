@@ -46,42 +46,80 @@ export function canAffordAnyLevelUp(run: RunState): boolean {
 /** Uniform Evolution trigger level for every hero (per-hero depth is deferred). */
 export const EVOLUTION_LEVEL = 5;
 
-/** Level at which each move tier becomes offerable. Placeholder curve. */
-export const MOVE_TIER_LEVEL: Record<MoveTier, number> = {
+// --- Mastery Rank: the gate on the movepool (docs/growth-overhaul.md §4) ---
+//
+// Rank sits BEHIND THE SPEND rather than behind a clock, and that is the whole point. Gate the
+// tiers on the act and holding a Scroll always beats spending one; gate them on how many have
+// gone into THIS hero and the incentive inverts. It also prices the carry build in breadth:
+// concentrate and the ceiling rises, spread six ways and nobody ranks up.
+
+/** Scrolls to climb one rank. Six maxes a hero. */
+export const SCROLLS_PER_RANK = 3;
+
+/**
+ * Guaranteed income: what every Guardian pays. Ten over a run against the six that max one hero,
+ * so the floor alone is one maxed hero and a second half-ranked — the Scroll Cache and the Guild
+ * Hall are what turn that into a real spread-vs-concentrate call. First-pass figure for playtest.
+ */
+export const SCROLLS_PER_ACT = 2;
+
+/**
+ * What the `scrollReward` Scroll Cache pays. Two, so a cache is a whole rank's worth of a
+ * decision rather than a top-up. First-pass figure for playtest.
+ */
+export const SCROLL_REWARD_COUNT = 2;
+
+export const MAX_MASTERY_RANK = 3;
+
+/**
+ * DERIVED from `masteryScrollsSpent`, never stored (state.ts). Rank 1 at 0-2 spent, 2 at 3-5,
+ * 3 from 6 on.
+ */
+export function masteryRank(entry: RosterEntry): number {
+  return Math.min(MAX_MASTERY_RANK, 1 + Math.floor(entry.masteryScrollsSpent / SCROLLS_PER_RANK));
+}
+
+/** Scrolls still owed for the next rank; 0 at the cap. */
+export function scrollsToNextRank(entry: RosterEntry): number {
+  if (masteryRank(entry) >= MAX_MASTERY_RANK) return 0;
+  return SCROLLS_PER_RANK - (entry.masteryScrollsSpent % SCROLLS_PER_RANK);
+}
+
+/** Rank at which each move tier becomes offerable. Maps 1:1 onto the authored 6 Early / 6 Mid / 4 Late. */
+export const MOVE_TIER_RANK: Record<MoveTier, number> = {
   early: 1,
-  mid: 4,
-  late: 7,
+  mid: 2,
+  late: 3,
 };
 
 /**
- * Level at which a tier stops being offerable. Early EXPIRES the moment Mid opens (2026-09-07):
- * a level-4 hero handed a starter-tier move was the curve paying out backwards, and Early
- * outnumbering everything else is what buried the Late band under a single random draw. Mid and
- * Late accumulate instead — the Late slates hold 4-5 moves a type, far too few to carry four
- * offers on their own.
+ * Rank at which a tier stops being offerable. Early EXPIRES the moment Mid opens: a ranked-up
+ * hero handed a starter-tier move is the ladder paying out backwards, and Early outnumbering
+ * everything else is what buried the Late band under a random draw. Mid and Late accumulate
+ * instead — the Late slates hold 4-5 moves a type, far too few to carry a band alone.
  */
-export const MOVE_TIER_EXPIRY: Record<MoveTier, number> = {
-  early: MOVE_TIER_LEVEL.mid,
+export const MOVE_TIER_RANK_EXPIRY: Record<MoveTier, number> = {
+  early: MOVE_TIER_RANK.mid,
   mid: Infinity,
   late: Infinity,
 };
 
-/** Whether `level` has REACHED a tier at all. A move with no authored `tier` is ungated — Ancient has no slate yet. */
-export function isMoveTierReached(move: MoveDefinition | undefined, level: number): boolean {
-  return level >= MOVE_TIER_LEVEL[move?.tier ?? 'early'];
+/** Whether `rank` has REACHED a tier at all. A move with no authored `tier` is ungated — Ancient has no slate yet. */
+export function isMoveTierReached(move: MoveDefinition | undefined, rank: number): boolean {
+  return rank >= MOVE_TIER_RANK[move?.tier ?? 'early'];
 }
 
 /**
  * Reached AND not expired — the gate on the base pool. A graft's line is gated on
- * isMoveTierReached instead: a graft lands at EVOLUTION_LEVEL, by which point Early has already
- * expired, so applying the expiry to it would make every Early move in a grafted type's line
- * permanently unreachable. The expiry stops the BASE pool paying starter moves late; a grafted
- * type is new to this hero, and its Early moves are the way into it.
+ * isMoveTierReached instead: a graft can land on a hero already past rank 1, and applying the
+ * expiry to it would make every Early move in the grafted type's line permanently unreachable.
+ * The expiry stops the BASE pool paying starter moves late; a grafted type is new to this hero,
+ * and its Early moves are the way into it.
  */
-export function isMoveTierOfferable(move: MoveDefinition | undefined, level: number): boolean {
+export function isMoveTierOfferable(move: MoveDefinition | undefined, rank: number): boolean {
   const tier = move?.tier;
   if (!tier) return true;
-  return isMoveTierReached(move, level) && level < MOVE_TIER_EXPIRY[tier];
+  return isMoveTierReached(move, rank) && rank < MOVE_TIER_RANK_EXPIRY[tier];
 }
 
 /** Last level whose level-up pays out a move; past it a level-up buys a stat (CLAUDE.md exemption). Same decision as data/progression.ts FLOOR — move one, move both. */
@@ -116,66 +154,43 @@ export function drawMasteryStats(random: () => number, count: number = MASTERY_C
 }
 
 /**
- * The levels a climb from 1 to MASTERY_LEVEL pays a MOVE for — every level bar the one that
- * surfaces the Evolution instead. Derived rather than written down, so retuning EVOLUTION_LEVEL
- * or MASTERY_LEVEL retunes what the pools have to hold with it.
- */
-export function moveOfferLevels(): number[] {
-  const levels: number[] = [];
-  for (let level = 2; level <= MASTERY_LEVEL; level++) if (level !== EVOLUTION_LEVEL) levels.push(level);
-  return levels;
-}
-
-/**
- * Spare offers every pool carries beyond that curve's own demand — derived, not chosen. The
- * curve is not the only thing that takes a move off the table: levelUpMovePool also filters
- * what the hero is currently HOLDING, and a loadout slot can be filled from outside the pool
- * (an event's gift). MOVE_CAP of those is the most that can ever be held at once, so a pool
- * deeper than curve + MOVE_CAP cannot be emptied — by any run, not merely by a likely one.
- */
-export const MOVE_POOL_MARGIN = MOVE_CAP;
-
-/**
- * Floor on a hero's level-up pool, by OFFERABLE SET rather than by cumulative band — Early
- * expiring at Mid means the three sets are Early alone, Mid alone, and Mid+Late. Each must
- * outlast every offer drawn from it (two, two, six) plus the margin. Enforced against the
- * authored pools by test/moveTiers.test.ts.
+ * Floor on a hero's move pool, by OFFERABLE SET rather than by cumulative band — Early expiring
+ * at Mid means the three sets are Early alone, Mid alone, and Mid+Late.
+ *
+ * It is no longer DERIVED from a curve, because there is no curve: Scrolls make offers-per-hero
+ * player-controlled and unbounded, so no depth can promise a pool "cannot be emptied" the way
+ * MOVE_POOL_MARGIN did (docs/growth-overhaul.md §4). Running a band dry is now a legal state the
+ * spend refuses rather than a data bug — and `SCROLLS_PER_RANK` offers is what a band has to
+ * survive to get the hero out of it, which is what these numbers are. In practice every pool is
+ * authored well past them (6 Early / 6 Mid / 4 Late). Enforced by test/moveTiers.test.ts.
  */
 export interface MovePoolFloor {
-  /** Early alone: every offer below MOVE_TIER_LEVEL.mid. */
+  /** Early alone: rank 1. */
   early: number;
-  /** Mid alone: the window where Mid has opened, Early has expired and Late is not yet in. */
+  /** Mid alone: rank 2, where Mid has opened and Early has expired. */
   mid: number;
-  /** Mid and Late together: every offer from MOVE_TIER_LEVEL.mid on, since a Mid taken at 4 is gone at 9. */
+  /** Mid and Late together: rank 3. */
   midLate: number;
 }
 
 export function movePoolFloor(): MovePoolFloor {
-  const levels = moveOfferLevels();
-  const offersIn = (from: number, to: number) => levels.filter((level) => level >= from && level < to).length;
-  return {
-    early: offersIn(0, MOVE_TIER_LEVEL.mid) + MOVE_POOL_MARGIN,
-    mid: offersIn(MOVE_TIER_LEVEL.mid, MOVE_TIER_LEVEL.late) + MOVE_POOL_MARGIN,
-    midLate: offersIn(MOVE_TIER_LEVEL.mid, Infinity) + MOVE_POOL_MARGIN,
-  };
+  return { early: SCROLLS_PER_RANK, mid: SCROLLS_PER_RANK, midLate: SCROLLS_PER_RANK };
 }
 
 /**
- * What a level-up pays out, read off the POST-level-up entry. Precedence:
- * evolution > move > mastery. `mastery` below MASTERY_LEVEL means the move pool came up
- * empty, which movePoolFloor exists to make unreachable — it is a data bug, not the gate
- * working. The fallback stays because a payout of nothing would be the worse failure.
+ * What a level-up pays out, read off the POST-level-up entry. Moves left the level track on
+ * 2026-09-10 (Growth Overhaul phase 2) — a Scroll is the only faucet — so a level either
+ * surfaces an Evolution or falls through to the stat reel. Phase 3 replaces the reel with
+ * per-level growth-grade rolls and this collapses further.
  */
-export type LevelUpPayout = 'evolution' | 'move' | 'mastery';
+export type LevelUpPayout = 'evolution' | 'mastery';
 
 export function levelUpPayout(
   table: ProgressionTable,
-  moves: Record<string, MoveDefinition>,
+  _moves: Record<string, MoveDefinition>,
   entry: RosterEntry
 ): LevelUpPayout {
-  if (availableEvolution(table, entry)) return 'evolution';
-  if (entry.level > MASTERY_LEVEL) return 'mastery';
-  return levelUpMovePool(table, moves, entry).length > 0 ? 'move' : 'mastery';
+  return availableEvolution(table, entry) ? 'evolution' : 'mastery';
 }
 
 export interface EvolutionPath {
@@ -256,23 +271,57 @@ export function fullMovepool(table: ProgressionTable, hero: HeroDefinition): str
 }
 
 /**
- * Table pool plus chosen paths' learnableMoveIds, minus unlocked, minus already
- * offered, minus tiers above `entry.level`. Pass the POST-level-up entry, or the
- * level-up that reaches 4 is still offered an Early-only pool.
+ * Table pool plus chosen paths' learnableMoveIds, minus unlocked, minus already offered, minus
+ * tiers above the hero's Mastery Rank. Pass the POST-spend entry: the Scroll ticks the rank
+ * before it rolls, so the third one into a hero is the one that opens Mid.
  */
-export function levelUpMovePool(
+export function masteryMovePool(
   table: ProgressionTable,
   moves: Record<string, MoveDefinition>,
   entry: RosterEntry
 ): string[] {
+  const rank = masteryRank(entry);
   const grafted = new Set(chosenEvolutionPaths(table, entry).flatMap((path) => path.learnableMoveIds ?? []));
   const pool = [...new Set([...(table.moveTiers[entry.heroId] ?? []), ...grafted])];
   return pool.filter(
     (id) =>
       !entry.unlockedMoveIds.includes(id) &&
       !entry.offeredMoveIds.includes(id) &&
-      (grafted.has(id) ? isMoveTierReached(moves[id], entry.level) : isMoveTierOfferable(moves[id], entry.level))
+      (grafted.has(id) ? isMoveTierReached(moves[id], rank) : isMoveTierOfferable(moves[id], rank))
   );
+}
+
+/**
+ * What a Scroll spent on this hero would open up — the POST-tick pool, which is what the spend
+ * actually rolls from.
+ */
+export function scrollMovePool(
+  table: ProgressionTable,
+  moves: Record<string, MoveDefinition>,
+  entry: RosterEntry
+): string[] {
+  return masteryMovePool(table, moves, { ...entry, masteryScrollsSpent: entry.masteryScrollsSpent + 1 });
+}
+
+/**
+ * Whether a Scroll can legally be poured into this hero. Refused only when it would buy
+ * LITERALLY nothing: the band is dry AND the rank cannot rise.
+ *
+ * The dry-band case is otherwise allowed on purpose, and it is the fix for a real dead end. A
+ * band can empty — an event's gifts fill the loadout out of the hero's own pool, and offers burn
+ * whether taken or declined — and refusing there would strand the hero at that rank forever,
+ * since the rank tick is the only thing that opens the next band. So below the cap a Scroll
+ * always buys the tick; only at MAX_MASTERY_RANK with nothing left to teach is the hero finished
+ * (docs/growth-overhaul.md §4).
+ */
+export function canSpendScroll(
+  table: ProgressionTable,
+  moves: Record<string, MoveDefinition>,
+  run: RunState,
+  entry: RosterEntry
+): boolean {
+  if (run.masteryScrolls < 1) return false;
+  return scrollMovePool(table, moves, entry).length > 0 || masteryRank(entry) < MAX_MASTERY_RANK;
 }
 
 /** Spends levelUpCost(entry.level) and increments level. The move/Evolution payout is resolved separately by the caller. */
@@ -300,9 +349,31 @@ export function grantMove(run: RunState, rosterId: string, moveId: string, repla
   return replaceEntry(run, rosterId, { ...entry, unlockedMoveIds }, 0);
 }
 
-/** The point was spent by levelUpHero. Grants, and spends the offer — swapping the move away later does not put it back in the pool. */
-export function grantLevelUpMove(run: RunState, rosterId: string, moveId: string, replaceMoveId?: string): RunState {
+/** The Scroll was spent by spendMasteryScroll. Grants, and spends the offer — swapping the move away later does not put it back in the pool. */
+export function grantOfferedMove(run: RunState, rosterId: string, moveId: string, replaceMoveId?: string): RunState {
   return recordMoveOffer(grantMove(run, rosterId, moveId, replaceMoveId), rosterId, [moveId]);
+}
+
+/**
+ * Pours one Mastery Scroll into a hero: takes it off the run's pool and ticks the rank bar.
+ * The move it offers is the caller's roll off the POST-spend entry (scrollMovePool) — the tick
+ * lands FIRST, so the third Scroll into a hero is the one that opens Mid. That is what makes
+ * every third spend the bigger moment rather than a silent deposit.
+ *
+ * The offer itself is banked by recordMoveOffer, as a level-up's was: an offer is spent by
+ * being MADE, so declining still burns the move.
+ */
+export function spendMasteryScroll(run: RunState, rosterId: string): RunState {
+  const entry = requireEntry(run, rosterId);
+  if (run.masteryScrolls < 1) throw new ProgressionError('No Mastery Scrolls to spend');
+  const next = replaceEntry(run, rosterId, { ...entry, masteryScrollsSpent: entry.masteryScrollsSpent + 1 }, 0);
+  return { ...next, masteryScrolls: next.masteryScrolls - 1 };
+}
+
+/** Income. Scrolls land on the RUN, never on a hero — who they go to is the whole decision. */
+export function grantMasteryScrolls(run: RunState, count: number = 1): RunState {
+  if (!Number.isInteger(count) || count < 1) throw new ProgressionError(`${count} is not a Scroll count`);
+  return { ...run, masteryScrolls: run.masteryScrolls + count };
 }
 
 /**

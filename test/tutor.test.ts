@@ -5,7 +5,7 @@ import { moves } from '../src/data/moves';
 import { progressionTable } from '../src/data/progression';
 import { createRosterEntry } from '../src/run/state';
 import { MAP_NODE_TYPES, generateMap } from '../src/run/map';
-import { MOVE_TIER_LEVEL } from '../src/run/progression';
+import { MOVE_TIER_RANK } from '../src/run/progression';
 import { tutorMovePool, tutorTeachableCount } from '../src/run/tutor';
 
 const entry = (heroId: string) => createRosterEntry(heroId, heroId, heroes[heroId].moveIds);
@@ -49,8 +49,8 @@ test('tutor: the pool is sorted by tier, then mana cost', () => {
       assert.ok(ta <= tb, `${heroId}: ${a.name} (${ta}) sorted before ${b.name} (${tb})`);
       if (ta === tb) assert.ok(a.manaCost <= b.manaCost, `${heroId}: ${a.name} costs more than ${b.name}`);
     }
-    // The sort keys are readable off MOVE_TIER_LEVEL; assert the table is the one being sorted on.
-    assert.ok(MOVE_TIER_LEVEL.early <= MOVE_TIER_LEVEL.mid && MOVE_TIER_LEVEL.mid <= MOVE_TIER_LEVEL.late);
+    // The sort keys are readable off MOVE_TIER_RANK; assert the table is the one being sorted on.
+    assert.ok(MOVE_TIER_RANK.early <= MOVE_TIER_RANK.mid && MOVE_TIER_RANK.mid <= MOVE_TIER_RANK.late);
   }
 });
 

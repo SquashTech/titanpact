@@ -78,6 +78,8 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
     </>
   ),
   equipmentReward: SECTION_PATHS.equipment,
+  // The Mastery section mark, for the node that pays the Scrolls out — same rule as the Boon.
+  scrollReward: SECTION_PATHS.mastery,
   // The Passives section mark, for the node that hands one over — same rule.
   passiveReward: SECTION_PATHS.passives,
   // Money bag.

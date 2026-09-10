@@ -1,8 +1,9 @@
 # growth-overhaul.md — The Growth Overhaul
 
-> **STATUS: DECIDED (2026-09-10, per user direction). PHASE 1 OF §8 IS BUILT; 2-7 ARE NOT.**
-> Gems are gone. The code still ships the Training Point pool, the mastery stat reel and
-> level-gated moves; `CLAUDE.md`'s remaining invariants still describe *that* game and are
+> **STATUS: DECIDED (2026-09-10, per user direction). PHASES 1-2 OF §8 ARE BUILT; 3-7 ARE NOT.**
+> Gems are gone and moves come only from Mastery Scrolls. The code still ships the Training
+> Point pool and the mastery stat reel; `CLAUDE.md`'s remaining invariants still describe *that*
+> game and are
 > still the rules in force until the phase that replaces each one lands. This module is the
 > destination, and §8 is the route — **check its Status column before assuming anything here
 > runs.** Where it disagrees with `leveling-and-ranks.md`, `progression.md` or `run-loop.md`,
@@ -145,9 +146,13 @@ on the axis where investment has texture instead of the one where it was arithme
 
 ### The spend
 
-**A Scroll rolls 3 from the hero's eligible pool; take 1 or decline; the offer is consumed either
-way.** This is the pick-1-of-3 grammar the game already speaks (reward rows, Boons, Classes,
-Banners), so it introduces no new vocabulary and one tap resolves it.
+**A Scroll offers ONE move from the hero's eligible pool; take it or decline; the move is burned
+either way** (2026-09-10, per user direction — a 1-of-3 was drafted here and rejected). The
+arithmetic is what settles it: rank 1 takes three Scrolls, three moves shown apiece against an
+Early band authored to a floor of six, so a 1-of-3 would empty the band before the hero could
+climb out of it — and §4's own promise is that **no hero needs re-authoring**. One move also
+keeps the rule the level curve already ran on unchanged: an offer is spent by being MADE
+(`docs/leveling-and-ranks.md`), whatever the answer.
 
 **Every Scroll does both things**: it offers a move *now* and it ticks the rank bar. Rank-only
 spends with moves arriving at rank-up would make two of every three Scrolls a silent deposit, which
@@ -171,15 +176,24 @@ or five heroes bumped once and nobody deep. A real spread-vs-concentrate call.
 
 ### Two mechanical notes
 
-- **`RosterEntry.offeredMoveIds` already exists** (`src/run/state.ts`) and `levelUpMovePool` already
-  filters on it (`src/run/progression.ts`). A Scroll is `grantLevelUpMove` with the level trigger cut
-  off. Because that list accumulates, the fifth Scroll dumped into one hero rolls from a depleted
-  pool — **hyperfocus self-limits with no cap needed**, which is the anti-funnel job the Gem 20/8
-  caps were doing badly.
-- **`movePoolFloor`'s proof breaks.** `MOVE_POOL_MARGIN` guarantees a pool "cannot be emptied — by
+- **`RosterEntry.offeredMoveIds` already exists** (`src/run/state.ts`) and the pool filter already
+  ran on it (`src/run/progression.ts`, now `masteryMovePool`). A Scroll is the old
+  `grantLevelUpMove` with the level trigger cut off — it ships as `grantOfferedMove`. Because that
+  list accumulates, the fifth Scroll dumped into one hero rolls from a depleted pool —
+  **hyperfocus self-limits with no cap needed**, which is the anti-funnel job the Gem 20/8 caps
+  were doing badly.
+- **`movePoolFloor`'s proof breaks.** `MOVE_POOL_MARGIN` guaranteed a pool "cannot be emptied — by
   any run, not merely by a likely one," derived against a *fixed* number of curve offers. Scrolls
-  make offers-per-hero player-controlled and unbounded. Fix: refuse the spend and grey out a hero
-  whose pool is dry. `test/moveTiers.test.ts` asserts a property that will no longer hold.
+  make offers-per-hero player-controlled and unbounded, so the floor is now simply
+  **`SCROLLS_PER_RANK` per offerable set** — what a band must survive to get the hero out of it.
+  `test/moveTiers.test.ts` is rewritten against rank.
+
+  **The refusal is narrower than first drafted** (2026-09-10, as built). "Refuse the spend and
+  grey out a hero whose pool is dry" strands the hero: a band *can* empty — an event's gifts fill
+  the loadout out of the hero's own pool, and offers burn whether taken or declined — and the rank
+  tick is the only thing that opens the next band. So a Scroll is refused only when it would buy
+  **literally nothing**: max rank AND nothing left to teach. Below the cap a dry band still takes
+  one, and the board says so rather than greying out (`canSpendScroll`).
 
 ### UI consequence
 
@@ -294,7 +308,7 @@ them, so in-flight runs invalidate cleanly and no migration code is owed at any 
 | # | Phase | Exit criterion | Status |
 |---|---|---|---|
 | 1 | **Excise Gems.** Isolated and well-bounded; it shrinks the surface everything else moves through. Delete the owned files, strip the state fields, pull `gemReward`, remove the sim's gem handling from `policy.ts` / `run.ts`. The two stat shrines were **removed outright** rather than given a placeholder payload (2026-09-10, per user direction): they are §1's rule stated as a node, so a stand-in screen would have been built only to be deleted in phase 3. Their 20 weight and the Gem Cache's 20 went to the Boon (18 → 30) and the purse (18 → 26) until phase 2 seats the Scroll node. | No gem references, suite green, a run completable end to end. | **DONE** 2026-09-10. 985 tests green; 200 batch runs complete end to end. Cost, measured: full-clear 45.5% → 33.0%, encounters won 12.11 → 10.70 — the ~200 stat points a run Gems carried, handed back by phase 3 and re-fitted in phase 6. |
-| 2 | **Mastery Scrolls and Rank.** Add the currency, `RosterEntry.masteryRank`, and the spend flow on the Roster screen. Re-point `levelUpMovePool`'s tier gate from level to rank and cut the level-up's move grant in the same change — they are one edge. Add the pool-exhaustion guard. | Scrolls are the only move faucet; level-ups fall through to the stat reel. `test/moveTiers.test.ts` rewritten against rank. | not started |
+| 2 | **Mastery Scrolls and Rank.** Add the currency, `RosterEntry.masteryRank`, and the spend flow on the Roster screen. Re-point `levelUpMovePool`'s tier gate from level to rank and cut the level-up's move grant in the same change — they are one edge. Add the pool-exhaustion guard. | Scrolls are the only move faucet; level-ups fall through to the stat reel. `test/moveTiers.test.ts` rewritten against rank. | **DONE** 2026-09-10. 989 tests green. Measured against phase 1: full-clear 33.0% → 18.0%, encounters won 10.70 → 8.55, and of heroes reaching act 4+ only 38.0% reach rank 2 and 23.1% rank 3 (against 97.9%/54.9% on the old level gate). Income is on §4's spec (~16 a run, ~2 heroes maxed); the gap is the difficulty curve, which phase 6 re-fits. |
 | 3 | **Flip the levelling model.** The destructive one, landing after its replacements exist. XP becomes automatic and roster-wide; pool, deferral, cost curve and stat reel all go; cap 30; each level rolls the seven stats. Ship with a uniform all-B grade set so the engine runs before the content pass does. | No allocation screen anywhere. Level moves to the map header. Tutorial script re-checked — `src/data/tutorial.ts` narrates the old beats. | not started |
 | 4 | **The Crucible.** Small: `chooseEvolutionPath` and the path data are untouched, only the invocation point moves. Insert into the act-boundary chain ahead of `PactSealScreen`; add the purchasable spend at the Guild Hall and the Vigil. | Five forced Crucibles a run, a sixth reachable. No evolution reachable from a level-up. | not started |
 | 5 | **Finished and raw recruits.** Contract heroes arrive levelled, ranked, evolved, kit game-chosen; guild heroes raw. Gold on both purchased routes. | The flat-value / decaying-runway line true on three axes instead of one. `test/recruitment.test.ts` extended. | not started |

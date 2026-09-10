@@ -25,6 +25,7 @@ export type SfxId =
   | 'equip'
   | 'contract.sign'
   | 'shrine'
+  | 'scroll.spend'
   | 'blessing'
   | 'class.learn'
   | 'cache.open'
@@ -269,6 +270,24 @@ export const sounds: Record<SfxId, SoundSpec> = {
       { wave: 'sine', freq: 784, detune: 12, gain: 0.13, attack: 0.18, decay: 1.2, delay: 0.26 },
       { wave: 'sine', freq: 1568, detune: 18, gain: 0.05, attack: 0.2, decay: 1.0, delay: 0.3 },
       { wave: 'noise', gain: 0.12, attack: 0.4, decay: 0.9, filter: { type: 'bandpass', freq: 500, freqEnd: 3000, q: 0.7 } },
+    ],
+  },
+
+  /**
+   * A Mastery Scroll unfurling onto a hero. Paper, then the thing written on it: a short filtered
+   * noise sweep for the unroll, and a rising two-note figure under it for what was learned. The
+   * caller pitches it up on the spend that ranks the hero, so the third one lands higher.
+   */
+  'scroll.spend': {
+    gain: 0.34,
+    jitter: 0.005,
+    voices: [
+      // The unroll — bandpassed noise sweeping up, no pitch of its own.
+      { wave: 'noise', gain: 0.16, attack: 0.006, decay: 0.28, filter: { type: 'bandpass', freq: 900, freqEnd: 4200, q: 1.1 } },
+      // What it taught. Fifth apart, the second arriving late enough to read as a consequence.
+      { wave: 'triangle', freq: 523, gain: 0.2, attack: 0.008, hold: 0.03, decay: 0.3 },
+      { wave: 'sine', freq: 784, gain: 0.16, attack: 0.01, decay: 0.36, delay: 0.1 },
+      { wave: 'sine', freq: 1568, detune: 10, gain: 0.05, attack: 0.012, decay: 0.3, delay: 0.12 },
     ],
   },
 

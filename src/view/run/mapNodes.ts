@@ -14,6 +14,7 @@ export const NODE_NAMES: Record<MapNodeType, string> = {
   shop: 'Guild Hall',
   blacksmith: 'Blacksmith',
   equipmentReward: 'Item',
+  scrollReward: 'Scrolls',
   passiveReward: 'Boon',
   currencyReward: 'Gold',
   upgradeReward: 'XP',
@@ -38,6 +39,8 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
   // carry), different silhouette tier, so they read as related rather than as each other.
   blacksmith: '#c67a4c',
   equipmentReward: 'var(--physical)',
+  // The Scroll's own violet (RunGlyph RESOURCE_COLORS) — one colour per concept, wherever it is drawn.
+  scrollReward: '#c9a2ff',
   // Arcane violet, the hue the whole passive vocabulary already sits on (passiveIcons' fallback).
   passiveReward: 'var(--magical)',
   currencyReward: 'var(--accent)',
@@ -65,6 +68,7 @@ const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
   shop: 'Buy heroes, contracts and gear — and sell what you are not carrying',
   blacksmith: 'Buy an item slot, a tier at the Anvil, or an element at the Enchanter — acts 3+',
   equipmentReward: '1 of 3 items',
+  scrollReward: '2 Mastery Scrolls — the run\'s only way to teach a hero a new move',
   passiveReward: '1 of 3 Boons, granted to one hero for the rest of the run',
   currencyReward: '15–30g',
   upgradeReward: '2 XP',
@@ -94,6 +98,7 @@ export const NODE_TIERS: Record<MapNodeType, NodeTier> = {
   shop: 'landmark',
   blacksmith: 'landmark',
   equipmentReward: 'reward',
+  scrollReward: 'reward',
   passiveReward: 'reward',
   currencyReward: 'reward',
   upgradeReward: 'reward',

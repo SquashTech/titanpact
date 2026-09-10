@@ -7,11 +7,12 @@
 > demo fight into the roguelike run CLAUDE.md's north star describes: draft →
 > escalating fights → relics.
 
-> **Partly superseded by `growth-overhaul.md` (2026-09-10).** Its **phase 1 has LANDED** and
-> this file is updated for it: Gems and the two stat shrines are deleted, the reward-row pool is
-> re-weighted, and the post-fight gates lose the Gem offer. Still **pending**: the level-up
-> screen leaves those gates, and **the Crucible** joins the act-boundary chain between the
-> Banner and the Pact Seal. **Everything not called pending describes what the code does.**
+> **Partly superseded by `growth-overhaul.md` (2026-09-10).** Its **phases 1-2 have LANDED**
+> and this file is updated for them: Gems and the two stat shrines are deleted, the post-fight
+> gates lose the Gem offer, and the reward-row pool is re-weighted around a new `scrollReward`
+> Scroll Cache. Still **pending**: the level-up screen leaves those gates, and **the Crucible**
+> joins the act-boundary chain between the Banner and the Pact Seal. **Everything not called
+> pending describes what the code does.**
 
 Slay the Spire is the direct reference (per user direction, 2026-08-16): a branching
 map of nodes, most of which reward something (a Guild Hall shop, equipment, a relic,
@@ -37,8 +38,8 @@ between; per user direction, the shape is now forced and uniform):
 - **Row 0: a single forced `fight` node.** Slay the Spire convention — the act always
   opens on an easy, unambiguous fight, no early reward-node luck and no meaningless
   first choice among identical-weight openers.
-- **Row 1: 3 nodes, pick 1 of 3 — reward types only** (`equipmentReward`/`passiveReward`/
-  `currencyReward`/`upgradeReward`/`forgeReward`/`event`, weighted). No
+- **Row 1: 3 nodes, pick 1 of 3 — reward types only** (`equipmentReward`/`scrollReward`/
+  `passiveReward`/`currencyReward`/`upgradeReward`/`forgeReward`/`event`, weighted). No
   `fight`/`shop`/`elite`/`classReward` mixed in — every reward row is a genuine reward
   choice, not a chance to draw another fight or dodge one, and `classReward` is reserved
   for its own forced Mentor row (2026-08-22 revision, per user direction — see the Mentor
@@ -231,6 +232,7 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30, more for nothing having been spent yet). **2026-09-08, per user direction:** it pays out on arrival and the screen counts the PURSE up to its new total, coin by coin, over a Claim button that was never a decision — the drop size is a chip beside a number the player can act on, rather than a number they cannot. `upgradeReward` shares the beat, counting the level-up pool. |
 | `upgradeReward` | `NodeRewardScreen` — an instant flat grant to the pooled level-up currency (2-3 points), on top of the per-fight-win grant (see below). |
 | `forgeReward` ("The Forge") | `ForgeScreen` — pick one roster hero to gain **+1 item slot** for the rest of the run (`runProgress.ts` `grantItemSlot`, stored on `RosterEntry.bonusItemSlots`, capped at `MAX_ITEM_SLOTS` = 3). **2026-09-06**, replacing the three slot-specific cache nodes (`weaponReward`/`armorReward`/`accessoryReward`), which lost their meaning when items stopped having categories — most of their frequency went to `equipmentReward`, whose weight went 20 → 40. The scarcest thing on the reward row (weight 8) on purpose: it is permanent, it compounds with every drop after it, and it is the only reward here a hero can be at the cap for — a roster entirely at 3 slots makes the node a dead draw, which is what makes spending it a choice — and at the 2026-09-07 cap of 3 that arrives materially sooner. |
+| `scrollReward` ("Scroll Cache") | `NodeRewardScreen` — an instant grant of `SCROLL_REWARD_COUNT` = 2 Mastery Scrolls, counted up on arrival like gold and XP. Which hero they go to is not asked here: a Scroll is spent at the player's leisure on the Roster's Mastery board. See "Mastery Scrolls" below. |
 | `passiveReward` ("Boon") | `BoonNodeScreen` — pick 1 of 3 passives, then the hero it settles on (`grantEventPassive`, stored on `RosterEntry.bonusPassiveGrants`). See "Boons" below. |
 | `classReward` ("Mentor's Hall") | `ClassNodeScreen` — pick 1 of 3 Classes (`src/data/classes.ts`), then pick which roster hero learns it, filtered to heroes with no Class yet (`src/run/classes.ts` `grantClass`, stored on `RosterEntry.classId` — a hero can hold at most one Class per run, so `grantClass` REPLACES rather than stacks). If every roster hero already has a Class, the offer is simply wasted. The screen names the heroes it CAN still teach, portraits and all, while the three disciplines are being read (2026-09-08) — that filtered roster is the whole reason to take or leave one, and it used to be a screen away behind the roster glyph. **Not in `REWARD_WEIGHTS`** (2026-08-22 revision, per user direction) — the only way to encounter this node type is a forced Mentor row (§1), never a random pick-1-of-3 option in any act. Acts 1-4 each guarantee one, so a run can Class up to four heroes; the offer filters to heroes with no Class yet and is wasted only once every hero has one. |
 | `tutorReward` ("Tutor") | `TutorNodeScreen` — pick one roster hero, then **any** move from that hero's level-up pool. See "The Tutor" below. Acts 4-5 only. |
@@ -399,6 +401,32 @@ two shrines freed 40 on 2026-09-10). It is the only reward-row node that
 changes how a hero *plays* rather than how big its numbers are, which argues for scarcer; it is
 also the node most likely to be the reason a run comes together, which argues for commoner.
 Playtest.
+
+### Mastery Scrolls (2026-09-10, Growth Overhaul phase 2)
+
+**The run's only faucet for moves.** A Scroll is poured into one hero on the Roster screen's
+Mastery board; it offers **one** move from that hero's pool — take it or decline, and the move is
+burned either way — and it ticks that hero's **Mastery Rank**, which is what gates the tiers
+(Early at 1, Mid at 2, Late at 3; three Scrolls a rank, six to max). Spec and rationale:
+`docs/leveling-and-ranks.md` Part 1b and `docs/growth-overhaul.md` §4.
+
+**Where they come from.** `SCROLLS_PER_ACT` = 2 from every Guardian (10 guaranteed over a run),
+the `scrollReward` Scroll Cache at `SCROLL_REWARD_COUNT` = 2 a visit (weight 34), and the Guild
+Hall at `SCROLL_PURCHASE_COST` = 35g. ~15-18 reachable, against the six that max one hero — so
+the floor alone is one maxed hero and a second half-ranked, and everything past that is a real
+spread-vs-concentrate call.
+
+**They are a STOCK, not an inbox.** Banking one is a legitimate play — there may be no hero worth
+pouring it into yet, and a recruit two nodes away changes the answer — so the count is stated on
+the map's purse and on the Mastery tab, and **nothing anywhere flags it as waiting**
+(`docs/growth-overhaul.md` §10). That is the opposite of the bag's unopened-item badge, which is
+an inbox and empties by being attended to.
+
+**Open — the income figures are all first-pass.** Measured at 200 batch runs, only 38% of heroes
+that reach act 4+ get to rank 2 and 23% to rank 3, against 97.9%/54.9% under the level gate this
+replaced. The shape is intended (concentrating is meant to cost breadth); whether the *level* is
+right is a phase 6 question, since the difficulty curve was fitted to the old, far more generous
+move economy.
 
 ### Gems — DELETED (2026-09-10, Growth Overhaul phase 1)
 

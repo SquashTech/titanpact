@@ -15,8 +15,8 @@ don't silently override it.
 > cap 30), moves onto a **Mastery Scroll / Mastery Rank** currency, Evolutions onto **the
 > Crucible** at the act boundary, and **Gems are deleted**. That doc's §9 lists the invariants
 > scheduled for reversal; its §8 is the phase order and says which have landed.
-> **Phase 1 is DONE (2026-09-10): Gems are gone.** Everything else below is still the rule in
-> force and the code still implements it.
+> **Phases 1-2 are DONE (2026-09-10): Gems are gone, and moves come only from Mastery
+> Scrolls.** Everything else below is still the rule in force and the code still implements it.
 > Read it before touching levelling, movepools, Evolutions or reward nodes.
 
 ---
@@ -109,24 +109,35 @@ don't silently override it.
   reached level 7**, where every move costing 70+ mana unlocks. Rationale, figures and the
   open tuning questions: `docs/leveling-and-ranks.md`.
 - **Level-ups are a pooled currency** distributed freely after each battle (benched heroes
-  included). Below the Evolution level, a level-up **unlocks a move** from the current
-  tier; the level-up that reaches the Evolution level instead **surfaces the Evolution
-  choice** — no move that level-up. **They never directly raise stats**, with one
-  documented exemption (2026-08-31): past `MASTERY_LEVEL` = 10 the movepool is spent, so a
-  level-up instead rolls **three distinct combat stats and the player picks one**, for a
-  flat **+10** — the sink that keeps hyperfocusing one hero a real option
-  (`MASTERY_CHOICE_COUNT`, `drawMasteryStats`, `grantMasteryStat`, `src/run/progression.ts`).
-  A choice rather than a single forced roll because hyperfocus needs *aim*; three of five
-  still withholds two stats, so the roll keeps mattering. The reel is the
-  **five combat stats only**; HP/Mana/MP Regen
-  are excluded because a flat +10 is not worth the same thing across all eight — the same
-  call `RANDOM_STAT_POOL` made for moves. Enforced by `test/mastery.test.ts`.
-- **A level-up never pays out nothing** (2026-08-31). Every hero's move pool is authored to
-  cover the level curve — **≥2 Early, ≥4 Early+Mid, ≥8 total** after the starting kit is
-  filtered out (the FLOOR block in `src/data/progression.ts`, `test/moveTiers.test.ts`) —
-  and an empty pool below the cap falls back to the mastery stat rather than to a bare
-  level. Filling that floor is worth pulling an **off-type** move from an adjacent slate;
-  a dead level-up is the worse outcome.
+  included). A level **pays a stat**: it rolls three distinct combat stats and the player
+  picks one, for a flat **+10** (`MASTERY_CHOICE_COUNT`, `drawMasteryStats`,
+  `grantMasteryStat`, `src/run/progression.ts`). A choice rather than a forced roll because
+  hyperfocus needs *aim*; three of five still withholds two, so the roll keeps mattering. The
+  reel is the **five combat stats only** — HP/Mana/MP Regen are excluded because a flat +10 is
+  not worth the same thing across all eight. The level-up that reaches the Evolution level
+  instead **surfaces the Evolution choice**. Enforced by `test/mastery.test.ts`.
+  **A level never teaches a move** (2026-09-10, Growth Overhaul phase 2), so the old
+  `MASTERY_LEVEL` = 10 gate is inert: every level pays a stat, from the first.
+- **Moves come from ONE faucet: Mastery Scrolls, gated by Mastery Rank** (2026-09-10,
+  `docs/growth-overhaul.md` §4). A Scroll is poured into one hero on the Roster's Mastery
+  board; it offers **one** move from that hero's pool — take it or decline, and the move is
+  burned either way — and it ticks the rank bar. **`SCROLLS_PER_RANK` = 3, `MAX_MASTERY_RANK`
+  = 3**, so six max a hero; rank 1 offers Early, 2 Mid (Early expires), 3 Mid+Late, mapping
+  1:1 onto the authored 6/6/4 pools, so **no hero needed re-authoring**. Rank is **DERIVED**
+  from `RosterEntry.masteryScrollsSpent`, never stored. **The tick lands before the roll**, so
+  the third Scroll into a hero offers from the band it just opened.
+  Income: **`SCROLLS_PER_ACT` = 2 at every Guardian** (10 guaranteed), plus the `scrollReward`
+  Scroll Cache and the Guild Hall — ~15-18 a run, against six to max one hero.
+  **Rank puts the ceiling behind the SPEND, never behind a clock** — act-gating the movepool
+  makes holding a Scroll always better than spending one, and a currency whose optimal play is
+  *don't spend it* can never feel good to receive. It is also where the carry build is priced
+  in breadth, which uniform levelling will otherwise delete in phase 3.
+- **A Scroll is refused only when it would buy LITERALLY nothing** — max rank AND nothing left
+  to teach (`canSpendScroll`). A dry band below the cap still takes one, because the rank tick
+  is the only thing that opens the next band and refusing there would strand the hero forever.
+  The move-pool floor is now **`SCROLLS_PER_RANK` per offerable set** (`movePoolFloor`,
+  `test/moveTiers.test.ts`): Scrolls make offers-per-hero player-controlled, so no depth can
+  promise a pool "cannot be emptied" the way the old curve-derived margin did.
 - **Evolutions are authored branch points**, each option carrying a **single
   identifiable name** (e.g. Cinder's Explosive / Ironclad / Thunderblaze).
   **All 36 heroes are on the five-clause Evolution framework** as of 2026-09-05 — no
@@ -361,7 +372,7 @@ authored roster.
   **`authoring-moves.md` is a runbook, not a design module** — read it before implementing
   a designed slate of moves for a type (1 type still to go — Ancient; Fire
   and Water are the worked examples, and §10 carries all fourteen hand-offs).
-  **`growth-overhaul.md` is a destination plus a route, and only phase 1 of §8 is built** —
+  **`growth-overhaul.md` is a destination plus a route, and only phases 1-2 of §8 are built** —
   the replacement for levelling, movepool gating and Evolutions. Check §8 before assuming.
 - `/prototypes/` — the two slices above, as behavioral reference.
 - `/src/engine/` — the pure resolution engine + the six contracts.

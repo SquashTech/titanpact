@@ -44,6 +44,12 @@ export interface RosterEntry {
   bonusStatGrants: Partial<Record<StatKey, number>>;
   /** Permanent grants from mastery level-ups (progression.ts grantMasteryStat). */
   masteryStatGrants: Partial<Record<StatKey, number>>;
+  /**
+   * Mastery Scrolls poured into this hero. Mastery Rank is DERIVED from it
+   * (progression.ts masteryRank), never stored: two figures for one fact drift, and the
+   * bar the hero card draws needs the count anyway. Keeps climbing past the max rank.
+   */
+  masteryScrollsSpent: number;
   /** Item slots granted on top of the hero's authored count (the Forge). Never negative; itemSlotsFor caps the sum. */
   bonusItemSlots: number;
   /** Current secondary-type grant from the latest type-graft path; a later graft overwrites. Innate primary never changes. */
@@ -85,6 +91,12 @@ export interface RunState {
   unseenItemIds: UnseenItems;
   /** Owned relic ids — duplicates stack. */
   relics: string[];
+  /**
+   * Unspent Mastery Scrolls — the run's only faucet for moves (docs/growth-overhaul.md §4).
+   * A stock, not an inbox: banking one is a legitimate play, so nothing anywhere may flag it
+   * as waiting.
+   */
+  masteryScrolls: number;
   /** Starts at 1; +1 at the end of every act; purchasable at a shop. */
   recruitContracts: number;
   /** Null for a RunState that never gets a map (enemyGen.ts throwaway rosters). */
@@ -125,6 +137,7 @@ export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1):
     stash: [],
     unseenItemIds: [],
     relics: [],
+    masteryScrolls: 0,
     recruitContracts,
     map: null,
     currentNodeId: null,
@@ -153,6 +166,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     bonusPassiveGrants: [],
     bonusStatGrants: {},
     masteryStatGrants: {},
+    masteryScrollsSpent: 0,
     bonusItemSlots: 0,
     evolutionTypeGraft: null,
     classId: null,

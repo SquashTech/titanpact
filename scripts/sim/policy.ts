@@ -18,7 +18,17 @@ import { statuses } from '../../src/data/statuses';
 import type { EquipmentDefinition } from '../../src/run/equipment';
 import { holdsItem } from '../../src/run/equipment';
 import type { RosterEntry, RunState } from '../../src/run/state';
-import { itemSlotsFor, rosterEntryTypes } from '../../src/run/progression';
+import {
+  MOVE_CAP,
+  canSpendScroll,
+  grantOfferedMove,
+  itemSlotsFor,
+  recordMoveOffer,
+  rosterEntryTypes,
+  scrollMovePool,
+  spendMasteryScroll,
+} from '../../src/run/progression';
+import { progressionTable } from '../../src/data/progression';
 import { mergeStatMods } from '../../src/run/statMods';
 import type { Rng } from './rng';
 
@@ -234,6 +244,40 @@ export function levelUpTarget(roster: readonly RosterEntry[], policy: LevelPolic
   // The four that will actually be fielded, lowest level first — Evolution at 5 is the spike worth chasing on everyone.
   const core = ordered.slice(0, Math.min(4, ordered.length));
   return [...core].sort((a, b) => a.level - b.level || powerScore(b) - powerScore(a))[0];
+}
+
+/**
+ * Every held Mastery Scroll, poured into the hero it is worth most to — highest power score that
+ * can still take one. CONCENTRATED rather than spread, because that is the play the rank ladder
+ * rewards and a sim that spread them evenly would measure a ceiling nobody reaches.
+ *
+ * The move is taken when it beats the worst one held (or there is room), declined otherwise —
+ * either way the Scroll is gone, which is the rule the screen enforces too.
+ */
+export function pourScrolls(run: RunState, rng: () => number): RunState {
+  let next = run;
+  // Bounded by the pool: every iteration spends one or breaks.
+  while (next.masteryScrolls > 0) {
+    const takers = next.roster.filter((entry) => canSpendScroll(progressionTable, moves, next, entry));
+    if (takers.length === 0) break;
+    const target = takers.reduce((best, entry) => (powerScore(entry) > powerScore(best) ? entry : best));
+    const pool = scrollMovePool(progressionTable, moves, target);
+    // A dry band below the cap still takes the Scroll — the tick is what opens the next one.
+    if (pool.length === 0) {
+      next = spendMasteryScroll(next, target.rosterId);
+      continue;
+    }
+    const moveId = pool[Math.floor(rng() * pool.length)];
+    next = recordMoveOffer(spendMasteryScroll(next, target.rosterId), target.rosterId, [moveId]);
+    const current = next.roster.find((r) => r.rosterId === target.rosterId)!;
+    if (current.unlockedMoveIds.length < MOVE_CAP) {
+      next = grantOfferedMove(next, target.rosterId, moveId);
+    } else {
+      const replaceId = replacementTarget(current, moveId);
+      if (replaceId) next = grantOfferedMove(next, target.rosterId, moveId, replaceId);
+    }
+  }
+  return next;
 }
 
 /** A stat-boost node's recipient: the hero the stat is worth the most to. */

@@ -20,8 +20,8 @@ import { buildCombatState } from '../src/run/buildCombatState';
 import { getEffectiveStat } from '../src/engine/state';
 import {
   levelUpHero,
-  levelUpMovePool,
-  grantLevelUpMove,
+  masteryMovePool,
+  grantOfferedMove,
   recordMoveOffer,
   availableEvolution,
   chooseEvolutionPath,
@@ -217,12 +217,12 @@ test('progression: levelUpHero spends levelUpCost and bumps level; insufficient 
   assert.strictEqual(next.roster[0].level, 2);
 });
 
-test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move offer', () => {
+test('progression: masteryMovePool + grantOfferedMove resolve a level-up\'s move offer', () => {
   let run = seedRoster(['cinderKnight']);
   const entry = run.roster[0];
   // Read at the two ends of the curve rather than at one level: Early EXPIRES when Mid opens, so
   // no single level sees the whole authored pool. Together these two pin all of it.
-  assert.deepStrictEqual(levelUpMovePool(progressionTable, moves, { ...entry, level: 1 }), [
+  assert.deepStrictEqual(masteryMovePool(progressionTable, moves, { ...entry, masteryScrollsSpent: 0 }), [
     'heavyBlow',
     'ironFist',
     'openingStrike',
@@ -230,7 +230,7 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
     'pinDown',
     'swiftBlow',
   ]);
-  assert.deepStrictEqual(levelUpMovePool(progressionTable, moves, { ...entry, level: 99 }), [
+  assert.deepStrictEqual(masteryMovePool(progressionTable, moves, { ...entry, masteryScrollsSpent: 99 }), [
     'moltenLash',
     'firebrand',
     'volcanicSurge',
@@ -243,32 +243,32 @@ test('progression: levelUpMovePool + grantLevelUpMove resolve a level-up\'s move
     'juggernaut',
   ]);
 
-  const withMove = grantLevelUpMove(run, 'cinderKnight', 'firebrand');
+  const withMove = grantOfferedMove(run, 'cinderKnight', 'firebrand');
   assert.ok(withMove.roster[0].unlockedMoveIds.includes('firebrand'));
-  assert.ok(!levelUpMovePool(progressionTable, moves, { ...withMove.roster[0], level: 99 }).includes('firebrand')); // granted move drops out of the pool
+  assert.ok(!masteryMovePool(progressionTable, moves, { ...withMove.roster[0], masteryScrollsSpent: 99 }).includes('firebrand')); // granted move drops out of the pool
   assert.strictEqual(withMove.roster[0].unlockedMoveIds.length, 4); // starting 3 + this grant hits MOVE_CAP
 
   // Already at MOVE_CAP: further offers require replacing an unlocked move.
-  const swapped = grantLevelUpMove(withMove, 'cinderKnight', 'heavyBlow', 'sharpen');
+  const swapped = grantOfferedMove(withMove, 'cinderKnight', 'heavyBlow', 'sharpen');
   assert.ok(!swapped.roster[0].unlockedMoveIds.includes('sharpen'));
   assert.ok(swapped.roster[0].unlockedMoveIds.includes('heavyBlow'));
-  assert.throws(() => grantLevelUpMove(withMove, 'cinderKnight', 'heavyBlow', 'notUnlocked'), ProgressionError);
+  assert.throws(() => grantOfferedMove(withMove, 'cinderKnight', 'heavyBlow', 'notUnlocked'), ProgressionError);
 });
 
 test('progression: an offer is spent by being MADE — declined or swapped away, it never comes back', () => {
   const run = seedRoster(['cinderKnight']);
-  const atCap = (entry: import('../src/run/state').RosterEntry) => ({ ...entry, level: 99 });
+  const atCap = (entry: import('../src/run/state').RosterEntry) => ({ ...entry, masteryScrollsSpent: 99 });
 
   // Declined: recordMoveOffer grants nothing and still burns the move out of the pool.
   const declined = recordMoveOffer(run, 'cinderKnight', ['moltenLash']);
   assert.ok(!declined.roster[0].unlockedMoveIds.includes('moltenLash'));
-  assert.ok(!levelUpMovePool(progressionTable, moves, atCap(declined.roster[0])).includes('moltenLash'));
+  assert.ok(!masteryMovePool(progressionTable, moves, atCap(declined.roster[0])).includes('moltenLash'));
 
   // Taught, then swapped away for something else: still gone.
-  const taught = grantLevelUpMove(declined, 'cinderKnight', 'firebrand');
-  const dropped = grantLevelUpMove(taught, 'cinderKnight', 'heavyBlow', 'firebrand');
+  const taught = grantOfferedMove(declined, 'cinderKnight', 'firebrand');
+  const dropped = grantOfferedMove(taught, 'cinderKnight', 'heavyBlow', 'firebrand');
   assert.ok(!dropped.roster[0].unlockedMoveIds.includes('firebrand'));
-  assert.ok(!levelUpMovePool(progressionTable, moves, atCap(dropped.roster[0])).includes('firebrand'));
+  assert.ok(!masteryMovePool(progressionTable, moves, atCap(dropped.roster[0])).includes('firebrand'));
 
   // Re-offering an already-spent move is a no-op, not a duplicate entry.
   const again = recordMoveOffer(dropped, 'cinderKnight', ['moltenLash']);
@@ -331,11 +331,11 @@ test('progression: a graft path adds its learnableMoveIds to the level-up pool w
   run = { ...run, levelUpPool: costToReachLevel(1, EVOLUTION_LEVEL) };
   run = levelUpTimes(run, 'crimson', EVOLUTION_LEVEL - 1);
 
-  const before = levelUpMovePool(progressionTable, moves, { ...run.roster[0], level: 99 });
+  const before = masteryMovePool(progressionTable, moves, { ...run.roster[0], masteryScrollsSpent: 99 });
   assert.ok(!before.includes('soulRend'), 'Spirit moves must not be offerable before the graft');
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-defensive');
-  const after = levelUpMovePool(progressionTable, moves, { ...next.roster[0], level: 99 });
+  const after = masteryMovePool(progressionTable, moves, { ...next.roster[0], masteryScrollsSpent: 99 });
 
   for (const id of ['drain', 'secondWind', 'soulRend', 'banish']) {
     assert.ok(after.includes(id), `${id} should be learnable after Cinderveil`);
@@ -353,7 +353,7 @@ test('progression: an untaken path\'s learnableMoveIds stay out of the pool, and
   run = levelUpTimes(run, 'crimson', EVOLUTION_LEVEL - 1);
 
   const next = chooseEvolutionPath(run, progressionTable, heroes, 'crimson', 'crimson-utility');
-  const atEvolutionLevel = levelUpMovePool(progressionTable, moves, next.roster[0]);
+  const atEvolutionLevel = masteryMovePool(progressionTable, moves, next.roster[0]);
 
   assert.ok(atEvolutionLevel.includes('manaTap')); // Early — reachable the moment the graft lands
   assert.ok(!atEvolutionLevel.includes('cataclysm')); // Late — still gated until level 7
@@ -389,7 +389,7 @@ test('progression: Warhowl inverts Fang\'s attacking stat — a NEGATIVE Evoluti
   assert.ok(base.intelligence + grants.intelligence! > base.attack + grants.attack!, 'Warhowl Fang attacks with Intelligence');
 
   // Animal Spirit is Beast's one magical row, absent from base Fang's pool (Int 20); Warhowl makes it reachable.
-  const pool = levelUpMovePool(progressionTable, moves, { ...next.roster[0], level: 99 });
+  const pool = masteryMovePool(progressionTable, moves, { ...next.roster[0], masteryScrollsSpent: 99 });
   assert.ok(!progressionTable.moveTiers.packAlpha.includes('animalSpirit'));
   assert.ok(pool.includes('animalSpirit'));
   assert.strictEqual(moves.animalSpirit.type, 'Beast');

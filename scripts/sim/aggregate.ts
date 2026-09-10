@@ -113,6 +113,9 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
     const best = record.heroLevels[heroId];
     agg.heroLevelHistogram[best] = (agg.heroLevelHistogram[best] ?? 0) + 1;
     if (record.actReached >= 4) agg.heroLevelHistogramDeep[best] = (agg.heroLevelHistogramDeep[best] ?? 0) + 1;
+    const rank = record.heroRanks[heroId] ?? 1;
+    agg.heroRankHistogram[rank] = (agg.heroRankHistogram[rank] ?? 0) + 1;
+    if (record.actReached >= 4) agg.heroRankHistogramDeep[rank] = (agg.heroRankHistogramDeep[rank] ?? 0) + 1;
     if (record.won) hero.runsWon += 1;
   }
 

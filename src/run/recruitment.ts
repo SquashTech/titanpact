@@ -62,6 +62,13 @@ export function buyContract(run: RunState, cost: number): RunState {
   return { ...run, gold: run.gold - cost, recruitContracts: run.recruitContracts + 1 };
 }
 
+export function buyMasteryScroll(run: RunState, cost: number): RunState {
+  if (run.gold < cost) {
+    throw new RecruitmentError(`A Mastery Scroll costs ${cost} gold, only ${run.gold} available`);
+  }
+  return { ...run, gold: run.gold - cost, masteryScrolls: run.masteryScrolls + 1 };
+}
+
 /** What's arriving when the roster is at ROSTER_CAP (RosterReplaceScreen). */
 export type RosterReplaceCandidate =
   | { source: 'guildHall'; offer: GuildHallOffer }
