@@ -77,7 +77,9 @@ function RankPips({ spent }: { spent: number }) {
  * has to carry the four moves the hero already holds — the whole question a Scroll asks is "is
  * there room, and for what", and that is unreadable on a half-width card.
  *
- * The tray is at the foot, in thumb reach, like the Gear board's bag.
+ * The purse is at the foot, in thumb reach, like the Gear board's bag. **Six rows plus the purse
+ * have to fit the panel without scrolling** — six is ROSTER_CAP, so that is the board's worst
+ * case, and it is the budget anything added to a row comes out of.
  */
 export function MasteryBoard({ run, onRunChange, onInspect }: Props) {
   const [offer, setOffer] = useState<ScrollOffer | null>(null);
@@ -115,36 +117,15 @@ export function MasteryBoard({ run, onRunChange, onInspect }: Props) {
 
   return (
     <div className="mastery-board">
-      {/* At the TOP, not pinned at the foot like the Gear board's bag. The bag is a place things
-          are dragged FROM, so it wants thumb reach; this is one instruction and a number, and it
-          is wanted on arrival. The count is also on the tab strip, which never scrolls away. */}
-      <div className="mastery-tray">
-        <span className="mastery-tray-glyph">
-          <ResourceGlyph kind="scroll" />
-        </span>
-        <span className="mastery-tray-count">{run.masteryScrolls}</span>
-        <span className="mastery-tray-label">
-          {run.masteryScrolls === 1 ? 'Mastery Scroll' : 'Mastery Scrolls'}
-          <span className="mastery-tray-sub">
-            {run.masteryScrolls > 0
-              ? `Tap a hero to pour one in · ${SCROLLS_PER_RANK} to a rank`
-              : 'Won every Guardian, found in caches, sold at the Guild Hall'}
-          </span>
-        </span>
-      </div>
-
       <div className="mastery-hero-list">
         {run.roster.map((entry) => {
           const hero = heroes[entry.heroId];
-          const rank = masteryRank(entry);
-          const owed = scrollsToNextRank(entry);
           return (
             <MasteryRow
               key={entry.rosterId}
               hero={hero}
               entry={entry}
-              rank={rank}
-              owed={owed}
+              rank={masteryRank(entry)}
               canSpend={canSpendScroll(progressionTable, moves, run, entry)}
               note={poolNote(entry)}
               finished={isFinished(entry)}
@@ -153,6 +134,20 @@ export function MasteryBoard({ run, onRunChange, onInspect }: Props) {
             />
           );
         })}
+      </div>
+
+      {/* At the foot, like the Gear board's bag, and for the same reason it moved here
+          (2026-09-10, per user direction): a full roster of six is the cap, and with the tray at
+          the top the board could not show all six without scrolling. A count and a word — the
+          instruction it used to carry was costing a hero row to say what a tap says. */}
+      <div className="mastery-purse">
+        <span className="mastery-purse-glyph">
+          <ResourceGlyph kind="scroll" />
+        </span>
+        <span className="mastery-purse-label">
+          {run.masteryScrolls === 1 ? 'Mastery Scroll' : 'Mastery Scrolls'}
+        </span>
+        <span className="mastery-purse-count">{run.masteryScrolls}</span>
       </div>
 
       {offer && offerEntry && (
@@ -176,18 +171,21 @@ interface RowProps {
   hero: HeroDefinition;
   entry: RosterEntry;
   rank: number;
-  owed: number;
   canSpend: boolean;
-  /** Replaces the progress line when the band has nothing left in it. */
+  /**
+   * The ONLY line a row still carries, and only when the band has nothing left in it. Everything
+   * else it used to say — how many Scrolls to the next rank, that the kit is full, that the hero
+   * is maxed — was already drawn: the pips are the rank bar, and four filled chips are a full kit.
+   * A dry band is the one state nothing on the row can show, so it is the one that gets words.
+   */
   note: string | null;
   finished: boolean;
   onSpend: () => void;
   onInspect: () => void;
 }
 
-function MasteryRow({ hero, entry, rank, owed, canSpend, note, finished, onSpend, onInspect }: RowProps) {
+function MasteryRow({ hero, entry, rank, canSpend, note, finished, onSpend, onInspect }: RowProps) {
   const press = useLongPress(onInspect, canSpend ? onSpend : undefined);
-  const full = entry.unlockedMoveIds.length >= MOVE_CAP;
 
   return (
     <div
@@ -228,9 +226,7 @@ function MasteryRow({ hero, entry, rank, owed, canSpend, note, finished, onSpend
         })}
       </div>
 
-      <span className="mastery-hero-note">
-        {note ?? (owed > 0 ? `${owed} more to Rank ${rank + 1}` : full ? 'Full kit — a new move replaces one' : 'Max rank')}
-      </span>
+      {note && <span className="mastery-hero-note">{note}</span>}
     </div>
   );
 }

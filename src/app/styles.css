@@ -22503,8 +22503,8 @@ textarea,
 /* --- The Mastery board (MasteryBoard.tsx) ----------------------------------------------------
    Full-width rows, not the Gear board's 2x3 cards: a row has to carry the four moves the hero
    already holds, because "is there room, and for what" is half of what a Scroll asks. Same
-   column shape as the Gear board — the list grows down, the tray pins to the bottom of the
-   reach — so switching tabs never moves the ground. */
+   column shape as the Gear board — the list grows down, the purse pins to the bottom of the
+   reach exactly as the bag does — so switching tabs never moves the ground. */
 
 .mastery-board {
   display: flex;
@@ -22513,10 +22513,13 @@ textarea,
   gap: 10px;
 }
 
+/* Metrics here are load-bearing, not taste: six rows plus the purse are what a roster at the
+   ROSTER_CAP puts on this board, and they have to fit the panel without scrolling. Anything
+   added to a row has to come back out of these. */
 .mastery-hero-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
 }
 
 /* The type stripe is on the LEFT here, not the top: these rows stack, and a top border between
@@ -22525,8 +22528,8 @@ textarea,
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  padding: 9px 11px 8px;
+  gap: 6px;
+  padding: 7px 11px;
   border: 1px solid var(--border);
   border-left-width: 3px;
   border-radius: var(--radius-lg);
@@ -22660,55 +22663,51 @@ textarea,
   color: var(--text-dim);
 }
 
-/* --- The tray -------------------------------------------------------------------------------
-   What is left to spend, at the top: unlike the Gear board's bag nothing is dragged out of it,
-   so it is a readout and an instruction rather than a target, and both are wanted on arrival. */
+/* --- The purse ------------------------------------------------------------------------------
+   What is left to spend, at the foot, in the Gear board's bag-header shape — label left, count
+   right — so the two boards read as one sheet. It sat at the top as a tall tray until 2026-09-10;
+   a roster at the six-hero cap could not fit on the board with it there, and the only thing it
+   said that a tap does not is the count, which the tab strip carries anyway. */
 
-.mastery-tray {
+.mastery-purse {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid color-mix(in srgb, #c9a2ff 34%, var(--border));
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, #c9a2ff 9%, var(--surface-raised));
+  gap: 8px;
+  margin-top: auto;
+  padding: 7px 10px;
+  border: 1px solid color-mix(in srgb, #c9a2ff 28%, var(--border));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, #c9a2ff 8%, var(--surface-sunken));
 }
 
-.mastery-tray-glyph {
+.mastery-purse-glyph {
   display: inline-flex;
   color: #c9a2ff;
-  font-size: 22px;
 }
 
-.mastery-tray-glyph .resource-glyph {
-  width: 22px;
-  height: 22px;
+.mastery-purse-glyph .resource-glyph {
+  width: 15px;
+  height: 15px;
 }
 
-.mastery-tray-count {
-  font-size: 22px;
+.mastery-purse-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* Pushed right, like the bag header's gold: the number is the thing being checked, and it lands
+   on the same edge on both boards. */
+.mastery-purse-count {
+  margin-left: auto;
+  font-size: 15px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: #c9a2ff;
-  min-width: 20px;
 }
 
-.mastery-tray-label {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  color: var(--text);
-}
-
-.mastery-tray-sub {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: var(--text-dim);
-}
 
 /* --- The Scroll's move offer (MoveOfferOverlay.tsx) ------------------------------------------
    Portalled over whichever board raised it, so the roster stays behind it and the answer lands
