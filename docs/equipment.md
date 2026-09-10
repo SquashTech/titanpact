@@ -514,11 +514,12 @@ centred alignment at 7px.
   load.
 - **The inventory is genuinely cut INTO the sheet**: a dark floor, a hard top shadow, a lit bottom
   lip.
-- **A locked slot is a blanked fitting**, not a ghost. At `BASE_ITEM_SLOTS` = 1 most heroes show one
-  socket and two of these, so at the old 0.2 opacity two thirds of every mount read as blank card —
-  the largest patch of nothing left on the sheet. They now have a floor, a rim and one short bar
-  across the middle. The bar is deliberately *not* the empty socket's four corner brackets: those
-  say "put something here" and this says the opposite.
+- **A locked slot stays faint** — dotted, at 0.2 opacity, unchanged. Drawing it up into a blanked
+  fitting (floor, rim, a bar across the middle) was tried in this pass and reverted the same day,
+  per user direction. The case for it was that at `BASE_ITEM_SLOTS` = 1 two thirds of every mount is
+  one of these, so faint means a lot of near-blank card. But that blankness is the point: capacity a
+  hero does **not** have must not draw the eye on the screen whose whole job is placing gear, and a
+  legible blank competes with the sockets beside it for exactly the glance the player came to spend.
 
 ### 10.3 "Bag" → "Inventory", and the count is gone
 
