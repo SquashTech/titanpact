@@ -68,6 +68,8 @@ import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { ResourceGlyph } from '../shared/RunGlyph';
+import { HubGlyph } from '../shared/nodeIcons';
+import { SectionGlyph } from '../shared/sectionIcons';
 import { EquipmentEffectList, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS, fmtGrant } from '../shared/EquipmentBox';
 import { useAmbientLocation } from '../shared/LocationContext';
 import { LocationAmbience } from '../shared/LocationSky';
@@ -979,7 +981,11 @@ export function FightScreen({
     if (revealed.dramaticEntrance) setMusicRate(DREAD_MUSIC_RATE);
     setBeat(revealed);
     setBeatSeq((n) => n + 1);
-    setPopups(Object.fromEntries(revealed.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className }])));
+    setPopups(
+      Object.fromEntries(
+        revealed.popups.map((p) => [p.combatantId, { key: popupSeq.current++, text: p.text, className: p.className, glyph: p.glyph }])
+      )
+    );
     return true;
   }
 
@@ -1544,7 +1550,7 @@ export function FightScreen({
                 }}
               >
                 <span className="options-item-glyph" aria-hidden="true">
-                  📜
+                  <HubGlyph name="reference" />
                 </span>
                 Battle Log
               </button>
@@ -1556,7 +1562,7 @@ export function FightScreen({
                 }}
               >
                 <span className="options-item-glyph" aria-hidden="true">
-                  📊
+                  <SectionGlyph name="matchups" />
                 </span>
                 Reference — Types &amp; Statuses
               </button>
@@ -1578,7 +1584,7 @@ export function FightScreen({
               {onSaveAndQuit && (
                 <button className="options-item" onClick={onSaveAndQuit}>
                   <span className="options-item-glyph" aria-hidden="true">
-                    🚪
+                    <HubGlyph name="door" />
                   </span>
                   Quit to Title
                 </button>
@@ -1589,7 +1595,7 @@ export function FightScreen({
                   onClick={() => (confirmingQuit ? onAbandonRun() : setConfirmingQuit(true))}
                 >
                   <span className="options-item-glyph" aria-hidden="true">
-                    {confirmingQuit ? '⚠' : '🗑'}
+                    <HubGlyph name={confirmingQuit ? 'warn' : 'discard'} />
                   </span>
                   {confirmingQuit ? 'Tap again to abandon' : 'Abandon Run'}
                 </button>
@@ -1732,7 +1738,7 @@ export function FightScreen({
                   <div className="result-rewards">
                     {goldReward > 0 && (
                       <div className="result-reward-chip">
-                        💰 <strong>+{goldReward}</strong>g
+                        <ResourceGlyph kind="gold" /> <strong>+{goldReward}</strong>g
                       </div>
                     )}
                     {levelsGained > 0 && (

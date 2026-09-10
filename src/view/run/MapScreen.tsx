@@ -285,7 +285,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
               {onSaveAndQuit && (
                 <button className="options-item" onClick={onSaveAndQuit}>
                   <span className="options-item-glyph" aria-hidden="true">
-                    🚪
+                    <HubGlyph name="door" />
                   </span>
                   Save &amp; Quit to Title
                 </button>
@@ -296,7 +296,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
                   onClick={() => (confirmingQuit ? onAbandonRun() : setConfirmingQuit(true))}
                 >
                   <span className="options-item-glyph" aria-hidden="true">
-                    {confirmingQuit ? '⚠' : '🗑'}
+                    <HubGlyph name={confirmingQuit ? 'warn' : 'discard'} />
                   </span>
                   {confirmingQuit ? 'Tap again to abandon' : 'Abandon Run'}
                 </button>

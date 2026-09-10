@@ -26,6 +26,7 @@ import { TypeMatchups } from '../shared/TypeMatchups';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { getTypeColor } from '../combat/typeColors';
 import { PassiveInfoPanel, PassiveReadout } from '../shared/passiveIcons';
+import { HubGlyph } from '../shared/nodeIcons';
 
 interface Props {
   hero: HeroDefinition;
@@ -211,7 +212,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
                 ))}
                 {heroClass && (
                   <span className="evolution-badge class-badge" {...classLongPress} title="Hold to view details">
-                    🏛️ {heroClass.name}
+                    <HubGlyph name="hall" /> {heroClass.name}
                   </span>
                 )}
               </div>

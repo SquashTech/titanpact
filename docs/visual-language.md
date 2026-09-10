@@ -2382,6 +2382,131 @@ the whole stack up and still composes), `prefers-reduced-motion: reduce` (the gl
 holds a legible final state on every new layer — the sweep parks off-plate, the dead sigil stays
 dead), and the CTA under `:focus-visible`.
 
+## Twenty-first pass — the last emoji come off (2026-09-10)
+
+*Per user direction, after a friend's note that "there are screens in the game that feel like web
+UI." An audit of ~30 screens at 394x780 found six recurring web idioms; this pass takes the first
+and most mechanical of them.*
+
+### What was wrong, measured
+
+**~30 colour emoji were still standing in for icons**, across 16 files — 💰 ⚔️ 🛡️ 📜 🔩 ⚒️ 🏛️
+🚪 🗑 🪙 👥 📖 🔊 🔥 🩸 🧪 💚 👻 ⚡ 🔒. They are the single loudest tell in the audit and the
+cheapest to fix, because **the vocabulary to replace them already existed**: `nodeIcons`,
+`sectionIcons`, `statIcons`, `statusIcons`, `equipmentIcons` and `RunGlyph` between them already
+drew almost every concept the emoji were naming. These were simply the sites nobody converted.
+
+Two of them were doing real damage rather than merely looking off:
+
+- **`👥`, in a rounded square, top-right of EVERY node screen in the run** (`RosterPeek`, and
+  `SquadSelectScreen`'s own copy). It is the first thing the eye lands on on the Guild Hall, the
+  Blacksmith, every reward, the Boon, the Mentor, the Crucible, the Banner and the act intro — and
+  it is a Segoe/Apple drawing sitting on top of an otherwise authored screen. `HUB_PATHS.roster` —
+  two figures, drawn for the map footer — was already there and already correct.
+- **The section headers.** `⚔️ Recruits`, `🛡️ Equipment`, `🔩 Item Slots`, `⚒️ Anvil & Enchanter`,
+  `⚔️ Scouted Enemies`, `🛡️ Arrange Your Squad`. A colour emoji beside 12px letterspaced caps is the
+  exact composition of a web page's section header, and it is why the two shop screens read as a
+  pricing page more than any other single detail.
+
+### What replaced it
+
+Every site now draws from the icon modules. One picture per concept, and it mostly just names
+glyphs that already existed:
+
+| Was | Is | From |
+|---|---|---|
+| `👥` roster corner | two figures | `HUB_PATHS.roster` (already drawn) |
+| `📖` Compendium | open tome | `HUB_PATHS.codex` — the Mentor node's `OPEN_BOOK`, shared on purpose |
+| `📜` Reference / Battle Log | ruled scroll | `HUB_PATHS.reference` |
+| `📜` Recruit Contract | quill | `ResourceGlyph kind="contract"` |
+| `💰` `🪙` gold, sell | money bag | `ResourceGlyph kind="gold"` |
+| `⚔️` Recruits, Scouted Enemies | crossed swords | `SECTION_PATHS.moves` |
+| `🛡️` Equipment | chest | `SECTION_PATHS.equipment` |
+| `🛡️` Arrange Your Squad | heater shield | `STAT_PATHS.defense` |
+| `⚒️` Anvil & Enchanter, and its price button | anvil on its stump | `NODE_PATHS.forgeReward` |
+| `✦` Enchant | four-point spark | `STAT_PATHS.intelligence` |
+| `📊` Reference row | shield with a bolt through it | `SECTION_PATHS.matchups` |
+| `🔥🩸🧪💚👻⚡` in beat popups | the status's own mark | `STATUS_PATHS` |
+
+**Shield versus swords is the one place the swap added information rather than preserving it.**
+Squad Select's two headers were `⚔️` and `🛡️`, which said nothing; crossed swords over the scouted
+enemies and a shield over your own squad says *theirs* and *yours* in the mark alone.
+
+**The status popups needed a contract change, not a substitution.** `BeatPopup` carried a `text`
+string with the emoji baked into it, so a Burn tick was the literal string `"🔥 -14"`. It now
+carries an optional `glyph` — a status id — which `CombatantCard` draws as a `StatusGlyph` ahead of
+the number. That is strictly better than what the emoji did: the popup now wears **the same mark the
+figure's shoulder cluster is already wearing**, so a `-14` floating off a hero points back at the
+badge that caused it. `.dmg-popup-glyph` is sized in `em` because the popup is 15px on a bench card
+and 17px on the battlefield, and the mark has to track the numeral rather than be set twice. The
+emoji also rode in `bannerLead` and came off there with nothing to replace it — the console banner
+already colours itself by `bannerFocusKind`.
+
+### Nine new glyphs, and what looking at them changed
+
+The rest needed authoring: `door`, `discard`, `warn`, `sound`, `mute`, `trophy`, `lock`, `hand`,
+`hall`. They were drawn blind, then rendered as a contact sheet at 14 / 16 / 18 / 22 / 36px — which
+is the whole method, and two of the nine failed it outright:
+
+- **A door is not a door.** The first `door` was a slab with a knob hung in its jamb. Below about
+  22px the 3-unit jamb and its 1.6-unit gap both land under one pixel, and the glyph reads as *a bar
+  beside a box*. It is now an **archway** — the opening rather than the slab that fills it — which
+  survives because it is ONE object whose hole is a third of its own width. A second attempt, an
+  arch with legs, read as a horseshoe magnet; the flat-bottomed inner arch is what stops that.
+- **A 24-unit box holds one object.** `slots` was two `.item-piece` silhouettes side by side, one
+  filled and one hollow, the pair being the information. At 14–18px they are two dots: at 0.62 scale
+  a 3-unit chamfer is half a pixel. Overlapping them made a blob. The glyph is now a single open
+  **`hand`**, which is what the Forge node has always called this ("Another Hand Free"), and which
+  reads at every size because a hand is a silhouette rather than a construction. **Capacity is not
+  gear**, so it is deliberately not the chest the Guild Hall's shelf wears.
+
+This is the twentieth pass's four-attempts-at-a-top-of-head lesson arriving from the other
+direction: there a shape kept reading as the wrong object because of the *light*, here because of
+the *size*. Both are invisible until something is rendered and looked at.
+
+The two headers that took a glyph also needed `.section-glyph`'s 16px raised to 18 — crossed swords
+rotated 45° are two 4-unit blades, which go spindly at 16px beside 15px bold text.
+
+**The Dev menu's `🧪` rows are deliberately untouched.** They are throwaway fixtures already marked
+as such, and drawing them properly would make scaffolding look shipped.
+
+### Verification
+
+Typecheck clean, 988 engine tests passing, and the affected screens screenshotted through the
+harness in `reference-screenshot-harness` at 394x780: the title, Records, the Compendium, the map
+Options sheet, Squad Select, the Guild Hall, the Blacksmith, and a fight in progress.
+
+### What this pass did NOT touch
+
+The five other idioms the audit named, in the order they are worth doing:
+
+1. **The colored-left-border list card** — `border-left: 3px solid <hue>` on a dark rounded rect
+   with a bold title, a gray sentence and a caps label, i.e. Bootstrap's `alert` / `list-group-item`.
+   **16 components wear it**: `.status-ref-row`, `.evo-path-card`, `.item-readout`,
+   `.passive-readout`, `.roster-card`, `.squad-slot`, `.relic-card`, `.guild-hall-hero-card`,
+   `.guild-hall-contract-row`, `.equip-cache-card`, `.boon-shrine-card`, `.equip-spotlight-passive`,
+   `.equip-target-card`, `.hero-grid-card`, `.sandbox-hero-card`, `.swap-option-badge`. The Reference
+   overlay, the Boon shrine, the Mentor's Hall, the Equipment Cache and the Guild Hall are the same
+   list in different hues. One shape, sixteen places — the highest-leverage fix left.
+2. **The Guild Hall and the Blacksmith** — shopping-cart line items, a form-validation sentence in
+   orange, a right-aligned italic hint in a table-header row, and (the Blacksmith) a screen that
+   titles itself twice. Open item 6 below has exempted the Guild Hall since the ninth pass.
+3. **The map is inside a card** — a header rect, a body rect and a footer rect, each with a 1px
+   border and a radius, around a scene. The fight screen's own rule ("a place, not a container") has
+   never reached it.
+4. **The hero sheet** — an iOS-style bottom tab bar with superscript count badges, a three-sentence
+   paragraph of documentation prose about growth grades, and ~400px of empty panel under ITEMS.
+5. **The KPI tile grid** on Records and Run Summary — a big accent numeral over a small caps label,
+   2-up. A SaaS analytics dashboard, verbatim.
+
+Two measured defects worth fixing alongside those:
+
+- **Dead vertical space.** Tallest empty band per screen: Crucible **416px, 53% of the phone**,
+  reward-equip 177, Forge 167, Boon 161, Banner 161, Tutor 157, draft 153. The Gold Cache and the
+  act intro *compose* their space and are the counterexample to copy.
+- **`.resolve-button:disabled` reads as a bug**, not as a waiting control: at `opacity: 0.55` over a
+  node screen's parallax, the mountains are visible through the button.
+
 ## Open / future improvements
 
 Roughly in order of expected payoff.

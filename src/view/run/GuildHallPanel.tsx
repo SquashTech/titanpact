@@ -4,6 +4,7 @@ import { equipment } from '../../data/equipment';
 import { guildHallOffers, CONTRACT_PURCHASE_COST, SCROLL_PURCHASE_COST } from '../../data/recruitment';
 import { playSfx } from '../../audio/sfx';
 import { ResourceGlyph } from '../shared/RunGlyph';
+import { SectionGlyph } from '../shared/sectionIcons';
 import type { HeroDefinition } from '../../engine/content';
 import type { RunState } from '../../run/state';
 import { ROSTER_CAP, RosterFullError } from '../../run/state';
@@ -185,12 +186,16 @@ export function GuildHallPanel({
     <div className="guild-hall">
       <div className="guild-hall-header">
         <h2>{title}</h2>
-        <span className="guild-hall-gold">💰 {run.gold}g</span>
+        <span className="guild-hall-gold">
+          <ResourceGlyph kind="gold" /> {run.gold}g
+        </span>
       </div>
 
       <div className="guild-hall-section">
         <div className="guild-hall-section-head">
-          <span className="guild-hall-section-title">⚔️ Recruits</span>
+          <span className="guild-hall-section-title">
+            <SectionGlyph name="moves" /> Recruits
+          </span>
           {/* What 50g buys is now half of what it used to (docs/growth-overhaul.md §6): a hire
               arrives RAW — no Evolution, rank 1, its own three moves — where a Recruit Contract's
               hero arrives finished. The hint has to say so, or the two routes look interchangeable
@@ -222,7 +227,9 @@ export function GuildHallPanel({
           </p>
         )}
         <button className="guild-hall-contract-row" disabled={!canBuyContract} onClick={() => setConfirmingContract(true)}>
-          <span className="guild-hall-contract-icon">📜</span>
+          <span className="guild-hall-contract-icon is-contract">
+            <ResourceGlyph kind="contract" tone="inherit" />
+          </span>
           <span className="guild-hall-contract-body">
             <span className="guild-hall-contract-name">Recruit Contract</span>
             <span className="guild-hall-contract-desc">Claim a beaten enemy hero for free, later.</span>
@@ -234,7 +241,7 @@ export function GuildHallPanel({
             there is nothing here to get wrong. Buying is the reversible half of the decision. */}
         <button className="guild-hall-contract-row" disabled={!canBuyScroll} onClick={handleBuyScroll}>
           <span className="guild-hall-contract-icon is-scroll">
-            <ResourceGlyph kind="scroll" />
+            <ResourceGlyph kind="scroll" tone="inherit" />
           </span>
           <span className="guild-hall-contract-body">
             <span className="guild-hall-contract-name">Mastery Scroll</span>
@@ -248,7 +255,9 @@ export function GuildHallPanel({
 
       <div className="guild-hall-section">
         <div className="guild-hall-section-head">
-          <span className="guild-hall-section-title">🛡️ Equipment</span>
+          <span className="guild-hall-section-title">
+            <SectionGlyph name="equipment" /> Equipment
+          </span>
           <span className="guild-hall-section-hint">Tap an item to view and buy</span>
         </div>
         {equipmentOffers.length > 0 ? (
@@ -341,7 +350,9 @@ export function GuildHallPanel({
           <div className="log-panel move-popup-panel" onClick={(e) => e.stopPropagation()}>
             <div className="move-info-panel">
               <div className="move-info-head">
-                <span className="move-info-name">📜 Recruit Contract</span>
+                <span className="move-info-name">
+                  <ResourceGlyph kind="contract" /> Recruit Contract
+                </span>
                 <span className="move-info-kind">{CONTRACT_PURCHASE_COST}g</span>
               </div>
               <div className="guild-hall-confirm-body">

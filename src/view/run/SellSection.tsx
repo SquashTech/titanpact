@@ -40,7 +40,9 @@ export function SellSection({ run, onRunChange, open, onOpenChange }: Props) {
   return (
     <div className="guild-hall-section">
       <button className="guild-hall-contract-row" disabled={empty} onClick={() => onOpenChange(true)}>
-        <span className="guild-hall-contract-icon">🪙</span>
+        <span className="guild-hall-contract-icon">
+          <ResourceGlyph kind="gold" tone="inherit" />
+        </span>
         <span className="guild-hall-contract-body">
           <span className="guild-hall-contract-name">Sell</span>
           <span className="guild-hall-contract-desc">
@@ -54,7 +56,9 @@ export function SellSection({ run, onRunChange, open, onOpenChange }: Props) {
         <div className="log-overlay" onClick={() => onOpenChange(false)}>
           <div className="log-panel roster-peek-panel" onClick={(e) => e.stopPropagation()}>
             <div className="log-panel-header">
-              <span>🪙 Sell — {run.gold}g</span>
+              <span>
+                <ResourceGlyph kind="gold" /> Sell — {run.gold}g
+              </span>
               <button className="log-close-button" onClick={() => onOpenChange(false)}>
                 ✕
               </button>

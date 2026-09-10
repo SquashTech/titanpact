@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { heroes } from '../../data/heroes';
 import { formatPlaytime, starredHeroCount, totalStars, type Profile } from '../../run/profile';
 import { SEAL_ACTS } from '../../run/state';
+import { HubGlyph } from '../shared/nodeIcons';
 
 interface Props {
   profile: Profile;
@@ -86,7 +87,7 @@ export function RecordsScreen({ profile, onEraseAllData, onClose }: Props) {
             }}
           >
             <span className="options-item-glyph" aria-hidden="true">
-              {confirmingErase ? '⚠' : '🗑'}
+              <HubGlyph name={confirmingErase ? 'warn' : 'discard'} />
             </span>
             {confirmingErase ? 'Tap again to erase everything' : 'Erase All Data'}
           </button>

@@ -15,6 +15,8 @@ export interface Popup {
   key: number;
   text: string;
   className: string;
+  /** A status id (buildBeats' BeatPopup.glyph), drawn ahead of the number in the status's own mark. */
+  glyph?: string;
 }
 
 // ── Figure animation ────────────────────────────────────────────────────
@@ -257,6 +259,7 @@ export function CombatantCard({
       {combatant.fainted && <span className="fainted-tag">KO</span>}
       {popup && (
         <div key={popup.key} className={`dmg-popup ${popup.className}`}>
+          {popup.glyph && <StatusGlyph statusId={popup.glyph} className="dmg-popup-glyph" />}
           {popup.text}
         </div>
       )}

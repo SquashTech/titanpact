@@ -7,6 +7,8 @@ import { ENCHANTMENTS, ENCHANTMENT_IDS, enchantLabel } from '../../run/equipment
 import { anvilQuote, anvilUpgrade, enchantItem, RunProgressError, type ItemRef } from '../../run/runProgress';
 import { ENCHANT_PRICE_BY_RARITY } from '../../run/shop';
 import { EquipmentFormGlyph } from '../shared/equipmentIcons';
+import { NodeGlyph } from '../shared/nodeIcons';
+import { StatGlyph } from '../shared/statIcons';
 import { TypeBadge } from '../shared/TypeBadge';
 
 interface Props {
@@ -68,7 +70,9 @@ export function ItemServicesSection({ run, onRunChange }: Props) {
     return (
       <div className="guild-hall-section">
         <div className="guild-hall-section-head">
-          <span className="guild-hall-section-title">⚒️ Anvil &amp; Enchanter</span>
+          <span className="guild-hall-section-title">
+            <NodeGlyph type="forgeReward" /> Anvil &amp; Enchanter
+          </span>
         </div>
         <p className="hint">Nothing to work on yet.</p>
       </div>
@@ -81,7 +85,9 @@ export function ItemServicesSection({ run, onRunChange }: Props) {
     return (
       <div className="guild-hall-section">
         <div className="guild-hall-section-head">
-          <span className="guild-hall-section-title">✦ Enchant {item?.name}</span>
+          <span className="guild-hall-section-title">
+            <StatGlyph stat="intelligence" tone="inherit" /> Enchant {item?.name}
+          </span>
           <span className="guild-hall-section-hint">{cost}g — one enchantment per item</span>
         </div>
         <div className="enchant-grid">
@@ -114,7 +120,9 @@ export function ItemServicesSection({ run, onRunChange }: Props) {
   return (
     <div className="guild-hall-section">
       <div className="guild-hall-section-head">
-        <span className="guild-hall-section-title">⚒️ Anvil &amp; Enchanter</span>
+        <span className="guild-hall-section-title">
+            <NodeGlyph type="forgeReward" /> Anvil &amp; Enchanter
+          </span>
         <span className="guild-hall-section-hint">Upgrade a tier, or bind an element</span>
       </div>
       <div className="item-service-list">
@@ -136,14 +144,14 @@ export function ItemServicesSection({ run, onRunChange }: Props) {
                 title={quote ? `Upgrade to ${equipment[quote.targetId]?.name}` : 'Nothing above this'}
                 onClick={() => quote && apply(() => anvilUpgrade(run, owned.ref, equipment))}
               >
-                ⚒ {quote ? `${quote.cost}g` : '—'}
+                <NodeGlyph type="forgeReward" /> {quote ? `${quote.cost}g` : '—'}
               </button>
               <button
                 className="item-service-button"
                 disabled={run.gold < enchantCost}
                 onClick={() => setEnchanting(owned)}
               >
-                ✦ {enchantCost}g
+                <StatGlyph stat="intelligence" tone="inherit" /> {enchantCost}g
               </button>
             </div>
           );

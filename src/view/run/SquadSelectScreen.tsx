@@ -17,6 +17,9 @@ import { HeroPortrait } from '../shared/HeroPortrait';
 import { hasDramaticEntrance } from '../shared/entrances';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { NodeSky, NODE_TINT_GOLD } from '../shared/NodeStage';
+import { HubGlyph } from '../shared/nodeIcons';
+import { SectionGlyph } from '../shared/sectionIcons';
+import { StatGlyph } from '../shared/statIcons';
 import { useAmbientLocation } from '../shared/LocationContext';
 
 interface Props {
@@ -143,7 +146,7 @@ export function SquadSelectScreen({
         aria-label="Manage your roster"
         title="Manage your roster"
       >
-        <span aria-hidden="true">👥</span>
+        <HubGlyph name="roster" />
       </button>
       <button
         type="button"
@@ -152,11 +155,13 @@ export function SquadSelectScreen({
         aria-label="Type chart and reference"
         title="Type chart and reference"
       >
-        <span aria-hidden="true">📖</span>
+        <HubGlyph name="codex" />
       </button>
       <div className="screen-scroll">
         <div className="squad-section squad-section-enemy">
-          <h2 className="squad-section-title">⚔️ Scouted Enemies</h2>
+          <h2 className="squad-section-title">
+            <SectionGlyph name="moves" /> Scouted Enemies
+          </h2>
           <div className="enemy-scout-grid">
             {scoutOrder.map((entry) => {
               const hero = allCombatants[entry.heroId];
@@ -203,7 +208,9 @@ export function SquadSelectScreen({
         <div className="squad-vs-divider">VS</div>
 
         <div className="squad-section squad-section-player">
-          <h2 className="squad-section-title">🛡️ Arrange Your Squad ({pickedIds.length}/{required})</h2>
+          <h2 className="squad-section-title">
+            <StatGlyph stat="defense" tone="inherit" /> Arrange Your Squad ({pickedIds.length}/{required})
+          </h2>
           <div className="squad-grid">
             {slotRows(squadSize).map((row) => (
               <div key={row.key} className={`squad-grid-row squad-grid-row-${row.key}`}>
@@ -253,7 +260,7 @@ export function SquadSelectScreen({
                           <>
                             {isLocked && (
                               <span className="squad-slot-pin" aria-label={`${hero.name} must start this fight`} title="Locked into the fight">
-                                🔒
+                                <HubGlyph name="lock" />
                               </span>
                             )}
                             <button

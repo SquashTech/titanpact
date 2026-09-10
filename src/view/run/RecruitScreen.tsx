@@ -14,6 +14,7 @@ import { chosenClass } from '../../run/classes';
 import { deriveContractOffer } from '../../run/recruitment';
 import { getTypeColorRgb } from '../combat/typeColors';
 import { healCasterForEntry } from '../shared/healCaster';
+import { ResourceGlyph } from '../shared/RunGlyph';
 import {
   StageCandidate,
   StageFigure,
@@ -127,12 +128,12 @@ export function RecruitScreen({ run, offers, onClaim, onClaimReplace, onDone, re
           {contracts <= MAX_CONTRACT_PIPS ? (
             Array.from({ length: contracts }, (_, i) => (
               <span key={i} className={`recruit-seal${canSign && i === 0 ? ' is-spending' : ''}`} aria-hidden="true">
-                📜
+                <ResourceGlyph kind="contract" tone="inherit" />
               </span>
             ))
           ) : (
             <span className="recruit-seal" aria-hidden="true">
-              📜
+              <ResourceGlyph kind="contract" tone="inherit" />
             </span>
           )}
           <span className="recruit-contracts-count">

@@ -4,6 +4,7 @@ import { LocationSelectOverlay } from './LocationSelectOverlay';
 import { ReferenceOverlay } from '../shared/ReferenceOverlay';
 import { RecordsScreen } from './RecordsScreen';
 import { TitanColossus, TitanRidge } from './titanArt';
+import { HubGlyph } from '../shared/nodeIcons';
 import type { SaveSummary } from '../../run/save';
 import type { Profile } from '../../run/profile';
 
@@ -245,7 +246,7 @@ export function TitleScreen({
         )}
         <button className="title-compendium-button" onClick={() => setShowCompendium(true)}>
           <span className="title-compendium-icon" aria-hidden="true">
-            📖
+            <HubGlyph name="codex" />
           </span>
           <span className="title-compendium-text">
             <span className="title-compendium-label">Compendium</span>
@@ -256,7 +257,7 @@ export function TitleScreen({
 
       <div className="title-icon-row">
         <button className="title-icon-button" onClick={() => setShowReference(true)} aria-label="Reference" title="Reference">
-          📜
+          <HubGlyph name="reference" />
         </button>
         <button
           className="title-icon-button"
@@ -267,7 +268,7 @@ export function TitleScreen({
           aria-label="Records"
           title="Records"
         >
-          🏆
+          <HubGlyph name="trophy" />
         </button>
       </div>
 

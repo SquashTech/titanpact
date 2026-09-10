@@ -9,6 +9,7 @@ import { buyItemSlot, slotQuote, RunProgressError } from '../../run/runProgress'
 import { HeroSlotCard, HeroSlotGrid } from '../shared/HeroSlotCard';
 import { NodeHeader, NodeSky } from '../shared/NodeStage';
 import { ResourceGlyph } from '../shared/RunGlyph';
+import { HubGlyph } from '../shared/nodeIcons';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { ItemServicesSection } from './ItemServicesSection';
 import { RosterPeek } from './RosterPeek';
@@ -72,7 +73,9 @@ export function BlacksmithScreen({ run, onRunChange, onContinue }: Props) {
 
           <div className="guild-hall-section">
             <div className="guild-hall-section-head">
-              <span className="guild-hall-section-title">🔩 Item Slots</span>
+              <span className="guild-hall-section-title">
+                <HubGlyph name="hand" /> Item Slots
+              </span>
               <span className="guild-hall-section-hint">Permanent — hold a hero to review its sheet</span>
             </div>
             <HeroSlotGrid>

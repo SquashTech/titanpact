@@ -197,6 +197,91 @@ const HUB_PATHS = {
       <rect x="3.4" y="16.2" width="17.2" height="3.2" rx="1.6" />
     </>
   ),
+  // The Compendium. Same open tome as the Mentor node above, deliberately: both are the book
+  // you read to learn what a hero is. They never share a screen — the Mentor is a map tile, the
+  // Compendium a title-screen and squad-select corner — so one picture is the rule, not a clash.
+  codex: OPEN_BOOK,
+// Leaving the run: an archway, drawn as the opening rather than as the slab that fills it.
+  // A door-and-jamb was drawn first and is a bar beside a box below 22px — the 3-unit jamb and
+  // its gap both land under a pixel there. This survives because it is ONE object whose hole is
+  // a third of its own width.
+  door: (
+    <path fillRule="evenodd" d="M3.4 21.8V10.2a8.6 8.6 0 0 1 17.2 0v11.6Zm4.4-3.4h8.4v-8.2a4.2 4.2 0 0 0-8.4 0Z" />
+  ),
+  // Abandoning a run, erasing a profile. The two slots are what separate a bin from a cup.
+  discard: (
+    <>
+      <path d="M9 1.8h6a1.1 1.1 0 0 1 1.1 1.1v1.3H7.9V2.9A1.1 1.1 0 0 1 9 1.8Z" />
+      <rect x="3" y="5.4" width="18" height="3.1" rx="1.55" />
+      <path
+        fillRule="evenodd"
+        d="M5.4 10.1h13.2l-1.1 10.4a1.9 1.9 0 0 1-1.9 1.7H8.4a1.9 1.9 0 0 1-1.9-1.7Zm3.7 2.5v7.4h2.1v-7.4Zm3.7 0v7.4h2.1v-7.4Z"
+      />
+    </>
+  ),
+  // The confirming state of the two above — the same button, one press from doing it.
+  warn: (
+    <path fillRule="evenodd" d="M12 2 22.9 21.6H1.1Zm-1.2 6.8v6.6h2.4V8.8Zm0 8.4v2.5h2.4v-2.5Z" />
+  ),
+  sound: (
+    <>
+      <path d="M11.6 3 6.3 7.9H2.6v8.2h3.7l5.3 4.9Z" />
+      <g fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+        <path d="M15.4 8.7a4.7 4.7 0 0 1 0 6.6" />
+        <path d="M18.6 5.7a9.1 9.1 0 0 1 0 12.6" />
+      </g>
+    </>
+  ),
+  mute: (
+    <>
+      <path d="M11.6 3 6.3 7.9H2.6v8.2h3.7l5.3 4.9Z" />
+      <g fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+        <path d="m15.6 9.4 5.8 5.2" />
+        <path d="m21.4 9.4-5.8 5.2" />
+      </g>
+    </>
+  ),
+  // Records. The handles are open stroke rather than fill: at 16px a filled handle closes up
+  // against the bowl and the whole thing becomes a goblet.
+  trophy: (
+    <>
+      <path d="M6.4 2.2h11.2v6.2a5.6 5.6 0 0 1-11.2 0Z" />
+      <g fill="none" stroke="currentColor" strokeWidth="2.1">
+        <path d="M6.4 4.4H3.7v1.9a3.3 3.3 0 0 0 3.3 3.3" />
+        <path d="M17.6 4.4h2.7v1.9a3.3 3.3 0 0 1-3.3 3.3" />
+      </g>
+      <path d="M10.8 14h2.4v3.8h-2.4Z" />
+      <path d="M6.8 18.2h10.4v3.6H6.8Z" />
+    </>
+  ),
+  // A slot a hero has not unlocked. Shackle in open stroke, body filled, keyway cut out.
+  lock: (
+    <>
+      <path fill="none" stroke="currentColor" strokeWidth="2.6" d="M7.6 10.2V7.4a4.4 4.4 0 0 1 8.8 0v2.8" />
+      <path
+        fillRule="evenodd"
+        d="M4.6 10.6h14.8v11.2H4.6Zm7.4 3a1.9 1.9 0 0 0-1.1 3.5v2.1h2.2v-2.1A1.9 1.9 0 0 0 12 13.6Z"
+      />
+    </>
+  ),
+/**
+   * Item slots — an open hand, which is what the Forge node has always called them ("Another
+   * Hand Free"). Two `.item-piece` silhouettes side by side were drawn first, one filled and one
+   * hollow, and they are two dots below 22px: a 24-unit box cannot hold two objects and still
+   * give either one a readable chamfer. Capacity is not gear, so the glyph is the hand rather
+   * than the chest the Guild Hall's shelf wears.
+   */
+  hand: (
+    <path d="M5 13.4V7.2a1.9 1.9 0 0 1 3.8 0v2.2h.6V3.8a1.9 1.9 0 0 1 3.8 0v5.6h.6V4.6a1.9 1.9 0 0 1 3.8 0v4.8h.6V7.4a1.9 1.9 0 0 1 3.8 0v6.6c0 4.6-3.2 7.8-7.6 7.8-2.5 0-4.4-1-6-3.1l-4-5.2a1.9 1.9 0 0 1 2.9-2.4Z" />
+  ),
+  // A hero's Class. A fluted column — the discipline they were taught in, not a thing they carry.
+  hall: (
+    <>
+      <path d="M3.4 2.2h17.2v3.2H3.4Z" />
+      <path fillRule="evenodd" d="M6.6 6.6h10.8v11.2H6.6Zm2.3 2.1v7h1.8v-7Zm4.2 0v7h1.8v-7Z" />
+      <path d="M2.6 19h18.8v2.8H2.6Z" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type HubGlyphName = keyof typeof HUB_PATHS;

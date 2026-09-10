@@ -3799,6 +3799,19 @@ textarea,
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
+/* The status that caused the number, in the status's own mark — same glyph the
+   figure's shoulder cluster is wearing, so the popup points back at the badge.
+   Sized in em: the popup is 15px on a bench card and 17px on the battlefield,
+   and the mark has to track the numeral rather than be set twice. It takes the
+   popup's colour, which the per-status .popup-* rule has already set. */
+.dmg-popup-glyph {
+  width: 0.92em;
+  height: 0.92em;
+  vertical-align: -0.1em;
+  margin-right: 0.14em;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+
 .dmg-popup.popup-damage {
   color: var(--hp-low);
 }
@@ -6117,12 +6130,21 @@ textarea,
 /* Fixed width so every label starts at the same x, whatever the glyph's own
    advance width is — the point of the gutter is the alignment, not the icon. */
 .options-item-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   width: 18px;
+  height: 18px;
   text-align: center;
   font-size: 15px;
   line-height: 1;
   opacity: 0.85;
+}
+
+.options-item-glyph > svg {
+  width: 100%;
+  height: 100%;
 }
 
 .options-item:active {
@@ -7145,6 +7167,11 @@ textarea,
   padding: 6px 12px;
   font-size: 13px;
   color: var(--text-dim);
+}
+
+.result-reward-chip > svg {
+  width: 14px;
+  height: 14px;
 }
 
 .result-reward-chip strong {
@@ -8627,9 +8654,17 @@ textarea,
 }
 
 .evolution-badge.class-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   border-color: #d9a441;
   color: #d9a441;
   cursor: pointer;
+}
+
+.evolution-badge.class-badge > svg {
+  width: 13px;
+  height: 13px;
 }
 
 /* HP/MP mini bars (reuses CombatantCard's .bar-track/.bar-fill/.bar-label so
@@ -10577,7 +10612,9 @@ textarea,
 }
 
 .recruit-seal {
-  font-size: 15px;
+  display: inline-flex;
+  width: 15px;
+  height: 15px;
   line-height: 1;
   filter: drop-shadow(0 0 6px rgba(164, 99, 217, 0.65));
   transition: opacity var(--dur-mid) var(--ease-out), filter var(--dur-mid) var(--ease-out);
@@ -11397,6 +11434,13 @@ textarea,
    long single-scroll shop the eye needs a repeating anchor to find section
    boundaries while flicking past; an uppercase label alone at 12px doesn't
    provide one, a colored tick does. */
+.squad-section-title > svg,
+.guild-hall-section-title > svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
 .guild-hall-section-title {
   display: flex;
   align-items: center;
@@ -11663,9 +11707,23 @@ textarea,
   cursor: not-allowed;
 }
 
+/* Sizes whatever glyph the row carries — a Contract quill, a Scroll, a coin —
+   so a new row does not need a second rule. The hue rides on --row-glyph-rgb,
+   set per row, because these are the only marks on the panel that are not the
+   panel's own gold. */
 .guild-hall-contract-icon {
-  font-size: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  color: rgb(var(--row-glyph-rgb, 224, 166, 60));
+}
+
+.guild-hall-contract-icon > svg {
+  width: 100%;
+  height: 100%;
 }
 
 /* Takes the row's free space, so the held chip and the price sit together at
@@ -16280,9 +16338,18 @@ textarea,
 }
 
 .title-compendium-icon {
-  font-size: 20px;
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
   line-height: 1;
-  filter: saturate(0.7) drop-shadow(0 0 6px rgba(150, 196, 214, 0.35));
+  color: rgba(190, 214, 226, 0.9);
+  filter: drop-shadow(0 0 6px rgba(150, 196, 214, 0.35));
+}
+
+.title-compendium-icon > svg,
+.title-icon-button > svg {
+  width: 100%;
+  height: 100%;
 }
 
 .title-compendium-text {
@@ -16321,6 +16388,7 @@ textarea,
 .title-icon-button {
   width: 36px;
   height: 36px;
+  padding: 9px;
   border-radius: 50%;
   background: rgba(16, 24, 30, 0.75);
   border: 1px solid rgba(146, 182, 196, 0.22);
@@ -22768,15 +22836,11 @@ textarea,
 
 /* The Guild Hall's Scroll row wears the vector mark, where the Contract row wears an emoji. */
 .guild-hall-contract-icon.is-scroll {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #c9a2ff;
+  --row-glyph-rgb: 201, 162, 255;
 }
 
-.guild-hall-contract-icon.is-scroll .resource-glyph {
-  width: 20px;
-  height: 20px;
+.guild-hall-contract-icon.is-contract {
+  --row-glyph-rgb: 155, 201, 255;
 }
 
 /* --- Level-up report (LevelUpScreen) ------------------------------------- *

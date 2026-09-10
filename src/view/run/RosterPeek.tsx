@@ -10,6 +10,7 @@ import type { RelicDefinition } from '../../run/relics';
 import { HeroPickCard, HeroPickGrid } from '../shared/HeroPickCard';
 import { RelicIcon } from '../shared/EquipmentBox';
 import { stackedGrantSummary, stackedRelicName } from '../shared/relicStacks';
+import { HubGlyph } from '../shared/nodeIcons';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
 import { RosterManagementScreen } from './RosterManagementScreen';
@@ -46,7 +47,7 @@ export function RosterPeek({ run, className, onRunChange }: Props) {
         aria-label="Check your roster"
         title="Check your roster"
       >
-        <span aria-hidden="true">👥</span>
+        <HubGlyph name="roster" />
       </button>
 
       {open && onRunChange && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setOpen(false)} />}

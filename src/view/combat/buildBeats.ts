@@ -24,6 +24,13 @@ export interface BeatPopup {
   combatantId: string;
   text: string;
   className: string;
+  /**
+   * A status id, drawn as its own StatusGlyph ahead of the number. The status IS the reason the
+   * number is happening — a Burn tick and an ordinary hit are both "-14" otherwise — and the
+   * glyph is the same mark the shoulder cluster on the figure is already wearing, so the popup
+   * points back at the badge that caused it.
+   */
+  glyph?: string;
 }
 
 /** Per-status flavor for DoT/HoT ticks. Poison only ticks once (on detonation) but shares the treatment. */
@@ -32,13 +39,6 @@ const STATUS_TICK_BANNER: Record<string, (targetName: string, amount: number) =>
   Bleed: (n, a) => `${n} bleeds for ${a} damage!`,
   Poison: (n, a) => `${n}'s Poison bursts for ${a} damage!`,
   Renew: (n, a) => `${n}'s Renew mends ${a} HP!`,
-};
-
-const STATUS_TICK_EMOJI: Record<string, string> = {
-  Burn: '🔥',
-  Bleed: '🩸',
-  Poison: '🧪',
-  Renew: '💚',
 };
 
 /**
@@ -281,8 +281,9 @@ export function buildBeats(
           [
             {
               combatantId: e.targetCombatantId,
-              text: `${haunted ? '👻 ' : ''}-${e.amount}`,
+              text: `-${e.amount}`,
               className: haunted ? 'popup-haunt' : e.isCrit ? 'popup-crit' : 'popup-damage',
+              glyph: haunted ? 'Haunt' : undefined,
             },
           ],
           {
@@ -308,7 +309,7 @@ export function buildBeats(
         push(
           applied,
           `${targetName}'s ${e.statusId} detonates for ${e.amount} damage!`,
-          [{ combatantId: e.combatantId, text: `⚡ -${e.amount}`, className: 'popup-conduct' }],
+          [{ combatantId: e.combatantId, text: `-${e.amount}`, className: 'popup-conduct', glyph: 'Conduct' }],
           {
             bannerLead: `${targetName}'s ${e.statusId} detonates`,
             bannerFocus: `${e.amount} damage`,
@@ -496,7 +497,6 @@ export function buildBeats(
         }
         const verb = e.kind === 'damage' ? 'takes' : 'recovers';
         const flavorBanner = STATUS_TICK_BANNER[e.statusId]?.(targetName, e.amount);
-        const emoji = STATUS_TICK_EMOJI[e.statusId];
         const popupClass = flavorBanner ? `popup-${e.statusId.toLowerCase()}` : e.kind === 'damage' ? 'popup-damage' : 'popup-heal';
         push(
           applied,
@@ -504,12 +504,13 @@ export function buildBeats(
           [
             {
               combatantId: e.combatantId,
-              text: `${emoji ? `${emoji} ` : ''}${e.kind === 'damage' ? '-' : '+'}${e.amount}`,
+              text: `${e.kind === 'damage' ? '-' : '+'}${e.amount}`,
               className: popupClass,
+              glyph: e.statusId,
             },
           ],
           {
-            bannerLead: `${emoji ? `${emoji} ` : ''}${targetName}'s ${e.statusId}`,
+            bannerLead: `${targetName}'s ${e.statusId}`,
             bannerFocus: `${e.kind === 'damage' ? '-' : '+'}${e.amount} HP`,
             bannerFocusKind: e.kind === 'damage' ? 'damage' : 'heal',
           }

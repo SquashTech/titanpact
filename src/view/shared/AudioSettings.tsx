@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { getAudioPrefs, playSfx, setMusicLevel, setMuted, setSfxLevel } from '../../audio/sfx';
+import { HubGlyph } from './nodeIcons';
 
 // Volume and mute, as a drop-in block for a menu's .options-list.
 
@@ -39,7 +40,7 @@ export function AudioSettings() {
     <div className="options-audio">
       <button className="options-item" onClick={handleMute} aria-pressed={muted}>
         <span className="options-item-glyph" aria-hidden="true">
-          {muted ? '🔇' : '🔊'}
+          <HubGlyph name={muted ? 'mute' : 'sound'} />
         </span>
         Sound
         <span className={`options-item-state${muted ? ' is-off' : ''}`}>{muted ? 'Muted' : 'On'}</span>
