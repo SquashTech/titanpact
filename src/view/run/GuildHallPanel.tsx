@@ -107,7 +107,13 @@ function GuildHallEquipCard({ item, cost, affordable, soldOut, onInspect }: Equi
           <ItemEffectChips item={item} />
         </div>
       </div>
-      {soldOut ? <span className="guild-hall-equip-soldout">Sold out</span> : <span className="guild-hall-equip-price">{cost}g</span>}
+      {soldOut ? (
+        <span className="guild-hall-equip-soldout">Sold out</span>
+      ) : (
+        <span className="guild-hall-equip-price">
+          <ResourceGlyph kind="gold" /> {cost}
+        </span>
+      )}
     </button>
   );
 }
@@ -184,13 +190,6 @@ export function GuildHallPanel({
 
   return (
     <div className="guild-hall">
-      <div className="guild-hall-header">
-        <h2>{title}</h2>
-        <span className="guild-hall-gold">
-          <ResourceGlyph kind="gold" /> {run.gold}g
-        </span>
-      </div>
-
       <div className="guild-hall-section">
         <div className="guild-hall-section-head">
           <span className="guild-hall-section-title">
@@ -200,7 +199,10 @@ export function GuildHallPanel({
               arrives RAW — no Evolution, rank 1, its own three moves — where a Recruit Contract's
               hero arrives finished. The hint has to say so, or the two routes look interchangeable
               and the cheaper-looking one is quietly the weaker. */}
-          <span className="guild-hall-section-hint">Unevolved, unranked — yours to build</span>
+          <span className="guild-hall-section-hint">
+            Unevolved, unranked — yours to build
+            {rosterFull ? ` · roster is full (${ROSTER_CAP}/${ROSTER_CAP}), so a hire asks who leaves` : ''}
+          </span>
         </div>
         {heroOffers.length > 0 ? (
           <div className="guild-hall-hero-grid">
@@ -221,36 +223,40 @@ export function GuildHallPanel({
         ) : (
           <p className="hint">No recruits on offer this visit.</p>
         )}
-        {rosterFull && (
-          <p className="hint">
-            Roster is full ({ROSTER_CAP}/{ROSTER_CAP}) — recruiting will ask you to terminate a hero to make room.
-          </p>
-        )}
-        <button className="guild-hall-contract-row" disabled={!canBuyContract} onClick={() => setConfirmingContract(true)}>
-          <span className="guild-hall-contract-icon is-contract">
-            <ResourceGlyph kind="contract" tone="inherit" />
-          </span>
-          <span className="guild-hall-contract-body">
-            <span className="guild-hall-contract-name">Recruit Contract</span>
-            <span className="guild-hall-contract-desc">Claim a beaten enemy hero for free, later.</span>
-          </span>
-          <span className="guild-hall-contract-held">{run.recruitContracts} held</span>
-          <span className="guild-hall-contract-price">{CONTRACT_PURCHASE_COST}g</span>
-        </button>
-        {/* No confirm, unlike the Contract: a Scroll is spent later and on whoever you like, so
-            there is nothing here to get wrong. Buying is the reversible half of the decision. */}
-        <button className="guild-hall-contract-row" disabled={!canBuyScroll} onClick={handleBuyScroll}>
-          <span className="guild-hall-contract-icon is-scroll">
-            <ResourceGlyph kind="scroll" tone="inherit" />
-          </span>
-          <span className="guild-hall-contract-body">
-            <span className="guild-hall-contract-name">Mastery Scroll</span>
-            <span className="guild-hall-contract-desc">Teach one hero a new move. Poured on the way out.</span>
-          </span>
-          {/* No held count: a Scroll bought here is poured the moment the Guild Hall is left
-              (App.tsx raises MasteryScreen on the way back to the map), never carried. */}
-          <span className="guild-hall-contract-price">{SCROLL_PURCHASE_COST}g</span>
-        </button>
+        {/* Two goods on a shelf, side by side. They used to be two full-width rows — glyph,
+            name, gray sentence, price hard right — which is a shopping-cart line item, and it
+            is what made the whole panel read as an invoice rather than as a counter. */}
+        <div className="guild-hall-shelf">
+          <button className="guild-hall-good is-contract" disabled={!canBuyContract} onClick={() => setConfirmingContract(true)}>
+            <span className="guild-hall-good-glyph">
+              <ResourceGlyph kind="contract" tone="inherit" />
+            </span>
+            <span className="guild-hall-good-name">Recruit Contract</span>
+            <span className="guild-hall-good-desc">Claim a beaten enemy hero, free, later.</span>
+            <span className="guild-hall-good-price">
+              <ResourceGlyph kind="gold" /> {CONTRACT_PURCHASE_COST}
+            </span>
+            {run.recruitContracts > 0 && (
+              <span className="guild-hall-good-held" aria-label={`${run.recruitContracts} held`}>
+                {run.recruitContracts}
+              </span>
+            )}
+          </button>
+          {/* No confirm, unlike the Contract: a Scroll is spent later and on whoever you like, so
+              there is nothing here to get wrong. Buying is the reversible half of the decision. */}
+          <button className="guild-hall-good is-scroll" disabled={!canBuyScroll} onClick={handleBuyScroll}>
+            <span className="guild-hall-good-glyph">
+              <ResourceGlyph kind="scroll" tone="inherit" />
+            </span>
+            <span className="guild-hall-good-name">Mastery Scroll</span>
+            {/* No held count: a Scroll bought here is poured the moment the Guild Hall is left
+                (App.tsx raises MasteryScreen on the way back to the map), never carried. */}
+            <span className="guild-hall-good-desc">Teach one hero a move, on the way out.</span>
+            <span className="guild-hall-good-price">
+              <ResourceGlyph kind="gold" /> {SCROLL_PURCHASE_COST}
+            </span>
+          </button>
+        </div>
       </div>
 
       <div className="guild-hall-section">
@@ -258,7 +264,7 @@ export function GuildHallPanel({
           <span className="guild-hall-section-title">
             <SectionGlyph name="equipment" /> Equipment
           </span>
-          <span className="guild-hall-section-hint">Tap an item to view and buy</span>
+          <span className="guild-hall-section-hint">Bought outright, and worn from the roster</span>
         </div>
         {equipmentOffers.length > 0 ? (
           <div className="equip-cache-list guild-hall-equip-list">

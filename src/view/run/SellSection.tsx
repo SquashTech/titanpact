@@ -39,18 +39,25 @@ export function SellSection({ run, onRunChange, open, onOpenChange }: Props) {
 
   return (
     <div className="guild-hall-section">
-      <button className="guild-hall-contract-row" disabled={empty} onClick={() => onOpenChange(true)}>
-        <span className="guild-hall-contract-icon">
-          <ResourceGlyph kind="gold" tone="inherit" />
-        </span>
-        <span className="guild-hall-contract-body">
-          <span className="guild-hall-contract-name">Sell</span>
-          <span className="guild-hall-contract-desc">
-            {empty ? 'The bag is empty.' : 'Trade gear out of the bag — unequip first.'}
+      {/* The counter's other side, in the same plate the shelf's goods wear — it is one good
+          wide because there is only one thing to do here, and a full-width row with the bag
+          count hard right was the same invoice line the shelf just stopped being. */}
+      <div className="guild-hall-shelf is-single">
+        <button className="guild-hall-good is-sell" disabled={empty} onClick={() => onOpenChange(true)}>
+          <span className="guild-hall-good-glyph">
+            <ResourceGlyph kind="gold" tone="inherit" />
           </span>
-        </span>
-        <span className="guild-hall-contract-held">{run.stash.length} in bag</span>
-      </button>
+          <span className="guild-hall-good-name">Sell from the bag</span>
+          <span className="guild-hall-good-desc">
+            {empty ? 'The bag is empty.' : 'Trade gear out — unequip it first.'}
+          </span>
+          {run.stash.length > 0 && (
+            <span className="guild-hall-good-held is-gold" aria-label={`${run.stash.length} in the bag`}>
+              {run.stash.length}
+            </span>
+          )}
+        </button>
+      </div>
 
       {open && (
         <div className="log-overlay" onClick={() => onOpenChange(false)}>

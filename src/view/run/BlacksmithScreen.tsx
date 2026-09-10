@@ -7,7 +7,7 @@ import { MAX_ITEM_SLOTS } from '../../run/equipment';
 import type { RosterEntry, RunState } from '../../run/state';
 import { buyItemSlot, slotQuote, RunProgressError } from '../../run/runProgress';
 import { HeroSlotCard, HeroSlotGrid } from '../shared/HeroSlotCard';
-import { NodeHeader, NodeSky } from '../shared/NodeStage';
+import { NodeHeader, NodePurse, NodeSky } from '../shared/NodeStage';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { HubGlyph } from '../shared/nodeIcons';
 import { HeroPreviewOverlay } from './HeroPreviewOverlay';
@@ -54,6 +54,7 @@ export function BlacksmithScreen({ run, onRunChange, onContinue }: Props) {
     <div className="node-screen shop-node-screen" style={{ '--node-rgb': NODE_TINT_BLACKSMITH } as CSSProperties}>
       <NodeSky />
       <RosterPeek run={run} onRunChange={onRunChange} />
+      <NodePurse gold={run.gold} />
 
       <NodeHeader
         compact
@@ -64,19 +65,12 @@ export function BlacksmithScreen({ run, onRunChange, onContinue }: Props) {
 
       <div className="screen-scroll">
         <div className="guild-hall">
-          <div className="guild-hall-header">
-            <h2>Blacksmith</h2>
-            <span className="guild-hall-gold">
-              <ResourceGlyph kind="gold" /> {run.gold}
-            </span>
-          </div>
-
           <div className="guild-hall-section">
             <div className="guild-hall-section-head">
               <span className="guild-hall-section-title">
                 <HubGlyph name="hand" /> Item Slots
               </span>
-              <span className="guild-hall-section-hint">Permanent — hold a hero to review its sheet</span>
+              <span className="guild-hall-section-hint">Permanent · hold a hero to review its sheet</span>
             </div>
             <HeroSlotGrid>
               {run.roster.map((entry) => {
@@ -99,15 +93,13 @@ export function BlacksmithScreen({ run, onRunChange, onContinue }: Props) {
                       >
                         {quote ? (
                           <>
-                            <span className="blacksmith-slot-gain">
-                              {quote.target - 1} → {quote.target} slots
-                            </span>
+                            <span className="blacksmith-slot-gain">+1 slot</span>
                             <span className="blacksmith-slot-price">
                               <ResourceGlyph kind="gold" /> {quote.cost}
                             </span>
                           </>
                         ) : (
-                          <span className="blacksmith-slot-gain">At the {MAX_ITEM_SLOTS}-slot cap</span>
+                          <span className="blacksmith-slot-gain">{MAX_ITEM_SLOTS}-slot cap</span>
                         )}
                       </button>
                     }

@@ -2489,7 +2489,7 @@ The five other idioms the audit named, in the order they are worth doing:
    `.equip-target-card`, `.hero-grid-card`, `.sandbox-hero-card`, `.swap-option-badge`. The Reference
    overlay, the Boon shrine, the Mentor's Hall, the Equipment Cache and the Guild Hall are the same
    list in different hues. One shape, sixteen places — the highest-leverage fix left.
-2. **The Guild Hall and the Blacksmith** — shopping-cart line items, a form-validation sentence in
+2. ~~**The Guild Hall and the Blacksmith**~~ — done in the twenty-third pass below. Was: — shopping-cart line items, a form-validation sentence in
    orange, a right-aligned italic hint in a table-header row, and (the Blacksmith) a screen that
    titles itself twice. Open item 6 below has exempted the Guild Hall since the ninth pass.
 3. **The map is inside a card** — a header rect, a body rect and a footer rect, each with a 1px
@@ -2505,7 +2505,7 @@ Two measured defects worth fixing alongside those:
 - **Dead vertical space.** Tallest empty band per screen: Crucible **416px, 53% of the phone**,
   reward-equip 177, Forge 167, Boon 161, Banner 161, Tutor 157, draft 153. The Gold Cache and the
   act intro *compose* their space and are the counterexample to copy.
-- **`.resolve-button:disabled` reads as a bug**, not as a waiting control: at `opacity: 0.55` over a
+- ~~**`.resolve-button:disabled` reads as a bug**~~ — fixed in the twenty-third pass. Was:, not as a waiting control: at `opacity: 0.55` over a
   node screen's parallax, the mountains are visible through the button.
 
 ## Twenty-second pass — the list-row marker comes off nineteen cards (2026-09-10)
@@ -2589,6 +2589,94 @@ Blacksmith's unbought slots, the roster's empty gear cells. A dashed rectangle i
 idiom the same way a left bar is the list idiom, and `styles.css` still has twenty of them. The
 eighth pass already machined some of these (`.item-box`, whose comment says the dashed version "read
 as a disabled form field"); the rest never followed.
+
+## Twenty-third pass — the two shops stop being a pricing page (2026-09-10)
+
+*Third item from the audit. The Guild Hall was deliberately exempted from the ninth pass ("a shop
+with three distinct lists, not a one-decision node") and never came back; the Blacksmith inherited
+its chrome wholesale when it split off in 2026-09-08.*
+
+### What was wrong
+
+Five separate web idioms, stacked:
+
+- **A masthead.** `.guild-hall-header` was an `<h2>` at one end of a `border-bottom` rule and a
+  gold figure at the other. Worse on the Blacksmith, which therefore **named itself twice** — a
+  `NodeHeader` reading *THE BLACKSMITH / Work On What You Carry*, and immediately under it an
+  `<h1>Blacksmith` with a purse.
+- **Table header rows.** `.guild-hall-section-head` was `justify-content: space-between` — a bold
+  uppercase title behind a coloured tick on the left, a small italic note hard right. That is a
+  `<thead>`, and two or three of them down a scrolling column is the single biggest reason these
+  screens read as a document.
+- **Shopping-cart line items.** The Recruit Contract, the Mastery Scroll and the Sell row were
+  full-width `glyph · bold name · gray sentence · price hard right`. Three of those stacked is an
+  invoice.
+- **Form validation.** *"Roster is full (6/6) — recruiting will ask you to terminate a hero to make
+  room."* in gold, as a paragraph of its own. `.hint` is globally `color: var(--accent)`, so every
+  loose advisory on a screen full of prices reads as *something is wrong*.
+- **A pricing table.** Six `1 → 2 slots ⋯ 120` bars, one per hero card, each `space-between` with
+  the gain at one end and the cost at the other.
+
+### What replaced it
+
+**The purse leaves the page and gets pinned.** `NodePurse` sits in the top corner the roster glyph
+does not own, in the same chip language `.map-stat` uses — so gold is one object across the run,
+and the number every decision is measured against no longer scrolls away. Both mastheads are gone,
+and `ShopNodeScreen` now takes the `NodeHeader` every other node screen has always had
+(*THE GUILD HALL / Who Will You Take / People and gear — for gold*).
+
+**The section head becomes a chapter mark.** Centred, flanked by two rules that fade *away* from
+the label in both directions (`::after` is the same gradient mirrored), with whatever the section
+qualifies sitting **under** it rather than beside it, and no longer italic. The flanking rules are
+not decoration: they are the thing that makes a centred label read as a break in a place rather
+than as a heading on a page. `.hint` joins the same dim centred voice inside `.guild-hall`.
+
+**The two goods go on a shelf.** The Contract and the Scroll are now two plates side by side —
+glyph, name, one line, a struck coin — each lit by the resource it buys rather than by the panel's
+gold, in the same two hues their glyphs and their run-HUD counts already wear (`RESOURCE_COLORS`).
+The Contract's held count moved from a *"N held"* chip in a row to a **tally on the corner of the
+plate**, which reads as stock the way a sentence does not. The Sell row got the same plate.
+
+**A price becomes a struck coin**, on the shelf and on every equipment card — the same object in
+both places instead of a bare gold figure at the end of a row. The Blacksmith's slot purchase
+shrinks from a full-width bar to a centred chip that fits its content, so the card's own hardware
+stays the subject; `1 → 2 slots` is just `+1 slot`, since the card underneath already shows how
+many sockets there are.
+
+**And the roster-full warning stops being an error.** It is now a clause on the Recruits hint —
+*"Unevolved, unranked — yours to build · roster is full (6/6), so a hire asks who leaves"* — which
+is what it always meant.
+
+### Three things carried in from the audit while the file was open
+
+- **The scrollbar.** `.screen-scroll` showed a persistent track down the right edge of every node
+  screen. `.move-list` and `.roster-held-chips` already hide theirs; this is the same call. A
+  visible scrollbar is browser chrome more than it is an affordance, and the thing it would tell
+  you — that there is more below — is already said by the card the fold cuts through.
+- **Two more dashed sockets machined.** `.squad-slot.empty` and `.mastery-move-chip.is-empty` now
+  wear the four L-cut corner brackets `.item-box.empty` got in the eighth pass, for the reason
+  written down there: a dashed rectangle reads as a disabled form field, a recess with brackets
+  reads as a mount waiting for something. (The remaining dashed rules in the file are deliberate
+  ornament — the title seal, the evolve ring, the pact seal, the recruit fanfare — plus
+  `.item-box.is-lifted`, where dashed means *in flight*.)
+- **The disabled CTA stops looking broken.** `.resolve-button:disabled` was `opacity: 0.55`, and on
+  a node screen the location's parallax showed straight **through** the plate — trees and masts
+  crossing the label. Measured on the Mastery board and the Boon shrine. The dimming is now baked
+  into the fill and the text instead, so the plate stays a solid object while it waits.
+
+### Verification
+
+Typecheck clean, 988 engine tests passing. Screenshotted at 394x780, both screens top and bottom,
+plus the Guild Hall at a full roster (the state that used to raise the gold warning) and the
+disabled CTA cropped against the parallax it used to show through.
+
+### What is still open on these two screens
+
+- **The equipment card is still a row**: icon, name, RARITY in caps, stat chips, price. The plate
+  now carries the rarity as light, so the caps word is saying a second time what the card's own
+  colour says — but removing it is a content call, not a styling one.
+- **The Anvil & Enchanter rows** keep two square action buttons at the right end. They are two
+  genuine actions, so the shape is honest; they just have not been given the shelf's treatment.
 
 ## Open / future improvements
 

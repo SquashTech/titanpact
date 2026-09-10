@@ -9637,6 +9637,17 @@ textarea,
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  /* No visible bar, the same as .move-list and .roster-held-chips. A persistent
+     scrollbar track down the right edge is a browser chrome tell more than
+     anything else on these screens, and the thing it would tell you — that
+     there is more below — is already said by the card the fold cuts through.
+     Touch scrolling needs no target, and every one of these screens is
+     portrait-mobile. */
+  scrollbar-width: none;
+}
+
+.screen-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 /* Screen titles across the run loop (here, Guild Hall, Sandbox, the reward
@@ -11051,14 +11062,33 @@ textarea,
 /* An empty slot is a hole in the layout, not an object in it — so it drops
    the raised treatment entirely and becomes a sunken dashed outline. Same
    figure/ground logic as .item-box's empty state. */
+/* A hole in the rack, not a dashed field. Same call as .item-box.empty (eighth
+   pass): a dashed rectangle reads as a disabled form input, where a recess with
+   four corner brackets reads as a mount waiting for something. */
 .squad-slot.empty {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-style: dashed;
   background: var(--surface-sunken);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
-  opacity: 0.6;
+  border-color: var(--border-sunken, var(--border));
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.55);
+  opacity: 0.72;
+}
+
+.squad-slot.empty::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  opacity: 0.5;
+  /* Only the four corners survive the mask, so the mark is four L-cuts. */
+  -webkit-mask: radial-gradient(circle 14px at 0 0, #000 99%, transparent), radial-gradient(circle 14px at 100% 0, #000 99%, transparent),
+    radial-gradient(circle 14px at 0 100%, #000 99%, transparent), radial-gradient(circle 14px at 100% 100%, #000 99%, transparent);
+  mask: radial-gradient(circle 14px at 0 0, #000 99%, transparent), radial-gradient(circle 14px at 100% 0, #000 99%, transparent),
+    radial-gradient(circle 14px at 0 100%, #000 99%, transparent), radial-gradient(circle 14px at 100% 100%, #000 99%, transparent);
+  pointer-events: none;
 }
 
 .squad-slot-empty-label {
@@ -11354,13 +11384,6 @@ textarea,
   gap: 14px;
 }
 
-/* On a shop node the corner roster glyph sits over the top-right of this row,
-   where the gold readout lives — reserve the corner rather than let the two
-   overlap. Scoped to the node so the same panel keeps its full width wherever
-   else it is embedded. */
-.shop-node-screen .guild-hall-header {
-  padding-right: 50px;
-}
 
 /* Clearance for the bottom-docked Continue button. `.screen-scroll` ends
    flush with that button, so at the very bottom of the scroll the last
@@ -11372,36 +11395,39 @@ textarea,
   padding-bottom: 10px;
 }
 
-.guild-hall-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border);
-}
-
-.guild-hall-header h2 {
-  font-size: 18px;
-  margin: 0;
-  letter-spacing: 0.01em;
-}
-
-/* The player's purse, rendered as a currency pill rather than loose gold
-   text. This is the number every decision on the screen is measured against,
-   so it needs a container that says "persistent readout" — the same chip
-   language .map-stat uses for the run HUD, so gold looks like the same object
-   in both places. */
-.guild-hall-gold {
-  flex-shrink: 0;
-  padding: 3px 10px;
+/* The purse (NodeStage NodePurse), pinned in the corner the roster glyph does
+   not own. It replaces `.guild-hall-header` — an <h2> at one end of a rule and
+   a gold figure at the other, which is a masthead, and which made these the
+   only two node screens that named themselves twice. Same chip language as
+   .map-stat, so gold is one object across the run. */
+.node-purse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 11px 0 9px;
   border-radius: var(--radius-pill);
   background: rgba(224, 166, 60, 0.1);
   border: 1px solid rgba(224, 166, 60, 0.35);
-  box-shadow: var(--hairline);
+  box-shadow: var(--hairline), var(--elev-1);
   font-size: 13px;
   font-weight: 800;
   color: var(--accent);
   white-space: nowrap;
+  pointer-events: none;
+}
+
+.node-purse .resource-glyph {
+  width: 14px;
+  height: 14px;
+}
+
+.node-purse-count {
+  font-variant-numeric: tabular-nums;
 }
 
 .guild-hall-section {
@@ -11410,11 +11436,19 @@ textarea,
   gap: 8px;
 }
 
+/* A centred chapter mark flanked by two fading rules, with whatever the section
+   has to qualify sitting UNDER it.
+   It was a `justify-content: space-between` row — a bold left title and a small
+   italic right note — which is a <thead>, and two of them stacked down a
+   scrolling column is the single reason these screens read as a document. The
+   flanking rules are not decoration: they are what makes a centred label read as
+   a break in a place rather than as a heading on a page. */
 .guild-hall-section-head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
 }
 
 /* Eyebrow-style section header with a short accent rule before it. In a
@@ -11439,19 +11473,45 @@ textarea,
   color: var(--text);
 }
 
-.guild-hall-section-title::before {
-  content: '';
-  width: 3px;
-  height: 12px;
-  border-radius: var(--radius-pill);
-  background: var(--accent);
-  flex-shrink: 0;
+.guild-hall-section-title {
+  justify-content: center;
+  width: 100%;
 }
 
-.guild-hall-section-hint {
+/* The two rules. `::after` is the same gradient mirrored, so the pair fades
+   away from the label in both directions rather than sweeping across it. */
+.guild-hall-section-title::before,
+.guild-hall-section-title::after {
+  content: '';
+  flex: 1 1 auto;
+  min-width: 12px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(224, 166, 60, 0.4));
+}
+
+.guild-hall-section-title::after {
+  transform: scaleX(-1);
+}
+
+/* Under the label, not beside it, and no longer italic: an italic note at the
+   far right of a heading is a table's column note.
+   A shop's loose advisories (`.hint`) join it in the same dim, centred voice —
+   globally `.hint` is gold, which on a screen full of prices reads as a form
+   telling you something is wrong rather than as the room talking. */
+.guild-hall-section-hint,
+.guild-hall .hint {
+  max-width: 38ch;
+  margin: 0 auto;
   font-size: 10px;
+  line-height: 1.35;
   color: var(--text-dim);
-  font-style: italic;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.guild-hall .hint {
+  font-size: 11px;
+  max-width: 42ch;
 }
 
 .guild-hall-hero-grid {
@@ -11576,16 +11636,34 @@ textarea,
   opacity: 0.5;
 }
 
+/* The same struck coin the shelf uses, so a price is one object across the
+   panel. It was a bare gold figure hard right, which — beside a name, a caps
+   rarity and a stat row — completes a shopping-cart line item. */
 .guild-hall-equip-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   flex-shrink: 0;
   margin-left: auto;
-  font-size: 13px;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  background: rgba(224, 166, 60, 0.1);
+  border: 1px solid rgba(224, 166, 60, 0.3);
+  font-size: 12px;
   font-weight: 800;
   color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.guild-hall-equip-price .resource-glyph {
+  width: 12px;
+  height: 12px;
 }
 
 .guild-hall-equip-card.unaffordable .guild-hall-equip-price {
   color: var(--enemy);
+  background: rgba(217, 83, 79, 0.1);
+  border-color: rgba(217, 83, 79, 0.32);
 }
 
 /* Bought (2026-08-31). The card stays on the shelf so the stock reads as a
@@ -11622,24 +11700,6 @@ textarea,
 
 /* --- Contracts ---------------------------------------------------------- */
 
-/* How many Recruit Contracts the player already holds, as a chip ON the
-   contract row rather than in a section head of its own — the row moved under
-   Recruits (2026-08-31) and the head went with it. A contract's value depends
-   entirely on how many you have (one is spent per claim, and a claim needs a
-   fight left to win), so it belongs immediately beside the price it is the
-   context for. */
-.guild-hall-contract-held {
-  flex-shrink: 0;
-  padding: 2px 8px;
-  border-radius: var(--radius-pill);
-  background: rgba(224, 166, 60, 0.08);
-  border: 1px solid rgba(224, 166, 60, 0.28);
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--accent);
-  white-space: nowrap;
-}
-
 /* The purchase confirm's two blocks (see GuildHallPanel). `.move-info-desc`
    is deliberately not reused: it line-clamps to 2 lines for a move tile's
    fixed box, which would silently eat the end of this sentence. */
@@ -11668,74 +11728,146 @@ textarea,
   color: var(--accent);
 }
 
-.guild-hall-contract-row {
+/* --- The shelf (GuildHallPanel) -------------------------------------------
+ *
+ * The Contract and the Mastery Scroll, as two goods standing side by side.
+ * They were two stacked full-width rows — glyph, bold name, gray sentence,
+ * price hard right — which is a shopping-cart line item, and stacking two of
+ * them under a table header is what made the whole panel read as an invoice.
+ * Two plates on a counter is the same information in the shape of a shop.
+ */
+.guild-hall-shelf {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.guild-hall-good {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  --plate-base: linear-gradient(165deg, var(--panel-alt), var(--panel) 70%);
-  --plate-color: var(--accent);
-  border-radius: 10px;
-  padding: 10px 12px;
+  gap: 3px;
+  padding: 10px 8px 8px;
+  border-radius: var(--radius-md);
   color: var(--text);
-  text-align: left;
+  text-align: center;
   cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-mid) var(--ease-out),
+    box-shadow var(--dur-mid) var(--ease-out);
 }
 
-.guild-hall-contract-row:hover:not(:disabled) {
-  border-color: var(--accent);
+/* Each good is lit by the resource it buys, not by the panel's gold — the
+   Contract's blue and the Scroll's violet are the same two hues their glyphs
+   and their run-HUD counts already wear (RunGlyph RESOURCE_COLORS). */
+.guild-hall-good.is-contract {
+  --plate-color: #9bc9ff;
 }
 
-.guild-hall-contract-row:disabled {
+.guild-hall-good.is-scroll {
+  --plate-color: #c9a2ff;
+}
+
+.guild-hall-good.is-sell {
+  --plate-color: var(--accent);
+}
+
+/* One good, and not stretched across the row: a plate that fills the width is
+   the row this stopped being. */
+.guild-hall-shelf.is-single {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  justify-content: center;
+}
+
+.guild-hall-shelf.is-single > .guild-hall-good {
+  grid-column: 1 / -1;
+  max-width: 62%;
+  justify-self: center;
+}
+
+.guild-hall-good-held.is-gold {
+  border-color: rgba(224, 166, 60, 0.55);
+  color: var(--accent);
+}
+
+.guild-hall-good:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--hairline), var(--elev-2);
+}
+
+.guild-hall-good:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-/* Sizes whatever glyph the row carries — a Contract quill, a Scroll, a coin —
-   so a new row does not need a second rule. The hue rides on --row-glyph-rgb,
-   set per row, because these are the only marks on the panel that are not the
-   panel's own gold. */
-.guild-hall-contract-icon {
+.guild-hall-good-glyph {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  color: rgb(var(--row-glyph-rgb, 224, 166, 60));
+  width: 26px;
+  height: 26px;
+  color: var(--plate-color);
 }
 
-.guild-hall-contract-icon > svg {
+.guild-hall-good-glyph > svg {
   width: 100%;
   height: 100%;
 }
 
-/* Takes the row's free space, so the held chip and the price sit together at
-   the right rather than being pushed apart by two competing `margin-left:
-   auto`s (flexbox splits free space evenly between auto margins). */
-.guild-hall-contract-body {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.guild-hall-contract-name {
-  font-size: 13px;
+.guild-hall-good-name {
+  font-size: 12px;
   font-weight: 700;
+  line-height: 1.2;
 }
 
-.guild-hall-contract-desc {
+.guild-hall-good-desc {
   font-size: 10px;
+  line-height: 1.3;
   color: var(--text-dim);
+  text-wrap: balance;
 }
 
-.guild-hall-contract-price {
-  margin-left: auto;
-  flex-shrink: 0;
-  font-size: 13px;
+/* A struck coin rather than a figure at the end of a row. */
+.guild-hall-good-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  background: rgba(224, 166, 60, 0.1);
+  border: 1px solid rgba(224, 166, 60, 0.3);
+  font-size: 12px;
   font-weight: 800;
   color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.guild-hall-good-price .resource-glyph {
+  width: 12px;
+  height: 12px;
+}
+
+/* How many Contracts are already held, as a count ON the good rather than a
+   "N held" chip in the row — a contract's value depends entirely on how many
+   you have, and a corner tally reads as stock the way a sentence does not. */
+.guild-hall-good-held {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 19px;
+  height: 19px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--bg);
+  border: 1px solid color-mix(in srgb, #9bc9ff 55%, var(--border));
+  font-size: 10px;
+  font-weight: 800;
+  color: #9bc9ff;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Primary bottom-docked CTA, shared by every "commit this choice and move on"
@@ -11805,14 +11937,18 @@ textarea,
    button still reads as "the thing to press", which is the wrong signal when
    the screen is waiting on the player to pick something first. It stays a
    legible dark plate rather than a ghost — at 0.32 opacity a dark button on a
-   dark screen is gone, where the gold slab it replaced was merely quiet. */
+   dark screen is gone, where the gold slab it replaced was merely quiet.
+   OPAQUE, though, and that is the correction (2026-09-10): `opacity: 0.55` on
+   a node screen let the location's parallax show straight THROUGH the plate —
+   mountains and masts crossing the label — which reads as a rendering fault
+   rather than as a control waiting. The dimming is now baked into the fill and
+   the text instead, so the plate is still a solid object while it waits. */
 .resolve-button:disabled {
-  background: var(--surface-raised);
+  background: linear-gradient(180deg, #1b1f29, #14171f 64%, #0f1219);
   border-color: var(--border-sunken);
-  color: var(--text-dim);
-  opacity: 0.55;
+  color: color-mix(in srgb, var(--text-dim) 72%, transparent);
   text-shadow: none;
-  box-shadow: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   cursor: not-allowed;
 }
 
@@ -22115,17 +22251,21 @@ textarea,
    read against the row it changes. The dearest thing in the run (shop.ts SLOT_PRICE_BY_TARGET),
    so it states the gain and the cost on one line rather than making either one hunt for the
    other. */
+/* A chip that reads as a purchase, not a full-width bar with the gain at one
+   end and the price at the other — that composition is a pricing table row,
+   and there were six of them stacked down the screen. Centred and shrunk to
+   its content so the card's own hardware stays the subject. */
 .blacksmith-slot-button {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  width: 100%;
-  margin-top: 4px;
-  padding: 6px 8px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
+  justify-content: center;
+  gap: 7px;
+  align-self: center;
+  margin-top: 5px;
+  padding: 4px 11px;
+  background: rgba(224, 166, 60, 0.07);
+  border: 1px solid rgba(224, 166, 60, 0.3);
+  border-radius: var(--radius-pill);
   color: var(--text);
   font-size: 10px;
   font-weight: 600;
@@ -22761,11 +22901,29 @@ textarea,
   white-space: nowrap;
 }
 
+/* A move this hero has not learned yet: an empty socket in the rack, cut the
+   same way every other hole in the game is (.item-box.empty, .squad-slot.empty)
+   rather than a dashed outline, which is a form field. */
 .mastery-move-chip.is-empty {
-  border-style: dashed;
-  border-color: color-mix(in srgb, var(--text-dim) 34%, transparent);
-  background: transparent;
+  position: relative;
+  border-color: var(--border-sunken, var(--border));
+  background: var(--surface-sunken);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
   min-height: 20px;
+}
+
+.mastery-move-chip.is-empty::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  opacity: 0.45;
+  -webkit-mask: radial-gradient(circle 8px at 0 0, #000 99%, transparent), radial-gradient(circle 8px at 100% 0, #000 99%, transparent),
+    radial-gradient(circle 8px at 0 100%, #000 99%, transparent), radial-gradient(circle 8px at 100% 100%, #000 99%, transparent);
+  mask: radial-gradient(circle 8px at 0 0, #000 99%, transparent), radial-gradient(circle 8px at 100% 0, #000 99%, transparent),
+    radial-gradient(circle 8px at 0 100%, #000 99%, transparent), radial-gradient(circle 8px at 100% 100%, #000 99%, transparent);
+  pointer-events: none;
 }
 
 .mastery-hero-note {
@@ -22797,14 +22955,6 @@ textarea,
 }
 
 /* The Guild Hall's Scroll row wears the vector mark, where the Contract row wears an emoji. */
-.guild-hall-contract-icon.is-scroll {
-  --row-glyph-rgb: 201, 162, 255;
-}
-
-.guild-hall-contract-icon.is-contract {
-  --row-glyph-rgb: 155, 201, 255;
-}
-
 /* --- Level-up report (LevelUpScreen) ------------------------------------- *
 
    What the fight just did to the roster. Six rows, one per hero, landing in a
@@ -23612,7 +23762,7 @@ textarea,
 .squad-slot,
 .relic-card,
 .guild-hall-hero-card,
-.guild-hall-contract-row,
+.guild-hall-good,
 .equip-cache-card,
 .equip-target-card,
 .equip-spotlight-passive,
@@ -23647,7 +23797,7 @@ textarea,
 .squad-slot,
 .relic-card,
 .guild-hall-hero-card,
-.guild-hall-contract-row,
+.guild-hall-good,
 .equip-cache-card,
 .equip-target-card,
 .hero-grid-card,

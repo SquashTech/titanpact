@@ -4,7 +4,7 @@ import type { GuildHallOffers } from '../../run/shop';
 import type { GuildHallOffer } from '../../run/recruitment';
 import { GuildHallPanel } from './GuildHallPanel';
 import { RosterPeek } from './RosterPeek';
-import { NodeSky, NODE_TINT_MANA } from '../shared/NodeStage';
+import { NodeHeader, NodePurse, NodeSky, NODE_TINT_MANA } from '../shared/NodeStage';
 
 interface Props {
   run: RunState;
@@ -38,6 +38,18 @@ export function ShopNodeScreen({
       {/* Full Manage Roster behind the glyph, not the read-only peek — a shop's
           question is "do I already have something better in that slot". */}
       <RosterPeek run={run} onRunChange={onRunChange} />
+      <NodePurse gold={run.gold} />
+
+      {/* The panel used to open with its own `<h2>Guild Hall</h2>` over a rule, which made this
+          the one node screen in the run that named itself in a masthead instead of in the
+          NodeHeader every other one uses. */}
+      <NodeHeader
+        compact
+        eyebrow={muster ? 'The Last Muster' : 'The Guild Hall'}
+        title={muster ? 'The Vigil' : 'Who Will You Take'}
+        readout={muster ? 'The last shelf, and the last hands.' : 'People and gear — for gold.'}
+      />
+
       <div className="screen-scroll">
         <GuildHallPanel
           run={run}
