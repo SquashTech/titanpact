@@ -535,3 +535,47 @@ hero's name or "Inventory"), the Guild Hall's purchase line, and the map footer'
 > sheet's new `overflow: hidden` then clips the right edge off, so the button silently loses a
 > corner and its centred label sits off centre. `width: auto` is the fix; a block-level auto width
 > accounts for margins.
+
+## 11. The hero sheet, and the shift on tap (2026-09-10, per user direction)
+
+### 11.1 The tap shift
+
+Picking a piece up moved the whole screen a hair. Not the highlights — those are box-shadows and
+transforms and cost no layout. The panel HEADER: it holds either an 11px eyebrow or a 26px piece
+with its name and chips, and the held state was **3px taller**. Since the sheet is content-sized and
+centred (§10.1), those 3px moved everything by half of them, every time.
+
+`.roster-panel-header` has a fixed `height` now rather than a `min-height`. Whatever it carries, the
+bar is one height.
+
+> The general form of this: on a **centred, content-sized** panel, any element that changes size
+> with state moves the entire screen by half the delta. Reserve the taller state's height.
+
+### 11.2 Both hero sheets take the gear sheet's treatment
+
+`HeroPreviewOverlay` (the run's) and `HeroDossierOverlay` (the Compendium's) share
+`.detail-panel.is-tabbed`, and both now carry `.is-hero-sheet`: three bands — title bar, recessed
+page well, control strip — instead of one flat rectangle with things stacked on it.
+
+The sheet is cut in the hero's **innate primary** type colour, passed as `--hero-color`. Innate, not
+effective: a graft changes what a hero fights like and never who it is (CLAUDE.md), and this is the
+screen that answers the second question — the badges under the name carry the effective pair. That
+colour drives the title bar's wash, the hairline under it, the portrait plate, the level plate and
+the active tab, which is what makes six of these read as six heroes rather than one template.
+
+The portrait is seated in a plate, and the level left the name: `Squall — Lv 14` ran a proper noun
+and a figure that changes every fight into one string.
+
+### 11.3 The empty well, and why the strip still does not move
+
+The panel was `flex: 1 1 auto` — it took the whole viewport whatever the page held, so the Gear page
+on a two-item hero was ~500px of nothing. It could not simply go content-sized the way the gear
+sheet did, because **the tab strip has to sit in the same place on every page** or the control the
+player is aiming at moves out from under the thumb between one page and the next.
+
+Both, via the overlay: `.detail-overlay.is-sheet` packs its column at `flex-end`. That pins the
+panel's BOTTOM edge against the footer, so its last row — the strip — never moves however short the
+page is. Only the top edge floats, and nothing is aimed at that. The sheet reads as a drawer rising
+out of the screen it was opened from, which is what it is.
+
+`.detail-overlay.is-sheet` is used by exactly these two overlays, so this is contained.

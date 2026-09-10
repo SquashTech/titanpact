@@ -7463,6 +7463,12 @@ textarea,
    name set as an eyebrow. It is also where the carried piece reads out (.roster-held), so it has
    to hold two very different contents at one height. */
 .roster-panel-header {
+  /* FIXED, not min-height (2026-09-10, per user report of a shift on tap). The bar holds two very
+     different contents — a line of 11px eyebrow, or a 26px piece with its name and chips — and the
+     held one is 3px taller. The sheet is content-sized and centred now, so those 3px moved the
+     whole screen by half of them every time a piece was picked up. Whatever it carries, this bar
+     is one height. */
+  height: 46px;
   padding: 9px 12px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent);
   border-bottom: 1px solid #2b3140;
@@ -8723,8 +8729,14 @@ textarea,
  * subtracted from it, not overlapped by it; min-height:0 is what lets it
  * shrink below its content so .detail-tab-body stays the only scroller.
  */
+/* BOTTOM-ALIGNED (2026-09-10, per user direction), which is what lets the panel be content-sized
+   without the strip moving. The panel used to be `flex: 1 1 auto` — it took the whole viewport
+   whatever the page held, so the Gear page on a two-item hero was ~500px of empty well. Packing the
+   column at the bottom pins the panel's BOTTOM edge against the footer, so its last row (the strip)
+   never moves however short the page is; only the top edge floats, and nothing is aimed at that. */
 .detail-overlay.is-sheet {
   flex-direction: column;
+  justify-content: flex-end;
   gap: 10px;
   padding: 24px 16px 14px;
 }
@@ -8732,7 +8744,7 @@ textarea,
 .detail-overlay.is-sheet .detail-panel.is-tabbed {
   height: auto;
   max-height: none;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
 }
 
@@ -23046,11 +23058,8 @@ textarea,
    the map now, so there is no block to lay it over — and reserving one would spend the room they
    freed on an empty rectangle that is only ever filled mid-gesture. The header's title is simply
    replaced by what is in hand, at the same height, which moves nothing and is also where the eye
-   already is. The full effect list stays a hold away on the piece itself. */
-.roster-panel-header {
-  min-height: 30px;
-}
-
+   already is. The full effect list stays a hold away on the piece itself. The bar's fixed height
+   is declared with the rest of its look, up with `.roster-panel`. */
 .roster-held {
   display: flex;
   align-items: center;
@@ -23397,4 +23406,140 @@ textarea,
 .roster-mgmt-grid.is-compact .roster-mgmt-plate {
   width: 26px;
   height: 26px;
+}
+
+/* --- The hero sheet, sleek (2026-09-10, per user direction) ----------------------------------
+   The same treatment the gear sheet took: three bands — a title bar, a recessed page well, a
+   control strip — instead of one flat gray rectangle with things stacked on it.
+
+   It cannot go content-sized the way the gear sheet did. The strip has to sit in the same place on
+   every page, or the control the player is aiming at moves out from under the thumb between one
+   page and the next — so the panel keeps its fixed height, and the fix for the empty room a short
+   page leaves is that the room is now visibly the PAGE'S floor rather than unused panel.
+
+   Cut in the hero's own type colour, which is what makes six of these read as six heroes rather
+   than one template. */
+.detail-panel.is-hero-sheet {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: linear-gradient(178deg, #232838, #191d29 38%, #14171f);
+  border: 1px solid #313847;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 18px 50px -12px rgba(0, 0, 0, 0.85), var(--elev-3);
+}
+
+/* The title bar. Its own ground, a hairline under it in the hero's colour rather than the gear
+   sheet's gold — this panel belongs to a hero, and that is the one thing on it worth colouring. */
+.is-hero-sheet .detail-header.is-hero {
+  position: relative;
+  margin: 0;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--hero-color, transparent) 13%, rgba(255, 255, 255, 0.04)), transparent 78%);
+  border-bottom: 1px solid #2b3140;
+}
+
+.is-hero-sheet .detail-header.is-hero::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--hero-color, var(--accent)) 70%, transparent), transparent);
+  pointer-events: none;
+}
+
+/* The portrait is SEATED, same as on a roster card: a recess cut in the hero's colour rather than
+   a sprite laid on a panel. */
+.detail-portrait-plate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), color-mix(in srgb, var(--hero-color, transparent) 18%, rgba(0, 0, 0, 0.2)));
+  border: 1px solid color-mix(in srgb, var(--hero-color, var(--border)) 32%, #2b3140);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.65);
+}
+
+.detail-portrait-plate .detail-portrait.is-inline {
+  width: 50px;
+  height: 50px;
+}
+
+/* The name, with the level set apart from it — "Squall — Lv 14" ran the two together as one
+   string, and the level is a figure about the hero rather than part of its name. */
+.is-hero-sheet .detail-name {
+  font-size: 18px;
+  letter-spacing: -0.015em;
+}
+
+/* The page WELL. This is what stops a short page (Stats on a hero with two grant sources) from
+   reading as an unfinished panel: the leftover room is visibly the floor of the page, cut into the
+   sheet exactly as the Inventory tray is. */
+.is-hero-sheet .detail-tab-body {
+  margin: 10px;
+  padding: 9px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, #0e1117, #12151d);
+  border: 1px solid #262c39;
+  box-shadow: inset 0 3px 7px -2px rgba(0, 0, 0, 0.8), inset 0 -1px 0 rgba(255, 255, 255, 0.045);
+}
+
+/* The strip is the sheet's bottom band, sitting on the panel ground rather than in the well. */
+.is-hero-sheet .tab-strip {
+  margin: 0 10px 10px;
+  background: linear-gradient(180deg, #10131a, #0c0f15);
+  border-color: #272d3a;
+  box-shadow: inset 0 2px 5px -1px rgba(0, 0, 0, 0.75);
+}
+
+/* The active page's tab is the one raised thing in that band, and it wears the hero's colour —
+   the sheet's one accent, so the strip and the title rule agree about whose sheet this is. */
+.is-hero-sheet .tab-button.is-active {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--hero-color, var(--accent)) 26%, #262c3a), #1b2029);
+  color: color-mix(in srgb, var(--hero-color, var(--accent)) 35%, #ffffff);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 2px 6px -2px rgba(0, 0, 0, 0.8);
+}
+
+.is-hero-sheet .tab-button.is-active .tab-button-count {
+  color: inherit;
+}
+
+/* Matched to the gear sheet's Close (styles.css .roster-close-button): this dismisses a sheet, it
+   does not commit a run decision, and at 56px it was the largest control on a screen full of the
+   hero's own numbers. */
+.detail-overlay.is-sheet .resolve-button.sheet-close-button {
+  min-height: 44px;
+  padding: 11px;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
+}
+
+/* The level, beside the name rather than inside it. Its own small plate, in the hero's colour, so
+   the pair reads as a name and a figure about it. */
+.is-hero-sheet .detail-name {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.detail-level {
+  flex: none;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--hero-color, var(--accent)) 18%, #1b2029);
+  border: 1px solid color-mix(in srgb, var(--hero-color, var(--border)) 40%, transparent);
+  color: color-mix(in srgb, var(--hero-color, var(--accent)) 30%, #ffffff);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
 }

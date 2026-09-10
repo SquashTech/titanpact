@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
 import { classes } from '../../data/classes';
@@ -24,6 +24,7 @@ import { EquipmentInfoPanel, EquipmentSlotGrid, ItemReadout } from '../shared/Eq
 import { TypeBadge } from '../shared/TypeBadge';
 import { TypeMatchups } from '../shared/TypeMatchups';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { getTypeColor } from '../combat/typeColors';
 import { PassiveInfoPanel, PassiveReadout } from '../shared/passiveIcons';
 
 interface Props {
@@ -176,12 +177,25 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
       {/* A tabbed panel does NOT dismiss on an inner tap the way the one-scroll sheet did: this is a
           surface the player reads and switches pages in, and losing it to a stray tap while
           scrolling a move list is the wrong trade. The backdrop and the footer Close still close it. */}
-      <div className="detail-panel is-tabbed" onClick={(e) => e.stopPropagation()}>
+      {/* The sheet is cut in the hero's INNATE primary colour, not its current effective one: a
+          graft changes what the hero fights like, never who it is (CLAUDE.md), and this is the
+          screen that answers the second question. The badges below carry the effective pair. */}
+      <div
+        className="detail-panel is-tabbed is-hero-sheet"
+        style={{ '--hero-color': getTypeColor(hero.types[0]) } as CSSProperties}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="detail-header is-hero">
-          <HeroPortrait heroId={hero.id} className="detail-portrait is-inline" />
+          <span className="detail-portrait-plate">
+            <HeroPortrait heroId={hero.id} className="detail-portrait is-inline" />
+          </span>
           <div className="detail-header-titles">
+            {/* The level is set apart rather than run into the name with an em dash: it is a figure
+                ABOUT the hero, and "Squall — Lv 14" reads as one string where one half changes
+                every fight. */}
             <div className="detail-name">
-              {hero.name} — Lv {entry.level}
+              {hero.name}
+              <span className="detail-level">Lv {entry.level}</span>
             </div>
             <div className="combatant-types">
               {types.map((t) => (

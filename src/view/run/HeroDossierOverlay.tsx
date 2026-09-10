@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
 import { progressionTable } from '../../data/progression';
@@ -8,6 +8,7 @@ import type { EvolutionPath } from '../../run/progression';
 import { MOVE_TIER_RANK, MOVE_TIER_RANK_EXPIRY } from '../../run/progression';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
 import { HeroPortrait } from '../shared/HeroPortrait';
+import { getTypeColor } from '../combat/typeColors';
 import { MoveButtonReplica } from '../shared/MoveTile';
 import { PassiveReadout } from '../shared/passiveIcons';
 import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
@@ -191,9 +192,18 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
 
   return (
     <div className="detail-overlay is-sheet" onClick={close}>
-      <div className="detail-panel is-tabbed" onClick={(e) => e.stopPropagation()}>
+      {/* Same sheet as the run's own hero preview (HeroPreviewOverlay), cut in the same colour:
+          the Compendium and the roster are two ways into one hero, and they should not be two
+          designs. */}
+      <div
+        className="detail-panel is-tabbed is-hero-sheet"
+        style={{ '--hero-color': getTypeColor(hero.types[0]) } as CSSProperties}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="detail-header is-hero">
-          <HeroPortrait heroId={hero.id} className="detail-portrait is-inline" />
+          <span className="detail-portrait-plate">
+            <HeroPortrait heroId={hero.id} className="detail-portrait is-inline" />
+          </span>
           <div className="detail-header-titles">
             <div className="detail-name">{hero.name}</div>
             <div className="combatant-types">
