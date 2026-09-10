@@ -72,7 +72,13 @@ export function HeroSlotCard({
 
   const head = (
     <>
-      <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
+      {/* The portrait is SEATED in a plate rather than dropped on the card (2026-09-10, per user
+          direction): a recess in the hero's own type colour, which is the same figure/ground move
+          the item sockets below it make. A bare 28px sprite on a panel reads as an image that has
+          not finished loading. */}
+      <span className="roster-mgmt-plate">
+        <HeroPortrait heroId={hero.id} className="roster-mgmt-portrait" />
+      </span>
       <span className="roster-mgmt-ident">
         <span className="roster-mgmt-name">{hero.name}</span>
         <span className="roster-card-types">

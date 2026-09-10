@@ -480,3 +480,57 @@ separately: the gold glyph in the same header row is one.
 
 What shipped is a bevelled **piece on a tray** — what the panel holds rather than what it is, in the
 exact silhouette the pieces below it are cut to. `HUB_PATHS.bag`.
+
+## 10. The gear board is a sheet, not a box (2026-09-10, per user direction)
+
+§9 made the contents good and left the container alone, and the container was the problem: a
+full-height rectangle of panel gray that stood the same height whether it held four items or forty.
+
+### 10.1 Content-sized
+
+`.roster-panel` was `height: 100%`. It is `height: auto; max-height: 100%` now — a sheet as tall as
+what it holds, centred in the scrim, with the map reading around it. A full inventory still reaches
+the cap and scrolls exactly as before.
+
+That deletes the ~113px dead band `.gear-board`'s `justify-content: safe center` existed to
+distribute, so that rule went with it. Everything else tightened by a few px at a time: the squad
+grid's gap 9 → 7, a card's padding 6 → 5 and its internal gap 7 → 5, the inventory header to
+centred alignment at 7px.
+
+### 10.2 What stops the rest being gray
+
+- **The sheet** is lit from its top edge and cooled toward its foot, with an inset white hairline
+  inside the border and a deep drop shadow. One gradient and one inset ring is most of the
+  difference between a panel and a box.
+- **The header is a title BAR** — its own darker ground, the name set as an uppercase eyebrow, and
+  a gold hairline under it that fades at both ends. It still doubles as the carried piece's readout
+  (§9.3), which is why the eyebrow's tracking is explicitly *unset* for `.roster-held`: an item name
+  is a proper noun and must not be set as a label.
+- **A hero card** carries its own type colour as a wash falling from the top stripe and fading out
+  before the mount, plus a short spill of that colour under the stripe itself. It is lit by the
+  thing at the top of it rather than being a rectangle with a coloured edge.
+- **The portrait sits in a plate** — a recess cut in the hero's type colour, the same figure/ground
+  move the sockets below it make. A bare 28px sprite on a panel reads as an image that failed to
+  load.
+- **The inventory is genuinely cut INTO the sheet**: a dark floor, a hard top shadow, a lit bottom
+  lip.
+- **A locked slot is a blanked fitting**, not a ghost. At `BASE_ITEM_SLOTS` = 1 most heroes show one
+  socket and two of these, so at the old 0.2 opacity two thirds of every mount read as blank card —
+  the largest patch of nothing left on the sheet. They now have a floor, a rim and one short bar
+  across the middle. The bar is deliberately *not* the empty socket's four corner brackets: those
+  say "put something here" and this says the opposite.
+
+### 10.3 "Bag" → "Inventory", and the count is gone
+
+Both per user direction. The count went because the grid below **is** the count — a figure restating
+the number of boxes the eye can already see was the one thing in that header that never changed what
+anybody did. What is left are the two inboxes (unopened, pairable) and the purse.
+
+The rename reaches the Blacksmith's item list (`ItemServicesSection`, where an item's holder is a
+hero's name or "Inventory"), the Guild Hall's purchase line, and the map footer's aria text.
+
+> **Trap.** `.resolve-button` sets `width: 100%`. Giving the Close button margins so it sits inside
+> the sheet's rounded corner makes it overhang its container by exactly those margins — and the
+> sheet's new `overflow: hidden` then clips the right edge off, so the button silently loses a
+> corner and its centred label sits off centre. `width: auto` is the fix; a block-level auto width
+> accounts for margins.

@@ -324,7 +324,7 @@ export function GuildHallPanel({
                 disabled: !affordable,
                 note: !affordable
                   ? `Not enough gold — ${cost}g needed, you have ${run.gold}g.`
-                  : 'It goes to your bag. Hand it out from the Roster whenever you like.',
+                  : 'It goes to your inventory. Hand it out from the Roster whenever you like.',
                 onConfirm: () => {
                   setPreviewEquipId(null);
                   onBuyEquipment(previewEquip.id);

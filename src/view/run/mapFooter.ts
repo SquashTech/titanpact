@@ -27,7 +27,7 @@ export function footerWaiting(unopened: number, merges = 0): FooterWaiting {
       label: plural(unopened, 'New Item', 'New Items'),
       total: unopened,
       kind: 'items',
-      aria: `${plural(unopened, 'unopened item', 'unopened items')} in your bag`,
+      aria: `${plural(unopened, 'unopened item', 'unopened items')} in your inventory`,
     };
   }
   if (merges > 0) {
@@ -36,7 +36,7 @@ export function footerWaiting(unopened: number, merges = 0): FooterWaiting {
       label: `${plural(merges, 'Merge', 'Merges')} Ready`,
       total: merges,
       kind: 'merges',
-      aria: `${plural(merges, 'pair', 'pairs')} in your bag can merge`,
+      aria: `${plural(merges, 'pair', 'pairs')} in your inventory can merge`,
     };
   }
   return { label: 'Roster', total: 0, kind: 'rest', aria: 'Roster' };

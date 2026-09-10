@@ -7434,16 +7434,69 @@ textarea,
 /* Full-bleed (2026-09-07, per user direction): this is a page, not a bottom sheet, and
    at 86% it left ~110px of scrim doing nothing under the bag. The scrim stays as a thin
    frame so the panel still reads as a layer over the map rather than as the map. */
+/* --- The gear sheet (2026-09-10, per user direction) ----------------------
+   It was `height: 100%` — a full-bleed rectangle that stood the same height whether it held four
+   items or forty, so on a light bag most of it was flat panel gray. It is a SHEET now: tall enough
+   for what it holds and no taller, centred, with the scrim reading around it. Everything below is
+   what stops the remaining surface from being a gray box.  */
 .roster-mgmt-overlay {
-  align-items: stretch;
+  align-items: center;
   padding: 8px;
 }
 
 .roster-panel {
-  height: 100%;
+  /* Content-sized, capped. A full inventory still reaches the cap and scrolls exactly as before. */
+  height: auto;
   max-height: 100%;
-  border-radius: 12px;
-  gap: 6px;
+  border-radius: 14px;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  /* Lit from the top edge and cooled toward the foot, with a tier-neutral hairline inside the
+     border. One gradient and one inset ring is the whole difference between a panel and a box. */
+  background: linear-gradient(178deg, #232838, #191d29 38%, #14171f);
+  border: 1px solid #313847;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 18px 50px -12px rgba(0, 0, 0, 0.85), var(--elev-3);
+}
+
+/* A title BAR, not a line of text on the panel: its own darker ground, a lit underline, and the
+   name set as an eyebrow. It is also where the carried piece reads out (.roster-held), so it has
+   to hold two very different contents at one height. */
+.roster-panel-header {
+  padding: 9px 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent);
+  border-bottom: 1px solid #2b3140;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* The one bright rule on the sheet, under the title bar and fading at both ends. */
+.roster-panel-header::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(224, 166, 60, 0.45), transparent);
+  pointer-events: none;
+}
+
+.roster-panel .log-panel-header {
+  position: relative;
+}
+
+/* Uppercase eyebrow metrics are wrong for an item's own name, which is the other thing this bar
+   carries — that is a proper noun and is set as one. */
+.roster-panel-header .roster-held {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.roster-panel .screen-scroll {
+  padding: 10px 10px 0;
 }
 
 /* --- Records (RecordsScreen.tsx) ---------------------------------------- */
@@ -7514,28 +7567,33 @@ textarea,
 .roster-mgmt-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 9px;
-  margin-bottom: 6px;
+  gap: 7px;
 }
 
-/* --- The bag ------------------------------------------------------------
-   Sits above the roster on Manage Roster, and reads as a container rather
+/* --- The Inventory ------------------------------------------------------
+   Sits under the roster on Manage Roster, and reads as a container rather
    than a seventh hero: no type stripe, no portrait, a recessed ground the
-   hero cards below it sit proud of. Its boxes are the SAME .item-box the
+   hero cards above it stand proud of. Its boxes are the SAME .item-box the
    heroes use, because "tap a thing, tap where it goes" only reads as one
-   gesture if both ends look like the same kind of place. */
+   gesture if both ends look like the same kind of place.
+
+   Called "Bag" until 2026-09-10, per user direction, along with the item count
+   beside it: the grid below IS the count, and the figure restated a number the
+   eye could already see. */
 .stash-panel {
-  padding: 8px;
-  background: var(--surface-sunken);
-  border: 1px solid var(--border);
+  padding: 7px 8px 8px;
+  /* Genuinely cut INTO the sheet — a dark floor, a hard top shadow and a lit bottom lip, so the
+     tray reads as a recess in the panel rather than as one more card on it. */
+  background: linear-gradient(180deg, #0e1117, #12151d);
+  border: 1px solid #262c39;
   border-radius: var(--radius-md);
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 3px 7px -2px rgba(0, 0, 0, 0.8), inset 0 -1px 0 rgba(255, 255, 255, 0.045);
 }
 
 .stash-header {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  gap: 7px;
   margin-bottom: 6px;
 }
 
@@ -7558,12 +7616,6 @@ textarea,
   height: 16px;
   color: var(--accent);
   opacity: 0.85;
-}
-
-.stash-count {
-  font-size: 11px;
-  color: var(--text-dim);
-  font-variant-numeric: tabular-nums;
 }
 
 /* How many bag items have never been opened. Beside the label rather than in the
@@ -7616,12 +7668,25 @@ textarea,
    loses the min-height it is trying to set.
 
    Shorter than the standard 68px CTA on purpose. This closes a sheet rather
-   than committing a run decision, and the roster above it needs the 14px more
-   than the button does. */
+   than committing a run decision, and the roster above it needs the room more
+   than the button does — and since 2026-09-10 the title bar carries a ✕ as
+   well, so this is the reachable duplicate rather than the only way out.
+
+   It sits in a footer BAND: the sheet has `overflow: hidden` and rounded
+   corners now, so a full-bleed button would have its own corners clipped
+   square against them. The band's padding is what keeps the button a button. */
 .resolve-button.roster-close-button {
-  min-height: 54px;
-  padding: 14px;
-  font-size: 16px;
+  min-height: 44px;
+  /* `width: auto`, not the inherited `width: 100%`: 100% of the panel's content box PLUS these
+     margins overhangs it by exactly their width, which the sheet's `overflow: hidden` then clips —
+     so the button silently loses its right edge and its label sits off centre. */
+  width: auto;
+  margin: 8px 10px 10px;
+  padding: 11px;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
 }
 
 /* Still used by the merge prompt, which is the one thing in the bag that has to
@@ -7806,20 +7871,37 @@ textarea,
   margin-bottom: 4px;
 }
 
+/* Slots sit UNDER the hero, so the card is a column again and the type stripe moves to the
+   top edge — a 3px left stripe on a 145px card reads as a crop mark, not an accent.
+   2026-09-10, per user direction: the flat panel-gray fill became a wash that carries the hero's
+   own type colour down from that stripe and fades out before the mount, so a card is lit by the
+   thing at the top of it rather than being a rectangle with a coloured edge. Tighter, too — 7px
+   of internal gap and 6px of padding were a card's worth of air across six of them. */
 .roster-mgmt-card {
-  /* Slots sit UNDER the hero, so the card is a column again and the type stripe moves to the
-     top edge — a 3px left stripe on a 145px card reads as a crop mark, not an accent. */
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 5px;
   min-width: 0;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--hero-color, var(--border)) 15%, #232838), #1a1e28 62%);
+  border: 1px solid #2e3444;
   border-top: 3px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 6px;
-  box-shadow: var(--hairline), var(--elev-1);
+  padding: 5px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 2px 6px -2px rgba(0, 0, 0, 0.7);
+}
+
+/* The stripe's own light, spilling a few px into the card under it. Drawn rather than done with a
+   box-shadow so it stays inside the border radius. */
+.roster-mgmt-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 14px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--hero-color, transparent) 32%, transparent), transparent);
+  pointer-events: none;
 }
 
 /* Somewhere the carried item could actually land. Marked on the CARD, not just the slot,
@@ -7848,7 +7930,6 @@ textarea,
 .roster-mgmt-card,
 .roster-mgmt-head,
 .stash-label,
-.stash-count,
 .stash-gold {
   transition: opacity var(--dur-mid) var(--ease-out);
 }
@@ -7868,7 +7949,6 @@ textarea,
 }
 
 .roster-panel.is-focused .stash-label,
-.roster-panel.is-focused .stash-count,
 .roster-panel.is-focused .stash-gold {
   opacity: 0.4;
 }
@@ -22090,13 +22170,34 @@ textarea,
    SEE the two the Forge would open. Flatter and fainter than
    `.item-box.empty`, which is a slot waiting for an item; this is not a slot
    yet, and must never read as one. */
+/* 2026-09-10: a blanked FITTING rather than a ghost. At `BASE_ITEM_SLOTS` = 1 most heroes show one
+   socket and two of these, so at 0.2 opacity two thirds of every mount was reading as blank card —
+   the single largest patch of nothing left on the sheet. Given a floor and a rim they read as
+   hardware that has not been opened yet, which is what they are; still flatter and fainter than
+   `.item-box.empty`, which is a slot waiting for an item and must never be confused with one. */
 .item-box.is-locked {
-  border-style: dotted;
-  background: none;
-  box-shadow: none;
-  opacity: 0.2;
+  border-style: solid;
+  border-color: #232936;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.12));
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.55);
+  opacity: 0.6;
   cursor: default;
   pointer-events: none;
+}
+
+/* The blank's own mark: one short bar across the middle, the plate over a fitting that is not
+   there yet. It is deliberately NOT the empty socket's four corner brackets — those say "put
+   something here", and this says the opposite. */
+.item-box.is-locked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 34%;
+  height: 2px;
+  border-radius: 1px;
+  background: #2f3646;
+  transform: translate(-50%, -50%);
 }
 
 /* A card nobody can act on (the Guild Hall's buy sheet): same block, no button. */
@@ -22473,17 +22574,13 @@ textarea,
    inside a full-height column, so a short roster leaves its slack in the MIDDLE rather than under
    the thing being tapped. */
 
-/* The board CENTRES in whatever it is given (2026-09-10, per user direction). The Banners left
-   this screen and their ~130px became a dead band between the squad and the bag, because the bag
-   was pinned to the foot and the squad to the head. Stretching the cards into it was tried and
-   is worse — six cards with a hole in the middle of each. Split evenly, the slack reads as margin
-   rather than as a gap, and a bag long enough to overflow still scrolls as it always did. */
+/* No slack to distribute any more: the panel is content-sized, so the board simply stacks and the
+   sheet ends where it ends. `justify-content: safe center` was here to split a ~113px dead band
+   evenly when the panel was forced to full height; there is no band now. */
 .gear-board {
   display: flex;
   flex-direction: column;
-  justify-content: safe center;
-  gap: 10px;
-  min-height: 100%;
+  gap: 8px;
 }
 
 /* --- The Mastery board (MasteryBoard.tsx) ----------------------------------------------------
@@ -23293,4 +23390,27 @@ textarea,
   .gear-carry {
     animation: none;
   }
+}
+
+/* The recess a hero's portrait is seated in (HeroSlotCard). Same figure/ground move the item
+   sockets in the mount below it make — a hole with something in it, rather than a sprite laid on
+   a panel — and cut in the hero's own type colour so the card's identity reads at a glance from
+   two places instead of only from its top stripe. */
+.roster-mgmt-plate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-xs);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.42), color-mix(in srgb, var(--hero-color, transparent) 16%, rgba(0, 0, 0, 0.18)));
+  border: 1px solid color-mix(in srgb, var(--hero-color, var(--border)) 28%, #2b3140);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* The Guild Hall's buy sheet runs its cards at two thirds; the plate goes with them. */
+.roster-mgmt-grid.is-compact .roster-mgmt-plate {
+  width: 26px;
+  height: 26px;
 }

@@ -340,24 +340,27 @@ export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
   const unopened = unseenCount(run.unseenItemIds, run.stash);
   const bagPanel = (
     <div className={`stash-panel${mergePairs.size > 0 ? ' has-merge' : ''}`}>
+      {/* No item count (2026-09-10, per user direction). The grid below IS the count, and a figure
+          restating the number of boxes the eye can already see was the one thing in this header
+          that never changed what anybody did. What is left are the two INBOXES — unopened, and
+          pairable — plus the purse. */}
       <div className="stash-header">
         <span className="stash-label">
           <HubGlyph name="bag" className="stash-label-glyph" />
-          Bag
+          Inventory
         </span>
         {unopened > 0 && (
           <span className="stash-unseen" aria-label={`${unopened} unopened`}>
             {unopened} new
           </span>
         )}
-        {/* What the bag can DO, beside what it holds — the one thing on this screen that is free. */}
+        {/* What the inventory can DO, beside what it holds — the one thing on this screen that is free. */}
         {mergePairs.size > 0 && (
           <span className="stash-merge-flag" aria-label={`${mergePairs.size / 2} merge${mergePairs.size > 2 ? 's' : ''} available`}>
             <MergeMark />
             {mergePairs.size / 2}
           </span>
         )}
-        <span className="stash-count">{run.stash.length}</span>
         <span className="stash-gold">
           <ResourceGlyph kind="gold" /> {run.gold}
         </span>

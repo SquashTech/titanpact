@@ -18,17 +18,17 @@ interface OwnedItem {
   key: string;
   ref: ItemRef;
   itemId: string;
-  /** "Bag", or the hero carrying it — the player picks the item, not the slot. */
+  /** "Inventory", or the hero carrying it — the player picks the item, not the slot. */
   holder: string;
 }
 
-/** Everything the player owns, bag first. Both services take equipped gear, so nothing comes off to be improved. */
+/** Everything the player owns, inventory first. Both services take equipped gear, so nothing comes off to be improved. */
 function ownedItems(run: RunState): OwnedItem[] {
   const out: OwnedItem[] = run.stash.map((itemId, index) => ({
     key: `stash:${index}`,
     ref: { kind: 'stash', index },
     itemId,
-    holder: 'Bag',
+    holder: 'Inventory',
   }));
   for (const entry of run.roster) {
     entry.equipment.forEach((itemId, index) => {
