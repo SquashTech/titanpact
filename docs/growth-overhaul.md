@@ -167,8 +167,22 @@ Evolutions are absolute, so nothing on the enemy side crossed one.
 
 ## 4. Mastery Scrolls and Mastery Rank
 
-**Mastery Scrolls are the only faucet for moves.** They are spent at the player's leisure on the
-Roster screen, alongside equipment.
+**Mastery Scrolls are the only faucet for moves.**
+
+**Revised 2026-09-10 (per user direction): a Scroll is poured where it is won, not at leisure.**
+The Roster's Mastery tab is gone; winning a Scroll raises `MasteryScreen`, the same six-row board
+pushed rather than pulled, with no way out but pouring. §10 below had flagged the failure this
+fixes — a count on a menu button "still signals admin waiting" — but the deeper argument is the
+one Rank itself makes: the ceiling sits behind the SPEND rather than behind a clock precisely so
+that holding is never better than spending, and a stock nobody has a reason to hold is not a
+strategy, it is a to-do list.
+
+The screen is LAST in the post-fight chain, after the Banner, the contract and the Crucible, so a
+hero recruited or evolved on that beat can take the Scroll it has only just become eligible for.
+What this costs is the **churn hedge**: a Scroll can no longer be banked for a hero you have not
+recruited yet. That is consistent with the rest of recruitment — a Guild hire arrives raw on
+purpose, a contract hero arrives finished on purpose — but it is the thing to watch if pivoting
+starts to feel punished.
 
 ### Why Rank exists
 
@@ -505,9 +519,14 @@ them. **None of these has changed yet** — they are in force until the phase th
   skipped, paid for in gold and a termination. That is meant to keep churn viable — but there is a
   point where it tips from *pivoting is an option* to *raising is a trap*, and starters start reading
   as fodder nobody spends a Crucible on.
-- **Do banked Scrolls read as homework?** Rank removes the incentive to hoard, but a Roster button
-  wearing "4 Scrolls" still signals admin waiting. Show a count, never an alert badge — and if the
-  screen still feels like a chore hub once equipment shares it, that is the signal to split them.
+- ~~**Do banked Scrolls read as homework?**~~ **ANSWERED, same day: yes.** Rank removed the
+  incentive to hoard, but a Roster button wearing "4 Scrolls" still signalled admin waiting, and
+  the shared screen did read as a chore hub. Both halves of the drafted fix were taken and then
+  some: equipment and Mastery are split, and Scrolls stopped being bankable at all — a Scroll is
+  poured on the beat it is won (§4). **What replaces this as the watch item:** the forced screen
+  fires ~4× an act now that the Skirmish pays one, stacked behind the level-up report, so the
+  post-fight chain is Victory → Level-up → Mastery → map. If that reads as long, the Skirmish
+  Scroll is the newest thing in it and the first to reconsider.
 - **Does the roster read too flat?** Uniform levelling means differentiation comes entirely from
   base stats, growth grades and the scarce axes. If it is not enough, the focus-hero XP dial (§3) is
   the drafted answer — but reach for it only after Rank has been played, not before.

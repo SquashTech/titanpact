@@ -28,6 +28,7 @@ import { ForgeScreen } from '../view/run/ForgeScreen';
 import { BlacksmithScreen } from '../view/run/BlacksmithScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
 import { LevelUpScreen } from '../view/run/LevelUpScreen';
+import { MasteryScreen } from '../view/run/MasteryScreen';
 import { CrucibleScreen } from '../view/run/CrucibleScreen';
 import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
 import { RecruitScreen } from '../view/run/RecruitScreen';
@@ -39,6 +40,7 @@ import { rollRunEvent } from '../run/events';
 import { SandboxBattleScreen } from '../view/run/SandboxBattleScreen';
 import { RunSummaryScreen } from '../view/run/RunSummaryScreen';
 import { heroes } from '../data/heroes';
+import { moves } from '../data/moves';
 import { allCombatants } from '../data/content';
 import { enemies, factions, basicEnemiesOf, finaleEnemies, ENDBRINGER_ID } from '../data/enemies';
 import { ActIntroScreen } from '../view/run/ActIntroScreen';
@@ -119,6 +121,7 @@ import { createStatusTestSides } from '../run/statusTestFight';
 import {
   anyEvolutionAvailable,
   availableEvolution,
+  canSpendScroll,
   fullMovepool,
   grantMasteryScrolls,
   SCROLLS_PER_ACT,
@@ -170,6 +173,8 @@ type Screen =
   | { kind: 'event'; nodeId: string; eventId: string }
   /** What the fight just did to the roster. First in the post-fight chain — it is the fight's own consequence. */
   | { kind: 'levelUp'; report: readonly HeroLevelUp[]; next: Screen }
+  /** A won Scroll, poured now. Never held, so this is the only place the Mastery board appears. */
+  | { kind: 'mastery'; next: Screen }
   /** Guardian's Banner after a Guardian win in acts 1-4. Not a map node, so no nodeId. */
   | { kind: 'guardianBanner'; next: Screen }
   /** The Crucible: pick one hero, and that hero evolves. A `nodeId` means it came off a map node. */
@@ -267,8 +272,9 @@ function createLevel4TestRun(): RunState {
     // Two mergeable pairs: a plain one, and one where both halves are enchanted so the
     // keep-which-enchant choice has somewhere to fire.
     stash: ['dagger.common', 'dagger.common', 'bow.common', 'spear.rare.blazing', 'spear.rare.tidal'],
-    // Enough to rank one hero to the top and still have a spread to weigh against it.
-    masteryScrolls: 9,
+    // Two, not nine: a Scroll is poured where it is won, so anything parked here is a forced
+    // MasteryScreen standing between this fixture and the map it exists to open.
+    masteryScrolls: 2,
     map: generateMap(randomSeed()),
     locationIds: generateItinerary(randomSeed()),
   };
@@ -304,6 +310,15 @@ function scrollRewardFor(nodeType: EncounterMapNodeType): number {
   return nodeType === 'skirmish' || nodeType === 'elite' ? SCROLLS_PER_SKIRMISH : 0;
 }
 
+/**
+ * Whether a Scroll is owed AND somebody can take it. The second half is what stops the forced
+ * screen becoming a wall: past the point where every hero is at max rank with an empty pool, a
+ * Scroll buys literally nothing, and raising a screen that cannot be resolved would trap the run.
+ */
+function masteryDue(run: RunState): boolean {
+  return run.masteryScrolls > 0 && run.roster.some((entry) => canSpendScroll(progressionTable, moves, run, entry));
+}
+
 function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): EquipmentDefinition | null {
   if (Math.random() >= EQUIPMENT_DROP_CHANCE[nodeType]) return null;
   const weights = rarityWeightsFor(actNumber, LOOT_SOURCE[nodeType]);
@@ -333,9 +348,6 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
       // lit, and this is the screen carrying it. Ahead of the node beat on purpose — it explains
       // what just happened, and the node beat explains what is next.
       if (unseenCount(run.unseenItemIds, run.stash) > 0) return 'equip';
-      // Same rule as gear, one beat behind it: the Scrolls are held, the Roster is where they
-      // are spent, and this is the screen carrying the count that says so.
-      if (run.masteryScrolls > 0) return 'scroll';
       // The scripted act is a corridor, so "the node ahead" is a single node. A branching act
       // has nothing to name and returns null rather than picking one arbitrarily.
       const ahead = reachableNodeIds(run);
@@ -344,6 +356,9 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
     }
     case 'levelUp':
       return 'levelUp';
+    // On the screen that is asking for the decision, which is the only place a Scroll now exists.
+    case 'mastery':
+      return 'scroll';
     case 'crucible':
       return 'evolution';
     case 'reward':
@@ -409,6 +424,19 @@ export function App() {
   // Title screen only. A checkpointed run now survives a reload, but everything between two
   // checkpoints does not, so a mid-fight reload would still cost the fight.
   useReloadOnNewBuild(screen.kind === 'title');
+
+  // A Scroll is never held (docs/growth-overhaul.md §4), so arriving at the map with one owed is
+  // the one thing that must not happen — that is the banked stock the forced screen replaced.
+  // Caught here rather than at each faucet: the fight chain slots the screen in explicitly, and
+  // this catches everything else at once — the Scroll Cache, the Guild Hall, and a save written
+  // by a build that still had a purse. It cannot loop, because `masteryDue` is false the moment
+  // the count is spent or nothing can spend it.
+  //
+  // Ahead of the autosave below on purpose: a checkpoint must never record an owed Scroll.
+  useEffect(() => {
+    if (screen.kind !== 'map' || !masteryDue(playerRun)) return;
+    setScreen({ kind: 'mastery', next: { kind: 'map' } });
+  }, [playerRun, screen.kind]);
 
   // Autosave. An effect rather than a call inside each transition handler for two reasons:
   // it sees state that has actually committed (several handlers still read the pre-setState
@@ -738,8 +766,13 @@ export function App() {
     // The Crucible is the GUARDIAN's beat, not every fight's (docs/growth-overhaul.md §5): five
     // forced a run, one per act, in the chain Guardian → Banner → Crucible → Pact Seal → act
     // intro. Team, hero, run — three scales ascending. Skipped when nothing is left to evolve.
+    // A Scroll is poured the moment it is won, never held (docs/growth-overhaul.md §4). LAST in
+    // the chain — after the Banner, the contract and the Crucible — so a hero recruited or evolved
+    // this beat can take the Scroll it has only just become eligible for.
+    const afterMastery: Screen = masteryDue(next) ? { kind: 'mastery', next: afterScreen } : afterScreen;
+
     const crucible = isGuardian && anyEvolutionAvailable(progressionTable, next.roster);
-    const afterCrucible: Screen = crucible ? { kind: 'crucible', next: afterScreen } : afterScreen;
+    const afterCrucible: Screen = crucible ? { kind: 'crucible', next: afterMastery } : afterMastery;
 
     // Gate order is deliberate: banner, then recruit, then the Crucible — so a hero recruited
     // this beat already stands under the Banner, and can walk into the Crucible itself.
@@ -1143,6 +1176,10 @@ export function App() {
 
       {screen.kind === 'levelUp' && (
         <LevelUpScreen run={playerRun} report={screen.report} onContinue={() => setScreen(screen.next)} />
+      )}
+
+      {screen.kind === 'mastery' && (
+        <MasteryScreen run={playerRun} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />
       )}
 
       {screen.kind === 'guardianBanner' && (

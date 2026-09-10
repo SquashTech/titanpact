@@ -13,8 +13,6 @@ import { ItemBox, ItemReadout, ItemSummaryPopup, slotBoxes } from '../shared/Equ
 import { HeroSlotCard, HeroSlotGrid } from '../shared/HeroSlotCard';
 import { EquipSwapScreen } from './EquipSwapScreen';
 import { RunRelicsPanel } from './RunRelicsPanel';
-import { MasteryBoard } from './MasteryBoard';
-import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { playSfx } from '../../audio/sfx';
 
@@ -26,12 +24,8 @@ const EQUIP_SEAT_MS = 420;
 interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
-  /** Which board to land on. Gear unless the caller has a reason. */
-  initialBoard?: BoardId;
   onClose: () => void;
 }
-
-type BoardId = 'gear' | 'mastery';
 
 /** Either end of a move: a hero's slot, or one of the bag's. */
 type SlotRef = { kind: 'hero'; rosterId: string; index: number } | { kind: 'stash'; index: number };
@@ -57,13 +51,7 @@ function parseRefKey(raw: string): SlotRef | null {
  * and no longer does: this is the screen the player opens between every node, and the one
  * irreversible verb on it was one mis-tap from the gesture everything else uses.
  */
-export function RosterManagementScreen({ run, onRunChange, initialBoard = 'gear', onClose }: Props) {
-  /**
-   * Gear and Mastery are two boards over one roster. Both answer "hand this out before the next
-   * node", and both want the same six heroes in front of them — so they are one door with a
-   * strip, not two buttons on the map (docs/growth-overhaul.md §10).
-   */
-  const [board, setBoard] = useState<BoardId>(initialBoard);
+export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
   const [selected, setSelected] = useState<SlotRef | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
@@ -328,11 +316,6 @@ export function RosterManagementScreen({ run, onRunChange, initialBoard = 'gear'
    * flow: nothing on the screen may move when an item is picked up or when a different one is,
    * so the block that holds it has one height and the card fills it whatever the item carries.
    */
-  const boards: TabSpec<BoardId>[] = [
-    { id: 'gear', label: 'Gear', glyph: 'equipment', count: run.stash.length },
-    { id: 'mastery', label: 'Mastery', glyph: 'mastery', count: run.masteryScrolls },
-  ];
-
   const focusBar = selectedItem && (
     <div className="equip-focus-bar">
       <ItemReadout item={selectedItem} />
@@ -373,9 +356,6 @@ export function RosterManagementScreen({ run, onRunChange, initialBoard = 'gear'
           </button>
         </div>
         <div className="screen-scroll">
-          {board === 'mastery' ? (
-            <MasteryBoard run={run} onRunChange={onRunChange} onInspect={(entry, hero) => setInspecting({ hero, entry })} />
-          ) : (
           <div className="gear-board">
           <div className="roster-top-block">
             <RunRelicsPanel run={run} />
@@ -420,10 +400,7 @@ export function RosterManagementScreen({ run, onRunChange, initialBoard = 'gear'
 
           {bagPanel}
           </div>
-          )}
         </div>
-
-        <TabStrip tabs={boards} active={board} onSelect={setBoard} className="is-boards" />
 
         {/* Outside the scroll, so it is pinned to the bottom of a full-height panel and always
             in thumb reach. The header ✕ stays — it is where every other overlay puts it — but

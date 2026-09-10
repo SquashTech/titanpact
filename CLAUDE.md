@@ -136,7 +136,21 @@ don't silently override it.
 - **Moves come from ONE faucet: Mastery Scrolls, gated by Mastery Rank** (2026-09-10,
   `docs/growth-overhaul.md` §4). A Scroll is poured into one hero on the Roster's Mastery
   board; it offers **one** move from that hero's pool — take it or decline, and the move is
-  burned either way — and it ticks the rank bar. **`SCROLLS_PER_RANK` = 3, `MAX_MASTERY_RANK`
+  burned either way — and it ticks the rank bar.
+  **A Scroll is POURED WHERE IT IS WON, never held** (2026-09-10, per user direction, replacing
+  the Roster's Mastery tab): winning one raises `MasteryScreen` — the same six-row board, pushed
+  rather than pulled — and there is no way out but pouring. Rank was built so the ceiling sits
+  behind the SPEND rather than behind a clock, so holding is never better than spending, and a
+  stock with no reason to be held is not a strategy but a to-do list (`docs/growth-overhaul.md`
+  §10 had named this: "a Roster button wearing 4 Scrolls still signals admin waiting"). It is LAST
+  in the post-fight chain, after the Banner, the contract and the Crucible, so a hero recruited or
+  evolved this beat can take it. **What it costs is the churn hedge** — a Scroll can no longer be
+  saved for a hero not yet recruited; that matches recruitment, where a hire arrives raw and a
+  contract hero arrives finished, but it is what to watch if pivoting starts feeling punished.
+  `run.masteryScrolls` survives only as the count owed DURING that beat: App refuses to reach the
+  map with one outstanding, which is also what catches a Cache, a Guild Hall purchase and an old
+  save. The one exception is a Scroll nothing can take (every hero max rank, pool empty) — the
+  screen would be a wall, so it is not raised (`masteryDue`). **`SCROLLS_PER_RANK` = 3, `MAX_MASTERY_RANK`
   = 3**, so six max a hero; rank 1 offers Early, 2 Mid (Early expires), 3 Mid+Late, mapping
   1:1 onto the authored 6/6/4 pools, so **no hero needed re-authoring**. Rank is **DERIVED**
   from `RosterEntry.masteryScrollsSpent`, never stored. **The tick lands before the roll**, so

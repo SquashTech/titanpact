@@ -20,7 +20,6 @@ import {
 import { playSfx } from '../../audio/sfx';
 import { getTypeColor } from '../combat/typeColors';
 import { HeroPortrait } from '../shared/HeroPortrait';
-import { ResourceGlyph } from '../shared/RunGlyph';
 import { TypeBadge } from '../shared/TypeBadge';
 import { useLongPress } from '../shared/MoveTile';
 import { MoveOfferOverlay } from './MoveOfferOverlay';
@@ -77,8 +76,11 @@ function RankPips({ spent }: { spent: number }) {
  * has to carry the four moves the hero already holds — the whole question a Scroll asks is "is
  * there room, and for what", and that is unreadable on a half-width card.
  *
- * The purse is at the foot, in thumb reach, like the Gear board's bag. **Six rows plus the purse
- * have to fit the panel without scrolling** — six is ROSTER_CAP, so that is the board's worst
+ * The list only, with no count and no chrome: since 2026-09-10 a Scroll is never held, so this is
+ * mounted by MasteryScreen at the moment one is won and by nothing else. How many are left to
+ * pour is the SCREEN's readout — this is the six answers to it.
+ *
+ * **Six rows have to fit the screen without scrolling.** Six is ROSTER_CAP, so that is the worst
  * case, and it is the budget anything added to a row comes out of.
  */
 export function MasteryBoard({ run, onRunChange, onInspect }: Props) {
@@ -134,20 +136,6 @@ export function MasteryBoard({ run, onRunChange, onInspect }: Props) {
             />
           );
         })}
-      </div>
-
-      {/* At the foot, like the Gear board's bag, and for the same reason it moved here
-          (2026-09-10, per user direction): a full roster of six is the cap, and with the tray at
-          the top the board could not show all six without scrolling. A count and a word — the
-          instruction it used to carry was costing a hero row to say what a tap says. */}
-      <div className="mastery-purse">
-        <span className="mastery-purse-glyph">
-          <ResourceGlyph kind="scroll" />
-        </span>
-        <span className="mastery-purse-label">
-          {run.masteryScrolls === 1 ? 'Mastery Scroll' : 'Mastery Scrolls'}
-        </span>
-        <span className="mastery-purse-count">{run.masteryScrolls}</span>
       </div>
 
       {offer && offerEntry && (

@@ -238,9 +238,10 @@ export function GuildHallPanel({
           </span>
           <span className="guild-hall-contract-body">
             <span className="guild-hall-contract-name">Mastery Scroll</span>
-            <span className="guild-hall-contract-desc">Teach one hero a new move, from the Roster.</span>
+            <span className="guild-hall-contract-desc">Teach one hero a new move. Poured on the way out.</span>
           </span>
-          <span className="guild-hall-contract-held">{run.masteryScrolls} held</span>
+          {/* No held count: a Scroll bought here is poured the moment the Guild Hall is left
+              (App.tsx raises MasteryScreen on the way back to the map), never carried. */}
           <span className="guild-hall-contract-price">{SCROLL_PURCHASE_COST}g</span>
         </button>
       </div>

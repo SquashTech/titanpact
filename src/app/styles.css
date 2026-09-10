@@ -14040,27 +14040,6 @@ textarea,
   text-align: right;
 }
 
-/*
- * The one chip that is a control: XP the player banked instead of spending has
- * somewhere to go from here, and a HUD number you can act on has to say so.
- * Tinted rather than raised — it is still a readout first, and the raised
- * pressable language on this screen belongs to .map-footer-button.
- */
-.map-stat.is-spendable {
-  cursor: pointer;
-  color: var(--hp-high);
-  background: linear-gradient(180deg, rgba(76, 175, 106, 0.24), rgba(76, 175, 106, 0.1));
-  box-shadow: var(--hairline), 0 0 0 1px rgba(76, 175, 106, 0.34);
-}
-
-.map-stat.is-spendable:hover {
-  box-shadow: var(--hairline), 0 0 0 1px rgba(76, 175, 106, 0.6);
-}
-
-.map-stat.is-spendable:active {
-  transform: translateY(1px);
-}
-
 /* Supplied pixel-art used for durable run landmarks.  These are kept at a
    true 16px half-scale (the same rule as combat status glyphs) so they stay
    crisp rather than becoming soft browser-scaled stickers. */
@@ -22502,9 +22481,11 @@ textarea,
 
 /* --- The Mastery board (MasteryBoard.tsx) ----------------------------------------------------
    Full-width rows, not the Gear board's 2x3 cards: a row has to carry the four moves the hero
-   already holds, because "is there room, and for what" is half of what a Scroll asks. Same
-   column shape as the Gear board — the list grows down, the purse pins to the bottom of the
-   reach exactly as the bag does — so switching tabs never moves the ground. */
+   already holds, because "is there room, and for what" is half of what a Scroll asks.
+
+   The list and nothing else. It was a tab on the Roster screen with a count at its foot until
+   2026-09-10; a Scroll is now poured the moment it is won, so MasteryScreen mounts this and owns
+   everything around it — the header, the count still owed, and the way out. */
 
 .mastery-board {
   display: flex;
@@ -22513,8 +22494,8 @@ textarea,
   gap: 10px;
 }
 
-/* Metrics here are load-bearing, not taste: six rows plus the purse are what a roster at the
-   ROSTER_CAP puts on this board, and they have to fit the panel without scrolling. Anything
+/* Metrics here are load-bearing, not taste: six rows are what a roster at the ROSTER_CAP puts
+   on this board, and they have to fit under MasteryScreen's header without scrolling. Anything
    added to a row has to come back out of these. */
 .mastery-hero-list {
   display: flex;
@@ -22662,52 +22643,6 @@ textarea,
   letter-spacing: 0.02em;
   color: var(--text-dim);
 }
-
-/* --- The purse ------------------------------------------------------------------------------
-   What is left to spend, at the foot, in the Gear board's bag-header shape — label left, count
-   right — so the two boards read as one sheet. It sat at the top as a tall tray until 2026-09-10;
-   a roster at the six-hero cap could not fit on the board with it there, and the only thing it
-   said that a tap does not is the count, which the tab strip carries anyway. */
-
-.mastery-purse {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: auto;
-  padding: 7px 10px;
-  border: 1px solid color-mix(in srgb, #c9a2ff 28%, var(--border));
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, #c9a2ff 8%, var(--surface-sunken));
-}
-
-.mastery-purse-glyph {
-  display: inline-flex;
-  color: #c9a2ff;
-}
-
-.mastery-purse-glyph .resource-glyph {
-  width: 15px;
-  height: 15px;
-}
-
-.mastery-purse-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-/* Pushed right, like the bag header's gold: the number is the thing being checked, and it lands
-   on the same edge on both boards. */
-.mastery-purse-count {
-  margin-left: auto;
-  font-size: 15px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: #c9a2ff;
-}
-
 
 /* --- The Scroll's move offer (MoveOfferOverlay.tsx) ------------------------------------------
    Portalled over whichever board raised it, so the roster stays behind it and the answer lands

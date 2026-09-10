@@ -188,8 +188,9 @@ declining every offer — and asserts no level-up ever falls through to a master
 
 # Part 1b — Mastery Scrolls and Mastery Rank (2026-09-10)
 
-**Moves come from ONE faucet: a Mastery Scroll, poured into one hero on the Roster's Mastery
-board.** Full rationale in `docs/growth-overhaul.md` §4; this section is the spec.
+**Moves come from ONE faucet: a Mastery Scroll, poured into one hero on `MasteryScreen` — raised
+the moment a Scroll is won, and not leavable until it is spent.** Full rationale in
+`docs/growth-overhaul.md` §4; this section is the spec.
 
 - **A Scroll offers ONE move** from the hero's eligible pool — take it or decline, and the move
   is burned either way (the offer-spent-by-being-made rule above, unchanged).

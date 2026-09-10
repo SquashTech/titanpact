@@ -166,10 +166,11 @@ const INSTANT_KIND: Partial<Record<RewardNodeType, HoardKind>> = {
 };
 
 /**
- * The instant reward nodes and the Equipment Cache (docs/run-loop.md): the Cache offers 3, and gold,
- * XP and Scrolls pay out on arrival — there was never a decision behind their Claim button, only a
- * tap between the player and the same Continue every other node ends on (2026-09-08, per user
- * direction). Which hero a Scroll goes to IS a decision, but it is the Roster screen's, made later.
+ * The instant reward nodes and the Equipment Cache (docs/run-loop.md): the Cache offers 3, and
+ * gold and Scrolls pay out on arrival — there was never a decision behind their Claim button, only
+ * a tap between the player and the same Continue every other node ends on (2026-09-08, per user
+ * direction). Which hero a Scroll goes to IS a decision, and MasteryScreen asks it on the way back
+ * to the map — the node hands the Scroll over, it does not spend it.
  */
 export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onClaimEquipment }: Props) {
   const [currencyAmount] = useState(() => 15 + Math.floor(Math.random() * 16)); // 15-30
@@ -227,7 +228,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
           eyebrow="Spoils"
           title="A Lone Scroll"
           glyph={<ResourceGlyph kind="scroll" className="node-header-resource" />}
-          readout="One Mastery Scroll. Pour it into a hero from the Roster."
+          readout="One Mastery Scroll — poured into a hero before you move on."
         />
       )}
 
@@ -236,7 +237,7 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
           eyebrow="A Cache Opens"
           title="Scroll Cache"
           glyph={<ResourceGlyph kind="scroll" className="node-header-resource" />}
-          readout="Mastery Scrolls. Pour them into a hero from the Roster."
+          readout="Mastery Scrolls — poured into your heroes before you move on."
         />
       )}
 

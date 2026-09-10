@@ -232,7 +232,7 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30). **2026-09-08, per user direction:** it pays out on arrival and the screen counts the PURSE up to its new total, coin by coin, over a Claim button that was never a decision — the drop size is a chip beside a number the player can act on, rather than a number they cannot. The two Scroll nodes share that beat. |
 | `loneScrollReward` ("A Lone Scroll") | `NodeRewardScreen` — an instant grant of `LONE_SCROLL_COUNT` = 1 Mastery Scroll. The commoner, smaller half of the Scroll Cache's grant. It was the XP Cache until 2026-09-10, when levels went automatic and there was no pool left to pay into; it kept its seat rather than being deleted (per user direction) because the reward rows were already down to six types. Distinguished from the Cache on the map by its glyph — one sealed sheet against a bundle — since the tiles carry no labels. |
 | `forgeReward` ("The Forge") | `ForgeScreen` — pick one roster hero to gain **+1 item slot** for the rest of the run (`runProgress.ts` `grantItemSlot`, stored on `RosterEntry.bonusItemSlots`, capped at `MAX_ITEM_SLOTS` = 3). **2026-09-06**, replacing the three slot-specific cache nodes (`weaponReward`/`armorReward`/`accessoryReward`), which lost their meaning when items stopped having categories — most of their frequency went to `equipmentReward`, whose weight went 20 → 40. The scarcest thing on the reward row (weight 8) on purpose: it is permanent, it compounds with every drop after it, and it is the only reward here a hero can be at the cap for — a roster entirely at 3 slots makes the node a dead draw, which is what makes spending it a choice — and at the 2026-09-07 cap of 3 that arrives materially sooner. |
-| `scrollReward` ("Scroll Cache") | `NodeRewardScreen` — an instant grant of `SCROLL_REWARD_COUNT` = 2 Mastery Scrolls, counted up on arrival like gold and XP. Which hero they go to is not asked here: a Scroll is spent at the player's leisure on the Roster's Mastery board. See "Mastery Scrolls" below. |
+| `scrollReward` ("Scroll Cache") | `NodeRewardScreen` — an instant grant of `SCROLL_REWARD_COUNT` = 2 Mastery Scrolls, counted up on arrival like gold and XP. Which hero they go to is not asked here, but it is asked immediately after: `MasteryScreen` is raised on the way back to the map. See "Mastery Scrolls" below. |
 | `passiveReward` ("Boon") | `BoonNodeScreen` — pick 1 of 3 passives, then the hero it settles on (`grantEventPassive`, stored on `RosterEntry.bonusPassiveGrants`). See "Boons" below. |
 | `classReward` ("Mentor's Hall") | `ClassNodeScreen` — pick 1 of 3 Classes (`src/data/classes.ts`), then pick which roster hero learns it, filtered to heroes with no Class yet (`src/run/classes.ts` `grantClass`, stored on `RosterEntry.classId` — a hero can hold at most one Class per run, so `grantClass` REPLACES rather than stacks). If every roster hero already has a Class, the offer is simply wasted. The screen names the heroes it CAN still teach, portraits and all, while the three disciplines are being read (2026-09-08) — that filtered roster is the whole reason to take or leave one, and it used to be a screen away behind the roster glyph. **Not in `REWARD_WEIGHTS`** (2026-08-22 revision, per user direction) — the only way to encounter this node type is a forced Mentor row (§1), never a random pick-1-of-3 option in any act. Acts 1-4 each guarantee one, so a run can Class up to four heroes; the offer filters to heroes with no Class yet and is wasted only once every hero has one. |
 | `tutorReward` ("Tutor") | `TutorNodeScreen` — pick one roster hero, then **any** move from that hero's Scroll pool. See "The Tutor" below. Acts 4-5 only. |
@@ -373,8 +373,8 @@ Playtest.
 
 ### Mastery Scrolls (2026-09-10, Growth Overhaul phase 2)
 
-**The run's only faucet for moves.** A Scroll is poured into one hero on the Roster screen's
-Mastery board; it offers **one** move from that hero's pool — take it or decline, and the move is
+**The run's only faucet for moves.** A Scroll is poured into one hero on `MasteryScreen`, which
+is raised the moment one is won and cannot be left until it is spent; it offers **one** move from that hero's pool — take it or decline, and the move is
 burned either way — and it ticks that hero's **Mastery Rank**, which is what gates the tiers
 (Early at 1, Mid at 2, Late at 3; three Scrolls a rank, six to max). Spec and rationale:
 `docs/leveling-and-ranks.md` Part 1b and `docs/growth-overhaul.md` §4.
@@ -385,11 +385,12 @@ Hall at `SCROLL_PURCHASE_COST` = 35g. ~15-18 reachable, against the six that max
 the floor alone is one maxed hero and a second half-ranked, and everything past that is a real
 spread-vs-concentrate call.
 
-**They are a STOCK, not an inbox.** Banking one is a legitimate play — there may be no hero worth
-pouring it into yet, and a recruit two nodes away changes the answer — so the count is stated on
-the map's purse and on the Mastery tab, and **nothing anywhere flags it as waiting**
-(`docs/growth-overhaul.md` §10). That is the opposite of the bag's unopened-item badge, which is
-an inbox and empties by being attended to.
+**They are neither a stock nor an inbox — they are an EVENT** (2026-09-10, per user direction,
+reversing the stock reading below). A Scroll is poured on the beat it is won, so there is nothing
+to bank, nothing to flag and no count to carry: the map's purse chip is gone and the Roster is
+back to being the Gear screen alone. What banking used to buy was the hedge against roster churn —
+not pouring into a hero you are about to terminate — and that is now simply gone, which is the
+thing to watch. Everything else it appeared to buy, Rank had already neutralised.
 
 **Open — the income figures are all first-pass.** Measured at 200 batch runs, only 38% of heroes
 that reach act 4+ get to rank 2 and 23% to rank 3, against 97.9%/54.9% under the level gate this

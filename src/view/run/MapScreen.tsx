@@ -28,27 +28,15 @@ interface Props {
 }
 
 /**
- * One run resource in the header track. A spendable Mastery Scroll is the only one with somewhere
- * to go from this screen, so it is the only one that is ever a button.
+ * One run resource in the header track. Every one of them is a pure readout — nothing in the
+ * purse is spendable from here any more, now that a Scroll is poured where it is won.
  */
-function ResourceStat({ kind, label, value, onSpend }: { kind: ResourceKind; label: string; value: number; onSpend?: () => void }) {
-  const body = (
-    <>
+function ResourceStat({ kind, label, value }: { kind: ResourceKind; label: string; value: number }) {
+  return (
+    <span className="map-stat" aria-label={`${label}: ${value}`}>
       <ResourceGlyph kind={kind} />
       <span className="map-stat-value">{value}</span>
-    </>
-  );
-  if (!onSpend) {
-    return (
-      <span className="map-stat" aria-label={`${label}: ${value}`}>
-        {body}
-      </span>
-    );
-  }
-  return (
-    <button type="button" className="map-stat is-spendable" onClick={onSpend} aria-label={`${label}: ${value} — spend now`} title="Spend now">
-      {body}
-    </button>
+    </span>
   );
 }
 
@@ -137,8 +125,7 @@ function MapPlacard({ location }: { location: LocationDefinition }) {
 // The run's hub (docs/run-loop.md). Levels are automatic (run/growth.ts) and nothing is spent
 // here — the header states where the run stands, the purse states what is still to hand out.
 export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAbandonRun }: Props) {
-  /** Null while closed; otherwise the board Manage Roster opens on. */
-  const [rosterBoard, setRosterBoard] = useState<'gear' | 'mastery' | null>(null);
+  const [rosterOpen, setRosterOpen] = useState(false);
   const [showReference, setShowReference] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   // Two taps to abandon: quitting is reversible now, but abandoning deletes the save.
@@ -200,15 +187,8 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
         <div className="map-purse">
           <ResourceStat kind="gold" label="Gold" value={run.gold} />
           <ResourceStat kind="contract" label="Recruit Contracts" value={run.recruitContracts} />
-          {/* A stock, not an inbox — banking a Scroll is a legitimate play, so the count is
-              stated and nothing is ever flagged as waiting (docs/growth-overhaul.md §10). The
-              chip is a shortcut to the board, which is the only place one can be spent. */}
-          <ResourceStat
-            kind="scroll"
-            label="Mastery Scrolls"
-            value={run.masteryScrolls}
-            onSpend={run.masteryScrolls > 0 ? () => setRosterBoard('mastery') : undefined}
-          />
+          {/* No Scroll chip: since 2026-09-10 a Scroll is poured the moment it is won and never
+              held, so the count here would read 0 for the whole run (docs/growth-overhaul.md §4). */}
         </div>
         <button
           type="button"
@@ -254,7 +234,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
           // Inline, so it has to carry the alert colour too: a custom property set here outranks
           // anything .has-unopened could say about it from the stylesheet.
           style={{ '--btn-color': waiting.total > 0 ? 'var(--physical)' : 'var(--ally)' } as CSSProperties}
-          onClick={() => setRosterBoard('gear')}
+          onClick={() => setRosterOpen(true)}
         >
           <span className="map-footer-icon"><HubGlyph name="roster" /></span>
           {/* The label says what is waiting, not where you are going. A badge alone is a mark the
@@ -318,14 +298,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAba
         </div>
       )}
 
-      {rosterBoard && (
-        <RosterManagementScreen
-          run={run}
-          onRunChange={onRunChange}
-          initialBoard={rosterBoard}
-          onClose={() => setRosterBoard(null)}
-        />
-      )}
+      {rosterOpen && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setRosterOpen(false)} />}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
       {previewNode && <MapNodePreviewPopup node={previewNode} onClose={() => setPreviewNode(null)} />}
     </div>

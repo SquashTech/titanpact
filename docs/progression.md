@@ -267,18 +267,18 @@ mind about what it is called cannot be.
 handled. A figure wired to a stock the player routinely sits on would be lit most of the run,
 which is the definition of a mark the eye learns to skip.
 
-**Mastery Scrolls deliberately do NOT ride that label** (2026-09-10). They are a stock — banking
-one until there is a hero worth pouring it into is a real play — so the count is stated on the
-map's purse chip and on the Mastery tab inside, and nothing flags them as waiting
-(`docs/growth-overhaul.md` §10: show a count, never an alert badge). The purse chip is also a
-shortcut straight to the board, the same affordance the XP chip has.
+**Mastery Scrolls do not ride that label either, because they never wait** (2026-09-10, revised
+the same day). They were briefly a stock with a purse chip and a Roster tab; a Scroll is now poured
+on the beat it is won (`MasteryScreen`), so there is no count to state and no badge to suppress.
+The waiting-gear problem this section is about simply has no Scroll equivalent.
 
-**Two boards, one roster** (2026-09-10). Gear and Mastery share the screen under a tab strip:
-both answer "hand this out before the next node", and both want the same six heroes in front of
-them. Gear is 2x3 cards because an item slot is a drop target; Mastery is full-width rows because
-a row has to carry the four moves the hero already holds — "is there room, and for what" is half
-of what a Scroll asks, and that is unreadable at half width. §10 flags the split as a watch item:
-if the screen reads as a chore hub once both are on it, that is the signal to separate them.
+**One board, not two** (2026-09-10, revised the same day). Gear and Mastery briefly shared the
+screen under a tab strip. `growth-overhaul.md` §10 had flagged that split as a watch item — "if the
+screen reads as a chore hub once both are on it, that is the signal to separate them" — and it did,
+so they are separated: the Roster screen is Gear alone, and Mastery is now a screen raised at the
+moment a Scroll is won (`MasteryScreen`). It keeps the full-width rows, because a row has to carry
+the four moves the hero already holds — "is there room, and for what" is half of what a Scroll asks,
+and that is unreadable at half width.
 
 The reason is that the gate had stopped being a decision and become a toll. Its cost was one
 mandatory screen per drop, and it was buying nothing:
