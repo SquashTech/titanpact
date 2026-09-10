@@ -27,7 +27,7 @@ import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScr
 import { ForgeScreen } from '../view/run/ForgeScreen';
 import { BlacksmithScreen } from '../view/run/BlacksmithScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
-import { LevelUpScreen } from '../view/run/LevelUpScreen';
+import { EvolutionGateScreen } from '../view/run/EvolutionGateScreen';
 import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
 import { RecruitScreen } from '../view/run/RecruitScreen';
 import { RecruitFanfare } from '../view/run/RecruitFanfare';
@@ -79,7 +79,6 @@ import {
   tutorialBeat,
   tutorialContractOffers,
   tutorialEncounterFor,
-  tutorialFocusRosterId,
   tutorialLockedActiveRosterIds,
   tutorialPayoutFor,
   TUTORIAL_STARTER_IDS,
@@ -96,7 +95,8 @@ import {
   type EncounterNodeType,
   type Encounter,
 } from '../run/enemyGen';
-import { actScaling, encounterHeroCountOverride, trainingPointsFor, type ScalingTrack } from '../run/difficulty';
+import { actScaling, encounterHeroCountOverride, type ScalingTrack } from '../run/difficulty';
+import { grantEncounterLevels, levelsForEncounter } from '../run/growth';
 import { generateItinerary, locationBias, locationForAct } from '../run/locations';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
@@ -109,7 +109,6 @@ import {
   advanceToNode,
   advanceToNextAct,
   grantCurrencyReward,
-  grantUpgradeReward,
   grantContractReward,
   stashItem,
   recordBrokenSeal,
@@ -119,7 +118,6 @@ import { createStatusTestSides } from '../run/statusTestFight';
 import {
   availableEvolution,
   fullMovepool,
-  canAffordAnyLevelUp,
   grantMasteryScrolls,
   SCROLLS_PER_ACT,
 } from '../run/progression';
@@ -144,7 +142,7 @@ type Screen =
       squad: Squad;
       encounter: Encounter;
       goldReward: number;
-      trainingPointsReward: number;
+      levelsGained: number;
       /** Rolled at squad-confirm time so the victory screen can spotlight it; handleFightResolved reuses it. */
       equipmentReward: EquipmentDefinition | null;
     }
@@ -167,7 +165,8 @@ type Screen =
   | { kind: 'event'; nodeId: string; eventId: string }
   /** Guardian's Banner after a Guardian win in acts 1-4. Not a map node, so no nodeId. */
   | { kind: 'guardianBanner'; next: Screen }
-  | { kind: 'levelUp'; next: Screen }
+  /** One or more heroes standing at an unresolved Evolution. Phase 4 moves this to the Crucible. */
+  | { kind: 'evolution'; next: Screen }
   /** Roster-full replacement, Guild Hall path only; the contract path resolves in RecruitScreen. */
   | { kind: 'rosterReplace'; candidate: RosterReplaceCandidate; next: Screen }
   /** Offers sampled once in handleFightResolved; only pushed when the player holds a contract. */
@@ -217,7 +216,7 @@ function addHeroes(run: RunState, heroIds: readonly string[], level?: number): R
  */
 function createStartingRun(heroIds: readonly string[], tutorial: boolean, seenBeatIds: readonly string[]): RunState {
   return {
-    ...addHeroes(createRunState(0, 40), heroIds),
+    ...addHeroes(createRunState(40), heroIds),
     map: tutorial ? generateTutorialMap(randomSeed()) : generateMap(randomSeed()),
     locationIds: generateItinerary(randomSeed()),
     tutorial,
@@ -234,7 +233,7 @@ function createLocationVisitRun(locationId: string): RunState {
   const heroIds = shuffled(Object.keys(heroes)).slice(0, ROSTER_CAP);
   const rest = shuffled(Object.keys(locations).filter((id) => id !== locationId));
   return {
-    ...addHeroes(createRunState(0, 40), heroIds),
+    ...addHeroes(createRunState(40), heroIds),
     map: generateMap(randomSeed()),
     locationIds: [locationId, ...rest].slice(0, TOTAL_ACTS),
   };
@@ -252,7 +251,7 @@ function shuffled<T>(items: readonly T[]): T[] {
 
 /** TEMPORARY DEV/TEST — a full roster one level under Evolution with one point to spend. Remove with its TitleScreen button. */
 function createLevel4TestRun(): RunState {
-  const base = addHeroes(createRunState(1, 999), Object.keys(heroes).slice(0, ROSTER_CAP), 4);
+  const base = addHeroes(createRunState(999), Object.keys(heroes).slice(0, ROSTER_CAP), 4);
   // Some worn, some carried: Manage Roster's gear half is only exercisable with both.
   const worn = ['sword.common', 'staff.common', 'sword.common.blazing'];
   return {
@@ -297,12 +296,13 @@ function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): Eq
 }
 
 /** The map, behind the level-up gate if anyone can afford one and the player has not banked the pool. */
-function levelUpPending(run: RunState): boolean {
-  return canAffordAnyLevelUp(run) && !run.levelUpDeferred;
+function evolutionPending(run: RunState): boolean {
+  return run.roster.some((entry) => !!availableEvolution(progressionTable, entry));
 }
 
-function mapAfterLevelUp(run: RunState): Screen {
-  return levelUpPending(run) ? { kind: 'levelUp', next: { kind: 'map' } } : { kind: 'map' };
+/** The map, behind the Evolution gate if anyone is standing at one. */
+function mapAfterEvolution(run: RunState): Screen {
+  return evolutionPending(run) ? { kind: 'evolution', next: { kind: 'map' } } : { kind: 'map' };
 }
 
 /**
@@ -334,10 +334,8 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
       const node = ahead.length === 1 ? run.map?.nodes[ahead[0]] : undefined;
       return node ? mapBeatKey(node.type) : null;
     }
-    case 'levelUp':
-      // The Evolution beat outranks the plain one: reaching a fork is the bigger lesson, and the
-      // level-up basics have long since been spoken by the time one is affordable.
-      return run.roster.some((entry) => availableEvolution(progressionTable, entry)) ? 'evolution' : 'levelUp';
+    case 'evolution':
+      return 'evolution';
     case 'reward':
       return rewardBeatKey(screen.nodeType);
     case 'classNode':
@@ -356,7 +354,7 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
 }
 
 export function App() {
-  const [playerRun, setPlayerRun] = useState<RunState>(() => createRunState(0, 40));
+  const [playerRun, setPlayerRun] = useState<RunState>(() => createRunState(40));
   const [screen, setScreen] = useState<Screen>({ kind: 'title' });
   const shellRef = useRef<HTMLDivElement>(null);
 
@@ -624,7 +622,9 @@ export function App() {
       squad,
       encounter,
       goldReward: payout?.gold ?? goldRewardFor(mapNodeType),
-      trainingPointsReward: payout?.xp ?? trainingPointsFor(mapNodeType, playerRun.actNumber),
+      // Read off the win this fight WILL be: the curve is a function of encounters won, so the
+      // figure is known before the fight rather than rolled after it.
+      levelsGained: levelsForEncounter(playerRun.encountersWon + 1),
       equipmentReward,
     });
   }
@@ -632,7 +632,6 @@ export function App() {
   function handleFightResolved(
     nodeId: string,
     goldReward: number,
-    trainingPointsReward: number,
     equipmentReward: EquipmentDefinition | null,
     /** This fight's AI roster — the beaten builds a Recruit Contract can claim. */
     defeatedRoster: readonly RosterEntry[],
@@ -650,10 +649,12 @@ export function App() {
     const banner = isGuardian;
 
     let next = grantCurrencyReward(playerRun, goldReward);
-    next = grantUpgradeReward(next, trainingPointsReward);
     next = advanceToNode(next, nodeId);
-    // Every node kind, unlike `fightsStarted` — this one is the run summary's tally.
+    // Every node kind, unlike `fightsStarted` — this one is the run summary's tally, and since
+    // 2026-09-10 it is also what the level curve reads (run/growth.ts).
     next = { ...next, encountersWon: next.encountersWon + 1 };
+    // Automatic and roster-wide, benched heroes included: no pool, no allocation, no screen.
+    next = grantEncounterLevels(next, heroes);
 
     let afterScreen: Screen;
     if (isFinale) {
@@ -698,10 +699,10 @@ export function App() {
     if (equipmentReward) next = stashItem(next, equipmentReward.id, equipment);
 
     setPlayerRun(next);
-    const afterLevelUp: Screen = levelUpPending(next) ? { kind: 'levelUp', next: afterScreen } : afterScreen;
+    const afterEvolution: Screen = evolutionPending(next) ? { kind: 'evolution', next: afterScreen } : afterScreen;
 
-    // Gate order is deliberate: banner, then recruit, then level-up — so a hero recruited
-    // this beat already stands under the Banner and can receive this win's points.
+    // Gate order is deliberate: banner, then recruit, then Evolution — so a hero recruited
+    // this beat already stands under the Banner.
     // `next`, not `playerRun`: a boss node has just granted the contract that is spendable here.
     const recruitable = defeatedRoster.filter((entry) => isRecruitable(entry.heroId, heroes));
     // The scripted act names its one contract and refuses to let it be walked past; a non-null
@@ -710,17 +711,14 @@ export function App() {
     const contractOffers = next.recruitContracts > 0 ? (forcedOffers ?? pickContractOffers(recruitable)) : [];
     const afterRecruit: Screen =
       contractOffers.length > 0
-        ? { kind: 'recruit', offers: contractOffers, next: afterLevelUp, required: forcedOffers !== null }
-        : afterLevelUp;
+        ? { kind: 'recruit', offers: contractOffers, next: afterEvolution, required: forcedOffers !== null }
+        : afterEvolution;
     setScreen(banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit);
   }
 
   function handleNodeContinue(nodeId: string) {
-    // The Vigil is the run's last node before the Titan, so a banked pool is re-offered
-    // there or never — walking on clears the defer rather than honouring it.
-    const unbank = playerRun.map?.nodes[nodeId]?.type === 'muster';
-    setPlayerRun((run) => advanceToNode(unbank ? { ...run, levelUpDeferred: false } : run, nodeId));
-    setScreen(mapAfterLevelUp(unbank ? { ...playerRun, levelUpDeferred: false } : playerRun));
+    setPlayerRun((run) => advanceToNode(run, nodeId));
+    setScreen(mapAfterEvolution(playerRun));
   }
 
   /**
@@ -730,7 +728,7 @@ export function App() {
   function handleClaimEquipment(nodeId: string, itemIds: string | string[]) {
     const ids = (Array.isArray(itemIds) ? itemIds : [itemIds]).filter((id) => equipment[id]);
     setPlayerRun((run) => ids.reduce((acc, id) => stashItem(acc, id, equipment), advanceToNode(run, nodeId)));
-    setScreen(mapAfterLevelUp(playerRun));
+    setScreen(mapAfterEvolution(playerRun));
   }
 
   /** Guild Hall purchase: validate-before-commit, then the item drops in the bag and the shop stays open. */
@@ -783,7 +781,7 @@ export function App() {
   /** TEMPORARY DEV/TEST — see createLevel4TestRun. */
   function handleStartLevel4TestRun() {
     setPlayerRun(createLevel4TestRun());
-    setScreen({ kind: 'levelUp', next: { kind: 'map' } });
+    setScreen({ kind: 'map' });
   }
 
   /** Random 4v4 straight into FightScreen. Every hero rolls MOVE_CAP moves from its FULL movepool — a throwaway fight is the place to spend on coverage. */
@@ -891,7 +889,7 @@ export function App() {
           aiSquad={screen.ai.squad}
           playerRelicIds={screen.playerRelics}
           goldReward={0}
-          trainingPointsReward={0}
+          levelsGained={0}
           equipmentReward={null}
           onResolved={() => setScreen({ kind: 'sandboxBattle' })}
         />
@@ -904,7 +902,7 @@ export function App() {
           aiRun={screen.ai.run}
           aiSquad={screen.ai.squad}
           goldReward={0}
-          trainingPointsReward={0}
+          levelsGained={0}
           equipmentReward={null}
           onResolved={() => setScreen({ kind: 'title' })}
         />
@@ -929,7 +927,6 @@ export function App() {
           run={playerRun}
           onRunChange={setPlayerRun}
           onSelectNode={handleSelectNode}
-          onOpenLevelUp={() => setScreen({ kind: 'levelUp', next: { kind: 'map' } })}
           onSaveAndQuit={() => setScreen({ kind: 'title' })}
           onAbandonRun={handleAbandonRun}
         />
@@ -954,13 +951,12 @@ export function App() {
           aiSquad={screen.encounter.squad}
           playerRelicIds={playerRun.relics}
           goldReward={screen.goldReward}
-          trainingPointsReward={screen.trainingPointsReward}
+          levelsGained={screen.levelsGained}
           equipmentReward={screen.equipmentReward}
           onResolved={(outcome) =>
             handleFightResolved(
               screen.nodeId,
               screen.goldReward,
-              screen.trainingPointsReward,
               screen.equipmentReward,
               screen.encounter.run.roster,
               outcome
@@ -979,7 +975,7 @@ export function App() {
           aiRun={screen.ai.run}
           aiSquad={screen.ai.squad}
           goldReward={0}
-          trainingPointsReward={0}
+          levelsGained={0}
           equipmentReward={null}
           onResolved={() => setScreen({ kind: 'title' })}
           /* No run behind a Quick Battle: a plain one-tap exit, not the armed quit run fights get. */
@@ -1092,13 +1088,8 @@ export function App() {
         <GuardianBannerScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />
       )}
 
-      {screen.kind === 'levelUp' && (
-        <LevelUpScreen
-          run={playerRun}
-          onRunChange={setPlayerRun}
-          onDone={() => setScreen(screen.next)}
-          focusRosterId={tutorialFocusRosterId(TUTORIAL_LOCKS, playerRun)}
-        />
+      {screen.kind === 'evolution' && (
+        <EvolutionGateScreen run={playerRun} onRunChange={setPlayerRun} onDone={() => setScreen(screen.next)} />
       )}
 
       {/* `runOutcome` is set in the layout effect above, so it is already there on the first paint. */}

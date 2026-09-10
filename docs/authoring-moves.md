@@ -305,7 +305,7 @@ Roughly, in this order:
 3. **Replace the type's moves** in `src/data/moves.ts`.
 4. **Re-wire everything that pointed at the old ones** (§6) — hero kits, level-up
    pools, enemies, tests, docs.
-5. **Distribute** (§7): starting kits, level-up pools, enemy loadouts.
+5. **Distribute** (§7): starting kits, Scroll pools, enemy loadouts.
 6. **Verify** (§9) and report the open design questions you hit (§10).
 
 Expect the mechanical part to be fast and the *removal* to be where the surprises are.
@@ -318,7 +318,7 @@ Expect the mechanical part to be fast and the *removal* to be where the surprise
 |---|---|---|
 | `src/data/moves.ts` | Every move, as pure data. The main event. | Yes |
 | `src/data/heroes.ts` | `moveIds` = each hero's **3-move starting kit**. | Yes, for your type's heroes |
-| `src/data/progression.ts` | `moveTiers[heroId]` = the **level-up pool** drawn from as a hero levels (`MOVE_CAP` is 4, so a hero ends a run with its 3 starters plus one pick, or a swap). | Yes |
+| `src/data/progression.ts` | `moveTiers[heroId]` = the **Scroll pool** a Mastery Scroll draws from (`MOVE_CAP` is 4, so a hero ends a run with its 3 starters plus one pick, or a swap). | Yes |
 | `src/data/enemies.ts` | Enemy heroes have `moveIds` too, and much smaller mana pools. | If your type has an enemy |
 | `src/engine/content.ts` | `MoveDefinition` / `StatusApplication` — the contract. | Only when a row needs a new field |
 | `src/engine/damage/damagePipeline.ts` | Pipeline 2. New BasePower-stage or multiplier terms live here. | Only for damage-math extensions |
@@ -1162,7 +1162,7 @@ Then, beyond green tests:
   `test/waterMoves.test.ts` ends with two that are worth copying verbatim into every
   slate: one walks `heroes` + `enemies` + `progressionTable.moveTiers` asserting every
   move id resolves, the other asserts no hero lists its own starting move in its
-  level-up pool (dead weight `masteryMovePool` can never offer).
+  Scroll pool (dead weight `masteryMovePool` can never offer).
 - **Test the mechanic, not the balance.** `test/fireMoves.test.ts` and
   `test/waterMoves.test.ts` are the model: assert
   that a chanced rider rolls, that a conditional multiplier lands on BasePower and not
@@ -1475,7 +1475,7 @@ already held the type** rather than about the moves:
      nothing else does.
   3. **Vesper and Marrow were the same hero — raised, and answered the same
      day.** Identical stat block (85/75/45/40/40/70/45/10), identical types,
-     identical starting kits, identical level-up pools, and three Evolution
+     identical starting kits, identical Scroll pools, and three Evolution
      paths with identical names AND identical descriptions (Nightreaver /
      Stillmind / Nightveil). The slate's own pass did the minimum that stopped
      them being interchangeable at level 1 — different kits, different pools —
@@ -1572,7 +1572,7 @@ touched:
 - **A fourth, smaller, and it came out of the distribution pass again.** Glyph
   and Zenith are NOT the same hero (365 vs 360 across the six non-mana stats,
   and genuinely different frames — 80/32/80 Wisdom-glass against 95/45/65
-  bulk), but their kits and level-up pools **were byte-identical apart from one
+  bulk), but their kits and Scroll pools **were byte-identical apart from one
   slot**: both opened `arcaneBolt, manaBurst, …` and both pools were off-type
   Mind filler. So the two played identically despite reading differently, which
   is the inverse of Shadow's Vesper/Marrow problem and just as invisible until
@@ -1719,7 +1719,7 @@ hero and no heal**:
 - **A fifth, small, and it came out of §7 for the fourth slate running.**
   Widening the "no starter in its own pool" assertion past the type being
   authored found `ironWarden` carrying `fortify` in BOTH its kit and its
-  level-up pool — dead weight `masteryMovePool` could never offer, which made
+  Scroll pool — dead weight `masteryMovePool` could never offer, which made
   its pool read as five picks when it was four. Predates this slate and
   nothing else would have found it. **Distribution keeps being a roster audit
   wearing a movepool hat** — that is four for four, and the lesson has
@@ -1744,7 +1744,7 @@ with the type**:
   and the fastest one a designer has ever answered.** `fortify` (Iron, +10
   Defense / +10 Wisdom, self, **10 mana**) was in **NINE starting kits across
   seven types** — Cinder, Cube, Sentinel, Hollowbark, Aegis, Warden, Valor,
-  Clockwork, Bellows — plus two level-up pools. The slate's fourteen rows
+  Clockwork, Bellows — plus two Scroll pools. The slate's fourteen rows
   contained **no defensive buff under 50 mana** (Reinforce at 50, Juggernaut at
   70), so what went away was a role and not a price point: the game's cheapest
   buff, and the only cheap defensive self-buff anywhere.

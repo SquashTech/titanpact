@@ -86,7 +86,6 @@ export interface Aggregate {
   /** Encounters won, summed over all runs. */
   encountersWonSum: number;
   goldEndSum: number;
-  levelUpPoolEndSum: number;
   /** Sum of the mean roster level at run end. */
   rosterLevelEndSum: number;
   /** Fight outcomes keyed `act:nodeType`. */
@@ -137,7 +136,6 @@ export function emptyAggregate(): Aggregate {
     deathByNodeType: {},
     encountersWonSum: 0,
     goldEndSum: 0,
-    levelUpPoolEndSum: 0,
     rosterLevelEndSum: 0,
     fightKinds: {},
     guardians: {},
@@ -214,7 +212,6 @@ export function mergeAggregate(into: Aggregate, from: Aggregate): void {
   into.wins += from.wins;
   into.encountersWonSum += from.encountersWonSum;
   into.goldEndSum += from.goldEndSum;
-  into.levelUpPoolEndSum += from.levelUpPoolEndSum;
   into.rosterLevelEndSum += from.rosterLevelEndSum;
   into.elapsedMs += from.elapsedMs;
   into.playerTurns += from.playerTurns;

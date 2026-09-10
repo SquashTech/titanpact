@@ -7,12 +7,12 @@
 > demo fight into the roguelike run CLAUDE.md's north star describes: draft →
 > escalating fights → relics.
 
-> **Partly superseded by `growth-overhaul.md` (2026-09-10).** Its **phases 1-2 have LANDED**
-> and this file is updated for them: Gems and the two stat shrines are deleted, the post-fight
-> gates lose the Gem offer, and the reward-row pool is re-weighted around a new `scrollReward`
-> Scroll Cache. Still **pending**: the level-up screen leaves those gates, and **the Crucible**
-> joins the act-boundary chain between the Banner and the Pact Seal. **Everything not called
-> pending describes what the code does.**
+> **Partly superseded by `growth-overhaul.md` (2026-09-10).** Its **phases 1-3 have LANDED**
+> and this file is updated for them: Gems and the two stat shrines are deleted, the reward-row
+> pool is re-weighted around two Scroll nodes, and the post-fight gates lose both the Gem offer
+> and the Level Up screen — an **Evolution** gate stands where the latter did. Still **pending**:
+> **the Crucible** takes that Evolution gate's place in the act-boundary chain, between the
+> Banner and the Pact Seal. **Everything not called pending describes what the code does.**
 
 Slay the Spire is the direct reference (per user direction, 2026-08-16): a branching
 map of nodes, most of which reward something (a Guild Hall shop, equipment, a relic,
@@ -39,7 +39,7 @@ between; per user direction, the shape is now forced and uniform):
   opens on an easy, unambiguous fight, no early reward-node luck and no meaningless
   first choice among identical-weight openers.
 - **Row 1: 3 nodes, pick 1 of 3 — reward types only** (`equipmentReward`/`scrollReward`/
-  `passiveReward`/`currencyReward`/`upgradeReward`/`forgeReward`/`event`, weighted). No
+  `loneScrollReward`/`passiveReward`/`currencyReward`/`forgeReward`/`event`, weighted). No
   `fight`/`shop`/`elite`/`classReward` mixed in — every reward row is a genuine reward
   choice, not a chance to draw another fight or dodge one, and `classReward` is reserved
   for its own forced Mentor row (2026-08-22 revision, per user direction — see the Mentor
@@ -229,13 +229,13 @@ difficulty choice, in two reds a shade apart (#d9534f vs #ff7043).
 | `boss` | `FightScreen` vs. **2 of the Location faction's basics** (no bench — a real no-cycling fight), each with a flat +20 bonus to 3 random growth stats. Hero-pool escorts until 2026-09-06 — see "The Guardian's escorts" below. Winning grants 1 Recruit Contract, the Guardian's Banner in acts 1-4, and ends the act (§3). **2026-09-01 exception:** a location may hold a **faction champion** on the boss's bench — see "The Guardian's champion" below. |
 | `shop` | `ShopNodeScreen` — the existing `GuildHallPanel`, given an exit for the first time. Overhauled 2026-08-18: offers 2-3 curated hero recruits (50g each, `GUILD_HALL_RECRUIT_COST`) rather than the full catalog, plus a rarity-priced equipment shelf, rolled once per visit (`src/run/shop.ts` `rollGuildHallOffers`). Second pass 2026-08-31: relics are no longer sold anywhere, the shelf is 4 wide and readable on its face, sold stock greys out, and Recruit Contracts confirm before buying (`docs/progression.md` "Second pass"). |
 | `equipmentReward` ("Item") | `NodeRewardScreen` — pick 1 of 3 items, rarity-weighted (`equipment.ts` `pickWeightedEquipment`); claiming bags it and lights the Roster badge — see "The bag notification" in `docs/progression.md`. Items are uncategorised as of 2026-09-06, so the three on offer are simply the three rolled (`docs/progression.md` "Uncategorised slots"). |
-| `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30, more for nothing having been spent yet). **2026-09-08, per user direction:** it pays out on arrival and the screen counts the PURSE up to its new total, coin by coin, over a Claim button that was never a decision — the drop size is a chip beside a number the player can act on, rather than a number they cannot. `upgradeReward` shares the beat, counting the level-up pool. |
-| `upgradeReward` | `NodeRewardScreen` — an instant flat grant to the pooled level-up currency (2-3 points), on top of the per-fight-win grant (see below). |
+| `currencyReward` | `NodeRewardScreen` — an instant flat gold grant (15-30). **2026-09-08, per user direction:** it pays out on arrival and the screen counts the PURSE up to its new total, coin by coin, over a Claim button that was never a decision — the drop size is a chip beside a number the player can act on, rather than a number they cannot. The two Scroll nodes share that beat. |
+| `loneScrollReward` ("A Lone Scroll") | `NodeRewardScreen` — an instant grant of `LONE_SCROLL_COUNT` = 1 Mastery Scroll. The commoner, smaller half of the Scroll Cache's grant. It was the XP Cache until 2026-09-10, when levels went automatic and there was no pool left to pay into; it kept its seat rather than being deleted (per user direction) because the reward rows were already down to six types. Distinguished from the Cache on the map by its glyph — one sealed sheet against a bundle — since the tiles carry no labels. |
 | `forgeReward` ("The Forge") | `ForgeScreen` — pick one roster hero to gain **+1 item slot** for the rest of the run (`runProgress.ts` `grantItemSlot`, stored on `RosterEntry.bonusItemSlots`, capped at `MAX_ITEM_SLOTS` = 3). **2026-09-06**, replacing the three slot-specific cache nodes (`weaponReward`/`armorReward`/`accessoryReward`), which lost their meaning when items stopped having categories — most of their frequency went to `equipmentReward`, whose weight went 20 → 40. The scarcest thing on the reward row (weight 8) on purpose: it is permanent, it compounds with every drop after it, and it is the only reward here a hero can be at the cap for — a roster entirely at 3 slots makes the node a dead draw, which is what makes spending it a choice — and at the 2026-09-07 cap of 3 that arrives materially sooner. |
 | `scrollReward` ("Scroll Cache") | `NodeRewardScreen` — an instant grant of `SCROLL_REWARD_COUNT` = 2 Mastery Scrolls, counted up on arrival like gold and XP. Which hero they go to is not asked here: a Scroll is spent at the player's leisure on the Roster's Mastery board. See "Mastery Scrolls" below. |
 | `passiveReward` ("Boon") | `BoonNodeScreen` — pick 1 of 3 passives, then the hero it settles on (`grantEventPassive`, stored on `RosterEntry.bonusPassiveGrants`). See "Boons" below. |
 | `classReward` ("Mentor's Hall") | `ClassNodeScreen` — pick 1 of 3 Classes (`src/data/classes.ts`), then pick which roster hero learns it, filtered to heroes with no Class yet (`src/run/classes.ts` `grantClass`, stored on `RosterEntry.classId` — a hero can hold at most one Class per run, so `grantClass` REPLACES rather than stacks). If every roster hero already has a Class, the offer is simply wasted. The screen names the heroes it CAN still teach, portraits and all, while the three disciplines are being read (2026-09-08) — that filtered roster is the whole reason to take or leave one, and it used to be a screen away behind the roster glyph. **Not in `REWARD_WEIGHTS`** (2026-08-22 revision, per user direction) — the only way to encounter this node type is a forced Mentor row (§1), never a random pick-1-of-3 option in any act. Acts 1-4 each guarantee one, so a run can Class up to four heroes; the offer filters to heroes with no Class yet and is wasted only once every hero has one. |
-| `tutorReward` ("Tutor") | `TutorNodeScreen` — pick one roster hero, then **any** move from that hero's level-up pool. See "The Tutor" below. Acts 4-5 only. |
+| `tutorReward` ("Tutor") | `TutorNodeScreen` — pick one roster hero, then **any** move from that hero's Scroll pool. See "The Tutor" below. Acts 4-5 only. |
 | `event` | `EventNodeScreen` — rolls one of the authored map events (`src/data/events.ts`, `src/run/events.ts`) and resolves it: a move taught to a chosen hero, a Passive taught to a chosen hero, a flat stat trade, or a pile of act-curve loot dropped straight into the bag. Which event a node turns out to be is rolled once at node-select time and gated by act and Location. See **docs/events.md**. |
 
 The stat bonuses above are the **node-kind** axis only — what `elite` costs relative to
@@ -248,82 +248,51 @@ act-steps, and its heroes arrive at level 7 already evolved.
 The Monsters / Skirmish split used to be a **naming + pool** split only: both lanes paid
 the same kind of reward, graded by difficulty, so `elite` simply out-paid `battle` on
 every axis at once and row 4's Elite-or-Battle pick collapsed into "how hard a fight do
-you want." The per-win payout tables in `App.tsx` (`goldRewardFor`, `trainingPointsFor`,
-`EQUIPMENT_DROP_CHANCE`/`LOOT_SOURCE`, all keyed on `EncounterMapNodeType` — the **map**
-node type, since `skirmish` and `battle` are indistinguishable once collapsed to
-`EncounterNodeType`) now make the two lanes pay in different currencies:
+you want." The per-win payout tables in `App.tsx` (`goldRewardFor`, `EQUIPMENT_DROP_CHANCE`/`LOOT_SOURCE`,
+all keyed on `EncounterMapNodeType` — the **map** node type, since `skirmish` and `battle` are
+indistinguishable once collapsed to `EncounterNodeType`) make the two lanes pay differently:
 
-| Node | Lane | Training Points | Gold | Equipment drop |
-|---|---|---|---|---|
-| `fight` (row 0 opener) | Monsters | 3 | 15-25 | **always**, act's standard curve |
-| `battle` (row 4) | Monsters | 3 | **30-45** | **always**, act's standard curve |
-| `skirmish` (row 2) | Skirmish | **4** | 15-25 | 25%, act's standard curve |
-| `elite` (row 4) | Skirmish | **4** | 15-25 | 55%, **one tier ahead** (`rarityWeightsFor(act, 'elite')`) |
-| `boss` | Guardian | **4** | 0 | 70%, one tier ahead |
+| Node | Lane | Gold | Equipment drop |
+|---|---|---|---|
+| `fight` (row 0 opener) | Monsters | 15-25 | **always**, act's standard curve |
+| `battle` (row 4) | Monsters | **30-45** | **always**, act's standard curve |
+| `skirmish` (row 2) | Skirmish | 15-25 | 25%, act's standard curve |
+| `elite` (row 4) | Skirmish | 15-25 | 55%, **one tier ahead** (`rarityWeightsFor(act, 'elite')`) |
+| `boss` | Guardian | 0 | 70%, one tier ahead |
 
-Training Points are the **Act 1** figures; every act past the first adds `ACT_XP_STEP` to each
-(§3). The table above sat at 1/1/2/2/2 until 2026-09-06, which was two income passes out of date —
-it is read off `BASE_TRAINING_POINTS` now.
+**The XP column is gone (2026-09-10, Growth Overhaul phase 3).** Levels are automatic and
+roster-wide, so no encounter pays a currency for them and no node type can be richer in levels
+than another — the curve is a function of encounters WON, not of which ones
+(`LEVEL_AFTER_ENCOUNTER`, `src/run/growth.ts`). `BASE_TRAINING_POINTS`, `ACT_XP_STEP` and
+`trainingPointsFor` are all deleted.
 
-**The opener pays 3, not 2 (2026-09-06, per user direction).** Reaching the Evolution costs 10
-pooled points, and an act paid 9 on its Battle route against 10 on its Elite one — so whether a
-player who poured an act into one hero could evolve before that act's Guardian came down to a
-routing choice made two rows earlier, for reasons they could not see. Both routes clear it now
-(10 and 11). Making the all-in *affordable* is the intent: it is a real plan with a real cost, the
-rest of the roster sitting at level 1 with catching up to do, and it should be the player's
-decision rather than the map's. The point went on the opener because row 0 is forced in every act,
-so it lands on every route — putting it on `battle` would have reached only the short route and
-flattened the Elite's XP premium, which is this whole split. Run income goes 145 → 150.
+That flattens one half of the two-lane split, and the half that remains is the one that was
+always the sharper of the two:
 
-- **Monsters is the loot-and-gold lane.** The guaranteed drop was previously a hard-coded
-  special case for the row-0 opener; it is now the lane's rule. `battle` additionally
-  carries the fat gold band. The opener is held at the thin band on purpose — it is
-  deliberately the run's lightest fight and already ships a free item, and making it the
-  map's richest gold node would undercut everything after it.
-- **Skirmish is the XP lane.** Double the Training Points, plus the recruitable pool
-  (the Recruit Contract shot), paid for with the thin gold band and a drop that is a roll
-  rather than a promise. `elite` buys rarity, not quantity.
-- **Row 4 is now a real trade.** `elite`: 2 points, a recruitable roster, 55% at a
-  tier-ahead item, against a harder fight. `battle`: 1 point, double gold, a certain
-  item, against an easier one.
+- **Monsters is the loot-and-gold lane.** The guaranteed drop is the lane's rule, and `battle`
+  additionally carries the fat gold band. The opener is held at the thin band on purpose — it is
+  deliberately the run's lightest fight and already ships a free item, and making it the map's
+  richest gold node would undercut everything after it.
+- **Skirmish is the RECRUIT lane.** It was "the XP lane" until phase 3 took the XP out; what is
+  left is the recruitable pool (the Recruit Contract shot) and, on `elite`, a tier-ahead item at
+  better odds — paid for with the thin gold band and a drop that is a roll rather than a promise.
+- **Row 4 is still a real trade.** `elite`: a recruitable roster, 55% at a tier-ahead item,
+  against a harder fight. `battle`: double gold, a certain item, against an easier one.
 
-**The Guardian pays 2, down from 3-4.** The old figure was the specific complaint — too
-much of the run's currency landing in a single beat — and it is no longer load-bearing
-now that the Banner (§3, always granted in acts 1-4) is the fight's headline reward.
-
-Net effect on the curve: an act pays **6-7 Training Points**, down from 8-11.
-
-**Scarcity is the point, and it prices two other things up.** The cut is deliberately
-more than a trim — it changes what a Training Point is worth relative to every other
-way of gaining power, and two of those get sharper:
-
-- **The raise-vs-recruit pivot** (`docs/progression.md`). A contract hero arrives at
-  the act's enemy level — 5 in Act 3, 7 in Act 4, 10 in Act 5 (`ENEMY_LEVEL_BY_ACT`,
-  `src/run/difficulty.ts`). Against an act that pays 6-7 points, claiming a level-5
-  hero mid-run is close to *four acts* of banked leveling arriving in one spend, on a
-  hero chosen because they fit the plan the run has actually turned into. That is the
-  intended shape: **strategic churn should be a live option, not a concession.** A
-  hero who is lagging is meant to be pivotable away from, and the scarcer the pooled
-  currency is, the more a ready-made replacement is worth against pouring more points
-  into the laggard. The roster cap (6, gaining requires terminating) is what keeps this
-  a decision rather than a free upgrade.
-- **The `upgradeReward` node** (2-3 points) is now worth roughly a third to a half of
-  an act's entire fight income in a single pick-1-of-3. Its value is deliberately
-  swingy: near-worthless to a player whose roster is already where they want it,
-  near-decisive to one holding a hero two levels short of an Evolution branch point.
-  That spread is the node doing its job — it is the strategic pull toward Evolution
-  the node was kept for (§4), and the XP cut is what gives it teeth.
+**Open — the Skirmish lane is thinner than it was.** Losing the XP premium leaves it carrying
+recruitability and drop rarity alone against Monsters' gold and guaranteed drops, and whether
+that is still an even trade is a phase 6 question, not one to patch here.
 
 ### The Tutor
 
 **2026-09-07, per user direction.** `tutorReward` → `TutorNodeScreen`. Pick a roster hero,
-then pick **any one move** off that hero's own level-up pool and it is taught outright. The
-node grants through `grantMove` — the same free faucet an event's gift uses, not
-`grantLevelUpMove` — so teaching a move does **not** spend a level-up offer, and the pool
-the hero's remaining levels draw from is untouched.
+then pick **any one move** off that hero's own Scroll pool and it is taught outright. The node
+grants through `grantMove` — the same free faucet an event's gift uses, not `grantOfferedMove` —
+so teaching a move does **not** spend an offer, and the pool the hero's remaining Scrolls draw
+from is untouched.
 
-What "its own level-up pool" means is `tutorMovePool` (`src/run/tutor.ts`), and it is
-deliberately wider than the pool a level-up draws from:
+What "its own Scroll pool" means is `tutorMovePool` (`src/run/tutor.ts`), and it is deliberately
+wider than the pool a Scroll draws from:
 
 - **The authored pool**, `progressionTable.moveTiers[heroId]`, entire.
 - **Plus everything the Evolution paths the hero actually took brought with them** — both
@@ -462,15 +431,21 @@ A won encounter resolves through up to five gates before the map comes back
    recruitable: the run goes straight on rather than opening a screen whose offer cannot
    be taken. On a boss node the act-end contract (§3) is granted *before* this check, so
    it is spendable on the heroes that boss fight just beat.
-2. **Training Point allocation** (`LevelUpScreen`), if the pool is non-empty.
+2. **Evolution** (`EvolutionGateScreen`), for every hero standing at an unresolved one — in
+   roster order, one at a time, with no picker: a pending Evolution is not optional, so which to
+   resolve first is a decision with no content in it. This is where `LevelUpScreen` used to be.
+   **Under automatic levelling the whole roster crosses `EVOLUTION_LEVEL` on the same fight**,
+   so this gate is a wall of choices by construction — which is exactly what the Crucible exists
+   to remove (`docs/growth-overhaul.md` §5). It stands in until phase 4 moves the invocation
+   point; when that lands, only the caller changes.
 
-The item drop is no longer a step here: it is banked into the bag as part of the same
-`RunState` transform as the gold and the XP, and the map's Roster badge is what says so
-(`docs/progression.md` "The bag notification" and "The uncapped bag").
+**The levels themselves are not a gate.** They are granted in the same `RunState` transform as
+the gold, before any screen opens (`grantEncounterLevels`), and reported on the victory overlay
+as "+2 Levels" rather than asked about. The item drop is banked the same way, with the map's
+Roster badge saying so (`docs/progression.md` "The bag notification" and "The uncapped bag").
 
-Recruiting comes first on purpose: the gear and the Training Points this same win paid
-out can then go to the hero who just joined, instead of arriving one node too late for
-them. **2026-08-28, per user direction:** the claim used to be a band inside
+Recruiting comes before the Evolution gate on purpose: the gear this same win paid out can then
+go to the hero who just joined, instead of arriving one node too late for them. **2026-08-28, per user direction:** the claim used to be a band inside
 `FightScreen`'s victory overlay — two portrait buttons under the gold/XP chips — which
 priced a permanent roster decision below the item drop above it. It is now its own
 screen, standing on the draft's stage (see `docs/visual-language.md`).

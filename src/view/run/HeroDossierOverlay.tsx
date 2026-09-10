@@ -146,7 +146,7 @@ function EvolutionPathCard({
 
       {learnable.length > 0 && (
         <>
-          <div className="evo-path-label">Joins the level-up pool</div>
+          <div className="evo-path-label">Joins the Scroll pool</div>
           <MoveList moveIds={learnable} caster={pathCaster} onInspect={onInspect} />
         </>
       )}
@@ -168,7 +168,7 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
   const [popupMoveId, setPopupMoveId] = useState<string | null>(null);
 
   const startingKit = hero.moveIds;
-  // The starting kit is filtered out of the pool by levelUpMovePool, so it is filtered out here too.
+  // The starting kit is filtered out of the pool by masteryMovePool, so it is filtered out here too.
   const pool = (progressionTable.moveTiers[hero.id] ?? []).filter((id) => !startingKit.includes(id));
   const byTier = TIER_ORDER.map((tier) => ({ tier, moveIds: pool.filter((id) => tierOf(id) === tier) }));
   const nodes = progressionTable.evolutions[hero.id] ?? [];

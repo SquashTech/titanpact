@@ -34,7 +34,6 @@ export function foldRun(agg: Aggregate, record: RunRecord): void {
   if (record.won) agg.wins += 1;
   agg.encountersWonSum += record.encountersWon;
   agg.goldEndSum += record.goldEnd;
-  agg.levelUpPoolEndSum += record.levelUpPoolEnd;
   agg.rosterLevelEndSum += record.rosterLevelEnd;
 
   for (let act = 1; act <= Math.min(record.actReached, TOTAL_ACTS); act++) agg.actEntered[act] += 1;

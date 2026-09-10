@@ -44,8 +44,11 @@ import { ROSTER_CAP, TOTAL_ACTS } from './state';
  * v9 (2026-09-10): its second — Mastery Scrolls. RunState gained `masteryScrolls` and entries
  * gained `masteryScrollsSpent`, which is the whole of a hero's Mastery Rank. A v8 file's moves
  * were gated on level, so its heroes would all read rank 1 and lose their ceiling.
+ * v10 (2026-09-10): its third — levels went automatic and roster-wide. `levelUpPool` and
+ * `levelUpDeferred` are gone, `masteryStatGrants` became `growthStatGrants`, and MAX_LEVEL went
+ * 10 -> 30. A v9 file's levels mean something else entirely.
  */
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 
 /**
  * Where a restored run resumes. Both are settled points: every reward is banked, the
@@ -270,7 +273,7 @@ function decodeRosterEntry(value: unknown, index: SaveContentIndex, at: number):
     evolutionPassiveGrants: requireIds(value.evolutionPassiveGrants, index.passiveIds, `${label}.evolutionPassiveGrants`),
     bonusPassiveGrants: requireIds(value.bonusPassiveGrants, index.passiveIds, `${label}.bonusPassiveGrants`),
     bonusStatGrants: decodeStatGrants(value.bonusStatGrants, `${label}.bonusStatGrants`),
-    masteryStatGrants: decodeStatGrants(value.masteryStatGrants, `${label}.masteryStatGrants`),
+    growthStatGrants: decodeStatGrants(value.growthStatGrants, `${label}.growthStatGrants`),
     masteryScrollsSpent: value.masteryScrollsSpent,
     bonusItemSlots: value.bonusItemSlots,
     evolutionTypeGraft: graft as TypeId | null,
@@ -355,8 +358,7 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
     seen.add(entry.rosterId);
   }
 
-  if (!isInt(value.levelUpPool, 0)) reject('run.levelUpPool is not a count');
-  if (typeof value.levelUpDeferred !== 'boolean') reject('run.levelUpDeferred is not a flag');
+
   if (!isInt(value.gold, 0)) reject('run.gold is not a count');
   if (!isInt(value.recruitContracts, 0)) reject('run.recruitContracts is not a count');
   if (!isInt(value.masteryScrolls, 0)) reject('run.masteryScrolls is not a count');
@@ -386,8 +388,6 @@ function decodeRun(value: unknown, index: SaveContentIndex): RunState {
 
   return {
     roster,
-    levelUpPool: value.levelUpPool,
-    levelUpDeferred: value.levelUpDeferred,
     gold: value.gold,
     stash,
     unseenItemIds: decodeUnseen(value.unseenItemIds, stash),

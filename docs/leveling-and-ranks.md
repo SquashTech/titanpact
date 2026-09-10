@@ -1,187 +1,120 @@
 # leveling-and-ranks.md
 
-> The authoritative spec for **how heroes grow**: the post-battle level-up grant, what
-> a level-up does to a hero's movepool, and the Evolution branching system. This module
+> The authoritative spec for **how heroes grow**: the automatic level curve and its growth
+> grades, the Mastery Scroll faucet and the rank that gates it, and the Evolution branching
+> system. This module
 > supersedes the level-up / Evolution sections of `progression.md` — where they
 > disagree, this file wins, and `progression.md` should be updated to defer here.
 > Rules only; thresholds, move data, and per-hero Evolution paths are **data** (`/data`).
 
-> **PARTLY SUPERSEDED by `growth-overhaul.md` (2026-09-10). Its phase 2 has LANDED and this
-> file is updated for it: moves left the level track entirely — a Scroll is the only faucet, and
-> **Mastery Rank**, not level, gates the tiers. Still **pending**: the pooled currency, the
-> level-up cost curve, the mastery stat reel and level-triggered Evolutions. **Everything not
-> called pending describes what the code does**, and stays authoritative until each phase of that doc's
-> §8 lands. Read both before changing anything here.
+> **PARTLY SUPERSEDED by `growth-overhaul.md` (2026-09-10). Its phases 2 and 3 have LANDED**
+> and this file is updated for them: moves left the level track entirely (a Scroll is the only
+> faucet, and **Mastery Rank**, not level, gates the tiers), and levels went automatic,
+> roster-wide and cap 30, paying stats through growth grades. The pooled currency, its cost
+> curve and the mastery stat reel are all deleted. Still **pending**: level-triggered Evolutions
+> move to **the Crucible** (phase 4), and the 36-hero grade authoring pass (phase 7) — until
+> then every hero runs the all-B placeholder. **Everything not called pending describes what
+> the code does.** Read both before changing anything here.
 
 ---
 
-# Part 1 — The level-up system
+# Part 1 — Levelling
 
-## How level-ups are earned
+## Levels are automatic and roster-wide (2026-09-10, Growth Overhaul phase 3)
 
-Level-ups are awarded **after battles**, as a discrete count. A fight grants a certain
-**number of level-ups**, and tougher fights grant more — **elite fights pay out extra
-level-ups as their reward**. The count scales with encounter difficulty; the exact
-per-encounter values are data (`/data`), tunable.
+**Every roster hero levels every won encounter, fielded or benched. There is no pool, no
+allocation and no screen.** `MAX_LEVEL` = 30. `src/run/growth.ts`.
 
-Think of level-ups as a **pooled resource earned per battle**, not as XP that
-accumulates invisibly on individual heroes. (This is the concrete form of the "pooled
-level-up currency" referenced in `progression.md`.)
+This replaced a pooled Training Point currency the player spent hero by hero — a triangular cost
+curve, a defer-and-bank flow, and a Level Up screen between the player and the map at almost every
+node. All of it is gone. Full argument: `docs/growth-overhaul.md` §3.
 
-## What a level-up COSTS (LOCKED, 2026-09-01)
+Participation-based XP (Fire Emblem's actual model) was considered and **rejected**: it produces
+the runaway where your best four level, your sideboard rots, and by Act 4 you cannot rotate.
+Roster-wide automatic XP gets the screen removal — the only thing a 30-level cap actually required
+— without buying that problem. A hero rotated in at Act 4 is at parity, and rotating costs
+nothing, which is *better* for strategic churn than participation XP, not worse.
 
-**A level-up costs as many Training Points as the hero's current level, flattening at
-`MAX_LEVEL_UP_COST` = 5.** Level 1 → 2 costs 1, level 4 → 5 costs 4, and every level from
-5 → 6 upward costs 5 (`levelUpCost`, `costToReachLevel`, `src/run/progression.ts`;
-`test/levelCost.test.ts`). The ceiling was added 2026-09-05 — see "The mastery treadmill needed a cap after all" below.
+**The cost, and it is a real deletion:** hyperfocus dies as a *levelling* strategy. It is bought
+back wholesale by Mastery Rank (Part 1b), which is why that system is load-bearing rather than a
+convenience. A **focus-hero XP dial** (one designated hero per act at +25% XP) was drafted as a
+consolation and then dropped once Rank made it unnecessary. Do not re-introduce it without
+re-reading `docs/growth-overhaul.md` §4.
 
-### Why it is a curve
+### The curve
 
-The price used to be a flat 1 at every level. Walk what that 1 actually bought:
+`LEVEL_AFTER_ENCOUNTER` is authored outright rather than derived from a per-fight rate: the
+act-end figures are the decided shape, and a rate would only approximate them. Acts 1-5 run four
+encounters each — the forced fight, the Skirmish, the Elite-or-Battle, and the Guardian — then the
+finale.
 
-| Levels | What the point buys | Value |
+| Act | Encounters | Level at act end |
 |---|---|---|
-| 2–4 | A move gain, then *declinable* replacement offers (kit is 3, cap is 4) | Low, and falling |
-| 5 | **Evolution** — 20–40 equipment points, plus a type, plus a passive or a move line | Enormous |
-| 6–10 | Replacement offers again | Low |
-| 11+ | **+10 to a chosen combat stat, forever, unbounded** | High, and never falls |
+| 1 | 4 | 6 |
+| 2 | 4 | 12 |
+| 3 | 4 | 18 |
+| 4 | 4 | 23 |
+| 5 | 4 | 28 |
+| 6 | 1 | 30 |
 
-That curve is **convex**: the eleventh point sunk into a hero was worth strictly more than
-the fourth, which was worth more than a declined offer on a bench hero. The system paid
-*more* per point the harder the player concentrated — so pouring everything into one carry
-was not merely available, it was the dominant line, and a 45-minute run resolved into
-"whose one attacker sweeps".
+Level 5 lands on the **third encounter of act 1**, which is where the Evolution surfaces until
+phase 4 moves it to the Crucible. Every figure is a first-pass placeholder for playtest; only the
+shape is decided.
 
-### Why it is a price and not a cap
+**It is a DELTA, never a target** (`levelsForEncounter`). A hero that joins late has missed the
+grants before it and stays behind permanently — which is what keeps "arrives underlevelled" a real
+archetype for a Guild Hall hire (`docs/growth-overhaul.md` §6) rather than a rounding error the
+next win erases. Setting each hero to the curve's level instead would erase it.
 
-A per-act **level cap** was the obvious alternative and is the weaker one. It fences the
-outcome without touching the convexity that causes it, and it strands currency the moment
-every hero sits at the ceiling — a level-up screen that has nothing to sell is worse than
-one that sells something expensive. A rising price leaves the carry build **legal** and
-charges for it in **breadth**, which in a bring-6-pick-4 doubles game is the currency that
-actually decides fights. Hyperfocus remains a real option (that is what `MASTERY_LEVEL` is
-for); it is no longer a free one.
+## Growth grades — what a level actually pays
 
-The concrete shape of the choice, which is the whole design claim:
+Each level rolls **each stat independently** against that hero's authored grade for it.
 
-- One hero rushed from level 1 to their Evolution: **10 points.**
-- The four-hero battle core lifted to level 3: **12 points.**
-- An act pays **~15–16** from fights. So an act buys either one, not both.
+| Grade | S | A | B | C | D | E | F |
+|---|---|---|---|---|---|---|---|
+| Chance | 95% | 80% | 65% | 50% | 35% | 20% | 5% |
+| Budget cost | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
 
-### Three consequences, all load-bearing
+- **A success grants +2, or +6 HP.** HP is not a special case: `CLAUDE.md`'s own measured
+  break-even is ≈0.33 a point, so 6 HP *is* 2 points' worth of anything else.
+- Grades cover the **seven stats the 550 budget covers** — MP Regen excluded, exactly as it is
+  from every other per-hero grant, and for the same reason.
+- **Every hero's grades sum to exactly `GRADE_BUDGET` = 28** (an average of B). This is a
+  **SECOND budget**, enforced by test the way `heroStatTotal` enforces the first: the 550 rule
+  alone stops being sufficient to say a hero is fairly costed the moment grades exist, because a
+  low base with S-grades outruns a high base with F-grades however the 550 is spent. Taking one
+  stat to S costs another from B to D, or two from B to C.
 
-- **The mastery treadmill needed a cap after all.** The claim here was that the unbounded
-  +10 tail prices itself out: level 11 costs 10, level 12 costs 11. It priced out far more
-  than the tail — reaching MASTERY_LEVEL on one hero cost 45 of the ~70 points a whole run
-  paid, and level 7, where every 70+ mana move unlocks, cost 21. The price now flattens at
-  `MAX_LEVEL_UP_COST` = 5, which takes mastery to 35 and level 7 to 20. Depth is still
-  charged for; it is no longer charged an amount no run can pay.
-- **A leftover pool that buys nobody is NORMAL, and it banks.** Every gate that used to
-  read `levelUpPool > 0` now reads `canAffordAnyLevelUp` (`src/app/App.tsx`,
-  `LevelUpScreen`) — otherwise the level-up screen reopens at every map node holding 2
-  points against a roster that all costs 3. Banking toward an expensive level is a real
-  and intended play; `RosterPeek` is where the banked figure is read.
-- **Recruits are cheap to raise; veterans are not.** A Guild Hall hero arriving
-  underleveled is now genuinely competitive with pouring the same points into an existing
-  carry. That is the raise-vs-recruit axis (`progression.md`) finally having a price
-  attached, and it reinforces strategic churn rather than fighting it.
+At all-B that is ~4.5 successes a level, ~9 budget points a level, **~264 over 29 levels** — a
+hero grows by roughly half again. Below ~90 the arc is invisible and the underwhelm returns.
 
-### Income was rescaled with it
+**Base and growth are independent axes**, and that is the point. Low base + high growth is a late
+bloomer; high base + low growth is front-loaded. This is Fire Emblem's Est/Oifey axis, and it
+lands on a problem the game already had: a Guild Hall hire arriving underlevelled is a downside
+today. Give that archetype S-grades and arriving underlevelled *is* the build.
 
-The curve is meaningless without the income it is denominated in, so per-fight payouts
-moved in the same pass (`trainingPointsFor`, `src/run/difficulty.ts`): at ACT 1, **2** for the act's
-row-0 opener (`fight`), **3** for Monsters (`battle`), **4** for Skirmish (`skirmish`,
-`elite`) and **4** for the Guardian — an act's four fights pay **13–14**, and the
-reward-row XP option is a flat **2** (`UPGRADE_REWARD_XP`, `NodeRewardScreen`).
+**All 36 heroes run the all-B placeholder** until the authoring pass (`docs/growth-overhaul.md`
+phase 7). All-B is exactly on budget, so an un-authored hero is fairly costed rather than free —
+and the budget test is already watching the day one gets a real line. `test/growth.test.ts`.
 
-The opener is priced below the rest of the Monsters lane deliberately: it is the lightest
-fight on the map, the one every path takes, and the one a player meets before owning
-anything. The XP cache is priced *below one fight* for the same reason it exists — a
-top-up the player can take instead of gold or a relic, not a substitute for fighting.
+**The multiple-of-5 rule does not apply to a growth roll.** `CLAUDE.md` locks flat stat modifiers
+to multiples of 5 or 10; +2 and +6 are neither. That rule exists to keep AUTHORED grants legible,
+and a roll nobody authors per-hero is not that kind of grant — the legibility lives in the grade
+instead.
 
-### Income scales by act (2026-09-05) — reversing the flat rule
+## Where levels are REPORTED
 
-Income *was* deliberately flat across acts, on the reasoning that scaling it would inflate
-the price curve away and that the resulting deceleration *was* the brake. Batch simulation
-retired that (`scripts/sim`, 100,000 runs):
+Under uniform levelling, Level is a property of the **run**, not of a hero: all six read the same
+number, and a figure identical across six cards carries no information there. It sits in the map
+header beside the act, and per-hero only where a hero **deviates** — which is exactly the case
+that matters, a recruit that is behind. The victory overlay reports the levels a win paid
+("+2 Levels"), because that beat is the only place the player learns their roster grew; it is a
+report, not a screen, and nothing is spent on it.
 
-- Late-tier moves unlock at level 7, and **every one of the 42 moves costing 70+ mana is
-  late tier**.
-- Under flat income, **0.0%** of heroes ever reached level 7 and **99.2% of all casts were
-  early-tier**. Among runs that got as far as act 4, only 16.8% reached it.
-- Reaching level 7 costs **20** pooled points under the capped curve. Flat income paid
-  ~70–75 across a whole five-act run **for the entire roster**, so a squad of four (80
-  points) could not get there on a perfect run. Total income, not the price curve, was the
-  binding constraint.
+## A level never touches the movepool (2026-09-10, phase 2)
 
-So `trainingPointsFor(nodeType, actNumber)` now adds **`ACT_XP_STEP` = 2** per act past the
-first: an Act 5 Skirmish pays 12 where an Act 1 Skirmish pays 4. The function moved from
-`src/app/App.tsx` to `src/run/difficulty.ts` with that change — it is an act rule, and it
-now lives beside the other act rules instead of in the view.
-
-Measured at +2, among runs reaching act 4: heroes reaching **level 7 went 16.8% → 54.1%**,
-Evolution 69.6% → 75.5%, and mastery stayed rare at 3.6% — which is the intent, since
-mastery is the sink *past* the movepool. The step was chosen as the smallest that clears
-the late-tier gate for a majority; +3 and above make mastery routine (36%+).
-
-> 🔒 **OPEN — the cost this bought.** Scaling income is exactly what the flat rule was
-> guarding against, and it shows: Act 3's clear rate went 26% → 41% and Act 5's 78% → 97%.
-> The back half of the run is now easier than it was. Whether that is the right trade for
-> a reachable movepool is a playtest question, and `ACT_XP_STEP` is the one number to turn.
-
-> 🔒 **OPEN — flag before hardening.** Every number above is a first-pass playtest figure;
-> only the shape is decided. Three specific questions the curve creates:
->
-> - **Should Evolution cost a premium** over its linear price? It is the single most
->   run-defining purchase in the game and currently costs the same as any other level.
-> - **A Recruit Contract hands over a leveled hero for free** — an Act 3 claim is a
->   level-5, already-evolved hero, i.e. 10 points of curve nobody paid. Contracts were a
->   modest bonus under flat pricing and are noticeably stronger under the curve. That may
->   be correct (contracts are documented as flat-value), but it is a change in their power.
-> - ~~**Does income ever scale by act?**~~ **ANSWERED 2026-09-05: yes, +2 per act.** The
->   original answer here was "no, on purpose" — that it un-does the brake. It does, and the
->   section above prices what that cost. It was taken anyway, because the alternative was a
->   movepool half the catalog deep that no run ever opened.
-
-## Spending is optional — the pool banks on the map
-
-The Level Up screen is offered after every node that can afford a level, but it is no
-longer a wall: **Bank _n_ XP for later** leaves it with the pool intact
-(`RunState.levelUpDeferred`, `deferLevelUp`). The flag suppresses the automatic gate so a
-banked pool is not re-offered at every node, and **any XP grant clears it**
-(`grantUpgradeReward`) — new income always re-opens the screen. An unresolved Evolution
-still blocks the out: that is a payout the player already bought, not a spend.
-
-Banking only works if the banked figure is visible, so the map's status bar carries **Gold
-· XP · Contracts** beside the act count, and the XP chip is a button whenever the pool can
-afford a level — the way back into the screen the player walked out of. This is the
-"banking toward an expensive level is a real and intended play" line above finally having
-an interface.
-
-## The pool is distributed freely — including to the bench
-
-After a battle, the player **assigns the earned level-ups to any heroes they choose**,
-including **benched** heroes. There is no per-hero XP bar to fill and no requirement
-that a hero participated in the fight to receive a level-up. The allocation is a
-deliberate strategic decision surface: pour level-ups into a developing hero now, or
-spread them, or bank them into a hero you plan to field later.
-
-> 🔒 **OPEN — do not resolve without designer sign-off.**
-> **Reconcile with the "bench XP at 33%" rule in `progression.md`.** That rule assumed
-> heroes earn their *own* XP at a reduced rate while benched. This freely-distributed
-> pooled model appears to **supersede** per-hero bench XP entirely (the player decides
-> who gets level-ups, so "bench rate" may be obsolete). Do not silently keep both.
-> Decide: is bench-XP-rate removed, or does it survive as a modifier on how pooled
-> level-ups apply to benched heroes? Flag until signed off.
-
-## What a level-up does (2026-09-10, Growth Overhaul phase 2)
-
-A level-up **never touches the movepool.** It either surfaces the Evolution — the level-up that
-takes a hero to `EVOLUTION_LEVEL` — or it pays a **stat**: three distinct combat stats rolled,
-the player picks one, flat +10 (`levelUpPayout`, `drawMasteryStats`, `grantMasteryStat`). The old
-`MASTERY_LEVEL` = 10 threshold is inert; the reel fires from the first level.
-
-Moves come from **Mastery Scrolls** instead, gated by **Mastery Rank** — Part 1b below.
+Moves come from **Mastery Scrolls**, gated by **Mastery Rank** — Part 1b below. A level pays
+stats and nothing else; the level that reaches `EVOLUTION_LEVEL` surfaces the Evolution as well.
 
 ### An offer is spent by being MADE (2026-09-07)
 
@@ -333,16 +266,17 @@ the movepool is strictly *substitution*, never expansion.
 > (Part 2, below) now cover all 12 fixture heroes too — a separate axis from the
 > move pool, see README "Known gaps."
 
-### Level-ups pay STATS, and only stats (2026-09-10)
+### Levels pay STATS — reversing "level-ups never change stats" (2026-09-10)
 
-Reversed by the Growth Overhaul's phase 2. A level-up is no longer a movepool event at all:
-it rolls three combat stats and the player takes one, +10, or it surfaces the Evolution. The
-movepool moved wholesale onto Mastery Scrolls (Part 1b).
+The old rule was that a level-up touched the movepool and nothing else, and all stat growth
+happened at Evolution. Both halves are reversed: a level pays stats automatically (Part 1), and
+the movepool moved wholesale onto Mastery Scrolls (Part 1b).
 
-The separation the old rule was protecting — raw power explained by visible choices rather than
-an opaque curve — survives, because the pick is still a choice. Phase 3 replaces the reel with
-automatic per-level growth-grade rolls, at which point the stat half stops being a decision
-entirely and the Scroll is the only place growth is chosen (`docs/growth-overhaul.md` §2).
+What the old rule was protecting — raw power explained by visible choices rather than an opaque
+curve — moves rather than dying. The growth roll is not a choice, but the GRADE behind it is
+authored, published on the hero sheet, and budgeted; and the choices that remain (which Scroll,
+which Evolution, which item) are all still visible. Two lanes that never cross
+(`docs/growth-overhaul.md` §2).
 
 ### Which moves are offered
 

@@ -87,22 +87,15 @@ the option rather than advising against it (2026-09-06, per user direction). Thr
 
 | Lock | What it closes | Lifts when |
 | --- | --- | --- |
-| `focusHeroId` | Every Level Up card but Valor | Valor takes an Evolution |
 | `recruitHeroId` | The Skirmish contract is one offer, and the screen has no leave button | It is signed |
 | `fieldHeroId` / `fieldAtNodes` | Flurry is pinned to an ACTIVE slot at the warband and the Guardian | Act 1 ends |
 
-**The Evolution needed no lock of its own.** `LevelUpScreen` already refuses to bank or
-auto-close while one is pending, and `EvolutionScreen` has no decline. What was missing was a
-guarantee the player *reaches* one — which is what the focus lock is. With every point landing
-on one hero the fork arrives on a schedule: level 3 after the opener, 4 after the Skirmish, 5
-after the warband — the level-up screen immediately before the Guild Hall and the Guardian (§6).
-A test walks that arithmetic against the payout table and asserts *which node* it lands on, so
-retuning either table fails loudly rather than quietly moving the beat.
-
-The focus lock has one consequence worth knowing: the screen now closes on a pool the
-locked-out heroes could still buy. `LevelUpScreen.leave()` therefore banks any spendable
-remainder on the way out — without that, App's `levelUpPending` gate re-opens the screen
-forever. Outside a lock the auto-continue only ever fires on an empty pool, so the bank is inert.
+**The Evolution needs no lock, and since 2026-09-10 no schedule either.** `EvolutionScreen` has
+no decline, and levels are automatic and roster-wide — so the whole roster crosses
+`EVOLUTION_LEVEL` on the act's **third encounter**, the warband, whatever the player does. The
+`focusHeroId` lock that used to funnel a pool to guarantee that went with the pool. A test still
+asserts *which node* the fork lands on, so retuning the level curve fails loudly rather than
+quietly moving the beat.
 
 ## 5. Physical vs magical, and why the caster is not optional
 

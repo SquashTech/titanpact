@@ -284,12 +284,12 @@ export interface TutorialEncounter {
 }
 
 /**
- * What a scripted node pays. Each field REPLACES its normal roll (`trainingPointsFor`,
- * `goldRewardFor`) rather than adding to it, and each is optional: an omitted field takes the
- * normal one, which is how the scripted act says "this is not a thing I need to pin".
+ * What a scripted node pays. The field REPLACES its normal roll (`goldRewardFor`) rather than
+ * adding to it, and is optional: omitted takes the normal one, which is how the scripted act says
+ * "this is not a thing I need to pin". `xp` went with the pool (2026-09-10) — levels are
+ * automatic and roster-wide now, so there is nothing there to pin.
  */
 export interface TutorialPayout {
-  xp?: number;
   gold?: number;
 }
 
@@ -326,16 +326,12 @@ export function isTutorialAct(run: RunState): boolean {
  * act removes the option rather than recommending against it (2026-09-06, per user direction).
  * Three locks, each lifting the moment its lesson has landed — none of them survives Act 1.
  *
- * The Evolution needs no lock of its own: `LevelUpScreen` already refuses to bank or auto-close
- * while one is pending. What it needed was a guarantee the player *reaches* one, which is what
- * `focusHeroId` is — with every point going to one hero, the fork arrives on schedule.
+ * The Evolution needs no lock of its own, and since 2026-09-10 no schedule either: levels are
+ * automatic and roster-wide (run/growth.ts), so the whole roster crosses EVOLUTION_LEVEL on the
+ * act's third encounter whatever the player does. The `focusHeroId` lock that used to funnel a
+ * pool to guarantee it went with the pool.
  */
 export interface TutorialLocks {
-  /**
-   * The only hero the Level Up screen will spend on, until that hero has taken an Evolution.
-   * Every point lands on one hero, so the Evolution arrives instead of being averaged away.
-   */
-  focusHeroId: string;
   /**
    * The one Recruit Contract the Skirmish offers, and it cannot be walked past. Chosen to be a
    * MAGICAL specialist: the physical/magical split is invisible until the player owns one of
@@ -346,15 +342,6 @@ export interface TutorialLocks {
   fieldHeroId: string;
   /** Map nodes `fieldHeroId` is locked into. */
   fieldAtNodes: readonly MapNodeType[];
-}
-
-/** The roster id the Level Up screen is restricted to, or null when nothing is restricted. */
-export function tutorialFocusRosterId(locks: TutorialLocks, run: RunState): string | null {
-  if (!isTutorialAct(run)) return null;
-  const entry = run.roster.find((r) => r.heroId === locks.focusHeroId);
-  // The lock exists to reach an Evolution; once one is taken it has nothing left to do.
-  if (!entry || entry.chosenPathIds.length > 0) return null;
-  return entry.rosterId;
 }
 
 /** Roster ids that must occupy an active slot at `nodeType`. Empty when the hero is not owned. */

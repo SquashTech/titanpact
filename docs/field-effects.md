@@ -181,7 +181,7 @@ The same three properties above apply unchanged, and the same way round: one slo
 any other field switches the spread off; no owner, so an enemy's Magical Surge spreads
 your Overload; a 5-round rented clock. What is new is only that the type now **sets the
 field it reads** — Mana Font and Magic Cloak are both Arcane, both in the same slate as
-Overload, and Mana Font sits in the same level-up pool. That is the deliberate
+Overload, and Mana Font sits in the same Scroll pool. That is the deliberate
 counterpart to Light's Consecrate/Smite pairing: the combo grows on one hero rather
 than depending on a second draft of the same type.
 

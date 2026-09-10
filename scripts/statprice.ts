@@ -20,15 +20,15 @@ import { createRosterEntry, createRunState, addRosterEntry } from '../src/run/st
 import type { RosterEntry } from '../src/run/state';
 import { pickSquad } from '../src/run/squad';
 import { progressionTable } from '../src/data/progression';
+import { levelUpEntry } from '../src/run/growth';
 import {
   MAX_MASTERY_RANK,
   MOVE_CAP,
   SCROLLS_PER_RANK,
+  availableEvolution,
   chooseEvolutionPath,
   grantMasteryScrolls,
   grantOfferedMove,
-  levelUpHero,
-  levelUpPayout,
   pendingEvolution,
   recordMoveOffer,
   scrollMovePool,
@@ -64,12 +64,13 @@ function entryAtLevel(heroId: string, level: number): RosterEntry {
 
   const maxScrolls = (MAX_MASTERY_RANK - 1) * SCROLLS_PER_RANK;
   let run = grantMasteryScrolls(
-    addRosterEntry(createRunState(10_000), createRosterEntry(heroId, heroId, heroes[heroId].moveIds)),
+    addRosterEntry(createRunState(0), createRosterEntry(heroId, heroId, heroes[heroId].moveIds)),
     Math.max(1, maxScrolls)
   );
   for (let next = 2; next <= level; next++) {
-    run = levelUpHero(run, heroId);
-    if (levelUpPayout(progressionTable, moves, run.roster[0]) === 'evolution') {
+    // Levels are automatic now (src/run/growth.ts), and they roll stats rather than being spent.
+    run = { ...run, roster: [levelUpEntry(run.roster[0], heroes[heroId], 1, () => 0.5).entry] };
+    if (availableEvolution(progressionTable, run.roster[0])) {
       const node = pendingEvolution(progressionTable, run.roster[0]);
       if (node && node.paths.length > 0) {
         run = chooseEvolutionPath(run, progressionTable, heroes, heroId, node.paths[0].id);

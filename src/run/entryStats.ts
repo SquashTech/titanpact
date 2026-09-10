@@ -42,7 +42,7 @@ export function entryStatModifiers(
     equipmentStatModifiers(entry.equipment, equipmentLookup),
     entry.evolutionStatGrants,
     entry.bonusStatGrants,
-    entry.masteryStatGrants,
+    entry.growthStatGrants,
     teamStatModifiers,
     passiveStatModifiers(passiveCounts, passiveDefs)
   );

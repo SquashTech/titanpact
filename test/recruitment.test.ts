@@ -4,7 +4,8 @@ import { heroes } from '../src/data/heroes';
 import { enemies } from '../src/data/enemies';
 import { guildHallOffers } from '../src/data/recruitment';
 import { GUILD_HALL_LEVEL_BY_ACT, guildHallLevel } from '../src/run/difficulty';
-import { EVOLUTION_LEVEL, MASTERY_LEVEL } from '../src/run/progression';
+import { EVOLUTION_LEVEL } from '../src/run/progression';
+import { MAX_LEVEL, levelAfterEncounters } from '../src/run/growth';
 import { guildHallEntry } from '../src/run/guildRecruit';
 import { createRunState, createRosterEntry, addRosterEntry, ROSTER_CAP } from '../src/run/state';
 import { equipItem } from '../src/run/equipment';
@@ -22,7 +23,7 @@ import {
 } from '../src/run/recruitment';
 
 function seedRoster(heroIds: string[], gold = 0) {
-  let run = createRunState(0, gold);
+  let run = createRunState(gold);
   for (const heroId of heroIds) {
     run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   }
@@ -62,7 +63,10 @@ test('recruitment: the Guild Hall hire curve climbs, and always leaves runway to
   for (let act = 1; act <= GUILD_HALL_LEVEL_BY_ACT.length; act++) {
     const level = guildHallLevel(act);
     assert.ok(level >= guildHallLevel(act - 1), `act ${act}: the hire curve must not go backwards`);
-    assert.ok(level < MASTERY_LEVEL, `act ${act}: a hire at ${level} has no movepool left to raise`);
+    assert.ok(level < MAX_LEVEL, `act ${act}: a hire at ${level} is already at the cap`);
+    // The point of a hire is that it arrives BEHIND: the curve is a delta, so a late joiner
+    // never catches up (docs/growth-overhaul.md §6).
+    assert.ok(level < levelAfterEncounters(act * 4), `act ${act}: a hire at ${level} is not underlevelled at all`);
   }
   // The early halls stop short of the fork, so an early hire's Evolution is the player's pick.
   assert.ok(guildHallLevel(1) < EVOLUTION_LEVEL);

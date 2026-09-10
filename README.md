@@ -98,14 +98,18 @@ Covered by `test/statuses.test.ts`.
 - **The engine seam** (`buildCombatState.ts`): turns a `Squad` + roster into a real
   `CombatState`, applying equipment/Evolution stat grants as each combatant's starting
   modifiers.
-- **The pooled level-up currency** (`progression.ts`): `levelUpHero` spends one point to
-  level a roster entry up (increments `RosterEntry.level`); `grantLevelUpMove` resolves
-  that level-up's move offer — a random pick from the hero's `moveTiers` pool, gained
-  outright under the 4-move cap or an accept/decline replacement at the cap
-  (`MOVE_CAP`). **Below `EVOLUTION_LEVEL` only** — the level-up that reaches it
-  (currently level 5, flat and uniform across every hero) skips the move offer
-  entirely and instead surfaces the hero's Evolution: a one-shot choice of three
-  named paths (`chooseEvolutionPath`) granting permanent stats and/or a type-graft.
+- **Automatic levelling** (`growth.ts`, 2026-09-10): every roster hero levels every won
+  encounter, fielded or benched — no pool, no allocation, no screen. `MAX_LEVEL` = 30 and the
+  curve is `LEVEL_AFTER_ENCOUNTER`. Each level rolls **every stat independently** against that
+  hero's growth grade (S 95% down to F 5%), granting +2 or +6 HP; every hero's grades sum to
+  `GRADE_BUDGET` = 28, a second budget beside the 550 stat rule.
+- **Mastery Scrolls** (`progression.ts`): the run's only faucet for moves. A Scroll offers ONE
+  move from the hero's `moveTiers` pool — gained outright under the 4-move cap, or an
+  accept/decline replacement at it (`MOVE_CAP`) — and ticks that hero's **Mastery Rank**, which
+  is what gates the tiers (Early at 1, Mid at 2, Late at 3; three Scrolls a rank).
+  Reaching `EVOLUTION_LEVEL` (currently 5, flat and uniform) surfaces the hero's Evolution: a
+  one-shot choice of three named paths (`chooseEvolutionPath`) granting permanent stats and/or
+  a type-graft.
   **`moveTiers` pool content covers all 12 fixture heroes** (`src/data/
   progression.ts`), each drawing from a handful of thematically-appropriate moves
   beyond their starting kit. **Evolution paths now cover all 12** as well, each with

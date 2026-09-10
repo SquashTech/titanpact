@@ -65,8 +65,8 @@ export function RosterPeek({ run, className, onRunChange }: Props) {
               <span className="roster-peek-resource" title="Gold">
                 <ResourceGlyph kind="gold" /> {run.gold}
               </span>
-              <span className="roster-peek-resource" title="Unspent XP">
-                <ResourceGlyph kind="xp" /> {run.levelUpPool}
+              <span className="roster-peek-resource" title="Mastery Scrolls">
+                <ResourceGlyph kind="scroll" /> {run.masteryScrolls}
               </span>
               <span className="roster-peek-resource" title="Recruit Contracts">
                 <ResourceGlyph kind="contract" /> {run.recruitContracts}

@@ -32,7 +32,7 @@ const index = buildContentIndex({
 function sampleRun(): RunState {
   const map = generateMap(1234, 2);
   const walked = map.rows[0][0];
-  let run: RunState = { ...createRunState(3, 120), map, actNumber: 2 };
+  let run: RunState = { ...createRunState(120), map, actNumber: 2 };
   run = addRosterEntry(run, createRosterEntry('cinderKnight-1', 'cinderKnight', heroes.cinderKnight.moveIds));
   run = addRosterEntry(run, createRosterEntry('rime-1', 'rime', heroes.rime.moveIds));
   const geared = {
@@ -40,7 +40,7 @@ function sampleRun(): RunState {
     level: 6,
     equipment: equipItem(run.roster[0].equipment, equipment['dagger.common'].id),
     bonusStatGrants: { attack: 10, speed: 5 },
-    masteryStatGrants: { hp: 10 },
+    growthStatGrants: { hp: 10 },
   };
   return {
     ...run,
@@ -79,7 +79,7 @@ test('save: the actIntro checkpoint round trips too', () => {
 });
 
 test('save: an empty roster and an unwalked map are legal (a run parked at its act intro)', () => {
-  const run: RunState = { ...createRunState(0, 40), map: generateMap(7, 1) };
+  const run: RunState = { ...createRunState(40), map: generateMap(7, 1) };
   const result = roundTrip(run, 'actIntro');
   assert.ok(result.ok, result.ok ? '' : result.reason);
 });

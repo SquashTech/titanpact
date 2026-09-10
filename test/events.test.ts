@@ -38,7 +38,7 @@ import { addRosterEntry, createRosterEntry, createRunState } from '../src/run/st
 const config = { typeChart, heroes, moves, statuses, passives, fieldEffects, benchHpRegenFlat: 5 };
 
 function seedRoster(heroIds: string[]) {
-  let run = createRunState(0, 0);
+  let run = createRunState(0);
   for (const heroId of heroIds) {
     run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   }

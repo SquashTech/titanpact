@@ -128,7 +128,6 @@ export function formatReport(
   out.push(`  encounters won per run     ${num(agg.encountersWonSum / R, 2)}`);
   out.push(`  mean roster level at end   ${num(agg.rosterLevelEndSum / R, 2)}`);
   out.push(`  gold unspent at end        ${num(agg.goldEndSum / R, 1)}`);
-  out.push(`  XP pool unspent at end     ${num(agg.levelUpPoolEndSum / R, 2)}`);
   out.push('');
   out.push(`  ${pad('act', 6)}${padStart('entered', 10)}${padStart('cleared', 10)}${padStart('clear%', 9)}${padStart('died here', 11)}`);
   for (let act = 1; act <= TOTAL_ACTS; act++) {

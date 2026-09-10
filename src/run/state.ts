@@ -42,8 +42,8 @@ export interface RosterEntry {
   bonusPassiveGrants: readonly PassiveId[];
   /** Permanent grants from map-node rewards and event stat shifts. */
   bonusStatGrants: Partial<Record<StatKey, number>>;
-  /** Permanent grants from mastery level-ups (progression.ts grantMasteryStat). */
-  masteryStatGrants: Partial<Record<StatKey, number>>;
+  /** Everything this hero's levels have rolled up (run/growth.ts). Automatic; never a decision. */
+  growthStatGrants: Partial<Record<StatKey, number>>;
   /**
    * Mastery Scrolls poured into this hero. Mastery Rank is DERIVED from it
    * (progression.ts masteryRank), never stored: two figures for one fact drift, and the
@@ -76,13 +76,6 @@ export interface BrokenSeal {
 
 export interface RunState {
   roster: RosterEntry[];
-  /** Pooled, freely distributable across the roster. */
-  levelUpPool: number;
-  /**
-   * The player walked away from the Level Up screen with a spendable pool. Suppresses the
-   * post-node gate so a banked pool is not re-offered at every node; any XP grant clears it.
-   */
-  levelUpDeferred: boolean;
   /** Spent at a Guild Hall; contracts are claimed, not bought with this. */
   gold: number;
   /** Items carried but not equipped. Uncapped. Duplicates allowed — one copy per HERO is the rule. */
@@ -128,11 +121,9 @@ export interface RunState {
   tutorialSeenBeatIds: readonly string[];
 }
 
-export function createRunState(levelUpPool = 0, gold = 0, recruitContracts = 1): RunState {
+export function createRunState(gold = 0, recruitContracts = 1): RunState {
   return {
     roster: [],
-    levelUpPool,
-    levelUpDeferred: false,
     gold,
     stash: [],
     unseenItemIds: [],
@@ -165,7 +156,7 @@ export function createRosterEntry(rosterId: string, heroId: string, startingMove
     evolutionPassiveGrants: [],
     bonusPassiveGrants: [],
     bonusStatGrants: {},
-    masteryStatGrants: {},
+    growthStatGrants: {},
     masteryScrollsSpent: 0,
     bonusItemSlots: 0,
     evolutionTypeGraft: null,

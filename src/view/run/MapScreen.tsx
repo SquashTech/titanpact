@@ -10,7 +10,7 @@ import { ResourceGlyph, type ResourceKind } from '../shared/RunGlyph';
 import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { MapRoute } from './MapRoute';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, nodeRewardText, type NodeTier } from './mapNodes';
-import { canAffordAnyLevelUp } from '../../run/progression';
+import { levelAfterEncounters } from '../../run/growth';
 import { footerWaiting } from './mapFooter';
 import { locationForAct } from '../../run/locations';
 import type { LocationDefinition } from '../../data/locations';
@@ -21,8 +21,6 @@ interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
   onSelectNode: (nodeId: string) => void;
-  /** Re-opens the Level Up screen for a pool the player banked rather than spent. */
-  onOpenLevelUp: () => void;
   /** Leave to the title with the run saved here. Omit and the pause menu drops both quit entries. */
   onSaveAndQuit?: () => void;
   /** Discard the run and its save (two-tap armed). */
@@ -138,7 +136,7 @@ function MapPlacard({ location }: { location: LocationDefinition }) {
 
 // The run's hub (docs/run-loop.md). Training Points are spent on LevelUpScreen,
 // not here; a banked remainder on the map is normal.
-export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSaveAndQuit, onAbandonRun }: Props) {
+export function MapScreen({ run, onRunChange, onSelectNode, onSaveAndQuit, onAbandonRun }: Props) {
   /** Null while closed; otherwise the board Manage Roster opens on. */
   const [rosterBoard, setRosterBoard] = useState<'gear' | 'mastery' | null>(null);
   const [showReference, setShowReference] = useState(false);
@@ -151,6 +149,10 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
 
   const location = locationForAct(run.locationIds, run.actNumber);
   const unopened = unseenCount(run.unseenItemIds, run.stash);
+  // The roster's PAR, which under automatic levelling is everyone but a late joiner. Read off the
+  // roster rather than off the curve so it is right for a hero the curve does not describe — a
+  // contract recruit arriving at act level, or a fixture. Falls back to the curve for an empty one.
+  const rosterLevel = run.roster.reduce((best, entry) => Math.max(best, entry.level), levelAfterEncounters(run.encountersWon));
   const waiting = footerWaiting(unopened);
 
   // The whole view: where the player stands, and what they may take from here.
@@ -172,6 +174,10 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
         >
           <HubGlyph name="reference" />
         </button>
+        {/* Level is a property of the RUN, not of a hero: automatic levelling puts the whole
+            roster on the same number, and a figure identical across six cards carries no
+            information there. It reads here, beside the act, and per-hero only where a hero
+            DEVIATES — a recruit that is behind (docs/growth-overhaul.md §4). */}
         {run.actNumber > SEAL_ACTS ? (
           // The finale is the corridor past the fifth seal, not a sixth act, so it counts nothing.
           <span className="map-act" aria-label="The final pact">
@@ -187,14 +193,12 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
             </span>
           </span>
         )}
+        <span className="map-level" aria-label={`Roster level ${rosterLevel}`}>
+          <span className="map-act-label">Lv</span>
+          <span className="map-act-count">{rosterLevel}</span>
+        </span>
         <div className="map-purse">
           <ResourceStat kind="gold" label="Gold" value={run.gold} />
-          <ResourceStat
-            kind="xp"
-            label="Unspent XP"
-            value={run.levelUpPool}
-            onSpend={canAffordAnyLevelUp(run) ? onOpenLevelUp : undefined}
-          />
           <ResourceStat kind="contract" label="Recruit Contracts" value={run.recruitContracts} />
           {/* A stock, not an inbox — banking a Scroll is a legitimate play, so the count is
               stated and nothing is ever flagged as waiting (docs/growth-overhaul.md §10). The

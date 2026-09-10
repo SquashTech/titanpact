@@ -52,7 +52,7 @@ export function createEmptySandboxSide(): SandboxSideConfig {
 
 /** The level gate on Evolution is ignored here: level is bumped to EVOLUTION_LEVEL just long enough to reuse chooseEvolutionPath's validation, then restored. */
 export function buildSandboxSide(config: SandboxSideConfig, heroes: HeroLookup, table: ProgressionTable): { run: RunState; squad: Squad } {
-  let run = createRunState(0, 0);
+  let run = createRunState(0);
 
   for (const hc of config.heroes) {
     const base = createRosterEntry(hc.rosterId, hc.heroId, hc.moveIds);

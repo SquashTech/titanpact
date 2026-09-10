@@ -416,4 +416,9 @@ export interface HeroDefinition {
   moveIds: readonly string[];
   /** Offered in the start-of-run draft; false = recruit-only (Guild Hall / Recruit Contract). Single source of truth for the split. */
   starter: boolean;
+  /**
+   * How each stat grows per level (run/growth.ts). Optional: absent reads as all-B, which is
+   * exactly the grade budget — so a hero with no authored line is fairly costed, not free.
+   */
+  growthGrades?: Record<StatKey, 'S' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F'>;
 }

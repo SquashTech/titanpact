@@ -219,7 +219,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
                 <GrantSourceRow label="Items" mods={equipmentStatModifiers(entry.equipment, equipmentLookup)} />
                 <GrantSourceRow label="Evolution" mods={entry.evolutionStatGrants} />
                 <GrantSourceRow label="Boons" mods={entry.bonusStatGrants} />
-                <GrantSourceRow label="Mastery" mods={entry.masteryStatGrants} />
+                <GrantSourceRow label="Growth" mods={entry.growthStatGrants} />
                 {/* Hero-scoped passives only — relic-granted ones are already inside the Relics
                     line, and every grant has to appear exactly once for the ledger to add up. */}
                 <GrantSourceRow label="Passives" mods={passiveStatModifiers(entryPassiveCounts(entry, equipmentLookup), passives)} />

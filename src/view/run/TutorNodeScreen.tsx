@@ -29,7 +29,7 @@ const TIER_LABELS: Record<MoveTier, string> = { early: 'Early', mid: 'Mid', late
 
 /**
  * `tutorReward` node (docs/run-loop.md "The Tutor"): pick a hero, then pick ANY move off its own
- * level-up pool — no roll, no tier gate, and a move it declined years of level-ups ago is still
+ * Scroll pool — no roll, no rank gate, and a move it declined a dozen Scrolls ago is still
  * on the shelf. Two phases plus the replace-or-decline every at-cap grant goes through, and the
  * reveal.
  *

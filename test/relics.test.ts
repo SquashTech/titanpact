@@ -83,7 +83,7 @@ test('relics: the five Banners cover five different axes, and no axis twice', ()
 
 test('entryStats: the out-of-combat sheet math equals the combatant a fight actually builds', () => {
   const relicIds = ['bannerOfSwiftness', 'bannerOfTheBulwark', 'bannerOfTheBulwark'];
-  let run = createRunState(10);
+  let run = createRunState(0);
   run = addRosterEntry(run, createRosterEntry('cinderKnight', 'cinderKnight', heroes.cinderKnight.moveIds));
   run = grantClass(run, classes, 'cinderKnight', 'warrior');
 

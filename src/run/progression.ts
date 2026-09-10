@@ -1,5 +1,9 @@
-// The pooled level-up currency — mechanism only; pool/path content is in
+// The movepool and the Evolution tree — mechanism only; pool/path content is in
 // src/data/progression.ts. Spec: docs/leveling-and-ranks.md.
+//
+// Levels themselves are NOT here: they are automatic and roster-wide (run/growth.ts). What lives
+// here is everything a level used to gate and no longer does — the Mastery Scroll faucet, the
+// rank that gates its tiers, and the Evolution nodes.
 
 import type { HeroDefinition, MoveDefinition, MoveTier, PassiveId, StatKey, TypeId } from '../engine/content';
 import { isValidFlatStatGrant } from '../engine/content';
@@ -10,38 +14,6 @@ import { mergeStatMods } from './statMods';
 
 /** Past the cap, growth is substitution, never expansion. */
 export const MOVE_CAP = 4;
-
-/**
- * Ceiling on the level-up price. The raw triangular curve made deep levels unaffordable:
- * a full five-act run pays roughly 70 pooled points, and reaching MASTERY_LEVEL on ONE
- * hero cost 55 of them, so the late-tier movepool — every move costing 70+ mana — was
- * priced out of a real run.
- */
-export const MAX_LEVEL_UP_COST = 5;
-
-/**
- * A level-up costs as many points as the level being LEFT (CLAUDE.md), so a hero's first
- * level-up costs 1 — flattening at MAX_LEVEL_UP_COST rather than rising forever.
- */
-export function levelUpCost(level: number): number {
-  return Math.min(MAX_LEVEL_UP_COST, Math.max(1, level));
-}
-
-/** Triangular sum of levelUpCost over [fromLevel, toLevel). */
-export function costToReachLevel(fromLevel: number, toLevel: number): number {
-  let total = 0;
-  for (let level = fromLevel; level < toLevel; level++) total += levelUpCost(level);
-  return total;
-}
-
-/**
- * The gate every level-up screen must use instead of `levelUpPool > 0` — a
- * non-empty pool may buy nobody. Ignores an earned-but-unresolved Evolution;
- * callers check `availableEvolution` for that separately.
- */
-export function canAffordAnyLevelUp(run: RunState): boolean {
-  return run.roster.some((entry) => run.levelUpPool >= levelUpCost(entry.level));
-}
 
 /** Uniform Evolution trigger level for every hero (per-hero depth is deferred). */
 export const EVOLUTION_LEVEL = 5;
@@ -68,6 +40,14 @@ export const SCROLLS_PER_ACT = 2;
  * decision rather than a top-up. First-pass figure for playtest.
  */
 export const SCROLL_REWARD_COUNT = 2;
+
+/**
+ * What the `loneScrollReward` node pays. One — the commoner, smaller half of the same grant
+ * (2026-09-10, per user direction). It was the XP Cache until levels went automatic and there
+ * was no pool left to pay into; it kept its seat rather than being deleted because the reward
+ * rows were already down to six types.
+ */
+export const LONE_SCROLL_COUNT = 1;
 
 export const MAX_MASTERY_RANK = 3;
 
@@ -122,37 +102,6 @@ export function isMoveTierOfferable(move: MoveDefinition | undefined, rank: numb
   return isMoveTierReached(move, rank) && rank < MOVE_TIER_RANK_EXPIRY[tier];
 }
 
-/** Last level whose level-up pays out a move; past it a level-up buys a stat (CLAUDE.md exemption). Same decision as data/progression.ts FLOOR — move one, move both. */
-export const MASTERY_LEVEL = 10;
-
-/** Flat grant per mastery level-up — a multiple of 10, so the 5/10 lock binds without exemption. */
-export const MASTERY_STAT_AMOUNT = 10;
-
-/**
- * The five combat stats only — HP/Mana/MP Regen are excluded because +10 is not
- * worth the same thing across all eight. Deliberately NOT imported from
- * data/moves.ts RANDOM_STAT_POOL: the two reels are independently authorable.
- */
-export const MASTERY_STAT_POOL: readonly StatKey[] = ['attack', 'defense', 'intelligence', 'wisdom', 'speed'];
-
-export function isValidMasteryStat(stat: StatKey): boolean {
-  return MASTERY_STAT_POOL.includes(stat);
-}
-
-/** Stats offered per mastery level-up; the player picks one. */
-export const MASTERY_CHOICE_COUNT = 3;
-
-/** `count` DISTINCT stats from MASTERY_STAT_POOL via partial Fisher-Yates; `random` is injected so tests can pin a draw. */
-export function drawMasteryStats(random: () => number, count: number = MASTERY_CHOICE_COUNT): StatKey[] {
-  const bag = [...MASTERY_STAT_POOL];
-  const draw = Math.min(count, bag.length);
-  for (let i = 0; i < draw; i++) {
-    const j = i + Math.floor(random() * (bag.length - i));
-    [bag[i], bag[j]] = [bag[j], bag[i]];
-  }
-  return bag.slice(0, draw);
-}
-
 /**
  * Floor on a hero's move pool, by OFFERABLE SET rather than by cumulative band — Early expiring
  * at Mid means the three sets are Early alone, Mid alone, and Mid+Late.
@@ -175,22 +124,6 @@ export interface MovePoolFloor {
 
 export function movePoolFloor(): MovePoolFloor {
   return { early: SCROLLS_PER_RANK, mid: SCROLLS_PER_RANK, midLate: SCROLLS_PER_RANK };
-}
-
-/**
- * What a level-up pays out, read off the POST-level-up entry. Moves left the level track on
- * 2026-09-10 (Growth Overhaul phase 2) — a Scroll is the only faucet — so a level either
- * surfaces an Evolution or falls through to the stat reel. Phase 3 replaces the reel with
- * per-level growth-grade rolls and this collapses further.
- */
-export type LevelUpPayout = 'evolution' | 'mastery';
-
-export function levelUpPayout(
-  table: ProgressionTable,
-  _moves: Record<string, MoveDefinition>,
-  entry: RosterEntry
-): LevelUpPayout {
-  return availableEvolution(table, entry) ? 'evolution' : 'mastery';
 }
 
 export interface EvolutionPath {
@@ -253,12 +186,8 @@ function requireEntry(run: RunState, rosterId: string): RosterEntry {
   return entry;
 }
 
-function replaceEntry(run: RunState, rosterId: string, next: RosterEntry, spend: number): RunState {
-  return {
-    ...run,
-    levelUpPool: run.levelUpPool - spend,
-    roster: run.roster.map((r) => (r.rosterId === rosterId ? next : r)),
-  };
+function replaceEntry(run: RunState, rosterId: string, next: RosterEntry): RunState {
+  return { ...run, roster: run.roster.map((r) => (r.rosterId === rosterId ? next : r)) };
 }
 
 function withOffers(entry: RosterEntry, moveIds: readonly string[]): readonly string[] {
@@ -324,15 +253,6 @@ export function canSpendScroll(
   return scrollMovePool(table, moves, entry).length > 0 || masteryRank(entry) < MAX_MASTERY_RANK;
 }
 
-/** Spends levelUpCost(entry.level) and increments level. The move/Evolution payout is resolved separately by the caller. */
-export function levelUpHero(run: RunState, rosterId: string): RunState {
-  const entry = requireEntry(run, rosterId);
-  const cost = levelUpCost(entry.level);
-  if (run.levelUpPool < cost) throw new ProgressionError('Not enough training points');
-
-  return replaceEntry(run, rosterId, { ...entry, level: entry.level + 1 }, cost);
-}
-
 /**
  * Free. Adds `moveId`, or swaps it in for `replaceMoveId` at the cap. Does NOT spend a
  * level-up offer: this is the faucet for moves that arrive from outside the pool — an event's
@@ -346,7 +266,7 @@ export function grantMove(run: RunState, rosterId: string, moveId: string, repla
   const unlockedMoveIds = replaceMoveId
     ? entry.unlockedMoveIds.map((id) => (id === replaceMoveId ? moveId : id))
     : [...entry.unlockedMoveIds, moveId];
-  return replaceEntry(run, rosterId, { ...entry, unlockedMoveIds }, 0);
+  return replaceEntry(run, rosterId, { ...entry, unlockedMoveIds });
 }
 
 /** The Scroll was spent by spendMasteryScroll. Grants, and spends the offer — swapping the move away later does not put it back in the pool. */
@@ -366,7 +286,7 @@ export function grantOfferedMove(run: RunState, rosterId: string, moveId: string
 export function spendMasteryScroll(run: RunState, rosterId: string): RunState {
   const entry = requireEntry(run, rosterId);
   if (run.masteryScrolls < 1) throw new ProgressionError('No Mastery Scrolls to spend');
-  const next = replaceEntry(run, rosterId, { ...entry, masteryScrollsSpent: entry.masteryScrollsSpent + 1 }, 0);
+  const next = replaceEntry(run, rosterId, { ...entry, masteryScrollsSpent: entry.masteryScrollsSpent + 1 });
   return { ...next, masteryScrolls: next.masteryScrolls - 1 };
 }
 
@@ -383,20 +303,7 @@ export function grantMasteryScrolls(run: RunState, count: number = 1): RunState 
  */
 export function recordMoveOffer(run: RunState, rosterId: string, moveIds: readonly string[]): RunState {
   const entry = requireEntry(run, rosterId);
-  return replaceEntry(run, rosterId, { ...entry, offeredMoveIds: withOffers(entry, moveIds) }, 0);
-}
-
-/** Free, like grantLevelUpMove. The roll is the caller's; the reel restriction is enforced here so a caller can't reintroduce +10 MP Regen. */
-export function grantMasteryStat(run: RunState, rosterId: string, stat: StatKey): RunState {
-  const entry = requireEntry(run, rosterId);
-  if (!isValidMasteryStat(stat)) {
-    throw new ProgressionError(`${stat} is not a mastery stat`);
-  }
-  const nextEntry: RosterEntry = {
-    ...entry,
-    masteryStatGrants: mergeStatMods(entry.masteryStatGrants, { [stat]: MASTERY_STAT_AMOUNT }),
-  };
-  return replaceEntry(run, rosterId, nextEntry, 0);
+  return replaceEntry(run, rosterId, { ...entry, offeredMoveIds: withOffers(entry, moveIds) });
 }
 
 /** The next unresolved Evolution node regardless of level ("where is this hero headed"); null once all are resolved. */
@@ -484,5 +391,5 @@ export function chooseEvolutionPath(
     evolutionPassiveGrants: [...new Set([...entry.evolutionPassiveGrants, ...(path.grantsPassiveIds ?? [])])],
     evolutionTypeGraft,
   };
-  return replaceEntry(run, rosterId, nextEntry, 0);
+  return replaceEntry(run, rosterId, nextEntry);
 }

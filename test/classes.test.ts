@@ -44,7 +44,7 @@ test('classes: no class touches manaPool/mpRegen (open question, not yet decided
 // --- grantClass / chosenClass ---
 
 function seedRoster(heroIds: string[]) {
-  let run = createRunState(10);
+  let run = createRunState(0);
   for (const heroId of heroIds) {
     run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   }

@@ -32,7 +32,7 @@ same rule CLAUDE.md states for every other content type.
 | `grantPassive` | Teaches a Passive to one chosen hero (`RosterEntry.bonusPassiveGrants`). | Assertiveness Training |
 | `loot` | N pieces of equipment on the act’s own drop curve, dropped straight into the bag. | Loot Pile |
 
-**What is deliberately NOT in the vocabulary:** gold, Training Points, Recruit Contracts.
+**What is deliberately NOT in the vocabulary:** gold, Mastery Scrolls, Recruit Contracts.
 Each is already a whole map-node type or a per-act grant, and an event that duplicated one
 would be a reward node wearing a costume. An event should be a thing the map cannot
 otherwise do.

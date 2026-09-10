@@ -36,7 +36,6 @@ import type { TutorialBeat, TutorialEncounter, TutorialFightCue, TutorialLocks, 
  * and nothing had to be staged for it.
  */
 export const TUTORIAL_LOCKS: TutorialLocks = {
-  focusHeroId: 'valor',
   recruitHeroId: 'glacialWarden',
   fieldHeroId: 'glacialWarden',
   fieldAtNodes: ['battle', 'boss'],
@@ -82,11 +81,9 @@ export const TUTORIAL_ENCOUNTERS: Partial<Record<MapNodeType, TutorialEncounter>
  * experience a normal one does, so that erasing a profile to replay the tutorial is never the
  * strongest opening move in the run. It used to pay double.
  *
- * Reaching the Evolution before the Guardian is what an override used to buy, and it is now
- * bought properly — the row-0 opener pays 3 rather than 2 (BASE_TRAINING_POINTS), so EVERY act
- * on EVERY route can afford an all-in on one hero. Act 1 therefore pays 10 before its Guardian
- * against a 10-point cost, and with TUTORIAL_LOCKS.focusHeroId funnelling all of it to Valor the
- * schedule is exact: level 3 after the opener, 4 after the Skirmish, 5 after the warband.
+ * XP is not pinned because there is none to pin (2026-09-10): levels are automatic and
+ * roster-wide, so the act's third encounter takes the whole roster to EVOLUTION_LEVEL on its own
+ * (run/growth.ts LEVEL_AFTER_ENCOUNTER).
  *
  * Gold IS pinned, and only to its own average (goldRewardFor rolls 30-45 for a battle and 15-25
  * otherwise). Not for power — 77 against a ~77.5 mean — but for determinism: Valor tells the

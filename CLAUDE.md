@@ -15,9 +15,10 @@ don't silently override it.
 > cap 30), moves onto a **Mastery Scroll / Mastery Rank** currency, Evolutions onto **the
 > Crucible** at the act boundary, and **Gems are deleted**. That doc's §9 lists the invariants
 > scheduled for reversal; its §8 is the phase order and says which have landed.
-> **Phases 1-2 are DONE (2026-09-10): Gems are gone, and moves come only from Mastery
-> Scrolls.** Everything else below is still the rule in force and the code still implements it.
-> Read it before touching levelling, movepools, Evolutions or reward nodes.
+> **Phases 1-3 are DONE (2026-09-10): Gems are gone, moves come only from Mastery Scrolls,
+> and levels are automatic, roster-wide and cap 30.** Everything else below is still the rule in
+> force and the code still implements it. Read it before touching levelling, movepools,
+> Evolutions or reward nodes.
 
 ---
 
@@ -65,7 +66,11 @@ don't silently override it.
   still pay `HP_BUDGET_VALUE` = 0.5 and equipment 0.25 — so it is a legibility call to be
   judged in playtest, and the walls are what to watch (`docs/progression.md` "Pricing HP").
 - **Stat modifiers are flat additive integers, multiples of 5 or 10.** No % stat mods.
-  There is **no automatic stat growth** from leveling. One documented exemption
+  **Automatic stat growth from levelling is the one systemic exemption** (2026-09-10, Growth
+  Overhaul phase 3): a growth roll grants **+2**, or **+6 HP**, neither of which is a multiple
+  of 5. The rule was written to keep authored grants legible, and a roll nobody authors per-hero
+  is not that kind of grant — the legibility lives in the GRADE instead (`src/run/growth.ts`).
+  A further exemption
   (2026-08-30): a **derived** grant, whose amount is read off live state rather than
   authored, lands unrounded — Arcane Overflow grants Attack/Intelligence equal to the
   caster's current Mana, and Beast's Apex Predator grants Attack equal to the caster's
@@ -93,31 +98,29 @@ don't silently override it.
 - Heroes are **named, authored, fixed specialists** (~53 concepts). Not procedurally generated.
 - **Mono typing is a valid terminal state**, not a larval stage. Precedent: Pokémon
   Normal/Water/Bug. A numerically common mono type is not a design flaw.
-- **A level-up costs as many pool points as the hero's current level** (2026-09-01):
-  1→2 costs 1, 4→5 costs 4, 10→11 costs 10 (`levelUpCost`, `costToReachLevel`,
-  `src/run/progression.ts`). The flat 1 it replaced made the payout curve **convex** —
-  the system paid more per point the harder the player hyperfocused. **Priced, not
-  capped:** the carry build stays legal and is charged for in breadth. A **leftover pool
-  that buys nobody is normal and banks**, so every gate is `canAffordAnyLevelUp`, never
-  `levelUpPool > 0`. **Spending is optional** (2026-09-03): the player may bank a
-  spendable pool and walk on (`RunState.levelUpDeferred`), which suppresses the gate
-  until the next XP grant clears it; the map's status bar carries the banked figure and
-  re-opens the screen. **The price flattens at `MAX_LEVEL_UP_COST` = 5** (2026-09-05) and
-  **per-fight income now scales by act**, `+ACT_XP_STEP` per act past the first
-  (`trainingPointsFor`, `ACT_XP_STEP`, `src/run/difficulty.ts`) — both reversing the
-  earlier flat-income decision, because batch simulation showed **0.0% of heroes ever
-  reached level 7**, where every move costing 70+ mana unlocks. Rationale, figures and the
-  open tuning questions: `docs/leveling-and-ranks.md`.
-- **Level-ups are a pooled currency** distributed freely after each battle (benched heroes
-  included). A level **pays a stat**: it rolls three distinct combat stats and the player
-  picks one, for a flat **+10** (`MASTERY_CHOICE_COUNT`, `drawMasteryStats`,
-  `grantMasteryStat`, `src/run/progression.ts`). A choice rather than a forced roll because
-  hyperfocus needs *aim*; three of five still withholds two, so the roll keeps mattering. The
-  reel is the **five combat stats only** — HP/Mana/MP Regen are excluded because a flat +10 is
-  not worth the same thing across all eight. The level-up that reaches the Evolution level
-  instead **surfaces the Evolution choice**. Enforced by `test/mastery.test.ts`.
-  **A level never teaches a move** (2026-09-10, Growth Overhaul phase 2), so the old
-  `MASTERY_LEVEL` = 10 gate is inert: every level pays a stat, from the first.
+- **Levels are AUTOMATIC and ROSTER-WIDE** (2026-09-10, `src/run/growth.ts`). Every roster hero
+  levels every won encounter, fielded or benched. **No pool, no allocation, no screen** —
+  `MAX_LEVEL` = 30, and the curve is authored outright as `LEVEL_AFTER_ENCOUNTER` (act ends
+  6/12/18/23/28/30, four encounters an act). It is a **DELTA, never a target**: a hero that
+  joins late has missed the grants before it and stays behind permanently, which is what keeps
+  "arrives underlevelled" a real archetype rather than a rounding error.
+  Participation-based XP was considered and **rejected** — it produces the runaway where your
+  best four level, the sideboard rots, and by Act 4 you cannot rotate. Roster-wide gets the
+  screen removal without buying that; a hero rotated in is at parity, so rotating is free.
+  **The cost is real: hyperfocus dies as a LEVELLING strategy**, and is bought back wholesale by
+  Mastery Rank. A focus-hero XP dial was drafted as a consolation and dropped; do not
+  re-introduce it without re-reading `docs/growth-overhaul.md` §4.
+- **Each level rolls EVERY stat independently against that hero's growth grade for it.**
+  S 95% / A 80% / B 65% / C 50% / D 35% / E 20% / F 5%; a success grants **+2**, or **+6 HP**
+  (CLAUDE.md's own measured HP break-even is ≈0.33 a point, so 6 HP IS 2 points' worth). Grades
+  cover the **seven stats the 550 budget covers** — MP Regen excluded, as from every other
+  per-hero grant. **Every hero's grades sum to exactly `GRADE_BUDGET` = 28** (an average of B):
+  a SECOND budget, enforced by test beside the 550 one, because the 550 rule alone stops being
+  sufficient the moment a low base with S-grades can outrun a high base with F-grades.
+  **Base and growth are independent axes and that is the point** — low base + high growth is a
+  late bloomer, high base + low growth is front-loaded. All 36 heroes are on the all-B
+  placeholder until the authoring pass (phase 7); all-B is exactly on budget, so an un-authored
+  hero is fairly costed rather than free. `test/growth.test.ts`.
 - **Moves come from ONE faucet: Mastery Scrolls, gated by Mastery Rank** (2026-09-10,
   `docs/growth-overhaul.md` §4). A Scroll is poured into one hero on the Roster's Mastery
   board; it offers **one** move from that hero's pool — take it or decline, and the move is
@@ -170,8 +173,8 @@ don't silently override it.
   equipment and the Boon node. Nothing team-wide grants a passive or an Elemental Force, and a
   Banner is the ONLY team-wide grant of any kind.
 - **The Tutor: one guaranteed seat in each of acts 4 and 5** (2026-09-07). `tutorReward` lets
-  the player pick a hero and teach it **any** move from that hero's own level-up pool — un-rolled,
-  un-tier-gated, and including moves a level-up already offered and had declined. It takes a seat
+  the player pick a hero and teach it **any** move from that hero's own Scroll pool — un-rolled,
+  un-rank-gated, and including moves a Scroll already offered and had declined. It takes a seat
   **inside** a pick-1-of-3 reward row rather than a forced row of its own: that displacement (a
   Forge, a Boon, a purse) is the only price a reward row can charge, and it is why the strongest
   reward in the run is not free. Lategame-only because earlier the level curve is handing out
@@ -372,7 +375,7 @@ authored roster.
   **`authoring-moves.md` is a runbook, not a design module** — read it before implementing
   a designed slate of moves for a type (1 type still to go — Ancient; Fire
   and Water are the worked examples, and §10 carries all fourteen hand-offs).
-  **`growth-overhaul.md` is a destination plus a route, and only phases 1-2 of §8 are built** —
+  **`growth-overhaul.md` is a destination plus a route, and only phases 1-3 of §8 are built** —
   the replacement for levelling, movepool gating and Evolutions. Check §8 before assuming.
 - `/prototypes/` — the two slices above, as behavioral reference.
 - `/src/engine/` — the pure resolution engine + the six contracts.

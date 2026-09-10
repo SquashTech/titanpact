@@ -78,8 +78,13 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
     </>
   ),
   equipmentReward: SECTION_PATHS.equipment,
-  // The Mastery section mark, for the node that pays the Scrolls out — same rule as the Boon.
-  scrollReward: SECTION_PATHS.mastery,
+  // A bundle, against the Lone Scroll's single sealed sheet below.
+  scrollReward: (
+    <>
+      <path fillRule="evenodd" d="M3 6.2a3.4 3.4 0 0 1 6.8 0v11.6a3.4 3.4 0 0 1-6.8 0Zm3.4-1.3a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Z" />
+      <path fillRule="evenodd" d="M14.2 6.2a3.4 3.4 0 0 1 6.8 0v11.6a3.4 3.4 0 0 1-6.8 0Zm3.4-1.3a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Z" />
+    </>
+  ),
   // The Passives section mark, for the node that hands one over — same rule.
   passiveReward: SECTION_PATHS.passives,
   // Money bag.
@@ -89,13 +94,9 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
       <path d="M9 7.8h6c3.6 1.9 5.8 5.2 5.8 8.6 0 3.2-2.4 5.2-6 5.2h-5.6c-3.6 0-6-2-6-5.2 0-3.4 2.2-6.7 5.8-8.6Z" />
     </>
   ),
-  // One arrow off a plinth (not the Buffs pair — XP only goes up).
-  upgradeReward: (
-    <>
-      <path d="M12 2 20.6 12h-5v5.4H8.4V12h-5Z" />
-      <path d="M6.4 19.4h11.2v2.6H6.4Z" />
-    </>
-  ),
+  // Two rolled scrolls seen end-on. The Cache pays two and the Lone Scroll one, and with map
+  // labels gone the silhouette is the only thing that can say which — so the count IS the mark.
+  loneScrollReward: SECTION_PATHS.mastery,
   // Anvil on its stump: the Forge adds a slot, so it draws the place gear is made, not gear.
   forgeReward: (
     <>

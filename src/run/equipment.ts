@@ -6,7 +6,7 @@ import type { PassiveId, StatKey, StatusGrant } from '../engine/content';
 import { isValidFlatStatGrant } from '../engine/content';
 import type { StatModifiers } from '../engine/state';
 import { mergeStatMods } from './statMods';
-import type { XpNodeType } from './difficulty';
+import type { EncounterNodeKind } from './difficulty';
 
 export type EquipmentRarity = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
 
@@ -383,7 +383,7 @@ export function lootTierFor(actNumber: number, source: LootSource = 'standard'):
  * synced. They are here now because a simulator measuring different drop odds than the game ships
  * is worse than no simulator.
  */
-export const EQUIPMENT_DROP_CHANCE: Record<XpNodeType, number> = {
+export const EQUIPMENT_DROP_CHANCE: Record<EncounterNodeKind, number> = {
   fight: 1,
   battle: 1,
   skirmish: 0.6,
@@ -393,7 +393,7 @@ export const EQUIPMENT_DROP_CHANCE: Record<XpNodeType, number> = {
 };
 
 /** Elite and Guardian roll one loot tier ahead (lootTierFor). */
-export const LOOT_SOURCE: Record<XpNodeType, LootSource> = {
+export const LOOT_SOURCE: Record<EncounterNodeKind, LootSource> = {
   fight: 'standard',
   battle: 'standard',
   skirmish: 'standard',

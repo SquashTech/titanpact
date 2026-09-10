@@ -6,7 +6,7 @@ import { moves } from '../src/data/moves';
 import { locations } from '../src/data/locations';
 import { typeChart } from '../src/data/typechart';
 import { progressionTable } from '../src/data/progression';
-import { trainingPointsFor, type XpNodeType } from '../src/run/difficulty';
+import { levelAfterEncounters } from '../src/run/growth';
 import {
   TUTORIAL_ENCOUNTERS,
   TUTORIAL_FIGHT_CUES,
@@ -16,7 +16,7 @@ import {
 } from '../src/data/tutorial';
 import { MAP_NODE_TYPES } from '../src/run/map';
 import { generateEncounter } from '../src/run/enemyGen';
-import { costToReachLevel, levelUpCost } from '../src/run/progression';
+import { EVOLUTION_LEVEL as EVOLUTION_LEVEL_ } from '../src/run/progression';
 import { EVOLUTION_LEVEL } from '../src/run/progression';
 import { createRosterEntry, createRunState } from '../src/run/state';
 import { resolveTypeMult } from '../src/engine/damage/typeMult';
@@ -35,7 +35,6 @@ import {
   tutorialBeat,
   tutorialContractOffers,
   tutorialEncounterFor,
-  tutorialFocusRosterId,
   tutorialLockedActiveRosterIds,
   tutorialPayoutFor,
   TUTORIAL_ROW_TYPES,
@@ -153,22 +152,19 @@ test('tutorial: a scripted encounter is fielded verbatim when nothing is exclude
 
 // --- Payouts ---
 
-test('an act can afford an Evolution before its own Guardian, on either route', () => {
-  // Not a tutorial property — a property of the game's income, which is why the tutorial no
-  // longer overrides XP at all. Pouring an act into one hero is meant to be a real plan with a
-  // real cost (the rest of the roster stays behind), so the map must not decide two rows early
-  // whether it is possible. Both routes through an act have to clear the fork.
-  const cost = costToReachLevel(1, EVOLUTION_LEVEL);
-  for (const middle of ['battle', 'elite'] as const) {
-    const beforeGuardian = (['fight', 'skirmish', middle] as const).reduce(
-      (total, node) => total + trainingPointsFor(node, 1),
-      0
-    );
-    assert.ok(
-      beforeGuardian >= cost,
-      `the ${middle} route pays ${beforeGuardian} XP before its Guardian, and the Evolution costs ${cost}`
-    );
-  }
+test('an act reaches the Evolution before its own Guardian, on every route', () => {
+  // Not a tutorial property — a property of the level curve, which is why the tutorial pins no
+  // XP at all any more. Act 1 runs four encounters (fight, Skirmish, Elite-or-Battle, Guardian)
+  // and every route is the same length, so the fork lands on the third whichever middle node the
+  // player takes (docs/growth-overhaul.md §3).
+  assert.ok(
+    levelAfterEncounters(3) >= EVOLUTION_LEVEL,
+    `three encounters reach level ${levelAfterEncounters(3)}, and the Evolution wants ${EVOLUTION_LEVEL}`
+  );
+  assert.ok(
+    levelAfterEncounters(2) < EVOLUTION_LEVEL,
+    'and not before the third — the fork should not land on the Skirmish'
+  );
 });
 
 test('tutorial: payouts and encounters apply in Act 1 only', () => {
@@ -424,41 +420,22 @@ test('tutorial: the contract offer is forced once, and only while it is claimabl
   assert.strictEqual(tutorialContractOffers(TUTORIAL_LOCKS, { ...run, tutorial: false }, beaten), null);
 });
 
-test('tutorial: the Level Up focus lock holds until the focus hero evolves, then lifts', () => {
-  const run = lockRun([...TUTORIAL_STARTER_IDS]);
-  const focusEntry = run.roster.find((r) => r.heroId === TUTORIAL_LOCKS.focusHeroId)!;
-  assert.strictEqual(tutorialFocusRosterId(TUTORIAL_LOCKS, run), focusEntry.rosterId);
-
-  const evolved = {
-    ...run,
-    roster: run.roster.map((r) => (r.rosterId === focusEntry.rosterId ? { ...r, chosenPathIds: ['whatever'] } : r)),
-  };
-  assert.strictEqual(tutorialFocusRosterId(TUTORIAL_LOCKS, evolved), null, 'the lock exists to reach an Evolution, so taking one ends it');
-
-  assert.strictEqual(tutorialFocusRosterId(TUTORIAL_LOCKS, { ...run, actNumber: 2 }), null);
-  assert.strictEqual(tutorialFocusRosterId(TUTORIAL_LOCKS, { ...run, tutorial: false }), null);
-  assert.strictEqual(tutorialFocusRosterId(TUTORIAL_LOCKS, lockRun(['packAlpha'])), null, 'no focus hero, no lock');
-});
-
-test('tutorial: the focus lock reaches the Evolution on the payouts as written', () => {
-  // The lock only guarantees the fork if the schedule pays for it. Walk Act 1's income against
-  // the level price with every point going to the focus hero, and check where level 5 lands.
-  let pool = 0;
-  let level = 1;
-  const reachedAfter: string[] = [];
-  for (const node of ['fight', 'skirmish', 'battle'] as const) {
-    pool += TUTORIAL_PAYOUTS[node]?.xp ?? trainingPointsFor(node, 1);
-    while (level < EVOLUTION_LEVEL && pool >= levelUpCost(level)) {
-      pool -= levelUpCost(level);
-      level++;
-    }
-    if (level >= EVOLUTION_LEVEL) reachedAfter.push(node);
-  }
-  assert.ok(reachedAfter.length > 0, 'Act 1 never reaches the Evolution even with every point on one hero');
-  // The warband, not the Guardian. The payouts are a normal act's total (see the ceiling test
-  // below), and on a normal act's ORDER the fork would land one fight too late — after the apex
-  // fight instead of before it. Landing it here is the entire reason a point sits where it does.
-  assert.strictEqual(reachedAfter[0], 'battle', 'the Evolution must be taken BEFORE the Guardian, not after');
+test('tutorial: the scripted act reaches the Evolution on the warband, not the Guardian', () => {
+  // Act 1's corridor is fight, Skirmish, (Forge), battle, ... Guardian — four ENCOUNTERS, and the
+  // curve puts the fork on the third. The lock that used to funnel a pool to guarantee this went
+  // with the pool: levels are automatic, so the schedule is a property of the curve now.
+  const encounters = TUTORIAL_ROW_TYPES.filter((type) => TUTORIAL_ENCOUNTERS[type] || type === 'boss');
+  const warband = encounters.indexOf('battle') + 1;
+  const guardian = encounters.indexOf('boss') + 1;
+  assert.ok(warband > 0 && guardian > warband, 'the corridor must run the warband before the Guardian');
+  assert.ok(
+    levelAfterEncounters(warband) >= EVOLUTION_LEVEL,
+    `the warband is encounter ${warband}, which reaches level ${levelAfterEncounters(warband)}`
+  );
+  assert.ok(
+    levelAfterEncounters(guardian - 1) >= EVOLUTION_LEVEL,
+    'the Evolution must be taken BEFORE the Guardian, not after'
+  );
 });
 
 test('tutorial: the field lock pins the caster at its nodes and nowhere else', () => {
@@ -596,17 +573,8 @@ test('tutorial: the scripted act never pays better than a normal one', () => {
   // earlier so the Evolution lands before the Guardian — but never to add any.
   const fights = TUTORIAL_ROW_TYPES.filter((type) => TUTORIAL_PAYOUTS[type]);
 
-  // Effective, not authored: an omitted `xp` takes the normal roll, and measuring the authored
-  // figure would score an absent override as zero and pass anything.
-  const tutorialXp = fights.reduce(
-    (sum, type) => sum + (TUTORIAL_PAYOUTS[type]?.xp ?? trainingPointsFor(type as XpNodeType, 1)),
-    0
-  );
-  const normalXp = fights.reduce((sum, type) => sum + trainingPointsFor(type as XpNodeType, 1), 0);
-  assert.ok(
-    tutorialXp <= normalXp,
-    `the scripted act pays ${tutorialXp} XP where a normal Act 1 pays ${normalXp} — a tutorial must not be the best way to win`
-  );
+  // XP is not checked because there is none to check: levels are automatic and roster-wide, and
+  // the tutorial pins nothing about them (src/run/growth.ts).
 
   // Gold has no importable table: `goldRewardFor` lives in src/app, which the node build excludes.
   // These are its Act 1 bands (30-45 for a battle, 15-25 otherwise, nothing for a boss) as means.

@@ -49,7 +49,7 @@ const ALL_STATS: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence'
 export function effectiveStats(entry: RosterEntry): Record<StatKey, number> {
   const base = { ...heroes[entry.heroId].baseStats } as Record<StatKey, number>;
   let grants = mergeStatMods(entry.evolutionStatGrants, entry.bonusStatGrants);
-  grants = mergeStatMods(grants, entry.masteryStatGrants);
+  grants = mergeStatMods(grants, entry.growthStatGrants);
   for (const itemId of entry.equipment) {
     if (equipment[itemId]) grants = mergeStatMods(grants, equipment[itemId].statGrants);
   }

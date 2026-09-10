@@ -17,9 +17,9 @@ export const MAP_NODE_TYPES = [
   'blacksmith',
   'equipmentReward',
   'scrollReward',
+  'loneScrollReward',
   'passiveReward',
   'currencyReward',
-  'upgradeReward',
   'forgeReward',
   'classReward',
   'tutorReward',
@@ -129,7 +129,8 @@ const REWARD_WEIGHTS: readonly [MapNodeType, number][] = [
   // rather than how big its numbers are.
   ['passiveReward', 22],
   ['currencyReward', 20],
-  ['upgradeReward', 14],
+  // The lone Scroll: the same grant as the Cache at half the size, and commoner for it.
+  ['loneScrollReward', 14],
   // The Forge (+1 item slot) is permanent, compounds with every later drop, and is the only thing
   // here a hero can be at the cap for, so it stays the scarcest of the grants.
   //

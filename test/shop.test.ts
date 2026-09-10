@@ -16,7 +16,7 @@ import {
 import { RARITY_ORDER } from '../src/run/equipment';
 
 function seedRoster(heroIds: string[], gold = 0) {
-  let run = createRunState(0, gold);
+  let run = createRunState(gold);
   for (const heroId of heroIds) {
     run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   }

@@ -17,7 +17,8 @@ import { createRunState, createRosterEntry, addRosterEntry, terminateRosterEntry
 import { generateMap, type MapNodeType } from '../../src/run/map';
 import { generateStarterOptions, STARTER_PICK_COUNT } from '../../src/run/draft';
 import { generateItinerary, locationBias, locationForAct } from '../../src/run/locations';
-import { actScaling, encounterHeroCountOverride, trainingPointsFor, type ScalingTrack } from '../../src/run/difficulty';
+import { actScaling, encounterHeroCountOverride, type ScalingTrack } from '../../src/run/difficulty';
+import { grantEncounterLevels, levelsForEncounter, MAX_LEVEL } from '../../src/run/growth';
 import { generateEncounter, generateLeaderEncounter, generateFinaleEncounter, appendFinalEnemy, type Encounter, type EncounterNodeType } from '../../src/run/enemyGen';
 import { pickSquad, requiredSquadSize, STANDARD_SQUAD_SIZE, type Squad } from '../../src/run/squad';
 import {
@@ -28,7 +29,6 @@ import {
   grantCurrencyReward,
   grantItemSlot,
   grantRelicReward,
-  grantUpgradeReward,
   anvilQuote,
   anvilUpgrade,
   buyItemSlot,
@@ -39,21 +39,16 @@ import {
 } from '../../src/run/runProgress';
 import {
   MOVE_CAP,
-  canAffordAnyLevelUp,
-  chooseEvolutionPath,
-  drawMasteryStats,
   SCROLLS_PER_ACT,
   SCROLL_REWARD_COUNT,
+  LONE_SCROLL_COUNT,
+  availableEvolution,
+  chooseEvolutionPath,
   grantMasteryScrolls,
   masteryRank,
-  grantMasteryStat,
   grantOfferedMove,
   itemSlotsFor,
-  levelUpCost,
-  levelUpHero,
   grantMove,
-  levelUpPayout,
-  pendingEvolution,
 } from '../../src/run/progression';
 import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitable, pickContractOffers, recruitFromGuildHall, recruitFromGuildHallReplacing, freshRosterId, buyContract } from '../../src/run/recruitment';
 import { rollGuildHallOffers, buyEquipment, sellValueFor, EQUIPMENT_PRICE_BY_RARITY } from '../../src/run/shop';
@@ -131,7 +126,6 @@ export interface RunRecord {
   deathNodeType: string | null;
   encountersWon: number;
   goldEnd: number;
-  levelUpPoolEnd: number;
   rosterLevelEnd: number;
   /** heroId -> best level reached this run, for every hero that was ever on the roster. */
   heroLevels: Record<string, number>;
@@ -151,51 +145,33 @@ function entryOf(run: RunState, rosterId: string): RosterEntry {
   return entry;
 }
 
-/** Level-cap guard: the pool can hold points nobody can afford, which is normal and banks (CLAUDE.md). */
-function spendLevelUps(run: RunState, rng: Rng, opts: policy.PolicyOptions, choices: ChoiceEvent[], encountersWon: number): RunState {
+/**
+ * Every hero standing at an unresolved Evolution takes a path. Levels themselves are automatic
+ * (src/run/growth.ts) and there is nothing to spend, so this is only the Evolution gate.
+ */
+function resolveEvolutions(run: RunState, rng: Rng, choices: ChoiceEvent[], encountersWon: number): RunState {
   let next = run;
   let guard = 0;
-  while (canAffordAnyLevelUp(next) && guard++ < 200) {
-    const affordable = next.roster.filter((entry) => next.levelUpPool >= levelUpCost(entry.level));
-    const target = policy.levelUpTarget(affordable, opts.levelPolicy);
-    if (!target) break;
-
-    next = levelUpHero(next, target.rosterId);
-    const entry = entryOf(next, target.rosterId);
-    const payout = levelUpPayout(progressionTable, moves, entry);
-
-    if (payout === 'evolution') {
-      const node = pendingEvolution(progressionTable, entry);
-      if (!node || node.paths.length === 0) continue;
-      // Uniformly random: this is the experiment (see policy.ts).
-      const path = pick(rng, node.paths);
-      choices.push({
-        bucket: 'evolution',
-        offered: node.paths.map((p) => p.id),
-        picked: [path.id],
-        encountersWonAtChoice: encountersWon,
-      });
-      const before = entryOf(next, target.rosterId).unlockedMoveIds.length;
-      next = chooseEvolutionPath(next, progressionTable, heroes, target.rosterId, path.id);
-      // Overflow: a path's granted move that would exceed MOVE_CAP is offered as replace-or-decline.
-      const after = entryOf(next, target.rosterId);
-      const granted = path.unlocksMoveIds.filter((id) => !after.unlockedMoveIds.includes(id));
-      if (before + granted.length > 0 && granted.length > 0) {
-        for (const moveId of granted) {
-          const replaceId = policy.replacementTarget(entryOf(next, target.rosterId), moveId);
-          if (replaceId) next = grantOfferedMove(next, target.rosterId, moveId, replaceId);
-        }
-      }
-    } else {
-      const drawn = drawMasteryStats(rng);
-      // The reel is the balance question; which of the three to take is a play. Take the one worth most to this hero.
-      const chosen = drawn.reduce((best, stat) =>
-        policy.itemValueFor(entryOf(next, target.rosterId), { id: '', name: '', rarity: 'common', statGrants: { [stat]: 10 } }) >
-        policy.itemValueFor(entryOf(next, target.rosterId), { id: '', name: '', rarity: 'common', statGrants: { [best]: 10 } })
-          ? stat
-          : best
-      );
-      next = grantMasteryStat(next, target.rosterId, chosen);
+  while (guard++ < 200) {
+    const entry = next.roster.find((r) => !!availableEvolution(progressionTable, r));
+    if (!entry) break;
+    const node = availableEvolution(progressionTable, entry);
+    if (!node || node.paths.length === 0) break;
+    // Uniformly random: this is the experiment (see policy.ts).
+    const path = pick(rng, node.paths);
+    choices.push({
+      bucket: 'evolution',
+      offered: node.paths.map((p) => p.id),
+      picked: [path.id],
+      encountersWonAtChoice: encountersWon,
+    });
+    next = chooseEvolutionPath(next, progressionTable, heroes, entry.rosterId, path.id);
+    // Overflow: a path's granted move that would exceed MOVE_CAP is offered as replace-or-decline.
+    const after = entryOf(next, entry.rosterId);
+    const granted = path.unlocksMoveIds.filter((id) => !after.unlockedMoveIds.includes(id));
+    for (const moveId of granted) {
+      const replaceId = policy.replacementTarget(entryOf(next, entry.rosterId), moveId);
+      if (replaceId) next = grantOfferedMove(next, entry.rosterId, moveId, replaceId);
     }
   }
   return next;
@@ -249,7 +225,6 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
     deathNodeType: null,
     encountersWon: 0,
     goldEnd: 0,
-    levelUpPoolEnd: 0,
     rosterLevelEnd: 0,
     heroLevels: {},
     heroRanks: {},
@@ -263,7 +238,7 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
   const drafted = sample(rng, draftOptions, STARTER_PICK_COUNT);
   record.choices.push({ bucket: 'draft', offered: draftOptions, picked: drafted, encountersWonAtChoice: 0 });
 
-  let run: RunState = createRunState(0, 40);
+  let run: RunState = createRunState(40);
   for (const heroId of drafted) {
     run = addRosterEntry(run, createRosterEntry(heroId, heroId, heroes[heroId].moveIds));
   }
@@ -307,6 +282,8 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
       }
       run = advanceToNode(run, nodeId);
       run = { ...run, encountersWon: run.encountersWon + 1 };
+      // Automatic and roster-wide, benched heroes included (src/run/growth.ts).
+      run = grantEncounterLevels(run, heroes, rng);
       record.encountersWon = run.encountersWon;
 
       if (node.type === 'boss') {
@@ -332,17 +309,16 @@ function runInner(options: RunOptions, rng: Rng): RunRecord {
 
       run = tryRecruitContracts(run, outcome.defeatedRoster, rng);
       if (outcome.drop) run = resolveDrop(run, outcome.drop.id, record.equipped, run.actNumber);
-      run = spendLevelUps(run, rng, options, record.choices, run.encountersWon);
+      run = resolveEvolutions(run, rng, record.choices, run.encountersWon);
       continue;
     }
 
     run = resolveRewardNode(run, node.type, location.id, rng, record, options);
     run = advanceToNode(run, nodeId);
-    run = spendLevelUps(run, rng, options, record.choices, run.encountersWon);
+    run = resolveEvolutions(run, rng, record.choices, run.encountersWon);
   }
 
   record.goldEnd = run.gold;
-  record.levelUpPoolEnd = run.levelUpPool;
   record.rosterLevelEnd =
     run.roster.length > 0 ? run.roster.reduce((sum, r) => sum + r.level, 0) / run.roster.length : 0;
   for (const entry of run.roster) {
@@ -485,7 +461,6 @@ function resolveEncounterNode(
   if (!fight.won) return { run: workingRun, won: false, defeatedRoster: encounter.run.roster, drop: null };
 
   workingRun = grantCurrencyReward(workingRun, goldRewardFor(kindKey, rng));
-  workingRun = grantUpgradeReward(workingRun, trainingPointsFor(kindKey, workingRun.actNumber) * options.xpMult);
   return { run: workingRun, won: true, defeatedRoster: encounter.run.roster, drop };
 }
 
@@ -521,8 +496,8 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       return grantMasteryScrolls(run, SCROLL_REWARD_COUNT);
     case 'currencyReward':
       return grantCurrencyReward(run, 15 + Math.floor(rng() * 16));
-    case 'upgradeReward':
-      return grantUpgradeReward(run, UPGRADE_REWARD_XP * options.xpMult);
+    case 'loneScrollReward':
+      return grantMasteryScrolls(run, LONE_SCROLL_COUNT);
     case 'equipmentReward': {
       // Three offered; the policy takes the one worth most to somebody. Equipment is a
       // power question, not a design experiment — the rarity curve is what's under test.

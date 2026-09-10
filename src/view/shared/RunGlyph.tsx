@@ -35,7 +35,6 @@ export function RunGlyph({ kind, className, title }: { kind: RunGlyphKind; class
 // concept.
 const RESOURCE_PATHS = {
   gold: NODE_PATHS.currencyReward,
-  xp: NODE_PATHS.upgradeReward,
   // A quill, not the document it signs: a sealed sheet drawn this small is a floppy disk
   // (measured), and a page of ruled lines is the Reference scroll, which is on the same
   // screen. The diagonal is what survives 14px — the same reason STAT_PATHS.attack is one.
@@ -45,7 +44,8 @@ const RESOURCE_PATHS = {
       <path d="M7.9 15.1 3.1 20.8l2 1.7 4.5-5.8Z" />
     </>
   ),
-  scroll: NODE_PATHS.scrollReward,
+  // The single sealed sheet, not the Cache's bundle: a Scroll in the purse is one Scroll's worth.
+  scroll: NODE_PATHS.loneScrollReward,
 } satisfies Record<string, ReactNode>;
 
 export type ResourceKind = keyof typeof RESOURCE_PATHS;
@@ -53,7 +53,6 @@ export type ResourceKind = keyof typeof RESOURCE_PATHS;
 /** One color per resource, shared everywhere the resource is drawn. */
 export const RESOURCE_COLORS: Record<ResourceKind, string> = {
   gold: 'var(--accent)',
-  xp: 'var(--hp-high)',
   contract: '#9bc9ff',
   // Violet, the run's "this changes how a hero plays" colour — apart from gold, XP-green and the
   // Contract's blue, and it is the only resource that buys a MOVE.

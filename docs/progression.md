@@ -1,15 +1,16 @@
 # progression.md
 
-> How heroes and teams grow across a run: the level-up currency, Evolution, equipment,
+> How heroes and teams grow across a run: the level curve, Evolution, equipment,
 > relics, XP, and the raise-vs-recruit axis. Rules only — grant values, XP rates, and
 > equipment/relic content are **data** (`/data`). Combat effects of these systems
 > resolve through the stat and damage pipelines in `architecture.md`.
 
-> **Partly superseded by `growth-overhaul.md` (2026-09-10).** Its **phases 1-2 have LANDED**
-> and this file is updated for them: Gems are deleted, and moves come only from Mastery Scrolls.
-> Still **pending**: the level-up currency and the raise-vs-recruit axis change, and equipment
-> picks up an open question (2 base slots, halved budgets). **Everything not called pending
-> describes what the code does.**
+> **Partly superseded by `growth-overhaul.md` (2026-09-10).** Its **phases 1-3 have LANDED**
+> and this file is updated for them: Gems are deleted, moves come only from Mastery Scrolls, and
+> levels are automatic, roster-wide and cap 30.
+> Still **pending**: the raise-vs-recruit axis changes (phase 5), and equipment picks up an
+> open question (2 base slots, halved budgets). **Everything not called pending describes what
+> the code does.**
 
 ## Progression philosophy: level-ups unlock, they don't inflate
 
@@ -26,12 +27,15 @@ an opaque level curve.
 
 ---
 
-## The level-up currency (pooled, freely distributed)
+## Levelling is automatic (2026-09-10, Growth Overhaul phase 3)
 
-- Leveling uses a **pooled level-up currency**, distributed **freely** across the
-  roster by the player — not a per-hero locked XP track for spending. 
-- The player chooses where to invest the pool. This is a strategic decision surface,
-  not an automatic allocation.
+- Every roster hero levels every won encounter, fielded or benched. **No pool, no allocation,
+  no screen.** `MAX_LEVEL` = 30; each level rolls every stat against that hero's growth grade.
+- This reverses the pooled, freely-distributed currency this section used to describe, and with
+  it the bench-XP reconciliation question below: there is no rate to reconcile, because there is
+  no per-hero XP at all.
+- The strategic decision surface it used to be moved to **Mastery Scrolls** — which hero to
+  deepen, at what cost in breadth. Full spec: `docs/leveling-and-ranks.md` Parts 1 and 1b.
 
 ---
 
@@ -40,16 +44,11 @@ an opaque level curve.
 > **`docs/leveling-and-ranks.md` is now the authoritative spec for level-ups and
 > Evolution** and supersedes this section where they disagree. The type-graft/shift
 > question is reconciled (below — secondary type can shift, 2026-08-15 sign-off) and
-> implemented. **Reconciled (2026-08-16 playtest sign-off):** the leveling
-> *currency* mechanic now matches `leveling-and-ranks.md` — `src/run/progression.ts`
-> implements `levelUpHero` (spends one pooled Training Point, incrementing
-> `RosterEntry.level`) plus `grantLevelUpMove` (resolves that level-up's random move
-> offer: gained outright under the 4-move cap, or an accept/decline replacement
-> choice at cap). The older two-independent-spends model (`unlockTierMove` /
-> `investRankProgress`) is removed. Spending is also now forced immediately after
-> every points grant (`LevelUpScreen`), not deferred via Manage Roster. **Still
-> open:** the bench-XP reconciliation question below is unaffected by this change
-> (points are still freely distributable to any roster hero, benched or active).
+> implemented. **The levelling currency this paragraph used to describe is deleted**
+> (2026-09-10): `levelUpHero`, `grantLevelUpMove` and the pool they spent are all gone.
+> Levels tick automatically (`src/run/growth.ts`) and moves come from Mastery Scrolls
+> (`spendMasteryScroll`, `grantOfferedMove`). The bench-XP question below is closed by the
+> same change: there is no per-hero XP rate left to reconcile.
 >
 > **Renamed and re-scoped (2026-08-16):** what this section used to call
 > "rank-up" is now **Evolution** (docs/leveling-and-ranks.md's terminology, matched
@@ -714,7 +713,7 @@ or recruited via Contract, same as a starter you didn't happen to draft).
 Two sources of heroes, with intentionally different value curves:
 
 - **Guild Hall heroes (raise).** Carry **runway value** — upside you unlock by
-  investing level-up currency and time. That runway **decays late-run**: there's
+  investing levels and time. That runway **decays late-run**: there's
   eventually not enough run left to cash in the investment.
 - **Contract heroes (recruit).** **Flat-value veterans** — they don't develop much,
   but they're immediately useful and don't need runway.

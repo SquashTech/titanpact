@@ -4,8 +4,8 @@ import { equipment, rollEquipmentDrops } from '../../data/equipment';
 import type { RunState } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
 import { rarityWeightsFor } from '../../run/equipment';
-import { grantCurrencyReward, grantUpgradeReward } from '../../run/runProgress';
-import { grantMasteryScrolls, SCROLL_REWARD_COUNT } from '../../run/progression';
+import { grantCurrencyReward } from '../../run/runProgress';
+import { grantMasteryScrolls, LONE_SCROLL_COUNT, SCROLL_REWARD_COUNT } from '../../run/progression';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { SectionGlyph } from '../shared/sectionIcons';
 import { NodeHeader, NodeSky, NODE_TINT_ARCANE, NODE_TINT_GOLD, NODE_TINT_VITAL } from '../shared/NodeStage';
@@ -14,16 +14,13 @@ import { CacheOpening, useCacheOpening } from './CacheReveal';
 import { EquipChoiceCard, EquipInspectOverlay } from './EquipChoiceCard';
 import { RosterPeek } from './RosterPeek';
 
-export type RewardNodeType = 'currencyReward' | 'upgradeReward' | 'equipmentReward' | 'scrollReward';
-
-/** Flat, and deliberately under one fight's pay: the XP cache is a top-up, not a substitute for fighting. */
-const UPGRADE_REWARD_XP = 2;
+export type RewardNodeType = 'currencyReward' | 'loneScrollReward' | 'equipmentReward' | 'scrollReward';
 
 const NODE_TINT: Record<RewardNodeType, string> = {
   currencyReward: NODE_TINT_GOLD,
-  upgradeReward: NODE_TINT_VITAL,
   equipmentReward: NODE_TINT_GOLD,
   scrollReward: NODE_TINT_ARCANE,
+  loneScrollReward: NODE_TINT_ARCANE,
 };
 
 /** Beat before the count starts, so the room is read before it moves. */
@@ -92,7 +89,6 @@ function useCountUp(from: number, amount: number, tick: SfxId): { shown: number;
  */
 const HOARD_KINDS = {
   gold: { tick: 'gold.coin', unit: 'g', label: 'Purse', delta: (n: number) => `+${n}g`, coins: true },
-  xp: { tick: 'xp.orb', unit: 'XP', label: 'Level-up pool', delta: (n: number) => `+${n} XP`, coins: false },
   scroll: {
     tick: 'scroll.spend',
     unit: '',
@@ -165,8 +161,8 @@ interface Props {
 /** Which resource each instant node pays, and how it pays it. Absent means the node is not instant. */
 const INSTANT_KIND: Partial<Record<RewardNodeType, HoardKind>> = {
   currencyReward: 'gold',
-  upgradeReward: 'xp',
   scrollReward: 'scroll',
+  loneScrollReward: 'scroll',
 };
 
 /**
@@ -190,11 +186,13 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
 
   const instant = INSTANT_KIND[nodeType];
   const amount =
-    nodeType === 'currencyReward' ? currencyAmount : nodeType === 'scrollReward' ? SCROLL_REWARD_COUNT : UPGRADE_REWARD_XP;
+    nodeType === 'currencyReward'
+      ? currencyAmount
+      : nodeType === 'scrollReward'
+        ? SCROLL_REWARD_COUNT
+        : LONE_SCROLL_COUNT;
   // Read before the grant lands, so the count-up has somewhere to start from.
-  const [startFrom] = useState(() =>
-    nodeType === 'currencyReward' ? run.gold : nodeType === 'scrollReward' ? run.masteryScrolls : run.levelUpPool
-  );
+  const [startFrom] = useState(() => (nodeType === 'currencyReward' ? run.gold : run.masteryScrolls));
 
   // Ref-guarded rather than deps-guarded: StrictMode mounts the effect twice, and the second pass
   // must not pay the player again.
@@ -203,15 +201,11 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
     if (!instant || granted.current) return;
     granted.current = true;
     onRunChange(
-      nodeType === 'currencyReward'
-        ? grantCurrencyReward(run, currencyAmount)
-        : nodeType === 'scrollReward'
-          ? grantMasteryScrolls(run, SCROLL_REWARD_COUNT)
-          : grantUpgradeReward(run, UPGRADE_REWARD_XP)
+      nodeType === 'currencyReward' ? grantCurrencyReward(run, currencyAmount) : grantMasteryScrolls(run, amount)
     );
     // `run` is deliberately absent: this fires once, on arrival, against the state it arrived with.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [instant, nodeType, currencyAmount]);
+  }, [instant, nodeType, currencyAmount, amount]);
 
   return (
     <div className="node-screen node-reward-screen" style={{ '--node-rgb': NODE_TINT[nodeType] } as CSSProperties}>
@@ -228,12 +222,12 @@ export function NodeRewardScreen({ nodeType, run, onRunChange, onContinue, onCla
         />
       )}
 
-      {nodeType === 'upgradeReward' && (
+      {nodeType === 'loneScrollReward' && (
         <NodeHeader
           eyebrow="Spoils"
-          title="XP Cache"
-          glyph={<ResourceGlyph kind="xp" className="node-header-resource" />}
-          readout="Hard-won experience, straight into the pool."
+          title="A Lone Scroll"
+          glyph={<ResourceGlyph kind="scroll" className="node-header-resource" />}
+          readout="One Mastery Scroll. Pour it into a hero from the Roster."
         />
       )}
 
