@@ -1,10 +1,9 @@
 # growth-overhaul.md — The Growth Overhaul
 
-> **STATUS: DECIDED (2026-09-10, per user direction). PHASES 1-6 OF §8 ARE BUILT; ONLY 7 IS NOT.**
+> **STATUS: DECIDED AND BUILT (2026-09-10, per user direction). ALL SEVEN PHASES OF §8 ARE IN.**
 > Gems are gone, moves come only from Mastery Scrolls, levels are automatic and cap 30,
-> Evolutions come from the Crucible, a Guild hire arrives raw, and the difficulty curve has been
-> re-fitted against all of it. Still to come: **the 36-hero grade authoring pass (phase 7)** —
-> until then every hero runs the all-B placeholder. `CLAUDE.md`'s remaining invariants still
+> Evolutions come from the Crucible, a Guild hire arrives raw, the difficulty curve has been
+> re-fitted against all of it, and all 36 heroes carry authored growth grades. `CLAUDE.md`'s remaining invariants still
 > describe *that* game and are
 > still the rules in force until the phase that replaces each one lands. This module is the
 > destination, and §8 is the route — **check its Status column before assuming anything here
@@ -116,6 +115,22 @@ grows by roughly half again. Below ~90 the arc is invisible and the underwhelm r
 bloomer; high base + low growth is front-loaded. This is Fire Emblem's Est/Oifey axis, and it lands
 on a problem the game already had: a Guild Hall hire arriving underlevelled is a downside today.
 Give that archetype S-grades and arriving underlevelled *is* the build.
+
+**What phase 7 found when it authored them: a grade line is a shape, never a size.** A grade's
+chance is exactly `0.05 + 0.15 × cost`, linear with no rounding, so a line summing to 28 buys
+*every* hero the same **4.55 successes a level** whatever its shape. "High growth" and "low growth"
+are therefore not available as authored properties — only *placement* is. So the axis is:
+
+- A **late bloomer** stacks the budget on the stat it swings with and on Speed, where growth
+  compounds through the damage ratio.
+- A **front-loaded** hero holds its spike at B or C and spends the budget on bulk, Wisdom or mana
+  — real value that does not compound.
+
+Two rules bound both, and they are what keep the second budget honest. A hero's **dump stat stays
+dumped** (E/F): it is what the 550 charged for, and growth must not quietly refund it. And a stat
+a hero genuinely swings or defends with **never goes below C** — the first draft gave Tempest an
+F in Defense and measured it straight into trap-pick territory, which `CLAUDE.md`'s north star
+forbids. Authored lines and per-hero notes: `src/data/heroes.ts`, `docs/types-and-heroes.md`.
 
 ### The level curve
 
@@ -359,7 +374,7 @@ them, so in-flight runs invalidate cleanly and no migration code is owed at any 
 | 4 | **The Crucible.** Small: `chooseEvolutionPath` and the path data are untouched, only the invocation point moves. Insert into the act-boundary chain ahead of `PactSealScreen`; add the purchasable spend at the Guild Hall and the Vigil. | Five forced Crucibles a run, a sixth reachable. No evolution reachable from a level-up. | **DONE** 2026-09-10. 982 tests green. Map node only, acts 3+, filtered out of the roll when nobody can take one (per user direction) — no Guild Hall purchase. Measured against phase 3: full-clear 51.5% → **38.5%** (1000 runs), encounters won 12.71 → 11.07. Evolutions went from every hero automatically in act 1 to one a Guardian, which is the whole point; phase 6 re-fits. |
 | 5 | **Finished and raw recruits.** Contract heroes arrive levelled, ranked, evolved, kit game-chosen; guild heroes raw. Gold on both purchased routes. | The flat-value / decaying-runway line true on three axes instead of one. `test/recruitment.test.ts` extended. | **DONE** 2026-09-10. 985 tests green. True on Rank, Evolution and Kit; the LEVEL axis is inverted by `ENEMY_LEVEL_BY_ACT` and left for phase 6 (per user direction), with a test pinning the inversion. Measured against phase 4: full-clear 38.5% → 36.0% (400 runs) — a hire losing its Evolution and rank. |
 | 6 | **Re-fit the difficulty curve.** The real work, and it cannot start earlier: `ENEMY_LEVEL_BY_ACT`, `ACT_STEP_CURVE`, Guardian champions, reward weights and Banner values all re-derived. Drive with `scripts/sim` and the skilled pilot. | Batch runs show no mechanical fault — walls, dead nodes, unreachable ranks. Win-rate targets are a playtest question, not a batch one. | **DONE** 2026-09-10. 985 tests green. Act clear `72/63/87/98/96/96` → `72/75/85/85/82/93` over 1000 runs; full-clear 36% → 29.6%. No dead node (every lift inside noise but the Tutor's), no unreachable rank (53% reach rank 2 by act 4+, 24% rank 3). The equipment and Banner open questions were both settled as LEAVE (per user direction), so this was purely the enemy side. |
-| 7 | **Growth grades for 36 heroes.** Parallelisable from phase 3 onward; it needs the schema, not the tuning. The interesting authoring is the mismatches — a low base with S grades is a late bloomer worth recruiting underlevelled, and that archetype only exists once this pass does. | Grade budget enforced by test, beside the 550 check in `test/roster.test.ts`. No hero left on the all-B placeholder. | not started |
+| 7 | **Growth grades for 36 heroes.** Parallelisable from phase 3 onward; it needs the schema, not the tuning. The interesting authoring is the mismatches — a low base with S grades is a late bloomer worth recruiting underlevelled, and that archetype only exists once this pass does. | Grade budget enforced by test, beside the 550 check in `test/roster.test.ts`. No hero left on the all-B placeholder. | **DONE** 2026-09-10. All 36 authored; both the budget and the no-placeholder rule pinned in `test/roster.test.ts`. Measured against the same 1000-run batch on all-B: full-clear **29.6% → 35.6%**, because a targeted line spends the same budget on stats the hero actually swings with. Grades are now VISIBLE on the hero sheet and the Guild Hall preview — the late-bloomer decision cannot be made against a number the player cannot read. |
 
 ### Phase 6 is the actual project — BUILT 2026-09-10
 

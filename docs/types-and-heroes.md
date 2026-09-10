@@ -265,6 +265,49 @@ path, a dual hero one retype. Born dual is no longer a tax on Evolution, but it 
 still less branching than born mono — so the choice between the two is a real
 authoring decision, not a default.
 
+### Growth grades — the second budget (2026-09-10)
+
+Every hero also authors a **growth grade per stat**, and those seven sum to
+**exactly `GRADE_BUDGET` = 28** (`src/run/growth.ts`; pinned in `test/roster.test.ts`
+directly beneath the 550). The 550 stops being sufficient to say a hero is fairly
+costed the moment growth exists — a low base with S grades outruns a high base with F
+grades however the 550 is spent. Grades cover the same seven stats the total covers;
+MP Regen is outside both.
+
+**A grade line is a shape, never a size.** A grade's success chance is exactly
+`0.05 + 0.15 × cost` — linear, no rounding — so any line summing to 28 buys the same
+**4.55 successes a level** whatever its shape. "This hero grows more" is not an
+authorable property. Only *placement* is, and that is the whole Est/Oifey axis:
+
+| | Where the budget goes | Reads as |
+|---|---|---|
+| **Late bloomer** | the stat it swings with, plus Speed — growth compounds through the damage ratio | behind early, ahead late; Riptide's hedged 55/59 resolves upward into a fast caster, Pincer's 80 Attack ends at 135 behind its 90 Defense |
+| **Front-loaded** | bulk, Wisdom or mana; the drafted spike is held at B or C | strong the hour you get it, changes character rather than scales — Bellows, Marrow, Runescribe |
+
+Two rules bound both, and they are what keep the second budget honest:
+
+- **A dump stat stays dumped (E/F).** It is what the 550 charged for, and growth must
+  not quietly refund it. A pure physical hero's Intelligence and a pure caster's
+  Attack are where the budget is found.
+- **A stat a hero genuinely swings or defends with never goes below C.** The first
+  draft of this pass gave Tempest an F in Defense and measured it straight into
+  trap-pick territory (draft lift −1.99 → −3.23 against the all-B baseline), which the
+  north star forbids. Nightshade had the same fault and the same fix.
+
+The late bloomer is the archetype the pass exists to create. The Guild Hall pool is
+exactly the `starter: false` heroes, and a hire arrives an act behind
+(`guildHallLevel`) — so an underlevelled hire is a *downside* unless its grades make
+the levels it has left worth more than the ones it missed. That is a decision the
+player can only make by reading the grades, which is why `StatBars` renders the letter
+column on the hero sheet and the Guild Hall preview.
+
+Measured cost of the pass, same 1000-run batch either side: full-clear **29.6% →
+35.6%**. The player side gained because a targeted line spends the same budget on
+stats the hero actually uses, where all-B spent a seventh of it on a caster's Attack.
+Enemies take no growth rolls at all, so the lift lands on the player alone — if the
+run wants to come back down, `ACT_STEP_CURVE` is the one knob
+(`docs/run-loop.md`), not the grades.
+
 ### The authored roster
 
 Eight authored heroes exist in the prototype with full type coverage. Their concrete

@@ -116,7 +116,7 @@ test('recruitment: RAW is unbuilt, not hollow — a hire has the growth its leve
   const gained = Object.values(entry.growthStatGrants).reduce((sum, n) => sum + (n ?? 0), 0);
   assert.ok(gained > 0, 'a hire past level 1 must carry growth grants');
   // Loosely bounded rather than pinned: the roll is seeded but the grades are placeholder, and
-  // pinning an exact figure would fail on the phase 7 authoring pass for no reason.
+  // pinning an exact figure would fail on any growth-grade re-author for no reason.
   assert.ok(gained > (entry.level - 1) * 4, `${gained} points over ${entry.level - 1} levels is too thin to be a real roll`);
 });
 

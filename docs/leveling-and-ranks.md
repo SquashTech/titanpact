@@ -7,16 +7,15 @@
 > disagree, this file wins, and `progression.md` should be updated to defer here.
 > Rules only; thresholds, move data, and per-hero Evolution paths are **data** (`/data`).
 
-> **PARTLY SUPERSEDED by `growth-overhaul.md` (2026-09-10). Its phases 2-5 have LANDED**
-> and this file is updated for them: moves left the level track entirely (a Scroll is the only
+> **SUPERSEDED IN PART by `growth-overhaul.md` (2026-09-10), which is now built in FULL**,
+> and this file is updated for it: moves left the level track entirely (a Scroll is the only
 > faucet, and **Mastery Rank**, not level, gates the tiers), and levels went automatic,
 > roster-wide and cap 30, paying stats through growth grades. The pooled currency, its cost
-> curve and the mastery stat reel are all deleted, and Evolutions come from **the Crucible** at
-> the act boundary rather than from a level, and a Guild hire arrives RAW — unevolved, rank 1,
-> its own three moves. Still **pending**: the difficulty re-fit (phase 6) and the 36-hero grade
-> authoring pass (phase 7) — until then every hero runs the all-B placeholder and
-> `ENEMY_LEVEL_BY_ACT` is still fitted to a 10-level cap. **Everything not called pending
-> describes what the code does.** Read both before changing anything here.
+> curve and the mastery stat reel are all deleted, Evolutions come from **the Crucible** at
+> the act boundary rather than from a level, a Guild hire arrives RAW — unevolved, rank 1, its
+> own three moves — the difficulty curve is re-fitted against all of it, and all 36 heroes
+> carry authored growth grades. **Everything here describes what the code does.** Read both
+> before changing anything.
 
 ---
 
@@ -87,17 +86,30 @@ Each level rolls **each stat independently** against that hero's authored grade 
   low base with S-grades outruns a high base with F-grades however the 550 is spent. Taking one
   stat to S costs another from B to D, or two from B to C.
 
-At all-B that is ~4.5 successes a level, ~9 budget points a level, **~264 over 29 levels** — a
-hero grows by roughly half again. Below ~90 the arc is invisible and the underwhelm returns.
+That is **4.55 successes a level for every hero**, ~9 budget points a level, **~264 over 29
+levels** — a hero grows by roughly half again. Below ~90 the arc is invisible and the underwhelm
+returns.
+
+"For every hero" is exact, not approximate: a grade's chance is `0.05 + 0.15 × cost` with no
+rounding, so any line summing to 28 buys the same 4.55. **A grade line is a shape, never a
+size** — which is what lets a mismatch be authored without also handing that hero more growth
+than the roster gets.
 
 **Base and growth are independent axes**, and that is the point. Low base + high growth is a late
 bloomer; high base + low growth is front-loaded. This is Fire Emblem's Est/Oifey axis, and it
 lands on a problem the game already had: a Guild Hall hire arriving underlevelled is a downside
 today. Give that archetype S-grades and arriving underlevelled *is* the build.
 
-**All 36 heroes run the all-B placeholder** until the authoring pass (`docs/growth-overhaul.md`
-phase 7). All-B is exactly on budget, so an un-authored hero is fairly costed rather than free —
-and the budget test is already watching the day one gets a real line. `test/growth.test.ts`.
+**All 36 heroes are authored** as of 2026-09-10 (`docs/growth-overhaul.md` phase 7). The budget
+and the no-placeholder rule are both pinned in `test/roster.test.ts`, directly beneath the 550 —
+a grade line is the second half of that rule, not a separate one. The authoring doctrine, the
+two archetypes it produces and the two rules that bound them: `docs/types-and-heroes.md`
+"Growth grades".
+
+**The player reads the grades on the sheet.** `StatBars` takes an opt-in `grades` prop and draws
+a letter column beside the bars, on the hero sheet and the Guild Hall preview — not in combat,
+where the question is what a hero IS rather than what it becomes. Without it the late-bloomer
+archetype would exist in the data and in no decision the player can make.
 
 **The multiple-of-5 rule does not apply to a growth roll.** `CLAUDE.md` locks flat stat modifiers
 to multiples of 5 or 10; +2 and +6 are neither. That rule exists to keep AUTHORED grants legible,

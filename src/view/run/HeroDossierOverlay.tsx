@@ -3,6 +3,7 @@ import { moves } from '../../data/moves';
 import { passives } from '../../data/passives';
 import { progressionTable } from '../../data/progression';
 import type { HeroDefinition, MoveTier, StatKey, TypeId } from '../../engine/content';
+import { gradesFor } from '../../run/growth';
 import type { EvolutionPath } from '../../run/progression';
 import { MOVE_TIER_RANK, MOVE_TIER_RANK_EXPIRY } from '../../run/progression';
 import { MoveDetailCard } from '../combat/MoveDetailOverlay';
@@ -213,7 +214,7 @@ export function HeroDossierOverlay({ hero, onClose }: Props) {
             <>
               {/* Matchups lead the page — see HeroPreviewOverlay. */}
               <TypeMatchups types={hero.types} />
-              <StatBars baseStats={hero.baseStats} />
+              <StatBars baseStats={hero.baseStats} grades={gradesFor(hero)} />
             </>
           )}
 

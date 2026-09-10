@@ -8,14 +8,14 @@
 // rotate. This gets the screen removal without buying that problem — a hero rotated in is at
 // parity, so rotating is free, which is BETTER for strategic churn than participation XP.
 
-import type { HeroDefinition, StatKey } from '../engine/content';
+import type { GrowthStatKey, HeroDefinition, StatKey } from '../engine/content';
 import type { RosterEntry, RunState } from './state';
 import { mergeStatMods } from './statMods';
 
 export const MAX_LEVEL = 30;
 
 /** The stats a grade exists for: the seven the 550 budget covers. MP Regen is excluded, as it is from every other per-hero grant. */
-export const GROWTH_STATS: readonly StatKey[] = [
+export const GROWTH_STATS: readonly GrowthStatKey[] = [
   'hp',
   'attack',
   'defense',
@@ -59,12 +59,13 @@ export function growthStepFor(stat: StatKey): number {
   return stat === 'hp' ? GROWTH_STEP_HP : GROWTH_STEP;
 }
 
-export type GrowthGrades = Record<StatKey, GrowthGrade>;
+export type GrowthGrades = Record<GrowthStatKey, GrowthGrade>;
 
 /**
- * The placeholder every hero runs on until the authoring pass (docs/growth-overhaul.md phase 7).
- * All-B is exactly the budget, so the engine and the budget test both hold before a single grade
- * is authored — and the day a hero gets a real line, the test is already watching it.
+ * The fallback for a hero with no authored line. Every one of the 36 authors its own as of
+ * 2026-09-10 and test/roster.test.ts refuses a hero that does not, so this is reached only by a
+ * hero definition mid-authoring. All-B is exactly the budget, so such a hero is fairly costed
+ * rather than free.
  */
 export const DEFAULT_GRADES: GrowthGrades = Object.fromEntries(
   GROWTH_STATS.map((stat) => [stat, 'B' as GrowthGrade])

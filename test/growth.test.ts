@@ -28,7 +28,7 @@ import {
   rollLevelGrowth,
 } from '../src/run/growth';
 import { EVOLUTION_LEVEL } from '../src/run/progression';
-import { STAT_ORDER } from '../src/engine/content';
+import { STAT_ORDER, type StatKey } from '../src/engine/content';
 
 /** Every roll succeeds / every roll fails — the two ends, so a grant's SIZE is testable apart from its odds. */
 const ALWAYS = () => 0;
@@ -55,24 +55,18 @@ test('growth: grades cover the seven stats the 550 budget covers — MP Regen ex
     STAT_ORDER.filter((stat) => stat !== 'mpRegen').sort(),
     'the grade stats and the budget stats must be the same seven'
   );
-  assert.ok(!GROWTH_STATS.includes('mpRegen'), 'MP Regen sits outside the budget and outside growth');
+  assert.ok(
+    !(GROWTH_STATS as readonly StatKey[]).includes('mpRegen'),
+    'MP Regen sits outside the budget and outside growth'
+  );
 });
 
-test('growth: the all-B placeholder is exactly on budget, so an un-authored hero is not free', () => {
+test('growth: the all-B fallback is exactly on budget, so an un-authored hero is not free', () => {
   assert.strictEqual(gradeBudgetOf(DEFAULT_GRADES), GRADE_BUDGET);
   assert.strictEqual(GRADE_BUDGET, GROWTH_STATS.length * GRADE_COST.B, 'the budget IS seven stats at B');
 });
 
-test('growth: EVERY hero is on budget — the second stat rule, beside the 550', () => {
-  const off = Object.values(heroes)
-    .map((hero) => ({ id: hero.id, spent: gradeBudgetOf(gradesFor(hero)) }))
-    .filter((row) => row.spent !== GRADE_BUDGET);
-  assert.deepStrictEqual(
-    off,
-    [],
-    `these heroes' growth grades do not sum to ${GRADE_BUDGET} — taking one stat to S costs another from B to D`
-  );
-});
+// The per-hero budget check lives in roster.test.ts, beside the 550 it is the second half of.
 
 test('growth: a success grants +2, or +6 HP, and a failure grants nothing', () => {
   const all = rollLevelGrowth(DEFAULT_GRADES, ALWAYS);

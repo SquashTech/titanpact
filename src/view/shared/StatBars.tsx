@@ -1,5 +1,6 @@
 import type { StatKey, StatLine } from '../../engine/content';
 import { STAT_ORDER } from '../../engine/content';
+import { GRADE_CHANCE, type GrowthGrade, type GrowthGrades } from '../../run/growth';
 import { STAT_COLORS, StatGlyph } from './statIcons';
 
 // Re-exported so screens keep one import site for the stat-block vocabulary.
@@ -56,15 +57,35 @@ export function computeStatTotal(stats: Partial<Record<StatKey, number>>): numbe
   return TOTAL_STATS.reduce((sum, stat) => sum + (stats[stat] ?? 0), 0);
 }
 
+// The growth column's tone ramp. Two above the line read as gains and four below fade out of
+// the way, because the question a grade answers is "does THIS stat grow", not "rank all seven".
+const GRADE_TONE: Record<GrowthGrade, { color: string; opacity: number; weight: number }> = {
+  S: { color: 'var(--accent)', opacity: 1, weight: 700 },
+  A: { color: 'var(--accent)', opacity: 0.82, weight: 700 },
+  B: { color: 'var(--text)', opacity: 0.72, weight: 600 },
+  C: { color: 'var(--text-dim)', opacity: 0.9, weight: 600 },
+  D: { color: 'var(--text-dim)', opacity: 0.66, weight: 600 },
+  E: { color: 'var(--text-dim)', opacity: 0.5, weight: 600 },
+  F: { color: 'var(--text-dim)', opacity: 0.38, weight: 600 },
+};
+
+/** The 3-column grid with the growth letter added; set inline so no caller without grades pays for it. */
+const GRADED_COLUMNS = '68px minmax(0, 1fr) 58px 16px';
+
 interface Props {
   baseStats: StatLine;
   /** Additive deltas on top of base (grants or live buffs); drives the "+N" annotation even when `totals` is given. */
   deltas?: Partial<Record<StatKey, number>>;
   /** Final effective value where it isn't base+deltas (e.g. Freeze's Speed halving). Per-stat fallback to base+deltas. */
   totals?: Partial<Record<StatKey, number>>;
+  /**
+   * The hero's growth grades, which turn the bars into a forecast rather than a snapshot. Opt-in:
+   * a combat card is asking what this hero IS, and only a sheet is asking what it becomes.
+   */
+  grades?: GrowthGrades;
 }
 
-export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {} }: Props) {
+export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {}, grades }: Props) {
   const totals = STAT_ORDER.map((stat) => Math.max(0, totalOverrides[stat] ?? baseStats[stat] + (deltas[stat] ?? 0)));
   const percents = STAT_ORDER.map((stat, i) => Math.min(100, (totals[i] / STAT_SCALE_MAX[stat]) * 100));
   const bestPercent = Math.max(...percents);
@@ -78,8 +99,13 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {} }
       {STAT_ORDER.map((stat, i) => {
         const delta = deltas[stat] ?? 0;
         const isBest = percents[i] === bestPercent && bestPercent > 0;
+        const grade = grades?.[stat as keyof GrowthGrades];
         return (
-          <div className={`stat-bar-row${isBest ? ' stat-bar-best' : ''}`} key={stat}>
+          <div
+            className={`stat-bar-row${isBest ? ' stat-bar-best' : ''}`}
+            key={stat}
+            style={grades ? { gridTemplateColumns: GRADED_COLUMNS } : undefined}
+          >
             <span className="stat-bar-label">
               <StatGlyph stat={stat} /> {STAT_LABELS[stat]}
             </span>
@@ -90,6 +116,20 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {} }
               {totals[i]}
               {delta !== 0 && <span className={delta > 0 ? 'stat-buff' : 'stat-debuff'}> {fmtDelta(delta)}</span>}
             </span>
+            {grades &&
+              (grade ? (
+                <span
+                  style={{ fontSize: 11, textAlign: 'right', lineHeight: 1, ...GRADE_TONE[grade], fontWeight: GRADE_TONE[grade].weight }}
+                  title={`Growth ${grade} — ${Math.round(GRADE_CHANCE[grade] * 100)}% chance each level raises ${STAT_LABELS[stat]}`}
+                >
+                  {grade}
+                </span>
+              ) : (
+                // MP Regen has no grade and never will — a dash so the column reads as deliberate.
+                <span style={{ fontSize: 11, textAlign: 'right', lineHeight: 1, color: 'var(--text-dim)', opacity: 0.3 }} title="MP Regen is flat across the roster and does not grow">
+                  –
+                </span>
+              ))}
           </div>
         );
       })}
@@ -103,6 +143,12 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {} }
           {totalDelta !== 0 && <span className={totalDelta > 0 ? 'stat-buff' : 'stat-debuff'}> {fmtDelta(totalDelta)}</span>}
         </span>
       </div>
+      {grades && (
+        <div className="stat-growth-note" style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 2, lineHeight: 1.35 }}>
+          Letters are growth grades — the chance a level raises that stat, S 95% down to F 5%. All
+          seven cost the same on every hero, so the line says where growth lands, not how much.
+        </div>
+      )}
     </div>
   );
 }

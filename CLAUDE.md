@@ -10,15 +10,15 @@ This file is the constitution: load-bearing rules and rationale. Deeper design l
 (see Repo map). When a rule here and a prompt conflict, this file wins — surface the conflict,
 don't silently override it.
 
-> **A partly-built overhaul supersedes part of this file: `docs/growth-overhaul.md`**
-> (2026-09-10). Stats move onto automatic roster-wide levelling (Fire Emblem growth grades,
-> cap 30), moves onto a **Mastery Scroll / Mastery Rank** currency, Evolutions onto **the
-> Crucible** at the act boundary, and **Gems are deleted**. That doc's §9 lists the invariants
-> scheduled for reversal; its §8 is the phase order and says which have landed.
-> **Phases 1-5 are DONE (2026-09-10): Gems are gone, moves come only from Mastery Scrolls,
-> levels are automatic and cap 30, Evolutions come from the Crucible, and a Guild hire arrives
-> raw against a contract hero's finished one.** Only the difficulty re-fit (phase 6) and the
-> 36-hero grade pass (phase 7) are left. Everything else below is still the rule in force.
+> **An overhaul supersedes part of this file: `docs/growth-overhaul.md`** (2026-09-10).
+> Stats moved onto automatic roster-wide levelling (Fire Emblem growth grades, cap 30), moves
+> onto a **Mastery Scroll / Mastery Rank** currency, Evolutions onto **the Crucible** at the act
+> boundary, and **Gems were deleted**. That doc's §9 lists the invariants it reversed.
+> **ALL SEVEN PHASES ARE DONE (2026-09-10):** Gems are gone, moves come only from Mastery
+> Scrolls, levels are automatic and cap 30, Evolutions come from the Crucible, a Guild hire
+> arrives raw against a contract hero's finished one, the difficulty curve is re-fitted against
+> all of it, and all 36 heroes carry authored growth grades. Everything else below is still the
+> rule in force.
 
 ---
 
@@ -119,9 +119,14 @@ don't silently override it.
   a SECOND budget, enforced by test beside the 550 one, because the 550 rule alone stops being
   sufficient the moment a low base with S-grades can outrun a high base with F-grades.
   **Base and growth are independent axes and that is the point** — low base + high growth is a
-  late bloomer, high base + low growth is front-loaded. All 36 heroes are on the all-B
-  placeholder until the authoring pass (phase 7); all-B is exactly on budget, so an un-authored
-  hero is fairly costed rather than free. `test/growth.test.ts`.
+  late bloomer, high base + low growth is front-loaded. **All 36 heroes are authored**
+  (2026-09-10); the budget and the no-placeholder rule are pinned in `test/roster.test.ts`,
+  beneath the 550. Because a grade's chance is exactly linear in its cost, an on-budget line
+  buys every hero the same 4.55 successes a level — **a line decides where a hero grows, never
+  how much** — so the two archetypes are placement, not size. Two authoring rules bound them: a
+  hero's dump stat stays dumped (E/F, since that is what the 550 charged for), and a stat it
+  genuinely swings or defends with never drops below C, which is where a trap pick comes from.
+  `docs/types-and-heroes.md` "Growth grades".
 - **Moves come from ONE faucet: Mastery Scrolls, gated by Mastery Rank** (2026-09-10,
   `docs/growth-overhaul.md` §4). A Scroll is poured into one hero on the Roster's Mastery
   board; it offers **one** move from that hero's pool — take it or decline, and the move is
@@ -182,10 +187,9 @@ don't silently override it.
   act-sized gap IS the decaying runway, worth most early when one act is most of the run.
   **Two brakes on two routes:** gold prices the purchased one, the roster cap prices the free one
   (gaining requires terminating, and equipment strips with no refund).
-  **OPEN — the LEVEL axis is currently INVERTED** and phase 6 owns it: `ENEMY_LEVEL_BY_ACT` is
-  still [1, 3, 5, 7, 10] against a roster ending acts at 6/12/18/23/28, so an act-5 contract hero
-  arrives at level 10 where a hire arrives at 24. `test/recruitment.test.ts` pins the bug on
-  purpose and says to flip when phase 6 lands.
+  The LEVEL axis points the right way again since phase 6 re-derived `ENEMY_LEVEL_BY_ACT`: a
+  contract hero arrives at the act's enemy level (6/12/17/22/26) against a hire's 2/9/15/20/25.
+  `test/recruitment.test.ts` carries the assertion that catches it inverting again.
 - **Roster hard cap = 6**, doubling as the bring-6-pick-4 battle sideboard. Gaining a hero
   requires **terminating** an existing one. Equipment strips on termination; no gold refund.
 - **Items are uncategorised, and the SLOT is the scarce thing** (2026-09-06, replacing the
@@ -406,8 +410,8 @@ authored roster.
   **`authoring-moves.md` is a runbook, not a design module** — read it before implementing
   a designed slate of moves for a type (1 type still to go — Ancient; Fire
   and Water are the worked examples, and §10 carries all fourteen hand-offs).
-  **`growth-overhaul.md` is a destination plus a route, and only phases 1-5 of §8 are built** —
-  the replacement for levelling, movepool gating and Evolutions. Check §8 before assuming.
+  **`growth-overhaul.md` is built in full** — the replacement for levelling, movepool gating
+  and Evolutions. Its §8 carries what each phase measured.
 - `/prototypes/` — the two slices above, as behavioral reference.
 - `/src/engine/` — the pure resolution engine + the six contracts.
 - `/src/content/` — heroes, moves, abilities, relics, equipment as pure data.

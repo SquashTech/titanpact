@@ -6,6 +6,7 @@ import { passives } from '../../data/passives';
 import { relics } from '../../data/relics';
 import type { HeroDefinition, PassiveId, StatKey } from '../../engine/content';
 import { STAT_ORDER } from '../../engine/content';
+import { gradesFor } from '../../run/growth';
 import type { StatModifiers } from '../../engine/state';
 import type { RosterEntry } from '../../run/state';
 import type { EquipmentDefinition } from '../../run/equipment';
@@ -210,7 +211,7 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
               {/* Matchups lead the page: which columns hurt this hero is the first thing asked of
                   a sheet, and behind eight stat bars it was below the fold. */}
               <TypeMatchups types={types} />
-              <StatBars baseStats={hero.baseStats} deltas={grants} />
+              <StatBars baseStats={hero.baseStats} deltas={grants} grades={gradesFor(hero)} />
               <div className="grant-source-list">
                 {/* Shown for an unowned hero too, unlike the old from-relics strip: the bars
                     already carry the team grant, and a ledger that claims to account for the

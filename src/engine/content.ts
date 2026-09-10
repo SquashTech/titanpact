@@ -7,6 +7,9 @@ export type TypeId = string;
 
 export type StatKey = 'hp' | 'attack' | 'defense' | 'intelligence' | 'wisdom' | 'speed' | 'manaPool' | 'mpRegen';
 
+/** The seven a growth grade exists for: MP Regen is outside the 550 budget and outside every per-hero grant (src/run/growth.ts). */
+export type GrowthStatKey = Exclude<StatKey, 'mpRegen'>;
+
 /** Canonical listing order for the eight stats (re-exported by view/shared/StatBars.tsx). */
 export const STAT_ORDER: readonly StatKey[] = ['hp', 'attack', 'defense', 'intelligence', 'wisdom', 'speed', 'manaPool', 'mpRegen'];
 
@@ -420,5 +423,5 @@ export interface HeroDefinition {
    * How each stat grows per level (run/growth.ts). Optional: absent reads as all-B, which is
    * exactly the grade budget — so a hero with no authored line is fairly costed, not free.
    */
-  growthGrades?: Record<StatKey, 'S' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F'>;
+  growthGrades?: Record<GrowthStatKey, 'S' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F'>;
 }

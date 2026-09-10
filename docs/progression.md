@@ -5,12 +5,12 @@
 > equipment/relic content are **data** (`/data`). Combat effects of these systems
 > resolve through the stat and damage pipelines in `architecture.md`.
 
-> **Partly superseded by `growth-overhaul.md` (2026-09-10).** Its **phases 1-3 have LANDED**
-> and this file is updated for them: Gems are deleted, moves come only from Mastery Scrolls, and
-> levels are automatic, roster-wide and cap 30.
-> Still **pending**: the raise-vs-recruit axis changes (phase 5), and equipment picks up an
-> open question (2 base slots, halved budgets). **Everything not called pending describes what
-> the code does.**
+> **Partly superseded by `growth-overhaul.md` (2026-09-10), which is now built in FULL**
+> and this file is updated for it: Gems are deleted, moves come only from Mastery Scrolls,
+> levels are automatic, roster-wide and cap 30 and pay through authored growth grades,
+> Evolutions come from the Crucible, and a Guild hire arrives raw. Equipment's open question
+> (2 base slots, halved budgets) was **closed as LEAVE** per user direction — one slot stands.
+> **Everything here describes what the code does.**
 
 ## Progression philosophy: level-ups unlock, they don't inflate
 

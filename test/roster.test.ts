@@ -1,7 +1,8 @@
 // The roster baseline: what every authored hero owes, and what every Evolution node owes.
 // The move-tier gate and the FLOOR live in moveTiers.test.ts; this file pins the two things
 // that pass established as content policy — the 550 stat total and the Evolution framework's
-// "no path is bare stats" (docs/leveling-and-ranks.md "The Evolution framework").
+// "no path is bare stats" (docs/leveling-and-ranks.md "The Evolution framework"). The GRADE budget
+// is the 550's second half and sits directly beneath it.
 
 import * as assert from 'assert';
 import { test } from './harness';
@@ -11,7 +12,8 @@ import { passives } from '../src/data/passives';
 import { statuses } from '../src/data/statuses';
 import { progressionTable } from '../src/data/progression';
 import { BASE_ITEM_SLOTS, MAX_ITEM_SLOTS, STAT_POINT_VALUE } from '../src/run/equipment';
-import type { StatKey } from '../src/engine/content';
+import type { GrowthStatKey, StatKey } from '../src/engine/content';
+import { GRADE_BUDGET, GRADE_CHANCE, GROWTH_STATS, gradeBudgetOf, gradesFor } from '../src/run/growth';
 import { HERO_STAT_TOTAL, heroStatTotal } from '../src/run/statBudget';
 import { itemSlotsFor } from '../src/run/progression';
 import { createRosterEntry } from '../src/run/state';
@@ -26,6 +28,42 @@ test('roster: every seven-stat line sums to 550, and MP Regen is flat 10 outside
 
   const offRegen = Object.values(heroes).filter((hero) => hero.baseStats.mpRegen !== 10).map((hero) => hero.id);
   assert.deepStrictEqual(offRegen, [], 'MP Regen is not a stat-total axis — every hero carries 10');
+});
+
+/** The second budget. The 550 alone stops saying a hero is fairly costed the moment growth exists. */
+test('roster: every growth-grade line sums to 28, and no hero is still on the placeholder', () => {
+  const offBudget = Object.values(heroes)
+    .map((hero) => ({ id: hero.id, spent: gradeBudgetOf(gradesFor(hero)) }))
+    .filter((row) => row.spent !== GRADE_BUDGET)
+    .map((row) => `${row.id}=${row.spent}`);
+  assert.deepStrictEqual(
+    offBudget,
+    [],
+    `these grade lines do not sum to ${GRADE_BUDGET} — taking one stat to S costs another from B to D`
+  );
+
+  const unauthored = Object.values(heroes).filter((hero) => !hero.growthGrades).map((hero) => hero.id);
+  assert.deepStrictEqual(unauthored, [], 'every hero authors its own grades; all-B is a placeholder, not a line');
+
+  const allB = Object.values(heroes)
+    .filter((hero) => GROWTH_STATS.every((stat) => hero.growthGrades?.[stat] === 'B'))
+    .map((hero) => hero.id);
+  assert.deepStrictEqual(allB, [], 'an all-B line says nothing about the hero — spike something and pay for it');
+});
+
+/**
+ * Chance is linear in cost (0.05 + 0.15 x cost), so an on-budget line buys every hero the SAME
+ * number of successes a level. A grade line is a shape, never a size — which is what lets a
+ * mismatch be authored without also handing that hero more growth than the roster.
+ */
+test('roster: the grade budget buys every hero the same expected growth', () => {
+  const perLevel = Object.values(heroes).map((hero) => {
+    const grades = gradesFor(hero);
+    const stats: readonly GrowthStatKey[] = GROWTH_STATS;
+    const total = stats.reduce((sum, stat) => sum + GRADE_CHANCE[grades[stat]], 0);
+    return Math.round(total * 100) / 100;
+  });
+  assert.deepStrictEqual([...new Set(perLevel)], [4.55], 'an on-budget line must not out-grow another on-budget line');
 });
 
 test('roster: no hero starts with a move it cannot pay for', () => {
