@@ -7,6 +7,12 @@
 > demo fight into the roguelike run CLAUDE.md's north star describes: draft →
 > escalating fights → relics.
 
+> **Partly superseded-pending by `growth-overhaul.md` (2026-09-10, decided, unbuilt):** Gems
+> and the two stat shrines are deleted, the reward-row pool is re-weighted, the post-fight
+> gates lose the Gem offer and the level-up screen, and **the Crucible** joins the
+> act-boundary chain between the Banner and the Pact Seal. **This file still describes what
+> the code does.**
+
 Slay the Spire is the direct reference (per user direction, 2026-08-16): a branching
 map of nodes, most of which reward something (a Guild Hall shop, equipment, a relic,
 gold, or a hero upgrade), interspersed with fights and Elite fights, all culminating in

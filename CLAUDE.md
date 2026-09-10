@@ -10,6 +10,14 @@ This file is the constitution: load-bearing rules and rationale. Deeper design l
 (see Repo map). When a rule here and a prompt conflict, this file wins — surface the conflict,
 don't silently override it.
 
+> **A decided, unbuilt overhaul supersedes part of this file: `docs/growth-overhaul.md`**
+> (2026-09-10). Stats move onto automatic roster-wide levelling (Fire Emblem growth grades,
+> cap 30), moves onto a **Mastery Scroll / Mastery Rank** currency, Evolutions onto **the
+> Crucible** at the act boundary, and **Gems are deleted**. Eight invariants below are
+> scheduled for reversal — that doc's §9 lists exactly which. **Until a phase of its §8
+> lands, the rules below are still the rules in force and the code still implements them.**
+> Read it before touching levelling, movepools, Evolutions, Gems or reward nodes.
+
 ---
 
 ## Locked invariants — do not violate without an explicit decision
@@ -358,6 +366,8 @@ authored roster.
   **`authoring-moves.md` is a runbook, not a design module** — read it before implementing
   a designed slate of moves for a type (1 type still to go — Ancient; Fire
   and Water are the worked examples, and §10 carries all fourteen hand-offs).
+  **`growth-overhaul.md` is a destination plus a route, not a description of the build** —
+  the decided-but-unbuilt replacement for levelling, movepool gating, Evolutions and Gems.
 - `/prototypes/` — the two slices above, as behavioral reference.
 - `/src/engine/` — the pure resolution engine + the six contracts.
 - `/src/content/` — heroes, moves, abilities, relics, equipment as pure data.

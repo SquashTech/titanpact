@@ -5,6 +5,10 @@
 > equipment/relic content are **data** (`/data`). Combat effects of these systems
 > resolve through the stat and damage pipelines in `architecture.md`.
 
+> **Partly superseded-pending by `growth-overhaul.md` (2026-09-10, decided, unbuilt):** the
+> level-up currency, the raise-vs-recruit axis and Gems all change; equipment picks up an open
+> question (2 base slots, halved budgets). **This file still describes what the code does.**
+
 ## Progression philosophy: level-ups unlock, they don't inflate
 
 The core rule that keeps balance legible:

@@ -6,6 +6,12 @@
 > disagree, this file wins, and `progression.md` should be updated to defer here.
 > Rules only; thresholds, move data, and per-hero Evolution paths are **data** (`/data`).
 
+> **SUPERSEDED-PENDING by `growth-overhaul.md` (2026-09-10, decided, unbuilt).** Almost all
+> of this module is scheduled for replacement: the pooled currency, the level-up cost curve,
+> the mastery stat reel, level-gated move tiers and level-triggered Evolutions. **This file
+> still describes what the code does** and stays authoritative until each phase of that doc's
+> §8 lands. Read both before changing anything here.
+
 ---
 
 # Part 1 — The level-up system
