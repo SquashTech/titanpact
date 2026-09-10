@@ -8,7 +8,7 @@ import { boonPassives, typeDamagePassiveFor } from '../data/passives';
 import type { RosterEntry } from './state';
 import { rosterEntryTypes } from './progression';
 
-/** A Boon offer is a 1-of-3, the same shape as the Gem Cache and the Mentor. */
+/** A Boon offer is a 1-of-3, the same shape as the Mentor and the equipment cache. */
 export const BOON_OFFER_COUNT = 3;
 
 /**

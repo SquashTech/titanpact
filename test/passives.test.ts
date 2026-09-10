@@ -430,7 +430,7 @@ test('passives: equipmentPassiveGrants tallies grants across held items, ignorin
 });
 
 test('passives: relicTeamPassiveGrants stacks a duplicate relic id, matching relicTeamStatModifiers', () => {
-  // Fixtures, not catalog ids: the shipped relics are all flat stats now (Gems and Banners), so
+  // Fixtures, not catalog ids: the shipped relics are all flat stats now (the Banners), so
   // the passive-granting shape is exercised on relics authored here.
   const fixtures = {
     emberIdol: { id: 'emberIdol', name: 'Ember Idol', statGrants: {}, grantsPassiveIds: ['emberheart'] },

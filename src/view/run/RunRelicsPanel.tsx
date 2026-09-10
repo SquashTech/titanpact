@@ -13,10 +13,9 @@ function countHoldings(run: RunState): Map<string, number> {
 }
 
 /**
- * One relic family's chips: icon and count, nothing else. Held or not — a run collects Gems
- * steadily and meets the same five Banners every act, so an unheld one is a slot to fill rather
- * than an absence, and the Banners being FIXED only becomes a spread-or-commit decision if all
- * five are visible from act 1.
+ * One relic family's chips: icon and count, nothing else. Held or not — a run meets the same
+ * five Banners every act, so an unheld one is a slot to fill rather than an absence, and the
+ * Banners being FIXED only becomes a spread-or-commit decision if all five are visible from act 1.
  *
  * Names and grants are one tap away rather than spelled out (2026-09-07, per user direction).
  * Twelve of these live above the roster on one scroll; written out in full they were the whole
@@ -35,8 +34,8 @@ function RelicRail({
   family: readonly { id: string; name: string }[];
   counts: Map<string, number>;
   onInspect: (relicId: string) => void;
-  /** Which family's sizing the rail takes — five Banners across one line, seven Gems across two. */
-  variant: 'banners' | 'gems';
+  /** Which family's sizing the rail takes. One family today; the class is what a second would hook. */
+  variant: 'banners';
 }) {
   return (
     <div className="relic-rail-row">
@@ -94,7 +93,7 @@ function RelicSummaryPopup({ relicId, count, onClose }: { relicId: string | null
 /**
  * The team-wide half of the run sheet: what every hero carries before a single item is equipped.
  * It sits at the top of the roster screen rather than behind a map button of its own (2026-09-07)
- * — the Banners, the Gems and the gear they stack with are one question, so they are one screen.
+ * — the Banners and the gear they stack with are one question, so they are one screen.
  */
 export function RunRelicsPanel({ run }: { run: RunState }) {
   const [inspectingId, setInspectingId] = useState<string | null>(null);

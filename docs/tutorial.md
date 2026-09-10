@@ -38,15 +38,16 @@ a reward node are untouched — the choosing is the lesson; the routing is not.
 | Row | Node | What Valor teaches |
 | --- | --- | --- |
 | 0 | Monsters | doubles, targeting, Speed, Mana, Rest, reading a resist |
-| — | *post-fight gates* | Gems and relics · XP as a pot · the bag badge, on the map that follows |
+| — | *post-fight gates* | XP as a pot · the bag badge, on the map that follows |
 | 1 | Equipment | comparing three pieces; rarity as a budget |
 | 2 | Mentor | Classes: permanent, one per hero, four on the road |
 | 3 | Skirmish | type advantage both ways, **physical vs magical**, the forced Recruit Contract |
-| 4 | Relic | team-wide vs. per-hero |
+| 4 | Forge | the item slot as the scarce thing |
 | — | *post-fight gate* | **Evolution** (the focus lock puts Valor at level 5 here) |
 | 5 | Monsters | the bench, switching, the lock-in rule, flying the caster |
-| 6 | Guild Hall | gold: a hero, gear, or a contract |
-| 7 | Guardian | the faction-escort shape, the Ancient wall, **reading the number not the colour**, the Pact Clock |
+| 6 | Boon | pick 1 of 3, then the hero it settles on — the grammar every later grant reuses |
+| 7 | Guild Hall | gold: a hero, gear, or a contract |
+| 8 | Guardian | the faction-escort shape, the Ancient wall, **reading the number not the colour**, the Pact Clock |
 
 Every node type appears **exactly once**, which is what lets a beat be addressed by node type
 alone (`map:<type>`); a test pins that.
@@ -166,8 +167,8 @@ the Level Up screen immediately before the Guild Hall and the Guardian. Two test
 15-25 otherwise. Not for power, but for determinism: Valor tells the player what to spend at the
 Guild Hall, so what they are holding when they arrive cannot be a coin flip.
 
-Everything else is already the normal roll — the equipment drop table, the opener's guaranteed
-Gem, the act-end Recruit Contract.
+Everything else is already the normal roll — the equipment drop table, the act-end Recruit
+Contract.
 
 ## 7. How the script is wired
 

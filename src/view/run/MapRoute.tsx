@@ -12,7 +12,7 @@ import { NODE_COLORS, NODE_NAMES, NODE_TIERS, nodeRewardText, type NodeTier } fr
  * The map stopped drawing the whole act, which cost the player the one thing a graph gives for
  * free — the sense of MOVING along it. This is what gives it back, and it gives it back as an
  * event rather than as a diagram: the paths are drawn in real time and each destination arrives
- * when its own path gets there. What arrives is a claw or a Gem, and it does not sound the same.
+ * when its own path gets there. What arrives is a claw or a Boon, and it does not sound the same.
  *
  * The whole structure is permanent, not just an animation frame. The reveal only decides whether
  * you WATCH it happen or find it already drawn — coming back from the Roster sheet or the Level Up

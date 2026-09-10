@@ -10,13 +10,14 @@ This file is the constitution: load-bearing rules and rationale. Deeper design l
 (see Repo map). When a rule here and a prompt conflict, this file wins — surface the conflict,
 don't silently override it.
 
-> **A decided, unbuilt overhaul supersedes part of this file: `docs/growth-overhaul.md`**
+> **A partly-built overhaul supersedes part of this file: `docs/growth-overhaul.md`**
 > (2026-09-10). Stats move onto automatic roster-wide levelling (Fire Emblem growth grades,
 > cap 30), moves onto a **Mastery Scroll / Mastery Rank** currency, Evolutions onto **the
-> Crucible** at the act boundary, and **Gems are deleted**. Eight invariants below are
-> scheduled for reversal — that doc's §9 lists exactly which. **Until a phase of its §8
-> lands, the rules below are still the rules in force and the code still implements them.**
-> Read it before touching levelling, movepools, Evolutions, Gems or reward nodes.
+> Crucible** at the act boundary, and **Gems are deleted**. That doc's §9 lists the invariants
+> scheduled for reversal; its §8 is the phase order and says which have landed.
+> **Phase 1 is DONE (2026-09-10): Gems are gone.** Everything else below is still the rule in
+> force and the code still implements it.
+> Read it before touching levelling, movepools, Evolutions or reward nodes.
 
 ---
 
@@ -152,16 +153,16 @@ don't silently override it.
   **No hero holds two copies of one item**, and capacity is decided in one place, `itemSlotsFor`
   (`docs/progression.md`). **Relics are the team-wide axis** — a separate axis, not items.
 - **The relic catalog is ONE closed family of flat stats: the Guardian's Banners** (2026-09-07,
-  replacing a ~50-relic random pool and the `relicReward` Shrine node, both deleted; Gems left the
-  axis 2026-09-09 when they went per-hero). Playtest found the pool collapsed into two buckets — a
-  bigger Gem, or a passive that was unanswerable applied to all four heroes at once — so the
-  interesting grants live per-hero: on equipment, the Boon node and Gems. Nothing team-wide grants
-  a passive or an Elemental Force, and a Banner is now the ONLY team-wide grant of any kind.
+  replacing a ~50-relic random pool and the `relicReward` Shrine node, both deleted). Playtest
+  found the pool collapsed into two buckets — a bigger stat grant, or a passive that was
+  unanswerable applied to all four heroes at once — so the interesting grants live per-hero: on
+  equipment and the Boon node. Nothing team-wide grants a passive or an Elemental Force, and a
+  Banner is the ONLY team-wide grant of any kind.
 - **The Tutor: one guaranteed seat in each of acts 4 and 5** (2026-09-07). `tutorReward` lets
   the player pick a hero and teach it **any** move from that hero's own level-up pool — un-rolled,
   un-tier-gated, and including moves a level-up already offered and had declined. It takes a seat
   **inside** a pick-1-of-3 reward row rather than a forced row of its own: that displacement (a
-  Forge, a Boon, a Gem) is the only price a reward row can charge, and it is why the strongest
+  Forge, a Boon, a purse) is the only price a reward row can charge, and it is why the strongest
   reward in the run is not free. Lategame-only because earlier the level curve is handing out
   moves anyway. `tutorMovePool`, `src/run/tutor.ts`; `docs/run-loop.md` "The Tutor".
 - **Boons: the `passiveReward` node grants ONE hero a passive** (2026-09-07), the salvage of the
@@ -171,23 +172,17 @@ don't silently override it.
   **only when a roster hero fields that type** — the filter is what keeps it from ever being a
   dead card. Evolution passives and Classes are excluded: both are somebody's identity already.
   `src/run/boons.ts`, `docs/run-loop.md` "Boons".
-- **Gems are PER-HERO stat investment, poured and re-poured freely** (2026-09-09, replacing the
-  team-wide +5 relic). **Seven** stones, one per stat **except MP Regen**, each a flat **+5**
-  (**+10** HP) socketed into ONE hero, capped at **`GEM_CAP_PER_HERO` = 20 a hero and
-  `GEM_CAP_PER_STAT` = 8 a stat** — 20/8 forces at least three stats to fill a hero, and the pair
-  is the whole anti-funnel lever. The cap is **flat**, never scaling with level: a cap whose job
-  is limiting concentration cannot grow with the thing players concentrate.
-  **Re-allocation is free and unlimited on the map**, which is what keeps a late recruit and a
-  roster swap viable — a hero cut is not a hero's worth of Gems lost. It **freezes at
-  node-select**: the encounter is scouted before the player commits, and re-tuning after the scout
-  would duplicate the bring-6-pick-4 counter-pick the sideboard already is. Gems answer "who is my
-  team", not "who am I fighting".
-  **The pool is DERIVED, never stored** — `RunState.gemsEarned` minus what the roster holds
-  (`gemPool`) — so a Gem cannot be duplicated or lost, and terminating a hero refunds by
-  construction. Every won fight pays a stack (2/2/2/3 by node kind; the Guardian and finale none)
-  and the `gemReward` node and the two shrines (Vitality, Mana Well) pay `GEM_NODE_STACK` = 4. Income rose ~4x with the
-  rework, because a cap only does anti-funnel work when income runs well past ONE hero's worth.
-  All first-pass figures for playtest (`src/data/gems.ts`, `src/run/gems.ts`; `docs/run-loop.md`).
+- **There is no per-hero stat-investment currency.** Gems were deleted whole on 2026-09-10
+  (Growth Overhaul phase 1), and with them the `gemReward` Gem Cache and the two stat shrines
+  (`hpBoostReward` Vitality, `manaBoostReward` Mana Well) — the reward pool's 40 freed weight
+  went to the Boon and the purse. They failed against the rule the overhaul reduces to,
+  **a bare number never gets a screen, and a screen never buys a bare number**: free
+  re-allocation made the decision admin rather than strategy, "+5 Attack" never became a story
+  the way a learned move does, and a run earned ~40 Gems against a roster capacity of 120, so
+  the caps could not bind. ~200 stat points a run at roughly ten times the attention cost per
+  point of one late Legendary. Stats become automatic and per-level in phase 3; until then the
+  roster is that much lighter, and re-fitting the curve is phase 6's job, not a bug
+  (`docs/growth-overhaul.md` §1, §7).
 - **Item rarity is a point budget, spent exactly** (2026-08-30; rebased 2026-09-06): Common 30 /
   Rare 50 / Epic 70 / Legendary 90 / Mythic 110, paid in stats, Elemental Force magnitude, or
   granted passives (`RARITY_BUDGET`, `src/run/equipment.ts`; enforced by `test/equipment.test.ts`).
@@ -366,8 +361,8 @@ authored roster.
   **`authoring-moves.md` is a runbook, not a design module** — read it before implementing
   a designed slate of moves for a type (1 type still to go — Ancient; Fire
   and Water are the worked examples, and §10 carries all fourteen hand-offs).
-  **`growth-overhaul.md` is a destination plus a route, not a description of the build** —
-  the decided-but-unbuilt replacement for levelling, movepool gating, Evolutions and Gems.
+  **`growth-overhaul.md` is a destination plus a route, and only phase 1 of §8 is built** —
+  the replacement for levelling, movepool gating and Evolutions. Check §8 before assuming.
 - `/prototypes/` — the two slices above, as behavioral reference.
 - `/src/engine/` — the pure resolution engine + the six contracts.
 - `/src/content/` — heroes, moves, abilities, relics, equipment as pure data.

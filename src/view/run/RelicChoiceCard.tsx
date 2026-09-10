@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import { RelicArt } from '../shared/relicArt';
 import { relicColor } from '../shared/relicIcons';
 
-/** A Banner or a Gem — the card only ever needed this much of either. */
+/** The card only ever needed this much of a relic. */
 interface Offer {
   id: string;
   name: string;
@@ -14,7 +14,7 @@ interface Props {
   picked: boolean;
   onPick: () => void;
   revealDelayMs: number;
-  /** Banners carry their name — a run plans four acts around "Banner of Vitality +2". Gems don't. */
+  /** Banners carry their name — a run plans four acts around "Banner of Vitality +2". */
   named?: boolean;
 }
 

@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import { GEM } from './relicIcons';
 
 // Section-header glyphs for the hero sheets. 24x24 grid, `currentColor`, nothing finer than ~2 units.
 // Kept out of statIcons.tsx: a header is always its panel's gold and inherits it.
@@ -57,8 +56,6 @@ export const SECTION_PATHS = {
       <rect x="10.4" y="9.6" width="3.2" height="6.2" rx="0.9" />
     </>
   ),
-  // The same brilliant the map node and the stones themselves wear.
-  gems: GEM,
 } satisfies Record<string, ReactNode>;
 
 export type SectionGlyphName = keyof typeof SECTION_PATHS;

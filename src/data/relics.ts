@@ -1,16 +1,16 @@
 // Relics: the team-wide axis (docs/progression.md "Relics (team-wide)"). One family — the
 // per-act Guardian's Banner, fixed and stacking. There is no random relic pool: a team-wide
-// passive applied to all four heroes at once was either a bigger Gem or an unanswerable one,
+// passive applied to all four heroes at once was either a bigger stat grant or an unanswerable one,
 // so the axis is flat stats and the interesting grants live per-hero on equipment (2026-09-07).
 //
-// Gems left this file for src/data/gems.ts (2026-09-09): a Gem is poured into ONE hero now, so
+// The per-hero stat axis left this file (2026-09-09) and was then deleted outright
 // it is not a team-wide grant any more.
 
 import type { RelicDefinition } from '../run/relics';
 
 // --- Guardian's Banner: the fixed, stackable pick after every Guardian (docs/run-loop.md).
 // One per axis, so five acts of Banners is a spread-or-commit decision the player can see
-// coming from act 1. `guardianBanner: true` groups them apart from the Gems on the run sheet.
+// coming from act 1. `guardianBanner: true` is the family flag the run sheet groups on.
 //
 // The values are NOT symmetric, and deliberately: a hero swings with Attack or with
 // Intelligence, never both, so the Warcry's two stats are worth one stat to any given hero.

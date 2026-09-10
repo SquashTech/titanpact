@@ -96,7 +96,7 @@ export function unknownIconTokens(text: string): string[] {
  * - `intro` / `arrival` / `outro` — the run's own bookends.
  * - `map:<nodeType>` — the map is showing and the one node ahead is of that type.
  * - `reward:<nodeType>` — that reward node's own screen is open.
- * - everything else names a screen (`gem`, `equip`, `levelUp`, `evolution`, `recruit`, …).
+ * - everything else names a screen (`equip`, `levelUp`, `evolution`, `recruit`, …).
  *
  * Each node type appears exactly once on the tutorial map, so a node type is a unique address.
  */
@@ -111,7 +111,6 @@ export type TutorialBeatKey = string;
 export const TUTORIAL_SCREEN_BEAT_KEYS = [
   'intro',
   'arrival',
-  'gem',
   'equip',
   'levelUp',
   'evolution',
@@ -242,10 +241,10 @@ export const TUTORIAL_ROW_TYPES: readonly MapNodeType[] = [
   'skirmish',
   'forgeReward',
   'battle',
-  // The act's third reward row. A Gem, because it is the reward a run meets most and the only
-  // one the player has already been handed unexplained — the first fight always pays one — so
-  // this seat is where the automatic grant becomes a choice between three.
-  'gemReward',
+  // The act's third reward row. A Boon: it is the one reward that changes how a hero PLAYS
+  // rather than how big its numbers are, and it teaches the pick-1-of-3-then-pick-a-hero
+  // grammar the rest of the run's grants are built on.
+  'passiveReward',
   'shop',
   'boss',
 ];

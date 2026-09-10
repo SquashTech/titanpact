@@ -11,7 +11,6 @@ import { HubGlyph, NodeGlyph } from '../shared/nodeIcons';
 import { MapRoute } from './MapRoute';
 import { NODE_COLORS, NODE_NAMES, NODE_TIERS, nodeRewardText, type NodeTier } from './mapNodes';
 import { canAffordAnyLevelUp } from '../../run/progression';
-import { gemPoolTotal } from '../../run/gems';
 import { footerWaiting } from './mapFooter';
 import { locationForAct } from '../../run/locations';
 import type { LocationDefinition } from '../../data/locations';
@@ -140,8 +139,7 @@ function MapPlacard({ location }: { location: LocationDefinition }) {
 // The run's hub (docs/run-loop.md). Training Points are spent on LevelUpScreen,
 // not here; a banked remainder on the map is normal.
 export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSaveAndQuit, onAbandonRun }: Props) {
-  /** Null while closed; otherwise the board Manage Roster opens on. */
-  const [rosterBoard, setRosterBoard] = useState<'gear' | 'gems' | null>(null);
+  const [rosterOpen, setRosterOpen] = useState(false);
   const [showReference, setShowReference] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   // Two taps to abandon: quitting is reversible now, but abandoning deletes the save.
@@ -152,8 +150,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
 
   const location = locationForAct(run.locationIds, run.actNumber);
   const unopened = unseenCount(run.unseenItemIds, run.stash);
-  const newGems = run.gemsUnseen;
-  const waiting = footerWaiting(unopened, newGems);
+  const waiting = footerWaiting(unopened);
 
   // The whole view: where the player stands, and what they may take from here.
   const choiceIds = reachableNodeIds(run);
@@ -198,14 +195,6 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
             onSpend={canAffordAnyLevelUp(run) ? onOpenLevelUp : undefined}
           />
           <ResourceStat kind="contract" label="Recruit Contracts" value={run.recruitContracts} />
-          {/* Unspent Gems, not collected ones: the figure is only worth carrying while it is
-              something the player can still act on, and the Roster button below is where. */}
-          <ResourceStat
-            kind="gem"
-            label="Unset Gems"
-            value={gemPoolTotal(run)}
-            onSpend={gemPoolTotal(run) > 0 ? () => setRosterBoard('gems') : undefined}
-          />
         </div>
         <button
           type="button"
@@ -242,24 +231,16 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
       </div>
 
       {/* One button, because there is one thing down here worth opening: the run's own sheet —
-          Banners, Gems, every hero and every item on them (2026-09-07, per user direction).
-          It stays ONE door rather than splitting into Gear and Gems (2026-09-09, per user
-          direction): the screen behind it is also where a hero is read and where one is
-          terminated, so either half of that pair would be lying about what it opens. What the
-          split was for — knowing which kind is waiting — the label carries instead.
-
-          It also carries both badges: neither gear nor Gems stops the run to be handed out, so
-          this is the only place the run says either is waiting (docs/progression.md). */}
+          Banners, every hero and every item on them (2026-09-07, per user direction). Gear
+          never stops the run to be handed out, so this is the only place the run says any is
+          waiting (docs/progression.md). */}
       <div className="map-footer">
         <button
           className={`map-footer-button${waiting.total > 0 ? ' has-unopened' : ''}`}
           // Inline, so it has to carry the alert colour too: a custom property set here outranks
           // anything .has-unopened could say about it from the stylesheet.
           style={{ '--btn-color': waiting.total > 0 ? 'var(--physical)' : 'var(--ally)' } as CSSProperties}
-          // Gear when both are waiting, and always Gear when neither is. A door that opens
-          // somewhere different each visit is one no muscle memory can form against, and the tab
-          // strip inside carries both counts — so landing on the other one costs a visible tap.
-          onClick={() => setRosterBoard(unopened > 0 || newGems === 0 ? 'gear' : 'gems')}
+          onClick={() => setRosterOpen(true)}
         >
           <span className="map-footer-icon"><HubGlyph name="roster" /></span>
           {/* The label says what is waiting, not where you are going. A badge alone is a mark the
@@ -315,7 +296,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
             {onAbandonRun && (
               <p className="options-note">
                 {confirmingQuit
-                  ? 'This run ends now. Roster, Banners, Gems and map progress are lost.'
+                  ? 'This run ends now. Roster, Banners and map progress are lost.'
                   : 'The run is saved here. Quitting keeps it — Continue picks it back up.'}
               </p>
             )}
@@ -323,14 +304,7 @@ export function MapScreen({ run, onRunChange, onSelectNode, onOpenLevelUp, onSav
         </div>
       )}
 
-      {rosterBoard && (
-        <RosterManagementScreen
-          run={run}
-          onRunChange={onRunChange}
-          initialBoard={rosterBoard}
-          onClose={() => setRosterBoard(null)}
-        />
-      )}
+      {rosterOpen && <RosterManagementScreen run={run} onRunChange={onRunChange} onClose={() => setRosterOpen(false)} />}
       {showReference && <ReferenceOverlay onClose={() => setShowReference(false)} />}
       {previewNode && <MapNodePreviewPopup node={previewNode} onClose={() => setPreviewNode(null)} />}
     </div>

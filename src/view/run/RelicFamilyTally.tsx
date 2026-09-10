@@ -6,12 +6,12 @@ import { prefersReducedMotion } from '../shared/reducedMotion';
 interface Props {
   /** The whole family, held or not — the collection is the point, not the one just gained. */
   family: readonly { id: string }[];
-  /** Which family is on the shelf: seven Gems lay out differently from five Banners. */
-  variant: 'gems' | 'banners';
+  /** Which family is on the shelf. One family today; the class is what a second would hook. */
+  variant: 'banners';
   /** Counts AFTER the grant lands; the gained one counts itself back down and ticks up. */
   counts: Map<string, number>;
   gainedRelicId: string;
-  /** How many landed — a Gem arrives in stacks, a Banner one at a time. */
+  /** How many landed. A Banner arrives one at a time; the count is here for a family that would not. */
   gainedCount?: number;
 }
 
@@ -20,9 +20,9 @@ const TICK_DELAY_MS = 460;
 
 /**
  * What a claim actually changed, shown against everything the run already holds (2026-09-08, per
- * user direction). A Gem or a Banner is a number on a shelf of numbers — its worth is entirely
- * "this is my fourth Ruby", which a single reveal card cannot say. So the claim reveals the SHELF,
- * with the new one flaring and counting up on it.
+ * user direction). A Banner is a number on a shelf of numbers — its worth is entirely "this is my
+ * fourth Vitality", which a single reveal card cannot say. So the claim reveals the SHELF, with
+ * the new one flaring and counting up on it.
  */
 export function RelicFamilyTally({ family, variant, counts, gainedRelicId, gainedCount = 1 }: Props) {
   const [ticked, setTicked] = useState(prefersReducedMotion());

@@ -10,7 +10,6 @@ import { createRunState, createRosterEntry, addRosterEntry } from '../src/run/st
 import { pickSquad } from '../src/run/squad';
 import { buildCombatState } from '../src/run/buildCombatState';
 import { grantClass } from '../src/run/classes';
-import { grantGems, socketGems } from '../src/run/gems';
 import { relicTeamPassiveGrants } from '../src/run/passives';
 import { entryPassiveCounts, entryStatModifiers, relicStatContribution } from '../src/run/entryStats';
 
@@ -25,8 +24,7 @@ test('relics: isValidRelicDefinition rejects a non-multiple-of-5 grant', () => {
 });
 
 // One closed family (2026-09-09): the random relic pool went in 2026-09-07, because a team-wide
-// passive applied to all four heroes at once was either a bigger Gem or unanswerable — and the
-// Gems themselves left for src/data/gems.ts when they went per-hero.
+// passive applied to all four heroes at once was either a bigger stat grant or unanswerable.
 test('relics: the catalog is exactly the Banners', () => {
   assert.strictEqual(Object.values(relics).length, guardianBannerRelics.length);
   for (const relic of Object.values(relics)) {
@@ -88,9 +86,6 @@ test('entryStats: the out-of-combat sheet math equals the combatant a fight actu
   let run = createRunState(10);
   run = addRosterEntry(run, createRosterEntry('cinderKnight', 'cinderKnight', heroes.cinderKnight.moveIds));
   run = grantClass(run, classes, 'cinderKnight', 'warrior');
-  // Socketed Gems are a grant source like any other, so the parity has to cover them too.
-  run = grantGems(run, 'attack', 3);
-  run = socketGems(run, 'cinderKnight', 'attack', 3);
 
   const teamStatModifiers = relicTeamStatModifiers(relicIds, relics);
   const teamPassiveGrants = relicTeamPassiveGrants(relicIds, relics);

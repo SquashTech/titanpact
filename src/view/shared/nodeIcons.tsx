@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import type { MapNodeType } from '../../run/map';
 import { STAT_PATHS } from './statIcons';
 import { SECTION_PATHS } from './sectionIcons';
-import { GEM } from './relicIcons';
 
 // One glyph per map node type, 24x24, `currentColor` only. The grouping is the information:
 // encounters say who you fight (claw = monsters, helm = recruitable heroes, skull = Guardian);
@@ -79,8 +78,6 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
     </>
   ),
   equipmentReward: SECTION_PATHS.equipment,
-  // The Gem's own cut (relicIcons.tsx) — one picture per concept, the same rule gold and XP follow.
-  gemReward: GEM,
   // The Passives section mark, for the node that hands one over — same rule.
   passiveReward: SECTION_PATHS.passives,
   // Money bag.
@@ -104,8 +101,6 @@ export const NODE_PATHS: Record<MapNodeType, ReactNode> = {
       <path d="M9.4 18h6.2l2.2 4H7.2Z" />
     </>
   ),
-  hpBoostReward: STAT_PATHS.hp,
-  manaBoostReward: STAT_PATHS.manaPool,
   // Open tome: the Mentor teaches.
   classReward: OPEN_BOOK,
   // A branching skill tree, not a second book: the Mentor hands over something new, the Tutor

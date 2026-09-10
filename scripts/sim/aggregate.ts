@@ -14,8 +14,6 @@ import {
 
 function choiceBucket(agg: Aggregate, bucket: string): Record<string, ChoiceAgg> {
   switch (bucket) {
-    case 'gem':
-      return agg.gemChoices;
     case 'boon':
       return agg.boonChoices;
     case 'banner':

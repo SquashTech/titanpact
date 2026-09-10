@@ -31,7 +31,6 @@ import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
 import { RecruitScreen } from '../view/run/RecruitScreen';
 import { RecruitFanfare } from '../view/run/RecruitFanfare';
-import { GemChoiceScreen } from '../view/run/GemChoiceScreen';
 import { ClassNodeScreen } from '../view/run/ClassNodeScreen';
 import { EventNodeScreen } from '../view/run/EventNodeScreen';
 import { runEvents } from '../data/events';
@@ -88,7 +87,6 @@ import {
 } from '../run/tutorial';
 import { TUTORIAL_ENCOUNTERS, TUTORIAL_LOCKS, TUTORIAL_PAYOUTS, TUTORIAL_SCRIPT } from '../data/tutorial';
 import { TutorialOverlay } from '../view/run/TutorialOverlay';
-import { GEM_CAP_PER_HERO, GEM_NODE_STACK, GEM_STATS, gemStackFor, grantGems, pickGemOffers } from '../run/gems';
 import { generateStarterOptions } from '../run/draft';
 import {
   generateEncounter,
@@ -155,8 +153,6 @@ type Screen =
   /** The Forge: +1 item slot to one hero. */
   | { kind: 'forge'; nodeId: string }
   | { kind: 'blacksmith'; nodeId: string }
-  /** A Gem offer — the gemReward node, the Mana Well, and every won fight. Already-resolved, so no nodeId. */
-  | { kind: 'gemChoice'; stats: StatKey[]; count: number; eyebrow: string; title: string; tint?: string; next: Screen }
   | { kind: 'classNode'; nodeId: string }
   | { kind: 'boonNode'; nodeId: string }
   /** The Tutor: one hero learns any move off its own level-up pool. Acts 4-5 only (run/map.ts). */
@@ -264,17 +260,6 @@ function createLevel4TestRun(): RunState {
   };
 }
 
-/**
- * TEMPORARY DEV/TEST — a full roster and a deep pool, for working on the Gems board. 20 of
- * every stone is 140 against a roster capacity of 120, so the caps bind while the tray still
- * has something left in it — which is the state the board is hardest to lay out for.
- */
-function createGemTestRun(): RunState {
-  let run = addHeroes(createRunState(1, 999), Object.keys(heroes).slice(0, ROSTER_CAP), 4);
-  for (const stat of GEM_STATS) run = grantGems(run, stat, GEM_CAP_PER_HERO);
-  return { ...run, map: generateMap(randomSeed()), locationIds: generateItinerary(randomSeed()) };
-}
-
 /** TEST FIXTURE — arms the opener's Goblin Skulker with a Dagger so the equip-inspect UI has an item from turn one. */
 function equipTestDagger(encounter: Encounter): Encounter {
   const roster = encounter.run.roster.map((entry) =>
@@ -302,28 +287,6 @@ function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): Eq
   const weights = rarityWeightsFor(actNumber, LOOT_SOURCE[nodeType]);
   return rollEquipmentDrops(1, weights)[0] ?? null;
 }
-
-/**
- * How each Gem-granting node dresses the one GemChoiceScreen. The Mana Well keeps the name, tint
- * and place-flavour it had as a hero-targeted shrine — only the grant changed.
- */
-type GemNodeType = 'gemReward' | 'manaBoostReward' | 'hpBoostReward';
-
-const GEM_NODE_PRESENTATION: Record<GemNodeType, { eyebrow: string; title: string; tint?: string }> = {
-  gemReward: { eyebrow: 'A Seam Opens', title: 'Gem Cache' },
-  manaBoostReward: { eyebrow: 'A Blessing', title: 'Mana Well', tint: NODE_TINT_MANA },
-  hpBoostReward: { eyebrow: 'A Blessing', title: 'Vitality Shrine', tint: NODE_TINT_VITAL },
-};
-
-/**
- * The two shrines hand over the stone carrying their own stat rather than offering a choice.
- * That fixed stat IS what tells them apart from the Gem Cache, which is the same grant as a
- * 1-of-3 — a shrine is a place that gives one thing, and the player walks to it knowing what.
- */
-const SHRINE_GEM_STATS: Record<'manaBoostReward' | 'hpBoostReward', StatKey[]> = {
-  manaBoostReward: ['manaPool'],
-  hpBoostReward: ['hp'],
-};
 
 /** The map, behind the level-up gate if anyone can afford one and the player has not banked the pool. */
 function levelUpPending(run: RunState): boolean {
@@ -360,8 +323,6 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
       const node = ahead.length === 1 ? run.map?.nodes[ahead[0]] : undefined;
       return node ? mapBeatKey(node.type) : null;
     }
-    case 'gemChoice':
-      return 'gem';
     case 'levelUp':
       // The Evolution beat outranks the plain one: reaching a fork is the bigger lesson, and the
       // level-up basics have long since been spoken by the time one is affordable.
@@ -623,12 +584,6 @@ export function App() {
       setScreen({ kind: 'forge', nodeId });
     } else if (node.type === 'blacksmith') {
       setScreen({ kind: 'blacksmith', nodeId });
-    } else if (node.type === 'gemReward' || node.type === 'manaBoostReward' || node.type === 'hpBoostReward') {
-      // The Gem Cache offers 1 of 3; the two shrines hand over the one Gem that carries their stat.
-      const preset = GEM_NODE_PRESENTATION[node.type];
-      const stats = node.type === 'gemReward' ? pickGemOffers() : SHRINE_GEM_STATS[node.type];
-      setPlayerRun((run) => advanceToNode(run, nodeId));
-      setScreen({ kind: 'gemChoice', stats, count: GEM_NODE_STACK, ...preset, next: mapAfterLevelUp(playerRun) });
     } else if (node.type === 'classReward') {
       setScreen({ kind: 'classNode', nodeId });
     } else if (node.type === 'passiveReward') {
@@ -731,8 +686,8 @@ export function App() {
     setPlayerRun(next);
     const afterLevelUp: Screen = levelUpPending(next) ? { kind: 'levelUp', next: afterScreen } : afterScreen;
 
-    // Gate order is deliberate: gem, banner, then recruit, then level-up — so a hero recruited
-    // this beat already stands under both team-wide grants and can receive this win's points.
+    // Gate order is deliberate: banner, then recruit, then level-up — so a hero recruited
+    // this beat already stands under the Banner and can receive this win's points.
     // `next`, not `playerRun`: a boss node has just granted the contract that is spendable here.
     const recruitable = defeatedRoster.filter((entry) => isRecruitable(entry.heroId, heroes));
     // The scripted act names its one contract and refuses to let it be walked past; a non-null
@@ -743,23 +698,7 @@ export function App() {
       contractOffers.length > 0
         ? { kind: 'recruit', offers: contractOffers, next: afterLevelUp, required: forcedOffers !== null }
         : afterLevelUp;
-    const afterBanner: Screen = banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit;
-
-    // Every won fight pays a stack, sized by what it was (run/gems.ts). The Guardian pays none:
-    // it is already paying a Banner.
-    const gemCount = isFinale ? 0 : gemStackFor(mapNodeType as EncounterMapNodeType);
-    setScreen(
-      gemCount > 0
-        ? {
-            kind: 'gemChoice',
-            stats: pickGemOffers(),
-            count: gemCount,
-            eyebrow: 'Spoils',
-            title: 'Gems Recovered',
-            next: afterBanner,
-          }
-        : afterBanner
-    );
+    setScreen(banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit);
   }
 
   function handleNodeContinue(nodeId: string) {
@@ -831,12 +770,6 @@ export function App() {
   function handleStartLevel4TestRun() {
     setPlayerRun(createLevel4TestRun());
     setScreen({ kind: 'levelUp', next: { kind: 'map' } });
-  }
-
-  /** TEMPORARY DEV/TEST — see createGemTestRun. Straight to the map; the Gems board is one tap on. */
-  function handleStartGemTestRun() {
-    setPlayerRun(createGemTestRun());
-    setScreen({ kind: 'map' });
   }
 
   /** Random 4v4 straight into FightScreen. Every hero rolls MOVE_CAP moves from its FULL movepool — a throwaway fight is the place to spend on coverage. */
@@ -921,7 +854,6 @@ export function App() {
           onOpenSandbox={handleOpenSandbox}
           onVisitLocation={handleVisitLocation}
           onStartLevel4TestRun={handleStartLevel4TestRun}
-          onStartGemTestRun={handleStartGemTestRun}
           onStartStatusTestFight={handleStatusTestFight}
         />
       )}
@@ -1113,19 +1045,6 @@ export function App() {
 
       {screen.kind === 'blacksmith' && (
         <BlacksmithScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => handleNodeContinue(screen.nodeId)} />
-      )}
-
-      {screen.kind === 'gemChoice' && (
-        <GemChoiceScreen
-          stats={screen.stats}
-          count={screen.count}
-          eyebrow={screen.eyebrow}
-          title={screen.title}
-          tint={screen.tint}
-          run={playerRun}
-          onRunChange={setPlayerRun}
-          onContinue={() => setScreen(screen.next)}
-        />
       )}
 
       {screen.kind === 'classNode' && (

@@ -15,7 +15,6 @@ import { relicTeamPassiveGrants, passiveStatModifiers } from '../../run/passives
 import { entryPassiveCounts, entryStatModifiers, relicStatContribution } from '../../run/entryStats';
 import { chosenEvolutionPaths, itemSlotsFor, rosterEntryTypes } from '../../run/progression';
 import { chosenClass } from '../../run/classes';
-import { gemStatModifiers } from '../../run/gems';
 import { StatBars, StatGlyph, STAT_LABELS } from '../shared/StatBars';
 import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { MoveButtonReplica, swallowGhostClick, useLongPress } from '../shared/MoveTile';
@@ -221,7 +220,6 @@ export function HeroPreviewOverlay({ hero, entry, equipmentLookup, relicIds = []
                 <GrantSourceRow label="Evolution" mods={entry.evolutionStatGrants} />
                 <GrantSourceRow label="Boons" mods={entry.bonusStatGrants} />
                 <GrantSourceRow label="Mastery" mods={entry.masteryStatGrants} />
-                <GrantSourceRow label="Gems" mods={gemStatModifiers(entry)} />
                 {/* Hero-scoped passives only — relic-granted ones are already inside the Relics
                     line, and every grant has to appear exactly once for the ledger to add up. */}
                 <GrantSourceRow label="Passives" mods={passiveStatModifiers(entryPassiveCounts(entry, equipmentLookup), passives)} />

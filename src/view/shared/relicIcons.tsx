@@ -1,20 +1,13 @@
 import type { CSSProperties, ReactNode } from 'react';
 import type { StatKey } from '../../engine/content';
 import { STAT_ORDER } from '../../engine/content';
-import { gemStatGrants, gems } from '../../data/gems';
 import { relics } from '../../data/relics';
 import { STAT_COLORS } from './statIcons';
 
 // A relic drawn the way every other content type is: 24x24, `currentColor` only, nothing finer
-// than ~2 units. Two halves — the FORM says which family it belongs to, the COLOUR says what it
-// grants. Two closed families, and a Gem left the relic catalog for its own (src/data/gems.ts)
-// when it went per-hero, so the id is what says which family a mark belongs to.
-
-/**
- * The Gem: one unbroken brilliant — flat table, girdle at the shoulders, a point — with the table
- * facet knocked OUT of the crown. Exported because the map node wears it too (nodeIcons).
- */
-export const GEM = <path fillRule="evenodd" d="M7.4 2.6h9.2l5 6.4L12 21.8 2.4 9ZM8.8 5h6.4l2.4 3H6.4Z" />;
+// than ~2 units. The FORM says which family it belongs to, the COLOUR says what it grants. The
+// Banners are the only family left (docs/growth-overhaul.md §7), but the split is kept because
+// a second one is what `RelicFormName` is for.
 
 /** The Banner: crossbar over a swallowtail field. No pole — at 14px the pole and field merge into a lolly. */
 export const BANNER = (
@@ -24,19 +17,13 @@ export const BANNER = (
   </>
 );
 
-type RelicFormName = 'gem' | 'banner';
+type RelicFormName = 'banner';
 
-const RELIC_FORM_PATHS: Record<RelicFormName, ReactNode> = { gem: GEM, banner: BANNER };
+const RELIC_FORM_PATHS: Record<RelicFormName, ReactNode> = { banner: BANNER };
 
-/** Whether this id names a Gem rather than a Banner. The two are drawn by the same machinery. */
-export function isGemId(id: string): boolean {
-  return id in gems;
-}
-
-/** What the id grants, from whichever catalog it belongs to. */
+/** What the id grants. */
 export function grantsFor(id: string): Partial<Record<StatKey, number>> {
-  const gem = gems[id];
-  return gem ? gemStatGrants(gem) : relics[id]?.statGrants ?? {};
+  return relics[id]?.statGrants ?? {};
 }
 
 /** The stat a relic leads with — highest grant, ties broken by STAT_ORDER. */
@@ -86,7 +73,7 @@ export function RelicGlyph({ relicId, className }: { relicId: string; className?
       focusable="false"
       style={{ color: relicColor(relicId) } as CSSProperties}
     >
-      {RELIC_FORM_PATHS[isGemId(relicId) ? 'gem' : 'banner']}
+      {RELIC_FORM_PATHS.banner}
     </svg>
   );
 }

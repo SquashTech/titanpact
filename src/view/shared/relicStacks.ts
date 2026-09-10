@@ -4,7 +4,7 @@
 
 import type { StatKey } from '../../engine/content';
 
-/** A Banner or a Gem: everything these helpers need to write one down. */
+/** Everything these helpers need to write a relic down. */
 export interface StackableGrant {
   name: string;
   statGrants: Partial<Record<StatKey, number>>;
@@ -28,7 +28,7 @@ export function stackedRelicName(relic: StackableGrant, count: number): string {
 
 /**
  * Flat grants times copies held: "+90 HP", "+40 Mana Pool, +20 MP Regen". Empty for all-passive
- * relics. A count of 0 is a real case — the Relics screen lists every Gem, held or not — and
+ * relics. A count of 0 is a real case — the run sheet lists every Banner, held or not — and
  * reads "+0 HP" rather than "0 HP", so a column of totals stays uniform.
  */
 export function stackedGrantSummary(relic: StackableGrant, count: number): string {

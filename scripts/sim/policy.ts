@@ -18,7 +18,6 @@ import { statuses } from '../../src/data/statuses';
 import type { EquipmentDefinition } from '../../src/run/equipment';
 import { holdsItem } from '../../src/run/equipment';
 import type { RosterEntry, RunState } from '../../src/run/state';
-import { GEM_STATS, gemHeadroom, gemPool, gemStatModifiers, socketGems } from '../../src/run/gems';
 import { itemSlotsFor, rosterEntryTypes } from '../../src/run/progression';
 import { mergeStatMods } from '../../src/run/statMods';
 import type { Rng } from './rng';
@@ -41,7 +40,6 @@ export function effectiveStats(entry: RosterEntry): Record<StatKey, number> {
   const base = { ...heroes[entry.heroId].baseStats } as Record<StatKey, number>;
   let grants = mergeStatMods(entry.evolutionStatGrants, entry.bonusStatGrants);
   grants = mergeStatMods(grants, entry.masteryStatGrants);
-  grants = mergeStatMods(grants, gemStatModifiers(entry));
   for (const itemId of entry.equipment) {
     if (equipment[itemId]) grants = mergeStatMods(grants, equipment[itemId].statGrants);
   }
@@ -244,28 +242,6 @@ export function statBoostTarget(roster: readonly RosterEntry[], stat: StatKey): 
   return byPower(roster).reduce((best, entry) =>
     statWeight(entry, stat) * powerScore(entry) > statWeight(best, stat) * powerScore(best) ? entry : best
   );
-}
-
-/**
- * Every unspent Gem, poured one at a time into whoever the stone is worth most to — the same
- * chooser the stat nodes use. A player concentrates and the caps are what bound it, so a sim
- * that spread its Gems evenly would be measuring a cap that never binds.
- *
- * Run before every fight rather than at the grant: re-allocation is free, so a Gem freed by a
- * terminated hero has to find its way back onto the field.
- */
-export function pourGems(run: RunState): RunState {
-  let next = run;
-  for (const stat of GEM_STATS) {
-    let spare = gemPool(next)[stat] ?? 0;
-    while (spare > 0) {
-      const target = statBoostTarget(next.roster.filter((entry) => gemHeadroom(entry, stat) > 0), stat);
-      if (!target) break;
-      next = socketGems(next, target.rosterId, stat, 1);
-      spare -= 1;
-    }
-  }
-  return next;
 }
 
 /** Class and event passives go to the strongest hero — the one most likely to stay fielded. */

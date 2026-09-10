@@ -241,8 +241,6 @@ export function formatReport(
 
   // --- Relics ---
   out.push(heading('6. RELICS'));
-  out.push('  GEMS — offered 3 at a time and taken at random, so lift is a matched comparison.');
-  out.push(liftTable('', agg.gemChoices, (id) => relics[id]?.name ?? id, 15));
   out.push('  GUARDIAN BANNERS (fixed 1-of-5, so every offer count is identical):');
   out.push(liftTable('', agg.bannerChoices, (id) => relics[id]?.name ?? id, 15));
   out.push('  BOONS — the type-locked ones are only OFFERED to a roster that fields the type,');

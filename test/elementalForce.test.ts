@@ -159,7 +159,7 @@ test('elementalForce: equipmentStatusGrants tallies magnitude across held items,
 });
 
 test('elementalForce: relicTeamStatusGrants sums a duplicate relic id, matching relicTeamPassiveGrants', () => {
-  // Fixtures, not catalog ids: the shipped relics are all flat stats now (Gems and Banners), so
+  // Fixtures, not catalog ids: the shipped relics are all flat stats now (the Banners), so
   // the Force-granting shape is exercised on relics authored here.
   const fixtures = {
     cinderStandard: { id: 'cinderStandard', name: 'Cinder Standard', statGrants: {}, grantsStatusIds: [{ statusId: 'FireForce', magnitude: 10 }] },

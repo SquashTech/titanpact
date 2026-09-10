@@ -57,7 +57,6 @@ import { claimContract, claimContractReplacing, deriveContractOffer, isRecruitab
 import { rollGuildHallOffers, buyEquipment, sellValueFor, EQUIPMENT_PRICE_BY_RARITY } from '../../src/run/shop';
 import { tutorMovePool } from '../../src/run/tutor';
 import { grantClass } from '../../src/run/classes';
-import { GEM_NODE_STACK, GEM_OFFER_COUNT, gemStackFor, grantGems, pickGemOffers } from '../../src/run/gems';
 import { boonMoveCount, pickBoonOffers } from '../../src/run/boons';
 import { applyStatShift, grantEventPassive, rollRunEvent, rollEventMove, statShiftAllowed } from '../../src/run/events';
 import { MAX_ITEM_SLOTS, pickWeightedEquipment, rarityWeightsFor, EQUIPMENT_DROP_CHANCE, LOOT_SOURCE, type EquipmentDefinition } from '../../src/run/equipment';
@@ -89,7 +88,7 @@ const UPGRADE_REWARD_XP = 2;
 // --- Records the aggregator consumes ---
 
 export interface ChoiceEvent {
-  bucket: 'gem' | 'banner' | 'boon' | 'evolution' | 'class' | 'draft' | 'node';
+  bucket: 'banner' | 'boon' | 'evolution' | 'class' | 'draft' | 'node';
   offered: string[];
   /** Usually one; the draft takes two of its four. */
   picked: string[];
@@ -384,7 +383,6 @@ function resolveEncounterNode(
 ): EncounterOutcome {
   const location = locationForAct(run.locationIds, run.actNumber);
   const kindKey = mapNodeType as EncounterMapNodeType;
-  // Act 1's row-0 fight is the run's first encounter, and the only one that always pays a Gem.
   const isRunOpener = run.actNumber === 1 && run.encountersWon === 0;
   let encounter: Encounter;
   let squadSize = STANDARD_SQUAD_SIZE;
@@ -436,7 +434,6 @@ function resolveEncounterNode(
     ? pickWeightedEquipment(EQUIPMENT_POOL, 1, rarityWeightsFor(workingRun.actNumber, LOOT_SOURCE[kindKey]))[0] ?? null
     : null;
 
-  workingRun = policy.pourGems(workingRun);
   const playerSquad = rosterSquad(workingRun, squadSize);
   const fight = simulateFight({
     seed: randomSeed(rng),
@@ -496,17 +493,7 @@ function resolveEncounterNode(
 
   workingRun = grantCurrencyReward(workingRun, goldRewardFor(kindKey, rng));
   workingRun = grantUpgradeReward(workingRun, trainingPointsFor(kindKey, workingRun.actNumber) * options.xpMult);
-  // The Gem drip (src/run/gems.ts): every won fight pays a stack, sized by what it was.
-  const gemStack = gemStackFor(kindKey);
-  if (gemStack > 0) workingRun = claimGem(workingRun, pickGemOffers(GEM_OFFER_COUNT, rng), gemStack, rng, record);
   return { run: workingRun, won: true, defeatedRoster: encounter.run.roster, drop };
-}
-
-/** A Gem offer, taken at random so lift is a matched comparison. The stack lands unplaced; pourGems spends it. */
-function claimGem(run: RunState, offered: readonly StatKey[], count: number, rng: Rng, record: RunRecord): RunState {
-  const picked = pick(rng, [...offered]);
-  record.choices.push({ bucket: 'gem', offered: [...offered], picked: [picked], encountersWonAtChoice: run.encountersWon });
-  return grantGems(run, picked, count);
 }
 
 /** The Guardian's Banner: a fixed 1-of-5, taken at random. */
@@ -547,8 +534,6 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       const best = choices.reduce((a, b) => ((policy.bestWearer(run.roster, b)?.gain ?? 0) > (policy.bestWearer(run.roster, a)?.gain ?? 0) ? b : a));
       return resolveDrop(run, best.id, record.equipped, run.actNumber);
     }
-    case 'gemReward':
-      return claimGem(run, pickGemOffers(GEM_OFFER_COUNT, rng), GEM_NODE_STACK, rng, record);
     case 'passiveReward': {
       // Offered 3 and taken at random — the pool is under test, not the policy. The TARGET is not
       // random though: a type-locked Boon goes to whoever has the most moves of its type, which
@@ -565,9 +550,6 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
       record.choices.push({ bucket: 'boon', offered, picked: [picked], encountersWonAtChoice: run.encountersWon });
       return grantEventPassive(run, target.rosterId, picked, passives);
     }
-    // The Mana Well hands over its stat's stones outright — no choice, so nothing to record.
-    case 'manaBoostReward':
-      return grantGems(run, 'manaPool', GEM_NODE_STACK);
     case 'forgeReward': {
       // Whoever is holding the most already: an extra slot is worth most where the gear is.
       const target = [...run.roster]
@@ -575,8 +557,6 @@ function resolveRewardNode(run: RunState, nodeType: MapNodeType, locationId: str
         .sort((a, b) => policy.powerScore(b) - policy.powerScore(a))[0];
       return target ? grantItemSlot(run, target.rosterId, heroes) : run;
     }
-    case 'hpBoostReward':
-      return grantGems(run, 'hp', GEM_NODE_STACK);
     case 'classReward': {
       const offered = sample(rng, Object.values(classes), 3);
       // ClassNodeScreen offers only heroes with no Class yet, and an offer with nobody

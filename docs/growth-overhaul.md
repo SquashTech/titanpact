@@ -1,10 +1,11 @@
 # growth-overhaul.md — The Growth Overhaul
 
-> **STATUS: DECIDED (2026-09-10, per user direction), NOT BUILT.** Nothing in this file is
-> implemented. The code still ships Gems, the Training Point pool, the mastery stat reel and
-> level-gated moves; `CLAUDE.md`'s invariants still describe *that* game and are still the
-> rules in force until a phase below lands. This module is the destination, and §8 is the
-> route. Where it disagrees with `leveling-and-ranks.md`, `progression.md` or `run-loop.md`,
+> **STATUS: DECIDED (2026-09-10, per user direction). PHASE 1 OF §8 IS BUILT; 2-7 ARE NOT.**
+> Gems are gone. The code still ships the Training Point pool, the mastery stat reel and
+> level-gated moves; `CLAUDE.md`'s remaining invariants still describe *that* game and are
+> still the rules in force until the phase that replaces each one lands. This module is the
+> destination, and §8 is the route — **check its Status column before assuming anything here
+> runs.** Where it disagrees with `leveling-and-ranks.md`, `progression.md` or `run-loop.md`,
 > those files describe what runs today and this one describes what replaces it — neither is
 > wrong; they are separated in time. Each phase in §8 updates the others as it lands.
 
@@ -290,15 +291,15 @@ Scrolls give moves and level-ups give stats via the old reel.
 **`SAVE_VERSION` bumps freely.** `src/run/save.ts` rejects version mismatches rather than migrating
 them, so in-flight runs invalidate cleanly and no migration code is owed at any boundary.
 
-| # | Phase | Exit criterion |
-|---|---|---|
-| 1 | **Excise Gems.** Isolated and well-bounded; it shrinks the surface everything else moves through. Delete the owned files, strip the state fields, pull `gemReward`, give the shrines a placeholder payload, remove the sim's gem handling from `policy.ts` / `run.ts`. | No gem references, suite green, a run completable end to end. |
-| 2 | **Mastery Scrolls and Rank.** Add the currency, `RosterEntry.masteryRank`, and the spend flow on the Roster screen. Re-point `levelUpMovePool`'s tier gate from level to rank and cut the level-up's move grant in the same change — they are one edge. Add the pool-exhaustion guard. | Scrolls are the only move faucet; level-ups fall through to the stat reel. `test/moveTiers.test.ts` rewritten against rank. |
-| 3 | **Flip the levelling model.** The destructive one, landing after its replacements exist. XP becomes automatic and roster-wide; pool, deferral, cost curve and stat reel all go; cap 30; each level rolls the seven stats. Ship with a uniform all-B grade set so the engine runs before the content pass does. | No allocation screen anywhere. Level moves to the map header. Tutorial script re-checked — `src/data/tutorial.ts` narrates the old beats. |
-| 4 | **The Crucible.** Small: `chooseEvolutionPath` and the path data are untouched, only the invocation point moves. Insert into the act-boundary chain ahead of `PactSealScreen`; add the purchasable spend at the Guild Hall and the Vigil. | Five forced Crucibles a run, a sixth reachable. No evolution reachable from a level-up. |
-| 5 | **Finished and raw recruits.** Contract heroes arrive levelled, ranked, evolved, kit game-chosen; guild heroes raw. Gold on both purchased routes. | The flat-value / decaying-runway line true on three axes instead of one. `test/recruitment.test.ts` extended. |
-| 6 | **Re-fit the difficulty curve.** The real work, and it cannot start earlier: `ENEMY_LEVEL_BY_ACT`, `ACT_STEP_CURVE`, Guardian champions, reward weights and Banner values all re-derived. Drive with `scripts/sim` and the skilled pilot. | Batch runs show no mechanical fault — walls, dead nodes, unreachable ranks. Win-rate targets are a playtest question, not a batch one. |
-| 7 | **Growth grades for 36 heroes.** Parallelisable from phase 3 onward; it needs the schema, not the tuning. The interesting authoring is the mismatches — a low base with S grades is a late bloomer worth recruiting underlevelled, and that archetype only exists once this pass does. | Grade budget enforced by test, beside the 550 check in `test/roster.test.ts`. No hero left on the all-B placeholder. |
+| # | Phase | Exit criterion | Status |
+|---|---|---|---|
+| 1 | **Excise Gems.** Isolated and well-bounded; it shrinks the surface everything else moves through. Delete the owned files, strip the state fields, pull `gemReward`, remove the sim's gem handling from `policy.ts` / `run.ts`. The two stat shrines were **removed outright** rather than given a placeholder payload (2026-09-10, per user direction): they are §1's rule stated as a node, so a stand-in screen would have been built only to be deleted in phase 3. Their 20 weight and the Gem Cache's 20 went to the Boon (18 → 30) and the purse (18 → 26) until phase 2 seats the Scroll node. | No gem references, suite green, a run completable end to end. | **DONE** 2026-09-10. 985 tests green; 200 batch runs complete end to end. Cost, measured: full-clear 45.5% → 33.0%, encounters won 12.11 → 10.70 — the ~200 stat points a run Gems carried, handed back by phase 3 and re-fitted in phase 6. |
+| 2 | **Mastery Scrolls and Rank.** Add the currency, `RosterEntry.masteryRank`, and the spend flow on the Roster screen. Re-point `levelUpMovePool`'s tier gate from level to rank and cut the level-up's move grant in the same change — they are one edge. Add the pool-exhaustion guard. | Scrolls are the only move faucet; level-ups fall through to the stat reel. `test/moveTiers.test.ts` rewritten against rank. | not started |
+| 3 | **Flip the levelling model.** The destructive one, landing after its replacements exist. XP becomes automatic and roster-wide; pool, deferral, cost curve and stat reel all go; cap 30; each level rolls the seven stats. Ship with a uniform all-B grade set so the engine runs before the content pass does. | No allocation screen anywhere. Level moves to the map header. Tutorial script re-checked — `src/data/tutorial.ts` narrates the old beats. | not started |
+| 4 | **The Crucible.** Small: `chooseEvolutionPath` and the path data are untouched, only the invocation point moves. Insert into the act-boundary chain ahead of `PactSealScreen`; add the purchasable spend at the Guild Hall and the Vigil. | Five forced Crucibles a run, a sixth reachable. No evolution reachable from a level-up. | not started |
+| 5 | **Finished and raw recruits.** Contract heroes arrive levelled, ranked, evolved, kit game-chosen; guild heroes raw. Gold on both purchased routes. | The flat-value / decaying-runway line true on three axes instead of one. `test/recruitment.test.ts` extended. | not started |
+| 6 | **Re-fit the difficulty curve.** The real work, and it cannot start earlier: `ENEMY_LEVEL_BY_ACT`, `ACT_STEP_CURVE`, Guardian champions, reward weights and Banner values all re-derived. Drive with `scripts/sim` and the skilled pilot. | Batch runs show no mechanical fault — walls, dead nodes, unreachable ranks. Win-rate targets are a playtest question, not a batch one. | not started |
+| 7 | **Growth grades for 36 heroes.** Parallelisable from phase 3 onward; it needs the schema, not the tuning. The interesting authoring is the mismatches — a low base with S grades is a late bloomer worth recruiting underlevelled, and that archetype only exists once this pass does. | Grade budget enforced by test, beside the 550 check in `test/roster.test.ts`. No hero left on the all-B placeholder. | not started |
 
 ### Phase 6 is the actual project
 

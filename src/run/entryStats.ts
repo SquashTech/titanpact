@@ -7,7 +7,6 @@ import type { StatModifiers } from '../engine/state';
 import type { RosterEntry } from './state';
 import type { EquipmentDefinition } from './equipment';
 import { equipmentStatModifiers } from './equipment';
-import { gemStatModifiers } from './gems';
 import { equipmentPassiveGrants, mergePassiveGrants, passiveStatModifiers } from './passives';
 import { mergeStatMods } from './statMods';
 
@@ -44,7 +43,6 @@ export function entryStatModifiers(
     entry.evolutionStatGrants,
     entry.bonusStatGrants,
     entry.masteryStatGrants,
-    gemStatModifiers(entry),
     teamStatModifiers,
     passiveStatModifiers(passiveCounts, passiveDefs)
   );

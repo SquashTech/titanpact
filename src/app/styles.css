@@ -5939,7 +5939,7 @@ textarea,
    set per choice by MapRoute so it is exactly when that path finishes): the card fades up, the
    sigil snaps in past its own size, and a ring leaves the disc.
 
-   The ring is where the two flavours part, and they part because the information does. A Gem
+   The ring is where the two flavours part, and they part because the information does. A Boon
    arriving and a Guardian arriving are not the same news, and the screen has no words left to say
    which — so a reward blooms open and an encounter SLAMS: faster, harder-edged, and with a kick on
    the sigil itself. Paired with `map.boon` / `map.threat` (MapRoute's ARRIVAL_SFX), which split the
@@ -10994,9 +10994,9 @@ textarea,
 }
 
 /* --- The team-wide panel (RunRelicsPanel.tsx) -----------------------------
-   Banners and Gems, at the top of the Roster sheet's one scroll rather than
-   behind a map button of their own (2026-09-07). Both families list in full,
-   held or not — an unheld one is a slot to fill, not an absence.
+   The Banners, at the top of the Roster sheet's one scroll rather than behind
+   a map button of their own (2026-09-07). The family lists in full, held or
+   not — an unheld one is a slot to fill, not an absence.
 
    Icon-and-count chips, NOT cards or even names: twelve of anything wordier
    filled the whole first screen and pushed the roster — the interactive half of
@@ -11029,10 +11029,9 @@ textarea,
 }
 
 /* The wrap row centres, so a short one reads as deliberate rather than as a chip
-   left hanging. Column counts differ per family (2026-09-07, per user direction):
-   the five Banners fit one line, the seven Gems take two, and the Gems are the pair
-   that yields height — the whole sheet has to land on one screen with no scroll, and
-   two Gem rows is where that budget is won or lost. */
+   left hanging. The five Banners fit one line; the whole sheet has to land on one
+   screen with no scroll, so a second family added here is where that budget would
+   be won or lost. */
 .relic-rail {
   display: flex;
   flex-wrap: wrap;
@@ -12567,7 +12566,7 @@ textarea,
   }
 }
 
-/* --- The relic offer list (GuardianBannerScreen, GemChoiceScreen) ---------
+/* --- The relic offer list (GuardianBannerScreen) --------------------------
    Overhauled (2026-08-23, per user direction) from a 2x2 grid of icon-only
    tiles — which read oddly with only 3 offers, always leaving one tile
    orphaned in the second row — into a vertical stack of full-width rows,
@@ -12682,19 +12681,17 @@ textarea,
 }
 
 /* --- Relics as objects (relicArt.tsx) -------------------------------------
-   The Gem and the Banner drawn at display size (2026-09-08, per user
+   The Banner drawn at display size (2026-09-08, per user
    direction). The flat 24x24 marks in relicIcons.tsx still serve every chip
    inside a sentence; these are for the surfaces where the relic IS the
    subject — the two choice screens, the claim tally, and the run sheet's
    rails.
 
    Everything is cut from ONE hue, `--relic-color`, which the relic's own lead
-   stat supplies. That is what makes the family read as seven different stones
-   rather than seven copies of one: the facets are all `color-mix` steps off
-   currentColor toward white or black, so an Emerald and a Ruby are the same
-   geometry lit the same way in two materials. */
+   stat supplies: the cloth and its folds are all `color-mix` steps off
+   currentColor toward white or black, so two Banners are the same geometry lit
+   the same way in two materials. */
 
-.gem-jewel,
 .banner-standard {
   position: relative;
   display: inline-flex;
@@ -12702,158 +12699,6 @@ textarea,
   justify-content: center;
   flex: none;
   color: var(--relic-color, var(--magical));
-}
-
-.gem-jewel {
-  width: 1em;
-  height: 1em;
-}
-
-.gem-jewel-cut {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-/* Light from the upper left. The crown takes it, the pavilion falls away —
-   and the middle pavilion facet comes back bright because that is where a
-   real brilliant returns light through the table. Six planes; five all read
-   as one flat pentagon and seven is past what 26px can hold. */
-.gem-facet.is-table {
-  fill: color-mix(in srgb, currentColor 38%, #ffffff);
-}
-
-.gem-facet.is-crown-left {
-  fill: color-mix(in srgb, currentColor 68%, #ffffff);
-}
-
-.gem-facet.is-crown-right {
-  fill: currentColor;
-}
-
-.gem-facet.is-pavilion-left {
-  fill: color-mix(in srgb, currentColor 60%, #05070c);
-}
-
-.gem-facet.is-pavilion-mid {
-  fill: color-mix(in srgb, currentColor 84%, #ffffff);
-}
-
-.gem-facet.is-pavilion-right {
-  fill: color-mix(in srgb, currentColor 42%, #05070c);
-}
-
-.gem-girdle {
-  fill: none;
-  stroke: color-mix(in srgb, currentColor 25%, #ffffff);
-  stroke-width: 1.3;
-  opacity: 0.65;
-}
-
-.gem-outline {
-  fill: none;
-  stroke: color-mix(in srgb, currentColor 50%, #ffffff);
-  stroke-width: 1.7;
-  stroke-linejoin: round;
-  opacity: 0.9;
-}
-
-/* The glisten: one soft bar of light dragged across the whole stone on a
-   loop, clipped to the silhouette. This is the difference between a coloured
-   shape and something the player reads as CUT — a static gem looks like an
-   icon no matter how many facets it has. */
-.gem-glisten {
-  fill: rgba(255, 255, 255, 0.85);
-  filter: blur(2.5px);
-  opacity: 0;
-  animation: gem-glisten 4.2s ease-in-out infinite;
-}
-
-@keyframes gem-glisten {
-  0%,
-  58% {
-    transform: translateX(0) skewX(-18deg);
-    opacity: 0;
-  }
-  63% {
-    opacity: 0.55;
-  }
-  84% {
-    transform: translateX(112px) skewX(-18deg);
-    opacity: 0.5;
-  }
-  90%,
-  100% {
-    transform: translateX(132px) skewX(-18deg);
-    opacity: 0;
-  }
-}
-
-/* Four-point stars at the corners the facets meet, each on its own beat so
-   the stone never twinkles in time with itself. */
-.gem-sparkle {
-  position: absolute;
-  background: #ffffff;
-  clip-path: polygon(50% 0%, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0% 50%, 42% 42%);
-  opacity: 0;
-  filter: drop-shadow(0 0 4px currentColor);
-  animation: gem-sparkle 3.6s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.gem-sparkle.is-a {
-  top: 4%;
-  left: 16%;
-  width: 26%;
-  height: 26%;
-  animation-delay: 0.3s;
-}
-
-.gem-sparkle.is-b {
-  top: 34%;
-  right: 2%;
-  width: 18%;
-  height: 18%;
-  animation-delay: 1.6s;
-}
-
-.gem-sparkle.is-c {
-  bottom: 12%;
-  left: 34%;
-  width: 15%;
-  height: 15%;
-  animation-delay: 2.6s;
-}
-
-@keyframes gem-sparkle {
-  0%,
-  76%,
-  100% {
-    opacity: 0;
-    transform: scale(0.25) rotate(0deg);
-  }
-  86% {
-    opacity: 1;
-    transform: scale(1) rotate(45deg);
-  }
-}
-
-/* The charge: the stat glyphs the relic grants, sitting on the stone's widest
-   band. White with a hard shadow rather than the stat's own colour — the
-   stone is already that colour, and a glyph in it would vanish. */
-.gem-jewel-charge {
-  position: absolute;
-  top: 41%;
-  left: 50%;
-  display: flex;
-  align-items: center;
-  gap: 0.06em;
-  transform: translate(-50%, -50%);
-  font-size: 0.32em;
-  color: #ffffff;
-  opacity: 0.94;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
-  pointer-events: none;
 }
 
 /* --- The Banner ----------------------------------------------------------
@@ -12951,7 +12796,7 @@ textarea,
   pointer-events: none;
 }
 
-/* --- Picking one (RelicChoiceCard.tsx, the Gem and Banner screens) --------
+/* --- Picking one (RelicChoiceCard.tsx, the Banner screen) -----------------
    This replaced three full-width rows of name-and-description prose
    (2026-09-08, per user direction). Both families grant flat stats, so every
    row was the same sentence with one number changed and the choice read as
@@ -13069,8 +12914,7 @@ textarea,
   font-size: 150px;
 }
 
-/* Banners are named and Gems are not: a run plans four acts around
-   "Banner of Vitality +2", while a Gem is only ever the stat it carries. */
+/* Banners are named: a run plans four acts around "Banner of Vitality +2". */
 .relic-pick-row.is-banners .relic-pick-art {
   font-size: 86px;
 }
@@ -13091,7 +12935,7 @@ textarea,
   color: var(--text);
 }
 
-/* Gold rather than the Gem screen's violet: a Banner comes off a Guardian. */
+/* Gold rather than the reward rows' violet: a Banner comes off a Guardian. */
 .relic-banner-claim-button {
   background: linear-gradient(165deg, #f0cf8a, #c08f2c);
   border: 1px solid var(--accent);
@@ -13116,9 +12960,9 @@ textarea,
 
 /* --- The claim tally (RelicFamilyTally.tsx) -------------------------------
    What a claim actually changed, against everything the run already holds.
-   A Gem's worth is entirely "this is my fourth Ruby", which the single reveal
-   card it replaced could not say — so the claim reveals the SHELF, and the new
-   one flares and counts up on it. */
+   A Banner's worth is entirely "this is my fourth Vitality", which the single
+   reveal card it replaced could not say — so the claim reveals the SHELF, and
+   the new one flares and counts up on it. */
 
 .relic-tally-label {
   margin-bottom: 12px;
@@ -13164,7 +13008,7 @@ textarea,
 }
 
 /* Never held: dimmed, not hidden — the shelf is the point, and an empty slot
-   is the thing the next Gem could fill. */
+   is the thing the next Banner could fill. */
 .relic-tally-cell.is-empty {
   opacity: 0.26;
   filter: grayscale(0.7);
@@ -14957,7 +14801,7 @@ textarea,
   transform: translateY(-1px) scale(0.97);
 }
 
-/* Weight by tier — a Guardian is not a Gem, and with no words left the size is what says so. */
+/* Weight by tier — a Guardian is not a Boon, and with no words left the size is what says so. */
 .map-choice.tier-reward .map-medallion {
   width: 84px;
   height: 84px;
@@ -22641,419 +22485,17 @@ textarea,
   text-align: left;
 }
 
-/* --- Manage Roster's two boards -------------------------------------------------------------
-   Gear and Gems swap under one strip, so anything that moved between them would read as the
-   screen jumping. Both are a list that grows downward with the tray of what you are spending
-   pinned to the bottom of the reach — `margin-top: auto` inside a full-height column, so a short
-   roster leaves its slack in the MIDDLE rather than under the thing being tapped. */
+/* --- Manage Roster's gear board --------------------------------------------------------------
+   A list that grows downward with the bag pinned to the bottom of the reach — `margin-top: auto`
+   inside a full-height column, so a short roster leaves its slack in the MIDDLE rather than under
+   the thing being tapped. */
 
-.gem-board,
 .gear-board {
   display: flex;
   flex-direction: column;
   min-height: 100%;
 }
 
-.gem-board .gem-tray,
 .gear-board .stash-panel {
   margin-top: auto;
-}
-
-/* The board switcher, sized apart from the sheets' tab strips (2026-09-09, per user direction):
-   it is one of two things the screen is FOR, not a page selector inside one. Held to 46px so six
-   hero rows and a tray still clear it on a 780px page. */
-.tab-strip.is-boards {
-  gap: 8px;
-  padding: 4px;
-  margin-top: 2px;
-}
-
-.tab-strip.is-boards .tab-button {
-  flex-direction: row;
-  justify-content: center;
-  gap: 8px;
-  min-height: 46px;
-  border-radius: var(--radius-md);
-  letter-spacing: 0.06em;
-}
-
-.tab-strip.is-boards .tab-button-label {
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.tab-strip.is-boards .section-glyph {
-  width: 19px;
-  height: 19px;
-}
-
-.tab-strip.is-boards .tab-button-count {
-  font-size: 10px;
-  font-weight: 800;
-}
-
-/* --- The Gems board's hero rows ---
-   Full width, because seven stat cells do not fit beside a portrait in a half-width card and the
-   point of showing all seven is reading a spread DOWN the column. */
-
-.gem-hero-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.gem-hero-row {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 5px 6px 4px;
-  border-radius: var(--radius-md);
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-left-width: 3px;
-  border-left-style: solid;
-}
-
-.gem-hero-row.can-take {
-  border-color: var(--accent);
-}
-
-.gem-hero-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-width: 0;
-  padding: 0;
-  background: none;
-  border: 0;
-  text-align: left;
-}
-
-.gem-hero-portrait {
-  width: 30px;
-  height: 30px;
-  flex: 0 0 auto;
-}
-
-.gem-hero-ident {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.gem-hero-name {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* The one number the row keeps, on the right edge where a capacity belongs. Beside the name it
-   read as part of the name; inside the stones it broke them up as a group. */
-.gem-hero-total {
-  flex: 0 0 auto;
-  font-size: 12px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-dim);
-}
-
-.gem-hero-total.is-full {
-  color: var(--accent);
-}
-
-.gem-hero-cap {
-  opacity: 0.65;
-}
-
-.gem-hero-grants {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px 7px;
-  min-height: 11px;
-  overflow: hidden;
-}
-
-.gem-hero-grant {
-  font-size: 10px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--relic-color);
-}
-
-.gem-hero-none {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-dim);
-  opacity: 0.7;
-}
-
-/* Full width now, so a cell is a real target rather than a seventh of the space left over. */
-.gem-hero-cells {
-  display: flex;
-  gap: 4px;
-}
-
-/* All seven, always, dim where a hero carries none: a column the eye can run down only exists if
-   every row has the same seven positions in the same order. */
-.gem-cell {
-  position: relative;
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
-  padding: 2px 0 1px;
-  border-radius: var(--radius-sm);
-  background: var(--panel-alt);
-  border: 1px solid transparent;
-  opacity: 0.34;
-}
-
-.gem-cell.is-set {
-  opacity: 1;
-  background: color-mix(in srgb, var(--relic-color) 15%, var(--panel-alt));
-  border-color: color-mix(in srgb, var(--relic-color) 42%, transparent);
-}
-
-.gem-cell-art {
-  font-size: 17px;
-}
-
-.gem-cell-count {
-  min-height: 11px;
-  font-size: 10px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  line-height: 10px;
-  color: var(--text);
-}
-
-/* --- The tray ---
-   One bar that changes what it says: the pool at rest, the stone in hand while one is lifted.
-   Nothing above it moves when a stone is picked up, and there is no standing instruction line —
-   the tray IS the instruction once a stone lights up in it. */
-
-.gem-tray {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 6px 8px 7px;
-  border-radius: var(--radius-md);
-  background: var(--panel-alt);
-  border: 1px solid var(--border);
-}
-
-.gem-tray-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 22px;
-}
-
-.gem-tray-label {
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--text-dim);
-}
-
-.gem-tray-total {
-  margin-left: auto;
-  font-size: 12px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-}
-
-.gem-tray-held {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.gem-tray-held-name {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--text);
-}
-
-.gem-tray-held-grant {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-dim);
-}
-
-.gem-tray-done {
-  margin-left: auto;
-  padding: 5px 13px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text);
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-}
-
-.gem-tray-grid {
-  display: flex;
-  justify-content: center;
-  gap: 5px;
-  min-height: 38px;
-  align-items: center;
-}
-
-/* Sized so all SEVEN fit one line at 394px: a stone wrapping to a second row costs the board a
-   whole tray-height for one chip, and the tray is the part that has to stay short. */
-.gem-tray-stone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  flex: 1 1 0;
-  min-width: 0;
-  padding: 4px 2px;
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--relic-color) 13%, var(--panel));
-  border: 1px solid color-mix(in srgb, var(--relic-color) 40%, var(--border));
-}
-
-/* In hand: the one stone the rest of the board is now about. */
-.gem-tray-stone.is-held {
-  background: color-mix(in srgb, var(--relic-color) 34%, var(--panel));
-  border-color: var(--relic-color);
-  box-shadow: 0 0 0 1px var(--relic-color), 0 0 14px -2px var(--relic-color);
-}
-
-.gem-tray-art {
-  font-size: 22px;
-}
-
-.gem-tray-count {
-  font-size: 10px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-}
-
-.gem-tray-none {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-dim);
-}
-
-/* Holding a stone turns the board into one question, as picking up an item does on the Gear
-   board: a hero who cannot take THIS stone — at its stat's cap, or at their own — recedes. */
-.gem-board.is-focused .gem-hero-row.is-inert {
-  opacity: 0.26;
-}
-
-/* --- Setting a Gem: the bloom and the numeral ------------------------------------------------
-   A Gem is +5 to a number, which is nothing to look at, so the feedback has to carry the whole
-   sense of the hero getting bigger. Two parts, both cheap: the cell it landed in blooms in its own
-   colour, and the amount rides up off the row in that colour. The stat line under the name has
-   already changed by then, so the numeral is flying off the number it just moved. */
-
-.gem-cell-bloom {
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  pointer-events: none;
-  background: radial-gradient(circle at 50% 45%, var(--relic-color), transparent 70%);
-  opacity: 0;
-  animation: gem-cell-bloom 460ms ease-out;
-}
-
-@keyframes gem-cell-bloom {
-  0% {
-    opacity: 0.85;
-    transform: scale(0.6);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.35);
-  }
-}
-
-/* The count lands rather than fades in — a stone seating, not a label updating. */
-.gem-cell.is-set .gem-cell-count {
-  animation: gem-count-land 300ms cubic-bezier(0.2, 1.5, 0.4, 1);
-}
-
-@keyframes gem-count-land {
-  0% {
-    transform: scale(1.9);
-    color: var(--relic-color);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* Rides the row, not the cell: a poured stack is several of these stacking up the same column,
-   and off a 50px cell they would fly off the edge of the panel.
-
-   Anchored over the STAT LINE rather than the right edge, for two reasons: the number it names
-   is the one that just moved there, and the row's capacity count lives on the right, where a
-   numeral flying past it reads as the capacity changing. */
-.gem-flare-layer {
-  position: absolute;
-  left: 44px;
-  top: 26px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  pointer-events: none;
-}
-
-.gem-flare {
-  font-size: 13px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--relic-color);
-  text-shadow: 0 0 10px color-mix(in srgb, var(--relic-color) 60%, transparent);
-  animation: gem-flare-rise 720ms ease-out forwards;
-}
-
-@keyframes gem-flare-rise {
-  0% {
-    opacity: 0;
-    transform: translateY(6px) scale(0.8);
-  }
-  18% {
-    opacity: 1;
-    transform: translateY(0) scale(1.1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-26px) scale(1);
-  }
-}
-
-/* The row itself takes the hit, briefly — the same trick the combat layer uses to say a thing
-   happened TO somebody rather than merely near them. */
-.gem-hero-row.can-take:active {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, var(--surface-raised));
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gem-cell-bloom,
-  .gem-cell.is-set .gem-cell-count,
-  .gem-flare {
-    animation: none;
-  }
-
-  .gem-cell-bloom {
-    opacity: 0;
-  }
 }

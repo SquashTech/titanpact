@@ -13,9 +13,6 @@ import { ItemBox, ItemReadout, ItemSummaryPopup, slotBoxes } from '../shared/Equ
 import { HeroSlotCard, HeroSlotGrid } from '../shared/HeroSlotCard';
 import { EquipSwapScreen } from './EquipSwapScreen';
 import { RunRelicsPanel } from './RunRelicsPanel';
-import { GemBoard } from './GemBoard';
-import { gemPoolTotal, markGemsSeen } from '../../run/gems';
-import { TabStrip, type TabSpec } from '../shared/TabStrip';
 import { ResourceGlyph } from '../shared/RunGlyph';
 import { playSfx } from '../../audio/sfx';
 
@@ -27,8 +24,6 @@ const EQUIP_SEAT_MS = 420;
 interface Props {
   run: RunState;
   onRunChange: (next: RunState) => void;
-  /** Which board to land on. The map sends whichever has something waiting; Gear when both do. */
-  initialBoard?: 'gear' | 'gems';
   onClose: () => void;
 }
 
@@ -56,20 +51,7 @@ function parseRefKey(raw: string): SlotRef | null {
  * and no longer does: this is the screen the player opens between every node, and the one
  * irreversible verb on it was one mis-tap from the gesture everything else uses.
  */
-export function RosterManagementScreen({ run, onRunChange, initialBoard = 'gear', onClose }: Props) {
-  /**
-   * Gear and Gems are two boards over one roster (2026-09-09, per user direction). Both are
-   * "hand this out before the next node", and Gems used to mean opening a hero sheet, setting
-   * stones, closing it, and repeating per hero — a depth of four for a job the Gear board does
-   * at a depth of one.
-   */
-  const [board, setBoard] = useState<'gear' | 'gems'>(initialBoard);
-  // Showing the tray IS looking at it, so the mark clears on arrival rather than per stone.
-  useEffect(() => {
-    if (board === 'gems' && run.gemsUnseen > 0) onRunChange(markGemsSeen(run));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [board, run.gemsUnseen]);
-
+export function RosterManagementScreen({ run, onRunChange, onClose }: Props) {
   const [selected, setSelected] = useState<SlotRef | null>(null);
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [inspecting, setInspecting] = useState<{ hero: HeroDefinition; entry: RosterEntry } | null>(null);
@@ -334,11 +316,6 @@ export function RosterManagementScreen({ run, onRunChange, initialBoard = 'gear'
    * flow: nothing on the screen may move when an item is picked up or when a different one is,
    * so the block that holds it has one height and the card fills it whatever the item carries.
    */
-  const boards: TabSpec<'gear' | 'gems'>[] = [
-    { id: 'gear', label: 'Gear', glyph: 'equipment', count: run.stash.length },
-    { id: 'gems', label: 'Gems', glyph: 'gems', count: gemPoolTotal(run) },
-  ];
-
   const focusBar = selectedItem && (
     <div className="equip-focus-bar">
       <ItemReadout item={selectedItem} />
@@ -379,10 +356,7 @@ export function RosterManagementScreen({ run, onRunChange, initialBoard = 'gear'
           </button>
         </div>
         <div className="screen-scroll">
-          {board === 'gems' ? (
-            <GemBoard run={run} onRunChange={onRunChange} onInspect={(entry, hero) => setInspecting({ hero, entry })} />
-          ) : (
-            <div className="gear-board">
+          <div className="gear-board">
           <div className="roster-top-block">
             <RunRelicsPanel run={run} />
             {focusBar}
@@ -425,11 +399,8 @@ export function RosterManagementScreen({ run, onRunChange, initialBoard = 'gear'
           </HeroSlotGrid>
 
           {bagPanel}
-            </div>
-          )}
+          </div>
         </div>
-
-        <TabStrip tabs={boards} active={board} onSelect={setBoard} className="is-boards" />
 
         {/* Outside the scroll, so it is pinned to the bottom of a full-height panel and always
             in thumb reach. The header ✕ stays — it is where every other overlay puts it — but

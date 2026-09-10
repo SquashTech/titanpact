@@ -132,14 +132,6 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     ],
   },
   {
-    id: 'gem',
-    topic: 'Gems',
-    lines: [
-      'A Gem. These will benefit all of us. They stack forever and we will collect many across these lands.',
-      'Pick the one you want carried for the rest of the journey.',
-    ],
-  },
-  {
     id: 'equip',
     topic: 'Equipment',
     lines: [
@@ -239,13 +231,13 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
     ],
   },
 
-  // --- Row 6: the Gem ---
+  // --- Row 6: the Boon ---
   {
-    id: 'map:gemReward',
-    topic: 'Gems',
+    id: 'map:passiveReward',
+    topic: 'Boons',
     lines: [
-      'A seam of them, and this time we choose which.',
-      'One stat, five points, every one of us — and they stack for the rest of the journey. Take the one our whole pact wants, not the one that suits me.',
+      'Something older than the Goblins is buried here, and it is still willing to bargain.',
+      'Three offers, and only one of us may take it. A Boon does not make a hero bigger — it changes what that hero does, for the rest of the journey. Choose the pairing, not the prize.',
     ],
   },
 
