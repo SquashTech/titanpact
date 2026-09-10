@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
 import { equipment, EQUIPMENT_DROP_POOL, UNIQUE_EQUIPMENT } from '../../data/equipment';
@@ -83,7 +83,7 @@ function HeroConfigCard({
 }: HeroConfigCardProps) {
   const displayTypes = displayTypesFor(hero, config, progressionTable);
   return (
-    <div className={`sandbox-hero-card${isActive ? ' active' : ''}`} style={{ borderLeftColor: getTypeColor(hero.types[0]) }}>
+    <div className={`sandbox-hero-card${isActive ? ' active' : ''}`} style={{ '--plate-color': getTypeColor(hero.types[0]) } as CSSProperties}>
       <div className="sandbox-hero-head">
         <HeroPortrait heroId={hero.id} className="training-hero-portrait" />
         <div className="training-hero-name-block">

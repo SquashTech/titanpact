@@ -61,7 +61,7 @@ function GuildHallHeroCard({ hero, offer, level, affordable, onInspect }: HeroCa
   return (
     <button
       className={`guild-hall-hero-card${affordable ? '' : ' unaffordable'}`}
-      style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
+      style={{ '--plate-color': getTypeColor(hero.types[0]) } as CSSProperties}
       onClick={onInspect}
     >
       <span className="guild-hall-hero-level">Lv{level}</span>

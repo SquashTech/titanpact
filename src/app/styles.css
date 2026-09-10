@@ -6998,8 +6998,6 @@ textarea,
   display: flex;
   gap: 10px;
   padding: 8px 10px;
-  background: var(--surface-raised);
-  border-left: 3px solid;
   border-radius: var(--radius-sm);
   box-shadow: var(--hairline), var(--elev-1);
 }
@@ -7851,11 +7849,9 @@ textarea,
 /* Sunken, because the three paths are alternatives set into the sheet rather
    than three more raised objects competing with the panel they sit in. */
 .evo-path-card {
+  --plate-base: var(--surface-sunken);
   margin: 6px 0;
   padding: 8px 10px;
-  background: var(--surface-sunken);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--border);
   border-radius: var(--radius-sm);
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
 }
@@ -7863,11 +7859,11 @@ textarea,
 /* Same three colors .evolution-badge uses, so the card's edge and the badge
    sitting on it never say different things. */
 .evo-path-card.evo-offensive {
-  border-left-color: var(--enemy);
+  --plate-color: var(--enemy);
 }
 
 .evo-path-card.evo-defensive {
-  border-left-color: var(--ally);
+  --plate-color: var(--ally);
 }
 
 .evo-path-card.evo-utility {
@@ -9023,22 +9019,21 @@ textarea,
  */
 .item-readout,
 .passive-readout {
+  --plate-base: var(--panel-alt);
   display: flex;
   flex-direction: column;
   gap: 5px;
   padding: 8px 9px;
   border-radius: var(--radius-md);
-  background: var(--panel-alt);
-  border: 1px solid var(--border);
   box-shadow: var(--hairline);
 }
 
 .item-readout {
-  border-left: 3px solid var(--rarity-color);
+  --plate-color: var(--rarity-color);
 }
 
 .passive-readout {
-  border-left: 3px solid var(--passive-color);
+  --plate-color: var(--passive-color);
 }
 
 .item-readout-head,
@@ -10926,9 +10921,6 @@ textarea,
 
 .roster-card {
   position: relative;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 10px;
   box-shadow: var(--hairline), var(--elev-1);
@@ -10948,8 +10940,8 @@ textarea,
 }
 
 .roster-card.picked {
+  --plate-color: var(--accent);
   border-color: var(--accent);
-  border-left-color: var(--accent);
   background: var(--selected-fill);
   box-shadow: 0 0 0 1px var(--accent), 0 0 14px rgba(224, 166, 60, 0.35);
   /* Only DraftScreen ever sets .picked, so this pop is safe to scope here —
@@ -11047,9 +11039,6 @@ textarea,
 .squad-slot {
   position: relative;
   min-height: 64px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 10px;
   box-shadow: var(--hairline), var(--elev-1);
@@ -11303,9 +11292,7 @@ textarea,
 }
 
 .relic-card {
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--magical);
+  --plate-color: var(--magical);
   border-radius: var(--radius-sm);
   padding: 8px 10px;
   box-shadow: var(--hairline), var(--elev-1);
@@ -11479,9 +11466,6 @@ textarea,
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--border);
   border-radius: var(--radius-md);
   padding: 10px 8px 8px;
   text-align: center;
@@ -11688,9 +11672,8 @@ textarea,
   display: flex;
   align-items: center;
   gap: 10px;
-  background: linear-gradient(165deg, var(--panel-alt), var(--panel) 70%);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
+  --plate-base: linear-gradient(165deg, var(--panel-alt), var(--panel) 70%);
+  --plate-color: var(--accent);
   border-radius: 10px;
   padding: 10px 12px;
   color: var(--text);
@@ -12135,9 +12118,7 @@ textarea,
   align-items: center;
   gap: 14px;
   text-align: left;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--rarity-color, var(--border));
+  --plate-color: var(--rarity-color, var(--border));
   border-radius: var(--radius-lg);
   padding: 14px 16px;
   color: var(--text);
@@ -13231,8 +13212,8 @@ textarea,
    look the same is the thing the derived-art vocabulary exists to prevent. */
 
 .boon-shrine-card {
+  --plate-color: var(--boon-color);
   align-items: flex-start;
-  border-left: 3px solid var(--boon-color);
   gap: 10px;
 }
 
@@ -13269,7 +13250,6 @@ textarea,
 
 .boon-shrine-card.picked {
   border-color: var(--boon-color);
-  border-left-color: var(--boon-color);
   box-shadow: 0 0 0 1px var(--boon-color), 0 4px 18px rgba(139, 127, 224, 0.3);
 }
 
@@ -13555,7 +13535,7 @@ textarea,
   color: inherit;
   padding: 10px 14px;
   cursor: pointer;
-  border-left-color: var(--buff);
+  --plate-color: var(--buff);
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
@@ -13824,8 +13804,8 @@ textarea,
   gap: 1px;
   padding: 6px 8px;
   border-radius: var(--radius-xs);
-  background: rgba(0, 0, 0, 0.25);
-  border-left: 2px solid var(--rarity-color, var(--border));
+  --plate-base: rgba(0, 0, 0, 0.25);
+  --plate-color: var(--rarity-color, var(--border));
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
@@ -13922,9 +13902,6 @@ textarea,
   align-items: center;
   gap: 8px;
   width: 100%;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 8px 10px;
   color: var(--text);
@@ -18232,9 +18209,6 @@ textarea,
   align-items: center;
   gap: 3px;
   width: 100%;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--border);
   border-radius: var(--radius-md);
   padding: 8px 6px 6px;
   color: var(--text);
@@ -18540,10 +18514,8 @@ textarea,
   font-size: 10px;
   font-weight: 700;
   padding: 6px 7px;
+  --plate-base: linear-gradient(165deg, var(--panel-alt), var(--well) 75%);
   border-radius: var(--radius-sm);
-  background: linear-gradient(165deg, var(--panel-alt), var(--well) 75%);
-  border: 1px solid var(--border);
-  border-left-width: 3px;
   box-shadow: var(--hairline), var(--elev-1);
   cursor: pointer;
   transition: border-color var(--dur-mid) var(--ease-out), box-shadow var(--dur-mid) var(--ease-out), transform var(--dur-fast) var(--ease-out);
@@ -19633,9 +19605,6 @@ textarea,
 
 .sandbox-hero-card {
   padding: 8px 10px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--border);
   border-radius: var(--radius-sm);
   box-shadow: var(--hairline), var(--elev-1);
   display: flex;
@@ -22070,21 +22039,18 @@ textarea,
 }
 
 .item-service-row {
+  --plate-color: var(--tier-common);
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-left-width: 3px;
-  border-left-color: var(--tier-common);
   border-radius: var(--radius-xs);
 }
 
-.item-service-row.tier-rare { border-left-color: var(--tier-rare); }
-.item-service-row.tier-epic { border-left-color: var(--tier-epic); }
-.item-service-row.tier-legendary { border-left-color: var(--tier-legendary); }
-.item-service-row.tier-mythic { border-left-color: var(--tier-mythic); }
+.item-service-row.tier-rare { --plate-color: var(--tier-rare); }
+.item-service-row.tier-epic { --plate-color: var(--tier-epic); }
+.item-service-row.tier-legendary { --plate-color: var(--tier-legendary); }
+.item-service-row.tier-mythic { --plate-color: var(--tier-mythic); }
 
 .item-service-glyph {
   flex: none;
@@ -22367,14 +22333,13 @@ textarea,
   flex: none;
   width: 40px;
   height: 40px;
+  --plate-base: var(--surface-sunken);
+  --plate-color: var(--rarity-color, var(--border));
   border-radius: var(--radius-xs);
-  background: var(--surface-sunken);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--rarity-color, var(--border));
 }
 
 .swap-option-badge {
-  border-left-color: var(--held-rarity, var(--border));
+  --plate-color: var(--held-rarity, var(--border));
 }
 
 .swap-offer-icon,
@@ -22680,10 +22645,7 @@ textarea,
   flex-direction: column;
   gap: 6px;
   padding: 7px 11px;
-  border: 1px solid var(--border);
-  border-left-width: 3px;
   border-radius: var(--radius-lg);
-  background: var(--surface-raised);
   transition: border-color 140ms ease, background 140ms ease, opacity 140ms ease;
 }
 
@@ -22876,10 +22838,7 @@ textarea,
   align-items: center;
   gap: 9px;
   padding: 7px 10px;
-  border: 1px solid var(--border);
-  border-left-width: 3px;
   border-radius: var(--radius-lg);
-  background: var(--surface-raised);
   /* Held out of the layout's way until its turn: `visibility` rather than
      `display` so the list's full height is reserved from the first paint and
      nothing below shifts as the rows arrive. */
@@ -23607,4 +23566,95 @@ textarea,
   letter-spacing: 0.04em;
   text-transform: uppercase;
   font-variant-numeric: tabular-nums;
+}
+
+/* --- The hued plate ------------------------------------------------------
+ *
+ * One surface for every card in the run whose identity is a COLOUR — a move's
+ * type, an item's rarity, a hero's domain, a passive's derived tint, an
+ * Evolution path's kind.
+ *
+ * Nineteen of them used to carry that colour as a 3px bar down the left edge
+ * on an otherwise gray rounded rectangle. That is `list-group-item`: a hard
+ * stripe that stops abruptly, reads as a list-row marker rather than as part
+ * of the object, and leaves the object itself colourless. The whole of the
+ * Reference overlay, the Boon shrine, the Mentor's Hall, the Equipment Cache,
+ * the Guild Hall and the Blacksmith were the same list in different hues.
+ *
+ * NOTHING HERE IS NEW. `.move-button` (second pass) and `.pick-card` (third)
+ * each independently replaced their own left bar with a wash entering from the
+ * top-left corner and a rim tinted the same way, and each wrote down why. This
+ * is that treatment generalised to the nineteen cards that predate both, so
+ * there is one answer to "an object with a colour" instead of three.
+ *
+ * `color-mix` rather than `rgba(var(--x-rgb), …)`: every one of these hues is
+ * already published as a hex custom property (--rarity-color, --boon-color,
+ * --passive-color, --tier-*, and the type colours set inline from JSX), and
+ * rgba() cannot take a hex var. Requiring an rgb triple would mean a second
+ * copy of all of them.
+ *
+ * Two knobs, both optional:
+ *   --plate-color  the identity hue. Defaults to --border, which degrades to
+ *                  the old colourless card rather than to black.
+ *   --plate-base   the surface under the wash, for the cards that are sunken
+ *                  or gradient rather than the ordinary raised plane.
+ *
+ * Declared LAST in this file on purpose. Each of these selectors is (0,1,0)
+ * and so is this rule, so being later is what lets it win the base surface;
+ * every state variant (.picked, :hover, .is-selected) is (0,2,0) and still
+ * wins over it, which is why none of them needed touching.
+ */
+.status-ref-row,
+.evo-path-card,
+.item-readout,
+.passive-readout,
+.roster-card,
+.squad-slot,
+.relic-card,
+.guild-hall-hero-card,
+.guild-hall-contract-row,
+.equip-cache-card,
+.equip-target-card,
+.equip-spotlight-passive,
+.hero-grid-card,
+.sandbox-hero-card,
+.swap-option-badge,
+.item-service-row,
+.move-tile,
+.mastery-hero-row,
+.level-up-row {
+  /* Resolved once so the four call sites below cannot drift apart. */
+  --plate-hue: var(--plate-color, var(--border));
+  border: 1px solid color-mix(in srgb, var(--plate-hue) 38%, var(--border));
+  background:
+    radial-gradient(
+      ellipse 130% 100% at 6% -16%,
+      color-mix(in srgb, var(--plate-hue) 26%, transparent),
+      color-mix(in srgb, var(--plate-hue) 7%, transparent) 44%,
+      transparent 72%
+    ),
+    var(--plate-base, var(--surface-raised));
+}
+
+/* The top edge catches the hue harder than the sides — the wash arrives from
+   above-left, and a rim that ignores that reads as a frame stuck onto the card
+   rather than as the same light. Same trick as .resolve-button's plate. */
+.status-ref-row,
+.evo-path-card,
+.item-readout,
+.passive-readout,
+.roster-card,
+.squad-slot,
+.relic-card,
+.guild-hall-hero-card,
+.guild-hall-contract-row,
+.equip-cache-card,
+.equip-target-card,
+.hero-grid-card,
+.sandbox-hero-card,
+.item-service-row,
+.move-tile,
+.mastery-hero-row,
+.level-up-row {
+  border-top-color: color-mix(in srgb, var(--plate-hue) 58%, var(--border));
 }

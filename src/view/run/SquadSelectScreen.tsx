@@ -230,7 +230,7 @@ export function SquadSelectScreen({
                         className={`squad-slot${hero ? ' filled' : ' empty'}${isSelected ? ' selected' : ''}${
                           isDropTarget ? ' drop-target' : ''
                         }${isDragOver ? ' drag-over' : ''}${isLocked ? ' is-pinned' : ''}`}
-                        style={hero ? { borderLeftColor: getTypeColor(hero.types[0]) } : undefined}
+                        style={hero ? ({ '--plate-color': getTypeColor(hero.types[0]) } as CSSProperties) : undefined}
                         role="button"
                         tabIndex={0}
                         draggable={!!hero}

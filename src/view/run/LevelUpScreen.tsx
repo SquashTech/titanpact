@@ -98,7 +98,7 @@ function LevelUpRow({ hero, shown }: RowProps) {
   return (
     <div
       className={`level-up-row${shown ? ' is-shown' : ''}${capped ? ' is-capped' : ''}`}
-      style={{ borderLeftColor: getTypeColor(definition.types[0]) }}
+      style={{ '--plate-color': getTypeColor(definition.types[0]) } as CSSProperties}
     >
       <HeroPortrait heroId={definition.id} className="level-up-portrait" />
 

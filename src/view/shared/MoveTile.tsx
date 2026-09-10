@@ -443,7 +443,7 @@ export function MoveTile({
   return (
     <span
       className={`move-tile${selected ? ' move-tile-selected' : ''}`}
-      style={{ borderLeftColor: getTypeColor(move.type) }}
+      style={{ '--plate-color': getTypeColor(move.type) } as CSSProperties}
       onMouseEnter={onHover}
       {...longPress}
     >

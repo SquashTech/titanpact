@@ -2480,7 +2480,8 @@ Options sheet, Squad Select, the Guild Hall, the Blacksmith, and a fight in prog
 
 The five other idioms the audit named, in the order they are worth doing:
 
-1. **The colored-left-border list card** — `border-left: 3px solid <hue>` on a dark rounded rect
+1. ~~**The colored-left-border list card**~~ — done in the twenty-second pass below.
+   Was: — `border-left: 3px solid <hue>` on a dark rounded rect
    with a bold title, a gray sentence and a caps label, i.e. Bootstrap's `alert` / `list-group-item`.
    **16 components wear it**: `.status-ref-row`, `.evo-path-card`, `.item-readout`,
    `.passive-readout`, `.roster-card`, `.squad-slot`, `.relic-card`, `.guild-hall-hero-card`,
@@ -2506,6 +2507,88 @@ Two measured defects worth fixing alongside those:
   act intro *compose* their space and are the counterexample to copy.
 - **`.resolve-button:disabled` reads as a bug**, not as a waiting control: at `opacity: 0.55` over a
   node screen's parallax, the mountains are visible through the button.
+
+## Twenty-second pass — the list-row marker comes off nineteen cards (2026-09-10)
+
+*Second item from the same audit. The first pass took the emoji; this one takes the shape.*
+
+### What was wrong, measured
+
+**Nineteen components carried their identity colour as a 3px bar down the left edge** of an
+otherwise gray rounded rectangle:
+
+`.status-ref-row` · `.evo-path-card` · `.item-readout` · `.passive-readout` · `.roster-card` ·
+`.squad-slot` · `.relic-card` (and through it `.boon-shrine-card`, `.class-shrine-card`) ·
+`.guild-hall-hero-card` · `.guild-hall-contract-row` · `.equip-cache-card` · `.equip-target-card` ·
+`.equip-spotlight-passive` · `.hero-grid-card` · `.sandbox-hero-card` · `.swap-option-badge` ·
+`.item-service-row` · `.move-tile` · `.mastery-hero-row` · `.level-up-row`
+
+That is Bootstrap's `alert` / `list-group-item`, and it was the most-repeated surface in the game.
+The Reference overlay's Statuses and Passives tabs, the Boon shrine, the Mentor's Hall, the
+Equipment Cache, the Guild Hall's shelf and the Blacksmith's item services were **the same list in
+different hues** — which is why those screens read as a documentation page and a pricing page
+rather than as places.
+
+The count is four higher than the audit first reported, because `.move-tile`, `.mastery-hero-row`,
+`.level-up-row` and `.item-service-row` write `border-left-width: 3px` on a separate line instead
+of using the shorthand, so a grep for `border-left: 3px solid` missed them.
+
+### What replaced it
+
+**Nothing new.** `.move-button` (second pass) and `.pick-card` (third) had each already hit this
+exact problem and each solved it the same way, in comments written at the time:
+
+> This used to be a flat gray gradient with a 3px type-colored left border — a hard stripe that
+> stops abruptly, reads as a list-row marker rather than as part of the control, and left the
+> button itself colorless. Now `--move-type-rgb` drives a wash that enters from the top-left corner
+> and dissolves across the face, plus a rim tinted the same way.
+
+So the answer already existed twice and had simply never been generalised. There is now **one hued
+plate**, declared last in `styles.css`, that all nineteen adopt: a radial wash entering from above
+the top-left corner, a rim mixed from the same hue, and a top edge that catches it harder than the
+sides — because the light arrives from up there and a uniform rim reads as a frame stuck on rather
+than as the same light. **The object is lit by its colour instead of being labelled with it.**
+
+Two optional knobs, and nothing else:
+
+- `--plate-color` — the identity hue. Defaults to `--border`, so a card whose hue is not set
+  degrades to the old colourless plate rather than to black.
+- `--plate-base` — the surface under the wash, for the six cards that are sunken or gradient rather
+  than the ordinary raised plane.
+
+**`color-mix`, not `rgba(var(--x-rgb), …)`.** Every one of these hues is already published as a hex
+custom property — `--rarity-color`, `--boon-color`, `--passive-color`, `--tier-*`, plus the type
+colours set inline from JSX — and `rgba()` cannot take a hex var. Demanding an rgb triple would
+have meant a second parallel copy of the whole palette. `.move-button` and `.pick-card` predate
+`color-mix` being reachable here and are left on their `rgb` triples; they are already correct.
+
+**Being declared last is load-bearing, and so is being (0,1,0).** Each of the nineteen selectors is
+a single class, and so is the shared rule, so declaration order is what lets the plate win the base
+surface from the component's own `background`. Every *state* variant — `.picked`, `:hover`,
+`.is-selected`, `.active` — is (0,2,0) and still beats it, which is why not one of them needed
+touching. Eight `border-left-color` overrides on kind/tier variants became `--plate-color`
+declarations; the seven JSX sites that set `borderLeftColor` inline now set `--plate-color`.
+
+### Verification
+
+Typecheck clean, 988 engine tests passing, and screenshotted at 394x780: the Reference overlay's
+Statuses tab, the Boon shrine, the Mentor's Hall, the Equipment Cache, the Guild Hall, the
+Blacksmith, the Mastery board, the level-up report, the Evolution screen, the draft, and the hero
+sheet's Moves page. Nothing lost a state it had; the Equipment Cache keeps its rarity bloom (that
+lives in `box-shadow`, which this rule does not touch).
+
+### What it did not fix, and what it exposed
+
+The plate changes what the cards are *made of*. It does not change that several screens are still a
+**list of cards floating in the middle of a tall empty screen** — the Boon, the Cache and the
+Crucible all still measure 160–420px of dead band. That is the composition problem, and it is next
+after the two shop screens.
+
+It also leaves the **dashed empty slot** untouched — the Mastery board's fourth move chip, the
+Blacksmith's unbought slots, the roster's empty gear cells. A dashed rectangle is the wireframe
+idiom the same way a left bar is the list idiom, and `styles.css` still has twenty of them. The
+eighth pass already machined some of these (`.item-box`, whose comment says the dashed version "read
+as a disabled form field"); the rest never followed.
 
 ## Open / future improvements
 

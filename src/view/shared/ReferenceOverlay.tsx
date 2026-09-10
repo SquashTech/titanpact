@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { TYPES, typeChart } from '../../data/typechart';
 import { statuses } from '../../data/statuses';
 import { passives } from '../../data/passives';
@@ -97,7 +97,7 @@ function PassiveReferenceRow({ def }: { def: PassiveDefinition }) {
   const summary = passiveEffectSummary(def);
 
   return (
-    <div className="status-ref-row" style={{ borderLeftColor: color }}>
+    <div className="status-ref-row" style={{ '--plate-color': color } as CSSProperties}>
       {/* `color` too: the glyph is a currentColor path. */}
       <span className="status-ref-icon" style={{ color, background: passiveTint(def.id, 0.16) }}>
         <PassiveGlyph passiveId={def.id} />
@@ -121,7 +121,7 @@ function StatusReferenceRow({ def }: { def: StatusDefinition }) {
   const color = statusColor(def.id);
 
   return (
-    <div className="status-ref-row" style={{ borderLeftColor: color }}>
+    <div className="status-ref-row" style={{ '--plate-color': color } as CSSProperties}>
       {/* `color` too: the glyph is a currentColor path. */}
       <span className="status-ref-icon" style={{ color, background: statusTint(def.id, 0.16) }}>
         <StatusGlyph statusId={def.id} />

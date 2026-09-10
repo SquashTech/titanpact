@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { heroes } from '../../data/heroes';
 import { moves } from '../../data/moves';
 import { progressionTable } from '../../data/progression';
@@ -178,7 +178,7 @@ function MasteryRow({ hero, entry, rank, canSpend, note, finished, onSpend, onIn
   return (
     <div
       className={`mastery-hero-row${canSpend ? ' can-take' : ''}${finished ? ' is-inert' : ''}`}
-      style={{ borderLeftColor: getTypeColor(hero.types[0]) }}
+      style={{ '--plate-color': getTypeColor(hero.types[0]) } as CSSProperties}
       {...press}
     >
       <div className="mastery-hero-head">
