@@ -2,6 +2,7 @@
 // Pure act -> numbers; enemyGen.ts applies the result. All figures placeholder.
 
 import type { StatKey } from '../engine/content';
+import { ENCOUNTERS_PER_ACT, MAX_LEVEL, levelAfterEncounters } from './growth';
 
 /** `monsters` = non-recruitable pool (fight/battle); `skirmish` = hero pool (skirmish/elite/boss). Same rate, different baseline act. */
 export type ScalingTrack = 'monsters' | 'skirmish';
@@ -54,18 +55,23 @@ export const ENEMY_LEVEL_BY_ACT: readonly number[] = [1, 3, 5, 7, 10];
  * priced the early halls at nothing. The early acts carry the biggest bump because that is
  * where the run is hardest (2026-09-06 playtest: Act 2 is the wall).
  *
- * Two lines the curve is drawn against, both load-bearing:
- *  - Acts 1-2 stay under `EVOLUTION_LEVEL`, so an early hire's Evolution is still the
- *    PLAYER's choice on the next level-up screen rather than the roll's.
- *  - Every act stays well under `MASTERY_LEVEL`, so there is always runway left to buy —
- *    a hire is a head start, never a finished hero (the raise-vs-recruit axis,
- *    `docs/progression.md`).
+ * DERIVED from the level curve since 2026-09-10 rather than authored beside it (Growth
+ * Overhaul phase 5). The old table — 2/4/5/6/7 — was written against a 10-level cap; against 30
+ * it would have put an Act 3 hire at level 5 with the roster at 18, which is not "underlevelled"
+ * but unusable. Deriving it means phase 6 retunes `LEVEL_AFTER_ENCOUNTER` once and this follows.
+ *
+ * **A hire arrives one act behind**, at the level the roster held when this act began, plus one.
+ * That is the whole of what "decaying runway value" means now: the gap is a fixed act, so it is
+ * worth most early — when one act is most of the run — and least at the end.
  */
-export const GUILD_HALL_LEVEL_BY_ACT: readonly number[] = [2, 4, 5, 6, 7];
+export const GUILD_HALL_ACT_LAG = 1;
 
 export function guildHallLevel(actNumber: number): number {
   const act = clampAct(actNumber);
-  return GUILD_HALL_LEVEL_BY_ACT[Math.min(act, GUILD_HALL_LEVEL_BY_ACT.length) - 1];
+  const behind = levelAfterEncounters(Math.max(0, act - GUILD_HALL_ACT_LAG) * ENCOUNTERS_PER_ACT);
+  // `clampAct` has no upper bound (the old table clamped through its own index), and the +1 can
+  // reach past the cap on its own — so the cap is applied here rather than assumed.
+  return Math.min(MAX_LEVEL, behind + 1);
 }
 
 /**

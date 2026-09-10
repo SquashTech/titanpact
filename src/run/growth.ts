@@ -80,6 +80,9 @@ export function gradeBudgetOf(grades: GrowthGrades): number {
 
 // --- The level curve ---
 
+/** Acts 1-5 each run four: the forced fight, the Skirmish, the Elite-or-Battle, the Guardian. */
+export const ENCOUNTERS_PER_ACT = 4;
+
 /**
  * Cumulative level after N won encounters, roster-wide. Authored outright rather than derived
  * from a per-fight rate: the act-end figures are the decided shape (6 / 12 / 18 / 23 / 28 / 30,

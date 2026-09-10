@@ -713,7 +713,7 @@ or recruited via Contract, same as a starter you didn't happen to draft).
 Two sources of heroes, with intentionally different value curves:
 
 - **Guild Hall heroes (raise).** Carry **runway value** — upside you unlock by
-  investing levels and time. That runway **decays late-run**: there's
+  investing levels, Scrolls and a Crucible. That runway **decays late-run**: there's
   eventually not enough run left to cash in the investment.
 - **Contract heroes (recruit).** **Flat-value veterans** — they don't develop much,
   but they're immediately useful and don't need runway.
@@ -791,34 +791,43 @@ recruit, since a contract still requires beating something specific to cash in.
 **NOT YET IMPLEMENTED:** the decaying Guild Hall runway value curve (offers are flat
 gold costs, not a value that decays as the run progresses).
 
-### A hire arrives raised (2026-09-06, per user direction)
+### A hire arrives RAW (2026-09-10, Growth Overhaul phase 5)
 
-A Guild Hall hire used to arrive at level 1 in every act, which by Act 4 bought the player
-a hero too far behind to field — the runway was not decaying, it was gone. A hire now
-arrives at `GUILD_HALL_LEVEL_BY_ACT` = **2 / 4 / 5 / 6 / 7** (`guildHallLevel`,
-`src/run/difficulty.ts`; later acts hold at the last entry, so Act 6's Vigil musters at 7),
-with those level-ups **already spent** — Evolution path first, then pool moves up to
-`MOVE_CAP`, rolled by the same `rollLevelProgression` an enemy's build comes from
-(`src/run/guildRecruit.ts`). It never carries the act's enemy stat scaling; that axis stays
-enemy-side.
+**A Guild Hall hire is unbuilt.** It arrives at the act's hire level with the growth those
+levels earned, and nothing else: **no Evolution, Mastery Rank 1, its own authored three moves**
+(`guildHallEntry`, `src/run/guildRecruit.ts`). Every decision about what it becomes is still the
+player's, and that is the whole of what 50 gold buys.
 
-**The curve is drawn against the player's own roster, not `ENEMY_LEVEL_BY_ACT`** (1 / 3 / 5 /
-7 / 10). The first pass pinned it under that table and the early halls came out worth nothing —
-which is backwards, because the early acts are where the run is hardest (2026-09-06 playtest:
-Act 2 is the wall, matching the sim's 57% Act-2 Guardian win rate). So the bump is
-front-loaded: **+1 / +2 / +1 / +1 / +0** over that first pass, and acts 1-2 now sit *above* the
-enemy level table, which is fine — enemies are scaled on stats at least as much as on levels.
+It is the opposite half of a **contract** hero, which arrives **finished** — the enemy you beat,
+entire: its Evolution chosen, the rank its level bought, a kit the game picked. You save six
+Scrolls and a Crucible on a contract, and in exchange you authored none of it. That makes
+contracts and Crucibles partially substitutable, which makes both more interesting than either
+was alone (`docs/growth-overhaul.md` §6).
 
-Two lines the curve is drawn against instead:
+**RAW is unbuilt, not hollow.** The hire's levels are still ROLLED through `levelUpEntry`, seeded
+off the offer so the preview and the purchase land on the same stat line. A level-13 hire with no
+growth grants would be ~120 points behind a level-13 roster hero — not an archetype, just a waste
+of 50 gold. It never carries the act's enemy stat scaling; that axis stays enemy-side.
 
-- **Acts 1-2 stop short of `EVOLUTION_LEVEL`.** An early hire arrives one affordable level-up
-  from its fork, and that fork is the *player's* pick on the next level-up screen rather than
-  the roll's. From Act 3 the hire arrives already evolved, path rolled.
-- **Every act stays well under `MASTERY_LEVEL`.** There is always movepool left to buy, so a
-  hire is a head start and never a finished hero — which is the whole raise-vs-recruit axis.
+**The hire level is DERIVED from the level curve**, not authored beside it: a hire arrives at the
+level the roster held when this act began, plus one (`GUILD_HALL_ACT_LAG`, `guildHallLevel`).
+The old `GUILD_HALL_LEVEL_BY_ACT` = 2 / 4 / 5 / 6 / 7 was written against a 10-level cap; against
+30 it would have put an Act 3 hire at level 5 with the roster at 18 — not underlevelled, unusable.
+Deriving it means phase 6 retunes `LEVEL_AFTER_ENCOUNTER` once and this follows.
 
-Gold cost is untouched at a flat 50g, so what the same 50g buys now grows with the act; whether
-that is the right price for an Act 5 level-7 hire is open.
+**That fixed act-sized gap IS the "decaying runway value"** the raise-vs-recruit axis is named
+for: one act is most of the run early and a fifth of it late, so the same lag is worth most in
+Act 1 and least in Act 5. It answers the NOT-YET-IMPLEMENTED note above.
+
+**OPEN — the LEVEL axis against a contract hero is INVERTED, and phase 6 owns it.**
+`ENEMY_LEVEL_BY_ACT` is still 1 / 3 / 5 / 7 / 10, so an Act 5 contract hero arrives at level
+**10** where a hire arrives at **24**. Re-deriving that table is phase 6's first job, and it
+cannot start earlier — enemy level also drives their Evolutions and Mastery Rank, so moving it is
+a difficulty swing that has to be measured. `test/recruitment.test.ts` pins the inversion on
+purpose and says to flip when phase 6 lands.
+
+Gold cost is untouched at a flat 50g. Whether that is right for a hire that now buys strictly
+less than it used to is open.
 
 The roll is deterministic in the offer, the act and the act's location, so the sheet the
 player inspects is exactly the hero they pay for (`test/recruitment.test.ts`). The sheet

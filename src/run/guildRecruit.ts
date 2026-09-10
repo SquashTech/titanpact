@@ -1,17 +1,25 @@
-// What a Guild Hall hire arrives as. A hire is bought rather than raised, so it comes in at the
-// act's `GUILD_HALL_LEVEL_BY_ACT` with those level-ups already spent — Evolution path and extra
-// moves rolled exactly the way an enemy's are (enemyGen.ts rollLevelProgression), never the act's
-// stat scaling, which is an enemy-side axis. Deterministic in the offer, the act and the act's
-// location, so the sheet the player inspects is the hero they pay for.
+// What a Guild Hall hire arrives as: **RAW** (docs/growth-overhaul.md §6). The act's hire level
+// with the growth its levels earned, and nothing else — rank 1, no Evolution, its authored
+// starting kit. The player builds it.
+//
+// That is the whole of the flat-value / decaying-runway split, and since 2026-09-10 it is true on
+// three axes instead of one. A CONTRACT hero is the enemy you beat, entire: act level, the rank
+// its level bought, an Evolution already chosen, a kit already picked. You save six Scrolls and a
+// Crucible, and in exchange you authored none of it. A hire costs 50 gold and arrives one act
+// behind — but every decision about what it becomes is still yours.
+//
+// It DOES get its levels rolled. "Raw" means unbuilt, not hollow: a level-13 hire with no growth
+// grants would be ~120 points behind a level-13 roster hero, which is not an archetype, it is a
+// waste of 50 gold. Deterministic in the offer, the act and the act's location, so the sheet the
+// player inspects is the hero they pay for.
 
 import { heroes } from '../data/heroes';
-import { progressionTable } from '../data/progression';
-import { createRng } from '../engine/rng/seededRng';
+import { createRng, nextFloat, type RngState } from '../engine/rng/seededRng';
 import { guildHallLevel } from './difficulty';
-import { rollLevelProgression } from './enemyGen';
+import { levelUpEntry } from './growth';
 import type { GuildHallOffer } from './recruitment';
 import type { RosterEntry, RunState } from './state';
-import { addRosterEntry, createRosterEntry, createRunState } from './state';
+import { createRosterEntry } from './state';
 
 /** FNV-1a over everything that must not shift between inspecting an offer and paying for it. */
 function offerSeed(offer: GuildHallOffer, actNumber: number, locationId: string): number {
@@ -28,8 +36,13 @@ export function guildHallEntry(run: RunState, offer: GuildHallOffer, rosterId: s
   const base = createRosterEntry(rosterId, offer.heroId, offer.startingMoveIds);
   if (level <= 1) return base;
 
-  const seed = offerSeed(offer, run.actNumber, run.locationIds[run.actNumber - 1] ?? '');
-  const scratch = addRosterEntry(createRunState(0), { ...base, level });
-  const { run: raised } = rollLevelProgression(scratch, rosterId, progressionTable, heroes, level, createRng(seed));
-  return raised.roster[0] ?? { ...base, level };
+  // Seeded rather than Math.random: the growth roll is part of what the player is buying, so the
+  // preview and the purchase have to land on the same stat line.
+  let state: RngState = createRng(offerSeed(offer, run.actNumber, run.locationIds[run.actNumber - 1] ?? ''));
+  const random = () => {
+    const { value, nextState } = nextFloat(state);
+    state = nextState;
+    return value;
+  };
+  return levelUpEntry(base, heroes[offer.heroId], level - 1, random).entry;
 }

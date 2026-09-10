@@ -7,15 +7,16 @@
 > disagree, this file wins, and `progression.md` should be updated to defer here.
 > Rules only; thresholds, move data, and per-hero Evolution paths are **data** (`/data`).
 
-> **PARTLY SUPERSEDED by `growth-overhaul.md` (2026-09-10). Its phases 2, 3 and 4 have LANDED**
+> **PARTLY SUPERSEDED by `growth-overhaul.md` (2026-09-10). Its phases 2-5 have LANDED**
 > and this file is updated for them: moves left the level track entirely (a Scroll is the only
 > faucet, and **Mastery Rank**, not level, gates the tiers), and levels went automatic,
 > roster-wide and cap 30, paying stats through growth grades. The pooled currency, its cost
 > curve and the mastery stat reel are all deleted, and Evolutions come from **the Crucible** at
-> the act boundary rather than from a level. Still **pending**: what a recruit arrives as
-> (phase 5) and the 36-hero grade authoring pass (phase 7) — until then a Guild hire arrives
-> pre-evolved off its level and every hero runs the all-B placeholder. **Everything not called
-> pending describes what the code does.** Read both before changing anything here.
+> the act boundary rather than from a level, and a Guild hire arrives RAW — unevolved, rank 1,
+> its own three moves. Still **pending**: the difficulty re-fit (phase 6) and the 36-hero grade
+> authoring pass (phase 7) — until then every hero runs the all-B placeholder and
+> `ENEMY_LEVEL_BY_ACT` is still fitted to a 10-level cap. **Everything not called pending
+> describes what the code does.** Read both before changing anything here.
 
 ---
 
@@ -328,7 +329,12 @@ trigger IS a six-decision wall.
 **A GENERATED hero is the exception.** An enemy or a Guild Hall hire holds no Crucible, so its
 Evolution is still read off level (`rollLevelProgression`, `src/run/enemyGen.ts`) — the same
 equivalence `enemyScrollsForLevel` uses for Mastery Rank. Without it a level-1 enemy would arrive
-evolved. Phase 5 revisits what a hire arrives as.
+evolved.
+
+A **Guild Hall hire is no longer one of those** (2026-09-10, phase 5): it arrives RAW — unevolved,
+rank 1, its own three moves — against a CONTRACT hero, which is the beaten enemy entire and so
+carries everything that enemy's level bought. That contrast is the raise-vs-recruit axis
+(`docs/progression.md` "A hire arrives RAW").
 
 > **Scope note, not a contradiction of `CLAUDE.md`.** `CLAUDE.md` describes evolution
 > depth as varying by design — *Capstone = 0 Evolutions, Single = 1, Deep line = 2+*

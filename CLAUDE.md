@@ -15,10 +15,10 @@ don't silently override it.
 > cap 30), moves onto a **Mastery Scroll / Mastery Rank** currency, Evolutions onto **the
 > Crucible** at the act boundary, and **Gems are deleted**. That doc's §9 lists the invariants
 > scheduled for reversal; its §8 is the phase order and says which have landed.
-> **Phases 1-4 are DONE (2026-09-10): Gems are gone, moves come only from Mastery Scrolls,
-> levels are automatic and cap 30, and Evolutions come from the Crucible.** Everything else
-> below is still the rule in force and the code still implements it. Read it before touching
-> levelling, movepools, Evolutions or reward nodes.
+> **Phases 1-5 are DONE (2026-09-10): Gems are gone, moves come only from Mastery Scrolls,
+> levels are automatic and cap 30, Evolutions come from the Crucible, and a Guild hire arrives
+> raw against a contract hero's finished one.** Only the difficulty re-fit (phase 6) and the
+> 36-hero grade pass (phase 7) are left. Everything else below is still the rule in force.
 
 ---
 
@@ -167,9 +167,24 @@ don't silently override it.
   start-of-run draft; `starter: false` heroes exist only in the game, obtained
   in-run via Recruit Contract or Guild Hall. A hero is in exactly one pool, never
   both (`docs/types-and-heroes.md` "Starters vs. recruit-only heroes").
-- **Recruitment:** Recruit Contracts (claim a beaten hero; arrives with branches partially
-  locked) or Guild Halls (spend gold; choose from a pool; arrives underleveled and fully
-  customizable). Guild heroes have decaying runway value; contract heroes have flat value.
+- **Recruitment: a contract hero arrives FINISHED, a Guild hire arrives RAW** (2026-09-10,
+  Growth Overhaul phase 5). The line — *Guild heroes have decaying runway value; contract heroes
+  have flat value* — is now true on **three axes**, where it used to be true on level alone.
+  A **contract** hero (free, and it IS the enemy you beat) arrives with its Evolution already
+  chosen, the Mastery Rank its level bought, and a kit the game picked. A **Guild hire** (50g)
+  arrives unevolved, at rank 1, holding its authored three moves. You save six Scrolls and a
+  Crucible on a contract, and in exchange you authored none of it.
+  **RAW is unbuilt, not hollow** — a hire still gets the growth its levels earned, or it would be
+  ~120 points behind a roster hero of the same level and simply a waste of gold.
+  A hire arrives **one act behind**, `guildHallLevel` DERIVED from the level curve
+  (`GUILD_HALL_ACT_LAG`, `src/run/difficulty.ts`) rather than authored beside it — that fixed
+  act-sized gap IS the decaying runway, worth most early when one act is most of the run.
+  **Two brakes on two routes:** gold prices the purchased one, the roster cap prices the free one
+  (gaining requires terminating, and equipment strips with no refund).
+  **OPEN — the LEVEL axis is currently INVERTED** and phase 6 owns it: `ENEMY_LEVEL_BY_ACT` is
+  still [1, 3, 5, 7, 10] against a roster ending acts at 6/12/18/23/28, so an act-5 contract hero
+  arrives at level 10 where a hire arrives at 24. `test/recruitment.test.ts` pins the bug on
+  purpose and says to flip when phase 6 lands.
 - **Roster hard cap = 6**, doubling as the bring-6-pick-4 battle sideboard. Gaining a hero
   requires **terminating** an existing one. Equipment strips on termination; no gold refund.
 - **Items are uncategorised, and the SLOT is the scarce thing** (2026-09-06, replacing the
@@ -390,7 +405,7 @@ authored roster.
   **`authoring-moves.md` is a runbook, not a design module** — read it before implementing
   a designed slate of moves for a type (1 type still to go — Ancient; Fire
   and Water are the worked examples, and §10 carries all fourteen hand-offs).
-  **`growth-overhaul.md` is a destination plus a route, and only phases 1-4 of §8 are built** —
+  **`growth-overhaul.md` is a destination plus a route, and only phases 1-5 of §8 are built** —
   the replacement for levelling, movepool gating and Evolutions. Check §8 before assuming.
 - `/prototypes/` — the two slices above, as behavioral reference.
 - `/src/engine/` — the pure resolution engine + the six contracts.

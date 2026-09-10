@@ -1,11 +1,11 @@
 # growth-overhaul.md — The Growth Overhaul
 
-> **STATUS: DECIDED (2026-09-10, per user direction). PHASES 1-4 OF §8 ARE BUILT; 5-7 ARE NOT.**
-> Gems are gone, moves come only from Mastery Scrolls, levels are automatic and cap 30, and
-> Evolutions come from the Crucible. Still to come: finished-vs-raw recruits, the difficulty
-> re-fit and the 36-hero grade pass — until then a Guild hire still arrives pre-evolved off its
-> level and every hero runs the all-B placeholder. `CLAUDE.md`'s remaining invariants still
-> describe *that* game and are
+> **STATUS: DECIDED (2026-09-10, per user direction). PHASES 1-5 OF §8 ARE BUILT; 6-7 ARE NOT.**
+> Gems are gone, moves come only from Mastery Scrolls, levels are automatic and cap 30,
+> Evolutions come from the Crucible, and a Guild hire arrives raw. Still to come: **the
+> difficulty re-fit (phase 6 — the actual project) and the 36-hero grade pass (phase 7)**; until
+> then every hero runs the all-B placeholder and the curve is fitted to a game that no longer
+> exists. `CLAUDE.md`'s remaining invariants still describe *that* game and are
 > still the rules in force until the phase that replaces each one lands. This module is the
 > destination, and §8 is the route — **check its Status column before assuming anything here
 > runs.** Where it disagrees with `leveling-and-ranks.md`, `progression.md` or `run-loop.md`,
@@ -276,6 +276,28 @@ stats. `CLAUDE.md`: "Guild heroes have decaying runway value; contract heroes ha
 | **Contract hero** | act level | 2–3 | already chosen | **chosen by the game** |
 | **Guild hero** | underlevelled | 1 | none | yours to build |
 
+**BUILT 2026-09-10 on three of those four axes. The LEVEL row is inverted and phase 6 owns it**
+(per user direction). Rank, Evolution and Kit all land as written — and they are the three this
+section actually argues, since "you save six Scrolls and a Crucible" is exactly rank and
+Evolution. Level is not: `ENEMY_LEVEL_BY_ACT` is still [1, 3, 5, 7, 10] against a roster that now
+ends acts at 6/12/18/23/28, so an act-5 contract hero arrives at **10** where a hire arrives at
+**24**. Re-deriving that table is phase 6's first job and §8 says it cannot start earlier — enemy
+level also drives their Evolutions and Mastery Rank, so moving it is a difficulty swing that has
+to be measured rather than guessed. `test/recruitment.test.ts` pins the inversion deliberately and
+says to flip the assertion when phase 6 lands.
+
+Two implementation notes worth keeping:
+
+- **RAW is unbuilt, not hollow.** A hire still has its levels ROLLED (`levelUpEntry`, seeded off
+  the offer so the preview and the purchase agree). A level-13 hire with no growth grants would be
+  ~120 points behind a level-13 roster hero, which is not an archetype — it is a waste of 50 gold.
+- **`guildHallLevel` is DERIVED from the level curve now**, not authored beside it: a hire arrives
+  at the level the roster held when this act began, plus one (`GUILD_HALL_ACT_LAG`). The old
+  2/4/5/6/7 table was written against a 10-level cap and would have put an Act 3 hire at 5 against
+  a roster at 18. Deriving it means phase 6 retunes `LEVEL_AFTER_ENCOUNTER` once and this follows.
+  That fixed act-sized gap IS the "decaying runway value": worth most early, when one act is most
+  of the run.
+
 The contract hero is **finished**; the guild hero is **raw**. You save six Scrolls and a Crucible,
 and in exchange you authored none of it — and spending your own Scrolls on it still works, since
 Rank 3 keeps offering. Contracts and Crucibles become partially substitutable, which makes both more
@@ -328,7 +350,7 @@ them, so in-flight runs invalidate cleanly and no migration code is owed at any 
 | 2 | **Mastery Scrolls and Rank.** Add the currency, `RosterEntry.masteryRank`, and the spend flow on the Roster screen. Re-point `levelUpMovePool`'s tier gate from level to rank and cut the level-up's move grant in the same change — they are one edge. Add the pool-exhaustion guard. | Scrolls are the only move faucet; level-ups fall through to the stat reel. `test/moveTiers.test.ts` rewritten against rank. | **DONE** 2026-09-10. 989 tests green. Measured against phase 1: full-clear 33.0% → 18.0%, encounters won 10.70 → 8.55, and of heroes reaching act 4+ only 38.0% reach rank 2 and 23.1% rank 3 (against 97.9%/54.9% on the old level gate). Income is on §4's spec (~16 a run, ~2 heroes maxed); the gap is the difficulty curve, which phase 6 re-fits. |
 | 3 | **Flip the levelling model.** The destructive one, landing after its replacements exist. XP becomes automatic and roster-wide; pool, deferral, cost curve and stat reel all go; cap 30; each level rolls the seven stats. Ship with a uniform all-B grade set so the engine runs before the content pass does. | No allocation screen anywhere. Level moves to the map header. Tutorial script re-checked — `src/data/tutorial.ts` narrates the old beats. | **DONE** 2026-09-10. 979 tests green. Measured against phase 2: full-clear 18.0% → **51.5%**, encounters won 8.55 → 12.71, mean end level 16.4. That is above even the pre-overhaul 45.5% — the ~264 points a hero of automatic growth more than replaced what Gems and the level curve were paying. Phase 6 re-fits it. The `upgradeReward` XP Cache became `loneScrollReward`, a 1-Scroll node (per user direction), rather than being deleted like the shrines. |
 | 4 | **The Crucible.** Small: `chooseEvolutionPath` and the path data are untouched, only the invocation point moves. Insert into the act-boundary chain ahead of `PactSealScreen`; add the purchasable spend at the Guild Hall and the Vigil. | Five forced Crucibles a run, a sixth reachable. No evolution reachable from a level-up. | **DONE** 2026-09-10. 982 tests green. Map node only, acts 3+, filtered out of the roll when nobody can take one (per user direction) — no Guild Hall purchase. Measured against phase 3: full-clear 51.5% → **38.5%** (1000 runs), encounters won 12.71 → 11.07. Evolutions went from every hero automatically in act 1 to one a Guardian, which is the whole point; phase 6 re-fits. |
-| 5 | **Finished and raw recruits.** Contract heroes arrive levelled, ranked, evolved, kit game-chosen; guild heroes raw. Gold on both purchased routes. | The flat-value / decaying-runway line true on three axes instead of one. `test/recruitment.test.ts` extended. | not started |
+| 5 | **Finished and raw recruits.** Contract heroes arrive levelled, ranked, evolved, kit game-chosen; guild heroes raw. Gold on both purchased routes. | The flat-value / decaying-runway line true on three axes instead of one. `test/recruitment.test.ts` extended. | **DONE** 2026-09-10. 985 tests green. True on Rank, Evolution and Kit; the LEVEL axis is inverted by `ENEMY_LEVEL_BY_ACT` and left for phase 6 (per user direction), with a test pinning the inversion. Measured against phase 4: full-clear 38.5% → 36.0% (400 runs) — a hire losing its Evolution and rank. |
 | 6 | **Re-fit the difficulty curve.** The real work, and it cannot start earlier: `ENEMY_LEVEL_BY_ACT`, `ACT_STEP_CURVE`, Guardian champions, reward weights and Banner values all re-derived. Drive with `scripts/sim` and the skilled pilot. | Batch runs show no mechanical fault — walls, dead nodes, unreachable ranks. Win-rate targets are a playtest question, not a batch one. | not started |
 | 7 | **Growth grades for 36 heroes.** Parallelisable from phase 3 onward; it needs the schema, not the tuning. The interesting authoring is the mismatches — a low base with S grades is a late bloomer worth recruiting underlevelled, and that archetype only exists once this pass does. | Grade budget enforced by test, beside the 550 check in `test/roster.test.ts`. No hero left on the all-B placeholder. | not started |
 

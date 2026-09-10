@@ -49,7 +49,7 @@ interface Props {
 interface HeroCardProps {
   hero: HeroDefinition;
   offer: GuildHallOffer;
-  /** The act's hire level (difficulty.ts guildHallLevel) — on the card because it is half of what 50g buys. */
+  /** The act's hire level (difficulty.ts guildHallLevel) — on the card because a hire arrives one act behind, and that is what 50g is priced against. */
   level: number;
   affordable: boolean;
   onInspect: () => void;
@@ -191,7 +191,11 @@ export function GuildHallPanel({
       <div className="guild-hall-section">
         <div className="guild-hall-section-head">
           <span className="guild-hall-section-title">⚔️ Recruits</span>
-          <span className="guild-hall-section-hint">Tap a hero to view and recruit</span>
+          {/* What 50g buys is now half of what it used to (docs/growth-overhaul.md §6): a hire
+              arrives RAW — no Evolution, rank 1, its own three moves — where a Recruit Contract's
+              hero arrives finished. The hint has to say so, or the two routes look interchangeable
+              and the cheaper-looking one is quietly the weaker. */}
+          <span className="guild-hall-section-hint">Unevolved, unranked — yours to build</span>
         </div>
         {heroOffers.length > 0 ? (
           <div className="guild-hall-hero-grid">
