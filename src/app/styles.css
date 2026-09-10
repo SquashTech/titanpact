@@ -8729,14 +8729,15 @@ textarea,
  * subtracted from it, not overlapped by it; min-height:0 is what lets it
  * shrink below its content so .detail-tab-body stays the only scroller.
  */
-/* BOTTOM-ALIGNED (2026-09-10, per user direction), which is what lets the panel be content-sized
-   without the strip moving. The panel used to be `flex: 1 1 auto` — it took the whole viewport
-   whatever the page held, so the Gear page on a two-item hero was ~500px of empty well. Packing the
-   column at the bottom pins the panel's BOTTOM edge against the footer, so its last row (the strip)
-   never moves however short the page is; only the top edge floats, and nothing is aimed at that. */
+/* CENTRED, and therefore FULL HEIGHT (2026-09-10, per user direction). A content-sized panel was
+   tried the same day to close the empty well a short page leaves, bottom-anchored so the strip —
+   the panel's last row — stayed put; the user asked for centring back, and the two cannot both
+   hold. Measured, this hero's four pages want 561 / 427 / 380 / 266px, so a centred content-sized
+   sheet moves the strip by half that spread — ~148px between Stats and Passives, which is a control
+   the thumb would miss. The strip staying put wins; the leftover room is styled as the page's own
+   floor (`.is-hero-sheet .detail-tab-body`) rather than left as blank panel. */
 .detail-overlay.is-sheet {
   flex-direction: column;
-  justify-content: flex-end;
   gap: 10px;
   padding: 24px 16px 14px;
 }
@@ -8744,7 +8745,7 @@ textarea,
 .detail-overlay.is-sheet .detail-panel.is-tabbed {
   height: auto;
   max-height: none;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-height: 0;
 }
 

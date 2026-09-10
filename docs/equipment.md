@@ -566,16 +566,25 @@ the active tab, which is what makes six of these read as six heroes rather than 
 The portrait is seated in a plate, and the level left the name: `Squall — Lv 14` ran a proper noun
 and a figure that changes every fight into one string.
 
-### 11.3 The empty well, and why the strip still does not move
+### 11.3 The empty well stays, and why
 
-The panel was `flex: 1 1 auto` — it took the whole viewport whatever the page held, so the Gear page
-on a two-item hero was ~500px of nothing. It could not simply go content-sized the way the gear
-sheet did, because **the tab strip has to sit in the same place on every page** or the control the
-player is aiming at moves out from under the thumb between one page and the next.
+The panel is `flex: 1 1 auto` — full height, whatever the page holds — so a short page (Gear on a
+two-item hero) leaves a large empty well. That is deliberate, and it is the second of two things
+this sheet cannot have at once.
 
-Both, via the overlay: `.detail-overlay.is-sheet` packs its column at `flex-end`. That pins the
-panel's BOTTOM edge against the footer, so its last row — the strip — never moves however short the
-page is. Only the top edge floats, and nothing is aimed at that. The sheet reads as a drawer rising
-out of the screen it was opened from, which is what it is.
+The rule it protects: **the tab strip has to sit in the same place on every page**, or the control
+the player is aiming at moves out from under the thumb between one page and the next.
 
-`.detail-overlay.is-sheet` is used by exactly these two overlays, so this is contained.
+A content-sized panel was tried the same day, bottom-anchored (`justify-content: flex-end` on the
+overlay) so that the panel's bottom edge — and therefore its last row, the strip — stayed pinned
+while only the top edge floated. It closed the well completely. **Reverted per user direction**, who
+wanted the sheet centred; centring a content-sized panel moves the strip by half the spread between
+pages, and measured on one hero those pages want 561 / 427 / 380 / 266px — a ~148px jump between
+Stats and Passives.
+
+So the well is styled instead of removed: `.is-hero-sheet .detail-tab-body` is cut into the sheet
+the way the Inventory tray is, and the leftover room reads as the page's own floor rather than as
+unfinished panel.
+
+`.detail-overlay.is-sheet` is used by exactly these two overlays, so any future attempt at this is
+contained.
