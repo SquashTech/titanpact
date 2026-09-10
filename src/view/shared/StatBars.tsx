@@ -69,6 +69,8 @@ const GRADE_TONE: Record<GrowthGrade, { color: string; opacity: number; weight: 
   F: { color: 'var(--text-dim)', opacity: 0.38, weight: 600 },
 };
 
+const GRADE_ORDER: readonly GrowthGrade[] = ['S', 'A', 'B', 'C', 'D', 'E', 'F'];
+
 /** The 3-column grid with the growth letter added; set inline so no caller without grades pays for it. */
 const GRADED_COLUMNS = '68px minmax(0, 1fr) 58px 16px';
 
@@ -119,14 +121,15 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {}, 
             {grades &&
               (grade ? (
                 <span
-                  style={{ fontSize: 11, textAlign: 'right', lineHeight: 1, ...GRADE_TONE[grade], fontWeight: GRADE_TONE[grade].weight }}
+                  className="stat-bar-grade"
+                  style={{ color: GRADE_TONE[grade].color, opacity: GRADE_TONE[grade].opacity, fontWeight: GRADE_TONE[grade].weight }}
                   title={`Growth ${grade} — ${Math.round(GRADE_CHANCE[grade] * 100)}% chance each level raises ${STAT_LABELS[stat]}`}
                 >
                   {grade}
                 </span>
               ) : (
                 // MP Regen has no grade and never will — a dash so the column reads as deliberate.
-                <span style={{ fontSize: 11, textAlign: 'right', lineHeight: 1, color: 'var(--text-dim)', opacity: 0.3 }} title="MP Regen is flat across the roster and does not grow">
+                <span className="stat-bar-grade is-none" title="MP Regen is flat across the roster and does not grow">
                   –
                 </span>
               ))}
@@ -143,10 +146,29 @@ export function StatBars({ baseStats, deltas = {}, totals: totalOverrides = {}, 
           {totalDelta !== 0 && <span className={totalDelta > 0 ? 'stat-buff' : 'stat-debuff'}> {fmtDelta(totalDelta)}</span>}
         </span>
       </div>
+      {/*
+       * The key to the letter column. It was three sentences of prose — "Letters are growth grades
+       * — the chance a level raises that stat, S 95% down to F 5%. All seven cost the same on every
+       * hero, so the line says where growth lands, not how much." — which is documentation set in
+       * the middle of a character sheet, and it taught two of the seven grades by naming the ends
+       * of a scale the reader could not see.
+       *
+       * A legend teaches all seven at once, in the same tones the column itself uses, and it is
+       * DATA rather than prose: the same object a chart or a map key is. The second sentence goes
+       * entirely — a line being on budget is a fact about authoring, not something a player reads a
+       * sheet to learn.
+       */}
       {grades && (
-        <div className="stat-growth-note" style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 2, lineHeight: 1.35 }}>
-          Letters are growth grades — the chance a level raises that stat, S 95% down to F 5%. All
-          seven cost the same on every hero, so the line says where growth lands, not how much.
+        <div className="stat-growth-key" aria-label="Growth grades: the chance a level raises that stat">
+          <span className="stat-growth-key-label">Growth</span>
+          {GRADE_ORDER.map((g) => (
+            <span key={g} className="stat-growth-key-cell">
+              <span className="stat-growth-key-grade" style={{ color: GRADE_TONE[g].color, opacity: GRADE_TONE[g].opacity }}>
+                {g}
+              </span>
+              <span className="stat-growth-key-pct">{Math.round(GRADE_CHANCE[g] * 100)}</span>
+            </span>
+          ))}
         </div>
       )}
     </div>

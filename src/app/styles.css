@@ -7299,37 +7299,20 @@ textarea,
   color: var(--text-dim);
 }
 
-.run-summary-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+/* The run's four figures, on the same ledger the lifetime record keeps. Tighter
+   than Records' — this is one panel among several on a screen that also has to
+   show the team that finished. */
+.run-summary-stats.ledger {
+  gap: 0;
+  padding: 4px 6px 2px;
 }
 
-.run-summary-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 8px 4px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(146, 182, 196, 0.16);
-  background: var(--well);
+.run-summary-stats .ledger-line {
+  padding: 3px 2px;
 }
 
-.run-summary-stat-value {
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.1;
-  color: var(--accent);
-}
-
-.run-summary-stat-label {
-  font-size: 8px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  line-height: 1.2;
-  color: var(--text-dim);
-  text-align: center;
+.run-summary-stats .ledger-value {
+  font-size: 13px;
 }
 
 .run-summary-relics {
@@ -7538,48 +7521,104 @@ textarea,
   gap: 6px;
 }
 
-/* Two columns: every figure here is short, and a single column would make six
-   lifetime numbers read as a settings list rather than as a scoreboard. */
-.records-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+/* --- The ledger (RecordsScreen, RunSummaryScreen) -------------------------
+ *
+ * What a run came to, and what every run before it came to. Both used to be a
+ * grid of tiles — a big accent numeral over a small caps label in a bordered
+ * box, two-up on Records and four-up on the summary — which is a SaaS
+ * dashboard's KPI row, verbatim, and was the most web-looking object left in
+ * the game once the shops were dealt with.
+ *
+ * It is a ledger now: label, leader dots, figure. That composition is a
+ * scorecard or a table of contents rather than a dashboard, the dots are what
+ * make it one (they are the whole difference between this and a spec table),
+ * and it obeys the rule the tiles were breaking — a record is not something
+ * you can act on, so it does not get a box.
+ */
+.ledger {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
   padding: 2px 2px 6px;
 }
 
-.records-stat {
+.ledger-line {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 10px 8px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(146, 182, 196, 0.16);
-  background: var(--well);
+  align-items: baseline;
+  gap: 7px;
+  padding: 5px 4px;
 }
 
-.records-stat-value {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--accent);
-  line-height: 1.1;
-}
-
-.records-stat-label {
-  font-size: 9.5px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.ledger-label {
+  flex: none;
+  font-size: 11.5px;
+  font-weight: 600;
   color: var(--text-dim);
-  text-align: center;
 }
 
+/* A repeating dot on the baseline, sized so the run reads as leaders rather
+   than as a dotted rule: 1.5px dots on a 5px pitch, masked to fade in from the
+   label so the first dot does not butt against the word. */
+.ledger-lead {
+  flex: 1 1 auto;
+  min-width: 10px;
+  height: 1.5px;
+  transform: translateY(-2px);
+  background-image: radial-gradient(circle, currentColor 45%, transparent 46%);
+  background-size: 5px 1.5px;
+  background-repeat: repeat-x;
+  color: var(--text-dim);
+  opacity: 0.28;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 14px);
+  mask: linear-gradient(90deg, transparent, #000 14px);
+}
+
+.ledger-value {
+  flex: none;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The same centred chapter mark the shop screens use, so a break in a list is
+   one object across the game rather than two. */
 .records-section-title {
-  padding: 8px 2px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 2px 5px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-dim);
+}
+
+.run-summary-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.records-section-title::before,
+.records-section-title::after,
+.run-summary-section-title::before,
+.run-summary-section-title::after {
+  content: '';
+  flex: 1 1 auto;
+  min-width: 12px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(224, 166, 60, 0.34));
+}
+
+.records-section-title::after,
+.run-summary-section-title::after {
+  transform: scaleX(-1);
 }
 
 .records-note {
@@ -23841,4 +23880,71 @@ textarea,
 .mastery-hero-row,
 .level-up-row {
   border-top-color: color-mix(in srgb, var(--plate-hue) 58%, var(--border));
+}
+
+/* --- The growth key (StatBars) -------------------------------------------
+   The legend for the letter column on a hero sheet's Stats page. It replaced
+   three sentences of prose set in the middle of a character sheet, which taught
+   two of the seven grades by naming the ends of a scale the reader could not
+   see. A key teaches all seven at once and is data rather than documentation —
+   the same object a chart legend or a map key is — and it wears the exact tones
+   the column itself uses, so a letter on a bar and its entry here are visibly
+   the same mark. */
+.stat-growth-key {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-growth-key-label {
+  flex: none;
+  margin-right: 2px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  opacity: 0.75;
+}
+
+.stat-growth-key-cell {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  line-height: 1;
+}
+
+.stat-growth-key-grade {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* No % sign on each: seven of them turn a key into a table, and the row reads
+   as percentages from the first cell on. */
+.stat-growth-key-pct {
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--text-dim);
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The letter beside a stat bar. Was six inline style properties per row; the
+   two that actually vary per grade (colour, weight) still come from
+   GRADE_TONE, and the rest live here. */
+.stat-bar-grade {
+  font-size: 11px;
+  line-height: 1;
+  text-align: right;
+}
+
+.stat-bar-grade.is-none {
+  color: var(--text-dim);
+  opacity: 0.3;
 }

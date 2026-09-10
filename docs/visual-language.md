@@ -2495,9 +2495,10 @@ The five other idioms the audit named, in the order they are worth doing:
 3. ~~**The map is inside a card**~~ — done in the twenty-fourth pass below. Was: — a header rect, a body rect and a footer rect, each with a 1px
    border and a radius, around a scene. The fight screen's own rule ("a place, not a container") has
    never reached it.
-4. **The hero sheet** — an iOS-style bottom tab bar with superscript count badges, a three-sentence
+4. ~~**The hero sheet**~~ — mostly a MISREADING; see the twenty-fifth pass below, which corrects it. Was:
+   an iOS-style bottom tab bar with superscript count badges, a three-sentence
    paragraph of documentation prose about growth grades, and ~400px of empty panel under ITEMS.
-5. **The KPI tile grid** on Records and Run Summary — a big accent numeral over a small caps label,
+5. ~~**The KPI tile grid** on Records and Run Summary~~ — done in the twenty-fifth pass below. Was: — a big accent numeral over a small caps label,
    2-up. A SaaS analytics dashboard, verbatim.
 
 Two measured defects worth fixing alongside those:
@@ -2752,6 +2753,106 @@ to do with the view layer. Only `styles.css` and `MapScreen.tsx` were committed 
   fight screen's bottom bar.
 - **The route still only draws the current row.** Nothing here changed what the map shows — the
   2026-09-08 pass owns that — only what it is set in.
+
+## Twenty-fifth pass — the ledger, and a key instead of a paragraph (2026-09-10)
+
+*Fifth and last item from the audit. It is shorter than the four before it, because looking
+properly at the hero sheet found that most of what the audit flagged there had already been
+decided — see "What was NOT wrong" below, which is the more useful half of this entry.*
+
+### The KPI tile grid
+
+**Records** and **Run Summary** each laid their figures out as a grid of tiles: a big accent
+numeral over a small letterspaced caps label, in a bordered box, two-up on Records and four-up on
+the summary. That is a SaaS analytics dashboard's KPI row, verbatim, and once the shops were dealt
+with it was the most web-looking object left in the game — `03-records.png` was the single clearest
+"a tool made this" screenshot in the whole audit.
+
+It is a **ledger** now: label, leader dots, figure. Both screens share it.
+
+- **The dots are the whole difference.** Label-left/figure-right with a rule between is a
+  definition list, which is no better than the tiles. A run of leader dots on the baseline is a
+  scorecard or a table of contents — a thing printed in a book — and that is what makes the same
+  data read as a record rather than as a readout.
+- **It also obeys the rule the tiles were breaking.** A lifetime record is not something you can
+  act on, so it does not get a box. Six boxes that cannot be pressed is exactly the noise the first
+  pass's rule exists to remove.
+- The dots are a repeating `radial-gradient` masked to fade in over the first 14px, so the run
+  starts clear of the word rather than butting against it.
+
+**And the section marks are now one object.** `.records-section-title` and
+`.run-summary-section-title` take the centred, rule-flanked chapter mark the twenty-third pass gave
+the shops, so a break in a list looks the same everywhere.
+
+Records also lost half a sentence. *"A hero earns a star for every run cleared with them on the
+final roster. Stars show on their Compendium tile."* — the second half is a navigation instruction
+that the Compendium answers by simply having the stars on it, and what a star **means** is the only
+part a record needs.
+
+### The growth key
+
+The hero sheet's Stats page ended in three sentences of prose: *"Letters are growth grades — the
+chance a level raises that stat, S 95% down to F 5%. All seven cost the same on every hero, so the
+line says where growth lands, not how much."* Documentation, set in the middle of a character
+sheet, and inline-styled at the call site where everything around it is a class.
+
+It is a **key** now — the seven grades in a row, each over its percentage, in the exact tones the
+letter column beside the bars uses. Three reasons that is better and not merely shorter:
+
+- It teaches **all seven**, where the sentence taught two by naming the ends of a scale the reader
+  could not see.
+- It is **data, not prose**: the same object a chart legend or a map key is, and legends are native
+  to games in a way explanatory paragraphs are not.
+- The second sentence goes entirely. That a line is on budget is a fact about **authoring** — it
+  belongs in `docs/types-and-heroes.md`, which already says it — not something a player opens a
+  hero sheet to learn.
+
+`GRADE_TONE`'s colour and weight still come from the table (they vary per grade); the four
+properties that never varied moved to `.stat-bar-grade`.
+
+### What was NOT wrong — two corrections to the audit
+
+The audit called two things on the hero sheet defects. Reading the code, **both are decisions taken
+the same day, with reasons written down**, and re-litigating them would have been the wrong work:
+
+- **The ~400px of empty panel under a short page is deliberate.** The comment on
+  `.detail-overlay.is-sheet` records the measurement: the four pages want 561 / 427 / 380 / 266px,
+  so a content-sized centred sheet moves the tab strip by ~148px between Stats and Passives — a
+  control the thumb would miss. The panel holds its height on purpose, and the leftover room is
+  styled as the page's own floor rather than left as blank panel. **A fixed target beats a tight
+  box**, and the audit measured the symptom without reading the trade.
+- **The tab strip's counts are load-bearing.** "An empty Passives page is a fact the player can
+  read off the strip instead of paying a tap to discover" (`TabStrip.tsx`). The strip is an app
+  idiom, but the count is doing real work, and removing the shape would take the information with
+  it.
+
+The lesson is worth keeping for the next audit: **an audit measures a screen, and a screen is not
+its own argument.** Two of the five things flagged here were already answered in a comment three
+lines above the CSS the audit was reading.
+
+### Verification
+
+Typecheck clean. Screenshotted at 394x780: Records, the Run Summary, and a hero sheet's Stats page.
+
+**The engine suite was not clean, and none of it is this**: another session was authoring the
+Shadow, Spirit, Iron, Beast and Undead move slates in the same tree throughout, and its nine
+failures are content assertions about passives, per-type slates and the grade budget. The engine
+tests do not compile `src/view` at all (`tsconfig.json` versus `tsconfig.view.json`), and the four
+files committed here are view-only.
+
+### What is still open, across the whole sweep
+
+- **The hamburger**, on the map header and the fight console's Menu key. Named in the audit,
+  deliberately not taken: the fix is a new object rather than a restyle.
+- **Two affordances for one thing** on `HeroPickCard` — a corner `i` button and an INSPECT line on
+  the same card, with long-press doing it too. Three ways into one sheet.
+- **The equipment card is still a row** (icon, name, RARITY in caps, stat chips, price) even though
+  the plate now carries the rarity as light. Removing the caps word is a content call.
+- **Composition, not chrome.** Several node screens still float a short list in the middle of a tall
+  screen: Crucible 416px of dead band, then reward-equip 177, Forge 167, Boon 161, Banner 161,
+  Tutor 157, draft 153. The Gold Cache and the act intro *compose* their space and are the
+  counterexample to copy. This is the biggest thing the sweep did not touch, and it is a layout
+  problem rather than a styling one.
 
 ## Open / future improvements
 

@@ -49,11 +49,13 @@ function evolutionName(entry: RosterEntry): string | null {
   return null;
 }
 
+/** One line of what the run came to. Same ledger the Records screen keeps — see RecordsScreen. */
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="run-summary-stat">
-      <span className="run-summary-stat-value">{value}</span>
-      <span className="run-summary-stat-label">{label}</span>
+    <div className="ledger-line">
+      <span className="ledger-label">{label}</span>
+      <span className="ledger-lead" aria-hidden="true" />
+      <span className="ledger-value">{value}</span>
     </div>
   );
 }
@@ -97,7 +99,7 @@ export function RunSummaryScreen({ outcome, run, profileBefore, profileAfter, on
               : `Your squad fell in Act ${actLabel(run.actNumber)}${place ? ` · ${place.name}` : ''}.`}
         </p>
 
-        <div className="run-summary-stats">
+        <div className="ledger run-summary-stats">
           <Stat
             label="Act reached"
             value={reachedLabel(run.actNumber)}

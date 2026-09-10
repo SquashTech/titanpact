@@ -15,11 +15,19 @@ const ACT_ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 
 const HERO_COUNT = Object.keys(heroes).length;
 
+/**
+ * One line of the record. It was a tile — a big accent numeral over a small caps label, in a
+ * bordered box, laid out two-up — which is a SaaS analytics dashboard's KPI grid and nothing else.
+ * A lifetime record is a ledger: the thing it was written in reads left to right, the figure sits
+ * at the far end, and a run of leader dots carries the eye across. No box, because a record is not
+ * something you can act on.
+ */
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="records-stat">
-      <span className="records-stat-value">{value}</span>
-      <span className="records-stat-label">{label}</span>
+    <div className="ledger-line">
+      <span className="ledger-label">{label}</span>
+      <span className="ledger-lead" aria-hidden="true" />
+      <span className="ledger-value">{value}</span>
     </div>
   );
 }
@@ -48,7 +56,7 @@ export function RecordsScreen({ profile, onEraseAllData, onClose }: Props) {
         </div>
 
         <div className="screen-scroll">
-          <div className="records-grid">
+          <div className="ledger">
             <Stat label="Playtime" value={formatPlaytime(profile.playtimeMs)} />
             <Stat label="Runs started" value={String(played)} />
             <Stat label="Runs cleared" value={String(cleared)} />
@@ -65,11 +73,11 @@ export function RecordsScreen({ profile, onEraseAllData, onClose }: Props) {
           </div>
 
           <div className="records-section-title">Stars</div>
-          <p className="records-note">
-            A hero earns a star for every run cleared with them on the final roster. Stars show on their
-            Compendium tile.
-          </p>
-          <div className="records-grid">
+          {/* Was a two-sentence paragraph explaining what a star is and where to see one. The
+              second half is a navigation instruction the Compendium answers by having them on it;
+              the first half is what a star MEANS, which is the only part a record needs. */}
+          <p className="records-note">One for every run cleared with that hero on the final roster.</p>
+          <div className="ledger">
             <Stat label="Stars earned" value={String(totalStars(profile))} />
             <Stat label="Heroes starred" value={`${starredHeroCount(profile)} / ${HERO_COUNT}`} />
           </div>
