@@ -99,7 +99,7 @@ don't silently override it.
 - **Mono typing is a valid terminal state**, not a larval stage. Precedent: Pokémon
   Normal/Water/Bug. A numerically common mono type is not a design flaw.
 - **Levels are AUTOMATIC and ROSTER-WIDE** (2026-09-10, `src/run/growth.ts`). Every roster hero
-  levels every won encounter, fielded or benched. **No pool, no allocation, no screen** —
+  levels every won encounter, fielded or benched. **No pool and no allocation** —
   `MAX_LEVEL` = 30, and the curve is authored outright as `LEVEL_AFTER_ENCOUNTER` (act ends
   **8/14/19/24/28/30**, four encounters an act; front-loaded in phase 6 because acts 1-2 measured
   as the run's wall and their enemy stat steps were already zero). It is a **DELTA, never a target**: a hero that
@@ -111,6 +111,12 @@ don't silently override it.
   **The cost is real: hyperfocus dies as a LEVELLING strategy**, and is bought back wholesale by
   Mastery Rank. A focus-hero XP dial was drafted as a consolation and dropped; do not
   re-introduce it without re-reading `docs/growth-overhaul.md` §4.
+  **A level-up REPORT screen is not an allocation screen** (2026-09-10,
+  `src/view/run/LevelUpScreen.tsx`): the ban is on a screen that collects a decision which is
+  really a spreadsheet, not on the player seeing growth happen. It is first in the post-fight
+  chain — the fight's own consequence, ahead of the Banner and everything under it — lists the
+  whole roster, benched included, and gives **every** growth stat a cell whether or not it rolled,
+  because the misses are what make the hits read as a roll against a grade. One button, no choice.
 - **Each level rolls EVERY stat independently against that hero's growth grade for it.**
   S 95% / A 80% / B 65% / C 50% / D 35% / E 20% / F 5%; a success grants **+2**, or **+6 HP**
   (CLAUDE.md's own measured HP break-even is ≈0.33 a point, so 6 HP IS 2 points' worth). Grades
@@ -135,8 +141,12 @@ don't silently override it.
   1:1 onto the authored 6/6/4 pools, so **no hero needed re-authoring**. Rank is **DERIVED**
   from `RosterEntry.masteryScrollsSpent`, never stored. **The tick lands before the roll**, so
   the third Scroll into a hero offers from the band it just opened.
-  Income: **`SCROLLS_PER_ACT` = 2 at every Guardian** (10 guaranteed), plus the `scrollReward`
-  Scroll Cache and the Guild Hall — ~15-18 a run, against six to max one hero.
+  Income: **`SCROLLS_PER_ACT` = 2 at every Guardian**, plus **`SCROLLS_PER_SKIRMISH` = 1 on every
+  won Skirmish or Elite** (2026-09-10) — ~20 guaranteed — plus the `scrollReward` Scroll Cache and
+  the Guild Hall, against six to max one hero. The Skirmish Scroll is the recruitable lane's
+  counterpart to the guaranteed drop the Monsters lane pays; without it nothing won between two act
+  boundaries taught anybody anything. **It is the number to watch**: a floor this high is what
+  would make spreading six ways stop costing anything, which is the whole breadth-vs-depth call.
   **Rank puts the ceiling behind the SPEND, never behind a clock** — act-gating the movepool
   makes holding a Scroll always better than spending one, and a currency whose optimal play is
   *don't spend it* can never feel good to receive. It is also where the carry build is priced

@@ -44,6 +44,18 @@ export const SCROLLS_PER_RANK = 3;
 export const SCROLLS_PER_ACT = 2;
 
 /**
+ * What a won Skirmish or Elite pays (2026-09-10, per user direction). The Guardian's two an act
+ * was the whole guaranteed income, which left every mid-act row paying in gold and gear and
+ * nothing a hero could learn from; this puts a Scroll on the recruitable lane the way a
+ * guaranteed drop sits on the Monsters lane, and roughly doubles the run's floor — about two an
+ * act on top of the Guardian's two, so ~20 guaranteed against the six that max one hero.
+ *
+ * First-pass figure for playtest, and the one to watch: Scrolls are the whole of the breadth-vs-
+ * depth call, so a floor this high is what would make spreading six ways stop costing anything.
+ */
+export const SCROLLS_PER_SKIRMISH = 1;
+
+/**
  * What the `scrollReward` Scroll Cache pays. Two, so a cache is a whole rank's worth of a
  * decision rather than a top-up. First-pass figure for playtest.
  */

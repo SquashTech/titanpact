@@ -71,8 +71,18 @@ what defuses the Level/Rank confusion risk. See §4 for the UI consequence.
 
 ### XP is automatic and roster-wide
 
-**Every roster hero levels every fight, fielded or benched. There is no pool, no allocation and no
-screen.** `MAX_LEVEL` = 30.
+**Every roster hero levels every fight, fielded or benched. There is no pool and no allocation.**
+`MAX_LEVEL` = 30.
+
+**There IS a screen, added 2026-09-10 (per user direction): `LevelUpScreen`, a REPORT.** The
+distinction the overhaul cares about is that a screen must not exist to collect a decision that is
+really a spreadsheet — not that growth should happen invisibly. Levelling was landing silently: the
+number on the hero sheet was different next time you looked at it, and the moment it changed was
+nowhere. So the screen is a beat, not a form — it names each hero, the level it crossed, and which
+of its seven stats the roll actually took, then it has one button. Every growth stat gets a cell
+whether it rolled or not, because the misses are what make the hits read as a **roll against a
+grade** rather than as an authored grant. It sits FIRST in the post-fight chain, ahead of the
+Banner and everything under it: those are what the act pays, this is what the fight did.
 
 Participation-based XP (Fire Emblem's actual model) was considered and **rejected**: it produces the
 runaway where your best four level, your sideboard rots, and by Act 4 you cannot rotate. Roster-wide
@@ -201,6 +211,17 @@ This maps **1:1 onto the offerable sets the movepools are already authored again
 Six Scrolls maxes a hero. Against a run paying **10 guaranteed (2 an act) and ~15–18 reachable**
 once reward rows and Guild Hall purchases are counted, that is two heroes maxed and a third partway,
 or five heroes bumped once and nobody deep. A real spread-vs-concentrate call.
+
+**Revised 2026-09-10 (per user direction): the Skirmish lane pays one too.** A won `skirmish` or
+`elite` now grants a Scroll (`SCROLLS_PER_SKIRMISH`, granted in `handleFightResolved` beside the
+gold). It roughly doubles the guaranteed floor — **~20 rather than 10** — and it exists because
+the Guardian's two an act meant that between one act boundary and the next, nothing a player won
+taught anybody anything: the Monsters lane paid gold and a guaranteed drop, and the recruitable
+lane paid gold and a *chance* of one. This is that lane's counterpart to the drop.
+
+The figure to watch in playtest is the same one the table above sizes: **a floor this high is what
+would make spreading six ways stop costing anything**, which is the whole breadth-vs-depth call.
+If concentration stops being a real choice, this is the number that did it — not the rank curve.
 
 ### Two mechanical notes
 

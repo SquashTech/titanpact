@@ -197,7 +197,7 @@ export const sounds: Record<SfxId, SoundSpec> = {
   },
 
   /**
-   * Level gained: four-note fanfare in D. Fired when the level lands (LevelUpScreen's LEVEL_UP_ANIM_MS); kept under 1s because four can play in a row.
+   * Level gained: four-note fanfare in D. Fired once as the level-up report lands, over the top of the per-row pips; kept under 1s.
    * `jitter` near-zero on purpose: it transposes the whole tune, and a fanfare in a different key each time reads as sloppy.
    */
   levelUp: {
@@ -364,7 +364,7 @@ export const sounds: Record<SfxId, SoundSpec> = {
     ],
   },
 
-  /** One XP orb landing (LevelUpScreen), ~130ms apart with the caller raising `pitch` each time. UI-sized: five can fire in 0.75s and tails would stack into a chord. */
+  /** One hero's row landing on the level-up report (LevelUpScreen), with the caller raising `pitch` up the roster. UI-sized: six can fire in 1.4s and tails would stack into a chord. */
   'xp.orb': {
     gain: 0.3,
     jitter: 0.006,

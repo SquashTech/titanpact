@@ -63,11 +63,13 @@ export const NODE_COLORS: Record<MapNodeType, string> = {
 // The line under a choice card's name: what the node pays out, and nothing else. Difficulty
 // rides on NODE_COLORS, recruitability on NODE_NAMES.
 const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
-  fight: '15–25g · 2 XP · item',
-  skirmish: '15–25g · 4 XP · 25% item · recruitable',
-  battle: '30–45g · 3 XP · item',
-  elite: '15–25g · 4 XP · 55% elite item · recruitable — enemies carry +10 to 2 stats',
-  boss: '4 XP · 70% elite item · 1 Recruit Contract',
+  // No levels listed: every won encounter pays the same automatic roster-wide level, so naming
+  // it here would only be noise on every card at once (run/growth.ts).
+  fight: '15–25g · item',
+  skirmish: '15–25g · 1 Mastery Scroll · 25% item · recruitable',
+  battle: '30–45g · item',
+  elite: '15–25g · 1 Mastery Scroll · 55% elite item · recruitable — enemies carry +10 to 2 stats',
+  boss: '2 Mastery Scrolls · 70% elite item · 1 Recruit Contract',
   shop: 'Buy heroes, contracts and gear — and sell what you are not carrying',
   blacksmith: 'Buy an item slot, a tier at the Anvil, or an element at the Enchanter — acts 3+',
   equipmentReward: '1 of 3 items',
@@ -78,7 +80,7 @@ const NODE_DESCRIPTIONS: Record<MapNodeType, string> = {
   forgeReward: '+1 item slot to one hero, for the rest of the run',
   crucibleReward: 'One hero evolves — the same choice a Guardian pays, off the road — acts 3+',
   classReward: '1 of 3 Classes, taught to one hero',
-  tutorReward: 'One hero learns ANY move from its level-up pool — acts 4 and 5 only',
+  tutorReward: 'One hero learns ANY move from its Mastery pool — acts 4 and 5 only',
   event: 'Hidden until you arrive: a move, a passive, gear or a trade',
   muster: 'Fill the roster to six, then spend everything left',
   finale: 'The five seals you broke — then the thing they were holding',

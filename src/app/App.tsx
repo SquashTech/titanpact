@@ -27,6 +27,7 @@ import { NodeRewardScreen, type RewardNodeType } from '../view/run/NodeRewardScr
 import { ForgeScreen } from '../view/run/ForgeScreen';
 import { BlacksmithScreen } from '../view/run/BlacksmithScreen';
 import { GuardianBannerScreen } from '../view/run/GuardianBannerScreen';
+import { LevelUpScreen } from '../view/run/LevelUpScreen';
 import { CrucibleScreen } from '../view/run/CrucibleScreen';
 import { RosterReplaceScreen } from '../view/run/RosterReplaceScreen';
 import { RecruitScreen } from '../view/run/RecruitScreen';
@@ -96,7 +97,7 @@ import {
   type Encounter,
 } from '../run/enemyGen';
 import { actScaling, encounterHeroCountOverride, type ScalingTrack } from '../run/difficulty';
-import { grantEncounterLevels, levelsForEncounter } from '../run/growth';
+import { applyEncounterLevels, levelsForEncounter, type HeroLevelUp } from '../run/growth';
 import { generateItinerary, locationBias, locationForAct } from '../run/locations';
 import { ACT_ONE_LOCATION_ID, locations } from '../data/locations';
 import { LocationProvider } from '../view/shared/LocationContext';
@@ -121,6 +122,7 @@ import {
   fullMovepool,
   grantMasteryScrolls,
   SCROLLS_PER_ACT,
+  SCROLLS_PER_SKIRMISH,
 } from '../run/progression';
 import { progressionTable } from '../data/progression';
 import type { RunState, RosterEntry } from '../run/state';
@@ -144,6 +146,8 @@ type Screen =
       encounter: Encounter;
       goldReward: number;
       levelsGained: number;
+      /** The Skirmish lane's Mastery Scroll, 0 on every other node kind. */
+      scrollReward: number;
       /** Rolled at squad-confirm time so the victory screen can spotlight it; handleFightResolved reuses it. */
       equipmentReward: EquipmentDefinition | null;
     }
@@ -164,6 +168,8 @@ type Screen =
   | { kind: 'tutorNode'; nodeId: string }
   /** Which event this node is gets rolled ONCE at node-select time — the screen re-renders on every onRunChange. */
   | { kind: 'event'; nodeId: string; eventId: string }
+  /** What the fight just did to the roster. First in the post-fight chain — it is the fight's own consequence. */
+  | { kind: 'levelUp'; report: readonly HeroLevelUp[]; next: Screen }
   /** Guardian's Banner after a Guardian win in acts 1-4. Not a map node, so no nodeId. */
   | { kind: 'guardianBanner'; next: Screen }
   /** The Crucible: pick one hero, and that hero evolves. A `nodeId` means it came off a map node. */
@@ -290,6 +296,14 @@ function goldRewardFor(nodeType: EncounterMapNodeType): number {
   return 15 + Math.floor(Math.random() * 11); // 15-25
 }
 
+/**
+ * The Skirmish lane's Scroll (progression.ts SCROLLS_PER_SKIRMISH): `skirmish` and `elite`, the
+ * two recruitable node kinds, and the counterpart to the guaranteed drop the Monsters lane pays.
+ */
+function scrollRewardFor(nodeType: EncounterMapNodeType): number {
+  return nodeType === 'skirmish' || nodeType === 'elite' ? SCROLLS_PER_SKIRMISH : 0;
+}
+
 function equipmentDropFor(nodeType: EncounterMapNodeType, actNumber: number): EquipmentDefinition | null {
   if (Math.random() >= EQUIPMENT_DROP_CHANCE[nodeType]) return null;
   const weights = rarityWeightsFor(actNumber, LOOT_SOURCE[nodeType]);
@@ -328,6 +342,8 @@ function tutorialBeatKeyFor(screen: Screen, run: RunState): TutorialBeatKey | nu
       const node = ahead.length === 1 ? run.map?.nodes[ahead[0]] : undefined;
       return node ? mapBeatKey(node.type) : null;
     }
+    case 'levelUp':
+      return 'levelUp';
     case 'crucible':
       return 'evolution';
     case 'reward':
@@ -636,6 +652,7 @@ export function App() {
       // Read off the win this fight WILL be: the curve is a function of encounters won, so the
       // figure is known before the fight rather than rolled after it.
       levelsGained: levelsForEncounter(playerRun.encountersWon + 1),
+      scrollReward: scrollRewardFor(mapNodeType),
       equipmentReward,
     });
   }
@@ -664,8 +681,15 @@ export function App() {
     // Every node kind, unlike `fightsStarted` — this one is the run summary's tally, and since
     // 2026-09-10 it is also what the level curve reads (run/growth.ts).
     next = { ...next, encountersWon: next.encountersWon + 1 };
-    // Automatic and roster-wide, benched heroes included: no pool, no allocation, no screen.
-    next = grantEncounterLevels(next, heroes);
+    // Automatic and roster-wide, benched heroes included: no pool and no allocation. The report
+    // is what the screen after the fight reads — the roll is destructive, so it cannot be
+    // recovered from the roster afterwards.
+    const levelled = applyEncounterLevels(next, heroes);
+    next = levelled.run;
+    // The Skirmish lane's Scroll. Granted here rather than at squad-confirm for the same reason
+    // gold is: a fight that is lost pays nothing.
+    const scrolls = scrollRewardFor(mapNodeType as EncounterMapNodeType);
+    if (scrolls > 0) next = grantMasteryScrolls(next, scrolls);
 
     let afterScreen: Screen;
     if (isFinale) {
@@ -729,7 +753,16 @@ export function App() {
       contractOffers.length > 0
         ? { kind: 'recruit', offers: contractOffers, next: afterCrucible, required: forcedOffers !== null }
         : afterCrucible;
-    setScreen(banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit);
+    const afterBanner: Screen = banner ? { kind: 'guardianBanner', next: afterRecruit } : afterRecruit;
+
+    // Levels go FIRST, ahead of the Banner and everything under it: they are what this fight did,
+    // and the rest of the chain is what the ACT pays. Skipped when the curve owes nothing — past
+    // the finale, and on a roster that is entirely at the cap.
+    setScreen(
+      levelled.report.some((hero) => hero.toLevel > hero.fromLevel)
+        ? { kind: 'levelUp', report: levelled.report, next: afterBanner }
+        : afterBanner
+    );
   }
 
   function handleNodeContinue(nodeId: string) {
@@ -975,6 +1008,7 @@ export function App() {
           playerRelicIds={playerRun.relics}
           goldReward={screen.goldReward}
           levelsGained={screen.levelsGained}
+          scrollReward={screen.scrollReward}
           equipmentReward={screen.equipmentReward}
           onResolved={(outcome) =>
             handleFightResolved(
@@ -1106,6 +1140,10 @@ export function App() {
             />
           );
         })()}
+
+      {screen.kind === 'levelUp' && (
+        <LevelUpScreen run={playerRun} report={screen.report} onContinue={() => setScreen(screen.next)} />
+      )}
 
       {screen.kind === 'guardianBanner' && (
         <GuardianBannerScreen run={playerRun} onRunChange={setPlayerRun} onContinue={() => setScreen(screen.next)} />

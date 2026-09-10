@@ -156,16 +156,51 @@ export function levelUpEntry(
   };
 }
 
-/** What one won encounter does to the whole roster — benched heroes included, which is the point. */
+/**
+ * What one won encounter did to ONE hero. The roll is destructive — a grade is a coin, not a
+ * schedule — so what it produced has to be carried out of the grant rather than read back off the
+ * entry afterwards. The post-battle screen is the only reader.
+ */
+export interface HeroLevelUp {
+  rosterId: string;
+  heroId: string;
+  fromLevel: number;
+  /** Equal to `fromLevel` for a hero already at MAX_LEVEL; it is still on the roster and still reported. */
+  toLevel: number;
+  gained: Partial<Record<StatKey, number>>;
+}
+
+/**
+ * What one won encounter does to the whole roster — benched heroes included, which is the point —
+ * and the per-hero report of what it rolled.
+ */
+export function applyEncounterLevels(
+  run: RunState,
+  heroLookup: Record<string, HeroDefinition>,
+  random: () => number = Math.random
+): { run: RunState; report: HeroLevelUp[] } {
+  const levels = levelsForEncounter(run.encountersWon);
+  if (levels <= 0) return { run, report: [] };
+  const report: HeroLevelUp[] = [];
+  const roster = run.roster.map((entry) => {
+    const { entry: levelled, gained } = levelUpEntry(entry, heroLookup[entry.heroId], levels, random);
+    report.push({
+      rosterId: entry.rosterId,
+      heroId: entry.heroId,
+      fromLevel: entry.level,
+      toLevel: levelled.level,
+      gained,
+    });
+    return levelled;
+  });
+  return { run: { ...run, roster }, report };
+}
+
+/** The same grant, for a caller with nowhere to report it (the simulator, the tests). */
 export function grantEncounterLevels(
   run: RunState,
   heroLookup: Record<string, HeroDefinition>,
   random: () => number = Math.random
 ): RunState {
-  const levels = levelsForEncounter(run.encountersWon);
-  if (levels <= 0) return run;
-  return {
-    ...run,
-    roster: run.roster.map((entry) => levelUpEntry(entry, heroLookup[entry.heroId], levels, random).entry),
-  };
+  return applyEncounterLevels(run, heroLookup, random).run;
 }

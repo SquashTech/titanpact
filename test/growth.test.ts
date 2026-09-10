@@ -19,6 +19,7 @@ import {
   GROWTH_STEP_HP,
   LEVEL_AFTER_ENCOUNTER,
   MAX_LEVEL,
+  applyEncounterLevels,
   gradeBudgetOf,
   gradesFor,
   grantEncounterLevels,
@@ -154,6 +155,41 @@ test('growth: a won encounter levels the WHOLE roster, benched heroes included',
     [expected, expected],
     'both heroes level, and neither had to be fielded'
   );
+});
+
+test('growth: the report says what each hero actually rolled, and matches the roster it produced', () => {
+  // The post-battle screen's whole source (view/run/LevelUpScreen.tsx). The roll is destructive —
+  // a grade is a coin, not a schedule — so a report that drifts from the roster it produced would
+  // show the player numbers that never landed, and nothing downstream could catch it.
+  let run = soloRun();
+  run = addRosterEntry(run, createRosterEntry('crimson', 'crimson', heroes.crimson.moveIds));
+  run = { ...run, encountersWon: 1 };
+
+  const { run: after, report } = applyEncounterLevels(run, heroes, ALWAYS);
+  assert.strictEqual(report.length, after.roster.length, 'one line per roster hero, benched included');
+
+  for (const line of report) {
+    const before = run.roster.find((e) => e.rosterId === line.rosterId)!;
+    const entry = after.roster.find((e) => e.rosterId === line.rosterId)!;
+    assert.strictEqual(line.fromLevel, before.level);
+    assert.strictEqual(line.toLevel, entry.level);
+    for (const stat of GROWTH_STATS) {
+      const delta = (entry.growthStatGrants[stat] ?? 0) - (before.growthStatGrants[stat] ?? 0);
+      assert.strictEqual(line.gained[stat] ?? 0, delta, `${line.heroId}'s reported ${stat} is what it actually banked`);
+    }
+  }
+});
+
+test('growth: a hero at the cap is still reported, gaining nothing', () => {
+  // The screen lists the whole roster; a row quietly missing reads as a bug rather than as a cap.
+  let run = soloRun();
+  run = { ...run, encountersWon: 1, roster: run.roster.map((e) => ({ ...e, level: MAX_LEVEL })) };
+
+  const { report } = applyEncounterLevels(run, heroes, ALWAYS);
+  assert.strictEqual(report.length, 1);
+  assert.strictEqual(report[0].fromLevel, MAX_LEVEL);
+  assert.strictEqual(report[0].toLevel, MAX_LEVEL);
+  assert.deepStrictEqual(report[0].gained, {}, 'nothing rolled, even with every roll succeeding');
 });
 
 test('growth: a hero that joins late stays behind — the grant is a DELTA, never a target', () => {

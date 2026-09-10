@@ -28,8 +28,8 @@ interface Props {
 }
 
 /**
- * One run resource in the header track. Spendable XP is the only one with somewhere to go
- * from this screen, so it is the only one that is ever a button.
+ * One run resource in the header track. A spendable Mastery Scroll is the only one with somewhere
+ * to go from this screen, so it is the only one that is ever a button.
  */
 function ResourceStat({ kind, label, value, onSpend }: { kind: ResourceKind; label: string; value: number; onSpend?: () => void }) {
   const body = (
@@ -46,7 +46,7 @@ function ResourceStat({ kind, label, value, onSpend }: { kind: ResourceKind; lab
     );
   }
   return (
-    <button type="button" className="map-stat is-spendable" onClick={onSpend} aria-label={`${label}: ${value} — spend now`} title="Spend XP">
+    <button type="button" className="map-stat is-spendable" onClick={onSpend} aria-label={`${label}: ${value} — spend now`} title="Spend now">
       {body}
     </button>
   );

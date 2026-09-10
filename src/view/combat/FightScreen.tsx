@@ -67,6 +67,7 @@ import { AudioSettings } from '../shared/AudioSettings';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
 import { StatGlyph, STAT_LABELS } from '../shared/StatBars';
+import { ResourceGlyph } from '../shared/RunGlyph';
 import { EquipmentEffectList, EquipmentIcon, RARITY_COLOR_VARS, RARITY_LABELS, fmtGrant } from '../shared/EquipmentBox';
 import { useAmbientLocation } from '../shared/LocationContext';
 import { LocationAmbience } from '../shared/LocationSky';
@@ -520,6 +521,8 @@ interface Props {
   /** Displayed only — the caller grants it in onResolved. */
   /** Levels this win pays the WHOLE roster (run/growth.ts). A report, not a screen — nothing is spent. */
   levelsGained: number;
+  /** The Skirmish lane's Mastery Scroll. Displayed only — the caller grants it in onResolved. */
+  scrollReward?: number;
   /** The opener fight's guaranteed drop, rolled up front so the victory screen can show it. Displayed only. */
   equipmentReward: EquipmentDefinition | null;
   /** Fired when the player dismisses the result overlay — the caller owns what a win/loss means for the run. */
@@ -546,6 +549,7 @@ export function FightScreen({
   playerRelicIds = [],
   goldReward,
   levelsGained,
+  scrollReward = 0,
   equipmentReward,
   onResolved,
   onSaveAndQuit,
@@ -1724,7 +1728,7 @@ export function FightScreen({
                 <div className="result-glow" aria-hidden="true" />
                 <h2>{winner === PLAYER_SIDE ? 'Victory!' : 'Defeat'}</h2>
 
-                {winner === PLAYER_SIDE && (goldReward > 0 || levelsGained > 0) && (
+                {winner === PLAYER_SIDE && (goldReward > 0 || levelsGained > 0 || scrollReward > 0) && (
                   <div className="result-rewards">
                     {goldReward > 0 && (
                       <div className="result-reward-chip">
@@ -1734,6 +1738,12 @@ export function FightScreen({
                     {levelsGained > 0 && (
                       <div className="result-reward-chip">
                         ⭐ <strong>+{levelsGained}</strong> {levelsGained === 1 ? 'Level' : 'Levels'}
+                      </div>
+                    )}
+                    {scrollReward > 0 && (
+                      <div className="result-reward-chip">
+                        <ResourceGlyph kind="scroll" />
+                        <strong>+{scrollReward}</strong> {scrollReward === 1 ? 'Scroll' : 'Scrolls'}
                       </div>
                     )}
                   </div>

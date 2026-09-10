@@ -22743,3 +22743,234 @@ textarea,
   width: 20px;
   height: 20px;
 }
+
+/* --- Level-up report (LevelUpScreen) ------------------------------------- *
+
+   What the fight just did to the roster. Six rows, one per hero, landing in a
+   staggered ladder — the stagger is the animation, not decoration: it is what
+   turns "the numbers changed" into a sequence the eye can follow, and it is
+   what a tap collapses when the player has seen it forty times.
+
+   Every growth stat gets a cell whether it rolled or not, so a row is a fixed
+   width and six of them line up into a grid. The misses are load-bearing —
+   without them the hits read as an authored grant instead of a roll against a
+   grade. */
+
+/* The list centres in whatever is left under the header. Auto margins rather than
+   `justify-content: center`, which clips the top of an overflowing scroll container —
+   auto margins collapse to 0 the moment the content is taller than the box. */
+.level-up-screen .screen-scroll {
+  display: flex;
+  flex-direction: column;
+}
+
+.level-up-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-block: auto;
+  padding-bottom: 4px;
+}
+
+.level-up-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  /* Held out of the layout's way until its turn: `visibility` rather than
+     `display` so the list's full height is reserved from the first paint and
+     nothing below shifts as the rows arrive. */
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.level-up-row.is-shown {
+  visibility: visible;
+  animation: level-up-row-land 320ms cubic-bezier(0.16, 0.9, 0.3, 1) forwards;
+}
+
+@keyframes level-up-row-land {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Already at MAX_LEVEL. Still listed — it is still on the roster, and a row
+   quietly missing would read as a bug rather than as a cap. */
+.level-up-row.is-capped {
+  opacity: 0.5;
+}
+
+.level-up-row.is-capped.is-shown {
+  animation-name: level-up-row-land-capped;
+}
+
+@keyframes level-up-row-land-capped {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 0.5;
+    transform: none;
+  }
+}
+
+.level-up-portrait {
+  width: 36px;
+  height: 36px;
+  flex: none;
+}
+
+.level-up-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.level-up-ident {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.level-up-name {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.level-up-level {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+.level-up-arrow {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+/* The number that changed. Struck rather than faded in: this is the one figure
+   the screen exists to report, and at 15px it has to carry the row on its own. */
+.level-up-to {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--hp-high);
+}
+
+.level-up-row.is-shown .level-up-to {
+  animation: level-up-strike 420ms cubic-bezier(0.2, 1.4, 0.4, 1) 60ms backwards;
+}
+
+@keyframes level-up-strike {
+  from {
+    transform: scale(0.5);
+    filter: brightness(2.4);
+  }
+  60% {
+    transform: scale(1.18);
+  }
+  to {
+    transform: none;
+    filter: none;
+  }
+}
+
+.level-up-max {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.level-up-gains {
+  display: grid;
+  /* Seven columns, always — see the block comment: constant width is what makes
+     the list scannable. */
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.level-up-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 3px 1px 2px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  /* The miss: the stat is named, and nothing happened to it. */
+  color: var(--text-dim);
+  opacity: 0.34;
+}
+
+.level-up-cell .stat-glyph {
+  width: 13px;
+  height: 13px;
+}
+
+.level-up-cell.is-hit {
+  color: var(--stat-color);
+  opacity: 1;
+  background: color-mix(in srgb, var(--stat-color) 14%, transparent);
+}
+
+.level-up-row.is-shown .level-up-cell.is-hit {
+  animation: level-up-cell-pop 300ms cubic-bezier(0.2, 1.5, 0.4, 1) 140ms backwards;
+}
+
+@keyframes level-up-cell-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.level-up-cell-amount {
+  line-height: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .level-up-row,
+  .level-up-row.is-shown,
+  .level-up-row.is-shown .level-up-to,
+  .level-up-row.is-shown .level-up-cell.is-hit {
+    animation: none;
+  }
+
+  .level-up-row.is-shown {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+  }
+
+  .level-up-row.is-capped.is-shown {
+    opacity: 0.5;
+  }
+}

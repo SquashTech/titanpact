@@ -138,12 +138,11 @@ export const TUTORIAL_SCRIPT: readonly TutorialBeat[] = [
   },
   {
     id: 'levelUp',
-    topic: 'Experience',
+    topic: 'Growing',
     lines: [
-      'Experience hardens us. It can be granted to any of us, even heroes who did not participate in the battle.',
-      'A level raises one of my statistics, and carries me toward evolution at level 5. It teaches me nothing — new moves come from Mastery Scrolls, on the Roster.',
-      'The first level costs one point, the next two, the next three, until a max of 5 per level.',
-      'For now, give it all to me.',
+      'Every fight we win hardens all of us — the ones who stood in it and the ones who did not. You will never have to choose who grows.',
+      'What we grow INTO is not up to either of us. Each of my statistics rolls on its own, against whatever I am naturally suited to. My sheet on the Roster shows those leanings.',
+      'A level teaches me nothing, mind. New moves come from Mastery Scrolls.',
     ],
   },
 
