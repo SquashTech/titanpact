@@ -35,8 +35,8 @@ const PARTICLES: Record<string, number> = {
 
 const BUFF_PARTICLES = 6;
 
-/** Longest of the animations, so the effect is gone before it is unmounted. */
-export const TYPE_FX_MS = 1100;
+/** Past the longest animation including its stagger (Spirit's last wisp, 1300ms), so nothing is unmounted mid-fade. */
+export const TYPE_FX_MS = 1400;
 
 export function TypeFx({ type, kind }: { type: string; kind: 'element' | 'buff' }) {
   const [live, setLive] = useState(true);

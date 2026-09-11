@@ -4107,9 +4107,13 @@ textarea,
   left: var(--cx);
   top: var(--cy);
   translate: -50% -50%;
-  animation-fill-mode: both;
 }
 
+/* Every animation below carries `both`. The shorthand resets fill-mode, so a
+   base-rule `animation-fill-mode` is overridden by each of them — and without
+   `both` a particle sits at its un-animated rest state through its stagger
+   delay and again on the frame after its keyframes end, before the component
+   unmounts it: a flame parked on the ground, a bolt at full brightness. */
 .type-fx i:nth-child(1) { --j: 3; }
 .type-fx i:nth-child(2) { --j: 0; }
 .type-fx i:nth-child(3) { --j: 5; }
@@ -4123,7 +4127,7 @@ textarea,
   height: 22px;
   border-radius: 50%;
   border: 3px solid var(--fx);
-  animation: fx-burst-ring 560ms ease-out;
+  animation: fx-burst-ring 560ms ease-out both;
 }
 
 .type-fx-burst::after {
@@ -4136,7 +4140,7 @@ textarea,
   border-radius: 50%;
   background: var(--fx);
   --a: calc(var(--i) * 360deg / var(--n));
-  animation: fx-burst-scatter 620ms ease-out;
+  animation: fx-burst-scatter 620ms ease-out both;
   animation-delay: 40ms;
 }
 
@@ -4158,7 +4162,7 @@ textarea,
   top: var(--ground);
   border-radius: 50%;
   background: radial-gradient(ellipse, rgba(255, 176, 64, 0.75), rgba(255, 92, 30, 0.38) 45%, transparent 70%);
-  animation: fx-fire-bloom 720ms ease-out;
+  animation: fx-fire-bloom 720ms ease-out both;
 }
 
 .type-fx-fire::after {
@@ -4173,7 +4177,7 @@ textarea,
   border-radius: 50% 50% 40% 40% / 70% 70% 30% 30%;
   background: radial-gradient(ellipse at 50% 85%, #fff6b4 0%, #ffb83e 32%, #ff5a1f 62%, transparent 78%);
   filter: blur(0.6px);
-  animation: fx-fire-tongue 760ms ease-out;
+  animation: fx-fire-tongue 760ms ease-out both;
   animation-delay: calc(var(--j) * 38ms);
 }
 
@@ -4199,7 +4203,7 @@ textarea,
   top: calc(var(--ground) + 6px);
   border-radius: 50%;
   background: radial-gradient(ellipse at 50% 60%, rgba(205, 238, 255, 0.85), rgba(74, 144, 217, 0.6) 40%, rgba(74, 144, 217, 0) 70%);
-  animation: fx-water-surge 660ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  animation: fx-water-surge 660ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
 }
 
 .type-fx-water::after {
@@ -4209,7 +4213,7 @@ textarea,
   border-radius: 50%;
   border-top: 3px solid #dff3ff;
   box-shadow: 0 -2px 8px rgba(205, 238, 255, 0.6);
-  animation: fx-water-surge 660ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  animation: fx-water-surge 660ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
   animation-delay: 40ms;
 }
 
@@ -4220,7 +4224,7 @@ textarea,
   border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
   background: linear-gradient(180deg, #e8f7ff, var(--fx));
   --dx: calc((var(--i) - 2.5) * 16px);
-  animation: fx-water-drop 560ms cubic-bezier(0.3, 0, 0.7, 1);
+  animation: fx-water-drop 560ms cubic-bezier(0.3, 0, 0.7, 1) both;
   animation-delay: calc(200ms + var(--j) * 22ms);
 }
 
@@ -4244,7 +4248,7 @@ textarea,
   height: 72px;
   clip-path: polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
   background: rgba(215, 248, 255, 0.4);
-  animation: fx-frost-flash 520ms ease-out;
+  animation: fx-frost-flash 520ms ease-out both;
 }
 
 .type-fx-frost::after {
@@ -4253,7 +4257,7 @@ textarea,
   border-radius: 50%;
   background: radial-gradient(ellipse, rgba(255, 255, 255, 0.55), transparent 70%);
   filter: blur(4px);
-  animation: fx-frost-mist 800ms ease-out;
+  animation: fx-frost-mist 800ms ease-out both;
 }
 
 .type-fx-frost i {
@@ -4262,7 +4266,7 @@ textarea,
   clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
   background: linear-gradient(180deg, #ffffff, #9fe4ee 55%, #4aa9c0);
   --a: calc(var(--i) * 60deg);
-  animation: fx-frost-shard 760ms ease-out;
+  animation: fx-frost-shard 760ms ease-out both;
   animation-delay: calc(var(--j) * 28ms);
 }
 
@@ -4295,7 +4299,7 @@ textarea,
   clip-path: polygon(48% 0, 18% 44%, 46% 46%, 12% 100%, 82% 40%, 52% 38%, 92% 0);
   background: #ffffff;
   filter: drop-shadow(0 0 5px var(--fx)) drop-shadow(0 0 14px var(--fx));
-  animation: fx-storm-bolt 540ms linear;
+  animation: fx-storm-bolt 540ms linear both;
 }
 
 .type-fx-storm::after {
@@ -4305,7 +4309,7 @@ textarea,
   width: 100%;
   height: 100%;
   background: radial-gradient(ellipse at 50% 55%, rgba(226, 212, 255, 0.75), transparent 72%);
-  animation: fx-storm-flash 540ms linear;
+  animation: fx-storm-flash 540ms linear both;
 }
 
 .type-fx-storm i {
@@ -4316,7 +4320,7 @@ textarea,
   background: #ffffff;
   box-shadow: 0 0 6px var(--fx);
   --a: calc(var(--i) * 72deg + 20deg);
-  animation: fx-storm-spark 420ms ease-out;
+  animation: fx-storm-spark 420ms ease-out both;
   animation-delay: 50ms;
 }
 
@@ -4357,7 +4361,7 @@ textarea,
   border-radius: 50%;
   background: radial-gradient(ellipse, rgba(190, 170, 128, 0.55), transparent 70%);
   filter: blur(2px);
-  animation: fx-stone-dust 520ms ease-out;
+  animation: fx-stone-dust 520ms ease-out both;
   animation-delay: 300ms;
 }
 
@@ -4372,7 +4376,7 @@ textarea,
   margin-left: calc((var(--i) - 2) * 18px);
   clip-path: polygon(20% 0, 75% 5%, 100% 45%, 85% 100%, 25% 95%, 0 55%);
   background: linear-gradient(135deg, #cdbd92, #8c7c54 60%, #5a4e38);
-  animation: fx-stone-fall 720ms linear;
+  animation: fx-stone-fall 720ms linear both;
   animation-delay: calc(var(--j) * 50ms);
 }
 
@@ -4399,7 +4403,7 @@ textarea,
   top: var(--ground);
   border-radius: 50%;
   background: radial-gradient(ellipse, rgba(107, 191, 89, 0.6), transparent 70%);
-  animation: fx-nature-glow 800ms ease-out;
+  animation: fx-nature-glow 800ms ease-out both;
 }
 
 .type-fx-nature::after {
@@ -4414,7 +4418,7 @@ textarea,
   border-radius: 80% 0 80% 0;
   background: linear-gradient(90deg, #97e07e, #4d9c3d);
   --dx: calc((var(--i) - 2.5) * 7px);
-  animation: fx-nature-leaf 920ms ease-out;
+  animation: fx-nature-leaf 920ms ease-out both;
   animation-delay: calc(var(--j) * 40ms);
 }
 
@@ -4442,7 +4446,7 @@ textarea,
   -webkit-mask: linear-gradient(90deg, transparent, #000 35%, #000 65%, transparent);
   mask: linear-gradient(90deg, transparent, #000 35%, #000 65%, transparent);
   mix-blend-mode: screen;
-  animation: fx-light-column 760ms ease-out;
+  animation: fx-light-column 760ms ease-out both;
 }
 
 .type-fx-light::after {
@@ -4453,7 +4457,7 @@ textarea,
   -webkit-mask: radial-gradient(circle, #000 15%, transparent 68%);
   mask: radial-gradient(circle, #000 15%, transparent 68%);
   mix-blend-mode: screen;
-  animation: fx-light-rays 820ms ease-out;
+  animation: fx-light-rays 820ms ease-out both;
 }
 
 .type-fx-light i {
@@ -4462,7 +4466,7 @@ textarea,
   clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
   background: #ffffff;
   --a: calc(var(--i) * 60deg);
-  animation: fx-light-sparkle 460ms ease-out;
+  animation: fx-light-sparkle 460ms ease-out both;
   animation-delay: calc(150ms + var(--j) * 55ms);
 }
 
@@ -4495,7 +4499,7 @@ textarea,
   height: 100%;
   /* A halo of dark closing on the figure, gone again before the stage's own edge — a box-shaped vignette showed the stage's corners. */
   background: radial-gradient(ellipse at 50% 55%, transparent 22%, rgba(22, 14, 42, 0.85) 48%, transparent 72%);
-  animation: fx-shadow-vignette 900ms ease-in-out;
+  animation: fx-shadow-vignette 900ms ease-in-out both;
 }
 
 .type-fx-shadow::after {
@@ -4504,7 +4508,7 @@ textarea,
   top: calc(var(--ground) + 4px);
   border-radius: 50%;
   background: radial-gradient(ellipse, rgba(10, 6, 20, 0.9), rgba(106, 99, 122, 0.3) 55%, transparent 72%);
-  animation: fx-shadow-pool 900ms ease-out;
+  animation: fx-shadow-pool 900ms ease-out both;
 }
 
 .type-fx-shadow i {
@@ -4516,7 +4520,7 @@ textarea,
   background: radial-gradient(ellipse at 50% 90%, rgba(34, 24, 56, 0.95), rgba(106, 99, 122, 0.6) 50%, transparent 76%);
   filter: blur(1.5px);
   box-shadow: 0 0 10px rgba(122, 84, 204, 0.45);
-  animation: fx-shadow-tendril 900ms ease-out;
+  animation: fx-shadow-tendril 900ms ease-out both;
   animation-delay: calc(var(--j) * 48ms);
 }
 
@@ -4547,7 +4551,7 @@ textarea,
   border-radius: 50%;
   border: 2px dashed var(--fx);
   box-shadow: 0 0 12px var(--fx-a), inset 0 0 12px var(--fx-a);
-  animation: fx-arcane-ring 820ms ease-out;
+  animation: fx-arcane-ring 820ms ease-out both;
 }
 
 .type-fx-arcane::after {
@@ -4555,7 +4559,7 @@ textarea,
   height: 64px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(226, 150, 236, 0.7), var(--fx-faint) 45%, transparent 70%);
-  animation: fx-arcane-glow 820ms ease-out;
+  animation: fx-arcane-glow 820ms ease-out both;
 }
 
 .type-fx-arcane i {
@@ -4565,7 +4569,7 @@ textarea,
   background: #ffe6ff;
   box-shadow: 0 0 8px var(--fx);
   --a: calc(var(--i) * 60deg);
-  animation: fx-arcane-mote 860ms ease-out;
+  animation: fx-arcane-mote 860ms ease-out both;
   animation-delay: calc(var(--j) * 30ms);
 }
 
@@ -4599,7 +4603,7 @@ textarea,
   height: 56px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 200, 230, 0.8), var(--fx-faint) 50%, transparent 70%);
-  animation: fx-mind-pulse 720ms ease-out;
+  animation: fx-mind-pulse 720ms ease-out both;
 }
 
 .type-fx-mind::after {
@@ -4609,7 +4613,7 @@ textarea,
   background: repeating-conic-gradient(var(--fx) 0 22deg, transparent 22deg 90deg);
   -webkit-mask: radial-gradient(circle, transparent 40%, #000 42%, #000 48%, transparent 50%);
   mask: radial-gradient(circle, transparent 40%, #000 42%, #000 48%, transparent 50%);
-  animation: fx-mind-spin 760ms ease-out;
+  animation: fx-mind-spin 760ms ease-out both;
 }
 
 .type-fx-mind i {
@@ -4618,7 +4622,7 @@ textarea,
   border-radius: 50%;
   border: 2px solid var(--fx);
   box-shadow: 0 0 10px var(--fx-a);
-  animation: fx-mind-ripple 700ms ease-out;
+  animation: fx-mind-ripple 700ms ease-out both;
   animation-delay: calc(var(--i) * 140ms);
 }
 
@@ -4647,7 +4651,7 @@ textarea,
   top: 50px;
   border-radius: 50%;
   background: radial-gradient(ellipse, rgba(95, 207, 192, 0.4), transparent 70%);
-  animation: fx-spirit-aura 1000ms ease-in-out;
+  animation: fx-spirit-aura 1000ms ease-in-out both;
 }
 
 .type-fx-spirit::after {
@@ -4662,7 +4666,7 @@ textarea,
   border-radius: 50%;
   background: radial-gradient(circle, #ecfffb, rgba(95, 207, 192, 0.85) 40%, transparent 70%);
   box-shadow: 0 0 12px var(--fx-a);
-  animation: fx-spirit-wisp 1000ms ease-in-out;
+  animation: fx-spirit-wisp 1000ms ease-in-out both;
   animation-delay: calc(var(--j) * 60ms);
 }
 
@@ -4689,7 +4693,7 @@ textarea,
   clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
   background: #ffffff;
   filter: drop-shadow(0 0 6px var(--fx));
-  animation: fx-iron-glint 320ms ease-out;
+  animation: fx-iron-glint 320ms ease-out both;
   animation-delay: 150ms;
 }
 
@@ -4705,7 +4709,7 @@ textarea,
   box-shadow: 0 0 6px var(--fx), 0 0 2px #ffffff;
   --a: calc(-36deg + var(--i) * 72deg);
   transform-origin: 0 50%;
-  animation: fx-iron-slash 380ms ease-out;
+  animation: fx-iron-slash 380ms ease-out both;
   animation-delay: calc(var(--i) * 110ms);
 }
 
@@ -4734,7 +4738,7 @@ textarea,
   top: 40px;
   background: var(--fx);
   box-shadow: 0 0 8px var(--fx);
-  animation: fx-mech-scan 520ms linear;
+  animation: fx-mech-scan 520ms linear both;
 }
 
 .type-fx-mech::after {
@@ -4743,7 +4747,7 @@ textarea,
   border-radius: 4px;
   border: 1px solid var(--fx);
   background: rgba(217, 122, 60, 0.32);
-  animation: fx-mech-lock 280ms ease-out;
+  animation: fx-mech-lock 280ms ease-out both;
   animation-delay: 330ms;
 }
 
@@ -4754,7 +4758,7 @@ textarea,
   border-left: 3px solid var(--fx);
   filter: drop-shadow(0 0 4px var(--fx-a));
   --a: calc(var(--i) * 90deg);
-  animation: fx-mech-bracket 640ms ease-out;
+  animation: fx-mech-bracket 640ms ease-out both;
 }
 
 @keyframes fx-mech-scan {
@@ -4786,7 +4790,7 @@ textarea,
   height: 54px;
   border-radius: 50%;
   background: radial-gradient(ellipse, rgba(181, 119, 47, 0.5), transparent 70%);
-  animation: fx-beast-puff 420ms ease-out;
+  animation: fx-beast-puff 420ms ease-out both;
 }
 
 .type-fx-beast::after {
@@ -4801,7 +4805,7 @@ textarea,
   background: linear-gradient(90deg, transparent, #f2c27a 15%, #b5772f 50%, #6b3f14 85%, transparent);
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
   transform-origin: 0 50%;
-  animation: fx-beast-gash 480ms ease-out;
+  animation: fx-beast-gash 480ms ease-out both;
   animation-delay: calc(var(--i) * 45ms);
 }
 
@@ -4827,7 +4831,7 @@ textarea,
   border-radius: 50%;
   border: 3px double rgba(160, 180, 110, 0.9);
   box-shadow: 0 0 16px var(--fx-a), inset 0 0 16px var(--fx-a);
-  animation: fx-ancient-ring 1080ms ease-in-out;
+  animation: fx-ancient-ring 1080ms ease-in-out both;
 }
 
 .type-fx-ancient::after {
@@ -4836,7 +4840,7 @@ textarea,
   top: calc(var(--ground) + 4px);
   border-radius: 50%;
   background: radial-gradient(ellipse, rgba(138, 156, 94, 0.6), transparent 70%);
-  animation: fx-ancient-ground 1080ms ease-out;
+  animation: fx-ancient-ground 1080ms ease-out both;
 }
 
 .type-fx-ancient i {
@@ -4846,7 +4850,7 @@ textarea,
   background: #e6efc8;
   filter: drop-shadow(0 0 5px var(--fx));
   --a: calc(var(--i) * 90deg + 45deg);
-  animation: fx-ancient-rune 720ms ease-in-out;
+  animation: fx-ancient-rune 720ms ease-in-out both;
   animation-delay: calc(120ms + var(--i) * 110ms);
 }
 
@@ -4882,7 +4886,7 @@ textarea,
   border-radius: 50%;
   border: 2px solid rgba(var(--fx-rgb), 0.9);
   box-shadow: 0 0 10px var(--fx-a), inset 0 0 10px var(--fx-faint);
-  animation: fx-buff-ring 820ms ease-out;
+  animation: fx-buff-ring 820ms ease-out both;
 }
 
 .type-fx-buff::after {
@@ -4891,7 +4895,7 @@ textarea,
   top: 52px;
   border-radius: 50%;
   background: radial-gradient(ellipse at 50% 100%, var(--fx-a), var(--fx-faint) 45%, transparent 72%);
-  animation: fx-buff-aura 820ms ease-out;
+  animation: fx-buff-aura 820ms ease-out both;
 }
 
 .type-fx-buff i {
@@ -4902,7 +4906,7 @@ textarea,
   border-radius: 50%;
   background: #ffffff;
   box-shadow: 0 0 6px var(--fx);
-  animation: fx-buff-mote 760ms ease-out;
+  animation: fx-buff-mote 760ms ease-out both;
   animation-delay: calc(var(--j) * 45ms);
 }
 
