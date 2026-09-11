@@ -107,7 +107,11 @@ export function RosterReplaceScreen({ roster, candidate, incomingEntry, relicIds
           }
         />
 
-        <HeroPickGrid count={roster.length} fill>
+        {/* Three columns, not the two a six-hero `fill` grid picks: this screen's header (portrait,
+            title, types, a two-line note) and its two stacked buttons leave ~410px, and three rows
+            of 96px cards collapsed to their floor there with the names clipped. Two rows of 48px
+            cards fit outright — and the roster is always full here, so it is always six. */}
+        <HeroPickGrid count={roster.length} fill columns={3}>
           {roster.map((entry) => {
             const rosterHero = heroes[entry.heroId];
             return (

@@ -94,9 +94,7 @@ export function MoveOfferOverlay({ run, entry, moveId, eyebrow, onResolve }: Pro
             <span className="moveoffer-icon" aria-hidden="true">
               ✕
             </span>
-            <span className="moveoffer-label">{atCap ? 'Keep current moveset' : 'Decline'}</span>
-            {/* Says the price out loud: the Scroll is spent and the move does not come back. */}
-            <span className="moveoffer-sub">The move is gone either way</span>
+            <span className="moveoffer-label">{atCap ? 'Keep moveset' : 'Decline'}</span>
           </button>
           <button
             className="moveoffer-button moveoffer-confirm"

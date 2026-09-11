@@ -14201,6 +14201,11 @@ textarea,
   backdrop-filter: blur(8px);
   z-index: 30;
   display: flex;
+  /* STRETCHED, not centred: it also wears .detail-overlay, whose `align-items: center` sized
+     the panel to its content — at six heroes that is taller than the viewport, and a centred
+     overflow puts the confirm button below the fold with no way to scroll to it. Pinned to the
+     viewport, the pick grid inside is the thing that scrolls. */
+  align-items: stretch;
   padding: 12px;
 }
 
