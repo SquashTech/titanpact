@@ -16894,8 +16894,8 @@ textarea,
    rather than N elements, so the count costs nothing.
    ┄
    The outer ring is the type chart (.title-seal-wheel, titleTypeWheel.tsx):
-   fifteen glyphs on its hairline and a chord for every 2× cell, spinning with
-   the ticks at the ticks' own period so the two never drift apart. */
+   fourteen glyphs round its hairline and a chord for every 2× cell, spinning
+   with the ticks at the ticks' own period so the two never drift apart. */
 .title-seal {
   position: absolute;
   top: 50%;
@@ -16919,12 +16919,12 @@ textarea,
   height: 300px;
   /* Graduation ticks. The mask is what makes it a ring of marks instead of a
      filled pinwheel; without it the conic gradient paints all the way in. */
-  /* One tick between each pair of type glyphs: 24° apart, offset to the
-     glyphs' own 6° start so each lands mid-gap (titleTypeWheel.tsx START_DEG). */
+  /* One tick between each pair of type glyphs: 360/14 apart, starting half a
+     step past the glyph at the top (titleTypeWheel.tsx STEP_DEG). */
   background: repeating-conic-gradient(
-    from 18deg,
+    from 12.857deg,
     rgba(224, 166, 60, 0.34) 0deg 1.1deg,
-    transparent 1.1deg 24deg
+    transparent 1.1deg 25.714deg
   );
   /* `closest-side` is load-bearing: a bare `circle` sizes to farthest-CORNER,
      so 46–50% would land at radius ~100 on a 300px box instead of ~150 and the

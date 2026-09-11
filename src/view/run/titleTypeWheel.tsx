@@ -2,17 +2,19 @@ import { TYPES, typeChart } from '../../data/typechart';
 import { ELEMENT_PATHS } from '../shared/elementIcons';
 import { getTypeColor } from '../combat/typeColors';
 
-// The type chart, drawn as the seal's outer dial (docs/types-and-heroes.md). The fifteen
-// glyphs sit on the ring in chart order, and every 2× cell is a chord from the attacker to
-// the defender in the attacker's colour, fading toward the end it strikes — so the direction
-// is in the line, not in an arrowhead the size would not carry. Resistances are not drawn:
-// forty-one chords is a seal, eighty is a hairball.
+// The type chart, drawn as the seal's outer dial (docs/types-and-heroes.md). Fourteen
+// glyphs sit round the ring in chart order, and every 2× cell is a chord from the attacker
+// to the defender in the attacker's colour, fading toward the end it strikes — so the
+// direction is in the line, not in an arrowhead the size would not carry. Resistances are
+// not drawn: forty-one chords is a seal, eighty is a hairball. Ancient is left off: it
+// strikes nothing for 2× and is only ever resisted, so its glyph would hang off the dial
+// with no line to or from it — and fourteen is even, which lets the wheel start dead-top
+// and straddle the horizontal on both sides.
 //
 // Sized to the outer ring in styles.css (`.title-seal-ring.is-outer`, 300px): RING is that
 // ring's radius. The chords end ON the hairline, between its ticks; the glyphs sit just
-// OUTSIDE it, like the labels on a dial. Outside, because fifteen is odd — wherever the
-// wheel is turned, one side has a glyph within a few degrees of the horizontal, and on the
-// ring that glyph is under the wordmark's first or last letter.
+// OUTSIDE it, like the labels on a dial, so a glyph turning past the wordmark's ends is
+// beside the letters rather than under them.
 
 const SIZE = 364;
 const CENTRE = SIZE / 2;
@@ -21,24 +23,25 @@ const LABEL = 168;
 const NODE_R = 11;
 const GLYPH = 12;
 
-/** 6° off the vertical so the wheel is never mirror-symmetric about the wordmark. */
-const START_DEG = -84;
-const STEP_DEG = 360 / TYPES.length;
+const WHEEL_TYPES = TYPES.filter((t) => t !== 'Ancient');
+
+const START_DEG = -90;
+const STEP_DEG = 360 / WHEEL_TYPES.length;
 
 function point(index: number, radius: number): readonly [number, number] {
   const a = ((START_DEG + index * STEP_DEG) * Math.PI) / 180;
   return [CENTRE + radius * Math.cos(a), CENTRE + radius * Math.sin(a)];
 }
 
-const NODES = TYPES.map((type, i) => ({
+const NODES = WHEEL_TYPES.map((type, i) => ({
   type,
   color: getTypeColor(type),
   at: point(i, RING),
   label: point(i, LABEL),
 }));
 
-const CHORDS = TYPES.flatMap((attacker, a) =>
-  TYPES.flatMap((defender, d) =>
+const CHORDS = WHEEL_TYPES.flatMap((attacker, a) =>
+  WHEEL_TYPES.flatMap((defender, d) =>
     typeChart[attacker][defender] > 1 ? [{ id: `${attacker}-${defender}`, from: NODES[a], to: NODES[d] }] : [],
   ),
 );
