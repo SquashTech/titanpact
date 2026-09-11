@@ -5933,14 +5933,29 @@ textarea,
   margin-right: 1px;
 }
 
-/* Instructional line under a screen's heading. Kept gold (it's the
-   "what do I do here" line and every screen has one) but given a real line
-   box — at 11px with default leading, a hint that wraps to two lines was
-   setting tighter than the body text around it, which read as cramped. */
+/*
+ * A quiet aside. Dim, not gold (2026-09-10).
+ *
+ * It was authored as "the instructional line under a screen's heading", and
+ * gold made sense for that — every screen had one, and it was the line telling
+ * you what to do. **That job moved.** `NodeHeader`'s `readout` is where a
+ * screen says what it is asking now, and what is left wearing this class is six
+ * sites of a different kind: five empty states ("No gear on offer this visit",
+ * "The bag is empty", "Nothing to work on yet") and one inline level suffix.
+ *
+ * None of those is an instruction and none is a warning, which is what gold
+ * says on a screen full of prices — that something has gone wrong. The
+ * twenty-third pass scoped this to dim inside the shops; the rest of the app
+ * had the same problem for the same reason, and the comment justifying the gold
+ * had outlived the thing it was justifying.
+ *
+ * The line box stays: at 11px with default leading, a hint that wrapped to two
+ * lines set tighter than the body text around it and read as cramped.
+ */
 .hint {
   font-size: 11px;
   line-height: 1.35;
-  color: var(--accent);
+  color: var(--text-dim);
   margin-bottom: 6px;
 }
 
@@ -11606,10 +11621,9 @@ textarea,
 }
 
 /* Under the label, not beside it, and no longer italic: an italic note at the
-   far right of a heading is a table's column note.
-   A shop's loose advisories (`.hint`) join it in the same dim, centred voice —
-   globally `.hint` is gold, which on a screen full of prices reads as a form
-   telling you something is wrong rather than as the room talking. */
+   far right of a heading is a table's column note. A shop's loose advisories
+   (`.hint`) join it in the same centred voice; the colour is no longer set here
+   because `.hint` itself went dim app-wide. */
 .guild-hall-section-hint,
 .guild-hall .hint {
   max-width: 38ch;

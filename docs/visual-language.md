@@ -3049,10 +3049,39 @@ slates in this tree all day, the failing set is unchanged, and the engine tests 
   glyph, which can be on screen at the same time in combat. **This is the second thing the audit
   flagged that turned out to be right** (the hero sheet's fixed height was the first), and it is
   recorded here as decided rather than left on a list.
-- `.hint` is globally `color: var(--accent)`; only the shop screens have been scoped to the dim
-  voice. Everywhere else a loose advisory still reads as a warning.
+- ~~`.hint` is globally `color: var(--accent)`~~ — done, below.
 - The equipment card still prints its rarity in caps under the name, now that the plate carries
   rarity as light. A content call, not a styling one.
+
+### Addendum — `.hint` goes dim app-wide
+
+`.hint` was `color: var(--accent)`, and its own comment justified that: *"Kept gold (it's the 'what
+do I do here' line and every screen has one)."* **That job moved.** `NodeHeader`'s `readout` is
+where a screen says what it is asking, and what is left wearing `.hint` is six sites of a different
+kind — five empty states ("No gear on offer this visit", "The bag is empty", "Nothing to work on
+yet") and one inline level suffix on Squad Select. None is an instruction; none is a warning, which
+is what gold says. The twenty-third pass had scoped it dim inside the shops; the rest of the app had
+the same problem for the same reason, and that scoped override now drops its own `color`.
+
+**The level suffix is the one that improves rather than merely calms.** `Cinder Lv 4` set the level
+in gold beside every name — and under roster-wide levelling that figure is *identical on all six
+cards*, which CLAUDE.md already says carries no information. Gold was giving the loudest treatment
+on the card to its least informative word.
+
+### And a correction to the `i` removal above
+
+The twenty-seventh pass took the `i` off `HeroPickCard`. **Squad Select has a second, separate one**
+— `.info-button`, a bordered circle with a serif italic `i`, used by that screen alone — and it is
+*more* web-looking than the chromeless mark that was removed.
+
+It stays, for now, and the reason is worth recording so the next sweep does not "finish the job"
+and break the screen: **`SquadSelectScreen` has no long press.** Its slots handle a tap (swap into
+a slot) and a drag, and nothing else — so unlike a pick card, the `i` there is not a redundant
+second way into the hero sheet, it is the *only* way. Removing it strands the sheet.
+
+The real fix is to give the slot the long press every other card in the game has, and then drop the
+`i`. That is a genuine change rather than a restyle — the slot already carries a click and a
+`DragEvent` handler for reordering, and a hold has to be introduced without eating either.
 
 ## Open / future improvements
 
