@@ -15,6 +15,18 @@ const VIEW_H = 754;
 /** Both layers share it: `inset` alone mis-sizes a replaced element on iOS. */
 const FILL = { width: '100%', height: '100%' } as const;
 
+/** The eyes: where each sits, and the tilt that makes the pair read as looking at you. */
+const EYE_Y = 136;
+const EYES = [
+  { x: 94, tilt: 7 },
+  { x: 272, tilt: -7 },
+] as const;
+const EYE_HALF_W = 82;
+const EYE_HALF_H = 32;
+const EYE_HALO_R = 128;
+/** The lens, in an eye's own coordinates; the lid clip and the fill are the same path. */
+const LENS = `M${-EYE_HALF_W} 0 Q0 ${-EYE_HALF_H} ${EYE_HALF_W} 0 Q0 ${EYE_HALF_H} ${-EYE_HALF_W} 0 Z`;
+
 /**
  * The Titan: two eyes and the brow over them, and nothing else. The body, the pauldrons,
  * the rim light and the chains all came off (2026-09-11) — drawn, the figure competed with
@@ -36,12 +48,22 @@ export function TitanColossus() {
             centre out through the mythic red to almost nothing at the rim, so the light reads
             as coming from inside the eye rather than the eye being a painted disc. */}
         <radialGradient id="titan-iris" cx="50%" cy="50%" r="52%">
-          <stop offset="0%" stopColor="#fff3d2" />
-          <stop offset="20%" stopColor="#f0b060" />
-          <stop offset="46%" stopColor="#e0393f" />
-          <stop offset="76%" stopColor="#601018" />
+          <stop offset="0%" stopColor="#f6c070" />
+          <stop offset="22%" stopColor="#e8604a" />
+          <stop offset="50%" stopColor="#c8303a" />
+          <stop offset="78%" stopColor="#601018" />
           <stop offset="100%" stopColor="#1e060a" />
         </radialGradient>
+        {/* The pale-gold core, split off the iris so it can travel with the pupil: the light
+            follows the gaze, which is most of what makes the eye look rather than slide. */}
+        <radialGradient id="titan-hotspot" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#fff3d2" stopOpacity="0.95" />
+          <stop offset="38%" stopColor="#f0b060" stopOpacity="0.68" />
+          <stop offset="100%" stopColor="#e0393f" stopOpacity="0" />
+        </radialGradient>
+        <clipPath id="titan-lid">
+          <path d={LENS} />
+        </clipPath>
         <radialGradient id="titan-glare" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#e0393f" stopOpacity="0.34" />
           <stop offset="42%" stopColor="#e0393f" stopOpacity="0.09" />
@@ -64,18 +86,28 @@ export function TitanColossus() {
             with a vertical slit contracted to a hairline and a halo that bleeds past the lids.
             ┄
             Slanted DOWN toward the middle: the same pair with the tilt reversed reads as
-            startled, and this way round they read as looking at you. */}
+            startled, and this way round they read as looking at you.
+            ┄
+            Each eye is one group in its own coordinates, so the two share a lid and a gaze.
+            The lid opens and the gaze wanders on CSS (`.titan-eye-open`, `.titan-eye-gaze`),
+            which is why they are groups nested under the positioning transform rather than
+            elements with one: a CSS transform on the positioned group would replace it. */}
         <g className="titan-eyes">
-          <circle className="titan-eye-halo" cx="108" cy="136" r="104" />
-          <circle className="titan-eye-halo" cx="258" cy="136" r="104" />
-          <g className="titan-eye-lens">
-            <path d="M44 136 Q108 112 172 136 Q108 160 44 136 Z" transform="rotate(7 108 136)" />
-            <path d="M322 136 Q258 112 194 136 Q258 160 322 136 Z" transform="rotate(-7 258 136)" />
-          </g>
-          <g className="titan-eye-pupil">
-            <ellipse cx="108" cy="136" rx="7.5" ry="20" transform="rotate(7 108 136)" />
-            <ellipse cx="258" cy="136" rx="7.5" ry="20" transform="rotate(-7 258 136)" />
-          </g>
+          {EYES.map(({ x, tilt }) => (
+            <g key={x} transform={`translate(${x} ${EYE_Y}) rotate(${tilt})`}>
+              <circle className="titan-eye-halo" r={EYE_HALO_R} />
+              {/* Clipped by the lens, so the light and the slit are bounded by the lids however
+                  far the gaze goes — and the clip is in this group's own space, so it opens
+                  with the lid. */}
+              <g className="titan-eye-open" clipPath="url(#titan-lid)">
+                <path className="titan-eye-lens" d={LENS} />
+                <g className="titan-eye-gaze">
+                  <ellipse className="titan-eye-hotspot" rx={EYE_HALF_W * 0.62} ry={EYE_HALF_H * 0.9} />
+                  <ellipse className="titan-eye-pupil" rx={EYE_HALF_H * 0.3} ry={EYE_HALF_H * 0.88} />
+                </g>
+              </g>
+            </g>
+          ))}
         </g>
       </g>
     </svg>

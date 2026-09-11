@@ -60,8 +60,8 @@ export function TitleTypeWheel() {
               x2={c.to.at[0]}
               y2={c.to.at[1]}
             >
-              <stop offset="0%" stopColor={c.from.color} stopOpacity="0.7" />
-              <stop offset="100%" stopColor={c.from.color} stopOpacity="0.06" />
+              <stop offset="0%" stopColor={c.from.color} stopOpacity="0.95" />
+              <stop offset="100%" stopColor={c.from.color} stopOpacity="0.14" />
             </linearGradient>
           ))}
           {/* The web thins toward the middle so the wordmark sits on the core glow, not on a knot. */}
