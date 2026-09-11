@@ -57,16 +57,16 @@ export function TitanColossus() {
         {/* The pale-gold core, split off the iris so it can travel with the pupil: the light
             follows the gaze, which is most of what makes the eye look rather than slide. */}
         <radialGradient id="titan-hotspot" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#fff3d2" stopOpacity="0.95" />
-          <stop offset="38%" stopColor="#f0b060" stopOpacity="0.68" />
+          <stop offset="0%" stopColor="#fff3d2" stopOpacity="1" />
+          <stop offset="38%" stopColor="#f0b060" stopOpacity="0.8" />
           <stop offset="100%" stopColor="#e0393f" stopOpacity="0" />
         </radialGradient>
         <clipPath id="titan-lid">
           <path d={LENS} />
         </clipPath>
         <radialGradient id="titan-glare" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#e0393f" stopOpacity="0.34" />
-          <stop offset="42%" stopColor="#e0393f" stopOpacity="0.09" />
+          <stop offset="0%" stopColor="#e0393f" stopOpacity="0.46" />
+          <stop offset="42%" stopColor="#e0393f" stopOpacity="0.13" />
           <stop offset="100%" stopColor="#e0393f" stopOpacity="0" />
         </radialGradient>
       </defs>
