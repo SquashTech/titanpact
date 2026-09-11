@@ -26,6 +26,7 @@ import { getTypeColor, getTypeColorRgb } from './typeColors';
 import { ElementGlyph } from '../shared/elementIcons';
 import { StatGlyph, MoveKindGlyph } from '../shared/statIcons';
 import { StatusGlyph, statusColor } from '../shared/statusIcons';
+import { statusFactsLine } from '../shared/statusFacts';
 import { STAT_LABELS, hpTier } from '../shared/StatBars';
 import { ManaCost } from '../shared/ManaCost';
 import { HeroPortrait } from '../shared/HeroPortrait';
@@ -210,8 +211,6 @@ interface CardProps {
   /** Payload rows keep their one-line claim and drop the rule sentence under it — for a screen that has to fit a decision beneath the card. */
   terse?: boolean;
 }
-
-const SCALES_BASE_POWER = 'scales base power, not the finished hit';
 
 /** The move dossier: a live damage band, the priority bracket, and the mana left after casting. */
 export function MoveDetailCard({ move: authored, label, context, caster, terse }: CardProps) {
@@ -420,25 +419,20 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
           {move.manaGrant != null && (
             <EffectRow
               glyph={<StatGlyph stat="manaPool" />}
-              text={`Gives ${move.manaGrant} MP to ${TARGET_MODE_LABELS[move.target].toLowerCase()}`}
-              note="overflows past the pool and stays there — nothing takes it back but spending it"
+              text={`+${move.manaGrant} MP to ${TARGET_MODE_LABELS[move.target].toLowerCase()}, past the pool`}
             />
           )}
           {move.statDeltas?.map(({ stat, amount }) => (
             <EffectRow
               key={stat}
               glyph={<StatGlyph stat={stat} />}
-              text={`${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]}`}
-              note={`on ${(move.statDeltaTarget === 'bothAllies'
+              text={`${amount >= 0 ? '+' : ''}${amount} ${STAT_LABELS[stat]} to ${(move.statDeltaTarget === 'bothAllies'
                 ? TARGET_MODE_LABELS.bothAllies
                 : move.statDeltaTarget === 'self'
                   ? TARGET_MODE_LABELS.self
                   : TARGET_MODE_LABELS[move.target]
-              ).toLowerCase()}${
-                move.statDeltaChance != null
-                  ? ` — ${Math.round(move.statDeltaChance * 100)}% chance, rolled per target; the hit itself always lands`
-                  : ''
-              }`}
+              ).toLowerCase()}`}
+              note={move.statDeltaChance != null ? `${Math.round(move.statDeltaChance * 100)}% chance, rolled per target` : undefined}
             />
           ))}
           {move.doublesStatReductions && (
@@ -452,10 +446,8 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
                   if (!d || d.fainted) return sum;
                   return sum + Object.values(d.statModifiers).reduce((a, v) => a + (typeof v === 'number' && v < 0 ? -v : 0), 0);
                 }, 0);
-                if (!ids.length) return 'worth nothing against a clean stat line, and it compounds on a second cast';
-                return banked > 0
-                  ? `${banked} of reductions standing right now — this would add ${banked} more`
-                  : 'nothing is debuffed right now, so this would do nothing at all';
+                if (!ids.length) return undefined;
+                return banked > 0 ? `${banked} standing right now — this adds ${banked} more` : 'nothing is debuffed right now';
               })()}
             />
           )}
@@ -469,11 +461,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
                   ? `+${attacker.currentMana} ${STAT_LABELS[stat]} on ${TARGET_MODE_LABELS[move.target].toLowerCase()}`
                   : `+${STAT_LABELS[stat]} equal to your current Mana`
               }
-              note={
-                attacker
-                  ? 'your Mana as it stands BEFORE this move is paid for — overflow included'
-                  : 'no fixed amount: it is whatever the caster is holding when they press it'
-              }
+              note="read before the cost is paid — overflow included"
             />
           ))}
           {move.conditionalTarget && (
@@ -485,8 +473,8 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               } is up`}
               note={
                 context?.combat.activeFieldEffect?.fieldEffectId === move.conditionalTarget.requiresFieldEffect
-                  ? 'the field is up right now — this cast spreads'
-                  : 'read when the move lands, so a partner setting the field earlier this round already counts'
+                  ? 'up right now — this cast spreads'
+                  : undefined
               }
             />
           )}
@@ -510,7 +498,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
                 } ${def.name}${
                   liveMagnitude != null ? ` ${liveMagnitude}` : app.duration != null ? ` ${app.duration}` : ''
                 }${where ? ` — ${where}` : ''}`}
-                note={def.description}
+                note={statusFactsLine(def)}
               />
             );
           })}
@@ -520,7 +508,6 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               glyph={<StatusGlyph statusId={move.requiresTargetStatus} />}
               color={statusColor(move.requiresTargetStatus)}
               text={`Only targets ${gateDef?.name ?? move.requiresTargetStatus}`}
-              note="no legal target, and no way to declare it, unless the status is already out there"
             />
           )}
           {move.conditionalPower && conditionalFieldId && (
@@ -528,33 +515,21 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               glyph={<ElementGlyph type={conditionalFieldDef?.flavorType ?? 'Arcane'} />}
               color={getTypeColor(conditionalFieldDef?.flavorType ?? 'Arcane')}
               text={`×${move.conditionalPower.multiplier} power while ${conditionalFieldDef?.name ?? conditionalFieldId} is up`}
-              note={
-                conditionalFieldLive
-                  ? `${SCALES_BASE_POWER} — and ${conditionalFieldDef?.name ?? conditionalFieldId} is up right now`
-                  : `${SCALES_BASE_POWER} — the field is global, so either side setting it arms this move`
-              }
+              note={conditionalFieldLive ? 'up right now' : undefined}
             />
           )}
           {move.conditionalPower && conditionalHpBelow != null && (
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
               text={`×${move.conditionalPower.multiplier} power vs a target below ${Math.round(conditionalHpBelow * 100)}% HP`}
-              note={
-                conditionalHpLive
-                  ? `${SCALES_BASE_POWER} — and someone out there is already under the line`
-                  : `${SCALES_BASE_POWER} — read BEFORE this hit lands, so it never doubles off HP it is about to take`
-              }
+              note={conditionalHpLive ? 'a target is under the line right now' : 'read before the hit lands'}
             />
           )}
           {move.conditionalPower && conditionalUserHpBelow != null && (
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
               text={`×${move.conditionalPower.multiplier} power while you are below ${Math.round(conditionalUserHpBelow * 100)}% HP`}
-              note={
-                conditionalUserHpLive
-                  ? `${SCALES_BASE_POWER} — and this hero is already under the line`
-                  : `${SCALES_BASE_POWER} — asked once per cast, so every hit gets it or none does`
-              }
+              note={conditionalUserHpLive ? 'under the line right now' : undefined}
             />
           )}
           {move.conditionalPower && conditionalPartnerType != null && (
@@ -562,11 +537,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               glyph={<ElementGlyph type={conditionalPartnerType} />}
               color={getTypeColor(conditionalPartnerType)}
               text={`×${move.conditionalPower.multiplier} power while your partner is a ${conditionalPartnerType}`}
-              note={
-                conditionalPartnerLive
-                  ? `${SCALES_BASE_POWER} — and the hero beside you qualifies right now`
-                  : `${SCALES_BASE_POWER} — read off the ACTIVE partner, so switching one in turns it on`
-              }
+              note={conditionalPartnerLive ? 'your partner qualifies right now' : 'read off the active partner'}
             />
           )}
           {move.conditionalPower &&
@@ -582,13 +553,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
                   ? `×${move.conditionalPower.multiplier} power while you have ${conditionalDef?.name ?? conditionalStatusId}`
                   : `×${move.conditionalPower.multiplier} power vs ${conditionalDef?.name ?? conditionalStatusId}`
               }
-              note={
-                move.conditionalPower.consumesStatus
-                  ? `${SCALES_BASE_POWER} — and spends the ${conditionalDef?.name ?? conditionalStatusId} it cashed in`
-                  : move.conditionalPower.requiresUserStatus
-                    ? `${SCALES_BASE_POWER} — read off THIS hero, so a partner granting it earlier in the round already counts`
-                    : SCALES_BASE_POWER
-              }
+              note={move.conditionalPower.consumesStatus ? `spends the ${conditionalDef?.name ?? conditionalStatusId}` : undefined}
             />
           )}
           {move.conditionalStatDeltas && (
@@ -598,8 +563,8 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               text={`×${move.conditionalStatDeltas.multiplier} stat grant while your partner is a ${move.conditionalStatDeltas.requiresPartnerType}`}
               note={
                 (livePartnerTypes ?? []).includes(move.conditionalStatDeltas.requiresPartnerType)
-                  ? 'the hero beside you qualifies right now, so this lands at the doubled figure'
-                  : 'read off the ACTIVE partner when the buff lands — the bench does not count'
+                  ? 'your partner qualifies right now'
+                  : 'read off the active partner'
               }
             />
           )}
@@ -608,21 +573,20 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               glyph={<StatusGlyph statusId={move.detonatesStatus} />}
               color={statusColor(move.detonatesStatus)}
               text={`Detonates ${detonateDef?.name ?? move.detonatesStatus} on contact`}
-              note="pays the timer out now, at whatever magnitude it has reached — and this move's own application counts toward it"
+              note="pays out now, at its current magnitude — this move's own rider counts"
             />
           )}
           {move.critChance != null && (
             <EffectRow
               glyph={<MoveKindGlyph kind={move.kind === 'damage' ? move.category : 'buff'} />}
-              text={`${Math.round(move.critChance * 100)}% crit chance`}
-              note="1.5× damage when it lands"
+              text={`${Math.round(move.critChance * 100)}% crit chance · 1.5×`}
             />
           )}
           {move.drainPercent != null && (
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
               text={`Heals ${Math.round(move.drainPercent * 100)}% of damage dealt`}
-              note="a share of the hit itself — Wisdom and STAB do not scale it"
+              note="unscaled by Wisdom or STAB"
             />
           )}
           {move.offStatOverride && (
@@ -631,8 +595,8 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               text={`Uses ${STAT_LABELS[move.offStatOverride]} in place of ${STAT_LABELS[move.category === 'physical' ? 'attack' : 'intelligence']}`}
               note={
                 attacker && attackerHero
-                  ? `${getEffectiveStat(attackerHero, attacker, move.offStatOverride, statCtx)} right now — the target still defends with its own ${STAT_LABELS[move.category === 'physical' ? 'defense' : 'wisdom']}`
-                  : 'the defending stat is unchanged — only the attacking one moves'
+                  ? `${getEffectiveStat(attackerHero, attacker, move.offStatOverride, statCtx)} right now — defended by ${STAT_LABELS[move.category === 'physical' ? 'defense' : 'wisdom']} as usual`
+                  : `defended by ${STAT_LABELS[move.category === 'physical' ? 'defense' : 'wisdom']} as usual`
               }
             />
           )}
@@ -646,8 +610,8 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               }
               note={
                 attacker
-                  ? `${Math.round(move.retributionPercent * 100)}% of the ${attacker.damageTakenSinceLastTurn} taken since this hero last acted — fixed damage, no type chart, no variance, no crit`
-                  : 'fixed damage — the type chart, variance and crit do not apply'
+                  ? `${Math.round(move.retributionPercent * 100)}% of the ${attacker.damageTakenSinceLastTurn} taken since this hero last acted · fixed: no chart, variance or crit`
+                  : 'fixed damage: no chart, variance or crit'
               }
             />
           )}
@@ -655,7 +619,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
             <EffectRow
               glyph={<StatGlyph stat="hp" />}
               text={`Costs ${Math.round(move.recoilPercent * 100)}% of damage dealt as recoil`}
-              note="a share of the hit itself — and there is no floor, so it can knock the caster out"
+              note="no floor — can KO the caster"
             />
           )}
           {move.selfHpCost != null && (
@@ -668,19 +632,18 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               }
               note={
                 move.selfHpCost.mode === 'percentMaxHp'
-                  ? 'paid after the effect lands — and there is no floor, so it can knock the caster out'
-                  : 'paid after the damage lands, and never heals — a caster already lower stays there'
+                  ? 'paid after the hit · no floor — can KO the caster'
+                  : 'paid after the hit · never heals'
               }
             />
           )}
           {move.cleanses && (
             <EffectRow
               glyph={<MoveKindGlyph kind="buff" />}
-              text={move.cleanseCount != null ? `Cleanses ${move.cleanseCount} at random` : 'Cleanses'}
-              note={
+              text={
                 move.cleanseCount != null
-                  ? 'one negative status, chosen at random — never a positive one'
-                  : 'strips every negative status from the target'
+                  ? `Cleanses ${move.cleanseCount} negative ${move.cleanseCount === 1 ? 'status' : 'statuses'} at random`
+                  : 'Cleanses every negative status'
               }
             />
           )}
@@ -693,8 +656,8 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
                   ? `${liveBasePower} now, ${Math.min(
                       move.basePowerGainOnUse.max,
                       (liveBasePower ?? 0) + move.basePowerGainOnUse.amount
-                    )} after this cast — for the rest of the fight, up to ${move.basePowerGainOnUse.max}`
-                  : `stacks for the rest of the fight, on this hero only, up to ${move.basePowerGainOnUse.max}`
+                    )} after this cast · up to ${move.basePowerGainOnUse.max}, this fight`
+                  : `up to ${move.basePowerGainOnUse.max}, this hero, this fight`
               }
             />
           )}
@@ -704,8 +667,8 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               text={`+${move.manaCostGainOnUse} mana each use`}
               note={
                 attacker
-                  ? `costs ${liveCost} now, ${liveCost + move.manaCostGainOnUse} after this cast — for the rest of the fight`
-                  : 'stacks for the rest of the fight, on this hero only — a lockout priced by the fight, not the cast'
+                  ? `costs ${liveCost} now, ${liveCost + move.manaCostGainOnUse} after this cast · this fight`
+                  : 'this hero, this fight'
               }
             />
           )}
@@ -714,7 +677,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               glyph={<ElementGlyph type={move.type} />}
               color={getTypeColor(move.type)}
               text="Wears the user's type"
-              note="a Class move: it takes the element of whoever holds it, so it always carries STAB"
+              note="Class move · always STAB"
             />
           )}
           {move.manaDiscountOnUse != null && (
@@ -723,8 +686,8 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               text={`−${move.manaDiscountOnUse} mana each use`}
               note={
                 attacker
-                  ? `costs ${liveCost} now, ${Math.max(0, liveCost - move.manaDiscountOnUse)} after this cast — for the rest of the fight`
-                  : 'stacks for the rest of the fight, on this hero only'
+                  ? `costs ${liveCost} now, ${Math.max(0, liveCost - move.manaDiscountOnUse)} after this cast · this fight`
+                  : 'this hero, this fight'
               }
             />
           )}
@@ -735,7 +698,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               text={`${move.conditionalPriority.bonus >= 0 ? '+' : ''}${move.conditionalPriority.bonus} priority vs ${
                 priorityDef?.name ?? move.conditionalPriority.requiresTargetStatus
               }`}
-              note="read when the round is ordered, so the mark has to already be out there — a partner applying it this round is too late"
+              note="read when the round is ordered"
             />
           )}
           {move.conditionalManaCost && (
@@ -744,18 +707,14 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
               text={`${move.conditionalManaCost.manaCost} mana while ${
                 move.conditionalManaCost.requiresAllEnemiesStatus ? 'both enemies carry' : 'an enemy carries'
               } ${freeDef?.name ?? freeGate}`}
-              note={
-                attacker
-                  ? `costs ${liveCost} right now`
-                  : `${move.manaCost} otherwise — the condition reads the live board`
-              }
+              note={attacker ? `costs ${liveCost} right now` : `${move.manaCost} otherwise`}
             />
           )}
           {move.switchesUserOut && (
             <EffectRow
               glyph={<MoveKindGlyph kind="buff" />}
               text="Then switch out"
-              note="the payload lands first, then the caster goes to the bench — refused, buff and all costs kept, once the side is locked in at 2 KOs"
+              note="payload first, then the bench · refused once locked in at 2 KOs"
             />
           )}
           {fieldDef && (
@@ -776,8 +735,7 @@ export function MoveDetailCard({ move: authored, label, context, caster, terse }
             <ForecastRow key={id} move={move} ctx={context} defenderId={id} />
           ))}
           <div className="move-detail-footnote">
-            Range is the 0.85–1.0 variance roll. A crit multiplies it by 1.5
-            {move.critChance != null ? ` (${Math.round(move.critChance * 100)}% on this move)` : ''}.
+            Variance {VARIANCE_MIN}–{VARIANCE_MAX} · crit ×1.5{move.critChance != null ? ` at ${Math.round(move.critChance * 100)}%` : ''}
           </div>
         </div>
       )}
